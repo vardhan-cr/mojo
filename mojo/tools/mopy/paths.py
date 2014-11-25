@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import os
+import platform
 
 from .config import Config
 
@@ -24,6 +25,8 @@ class Paths(object):
       subdir += "Debug" if config.is_debug else "Release"
       self.build_dir = os.path.join(self.src_root, "out", subdir)
       self.mojo_shell_path = os.path.join(self.build_dir, "mojo_shell")
+      if platform.system() == 'Windows':
+        self.mojo_shell_path += ".exe"
     else:
       self.build_dir = None
       self.mojo_shell_path = None

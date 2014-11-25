@@ -7,61 +7,12 @@
 
 import logging
 import os
-import platform
-import subprocess
 import sys
 
 _logging = logging.getLogger()
 
-from mopy.gtest_list_tests import gtest_list_tests
-
-
-def print_output(command_line, output):
-  print command_line
-  print 72 * '-'
-  print output
-  print 72 * '-'
-
-
-def try_command_line(command_line):
-  """Returns the output of a command line or an empty string on error."""
-  _logging.debug("Running command line: %s" % command_line)
-  try:
-    output = subprocess.check_output(command_line, stderr=subprocess.STDOUT)
-    return output
-  except subprocess.CalledProcessError as e:
-    print "Failed with exit code %d, command line, and output:" % e.returncode
-    print_output(command_line, e.output)
-  except Exception as e:
-    print "Failed with command line and exception:"
-    print_output(command_line, e)
-  return None
-
-
-def get_fixtures(command_line):
-  """Returns the "Test.Fixture" list from a --gtest_list_tests commandline."""
-  list_output = try_command_line(command_line)
-  _logging.debug("Tests listed:\n%s" % list_output)
-  try:
-    return gtest_list_tests(list_output)
-  except Exception as e:
-    print "Failed to get test fixtures with command line and exception:"
-    print_output(command_line, e)
-    return []
-
-
-def run_test(command_line):
-  """Runs a command line and checks the output for signs of gtest failure."""
-  output = try_command_line(command_line)
-  # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
-  # The latter condition ensures failure on broken command lines or output.
-  # Check output instead of exit codes because mojo_shell always exits with 0.
-  if output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1:
-    print "Failed test with command line and output:"
-    print_output(command_line, output)
-    return False
-  _logging.debug("Succeeded with output:\n%s" % output)
-  return True
+import mopy.paths
+import mopy.gtest
 
 
 def main(argv):
@@ -85,9 +36,7 @@ def main(argv):
     _logging.debug("Setting GTEST_COLOR=yes")
     os.environ['GTEST_COLOR'] = 'yes'
 
-  mojo_shell = "./" + argv[2] + "/mojo_shell"
-  if platform.system() == 'Windows':
-    mojo_shell += ".exe"
+  mojo_shell = mopy.paths.Paths(argv[2]).mojo_shell_path
 
   exit_code = 0
   for apptest in apptest_list:
@@ -96,10 +45,7 @@ def main(argv):
 
     # List the apptest fixtures so they can be run independently for isolation.
     # TODO(msw): Run some apptests without fixture isolation?
-    command = [mojo_shell,
-               "--args-for={0} --gtest_list_tests".format(apptest),
-               apptest]
-    fixtures = get_fixtures(command)
+    fixtures = mopy.gtest.get_fixtures(mojo_shell, apptest)
 
     if not fixtures:
       print "Failed with no tests found."
@@ -116,7 +62,7 @@ def main(argv):
                  "--args-for=mojo:native_viewport_service "
                      "--use-headless-config --use-osmesa",
                  apptest]
-      if not run_test(command):
+      if not mopy.gtest.run_test(command):
         apptest_result = "Failed test(s) in " + apptest
         exit_code = 1
     print apptest_result
