@@ -40,4 +40,10 @@ group("examples") {
       "//examples/pdf_viewer",
     ]
   }
+
+  if (is_android) {
+    deps += [
+      "//examples/device_name",
+    ]
+  }
 }

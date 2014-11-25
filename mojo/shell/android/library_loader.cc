@@ -8,15 +8,16 @@
 #include "base/android/library_loader/library_loader_hooks.h"
 #include "base/logging.h"
 #include "mojo/services/native_viewport/platform_viewport_android.h"
+#include "mojo/shell/android/android_handler.h"
 #include "mojo/shell/android/mojo_main.h"
 #include "net/android/net_jni_registrar.h"
 
 namespace {
 
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
-  { "MojoMain", mojo::RegisterMojoMain },
-  { "PlatformViewportAndroid",
-     mojo::PlatformViewportAndroid::Register },
+    {"AndroidHandler", mojo::RegisterAndroidHandlerJni},
+    {"MojoMain", mojo::RegisterMojoMain},
+    {"PlatformViewportAndroid", mojo::PlatformViewportAndroid::Register},
 };
 
 bool RegisterMojoJni(JNIEnv* env) {
@@ -41,6 +42,9 @@ JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     return -1;
 
   if (!RegisterMojoJni(env))
+    return -1;
+
+  if (!mojo::RegisterAndroidHandlerJni(env))
     return -1;
 
   return JNI_VERSION_1_4;

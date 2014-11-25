@@ -43,6 +43,12 @@ bool MOJO_COMMON_EXPORT BlockingCopyToString(
     ScopedDataPipeConsumerHandle source,
     std::string* contents);
 
+// Synchronously copies data from source to the destination file returning true
+// on success and false on error.  In case of an error, |destination| holds the
+// data that could be read from the source before the error occured.
+bool MOJO_COMMON_EXPORT BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
+                                           const base::FilePath& destination);
+
 }  // namespace common
 }  // namespace mojo
 

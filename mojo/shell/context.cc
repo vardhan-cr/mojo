@@ -34,6 +34,7 @@
 #if defined(OS_ANDROID)
 #include "mojo/services/gles2/gpu_impl.h"
 #include "mojo/services/native_viewport/native_viewport_impl.h"
+#include "mojo/shell/android/android_handler_loader.h"
 #include "mojo/shell/network_application_loader.h"
 #endif  // defined(OS_ANDROID)
 
@@ -259,6 +260,14 @@ bool Context::Init() {
             base::MessageLoop::TYPE_IO));
     application_manager_.SetLoaderForURL(loader.Pass(),
                                          GURL("mojo:network_service"));
+  }
+  {
+    scoped_ptr<BackgroundShellApplicationLoader> loader(
+        new BackgroundShellApplicationLoader(
+            scoped_ptr<ApplicationLoader>(new AndroidHandlerLoader()),
+            "android_handler", base::MessageLoop::TYPE_DEFAULT));
+    application_manager_.SetLoaderForURL(loader.Pass(),
+                                         GURL("mojo:android_handler"));
   }
 #endif
 

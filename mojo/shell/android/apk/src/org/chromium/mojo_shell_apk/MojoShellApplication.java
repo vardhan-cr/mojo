@@ -21,6 +21,7 @@ public class MojoShellApplication extends BaseChromiumApplication {
     public void onCreate() {
         super.onCreate();
         initializeApplicationParameters();
+        AndroidHandler.clearTemporaryFiles(getApplicationContext());
     }
 
     public static void initializeApplicationParameters() {

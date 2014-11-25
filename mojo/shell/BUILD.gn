@@ -131,14 +131,20 @@ source_set("lib") {
 
   if (is_android) {
     sources += [
+      "android/android_handler.h",
+      "android/android_handler.cc",
+      "android/android_handler_loader.h",
+      "android/android_handler_loader.cc",
       "network_application_loader.cc",
       "network_application_loader.h",
     ]
 
     deps += [
+      ":jni_headers",
       "//mojo/services/gles2",
       "//mojo/services/native_viewport:lib",
       "//mojo/services/network:lib",
+      "//mojo/application:content_handler",
     ]
   }
 }
@@ -146,13 +152,40 @@ source_set("lib") {
 if (is_android) {
   generate_jni("jni_headers") {
     sources = [
+      "android/apk/src/org/chromium/mojo_shell_apk/AndroidHandler.java",
+      "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
     ]
     jni_package = "mojo"
   }
 
+  android_library("bootstrap_java") {
+    java_files = [
+      "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java",
+    ]
+
+    deps = [
+      "//base:base_java",
+    ]
+
+    dex_path = "$target_out_dir/bootstrap_java.dex.jar"
+  }
+
+  shared_library("bootstrap") {
+    sources = [
+      "android/bootstrap.cc",
+    ]
+    deps = [
+      ":jni_headers",
+      ":lib",
+      "//base",
+      "//mojo/environment:chromium",
+    ]
+  }
+
   android_library("java") {
     java_files = [
+      "android/apk/src/org/chromium/mojo_shell_apk/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoShellApplication.java",
@@ -185,22 +218,35 @@ if (is_android) {
     ]
   }
 
+  mojo_shell_assets_dir = "$root_build_dir/mojo_shell_assets"
+
+  copy_ex("copy_mojo_shell_assets") {
+    clear_dir = true
+    dest = mojo_shell_assets_dir
+    sources = [
+      "$root_out_dir/lib.stripped/libbootstrap.so",
+      "$root_out_dir/obj/mojo/shell/bootstrap_java.dex.jar",
+    ]
+  }
+
   android_apk("mojo_shell_apk") {
     apk_name = "MojoShell"
 
     android_manifest = "android/apk/AndroidManifest.xml"
 
     native_libs = [
-      "libmojo_shell.so"
+      "libmojo_shell.so",
     ]
 
+    asset_location = mojo_shell_assets_dir
+
     deps = [
+      ":copy_mojo_shell_assets",
       ":java",
       ":libmojo_shell",
       ":resources",
       "//mojo/services/native_viewport:native_viewport_java",
     ]
-
   }
 }
 
