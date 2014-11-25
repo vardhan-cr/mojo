@@ -223,8 +223,7 @@ class TestReceiveCallback
   Array<uint8_t> data_;
 };
 
-class UDPSocketAppTest : public test::ApplicationTestBase,
-                         public ApplicationDelegate {
+class UDPSocketAppTest : public test::ApplicationTestBase {
  public:
   UDPSocketAppTest() {}
   ~UDPSocketAppTest() override {}
@@ -281,9 +280,6 @@ class UDPSocketAppTest : public test::ApplicationTestBase,
 
     DISALLOW_COPY_AND_ASSIGN(UDPSocketClientImpl);
   };
-
-  // test::ApplicationTestBase implementation.
-  ApplicationDelegate* GetApplicationDelegate() override { return this; }
 
   std::queue<ReceiveResult*>* GetReceiveResults() {
     return &udp_socket_client_.results_;

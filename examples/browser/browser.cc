@@ -170,10 +170,10 @@ class Browser : public ApplicationDelegate,
         new ViewManagerClientFactory(shell_, this));
     views_init_.reset(new ViewsInit);
     app->ConnectToService("mojo:window_manager", &window_manager_);
- }
+  }
 
- virtual bool ConfigureIncomingConnection(
-     ApplicationConnection* connection) override {
+  virtual bool ConfigureIncomingConnection(
+      ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
