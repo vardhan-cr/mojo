@@ -14,7 +14,7 @@ gin::WrapperInfo JSAppShell::kWrapperInfo = {gin::kEmbedderNativeGin};
 
 gin::Handle<JSAppShell> JSAppShell::Create(v8::Isolate* isolate,
                                            JSApp* js_app) {
-  return CreateHandle(isolate, new JSAppShell(js_app));
+  return gin::CreateHandle(isolate, new JSAppShell(js_app));
 }
 
 JSAppShell::JSAppShell(JSApp* js_app) : js_app_(js_app) {
