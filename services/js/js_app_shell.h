@@ -28,8 +28,8 @@ class JSAppShell : public gin::Wrappable<JSAppShell> {
       override;
 
   // Bound to JS method "connectToApplication".
-  void ConnectToApplication(
-      const std::string& application_url, mojo::Handle service_provider);
+  void ConnectToApplication(const std::string& application_url,
+                            v8::Handle<v8::Value> service_provider);
 
   JSApp* js_app_;
 

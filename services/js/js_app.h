@@ -29,10 +29,9 @@ class JSApp : public InterfaceImpl<Application>,
   JSApp(ShellPtr shell, URLResponsePtr response);
   virtual ~JSApp();
 
-  // This method just delegates to shell_->ConnectToApplication().
+  // This method delegates to shell_->ConnectToApplication().
   void ConnectToApplication(const std::string& application_url,
-                            ScopedMessagePipeHandle service_provider);
-
+                            v8::Handle<v8::Value> service_provider);
   void Quit();
 
  private:

@@ -29,13 +29,10 @@ gin::ObjectTemplateBuilder JSAppShell::GetObjectTemplateBuilder(
       .SetMethod("connectToApplication", &JSAppShell::ConnectToApplication);
 }
 
-void JSAppShell::ConnectToApplication(
-    const std::string& application_url, mojo::Handle service_provider) {
+void JSAppShell::ConnectToApplication(const std::string& application_url,
+                                      v8::Handle<v8::Value> service_provider) {
   // TODO(hansmuller): Validate arguments.
-  // TODO(hansmuller): Service_provider may be a ServiceProviderProxy.
-  MessagePipeHandle message_pipe_handle(service_provider.value());
-  ScopedMessagePipeHandle scoped_handle(message_pipe_handle);
-  js_app_->ConnectToApplication(application_url, scoped_handle.Pass());
+  js_app_->ConnectToApplication(application_url, service_provider);
 }
 
 }  // namespace js

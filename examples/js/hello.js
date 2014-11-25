@@ -22,9 +22,7 @@ define("main", [
       return;
     }
     var serviceProvider = new sp.ServiceProvider.proxyClass();
-    // TODO(hansmuller): the following step shouldn't be necessary.
-    var handle = serviceProvider.getConnection$().messagePipeHandle;
-    this.shell.connectToApplication(args[1], handle);
+    this.shell.connectToApplication(args[1], service_provider);
   }
 
   Application.prototype.acceptConnection = function(url, serviceProvider) {

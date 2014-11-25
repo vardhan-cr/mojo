@@ -20,6 +20,64 @@
 namespace mojo {
 namespace js {
 
+namespace {
+
+// If true then result is the value of value.property_name.
+bool GetValueProperty(v8::Isolate* isolate,
+                      v8::Handle<v8::Value> value,
+                      const std::string& property_name,
+                      v8::Handle<v8::Value>* result) {
+  if (!value->IsObject())
+    return false;
+  v8::Handle<v8::Object> obj = v8::Handle<v8::Object>::Cast(value);
+  v8::Handle<v8::Value> key = gin::StringToV8(isolate, property_name);
+  *result = obj->Get(key);
+  return true;
+}
+
+// If true then result is the function at value.method_name.
+bool GetValueMethod(v8::Isolate* isolate,
+                    v8::Handle<v8::Value> value,
+                    const std::string& method_name,
+                    v8::Handle<v8::Function>* result) {
+  v8::Handle<v8::Value> method_value;
+  if (!GetValueProperty(isolate, value, method_name, &method_value))
+    return false;
+  if (!method_value->IsFunction())
+    return false;
+  CHECK(gin::ConvertFromV8(isolate, method_value, result));
+  return true;
+}
+
+// If true then result is the mojo::Handle at value.property_name.
+bool GetValueMojoHandle(v8::Isolate* isolate,
+                        v8::Handle<v8::Value> value,
+                        const std::string& property_name,
+                        mojo::Handle* result) {
+  v8::Handle<v8::Value> mojo_handle_value;
+  if (!GetValueProperty(isolate, value, property_name, &mojo_handle_value))
+    return false;
+  return gin::ConvertFromV8(isolate, mojo_handle_value, result);
+}
+
+// If true then result is the mojo::Handle value of
+// service_provider.getConnection().messagePipeHandle
+bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
+                                    v8::Handle<v8::Value> service_provider,
+                                    mojo::Handle* result) {
+  v8::Handle<v8::Function> get_connection_method;
+  if (!GetValueMethod(
+          isolate, service_provider, "getConnection$", &get_connection_method))
+    return false;
+  v8::Handle<v8::Value> argv[] { };
+  v8::Local<v8::Value> connection_value =
+    get_connection_method->Call(get_connection_method, 0, argv);
+  return GetValueMojoHandle(
+      isolate, connection_value, "messagePipeHandle", result);
+}
+
+} // namespace
+
 const char JSApp::kMainModuleName[] = "main";
 
 JSApp::JSApp(ShellPtr shell, URLResponsePtr response) : shell_(shell.Pass()) {
@@ -47,7 +105,6 @@ JSApp::~JSApp() {
   app_instance_.Reset();
 }
 
-
 void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
   gin::Runner::Scope scope(shell_runner_.get());
   gin::TryCatch try_catch;
@@ -68,9 +125,18 @@ void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
 }
 
 void JSApp::ConnectToApplication(const std::string& application_url,
-                                 ScopedMessagePipeHandle service_provider) {
-  shell_->ConnectToApplication(
-      application_url, MakeRequest<ServiceProvider>(service_provider.Pass()));
+                                 v8::Handle<v8::Value> service_provider) {
+  gin::Runner::Scope scope(shell_runner_.get());
+  v8::Isolate* isolate = isolate_holder_.isolate();
+
+  mojo::Handle handle;
+  if (GetConnectionMessagePipeHandle(isolate, service_provider, &handle) ||
+      gin::ConvertFromV8(isolate, service_provider, &handle)) {
+    MessagePipeHandle message_pipe_handle(handle.value());
+    ScopedMessagePipeHandle scoped_handle(message_pipe_handle);
+    shell_->ConnectToApplication(
+        application_url, MakeRequest<ServiceProvider>(scoped_handle.Pass()));
+  }
 }
 
 void JSApp::CallAppInstanceMethod(
@@ -78,12 +144,9 @@ void JSApp::CallAppInstanceMethod(
   v8::Isolate* isolate = isolate_holder_.isolate();
   v8::Local<v8::Object> app =
       v8::Local<v8::Object>::New(isolate, app_instance_);
-  v8::Handle<v8::Value> key = gin::StringToV8(isolate, name);
-  v8::Handle<v8::Value> value = app->Get(key);
-  if (!value->IsFunction())
-    return;
+
   v8::Handle<v8::Function> app_method;
-  CHECK(gin::ConvertFromV8(isolate, value, &app_method));
+  GetValueMethod(isolate, app, name, &app_method);
   shell_runner_->Call(app_method, app, argc, argv);
 }
 
