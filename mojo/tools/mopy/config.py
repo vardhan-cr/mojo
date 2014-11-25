@@ -26,27 +26,32 @@ class Config(object):
   build/test configuration. The dictionary is accessible through the values
   member."""
 
-  # Valid values for target_os:
+  # Valid values for target_os (None is also valid):
   OS_ANDROID = "android"
   OS_CHROMEOS = "chromeos"
   OS_LINUX = "linux"
   OS_MAC = "mac"
   OS_WINDOWS = "windows"
 
-  # TODO(vtl): Add clang vs gcc.
-  # TODO(vtl): Add ASan/TSan/etc.
+  # Valid values for sanitizer (None is also valid):
+  SANITIZER_ASAN = "asan"
 
-  def __init__(self, target_os=None, is_debug=True, **kwargs):
+  def __init__(self, target_os=None, is_debug=True, is_clang=None,
+               sanitizer=None, **kwargs):
     """Constructs a Config with key-value pairs specified via keyword arguments.
     If target_os is not specified, it will be set to the host OS."""
 
     assert target_os in (None, Config.OS_ANDROID, Config.OS_CHROMEOS,
                          Config.OS_LINUX, Config.OS_MAC, Config.OS_WINDOWS)
     assert isinstance(is_debug, bool)
+    assert is_clang is None or isinstance(is_clang, bool)
+    assert sanitizer in (None, Config.SANITIZER_ASAN)
 
     self.values = {}
     self.values["target_os"] = _GetHostOS() if target_os is None else target_os
     self.values["is_debug"] = is_debug
+    self.values["is_clang"] = is_clang
+    self.values["sanitizer"] = sanitizer
 
     self.values.update(kwargs)
 
@@ -60,4 +65,14 @@ class Config(object):
   @property
   def is_debug(self):
     """Is Debug build?"""
-    return self.values.get("is_debug")
+    return self.values["is_debug"]
+
+  @property
+  def is_clang(self):
+    """Should use clang?"""
+    return self.values["is_clang"]
+
+  @property
+  def sanitizer(self):
+    """Sanitizer to use, if any."""
+    return self.values["sanitizer"]
