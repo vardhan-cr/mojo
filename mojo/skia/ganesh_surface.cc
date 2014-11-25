@@ -16,6 +16,7 @@ GaneshSurface::GaneshSurface(GaneshContext* context,
   desc.fConfig = kSkia8888_GrPixelConfig;
   desc.fOrigin = kTopLeft_GrSurfaceOrigin;
   desc.fTextureHandle = texture_->texture_id();
+  DCHECK(texture_->texture_id());
 
   auto gr_texture = skia::AdoptRef(context->gr()->wrapBackendTexture(desc));
   DCHECK(gr_texture);
