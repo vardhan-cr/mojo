@@ -11,8 +11,9 @@ import sys
 
 _logging = logging.getLogger()
 
-import mopy.paths
+from mopy.config import Config
 import mopy.gtest
+from mopy.paths import Paths
 
 
 def main(argv):
@@ -36,7 +37,7 @@ def main(argv):
     _logging.debug("Setting GTEST_COLOR=yes")
     os.environ['GTEST_COLOR'] = 'yes'
 
-  mojo_shell = mopy.paths.Paths(argv[2]).mojo_shell_path
+  mojo_shell = Paths(Config(build_dir=argv[2])).mojo_shell_path
 
   exit_code = 0
   for apptest in apptest_list:
