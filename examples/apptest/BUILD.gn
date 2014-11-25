@@ -41,8 +41,6 @@ mojo_native_application("apptests") {
 
   sources = [
     "example_apptest.cc",
-    "example_client_application.cc",
-    "example_client_application.h",
     "example_client_impl.cc",
     "example_client_impl.h",
   ]

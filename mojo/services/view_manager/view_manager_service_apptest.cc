@@ -427,7 +427,6 @@ class ViewManagerServiceAppTest : public test::ApplicationTestBase,
   }
 
   // ApplicationDelegate implementation.
-  void Initialize(ApplicationImpl* app) override {}
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(&client_factory_);
     return true;

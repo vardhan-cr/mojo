@@ -6,7 +6,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/run_loop.h"
 #include "mojo/public/cpp/application/application_connection.h"
-#include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/bindings/callback.h"
@@ -223,8 +222,7 @@ class TestReceiveCallback
   Array<uint8_t> data_;
 };
 
-class UDPSocketAppTest : public test::ApplicationTestBase,
-                         public ApplicationDelegate {
+class UDPSocketAppTest : public test::ApplicationTestBase {
  public:
   UDPSocketAppTest() {}
   ~UDPSocketAppTest() override {}
@@ -281,9 +279,6 @@ class UDPSocketAppTest : public test::ApplicationTestBase,
 
     DISALLOW_COPY_AND_ASSIGN(UDPSocketClientImpl);
   };
-
-  // test::ApplicationTestBase implementation.
-  ApplicationDelegate* GetApplicationDelegate() override { return this; }
 
   std::queue<ReceiveResult*>* GetReceiveResults() {
     return &udp_socket_client_.results_;
