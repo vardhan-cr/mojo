@@ -96,6 +96,12 @@ group("tests") {
       "//mojo/services/window_manager:window_manager_unittests",
     ]
   }
+
+  if (mojo_use_dart) {
+    deps += [
+      "//mojo/dart/embedder/test:dart_unittests",
+    ]
+  }
 }
 
 if (is_android) {

@@ -104,19 +104,18 @@ def build(args):
     return subprocess.call(['ninja', '-C', out_dir, 'root'])
 
 
-def run_unittests(args):
-  out_dir = get_out_dir(args)
-  print 'Running unit tests in %s ...' % out_dir
+def run_testrunner(out_dir, testlist):
   command = ['python']
   if platform.system() == 'Linux':
     command.append('./testing/xvfb.py')
     command.append(out_dir)
 
   command.append(os.path.join('mojo', 'tools', 'test_runner.py'))
-  command.append(os.path.join('mojo', 'tools', 'data', 'unittests'))
+  command.append(os.path.join('mojo', 'tools', 'data', testlist))
   command.append(out_dir)
   command.append('mojob_test_successes')
   return subprocess.call(command)
+
 
 def run_apptests(args):
   out_dir = get_out_dir(args)
@@ -130,6 +129,13 @@ def run_apptests(args):
   command.append(os.path.join('mojo', 'tools', 'data', 'apptests'))
   command.append(out_dir)
   return subprocess.call(command)
+
+
+def run_unittests(args):
+  out_dir = get_out_dir(args)
+  print 'Running unit tests in %s ...' % out_dir
+  return run_testrunner(out_dir, 'unittests')
+
 
 def run_skytests(args):
   out_dir = get_out_dir(args)
@@ -202,6 +208,7 @@ def test(args):
 
   return final_exit_code
 
+
 def perftest(args):
   out_dir = get_out_dir(args)
   print 'Running perf tests in %s ...' % out_dir
@@ -217,6 +224,10 @@ def pytest(args):
 def darttest(args):
   out_dir = get_out_dir(args)
   print 'Running Dart tests in %s ...' % out_dir
+  exit_code = run_testrunner(out_dir, 'dart_unittests')
+  if exit_code:
+    return exit_code
+
   command = []
   command.append('dart')
   command.append('--checked')

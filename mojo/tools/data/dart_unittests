@@ -1,0 +1,6 @@
+# This file contains a list of Mojo gtest unit tests.
+# Prepend * to indicate that results shouldn't be cached (e.g., if the test has
+# other data dependencies).
+# TODO(zra): Merge with unittests when Dart is no longer under a flag.
+
+*dart_unittests

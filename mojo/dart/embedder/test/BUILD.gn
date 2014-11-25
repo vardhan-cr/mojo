@@ -1,0 +1,19 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+test("dart_unittests") {
+  deps = [
+    "//base",
+    "//crypto:crypto",
+    "//mojo/dart/embedder:dart_controller",
+    "//mojo/edk/test:run_all_unittests",
+    "//mojo/edk/test:test_support",
+    "//mojo/public/cpp/environment",
+    "//mojo/public/cpp/system",
+    "//mojo/public/cpp/utility",
+    "//mojo/environment:chromium",
+  ]
+
+  sources = [ "run_dart_tests.cc" ]
+}

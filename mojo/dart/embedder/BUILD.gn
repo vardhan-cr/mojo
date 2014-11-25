@@ -1,0 +1,102 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+template("gen_library_src_path") {
+  assert(defined(invoker.sources), "Need sources in $target_name")
+  assert(defined(invoker.output), "Need output in $target_name")
+  action(target_name) {
+    visibility = [ ":*" ]  # Only targets in this file can see this.
+    script = "//dart/runtime/tools/gen_library_src_paths.py"
+    inputs = [
+      "//dart/runtime/tools/gen_library_src_paths.py",
+      "builtin.cc.tmpl",
+    ] + invoker.sources
+    outputs = [ invoker.output, ]
+    name = invoker.name
+    kind = invoker.kind
+    args = [
+      "--output", rebase_path(invoker.output, root_build_dir),
+      "--input_cc", rebase_path("builtin.cc.tmpl", root_build_dir),
+      "--include", rebase_path("builtin.h", root_build_dir),
+      "--var_name", "mojo::dart::Builtin::${name}_${kind}_paths_",
+      "--library_name", "dart:${name}",] +
+      rebase_path(invoker.sources, root_build_dir)
+  }
+}
+
+
+gen_library_src_path("generate_builtin_cc_file") {
+  name = "_builtin"
+  kind = "source"
+  sources = ["builtin.dart"]
+  output = "$target_gen_dir/builtin_gen.cc"
+}
+
+
+action("generate_snapshot_bin") {
+  deps = ["//dart/runtime/bin:gen_snapshot"]
+  inputs = [
+    "//dart/runtime/tools/create_snapshot_bin.py",
+    "snapshot.dart",
+  ]
+  output = "$target_gen_dir/snapshot_gen.bin"
+  outputs = [output,]
+
+  script = "//dart/runtime/tools/create_snapshot_bin.py"
+  args = [
+    "--executable", rebase_path("$root_out_dir/gen_snapshot"),
+    "--script", rebase_path("snapshot.dart"),
+    "--output_bin", rebase_path(output, root_build_dir),
+    "--target_os", os
+  ]
+}
+
+
+action("generate_snapshot_file") {
+  deps = [":generate_snapshot_bin"]
+  inputs = [
+    "//dart/runtime/tools/create_snapshot_file.py",
+    "snapshot.cc.tmpl",
+    "$target_gen_dir/snapshot_gen.bin",
+  ]
+  output = "$target_gen_dir/snapshot.cc"
+  outputs = [output,]
+
+  script = "//dart/runtime/tools/create_snapshot_file.py"
+  args = [
+    "--input_bin", rebase_path("$target_gen_dir/snapshot_gen.bin"),
+    "--input_cc", rebase_path("snapshot.cc.tmpl"),
+    "--output", rebase_path(output),
+  ]
+}
+
+
+source_set("dart_controller") {
+  deps = [
+    "//dart/runtime/bin:libdart_embedder_noio",
+    ":generate_builtin_cc_file",
+    ":generate_snapshot_file",
+  ]
+  sources = [
+    "builtin.cc",
+    "builtin.h",
+    "builtin_natives.cc",
+    "dart_controller.cc",
+    "dart_controller.h",
+    "isolate_data.h",
+    "$target_gen_dir/builtin_gen.cc",
+    "$target_gen_dir/snapshot.cc",
+  ]
+
+  defines = []
+  if (is_debug) {
+    defines += ["DEBUG"]
+  } else {
+    defines += ["NDEBUG"]
+  }
+
+  include_dirs = [
+    "//dart/runtime",
+  ]
+}
