@@ -22,7 +22,7 @@ define("main", [
       return;
     }
     var serviceProvider = new sp.ServiceProvider.proxyClass();
-    this.shell.connectToApplication(args[1], service_provider);
+    this.shell.connectToApplication(args[1], serviceProvider);
   }
 
   Application.prototype.acceptConnection = function(url, serviceProvider) {

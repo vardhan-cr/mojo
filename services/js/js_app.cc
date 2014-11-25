@@ -69,9 +69,8 @@ bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
   if (!GetValueMethod(
           isolate, service_provider, "getConnection$", &get_connection_method))
     return false;
-  v8::Handle<v8::Value> argv[] { };
   v8::Local<v8::Value> connection_value =
-    get_connection_method->Call(get_connection_method, 0, argv);
+    get_connection_method->Call(get_connection_method, 0, nullptr);
   return GetValueMojoHandle(
       isolate, connection_value, "messagePipeHandle", result);
 }
