@@ -27,14 +27,7 @@ def args_to_config(args):
   additional_args = {}
 
   if 'clang' in args:
-    if args.clang is not None:
-      # If --clang/--gcc is specified, use that.
-      additional_args['is_clang'] = args.clang
-    else:
-      # Otherwise, use the default (use clang for everything except Android and
-      # Windows).
-      additional_args['is_clang'] = (target_os not in (Config.OS_ANDROID,
-                                                       Config.OS_WINDOWS))
+    additional_args['is_clang'] = args.clang
 
   if 'asan' in args and args.asan:
     additional_args['sanitizer'] = Config.SANITIZER_ASAN
@@ -86,15 +79,20 @@ def gn(config):
   gn_args.append('is_debug=' + ('true' if config.is_debug else 'false'))
   gn_args.append('is_asan=' + ('true' if config.sanitizer ==
                                Config.SANITIZER_ASAN else 'false'))
-  gn_args.append('is_clang=' + ('true' if config.is_clang else 'false'))
+  if config.is_clang is not None:
+    gn_args.append('is_clang=' + ('true' if config.is_clang else 'false'))
+  else:
+    gn_args.append('is_clang=' + ('true' if config.target_os not in
+                                  (Config.OS_ANDROID, Config.OS_WINDOWS)
+                                  else 'false'))
 
-  if config.values["use_goma"]:
+  if config.values['use_goma']:
     gn_args.append('use_goma=true')
-    gn_args.append(r'''goma_dir=\"%s\"''' % config.values["goma_dir"])
+    gn_args.append(r'''goma_dir=\"%s\"''' % config.values['goma_dir'])
   else:
     gn_args.append('use_goma=false')
 
-  if config.values["with_dart"]:
+  if config.values['with_dart']:
     gn_args.append('mojo_use_dart=true')
 
   if config.target_os == Config.OS_ANDROID:
@@ -112,10 +110,10 @@ def gn(config):
 
 
 def get_gn_arg_value(out_dir, arg):
-  args_file_path = os.path.join(out_dir, "args.gn")
+  args_file_path = os.path.join(out_dir, 'args.gn')
   if os.path.isfile(args_file_path):
     key_value_regex = re.compile(r'^%s = (.+)$' % arg)
-    with open(args_file_path, "r") as args_file:
+    with open(args_file_path, 'r') as args_file:
       for line in args_file.readlines():
         m = key_value_regex.search(line)
         if m:
@@ -191,21 +189,21 @@ def run_skytests(config):
   command.append('--no-show-results')
   command.append('--verbose')
 
-  if config.values["builder_name"]:
+  if config.values['builder_name']:
     command.append('--builder-name')
-    command.append(config.values["builder_name"])
+    command.append(config.values['builder_name'])
 
-  if config.values["build_number"]:
+  if config.values['build_number']:
     command.append('--build-number')
-    command.append(config.values["build_number"])
+    command.append(config.values['build_number'])
 
-  if config.values["master_name"]:
+  if config.values['master_name']:
     command.append('--master-name')
-    command.append(config.values["master_name"])
+    command.append(config.values['master_name'])
 
-  if config.values["test_results_server"]:
+  if config.values['test_results_server']:
     command.append('--test-results-server')
-    command.append(config.values["test_results_server"])
+    command.append(config.values['test_results_server'])
 
   subprocess.call(command)
   # Sky tests are currently really unstable, so make the step green even if
