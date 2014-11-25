@@ -64,6 +64,14 @@ source_set("in_process_dynamic_service_runner") {
     "//mojo/gles2",
     "//mojo/public/cpp/system",
   ]
+
+  # This target has to include the public thunk headers, which generally
+  # shouldn't be included without picking an implementation. We are providing
+  # the implementation but the thunk header target cannot declare that we are
+  # permitted to include it since it's in the public SDK and we are not.
+  # Suppress include checking so we can still check the rest of the targets in
+  # this file.
+  check_includes = false
 }
 
 source_set("lib") {
@@ -147,6 +155,14 @@ source_set("lib") {
       "//mojo/application:content_handler",
     ]
   }
+
+  # This target includes some files behind #ifdef OS... guards. Since gn is not
+  # smart enough to understand preprocess includes, it does complains about
+  # these includes when not using the build files for that OS. Suppress checking
+  # so we can enable checking for the rest of the targets in this file.
+  # TODO: Might be better to split the files with OS-specific includes out to a
+  # separate source_set so we can leave checking on for the rest of the target.
+  check_includes = false
 }
 
 if (is_android) {

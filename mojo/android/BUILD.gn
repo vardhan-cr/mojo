@@ -41,8 +41,10 @@ source_set("libsystem_java") {
 
   deps = [
     ":system_java_jni_headers",
+    "//base",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
+    "//mojo/public/cpp/environment",
   ]
 }
 
@@ -107,14 +109,18 @@ shared_library("mojo_java_unittests") {
     "javatests/validation_test_util.cc",
     "javatests/validation_test_util.h",
   ]
+
   deps = [
     ":jni_headers",
     ":libsystem_java",
     ":system_java_jni_headers",
     "//base",
     "//base/test/:test_support",
+    "//mojo/common",
+    "//mojo/edk/system",
     "//mojo/public/cpp/bindings/tests:mojo_public_bindings_test_utils",
     "//mojo/public/cpp/test_support:test_utils",
+    "//mojo/public/cpp/environment",
   ]
   defines = [ "UNIT_TEST" ]
 
