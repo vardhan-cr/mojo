@@ -6,6 +6,7 @@ module mojo;
 
 import "mojo/services/public/interfaces/geometry/geometry.mojom";
 import "mojo/services/public/interfaces/gpu/command_buffer.mojom";
+import "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom";
 import "mojo/services/public/interfaces/surfaces/quads.mojom";
 import "mojo/services/public/interfaces/surfaces/surface_id.mojom";
 
@@ -70,5 +71,6 @@ interface Surface {
 
   CreateGLES2BoundSurface(CommandBuffer gles2_client,
                           SurfaceId id,
-                          Size size);
+                          Size size,
+                          ViewportParameterListener& listener);
 };

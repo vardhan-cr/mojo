@@ -35,6 +35,16 @@ namespace mojo {
 
 class CommandBufferDriver {
  public:
+  class Client {
+   public:
+    virtual void DidDestroy() = 0;
+    virtual void UpdateVSyncParameters(base::TimeTicks timebase,
+                                       base::TimeDelta interval) = 0;
+    virtual void LostContext(int32_t lost_reason) = 0;
+
+   protected:
+    virtual ~Client();
+  };
   // Offscreen.
   CommandBufferDriver(gfx::GLShareGroup* share_group,
                       gpu::gles2::MailboxManager* mailbox_manager,
@@ -47,6 +57,8 @@ class CommandBufferDriver {
                       gpu::SyncPointManager* sync_point_manager);
   ~CommandBufferDriver();
 
+  void set_client(Client* client) { client_ = client; }
+
   void Initialize(CommandBufferSyncClientPtr sync_client,
                   ScopedSharedBufferHandle shared_state);
   void SetGetBuffer(int32_t buffer);
@@ -58,10 +70,6 @@ class CommandBufferDriver {
   void DestroyTransferBuffer(int32_t id);
   void Echo(const Callback<void()>& callback);
 
-  void SetContextLostCallback(
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-      const base::Callback<void(int32_t)>& callback);
-
  private:
   bool DoInitialize(ScopedSharedBufferHandle shared_state);
   void OnResize(gfx::Size size, float scale_factor);
@@ -69,9 +77,11 @@ class CommandBufferDriver {
   void OnSyncPointRetired();
   void OnParseError();
   void OnContextLost(uint32_t reason);
+  void OnUpdateVSyncParameters(const base::TimeTicks timebase,
+                               const base::TimeDelta interval);
 
+  Client* client_;
   CommandBufferSyncClientPtr sync_client_;
-
   gfx::AcceleratedWidget widget_;
   gfx::Size size_;
   scoped_ptr<gpu::CommandBufferService> command_buffer_;

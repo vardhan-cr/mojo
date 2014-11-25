@@ -65,7 +65,8 @@ class GpuImpl : public Gpu {
   void CreateOnscreenGLES2Context(
       uint64_t native_viewport_id,
       SizePtr size,
-      InterfaceRequest<CommandBuffer> command_buffer_request) override;
+      InterfaceRequest<CommandBuffer> command_buffer_request,
+      ViewportParameterListenerPtr listener) override;
 
   void CreateOffscreenGLES2Context(
       InterfaceRequest<CommandBuffer> command_buffer_request) override;

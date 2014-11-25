@@ -31,11 +31,14 @@ class SurfacesServiceApplication : public ApplicationDelegate,
               InterfaceRequest<SurfacesService> request) override;
 
   // SurfacesImpl::Client implementation.
+  void OnVSyncParametersUpdated(base::TimeTicks timebase,
+                                base::TimeDelta interval) override;
   void FrameSubmitted() override;
   void SetDisplay(cc::Display*) override;
   void OnDisplayBeingDestroyed(cc::Display* display) override;
 
  private:
+  base::TimeDelta tick_interval_;
   cc::SurfaceManager manager_;
   uint32_t next_id_namespace_;
   cc::Display* display_;

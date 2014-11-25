@@ -18,6 +18,7 @@
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "mojo/services/gles2/command_buffer_type_conversions.h"
 #include "mojo/services/gles2/mojo_buffer_backing.h"
+#include "ui/gfx/vsync_provider.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
@@ -44,6 +45,9 @@ class MemoryTrackerStub : public gpu::gles2::MemoryTracker {
 
 }  // anonymous namespace
 
+CommandBufferDriver::Client::~Client() {
+}
+
 CommandBufferDriver::CommandBufferDriver(
     gfx::GLShareGroup* share_group,
     gpu::gles2::MailboxManager* mailbox_manager,
@@ -61,7 +65,8 @@ CommandBufferDriver::CommandBufferDriver(
     gfx::GLShareGroup* share_group,
     gpu::gles2::MailboxManager* mailbox_manager,
     gpu::SyncPointManager* sync_point_manager)
-    : widget_(widget),
+    : client_(nullptr),
+      widget_(widget),
       size_(size),
       share_group_(share_group),
       mailbox_manager_(mailbox_manager),
@@ -74,6 +79,7 @@ CommandBufferDriver::~CommandBufferDriver() {
     bool have_context = decoder_->MakeCurrent();
     decoder_->Destroy(have_context);
   }
+  client_->DidDestroy();
 }
 
 void CommandBufferDriver::Initialize(CommandBufferSyncClientPtr sync_client,
@@ -89,8 +95,13 @@ void CommandBufferDriver::Initialize(CommandBufferSyncClientPtr sync_client,
 bool CommandBufferDriver::DoInitialize(ScopedSharedBufferHandle shared_state) {
   if (widget_ == gfx::kNullAcceleratedWidget)
     surface_ = gfx::GLSurface::CreateOffscreenGLSurface(size_);
-  else
+  else {
     surface_ = gfx::GLSurface::CreateViewGLSurface(widget_);
+    surface_->GetVSyncProvider()->GetVSyncParameters(
+        base::Bind(&CommandBufferDriver::OnUpdateVSyncParameters,
+                   weak_factory_.GetWeakPtr()));
+  }
+
   if (!surface_.get())
     return false;
 
@@ -193,13 +204,6 @@ void CommandBufferDriver::Echo(const Callback<void()>& callback) {
   callback.Run();
 }
 
-void CommandBufferDriver::SetContextLostCallback(
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-    const base::Callback<void(int32_t)>& callback) {
-  context_lost_task_runner_ = task_runner;
-  context_lost_callback_ = callback;
-}
-
 void CommandBufferDriver::OnParseError() {
   gpu::CommandBuffer::State state = command_buffer_->GetLastState();
   OnContextLost(state.context_lost_reason);
@@ -226,10 +230,13 @@ void CommandBufferDriver::OnSyncPointRetired() {
 }
 
 void CommandBufferDriver::OnContextLost(uint32_t reason) {
-  if (!context_lost_callback_.is_null()) {
-    context_lost_task_runner_->PostTask(
-        FROM_HERE, base::Bind(context_lost_callback_, reason));
-  }
+  client_->LostContext(reason);
+}
+
+void CommandBufferDriver::OnUpdateVSyncParameters(
+    const base::TimeTicks timebase,
+    const base::TimeDelta interval) {
+  client_->UpdateVSyncParameters(timebase, interval);
 }
 
 }  // namespace mojo

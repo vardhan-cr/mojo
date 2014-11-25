@@ -8,9 +8,11 @@
 #include "cc/surfaces/display_client.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_factory_client.h"
+#include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/public/interfaces/gpu/command_buffer.mojom.h"
+#include "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom.h"
 #include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
 
 namespace cc {
@@ -23,11 +25,14 @@ class ApplicationManager;
 class SurfaceNativeViewportClient;
 
 class SurfacesImpl : public Surface,
+                     public ViewportParameterListener,
                      public cc::SurfaceFactoryClient,
                      public cc::DisplayClient {
  public:
   class Client {
    public:
+    virtual void OnVSyncParametersUpdated(base::TimeTicks timebase,
+                                          base::TimeDelta interval) = 0;
     virtual void FrameSubmitted() = 0;
     virtual void SetDisplay(cc::Display* display) = 0;
     virtual void OnDisplayBeingDestroyed(cc::Display* display) = 0;
@@ -46,9 +51,11 @@ class SurfacesImpl : public Surface,
                    FramePtr frame,
                    const mojo::Closure& callback) override;
   void DestroySurface(SurfaceIdPtr id) override;
-  void CreateGLES2BoundSurface(CommandBufferPtr gles2_client,
-                               SurfaceIdPtr id,
-                               mojo::SizePtr size) override;
+  void CreateGLES2BoundSurface(
+      CommandBufferPtr gles2_client,
+      SurfaceIdPtr id,
+      mojo::SizePtr size,
+      InterfaceRequest<ViewportParameterListener> listener_request) override;
 
   // SurfaceFactoryClient implementation.
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
@@ -62,6 +69,9 @@ class SurfacesImpl : public Surface,
   void OutputSurfaceLost() override;
   void SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) override;
 
+  // ViewportParameterListener
+  void OnVSyncParametersUpdated(int64_t timebase, int64_t interval) override;
+
   cc::SurfaceFactory* factory() { return &factory_; }
 
  private:
@@ -71,6 +81,7 @@ class SurfacesImpl : public Surface,
   Client* client_;
   scoped_ptr<cc::Display> display_;
   ScopedMessagePipeHandle command_buffer_handle_;
+  WeakBindingSet<ViewportParameterListener> parameter_listeners_;
   StrongBinding<Surface> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesImpl);

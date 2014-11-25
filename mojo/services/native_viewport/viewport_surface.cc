@@ -64,13 +64,18 @@ void ViewportSurface::OnSurfaceConnectionCreated(SurfacePtr surface,
 }
 
 void ViewportSurface::BindSurfaceToNativeViewport() {
-  CommandBufferPtr cb;
-  gpu_service_->CreateOnscreenGLES2Context(
-      widget_id_, Size::From(size_), GetProxy(&cb));
+  ViewportParameterListenerPtr listener;
+  InterfaceRequest<ViewportParameterListener> listener_request =
+      GetProxy(&listener);
+
+  CommandBufferPtr command_buffer;
+  gpu_service_->CreateOnscreenGLES2Context(widget_id_, Size::From(size_),
+                                           GetProxy(&command_buffer),
+                                           listener.Pass());
 
   id_ = id_allocator_->GenerateId();
-  surface_->CreateGLES2BoundSurface(
-      cb.Pass(), SurfaceId::From(id_), Size::From(size_));
+  surface_->CreateGLES2BoundSurface(command_buffer.Pass(), SurfaceId::From(id_),
+                                    Size::From(size_), listener_request.Pass());
 
   SubmitFrame();
 }

@@ -12,7 +12,10 @@
 namespace mojo {
 
 SurfacesServiceApplication::SurfacesServiceApplication()
-    : next_id_namespace_(1u), display_(NULL), draw_timer_(false, false) {
+    : tick_interval_(base::TimeDelta::FromMilliseconds(17)),
+      next_id_namespace_(1u),
+      display_(NULL),
+      draw_timer_(false, false) {
 }
 
 SurfacesServiceApplication::~SurfacesServiceApplication() {
@@ -30,10 +33,15 @@ void SurfacesServiceApplication::Create(
   new SurfacesServiceImpl(&manager_, &next_id_namespace_, this, request.Pass());
 }
 
+void SurfacesServiceApplication::OnVSyncParametersUpdated(
+    base::TimeTicks timebase,
+    base::TimeDelta interval) {
+  tick_interval_ = interval;
+}
+
 void SurfacesServiceApplication::FrameSubmitted() {
   if (!draw_timer_.IsRunning() && display_) {
-    draw_timer_.Start(FROM_HERE,
-                      base::TimeDelta::FromMilliseconds(17),
+    draw_timer_.Start(FROM_HERE, tick_interval_,
                       base::Bind(base::IgnoreResult(&cc::Display::Draw),
                                  base::Unretained(display_)));
   }

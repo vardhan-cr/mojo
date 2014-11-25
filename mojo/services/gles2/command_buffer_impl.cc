@@ -18,21 +18,50 @@ void DestroyDriver(scoped_ptr<CommandBufferDriver> driver) {
 void RunCallback(const Callback<void()>& callback) {
   callback.Run();
 }
+
+class CommandBufferDriverClientImpl : public CommandBufferDriver::Client {
+ public:
+  CommandBufferDriverClientImpl(
+      base::WeakPtr<CommandBufferImpl> command_buffer,
+      scoped_refptr<base::SingleThreadTaskRunner> control_task_runner)
+      : command_buffer_(command_buffer),
+        control_task_runner_(control_task_runner) {}
+
+ private:
+  void DidDestroy() override { delete this; }
+
+  void UpdateVSyncParameters(base::TimeTicks timebase,
+                             base::TimeDelta interval) override {
+    control_task_runner_->PostTask(
+        FROM_HERE, base::Bind(&CommandBufferImpl::UpdateVSyncParameters,
+                              command_buffer_, timebase, interval));
+  }
+
+  void LostContext(int32_t lost_reason) override {
+    control_task_runner_->PostTask(
+        FROM_HERE, base::Bind(&CommandBufferImpl::LostContext, command_buffer_,
+                              lost_reason));
+  }
+
+  base::WeakPtr<CommandBufferImpl> command_buffer_;
+  scoped_refptr<base::SingleThreadTaskRunner> control_task_runner_;
+};
 }
 
 CommandBufferImpl::CommandBufferImpl(
     InterfaceRequest<CommandBuffer> request,
+    ViewportParameterListenerPtr listener,
     scoped_refptr<base::SingleThreadTaskRunner> control_task_runner,
     gpu::SyncPointManager* sync_point_manager,
     scoped_ptr<CommandBufferDriver> driver)
     : sync_point_manager_(sync_point_manager),
       driver_task_runner_(base::MessageLoop::current()->task_runner()),
       driver_(driver.Pass()),
+      viewport_parameter_listener_(listener.Pass()),
       binding_(this),
       weak_factory_(this) {
-  driver_->SetContextLostCallback(control_task_runner,
-                                  base::Bind(&CommandBufferImpl::OnContextLost,
-                                             weak_factory_.GetWeakPtr()));
+  driver_->set_client(new CommandBufferDriverClientImpl(
+      weak_factory_.GetWeakPtr(), control_task_runner));
 
   control_task_runner->PostTask(
       FROM_HERE, base::Bind(&CommandBufferImpl::BindToRequest,
@@ -116,8 +145,16 @@ void CommandBufferImpl::BindToRequest(InterfaceRequest<CommandBuffer> request) {
   binding_.Bind(request.Pass());
 }
 
-void CommandBufferImpl::OnContextLost(int32_t reason) {
+void CommandBufferImpl::LostContext(int32_t reason) {
   binding_.client()->LostContext(reason);
+}
+
+void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
+                                              base::TimeDelta interval) {
+  if (!viewport_parameter_listener_)
+    return;
+  viewport_parameter_listener_->OnVSyncParametersUpdated(
+      timebase.ToInternalValue(), interval.ToInternalValue());
 }
 
 }  // namespace mojo

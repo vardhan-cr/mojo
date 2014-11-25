@@ -16,7 +16,7 @@
 
 namespace mojo {
 namespace {
-void CallCallback(const mojo::Closure& callback) {
+void CallCallback(const Closure& callback) {
   callback.Run();
 }
 }
@@ -37,7 +37,7 @@ SurfacesImpl::~SurfacesImpl() {
   factory_.DestroyAll();
 }
 
-void SurfacesImpl::CreateSurface(SurfaceIdPtr id, mojo::SizePtr size) {
+void SurfacesImpl::CreateSurface(SurfaceIdPtr id, SizePtr size) {
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
   if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
     // Bad message, do something bad to the caller?
@@ -49,7 +49,7 @@ void SurfacesImpl::CreateSurface(SurfaceIdPtr id, mojo::SizePtr size) {
 
 void SurfacesImpl::SubmitFrame(SurfaceIdPtr id,
                                FramePtr frame_ptr,
-                               const mojo::Closure& callback) {
+                               const Closure& callback) {
   TRACE_EVENT0("mojo", "SurfacesImpl::SubmitFrame");
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
   if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
@@ -75,9 +75,11 @@ void SurfacesImpl::DestroySurface(SurfaceIdPtr id) {
   factory_.Destroy(id.To<cc::SurfaceId>());
 }
 
-void SurfacesImpl::CreateGLES2BoundSurface(CommandBufferPtr gles2_client,
-                                           SurfaceIdPtr id,
-                                           mojo::SizePtr size) {
+void SurfacesImpl::CreateGLES2BoundSurface(
+    CommandBufferPtr gles2_client,
+    SurfaceIdPtr id,
+    SizePtr size,
+    InterfaceRequest<ViewportParameterListener> listener_request) {
   command_buffer_handle_ = gles2_client.PassMessagePipe();
 
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
@@ -97,6 +99,7 @@ void SurfacesImpl::CreateGLES2BoundSurface(CommandBufferPtr gles2_client,
   }
   factory_.Create(cc_id, size.To<gfx::Size>());
   display_->Resize(cc_id, size.To<gfx::Size>(), 1.f);
+  parameter_listeners_.AddBinding(this, listener_request.Pass());
 }
 
 void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
@@ -124,6 +127,13 @@ void SurfacesImpl::OutputSurfaceLost() {
 }
 
 void SurfacesImpl::SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) {
+}
+
+void SurfacesImpl::OnVSyncParametersUpdated(int64_t timebase,
+                                            int64_t interval) {
+  client_->OnVSyncParametersUpdated(
+      base::TimeTicks::FromInternalValue(timebase),
+      base::TimeDelta::FromInternalValue(interval));
 }
 
 }  // namespace mojo

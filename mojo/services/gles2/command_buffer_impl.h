@@ -10,6 +10,7 @@
 #include "base/single_thread_task_runner.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/public/interfaces/gpu/command_buffer.mojom.h"
+#include "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom.h"
 
 namespace gpu {
 class SyncPointManager;
@@ -26,6 +27,7 @@ class CommandBufferImpl : public CommandBuffer {
  public:
   CommandBufferImpl(
       InterfaceRequest<CommandBuffer> request,
+      ViewportParameterListenerPtr listener,
       scoped_refptr<base::SingleThreadTaskRunner> control_task_runner,
       gpu::SyncPointManager* sync_point_manager,
       scoped_ptr<CommandBufferDriver> driver);
@@ -45,14 +47,18 @@ class CommandBufferImpl : public CommandBuffer {
   void RetireSyncPoint(uint32_t sync_point) override;
   void Echo(const Callback<void()>& callback) override;
 
+  void LostContext(int32_t reason);
+  void UpdateVSyncParameters(base::TimeTicks timebase,
+                             base::TimeDelta interval);
+
  private:
   void BindToRequest(InterfaceRequest<CommandBuffer> request);
-  void OnContextLost(int32_t reason);
 
   scoped_refptr<gpu::SyncPointManager> sync_point_manager_;
   scoped_refptr<base::SingleThreadTaskRunner> driver_task_runner_;
   scoped_ptr<CommandBufferDriver> driver_;
   CommandBufferSyncPointClientPtr sync_point_client_;
+  ViewportParameterListenerPtr viewport_parameter_listener_;
   StrongBinding<CommandBuffer> binding_;
 
   base::WeakPtrFactory<CommandBufferImpl> weak_factory_;

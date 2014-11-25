@@ -37,11 +37,12 @@ GpuImpl::~GpuImpl() {
 void GpuImpl::CreateOnscreenGLES2Context(
     uint64_t native_viewport_id,
     SizePtr size,
-    InterfaceRequest<CommandBuffer> request) {
+    InterfaceRequest<CommandBuffer> request,
+    ViewportParameterListenerPtr listener) {
   gfx::AcceleratedWidget widget = bit_cast<gfx::AcceleratedWidget>(
       static_cast<uintptr_t>(native_viewport_id));
   new CommandBufferImpl(
-      request.Pass(), state_->control_task_runner(),
+      request.Pass(), listener.Pass(), state_->control_task_runner(),
       state_->sync_point_manager(),
       make_scoped_ptr(new CommandBufferDriver(
           widget, size.To<gfx::Size>(), state_->share_group(),
@@ -50,7 +51,8 @@ void GpuImpl::CreateOnscreenGLES2Context(
 
 void GpuImpl::CreateOffscreenGLES2Context(
     InterfaceRequest<CommandBuffer> request) {
-  new CommandBufferImpl(request.Pass(), state_->control_task_runner(),
+  new CommandBufferImpl(request.Pass(), ViewportParameterListenerPtr(),
+                        state_->control_task_runner(),
                         state_->sync_point_manager(),
                         make_scoped_ptr(new CommandBufferDriver(
                             state_->share_group(), state_->mailbox_manager(),

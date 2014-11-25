@@ -22,6 +22,7 @@ mojo_native_application("surfaces") {
     "//ui/gfx/geometry",
     "//mojo/application",
     "//mojo/cc",
+    "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/converters/surfaces",
     "//mojo/environment:chromium",

@@ -78,10 +78,12 @@ class SampleApp
     mojo::SizePtr size = mojo::Size::New();
     size->width = 800;
     size->height = 600;
+    mojo::ViewportParameterListenerPtr listener;
     mojo::CommandBufferPtr command_buffer;
     // TODO(jamesr): Output to a surface instead.
-    gpu_service_->CreateOnscreenGLES2Context(
-        native_viewport_id, size.Pass(), GetProxy(&command_buffer));
+    gpu_service_->CreateOnscreenGLES2Context(native_viewport_id, size.Pass(),
+                                             GetProxy(&command_buffer),
+                                             listener.Pass());
     gles2_client_.reset(new GLES2ClientImpl(command_buffer.Pass()));
   }
 
