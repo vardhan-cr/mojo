@@ -110,8 +110,6 @@ MessageInTransit::MessageInTransit(Type type,
           base::AlignedAlloc(main_buffer_size_, kMessageAlignment))) {
   ConstructorHelper(type, subtype, num_bytes);
   bytes.GetArray(MessageInTransit::bytes(), num_bytes);
-  memset(static_cast<char*>(MessageInTransit::bytes()) + num_bytes, 0,
-         main_buffer_size_ - sizeof(Header) - num_bytes);
 }
 
 MessageInTransit::MessageInTransit(const View& message_view)
