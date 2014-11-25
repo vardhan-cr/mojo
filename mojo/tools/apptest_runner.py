@@ -111,10 +111,11 @@ def main(argv):
       # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
       # TODO(msw): Enable passing arguments to tests down from the test harness.
       command = [mojo_shell,
-          "--args-for={0} --example_apptest_arg --gtest_filter={1}".format(
-		      apptest, fixture),
-          "--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa",
-          apptest]
+                 "--args-for={0} --example_apptest_arg --gtest_filter={1}"
+                     .format(apptest, fixture),
+                 "--args-for=mojo:native_viewport_service "
+                     "--use-headless-config --use-osmesa",
+                 apptest]
       if not run_test(command):
         apptest_result = "Failed test(s) in " + apptest
         exit_code = 1
