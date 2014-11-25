@@ -9,6 +9,10 @@ import android.util.Log;
 import org.chromium.base.BaseChromiumApplication;
 import org.chromium.base.PathUtils;
 
+/**
+ * MojoShell implementation of {@link android.app.Application}, managing application-level global
+ * state and initializations.
+ */
 public class MojoShellApplication extends BaseChromiumApplication {
     private static final String TAG = "MojoShellApplication";
     private static final String PRIVATE_DATA_DIRECTORY_SUFFIX = "mojo_shell";
