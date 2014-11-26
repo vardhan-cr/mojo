@@ -28,8 +28,8 @@ public class Bootstrap implements Runnable {
 
     @Override
     public void run() {
-        Runtime.getRuntime().load(mBootstrapNativeLibrary.getAbsolutePath());
-        Runtime.getRuntime().load(mApplicationNativeLibrary.getAbsolutePath());
+        System.load(mBootstrapNativeLibrary.getAbsolutePath());
+        System.load(mApplicationNativeLibrary.getAbsolutePath());
         nativeBootstrap(mApplicationNativeLibrary.getAbsolutePath(), mHandle);
     }
 
