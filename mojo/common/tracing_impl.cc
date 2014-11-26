@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "sky/viewer/services/tracing_impl.h"
+#include "mojo/common/tracing_impl.h"
 
 #include "base/callback.h"
 #include "base/debug/trace_event.h"
 #include "base/files/file_util.h"
 
-namespace sky {
+namespace mojo {
 namespace {
 
 static bool g_tracing = false;
@@ -22,8 +22,8 @@ void WriteTraceDataCollected(
     fwrite(",", 1, 1, g_trace_file);
   }
   ++g_blocks;
-  fwrite(
-      events_str->data().c_str(), 1, events_str->data().length(), g_trace_file);
+  fwrite(events_str->data().c_str(), 1, events_str->data().length(),
+         g_trace_file);
   if (!has_more_events) {
     fwrite("]}", 1, 2, g_trace_file);
     base::CloseFile(g_trace_file);
@@ -32,20 +32,21 @@ void WriteTraceDataCollected(
   }
 }
 
-void StopTracingAndFlushToDisk() {
+void StopTracingAndFlushToDisk(base::FilePath::StringType base_name) {
   base::debug::TraceLog::GetInstance()->SetDisabled();
 
-  g_trace_file = base::OpenFile(
-      base::FilePath(FILE_PATH_LITERAL("sky_viewer.trace")), "w+");
+  base_name.append(FILE_PATH_LITERAL(".trace"));
+  g_trace_file = base::OpenFile(base::FilePath(base_name), "w+");
   static const char start[] = "{\"traceEvents\":[";
   fwrite(start, 1, strlen(start), g_trace_file);
   base::debug::TraceLog::GetInstance()->Flush(
       base::Bind(&WriteTraceDataCollected));
 }
-
 }
 
-TracingImpl::TracingImpl() {
+TracingImpl::TracingImpl(InterfaceRequest<Tracing> request,
+                         base::FilePath::StringType base_name)
+    : base_name_(base_name), binding_(this, request.Pass()) {
 }
 
 TracingImpl::~TracingImpl() {
@@ -56,8 +57,7 @@ void TracingImpl::Start() {
     return;
   g_tracing = true;
   base::debug::TraceLog::GetInstance()->SetEnabled(
-      base::debug::CategoryFilter("*"),
-      base::debug::TraceLog::RECORDING_MODE,
+      base::debug::CategoryFilter("*"), base::debug::TraceLog::RECORDING_MODE,
       base::debug::TraceOptions(base::debug::RECORD_UNTIL_FULL));
 }
 
@@ -65,7 +65,7 @@ void TracingImpl::Stop() {
   if (!g_tracing)
     return;
   g_tracing = false;
-  StopTracingAndFlushToDisk();
+  StopTracingAndFlushToDisk(base_name_);
 }
 
-}  // namespace sky
+}  // namespace mojo

@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//mojo/public/tools/bindings/mojom.gni")
+
 # GYP version: mojo/mojo_base.gyp:mojo_common_lib
 component("common") {
   output_name = "mojo_common_lib"
@@ -56,4 +58,21 @@ test("mojo_common_unittests") {
     "//testing/gtest",
     "//url",
   ]
+}
+
+source_set("tracing_impl") {
+  sources = [
+    "tracing_impl.cc",
+    "tracing_impl.h",
+  ]
+
+  deps = [
+    ":tracing_bindings",
+    "//base",
+    "//mojo/public/cpp/bindings",
+  ]
+}
+
+mojom("tracing_bindings") {
+  sources = [ "tracing.mojom" ]
 }
