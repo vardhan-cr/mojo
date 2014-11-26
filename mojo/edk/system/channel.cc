@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include "base/bind.h"
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/strings/stringprintf.h"
@@ -331,7 +330,16 @@ void Channel::OnReadMessageForDownstream(
     return;
   }
 
-  if (!endpoint->OnReadMessage(message_view, platform_handles.Pass())) {
+  scoped_ptr<MessageInTransit> message(new MessageInTransit(message_view));
+  if (message_view.transport_data_buffer_size() > 0) {
+    DCHECK(message_view.transport_data_buffer());
+    message->SetDispatchers(TransportData::DeserializeDispatchers(
+        message_view.transport_data_buffer(),
+        message_view.transport_data_buffer_size(), platform_handles.Pass(),
+        this));
+  }
+
+  if (!endpoint->OnReadMessage(message.Pass())) {
     HandleLocalError(
         base::StringPrintf("Failed to enqueue message to local ID %u",
                            static_cast<unsigned>(local_id.value())));

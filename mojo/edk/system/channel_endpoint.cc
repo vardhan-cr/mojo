@@ -7,7 +7,6 @@
 #include "base/logging.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
-#include "mojo/edk/system/transport_data.h"
 
 namespace mojo {
 namespace system {
@@ -85,10 +84,7 @@ void ChannelEndpoint::AttachAndRun(Channel* channel,
   }
 }
 
-bool ChannelEndpoint::OnReadMessage(
-    const MessageInTransit::View& message_view,
-    embedder::ScopedPlatformHandleVectorPtr platform_handles) {
-  scoped_ptr<MessageInTransit> message(new MessageInTransit(message_view));
+bool ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
   scoped_refptr<ChannelEndpointClient> client;
   unsigned client_port;
   {
@@ -98,14 +94,6 @@ bool ChannelEndpoint::OnReadMessage(
       // This isn't a failure per se. (It just means that, e.g., the other end
       // of the message point closed first.)
       return true;
-    }
-
-    if (message_view.transport_data_buffer_size() > 0) {
-      DCHECK(message_view.transport_data_buffer());
-      message->SetDispatchers(TransportData::DeserializeDispatchers(
-          message_view.transport_data_buffer(),
-          message_view.transport_data_buffer_size(), platform_handles.Pass(),
-          channel_));
     }
 
     // Take a ref, and call |OnReadMessage()| outside the lock.

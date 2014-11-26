@@ -9,9 +9,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
-#include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
-#include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/system_impl_export.h"
 
@@ -146,8 +144,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
                     ChannelEndpointId remote_id);
 
   // Called when the |Channel| receives a message for the |ChannelEndpoint|.
-  bool OnReadMessage(const MessageInTransit::View& message_view,
-                     embedder::ScopedPlatformHandleVectorPtr platform_handles);
+  bool OnReadMessage(scoped_ptr<MessageInTransit> message);
 
   // Called before the |Channel| gives up its reference to this object.
   void DetachFromChannel();
