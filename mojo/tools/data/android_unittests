@@ -1,0 +1,5 @@
+# This file contains a list of android Mojo gtest unit tests.
+# TODO(qsr): Update the base list to allow annotating test per platform.
+
+# System tests:
+mojo_system_unittests

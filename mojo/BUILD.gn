@@ -87,6 +87,12 @@ group("tests") {
     "//services/js:js_services_unittests",
   ]
 
+  if (is_android) {
+    deps += [
+      "//mojo/edk/system:mojo_system_unittests_apk",
+    ]
+  }
+
   if (use_aura) {
     deps += [
       "//mojo/services/public/cpp/view_manager/tests:mojo_view_manager_lib_unittests",

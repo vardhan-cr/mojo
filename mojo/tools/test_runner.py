@@ -5,6 +5,7 @@
 
 """A "smart" test runner for gtest unit tests (that caches successes)."""
 
+import argparse
 import logging
 import os
 import platform
@@ -13,46 +14,59 @@ import sys
 
 _logging = logging.getLogger()
 
-from mopy.transitive_hash import transitive_hash
+from mopy.paths import Paths
+from mopy.transitive_hash import file_hash, transitive_hash
 
-def main(argv):
+paths = Paths()
+
+def main():
   logging.basicConfig()
   # Uncomment to debug:
   # _logging.setLevel(logging.DEBUG)
 
-  if len(argv) < 3 or len(argv) > 4:
-    print "Usage: %s gtest_list_file root_dir [successes_cache_file]" % \
-        os.path.basename(argv[0])
-    return 0 if len(argv) < 2 else 1
+  parser = argparse.ArgumentParser(
+      description="A 'smart' test runner for gtest unit tests (that caches "
+                  "successes).")
 
-  _logging.debug("Test list file: %s", argv[1])
-  with open(argv[1], 'rb') as f:
+  os_group = parser.add_mutually_exclusive_group()
+  os_group.add_argument("--android", help="Run tests for android",
+                        action='store_true')
+
+  parser.add_argument("gtest_list_file",
+                      help="The file containing the tests to run.")
+  parser.add_argument("root_dir", help="The build directory.")
+  parser.add_argument("successes_cache_filename",
+                      help="The file caching test results.", default=None,
+                      nargs='?')
+  args = parser.parse_args()
+
+  _logging.debug("Test list file: %s", args.gtest_list_file)
+  with open(args.gtest_list_file, 'rb') as f:
     gtest_list = [y for y in [x.strip() for x in f.readlines()] \
                       if y and y[0] != '#']
   _logging.debug("Test list: %s" % gtest_list)
 
-  print "Running tests in directory: %s" % argv[2]
-  os.chdir(argv[2])
+  print "Running tests in directory: %s" % args.root_dir
+  os.chdir(args.root_dir)
 
-  if len(argv) == 4 and argv[3]:
-    successes_cache_filename = argv[3]
-    print "Successes cache file: %s" % successes_cache_filename
+  if args.successes_cache_filename:
+    print "Successes cache file: %s" % args.successes_cache_filename
   else:
-    successes_cache_filename = None
     print "No successes cache file (will run all tests unconditionally)"
 
-  if successes_cache_filename:
+  if args.successes_cache_filename:
     # This file simply contains a list of transitive hashes of tests that
     # succeeded.
     try:
       _logging.debug("Trying to read successes cache file: %s",
-                     successes_cache_filename)
-      with open(argv[3], 'rb') as f:
+                     args.successes_cache_filename)
+      with open(args.successes_cache_filename, 'rb') as f:
         successes = set([x.strip() for x in f.readlines()])
       _logging.debug("Successes: %s", successes)
     except IOError:
       # Just assume that it didn't exist, or whatever.
-      print "Failed to read successes cache file %s (will create)" % argv[3]
+      print ("Failed to read successes cache file %s (will create)" %
+             args.successes_cache_filename)
       successes = set()
 
   # Run gtests with color if we're on a TTY (and we're not being told explicitly
@@ -62,8 +76,8 @@ def main(argv):
     os.environ['GTEST_COLOR'] = 'yes'
 
   # TODO(vtl): We may not close this file on failure.
-  successes_cache_file = open(successes_cache_filename, 'ab') \
-      if successes_cache_filename else None
+  successes_cache_file = open(args.successes_cache_filename, 'ab') \
+      if args.successes_cache_filename else None
   for gtest in gtest_list:
     if gtest[0] == '*':
       gtest = gtest[1:]
@@ -72,13 +86,19 @@ def main(argv):
     else:
       cacheable = True
 
+    gtest_file = gtest
     if platform.system() == 'Windows':
-      gtest += ".exe"
+      gtest_file += ".exe"
+    if args.android:
+      gtest_file = gtest + "_apk/" + gtest + "-debug.apk"
 
     if successes_cache_file and cacheable:
       _logging.debug("Getting transitive hash for %s ... " % gtest)
       try:
-        gtest_hash = transitive_hash(gtest)
+        if args.android:
+          gtest_hash = file_hash(gtest_file)
+        else:
+          gtest_hash = transitive_hash(gtest_file)
       except subprocess.CalledProcessError:
         print "Failed to get transitive hash for %s" % gtest
         return 1
@@ -91,10 +111,22 @@ def main(argv):
     print "Running %s...." % gtest,
     sys.stdout.flush()
     try:
-      subprocess.check_output(["./" + gtest], stderr=subprocess.STDOUT)
+      if args.android:
+        command = [
+            "python",
+            os.path.join(paths.src_root, "build", "android", "test_runner.py"),
+            "gtest",
+            "--output-directory",
+            args.root_dir,
+            "-s",
+            gtest,
+        ]
+      else:
+        command = ["./" + gtest]
+      subprocess.check_output(command, stderr=subprocess.STDOUT)
       print "Succeeded"
       # Record success.
-      if successes_cache_filename and cacheable:
+      if args.successes_cache_filename and cacheable:
         successes.add(gtest_hash)
         successes_cache_file.write(gtest_hash + '\n')
         successes_cache_file.flush()
@@ -114,4 +146,4 @@ def main(argv):
   return 0
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+  sys.exit(main())

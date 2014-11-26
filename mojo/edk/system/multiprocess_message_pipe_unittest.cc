@@ -96,7 +96,13 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(EchoEcho) {
 }
 
 // Sends "hello" to child, and expects "hellohello" back.
-TEST_F(MultiprocessMessagePipeTest, Basic) {
+#if defined(OS_ANDROID)
+// Android multi-process tests are not executing the new process. This is flaky.
+#define MAYBE_Basic DISABLED_Basic
+#else
+#define MAYBE_Basic Basic
+#endif  // defined(OS_ANDROID)
+TEST_F(MultiprocessMessagePipeTest, MAYBE_Basic) {
   helper()->StartChild("EchoEcho");
 
   scoped_refptr<ChannelEndpoint> ep;
@@ -136,7 +142,13 @@ TEST_F(MultiprocessMessagePipeTest, Basic) {
 
 // Sends a bunch of messages to the child. Expects them "repeated" back. Waits
 // for the child to close its end before quitting.
-TEST_F(MultiprocessMessagePipeTest, QueueMessages) {
+#if defined(OS_ANDROID)
+// Android multi-process tests are not executing the new process. This is flaky.
+#define MAYBE_QueueMessages DISABLED_QueueMessages
+#else
+#define MAYBE_QueueMessages QueueMessages
+#endif  // defined(OS_ANDROID)
+TEST_F(MultiprocessMessagePipeTest, DISABLED_QueueMessages) {
   helper()->StartChild("EchoEcho");
 
   scoped_refptr<ChannelEndpoint> ep;
@@ -282,10 +294,11 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
   return 0;
 }
 
-#if defined(OS_POSIX)
+#if defined(OS_POSIX) && !defined(OS_ANDROID)
 #define MAYBE_SharedBufferPassing SharedBufferPassing
 #else
 // Not yet implemented (on Windows).
+// Android multi-process tests are not executing the new process. This is flaky.
 #define MAYBE_SharedBufferPassing DISABLED_SharedBufferPassing
 #endif
 TEST_F(MultiprocessMessagePipeTest, MAYBE_SharedBufferPassing) {
@@ -422,10 +435,11 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckPlatformHandleFile) {
   return 0;
 }
 
-#if defined(OS_POSIX)
+#if defined(OS_POSIX) && !defined(OS_ANDROID)
 #define MAYBE_PlatformHandlePassing PlatformHandlePassing
 #else
 // Not yet implemented (on Windows).
+// Android multi-process tests are not executing the new process. This is flaky.
 #define MAYBE_PlatformHandlePassing DISABLED_PlatformHandlePassing
 #endif
 TEST_F(MultiprocessMessagePipeTest, MAYBE_PlatformHandlePassing) {

@@ -892,7 +892,7 @@ TEST_F(CoreTest, DataPipe) {
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfiable_signals);
 
   // Write.
-  char elements[2] = {'A', 'B'};
+  signed char elements[2] = {'A', 'B'};
   uint32_t num_bytes = 2u;
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->WriteData(ph, UserPointer<const void>(elements),

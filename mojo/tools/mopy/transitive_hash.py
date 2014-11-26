@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import hashlib
 import logging
 import platform
 import subprocess
@@ -13,36 +12,12 @@ from hashlib import sha256
 # pylint: enable=E0611
 from os.path import basename, realpath
 
+from mopy.file_hash import file_hash
+from mopy.memoize import memoize
+
 _logging = logging.getLogger()
 
-# pylint: disable=C0301
-# Based on/taken from
-#   http://code.activestate.com/recipes/578231-probably-the-fastest-memoization-decorator-in-the-/
-# (with cosmetic changes).
-# pylint: enable=C0301
-def _memoize(f):
-  """Memoization decorator for a function taking a single argument."""
-  class Memoize(dict):
-    def __missing__(self, key):
-      rv = self[key] = f(key)
-      return rv
-  return Memoize().__getitem__
-
-@_memoize
-def _file_hash(filename):
-  """Returns a string representing the hash of the given file."""
-  _logging.debug("Hashing %s ...", filename)
-  with open(filename, mode='rb') as f:
-    m = hashlib.sha256()
-    while True:
-      block = f.read(4096)
-      if not block:
-        break
-      m.update(block)
-  _logging.debug("  => %s", m.hexdigest())
-  return m.hexdigest()
-
-@_memoize
+@memoize
 def _get_dependencies(filename):
   """Returns a list of filenames for files that the given file depends on."""
   if platform.system() == 'Windows':
@@ -69,7 +44,7 @@ def transitive_hash(filename):
   to_hash = [filename]
   while to_hash:
     current_filename = realpath(to_hash.pop())
-    current_hash = _file_hash(current_filename)
+    current_hash = file_hash(current_filename)
     if current_hash in hashes:
       _logging.debug("Already seen %s (%s) ...", current_filename, current_hash)
       continue

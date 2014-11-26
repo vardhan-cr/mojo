@@ -141,13 +141,15 @@ def build(config):
     return subprocess.call(['ninja', '-C', out_dir, 'root'])
 
 
-def run_testrunner(out_dir, testlist):
+def run_testrunner(config, out_dir, testlist):
   command = ['python']
-  if platform.system() == 'Linux':
+  if platform.system() == 'Linux' and config.target_os != Config.OS_ANDROID:
     command.append('./testing/xvfb.py')
     command.append(out_dir)
 
   command.append(os.path.join('mojo', 'tools', 'test_runner.py'))
+  if config.target_os == Config.OS_ANDROID:
+    command.append('--android')
   command.append(os.path.join('mojo', 'tools', 'data', testlist))
   command.append(out_dir)
   command.append('mojob_test_successes')
@@ -156,6 +158,9 @@ def run_testrunner(out_dir, testlist):
 
 def run_apptests(config):
   out_dir = get_out_dir(config)
+  if config.target_os == Config.OS_ANDROID:
+    return 0
+
   print 'Running application tests in %s ...' % out_dir
   command = ['python']
   if platform.system() == 'Linux':
@@ -171,12 +176,16 @@ def run_apptests(config):
 def run_unittests(config):
   out_dir = get_out_dir(config)
   print 'Running unit tests in %s ...' % out_dir
-  return run_testrunner(out_dir, 'unittests')
+  if config.target_os == Config.OS_ANDROID:
+    test_list = 'android_unittests'
+  else:
+    test_list = 'unittests'
+  return run_testrunner(config, out_dir, test_list)
 
 
 def run_skytests(config):
   out_dir = get_out_dir(config)
-  if platform.system() != 'Linux':
+  if platform.system() != 'Linux' or config.target_os == Config.OS_ANDROID:
     return 0
 
   command = []
@@ -220,7 +229,7 @@ def run_pytests(config):
   if exit_code:
     return exit_code
 
-  if platform.system() != 'Linux':
+  if platform.system() != 'Linux' or config.target_os == Config.OS_ANDROID:
     print ('Python bindings tests are only supported on Linux.')
     return
 
@@ -261,7 +270,7 @@ def pytest(config):
 def darttest(config):
   out_dir = get_out_dir(config)
   print 'Running Dart tests in %s ...' % out_dir
-  exit_code = run_testrunner(out_dir, 'dart_unittests')
+  exit_code = run_testrunner(config, out_dir, 'dart_unittests')
   if exit_code:
     return exit_code
 
