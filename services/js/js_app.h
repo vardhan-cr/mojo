@@ -18,6 +18,7 @@ namespace mojo {
 namespace js {
 
 class JSApp;
+class JSAppMessageLoopObservers;
 class ApplicationDelegateImpl;
 
 // Each JavaScript app started by the content handler runs on its own thread
@@ -54,6 +55,7 @@ class JSApp : public InterfaceImpl<Application>,
   gin::IsolateHolder isolate_holder_;
   scoped_ptr<gin::ShellRunner> shell_runner_;
   v8::Persistent<v8::Object> app_instance_;
+  scoped_ptr<JSAppMessageLoopObservers> message_loop_observers_;
 
   DISALLOW_COPY_AND_ASSIGN(JSApp);
 };

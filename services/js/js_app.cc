@@ -14,6 +14,7 @@
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
+#include "services/js/js_app_message_loop_observers.h"
 #include "services/js/js_app_shell.h"
 #include "services/js/mojo_bridge_module.h"
 
@@ -70,7 +71,7 @@ bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
           isolate, service_provider, "getConnection$", &get_connection_method))
     return false;
   v8::Local<v8::Value> connection_value =
-    get_connection_method->Call(get_connection_method, 0, nullptr);
+    get_connection_method->Call(service_provider, 0, nullptr);
   return GetValueMojoHandle(
       isolate, connection_value, "messagePipeHandle", result);
 }
@@ -80,14 +81,14 @@ bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
 const char JSApp::kMainModuleName[] = "main";
 
 JSApp::JSApp(ShellPtr shell, URLResponsePtr response) : shell_(shell.Pass()) {
-  isolate_holder_.AddRunMicrotasksObserver();
+  v8::Isolate* isolate = isolate_holder_.isolate();
+  message_loop_observers_.reset(new JSAppMessageLoopObservers(isolate));
 
   DCHECK(!response.is_null());
   std::string url(response->url);
   std::string source;
   CHECK(common::BlockingCopyToString(response->body.Pass(), &source));
 
-  v8::Isolate* isolate = isolate_holder_.isolate();
   shell_runner_.reset(new gin::ShellRunner(&runner_delegate_, isolate));
   gin::Runner::Scope scope(shell_runner_.get());
   shell_runner_->Run(source.c_str(), kMainModuleName);
@@ -170,7 +171,6 @@ void JSApp::AcceptConnection(const String& requestor_url,
 }
 
 void JSApp::Quit() {
-  isolate_holder_.RemoveRunMicrotasksObserver();
   base::MessageLoop::current()->PostTask(
       FROM_HERE, base::Bind(&JSApp::QuitInternal, base::Unretained(this)));
 }
