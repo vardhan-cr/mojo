@@ -417,11 +417,8 @@ def _CheckGNCheck(input_api, output_api):
 
   class _TemporaryDirectory(object):
     """Context manager for tempfile.mkdtemp()"""
-    def __init__(self, parent_dir=None):
-      self.parent_dir = parent_dir
-
     def __enter__(self):
-      self.path = input_api.tempfile.mkdtemp(dir=self.parent_dir)
+      self.path = input_api.tempfile.mkdtemp()
       return self.path
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -430,13 +427,9 @@ def _CheckGNCheck(input_api, output_api):
       import shutil
       shutil.rmtree(self.path)
 
-  # TODO(eseidel): We should not have to pass dir= here but unfortunately
-  # gn's rebase_path can't handle absolute paths!  crbug.com/429324
-  temp_parent = input_api.change.RepositoryRoot()
-  with _TemporaryDirectory(parent_dir=temp_parent) as out_dir:
-    relative_out_dir = input_api.os_path.relpath(out_dir, temp_parent)
+  with _TemporaryDirectory() as out_dir:
     try:
-      input_api.subprocess.check_output(['gn', 'gen', relative_out_dir])
+      input_api.subprocess.check_output(['gn', 'gen', out_dir])
     except input_api.subprocess.CalledProcessError, error:
       return [output_api.PresubmitError(
           'gn gen must not fail.', long_text=error.output)]
@@ -454,7 +447,7 @@ def _CheckGNCheck(input_api, output_api):
       ]
     for target_filter in KNOWN_PASSING:
       try:
-        input_api.subprocess.check_output(['gn', 'check', relative_out_dir,
+        input_api.subprocess.check_output(['gn', 'check', out_dir,
             target_filter])
       except input_api.subprocess.CalledProcessError, error:
         error_title = 'gn check %s must not fail.' % target_filter
