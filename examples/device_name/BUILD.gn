@@ -2,17 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//mojo/public/tools/bindings/mojom.gni")
 import("//build/config/android/rules.gni")
-
-group("device_name") {
-  deps = [
-    ":device_name_archive",
-    ":device_name_bundle",
-    ":device_name_java",
-    ":libdevice_name",
-  ]
-}
+import("//mojo/public/mojo_application.gni")
 
 shared_library("libdevice_name") {
   output_name = "device_name"
@@ -39,6 +30,7 @@ generate_jni("jni_headers") {
   jni_package = "mojo"
 }
 
+dex_output_path = "$target_out_dir/device_name_java.dex.jar"
 android_library("device_name_java") {
   java_files = [
     "java/src/org/chromium/mojo/examples/DeviceName.java",
@@ -48,42 +40,10 @@ android_library("device_name_java") {
     "//base:base_java",
   ]
 
-  dex_path = "$target_out_dir/device_name_java.dex.jar"
+  dex_path = dex_output_path
 }
 
-action("device_name_archive") {
-  script = "//build/android/gn/zip.py"
-
-  inputs = [
-    "$root_out_dir/lib.stripped/libdevice_name.so",
-    "$root_out_dir/obj/examples/device_name/device_name_java.dex.jar",
-  ]
-
-  output = "$target_gen_dir/device_name.zip"
-  outputs = [ output ]
-
-  rebase_inputs = rebase_path(inputs, root_build_dir)
-  rebase_output = rebase_path(output, root_build_dir)
-  args = [
-    "--inputs=$rebase_inputs",
-    "--output=$rebase_output",
-  ]
-}
-
-action("device_name_bundle") {
-  script = "//mojo/public/tools/prepend.py"
-
-  input = "$target_gen_dir/device_name.zip"
-  inputs = [ input ]
-
-  output = "$target_out_dir/device_name.mojo"
-  outputs = [ output ]
-
-  rebase_input = rebase_path(input, root_build_dir)
-  rebase_output = rebase_path(output, root_build_dir)
-  args = [
-    "--input=$rebase_input",
-    "--output=$rebase_output",
-    "--line=#!mojo:android_handler",
-  ]
+mojo_android_application("device_name") {
+  input_so = "$root_out_dir/lib.stripped/libdevice_name.so"
+  input_dex_jar = dex_output_path
 }
