@@ -62,8 +62,8 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(EchoEcho) {
     if (result != MOJO_RESULT_OK) {
       // It was closed, probably.
       CHECK_EQ(result, MOJO_RESULT_FAILED_PRECONDITION);
-      CHECK_EQ(hss.satisfied_signals, 0u);
-      CHECK_EQ(hss.satisfiable_signals, 0u);
+      CHECK_EQ(hss.satisfied_signals, MOJO_HANDLE_SIGNAL_PEER_CLOSED);
+      CHECK_EQ(hss.satisfiable_signals, MOJO_HANDLE_SIGNAL_PEER_CLOSED);
       break;
     } else {
       CHECK((hss.satisfied_signals & MOJO_HANDLE_SIGNAL_READABLE));
@@ -196,8 +196,8 @@ TEST_F(MultiprocessMessagePipeTest, DISABLED_QueueMessages) {
   HandleSignalsState hss;
   EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
             test::WaitIfNecessary(mp, MOJO_HANDLE_SIGNAL_READABLE, &hss));
-  EXPECT_EQ(0u, hss.satisfied_signals);
-  EXPECT_EQ(0u, hss.satisfiable_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
 
   mp->Close(0);
 
@@ -223,8 +223,9 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
   // pipe before we do.
   CHECK_EQ(hss.satisfied_signals,
            MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
-  CHECK_EQ(hss.satisfiable_signals,
-           MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
+  CHECK_EQ(hss.satisfiable_signals, MOJO_HANDLE_SIGNAL_READABLE |
+                                        MOJO_HANDLE_SIGNAL_WRITABLE |
+                                        MOJO_HANDLE_SIGNAL_PEER_CLOSED);
 
   // It should have a shared buffer.
   std::string read_buffer(100, '\0');
@@ -272,8 +273,9 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
            MOJO_RESULT_OK);
   CHECK_EQ(hss.satisfied_signals,
            MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
-  CHECK_EQ(hss.satisfiable_signals,
-           MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
+  CHECK_EQ(hss.satisfiable_signals, MOJO_HANDLE_SIGNAL_READABLE |
+                                        MOJO_HANDLE_SIGNAL_WRITABLE |
+                                        MOJO_HANDLE_SIGNAL_PEER_CLOSED);
 
   read_buffer = std::string(100, '\0');
   num_bytes = static_cast<uint32_t>(read_buffer.size());
@@ -377,8 +379,8 @@ TEST_F(MultiprocessMessagePipeTest, MAYBE_SharedBufferPassing) {
   hss = HandleSignalsState();
   EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
             test::WaitIfNecessary(mp, MOJO_HANDLE_SIGNAL_READABLE, &hss));
-  EXPECT_EQ(0u, hss.satisfied_signals);
-  EXPECT_EQ(0u, hss.satisfiable_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
 
   mp->Close(0);
 
@@ -400,8 +402,9 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckPlatformHandleFile) {
            MOJO_RESULT_OK);
   CHECK_EQ(hss.satisfied_signals,
            MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
-  CHECK_EQ(hss.satisfiable_signals,
-           MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE);
+  CHECK_EQ(hss.satisfiable_signals, MOJO_HANDLE_SIGNAL_READABLE |
+                                        MOJO_HANDLE_SIGNAL_WRITABLE |
+                                        MOJO_HANDLE_SIGNAL_PEER_CLOSED);
 
   std::string read_buffer(100, '\0');
   uint32_t num_bytes = static_cast<uint32_t>(read_buffer.size());
@@ -485,8 +488,8 @@ TEST_F(MultiprocessMessagePipeTest, MAYBE_PlatformHandlePassing) {
   HandleSignalsState hss;
   EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
             test::WaitIfNecessary(mp, MOJO_HANDLE_SIGNAL_READABLE, &hss));
-  EXPECT_EQ(0u, hss.satisfied_signals);
-  EXPECT_EQ(0u, hss.satisfiable_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
 
   mp->Close(0);
 

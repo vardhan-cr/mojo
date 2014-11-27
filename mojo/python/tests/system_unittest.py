@@ -45,6 +45,7 @@ class CoreTest(mojo_unittest.MojoTestCase):
     self.assertGreaterEqual(system.HANDLE_SIGNAL_NONE, 0)
     self.assertGreaterEqual(system.HANDLE_SIGNAL_READABLE, 0)
     self.assertGreaterEqual(system.HANDLE_SIGNAL_WRITABLE, 0)
+    self.assertGreaterEqual(system.HANDLE_SIGNAL_PEER_CLOSED, 0)
     self.assertGreaterEqual(system.WRITE_MESSAGE_FLAG_NONE, 0)
     self.assertGreaterEqual(system.READ_MESSAGE_FLAG_NONE, 0)
     self.assertGreaterEqual(system.READ_MESSAGE_FLAG_MAY_DISCARD, 0)
