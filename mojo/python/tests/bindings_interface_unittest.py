@@ -10,6 +10,7 @@ import mojo.system as system
 
 import mojo_unittest
 import mojo.bindings.promise as promise
+import regression_tests_mojom
 import sample_factory_mojom
 import sample_service_mojom
 
@@ -181,3 +182,8 @@ class InterfaceTest(mojo_unittest.MojoTestCase):
     self.loop.RunUntilIdle()
 
     self.assertEquals(p1.state, promise.Promise.STATE_REJECTED)
+
+  def testImportedClient(self):
+    pipe = system.MessagePipe()
+    regression_tests_mojom.InterfaceWithClientImported.manager.Proxy(
+        pipe.handle0)
