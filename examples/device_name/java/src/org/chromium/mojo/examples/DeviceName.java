@@ -4,6 +4,7 @@
 
 package org.chromium.mojo_shell_apk;
 
+import android.content.Context;
 import android.os.Build;
 
 import org.chromium.base.CalledByNative;
@@ -17,5 +18,10 @@ public class DeviceName {
     @CalledByNative
     private static String getName() {
         return Build.MODEL;
+    }
+
+    @CalledByNative
+    private static String getApplicationClassName(Context context) {
+        return context.getApplicationInfo().className;
     }
 }

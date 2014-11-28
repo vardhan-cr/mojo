@@ -111,8 +111,8 @@ public class AndroidHandler {
             Class<?> loadedClass = bootstrapLoader.loadClass(BOOTSTRAP_CLASS);
             Class<? extends Runnable> bootstrapClass = loadedClass.asSubclass(Runnable.class);
             Constructor<? extends Runnable> constructor = bootstrapClass.getConstructor(
-                    File.class, File.class, Integer.class);
-            Runnable bootstrapRunnable = constructor.newInstance(bootstrap_native_library,
+                    Context.class, File.class, File.class, Integer.class);
+            Runnable bootstrapRunnable = constructor.newInstance(context, bootstrap_native_library,
                     application_native_library, Integer.valueOf(handle));
             bootstrapRunnable.run();
         } catch (Throwable t) {

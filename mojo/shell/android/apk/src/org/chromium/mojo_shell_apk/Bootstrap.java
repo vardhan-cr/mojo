@@ -4,6 +4,8 @@
 
 package org.chromium.mojo_shell_apk;
 
+import android.content.Context;
+
 import org.chromium.base.JNINamespace;
 
 import java.io.File;
@@ -16,11 +18,14 @@ import java.io.File;
 @JNINamespace("mojo")
 public class Bootstrap implements Runnable {
 
+    private final Context mContext;
     private final File mBootstrapNativeLibrary;
     private final File mApplicationNativeLibrary;
     private final int mHandle;
 
-    public Bootstrap(File bootstrapNativeLibrary, File applicationNativeLibrary, Integer handle) {
+    public Bootstrap(Context context, File bootstrapNativeLibrary, File applicationNativeLibrary,
+            Integer handle) {
+        mContext = context;
         mBootstrapNativeLibrary = bootstrapNativeLibrary;
         mApplicationNativeLibrary = applicationNativeLibrary;
         mHandle = handle;
@@ -30,8 +35,8 @@ public class Bootstrap implements Runnable {
     public void run() {
         System.load(mBootstrapNativeLibrary.getAbsolutePath());
         System.load(mApplicationNativeLibrary.getAbsolutePath());
-        nativeBootstrap(mApplicationNativeLibrary.getAbsolutePath(), mHandle);
+        nativeBootstrap(mContext, mApplicationNativeLibrary.getAbsolutePath(), mHandle);
     }
 
-    native void nativeBootstrap(String libraryPath, int handle);
+    native void nativeBootstrap(Context context, String libraryPath, int handle);
 }

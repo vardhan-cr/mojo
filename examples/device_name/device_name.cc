@@ -35,10 +35,20 @@ bool RegisterDeviceJni(JNIEnv* env) {
   return RegisterNativesImpl(env);
 }
 
+// Simplest example of a function that needs to call into Java.
 std::string GetDeviceName() {
   JNIEnv* env = base::android::AttachCurrentThread();
   return base::android::ConvertJavaStringToUTF8(
       env, Java_DeviceName_getName(env).obj());
+}
+
+// Example of a function that need to access the application context - see
+// InitApplicationContext() below.
+std::string GetApplicationClassName() {
+  JNIEnv* env = base::android::AttachCurrentThread();
+  jobject context = base::android::GetApplicationContext();
+  return base::android::ConvertJavaStringToUTF8(
+      env, Java_DeviceName_getApplicationClassName(env, context).obj());
 }
 
 }  // namespace examples
@@ -46,6 +56,8 @@ std::string GetDeviceName() {
 
 MojoResult MojoMain(MojoHandle shell_handle) {
   LOG(INFO) << "Device name: " << mojo::examples::GetDeviceName();
+  LOG(INFO) << "Application class: "
+            << mojo::examples::GetApplicationClassName();
   return MOJO_RESULT_OK;
 }
 
@@ -57,4 +69,13 @@ JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     return -1;
 
   return JNI_VERSION_1_4;
+}
+
+// This is needed only if the application actually needs to access the
+// application context. For instance, GetDeviceName() itself doesn't need it,
+// but we use it for demonstrative purposes in GetApplicationClassName().
+extern "C" JNI_EXPORT void InitApplicationContext(
+    const base::android::JavaRef<jobject>& context) {
+  JNIEnv* env = base::android::AttachCurrentThread();
+  base::android::InitApplicationContext(env, context);
 }
