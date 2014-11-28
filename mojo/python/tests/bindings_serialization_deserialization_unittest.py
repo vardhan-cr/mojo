@@ -7,6 +7,7 @@ import math
 import mojo_unittest
 
 # pylint: disable=E0611,F0401
+import mojo.bindings.serialization as serialization
 import mojo.system
 
 # Generated files
@@ -68,13 +69,15 @@ class SerializationDeserializationTest(mojo_unittest.MojoTestCase):
 
   def testFooDeserialization(self):
     (data, handles) = _NewFoo().Serialize()
+    context = serialization.RootDeserializationContext(data, handles)
     self.assertTrue(
-        sample_service_mojom.Foo.Deserialize(data, handles))
+        sample_service_mojom.Foo.Deserialize(context))
 
   def testFooSerializationDeserialization(self):
     foo1 = _NewFoo()
     (data, handles) = foo1.Serialize()
-    foo2 = sample_service_mojom.Foo.Deserialize(data, handles)
+    context = serialization.RootDeserializationContext(data, handles)
+    foo2 = sample_service_mojom.Foo.Deserialize(context)
     self.assertEquals(foo1, foo2)
 
   def testDefaultsTestSerializationDeserialization(self):
@@ -85,7 +88,8 @@ class SerializationDeserializationTest(mojo_unittest.MojoTestCase):
     v1.a22.location = sample_import_mojom.Point()
     v1.a22.size = sample_import2_mojom.Size()
     (data, handles) = v1.Serialize()
-    v2 = sample_service_mojom.DefaultsTest.Deserialize(data, handles)
+    context = serialization.RootDeserializationContext(data, handles)
+    v2 = sample_service_mojom.DefaultsTest.Deserialize(context)
     # NaN needs to be a special case.
     self.assertNotEquals(v1, v2)
     self.assertTrue(math.isnan(v2.a28))

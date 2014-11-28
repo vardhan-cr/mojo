@@ -8,6 +8,7 @@ import("//third_party/cython/rules.gni")
 group("python") {
   deps = [
     ":embedder",
+    ":validation_util",
     "//mojo/public/python",
   ]
 }
@@ -23,5 +24,27 @@ python_binary_module("embedder") {
   ]
   datadeps = [
     "//mojo/public/python:system",
+  ]
+}
+
+copy("tests_module") {
+  sources = [
+    "system/mojo/tests/__init__.py",
+  ]
+  outputs = [
+    "$root_out_dir/python/mojo/tests/{{source_file_part}}",
+  ]
+}
+
+python_binary_module("validation_util") {
+  python_base_module = "mojo/tests"
+  sources = [
+    "system/mojo/tests/validation_util.pyx",
+  ]
+  deps = [
+    "//mojo/public/cpp/bindings/tests:mojo_public_bindings_test_utils",
+  ]
+  datadeps = [
+    ":tests_module",
   ]
 }

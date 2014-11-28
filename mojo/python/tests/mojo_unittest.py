@@ -10,11 +10,15 @@ import mojo.system
 
 
 class MojoTestCase(unittest.TestCase):
-
-  def setUp(self):
-    mojo.embedder.Init()
-    self.loop = mojo.system.RunLoop()
-
-  def tearDown(self):
+  def __init__(self, *args, **kwargs):
+    unittest.TestCase.__init__(self, *args, **kwargs)
     self.loop = None
-    assert mojo.embedder.ShutdownForTest()
+
+  def run(self, *args, **kwargs):
+    try:
+      mojo.embedder.Init()
+      self.loop = mojo.system.RunLoop()
+      unittest.TestCase.run(self, *args, **kwargs)
+    finally:
+      self.loop = None
+      assert mojo.embedder.ShutdownForTest()
