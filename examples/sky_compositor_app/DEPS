@@ -1,4 +1,0 @@
-include_rules = [
-  "+sky/compositor",
-  "+third_party/skia/include",
-]
