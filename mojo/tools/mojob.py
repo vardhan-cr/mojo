@@ -6,17 +6,19 @@
 # This a simple script to make building/testing Mojo components easier.
 
 import argparse
+from copy import deepcopy
 import os
 import platform
 import re
 import subprocess
 import sys
 
+from get_test_list import GetTestList
 from mopy.config import Config
 from mopy.paths import Paths
 
 
-def args_to_config(args):
+def _args_to_config(args):
   # Default to host OS.
   target_os = None
   if args.android:
@@ -50,6 +52,9 @@ def args_to_config(args):
   if 'with_dart' in args:
     additional_args['with_dart'] = args.with_dart
 
+  if 'dry_run' in args:
+    additional_args['dry_run'] = args.dry_run
+
   if 'builder_name' in args:
     additional_args['builder_name'] = args.builder_name
   if 'build_number' in args:
@@ -62,7 +67,7 @@ def args_to_config(args):
   return Config(target_os=target_os, is_debug=args.debug, **additional_args)
 
 
-def get_out_dir(config):
+def _get_out_dir(config):
   paths = Paths(config)
   return paths.SrcRelPath(paths.build_dir)
 
@@ -101,7 +106,7 @@ def gn(config):
     gn_args.append(r'''os=\"chromeos\" ui_base_build_ime=false
                    use_system_harfbuzz=false''')
 
-  out_dir = get_out_dir(config)
+  out_dir = _get_out_dir(config)
   command.append(out_dir)
   command.append('--args="%s"' % ' '.join(gn_args))
 
@@ -109,7 +114,7 @@ def gn(config):
   return subprocess.call(' '.join(command), shell=True)
 
 
-def get_gn_arg_value(out_dir, arg):
+def _get_gn_arg_value(out_dir, arg):
   args_file_path = os.path.join(out_dir, 'args.gn')
   if os.path.isfile(args_file_path):
     key_value_regex = re.compile(r'^%s = (.+)$' % arg)
@@ -122,11 +127,11 @@ def get_gn_arg_value(out_dir, arg):
 
 
 def build(config):
-  out_dir = get_out_dir(config)
+  out_dir = _get_out_dir(config)
   print 'Building in %s ...' % out_dir
-  if get_gn_arg_value(out_dir, 'use_goma') == 'true':
+  if _get_gn_arg_value(out_dir, 'use_goma') == 'true':
     # Use the configured goma directory.
-    local_goma_dir = get_gn_arg_value(out_dir, 'goma_dir')
+    local_goma_dir = _get_gn_arg_value(out_dir, 'goma_dir')
     print 'Ensuring goma (in %s) started ...' % local_goma_dir
     command = ['python',
                os.path.join(local_goma_dir, 'goma_ctl.py'),
@@ -141,146 +146,46 @@ def build(config):
     return subprocess.call(['ninja', '-C', out_dir, 'root'])
 
 
-def run_testrunner(config, out_dir, testlist):
-  command = ['python']
-  if platform.system() == 'Linux' and config.target_os != Config.OS_ANDROID:
-    command.append('./testing/xvfb.py')
-    command.append(out_dir)
+def _run_tests(config, test_types):
+  """Runs the tests of the given type(s) for the given config."""
 
-  command.append(os.path.join('mojo', 'tools', 'test_runner.py'))
-  if config.target_os == Config.OS_ANDROID:
-    command.append('--android')
-  command.append(os.path.join('mojo', 'tools', 'data', testlist))
-  command.append(out_dir)
-  command.append('mojob_test_successes')
-  return subprocess.call(command)
+  assert isinstance(test_types, list)
+  config = deepcopy(config)
+  config.values['test_types'] = test_types
 
-
-def run_apptests(config):
-  out_dir = get_out_dir(config)
-  if config.target_os == Config.OS_ANDROID:
-    return 0
-
-  print 'Running application tests in %s ...' % out_dir
-  command = ['python']
-  if platform.system() == 'Linux':
-    command.append('./testing/xvfb.py')
-    command.append(out_dir)
-
-  command.append(os.path.join('mojo', 'tools', 'apptest_runner.py'))
-  command.append(os.path.join('mojo', 'tools', 'data', 'apptests'))
-  command.append(out_dir)
-  return subprocess.call(command)
-
-
-def run_unittests(config):
-  out_dir = get_out_dir(config)
-  print 'Running unit tests in %s ...' % out_dir
-  if config.target_os == Config.OS_ANDROID:
-    test_list = 'android_unittests'
-  else:
-    test_list = 'unittests'
-  return run_testrunner(config, out_dir, test_list)
-
-
-def run_skytests(config):
-  out_dir = get_out_dir(config)
-  if platform.system() != 'Linux' or config.target_os == Config.OS_ANDROID:
-    return 0
-
-  command = []
-  command.append('./testing/xvfb.py')
-  command.append(out_dir)
-  command.append('sky/tools/test_sky')
-  command.append('-t')
-  command.append('Debug' if config.is_debug else 'Release')
-  command.append('--no-new-test-results')
-  command.append('--no-show-results')
-  command.append('--verbose')
-
-  if config.values['builder_name']:
-    command.append('--builder-name')
-    command.append(config.values['builder_name'])
-
-  if config.values['build_number']:
-    command.append('--build-number')
-    command.append(config.values['build_number'])
-
-  if config.values['master_name']:
-    command.append('--master-name')
-    command.append(config.values['master_name'])
-
-  if config.values['test_results_server']:
-    command.append('--test-results-server')
-    command.append(config.values['test_results_server'])
-
-  subprocess.call(command)
-  # Sky tests are currently really unstable, so make the step green even if
-  # tests actually fail.
-  return 0
-
-
-def run_pytests(config):
-  out_dir = get_out_dir(config)
-  print 'Running python tests in %s ...' % out_dir
-  command = ['python']
-  command.append(os.path.join('mojo', 'tools', 'run_mojo_python_tests.py'))
-  exit_code = subprocess.call(command)
-  if exit_code:
-    return exit_code
-
-  if platform.system() != 'Linux' or config.target_os == Config.OS_ANDROID:
-    print ('Python bindings tests are only supported on Linux.')
-    return
-
-  command = ['python']
-  command.append(os.path.join('mojo', 'tools',
-                              'run_mojo_python_bindings_tests.py'))
-  command.append('--build-dir=' + out_dir)
-  return subprocess.call(command)
-
-
-def test(config):
-  test_suites = [run_unittests, run_apptests, run_pytests, run_skytests]
+  test_list = GetTestList(config)
+  dry_run = config.values.get('dry_run')
   final_exit_code = 0
+  for entry in test_list:
+    print 'Running: %s' % entry['name']
+    print 'Command: %s' % entry['command']
+    if dry_run:
+      continue
 
-  for test_suite in test_suites:
-    exit_code = test_suite(config)
-    # TODO(ojan): Find a better way to do this. We want to run all the tests
-    # so we get coverage even if an early test suite fails, but we only have
-    # one exit code.
+    exit_code = subprocess.call(entry['command'])
+    # TODO(vtl): Temporary hack: Sky tests are currently really unstable, so
+    # make the step green even if the tests actually fail.
+    if entry['name'] == 'Sky tests':
+      exit_code = 0
     if not final_exit_code:
       final_exit_code = exit_code
-
   return final_exit_code
 
 
+def test(config):
+  return _run_tests(config, [Config.TEST_TYPE_DEFAULT])
+
+
 def perftest(config):
-  out_dir = get_out_dir(config)
-  print 'Running perf tests in %s ...' % out_dir
-  command = []
-  command.append(os.path.join(out_dir, 'mojo_public_system_perftests'))
-  return subprocess.call(command)
+  return _run_tests(config, [Config.TEST_TYPE_PERF])
 
 
 def pytest(config):
-  return run_pytests(config)
+  return _run_tests(config, ['python'])
 
 
 def darttest(config):
-  out_dir = get_out_dir(config)
-  print 'Running Dart tests in %s ...' % out_dir
-  exit_code = run_testrunner(config, out_dir, 'dart_unittests')
-  if exit_code:
-    return exit_code
-
-  command = []
-  command.append('dart')
-  command.append('--checked')
-  command.append('--enable-async')
-  command.append(os.path.join('mojo', 'tools', 'dart_test_runner.dart'))
-  command.append(os.path.join(out_dir, 'gen'))
-  return subprocess.call(command)
+  return _run_tests(config, ['dart'])
 
 
 def main():
@@ -323,7 +228,7 @@ def main():
   goma_group = gn_parser.add_mutually_exclusive_group()
   goma_group.add_argument('--goma',
                           help='Use Goma (if $GOMA_DIR is set or $HOME/goma '
-                              'exists;default)',
+                               'exists; default)',
                           default=True,
                           action='store_true')
   goma_group.add_argument('--no-goma', help='Don\'t use Goma', default=False,
@@ -336,6 +241,9 @@ def main():
   test_parser = subparsers.add_parser('test', parents=[parent_parser],
                                       help='Run unit tests (does not build).')
   test_parser.set_defaults(func=test)
+  test_parser.add_argument('--dry-run',
+                           help='Print instead of executing commands',
+                           default=False, action='store_true')
 
   # Arguments required for uploading to the flakiness dashboard.
   test_parser.add_argument('--master-name',
@@ -361,7 +269,7 @@ def main():
   darttest_parser.set_defaults(func=darttest)
 
   args = parser.parse_args()
-  config = args_to_config(args)
+  config = _args_to_config(args)
   return args.func(config)
 
 

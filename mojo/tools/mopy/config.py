@@ -18,7 +18,7 @@ def _GetHostOS():
     return Config.OS_MAC
   if sys.platform == "win32":
     return Config.OS_WINDOWS
-  raise NotImplementedError
+  raise NotImplementedError("Unsupported host OS")
 
 
 class Config(object):
@@ -36,6 +36,12 @@ class Config(object):
   # Valid values for sanitizer (None is also valid):
   SANITIZER_ASAN = "asan"
 
+  # Standard values for test types (test types are arbitrary strings; other
+  # values are allowed).
+  TEST_TYPE_DEFAULT = "default"
+  TEST_TYPE_UNIT = "unit"
+  TEST_TYPE_PERF = "perf"
+
   def __init__(self, target_os=None, is_debug=True, is_clang=None,
                sanitizer=None, **kwargs):
     """Constructs a Config with key-value pairs specified via keyword arguments.
@@ -46,6 +52,8 @@ class Config(object):
     assert isinstance(is_debug, bool)
     assert is_clang is None or isinstance(is_clang, bool)
     assert sanitizer in (None, Config.SANITIZER_ASAN)
+    if "test_types" in kwargs:
+      assert isinstance(kwargs["test_types"], list)
 
     self.values = {}
     self.values["target_os"] = _GetHostOS() if target_os is None else target_os
@@ -76,3 +84,8 @@ class Config(object):
   def sanitizer(self):
     """Sanitizer to use, if any."""
     return self.values["sanitizer"]
+
+  @property
+  def test_types(self):
+    """List of test types to run."""
+    return self.values.get("test_types", [Config.TEST_TYPE_DEFAULT])
