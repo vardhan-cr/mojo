@@ -18,7 +18,7 @@ ChannelEndpoint::ChannelEndpoint(ChannelEndpointClient* client,
   DCHECK(client_.get() || message_queue);
 
   if (message_queue)
-    paused_message_queue_.Swap(message_queue);
+    channel_message_queue_.Swap(message_queue);
 }
 
 bool ChannelEndpoint::EnqueueMessage(scoped_ptr<MessageInTransit> message) {
@@ -32,7 +32,7 @@ bool ChannelEndpoint::EnqueueMessage(scoped_ptr<MessageInTransit> message) {
     // some reason (with live message pipes on it). Ideally, we'd return false
     // (and not enqueue the message), but we currently don't have a way to check
     // this.
-    paused_message_queue_.AddMessage(message.Pass());
+    channel_message_queue_.AddMessage(message.Pass());
     return true;
   }
 
@@ -71,8 +71,8 @@ void ChannelEndpoint::AttachAndRun(Channel* channel,
   local_id_ = local_id;
   remote_id_ = remote_id;
 
-  while (!paused_message_queue_.IsEmpty()) {
-    LOG_IF(WARNING, !WriteMessageNoLock(paused_message_queue_.GetMessage()))
+  while (!channel_message_queue_.IsEmpty()) {
+    LOG_IF(WARNING, !WriteMessageNoLock(channel_message_queue_.GetMessage()))
         << "Failed to write enqueue message to channel";
   }
 

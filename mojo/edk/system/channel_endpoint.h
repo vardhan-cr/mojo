@@ -137,7 +137,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
   // Methods called by |Channel|:
 
   // Called when the |Channel| takes a reference to this object. This will send
-  // all queue messages (in |paused_message_queue_|).
+  // all queue messages (in |channel_message_queue_|).
   // TODO(vtl): Maybe rename this "OnAttach"?
   void AttachAndRun(Channel* channel,
                     ChannelEndpointId local_id,
@@ -179,8 +179,8 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
   ChannelEndpointId remote_id_;
 
   // This queue is used before we're running on a channel and ready to send
-  // messages.
-  MessageInTransitQueue paused_message_queue_;
+  // messages to the channel.
+  MessageInTransitQueue channel_message_queue_;
 
   DISALLOW_COPY_AND_ASSIGN(ChannelEndpoint);
 };
