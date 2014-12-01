@@ -12,6 +12,7 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/shell/external_application_registrar_connection.h"
 #include "mojo/shell/in_process_dynamic_service_runner.h"
+#include "mojo/shell/init.h"
 #include "url/gurl.h"
 
 namespace {
@@ -97,18 +98,22 @@ int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   mojo::embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
       new mojo::embedder::SimplePlatformSupport()));
-  base::CommandLine command_line(argc, argv);
-  Launcher launcher(&command_line);
+
+  base::CommandLine::Init(argc, argv);
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  mojo::shell::InitializeLogging();
+
+  Launcher launcher(command_line);
   int result = launcher.Connect();
   if (result < 0) {
     LOG(ERROR) << "Error(" << result << ") connecting on socket "
-               << command_line.GetSwitchValueASCII(kShellPath);
+               << command_line->GetSwitchValueASCII(kShellPath);
     return MOJO_RESULT_INVALID_ARGUMENT;
   }
 
   if (!launcher.Register()) {
     LOG(ERROR) << "Error registering "
-               << command_line.GetSwitchValueASCII(kAppURL);
+               << command_line->GetSwitchValueASCII(kAppURL);
     return MOJO_RESULT_INVALID_ARGUMENT;
   }
 
