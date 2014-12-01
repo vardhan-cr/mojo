@@ -107,7 +107,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
                     embedder::PlatformHandleVector* platform_handles);
 
   // |ChannelEndpointClient| methods:
-  bool OnReadMessage(unsigned port,
+  void OnReadMessage(unsigned port,
                      scoped_ptr<MessageInTransit> message) override;
   void OnDetachFromChannel(unsigned port) override;
 

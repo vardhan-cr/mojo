@@ -144,7 +144,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
                     ChannelEndpointId remote_id);
 
   // Called when the |Channel| receives a message for the |ChannelEndpoint|.
-  bool OnReadMessage(scoped_ptr<MessageInTransit> message);
+  void OnReadMessage(scoped_ptr<MessageInTransit> message);
 
   // Called before the |Channel| gives up its reference to this object.
   void DetachFromChannel();

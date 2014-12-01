@@ -287,14 +287,16 @@ bool MessagePipe::EndSerialize(
   return true;
 }
 
-bool MessagePipe::OnReadMessage(unsigned port,
+void MessagePipe::OnReadMessage(unsigned port,
                                 scoped_ptr<MessageInTransit> message) {
   // This is called when the |ChannelEndpoint| for the
   // |ProxyMessagePipeEndpoint| |port| receives a message (from the |Channel|).
   // We need to pass this message on to its peer port (typically a
   // |LocalMessagePipeEndpoint|).
-  return EnqueueMessage(GetPeerPort(port), message.Pass(), nullptr) ==
-         MOJO_RESULT_OK;
+  MojoResult result =
+      EnqueueMessage(GetPeerPort(port), message.Pass(), nullptr);
+  DLOG_IF(WARNING, result != MOJO_RESULT_OK)
+      << "EnqueueMessage() failed (result  = " << result << ")";
 }
 
 void MessagePipe::OnDetachFromChannel(unsigned port) {

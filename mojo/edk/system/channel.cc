@@ -337,12 +337,7 @@ void Channel::OnReadMessageForEndpoint(
         this));
   }
 
-  if (!endpoint->OnReadMessage(message.Pass())) {
-    HandleLocalError(
-        base::StringPrintf("Failed to enqueue message to local ID %u",
-                           static_cast<unsigned>(local_id.value())));
-    return;
-  }
+  endpoint->OnReadMessage(message.Pass());
 }
 
 void Channel::OnReadMessageForChannel(

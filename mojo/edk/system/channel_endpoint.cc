@@ -84,7 +84,7 @@ void ChannelEndpoint::AttachAndRun(Channel* channel,
   }
 }
 
-bool ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
+void ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
   scoped_refptr<ChannelEndpointClient> client;
   unsigned client_port;
   {
@@ -93,7 +93,7 @@ bool ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
     if (!client_.get()) {
       // This isn't a failure per se. (It just means that, e.g., the other end
       // of the message point closed first.)
-      return true;
+      return;
     }
 
     // Take a ref, and call |OnReadMessage()| outside the lock.
@@ -101,7 +101,7 @@ bool ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
     client_port = client_port_;
   }
 
-  return client->OnReadMessage(client_port, message.Pass());
+  client->OnReadMessage(client_port, message.Pass());
 }
 
 void ChannelEndpoint::DetachFromChannel() {
