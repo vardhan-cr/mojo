@@ -163,10 +163,6 @@ def _run_tests(config, test_types):
       continue
 
     exit_code = subprocess.call(entry['command'])
-    # TODO(vtl): Temporary hack: Sky tests are currently really unstable, so
-    # make the step green even if the tests actually fail.
-    if entry['name'] == 'Sky tests':
-      exit_code = 0
     if not final_exit_code:
       final_exit_code = exit_code
   return final_exit_code
