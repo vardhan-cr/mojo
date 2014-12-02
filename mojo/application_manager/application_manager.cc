@@ -247,12 +247,7 @@ void ApplicationManager::RegisterExternalApplication(
     ScopedMessagePipeHandle shell_handle) {
   ShellImpl* shell_impl = new ShellImpl(shell_handle.Pass(), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
-
-  URLToArgsMap::const_iterator args_it = url_to_args_.find(url);
-  Array<String> args;
-  if (args_it != url_to_args_.end())
-    args = Array<String>::From(args_it->second);
-  shell_impl->client()->Initialize(args.Pass());
+  shell_impl->client()->Initialize(GetArgsForURL(url));
 }
 
 void ApplicationManager::LoadWithContentHandler(
