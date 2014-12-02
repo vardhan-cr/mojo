@@ -93,6 +93,7 @@ source_set("embedder_unittests") {
     "//base/test:test_support",
     "//mojo/edk/test:test_support",
     "//mojo/edk/system",
+    "//mojo/edk/system:test_utils",
     "//testing/gtest",
   ]
 }

@@ -104,6 +104,20 @@ component("system") {
   allow_circular_includes_from = [ "//mojo/edk/embedder" ]
 }
 
+source_set("test_utils") {
+  testonly = true
+
+  sources = [
+    "test_utils.cc",
+    "test_utils.h",
+  ]
+
+  deps = [
+    "//base",
+    "//base/test:test_support",
+  ]
+}
+
 # GYP version: mojo/edk/mojo_edk.gyp:mojo_system_unittests
 test("mojo_system_unittests") {
   sources = [
@@ -130,9 +144,6 @@ test("mojo_system_unittests") {
     "run_all_unittests.cc",
     "shared_buffer_dispatcher_unittest.cc",
     "simple_dispatcher_unittest.cc",
-    # TODO(vtl): Factor test_utils.* into their own source set.
-    "test_utils.cc",
-    "test_utils.h",
     "waiter_list_unittest.cc",
     "waiter_test_utils.cc",
     "waiter_test_utils.h",
@@ -141,6 +152,7 @@ test("mojo_system_unittests") {
 
   deps = [
     ":system",
+    ":test_utils",
     "//base",
     "//base/test:test_support",
     "//mojo/edk/embedder:embedder_unittests",
@@ -163,12 +175,11 @@ test("mojo_message_pipe_perftests") {
     "message_pipe_perftest.cc",
     "message_pipe_test_utils.h",
     "message_pipe_test_utils.cc",
-    "test_utils.cc",
-    "test_utils.h",
   ]
 
   deps = [
     ":system",
+    ":test_utils",
     "//base",
     "//base/test:test_support",
     "//base/test:test_support_perf",
