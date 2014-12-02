@@ -82,7 +82,12 @@ Commit your change locally (this doesn't commit your change to the SVN or Git se
 ```
   git commit -a
 ```
-If you added new files, you should tell git by running `git add <files>` before committing.
+
+Fix your source code formatting
+
+```
+$ git cl format
+```
 
 Upload your change for review
 
@@ -91,6 +96,7 @@ $ git cl upload
 ```
 
 Respond to review comments
+
 See <a href="http://www.chromium.org/developers/contributing-code">Contributing code</a> for more detailed git instructions, including how to update your CL when you get review comments. There's a short tutorial that might be helpful to try before your first change: <a href="http://dev.chromium.org/developers/cpp-in-chromium-101-codelab">C++ in Chromium 101</a>.
 
 To land a change after receiving LGTM:
