@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/view_target.h"
+#include "services/window_manager/view_target.h"
 
 #include <set>
 
 #include "mojo/services/public/cpp/view_manager/view.h"
-#include "mojo/services/window_manager/window_manager_test_util.h"
+#include "services/window_manager/window_manager_test_util.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/gfx/geometry/rect.h"
 

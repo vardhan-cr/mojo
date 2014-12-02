@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/view_event_dispatcher.h"
+#include "services/window_manager/view_event_dispatcher.h"
 
 #include "mojo/services/public/cpp/view_manager/view.h"
-#include "mojo/services/window_manager/view_target.h"
+#include "services/window_manager/view_target.h"
 
 namespace mojo {
 

@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/view_target.h"
+#include "services/window_manager/view_target.h"
 
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/services/public/cpp/view_manager/view.h"
 #include "mojo/services/public/cpp/view_manager/view_property.h"
-#include "mojo/services/window_manager/view_targeter.h"
-#include "mojo/services/window_manager/window_manager_app.h"
+#include "services/window_manager/view_targeter.h"
+#include "services/window_manager/window_manager_app.h"
 #include "ui/events/event.h"
 #include "ui/events/event_target_iterator.h"
 #include "ui/events/event_targeter.h"

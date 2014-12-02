@@ -10,8 +10,8 @@
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/services/public/cpp/view_manager/view_manager.h"
 #include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
-#include "mojo/services/window_manager/window_manager_app.h"
-#include "mojo/services/window_manager/window_manager_delegate.h"
+#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_delegate.h"
 
 // ApplicationDelegate implementation file for WindowManager users (e.g.
 // core window manager tests) that do not want to provide their own

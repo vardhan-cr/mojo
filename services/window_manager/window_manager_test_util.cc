@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/window_manager_test_util.h"
+#include "services/window_manager/window_manager_test_util.h"
 
 #include "base/stl_util.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_app.h"
 
 #include "base/message_loop/message_loop.h"
 #include "base/stl_util.h"
@@ -13,12 +13,12 @@
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/public/cpp/view_manager/view.h"
 #include "mojo/services/public/cpp/view_manager/view_manager.h"
-#include "mojo/services/window_manager/focus_controller.h"
-#include "mojo/services/window_manager/focus_rules.h"
-#include "mojo/services/window_manager/view_event_dispatcher.h"
-#include "mojo/services/window_manager/view_target.h"
-#include "mojo/services/window_manager/view_targeter.h"
-#include "mojo/services/window_manager/window_manager_delegate.h"
+#include "services/window_manager/focus_controller.h"
+#include "services/window_manager/focus_rules.h"
+#include "services/window_manager/view_event_dispatcher.h"
+#include "services/window_manager/view_target.h"
+#include "services/window_manager/view_targeter.h"
+#include "services/window_manager/window_manager_delegate.h"
 #include "ui/base/hit_test.h"
 
 namespace mojo {

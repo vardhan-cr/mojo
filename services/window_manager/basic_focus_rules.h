@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERIVCES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_
-#define MOJO_SERIVCES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_
+#ifndef SERVICES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_
+#define SERVICES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_
 
-#include "mojo/services/window_manager/focus_rules.h"
+#include "services/window_manager/focus_rules.h"
 
 namespace mojo {
 
@@ -42,4 +42,4 @@ class BasicFocusRules : public FocusRules {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERIVCES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_
+#endif  // SERVICES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_

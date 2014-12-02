@@ -14,10 +14,10 @@
 #include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
 #include "mojo/services/public/cpp/view_manager/view_observer.h"
 #include "mojo/services/public/interfaces/input_events/input_events.mojom.h"
-#include "mojo/services/window_manager/basic_focus_rules.h"
-#include "mojo/services/window_manager/window_manager_app.h"
-#include "mojo/services/window_manager/window_manager_delegate.h"
 #include "mojo/views/views_init.h"
+#include "services/window_manager/basic_focus_rules.h"
+#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_delegate.h"
 
 namespace examples {
 

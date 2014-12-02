@@ -31,7 +31,6 @@ group("services") {
       "//mojo/services/public/interfaces/view_manager",
       "//mojo/services/public/interfaces/window_manager",
       "//mojo/services/view_manager",
-      "//mojo/services/window_manager",
     ]
   }
 }

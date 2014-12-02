@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_
-#define MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_
+#ifndef SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_
+#define SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_
 
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
@@ -22,4 +22,4 @@ class WindowManagerDelegate {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_
+#endif  // SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_DELEGATE_H_

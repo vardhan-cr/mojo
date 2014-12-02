@@ -35,8 +35,8 @@ mojo_native_application("wm") {
     "//mojo/public/c/system:for_shared_library",
     "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/input_events",
-    "//mojo/services/window_manager:lib",
     "//mojo/views:views",
+    "//services/window_manager:lib",
   ]
 }
 
@@ -56,8 +56,8 @@ mojo_native_application("app") {
     "//mojo/public/c/system:for_shared_library",
     "//mojo/public/interfaces/application:application",
     "//mojo/services/public/cpp/view_manager",
-    "//mojo/services/window_manager:lib",
     "//skia",
+    "//services/window_manager:lib",
   ]
 }
 
@@ -76,7 +76,7 @@ mojo_native_application("embedded") {
     "//mojo/application",
     "//mojo/public/c/system:for_shared_library",
     "//mojo/services/public/cpp/view_manager",
-    "//mojo/services/window_manager:lib",
+    "//services/window_manager:lib",
     "//skia",
   ]
 }

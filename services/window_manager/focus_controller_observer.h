@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_
-#define MOJO_SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_
+#ifndef SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_
+#define SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_
 
 namespace mojo {
 
@@ -33,4 +33,4 @@ class FocusControllerObserver {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_
+#endif  // SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_OBSERVER_H_

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_
-#define MOJO_SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_
+#ifndef SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_
+#define SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_
 
 #include "base/memory/scoped_ptr.h"
 #include "ui/events/event_processor.h"
@@ -44,4 +44,4 @@ class ViewEventDispatcher : public ui::EventProcessor {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_
+#endif  // SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERIVCES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_
-#define MOJO_SERIVCES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_
+#ifndef SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_
+#define SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_
 
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
@@ -101,4 +101,4 @@ FocusController* GetFocusController(View* view);
 
 }  // namespace mojo
 
-#endif  // MOJO_SERIVCES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_
+#endif  // SERVICES_WINDOW_MANAGER_FOCUS_CONTROLLER_H_

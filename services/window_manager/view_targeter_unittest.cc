@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/view_targeter.h"
+#include "services/window_manager/view_targeter.h"
 
-#include "mojo/services/window_manager/basic_focus_rules.h"
-#include "mojo/services/window_manager/focus_controller.h"
-#include "mojo/services/window_manager/view_event_dispatcher.h"
-#include "mojo/services/window_manager/window_manager_test_util.h"
+#include "services/window_manager/basic_focus_rules.h"
+#include "services/window_manager/focus_controller.h"
+#include "services/window_manager/view_event_dispatcher.h"
+#include "services/window_manager/window_manager_test_util.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/events/test/test_event_handler.h"
 

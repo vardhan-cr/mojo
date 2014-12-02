@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_
-#define MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_
+#ifndef SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_
+#define SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_
 
 #include <set>
 
@@ -18,10 +18,10 @@
 #include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
 #include "mojo/services/public/cpp/view_manager/view_observer.h"
 #include "mojo/services/public/interfaces/window_manager/window_manager_internal.mojom.h"
-#include "mojo/services/window_manager/focus_controller_observer.h"
-#include "mojo/services/window_manager/native_viewport_event_dispatcher_impl.h"
-#include "mojo/services/window_manager/view_target.h"
-#include "mojo/services/window_manager/window_manager_impl.h"
+#include "services/window_manager/focus_controller_observer.h"
+#include "services/window_manager/native_viewport_event_dispatcher_impl.h"
+#include "services/window_manager/view_target.h"
+#include "services/window_manager/window_manager_impl.h"
 #include "ui/events/event_handler.h"
 
 namespace gfx {
@@ -178,4 +178,4 @@ class WindowManagerApp : public ApplicationDelegate,
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_
+#endif  // SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_

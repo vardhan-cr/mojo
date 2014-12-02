@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
-#define MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
+#ifndef SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
+#define SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
 
 #include "base/basictypes.h"
 #include "base/logging.h"
@@ -62,4 +62,4 @@ class WindowManagerImpl : public WindowManager, public ErrorHandler {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
+#endif  // SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_

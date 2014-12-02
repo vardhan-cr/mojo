@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/window_manager_impl.h"
+#include "services/window_manager/window_manager_impl.h"
 
-#include "mojo/services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_app.h"
 
 namespace mojo {
 

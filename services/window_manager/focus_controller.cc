@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/window_manager/focus_controller.h"
+#include "services/window_manager/focus_controller.h"
 
 #include "base/auto_reset.h"
 #include "mojo/services/public/cpp/view_manager/view_property.h"
 #include "mojo/services/public/cpp/view_manager/view_tracker.h"
-#include "mojo/services/window_manager/focus_controller_observer.h"
-#include "mojo/services/window_manager/focus_rules.h"
-#include "mojo/services/window_manager/view_target.h"
-#include "mojo/services/window_manager/window_manager_app.h"
+#include "services/window_manager/focus_controller_observer.h"
+#include "services/window_manager/focus_rules.h"
+#include "services/window_manager/view_target.h"
+#include "services/window_manager/window_manager_app.h"
 #include "ui/events/event.h"
 
 DECLARE_VIEW_PROPERTY_TYPE(mojo::FocusController*);

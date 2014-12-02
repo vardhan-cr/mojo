@@ -7,7 +7,7 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "mojo/services/public/cpp/view_manager/view_observer.h"
-#include "mojo/services/window_manager/focus_controller.h"
+#include "services/window_manager/focus_controller.h"
 #include "ui/gfx/geometry/rect.h"
 
 namespace mojo {
