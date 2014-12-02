@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/surfaces/surfaces_impl.h"
+#include "services/surfaces/surfaces_impl.h"
 
 #include "base/debug/trace_event.h"
 #include "cc/output/compositor_frame.h"

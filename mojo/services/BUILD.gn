@@ -17,7 +17,6 @@ group("services") {
     "//mojo/services/public/interfaces/navigation",
     "//mojo/services/public/interfaces/network",
     "//mojo/services/public/interfaces/surfaces",
-    "//mojo/services/surfaces",
     "//mojo/services/test_service:bindings",
   ]
 

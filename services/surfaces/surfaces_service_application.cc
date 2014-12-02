@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/surfaces/surfaces_service_application.h"
+#include "services/surfaces/surfaces_service_application.h"
 
 #include "cc/surfaces/display.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
-#include "mojo/services/surfaces/surfaces_service_impl.h"
+#include "services/surfaces/surfaces_service_impl.h"
 
 namespace mojo {
 

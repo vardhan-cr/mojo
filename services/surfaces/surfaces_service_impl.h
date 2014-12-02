@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
-#define MOJO_SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
+#ifndef SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
+#define SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
 
 #include "base/macros.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
-#include "mojo/services/surfaces/surfaces_impl.h"
+#include "services/surfaces/surfaces_impl.h"
 
 namespace cc {
 class SurfaceManager;
@@ -43,4 +43,4 @@ class SurfacesServiceImpl : public SurfacesService {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
+#endif  // SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_
