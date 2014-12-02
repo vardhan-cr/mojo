@@ -15,15 +15,13 @@ namespace mojo {
 namespace system {
 
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Type
-    MessageInTransit::kTypeMessagePipeEndpoint;
-STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Type
-    MessageInTransit::kTypeMessagePipe;
+    MessageInTransit::kTypeEndpoint;
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Type
     MessageInTransit::kTypeChannel;
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Type
     MessageInTransit::kTypeRawChannel;
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Subtype
-    MessageInTransit::kSubtypeMessagePipeEndpointData;
+    MessageInTransit::kSubtypeEndpointData;
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Subtype
     MessageInTransit::kSubtypeChannelAttachAndRunEndpoint;
 STATIC_CONST_MEMBER_DEFINITION const MessageInTransit::Subtype
