@@ -21,8 +21,8 @@ mojo_native_application("js_content_handler") {
     "js_app_runner_delegate.h",
     "js_app_shell.cc",
     "js_app_shell.h",
-    "mojo_bridge_module.cc",
-    "mojo_bridge_module.h",
+    "js_app_bridge_module.cc",
+    "js_app_bridge_module.h",
   ]
 
   deps = [
@@ -55,3 +55,22 @@ test("js_services_unittests") {
     "//services/js/modules/clock/test",
   ]
 }
+
+mojo_native_application("js_apptests") {
+  testonly = true
+
+  sources = [
+    "js_apptests.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/public/c/system:for_shared_library",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/system",
+    "//services/js/test:echo_service",
+  ]
+}
+

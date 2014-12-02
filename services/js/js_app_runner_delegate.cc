@@ -29,9 +29,9 @@ std::vector<base::FilePath> GetModuleSearchPaths() {
 JSAppRunnerDelegate::JSAppRunnerDelegate()
     : ModuleRunnerDelegate(GetModuleSearchPaths()) {
   AddBuiltinModule(gin::Console::kModuleName, gin::Console::GetModule);
-  AddBuiltinModule(js::Core::kModuleName, js::Core::GetModule);
-  AddBuiltinModule(js::Support::kModuleName, js::Support::GetModule);
-  AddBuiltinModule(js::Threading::kModuleName, js::Threading::GetModule);
+  AddBuiltinModule(Core::kModuleName, Core::GetModule);
+  AddBuiltinModule(Support::kModuleName, Support::GetModule);
+  AddBuiltinModule(Threading::kModuleName, Threading::GetModule);
 }
 
 JSAppRunnerDelegate::~JSAppRunnerDelegate() {

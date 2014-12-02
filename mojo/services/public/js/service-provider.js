@@ -2,54 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-define("mojo/services/public/js/mojo", [
+define("mojo/services/public/js/service-provider", [
   "mojo/public/interfaces/application/service_provider.mojom",
   "mojo/public/js/connection",
   "mojo/public/js/core",
-  "services/js/bridge",
-], function(service, connection, core, bridge) {
-
-  function Shell() {
-    this.applications_ = new Map();
-  }
-
-  Shell.prototype.connectToApplication = function(url) {
-    var application = this.applications_.get(url);
-    if (application)
-      return application;
-    application = new ServiceProvider(bridge.connectToApplication(url));
-    this.applications_.set(url, application);
-    return application;
-  };
-
-  Shell.prototype.connectToService = function (url, service, client) {
-    return this.connectToApplication(url).connectToService(service, client);
-  };
-
-  Shell.prototype.close = function() {
-    shell().applications_.forEach(function(application, url) {
-      application.close();
-    });
-    shell().applications_.clear();
-  };
-
-  var shellValue = null;
-
-  function shell() {
-    if (!shellValue)
-      shellValue = new Shell();
-    return shellValue;
-  }
-
-  var requestorValue = null;
-
-  function requestor() {
-    if (!requestorValue) {
-      var handle = bridge.requestorMessagePipeHandle();
-      requestorValue = handle && new ServiceProvider(handle);
-    }
-    return requestorValue;
-  }
+], function(spModule, connectionModule, coreModule) {
 
   function connectToServiceImpl(serviceName, serviceHandle) {
     var provider = this.providers_.get(serviceName);
@@ -58,7 +15,7 @@ define("mojo/services/public/js/mojo", [
       return;
     }
 
-    var serviceConnection = new connection.Connection(
+    var serviceConnection = new connectionModule.Connection(
       serviceHandle,
       provider.service.stubClass,
       provider.service.client && provider.service.client.proxyClass);
@@ -77,10 +34,10 @@ define("mojo/services/public/js/mojo", [
     this.pendingRequests_ = new Map();
     this.connection_ = null;
     this.handle_ = messagePipeHandle;
-    this.connection_ =  new connection.Connection(
+    this.connection_ =  new connectionModule.Connection(
       this.handle_,
-      service.ServiceProvider.client.stubClass,
-      service.ServiceProvider.proxyClass);
+      spModule.ServiceProvider.client.stubClass,
+      spModule.ServiceProvider.proxyClass);
     this.connection_.local.delegate$ = {
       connectToService: connectToServiceImpl.bind(this)
     };
@@ -111,11 +68,11 @@ define("mojo/services/public/js/mojo", [
     if (serviceConnection)
       return serviceConnection.remote;
 
-    var pipe = core.createMessagePipe();
+    var pipe = coreModule.createMessagePipe();
     this.connection_.remote.connectToService(service.name, pipe.handle1);
     var clientClass = client && service.client.stubClass;
-    var serviceConnection =
-      new connection.Connection(pipe.handle0, clientClass, service.proxyClass);
+    var serviceConnection = new connectionModule.Connection(
+        pipe.handle0, clientClass, service.proxyClass);
     if (serviceConnection.local)
       serviceConnection.local.delegate$ = client;
 
@@ -145,25 +102,10 @@ define("mojo/services/public/js/mojo", [
       this.pendingRequests_ = null;
       this.connection_ = null;
       this.handle_ = null;
-
-      shell().applications_.forEach(function(application, url) {
-        if (application === this)
-          shell().applications_.delete(url);
-      }, this);
     }
   };
 
-  function quit() {
-    if (requestorValue)
-      requestor().close();
-    if (shellValue)
-      shell().close();
-    bridge.quit();
-  }
-
   var exports = {};
-  exports.requestor = requestor;
-  exports.shell = shell;
-  exports.quit = quit;
+  exports.ServiceProvider = ServiceProvider;
   return exports;
 });

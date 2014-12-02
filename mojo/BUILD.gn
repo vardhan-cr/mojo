@@ -85,6 +85,7 @@ group("tests") {
     "//mojo/shell:mojo_shell_tests",
     "//mojo/tools:message_generator",
     "//services/js:js_services_unittests",
+    "//services/js:js_apptests",
   ]
 
   if (is_android) {

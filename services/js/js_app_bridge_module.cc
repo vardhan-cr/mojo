@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "services/js/mojo_bridge_module.h"
+#include "services/js/js_app_bridge_module.h"
 
 #include "gin/arguments.h"
 #include "gin/converter.h"
@@ -20,10 +20,9 @@ gin::WrapperInfo g_wrapper_info = {gin::kEmbedderNativeGin};
 
 }  // namespace
 
-const char MojoInternals::kModuleName[] = "services/js/bridge";
+const char AppBridge::kModuleName[] = "services/js/app-bridge";
 
-v8::Local<v8::Value> MojoInternals::GetModule(JSApp* js_app,
-                                              v8::Isolate* isolate) {
+v8::Local<v8::Value> AppBridge::GetModule(JSApp* js_app, v8::Isolate* isolate) {
   gin::PerIsolateData* data = gin::PerIsolateData::From(isolate);
   v8::Local<v8::ObjectTemplate> templ =
       data->GetObjectTemplate(&g_wrapper_info);

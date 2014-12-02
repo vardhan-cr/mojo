@@ -14,9 +14,9 @@
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
+#include "services/js/js_app_bridge_module.h"
 #include "services/js/js_app_message_loop_observers.h"
 #include "services/js/js_app_shell.h"
-#include "services/js/mojo_bridge_module.h"
 
 namespace mojo {
 namespace js {
@@ -88,6 +88,9 @@ JSApp::JSApp(ShellPtr shell, URLResponsePtr response) : shell_(shell.Pass()) {
   std::string url(response->url);
   std::string source;
   CHECK(common::BlockingCopyToString(response->body.Pass(), &source));
+
+  runner_delegate_.AddBuiltinModule(AppBridge::kModuleName,
+      base::Bind(&AppBridge::GetModule, base::Unretained(this)));
 
   shell_runner_.reset(new gin::ShellRunner(&runner_delegate_, isolate));
   gin::Runner::Scope scope(shell_runner_.get());
@@ -165,7 +168,7 @@ void JSApp::AcceptConnection(const String& requestor_url,
   v8::Isolate* isolate = isolate_holder_.isolate();
   v8::Handle<v8::Value> argv[] = {
     gin::ConvertToV8(isolate, requestor_url.To<std::string>()),
-    gin::ConvertToV8(isolate, provider.PassMessagePipe().get()),
+    gin::ConvertToV8(isolate, provider.PassMessagePipe().release()),
   };
   CallAppInstanceMethod("acceptConnection", arraysize(argv), argv);
 }

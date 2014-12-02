@@ -17,7 +17,7 @@ class JSApp;
 // built-in module. It provides the bridge between the JSApp class and
 // JavaScript.
 
-class MojoInternals {
+class AppBridge {
  public:
   static const char kModuleName[];
   static v8::Local<v8::Value> GetModule(JSApp* js_app, v8::Isolate* isolate);
