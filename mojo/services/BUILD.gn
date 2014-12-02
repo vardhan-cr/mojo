@@ -29,7 +29,6 @@ group("services") {
     deps += [
       "//mojo/services/public/interfaces/view_manager",
       "//mojo/services/public/interfaces/window_manager",
-      "//mojo/services/view_manager",
     ]
   }
 }

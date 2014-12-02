@@ -15,6 +15,7 @@ group("services") {
 
   if (use_aura) {
     deps += [
+      "//services/view_manager",
       "//services/window_manager",
     ]
   }
