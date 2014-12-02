@@ -1551,14 +1551,12 @@ def GetDefaultTryConfigs(bots=None):
   """
 
   builders_and_tests = {
-      # TODO(maruel): Figure out a way to run 'sizes' where people can
-      # effectively update the perf expectation correctly.  This requires a
-      # clobber=True build running 'sizes'. 'sizes' is not accurate with
-      # incremental build. Reference:
-      # http://chromium.org/developers/tree-sheriffs/perf-sheriffs.
-      # TODO(maruel): An option would be to run 'sizes' but not count a failure
-      # of this step as a try job failure.
       'Mojo Linux Try': ['defaulttests'],
+      'Mojo Linux (dbg) Try': ['defaulttests'],
+      'Mojo Android Builder Try': ['defaulttests'],
+      'Mojo Android Builder (dbg) Try': ['defaulttests'],
+      'Mojo ChromeOS Builder Try': ['defaulttests'],
+      'Mojo ChromeOS Builder (dbg) Try': ['defaulttests'],
   }
 
   if bots:
@@ -1595,6 +1593,11 @@ def GetPreferredTryMasters(project, change):
 
   builders = [
       'Mojo Linux Try',
+      'Mojo Linux (dbg) Try',
+      'Mojo Android Builder Try',
+      'Mojo Android Builder (dbg) Try',
+      'Mojo ChromeOS Builder Try',
+      'Mojo ChromeOS Builder (dbg) Try',
   ]
 
   return GetDefaultTryConfigs(builders)
