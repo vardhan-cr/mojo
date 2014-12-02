@@ -4,6 +4,7 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
@@ -32,6 +33,7 @@ class DefaultWindowManager : public ApplicationDelegate,
   // Overridden from ApplicationDelegate:
   void Initialize(ApplicationImpl* impl) override {
     window_manager_app_->Initialize(impl);
+    TracingImpl::Create(impl);
   }
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     window_manager_app_->ConfigureIncomingConnection(connection);

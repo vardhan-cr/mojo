@@ -29,6 +29,7 @@ class ViewManagerApp : public ApplicationDelegate,
 
  private:
   // ApplicationDelegate:
+  void Initialize(ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
   // ConnectionManagerDelegate:

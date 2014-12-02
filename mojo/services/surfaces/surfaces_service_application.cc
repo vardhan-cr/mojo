@@ -6,6 +6,7 @@
 
 #include "cc/surfaces/display.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/services/surfaces/surfaces_service_impl.h"
 
@@ -19,6 +20,10 @@ SurfacesServiceApplication::SurfacesServiceApplication()
 }
 
 SurfacesServiceApplication::~SurfacesServiceApplication() {
+}
+
+void SurfacesServiceApplication::Initialize(ApplicationImpl* app) {
+  TracingImpl::Create(app);
 }
 
 bool SurfacesServiceApplication::ConfigureIncomingConnection(

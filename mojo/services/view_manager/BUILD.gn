@@ -16,6 +16,7 @@ mojo_native_application("view_manager") {
     ":view_manager_lib",
     "//base",
     "//mojo/application",
+    "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
     "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings:bindings",

@@ -7,24 +7,40 @@
 
 #include "base/basictypes.h"
 #include "base/files/file_path.h"
-#include "mojo/common/tracing.mojom.h"
+#include "base/memory/ref_counted.h"
+#include "base/memory/ref_counted_memory.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
+#include "services/tracing/tracing.mojom.h"
 
 namespace mojo {
 
-class TracingImpl : public Tracing {
+class ApplicationImpl;
+
+class TracingImpl : public tracing::TraceController {
  public:
-  TracingImpl(InterfaceRequest<Tracing> request,
-              base::FilePath::StringType base_name);
+  // This constructs a TracingImpl and connects to the tracing service. The
+  // lifetime of the TracingImpl is bound to the connection to the tracing
+  // service.
+  static void Create(ApplicationImpl* app);
+
+  // This constructs a TracingImpl around a tracing::TraceDataCollectorPtr
+  // already bound to the service.
+  static void Create(tracing::TraceDataCollectorPtr ptr);
+
   virtual ~TracingImpl();
 
  private:
-  // Overridden from Tracing:
-  void Start() override;
-  void Stop() override;
+  explicit TracingImpl(ApplicationImpl* app);
+  explicit TracingImpl(tracing::TraceDataCollectorPtr ptr);
 
-  base::FilePath::StringType base_name_;
-  StrongBinding<Tracing> binding_;
+  // Overridden from tracing::TraceController:
+  void StartTracing(const String& categories) override;
+  void StopTracing() override;
+
+  void SendChunk(const scoped_refptr<base::RefCountedString>& events_str,
+                 bool has_more_events);
+
+  StrongBinding<tracing::TraceController> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(TracingImpl);
 };

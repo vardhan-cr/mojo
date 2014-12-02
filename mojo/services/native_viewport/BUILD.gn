@@ -26,6 +26,7 @@ if (is_android) {
       ":lib",
       "//base",
       "//mojo/application",
+      "//mojo/common:tracing_impl",
       "//mojo/public/c/system:for_shared_library",
       "//mojo/public/cpp/bindings:bindings",
       "//mojo/services/gles2:gles2",

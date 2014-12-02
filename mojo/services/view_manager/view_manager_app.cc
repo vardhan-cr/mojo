@@ -5,6 +5,7 @@
 #include "mojo/services/view_manager/view_manager_app.h"
 
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -19,6 +20,10 @@ namespace service {
 ViewManagerApp::ViewManagerApp() : wm_app_connection_(nullptr) {
 }
 ViewManagerApp::~ViewManagerApp() {}
+
+void ViewManagerApp::Initialize(ApplicationImpl* app) {
+  TracingImpl::Create(app);
+}
 
 bool ViewManagerApp::ConfigureIncomingConnection(
     ApplicationConnection* connection) {

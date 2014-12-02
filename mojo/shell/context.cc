@@ -18,6 +18,7 @@
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/application_manager/application_manager.h"
 #include "mojo/application_manager/background_shell_application_loader.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -30,6 +31,8 @@
 #include "mojo/shell/switches.h"
 #include "mojo/shell/ui_application_loader_android.h"
 #include "mojo/spy/spy.h"
+#include "services/tracing/tracing.mojom.h"
+#include "url/gurl.h"
 
 #if defined(OS_ANDROID)
 #include "mojo/services/gles2/gpu_impl.h"
@@ -270,6 +273,11 @@ bool Context::Init() {
                                          GURL("mojo:android_handler"));
   }
 #endif
+
+  tracing::TraceDataCollectorPtr trace_data_collector_ptr;
+  application_manager_.ConnectToService(GURL("mojo:tracing"),
+                                        &trace_data_collector_ptr);
+  TracingImpl::Create(trace_data_collector_ptr.Pass());
 
   if (listener_)
     listener_->WaitForListening();

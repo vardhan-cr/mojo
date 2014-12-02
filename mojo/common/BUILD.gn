@@ -67,12 +67,9 @@ source_set("tracing_impl") {
   ]
 
   deps = [
-    ":tracing_bindings",
     "//base",
+    "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings",
+    "//services/tracing:bindings",
   ]
-}
-
-mojom("tracing_bindings") {
-  sources = [ "tracing.mojom" ]
 }

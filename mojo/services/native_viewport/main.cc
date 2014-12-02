@@ -5,6 +5,7 @@
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -29,6 +30,8 @@ class NativeViewportAppDelegate
   // ApplicationDelegate implementation.
   void Initialize(ApplicationImpl* application) override {
     app_ = application;
+
+    TracingImpl::Create(application);
 
     if (app_->HasArg(kUseTestConfig))
       gfx::GLSurface::InitializeOneOffForTests();

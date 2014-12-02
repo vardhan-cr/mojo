@@ -2,6 +2,7 @@ include_rules = [
   "+gpu",
   "+mojo/edk/embedder",
   "+net",
+  "+services",
   "+ui/gfx/switches.h",
   "+ui/gl",
 ]

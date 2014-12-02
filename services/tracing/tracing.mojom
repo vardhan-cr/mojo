@@ -1,0 +1,31 @@
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module tracing;
+
+// To particate in the tracing ecosystem, implement the TraceController
+// interface and connect to the tracing app. Then, when the controller's Start()
+// function is called collect tracing data and pass it back via the
+// TraceDataCollector interface up until Stop() is called.
+
+[Client=TraceDataCollector]
+interface TraceController {
+  StartTracing(string categories);
+  StopTracing();
+};
+
+[Client=TraceController]
+interface TraceDataCollector {
+  DataCollected(string json);
+  EndTracing();
+};
+
+interface TraceCoordinator {
+  // Request tracing data from all connected TraceControllers to save in a file
+  // derived from |base_name|.
+  Start(string base_name, string categories);
+
+  // Stop tracing and flush results to file.
+  StopAndFlush();
+};

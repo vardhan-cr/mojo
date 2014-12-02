@@ -7,5 +7,6 @@ group("services") {
     "//services/http_server",
     "//services/http_server/public",
     "//services/js",
+    "//services/tracing",
   ]
 }

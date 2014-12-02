@@ -135,12 +135,15 @@ source_set("lib") {
     "//mojo/application",
     "//mojo/application_manager",
     "//mojo/common",
+    "//mojo/common:tracing_impl",
     "//mojo/edk/system",
     "//mojo/public/cpp/bindings",
     "//mojo/public/interfaces/application",
     "//mojo/services/public/interfaces/network",
     "//mojo/shell/domain_socket",
     "//mojo/spy",
+    "//services/tracing:bindings",
+    "//url",
   ]
 
   if (is_win) {

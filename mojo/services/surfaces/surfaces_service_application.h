@@ -24,6 +24,7 @@ class SurfacesServiceApplication : public ApplicationDelegate,
   ~SurfacesServiceApplication() override;
 
   // ApplicationDelegate implementation.
+  void Initialize(ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
   // InterfaceFactory<SurfacsServicee> implementation.

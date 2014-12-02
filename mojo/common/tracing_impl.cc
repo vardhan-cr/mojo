@@ -4,68 +4,58 @@
 
 #include "mojo/common/tracing_impl.h"
 
-#include "base/callback.h"
 #include "base/debug/trace_event.h"
-#include "base/files/file_util.h"
+#include "mojo/public/cpp/application/application_connection.h"
+#include "mojo/public/cpp/application/application_impl.h"
 
 namespace mojo {
-namespace {
 
-static bool g_tracing = false;
-static int g_blocks = 0;
-static FILE* g_trace_file = NULL;
-
-void WriteTraceDataCollected(
-    const scoped_refptr<base::RefCountedString>& events_str,
-    bool has_more_events) {
-  if (g_blocks) {
-    fwrite(",", 1, 1, g_trace_file);
-  }
-  ++g_blocks;
-  fwrite(events_str->data().c_str(), 1, events_str->data().length(),
-         g_trace_file);
-  if (!has_more_events) {
-    fwrite("]}", 1, 2, g_trace_file);
-    base::CloseFile(g_trace_file);
-    g_trace_file = NULL;
-    g_blocks = 0;
-  }
+// static
+void TracingImpl::Create(ApplicationImpl* app) {
+  new TracingImpl(app);
 }
 
-void StopTracingAndFlushToDisk(base::FilePath::StringType base_name) {
-  base::debug::TraceLog::GetInstance()->SetDisabled();
-
-  base_name.append(FILE_PATH_LITERAL(".trace"));
-  g_trace_file = base::OpenFile(base::FilePath(base_name), "w+");
-  static const char start[] = "{\"traceEvents\":[";
-  fwrite(start, 1, strlen(start), g_trace_file);
-  base::debug::TraceLog::GetInstance()->Flush(
-      base::Bind(&WriteTraceDataCollected));
-}
+// static
+void TracingImpl::Create(tracing::TraceDataCollectorPtr ptr) {
+  new TracingImpl(ptr.Pass());
 }
 
-TracingImpl::TracingImpl(InterfaceRequest<Tracing> request,
-                         base::FilePath::StringType base_name)
-    : base_name_(base_name), binding_(this, request.Pass()) {
+TracingImpl::TracingImpl(ApplicationImpl* app) : binding_(this) {
+  ApplicationConnection* connection = app->ConnectToApplication("mojo:tracing");
+  tracing::TraceDataCollectorPtr trace_data_collector_ptr;
+  connection->ConnectToService(&trace_data_collector_ptr);
+  binding_.Bind(trace_data_collector_ptr.PassMessagePipe());
+}
+
+TracingImpl::TracingImpl(tracing::TraceDataCollectorPtr ptr)
+    : binding_(this, ptr.PassMessagePipe()) {
 }
 
 TracingImpl::~TracingImpl() {
 }
 
-void TracingImpl::Start() {
-  if (g_tracing)
-    return;
-  g_tracing = true;
+void TracingImpl::StartTracing(const String& categories) {
+  std::string categories_str = categories.To<std::string>();
   base::debug::TraceLog::GetInstance()->SetEnabled(
-      base::debug::CategoryFilter("*"), base::debug::TraceLog::RECORDING_MODE,
+      base::debug::CategoryFilter(categories_str),
+      base::debug::TraceLog::RECORDING_MODE,
       base::debug::TraceOptions(base::debug::RECORD_UNTIL_FULL));
 }
 
-void TracingImpl::Stop() {
-  if (!g_tracing)
-    return;
-  g_tracing = false;
-  StopTracingAndFlushToDisk(base_name_);
+void TracingImpl::StopTracing() {
+  base::debug::TraceLog::GetInstance()->SetDisabled();
+
+  base::debug::TraceLog::GetInstance()->Flush(
+      base::Bind(&TracingImpl::SendChunk, base::Unretained(this)));
+}
+
+void TracingImpl::SendChunk(
+    const scoped_refptr<base::RefCountedString>& events_str,
+    bool has_more_events) {
+  binding_.client()->DataCollected(mojo::String(events_str->data()));
+  if (!has_more_events) {
+    binding_.client()->EndTracing();
+  }
 }
 
 }  // namespace mojo
