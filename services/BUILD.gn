@@ -6,6 +6,7 @@ import("//build/config/ui.gni")
 
 group("services") {
   deps = [
+    "//services/clipboard",
     "//services/http_server",
     "//services/http_server/public",
     "//services/js",

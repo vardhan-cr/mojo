@@ -14,7 +14,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
-#include "mojo/services/clipboard/clipboard_standalone_impl.h"
+#include "services/clipboard/clipboard_standalone_impl.h"
 
 class Delegate : public mojo::ApplicationDelegate,
                  public mojo::InterfaceFactory<mojo::Clipboard> {

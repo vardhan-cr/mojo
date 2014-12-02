@@ -6,7 +6,6 @@ import("//build/config/ui.gni")
 
 group("services") {
   deps = [
-    "//mojo/services/clipboard",
     "//mojo/services/gles2:lib",
     "//mojo/services/network",
     "//mojo/services/public/interfaces/accessibility",
