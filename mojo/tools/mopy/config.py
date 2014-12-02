@@ -11,16 +11,6 @@ import os.path
 import sys
 
 
-def _GetHostOS():
-  if sys.platform == "linux2":
-    return Config.OS_LINUX
-  if sys.platform == "darwin":
-    return Config.OS_MAC
-  if sys.platform == "win32":
-    return Config.OS_WINDOWS
-  raise NotImplementedError("Unsupported host OS")
-
-
 class Config(object):
   """A Config is basically just a wrapper around a dictionary that species a
   build/test configuration. The dictionary is accessible through the values
@@ -56,12 +46,23 @@ class Config(object):
       assert isinstance(kwargs["test_types"], list)
 
     self.values = {}
-    self.values["target_os"] = _GetHostOS() if target_os is None else target_os
+    self.values["target_os"] = (self.GetHostOS() if target_os is None else
+                                target_os)
     self.values["is_debug"] = is_debug
     self.values["is_clang"] = is_clang
     self.values["sanitizer"] = sanitizer
 
     self.values.update(kwargs)
+
+  @staticmethod
+  def GetHostOS():
+    if sys.platform == "linux2":
+      return Config.OS_LINUX
+    if sys.platform == "darwin":
+      return Config.OS_MAC
+    if sys.platform == "win32":
+      return Config.OS_WINDOWS
+    raise NotImplementedError("Unsupported host OS")
 
   # Getters for standard fields ------------------------------------------------
 

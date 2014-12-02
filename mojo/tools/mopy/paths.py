@@ -32,7 +32,10 @@ class Paths(object):
 
     if self.build_dir is not None:
       self.mojo_shell_path = os.path.join(self.build_dir, "mojo_shell")
-      if config.target_os == Config.OS_WINDOWS:
+      # TODO(vtl): Use the host OS here, since |config| may not be available.
+      # In any case, if the target is Windows, but the host isn't, using
+      # |os.path| isn't correct....
+      if Config.GetHostOS() == Config.OS_WINDOWS:
         self.mojo_shell_path += ".exe"
     else:
       self.mojo_shell_path = None
