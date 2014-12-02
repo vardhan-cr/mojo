@@ -142,8 +142,8 @@ MojoResult MessagePipe::WriteMessage(
   return EnqueueMessage(
       GetPeerPort(port),
       make_scoped_ptr(new MessageInTransit(
-          MessageInTransit::kTypeEndpoint,
-          MessageInTransit::kSubtypeEndpointData, num_bytes, bytes)),
+          MessageInTransit::kTypeMessagePipeEndpoint,
+          MessageInTransit::kSubtypeMessagePipeEndpointData, num_bytes, bytes)),
       transports);
 }
 
@@ -321,7 +321,12 @@ MojoResult MessagePipe::EnqueueMessage(
   DCHECK(port == 0 || port == 1);
   DCHECK(message);
 
-  DCHECK_EQ(message->type(), MessageInTransit::kTypeEndpoint);
+  if (message->type() == MessageInTransit::kTypeMessagePipe) {
+    DCHECK(!transports);
+    return HandleControlMessage(port, message.Pass());
+  }
+
+  DCHECK_EQ(message->type(), MessageInTransit::kTypeMessagePipeEndpoint);
 
   base::AutoLock locker(lock_);
   DCHECK(endpoints_[GetPeerPort(port)]);
@@ -383,6 +388,14 @@ MojoResult MessagePipe::AttachTransportsNoLock(
   }
   message->SetDispatchers(dispatchers.Pass());
   return MOJO_RESULT_OK;
+}
+
+MojoResult MessagePipe::HandleControlMessage(
+    unsigned /*port*/,
+    scoped_ptr<MessageInTransit> message) {
+  LOG(WARNING) << "Unrecognized MessagePipe control message subtype "
+               << message->subtype();
+  return MOJO_RESULT_UNKNOWN;
 }
 
 }  // namespace system
