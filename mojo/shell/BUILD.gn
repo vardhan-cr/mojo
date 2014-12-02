@@ -217,6 +217,7 @@ if (is_android) {
   android_library("java") {
     java_files = [
       "android/apk/src/org/chromium/mojo_shell_apk/AndroidHandler.java",
+      "android/apk/src/org/chromium/mojo_shell_apk/FileHelper.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo_shell_apk/MojoShellApplication.java",

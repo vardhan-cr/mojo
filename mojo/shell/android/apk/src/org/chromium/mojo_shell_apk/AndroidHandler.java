@@ -12,18 +12,9 @@ import dalvik.system.DexClassLoader;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Constructor;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * Content handler for archives containing native libraries bundled with Java code.
@@ -52,17 +43,14 @@ public class AndroidHandler {
     private static final String APP_DIRECTORY = "applications";
     private static final String ASSET_DIRECTORY = "assets";
 
-    // Size of the buffer used in streaming file operations.
-    private static final int BUFFER_SIZE = 1024 * 1024;
-
     /**
      * Deletes directories holding the temporary files. This should be called early on shell
      * startup to clean up after the previous run.
      */
     static void clearTemporaryFiles(Context context) {
-        context.getDir(DEX_OUTPUT_DIRECTORY, Context.MODE_PRIVATE).delete();
-        context.getDir(APP_DIRECTORY, Context.MODE_PRIVATE).delete();
-        context.getDir(ASSET_DIRECTORY, Context.MODE_PRIVATE).delete();
+        getDexOutputDir(context).delete();
+        getAppDir(context).delete();
+        getAssetDir(context).delete();
     }
 
     /**
@@ -71,7 +59,7 @@ public class AndroidHandler {
     @CalledByNative
     private static String getNewTempArchivePath(Context context) throws IOException {
         return File.createTempFile(ARCHIVE_PREFIX, ARCHIVE_SUFFIX,
-                context.getDir(APP_DIRECTORY, Context.MODE_PRIVATE)).getAbsolutePath();
+                getAppDir(context)).getAbsolutePath();
     }
 
     /**
@@ -82,8 +70,10 @@ public class AndroidHandler {
         File bootstrap_java_library;
         File bootstrap_native_library;
         try {
-            bootstrap_java_library = extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY);
-            bootstrap_native_library = extractFromAssets(context, BOOTSTRAP_NATIVE_LIBRARY);
+            bootstrap_java_library = FileHelper.extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY,
+                    getAssetDir(context));
+            bootstrap_native_library = FileHelper.extractFromAssets(context,
+                    BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context));
         } catch (Exception e) {
             Log.e(TAG, "Extraction of bootstrap files from assets failed: " + e);
             return false;
@@ -93,9 +83,10 @@ public class AndroidHandler {
         File application_native_library;
         try {
             File archive = new File(archivePath);
-            application_java_library = extractFromArchive(context, archive, JAVA_LIBRARY_SUFFIX);
-            application_native_library = extractFromArchive(context, archive,
-                    NATIVE_LIBRARY_SUFFIX);
+            application_java_library = FileHelper.extractFromArchive(archive,
+                    JAVA_LIBRARY_SUFFIX, APP_LIBRARY_PREFIX, getAppDir(context));
+            application_native_library = FileHelper.extractFromArchive(archive,
+                    NATIVE_LIBRARY_SUFFIX, APP_LIBRARY_PREFIX, getAppDir(context));
         } catch (Exception e) {
             Log.e(TAG, "Extraction of application files from the archive failed: " + e);
             return false;
@@ -103,9 +94,9 @@ public class AndroidHandler {
 
         String dexPath = bootstrap_java_library.getAbsolutePath() + File.pathSeparator
                 + application_java_library.getAbsolutePath();
-        File dex_output_dir = context.getDir(DEX_OUTPUT_DIRECTORY, Context.MODE_PRIVATE);
         DexClassLoader bootstrapLoader = new DexClassLoader(dexPath,
-                dex_output_dir.getAbsolutePath(), null, ClassLoader.getSystemClassLoader());
+                getDexOutputDir(context).getAbsolutePath(), null,
+                ClassLoader.getSystemClassLoader());
 
         try {
             Class<?> loadedClass = bootstrapLoader.loadClass(BOOTSTRAP_CLASS);
@@ -122,49 +113,15 @@ public class AndroidHandler {
         return true;
     }
 
-    private static File extractFromAssets(Context context, String assetName)
-            throws IOException, FileNotFoundException {
-        File outputFile = new File(
-                context.getDir(ASSET_DIRECTORY, Context.MODE_PRIVATE), assetName);
-
-        BufferedInputStream inputStream = new BufferedInputStream(
-                context.getAssets().open(assetName));
-        writeStreamToFile(inputStream, outputFile);
-        inputStream.close();
-        return outputFile;
+    private static File getDexOutputDir(Context context) {
+        return context.getDir(DEX_OUTPUT_DIRECTORY, Context.MODE_PRIVATE);
     }
 
-    /**
-     * Extracts the file of the given extension from the archive. Throws FileNotFoundException if
-     * no matching file is found.
-     */
-    private static File extractFromArchive(Context context, File archive, String suffix)
-            throws IOException, FileNotFoundException {
-        ZipInputStream zip = new ZipInputStream(new BufferedInputStream(new FileInputStream(
-                archive)));
-        ZipEntry entry;
-        while ((entry = zip.getNextEntry()) != null) {
-            if (entry.getName().endsWith(suffix)) {
-                String fileName = new File(entry.getName()).getName();
-                File extractedFile = File.createTempFile(APP_LIBRARY_PREFIX, suffix,
-                        context.getDir(APP_DIRECTORY, Context.MODE_PRIVATE));
-                writeStreamToFile(zip, extractedFile);
-                zip.close();
-                return extractedFile;
-            }
-        }
-        zip.close();
-        throw new FileNotFoundException();
+    private static File getAppDir(Context context) {
+        return context.getDir(APP_DIRECTORY, Context.MODE_PRIVATE);
     }
 
-    private static void writeStreamToFile(InputStream inputStream, File outputFile)
-            throws IOException {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
-        int read;
-        while ((read = inputStream.read(buffer, 0, BUFFER_SIZE)) > 0) {
-            outputStream.write(buffer, 0, read);
-        }
-        outputStream.close();
+    private static File getAssetDir(Context context) {
+        return context.getDir(ASSET_DIRECTORY, Context.MODE_PRIVATE);
     }
 }
