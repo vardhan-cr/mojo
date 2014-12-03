@@ -26,4 +26,14 @@ TestView::TestView(int id, const gfx::Rect& rect, View* parent)
 TestView::~TestView() {
 }
 
+// static
+TestView* TestView::Build(int id, const gfx::Rect& rect) {
+  return new TestView(id, rect);
+}
+
+// static
+TestView* TestView::Build(int id, const gfx::Rect& rect, View* parent) {
+  return new TestView(id, rect, parent);
+}
+
 }  // namespace mojo

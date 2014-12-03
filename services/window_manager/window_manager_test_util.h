@@ -25,6 +25,11 @@ class TestView : public View {
   TestView(int id, const gfx::Rect& rect, View* parent);
   ~TestView();
 
+  // Builds a child view as a pointer. The caller is responsible for making
+  // sure that the root of any tree allocated this way is Destroy()ed.
+  static TestView* Build(int id, const gfx::Rect& rect);
+  static TestView* Build(int id, const gfx::Rect& rect, View* parent);
+
   ViewTarget* target() { return target_; }
 
  private:

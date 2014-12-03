@@ -23,8 +23,8 @@ class FocusNotificationObserver : public FocusControllerObserver {
       : activation_changed_count_(0),
         focus_changed_count_(0),
         reactivation_count_(0),
-        reactivation_requested_window_(NULL),
-        reactivation_actual_window_(NULL) {}
+        reactivation_requested_view_(NULL),
+        reactivation_actual_view_(NULL) {}
   ~FocusNotificationObserver() override {}
 
   void ExpectCounts(int activation_changed_count, int focus_changed_count) {
@@ -32,11 +32,11 @@ class FocusNotificationObserver : public FocusControllerObserver {
     EXPECT_EQ(focus_changed_count, focus_changed_count_);
   }
   int reactivation_count() const { return reactivation_count_; }
-  View* reactivation_requested_window() const {
-    return reactivation_requested_window_;
+  View* reactivation_requested_view() const {
+    return reactivation_requested_view_;
   }
-  View* reactivation_actual_window() const {
-    return reactivation_actual_window_;
+  View* reactivation_actual_view() const {
+    return reactivation_actual_view_;
   }
 
  protected:
@@ -52,18 +52,107 @@ class FocusNotificationObserver : public FocusControllerObserver {
   void OnAttemptToReactivateView(View* request_active,
                                  View* actual_active) override {
     ++reactivation_count_;
-    reactivation_requested_window_ = request_active;
-    reactivation_actual_window_ = actual_active;
+    reactivation_requested_view_ = request_active;
+    reactivation_actual_view_ = actual_active;
   }
 
  private:
   int activation_changed_count_;
   int focus_changed_count_;
   int reactivation_count_;
-  View* reactivation_requested_window_;
-  View* reactivation_actual_window_;
+  View* reactivation_requested_view_;
+  View* reactivation_actual_view_;
 
   DISALLOW_COPY_AND_ASSIGN(FocusNotificationObserver);
+};
+
+class ViewDestroyer {
+ public:
+  virtual View* GetDestroyedView() = 0;
+
+ protected:
+  virtual ~ViewDestroyer() {}
+};
+
+// FocusNotificationObserver that keeps track of whether it was notified about
+// activation changes or focus changes with a destroyed view.
+class RecordingFocusNotificationObserver : public FocusNotificationObserver {
+ public:
+  RecordingFocusNotificationObserver(FocusController* focus_controller,
+                                     ViewDestroyer* destroyer)
+      : focus_controller_(focus_controller),
+        destroyer_(destroyer),
+        was_notified_with_destroyed_view_(false) {
+    focus_controller_->AddObserver(this);
+  }
+  ~RecordingFocusNotificationObserver() override {
+    focus_controller_->RemoveObserver(this);
+  }
+
+  bool was_notified_with_destroyed_view() const {
+    return was_notified_with_destroyed_view_;
+  }
+
+  // Overridden from FocusNotificationObserver:
+  void OnViewActivated(View* gained_active, View* lost_active) override {
+    if (lost_active && lost_active == destroyer_->GetDestroyedView())
+      was_notified_with_destroyed_view_ = true;
+  }
+
+  void OnViewFocused(View* gained_focus, View* lost_focus) override {
+    if (lost_focus && lost_focus == destroyer_->GetDestroyedView())
+      was_notified_with_destroyed_view_ = true;
+  }
+
+ private:
+  mojo::FocusController* focus_controller_;
+
+  // Not owned.
+  ViewDestroyer* destroyer_;
+
+  // Whether the observer was notified about the loss of activation or the
+  // loss of focus with a view already destroyed by |destroyer_| as the
+  // |lost_active| or |lost_focus| parameter.
+  bool was_notified_with_destroyed_view_;
+
+  DISALLOW_COPY_AND_ASSIGN(RecordingFocusNotificationObserver);
+};
+
+class DestroyOnLoseActivationFocusNotificationObserver
+    : public FocusNotificationObserver,
+      public ViewDestroyer {
+ public:
+  DestroyOnLoseActivationFocusNotificationObserver(
+      FocusController* focus_controller,
+      View* view_to_destroy)
+      : focus_controller_(focus_controller),
+        view_to_destroy_(view_to_destroy),
+        did_destroy_(false) {
+    focus_controller_->AddObserver(this);
+  }
+  ~DestroyOnLoseActivationFocusNotificationObserver() override {
+    focus_controller_->RemoveObserver(this);
+  }
+
+  // Overridden from FocusNotificationObserver:
+  void OnViewActivated(View* gained_active, View* lost_active) override {
+    if (view_to_destroy_ && lost_active == view_to_destroy_) {
+      view_to_destroy_->Destroy();
+      did_destroy_ = true;
+    }
+  }
+
+  // Overridden from ViewDestroyer:
+  View* GetDestroyedView() override {
+    return did_destroy_ ? view_to_destroy_ : nullptr;
+  }
+
+ private:
+  FocusController* focus_controller_;
+  View* view_to_destroy_;
+  bool did_destroy_;
+
+  DISALLOW_COPY_AND_ASSIGN(DestroyOnLoseActivationFocusNotificationObserver);
 };
 
 class ScopedFocusNotificationObserver : public FocusNotificationObserver {
@@ -181,7 +270,7 @@ class TestFocusRules : public BasicFocusRules {
   TestFocusRules(View* root)
       : BasicFocusRules(root), focus_restriction_(NULL) {}
 
-  // Restricts focus and activation to this window and its child hierarchy.
+  // Restricts focus and activation to this view and its child hierarchy.
   void set_focus_restriction(View* focus_restriction) {
     focus_restriction_ = focus_restriction;
   }
@@ -231,7 +320,7 @@ class TestFocusRules : public BasicFocusRules {
 class FocusControllerTestBase : public testing::Test {
  protected:
   // Hierarchy used by all tests:
-  // root_window
+  // root_view
   //       +-- w1
   //       |    +-- w11
   //       |    +-- w12
@@ -240,14 +329,14 @@ class FocusControllerTestBase : public testing::Test {
   //       |         +-- w211
   //       +-- w3
   FocusControllerTestBase()
-      : root_view_(0, gfx::Rect(0, 0, 800, 600)),
-        v1(1, gfx::Rect(0, 0, 50, 50), root_view()),
-        v11(11, gfx::Rect(5, 5, 10, 10), &v1),
-        v12(12, gfx::Rect(15, 15, 10, 10), &v1),
-        v2(2, gfx::Rect(75, 75, 50, 50), root_view()),
-        v21(21, gfx::Rect(5, 5, 10, 10), &v2),
-        v211(211, gfx::Rect(1, 1, 5, 5), &v21),
-        v3(3, gfx::Rect(125, 125, 50, 50), root_view()) {}
+      : root_view_(TestView::Build(0, gfx::Rect(0, 0, 800, 600))),
+        v1(TestView::Build(1, gfx::Rect(0, 0, 50, 50), root_view())),
+        v11(TestView::Build(11, gfx::Rect(5, 5, 10, 10), v1)),
+        v12(TestView::Build(12, gfx::Rect(15, 15, 10, 10), v1)),
+        v2(TestView::Build(2, gfx::Rect(75, 75, 50, 50), root_view())),
+        v21(TestView::Build(21, gfx::Rect(5, 5, 10, 10), v2)),
+        v211(TestView::Build(211, gfx::Rect(1, 1, 5, 5), v21)),
+        v3(TestView::Build(3, gfx::Rect(125, 125, 50, 50), root_view())) {}
 
   // Overridden from testing::Test:
   void SetUp() override {
@@ -257,7 +346,7 @@ class FocusControllerTestBase : public testing::Test {
     focus_controller_.reset(
         new FocusController(scoped_ptr<FocusRules>(test_focus_rules_)));
 
-    ViewTarget* root_target = root_view_.target();
+    ViewTarget* root_target = root_view_->target();
     root_target->SetEventTargeter(scoped_ptr<ViewTargeter>(new ViewTargeter()));
     view_event_dispatcher_.reset(new ViewEventDispatcher());
     view_event_dispatcher_->SetRootViewTarget(root_target);
@@ -268,6 +357,8 @@ class FocusControllerTestBase : public testing::Test {
   void TearDown() override {
     GetRootViewTarget()->RemovePreTargetHandler(focus_controller_.get());
     view_event_dispatcher_.reset();
+
+    root_view_->Destroy();
 
     test_focus_rules_ = nullptr;  // Owned by FocusController.
     focus_controller_.reset();
@@ -289,14 +380,14 @@ class FocusControllerTestBase : public testing::Test {
     return active_view ? active_view->id() : -1;
   }
 
-  View* GetViewById(int id) { return root_view_.GetChildById(id); }
+  View* GetViewById(int id) { return root_view_->GetChildById(id); }
 
   void ClickLeftButton(View* view) {
     // Get the center bounds of |target| in |root_view_| coordinate space.
     gfx::Point center =
         gfx::Rect(view->bounds().To<gfx::Rect>().size()).CenterPoint();
     ViewTarget::ConvertPointToTarget(ViewTarget::TargetFromView(view),
-                                     root_view_.target(), &center);
+                                     root_view_->target(), &center);
 
     ui::MouseEvent button_down(ui::ET_MOUSE_PRESSED, center, center,
                                ui::EF_LEFT_MOUSE_BUTTON, ui::EF_NONE);
@@ -314,7 +405,7 @@ class FocusControllerTestBase : public testing::Test {
     return ViewTarget::TargetFromView(root_view());
   }
 
-  View* root_view() { return &root_view_; }
+  View* root_view() { return root_view_; }
   TestFocusRules* test_focus_rules() { return test_focus_rules_; }
   FocusController* focus_controller() { return focus_controller_.get(); }
 
@@ -332,9 +423,16 @@ class FocusControllerTestBase : public testing::Test {
   virtual void FocusRulesOverride() = 0;
   virtual void ActivationRulesOverride() = 0;
   virtual void ShiftFocusOnActivation() {}
+  virtual void ShiftFocusOnActivationDueToHide() {}
+  virtual void NoShiftActiveOnActivation() {}
+  // TODO(erg): void NoFocusChangeOnClickOnCaptureWindow() once we have a
+  // system of capture.
+  // TODO(erg): Also, void ChangeFocusWhenNothingFocusedAndCaptured().
+  virtual void DontPassDestroyedView() {}
+  // TODO(erg): Also, void FocusedTextInputClient() once we build the IME.
 
  private:
-  TestView root_view_;
+  TestView* root_view_;
   scoped_ptr<FocusController> focus_controller_;
   TestFocusRules* test_focus_rules_;
   // TODO(erg): The aura version of this class also keeps track of WMState. Do
@@ -342,18 +440,18 @@ class FocusControllerTestBase : public testing::Test {
 
   scoped_ptr<ViewEventDispatcher> view_event_dispatcher_;
 
-  TestView v1;
-  TestView v11;
-  TestView v12;
-  TestView v2;
-  TestView v21;
-  TestView v211;
-  TestView v3;
+  TestView* v1;
+  TestView* v11;
+  TestView* v12;
+  TestView* v2;
+  TestView* v21;
+  TestView* v211;
+  TestView* v3;
 
   DISALLOW_COPY_AND_ASSIGN(FocusControllerTestBase);
 };
 
-// Test base for tests where focus is directly set to a target window.
+// Test base for tests where focus is directly set to a target view.
 class FocusControllerDirectTestBase : public FocusControllerTestBase {
  protected:
   FocusControllerDirectTestBase() {}
@@ -363,7 +461,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
   virtual void ActivateViewDirect(View* view) = 0;
   virtual void DeactivateViewDirect(View* view) = 0;
 
-  // Input events do not change focus if the window can not be focused.
+  // Input events do not change focus if the view can not be focused.
   virtual bool IsInputEvent() = 0;
 
   void FocusViewById(int id) {
@@ -420,7 +518,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     observer2.ExpectCounts(1, 1);
   }
   void DuplicateFocusEvents() override {
-    // Focusing an existing focused window should not resend focus events.
+    // Focusing an existing focused view should not resend focus events.
     ScopedFocusNotificationObserver root_observer(focus_controller());
     ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
                                                        GetViewById(1));
@@ -464,12 +562,12 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     ActivateViewById(2);
     EXPECT_EQ(1, root_observer.reactivation_count());
     EXPECT_EQ(GetViewById(2),
-              root_observer.reactivation_requested_window());
+              root_observer.reactivation_requested_view());
     EXPECT_EQ(GetViewById(1),
-              root_observer.reactivation_actual_window());
+              root_observer.reactivation_actual_view());
   }
   void DuplicateActivationEvents() override {
-    // Activating an existing active window should not resend activation events.
+    // Activating an existing active view should not resend activation events.
     ActivateViewById(1);
 
     ScopedFocusNotificationObserver root_observer(focus_controller());
@@ -515,7 +613,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     FocusViewById(11);
     EXPECT_EQ(11, GetFocusedViewId());
     FocusViewById(1);
-    // Focus should _not_ shift to the parent of the already-focused window.
+    // Focus should _not_ shift to the parent of the already-focused view.
     EXPECT_EQ(11, GetFocusedViewId());
   }
   void FocusRulesOverride() override {
@@ -594,6 +692,77 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     ActivateViewById(1);
     EXPECT_EQ(1, GetFocusedViewId());
   }
+  void ShiftFocusOnActivationDueToHide() override {
+    // Similar to ShiftFocusOnActivation except the activation change is
+    // triggered by hiding the active view.
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    // Removes view 3 as candidate for next activatable view.
+    root_view()->GetChildById(3)->SetVisible(false);
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    View* target = root_view()->GetChildById(2);
+
+    scoped_ptr<FocusShiftingActivationObserver> observer(
+        new FocusShiftingActivationObserver(focus_controller(), target));
+    observer->set_shift_focus_to(target->GetChildById(21));
+    focus_controller()->AddObserver(observer.get());
+
+    // Hide the active view.
+    root_view()->GetChildById(1)->SetVisible(false);
+
+    EXPECT_EQ(21, GetFocusedViewId());
+
+    focus_controller()->RemoveObserver(observer.get());
+  }
+  void NoShiftActiveOnActivation() override {
+    // When a view is activated, we need to prevent any change to activation
+    // from being made in response to an activation change notification.
+  }
+
+  // TODO(erg): Port the capture tests here, once we have a capture mechanism.
+
+  // Verifies if a view that loses activation or focus is destroyed during
+  // observer notification we don't pass the destroyed view to other observers.
+  void DontPassDestroyedView() override {
+    FocusViewById(1);
+
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    {
+      View* to_destroy = root_view()->GetChildById(1);
+      DestroyOnLoseActivationFocusNotificationObserver observer1(
+          focus_controller(), to_destroy);
+      RecordingFocusNotificationObserver observer2(focus_controller(),
+                                                   &observer1);
+
+      FocusViewById(2);
+
+      EXPECT_EQ(2, GetActiveViewId());
+      EXPECT_EQ(2, GetFocusedViewId());
+
+      EXPECT_EQ(to_destroy, observer1.GetDestroyedView());
+      EXPECT_FALSE(observer2.was_notified_with_destroyed_view());
+    }
+
+    {
+      View* to_destroy = root_view()->GetChildById(2);
+      DestroyOnLoseActivationFocusNotificationObserver observer1(
+          focus_controller(), to_destroy);
+      RecordingFocusNotificationObserver observer2(focus_controller(),
+                                                   &observer1);
+
+      FocusViewById(3);
+
+      EXPECT_EQ(3, GetActiveViewId());
+      EXPECT_EQ(3, GetFocusedViewId());
+
+      EXPECT_EQ(to_destroy, observer1.GetDestroyedView());
+      EXPECT_FALSE(observer2.was_notified_with_destroyed_view());
+    }
+  }
 
 
   // TODO(erg): There are a whole bunch other tests here. Port them.
@@ -622,7 +791,7 @@ class FocusControllerMouseEventTest : public FocusControllerDirectTestBase {
  public:
   FocusControllerMouseEventTest() {}
 
-  // Tests that a handled mouse event does not trigger a window activation.
+  // Tests that a handled mouse event does not trigger a view activation.
   void IgnoreHandledEvent() {
     EXPECT_EQ(NULL, GetActiveView());
     View* v1 = root_view()->GetChildById(1);
@@ -649,6 +818,160 @@ class FocusControllerMouseEventTest : public FocusControllerDirectTestBase {
   DISALLOW_COPY_AND_ASSIGN(FocusControllerMouseEventTest);
 };
 
+// TODO(erg): Add a FocusControllerGestureEventTest once we have working
+// gesture forwarding and handling.
+
+// Test base for tests where focus is implicitly set to a window as the result
+// of a disposition change to the focused window or the hierarchy that contains
+// it.
+class FocusControllerImplicitTestBase : public FocusControllerTestBase {
+ protected:
+  explicit FocusControllerImplicitTestBase(bool parent) : parent_(parent) {}
+
+  View* GetDispositionView(View* view) {
+    return parent_ ? view->parent() : view;
+  }
+
+  // Change the disposition of |view| in such a way as it will lose focus.
+  virtual void ChangeViewDisposition(View* view) = 0;
+
+  // Allow each disposition change test to add additional post-disposition
+  // change expectations.
+  virtual void PostDispostionChangeExpectations() {}
+
+  // Overridden from FocusControllerTestBase:
+  void BasicFocus() override {
+    EXPECT_EQ(NULL, GetFocusedView());
+
+    View* w211 = root_view()->GetChildById(211);
+    FocusView(w211);
+    EXPECT_EQ(211, GetFocusedViewId());
+
+    ChangeViewDisposition(w211);
+    // BasicFocusRules passes focus to the parent.
+    EXPECT_EQ(parent_ ? 2 : 21, GetFocusedViewId());
+  }
+
+  void BasicActivation() override {
+    DCHECK(!parent_) << "Activation tests don't support parent changes.";
+
+    EXPECT_EQ(NULL, GetActiveView());
+
+    View* w2 = root_view()->GetChildById(2);
+    ActivateView(w2);
+    EXPECT_EQ(2, GetActiveViewId());
+
+    ChangeViewDisposition(w2);
+    EXPECT_EQ(3, GetActiveViewId());
+    PostDispostionChangeExpectations();
+  }
+
+  void FocusEvents() override {
+    View* w211 = root_view()->GetChildById(211);
+    FocusView(w211);
+
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    ScopedFilteringFocusNotificationObserver observer211(focus_controller(),
+                                                         GetViewById(211));
+    root_observer.ExpectCounts(0, 0);
+    observer211.ExpectCounts(0, 0);
+
+    ChangeViewDisposition(w211);
+    root_observer.ExpectCounts(0, 1);
+    observer211.ExpectCounts(0, 1);
+  }
+
+  void ActivationEvents() override {
+    DCHECK(!parent_) << "Activation tests don't support parent changes.";
+
+    View* w2 = root_view()->GetChildById(2);
+    ActivateView(w2);
+
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
+                                                       GetViewById(2));
+    ScopedFilteringFocusNotificationObserver observer3(focus_controller(),
+                                                       GetViewById(3));
+    root_observer.ExpectCounts(0, 0);
+    observer2.ExpectCounts(0, 0);
+    observer3.ExpectCounts(0, 0);
+
+    ChangeViewDisposition(w2);
+    root_observer.ExpectCounts(1, 1);
+    observer2.ExpectCounts(1, 1);
+    observer3.ExpectCounts(1, 1);
+  }
+
+  void FocusRulesOverride() override {
+    EXPECT_EQ(NULL, GetFocusedView());
+    View* w211 = root_view()->GetChildById(211);
+    FocusView(w211);
+    EXPECT_EQ(211, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(root_view()->GetChildById(11));
+    ChangeViewDisposition(w211);
+    // Normally, focus would shift to the parent (w21) but the override shifts
+    // it to 11.
+    EXPECT_EQ(11, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(NULL);
+  }
+
+  void ActivationRulesOverride() override {
+    DCHECK(!parent_) << "Activation tests don't support parent changes.";
+
+    View* w1 = root_view()->GetChildById(1);
+    ActivateView(w1);
+
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    View* w3 = root_view()->GetChildById(3);
+    test_focus_rules()->set_focus_restriction(w3);
+
+    // Normally, activation/focus would move to w2, but since we have a focus
+    // restriction, it should move to w3 instead.
+    ChangeViewDisposition(w1);
+    EXPECT_EQ(3, GetActiveViewId());
+    EXPECT_EQ(3, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(NULL);
+    ActivateView(root_view()->GetChildById(2));
+    EXPECT_EQ(2, GetActiveViewId());
+    EXPECT_EQ(2, GetFocusedViewId());
+  }
+
+ private:
+  // When true, the disposition change occurs to the parent of the window
+  // instead of to the window. This verifies that changes occurring in the
+  // hierarchy that contains the window affect the window's focus.
+  bool parent_;
+
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerImplicitTestBase);
+};
+
+// Focus and Activation changes in response to window visibility changes.
+class FocusControllerHideTest : public FocusControllerImplicitTestBase {
+ public:
+  FocusControllerHideTest() : FocusControllerImplicitTestBase(false) {}
+
+ protected:
+  FocusControllerHideTest(bool parent)
+      : FocusControllerImplicitTestBase(parent) {}
+
+  // Overridden from FocusControllerImplicitTestBase:
+  void ChangeViewDisposition(View* view) override {
+    GetDispositionView(view)->SetVisible(false);
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerHideTest);
+};
+
+// TODO(erg): Add FocusControllerParentHideTest and the rest.
+
+// TODO(erg): Destroy view tests?
+
 #define FOCUS_CONTROLLER_TEST(TESTCLASS, TESTNAME) \
   TEST_F(TESTCLASS, TESTNAME) { TESTNAME(); }
 
@@ -659,16 +982,53 @@ class FocusControllerMouseEventTest : public FocusControllerDirectTestBase {
   FOCUS_CONTROLLER_TEST(FocusControllerApiTest, TESTNAME) \
   FOCUS_CONTROLLER_TEST(FocusControllerMouseEventTest, TESTNAME)
 
-// TODO(erg): Once all the basic tests are implemented, go through this list
-// and change the ones which are ALL_FOCUS_TESTS() to the correct macro.
+// Runs implicit focus change tests for disposition changes to target.
+#define IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME) \
+    FOCUS_CONTROLLER_TEST(FocusControllerHideTest, TESTNAME)
+// TODO(erg): Add the destruction and removal tests once we've made View track
+// visibility/destruction of its parents/children.
 
-DIRECT_FOCUS_CHANGE_TESTS(BasicFocus);
-DIRECT_FOCUS_CHANGE_TESTS(BasicActivation);
-DIRECT_FOCUS_CHANGE_TESTS(FocusEvents);
+// TODO(erg): Add IMPLICIT_FOCUS_CHANGE_PARENT_TESTS
+
+// Runs all implicit focus change tests (changes to the target and target's
+// parent hierarchy)
+#define IMPLICIT_FOCUS_CHANGE_TESTS(TESTNAME) \
+    IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME)
+// TODO(erg): Enable
+//    IMPLICIT_FOCUS_CHANGE_PARENT_TESTS(TESTNAME)
+
+// Runs all possible focus change tests.
+#define ALL_FOCUS_TESTS(TESTNAME) \
+    DIRECT_FOCUS_CHANGE_TESTS(TESTNAME) \
+    IMPLICIT_FOCUS_CHANGE_TESTS(TESTNAME)
+
+// Runs focus change tests that apply only to the target. For example,
+// implicit activation changes caused by window disposition changes do not
+// occur when changes to the containing hierarchy happen.
+#define TARGET_FOCUS_TESTS(TESTNAME) \
+    DIRECT_FOCUS_CHANGE_TESTS(TESTNAME) \
+    IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME)
+
+// - Focuses a window, verifies that focus changed.
+ALL_FOCUS_TESTS(BasicFocus);
+
+// - Activates a window, verifies that activation changed.
+TARGET_FOCUS_TESTS(BasicActivation);
+
+// - Focuses a window, verifies that focus events were dispatched.
+ALL_FOCUS_TESTS(FocusEvents);
+
+// - Focuses or activates a window multiple times, verifies that events are only
+//   dispatched when focus/activation actually changes.
 DIRECT_FOCUS_CHANGE_TESTS(DuplicateFocusEvents);
 DIRECT_FOCUS_CHANGE_TESTS(DuplicateActivationEvents);
 
-DIRECT_FOCUS_CHANGE_TESTS(ActivationEvents);
+// - Activates a window, verifies that activation events were dispatched.
+TARGET_FOCUS_TESTS(ActivationEvents);
+
+// - Attempts to active a hidden view, verifies that current view is
+//   attempted to be reactivated and the appropriate event dispatched.
+FOCUS_CONTROLLER_TEST(FocusControllerApiTest, ReactivationEvents);
 
 // - Input events/API calls shift focus between focusable views within the
 //   active view.
@@ -682,24 +1042,26 @@ DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusToChildOfInactiveView);
 //   shift focus away from the child.
 DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusToParentOfFocusedView);
 
-// - Attempts to active a hidden window, verifies that current window is
-//   attempted to be reactivated and the appropriate event dispatched.
-FOCUS_CONTROLLER_TEST(FocusControllerApiTest, ReactivationEvents);
-
 // - Verifies that FocusRules determine what can be focused.
-DIRECT_FOCUS_CHANGE_TESTS(FocusRulesOverride);
+ALL_FOCUS_TESTS(FocusRulesOverride);
 
 // - Verifies that FocusRules determine what can be activated.
-DIRECT_FOCUS_CHANGE_TESTS(ActivationRulesOverride);
+TARGET_FOCUS_TESTS(ActivationRulesOverride);
 
 // - Verifies that attempts to change focus or activation from a focus or
 //   activation change observer are ignored.
 DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusOnActivation);
+DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusOnActivationDueToHide);
+DIRECT_FOCUS_CHANGE_TESTS(NoShiftActiveOnActivation);
 
-// TODO(erg): Also port IMPLICIT_FOCUS_CHANGE_TARGET_TESTS / ALL_FOCUS_TESTS
-// here, and replace the above direct testing list.
+// TODO(erg): Add the capture tests here.
 
-// If a mouse event was handled, it should not activate a window.
+// See description above DontPassDestroyedView() for details.
+FOCUS_CONTROLLER_TEST(FocusControllerApiTest, DontPassDestroyedView);
+
+// TODO(erg): Add the TextInputClient tests here.
+
+// If a mouse event was handled, it should not activate a view.
 FOCUS_CONTROLLER_TEST(FocusControllerMouseEventTest, IgnoreHandledEvent);
 
 }  // namespace mojo

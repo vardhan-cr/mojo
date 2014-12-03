@@ -146,7 +146,7 @@ void FocusController::OnGestureEvent(ui::GestureEvent* event) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// FocusController, aura::WindowObserver implementation:
+// FocusController, mojo::ViewObserver implementation:
 
 void FocusController::OnViewVisibilityChanged(View* view) {
   bool visible = view->visible();
