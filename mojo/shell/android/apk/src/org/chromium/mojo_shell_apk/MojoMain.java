@@ -49,5 +49,6 @@ public class MojoMain {
      * Initializes the native system. This API should be called only once per process.
      **/
     private static native void nativeInit(Context context, String[] parameters);
+
     private static native void nativeStart(String appUrl);
-};
+}

@@ -18,6 +18,7 @@ import java.lang.reflect.Constructor;
 
 /**
  * Content handler for archives containing native libraries bundled with Java code.
+ * <p>
  * TODO(ppi): create a seperate instance for each application being bootstrapped to keep track of
  * the temporary files and clean them up once the execution finishes.
  */
@@ -45,8 +46,8 @@ public class AndroidHandler {
     private static final String ASSET_DIRECTORY = "assets";
 
     /**
-     * Deletes directories holding the temporary files. This should be called early on shell
-     * startup to clean up after the previous run.
+     * Deletes directories holding the temporary files. This should be called early on shell startup
+     * to clean up after the previous run.
      */
     static void clearTemporaryFiles(Context context) {
         FileHelper.deleteRecursively(getDexOutputDir(context));
