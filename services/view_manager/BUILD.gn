@@ -51,6 +51,7 @@ source_set("view_manager_lib") {
   deps = [
     "//base",
     "//cc/surfaces",
+    "//cc/surfaces:surface_id",
     "//mojo/application",
     "//mojo/common",
     "//mojo/converters/geometry",

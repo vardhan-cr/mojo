@@ -66,6 +66,7 @@ source_set("lib") {
   deps = [
     "//base",
     "//cc/surfaces",
+    "//cc/surfaces:surface_id",
     "//gpu/command_buffer/service",
     "//mojo/application",
     "//mojo/common",
