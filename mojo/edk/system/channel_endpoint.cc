@@ -100,7 +100,7 @@ void ChannelEndpoint::AttachAndRun(Channel* channel,
 
 void ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
   scoped_refptr<ChannelEndpointClient> client;
-  unsigned client_port;
+  unsigned client_port = 0;
 
   // This loop is to make |ReplaceClient()| work. We can't call the client's
   // |OnReadMessage()| under our lock, so by the time we do that, |client| may
