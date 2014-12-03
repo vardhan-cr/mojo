@@ -89,39 +89,6 @@ source_set("test_support") {
   ]
 }
 
-test("view_manager_unittests") {
-  sources = [
-    "view_manager_unittest.cc",
-  ]
-
-  deps = [
-    ":test_support",
-    ":view_manager_lib",
-    "//base",
-    "//base/test:test_support",
-    "//mojo/application",
-    "//mojo/application_manager",
-    "//mojo/converters/geometry",
-    "//mojo/converters/input_events",
-    "//mojo/edk/system",
-    "//mojo/environment:chromium",
-    "//mojo/public/cpp/bindings",
-    "//mojo/services/public/cpp/native_viewport:args",
-    "//mojo/services/public/cpp/view_manager",
-    "//mojo/services/public/cpp/view_manager/lib:run_unittests",
-    "//mojo/services/public/interfaces/geometry",
-    "//mojo/services/public/interfaces/view_manager",
-    "//mojo/services/public/interfaces/window_manager",
-    "//mojo/shell:test_support",
-    "//testing/gtest",
-    "//ui/gfx/geometry",
-  ]
-
-  if (!is_android) {  # TODO(GYP) Enable on Android when osmesa links.
-    deps += [ "//third_party/mesa:osmesa" ]
-  }
-}
-
 test("view_manager_service_unittests") {
   sources = [
     "view_coordinate_conversions_unittest.cc",
