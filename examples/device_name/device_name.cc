@@ -26,6 +26,7 @@
 #include "base/android/jni_string.h"
 #include "jni/DeviceName_jni.h"
 #include "mojo/public/c/system/main.h"
+#include "mojo/public/cpp/system/core.h"
 
 namespace mojo {
 
@@ -55,9 +56,18 @@ std::string GetApplicationClassName() {
 }  // namespace mojo
 
 MojoResult MojoMain(MojoHandle shell_handle) {
+  // Call a Java function to demonstrate that the JNI was correctly set up.
   LOG(INFO) << "Device name: " << mojo::examples::GetDeviceName();
+
+  // Call a function that uses the application context to demonstrate that it
+  // was properly set.
   LOG(INFO) << "Application class: "
             << mojo::examples::GetApplicationClassName();
+
+  // Call a Mojo core function to demonstrate that the thunks were properly set.
+  MojoTimeTicks ticks = MojoGetTimeTicksNow();
+  LOG(INFO) << "Timeticks: " << ticks;
+
   return MOJO_RESULT_OK;
 }
 

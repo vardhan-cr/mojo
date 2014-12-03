@@ -164,6 +164,7 @@ source_set("lib") {
 
     deps += [
       ":jni_headers",
+      ":run_android_application_function",
       "//mojo/services/gles2",
       "//mojo/services/native_viewport:lib",
       "//mojo/services/network:lib",
@@ -209,8 +210,15 @@ if (is_android) {
     deps = [
       ":jni_headers",
       ":lib",
+      ":run_android_application_function",
       "//base",
-      "//mojo/environment:chromium",
+    ]
+  }
+
+  # Shared header between the bootstrap and the main shell .so.
+  source_set("run_android_application_function") {
+    sources = [
+      "android/run_android_application_function.h",
     ]
   }
 
