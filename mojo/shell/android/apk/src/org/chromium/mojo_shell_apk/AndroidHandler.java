@@ -18,6 +18,8 @@ import java.lang.reflect.Constructor;
 
 /**
  * Content handler for archives containing native libraries bundled with Java code.
+ * TODO(ppi): create a seperate instance for each application being bootstrapped to keep track of
+ * the temporary files and clean them up once the execution finishes.
  */
 @JNINamespace("mojo")
 public class AndroidHandler {
@@ -34,7 +36,6 @@ public class AndroidHandler {
     private static final String NATIVE_LIBRARY_SUFFIX = ".so";
     // Filename sections used for naming temporary files holding application files.
     private static final String ARCHIVE_PREFIX = "archive";
-    private static final String APP_LIBRARY_PREFIX = "app-library";
     private static final String ARCHIVE_SUFFIX = ".zip";
 
     // Directories used to hold temporary files. These are cleared when clearTemporaryFiles() is
@@ -83,10 +84,10 @@ public class AndroidHandler {
         File application_native_library;
         try {
             File archive = new File(archivePath);
-            application_java_library = FileHelper.extractFromArchive(archive,
-                    JAVA_LIBRARY_SUFFIX, APP_LIBRARY_PREFIX, getAppDir(context));
+            application_java_library = FileHelper.extractFromArchive(archive, JAVA_LIBRARY_SUFFIX,
+                    getAppDir(context));
             application_native_library = FileHelper.extractFromArchive(archive,
-                    NATIVE_LIBRARY_SUFFIX, APP_LIBRARY_PREFIX, getAppDir(context));
+                    NATIVE_LIBRARY_SUFFIX, getAppDir(context));
         } catch (Exception e) {
             Log.e(TAG, "Extraction of application files from the archive failed: " + e);
             return false;

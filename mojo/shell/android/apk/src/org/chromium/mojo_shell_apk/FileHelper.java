@@ -24,10 +24,15 @@ import java.util.zip.ZipInputStream;
 class FileHelper {
     // Size of the buffer used in streaming file operations.
     private static final int BUFFER_SIZE = 1024 * 1024;
+    // Prefix used when naming temporary files.
+    private static final String TEMP_FILE_PREFIX = "temp-";
 
     static File extractFromAssets(Context context, String assetName, File outputDirectory)
             throws IOException, FileNotFoundException {
-        File outputFile = new File(outputDirectory, assetName);
+        // Make the original filename part of the temp file name.
+        // TODO(ppi): do we need to sanitize the suffix?
+        String suffix = "-" + assetName;
+        File outputFile = File.createTempFile(TEMP_FILE_PREFIX, suffix, outputDirectory);
         BufferedInputStream inputStream = new BufferedInputStream(
                 context.getAssets().open(assetName));
         writeStreamToFile(inputStream, outputFile);
@@ -39,15 +44,17 @@ class FileHelper {
      * Extracts the file of the given extension from the archive. Throws FileNotFoundException if
      * no matching file is found.
      */
-    static File extractFromArchive(File archive, String suffixToMatch, String prefixToAdd,
+    static File extractFromArchive(File archive, String suffixToMatch,
             File outputDirectory) throws IOException, FileNotFoundException {
         ZipInputStream zip = new ZipInputStream(new BufferedInputStream(new FileInputStream(
                 archive)));
         ZipEntry entry;
         while ((entry = zip.getNextEntry()) != null) {
             if (entry.getName().endsWith(suffixToMatch)) {
-                String fileName = new File(entry.getName()).getName();
-                File extractedFile = File.createTempFile(prefixToAdd, suffixToMatch,
+                // Make the original filename part of the temp file name.
+                // TODO(ppi): do we need to sanitize the suffix?
+                String suffix = "-" + new File(entry.getName()).getName();
+                File extractedFile = File.createTempFile(TEMP_FILE_PREFIX, suffix,
                         outputDirectory);
                 writeStreamToFile(zip, extractedFile);
                 zip.close();
