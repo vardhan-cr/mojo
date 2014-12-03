@@ -139,6 +139,39 @@ class SimpleEventHandler : public ui::EventHandler {
   DISALLOW_COPY_AND_ASSIGN(SimpleEventHandler);
 };
 
+class FocusShiftingActivationObserver
+    : public FocusControllerObserver {
+ public:
+  explicit FocusShiftingActivationObserver(FocusController* focus_controller,
+                                           View* activated_view)
+      : focus_controller_(focus_controller),
+        activated_view_(activated_view),
+        shift_focus_to_(NULL) {}
+  ~FocusShiftingActivationObserver() override {}
+
+  void set_shift_focus_to(View* shift_focus_to) {
+    shift_focus_to_ = shift_focus_to;
+  }
+
+ private:
+  // Overridden from FocusControllerObserver:
+  void OnViewActivated(View* gained_active,
+                       View* lost_active) override {
+    // Shift focus to a child. This should prevent the default focusing from
+    // occurring in FocusController::FocusView().
+    if (gained_active == activated_view_)
+      focus_controller_->FocusView(shift_focus_to_);
+  }
+
+  void OnViewFocused(View* gained_focus, View* lost_focus) override {}
+
+  FocusController* focus_controller_;
+  View* activated_view_;
+  View* shift_focus_to_;
+
+  DISALLOW_COPY_AND_ASSIGN(FocusShiftingActivationObserver);
+};
+
 // BasicFocusRules subclass that allows basic overrides of focus/activation to
 // be tested. This is intended more as a test that the override system works at
 // all, rather than as an exhaustive set of use cases, those should be covered
@@ -154,6 +187,10 @@ class TestFocusRules : public BasicFocusRules {
   }
 
   // Overridden from BasicFocusRules:
+  bool SupportsChildActivation(View* view) const override {
+    // In FocusControllerTests, only the Root has activatable children.
+    return view->GetRoot() == view;
+  }
   bool CanActivateView(View* view) const override {
     // Restricting focus to a non-activatable child view means the activatable
     // parent outside the focus restriction is activatable.
@@ -285,6 +322,16 @@ class FocusControllerTestBase : public testing::Test {
   virtual void BasicFocus() = 0;
   virtual void BasicActivation() = 0;
   virtual void FocusEvents() = 0;
+  virtual void DuplicateFocusEvents() {}
+  virtual void ActivationEvents() = 0;
+  virtual void ReactivationEvents() {}
+  virtual void DuplicateActivationEvents() {}
+  virtual void ShiftFocusWithinActiveView() {}
+  virtual void ShiftFocusToChildOfInactiveView() {}
+  virtual void ShiftFocusToParentOfFocusedView() {}
+  virtual void FocusRulesOverride() = 0;
+  virtual void ActivationRulesOverride() = 0;
+  virtual void ShiftFocusOnActivation() {}
 
  private:
   TestView root_view_;
@@ -372,6 +419,182 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     observer1.ExpectCounts(2, 2);
     observer2.ExpectCounts(1, 1);
   }
+  void DuplicateFocusEvents() override {
+    // Focusing an existing focused window should not resend focus events.
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
+                                                       GetViewById(1));
+
+    root_observer.ExpectCounts(0, 0);
+    observer1.ExpectCounts(0, 0);
+
+    FocusViewById(1);
+    root_observer.ExpectCounts(1, 1);
+    observer1.ExpectCounts(1, 1);
+
+    FocusViewById(1);
+    root_observer.ExpectCounts(1, 1);
+    observer1.ExpectCounts(1, 1);
+  }
+  void ActivationEvents() override {
+    ActivateViewById(1);
+
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
+                                                       GetViewById(1));
+    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
+                                                       GetViewById(2));
+
+    root_observer.ExpectCounts(0, 0);
+    observer1.ExpectCounts(0, 0);
+    observer2.ExpectCounts(0, 0);
+
+    ActivateViewById(2);
+    root_observer.ExpectCounts(1, 1);
+    observer1.ExpectCounts(1, 1);
+    observer2.ExpectCounts(1, 1);
+  }
+  void ReactivationEvents() override {
+    ActivateViewById(1);
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    EXPECT_EQ(0, root_observer.reactivation_count());
+    GetViewById(2)->SetVisible(false);
+    // When we attempt to activate "2", which cannot be activated because it
+    // is not visible, "1" will be reactivated.
+    ActivateViewById(2);
+    EXPECT_EQ(1, root_observer.reactivation_count());
+    EXPECT_EQ(GetViewById(2),
+              root_observer.reactivation_requested_window());
+    EXPECT_EQ(GetViewById(1),
+              root_observer.reactivation_actual_window());
+  }
+  void DuplicateActivationEvents() override {
+    // Activating an existing active window should not resend activation events.
+    ActivateViewById(1);
+
+    ScopedFocusNotificationObserver root_observer(focus_controller());
+    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
+                                                       GetViewById(1));
+    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
+                                                       GetViewById(2));
+
+    root_observer.ExpectCounts(0, 0);
+    observer1.ExpectCounts(0, 0);
+    observer2.ExpectCounts(0, 0);
+
+    ActivateViewById(2);
+    root_observer.ExpectCounts(1, 1);
+    observer1.ExpectCounts(1, 1);
+    observer2.ExpectCounts(1, 1);
+
+    ActivateViewById(2);
+    root_observer.ExpectCounts(1, 1);
+    observer1.ExpectCounts(1, 1);
+    observer2.ExpectCounts(1, 1);
+  }
+  void ShiftFocusWithinActiveView() override {
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(1, GetFocusedViewId());
+    FocusViewById(11);
+    EXPECT_EQ(11, GetFocusedViewId());
+    FocusViewById(12);
+    EXPECT_EQ(12, GetFocusedViewId());
+  }
+  void ShiftFocusToChildOfInactiveView() override {
+    ActivateViewById(2);
+    EXPECT_EQ(2, GetActiveViewId());
+    EXPECT_EQ(2, GetFocusedViewId());
+    FocusViewById(11);
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(11, GetFocusedViewId());
+  }
+  void ShiftFocusToParentOfFocusedView() override {
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetFocusedViewId());
+    FocusViewById(11);
+    EXPECT_EQ(11, GetFocusedViewId());
+    FocusViewById(1);
+    // Focus should _not_ shift to the parent of the already-focused window.
+    EXPECT_EQ(11, GetFocusedViewId());
+  }
+  void FocusRulesOverride() override {
+    EXPECT_EQ(NULL, GetFocusedView());
+    FocusViewById(11);
+    EXPECT_EQ(11, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(GetViewById(211));
+    FocusViewById(12);
+    // Input events leave focus unchanged; direct API calls will change focus
+    // to the restricted view.
+    int focused_view = IsInputEvent() ? 11 : 211;
+    EXPECT_EQ(focused_view, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(NULL);
+    FocusViewById(12);
+    EXPECT_EQ(12, GetFocusedViewId());
+  }
+  void ActivationRulesOverride() override {
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    View* v3 = GetViewById(3);
+    test_focus_rules()->set_focus_restriction(v3);
+
+    ActivateViewById(2);
+    // Input events leave activation unchanged; direct API calls will activate
+    // the restricted view.
+    int active_view = IsInputEvent() ? 1 : 3;
+    EXPECT_EQ(active_view, GetActiveViewId());
+    EXPECT_EQ(active_view, GetFocusedViewId());
+
+    test_focus_rules()->set_focus_restriction(NULL);
+    ActivateViewById(2);
+    EXPECT_EQ(2, GetActiveViewId());
+    EXPECT_EQ(2, GetFocusedViewId());
+  }
+  void ShiftFocusOnActivation() override {
+    // When a view is activated, by default that view is also focused.
+    // An ActivationChangeObserver may shift focus to another view within the
+    // same activatable view.
+    ActivateViewById(2);
+    EXPECT_EQ(2, GetFocusedViewId());
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    ActivateViewById(2);
+
+    View* target = GetViewById(1);
+
+    scoped_ptr<FocusShiftingActivationObserver> observer(
+        new FocusShiftingActivationObserver(focus_controller(), target));
+    observer->set_shift_focus_to(target->GetChildById(11));
+    focus_controller()->AddObserver(observer.get());
+
+    ActivateViewById(1);
+
+    // w1's ActivationChangeObserver shifted focus to this child, pre-empting
+    // FocusController's default setting.
+    EXPECT_EQ(11, GetFocusedViewId());
+
+    ActivateViewById(2);
+    EXPECT_EQ(2, GetFocusedViewId());
+
+    // Simulate a focus reset by the ActivationChangeObserver. This should
+    // trigger the default setting in FocusController.
+    observer->set_shift_focus_to(nullptr);
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    focus_controller()->RemoveObserver(observer.get());
+
+    ActivateViewById(2);
+    EXPECT_EQ(2, GetFocusedViewId());
+    ActivateViewById(1);
+    EXPECT_EQ(1, GetFocusedViewId());
+  }
+
 
   // TODO(erg): There are a whole bunch other tests here. Port them.
 
@@ -436,9 +659,42 @@ class FocusControllerMouseEventTest : public FocusControllerDirectTestBase {
   FOCUS_CONTROLLER_TEST(FocusControllerApiTest, TESTNAME) \
   FOCUS_CONTROLLER_TEST(FocusControllerMouseEventTest, TESTNAME)
 
+// TODO(erg): Once all the basic tests are implemented, go through this list
+// and change the ones which are ALL_FOCUS_TESTS() to the correct macro.
+
 DIRECT_FOCUS_CHANGE_TESTS(BasicFocus);
 DIRECT_FOCUS_CHANGE_TESTS(BasicActivation);
 DIRECT_FOCUS_CHANGE_TESTS(FocusEvents);
+DIRECT_FOCUS_CHANGE_TESTS(DuplicateFocusEvents);
+DIRECT_FOCUS_CHANGE_TESTS(DuplicateActivationEvents);
+
+DIRECT_FOCUS_CHANGE_TESTS(ActivationEvents);
+
+// - Input events/API calls shift focus between focusable views within the
+//   active view.
+DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusWithinActiveView);
+
+// - Input events/API calls to a child view of an inactive view shifts
+//   activation to the activatable parent and focuses the child.
+DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusToChildOfInactiveView);
+
+// - Input events/API calls to focus the parent of the focused view do not
+//   shift focus away from the child.
+DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusToParentOfFocusedView);
+
+// - Attempts to active a hidden window, verifies that current window is
+//   attempted to be reactivated and the appropriate event dispatched.
+FOCUS_CONTROLLER_TEST(FocusControllerApiTest, ReactivationEvents);
+
+// - Verifies that FocusRules determine what can be focused.
+DIRECT_FOCUS_CHANGE_TESTS(FocusRulesOverride);
+
+// - Verifies that FocusRules determine what can be activated.
+DIRECT_FOCUS_CHANGE_TESTS(ActivationRulesOverride);
+
+// - Verifies that attempts to change focus or activation from a focus or
+//   activation change observer are ignored.
+DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusOnActivation);
 
 // TODO(erg): Also port IMPLICIT_FOCUS_CHANGE_TARGET_TESTS / ALL_FOCUS_TESTS
 // here, and replace the above direct testing list.

@@ -16,6 +16,9 @@ class FocusRules {
  public:
   virtual ~FocusRules() {}
 
+  // Returns true if the children of |window| can be activated.
+  virtual bool SupportsChildActivation(View* window) const = 0;
+
   // Returns true if |view| is a toplevel view. Whether or not a view
   // is considered toplevel is determined by a similar set of rules that
   // govern activation and focus. Not all toplevel views are activatable,

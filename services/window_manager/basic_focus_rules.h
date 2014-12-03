@@ -15,10 +15,6 @@ class View;
 //
 // This is intended to be a user supplyable, subclassable component passed to
 // WindowManagerApp, allowing for the creation of other window managers.
-//
-// TODO(erg): This was a straight move of the minimal focus rules from when
-// WindowManagerApp directly used the wm::FocusController. This implementation
-// is very incomplete. crbug.com/431047
 class BasicFocusRules : public FocusRules {
  public:
   BasicFocusRules(mojo::View* window_container);
@@ -26,6 +22,7 @@ class BasicFocusRules : public FocusRules {
 
  protected:
   // Overridden from mojo::FocusRules:
+  bool SupportsChildActivation(mojo::View* view) const override;
   bool IsToplevelView(mojo::View* view) const override;
   bool CanActivateView(mojo::View* view) const override;
   bool CanFocusView(mojo::View* view) const override;
@@ -35,6 +32,11 @@ class BasicFocusRules : public FocusRules {
   mojo::View* GetNextActivatableView(mojo::View* activatable) const override;
 
  private:
+  bool CanFocusViewImpl(View* view) const;
+
+  // Tests to see if |view| is in |window_container_|.
+  bool IsViewParentedToWindowContainer(View* view) const;
+
   mojo::View* window_container_;
 
   DISALLOW_COPY_AND_ASSIGN(BasicFocusRules);

@@ -22,6 +22,7 @@ external_application_unittests
 mojo_surfaces_lib_unittests
 view_manager_service_unittests
 view_manager_unittests
+window_manager_unittests
 
 # JavaScript tests:
 *js_unittests
