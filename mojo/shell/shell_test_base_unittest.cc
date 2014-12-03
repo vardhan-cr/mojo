@@ -12,8 +12,8 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
 #include "mojo/public/cpp/system/core.h"
-#include "mojo/services/test_service/test_request_tracker.mojom.h"
-#include "mojo/services/test_service/test_service.mojom.h"
+#include "services/test_service/test_request_tracker.mojom.h"
+#include "services/test_service/test_service.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 

@@ -355,13 +355,13 @@ test("mojo_shell_tests") {
     "//mojo/common",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
-    "//mojo/services/test_service:bindings",
     "//mojo/public/cpp/bindings",
+    "//services/test_service:bindings",
   ]
 
   datadeps = [
-    "//mojo/services/test_service:test_app",
-    "//mojo/services/test_service:test_request_tracker_app",
+    "//services/test_service:test_app",
+    "//services/test_service:test_request_tracker_app",
   ]
 
   if (is_android) {

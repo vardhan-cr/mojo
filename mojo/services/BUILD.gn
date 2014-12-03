@@ -16,7 +16,6 @@ group("services") {
     "//mojo/services/public/interfaces/navigation",
     "//mojo/services/public/interfaces/network",
     "//mojo/services/public/interfaces/surfaces",
-    "//mojo/services/test_service:bindings",
   ]
 
   if (use_aura) {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/test_service/test_service_application.h"
+#include "services/test_service/test_service_application.h"
 
 #include <assert.h>
 
@@ -10,8 +10,8 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_runner.h"
 #include "mojo/public/cpp/utility/run_loop.h"
-#include "mojo/services/test_service/test_service_impl.h"
-#include "mojo/services/test_service/test_time_service_impl.h"
+#include "services/test_service/test_service_impl.h"
+#include "services/test_service/test_time_service_impl.h"
 
 namespace mojo {
 namespace test {

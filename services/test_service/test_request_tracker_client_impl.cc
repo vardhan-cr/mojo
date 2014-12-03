@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/test_service/test_request_tracker_client_impl.h"
+#include "services/test_service/test_request_tracker_client_impl.h"
 
 namespace mojo {
 namespace test {

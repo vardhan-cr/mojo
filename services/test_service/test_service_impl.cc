@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/test_service/test_service_impl.h"
+#include "services/test_service/test_service_impl.h"
 
 #include "base/bind.h"
 #include "base/i18n/time_formatting.h"
 #include "base/strings/utf_string_conversions.h"
 #include "mojo/public/cpp/application/application_connection.h"
-#include "mojo/services/test_service/test_request_tracker_client_impl.h"
-#include "mojo/services/test_service/test_service_application.h"
-#include "mojo/services/test_service/test_time_service_impl.h"
+#include "services/test_service/test_request_tracker_client_impl.h"
+#include "services/test_service/test_service_application.h"
+#include "services/test_service/test_time_service_impl.h"
 
 namespace mojo {
 namespace test {

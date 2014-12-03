@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_
-#define MOJO_SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_
+#ifndef SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_
+#define SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_
 
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/macros.h"
-#include "mojo/services/test_service/test_service.mojom.h"
+#include "services/test_service/test_service.mojom.h"
 
 namespace mojo {
 
@@ -40,4 +40,4 @@ class TestTimeServiceImpl : public TestTimeService {
 }  // namespace test
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_
+#endif  // SERVICES_TEST_SERVICE_TEST_TIME_SERVICE_IMPL_H_

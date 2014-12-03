@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "base/bind.h"
-#include "mojo/services/test_service/test_request_tracker_impl.h"
+#include "services/test_service/test_request_tracker_impl.h"
 
 namespace mojo {
 namespace test {
