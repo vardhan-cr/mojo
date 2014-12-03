@@ -49,9 +49,9 @@ public class AndroidHandler {
      * startup to clean up after the previous run.
      */
     static void clearTemporaryFiles(Context context) {
-        getDexOutputDir(context).delete();
-        getAppDir(context).delete();
-        getAssetDir(context).delete();
+        FileHelper.deleteRecursively(getDexOutputDir(context));
+        FileHelper.deleteRecursively(getAppDir(context));
+        FileHelper.deleteRecursively(getAssetDir(context));
     }
 
     /**

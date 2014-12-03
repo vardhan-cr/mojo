@@ -65,6 +65,18 @@ class FileHelper {
         throw new FileNotFoundException();
     }
 
+    /**
+     * Deletes a file or directory. Directory will be deleted even if not empty.
+     */
+    static void deleteRecursively(File file) {
+        if (file.isDirectory()) {
+            for (File child : file.listFiles()) {
+                deleteRecursively(child);
+            }
+        }
+        file.delete();
+    }
+
     private static void writeStreamToFile(InputStream inputStream, File outputFile)
             throws IOException {
         byte[] buffer = new byte[BUFFER_SIZE];
