@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_
-#define MOJO_SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_
+#ifndef SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_
+#define SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_
 
 #include "base/android/jni_weak_ref.h"
 #include "base/android/scoped_java_ref.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/services/native_viewport/platform_viewport.h"
+#include "services/native_viewport/platform_viewport.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/sequential_id_generator.h"
@@ -63,4 +63,4 @@ class PlatformViewportAndroid : public PlatformViewport {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_
+#endif  // SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_

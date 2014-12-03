@@ -2,8 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifndef SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_HEADLESS_H_
+#define SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_HEADLESS_H_
+
 #include "base/macros.h"
-#include "mojo/services/native_viewport/platform_viewport.h"
+#include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/rect.h"
 
 namespace mojo {
@@ -34,3 +37,5 @@ class PlatformViewportHeadless : public PlatformViewport {
 };
 
 }  // namespace mojo
+
+#endif  // SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_HEADLESS_H_

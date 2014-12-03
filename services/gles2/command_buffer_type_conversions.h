@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_
-#define MOJO_SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_
+#ifndef SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_
+#define SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_
 
 #include "gpu/command_buffer/common/capabilities.h"
 #include "gpu/command_buffer/common/command_buffer.h"
@@ -64,4 +64,4 @@ struct TypeConverter<gpu::Capabilities, GpuCapabilitiesPtr> {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_
+#endif  // SERVICES_GLES2_COMMAND_BUFFER_TYPE_CONVERSIONS_H_

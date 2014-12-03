@@ -7,12 +7,17 @@ import("//build/config/ui.gni")
 group("services") {
   deps = [
     "//services/clipboard",
+    "//services/gles2:lib",
     "//services/http_server",
     "//services/http_server/public",
     "//services/js",
     "//services/surfaces",
     "//services/tracing",
   ]
+
+  if (!is_android) {
+    deps += [ "//services/native_viewport" ]
+  }
 
   if (use_aura) {
     deps += [

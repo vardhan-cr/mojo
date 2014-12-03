@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_NATIVE_VIEWPORT_IMPL_H_
-#define MOJO_SERVICES_NATIVE_VIEWPORT_IMPL_H_
+#ifndef SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_
+#define SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_
 
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/surfaces/surface_id.h"
-#include "mojo/services/native_viewport/platform_viewport.h"
 #include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
 #include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
 #include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/geometry/rect.h"
 
 namespace ui {
@@ -66,4 +66,4 @@ class NativeViewportImpl : public InterfaceImpl<NativeViewport>,
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_NATIVE_VIEWPORT_IMPL_H_
+#endif  // SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_

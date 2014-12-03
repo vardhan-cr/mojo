@@ -35,10 +35,10 @@
 #include "url/gurl.h"
 
 #if defined(OS_ANDROID)
-#include "mojo/services/gles2/gpu_impl.h"
-#include "mojo/services/native_viewport/native_viewport_impl.h"
 #include "mojo/shell/android/android_handler_loader.h"
 #include "mojo/shell/network_application_loader.h"
+#include "services/gles2/gpu_impl.h"
+#include "services/native_viewport/native_viewport_impl.h"
 #endif  // defined(OS_ANDROID)
 
 namespace mojo {

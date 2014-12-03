@@ -165,10 +165,10 @@ source_set("lib") {
     deps += [
       ":jni_headers",
       ":run_android_application_function",
-      "//mojo/services/gles2",
-      "//mojo/services/native_viewport:lib",
-      "//mojo/services/network:lib",
       "//mojo/application:content_handler",
+      "//mojo/services/network:lib",
+      "//services/gles2",
+      "//services/native_viewport:lib",
     ]
   }
 
@@ -252,8 +252,8 @@ if (is_android) {
       ":jni_headers",
       ":lib",
       "//mojo/application_manager",
-      "//mojo/services/native_viewport:lib",
       "//net",
+      "//services/native_viewport:lib",
       "//ui/gl",
     ]
   }
@@ -285,7 +285,7 @@ if (is_android) {
       ":java",
       ":libmojo_shell",
       ":resources",
-      "//mojo/services/native_viewport:native_viewport_java",
+      "//services/native_viewport:native_viewport_java",
     ]
   }
 }

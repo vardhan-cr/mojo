@@ -7,10 +7,10 @@
 #include "base/android/jni_registrar.h"
 #include "base/android/library_loader/library_loader_hooks.h"
 #include "base/logging.h"
-#include "mojo/services/native_viewport/platform_viewport_android.h"
 #include "mojo/shell/android/android_handler.h"
 #include "mojo/shell/android/mojo_main.h"
 #include "net/android/net_jni_registrar.h"
+#include "services/native_viewport/platform_viewport_android.h"
 
 namespace {
 

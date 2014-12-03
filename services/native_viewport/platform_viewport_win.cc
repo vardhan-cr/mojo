@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/native_viewport/platform_viewport.h"
+#include "services/native_viewport/platform_viewport.h"
 
 #include "base/memory/scoped_ptr.h"
 #include "ui/gfx/rect.h"

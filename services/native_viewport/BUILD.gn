@@ -29,9 +29,9 @@ if (is_android) {
       "//mojo/common:tracing_impl",
       "//mojo/public/c/system:for_shared_library",
       "//mojo/public/cpp/bindings:bindings",
-      "//mojo/services/gles2:gles2",
       "//mojo/services/public/interfaces/native_viewport",
       "//mojo/services/public/cpp/native_viewport:args",
+      "//services/gles2",
       "//ui/gl",
     ]
   }
@@ -73,7 +73,7 @@ source_set("lib") {
     "//mojo/converters/input_events",
     "//mojo/converters/surfaces",
     "//mojo/environment:chromium",
-    "//mojo/services/gles2",
+    "//services/gles2",
     "//mojo/services/public/cpp/surfaces",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/gpu",

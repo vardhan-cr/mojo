@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/native_viewport/native_viewport_impl.h"
+#include "services/native_viewport/native_viewport_impl.h"
 
 #include "base/auto_reset.h"
 #include "base/bind.h"
@@ -15,8 +15,8 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/services/native_viewport/platform_viewport_headless.h"
-#include "mojo/services/native_viewport/viewport_surface.h"
+#include "services/native_viewport/platform_viewport_headless.h"
+#include "services/native_viewport/viewport_surface.h"
 #include "ui/events/event.h"
 
 namespace mojo {

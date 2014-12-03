@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/native_viewport/viewport_surface.h"
+#include "services/native_viewport/viewport_surface.h"
 
 #include "base/bind.h"
 #include "cc/surfaces/surface_id_allocator.h"

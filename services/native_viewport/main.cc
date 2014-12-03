@@ -11,9 +11,9 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
-#include "mojo/services/gles2/gpu_impl.h"
-#include "mojo/services/native_viewport/native_viewport_impl.h"
 #include "mojo/services/public/cpp/native_viewport/args.h"
+#include "services/gles2/gpu_impl.h"
+#include "services/native_viewport/native_viewport_impl.h"
 #include "ui/gl/gl_surface.h"
 
 namespace mojo {

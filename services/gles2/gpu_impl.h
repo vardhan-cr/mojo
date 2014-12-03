@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifndef SERVICES_GLES2_GPU_IMPL_H_
+#define SERVICES_GLES2_GPU_IMPL_H_
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/threading/thread.h"
@@ -79,3 +82,5 @@ class GpuImpl : public Gpu {
 };
 
 }  // namespace mojo
+
+#endif  // SERVICES_GLES2_GPU_IMPL_H_

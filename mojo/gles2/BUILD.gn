@@ -51,7 +51,7 @@ component("gles2") {
     "//mojo/public/c/system:for_component",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
-    "//mojo/services/gles2:lib",
     "//mojo/services/public/interfaces/gpu",
+    "//services/gles2:lib",
   ]
 }
