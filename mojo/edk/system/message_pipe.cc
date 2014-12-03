@@ -139,7 +139,9 @@ MojoResult MessagePipe::WriteMessage(
     std::vector<DispatcherTransport>* transports,
     MojoWriteMessageFlags flags) {
   DCHECK(port == 0 || port == 1);
-  return EnqueueMessage(
+
+  base::AutoLock locker(lock_);
+  return EnqueueMessageNoLock(
       GetPeerPort(port),
       make_scoped_ptr(new MessageInTransit(
           MessageInTransit::kTypeEndpoint,
@@ -287,16 +289,27 @@ bool MessagePipe::EndSerialize(
   return true;
 }
 
-void MessagePipe::OnReadMessage(unsigned port,
-                                scoped_ptr<MessageInTransit> message) {
+bool MessagePipe::OnReadMessage(unsigned port, MessageInTransit* message) {
+  base::AutoLock locker(lock_);
+
+  if (!endpoints_[port]) {
+    // This will happen only on the rare occasion that the call to
+    // |OnReadMessage()| is racing with us calling
+    // |ChannelEndpoint::ReplaceClient()|, in which case we reject the message,
+    // and the |ChannelEndpoint| can retry (calling the new client's
+    // |OnReadMessage()|).
+    return false;
+  }
+
   // This is called when the |ChannelEndpoint| for the
   // |ProxyMessagePipeEndpoint| |port| receives a message (from the |Channel|).
   // We need to pass this message on to its peer port (typically a
   // |LocalMessagePipeEndpoint|).
-  MojoResult result =
-      EnqueueMessage(GetPeerPort(port), message.Pass(), nullptr);
+  MojoResult result = EnqueueMessageNoLock(GetPeerPort(port),
+                                           make_scoped_ptr(message), nullptr);
   DLOG_IF(WARNING, result != MOJO_RESULT_OK)
-      << "EnqueueMessage() failed (result  = " << result << ")";
+      << "EnqueueMessageNoLock() failed (result  = " << result << ")";
+  return true;
 }
 
 void MessagePipe::OnDetachFromChannel(unsigned port) {
@@ -314,7 +327,7 @@ MessagePipe::~MessagePipe() {
   DCHECK(!endpoints_[1]);
 }
 
-MojoResult MessagePipe::EnqueueMessage(
+MojoResult MessagePipe::EnqueueMessageNoLock(
     unsigned port,
     scoped_ptr<MessageInTransit> message,
     std::vector<DispatcherTransport>* transports) {
@@ -322,8 +335,6 @@ MojoResult MessagePipe::EnqueueMessage(
   DCHECK(message);
 
   DCHECK_EQ(message->type(), MessageInTransit::kTypeEndpoint);
-
-  base::AutoLock locker(lock_);
   DCHECK(endpoints_[GetPeerPort(port)]);
 
   // The destination port need not be open, unlike the source port.
