@@ -107,8 +107,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
                     embedder::PlatformHandleVector* platform_handles);
 
   // |ChannelEndpointClient| methods:
-  void OnReadMessage(unsigned port,
-                     scoped_ptr<MessageInTransit> message) override;
+  bool OnReadMessage(unsigned port, MessageInTransit* message) override;
   void OnDetachFromChannel(unsigned port) override;
 
  private:
@@ -117,12 +116,12 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
 
   // This is used internally by |WriteMessage()| and by |OnReadMessage()|.
   // |transports| may be non-null only if it's nonempty and |message| has no
-  // dispatchers attached.
-  MojoResult EnqueueMessage(unsigned port,
-                            scoped_ptr<MessageInTransit> message,
-                            std::vector<DispatcherTransport>* transports);
+  // dispatchers attached. Must be called with |lock_| held.
+  MojoResult EnqueueMessageNoLock(unsigned port,
+                                  scoped_ptr<MessageInTransit> message,
+                                  std::vector<DispatcherTransport>* transports);
 
-  // Helper for |EnqueueMessage()|. Must be called with |lock_| held.
+  // Helper for |EnqueueMessageNoLock()|. Must be called with |lock_| held.
   MojoResult AttachTransportsNoLock(
       unsigned port,
       MessageInTransit* message,
