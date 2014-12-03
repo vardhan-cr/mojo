@@ -151,22 +151,6 @@ size_t GetMaxTransferBufferUsageBytes(
                   max_transfer_buffer_usage_bytes);
 }
 
-unsigned GetMapImageTextureTarget(
-    const ContextProvider::Capabilities& context_capabilities) {
-// TODO(reveman): This should be a setting passed to the compositor instead
-// of hard-coded here. The target that need to be used depends on our choice
-// of GpuMemoryBuffer type. Note: SURFACE_TEXTURE needs EXTERNAL_OES,
-// IO_SURFACE needs RECTANGLE_ARB. crbug.com/431059
-#if defined(OS_ANDROID)
-  if (context_capabilities.gpu.egl_image_external)
-    return GL_TEXTURE_EXTERNAL_OES;
-#endif
-  if (context_capabilities.gpu.texture_rectangle)
-    return GL_TEXTURE_RECTANGLE_ARB;
-
-  return GL_TEXTURE_2D;
-}
-
 size_t GetMaxStagingResourceCount() {
   // Upper bound for number of staging resource to allow.
   return 32;
@@ -2005,9 +1989,6 @@ void LayerTreeHostImpl::CreateResourceAndRasterWorkerPool(
   DCHECK(task_runner);
 
   ContextProvider* context_provider = output_surface_->context_provider();
-  bool should_use_zero_copy_rasterizer =
-      settings_.use_zero_copy || IsSynchronousSingleThreaded();
-
   if (!context_provider) {
     *resource_pool =
         ResourcePool::Create(resource_provider_.get(),
@@ -2018,7 +1999,10 @@ void LayerTreeHostImpl::CreateResourceAndRasterWorkerPool(
         BitmapRasterWorkerPool::Create(task_runner,
                                        RasterWorkerPool::GetTaskGraphRunner(),
                                        resource_provider_.get());
-  } else if (use_gpu_rasterization_) {
+    return;
+  }
+
+  if (use_gpu_rasterization_) {
     *resource_pool =
         ResourcePool::Create(resource_provider_.get(),
                              GL_TEXTURE_2D,
@@ -2029,53 +2013,65 @@ void LayerTreeHostImpl::CreateResourceAndRasterWorkerPool(
                                     context_provider,
                                     resource_provider_.get(),
                                     settings_.use_distance_field_text);
-  } else if (should_use_zero_copy_rasterizer && CanUseZeroCopyRasterizer()) {
-    *resource_pool = ResourcePool::Create(
-        resource_provider_.get(),
-        GetMapImageTextureTarget(context_provider->ContextCapabilities()),
-        resource_provider_->best_texture_format());
+    return;
+  }
 
-    TaskGraphRunner* task_graph_runner;
-    if (IsSynchronousSingleThreaded()) {
-      DCHECK(!single_thread_synchronous_task_graph_runner_);
-      single_thread_synchronous_task_graph_runner_.reset(new TaskGraphRunner);
-      task_graph_runner = single_thread_synchronous_task_graph_runner_.get();
-    } else {
-      task_graph_runner = RasterWorkerPool::GetTaskGraphRunner();
+  if (GetRendererCapabilities().using_image) {
+    unsigned image_target = GL_TEXTURE_2D;
+#if defined(OS_MACOSX)
+    // GL_TEXTURE_RECTANGLE_ARB target is required by IOSurface backed images.
+    DCHECK(context_provider->ContextCapabilities().gpu.texture_rectangle);
+    image_target = GL_TEXTURE_RECTANGLE_ARB;
+#endif
+    if (settings_.use_image_external) {
+      DCHECK(context_provider->ContextCapabilities().gpu.egl_image_external);
+      image_target = GL_TEXTURE_EXTERNAL_OES;
     }
 
-    *raster_worker_pool = ZeroCopyRasterWorkerPool::Create(
-        task_runner, task_graph_runner, resource_provider_.get());
-  } else if (settings_.use_one_copy && CanUseOneCopyRasterizer()) {
-    // We need to create a staging resource pool when using copy rasterizer.
-    *staging_resource_pool = ResourcePool::Create(
-        resource_provider_.get(),
-        GetMapImageTextureTarget(context_provider->ContextCapabilities()),
-        resource_provider_->best_texture_format());
-    *resource_pool =
-        ResourcePool::Create(resource_provider_.get(),
-                             GL_TEXTURE_2D,
-                             resource_provider_->best_texture_format());
+    if (settings_.use_zero_copy || IsSynchronousSingleThreaded()) {
+      *resource_pool =
+          ResourcePool::Create(resource_provider_.get(), image_target,
+                               resource_provider_->best_texture_format());
 
-    *raster_worker_pool =
-        OneCopyRasterWorkerPool::Create(task_runner,
-                                        RasterWorkerPool::GetTaskGraphRunner(),
-                                        context_provider,
-                                        resource_provider_.get(),
-                                        staging_resource_pool_.get());
-  } else {
-    *resource_pool = ResourcePool::Create(
-        resource_provider_.get(),
-        GL_TEXTURE_2D,
-        resource_provider_->memory_efficient_texture_format());
+      TaskGraphRunner* task_graph_runner;
+      if (IsSynchronousSingleThreaded()) {
+        DCHECK(!single_thread_synchronous_task_graph_runner_);
+        single_thread_synchronous_task_graph_runner_.reset(new TaskGraphRunner);
+        task_graph_runner = single_thread_synchronous_task_graph_runner_.get();
+      } else {
+        task_graph_runner = RasterWorkerPool::GetTaskGraphRunner();
+      }
 
-    *raster_worker_pool = PixelBufferRasterWorkerPool::Create(
-        task_runner, RasterWorkerPool::GetTaskGraphRunner(), context_provider,
-        resource_provider_.get(),
-        GetMaxTransferBufferUsageBytes(
-            context_provider->ContextCapabilities(),
-            settings_.renderer_settings.refresh_rate));
+      *raster_worker_pool = ZeroCopyRasterWorkerPool::Create(
+          task_runner, task_graph_runner, resource_provider_.get());
+      return;
+    }
+
+    if (settings_.use_one_copy) {
+      // We need to create a staging resource pool when using copy rasterizer.
+      *staging_resource_pool =
+          ResourcePool::Create(resource_provider_.get(), image_target,
+                               resource_provider_->best_texture_format());
+      *resource_pool =
+          ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D,
+                               resource_provider_->best_texture_format());
+
+      *raster_worker_pool = OneCopyRasterWorkerPool::Create(
+          task_runner, RasterWorkerPool::GetTaskGraphRunner(), context_provider,
+          resource_provider_.get(), staging_resource_pool_.get());
+      return;
+    }
   }
+
+  *resource_pool = ResourcePool::Create(
+      resource_provider_.get(), GL_TEXTURE_2D,
+      resource_provider_->memory_efficient_texture_format());
+
+  *raster_worker_pool = PixelBufferRasterWorkerPool::Create(
+      task_runner, RasterWorkerPool::GetTaskGraphRunner(), context_provider,
+      resource_provider_.get(),
+      GetMaxTransferBufferUsageBytes(context_provider->ContextCapabilities(),
+                                     settings_.renderer_settings.refresh_rate));
 }
 
 void LayerTreeHostImpl::DestroyTileManager() {
@@ -2094,14 +2090,6 @@ bool LayerTreeHostImpl::UsePendingTreeForSync() const {
 
 bool LayerTreeHostImpl::IsSynchronousSingleThreaded() const {
   return !proxy_->HasImplThread() && !settings_.single_thread_proxy_scheduler;
-}
-
-bool LayerTreeHostImpl::CanUseZeroCopyRasterizer() const {
-  return GetRendererCapabilities().using_image;
-}
-
-bool LayerTreeHostImpl::CanUseOneCopyRasterizer() const {
-  return GetRendererCapabilities().using_image;
 }
 
 void LayerTreeHostImpl::EnforceZeroBudget(bool zero_budget) {
@@ -2563,10 +2551,14 @@ gfx::Vector2dF LayerTreeHostImpl::ScrollLayerWithViewportSpaceDelta(
   return actual_viewport_end_point - viewport_point;
 }
 
-static gfx::Vector2dF ScrollLayerWithLocalDelta(LayerImpl* layer_impl,
-    const gfx::Vector2dF& local_delta) {
+static gfx::Vector2dF ScrollLayerWithLocalDelta(
+    LayerImpl* layer_impl,
+    const gfx::Vector2dF& local_delta,
+    float page_scale_factor) {
   gfx::Vector2dF previous_delta(layer_impl->ScrollDelta());
-  layer_impl->ScrollBy(local_delta);
+  gfx::Vector2dF delta = local_delta;
+  delta.Scale(1.f / page_scale_factor);
+  layer_impl->ScrollBy(delta);
   return layer_impl->ScrollDelta() - previous_delta;
 }
 
@@ -2644,7 +2636,8 @@ InputHandlerScrollResult LayerTreeHostImpl::ScrollBy(
     // Gesture events need to be transformed from viewport coordinates to local
     // layer coordinates so that the scrolling contents exactly follow the
     // user's finger. In contrast, wheel events represent a fixed amount of
-    // scrolling so we can just apply them directly.
+    // scrolling so we can just apply them directly, but the page scale factor
+    // is applied to the scroll delta.
     if (!wheel_scrolling_) {
       float scale_from_viewport_to_screen_space = device_scale_factor_;
       applied_delta =
@@ -2652,7 +2645,8 @@ InputHandlerScrollResult LayerTreeHostImpl::ScrollBy(
                                             scale_from_viewport_to_screen_space,
                                             viewport_point, pending_delta);
     } else {
-      applied_delta = ScrollLayerWithLocalDelta(layer_impl, pending_delta);
+      applied_delta = ScrollLayerWithLocalDelta(
+          layer_impl, pending_delta, active_tree_->total_page_scale_factor());
     }
 
     const float kEpsilon = 0.1f;
@@ -2774,7 +2768,8 @@ bool LayerTreeHostImpl::ScrollVerticallyByPage(const gfx::Point& viewport_point,
 
     gfx::Vector2dF delta = gfx::Vector2dF(0.f, page);
 
-    gfx::Vector2dF applied_delta = ScrollLayerWithLocalDelta(layer_impl, delta);
+    gfx::Vector2dF applied_delta =
+        ScrollLayerWithLocalDelta(layer_impl, delta, 1.f);
 
     if (!applied_delta.IsZero()) {
       client_->SetNeedsCommitOnImplThread();
@@ -3251,9 +3246,9 @@ BeginFrameArgs LayerTreeHostImpl::CurrentBeginFrameArgs() const {
   // task), fall back to physical time.  This should still be monotonic.
   if (current_begin_frame_args_.IsValid())
     return current_begin_frame_args_;
-  return BeginFrameArgs::Create(gfx::FrameTime::Now(), base::TimeTicks(),
-                                BeginFrameArgs::DefaultInterval(),
-                                BeginFrameArgs::NORMAL);
+  return BeginFrameArgs::Create(
+      BEGINFRAME_FROM_HERE, gfx::FrameTime::Now(), base::TimeTicks(),
+      BeginFrameArgs::DefaultInterval(), BeginFrameArgs::NORMAL);
 }
 
 scoped_refptr<base::debug::ConvertableToTraceFormat>

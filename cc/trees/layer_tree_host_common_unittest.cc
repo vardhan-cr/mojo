@@ -59,6 +59,12 @@ class MockContentLayerClient : public ContentLayerClient {
       SkCanvas* canvas,
       const gfx::Rect& clip,
       ContentLayerClient::GraphicsContextStatus gc_status) override {}
+  scoped_refptr<DisplayItemList> PaintContentsToDisplayList(
+      const gfx::Rect& clip,
+      GraphicsContextStatus gc_status) override {
+    NOTIMPLEMENTED();
+    return DisplayItemList::Create();
+  }
   bool FillsBoundsCompletely() const override { return false; }
 };
 
@@ -2817,6 +2823,56 @@ TEST_F(LayerTreeHostCommonTest,
   EXPECT_RECT_EQ(gfx::Rect(5, 5, 50, 50), child1->drawable_content_rect());
   EXPECT_RECT_EQ(gfx::Rect(75, 75, 50, 50), child2->drawable_content_rect());
   EXPECT_RECT_EQ(gfx::Rect(125, 125, 50, 50), child3->drawable_content_rect());
+}
+
+TEST_F(LayerTreeHostCommonTest,
+       VisibleContentRectsForClippedSurfaceWithEmptyClip) {
+  scoped_refptr<Layer> root = Layer::Create();
+  scoped_refptr<LayerWithForcedDrawsContent> child1 =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  scoped_refptr<LayerWithForcedDrawsContent> child2 =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  scoped_refptr<LayerWithForcedDrawsContent> child3 =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  root->AddChild(child1);
+  root->AddChild(child2);
+  root->AddChild(child3);
+
+  scoped_ptr<FakeLayerTreeHost> host(CreateFakeLayerTreeHost());
+  host->SetRootLayer(root);
+
+  gfx::Transform identity_matrix;
+  SetLayerPropertiesForTesting(root.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(100, 100), true, false);
+  SetLayerPropertiesForTesting(child1.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(5.f, 5.f), gfx::Size(50, 50), true,
+                               false);
+  SetLayerPropertiesForTesting(child2.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(75.f, 75.f), gfx::Size(50, 50), true,
+                               false);
+  SetLayerPropertiesForTesting(child3.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(125.f, 125.f), gfx::Size(50, 50),
+                               true, false);
+
+  RenderSurfaceLayerList render_surface_layer_list;
+  // Now set the root render surface an empty clip.
+  LayerTreeHostCommon::CalcDrawPropsMainInputsForTesting inputs(
+      root.get(), gfx::Size(), &render_surface_layer_list);
+
+  LayerTreeHostCommon::CalculateDrawProperties(&inputs);
+  ASSERT_TRUE(root->render_surface());
+  EXPECT_FALSE(root->is_clipped());
+
+  gfx::Rect empty;
+  EXPECT_EQ(empty, root->render_surface()->clip_rect());
+  EXPECT_TRUE(root->render_surface()->is_clipped());
+
+  // Visible content rect calculation will check if the target surface is
+  // clipped or not. An empty clip rect does not indicate the render surface
+  // is unclipped.
+  EXPECT_EQ(empty, child1->visible_content_rect());
+  EXPECT_EQ(empty, child2->visible_content_rect());
+  EXPECT_EQ(empty, child3->visible_content_rect());
 }
 
 TEST_F(LayerTreeHostCommonTest,

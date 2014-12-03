@@ -9,6 +9,7 @@
 #include "base/callback_helpers.h"
 #include "base/logging.h"
 #include "base/metrics/histogram.h"
+#include "base/profiler/scoped_tracker.h"
 #include "net/base/completion_callback.h"
 #include "net/base/io_buffer.h"
 #include "net/base/net_errors.h"
@@ -78,9 +79,11 @@ int DiskCacheBasedQuicServerInfo::WaitForDataReady(
     const CompletionCallback& callback) {
   DCHECK(CalledOnValidThread());
   DCHECK_NE(GET_BACKEND, state_);
+  wait_for_data_start_time_ = base::TimeTicks::Now();
 
   RecordQuicServerInfoStatus(QUIC_SERVER_INFO_WAIT_FOR_DATA_READY);
   if (ready_) {
+    wait_for_data_end_time_ = base::TimeTicks::Now();
     RecordLastFailure();
     return OK;
   }
@@ -183,11 +186,17 @@ std::string DiskCacheBasedQuicServerInfo::key() const {
 
 void DiskCacheBasedQuicServerInfo::OnIOComplete(CacheOperationDataShim* unused,
                                                 int rv) {
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 DiskCacheBasedQuicServerInfo::OnIOComplete"));
+
   DCHECK_NE(NONE, state_);
   rv = DoLoop(rv);
   if (rv == ERR_IO_PENDING)
     return;
   if (!wait_for_ready_callback_.is_null()) {
+    wait_for_data_end_time_ = base::TimeTicks::Now();
     RecordLastFailure();
     base::ResetAndReturn(&wait_for_ready_callback_).Run(rv);
   }

@@ -91,7 +91,7 @@ class ExternalBeginFrameSourceForTest
 
   void TestOnBeginFrame() {
     DCHECK(CalledOnValidThread());
-    CallOnBeginFrame(CreateBeginFrameArgsForTesting());
+    CallOnBeginFrame(CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE));
   }
 
  private:
@@ -151,6 +151,11 @@ class ThreadProxyForTest : public ThreadProxy {
   void ScheduledActionBeginOutputSurfaceCreation() override {
     ThreadProxy::ScheduledActionBeginOutputSurfaceCreation();
     test_hooks_->ScheduledActionBeginOutputSurfaceCreation();
+  }
+
+  void ScheduledActionManageTiles() override {
+    ThreadProxy::ScheduledActionManageTiles();
+    test_hooks_->ScheduledActionManageTiles();
   }
 
   ThreadProxyForTest(
@@ -778,6 +783,11 @@ void LayerTreeTest::RunTest(bool threaded,
 
 void LayerTreeTest::RunTestWithImplSidePainting() {
   RunTest(true, false, true);
+}
+
+void LayerTreeTest::RunTestWithMainThreadLowLatency() {
+  settings_.main_thread_should_always_be_low_latency = true;
+  RunTest(false, false, false);
 }
 
 void LayerTreeTest::RequestNewOutputSurface(bool fallback) {

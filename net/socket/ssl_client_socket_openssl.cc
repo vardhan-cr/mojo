@@ -24,6 +24,7 @@
 #include "crypto/openssl_util.h"
 #include "crypto/scoped_openssl_types.h"
 #include "net/base/net_errors.h"
+#include "net/cert/cert_policy_enforcer.h"
 #include "net/cert/cert_verifier.h"
 #include "net/cert/ct_ev_whitelist.h"
 #include "net/cert/ct_verifier.h"
@@ -81,11 +82,10 @@ unsigned long SSL_CIPHER_get_id(const SSL_CIPHER* cipher) { return cipher->id; }
 #endif
 
 // Used for encoding the |connection_status| field of an SSLInfo object.
-int EncodeSSLConnectionStatus(int cipher_suite,
+int EncodeSSLConnectionStatus(uint16 cipher_suite,
                               int compression,
                               int version) {
-  return ((cipher_suite & SSL_CONNECTION_CIPHERSUITE_MASK) <<
-          SSL_CONNECTION_CIPHERSUITE_SHIFT) |
+  return cipher_suite |
          ((compression & SSL_CONNECTION_COMPRESSION_MASK) <<
           SSL_CONNECTION_COMPRESSION_SHIFT) |
          ((version & SSL_CONNECTION_VERSION_MASK) <<
@@ -345,6 +345,11 @@ void SSLClientSocket::ClearSessionCache() {
   context->session_cache()->Flush();
 }
 
+// static
+uint16 SSLClientSocket::GetMaxSupportedSSLVersion() {
+  return SSL_PROTOCOL_VERSION_TLS1_2;
+}
+
 SSLClientSocketOpenSSL::SSLClientSocketOpenSSL(
     scoped_ptr<ClientSocketHandle> transport_socket,
     const HostPortPair& host_and_port,
@@ -376,6 +381,7 @@ SSLClientSocketOpenSSL::SSLClientSocketOpenSSL(
       handshake_succeeded_(false),
       marked_session_as_good_(false),
       transport_security_state_(context.transport_security_state),
+      policy_enforcer_(context.cert_policy_enforcer),
       net_log_(transport_->socket()->NetLog()),
       weak_factory_(this) {
 }
@@ -625,7 +631,7 @@ bool SSLClientSocketOpenSSL::GetSSLInfo(SSLInfo* ssl_info) {
   ssl_info->security_bits = SSL_CIPHER_get_bits(cipher, NULL);
 
   ssl_info->connection_status = EncodeSSLConnectionStatus(
-      SSL_CIPHER_get_id(cipher), 0 /* no compression */,
+      static_cast<uint16>(SSL_CIPHER_get_id(cipher)), 0 /* no compression */,
       GetNetSSLVersion(ssl_));
 
   if (!SSL_get_secure_renegotiation_support(ssl_))
@@ -788,7 +794,7 @@ int SSLClientSocketOpenSSL::Init() {
   // appended to the cipher removal |command|.
   for (size_t i = 0; i < sk_SSL_CIPHER_num(ciphers); ++i) {
     const SSL_CIPHER* cipher = sk_SSL_CIPHER_value(ciphers, i);
-    const uint16 id = SSL_CIPHER_get_id(cipher);
+    const uint16 id = static_cast<uint16>(SSL_CIPHER_get_id(cipher));
     // Remove any ciphers with a strength of less than 80 bits. Note the NSS
     // implementation uses "effective" bits here but OpenSSL does not provide
     // this detail. This only impacts Triple DES: reports 112 vs. 168 bits,
@@ -960,7 +966,7 @@ int SSLClientSocketOpenSSL::DoHandshake() {
     // Only record OCSP histograms if OCSP was requested.
     if (ssl_config_.signed_cert_timestamps_enabled ||
         IsOCSPStaplingSupported()) {
-      uint8_t* ocsp_response;
+      const uint8_t* ocsp_response;
       size_t ocsp_response_len;
       SSL_get0_ocsp_response(ssl_, &ocsp_response, &ocsp_response_len);
 
@@ -968,7 +974,7 @@ int SSLClientSocketOpenSSL::DoHandshake() {
       UMA_HISTOGRAM_BOOLEAN("Net.OCSPResponseStapled", ocsp_response_len != 0);
     }
 
-    uint8_t* sct_list;
+    const uint8_t* sct_list;
     size_t sct_list_len;
     SSL_get0_signed_cert_timestamp_list(ssl_, &sct_list, &sct_list_len);
     set_signed_cert_timestamps_received(sct_list_len != 0);
@@ -1140,21 +1146,6 @@ int SSLClientSocketOpenSSL::DoVerifyCertComplete(int result) {
     result = ERR_SSL_PINNED_KEY_NOT_IN_CERT_CHAIN;
   }
 
-  scoped_refptr<ct::EVCertsWhitelist> ev_whitelist =
-      SSLConfigService::GetEVCertsWhitelist();
-  if (server_cert_verify_result_.cert_status & CERT_STATUS_IS_EV) {
-    if (ev_whitelist.get() && ev_whitelist->IsValid()) {
-      const SHA256HashValue fingerprint(
-          X509Certificate::CalculateFingerprint256(
-              server_cert_verify_result_.verified_cert->os_cert_handle()));
-
-      UMA_HISTOGRAM_BOOLEAN(
-          "Net.SSL_EVCertificateInWhitelist",
-          ev_whitelist->ContainsCertificateHash(
-              std::string(reinterpret_cast<const char*>(fingerprint.data), 8)));
-    }
-  }
-
   if (result == OK) {
     // Only check Certificate Transparency if there were no other errors with
     // the connection.
@@ -1201,13 +1192,13 @@ void SSLClientSocketOpenSSL::UpdateServerCert() {
     // update IsOCSPStaplingSupported for Mac. https://crbug.com/430714
     if (IsOCSPStaplingSupported()) {
 #if defined(OS_WIN)
-      uint8_t* ocsp_response_raw;
+      const uint8_t* ocsp_response_raw;
       size_t ocsp_response_len;
       SSL_get0_ocsp_response(ssl_, &ocsp_response_raw, &ocsp_response_len);
 
       CRYPT_DATA_BLOB ocsp_response_blob;
       ocsp_response_blob.cbData = ocsp_response_len;
-      ocsp_response_blob.pbData = ocsp_response_raw;
+      ocsp_response_blob.pbData = const_cast<BYTE*>(ocsp_response_raw);
       BOOL ok = CertSetCertificateContextProperty(
           server_cert_->os_cert_handle(),
           CERT_OCSP_RESPONSE_PROP_ID,
@@ -1228,7 +1219,7 @@ void SSLClientSocketOpenSSL::VerifyCT() {
   if (!cert_transparency_verifier_)
     return;
 
-  uint8_t* ocsp_response_raw;
+  const uint8_t* ocsp_response_raw;
   size_t ocsp_response_len;
   SSL_get0_ocsp_response(ssl_, &ocsp_response_raw, &ocsp_response_len);
   std::string ocsp_response;
@@ -1237,7 +1228,7 @@ void SSLClientSocketOpenSSL::VerifyCT() {
                          ocsp_response_len);
   }
 
-  uint8_t* sct_list_raw;
+  const uint8_t* sct_list_raw;
   size_t sct_list_len;
   SSL_get0_signed_cert_timestamp_list(ssl_, &sct_list_raw, &sct_list_len);
   std::string sct_list;
@@ -1247,15 +1238,28 @@ void SSLClientSocketOpenSSL::VerifyCT() {
   // Note that this is a completely synchronous operation: The CT Log Verifier
   // gets all the data it needs for SCT verification and does not do any
   // external communication.
-  int result = cert_transparency_verifier_->Verify(
-      server_cert_verify_result_.verified_cert.get(),
-      ocsp_response, sct_list, &ct_verify_result_, net_log_);
+  cert_transparency_verifier_->Verify(
+      server_cert_verify_result_.verified_cert.get(), ocsp_response, sct_list,
+      &ct_verify_result_, net_log_);
 
-  VLOG(1) << "CT Verification complete: result " << result
-          << " Invalid scts: " << ct_verify_result_.invalid_scts.size()
-          << " Verified scts: " << ct_verify_result_.verified_scts.size()
-          << " scts from unknown logs: "
-          << ct_verify_result_.unknown_logs_scts.size();
+  if (!policy_enforcer_) {
+    server_cert_verify_result_.cert_status &= ~CERT_STATUS_IS_EV;
+  } else {
+    if (server_cert_verify_result_.cert_status & CERT_STATUS_IS_EV) {
+      scoped_refptr<ct::EVCertsWhitelist> ev_whitelist =
+          SSLConfigService::GetEVCertsWhitelist();
+      if (!policy_enforcer_->DoesConformToCTEVPolicy(
+              server_cert_verify_result_.verified_cert.get(),
+              ev_whitelist.get(), ct_verify_result_)) {
+        // TODO(eranm): Log via the BoundNetLog, see crbug.com/437766
+        VLOG(1) << "EV certificate for "
+                << server_cert_verify_result_.verified_cert->subject()
+                       .GetDisplayName()
+                << " does not conform to CT policy, removing EV status.";
+        server_cert_verify_result_.cert_status &= ~CERT_STATUS_IS_EV;
+      }
+    }
+  }
 }
 
 void SSLClientSocketOpenSSL::OnHandshakeIOComplete(int result) {

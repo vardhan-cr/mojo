@@ -22,11 +22,11 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '947556f6583e62b1ae19dcda94e0dea78babda2b',
+  'skia_revision': '2dd1ae016d7f297b433c3ea3a771ef8e01657c1f',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '43c0584a4b83eefc27c519f577b62f3960a1772d',
+  'v8_revision': 'dfec52e2f3e073cfe28d0041f6d7c657d9b9486f',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
@@ -34,15 +34,15 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '6ea835db27479b9a5742e48b5e4466af7c2534ff',
+  'buildtools_revision': 'ded32942a1ebfddff0ba1231898fc4f6c7faacec',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': '1dc4f4112d72c63e465d6f09695ebea1119d39a6',
+  'pdfium_revision': 'ef619d0562b39f30943cfdc4985a0df233d00e42',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': '69a01608f33ab6fe2c3485d94aef1fe9eacf5364',
+  'boringssl_revision': '00505ec2e1e4c3047b4f61a306f2ac1372fa7640',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -50,7 +50,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling nss
   # and whatever else without interference from each other.
-  'nss_revision': '258342ecf9c65105189092ef6339dc4e7779a7ae',
+  'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -78,7 +78,7 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu52.git' + '@' + 'dd727641e190d60e4593bcb3a35c7f51eb4925c5', # from svn revision 292996
+   Var('chromium_git') + '/chromium/deps/icu52.git' + '@' + '866ff696e9022a6000afbab516fba62cfa306075', # from svn revision 293126
 
   'src/third_party/libc++/trunk':
    Var('chromium_git') + '/chromium/llvm-project/libcxx.git' + '@' +  Var('libcxx_revision'),
@@ -102,10 +102,10 @@ deps = {
     Var('chromium_git') + '/external/ots.git' + '@' + '98897009f3ea8a5fa3e20a4a74977da7aaa8e61a',
 
   'src/third_party/brotli/src':
-   Var('chromium_git') + '/external/font-compression-reference.git' + '@' + '65cb3326e30ef8a67eb1d4411ec563e91be6e9ae',
+   Var('chromium_git') + '/external/font-compression-reference.git' + '@' + '8c9c83426beb4a58da34be76ea1fccb4054c4703',
 
   'src/third_party/yasm/source/patched-yasm':
-   Var('chromium_git') + '/chromium/deps/yasm/patched-yasm.git' + '@' + 'c960eb11ccda80b10ed50be39df4f0663b371d1d',
+   Var('chromium_git') + '/chromium/deps/yasm/patched-yasm.git' + '@' + '4671120cd8558ce62ee8672ebf3eb6f5216f909b',
 
   'src/third_party/libjpeg_turbo':
    Var('chromium_git') + '/chromium/deps/libjpeg_turbo.git' + '@' + '034e9a9747e0983bc19808ea70e469bc8342081f',
@@ -126,7 +126,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + 'b13d8f243da15ded051e87e663c4f2c2fcc5804c', # from svn revision 1994
+    Var('chromium_git') + '/external/gyp.git' + '@' + 'fe00999dfaee449d3465a9316778434884da4fa7', # from svn revision 2010
 }
 
 
@@ -152,7 +152,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + 'ea50cccc11657404ce22cf928062ed1a3927eb39',
+     Var('chromium_git') + '/android_tools.git' + '@' + '4f723e2a5fa5b7b8a198072ac19b92344be2b271',
 
     'src/third_party/freetype':
        Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'a2b9955b49034a51dfbc8bf9f4e9d312149cecac',

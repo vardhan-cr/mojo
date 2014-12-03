@@ -56,10 +56,17 @@ const char kDisableGpuShaderDiskCache[]     = "disable-gpu-shader-disk-cache";
 const char kEnableShareGroupAsyncTextureUpload[] =
     "enable-share-group-async-texture-upload";
 
+// Enable WebGL subscribe uniform extension.
+const char kEnableSubscribeUniformExtension[] =
+    "enable-subscribe-uniform-extension";
+
 // Simulates shared textures when share groups are not available. Not available
 // everywhere.
 const char kEnableThreadedTextureMailboxes[] =
     "enable-threaded-texture-mailboxes";
+
+// Enable OpenGL ES 3 APIs without proper service side validation.
+const char kEnableUnsafeES3APIs[] = "enable-unsafe-es3-apis";
 
 const char* kGpuSwitches[] = {
   kCompileShaderAlwaysSucceeds,
@@ -77,6 +84,8 @@ const char* kGpuSwitches[] = {
   kGpuProgramCacheSizeKb,
   kDisableGpuShaderDiskCache,
   kEnableShareGroupAsyncTextureUpload,
+  kEnableUnsafeES3APIs,
+  kEnableSubscribeUniformExtension,
 };
 
 const int kNumGpuSwitches = arraysize(kGpuSwitches);

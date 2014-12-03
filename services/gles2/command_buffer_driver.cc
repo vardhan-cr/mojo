@@ -8,6 +8,7 @@
 #include "base/macros.h"
 #include "base/memory/shared_memory.h"
 #include "gpu/command_buffer/common/constants.h"
+#include "gpu/command_buffer/common/value_state.h"
 #include "gpu/command_buffer/service/command_buffer_service.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
@@ -119,7 +120,7 @@ bool CommandBufferDriver::DoInitialize(ScopedSharedBufferHandle shared_state) {
   scoped_refptr<gpu::gles2::ContextGroup> context_group =
       new gpu::gles2::ContextGroup(
           mailbox_manager_.get(), new MemoryTrackerStub,
-          new gpu::gles2::ShaderTranslatorCache, nullptr, true);
+          new gpu::gles2::ShaderTranslatorCache, nullptr, nullptr, true);
 
   command_buffer_.reset(
       new gpu::CommandBufferService(context_group->transfer_buffer_manager()));

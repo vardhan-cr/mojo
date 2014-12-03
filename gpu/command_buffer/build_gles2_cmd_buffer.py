@@ -688,6 +688,16 @@ _NAMED_TYPE_INFO = {
       'GL_PROXY_TEXTURE_CUBE_MAP',
     ]
   },
+  'Texture3DTarget': {
+    'type': 'GLenum',
+    'valid': [
+      'GL_TEXTURE_3D',
+      'GL_TEXTURE_2D_ARRAY',
+    ],
+    'invalid': [
+      'GL_TEXTURE_2D',
+    ]
+  },
   'TextureBindTarget': {
     'type': 'GLenum',
     'valid': [
@@ -1347,6 +1357,8 @@ _PEPPER_INTERFACES = [
 #               the corresponding feature info flag is enabled. Implies
 #               'extension': True.
 # not_shared:   For GENn types, True if objects can't be shared between contexts
+# unsafe:       True = no validation is implemented on the service side and the
+#               command is only available with --enable-unsafe-es3-apis.
 
 _FUNCTION_INFO = {
   'ActiveTexture': {
@@ -1449,6 +1461,9 @@ _FUNCTION_INFO = {
     'extension': "CHROMIUM_texture_mailbox",
     'chromium': True,
     'trace_level': 1,
+  },
+  'CopyBufferSubData': {
+    'unsafe': True,
   },
   'CreateAndConsumeTextureCHROMIUM': {
     'decoder_func': 'DoCreateAndConsumeTextureCHROMIUM',
@@ -1751,6 +1766,10 @@ _FUNCTION_INFO = {
     'extension_flag': 'multisampled_render_to_texture',
     'trace_level': 1,
   },
+  'FramebufferTextureLayer': {
+    'decoder_func': 'DoFramebufferTextureLayer',
+    'unsafe': True,
+  },
   'GenerateMipmap': {
     'decoder_func': 'DoGenerateMipmap',
     'gl_test_func': 'glGenerateMipmapEXT',
@@ -1859,6 +1878,11 @@ _FUNCTION_INFO = {
     'result': ['SizedResult<GLint>'],
     'decoder_func': 'DoGetIntegerv',
     'client_test': False,
+  },
+  'GetInternalformativ': {
+    'type': 'GETn',
+    'result': ['SizedResult<GLint>'],
+    'unsafe': True,
   },
   'GetMaxValueInBufferCHROMIUM': {
     'type': 'Is',
@@ -2198,6 +2222,9 @@ _FUNCTION_INFO = {
     'gl_test_func': 'glTexParameteri',
     'first_element_only': True,
   },
+  'TexStorage3D': {
+    'unsafe': True,
+  },
   'TexSubImage2D': {
     'type': 'Manual',
     'data_transfer_methods': ['shm'],
@@ -2221,6 +2248,16 @@ _FUNCTION_INFO = {
     'decoder_func': 'DoUniform1iv',
     'unit_test': False,
   },
+  'Uniform1ui': {
+    'type': 'PUTXn',
+    'count': 1,
+    'unsafe': True,
+  },
+  'Uniform1uiv': {
+    'type': 'PUTn',
+    'count': 1,
+    'unsafe': True,
+  },
   'Uniform2i': {'type': 'PUTXn', 'count': 2},
   'Uniform2f': {'type': 'PUTXn', 'count': 2},
   'Uniform2fv': {
@@ -2232,6 +2269,16 @@ _FUNCTION_INFO = {
     'type': 'PUTn',
     'count': 2,
     'decoder_func': 'DoUniform2iv',
+  },
+  'Uniform2ui': {
+    'type': 'PUTXn',
+    'count': 2,
+    'unsafe': True,
+  },
+  'Uniform2uiv': {
+    'type': 'PUTn',
+    'count': 2,
+    'unsafe': True,
   },
   'Uniform3i': {'type': 'PUTXn', 'count': 3},
   'Uniform3f': {'type': 'PUTXn', 'count': 3},
@@ -2245,6 +2292,16 @@ _FUNCTION_INFO = {
     'count': 3,
     'decoder_func': 'DoUniform3iv',
   },
+  'Uniform3ui': {
+    'type': 'PUTXn',
+    'count': 3,
+    'unsafe': True,
+  },
+  'Uniform3uiv': {
+    'type': 'PUTn',
+    'count': 3,
+    'unsafe': True,
+  },
   'Uniform4i': {'type': 'PUTXn', 'count': 4},
   'Uniform4f': {'type': 'PUTXn', 'count': 4},
   'Uniform4fv': {
@@ -2257,20 +2314,60 @@ _FUNCTION_INFO = {
     'count': 4,
     'decoder_func': 'DoUniform4iv',
   },
+  'Uniform4ui': {
+    'type': 'PUTXn',
+    'count': 4,
+    'unsafe': True,
+  },
+  'Uniform4uiv': {
+    'type': 'PUTn',
+    'count': 4,
+    'unsafe': True,
+  },
   'UniformMatrix2fv': {
     'type': 'PUTn',
     'count': 4,
     'decoder_func': 'DoUniformMatrix2fv',
+  },
+  'UniformMatrix2x3fv': {
+    'type': 'PUTn',
+    'count': 6,
+    'unsafe': True,
+  },
+  'UniformMatrix2x4fv': {
+    'type': 'PUTn',
+    'count': 8,
+    'unsafe': True,
   },
   'UniformMatrix3fv': {
     'type': 'PUTn',
     'count': 9,
     'decoder_func': 'DoUniformMatrix3fv',
   },
+  'UniformMatrix3x2fv': {
+    'type': 'PUTn',
+    'count': 6,
+    'unsafe': True,
+  },
+  'UniformMatrix3x4fv': {
+    'type': 'PUTn',
+    'count': 12,
+    'unsafe': True,
+  },
   'UniformMatrix4fv': {
     'type': 'PUTn',
     'count': 16,
     'decoder_func': 'DoUniformMatrix4fv',
+  },
+  'UniformMatrix4x2fv': {
+    'type': 'PUTn',
+    'count': 8,
+    'unsafe': True,
+  },
+  'UniformMatrix4x3fv': {
+    'type': 'PUTn',
+    'count': 12,
+    'unsafe': True,
   },
   'UnmapBufferCHROMIUM': {
     'gen_cmd': False,
@@ -2321,12 +2418,36 @@ _FUNCTION_INFO = {
     'count': 4,
     'decoder_func': 'DoVertexAttrib4fv',
   },
+  'VertexAttribI4i': {
+    'unsafe': True,
+  },
+  'VertexAttribI4iv': {
+    'type': 'PUT',
+    'count': 4,
+    'unsafe': True,
+  },
+  'VertexAttribI4ui': {
+    'unsafe': True,
+  },
+  'VertexAttribI4uiv': {
+    'type': 'PUT',
+    'count': 4,
+    'unsafe': True,
+  },
+  'VertexAttribIPointer': {
+    'type': 'Manual',
+    'cmd_args': 'GLuint indx, GLintVertexAttribSize size, '
+                'GLenumVertexAttribType type, GLsizei stride, '
+                'GLuint offset',
+    'client_test': False,
+    'unsafe': True,
+  },
   'VertexAttribPointer': {
-      'type': 'Manual',
-      'cmd_args': 'GLuint indx, GLintVertexAttribSize size, '
-                  'GLenumVertexAttribType type, GLboolean normalized, '
-                  'GLsizei stride, GLuint offset',
-      'client_test': False,
+    'type': 'Manual',
+    'cmd_args': 'GLuint indx, GLintVertexAttribSize size, '
+                'GLenumVertexAttribType type, GLboolean normalized, '
+                'GLsizei stride, GLuint offset',
+    'client_test': False,
   },
   'Scissor': {
     'type': 'StateSet',
@@ -2336,11 +2457,11 @@ _FUNCTION_INFO = {
     'decoder_func': 'DoViewport',
   },
   'ResizeCHROMIUM': {
-      'type': 'Custom',
-      'impl_func': False,
-      'unit_test': False,
-      'extension': True,
-      'chromium': True,
+    'type': 'Custom',
+    'impl_func': False,
+    'unit_test': False,
+    'extension': True,
+    'chromium': True,
   },
   'GetRequestableExtensionsCHROMIUM': {
     'type': 'Custom',
@@ -2978,7 +3099,12 @@ COMPILE_ASSERT(offsetof(%(cmd_name)s::Result, %(field_name)s) == %(offset)d,
     """Writes function header for service implementation handlers."""
     file.Write("""error::Error GLES2DecoderImpl::Handle%(name)s(
         uint32_t immediate_data_size, const void* cmd_data) {
-      const gles2::cmds::%(name)s& c =
+      """ % {'name': func.name})
+    if func.IsUnsafe():
+      file.Write("""if (!unsafe_es3_apis_enabled())
+          return error::kUnknownCommand;
+        """)
+    file.Write("""const gles2::cmds::%(name)s& c =
           *static_cast<const gles2::cmds::%(name)s*>(cmd_data);
       (void)c;
       """ % {'name': func.name})
@@ -3140,36 +3266,40 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
   SetupExpectationsForEnableDisable(%(gl_args)s, true);
   SpecializedSetup<cmds::%(name)s, 0>(true);
   cmds::%(name)s cmd;
-  cmd.Init(%(args)s);
-  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
-}
-"""
+  cmd.Init(%(args)s);"""
     elif func.name == 'Disable':
       valid_test = """
 TEST_P(%(test_name)s, %(name)sValidArgs) {
   SetupExpectationsForEnableDisable(%(gl_args)s, false);
   SpecializedSetup<cmds::%(name)s, 0>(true);
   cmds::%(name)s cmd;
-  cmd.Init(%(args)s);
-  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
-}
-"""
+  cmd.Init(%(args)s);"""
     else:
       valid_test = """
 TEST_P(%(test_name)s, %(name)sValidArgs) {
   EXPECT_CALL(*gl_, %(gl_func_name)s(%(gl_args)s));
   SpecializedSetup<cmds::%(name)s, 0>(true);
   cmds::%(name)s cmd;
-  cmd.Init(%(args)s);
+  cmd.Init(%(args)s);"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(true);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand, ExecuteCmd(cmd));
+}
+"""
+    else:
+      valid_test += """
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
   EXPECT_EQ(GL_NO_ERROR, GetGLError());
 }
 """
     self.WriteValidUnitTest(func, file, valid_test, *extras)
 
-    invalid_test = """
+    if not func.IsUnsafe():
+      invalid_test = """
 TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
   EXPECT_CALL(*gl_, %(gl_func_name)s(%(gl_args)s)).Times(0);
   SpecializedSetup<cmds::%(name)s, 0>(false);
@@ -3178,7 +3308,7 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
   EXPECT_EQ(error::%(parse_result)s, ExecuteCmd(cmd));%(gl_error_test)s
 }
 """
-    self.WriteInvalidUnitTest(func, file, invalid_test, *extras)
+      self.WriteInvalidUnitTest(func, file, invalid_test, *extras)
 
   def WriteImmediateServiceUnitTest(self, func, file, *extras):
     """Writes the service unit test for an immediate command."""
@@ -4919,12 +5049,21 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
   EXPECT_CALL(*gl_, %(gl_func_name)s(%(local_gl_args)s));
   result->size = 0;
   cmds::%(name)s cmd;
-  cmd.Init(%(args)s);
+  cmd.Init(%(args)s);"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(true);"""
+    valid_test += """
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
   EXPECT_EQ(decoder_->GetGLES2Util()->GLGetNumValuesReturned(
                 %(valid_pname)s),
             result->GetNumResults());
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand, ExecuteCmd(cmd));"""
+    valid_test += """
 }
 """
     gl_arg_strings = []
@@ -4944,7 +5083,8 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
         'valid_pname': valid_pname,
       }, *extras)
 
-    invalid_test = """
+    if not func.IsUnsafe():
+      invalid_test = """
 TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
   EXPECT_CALL(*gl_, %(gl_func_name)s(%(gl_args)s)).Times(0);
   SpecializedSetup<cmds::%(name)s, 0>(false);
@@ -4957,7 +5097,7 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
   EXPECT_EQ(0u, result->size);%(gl_error_test)s
 }
 """
-    self.WriteInvalidUnitTest(func, file, invalid_test, *extras)
+      self.WriteInvalidUnitTest(func, file, invalid_test, *extras)
 
 class ArrayArgTypeHandler(TypeHandler):
   """Base class for type handlers that handle args that are arrays"""
@@ -5040,10 +5180,20 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
   EXPECT_CALL(
       *gl_,
       %(gl_func_name)s(%(gl_args)s, %(data_ref)sreinterpret_cast<
-          %(data_type)s*>(ImmediateDataAddress(&cmd))));
+          %(data_type)s*>(ImmediateDataAddress(&cmd))));"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(true);"""
+    valid_test += """
   EXPECT_EQ(error::kNoError,
             ExecuteImmediateCmd(cmd, sizeof(temp)));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand,
+            ExecuteImmediateCmd(cmd, sizeof(temp)));"""
+    valid_test += """
 }
 """
     gl_arg_strings = [
@@ -5309,10 +5459,20 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
           reinterpret_cast<%(data_type)s*>(ImmediateDataAddress(&cmd))));
   SpecializedSetup<cmds::%(name)s, 0>(true);
   %(data_type)s temp[%(data_count)s * 2] = { 0, };
-  cmd.Init(%(args)s, &temp[0]);
+  cmd.Init(%(args)s, &temp[0]);"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(true);"""
+    valid_test += """
   EXPECT_EQ(error::kNoError,
             ExecuteImmediateCmd(cmd, sizeof(temp)));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand,
+            ExecuteImmediateCmd(cmd, sizeof(temp)));"""
+    valid_test += """
 }
 """
     gl_arg_strings = []
@@ -5586,7 +5746,13 @@ class PUTXnHandler(ArrayArgTypeHandler):
 
   def WriteHandlerImplementation(self, func, file):
     """Overrriden from TypeHandler."""
-    code = """  %(type)s temp[%(count)s] = { %(values)s};
+    code = """  %(type)s temp[%(count)s] = { %(values)s};"""
+    if func.IsUnsafe():
+      code += """
+  gl%(name)sv(%(location)s, 1, &temp[0]);
+"""
+    else:
+      code += """
   Do%(name)sv(%(location)s, 1, &temp[0]);
 """
     values = ""
@@ -5612,9 +5778,18 @@ TEST_P(%(test_name)s, %(name)sValidArgs) {
   EXPECT_CALL(*gl_, %(name)sv(%(local_args)s));
   SpecializedSetup<cmds::%(name)s, 0>(true);
   cmds::%(name)s cmd;
-  cmd.Init(%(args)s);
+  cmd.Init(%(args)s);"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(true);"""
+    valid_test += """
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());"""
+    if func.IsUnsafe():
+      valid_test += """
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand, ExecuteCmd(cmd));"""
+    valid_test += """
 }
 """
     args = func.GetOriginalArgs()
@@ -6368,6 +6543,8 @@ class EnumBaseArgument(Argument):
     return self.named_type.GetConstantValue()
 
   def WriteValidationCode(self, file, func):
+    if func.IsUnsafe():
+      return
     if self.named_type.IsConstant():
       return
     file.Write("  if (!validators_->%s.IsValid(%s)) {\n" %
@@ -6846,6 +7023,10 @@ class Function(object):
     """Returns whether the function is immediate data function or not."""
     return False
 
+  def IsUnsafe(self):
+    """Returns whether the function has service side validation or not."""
+    return self.GetInfo('unsafe', False)
+
   def GetInfo(self, name, default = None):
     """Returns a value from the function info for this function."""
     if name in self.info:
@@ -6874,7 +7055,8 @@ class Function(object):
 
   def IsCoreGLFunction(self):
     return (not self.IsExtension() and
-            not self.GetInfo('pepper_interface'))
+            not self.GetInfo('pepper_interface') and
+            not self.IsUnsafe())
 
   def InPepperInterface(self, interface):
     ext = self.GetInfo('pepper_interface')
@@ -8301,6 +8483,7 @@ extern const NameToFunc g_gles2_function_table[] = {
     dict = {}
     for fname in ['third_party/khronos/GLES2/gl2.h',
                   'third_party/khronos/GLES2/gl2ext.h',
+                  'third_party/khronos/GLES3/gl3.h',
                   'gpu/GLES2/gl2chromium.h',
                   'gpu/GLES2/gl2extchromium.h']:
       lines = open(fname).readlines()

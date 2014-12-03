@@ -145,7 +145,9 @@ FeatureInfo::FeatureFlags::FeatureFlags()
       ext_texture_storage(false),
       chromium_path_rendering(false),
       blend_equation_advanced(false),
-      blend_equation_advanced_coherent(false) {
+      blend_equation_advanced_coherent(false),
+      ext_texture_rg(false),
+      enable_subscribe_uniform(false) {
 }
 
 FeatureInfo::Workarounds::Workarounds() :
@@ -178,6 +180,9 @@ void FeatureInfo::InitializeBasicState(const CommandLine& command_line) {
 
   feature_flags_.is_swiftshader =
       (command_line.GetSwitchValueASCII(switches::kUseGL) == "swiftshader");
+
+  feature_flags_.enable_subscribe_uniform =
+      command_line.HasSwitch(switches::kEnableSubscribeUniformExtension);
 
   static const GLenum kAlphaTypes[] = {
       GL_UNSIGNED_BYTE,
@@ -226,6 +231,39 @@ bool FeatureInfo::Initialize(const DisallowedFeatures& disallowed_features) {
   return true;
 }
 
+bool IsGL_REDSupportedOnFBOs() {
+  // Skia uses GL_RED with frame buffers, unfortunately, Mesa claims to support
+  // GL_EXT_texture_rg, but it doesn't support it on frame buffers.  To fix
+  // this, we try it, and if it fails, we don't expose GL_EXT_texture_rg.
+  GLint fb_binding = 0;
+  GLint tex_binding = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fb_binding);
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &tex_binding);
+
+  GLuint textureId = 0;
+  glGenTextures(1, &textureId);
+  glBindTexture(GL_TEXTURE_2D, textureId);
+  GLubyte data[1] = {0};
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED_EXT, 1, 1, 0, GL_RED_EXT,
+               GL_UNSIGNED_BYTE, data);
+  GLuint textureFBOID = 0;
+  glGenFramebuffersEXT(1, &textureFBOID);
+  glBindFramebufferEXT(GL_FRAMEBUFFER, textureFBOID);
+  glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                            textureId, 0);
+  bool result =
+      glCheckFramebufferStatusEXT(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_UNSUPPORTED;
+  glDeleteFramebuffersEXT(1, &textureFBOID);
+  glDeleteTextures(1, &textureId);
+
+  glBindFramebufferEXT(GL_FRAMEBUFFER, static_cast<GLuint>(fb_binding));
+  glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(tex_binding));
+
+  DCHECK(glGetError() == GL_NO_ERROR);
+
+  return result;
+}
+
 void FeatureInfo::InitializeFeatures() {
   // Figure out what extensions to turn on.
   StringSet extensions(
@@ -260,6 +298,10 @@ void FeatureInfo::InitializeFeatures() {
   AddExtensionString("GL_CHROMIUM_strict_attribs");
   AddExtensionString("GL_CHROMIUM_texture_mailbox");
   AddExtensionString("GL_EXT_debug_marker");
+
+  if (feature_flags_.enable_subscribe_uniform) {
+    AddExtensionString("GL_CHROMIUM_subscribe_uniform");
+  }
 
   // OES_vertex_array_object is emulated if not present natively,
   // so the extension string is always exposed.
@@ -394,8 +436,14 @@ void FeatureInfo::InitializeFeatures() {
     validators_.index_type.AddValue(GL_UNSIGNED_INT);
   }
 
-  if (is_es3 || extensions.Contains("GL_EXT_sRGB") ||
-      gfx::HasDesktopGLFeatures()) {
+  // With EXT_sRGB, unsized SRGB_EXT and SRGB_ALPHA_EXT are accepted by the
+  // <format> and <internalformat> parameter of TexImage2D. GLES3 adds support
+  // for SRGB Textures but the accepted internal formats for TexImage2D are only
+  // sized formats GL_SRGB8 and GL_SRGB8_ALPHA8. Also, SRGB_EXT isn't a valid
+  // <format> in this case. So, even with GLES3 explicitly check for
+  // GL_EXT_sRGB.
+  if (((is_es3 || extensions.Contains("GL_OES_rgb8_rgba8")) &&
+      extensions.Contains("GL_EXT_sRGB")) || gfx::HasDesktopGLFeatures()) {
     AddExtensionString("GL_EXT_sRGB");
     texture_format_validators_[GL_SRGB_EXT].AddValue(GL_UNSIGNED_BYTE);
     texture_format_validators_[GL_SRGB_ALPHA_EXT].AddValue(GL_UNSIGNED_BYTE);
@@ -931,6 +979,34 @@ void FeatureInfo::InitializeFeatures() {
       feature_flags_.chromium_path_rendering = true;
       validators_.g_l_state.AddValue(GL_PATH_MODELVIEW_MATRIX_CHROMIUM);
       validators_.g_l_state.AddValue(GL_PATH_PROJECTION_MATRIX_CHROMIUM);
+    }
+  }
+
+  if ((is_es3 || extensions.Contains("GL_EXT_texture_rg") ||
+       extensions.Contains("GL_ARB_texture_rg")) &&
+      IsGL_REDSupportedOnFBOs()) {
+    feature_flags_.ext_texture_rg = true;
+    AddExtensionString("GL_EXT_texture_rg");
+
+    validators_.texture_format.AddValue(GL_RED_EXT);
+    validators_.texture_format.AddValue(GL_RG_EXT);
+    validators_.texture_internal_format.AddValue(GL_RED_EXT);
+    validators_.texture_internal_format.AddValue(GL_RG_EXT);
+    validators_.read_pixel_format.AddValue(GL_RED_EXT);
+    validators_.read_pixel_format.AddValue(GL_RG_EXT);
+    validators_.render_buffer_format.AddValue(GL_R8_EXT);
+    validators_.render_buffer_format.AddValue(GL_RG8_EXT);
+
+    texture_format_validators_[GL_RED_EXT].AddValue(GL_UNSIGNED_BYTE);
+    texture_format_validators_[GL_RG_EXT].AddValue(GL_UNSIGNED_BYTE);
+
+    if (enable_texture_float) {
+      texture_format_validators_[GL_RED_EXT].AddValue(GL_FLOAT);
+      texture_format_validators_[GL_RG_EXT].AddValue(GL_FLOAT);
+    }
+    if (enable_texture_half_float) {
+      texture_format_validators_[GL_RED_EXT].AddValue(GL_HALF_FLOAT_OES);
+      texture_format_validators_[GL_RG_EXT].AddValue(GL_HALF_FLOAT_OES);
     }
   }
 }

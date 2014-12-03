@@ -725,6 +725,13 @@ bool GLES2Implementation::GetIntegervHelper(GLenum pname, GLint* params) {
   return GetHelper(pname, params);
 }
 
+bool GLES2Implementation::GetInternalformativHelper(
+    GLenum target, GLenum format, GLenum pname, GLsizei bufSize,
+    GLint* params) {
+  // TODO(zmo): Implement the client side caching.
+  return false;
+}
+
 GLuint GLES2Implementation::GetMaxValueInBufferCHROMIUMHelper(
     GLuint buffer_id, GLsizei count, GLenum type, GLuint offset) {
   typedef cmds::GetMaxValueInBufferCHROMIUM::Result Result;
@@ -1111,6 +1118,19 @@ void GLES2Implementation::PixelStorei(GLenum pname, GLint param) {
   CheckGLError();
 }
 
+void GLES2Implementation::VertexAttribIPointer(
+    GLuint index, GLint size, GLenum type, GLsizei stride, const void* ptr) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glVertexAttribPointer("
+      << index << ", "
+      << size << ", "
+      << GLES2Util::GetStringVertexAttribType(type) << ", "
+      << stride << ", "
+      << ptr << ")");
+  helper_->VertexAttribIPointer(index, size, type, stride, ToGLuint(ptr));
+  CheckGLError();
+}
+
 void GLES2Implementation::VertexAttribPointer(
     GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride,
     const void* ptr) {
@@ -1121,7 +1141,7 @@ void GLES2Implementation::VertexAttribPointer(
       << GLES2Util::GetStringVertexAttribType(type) << ", "
       << GLES2Util::GetStringBool(normalized) << ", "
       << stride << ", "
-      << static_cast<const void*>(ptr) << ")");
+      << ptr << ")");
   // Record the info on the client side.
   if (!vertex_array_object_manager_->SetAttribPointer(
       bound_array_buffer_id_, index, size, type, normalized, stride, ptr)) {

@@ -20,6 +20,9 @@
 #include "gin/run_microtasks_observer.h"
 
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
+#ifdef OS_MACOSX
+#include "base/mac/foundation_util.h"
+#endif  // OS_MACOSX
 #include "base/path_service.h"
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
@@ -68,6 +71,16 @@ bool MapV8Files(base::FilePath* natives_path, base::FilePath* snapshot_path,
 
   return true;
 }
+
+#if !defined(OS_MACOSX)
+const int v8_snapshot_dir =
+#if defined(OS_ANDROID)
+    base::DIR_ANDROID_APP_DATA;
+#elif defined(OS_POSIX)
+    base::DIR_EXE;
+#endif  // defined(OS_ANDROID)
+#endif  // !defined(OS_MACOSX)
+
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
 }  // namespace
@@ -79,18 +92,21 @@ bool IsolateHolder::LoadV8Snapshot() {
   if (g_mapped_natives && g_mapped_snapshot)
     return true;
 
+#if !defined(OS_MACOSX)
   base::FilePath data_path;
-  PathService::Get(
-#if defined(OS_ANDROID)
-    base::DIR_ANDROID_APP_DATA,
-#elif defined(OS_POSIX)
-    base::DIR_EXE,
-#endif
-    &data_path);
+  PathService::Get(v8_snapshot_dir, &data_path);
   DCHECK(!data_path.empty());
 
   base::FilePath natives_path = data_path.AppendASCII("natives_blob.bin");
   base::FilePath snapshot_path = data_path.AppendASCII("snapshot_blob.bin");
+#else  // !defined(OS_MACOSX)
+  base::FilePath natives_path = base::mac::PathForFrameworkBundleResource(
+      CFSTR("natives_blob.bin"));
+  base::FilePath snapshot_path = base::mac::PathForFrameworkBundleResource(
+      CFSTR("snapshot_blob.bin"));
+  DCHECK(!natives_path.empty());
+  DCHECK(!snapshot_path.empty());
+#endif  // !defined(OS_MACOSX)
 
   return MapV8Files(&natives_path, &snapshot_path);
 }
@@ -181,13 +197,11 @@ void IsolateHolder::Initialize(ScriptMode mode,
   v8::StartupData natives;
   natives.data = reinterpret_cast<const char*>(g_mapped_natives->data());
   natives.raw_size = static_cast<int>(g_mapped_natives->length());
-  natives.compressed_size = static_cast<int>(g_mapped_natives->length());
   v8::V8::SetNativesDataBlob(&natives);
 
   v8::StartupData snapshot;
   snapshot.data = reinterpret_cast<const char*>(g_mapped_snapshot->data());
   snapshot.raw_size = static_cast<int>(g_mapped_snapshot->length());
-  snapshot.compressed_size = static_cast<int>(g_mapped_snapshot->length());
   v8::V8::SetSnapshotDataBlob(&snapshot);
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
   v8::V8::Initialize();

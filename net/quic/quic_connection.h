@@ -260,8 +260,8 @@ class NET_EXPORT_PRIVATE QuicConnection
   void SetFromConfig(const QuicConfig& config);
 
   // Called by the Session when the client has provided CachedNetworkParameters.
-  // Virtual for tests.
-  virtual void ResumeConnectionState(
+  // Returns true if this changes the initial connection state.
+  virtual bool ResumeConnectionState(
       const CachedNetworkParameters& cached_network_params);
 
   // Sets the number of active streams on the connection for congestion control.
@@ -753,7 +753,7 @@ class NET_EXPORT_PRIVATE QuicConnection
   // Indicates whether an ack should be sent the next time we try to write.
   bool ack_queued_;
   // Indicates how many consecutive packets have arrived without sending an ack.
-  uint32 num_packets_received_since_last_ack_sent_;
+  QuicPacketCount num_packets_received_since_last_ack_sent_;
   // Indicates how many consecutive times an ack has arrived which indicates
   // the peer needs to stop waiting for some packets.
   int stop_waiting_count_;

@@ -470,20 +470,16 @@ void Scheduler::BeginRetroFrame() {
   // draining the queue if we don't catch up. If we consistently can't catch
   // up, our fallback should be to lower our frame rate.
   base::TimeTicks now = Now();
-  base::TimeDelta draw_duration_estimate = client_->DrawDurationEstimate();
-  while (!begin_retro_frame_args_.empty()) {
-    base::TimeTicks adjusted_deadline = AdjustedBeginImplFrameDeadline(
-        begin_retro_frame_args_.front(), draw_duration_estimate);
-    if (now <= adjusted_deadline)
-      break;
 
-    TRACE_EVENT_INSTANT2("cc",
-                         "Scheduler::BeginRetroFrame discarding",
-                         TRACE_EVENT_SCOPE_THREAD,
-                         "deadline - now",
-                         (adjusted_deadline - now).InMicroseconds(),
-                         "BeginFrameArgs",
-                         begin_retro_frame_args_.front().AsValue());
+  while (!begin_retro_frame_args_.empty()) {
+    const BeginFrameArgs& args = begin_retro_frame_args_.front();
+    base::TimeTicks expiration_time = args.frame_time + args.interval;
+    if (now <= expiration_time)
+      break;
+    TRACE_EVENT_INSTANT2(
+        "cc", "Scheduler::BeginRetroFrame discarding", TRACE_EVENT_SCOPE_THREAD,
+        "expiration_time - now", (expiration_time - now).InMillisecondsF(),
+        "BeginFrameArgs", begin_retro_frame_args_.front().AsValue());
     begin_retro_frame_args_.pop_front();
     frame_source_->DidFinishFrame(begin_retro_frame_args_.size());
   }
@@ -564,19 +560,38 @@ void Scheduler::BeginImplFrame(const BeginFrameArgs& args) {
   ProcessScheduledActions();
 
   state_machine_.OnBeginImplFrameDeadlinePending();
-  ScheduleBeginImplFrameDeadline(
-      AdjustedBeginImplFrameDeadline(args, draw_duration_estimate));
+
+  if (settings_.using_synchronous_renderer_compositor) {
+    // The synchronous renderer compositor has to make its GL calls
+    // within this call.
+    // TODO(brianderson): Have the OutputSurface initiate the deadline tasks
+    // so the synchronous renderer compositor can take advantage of splitting
+    // up the BeginImplFrame and deadline as well.
+    OnBeginImplFrameDeadline();
+  } else {
+    ScheduleBeginImplFrameDeadline(
+        AdjustedBeginImplFrameDeadline(args, draw_duration_estimate));
+  }
 }
 
 base::TimeTicks Scheduler::AdjustedBeginImplFrameDeadline(
     const BeginFrameArgs& args,
     base::TimeDelta draw_duration_estimate) const {
-  if (settings_.using_synchronous_renderer_compositor) {
-    // The synchronous compositor needs to draw right away.
+  // The synchronous compositor does not post a deadline task.
+  DCHECK(!settings_.using_synchronous_renderer_compositor);
+  if (settings_.main_thread_should_always_be_low_latency) {
+    // In main thread low latency mode, always start deadline early.
     return base::TimeTicks();
   } else if (state_machine_.ShouldTriggerBeginImplFrameDeadlineEarly()) {
     // We are ready to draw a new active tree immediately.
+    // We don't use Now() here because it's somewhat expensive to call.
     return base::TimeTicks();
+  } else if (settings_.main_thread_should_always_be_low_latency) {
+    // Post long deadline to keep advancing during idle period. After activation
+    // we will be able to trigger deadline early.
+    // TODO(weiliangc): Don't post deadline once input is deferred with
+    // BeginRetroFrames.
+    return args.frame_time + args.interval;
   } else if (state_machine_.needs_redraw()) {
     // We have an animation or fast input path on the impl thread that wants
     // to draw, so don't wait too long for a new active tree.
@@ -596,15 +611,6 @@ base::TimeTicks Scheduler::AdjustedBeginImplFrameDeadline(
 void Scheduler::ScheduleBeginImplFrameDeadline(base::TimeTicks deadline) {
   TRACE_EVENT1(
       "cc", "Scheduler::ScheduleBeginImplFrameDeadline", "deadline", deadline);
-  if (settings_.using_synchronous_renderer_compositor) {
-    // The synchronous renderer compositor has to make its GL calls
-    // within this call.
-    // TODO(brianderson): Have the OutputSurface initiate the deadline tasks
-    // so the sychronous renderer compositor can take advantage of splitting
-    // up the BeginImplFrame and deadline as well.
-    OnBeginImplFrameDeadline();
-    return;
-  }
   begin_impl_frame_deadline_task_.Cancel();
   begin_impl_frame_deadline_task_.Reset(begin_impl_frame_deadline_closure_);
 
@@ -618,7 +624,6 @@ void Scheduler::ScheduleBeginImplFrameDeadline(base::TimeTicks deadline) {
 void Scheduler::OnBeginImplFrameDeadline() {
   TRACE_EVENT0("cc", "Scheduler::OnBeginImplFrameDeadline");
   begin_impl_frame_deadline_task_.Cancel();
-
   // We split the deadline actions up into two phases so the state machine
   // has a chance to trigger actions that should occur durring and after
   // the deadline separately. For example:

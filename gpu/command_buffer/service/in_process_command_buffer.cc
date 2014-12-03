@@ -19,6 +19,7 @@
 #include "base/synchronization/condition_variable.h"
 #include "base/threading/thread.h"
 #include "gpu/command_buffer/client/gpu_memory_buffer_manager.h"
+#include "gpu/command_buffer/common/value_state.h"
 #include "gpu/command_buffer/service/command_buffer_service.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/gl_context_virtual.h"
@@ -105,9 +106,12 @@ GpuInProcessThread::shader_translator_cache() {
   return shader_translator_cache_;
 }
 
-base::LazyInstance<std::set<InProcessCommandBuffer*> > default_thread_clients_ =
-    LAZY_INSTANCE_INITIALIZER;
-base::LazyInstance<base::Lock> default_thread_clients_lock_ =
+struct GpuInProcessThreadHolder {
+  GpuInProcessThreadHolder() : gpu_thread(new GpuInProcessThread) {}
+  scoped_refptr<InProcessCommandBuffer::Service> gpu_thread;
+};
+
+base::LazyInstance<GpuInProcessThreadHolder> g_default_service =
     LAZY_INSTANCE_INITIALIZER;
 
 class ScopedEvent {
@@ -194,18 +198,12 @@ InProcessCommandBuffer::Service::mailbox_manager() {
   return mailbox_manager_;
 }
 
-scoped_refptr<InProcessCommandBuffer::Service>
-InProcessCommandBuffer::GetDefaultService() {
-  base::AutoLock lock(default_thread_clients_lock_.Get());
-  scoped_refptr<Service> service;
-  if (!default_thread_clients_.Get().empty()) {
-    InProcessCommandBuffer* other = *default_thread_clients_.Get().begin();
-    service = other->service_;
-    DCHECK(service.get());
-  } else {
-    service = new GpuInProcessThread;
+scoped_refptr<gpu::ValueStateMap>
+InProcessCommandBuffer::Service::pending_valuebuffer_state() {
+  if (!pending_valuebuffer_state_.get()) {
+    pending_valuebuffer_state_ = new gpu::ValueStateMap();
   }
-  return service;
+  return pending_valuebuffer_state_;
 }
 
 InProcessCommandBuffer::InProcessCommandBuffer(
@@ -216,19 +214,14 @@ InProcessCommandBuffer::InProcessCommandBuffer(
       last_put_offset_(-1),
       gpu_memory_buffer_manager_(nullptr),
       flush_event_(false, false),
-      service_(service.get() ? service : GetDefaultService()),
+      service_(service.get() ? service : g_default_service.Get().gpu_thread),
       gpu_thread_weak_ptr_factory_(this) {
-  if (!service.get()) {
-    base::AutoLock lock(default_thread_clients_lock_.Get());
-    default_thread_clients_.Get().insert(this);
-  }
+  DCHECK(service_.get());
   next_image_id_.GetNext();
 }
 
 InProcessCommandBuffer::~InProcessCommandBuffer() {
   Destroy();
-  base::AutoLock lock(default_thread_clients_lock_.Get());
-  default_thread_clients_.Get().erase(this);
 }
 
 void InProcessCommandBuffer::OnResizeView(gfx::Size size, float scale_factor) {
@@ -358,6 +351,7 @@ bool InProcessCommandBuffer::InitializeOnGpuThread(
                                     NULL,
                                     service_->shader_translator_cache(),
                                     NULL,
+                                    service_->pending_valuebuffer_state(),
                                     bind_generates_resource)));
 
   gpu_scheduler_.reset(

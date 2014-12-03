@@ -542,7 +542,8 @@ bool GLES2Decoder::GetServiceTextureId(uint32 client_texture_id,
 GLES2Decoder::GLES2Decoder()
     : initialized_(false),
       debug_(false),
-      log_commands_(false) {
+      log_commands_(false),
+      unsafe_es3_apis_enabled_(false) {
 }
 
 GLES2Decoder::~GLES2Decoder() {
@@ -629,7 +630,13 @@ class GLES2DecoderImpl : public GLES2Decoder,
     return vertex_array_manager_.get();
   }
   ImageManager* GetImageManager() override { return image_manager_.get(); }
+
+  ValuebufferManager* GetValuebufferManager() override {
+    return valuebuffer_manager();
+  }
+
   bool ProcessPendingQueries(bool did_finish) override;
+
   bool HasMoreIdleWork() override;
   void PerformIdleWork() override;
 
@@ -1365,6 +1372,11 @@ class GLES2DecoderImpl : public GLES2Decoder,
   void DoFramebufferTexture2DCommon(const char* name,
       GLenum target, GLenum attachment, GLenum textarget,
       GLuint texture, GLint level, GLsizei samples);
+
+  // Wrapper for glFramebufferTextureLayer.
+  void DoFramebufferTextureLayer(
+      GLenum target, GLenum attachment, GLuint texture, GLint level,
+      GLint layer);
 
   // Wrapper for glGenerateMipmap
   void DoGenerateMipmap(GLenum target);
@@ -2427,9 +2439,13 @@ bool GLES2DecoderImpl::Initialize(
     set_log_commands(true);
   }
 
+  if (CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kEnableUnsafeES3APIs)) {
+    set_unsafe_es3_apis_enabled(true);
+  }
+
   compile_shader_always_succeeds_ = CommandLine::ForCurrentProcess()->HasSwitch(
       switches::kCompileShaderAlwaysSucceeds);
-
 
   // Take ownership of the context and surface. The surface can be replaced with
   // SetSurface.
@@ -2839,6 +2855,7 @@ Capabilities GLES2DecoderImpl::GetCapabilities() {
       feature_info_->feature_flags().blend_equation_advanced;
   caps.blend_equation_advanced_coherent =
       feature_info_->feature_flags().blend_equation_advanced_coherent;
+  caps.texture_rg = feature_info_->feature_flags().ext_texture_rg;
   return caps;
 }
 
@@ -5364,6 +5381,25 @@ void GLES2DecoderImpl::DoFramebufferTexture2DCommon(
   OnFboChanged();
 }
 
+void GLES2DecoderImpl::DoFramebufferTextureLayer(
+    GLenum target, GLenum attachment, GLuint client_texture_id,
+    GLint level, GLint layer) {
+  // TODO(zmo): Unsafe ES3 API, missing states update.
+  GLuint service_id = 0;
+  TextureRef* texture_ref = NULL;
+  if (client_texture_id) {
+    texture_ref = GetTexture(client_texture_id);
+    if (!texture_ref) {
+      LOCAL_SET_GL_ERROR(
+          GL_INVALID_OPERATION,
+          "glFramebufferTextureLayer", "unknown texture_ref");
+      return;
+    }
+    service_id = texture_ref->service_id();
+  }
+  glFramebufferTextureLayer(target, attachment, service_id, level, layer);
+}
+
 void GLES2DecoderImpl::DoGetFramebufferAttachmentParameteriv(
     GLenum target, GLenum attachment, GLenum pname, GLint* params) {
   Framebuffer* framebuffer = GetFramebufferInfoForTarget(target);
@@ -7413,6 +7449,24 @@ void GLES2DecoderImpl::DoVertexAttrib4fv(GLuint index, const GLfloat* v) {
   if (SetVertexAttribValue("glVertexAttrib4fv", index, v)) {
     glVertexAttrib4fv(index, v);
   }
+}
+
+error::Error GLES2DecoderImpl::HandleVertexAttribIPointer(
+    uint32 immediate_data_size,
+    const void* cmd_data) {
+  // TODO(zmo): Unsafe ES3 API, missing states update.
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::VertexAttribIPointer& c =
+      *static_cast<const gles2::cmds::VertexAttribIPointer*>(cmd_data);
+  GLuint indx = c.indx;
+  GLint size = c.size;
+  GLenum type = c.type;
+  GLsizei stride = c.stride;
+  GLsizei offset = c.offset;
+  const void* ptr = reinterpret_cast<const void*>(offset);
+  glVertexAttribIPointer(indx, size, type, stride, ptr);
+  return error::kNoError;
 }
 
 error::Error GLES2DecoderImpl::HandleVertexAttribPointer(

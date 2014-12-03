@@ -44,7 +44,7 @@ class NET_EXPORT_PRIVATE TcpCubicSender : public SendAlgorithmInterface {
   void SetFromConfig(const QuicConfig& config,
                      bool is_server,
                      bool using_pacing) override;
-  void ResumeConnectionState(
+  bool ResumeConnectionState(
       const CachedNetworkParameters& cached_network_params) override;
   void SetNumEmulatedConnections(int num_connections) override;
   void OnCongestionEvent(bool rtt_updated,
@@ -118,7 +118,7 @@ class NET_EXPORT_PRIVATE TcpCubicSender : public SendAlgorithmInterface {
   QuicPacketCount congestion_window_;
 
   // Congestion window before the last loss event or RTO.
-  QuicByteCount previous_congestion_window_;
+  QuicPacketCount previous_congestion_window_;
 
   // Slow start congestion window in packets, aka ssthresh.
   QuicPacketCount slowstart_threshold_;

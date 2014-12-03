@@ -98,6 +98,7 @@ class TestHooks : public AnimationDelegate {
   virtual void ScheduledActionAnimate() {}
   virtual void ScheduledActionCommit() {}
   virtual void ScheduledActionBeginOutputSurfaceCreation() {}
+  virtual void ScheduledActionManageTiles() {}
 
   // Implementation of AnimationDelegate:
   void NotifyAnimationStarted(base::TimeTicks monotonic_time,
@@ -175,6 +176,7 @@ class LayerTreeTest : public testing::Test, public TestHooks {
                        bool delegating_renderer,
                        bool impl_side_painting);
   virtual void RunTestWithImplSidePainting();
+  virtual void RunTestWithMainThreadLowLatency();
 
   bool HasImplThread() { return proxy() ? proxy()->HasImplThread() : false; }
   base::SingleThreadTaskRunner* ImplThreadTaskRunner() {
@@ -235,7 +237,18 @@ class LayerTreeTest : public testing::Test, public TestHooks {
 
 }  // namespace cc
 
+#define SINGLE_THREAD_DIRECT_RENDERER_NOIMPL_MAIN_THREAD_LOW_LATENCY_TEST_F( \
+    TEST_FIXTURE_NAME)                                                       \
+  TEST_F(                                                                    \
+      TEST_FIXTURE_NAME,                                                     \
+      RunSingleThread_DirectRenderer_MainThreadPaint_MainThreadLowLatency) { \
+    RunTestWithMainThreadLowLatency();                                       \
+  }                                                                          \
+  class SingleThreadDirectNoImplLowLatencyNeedsSemicolon##TEST_FIXTURE_NAME {}
+
 #define SINGLE_THREAD_DIRECT_RENDERER_NOIMPL_TEST_F(TEST_FIXTURE_NAME)        \
+  SINGLE_THREAD_DIRECT_RENDERER_NOIMPL_MAIN_THREAD_LOW_LATENCY_TEST_F(        \
+      TEST_FIXTURE_NAME);                                                     \
   TEST_F(TEST_FIXTURE_NAME, RunSingleThread_DirectRenderer_MainThreadPaint) { \
     RunTest(false, false, false);                                             \
   }                                                                           \

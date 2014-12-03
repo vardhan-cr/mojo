@@ -14,7 +14,10 @@ def patch():
   utils.commit("filter gyp_environment out of build/landmines.py")
 
   utils.filter_file("gpu/BUILD.gn", lambda line: not "//gpu/ipc" in line)
-  utils.commit("filter gpu/ipc out of gpu/BUILD.gn")
+  utils.commit("filter //gpu/ipc out of gpu/BUILD.gn")
+
+  utils.filter_file("cc/BUILD.gn", lambda line: not "//media" in line)
+  utils.commit("filter //media out of cc/BUILD.gn")
 
   for p in utils.find(["*.patch"], os.path.dirname(os.path.realpath(__file__))):
     print "applying patch %s" % os.path.basename(p)

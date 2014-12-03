@@ -44,7 +44,7 @@ void SurfacesImpl::CreateSurface(SurfaceIdPtr id, SizePtr size) {
     NOTREACHED();
     return;
   }
-  factory_.Create(id.To<cc::SurfaceId>(), size.To<gfx::Size>());
+  factory_.Create(id.To<cc::SurfaceId>());
 }
 
 void SurfacesImpl::SubmitFrame(SurfaceIdPtr id,
@@ -97,8 +97,9 @@ void SurfacesImpl::CreateGLES2BoundSurface(
     display_->Initialize(make_scoped_ptr(new DirectOutputSurface(
         new ContextProviderMojo(command_buffer_handle_.Pass()))));
   }
-  factory_.Create(cc_id, size.To<gfx::Size>());
-  display_->Resize(cc_id, size.To<gfx::Size>(), 1.f);
+  factory_.Create(cc_id);
+  display_->SetSurfaceId(cc_id, 1.f);
+  display_->Resize(size.To<gfx::Size>());
   parameter_listeners_.AddBinding(this, listener_request.Pass());
 }
 

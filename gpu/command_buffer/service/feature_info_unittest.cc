@@ -455,7 +455,7 @@ TEST_F(FeatureInfoTest, InitializeEXT_read_format_bgra) {
 }
 
 TEST_F(FeatureInfoTest, InitializeEXT_sRGB) {
-  SetupInitExpectations("GL_EXT_sRGB");
+  SetupInitExpectations("GL_EXT_sRGB GL_OES_rgb8_rgba8");
   EXPECT_THAT(info_->extensions(),
               HasSubstr("GL_EXT_sRGB"));
   EXPECT_TRUE(info_->GetTextureFormatValidator(GL_SRGB_EXT).IsValid(
@@ -688,6 +688,27 @@ TEST_F(FeatureInfoTest, Initialize_texture_floatGLES3) {
       GL_FLOAT));
   EXPECT_FALSE(info_->GetTextureFormatValidator(GL_ALPHA).IsValid(
       GL_FLOAT));
+}
+
+TEST_F(FeatureInfoTest, Initialize_sRGBGLES3) {
+  SetupInitExpectationsWithGLVersion("", "", "OpenGL ES 3.0");
+  EXPECT_THAT(info_->extensions(), Not(HasSubstr("GL_EXT_sRGB")));
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_SRGB_EXT).IsValid(
+      GL_UNSIGNED_BYTE));
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_SRGB_ALPHA_EXT).IsValid(
+      GL_UNSIGNED_BYTE));
+  EXPECT_FALSE(info_->validators()->texture_format.IsValid(
+      GL_SRGB_EXT));
+  EXPECT_FALSE(info_->validators()->texture_format.IsValid(
+      GL_SRGB_ALPHA_EXT));
+  EXPECT_FALSE(info_->validators()->texture_internal_format.IsValid(
+      GL_SRGB_EXT));
+  EXPECT_FALSE(info_->validators()->texture_internal_format.IsValid(
+      GL_SRGB_ALPHA_EXT));
+  EXPECT_FALSE(info_->validators()->render_buffer_format.IsValid(
+      GL_SRGB8_ALPHA8_EXT));
+  EXPECT_FALSE(info_->validators()->frame_buffer_parameter.IsValid(
+      GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING_EXT));
 }
 
 TEST_F(FeatureInfoTest, InitializeOES_texture_floatGLES2) {
@@ -1400,6 +1421,58 @@ TEST_F(FeatureInfoTest, InitializeKHR_blend_equations_advanced_coherent) {
               HasSubstr("GL_KHR_blend_equation_advanced_coherent"));
   EXPECT_TRUE(info_->feature_flags().blend_equation_advanced);
   EXPECT_TRUE(info_->feature_flags().blend_equation_advanced_coherent);
+}
+
+TEST_F(FeatureInfoTest, InitializeEXT_texture_rgWithFloat) {
+  SetupInitExpectations(
+      "GL_EXT_texture_rg GL_OES_texture_float GL_OES_texture_half_float");
+  EXPECT_TRUE(info_->feature_flags().ext_texture_rg);
+
+  EXPECT_TRUE(info_->validators()->texture_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->texture_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->texture_internal_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->texture_internal_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->read_pixel_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->read_pixel_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->render_buffer_format.IsValid(GL_R8_EXT));
+  EXPECT_TRUE(info_->validators()->render_buffer_format.IsValid(GL_RG8_EXT));
+
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_HALF_FLOAT_OES));
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_HALF_FLOAT_OES));
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_UNSIGNED_BYTE));
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_UNSIGNED_BYTE));
+
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_BYTE));
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_BYTE));
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_SHORT));
+  EXPECT_FALSE(info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_SHORT));
+}
+
+TEST_F(FeatureInfoTest, InitializeARB_texture_rgNoFloat) {
+  SetupInitExpectations("GL_ARB_texture_rg");
+  EXPECT_TRUE(info_->feature_flags().ext_texture_rg);
+
+  EXPECT_TRUE(info_->validators()->texture_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->texture_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->texture_internal_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->texture_internal_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->read_pixel_format.IsValid(GL_RED_EXT));
+  EXPECT_TRUE(info_->validators()->read_pixel_format.IsValid(GL_RG_EXT));
+  EXPECT_TRUE(info_->validators()->render_buffer_format.IsValid(GL_R8_EXT));
+  EXPECT_TRUE(info_->validators()->render_buffer_format.IsValid(GL_RG8_EXT));
+
+  EXPECT_FALSE(
+      info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_HALF_FLOAT_OES));
+  EXPECT_FALSE(
+      info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_HALF_FLOAT_OES));
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RED_EXT).IsValid(GL_UNSIGNED_BYTE));
+  EXPECT_TRUE(
+      info_->GetTextureFormatValidator(GL_RG_EXT).IsValid(GL_UNSIGNED_BYTE));
 }
 
 }  // namespace gles2

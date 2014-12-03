@@ -61,10 +61,13 @@ LayerTreeSettings::LayerTreeSettings()
       strict_layer_property_change_checking(false),
       use_one_copy(false),
       use_zero_copy(false),
+      use_image_external(false),
       ignore_root_layer_flings(false),
       scheduled_raster_task_limit(32),
       use_occlusion_for_tile_prioritization(false),
-      record_full_layer(false) {
+      record_full_layer(false),
+      use_display_lists(false),
+      main_thread_should_always_be_low_latency(false) {
 }
 
 LayerTreeSettings::~LayerTreeSettings() {}

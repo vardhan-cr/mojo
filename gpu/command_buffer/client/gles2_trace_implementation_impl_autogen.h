@@ -167,6 +167,16 @@ void GLES2TraceImplementation::CompressedTexSubImage2D(GLenum target,
                                format, imageSize, data);
 }
 
+void GLES2TraceImplementation::CopyBufferSubData(GLenum readtarget,
+                                                 GLenum writetarget,
+                                                 GLintptr readoffset,
+                                                 GLintptr writeoffset,
+                                                 GLsizeiptr size) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::CopyBufferSubData");
+  gl_->CopyBufferSubData(readtarget, writetarget, readoffset, writeoffset,
+                         size);
+}
+
 void GLES2TraceImplementation::CopyTexImage2D(GLenum target,
                                               GLint level,
                                               GLenum internalformat,
@@ -325,6 +335,15 @@ void GLES2TraceImplementation::FramebufferTexture2D(GLenum target,
   gl_->FramebufferTexture2D(target, attachment, textarget, texture, level);
 }
 
+void GLES2TraceImplementation::FramebufferTextureLayer(GLenum target,
+                                                       GLenum attachment,
+                                                       GLuint texture,
+                                                       GLint level,
+                                                       GLint layer) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::FramebufferTextureLayer");
+  gl_->FramebufferTextureLayer(target, attachment, texture, level, layer);
+}
+
 void GLES2TraceImplementation::FrontFace(GLenum mode) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::FrontFace");
   gl_->FrontFace(mode);
@@ -428,6 +447,15 @@ void GLES2TraceImplementation::GetFramebufferAttachmentParameteriv(
 void GLES2TraceImplementation::GetIntegerv(GLenum pname, GLint* params) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetIntegerv");
   gl_->GetIntegerv(pname, params);
+}
+
+void GLES2TraceImplementation::GetInternalformativ(GLenum target,
+                                                   GLenum format,
+                                                   GLenum pname,
+                                                   GLsizei bufSize,
+                                                   GLint* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetInternalformativ");
+  gl_->GetInternalformativ(target, format, pname, bufSize, params);
 }
 
 void GLES2TraceImplementation::GetProgramiv(GLuint program,
@@ -751,6 +779,16 @@ void GLES2TraceImplementation::TexParameteriv(GLenum target,
   gl_->TexParameteriv(target, pname, params);
 }
 
+void GLES2TraceImplementation::TexStorage3D(GLenum target,
+                                            GLsizei levels,
+                                            GLenum internalFormat,
+                                            GLsizei width,
+                                            GLsizei height,
+                                            GLsizei depth) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::TexStorage3D");
+  gl_->TexStorage3D(target, levels, internalFormat, width, height, depth);
+}
+
 void GLES2TraceImplementation::TexSubImage2D(GLenum target,
                                              GLint level,
                                              GLint xoffset,
@@ -789,6 +827,18 @@ void GLES2TraceImplementation::Uniform1iv(GLint location,
   gl_->Uniform1iv(location, count, v);
 }
 
+void GLES2TraceImplementation::Uniform1ui(GLint location, GLuint x) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform1ui");
+  gl_->Uniform1ui(location, x);
+}
+
+void GLES2TraceImplementation::Uniform1uiv(GLint location,
+                                           GLsizei count,
+                                           const GLuint* v) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform1uiv");
+  gl_->Uniform1uiv(location, count, v);
+}
+
 void GLES2TraceImplementation::Uniform2f(GLint location, GLfloat x, GLfloat y) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform2f");
   gl_->Uniform2f(location, x, y);
@@ -811,6 +861,18 @@ void GLES2TraceImplementation::Uniform2iv(GLint location,
                                           const GLint* v) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform2iv");
   gl_->Uniform2iv(location, count, v);
+}
+
+void GLES2TraceImplementation::Uniform2ui(GLint location, GLuint x, GLuint y) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform2ui");
+  gl_->Uniform2ui(location, x, y);
+}
+
+void GLES2TraceImplementation::Uniform2uiv(GLint location,
+                                           GLsizei count,
+                                           const GLuint* v) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform2uiv");
+  gl_->Uniform2uiv(location, count, v);
 }
 
 void GLES2TraceImplementation::Uniform3f(GLint location,
@@ -841,6 +903,21 @@ void GLES2TraceImplementation::Uniform3iv(GLint location,
                                           const GLint* v) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform3iv");
   gl_->Uniform3iv(location, count, v);
+}
+
+void GLES2TraceImplementation::Uniform3ui(GLint location,
+                                          GLuint x,
+                                          GLuint y,
+                                          GLuint z) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform3ui");
+  gl_->Uniform3ui(location, x, y, z);
+}
+
+void GLES2TraceImplementation::Uniform3uiv(GLint location,
+                                           GLsizei count,
+                                           const GLuint* v) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform3uiv");
+  gl_->Uniform3uiv(location, count, v);
 }
 
 void GLES2TraceImplementation::Uniform4f(GLint location,
@@ -875,12 +952,44 @@ void GLES2TraceImplementation::Uniform4iv(GLint location,
   gl_->Uniform4iv(location, count, v);
 }
 
+void GLES2TraceImplementation::Uniform4ui(GLint location,
+                                          GLuint x,
+                                          GLuint y,
+                                          GLuint z,
+                                          GLuint w) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform4ui");
+  gl_->Uniform4ui(location, x, y, z, w);
+}
+
+void GLES2TraceImplementation::Uniform4uiv(GLint location,
+                                           GLsizei count,
+                                           const GLuint* v) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Uniform4uiv");
+  gl_->Uniform4uiv(location, count, v);
+}
+
 void GLES2TraceImplementation::UniformMatrix2fv(GLint location,
                                                 GLsizei count,
                                                 GLboolean transpose,
                                                 const GLfloat* value) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix2fv");
   gl_->UniformMatrix2fv(location, count, transpose, value);
+}
+
+void GLES2TraceImplementation::UniformMatrix2x3fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix2x3fv");
+  gl_->UniformMatrix2x3fv(location, count, transpose, value);
+}
+
+void GLES2TraceImplementation::UniformMatrix2x4fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix2x4fv");
+  gl_->UniformMatrix2x4fv(location, count, transpose, value);
 }
 
 void GLES2TraceImplementation::UniformMatrix3fv(GLint location,
@@ -891,12 +1000,44 @@ void GLES2TraceImplementation::UniformMatrix3fv(GLint location,
   gl_->UniformMatrix3fv(location, count, transpose, value);
 }
 
+void GLES2TraceImplementation::UniformMatrix3x2fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix3x2fv");
+  gl_->UniformMatrix3x2fv(location, count, transpose, value);
+}
+
+void GLES2TraceImplementation::UniformMatrix3x4fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix3x4fv");
+  gl_->UniformMatrix3x4fv(location, count, transpose, value);
+}
+
 void GLES2TraceImplementation::UniformMatrix4fv(GLint location,
                                                 GLsizei count,
                                                 GLboolean transpose,
                                                 const GLfloat* value) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix4fv");
   gl_->UniformMatrix4fv(location, count, transpose, value);
+}
+
+void GLES2TraceImplementation::UniformMatrix4x2fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix4x2fv");
+  gl_->UniformMatrix4x2fv(location, count, transpose, value);
+}
+
+void GLES2TraceImplementation::UniformMatrix4x3fv(GLint location,
+                                                  GLsizei count,
+                                                  GLboolean transpose,
+                                                  const GLfloat* value) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformMatrix4x3fv");
+  gl_->UniformMatrix4x3fv(location, count, transpose, value);
 }
 
 void GLES2TraceImplementation::UseProgram(GLuint program) {
@@ -960,6 +1101,45 @@ void GLES2TraceImplementation::VertexAttrib4fv(GLuint indx,
                                                const GLfloat* values) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttrib4fv");
   gl_->VertexAttrib4fv(indx, values);
+}
+
+void GLES2TraceImplementation::VertexAttribI4i(GLuint indx,
+                                               GLint x,
+                                               GLint y,
+                                               GLint z,
+                                               GLint w) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttribI4i");
+  gl_->VertexAttribI4i(indx, x, y, z, w);
+}
+
+void GLES2TraceImplementation::VertexAttribI4iv(GLuint indx,
+                                                const GLint* values) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttribI4iv");
+  gl_->VertexAttribI4iv(indx, values);
+}
+
+void GLES2TraceImplementation::VertexAttribI4ui(GLuint indx,
+                                                GLuint x,
+                                                GLuint y,
+                                                GLuint z,
+                                                GLuint w) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttribI4ui");
+  gl_->VertexAttribI4ui(indx, x, y, z, w);
+}
+
+void GLES2TraceImplementation::VertexAttribI4uiv(GLuint indx,
+                                                 const GLuint* values) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttribI4uiv");
+  gl_->VertexAttribI4uiv(indx, values);
+}
+
+void GLES2TraceImplementation::VertexAttribIPointer(GLuint indx,
+                                                    GLint size,
+                                                    GLenum type,
+                                                    GLsizei stride,
+                                                    const void* ptr) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::VertexAttribIPointer");
+  gl_->VertexAttribIPointer(indx, size, type, stride, ptr);
 }
 
 void GLES2TraceImplementation::VertexAttribPointer(GLuint indx,

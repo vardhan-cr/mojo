@@ -209,6 +209,17 @@ TEST_F(GLES2ImplementationTest, CompileShader) {
 // TODO: Implement unit test for CompressedTexImage2D
 // TODO: Implement unit test for CompressedTexSubImage2D
 
+TEST_F(GLES2ImplementationTest, CopyBufferSubData) {
+  struct Cmds {
+    cmds::CopyBufferSubData cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(GL_ARRAY_BUFFER, GL_ARRAY_BUFFER, 3, 4, 5);
+
+  gl_->CopyBufferSubData(GL_ARRAY_BUFFER, GL_ARRAY_BUFFER, 3, 4, 5);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
 TEST_F(GLES2ImplementationTest, CopyTexImage2D) {
   struct Cmds {
     cmds::CopyTexImage2D cmd;
@@ -445,6 +456,17 @@ TEST_F(GLES2ImplementationTest, FramebufferTexture2DInvalidConstantArg4) {
   EXPECT_EQ(GL_INVALID_VALUE, CheckError());
 }
 
+TEST_F(GLES2ImplementationTest, FramebufferTextureLayer) {
+  struct Cmds {
+    cmds::FramebufferTextureLayer cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 3, 4, 5);
+
+  gl_->FramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 3, 4, 5);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
 TEST_F(GLES2ImplementationTest, FrontFace) {
   struct Cmds {
     cmds::FrontFace cmd;
@@ -628,6 +650,24 @@ TEST_F(GLES2ImplementationTest, GetIntegerv) {
       .WillOnce(SetMemory(result1.ptr, SizedResultHelper<Result::Type>(1)))
       .RetiresOnSaturation();
   gl_->GetIntegerv(123, &result);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+  EXPECT_EQ(static_cast<Result::Type>(1), result);
+}
+
+TEST_F(GLES2ImplementationTest, GetInternalformativ) {
+  struct Cmds {
+    cmds::GetInternalformativ cmd;
+  };
+  typedef cmds::GetInternalformativ::Result Result;
+  Result::Type result = 0;
+  Cmds expected;
+  ExpectedMemoryInfo result1 = GetExpectedResultMemory(4);
+  expected.cmd.Init(123, GL_RGBA4, GL_RENDERBUFFER_RED_SIZE, 4, result1.id,
+                    result1.offset);
+  EXPECT_CALL(*command_buffer(), OnFlush())
+      .WillOnce(SetMemory(result1.ptr, SizedResultHelper<Result::Type>(1)))
+      .RetiresOnSaturation();
+  gl_->GetInternalformativ(123, GL_RGBA4, GL_RENDERBUFFER_RED_SIZE, 4, &result);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_EQ(static_cast<Result::Type>(1), result);
 }
@@ -1111,6 +1151,17 @@ TEST_F(GLES2ImplementationTest, TexParameteriv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
+TEST_F(GLES2ImplementationTest, TexStorage3D) {
+  struct Cmds {
+    cmds::TexStorage3D cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(GL_TEXTURE_3D, 2, GL_RGB565, 4, 5, 6);
+
+  gl_->TexStorage3D(GL_TEXTURE_3D, 2, GL_RGB565, 4, 5, 6);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
 TEST_F(GLES2ImplementationTest, Uniform1f) {
   struct Cmds {
     cmds::Uniform1f cmd;
@@ -1166,6 +1217,35 @@ TEST_F(GLES2ImplementationTest, Uniform1iv) {
   }
   expected.cmd.Init(1, 2, &data[0][0]);
   gl_->Uniform1iv(1, 2, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform1ui) {
+  struct Cmds {
+    cmds::Uniform1ui cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2);
+
+  gl_->Uniform1ui(1, 2);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform1uiv) {
+  GLuint data[2][1] = {{0}};
+  struct Cmds {
+    cmds::Uniform1uivImmediate cmd;
+    GLuint data[2][1];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 1; ++jj) {
+      data[ii][jj] = static_cast<GLuint>(ii * 1 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->Uniform1uiv(1, 2, &data[0][0]);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
@@ -1227,6 +1307,35 @@ TEST_F(GLES2ImplementationTest, Uniform2iv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
+TEST_F(GLES2ImplementationTest, Uniform2ui) {
+  struct Cmds {
+    cmds::Uniform2ui cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2, 3);
+
+  gl_->Uniform2ui(1, 2, 3);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform2uiv) {
+  GLuint data[2][2] = {{0}};
+  struct Cmds {
+    cmds::Uniform2uivImmediate cmd;
+    GLuint data[2][2];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 2; ++jj) {
+      data[ii][jj] = static_cast<GLuint>(ii * 2 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->Uniform2uiv(1, 2, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
 TEST_F(GLES2ImplementationTest, Uniform3f) {
   struct Cmds {
     cmds::Uniform3f cmd;
@@ -1282,6 +1391,35 @@ TEST_F(GLES2ImplementationTest, Uniform3iv) {
   }
   expected.cmd.Init(1, 2, &data[0][0]);
   gl_->Uniform3iv(1, 2, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform3ui) {
+  struct Cmds {
+    cmds::Uniform3ui cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2, 3, 4);
+
+  gl_->Uniform3ui(1, 2, 3, 4);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform3uiv) {
+  GLuint data[2][3] = {{0}};
+  struct Cmds {
+    cmds::Uniform3uivImmediate cmd;
+    GLuint data[2][3];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 3; ++jj) {
+      data[ii][jj] = static_cast<GLuint>(ii * 3 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->Uniform3uiv(1, 2, &data[0][0]);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
@@ -1343,6 +1481,35 @@ TEST_F(GLES2ImplementationTest, Uniform4iv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
+TEST_F(GLES2ImplementationTest, Uniform4ui) {
+  struct Cmds {
+    cmds::Uniform4ui cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2, 3, 4, 5);
+
+  gl_->Uniform4ui(1, 2, 3, 4, 5);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, Uniform4uiv) {
+  GLuint data[2][4] = {{0}};
+  struct Cmds {
+    cmds::Uniform4uivImmediate cmd;
+    GLuint data[2][4];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 4; ++jj) {
+      data[ii][jj] = static_cast<GLuint>(ii * 4 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->Uniform4uiv(1, 2, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
 TEST_F(GLES2ImplementationTest, UniformMatrix2fv) {
   GLfloat data[2][4] = {{0}};
   struct Cmds {
@@ -1369,6 +1536,66 @@ TEST_F(GLES2ImplementationTest, UniformMatrix2fvInvalidConstantArg2) {
     }
   }
   gl_->UniformMatrix2fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix2x3fv) {
+  GLfloat data[2][6] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix2x3fvImmediate cmd;
+    GLfloat data[2][6];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 6; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 6 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix2x3fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix2x3fvInvalidConstantArg2) {
+  GLfloat data[2][6] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 6; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 6 + jj);
+    }
+  }
+  gl_->UniformMatrix2x3fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix2x4fv) {
+  GLfloat data[2][8] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix2x4fvImmediate cmd;
+    GLfloat data[2][8];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 8; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 8 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix2x4fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix2x4fvInvalidConstantArg2) {
+  GLfloat data[2][8] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 8; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 8 + jj);
+    }
+  }
+  gl_->UniformMatrix2x4fv(1, 2, true, &data[0][0]);
   EXPECT_TRUE(NoCommandsWritten());
   EXPECT_EQ(GL_INVALID_VALUE, CheckError());
 }
@@ -1403,6 +1630,66 @@ TEST_F(GLES2ImplementationTest, UniformMatrix3fvInvalidConstantArg2) {
   EXPECT_EQ(GL_INVALID_VALUE, CheckError());
 }
 
+TEST_F(GLES2ImplementationTest, UniformMatrix3x2fv) {
+  GLfloat data[2][6] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix3x2fvImmediate cmd;
+    GLfloat data[2][6];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 6; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 6 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix3x2fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix3x2fvInvalidConstantArg2) {
+  GLfloat data[2][6] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 6; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 6 + jj);
+    }
+  }
+  gl_->UniformMatrix3x2fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix3x4fv) {
+  GLfloat data[2][12] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix3x4fvImmediate cmd;
+    GLfloat data[2][12];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 12; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 12 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix3x4fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix3x4fvInvalidConstantArg2) {
+  GLfloat data[2][12] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 12; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 12 + jj);
+    }
+  }
+  gl_->UniformMatrix3x4fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
 TEST_F(GLES2ImplementationTest, UniformMatrix4fv) {
   GLfloat data[2][16] = {{0}};
   struct Cmds {
@@ -1429,6 +1716,66 @@ TEST_F(GLES2ImplementationTest, UniformMatrix4fvInvalidConstantArg2) {
     }
   }
   gl_->UniformMatrix4fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix4x2fv) {
+  GLfloat data[2][8] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix4x2fvImmediate cmd;
+    GLfloat data[2][8];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 8; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 8 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix4x2fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix4x2fvInvalidConstantArg2) {
+  GLfloat data[2][8] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 8; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 8 + jj);
+    }
+  }
+  gl_->UniformMatrix4x2fv(1, 2, true, &data[0][0]);
+  EXPECT_TRUE(NoCommandsWritten());
+  EXPECT_EQ(GL_INVALID_VALUE, CheckError());
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix4x3fv) {
+  GLfloat data[2][12] = {{0}};
+  struct Cmds {
+    cmds::UniformMatrix4x3fvImmediate cmd;
+    GLfloat data[2][12];
+  };
+
+  Cmds expected;
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 12; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 12 + jj);
+    }
+  }
+  expected.cmd.Init(1, 2, &data[0][0]);
+  gl_->UniformMatrix4x3fv(1, 2, false, &data[0][0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, UniformMatrix4x3fvInvalidConstantArg2) {
+  GLfloat data[2][12] = {{0}};
+  for (int ii = 0; ii < 2; ++ii) {
+    for (int jj = 0; jj < 12; ++jj) {
+      data[ii][jj] = static_cast<GLfloat>(ii * 12 + jj);
+    }
+  }
+  gl_->UniformMatrix4x3fv(1, 2, true, &data[0][0]);
   EXPECT_TRUE(NoCommandsWritten());
   EXPECT_EQ(GL_INVALID_VALUE, CheckError());
 }
@@ -1563,6 +1910,60 @@ TEST_F(GLES2ImplementationTest, VertexAttrib4fv) {
   Cmds expected;
   expected.cmd.Init(1, &data[0]);
   gl_->VertexAttrib4fv(1, &data[0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, VertexAttribI4i) {
+  struct Cmds {
+    cmds::VertexAttribI4i cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2, 3, 4, 5);
+
+  gl_->VertexAttribI4i(1, 2, 3, 4, 5);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, VertexAttribI4iv) {
+  GLint data[4] = {0};
+  struct Cmds {
+    cmds::VertexAttribI4ivImmediate cmd;
+    GLint data[4];
+  };
+
+  for (int jj = 0; jj < 4; ++jj) {
+    data[jj] = static_cast<GLint>(jj);
+  }
+  Cmds expected;
+  expected.cmd.Init(1, &data[0]);
+  gl_->VertexAttribI4iv(1, &data[0]);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, VertexAttribI4ui) {
+  struct Cmds {
+    cmds::VertexAttribI4ui cmd;
+  };
+  Cmds expected;
+  expected.cmd.Init(1, 2, 3, 4, 5);
+
+  gl_->VertexAttribI4ui(1, 2, 3, 4, 5);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, VertexAttribI4uiv) {
+  GLuint data[4] = {0};
+  struct Cmds {
+    cmds::VertexAttribI4uivImmediate cmd;
+    GLuint data[4];
+  };
+
+  for (int jj = 0; jj < 4; ++jj) {
+    data[jj] = static_cast<GLuint>(jj);
+  }
+  Cmds expected;
+  expected.cmd.Init(1, &data[0]);
+  gl_->VertexAttribI4uiv(1, &data[0]);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
