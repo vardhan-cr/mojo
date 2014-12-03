@@ -41,8 +41,8 @@ class FileHelper {
     }
 
     /**
-     * Extracts the file of the given extension from the archive. Throws FileNotFoundException if
-     * no matching file is found.
+     * Extracts the file of the given extension from the archive. Throws FileNotFoundException if no
+     * matching file is found.
      */
     static File extractFromArchive(File archive, String suffixToMatch,
             File outputDirectory) throws IOException, FileNotFoundException {

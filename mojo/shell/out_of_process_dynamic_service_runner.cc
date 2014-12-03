@@ -34,9 +34,6 @@ void OutOfProcessDynamicServiceRunner::Start(
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
 
-  DCHECK(!service_handle_.is_valid());
-  service_handle_ = service_handle.Pass();
-
   DCHECK(app_completed_callback_.is_null());
   app_completed_callback_ = app_completed_callback;
 

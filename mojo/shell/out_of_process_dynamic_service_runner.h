@@ -36,7 +36,6 @@ class OutOfProcessDynamicServiceRunner
   Context* const context_;
 
   base::FilePath app_path_;
-  ScopedMessagePipeHandle service_handle_;
   base::Closure app_completed_callback_;
 
   scoped_ptr<AppChildProcessHost> app_child_process_host_;
