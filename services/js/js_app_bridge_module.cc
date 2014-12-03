@@ -20,7 +20,7 @@ gin::WrapperInfo g_wrapper_info = {gin::kEmbedderNativeGin};
 
 }  // namespace
 
-const char AppBridge::kModuleName[] = "services/js/app-bridge";
+const char AppBridge::kModuleName[] = "services/js/app_bridge";
 
 v8::Local<v8::Value> AppBridge::GetModule(JSApp* js_app, v8::Isolate* isolate) {
   gin::PerIsolateData* data = gin::PerIsolateData::From(isolate);

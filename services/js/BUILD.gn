@@ -60,17 +60,18 @@ mojo_native_application("js_apptests") {
   testonly = true
 
   sources = [
-    "js_apptests.cc",
+    "echo_apptest.cc",
+    "pingpong_apptest.cc",
   ]
 
   deps = [
     "//base",
     "//mojo/public/c/system:for_shared_library",
-    "//mojo/application",
-    "//mojo/application:test_support",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//services/js/test:echo_service",
+    "//services/js/test:js_application_test_base",
+    "//services/js/test:pingpong_service",
   ]
 }
 

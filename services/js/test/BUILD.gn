@@ -4,7 +4,26 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
+source_set("js_application_test_base") {
+  testonly = true
+
+  sources = [
+    "js_application_test_base.cc",
+    "js_application_test_base.h",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+  ]
+}
+
 mojom("echo_service") {
   sources = [ "echo_service.mojom" ]
+}
+
+mojom("pingpong_service") {
+  sources = [ "pingpong_service.mojom" ]
 }
 

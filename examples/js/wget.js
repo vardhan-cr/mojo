@@ -11,11 +11,17 @@ define("main", [
   "mojo/public/js/core",
   "mojo/services/public/interfaces/network/network_service.mojom",
   "mojo/services/public/interfaces/network/url_loader.mojom",
-  "mojo/public/interfaces/application/service_provider.mojom",
-], function(console, core, net, loader, sp) {
+  "mojo/services/public/js/shell",
+  "services/js/app_bridge",
+], function(console,
+            coreModule,
+            netModule,
+            loaderModule,
+            shellModule,
+            appModule) {
 
-  function Application(shell, url) {
-    this.shell = shell;
+  function Application(appShell, url) {
+    this.shell = new shellModule.Shell(appShell);
   }
 
   Application.prototype.initialize = function(args) {
@@ -24,18 +30,13 @@ define("main", [
       return;
     }
 
-    var netServiceApp = new sp.ServiceProvider.proxyClass;
-    this.shell.connectToApplication("mojo:network_service", netServiceApp);
+    var netService = this.shell.connectToService(
+        "mojo:network_service", netModule.NetworkService);
 
-    var netService = new net.NetworkService.proxyClass();
-    // TODO(hansmuller): eliminate this step.
-    var handle = netService.getConnection$().messagePipeHandle;
-    netServiceApp.connectToService(net.NetworkService.name, handle);
-
-    var urlLoader = new loader.URLLoader.proxyClass();
+    var urlLoader = new loaderModule.URLLoader.proxyClass();
     netService.createURLLoader(urlLoader);
 
-    var urlRequest = new loader.URLRequest({
+    var urlRequest = new loaderModule.URLRequest({
       url: args[1],
       method: "GET",
       auto_follow_redirects: true
@@ -46,13 +47,14 @@ define("main", [
       console.log("status_line => " + result.response["status_line"]);
       console.log("mime_type => " + result.response["mime_type"]);
 
-      core.drainData(result.response.body).then(
+      coreModule.drainData(result.response.body).then(
         function(result) {
           console.log("read " + result.buffer.byteLength + " bytes");
         },
         function (reject) {
           console.log("failed " + reject);
-        });
+        })
+        .then(appModule.quit);
     });
   }
 

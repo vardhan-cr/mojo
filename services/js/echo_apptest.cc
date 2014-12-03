@@ -2,41 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/bind.h"
-#include "base/files/file_path.h"
-#include "base/path_service.h"
-#include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/public/cpp/application/application_test_base.h"
 #include "services/js/test/echo_service.mojom.h"
+#include "services/js/test/js_application_test_base.h"
 
 namespace mojo {
 namespace {
 
-class JSEchoTest : public test::ApplicationTestBase {
+class JSEchoTest : public test::JSApplicationTestBase {
  public:
-  JSEchoTest() : ApplicationTestBase() {}
+  JSEchoTest() : JSApplicationTestBase() {}
   ~JSEchoTest() override {}
 
  protected:
   // ApplicationTestBase:
   void SetUp() override {
     ApplicationTestBase::SetUp();
-    application_impl()->ConnectToService(service_path(), &echo_service_);
+    const std::string& url = JSAppURL("echo.js");
+    application_impl()->ConnectToService(url, &echo_service_);
   }
 
   EchoServicePtr echo_service_;
 
  private:
-  const std::string service_path() {
-    base::FilePath path;
-    PathService::Get(base::DIR_SOURCE_ROOT, &path);
-    path = path.AppendASCII("services")
-        .AppendASCII("js")
-        .AppendASCII("test")
-        .AppendASCII("echo.js");
-    return "file://" + path.AsUTF8Unsafe();
-  }
-
   MOJO_DISALLOW_COPY_AND_ASSIGN(JSEchoTest);
 };
 
@@ -75,5 +62,5 @@ TEST_F(JSEchoTest, EchoNullString) {
   echo_service_->EchoString("quit", callback);
 }
 
-}  // namespace
-}  // namespace mojo
+} // namespace
+} // namespace mojo

@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-define("mojo/services/public/js/service-provider", [
+define("mojo/services/public/js/service_provider", [
   "mojo/public/interfaces/application/service_provider.mojom",
   "mojo/public/js/connection",
   "mojo/public/js/core",
-], function(spModule, connectionModule, coreModule) {
+], function(spInterfaceModule, connectionModule, coreModule) {
 
   function connectToServiceImpl(serviceName, serviceHandle) {
     var provider = this.providers_.get(serviceName);
@@ -27,20 +27,24 @@ define("mojo/services/public/js/service-provider", [
     provider.connections.push(serviceConnection);
   }
 
-  function ServiceProvider(messagePipeHandle) {
-    // TODO(hansmuller): if messagePipeHandle is null, throw an exception.
+  function ServiceProvider(service) {
     this.connections_ = new Map();
     this.providers_ = new Map();
     this.pendingRequests_ = new Map();
     this.connection_ = null;
-    this.handle_ = messagePipeHandle;
-    this.connection_ =  new connectionModule.Connection(
-      this.handle_,
-      spModule.ServiceProvider.client.stubClass,
-      spModule.ServiceProvider.proxyClass);
+
+    if (service instanceof spInterfaceModule.ServiceProvider.proxyClass) {
+      this.connection_ = service.getConnection$();
+    } else {
+      this.handle_ = service; // service is-a MessagePipe handle
+      this.connection_ =  new connectionModule.Connection(
+        this.handle_,
+        spInterfaceModule.ServiceProvider.client.stubClass,
+        spInterfaceModule.ServiceProvider.proxyClass);
+    };
     this.connection_.local.delegate$ = {
       connectToService: connectToServiceImpl.bind(this)
-    };
+    }
   }
 
   ServiceProvider.prototype.provideService = function(service, factory) {

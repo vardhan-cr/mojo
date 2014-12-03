@@ -2,9 +2,9 @@
 
 define("main", [
   "console",
-  "mojo/services/public/js/service-provider",
+  "mojo/services/public/js/service_provider",
   "services/js/test/echo_service.mojom",
-  "services/js/app-bridge",
+  "services/js/app_bridge",
 ], function(console, spModule, echoModule, appModule) {
 
   function Application(shell, url) {
