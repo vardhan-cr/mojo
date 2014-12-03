@@ -8,6 +8,7 @@
 
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/memory/weak_ptr.h"
 #include "base/threading/platform_thread.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/message_pump_mojo.h"
@@ -55,9 +56,13 @@ class ApplicationThread : public base::PlatformThread::Delegate {
 class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
  public:
   explicit ContentHandlerImpl(ContentHandlerFactory::Delegate* delegate)
-      : in_destructor_(false), delegate_(delegate) {}
+      : delegate_(delegate), weak_factory_(this) {}
   ~ContentHandlerImpl() {
-    in_destructor_ = true;
+    // We're shutting down and doing cleanup. Cleanup may trigger calls back to
+    // OnThreadEnd(). As we're doing the cleanup here we don't want to do it in
+    // OnThreadEnd() as well. InvalidateWeakPtrs() ensures we don't get any
+    // calls to OnThreadEnd().
+    weak_factory_.InvalidateWeakPtrs();
     for (auto thread : active_threads_) {
       base::PlatformThread::Join(thread.second);
       delete thread.first;
@@ -70,7 +75,8 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
                                 URLResponsePtr response) override {
     ApplicationThread* thread = new ApplicationThread(
         base::MessageLoopProxy::current(),
-        base::Bind(&ContentHandlerImpl::OnThreadEnd, base::Unretained(this)),
+        base::Bind(&ContentHandlerImpl::OnThreadEnd,
+                   weak_factory_.GetWeakPtr()),
         delegate_,
         shell.Pass(),
         response.Pass());
@@ -81,10 +87,6 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
   }
 
   void OnThreadEnd(ApplicationThread* thread) {
-    if (in_destructor_) {
-      // The destructor is already taking care of cleaning up this thread.
-      return;
-    }
     DCHECK(active_threads_.find(thread) != active_threads_.end());
     base::PlatformThreadHandle handle = active_threads_[thread];
     active_threads_.erase(thread);
@@ -95,9 +97,9 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
     }
   }
 
-  bool in_destructor_;
   ContentHandlerFactory::Delegate* delegate_;
   std::map<ApplicationThread*, base::PlatformThreadHandle> active_threads_;
+  base::WeakPtrFactory<ContentHandlerImpl> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentHandlerImpl);
 };
