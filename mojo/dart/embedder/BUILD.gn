@@ -2,53 +2,30 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-template("gen_library_src_path") {
-  assert(defined(invoker.sources), "Need sources in $target_name")
-  assert(defined(invoker.output), "Need output in $target_name")
-  action(target_name) {
-    visibility = [ ":*" ]  # Only targets in this file can see this.
-    script = "//dart/runtime/tools/gen_library_src_paths.py"
-    inputs = [
-      "//dart/runtime/tools/gen_library_src_paths.py",
-      "builtin.cc.tmpl",
-    ] + invoker.sources
-    outputs = [ invoker.output, ]
-    name = invoker.name
-    kind = invoker.kind
-    args = [
-      "--output", rebase_path(invoker.output, root_build_dir),
-      "--input_cc", rebase_path("builtin.cc.tmpl", root_build_dir),
-      "--include", rebase_path("builtin.h", root_build_dir),
-      "--var_name", "mojo::dart::Builtin::${name}_${kind}_paths_",
-      "--library_name", "dart:${name}",] +
-      rebase_path(invoker.sources, root_build_dir)
-  }
-}
-
-
-gen_library_src_path("generate_builtin_cc_file") {
-  name = "_builtin"
-  kind = "source"
-  sources = ["builtin.dart"]
-  output = "$target_gen_dir/builtin_gen.cc"
-}
-
-
 action("generate_snapshot_bin") {
   deps = ["//dart/runtime/bin:gen_snapshot"]
   inputs = [
     "//dart/runtime/tools/create_snapshot_bin.py",
+    "//mojo/dart/embedder/builtin.dart",
+    "//mojo/public/dart/bindings.dart",
+    "//mojo/public/dart/core.dart",
     "snapshot.dart",
   ]
   output = "$target_gen_dir/snapshot_gen.bin"
   outputs = [output,]
 
   script = "//dart/runtime/tools/create_snapshot_bin.py"
+  builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
+  bindings_path = rebase_path("//mojo/public/dart/bindings.dart")
+  core_path = rebase_path("//mojo/public/dart/core.dart")
   args = [
     "--executable", rebase_path("$root_out_dir/gen_snapshot"),
     "--script", rebase_path("snapshot.dart"),
     "--output_bin", rebase_path(output, root_build_dir),
-    "--target_os", os
+    "--target_os", os,
+    "--url_mapping=dart:mojo_bindings,$bindings_path",
+    "--url_mapping=dart:mojo_builtin,$builtin_path",
+    "--url_mapping=dart:mojo_core,$core_path",
   ]
 }
 
@@ -75,7 +52,6 @@ action("generate_snapshot_file") {
 source_set("dart_controller") {
   deps = [
     "//dart/runtime/bin:libdart_embedder_noio",
-    ":generate_builtin_cc_file",
     ":generate_snapshot_file",
   ]
   sources = [
@@ -85,7 +61,8 @@ source_set("dart_controller") {
     "dart_controller.cc",
     "dart_controller.h",
     "isolate_data.h",
-    "$target_gen_dir/builtin_gen.cc",
+    "mojo_natives.cc",
+    "mojo_natives.h",
     "$target_gen_dir/snapshot.cc",
   ]
 

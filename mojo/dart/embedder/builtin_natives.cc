@@ -6,19 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "base/files/file_path.h"
 #include "base/files/file_util.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "crypto/random.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
+#include "mojo/dart/embedder/mojo_natives.h"
 
 namespace mojo {
 namespace dart {
 
 // Lists the native functions implementing basic functionality in
-// standalone dart, such as printing, file I/O, and platform information.
-// Advanced I/O classes like sockets and process management are implemented
-// using functions listed in io_natives.cc.
+// the Mojo embedder dart, such as printing, and file I/O.
 #define BUILTIN_NATIVE_LIST(V)                                                 \
   V(Crypto_GetRandomBytes, 1)                                                  \
   V(Logger_PrintString, 1)                                                     \
@@ -30,50 +31,47 @@ namespace dart {
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
 static struct NativeEntries {
-  const char* name_;
-  Dart_NativeFunction function_;
-  int argument_count_;
+  const char* name;
+  Dart_NativeFunction function;
+  int argument_count;
 } BuiltinEntries[] = {BUILTIN_NATIVE_LIST(REGISTER_FUNCTION)};
 
-// Looks up native functions in both libdart_builtin and libdart_io.
 Dart_NativeFunction Builtin::NativeLookup(Dart_Handle name,
                                           int argument_count,
                                           bool* auto_setup_scope) {
-  const char* function_name = NULL;
+  const char* function_name = nullptr;
   Dart_Handle result = Dart_StringToCString(name, &function_name);
   DART_CHECK_VALID(result);
-  CHECK(function_name != NULL);
-  CHECK(auto_setup_scope != NULL);
+  DCHECK(function_name != nullptr);
+  DCHECK(auto_setup_scope != nullptr);
   *auto_setup_scope = true;
-  int num_entries = sizeof(BuiltinEntries) / sizeof(struct NativeEntries);
-  for (int i = 0; i < num_entries; i++) {
-    struct NativeEntries* entry = &(BuiltinEntries[i]);
-    if (!strcmp(function_name, entry->name_) &&
-        (entry->argument_count_ == argument_count)) {
-      return reinterpret_cast<Dart_NativeFunction>(entry->function_);
-    }
-  }
-  return NULL;
-}
-
-
-const uint8_t* Builtin::NativeSymbol(Dart_NativeFunction nf) {
-  int num_entries = sizeof(BuiltinEntries) / sizeof(struct NativeEntries);
-  for (int i = 0; i < num_entries; i++) {
-    struct NativeEntries* entry = &(BuiltinEntries[i]);
-    if (reinterpret_cast<Dart_NativeFunction>(entry->function_) == nf) {
-      return reinterpret_cast<const uint8_t*>(entry->name_);
+  size_t num_entries = arraysize(BuiltinEntries);
+  for (size_t i = 0; i < num_entries; i++) {
+    const struct NativeEntries& entry = BuiltinEntries[i];
+    if (!strcmp(function_name, entry.name) &&
+        (entry.argument_count == argument_count)) {
+      return entry.function;
     }
   }
   return nullptr;
 }
 
+const uint8_t* Builtin::NativeSymbol(Dart_NativeFunction nf) {
+  size_t num_entries = arraysize(BuiltinEntries);
+  for (size_t i = 0; i < num_entries; i++) {
+    const struct NativeEntries& entry = BuiltinEntries[i];
+    if (entry.function == nf) {
+      return reinterpret_cast<const uint8_t*>(entry.name);
+    }
+  }
+  return nullptr;
+}
 
 // Implementation of native functions which are used for some
 // test/debug functionality in standalone dart mode.
-void FUNCTION_NAME(Logger_PrintString)(Dart_NativeArguments args) {
+void Logger_PrintString(Dart_NativeArguments args) {
   intptr_t length = 0;
-  uint8_t* chars = NULL;
+  uint8_t* chars = nullptr;
   Dart_Handle str = Dart_GetNativeArgument(args, 0);
   Dart_Handle result = Dart_StringToUTF8(str, &chars, &length);
   if (Dart_IsError(result)) {
@@ -86,10 +84,9 @@ void FUNCTION_NAME(Logger_PrintString)(Dart_NativeArguments args) {
   fflush(stdout);
 }
 
-
-void FUNCTION_NAME(Builtin_ReadSync)(Dart_NativeArguments args) {
+void Builtin_ReadSync(Dart_NativeArguments args) {
   intptr_t chars_length = 0;
-  uint8_t* chars = NULL;
+  uint8_t* chars = nullptr;
   Dart_Handle file_uri = Dart_GetNativeArgument(args, 0);
   if (!Dart_IsString(file_uri)) {
     Dart_PropagateError(file_uri);
@@ -120,10 +117,9 @@ void FUNCTION_NAME(Builtin_ReadSync)(Dart_NativeArguments args) {
   Dart_SetReturnValue(args, Dart_Null());
 }
 
-
 // Callback function, gets called from asynchronous script and library
 // reading code when there is an i/o error.
-void FUNCTION_NAME(Builtin_AsyncLoadError)(Dart_NativeArguments args) {
+void Builtin_AsyncLoadError(Dart_NativeArguments args) {
   //  Dart_Handle source_uri = Dart_GetNativeArgument(args, 0);
   Dart_Handle library_uri = Dart_GetNativeArgument(args, 1);
   Dart_Handle error = Dart_GetNativeArgument(args, 2);
@@ -132,7 +128,7 @@ void FUNCTION_NAME(Builtin_AsyncLoadError)(Dart_NativeArguments args) {
   // the error. If the load requests stems from a deferred library load,
   // an IO error is not fatal.
   if (!Dart_IsError(library)) {
-    CHECK(Dart_IsLibrary(library));
+    DCHECK(Dart_IsLibrary(library));
     Dart_Handle res = Dart_LibraryHandleError(library, error);
     if (Dart_IsNull(res)) {
       return;
@@ -142,7 +138,6 @@ void FUNCTION_NAME(Builtin_AsyncLoadError)(Dart_NativeArguments args) {
   error = Dart_NewUnhandledExceptionError(error);
   Dart_PropagateError(error);
 }
-
 
 static const uint8_t* SniffForMagicNumber(const uint8_t* text_buffer,
                                           intptr_t* buffer_len,
@@ -155,15 +150,14 @@ static const uint8_t* SniffForMagicNumber(const uint8_t* text_buffer,
     }
   }
   *is_snapshot = true;
-  CHECK(*buffer_len > len);
+  DCHECK_GT(*buffer_len, len);
   *buffer_len -= len;
   return text_buffer + len;
 }
 
-
 // Callback function called when the asynchronous load request of a
 // script, library or part is complete.
-void FUNCTION_NAME(Builtin_LoadScript)(Dart_NativeArguments args) {
+void Builtin_LoadScript(Dart_NativeArguments args) {
   Dart_Handle tag_in = Dart_GetNativeArgument(args, 0);
   Dart_Handle resolved_script_uri = Dart_GetNativeArgument(args, 1);
   Dart_Handle library_uri = Dart_GetNativeArgument(args, 2);
@@ -171,19 +165,19 @@ void FUNCTION_NAME(Builtin_LoadScript)(Dart_NativeArguments args) {
 
   Dart_TypedData_Type type = Dart_GetTypeOfExternalTypedData(source_data);
   bool external = type == Dart_TypedData_kUint8;
-  uint8_t* data = NULL;
+  uint8_t* data = nullptr;
   intptr_t num_bytes;
   Dart_Handle result = Dart_TypedDataAcquireData(
       source_data, &type, reinterpret_cast<void**>(&data), &num_bytes);
   if (Dart_IsError(result))
     Dart_PropagateError(result);
 
-  uint8_t* buffer_copy = NULL;
+  scoped_ptr<uint8_t[]> buffer_copy;
   if (!external) {
     // If the buffer is not external, take a copy.
-    buffer_copy = reinterpret_cast<uint8_t*>(malloc(num_bytes));
-    memmove(buffer_copy, data, num_bytes);
-    data = buffer_copy;
+    buffer_copy.reset(new uint8_t[num_bytes]);
+    memmove(buffer_copy.get(), data, num_bytes);
+    data = buffer_copy.get();
   }
 
   Dart_TypedDataReleaseData(source_data);
@@ -218,7 +212,7 @@ void FUNCTION_NAME(Builtin_LoadScript)(Dart_NativeArguments args) {
       if (tag == Dart_kImportTag) {
         result = Dart_LoadLibrary(resolved_script_uri, source, 0, 0);
       } else {
-        CHECK(tag == Dart_kSourceTag);
+        DCHECK_EQ(tag, Dart_kSourceTag);
         Dart_Handle library = Dart_LookupLibrary(library_uri);
         DART_CHECK_VALID(library);
         result = Dart_LoadSource(library, resolved_script_uri, source, 0, 0);
@@ -226,25 +220,19 @@ void FUNCTION_NAME(Builtin_LoadScript)(Dart_NativeArguments args) {
     }
   }
 
-  if (buffer_copy != NULL) {
-    free(const_cast<uint8_t*>(buffer_copy));
-  }
-
   if (Dart_IsError(result)) {
     Dart_PropagateError(result);
   }
 }
 
-
 // Callback function that gets called from dartutils when there are
 // no more outstanding load requests.
-void FUNCTION_NAME(Builtin_DoneLoading)(Dart_NativeArguments args) {
+void Builtin_DoneLoading(Dart_NativeArguments args) {
   Dart_Handle res = Dart_FinalizeLoading(true);
   if (Dart_IsError(res)) {
     Dart_PropagateError(res);
   }
 }
-
 
 static bool GetInt64Value(Dart_Handle value_obj, int64_t* value) {
   bool valid = Dart_IsInteger(value_obj);
@@ -261,8 +249,7 @@ static bool GetInt64Value(Dart_Handle value_obj, int64_t* value) {
   return true;
 }
 
-
-void FUNCTION_NAME(Crypto_GetRandomBytes)(Dart_NativeArguments args) {
+void Crypto_GetRandomBytes(Dart_NativeArguments args) {
   Dart_Handle count_obj = Dart_GetNativeArgument(args, 0);
   const int64_t kMaxRandomBytes = 4096;
   int64_t count64 = 0;
@@ -274,7 +261,7 @@ void FUNCTION_NAME(Crypto_GetRandomBytes)(Dart_NativeArguments args) {
     Dart_ThrowException(error);
   }
   intptr_t count = static_cast<intptr_t>(count64);
-  scoped_ptr<uint8_t> buffer(new uint8_t[count]);
+  scoped_ptr<uint8_t[]> buffer(new uint8_t[count]);
 
   crypto::RandBytes(reinterpret_cast<void*>(buffer.get()), count);
 
@@ -283,7 +270,6 @@ void FUNCTION_NAME(Crypto_GetRandomBytes)(Dart_NativeArguments args) {
     Dart_Handle error = Dart_NewStringFromCString(
         "Failed to allocate storage.");
     Dart_ThrowException(error);
-    CHECK(false);
   }
   Dart_ListSetAsBytes(result, 0, buffer.get(), count);
   Dart_SetReturnValue(args, result);

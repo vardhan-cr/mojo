@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:mojo_core';
 import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/core.dart';
-import 'package:mojo/public/dart/mojo_init.dart';
 
 
 invalidHandleTest() {
@@ -265,6 +264,9 @@ basicSharedBufferTest() {
   Expect.isTrue(duplicate.status.isOk);
   Expect.isTrue(duplicate.handle is RawMojoHandle);
   Expect.isTrue(duplicate.handle.isValid);
+
+  duplicate.map(0, 100, MojoSharedBuffer.MAP_FLAG_NONE);
+  Expect.isTrue(duplicate.status.isOk);
   Expect.isNotNull(duplicate.mapping);
   Expect.isTrue(duplicate.mapping is ByteData);
 
@@ -297,11 +299,9 @@ basicSharedBufferTest() {
 }
 
 
-main() async {
-  await mojoInit();
+main() {
   invalidHandleTest();
   basicMessagePipeTest();
   basicDataPipeTest();
   basicSharedBufferTest();
-  mojoShutdown();
 }

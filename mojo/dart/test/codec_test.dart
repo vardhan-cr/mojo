@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:mojo_bindings' as bindings;
+import 'dart:mojo_core' as core;
 import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/bindings.dart' as bindings;
-import 'package:mojo/public/dart/core.dart' as core;
 
-class TestBar implements bindings.MojoType<TestBar> {
+class TestBar {
   static const int TYPE_VERTICAL = 1;
   static const int TYPE_HORIZONTAL = TYPE_VERTICAL + 1;
   static const int TYPE_BOTH = TYPE_VERTICAL + 1;
@@ -95,7 +95,7 @@ void testBar() {
 }
 
 
-class TestFoo implements bindings.MojoType<TestFoo> {
+class TestFoo {
   static const String kFooby = "Fooby";
 
   int x = 0;
@@ -276,7 +276,7 @@ void testFoo() {
 }
 
 
-class TestRect implements bindings.MojoType<TestRect> {
+class TestRect {
   int x = 0;
   int y = 0;
   int width = 0;
@@ -323,7 +323,7 @@ TestRect createRect(int x, int y, int width, int height) {
 }
 
 
-class TestNamedRegion implements bindings.MojoType<TestNamedRegion> {
+class TestNamedRegion {
   String name = null;
   List<TestRect> rects = null;
 

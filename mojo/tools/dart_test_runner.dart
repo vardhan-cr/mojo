@@ -84,7 +84,10 @@ void testRunnerIsolate(List args) {
     // Parse the test for special VM options.
     List<String> vmoptions = await extractVMOptions(test);
     // Tests are run in "checked mode".
-    List testargs = ['--checked', '--enable-async', '-p', package_root];
+    List testargs = ['--checked',
+                     '--error_on_bad_type',
+                     '--enable-async',
+                     '-p', package_root];
     testargs.addAll(vmoptions);
     testargs.add(test);
     Process.start(Platform.executable, testargs).then((process) {

@@ -19,11 +19,15 @@ class DartController {
                             Dart_IsolateCreateCallback create,
                             Dart_IsolateShutdownCallback shutdown,
                             Dart_EntropySource entropy,
+                            const char** extra_args,
+                            int num_extra_args,
                             char** error);
 
  private:
   static void initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
-                             Dart_EntropySource entropy);
+                             Dart_EntropySource entropy,
+                             const char** extra_args,
+                             int num_extra_args);
   static bool vmIsInitialized;
 };
 

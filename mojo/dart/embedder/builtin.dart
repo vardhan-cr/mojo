@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-library builtin;
+library mojo_builtin;
 
 import 'dart:async';
 import 'dart:convert';
@@ -208,7 +208,7 @@ Uri _createUri(String userUri) {
 List<int> _readSync(String uri) native "Builtin_ReadSync";
 
 // Asynchronously loads script data through a http[s] or file uri.
-_loadDataAsync(int tag, String uri, String libraryUri) {
+_loadDataAsync(int tag, String uri, String libraryUri, List<int> source) {
   if (tag == null) {
     uri = _resolveScriptUri(uri);
   }
@@ -217,6 +217,10 @@ _loadDataAsync(int tag, String uri, String libraryUri) {
   if (_logBuiltin) {
     _print("_loadDataAsync($uri), "
            "${_numOutstandingLoadRequests} requests outstanding");
+  }
+  if (source != null) {
+    _loadScript(tag, uri, libraryUri, source);
+    return;
   }
   if ((resourceUri.scheme == 'http') || (resourceUri.scheme == 'https')) {
     // TODO(zra): Enable library loading over http.

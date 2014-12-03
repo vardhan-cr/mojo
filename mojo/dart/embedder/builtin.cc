@@ -8,29 +8,19 @@
 #include "base/i18n/icu_util.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
+#include "mojo/dart/embedder/mojo_natives.h"
 
 namespace mojo {
 namespace dart {
 
 Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
-    /* { url_, source_, has_natives_ } */
-    {"dart:_builtin", _builtin_source_paths_, true},
+    /* { url_, has_natives_, native_symbol_, native_resolver_ } */
+    {"dart:mojo_builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup},
+    {"dart:mojo_bindings", false, nullptr, nullptr},
+    {"dart:mojo_core", true, MojoNativeSymbol, MojoNativeLookup},
 };
 
 uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};
-
-static Dart_Handle ReadStringFromFile(const char* str) {
-  base::FilePath path(base::FilePath::FromUTF8Unsafe(str));
-  std::string source;
-  if (ReadFileToString(path, &source)) {
-    Dart_Handle str = Dart_NewStringFromUTF8(
-        reinterpret_cast<const uint8_t*>(source.c_str()), source.length());
-    return str;
-  } else {
-    return Dart_Null();
-  }
-}
-
 
 Dart_Handle Builtin::NewError(const char* format, ...) {
   va_list args;
@@ -47,68 +37,30 @@ Dart_Handle Builtin::NewError(const char* format, ...) {
   return Dart_NewApiError(buffer);
 }
 
-
-Dart_Handle Builtin::Source(BuiltinLibraryId id) {
-  CHECK((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
-        kInvalidLibrary);
-  CHECK(id >= kBuiltinLibrary && id < kInvalidLibrary);
-
-  // Try to read the source using the path specified for the uri.
-  const char* uri = builtin_libraries_[id].url_;
-  const char** source_paths = builtin_libraries_[id].source_paths_;
-  return GetSource(source_paths, uri);
-}
-
-
-Dart_Handle Builtin::PartSource(BuiltinLibraryId id, const char* part_uri) {
-  CHECK((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
-        kInvalidLibrary);
-  CHECK(id >= kBuiltinLibrary && id < kInvalidLibrary);
-
-  // Try to read the source using the path specified for the uri.
-  const char** source_paths = builtin_libraries_[id].source_paths_;
-  return GetSource(source_paths, part_uri);
-}
-
-
-Dart_Handle Builtin::GetSource(const char** source_paths, const char* uri) {
-  if (source_paths == NULL) {
-    return Dart_Null();  // No path mapping information exists for library.
-  }
-  const char* source_path = NULL;
-  for (intptr_t i = 0; source_paths[i] != NULL; i += 2) {
-    if (!strcmp(uri, source_paths[i])) {
-      source_path = source_paths[i + 1];
-      break;
-    }
-  }
-  if (source_path == NULL) {
-    return Dart_Null();  // Uri does not exist in path mapping information.
-  }
-  return ReadStringFromFile(source_path);
-}
-
-
-Dart_Handle Builtin::LoadLibrary(Dart_Handle url, BuiltinLibraryId id) {
-  Dart_Handle library = Dart_LoadLibrary(url, Source(id), 0, 0);
-  if (!Dart_IsError(library) && (builtin_libraries_[id].has_natives_)) {
+void Builtin::SetNativeResolver(BuiltinLibraryId id) {
+  static_assert((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
+                kInvalidLibrary, "Unexpected number of builtin libraries");
+  DCHECK_GE(id, kBuiltinLibrary);
+  DCHECK_LT(id, kInvalidLibrary);
+  if (builtin_libraries_[id].has_natives_) {
+    Dart_Handle url = Dart_NewStringFromCString(builtin_libraries_[id].url_);
+    Dart_Handle library = Dart_LookupLibrary(url);
+    DCHECK(!Dart_IsError(library));
     // Setup the native resolver for built in library functions.
     DART_CHECK_VALID(
-        Dart_SetNativeResolver(library, NativeLookup, NativeSymbol));
+        Dart_SetNativeResolver(library,
+                               builtin_libraries_[id].native_resolver_,
+                               builtin_libraries_[id].native_symbol_));
   }
-  return library;
 }
 
-
 Dart_Handle Builtin::LoadAndCheckLibrary(BuiltinLibraryId id) {
-  CHECK((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
-        kInvalidLibrary);
-  CHECK(id >= kBuiltinLibrary && id < kInvalidLibrary);
+  static_assert((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
+                kInvalidLibrary, "Unexpected number of builtin libraries");
+  DCHECK_GE(id, kBuiltinLibrary);
+  DCHECK_LT(id, kInvalidLibrary);
   Dart_Handle url = Dart_NewStringFromCString(builtin_libraries_[id].url_);
   Dart_Handle library = Dart_LookupLibrary(url);
-  if (Dart_IsError(library)) {
-    library = LoadLibrary(url, id);
-  }
   DART_CHECK_VALID(library);
   return library;
 }

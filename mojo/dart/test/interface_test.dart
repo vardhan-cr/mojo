@@ -7,11 +7,11 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/bindings.dart' as bindings;
-import 'package:mojo/public/dart/core.dart' as core;
+import 'package:mojo/public/dart/bindings_standalone.dart' as bindings;
+import 'package:mojo/public/dart/core_standalone.dart' as core;
 import 'package:mojo/public/dart/mojo_init.dart' as init;
 
-class EchoString implements bindings.MojoType<EchoString> {
+class EchoString {
   String a = null;
 
   EchoString();

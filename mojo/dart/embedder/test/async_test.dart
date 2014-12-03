@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
+
 main() {
-  print("Hello, Mojo!");
+  (new Future.value(42)).then((value) {
+    assert(value == 42);
+  });
 }
