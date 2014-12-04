@@ -33,7 +33,6 @@ mojo_native_application("js_content_handler") {
     "//mojo/common",
     "//mojo/edk/js/",
     "//mojo/environment:chromium",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",
@@ -66,7 +65,6 @@ mojo_native_application("js_apptests") {
 
   deps = [
     "//base",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//services/js/test:echo_service",

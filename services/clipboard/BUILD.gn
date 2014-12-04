@@ -16,7 +16,6 @@ mojo_native_application("clipboard") {
     "//mojo/application",
     "//mojo/common",
     "//mojo/environment:chromium",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings",
     "//mojo/services/public/interfaces/clipboard",
     "//ui/base",

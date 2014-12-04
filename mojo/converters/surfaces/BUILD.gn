@@ -25,7 +25,7 @@ component("surfaces") {
     "//cc/surfaces:surface_id",
     "//gpu",
     "//mojo/environment:chromium",
-    "//mojo/public/c/system:for_component",
+    "//mojo/public/c/system",
     "//mojo/services/public/interfaces/surfaces:surface_id",
     "//mojo/services/public/interfaces/surfaces",
   ]

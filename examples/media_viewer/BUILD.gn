@@ -18,7 +18,6 @@ mojo_native_application("media_viewer") {
     "//base",
     "//mojo/application",
     "//mojo/converters/input_events",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/navigation",
     "//mojo/services/public/interfaces/view_manager",

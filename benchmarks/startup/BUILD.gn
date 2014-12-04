@@ -18,10 +18,6 @@ mojo_native_application("app") {
   testonly = true
 
   sources = [ "startup.cc" ]
-
-  deps = [
-    "//mojo/public/c/system:for_shared_library",
-  ]
 }
 
 executable("noop") {

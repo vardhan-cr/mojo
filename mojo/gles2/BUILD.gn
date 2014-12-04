@@ -12,14 +12,10 @@ config("gles2_use_mojo") {
   defines = [ "GLES2_USE_MOJO" ]
 }
 
-# GYP version: mojo/mojo_base.gyp:mojo_gles2_impl
-component("gles2") {
-  output_name = "mojo_gles2_impl"
-
+source_set("gles2") {
   sources = [
     "command_buffer_client_impl.cc",
     "command_buffer_client_impl.h",
-    "gles2_impl_export.h",
     "gles2_impl.cc",
     "gles2_context.cc",
     "gles2_context.h",
@@ -27,7 +23,6 @@ component("gles2") {
 
   defines = [
     "GL_GLEXT_PROTOTYPES",
-    "MOJO_GLES2_IMPL_IMPLEMENTATION",
     "MOJO_GLES2_IMPLEMENTATION",
   ]
 
@@ -47,8 +42,8 @@ component("gles2") {
     "//gpu/command_buffer/client:gles2_interface",
     "//gpu/command_buffer/common",
     "//mojo/environment:chromium",
-    "//mojo/public/c/gles2",
-    "//mojo/public/c/system:for_component",
+    "//mojo/public/c/gles2:headers",
+    "//mojo/public/c/system",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//mojo/services/public/interfaces/gpu",

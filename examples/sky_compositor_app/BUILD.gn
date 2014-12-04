@@ -15,7 +15,6 @@ mojo_native_application("sky_compositor_app") {
     "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/environment:chromium",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",

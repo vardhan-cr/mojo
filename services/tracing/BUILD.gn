@@ -17,7 +17,6 @@ mojo_native_application("tracing") {
     "//base",
     "//mojo/application",
     "//mojo/common",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/application",
   ]
 }

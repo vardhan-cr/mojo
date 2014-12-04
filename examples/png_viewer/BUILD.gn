@@ -14,7 +14,6 @@ mojo_native_application("png_viewer") {
     "//examples/media_viewer:bindings",
     "//mojo/application",
     "//mojo/application:content_handler",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/utility",
     "//mojo/services/public/cpp/view_manager",
