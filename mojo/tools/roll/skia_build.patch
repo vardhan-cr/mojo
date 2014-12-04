@@ -1,24 +1,27 @@
 diff --git a/skia/BUILD.gn b/skia/BUILD.gn
-index 1944183..a57b6a1 100644
+index 9aeaa0d..83c4d8b 100644
 --- a/skia/BUILD.gn
 +++ b/skia/BUILD.gn
-@@ -11,15 +11,6 @@ if (cpu_arch == "arm") {
+@@ -11,18 +11,6 @@ if (cpu_arch == "arm") {
  skia_support_gpu = !is_ios
  skia_support_pdf = !is_ios && (enable_basic_printing || enable_print_preview)
  
 -# The list of Skia defines that are to be set for blink.
--gypi_blink_skia_defines = exec_script(
--    "//build/gypi_to_gn.py",
--    [ rebase_path("//third_party/WebKit/public/blink_skia_config.gypi"),
--      "--replace=<(skia_include_path)=//third_party/skia/include",
--      "--replace=<(skia_src_path)=//third_party/skia/src" ],
--    "scope",
--    [ "//third_party/WebKit/public/blink_skia_config.gypi" ])
+-gypi_blink_skia_defines =
+-    exec_script("//build/gypi_to_gn.py",
+-                [
+-                  rebase_path(
+-                      "//third_party/WebKit/public/blink_skia_config.gypi"),
+-                  "--replace=<(skia_include_path)=//third_party/skia/include",
+-                  "--replace=<(skia_src_path)=//third_party/skia/src",
+-                ],
+-                "scope",
+-                [ "//third_party/WebKit/public/blink_skia_config.gypi" ])
 -
  # The list of Skia defines that are to be set for chromium.
- gypi_skia_defines = exec_script(
-     "//build/gypi_to_gn.py",
-@@ -108,8 +99,7 @@ config("skia_config") {
+ gypi_skia_defines =
+     exec_script("//build/gypi_to_gn.py",
+@@ -126,8 +114,7 @@ config("skia_config") {
      "//third_party/skia/src/lazy",
    ]
  
