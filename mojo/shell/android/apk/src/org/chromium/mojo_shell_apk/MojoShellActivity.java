@@ -12,9 +12,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 
-import org.chromium.base.library_loader.LibraryLoader;
-import org.chromium.base.library_loader.ProcessInitException;
-
 /**
  * Activity for managing the Mojo Shell.
  */
@@ -24,16 +21,6 @@ public class MojoShellActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        try {
-            LibraryLoader.ensureInitialized();
-        } catch (ProcessInitException e) {
-            Log.e(TAG, "libmojo_shell initialization failed.", e);
-            finish();
-            return;
-        }
-
-        MojoMain.ensureInitialized(getApplicationContext(), getParametersFromIntent(getIntent()));
 
         String appUrl = getUrlFromIntent(getIntent());
         if (appUrl == null) {
@@ -65,6 +52,11 @@ public class MojoShellActivity extends Activity {
     }
 
     private void startWithURL(String url) {
+        // TODO(ppi): Gotcha - the call below will work only once per process lifetime, but the OS
+        // has no obligation to kill the application process between destroying and restarting the
+        // activity. If the application process is kept alive, initialization parameters sent with
+        // the intent will be stale.
+        MojoMain.ensureInitialized(getApplicationContext(), getParametersFromIntent(getIntent()));
         MojoMain.start(url);
         Log.i(TAG, "Mojo started: " + url);
     }

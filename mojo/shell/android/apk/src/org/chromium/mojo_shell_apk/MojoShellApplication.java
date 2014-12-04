@@ -8,6 +8,8 @@ import android.util.Log;
 
 import org.chromium.base.BaseChromiumApplication;
 import org.chromium.base.PathUtils;
+import org.chromium.base.library_loader.LibraryLoader;
+import org.chromium.base.library_loader.ProcessInitException;
 
 /**
  * MojoShell implementation of {@link android.app.Application}, managing application-level global
@@ -20,13 +22,36 @@ public class MojoShellApplication extends BaseChromiumApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        initializeApplicationParameters();
-        AndroidHandler.clearTemporaryFiles(getApplicationContext());
+        clearTemporaryFiles();
+        initializeJavaUtils();
+        initializeNative();
     }
 
-    public static void initializeApplicationParameters() {
+    /**
+     * Deletes the temporary files and directories created in the previous run of the application.
+     * This is important regardless of cleanups on exit, as the previous run could have crashed.
+     */
+    private void clearTemporaryFiles() {
+        AndroidHandler.clearTemporaryFiles(this);
+    }
+
+    /**
+     * Initializes Java-side utils.
+     */
+    private void initializeJavaUtils() {
         PathUtils.setPrivateDataDirectorySuffix(PRIVATE_DATA_DIRECTORY_SUFFIX);
-        Log.i(TAG, "MojoShellApplication.initializeApplicationParameters() success.");
     }
 
+    /**
+     * Loads the native library.
+     */
+    private void initializeNative() {
+        try {
+            LibraryLoader.ensureInitialized();
+        } catch (ProcessInitException e) {
+            Log.e(TAG, "libmojo_shell initialization failed.", e);
+            System.exit(-1);
+            return;
+        }
+    }
 }

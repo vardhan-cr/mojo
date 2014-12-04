@@ -25,7 +25,7 @@ public class MojoMain {
     /**
      * Initializes the native system.
      **/
-    public static void ensureInitialized(Context applicationContext, String[] parameters) {
+    static void ensureInitialized(Context applicationContext, String[] parameters) {
         if (sInitialized)
             return;
         List<String> parametersList = new ArrayList<String>();
@@ -41,7 +41,7 @@ public class MojoMain {
     /**
      * Starts the specified application in the specified context.
      **/
-    public static void start(final String appUrl) {
+    static void start(final String appUrl) {
         nativeStart(appUrl);
     }
 
