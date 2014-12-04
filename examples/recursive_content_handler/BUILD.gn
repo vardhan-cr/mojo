@@ -6,7 +6,7 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("recursive_content_handler") {
   sources = [
-    "recursive_content_handler.cc"
+    "recursive_content_handler.cc",
   ]
 
   deps = [

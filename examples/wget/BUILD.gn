@@ -13,6 +13,6 @@ mojo_native_application("wget") {
   ]
 
   sources = [
-    "wget.cc"
+    "wget.cc",
   ]
 }

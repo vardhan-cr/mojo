@@ -3,7 +3,9 @@
 # found in the LICENSE file.
 
 action("generate_snapshot_bin") {
-  deps = ["//dart/runtime/bin:gen_snapshot"]
+  deps = [
+    "//dart/runtime/bin:gen_snapshot",
+  ]
   inputs = [
     "//dart/runtime/tools/create_snapshot_bin.py",
     "//mojo/dart/embedder/builtin.dart",
@@ -12,42 +14,53 @@ action("generate_snapshot_bin") {
     "snapshot.dart",
   ]
   output = "$target_gen_dir/snapshot_gen.bin"
-  outputs = [output,]
+  outputs = [
+    output,
+  ]
 
   script = "//dart/runtime/tools/create_snapshot_bin.py"
   builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
   bindings_path = rebase_path("//mojo/public/dart/bindings.dart")
   core_path = rebase_path("//mojo/public/dart/core.dart")
   args = [
-    "--executable", rebase_path("$root_out_dir/gen_snapshot"),
-    "--script", rebase_path("snapshot.dart"),
-    "--output_bin", rebase_path(output, root_build_dir),
-    "--target_os", os,
+    "--executable",
+    rebase_path("$root_out_dir/gen_snapshot"),
+    "--script",
+    rebase_path("snapshot.dart"),
+    "--output_bin",
+    rebase_path(output, root_build_dir),
+    "--target_os",
+    os,
     "--url_mapping=dart:mojo_bindings,$bindings_path",
     "--url_mapping=dart:mojo_builtin,$builtin_path",
     "--url_mapping=dart:mojo_core,$core_path",
   ]
 }
 
-
 action("generate_snapshot_file") {
-  deps = [":generate_snapshot_bin"]
+  deps = [
+    ":generate_snapshot_bin",
+  ]
   inputs = [
     "//dart/runtime/tools/create_snapshot_file.py",
     "snapshot.cc.tmpl",
     "$target_gen_dir/snapshot_gen.bin",
   ]
   output = "$target_gen_dir/snapshot.cc"
-  outputs = [output,]
+  outputs = [
+    output,
+  ]
 
   script = "//dart/runtime/tools/create_snapshot_file.py"
   args = [
-    "--input_bin", rebase_path("$target_gen_dir/snapshot_gen.bin"),
-    "--input_cc", rebase_path("snapshot.cc.tmpl"),
-    "--output", rebase_path(output),
+    "--input_bin",
+    rebase_path("$target_gen_dir/snapshot_gen.bin"),
+    "--input_cc",
+    rebase_path("snapshot.cc.tmpl"),
+    "--output",
+    rebase_path(output),
   ]
 }
-
 
 source_set("dart_controller") {
   deps = [
@@ -68,12 +81,10 @@ source_set("dart_controller") {
 
   defines = []
   if (is_debug) {
-    defines += ["DEBUG"]
+    defines += [ "DEBUG" ]
   } else {
-    defines += ["NDEBUG"]
+    defines += [ "NDEBUG" ]
   }
 
-  include_dirs = [
-    "//dart/runtime",
-  ]
+  include_dirs = [ "//dart/runtime" ]
 }

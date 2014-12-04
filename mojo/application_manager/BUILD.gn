@@ -17,9 +17,7 @@ component("application_manager") {
     "background_shell_application_loader.h",
   ]
 
-  defines = [
-    "MOJO_APPLICATION_MANAGER_IMPLEMENTATION",
-  ]
+  defines = [ "MOJO_APPLICATION_MANAGER_IMPLEMENTATION" ]
 
   public_deps = [
     "//base",
@@ -61,5 +59,7 @@ test("mojo_application_manager_unittests") {
 }
 
 mojom("test_bindings") {
-  sources = [ "test.mojom" ]
+  sources = [
+    "test.mojom",
+  ]
 }

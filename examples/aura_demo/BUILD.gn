@@ -9,7 +9,7 @@ assert(use_aura)
 
 mojo_native_application("aura_demo") {
   sources = [
-    "aura_demo.cc"
+    "aura_demo.cc",
   ]
 
   deps = [
@@ -30,7 +30,9 @@ mojo_native_application("aura_demo") {
     "//mojo/services/public/cpp/view_manager",
   ]
 
-  datadeps = [ ":init" ]
+  datadeps = [
+    ":init",
+  ]
 }
 
 mojo_native_application("init") {

@@ -18,4 +18,3 @@ component("ipc") {
     "//ui/events",
   ]
 }
-

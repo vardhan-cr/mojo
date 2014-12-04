@@ -22,5 +22,7 @@ mojo_native_application("tracing") {
 }
 
 mojom("bindings") {
-  sources = [ "tracing.mojom" ]
+  sources = [
+    "tracing.mojom",
+  ]
 }

@@ -5,10 +5,10 @@
 import("//build/go/rules.gni")
 
 if (is_android) {
-   group("go") {
-     deps = [
-       ":go_sample_app",
-     ]
+  group("go") {
+    deps = [
+      ":go_sample_app",
+    ]
   }
   go_shared_library("go_sample_app") {
     sources = [
@@ -20,9 +20,9 @@ if (is_android) {
   }
 } else if (is_linux) {
   group("go") {
-      deps = [
-        ":system_test",
-      ]
+    deps = [
+      ":system_test",
+    ]
   }
   go_test_binary("system_test") {
     sources = [
@@ -35,5 +35,5 @@ if (is_android) {
     deps = [
       "//mojo/edk/system",
     ]
-  }  
+  }
 }

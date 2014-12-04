@@ -16,27 +16,25 @@ if (is_android) {
 }
 
 if (!use_prebuilt_mojo_shell) {
+  executable("mojo_shell") {
+    sources = [
+      "desktop/mojo_main.cc",
+    ]
 
-executable("mojo_shell") {
-  sources = [
-    "desktop/mojo_main.cc"
-  ]
-
-  deps = [
-    ":init",
-    ":lib",    
-    "//base",
-    "//build/config/sanitizers:deps",
-    "//mojo/common",
-    "//mojo/environment:chromium",
-  ]
-}
-
+    deps = [
+      ":init",
+      ":lib",
+      "//base",
+      "//build/config/sanitizers:deps",
+      "//mojo/common",
+      "//mojo/environment:chromium",
+    ]
+  }
 }  # !use_prebuilt_mojo_shell
 
 executable("mojo_launcher") {
   sources = [
-    "launcher_main.cc"
+    "launcher_main.cc",
   ]
 
   deps = [
@@ -147,9 +145,7 @@ source_set("lib") {
   ]
 
   if (is_win) {
-    deps -= [
-      "//mojo/shell/domain_socket",
-    ]
+    deps -= [ "//mojo/shell/domain_socket" ]
   }
 
   if (is_android) {
@@ -192,9 +188,8 @@ if (is_android) {
   }
 
   android_library("bootstrap_java") {
-    java_files = [
-      "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java",
-    ]
+    java_files =
+        [ "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java" ]
 
     deps = [
       "//base:base_java",
@@ -274,9 +269,7 @@ if (is_android) {
 
     android_manifest = "android/apk/AndroidManifest.xml"
 
-    native_libs = [
-      "libmojo_shell.so",
-    ]
+    native_libs = [ "libmojo_shell.so" ]
 
     asset_location = mojo_shell_assets_dir
 
@@ -292,16 +285,18 @@ if (is_android) {
 
 mojom("app_child_process_bindings") {
   sources = [
-    "app_child_process.mojom"
+    "app_child_process.mojom",
   ]
 }
 
 mojom("external_application_registrar_bindings") {
   sources = [
-    "external_application_registrar.mojom"
+    "external_application_registrar.mojom",
   ]
 
-  deps = [ "//mojo/public/interfaces/application" ]
+  deps = [
+    "//mojo/public/interfaces/application",
+  ]
 }
 
 source_set("external_application_registrar_connection") {
@@ -322,9 +317,7 @@ source_set("external_application_registrar_connection") {
   ]
 
   if (is_win) {
-    deps -= [
-      "//mojo/shell/domain_socket"
-    ]
+    deps -= [ "//mojo/shell/domain_socket" ]
   }
 }
 

@@ -20,10 +20,13 @@ source_set("js_application_test_base") {
 }
 
 mojom("echo_service") {
-  sources = [ "echo_service.mojom" ]
+  sources = [
+    "echo_service.mojom",
+  ]
 }
 
 mojom("pingpong_service") {
-  sources = [ "pingpong_service.mojom" ]
+  sources = [
+    "pingpong_service.mojom",
+  ]
 }
-

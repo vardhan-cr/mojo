@@ -33,33 +33,23 @@ group("mojo") {
   }
 
   if (is_android) {
-    deps += [
-      "//mojo/android",
-    ]
+    deps += [ "//mojo/android" ]
   }
 
   if (mojo_use_go) {
-    deps += [
-      "//mojo/go",
-    ]
+    deps += [ "//mojo/go" ]
   }
 
   if (mojo_use_dart) {
-    deps += [
-      "//mojo/dart",
-    ]
+    deps += [ "//mojo/dart" ]
   }
 
   if (is_linux) {
-    deps += [
-      "//mojo/python",
-    ]
+    deps += [ "//mojo/python" ]
   }
 
   if (!is_win) {
-    deps += [
-      "//mojo/shell:mojo_launcher",
-    ]
+    deps += [ "//mojo/shell:mojo_launcher" ]
   }
 }
 
@@ -89,9 +79,7 @@ group("tests") {
   ]
 
   if (is_android) {
-    deps += [
-      "//mojo/edk/system:mojo_system_unittests_apk",
-    ]
+    deps += [ "//mojo/edk/system:mojo_system_unittests_apk" ]
   }
 
   if (use_aura) {
@@ -104,9 +92,7 @@ group("tests") {
   }
 
   if (mojo_use_dart) {
-    deps += [
-      "//mojo/dart/embedder/test:dart_unittests",
-    ]
+    deps += [ "//mojo/dart/embedder/test:dart_unittests" ]
   }
 }
 

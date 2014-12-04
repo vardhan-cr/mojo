@@ -16,7 +16,9 @@ group("indirect_service") {
 mojo_native_application("indirect_service_demo") {
   output_name = "indirect_service_demo"
 
-  sources = [ "indirect_service_demo.cc" ]
+  sources = [
+    "indirect_service_demo.cc",
+  ]
 
   deps = [
     ":bindings",
@@ -32,7 +34,9 @@ mojo_native_application("indirect_service_demo") {
 mojo_native_application("integer_service") {
   output_name = "integer_service"
 
-  sources = [ "integer_service.cc" ]
+  sources = [
+    "integer_service.cc",
+  ]
 
   deps = [
     ":bindings",
@@ -45,7 +49,9 @@ mojo_native_application("integer_service") {
 mojo_native_application("indirect_integer_service") {
   output_name = "indirect_integer_service"
 
-  sources = [ "indirect_integer_service.cc" ]
+  sources = [
+    "indirect_integer_service.cc",
+  ]
 
   deps = [
     ":bindings",
@@ -56,5 +62,7 @@ mojo_native_application("indirect_integer_service") {
 }
 
 mojom("bindings") {
-  sources = [ "indirect_service_demo.mojom" ]
+  sources = [
+    "indirect_service_demo.mojom",
+  ]
 }

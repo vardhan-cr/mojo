@@ -6,7 +6,9 @@ import("//build/config/ui.gni")
 import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("window_manager") {
-  sources = [ "main.cc" ]
+  sources = [
+    "main.cc",
+  ]
 
   public_deps = [
     ":lib",

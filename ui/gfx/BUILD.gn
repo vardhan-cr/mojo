@@ -236,6 +236,7 @@ component("gfx") {
       "render_text_harfbuzz.h",
       "text_utils_skia.cc",
     ]
+
     # These are the "native" rendering routines, only one should apply.
     if (is_win) {
       sources += [ "render_text_win.cc" ]
@@ -316,9 +317,7 @@ component("gfx") {
 
   # Ozone stuff.
   if (use_ozone) {
-    sources += [
-      "platform_font_ozone.cc",
-    ]
+    sources += [ "platform_font_ozone.cc" ]
   }
 
   if (!use_aura) {
@@ -331,13 +330,9 @@ component("gfx") {
   }
 
   if (use_x11) {
-    deps += [
-      "//ui/gfx/x",
-    ]
+    deps += [ "//ui/gfx/x" ]
   } else {
-    sources -= [
-      "path_x11.cc",
-    ]
+    sources -= [ "path_x11.cc" ]
   }
 
   if (use_pango) {
@@ -350,9 +345,7 @@ component("gfx") {
     configs += [ "//build/config/linux:pangocairo" ]
   }
   if (use_pango && use_ozone) {
-    sources -= [
-      "platform_font_ozone.cc",
-    ]
+    sources -= [ "platform_font_ozone.cc" ]
   }
 }
 
@@ -509,15 +502,11 @@ test("gfx_unittests") {
   }
 
   if (is_android || is_ios) {
-    sources -= [
-      "render_text_unittest.cc",
-    ]
+    sources -= [ "render_text_unittest.cc" ]
   }
 
   if (use_aura) {
-    sources -= [
-      "screen_unittest.cc",
-    ]
+    sources -= [ "screen_unittest.cc" ]
   }
 
   if (is_win) {

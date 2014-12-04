@@ -36,14 +36,10 @@ group("examples") {
   }
 
   if (!is_android) {
-    deps += [
-      "//examples/pdf_viewer",
-    ]
+    deps += [ "//examples/pdf_viewer" ]
   }
 
   if (is_android) {
-    deps += [
-      "//examples/device_name",
-    ]
+    deps += [ "//examples/device_name" ]
   }
 }

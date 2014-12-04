@@ -63,9 +63,7 @@ java_strings_grd("ui_strings_grd") {
 
 android_resources("ui_java_resources") {
   custom_package = "org.chromium.ui"
-  resource_dirs = [
-    "java/res"
-  ]
+  resource_dirs = [ "java/res" ]
   deps = [
     ":ui_strings_grd",
   ]
@@ -77,7 +75,5 @@ android_library("ui_java") {
     ":ui_java_resources",
     "//base:base_java",
   ]
-  srcjar_deps = [
-    ":java_enums_srcjar",
-  ]
+  srcjar_deps = [ ":java_enums_srcjar" ]
 }

@@ -239,9 +239,7 @@ component("base") {
 
   if (ui_base_build_ime) {
     if (!is_android) {
-      deps += [
-        "//ui/events",
-      ]
+      deps += [ "//ui/events" ]
     }
 
     sources += [
@@ -327,9 +325,7 @@ component("base") {
     }
 
     if (is_chromeos) {
-      deps += [
-        "//chromeos",
-      ]
+      deps += [ "//chromeos" ]
     }
 
     if (use_pango) {
@@ -343,9 +339,7 @@ component("base") {
   }
 
   if (toolkit_views) {
-    deps += [
-      "//ui/events",
-    ]
+    deps += [ "//ui/events" ]
   }
 
   if (use_x11 && use_aura) {
@@ -360,9 +354,7 @@ component("base") {
   }
 
   if (use_aura) {
-    deps += [
-      "//ui/events",
-    ]
+    deps += [ "//ui/events" ]
   } else {
     sources -= [
       "cursor/cursor.cc",
@@ -384,15 +376,11 @@ component("base") {
   }
 
   if (!use_aura || !is_linux) {
-    sources -= [
-      "resource/resource_bundle_auralinux.cc",
-    ]
+    sources -= [ "resource/resource_bundle_auralinux.cc" ]
   }
 
   if (use_aura && is_win) {
-    sources -= [
-      "dragdrop/drag_utils_aura.cc",
-    ]
+    sources -= [ "dragdrop/drag_utils_aura.cc" ]
   }
 
   if (is_linux) {
@@ -453,9 +441,7 @@ component("base") {
   }
 
   if (is_mac) {
-    deps += [
-      "//third_party/mozilla",
-    ]
+    deps += [ "//third_party/mozilla" ]
 
     sources -= [
       "cursor/image_cursors.cc",
@@ -473,13 +459,11 @@ component("base") {
 
   if (use_x11) {
     #'all_dependent_settings': {
-      #'ldflags': [
-        #'-L<(PRODUCT_DIR)',
-      #],
+    #'ldflags': [
+    #'-L<(PRODUCT_DIR)',
+    #],
     #},
-    configs += [
-      "//build/config/linux:x11"
-    ]
+    configs += [ "//build/config/linux:x11" ]
   }
 
   if (use_aura) {
@@ -507,9 +491,7 @@ component("base") {
       "cursor/ozone/bitmap_cursor_factory_ozone.h",
     ]
 
-    deps += [
-      "//ui/ozone:ozone_base",
-    ]
+    deps += [ "//ui/ozone:ozone_base" ]
   }
 
   if (!toolkit_views) {
@@ -537,13 +519,9 @@ component("base") {
       "ui_base_types.cc",
     ]
 
-    deps += [
-      ":ui_base_jni_headers",
-    ]
+    deps += [ ":ui_base_jni_headers" ]
 
-    libs += [
-      "jnigraphics",
-    ]
+    libs += [ "jnigraphics" ]
   }
 
   if (is_android && is_android_webview_build) {
@@ -554,9 +532,7 @@ component("base") {
   }
 
   if (is_android && !use_aura) {
-    sources -= [
-      "cursor/cursor_android.cc",
-    ]
+    sources -= [ "cursor/cursor_android.cc" ]
   }
 
   # Aura clipboard.
@@ -620,182 +596,169 @@ if (is_android) {
 }
 
 if (false) {
-
-# TODO(GYP): Make this work on Android and reenable it.
-if (!is_android) {
-# TODO(tfarina): Rename this target to ui_base_unittests.
-# In order to do this we will need to keep this target, add a dummy
-# ui_base_unittests target that just points to ui_unittests, change
-# buildbot code to reference the new 'ui_base_unittests' target.
-# After buildbot is updated, we can make the changes in Chromium and
-# remove 'ui_unittests' target. crbug.com/331829
-# GYP version: ui/base/ui_base_tests.gyp:ui_unittests
-test("ui_unittests") {
-  sources = [
-    "l10n/l10n_util_mac_unittest.mm",
-    "l10n/l10n_util_unittest.cc",
-    "l10n/l10n_util_win_unittest.cc",
-    "l10n/time_format_unittest.cc",
-    "layout_unittest.cc",
-    "models/tree_node_iterator_unittest.cc",
-    "resource/data_pack_literal.cc",
-    "resource/data_pack_unittest.cc",
-    "resource/resource_bundle_unittest.cc",
-    "test/run_all_unittests.cc",
-  ]
-
-  sources += [
-    "accelerators/accelerator_manager_unittest.cc",
-    "accelerators/menu_label_accelerator_util_linux_unittest.cc",
-    "clipboard/custom_data_helper_unittest.cc",
-    "dragdrop/os_exchange_data_provider_aurax11_unittest.cc",
-    "models/list_model_unittest.cc",
-    "models/list_selection_model_unittest.cc",
-    "models/tree_node_model_unittest.cc",
-    "test/data/resource.h",
-    "text/bytes_formatting_unittest.cc",
-    "view_prop_unittest.cc",
-    "x/selection_requestor_unittest.cc",
-  ]
-
-  if (!use_x11) {
-    if (is_chromeos) {
-      # These were already removed in the chromeos case.
-      sources -= [
-        "ime/chromeos/character_composer_unittest.cc",
-        "ime/input_method_chromeos_unittest.cc",
+  # TODO(GYP): Make this work on Android and reenable it.
+  if (!is_android) {
+    # TODO(tfarina): Rename this target to ui_base_unittests.
+    # In order to do this we will need to keep this target, add a dummy
+    # ui_base_unittests target that just points to ui_unittests, change
+    # buildbot code to reference the new 'ui_base_unittests' target.
+    # After buildbot is updated, we can make the changes in Chromium and
+    # remove 'ui_unittests' target. crbug.com/331829
+    # GYP version: ui/base/ui_base_tests.gyp:ui_unittests
+    test("ui_unittests") {
+      sources = [
+        "l10n/l10n_util_mac_unittest.mm",
+        "l10n/l10n_util_unittest.cc",
+        "l10n/l10n_util_win_unittest.cc",
+        "l10n/time_format_unittest.cc",
+        "layout_unittest.cc",
+        "models/tree_node_iterator_unittest.cc",
+        "resource/data_pack_literal.cc",
+        "resource/data_pack_unittest.cc",
+        "resource/resource_bundle_unittest.cc",
+        "test/run_all_unittests.cc",
       ]
+
+      sources += [
+        "accelerators/accelerator_manager_unittest.cc",
+        "accelerators/menu_label_accelerator_util_linux_unittest.cc",
+        "clipboard/custom_data_helper_unittest.cc",
+        "dragdrop/os_exchange_data_provider_aurax11_unittest.cc",
+        "models/list_model_unittest.cc",
+        "models/list_selection_model_unittest.cc",
+        "models/tree_node_model_unittest.cc",
+        "test/data/resource.h",
+        "text/bytes_formatting_unittest.cc",
+        "view_prop_unittest.cc",
+        "x/selection_requestor_unittest.cc",
+      ]
+
+      if (!use_x11) {
+        if (is_chromeos) {
+          # These were already removed in the chromeos case.
+          sources -= [
+            "ime/chromeos/character_composer_unittest.cc",
+            "ime/input_method_chromeos_unittest.cc",
+          ]
+        }
+      }
+
+      if (ui_base_build_ime) {
+        sources += [
+          "ime/candidate_window_unittest.cc",
+          "ime/chromeos/character_composer_unittest.cc",
+          "ime/input_method_base_unittest.cc",
+          "ime/input_method_chromeos_unittest.cc",
+          "ime/remote_input_method_win_unittest.cc",
+          "ime/win/imm32_manager_unittest.cc",
+          "ime/win/tsf_input_scope_unittest.cc",
+        ]
+        if (use_x11) {
+          sources += [ "ime/composition_text_util_pango_unittest.cc" ]
+        }
+      }
+
+      deps = [
+        "//base",
+        "//base/allocator",
+        "//base/test:test_support",
+        "//net",
+        "//skia",
+        "//testing/gmock",
+        "//testing/gtest",
+        "//third_party/icu",
+        "//ui/base",
+        "//ui/base:test_support",
+        "//ui/events:events_base",
+        "//ui/events:test_support",
+        "//ui/gfx:test_support",
+        "//ui/resources",
+        "//ui/resources:ui_test_pak",
+        "//ui/strings",
+        "//url",
+      ]
+
+      if (is_win) {
+        sources += [
+          "dragdrop/os_exchange_data_win_unittest.cc",
+          "win/hwnd_subclass_unittest.cc",
+          "win/open_file_name_win_unittest.cc",
+        ]
+
+        ldflags = [
+          "/DELAYLOAD:d2d1.dll",
+          "/DELAYLOAD:d3d10_1.dll",
+        ]
+        libs = [
+          "d2d1.lib",
+          "d3d10_1.lib",
+          "imm32.lib",
+          "oleacc.lib",
+        ]
+
+        # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
+        cflags = [ "/wd4267" ]
+      }
+
+      if (is_android) {
+        deps += [
+          #"testing/android/native_test.gyp:native_test_native_code"  TODO(GYP)
+        ]
+      }
+
+      if (use_pango) {
+        configs += [ "//build/config/linux:pangocairo" ]
+      }
+
+      if (use_x11) {
+        sources += [ "cursor/cursor_loader_x11_unittest.cc" ]
+
+        configs += [ "//build/config/linux:x11" ]
+
+        deps += [
+          "//ui/events/platform/x11",
+          "//ui/gfx/x",
+        ]
+
+        datadeps = [
+          "//tools/xdisplaycheck",
+        ]
+      }
+
+      if (!is_win || !use_aura) {
+        sources -= [ "view_prop_unittest.cc" ]
+      }
+
+      if (is_mac) {
+        deps += [
+          "//third_party/mozilla",
+          #'ui_unittests_bundle',  TODO(GYP)
+        ]
+      }
+
+      if (use_aura || toolkit_views) {
+        sources += [ "dragdrop/os_exchange_data_unittest.cc" ]
+
+        deps += [
+          "//ui/events",
+          "//ui/events/platform",
+        ]
+      }
+
+      if (is_chromeos) {
+        sources += [ "../chromeos/touch_exploration_controller_unittest.cc" ]
+        sources -= [
+          "dragdrop/os_exchange_data_provider_aurax11_unittest.cc",
+          "x/selection_requestor_unittest.cc",
+        ]
+        deps += [
+          "//chromeos",
+          "//ui/aura:test_support",
+          "//ui/events:gesture_detection",
+          "//ui/chromeos:ui_chromeos",
+        ]
+      }
     }
   }
-
-  if (ui_base_build_ime) {
-    sources += [
-      "ime/candidate_window_unittest.cc",
-      "ime/chromeos/character_composer_unittest.cc",
-      "ime/input_method_base_unittest.cc",
-      "ime/input_method_chromeos_unittest.cc",
-      "ime/remote_input_method_win_unittest.cc",
-      "ime/win/imm32_manager_unittest.cc",
-      "ime/win/tsf_input_scope_unittest.cc",
-    ]
-    if (use_x11) {
-      sources += [ "ime/composition_text_util_pango_unittest.cc" ]
-    }
-  }
-
-  deps = [
-    "//base",
-    "//base/allocator",
-    "//base/test:test_support",
-    "//net",
-    "//skia",
-    "//testing/gmock",
-    "//testing/gtest",
-    "//third_party/icu",
-    "//ui/base",
-    "//ui/base:test_support",
-    "//ui/events:events_base",
-    "//ui/events:test_support",
-    "//ui/gfx:test_support",
-    "//ui/resources",
-    "//ui/resources:ui_test_pak",
-    "//ui/strings",
-    "//url",
-  ]
-
-  if (is_win) {
-    sources += [
-      "dragdrop/os_exchange_data_win_unittest.cc",
-      "win/hwnd_subclass_unittest.cc",
-      "win/open_file_name_win_unittest.cc",
-    ]
-
-    ldflags = [
-      "/DELAYLOAD:d2d1.dll",
-      "/DELAYLOAD:d3d10_1.dll",
-    ]
-    libs = [
-      "d2d1.lib",
-      "d3d10_1.lib",
-      "imm32.lib",
-      "oleacc.lib",
-    ]
-
-    # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-    cflags = [ "/wd4267" ]
-  }
-
-  if (is_android) {
-    deps += [
-      #"testing/android/native_test.gyp:native_test_native_code"  TODO(GYP)
-    ]
-  }
-
-  if (use_pango) {
-    configs += [
-      "//build/config/linux:pangocairo"
-    ]
-  }
-
-  if (use_x11) {
-    sources += [
-      "cursor/cursor_loader_x11_unittest.cc"
-    ]
-
-    configs += [
-      "//build/config/linux:x11"
-    ]
-
-    deps += [
-      "//ui/events/platform/x11",
-      "//ui/gfx/x",
-    ]
-
-    datadeps = [
-      "//tools/xdisplaycheck"
-    ]
-  }
-
-  if (!is_win || !use_aura) {
-    sources -= [
-      "view_prop_unittest.cc"
-    ]
-  }
-
-  if (is_mac) {
-    deps += [
-      "//third_party/mozilla",
-      #'ui_unittests_bundle',  TODO(GYP)
-    ]
-  }
-
-  if (use_aura || toolkit_views) {
-    sources += [
-      "dragdrop/os_exchange_data_unittest.cc"
-    ]
-
-    deps += [
-      "//ui/events",
-      "//ui/events/platform",
-    ]
-  }
-
-  if (is_chromeos) {
-    sources += [
-      "../chromeos/touch_exploration_controller_unittest.cc",
-    ]
-    sources -= [
-      "dragdrop/os_exchange_data_provider_aurax11_unittest.cc",
-      "x/selection_requestor_unittest.cc",
-    ]
-    deps += [
-      "//chromeos",
-      "//ui/aura:test_support",
-      "//ui/events:gesture_detection",
-      "//ui/chromeos:ui_chromeos",
-    ]
-  }
-}
-}
 }
 # TODO(GYP) Mac (ui_unittest_bundle) and Android (ui_unittests_apk).

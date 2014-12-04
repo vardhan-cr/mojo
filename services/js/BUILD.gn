@@ -72,4 +72,3 @@ mojo_native_application("js_apptests") {
     "//services/js/test:pingpong_service",
   ]
 }
-

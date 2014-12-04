@@ -6,7 +6,7 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("nesting_app") {
   sources = [
-    "nesting_app.cc"
+    "nesting_app.cc",
   ]
 
   deps = [

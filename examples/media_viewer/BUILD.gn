@@ -7,28 +7,26 @@ import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 
 if (use_aura) {
+  mojo_native_application("media_viewer") {
+    sources = [
+      "media_viewer.cc",
+    ]
 
-mojo_native_application("media_viewer") {
-  sources = [
-    "media_viewer.cc"
-  ]
-
-  deps = [
-    ":bindings",
-    "//base",
-    "//mojo/application",
-    "//mojo/converters/input_events",
-    "//mojo/services/public/cpp/view_manager",
-    "//mojo/services/public/interfaces/navigation",
-    "//mojo/services/public/interfaces/view_manager",
-    "//mojo/views:views",
-    "//skia",
-    "//ui/gfx",
-    "//ui/gfx/geometry",
-    "//ui/views",
-  ]
-}
-
+    deps = [
+      ":bindings",
+      "//base",
+      "//mojo/application",
+      "//mojo/converters/input_events",
+      "//mojo/services/public/cpp/view_manager",
+      "//mojo/services/public/interfaces/navigation",
+      "//mojo/services/public/interfaces/view_manager",
+      "//mojo/views:views",
+      "//skia",
+      "//ui/gfx",
+      "//ui/gfx/geometry",
+      "//ui/views",
+    ]
+  }
 }  # use_aura
 
 mojom("bindings") {

@@ -45,7 +45,6 @@ mojo_native_application("parent_app") {
   ]
 }
 
-
 mojo_native_application("child_app") {
   output_name = "surfaces_child_app"
 
@@ -135,5 +134,7 @@ mojom("bindings") {
     "//mojo/services/public/interfaces/surfaces:surface_id",
   ]
 
-  sources = [ "child.mojom" ]
+  sources = [
+    "child.mojom",
+  ]
 }

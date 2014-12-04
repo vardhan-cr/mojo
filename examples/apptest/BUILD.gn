@@ -44,18 +44,22 @@ mojo_native_application("apptests") {
     "example_client_impl.h",
   ]
 
-   deps = [
+  deps = [
     ":bindings",
     "//mojo/public/cpp/application:standalone",
     "//mojo/public/cpp/application:test_support_standalone",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",
-   ]
+  ]
 
-   datadeps = [ ":service", ]
+  datadeps = [
+    ":service",
+  ]
 }
 
 mojom("bindings") {
-  sources = [ "example_service.mojom" ]
+  sources = [
+    "example_service.mojom",
+  ]
 }

@@ -53,4 +53,3 @@ mojom("bindings") {
     "//mojo/services/public/interfaces/geometry",
   ]
 }
-

@@ -6,7 +6,7 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("pdf_viewer") {
   sources = [
-    "pdf_viewer.cc"
+    "pdf_viewer.cc",
   ]
 
   deps = [

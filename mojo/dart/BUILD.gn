@@ -9,7 +9,6 @@ group("dart") {
   ]
 }
 
-
 copy("testing") {
   sources = [
     "test/bindings_generation_test.dart",
@@ -20,10 +19,9 @@ copy("testing") {
     "testing/expect.dart",
   ]
   outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}"
+    "{{source_gen_dir}}/{{source_file_part}}",
   ]
 }
-
 
 group("init_library") {
   deps = [
@@ -32,9 +30,8 @@ group("init_library") {
   ]
 }
 
-
 shared_library("mojo_dart_init") {
-  defines = ["DART_SHARED_LIB"]
+  defines = [ "DART_SHARED_LIB" ]
   sources = [
     "system/mojo_dart_init.cc",
   ]
@@ -43,7 +40,6 @@ shared_library("mojo_dart_init") {
   ]
 }
 
-
 # This library is copied alongside the Dart sources so that it can be found
 # under the Dart package root.
 copy("copy_init_library") {
@@ -51,9 +47,9 @@ copy("copy_init_library") {
     "$root_out_dir/libmojo_dart_init.so",
   ]
   outputs = [
-    "$root_out_dir/gen/mojo/public/dart/src/libmojo_dart_init.so"
+    "$root_out_dir/gen/mojo/public/dart/src/libmojo_dart_init.so",
   ]
-  deps =[
-    ":mojo_dart_init"
+  deps = [
+    ":mojo_dart_init",
   ]
 }

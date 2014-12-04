@@ -17,14 +17,20 @@ mojo_native_application("app") {
   output_name = "mojo_benchmark_startup"
   testonly = true
 
-  sources = [ "startup.cc" ]
+  sources = [
+    "startup.cc",
+  ]
 }
 
 executable("noop") {
   output_name = "mojo_benchmark_startup_noop"
   testonly = true
 
-  sources = [ "noop.cc" ]
+  sources = [
+    "noop.cc",
+  ]
 
-  deps = [ "//build/config/sanitizers:deps" ]
+  deps = [
+    "//build/config/sanitizers:deps",
+  ]
 }

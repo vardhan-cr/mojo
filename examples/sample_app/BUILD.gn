@@ -29,7 +29,7 @@ mojo_native_application("sample_app") {
 source_set("spinning_cube") {
   sources = [
     "spinning_cube.cc",
-    "spinning_cube.h"
+    "spinning_cube.h",
   ]
 
   deps = [

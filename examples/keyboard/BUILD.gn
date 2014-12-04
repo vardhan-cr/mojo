@@ -46,6 +46,7 @@ mojo_native_application("keyboard") {
 }
 
 mojom("bindings") {
-  sources = [ "keyboard.mojom" ]
+  sources = [
+    "keyboard.mojom",
+  ]
 }
-

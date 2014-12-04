@@ -14,7 +14,9 @@ source_set("gles2") {
     "gpu_impl.h",
   ]
 
-  public_deps = [ ":lib" ]
+  public_deps = [
+    ":lib",
+  ]
   deps = [
     "//base",
     "//gpu/command_buffer/service",

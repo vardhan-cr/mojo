@@ -6,7 +6,7 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("content_handler_demo") {
   sources = [
-    "content_handler_demo.cc"
+    "content_handler_demo.cc",
   ]
 
   deps = [
@@ -16,4 +16,3 @@ mojo_native_application("content_handler_demo") {
     "//mojo/services/public/interfaces/content_handler",
   ]
 }
-

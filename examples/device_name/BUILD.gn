@@ -32,9 +32,7 @@ generate_jni("jni_headers") {
 
 dex_output_path = "$target_out_dir/device_name_java.dex.jar"
 android_library("device_name_java") {
-  java_files = [
-    "java/src/org/chromium/mojo/examples/DeviceName.java",
-  ]
+  java_files = [ "java/src/org/chromium/mojo/examples/DeviceName.java" ]
 
   deps = [
     "//base:base_java",

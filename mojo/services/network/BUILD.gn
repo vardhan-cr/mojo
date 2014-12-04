@@ -6,7 +6,9 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("network") {
   output_name = "network_service"
-  sources = [ "main.cc" ]
+  sources = [
+    "main.cc",
+  ]
   deps = [
     ":lib",
     "//base",

@@ -8,7 +8,7 @@ import("//mojo/public/tools/bindings/mojom.gni")
 group("echo") {
   deps = [
     ":client",
-    ":service"
+    ":service",
   ]
 }
 
@@ -22,7 +22,9 @@ mojo_native_application("client") {
     "//mojo/public/cpp/utility",
   ]
 
-  sources = [ "echo_client.cc" ]
+  sources = [
+    "echo_client.cc",
+  ]
 }
 
 mojo_native_application("service") {
@@ -35,9 +37,13 @@ mojo_native_application("service") {
     "//mojo/public/cpp/utility",
   ]
 
-  sources = [ "echo_service.cc" ]
+  sources = [
+    "echo_service.cc",
+  ]
 }
 
 mojom("bindings") {
-  sources = [ "echo_service.mojom" ]
+  sources = [
+    "echo_service.mojom",
+  ]
 }

@@ -12,9 +12,7 @@ group("root") {
   ]
 
   if (!is_win) {
-    deps += [
-      "//sky",
-    ]
+    deps += [ "//sky" ]
   }
 
   if (!is_android && !is_win) {

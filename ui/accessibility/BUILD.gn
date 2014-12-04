@@ -44,11 +44,11 @@ component("accessibility") {
 source_set("test_support") {
   sources = [
     "tree_generator.cc",
-    "tree_generator.h"
+    "tree_generator.h",
   ]
 
   deps = [
-    ":accessibility"
+    ":accessibility",
   ]
 }
 

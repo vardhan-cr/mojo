@@ -15,5 +15,7 @@ test("dart_unittests") {
     "//mojo/environment:chromium",
   ]
 
-  sources = [ "run_dart_tests.cc" ]
+  sources = [
+    "run_dart_tests.cc",
+  ]
 }

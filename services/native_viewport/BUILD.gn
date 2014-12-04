@@ -10,9 +10,8 @@ if (is_android) {
   import("//build/config/android/rules.gni")
 
   android_library("native_viewport_java") {
-    java_files = [
-      "android/src/org/chromium/mojo/PlatformViewportAndroid.java",
-    ]
+    java_files =
+        [ "android/src/org/chromium/mojo/PlatformViewportAndroid.java" ]
 
     deps = [
       "//base:base_java",
@@ -21,7 +20,9 @@ if (is_android) {
 } else {
   mojo_native_application("native_viewport") {
     output_name = "native_viewport_service"
-    sources = [ "main.cc" ]
+    sources = [
+      "main.cc",
+    ]
     deps = [
       ":lib",
       "//base",
@@ -99,10 +100,8 @@ source_set("lib") {
   } else {
     sources -= [ "platform_viewport_x11.cc" ]
   }
-  
+
   if (is_win) {
-    deps += [
-      "//ui/platform_window/win",
-    ]
+    deps += [ "//ui/platform_window/win" ]
   }
 }

@@ -20,7 +20,9 @@ generate_jni("jni_headers") {
     "../../services/native_viewport/android/src/org/chromium/mojo/PlatformViewportAndroid.java",
     "../shell/android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
   ]
-  deps = [ ":system_java_jni_headers" ]
+  deps = [
+    ":system_java_jni_headers",
+  ]
 
   jni_package = "mojo"
 }
@@ -123,7 +125,6 @@ shared_library("mojo_java_unittests") {
     "//mojo/public/cpp/environment",
   ]
   defines = [ "UNIT_TEST" ]
-
 }
 
 android_apk("mojo_test_apk") {
