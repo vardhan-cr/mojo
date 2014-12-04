@@ -1,33 +1,37 @@
 #!mojo:js_content_handler
 
 define("main", [
-  "mojo/services/public/js/service_provider",
-  "services/js/app_bridge",
+  "mojo/services/public/js/application",
   "services/js/test/pingpong_service.mojom",
-  "mojo/services/public/js/shell",
-], function(spModule, appModule, ppModule, shellModule) {
+], function(appModule, ppModule) {
 
-  var shell;
+  class PingPongServiceImpl {
+    constructor(app, client) {
+      this.app = app;
+      this.client = client;
+    }
 
-  function PingPongServiceImpl(client) {
-    this.ping = function(value) {
-      if (value == 999)
-        appModule.quit();
-      client.pong(value + 1);
+    ping(value) {
+      this.client.pong(value + 1);
     };
+
+    quit() {
+      this.app.quit();
+    }
+
     // This method is only used by the PingPongTargetApp test.
-    this.pingTarget = function(pingTargetURL, count) {
+    pingTarget(pingTargetURL, count) {
+      var app = this.app;
       return new Promise(function(resolve) {
         var pingTargetClient = {
           pong: function(value) {
             if (value == count) {
-              pingTargetService.ping(999); // Quit pingTargetService.
+              pingTargetService.quit();
               resolve({ok: true});
-              appModule.quit();
             }
           }
         };
-        var pingTargetService = shell.connectToService(
+        var pingTargetService = app.shell.connectToService(
             pingTargetURL, ppModule.PingPongService, pingTargetClient);
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
@@ -35,20 +39,12 @@ define("main", [
     }
   }
 
-  function Application(appShell, url) {
-    shell = new shellModule.Shell(appShell);
-    this.serviceProviders = [];
+  class PingPong extends appModule.Application {
+    acceptConnection(url, serviceProvider) {
+      serviceProvider.provideService(
+          ppModule.PingPongService, PingPongServiceImpl.bind(null, this));
+    }
   }
 
-  Application.prototype.initialize = function(args) {
-  }
-
-  Application.prototype.acceptConnection = function(url, spHandle) {
-    var serviceProvider =  new spModule.ServiceProvider(spHandle);
-    serviceProvider.provideService(
-        ppModule.PingPongService, PingPongServiceImpl);
-    this.serviceProviders.push(serviceProvider);
-  }
-
-  return Application;
+  return PingPong;
 });

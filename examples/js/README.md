@@ -20,34 +20,40 @@ source file must be:
   #!mojo:js_content_handler
 
 Following the shebang should be a single AMD module called "main" whose value
-is an Application class. The JS content handler will create an instance of the
-Application and make it the client of the Mojo shell. The JS content handler is
-itself a Mojo application and it's responsible for creating an instance of V8
+is an Application subclass. The JS content handler will create an instance of
+the Application and make it the client of the Mojo shell. The JS content handler
+is itself a Mojo application and it's responsible for creating an instance of V8
 and loading the "main" JS module and all of the modules the main module
 depends on. 
 
-The overall structure of a JS Mojo application is this:
+This is the overall structure of a JS Mojo application:
 
   #!mojo:js_content_handler
 
-  define("main", [<list of modules this application depends on>],
-    function(<one parameter per dependent module>) {
-      function Application(appShell, url) {
+  define("main", ["mojo/services/public/js/application", 
+    <list of other modules that this application depends on>
+],
+    function(appModule, <one parameter per dependent module>) {
+      class MyApplication extends appModule.Application {
+        constructor(appShell, url) {
+          super(appShell, url); // Initializes this.shell, this.url.
+          // MyApplication initializations here. 
+        }
+
+        initialize(args) {
+        }
+
+        acceptConnection(url, serviceProvider) {
+        }
       }
 
-      Application.prototype.initialize = function(args) {
-      }
-
-      Application.prototype.acceptConnection = function(url, spHandle) {
-      }
-
-      return Application;
+      return MyApplication;
     });
 
 The hello.js example is little more than this basic skeleton.
 
 The JS content handler loads the "main" module and makes an instance of its
-value, which must be the application's class. The application's constructor is 
+value, which must be an Application subclass. The application's constructor is 
 passed two arguments:
 
 appShell - a pointer to the Mojo shell. Typically this will be wrapped by a
@@ -55,9 +61,19 @@ appShell - a pointer to the Mojo shell. Typically this will be wrapped by a
 
 url - the URL this application was loaded from as a String.
 
+The (inherited) Application class constructor initializes the shell and url
+properties. It's unlikely that you'll want to use the appShell argument
+directly.
+
 The initialize() and acceptConnection() methods are defined by application.mojom
 and they're needed because the JS content handler makes the JS application the
 Mojo shell's client.
+
+
+--- JavaScript Classes --- 
+
+The JS content handler depends on the ECMAScript6 ("Harmony") classes feature.
+
 
 
 --- Mojo Application Structure --- 
@@ -72,7 +88,8 @@ same as the '.mojom' file with a '.js' suffix. It's often helpful to look at the
 generated 'mojom.js' files.
 
 The JS Shell class simplifies connecting to applications and services. It's a
-wrapper for the Application's appShell argument. 
+wrapper for the Application's appShell argument. The Application constructor
+creates a Shell and assigns it to |this.shell|.
 
 The Shell's connectToService() method returns a "proxy" to a service provided by
 another application.
@@ -83,20 +100,19 @@ service you need the JS module based on network_service.mojom:
 
   define("main", [
     "mojo/services/public/interfaces/network/network_service.mojom",
-    "mojo/services/public/js/shell",
+    "mojo/services/public/js/application",
   ]
-    function(netModule, shellModule) {
-      function Application(appShell, url) {
-        this.shell = new shellModule.Shell(appShell);
+    function(netModule, appModule) {
+      class MyApplication extends appModule.Application {
+        initialize(args) {
+          var netService = this.shell.connectToService(
+              "mojo:network_service", netModule.NetworkService);
+          // Use netService's NetworkService methods.
+        }
+        ...
       }
 
-      Application.prototype.initialize = function(args) {
-       var netService = this.shell.connectToService(
-           "mojo:network_service", netModule.NetworkService);
-
-      }
-      ...
-      return Application;
+      return MyApplication;
     });
 
 The first connectToService() parameter is the Mojo URL for the network service
@@ -116,9 +132,9 @@ The 'proxyClass' is used to access another application's NetworkService and the
 'stubClass' is used to create an implementation of NetworkService. 
 
 In the netService case above the Shell connects to the Mojo application at
-"mojo:network_service", then connects its service called 
+"mojo:network_service", then connects to its service called 
 'NetworkService.name' with an instance of 'NetworkService.proxyClass'. The proxy
-instance is returned.
+instance is returned. The netService proxy can be used immediately.
 
 
 --- Interface Parameters --- 
@@ -130,7 +146,8 @@ indirect_service example demonstrates this.
 The NetworkService CreateURLLoader() method has an interface request parameter:
 
   interface NetworkService {
-    CreateURLLoader(URLLoader& loader); // Return a URLLoader to the caller.
+    // Connect the loader parameter to a URLLoader service.
+    CreateURLLoader(URLLoader& loader);
     ...
   }
 

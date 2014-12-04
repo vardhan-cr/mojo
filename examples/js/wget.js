@@ -11,55 +11,44 @@ define("main", [
   "mojo/public/js/core",
   "mojo/services/public/interfaces/network/network_service.mojom",
   "mojo/services/public/interfaces/network/url_loader.mojom",
-  "mojo/services/public/js/shell",
-  "services/js/app_bridge",
-], function(console,
-            coreModule,
-            netModule,
-            loaderModule,
-            shellModule,
-            appModule) {
+  "mojo/services/public/js/application",
+], function(console, coreModule, netModule, loaderModule, appModule) {
 
-  function Application(appShell, url) {
-    this.shell = new shellModule.Shell(appShell);
-  }
+  class WGet extends appModule.Application {
+    initialize(args) {
+      if (args.length != 2) {
+        console.log("Expected URL argument");
+        return;
+      }
 
-  Application.prototype.initialize = function(args) {
-    if (args.length != 2) {
-      console.log("Expected URL argument");
-      return;
-    }
-
-    var netService = this.shell.connectToService(
+      var netService = this.shell.connectToService(
         "mojo:network_service", netModule.NetworkService);
 
-    var urlLoader = new loaderModule.URLLoader.proxyClass();
-    netService.createURLLoader(urlLoader);
+      var urlLoader = new loaderModule.URLLoader.proxyClass();
+      netService.createURLLoader(urlLoader);
 
-    var urlRequest = new loaderModule.URLRequest({
-      url: args[1],
-      method: "GET",
-      auto_follow_redirects: true
-    });
+      var urlRequest = new loaderModule.URLRequest({
+        url: args[1],
+        method: "GET",
+        auto_follow_redirects: true
+      });
 
-    urlLoader.start(urlRequest).then(function(result) {
-      console.log("url => " + result.response["url"]);
-      console.log("status_line => " + result.response["status_line"]);
-      console.log("mime_type => " + result.response["mime_type"]);
+      var app = this;
+      urlLoader.start(urlRequest).then(function(result) {
+        console.log("url => " + result.response["url"]);
+        console.log("status_line => " + result.response["status_line"]);
+        console.log("mime_type => " + result.response["mime_type"]);
 
-      coreModule.drainData(result.response.body).then(
-        function(result) {
-          console.log("read " + result.buffer.byteLength + " bytes");
-        },
-        function (reject) {
-          console.log("failed " + reject);
-        })
-        .then(appModule.quit);
-    });
+        coreModule.drainData(result.response.body).then(
+          function(result) {
+            console.log("read " + result.buffer.byteLength + " bytes");
+          })
+          .then(function() {
+            app.quit();
+          });
+      });
+    }
   }
 
-  Application.prototype.acceptConnection = function(url, serviceProvider) {
-  }
-
-  return Application;
+  return WGet;
 });

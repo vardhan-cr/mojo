@@ -8,25 +8,20 @@
 
 define("main", [
   "console",
-  "mojo/public/interfaces/application/service_provider.mojom",
-], function(console, sp) {
+  "mojo/services/public/js/application",
+], function(console, appModule) {
 
-  function Application(shell, url) {
-    this.shell = shell;
-    console.log(url + ": Hello");
-  }
-
-  Application.prototype.initialize = function(args) {
-    if (args.length != 2) {
-      console.log("Expected hello.js URL argument");
-      return;
+  class Hello extends appModule.Application {
+    initialize(args) {
+      if (args.length != 2) {
+        console.log("Expected hello.js URL argument");
+        return;
+      }
+      console.log(this.url + ": Hello");
+      this.shell.connectToApplication(args[1]);
+      this.quit();
     }
-    var serviceProvider = new sp.ServiceProvider.proxyClass();
-    this.shell.connectToApplication(args[1], serviceProvider);
   }
 
-  Application.prototype.acceptConnection = function(url, serviceProvider) {
-  }
-
-  return Application;
+  return Hello;
 });

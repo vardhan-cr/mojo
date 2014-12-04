@@ -1,34 +1,31 @@
 #!mojo:js_content_handler
 
 define("main", [
-  "mojo/services/public/js/service_provider",
-  "services/js/app_bridge",
+  "mojo/services/public/js/application",
   "services/js/test/pingpong_service.mojom",
-  "mojo/services/public/js/shell","console",
-], function(spModule, appModule, ppModule, shellModule,console) {
+], function(appModule, ppModule) {
 
-  function PingPongServiceImpl(client) {
-    this.ping = function(value) {
-      client.pong(value + 1);
-      if (value == 999)
-        appModule.quit();
+  class PingPongServiceImpl {
+    constructor(app, client) {
+      this.app = app;
+      this.client = client;
+    }
+
+    ping(value) {
+      this.client.pong(value + 1);
+    }
+
+    quit() {
+      this.app.quit();
     }
   }
 
-  function Application(appShell, url) {
-    this.shell = new shellModule.Shell(appShell);
-    this.serviceProviders = [];
+  class PingPongTarget extends appModule.Application {
+    acceptConnection(url, serviceProvider) {
+      serviceProvider.provideService(
+          ppModule.PingPongService, PingPongServiceImpl.bind(null, this));
+    }
   }
 
-  Application.prototype.initialize = function(args) {
-  }
-
-  Application.prototype.acceptConnection = function(url, spHandle) {
-    var serviceProvider =  new spModule.ServiceProvider(spHandle);
-    serviceProvider.provideService(
-        ppModule.PingPongService, PingPongServiceImpl);
-    this.serviceProviders.push(serviceProvider);
-  }
-
-  return Application;
+  return PingPongTarget;
 });

@@ -64,7 +64,7 @@ TEST_F(JSPingPongTest, PingServiceToPongClient) {
   pingpong_service_->Ping(100);
   EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
   EXPECT_EQ(101, pingpong_client_.last_pong_value());
-  pingpong_service_->Ping(999); // Ask the service to quit.
+  pingpong_service_->Quit();
 }
 
 // Verify that "pingpong.js" can connect to "pingpong-target.js", act as
@@ -76,6 +76,7 @@ TEST_F(JSPingPongTest, PingTargetApp) {
   pingpong_service_->PingTarget(JSAppURL("pingpong_target.js"), 10, callback);
   EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
   EXPECT_TRUE(returned_value);
+  pingpong_service_->Quit();
 }
 
 }  // namespace

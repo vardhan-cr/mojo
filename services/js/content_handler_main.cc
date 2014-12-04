@@ -23,6 +23,8 @@ class JsContentHandler : public ApplicationDelegate,
  private:
   // Overridden from ApplicationDelegate:
   void Initialize(ApplicationImpl* app) override {
+    static const char v8Flags[] = "--harmony-classes";
+    v8::V8::SetFlagsFromString(v8Flags, sizeof(v8Flags) - 1);
     base::i18n::InitializeICU();
     gin::IsolateHolder::Initialize(gin::IsolateHolder::kStrictMode,
                                    gin::ArrayBufferAllocator::SharedInstance());

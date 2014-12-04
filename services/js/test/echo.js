@@ -1,32 +1,23 @@
 #!mojo:js_content_handler
 
 define("main", [
-  "console",
-  "mojo/services/public/js/service_provider",
+  "mojo/services/public/js/application",
   "services/js/test/echo_service.mojom",
-  "services/js/app_bridge",
-], function(console, spModule, echoModule, appModule) {
+], function(appModule, echoModule) {
 
-  function Application(shell, url) {
-    this.shell = shell;
-    this.serviceProviders = [];
-  }
-
-  Application.prototype.initialize = function(args) {
-  }
-
-  Application.prototype.acceptConnection = function(url, spHandle) {
-    function EchoServiceImpl(client) {
-      this.echoString = function(s) {
-        if (s == "quit")
-          appModule.quit();
-        return Promise.resolve({value: s});
-      };
+  class Echo extends appModule.Application {
+    acceptConnection(url, serviceProvider) {
+      var app = this;
+      function EchoServiceImpl(client) {
+        this.echoString = function(s) {
+          if (s == "quit")
+            app.quit();
+          return Promise.resolve({value: s});
+        };
+      }
+      serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
     }
-    var serviceProvider =  new spModule.ServiceProvider(spHandle);
-    serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
-    this.serviceProviders.push(serviceProvider);
   }
 
-  return Application;
+  return Echo;
 });

@@ -170,7 +170,7 @@ void JSApp::AcceptConnection(const String& requestor_url,
     gin::ConvertToV8(isolate, requestor_url.To<std::string>()),
     gin::ConvertToV8(isolate, provider.PassMessagePipe().release()),
   };
-  CallAppInstanceMethod("acceptConnection", arraysize(argv), argv);
+  CallAppInstanceMethod("acceptConnection_", arraysize(argv), argv);
 }
 
 void JSApp::Quit() {

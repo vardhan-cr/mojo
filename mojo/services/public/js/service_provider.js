@@ -27,87 +27,90 @@ define("mojo/services/public/js/service_provider", [
     provider.connections.push(serviceConnection);
   }
 
-  function ServiceProvider(service) {
-    this.connections_ = new Map();
-    this.providers_ = new Map();
-    this.pendingRequests_ = new Map();
-    this.connection_ = null;
+  class ServiceProvider {
+    constructor(service) {
+      this.connections_ = new Map();
+      this.providers_ = new Map();
+      this.pendingRequests_ = new Map();
+      this.connection_ = null;
 
-    if (service instanceof spInterfaceModule.ServiceProvider.proxyClass) {
-      this.connection_ = service.getConnection$();
-    } else {
-      this.handle_ = service; // service is-a MessagePipe handle
-      this.connection_ =  new connectionModule.Connection(
-        this.handle_,
-        spInterfaceModule.ServiceProvider.client.stubClass,
-        spInterfaceModule.ServiceProvider.proxyClass);
-    };
-    this.connection_.local.delegate$ = {
-      connectToService: connectToServiceImpl.bind(this)
-    }
-  }
-
-  ServiceProvider.prototype.provideService = function(service, factory) {
-    // TODO(hansmuller): if !factory, remove provider and close its connections.
-    // TODO(hansmuller): if this.connection_ is null, throw an error.
-    var provider = {
-      service: service,
-      factory: factory,
-      connections: [],
-    };
-    this.providers_.set(service.name, provider);
-
-    if (this.pendingRequests_.has(service.name)) {
-      connectToServiceImpl(service.name, pendingRequests_.get(service.name));
-      pendingRequests_.delete(service.name);
+      if (service instanceof spInterfaceModule.ServiceProvider.proxyClass) {
+        this.connection_ = service.getConnection$();
+      } else {
+        this.handle_ = service; // service is-a MessagePipe handle
+        this.connection_ =  new connectionModule.Connection(
+          this.handle_,
+          spInterfaceModule.ServiceProvider.client.stubClass,
+          spInterfaceModule.ServiceProvider.proxyClass);
+      };
+      this.connection_.local.delegate$ = {
+        connectToService: connectToServiceImpl.bind(this)
+      }
     }
 
-    return this;
-  };
+    provideService(service, factory) {
+      // TODO(hansmuller): if !factory, remove provider and close its
+      // connections.
+      // TODO(hansmuller): if this.connection_ is null, throw an error.
+      var provider = {
+        service: service,
+        factory: factory,
+        connections: [],
+      };
+      this.providers_.set(service.name, provider);
 
-  ServiceProvider.prototype.connectToService = function(service, client) {
-    // TODO(hansmuler): if service.name isn't defined, throw an error.
-    // TODO(hansmuller): if this.connection_ is null, throw an error.
-    var serviceConnection = this.connections_.get(service.name);
-    if (serviceConnection)
-      return serviceConnection.remote;
+      if (this.pendingRequests_.has(service.name)) {
+        connectToServiceImpl(service.name, pendingRequests_.get(service.name));
+        pendingRequests_.delete(service.name);
+      }
 
-    var pipe = coreModule.createMessagePipe();
-    this.connection_.remote.connectToService(service.name, pipe.handle1);
-    var clientClass = client && service.client.stubClass;
-    var serviceConnection = new connectionModule.Connection(
+      return this;
+    }
+
+    connectToService(service, client) {
+      // TODO(hansmuler): if service.name isn't defined, throw an error.
+      // TODO(hansmuller): if this.connection_ is null, throw an error.
+      var serviceConnection = this.connections_.get(service.name);
+      if (serviceConnection)
+        return serviceConnection.remote;
+
+      var pipe = coreModule.createMessagePipe();
+      this.connection_.remote.connectToService(service.name, pipe.handle1);
+      var clientClass = client && service.client.stubClass;
+      var serviceConnection = new connectionModule.Connection(
         pipe.handle0, clientClass, service.proxyClass);
-    if (serviceConnection.local)
-      serviceConnection.local.delegate$ = client;
+      if (serviceConnection.local)
+        serviceConnection.local.delegate$ = client;
 
-    this.connections_.set(service.name, serviceConnection);
-    return serviceConnection.remote;
-  };
+      this.connections_.set(service.name, serviceConnection);
+      return serviceConnection.remote;
+    };
 
-  ServiceProvider.prototype.close = function() {
-    if (!this.connection_)
-      return;
+    close() {
+      if (!this.connection_)
+        return;
 
-    try {
-      // Outgoing connections
-      this.connections_.forEach(function(connection, serviceName) {
-        connection.close();
-      });
-      // Incoming connections
-      this.providers_.forEach(function(provider, serviceName) {
-        provider.connections.forEach(function(connection) {
+      try {
+        // Outgoing connections
+        this.connections_.forEach(function(connection, serviceName) {
           connection.close();
         });
-      });
-      this.connection_.close();
-    } finally {
-      this.connections_ = null;
-      this.providers_ = null;
-      this.pendingRequests_ = null;
-      this.connection_ = null;
-      this.handle_ = null;
+        // Incoming connections
+        this.providers_.forEach(function(provider, serviceName) {
+          provider.connections.forEach(function(connection) {
+            connection.close();
+          });
+        });
+        this.connection_.close();
+      } finally {
+        this.connections_ = null;
+        this.providers_ = null;
+        this.pendingRequests_ = null;
+        this.connection_ = null;
+        this.handle_ = null;
+      }
     }
-  };
+  }
 
   var exports = {};
   exports.ServiceProvider = ServiceProvider;
