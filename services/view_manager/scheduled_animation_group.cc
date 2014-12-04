@@ -81,6 +81,7 @@ gfx::Tween::Type AnimationTypeToTweenType(AnimationTweenType type) {
     case ANIMATION_TWEEN_TYPE_EASE_IN_OUT:
       return gfx::Tween::EASE_IN_OUT;
   }
+  return gfx::Tween::LINEAR;
 }
 
 void ConvertToScheduledValue(const AnimationValue& transport_value,
