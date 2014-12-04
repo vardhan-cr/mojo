@@ -41,7 +41,7 @@ MessagePipe* MessagePipe::CreateLocalLocal() {
 // static
 MessagePipe* MessagePipe::CreateLocalProxy(
     scoped_refptr<ChannelEndpoint>* channel_endpoint) {
-  DCHECK(!channel_endpoint->get());  // Not technically wrong, but unlikely.
+  DCHECK(!*channel_endpoint);  // Not technically wrong, but unlikely.
   MessagePipe* message_pipe = new MessagePipe();
   message_pipe->endpoints_[0].reset(new LocalMessagePipeEndpoint());
   *channel_endpoint = new ChannelEndpoint(message_pipe, 1);
@@ -53,7 +53,7 @@ MessagePipe* MessagePipe::CreateLocalProxy(
 // static
 MessagePipe* MessagePipe::CreateProxyLocal(
     scoped_refptr<ChannelEndpoint>* channel_endpoint) {
-  DCHECK(!channel_endpoint->get());  // Not technically wrong, but unlikely.
+  DCHECK(!*channel_endpoint);  // Not technically wrong, but unlikely.
   MessagePipe* message_pipe = new MessagePipe();
   *channel_endpoint = new ChannelEndpoint(message_pipe, 0);
   message_pipe->endpoints_[0].reset(
@@ -74,7 +74,7 @@ bool MessagePipe::Deserialize(Channel* channel,
                               size_t size,
                               scoped_refptr<MessagePipe>* message_pipe,
                               unsigned* port) {
-  DCHECK(!message_pipe->get());  // Not technically wrong, but unlikely.
+  DCHECK(!*message_pipe);  // Not technically wrong, but unlikely.
 
   if (size != sizeof(SerializedMessagePipe)) {
     LOG(ERROR) << "Invalid serialized message pipe";
@@ -84,7 +84,7 @@ bool MessagePipe::Deserialize(Channel* channel,
   const SerializedMessagePipe* s =
       static_cast<const SerializedMessagePipe*>(source);
   *message_pipe = channel->PassIncomingMessagePipe(s->receiver_endpoint_id);
-  if (!message_pipe->get()) {
+  if (!*message_pipe) {
     LOG(ERROR) << "Failed to deserialize message pipe (ID = "
                << s->receiver_endpoint_id << ")";
     return false;

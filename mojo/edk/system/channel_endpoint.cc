@@ -19,7 +19,7 @@ ChannelEndpoint::ChannelEndpoint(ChannelEndpointClient* client,
       client_port_(client_port),
       channel_(nullptr),
       is_detached_from_channel_(false) {
-  DCHECK(client_.get() || message_queue);
+  DCHECK(client_ || message_queue);
 
   if (message_queue)
     channel_message_queue_.Swap(message_queue);
@@ -48,7 +48,7 @@ bool ChannelEndpoint::ReplaceClient(ChannelEndpointClient* client,
   DCHECK(client);
 
   base::AutoLock locker(lock_);
-  DCHECK(client_.get());
+  DCHECK(client_);
   DCHECK(client != client_.get() || client_port != client_port_);
   client_ = client;
   client_port_ = client_port;
@@ -57,7 +57,7 @@ bool ChannelEndpoint::ReplaceClient(ChannelEndpointClient* client,
 
 void ChannelEndpoint::DetachFromClient() {
   base::AutoLock locker(lock_);
-  DCHECK(client_.get());
+  DCHECK(client_);
   client_ = nullptr;
 
   if (!channel_)
@@ -86,7 +86,7 @@ void ChannelEndpoint::AttachAndRun(Channel* channel,
         << "Failed to write enqueue message to channel";
   }
 
-  if (!client_.get()) {
+  if (!client_) {
     channel_->DetachEndpoint(this, local_id_, remote_id_);
     ResetChannelNoLock();
   }
@@ -110,7 +110,7 @@ void ChannelEndpoint::OnReadMessage(scoped_ptr<MessageInTransit> message) {
   for (;;) {
     {
       base::AutoLock locker(lock_);
-      if (!channel_ || !client_.get()) {
+      if (!channel_ || !client_) {
         // This isn't a failure per se. (It just means that, e.g., the other end
         // of the message point closed first.)
         return;
@@ -140,7 +140,7 @@ void ChannelEndpoint::DetachFromChannel() {
   {
     base::AutoLock locker(lock_);
 
-    if (client_.get()) {
+    if (client_) {
       // Take a ref, and call |OnDetachFromChannel()| outside the lock.
       client = client_;
       client_port = client_port_;
@@ -160,12 +160,12 @@ void ChannelEndpoint::DetachFromChannel() {
   // return false to notify the caller that the channel was already detached.
   // (The old client has to accept the arguably-spurious call to
   // |OnDetachFromChannel()|.)
-  if (client.get())
+  if (client)
     client->OnDetachFromChannel(client_port);
 }
 
 ChannelEndpoint::~ChannelEndpoint() {
-  DCHECK(!client_.get());
+  DCHECK(!client_);
   DCHECK(!channel_);
   DCHECK(!local_id_.is_valid());
   DCHECK(!remote_id_.is_valid());

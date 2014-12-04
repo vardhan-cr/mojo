@@ -52,7 +52,7 @@ void ChannelThread::Start(embedder::ScopedPlatformHandle platform_handle,
 }
 
 void ChannelThread::Stop() {
-  if (channel_.get()) {
+  if (channel_) {
     // Hack to flush write buffers before quitting.
     // TODO(vtl): Remove this once |Channel| has a
     // |FlushWriteBufferAndShutdown()| (or whatever).
@@ -86,7 +86,7 @@ void ChannelThread::InitChannelOnIOThread(
 }
 
 void ChannelThread::ShutdownChannelOnIOThread() {
-  CHECK(channel_.get());
+  CHECK(channel_);
   channel_->Shutdown();
   channel_ = nullptr;
 }

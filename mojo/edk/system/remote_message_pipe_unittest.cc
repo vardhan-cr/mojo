@@ -110,11 +110,11 @@ class RemoteMessagePipeTest : public testing::Test {
   void TearDownOnIOThread() {
     CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
 
-    if (channels_[0].get()) {
+    if (channels_[0]) {
       channels_[0]->Shutdown();
       channels_[0] = nullptr;
     }
-    if (channels_[1].get()) {
+    if (channels_[1]) {
       channels_[1]->Shutdown();
       channels_[1] = nullptr;
     }
@@ -123,7 +123,7 @@ class RemoteMessagePipeTest : public testing::Test {
   void CreateAndInitChannel(unsigned channel_index) {
     CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
     CHECK(channel_index == 0 || channel_index == 1);
-    CHECK(!channels_[channel_index].get());
+    CHECK(!channels_[channel_index]);
 
     channels_[channel_index] = new Channel(&platform_support_);
     CHECK(channels_[channel_index]->Init(
@@ -134,9 +134,9 @@ class RemoteMessagePipeTest : public testing::Test {
                                            scoped_refptr<ChannelEndpoint> ep1) {
     CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
 
-    if (!channels_[0].get())
+    if (!channels_[0])
       CreateAndInitChannel(0);
-    if (!channels_[1].get())
+    if (!channels_[1])
       CreateAndInitChannel(1);
 
     channels_[0]->AttachAndRunEndpoint(ep0, true);
@@ -366,7 +366,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   // Warning: The local side of mp3 is port 0, not port 1.
   scoped_refptr<MessagePipe> mp3 =
       channels(1)->PassIncomingMessagePipe(received_id);
-  ASSERT_TRUE(mp3.get());
+  ASSERT_TRUE(mp3);
 
   // Write: MP 2, port 0 -> MP 3, port 1.
 
@@ -658,7 +658,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   EXPECT_STREQ(kHello, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypeMessagePipe, read_dispatchers[0]->GetType());
@@ -832,7 +832,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassingHalfClosed) {
   EXPECT_STREQ(kHello, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypeMessagePipe, read_dispatchers[0]->GetType());
@@ -903,7 +903,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
                                 platform_support(),
                                 SharedBufferDispatcher::kDefaultCreateOptions,
                                 100, &dispatcher));
-  ASSERT_TRUE(dispatcher.get());
+  ASSERT_TRUE(dispatcher);
 
   // Make a mapping.
   scoped_ptr<embedder::PlatformSharedBufferMapping> mapping0;
@@ -966,7 +966,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
   EXPECT_STREQ(kHello, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypeSharedBuffer, read_dispatchers[0]->GetType());
@@ -1085,7 +1085,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
   EXPECT_STREQ(kWorld, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypePlatformHandle, read_dispatchers[0]->GetType());
@@ -1222,7 +1222,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_STREQ(kHello, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypeMessagePipe, read_dispatchers[0]->GetType());
@@ -1279,7 +1279,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_STREQ(kWorld, read_buffer);
   EXPECT_EQ(1u, read_dispatchers.size());
   EXPECT_EQ(1u, read_num_dispatchers);
-  ASSERT_TRUE(read_dispatchers[0].get());
+  ASSERT_TRUE(read_dispatchers[0]);
   EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
 
   EXPECT_EQ(Dispatcher::kTypeMessagePipe, read_dispatchers[0]->GetType());

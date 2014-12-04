@@ -20,7 +20,7 @@ ProxyMessagePipeEndpoint::ProxyMessagePipeEndpoint(
 }
 
 ProxyMessagePipeEndpoint::~ProxyMessagePipeEndpoint() {
-  DCHECK(!channel_endpoint_.get());
+  DCHECK(!channel_endpoint_);
 }
 
 MessagePipeEndpoint::Type ProxyMessagePipeEndpoint::GetType() const {
@@ -37,7 +37,7 @@ bool ProxyMessagePipeEndpoint::OnPeerClose() {
 // This case is handled in |Run()| (which will call us).
 void ProxyMessagePipeEndpoint::EnqueueMessage(
     scoped_ptr<MessageInTransit> message) {
-  DCHECK(channel_endpoint_.get());
+  DCHECK(channel_endpoint_);
   LOG_IF(WARNING, !channel_endpoint_->EnqueueMessage(message.Pass()))
       << "Failed to write enqueue message to channel";
 }
@@ -47,7 +47,7 @@ void ProxyMessagePipeEndpoint::Close() {
 }
 
 void ProxyMessagePipeEndpoint::DetachIfNecessary() {
-  if (channel_endpoint_.get()) {
+  if (channel_endpoint_) {
     channel_endpoint_->DetachFromClient();
     channel_endpoint_ = nullptr;
   }
