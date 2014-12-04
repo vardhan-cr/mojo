@@ -492,9 +492,8 @@ TEST_F(ApplicationManagerTest, Basic) {
 TEST_F(ApplicationManagerTest, NoArgs) {
   ApplicationManager am(&test_delegate_);
   GURL test_url("test:test");
-  TestContext context;
   TestApplicationLoader* loader = new TestApplicationLoader;
-  loader->set_context(&context);
+  loader->set_context(&context_);
   am.SetLoaderForURL(scoped_ptr<ApplicationLoader>(loader), test_url);
   TestServicePtr test_service;
   am.ConnectToService(test_url, &test_service);
@@ -513,9 +512,8 @@ TEST_F(ApplicationManagerTest, Args) {
   args.push_back("test_arg1");
   args.push_back("test_arg2");
   am.SetArgsForURL(args, test_url);
-  TestContext context;
   TestApplicationLoader* loader = new TestApplicationLoader;
-  loader->set_context(&context);
+  loader->set_context(&context_);
   am.SetLoaderForURL(scoped_ptr<ApplicationLoader>(loader), test_url);
   TestServicePtr test_service;
   am.ConnectToService(test_url, &test_service);
