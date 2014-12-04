@@ -18,6 +18,9 @@ component("system") {
   output_name = "mojo_system_impl"
 
   sources = [
+    "awakable.h",
+    "awakable_list.cc",
+    "awakable_list.h",
     "channel.cc",
     "channel.h",
     "channel_endpoint.cc",
@@ -79,9 +82,6 @@ component("system") {
     "transport_data.h",
     "waiter.cc",
     "waiter.h",
-    "awakable.h",
-    "awakable_list.cc",
-    "awakable_list.h",
   ]
 
   defines = [
@@ -123,6 +123,7 @@ source_set("test_utils") {
 test("mojo_system_unittests") {
   sources = [
     "../test/multiprocess_test_helper_unittest.cc",
+    "awakable_list_unittest.cc",
     "channel_endpoint_id_unittest.cc",
     "channel_manager_unittest.cc",
     "channel_unittest.cc",
@@ -145,7 +146,6 @@ test("mojo_system_unittests") {
     "run_all_unittests.cc",
     "shared_buffer_dispatcher_unittest.cc",
     "simple_dispatcher_unittest.cc",
-    "awakable_list_unittest.cc",
     "waiter_test_utils.cc",
     "waiter_test_utils.h",
     "waiter_unittest.cc",
