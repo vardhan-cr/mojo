@@ -1,32 +1,73 @@
 # This file contains a list of Mojo gtest unit tests.
-# Prepend * to indicate that results shouldn't be cached (e.g., if the test has
-# other data dependencies).
-# TODO(vtl): Add a way of specifying data dependencies instead.
+# This must be a valid python dictionary.
+# TODO(vtl): Add a way of specifying data dependencies instead of cacheable.
+[
+  # System tests:
+  {
+    "test": "mojo_system_unittests",
+    "run_on_android": True,
+  },
 
-# System tests:
-mojo_system_unittests
+  # Public tests:
+  {
+    "test": "mojo_public_bindings_unittests",
+    "cacheable": False,
+  },
+  {
+    "test": "mojo_public_environment_unittests",
+  },
+  {
+    "test": "mojo_public_system_unittests",
+  },
+  {
+    "test": "mojo_public_utility_unittests",
+  },
 
-# Public tests:
-*mojo_public_bindings_unittests
-mojo_public_environment_unittests
-mojo_public_system_unittests
-mojo_public_utility_unittests
+  # Non-system, non-public tests:
+  {
+    "test": "clipboard_unittests",
+  },
+  {
+    "test": "mojo_application_manager_unittests",
+  },
+  {
+    "test": "mojo_common_unittests",
+  },
+  {
+    "test": "external_application_unittests",
+  },
+  {
+    # These tests currently crash. We should re-enable them when they pass.
+    "test": "mojo_view_manager_lib_unittests",
+    "disabled": True,
+  },
+  {
+    "test": "mojo_surfaces_lib_unittests",
+  },
+  {
+    "test": "view_manager_service_unittests",
+  },
+  {
+    "test": "window_manager_unittests",
+  },
 
-# Non-system, non-public tests:
-clipboard_unittests
-mojo_application_manager_unittests
-mojo_common_unittests
-external_application_unittests
-# These tests currently crash. We should re-enable them when they pass.
-# mojo_view_manager_lib_unittests
-mojo_surfaces_lib_unittests
-view_manager_service_unittests
-window_manager_unittests
+  # JavaScript tests:
+  {
+    "test": "js_unittests",
+    "cacheable": False,
+  },
+  {
+    "test": "js_integration_tests",
+    "cacheable": False,
+  },
+  {
+    "test": "js_services_unittests",
+    "cacheable": False,
+  },
 
-# JavaScript tests:
-*js_unittests
-*js_integration_tests
-*js_services_unittests
-
-# Shell integration tests:
-*mojo_shell_tests
+  # Shell integration tests:
+  {
+    "test": "mojo_shell_tests",
+    "cacheable": False,
+  },
+]

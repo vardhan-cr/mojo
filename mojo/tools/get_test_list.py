@@ -73,11 +73,8 @@ def GetTestList(config):
     unit_test_command = [os.path.join("mojo", "tools", "test_runner.py")]
     if target_os == Config.OS_ANDROID:
       unit_test_command.append("--android")
-      unittests_file = "android_unittests"
-    else:
-      unittests_file = "unittests"
     unit_test_command.extend(
-        [os.path.join("mojo", "tools", "data", unittests_file), build_dir,
+        [os.path.join("mojo", "tools", "data", "unittests"), build_dir,
         "mojob_test_successes"])
     AddXvfbEntry("Unit tests", unit_test_command)
 

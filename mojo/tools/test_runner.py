@@ -42,8 +42,7 @@ def main():
 
   _logging.debug("Test list file: %s", args.gtest_list_file)
   with open(args.gtest_list_file, 'rb') as f:
-    gtest_list = [y for y in [x.strip() for x in f.readlines()] \
-                      if y and y[0] != '#']
+    gtest_list = eval(f.read())
   _logging.debug("Test list: %s" % gtest_list)
 
   print "Running tests in directory: %s" % args.root_dir
@@ -78,13 +77,16 @@ def main():
   # TODO(vtl): We may not close this file on failure.
   successes_cache_file = open(args.successes_cache_filename, 'ab') \
       if args.successes_cache_filename else None
-  for gtest in gtest_list:
-    if gtest[0] == '*':
-      gtest = gtest[1:]
+  for gtest_dict in gtest_list:
+    if gtest_dict.get("disabled"):
+      continue
+    if args.android and not gtest_dict.get("run_on_android"):
+      continue
+
+    gtest = gtest_dict["test"]
+    cacheable = gtest_dict.get("cacheable", True)
+    if not cacheable:
       _logging.debug("%s is marked as non-cacheable" % gtest)
-      cacheable = False
-    else:
-      cacheable = True
 
     gtest_file = gtest
     if platform.system() == 'Windows':
