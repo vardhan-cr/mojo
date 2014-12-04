@@ -131,6 +131,19 @@ def GetTestList(config):
     AddEntry("Perf tests",
              [os.path.join(build_dir, "mojo_public_system_perftests")])
 
+  # Integration tests ----------------------------------------------------------
+
+  if target_os == Config.OS_ANDROID and ShouldRunTest(
+      Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_INTEGRATION):
+    AddEntry("Integration test (MojoTest)",
+             ["python",
+              os.path.join("build", "android", "test_runner.py"),
+              "instrumentation",
+              "--test-apk=MojoTest",
+              "--output-directory=%s" % build_dir,
+              "--test_data=bindings:mojo/public/interfaces/bindings/tests/data"]
+             )
+
   # Other (non-default) tests --------------------------------------------------
 
   # Dart unit tests:

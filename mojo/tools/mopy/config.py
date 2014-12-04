@@ -31,6 +31,7 @@ class Config(object):
   TEST_TYPE_DEFAULT = "default"
   TEST_TYPE_UNIT = "unit"
   TEST_TYPE_PERF = "perf"
+  TEST_TYPE_INTEGRATION = "integration"
 
   def __init__(self, target_os=None, is_debug=True, is_clang=None,
                sanitizer=None, **kwargs):
