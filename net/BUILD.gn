@@ -251,7 +251,7 @@ component("net") {
     }
     if (is_win) {
       sources -= [
-        "cert/cert/sha256_legacy_support_nss_win.cc",
+        "cert/sha256_legacy_support_nss_win.cc",
       ]
     }
   } else {
@@ -498,6 +498,10 @@ component("net") {
       "SystemConfiguration.framework",
       "resolv",
     ]
+  }
+
+  if (is_ios || is_mac) {
+    sources += gypi_values.net_base_mac_ios_sources
   }
 
   if (is_android) {
@@ -1148,6 +1152,10 @@ test("net_unittests") {
       ":flip_in_mem_edsm_server_base",
       ":quic_base",
     ]
+  }
+
+  if (is_mac || is_ios) {
+    sources += gypi_values.net_base_test_mac_ios_sources
   }
 
   if (is_chromeos) {
