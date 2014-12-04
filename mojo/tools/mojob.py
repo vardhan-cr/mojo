@@ -153,6 +153,9 @@ def _run_tests(config, test_types):
   config = deepcopy(config)
   config.values['test_types'] = test_types
 
+  if _get_gn_arg_value(_get_out_dir(config), 'is_asan') == 'true':
+    config.values["sanitizer"] = Config.SANITIZER_ASAN
+
   test_list = GetTestList(config)
   dry_run = config.values.get('dry_run')
   final_exit_code = 0

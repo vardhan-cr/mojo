@@ -96,9 +96,11 @@ def GetTestList(config):
               "run_mojo_python_tests.py")])
 
   # Python bindings tests (Linux-only):
-  if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT,
-                                                    Config.TEST_TYPE_UNIT,
-                                                    "python"):
+  # See http://crbug.com/438781 for details on asan exclusion.
+  if (target_os == Config.OS_LINUX and
+      ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT,
+                    "python") and
+      config.sanitizer != Config.SANITIZER_ASAN):
     AddEntry("Python bindings tests",
              ["python",
               os.path.join("mojo", "tools",
