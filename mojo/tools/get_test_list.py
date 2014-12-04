@@ -48,6 +48,10 @@ def GetTestList(config):
 
   # Call this to add the given command to the test list.
   def AddEntry(name, command):
+    if config.sanitizer == Config.SANITIZER_ASAN:
+      command = (['python', os.path.join("mojo", "tools",
+                                         "run_command_through_symbolizer.py")] +
+                 command)
     test_list.append({"name": name, "command": command})
 
   # Call this to add the given command to the test list. If appropriate, the
