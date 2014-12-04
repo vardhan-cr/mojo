@@ -6,8 +6,12 @@ module mojo;
 
 [Client=PingPongClient]
 interface PingPongService {
-  // Typicall calls PingPongClient::Pong(ping_value + 1)
+  // Typically calls PingPongClient::Pong(ping_value + 1)
   Ping(uint16 ping_value);
+
+  // Ping the PingPongService at |url| |count| times and return true
+  // after the final Pong() is received.
+  PingTarget(string url, uint16 count) => (bool ok);
 };
 
 interface PingPongClient {

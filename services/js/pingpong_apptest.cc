@@ -46,6 +46,16 @@ class JSPingPongTest : public test::JSApplicationTestBase {
   MOJO_DISALLOW_COPY_AND_ASSIGN(JSPingPongTest);
 };
 
+struct PingTargetCallback {
+  explicit PingTargetCallback(bool *b) : value(b) {}
+  void Run(bool callback_value) const {
+    *value = callback_value;
+  }
+  bool *value;
+};
+
+// Verify that "pingpong.js" implements the PingPongService interface
+// and sends responses to our client.
 TEST_F(JSPingPongTest, PingServiceToPongClient) {
   EXPECT_EQ(0, pingpong_client_.last_pong_value());
   pingpong_service_->Ping(1);
@@ -55,6 +65,17 @@ TEST_F(JSPingPongTest, PingServiceToPongClient) {
   EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
   EXPECT_EQ(101, pingpong_client_.last_pong_value());
   pingpong_service_->Ping(999); // Ask the service to quit.
+}
+
+// Verify that "pingpong.js" can connect to "pingpong-target.js", act as
+// its client, and return a Promise that only resolves after the target.ping()
+// => client.pong() methods have executed 10 times.
+TEST_F(JSPingPongTest, PingTargetApp) {
+  bool returned_value = false;
+  PingTargetCallback callback(&returned_value);
+  pingpong_service_->PingTarget(JSAppURL("pingpong_target.js"), 10, callback);
+  EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(returned_value);
 }
 
 }  // namespace
