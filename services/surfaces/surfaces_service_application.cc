@@ -13,10 +13,7 @@
 namespace mojo {
 
 SurfacesServiceApplication::SurfacesServiceApplication()
-    : tick_interval_(base::TimeDelta::FromMilliseconds(17)),
-      next_id_namespace_(1u),
-      display_(NULL),
-      draw_timer_(false, false) {
+    : next_id_namespace_(1u), display_(nullptr) {
 }
 
 SurfacesServiceApplication::~SurfacesServiceApplication() {
@@ -24,6 +21,7 @@ SurfacesServiceApplication::~SurfacesServiceApplication() {
 
 void SurfacesServiceApplication::Initialize(ApplicationImpl* app) {
   TracingImpl::Create(app);
+  scheduler_.reset(new SurfacesScheduler(this));
 }
 
 bool SurfacesServiceApplication::ConfigureIncomingConnection(
@@ -41,25 +39,25 @@ void SurfacesServiceApplication::Create(
 void SurfacesServiceApplication::OnVSyncParametersUpdated(
     base::TimeTicks timebase,
     base::TimeDelta interval) {
-  tick_interval_ = interval;
+  scheduler_->OnVSyncParametersUpdated(timebase, interval);
 }
 
 void SurfacesServiceApplication::FrameSubmitted() {
-  if (!draw_timer_.IsRunning() && display_) {
-    draw_timer_.Start(FROM_HERE, tick_interval_,
-                      base::Bind(base::IgnoreResult(&cc::Display::Draw),
-                                 base::Unretained(display_)));
-  }
+  scheduler_->SetNeedsDraw();
 }
 
 void SurfacesServiceApplication::SetDisplay(cc::Display* display) {
-  draw_timer_.Stop();
   display_ = display;
 }
 
 void SurfacesServiceApplication::OnDisplayBeingDestroyed(cc::Display* display) {
   if (display_ == display)
     SetDisplay(nullptr);
+}
+
+void SurfacesServiceApplication::Draw() {
+  if (display_)
+    display_->Draw();
 }
 
 }  // namespace mojo

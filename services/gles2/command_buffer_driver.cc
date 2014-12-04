@@ -98,9 +98,11 @@ bool CommandBufferDriver::DoInitialize(ScopedSharedBufferHandle shared_state) {
     surface_ = gfx::GLSurface::CreateOffscreenGLSurface(size_);
   else {
     surface_ = gfx::GLSurface::CreateViewGLSurface(widget_);
-    surface_->GetVSyncProvider()->GetVSyncParameters(
-        base::Bind(&CommandBufferDriver::OnUpdateVSyncParameters,
-                   weak_factory_.GetWeakPtr()));
+    if (auto vsync_provider = surface_->GetVSyncProvider()) {
+      vsync_provider->GetVSyncParameters(
+          base::Bind(&CommandBufferDriver::OnUpdateVSyncParameters,
+                     weak_factory_.GetWeakPtr()));
+    }
   }
 
   if (!surface_.get())

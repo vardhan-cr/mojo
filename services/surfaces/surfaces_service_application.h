@@ -12,13 +12,15 @@
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
 #include "services/surfaces/surfaces_impl.h"
+#include "services/surfaces/surfaces_scheduler.h"
 
 namespace mojo {
 class ApplicationConnection;
 
 class SurfacesServiceApplication : public ApplicationDelegate,
                                    public InterfaceFactory<SurfacesService>,
-                                   public SurfacesImpl::Client {
+                                   public SurfacesImpl::Client,
+                                   public SurfacesScheduler::Client {
  public:
   SurfacesServiceApplication();
   ~SurfacesServiceApplication() override;
@@ -38,13 +40,14 @@ class SurfacesServiceApplication : public ApplicationDelegate,
   void SetDisplay(cc::Display*) override;
   void OnDisplayBeingDestroyed(cc::Display* display) override;
 
+  // SurfacesScheduler::Client
+  void Draw() override;
+
  private:
-  base::TimeDelta tick_interval_;
   cc::SurfaceManager manager_;
   uint32_t next_id_namespace_;
   cc::Display* display_;
-  // TODO(jamesr): Integrate with real scheduler.
-  base::Timer draw_timer_;
+  scoped_ptr<SurfacesScheduler> scheduler_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesServiceApplication);
 };

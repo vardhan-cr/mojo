@@ -9,6 +9,8 @@ mojo_native_application("surfaces") {
   sources = [
     "surfaces_impl.cc",
     "surfaces_impl.h",
+    "surfaces_scheduler.cc",
+    "surfaces_scheduler.h",
     "surfaces_service_application.cc",
     "surfaces_service_application.h",
     "surfaces_service_impl.cc",
