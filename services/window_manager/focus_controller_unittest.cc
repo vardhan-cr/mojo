@@ -968,7 +968,15 @@ class FocusControllerHideTest : public FocusControllerImplicitTestBase {
   DISALLOW_COPY_AND_ASSIGN(FocusControllerHideTest);
 };
 
-// TODO(erg): Add FocusControllerParentHideTest and the rest.
+// Focus and Activation changes in response to window parent visibility
+// changes.
+class FocusControllerParentHideTest : public FocusControllerHideTest {
+ public:
+  FocusControllerParentHideTest() : FocusControllerHideTest(true) {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerParentHideTest);
+};
 
 // TODO(erg): Destroy view tests?
 
@@ -988,14 +996,17 @@ class FocusControllerHideTest : public FocusControllerImplicitTestBase {
 // TODO(erg): Add the destruction and removal tests once we've made View track
 // visibility/destruction of its parents/children.
 
-// TODO(erg): Add IMPLICIT_FOCUS_CHANGE_PARENT_TESTS
+// Runs implicit focus change tests for disposition changes to target's parent
+// hierarchy.
+#define IMPLICIT_FOCUS_CHANGE_PARENT_TESTS(TESTNAME) \
+    FOCUS_CONTROLLER_TEST(FocusControllerParentHideTest, TESTNAME)
+// TODO(erg): Add more IMPLICIT_FOCUS_CHANGE_PARENT_TESTS
 
 // Runs all implicit focus change tests (changes to the target and target's
 // parent hierarchy)
 #define IMPLICIT_FOCUS_CHANGE_TESTS(TESTNAME) \
-    IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME)
-// TODO(erg): Enable
-//    IMPLICIT_FOCUS_CHANGE_PARENT_TESTS(TESTNAME)
+    IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME) \
+    IMPLICIT_FOCUS_CHANGE_PARENT_TESTS(TESTNAME)
 
 // Runs all possible focus change tests.
 #define ALL_FOCUS_TESTS(TESTNAME) \
