@@ -151,7 +151,8 @@ void CreateTestTextureDrawQuad(const gfx::Rect& rect,
                gfx::PointF(1.0f, 1.0f),  // uv_bottom_right
                background_color,
                vertex_opacity,
-               false);  // flipped
+               false,   // flipped
+               false);  // nearest_neighbor
 }
 
 typedef ::testing::Types<GLRenderer,
@@ -1955,7 +1956,8 @@ TYPED_TEST(RendererPixelTest, WrapModeRepeat) {
           this->device_viewport_size_.height() / texture_rect.height()),
       SK_ColorWHITE,
       vertex_opacity,
-      false);  // flipped
+      false,   // flipped
+      false);  // nearest_neighbor
 
   RenderPassList pass_list;
   pass_list.push_back(pass.Pass());

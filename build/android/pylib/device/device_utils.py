@@ -557,13 +557,14 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    package, old_intent = intent.action.rsplit('.', 1)
-    if intent.extras is None:
-      args = []
-    else:
-      args = ['-e %s%s' % (k, ' "%s"' % v if v else '')
-              for k, v in intent.extras.items() if len(k) > 0]
-    self.old_interface.BroadcastIntent(package, old_intent, *args)
+    cmd = ['am', 'broadcast', '-a', intent.action]
+    if intent.extras:
+      for key, value in intent.extras.iteritems():
+        if key:
+          cmd.extend(['-e', key])
+          if value:
+            cmd.append(str(value))
+    self.RunShellCommand(cmd, check_return=True)
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def GoHome(self, timeout=None, retries=None):
@@ -592,7 +593,7 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    self.old_interface.CloseApplication(package)
+    self.RunShellCommand(['am', 'force-stop', package], check_return=True)
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def ClearApplicationState(self, package, timeout=None, retries=None):
@@ -607,7 +608,10 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    self.old_interface.ClearApplicationState(package)
+    # Check that the package exists before clearing it. Necessary because
+    # calling pm clear on a package that doesn't exist may never return.
+    if self.GetApplicationPath(package):
+      self.RunShellCommand(['pm', 'clear', package], check_return=True)
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def SendKeyEvent(self, keycode, timeout=None, retries=None):
@@ -624,7 +628,8 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    self.old_interface.SendKeyEvent(keycode)
+    self.RunShellCommand(['input', 'keyevent', format(keycode, 'd')],
+                         check_return=True)
 
   PUSH_CHANGED_FILES_DEFAULT_TIMEOUT = 10 * _DEFAULT_TIMEOUT
   PUSH_CHANGED_FILES_DEFAULT_RETRIES = _DEFAULT_RETRIES
@@ -938,13 +943,41 @@ class DeviceUtils(object):
       retries: number of retries
 
     Returns:
-      The contents of the directory specified by |device_path|.
+      A list of pairs (filename, stat) for each file found in the directory,
+      where the stat object has the properties: st_mode, st_size, and st_time.
 
     Raises:
+      AdbCommandFailedError if |device_path| does not specify a valid and
+          accessible directory in the device.
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    return self.old_interface.ListPathContents(device_path)
+    return self.adb.Ls(device_path)
+
+  @decorators.WithTimeoutAndRetriesFromInstance()
+  def Stat(self, device_path, timeout=None, retries=None):
+    """Get the stat attributes of a file or directory on the device.
+
+    Args:
+      device_path: A string containing the path of from which to get attributes
+                   on the device.
+      timeout: timeout in seconds
+      retries: number of retries
+
+    Returns:
+      A stat object with the properties: st_mode, st_size, and st_time
+
+    Raises:
+      CommandFailedError if device_path cannot be found on the device.
+      CommandTimeoutError on timeout.
+      DeviceUnreachableError on missing device.
+    """
+    dirname, target = device_path.rsplit('/', 1)
+    for filename, stat in self.adb.Ls(dirname):
+      if filename == target:
+        return stat
+    raise device_errors.CommandFailedError(
+        'Cannot find file or directory: %r' % device_path, str(self))
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def SetJavaAsserts(self, enabled, timeout=None, retries=None):

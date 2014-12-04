@@ -158,17 +158,21 @@ void ChildGLImpl::Draw() {
   TextureDrawQuad* texture_quad =
       pass->CreateAndAppendDrawQuad<TextureDrawQuad>();
   float vertex_opacity[4] = {1.0f, 1.0f, 0.2f, 1.0f};
+  const bool premultiplied_alpha = true;
+  const bool flipped = false;
+  const bool nearest_neighbor = false;
   texture_quad->SetNew(pass->shared_quad_state_list.back(),
                        rect,
                        rect,
                        rect,
                        resource.id,
-                       true,
+                       premultiplied_alpha,
                        gfx::PointF(),
                        gfx::PointF(1.f, 1.f),
                        SK_ColorBLUE,
                        vertex_opacity,
-                       false);
+                       flipped,
+                       nearest_neighbor);
 
   scoped_ptr<DelegatedFrameData> delegated_frame_data(new DelegatedFrameData);
   delegated_frame_data->render_pass_list.push_back(pass.Pass());

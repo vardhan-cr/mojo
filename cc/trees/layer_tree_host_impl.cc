@@ -237,22 +237,16 @@ LayerTreeHostImpl::LayerTreeHostImpl(
   SetDebugState(settings.initial_debug_state);
 
   // LTHI always has an active tree.
-  active_tree_ = LayerTreeImpl::create(this);
+  active_tree_ = LayerTreeImpl::create(this, new SyncedProperty<ScaleGroup>());
+
   TRACE_EVENT_OBJECT_CREATED_WITH_ID(
       TRACE_DISABLED_BY_DEFAULT("cc.debug"), "cc::LayerTreeHostImpl", id_);
 
   if (settings.calculate_top_controls_position) {
     top_controls_manager_ =
         TopControlsManager::Create(this,
-                                   settings.top_controls_height,
                                    settings.top_controls_show_threshold,
                                    settings.top_controls_hide_threshold);
-
-    // TODO(bokan): This is a quick fix. The browser should lock the top
-    // controls to shown on creation but this appears not to work. Tracked
-    // in crbug.com/417680.
-    // Initialize with top controls showing.
-    SetControlsTopOffset(0.f);
   }
 }
 
@@ -417,12 +411,10 @@ void LayerTreeHostImpl::StartPageScaleAnimation(
       CubicBezierTimingFunction::Create(.8, 0, .3, .9);
 
   // TODO(miletus) : Pass in ScrollOffset.
-  page_scale_animation_ =
-      PageScaleAnimation::Create(ScrollOffsetToVector2dF(scroll_total),
-                                 active_tree_->total_page_scale_factor(),
-                                 viewport_size,
-                                 scaled_scrollable_size,
-                                 timing_function.Pass());
+  page_scale_animation_ = PageScaleAnimation::Create(
+      ScrollOffsetToVector2dF(scroll_total),
+      active_tree_->current_page_scale_factor(), viewport_size,
+      scaled_scrollable_size, timing_function.Pass());
 
   if (anchor_point) {
     gfx::Vector2dF anchor(target_offset);
@@ -675,6 +667,7 @@ static void AppendQuadsToFillScreen(
                 overhang_resource_scaled_size.height()),
         screen_background_color,
         vertex_opacity,
+        false,
         false);
   }
 }
@@ -1108,7 +1101,8 @@ void LayerTreeHostImpl::BlockNotifyReadyToActivateForTesting(bool block) {
 void LayerTreeHostImpl::ResetTreesForTesting() {
   if (active_tree_)
     active_tree_->DetachLayerTree();
-  active_tree_ = LayerTreeImpl::create(this);
+  active_tree_ =
+      LayerTreeImpl::create(this, active_tree()->page_scale_factor());
   if (pending_tree_)
     pending_tree_->DetachLayerTree();
   pending_tree_ = nullptr;
@@ -1432,7 +1426,7 @@ void LayerTreeHostImpl::OnCanDrawStateChangedForTree() {
 CompositorFrameMetadata LayerTreeHostImpl::MakeCompositorFrameMetadata() const {
   CompositorFrameMetadata metadata;
   metadata.device_scale_factor = device_scale_factor_;
-  metadata.page_scale_factor = active_tree_->total_page_scale_factor();
+  metadata.page_scale_factor = active_tree_->current_page_scale_factor();
   metadata.scrollable_viewport_size = active_tree_->ScrollableViewportSize();
   metadata.root_layer_size = active_tree_->ScrollableSize();
   metadata.min_page_scale_factor = active_tree_->min_page_scale_factor();
@@ -1661,9 +1655,13 @@ void LayerTreeHostImpl::UpdateViewportContainerSizes() {
 
   // Adjust the inner viewport by shrinking/expanding the container to account
   // for the change in top controls height since the last Resize from Blink.
+  float top_controls_layout_height =
+      active_tree_->top_controls_shrink_blink_size()
+          ? active_tree_->top_controls_height()
+          : 0.f;
   inner_container->SetBoundsDelta(
-      gfx::Vector2dF(0, active_tree_->top_controls_layout_height() -
-          active_tree_->total_top_controls_content_offset()));
+      gfx::Vector2dF(0, top_controls_layout_height -
+                            active_tree_->total_top_controls_content_offset()));
 
   if (!outer_container || outer_container->BoundsForScrolling().IsEmpty())
     return;
@@ -1684,15 +1682,6 @@ void LayerTreeHostImpl::UpdateViewportContainerSizes() {
   active_tree_->InnerViewportScrollLayer()->SetBoundsDelta(delta);
 
   anchor.ResetViewportToAnchoredPosition();
-}
-
-void LayerTreeHostImpl::SetTopControlsLayoutHeight(float height) {
-  if (active_tree_->top_controls_layout_height() == height)
-    return;
-
-  active_tree_->set_top_controls_layout_height(height);
-  UpdateViewportContainerSizes();
-  SetFullRootLayerDamage();
 }
 
 void LayerTreeHostImpl::SynchronouslyInitializeAllTiles() {
@@ -1758,17 +1747,16 @@ void LayerTreeHostImpl::CreatePendingTree() {
   if (recycle_tree_)
     recycle_tree_.swap(pending_tree_);
   else
-    pending_tree_ = LayerTreeImpl::create(this);
+    pending_tree_ =
+        LayerTreeImpl::create(this, active_tree()->page_scale_factor());
 
   // Update the delta from the active tree, which may have
   // adjusted its delta prior to the pending tree being created.
-  DCHECK_EQ(1.f, pending_tree_->sent_page_scale_delta());
   DCHECK_EQ(0.f, pending_tree_->sent_top_controls_delta());
-  pending_tree_->SetPageScaleDelta(active_tree_->page_scale_delta() /
-                                   active_tree_->sent_page_scale_delta());
   pending_tree_->set_top_controls_delta(
       active_tree_->top_controls_delta() -
       active_tree_->sent_top_controls_delta());
+  pending_tree_->set_top_controls_height(active_tree_->top_controls_height());
 
   client_->OnCanDrawStateChanged(CanDraw());
   TRACE_EVENT_ASYNC_BEGIN0("cc", "PendingTree:waiting", pending_tree_.get());
@@ -1805,9 +1793,11 @@ void LayerTreeHostImpl::ActivateSyncTree() {
         root_layer_scroll_offset_delegate_);
 
     if (top_controls_manager_) {
+      top_controls_manager_->SetTopControlsHeight(
+          active_tree_->top_controls_height());
       top_controls_manager_->SetControlsTopOffset(
           active_tree_->total_top_controls_content_offset() -
-          top_controls_manager_->top_controls_height());
+          active_tree_->top_controls_height());
     }
 
     UpdateViewportContainerSizes();
@@ -2232,6 +2222,10 @@ void LayerTreeHostImpl::SetDeviceScaleFactor(float device_scale_factor) {
   SetFullRootLayerDamage();
 }
 
+void LayerTreeHostImpl::SetPageScaleOnActiveTree(float page_scale_factor) {
+  active_tree_->SetPageScaleOnActiveTree(page_scale_factor);
+}
+
 const gfx::Rect LayerTreeHostImpl::ViewportRectForTilePriority() const {
   if (viewport_rect_for_tile_priority_.IsEmpty())
     return DeviceViewport();
@@ -2271,13 +2265,13 @@ void LayerTreeHostImpl::DidChangeTopControlsPosition() {
 
 void LayerTreeHostImpl::SetControlsTopOffset(float offset) {
   float current_top_offset = active_tree_->top_controls_content_offset() -
-      top_controls_manager_->top_controls_height();
+                             active_tree_->top_controls_height();
   active_tree_->set_top_controls_delta(offset - current_top_offset);
 }
 
 float LayerTreeHostImpl::ControlsTopOffset() const {
   return active_tree_->total_top_controls_content_offset() -
-      top_controls_manager_->top_controls_height();
+         active_tree_->top_controls_height();
 }
 
 void LayerTreeHostImpl::BindToClient(InputHandlerClient* client) {
@@ -2647,7 +2641,7 @@ InputHandlerScrollResult LayerTreeHostImpl::ScrollBy(
                                             viewport_point, pending_delta);
     } else {
       applied_delta = ScrollLayerWithLocalDelta(
-          layer_impl, pending_delta, active_tree_->total_page_scale_factor());
+          layer_impl, pending_delta, active_tree_->current_page_scale_factor());
     }
 
     const float kEpsilon = 0.1f;
@@ -2951,18 +2945,15 @@ void LayerTreeHostImpl::PinchGestureUpdate(float magnify_delta,
 
   // Keep the center-of-pinch anchor specified by (x, y) in a stable
   // position over the course of the magnify.
-  float page_scale_delta = active_tree_->page_scale_delta();
-  gfx::PointF previous_scale_anchor =
-      gfx::ScalePoint(anchor, 1.f / page_scale_delta);
-  active_tree_->SetPageScaleDelta(page_scale_delta * magnify_delta);
-  page_scale_delta = active_tree_->page_scale_delta();
-  gfx::PointF new_scale_anchor =
-      gfx::ScalePoint(anchor, 1.f / page_scale_delta);
+  float page_scale = active_tree_->current_page_scale_factor();
+  gfx::PointF previous_scale_anchor = gfx::ScalePoint(anchor, 1.f / page_scale);
+  active_tree_->SetPageScaleOnActiveTree(page_scale * magnify_delta);
+  page_scale = active_tree_->current_page_scale_factor();
+  gfx::PointF new_scale_anchor = gfx::ScalePoint(anchor, 1.f / page_scale);
   gfx::Vector2dF move = previous_scale_anchor - new_scale_anchor;
 
   previous_pinch_anchor_ = anchor;
 
-  move.Scale(1 / active_tree_->page_scale_factor());
   // If clamping the inner viewport scroll offset causes a change, it should
   // be accounted for from the intended move.
   move -= InnerViewportScrollLayer()->ClampScrollToMaxScrollOffset();
@@ -3029,8 +3020,8 @@ scoped_ptr<ScrollAndScaleSet> LayerTreeHostImpl::ProcessScrollDeltas() {
   scoped_ptr<ScrollAndScaleSet> scroll_info(new ScrollAndScaleSet());
 
   CollectScrollDeltas(scroll_info.get(), active_tree_->root_layer());
-  scroll_info->page_scale_delta = active_tree_->page_scale_delta();
-  active_tree_->set_sent_page_scale_delta(scroll_info->page_scale_delta);
+  scroll_info->page_scale_delta =
+      active_tree_->page_scale_factor()->PullDeltaForMainThread();
   scroll_info->swap_promises.swap(swap_promises_for_main_thread_scroll_update_);
   scroll_info->top_controls_delta = active_tree()->top_controls_delta();
   active_tree_->set_sent_top_controls_delta(scroll_info->top_controls_delta);
@@ -3072,9 +3063,8 @@ void LayerTreeHostImpl::AnimatePageScale(base::TimeTicks monotonic_time) {
   if (!page_scale_animation_->IsAnimationStarted())
     page_scale_animation_->StartAnimation(monotonic_time);
 
-  active_tree_->SetPageScaleDelta(
-      page_scale_animation_->PageScaleFactorAtTime(monotonic_time) /
-      active_tree_->page_scale_factor());
+  active_tree_->SetPageScaleOnActiveTree(
+      page_scale_animation_->PageScaleFactorAtTime(monotonic_time));
   gfx::ScrollOffset next_scroll = gfx::ScrollOffset(
       page_scale_animation_->ScrollOffsetAtTime(monotonic_time));
 
@@ -3106,7 +3096,7 @@ void LayerTreeHostImpl::AnimateTopControls(base::TimeTicks time) {
     return;
 
   ScrollViewportBy(gfx::ScaleVector2d(
-      scroll, 1.f / active_tree_->total_page_scale_factor()));
+      scroll, 1.f / active_tree_->current_page_scale_factor()));
   SetNeedsRedraw();
   client_->SetNeedsCommitOnImplThread();
   client_->RenewTreePriority();

@@ -18,6 +18,7 @@
 #include "cc/animation/animation_registrar.h"
 #include "cc/animation/scrollbar_animation_controller.h"
 #include "cc/base/cc_export.h"
+#include "cc/base/synced_property.h"
 #include "cc/debug/micro_benchmark_controller_impl.h"
 #include "cc/input/input_handler.h"
 #include "cc/input/layer_scroll_offset_delegate.h"
@@ -359,6 +360,8 @@ class CC_EXPORT LayerTreeHostImpl
   void SetDeviceScaleFactor(float device_scale_factor);
   float device_scale_factor() const { return device_scale_factor_; }
 
+  void SetPageScaleOnActiveTree(float page_scale_factor);
+
   const gfx::Transform& DrawTransform() const;
 
   scoped_ptr<ScrollAndScaleSet> ProcessScrollDeltas();
@@ -488,8 +491,6 @@ class CC_EXPORT LayerTreeHostImpl
 
   void GetPictureLayerImplPairs(std::vector<PictureLayerImpl::Pair>* layers,
                                 bool need_valid_tile_priorities) const;
-
-  void SetTopControlsLayoutHeight(float height);
 
   void SetRequiresHighResToDraw() { requires_high_res_to_draw_ = true; }
   void ResetRequiresHighResToDraw() { requires_high_res_to_draw_ = false; }
