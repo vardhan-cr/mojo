@@ -764,9 +764,6 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     }
   }
 
-
-  // TODO(erg): There are a whole bunch other tests here. Port them.
-
  private:
   DISALLOW_COPY_AND_ASSIGN(FocusControllerDirectTestBase);
 };
@@ -978,7 +975,63 @@ class FocusControllerParentHideTest : public FocusControllerHideTest {
   DISALLOW_COPY_AND_ASSIGN(FocusControllerParentHideTest);
 };
 
-// TODO(erg): Destroy view tests?
+// Focus and Activation changes in response to window destruction.
+class FocusControllerDestructionTest : public FocusControllerImplicitTestBase {
+ public:
+  FocusControllerDestructionTest() : FocusControllerImplicitTestBase(false) {}
+
+ protected:
+  FocusControllerDestructionTest(bool parent)
+      : FocusControllerImplicitTestBase(parent) {}
+
+  // Overridden from FocusControllerImplicitTestBase:
+  void ChangeViewDisposition(View* view) override {
+    GetDispositionView(view)->Destroy();
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerDestructionTest);
+};
+
+// Focus and Activation changes in response to window removal.
+class FocusControllerRemovalTest : public FocusControllerImplicitTestBase {
+ public:
+  FocusControllerRemovalTest()
+      : FocusControllerImplicitTestBase(false),
+        window_to_destroy_(nullptr) {}
+
+ protected:
+  FocusControllerRemovalTest(bool parent)
+      : FocusControllerImplicitTestBase(parent),
+        window_to_destroy_(nullptr) {}
+
+  // Overridden from FocusControllerImplicitTestBase:
+  void ChangeViewDisposition(View* view) override {
+    View* disposition_view = GetDispositionView(view);
+    disposition_view->parent()->RemoveChild(disposition_view);
+    window_to_destroy_ = disposition_view;
+  }
+  virtual void TearDown() override {
+    if (window_to_destroy_)
+      window_to_destroy_->Destroy();
+
+    FocusControllerImplicitTestBase::TearDown();
+  }
+
+ private:
+  View* window_to_destroy_;
+
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerRemovalTest);
+};
+
+// Focus and Activation changes in response to window parent removal.
+class FocusControllerParentRemovalTest : public FocusControllerRemovalTest {
+ public:
+  FocusControllerParentRemovalTest() : FocusControllerRemovalTest(true) {}
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(FocusControllerParentRemovalTest);
+};
 
 #define FOCUS_CONTROLLER_TEST(TESTCLASS, TESTNAME) \
   TEST_F(TESTCLASS, TESTNAME) { TESTNAME(); }
@@ -992,15 +1045,17 @@ class FocusControllerParentHideTest : public FocusControllerHideTest {
 
 // Runs implicit focus change tests for disposition changes to target.
 #define IMPLICIT_FOCUS_CHANGE_TARGET_TESTS(TESTNAME) \
-    FOCUS_CONTROLLER_TEST(FocusControllerHideTest, TESTNAME)
-// TODO(erg): Add the destruction and removal tests once we've made View track
-// visibility/destruction of its parents/children.
+    FOCUS_CONTROLLER_TEST(FocusControllerHideTest, TESTNAME) \
+    FOCUS_CONTROLLER_TEST(FocusControllerDestructionTest, TESTNAME) \
+    FOCUS_CONTROLLER_TEST(FocusControllerRemovalTest, TESTNAME)
 
 // Runs implicit focus change tests for disposition changes to target's parent
 // hierarchy.
 #define IMPLICIT_FOCUS_CHANGE_PARENT_TESTS(TESTNAME) \
-    FOCUS_CONTROLLER_TEST(FocusControllerParentHideTest, TESTNAME)
-// TODO(erg): Add more IMPLICIT_FOCUS_CHANGE_PARENT_TESTS
+    FOCUS_CONTROLLER_TEST(FocusControllerParentHideTest, TESTNAME) \
+    FOCUS_CONTROLLER_TEST(FocusControllerParentRemovalTest, TESTNAME)
+// TODO(erg): FocusControllerParentDestructionTest were commented out in the
+// aura version of this file, and don't work when I tried porting things over.
 
 // Runs all implicit focus change tests (changes to the target and target's
 // parent hierarchy)
