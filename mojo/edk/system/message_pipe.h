@@ -28,9 +28,9 @@
 namespace mojo {
 namespace system {
 
+class Awakable;
 class Channel;
 class ChannelEndpoint;
-class Waiter;
 
 // |MessagePipe| is the secondary object implementing a message pipe (see the
 // explanatory comment in core.cc). It is typically owned by the dispatcher(s)
@@ -72,7 +72,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
 
   // These are called by the dispatcher to implement its methods of
   // corresponding names. In all cases, the port |port| must be open.
-  void CancelAllWaiters(unsigned port);
+  void CancelAllAwakables(unsigned port);
   void Close(unsigned port);
   // Unlike |MessagePipeDispatcher::WriteMessage()|, this does not validate its
   // arguments.
@@ -88,14 +88,14 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
                          uint32_t* num_dispatchers,
                          MojoReadMessageFlags flags);
   HandleSignalsState GetHandleSignalsState(unsigned port) const;
-  MojoResult AddWaiter(unsigned port,
-                       Waiter* waiter,
-                       MojoHandleSignals signals,
-                       uint32_t context,
-                       HandleSignalsState* signals_state);
-  void RemoveWaiter(unsigned port,
-                    Waiter* waiter,
-                    HandleSignalsState* signals_state);
+  MojoResult AddAwakable(unsigned port,
+                         Awakable* awakable,
+                         MojoHandleSignals signals,
+                         uint32_t context,
+                         HandleSignalsState* signals_state);
+  void RemoveAwakable(unsigned port,
+                      Awakable* awakable,
+                      HandleSignalsState* signals_state);
   void StartSerialize(unsigned port,
                       Channel* channel,
                       size_t* max_size,

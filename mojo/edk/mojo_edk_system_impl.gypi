@@ -41,6 +41,9 @@
     'embedder/simple_platform_shared_buffer_win.cc',
     'embedder/simple_platform_support.cc',
     'embedder/simple_platform_support.h',
+    'system/awakable.h',
+    'system/awakable_list.cc',
+    'system/awakable_list.h',
     'system/channel.cc',
     'system/channel.h',
     'system/channel_endpoint.cc',
@@ -102,8 +105,6 @@
     'system/transport_data.h',
     'system/waiter.cc',
     'system/waiter.h',
-    'system/waiter_list.cc',
-    'system/waiter_list.h',
     # Test-only code:
     # TODO(vtl): It's a little unfortunate that these end up in the same
     # component as non-test-only code. In the static build, this code

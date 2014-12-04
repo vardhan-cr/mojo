@@ -104,12 +104,12 @@ MessagePipeEndpoint::Type MessagePipe::GetType(unsigned port) {
   return endpoints_[port]->GetType();
 }
 
-void MessagePipe::CancelAllWaiters(unsigned port) {
+void MessagePipe::CancelAllAwakables(unsigned port) {
   DCHECK(port == 0 || port == 1);
 
   base::AutoLock locker(lock_);
   DCHECK(endpoints_[port]);
-  endpoints_[port]->CancelAllWaiters();
+  endpoints_[port]->CancelAllAwakables();
 }
 
 void MessagePipe::Close(unsigned port) {
@@ -173,28 +173,29 @@ HandleSignalsState MessagePipe::GetHandleSignalsState(unsigned port) const {
   return endpoints_[port]->GetHandleSignalsState();
 }
 
-MojoResult MessagePipe::AddWaiter(unsigned port,
-                                  Waiter* waiter,
-                                  MojoHandleSignals signals,
-                                  uint32_t context,
-                                  HandleSignalsState* signals_state) {
+MojoResult MessagePipe::AddAwakable(unsigned port,
+                                    Awakable* awakable,
+                                    MojoHandleSignals signals,
+                                    uint32_t context,
+                                    HandleSignalsState* signals_state) {
   DCHECK(port == 0 || port == 1);
 
   base::AutoLock locker(lock_);
   DCHECK(endpoints_[port]);
 
-  return endpoints_[port]->AddWaiter(waiter, signals, context, signals_state);
+  return endpoints_[port]->AddAwakable(awakable, signals, context,
+                                       signals_state);
 }
 
-void MessagePipe::RemoveWaiter(unsigned port,
-                               Waiter* waiter,
-                               HandleSignalsState* signals_state) {
+void MessagePipe::RemoveAwakable(unsigned port,
+                                 Awakable* awakable,
+                                 HandleSignalsState* signals_state) {
   DCHECK(port == 0 || port == 1);
 
   base::AutoLock locker(lock_);
   DCHECK(endpoints_[port]);
 
-  endpoints_[port]->RemoveWaiter(waiter, signals_state);
+  endpoints_[port]->RemoveAwakable(awakable, signals_state);
 }
 
 void MessagePipe::StartSerialize(unsigned /*port*/,

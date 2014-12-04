@@ -116,9 +116,9 @@ unsigned MessagePipeDispatcher::GetPortNoLock() const {
   return port_;
 }
 
-void MessagePipeDispatcher::CancelAllWaitersNoLock() {
+void MessagePipeDispatcher::CancelAllAwakablesNoLock() {
   lock().AssertAcquired();
-  message_pipe_->CancelAllWaiters(port_);
+  message_pipe_->CancelAllAwakables(port_);
 }
 
 void MessagePipeDispatcher::CloseImplNoLock() {
@@ -178,21 +178,21 @@ HandleSignalsState MessagePipeDispatcher::GetHandleSignalsStateImplNoLock()
   return message_pipe_->GetHandleSignalsState(port_);
 }
 
-MojoResult MessagePipeDispatcher::AddWaiterImplNoLock(
-    Waiter* waiter,
+MojoResult MessagePipeDispatcher::AddAwakableImplNoLock(
+    Awakable* awakable,
     MojoHandleSignals signals,
     uint32_t context,
     HandleSignalsState* signals_state) {
   lock().AssertAcquired();
-  return message_pipe_->AddWaiter(port_, waiter, signals, context,
-                                  signals_state);
+  return message_pipe_->AddAwakable(port_, awakable, signals, context,
+                                    signals_state);
 }
 
-void MessagePipeDispatcher::RemoveWaiterImplNoLock(
-    Waiter* waiter,
+void MessagePipeDispatcher::RemoveAwakableImplNoLock(
+    Awakable* awakable,
     HandleSignalsState* signals_state) {
   lock().AssertAcquired();
-  message_pipe_->RemoveWaiter(port_, waiter, signals_state);
+  message_pipe_->RemoveAwakable(port_, awakable, signals_state);
 }
 
 void MessagePipeDispatcher::StartSerializeImplNoLock(

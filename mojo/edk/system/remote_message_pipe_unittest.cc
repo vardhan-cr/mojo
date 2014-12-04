@@ -193,7 +193,7 @@ TEST_F(RemoteMessagePipeTest, Basic) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   EXPECT_EQ(
@@ -205,7 +205,7 @@ TEST_F(RemoteMessagePipeTest, Basic) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -223,7 +223,7 @@ TEST_F(RemoteMessagePipeTest, Basic) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp0->AddWaiter(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, nullptr));
+      mp0->AddAwakable(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, nullptr));
 
   EXPECT_EQ(
       MOJO_RESULT_OK,
@@ -233,7 +233,7 @@ TEST_F(RemoteMessagePipeTest, Basic) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(456u, context);
   hss = HandleSignalsState();
-  mp0->RemoveWaiter(0, &waiter, &hss);
+  mp0->RemoveAwakable(0, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -255,13 +255,13 @@ TEST_F(RemoteMessagePipeTest, Basic) {
   waiter.Init();
   hss = HandleSignalsState();
   MojoResult result =
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789, &hss);
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789, &hss);
   if (result == MOJO_RESULT_OK) {
     EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
               waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
     EXPECT_EQ(789u, context);
     hss = HandleSignalsState();
-    mp1->RemoveWaiter(1, &waiter, &hss);
+    mp1->RemoveAwakable(1, &waiter, &hss);
   }
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
@@ -292,12 +292,12 @@ TEST_F(RemoteMessagePipeTest, PeerClosed) {
   waiter.Init();
   hss = HandleSignalsState();
   MojoResult result =
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_PEER_CLOSED, 101, &hss);
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_PEER_CLOSED, 101, &hss);
   if (result == MOJO_RESULT_OK) {
     EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
     EXPECT_EQ(101u, context);
     hss = HandleSignalsState();
-    mp1->RemoveWaiter(1, &waiter, &hss);
+    mp1->RemoveAwakable(1, &waiter, &hss);
   }
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
@@ -339,7 +339,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   EXPECT_EQ(MOJO_RESULT_OK,
             mp0->WriteMessage(0, UserPointer<const void>(&remote_id),
@@ -349,7 +349,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -373,7 +373,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp3->AddWaiter(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789, nullptr));
+      mp3->AddAwakable(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789, nullptr));
 
   EXPECT_EQ(
       MOJO_RESULT_OK,
@@ -383,7 +383,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(789u, context);
   hss = HandleSignalsState();
-  mp3->RemoveWaiter(0, &waiter, &hss);
+  mp3->RemoveAwakable(0, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -419,7 +419,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   EXPECT_EQ(
       MOJO_RESULT_OK,
@@ -429,7 +429,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
@@ -500,7 +500,7 @@ TEST_F(RemoteMessagePipeTest, CloseBeforeAttachAndRun) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   BootstrapChannelEndpointNoWait(1, ep1);
 
@@ -512,7 +512,7 @@ TEST_F(RemoteMessagePipeTest, CloseBeforeAttachAndRun) {
   // not appear as writable (there's a race, and it may not have noticed that
   // the other side was closed yet -- e.g., inserting a sleep here would make it
   // much more likely to notice that it's no longer writable).
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_TRUE((hss.satisfied_signals & MOJO_HANDLE_SIGNAL_READABLE));
   EXPECT_TRUE((hss.satisfiable_signals & MOJO_HANDLE_SIGNAL_READABLE));
 
@@ -562,7 +562,7 @@ TEST_F(RemoteMessagePipeTest, CloseBeforeConnect) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   BootstrapChannelEndpointNoWait(1, ep1);
 
@@ -574,7 +574,7 @@ TEST_F(RemoteMessagePipeTest, CloseBeforeConnect) {
   // not appear as writable (there's a race, and it may not have noticed that
   // the other side was closed yet -- e.g., inserting a sleep here would make it
   // much more likely to notice that it's no longer writable).
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_TRUE((hss.satisfied_signals & MOJO_HANDLE_SIGNAL_READABLE));
   EXPECT_TRUE((hss.satisfiable_signals & MOJO_HANDLE_SIGNAL_READABLE));
 
@@ -613,7 +613,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   {
@@ -639,7 +639,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -667,8 +667,8 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   // Add the waiter now, before it becomes readable to avoid a race.
   waiter.Init();
   ASSERT_EQ(MOJO_RESULT_OK,
-            dispatcher->AddWaiter(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 456,
-                                  nullptr));
+            dispatcher->AddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 456,
+                                    nullptr));
 
   // Write to "local_mp", port 1.
   EXPECT_EQ(
@@ -683,7 +683,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(456u, context);
   hss = HandleSignalsState();
-  dispatcher->RemoveWaiter(&waiter, &hss);
+  dispatcher->RemoveAwakable(&waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -701,8 +701,8 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   // Prepare to wait on "local_mp", port 1.
   waiter.Init();
   ASSERT_EQ(MOJO_RESULT_OK,
-            local_mp->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
-                                nullptr));
+            local_mp->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
+                                  nullptr));
 
   // Write to the dispatcher.
   EXPECT_EQ(MOJO_RESULT_OK, dispatcher->WriteMessage(
@@ -713,7 +713,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(789u, context);
   hss = HandleSignalsState();
-  local_mp->RemoveWaiter(1, &waiter, &hss);
+  local_mp->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -787,7 +787,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassingHalfClosed) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   {
@@ -813,7 +813,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassingHalfClosed) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -921,7 +921,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   {
@@ -947,7 +947,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -1040,7 +1040,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   {
@@ -1066,7 +1066,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -1177,7 +1177,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp1->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+      mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   // Write to MP 0, port 0.
   {
@@ -1203,7 +1203,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
-  mp1->RemoveWaiter(1, &waiter, &hss);
+  mp1->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -1236,7 +1236,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   waiter.Init();
   ASSERT_EQ(
       MOJO_RESULT_OK,
-      mp0->AddWaiter(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, nullptr));
+      mp0->AddAwakable(0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, nullptr));
 
   // Write to MP 1, port 1.
   {
@@ -1262,7 +1262,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(456u, context);
   hss = HandleSignalsState();
-  mp0->RemoveWaiter(0, &waiter, &hss);
+  mp0->RemoveAwakable(0, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -1289,8 +1289,8 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   // Add the waiter now, before it becomes readable to avoid a race.
   waiter.Init();
   ASSERT_EQ(MOJO_RESULT_OK,
-            dispatcher->AddWaiter(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
-                                  nullptr));
+            dispatcher->AddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
+                                    nullptr));
 
   // Write to "local_mp", port 1.
   EXPECT_EQ(
@@ -1302,7 +1302,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(789u, context);
   hss = HandleSignalsState();
-  dispatcher->RemoveWaiter(&waiter, &hss);
+  dispatcher->RemoveAwakable(&waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
@@ -1320,8 +1320,8 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   // Prepare to wait on "local_mp", port 1.
   waiter.Init();
   ASSERT_EQ(MOJO_RESULT_OK,
-            local_mp->AddWaiter(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
-                                nullptr));
+            local_mp->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 789,
+                                  nullptr));
 
   // Write to the dispatcher.
   EXPECT_EQ(MOJO_RESULT_OK, dispatcher->WriteMessage(
@@ -1332,7 +1332,7 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(789u, context);
   hss = HandleSignalsState();
-  local_mp->RemoveWaiter(1, &waiter, &hss);
+  local_mp->RemoveAwakable(1, &waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);

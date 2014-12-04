@@ -47,10 +47,11 @@ namespace system {
 // |Dispatcher|s for the handles that it wants to wait on with a |Waiter|
 // object; this |Waiter| object may be created on the stack of that thread or be
 // kept in thread local storage for that thread (TODO(vtl): future improvement).
-// The |Dispatcher| then adds the |Waiter| to a |WaiterList| that's either owned
-// by that |Dispatcher| (see |SimpleDispatcher|) or by a secondary object (e.g.,
-// |MessagePipe|). To signal/wake a |Waiter|, the object in question -- either a
-// |SimpleDispatcher| or a secondary object -- talks to its |WaiterList|.
+// The |Dispatcher| then adds the |Waiter| to an |AwakableList| that's either
+// owned by that |Dispatcher| (see |SimpleDispatcher|) or by a secondary object
+// (e.g., |MessagePipe|). To signal/wake a |Waiter|, the object in question --
+// either a |SimpleDispatcher| or a secondary object -- talks to its
+// |AwakableList|.
 
 // Thread-safety notes
 //
@@ -532,7 +533,7 @@ MojoResult Core::UnmapBuffer(UserPointer<void> buffer) {
 
 // Note: We allow |handles| to repeat the same handle multiple times, since
 // different flags may be specified.
-// TODO(vtl): This incurs a performance cost in |RemoveWaiter()|. Analyze this
+// TODO(vtl): This incurs a performance cost in |Remove()|. Analyze this
 // more carefully and address it if necessary.
 MojoResult Core::WaitManyInternal(const MojoHandle* handles,
                                   const MojoHandleSignals* signals,
@@ -561,7 +562,7 @@ MojoResult Core::WaitManyInternal(const MojoHandle* handles,
   uint32_t i;
   MojoResult rv = MOJO_RESULT_OK;
   for (i = 0; i < num_handles; i++) {
-    rv = dispatchers[i]->AddWaiter(
+    rv = dispatchers[i]->AddAwakable(
         &waiter, signals[i], i, signals_states ? &signals_states[i] : nullptr);
     if (rv != MOJO_RESULT_OK) {
       *result_index = i;
@@ -579,8 +580,8 @@ MojoResult Core::WaitManyInternal(const MojoHandle* handles,
   // |Wait()|/|WaitMany()| call. (Only after doing this can |waiter| be
   // destroyed, but this would still be required if the waiter were in TLS.)
   for (i = 0; i < num_added; i++) {
-    dispatchers[i]->RemoveWaiter(&waiter,
-                                 signals_states ? &signals_states[i] : nullptr);
+    dispatchers[i]->RemoveAwakable(
+        &waiter, signals_states ? &signals_states[i] : nullptr);
   }
   if (signals_states) {
     for (; i < num_handles; i++)
