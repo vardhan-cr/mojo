@@ -120,6 +120,7 @@ bool IsAnimationValueValid(AnimationProperty property,
     case ANIMATION_PROPERTY_TRANSFORM:
       return value.transform.get() && value.transform->matrix.size() == 16u;
   }
+  return false;
 }
 
 bool IsAnimationElementValid(const AnimationElement& element) {
