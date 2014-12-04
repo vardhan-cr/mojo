@@ -25,9 +25,6 @@
 
   # Non-system, non-public tests:
   {
-    "test": "clipboard_unittests",
-  },
-  {
     "test": "mojo_application_manager_unittests",
   },
   {

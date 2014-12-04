@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/at_exit.h"
 #include "base/bind.h"
-#include "base/macros.h"
+#include "base/run_loop.h"
 #include "mojo/common/common_type_converters.h"
+#include "mojo/public/cpp/application/application_impl.h"
+#include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/services/public/interfaces/clipboard/clipboard.mojom.h"
-#include "mojo/shell/shell_test_helper.h"
-#include "testing/gtest/include/gtest/gtest.h"
 
 namespace {
 
@@ -44,16 +43,14 @@ const char* kHtmlData = "<html>data</html>";
 namespace mojo {
 namespace service {
 
-class ClipboardStandaloneTest : public testing::Test {
+class ClipboardAppTest : public test::ApplicationTestBase {
  public:
-  ClipboardStandaloneTest() {}
-  ~ClipboardStandaloneTest() override {}
+  ClipboardAppTest() : ApplicationTestBase() {}
+  ~ClipboardAppTest() override {}
 
   void SetUp() override {
-    test_helper_.Init();
-
-    test_helper_.application_manager()->ConnectToService(GURL("mojo:clipboard"),
-                                                         &clipboard_);
+    ApplicationTestBase::SetUp();
+    application_impl()->ConnectToService("mojo:clipboard", &clipboard_);
   }
 
   uint64_t GetSequenceNumber() {
@@ -96,22 +93,19 @@ class ClipboardStandaloneTest : public testing::Test {
   }
 
  protected:
-  base::ShadowingAtExitManager at_exit_;
-  shell::ShellTestHelper test_helper_;
-
   ClipboardPtr clipboard_;
 
-  DISALLOW_COPY_AND_ASSIGN(ClipboardStandaloneTest);
+  DISALLOW_COPY_AND_ASSIGN(ClipboardAppTest);
 };
 
-TEST_F(ClipboardStandaloneTest, EmptyClipboardOK) {
+TEST_F(ClipboardAppTest, EmptyClipboardOK) {
   EXPECT_EQ(0ul, GetSequenceNumber());
   EXPECT_TRUE(GetAvailableFormatMimeTypes().empty());
   std::string data;
   EXPECT_FALSE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
 }
 
-TEST_F(ClipboardStandaloneTest, CanReadBackText) {
+TEST_F(ClipboardAppTest, CanReadBackText) {
   std::string data;
   EXPECT_FALSE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
   EXPECT_EQ(0ul, GetSequenceNumber());
@@ -123,7 +117,7 @@ TEST_F(ClipboardStandaloneTest, CanReadBackText) {
   EXPECT_EQ(kPlainTextData, data);
 }
 
-TEST_F(ClipboardStandaloneTest, CanSetMultipleDataTypesAtOnce) {
+TEST_F(ClipboardAppTest, CanSetMultipleDataTypesAtOnce) {
   Map<String, Array<uint8_t>> mime_data;
   mime_data[mojo::Clipboard::MIME_TYPE_TEXT] =
       Array<uint8_t>::From(std::string(kPlainTextData));
@@ -142,7 +136,7 @@ TEST_F(ClipboardStandaloneTest, CanSetMultipleDataTypesAtOnce) {
   EXPECT_EQ(kHtmlData, data);
 }
 
-TEST_F(ClipboardStandaloneTest, CanClearClipboardWithZeroArray) {
+TEST_F(ClipboardAppTest, CanClearClipboardWithZeroArray) {
   std::string data;
   SetStringText(kPlainTextData);
   EXPECT_EQ(1ul, GetSequenceNumber());

@@ -22,22 +22,21 @@ mojo_native_application("clipboard") {
   ]
 }
 
-test("clipboard_unittests") {
-  sources = [
-    "clipboard_standalone_unittest.cc",
-  ]
+mojo_native_application("apptests") {
+  output_name = "clipboard_apptests"
+
+  testonly = true
+
+  sources = [ "clipboard_apptest.cc" ]
 
   deps = [
     "//base",
-    "//base/test:run_all_unittests",
-    "//base/test:test_support",
     "//mojo/application",
-    "//mojo/application_manager",
+    "//mojo/application:test_support",
     "//mojo/common",
-    "//mojo/edk/system",
-    "//mojo/environment:chromium",
-    "//mojo/services/public/interfaces/clipboard:clipboard",
-    "//mojo/shell:test_support",
-    "//testing/gtest",
+    "//mojo/public/cpp/bindings",
+    "//mojo/services/public/interfaces/clipboard",
   ]
+
+  datadeps = [ ":clipboard" ]
 }

@@ -69,7 +69,7 @@ group("tests") {
     "//mojo/shell:external_application_unittests",
     "//mojo/shell:mojo_shell_tests",
     "//mojo/tools:message_generator",
-    "//services/clipboard:clipboard_unittests",
+    "//services/clipboard:apptests",
     "//services/js:js_services_unittests",
     "//services/js:js_apptests",
   ]
