@@ -3,7 +3,11 @@
 # found in the LICENSE file.
 
 test("dart_unittests") {
+  sources = [
+    "run_dart_tests.cc",
+  ]
   deps = [
+    ":expect",
     "//base",
     "//crypto:crypto",
     "//mojo/dart/embedder:dart_controller",
@@ -14,8 +18,13 @@ test("dart_unittests") {
     "//mojo/public/cpp/utility",
     "//mojo/environment:chromium",
   ]
+}
 
+copy("expect") {
   sources = [
-    "run_dart_tests.cc",
+    "//mojo/dart/testing/expect.dart",
+  ]
+  outputs = [
+    "{{source_gen_dir}}/{{source_file_part}}",
   ]
 }

@@ -8,6 +8,7 @@
 #include "base/sys_info.h"
 #include "crypto/random.h"
 #include "dart/runtime/include/dart_api.h"
+#include "dart/runtime/include/dart_native_api.h"
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/dart/embedder/isolate_data.h"
@@ -139,6 +140,9 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   DART_CHECK_VALID(url);
   Dart_Handle async_lib = Dart_LookupLibrary(url);
   DART_CHECK_VALID(async_lib);
+  Dart_Handle mojo_core_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
 
   // We need to ensure that all the scripts loaded so far are finalized
   // as we are about to invoke some Dart code below to setup closures.
@@ -160,9 +164,20 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
                          print);
   DART_CHECK_VALID(result);
 
-  // TODO(zra): Set up timer factory closure. This must be implemented through
-  // the mojo handle watcher just as timers are implemented in the standalone
-  // embedder with epoll.
+  // Setup the 'timer' factory.
+  Dart_Handle timer_closure = Dart_Invoke(
+      mojo_core_lib,
+      Dart_NewStringFromCString("_getTimerFactoryClosure"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(timer_closure);
+  Dart_Handle timer_args[1];
+  timer_args[0] = timer_closure;
+  result = Dart_Invoke(async_lib,
+                       Dart_NewStringFromCString("_setTimerFactoryClosure"),
+                       1,
+                       timer_args);
+  DART_CHECK_VALID(result);
 
   // Setup the 'scheduleImmediate' closure.
   url = Dart_NewStringFromCString(kIsolateLibURL);
@@ -174,13 +189,13 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
       Dart_NewStringFromCString("_getIsolateScheduleImmediateClosure"),
       0,
       nullptr);
-  Dart_Handle args[1];
-  args[0] = schedule_immediate_closure;
+  Dart_Handle schedule_args[1];
+  schedule_args[0] = schedule_immediate_closure;
   result = Dart_Invoke(
       async_lib,
       Dart_NewStringFromCString("_setScheduleImmediateClosure"),
       1,
-      args);
+      schedule_args);
   DART_CHECK_VALID(result);
 
   // TODO(zra): Setup the uriBase with the base uri of the mojo app.
@@ -329,15 +344,15 @@ static Dart_Isolate serviceIsolateCreateCallback(void* callback_data,
 bool DartController::vmIsInitialized = false;
 void DartController::initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
                                     Dart_EntropySource entropy,
-                                    const char** extra_args,
-                                    int num_extra_args) {
+                                    const char** arguments,
+                                    int arguments_count) {
   // TODO(zra): If runDartScript can be called from multiple threads
   // concurrently, then vmIsInitialized will need to be protected by a lock.
   if (vmIsInitialized) {
     return;
   }
 
-  const int kNumArgs = num_extra_args + 2;
+  const int kNumArgs = arguments_count + 2;
   const char* args[kNumArgs];
 
   // TODO(zra): Fix Dart VM Shutdown race.
@@ -352,8 +367,8 @@ void DartController::initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
   // Enable async/await features.
   args[1] = "--enable-async";
 
-  for (int i = 0; i < num_extra_args; ++i) {
-    args[i + 2] = extra_args[i];
+  for (int i = 0; i < arguments_count; ++i) {
+    args[i + 2] = arguments[i];
   }
 
   bool result = Dart_SetVMFlags(kNumArgs, args);
@@ -372,19 +387,17 @@ void DartController::initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
   vmIsInitialized = true;
 }
 
-bool DartController::runDartScript(void* dart_app,
-                                   const std::string& script,
-                                   const std::string& script_uri,
-                                   const std::string& package_root,
-                                   Dart_IsolateCreateCallback app_callback,
-                                   Dart_IsolateShutdownCallback shutdown,
-                                   Dart_EntropySource entropy,
-                                   const char** extra_args,
-                                   int num_extra_args,
-                                   char** error) {
-  initVmIfNeeded(shutdown, entropy, extra_args, num_extra_args);
-  Dart_Isolate isolate = createIsolateHelper(
-      dart_app, app_callback, script, script_uri, package_root, error);
+bool DartController::runDartScript(const DartControllerConfig& config) {
+  initVmIfNeeded(config.shutdown_callback,
+                 config.entropy_callback,
+                 config.arguments,
+                 config.arguments_count);
+  Dart_Isolate isolate = createIsolateHelper(config.application_data,
+                                             config.create_callback,
+                                             config.script,
+                                             config.script_uri,
+                                             config.package_root,
+                                             config.error);
   if (isolate == nullptr) {
     return false;
   }
@@ -399,9 +412,35 @@ bool DartController::runDartScript(void* dart_app,
   Dart_Handle builtin_lib =
       Builtin::LoadAndCheckLibrary(Builtin::kBuiltinLibrary);
   DART_CHECK_VALID(builtin_lib);
+  Dart_Handle mojo_core_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
+
+  // Start the MojoHandleWatcher.
+  Dart_Handle handle_watcher_type = Dart_GetType(
+      mojo_core_lib,
+      Dart_NewStringFromCString("MojoHandleWatcher"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(handle_watcher_type);
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("Start"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(result);
+
+  // RunLoop until the handle watcher isolate is spun-up.
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
 
   result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
   DART_CHECK_VALID(result);
+
+  if (config.compile_all) {
+    result = Dart_CompileAll();
+    DART_CHECK_VALID(result);
+  }
 
   Dart_Handle main_closure = Dart_Invoke(
       builtin_lib,
@@ -426,6 +465,17 @@ bool DartController::runDartScript(void* dart_app,
                        Dart_NewStringFromCString("_startMainIsolate"),
                        kNumIsolateArgs,
                        isolate_args);
+  DART_CHECK_VALID(result);
+
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
+
+  // Stop the MojoHandleWatcher.
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("Stop"),
+      0,
+      nullptr);
   DART_CHECK_VALID(result);
 
   result = Dart_RunLoop();

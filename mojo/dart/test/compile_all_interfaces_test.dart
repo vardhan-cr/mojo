@@ -2,18 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:async';
-import 'dart:isolate';
-import 'dart:typed_data';
-
-import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/bindings_standalone.dart' as bindings;
-import 'package:mojo/public/dart/core_standalone.dart' as core;
-import 'package:mojo/public/dart/mojo_init.dart' as init;
-
 // Make sure that we are generating valid Dart code for all mojom interface
 // tests.
 // vmoptions: --compile_all
+
+import 'dart:async';
+import 'dart:isolate';
+import 'dart:mojo_bindings' as bindings;
+import 'dart:mojo_core' as core;
+import 'dart:typed_data';
+
+import 'package:mojo/dart/testing/expect.dart';
 
 import 'package:mojo/public/interfaces/application/application.mojom.dart';
 import 'package:mojo/public/interfaces/application/service_provider.mojom.dart';

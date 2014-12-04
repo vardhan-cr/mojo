@@ -11,6 +11,8 @@
 #include "mojo/public/cpp/environment/environment.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
+// TODO(zra): Pull vm options from the test scripts.
+
 namespace mojo {
 namespace dart {
 namespace {
@@ -20,9 +22,17 @@ static bool generateEntropy(uint8_t* buffer, intptr_t length) {
   return true;
 }
 
-static void RunTest(const base::FilePath& path,
+static void RunTest(const std::string& test,
+                    bool compile_all,
                     const char** extra_args,
                     int num_extra_args) {
+  base::FilePath path;
+  PathService::Get(base::DIR_SOURCE_ROOT, &path);
+  path = path.AppendASCII("mojo")
+             .AppendASCII("dart")
+             .AppendASCII("test")
+             .AppendASCII(test);
+
   // Read in the source.
   std::string source;
   EXPECT_TRUE(ReadFileToString(path, &source)) << "Failed to read test file";
@@ -45,67 +55,92 @@ static void RunTest(const base::FilePath& path,
   }
 
   char* error = NULL;
-  bool success = DartController::runDartScript(
-      NULL,  // No app data.
-      source,
-      path.AsUTF8Unsafe(),
-      package_root.AsUTF8Unsafe(),
-      NULL,  // No creation callback.
-      NULL,  // No shutdown callback.
-      generateEntropy,
-      args,
-      kNumArgs,
-      &error);
+  DartControllerConfig config;
+  config.script = source;
+  config.script_uri = path.AsUTF8Unsafe();
+  config.package_root = package_root.AsUTF8Unsafe();
+  config.application_data = nullptr;
+  config.create_callback = nullptr;
+  config.shutdown_callback = nullptr;
+  config.entropy_callback = generateEntropy;
+  config.arguments = args;
+  config.arguments_count = kNumArgs;
+  config.compile_all = compile_all;
+  config.error = &error;
+
+  bool success = DartController::runDartScript(config);
   EXPECT_TRUE(success) << error;
 }
 
-static void RunEmbedderTest(const std::string& test,
-                            const char** extra_args,
-                            int num_extra_args) {
-  base::FilePath path;
-  PathService::Get(base::DIR_SOURCE_ROOT, &path);
-  path = path.AppendASCII("mojo")
-             .AppendASCII("dart")
-             .AppendASCII("embedder")
-             .AppendASCII("test")
-             .AppendASCII(test);
-  RunTest(path, extra_args, num_extra_args);
-}
-
-static void RunMojoTest(const std::string& test,
-                        const char** extra_args,
-                        int num_extra_args) {
-  base::FilePath path;
-  PathService::Get(base::DIR_SOURCE_ROOT, &path);
-  path = path.AppendASCII("mojo")
-             .AppendASCII("dart")
-             .AppendASCII("test")
-             .AppendASCII(test);
-  RunTest(path, extra_args, num_extra_args);
-}
+// TODO(zra): instead of listing all these tests, search //mojo/dart/test for
+// _test.dart files.
 
 TEST(DartTest, hello_mojo) {
-  RunEmbedderTest("hello_mojo.dart", nullptr, 0);
+  RunTest("hello_mojo.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, core_types_test) {
-  RunEmbedderTest("core_types_test.dart", nullptr, 0);
+  RunTest("core_types_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, async_test) {
-  RunEmbedderTest("async_test.dart", nullptr, 0);
+  RunTest("async_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, isolate_test) {
+  RunTest("isolate_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, import_mojo) {
-  RunEmbedderTest("import_mojo.dart", nullptr, 0);
+  RunTest("import_mojo.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, simple_handle_watcher_test) {
+  RunTest("simple_handle_watcher_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, ping_pong_test) {
+  RunTest("ping_pong_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, timer_test) {
+  RunTest("timer_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, async_await_test) {
+  RunTest("async_await_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, core_test) {
-  RunMojoTest("core_test.dart", nullptr, 0);
+  RunTest("core_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, codec_test) {
-  RunMojoTest("codec_test.dart", nullptr, 0);
+  RunTest("codec_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, handle_watcher_test) {
+  RunTest("handle_watcher_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, interface_test) {
+  RunTest("interface_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, bindings_generation_test) {
+  RunTest("bindings_generation_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, compile_all_interfaces_test) {
+  RunTest("compile_all_interfaces_test.dart", true, nullptr, 0);
+}
+
+TEST(DartTest, handle_finalizer_test) {
+  const int kNumArgs = 2;
+  const char* args[kNumArgs];
+  args[0] = "--new-gen-semi-max-size=1";
+  args[1] = "--old_gen_growth_rate=1";
+  RunTest("handle_finalizer_test.dart", false, args, kNumArgs);
 }
 
 }  // namespace

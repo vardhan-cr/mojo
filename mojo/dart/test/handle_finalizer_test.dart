@@ -4,12 +4,10 @@
 
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:mojo_core';
 import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/core_standalone.dart';
-import 'package:mojo/public/dart/mojo_init.dart';
-
 
 RawMojoHandle leakMojoHandle() {
   var pipe = new MojoMessagePipe();
@@ -26,13 +24,11 @@ RawMojoHandle leakMojoHandle() {
   return endpoint.handle;
 }
 
-
 // vmoptions: --new-gen-semi-max-size=1 --old_gen_growth_rate=1
 List<int> triggerGC() {
   var l = new List.filled(1000000, 7);
   return l;
 }
-
 
 test() {
   RawMojoHandle handle = leakMojoHandle();
@@ -44,9 +40,6 @@ test() {
   Expect.isTrue(result.isInvalidArgument);
 }
 
-
-main() async {
-  await mojoInit();
+main() {
   test();
-  mojoShutdown();
 }

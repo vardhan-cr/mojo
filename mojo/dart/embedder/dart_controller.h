@@ -10,24 +10,30 @@
 namespace mojo {
 namespace dart {
 
+struct DartControllerConfig {
+  void* application_data;
+  std::string script;
+  std::string script_uri;
+  std::string package_root;
+  Dart_IsolateCreateCallback create_callback;
+  Dart_IsolateShutdownCallback shutdown_callback;
+  Dart_EntropySource entropy_callback;
+  const char** arguments;
+  int arguments_count;
+  // TODO(zra): search for the --compile_all flag in arguments where needed.
+  bool compile_all;
+  char** error;
+};
+
 class DartController {
  public:
-  static bool runDartScript(void* dart_app,
-                            const std::string& script,
-                            const std::string& script_uri,
-                            const std::string& package_root,
-                            Dart_IsolateCreateCallback create,
-                            Dart_IsolateShutdownCallback shutdown,
-                            Dart_EntropySource entropy,
-                            const char** extra_args,
-                            int num_extra_args,
-                            char** error);
+  static bool runDartScript(const DartControllerConfig& config);
 
  private:
   static void initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
                              Dart_EntropySource entropy,
-                             const char** extra_args,
-                             int num_extra_args);
+                             const char** arguments,
+                             int arguments_count);
   static bool vmIsInitialized;
 };
 

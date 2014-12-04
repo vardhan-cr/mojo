@@ -34,7 +34,7 @@ namespace dart {
   V(MojoHandle_Wait, 3)                                                        \
   V(MojoHandle_Register, 1)                                                    \
   V(MojoHandle_WaitMany, 4)                                                    \
-  V(MojoHandleWatcher_SendControlData, 3)                                      \
+  V(MojoHandleWatcher_SendControlData, 4)                                      \
   V(MojoHandleWatcher_RecvControlData, 1)                                      \
   V(MojoHandleWatcher_SetControlHandle, 1)                                     \
   V(MojoHandleWatcher_GetControlHandle, 0)                                     \
@@ -739,11 +739,7 @@ static int64_t mojo_control_handle = MOJO_HANDLE_INVALID;
 void MojoHandleWatcher_SetControlHandle(Dart_NativeArguments arguments) {
   int64_t control_handle;
   CHECK_INTEGER_ARGUMENT(arguments, 0, &control_handle, InvalidArgument);
-
-  if (mojo_control_handle == static_cast<int64_t>(MOJO_HANDLE_INVALID)) {
-    mojo_control_handle = control_handle;
-  }
-
+  mojo_control_handle = control_handle;
   Dart_SetIntegerReturnValue(arguments, static_cast<int64_t>(MOJO_RESULT_OK));
 }
 

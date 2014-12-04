@@ -157,13 +157,6 @@ def GetTestList(config):
                   os.path.join("mojo", "tools", "data", "dart_unittests"),
                   build_dir, "mojob_test_successes"])
 
-  # Dart tests:
-  if ShouldRunTest("dart"):
-    AddEntry("Dart tests",
-             ["dart", "--checked", "--enable-async",
-              os.path.join("mojo", "tools", "dart_test_runner.dart"),
-              os.path.join(build_dir, "gen")])
-
   # ----------------------------------------------------------------------------
 
   return test_list

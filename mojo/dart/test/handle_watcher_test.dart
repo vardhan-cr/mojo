@@ -4,12 +4,10 @@
 
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:mojo_core';
 import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/core_standalone.dart';
-import 'package:mojo/public/dart/mojo_init.dart';
-
 
 void simpleTest() {
   var pipe = new MojoMessagePipe();
@@ -143,9 +141,7 @@ Future pingPongTest() async {
 
 
 main() async {
-  await mojoInit();
   simpleTest();
   await simpleAsyncAwaitTest();
   await pingPongTest();
-  mojoShutdown();
 }

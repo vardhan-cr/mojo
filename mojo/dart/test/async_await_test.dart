@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:mojo_core' as core;
 
-main() {
-  (new Future.value(42)).then((value) {
-    assert(value == 42);
-  });
+main() async {
+  var x = await (new Future.value(42));
+  assert(x == 42);
 }

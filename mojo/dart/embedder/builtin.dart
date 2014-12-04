@@ -6,11 +6,12 @@ library mojo_builtin;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:mojo_core';
 // import 'root_library'; happens here from C Code
 
 // The root library (aka the script) is imported into this library. The
-// standalone embedder uses this to lookup the main entrypoint in the
-// root library's namespace.
+// embedder uses this to lookup the main entrypoint in the root library's
+// namespace.
 Function _getMainClosure() => main;
 
 
