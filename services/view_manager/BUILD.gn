@@ -18,6 +18,7 @@ mojo_native_application("view_manager") {
     "//mojo/application",
     "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
+    "//mojo/converters/geometry",
     "//mojo/public/cpp/bindings:bindings",
     "//mojo/services/public/interfaces/window_manager",
   ]
@@ -27,6 +28,9 @@ source_set("view_manager_lib") {
   sources = [
     "access_policy.h",
     "access_policy_delegate.h",
+    "animation_runner.cc",
+    "animation_runner.h",
+    "animation_runner_observer.h",
     "client_connection.cc",
     "client_connection.h",
     "connection_manager.cc",
@@ -36,6 +40,8 @@ source_set("view_manager_lib") {
     "default_access_policy.h",
     "display_manager.cc",
     "display_manager.h",
+    "scheduled_animation_group.cc",
+    "scheduled_animation_group.h",
     "server_view.cc",
     "server_view.h",
     "server_view_delegate.h",
@@ -67,6 +73,7 @@ source_set("view_manager_lib") {
     "//mojo/services/public/interfaces/view_manager",
     "//mojo/services/public/interfaces/window_manager",
     "//mojo/services/public/cpp/view_manager:common",
+    "//ui/gfx",
     "//ui/gfx/geometry",
   ]
 }
@@ -91,6 +98,10 @@ source_set("test_support") {
 
 test("view_manager_service_unittests") {
   sources = [
+    "animation_runner_unittest.cc",
+    "scheduled_animation_group_unittest.cc",
+    "test_server_view_delegate.cc",
+    "test_server_view_delegate.h",
     "view_coordinate_conversions_unittest.cc",
     "view_manager_service_unittest.cc",
   ]
@@ -112,6 +123,7 @@ test("view_manager_service_unittests") {
     "//mojo/services/public/interfaces/view_manager",
     "//mojo/services/public/interfaces/window_manager",
     "//testing/gtest",
+    "//ui/gfx",
     "//ui/gfx:test_support",
     "//ui/gfx/geometry",
   ]

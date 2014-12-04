@@ -135,6 +135,14 @@ void ServerView::SetOpacity(float value) {
   delegate_->OnScheduleViewPaint(this);
 }
 
+void ServerView::SetTransform(const gfx::Transform& transform) {
+  if (transform_ == transform)
+    return;
+
+  transform_ = transform;
+  delegate_->OnScheduleViewPaint(this);
+}
+
 void ServerView::SetProperty(const std::string& name,
                              const std::vector<uint8_t>* value) {
   auto it = properties_.find(name);

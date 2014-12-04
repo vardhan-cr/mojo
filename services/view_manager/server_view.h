@@ -12,6 +12,7 @@
 #include "mojo/services/public/interfaces/view_manager/view_manager.mojom.h"
 #include "services/view_manager/ids.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/transform.h"
 
 namespace mojo {
 namespace service {
@@ -63,6 +64,9 @@ class ServerView {
   float opacity() const { return opacity_; }
   void SetOpacity(float value);
 
+  const gfx::Transform& transform() const { return transform_; }
+  void SetTransform(const gfx::Transform& transform);
+
   const std::map<std::string, std::vector<uint8_t>>& properties() const {
     return properties_;
   }
@@ -73,7 +77,7 @@ class ServerView {
   bool IsDrawn(const ServerView* root) const;
 
   void SetSurfaceId(cc::SurfaceId surface_id);
-  const cc::SurfaceId surface_id() const { return surface_id_; }
+  const cc::SurfaceId& surface_id() const { return surface_id_; }
 
 #if !defined(NDEBUG)
   std::string GetDebugWindowHierarchy() const;
@@ -94,6 +98,7 @@ class ServerView {
   gfx::Rect bounds_;
   cc::SurfaceId surface_id_;
   float opacity_;
+  gfx::Transform transform_;
 
   std::map<std::string, std::vector<uint8_t>> properties_;
 
