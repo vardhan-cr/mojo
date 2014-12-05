@@ -30,8 +30,12 @@
 #include "services/http_server/public/http_server_util.h"
 #include "third_party/re2/re2/re2.h"
 
-namespace mojo {
-namespace examples {
+using mojo::AsyncWaiter;
+using mojo::ScopedDataPipeConsumerHandle;
+using mojo::ScopedDataPipeProducerHandle;
+using mojo::TCPConnectedSocketPtr;
+
+namespace http_server {
 
 class Connection;
 
@@ -144,7 +148,7 @@ class Connection {
             base::Bind(&Connection::OnSenderReady, base::Unretained(this))));
         return;
       } else if (result != MOJO_RESULT_OK) {
-        printf("Error writing to pipe.\n");
+        LOG(ERROR) << "Error writing to pipe " << result;
         delete this;
         return;
       }
@@ -245,9 +249,9 @@ void BarHandler(HttpRequestPtr request, Connection* connection) {
 
 class HttpServerApp;
 
-class HttpServerServiceImpl : public InterfaceImpl<HttpServerService> {
+class HttpServerServiceImpl : public mojo::InterfaceImpl<HttpServerService> {
  public:
-  HttpServerServiceImpl(ApplicationConnection* connection,
+  HttpServerServiceImpl(mojo::ApplicationConnection* connection,
                         HttpServerApp* app)
       : app_(app) {}
   virtual ~HttpServerServiceImpl();
@@ -274,11 +278,11 @@ class HttpServerServiceImpl : public InterfaceImpl<HttpServerService> {
   std::vector<std::string> paths_;
 };
 
-class HttpServerApp : public ApplicationDelegate,
-                      public InterfaceFactory<HttpServerService> {
+class HttpServerApp : public mojo::ApplicationDelegate,
+                      public mojo::InterfaceFactory<HttpServerService> {
  public:
   HttpServerApp() : weak_ptr_factory_(this) {}
-  virtual void Initialize(ApplicationImpl* app) override {
+  virtual void Initialize(mojo::ApplicationImpl* app) override {
     app->ConnectToService("mojo:network_service", &network_service_);
 
     AddHandler("/foo", base::Bind(FooHandler));
@@ -313,18 +317,19 @@ class HttpServerApp : public ApplicationDelegate,
  private:
   // ApplicationDelegate:
   bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+      mojo::ApplicationConnection* connection) override {
     connection->AddService(this);
     return true;
   }
 
   // InterfaceFactory<HttpServerService>:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<HttpServerService> request) override {
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<HttpServerService> request) override {
     mojo::BindToRequest(new HttpServerServiceImpl(connection, this), &request);
   }
 
-  void OnSocketBound(NetworkErrorPtr err, NetAddressPtr bound_address) {
+  void OnSocketBound(mojo::NetworkErrorPtr err,
+                     mojo::NetAddressPtr bound_address) {
     if (err->code != 0) {
       printf("Bound err = %d\n", err->code);
       return;
@@ -338,7 +343,7 @@ class HttpServerApp : public ApplicationDelegate,
            (int)bound_address->ipv4->port);
   }
 
-  void OnSocketListening(NetworkErrorPtr err) {
+  void OnSocketListening(mojo::NetworkErrorPtr err) {
     if (err->code != 0) {
       printf("Listen err = %d\n", err->code);
       return;
@@ -346,7 +351,8 @@ class HttpServerApp : public ApplicationDelegate,
     printf("Waiting for incoming connections...\n");
   }
 
-  void OnConnectionAccepted(NetworkErrorPtr err, NetAddressPtr remote_address) {
+  void OnConnectionAccepted(mojo::NetworkErrorPtr err,
+                            mojo::NetAddressPtr remote_address) {
     if (err->code != 0) {
       printf("Accepted socket error = %d\n", err->code);
       return;
@@ -369,7 +375,7 @@ class HttpServerApp : public ApplicationDelegate,
         nullptr, &pending_send_handle_, &send_consumer_handle);
     assert(result == MOJO_RESULT_OK);
 
-    ScopedDataPipeProducerHandle receive_producer_handle;
+    mojo::ScopedDataPipeProducerHandle receive_producer_handle;
     result = CreateDataPipe(
         nullptr, &receive_producer_handle, &pending_receive_handle_);
     assert(result == MOJO_RESULT_OK);
@@ -383,9 +389,9 @@ class HttpServerApp : public ApplicationDelegate,
   }
 
   void Start() {
-    NetAddressPtr net_address(NetAddress::New());
-    net_address->family = NET_ADDRESS_FAMILY_IPV4;
-    net_address->ipv4 = NetAddressIPv4::New();
+    mojo::NetAddressPtr net_address(mojo::NetAddress::New());
+    net_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    net_address->ipv4 = mojo::NetAddressIPv4::New();
     net_address->ipv4->addr.resize(4);
     net_address->ipv4->addr[0] = 0;
     net_address->ipv4->addr[1] = 0;
@@ -438,9 +444,9 @@ class HttpServerApp : public ApplicationDelegate,
 
   base::WeakPtrFactory<HttpServerApp> weak_ptr_factory_;
 
-  NetworkServicePtr network_service_;
-  TCPBoundSocketPtr bound_socket_;
-  TCPServerSocketPtr server_socket_;
+  mojo::NetworkServicePtr network_service_;
+  mojo::TCPBoundSocketPtr bound_socket_;
+  mojo::TCPServerSocketPtr server_socket_;
 
   ScopedDataPipeProducerHandle pending_send_handle_;
   ScopedDataPipeConsumerHandle pending_receive_handle_;
@@ -478,10 +484,9 @@ void HttpServerServiceImpl::RemoveHandler(
   }
 }
 
-}  // namespace examples
-}  // namespace mojo
+}  // namespace http_server
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunner runner(new mojo::examples::HttpServerApp);
+  mojo::ApplicationRunner runner(new http_server::HttpServerApp);
   return runner.Run(shell_handle);
 }

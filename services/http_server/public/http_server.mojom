@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-module mojo;
+module http_server;
 
 import "services/http_server/public/http_request.mojom";
 import "services/http_server/public/http_response.mojom";

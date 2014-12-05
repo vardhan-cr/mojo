@@ -20,7 +20,7 @@ namespace examples {
 // service to handle the HTTP protocol details, and just contains the logic for
 // handling its registered urls.
 class HttpHandler : public ApplicationDelegate,
-                    public HttpServerClient {
+                    public http_server::HttpServerClient {
  public:
   HttpHandler() {}
   ~HttpHandler() override {}
@@ -38,16 +38,16 @@ class HttpHandler : public ApplicationDelegate,
 
   // HttpServerClient:
   void OnHandleRequest(
-      HttpRequestPtr request,
-      const Callback<void(HttpResponsePtr)>& callback) override {
-    callback.Run(CreateHttpResponse(200, "Hello World\n"));
+      http_server::HttpRequestPtr request,
+      const Callback<void(http_server::HttpResponsePtr)>& callback) override {
+    callback.Run(http_server::CreateHttpResponse(200, "Hello World\n"));
   }
 
   void AddHandlerCallback(bool result) {
     CHECK(result);
   }
 
-  HttpServerServicePtr http_server_service_;
+  http_server::HttpServerServicePtr http_server_service_;
 
   DISALLOW_COPY_AND_ASSIGN(HttpHandler);
 };

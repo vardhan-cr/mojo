@@ -7,13 +7,13 @@
 #include "base/logging.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 
-namespace mojo {
+namespace http_server {
 
 HttpResponsePtr CreateHttpResponse(uint32_t status_code,
                                    const std::string& body) {
   HttpResponsePtr response = HttpResponse::New();
 
-  ScopedDataPipeProducerHandle producer_handle;
+  mojo::ScopedDataPipeProducerHandle producer_handle;
   uint32_t num_bytes = static_cast<uint32_t>(body.size());
   MojoCreateDataPipeOptions options = {sizeof(MojoCreateDataPipeOptions),
                                        MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,
@@ -31,4 +31,4 @@ HttpResponsePtr CreateHttpResponse(uint32_t status_code,
   return response.Pass();
 }
 
-}  // namespace mojo
+}  // namespace http_server

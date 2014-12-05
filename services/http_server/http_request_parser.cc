@@ -12,7 +12,7 @@
 #include "base/strings/string_util.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 
-namespace mojo {
+namespace http_server {
 
 namespace {
 
@@ -192,4 +192,4 @@ HttpRequestPtr HttpRequestParser::GetRequest() {
   return http_request_.Pass();
 }
 
-}  // namespace mojo
+}  // namespace http_server

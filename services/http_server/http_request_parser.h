@@ -12,7 +12,7 @@
 #include "base/strings/string_piece.h"
 #include "services/http_server/public/http_request.mojom.h"
 
-namespace mojo {
+namespace http_server {
 
 // Parses the input data and produces a valid HttpRequest object. If there is
 // more than one request in one chunk, then only the first one will be parsed.
@@ -65,7 +65,7 @@ class HttpRequestParser {
   uint32_t GetBodySize();
 
   HttpRequestPtr http_request_;
-  ScopedDataPipeProducerHandle producer_handle_;
+  mojo::ScopedDataPipeProducerHandle producer_handle_;
   std::string buffer_;
   size_t buffer_position_;  // Current position in the internal buffer.
   State state_;
@@ -75,6 +75,6 @@ class HttpRequestParser {
   DISALLOW_COPY_AND_ASSIGN(HttpRequestParser);
 };
 
-}  // namespace mojo
+}  // namespace http_server
 
 #endif  // SERVICES_HTTP_SERVER_HTTP_REQUEST_PARSER_H_
