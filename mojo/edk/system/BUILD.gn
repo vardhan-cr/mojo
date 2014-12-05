@@ -94,9 +94,9 @@ component("system") {
   all_dependent_configs = [ ":system_config" ]
 
   public_deps = [
-    "//mojo/edk/embedder",
-    "//mojo/edk/embedder:platform",
-    "//mojo/public/c/system",
+    "../embedder",
+    "../embedder:platform",
+    "../../public/c/system",
   ]
 
   deps = [
@@ -104,7 +104,7 @@ component("system") {
     "//base/third_party/dynamic_annotations",
   ]
 
-  allow_circular_includes_from = [ "//mojo/edk/embedder" ]
+  allow_circular_includes_from = [ "../embedder" ]
 }
 
 source_set("test_utils") {
@@ -156,10 +156,10 @@ test("mojo_system_unittests") {
   deps = [
     ":system",
     ":test_utils",
+    "../embedder:embedder_unittests",
+    "../test:test_support",
     "//base",
     "//base/test:test_support",
-    "//mojo/edk/embedder:embedder_unittests",
-    "//mojo/edk/test:test_support",
     "//testing/gtest",
   ]
 
@@ -167,7 +167,7 @@ test("mojo_system_unittests") {
     deps += [ "//testing/android:native_test_native_code" ]
   }
 
-  allow_circular_includes_from = [ "//mojo/edk/embedder:embedder_unittests" ]
+  allow_circular_includes_from = [ "../embedder:embedder_unittests" ]
 }
 
 # GYP version: mojo/edk/mojo_edk.gyp:mojo_message_pipe_perftests
@@ -181,10 +181,10 @@ test("mojo_message_pipe_perftests") {
   deps = [
     ":system",
     ":test_utils",
+    "../test:test_support",
     "//base",
     "//base/test:test_support",
     "//base/test:test_support_perf",
-    "//mojo/edk/test:test_support",
     "//testing/gtest",
   ]
 }
