@@ -185,6 +185,7 @@ skip_child_includes = [
   'examples',
   'sdch',
   'services',
+  'shell',
   'skia',
   'sky',
   'testing',

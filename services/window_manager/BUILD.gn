@@ -88,7 +88,7 @@ test("window_manager_unittests") {
     "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/view_manager",
     "//mojo/services/public/interfaces/window_manager",
-    "//mojo/shell:test_support",
+    "//shell:test_support",
     "//testing/gtest",
     "//ui/events:test_support",
     "//ui/gfx",

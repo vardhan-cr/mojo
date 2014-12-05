@@ -23,15 +23,6 @@ group("mojo") {
     "//services",
   ]
 
-  if (use_prebuilt_mojo_shell) {
-    deps += [ "//mojo/public/tools:copy_mojo_shell" ]
-  } else {
-    deps += [ "//mojo/shell:mojo_shell" ]
-    if (is_android) {
-      deps += [ "//mojo/shell:mojo_shell_apk" ]
-    }
-  }
-
   if (is_android) {
     deps += [ "//mojo/android" ]
   }
@@ -42,10 +33,6 @@ group("mojo") {
 
   if (is_linux) {
     deps += [ "//mojo/python" ]
-  }
-
-  if (!is_win) {
-    deps += [ "//mojo/shell:mojo_launcher" ]
   }
 }
 
@@ -66,8 +53,6 @@ group("tests") {
     "//mojo/public/cpp/system/tests:mojo_public_system_unittests",
     "//mojo/public/cpp/utility/tests:mojo_public_utility_unittests",
     "//mojo/services/network:apptests",
-    "//mojo/shell:external_application_unittests",
-    "//mojo/shell:mojo_shell_tests",
     "//mojo/tools:message_generator",
     "//services/clipboard:apptests",
     "//services/js:js_services_unittests",

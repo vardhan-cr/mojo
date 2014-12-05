@@ -440,6 +440,7 @@ def _CheckGNCheck(input_api, output_api):
       '//examples/*',
       '//mojo/*',
       '//services/*',
+      '//shell/*',
     ]
     if input_api.platform != 'win32':
       KNOWN_PASSING += [
