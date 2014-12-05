@@ -116,7 +116,7 @@ def GetTestList(config):
     sky_command = ["python",
                    os.path.join("mojo", "tools", "run_always_succeed.py")]
     sky_command += ["sky/tools/test_sky",
-                    "-t", "Debug" if config.is_debug else "Release",
+                    "-t", os.path.basename(build_dir),
                     "--no-new-test-results", "--no-show-results", "--verbose"]
     if config.values.get("builder_name"):
       sky_command += ["--builder-name", config.values["builder_name"]]

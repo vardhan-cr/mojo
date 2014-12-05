@@ -24,6 +24,8 @@ class Paths(object):
       elif config.target_os == Config.OS_CHROMEOS:
         subdir += "chromeos_"
       subdir += "Debug" if config.is_debug else "Release"
+      if config.sanitizer == Config.SANITIZER_ASAN:
+        subdir += "_asan"
       self.build_dir = os.path.join(self.src_root, "out", subdir)
     elif build_dir is not None:
       self.build_dir = os.path.abspath(build_dir)

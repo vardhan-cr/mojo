@@ -153,9 +153,6 @@ def _run_tests(config, test_types):
   config = deepcopy(config)
   config.values['test_types'] = test_types
 
-  if _get_gn_arg_value(_get_out_dir(config), 'is_asan') == 'true':
-    config.values["sanitizer"] = Config.SANITIZER_ASAN
-
   test_list = GetTestList(config)
   dry_run = config.values.get('dry_run')
   final_exit_code = 0
@@ -194,6 +191,9 @@ def main():
       '/testing Mojo components easier.')
 
   parent_parser = argparse.ArgumentParser(add_help=False)
+  parent_parser.add_argument('--asan', help='Use Address Sanitizer',
+                             action='store_true')
+
   debug_group = parent_parser.add_mutually_exclusive_group()
   debug_group.add_argument('--debug', help='Debug build (default)',
                            default=True, action='store_true')
@@ -215,8 +215,6 @@ def main():
   gn_parser = subparsers.add_parser('gn', parents=[parent_parser],
                                     help='Run gn for mojo (does not sync).')
   gn_parser.set_defaults(func=gn)
-  gn_parser.add_argument('--asan', help='Uses Address Sanitizer',
-                         action='store_true')
   gn_parser.add_argument('--with-dart', help='Configure the Dart bindings',
                          action='store_true')
   clang_group = gn_parser.add_mutually_exclusive_group()
