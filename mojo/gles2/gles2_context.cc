@@ -10,7 +10,6 @@
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/system/core.h"
 
-namespace mojo {
 namespace gles2 {
 
 namespace {
@@ -21,12 +20,13 @@ const size_t kDefaultMaxTransferBufferSize = 16 * 1024 * 1024;
 }
 
 GLES2Context::GLES2Context(const MojoAsyncWaiter* async_waiter,
-                           ScopedMessagePipeHandle command_buffer_handle,
+                           mojo::ScopedMessagePipeHandle command_buffer_handle,
                            MojoGLES2ContextLost lost_callback,
                            void* closure)
     : command_buffer_(this, async_waiter, command_buffer_handle.Pass()),
       lost_callback_(lost_callback),
-      closure_(closure) {}
+      closure_(closure) {
+}
 
 GLES2Context::~GLES2Context() {}
 
@@ -62,4 +62,3 @@ bool GLES2Context::Initialize() {
 void GLES2Context::ContextLost() { lost_callback_(closure_); }
 
 }  // namespace gles2
-}  // namespace mojo

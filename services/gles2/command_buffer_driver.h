@@ -31,7 +31,7 @@ class GLShareGroup;
 class GLSurface;
 }
 
-namespace mojo {
+namespace gles2 {
 
 class CommandBufferDriver {
  public:
@@ -59,19 +59,19 @@ class CommandBufferDriver {
 
   void set_client(Client* client) { client_ = client; }
 
-  void Initialize(CommandBufferSyncClientPtr sync_client,
-                  ScopedSharedBufferHandle shared_state);
+  void Initialize(mojo::CommandBufferSyncClientPtr sync_client,
+                  mojo::ScopedSharedBufferHandle shared_state);
   void SetGetBuffer(int32_t buffer);
   void Flush(int32_t put_offset);
   void MakeProgress(int32_t last_get_offset);
   void RegisterTransferBuffer(int32_t id,
-                              ScopedSharedBufferHandle transfer_buffer,
+                              mojo::ScopedSharedBufferHandle transfer_buffer,
                               uint32_t size);
   void DestroyTransferBuffer(int32_t id);
-  void Echo(const Callback<void()>& callback);
+  void Echo(const mojo::Callback<void()>& callback);
 
  private:
-  bool DoInitialize(ScopedSharedBufferHandle shared_state);
+  bool DoInitialize(mojo::ScopedSharedBufferHandle shared_state);
   void OnResize(gfx::Size size, float scale_factor);
   bool OnWaitSyncPoint(uint32_t sync_point);
   void OnSyncPointRetired();
@@ -81,7 +81,7 @@ class CommandBufferDriver {
                                const base::TimeDelta interval);
 
   Client* client_;
-  CommandBufferSyncClientPtr sync_client_;
+  mojo::CommandBufferSyncClientPtr sync_client_;
   gfx::AcceleratedWidget widget_;
   gfx::Size size_;
   scoped_ptr<gpu::CommandBufferService> command_buffer_;
@@ -101,6 +101,6 @@ class CommandBufferDriver {
   DISALLOW_COPY_AND_ASSIGN(CommandBufferDriver);
 };
 
-}  // namespace mojo
+}  // namespace gles2
 
 #endif  // SERVICES_GLES2_COMMAND_BUFFER_DRIVER_H_

@@ -23,7 +23,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
-namespace mojo {
+namespace gles2 {
 
 namespace {
 
@@ -83,17 +83,19 @@ CommandBufferDriver::~CommandBufferDriver() {
   client_->DidDestroy();
 }
 
-void CommandBufferDriver::Initialize(CommandBufferSyncClientPtr sync_client,
-                                     ScopedSharedBufferHandle shared_state) {
+void CommandBufferDriver::Initialize(
+    mojo::CommandBufferSyncClientPtr sync_client,
+    mojo::ScopedSharedBufferHandle shared_state) {
   sync_client_ = sync_client.Pass();
   bool success = DoInitialize(shared_state.Pass());
-  GpuCapabilitiesPtr capabilities =
-      success ? GpuCapabilities::From(decoder_->GetCapabilities())
-              : GpuCapabilities::New();
+  mojo::GpuCapabilitiesPtr capabilities =
+      success ? mojo::GpuCapabilities::From(decoder_->GetCapabilities())
+              : mojo::GpuCapabilities::New();
   sync_client_->DidInitialize(success, capabilities.Pass());
 }
 
-bool CommandBufferDriver::DoInitialize(ScopedSharedBufferHandle shared_state) {
+bool CommandBufferDriver::DoInitialize(
+    mojo::ScopedSharedBufferHandle shared_state) {
   if (widget_ == gfx::kNullAcceleratedWidget)
     surface_ = gfx::GLSurface::CreateOffscreenGLSurface(size_);
   else {
@@ -181,12 +183,12 @@ void CommandBufferDriver::Flush(int32_t put_offset) {
 void CommandBufferDriver::MakeProgress(int32_t last_get_offset) {
   // TODO(piman): handle out-of-order.
   sync_client_->DidMakeProgress(
-      CommandBufferState::From(command_buffer_->GetLastState()));
+      mojo::CommandBufferState::From(command_buffer_->GetLastState()));
 }
 
 void CommandBufferDriver::RegisterTransferBuffer(
     int32_t id,
-    ScopedSharedBufferHandle transfer_buffer,
+    mojo::ScopedSharedBufferHandle transfer_buffer,
     uint32_t size) {
   // Take ownership of the memory and map it into this process.
   // This validates the size.
@@ -203,7 +205,7 @@ void CommandBufferDriver::DestroyTransferBuffer(int32_t id) {
   command_buffer_->DestroyTransferBuffer(id);
 }
 
-void CommandBufferDriver::Echo(const Callback<void()>& callback) {
+void CommandBufferDriver::Echo(const mojo::Callback<void()>& callback) {
   callback.Run();
 }
 
@@ -242,4 +244,4 @@ void CommandBufferDriver::OnUpdateVSyncParameters(
   client_->UpdateVSyncParameters(timebase, interval);
 }
 
-}  // namespace mojo
+}  // namespace gles2

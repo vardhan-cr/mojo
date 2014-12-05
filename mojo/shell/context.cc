@@ -131,7 +131,7 @@ class Context::NativeViewportApplicationLoader
       public InterfaceFactory<NativeViewport>,
       public InterfaceFactory<Gpu> {
  public:
-  NativeViewportApplicationLoader() : gpu_state_(new GpuImpl::State) {}
+  NativeViewportApplicationLoader() : gpu_state_(new gles2::GpuImpl::State) {}
   virtual ~NativeViewportApplicationLoader() {}
 
  private:
@@ -164,10 +164,10 @@ class Context::NativeViewportApplicationLoader
   // InterfaceFactory<Gpu> implementation.
   virtual void Create(ApplicationConnection* connection,
                       InterfaceRequest<Gpu> request) override {
-    new GpuImpl(request.Pass(), gpu_state_);
+    new gles2::GpuImpl(request.Pass(), gpu_state_);
   }
 
-  scoped_refptr<GpuImpl::State> gpu_state_;
+  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
   scoped_ptr<ApplicationImpl> app_;
   DISALLOW_COPY_AND_ASSIGN(NativeViewportApplicationLoader);
 };

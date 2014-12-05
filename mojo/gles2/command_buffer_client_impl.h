@@ -19,7 +19,6 @@ namespace base {
 class RunLoop;
 }
 
-namespace mojo {
 namespace gles2 {
 class CommandBufferClientImpl;
 
@@ -29,15 +28,15 @@ class CommandBufferDelegate {
   virtual void ContextLost();
 };
 
-class CommandBufferClientImpl : public CommandBufferClient,
-                                public ErrorHandler,
+class CommandBufferClientImpl : public mojo::CommandBufferClient,
+                                public mojo::ErrorHandler,
                                 public gpu::CommandBuffer,
                                 public gpu::GpuControl {
  public:
   explicit CommandBufferClientImpl(
       CommandBufferDelegate* delegate,
       const MojoAsyncWaiter* async_waiter,
-      ScopedMessagePipeHandle command_buffer_handle);
+      mojo::ScopedMessagePipeHandle command_buffer_handle);
   ~CommandBufferClientImpl() override;
 
   // CommandBuffer implementation:
@@ -89,7 +88,7 @@ class CommandBufferClientImpl : public CommandBufferClient,
   gpu::CommandBufferSharedState* shared_state() const { return shared_state_; }
 
   CommandBufferDelegate* delegate_;
-  CommandBufferPtr command_buffer_;
+  mojo::CommandBufferPtr command_buffer_;
   scoped_ptr<SyncClientImpl> sync_client_impl_;
   scoped_ptr<SyncPointClientImpl> sync_point_client_impl_;
 
@@ -104,6 +103,5 @@ class CommandBufferClientImpl : public CommandBufferClient,
 };
 
 }  // gles2
-}  // mojo
 
 #endif  // MOJO_GLES2_COMMAND_BUFFER_CLIENT_IMPL_H_

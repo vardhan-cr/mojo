@@ -10,7 +10,6 @@
 #include "gpu/command_buffer/common/buffer.h"
 #include "mojo/public/cpp/system/core.h"
 
-namespace mojo {
 namespace gles2 {
 
 class MojoBufferBacking : public gpu::BufferBacking {
@@ -36,6 +35,5 @@ class MojoBufferBacking : public gpu::BufferBacking {
 };
 
 }  // namespace gles2
-}  // namespace mojo
 
 #endif  // SERVICES_GLES2_MOJO_BUFFER_BACKING_H_

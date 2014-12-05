@@ -21,14 +21,13 @@ class GLES2Implementation;
 }
 }
 
-namespace mojo {
 namespace gles2 {
 
 class GLES2Context : public CommandBufferDelegate,
                      public MojoGLES2ContextPrivate {
  public:
   explicit GLES2Context(const MojoAsyncWaiter* async_waiter,
-                        ScopedMessagePipeHandle command_buffer_handle,
+                        mojo::ScopedMessagePipeHandle command_buffer_handle,
                         MojoGLES2ContextLost lost_callback,
                         void* closure);
   ~GLES2Context() override;
@@ -53,6 +52,5 @@ class GLES2Context : public CommandBufferDelegate,
 };
 
 }  // namespace gles2
-}  // namespace mojo
 
 #endif  // MOJO_GLES2_GLES2_CONTEXT_H_

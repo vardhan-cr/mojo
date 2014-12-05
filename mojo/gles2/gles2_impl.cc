@@ -10,7 +10,7 @@
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/gles2/gles2_context.h"
 
-using mojo::gles2::GLES2Context;
+using gles2::GLES2Context;
 
 namespace {
 

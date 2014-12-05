@@ -13,7 +13,7 @@
 #include "ui/gl/gl_share_group.h"
 #include "ui/gl/gl_surface.h"
 
-namespace mojo {
+namespace gles2 {
 
 GpuImpl::State::State()
     : control_thread_("gpu_command_buffer_control"),
@@ -26,7 +26,7 @@ GpuImpl::State::State()
 GpuImpl::State::~State() {
 }
 
-GpuImpl::GpuImpl(InterfaceRequest<Gpu> request,
+GpuImpl::GpuImpl(mojo::InterfaceRequest<Gpu> request,
                  const scoped_refptr<State>& state)
     : binding_(this, request.Pass()), state_(state) {
 }
@@ -36,9 +36,9 @@ GpuImpl::~GpuImpl() {
 
 void GpuImpl::CreateOnscreenGLES2Context(
     uint64_t native_viewport_id,
-    SizePtr size,
-    InterfaceRequest<CommandBuffer> request,
-    ViewportParameterListenerPtr listener) {
+    mojo::SizePtr size,
+    mojo::InterfaceRequest<mojo::CommandBuffer> request,
+    mojo::ViewportParameterListenerPtr listener) {
   gfx::AcceleratedWidget widget = bit_cast<gfx::AcceleratedWidget>(
       static_cast<uintptr_t>(native_viewport_id));
   new CommandBufferImpl(
@@ -50,8 +50,8 @@ void GpuImpl::CreateOnscreenGLES2Context(
 }
 
 void GpuImpl::CreateOffscreenGLES2Context(
-    InterfaceRequest<CommandBuffer> request) {
-  new CommandBufferImpl(request.Pass(), ViewportParameterListenerPtr(),
+    mojo::InterfaceRequest<mojo::CommandBuffer> request) {
+  new CommandBufferImpl(request.Pass(), mojo::ViewportParameterListenerPtr(),
                         state_->control_task_runner(),
                         state_->sync_point_manager(),
                         make_scoped_ptr(new CommandBufferDriver(
@@ -59,4 +59,4 @@ void GpuImpl::CreateOffscreenGLES2Context(
                             state_->sync_point_manager())));
 }
 
-}  // namespace mojo
+}  // namespace gles2

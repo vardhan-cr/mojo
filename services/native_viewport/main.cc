@@ -60,12 +60,12 @@ class NativeViewportAppDelegate
   void Create(ApplicationConnection* connection,
               InterfaceRequest<Gpu> request) override {
     if (!gpu_state_.get())
-      gpu_state_ = new GpuImpl::State;
-    new GpuImpl(request.Pass(), gpu_state_);
+      gpu_state_ = new gles2::GpuImpl::State;
+    new gles2::GpuImpl(request.Pass(), gpu_state_);
   }
 
   ApplicationImpl* app_;
-  scoped_refptr<GpuImpl::State> gpu_state_;
+  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
   bool is_headless_;
   DISALLOW_COPY_AND_ASSIGN(NativeViewportAppDelegate);
 };

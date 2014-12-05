@@ -11,7 +11,6 @@
 #include "services/gles2/command_buffer_type_conversions.h"
 #include "services/gles2/mojo_buffer_backing.h"
 
-namespace mojo {
 namespace gles2 {
 
 namespace {
@@ -45,9 +44,10 @@ CommandBufferDelegate::~CommandBufferDelegate() {}
 
 void CommandBufferDelegate::ContextLost() {}
 
-class CommandBufferClientImpl::SyncClientImpl : public CommandBufferSyncClient {
+class CommandBufferClientImpl::SyncClientImpl
+    : public mojo::CommandBufferSyncClient {
  public:
-  SyncClientImpl(CommandBufferSyncClientPtr* ptr,
+  SyncClientImpl(mojo::CommandBufferSyncClientPtr* ptr,
                  const MojoAsyncWaiter* async_waiter)
       : initialized_successfully_(false), binding_(this, ptr, async_waiter) {}
 
@@ -57,9 +57,9 @@ class CommandBufferClientImpl::SyncClientImpl : public CommandBufferSyncClient {
     return initialized_successfully_;
   }
 
-  CommandBufferStatePtr WaitForProgress() {
+  mojo::CommandBufferStatePtr WaitForProgress() {
     if (!binding_.WaitForIncomingMethodCall())
-      return CommandBufferStatePtr();
+      return mojo::CommandBufferStatePtr();
     return command_buffer_state_.Pass();
   }
 
@@ -69,26 +69,27 @@ class CommandBufferClientImpl::SyncClientImpl : public CommandBufferSyncClient {
 
  private:
   // CommandBufferSyncClient methods:
-  void DidInitialize(bool success, GpuCapabilitiesPtr capabilities) override {
+  void DidInitialize(bool success,
+                     mojo::GpuCapabilitiesPtr capabilities) override {
     initialized_successfully_ = success;
     capabilities_ = capabilities.Pass();
   }
-  void DidMakeProgress(CommandBufferStatePtr state) override {
+  void DidMakeProgress(mojo::CommandBufferStatePtr state) override {
     command_buffer_state_ = state.Pass();
   }
 
   bool initialized_successfully_;
-  GpuCapabilitiesPtr capabilities_;
-  CommandBufferStatePtr command_buffer_state_;
-  Binding<CommandBufferSyncClient> binding_;
+  mojo::GpuCapabilitiesPtr capabilities_;
+  mojo::CommandBufferStatePtr command_buffer_state_;
+  mojo::Binding<mojo::CommandBufferSyncClient> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SyncClientImpl);
 };
 
 class CommandBufferClientImpl::SyncPointClientImpl
-    : public CommandBufferSyncPointClient {
+    : public mojo::CommandBufferSyncPointClient {
  public:
-  SyncPointClientImpl(CommandBufferSyncPointClientPtr* ptr,
+  SyncPointClientImpl(mojo::CommandBufferSyncPointClientPtr* ptr,
                       const MojoAsyncWaiter* async_waiter)
       : sync_point_(0u), binding_(this, ptr, async_waiter) {}
 
@@ -107,13 +108,13 @@ class CommandBufferClientImpl::SyncPointClientImpl
 
   uint32_t sync_point_;
 
-  Binding<CommandBufferSyncPointClient> binding_;
+  mojo::Binding<mojo::CommandBufferSyncPointClient> binding_;
 };
 
 CommandBufferClientImpl::CommandBufferClientImpl(
     CommandBufferDelegate* delegate,
     const MojoAsyncWaiter* async_waiter,
-    ScopedMessagePipeHandle command_buffer_handle)
+    mojo::ScopedMessagePipeHandle command_buffer_handle)
     : delegate_(delegate),
       shared_state_(NULL),
       last_put_offset_(-1),
@@ -139,10 +140,10 @@ bool CommandBufferClientImpl::Initialize() {
 
   shared_state()->Initialize();
 
-  CommandBufferSyncClientPtr sync_client;
+  mojo::CommandBufferSyncClientPtr sync_client;
   sync_client_impl_.reset(new SyncClientImpl(&sync_client, async_waiter_));
 
-  CommandBufferSyncPointClientPtr sync_point_client;
+  mojo::CommandBufferSyncPointClientPtr sync_point_client;
   sync_point_client_impl_.reset(
       new SyncPointClientImpl(&sync_point_client, async_waiter_));
 
@@ -312,7 +313,7 @@ void CommandBufferClientImpl::TryUpdateState() {
 void CommandBufferClientImpl::MakeProgressAndUpdateState() {
   command_buffer_->MakeProgress(last_state_.get_offset);
 
-  CommandBufferStatePtr state = sync_client_impl_->WaitForProgress();
+  mojo::CommandBufferStatePtr state = sync_client_impl_->WaitForProgress();
   if (!state) {
     VLOG(1) << "Channel encountered error while waiting for command buffer";
     // TODO(piman): is it ok for this to re-enter?
@@ -325,4 +326,3 @@ void CommandBufferClientImpl::MakeProgressAndUpdateState() {
 }
 
 }  // namespace gles2
-}  // namespace mojo

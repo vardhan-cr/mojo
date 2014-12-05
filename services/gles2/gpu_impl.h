@@ -25,9 +25,9 @@ class MailboxManager;
 }
 }
 
-namespace mojo {
+namespace gles2 {
 
-class GpuImpl : public Gpu {
+class GpuImpl : public mojo::Gpu {
  public:
   // We need to share these across all CommandBuffer instances so that contexts
   // they create can share resources with each other via mailboxes.
@@ -62,25 +62,26 @@ class GpuImpl : public Gpu {
     scoped_refptr<gpu::gles2::MailboxManager> mailbox_manager_;
   };
 
-  GpuImpl(InterfaceRequest<Gpu> request, const scoped_refptr<State>& state);
+  GpuImpl(mojo::InterfaceRequest<mojo::Gpu> request,
+          const scoped_refptr<State>& state);
   ~GpuImpl() override;
 
   void CreateOnscreenGLES2Context(
       uint64_t native_viewport_id,
-      SizePtr size,
-      InterfaceRequest<CommandBuffer> command_buffer_request,
-      ViewportParameterListenerPtr listener) override;
+      mojo::SizePtr size,
+      mojo::InterfaceRequest<mojo::CommandBuffer> command_buffer_request,
+      mojo::ViewportParameterListenerPtr listener) override;
 
-  void CreateOffscreenGLES2Context(
-      InterfaceRequest<CommandBuffer> command_buffer_request) override;
+  void CreateOffscreenGLES2Context(mojo::InterfaceRequest<mojo::CommandBuffer>
+                                       command_buffer_request) override;
 
  private:
-  StrongBinding<Gpu> binding_;
+  mojo::StrongBinding<Gpu> binding_;
   scoped_refptr<State> state_;
 
   DISALLOW_COPY_AND_ASSIGN(GpuImpl);
 };
 
-}  // namespace mojo
+}  // namespace gles2
 
 #endif  // SERVICES_GLES2_GPU_IMPL_H_

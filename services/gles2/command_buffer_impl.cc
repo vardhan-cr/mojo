@@ -9,13 +9,13 @@
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "services/gles2/command_buffer_driver.h"
 
-namespace mojo {
+namespace gles2 {
 namespace {
 void DestroyDriver(scoped_ptr<CommandBufferDriver> driver) {
   // Just let ~scoped_ptr run.
 }
 
-void RunCallback(const Callback<void()>& callback) {
+void RunCallback(const mojo::Callback<void()>& callback) {
   callback.Run();
 }
 
@@ -49,8 +49,8 @@ class CommandBufferDriverClientImpl : public CommandBufferDriver::Client {
 }
 
 CommandBufferImpl::CommandBufferImpl(
-    InterfaceRequest<CommandBuffer> request,
-    ViewportParameterListenerPtr listener,
+    mojo::InterfaceRequest<mojo::CommandBuffer> request,
+    mojo::ViewportParameterListenerPtr listener,
     scoped_refptr<base::SingleThreadTaskRunner> control_task_runner,
     gpu::SyncPointManager* sync_point_manager,
     scoped_ptr<CommandBufferDriver> driver)
@@ -75,9 +75,9 @@ CommandBufferImpl::~CommandBufferImpl() {
 }
 
 void CommandBufferImpl::Initialize(
-    CommandBufferSyncClientPtr sync_client,
-    CommandBufferSyncPointClientPtr sync_point_client,
-    ScopedSharedBufferHandle shared_state) {
+    mojo::CommandBufferSyncClientPtr sync_client,
+    mojo::CommandBufferSyncPointClientPtr sync_point_client,
+    mojo::ScopedSharedBufferHandle shared_state) {
   sync_point_client_ = sync_point_client.Pass();
   driver_task_runner_->PostTask(
       FROM_HERE,
@@ -106,7 +106,7 @@ void CommandBufferImpl::MakeProgress(int32_t last_get_offset) {
 
 void CommandBufferImpl::RegisterTransferBuffer(
     int32_t id,
-    ScopedSharedBufferHandle transfer_buffer,
+    mojo::ScopedSharedBufferHandle transfer_buffer,
     uint32_t size) {
   driver_task_runner_->PostTask(
       FROM_HERE, base::Bind(&CommandBufferDriver::RegisterTransferBuffer,
@@ -136,12 +136,13 @@ void CommandBufferImpl::RetireSyncPoint(uint32_t sync_point) {
                             sync_point_manager_, sync_point));
 }
 
-void CommandBufferImpl::Echo(const Callback<void()>& callback) {
+void CommandBufferImpl::Echo(const mojo::Callback<void()>& callback) {
   driver_task_runner_->PostTaskAndReply(FROM_HERE, base::Bind(&base::DoNothing),
                                         base::Bind(&RunCallback, callback));
 }
 
-void CommandBufferImpl::BindToRequest(InterfaceRequest<CommandBuffer> request) {
+void CommandBufferImpl::BindToRequest(
+    mojo::InterfaceRequest<mojo::CommandBuffer> request) {
   binding_.Bind(request.Pass());
 }
 
@@ -157,4 +158,4 @@ void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
       timebase.ToInternalValue(), interval.ToInternalValue());
 }
 
-}  // namespace mojo
+}  // namespace gles2
