@@ -85,7 +85,7 @@ public class AndroidHandler {
             bootstrap_native_library = FileHelper.extractFromAssets(context,
                     BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context));
         } catch (Exception e) {
-            Log.e(TAG, "Extraction of bootstrap files from assets failed: " + e);
+            Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
             return false;
         }
 
@@ -98,7 +98,7 @@ public class AndroidHandler {
             application_native_library = FileHelper.extractFromArchive(archive,
                     NATIVE_LIBRARY_SUFFIX, getAppDir(context));
         } catch (Exception e) {
-            Log.e(TAG, "Extraction of application files from the archive failed: " + e);
+            Log.e(TAG, "Extraction of application files from the archive failed.",  e);
             return false;
         }
 
@@ -118,7 +118,7 @@ public class AndroidHandler {
                     Long.valueOf(runApplicationPtr));
             bootstrapRunnable.run();
         } catch (Throwable t) {
-            Log.e(TAG, "Running Bootstrap failed: " + t);
+            Log.e(TAG, "Running Bootstrap failed.", t);
             return false;
         }
         return true;
