@@ -10,7 +10,7 @@
 
 #include "mojo/services/public/interfaces/clipboard/clipboard.mojom.h"
 
-namespace mojo {
+namespace clipboard {
 
 // Stub clipboard implementation.
 //
@@ -19,7 +19,7 @@ namespace mojo {
 // ui::Clipboard interface is synchronous (which is what we'd use), mojo is
 // asynchronous across processes, and the WebClipboard interface is synchronous
 // (which is at least tractable).
-class ClipboardStandaloneImpl : public InterfaceImpl<mojo::Clipboard> {
+class ClipboardStandaloneImpl : public mojo::InterfaceImpl<mojo::Clipboard> {
  public:
   // mojo::Clipboard exposes three possible clipboards.
   static const int kNumClipboards = 3;
@@ -29,17 +29,17 @@ class ClipboardStandaloneImpl : public InterfaceImpl<mojo::Clipboard> {
 
   // InterfaceImpl<mojo::Clipboard> implementation.
   void GetSequenceNumber(
-      Clipboard::Type clipboard_type,
+      mojo::Clipboard::Type clipboard_type,
       const mojo::Callback<void(uint64_t)>& callback) override;
   void GetAvailableMimeTypes(
-      Clipboard::Type clipboard_types,
+      mojo::Clipboard::Type clipboard_types,
       const mojo::Callback<void(mojo::Array<mojo::String>)>& callback) override;
   void ReadMimeType(
-      Clipboard::Type clipboard_type,
+      mojo::Clipboard::Type clipboard_type,
       const mojo::String& mime_type,
       const mojo::Callback<void(mojo::Array<uint8_t>)>& callback) override;
   void WriteClipboardData(
-      Clipboard::Type clipboard_type,
+      mojo::Clipboard::Type clipboard_type,
       mojo::Map<mojo::String, mojo::Array<uint8_t>> data) override;
 
  private:
@@ -54,6 +54,6 @@ class ClipboardStandaloneImpl : public InterfaceImpl<mojo::Clipboard> {
   DISALLOW_COPY_AND_ASSIGN(ClipboardStandaloneImpl);
 };
 
-}  // namespace mojo
+}  // namespace clipboard
 
 #endif  // SERVICES_CLIPBOARD_CLIPBOARD_STANDALONE_IMPL_H_

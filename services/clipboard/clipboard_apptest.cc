@@ -9,6 +9,11 @@
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/services/public/interfaces/clipboard/clipboard.mojom.h"
 
+using mojo::Array;
+using mojo::Clipboard;
+using mojo::Map;
+using mojo::String;
+
 namespace {
 
 void CopyUint64AndEndRunloop(uint64_t* output,
@@ -21,7 +26,7 @@ void CopyUint64AndEndRunloop(uint64_t* output,
 void CopyStringAndEndRunloop(std::string* output,
                              bool* string_is_null,
                              base::RunLoop* run_loop,
-                             const mojo::Array<uint8_t>& input) {
+                             const Array<uint8_t>& input) {
   *string_is_null = input.is_null();
   *output = input.is_null() ? "" : input.To<std::string>();
   run_loop->Quit();
@@ -29,7 +34,7 @@ void CopyStringAndEndRunloop(std::string* output,
 
 void CopyVectorStringAndEndRunloop(std::vector<std::string>* output,
                                    base::RunLoop* run_loop,
-                                   const mojo::Array<mojo::String>& input) {
+                                   const Array<String>& input) {
   *output = input.To<std::vector<std::string> >();
   run_loop->Quit();
 }
@@ -40,16 +45,15 @@ const char* kHtmlData = "<html>data</html>";
 
 }  // namespace
 
-namespace mojo {
-namespace service {
+namespace clipboard {
 
-class ClipboardAppTest : public test::ApplicationTestBase {
+class ClipboardAppTest : public mojo::test::ApplicationTestBase {
  public:
   ClipboardAppTest() : ApplicationTestBase() {}
   ~ClipboardAppTest() override {}
 
   void SetUp() override {
-    ApplicationTestBase::SetUp();
+    mojo::test::ApplicationTestBase::SetUp();
     application_impl()->ConnectToService("mojo:clipboard", &clipboard_);
   }
 
@@ -57,7 +61,7 @@ class ClipboardAppTest : public test::ApplicationTestBase {
     base::RunLoop run_loop;
     uint64_t sequence_num = 999999;
     clipboard_->GetSequenceNumber(
-        mojo::Clipboard::TYPE_COPY_PASTE,
+        Clipboard::TYPE_COPY_PASTE,
         base::Bind(&CopyUint64AndEndRunloop, &sequence_num, &run_loop));
     run_loop.Run();
     return sequence_num;
@@ -68,7 +72,7 @@ class ClipboardAppTest : public test::ApplicationTestBase {
     std::vector<std::string> types;
     types.push_back(kUninitialized);
     clipboard_->GetAvailableMimeTypes(
-        mojo::Clipboard::TYPE_COPY_PASTE,
+        Clipboard::TYPE_COPY_PASTE,
         base::Bind(&CopyVectorStringAndEndRunloop, &types, &run_loop));
     run_loop.Run();
     return types;
@@ -78,8 +82,7 @@ class ClipboardAppTest : public test::ApplicationTestBase {
     base::RunLoop run_loop;
     bool is_null = false;
     clipboard_->ReadMimeType(
-        mojo::Clipboard::TYPE_COPY_PASTE,
-        mime_type,
+        Clipboard::TYPE_COPY_PASTE, mime_type,
         base::Bind(&CopyStringAndEndRunloop, data, &is_null, &run_loop));
     run_loop.Run();
     return !is_null;
@@ -87,13 +90,13 @@ class ClipboardAppTest : public test::ApplicationTestBase {
 
   void SetStringText(const std::string& data) {
     Map<String, Array<uint8_t>> mime_data;
-    mime_data[mojo::Clipboard::MIME_TYPE_TEXT] = Array<uint8_t>::From(data);
-    clipboard_->WriteClipboardData(mojo::Clipboard::TYPE_COPY_PASTE,
+    mime_data[Clipboard::MIME_TYPE_TEXT] = Array<uint8_t>::From(data);
+    clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE,
                                    mime_data.Pass());
   }
 
  protected:
-  ClipboardPtr clipboard_;
+  mojo::ClipboardPtr clipboard_;
 
   DISALLOW_COPY_AND_ASSIGN(ClipboardAppTest);
 };
@@ -102,37 +105,36 @@ TEST_F(ClipboardAppTest, EmptyClipboardOK) {
   EXPECT_EQ(0ul, GetSequenceNumber());
   EXPECT_TRUE(GetAvailableFormatMimeTypes().empty());
   std::string data;
-  EXPECT_FALSE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_FALSE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
 }
 
 TEST_F(ClipboardAppTest, CanReadBackText) {
   std::string data;
-  EXPECT_FALSE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_FALSE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
   EXPECT_EQ(0ul, GetSequenceNumber());
 
   SetStringText(kPlainTextData);
   EXPECT_EQ(1ul, GetSequenceNumber());
 
-  EXPECT_TRUE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_TRUE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
   EXPECT_EQ(kPlainTextData, data);
 }
 
 TEST_F(ClipboardAppTest, CanSetMultipleDataTypesAtOnce) {
   Map<String, Array<uint8_t>> mime_data;
-  mime_data[mojo::Clipboard::MIME_TYPE_TEXT] =
+  mime_data[Clipboard::MIME_TYPE_TEXT] =
       Array<uint8_t>::From(std::string(kPlainTextData));
-  mime_data[mojo::Clipboard::MIME_TYPE_HTML] =
+  mime_data[Clipboard::MIME_TYPE_HTML] =
       Array<uint8_t>::From(std::string(kHtmlData));
 
-  clipboard_->WriteClipboardData(mojo::Clipboard::TYPE_COPY_PASTE,
-                                 mime_data.Pass());
+  clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE, mime_data.Pass());
 
   EXPECT_EQ(1ul, GetSequenceNumber());
 
   std::string data;
-  EXPECT_TRUE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_TRUE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
   EXPECT_EQ(kPlainTextData, data);
-  EXPECT_TRUE(GetDataOfType(mojo::Clipboard::MIME_TYPE_HTML, &data));
+  EXPECT_TRUE(GetDataOfType(Clipboard::MIME_TYPE_HTML, &data));
   EXPECT_EQ(kHtmlData, data);
 }
 
@@ -141,16 +143,14 @@ TEST_F(ClipboardAppTest, CanClearClipboardWithZeroArray) {
   SetStringText(kPlainTextData);
   EXPECT_EQ(1ul, GetSequenceNumber());
 
-  EXPECT_TRUE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_TRUE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
   EXPECT_EQ(kPlainTextData, data);
 
   Map<String, Array<uint8_t>> mime_data;
-  clipboard_->WriteClipboardData(mojo::Clipboard::TYPE_COPY_PASTE,
-                                 mime_data.Pass());
+  clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE, mime_data.Pass());
 
   EXPECT_EQ(2ul, GetSequenceNumber());
-  EXPECT_FALSE(GetDataOfType(mojo::Clipboard::MIME_TYPE_TEXT, &data));
+  EXPECT_FALSE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace clipboard

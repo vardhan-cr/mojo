@@ -34,7 +34,7 @@ class Delegate : public mojo::ApplicationDelegate,
               mojo::InterfaceRequest<mojo::Clipboard> request) override {
     // TODO(erg): Write native implementations of the clipboard. For now, we
     // just build a clipboard which doesn't interact with the system.
-    mojo::BindToRequest(new mojo::ClipboardStandaloneImpl(), &request);
+    mojo::BindToRequest(new clipboard::ClipboardStandaloneImpl(), &request);
   }
 };
 

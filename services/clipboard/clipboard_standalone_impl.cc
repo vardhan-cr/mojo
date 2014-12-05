@@ -6,7 +6,15 @@
 
 #include <string.h>
 
-namespace mojo {
+#include "mojo/public/cpp/bindings/array.h"
+#include "mojo/public/cpp/bindings/callback.h"
+#include "mojo/public/cpp/bindings/string.h"
+
+using mojo::Array;
+using mojo::Map;
+using mojo::String;
+
+namespace clipboard {
 
 // ClipboardData contains data copied to the Clipboard for a variety of formats.
 // It mostly just provides APIs to cleanly access and manipulate this data.
@@ -26,7 +34,7 @@ class ClipboardStandaloneImpl::ClipboardData {
 
   void SetData(Map<String, Array<uint8_t>> data) { data_types_ = data.Pass(); }
 
-  void GetData(const String& mime_type, mojo::Array<uint8_t>* data) const {
+  void GetData(const String& mime_type, Array<uint8_t>* data) const {
     auto it = data_types_.find(mime_type);
     if (it != data_types_.end())
       *data = it.GetValue().Clone();
@@ -56,24 +64,24 @@ void ClipboardStandaloneImpl::GetSequenceNumber(
 
 void ClipboardStandaloneImpl::GetAvailableMimeTypes(
     Clipboard::Type clipboard_type,
-    const mojo::Callback<void(mojo::Array<mojo::String>)>& callback) {
+    const mojo::Callback<void(Array<String>)>& callback) {
   callback.Run(clipboard_state_[clipboard_type]->GetMimeTypes().Pass());
 }
 
 void ClipboardStandaloneImpl::ReadMimeType(
     Clipboard::Type clipboard_type,
-    const mojo::String& mime_type,
-    const mojo::Callback<void(mojo::Array<uint8_t>)>& callback) {
-  mojo::Array<uint8_t> mime_data;
+    const String& mime_type,
+    const mojo::Callback<void(Array<uint8_t>)>& callback) {
+  Array<uint8_t> mime_data;
   clipboard_state_[clipboard_type]->GetData(mime_type, &mime_data);
   callback.Run(mime_data.Pass());
 }
 
 void ClipboardStandaloneImpl::WriteClipboardData(
     Clipboard::Type clipboard_type,
-    mojo::Map<mojo::String, mojo::Array<uint8_t>> data) {
+    Map<String, Array<uint8_t>> data) {
   sequence_number_[clipboard_type]++;
   clipboard_state_[clipboard_type]->SetData(data.Pass());
 }
 
-}  // namespace mojo
+}  // namespace clipboard
