@@ -10,7 +10,7 @@
 #include "mojo/public/c/system/main.h"
 #include "services/surfaces/surfaces_service_impl.h"
 
-namespace mojo {
+namespace surfaces {
 
 SurfacesServiceApplication::SurfacesServiceApplication()
     : next_id_namespace_(1u), display_(nullptr) {
@@ -19,20 +19,20 @@ SurfacesServiceApplication::SurfacesServiceApplication()
 SurfacesServiceApplication::~SurfacesServiceApplication() {
 }
 
-void SurfacesServiceApplication::Initialize(ApplicationImpl* app) {
-  TracingImpl::Create(app);
+void SurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
+  mojo::TracingImpl::Create(app);
   scheduler_.reset(new SurfacesScheduler(this));
 }
 
 bool SurfacesServiceApplication::ConfigureIncomingConnection(
-    ApplicationConnection* connection) {
+    mojo::ApplicationConnection* connection) {
   connection->AddService(this);
   return true;
 }
 
 void SurfacesServiceApplication::Create(
-    ApplicationConnection* connection,
-    InterfaceRequest<SurfacesService> request) {
+    mojo::ApplicationConnection* connection,
+    mojo::InterfaceRequest<mojo::SurfacesService> request) {
   new SurfacesServiceImpl(&manager_, &next_id_namespace_, this, request.Pass());
 }
 
@@ -60,9 +60,10 @@ void SurfacesServiceApplication::Draw() {
     display_->Draw();
 }
 
-}  // namespace mojo
+}  // namespace surfaces
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new mojo::SurfacesServiceApplication);
+  mojo::ApplicationRunnerChromium runner(
+      new surfaces::SurfacesServiceApplication);
   return runner.Run(shell_handle);
 }

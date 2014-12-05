@@ -14,16 +14,16 @@ namespace cc {
 class SurfaceManager;
 }
 
-namespace mojo {
+namespace surfaces {
 
-class SurfacesServiceImpl : public SurfacesService {
+class SurfacesServiceImpl : public mojo::SurfacesService {
  public:
   // The instances pointed to by |manager|, |next_id_namespace| and |client| are
   // owned by the caller and must outlive the SurfacesServiceImpl instance.
   SurfacesServiceImpl(cc::SurfaceManager* manager,
                       uint32_t* next_id_namespace,
                       SurfacesImpl::Client* client,
-                      InterfaceRequest<SurfacesService> request);
+                      mojo::InterfaceRequest<mojo::SurfacesService> request);
 
   ~SurfacesServiceImpl() override;
 
@@ -36,11 +36,11 @@ class SurfacesServiceImpl : public SurfacesService {
   cc::SurfaceManager* manager_;
   uint32_t* next_id_namespace_;
   SurfacesImpl::Client* client_;
-  StrongBinding<SurfacesService> binding_;
+  mojo::StrongBinding<SurfacesService> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesServiceImpl);
 };
 
-}  // namespace mojo
+}  // namespace surfaces
 
 #endif  // SERVICES_SURFACES_SURFACES_SERVICE_IMPL_H_

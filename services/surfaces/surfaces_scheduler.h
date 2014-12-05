@@ -7,7 +7,7 @@
 
 #include "cc/scheduler/scheduler.h"
 
-namespace mojo {
+namespace surfaces {
 
 class SurfacesScheduler : public cc::SchedulerClient {
  public:

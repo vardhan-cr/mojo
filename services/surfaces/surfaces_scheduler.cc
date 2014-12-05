@@ -4,7 +4,7 @@
 
 #include "services/surfaces/surfaces_scheduler.h"
 
-namespace mojo {
+namespace surfaces {
 
 SurfacesScheduler::Client::~Client() {
 }

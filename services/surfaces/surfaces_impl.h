@@ -21,11 +21,14 @@ class Display;
 
 namespace mojo {
 class ApplicationManager;
+}
+
+namespace surfaces {
 
 class SurfaceNativeViewportClient;
 
-class SurfacesImpl : public Surface,
-                     public ViewportParameterListener,
+class SurfacesImpl : public mojo::Surface,
+                     public mojo::ViewportParameterListener,
                      public cc::SurfaceFactoryClient,
                      public cc::DisplayClient {
  public:
@@ -41,21 +44,22 @@ class SurfacesImpl : public Surface,
   SurfacesImpl(cc::SurfaceManager* manager,
                uint32_t id_namespace,
                Client* client,
-               SurfacePtr* surface);
+               mojo::SurfacePtr* surface);
 
   ~SurfacesImpl() override;
 
   // Surface implementation.
-  void CreateSurface(SurfaceIdPtr id, mojo::SizePtr size) override;
-  void SubmitFrame(SurfaceIdPtr id,
-                   FramePtr frame,
+  void CreateSurface(mojo::SurfaceIdPtr id, mojo::SizePtr size) override;
+  void SubmitFrame(mojo::SurfaceIdPtr id,
+                   mojo::FramePtr frame,
                    const mojo::Closure& callback) override;
-  void DestroySurface(SurfaceIdPtr id) override;
+  void DestroySurface(mojo::SurfaceIdPtr id) override;
   void CreateGLES2BoundSurface(
-      CommandBufferPtr gles2_client,
-      SurfaceIdPtr id,
+      mojo::CommandBufferPtr gles2_client,
+      mojo::SurfaceIdPtr id,
       mojo::SizePtr size,
-      InterfaceRequest<ViewportParameterListener> listener_request) override;
+      mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request)
+      override;
 
   // SurfaceFactoryClient implementation.
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
@@ -80,13 +84,13 @@ class SurfacesImpl : public Surface,
   uint32_t id_namespace_;
   Client* client_;
   scoped_ptr<cc::Display> display_;
-  ScopedMessagePipeHandle command_buffer_handle_;
-  WeakBindingSet<ViewportParameterListener> parameter_listeners_;
-  StrongBinding<Surface> binding_;
+  mojo::ScopedMessagePipeHandle command_buffer_handle_;
+  mojo::WeakBindingSet<ViewportParameterListener> parameter_listeners_;
+  mojo::StrongBinding<Surface> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesImpl);
 };
 
-}  // namespace mojo
+}  // namespace surfaces
 
 #endif  // SERVICES_SURFACES_SURFACES_IMPL_H_

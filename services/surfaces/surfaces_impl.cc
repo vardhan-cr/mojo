@@ -14,9 +14,12 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 
-namespace mojo {
+using mojo::SurfaceIdPtr;
+
+namespace surfaces {
+
 namespace {
-void CallCallback(const Closure& callback) {
+void CallCallback(const mojo::Closure& callback) {
   callback.Run();
 }
 }
@@ -24,7 +27,7 @@ void CallCallback(const Closure& callback) {
 SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
                            uint32_t id_namespace,
                            Client* client,
-                           SurfacePtr* surface)
+                           mojo::SurfacePtr* surface)
     : manager_(manager),
       factory_(manager, this),
       id_namespace_(id_namespace),
@@ -37,7 +40,7 @@ SurfacesImpl::~SurfacesImpl() {
   factory_.DestroyAll();
 }
 
-void SurfacesImpl::CreateSurface(SurfaceIdPtr id, SizePtr size) {
+void SurfacesImpl::CreateSurface(SurfaceIdPtr id, mojo::SizePtr size) {
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
   if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
     // Bad message, do something bad to the caller?
@@ -48,8 +51,8 @@ void SurfacesImpl::CreateSurface(SurfaceIdPtr id, SizePtr size) {
 }
 
 void SurfacesImpl::SubmitFrame(SurfaceIdPtr id,
-                               FramePtr frame_ptr,
-                               const Closure& callback) {
+                               mojo::FramePtr frame_ptr,
+                               const mojo::Closure& callback) {
   TRACE_EVENT0("mojo", "SurfacesImpl::SubmitFrame");
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
   if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
@@ -76,10 +79,10 @@ void SurfacesImpl::DestroySurface(SurfaceIdPtr id) {
 }
 
 void SurfacesImpl::CreateGLES2BoundSurface(
-    CommandBufferPtr gles2_client,
+    mojo::CommandBufferPtr gles2_client,
     SurfaceIdPtr id,
-    SizePtr size,
-    InterfaceRequest<ViewportParameterListener> listener_request) {
+    mojo::SizePtr size,
+    mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request) {
   command_buffer_handle_ = gles2_client.PassMessagePipe();
 
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
@@ -94,8 +97,8 @@ void SurfacesImpl::CreateGLES2BoundSurface(
     cc::RendererSettings settings;
     display_.reset(new cc::Display(this, manager_, nullptr, nullptr, settings));
     client_->SetDisplay(display_.get());
-    display_->Initialize(make_scoped_ptr(new DirectOutputSurface(
-        new ContextProviderMojo(command_buffer_handle_.Pass()))));
+    display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
+        new mojo::ContextProviderMojo(command_buffer_handle_.Pass()))));
   }
   factory_.Create(cc_id);
   display_->SetSurfaceId(cc_id, 1.f);
@@ -104,9 +107,9 @@ void SurfacesImpl::CreateGLES2BoundSurface(
 }
 
 void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
-  Array<ReturnedResourcePtr> ret(resources.size());
+  mojo::Array<mojo::ReturnedResourcePtr> ret(resources.size());
   for (size_t i = 0; i < resources.size(); ++i) {
-    ret[i] = ReturnedResource::From(resources[i]);
+    ret[i] = mojo::ReturnedResource::From(resources[i]);
   }
   binding_.client()->ReturnResources(ret.Pass());
 }

@@ -16,22 +16,27 @@
 
 namespace mojo {
 class ApplicationConnection;
+}
 
-class SurfacesServiceApplication : public ApplicationDelegate,
-                                   public InterfaceFactory<SurfacesService>,
-                                   public SurfacesImpl::Client,
-                                   public SurfacesScheduler::Client {
+namespace surfaces {
+
+class SurfacesServiceApplication
+    : public mojo::ApplicationDelegate,
+      public mojo::InterfaceFactory<mojo::SurfacesService>,
+      public SurfacesImpl::Client,
+      public SurfacesScheduler::Client {
  public:
   SurfacesServiceApplication();
   ~SurfacesServiceApplication() override;
 
   // ApplicationDelegate implementation.
-  void Initialize(ApplicationImpl* app) override;
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
+  void Initialize(mojo::ApplicationImpl* app) override;
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override;
 
   // InterfaceFactory<SurfacsServicee> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<SurfacesService> request) override;
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::SurfacesService> request) override;
 
   // SurfacesImpl::Client implementation.
   void OnVSyncParametersUpdated(base::TimeTicks timebase,
@@ -52,6 +57,6 @@ class SurfacesServiceApplication : public ApplicationDelegate,
   DISALLOW_COPY_AND_ASSIGN(SurfacesServiceApplication);
 };
 
-}  // namespace mojo
+}  // namespace surfaces
 
 #endif  //  SERVICES_SURFACES_SURFACES_SERVICE_APPLICATION_H_

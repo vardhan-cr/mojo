@@ -4,13 +4,13 @@
 
 #include "services/surfaces/surfaces_service_impl.h"
 
-namespace mojo {
+namespace surfaces {
 
 SurfacesServiceImpl::SurfacesServiceImpl(
     cc::SurfaceManager* manager,
     uint32_t* next_id_namespace,
     SurfacesImpl::Client* client,
-    InterfaceRequest<SurfacesService> request)
+    mojo::InterfaceRequest<mojo::SurfacesService> request)
     : manager_(manager),
       next_id_namespace_(next_id_namespace),
       client_(client),
@@ -21,11 +21,11 @@ SurfacesServiceImpl::~SurfacesServiceImpl() {
 }
 
 void SurfacesServiceImpl::CreateSurfaceConnection(
-    const Callback<void(SurfacePtr, uint32_t)>& callback) {
+    const mojo::Callback<void(mojo::SurfacePtr, uint32_t)>& callback) {
   uint32_t id_namespace = (*next_id_namespace_)++;
-  SurfacePtr surface;
+  mojo::SurfacePtr surface;
   new SurfacesImpl(manager_, id_namespace, client_, &surface);
   callback.Run(surface.Pass(), id_namespace);
 }
 
-}  // namespace mojo
+}  // namespace surfaces
