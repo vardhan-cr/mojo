@@ -23,6 +23,14 @@ ProxyMessagePipeEndpoint::~ProxyMessagePipeEndpoint() {
   DCHECK(!channel_endpoint_);
 }
 
+scoped_refptr<ChannelEndpoint>
+ProxyMessagePipeEndpoint::ReleaseChannelEndpoint() {
+  DCHECK(channel_endpoint_);
+  scoped_refptr<ChannelEndpoint> rv;
+  rv.swap(channel_endpoint_);
+  return rv;
+}
+
 MessagePipeEndpoint::Type ProxyMessagePipeEndpoint::GetType() const {
   return kTypeProxy;
 }

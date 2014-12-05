@@ -67,6 +67,8 @@
     'system/data_pipe_producer_dispatcher.h',
     'system/dispatcher.cc',
     'system/dispatcher.h',
+    'system/endpoint_relayer.cc',
+    'system/endpoint_relayer.h',
     'system/handle_signals_state.h',
     'system/handle_table.cc',
     'system/handle_table.h',

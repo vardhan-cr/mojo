@@ -8,6 +8,7 @@
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
+#include "mojo/edk/system/endpoint_relayer.h"
 #include "mojo/edk/system/local_message_pipe_endpoint.h"
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
@@ -115,7 +116,7 @@ void MessagePipe::CancelAllAwakables(unsigned port) {
 void MessagePipe::Close(unsigned port) {
   DCHECK(port == 0 || port == 1);
 
-  unsigned destination_port = GetPeerPort(port);
+  unsigned peer_port = GetPeerPort(port);
 
   base::AutoLock locker(lock_);
   // The endpoint's |OnPeerClose()| may have been called first and returned
@@ -124,9 +125,9 @@ void MessagePipe::Close(unsigned port) {
     return;
 
   endpoints_[port]->Close();
-  if (endpoints_[destination_port]) {
-    if (!endpoints_[destination_port]->OnPeerClose())
-      endpoints_[destination_port].reset();
+  if (endpoints_[peer_port]) {
+    if (!endpoints_[peer_port]->OnPeerClose())
+      endpoints_[peer_port].reset();
   }
   endpoints_[port].reset();
 }
@@ -246,16 +247,17 @@ bool MessagePipe::EndSerialize(
     //     We also pass its |ChannelEndpoint| to the channel, which then decides
     //     what to do. We have no reason to continue to exist.
     //
-    // TODO(vtl): Factor some of this out to |ChannelEndpoint|.
+    // TODO(vtl): Factor some of this out to |ChannelEndpoint| (or |Channel|).
 
-    if (!endpoints_[GetPeerPort(port)]) {
+    unsigned peer_port = GetPeerPort(port);
+    if (!endpoints_[peer_port]) {
       // Case 1.
       channel_endpoint = new ChannelEndpoint(
           nullptr, 0, static_cast<LocalMessagePipeEndpoint*>(
                           endpoints_[port].get())->message_queue());
       endpoints_[port]->Close();
       endpoints_[port].reset();
-    } else if (endpoints_[GetPeerPort(port)]->GetType() ==
+    } else if (endpoints_[peer_port]->GetType() ==
                MessagePipeEndpoint::kTypeLocal) {
       // Case 2.
       channel_endpoint = new ChannelEndpoint(
@@ -266,15 +268,44 @@ bool MessagePipe::EndSerialize(
           new ProxyMessagePipeEndpoint(channel_endpoint.get()));
     } else {
       // Case 3.
-      // TODO(vtl): Temporarily the same as case 2.
       DLOG(WARNING) << "Direct message pipe passing across multiple channels "
                        "not yet implemented; will proxy";
+
+      // Create an |EndpointRelayer| to replace ourselves (rather than having a
+      // |MessagePipe| object that exists solely to relay messages between two
+      // |ChannelEndpoint|s, owned by the |Channel| through them.
+      //
+      // This reduces overhead somewhat, and more importantly restores some
+      // invariants, e.g., that |MessagePipe|s are owned by dispatchers.
+      //
+      // TODO(vtl): If we get the |Channel| to own/track the relayer directly,
+      // then possibly we could make |ChannelEndpoint|'s |client_| pointer a raw
+      // pointer (and not have the |Channel| owning the relayer via its
+      // |ChannelEndpoint|s.
+      //
+      // TODO(vtl): This is not obviously the right place for (all of) this
+      // logic, nor is it obviously factored correctly.
+
+      DCHECK_EQ(endpoints_[peer_port]->GetType(),
+                MessagePipeEndpoint::kTypeProxy);
+      ProxyMessagePipeEndpoint* peer_endpoint =
+          static_cast<ProxyMessagePipeEndpoint*>(endpoints_[peer_port].get());
+      scoped_refptr<ChannelEndpoint> peer_channel_endpoint =
+          peer_endpoint->ReleaseChannelEndpoint();
+
+      scoped_refptr<EndpointRelayer> relayer(new EndpointRelayer());
+      // We'll assign our peer port's endpoint to the relayer's port 1, and this
+      // port's endpoint to the relayer's port 0.
       channel_endpoint = new ChannelEndpoint(
-          this, port, static_cast<LocalMessagePipeEndpoint*>(
-                          endpoints_[port].get())->message_queue());
+          relayer.get(), 0, static_cast<LocalMessagePipeEndpoint*>(
+                                endpoints_[port].get())->message_queue());
+      relayer->Init(channel_endpoint.get(), peer_channel_endpoint.get());
+      peer_channel_endpoint->ReplaceClient(relayer.get(), 1);
+
       endpoints_[port]->Close();
-      endpoints_[port].reset(
-          new ProxyMessagePipeEndpoint(channel_endpoint.get()));
+      endpoints_[port].reset();
+      // No need to call |Close()| after |ReleaseChannelEndpoint()|.
+      endpoints_[peer_port].reset();
     }
   }
 
