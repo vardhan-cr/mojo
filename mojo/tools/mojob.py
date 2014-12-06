@@ -127,19 +127,10 @@ def _get_gn_arg_value(out_dir, arg):
 
 
 def build(config):
+  # Ninja prints the output directory and gn-generated ninja knows how to start
+  # goma. The -l will protect from flooding the machine if goma fails to start.
   out_dir = _get_out_dir(config)
-  print 'Building in %s ...' % out_dir
   if _get_gn_arg_value(out_dir, 'use_goma') == 'true':
-    # Use the configured goma directory.
-    local_goma_dir = _get_gn_arg_value(out_dir, 'goma_dir')
-    print 'Ensuring goma (in %s) started ...' % local_goma_dir
-    command = ['python',
-               os.path.join(local_goma_dir, 'goma_ctl.py'),
-               'ensure_start']
-    exit_code = subprocess.call(command)
-    if exit_code:
-      return exit_code
-
     return subprocess.call(['ninja', '-j', '1000', '-l', '100', '-C', out_dir,
                             'root'])
   else:
