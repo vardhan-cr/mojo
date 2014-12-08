@@ -14,7 +14,6 @@
 #include "services/js/js_app_runner_delegate.h"
 #include "v8/include/v8.h"
 
-namespace mojo {
 namespace js {
 
 class JSApp;
@@ -24,10 +23,10 @@ class ApplicationDelegateImpl;
 // Each JavaScript app started by the content handler runs on its own thread
 // and in its own V8 isolate. This class represents one running JS app.
 
-class JSApp : public InterfaceImpl<Application>,
-              public ContentHandlerFactory::HandledApplicationHolder {
+class JSApp : public mojo::InterfaceImpl<mojo::Application>,
+              public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
-  JSApp(ShellPtr shell, URLResponsePtr response);
+  JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response);
   virtual ~JSApp();
 
   // This method delegates to shell_->ConnectToApplication().
@@ -41,16 +40,16 @@ class JSApp : public InterfaceImpl<Application>,
   void OnAppLoaded(std::string url, v8::Handle<v8::Value> module);
 
   // Application methods:
-  void AcceptConnection(const String& requestor_url,
-                        ServiceProviderPtr provider) override;
-  void Initialize(Array<String> args) override;
+  void AcceptConnection(const mojo::String& requestor_url,
+                        mojo::ServiceProviderPtr provider) override;
+  void Initialize(mojo::Array<mojo::String> args) override;
 
   void CallAppInstanceMethod(
       const std::string& name, int argc, v8::Handle<v8::Value> argv[]);
 
   void QuitInternal();
 
-  ShellPtr shell_;
+  mojo::ShellPtr shell_;
   JSAppRunnerDelegate runner_delegate_;
   gin::IsolateHolder isolate_holder_;
   scoped_ptr<gin::ShellRunner> shell_runner_;
@@ -61,6 +60,5 @@ class JSApp : public InterfaceImpl<Application>,
 };
 
 }  // namespace js
-}  // namespace mojo
 
 #endif  // SERVICES_JS_JS_APP_H_

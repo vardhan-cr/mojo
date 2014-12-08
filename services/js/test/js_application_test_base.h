@@ -10,10 +10,10 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 
-namespace mojo {
+namespace js {
 namespace test {
 
-class JSApplicationTestBase : public test::ApplicationTestBase {
+class JSApplicationTestBase : public mojo::test::ApplicationTestBase {
  public:
   JSApplicationTestBase();
   ~JSApplicationTestBase() override;
@@ -25,6 +25,6 @@ class JSApplicationTestBase : public test::ApplicationTestBase {
 };
 
 }  // namespace test
-}  // namespace mojo
+}  // namespace js
 
 #endif  // SERVICES_JS_TEST_JS_APPLICATION_TEST_BASE_H_

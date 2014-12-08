@@ -7,7 +7,6 @@
 #include "gin/object_template_builder.h"
 #include "services/js/js_app.h"
 
-namespace mojo {
 namespace js {
 
 gin::WrapperInfo JSAppShell::kWrapperInfo = {gin::kEmbedderNativeGin};
@@ -36,4 +35,3 @@ void JSAppShell::ConnectToApplication(const std::string& application_url,
 }
 
 }  // namespace js
-}  // namespace mojo

@@ -9,7 +9,6 @@
 #include "gin/shell_runner.h"
 #include "gin/try_catch.h"
 
-namespace mojo {
 namespace js {
 
 class JSAppRunnerDelegate : public gin::ModuleRunnerDelegate {
@@ -26,6 +25,5 @@ class JSAppRunnerDelegate : public gin::ModuleRunnerDelegate {
 };
 
 }  // namespace js
-}  // namespace mojo
 
 #endif  // SERVICES_JS_JS_APP_RUNNER_DELEGATE_H_

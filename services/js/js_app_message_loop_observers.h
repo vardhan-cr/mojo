@@ -9,7 +9,6 @@
 #include "mojo/common/message_pump_mojo.h"
 #include "v8/include/v8.h"
 
-namespace mojo {
 namespace js {
 
 class JSAppMessageLoopObservers {
@@ -27,7 +26,7 @@ class JSAppMessageLoopObservers {
     JSAppMessageLoopObservers* loop_observers_;
   };
 
-  class SignalObserver : public common::MessagePumpMojo::Observer {
+  class SignalObserver : public mojo::common::MessagePumpMojo::Observer {
    public:
     explicit SignalObserver(JSAppMessageLoopObservers* loop_observers);
     void WillSignalHandler() override;
@@ -44,6 +43,5 @@ class JSAppMessageLoopObservers {
 };
 
 }  // namespace js
-}  // namespace mojo
 
 #endif  // SERVICES_JS_JS_APP_MESSAGE_LOOP_OBSERVERS_H_

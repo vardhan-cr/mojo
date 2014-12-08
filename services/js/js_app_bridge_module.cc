@@ -11,7 +11,6 @@
 #include "mojo/edk/js/handle.h"
 #include "services/js/js_app.h"
 
-namespace mojo {
 namespace js {
 
 namespace {
@@ -39,4 +38,3 @@ v8::Local<v8::Value> AppBridge::GetModule(JSApp* js_app, v8::Isolate* isolate) {
 }
 
 }  // namespace js
-}  // namespace mojo

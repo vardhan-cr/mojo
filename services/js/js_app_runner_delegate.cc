@@ -11,7 +11,6 @@
 #include "mojo/edk/js/support.h"
 #include "mojo/edk/js/threading.h"
 
-namespace mojo {
 namespace js {
 
 namespace {
@@ -29,9 +28,11 @@ std::vector<base::FilePath> GetModuleSearchPaths() {
 JSAppRunnerDelegate::JSAppRunnerDelegate()
     : ModuleRunnerDelegate(GetModuleSearchPaths()) {
   AddBuiltinModule(gin::Console::kModuleName, gin::Console::GetModule);
-  AddBuiltinModule(Core::kModuleName, Core::GetModule);
-  AddBuiltinModule(Support::kModuleName, Support::GetModule);
-  AddBuiltinModule(Threading::kModuleName, Threading::GetModule);
+  AddBuiltinModule(mojo::js::Core::kModuleName, mojo::js::Core::GetModule);
+  AddBuiltinModule(mojo::js::Support::kModuleName,
+                   mojo::js::Support::GetModule);
+  AddBuiltinModule(mojo::js::Threading::kModuleName,
+                   mojo::js::Threading::GetModule);
 }
 
 JSAppRunnerDelegate::~JSAppRunnerDelegate() {
@@ -43,6 +44,5 @@ void JSAppRunnerDelegate::UnhandledException(gin::ShellRunner* runner,
   LOG(ERROR) << try_catch.GetStackTrace();
 }
 
-}  // namespace mojo
 } // namespace js
 

@@ -4,7 +4,6 @@
 
 #include "services/js/js_app_message_loop_observers.h"
 
-namespace mojo {
 namespace js {
 
 JSAppMessageLoopObservers::JSAppMessageLoopObservers(v8::Isolate* isolate)
@@ -12,12 +11,12 @@ JSAppMessageLoopObservers::JSAppMessageLoopObservers(v8::Isolate* isolate)
     task_observer_(this),
     signal_observer_(this) {
   base::MessageLoop::current()->AddTaskObserver(&task_observer_);
-  common::MessagePumpMojo::current()->AddObserver(&signal_observer_);
+  mojo::common::MessagePumpMojo::current()->AddObserver(&signal_observer_);
 }
 
 JSAppMessageLoopObservers::~JSAppMessageLoopObservers() {
   base::MessageLoop::current()->RemoveTaskObserver(&task_observer_);
-  common::MessagePumpMojo::current()->RemoveObserver(&signal_observer_);
+  mojo::common::MessagePumpMojo::current()->RemoveObserver(&signal_observer_);
 }
 
 JSAppMessageLoopObservers::TaskObserver::TaskObserver(
@@ -52,4 +51,3 @@ void JSAppMessageLoopObservers::RunMicrotasks() {
 }
 
 }  // namespace js
-}  // namespace mojo

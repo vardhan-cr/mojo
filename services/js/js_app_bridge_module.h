@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_JS_MOJO_MODULE_H_
-#define MOJO_SERVICES_JS_MOJO_MODULE_H_
+#ifndef SERVICES_JS_JS_APP_BRIDGE_MODULE_H_
+#define SERVICES_JS_JS_APP_BRIDGE_MODULE_H_
 
 #include "gin/gin_export.h"
 #include "v8/include/v8.h"
 
-namespace mojo {
 namespace js {
 
 class JSApp;
@@ -24,6 +23,5 @@ class AppBridge {
 };
 
 }  // namespace js
-}  // namespace mojo
 
-#endif  // MOJO_SERVICES_JS_MOJO_MODULE_H_
+#endif  // SERVICES_JS_JS_APP_BRIDGE_MODULE_H_

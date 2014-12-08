@@ -12,17 +12,16 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/js/js_app.h"
 
-namespace mojo {
 namespace js {
 
-class JsContentHandler : public ApplicationDelegate,
-                         public ContentHandlerFactory::ManagedDelegate {
+class JsContentHandler : public mojo::ApplicationDelegate,
+                         public mojo::ContentHandlerFactory::ManagedDelegate {
  public:
   JsContentHandler() : content_handler_factory_(this) {}
 
  private:
-  // Overridden from ApplicationDelegate:
-  void Initialize(ApplicationImpl* app) override {
+  // Overridden from mojo::ApplicationDelegate:
+  void Initialize(mojo::ApplicationImpl* app) override {
     static const char v8Flags[] = "--harmony-classes";
     v8::V8::SetFlagsFromString(v8Flags, sizeof(v8Flags) - 1);
     base::i18n::InitializeICU();
@@ -31,27 +30,27 @@ class JsContentHandler : public ApplicationDelegate,
   }
 
   // Overridden from ApplicationDelegate:
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
     return true;
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  scoped_ptr<ContentHandlerFactory::HandledApplicationHolder> CreateApplication(
-      ShellPtr shell,
-      URLResponsePtr response) override {
+  scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
+  CreateApplication(mojo::ShellPtr shell,
+                    mojo::URLResponsePtr response) override {
     return make_scoped_ptr(new JSApp(shell.Pass(), response.Pass()));
   }
 
-  ContentHandlerFactory content_handler_factory_;
+  mojo::ContentHandlerFactory content_handler_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(JsContentHandler);
 };
 
 }  // namespace js
-}  // namespace mojo
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new mojo::js::JsContentHandler);
+  mojo::ApplicationRunnerChromium runner(new js::JsContentHandler);
   return runner.Run(shell_handle);
 }

@@ -18,7 +18,6 @@
 #include "services/js/js_app_message_loop_observers.h"
 #include "services/js/js_app_shell.h"
 
-namespace mojo {
 namespace js {
 
 namespace {
@@ -80,14 +79,15 @@ bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
 
 const char JSApp::kMainModuleName[] = "main";
 
-JSApp::JSApp(ShellPtr shell, URLResponsePtr response) : shell_(shell.Pass()) {
+JSApp::JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response)
+    : shell_(shell.Pass()) {
   v8::Isolate* isolate = isolate_holder_.isolate();
   message_loop_observers_.reset(new JSAppMessageLoopObservers(isolate));
 
   DCHECK(!response.is_null());
   std::string url(response->url);
   std::string source;
-  CHECK(common::BlockingCopyToString(response->body.Pass(), &source));
+  CHECK(mojo::common::BlockingCopyToString(response->body.Pass(), &source));
 
   runner_delegate_.AddBuiltinModule(AppBridge::kModuleName,
       base::Bind(&AppBridge::GetModule, base::Unretained(this)));
@@ -135,10 +135,11 @@ void JSApp::ConnectToApplication(const std::string& application_url,
   mojo::Handle handle;
   if (GetConnectionMessagePipeHandle(isolate, service_provider, &handle) ||
       gin::ConvertFromV8(isolate, service_provider, &handle)) {
-    MessagePipeHandle message_pipe_handle(handle.value());
-    ScopedMessagePipeHandle scoped_handle(message_pipe_handle);
+    mojo::MessagePipeHandle message_pipe_handle(handle.value());
+    mojo::ScopedMessagePipeHandle scoped_handle(message_pipe_handle);
     shell_->ConnectToApplication(
-        application_url, MakeRequest<ServiceProvider>(scoped_handle.Pass()));
+        application_url,
+        mojo::MakeRequest<mojo::ServiceProvider>(scoped_handle.Pass()));
   }
 }
 
@@ -153,7 +154,7 @@ void JSApp::CallAppInstanceMethod(
   shell_runner_->Call(app_method, app, argc, argv);
 }
 
-void JSApp::Initialize(Array<String> app_args) {
+void JSApp::Initialize(mojo::Array<mojo::String> app_args) {
   gin::Runner::Scope scope(shell_runner_.get());
   v8::Isolate* isolate = isolate_holder_.isolate();
   v8::Handle<v8::Value> argv[] = {
@@ -162,8 +163,8 @@ void JSApp::Initialize(Array<String> app_args) {
   CallAppInstanceMethod("initialize", 1, argv);
 }
 
-void JSApp::AcceptConnection(const String& requestor_url,
-                             ServiceProviderPtr provider) {
+void JSApp::AcceptConnection(const mojo::String& requestor_url,
+                             mojo::ServiceProviderPtr provider) {
   gin::Runner::Scope scope(shell_runner_.get());
   v8::Isolate* isolate = isolate_holder_.isolate();
   v8::Handle<v8::Value> argv[] = {
@@ -184,5 +185,4 @@ void JSApp::QuitInternal() {
 }
 
 }  // namespace js
-}  // namespace mojo
 

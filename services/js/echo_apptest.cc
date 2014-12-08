@@ -5,7 +5,9 @@
 #include "services/js/test/echo_service.mojom.h"
 #include "services/js/test/js_application_test_base.h"
 
-namespace mojo {
+using mojo::String;
+
+namespace js {
 namespace {
 
 class JSEchoTest : public test::JSApplicationTestBase {
@@ -21,7 +23,7 @@ class JSEchoTest : public test::JSApplicationTestBase {
     application_impl()->ConnectToService(url, &echo_service_);
   }
 
-  EchoServicePtr echo_service_;
+  mojo::EchoServicePtr echo_service_;
 
  private:
   MOJO_DISALLOW_COPY_AND_ASSIGN(JSEchoTest);
@@ -63,4 +65,4 @@ TEST_F(JSEchoTest, EchoNullString) {
 }
 
 } // namespace
-} // namespace mojo
+}  // namespace js

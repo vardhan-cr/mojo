@@ -5,7 +5,7 @@
 #include "services/js/test/js_application_test_base.h"
 #include "services/js/test/pingpong_service.mojom.h"
 
-namespace mojo {
+namespace js {
 namespace {
 
 class PingPongClientImpl : public PingPongClient {
@@ -80,4 +80,4 @@ TEST_F(JSPingPongTest, PingTargetApp) {
 }
 
 }  // namespace
-}  // namespace mojo
+}  // namespace js

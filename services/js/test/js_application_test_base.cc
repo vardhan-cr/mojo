@@ -4,7 +4,7 @@
 
 #include "services/js/test/js_application_test_base.h"
 
-namespace mojo {
+namespace js {
 namespace test {
 
 JSApplicationTestBase::JSApplicationTestBase() {}

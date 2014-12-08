@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_JS_JS_APP_SHELL_H_
-#define MOJO_SERVICES_JS_JS_APP_SHELL_H_
+#ifndef SERVICES_JS_JS_APP_SHELL_H_
+#define SERVICES_JS_JS_APP_SHELL_H_
 
 #include "gin/handle.h"
 #include "gin/wrappable.h"
 #include "mojo/edk/js/handle.h"
 
-namespace mojo {
 namespace js {
 
 class JSApp;
@@ -37,6 +36,5 @@ class JSAppShell : public gin::Wrappable<JSAppShell> {
 };
 
 }  // namespace js
-}  // namespace mojo
 
-#endif  // MOJO_SERVICES_JS_JS_APP_SHELL_H_
+#endif  // SERVICES_JS_JS_APP_SHELL_H_
