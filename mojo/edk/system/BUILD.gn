@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("../mojo_edk.gni")
+
 if (is_android) {
   import("//build/config/android/config.gni")
   import("//build/config/android/rules.gni")
@@ -107,7 +109,7 @@ component("system") {
   allow_circular_includes_from = [ "../embedder" ]
 }
 
-source_set("test_utils") {
+mojo_edk_source_set("test_utils") {
   testonly = true
 
   sources = [
