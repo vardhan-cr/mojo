@@ -7,13 +7,14 @@
 
 #include <stdint.h>
 
+#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 
 namespace mojo {
 namespace system {
 
 // An interface that may be waited on |AwakableList|.
-class Awakable {
+class MOJO_SYSTEM_IMPL_EXPORT Awakable {
  public:
   // |Awake()| must satisfy the following contract:
   // * As this is called from any thread, this must be thread-safe.
