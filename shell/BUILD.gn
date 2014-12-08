@@ -21,6 +21,10 @@ group("shell") {
   if (!is_win) {
     deps += [ ":mojo_launcher" ]
   }
+
+  if (is_android) {
+    deps += [ ":mojo_shell_apk" ]
+  }
 }
 
 group("tests") {
