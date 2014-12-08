@@ -10,7 +10,6 @@
 #include "gin/public/wrapper_info.h"
 #include "mojo/public/cpp/system/core.h"
 
-namespace mojo {
 namespace js {
 
 namespace {
@@ -40,4 +39,3 @@ v8::Local<v8::Value> MonotonicClock::GetModule(v8::Isolate* isolate) {
 }
 
 }  // namespace js
-}  // namespace mojo

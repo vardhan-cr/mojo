@@ -4,28 +4,24 @@
 
 #include "base/files/file_path.h"
 #include "base/path_service.h"
-#include "gin/modules/console.h"
 #include "gin/modules/module_registry.h"
 #include "gin/modules/timer.h"
 #include "gin/test/file_runner.h"
 #include "gin/test/gtest.h"
-#include "mojo/edk/js/core.h"
 #include "mojo/edk/js/threading.h"
 #include "services/js/modules/clock/monotonic_clock.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace js {
 namespace {
 
 class TestRunnerDelegate : public gin::FileRunnerDelegate {
  public:
   TestRunnerDelegate() {
-    AddBuiltinModule(gin::Console::kModuleName, gin::Console::GetModule);
-    AddBuiltinModule(Core::kModuleName, Core::GetModule);
     AddBuiltinModule(gin::TimerModule::kName, gin::TimerModule::GetModule);
     AddBuiltinModule(MonotonicClock::kModuleName, MonotonicClock::GetModule);
-    AddBuiltinModule(Threading::kModuleName, Threading::GetModule);
+    AddBuiltinModule(
+        mojo::js::Threading::kModuleName, mojo::js::Threading::GetModule);
   }
 
  private:
@@ -52,4 +48,3 @@ TEST(JSTest, monotonic_clock) {
 
 }  // namespace
 }  // namespace js
-}  // namespace mojo

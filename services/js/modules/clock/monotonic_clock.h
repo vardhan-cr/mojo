@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_
-#define MOJO_SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_
+#ifndef SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_
+#define SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_
 
 #include "v8/include/v8.h"
 
-namespace mojo {
 namespace js {
 
 class MonotonicClock {
@@ -17,6 +16,5 @@ class MonotonicClock {
 };
 
 }  // namespace js
-}  // namespace mojo
 
-#endif // MOJO_SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_
+#endif // SERVICES_JS_MODULES_CLOCK_MONOTONIC_CLOCK_H_

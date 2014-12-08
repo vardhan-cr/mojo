@@ -38,6 +38,8 @@ mojo_native_application("js_content_handler") {
     "//mojo/public/interfaces/application",
     "//mojo/services/public/interfaces/content_handler",
     "//mojo/services/public/interfaces/network",
+    "//services/js/modules/clock",
+    "//services/js/modules/gl",
   ]
 }
 

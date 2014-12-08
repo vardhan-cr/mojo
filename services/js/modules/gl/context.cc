@@ -27,7 +27,6 @@ struct Converter<GLboolean> {
 };
 }
 
-namespace mojo {
 namespace js {
 namespace gl {
 
@@ -158,7 +157,7 @@ Context::Context(v8::Isolate* isolate,
   context_ = MojoGLES2CreateContext(handle.value(),
                                     &ContextLostThunk,
                                     this,
-                                    Environment::GetDefaultAsyncWaiter());
+                                    mojo::Environment::GetDefaultAsyncWaiter());
   MojoGLES2MakeCurrent(context_);
 }
 
@@ -184,4 +183,3 @@ void Context::ContextLostThunk(void* closure) {
 
 }  // namespace gl
 }  // namespace js
-}  // namespace mojo

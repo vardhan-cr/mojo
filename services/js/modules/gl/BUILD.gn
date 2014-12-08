@@ -17,5 +17,6 @@ source_set("gl") {
     "//mojo/edk/js",
     "//mojo/environment:chromium",
     "//mojo/public/c/gles2",
+    "//mojo/public/cpp/environment",
   ]
 }

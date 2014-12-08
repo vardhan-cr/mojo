@@ -10,6 +10,8 @@
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"
 #include "mojo/edk/js/threading.h"
+#include "services/js/modules/clock/monotonic_clock.h"
+#include "services/js/modules/gl/module.h"
 
 namespace js {
 
@@ -23,16 +25,22 @@ std::vector<base::FilePath> GetModuleSearchPaths() {
   return search_paths;
 }
 
+// Shorten the AddBuiltinModule statements a little.
+template<typename T>
+void AddBuiltin(gin::ModuleRunnerDelegate* delegate) {
+  delegate->AddBuiltinModule(T::kModuleName, T::GetModule);
+}
+
 } // namespace
 
 JSAppRunnerDelegate::JSAppRunnerDelegate()
     : ModuleRunnerDelegate(GetModuleSearchPaths()) {
-  AddBuiltinModule(gin::Console::kModuleName, gin::Console::GetModule);
-  AddBuiltinModule(mojo::js::Core::kModuleName, mojo::js::Core::GetModule);
-  AddBuiltinModule(mojo::js::Support::kModuleName,
-                   mojo::js::Support::GetModule);
-  AddBuiltinModule(mojo::js::Threading::kModuleName,
-                   mojo::js::Threading::GetModule);
+  AddBuiltin<gin::Console>(this);
+  AddBuiltin<mojo::js::Core>(this);
+  AddBuiltin<mojo::js::Support>(this);
+  AddBuiltin<mojo::js::Threading>(this);
+  AddBuiltin<gl::GL>(this);
+  AddBuiltin<MonotonicClock>(this);
 }
 
 JSAppRunnerDelegate::~JSAppRunnerDelegate() {

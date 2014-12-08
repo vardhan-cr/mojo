@@ -3,12 +3,11 @@
 // found in the LICENSE file.
 
 define([
-  "console",
   "gin/test/expect",
   "services/js/modules/clock",
   "timer",
   "mojo/public/js/threading"
-], function(console, expect, monotonicClock, timer, threading) {
+], function(expect, monotonicClock, timer, threading) {
   var global = this;
   var then = monotonicClock.seconds();
   var t = timer.createOneShot(100, function() {

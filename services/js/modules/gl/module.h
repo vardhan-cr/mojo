@@ -2,22 +2,23 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_JS_MODULES_GL_MODULE_H_
-#define MOJO_SERVICES_JS_MODULES_GL_MODULE_H_
+#ifndef SERVICES_JS_MODULES_GL_MODULE_H_
+#define SERVICES_JS_MODULES_GL_MODULE_H_
 
 #include "gin/public/wrapper_info.h"
 #include "v8/include/v8.h"
 
-namespace mojo {
 namespace js {
 namespace gl {
 
-extern const char* kModuleName;
-v8::Local<v8::Value> GetModule(v8::Isolate* isolate);
+class GL {
+ public:
+  static const char* kModuleName;
+  static v8::Local<v8::Value> GetModule(v8::Isolate* isolate);
+};
 
 }  // namespace gl
 }  // namespace js
-}  // namespace mojo
 
-#endif // MOJO_SERVICES_JS_MODULES_GL_MODULE_H_
+#endif // SERVICES_JS_MODULES_GL_MODULE_H_
 

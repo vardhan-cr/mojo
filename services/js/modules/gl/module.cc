@@ -12,11 +12,8 @@
 #include "mojo/edk/js/handle.h"
 #include "services/js/modules/gl/context.h"
 
-namespace mojo {
 namespace js {
 namespace gl {
-
-const char* kModuleName = "services/js/modules/gl";
 
 namespace {
 
@@ -31,7 +28,9 @@ gin::Handle<Context> CreateContext(
 
 }  // namespace
 
-v8::Local<v8::Value> GetModule(v8::Isolate* isolate) {
+const char* GL::kModuleName = "services/js/modules/gl";
+
+v8::Local<v8::Value> GL::GetModule(v8::Isolate* isolate) {
   gin::PerIsolateData* data = gin::PerIsolateData::From(isolate);
   v8::Local<v8::ObjectTemplate> templ = data->GetObjectTemplate(&kWrapperInfo);
 
@@ -47,4 +46,3 @@ v8::Local<v8::Value> GetModule(v8::Isolate* isolate) {
 
 }  // namespace gl
 }  // namespace js
-}  // namespace mojo

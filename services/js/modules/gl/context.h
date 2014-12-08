@@ -21,7 +21,6 @@ class Arguments;
 class ArrayBufferView;
 }
 
-namespace mojo {
 namespace js {
 namespace gl {
 
@@ -72,6 +71,5 @@ class Context : public gin::Wrappable<Context> {
 
 }  // namespace gl
 }  // namespace js
-}  // namespace mojo
 
 #endif  // MOJO_SERVICES_JS_MODULES_GL_CONTEXT_H_
