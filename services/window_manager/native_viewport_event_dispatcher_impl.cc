@@ -8,7 +8,7 @@
 #include "services/window_manager/view_event_dispatcher.h"
 #include "services/window_manager/window_manager_app.h"
 
-namespace mojo {
+namespace window_manager {
 
 NativeViewportEventDispatcherImpl::NativeViewportEventDispatcherImpl(
     WindowManagerApp* app)
@@ -32,4 +32,4 @@ void NativeViewportEventDispatcherImpl::OnEvent(
   callback.Run();
 }
 
-}  // namespace mojo
+}  // namespace window_manager

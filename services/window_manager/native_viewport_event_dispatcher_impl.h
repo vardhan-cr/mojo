@@ -9,13 +9,13 @@
 #include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
 #include "ui/events/event_source.h"
 
-namespace mojo {
+namespace window_manager {
 
 class WindowManagerApp;
 
 class NativeViewportEventDispatcherImpl
     : public ui::EventSource,
-      public InterfaceImpl<NativeViewportEventDispatcher> {
+      public mojo::InterfaceImpl<mojo::NativeViewportEventDispatcher> {
  public:
   explicit NativeViewportEventDispatcherImpl(WindowManagerApp* app);
   ~NativeViewportEventDispatcherImpl() override;
@@ -33,6 +33,6 @@ class NativeViewportEventDispatcherImpl
   DISALLOW_COPY_AND_ASSIGN(NativeViewportEventDispatcherImpl);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_NATIVE_VIEWPORT_EVENT_DISPATCHER_IMPL_H_

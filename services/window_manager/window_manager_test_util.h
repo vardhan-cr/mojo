@@ -15,14 +15,14 @@ namespace gfx {
 class Rect;
 }
 
-namespace mojo {
+namespace window_manager {
 
 // A wrapper around View so we can instantiate these directly without a
 // ViewManager.
-class TestView : public View {
+class TestView : public mojo::View {
  public:
   TestView(int id, const gfx::Rect& rect);
-  TestView(int id, const gfx::Rect& rect, View* parent);
+  TestView(int id, const gfx::Rect& rect, mojo::View* parent);
   ~TestView();
 
   // Builds a child view as a pointer. The caller is responsible for making
@@ -38,6 +38,6 @@ class TestView : public View {
   DISALLOW_COPY_AND_ASSIGN(TestView);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_TEST_UTIL_H_

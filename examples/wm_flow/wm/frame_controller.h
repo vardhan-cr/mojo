@@ -14,12 +14,15 @@ namespace mojo {
 class NativeWidgetViewManager;
 class Shell;
 class View;
-class WindowManagerApp;
 }
 
 namespace views {
 class View;
 class Widget;
+}
+
+namespace window_manager {
+class WindowManagerApp;
 }
 
 // FrameController encapsulates the window manager's frame additions to a window
@@ -30,7 +33,7 @@ class FrameController : mojo::ViewObserver {
   FrameController(mojo::Shell* shell,
                   mojo::View* view,
                   mojo::View** app_view,
-                  mojo::WindowManagerApp* window_manager_app);
+                  window_manager::WindowManagerApp* window_manager_app);
   virtual ~FrameController();
 
   void CloseWindow();
@@ -52,7 +55,7 @@ class FrameController : mojo::ViewObserver {
   views::Widget* widget_;
   bool maximized_;
   gfx::Rect restored_bounds_;
-  mojo::WindowManagerApp* window_manager_app_;
+  window_manager::WindowManagerApp* window_manager_app_;
   scoped_ptr<FrameEventHandler> frame_event_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(FrameController);

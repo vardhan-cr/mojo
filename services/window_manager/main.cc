@@ -17,10 +17,13 @@
 // core window manager tests) that do not want to provide their own
 // ApplicationDelegate::Create().
 
-namespace mojo {
+using mojo::View;
+using mojo::ViewManager;
 
-class DefaultWindowManager : public ApplicationDelegate,
-                             public ViewManagerDelegate,
+namespace window_manager {
+
+class DefaultWindowManager : public mojo::ApplicationDelegate,
+                             public mojo::ViewManagerDelegate,
                              public WindowManagerDelegate {
  public:
   DefaultWindowManager()
@@ -30,12 +33,13 @@ class DefaultWindowManager : public ApplicationDelegate,
   ~DefaultWindowManager() override {}
 
  private:
-  // Overridden from ApplicationDelegate:
-  void Initialize(ApplicationImpl* impl) override {
+  // Overridden from mojo::ApplicationDelegate:
+  void Initialize(mojo::ApplicationImpl* impl) override {
     window_manager_app_->Initialize(impl);
-    TracingImpl::Create(impl);
+    mojo::TracingImpl::Create(impl);
   }
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     window_manager_app_->ConfigureIncomingConnection(connection);
     return true;
   }
@@ -43,16 +47,17 @@ class DefaultWindowManager : public ApplicationDelegate,
   // Overridden from ViewManagerDelegate:
   void OnEmbed(ViewManager* view_manager,
                View* root,
-               ServiceProviderImpl* exported_services,
-               scoped_ptr<ServiceProvider> imported_services) override {
+               mojo::ServiceProviderImpl* exported_services,
+               scoped_ptr<mojo::ServiceProvider> imported_services) override {
     view_manager_ = view_manager;
     root_ = root;
   }
   void OnViewManagerDisconnected(ViewManager* view_manager) override {}
 
   // Overridden from WindowManagerDelegate:
-  void Embed(const String& url,
-             InterfaceRequest<ServiceProvider> service_provider) override {
+  void Embed(
+      const mojo::String& url,
+      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
     View* view = View::Create(view_manager_);
     root_->AddChild(view);
     view->SetVisible(true);
@@ -68,9 +73,10 @@ class DefaultWindowManager : public ApplicationDelegate,
   MOJO_DISALLOW_COPY_AND_ASSIGN(DefaultWindowManager);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new mojo::DefaultWindowManager);
+  mojo::ApplicationRunnerChromium runner(
+      new window_manager::DefaultWindowManager);
   return runner.Run(shell_handle);
 }

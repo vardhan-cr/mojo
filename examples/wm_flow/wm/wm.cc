@@ -23,12 +23,12 @@ namespace examples {
 
 class SimpleWM : public mojo::ApplicationDelegate,
                  public mojo::ViewManagerDelegate,
-                 public mojo::WindowManagerDelegate,
+                 public window_manager::WindowManagerDelegate,
                  public mojo::ViewObserver {
  public:
   SimpleWM()
       : shell_(nullptr),
-        window_manager_app_(new mojo::WindowManagerApp(this, this)),
+        window_manager_app_(new window_manager::WindowManagerApp(this, this)),
         view_manager_(NULL),
         root_(NULL),
         window_container_(NULL),
@@ -65,8 +65,8 @@ class SimpleWM : public mojo::ApplicationDelegate,
     root_->AddChild(window_container_);
     window_container_->SetVisible(true);
 
-    window_manager_app_->InitFocus(scoped_ptr<mojo::FocusRules>(
-        new mojo::BasicFocusRules(window_container_)));
+    window_manager_app_->InitFocus(make_scoped_ptr(
+        new window_manager::BasicFocusRules(window_container_)));
   }
   virtual void OnViewManagerDisconnected(
       mojo::ViewManager* view_manager) override {
@@ -130,7 +130,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
 
   scoped_ptr<mojo::ViewsInit> views_init_;
 
-  scoped_ptr<mojo::WindowManagerApp> window_manager_app_;
+  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
   mojo::ViewManager* view_manager_;
   mojo::View* root_;

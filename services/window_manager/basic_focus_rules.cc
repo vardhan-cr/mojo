@@ -7,19 +7,21 @@
 #include "base/macros.h"
 #include "mojo/services/public/cpp/view_manager/view.h"
 
-namespace mojo {
+using mojo::View;
 
-BasicFocusRules::BasicFocusRules(mojo::View* window_container)
+namespace window_manager {
+
+BasicFocusRules::BasicFocusRules(View* window_container)
     : window_container_(window_container) {
 }
 
 BasicFocusRules::~BasicFocusRules() {}
 
-bool BasicFocusRules::SupportsChildActivation(mojo::View* view) const {
+bool BasicFocusRules::SupportsChildActivation(View* view) const {
   return true;
 }
 
-bool BasicFocusRules::IsToplevelView(mojo::View* view) const {
+bool BasicFocusRules::IsToplevelView(View* view) const {
   if (!IsViewParentedToWindowContainer(view))
     return false;
 
@@ -28,7 +30,7 @@ bool BasicFocusRules::IsToplevelView(mojo::View* view) const {
   return SupportsChildActivation(view->parent());
 }
 
-bool BasicFocusRules::CanActivateView(mojo::View* view) const {
+bool BasicFocusRules::CanActivateView(View* view) const {
   if (!view)
     return true;
 
@@ -55,7 +57,7 @@ bool BasicFocusRules::CanActivateView(mojo::View* view) const {
   return true;
 }
 
-bool BasicFocusRules::CanFocusView(mojo::View* view) const {
+bool BasicFocusRules::CanFocusView(View* view) const {
   // It is possible to focus a NULL window, it is equivalent to clearing focus.
   if (!view)
     return true;
@@ -68,7 +70,7 @@ bool BasicFocusRules::CanFocusView(mojo::View* view) const {
   return CanFocusViewImpl(view);
 }
 
-mojo::View* BasicFocusRules::GetToplevelView(mojo::View* view) const {
+View* BasicFocusRules::GetToplevelView(View* view) const {
   View* parent = view->parent();
   View* child = view;
   while (parent) {
@@ -82,7 +84,7 @@ mojo::View* BasicFocusRules::GetToplevelView(mojo::View* view) const {
   return nullptr;
 }
 
-mojo::View* BasicFocusRules::GetActivatableView(mojo::View* view) const {
+View* BasicFocusRules::GetActivatableView(View* view) const {
   View* parent = view->parent();
   View* child = view;
   while (parent) {
@@ -99,7 +101,7 @@ mojo::View* BasicFocusRules::GetActivatableView(mojo::View* view) const {
   return nullptr;
 }
 
-mojo::View* BasicFocusRules::GetFocusableView(mojo::View* view) const {
+View* BasicFocusRules::GetFocusableView(View* view) const {
   if (CanFocusView(view))
     return view;
 
@@ -129,8 +131,7 @@ mojo::View* BasicFocusRules::GetFocusableView(mojo::View* view) const {
   return view;
 }
 
-mojo::View* BasicFocusRules::GetNextActivatableView(
-    mojo::View* activatable) const {
+View* BasicFocusRules::GetNextActivatableView(View* activatable) const {
   DCHECK(activatable);
 
   // In the basic scenarios handled by BasicFocusRules, the pool of activatable
@@ -148,7 +149,7 @@ mojo::View* BasicFocusRules::GetNextActivatableView(
   return nullptr;
 }
 
-// TODO(erg): aura::Window::CanFocus() exists. mojo::View::CanFocus() does
+// TODO(erg): aura::Window::CanFocus() exists. View::CanFocus() does
 // not. This is a hack that does everything that Window::CanFocus() currently
 // does that doesn't require a delegate or an EventClient.
 bool BasicFocusRules::CanFocusViewImpl(View* view) const {
@@ -163,7 +164,7 @@ bool BasicFocusRules::CanFocusViewImpl(View* view) const {
   return CanFocusViewImpl(view->parent());
 }
 
-bool BasicFocusRules::IsViewParentedToWindowContainer(mojo::View* view) const {
+bool BasicFocusRules::IsViewParentedToWindowContainer(View* view) const {
   return view->parent() == window_container_;
 }
 

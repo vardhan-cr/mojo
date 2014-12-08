@@ -99,7 +99,7 @@ FrameController::FrameController(
     mojo::Shell* shell,
     mojo::View* view,
     mojo::View** app_view,
-    mojo::WindowManagerApp* window_manager_app)
+    window_manager::WindowManagerApp* window_manager_app)
     : view_(view),
       app_view_(mojo::View::Create(view->view_manager())),
       frame_view_(new views::View),

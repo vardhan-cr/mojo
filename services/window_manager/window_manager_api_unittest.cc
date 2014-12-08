@@ -20,14 +20,18 @@
 #include "shell/shell_test_helper.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
+using mojo::ApplicationImpl;
+using mojo::Id;
+using mojo::View;
+
+namespace window_manager {
 namespace {
 
 const char kTestServiceURL[] = "mojo:test_url";
 
 void EmptyResultCallback(bool result) {}
 
-class TestWindowManagerClient : public WindowManagerClient {
+class TestWindowManagerClient : public mojo::WindowManagerClient {
  public:
   typedef base::Callback<void(Id, Id)>
       TwoNodeCallback;
@@ -44,7 +48,7 @@ class TestWindowManagerClient : public WindowManagerClient {
   }
 
  private:
-  // Overridden from WindowManagerClient:
+  // Overridden from mojo::WindowManagerClient:
   void OnCaptureChanged(Id old_capture_node_id,
                         Id new_capture_node_id) override {}
   void OnFocusChanged(Id old_focused_node_id, Id new_focused_node_id) override {
@@ -64,9 +68,9 @@ class TestWindowManagerClient : public WindowManagerClient {
   DISALLOW_COPY_AND_ASSIGN(TestWindowManagerClient);
 };
 
-class TestApplicationLoader : public ApplicationLoader,
-                              public ApplicationDelegate,
-                              public ViewManagerDelegate {
+class TestApplicationLoader : public mojo::ApplicationLoader,
+                              public mojo::ApplicationDelegate,
+                              public mojo::ViewManagerDelegate {
  public:
   typedef base::Callback<void(View*)> RootAddedCallback;
 
@@ -75,43 +79,44 @@ class TestApplicationLoader : public ApplicationLoader,
   ~TestApplicationLoader() override {}
 
  private:
-  // Overridden from ApplicationLoader:
-  void Load(ApplicationManager* application_manager,
+  // Overridden from mojo::ApplicationLoader:
+  void Load(mojo::ApplicationManager* application_manager,
             const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
+            mojo::ScopedMessagePipeHandle shell_handle,
             LoadCallback callback) override {
     ASSERT_TRUE(shell_handle.is_valid());
     scoped_ptr<ApplicationImpl> app(
         new ApplicationImpl(this, shell_handle.Pass()));
     apps_.push_back(app.release());
   }
-  void OnApplicationError(ApplicationManager* application_manager,
+  void OnApplicationError(mojo::ApplicationManager* application_manager,
                           const GURL& url) override {}
 
-  // Overridden from ApplicationDelegate:
+  // Overridden from mojo::ApplicationDelegate:
   void Initialize(ApplicationImpl* app) override {
     view_manager_client_factory_.reset(
-        new ViewManagerClientFactory(app->shell(), this));
+        new mojo::ViewManagerClientFactory(app->shell(), this));
   }
 
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
-  // Overridden from ViewManagerDelegate:
-  void OnEmbed(ViewManager* view_manager,
+  // Overridden from mojo::ViewManagerDelegate:
+  void OnEmbed(mojo::ViewManager* view_manager,
                View* root,
-               ServiceProviderImpl* exported_services,
-               scoped_ptr<ServiceProvider> imported_services) override {
+               mojo::ServiceProviderImpl* exported_services,
+               scoped_ptr<mojo::ServiceProvider> imported_services) override {
     root_added_callback_.Run(root);
   }
-  void OnViewManagerDisconnected(ViewManager* view_manager) override {}
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {}
 
   RootAddedCallback root_added_callback_;
 
   ScopedVector<ApplicationImpl> apps_;
-  scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
+  scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(TestApplicationLoader);
 };
@@ -161,10 +166,10 @@ class WindowManagerApiTest : public testing::Test {
 
   Id OpenWindowWithURL(const std::string& url) {
     base::RunLoop run_loop;
-    ServiceProviderPtr sp;
-    BindToProxy(new ServiceProviderImpl, &sp);
+    mojo::ServiceProviderPtr sp;
+    BindToProxy(new mojo::ServiceProviderImpl, &sp);
     window_manager_->Embed(
-      url, MakeRequest<ServiceProvider>(sp.PassMessagePipe()));
+        url, mojo::MakeRequest<mojo::ServiceProvider>(sp.PassMessagePipe()));
     run_loop.Run();
     return WaitForEmbed();
   }
@@ -173,18 +178,19 @@ class WindowManagerApiTest : public testing::Test {
     return window_manager_client_.get();
   }
 
-  WindowManagerPtr window_manager_;
+  mojo::WindowManagerPtr window_manager_;
 
  private:
   // Overridden from testing::Test:
   void SetUp() override {
-    test_helper_.reset(new shell::ShellTestHelper);
+    test_helper_.reset(new mojo::shell::ShellTestHelper);
     test_helper_->Init();
     test_helper_->AddCustomMapping(GURL("mojo:window_manager"),
                                    GURL("mojo:core_window_manager"));
     test_helper_->SetLoaderForURL(
-        scoped_ptr<ApplicationLoader>(new TestApplicationLoader(base::Bind(
-            &WindowManagerApiTest::OnRootAdded, base::Unretained(this)))),
+        scoped_ptr<mojo::ApplicationLoader>(
+            new TestApplicationLoader(base::Bind(
+                &WindowManagerApiTest::OnRootAdded, base::Unretained(this)))),
         GURL(kTestServiceURL));
     ConnectToWindowManager2();
   }
@@ -236,7 +242,7 @@ class WindowManagerApiTest : public testing::Test {
     run_loop->Quit();
   }
 
-  scoped_ptr<shell::ShellTestHelper> test_helper_;
+  scoped_ptr<mojo::shell::ShellTestHelper> test_helper_;
   scoped_ptr<TestWindowManagerClient> window_manager_client_;
   TestApplicationLoader::RootAddedCallback root_added_callback_;
 
@@ -261,4 +267,4 @@ TEST_F(WindowManagerApiTest, DISABLED_FocusAndActivateWindow) {
   EXPECT_EQ(ids.second, second_window);
 }
 
-}  // namespace mojo
+}  // namespace window_manager

@@ -8,11 +8,11 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "ui/gfx/geometry/rect.h"
 
-namespace mojo {
+namespace window_manager {
 
 TestView::TestView(int id, const gfx::Rect& rect)
     : target_(new ViewTarget(this)) {
-  ViewPrivate(this).set_id(id);
+  mojo::ViewPrivate(this).set_id(id);
 
   mojo::Rect mojo_rect = *mojo::Rect::From(rect);
   SetBounds(mojo_rect);
@@ -32,8 +32,8 @@ TestView* TestView::Build(int id, const gfx::Rect& rect) {
 }
 
 // static
-TestView* TestView::Build(int id, const gfx::Rect& rect, View* parent) {
+TestView* TestView::Build(int id, const gfx::Rect& rect, mojo::View* parent) {
   return new TestView(id, rect, parent);
 }
 
-}  // namespace mojo
+}  // namespace window_manager

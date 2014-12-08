@@ -7,7 +7,7 @@
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/view_target.h"
 
-namespace mojo {
+namespace window_manager {
 
 ViewTargeter::ViewTargeter() {}
 
@@ -72,7 +72,7 @@ bool ViewTargeter::EventLocationInsideBounds(
 ViewTarget* ViewTargeter::FindTargetForKeyEvent(ViewTarget* view_target,
                                                 const ui::KeyEvent& key) {
   FocusController* focus_controller = GetFocusController(view_target->view());
-  View* focused_view = focus_controller->GetFocusedView();
+  mojo::View* focused_view = focus_controller->GetFocusedView();
   if (focused_view)
     return ViewTarget::TargetFromView(focused_view);
 
@@ -94,4 +94,4 @@ ViewTarget* ViewTargeter::FindTargetInRootView(ViewTarget* root_view,
   return nullptr;
 }
 
-}  // namespace mojo
+}  // namespace window_manager

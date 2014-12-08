@@ -16,7 +16,7 @@
 #include "ui/gfx/point3_f.h"
 #include "ui/gfx/transform.h"
 
-namespace mojo {
+namespace window_manager {
 
 namespace {
 
@@ -28,7 +28,7 @@ ViewTarget::~ViewTarget() {
 }
 
 // static
-ViewTarget* ViewTarget::TargetFromView(View* view) {
+ViewTarget* ViewTarget::TargetFromView(mojo::View* view) {
   if (!view)
     return nullptr;
 
@@ -59,7 +59,7 @@ void ViewTarget::ConvertPointToTarget(const ViewTarget* source,
 
 std::vector<ViewTarget*> ViewTarget::GetChildren() {
   std::vector<ViewTarget*> targets;
-  for (View* child : view_->children())
+  for (mojo::View* child : view_->children())
     targets.push_back(TargetFromView(child));
   return targets;
 }
@@ -133,7 +133,7 @@ void ViewTarget::ConvertEventToTarget(ui::EventTarget* target,
   event->ConvertLocationToTarget(this, static_cast<ViewTarget*>(target));
 }
 
-ViewTarget::ViewTarget(View* view_to_wrap) : view_(view_to_wrap) {
+ViewTarget::ViewTarget(mojo::View* view_to_wrap) : view_(view_to_wrap) {
   DCHECK(view_->GetLocalProperty(kViewTargetKey) == nullptr);
   view_->SetLocalProperty(kViewTargetKey, this);
 }
@@ -164,4 +164,4 @@ bool ViewTarget::GetTargetOffsetRelativeTo(const ViewTarget* ancestor,
   return v == ancestor;
 }
 
-}  // namespace mojo
+}  // namespace window_manager

@@ -6,7 +6,10 @@
 
 #include "services/window_manager/window_manager_app.h"
 
-namespace mojo {
+using mojo::Callback;
+using mojo::Id;
+
+namespace window_manager {
 
 WindowManagerImpl::WindowManagerImpl(WindowManagerApp* window_manager,
                                      bool from_vm)
@@ -19,7 +22,8 @@ WindowManagerImpl::~WindowManagerImpl() {
   window_manager_->RemoveConnection(this);
 }
 
-void WindowManagerImpl::Bind(ScopedMessagePipeHandle window_manager_pipe) {
+void WindowManagerImpl::Bind(
+    mojo::ScopedMessagePipeHandle window_manager_pipe) {
   binding_.Bind(window_manager_pipe.Pass());
 }
 
@@ -36,8 +40,8 @@ void WindowManagerImpl::NotifyWindowActivated(Id new_active_id,
 }
 
 void WindowManagerImpl::Embed(
-    const String& url,
-    InterfaceRequest<ServiceProvider> service_provider) {
+    const mojo::String& url,
+    mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) {
   window_manager_->Embed(url, service_provider.Pass());
 }
 
@@ -78,4 +82,4 @@ void WindowManagerImpl::OnConnectionError() {
   delete this;
 }
 
-}  // namespace mojo
+}  // namespace window_manager

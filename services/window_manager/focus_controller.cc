@@ -13,9 +13,11 @@
 #include "services/window_manager/window_manager_app.h"
 #include "ui/events/event.h"
 
-DECLARE_VIEW_PROPERTY_TYPE(mojo::FocusController*);
+DECLARE_VIEW_PROPERTY_TYPE(window_manager::FocusController*);
 
-namespace mojo {
+using mojo::View;
+
+namespace window_manager {
 
 namespace {
 DEFINE_VIEW_PROPERTY_KEY(FocusController*, kRootViewFocusController, nullptr);
@@ -198,7 +200,7 @@ void FocusController::SetFocusedView(View* view) {
 
   // Allow for the window losing focus to be deleted during dispatch. If it is
   // deleted pass null to observers instead of a deleted window.
-  ViewTracker view_tracker;
+  mojo::ViewTracker view_tracker;
   if (lost_focus)
     view_tracker.Add(lost_focus);
   if (focused_view_ && observer_manager_.IsObserving(focused_view_) &&
@@ -245,7 +247,7 @@ void FocusController::SetActiveView(View* requested_view, View* view) {
   View* lost_activation = active_view_;
   // Allow for the window losing activation to be deleted during dispatch. If
   // it is deleted pass null to observers instead of a deleted window.
-  ViewTracker view_tracker;
+  mojo::ViewTracker view_tracker;
   if (lost_activation)
     view_tracker.Add(lost_activation);
   if (active_view_ && observer_manager_.IsObserving(active_view_) &&
@@ -317,4 +319,4 @@ FocusController* GetFocusController(View* root_view) {
       root_view->GetLocalProperty(kRootViewFocusController) : nullptr;
 }
 
-}  // namespace mojo
+}  // namespace window_manager

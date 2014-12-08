@@ -21,7 +21,13 @@
 #include "services/window_manager/window_manager_delegate.h"
 #include "ui/base/hit_test.h"
 
-namespace mojo {
+using mojo::ApplicationConnection;
+using mojo::Id;
+using mojo::ServiceProvider;
+using mojo::View;
+using mojo::WindowManager;
+
+namespace window_manager {
 
 namespace {
 
@@ -34,8 +40,8 @@ Id GetIdForView(View* view) {
 // Used for calls to Embed() that occur before we've connected to the
 // ViewManager.
 struct WindowManagerApp::PendingEmbed {
-  String url;
-  InterfaceRequest<mojo::ServiceProvider> service_provider;
+  mojo::String url;
+  mojo::InterfaceRequest<ServiceProvider> service_provider;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -91,8 +97,8 @@ bool WindowManagerApp::IsReady() const {
   return view_manager_ && root_;
 }
 
-void WindowManagerApp::InitFocus(scoped_ptr<mojo::FocusRules> rules) {
-  focus_controller_.reset(new mojo::FocusController(rules.Pass()));
+void WindowManagerApp::InitFocus(scoped_ptr<FocusRules> rules) {
+  focus_controller_.reset(new FocusController(rules.Pass()));
   focus_controller_->AddObserver(this);
 
   DCHECK(root_);
@@ -100,8 +106,8 @@ void WindowManagerApp::InitFocus(scoped_ptr<mojo::FocusRules> rules) {
 }
 
 void WindowManagerApp::Embed(
-    const String& url,
-    InterfaceRequest<ServiceProvider> service_provider) {
+    const mojo::String& url,
+    mojo::InterfaceRequest<ServiceProvider> service_provider) {
   if (view_manager_) {
     window_manager_delegate_->Embed(url, service_provider.Pass());
     return;
@@ -115,7 +121,7 @@ void WindowManagerApp::Embed(
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, ApplicationDelegate implementation:
 
-void WindowManagerApp::Initialize(ApplicationImpl* impl) {
+void WindowManagerApp::Initialize(mojo::ApplicationImpl* impl) {
   shell_ = impl->shell();
   LaunchViewManager(impl);
 }
@@ -129,15 +135,15 @@ bool WindowManagerApp::ConfigureIncomingConnection(
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, ViewManagerDelegate implementation:
 
-void WindowManagerApp::OnEmbed(ViewManager* view_manager,
+void WindowManagerApp::OnEmbed(mojo::ViewManager* view_manager,
                                View* root,
-                               ServiceProviderImpl* exported_services,
+                               mojo::ServiceProviderImpl* exported_services,
                                scoped_ptr<ServiceProvider> imported_services) {
   DCHECK(!view_manager_ && !root_);
   view_manager_ = view_manager;
   root_ = root;
 
-  view_event_dispatcher_.reset(new ViewEventDispatcher());
+  view_event_dispatcher_.reset(new ViewEventDispatcher);
 
   RegisterSubtree(root_);
 
@@ -157,7 +163,7 @@ void WindowManagerApp::OnEmbed(ViewManager* view_manager,
 }
 
 void WindowManagerApp::OnViewManagerDisconnected(
-    ViewManager* view_manager) {
+    mojo::ViewManager* view_manager) {
   DCHECK_EQ(view_manager_, view_manager);
   if (wrapped_view_manager_delegate_)
     wrapped_view_manager_delegate_->OnViewManagerDisconnected(view_manager);
@@ -214,7 +220,7 @@ void WindowManagerApp::OnEvent(ui::Event* event) {
     focus_controller_->OnEvent(event);
 
   window_manager_client_->DispatchInputEventToView(view->id(),
-                                                   Event::From(*event));
+                                                   mojo::Event::From(*event));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,28 +285,30 @@ void WindowManagerApp::Unregister(View* view) {
   registered_view_id_set_.erase(it);
 }
 
-void WindowManagerApp::DispatchInputEventToView(View* view, EventPtr event) {
+void WindowManagerApp::DispatchInputEventToView(View* view,
+                                                mojo::EventPtr event) {
   window_manager_client_->DispatchInputEventToView(view->id(), event.Pass());
 }
 
 void WindowManagerApp::SetViewportSize(const gfx::Size& size) {
-  window_manager_client_->SetViewportSize(Size::From(size));
+  window_manager_client_->SetViewportSize(mojo::Size::From(size));
 }
 
-void WindowManagerApp::LaunchViewManager(ApplicationImpl* app) {
+void WindowManagerApp::LaunchViewManager(mojo::ApplicationImpl* app) {
   // TODO(sky): figure out logic if this connection goes away.
   view_manager_client_factory_.reset(
-      new ViewManagerClientFactory(shell_, this));
+      new mojo::ViewManagerClientFactory(shell_, this));
 
-  MessagePipe pipe;
+  mojo::MessagePipe pipe;
   ApplicationConnection* view_manager_app =
       app->ConnectToApplication("mojo:view_manager");
   ServiceProvider* view_manager_service_provider =
       view_manager_app->GetServiceProvider();
-  view_manager_service_provider->ConnectToService(ViewManagerService::Name_,
-                                                  pipe.handle1.Pass());
-  view_manager_client_ = ViewManagerClientFactory::WeakBindViewManagerToPipe(
-                             pipe.handle0.Pass(), shell_, this).Pass();
+  view_manager_service_provider->ConnectToService(
+      mojo::ViewManagerService::Name_, pipe.handle1.Pass());
+  view_manager_client_ =
+      mojo::ViewManagerClientFactory::WeakBindViewManagerToPipe(
+          pipe.handle0.Pass(), shell_, this).Pass();
 
   view_manager_app->AddService(&native_viewport_event_dispatcher_factory_);
   view_manager_app->AddService(
@@ -309,19 +317,20 @@ void WindowManagerApp::LaunchViewManager(ApplicationImpl* app) {
   view_manager_app->ConnectToService(&window_manager_client_);
 }
 
-void WindowManagerApp::Create(ApplicationConnection* connection,
-                              InterfaceRequest<WindowManagerInternal> request) {
+void WindowManagerApp::Create(
+    ApplicationConnection* connection,
+    mojo::InterfaceRequest<WindowManagerInternal> request) {
   if (wm_internal_binding_.get()) {
     VLOG(1) <<
         "WindowManager allows only one WindowManagerInternal connection.";
     return;
   }
   wm_internal_binding_.reset(
-      new Binding<WindowManagerInternal>(this, request.Pass()));
+      new mojo::Binding<WindowManagerInternal>(this, request.Pass()));
 }
 
 void WindowManagerApp::Create(ApplicationConnection* connection,
-                              InterfaceRequest<WindowManager> request) {
+                              mojo::InterfaceRequest<WindowManager> request) {
   WindowManagerImpl* wm = new WindowManagerImpl(this, false);
   wm->Bind(request.PassMessagePipe());
   // WindowManagerImpl is deleted when the connection has an error, or from our
@@ -330,11 +339,11 @@ void WindowManagerApp::Create(ApplicationConnection* connection,
 
 void WindowManagerApp::CreateWindowManagerForViewManagerClient(
     uint16_t connection_id,
-    ScopedMessagePipeHandle window_manager_pipe) {
+    mojo::ScopedMessagePipeHandle window_manager_pipe) {
   WindowManagerImpl* wm = new WindowManagerImpl(this, true);
   wm->Bind(window_manager_pipe.Pass());
   // WindowManagerImpl is deleted when the connection has an error, or from our
   // destructor.
 }
 
-}  // namespace mojo
+}  // namespace window_manager

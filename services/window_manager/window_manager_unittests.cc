@@ -11,7 +11,7 @@
 #include "ui/gfx/x/x11_connection.h"
 #endif
 
-namespace mojo {
+namespace window_manager {
 
 class WindowManagerTestSuite : public base::TestSuite {
  public:
@@ -33,10 +33,10 @@ class WindowManagerTestSuite : public base::TestSuite {
   DISALLOW_COPY_AND_ASSIGN(WindowManagerTestSuite);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 int main(int argc, char** argv) {
-  mojo::WindowManagerTestSuite test_suite(argc, argv);
+  window_manager::WindowManagerTestSuite test_suite(argc, argv);
 
   return base::LaunchUnitTests(
       argc, argv, base::Bind(&TestSuite::Run, base::Unretained(&test_suite)));

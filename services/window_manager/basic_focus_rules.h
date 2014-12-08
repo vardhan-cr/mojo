@@ -8,8 +8,10 @@
 #include "services/window_manager/focus_rules.h"
 
 namespace mojo {
-
 class View;
+}
+
+namespace window_manager {
 
 // The focusing rules used inside a window manager.
 //
@@ -32,16 +34,16 @@ class BasicFocusRules : public FocusRules {
   mojo::View* GetNextActivatableView(mojo::View* activatable) const override;
 
  private:
-  bool CanFocusViewImpl(View* view) const;
+  bool CanFocusViewImpl(mojo::View* view) const;
 
   // Tests to see if |view| is in |window_container_|.
-  bool IsViewParentedToWindowContainer(View* view) const;
+  bool IsViewParentedToWindowContainer(mojo::View* view) const;
 
   mojo::View* window_container_;
 
   DISALLOW_COPY_AND_ASSIGN(BasicFocusRules);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_BASIC_FOCUS_RULES_H_

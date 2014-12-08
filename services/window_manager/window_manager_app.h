@@ -28,14 +28,14 @@ namespace gfx {
 class Size;
 }
 
-namespace mojo {
+namespace window_manager {
 
 class FocusController;
 class FocusRules;
+class ViewEventDispatcher;
 class WindowManagerClient;
 class WindowManagerDelegate;
 class WindowManagerImpl;
-class ViewEventDispatcher;
 
 // Implements core window manager functionality that could conceivably be shared
 // across multiple window managers implementing superficially different user
@@ -45,20 +45,21 @@ class ViewEventDispatcher;
 // delegate interfaces exposed by the view manager, this object provides the
 // canonical implementation of said interfaces but will call out to the wrapped
 // instances.
-class WindowManagerApp : public ApplicationDelegate,
-                         public ViewManagerDelegate,
-                         public ViewObserver,
-                         public ui::EventHandler,
-                         public FocusControllerObserver,
-                         public InterfaceFactory<WindowManager>,
-                         public InterfaceFactory<WindowManagerInternal>,
-                         public WindowManagerInternal {
+class WindowManagerApp
+    : public mojo::ApplicationDelegate,
+      public mojo::ViewManagerDelegate,
+      public mojo::ViewObserver,
+      public ui::EventHandler,
+      public FocusControllerObserver,
+      public mojo::InterfaceFactory<mojo::WindowManager>,
+      public mojo::InterfaceFactory<mojo::WindowManagerInternal>,
+      public mojo::WindowManagerInternal {
  public:
   WindowManagerApp(ViewManagerDelegate* view_manager_delegate,
                    WindowManagerDelegate* window_manager_delegate);
   ~WindowManagerApp() override;
 
-  mojo::ViewEventDispatcher* event_dispatcher() {
+  ViewEventDispatcher* event_dispatcher() {
     return view_event_dispatcher_.get();
   }
 
@@ -67,11 +68,11 @@ class WindowManagerApp : public ApplicationDelegate,
   void RemoveConnection(WindowManagerImpl* connection);
 
   // These are canonical implementations of the window manager API methods.
-  void SetCapture(Id view);
-  void FocusWindow(Id view);
-  void ActivateWindow(Id view);
+  void SetCapture(mojo::Id view);
+  void FocusWindow(mojo::Id view);
+  void ActivateWindow(mojo::Id view);
 
-  void DispatchInputEventToView(View* view, EventPtr event);
+  void DispatchInputEventToView(mojo::View* view, mojo::EventPtr event);
   void SetViewportSize(const gfx::Size& size);
 
   bool IsReady() const;
@@ -83,17 +84,18 @@ class WindowManagerApp : public ApplicationDelegate,
   // WindowManagerImpl::Embed() forwards to this. If connected to ViewManager
   // then forwards to delegate, otherwise waits for connection to establish then
   // forwards.
-  void Embed(const String& url,
-             InterfaceRequest<ServiceProvider> service_provider);
+  void Embed(const mojo::String& url,
+             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
 
   // Overridden from ApplicationDelegate:
-  void Initialize(ApplicationImpl* impl) override;
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
+  void Initialize(mojo::ApplicationImpl* impl) override;
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override;
 
  private:
   // TODO(sky): rename this. Connections is ambiguous.
   typedef std::set<WindowManagerImpl*> Connections;
-  typedef std::set<Id> RegisteredViewIdSet;
+  typedef std::set<mojo::Id> RegisteredViewIdSet;
 
   struct PendingEmbed;
   class WindowManagerInternalImpl;
@@ -102,80 +104,82 @@ class WindowManagerApp : public ApplicationDelegate,
   // and adds to the registry so that it can be retrieved later via
   // GetViewTargetForViewId().
   // TODO(beng): perhaps View should have a property bag.
-  void RegisterSubtree(View* view);
+  void RegisterSubtree(mojo::View* view);
 
   // Recursively invokes Unregister() for |view| and all its descendants.
-  void UnregisterSubtree(View* view);
+  void UnregisterSubtree(mojo::View* view);
 
   // Deletes the ViewTarget associated with the hierarchy beneath |id|,
   // and removes from the registry.
-  void Unregister(View* view);
+  void Unregister(mojo::View* view);
 
   // Overridden from ViewManagerDelegate:
-  void OnEmbed(ViewManager* view_manager,
-               View* root,
-               ServiceProviderImpl* exported_services,
-               scoped_ptr<ServiceProvider> imported_services) override;
-  void OnViewManagerDisconnected(ViewManager* view_manager) override;
+  void OnEmbed(mojo::ViewManager* view_manager,
+               mojo::View* root,
+               mojo::ServiceProviderImpl* exported_services,
+               scoped_ptr<mojo::ServiceProvider> imported_services) override;
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override;
 
   // Overridden from ViewObserver:
   void OnTreeChanged(const ViewObserver::TreeChangeParams& params) override;
-  void OnViewDestroying(View* view) override;
+  void OnViewDestroying(mojo::View* view) override;
 
   // Overridden from ui::EventHandler:
   void OnEvent(ui::Event* event) override;
 
   // Overridden from mojo::FocusControllerObserver:
-  void OnViewFocused(View* gained_focus, View* lost_focus) override;
-  void OnViewActivated(View* gained_active, View* lost_active) override;
+  void OnViewFocused(mojo::View* gained_focus, mojo::View* lost_focus) override;
+  void OnViewActivated(mojo::View* gained_active,
+                       mojo::View* lost_active) override;
 
   // Creates the connection to the ViewManager.
-  void LaunchViewManager(ApplicationImpl* app);
+  void LaunchViewManager(mojo::ApplicationImpl* app);
 
   // InterfaceFactory<WindowManagerInternal>:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<WindowManagerInternal> request) override;
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<mojo::WindowManagerInternal> request) override;
 
   // InterfaceFactory<WindowManager>:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<WindowManager> request) override;
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::WindowManager> request) override;
 
   // WindowManagerInternal:
   void CreateWindowManagerForViewManagerClient(
       uint16_t connection_id,
-      ScopedMessagePipeHandle window_manager_pipe) override;
+      mojo::ScopedMessagePipeHandle window_manager_pipe) override;
 
-  Shell* shell_;
+  mojo::Shell* shell_;
 
-  InterfaceFactoryImplWithContext<NativeViewportEventDispatcherImpl,
-                                  WindowManagerApp>
+  mojo::InterfaceFactoryImplWithContext<NativeViewportEventDispatcherImpl,
+                                        WindowManagerApp>
       native_viewport_event_dispatcher_factory_;
 
   ViewManagerDelegate* wrapped_view_manager_delegate_;
   WindowManagerDelegate* window_manager_delegate_;
 
-  ViewManager* view_manager_;
-  scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
-  View* root_;
+  mojo::ViewManager* view_manager_;
+  scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
+  mojo::View* root_;
 
-  scoped_ptr<mojo::FocusController> focus_controller_;
+  scoped_ptr<FocusController> focus_controller_;
 
   Connections connections_;
   RegisteredViewIdSet registered_view_id_set_;
 
-  WindowManagerInternalClientPtr window_manager_client_;
+  mojo::WindowManagerInternalClientPtr window_manager_client_;
 
   ScopedVector<PendingEmbed> pending_embeds_;
 
-  scoped_ptr<ViewManagerClient> view_manager_client_;
+  scoped_ptr<mojo::ViewManagerClient> view_manager_client_;
 
   scoped_ptr<ViewEventDispatcher> view_event_dispatcher_;
 
-  scoped_ptr<Binding<WindowManagerInternal>> wm_internal_binding_;
+  scoped_ptr<mojo::Binding<WindowManagerInternal>> wm_internal_binding_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerApp);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_APP_H_

@@ -9,7 +9,7 @@
 #include "ui/events/event_processor.h"
 #include "ui/events/event_target.h"
 
-namespace mojo {
+namespace window_manager {
 
 class ViewTarget;
 
@@ -42,6 +42,6 @@ class ViewEventDispatcher : public ui::EventProcessor {
   DISALLOW_COPY_AND_ASSIGN(ViewEventDispatcher);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_VIEW_EVENT_DISPATCHER_H_

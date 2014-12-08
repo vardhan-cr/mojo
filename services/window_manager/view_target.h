@@ -18,9 +18,12 @@ class EventTargeter;
 }
 
 namespace mojo {
+class View;
+}
+
+namespace window_manager {
 
 class TestView;
-class View;
 class ViewTargeter;
 class WindowManagerApp;
 
@@ -36,7 +39,7 @@ class ViewTarget : public ui::EventTarget {
 
   // Returns the ViewTarget for a View. ViewTargets are owned by the |view|
   // passed in, and are created on demand.
-  static ViewTarget* TargetFromView(View* view);
+  static ViewTarget* TargetFromView(mojo::View* view);
 
   // Converts |point| from |source|'s coordinates to |target|'s. If |source| is
   // NULL, the function returns without modifying |point|. |target| cannot be
@@ -45,7 +48,7 @@ class ViewTarget : public ui::EventTarget {
                                    const ViewTarget* target,
                                    gfx::Point* point);
 
-  View* view() { return view_; }
+  mojo::View* view() { return view_; }
 
   // TODO(erg): Make this const once we've removed aura from the tree and it's
   // feasible to change all callers of the EventTargeter interface to pass and
@@ -75,7 +78,7 @@ class ViewTarget : public ui::EventTarget {
 
  private:
   friend class TestView;
-  explicit ViewTarget(View* view_to_wrap);
+  explicit ViewTarget(mojo::View* view_to_wrap);
 
   bool ConvertPointForAncestor(const ViewTarget* ancestor,
                                gfx::Point* point) const;
@@ -85,13 +88,13 @@ class ViewTarget : public ui::EventTarget {
                                  gfx::Vector2d* offset) const;
 
   // The mojo::View that we dispatch to.
-  View* view_;
+  mojo::View* view_;
 
   scoped_ptr<ViewTargeter> targeter_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewTarget);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_VIEW_TARGET_H_

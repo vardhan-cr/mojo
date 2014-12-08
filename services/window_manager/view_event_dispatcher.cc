@@ -7,7 +7,7 @@
 #include "mojo/services/public/cpp/view_manager/view.h"
 #include "services/window_manager/view_target.h"
 
-namespace mojo {
+namespace window_manager {
 
 ViewEventDispatcher::ViewEventDispatcher()
     : event_dispatch_target_(nullptr),
@@ -55,4 +55,4 @@ ui::EventDispatchDetails ViewEventDispatcher::PostDispatchEvent(
   return ui::EventDispatchDetails();
 }
 
-}  // namespace mojo
+}  // namespace window_manager

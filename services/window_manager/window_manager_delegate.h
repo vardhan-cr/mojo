@@ -8,13 +8,14 @@
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 
-namespace mojo {
+namespace window_manager {
 
 class WindowManagerDelegate {
  public:
   // See WindowManager::Embed() for details.
-  virtual void Embed(const String& url,
-                     InterfaceRequest<ServiceProvider> service_provider) = 0;
+  virtual void Embed(
+      const mojo::String& url,
+      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) = 0;
 
  protected:
   virtual ~WindowManagerDelegate() {}

@@ -11,7 +11,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/events/test/test_event_handler.h"
 
-namespace mojo {
+namespace window_manager {
 
 class ViewTargeterTest : public testing::Test {
  public:
@@ -80,8 +80,7 @@ TEST_F(ViewTargeterTest, KeyTest) {
   ui::test::TestEventHandler two_handler;
   two.target()->AddPreTargetHandler(&two_handler);
 
-  FocusController focus_controller(scoped_ptr<mojo::FocusRules>(
-      new mojo::BasicFocusRules(&root)));
+  FocusController focus_controller(make_scoped_ptr(new BasicFocusRules(&root)));
   SetFocusController(&root, &focus_controller);
 
   // Focus |one|. Then test that it receives a key event.
@@ -103,4 +102,4 @@ TEST_F(ViewTargeterTest, KeyTest) {
   one.target()->RemovePreTargetHandler(&one_handler);
 }
 
-}  // namespace mojo
+}  // namespace window_manager

@@ -11,7 +11,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/gfx/geometry/rect.h"
 
-namespace mojo {
+namespace window_manager {
 
 using ViewTargetTest = testing::Test;
 
@@ -78,4 +78,4 @@ TEST_F(ViewTargetTest, ConvertPointToTarget_Medium) {
   EXPECT_EQ(point2_in_t3_coords, point2_in_t1_coords);
 }
 
-}  // namespace mojo
+}  // namespace window_manager

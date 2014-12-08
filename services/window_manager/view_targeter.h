@@ -7,7 +7,7 @@
 
 #include "ui/events/event_targeter.h"
 
-namespace mojo {
+namespace window_manager {
 
 class ViewTarget;
 
@@ -39,6 +39,6 @@ class ViewTargeter : public ui::EventTargeter {
   DISALLOW_COPY_AND_ASSIGN(ViewTargeter);
 };
 
-}  // namespace mojo
+}  // namespace window_manager
 
 #endif  // SERVICES_WINDOW_MANAGER_VIEW_TARGETER_H_

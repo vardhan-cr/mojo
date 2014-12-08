@@ -252,19 +252,18 @@ class Window : public InterfaceFactory<NavigatorHost> {
   View* view_;
 };
 
-class WindowManager
-    : public ApplicationDelegate,
-      public DebugPanel::Delegate,
-      public ViewManagerDelegate,
-      public WindowManagerDelegate,
-      public ui::EventHandler {
+class WindowManager : public ApplicationDelegate,
+                      public DebugPanel::Delegate,
+                      public ViewManagerDelegate,
+                      public window_manager::WindowManagerDelegate,
+                      public ui::EventHandler {
  public:
   WindowManager()
       : shell_(nullptr),
         window_manager_factory_(this),
         launcher_ui_(NULL),
         view_manager_(NULL),
-        window_manager_app_(new WindowManagerApp(this, this)),
+        window_manager_app_(new window_manager::WindowManagerApp(this, this)),
         app_(NULL) {}
 
   virtual ~WindowManager() {
@@ -378,7 +377,7 @@ class WindowManager
     // analogous here.
 
     window_manager_app_->InitFocus(
-        scoped_ptr<mojo::FocusRules>(new mojo::BasicFocusRules(view)));
+        make_scoped_ptr(new window_manager::BasicFocusRules(view)));
   }
   virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
     DCHECK_EQ(view_manager_, view_manager);
@@ -396,7 +395,8 @@ class WindowManager
 
   // Overridden from ui::EventHandler:
   virtual void OnEvent(ui::Event* event) override {
-    View* view = static_cast<ViewTarget*>(event->target())->view();
+    View* view =
+        static_cast<window_manager::ViewTarget*>(event->target())->view();
     if (event->type() == ui::ET_MOUSE_PRESSED &&
         !IsDescendantOfKeyboard(view)) {
       view->SetFocus();
@@ -518,7 +518,7 @@ class WindowManager
   ViewManager* view_manager_;
   scoped_ptr<RootLayoutManager> root_layout_manager_;
 
-  scoped_ptr<WindowManagerApp> window_manager_app_;
+  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
   // Id of the view most content is added to. The keyboard is NOT added here.
   Id content_view_id_;

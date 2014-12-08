@@ -14,7 +14,9 @@
 #include "ui/events/test/event_generator.h"
 #include "ui/gfx/geometry/rect.h"
 
-namespace mojo {
+using mojo::View;
+
+namespace window_manager {
 
 // Counts the number of events that occur.
 class FocusNotificationObserver : public FocusControllerObserver {
@@ -105,7 +107,7 @@ class RecordingFocusNotificationObserver : public FocusNotificationObserver {
   }
 
  private:
-  mojo::FocusController* focus_controller_;
+  FocusController* focus_controller_;
 
   // Not owned.
   ViewDestroyer* destroyer_;
@@ -166,7 +168,7 @@ class ScopedFocusNotificationObserver : public FocusNotificationObserver {
   }
 
  private:
-  mojo::FocusController* focus_controller_;
+  FocusController* focus_controller_;
 
   DISALLOW_COPY_AND_ASSIGN(ScopedFocusNotificationObserver);
 };
@@ -204,7 +206,7 @@ class ScopedFilteringFocusNotificationObserver
     }
   }
 
-  mojo::FocusController* focus_controller_;
+  FocusController* focus_controller_;
   View* target_;
 
   DISALLOW_COPY_AND_ASSIGN(ScopedFilteringFocusNotificationObserver);
@@ -1130,4 +1132,4 @@ FOCUS_CONTROLLER_TEST(FocusControllerApiTest, DontPassDestroyedView);
 // If a mouse event was handled, it should not activate a view.
 FOCUS_CONTROLLER_TEST(FocusControllerMouseEventTest, IgnoreHandledEvent);
 
-}  // namespace mojo
+}  // namespace window_manager
