@@ -111,13 +111,10 @@ def GetTestList(config):
   # Sky tests (Linux-only):
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT,
                                                     "sky"):
-    # TODO(vtl): Temporary hack: Sky tests are currently really unstable, so
-    # make the step green even if the tests actually fail.
     sky_command = ["python",
-                   os.path.join("mojo", "tools", "run_always_succeed.py")]
-    sky_command += ["sky/tools/test_sky",
-                    "-t", os.path.basename(build_dir),
-                    "--no-new-test-results", "--no-show-results", "--verbose"]
+                   "sky/tools/test_sky",
+                   "-t", os.path.basename(build_dir),
+                   "--no-new-test-results", "--no-show-results", "--verbose"]
     if config.values.get("builder_name"):
       sky_command += ["--builder-name", config.values["builder_name"]]
     if config.values.get("build_number"):
