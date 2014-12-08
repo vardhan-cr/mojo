@@ -37,6 +37,7 @@
     'embedder/scoped_platform_handle.h',
     'embedder/simple_platform_shared_buffer.cc',
     'embedder/simple_platform_shared_buffer.h',
+    'embedder/simple_platform_shared_buffer_android.cc',
     'embedder/simple_platform_shared_buffer_posix.cc',
     'embedder/simple_platform_shared_buffer_win.cc',
     'embedder/simple_platform_support.cc',
