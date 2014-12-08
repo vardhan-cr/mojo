@@ -442,7 +442,7 @@ class LayerTreeHostTestSetNeedsRedrawRect : public LayerTreeHostTest {
 
     if (!num_draws_) {
       // If this is the first frame, expect full frame damage.
-      EXPECT_RECT_EQ(root_damage_rect, gfx::Rect(bounds_));
+      EXPECT_EQ(root_damage_rect, gfx::Rect(bounds_));
     } else {
       // Check that invalid_rect_ is indeed repainted.
       EXPECT_TRUE(root_damage_rect.Contains(invalid_rect_));
@@ -624,17 +624,17 @@ class LayerTreeHostTestSetNextCommitForcesRedraw : public LayerTreeHostTest {
 
     switch (num_draws_) {
       case 0:
-        EXPECT_RECT_EQ(gfx::Rect(bounds_), root_damage_rect);
+        EXPECT_EQ(gfx::Rect(bounds_), root_damage_rect);
         break;
       case 1:
       case 2:
-        EXPECT_RECT_EQ(gfx::Rect(0, 0, 0, 0), root_damage_rect);
+        EXPECT_EQ(gfx::Rect(0, 0, 0, 0), root_damage_rect);
         break;
       case 3:
-        EXPECT_RECT_EQ(invalid_rect_, root_damage_rect);
+        EXPECT_EQ(invalid_rect_, root_damage_rect);
         break;
       case 4:
-        EXPECT_RECT_EQ(gfx::Rect(bounds_), root_damage_rect);
+        EXPECT_EQ(gfx::Rect(bounds_), root_damage_rect);
         break;
       default:
         NOTREACHED();
@@ -736,12 +736,12 @@ class LayerTreeHostTestUndrawnLayersDamageLater : public LayerTreeHostTest {
     // box.
     switch (host_impl->active_tree()->source_frame_number()) {
       case 0:
-        EXPECT_RECT_EQ(gfx::Rect(root_layer_->bounds()), root_damage_rect);
+        EXPECT_EQ(gfx::Rect(root_layer_->bounds()), root_damage_rect);
         break;
       case 1:
       case 2:
       case 3:
-        EXPECT_RECT_EQ(gfx::Rect(child_layer_->bounds()), root_damage_rect);
+        EXPECT_EQ(gfx::Rect(child_layer_->bounds()), root_damage_rect);
         break;
       default:
         NOTREACHED();
@@ -1269,8 +1269,7 @@ class LayerTreeHostTestDeviceScaleFactorScalesViewportAndLayers
     ASSERT_EQ(2u, root->render_surface()->layer_list().size());
 
     // The root render surface is the size of the viewport.
-    EXPECT_RECT_EQ(gfx::Rect(0, 0, 60, 60),
-                   root->render_surface()->content_rect());
+    EXPECT_EQ(gfx::Rect(0, 0, 60, 60), root->render_surface()->content_rect());
 
     // The max tiling scale of the child should be scaled.
     EXPECT_FLOAT_EQ(1.5f, child->MaximumTilingContentsScale());
@@ -2643,10 +2642,10 @@ class LayerTreeHostTestChangeLayerPropertiesInPaintContents
     num_commits_++;
     if (num_commits_ == 1) {
       LayerImpl* root_layer = host_impl->active_tree()->root_layer();
-      EXPECT_SIZE_EQ(gfx::Size(1, 1), root_layer->bounds());
+      EXPECT_EQ(gfx::Size(1, 1), root_layer->bounds());
     } else {
       LayerImpl* root_layer = host_impl->active_tree()->root_layer();
-      EXPECT_SIZE_EQ(gfx::Size(2, 2), root_layer->bounds());
+      EXPECT_EQ(gfx::Size(2, 2), root_layer->bounds());
       EndTest();
     }
   }
@@ -2769,7 +2768,7 @@ class LayerTreeHostTestIOSurfaceDrawing : public LayerTreeHostTest {
     CHECK_EQ(DrawQuad::IO_SURFACE_CONTENT, quad->material);
     const IOSurfaceDrawQuad* io_surface_draw_quad =
         IOSurfaceDrawQuad::MaterialCast(quad);
-    EXPECT_SIZE_EQ(io_surface_size_, io_surface_draw_quad->io_surface_size);
+    EXPECT_EQ(io_surface_size_, io_surface_draw_quad->io_surface_size);
     EXPECT_NE(0u, io_surface_draw_quad->io_surface_resource_id);
     EXPECT_EQ(static_cast<GLenum>(GL_TEXTURE_RECTANGLE_ARB),
               resource_provider->TargetForTesting(
@@ -4719,6 +4718,62 @@ class LayerTreeHostTestBreakSwapPromise : public LayerTreeHostTest {
 
 MULTI_THREAD_TEST_F(LayerTreeHostTestBreakSwapPromise);
 
+class LayerTreeHostTestKeepSwapPromise : public LayerTreeTest {
+ public:
+  LayerTreeHostTestKeepSwapPromise() {}
+
+  void BeginTest() override {
+    layer_ = SolidColorLayer::Create();
+    layer_->SetIsDrawable(true);
+    layer_->SetBounds(gfx::Size(10, 10));
+    layer_tree_host()->SetRootLayer(layer_);
+    gfx::Size bounds(100, 100);
+    layer_tree_host()->SetViewportSize(bounds);
+    PostSetNeedsCommitToMainThread();
+  }
+
+  void DidCommit() override {
+    MainThreadTaskRunner()->PostTask(
+        FROM_HERE, base::Bind(&LayerTreeHostTestKeepSwapPromise::ChangeFrame,
+                              base::Unretained(this)));
+  }
+
+  void ChangeFrame() {
+    switch (layer_tree_host()->source_frame_number()) {
+      case 1:
+        layer_->SetBounds(gfx::Size(10, 11));
+        layer_tree_host()->QueueSwapPromise(
+            make_scoped_ptr(new TestSwapPromise(&swap_promise_result_)));
+        break;
+      case 2:
+        break;
+      default:
+        NOTREACHED();
+        break;
+    }
+  }
+
+  void SwapBuffersOnThread(LayerTreeHostImpl* host_impl, bool result) override {
+    EXPECT_TRUE(result);
+    if (host_impl->active_tree()->source_frame_number() >= 1) {
+      // The commit changes layers so it should cause a swap.
+      base::AutoLock lock(swap_promise_result_.lock);
+      EXPECT_TRUE(swap_promise_result_.did_swap_called);
+      EXPECT_FALSE(swap_promise_result_.did_not_swap_called);
+      EXPECT_TRUE(swap_promise_result_.dtor_called);
+      EndTest();
+    }
+  }
+
+  void AfterTest() override {}
+
+ private:
+  scoped_refptr<Layer> layer_;
+  TestSwapPromiseResult swap_promise_result_;
+};
+
+SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostTestKeepSwapPromise);
+
 class LayerTreeHostTestBreakSwapPromiseForVisibilityAbortedCommit
     : public LayerTreeHostTest {
  protected:
@@ -4780,17 +4835,9 @@ class LayerTreeHostTestBreakSwapPromiseForContextAbortedCommit
 
   void BeginMainFrameAbortedOnThread(LayerTreeHostImpl* host_impl,
                                      bool did_handle) override {
+    // This is needed so that the impl-thread state matches main-thread state.
+    host_impl->DidLoseOutputSurface();
     EndTest();
-    // This lets the test finally commit and exit.
-    MainThreadTaskRunner()->PostTask(
-        FROM_HERE,
-        base::Bind(&LayerTreeHostTestBreakSwapPromiseForContextAbortedCommit::
-                       FindOutputSurface,
-                   base::Unretained(this)));
-  }
-
-  void FindOutputSurface() {
-    layer_tree_host()->OnCreateAndInitializeOutputSurfaceAttempted(true);
   }
 
   void AfterTest() override {

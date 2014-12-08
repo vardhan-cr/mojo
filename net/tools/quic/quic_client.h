@@ -44,7 +44,7 @@ class QuicClient : public EpollCallbackInterface,
     virtual ~ResponseListener() {}
     virtual void OnCompleteResponse(QuicStreamId id,
                                     const BalsaHeaders& response_headers,
-                                    const string& response_body) = 0;
+                                    const std::string& response_body) = 0;
   };
 
   // Create a quic client, which will have events managed by an externally owned
@@ -120,6 +120,7 @@ class QuicClient : public EpollCallbackInterface,
   QuicClientSession* session() { return session_.get(); }
 
   bool connected() const;
+  bool goaway_received() const;
 
   void set_bind_to_address(IPAddressNumber address) {
     bind_to_address_ = address;
@@ -142,7 +143,7 @@ class QuicClient : public EpollCallbackInterface,
     server_id_ = server_id;
   }
 
-  void SetUserAgentID(const string& user_agent_id) {
+  void SetUserAgentID(const std::string& user_agent_id) {
     crypto_config_.set_user_agent_id(user_agent_id);
   }
 

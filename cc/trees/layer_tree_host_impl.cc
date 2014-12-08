@@ -237,7 +237,8 @@ LayerTreeHostImpl::LayerTreeHostImpl(
   SetDebugState(settings.initial_debug_state);
 
   // LTHI always has an active tree.
-  active_tree_ = LayerTreeImpl::create(this, new SyncedProperty<ScaleGroup>());
+  active_tree_ = LayerTreeImpl::create(this, new SyncedProperty<ScaleGroup>(),
+                                       new SyncedElasticOverscroll);
 
   TRACE_EVENT_OBJECT_CREATED_WITH_ID(
       TRACE_DISABLED_BY_DEFAULT("cc.debug"), "cc::LayerTreeHostImpl", id_);
@@ -1101,8 +1102,8 @@ void LayerTreeHostImpl::BlockNotifyReadyToActivateForTesting(bool block) {
 void LayerTreeHostImpl::ResetTreesForTesting() {
   if (active_tree_)
     active_tree_->DetachLayerTree();
-  active_tree_ =
-      LayerTreeImpl::create(this, active_tree()->page_scale_factor());
+  active_tree_ = LayerTreeImpl::create(this, active_tree()->page_scale_factor(),
+                                       active_tree()->elastic_overscroll());
   if (pending_tree_)
     pending_tree_->DetachLayerTree();
   pending_tree_ = nullptr;
@@ -1748,7 +1749,8 @@ void LayerTreeHostImpl::CreatePendingTree() {
     recycle_tree_.swap(pending_tree_);
   else
     pending_tree_ =
-        LayerTreeImpl::create(this, active_tree()->page_scale_factor());
+        LayerTreeImpl::create(this, active_tree()->page_scale_factor(),
+                              active_tree()->elastic_overscroll());
 
   // Update the delta from the active tree, which may have
   // adjusted its delta prior to the pending tree being created.
@@ -2008,16 +2010,13 @@ void LayerTreeHostImpl::CreateResourceAndRasterWorkerPool(
   }
 
   if (GetRendererCapabilities().using_image) {
-    unsigned image_target = GL_TEXTURE_2D;
-#if defined(OS_MACOSX)
-    // GL_TEXTURE_RECTANGLE_ARB target is required by IOSurface backed images.
-    DCHECK(context_provider->ContextCapabilities().gpu.texture_rectangle);
-    image_target = GL_TEXTURE_RECTANGLE_ARB;
-#endif
-    if (settings_.use_image_external) {
-      DCHECK(context_provider->ContextCapabilities().gpu.egl_image_external);
-      image_target = GL_TEXTURE_EXTERNAL_OES;
-    }
+    unsigned image_target = settings_.use_image_texture_target;
+    DCHECK_IMPLIES(
+        image_target == GL_TEXTURE_RECTANGLE_ARB,
+        context_provider->ContextCapabilities().gpu.texture_rectangle);
+    DCHECK_IMPLIES(
+        image_target == GL_TEXTURE_EXTERNAL_OES,
+        context_provider->ContextCapabilities().gpu.egl_image_external);
 
     if (settings_.use_zero_copy || IsSynchronousSingleThreaded()) {
       *resource_pool =
@@ -2681,10 +2680,16 @@ InputHandlerScrollResult LayerTreeHostImpl::ScrollBy(
     }
 
     did_lock_scrolling_layer_ = true;
-    if (!allow_bubbling_for_current_layer) {
+
+    // When scrolls are allowed to bubble, it's important that the original
+    // scrolling layer be preserved. This ensures that, after a scroll bubbles,
+    // the user can reverse scroll directions and immediately resume scrolling
+    // the original layer that scrolled.
+    if (!should_bubble_scrolls_)
       active_tree_->SetCurrentlyScrollingLayer(layer_impl);
+
+    if (!allow_bubbling_for_current_layer)
       break;
-    }
 
     if (allow_unrestricted_bubbling_for_current_layer) {
       pending_delta -= applied_delta;
@@ -3022,6 +3027,8 @@ scoped_ptr<ScrollAndScaleSet> LayerTreeHostImpl::ProcessScrollDeltas() {
   CollectScrollDeltas(scroll_info.get(), active_tree_->root_layer());
   scroll_info->page_scale_delta =
       active_tree_->page_scale_factor()->PullDeltaForMainThread();
+  scroll_info->elastic_overscroll_delta =
+      active_tree_->elastic_overscroll()->PullDeltaForMainThread();
   scroll_info->swap_promises.swap(swap_promises_for_main_thread_scroll_update_);
   scroll_info->top_controls_delta = active_tree()->top_controls_delta();
   active_tree_->set_sent_top_controls_delta(scroll_info->top_controls_delta);

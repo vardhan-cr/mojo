@@ -22,19 +22,19 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '32fee2907e2109ef420c3fec5f44e655ebc55c2a',
+  'skia_revision': 'cf56009d9058d25933d9840bf6cf9fdf6a80f647',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '5e7bfaf5530837b94fa0c05189c0ab601e3a6355',
+  'v8_revision': '4f77f25857dd9ca5b51749006d6183c3eeb2d49b',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  "angle_revision": "746d0ea79208b514e95e626310bec513fa666ca4",
+  "angle_revision": "16545669136028420f67ac496c45c2e9a32ed5a9",
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': 'af2cab762e6de03ee53ba430a596ad98d5006778',
+  'buildtools_revision': '535aff24c308a715751028173e569596bcfe12a7',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
@@ -78,7 +78,7 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu52.git' + '@' + '866ff696e9022a6000afbab516fba62cfa306075', # from svn revision 293126
+   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '53ecf0f68b27a004bef5526553b8e5f6c235b80b',
 
   'src/third_party/libc++/trunk':
    Var('chromium_git') + '/chromium/llvm-project/libcxx.git' + '@' +  Var('libcxx_revision'),
@@ -87,7 +87,7 @@ deps = {
    Var('chromium_git') + '/chromium/llvm-project/libcxxabi.git' + '@' +  Var('libcxxabi_revision'),
 
   'src/tools/grit':
-    Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'a24a0e647bb718b3540db89864cf586b12331e82', # from svn revision 182
+    Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'ba706f5aa055960b40927d7e5b42186acac9c5e6', # from svn revision 184
 
   'src/v8':
     Var('chromium_git') + '/v8/v8.git' + '@' +  Var('v8_revision'),

@@ -10,7 +10,6 @@
 #endif
 
 #include <algorithm>
-#include <string>
 
 #include "base/basictypes.h"
 #include "base/bind.h"
@@ -99,6 +98,7 @@
 
 using base::ASCIIToUTF16;
 using base::Time;
+using std::string;
 
 namespace net {
 
@@ -5434,6 +5434,25 @@ TEST_F(URLRequestTestHTTP, NoCacheOnNetworkDelegateRedirect) {
     EXPECT_FALSE(req->was_cached());
     EXPECT_EQ(0, d.received_redirect_count());
     EXPECT_EQ(initial_url, req->url());
+  }
+}
+
+// Make sure an HTTP request using the "unsafe" port 443 fails.
+// See: https://crbug.com/436451
+TEST_F(URLRequestTestHTTP, UnsafePort) {
+  TestDelegate d;
+  {
+    scoped_ptr<URLRequest> r(default_context_.CreateRequest(
+        GURL("http://www.google.com:443/"), DEFAULT_PRIORITY, &d, NULL));
+
+    r->Start();
+    EXPECT_TRUE(r->is_pending());
+
+    base::RunLoop().Run();
+
+    EXPECT_FALSE(r->is_pending());
+    EXPECT_EQ(URLRequestStatus::FAILED, r->status().status());
+    EXPECT_EQ(ERR_UNSAFE_PORT, r->status().error());
   }
 }
 
