@@ -5,6 +5,7 @@
 
 """A test runner for gtest application tests."""
 
+import argparse
 import logging
 import os
 import sys
@@ -15,28 +16,24 @@ import mopy.gtest
 from mopy.paths import Paths
 
 
-def main(argv):
+def main():
   logging.basicConfig()
   # Uncomment to debug:
   # _logging.setLevel(logging.DEBUG)
 
-  if len(argv) != 3:
-    print "Usage: %s gtest_app_list_file root_dir" % os.path.basename(argv[0])
-    return 0
+  parser = argparse.ArgumentParser(description='A test runner for gtest '
+                                   'application tests.')
 
-  _logging.debug("Test list file: %s", argv[1])
-  with open(argv[1], 'rb') as f:
-    apptest_list = [y for y in [x.strip() for x in f.readlines()] \
-                        if y and y[0] != '#']
+  parser.add_argument('apptests', type=file, metavar='gtest_app_list_file')
+  parser.add_argument('build_dir', type=str)
+  args = parser.parse_args()
+
+  apptest_list = [y.rstrip() for y in args.apptests \
+                      if not y.strip().startswith('#')]
   _logging.debug("Test list: %s" % apptest_list)
 
-  # Run gtests with color if we're on a TTY (and we're not being told explicitly
-  # what to do).
-  if sys.stdout.isatty() and 'GTEST_COLOR' not in os.environ:
-    _logging.debug("Setting GTEST_COLOR=yes")
-    os.environ['GTEST_COLOR'] = 'yes'
-
-  mojo_shell = Paths(build_dir=argv[2]).mojo_shell_path
+  mopy.gtest.set_color()
+  mojo_shell = Paths(build_dir=args.build_dir).mojo_shell_path
 
   exit_code = 0
   for apptest in apptest_list:
@@ -70,4 +67,4 @@ def main(argv):
   return exit_code
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+  sys.exit(main())

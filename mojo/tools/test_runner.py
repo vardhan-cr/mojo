@@ -14,6 +14,7 @@ import sys
 
 _logging = logging.getLogger()
 
+import mopy.gtest
 from mopy.paths import Paths
 from mopy.transitive_hash import file_hash, transitive_hash
 
@@ -68,11 +69,7 @@ def main():
              args.successes_cache_filename)
       successes = set()
 
-  # Run gtests with color if we're on a TTY (and we're not being told explicitly
-  # what to do).
-  if sys.stdout.isatty() and 'GTEST_COLOR' not in os.environ:
-    _logging.debug("Setting GTEST_COLOR=yes")
-    os.environ['GTEST_COLOR'] = 'yes'
+  mopy.gtest.set_color()
 
   # TODO(vtl): We may not close this file on failure.
   successes_cache_file = open(args.successes_cache_filename, 'ab') \

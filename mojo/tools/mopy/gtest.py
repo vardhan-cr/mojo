@@ -3,13 +3,23 @@
 # found in the LICENSE file.
 
 import logging
+import os
 import re
 import subprocess
+import sys
 
 _logging = logging.getLogger()
 
 import mopy.paths
 import mopy.print_process_error
+
+
+def set_color():
+  """Run gtests with color if we're on a TTY (and we're not being told
+  explicitly what to do)."""
+  if sys.stdout.isatty() and 'GTEST_COLOR' not in os.environ:
+    _logging.debug("Setting GTEST_COLOR=yes")
+    os.environ['GTEST_COLOR'] = 'yes'
 
 
 def _try_command_line(command_line):
