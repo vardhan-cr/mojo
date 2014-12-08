@@ -4,6 +4,8 @@
 
 #include "services/view_manager/server_view.h"
 
+#include <inttypes.h>
+
 #include "base/strings/stringprintf.h"
 #include "services/view_manager/server_view_delegate.h"
 
@@ -188,7 +190,7 @@ std::string ServerView::GetDebugWindowHierarchy() const {
 void ServerView::BuildDebugInfo(const std::string& depth,
                                 std::string* result) const {
   *result += base::StringPrintf(
-      "%sid=%d,%d visible=%s bounds=%d,%d %dx%d surface_id=%ld\n",
+      "%sid=%d,%d visible=%s bounds=%d,%d %dx%d surface_id=%" PRIu64 "\n",
       depth.c_str(), static_cast<int>(id_.connection_id),
       static_cast<int>(id_.view_id), visible_ ? "true" : "false", bounds_.x(),
       bounds_.y(), bounds_.width(), bounds_.height(), surface_id_.id);
