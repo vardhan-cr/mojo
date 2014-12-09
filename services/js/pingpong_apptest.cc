@@ -69,11 +69,24 @@ TEST_F(JSPingPongTest, PingServiceToPongClient) {
 
 // Verify that "pingpong.js" can connect to "pingpong-target.js", act as
 // its client, and return a Promise that only resolves after the target.ping()
-// => client.pong() methods have executed 10 times.
-TEST_F(JSPingPongTest, PingTargetApp) {
+// => client.pong() methods have executed 9 times.
+TEST_F(JSPingPongTest, PingTargetURL) {
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
-  pingpong_service_->PingTarget(JSAppURL("pingpong_target.js"), 10, callback);
+  pingpong_service_->PingTargetURL(JSAppURL("pingpong_target.js"), 9, callback);
+  EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(returned_value);
+  pingpong_service_->Quit();
+}
+
+// Same as the previous test except that instead of providing the
+// pingpong-target.js URL, we provide a connection to its PingPongService.
+TEST_F(JSPingPongTest, PingTargetService) {
+  PingPongServicePtr target;
+  application_impl()->ConnectToService(JSAppURL("pingpong_target.js"), &target);
+  bool returned_value = false;
+  PingTargetCallback callback(&returned_value);
+  pingpong_service_->PingTargetService(target.Pass(), 9, callback);
   EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
   EXPECT_TRUE(returned_value);
   pingpong_service_->Quit();

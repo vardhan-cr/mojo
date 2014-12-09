@@ -11,7 +11,11 @@ interface PingPongService {
 
   // Ping the PingPongService at |url| |count| times and return true
   // after the final Pong() is received.
-  PingTarget(string url, uint16 count) => (bool ok);
+  PingTargetURL(string url, uint16 count) => (bool ok);
+
+  // Ping the PingPongService |count| times and return true
+  // after the final Pong() is received.
+  PingTargetService(PingPongService service, uint16 count) => (bool ok);
 
   // Make it stop.
   Quit();

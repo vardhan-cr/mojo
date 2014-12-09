@@ -19,8 +19,8 @@ define("main", [
       this.app.quit();
     }
 
-    // This method is only used by the PingPongTargetApp test.
-    pingTarget(pingTargetURL, count) {
+    // This method is only used by the PingTargetURL test.
+    pingTargetURL(url, count) {
       var app = this.app;
       return new Promise(function(resolve) {
         var pingTargetClient = {
@@ -32,7 +32,25 @@ define("main", [
           }
         };
         var pingTargetService = app.shell.connectToService(
-            pingTargetURL, ppModule.PingPongService, pingTargetClient);
+            url, ppModule.PingPongService, pingTargetClient);
+        for(var i = 0; i <= count; i++)
+          pingTargetService.ping(i);
+      });
+    }
+
+    // This method is only used by the PingTargetService test.
+    pingTargetService(handle, count) {
+      var pingTargetService = new ppModule.PingPongService.proxyClass(handle);
+      return new Promise(function(resolve) {
+        var pingTargetClient = {
+          pong: function(value) {
+            if (value == count) {
+              pingTargetService.quit();
+              resolve({ok: true});
+            }
+          }
+        };
+        pingTargetService.client$ = pingTargetClient;
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });

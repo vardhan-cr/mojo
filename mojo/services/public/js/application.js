@@ -4,9 +4,10 @@
 
 define("mojo/services/public/js/application", [
   "services/js/app_bridge",
+  "mojo/public/interfaces/application/service_provider.mojom",
   "mojo/services/public/js/service_provider",
   "mojo/services/public/js/shell",
-], function(appBridgeModule, spModule, shellModule) {
+], function(appBridgeModule, spInterfaceModule, spModule, shellModule) {
 
   class Application {
     constructor(appShell, url) {
@@ -19,7 +20,8 @@ define("mojo/services/public/js/application", [
     }
 
     acceptConnection_(url, spHandle) {
-      var serviceProvider =  new spModule.ServiceProvider(spHandle);
+      var service = new spInterfaceModule.ServiceProvider.proxyClass(spHandle);
+      var serviceProvider =  new spModule.ServiceProvider(service);
       this.serviceProviders.push(serviceProvider);
       this.acceptConnection(url, serviceProvider);
     }
