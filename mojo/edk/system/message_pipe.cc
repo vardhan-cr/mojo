@@ -18,19 +18,6 @@
 namespace mojo {
 namespace system {
 
-namespace {
-
-// TODO(vtl): Move this into |Channel| (and possible further).
-struct SerializedMessagePipe {
-  // This is the endpoint ID on the receiving side, and should be a "remote ID".
-  // (The receiving side should already have had an endpoint attached and been
-  // run via the |Channel|s. This endpoint will have both IDs assigned, so this
-  // ID is only needed to associate that endpoint with a particular dispatcher.)
-  ChannelEndpointId receiver_endpoint_id;
-};
-
-}  // namespace
-
 // static
 MessagePipe* MessagePipe::CreateLocalLocal() {
   MessagePipe* message_pipe = new MessagePipe();
@@ -77,22 +64,15 @@ bool MessagePipe::Deserialize(Channel* channel,
                               unsigned* port) {
   DCHECK(!*message_pipe);  // Not technically wrong, but unlikely.
 
-  if (size != sizeof(SerializedMessagePipe)) {
+  if (size != channel->GetSerializedEndpointSize()) {
     LOG(ERROR) << "Invalid serialized message pipe";
     return false;
   }
 
-  const SerializedMessagePipe* s =
-      static_cast<const SerializedMessagePipe*>(source);
-  *message_pipe = channel->PassIncomingMessagePipe(s->receiver_endpoint_id);
-  if (!*message_pipe) {
-    LOG(ERROR) << "Failed to deserialize message pipe (ID = "
-               << s->receiver_endpoint_id << ")";
+  *message_pipe = channel->DeserializeEndpoint(source);
+  if (!*message_pipe)
     return false;
-  }
 
-  DVLOG(2) << "Deserializing message pipe dispatcher (new local ID = "
-           << s->receiver_endpoint_id << ")";
   *port = 0;
   return true;
 }
@@ -200,10 +180,10 @@ void MessagePipe::RemoveAwakable(unsigned port,
 }
 
 void MessagePipe::StartSerialize(unsigned /*port*/,
-                                 Channel* /*channel*/,
+                                 Channel* channel,
                                  size_t* max_size,
                                  size_t* max_platform_handles) {
-  *max_size = sizeof(SerializedMessagePipe);
+  *max_size = channel->GetSerializedEndpointSize();
   *max_platform_handles = 0;
 }
 
@@ -309,15 +289,10 @@ bool MessagePipe::EndSerialize(
     }
   }
 
-  SerializedMessagePipe* s = static_cast<SerializedMessagePipe*>(destination);
-
-  // Convert the local endpoint to a proxy endpoint (moving the message queue)
-  // and attach it to the channel.
-  s->receiver_endpoint_id =
-      channel->AttachAndRunEndpoint(channel_endpoint, false);
-  DVLOG(2) << "Serializing message pipe (remote ID = "
-           << s->receiver_endpoint_id << ")";
-  *actual_size = sizeof(SerializedMessagePipe);
+  // TODO(vtl): More/most of the above should be moved into (some variant of)
+  // |Channel::SerializeEndpoint()|.
+  channel->SerializeEndpoint(channel_endpoint, destination);
+  *actual_size = channel->GetSerializedEndpointSize();
   return true;
 }
 

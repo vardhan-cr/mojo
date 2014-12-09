@@ -16,6 +16,18 @@
 namespace mojo {
 namespace system {
 
+namespace {
+
+struct SerializedEndpoint {
+  // This is the endpoint ID on the receiving side, and should be a "remote ID".
+  // (The receiving side should already have had an endpoint attached and been
+  // run via the |Channel|s. This endpoint will have both IDs assigned, so this
+  // ID is only needed to associate that endpoint with a particular dispatcher.)
+  ChannelEndpointId receiver_endpoint_id;
+};
+
+}  // namespace
+
 Channel::Channel(embedder::PlatformSupport* platform_support)
     : platform_support_(platform_support),
       is_running_(false),
@@ -217,6 +229,33 @@ scoped_refptr<MessagePipe> Channel::PassIncomingMessagePipe(
   scoped_refptr<MessagePipe> rv;
   rv.swap(it->second);
   incoming_message_pipes_.erase(it);
+  return rv;
+}
+
+size_t Channel::GetSerializedEndpointSize() const {
+  return sizeof(SerializedEndpoint);
+}
+
+void Channel::SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
+                                void* destination) {
+  SerializedEndpoint* s = static_cast<SerializedEndpoint*>(destination);
+  s->receiver_endpoint_id = AttachAndRunEndpoint(endpoint, false);
+  DVLOG(2) << "Serializing endpoint (remote ID = " << s->receiver_endpoint_id
+           << ")";
+}
+
+scoped_refptr<MessagePipe> Channel::DeserializeEndpoint(const void* source) {
+  const SerializedEndpoint* s = static_cast<const SerializedEndpoint*>(source);
+  scoped_refptr<MessagePipe> rv =
+      PassIncomingMessagePipe(s->receiver_endpoint_id);
+  if (!rv) {
+    LOG(ERROR) << "Failed to deserialize message pipe (ID = "
+               << s->receiver_endpoint_id << ")";
+    return nullptr;
+  }
+
+  DVLOG(2) << "Deserializing endpoint (new local ID = "
+           << s->receiver_endpoint_id << ")";
   return rv;
 }
 

@@ -95,6 +95,8 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // returns true, otherwise).
   //
   // TODO(vtl): Maybe limit the number of attached message pipes.
+  // TODO(vtl): Get rid of this as a public method, except for the bootstrap
+  // case (and maybe rename it).
   ChannelEndpointId AttachAndRunEndpoint(
       scoped_refptr<ChannelEndpoint> endpoint,
       bool is_bootstrap);
@@ -118,8 +120,30 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
 
   // Takes ownership of an incoming message pipe (i.e., one that was created via
   // a |kSubtypeChannelAttachAndRunEndpoint| message).
+  // TODO(vtl): Get rid of this as a public method.
   scoped_refptr<MessagePipe> PassIncomingMessagePipe(
       ChannelEndpointId local_id);
+
+  // Returns the size of a serialized endpoint (see |SerializeEndpoint()| and
+  // |DeserializeEndpoint()| below). This value will remain constant for a given
+  // instance of |Channel|.
+  size_t GetSerializedEndpointSize() const;
+
+  // Serializes the given endpoint, writing to |destination| auxiliary
+  // information to be transmitted to the peer |Channel| via some other means.
+  // |destination| should point to a buffer of (at least) the size returned by
+  // |GetSerializedEndpointSize()| (exactly that much data will be written).
+  void SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
+                         void* destination);
+
+  // Deserializes an endpoint that was sent from the peer |Channel| (using
+  // |SerializeEndpoint()|. |source| should be (a copy of) the data that
+  // |SerializeEndpoint()| wrote, and must be (at least)
+  // |GetSerializedEndpointSize()| bytes. This returns the deserialized
+  // |MessagePipe| (whose local side is always port 0) or null on error.
+  // TODO(vtl): This shouldn't really produce a |MessagePipe|, but it'll have to
+  // do for now.
+  scoped_refptr<MessagePipe> DeserializeEndpoint(const void* source);
 
   // See |RawChannel::GetSerializedPlatformHandleSize()|.
   size_t GetSerializedPlatformHandleSize() const;
