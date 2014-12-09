@@ -149,11 +149,11 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // Handles "attach and run endpoint" messages.
   bool OnAttachAndRunEndpoint(ChannelEndpointId local_id,
                               ChannelEndpointId remote_id);
-  // Handles "remove message pipe endpoint" messages.
-  bool OnRemoveMessagePipeEndpoint(ChannelEndpointId local_id,
-                                   ChannelEndpointId remote_id);
-  // Handles "remove message pipe endpoint ack" messages.
-  bool OnRemoveMessagePipeEndpointAck(ChannelEndpointId local_id);
+  // Handles "remove endpoint" messages.
+  bool OnRemoveEndpoint(ChannelEndpointId local_id,
+                        ChannelEndpointId remote_id);
+  // Handles "remove endpoint ack" messages.
+  bool OnRemoveEndpointAck(ChannelEndpointId local_id);
 
   // Handles errors (e.g., invalid messages) from the remote side. Callable from
   // any thread.

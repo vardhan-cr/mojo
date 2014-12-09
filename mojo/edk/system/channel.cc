@@ -131,8 +131,8 @@ ChannelEndpointId Channel::AttachAndRunEndpoint(
             MessageInTransit::kSubtypeChannelAttachAndRunEndpoint, local_id,
             remote_id)) {
       HandleLocalError(base::StringPrintf(
-          "Failed to send message to run remote message pipe endpoint (local "
-          "ID %u, remote ID %u)",
+          "Failed to send message to run remote endpoint (local ID %u, remote "
+          "ID %u)",
           static_cast<unsigned>(local_id.value()),
           static_cast<unsigned>(remote_id.value())));
       // TODO(vtl): Should we continue on to |AttachAndRun()|?
@@ -191,12 +191,11 @@ void Channel::DetachEndpoint(ChannelEndpoint* endpoint,
     // Send a remove message outside the lock.
   }
 
-  if (!SendControlMessage(
-          MessageInTransit::kSubtypeChannelRemoveMessagePipeEndpoint, local_id,
-          remote_id)) {
+  if (!SendControlMessage(MessageInTransit::kSubtypeChannelRemoveEndpoint,
+                          local_id, remote_id)) {
     HandleLocalError(base::StringPrintf(
-        "Failed to send message to remove remote message pipe endpoint (local "
-        "ID %u, remote ID %u)",
+        "Failed to send message to remove remote endpoint (local ID %u, remote "
+        "ID %u)",
         static_cast<unsigned>(local_id.value()),
         static_cast<unsigned>(remote_id.value())));
   }
@@ -356,32 +355,32 @@ void Channel::OnReadMessageForChannel(
 
   switch (message_view.subtype()) {
     case MessageInTransit::kSubtypeChannelAttachAndRunEndpoint:
-      DVLOG(2) << "Handling channel message to attach and run message pipe "
-                  "(local ID " << message_view.destination_id()
-               << ", remote ID " << message_view.source_id() << ")";
+      DVLOG(2) << "Handling channel message to attach and run endpoint (local "
+                  "ID " << message_view.destination_id() << ", remote ID "
+               << message_view.source_id() << ")";
       if (!OnAttachAndRunEndpoint(message_view.destination_id(),
                                   message_view.source_id())) {
         HandleRemoteError(
-            "Received invalid channel message to attach and run message pipe");
+            "Received invalid channel message to attach and run endpoint");
       }
       break;
-    case MessageInTransit::kSubtypeChannelRemoveMessagePipeEndpoint:
-      DVLOG(2) << "Handling channel message to remove message pipe (local ID "
+    case MessageInTransit::kSubtypeChannelRemoveEndpoint:
+      DVLOG(2) << "Handling channel message to remove endpoint (local ID "
                << message_view.destination_id() << ", remote ID "
                << message_view.source_id() << ")";
-      if (!OnRemoveMessagePipeEndpoint(message_view.destination_id(),
-                                       message_view.source_id())) {
+      if (!OnRemoveEndpoint(message_view.destination_id(),
+                            message_view.source_id())) {
         HandleRemoteError(
-            "Received invalid channel message to remove message pipe");
+            "Received invalid channel message to remove endpoint");
       }
       break;
-    case MessageInTransit::kSubtypeChannelRemoveMessagePipeEndpointAck:
-      DVLOG(2) << "Handling channel message to ack remove message pipe (local "
-                  "ID " << message_view.destination_id() << ", remote ID "
+    case MessageInTransit::kSubtypeChannelRemoveEndpointAck:
+      DVLOG(2) << "Handling channel message to ack remove endpoint (local ID "
+               << message_view.destination_id() << ", remote ID "
                << message_view.source_id() << ")";
-      if (!OnRemoveMessagePipeEndpointAck(message_view.destination_id())) {
+      if (!OnRemoveEndpointAck(message_view.destination_id())) {
         HandleRemoteError(
-            "Received invalid channel message to ack remove message pipe");
+            "Received invalid channel message to ack remove endpoint");
       }
       break;
     default:
@@ -439,8 +438,8 @@ bool Channel::OnAttachAndRunEndpoint(ChannelEndpointId local_id,
   return true;
 }
 
-bool Channel::OnRemoveMessagePipeEndpoint(ChannelEndpointId local_id,
-                                          ChannelEndpointId remote_id) {
+bool Channel::OnRemoveEndpoint(ChannelEndpointId local_id,
+                               ChannelEndpointId remote_id) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
 
   scoped_refptr<ChannelEndpoint> endpoint;
@@ -449,7 +448,7 @@ bool Channel::OnRemoveMessagePipeEndpoint(ChannelEndpointId local_id,
 
     IdToEndpointMap::iterator it = local_id_to_endpoint_map_.find(local_id);
     if (it == local_id_to_endpoint_map_.end()) {
-      DVLOG(2) << "Remove message pipe endpoint error: not found";
+      DVLOG(2) << "Remove endpoint error: not found";
       return false;
     }
 
@@ -465,12 +464,11 @@ bool Channel::OnRemoveMessagePipeEndpoint(ChannelEndpointId local_id,
 
   endpoint->DetachFromChannel();
 
-  if (!SendControlMessage(
-          MessageInTransit::kSubtypeChannelRemoveMessagePipeEndpointAck,
-          local_id, remote_id)) {
+  if (!SendControlMessage(MessageInTransit::kSubtypeChannelRemoveEndpointAck,
+                          local_id, remote_id)) {
     HandleLocalError(base::StringPrintf(
-        "Failed to send message to remove remote message pipe endpoint ack "
-        "(local ID %u, remote ID %u)",
+        "Failed to send message to ack remove remote endpoint (local ID %u, "
+        "remote ID %u)",
         static_cast<unsigned>(local_id.value()),
         static_cast<unsigned>(remote_id.value())));
   }
@@ -478,19 +476,19 @@ bool Channel::OnRemoveMessagePipeEndpoint(ChannelEndpointId local_id,
   return true;
 }
 
-bool Channel::OnRemoveMessagePipeEndpointAck(ChannelEndpointId local_id) {
+bool Channel::OnRemoveEndpointAck(ChannelEndpointId local_id) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
 
   base::AutoLock locker(lock_);
 
   IdToEndpointMap::iterator it = local_id_to_endpoint_map_.find(local_id);
   if (it == local_id_to_endpoint_map_.end()) {
-    DVLOG(2) << "Remove message pipe endpoint ack error: not found";
+    DVLOG(2) << "Remove endpoint ack error: not found";
     return false;
   }
 
   if (it->second) {
-    DVLOG(2) << "Remove message pipe endpoint ack error: wrong state";
+    DVLOG(2) << "Remove endpoint ack error: wrong state";
     return false;
   }
 
