@@ -83,7 +83,7 @@
       ],
     },
     {
-      # GN version: //mojo/public/cpp/application/tests:mojo_public_application_unittests
+      # GN version: //mojo/edk/test:mojo_public_application_unittests
       'target_name': 'mojo_public_application_unittests',
       'type': 'executable',
       'dependencies': [

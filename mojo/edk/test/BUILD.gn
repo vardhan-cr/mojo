@@ -88,3 +88,14 @@ mojo_edk_source_set("test_support_impl") {
     "test_support_impl.h",
   ]
 }
+
+# Public SDK test targets follow. These targets are not defined within the
+# public SDK itself as running the unittests requires the EDK.
+
+# GYP version: mojo/mojo_base.gyp:mojo_public_application_unittests
+test("mojo_public_application_unittests") {
+  deps = [
+    ":run_all_unittests",
+    "../../public/cpp/application/tests",
+  ]
+}
