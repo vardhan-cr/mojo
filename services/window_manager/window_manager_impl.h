@@ -10,7 +10,7 @@
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/public/cpp/view_manager/types.h"
-#include "mojo/services/public/interfaces/window_manager/window_manager.mojom.h"
+#include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 
 namespace window_manager {
 

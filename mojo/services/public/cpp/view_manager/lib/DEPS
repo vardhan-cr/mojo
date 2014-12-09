@@ -1,6 +1,7 @@
 include_rules = [
   "+mojo/converters/geometry",
   "+mojo/geometry",
+  "+mojo/services/window_manager/public",
   "+ui/gfx",
 ]
 

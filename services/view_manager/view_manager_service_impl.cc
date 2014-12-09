@@ -9,7 +9,7 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
-#include "mojo/services/public/interfaces/window_manager/window_manager_internal.mojom.h"
+#include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/connection_manager.h"
 #include "services/view_manager/default_access_policy.h"
 #include "services/view_manager/server_view.h"

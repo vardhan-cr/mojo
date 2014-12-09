@@ -6,7 +6,7 @@
 
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
-#include "mojo/services/public/interfaces/window_manager/window_manager.mojom.h"
+#include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 
 namespace mojo {
 class ApplicationImpl;

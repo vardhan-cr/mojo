@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("window_manager") {
+mojom("interfaces") {
   sources = [
     "window_manager.mojom",
     "window_manager_internal.mojom",

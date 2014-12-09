@@ -59,7 +59,7 @@ source_set("lib") {
     "//mojo/public/interfaces/application",
     "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/native_viewport",
-    "//mojo/services/public/interfaces/window_manager",
+    "//mojo/services/window_manager/public/interfaces",
   ]
 }
 
@@ -87,7 +87,7 @@ test("window_manager_unittests") {
     "//mojo/public/cpp/application",
     "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/view_manager",
-    "//mojo/services/public/interfaces/window_manager",
+    "//mojo/services/window_manager/public/interfaces",
     "//shell:test_support",
     "//testing/gtest",
     "//ui/events:test_support",

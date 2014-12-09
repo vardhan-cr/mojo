@@ -14,7 +14,7 @@
 #include "mojo/services/public/cpp/view_manager/view.h"
 #include "mojo/services/public/cpp/view_manager/view_manager.h"
 #include "mojo/services/public/interfaces/view_manager/view_manager.mojom.h"
-#include "mojo/services/public/interfaces/window_manager/window_manager.mojom.h"
+#include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 
 namespace mojo {
 class Shell;

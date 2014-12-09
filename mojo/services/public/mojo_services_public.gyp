@@ -245,7 +245,7 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/window_manager
+      # GN version: //mojo/services/window_manager/public/interfaces
       'target_name': 'mojo_window_manager_bindings',
       'type': 'static_library',
       'sources': [
