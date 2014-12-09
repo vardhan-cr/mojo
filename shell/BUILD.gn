@@ -285,7 +285,7 @@ if (is_android) {
     dest = mojo_shell_assets_dir
     sources = [
       "$root_out_dir/lib.stripped/libbootstrap.so",
-      "$root_out_dir/obj/mojo/shell/bootstrap_java.dex.jar",
+      "$root_out_dir/obj/shell/bootstrap_java.dex.jar",
     ]
   }
 
