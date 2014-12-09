@@ -1009,20 +1009,20 @@ def _CheckSpamLogging(input_api, output_api):
   source_file_filter = lambda x: input_api.FilterSourceFile(
       x, white_list=(file_inclusion_pattern,), black_list=black_list)
 
+  log_macro = input_api.re.compile(r"\bD?LOG\s*\(\s*INFO\s*\)")
+  log_if_macro = input_api.re.compile(r"\bD?LOG_IF\s*\(\s*INFO\s*,")
+  printf_macro = input_api.re.compile(r"\bprintf\(")
+  fprintf_macro = input_api.re.compile(r"\bfprintf\((stdout|stderr)")
+
   log_info = []
   printf = []
 
   for f in input_api.AffectedSourceFiles(source_file_filter):
-    contents = input_api.ReadFile(f, 'rb')
-    if input_api.re.search(r"\bD?LOG\s*\(\s*INFO\s*\)", contents):
-      log_info.append(f.LocalPath())
-    elif input_api.re.search(r"\bD?LOG_IF\s*\(\s*INFO\s*,", contents):
-      log_info.append(f.LocalPath())
-
-    if input_api.re.search(r"\bprintf\(", contents):
-      printf.append(f.LocalPath())
-    elif input_api.re.search(r"\bfprintf\((stdout|stderr)", contents):
-      printf.append(f.LocalPath())
+    for linenum, line in f.ChangedContents():
+      if log_macro.search(line) or log_if_macro.search(line):
+        log_info.append(f.LocalPath())
+      if printf_macro.search(line) or fprintf_macro.search(line):
+        printf.append(f.LocalPath())
 
   if log_info:
     return [output_api.PresubmitError(
