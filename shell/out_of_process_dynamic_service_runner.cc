@@ -50,9 +50,11 @@ void OutOfProcessDynamicServiceRunner::AppCompleted(int32_t result) {
   DVLOG(2) << "OutOfProcessDynamicServiceRunner::AppCompleted(" << result
            << ")";
 
-  app_completed_callback_.Run();
-  app_completed_callback_.Reset();
   app_child_process_host_.reset();
+  // This object may be deleted by this callback.
+  base::Closure app_completed_callback = app_completed_callback_;
+  app_completed_callback_.Reset();
+  app_completed_callback.Run();
 }
 
 }  // namespace shell
