@@ -17,6 +17,14 @@ if (is_android) {
       "//base:base_java",
     ]
   }
+
+  generate_jni("jni_headers") {
+    sources = [
+      "android/src/org/chromium/mojo/PlatformViewportAndroid.java",
+    ]
+
+    jni_package = "mojo"
+  }
 } else {
   mojo_native_application("native_viewport") {
     output_name = "native_viewport_service"
@@ -89,7 +97,7 @@ source_set("lib") {
   ]
 
   if (is_android) {
-    deps += [ "//mojo:jni_headers" ]
+    deps += [ ":jni_headers" ]
   }
 
   if (use_x11) {

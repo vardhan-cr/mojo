@@ -76,18 +76,3 @@ group("tests") {
     deps += [ "//mojo/dart/embedder/test:dart_unittests" ]
   }
 }
-
-if (is_android) {
-  import("//build/config/android/rules.gni")
-
-  generate_jni("jni_headers") {
-    sources = [
-      "android/javatests/src/org/chromium/mojo/MojoTestCase.java",
-      "android/javatests/src/org/chromium/mojo/bindings/ValidationTestUtil.java",
-      "android/system/src/org/chromium/mojo/system/impl/CoreImpl.java",
-      "../services/native_viewport/android/src/org/chromium/mojo/PlatformViewportAndroid.java",
-    ]
-
-    jni_package = "mojo"
-  }
-}

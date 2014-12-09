@@ -17,8 +17,6 @@ generate_jni("jni_headers") {
   sources = [
     "javatests/src/org/chromium/mojo/MojoTestCase.java",
     "javatests/src/org/chromium/mojo/bindings/ValidationTestUtil.java",
-    "../../services/native_viewport/android/src/org/chromium/mojo/PlatformViewportAndroid.java",
-    "../../shell/android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
   ]
   deps = [
     ":system_java_jni_headers",
