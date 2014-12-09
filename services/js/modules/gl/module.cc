@@ -4,7 +4,6 @@
 
 #include "services/js/modules/gl/module.h"
 
-#include "base/logging.h"
 #include "gin/arguments.h"
 #include "gin/object_template_builder.h"
 #include "gin/per_isolate_data.h"

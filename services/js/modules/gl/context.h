@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_JS_MODULES_GL_CONTEXT_H_
-#define MOJO_SERVICES_JS_MODULES_GL_CONTEXT_H_
+#ifndef SERVICES_JS_MODULES_GL_CONTEXT_H_
+#define SERVICES_JS_MODULES_GL_CONTEXT_H_
 
 #include <GLES2/gl2.h>
 
@@ -51,6 +51,7 @@ class Context : public gin::Wrappable<Context> {
   static void VertexAttribPointer(GLuint index, GLint size, GLenum type,
                                   GLboolean normalized, GLsizei stride,
                                   uint64_t offset);
+  void Resize(GLuint width, GLuint height, GLfloat scale_factor);
 
  private:
   gin::ObjectTemplateBuilder GetObjectTemplateBuilder(
@@ -72,4 +73,4 @@ class Context : public gin::Wrappable<Context> {
 }  // namespace gl
 }  // namespace js
 
-#endif  // MOJO_SERVICES_JS_MODULES_GL_CONTEXT_H_
+#endif  // SERVICES_JS_MODULES_GL_CONTEXT_H_

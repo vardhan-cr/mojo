@@ -5,11 +5,14 @@
 #include "services/js/modules/gl/context.h"
 
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
+#include "base/bind.h"
 #include "gin/arguments.h"
 #include "gin/array_buffer.h"
 #include "gin/object_template_builder.h"
 #include "gin/per_context_data.h"
+#include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/environment/environment.h"
 
@@ -140,6 +143,7 @@ gin::ObjectTemplateBuilder Context::GetObjectTemplateBuilder(
       .SetMethod("getShaderInfoLog", GetShaderInfoLog)
       .SetMethod("getUniformLocation", GetUniformLocation)
       .SetMethod("linkProgram", glLinkProgram)
+      .SetMethod("resize", base::Bind(&Context::Resize, base::Unretained(this)))
       .SetMethod("shaderSource", ShaderSource)
       .SetMethod("swapBuffers", MojoGLES2SwapBuffers)
       .SetMethod("uniformMatrix4fv", UniformMatrix4fv)
@@ -163,6 +167,13 @@ Context::Context(v8::Isolate* isolate,
 
 Context::~Context() {
   MojoGLES2DestroyContext(context_);
+}
+
+void Context::Resize(GLuint width, GLuint height, GLfloat scale_factor) {
+  static_cast<gpu::gles2::GLES2Interface*>(
+      MojoGLES2GetGLES2Interface(context_))->ResizeCHROMIUM(width,
+                                                            height,
+                                                            scale_factor);
 }
 
 void Context::ContextLost() {

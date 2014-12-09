@@ -5,6 +5,7 @@ hello.js, world.js - A minimal application that connects to another.
 
 wget.js - Uses the network service to load a URL.
 
+cube.js - A JS version of examples/sample_app.
 
 --- Running Mojo Applications --- 
 
@@ -12,10 +13,11 @@ A Mojo application written in JavaScript is launched with mojo_shell like this:
 
   mojo_shell <js-application-url>
 
-Where js-application-url is either a file or an http URL that names a JS source
-file. The JS file itself must begin with a Mojo "shebang" that specifies the
-Mojo URL of the JS content handler. In other words, the first line of the JS
-source file must be:
+Where js-application-url is a URL understood by the shell. For example
+a file or an http URL that names a JS source file. The JS file itself
+must begin with a Mojo "shebang" that specifies the Mojo URL of the JS
+content handler. In other words, the first line of the JS source file
+must be:
 
   #!mojo:js_content_handler
 

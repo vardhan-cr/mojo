@@ -6,6 +6,7 @@
 
 #include "base/path_service.h"
 #include "gin/modules/console.h"
+#include "gin/modules/timer.h"
 #include "mojo/edk/js/core.h"
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"
@@ -36,6 +37,7 @@ void AddBuiltin(gin::ModuleRunnerDelegate* delegate) {
 JSAppRunnerDelegate::JSAppRunnerDelegate()
     : ModuleRunnerDelegate(GetModuleSearchPaths()) {
   AddBuiltin<gin::Console>(this);
+  AddBuiltinModule(gin::TimerModule::kName, gin::TimerModule::GetModule);
   AddBuiltin<mojo::js::Core>(this);
   AddBuiltin<mojo::js::Support>(this);
   AddBuiltin<mojo::js::Threading>(this);
