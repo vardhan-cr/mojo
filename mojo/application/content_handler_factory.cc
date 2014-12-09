@@ -92,9 +92,6 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
     active_threads_.erase(thread);
     base::PlatformThread::Join(handle);
     delete thread;
-    if (!active_threads_.size()) {
-      ApplicationImpl::Terminate();
-    }
   }
 
   ContentHandlerFactory::Delegate* delegate_;
