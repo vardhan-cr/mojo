@@ -118,12 +118,6 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
                       ChannelEndpointId local_id,
                       ChannelEndpointId remote_id);
 
-  // Takes ownership of an incoming message pipe (i.e., one that was created via
-  // a |kSubtypeChannelAttachAndRunEndpoint| message).
-  // TODO(vtl): Get rid of this as a public method.
-  scoped_refptr<MessagePipe> PassIncomingMessagePipe(
-      ChannelEndpointId local_id);
-
   // Returns the size of a serialized endpoint (see |SerializeEndpoint()| and
   // |DeserializeEndpoint()| below). This value will remain constant for a given
   // instance of |Channel|.
@@ -155,6 +149,12 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
  private:
   friend class base::RefCountedThreadSafe<Channel>;
   ~Channel() override;
+
+  // Takes ownership of an incoming message pipe (i.e., one that was created via
+  // a |kSubtypeChannelAttachAndRunEndpoint| message).
+  // TODO(vtl): Get rid of this.
+  scoped_refptr<MessagePipe> PassIncomingMessagePipe(
+      ChannelEndpointId local_id);
 
   // |RawChannel::Delegate| implementation (only called on the creation thread):
   void OnReadMessage(

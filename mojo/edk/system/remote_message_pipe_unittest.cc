@@ -333,8 +333,9 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   scoped_refptr<ChannelEndpoint> ep2;
   scoped_refptr<MessagePipe> mp2(MessagePipe::CreateLocalProxy(&ep2));
   ASSERT_TRUE(channels(0));
-  ChannelEndpointId remote_id = channels(0)->AttachAndRunEndpoint(ep2, false);
-  EXPECT_TRUE(remote_id.is_remote());
+  size_t endpoint_info_size = channels(0)->GetSerializedEndpointSize();
+  scoped_ptr<char[]> endpoint_info(new char[endpoint_info_size]);
+  channels(0)->SerializeEndpoint(ep2, endpoint_info.get());
 
   waiter.Init();
   ASSERT_EQ(
@@ -342,8 +343,8 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
       mp1->AddAwakable(1, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
 
   EXPECT_EQ(MOJO_RESULT_OK,
-            mp0->WriteMessage(0, UserPointer<const void>(&remote_id),
-                              sizeof(remote_id), nullptr,
+            mp0->WriteMessage(0, UserPointer<const void>(endpoint_info.get()),
+                              endpoint_info_size, nullptr,
                               MOJO_WRITE_MESSAGE_FLAG_NONE));
 
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
@@ -354,18 +355,20 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
 
-  ChannelEndpointId received_id;
-  buffer_size = static_cast<uint32_t>(sizeof(received_id));
+  EXPECT_EQ(endpoint_info_size, channels(1)->GetSerializedEndpointSize());
+  scoped_ptr<char[]> received_endpoint_info(new char[endpoint_info_size]);
+  buffer_size = static_cast<uint32_t>(endpoint_info_size);
   EXPECT_EQ(MOJO_RESULT_OK,
-            mp1->ReadMessage(1, UserPointer<void>(&received_id),
+            mp1->ReadMessage(1, UserPointer<void>(received_endpoint_info.get()),
                              MakeUserPointer(&buffer_size), nullptr, nullptr,
                              MOJO_READ_MESSAGE_FLAG_NONE));
-  EXPECT_EQ(sizeof(received_id), static_cast<size_t>(buffer_size));
-  EXPECT_EQ(remote_id, received_id);
+  EXPECT_EQ(endpoint_info_size, static_cast<size_t>(buffer_size));
+  EXPECT_EQ(0, memcmp(received_endpoint_info.get(), endpoint_info.get(),
+                      endpoint_info_size));
 
   // Warning: The local side of mp3 is port 0, not port 1.
   scoped_refptr<MessagePipe> mp3 =
-      channels(1)->PassIncomingMessagePipe(received_id);
+      channels(1)->DeserializeEndpoint(received_endpoint_info.get());
   ASSERT_TRUE(mp3);
 
   // Write: MP 2, port 0 -> MP 3, port 1.

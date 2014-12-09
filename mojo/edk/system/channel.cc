@@ -213,25 +213,6 @@ void Channel::DetachEndpoint(ChannelEndpoint* endpoint,
   }
 }
 
-scoped_refptr<MessagePipe> Channel::PassIncomingMessagePipe(
-    ChannelEndpointId local_id) {
-  // No need to check the validity of |local_id| -- if it's not valid, it simply
-  // won't be in |incoming_message_pipes_|.
-  DVLOG_IF(2, !local_id.is_valid() || !local_id.is_remote())
-      << "Attempt to get invalid incoming message pipe for ID " << local_id;
-
-  base::AutoLock locker(lock_);
-
-  auto it = incoming_message_pipes_.find(local_id);
-  if (it == incoming_message_pipes_.end())
-    return nullptr;
-
-  scoped_refptr<MessagePipe> rv;
-  rv.swap(it->second);
-  incoming_message_pipes_.erase(it);
-  return rv;
-}
-
 size_t Channel::GetSerializedEndpointSize() const {
   return sizeof(SerializedEndpoint);
 }
@@ -266,6 +247,25 @@ size_t Channel::GetSerializedPlatformHandleSize() const {
 Channel::~Channel() {
   // The channel should have been shut down first.
   DCHECK(!is_running_);
+}
+
+scoped_refptr<MessagePipe> Channel::PassIncomingMessagePipe(
+    ChannelEndpointId local_id) {
+  // No need to check the validity of |local_id| -- if it's not valid, it simply
+  // won't be in |incoming_message_pipes_|.
+  DVLOG_IF(2, !local_id.is_valid() || !local_id.is_remote())
+      << "Attempt to get invalid incoming message pipe for ID " << local_id;
+
+  base::AutoLock locker(lock_);
+
+  auto it = incoming_message_pipes_.find(local_id);
+  if (it == incoming_message_pipes_.end())
+    return nullptr;
+
+  scoped_refptr<MessagePipe> rv;
+  rv.swap(it->second);
+  incoming_message_pipes_.erase(it);
+  return rv;
 }
 
 void Channel::OnReadMessage(
