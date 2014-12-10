@@ -15,7 +15,8 @@ if (is_android) {
       "sample_app/app.go",
     ]
     deps = [
-      "//mojo/public/c/system:for_shared_library",
+      "//mojo/public/c/system",
+      "//mojo/public/platform/native:system",
     ]
   }
 } else if (is_linux) {
