@@ -16,66 +16,8 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "services/js/js_app_bridge_module.h"
 #include "services/js/js_app_message_loop_observers.h"
-#include "services/js/js_app_shell.h"
 
 namespace js {
-
-namespace {
-
-// If true then result is the value of value.property_name.
-bool GetValueProperty(v8::Isolate* isolate,
-                      v8::Handle<v8::Value> value,
-                      const std::string& property_name,
-                      v8::Handle<v8::Value>* result) {
-  if (!value->IsObject())
-    return false;
-  v8::Handle<v8::Object> obj = v8::Handle<v8::Object>::Cast(value);
-  v8::Handle<v8::Value> key = gin::StringToV8(isolate, property_name);
-  *result = obj->Get(key);
-  return true;
-}
-
-// If true then result is the function at value.method_name.
-bool GetValueMethod(v8::Isolate* isolate,
-                    v8::Handle<v8::Value> value,
-                    const std::string& method_name,
-                    v8::Handle<v8::Function>* result) {
-  v8::Handle<v8::Value> method_value;
-  if (!GetValueProperty(isolate, value, method_name, &method_value))
-    return false;
-  if (!method_value->IsFunction())
-    return false;
-  CHECK(gin::ConvertFromV8(isolate, method_value, result));
-  return true;
-}
-
-// If true then result is the mojo::Handle at value.property_name.
-bool GetValueMojoHandle(v8::Isolate* isolate,
-                        v8::Handle<v8::Value> value,
-                        const std::string& property_name,
-                        mojo::Handle* result) {
-  v8::Handle<v8::Value> mojo_handle_value;
-  if (!GetValueProperty(isolate, value, property_name, &mojo_handle_value))
-    return false;
-  return gin::ConvertFromV8(isolate, mojo_handle_value, result);
-}
-
-// If true then result is the mojo::Handle value of
-// service_provider.getConnection().messagePipeHandle
-bool GetConnectionMessagePipeHandle(v8::Isolate* isolate,
-                                    v8::Handle<v8::Value> service_provider,
-                                    mojo::Handle* result) {
-  v8::Handle<v8::Function> get_connection_method;
-  if (!GetValueMethod(
-          isolate, service_provider, "getConnection$", &get_connection_method))
-    return false;
-  v8::Local<v8::Value> connection_value =
-    get_connection_method->Call(service_provider, 0, nullptr);
-  return GetValueMojoHandle(
-      isolate, connection_value, "messagePipeHandle", result);
-}
-
-} // namespace
 
 const char JSApp::kMainModuleName[] = "main";
 
@@ -114,7 +56,7 @@ void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
   v8::Isolate* isolate = isolate_holder_.isolate();
 
   v8::Handle<v8::Value> argv[] = {
-    gin::ConvertToV8(isolate, JSAppShell::Create(isolate, this)),
+    gin::ConvertToV8(isolate, shell_.PassMessagePipe().release()),
     gin::ConvertToV8(isolate, url)
   };
 
@@ -123,55 +65,6 @@ void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
   app_instance_.Reset(isolate, app_class->NewInstance(arraysize(argv), argv));
   if (try_catch.HasCaught())
     runner_delegate_.UnhandledException(shell_runner_.get(), try_catch);
-
-  shell_.set_client(this);
-}
-
-void JSApp::ConnectToApplication(const std::string& application_url,
-                                 v8::Handle<v8::Value> service_provider) {
-  gin::Runner::Scope scope(shell_runner_.get());
-  v8::Isolate* isolate = isolate_holder_.isolate();
-
-  mojo::Handle handle;
-  if (GetConnectionMessagePipeHandle(isolate, service_provider, &handle) ||
-      gin::ConvertFromV8(isolate, service_provider, &handle)) {
-    mojo::MessagePipeHandle message_pipe_handle(handle.value());
-    mojo::ScopedMessagePipeHandle scoped_handle(message_pipe_handle);
-    shell_->ConnectToApplication(
-        application_url,
-        mojo::MakeRequest<mojo::ServiceProvider>(scoped_handle.Pass()));
-  }
-}
-
-void JSApp::CallAppInstanceMethod(
-    const std::string& name, int argc, v8::Handle<v8::Value> argv[]) {
-  v8::Isolate* isolate = isolate_holder_.isolate();
-  v8::Local<v8::Object> app =
-      v8::Local<v8::Object>::New(isolate, app_instance_);
-
-  v8::Handle<v8::Function> app_method;
-  GetValueMethod(isolate, app, name, &app_method);
-  shell_runner_->Call(app_method, app, argc, argv);
-}
-
-void JSApp::Initialize(mojo::Array<mojo::String> app_args) {
-  gin::Runner::Scope scope(shell_runner_.get());
-  v8::Isolate* isolate = isolate_holder_.isolate();
-  v8::Handle<v8::Value> argv[] = {
-    gin::ConvertToV8(isolate, app_args.To<std::vector<std::string>>()),
-  };
-  CallAppInstanceMethod("initialize", 1, argv);
-}
-
-void JSApp::AcceptConnection(const mojo::String& requestor_url,
-                             mojo::ServiceProviderPtr provider) {
-  gin::Runner::Scope scope(shell_runner_.get());
-  v8::Isolate* isolate = isolate_holder_.isolate();
-  v8::Handle<v8::Value> argv[] = {
-    gin::ConvertToV8(isolate, requestor_url.To<std::string>()),
-    gin::ConvertToV8(isolate, provider.PassMessagePipe().release()),
-  };
-  CallAppInstanceMethod("acceptConnection_", arraysize(argv), argv);
 }
 
 void JSApp::Quit() {

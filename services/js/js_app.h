@@ -23,30 +23,17 @@ class ApplicationDelegateImpl;
 // Each JavaScript app started by the content handler runs on its own thread
 // and in its own V8 isolate. This class represents one running JS app.
 
-class JSApp : public mojo::InterfaceImpl<mojo::Application>,
-              public mojo::ContentHandlerFactory::HandledApplicationHolder {
+class JSApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
   JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response);
   virtual ~JSApp();
 
-  // This method delegates to shell_->ConnectToApplication().
-  void ConnectToApplication(const std::string& application_url,
-                            v8::Handle<v8::Value> service_provider);
   void Quit();
 
  private:
   static const char kMainModuleName[];
 
   void OnAppLoaded(std::string url, v8::Handle<v8::Value> module);
-
-  // Application methods:
-  void AcceptConnection(const mojo::String& requestor_url,
-                        mojo::ServiceProviderPtr provider) override;
-  void Initialize(mojo::Array<mojo::String> args) override;
-
-  void CallAppInstanceMethod(
-      const std::string& name, int argc, v8::Handle<v8::Value> argv[]);
-
   void QuitInternal();
 
   mojo::ShellPtr shell_;
