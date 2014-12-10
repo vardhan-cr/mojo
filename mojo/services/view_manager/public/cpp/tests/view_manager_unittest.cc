@@ -349,12 +349,12 @@ TEST_F(ViewManagerTest, DISABLED_SetUp) {}
 TEST_F(ViewManagerTest, DISABLED_Embed) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
   EXPECT_TRUE(NULL != embedded);
 
-  View* view_in_embedded = embedded->GetRoots().front();
-  EXPECT_EQ(view->parent(), window_manager()->GetRoots().front());
+  View* view_in_embedded = embedded->GetRoot();
+  EXPECT_EQ(view->parent(), window_manager()->GetRoot());
   EXPECT_EQ(NULL, view_in_embedded->parent());
 }
 
@@ -364,15 +364,15 @@ TEST_F(ViewManagerTest, DISABLED_Embed) {
 TEST_F(ViewManagerTest, DISABLED_EmbeddedDoesntSeeChild) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   View* nested = View::Create(window_manager());
   nested->SetVisible(true);
   view->AddChild(nested);
 
   ViewManager* embedded = Embed(window_manager(), view);
-  EXPECT_EQ(embedded->GetRoots().front()->children().front()->id(),
+  EXPECT_EQ(embedded->GetRoot()->children().front()->id(),
             nested->id());
-  EXPECT_TRUE(embedded->GetRoots().front()->children().empty());
+  EXPECT_TRUE(embedded->GetRoot()->children().empty());
   EXPECT_TRUE(nested->parent() == NULL);
 }
 
@@ -380,7 +380,7 @@ TEST_F(ViewManagerTest, DISABLED_EmbeddedDoesntSeeChild) {
 TEST_F(ViewManagerTest, DISABLED_ViewManagerDestroyed_CleanupView) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
 
   Id view_id = view->id();
@@ -391,7 +391,7 @@ TEST_F(ViewManagerTest, DISABLED_ViewManagerDestroyed_CleanupView) {
   views.insert(view_id);
   WaitForDestruction(embedded, &views);
 
-  EXPECT_TRUE(embedded->GetRoots().empty());
+  EXPECT_EQ(nullptr, embedded->GetRoot());
 }
 
 // TODO(beng): write a replacement test for the one that once existed here:
@@ -411,7 +411,7 @@ TEST_F(ViewManagerTest, DISABLED_ViewManagerDestroyed_CleanupView) {
 TEST_F(ViewManagerTest, DISABLED_SetBounds) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
@@ -430,7 +430,7 @@ TEST_F(ViewManagerTest, DISABLED_SetBounds) {
 TEST_F(ViewManagerTest, DISABLED_SetBoundsSecurity) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
@@ -451,7 +451,7 @@ TEST_F(ViewManagerTest, DISABLED_SetBoundsSecurity) {
 TEST_F(ViewManagerTest, DISABLED_DestroySecurity) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
@@ -469,10 +469,10 @@ TEST_F(ViewManagerTest, DISABLED_DestroySecurity) {
 TEST_F(ViewManagerTest, DISABLED_MultiRoots) {
   View* view1 = View::Create(window_manager());
   view1->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view1);
+  window_manager()->GetRoot()->AddChild(view1);
   View* view2 = View::Create(window_manager());
   view2->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view2);
+  window_manager()->GetRoot()->AddChild(view2);
   ViewManager* embedded1 = Embed(window_manager(), view1);
   ViewManager* embedded2 = Embed(window_manager(), view2);
   EXPECT_EQ(embedded1, embedded2);
@@ -481,7 +481,7 @@ TEST_F(ViewManagerTest, DISABLED_MultiRoots) {
 TEST_F(ViewManagerTest, DISABLED_EmbeddingIdentity) {
   View* view = View::Create(window_manager());
   view->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view);
+  window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
   EXPECT_EQ(kWindowManagerURL, embedded->GetEmbedderURL());
 }
@@ -489,16 +489,16 @@ TEST_F(ViewManagerTest, DISABLED_EmbeddingIdentity) {
 TEST_F(ViewManagerTest, DISABLED_Reorder) {
   View* view1 = View::Create(window_manager());
   view1->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view1);
+  window_manager()->GetRoot()->AddChild(view1);
 
   ViewManager* embedded = Embed(window_manager(), view1);
 
   View* view11 = View::Create(embedded);
   view11->SetVisible(true);
-  embedded->GetRoots().front()->AddChild(view11);
+  embedded->GetRoot()->AddChild(view11);
   View* view12 = View::Create(embedded);
   view12->SetVisible(true);
-  embedded->GetRoots().front()->AddChild(view12);
+  embedded->GetRoot()->AddChild(view12);
 
   View* view1_in_wm = window_manager()->GetViewById(view1->id());
 
@@ -552,12 +552,12 @@ class VisibilityChangeObserver : public ViewObserver {
 TEST_F(ViewManagerTest, DISABLED_Visible) {
   View* view1 = View::Create(window_manager());
   view1->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view1);
+  window_manager()->GetRoot()->AddChild(view1);
 
   // Embed another app and verify initial state.
   ViewManager* embedded = Embed(window_manager(), view1);
-  ASSERT_EQ(1u, embedded->GetRoots().size());
-  View* embedded_root = embedded->GetRoots().front();
+  ASSERT_NE(nullptr, embedded->GetRoot());
+  View* embedded_root = embedded->GetRoot();
   EXPECT_TRUE(embedded_root->visible());
   EXPECT_TRUE(embedded_root->IsDrawn());
 
@@ -615,12 +615,12 @@ class DrawnChangeObserver : public ViewObserver {
 TEST_F(ViewManagerTest, DISABLED_Drawn) {
   View* view1 = View::Create(window_manager());
   view1->SetVisible(true);
-  window_manager()->GetRoots().front()->AddChild(view1);
+  window_manager()->GetRoot()->AddChild(view1);
 
   // Embed another app and verify initial state.
   ViewManager* embedded = Embed(window_manager(), view1);
-  ASSERT_EQ(1u, embedded->GetRoots().size());
-  View* embedded_root = embedded->GetRoots().front();
+  ASSERT_NE(nullptr, embedded->GetRoot());
+  View* embedded_root = embedded->GetRoot();
   EXPECT_TRUE(embedded_root->visible());
   EXPECT_TRUE(embedded_root->IsDrawn());
 
@@ -628,7 +628,7 @@ TEST_F(ViewManagerTest, DISABLED_Drawn) {
   // change to |embedded|.
   {
     DrawnChangeObserver observer(embedded_root);
-    window_manager()->GetRoots().front()->SetVisible(false);
+    window_manager()->GetRoot()->SetVisible(false);
     DoRunLoop();
   }
 

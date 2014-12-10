@@ -85,7 +85,7 @@ class ViewManagerClientImpl : public ViewManager,
 
   // Overridden from ViewManager:
   const std::string& GetEmbedderURL() const override;
-  const std::vector<View*>& GetRoots() const override;
+  View* GetRoot() override;
   View* GetViewById(Id id) override;
   View* GetFocusedView() override;
 
@@ -126,7 +126,7 @@ class ViewManagerClientImpl : public ViewManager,
   // ErrorHandler implementation.
   void OnConnectionError() override;
 
-  void RemoveRoot(View* root);
+  void RootDestroyed(View* root);
 
   void OnActionCompleted(bool success);
   void OnActionCompletedWithErrorCode(ErrorCode code);
@@ -148,7 +148,7 @@ class ViewManagerClientImpl : public ViewManager,
 
   ViewManagerDelegate* delegate_;
 
-  std::vector<View*> roots_;
+  View* root_;
 
   IdToViewMap views_;
 

@@ -290,7 +290,7 @@ class WindowManager : public ApplicationDelegate,
     // TODO: honor |bounds|.
     if (!keyboard_manager_) {
       keyboard_manager_.reset(new KeyboardManager);
-      View* parent = view_manager_->GetRoots().back();
+      View* parent = view_manager_->GetRoot();
       int ideal_height = 200;
       // TODO(sky): 10 is a bit of a hack here. There is a bug that causes
       // white strips to appear when 0 is used. Figure this out!

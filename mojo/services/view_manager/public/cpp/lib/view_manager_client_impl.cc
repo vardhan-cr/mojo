@@ -81,7 +81,7 @@ class RootObserver : public ViewObserver {
   void OnViewDestroyed(View* view) override {
     DCHECK_EQ(view, root_);
     static_cast<ViewManagerClientImpl*>(
-        ViewPrivate(root_).view_manager())->RemoveRoot(root_);
+        ViewPrivate(root_).view_manager())->RootDestroyed(root_);
     view->RemoveObserver(this);
     delete this;
   }
@@ -99,6 +99,7 @@ ViewManagerClientImpl::ViewManagerClientImpl(ViewManagerDelegate* delegate,
       connection_id_(0),
       next_id_(1),
       delegate_(delegate),
+      root_(nullptr),
       focused_view_(nullptr),
       binding_(this, handle.Pass()),
       service_(binding_.client()),
@@ -231,8 +232,8 @@ const std::string& ViewManagerClientImpl::GetEmbedderURL() const {
   return creator_url_;
 }
 
-const std::vector<View*>& ViewManagerClientImpl::GetRoots() const {
-  return roots_;
+View* ViewManagerClientImpl::GetRoot() {
+  return root_;
 }
 
 View* ViewManagerClientImpl::GetViewById(Id id) {
@@ -253,20 +254,14 @@ void ViewManagerClientImpl::OnEmbed(
     ViewDataPtr root_data,
     InterfaceRequest<ServiceProvider> parent_services,
     ScopedMessagePipeHandle window_manager_pipe) {
-  if (!connected_) {
-    connected_ = true;
-    connection_id_ = connection_id;
-    creator_url_ = String::From(creator_url);
-  } else {
-    DCHECK_EQ(connection_id_, connection_id);
-    DCHECK_EQ(creator_url_, creator_url);
-  }
+  DCHECK(!connected_);
+  connected_ = true;
+  connection_id_ = connection_id;
+  creator_url_ = String::From(creator_url);
 
-  // A new root must not already exist as a root or be contained by an existing
-  // hierarchy visible to this view manager.
-  View* root = AddViewToViewManager(this, NULL, root_data);
-  roots_.push_back(root);
-  root->AddObserver(new RootObserver(root));
+  DCHECK(!root_);
+  root_ = AddViewToViewManager(this, nullptr, root_data);
+  root_->AddObserver(new RootObserver(root_));
 
   ServiceProviderImpl* exported_services = nullptr;
   scoped_ptr<ServiceProvider> remote;
@@ -284,7 +279,7 @@ void ViewManagerClientImpl::OnEmbed(
   window_manager_->GetFocusedAndActiveViews(
       base::Bind(&ViewManagerClientImpl::OnGotFocusedAndActiveViews,
                  base::Unretained(this)));
-  delegate_->OnEmbed(this, root, exported_services, remote.Pass());
+  delegate_->OnEmbed(this, root_, exported_services, remote.Pass());
 }
 
 void ViewManagerClientImpl::OnEmbeddedAppDisconnected(Id view_id) {
@@ -417,11 +412,9 @@ void ViewManagerClientImpl::OnConnectionError() {
 ////////////////////////////////////////////////////////////////////////////////
 // ViewManagerClientImpl, private:
 
-void ViewManagerClientImpl::RemoveRoot(View* root) {
-  std::vector<View*>::iterator it =
-      std::find(roots_.begin(), roots_.end(), root);
-  if (it != roots_.end())
-    roots_.erase(it);
+void ViewManagerClientImpl::RootDestroyed(View* root) {
+  DCHECK_EQ(root, root_);
+  root_ = nullptr;
 }
 
 void ViewManagerClientImpl::OnActionCompleted(bool success) {

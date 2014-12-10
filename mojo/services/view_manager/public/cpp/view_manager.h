@@ -6,7 +6,6 @@
 #define MOJO_SERVICES_VIEW_MANAGER_PUBLIC_CPP_VIEW_MANAGER_H_
 
 #include <string>
-#include <vector>
 
 #include "mojo/services/view_manager/public/cpp/types.h"
 
@@ -22,8 +21,8 @@ class ViewManager {
   // Returns the URL of the application that embedded this application.
   virtual const std::string& GetEmbedderURL() const = 0;
 
-  // Returns all root views known to this connection.
-  virtual const std::vector<View*>& GetRoots() const = 0;
+  // Returns the root of this connection.
+  virtual View* GetRoot() = 0;
 
   // Returns a View known to this connection.
   virtual View* GetViewById(Id id) = 0;
