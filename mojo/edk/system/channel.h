@@ -150,12 +150,6 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   friend class base::RefCountedThreadSafe<Channel>;
   ~Channel() override;
 
-  // Takes ownership of an incoming message pipe (i.e., one that was created via
-  // a |kSubtypeChannelAttachAndRunEndpoint| message).
-  // TODO(vtl): Get rid of this.
-  scoped_refptr<IncomingEndpoint> PassIncomingEndpoint(
-      ChannelEndpointId local_id);
-
   // |RawChannel::Delegate| implementation (only called on the creation thread):
   void OnReadMessage(
       const MessageInTransit::View& message_view,

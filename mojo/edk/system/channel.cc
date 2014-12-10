@@ -228,16 +228,25 @@ void Channel::SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
 scoped_refptr<IncomingEndpoint> Channel::DeserializeEndpoint(
     const void* source) {
   const SerializedEndpoint* s = static_cast<const SerializedEndpoint*>(source);
-  scoped_refptr<IncomingEndpoint> rv =
-      PassIncomingEndpoint(s->receiver_endpoint_id);
-  if (!rv) {
-    LOG(ERROR) << "Failed to deserialize message pipe (ID = "
-               << s->receiver_endpoint_id << ")";
+  ChannelEndpointId local_id = s->receiver_endpoint_id;
+  // No need to check the validity of |local_id| -- if it's not valid, it simply
+  // won't be in |incoming_endpoints_|.
+  DVLOG_IF(2, !local_id.is_valid() || !local_id.is_remote())
+      << "Attempt to get incoming endpoint for invalid ID " << local_id;
+
+  base::AutoLock locker(lock_);
+
+  auto it = incoming_endpoints_.find(local_id);
+  if (it == incoming_endpoints_.end()) {
+    LOG(ERROR) << "Failed to deserialize endpoint (ID = " << local_id << ")";
     return nullptr;
   }
 
-  DVLOG(2) << "Deserializing endpoint (new local ID = "
-           << s->receiver_endpoint_id << ")";
+  DVLOG(2) << "Deserializing endpoint (new local ID = " << local_id << ")";
+
+  scoped_refptr<IncomingEndpoint> rv;
+  rv.swap(it->second);
+  incoming_endpoints_.erase(it);
   return rv;
 }
 
@@ -248,25 +257,6 @@ size_t Channel::GetSerializedPlatformHandleSize() const {
 Channel::~Channel() {
   // The channel should have been shut down first.
   DCHECK(!is_running_);
-}
-
-scoped_refptr<IncomingEndpoint> Channel::PassIncomingEndpoint(
-    ChannelEndpointId local_id) {
-  // No need to check the validity of |local_id| -- if it's not valid, it simply
-  // won't be in |incoming_endpoints_|.
-  DVLOG_IF(2, !local_id.is_valid() || !local_id.is_remote())
-      << "Attempt to get invalid incoming message pipe for ID " << local_id;
-
-  base::AutoLock locker(lock_);
-
-  auto it = incoming_endpoints_.find(local_id);
-  if (it == incoming_endpoints_.end())
-    return nullptr;
-
-  scoped_refptr<IncomingEndpoint> rv;
-  rv.swap(it->second);
-  incoming_endpoints_.erase(it);
-  return rv;
 }
 
 void Channel::OnReadMessage(
