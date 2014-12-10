@@ -26,8 +26,9 @@ def rev(source_dir, chromium_dir):
   src_commit = system(["git", "show-ref", "HEAD", "-s"], cwd=source_dir).strip()
 
   for d in dirs_to_clone:
-    print "removing directory %s" % d
-    system(["git", "rm", "-r", d], cwd=chromium_dir)
+    if os.path.exists(os.path.join(chromium_dir, d)):
+      print "removing directory %s" % d
+      system(["git", "rm", "-r", d], cwd=chromium_dir)
     print "cloning directory %s" % d
     files = system(["git", "ls-files", d], cwd=source_dir)
     for f in files.splitlines():
