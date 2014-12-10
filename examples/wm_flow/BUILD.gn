@@ -32,7 +32,7 @@ mojo_native_application("wm") {
     "//ui/views",
     "//ui/wm:wm",
     "//mojo/application",
-    "//mojo/services/public/interfaces/input_events",
+    "//mojo/services/input_events/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/views:views",
     "//services/window_manager:lib",

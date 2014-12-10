@@ -22,7 +22,7 @@ mojo_native_application("browser") {
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/input_events",
+    "//mojo/services/input_events/public/interfaces",
     "//mojo/services/public/interfaces/navigation",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/interfaces",

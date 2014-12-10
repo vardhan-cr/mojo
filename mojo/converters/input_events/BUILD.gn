@@ -21,6 +21,6 @@ component("input_events") {
     "//mojo/environment:chromium",
     "//mojo/public/c/system",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/input_events",
+    "//mojo/services/input_events/public/interfaces",
   ]
 }

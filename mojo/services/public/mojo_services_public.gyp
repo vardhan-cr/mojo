@@ -42,13 +42,13 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/input_events
+      # GN version: //mojo/services/input_events/public/interfaces
       'target_name': 'mojo_input_events_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/input_events/input_event_constants.mojom',
-        'interfaces/input_events/input_events.mojom',
-        'interfaces/input_events/input_key_codes.mojom',
+        '../input_events/public/interfaces/input_event_constants.mojom',
+        '../input_events/public/interfaces/input_events.mojom',
+        '../input_events/public/interfaces/input_key_codes.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [
