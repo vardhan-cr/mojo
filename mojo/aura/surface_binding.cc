@@ -21,7 +21,7 @@
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
-#include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
+#include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"

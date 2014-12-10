@@ -11,7 +11,7 @@
 #include "base/memory/weak_ptr.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
-#include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
+#include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"

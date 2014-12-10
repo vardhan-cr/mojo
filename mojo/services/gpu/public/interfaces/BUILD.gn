@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("gpu") {
+mojom("interfaces") {
   sources = [
     "command_buffer.mojom",
     "gpu.mojom",

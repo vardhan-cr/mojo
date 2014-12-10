@@ -11,8 +11,8 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
-#include "mojo/services/public/interfaces/gpu/command_buffer.mojom.h"
-#include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
+#include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
+#include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 
 namespace gfx {
 class GLShareGroup;

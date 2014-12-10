@@ -76,14 +76,14 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/gpu
+      # GN version: //mojo/services/gpu/public/interfaces
       'target_name': 'mojo_gpu_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/gpu/command_buffer.mojom',
-        'interfaces/gpu/gpu.mojom',
-        'interfaces/gpu/gpu_capabilities.mojom',
-        'interfaces/gpu/viewport_parameter_listener.mojom',
+        '../gpu/public/interfaces/command_buffer.mojom',
+        '../gpu/public/interfaces/gpu.mojom',
+        '../gpu/public/interfaces/gpu_capabilities.mojom',
+        '../gpu/public/interfaces/viewport_parameter_listener.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

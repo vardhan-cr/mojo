@@ -14,8 +14,8 @@ mojom("interfaces") {
   deps = [
     ":surface_id",
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/gpu/public/interfaces",
     "//mojo/services/native_viewport/public/interfaces",
-    "//mojo/services/public/interfaces/gpu",
   ]
 }
 

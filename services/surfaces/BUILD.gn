@@ -32,7 +32,7 @@ mojo_native_application("surfaces") {
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/bindings",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/gpu",
+    "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
   ]
 }

@@ -5,7 +5,7 @@
 module mojo;
 
 import "mojo/services/geometry/public/interfaces/geometry.mojom";
-import "mojo/services/public/interfaces/gpu/command_buffer.mojom";
+import "mojo/services/gpu/public/interfaces/command_buffer.mojom";
 import "mojo/services/public/interfaces/input_events/input_events.mojom";
 import "mojo/services/surfaces/public/interfaces/surface_id.mojom";
 

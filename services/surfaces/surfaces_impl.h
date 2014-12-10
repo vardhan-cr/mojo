@@ -11,8 +11,8 @@
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
-#include "mojo/services/public/interfaces/gpu/command_buffer.mojom.h"
-#include "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom.h"
+#include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
+#include "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 
 namespace cc {

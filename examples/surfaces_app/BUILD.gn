@@ -33,8 +33,8 @@ mojo_native_application("parent_app") {
     "//mojo/environment:chromium",
     "//mojo/public/cpp/system",
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/gpu/public/interfaces",
     "//mojo/services/native_viewport/public/interfaces",
-    "//mojo/services/public/interfaces/gpu",
     "//mojo/services/surfaces/public/interfaces",
   ]
 
@@ -98,7 +98,7 @@ mojo_native_application("child_gl_app") {
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/gpu",
+    "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/surfaces/public/interfaces:surface_id",
     "//skia",

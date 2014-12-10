@@ -10,7 +10,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/single_thread_task_runner.h"
 #include "base/timer/timer.h"
-#include "mojo/services/public/interfaces/gpu/command_buffer.mojom.h"
+#include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 

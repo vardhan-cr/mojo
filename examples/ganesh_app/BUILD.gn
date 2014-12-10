@@ -32,7 +32,7 @@ mojo_native_application("ganesh_app") {
     "//mojo/public/interfaces/application",
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/gpu",
+    "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/cpp",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/surfaces/public/interfaces:surface_id",

@@ -15,6 +15,7 @@ dirs_to_clone = [
   "mojo/services/public",
   "mojo/services/accessibility/public",
   "mojo/services/geometry/public",
+  "mojo/services/gpu/public",
   "mojo/services/native_viewport/public",
   "mojo/services/network/public",
   "mojo/services/surfaces/public",

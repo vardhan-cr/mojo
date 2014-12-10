@@ -6,7 +6,7 @@
 
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
-#include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
+#include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 
 namespace mojo {
 

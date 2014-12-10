@@ -5,8 +5,8 @@
 module mojo;
 
 import "mojo/services/geometry/public/interfaces/geometry.mojom";
-import "mojo/services/public/interfaces/gpu/command_buffer.mojom";
-import "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom";
+import "mojo/services/gpu/public/interfaces/command_buffer.mojom";
+import "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom";
 
 interface Gpu {
   CreateOnscreenGLES2Context(uint64 native_viewport_id,
