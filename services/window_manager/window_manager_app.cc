@@ -340,6 +340,7 @@ void WindowManagerApp::Create(ApplicationConnection* connection,
 void WindowManagerApp::CreateWindowManagerForViewManagerClient(
     uint16_t connection_id,
     mojo::ScopedMessagePipeHandle window_manager_pipe) {
+  // TODO(sky): pass in |connection_id| for validation.
   WindowManagerImpl* wm = new WindowManagerImpl(this, true);
   wm->Bind(window_manager_pipe.Pass());
   // WindowManagerImpl is deleted when the connection has an error, or from our

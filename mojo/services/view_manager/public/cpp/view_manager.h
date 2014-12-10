@@ -28,6 +28,10 @@ class ViewManager {
   // Returns a View known to this connection.
   virtual View* GetViewById(Id id) = 0;
 
+  // Returns the focused view; null if focus is not yet known or another app is
+  // focused.
+  virtual View* GetFocusedView() = 0;
+
  protected:
   virtual ~ViewManager() {}
 };

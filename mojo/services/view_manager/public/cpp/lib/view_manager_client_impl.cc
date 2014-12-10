@@ -99,6 +99,7 @@ ViewManagerClientImpl::ViewManagerClientImpl(ViewManagerDelegate* delegate,
       connection_id_(0),
       next_id_(1),
       delegate_(delegate),
+      focused_view_(nullptr),
       binding_(this, handle.Pass()),
       service_(binding_.client()),
       delete_on_error_(delete_on_error) {
@@ -239,6 +240,10 @@ View* ViewManagerClientImpl::GetViewById(Id id) {
   return it != views_.end() ? it->second : NULL;
 }
 
+View* ViewManagerClientImpl::GetFocusedView() {
+  return focused_view_;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // ViewManagerClientImpl, ViewManagerClient implementation:
 
@@ -274,6 +279,11 @@ void ViewManagerClientImpl::OnEmbed(
   }
   window_manager_.Bind(window_manager_pipe.Pass());
   window_manager_.set_client(this);
+  // base::Unretained() is safe here as |window_manager_| is bound to our
+  // lifetime.
+  window_manager_->GetFocusedAndActiveViews(
+      base::Bind(&ViewManagerClientImpl::OnGotFocusedAndActiveViews,
+                 base::Unretained(this)));
   delegate_->OnEmbed(this, root, exported_services, remote.Pass());
 }
 
@@ -386,6 +396,7 @@ void ViewManagerClientImpl::OnFocusChanged(Id old_focused_view_id,
                       *ViewPrivate(blurred).observers(),
                       OnViewFocusChanged(focused, blurred));
   }
+  focused_view_ = focused;
   if (focused) {
     FOR_EACH_OBSERVER(ViewObserver,
                       *ViewPrivate(focused).observers(),
@@ -431,6 +442,12 @@ base::Callback<void(ErrorCode)>
     ViewManagerClientImpl::ActionCompletedCallbackWithErrorCode() {
   return base::Bind(&ViewManagerClientImpl::OnActionCompletedWithErrorCode,
                     base::Unretained(this));
+}
+
+void ViewManagerClientImpl::OnGotFocusedAndActiveViews(uint32 focused_view_id,
+                                                       uint32 active_view_id) {
+  if (GetViewById(focused_view_id) != focused_view_)
+    OnFocusChanged(focused_view_ ? focused_view_->id() : 0, focused_view_id);
 }
 
 }  // namespace mojo

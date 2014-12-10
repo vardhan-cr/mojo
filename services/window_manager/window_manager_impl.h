@@ -46,6 +46,8 @@ class WindowManagerImpl : public mojo::WindowManager,
                    const mojo::Callback<void(bool)>& callback) override;
   void ActivateWindow(uint32_t view_id,
                       const mojo::Callback<void(bool)>& callback) override;
+  void GetFocusedAndActiveViews(
+      const mojo::Callback<void(uint32_t, uint32_t)>& callback) override;
 
   // mojo::ErrorHandler:
   void OnConnectionError() override;

@@ -4,6 +4,8 @@
 
 #include "services/window_manager/window_manager_impl.h"
 
+#include "mojo/services/view_manager/public/cpp/view.h"
+#include "services/window_manager/focus_controller.h"
 #include "services/window_manager/window_manager_app.h"
 
 using mojo::Callback;
@@ -76,6 +78,22 @@ void WindowManagerImpl::ActivateWindow(Id view,
   if (success)
     window_manager_->ActivateWindow(view);
   callback.Run(success);
+}
+
+void WindowManagerImpl::GetFocusedAndActiveViews(
+    const mojo::Callback<void(uint32_t, uint32_t)>& callback) {
+  if (!window_manager_->focus_controller()) {
+    // TODO(sky): add typedef for 0.
+    callback.Run(0, 0);
+    return;
+  }
+  mojo::View* active_view =
+      window_manager_->focus_controller()->GetActiveView();
+  mojo::View* focused_view =
+      window_manager_->focus_controller()->GetFocusedView();
+  // TODO(sky): sanitize ids for client.
+  callback.Run(focused_view ? focused_view->id() : 0,
+               active_view ? active_view->id() : 0);
 }
 
 void WindowManagerImpl::OnConnectionError() {

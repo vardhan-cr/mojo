@@ -87,6 +87,7 @@ class ViewManagerClientImpl : public ViewManager,
   const std::string& GetEmbedderURL() const override;
   const std::vector<View*>& GetRoots() const override;
   View* GetViewById(Id id) override;
+  View* GetFocusedView() override;
 
   // Overridden from ViewManagerClient:
   void OnEmbed(ConnectionSpecificId connection_id,
@@ -133,6 +134,10 @@ class ViewManagerClientImpl : public ViewManager,
   base::Callback<void(bool)> ActionCompletedCallback();
   base::Callback<void(ErrorCode)> ActionCompletedCallbackWithErrorCode();
 
+  // Callback from server for initial request of focused/active views.
+  void OnGotFocusedAndActiveViews(uint32 focused_view_id,
+                                  uint32 active_view_id);
+
   bool connected_;
   ConnectionSpecificId connection_id_;
   ConnectionSpecificId next_id_;
@@ -146,6 +151,8 @@ class ViewManagerClientImpl : public ViewManager,
   std::vector<View*> roots_;
 
   IdToViewMap views_;
+
+  View* focused_view_;
 
   WindowManagerPtr window_manager_;
 
