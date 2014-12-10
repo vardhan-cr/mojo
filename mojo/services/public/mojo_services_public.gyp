@@ -61,11 +61,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/geometry
+      # GN version: //mojo/services/geometry/public/interfaces
       'target_name': 'mojo_geometry_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/geometry/geometry.mojom',
+        '../geometry/public/interfaces/geometry.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

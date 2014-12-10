@@ -7,7 +7,7 @@
 
 #include "base/basictypes.h"
 #include "mojo/gpu/gl_context.h"
-#include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
+#include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 
 namespace mojo {
 

@@ -10,7 +10,7 @@ mojom("native_viewport") {
   ]
 
   public_deps = [
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/public/interfaces/input_events",
     "//mojo/services/surfaces/public/interfaces:surface_id",

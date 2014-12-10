@@ -25,7 +25,7 @@ mojo_native_application("aura_demo") {
     "//mojo/converters/geometry",
     "//mojo/aura",
     "//mojo/public/cpp/system",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/native_viewport",
     "//mojo/services/view_manager/public/cpp",
   ]

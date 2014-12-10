@@ -25,7 +25,7 @@ static_library("gpu") {
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
   ]
 }

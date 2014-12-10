@@ -10,7 +10,7 @@
 
 #include "base/basictypes.h"
 #include "mojo/public/cpp/bindings/array.h"
-#include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
+#include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/view_manager/public/cpp/types.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 

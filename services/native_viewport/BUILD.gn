@@ -83,7 +83,7 @@ source_set("lib") {
     "//mojo/converters/surfaces",
     "//mojo/environment:chromium",
     "//services/gles2",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/public/interfaces/native_viewport",
     "//mojo/services/surfaces/public/cpp",

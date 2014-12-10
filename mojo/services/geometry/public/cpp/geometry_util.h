@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_PUBLIC_CPP_GEOMETRY_GEOMETRY_UTIL_H_
-#define MOJO_SERVICES_PUBLIC_CPP_GEOMETRY_GEOMETRY_UTIL_H_
+#ifndef MOJO_SERVICES_GEOMETRY_PUBLIC_CPP_GEOMETRY_UTIL_H_
+#define MOJO_SERVICES_GEOMETRY_PUBLIC_CPP_GEOMETRY_UTIL_H_
 
-#include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
+#include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 
 namespace mojo {
 
@@ -36,4 +36,4 @@ inline bool operator!=(const Point& lhs, const Point& rhs) {
 
 }
 
-#endif  // MOJO_SERVICES_PUBLIC_CPP_GEOMETRY_GEOMETRY_UTIL_H_
+#endif  // MOJO_SERVICES_GEOMETRY_PUBLIC_CPP_GEOMETRY_UTIL_H_

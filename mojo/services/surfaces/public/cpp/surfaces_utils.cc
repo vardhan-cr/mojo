@@ -4,7 +4,7 @@
 
 #include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
 
-#include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
+#include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 
 namespace mojo {
 

@@ -22,7 +22,7 @@ source_set("gles2") {
     "//gpu/command_buffer/service",
     "//mojo/converters/geometry",
     "//mojo/public/cpp/bindings",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
     "//ui/gfx",
     "//ui/gfx/geometry",

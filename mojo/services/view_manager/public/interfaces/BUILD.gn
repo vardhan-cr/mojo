@@ -13,7 +13,7 @@ mojom("interfaces") {
 
   deps = [
     "//mojo/public/interfaces/application",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/input_events",
     "//mojo/services/surfaces/public/interfaces:surface_id",
   ]

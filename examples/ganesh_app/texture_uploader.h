@@ -10,7 +10,7 @@
 #include "base/memory/weak_ptr.h"
 #include "mojo/gpu/gl_context.h"
 #include "mojo/gpu/gl_texture.h"
-#include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
+#include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"

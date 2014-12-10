@@ -9,7 +9,7 @@ source_set("cpp") {
   ]
 
   deps = [
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
   ]
 }

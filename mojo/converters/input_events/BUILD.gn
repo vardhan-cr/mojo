@@ -20,7 +20,7 @@ component("input_events") {
     "//mojo/converters/geometry",
     "//mojo/environment:chromium",
     "//mojo/public/c/system",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/input_events",
-    "//mojo/services/public/interfaces/geometry",
   ]
 }

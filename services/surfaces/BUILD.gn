@@ -31,7 +31,7 @@ mojo_native_application("surfaces") {
     "//mojo/environment:chromium",
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/bindings",
-    "//mojo/services/public/interfaces/geometry",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/surfaces/public/interfaces",
   ]
