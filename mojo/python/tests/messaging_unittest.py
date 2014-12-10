@@ -45,6 +45,8 @@ class ConnectorTest(mojo_unittest.MojoTestCase):
   def tearDown(self):
     self.connector = None
     self.handle = None
+    self.received_messages = []
+    self.received_errors = []
     super(ConnectorTest, self).tearDown()
 
   def testConnectorRead(self):
@@ -71,6 +73,14 @@ class ConnectorTest(mojo_unittest.MojoTestCase):
     self.connector = None
     (result, _, _) = self.handle.ReadMessage()
     self.assertEquals(result, system.RESULT_FAILED_PRECONDITION)
+
+  def testConnectorWriteHandle(self):
+    new_handles = system.MessagePipe()
+    self.handle.WriteMessage(None, [new_handles.handle0])
+    self.loop.RunUntilIdle()
+    self.assertTrue(self.received_messages)
+    self.assertTrue(self.received_messages[0].handles)
+    self.assertFalse(self.received_errors)
 
 
 class HeaderTest(unittest.TestCase):
