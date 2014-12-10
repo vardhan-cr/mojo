@@ -13,8 +13,8 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/public/cpp/application/application_connection.h"
-#include "mojo/services/public/interfaces/surfaces/surface_id.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/transform.h"
 

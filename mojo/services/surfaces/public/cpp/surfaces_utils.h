@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_PUBLIC_CPP_SURFACES_SURFACES_UTILS_H_
-#define MOJO_SERVICES_PUBLIC_CPP_SURFACES_SURFACES_UTILS_H_
+#ifndef MOJO_SERVICES_SURFACES_PUBLIC_CPP_SURFACES_UTILS_H_
+#define MOJO_SERVICES_SURFACES_PUBLIC_CPP_SURFACES_UTILS_H_
 
-#include "mojo/services/public/interfaces/surfaces/quads.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/quads.mojom.h"
 
 namespace mojo {
 class Rect;
@@ -20,4 +20,4 @@ PassPtr CreateDefaultPass(int id, const Rect& rect);
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_PUBLIC_CPP_SURFACES_SURFACES_UTILS_H_
+#endif  // MOJO_SERVICES_SURFACES_PUBLIC_CPP_SURFACES_UTILS_H_

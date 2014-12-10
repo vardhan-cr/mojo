@@ -9,8 +9,8 @@
 #include "base/memory/weak_ptr.h"
 #include "cc/surfaces/surface_id.h"
 #include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 

@@ -208,13 +208,13 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/surfaces
+      # GN version: //mojo/services/surfaces/public/interfaces
       'target_name': 'mojo_surfaces_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/surfaces/surfaces.mojom',
-        'interfaces/surfaces/surfaces_service.mojom',
-        'interfaces/surfaces/quads.mojom',
+        '../surfaces/public/interfaces/surfaces.mojom',
+        '../surfaces/public/interfaces/surfaces_service.mojom',
+        '../surfaces/public/interfaces/quads.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [
@@ -230,11 +230,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/surfaces:surface_id
+      # GN version: //mojo/services/surfaces/public/interfaces:surface_id
       'target_name': 'mojo_surface_id_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/surfaces/surface_id.mojom',
+        '../surfaces/public/interfaces/surface_id.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

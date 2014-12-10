@@ -34,8 +34,8 @@ mojo_native_application("parent_app") {
     "//mojo/public/cpp/system",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/gpu",
-    "//mojo/services/public/interfaces/surfaces",
     "//mojo/services/public/interfaces/native_viewport",
+    "//mojo/services/surfaces/public/interfaces",
   ]
 
   sources = [
@@ -62,8 +62,8 @@ mojo_native_application("child_app") {
     "//mojo/environment:chromium",
     "//mojo/public/cpp/bindings",
     "//mojo/services/public/interfaces/geometry",
-    "//mojo/services/public/interfaces/surfaces",
-    "//mojo/services/public/interfaces/surfaces:surface_id",
+    "//mojo/services/surfaces/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
     "//skia",
     "//ui/gfx",
     "//ui/gfx/geometry",
@@ -99,8 +99,8 @@ mojo_native_application("child_gl_app") {
     "//mojo/public/cpp/system",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/gpu",
-    "//mojo/services/public/interfaces/surfaces",
-    "//mojo/services/public/interfaces/surfaces:surface_id",
+    "//mojo/services/surfaces/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
     "//skia",
     "//ui/gfx",
     "//ui/gfx/geometry",
@@ -130,8 +130,8 @@ source_set("util") {
 mojom("bindings") {
   deps = [
     "//mojo/services/public/interfaces/geometry",
-    "//mojo/services/public/interfaces/surfaces",
-    "//mojo/services/public/interfaces/surfaces:surface_id",
+    "//mojo/services/surfaces/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
   ]
 
   sources = [

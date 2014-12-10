@@ -11,7 +11,7 @@
 #include "cc/quads/surface_draw_quad.h"
 #include "examples/surfaces_app/surfaces_util.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
-#include "mojo/services/public/interfaces/surfaces/surface_id.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/size.h"
 #include "ui/gfx/transform.h"

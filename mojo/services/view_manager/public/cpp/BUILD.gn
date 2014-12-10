@@ -34,7 +34,7 @@ source_set("cpp") {
     "//mojo/public/interfaces/application",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/input_events:input_events",
-    "//mojo/services/public/interfaces/surfaces:surface_id",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
   ]

@@ -12,9 +12,9 @@
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
 #include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surface_id.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 
 namespace mojo {
 class Shell;

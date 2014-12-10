@@ -12,9 +12,9 @@
 #include "cc/surfaces/surface_id_allocator.h"
 #include "examples/surfaces_app/child.mojom.h"
 #include "mojo/public/cpp/bindings/string.h"
-#include "mojo/services/public/interfaces/surfaces/surface_id.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/size.h"
 

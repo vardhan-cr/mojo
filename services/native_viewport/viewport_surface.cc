@@ -8,7 +8,7 @@
 #include "cc/surfaces/surface_id_allocator.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
-#include "mojo/services/public/cpp/surfaces/surfaces_utils.h"
+#include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
 #include "ui/gfx/transform.h"
 
 namespace mojo {

@@ -7,8 +7,8 @@ module mojo;
 import "mojo/services/public/interfaces/geometry/geometry.mojom";
 import "mojo/services/public/interfaces/gpu/command_buffer.mojom";
 import "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom";
-import "mojo/services/public/interfaces/surfaces/quads.mojom";
-import "mojo/services/public/interfaces/surfaces/surface_id.mojom";
+import "mojo/services/surfaces/public/interfaces/quads.mojom";
+import "mojo/services/surfaces/public/interfaces/surface_id.mojom";
 
 enum ResourceFormat {
   RGBA_8888,

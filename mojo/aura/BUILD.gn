@@ -37,7 +37,7 @@ source_set("aura") {
     "//mojo/public/interfaces/application:application",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/public/interfaces/native_viewport",
-    "//mojo/services/public/interfaces/surfaces",
+    "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
   ]
 }

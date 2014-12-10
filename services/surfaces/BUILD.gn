@@ -33,6 +33,6 @@ mojo_native_application("surfaces") {
     "//mojo/public/cpp/bindings",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/gpu",
-    "//mojo/services/public/interfaces/surfaces",
+    "//mojo/services/surfaces/public/interfaces",
   ]
 }

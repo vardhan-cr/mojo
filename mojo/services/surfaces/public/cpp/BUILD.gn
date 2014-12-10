@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-source_set("surfaces") {
+source_set("cpp") {
   sources = [
     "surfaces_utils.cc",
     "surfaces_utils.h",
@@ -10,6 +10,6 @@ source_set("surfaces") {
 
   deps = [
     "//mojo/services/public/interfaces/geometry",
-    "//mojo/services/public/interfaces/surfaces",
+    "//mojo/services/surfaces/public/interfaces",
   ]
 }

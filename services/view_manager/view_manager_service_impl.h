@@ -12,7 +12,7 @@
 #include "base/basictypes.h"
 #include "base/containers/hash_tables.h"
 #include "base/memory/scoped_ptr.h"
-#include "mojo/services/public/interfaces/surfaces/surface_id.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "services/view_manager/access_policy_delegate.h"
 #include "services/view_manager/ids.h"

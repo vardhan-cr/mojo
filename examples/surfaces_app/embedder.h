@@ -7,7 +7,7 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "cc/surfaces/surface_id.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "ui/gfx/size.h"
 
 namespace cc {

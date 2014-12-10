@@ -10,7 +10,7 @@
 #include "cc/surfaces/surface_id.h"
 #include "mojo/services/public/interfaces/gpu/gpu.mojom.h"
 #include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/geometry/rect.h"
 

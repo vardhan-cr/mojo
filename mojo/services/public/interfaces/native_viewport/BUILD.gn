@@ -13,6 +13,6 @@ mojom("native_viewport") {
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/public/interfaces/input_events",
-    "//mojo/services/public/interfaces/surfaces:surface_id",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
   ]
 }

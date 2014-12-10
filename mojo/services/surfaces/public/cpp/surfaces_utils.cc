@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/public/cpp/surfaces/surfaces_utils.h"
+#include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
 
 #include "mojo/services/public/interfaces/geometry/geometry.mojom.h"
 
