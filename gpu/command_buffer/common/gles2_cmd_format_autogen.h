@@ -9746,26 +9746,30 @@ struct TraceBeginCHROMIUM {
 
   void SetHeader() { header.SetCmd<ValueType>(); }
 
-  void Init(GLuint _bucket_id) {
+  void Init(GLuint _category_bucket_id, GLuint _name_bucket_id) {
     SetHeader();
-    bucket_id = _bucket_id;
+    category_bucket_id = _category_bucket_id;
+    name_bucket_id = _name_bucket_id;
   }
 
-  void* Set(void* cmd, GLuint _bucket_id) {
-    static_cast<ValueType*>(cmd)->Init(_bucket_id);
+  void* Set(void* cmd, GLuint _category_bucket_id, GLuint _name_bucket_id) {
+    static_cast<ValueType*>(cmd)->Init(_category_bucket_id, _name_bucket_id);
     return NextCmdAddress<ValueType>(cmd);
   }
 
   gpu::CommandHeader header;
-  uint32_t bucket_id;
+  uint32_t category_bucket_id;
+  uint32_t name_bucket_id;
 };
 
-COMPILE_ASSERT(sizeof(TraceBeginCHROMIUM) == 8,
-               Sizeof_TraceBeginCHROMIUM_is_not_8);
+COMPILE_ASSERT(sizeof(TraceBeginCHROMIUM) == 12,
+               Sizeof_TraceBeginCHROMIUM_is_not_12);
 COMPILE_ASSERT(offsetof(TraceBeginCHROMIUM, header) == 0,
                OffsetOf_TraceBeginCHROMIUM_header_not_0);
-COMPILE_ASSERT(offsetof(TraceBeginCHROMIUM, bucket_id) == 4,
-               OffsetOf_TraceBeginCHROMIUM_bucket_id_not_4);
+COMPILE_ASSERT(offsetof(TraceBeginCHROMIUM, category_bucket_id) == 4,
+               OffsetOf_TraceBeginCHROMIUM_category_bucket_id_not_4);
+COMPILE_ASSERT(offsetof(TraceBeginCHROMIUM, name_bucket_id) == 8,
+               OffsetOf_TraceBeginCHROMIUM_name_bucket_id_not_8);
 
 struct TraceEndCHROMIUM {
   typedef TraceEndCHROMIUM ValueType;
@@ -10350,6 +10354,38 @@ COMPILE_ASSERT(offsetof(ScheduleOverlayPlaneCHROMIUM, uv_width) == 40,
                OffsetOf_ScheduleOverlayPlaneCHROMIUM_uv_width_not_40);
 COMPILE_ASSERT(offsetof(ScheduleOverlayPlaneCHROMIUM, uv_height) == 44,
                OffsetOf_ScheduleOverlayPlaneCHROMIUM_uv_height_not_44);
+
+struct SwapInterval {
+  typedef SwapInterval ValueType;
+  static const CommandId kCmdId = kSwapInterval;
+  static const cmd::ArgFlags kArgFlags = cmd::kFixed;
+  static const uint8 cmd_flags = CMD_FLAG_SET_TRACE_LEVEL(1);
+
+  static uint32_t ComputeSize() {
+    return static_cast<uint32_t>(sizeof(ValueType));  // NOLINT
+  }
+
+  void SetHeader() { header.SetCmd<ValueType>(); }
+
+  void Init(GLint _interval) {
+    SetHeader();
+    interval = _interval;
+  }
+
+  void* Set(void* cmd, GLint _interval) {
+    static_cast<ValueType*>(cmd)->Init(_interval);
+    return NextCmdAddress<ValueType>(cmd);
+  }
+
+  gpu::CommandHeader header;
+  int32_t interval;
+};
+
+COMPILE_ASSERT(sizeof(SwapInterval) == 8, Sizeof_SwapInterval_is_not_8);
+COMPILE_ASSERT(offsetof(SwapInterval, header) == 0,
+               OffsetOf_SwapInterval_header_not_0);
+COMPILE_ASSERT(offsetof(SwapInterval, interval) == 4,
+               OffsetOf_SwapInterval_interval_not_4);
 
 struct MatrixLoadfCHROMIUMImmediate {
   typedef MatrixLoadfCHROMIUMImmediate ValueType;

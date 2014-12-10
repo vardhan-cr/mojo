@@ -2021,11 +2021,11 @@ void ReleaseTexImage2DCHROMIUM(GLenum target, GLint imageId) {
   }
 }
 
-void TraceBeginCHROMIUM(GLuint bucket_id) {
+void TraceBeginCHROMIUM(GLuint category_bucket_id, GLuint name_bucket_id) {
   gles2::cmds::TraceBeginCHROMIUM* c =
       GetCmdSpace<gles2::cmds::TraceBeginCHROMIUM>();
   if (c) {
-    c->Init(bucket_id);
+    c->Init(category_bucket_id, name_bucket_id);
   }
 }
 
@@ -2160,6 +2160,13 @@ void ScheduleOverlayPlaneCHROMIUM(GLint plane_z_order,
     c->Init(plane_z_order, plane_transform, overlay_texture_id, bounds_x,
             bounds_y, bounds_width, bounds_height, uv_x, uv_y, uv_width,
             uv_height);
+  }
+}
+
+void SwapInterval(GLint interval) {
+  gles2::cmds::SwapInterval* c = GetCmdSpace<gles2::cmds::SwapInterval>();
+  if (c) {
+    c->Init(interval);
   }
 }
 

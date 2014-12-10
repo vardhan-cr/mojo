@@ -34,16 +34,14 @@ static const int kTimeLimitMillis = 2000;
 static const int kWarmupRuns = 5;
 static const int kTimeCheckInterval = 10;
 
-class FakeRasterizerImpl : public Rasterizer, public RasterizerTaskClient {
+class FakeTileTaskRunnerImpl : public TileTaskRunner, public TileTaskClient {
  public:
-  // Overridden from Rasterizer:
-  void SetClient(RasterizerClient* client) override {}
+  // Overridden from TileTaskRunner:
+  void SetClient(TileTaskRunnerClient* client) override {}
   void Shutdown() override {}
-  void ScheduleTasks(RasterTaskQueue* queue) override {
-    for (RasterTaskQueue::Item::Vector::const_iterator it =
-             queue->items.begin();
-         it != queue->items.end();
-         ++it) {
+  void ScheduleTasks(TileTaskQueue* queue) override {
+    for (TileTaskQueue::Item::Vector::const_iterator it = queue->items.begin();
+         it != queue->items.end(); ++it) {
       RasterTask* task = it->task;
 
       task->WillSchedule();
@@ -68,7 +66,7 @@ class FakeRasterizerImpl : public Rasterizer, public RasterizerTaskClient {
     completed_tasks_.clear();
   }
 
-  // Overridden from RasterizerTaskClient:
+  // Overridden from TileTaskClient:
   scoped_ptr<RasterBuffer> AcquireBufferForRaster(
       const Resource* resource) override {
     return nullptr;
@@ -78,7 +76,7 @@ class FakeRasterizerImpl : public Rasterizer, public RasterizerTaskClient {
  private:
   RasterTask::Vector completed_tasks_;
 };
-base::LazyInstance<FakeRasterizerImpl> g_fake_rasterizer =
+base::LazyInstance<FakeTileTaskRunnerImpl> g_fake_tile_task_runner =
     LAZY_INSTANCE_INITIALIZER;
 
 class TileManagerPerfTest : public testing::Test {
@@ -118,7 +116,8 @@ class TileManagerPerfTest : public testing::Test {
 
   virtual void InitializeRenderer() {
     host_impl_.InitializeRenderer(FakeOutputSurface::Create3d().Pass());
-    tile_manager()->SetRasterizerForTesting(g_fake_rasterizer.Pointer());
+    tile_manager()->SetTileTaskRunnerForTesting(
+        g_fake_tile_task_runner.Pointer());
   }
 
   void SetupDefaultTrees(const gfx::Size& layer_bounds) {
@@ -392,9 +391,9 @@ class TileManagerPerfTest : public testing::Test {
     return state;
   }
 
-  void RunManageTilesTest(const std::string& test_name,
-                          int layer_count,
-                          int approximate_tile_count_per_layer) {
+  void RunPrepareTilesTest(const std::string& test_name,
+                           int layer_count,
+                           int approximate_tile_count_per_layer) {
     std::vector<LayerImpl*> layers =
         CreateLayers(layer_count, approximate_tile_count_per_layer);
     timer_.Reset();
@@ -408,14 +407,14 @@ class TileManagerPerfTest : public testing::Test {
       }
 
       GlobalStateThatImpactsTilePriority global_state(GlobalStateForTest());
-      tile_manager()->ManageTiles(global_state);
+      tile_manager()->PrepareTiles(global_state);
       tile_manager()->UpdateVisibleTiles();
       timer_.NextLap();
       host_impl_.ResetCurrentBeginFrameArgsForNextFrame();
     } while (!timer_.HasTimeLimitExpired());
 
-    perf_test::PrintResult(
-        "manage_tiles", "", test_name, timer_.LapsPerSecond(), "runs/s", true);
+    perf_test::PrintResult("prepare_tiles", "", test_name,
+                           timer_.LapsPerSecond(), "runs/s", true);
   }
 
   TileManager* tile_manager() { return host_impl_.tile_manager(); }
@@ -439,16 +438,16 @@ class TileManagerPerfTest : public testing::Test {
 
 const gfx::Size TileManagerPerfTest::kDefaultTileSize(100, 100);
 
-TEST_F(TileManagerPerfTest, ManageTiles) {
-  RunManageTilesTest("2_100", 2, 100);
-  RunManageTilesTest("2_500", 2, 500);
-  RunManageTilesTest("2_1000", 2, 1000);
-  RunManageTilesTest("10_100", 10, 100);
-  RunManageTilesTest("10_500", 10, 500);
-  RunManageTilesTest("10_1000", 10, 1000);
-  RunManageTilesTest("50_100", 100, 100);
-  RunManageTilesTest("50_500", 100, 500);
-  RunManageTilesTest("50_1000", 100, 1000);
+TEST_F(TileManagerPerfTest, PrepareTiles) {
+  RunPrepareTilesTest("2_100", 2, 100);
+  RunPrepareTilesTest("2_500", 2, 500);
+  RunPrepareTilesTest("2_1000", 2, 1000);
+  RunPrepareTilesTest("10_100", 10, 100);
+  RunPrepareTilesTest("10_500", 10, 500);
+  RunPrepareTilesTest("10_1000", 10, 1000);
+  RunPrepareTilesTest("50_100", 100, 100);
+  RunPrepareTilesTest("50_500", 100, 500);
+  RunPrepareTilesTest("50_1000", 100, 1000);
 }
 
 TEST_F(TileManagerPerfTest, RasterTileQueueConstruct) {

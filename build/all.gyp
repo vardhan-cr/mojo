@@ -36,8 +36,14 @@
         '../url/url.gyp:*',
       ],
       'conditions': [
+        ['OS!="ios" and OS!="mac"', {
+          'dependencies': [
+            '../ui/touch_selection/ui_touch_selection.gyp:*',
+          ],
+        }],
         ['OS=="ios"', {
           'dependencies': [
+            '../chrome/chrome.gyp:browser',
             '../ios/ios.gyp:*',
             # NOTE: This list of targets is present because
             # mojo_base.gyp:mojo_base cannot be built on iOS, as
@@ -312,6 +318,11 @@
         '../url/url.gyp:url_unittests',
       ],
       'conditions': [
+        ['OS!="ios" and OS!="mac"', {
+          'dependencies': [
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
+          ],
+        }],
         ['OS!="ios" and OS!="android"', {
           'dependencies': [
             '../cc/blink/cc_blink_tests.gyp:cc_blink_unittests',
@@ -463,8 +474,10 @@
         }],
         ['disable_nacl==0 and disable_nacl_untrusted==0', {
           'dependencies': [
-            '../mojo/mojo_nacl.gyp:*',
-            '../testing/gtest_nacl.gyp:*',
+            '../mojo/mojo_nacl.gyp:mojo_nacl',
+            '../mojo/mojo_nacl.gyp:monacl_codegen',
+            '../mojo/mojo_nacl.gyp:monacl_sel',
+            '../mojo/mojo_nacl.gyp:monacl_shell',
           ],
         }],
       ],
@@ -536,6 +549,7 @@
             '../chrome/chrome.gyp:load_library_perf_tests',
             '../chrome/chrome.gyp:performance_browser_tests',
             '../chrome/chrome.gyp:sync_performance_tests',
+            '../content/content_shell_and_tests.gyp:content_shell',
             '../media/media.gyp:media_perftests',
             '../tools/perf/clear_system_cache/clear_system_cache.gyp:*',
             '../tools/telemetry/telemetry.gyp:*',
@@ -834,6 +848,7 @@
             '../tools/android/findbugs_plugin/findbugs_plugin.gyp:findbugs_plugin_test',
             '../ui/base/ui_base_tests.gyp:ui_base_unittests',
             '../ui/events/events.gyp:events_unittests',
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
             # Unit test bundles packaged as an apk.
             '../android_webview/android_webview.gyp:android_webview_test_apk',
             '../android_webview/android_webview.gyp:android_webview_unittests_apk',
@@ -862,6 +877,7 @@
             '../ui/base/ui_base_tests.gyp:ui_base_unittests_apk',
             '../ui/events/events.gyp:events_unittests_apk',
             '../ui/gfx/gfx_tests.gyp:gfx_unittests_apk',
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests_apk',
           ],
           'conditions': [
             ['enable_webrtc==1 and "<(libpeer_target_type)"=="static_library"', {
@@ -1075,6 +1091,7 @@
             '../ui/base/ui_base_tests.gyp:ui_base_unittests',
             '../ui/events/events.gyp:events_unittests',
             '../ui/gfx/gfx_tests.gyp:gfx_unittests',
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
             '../ui/views/views.gyp:views_unittests',
             '../url/url.gyp:url_unittests',
           ],
@@ -1179,6 +1196,7 @@
             '../ui/events/events.gyp:events_unittests',
             '../ui/gfx/gfx_tests.gyp:gfx_unittests',
             '../ui/keyboard/keyboard.gyp:keyboard_unittests',
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
             '../url/url.gyp:url_unittests',
           ],
         },
@@ -1219,6 +1237,7 @@
                 '../third_party/widevine/cdm/widevine_cdm.gyp:widevinecdmadapter',
                 '../ui/base/ui_base_tests.gyp:ui_base_unittests',
                 '../ui/gfx/gfx_tests.gyp:gfx_unittests',
+                '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
                 '../ui/views/views.gyp:views_unittests',
                 '../url/url.gyp:url_unittests',
               ],
@@ -1267,6 +1286,7 @@
             '../ui/keyboard/keyboard.gyp:*',
             '../ui/message_center/message_center.gyp:*',
             '../ui/snapshot/snapshot.gyp:snapshot_unittests',
+            '../ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection_unittests',
             '../ui/views/examples/examples.gyp:views_examples_with_content_exe',
             '../ui/views/views.gyp:views',
             '../ui/views/views.gyp:views_unittests',

@@ -22,11 +22,11 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'cf56009d9058d25933d9840bf6cf9fdf6a80f647',
+  'skia_revision': 'f9d09c969f8ffa664bc5cd40a71077e3dc46e0aa',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '4f77f25857dd9ca5b51749006d6183c3eeb2d49b',
+  'v8_revision': '49dd4474ba5b874fd2ac982be8c34d09052dcd85',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
@@ -34,7 +34,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '535aff24c308a715751028173e569596bcfe12a7',
+  'buildtools_revision': '05dd6a24723170d7c6ff35b537ee02947f619891',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
@@ -42,7 +42,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': '00505ec2e1e4c3047b4f61a306f2ac1372fa7640',
+  'boringssl_revision': '306e520cda7d2f0afee9ba634dae629f994b096c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.

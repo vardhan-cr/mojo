@@ -5496,11 +5496,11 @@ class LayerTreeHostAcceptsDeltasFromImplWithoutRootLayer
     EndTest();
   }
 
-  void ApplyViewportDeltas(
-      const gfx::Vector2d& inner,
-      const gfx::Vector2d& outer,
-      float scale_delta,
-      float top_controls_delta) override {
+  void ApplyViewportDeltas(const gfx::Vector2d& inner,
+                           const gfx::Vector2d& outer,
+                           const gfx::Vector2dF& elastic_overscroll_delta,
+                           float scale_delta,
+                           float top_controls_delta) override {
     EXPECT_EQ(info_.page_scale_delta, scale_delta);
     EXPECT_EQ(info_.top_controls_delta, top_controls_delta);
     deltas_sent_to_client_ = true;
@@ -5910,10 +5910,11 @@ class LayerTreeHostTestContinuousDrawWhenCreatingVisibleTiles
 
 MULTI_THREAD_TEST_F(LayerTreeHostTestContinuousDrawWhenCreatingVisibleTiles);
 
-class LayerTreeHostTestOneActivatePerManageTiles : public LayerTreeHostTest {
+class LayerTreeHostTestOneActivatePerPrepareTiles : public LayerTreeHostTest {
  public:
-  LayerTreeHostTestOneActivatePerManageTiles()
-      : notify_ready_to_activate_count_(0u), scheduled_manage_tiles_count_(0) {}
+  LayerTreeHostTestOneActivatePerPrepareTiles()
+      : notify_ready_to_activate_count_(0u),
+        scheduled_prepare_tiles_count_(0) {}
 
   void SetupTree() override {
     client_.set_fill_with_nonsolid_color(true);
@@ -5942,27 +5943,27 @@ class LayerTreeHostTestOneActivatePerManageTiles : public LayerTreeHostTest {
     EndTestAfterDelayMs(100);
   }
 
-  void ScheduledActionManageTiles() override {
-    ++scheduled_manage_tiles_count_;
+  void ScheduledActionPrepareTiles() override {
+    ++scheduled_prepare_tiles_count_;
   }
 
   void AfterTest() override {
-    // Expect at most a notification for each scheduled manage tiles, plus one
+    // Expect at most a notification for each scheduled prepare tiles, plus one
     // for the initial commit (which doesn't go through scheduled actions).
     // The reason this is not an equality is because depending on timing, we
-    // might get a manage tiles but not yet get a notification that we're
+    // might get a prepare tiles but not yet get a notification that we're
     // ready to activate. The intent of a test is to ensure that we don't
-    // get more than one notification per manage tiles, so this is OK.
+    // get more than one notification per prepare tiles, so this is OK.
     EXPECT_LE(notify_ready_to_activate_count_,
-              1u + scheduled_manage_tiles_count_);
+              1u + scheduled_prepare_tiles_count_);
   }
 
  protected:
   FakeContentLayerClient client_;
   size_t notify_ready_to_activate_count_;
-  size_t scheduled_manage_tiles_count_;
+  size_t scheduled_prepare_tiles_count_;
 };
 
-MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestOneActivatePerManageTiles);
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestOneActivatePerPrepareTiles);
 
 }  // namespace cc

@@ -51,7 +51,7 @@ class PageScaleAnimation;
 class PaintTimeCounter;
 class PictureLayerImpl;
 class RasterTilePriorityQueue;
-class RasterWorkerPool;
+class TileTaskWorkerPool;
 class RenderPassDrawQuad;
 class RenderingStatsInstrumentation;
 class ResourcePool;
@@ -92,7 +92,7 @@ class LayerTreeHostImplClient {
   virtual void SetNeedsRedrawRectOnImplThread(const gfx::Rect& damage_rect) = 0;
   virtual void SetNeedsAnimateOnImplThread() = 0;
   virtual void SetNeedsCommitOnImplThread() = 0;
-  virtual void SetNeedsManageTilesOnImplThread() = 0;
+  virtual void SetNeedsPrepareTilesOnImplThread() = 0;
   virtual void PostAnimationEventsToMainThreadOnImplThread(
       scoped_ptr<AnimationEventsVector> events) = 0;
   // Returns true if resources were deleted by this call.
@@ -105,7 +105,7 @@ class LayerTreeHostImplClient {
       const base::Closure& start_fade,
       base::TimeDelta delay) = 0;
   virtual void DidActivateSyncTree() = 0;
-  virtual void DidManageTiles() = 0;
+  virtual void DidPrepareTiles() = 0;
 
  protected:
   virtual ~LayerTreeHostImplClient() {}
@@ -200,7 +200,7 @@ class CC_EXPORT LayerTreeHostImpl
   void DidAnimateScrollOffset();
   void SetViewportDamage(const gfx::Rect& damage_rect);
 
-  virtual void ManageTiles();
+  virtual void PrepareTiles();
 
   // Returns DRAW_SUCCESS unless problems occured preparing the frame, and we
   // should try to avoid displaying the frame. If PrepareToDraw is called,
@@ -499,8 +499,8 @@ class CC_EXPORT LayerTreeHostImpl
   // Only valid for synchronous (non-scheduled) single-threaded case.
   void SynchronouslyInitializeAllTiles();
 
-  virtual void CreateResourceAndRasterWorkerPool(
-      scoped_ptr<RasterWorkerPool>* raster_worker_pool,
+  virtual void CreateResourceAndTileTaskWorkerPool(
+      scoped_ptr<TileTaskWorkerPool>* tile_task_worker_pool,
       scoped_ptr<ResourcePool>* resource_pool,
       scoped_ptr<ResourcePool>* staging_resource_pool);
 
@@ -523,7 +523,7 @@ class CC_EXPORT LayerTreeHostImpl
     return animation_registrar_->active_animation_controllers();
   }
 
-  bool manage_tiles_needed() const { return tile_priorities_dirty_; }
+  bool prepare_tiles_needed() const { return tile_priorities_dirty_; }
 
   LayerTreeHostImplClient* client_;
   Proxy* proxy_;
@@ -610,7 +610,7 @@ class CC_EXPORT LayerTreeHostImpl
   scoped_ptr<TileManager> tile_manager_;
   bool use_gpu_rasterization_;
   GpuRasterizationStatus gpu_rasterization_status_;
-  scoped_ptr<RasterWorkerPool> raster_worker_pool_;
+  scoped_ptr<TileTaskWorkerPool> tile_task_worker_pool_;
   scoped_ptr<ResourcePool> resource_pool_;
   scoped_ptr<ResourcePool> staging_resource_pool_;
   scoped_ptr<Renderer> renderer_;

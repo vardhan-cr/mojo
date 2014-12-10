@@ -529,7 +529,8 @@ void UniformValuebufferCHROMIUM(GLint location,
                                 GLenum subscription) override;
 void BindTexImage2DCHROMIUM(GLenum target, GLint imageId) override;
 void ReleaseTexImage2DCHROMIUM(GLenum target, GLint imageId) override;
-void TraceBeginCHROMIUM(const char* name) override;
+void TraceBeginCHROMIUM(const char* category_name,
+                        const char* trace_name) override;
 void TraceEndCHROMIUM() override;
 void AsyncTexSubImage2DCHROMIUM(GLenum target,
                                 GLint level,
@@ -570,6 +571,7 @@ void ScheduleOverlayPlaneCHROMIUM(GLint plane_z_order,
                                   GLfloat uv_y,
                                   GLfloat uv_width,
                                   GLfloat uv_height) override;
+void SwapInterval(GLint interval) override;
 void MatrixLoadfCHROMIUM(GLenum matrixMode, const GLfloat* m) override;
 void MatrixLoadIdentityCHROMIUM(GLenum matrixMode) override;
 void BlendBarrierKHR() override;

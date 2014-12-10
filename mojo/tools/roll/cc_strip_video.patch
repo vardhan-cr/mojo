@@ -22,8 +22,8 @@ index c744c5b..16a1589 100644
      "resources/ui_resource_request.h",
 -    "resources/video_resource_updater.cc",
 -    "resources/video_resource_updater.h",
-     "resources/zero_copy_raster_worker_pool.cc",
-     "resources/zero_copy_raster_worker_pool.h",
+     "resources/zero_copy_tile_task_worker_pool.cc",
+     "resources/zero_copy_tile_task_worker_pool.h",
      "scheduler/begin_frame_source.cc",
 @@ -588,8 +579,6 @@ source_set("test_support") {
      "test/fake_tile_manager_client.h",

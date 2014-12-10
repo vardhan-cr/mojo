@@ -36,7 +36,7 @@ class SurfacesScheduler : public cc::SchedulerClient {
   void ScheduledActionCommit() override;
   void ScheduledActionActivateSyncTree() override;
   void ScheduledActionBeginOutputSurfaceCreation() override;
-  void ScheduledActionManageTiles() override;
+  void ScheduledActionPrepareTiles() override;
   void DidAnticipatedDrawTimeChange(base::TimeTicks time) override;
   base::TimeDelta DrawDurationEstimate() override;
   base::TimeDelta BeginMainFrameToCommitDurationEstimate() override;

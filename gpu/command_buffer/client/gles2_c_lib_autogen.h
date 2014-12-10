@@ -1010,8 +1010,9 @@ void GLES2BindTexImage2DCHROMIUM(GLenum target, GLint imageId) {
 void GLES2ReleaseTexImage2DCHROMIUM(GLenum target, GLint imageId) {
   gles2::GetGLContext()->ReleaseTexImage2DCHROMIUM(target, imageId);
 }
-void GLES2TraceBeginCHROMIUM(const char* name) {
-  gles2::GetGLContext()->TraceBeginCHROMIUM(name);
+void GLES2TraceBeginCHROMIUM(const char* category_name,
+                             const char* trace_name) {
+  gles2::GetGLContext()->TraceBeginCHROMIUM(category_name, trace_name);
 }
 void GLES2TraceEndCHROMIUM() {
   gles2::GetGLContext()->TraceEndCHROMIUM();
@@ -1081,6 +1082,9 @@ void GLES2ScheduleOverlayPlaneCHROMIUM(GLint plane_z_order,
   gles2::GetGLContext()->ScheduleOverlayPlaneCHROMIUM(
       plane_z_order, plane_transform, overlay_texture_id, bounds_x, bounds_y,
       bounds_width, bounds_height, uv_x, uv_y, uv_width, uv_height);
+}
+void GLES2SwapInterval(GLint interval) {
+  gles2::GetGLContext()->SwapInterval(interval);
 }
 void GLES2MatrixLoadfCHROMIUM(GLenum matrixMode, const GLfloat* m) {
   gles2::GetGLContext()->MatrixLoadfCHROMIUM(matrixMode, m);
@@ -2068,6 +2072,10 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glScheduleOverlayPlaneCHROMIUM",
      reinterpret_cast<GLES2FunctionPointer>(glScheduleOverlayPlaneCHROMIUM),
+    },
+    {
+     "glSwapInterval",
+     reinterpret_cast<GLES2FunctionPointer>(glSwapInterval),
     },
     {
      "glMatrixLoadfCHROMIUM",

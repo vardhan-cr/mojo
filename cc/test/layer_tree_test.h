@@ -35,9 +35,9 @@ class TestHooks : public AnimationDelegate {
 
   void ReadSettings(const LayerTreeSettings& settings);
 
-  virtual void CreateResourceAndRasterWorkerPool(
+  virtual void CreateResourceAndTileTaskWorkerPool(
       LayerTreeHostImpl* host_impl,
-      scoped_ptr<RasterWorkerPool>* raster_worker_pool,
+      scoped_ptr<TileTaskWorkerPool>* tile_task_worker_pool,
       scoped_ptr<ResourcePool>* resource_pool,
       scoped_ptr<ResourcePool>* staging_resource_pool);
   virtual void WillBeginImplFrameOnThread(LayerTreeHostImpl* host_impl,
@@ -67,10 +67,12 @@ class TestHooks : public AnimationDelegate {
                                     bool has_unfinished_animation) {}
   virtual void WillAnimateLayers(LayerTreeHostImpl* host_impl,
                                  base::TimeTicks monotonic_time) {}
-  virtual void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
-                                   const gfx::Vector2d& outer_delta,
-                                   float scale,
-                                   float top_controls_delta) {}
+  virtual void ApplyViewportDeltas(
+      const gfx::Vector2d& inner_delta,
+      const gfx::Vector2d& outer_delta,
+      const gfx::Vector2dF& elastic_overscroll_delta,
+      float scale,
+      float top_controls_delta) {}
   virtual void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                                    float scale,
                                    float top_controls_delta) {}
@@ -98,7 +100,7 @@ class TestHooks : public AnimationDelegate {
   virtual void ScheduledActionAnimate() {}
   virtual void ScheduledActionCommit() {}
   virtual void ScheduledActionBeginOutputSurfaceCreation() {}
-  virtual void ScheduledActionManageTiles() {}
+  virtual void ScheduledActionPrepareTiles() {}
 
   // Implementation of AnimationDelegate:
   void NotifyAnimationStarted(base::TimeTicks monotonic_time,

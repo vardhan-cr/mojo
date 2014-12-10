@@ -932,7 +932,8 @@ void GLES2InterfaceStub::BindTexImage2DCHROMIUM(GLenum /* target */,
 void GLES2InterfaceStub::ReleaseTexImage2DCHROMIUM(GLenum /* target */,
                                                    GLint /* imageId */) {
 }
-void GLES2InterfaceStub::TraceBeginCHROMIUM(const char* /* name */) {
+void GLES2InterfaceStub::TraceBeginCHROMIUM(const char* /* category_name */,
+                                            const char* /* trace_name */) {
 }
 void GLES2InterfaceStub::TraceEndCHROMIUM() {
 }
@@ -990,6 +991,8 @@ void GLES2InterfaceStub::ScheduleOverlayPlaneCHROMIUM(
     GLfloat /* uv_y */,
     GLfloat /* uv_width */,
     GLfloat /* uv_height */) {
+}
+void GLES2InterfaceStub::SwapInterval(GLint /* interval */) {
 }
 void GLES2InterfaceStub::MatrixLoadfCHROMIUM(GLenum /* matrixMode */,
                                              const GLfloat* /* m */) {

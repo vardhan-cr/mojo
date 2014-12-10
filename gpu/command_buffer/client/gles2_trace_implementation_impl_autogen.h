@@ -1612,9 +1612,10 @@ void GLES2TraceImplementation::ReleaseTexImage2DCHROMIUM(GLenum target,
   gl_->ReleaseTexImage2DCHROMIUM(target, imageId);
 }
 
-void GLES2TraceImplementation::TraceBeginCHROMIUM(const char* name) {
+void GLES2TraceImplementation::TraceBeginCHROMIUM(const char* category_name,
+                                                  const char* trace_name) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::TraceBeginCHROMIUM");
-  gl_->TraceBeginCHROMIUM(name);
+  gl_->TraceBeginCHROMIUM(category_name, trace_name);
 }
 
 void GLES2TraceImplementation::TraceEndCHROMIUM() {
@@ -1715,6 +1716,11 @@ void GLES2TraceImplementation::ScheduleOverlayPlaneCHROMIUM(
   gl_->ScheduleOverlayPlaneCHROMIUM(
       plane_z_order, plane_transform, overlay_texture_id, bounds_x, bounds_y,
       bounds_width, bounds_height, uv_x, uv_y, uv_width, uv_height);
+}
+
+void GLES2TraceImplementation::SwapInterval(GLint interval) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SwapInterval");
+  gl_->SwapInterval(interval);
 }
 
 void GLES2TraceImplementation::MatrixLoadfCHROMIUM(GLenum matrixMode,

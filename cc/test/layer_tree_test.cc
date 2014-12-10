@@ -45,13 +45,13 @@ DrawResult TestHooks::PrepareToDrawOnThread(
   return draw_result;
 }
 
-void TestHooks::CreateResourceAndRasterWorkerPool(
+void TestHooks::CreateResourceAndTileTaskWorkerPool(
     LayerTreeHostImpl* host_impl,
-    scoped_ptr<RasterWorkerPool>* raster_worker_pool,
+    scoped_ptr<TileTaskWorkerPool>* tile_task_worker_pool,
     scoped_ptr<ResourcePool>* resource_pool,
     scoped_ptr<ResourcePool>* staging_resource_pool) {
-  host_impl->LayerTreeHostImpl::CreateResourceAndRasterWorkerPool(
-      raster_worker_pool, resource_pool, staging_resource_pool);
+  host_impl->LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
+      tile_task_worker_pool, resource_pool, staging_resource_pool);
 }
 
 class ExternalBeginFrameSourceForTest
@@ -153,9 +153,9 @@ class ThreadProxyForTest : public ThreadProxy {
     test_hooks_->ScheduledActionBeginOutputSurfaceCreation();
   }
 
-  void ScheduledActionManageTiles() override {
-    ThreadProxy::ScheduledActionManageTiles();
-    test_hooks_->ScheduledActionManageTiles();
+  void ScheduledActionPrepareTiles() override {
+    ThreadProxy::ScheduledActionPrepareTiles();
+    test_hooks_->ScheduledActionPrepareTiles();
   }
 
   ThreadProxyForTest(
@@ -211,12 +211,12 @@ class LayerTreeHostImplForTesting : public LayerTreeHostImpl {
         block_notify_ready_to_activate_for_testing_(false),
         notify_ready_to_activate_was_blocked_(false) {}
 
-  void CreateResourceAndRasterWorkerPool(
-      scoped_ptr<RasterWorkerPool>* raster_worker_pool,
+  void CreateResourceAndTileTaskWorkerPool(
+      scoped_ptr<TileTaskWorkerPool>* tile_task_worker_pool,
       scoped_ptr<ResourcePool>* resource_pool,
       scoped_ptr<ResourcePool>* staging_resource_pool) override {
-    test_hooks_->CreateResourceAndRasterWorkerPool(
-        this, raster_worker_pool, resource_pool, staging_resource_pool);
+    test_hooks_->CreateResourceAndTileTaskWorkerPool(
+        this, tile_task_worker_pool, resource_pool, staging_resource_pool);
   }
 
   void WillBeginImplFrame(const BeginFrameArgs& args) override {
@@ -362,11 +362,11 @@ class LayerTreeHostClientForTesting : public LayerTreeHostClient,
 
   void ApplyViewportDeltas(const gfx::Vector2d& inner_delta,
                            const gfx::Vector2d& outer_delta,
+                           const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) override {
-    test_hooks_->ApplyViewportDeltas(inner_delta,
-                                     outer_delta,
-                                     page_scale,
+    test_hooks_->ApplyViewportDeltas(inner_delta, outer_delta,
+                                     elastic_overscroll_delta, page_scale,
                                      top_controls_delta);
   }
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
