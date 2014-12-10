@@ -80,27 +80,13 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // If set, the channel manager associated with this channel will be reset.
   void WillShutdownSoon();
 
-  // Attaches the given endpoint to this channel and runs it. |is_bootstrap|
-  // should be set if and only if it is the first endpoint on the channel. This
-  // assigns the endpoint both local and remote IDs. If |is_bootstrap| is set,
-  // both are the bootstrap ID (given by |ChannelEndpointId::GetBootstrap()|);
-  // if not, it will also send a |kSubtypeChannelAttachAndRunEndpoint| message
-  // to the remote side to tell it to create an endpoint as well.
+  // Called to set (i.e., attach and run) the bootstrap (first) endpoint on the
+  // channel. Both the local and remote IDs are the bootstrap ID (given by
+  // |ChannelEndpointId::GetBootstrap()|).
   //
-  // (Bootstrapping is symmetric: Both sides attach and run endpoints with
-  // |is_bootstrap| set, which establishes the first message pipe across a
-  // channel.)
-  //
-  // This returns the *remote* ID (which will be the bootstrap ID in the
-  // bootstrap case, and a "remote ID", i.e., one for which |is_remote()|
-  // returns true, otherwise).
-  //
-  // TODO(vtl): Maybe limit the number of attached message pipes.
-  // TODO(vtl): Get rid of this as a public method, except for the bootstrap
-  // case (and maybe rename it).
-  ChannelEndpointId AttachAndRunEndpoint(
-      scoped_refptr<ChannelEndpoint> endpoint,
-      bool is_bootstrap);
+  // (Bootstrapping is symmetric: Both sides call this, which will establish the
+  // first connection across a channel.)
+  void SetBootstrapEndpoint(scoped_refptr<ChannelEndpoint> endpoint);
 
   // This forwards |message| verbatim to |raw_channel_|.
   bool WriteMessage(scoped_ptr<MessageInTransit> message);
@@ -179,6 +165,16 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // Handles internal errors/failures from the local side. Callable from any
   // thread.
   void HandleLocalError(const base::StringPiece& error_message);
+
+  // Helper for |SerializeEndpoint()|: Attaches the given (non-bootstrap)
+  // endpoint to this channel and runs it. This assigns the endpoint both local
+  // and remote IDs. This will also send a |kSubtypeChannelAttachAndRunEndpoint|
+  // message to the remote side to tell it to create an endpoint as well. This
+  // returns the *remote* ID (one for which |is_remote()| returns true).
+  //
+  // TODO(vtl): Maybe limit the number of attached message pipes.
+  ChannelEndpointId AttachAndRunEndpoint(
+      scoped_refptr<ChannelEndpoint> endpoint);
 
   // Helper to send channel control messages. Returns true on success. Should be
   // called *without* |lock_| held. Callable from any thread.

@@ -102,57 +102,25 @@ void Channel::WillShutdownSoon() {
   channel_manager_ = nullptr;
 }
 
-// Note: |endpoint| being a |scoped_refptr| makes this function safe, since it
-// keeps the endpoint alive even after the lock is released. Otherwise, there's
-// the temptation to simply pass the result of |new ChannelEndpoint(...)|
-// directly to this function, which wouldn't be sufficient for safety.
-ChannelEndpointId Channel::AttachAndRunEndpoint(
-    scoped_refptr<ChannelEndpoint> endpoint,
-    bool is_bootstrap) {
+void Channel::SetBootstrapEndpoint(scoped_refptr<ChannelEndpoint> endpoint) {
   DCHECK(endpoint);
 
-  ChannelEndpointId local_id;
-  ChannelEndpointId remote_id;
+  // Used for both local and remote IDs.
+  ChannelEndpointId bootstrap_id = ChannelEndpointId::GetBootstrap();
+
   {
     base::AutoLock locker(lock_);
 
     DLOG_IF(WARNING, is_shutting_down_)
-        << "AttachEndpoint() while shutting down";
+        << "SetBootstrapEndpoint() while shutting down";
 
-    if (is_bootstrap) {
-      local_id = ChannelEndpointId::GetBootstrap();
-      DCHECK(local_id_to_endpoint_map_.find(local_id) ==
-             local_id_to_endpoint_map_.end());
+    // Bootstrap endpoint should be the first.
+    DCHECK(local_id_to_endpoint_map_.empty());
 
-      remote_id = ChannelEndpointId::GetBootstrap();
-    } else {
-      do {
-        local_id = local_id_generator_.GetNext();
-      } while (local_id_to_endpoint_map_.find(local_id) !=
-               local_id_to_endpoint_map_.end());
-
-      // TODO(vtl): We also need to check for collisions of remote IDs here.
-      remote_id = remote_id_generator_.GetNext();
-    }
-
-    local_id_to_endpoint_map_[local_id] = endpoint;
+    local_id_to_endpoint_map_[bootstrap_id] = endpoint;
   }
 
-  if (!is_bootstrap) {
-    if (!SendControlMessage(
-            MessageInTransit::kSubtypeChannelAttachAndRunEndpoint, local_id,
-            remote_id)) {
-      HandleLocalError(base::StringPrintf(
-          "Failed to send message to run remote endpoint (local ID %u, remote "
-          "ID %u)",
-          static_cast<unsigned>(local_id.value()),
-          static_cast<unsigned>(remote_id.value())));
-      // TODO(vtl): Should we continue on to |AttachAndRun()|?
-    }
-  }
-
-  endpoint->AttachAndRun(this, local_id, remote_id);
-  return remote_id;
+  endpoint->AttachAndRun(this, bootstrap_id, bootstrap_id);
 }
 
 bool Channel::WriteMessage(scoped_ptr<MessageInTransit> message) {
@@ -220,7 +188,7 @@ size_t Channel::GetSerializedEndpointSize() const {
 void Channel::SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
                                 void* destination) {
   SerializedEndpoint* s = static_cast<SerializedEndpoint*>(destination);
-  s->receiver_endpoint_id = AttachAndRunEndpoint(endpoint, false);
+  s->receiver_endpoint_id = AttachAndRunEndpoint(endpoint);
   DVLOG(2) << "Serializing endpoint (remote ID = " << s->receiver_endpoint_id
            << ")";
 }
@@ -525,18 +493,6 @@ bool Channel::OnRemoveEndpointAck(ChannelEndpointId local_id) {
   return true;
 }
 
-bool Channel::SendControlMessage(MessageInTransit::Subtype subtype,
-                                 ChannelEndpointId local_id,
-                                 ChannelEndpointId remote_id) {
-  DVLOG(2) << "Sending channel control message: subtype " << subtype
-           << ", local ID " << local_id << ", remote ID " << remote_id;
-  scoped_ptr<MessageInTransit> message(new MessageInTransit(
-      MessageInTransit::kTypeChannel, subtype, 0, nullptr));
-  message->set_source_id(local_id);
-  message->set_destination_id(remote_id);
-  return WriteMessage(message.Pass());
-}
-
 void Channel::HandleRemoteError(const base::StringPiece& error_message) {
   // TODO(vtl): Is this how we really want to handle this? Probably we want to
   // terminate the connection, since it's spewing invalid stuff.
@@ -550,6 +506,59 @@ void Channel::HandleLocalError(const base::StringPiece& error_message) {
   // Sometimes we'll want to kill the channel (and notify all the endpoints that
   // their remotes are dead.
   LOG(WARNING) << error_message;
+}
+
+// Note: |endpoint| being a |scoped_refptr| makes this function safe, since it
+// keeps the endpoint alive even after the lock is released. Otherwise, there's
+// the temptation to simply pass the result of |new ChannelEndpoint(...)|
+// directly to this function, which wouldn't be sufficient for safety.
+ChannelEndpointId Channel::AttachAndRunEndpoint(
+    scoped_refptr<ChannelEndpoint> endpoint) {
+  DCHECK(endpoint);
+
+  ChannelEndpointId local_id;
+  ChannelEndpointId remote_id;
+  {
+    base::AutoLock locker(lock_);
+
+    DLOG_IF(WARNING, is_shutting_down_)
+        << "AttachAndRunEndpoint() while shutting down";
+
+    do {
+      local_id = local_id_generator_.GetNext();
+    } while (local_id_to_endpoint_map_.find(local_id) !=
+             local_id_to_endpoint_map_.end());
+
+    // TODO(vtl): We also need to check for collisions of remote IDs here.
+    remote_id = remote_id_generator_.GetNext();
+
+    local_id_to_endpoint_map_[local_id] = endpoint;
+  }
+
+  if (!SendControlMessage(MessageInTransit::kSubtypeChannelAttachAndRunEndpoint,
+                          local_id, remote_id)) {
+    HandleLocalError(base::StringPrintf(
+        "Failed to send message to run remote endpoint (local ID %u, remote ID "
+        "%u)",
+        static_cast<unsigned>(local_id.value()),
+        static_cast<unsigned>(remote_id.value())));
+    // TODO(vtl): Should we continue on to |AttachAndRun()|?
+  }
+
+  endpoint->AttachAndRun(this, local_id, remote_id);
+  return remote_id;
+}
+
+bool Channel::SendControlMessage(MessageInTransit::Subtype subtype,
+                                 ChannelEndpointId local_id,
+                                 ChannelEndpointId remote_id) {
+  DVLOG(2) << "Sending channel control message: subtype " << subtype
+           << ", local ID " << local_id << ", remote ID " << remote_id;
+  scoped_ptr<MessageInTransit> message(new MessageInTransit(
+      MessageInTransit::kTypeChannel, subtype, 0, nullptr));
+  message->set_source_id(local_id);
+  message->set_destination_id(remote_id);
+  return WriteMessage(message.Pass());
 }
 
 }  // namespace system

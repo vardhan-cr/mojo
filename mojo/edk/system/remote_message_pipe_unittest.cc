@@ -140,8 +140,8 @@ class RemoteMessagePipeTest : public testing::Test {
     if (!channels_[1])
       CreateAndInitChannel(1);
 
-    channels_[0]->AttachAndRunEndpoint(ep0, true);
-    channels_[1]->AttachAndRunEndpoint(ep1, true);
+    channels_[0]->SetBootstrapEndpoint(ep0);
+    channels_[1]->SetBootstrapEndpoint(ep1);
   }
 
   void BootstrapChannelEndpointOnIOThread(unsigned channel_index,
@@ -150,7 +150,7 @@ class RemoteMessagePipeTest : public testing::Test {
     CHECK(channel_index == 0 || channel_index == 1);
 
     CreateAndInitChannel(channel_index);
-    channels_[channel_index]->AttachAndRunEndpoint(ep, true);
+    channels_[channel_index]->SetBootstrapEndpoint(ep);
   }
 
   void RestoreInitialStateOnIOThread() {
