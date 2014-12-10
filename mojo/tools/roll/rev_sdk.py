@@ -13,6 +13,7 @@ dirs_to_clone = [
   "mojo/edk",
   "mojo/public",
   "mojo/services/public",
+  "mojo/services/accessibility/public",
   "mojo/services/geometry/public",
   "mojo/services/network/public",
   "mojo/services/surfaces/public",
