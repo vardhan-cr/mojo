@@ -7,10 +7,10 @@
 define("main", [
   "console",
   "mojo/services/geometry/public/interfaces/geometry.mojom",
+  "mojo/services/native_viewport/public/interfaces/native_viewport.mojom",
   "mojo/services/public/js/application",
   "mojo/services/public/interfaces/gpu/command_buffer.mojom",
   "mojo/services/public/interfaces/gpu/gpu.mojom",
-  "mojo/services/public/interfaces/native_viewport/native_viewport.mojom",
   "mojo/services/public/interfaces/gpu/viewport_parameter_listener.mojom",
   "mojo/public/js/core",
   "services/js/modules/gl",

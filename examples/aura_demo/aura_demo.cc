@@ -15,7 +15,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/system/core.h"
-#include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
+#include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"

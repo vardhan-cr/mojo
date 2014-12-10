@@ -35,8 +35,8 @@ source_set("aura") {
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/application",
     "//mojo/public/interfaces/application:application",
+    "//mojo/services/native_viewport/public/interfaces",
     "//mojo/services/public/interfaces/gpu",
-    "//mojo/services/public/interfaces/native_viewport",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
   ]

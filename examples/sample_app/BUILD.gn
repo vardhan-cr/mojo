@@ -22,7 +22,7 @@ mojo_native_application("sample_app") {
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/native_viewport",
+    "//mojo/services/native_viewport/public/interfaces",
   ]
 }
 

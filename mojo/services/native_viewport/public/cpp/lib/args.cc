@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/public/cpp/native_viewport/args.h"
+#include "mojo/services/native_viewport/public/cpp/args.h"
 
 namespace mojo {
 

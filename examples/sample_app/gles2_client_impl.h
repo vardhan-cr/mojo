@@ -8,7 +8,7 @@
 #include "examples/sample_app/spinning_cube.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
-#include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
+#include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 
 namespace examples {
 

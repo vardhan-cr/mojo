@@ -6,7 +6,7 @@
 #define SERVICES_WINDOW_MANAGER_NATIVE_VIEWPORT_EVENT_DISPATCHER_IMPL_H_
 
 #include "base/basictypes.h"
-#include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
+#include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "ui/events/event_source.h"
 
 namespace window_manager {

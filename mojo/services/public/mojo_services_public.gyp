@@ -96,11 +96,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/native_viewport
+      # GN version: //mojo/services/native_viewport/public/interfaces
       'target_name': 'mojo_native_viewport_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/native_viewport/native_viewport.mojom',
+        '../native_viewport/public/interfaces/native_viewport.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

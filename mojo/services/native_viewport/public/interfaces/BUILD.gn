@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("native_viewport") {
+mojom("interfaces") {
   sources = [
     "native_viewport.mojom",
   ]

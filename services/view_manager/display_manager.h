@@ -13,7 +13,7 @@
 #include "base/timer/timer.h"
 #include "cc/surfaces/surface_id.h"
 #include "mojo/public/cpp/bindings/callback.h"
-#include "mojo/services/public/interfaces/native_viewport/native_viewport.mojom.h"
+#include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "ui/gfx/rect.h"
