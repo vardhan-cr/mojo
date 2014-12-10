@@ -9,9 +9,9 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/services/public/cpp/view_manager/view_manager.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_client_factory.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 
 namespace examples {
 

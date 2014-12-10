@@ -176,20 +176,20 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/cpp/view_manager:common
+      # GN version: //mojo/services/view_manager/public/cpp:common
       'target_name': 'mojo_view_manager_common',
       'type': 'static_library',
       'sources': [
-        'cpp/view_manager/types.h',
+        '../view_manager/public/cpp/types.h',
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/view_manager
+      # GN version: //mojo/services/view_manager/public/interfaces/
       'target_name': 'mojo_view_manager_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/view_manager/view_manager.mojom',
-        'interfaces/view_manager/view_manager_constants.mojom',
+        '../view_manager/public/interfaces/view_manager.mojom',
+        '../view_manager/public/interfaces/view_manager_constants.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [
@@ -249,7 +249,7 @@
       'target_name': 'mojo_window_manager_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/window_manager/window_manager.mojom',
+        '../window_manager/public/interfaces/window_manager.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

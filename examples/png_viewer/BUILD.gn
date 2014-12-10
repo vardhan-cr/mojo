@@ -16,9 +16,9 @@ mojo_native_application("png_viewer") {
     "//mojo/application:content_handler",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/utility",
-    "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/content_handler",
     "//mojo/services/public/interfaces/network",
+    "//mojo/services/view_manager/public/cpp",
     "//ui/gfx",
   ]
 }

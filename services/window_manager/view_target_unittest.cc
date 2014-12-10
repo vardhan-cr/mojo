@@ -6,7 +6,7 @@
 
 #include <set>
 
-#include "mojo/services/public/cpp/view_manager/view.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
 #include "services/window_manager/window_manager_test_util.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/gfx/geometry/rect.h"

@@ -8,7 +8,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
-#include "mojo/services/public/interfaces/view_manager/view_manager.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/ids.h"

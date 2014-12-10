@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "mojo/services/public/cpp/view_manager/types.h"
+#include "mojo/services/view_manager/public/cpp/types.h"
 
 namespace mojo {
 

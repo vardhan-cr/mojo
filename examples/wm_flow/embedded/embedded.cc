@@ -15,10 +15,10 @@
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
-#include "mojo/services/public/cpp/view_manager/view.h"
-#include "mojo/services/public/cpp/view_manager/view_manager.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_client_factory.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "third_party/skia/include/core/SkColor.h"
 
 namespace examples {

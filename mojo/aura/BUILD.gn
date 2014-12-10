@@ -18,7 +18,7 @@ source_set("aura") {
   ]
 
   public_deps = [
-    "//mojo/services/public/cpp/view_manager",
+    "//mojo/services/view_manager/public/cpp",
   ]
   deps = [
     "//cc",
@@ -35,9 +35,9 @@ source_set("aura") {
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/application",
     "//mojo/public/interfaces/application:application",
-    "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/gpu",
     "//mojo/services/public/interfaces/native_viewport",
     "//mojo/services/public/interfaces/surfaces",
+    "//mojo/services/view_manager/public/cpp",
   ]
 }

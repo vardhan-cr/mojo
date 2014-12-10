@@ -9,7 +9,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/scoped_observer.h"
-#include "mojo/services/public/cpp/view_manager/view_observer.h"
+#include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "ui/events/event_handler.h"
 
 namespace window_manager {

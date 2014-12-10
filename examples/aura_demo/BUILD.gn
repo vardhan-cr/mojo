@@ -27,7 +27,7 @@ mojo_native_application("aura_demo") {
     "//mojo/public/cpp/system",
     "//mojo/services/public/interfaces/geometry",
     "//mojo/services/public/interfaces/native_viewport",
-    "//mojo/services/public/cpp/view_manager",
+    "//mojo/services/view_manager/public/cpp",
   ]
 
   datadeps = [
@@ -46,7 +46,7 @@ mojo_native_application("init") {
     "//base",
     "//mojo/application",
     "//mojo/public/interfaces/application",
-    "//mojo/services/public/cpp/view_manager",
-    "//mojo/services/public/interfaces/view_manager",
+    "//mojo/services/view_manager/public/cpp",
+    "//mojo/services/view_manager/public/interfaces",
   ]
 }

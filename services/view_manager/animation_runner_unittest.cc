@@ -6,7 +6,7 @@
 
 #include "base/strings/stringprintf.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/services/public/interfaces/view_manager/view_manager_constants.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager_constants.mojom.h"
 #include "services/view_manager/animation_runner_observer.h"
 #include "services/view_manager/scheduled_animation_group.h"
 #include "services/view_manager/server_view.h"

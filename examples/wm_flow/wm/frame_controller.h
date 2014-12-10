@@ -6,7 +6,7 @@
 #define EXAMPLES_WM_FLOW_WM_FRAME_CONTROLLER_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "mojo/services/public/cpp/view_manager/view_observer.h"
+#include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "services/window_manager/focus_controller.h"
 #include "ui/gfx/geometry/rect.h"
 

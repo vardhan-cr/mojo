@@ -6,7 +6,7 @@
 #define MOJO_EXAMPLES_AURA_DEMO_WINDOW_TREE_HOST_VIEW_MANAGER_H_
 
 #include "base/macros.h"
-#include "mojo/services/public/cpp/view_manager/view_observer.h"
+#include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "ui/aura/window_tree_host.h"
 #include "ui/events/event_source.h"
 #include "ui/gfx/geometry/rect.h"

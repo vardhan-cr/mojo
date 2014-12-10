@@ -12,7 +12,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/timer/timer.h"
 #include "mojo/public/cpp/bindings/array.h"
-#include "mojo/services/public/interfaces/view_manager/view_manager.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/ids.h"
 #include "services/view_manager/server_view_delegate.h"

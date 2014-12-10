@@ -5,7 +5,7 @@
 #ifndef SERVICES_VIEW_MANAGER_SERVER_VIEW_DELEGATE_H_
 #define SERVICES_VIEW_MANAGER_SERVER_VIEW_DELEGATE_H_
 
-#include "mojo/services/public/interfaces/view_manager/view_manager_constants.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager_constants.mojom.h"
 
 namespace gfx {
 class Rect;

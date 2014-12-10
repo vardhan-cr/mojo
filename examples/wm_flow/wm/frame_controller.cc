@@ -7,7 +7,7 @@
 #include "base/macros.h"
 #include "base/strings/utf_string_conversions.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/services/public/cpp/view_manager/view.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/views/native_widget_view_manager.h"
 #include "services/window_manager/window_manager_app.h"
 #include "ui/views/background.h"

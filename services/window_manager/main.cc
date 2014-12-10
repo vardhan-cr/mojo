@@ -8,8 +8,8 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
-#include "mojo/services/public/cpp/view_manager/view_manager.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_delegate.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
 

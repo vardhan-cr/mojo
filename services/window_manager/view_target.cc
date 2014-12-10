@@ -5,8 +5,8 @@
 #include "services/window_manager/view_target.h"
 
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/services/public/cpp/view_manager/view.h"
-#include "mojo/services/public/cpp/view_manager/view_property.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
+#include "mojo/services/view_manager/public/cpp/view_property.h"
 #include "services/window_manager/view_targeter.h"
 #include "services/window_manager/window_manager_app.h"
 #include "ui/events/event.h"

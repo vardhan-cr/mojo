@@ -5,8 +5,8 @@
 #include "services/window_manager/focus_controller.h"
 
 #include "base/auto_reset.h"
-#include "mojo/services/public/cpp/view_manager/view_property.h"
-#include "mojo/services/public/cpp/view_manager/view_tracker.h"
+#include "mojo/services/view_manager/public/cpp/view_property.h"
+#include "mojo/services/view_manager/public/cpp/view_tracker.h"
 #include "services/window_manager/focus_controller_observer.h"
 #include "services/window_manager/focus_rules.h"
 #include "services/window_manager/view_target.h"

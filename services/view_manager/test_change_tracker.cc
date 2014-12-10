@@ -7,7 +7,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "mojo/common/common_type_converters.h"
-#include "mojo/services/public/cpp/view_manager/util.h"
+#include "mojo/services/view_manager/public/cpp/util.h"
 
 namespace mojo {
 namespace service {

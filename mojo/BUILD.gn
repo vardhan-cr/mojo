@@ -65,7 +65,7 @@ group("tests") {
 
   if (use_aura) {
     deps += [
-      "//mojo/services/public/cpp/view_manager/tests:mojo_view_manager_lib_unittests",
+      "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
       "//services/window_manager:window_manager_unittests",
       "//services/view_manager:view_manager_service_apptests",
       "//services/view_manager:view_manager_service_unittests",

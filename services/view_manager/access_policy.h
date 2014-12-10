@@ -5,7 +5,7 @@
 #ifndef SERVICES_VIEW_MANAGER_ACCESS_POLICY_H_
 #define SERVICES_VIEW_MANAGER_ACCESS_POLICY_H_
 
-#include "mojo/services/public/interfaces/view_manager/view_manager_constants.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager_constants.mojom.h"
 #include "services/view_manager/ids.h"
 
 namespace mojo {

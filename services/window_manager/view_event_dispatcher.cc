@@ -4,7 +4,7 @@
 
 #include "services/window_manager/view_event_dispatcher.h"
 
-#include "mojo/services/public/cpp/view_manager/view.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
 #include "services/window_manager/view_target.h"
 
 namespace window_manager {

@@ -7,7 +7,7 @@
 #include "mojo/aura/surface_context_factory.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
-#include "mojo/services/public/cpp/view_manager/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "ui/aura/env.h"
 #include "ui/aura/window.h"
 #include "ui/aura/window_event_dispatcher.h"

@@ -5,8 +5,8 @@
 #ifndef SERVICES_WINDOW_MANAGER_FOCUS_RULES_H_
 #define SERVICES_WINDOW_MANAGER_FOCUS_RULES_H_
 
-#include "mojo/services/public/cpp/view_manager/types.h"
-#include "mojo/services/public/cpp/view_manager/view.h"
+#include "mojo/services/view_manager/public/cpp/types.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
 
 namespace window_manager {
 

@@ -16,7 +16,7 @@
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/public/cpp/geometry/geometry_util.h"
 #include "mojo/services/public/cpp/surfaces/surfaces_utils.h"
-#include "mojo/services/public/cpp/view_manager/lib/view_manager_client_impl.h"
+#include "mojo/services/view_manager/public/cpp/lib/view_manager_client_impl.h"
 #include "third_party/khronos/GLES2/gl2.h"
 #include "ui/gfx/geometry/rect.h"
 

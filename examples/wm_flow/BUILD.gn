@@ -32,8 +32,8 @@ mojo_native_application("wm") {
     "//ui/views",
     "//ui/wm:wm",
     "//mojo/application",
-    "//mojo/services/public/cpp/view_manager",
     "//mojo/services/public/interfaces/input_events",
+    "//mojo/services/view_manager/public/cpp",
     "//mojo/views:views",
     "//services/window_manager:lib",
   ]
@@ -53,7 +53,7 @@ mojo_native_application("app") {
     "//examples/bitmap_uploader",
     "//mojo/application",
     "//mojo/public/interfaces/application:application",
-    "//mojo/services/public/cpp/view_manager",
+    "//mojo/services/view_manager/public/cpp",
     "//skia",
     "//services/window_manager:lib",
   ]
@@ -72,7 +72,7 @@ mojo_native_application("embedded") {
     "//base",
     "//examples/bitmap_uploader",
     "//mojo/application",
-    "//mojo/services/public/cpp/view_manager",
+    "//mojo/services/view_manager/public/cpp",
     "//services/window_manager:lib",
     "//skia",
   ]

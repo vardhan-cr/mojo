@@ -13,6 +13,8 @@ dirs_to_clone = [
   "mojo/edk",
   "mojo/public",
   "mojo/services/public",
+  "mojo/services/view_manager/public",
+  "mojo/services/window_manager/public",
 ]
 
 def rev(source_dir, chromium_dir):

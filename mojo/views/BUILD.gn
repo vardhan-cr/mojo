@@ -20,7 +20,7 @@ static_library("views") {
   public_deps = [
     "//mojo/aura",
     "//mojo/converters/geometry",
-    "//mojo/services/public/cpp/view_manager",
+    "//mojo/services/view_manager/public/cpp",
     "//skia",
     "//ui/base",
     "//ui/views",

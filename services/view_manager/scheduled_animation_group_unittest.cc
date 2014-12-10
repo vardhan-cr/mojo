@@ -5,7 +5,7 @@
 #include "services/view_manager/scheduled_animation_group.h"
 
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/services/public/interfaces/view_manager/animations.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/animations.mojom.h"
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/test_server_view_delegate.h"
 #include "testing/gtest/include/gtest/gtest.h"

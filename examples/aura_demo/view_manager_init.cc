@@ -9,8 +9,8 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
-#include "mojo/services/public/cpp/view_manager/view_manager.h"
-#include "mojo/services/public/cpp/view_manager/view_manager_context.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_context.h"
 
 namespace examples {
 
