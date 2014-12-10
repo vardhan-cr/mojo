@@ -225,10 +225,11 @@ void Channel::SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
            << ")";
 }
 
-scoped_refptr<MessagePipe> Channel::DeserializeEndpoint(const void* source) {
+scoped_refptr<IncomingEndpoint> Channel::DeserializeEndpoint(
+    const void* source) {
   const SerializedEndpoint* s = static_cast<const SerializedEndpoint*>(source);
-  scoped_refptr<MessagePipe> rv =
-      PassIncomingMessagePipe(s->receiver_endpoint_id);
+  scoped_refptr<IncomingEndpoint> rv =
+      PassIncomingEndpoint(s->receiver_endpoint_id);
   if (!rv) {
     LOG(ERROR) << "Failed to deserialize message pipe (ID = "
                << s->receiver_endpoint_id << ")";
@@ -249,22 +250,22 @@ Channel::~Channel() {
   DCHECK(!is_running_);
 }
 
-scoped_refptr<MessagePipe> Channel::PassIncomingMessagePipe(
+scoped_refptr<IncomingEndpoint> Channel::PassIncomingEndpoint(
     ChannelEndpointId local_id) {
   // No need to check the validity of |local_id| -- if it's not valid, it simply
-  // won't be in |incoming_message_pipes_|.
+  // won't be in |incoming_endpoints_|.
   DVLOG_IF(2, !local_id.is_valid() || !local_id.is_remote())
       << "Attempt to get invalid incoming message pipe for ID " << local_id;
 
   base::AutoLock locker(lock_);
 
-  auto it = incoming_message_pipes_.find(local_id);
-  if (it == incoming_message_pipes_.end())
+  auto it = incoming_endpoints_.find(local_id);
+  if (it == incoming_endpoints_.end())
     return nullptr;
 
-  scoped_refptr<MessagePipe> rv;
+  scoped_refptr<IncomingEndpoint> rv;
   rv.swap(it->second);
-  incoming_message_pipes_.erase(it);
+  incoming_endpoints_.erase(it);
   return rv;
 }
 
@@ -444,10 +445,10 @@ bool Channel::OnAttachAndRunEndpoint(ChannelEndpointId local_id,
     return false;
   }
 
-  // Create a message pipe and thus an endpoint (outside the lock).
-  scoped_refptr<ChannelEndpoint> endpoint;
-  scoped_refptr<MessagePipe> message_pipe(
-      MessagePipe::CreateLocalProxy(&endpoint));
+  // Create/initialize an |IncomingEndpoint| and thus an endpoint (outside the
+  // lock).
+  scoped_refptr<IncomingEndpoint> incoming_endpoint(new IncomingEndpoint());
+  scoped_refptr<ChannelEndpoint> endpoint = incoming_endpoint->Init();
 
   bool success = true;
   {
@@ -455,21 +456,20 @@ bool Channel::OnAttachAndRunEndpoint(ChannelEndpointId local_id,
 
     if (local_id_to_endpoint_map_.find(local_id) ==
         local_id_to_endpoint_map_.end()) {
-      DCHECK(incoming_message_pipes_.find(local_id) ==
-             incoming_message_pipes_.end());
+      DCHECK(incoming_endpoints_.find(local_id) == incoming_endpoints_.end());
 
       // TODO(vtl): Use emplace when we move to C++11 unordered_maps. (It'll
       // avoid some refcount churn.)
       local_id_to_endpoint_map_[local_id] = endpoint;
-      incoming_message_pipes_[local_id] = message_pipe;
+      incoming_endpoints_[local_id] = incoming_endpoint;
     } else {
-      // We need to call |Close()| on the message pipe outside the lock.
+      // We need to call |Close()| outside the lock.
       success = false;
     }
   }
   if (!success) {
     DVLOG(2) << "Received attach and run endpoint for existing local ID";
-    message_pipe->Close(0);
+    incoming_endpoint->Close();
     return false;
   }
 

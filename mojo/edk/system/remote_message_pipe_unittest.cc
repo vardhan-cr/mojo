@@ -27,6 +27,7 @@
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
+#include "mojo/edk/system/incoming_endpoint.h"
 #include "mojo/edk/system/message_pipe.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/platform_handle_dispatcher.h"
@@ -367,8 +368,10 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
                       endpoint_info_size));
 
   // Warning: The local side of mp3 is port 0, not port 1.
-  scoped_refptr<MessagePipe> mp3 =
+  scoped_refptr<IncomingEndpoint> incoming_endpoint =
       channels(1)->DeserializeEndpoint(received_endpoint_info.get());
+  ASSERT_TRUE(incoming_endpoint);
+  scoped_refptr<MessagePipe> mp3 = incoming_endpoint->ConvertToMessagePipe();
   ASSERT_TRUE(mp3);
 
   // Write: MP 2, port 0 -> MP 3, port 1.

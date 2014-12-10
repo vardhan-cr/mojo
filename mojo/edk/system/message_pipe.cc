@@ -9,6 +9,7 @@
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/endpoint_relayer.h"
+#include "mojo/edk/system/incoming_endpoint.h"
 #include "mojo/edk/system/local_message_pipe_endpoint.h"
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
@@ -35,6 +36,30 @@ MessagePipe* MessagePipe::CreateLocalProxy(
   *channel_endpoint = new ChannelEndpoint(message_pipe, 1);
   message_pipe->endpoints_[1].reset(
       new ProxyMessagePipeEndpoint(channel_endpoint->get()));
+  return message_pipe;
+}
+
+// static
+MessagePipe* MessagePipe::CreateLocalProxyFromExisting(
+    MessageInTransitQueue* message_queue,
+    ChannelEndpoint* channel_endpoint) {
+  DCHECK(message_queue);
+  MessagePipe* message_pipe = new MessagePipe();
+  message_pipe->endpoints_[0].reset(
+      new LocalMessagePipeEndpoint(message_queue));
+  if (channel_endpoint) {
+    bool attached_to_channel = channel_endpoint->ReplaceClient(message_pipe, 1);
+    message_pipe->endpoints_[1].reset(
+        new ProxyMessagePipeEndpoint(channel_endpoint));
+    if (!attached_to_channel)
+      message_pipe->OnDetachFromChannel(1);
+  } else {
+    // This means that the proxy side was already closed; we only need to inform
+    // the local side of this.
+    // TODO(vtl): This is safe to do without locking (but perhaps slightly
+    // dubious), since no other thread has access to |message_pipe| yet.
+    message_pipe->endpoints_[0]->OnPeerClose();
+  }
   return message_pipe;
 }
 
@@ -69,10 +94,13 @@ bool MessagePipe::Deserialize(Channel* channel,
     return false;
   }
 
-  *message_pipe = channel->DeserializeEndpoint(source);
-  if (!*message_pipe)
+  scoped_refptr<IncomingEndpoint> incoming_endpoint =
+      channel->DeserializeEndpoint(source);
+  if (!incoming_endpoint)
     return false;
 
+  *message_pipe = incoming_endpoint->ConvertToMessagePipe();
+  DCHECK(*message_pipe);
   *port = 0;
   return true;
 }

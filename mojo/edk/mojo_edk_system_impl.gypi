@@ -73,6 +73,8 @@
     'system/handle_signals_state.h',
     'system/handle_table.cc',
     'system/handle_table.h',
+    'system/incoming_endpoint.cc',
+    'system/incoming_endpoint.h',
     'system/local_data_pipe.cc',
     'system/local_data_pipe.h',
     'system/local_message_pipe_endpoint.cc',
