@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("network") {
+mojom("interfaces") {
   sources = [
     "cookie_store.mojom",
     "net_address.mojom",

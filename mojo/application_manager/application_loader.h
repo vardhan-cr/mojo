@@ -8,7 +8,7 @@
 #include "base/callback.h"
 #include "mojo/application_manager/application_manager_export.h"
 #include "mojo/public/cpp/system/core.h"
-#include "mojo/services/public/interfaces/network/url_loader.mojom.h"
+#include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "url/gurl.h"
 
 namespace mojo {

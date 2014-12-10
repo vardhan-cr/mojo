@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SERVICES_PUBLIC_CPP_NETWORK_WEB_SOCKET_WRITE_QUEUE_H_
-#define MOJO_SERVICES_PUBLIC_CPP_NETWORK_WEB_SOCKET_WRITE_QUEUE_H_
+#ifndef MOJO_SERVICES_NETWORK_PUBLIC_CPP_WEB_SOCKET_WRITE_QUEUE_H_
+#define MOJO_SERVICES_NETWORK_PUBLIC_CPP_WEB_SOCKET_WRITE_QUEUE_H_
 
 #include "base/callback.h"
 #include "base/memory/scoped_vector.h"
@@ -41,4 +41,4 @@ class WebSocketWriteQueue {
 
 }  // namespace mojo
 
-#endif  // MOJO_SERVICES_PUBLIC_CPP_NETWORK_WEB_SOCKET_WRITE_QUEUE_H_
+#endif  // MOJO_SERVICES_NETWORK_PUBLIC_CPP_WEB_SOCKET_WRITE_QUEUE_H_

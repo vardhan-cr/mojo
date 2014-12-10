@@ -76,8 +76,8 @@ source_set("lib") {
     "//mojo/common",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/bindings",
-    "//mojo/services/public/cpp/network",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/cpp",
+    "//mojo/services/network/public/interfaces",
     "//net",
     "//url",
   ]
@@ -96,8 +96,8 @@ source_set("sources") {
     "//mojo/application",
     "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings:bindings",
-    "//mojo/services/public/cpp/network",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/cpp",
+    "//mojo/services/network/public/interfaces",
   ]
 }
 
@@ -116,8 +116,8 @@ mojo_native_application("apptests") {
     "//mojo/application:test_support",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/bindings:callback",
-    "//mojo/services/public/cpp/network",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/cpp",
+    "//mojo/services/network/public/interfaces",
     "//net",
     "//testing/gtest",
   ]

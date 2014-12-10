@@ -9,9 +9,9 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/bindings/callback.h"
-#include "mojo/services/public/cpp/network/udp_socket_wrapper.h"
-#include "mojo/services/public/interfaces/network/network_service.mojom.h"
-#include "mojo/services/public/interfaces/network/udp_socket.mojom.h"
+#include "mojo/services/network/public/cpp/udp_socket_wrapper.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
+#include "mojo/services/network/public/interfaces/udp_socket.mojom.h"
 #include "net/base/net_errors.h"
 #include "testing/gtest/include/gtest/gtest.h"
 

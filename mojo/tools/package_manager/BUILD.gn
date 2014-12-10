@@ -25,7 +25,7 @@ mojo_native_application("package_manager") {
     "//mojo/common",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/interfaces",
     "//third_party/zlib:zip",
     "//url",
   ]

@@ -19,7 +19,7 @@
 #include "mojo/common/common_type_converters.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/cpp/system/data_pipe.h"
-#include "mojo/services/public/interfaces/network/url_loader.mojom.h"
+#include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "shell/context.h"
 #include "shell/data_pipe_peek.h"
 #include "shell/filename_util.h"

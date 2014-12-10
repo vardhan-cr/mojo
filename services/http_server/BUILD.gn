@@ -19,7 +19,7 @@ mojo_native_application("http_server") {
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/interfaces",
     "//services/http_server/public",
     "//services/http_server/public:util",
     "//third_party/re2",

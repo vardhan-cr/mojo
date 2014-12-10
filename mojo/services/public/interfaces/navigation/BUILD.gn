@@ -10,6 +10,6 @@ mojom("navigation") {
   ]
 
   deps = [
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/interfaces",
   ]
 }

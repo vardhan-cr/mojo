@@ -31,8 +31,8 @@ source_set("content_handler") {
     "//mojo/common",
     "//mojo/environment:chromium",
     "//mojo/public/interfaces/application",
+    "//mojo/services/network/public/interfaces",
     "//mojo/services/public/interfaces/content_handler",
-    "//mojo/services/public/interfaces/network",
   ]
 }
 

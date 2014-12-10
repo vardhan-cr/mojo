@@ -9,8 +9,8 @@
 #include "base/files/file_path.h"
 #include "mojo/common/handle_watcher.h"
 #include "mojo/public/cpp/system/macros.h"
-#include "mojo/services/public/interfaces/network/network_service.mojom.h"
-#include "mojo/services/public/interfaces/network/url_loader.mojom.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
+#include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "url/gurl.h"
 
 namespace base {

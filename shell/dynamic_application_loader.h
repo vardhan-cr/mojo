@@ -13,7 +13,7 @@
 #include "base/memory/weak_ptr.h"
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/public/cpp/system/core.h"
-#include "mojo/services/public/interfaces/network/network_service.mojom.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/dynamic_service_runner.h"
 #include "url/gurl.h"
 

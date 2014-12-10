@@ -23,7 +23,7 @@ component("application_manager") {
     "//base",
     "//mojo/common",
     "//mojo/public/interfaces/application:application",
-    "//mojo/services/public/interfaces/network:network",
+    "//mojo/services/network/public/interfaces",
     "//url",
   ]
   deps = [

@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-source_set("network") {
+source_set("cpp") {
   sources = [
     "udp_socket_wrapper.cc",
     "udp_socket_wrapper.h",
@@ -19,6 +19,6 @@ source_set("network") {
     "//mojo/environment:chromium",
     "//mojo/public/c/system",
     "//mojo/public/cpp/system",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/interfaces",
   ]
 }

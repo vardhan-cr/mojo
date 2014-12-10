@@ -152,20 +152,20 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/network
+      # GN version: //mojo/services/network/public/interfaces
       'target_name': 'mojo_network_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/network/cookie_store.mojom',
-        'interfaces/network/net_address.mojom',
-        'interfaces/network/network_error.mojom',
-        'interfaces/network/network_service.mojom',
-        'interfaces/network/tcp_bound_socket.mojom',
-        'interfaces/network/tcp_connected_socket.mojom',
-        'interfaces/network/tcp_server_socket.mojom',
-        'interfaces/network/udp_socket.mojom',
-        'interfaces/network/url_loader.mojom',
-        'interfaces/network/web_socket.mojom',
+        '../network/public/interfaces/cookie_store.mojom',
+        '../network/public/interfaces/net_address.mojom',
+        '../network/public/interfaces/network_error.mojom',
+        '../network/public/interfaces/network_service.mojom',
+        '../network/public/interfaces/tcp_bound_socket.mojom',
+        '../network/public/interfaces/tcp_connected_socket.mojom',
+        '../network/public/interfaces/tcp_server_socket.mojom',
+        '../network/public/interfaces/udp_socket.mojom',
+        '../network/public/interfaces/url_loader.mojom',
+        '../network/public/interfaces/web_socket.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'export_dependent_settings': [

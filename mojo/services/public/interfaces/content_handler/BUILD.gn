@@ -11,6 +11,6 @@ mojom("content_handler") {
 
   deps = [
     "//mojo/public/interfaces/application",
-    "//mojo/services/public/interfaces/network",
+    "//mojo/services/network/public/interfaces",
   ]
 }

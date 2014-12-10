@@ -22,7 +22,7 @@
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/environment/async_waiter.h"
 #include "mojo/public/cpp/system/data_pipe.h"
-#include "mojo/services/public/interfaces/network/network_service.mojom.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "services/http_server/http_request_parser.h"
 #include "services/http_server/public/http_request.mojom.h"
 #include "services/http_server/public/http_response.mojom.h"

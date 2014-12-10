@@ -101,7 +101,7 @@ name is based on the '.mojom' file's path. For example, to use the Mojo network
 service you need the JS module based on network_service.mojom:
 
   define("main", [
-    "mojo/services/public/interfaces/network/network_service.mojom",
+    "mojo/services/network/public/interfaces/network_service.mojom",
     "mojo/services/public/js/application",
   ]
     function(netModule, appModule) {

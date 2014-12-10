@@ -9,8 +9,8 @@
 define("main", [
   "console",
   "mojo/public/js/core",
-  "mojo/services/public/interfaces/network/network_service.mojom",
-  "mojo/services/public/interfaces/network/url_loader.mojom",
+  "mojo/services/network/public/interfaces/network_service.mojom",
+  "mojo/services/network/public/interfaces/url_loader.mojom",
   "mojo/services/public/js/application",
 ], function(console, coreModule, netModule, loaderModule, appModule) {
 
