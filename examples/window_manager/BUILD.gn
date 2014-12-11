@@ -30,7 +30,7 @@ mojo_native_application("window_manager") {
     "//mojo/public/cpp/utility",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/input_events/public/interfaces",
-    "//mojo/services/public/interfaces/navigation",
+    "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/views:views",
     "//services/window_manager:lib",

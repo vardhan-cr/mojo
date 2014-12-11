@@ -15,7 +15,7 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
-#include "mojo/services/public/interfaces/navigation/navigation.mojom.h"
+#include "mojo/services/navigation/public/interfaces/navigation.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"

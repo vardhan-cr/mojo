@@ -28,7 +28,7 @@ mojo_native_application("keyboard") {
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/public/interfaces/navigation",
+    "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/views:views",

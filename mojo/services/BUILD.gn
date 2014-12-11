@@ -12,9 +12,9 @@ group("services") {
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/input_events/public/interfaces",
     "//mojo/services/native_viewport/public/interfaces",
+    "//mojo/services/navigation/public/interfaces",
     "//mojo/services/network",
     "//mojo/services/network/public/interfaces",
-    "//mojo/services/public/interfaces/navigation",
     "//mojo/services/surfaces/public/interfaces",
   ]
 

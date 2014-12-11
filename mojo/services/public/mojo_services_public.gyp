@@ -119,11 +119,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/navigation
+      # GN version: //mojo/services/navigation/public/interfaces
       'target_name': 'mojo_navigation_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/navigation/navigation.mojom',
+        '../navigation/public/interfaces/navigation.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'export_dependent_settings': [

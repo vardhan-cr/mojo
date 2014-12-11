@@ -8,7 +8,7 @@
 #include <string>
 
 #include "base/macros.h"
-#include "mojo/services/public/interfaces/navigation/navigation.mojom.h"
+#include "mojo/services/navigation/public/interfaces/navigation.mojom.h"
 #include "ui/views/controls/button/button.h"
 #include "ui/views/layout/layout_manager.h"
 #include "ui/views/widget/widget_delegate.h"
