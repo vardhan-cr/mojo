@@ -10,7 +10,7 @@
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
-#include "mojo/services/public/interfaces/content_handler/content_handler.mojom.h"
+#include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 
 namespace base {
 class FilePath;

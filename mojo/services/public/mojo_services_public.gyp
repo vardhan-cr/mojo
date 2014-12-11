@@ -135,11 +135,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/content_handler
+      # GN version: //mojo/services/content_handler/public/interfaces
       'target_name': 'mojo_content_handler_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/content_handler/content_handler.mojom',
+        '../content_handler/public/interfaces/content_handler.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'export_dependent_settings': [

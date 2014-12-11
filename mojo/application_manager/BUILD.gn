@@ -33,7 +33,7 @@ component("application_manager") {
     "//mojo/environment:chromium",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings",
-    "//mojo/services/public/interfaces/content_handler:content_handler",
+    "//mojo/services/content_handler/public/interfaces",
   ]
 }
 

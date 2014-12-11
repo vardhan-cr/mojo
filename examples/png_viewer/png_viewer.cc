@@ -18,7 +18,7 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
-#include "mojo/services/public/interfaces/content_handler/content_handler.mojom.h"
+#include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "mojo/services/view_manager/public/cpp/types.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"

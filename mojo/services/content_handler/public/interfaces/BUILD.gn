@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("content_handler") {
+mojom("interfaces") {
   sources = [
     "content_handler.mojom",
   ]
