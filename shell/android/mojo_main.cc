@@ -6,6 +6,7 @@
 
 #include "base/android/command_line_android.h"
 #include "base/android/java_handler_thread.h"
+#include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/at_exit.h"
 #include "base/bind.h"
@@ -50,9 +51,9 @@ void RunShell(std::vector<GURL> app_urls) {
 static void Init(JNIEnv* env,
                  jclass clazz,
                  jobject context,
-                 jobjectArray jparameters) {
+                 jobjectArray jparameters,
+                 jstring j_local_apps_directory) {
   base::android::ScopedJavaLocalRef<jobject> scoped_context(env, context);
-
   base::android::InitApplicationContext(env, scoped_context);
 
   base::android::InitNativeCommandLineFromJavaArray(env, jparameters);
@@ -62,7 +63,10 @@ static void Init(JNIEnv* env,
   // LazyInstances is akin to stack-allocating objects; their destructors
   // will be invoked first-in-last-out.
   shell::Context* shell_context = new shell::Context();
+  shell_context->mojo_url_resolver()->SetLocalAppsPath(base::FilePath(
+      base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
   g_context.Get().reset(shell_context);
+
   g_java_message_loop.Get().reset(new base::MessageLoopForUI);
   base::MessageLoopForUI::current()->Start();
 

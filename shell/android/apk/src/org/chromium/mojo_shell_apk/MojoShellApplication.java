@@ -33,6 +33,7 @@ public class MojoShellApplication extends BaseChromiumApplication {
      */
     private void clearTemporaryFiles() {
         AndroidHandler.clearTemporaryFiles(this);
+        MojoMain.clearTemporaryFiles(this);
     }
 
     /**

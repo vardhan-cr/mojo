@@ -27,12 +27,18 @@ class FileHelper {
     // Prefix used when naming temporary files.
     private static final String TEMP_FILE_PREFIX = "temp-";
 
-    static File extractFromAssets(Context context, String assetName, File outputDirectory)
-            throws IOException, FileNotFoundException {
-        // Make the original filename part of the temp file name.
-        // TODO(ppi): do we need to sanitize the suffix?
-        String suffix = "-" + assetName;
-        File outputFile = File.createTempFile(TEMP_FILE_PREFIX, suffix, outputDirectory);
+    static File extractFromAssets(Context context, String assetName, File outputDirectory,
+            boolean useTempFile) throws IOException, FileNotFoundException {
+        File outputFile;
+        if (useTempFile) {
+            // Make the original filename part of the temp file name.
+            // TODO(ppi): do we need to sanitize the suffix?
+            String suffix = "-" + assetName;
+            outputFile = File.createTempFile(TEMP_FILE_PREFIX, suffix, outputDirectory);
+        } else {
+            outputFile = new File(outputDirectory, assetName);
+        }
+
         BufferedInputStream inputStream = new BufferedInputStream(
                 context.getAssets().open(assetName));
         writeStreamToFile(inputStream, outputFile);

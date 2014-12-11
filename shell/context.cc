@@ -38,7 +38,6 @@
 #include "services/gles2/gpu_impl.h"
 #include "services/native_viewport/native_viewport_impl.h"
 #include "shell/android/android_handler_loader.h"
-#include "shell/network_application_loader.h"
 #endif  // defined(OS_ANDROID)
 
 namespace mojo {
@@ -252,17 +251,10 @@ bool Context::Init() {
   }
 
 #if defined(OS_ANDROID)
-  // On android, the network service is bundled with the shell because the
-  // network stack depends on the android runtime.
   {
-    scoped_ptr<BackgroundShellApplicationLoader> loader(
-        new BackgroundShellApplicationLoader(
-            scoped_ptr<ApplicationLoader>(new NetworkApplicationLoader()),
-            "network_service", base::MessageLoop::TYPE_IO));
-    application_manager_.SetLoaderForURL(loader.Pass(),
-                                         GURL("mojo:network_service"));
-  }
-  {
+    // Android handler is bundled with the Mojo shell, because it uses the
+    // MojoShell application as the JNI bridge to bootstrap execution of other
+    // Android Mojo apps that need JNI.
     scoped_ptr<BackgroundShellApplicationLoader> loader(
         new BackgroundShellApplicationLoader(
             scoped_ptr<ApplicationLoader>(new AndroidHandlerLoader()),

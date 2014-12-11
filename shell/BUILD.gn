@@ -179,8 +179,6 @@ source_set("lib") {
       "android/android_handler.cc",
       "android/android_handler_loader.h",
       "android/android_handler_loader.cc",
-      "network_application_loader.cc",
-      "network_application_loader.h",
     ]
 
     deps += [
@@ -253,7 +251,6 @@ if (is_android) {
 
     deps = [
       "//base:base_java",
-      "//net/android:net_java",
     ]
   }
 
@@ -272,7 +269,6 @@ if (is_android) {
       ":jni_headers",
       ":lib",
       "//mojo/application_manager",
-      "//net",
       "//services/native_viewport:lib",
       "//ui/gl",
     ]
@@ -285,6 +281,7 @@ if (is_android) {
     dest = mojo_shell_assets_dir
     sources = [
       "$root_out_dir/lib.stripped/libbootstrap.so",
+      "$root_out_dir/network_service.mojo",
       "$root_out_dir/obj/shell/bootstrap_java.dex.jar",
     ]
   }

@@ -30,11 +30,10 @@ GURL AddTrailingSlashIfNeeded(const GURL& url) {
 MojoURLResolver::MojoURLResolver() {
   // Needed to treat first component of mojo URLs as host, not path.
   url::AddStandardScheme("mojo");
-
-  // By default, resolve mojo URLs to files living alongside the shell.
+  // By default assume that the local apps reside alongside the shell.
   base::FilePath path;
   PathService::Get(base::DIR_MODULE, &path);
-  default_base_url_ = AddTrailingSlashIfNeeded(FilePathToFileURL(path));
+  local_apps_url_ = AddTrailingSlashIfNeeded(FilePathToFileURL(path));
 }
 
 MojoURLResolver::~MojoURLResolver() {
@@ -45,6 +44,12 @@ void MojoURLResolver::SetBaseURL(const GURL& base_url) {
   // Force a trailing slash on the base_url to simplify resolving
   // relative files and URLs below.
   base_url_ = AddTrailingSlashIfNeeded(base_url);
+}
+
+void MojoURLResolver::SetLocalAppsPath(const base::FilePath& local_apps_path) {
+  local_apps_url_ =
+      AddTrailingSlashIfNeeded(FilePathToFileURL(local_apps_path));
+  DCHECK(local_apps_url_.is_valid());
 }
 
 void MojoURLResolver::AddCustomMapping(const GURL& mojo_url,
@@ -68,7 +73,7 @@ GURL MojoURLResolver::Resolve(const GURL& mojo_url) const {
   if (!base_url_.is_valid() ||
       local_file_set_.find(mapped_url) != local_file_set_.end()) {
     // Resolve to a local file URL.
-    return default_base_url_.Resolve(lib);
+    return local_apps_url_.Resolve(lib);
   }
 
   // Otherwise, resolve to an URL relative to base_url_.

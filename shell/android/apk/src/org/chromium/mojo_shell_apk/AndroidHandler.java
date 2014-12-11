@@ -81,9 +81,9 @@ public class AndroidHandler {
         File bootstrap_native_library;
         try {
             bootstrap_java_library = FileHelper.extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY,
-                    getAssetDir(context));
+                    getAssetDir(context), true);
             bootstrap_native_library = FileHelper.extractFromAssets(context,
-                    BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context));
+                    BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context), true);
         } catch (Exception e) {
             Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
             return false;
