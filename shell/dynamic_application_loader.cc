@@ -256,6 +256,7 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
                shell_handle.Pass(),
                load_callback,
                loader_complete_callback),
+        url_(url),
         weak_ptr_factory_(this) {
     StartNetworkRequest(url, network_service);
   }
@@ -289,6 +290,10 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
       return;
     }
     base::CreateTemporaryFile(&path_);
+#if defined(OS_ANDROID)
+    // This is used to extract symbols on android.
+    LOG(INFO) << "Caching mojo app " << url_ << " at " << path_.value();
+#endif
     common::CopyToFile(response_->body.Pass(), path_, task_runner,
                        base::Bind(callback, path_));
   }
@@ -338,6 +343,7 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
     Load();
   }
 
+  const GURL url_;
   URLLoaderPtr url_loader_;
   URLResponsePtr response_;
   base::FilePath path_;

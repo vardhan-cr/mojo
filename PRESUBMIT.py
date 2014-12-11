@@ -984,28 +984,10 @@ def _CheckSpamLogging(input_api, output_api):
                 input_api.DEFAULT_BLACK_LIST +
                 (r"^base[\\\/]logging\.h$",
                  r"^base[\\\/]logging\.cc$",
-                 r"^chrome[\\\/]app[\\\/]chrome_main_delegate\.cc$",
-                 r"^chrome[\\\/]browser[\\\/]chrome_browser_main\.cc$",
-                 r"^chrome[\\\/]browser[\\\/]ui[\\\/]startup[\\\/]"
-                     r"startup_browser_creator\.cc$",
-                 r"^chrome[\\\/]installer[\\\/]setup[\\\/].*",
-                 r"chrome[\\\/]browser[\\\/]diagnostics[\\\/]" +
-                     r"diagnostics_writer\.cc$",
-                 r"^chrome_elf[\\\/]dll_hash[\\\/]dll_hash_main\.cc$",
-                 r"^chromecast[\\\/]",
-                 r"^cloud_print[\\\/]",
-                 r"^content[\\\/]common[\\\/]gpu[\\\/]client[\\\/]"
-                     r"gl_helper_benchmark\.cc$",
-                 r"^courgette[\\\/]courgette_tool\.cc$",
-                 r"^extensions[\\\/]renderer[\\\/]logging_native_handler\.cc$",
-                 r"^native_client_sdk[\\\/]",
-                 r"^remoting[\\\/]base[\\\/]logging\.h$",
-                 r"^remoting[\\\/]host[\\\/].*",
+                 r"^shell[\\\/]dynamic_application_loader\.cc$",
                  r"^sandbox[\\\/]linux[\\\/].*",
                  r"^tools[\\\/]",
-                 r"^ui[\\\/]aura[\\\/]bench[\\\/]bench_main\.cc$",
-                 r"^webkit[\\\/]browser[\\\/]fileapi[\\\/]" +
-                     r"dump_file_system.cc$",))
+                 r"^ui[\\\/]aura[\\\/]bench[\\\/]bench_main\.cc$",))
   source_file_filter = lambda x: input_api.FilterSourceFile(
       x, white_list=(file_inclusion_pattern,), black_list=black_list)
 
