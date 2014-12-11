@@ -257,25 +257,22 @@ bool MessagePipe::EndSerialize(
     //
     // TODO(vtl): Factor some of this out to |ChannelEndpoint| (or |Channel|).
 
+    // The replacement for |endpoints_[port]|, if any.
+    MessagePipeEndpoint* replacement_endpoint = nullptr;
+
     unsigned peer_port = GetPeerPort(port);
-    if (!endpoints_[peer_port]) {
-      // Case 1.
+    if (!endpoints_[peer_port]) {  // Case 1.
       channel_endpoint = new ChannelEndpoint(
           nullptr, 0, static_cast<LocalMessagePipeEndpoint*>(
                           endpoints_[port].get())->message_queue());
-      endpoints_[port]->Close();
-      endpoints_[port].reset();
     } else if (endpoints_[peer_port]->GetType() ==
-               MessagePipeEndpoint::kTypeLocal) {
-      // Case 2.
+               MessagePipeEndpoint::kTypeLocal) {  // Case 2.
       channel_endpoint = new ChannelEndpoint(
           this, port, static_cast<LocalMessagePipeEndpoint*>(
                           endpoints_[port].get())->message_queue());
-      endpoints_[port]->Close();
-      endpoints_[port].reset(
-          new ProxyMessagePipeEndpoint(channel_endpoint.get()));
-    } else {
-      // Case 3.
+      replacement_endpoint =
+          new ProxyMessagePipeEndpoint(channel_endpoint.get());
+    } else {  // Case 3.
       DLOG(WARNING) << "Direct message pipe passing across multiple channels "
                        "not yet implemented; will proxy";
 
@@ -310,11 +307,12 @@ bool MessagePipe::EndSerialize(
       relayer->Init(channel_endpoint.get(), peer_channel_endpoint.get());
       peer_channel_endpoint->ReplaceClient(relayer.get(), 1);
 
-      endpoints_[port]->Close();
-      endpoints_[port].reset();
       // No need to call |Close()| after |ReleaseChannelEndpoint()|.
       endpoints_[peer_port].reset();
     }
+
+    endpoints_[port]->Close();
+    endpoints_[port].reset(replacement_endpoint);
   }
 
   // TODO(vtl): More/most of the above should be moved into (some variant of)
