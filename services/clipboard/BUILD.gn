@@ -18,7 +18,7 @@ mojo_native_application("clipboard") {
     "//mojo/environment:chromium",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/bindings:callback",
-    "//mojo/services/public/interfaces/clipboard",
+    "//mojo/services/clipboard/public/interfaces",
     "//ui/base",
   ]
 }
@@ -28,7 +28,9 @@ mojo_native_application("apptests") {
 
   testonly = true
 
-  sources = [ "clipboard_apptest.cc" ]
+  sources = [
+    "clipboard_apptest.cc",
+  ]
 
   deps = [
     "//base",
@@ -36,8 +38,10 @@ mojo_native_application("apptests") {
     "//mojo/application:test_support",
     "//mojo/common",
     "//mojo/public/cpp/bindings",
-    "//mojo/services/public/interfaces/clipboard",
+    "//mojo/services/clipboard/public/interfaces",
   ]
 
-  datadeps = [ ":clipboard" ]
+  datadeps = [
+    ":clipboard",
+  ]
 }

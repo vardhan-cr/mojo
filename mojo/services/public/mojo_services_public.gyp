@@ -27,11 +27,11 @@
       ],
     },
     {
-      # GN version: //mojo/services/public/interfaces/clipboard
+      # GN version: //mojo/services/clipboard/public/interfaces
       'target_name': 'mojo_clipboard_bindings',
       'type': 'static_library',
       'sources': [
-        'interfaces/clipboard/clipboard.mojom',
+        '../clipboard/public/interfaces/clipboard.mojom',
       ],
       'includes': [ '../../public/tools/bindings/mojom_bindings_generator.gypi' ],
       'dependencies': [

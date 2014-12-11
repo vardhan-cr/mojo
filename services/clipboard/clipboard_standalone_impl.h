@@ -8,7 +8,7 @@
 #include <base/memory/scoped_ptr.h>
 #include <string>
 
-#include "mojo/services/public/interfaces/clipboard/clipboard.mojom.h"
+#include "mojo/services/clipboard/public/interfaces/clipboard.mojom.h"
 
 namespace clipboard {
 

@@ -7,7 +7,7 @@
 #include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
-#include "mojo/services/public/interfaces/clipboard/clipboard.mojom.h"
+#include "mojo/services/clipboard/public/interfaces/clipboard.mojom.h"
 
 using mojo::Array;
 using mojo::Clipboard;

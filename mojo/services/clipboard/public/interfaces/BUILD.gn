@@ -4,7 +4,7 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("clipboard") {
+mojom("interfaces") {
   sources = [
     "clipboard.mojom",
   ]
