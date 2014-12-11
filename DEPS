@@ -22,11 +22,11 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'f9d09c969f8ffa664bc5cd40a71077e3dc46e0aa',
+  'skia_revision': '3054be16dfdb0d06233770cbfc338958edef44ea',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '49dd4474ba5b874fd2ac982be8c34d09052dcd85',
+  'v8_revision': 'a2359f44508afdb9abe8cb89cdfb02a7b48095b2',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
