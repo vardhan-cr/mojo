@@ -11,6 +11,7 @@
 #include "base/at_exit.h"
 #include "base/bind.h"
 #include "base/command_line.h"
+#include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/macros.h"
@@ -51,12 +52,16 @@ void RunShell(std::vector<GURL> app_urls) {
 static void Init(JNIEnv* env,
                  jclass clazz,
                  jobject context,
+                 jstring mojo_shell_path,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory) {
   base::android::ScopedJavaLocalRef<jobject> scoped_context(env, context);
   base::android::InitApplicationContext(env, scoped_context);
 
   base::android::InitNativeCommandLineFromJavaArray(env, jparameters);
+  base::FilePath mojo_shell_file_path(
+      base::android::ConvertJavaStringToUTF8(env, mojo_shell_path));
+  base::CommandLine::ForCurrentProcess()->SetProgram(mojo_shell_file_path);
   mojo::shell::InitializeLogging();
 
   // We want ~MessageLoop to happen prior to ~Context. Initializing

@@ -25,6 +25,9 @@ public class MojoMain {
     private static final String LOCAL_APP_DIRECTORY = "local_apps";
     // Individual applications bundled with the shell as assets.
     private static final String NETWORK_LIBRARY_APP = "network_service.mojo";
+    // The mojo_shell library is also an executable run in forked processes when running
+    // multi-process.
+    private static final String MOJO_SHELL_EXECUTABLE = "libmojo_shell.so";
 
     /**
      * A guard flag for calling nativeInit() only once.
@@ -45,10 +48,11 @@ public class MojoMain {
     static void ensureInitialized(Context applicationContext, String[] parameters) {
         if (sInitialized)
             return;
-
         try {
             FileHelper.extractFromAssets(applicationContext, NETWORK_LIBRARY_APP,
                     getLocalAppsDir(applicationContext), false);
+            File mojoShell = new File(applicationContext.getApplicationInfo().nativeLibraryDir,
+                    MOJO_SHELL_EXECUTABLE);
 
             List<String> parametersList = new ArrayList<String>();
             // Program name.
@@ -58,6 +62,7 @@ public class MojoMain {
             }
 
             nativeInit(applicationContext,
+                    mojoShell.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath());
             sInitialized = true;
@@ -81,8 +86,10 @@ public class MojoMain {
     /**
      * Initializes the native system. This API should be called only once per process.
      **/
-    private static native void nativeInit(Context context, String[] parameters,
+    private static native void nativeInit(Context context, String mojoShellPath,
+            String[] parameters,
             String bundledAppsDirectory);
 
     private static native void nativeStart(String appUrl);
+
 }

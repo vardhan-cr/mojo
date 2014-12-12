@@ -54,6 +54,23 @@ if (!use_prebuilt_mojo_shell) {
       "//mojo/common",
       "//mojo/environment:chromium",
     ]
+
+    if (is_android) {
+      sources += [
+        "android/library_loader.cc",
+        "android/mojo_main.cc",
+        "android/mojo_main.h",
+      ]
+
+      # On android, the executable is also the native library used by the apk.
+      # It means dynamic symbols must be preserved and exported.
+      ldflags = [ "-Wl,--export-dynamic" ]
+
+      deps += [
+        ":jni_headers",
+        "//ui/gl",
+      ]
+    }
   }
 }  # !use_prebuilt_mojo_shell
 
@@ -258,21 +275,6 @@ if (is_android) {
     custom_package = "org.chromium.mojo_shell_apk"
   }
 
-  shared_library("libmojo_shell") {
-    sources = [
-      "android/library_loader.cc",
-      "android/mojo_main.cc",
-      "android/mojo_main.h",
-    ]
-    deps = [
-      ":jni_headers",
-      ":lib",
-      "//mojo/application_manager",
-      "//services/native_viewport:lib",
-      "//ui/gl",
-    ]
-  }
-
   mojo_shell_assets_dir = "$root_build_dir/mojo_shell_assets"
 
   copy_ex("copy_mojo_shell_assets") {
@@ -282,6 +284,15 @@ if (is_android) {
       "$root_out_dir/lib.stripped/libbootstrap.so",
       "$root_out_dir/network_service.mojo",
       "$root_out_dir/obj/shell/bootstrap_java.dex.jar",
+    ]
+  }
+
+  copy("copy_mojo_shell") {
+    sources = [
+      "$root_out_dir/exe.stripped/mojo_shell",
+    ]
+    outputs = [
+      "$root_out_dir/lib.stripped/libmojo_shell.so",
     ]
   }
 
@@ -295,9 +306,9 @@ if (is_android) {
     asset_location = mojo_shell_assets_dir
 
     deps = [
+      ":copy_mojo_shell",
       ":copy_mojo_shell_assets",
       ":java",
-      ":libmojo_shell",
       ":resources",
       "//services/native_viewport:native_viewport_java",
     ]
