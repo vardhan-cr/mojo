@@ -53,23 +53,18 @@ group("tests") {
     "//mojo/public/cpp/system/tests:mojo_public_system_unittests",
     "//mojo/public/cpp/utility/tests:mojo_public_utility_unittests",
     "//mojo/services/network:apptests",
+    "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
     "//mojo/tools:message_generator",
     "//services/clipboard:apptests",
     "//services/js:js_services_unittests",
     "//services/js:js_apptests",
+    "//services/view_manager:view_manager_service_apptests",
+    "//services/view_manager:view_manager_service_unittests",
+    "//services/window_manager:window_manager_unittests",
   ]
 
   if (is_android) {
     deps += [ "//mojo/edk/system:mojo_system_unittests_apk" ]
-  }
-
-  if (use_aura) {
-    deps += [
-      "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
-      "//services/window_manager:window_manager_unittests",
-      "//services/view_manager:view_manager_service_apptests",
-      "//services/view_manager:view_manager_service_unittests",
-    ]
   }
 
   if (mojo_use_dart) {

@@ -9,6 +9,14 @@ if (is_android) {
   import("//build/config/android/config.gni")
   import("//build/config/android/rules.gni")
 
+  group("native_viewport") {
+    deps = [
+      ":lib",
+      ":native_viewport_java",
+      ":jni_headers",
+    ]
+  }
+
   android_library("native_viewport_java") {
     java_files =
         [ "android/src/org/chromium/mojo/PlatformViewportAndroid.java" ]
