@@ -345,8 +345,8 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
 
   EXPECT_EQ(MOJO_RESULT_OK,
             mp0->WriteMessage(0, UserPointer<const void>(endpoint_info.get()),
-                              endpoint_info_size, nullptr,
-                              MOJO_WRITE_MESSAGE_FLAG_NONE));
+                              static_cast<uint32_t>(endpoint_info_size),
+                              nullptr, MOJO_WRITE_MESSAGE_FLAG_NONE));
 
   EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
   EXPECT_EQ(123u, context);
