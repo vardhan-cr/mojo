@@ -87,7 +87,7 @@ source_set("sources") {
   visibility = [ ":*" ]
 
   sources = [
-    "main.cc",
+    "network_service.cc",
   ]
 
   deps = [

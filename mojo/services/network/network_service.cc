@@ -17,11 +17,10 @@
 #include "mojo/services/network/network_context.h"
 #include "mojo/services/network/network_service_impl.h"
 
-class Delegate : public mojo::ApplicationDelegate,
-                 public mojo::InterfaceFactory<mojo::NetworkService> {
- public:
-  Delegate() {}
-
+class NetworkServiceDelegate
+    : public mojo::ApplicationDelegate,
+      public mojo::InterfaceFactory<mojo::NetworkService> {
+ private:
   void Initialize(mojo::ApplicationImpl* app) override {
     base::FilePath base_path;
     CHECK(PathService::Get(base::DIR_TEMP, &base_path));
@@ -49,7 +48,7 @@ class Delegate : public mojo::ApplicationDelegate,
 };
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new Delegate);
+  mojo::ApplicationRunnerChromium runner(new NetworkServiceDelegate);
   runner.set_message_loop_type(base::MessageLoop::TYPE_IO);
   return runner.Run(shell_handle);
 }
