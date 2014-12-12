@@ -3,7 +3,9 @@ include_rules = [
   "+skia",
   "+ui/aura",
   "+ui/base",
+  "+ui/compositor",
   "+ui/events",
+  "+ui/native_theme",
   "+ui/views",
   "+ui/wm",
 ]

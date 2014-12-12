@@ -8,7 +8,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
-#include "mojo/views/native_widget_view_manager.h"
+#include "mojo/views/native_widget_mojo.h"
 #include "services/window_manager/window_manager_app.h"
 #include "ui/views/background.h"
 #include "ui/views/controls/button/label_button.h"
@@ -118,10 +118,8 @@ FrameController::FrameController(
   frame_view_->AddPreTargetHandler(frame_event_handler_.get());
   views::Widget::InitParams params(
       views::Widget::InitParams::TYPE_WINDOW_FRAMELESS);
-  params.native_widget =
-      new mojo::NativeWidgetViewManager(widget_, shell, view_);
-  params.bounds = gfx::Rect(
-      0, 0, view_->bounds().width, view_->bounds().height);
+  params.native_widget = new mojo::NativeWidgetMojo(widget_, shell, view_);
+  params.bounds = view_->bounds().To<gfx::Rect>();
   widget_->Init(params);
   widget_->SetContentsView(frame_view_);
   widget_->Show();

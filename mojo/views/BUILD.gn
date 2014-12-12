@@ -11,6 +11,8 @@ static_library("views") {
   sources = [
     "input_method_mojo_linux.cc",
     "input_method_mojo_linux.h",
+    "native_widget_mojo.cc",
+    "native_widget_mojo.h",
     "native_widget_view_manager.cc",
     "native_widget_view_manager.h",
     "views_init.cc",
@@ -35,6 +37,7 @@ static_library("views") {
     "//ui/aura",
     "//ui/base",
     "//ui/gfx",
+    "//ui/native_theme:native_theme",
     "//ui/wm",
   ]
 }
