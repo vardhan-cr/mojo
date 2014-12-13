@@ -151,14 +151,6 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
       MessageInTransitQueue* message_queue,
       scoped_refptr<ChannelEndpoint> peer_endpoint);
 
-  // Serializes the given endpoint, writing to |destination| auxiliary
-  // information to be transmitted to the peer |Channel| via some other means.
-  // |destination| should point to a buffer of (at least) the size returned by
-  // |GetSerializedEndpointSize()| (exactly that much data will be written).
-  // TODO(vtl): Delete this once I get rid of its use in tests.
-  void SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
-                         void* destination);
-
   // Deserializes an endpoint that was sent from the peer |Channel| (using
   // |SerializeEndpoint...()|. |source| should be (a copy of) the data that
   // |SerializeEndpoint...()| wrote, and must be (at least)

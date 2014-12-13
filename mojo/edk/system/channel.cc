@@ -238,14 +238,6 @@ void Channel::SerializeEndpointWithRemotePeer(
            << s->receiver_endpoint_id << ")";
 }
 
-void Channel::SerializeEndpoint(scoped_refptr<ChannelEndpoint> endpoint,
-                                void* destination) {
-  SerializedEndpoint* s = static_cast<SerializedEndpoint*>(destination);
-  s->receiver_endpoint_id = AttachAndRunEndpoint(endpoint);
-  DVLOG(2) << "Serializing endpoint (remote ID = " << s->receiver_endpoint_id
-           << ")";
-}
-
 scoped_refptr<IncomingEndpoint> Channel::DeserializeEndpoint(
     const void* source) {
   const SerializedEndpoint* s = static_cast<const SerializedEndpoint*>(source);
