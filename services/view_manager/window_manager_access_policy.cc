@@ -7,17 +7,15 @@
 #include "services/view_manager/access_policy_delegate.h"
 #include "services/view_manager/server_view.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 // TODO(sky): document why this differs from default for each case. Maybe want
 // to subclass DefaultAccessPolicy.
 
 WindowManagerAccessPolicy::WindowManagerAccessPolicy(
-    ConnectionSpecificId connection_id,
+    mojo::ConnectionSpecificId connection_id,
     AccessPolicyDelegate* delegate)
-    : connection_id_(connection_id),
-      delegate_(delegate) {
+    : connection_id_(connection_id), delegate_(delegate) {
 }
 
 WindowManagerAccessPolicy::~WindowManagerAccessPolicy() {
@@ -33,9 +31,10 @@ bool WindowManagerAccessPolicy::CanAddView(const ServerView* parent,
   return true;
 }
 
-bool WindowManagerAccessPolicy::CanReorderView(const ServerView* view,
-                                               const ServerView* relative_view,
-                                               OrderDirection direction) const {
+bool WindowManagerAccessPolicy::CanReorderView(
+    const ServerView* view,
+    const ServerView* relative_view,
+    mojo::OrderDirection direction) const {
   return true;
 }
 
@@ -95,5 +94,4 @@ bool WindowManagerAccessPolicy::IsViewKnown(const ServerView* view) const {
   return delegate_->IsViewKnownForAccessPolicy(view);
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

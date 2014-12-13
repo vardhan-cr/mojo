@@ -24,15 +24,21 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/gfx/geometry/rect.h"
 
-namespace mojo {
-namespace service {
+using mojo::Array;
+using mojo::ERROR_CODE_NONE;
+using mojo::InterfaceRequest;
+using mojo::ServiceProvider;
+using mojo::String;
+using mojo::ViewDataPtr;
+
+namespace view_manager {
 namespace {
 
 // -----------------------------------------------------------------------------
 
 // ViewManagerClient implementation that logs all calls to a TestChangeTracker.
 // TODO(sky): refactor so both this and ViewManagerServiceAppTest share code.
-class TestViewManagerClient : public ViewManagerClient {
+class TestViewManagerClient : public mojo::ViewManagerClient {
  public:
   TestViewManagerClient() {}
   ~TestViewManagerClient() override {}
@@ -45,15 +51,15 @@ class TestViewManagerClient : public ViewManagerClient {
                const String& embedder_url,
                ViewDataPtr root,
                InterfaceRequest<ServiceProvider> parent_service_provider,
-               ScopedMessagePipeHandle window_manager_pipe) override {
+               mojo::ScopedMessagePipeHandle window_manager_pipe) override {
     tracker_.OnEmbed(connection_id, embedder_url, root.Pass());
   }
   void OnEmbeddedAppDisconnected(uint32_t view) override {
     tracker_.OnEmbeddedAppDisconnected(view);
   }
   void OnViewBoundsChanged(uint32_t view,
-                           RectPtr old_bounds,
-                           RectPtr new_bounds) override {
+                           mojo::RectPtr old_bounds,
+                           mojo::RectPtr new_bounds) override {
     tracker_.OnViewBoundsChanged(view, old_bounds.Pass(), new_bounds.Pass());
   }
   void OnViewHierarchyChanged(uint32_t view,
@@ -64,7 +70,7 @@ class TestViewManagerClient : public ViewManagerClient {
   }
   void OnViewReordered(uint32_t view_id,
                        uint32_t relative_view_id,
-                       OrderDirection direction) override {
+                       mojo::OrderDirection direction) override {
     tracker_.OnViewReordered(view_id, relative_view_id, direction);
   }
   void OnViewDeleted(uint32_t view) override { tracker_.OnViewDeleted(view); }
@@ -80,8 +86,8 @@ class TestViewManagerClient : public ViewManagerClient {
     tracker_.OnViewSharedPropertyChanged(view, name, new_data.Pass());
   }
   void OnViewInputEvent(uint32_t view,
-                        EventPtr event,
-                        const Callback<void()>& callback) override {
+                        mojo::EventPtr event,
+                        const mojo::Callback<void()>& callback) override {
     tracker_.OnViewInputEvent(view, event.Pass());
   }
 
@@ -129,7 +135,7 @@ class TestConnectionManagerDelegate : public ConnectionManagerDelegate {
 
   ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
-      ConnectionSpecificId creator_id,
+      mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,
       const ViewId& root_id) override {
@@ -165,7 +171,7 @@ class TestDisplayManager : public DisplayManager {
 // -----------------------------------------------------------------------------
 
 // Empty implementation of WindowManagerInternal.
-class TestWindowManagerInternal : public WindowManagerInternal {
+class TestWindowManagerInternal : public mojo::WindowManagerInternal {
  public:
   TestWindowManagerInternal() {}
   ~TestWindowManagerInternal() override {}
@@ -173,7 +179,7 @@ class TestWindowManagerInternal : public WindowManagerInternal {
   // WindowManagerInternal:
   void CreateWindowManagerForViewManagerClient(
       uint16_t connection_id,
-      ScopedMessagePipeHandle window_manager_pipe) override {}
+      mojo::ScopedMessagePipeHandle window_manager_pipe) override {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(TestWindowManagerInternal);
@@ -436,5 +442,4 @@ TEST_F(ViewManagerServiceTest, CloneAndAnimateLargerDepth) {
   EXPECT_TRUE(cloned_view_child->id() == ClonedViewId());
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

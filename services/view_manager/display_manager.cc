@@ -16,11 +16,13 @@
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/view_coordinate_conversions.h"
 
-namespace mojo {
-namespace service {
+using mojo::Rect;
+using mojo::Size;
+
+namespace view_manager {
 namespace {
 
-void DrawViewTree(Pass* pass,
+void DrawViewTree(mojo::Pass* pass,
                   const ServerView* view,
                   const gfx::Vector2d& offset,
                   float opacity) {
@@ -38,14 +40,14 @@ void DrawViewTree(Pass* pass,
 
   cc::SurfaceId node_id = view->surface_id();
 
-  SurfaceQuadStatePtr surface_quad_state = SurfaceQuadState::New();
-  surface_quad_state->surface = SurfaceId::From(node_id);
+  auto surface_quad_state = mojo::SurfaceQuadState::New();
+  surface_quad_state->surface = mojo::SurfaceId::From(node_id);
 
   gfx::Transform node_transform;
   node_transform.Translate(node_bounds.x(), node_bounds.y());
 
-  QuadPtr surface_quad = Quad::New();
-  surface_quad->material = Material::MATERIAL_SURFACE_CONTENT;
+  auto surface_quad = mojo::Quad::New();
+  surface_quad->material = mojo::Material::MATERIAL_SURFACE_CONTENT;
   surface_quad->rect = Rect::From(node_bounds);
   surface_quad->opaque_rect = Rect::From(node_bounds);
   surface_quad->visible_rect = Rect::From(node_bounds);
@@ -54,10 +56,10 @@ void DrawViewTree(Pass* pass,
       base::saturated_cast<int32_t>(pass->shared_quad_states.size());
   surface_quad->surface_quad_state = surface_quad_state.Pass();
 
-  SharedQuadStatePtr sqs = CreateDefaultSQS(*Size::From(node_bounds.size()));
-  sqs->blend_mode = SK_XFERMODE_kSrcOver_Mode;
+  auto sqs = CreateDefaultSQS(*Size::From(node_bounds.size()));
+  sqs->blend_mode = mojo::SK_XFERMODE_kSrcOver_Mode;
   sqs->opacity = combined_opacity;
-  sqs->content_to_target_transform = Transform::From(node_transform);
+  sqs->content_to_target_transform = mojo::Transform::From(node_transform);
 
   pass->quads.push_back(surface_quad.Pass());
   pass->shared_quad_states.push_back(sqs.Pass());
@@ -66,8 +68,8 @@ void DrawViewTree(Pass* pass,
 }  // namespace
 
 DefaultDisplayManager::DefaultDisplayManager(
-    ApplicationConnection* app_connection,
-    const Callback<void()>& native_viewport_closed_callback)
+    mojo::ApplicationConnection* app_connection,
+    const mojo::Callback<void()>& native_viewport_closed_callback)
     : app_connection_(app_connection),
       connection_manager_(nullptr),
       size_(800, 600),
@@ -92,7 +94,7 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
       base::Bind(&DefaultDisplayManager::OnSurfaceConnectionCreated,
                  weak_factory_.GetWeakPtr()));
 
-  NativeViewportEventDispatcherPtr event_dispatcher;
+  mojo::NativeViewportEventDispatcherPtr event_dispatcher;
   app_connection_->ConnectToService(&event_dispatcher);
   native_viewport_->SetEventDispatcher(event_dispatcher.Pass());
 }
@@ -124,7 +126,7 @@ void DefaultDisplayManager::OnCreatedNativeViewport(
     uint64_t native_viewport_id) {
 }
 
-void DefaultDisplayManager::OnSurfaceConnectionCreated(SurfacePtr surface,
+void DefaultDisplayManager::OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
                                                        uint32_t id_namespace) {
   surface_ = surface.Pass();
   surface_.set_client(this);
@@ -137,24 +139,25 @@ void DefaultDisplayManager::Draw() {
     return;
   if (surface_id_.is_null()) {
     surface_id_ = surface_id_allocator_->GenerateId();
-    surface_->CreateSurface(SurfaceId::From(surface_id_), Size::From(size_));
+    surface_->CreateSurface(mojo::SurfaceId::From(surface_id_),
+                            Size::From(size_));
   }
 
   Rect rect;
   rect.width = size_.width();
   rect.height = size_.height();
-  PassPtr pass = CreateDefaultPass(1, rect);
+  auto pass = CreateDefaultPass(1, rect);
   pass->damage_rect = Rect::From(dirty_rect_);
 
   DrawViewTree(pass.get(), connection_manager_->root(), gfx::Vector2d(), 1.0f);
 
-  FramePtr frame = Frame::New();
+  auto frame = mojo::Frame::New();
   frame->passes.push_back(pass.Pass());
   frame->resources.resize(0u);
-  surface_->SubmitFrame(SurfaceId::From(surface_id_), frame.Pass(),
+  surface_->SubmitFrame(mojo::SurfaceId::From(surface_id_), frame.Pass(),
                         mojo::Closure());
 
-  native_viewport_->SubmittedFrame(SurfaceId::From(surface_id_));
+  native_viewport_->SubmittedFrame(mojo::SurfaceId::From(surface_id_));
 
   dirty_rect_ = gfx::Rect();
 }
@@ -165,20 +168,19 @@ void DefaultDisplayManager::OnDestroyed() {
   native_viewport_closed_callback_.Run();
 }
 
-void DefaultDisplayManager::OnSizeChanged(SizePtr size) {
+void DefaultDisplayManager::OnSizeChanged(mojo::SizePtr size) {
   size_ = size.To<gfx::Size>();
   connection_manager_->root()->SetBounds(gfx::Rect(size_));
   if (surface_id_.is_null())
     return;
-  surface_->DestroySurface(SurfaceId::From(surface_id_));
+  surface_->DestroySurface(mojo::SurfaceId::From(surface_id_));
   surface_id_ = cc::SurfaceId();
   SchedulePaint(connection_manager_->root(), gfx::Rect(size_));
 }
 
 void DefaultDisplayManager::ReturnResources(
-    Array<ReturnedResourcePtr> resources) {
+    mojo::Array<mojo::ReturnedResourcePtr> resources) {
   DCHECK_EQ(0u, resources.size());
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

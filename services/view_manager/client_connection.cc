@@ -7,8 +7,7 @@
 #include "services/view_manager/connection_manager.h"
 #include "services/view_manager/view_manager_service_impl.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 ClientConnection::ClientConnection(scoped_ptr<ViewManagerServiceImpl> service)
     : service_(service.Pass()), client_(nullptr) {
@@ -20,7 +19,7 @@ ClientConnection::~ClientConnection() {
 DefaultClientConnection::DefaultClientConnection(
     scoped_ptr<ViewManagerServiceImpl> service_impl,
     ConnectionManager* connection_manager,
-    ScopedMessagePipeHandle handle)
+    mojo::ScopedMessagePipeHandle handle)
     : ClientConnection(service_impl.Pass()),
       connection_manager_(connection_manager),
       binding_(service(), handle.Pass()) {
@@ -35,5 +34,4 @@ void DefaultClientConnection::OnConnectionError() {
   connection_manager_->OnConnectionError(this);
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

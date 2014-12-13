@@ -10,8 +10,7 @@
 #include "base/containers/hash_tables.h"
 #include "services/view_manager/ids.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -32,7 +31,6 @@ class AccessPolicyDelegate {
   virtual ~AccessPolicyDelegate() {}
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_ACCESS_POLICY_DELEGATE_H_

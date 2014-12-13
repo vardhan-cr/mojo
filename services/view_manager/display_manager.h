@@ -23,10 +23,10 @@ class SurfaceIdAllocator;
 }
 
 namespace mojo {
-
 class ApplicationConnection;
+}
 
-namespace service {
+namespace view_manager {
 
 class ConnectionManager;
 class ServerView;
@@ -48,12 +48,12 @@ class DisplayManager {
 // DisplayManager implementation that connects to the services necessary to
 // actually display.
 class DefaultDisplayManager : public DisplayManager,
-                              public NativeViewportClient,
-                              public SurfaceClient {
+                              public mojo::NativeViewportClient,
+                              public mojo::SurfaceClient {
  public:
   DefaultDisplayManager(
-      ApplicationConnection* app_connection,
-      const Callback<void()>& native_viewport_closed_callback);
+      mojo::ApplicationConnection* app_connection,
+      const mojo::Callback<void()>& native_viewport_closed_callback);
   ~DefaultDisplayManager() override;
 
   // DisplayManager:
@@ -63,35 +63,36 @@ class DefaultDisplayManager : public DisplayManager,
 
  private:
   void OnCreatedNativeViewport(uint64_t native_viewport_id);
-  void OnSurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace);
+  void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
+                                  uint32_t id_namespace);
   void Draw();
 
   // NativeViewportClient:
   void OnDestroyed() override;
-  void OnSizeChanged(SizePtr size) override;
+  void OnSizeChanged(mojo::SizePtr size) override;
 
   // SurfaceClient:
-  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+  void ReturnResources(
+      mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
-  ApplicationConnection* app_connection_;
+  mojo::ApplicationConnection* app_connection_;
   ConnectionManager* connection_manager_;
 
   gfx::Size size_;
   gfx::Rect dirty_rect_;
   base::Timer draw_timer_;
 
-  SurfacesServicePtr surfaces_service_;
-  SurfacePtr surface_;
+  mojo::SurfacesServicePtr surfaces_service_;
+  mojo::SurfacePtr surface_;
   scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
   cc::SurfaceId surface_id_;
-  NativeViewportPtr native_viewport_;
-  Callback<void()> native_viewport_closed_callback_;
+  mojo::NativeViewportPtr native_viewport_;
+  mojo::Callback<void()> native_viewport_closed_callback_;
   base::WeakPtrFactory<DefaultDisplayManager> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultDisplayManager);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_DISPLAY_MANAGER_H_

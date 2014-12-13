@@ -11,8 +11,7 @@ namespace gfx {
 class Rect;
 }
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -42,7 +41,7 @@ class ServerViewDelegate {
 
   virtual void OnViewReordered(const ServerView* view,
                                const ServerView* relative,
-                               OrderDirection direction) = 0;
+                               mojo::OrderDirection direction) = 0;
 
   virtual void OnWillChangeViewVisibility(ServerView* view) = 0;
 
@@ -57,7 +56,6 @@ class ServerViewDelegate {
   virtual ~ServerViewDelegate() {}
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_SERVER_VIEW_DELEGATE_H_

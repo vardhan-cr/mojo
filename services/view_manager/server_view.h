@@ -14,8 +14,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/transform.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerViewDelegate;
 
@@ -36,7 +35,7 @@ class ServerView {
   void Remove(ServerView* child);
   void Reorder(ServerView* child,
                ServerView* relative,
-               OrderDirection direction);
+               mojo::OrderDirection direction);
 
   const gfx::Rect& bounds() const { return bounds_; }
   void SetBounds(const gfx::Rect& bounds);
@@ -105,7 +104,6 @@ class ServerView {
   DISALLOW_COPY_AND_ASSIGN(ServerView);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_SERVER_VIEW_H_

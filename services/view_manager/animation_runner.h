@@ -10,10 +10,10 @@
 #include "base/time/time.h"
 
 namespace mojo {
-
 class AnimationGroup;
+}
 
-namespace service {
+namespace view_manager {
 
 class AnimationRunnerObserver;
 class ScheduledAnimationGroup;
@@ -36,7 +36,8 @@ class AnimationRunner {
   // progress for |view| it is canceled and any properties that were animating
   // but are no longer animating are set to their target value.
   // Returns 0 if |transport_group| is not valid.
-  uint32_t Schedule(ServerView* view, const AnimationGroup& transport_group);
+  uint32_t Schedule(ServerView* view,
+                    const mojo::AnimationGroup& transport_group);
 
   // Returns the view the animation identified by |id| was scheduled for.
   ServerView* GetViewForAnimation(uint32_t id);
@@ -67,7 +68,6 @@ class AnimationRunner {
   DISALLOW_COPY_AND_ASSIGN(AnimationRunner);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_ANIMATION_RUNNER_H_

@@ -17,8 +17,7 @@
 #include "services/view_manager/ids.h"
 #include "services/view_manager/server_view_delegate.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ClientConnection;
 class ConnectionManagerDelegate;
@@ -29,7 +28,7 @@ class ViewManagerServiceImpl;
 // ConnectionManager manages the set of connections to the ViewManager (all the
 // ViewManagerServiceImpls) as well as providing the root of the hierarchy.
 class ConnectionManager : public ServerViewDelegate,
-                          public WindowManagerInternalClient {
+                          public mojo::WindowManagerInternalClient {
  public:
   // Create when a ViewManagerServiceImpl is about to make a change. Ensures
   // clients are notified correctly.
@@ -40,50 +39,52 @@ class ConnectionManager : public ServerViewDelegate,
                  bool is_delete_view);
     ~ScopedChange();
 
-    ConnectionSpecificId connection_id() const { return connection_id_; }
+    mojo::ConnectionSpecificId connection_id() const { return connection_id_; }
     bool is_delete_view() const { return is_delete_view_; }
 
     // Marks the connection with the specified id as having seen a message.
-    void MarkConnectionAsMessaged(ConnectionSpecificId connection_id) {
+    void MarkConnectionAsMessaged(mojo::ConnectionSpecificId connection_id) {
       message_ids_.insert(connection_id);
     }
 
     // Returns true if MarkConnectionAsMessaged(connection_id) was invoked.
-    bool DidMessageConnection(ConnectionSpecificId connection_id) const {
+    bool DidMessageConnection(mojo::ConnectionSpecificId connection_id) const {
       return message_ids_.count(connection_id) > 0;
     }
 
    private:
     ConnectionManager* connection_manager_;
-    const ConnectionSpecificId connection_id_;
+    const mojo::ConnectionSpecificId connection_id_;
     const bool is_delete_view_;
 
     // See description of MarkConnectionAsMessaged/DidMessageConnection.
-    std::set<ConnectionSpecificId> message_ids_;
+    std::set<mojo::ConnectionSpecificId> message_ids_;
 
     DISALLOW_COPY_AND_ASSIGN(ScopedChange);
   };
 
   ConnectionManager(ConnectionManagerDelegate* delegate,
                     scoped_ptr<DisplayManager> display_manager,
-                    WindowManagerInternal* wm_internal);
+                    mojo::WindowManagerInternal* wm_internal);
   ~ConnectionManager() override;
 
   // Returns the id for the next ViewManagerServiceImpl.
-  ConnectionSpecificId GetAndAdvanceNextConnectionId();
+  mojo::ConnectionSpecificId GetAndAdvanceNextConnectionId();
 
   // Invoked when a ViewManagerServiceImpl's connection encounters an error.
   void OnConnectionError(ClientConnection* connection);
 
   // See description of ViewManagerService::Embed() for details. This assumes
   // |transport_view_id| is valid.
-  void EmbedAtView(ConnectionSpecificId creator_id,
-                   const std::string& url,
-                   const ViewId& view_id,
-                   InterfaceRequest<ServiceProvider> service_provider);
+  void EmbedAtView(
+      mojo::ConnectionSpecificId creator_id,
+      const std::string& url,
+      const ViewId& view_id,
+      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
 
   // Returns the connection by id.
-  ViewManagerServiceImpl* GetConnection(ConnectionSpecificId connection_id);
+  ViewManagerServiceImpl* GetConnection(
+      mojo::ConnectionSpecificId connection_id);
 
   // Returns the View identified by |id|.
   ServerView* GetView(const ViewId& id);
@@ -98,10 +99,10 @@ class ConnectionManager : public ServerViewDelegate,
 
   // Invoked when a connection messages a client about the change. This is used
   // to avoid sending ServerChangeIdAdvanced() unnecessarily.
-  void OnConnectionMessagedClient(ConnectionSpecificId id);
+  void OnConnectionMessagedClient(mojo::ConnectionSpecificId id);
 
   // Returns true if OnConnectionMessagedClient() was invoked for id.
-  bool DidConnectionMessageClient(ConnectionSpecificId id) const;
+  bool DidConnectionMessageClient(mojo::ConnectionSpecificId id) const;
 
   // Returns the ViewManagerServiceImpl that has |id| as a root.
   ViewManagerServiceImpl* GetConnectionWithRoot(const ViewId& id) {
@@ -110,7 +111,7 @@ class ConnectionManager : public ServerViewDelegate,
   }
   const ViewManagerServiceImpl* GetConnectionWithRoot(const ViewId& id) const;
 
-  WindowManagerInternal* wm_internal() { return wm_internal_; }
+  mojo::WindowManagerInternal* wm_internal() { return wm_internal_; }
 
   void SetWindowManagerClientConnection(
       scoped_ptr<ClientConnection> connection);
@@ -135,11 +136,11 @@ class ConnectionManager : public ServerViewDelegate,
                                    const ServerView* old_parent);
   void ProcessViewReorder(const ServerView* view,
                           const ServerView* relative_view,
-                          const OrderDirection direction);
+                          const mojo::OrderDirection direction);
   void ProcessViewDeleted(const ViewId& view);
 
  private:
-  typedef std::map<ConnectionSpecificId, ClientConnection*> ConnectionMap;
+  typedef std::map<mojo::ConnectionSpecificId, ClientConnection*> ConnectionMap;
 
   // Invoked when a connection is about to make a change.  Subsequently followed
   // by FinishChange() once the change is done.
@@ -153,7 +154,7 @@ class ConnectionManager : public ServerViewDelegate,
   void FinishChange();
 
   // Returns true if the specified connection originated the current change.
-  bool IsChangeSource(ConnectionSpecificId connection_id) const {
+  bool IsChangeSource(mojo::ConnectionSpecificId connection_id) const {
     return current_change_ && current_change_->connection_id() == connection_id;
   }
 
@@ -179,7 +180,7 @@ class ConnectionManager : public ServerViewDelegate,
   void OnViewSurfaceIdChanged(const ServerView* view) override;
   void OnViewReordered(const ServerView* view,
                        const ServerView* relative,
-                       OrderDirection direction) override;
+                       mojo::OrderDirection direction) override;
   void OnWillChangeViewVisibility(ServerView* view) override;
   void OnViewSharedPropertyChanged(
       const ServerView* view,
@@ -188,9 +189,10 @@ class ConnectionManager : public ServerViewDelegate,
   void OnScheduleViewPaint(const ServerView* view) override;
 
   // WindowManagerInternalClient:
-  void DispatchInputEventToView(Id transport_view_id, EventPtr event) override;
-  void SetViewportSize(SizePtr size) override;
-  void CloneAndAnimate(Id transport_view_id) override;
+  void DispatchInputEventToView(mojo::Id transport_view_id,
+                                mojo::EventPtr event) override;
+  void SetViewportSize(mojo::SizePtr size) override;
+  void CloneAndAnimate(mojo::Id transport_view_id) override;
 
   ConnectionManagerDelegate* delegate_;
 
@@ -200,7 +202,7 @@ class ConnectionManager : public ServerViewDelegate,
   ClientConnection* window_manager_client_connection_;
 
   // ID to use for next ViewManagerServiceImpl.
-  ConnectionSpecificId next_connection_id_;
+  mojo::ConnectionSpecificId next_connection_id_;
 
   // Set of ViewManagerServiceImpls.
   ConnectionMap connection_map_;
@@ -209,7 +211,7 @@ class ConnectionManager : public ServerViewDelegate,
 
   scoped_ptr<ServerView> root_;
 
-  WindowManagerInternal* wm_internal_;
+  mojo::WindowManagerInternal* wm_internal_;
 
   // If non-null we're processing a change. The ScopedChange is not owned by us
   // (it's created on the stack by ViewManagerServiceImpl).
@@ -223,7 +225,6 @@ class ConnectionManager : public ServerViewDelegate,
   DISALLOW_COPY_AND_ASSIGN(ConnectionManager);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_CONNECTION_MANAGER_H_

@@ -15,12 +15,21 @@
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/window_manager_access_policy.h"
 
-namespace mojo {
-namespace service {
+using mojo::Array;
+using mojo::Callback;
+using mojo::Id;
+using mojo::InterfaceRequest;
+using mojo::OrderDirection;
+using mojo::Rect;
+using mojo::ServiceProvider;
+using mojo::String;
+using mojo::ViewDataPtr;
+
+namespace view_manager {
 
 ViewManagerServiceImpl::ViewManagerServiceImpl(
     ConnectionManager* connection_manager,
-    ConnectionSpecificId creator_id,
+    mojo::ConnectionSpecificId creator_id,
     const std::string& creator_url,
     const std::string& url,
     const ViewId& root_id)
@@ -43,7 +52,7 @@ ViewManagerServiceImpl::~ViewManagerServiceImpl() {
 }
 
 void ViewManagerServiceImpl::Init(
-    ViewManagerClient* client,
+    mojo::ViewManagerClient* client,
     InterfaceRequest<ServiceProvider> service_provider) {
   DCHECK(!client_);
   client_ = client;
@@ -51,7 +60,7 @@ void ViewManagerServiceImpl::Init(
   if (root_.get())
     GetUnknownViewsFrom(GetView(*root_), &to_send);
 
-  MessagePipe pipe;
+  mojo::MessagePipe pipe;
   connection_manager_->wm_internal()->CreateWindowManagerForViewManagerClient(
       id_, pipe.handle1.Pass());
   client->OnEmbed(id_, creator_url_, ViewToViewData(to_send.front()),
@@ -83,14 +92,14 @@ void ViewManagerServiceImpl::OnWillDestroyViewManagerServiceImpl(
     root_.reset();
 }
 
-ErrorCode ViewManagerServiceImpl::CreateView(const ViewId& view_id) {
+mojo::ErrorCode ViewManagerServiceImpl::CreateView(const ViewId& view_id) {
   if (view_id.connection_id != id_)
-    return ERROR_CODE_ILLEGAL_ARGUMENT;
+    return mojo::ERROR_CODE_ILLEGAL_ARGUMENT;
   if (view_map_.find(view_id.view_id) != view_map_.end())
-    return ERROR_CODE_VALUE_IN_USE;
+    return mojo::ERROR_CODE_VALUE_IN_USE;
   view_map_[view_id.view_id] = new ServerView(connection_manager_, view_id);
   known_views_.insert(ViewIdToTransportId(view_id));
-  return ERROR_CODE_NONE;
+  return mojo::ERROR_CODE_NONE;
 }
 
 bool ViewManagerServiceImpl::AddView(const ViewId& parent_id,
@@ -306,8 +315,8 @@ bool ViewManagerServiceImpl::CanReorderView(const ServerView* view,
   const size_t target_i =
       std::find(children.begin(), children.end(), relative_view) -
       children.begin();
-  if ((direction == ORDER_DIRECTION_ABOVE && child_i == target_i + 1) ||
-      (direction == ORDER_DIRECTION_BELOW && child_i + 1 == target_i)) {
+  if ((direction == mojo::ORDER_DIRECTION_ABOVE && child_i == target_i + 1) ||
+      (direction == mojo::ORDER_DIRECTION_BELOW && child_i + 1 == target_i)) {
     return false;
   }
 
@@ -395,11 +404,12 @@ ViewDataPtr ViewManagerServiceImpl::ViewToViewData(const ServerView* view) {
   // in roots), and should not be sent over.
   if (parent && !IsViewKnown(parent))
     parent = NULL;
-  ViewDataPtr view_data(ViewData::New());
+  ViewDataPtr view_data(mojo::ViewData::New());
   view_data->parent_id = ViewIdToTransportId(parent ? parent->id() : ViewId());
   view_data->view_id = ViewIdToTransportId(view->id());
   view_data->bounds = Rect::From(view->bounds());
-  view_data->properties = Map<String, Array<uint8_t>>::From(view->properties());
+  view_data->properties =
+      mojo::Map<String, Array<uint8_t>>::From(view->properties());
   view_data->visible = view->visible();
   view_data->drawn = view->IsDrawn(connection_manager_->root());
   return view_data.Pass();
@@ -453,7 +463,7 @@ void ViewManagerServiceImpl::DestroyViews() {
 
 void ViewManagerServiceImpl::CreateView(
     Id transport_view_id,
-    const Callback<void(ErrorCode)>& callback) {
+    const Callback<void(mojo::ErrorCode)>& callback) {
   callback.Run(CreateView(ViewIdFromTransportId(transport_view_id)));
 }
 
@@ -517,7 +527,7 @@ void ViewManagerServiceImpl::GetViewTree(
 
 void ViewManagerServiceImpl::SetViewSurfaceId(
     Id view_id,
-    SurfaceIdPtr surface_id,
+    mojo::SurfaceIdPtr surface_id,
     const Callback<void(bool)>& callback) {
   // TODO(sky): add coverage of not being able to set for random node.
   ServerView* view = GetView(ViewIdFromTransportId(view_id));
@@ -531,7 +541,7 @@ void ViewManagerServiceImpl::SetViewSurfaceId(
 
 void ViewManagerServiceImpl::SetViewBounds(
     Id view_id,
-    RectPtr bounds,
+    mojo::RectPtr bounds,
     const Callback<void(bool)>& callback) {
   ServerView* view = GetView(ViewIdFromTransportId(view_id));
   const bool success = view && access_policy_->CanSetViewBounds(view);
@@ -596,5 +606,4 @@ bool ViewManagerServiceImpl::IsViewRootOfAnotherConnectionForAccessPolicy(
   return connection && connection != this;
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

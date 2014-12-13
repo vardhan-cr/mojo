@@ -13,54 +13,57 @@
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/connection_manager_delegate.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ConnectionManager;
 
-class ViewManagerApp : public ApplicationDelegate,
-                       public ConnectionManagerDelegate,
-                       public ErrorHandler,
-                       public InterfaceFactory<ViewManagerService>,
-                       public InterfaceFactory<WindowManagerInternalClient> {
+class ViewManagerApp
+    : public mojo::ApplicationDelegate,
+      public ConnectionManagerDelegate,
+      public mojo::ErrorHandler,
+      public mojo::InterfaceFactory<mojo::ViewManagerService>,
+      public mojo::InterfaceFactory<mojo::WindowManagerInternalClient> {
  public:
   ViewManagerApp();
   ~ViewManagerApp() override;
 
  private:
   // ApplicationDelegate:
-  void Initialize(ApplicationImpl* app) override;
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
+  void Initialize(mojo::ApplicationImpl* app) override;
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override;
 
   // ConnectionManagerDelegate:
   void OnLostConnectionToWindowManager() override;
   ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
-      ConnectionSpecificId creator_id,
+      mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,
       const ViewId& root_id) override;
 
-  // InterfaceFactory<ViewManagerService>:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<ViewManagerService> request) override;
+  // mojo::InterfaceFactory<mojo::ViewManagerService>:
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<mojo::ViewManagerService> request) override;
 
-  // InterfaceFactory<WindowManagerInternalClient>:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<WindowManagerInternalClient> request) override;
+  // mojo::InterfaceFactory<mojo::WindowManagerInternalClient>:
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::WindowManagerInternalClient> request)
+      override;
 
   // ErrorHandler (for |wm_internal_| and |wm_internal_client_binding_|).
   void OnConnectionError() override;
 
-  ApplicationConnection* wm_app_connection_;
-  scoped_ptr<Binding<WindowManagerInternalClient>> wm_internal_client_binding_;
-  WindowManagerInternalPtr wm_internal_;
+  mojo::ApplicationConnection* wm_app_connection_;
+  scoped_ptr<mojo::Binding<mojo::WindowManagerInternalClient>>
+      wm_internal_client_binding_;
+  mojo::WindowManagerInternalPtr wm_internal_;
   scoped_ptr<ConnectionManager> connection_manager_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewManagerApp);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_VIEW_MANAGER_APP_H_

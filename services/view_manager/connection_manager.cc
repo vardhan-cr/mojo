@@ -16,8 +16,9 @@
 #include "services/view_manager/view_coordinate_conversions.h"
 #include "services/view_manager/view_manager_service_impl.h"
 
-namespace mojo {
-namespace service {
+using mojo::ConnectionSpecificId;
+
+namespace view_manager {
 namespace {
 
 // Creates a copy of |view|. The copied view has |delegate| as its delegate.
@@ -56,7 +57,7 @@ void ReparentClonedViews(ServerView* new_parent,
     const gfx::Rect new_bounds(ConvertRectBetweenViews(
         view, new_parent, gfx::Rect(view->bounds().size())));
     new_parent->Add(view);
-    new_parent->Reorder(view, *stack_above, ORDER_DIRECTION_ABOVE);
+    new_parent->Reorder(view, *stack_above, mojo::ORDER_DIRECTION_ABOVE);
     view->SetBounds(new_bounds);
     *stack_above = view;
     return;
@@ -110,7 +111,7 @@ ConnectionManager::ScopedChange::~ScopedChange() {
 
 ConnectionManager::ConnectionManager(ConnectionManagerDelegate* delegate,
                                      scoped_ptr<DisplayManager> display_manager,
-                                     WindowManagerInternal* wm_internal)
+                                     mojo::WindowManagerInternal* wm_internal)
     : delegate_(delegate),
       window_manager_client_connection_(nullptr),
       next_connection_id_(1),
@@ -162,7 +163,7 @@ void ConnectionManager::EmbedAtView(
     ConnectionSpecificId creator_id,
     const std::string& url,
     const ViewId& view_id,
-    InterfaceRequest<ServiceProvider> service_provider) {
+    mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) {
   std::string creator_url;
   ConnectionMap::const_iterator it = connection_map_.find(creator_id);
   if (it != connection_map_.end())
@@ -216,7 +217,7 @@ void ConnectionManager::SetWindowManagerClientConnection(
   AddConnection(window_manager_client_connection_);
   window_manager_client_connection_->service()->Init(
       window_manager_client_connection_->client(),
-      InterfaceRequest<ServiceProvider>());
+      mojo::InterfaceRequest<mojo::ServiceProvider>());
 }
 
 bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {
@@ -230,7 +231,7 @@ bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {
   ServerView* clone = CloneView(view, this);
   CloneViewTree(view, clone, this);
   view->parent()->Add(clone);
-  view->parent()->Reorder(clone, view, ORDER_DIRECTION_ABOVE);
+  view->parent()->Reorder(clone, view, mojo::ORDER_DIRECTION_ABOVE);
   return true;
 }
 
@@ -263,9 +264,10 @@ void ConnectionManager::ProcessViewHierarchyChanged(
   }
 }
 
-void ConnectionManager::ProcessViewReorder(const ServerView* view,
-                                           const ServerView* relative_view,
-                                           const OrderDirection direction) {
+void ConnectionManager::ProcessViewReorder(
+    const ServerView* view,
+    const ServerView* relative_view,
+    const mojo::OrderDirection direction) {
   for (auto& pair : connection_map_) {
     pair.second->service()->ProcessViewReorder(view, relative_view, direction,
                                                IsChangeSource(pair.first));
@@ -376,7 +378,7 @@ void ConnectionManager::OnViewSurfaceIdChanged(const ServerView* view) {
 
 void ConnectionManager::OnViewReordered(const ServerView* view,
                                         const ServerView* relative,
-                                        OrderDirection direction) {
+                                        mojo::OrderDirection direction) {
   if (!in_destructor_)
     display_manager_->SchedulePaint(view, gfx::Rect(view->bounds().size()));
 }
@@ -421,8 +423,8 @@ void ConnectionManager::OnScheduleViewPaint(const ServerView* view) {
     display_manager_->SchedulePaint(view, gfx::Rect(view->bounds().size()));
 }
 
-void ConnectionManager::DispatchInputEventToView(Id transport_view_id,
-                                                 EventPtr event) {
+void ConnectionManager::DispatchInputEventToView(mojo::Id transport_view_id,
+                                                 mojo::EventPtr event) {
   const ViewId view_id(ViewIdFromTransportId(transport_view_id));
 
   ViewManagerServiceImpl* connection = GetConnectionWithRoot(view_id);
@@ -434,14 +436,13 @@ void ConnectionManager::DispatchInputEventToView(Id transport_view_id,
   }
 }
 
-void ConnectionManager::SetViewportSize(SizePtr size) {
+void ConnectionManager::SetViewportSize(mojo::SizePtr size) {
   gfx::Size new_size = size.To<gfx::Size>();
   display_manager_->SetViewportSize(new_size);
 }
 
-void ConnectionManager::CloneAndAnimate(Id transport_view_id) {
+void ConnectionManager::CloneAndAnimate(mojo::Id transport_view_id) {
   CloneAndAnimate(ViewIdFromTransportId(transport_view_id));
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

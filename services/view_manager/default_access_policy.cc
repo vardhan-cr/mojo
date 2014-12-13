@@ -7,13 +7,12 @@
 #include "services/view_manager/access_policy_delegate.h"
 #include "services/view_manager/server_view.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
-DefaultAccessPolicy::DefaultAccessPolicy(ConnectionSpecificId connection_id,
-                                         AccessPolicyDelegate* delegate)
-    : connection_id_(connection_id),
-      delegate_(delegate) {
+DefaultAccessPolicy::DefaultAccessPolicy(
+    mojo::ConnectionSpecificId connection_id,
+    AccessPolicyDelegate* delegate)
+    : connection_id_(connection_id), delegate_(delegate) {
 }
 
 DefaultAccessPolicy::~DefaultAccessPolicy() {
@@ -38,7 +37,7 @@ bool DefaultAccessPolicy::CanAddView(const ServerView* parent,
 
 bool DefaultAccessPolicy::CanReorderView(const ServerView* view,
                                          const ServerView* relative_view,
-                                         OrderDirection direction) const {
+                                         mojo::OrderDirection direction) const {
   return WasCreatedByThisConnection(view) &&
          WasCreatedByThisConnection(relative_view);
 }
@@ -110,5 +109,4 @@ bool DefaultAccessPolicy::WasCreatedByThisConnection(
   return view->id().connection_id == connection_id_;
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

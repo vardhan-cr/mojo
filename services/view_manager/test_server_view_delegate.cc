@@ -4,8 +4,7 @@
 
 #include "services/view_manager/test_server_view_delegate.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 TestServerViewDelegate::TestServerViewDelegate() {
 }
@@ -40,7 +39,7 @@ void TestServerViewDelegate::OnViewSurfaceIdChanged(const ServerView* view) {
 
 void TestServerViewDelegate::OnViewReordered(const ServerView* view,
                                              const ServerView* relative,
-                                             OrderDirection direction) {
+                                             mojo::OrderDirection direction) {
 }
 
 void TestServerViewDelegate::OnWillChangeViewVisibility(ServerView* view) {
@@ -55,5 +54,4 @@ void TestServerViewDelegate::OnViewSharedPropertyChanged(
 void TestServerViewDelegate::OnScheduleViewPaint(const ServerView* view) {
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

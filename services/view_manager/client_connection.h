@@ -10,8 +10,7 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ConnectionManager;
 class ViewManagerServiceImpl;
@@ -26,24 +25,25 @@ class ClientConnection {
   ViewManagerServiceImpl* service() { return service_.get(); }
   const ViewManagerServiceImpl* service() const { return service_.get(); }
 
-  ViewManagerClient* client() { return client_; }
+  mojo::ViewManagerClient* client() { return client_; }
 
  protected:
-  void set_client(ViewManagerClient* client) { client_ = client; }
+  void set_client(mojo::ViewManagerClient* client) { client_ = client; }
 
  private:
   scoped_ptr<ViewManagerServiceImpl> service_;
-  ViewManagerClient* client_;
+  mojo::ViewManagerClient* client_;
 
   DISALLOW_COPY_AND_ASSIGN(ClientConnection);
 };
 
 // Bindings implementation of ClientConnection.
-class DefaultClientConnection : public ClientConnection, public ErrorHandler {
+class DefaultClientConnection : public ClientConnection,
+                                public mojo::ErrorHandler {
  public:
   DefaultClientConnection(scoped_ptr<ViewManagerServiceImpl> service_impl,
                           ConnectionManager* connection_manager,
-                          ScopedMessagePipeHandle handle);
+                          mojo::ScopedMessagePipeHandle handle);
   ~DefaultClientConnection() override;
 
  private:
@@ -51,12 +51,11 @@ class DefaultClientConnection : public ClientConnection, public ErrorHandler {
   void OnConnectionError() override;
 
   ConnectionManager* connection_manager_;
-  Binding<ViewManagerService> binding_;
+  mojo::Binding<mojo::ViewManagerService> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultClientConnection);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_CLIENT_CONNECTION_H_

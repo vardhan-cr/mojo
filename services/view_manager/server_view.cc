@@ -9,8 +9,7 @@
 #include "base/strings/stringprintf.h"
 #include "services/view_manager/server_view_delegate.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 ServerView::ServerView(ServerViewDelegate* delegate, const ViewId& id)
     : delegate_(delegate),
@@ -41,7 +40,7 @@ void ServerView::Add(ServerView* child) {
   if (child->parent() == this) {
     if (children_.size() == 1)
       return;  // Already in the right position.
-    Reorder(child, children_.back(), ORDER_DIRECTION_ABOVE);
+    Reorder(child, children_.back(), mojo::ORDER_DIRECTION_ABOVE);
     return;
   }
 
@@ -68,17 +67,17 @@ void ServerView::Remove(ServerView* child) {
 
 void ServerView::Reorder(ServerView* child,
                          ServerView* relative,
-                         OrderDirection direction) {
+                         mojo::OrderDirection direction) {
   // We assume validation checks happened else where.
   DCHECK(child);
   DCHECK(child->parent() == this);
   DCHECK_GT(children_.size(), 1u);
   children_.erase(std::find(children_.begin(), children_.end(), child));
   Views::iterator i = std::find(children_.begin(), children_.end(), relative);
-  if (direction == ORDER_DIRECTION_ABOVE) {
+  if (direction == mojo::ORDER_DIRECTION_ABOVE) {
     DCHECK(i != children_.end());
     children_.insert(++i, child);
-  } else if (direction == ORDER_DIRECTION_BELOW) {
+  } else if (direction == mojo::ORDER_DIRECTION_BELOW) {
     DCHECK(i != children_.end());
     children_.insert(i, child);
   }
@@ -204,5 +203,4 @@ void ServerView::RemoveImpl(ServerView* view) {
   children_.erase(std::find(children_.begin(), children_.end(), view));
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

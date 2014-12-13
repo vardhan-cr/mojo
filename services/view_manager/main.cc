@@ -7,6 +7,6 @@
 #include "services/view_manager/view_manager_app.h"
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new mojo::service::ViewManagerApp);
+  mojo::ApplicationRunnerChromium runner(new view_manager::ViewManagerApp);
   return runner.Run(shell_handle);
 }

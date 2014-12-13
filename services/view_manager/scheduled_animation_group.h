@@ -13,8 +13,7 @@
 #include "ui/gfx/animation/tween.h"
 #include "ui/gfx/transform.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -30,7 +29,7 @@ struct ScheduledAnimationElement {
   ScheduledAnimationElement();
   ~ScheduledAnimationElement();
 
-  AnimationProperty property;
+  mojo::AnimationProperty property;
   base::TimeDelta duration;
   gfx::Tween::Type tween_type;
   bool is_start_valid;
@@ -74,7 +73,7 @@ class ScheduledAnimationGroup {
       ServerView* view,
       base::TimeTicks now,
       uint32_t id,
-      const AnimationGroup& transport_group);
+      const mojo::AnimationGroup& transport_group);
 
   uint32_t id() const { return id_; }
 
@@ -104,7 +103,6 @@ class ScheduledAnimationGroup {
   DISALLOW_COPY_AND_ASSIGN(ScheduledAnimationGroup);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_SCHEDULED_ANIMATION_GROUP_H_

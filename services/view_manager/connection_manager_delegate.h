@@ -10,10 +10,10 @@
 #include "mojo/services/view_manager/public/cpp/types.h"
 
 namespace mojo {
-
 class ViewManagerService;
+}
 
-namespace service {
+namespace view_manager {
 
 class ClientConnection;
 class ConnectionManager;
@@ -27,7 +27,7 @@ class ConnectionManagerDelegate {
   // ConnectionManager.
   virtual ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
-      ConnectionSpecificId creator_id,
+      mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,
       const ViewId& root_id) = 0;
@@ -36,7 +36,6 @@ class ConnectionManagerDelegate {
   virtual ~ConnectionManagerDelegate() {}
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_CONNECTION_MANAGER_DELEGATE_H_

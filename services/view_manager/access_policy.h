@@ -8,8 +8,7 @@
 #include "mojo/services/view_manager/public/interfaces/view_manager_constants.mojom.h"
 #include "services/view_manager/ids.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -27,7 +26,7 @@ class AccessPolicy {
                           const ServerView* child) const = 0;
   virtual bool CanReorderView(const ServerView* view,
                               const ServerView* relative_view,
-                              OrderDirection direction) const = 0;
+                              mojo::OrderDirection direction) const = 0;
   virtual bool CanDeleteView(const ServerView* view) const = 0;
   virtual bool CanGetViewTree(const ServerView* view) const = 0;
   // Used when building a view tree (GetViewTree()) to decide if we should
@@ -48,7 +47,6 @@ class AccessPolicy {
       const ServerView** old_parent) const = 0;
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_ACCESS_POLICY_H_

@@ -10,8 +10,7 @@
 #include "services/view_manager/scheduled_animation_group.h"
 #include "services/view_manager/server_view.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 namespace {
 
 struct AnimationDoneState {
@@ -36,8 +35,9 @@ void AnimationRunner::RemoveObserver(AnimationRunnerObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-uint32_t AnimationRunner::Schedule(ServerView* view,
-                                   const AnimationGroup& transport_group) {
+uint32_t AnimationRunner::Schedule(
+    ServerView* view,
+    const mojo::AnimationGroup& transport_group) {
   scoped_ptr<ScheduledAnimationGroup> group(ScheduledAnimationGroup::Create(
       view, last_tick_time_, next_id_++, transport_group));
   if (!group.get())
@@ -108,5 +108,4 @@ void AnimationRunner::Tick(base::TimeTicks time) {
   }
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

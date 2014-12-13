@@ -9,8 +9,7 @@ namespace gfx {
 class Rect;
 }
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -20,7 +19,6 @@ gfx::Rect ConvertRectBetweenViews(const ServerView* from,
                                   const ServerView* to,
                                   const gfx::Rect& rect);
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_VIEW_COORDINATE_CONVERSIONS_H_

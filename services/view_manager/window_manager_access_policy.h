@@ -8,14 +8,13 @@
 #include "base/basictypes.h"
 #include "services/view_manager/access_policy.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class AccessPolicyDelegate;
 
 class WindowManagerAccessPolicy : public AccessPolicy {
  public:
-  WindowManagerAccessPolicy(ConnectionSpecificId connection_id,
+  WindowManagerAccessPolicy(mojo::ConnectionSpecificId connection_id,
                             AccessPolicyDelegate* delegate);
   ~WindowManagerAccessPolicy() override;
 
@@ -25,7 +24,7 @@ class WindowManagerAccessPolicy : public AccessPolicy {
                   const ServerView* child) const override;
   bool CanReorderView(const ServerView* view,
                       const ServerView* relative_view,
-                      OrderDirection direction) const override;
+                      mojo::OrderDirection direction) const override;
   bool CanDeleteView(const ServerView* view) const override;
   bool CanGetViewTree(const ServerView* view) const override;
   bool CanDescendIntoViewForViewTree(const ServerView* view) const override;
@@ -42,13 +41,12 @@ class WindowManagerAccessPolicy : public AccessPolicy {
  private:
   bool IsViewKnown(const ServerView* view) const;
 
-  const ConnectionSpecificId connection_id_;
+  const mojo::ConnectionSpecificId connection_id_;
   AccessPolicyDelegate* delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerAccessPolicy);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_WINDOW_MANAGER_ACCESS_POLICY_H_

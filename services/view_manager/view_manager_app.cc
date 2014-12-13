@@ -14,15 +14,20 @@
 #include "services/view_manager/display_manager.h"
 #include "services/view_manager/view_manager_service_impl.h"
 
-namespace mojo {
-namespace service {
+using mojo::ApplicationConnection;
+using mojo::ApplicationImpl;
+using mojo::InterfaceRequest;
+using mojo::ViewManagerService;
+using mojo::WindowManagerInternalClient;
+
+namespace view_manager {
 
 ViewManagerApp::ViewManagerApp() : wm_app_connection_(nullptr) {
 }
 ViewManagerApp::~ViewManagerApp() {}
 
 void ViewManagerApp::Initialize(ApplicationImpl* app) {
-  TracingImpl::Create(app);
+  mojo::TracingImpl::Create(app);
 }
 
 bool ViewManagerApp::ConfigureIncomingConnection(
@@ -34,10 +39,8 @@ bool ViewManagerApp::ConfigureIncomingConnection(
   wm_app_connection_ = connection;
   // |connection| originates from the WindowManager. Let it connect directly
   // to the ViewManager and WindowManagerInternalClient.
-  connection->AddService(
-      static_cast<InterfaceFactory<ViewManagerService>*>(this));
-  connection->AddService(
-      static_cast<InterfaceFactory<WindowManagerInternalClient>*>(this));
+  connection->AddService<ViewManagerService>(this);
+  connection->AddService<WindowManagerInternalClient>(this);
   connection->ConnectToService(&wm_internal_);
   // TODO(sky): add this back. It's causing tests to hang, figure out why.
   // wm_internal_.set_error_handler(this);
@@ -56,13 +59,13 @@ void ViewManagerApp::OnLostConnectionToWindowManager() {
 
 ClientConnection* ViewManagerApp::CreateClientConnectionForEmbedAtView(
     ConnectionManager* connection_manager,
-    ConnectionSpecificId creator_id,
+    mojo::ConnectionSpecificId creator_id,
     const std::string& creator_url,
     const std::string& url,
     const ViewId& root_id) {
-  MessagePipe pipe;
+  mojo::MessagePipe pipe;
 
-  ServiceProvider* view_manager_service_provider =
+  mojo::ServiceProvider* view_manager_service_provider =
       wm_app_connection_->ConnectToApplication(url)->GetServiceProvider();
   view_manager_service_provider->ConnectToService(
       ViewManagerServiceImpl::Client::Name_, pipe.handle1.Pass());
@@ -98,8 +101,9 @@ void ViewManagerApp::Create(
 
   // ConfigureIncomingConnection() must have been called before getting here.
   DCHECK(connection_manager_.get());
-  wm_internal_client_binding_.reset(new Binding<WindowManagerInternalClient>(
-      connection_manager_.get(), request.Pass()));
+  wm_internal_client_binding_.reset(
+      new mojo::Binding<WindowManagerInternalClient>(connection_manager_.get(),
+                                                     request.Pass()));
   wm_internal_client_binding_->set_error_handler(this);
 }
 
@@ -107,5 +111,4 @@ void ViewManagerApp::OnConnectionError() {
   ApplicationImpl::Terminate();
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

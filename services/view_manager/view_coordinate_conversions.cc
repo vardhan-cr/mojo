@@ -8,8 +8,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 namespace {
 
@@ -40,5 +39,4 @@ gfx::Rect ConvertRectBetweenViews(const ServerView* from,
   return gfx::Rect(rect.origin() + offset, rect.size());
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

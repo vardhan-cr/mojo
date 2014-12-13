@@ -13,8 +13,17 @@
 #include "services/view_manager/test_server_view_delegate.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
-namespace service {
+using mojo::ANIMATION_PROPERTY_NONE;
+using mojo::ANIMATION_PROPERTY_OPACITY;
+using mojo::ANIMATION_PROPERTY_TRANSFORM;
+using mojo::ANIMATION_TWEEN_TYPE_LINEAR;
+using mojo::AnimationElement;
+using mojo::AnimationGroup;
+using mojo::AnimationSequence;
+using mojo::AnimationValue;
+using mojo::Transform;
+
+namespace view_manager {
 namespace {
 
 class TestAnimationRunnerObserver : public AnimationRunnerObserver {
@@ -501,5 +510,4 @@ TEST_F(AnimationRunnerTest, RescheduleSetsPropertiesToFinalValue) {
   EXPECT_TRUE(view.transform().IsIdentity());
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

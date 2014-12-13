@@ -5,8 +5,7 @@
 #ifndef SERVICES_VIEW_MANAGER_ANIMATION_RUNNER_OBSERVER_H_
 #define SERVICES_VIEW_MANAGER_ANIMATION_RUNNER_OBSERVER_H_
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class ServerView;
 
@@ -21,7 +20,6 @@ class AnimationRunnerObserver {
   virtual ~AnimationRunnerObserver() {}
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_ANIMATION_RUNNER_OBSERVER_H_

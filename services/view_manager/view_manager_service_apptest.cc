@@ -14,8 +14,27 @@
 #include "services/view_manager/ids.h"
 #include "services/view_manager/test_change_tracker.h"
 
-namespace mojo {
-namespace service {
+using mojo::ApplicationConnection;
+using mojo::ApplicationDelegate;
+using mojo::Array;
+using mojo::Callback;
+using mojo::ConnectionSpecificId;
+using mojo::ERROR_CODE_NONE;
+using mojo::ErrorCode;
+using mojo::EventPtr;
+using mojo::Id;
+using mojo::InterfaceRequest;
+using mojo::ORDER_DIRECTION_ABOVE;
+using mojo::ORDER_DIRECTION_BELOW;
+using mojo::OrderDirection;
+using mojo::RectPtr;
+using mojo::ServiceProvider;
+using mojo::String;
+using mojo::ViewDataPtr;
+using mojo::ViewManagerClient;
+using mojo::ViewManagerService;
+
+namespace view_manager {
 
 // Creates an id used for transport from the specified parameters.
 Id BuildViewId(ConnectionSpecificId connection_id,
@@ -63,9 +82,9 @@ bool Embed(ViewManagerService* vm, Id root_id) {
   bool result = false;
   base::RunLoop run_loop;
   {
-    ServiceProviderPtr sp;
+    mojo::ServiceProviderPtr sp;
     vm->Embed("mojo:view_manager_service_apptests", root_id,
-              MakeRequest<ServiceProvider>(sp.PassMessagePipe()),
+              mojo::MakeRequest<ServiceProvider>(sp.PassMessagePipe()),
               base::Bind(&BoolResultCallback, &run_loop, &result));
   }
   run_loop.Run();
@@ -136,7 +155,7 @@ bool SetViewBounds(ViewManagerService* vm,
                    int h) {
   base::RunLoop run_loop;
   bool result = false;
-  RectPtr rect(Rect::New());
+  RectPtr rect(mojo::Rect::New());
   rect->x = x;
   rect->y = y;
   rect->width = w;
@@ -195,7 +214,7 @@ bool HasClonedView(const std::vector<TestView>& views) {
 // -----------------------------------------------------------------------------
 
 // A ViewManagerClient implementation that logs all changes to a tracker.
-class ViewManagerClientImpl : public InterfaceImpl<ViewManagerClient>,
+class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
                               public TestChangeTracker::Delegate {
  public:
   ViewManagerClientImpl() : got_embed_(false) { tracker_.set_delegate(this); }
@@ -247,7 +266,7 @@ class ViewManagerClientImpl : public InterfaceImpl<ViewManagerClient>,
                const String& creator_url,
                ViewDataPtr root,
                InterfaceRequest<ServiceProvider> services,
-               ScopedMessagePipeHandle window_manager_pipe) override {
+               mojo::ScopedMessagePipeHandle window_manager_pipe) override {
     tracker()->OnEmbed(connection_id, creator_url, root.Pass());
     got_embed_ = true;
     if (embed_run_loop_)
@@ -310,7 +329,8 @@ class ViewManagerClientImpl : public InterfaceImpl<ViewManagerClient>,
 // -----------------------------------------------------------------------------
 
 // InterfaceFactory for vending ViewManagerClientImpls.
-class ViewManagerClientFactory : public InterfaceFactory<ViewManagerClient> {
+class ViewManagerClientFactory
+    : public mojo::InterfaceFactory<ViewManagerClient> {
  public:
   ViewManagerClientFactory() {}
   ~ViewManagerClientFactory() override {}
@@ -342,7 +362,7 @@ class ViewManagerClientFactory : public InterfaceFactory<ViewManagerClient> {
   DISALLOW_COPY_AND_ASSIGN(ViewManagerClientFactory);
 };
 
-class ViewManagerServiceAppTest : public test::ApplicationTestBase,
+class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
                                   public ApplicationDelegate {
  public:
   ViewManagerServiceAppTest() {}
@@ -432,13 +452,13 @@ class ViewManagerServiceAppTest : public test::ApplicationTestBase,
     return true;
   }
 
-  WindowManagerInternalClientPtr wm_internal_;
+  mojo::WindowManagerInternalClientPtr wm_internal_;
   ViewManagerClientImpl vm_client1_;
   scoped_ptr<ViewManagerClientImpl> vm_client2_;
   scoped_ptr<ViewManagerClientImpl> vm_client3_;
 
  private:
-  ViewManagerServicePtr vm1_;
+  mojo::ViewManagerServicePtr vm1_;
   ViewManagerClientFactory client_factory_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ViewManagerServiceAppTest);
@@ -577,12 +597,12 @@ TEST_F(ViewManagerServiceAppTest, CreateView) {
   EXPECT_TRUE(changes1()->empty());
 
   // Can't create a view with the same id.
-  ASSERT_EQ(ERROR_CODE_VALUE_IN_USE,
+  ASSERT_EQ(mojo::ERROR_CODE_VALUE_IN_USE,
             CreateViewWithErrorCode(vm1(), BuildViewId(1, 1)));
   EXPECT_TRUE(changes1()->empty());
 
   // Can't create a view with a bogus connection id.
-  EXPECT_EQ(ERROR_CODE_ILLEGAL_ARGUMENT,
+  EXPECT_EQ(mojo::ERROR_CODE_ILLEGAL_ARGUMENT,
             CreateViewWithErrorCode(vm1(), BuildViewId(2, 1)));
   EXPECT_TRUE(changes1()->empty());
 }
@@ -1022,8 +1042,8 @@ TEST_F(ViewManagerServiceAppTest, OnViewInputEvent) {
 
   // Dispatch an event to the view and verify it's received.
   {
-    EventPtr event(Event::New());
-    event->action = static_cast<EventType>(1);
+    EventPtr event(mojo::Event::New());
+    event->action = static_cast<mojo::EventType>(1);
     wm_internal_->DispatchInputEventToView(BuildViewId(1, 1), event.Pass());
     vm_client2_->WaitForChangeCount(1);
     EXPECT_EQ("InputEvent view=1,1 event_action=1",
@@ -1400,5 +1420,4 @@ TEST_F(ViewManagerServiceAppTest, CloneAndAnimate) {
 // ViewManagerTest.MultipleEmbedRootsBeforeWTHReady gets added to window manager
 // tests.
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

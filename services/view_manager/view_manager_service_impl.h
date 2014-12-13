@@ -21,8 +21,7 @@ namespace gfx {
 class Rect;
 }
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class AccessPolicy;
 class ConnectionManager;
@@ -32,13 +31,13 @@ class ServerView;
 // request. ViewManagerServiceImpl tracks all the state and views created by a
 // client. ViewManagerServiceImpl coordinates with ConnectionManager to update
 // the client (and internal state) as necessary.
-class ViewManagerServiceImpl : public ViewManagerService,
+class ViewManagerServiceImpl : public mojo::ViewManagerService,
                                public AccessPolicyDelegate {
  public:
-  using ViewIdSet = base::hash_set<Id>;
+  using ViewIdSet = base::hash_set<mojo::Id>;
 
   ViewManagerServiceImpl(ConnectionManager* connection_manager,
-                         ConnectionSpecificId creator_id,
+                         mojo::ConnectionSpecificId creator_id,
                          const std::string& creator_url,
                          const std::string& url,
                          const ViewId& root_id);
@@ -46,14 +45,14 @@ class ViewManagerServiceImpl : public ViewManagerService,
 
   // |service_provider| is the ServiceProvider to pass to the client via
   // OnEmbed().
-  void Init(ViewManagerClient* client,
-            InterfaceRequest<ServiceProvider> service_provider);
+  void Init(mojo::ViewManagerClient* client,
+            mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
 
-  ConnectionSpecificId id() const { return id_; }
-  ConnectionSpecificId creator_id() const { return creator_id_; }
+  mojo::ConnectionSpecificId id() const { return id_; }
+  mojo::ConnectionSpecificId creator_id() const { return creator_id_; }
   const std::string& url() const { return url_; }
 
-  ViewManagerClient* client() { return client_; }
+  mojo::ViewManagerClient* client() { return client_; }
 
   // Returns the View with the specified id.
   ServerView* GetView(const ViewId& id) {
@@ -75,13 +74,13 @@ class ViewManagerServiceImpl : public ViewManagerService,
   // These functions are synchronous variants of those defined in the mojom. The
   // ViewManagerService implementations all call into these. See the mojom for
   // details.
-  ErrorCode CreateView(const ViewId& view_id);
+  mojo::ErrorCode CreateView(const ViewId& view_id);
   bool AddView(const ViewId& parent_id, const ViewId& child_id);
   std::vector<const ServerView*> GetViewTree(const ViewId& view_id) const;
   bool SetViewVisibility(const ViewId& view_id, bool visible);
   bool Embed(const std::string& url,
              const ViewId& view_id,
-             InterfaceRequest<ServiceProvider> service_provider);
+             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
 
   // The following methods are invoked after the corresponding change has been
   // processed. They do the appropriate bookkeeping and update the client as
@@ -104,7 +103,7 @@ class ViewManagerServiceImpl : public ViewManagerService,
                                    bool originated_change);
   void ProcessViewReorder(const ServerView* view,
                           const ServerView* relative_view,
-                          OrderDirection direction,
+                          mojo::OrderDirection direction,
                           bool originated_change);
   void ProcessViewDeleted(const ViewId& view, bool originated_change);
   void ProcessWillChangeViewVisibility(const ServerView* view,
@@ -113,7 +112,7 @@ class ViewManagerServiceImpl : public ViewManagerService,
                                     bool originated_change);
 
  private:
-  typedef std::map<ConnectionSpecificId, ServerView*> ViewMap;
+  typedef std::map<mojo::ConnectionSpecificId, ServerView*> ViewMap;
 
   bool IsViewKnown(const ServerView* view) const;
 
@@ -121,7 +120,7 @@ class ViewManagerServiceImpl : public ViewManagerService,
   // for this connection.
   bool CanReorderView(const ServerView* view,
                       const ServerView* relative_view,
-                      OrderDirection direction) const;
+                      mojo::OrderDirection direction) const;
 
   // Deletes a view owned by this connection. Returns true on success. |source|
   // is the connection that originated the change.
@@ -146,9 +145,9 @@ class ViewManagerServiceImpl : public ViewManagerService,
   // Converts View(s) to ViewData(s) for transport. This assumes all the views
   // are valid for the client. The parent of views the client is not allowed to
   // see are set to NULL (in the returned ViewData(s)).
-  Array<ViewDataPtr> ViewsToViewDatas(
+  mojo::Array<mojo::ViewDataPtr> ViewsToViewDatas(
       const std::vector<const ServerView*>& views);
-  ViewDataPtr ViewToViewData(const ServerView* view);
+  mojo::ViewDataPtr ViewToViewData(const ServerView* view);
 
   // Implementation of GetViewTree(). Adds |view| to |views| and recurses if
   // CanDescendIntoViewForViewTree() returns true.
@@ -163,38 +162,41 @@ class ViewManagerServiceImpl : public ViewManagerService,
   void DestroyViews();
 
   // ViewManagerService:
-  void CreateView(Id transport_view_id,
-                  const Callback<void(ErrorCode)>& callback) override;
-  void DeleteView(Id transport_view_id,
-                  const Callback<void(bool)>& callback) override;
-  void AddView(Id parent_id,
-               Id child_id,
-               const Callback<void(bool)>& callback) override;
-  void RemoveViewFromParent(Id view_id,
-                            const Callback<void(bool)>& callback) override;
-  void ReorderView(Id view_id,
-                   Id relative_view_id,
-                   OrderDirection direction,
-                   const Callback<void(bool)>& callback) override;
-  void GetViewTree(Id view_id,
-                   const Callback<void(Array<ViewDataPtr>)>& callback) override;
-  void SetViewSurfaceId(Id view_id,
-                        SurfaceIdPtr surface_id,
-                        const Callback<void(bool)>& callback) override;
-  void SetViewBounds(Id view_id,
-                     RectPtr bounds,
-                     const Callback<void(bool)>& callback) override;
-  void SetViewVisibility(Id view_id,
+  void CreateView(
+      mojo::Id transport_view_id,
+      const mojo::Callback<void(mojo::ErrorCode)>& callback) override;
+  void DeleteView(mojo::Id transport_view_id,
+                  const mojo::Callback<void(bool)>& callback) override;
+  void AddView(mojo::Id parent_id,
+               mojo::Id child_id,
+               const mojo::Callback<void(bool)>& callback) override;
+  void RemoveViewFromParent(
+      mojo::Id view_id,
+      const mojo::Callback<void(bool)>& callback) override;
+  void ReorderView(mojo::Id view_id,
+                   mojo::Id relative_view_id,
+                   mojo::OrderDirection direction,
+                   const mojo::Callback<void(bool)>& callback) override;
+  void GetViewTree(mojo::Id view_id,
+                   const mojo::Callback<void(mojo::Array<mojo::ViewDataPtr>)>&
+                       callback) override;
+  void SetViewSurfaceId(mojo::Id view_id,
+                        mojo::SurfaceIdPtr surface_id,
+                        const mojo::Callback<void(bool)>& callback) override;
+  void SetViewBounds(mojo::Id view_id,
+                     mojo::RectPtr bounds,
+                     const mojo::Callback<void(bool)>& callback) override;
+  void SetViewVisibility(mojo::Id view_id,
                          bool visible,
-                         const Callback<void(bool)>& callback) override;
-  void SetViewProperty(Id view_id,
-                       const String& name,
-                       Array<uint8_t> value,
-                       const Callback<void(bool)>& callback) override;
-  void Embed(const String& url,
-             Id view_id,
-             InterfaceRequest<ServiceProvider> service_provider,
-             const Callback<void(bool)>& callback) override;
+                         const mojo::Callback<void(bool)>& callback) override;
+  void SetViewProperty(mojo::Id view_id,
+                       const mojo::String& name,
+                       mojo::Array<uint8_t> value,
+                       const mojo::Callback<void(bool)>& callback) override;
+  void Embed(const mojo::String& url,
+             mojo::Id view_id,
+             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider,
+             const mojo::Callback<void(bool)>& callback) override;
 
   // AccessPolicyDelegate:
   bool IsRootForAccessPolicy(const ViewId& id) const override;
@@ -205,19 +207,19 @@ class ViewManagerServiceImpl : public ViewManagerService,
   ConnectionManager* connection_manager_;
 
   // Id of this connection as assigned by ConnectionManager.
-  const ConnectionSpecificId id_;
+  const mojo::ConnectionSpecificId id_;
 
   // URL this connection was created for.
   const std::string url_;
 
   // ID of the connection that created us. If 0 it indicates either we were
   // created by the root, or the connection that created us has been destroyed.
-  ConnectionSpecificId creator_id_;
+  mojo::ConnectionSpecificId creator_id_;
 
   // The URL of the app that embedded the app this connection was created for.
   const std::string creator_url_;
 
-  ViewManagerClient* client_;
+  mojo::ViewManagerClient* client_;
 
   scoped_ptr<AccessPolicy> access_policy_;
 
@@ -235,7 +237,6 @@ class ViewManagerServiceImpl : public ViewManagerService,
   DISALLOW_COPY_AND_ASSIGN(ViewManagerServiceImpl);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_VIEW_MANAGER_SERVICE_IMPL_H_

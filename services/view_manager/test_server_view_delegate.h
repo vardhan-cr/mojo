@@ -8,8 +8,7 @@
 #include "base/basictypes.h"
 #include "services/view_manager/server_view_delegate.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 class TestServerViewDelegate : public ServerViewDelegate {
  public:
@@ -32,7 +31,7 @@ class TestServerViewDelegate : public ServerViewDelegate {
   void OnViewSurfaceIdChanged(const ServerView* view) override;
   void OnViewReordered(const ServerView* view,
                        const ServerView* relative,
-                       OrderDirection direction) override;
+                       mojo::OrderDirection direction) override;
   void OnWillChangeViewVisibility(ServerView* view) override;
   void OnViewSharedPropertyChanged(
       const ServerView* view,
@@ -43,7 +42,6 @@ class TestServerViewDelegate : public ServerViewDelegate {
   DISALLOW_COPY_AND_ASSIGN(TestServerViewDelegate);
 };
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
 
 #endif  // SERVICES_VIEW_MANAGER_TEST_SERVER_VIEW_DELEGATE_H_

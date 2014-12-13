@@ -10,8 +10,16 @@
 #include "services/view_manager/test_server_view_delegate.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
-namespace service {
+using mojo::ANIMATION_PROPERTY_NONE;
+using mojo::ANIMATION_PROPERTY_OPACITY;
+using mojo::ANIMATION_PROPERTY_TRANSFORM;
+using mojo::ANIMATION_TWEEN_TYPE_LINEAR;
+using mojo::AnimationGroup;
+using mojo::AnimationSequence;
+using mojo::AnimationElement;
+using mojo::AnimationValue;
+
+namespace view_manager {
 namespace {
 
 bool IsAnimationGroupValid(const AnimationGroup& transport_group) {
@@ -63,9 +71,9 @@ TEST(ScheduledAnimationGroupTest, IsAnimationGroupValid) {
   // Bogus transform.
   element.property = ANIMATION_PROPERTY_TRANSFORM;
   EXPECT_FALSE(IsAnimationGroupValid(group));
-  element.start_value->transform = Transform::From(gfx::Transform());
+  element.start_value->transform = mojo::Transform::From(gfx::Transform());
   EXPECT_FALSE(IsAnimationGroupValid(group));
-  element.target_value->transform = Transform::From(gfx::Transform());
+  element.target_value->transform = mojo::Transform::From(gfx::Transform());
   EXPECT_TRUE(IsAnimationGroupValid(group));
 
   // Add another empty sequence, should be invalid again.
@@ -85,5 +93,4 @@ TEST(ScheduledAnimationGroupTest, IsAnimationGroupValid) {
   EXPECT_TRUE(IsAnimationGroupValid(group));
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

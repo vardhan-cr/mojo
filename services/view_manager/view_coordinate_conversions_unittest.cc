@@ -10,8 +10,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
 
-namespace mojo {
-namespace service {
+namespace view_manager {
 
 using ViewCoordinateConversionsTest = testing::Test;
 
@@ -31,5 +30,4 @@ TEST_F(ViewCoordinateConversionsTest, ConvertRectBetweenViews) {
             ConvertRectBetweenViews(&v3, &v1, gfx::Rect(10, 11, 8, 9)));
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

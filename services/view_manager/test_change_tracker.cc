@@ -9,23 +9,27 @@
 #include "mojo/common/common_type_converters.h"
 #include "mojo/services/view_manager/public/cpp/util.h"
 
-namespace mojo {
-namespace service {
+using mojo::Array;
+using mojo::Id;
+using mojo::ViewDataPtr;
+using mojo::String;
+
+namespace view_manager {
 
 std::string ViewIdToString(Id id) {
-  return (id == 0) ? "null" :
-      base::StringPrintf("%d,%d", HiWord(id), LoWord(id));
+  return (id == 0) ? "null" : base::StringPrintf("%d,%d", mojo::HiWord(id),
+                                                 mojo::LoWord(id));
 }
 
 namespace {
 
-std::string RectToString(const Rect& rect) {
+std::string RectToString(const mojo::Rect& rect) {
   return base::StringPrintf("%d,%d %dx%d", rect.x, rect.y, rect.width,
                             rect.height);
 }
 
-std::string DirectionToString(OrderDirection direction) {
-  return direction == ORDER_DIRECTION_ABOVE ? "above" : "below";
+std::string DirectionToString(mojo::OrderDirection direction) {
+  return direction == mojo::ORDER_DIRECTION_ABOVE ? "above" : "below";
 }
 
 std::string ChangeToDescription1(const Change& change) {
@@ -145,7 +149,7 @@ Change::Change()
       view_id2(0),
       view_id3(0),
       event_action(0),
-      direction(ORDER_DIRECTION_ABOVE),
+      direction(mojo::ORDER_DIRECTION_ABOVE),
       bool_value(false) {
 }
 
@@ -159,7 +163,7 @@ TestChangeTracker::TestChangeTracker()
 TestChangeTracker::~TestChangeTracker() {
 }
 
-void TestChangeTracker::OnEmbed(ConnectionSpecificId connection_id,
+void TestChangeTracker::OnEmbed(mojo::ConnectionSpecificId connection_id,
                                 const String& creator_url,
                                 ViewDataPtr root) {
   Change change;
@@ -178,8 +182,8 @@ void TestChangeTracker::OnEmbeddedAppDisconnected(Id view_id) {
 }
 
 void TestChangeTracker::OnViewBoundsChanged(Id view_id,
-                                            RectPtr old_bounds,
-                                            RectPtr new_bounds) {
+                                            mojo::RectPtr old_bounds,
+                                            mojo::RectPtr new_bounds) {
   Change change;
   change.type = CHANGE_TYPE_NODE_BOUNDS_CHANGED;
   change.view_id = view_id;
@@ -209,7 +213,7 @@ void TestChangeTracker::OnViewHierarchyChanged(Id view_id,
 
 void TestChangeTracker::OnViewReordered(Id view_id,
                                         Id relative_view_id,
-                                        OrderDirection direction) {
+                                        mojo::OrderDirection direction) {
   Change change;
   change.type = CHANGE_TYPE_NODE_REORDERED;
   change.view_id = view_id;
@@ -241,7 +245,7 @@ void TestChangeTracker::OnViewDrawnStateChanged(Id view_id, bool drawn) {
   AddChange(change);
 }
 
-void TestChangeTracker::OnViewInputEvent(Id view_id, EventPtr event) {
+void TestChangeTracker::OnViewInputEvent(Id view_id, mojo::EventPtr event) {
   Change change;
   change.type = CHANGE_TYPE_INPUT_EVENT;
   change.view_id = view_id;
@@ -294,5 +298,4 @@ std::string TestView::ToString2() const {
                             drawn ? "true" : "false");
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager

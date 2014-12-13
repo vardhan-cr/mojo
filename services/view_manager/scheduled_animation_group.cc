@@ -9,8 +9,12 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "services/view_manager/server_view.h"
 
-namespace mojo {
-namespace service {
+using mojo::ANIMATION_PROPERTY_NONE;
+using mojo::ANIMATION_PROPERTY_OPACITY;
+using mojo::ANIMATION_PROPERTY_TRANSFORM;
+using mojo::AnimationProperty;
+
+namespace view_manager {
 namespace {
 
 using Sequences = std::vector<ScheduledAnimationSequence>;
@@ -70,27 +74,27 @@ void SetViewPropertyFromValueBetween(ServerView* view,
   }
 }
 
-gfx::Tween::Type AnimationTypeToTweenType(AnimationTweenType type) {
+gfx::Tween::Type AnimationTypeToTweenType(mojo::AnimationTweenType type) {
   switch (type) {
-    case ANIMATION_TWEEN_TYPE_LINEAR:
+    case mojo::ANIMATION_TWEEN_TYPE_LINEAR:
       return gfx::Tween::LINEAR;
-    case ANIMATION_TWEEN_TYPE_EASE_IN:
+    case mojo::ANIMATION_TWEEN_TYPE_EASE_IN:
       return gfx::Tween::EASE_IN;
-    case ANIMATION_TWEEN_TYPE_EASE_OUT:
+    case mojo::ANIMATION_TWEEN_TYPE_EASE_OUT:
       return gfx::Tween::EASE_OUT;
-    case ANIMATION_TWEEN_TYPE_EASE_IN_OUT:
+    case mojo::ANIMATION_TWEEN_TYPE_EASE_IN_OUT:
       return gfx::Tween::EASE_IN_OUT;
   }
   return gfx::Tween::LINEAR;
 }
 
-void ConvertToScheduledValue(const AnimationValue& transport_value,
+void ConvertToScheduledValue(const mojo::AnimationValue& transport_value,
                              ScheduledAnimationValue* value) {
   value->float_value = transport_value.float_value;
   value->transform = transport_value.transform.To<gfx::Transform>();
 }
 
-void ConvertToScheduledElement(const AnimationElement& transport_element,
+void ConvertToScheduledElement(const mojo::AnimationElement& transport_element,
                                ScheduledAnimationElement* element) {
   element->property = transport_element.property;
   element->duration =
@@ -110,7 +114,7 @@ void ConvertToScheduledElement(const AnimationElement& transport_element,
 }
 
 bool IsAnimationValueValid(AnimationProperty property,
-                           const AnimationValue& value) {
+                           const mojo::AnimationValue& value) {
   switch (property) {
     case ANIMATION_PROPERTY_NONE:
       NOTREACHED();
@@ -123,7 +127,7 @@ bool IsAnimationValueValid(AnimationProperty property,
   return false;
 }
 
-bool IsAnimationElementValid(const AnimationElement& element) {
+bool IsAnimationElementValid(const mojo::AnimationElement& element) {
   if (element.property == ANIMATION_PROPERTY_NONE)
     return true;  // None is a pause and doesn't need any values.
   if (element.start_value.get() &&
@@ -134,7 +138,7 @@ bool IsAnimationElementValid(const AnimationElement& element) {
          IsAnimationValueValid(element.property, *element.target_value);
 }
 
-bool IsAnimationSequenceValid(const AnimationSequence& sequence) {
+bool IsAnimationSequenceValid(const mojo::AnimationSequence& sequence) {
   if (sequence.elements.size() == 0u)
     return false;
 
@@ -145,7 +149,7 @@ bool IsAnimationSequenceValid(const AnimationSequence& sequence) {
   return true;
 }
 
-bool IsAnimationGroupValid(const AnimationGroup& transport_group) {
+bool IsAnimationGroupValid(const mojo::AnimationGroup& transport_group) {
   if (transport_group.sequences.size() == 0u)
     return false;
   for (size_t i = 0; i < transport_group.sequences.size(); ++i) {
@@ -174,7 +178,7 @@ void GetScheduledAnimationProperties(const Sequences& sequences,
 }
 
 void SetPropertyToTargetProperty(ServerView* view,
-                                 AnimationProperty property,
+                                 mojo::AnimationProperty property,
                                  const Sequences& sequences) {
   // NOTE: this doesn't deal with |cycle_count| quite right, but I'm honestly
   // not sure we really want to support the same property in multiple sequences
@@ -198,9 +202,10 @@ void SetPropertyToTargetProperty(ServerView* view,
     SetViewPropertyFromValue(view, property, *value);
 }
 
-void ConvertSequenceToScheduled(const AnimationSequence& transport_sequence,
-                                base::TimeTicks now,
-                                ScheduledAnimationSequence* sequence) {
+void ConvertSequenceToScheduled(
+    const mojo::AnimationSequence& transport_sequence,
+    base::TimeTicks now,
+    ScheduledAnimationSequence* sequence) {
   sequence->run_until_stopped = transport_sequence.cycle_count == 0u;
   sequence->cycle_count = transport_sequence.cycle_count;
   DCHECK_NE(0u, transport_sequence.elements.size());
@@ -281,7 +286,7 @@ scoped_ptr<ScheduledAnimationGroup> ScheduledAnimationGroup::Create(
     ServerView* view,
     base::TimeTicks now,
     uint32_t id,
-    const AnimationGroup& transport_group) {
+    const mojo::AnimationGroup& transport_group) {
   if (!IsAnimationGroupValid(transport_group))
     return nullptr;
 
@@ -289,7 +294,7 @@ scoped_ptr<ScheduledAnimationGroup> ScheduledAnimationGroup::Create(
       new ScheduledAnimationGroup(view, id, now));
   group->sequences_.resize(transport_group.sequences.size());
   for (size_t i = 0; i < transport_group.sequences.size(); ++i) {
-    const AnimationSequence& transport_sequence(
+    const mojo::AnimationSequence& transport_sequence(
         *(transport_group.sequences[i]));
     DCHECK_NE(0u, transport_sequence.elements.size());
     ConvertSequenceToScheduled(transport_sequence, now, &group->sequences_[i]);
@@ -343,5 +348,4 @@ ScheduledAnimationGroup::ScheduledAnimationGroup(ServerView* view,
     : view_(view), id_(id), time_scheduled_(time_scheduled) {
 }
 
-}  // namespace service
-}  // namespace mojo
+}  // namespace view_manager
