@@ -18,13 +18,13 @@ namespace cc {
 class SurfaceIdAllocator;
 }
 
-namespace mojo {
+namespace native_viewport {
 
 // This manages the surface that draws to a particular NativeViewport instance.
-class ViewportSurface : public SurfaceClient {
+class ViewportSurface : public mojo::SurfaceClient {
  public:
-  ViewportSurface(SurfacesService* surfaces_service,
-                  Gpu* gpu_service,
+  ViewportSurface(mojo::SurfacesService* surfaces_service,
+                  mojo::Gpu* gpu_service,
                   const gfx::Size& size,
                   cc::SurfaceId child_id);
   ~ViewportSurface() override;
@@ -34,15 +34,17 @@ class ViewportSurface : public SurfaceClient {
   void SetChildId(cc::SurfaceId child_id);
 
  private:
-  void OnSurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace);
+  void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
+                                  uint32_t id_namespace);
   void BindSurfaceToNativeViewport();
   void SubmitFrame();
 
   // SurfaceClient implementation.
-  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+  void ReturnResources(
+      mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
-  SurfacePtr surface_;
-  Gpu* gpu_service_;
+  mojo::SurfacePtr surface_;
+  mojo::Gpu* gpu_service_;
   uint64_t widget_id_;
   gfx::Size size_;
   scoped_ptr<cc::SurfaceIdAllocator> id_allocator_;
@@ -53,6 +55,6 @@ class ViewportSurface : public SurfaceClient {
   DISALLOW_COPY_AND_ASSIGN(ViewportSurface);
 };
 
-}  // namespace mojo
+}  // namespace native_viewport
 
 #endif  // SERVICES_NATIVE_VIEWPORT_VIEWPORT_SURFACE_H_

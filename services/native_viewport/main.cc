@@ -16,55 +16,57 @@
 #include "services/native_viewport/native_viewport_impl.h"
 #include "ui/gl/gl_surface.h"
 
-namespace mojo {
+using mojo::ApplicationConnection;
+using mojo::Gpu;
+using mojo::NativeViewport;
 
-class NativeViewportAppDelegate
-    : public ApplicationDelegate,
-      public InterfaceFactory<NativeViewport>,
-      public InterfaceFactory<Gpu> {
+namespace native_viewport {
+
+class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
+                                  public mojo::InterfaceFactory<NativeViewport>,
+                                  public mojo::InterfaceFactory<Gpu> {
  public:
   NativeViewportAppDelegate() : is_headless_(false) {}
   ~NativeViewportAppDelegate() override {}
 
  private:
-  // ApplicationDelegate implementation.
-  void Initialize(ApplicationImpl* application) override {
+  // mojo::ApplicationDelegate implementation.
+  void Initialize(mojo::ApplicationImpl* application) override {
     app_ = application;
 
-    TracingImpl::Create(application);
+    mojo::TracingImpl::Create(application);
 
-    if (app_->HasArg(kUseTestConfig))
+    if (app_->HasArg(mojo::kUseTestConfig))
       gfx::GLSurface::InitializeOneOffForTests();
-    else if (app_->HasArg(kUseOSMesa))
+    else if (app_->HasArg(mojo::kUseOSMesa))
       gfx::GLSurface::InitializeOneOff(gfx::kGLImplementationOSMesaGL);
     else
       gfx::GLSurface::InitializeOneOff();
 
-    is_headless_ = app_->HasArg(kUseHeadlessConfig);
+    is_headless_ = app_->HasArg(mojo::kUseHeadlessConfig);
   }
 
-  bool ConfigureIncomingConnection(
-      mojo::ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService<NativeViewport>(this);
     connection->AddService<Gpu>(this);
     return true;
   }
 
-  // InterfaceFactory<NativeViewport> implementation.
+  // mojo::InterfaceFactory<NativeViewport> implementation.
   void Create(ApplicationConnection* connection,
-              InterfaceRequest<NativeViewport> request) override {
+              mojo::InterfaceRequest<NativeViewport> request) override {
     BindToRequest(new NativeViewportImpl(app_, is_headless_), &request);
   }
 
-  // InterfaceFactory<Gpu> implementation.
+  // mojo::InterfaceFactory<Gpu> implementation.
   void Create(ApplicationConnection* connection,
-              InterfaceRequest<Gpu> request) override {
+              mojo::InterfaceRequest<Gpu> request) override {
     if (!gpu_state_.get())
       gpu_state_ = new gles2::GpuImpl::State;
     new gles2::GpuImpl(request.Pass(), gpu_state_);
   }
 
-  ApplicationImpl* app_;
+  mojo::ApplicationImpl* app_;
   scoped_refptr<gles2::GpuImpl::State> gpu_state_;
   bool is_headless_;
   DISALLOW_COPY_AND_ASSIGN(NativeViewportAppDelegate);
@@ -72,7 +74,8 @@ class NativeViewportAppDelegate
 }
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new mojo::NativeViewportAppDelegate);
+  mojo::ApplicationRunnerChromium runner(
+      new native_viewport::NativeViewportAppDelegate);
   runner.set_message_loop_type(base::MessageLoop::TYPE_UI);
   return runner.Run(shell_handle);
 }

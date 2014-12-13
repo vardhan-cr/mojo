@@ -20,22 +20,27 @@ class Event;
 
 namespace mojo {
 class ApplicationImpl;
+}
+
+namespace native_viewport {
 class ViewportSurface;
 
-class NativeViewportImpl : public InterfaceImpl<NativeViewport>,
+class NativeViewportImpl : public mojo::InterfaceImpl<mojo::NativeViewport>,
                            public PlatformViewport::Delegate {
  public:
-  NativeViewportImpl(ApplicationImpl* app, bool is_headless);
+  NativeViewportImpl(mojo::ApplicationImpl* app, bool is_headless);
   ~NativeViewportImpl() override;
 
   // InterfaceImpl<NativeViewport> implementation.
-  void Create(SizePtr size, const Callback<void(uint64_t)>& callback) override;
+  void Create(mojo::SizePtr size,
+              const mojo::Callback<void(uint64_t)>& callback) override;
   void Show() override;
   void Hide() override;
   void Close() override;
-  void SetSize(SizePtr size) override;
-  void SubmittedFrame(SurfaceIdPtr surface_id) override;
-  void SetEventDispatcher(NativeViewportEventDispatcherPtr dispatcher) override;
+  void SetSize(mojo::SizePtr size) override;
+  void SubmittedFrame(mojo::SurfaceIdPtr surface_id) override;
+  void SetEventDispatcher(
+      mojo::NativeViewportEventDispatcherPtr dispatcher) override;
 
   // PlatformViewport::Delegate implementation.
   void OnBoundsChanged(const gfx::Rect& bounds) override;
@@ -53,17 +58,17 @@ class NativeViewportImpl : public InterfaceImpl<NativeViewport>,
   scoped_ptr<ViewportSurface> viewport_surface_;
   uint64_t widget_id_;
   gfx::Size size_;
-  GpuPtr gpu_service_;
-  SurfacesServicePtr surfaces_service_;
+  mojo::GpuPtr gpu_service_;
+  mojo::SurfacesServicePtr surfaces_service_;
   cc::SurfaceId child_surface_id_;
   bool waiting_for_event_ack_;
-  Callback<void(uint64_t)> create_callback_;
-  NativeViewportEventDispatcherPtr event_dispatcher_;
+  mojo::Callback<void(uint64_t)> create_callback_;
+  mojo::NativeViewportEventDispatcherPtr event_dispatcher_;
   base::WeakPtrFactory<NativeViewportImpl> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewportImpl);
 };
 
-}  // namespace mojo
+}  // namespace native_viewport
 
 #endif  // SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_

@@ -21,7 +21,7 @@ class GLInProcessContext;
 
 struct ANativeWindow;
 
-namespace mojo {
+namespace native_viewport {
 
 class PlatformViewportAndroid : public PlatformViewport {
  public:
@@ -60,7 +60,6 @@ class PlatformViewportAndroid : public PlatformViewport {
   DISALLOW_COPY_AND_ASSIGN(PlatformViewportAndroid);
 };
 
-
-}  // namespace mojo
+}  // namespace native_viewport
 
 #endif  // SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_ANDROID_H_

@@ -17,7 +17,7 @@ namespace ui {
 class Event;
 }
 
-namespace mojo {
+namespace native_viewport {
 
 // Encapsulation of platform-specific Viewport.
 class PlatformViewport {
@@ -48,6 +48,6 @@ class PlatformViewport {
   static scoped_ptr<PlatformViewport> Create(Delegate* delegate);
 };
 
-}  // namespace mojo
+}  // namespace native_viewport
 
 #endif  // SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_H_

@@ -12,7 +12,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/point.h"
 
-namespace mojo {
+namespace native_viewport {
 
 ui::EventType MotionEventActionToEventType(jint action) {
   switch (action) {
@@ -153,4 +153,4 @@ scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
       new PlatformViewportAndroid(delegate)).Pass();
 }
 
-}  // namespace mojo
+}  // namespace native_viewport

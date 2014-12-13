@@ -4,7 +4,7 @@
 
 #include "services/native_viewport/platform_viewport_headless.h"
 
-namespace mojo {
+namespace native_viewport {
 
 PlatformViewportHeadless::PlatformViewportHeadless(Delegate* delegate)
     : delegate_(delegate) {
@@ -49,4 +49,4 @@ scoped_ptr<PlatformViewport> PlatformViewportHeadless::Create(
       new PlatformViewportHeadless(delegate)).Pass();
 }
 
-}  // namespace mojo
+}  // namespace native_viewport

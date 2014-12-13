@@ -9,7 +9,7 @@
 #include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/rect.h"
 
-namespace mojo {
+namespace native_viewport {
 
 class PlatformViewportHeadless : public PlatformViewport {
  public:
@@ -36,6 +36,6 @@ class PlatformViewportHeadless : public PlatformViewport {
   DISALLOW_COPY_AND_ASSIGN(PlatformViewportHeadless);
 };
 
-}  // namespace mojo
+}  // namespace native_viewport
 
 #endif  // SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_HEADLESS_H_

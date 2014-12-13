@@ -16,7 +16,8 @@ namespace {
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
     {"AndroidHandler", mojo::RegisterAndroidHandlerJni},
     {"MojoMain", mojo::RegisterMojoMain},
-    {"PlatformViewportAndroid", mojo::PlatformViewportAndroid::Register},
+    {"PlatformViewportAndroid",
+     native_viewport::PlatformViewportAndroid::Register},
 };
 
 bool RegisterMojoJni(JNIEnv* env) {

@@ -16,7 +16,7 @@
 #include "ui/platform_window/platform_window_delegate.h"
 #include "ui/platform_window/x11/x11_window.h"
 
-namespace mojo {
+namespace native_viewport {
 
 class PlatformViewportX11 : public PlatformViewport,
                             public ui::PlatformWindowDelegate {
@@ -89,8 +89,8 @@ class PlatformViewportX11 : public PlatformViewport,
       DCHECK_EQ(key_press_event->key_code(), char_event.key_code());
       DCHECK_EQ(key_press_event->flags(), char_event.flags());
 
-      char_event.SetExtendedKeyEventData(scoped_ptr<ui::ExtendedKeyEventData>(
-          new MojoExtendedKeyEventData(
+      char_event.SetExtendedKeyEventData(
+          make_scoped_ptr(new mojo::MojoExtendedKeyEventData(
               key_press_event->GetLocatedWindowsKeyboardCode(),
               key_press_event->GetText(),
               key_press_event->GetUnmodifiedText())));
@@ -124,7 +124,7 @@ class PlatformViewportX11 : public PlatformViewport,
 
 // static
 scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
-  return scoped_ptr<PlatformViewport>(new PlatformViewportX11(delegate)).Pass();
+  return make_scoped_ptr(new PlatformViewportX11(delegate));
 }
 
-}  // namespace mojo
+}  // namespace native_viewport

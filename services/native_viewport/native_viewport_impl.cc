@@ -19,7 +19,7 @@
 #include "services/native_viewport/viewport_surface.h"
 #include "ui/events/event.h"
 
-namespace mojo {
+namespace native_viewport {
 namespace {
 
 bool IsRateLimitedEventType(ui::Event* event) {
@@ -30,7 +30,8 @@ bool IsRateLimitedEventType(ui::Event* event) {
 
 }  // namespace
 
-NativeViewportImpl::NativeViewportImpl(ApplicationImpl* app, bool is_headless)
+NativeViewportImpl::NativeViewportImpl(mojo::ApplicationImpl* app,
+                                       bool is_headless)
     : is_headless_(is_headless),
       widget_id_(0u),
       waiting_for_event_ack_(false),
@@ -46,8 +47,9 @@ NativeViewportImpl::~NativeViewportImpl() {
   platform_viewport_.reset();
 }
 
-void NativeViewportImpl::Create(SizePtr size,
-                                const Callback<void(uint64_t)>& callback) {
+void NativeViewportImpl::Create(
+    mojo::SizePtr size,
+    const mojo::Callback<void(uint64_t)>& callback) {
   create_callback_ = callback;
   size_ = size.To<gfx::Size>();
   if (is_headless_)
@@ -70,11 +72,11 @@ void NativeViewportImpl::Close() {
   platform_viewport_->Close();
 }
 
-void NativeViewportImpl::SetSize(SizePtr size) {
+void NativeViewportImpl::SetSize(mojo::SizePtr size) {
   platform_viewport_->SetBounds(gfx::Rect(size.To<gfx::Size>()));
 }
 
-void NativeViewportImpl::SubmittedFrame(SurfaceIdPtr child_surface_id) {
+void NativeViewportImpl::SubmittedFrame(mojo::SurfaceIdPtr child_surface_id) {
   if (child_surface_id_.is_null()) {
     // If this is the first indication that the client will use surfaces,
     // initialize that system.
@@ -94,7 +96,7 @@ void NativeViewportImpl::SubmittedFrame(SurfaceIdPtr child_surface_id) {
 }
 
 void NativeViewportImpl::SetEventDispatcher(
-    NativeViewportEventDispatcherPtr dispatcher) {
+    mojo::NativeViewportEventDispatcherPtr dispatcher) {
   event_dispatcher_ = dispatcher.Pass();
 }
 
@@ -144,7 +146,7 @@ bool NativeViewportImpl::OnEvent(ui::Event* ui_event) {
     return false;
 
   event_dispatcher_->OnEvent(
-      Event::From(*ui_event),
+      mojo::Event::From(*ui_event),
       base::Bind(&NativeViewportImpl::AckEvent, weak_factory_.GetWeakPtr()));
   waiting_for_event_ack_ = true;
   return false;
@@ -159,10 +161,9 @@ void NativeViewportImpl::AckEvent() {
 }
 
 void NativeViewportImpl::ProcessOnBoundsChanged() {
-  client()->OnSizeChanged(Size::From(size_));
+  client()->OnSizeChanged(mojo::Size::From(size_));
   if (viewport_surface_)
     viewport_surface_->SetSize(size_);
 }
 
-}  // namespace mojo
-
+}  // namespace native_viewport

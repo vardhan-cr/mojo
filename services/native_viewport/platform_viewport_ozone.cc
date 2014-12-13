@@ -13,7 +13,7 @@
 #include "ui/platform_window/platform_window.h"
 #include "ui/platform_window/platform_window_delegate.h"
 
-namespace mojo {
+namespace native_viewport {
 
 // TODO(spang): Deduplicate with PlatformViewportX11.. but there's a hack
 // in there that prevents this.
@@ -88,8 +88,7 @@ class PlatformViewportOzone : public PlatformViewport,
 
 // static
 scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
-  return scoped_ptr<PlatformViewport>(
-      new PlatformViewportOzone(delegate)).Pass();
+  return make_scoped_ptr(new PlatformViewportOzone(delegate));
 }
 
-}  // namespace mojo
+}  // namespace native_viewport

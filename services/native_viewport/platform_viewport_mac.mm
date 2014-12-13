@@ -11,7 +11,7 @@
 #include "base/bind.h"
 #include "ui/gfx/rect.h"
 
-namespace mojo {
+namespace native_viewport {
 
 class PlatformViewportMac : public PlatformViewport {
  public:
@@ -66,7 +66,7 @@ class PlatformViewportMac : public PlatformViewport {
 
 // static
 scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
-  return scoped_ptr<PlatformViewport>(new PlatformViewportMac(delegate)).Pass();
+  return make_scoped_ptr(new PlatformViewportMac(delegate));
 }
 
-}  // namespace mojo
+}  // namespace native_viewport
