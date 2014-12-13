@@ -12,6 +12,7 @@
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
+#include "sky/compositor/display_delegate_ganesh.h"
 #include "sky/compositor/layer.h"
 #include "sky/compositor/layer_host.h"
 #include "third_party/skia/include/core/SkCanvas.h"
@@ -40,6 +41,9 @@ class SkyCompositorApp : public mojo::ApplicationDelegate,
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new mojo::ViewManagerClientFactory(app->shell(), this));
+
+    sky::DisplayDelegate::setDisplayDelegateCreateFunction(
+        sky::DisplayDelegateGanesh::create);
   }
 
   bool ConfigureIncomingConnection(
