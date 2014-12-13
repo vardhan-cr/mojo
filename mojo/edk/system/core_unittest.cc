@@ -1304,7 +1304,7 @@ TEST_F(CoreTest, AsyncWait) {
                                          base::Unretained(&waiter))));
   EXPECT_EQ(1u, info.GetAddedAwakableSize());
 
-  EXPECT_EQ(false, info.GetAddedAwakableAt(0)->Awake(MOJO_RESULT_BUSY, 0));
+  EXPECT_FALSE(info.GetAddedAwakableAt(0)->Awake(MOJO_RESULT_BUSY, 0));
   EXPECT_EQ(MOJO_RESULT_BUSY, waiter.result);
 
   EXPECT_EQ(MOJO_RESULT_OK, core()->Close(h));
