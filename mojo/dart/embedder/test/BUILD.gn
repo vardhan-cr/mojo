@@ -2,11 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//mojo/public/tools/bindings/mojom.gni")
+
 test("dart_unittests") {
   sources = [
     "run_dart_tests.cc",
   ]
   deps = [
+    ":dart_to_cpp_unittests",
     ":expect",
     "//base",
     "//crypto:crypto",
@@ -26,5 +29,28 @@ copy("expect") {
   ]
   outputs = [
     "{{source_gen_dir}}/{{source_file_part}}",
+  ]
+}
+
+source_set("dart_to_cpp_unittests") {
+  testonly = true
+  sources = [
+    "dart_to_cpp_tests.cc",
+  ]
+  deps = [
+    ":dart_to_cpp_bindings",
+    "//crypto:crypto",
+    "//mojo/dart/embedder:dart_controller",
+    "//mojo/edk/test:test_support",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/system",
+    "//mojo/public/interfaces/bindings/tests:test_interfaces",
+    "//testing/gtest",
+  ]
+}
+
+mojom("dart_to_cpp_bindings") {
+  sources = [
+    "dart_to_cpp.mojom",
   ]
 }

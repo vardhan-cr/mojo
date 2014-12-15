@@ -6,6 +6,7 @@
 #define MOJO_DART_EMBEDDER_DART_CONTROLLER_H_
 
 #include "dart/runtime/include/dart_api.h"
+#include "mojo/public/c/system/types.h"
 
 namespace mojo {
 namespace dart {
@@ -20,6 +21,7 @@ struct DartControllerConfig {
   Dart_EntropySource entropy_callback;
   const char** arguments;
   int arguments_count;
+  MojoHandle handle;
   // TODO(zra): search for the --compile_all flag in arguments where needed.
   bool compile_all;
   char** error;

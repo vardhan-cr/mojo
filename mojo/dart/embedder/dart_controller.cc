@@ -454,8 +454,9 @@ bool DartController::runDartScript(const DartControllerConfig& config) {
   const intptr_t kNumIsolateArgs = 2;
   Dart_Handle isolate_args[kNumIsolateArgs];
   isolate_args[0] = main_closure;     // entryPoint
-  isolate_args[1] = Dart_NewList(0);  // args
+  isolate_args[1] = Dart_NewList(1);  // args
   DART_CHECK_VALID(isolate_args[1]);
+  Dart_ListSetAt(isolate_args[1], 0, Dart_NewInteger(config.handle));
 
   Dart_Handle isolate_lib =
       Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));

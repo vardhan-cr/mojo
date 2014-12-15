@@ -8,6 +8,7 @@
 #include "base/path_service.h"
 #include "crypto/random.h"
 #include "mojo/dart/embedder/dart_controller.h"
+#include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -65,6 +66,7 @@ static void RunTest(const std::string& test,
   config.entropy_callback = generateEntropy;
   config.arguments = args;
   config.arguments_count = kNumArgs;
+  config.handle = MOJO_HANDLE_INVALID;
   config.compile_all = compile_all;
   config.error = &error;
 
