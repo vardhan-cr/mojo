@@ -235,6 +235,13 @@ v8::Handle<v8::Value> DoDrainData(gin::Arguments* args,
   return (new DrainData(args->isolate(), handle->release()))->GetPromise();
 }
 
+bool IsHandle(gin::Arguments* args, v8::Handle<v8::Value> val) {
+  gin::Handle<mojo::js::HandleWrapper> ignore_handle;
+  return gin::Converter<gin::Handle<mojo::js::HandleWrapper>>::FromV8(
+      args->isolate(), val, &ignore_handle);
+}
+
+
 gin::WrapperInfo g_wrapper_info = { gin::kEmbedderNativeGin };
 
 }  // namespace
@@ -261,6 +268,7 @@ v8::Local<v8::Value> Core::GetModule(v8::Isolate* isolate) {
             .SetMethod("writeData", WriteData)
             .SetMethod("readData", ReadData)
             .SetMethod("drainData", DoDrainData)
+            .SetMethod("isHandle", IsHandle)
 
             .SetValue("RESULT_OK", MOJO_RESULT_OK)
             .SetValue("RESULT_CANCELLED", MOJO_RESULT_CANCELLED)
