@@ -120,8 +120,8 @@ class ViewManagerClientImpl : public ViewManager,
   void OnCaptureChanged(Id old_capture_view_id,
                         Id new_capture_view_id) override;
   void OnFocusChanged(Id old_focused_view_id, Id new_focused_view_id) override;
-  void OnActiveWindowChanged(Id old_focused_window,
-                             Id new_focused_window) override;
+  void OnActiveWindowChanged(Id old_focused_view_id,
+                             Id new_focused_view_id) override;
 
   // ErrorHandler implementation.
   void OnConnectionError() override;
@@ -153,6 +153,7 @@ class ViewManagerClientImpl : public ViewManager,
   IdToViewMap views_;
 
   View* focused_view_;
+  View* activated_view_;
 
   WindowManagerPtr window_manager_;
 

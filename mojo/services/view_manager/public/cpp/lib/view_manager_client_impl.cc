@@ -101,6 +101,7 @@ ViewManagerClientImpl::ViewManagerClientImpl(ViewManagerDelegate* delegate,
       delegate_(delegate),
       root_(nullptr),
       focused_view_(nullptr),
+      activated_view_(nullptr),
       binding_(this, handle.Pass()),
       service_(binding_.client()),
       delete_on_error_(delete_on_error) {
@@ -386,21 +387,24 @@ void ViewManagerClientImpl::OnFocusChanged(Id old_focused_view_id,
                                            Id new_focused_view_id) {
   View* focused = GetViewById(new_focused_view_id);
   View* blurred = GetViewById(old_focused_view_id);
-  if (blurred) {
-    FOR_EACH_OBSERVER(ViewObserver,
-                      *ViewPrivate(blurred).observers(),
-                      OnViewFocusChanged(focused, blurred));
-  }
   focused_view_ = focused;
-  if (focused) {
+  if (focused != blurred) {
     FOR_EACH_OBSERVER(ViewObserver,
                       *ViewPrivate(focused).observers(),
                       OnViewFocusChanged(focused, blurred));
   }
 }
 
-void ViewManagerClientImpl::OnActiveWindowChanged(Id old_focused_window,
-                                                  Id new_focused_window) {}
+void ViewManagerClientImpl::OnActiveWindowChanged(Id old_active_view_id,
+                                                  Id new_active_view_id) {
+  View* activated = GetViewById(new_active_view_id);
+  View* deactivated = GetViewById(old_active_view_id);
+  activated_view_ = activated;
+  if (activated != deactivated) {
+    FOR_EACH_OBSERVER(ViewObserver, *ViewPrivate(activated).observers(),
+                      OnViewActivationChanged(activated, deactivated));
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // OnConnectionError, private:
@@ -441,6 +445,10 @@ void ViewManagerClientImpl::OnGotFocusedAndActiveViews(uint32 focused_view_id,
                                                        uint32 active_view_id) {
   if (GetViewById(focused_view_id) != focused_view_)
     OnFocusChanged(focused_view_ ? focused_view_->id() : 0, focused_view_id);
+  if (GetViewById(active_view_id) != activated_view_) {
+    OnActiveWindowChanged(activated_view_ ? activated_view_->id() : 0,
+                          active_view_id);
+  }
 }
 
 }  // namespace mojo
