@@ -387,8 +387,13 @@ void ViewManagerClientImpl::OnFocusChanged(Id old_focused_view_id,
                                            Id new_focused_view_id) {
   View* focused = GetViewById(new_focused_view_id);
   View* blurred = GetViewById(old_focused_view_id);
+  if (blurred) {
+    FOR_EACH_OBSERVER(ViewObserver,
+                      *ViewPrivate(blurred).observers(),
+                      OnViewFocusChanged(focused, blurred));
+  }
   focused_view_ = focused;
-  if (focused != blurred) {
+  if (focused) {
     FOR_EACH_OBSERVER(ViewObserver,
                       *ViewPrivate(focused).observers(),
                       OnViewFocusChanged(focused, blurred));
@@ -399,9 +404,15 @@ void ViewManagerClientImpl::OnActiveWindowChanged(Id old_active_view_id,
                                                   Id new_active_view_id) {
   View* activated = GetViewById(new_active_view_id);
   View* deactivated = GetViewById(old_active_view_id);
+  if (deactivated) {
+    FOR_EACH_OBSERVER(ViewObserver,
+                      *ViewPrivate(deactivated).observers(),
+                      OnViewActivationChanged(activated, deactivated));
+  }
   activated_view_ = activated;
-  if (activated != deactivated) {
-    FOR_EACH_OBSERVER(ViewObserver, *ViewPrivate(activated).observers(),
+  if (activated) {
+    FOR_EACH_OBSERVER(ViewObserver,
+                      *ViewPrivate(activated).observers(),
                       OnViewActivationChanged(activated, deactivated));
   }
 }
