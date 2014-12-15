@@ -1,0 +1,24 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+mojo_native_application("fake_surfaces") {
+  output_name = "fake_surfaces_service"
+  sources = [
+    "fake_surfaces_service_application.cc",
+    "fake_surfaces_service_application.h",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/common:tracing_impl",
+    "//mojo/environment:chromium",
+    "//mojo/public/c/gles2",
+    "//mojo/public/cpp/bindings",
+    "//mojo/services/gpu/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces",
+  ]
+}

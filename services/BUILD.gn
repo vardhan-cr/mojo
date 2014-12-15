@@ -8,6 +8,7 @@ group("services") {
   deps = [
     "//services/clipboard",
     "//services/gles2:lib",
+    "//services/fake_surfaces",
     "//services/http_server",
     "//services/http_server/public",
     "//services/js",
