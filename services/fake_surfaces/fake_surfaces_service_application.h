@@ -8,7 +8,7 @@
 #include "base/macros.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 
 namespace mojo {
 class ApplicationConnection;

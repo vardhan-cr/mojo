@@ -8,7 +8,7 @@
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
-#include "mojo/services/public/interfaces/surfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 
 using mojo::InterfaceRequest;
 
