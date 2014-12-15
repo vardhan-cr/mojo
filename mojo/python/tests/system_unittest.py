@@ -20,6 +20,11 @@ def _GetRandomBuffer(size):
 
 class CoreTest(mojo_unittest.MojoTestCase):
 
+  HANDLE_SIGNAL_READWRITABLE = (system.HANDLE_SIGNAL_READABLE |
+      system.HANDLE_SIGNAL_WRITABLE)
+  HANDLE_SIGNAL_ALL = (system.HANDLE_SIGNAL_READABLE |
+      system.HANDLE_SIGNAL_WRITABLE | system.HANDLE_SIGNAL_PEER_CLOSED)
+
   def testResults(self):
     self.assertEquals(system.RESULT_OK, 0)
     self.assertLess(system.RESULT_CANCELLED, 0)
@@ -89,44 +94,73 @@ class CoreTest(mojo_unittest.MojoTestCase):
     handles = system.MessagePipe()
     handle = handles.handle0
 
-    self.assertEquals(system.RESULT_OK, handle.Wait(
-        system.HANDLE_SIGNAL_WRITABLE, system.DEADLINE_INDEFINITE))
-    self.assertEquals(system.RESULT_DEADLINE_EXCEEDED,
-                      handle.Wait(system.HANDLE_SIGNAL_READABLE, 0))
+    (res, states) = handle.Wait(
+        system.HANDLE_SIGNAL_WRITABLE, system.DEADLINE_INDEFINITE)
+    self.assertEquals(system.RESULT_OK, res)
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1])
+
+    (res, states) = handle.Wait(system.HANDLE_SIGNAL_READABLE, 0)
+    self.assertEquals(system.RESULT_DEADLINE_EXCEEDED, res)
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1])
 
     handles.handle1.WriteMessage()
 
-    self.assertEquals(
-        system.RESULT_OK,
-        handle.Wait(
+    (res, states) = handle.Wait(
             system.HANDLE_SIGNAL_READABLE,
-            system.DEADLINE_INDEFINITE))
+            system.DEADLINE_INDEFINITE)
+    self.assertEquals(system.RESULT_OK, res)
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_READWRITABLE, states[0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1])
+
+  def testWaitInvalidArgument(self):
+    (res, index, states) = system.WaitMany(
+            [(system.Handle(0), system.HANDLE_SIGNAL_WRITABLE),
+             (system.Handle(0), system.HANDLE_SIGNAL_WRITABLE)],
+            system.DEADLINE_INDEFINITE)
+    self.assertEquals(system.RESULT_INVALID_ARGUMENT, res)
+    self.assertEquals(0, index)
+    self.assertEquals(states, None)
 
   def testWaitOverManyMessagePipe(self):
     handles = system.MessagePipe()
     handle0 = handles.handle0
     handle1 = handles.handle1
 
-    self.assertEquals(
-        0,
-        system.WaitMany(
+    (res, index, states) = system.WaitMany(
             [(handle0, system.HANDLE_SIGNAL_WRITABLE),
              (handle1, system.HANDLE_SIGNAL_WRITABLE)],
-            system.DEADLINE_INDEFINITE))
-    self.assertEquals(
-        system.RESULT_DEADLINE_EXCEEDED,
-        system.WaitMany(
+            system.DEADLINE_INDEFINITE)
+    self.assertEquals(system.RESULT_OK, res)
+    self.assertEquals(0, index)
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[0][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[0][1])
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[1][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1][1])
+
+    (res, index, states) = system.WaitMany(
             [(handle0, system.HANDLE_SIGNAL_READABLE),
-             (handle1, system.HANDLE_SIGNAL_READABLE)], 0))
+             (handle1, system.HANDLE_SIGNAL_READABLE)], 0)
+    self.assertEquals(system.RESULT_DEADLINE_EXCEEDED, res)
+    self.assertEquals(None, index)
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[0][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[0][1])
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[1][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1][1])
 
     handle0.WriteMessage()
 
-    self.assertEquals(
-        1,
-        system.WaitMany(
+    (res, index, states) = system.WaitMany(
             [(handle0, system.HANDLE_SIGNAL_READABLE),
              (handle1, system.HANDLE_SIGNAL_READABLE)],
-            system.DEADLINE_INDEFINITE))
+            system.DEADLINE_INDEFINITE)
+    self.assertEquals(system.RESULT_OK, res)
+    self.assertEquals(1, index)
+    self.assertEquals(system.HANDLE_SIGNAL_WRITABLE, states[0][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[0][1])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_READWRITABLE, states[1][0])
+    self.assertEquals(CoreTest.HANDLE_SIGNAL_ALL, states[1][1])
 
   def testSendBytesOverMessagePipe(self):
     handles = system.MessagePipe()
