@@ -159,6 +159,9 @@ deps_os = {
 
     'src/third_party/freetype':
        Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'a2b9955b49034a51dfbc8bf9f4e9d312149cecac',
+
+    'src/third_party/requests/src':
+      Var('chromium_git') + '/external/github.com/kennethreitz/requests.git' + '@' + 'f172b30356d821d180fa4ecfa3e71c7274a32de4',
   },
   'win': {
     'src/third_party/nss':
