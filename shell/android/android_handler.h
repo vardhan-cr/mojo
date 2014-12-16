@@ -21,8 +21,8 @@ namespace mojo {
 class AndroidHandler : public ApplicationDelegate,
                        public ContentHandlerFactory::Delegate {
  public:
-  AndroidHandler() : content_handler_factory_(this) {}
-  virtual ~AndroidHandler() {}
+  AndroidHandler();
+  ~AndroidHandler();
 
  private:
   // ApplicationDelegate:

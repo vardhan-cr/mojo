@@ -67,6 +67,12 @@ void RunAndroidApplication(JNIEnv* env,
 }
 }  // namespace
 
+AndroidHandler::AndroidHandler() : content_handler_factory_(this) {
+}
+
+AndroidHandler::~AndroidHandler() {
+}
+
 void AndroidHandler::RunApplication(ShellPtr shell, URLResponsePtr response) {
   JNIEnv* env = AttachCurrentThread();
   ScopedJavaLocalRef<jstring> j_archive_path =
