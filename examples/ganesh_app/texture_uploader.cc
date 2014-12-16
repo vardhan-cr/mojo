@@ -132,17 +132,20 @@ void TextureUploader::EnsureSurfaceForSize(const mojo::Size& size) {
     surface_->DestroySurface(surface_id_.Clone());
   } else {
     surface_id_ = mojo::SurfaceId::New();
-    surface_id_->id = static_cast<uint64_t>(id_namespace_) << 32;
+    surface_id_->id_namespace = id_namespace_;
   }
 
-  surface_id_->id++;
-  surface_->CreateSurface(surface_id_.Clone(), size.Clone());
+  surface_id_->local++;
+  surface_->CreateSurface(surface_id_.Clone());
   client_->OnSurfaceIdAvailable(surface_id_.Clone());
   surface_size_ = size;
 }
 
 void TextureUploader::OnContextLost() {
   LOG(FATAL) << "Context lost.";
+}
+
+void TextureUploader::SetIdNamespace(uint32_t id_namespace) {
 }
 
 void TextureUploader::ReturnResources(

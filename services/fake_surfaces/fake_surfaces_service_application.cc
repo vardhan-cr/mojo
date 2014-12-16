@@ -17,11 +17,13 @@ namespace fake_surfaces {
 class FakeSurfaceImpl : public mojo::Surface {
  public:
   FakeSurfaceImpl(uint32_t id_namespace, mojo::SurfacePtr* ptr)
-      : binding_(this, ptr) {}
+      : binding_(this, ptr) {
+    binding_.client()->SetIdNamespace(id_namespace);
+  }
   ~FakeSurfaceImpl() override {}
 
   // mojo::Surface implementation.
-  void CreateSurface(mojo::SurfaceIdPtr id, mojo::SizePtr size) override {}
+  void CreateSurface(mojo::SurfaceIdPtr id) override {}
 
   void SubmitFrame(mojo::SurfaceIdPtr id,
                    mojo::FramePtr frame,

@@ -38,6 +38,7 @@ class SurfaceClientImpl : public SurfaceClient {
   ~SurfaceClientImpl() override {}
 
   // SurfaceClient:
+  void SetIdNamespace(uint32_t id_namespace) override {}
   void ReturnResources(Array<ReturnedResourcePtr> resources) override {
     // TODO (sky|jamesr): figure out right way to recycle resources.
   }
@@ -94,8 +95,7 @@ void OutputSurfaceImpl::SwapBuffers(cc::CompositorFrame* frame) {
     if (!surface_id_.is_null())
       surface_->DestroySurface(SurfaceId::From(surface_id_));
     surface_id_ = id_allocator_->GenerateId();
-    surface_->CreateSurface(SurfaceId::From(surface_id_),
-                            Size::From(frame_size));
+    surface_->CreateSurface(SurfaceId::From(surface_id_));
     view_->SetSurfaceId(SurfaceId::From(surface_id_));
     surface_size_ = frame_size;
   }

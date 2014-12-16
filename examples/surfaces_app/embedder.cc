@@ -27,7 +27,7 @@ using cc::SolidColorDrawQuad;
 using cc::DelegatedFrameData;
 using cc::CompositorFrame;
 
-Embedder::Embedder(Surface* surface) : surface_(surface) {
+Embedder::Embedder() : surface_(nullptr) {
 }
 
 Embedder::~Embedder() {
@@ -89,7 +89,7 @@ void Embedder::ProduceFrame(cc::SurfaceId child_one,
   scoped_ptr<CompositorFrame> frame(new CompositorFrame);
   frame->delegated_frame_data = delegated_frame_data.Pass();
 
-  surface_->SubmitFrame(mojo::SurfaceId::From(id_), mojo::Frame::From(*frame),
+  surface_->SubmitFrame(id_.Clone(), mojo::Frame::From(*frame),
                         mojo::Closure());
 }
 

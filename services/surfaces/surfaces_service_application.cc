@@ -8,6 +8,7 @@
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
+#include "services/surfaces/surfaces_impl.h"
 #include "services/surfaces/surfaces_service_impl.h"
 
 namespace surfaces {
@@ -26,7 +27,8 @@ void SurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
 
 bool SurfacesServiceApplication::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
-  connection->AddService(this);
+  connection->AddService<mojo::SurfacesService>(this);
+  connection->AddService<mojo::Surface>(this);
   return true;
 }
 
@@ -34,6 +36,12 @@ void SurfacesServiceApplication::Create(
     mojo::ApplicationConnection* connection,
     mojo::InterfaceRequest<mojo::SurfacesService> request) {
   new SurfacesServiceImpl(&manager_, &next_id_namespace_, this, request.Pass());
+}
+
+void SurfacesServiceApplication::Create(
+    mojo::ApplicationConnection* connection,
+    mojo::InterfaceRequest<mojo::Surface> request) {
+  new SurfacesImpl(&manager_, next_id_namespace_++, this, request.Pass());
 }
 
 void SurfacesServiceApplication::OnVSyncParametersUpdated(

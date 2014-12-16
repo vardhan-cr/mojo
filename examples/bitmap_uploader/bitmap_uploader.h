@@ -49,7 +49,8 @@ class BitmapUploader : public SurfaceClient {
   uint32_t TextureFormat();
 
   // SurfaceClient implementation.
-  virtual void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+  void SetIdNamespace(uint32_t id_namespace) override;
+  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
   View* view_;
   SurfacesServicePtr surfaces_service_;

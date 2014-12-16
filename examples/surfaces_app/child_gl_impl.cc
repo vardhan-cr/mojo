@@ -49,9 +49,9 @@ ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
     : start_time_(base::TimeTicks::Now()),
       next_resource_id_(1),
       weak_factory_(this) {
-  surfaces_service_connection->ConnectToService(&surfaces_service_);
-  surfaces_service_->CreateSurfaceConnection(base::Bind(
-      &ChildGLImpl::SurfaceConnectionCreated, weak_factory_.GetWeakPtr()));
+  surfaces_service_connection->ConnectToService(&surface_);
+  surface_.set_client(this);
+  surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
   context_ =
       MojoGLES2CreateContext(command_buffer.PassMessagePipe().release().value(),
                              &ContextLostThunk,
@@ -75,16 +75,14 @@ void ChildGLImpl::ProduceFrame(
   cube_.Init(size_.width(), size_.height());
   cube_.set_color(
       SkColorGetR(color_), SkColorGetG(color_), SkColorGetB(color_));
-  produce_callback_ = callback;
-  AllocateSurface();
+  id_ = allocator_->GenerateId();
+  surface_->CreateSurface(mojo::SurfaceId::From(id_));
+  callback.Run(SurfaceId::From(id_));
+  Draw();
 }
 
-void ChildGLImpl::SurfaceConnectionCreated(SurfacePtr surface,
-                                           uint32_t id_namespace) {
-  surface_ = surface.Pass();
-  surface_.set_client(this);
+void ChildGLImpl::SetIdNamespace(uint32_t id_namespace) {
   allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
-  AllocateSurface();
 }
 
 void ChildGLImpl::ReturnResources(Array<ReturnedResourcePtr> resources) {
@@ -93,16 +91,6 @@ void ChildGLImpl::ReturnResources(Array<ReturnedResourcePtr> resources) {
     GLuint returned_texture = id_to_tex_map_[res.id];
     glDeleteTextures(1, &returned_texture);
   }
-}
-
-void ChildGLImpl::AllocateSurface() {
-  if (produce_callback_.is_null() || !allocator_)
-    return;
-
-  id_ = allocator_->GenerateId();
-  surface_->CreateSurface(mojo::SurfaceId::From(id_), mojo::Size::From(size_));
-  produce_callback_.Run(SurfaceId::From(id_));
-  Draw();
 }
 
 void ChildGLImpl::Draw() {

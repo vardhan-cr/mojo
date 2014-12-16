@@ -40,6 +40,7 @@ class ViewportSurface : public mojo::SurfaceClient {
   void SubmitFrame();
 
   // SurfaceClient implementation.
+  void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 

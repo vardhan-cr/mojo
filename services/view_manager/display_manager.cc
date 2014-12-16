@@ -139,8 +139,7 @@ void DefaultDisplayManager::Draw() {
     return;
   if (surface_id_.is_null()) {
     surface_id_ = surface_id_allocator_->GenerateId();
-    surface_->CreateSurface(mojo::SurfaceId::From(surface_id_),
-                            Size::From(size_));
+    surface_->CreateSurface(mojo::SurfaceId::From(surface_id_));
   }
 
   Rect rect;
@@ -176,6 +175,9 @@ void DefaultDisplayManager::OnSizeChanged(mojo::SizePtr size) {
   surface_->DestroySurface(mojo::SurfaceId::From(surface_id_));
   surface_id_ = cc::SurfaceId();
   SchedulePaint(connection_manager_->root(), gfx::Rect(size_));
+}
+
+void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {
 }
 
 void DefaultDisplayManager::ReturnResources(

@@ -27,12 +27,19 @@ void CallCallback(const mojo::Closure& callback, bool frame_drawn) {
 SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
                            uint32_t id_namespace,
                            Client* client,
+                           mojo::InterfaceRequest<mojo::Surface> request)
+    : SurfacesImpl(manager, id_namespace, client) {
+  binding_.Bind(request.Pass());
+  binding_.client()->SetIdNamespace(id_namespace);
+}
+
+SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
+                           uint32_t id_namespace,
+                           Client* client,
                            mojo::SurfacePtr* surface)
-    : manager_(manager),
-      factory_(manager, this),
-      id_namespace_(id_namespace),
-      client_(client),
-      binding_(this, surface) {
+    : SurfacesImpl(manager, id_namespace, client) {
+  binding_.Bind(surface);
+  binding_.client()->SetIdNamespace(id_namespace);
 }
 
 SurfacesImpl::~SurfacesImpl() {
@@ -40,7 +47,7 @@ SurfacesImpl::~SurfacesImpl() {
   factory_.DestroyAll();
 }
 
-void SurfacesImpl::CreateSurface(SurfaceIdPtr id, mojo::SizePtr size) {
+void SurfacesImpl::CreateSurface(SurfaceIdPtr id) {
   cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
   if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
     // Bad message, do something bad to the caller?
@@ -138,6 +145,16 @@ void SurfacesImpl::OnVSyncParametersUpdated(int64_t timebase,
   client_->OnVSyncParametersUpdated(
       base::TimeTicks::FromInternalValue(timebase),
       base::TimeDelta::FromInternalValue(interval));
+}
+
+SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
+                           uint32_t id_namespace,
+                           Client* client)
+    : manager_(manager),
+      factory_(manager, this),
+      id_namespace_(id_namespace),
+      client_(client),
+      binding_(this) {
 }
 
 }  // namespace mojo

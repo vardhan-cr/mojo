@@ -103,10 +103,10 @@ void BitmapUploader::Upload() {
       surface_->DestroySurface(surface_id_.Clone());
     } else {
       surface_id_ = SurfaceId::New();
-      surface_id_->id = static_cast<uint64_t>(id_namespace_) << 32;
+      surface_id_->id_namespace = id_namespace_;
     }
-    surface_id_->id++;
-    surface_->CreateSurface(surface_id_.Clone(), size.Clone());
+    surface_id_->local++;
+    surface_->CreateSurface(surface_id_.Clone());
     view_->SetSurfaceId(surface_id_.Clone());
     surface_size_ = size;
   }
@@ -223,6 +223,9 @@ void BitmapUploader::Upload() {
   frame->passes.push_back(pass.Pass());
 
   surface_->SubmitFrame(surface_id_.Clone(), frame.Pass(), mojo::Closure());
+}
+
+void BitmapUploader::SetIdNamespace(uint32_t id_namespace) {
 }
 
 void BitmapUploader::ReturnResources(Array<ReturnedResourcePtr> resources) {

@@ -20,7 +20,6 @@
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "ui/gfx/rect.h"
 
 namespace mojo {
@@ -30,18 +29,17 @@ class SurfacesApp : public ApplicationDelegate,
                     public SurfaceClient,
                     public NativeViewportClient {
  public:
-  SurfacesApp() : weak_factory_(this) {}
-  virtual ~SurfacesApp() {}
+  SurfacesApp() : onscreen_id_(SurfaceId::New()), weak_factory_(this) {}
+  ~SurfacesApp() override {}
 
   // ApplicationDelegate implementation
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->ConnectToService("mojo:native_viewport_service", &viewport_);
     viewport_.set_client(this);
 
-    connection->ConnectToService("mojo:surfaces_service", &surfaces_service_);
-    surfaces_service_->CreateSurfaceConnection(base::Bind(
-        &SurfacesApp::SurfaceConnectionCreated, base::Unretained(this)));
+    connection->ConnectToService("mojo:surfaces_service", &surface_);
+    surface_.set_client(this);
+    embedder_.set_surface(surface_.get());
 
     size_ = gfx::Size(800, 600);
 
@@ -76,8 +74,8 @@ class SurfacesApp : public ApplicationDelegate,
     int bounced_offset = offset;
     if (offset > 200)
       bounced_offset = 400 - offset;
-    embedder_->ProduceFrame(
-        child_one_id_, child_two_id_, child_size_, size_, bounced_offset);
+    embedder_.ProduceFrame(child_one_id_, child_two_id_, child_size_, size_,
+                           bounced_offset);
     base::MessageLoop::current()->PostDelayedTask(
         FROM_HERE,
         base::Bind(
@@ -85,35 +83,27 @@ class SurfacesApp : public ApplicationDelegate,
         base::TimeDelta::FromMilliseconds(50));
   }
 
-  void SurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace) {
-    surface_ = surface.Pass();
-    surface_.set_client(this);
-    embedder_.reset(new Embedder(surface_.get()));
-    allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
-
-    onscreen_id_ = allocator_->GenerateId();
-    embedder_->SetSurfaceId(onscreen_id_);
-    surface_->CreateSurface(SurfaceId::From(onscreen_id_), Size::From(size_));
-    viewport_->SubmittedFrame(SurfaceId::From(onscreen_id_));
+  // SurfaceClient implementation.
+  void SetIdNamespace(uint32_t id_namespace) override {
+    onscreen_id_->id_namespace = id_namespace;
+    embedder_.set_surface_id(onscreen_id_.Clone());
+    surface_->CreateSurface(onscreen_id_.Clone());
+    viewport_->SubmittedFrame(onscreen_id_.Clone());
     Draw(10);
   }
-
-  // SurfaceClient implementation.
-  virtual void ReturnResources(Array<ReturnedResourcePtr> resources) override {
+  void ReturnResources(Array<ReturnedResourcePtr> resources) override {
     DCHECK(!resources.size());
   }
   // NativeViewportClient implementation.
-  virtual void OnSizeChanged(mojo::SizePtr size) override {}
-  virtual void OnDestroyed() override {}
+  void OnSizeChanged(mojo::SizePtr size) override {}
+  void OnDestroyed() override {}
 
  private:
   void OnCreatedNativeViewport(uint64_t native_viewport_id) {}
 
-  SurfacesServicePtr surfaces_service_;
   SurfacePtr surface_;
-  cc::SurfaceId onscreen_id_;
-  scoped_ptr<cc::SurfaceIdAllocator> allocator_;
-  scoped_ptr<Embedder> embedder_;
+  SurfaceIdPtr onscreen_id_;
+  Embedder embedder_;
   ChildPtr child_one_;
   cc::SurfaceId child_one_id_;
   ChildPtr child_two_;

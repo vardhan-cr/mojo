@@ -111,6 +111,9 @@ void ViewportSurface::SubmitFrame() {
   surface_->SubmitFrame(SurfaceId::From(id_), frame.Pass(), mojo::Closure());
 }
 
+void ViewportSurface::SetIdNamespace(uint32_t id_namespace) {
+}
+
 void ViewportSurface::ReturnResources(
     mojo::Array<mojo::ReturnedResourcePtr> resources) {
   // We never submit resources so we should never get any back.

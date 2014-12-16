@@ -23,6 +23,7 @@ namespace surfaces {
 class SurfacesServiceApplication
     : public mojo::ApplicationDelegate,
       public mojo::InterfaceFactory<mojo::SurfacesService>,
+      public mojo::InterfaceFactory<mojo::Surface>,
       public SurfacesImpl::Client,
       public SurfacesScheduler::Client {
  public:
@@ -34,9 +35,13 @@ class SurfacesServiceApplication
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
 
-  // InterfaceFactory<SurfacsServicee> implementation.
+  // InterfaceFactory<SurfacesServicee> implementation.
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::SurfacesService> request) override;
+
+  // InterfaceFactory<Surface> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::Surface> request) override;
 
   // SurfacesImpl::Client implementation.
   void OnVSyncParametersUpdated(base::TimeTicks timebase,

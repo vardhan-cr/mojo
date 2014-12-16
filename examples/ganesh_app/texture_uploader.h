@@ -44,6 +44,7 @@ class TextureUploader : public mojo::SurfaceClient,
   void OnContextLost() override;
 
   // mojo::SurfaceClient
+  void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
   void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,

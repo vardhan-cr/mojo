@@ -28,11 +28,10 @@ using cc::SolidColorDrawQuad;
 using cc::DelegatedFrameData;
 using cc::CompositorFrame;
 
-ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection)
-    : weak_factory_(this) {
-  surfaces_service_connection->ConnectToService(&surfaces_service_);
-  surfaces_service_->CreateSurfaceConnection(base::Bind(
-      &ChildImpl::SurfaceConnectionCreated, weak_factory_.GetWeakPtr()));
+ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection) {
+  surfaces_service_connection->ConnectToService(&surface_);
+  surface_.set_client(this);
+  surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
 }
 
 ChildImpl::~ChildImpl() {
@@ -40,24 +39,8 @@ ChildImpl::~ChildImpl() {
     surface_->DestroySurface(mojo::SurfaceId::From(id_));
 }
 
-void ChildImpl::ProduceFrame(
-    ColorPtr color,
-    SizePtr size,
-    const mojo::Callback<void(SurfaceIdPtr id)>& callback) {
-  color_ = color.To<SkColor>();
-  size_ = size.To<gfx::Size>();
-  produce_callback_ = callback;
-  if (allocator_)
-    Draw();
-}
-
-void ChildImpl::SurfaceConnectionCreated(SurfacePtr surface,
-                                         uint32_t id_namespace) {
-  surface_ = surface.Pass();
-  surface_.set_client(this);
+void ChildImpl::SetIdNamespace(uint32_t id_namespace) {
   allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
-  if (!produce_callback_.is_null())
-    Draw();
 }
 
 void ChildImpl::ReturnResources(
@@ -65,16 +48,19 @@ void ChildImpl::ReturnResources(
   DCHECK(!resources.size());
 }
 
-void ChildImpl::Draw() {
+void ChildImpl::ProduceFrame(
+    ColorPtr color,
+    SizePtr size_ptr,
+    const mojo::Callback<void(SurfaceIdPtr id)>& callback) {
   id_ = allocator_->GenerateId();
-  surface_->CreateSurface(mojo::SurfaceId::From(id_),
-                          mojo::Size::From(size_));
-  gfx::Rect rect(size_);
+  surface_->CreateSurface(mojo::SurfaceId::From(id_));
+  gfx::Size size = size_ptr.To<gfx::Size>();
+  gfx::Rect rect(size);
   RenderPassId id(1, 1);
   scoped_ptr<RenderPass> pass = RenderPass::Create();
   pass->SetNew(id, rect, rect, gfx::Transform());
 
-  CreateAndAppendSimpleSharedQuadState(pass.get(), gfx::Transform(), size_);
+  CreateAndAppendSimpleSharedQuadState(pass.get(), gfx::Transform(), size);
 
   SolidColorDrawQuad* color_quad =
       pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
@@ -82,7 +68,7 @@ void ChildImpl::Draw() {
   color_quad->SetNew(pass->shared_quad_state_list.back(),
                      rect,
                      rect,
-                     color_,
+                     color.To<SkColor>(),
                      force_anti_aliasing_off);
 
   scoped_ptr<DelegatedFrameData> delegated_frame_data(new DelegatedFrameData);
@@ -93,7 +79,7 @@ void ChildImpl::Draw() {
 
   surface_->SubmitFrame(mojo::SurfaceId::From(id_), mojo::Frame::From(*frame),
                         mojo::Closure());
-  produce_callback_.Run(SurfaceId::From(id_));
+  callback.Run(SurfaceId::From(id_));
 }
 
 }  // namespace examples

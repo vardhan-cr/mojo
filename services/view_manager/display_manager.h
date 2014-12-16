@@ -72,6 +72,7 @@ class DefaultDisplayManager : public DisplayManager,
   void OnSizeChanged(mojo::SizePtr size) override;
 
   // SurfaceClient:
+  void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 

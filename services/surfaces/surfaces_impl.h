@@ -44,12 +44,17 @@ class SurfacesImpl : public mojo::Surface,
   SurfacesImpl(cc::SurfaceManager* manager,
                uint32_t id_namespace,
                Client* client,
+               mojo::InterfaceRequest<mojo::Surface> request);
+
+  SurfacesImpl(cc::SurfaceManager* manager,
+               uint32_t id_namespace,
+               Client* client,
                mojo::SurfacePtr* surface);
 
   ~SurfacesImpl() override;
 
   // Surface implementation.
-  void CreateSurface(mojo::SurfaceIdPtr id, mojo::SizePtr size) override;
+  void CreateSurface(mojo::SurfaceIdPtr id) override;
   void SubmitFrame(mojo::SurfaceIdPtr id,
                    mojo::FramePtr frame,
                    const mojo::Closure& callback) override;
@@ -79,6 +84,10 @@ class SurfacesImpl : public mojo::Surface,
   cc::SurfaceFactory* factory() { return &factory_; }
 
  private:
+  SurfacesImpl(cc::SurfaceManager* manager,
+               uint32_t id_namespace,
+               Client* client);
+
   cc::SurfaceManager* manager_;
   cc::SurfaceFactory factory_;
   uint32_t id_namespace_;

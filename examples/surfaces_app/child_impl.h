@@ -26,10 +26,6 @@ namespace mojo {
 
 class ApplicationConnection;
 
-namespace surfaces {
-class Surface;
-}
-
 namespace examples {
 
 // Simple example of a child app using surfaces.
@@ -41,30 +37,22 @@ class ChildImpl : public InterfaceImpl<Child>, public SurfaceClient {
         const mojo::String& application_url) = 0;
   };
   explicit ChildImpl(ApplicationConnection* surfaces_service_connection);
-  virtual ~ChildImpl();
-
-  // SurfaceClient implementation
-  virtual void ReturnResources(
-      Array<ReturnedResourcePtr> resources) override;
+  ~ChildImpl() override;
 
  private:
+  // SurfaceClient implementation
+  void SetIdNamespace(uint32_t id_namespace) override;
+  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+
   // Child implementation.
-  virtual void ProduceFrame(
+  void ProduceFrame(
       ColorPtr color,
       SizePtr size,
       const mojo::Callback<void(SurfaceIdPtr id)>& callback) override;
 
-  void SurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace);
-  void Draw();
-
-  SkColor color_;
-  gfx::Size size_;
   scoped_ptr<cc::SurfaceIdAllocator> allocator_;
-  SurfacesServicePtr surfaces_service_;
   SurfacePtr surface_;
   cc::SurfaceId id_;
-  mojo::Callback<void(SurfaceIdPtr id)> produce_callback_;
-  base::WeakPtrFactory<ChildImpl> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildImpl);
 };

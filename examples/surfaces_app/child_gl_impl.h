@@ -18,7 +18,6 @@
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/size.h"
 
@@ -37,31 +36,29 @@ class ChildGLImpl : public InterfaceImpl<Child>, public SurfaceClient {
  public:
   ChildGLImpl(ApplicationConnection* surfaces_service_connection,
               CommandBufferPtr command_buffer);
-  virtual ~ChildGLImpl();
+  ~ChildGLImpl() override;
 
   // SurfaceClient implementation
-  virtual void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+  void SetIdNamespace(uint32_t id_namespace) override;
+  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
  private:
   // Child implementation.
-  virtual void ProduceFrame(
+  void ProduceFrame(
       ColorPtr color,
       SizePtr size,
       const mojo::Callback<void(SurfaceIdPtr id)>& callback) override;
 
-  void SurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace);
   void AllocateSurface();
   void Draw();
 
   SkColor color_;
   gfx::Size size_;
   scoped_ptr<cc::SurfaceIdAllocator> allocator_;
-  SurfacesServicePtr surfaces_service_;
   SurfacePtr surface_;
   MojoGLES2Context context_;
   cc::SurfaceId id_;
   ::examples::SpinningCube cube_;
-  Callback<void(SurfaceIdPtr id)> produce_callback_;
   base::TimeTicks start_time_;
   uint32_t next_resource_id_;
   base::hash_map<uint32_t, GLuint> id_to_tex_map_;
