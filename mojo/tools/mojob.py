@@ -140,10 +140,9 @@ def build(config):
     if exit_code:
       return exit_code
 
-    return subprocess.call(['ninja', '-j', '1000', '-l', '100', '-C', out_dir,
-                            'root'])
+    return subprocess.call(['ninja', '-j', '1000', '-l', '100', '-C', out_dir])
   else:
-    return subprocess.call(['ninja', '-C', out_dir, 'root'])
+    return subprocess.call(['ninja', '-C', out_dir])
 
 
 def _run_tests(config, test_types):

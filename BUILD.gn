@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-group("root") {
+# This target will be built if no target is specified when invoking ninja.
+group("default") {
   testonly = true
 
   deps = [
@@ -16,4 +17,12 @@ group("root") {
   if (!is_android && !is_win) {
     deps += [ "//tools/xdisplaycheck" ]
   }
+}
+
+# Deprecated name for the default build target.
+group("root") {
+  testonly = true
+  deps = [
+    ":default",
+  ]
 }

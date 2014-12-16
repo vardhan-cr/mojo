@@ -35,10 +35,8 @@ If the fetch command fails, you will need to delete the src directory and start 
 Build Mojo by running:
 
 ```
-$ ninja -C out/Debug -j 10 root
+$ ninja -C out/Debug -j 10
 ```
-
-The "root" parameter specifies the target to build, it's not a special keyword. You can find the "root" target in src/BUILD.gn.
 
 (If you are a Googler, see the section at the end of this document for faster builds.)
 
@@ -150,5 +148,5 @@ After you close the editor, the "gn args" command will automatically run "gn gen
 
 Now you can dramatically increase the number of parallel tasks:
 ```
-$ ninja -C out/Debug -j 1000 root
+$ ninja -C out/Debug -j 1000
 ```
