@@ -41,8 +41,5 @@ JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
   if (!RegisterMojoJni(env))
     return -1;
 
-  if (!mojo::RegisterAndroidHandlerJni(env))
-    return -1;
-
   return JNI_VERSION_1_4;
 }
