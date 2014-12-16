@@ -5,6 +5,7 @@
 #include "services/window_manager/view_targeter.h"
 
 #include "services/window_manager/basic_focus_rules.h"
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/view_event_dispatcher.h"
 #include "services/window_manager/window_manager_test_util.h"
@@ -41,6 +42,9 @@ TEST_F(ViewTargeterTest, Basic) {
   root_target->SetEventTargeter(scoped_ptr<ViewTargeter>(new ViewTargeter()));
   view_event_dispatcher_->SetRootViewTarget(root_target);
 
+  CaptureController capture_controller;
+  SetCaptureController(&root, &capture_controller);
+
   TestView one(2, gfx::Rect(0, 0, 500, 100));
   TestView two(3, gfx::Rect(501, 0, 500, 1000));
 
@@ -67,6 +71,9 @@ TEST_F(ViewTargeterTest, KeyTest) {
   ViewTarget* root_target = root.target();
   root_target->SetEventTargeter(scoped_ptr<ViewTargeter>(new ViewTargeter()));
   view_event_dispatcher_->SetRootViewTarget(root_target);
+
+  CaptureController capture_controller;
+  SetCaptureController(&root, &capture_controller);
 
   TestView one(2, gfx::Rect(0, 0, 500, 100));
   TestView two(3, gfx::Rect(501, 0, 500, 1000));

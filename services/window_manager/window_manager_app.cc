@@ -13,6 +13,7 @@
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/focus_rules.h"
 #include "services/window_manager/view_event_dispatcher.h"
@@ -72,13 +73,10 @@ void WindowManagerApp::RemoveConnection(WindowManagerImpl* connection) {
   connections_.erase(connection);
 }
 
-void WindowManagerApp::SetCapture(Id view) {
-  // TODO(erg): Capture. Another pile of worms that is mixed in here.
-
-  // capture_client_->capture_client()->SetCapture(GetWindowForViewId(view));
-
-  // TODO(beng): notify connected clients that capture has changed, probably
-  //             by implementing some capture-client observer.
+void WindowManagerApp::SetCapture(Id view_id) {
+  View* view = view_manager_->GetViewById(view_id);
+  DCHECK(view);
+  capture_controller_->SetCapture(view);
 }
 
 void WindowManagerApp::FocusWindow(Id view_id) {
@@ -98,11 +96,15 @@ bool WindowManagerApp::IsReady() const {
 }
 
 void WindowManagerApp::InitFocus(scoped_ptr<FocusRules> rules) {
+  DCHECK(root_);
+
   focus_controller_.reset(new FocusController(rules.Pass()));
   focus_controller_->AddObserver(this);
-
-  DCHECK(root_);
   SetFocusController(root_, focus_controller_.get());
+
+  capture_controller_.reset(new CaptureController);
+  capture_controller_->AddObserver(this);
+  SetCaptureController(root_, capture_controller_.get());
 }
 
 void WindowManagerApp::Embed(
@@ -146,11 +148,6 @@ void WindowManagerApp::OnEmbed(mojo::ViewManager* view_manager,
   view_event_dispatcher_.reset(new ViewEventDispatcher);
 
   RegisterSubtree(root_);
-
-  // TODO(erg): Also move the capture client over.
-  //
-  // capture_client_.reset(
-  //     new wm::ScopedCaptureClient(window_tree_host_->window()));
 
   if (wrapped_view_manager_delegate_) {
     wrapped_view_manager_delegate_->OnEmbed(
@@ -203,6 +200,8 @@ void WindowManagerApp::OnViewDestroying(View* view) {
   root_ = nullptr;
   if (focus_controller_)
     focus_controller_->RemoveObserver(this);
+  if (capture_controller_)
+    capture_controller_->RemoveObserver(this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -244,6 +243,20 @@ void WindowManagerApp::OnViewActivated(View* gained_active,
   }
   if (gained_active)
     gained_active->MoveToFront();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// WindowManagerApp, mojo::CaptureControllerObserver implementation:
+
+void WindowManagerApp::OnCaptureChanged(View* gained_capture,
+                                        View* lost_capture) {
+  for (Connections::const_iterator it = connections_.begin();
+       it != connections_.end(); ++it) {
+    (*it)->NotifyCaptureChanged(GetIdForView(gained_capture),
+                                GetIdForView(lost_capture));
+  }
+  if (gained_capture)
+    gained_capture->MoveToFront();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

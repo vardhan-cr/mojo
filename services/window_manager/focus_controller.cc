@@ -74,9 +74,6 @@ void FocusController::FocusView(View* view) {
     return;
   }
 
-  // TODO(erg): We need to early abort in the of a view having
-  // capture. However, we currently don't have a capture client here.
-
   // Focusing a window also activates its containing activatable window. Note
   // that the rules could redirect activation activation and/or focus.
   View* focusable = rules_->GetFocusableView(view);

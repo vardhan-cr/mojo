@@ -41,6 +41,12 @@ void WindowManagerImpl::NotifyWindowActivated(Id new_active_id,
     client()->OnActiveWindowChanged(old_active_id, new_active_id);
 }
 
+void WindowManagerImpl::NotifyCaptureChanged(Id new_capture_id,
+                                             Id old_capture_id) {
+  if (from_vm_)
+    client()->OnCaptureChanged(old_capture_id, new_capture_id);
+}
+
 void WindowManagerImpl::Embed(
     const mojo::String& url,
     mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) {

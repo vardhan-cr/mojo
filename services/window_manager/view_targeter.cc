@@ -4,6 +4,7 @@
 
 #include "services/window_manager/view_targeter.h"
 
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/view_target.h"
 
@@ -85,8 +86,12 @@ ViewTarget* ViewTargeter::FindTargetInRootView(ViewTarget* root_view,
   // mouse_pressed_handler() in the aura version. This is what makes sure
   // that a view gets both the mouse down and up.
 
-  // TODO(erg): We redirect to a currently active capture window here. Add this
-  // when we have capture working.
+  CaptureController* capture_controller =
+      GetCaptureController(root_view->view());
+  DCHECK(capture_controller);
+  mojo::View* capture_view = capture_controller->GetCapture();
+  if (capture_view)
+    return ViewTarget::TargetFromView(capture_view);
 
   // TODO(erg): There's a whole bunch of junk about handling touch events
   // here. Handle later.

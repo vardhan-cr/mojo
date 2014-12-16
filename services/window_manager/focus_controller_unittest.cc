@@ -6,6 +6,7 @@
 
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "services/window_manager/basic_focus_rules.h"
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller_observer.h"
 #include "services/window_manager/view_event_dispatcher.h"
 #include "services/window_manager/view_targeter.h"
@@ -347,6 +348,10 @@ class FocusControllerTestBase : public testing::Test {
     test_focus_rules_ = new TestFocusRules(root_view());
     focus_controller_.reset(
         new FocusController(scoped_ptr<FocusRules>(test_focus_rules_)));
+    SetFocusController(root_view(), focus_controller_.get());
+
+    capture_controller_.reset(new CaptureController);
+    SetCaptureController(root_view(), capture_controller_.get());
 
     ViewTarget* root_target = root_view_->target();
     root_target->SetEventTargeter(scoped_ptr<ViewTargeter>(new ViewTargeter()));
@@ -362,6 +367,7 @@ class FocusControllerTestBase : public testing::Test {
 
     root_view_->Destroy();
 
+    capture_controller_.reset();
     test_focus_rules_ = nullptr;  // Owned by FocusController.
     focus_controller_.reset();
 
@@ -410,6 +416,7 @@ class FocusControllerTestBase : public testing::Test {
   View* root_view() { return root_view_; }
   TestFocusRules* test_focus_rules() { return test_focus_rules_; }
   FocusController* focus_controller() { return focus_controller_.get(); }
+  CaptureController* capture_controller() { return capture_controller_.get(); }
 
   // Test functions.
   virtual void BasicFocus() = 0;
@@ -427,9 +434,7 @@ class FocusControllerTestBase : public testing::Test {
   virtual void ShiftFocusOnActivation() {}
   virtual void ShiftFocusOnActivationDueToHide() {}
   virtual void NoShiftActiveOnActivation() {}
-  // TODO(erg): void NoFocusChangeOnClickOnCaptureWindow() once we have a
-  // system of capture.
-  // TODO(erg): Also, void ChangeFocusWhenNothingFocusedAndCaptured().
+  virtual void ChangeFocusWhenNothingFocusedAndCaptured() {}
   virtual void DontPassDestroyedView() {}
   // TODO(erg): Also, void FocusedTextInputClient() once we build the IME.
 
@@ -437,6 +442,7 @@ class FocusControllerTestBase : public testing::Test {
   TestView* root_view_;
   scoped_ptr<FocusController> focus_controller_;
   TestFocusRules* test_focus_rules_;
+  scoped_ptr<CaptureController> capture_controller_;
   // TODO(erg): The aura version of this class also keeps track of WMState. Do
   // we need something analogous here?
 
@@ -723,7 +729,21 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     // from being made in response to an activation change notification.
   }
 
-  // TODO(erg): Port the capture tests here, once we have a capture mechanism.
+  // Verifies focus change is honored while capture held.
+  void ChangeFocusWhenNothingFocusedAndCaptured() override {
+    View* v1 = root_view()->GetChildById(1);
+    capture_controller()->SetCapture(v1);
+
+    EXPECT_EQ(-1, GetActiveViewId());
+    EXPECT_EQ(-1, GetFocusedViewId());
+
+    FocusViewById(1);
+
+    EXPECT_EQ(1, GetActiveViewId());
+    EXPECT_EQ(1, GetFocusedViewId());
+
+    capture_controller()->ReleaseCapture(v1);
+  }
 
   // Verifies if a view that loses activation or focus is destroyed during
   // observer notification we don't pass the destroyed view to other observers.
@@ -1122,7 +1142,8 @@ DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusOnActivation);
 DIRECT_FOCUS_CHANGE_TESTS(ShiftFocusOnActivationDueToHide);
 DIRECT_FOCUS_CHANGE_TESTS(NoShiftActiveOnActivation);
 
-// TODO(erg): Add the capture tests here.
+FOCUS_CONTROLLER_TEST(FocusControllerApiTest,
+                      ChangeFocusWhenNothingFocusedAndCaptured);
 
 // See description above DontPassDestroyedView() for details.
 FOCUS_CONTROLLER_TEST(FocusControllerApiTest, DontPassDestroyedView);

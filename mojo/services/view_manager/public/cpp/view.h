@@ -103,6 +103,9 @@ class View {
   View* parent() { return parent_; }
   const View* parent() const { return parent_; }
   const Children& children() const { return children_; }
+  View* GetRoot() {
+    return const_cast<View*>(const_cast<const View*>(this)->GetRoot());
+  }
   const View* GetRoot() const;
 
   void AddChild(View* child);

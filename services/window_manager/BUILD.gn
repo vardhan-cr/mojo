@@ -26,6 +26,9 @@ source_set("lib") {
   sources = [
     "basic_focus_rules.cc",
     "basic_focus_rules.h",
+    "capture_controller.cc",
+    "capture_controller.h",
+    "capture_controller_observer.h",
     "focus_controller.cc",
     "focus_controller.h",
     "focus_controller_observer.h",

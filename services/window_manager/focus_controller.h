@@ -93,7 +93,7 @@ class FocusController : public ui::EventHandler, public mojo::ViewObserver {
   DISALLOW_COPY_AND_ASSIGN(FocusController);
 };
 
-// Sets/Gets the focus controller for a root view.
+// Sets/Gets the focus controller for a view.
 void SetFocusController(mojo::View* view, FocusController* focus_controller);
 FocusController* GetFocusController(mojo::View* view);
 

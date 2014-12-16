@@ -152,6 +152,7 @@ class ViewManagerClientImpl : public ViewManager,
 
   IdToViewMap views_;
 
+  View* capture_view_;
   View* focused_view_;
   View* activated_view_;
 

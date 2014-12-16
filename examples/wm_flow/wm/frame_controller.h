@@ -41,6 +41,8 @@ class FrameController : mojo::ViewObserver {
 
   void ActivateWindow();
 
+  void SetCapture(bool frame_has_capture);
+
  private:
   class LayoutManager;
   friend class LayoutManager;

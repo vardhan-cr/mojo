@@ -29,6 +29,7 @@ class WindowManagerImpl : public mojo::WindowManager,
 
   void NotifyViewFocused(mojo::Id new_focused_id, mojo::Id old_focused_id);
   void NotifyWindowActivated(mojo::Id new_active_id, mojo::Id old_active_id);
+  void NotifyCaptureChanged(mojo::Id new_capture_id, mojo::Id old_capture_id);
 
  private:
   mojo::WindowManagerClient* client() {

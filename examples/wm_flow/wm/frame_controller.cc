@@ -9,8 +9,10 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/views/native_widget_mojo.h"
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/window_manager_app.h"
 #include "ui/views/background.h"
+#include "ui/views/controls/button/checkbox.h"
 #include "ui/views/controls/button/label_button.h"
 #include "ui/views/layout/layout_manager.h"
 #include "ui/views/widget/widget.h"
@@ -21,10 +23,14 @@ class FrameController::LayoutManager : public views::LayoutManager,
  public:
   explicit LayoutManager(FrameController* controller)
       : controller_(controller),
+        capture_checkbox_(
+            new views::Checkbox(base::ASCIIToUTF16("Capture"))),
         close_button_(
             new views::LabelButton(this, base::ASCIIToUTF16("Begone"))),
         maximize_button_(
-            new views::LabelButton(this, base::ASCIIToUTF16("Embiggen"))) {}
+            new views::LabelButton(this, base::ASCIIToUTF16("Embiggen"))) {
+    capture_checkbox_->set_listener(this);
+  }
   virtual ~LayoutManager() {}
 
  private:
@@ -34,11 +40,16 @@ class FrameController::LayoutManager : public views::LayoutManager,
 
   // Overridden from views::LayoutManager:
   virtual void Installed(views::View* host) override {
+    host->AddChildView(capture_checkbox_);
     host->AddChildView(close_button_);
     host->AddChildView(maximize_button_);
   }
   virtual void Layout(views::View* host) override {
-    gfx::Size ps = close_button_->GetPreferredSize();
+    gfx::Size ps = capture_checkbox_->GetPreferredSize();
+    capture_checkbox_->SetBounds(kButtonFrameMargin, kButtonFrameMargin,
+                                 ps.width(), ps.height());
+
+    ps = close_button_->GetPreferredSize();
     gfx::Rect bounds = host->GetLocalBounds();
     close_button_->SetBounds(bounds.right() - kButtonFrameMargin - ps.width(),
                              kButtonFrameMargin, ps.width(), ps.height());
@@ -64,9 +75,12 @@ class FrameController::LayoutManager : public views::LayoutManager,
       controller_->CloseWindow();
     else if (sender == maximize_button_)
       controller_->ToggleMaximize();
+    else if (sender == capture_checkbox_)
+      controller_->SetCapture(capture_checkbox_->checked());
   }
 
   FrameController* controller_;
+  views::Checkbox* capture_checkbox_;
   views::Button* close_button_;
   views::Button* maximize_button_;
 
@@ -144,6 +158,13 @@ void FrameController::ToggleMaximize() {
 
 void FrameController::ActivateWindow() {
   window_manager_app_->focus_controller()->ActivateView(view_);
+}
+
+void FrameController::SetCapture(bool frame_has_capture) {
+  if (frame_has_capture)
+    window_manager_app_->capture_controller()->SetCapture(view_);
+  else
+    window_manager_app_->capture_controller()->ReleaseCapture(view_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

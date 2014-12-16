@@ -18,6 +18,7 @@
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
+#include "services/window_manager/capture_controller_observer.h"
 #include "services/window_manager/focus_controller_observer.h"
 #include "services/window_manager/native_viewport_event_dispatcher_impl.h"
 #include "services/window_manager/view_target.h"
@@ -30,6 +31,7 @@ class Size;
 
 namespace window_manager {
 
+class CaptureController;
 class FocusController;
 class FocusRules;
 class ViewEventDispatcher;
@@ -51,6 +53,7 @@ class WindowManagerApp
       public mojo::ViewObserver,
       public ui::EventHandler,
       public FocusControllerObserver,
+      public CaptureControllerObserver,
       public mojo::InterfaceFactory<mojo::WindowManager>,
       public mojo::InterfaceFactory<mojo::WindowManagerInternal>,
       public mojo::WindowManagerInternal {
@@ -78,6 +81,7 @@ class WindowManagerApp
   bool IsReady() const;
 
   FocusController* focus_controller() { return focus_controller_.get(); }
+  CaptureController* capture_controller() { return capture_controller_.get(); }
 
   void InitFocus(scoped_ptr<FocusRules> rules);
 
@@ -132,6 +136,10 @@ class WindowManagerApp
   void OnViewActivated(mojo::View* gained_active,
                        mojo::View* lost_active) override;
 
+  // Overridden from mojo::CaptureControllerObserver:
+  void OnCaptureChanged(mojo::View* gained_capture,
+                        mojo::View* lost_capture) override;
+
   // Creates the connection to the ViewManager.
   void LaunchViewManager(mojo::ApplicationImpl* app);
 
@@ -163,6 +171,7 @@ class WindowManagerApp
   mojo::View* root_;
 
   scoped_ptr<FocusController> focus_controller_;
+  scoped_ptr<CaptureController> capture_controller_;
 
   Connections connections_;
   RegisteredViewIdSet registered_view_id_set_;

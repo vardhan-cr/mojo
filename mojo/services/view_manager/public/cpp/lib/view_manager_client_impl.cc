@@ -100,6 +100,7 @@ ViewManagerClientImpl::ViewManagerClientImpl(ViewManagerDelegate* delegate,
       next_id_(1),
       delegate_(delegate),
       root_(nullptr),
+      capture_view_(nullptr),
       focused_view_(nullptr),
       activated_view_(nullptr),
       binding_(this, handle.Pass()),
@@ -381,7 +382,21 @@ void ViewManagerClientImpl::OnViewInputEvent(
 // ViewManagerClientImpl, WindowManagerClient implementation:
 
 void ViewManagerClientImpl::OnCaptureChanged(Id old_capture_view_id,
-                                             Id new_capture_view_id) {}
+                                             Id new_capture_view_id) {
+  View* gained_capture = GetViewById(new_capture_view_id);
+  View* lost_capture = GetViewById(old_capture_view_id);
+  if (lost_capture) {
+    FOR_EACH_OBSERVER(ViewObserver,
+                      *ViewPrivate(lost_capture).observers(),
+                      OnViewFocusChanged(gained_capture, lost_capture));
+  }
+  capture_view_ = gained_capture;
+  if (gained_capture) {
+    FOR_EACH_OBSERVER(ViewObserver,
+                      *ViewPrivate(gained_capture).observers(),
+                      OnViewFocusChanged(gained_capture, lost_capture));
+  }
+}
 
 void ViewManagerClientImpl::OnFocusChanged(Id old_focused_view_id,
                                            Id new_focused_view_id) {
