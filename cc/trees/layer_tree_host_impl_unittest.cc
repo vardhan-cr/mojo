@@ -4181,6 +4181,7 @@ class BlendStateCheckLayer : public LayerImpl {
                                     resource_id_,
                                     gfx::RectF(0.f, 0.f, 1.f, 1.f),
                                     gfx::Size(1, 1),
+                                    false,
                                     false);
     test_blending_draw_quad->visible_rect = quad_visible_rect_;
     EXPECT_EQ(blend_, test_blending_draw_quad->ShouldDrawWithBlending());
@@ -7768,7 +7769,7 @@ TEST_F(LayerTreeHostImplTest, ScrollAnimated) {
 TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
   host_impl_->CreatePendingTree();
   host_impl_->pending_tree()->SetRootLayer(
-      PictureLayerImpl::Create(host_impl_->pending_tree(), 10));
+      PictureLayerImpl::Create(host_impl_->pending_tree(), 10, false));
 
   LayerTreeImpl* pending_tree = host_impl_->pending_tree();
   LayerImpl* pending_layer = pending_tree->root_layer();
@@ -7809,7 +7810,7 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
   // should get two pairs.
   host_impl_->CreatePendingTree();
   host_impl_->pending_tree()->root_layer()->AddChild(
-      PictureLayerImpl::Create(host_impl_->pending_tree(), 11));
+      PictureLayerImpl::Create(host_impl_->pending_tree(), 11, false));
 
   LayerImpl* new_pending_layer = pending_tree->root_layer()->children()[0];
 

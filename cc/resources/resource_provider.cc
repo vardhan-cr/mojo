@@ -622,21 +622,11 @@ ResourceProvider::ResourceId ResourceProvider::CreateResourceFromTextureMailbox(
                         RGBA_8888);
   } else {
     DCHECK(mailbox.IsSharedMemory());
-    base::SharedMemory* shared_memory = mailbox.shared_memory();
-    DCHECK(shared_memory->memory());
-    uint8_t* pixels = reinterpret_cast<uint8_t*>(shared_memory->memory());
+    SharedBitmap* shared_bitmap = mailbox.shared_bitmap();
+    uint8_t* pixels = shared_bitmap->pixels();
     DCHECK(pixels);
-    scoped_ptr<SharedBitmap> shared_bitmap;
-    if (shared_bitmap_manager_) {
-      shared_bitmap =
-          shared_bitmap_manager_->GetBitmapForSharedMemory(shared_memory);
-    }
-    resource = Resource(pixels,
-                        shared_bitmap.release(),
-                        mailbox.shared_memory_size(),
-                        Resource::External,
-                        GL_LINEAR,
-                        GL_CLAMP_TO_EDGE);
+    resource = Resource(pixels, shared_bitmap, mailbox.shared_memory_size(),
+                        Resource::External, GL_LINEAR, GL_CLAMP_TO_EDGE);
   }
   resource.allocated = true;
   resource.mailbox = mailbox;
@@ -714,13 +704,8 @@ void ResourceProvider::DeleteResourceInternal(ResourceMap::iterator it,
       }
     } else {
       DCHECK(resource->mailbox.IsSharedMemory());
-      base::SharedMemory* shared_memory = resource->mailbox.shared_memory();
-      if (resource->pixels && shared_memory) {
-        DCHECK(shared_memory->memory() == resource->pixels);
-        resource->pixels = NULL;
-        delete resource->shared_bitmap;
-        resource->shared_bitmap = NULL;
-      }
+      resource->shared_bitmap = nullptr;
+      resource->pixels = nullptr;
     }
     resource->release_callback_impl.Run(
         sync_point, lost_resource, blocking_main_thread_task_runner_);
@@ -1123,11 +1108,6 @@ SkSurface* ResourceProvider::ScopedWriteLockGr::GetSkSurface(
       !resource_->sk_surface.get() ||
       !SurfaceHasMatchingProperties(use_distance_field_text, can_use_lcd_text);
   if (create_surface) {
-    class GrContext* gr_context = resource_provider_->GrContext();
-    // TODO(alokp): Implement TestContextProvider::GrContext().
-    if (!gr_context)
-      return nullptr;
-
     resource_provider_->LazyAllocate(resource_);
 
     GrBackendTextureDesc desc;
@@ -1137,6 +1117,8 @@ SkSurface* ResourceProvider::ScopedWriteLockGr::GetSkSurface(
     desc.fConfig = ToGrPixelConfig(resource_->format);
     desc.fOrigin = kTopLeft_GrSurfaceOrigin;
     desc.fTextureHandle = resource_->gl_id;
+
+    class GrContext* gr_context = resource_provider_->GrContext();
     skia::RefPtr<GrTexture> gr_texture =
         skia::AdoptRef(gr_context->wrapBackendTexture(desc));
     if (!gr_texture)

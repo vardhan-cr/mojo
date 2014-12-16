@@ -121,6 +121,8 @@ component("base") {
     "cancelable_callback.h",
     "command_line.cc",
     "command_line.h",
+    "chromeos/memory_pressure_observer_chromeos.cc",
+    "chromeos/memory_pressure_observer_chromeos.h",
     "compiler_specific.h",
     "containers/adapters.h",
     "containers/hash_tables.h",
@@ -249,6 +251,8 @@ component("base") {
     "ios/ios_util.mm",
     "ios/scoped_critical_action.h",
     "ios/scoped_critical_action.mm",
+    "ios/weak_nsobject.h",
+    "ios/weak_nsobject.mm",
     "json/json_file_value_serializer.cc",
     "json/json_file_value_serializer.h",
     "json/json_parser.cc",
@@ -771,6 +775,12 @@ component("base") {
     "//third_party/modp_b64",
   ]
 
+  # Allow more direct string conversions on platforms with native utf8
+  # strings
+  if (is_mac || is_ios || is_chromeos) {
+    defines += [ "SYSTEM_NATIVE_UTF8" ]
+  }
+
   if (is_android) {
     sources += [
       "memory/discardable_memory_ashmem_allocator.cc",
@@ -1187,6 +1197,7 @@ test("base_unittests") {
     "i18n/time_formatting_unittest.cc",
     "i18n/timezone_unittest.cc",
     "ios/device_util_unittest.mm",
+    "ios/weak_nsobject_unittest.mm",
     "json/json_parser_unittest.cc",
     "json/json_reader_unittest.cc",
     "json/json_value_converter_unittest.cc",

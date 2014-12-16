@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "cc/layers/image_layer.h"
+#include "cc/layers/picture_image_layer.h"
 #include "cc/layers/solid_color_layer.h"
 #include "cc/test/layer_tree_pixel_resource_test.h"
 #include "cc/test/pixel_comparator.h"
@@ -137,7 +137,7 @@ class LayerTreeHostBlendingPixelTest : public LayerTreeHostPixelResourceTest {
       canvas.drawRect(
           SkRect::MakeXYWH(0, i * kLaneHeight, kLaneWidth, kLaneHeight), paint);
     }
-    scoped_refptr<ImageLayer> layer = ImageLayer::Create();
+    scoped_refptr<PictureImageLayer> layer = PictureImageLayer::Create();
     layer->SetIsDrawable(true);
     layer->SetBounds(gfx::Size(width, height));
     layer->SetBitmap(backing_store);
@@ -147,7 +147,7 @@ class LayerTreeHostBlendingPixelTest : public LayerTreeHostPixelResourceTest {
   void SetupMaskLayer(scoped_refptr<Layer> layer) {
     const int kMaskOffset = 2;
     gfx::Size bounds = layer->bounds();
-    scoped_refptr<ImageLayer> mask = ImageLayer::Create();
+    scoped_refptr<PictureImageLayer> mask = PictureImageLayer::Create();
     mask->SetIsDrawable(true);
     mask->SetIsMask(true);
     mask->SetBounds(bounds);
@@ -237,7 +237,6 @@ class LayerTreeHostBlendingPixelTest : public LayerTreeHostPixelResourceTest {
 
     CreateBlendingColorLayers(kLaneWidth, kLaneHeight, background.get(), flags);
 
-    this->impl_side_painting_ = false;
     this->force_antialiasing_ = (flags & kUseAntialiasing);
     this->force_blending_with_shaders_ = (flags & kForceShaders);
 
@@ -437,8 +436,22 @@ TEST_F(LayerTreeHostBlendingPixelTest,
 }
 
 TEST_F(LayerTreeHostBlendingPixelTest,
+       BlendingWithRenderPassShadersWithMask_GL_TextureRect) {
+  RunBlendingWithRenderPass(GL_ZERO_COPY_RECT_DRAW,
+                            FILE_PATH_LITERAL("blending_render_pass_mask.png"),
+                            kUseMasks | kForceShaders);
+}
+
+TEST_F(LayerTreeHostBlendingPixelTest,
        BlendingWithRenderPassShadersWithMaskAA_GL) {
   RunBlendingWithRenderPass(GL_ASYNC_UPLOAD_2D_DRAW,
+                            FILE_PATH_LITERAL("blending_render_pass_mask.png"),
+                            kUseMasks | kUseAntialiasing | kForceShaders);
+}
+
+TEST_F(LayerTreeHostBlendingPixelTest,
+       BlendingWithRenderPassShadersWithMaskAA_GL_TextureRect) {
+  RunBlendingWithRenderPass(GL_ZERO_COPY_RECT_DRAW,
                             FILE_PATH_LITERAL("blending_render_pass_mask.png"),
                             kUseMasks | kUseAntialiasing | kForceShaders);
 }
@@ -460,6 +473,13 @@ TEST_F(LayerTreeHostBlendingPixelTest,
 TEST_F(LayerTreeHostBlendingPixelTest,
        BlendingWithRenderPassShadersWithMaskColorMatrix_GL) {
   RunBlendingWithRenderPass(GL_ASYNC_UPLOAD_2D_DRAW,
+                            FILE_PATH_LITERAL("blending_render_pass_mask.png"),
+                            kUseMasks | kUseColorMatrix | kForceShaders);
+}
+
+TEST_F(LayerTreeHostBlendingPixelTest,
+       BlendingWithRenderPassShadersWithMaskColorMatrix_GL_TextureRect) {
+  RunBlendingWithRenderPass(GL_ZERO_COPY_RECT_DRAW,
                             FILE_PATH_LITERAL("blending_render_pass_mask.png"),
                             kUseMasks | kUseColorMatrix | kForceShaders);
 }

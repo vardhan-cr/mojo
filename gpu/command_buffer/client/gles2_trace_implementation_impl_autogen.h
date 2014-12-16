@@ -46,9 +46,20 @@ void GLES2TraceImplementation::BindRenderbuffer(GLenum target,
   gl_->BindRenderbuffer(target, renderbuffer);
 }
 
+void GLES2TraceImplementation::BindSampler(GLuint unit, GLuint sampler) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::BindSampler");
+  gl_->BindSampler(unit, sampler);
+}
+
 void GLES2TraceImplementation::BindTexture(GLenum target, GLuint texture) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::BindTexture");
   gl_->BindTexture(target, texture);
+}
+
+void GLES2TraceImplementation::BindTransformFeedback(GLenum target,
+                                                     GLuint transformfeedback) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::BindTransformFeedback");
+  gl_->BindTransformFeedback(target, transformfeedback);
 }
 
 void GLES2TraceImplementation::BlendColor(GLclampf red,
@@ -240,6 +251,12 @@ void GLES2TraceImplementation::DeleteRenderbuffers(
   gl_->DeleteRenderbuffers(n, renderbuffers);
 }
 
+void GLES2TraceImplementation::DeleteSamplers(GLsizei n,
+                                              const GLuint* samplers) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::DeleteSamplers");
+  gl_->DeleteSamplers(n, samplers);
+}
+
 void GLES2TraceImplementation::DeleteShader(GLuint shader) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::DeleteShader");
   gl_->DeleteShader(shader);
@@ -249,6 +266,12 @@ void GLES2TraceImplementation::DeleteTextures(GLsizei n,
                                               const GLuint* textures) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::DeleteTextures");
   gl_->DeleteTextures(n, textures);
+}
+
+void GLES2TraceImplementation::DeleteTransformFeedbacks(GLsizei n,
+                                                        const GLuint* ids) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::DeleteTransformFeedbacks");
+  gl_->DeleteTransformFeedbacks(n, ids);
 }
 
 void GLES2TraceImplementation::DepthFunc(GLenum func) {
@@ -371,9 +394,19 @@ void GLES2TraceImplementation::GenRenderbuffers(GLsizei n,
   gl_->GenRenderbuffers(n, renderbuffers);
 }
 
+void GLES2TraceImplementation::GenSamplers(GLsizei n, GLuint* samplers) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GenSamplers");
+  gl_->GenSamplers(n, samplers);
+}
+
 void GLES2TraceImplementation::GenTextures(GLsizei n, GLuint* textures) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GenTextures");
   gl_->GenTextures(n, textures);
+}
+
+void GLES2TraceImplementation::GenTransformFeedbacks(GLsizei n, GLuint* ids) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GenTransformFeedbacks");
+  gl_->GenTransformFeedbacks(n, ids);
 }
 
 void GLES2TraceImplementation::GetActiveAttrib(GLuint program,
@@ -479,6 +512,20 @@ void GLES2TraceImplementation::GetRenderbufferParameteriv(GLenum target,
   TRACE_EVENT_BINARY_EFFICIENT0("gpu",
                                 "GLES2Trace::GetRenderbufferParameteriv");
   gl_->GetRenderbufferParameteriv(target, pname, params);
+}
+
+void GLES2TraceImplementation::GetSamplerParameterfv(GLuint sampler,
+                                                     GLenum pname,
+                                                     GLfloat* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetSamplerParameterfv");
+  gl_->GetSamplerParameterfv(sampler, pname, params);
+}
+
+void GLES2TraceImplementation::GetSamplerParameteriv(GLuint sampler,
+                                                     GLenum pname,
+                                                     GLint* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetSamplerParameteriv");
+  gl_->GetSamplerParameteriv(sampler, pname, params);
 }
 
 void GLES2TraceImplementation::GetShaderiv(GLuint shader,
@@ -623,6 +670,11 @@ GLboolean GLES2TraceImplementation::IsRenderbuffer(GLuint renderbuffer) {
   return gl_->IsRenderbuffer(renderbuffer);
 }
 
+GLboolean GLES2TraceImplementation::IsSampler(GLuint sampler) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::IsSampler");
+  return gl_->IsSampler(sampler);
+}
+
 GLboolean GLES2TraceImplementation::IsShader(GLuint shader) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::IsShader");
   return gl_->IsShader(shader);
@@ -633,6 +685,12 @@ GLboolean GLES2TraceImplementation::IsTexture(GLuint texture) {
   return gl_->IsTexture(texture);
 }
 
+GLboolean GLES2TraceImplementation::IsTransformFeedback(
+    GLuint transformfeedback) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::IsTransformFeedback");
+  return gl_->IsTransformFeedback(transformfeedback);
+}
+
 void GLES2TraceImplementation::LineWidth(GLfloat width) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::LineWidth");
   gl_->LineWidth(width);
@@ -641,6 +699,11 @@ void GLES2TraceImplementation::LineWidth(GLfloat width) {
 void GLES2TraceImplementation::LinkProgram(GLuint program) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::LinkProgram");
   gl_->LinkProgram(program);
+}
+
+void GLES2TraceImplementation::PauseTransformFeedback() {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::PauseTransformFeedback");
+  gl_->PauseTransformFeedback();
 }
 
 void GLES2TraceImplementation::PixelStorei(GLenum pname, GLint param) {
@@ -682,10 +745,43 @@ void GLES2TraceImplementation::RenderbufferStorage(GLenum target,
   gl_->RenderbufferStorage(target, internalformat, width, height);
 }
 
+void GLES2TraceImplementation::ResumeTransformFeedback() {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::ResumeTransformFeedback");
+  gl_->ResumeTransformFeedback();
+}
+
 void GLES2TraceImplementation::SampleCoverage(GLclampf value,
                                               GLboolean invert) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SampleCoverage");
   gl_->SampleCoverage(value, invert);
+}
+
+void GLES2TraceImplementation::SamplerParameterf(GLuint sampler,
+                                                 GLenum pname,
+                                                 GLfloat param) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SamplerParameterf");
+  gl_->SamplerParameterf(sampler, pname, param);
+}
+
+void GLES2TraceImplementation::SamplerParameterfv(GLuint sampler,
+                                                  GLenum pname,
+                                                  const GLfloat* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SamplerParameterfv");
+  gl_->SamplerParameterfv(sampler, pname, params);
+}
+
+void GLES2TraceImplementation::SamplerParameteri(GLuint sampler,
+                                                 GLenum pname,
+                                                 GLint param) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SamplerParameteri");
+  gl_->SamplerParameteri(sampler, pname, param);
+}
+
+void GLES2TraceImplementation::SamplerParameteriv(GLuint sampler,
+                                                  GLenum pname,
+                                                  const GLint* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::SamplerParameteriv");
+  gl_->SamplerParameteriv(sampler, pname, params);
 }
 
 void GLES2TraceImplementation::Scissor(GLint x,
@@ -1268,9 +1364,19 @@ void GLES2TraceImplementation::BeginQueryEXT(GLenum target, GLuint id) {
   gl_->BeginQueryEXT(target, id);
 }
 
+void GLES2TraceImplementation::BeginTransformFeedback(GLenum primitivemode) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::BeginTransformFeedback");
+  gl_->BeginTransformFeedback(primitivemode);
+}
+
 void GLES2TraceImplementation::EndQueryEXT(GLenum target) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::EndQueryEXT");
   gl_->EndQueryEXT(target);
+}
+
+void GLES2TraceImplementation::EndTransformFeedback() {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::EndTransformFeedback");
+  gl_->EndTransformFeedback();
 }
 
 void GLES2TraceImplementation::GetQueryivEXT(GLenum target,

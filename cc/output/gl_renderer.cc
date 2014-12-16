@@ -154,8 +154,6 @@ class GLRenderer::ScopedUseGrContext {
  public:
   static scoped_ptr<ScopedUseGrContext> Create(GLRenderer* renderer,
                                                DrawingFrame* frame) {
-    if (!renderer->output_surface_->context_provider()->GrContext())
-      return nullptr;
     return make_scoped_ptr(new ScopedUseGrContext(renderer, frame));
   }
 
@@ -1627,7 +1625,8 @@ void GLRenderer::DrawContentQuadAA(const DrawingFrame* frame,
   SetupQuadForAntialiasing(device_transform, quad, &local_quad, edge);
 
   ResourceProvider::ScopedSamplerGL quad_resource_lock(
-      resource_provider_, resource_id, GL_LINEAR);
+      resource_provider_, resource_id,
+      quad->nearest_neighbor ? GL_NEAREST : GL_LINEAR);
   SamplerType sampler =
       SamplerTypeFromTextureTarget(quad_resource_lock.target());
 
@@ -1711,7 +1710,8 @@ void GLRenderer::DrawContentQuadNoAA(const DrawingFrame* frame,
 
   bool scaled = (tex_to_geom_scale_x != 1.f || tex_to_geom_scale_y != 1.f);
   GLenum filter =
-      (scaled || !quad->quadTransform().IsIdentityOrIntegerTranslation())
+      (scaled || !quad->quadTransform().IsIdentityOrIntegerTranslation()) &&
+              !quad->nearest_neighbor
           ? GL_LINEAR
           : GL_NEAREST;
 

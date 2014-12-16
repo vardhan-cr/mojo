@@ -431,6 +431,8 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   bool IsVertexArrayReservedId(GLuint id) { return false; }
   bool IsProgramReservedId(GLuint id) { return false; }
   bool IsValuebufferReservedId(GLuint id) { return false; }
+  bool IsSamplerReservedId(GLuint id) { return false; }
+  bool IsTransformFeedbackReservedId(GLuint id) { return false; }
 
   void BindBufferHelper(GLenum target, GLuint buffer);
   void BindFramebufferHelper(GLenum target, GLuint framebuffer);
@@ -453,6 +455,8 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   void GenVertexArraysOESHelper(GLsizei n, const GLuint* arrays);
   void GenQueriesEXTHelper(GLsizei n, const GLuint* queries);
   void GenValuebuffersCHROMIUMHelper(GLsizei n, const GLuint* valuebuffers);
+  void GenSamplersHelper(GLsizei n, const GLuint* samplers);
+  void GenTransformFeedbacksHelper(GLsizei n, const GLuint* transformfeedbacks);
 
   void DeleteBuffersHelper(GLsizei n, const GLuint* buffers);
   void DeleteFramebuffersHelper(GLsizei n, const GLuint* framebuffers);
@@ -463,6 +467,9 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   void DeleteQueriesEXTHelper(GLsizei n, const GLuint* queries);
   void DeleteVertexArraysOESHelper(GLsizei n, const GLuint* arrays);
   void DeleteValuebuffersCHROMIUMHelper(GLsizei n, const GLuint* valuebuffers);
+  void DeleteSamplersHelper(GLsizei n, const GLuint* samplers);
+  void DeleteTransformFeedbacksHelper(
+      GLsizei n, const GLuint* transformfeedbacks);
 
   void DeleteBuffersStub(GLsizei n, const GLuint* buffers);
   void DeleteFramebuffersStub(GLsizei n, const GLuint* framebuffers);
@@ -472,6 +479,9 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   void DeleteShaderStub(GLsizei n, const GLuint* shaders);
   void DeleteVertexArraysOESStub(GLsizei n, const GLuint* arrays);
   void DeleteValuebuffersCHROMIUMStub(GLsizei n, const GLuint* valuebuffers);
+  void DeleteSamplersStub(GLsizei n, const GLuint* samplers);
+  void DeleteTransformFeedbacksStub(
+      GLsizei n, const GLuint* transformfeedbacks);
 
   void BufferDataHelper(
       GLenum target, GLsizeiptr size, const void* data, GLenum usage);
@@ -520,6 +530,10 @@ class GLES2_IMPL_EXPORT GLES2Implementation
       GLenum target, GLenum format, GLenum pname, GLsizei bufSize,
       GLint* params);
   bool GetProgramivHelper(GLuint program, GLenum pname, GLint* params);
+  bool GetSamplerParameterfvHelper(
+      GLuint sampler, GLenum pname, GLfloat* params);
+  bool GetSamplerParameterivHelper(
+      GLuint sampler, GLenum pname, GLint* params);
   bool GetRenderbufferParameterivHelper(
       GLenum target, GLenum pname, GLint* params);
   bool GetShaderivHelper(GLuint shader, GLenum pname, GLint* params);

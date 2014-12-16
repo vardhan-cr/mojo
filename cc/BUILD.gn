@@ -581,6 +581,8 @@ source_set("test_support") {
     "test/fake_tile_manager_client.h",
     "test/fake_ui_resource_layer_tree_host_impl.cc",
     "test/fake_ui_resource_layer_tree_host_impl.h",
+    "test/failure_output_surface.cc",
+    "test/failure_output_surface.h",
     "test/geometry_test_utils.cc",
     "test/geometry_test_utils.h",
     "test/test_in_process_context_provider.cc",

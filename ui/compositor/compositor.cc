@@ -108,7 +108,7 @@ Compositor::Compositor(gfx::AcceleratedWidget widget,
       draw_on_compositing_end_(false),
       swap_state_(SWAP_NONE),
       layer_animator_collection_(this),
-      schedule_draw_factory_(this) {
+      weak_ptr_factory_(this) {
   root_web_layer_ = cc::Layer::Create();
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
@@ -210,8 +210,25 @@ void Compositor::ScheduleDraw() {
     defer_draw_scheduling_ = true;
     task_runner_->PostTask(
         FROM_HERE,
-        base::Bind(&Compositor::Draw, schedule_draw_factory_.GetWeakPtr()));
+        base::Bind(&Compositor::Draw, weak_ptr_factory_.GetWeakPtr()));
   }
+}
+
+void Compositor::DidInitializeOutputSurface() {
+  num_failed_recreate_attempts_ = 0;
+}
+
+void Compositor::DidFailToInitializeOutputSurface() {
+  num_failed_recreate_attempts_++;
+
+  // Tolerate a certain number of recreation failures to work around races
+  // in the output-surface-lost machinery.
+  if (num_failed_recreate_attempts_ >= MAX_OUTPUT_SURFACE_RETRIES)
+    LOG(FATAL) << "Failed to create a fallback OutputSurface.";
+
+  base::MessageLoop::current()->PostTask(
+      FROM_HERE, base::Bind(&Compositor::RequestNewOutputSurface,
+                            weak_ptr_factory_.GetWeakPtr()));
 }
 
 void Compositor::SetRootLayer(Layer* root_layer) {
@@ -367,9 +384,11 @@ void Compositor::Layout() {
   disable_schedule_composite_ = false;
 }
 
-void Compositor::RequestNewOutputSurface(bool fallback) {
-  host_->SetOutputSurface(
-      context_factory_->CreateOutputSurface(this, fallback));
+void Compositor::RequestNewOutputSurface() {
+  bool fallback =
+      num_failed_recreate_attempts_ >= OUTPUT_SURFACE_RETRIES_BEFORE_FALLBACK;
+  context_factory_->CreateOutputSurface(weak_ptr_factory_.GetWeakPtr().get(),
+                                        fallback);
 }
 
 void Compositor::DidCommit() {

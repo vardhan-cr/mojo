@@ -72,6 +72,7 @@ struct TileQuadState {
   Size texture_size;
   bool swizzle_contents;
   uint32 resource_id;
+  bool nearest_neighbor;
 };
 
 struct StreamVideoQuadState {};

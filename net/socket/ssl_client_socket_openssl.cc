@@ -788,8 +788,8 @@ int SSLClientSocketOpenSSL::Init() {
   // disabled by default. Note that !SHA256 and !SHA384 only remove HMAC-SHA256
   // and HMAC-SHA384 cipher suites, not GCM cipher suites with SHA256 or SHA384
   // as the handshake hash.
-  std::string command("DEFAULT:!NULL:!aNULL:!IDEA:!FZA:!SRP:!SHA256:!SHA384:"
-                      "!aECDH:!AESGCM+AES256");
+  std::string command(
+      "DEFAULT:!NULL:!aNULL:!SHA256:!SHA384:!aECDH:!AESGCM+AES256:!aPSK");
   // Walk through all the installed ciphers, seeing if any need to be
   // appended to the cipher removal |command|.
   for (size_t i = 0; i < sk_SSL_CIPHER_num(ciphers); ++i) {
@@ -838,8 +838,20 @@ int SSLClientSocketOpenSSL::Init() {
   }
 
   if (!ssl_config_.next_protos.empty()) {
+    // Get list of ciphers that are enabled.
+    STACK_OF(SSL_CIPHER)* enabled_ciphers = SSL_get_ciphers(ssl_);
+    DCHECK(enabled_ciphers);
+    std::vector<uint16> enabled_ciphers_vector;
+    for (size_t i = 0; i < sk_SSL_CIPHER_num(enabled_ciphers); ++i) {
+      const SSL_CIPHER* cipher = sk_SSL_CIPHER_value(enabled_ciphers, i);
+      const uint16 id = static_cast<uint16>(SSL_CIPHER_get_id(cipher));
+      enabled_ciphers_vector.push_back(id);
+    }
+
     std::vector<uint8_t> wire_protos =
-        SerializeNextProtos(ssl_config_.next_protos);
+        SerializeNextProtos(ssl_config_.next_protos,
+                            HasCipherAdequateForHTTP2(enabled_ciphers_vector) &&
+                                IsTLSVersionAdequateForHTTP2(ssl_config_));
     SSL_set_alpn_protos(ssl_, wire_protos.empty() ? NULL : &wire_protos[0],
                         wire_protos.size());
   }
@@ -1131,8 +1143,17 @@ int SSLClientSocketOpenSSL::DoVerifyCertComplete(int result) {
     }
   }
 
-  if (result == OK)
+  if (result == OK) {
     RecordConnectionTypeMetrics(GetNetSSLVersion(ssl_));
+
+    if (SSL_session_reused(ssl_)) {
+      // Record whether or not the server tried to resume a session for a
+      // different version. See https://crbug.com/441456.
+      UMA_HISTOGRAM_BOOLEAN(
+          "Net.SSLSessionVersionMatch",
+          SSL_version(ssl_) == SSL_get_session(ssl_)->ssl_version);
+    }
+  }
 
   const CertStatus cert_status = server_cert_verify_result_.cert_status;
   if (transport_security_state_ &&
@@ -1782,11 +1803,10 @@ int SSLClientSocketOpenSSL::SelectNextProtoCallback(unsigned char** out,
 
   // For each protocol in server preference order, see if we support it.
   for (unsigned int i = 0; i < inlen; i += in[i] + 1) {
-    for (std::vector<std::string>::const_iterator
-             j = ssl_config_.next_protos.begin();
-         j != ssl_config_.next_protos.end(); ++j) {
-      if (in[i] == j->size() &&
-          memcmp(&in[i + 1], j->data(), in[i]) == 0) {
+    for (NextProto next_proto : ssl_config_.next_protos) {
+      const std::string proto = NextProtoToString(next_proto);
+      if (in[i] == proto.size() &&
+          memcmp(&in[i + 1], proto.data(), in[i]) == 0) {
         // We found a match.
         *out = const_cast<unsigned char*>(in) + i + 1;
         *outlen = in[i];
@@ -1800,9 +1820,9 @@ int SSLClientSocketOpenSSL::SelectNextProtoCallback(unsigned char** out,
 
   // If we didn't find a protocol, we select the first one from our list.
   if (npn_status_ == kNextProtoNoOverlap) {
-    *out = reinterpret_cast<uint8*>(const_cast<char*>(
-        ssl_config_.next_protos[0].data()));
-    *outlen = ssl_config_.next_protos[0].size();
+    const std::string proto = NextProtoToString(ssl_config_.next_protos[0]);
+    *out = reinterpret_cast<uint8*>(const_cast<char*>(proto.data()));
+    *outlen = proto.size();
   }
 
   npn_proto_.assign(reinterpret_cast<const char*>(*out), *outlen);

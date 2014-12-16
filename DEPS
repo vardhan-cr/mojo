@@ -22,19 +22,19 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '3054be16dfdb0d06233770cbfc338958edef44ea',
+  'skia_revision': '912ed6ebb8e2813e72ed7a3dec3b6710ba7e7405',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': 'a2359f44508afdb9abe8cb89cdfb02a7b48095b2',
+  'v8_revision': '74869d9a9122e26952e517bcc7ad990078644047',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  "angle_revision": "16545669136028420f67ac496c45c2e9a32ed5a9",
+  "angle_revision": "797ff4c0ecf1b4950f6948175ea38ccbe888de7f",
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '05dd6a24723170d7c6ff35b537ee02947f619891',
+  'buildtools_revision': '4995faa4a7ad968f1fa1917c26edd5cea295582f',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
@@ -78,7 +78,7 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '53ecf0f68b27a004bef5526553b8e5f6c235b80b',
+   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + 'b0932a04c79198b0fd44282304eb48a5c1850ea3',
 
   'src/third_party/libc++/trunk':
    Var('chromium_git') + '/chromium/llvm-project/libcxx.git' + '@' +  Var('libcxx_revision'),
@@ -152,7 +152,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + '4f723e2a5fa5b7b8a198072ac19b92344be2b271',
+     Var('chromium_git') + '/android_tools.git' + '@' + '8fe116f93f350dcf73c6fe70db893985bf1b91d5',
 
     'src/third_party/freetype':
        Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'a2b9955b49034a51dfbc8bf9f4e9d312149cecac',

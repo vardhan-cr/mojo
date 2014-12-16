@@ -109,7 +109,7 @@ class TileManagerTilePriorityQueueTest : public testing::Test {
     if (old_pending_root) {
       pending_layer.reset(
           static_cast<FakePictureLayerImpl*>(old_pending_root.release()));
-      pending_layer->SetRasterSource(pile);
+      pending_layer->SetRasterSourceOnPending(pile, Region());
     } else {
       pending_layer =
           FakePictureLayerImpl::CreateWithRasterSource(pending_tree, id_, pile);
@@ -122,14 +122,6 @@ class TileManagerTilePriorityQueueTest : public testing::Test {
     pending_layer_ = static_cast<FakePictureLayerImpl*>(
         host_impl_.pending_tree()->LayerById(id_));
     pending_layer_->DoPostCommitInitializationIfNeeded();
-  }
-
-  void CreateHighLowResAndSetAllTilesVisible() {
-    // Active layer must get updated first so pending layer can share from it.
-    active_layer_->CreateDefaultTilingsAndTiles();
-    active_layer_->SetAllTilesVisible();
-    pending_layer_->CreateDefaultTilingsAndTiles();
-    pending_layer_->SetAllTilesVisible();
   }
 
   TileManager* tile_manager() { return host_impl_.tile_manager(); }
@@ -195,10 +187,8 @@ TEST_F(TileManagerTilePriorityQueueTest, RasterTilePriorityQueue) {
 
   // Invalidate the pending tree.
   pending_layer_->set_invalidation(invalidation);
-  pending_layer_->HighResTiling()->UpdateTilesToCurrentRasterSource(
-      pending_layer_->raster_source(), invalidation, gfx::Size(1000, 1000));
-  pending_layer_->LowResTiling()->UpdateTilesToCurrentRasterSource(
-      pending_layer_->raster_source(), invalidation, gfx::Size(1000, 1000));
+  pending_layer_->HighResTiling()->Invalidate(invalidation);
+  pending_layer_->LowResTiling()->Invalidate(invalidation);
 
   active_layer_->ResetAllTilesPriorities();
   pending_layer_->ResetAllTilesPriorities();
@@ -445,10 +435,8 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
 
   // Invalidate the pending tree.
   pending_layer_->set_invalidation(invalidation);
-  pending_layer_->HighResTiling()->UpdateTilesToCurrentRasterSource(
-      pending_layer_->raster_source(), invalidation, gfx::Size(1000, 1000));
-  pending_layer_->LowResTiling()->UpdateTilesToCurrentRasterSource(
-      pending_layer_->raster_source(), invalidation, gfx::Size(1000, 1000));
+  pending_layer_->HighResTiling()->Invalidate(invalidation);
+  pending_layer_->LowResTiling()->Invalidate(invalidation);
 
   active_layer_->ResetAllTilesPriorities();
   pending_layer_->ResetAllTilesPriorities();
@@ -495,6 +483,8 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
   // Here we expect to get increasing ACTIVE_TREE priority_bin.
   queue.Reset();
   host_impl_.BuildEvictionQueue(&queue, SMOOTHNESS_TAKES_PRIORITY);
+  int distance_increasing = 0;
+  int distance_decreasing = 0;
   while (!queue.IsEmpty()) {
     Tile* tile = queue.Top();
     EXPECT_TRUE(tile);
@@ -511,8 +501,11 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
                 tile->required_for_activation());
       if (last_tile->required_for_activation() ==
           tile->required_for_activation()) {
-        EXPECT_GE(last_tile->priority(ACTIVE_TREE).distance_to_visible,
-                  tile->priority(ACTIVE_TREE).distance_to_visible);
+        if (last_tile->priority(ACTIVE_TREE).distance_to_visible >=
+            tile->priority(ACTIVE_TREE).distance_to_visible)
+          ++distance_decreasing;
+        else
+          ++distance_increasing;
       }
     }
 
@@ -522,6 +515,8 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     queue.Pop();
   }
 
+  EXPECT_EQ(3, distance_increasing);
+  EXPECT_EQ(16, distance_decreasing);
   EXPECT_EQ(tile_count, smoothness_tiles.size());
   EXPECT_EQ(all_tiles, smoothness_tiles);
 
@@ -530,6 +525,8 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
   // Here we expect to get increasing PENDING_TREE priority_bin.
   queue.Reset();
   host_impl_.BuildEvictionQueue(&queue, NEW_CONTENT_TAKES_PRIORITY);
+  distance_decreasing = 0;
+  distance_increasing = 0;
   while (!queue.IsEmpty()) {
     Tile* tile = queue.Top();
     EXPECT_TRUE(tile);
@@ -545,8 +542,11 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
                 tile->required_for_activation());
       if (last_tile->required_for_activation() ==
           tile->required_for_activation()) {
-        EXPECT_GE(last_tile->priority(PENDING_TREE).distance_to_visible,
-                  tile->priority(PENDING_TREE).distance_to_visible);
+        if (last_tile->priority(PENDING_TREE).distance_to_visible >=
+            tile->priority(PENDING_TREE).distance_to_visible)
+          ++distance_decreasing;
+        else
+          ++distance_increasing;
       }
     }
 
@@ -555,6 +555,8 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     queue.Pop();
   }
 
+  EXPECT_EQ(3, distance_increasing);
+  EXPECT_EQ(16, distance_decreasing);
   EXPECT_EQ(tile_count, new_content_tiles.size());
   EXPECT_EQ(all_tiles, new_content_tiles);
 }

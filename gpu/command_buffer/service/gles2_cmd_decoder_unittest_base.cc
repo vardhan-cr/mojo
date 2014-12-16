@@ -90,7 +90,8 @@ GLES2DecoderTestBase::GLES2DecoderTestBase()
       client_framebuffer_id_(101),
       client_program_id_(102),
       client_renderbuffer_id_(103),
-      client_shader_id_(104),
+      client_sampler_id_(104),
+      client_shader_id_(105),
       client_texture_id_(106),
       client_element_buffer_id_(107),
       client_vertex_shader_id_(121),
@@ -98,6 +99,7 @@ GLES2DecoderTestBase::GLES2DecoderTestBase()
       client_query_id_(123),
       client_vertexarray_id_(124),
       client_valuebuffer_id_(125),
+      client_transformfeedback_id_(126),
       service_renderbuffer_id_(0),
       service_renderbuffer_valid_(false),
       ignore_cached_state_for_test_(GetParam()),
@@ -412,6 +414,24 @@ void GLES2DecoderTestBase::InitDecoderWithCommandLine(
 
   DoCreateProgram(client_program_id_, kServiceProgramId);
   DoCreateShader(GL_VERTEX_SHADER, client_shader_id_, kServiceShaderId);
+
+  // Unsafe commands.
+  bool reset_unsafe_es3_apis_enabled = false;
+  if (!decoder_->unsafe_es3_apis_enabled()) {
+    decoder_->set_unsafe_es3_apis_enabled(true);
+    reset_unsafe_es3_apis_enabled = true;
+  }
+  EXPECT_CALL(*gl_, GenSamplers(_, _))
+      .WillOnce(SetArgumentPointee<1>(kServiceSamplerId))
+      .RetiresOnSaturation();
+  GenHelper<cmds::GenSamplersImmediate>(client_sampler_id_);
+  EXPECT_CALL(*gl_, GenTransformFeedbacks(_, _))
+      .WillOnce(SetArgumentPointee<1>(kServiceTransformFeedbackId))
+      .RetiresOnSaturation();
+  GenHelper<cmds::GenTransformFeedbacksImmediate>(client_transformfeedback_id_);
+  if (reset_unsafe_es3_apis_enabled) {
+    decoder_->set_unsafe_es3_apis_enabled(false);
+  }
 
   EXPECT_EQ(GL_NO_ERROR, GetGLError());
 }
@@ -1245,12 +1265,14 @@ const GLuint GLES2DecoderTestBase::kServiceFixedAttribBufferId;
 const GLuint GLES2DecoderTestBase::kServiceBufferId;
 const GLuint GLES2DecoderTestBase::kServiceFramebufferId;
 const GLuint GLES2DecoderTestBase::kServiceRenderbufferId;
+const GLuint GLES2DecoderTestBase::kServiceSamplerId;
 const GLuint GLES2DecoderTestBase::kServiceTextureId;
 const GLuint GLES2DecoderTestBase::kServiceProgramId;
 const GLuint GLES2DecoderTestBase::kServiceShaderId;
 const GLuint GLES2DecoderTestBase::kServiceElementBufferId;
 const GLuint GLES2DecoderTestBase::kServiceQueryId;
 const GLuint GLES2DecoderTestBase::kServiceVertexArrayId;
+const GLuint GLES2DecoderTestBase::kServiceTransformFeedbackId;
 
 const int32 GLES2DecoderTestBase::kSharedMemoryId;
 const size_t GLES2DecoderTestBase::kSharedBufferSize;

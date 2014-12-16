@@ -16,7 +16,7 @@ group("python") {
 # GYP version: mojo/mojo.gyp:mojo_python_embedder
 python_binary_module("embedder") {
   python_base_module = "mojo"
-  sources = [
+  cython_sources = [
     "system/mojo/embedder.pyx",
   ]
   deps = [
@@ -38,7 +38,7 @@ copy("tests_module") {
 
 python_binary_module("validation_util") {
   python_base_module = "mojo/tests"
-  sources = [
+  cython_sources = [
     "system/mojo/tests/validation_util.pyx",
   ]
   deps = [

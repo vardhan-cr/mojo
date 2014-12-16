@@ -566,6 +566,8 @@ static_library("http_server") {
     "server/http_server_response_info.h",
     "server/web_socket.cc",
     "server/web_socket.h",
+    "server/web_socket_encoder.cc",
+    "server/web_socket_encoder.h",
   ]
   configs += [
     "//build/config/compiler:wexit_time_destructors",
@@ -677,6 +679,8 @@ source_set("test_support") {
     "test/spawned_test_server/spawner_communicator.h",
     "test/url_request/url_request_failed_job.cc",
     "test/url_request/url_request_failed_job.h",
+    "test/url_request/url_request_mock_data_job.cc",
+    "test/url_request/url_request_mock_data_job.h",
     "test/url_request/url_request_mock_http_job.cc",
     "test/url_request/url_request_mock_http_job.h",
     "url_request/test_url_fetcher_factory.cc",
@@ -1247,6 +1251,10 @@ if (!is_android && !is_win && !is_mac) {
 
     if (!enable_websockets) {
       sources -= [
+        "server/http_connection_unittest.cc",
+        "server/http_server_response_info_unittest.cc",
+        "server/http_server_unittest.cc",
+        "server/web_socket_encoder_unittest.cc",
         "websockets/websocket_basic_stream_test.cc",
         "websockets/websocket_channel_test.cc",
         "websockets/websocket_deflate_predictor_impl_test.cc",
@@ -1263,6 +1271,7 @@ if (!is_android && !is_win && !is_mac) {
         "websockets/websocket_test_util.cc",
         "websockets/websocket_test_util.h",
       ]
+      deps -= [ ":http_server" ]
     }
 
     if (disable_file_support) {

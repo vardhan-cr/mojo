@@ -209,10 +209,23 @@ class NET_EXPORT SSLClientSocket : public SSLSocket {
       const SSLConfig& ssl_config,
       ChannelIDService* channel_id_service);
 
+  // Determine if there is at least one enabled cipher suite that satisfies
+  // Section 9.2 of the HTTP/2 specification.  Note that the server might still
+  // pick an inadequate cipher suite.
+  static bool HasCipherAdequateForHTTP2(
+      const std::vector<uint16>& cipher_suites);
+
+  // Determine if the TLS version required by Section 9.2 of the HTTP/2
+  // specification is enabled.  Note that the server might still pick an
+  // inadequate TLS version.
+  static bool IsTLSVersionAdequateForHTTP2(const SSLConfig& ssl_config);
+
   // Serializes |next_protos| in the wire format for ALPN: protocols are listed
-  // in order, each prefixed by a one-byte length.
+  // in order, each prefixed by a one-byte length.  Any HTTP/2 protocols in
+  // |next_protos| are ignored if |can_advertise_http2| is false.
   static std::vector<uint8_t> SerializeNextProtos(
-      const std::vector<std::string>& next_protos);
+      const NextProtoVector& next_protos,
+      bool can_advertise_http2);
 
   // For unit testing only.
   // Returns the unverified certificate chain as presented by server.
@@ -222,6 +235,7 @@ class NET_EXPORT SSLClientSocket : public SSLSocket {
       const = 0;
 
  private:
+  FRIEND_TEST_ALL_PREFIXES(SSLClientSocket, SerializeNextProtos);
   // For signed_cert_timestamps_received_ and stapled_ocsp_response_received_.
   FRIEND_TEST_ALL_PREFIXES(SSLClientSocketTest,
                            ConnectSignedCertTimestampsEnabledTLSExtension);

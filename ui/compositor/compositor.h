@@ -73,7 +73,7 @@ class COMPOSITOR_EXPORT ContextFactory {
       Compositor* compositor, bool software_fallback) = 0;
 
   // Creates a reflector that copies the content of the |mirrored_compositor|
-  // onto |mirroing_layer|.
+  // onto |mirroring_layer|.
   virtual scoped_refptr<Reflector> CreateReflector(
       Compositor* mirrored_compositor,
       Layer* mirroring_layer) = 0;
@@ -249,8 +249,9 @@ class COMPOSITOR_EXPORT Compositor
   void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
                            float page_scale,
                            float top_controls_delta) override {}
-  void RequestNewOutputSurface(bool fallback) override;
-  void DidInitializeOutputSurface() override {}
+  void RequestNewOutputSurface() override;
+  void DidInitializeOutputSurface() override;
+  void DidFailToInitializeOutputSurface() override;
   void WillCommit() override {}
   void DidCommit() override;
   void DidCommitAndDrawFrame() override;
@@ -286,6 +287,10 @@ class COMPOSITOR_EXPORT Compositor
   friend class base::RefCounted<Compositor>;
   friend class CompositorLock;
 
+  enum {
+    OUTPUT_SURFACE_RETRIES_BEFORE_FALLBACK = 4,
+    MAX_OUTPUT_SURFACE_RETRIES = 5,
+  };
   // Called by CompositorLock.
   void UnlockCompositor();
 
@@ -323,6 +328,8 @@ class COMPOSITOR_EXPORT Compositor
   int last_started_frame_;
   int last_ended_frame_;
 
+  int num_failed_recreate_attempts_;
+
   bool disable_schedule_composite_;
 
   CompositorLock* compositor_lock_;
@@ -338,7 +345,7 @@ class COMPOSITOR_EXPORT Compositor
 
   LayerAnimatorCollection layer_animator_collection_;
 
-  base::WeakPtrFactory<Compositor> schedule_draw_factory_;
+  base::WeakPtrFactory<Compositor> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(Compositor);
 };
