@@ -154,6 +154,9 @@ deps_os = {
     'src/third_party/android_tools':
      Var('chromium_git') + '/android_tools.git' + '@' + '8fe116f93f350dcf73c6fe70db893985bf1b91d5',
 
+    'src/third_party/appurify-python/src':
+     Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',
+
     'src/third_party/freetype':
        Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'a2b9955b49034a51dfbc8bf9f4e9d312149cecac',
   },
