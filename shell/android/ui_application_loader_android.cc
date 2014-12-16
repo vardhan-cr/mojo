@@ -2,22 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/ui_application_loader_android.h"
+#include "shell/android/ui_application_loader_android.h"
 
 #include "base/bind.h"
+#include "base/message_loop/message_loop.h"
 #include "mojo/application_manager/application_manager.h"
-#include "shell/context.h"
 
 namespace mojo {
 
 UIApplicationLoader::UIApplicationLoader(
     scoped_ptr<ApplicationLoader> real_loader,
-    shell::Context* context)
-    : loader_(real_loader.Pass()), context_(context) {
+    base::MessageLoop* ui_message_loop)
+    : loader_(real_loader.Pass()), ui_message_loop_(ui_message_loop) {
 }
 
 UIApplicationLoader::~UIApplicationLoader() {
-  context_->ui_loop()->PostTask(
+  ui_message_loop_->PostTask(
       FROM_HERE, base::Bind(&UIApplicationLoader::ShutdownOnUIThread,
                             base::Unretained(this)));
 }
@@ -27,7 +27,7 @@ void UIApplicationLoader::Load(ApplicationManager* manager,
                                ScopedMessagePipeHandle shell_handle,
                                LoadCallback callback) {
   DCHECK(shell_handle.is_valid());
-  context_->ui_loop()->PostTask(
+  ui_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(&UIApplicationLoader::LoadOnUIThread, base::Unretained(this),
                  manager, url, base::Passed(&shell_handle)));
@@ -35,7 +35,7 @@ void UIApplicationLoader::Load(ApplicationManager* manager,
 
 void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
                                              const GURL& url) {
-  context_->ui_loop()->PostTask(
+  ui_message_loop_->PostTask(
       FROM_HERE, base::Bind(&UIApplicationLoader::OnApplicationErrorOnUIThread,
                             base::Unretained(this), manager, url));
 }

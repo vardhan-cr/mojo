@@ -8,9 +8,11 @@
 #include <jni.h>
 
 namespace mojo {
+namespace shell {
 
 bool RegisterMojoMain(JNIEnv* env);
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_ANDROID_MOJO_MAIN_H_

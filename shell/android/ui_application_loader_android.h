@@ -2,20 +2,20 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_UI_APPLICATION_LOADER_ANDROID_H_
-#define SHELL_UI_APPLICATION_LOADER_ANDROID_H_
+#ifndef SHELL_ANDROID_UI_APPLICATION_LOADER_ANDROID_H_
+#define SHELL_ANDROID_UI_APPLICATION_LOADER_ANDROID_H_
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/application_manager/application_loader.h"
 
+namespace base {
+class MessageLoop;
+}
+
 namespace mojo {
 
 class ApplicationManager;
-
-namespace shell {
-class Context;
-}
 
 // ApplicationLoader implementation that creates a background thread and issues
 // load
@@ -23,7 +23,7 @@ class Context;
 class UIApplicationLoader : public ApplicationLoader {
  public:
   UIApplicationLoader(scoped_ptr<ApplicationLoader> real_loader,
-                      shell::Context* context);
+                      base::MessageLoop* ui_message_loop);
   ~UIApplicationLoader() override;
 
   // ApplicationLoader overrides:
@@ -49,11 +49,11 @@ class UIApplicationLoader : public ApplicationLoader {
   void ShutdownOnUIThread();
 
   scoped_ptr<ApplicationLoader> loader_;
-  shell::Context* context_;
+  base::MessageLoop* ui_message_loop_;
 
   DISALLOW_COPY_AND_ASSIGN(UIApplicationLoader);
 };
 
 }  // namespace mojo
 
-#endif  // SHELL_UI_APPLICATION_LOADER_ANDROID_H_
+#endif  // SHELL_ANDROID_UI_APPLICATION_LOADER_ANDROID_H_

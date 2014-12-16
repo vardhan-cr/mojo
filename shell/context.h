@@ -12,10 +12,6 @@
 #include "shell/mojo_url_resolver.h"
 #include "shell/task_runners.h"
 
-#if defined(OS_ANDROID)
-#include "base/android/scoped_java_ref.h"
-#endif  // defined(OS_ANDROID)
-
 namespace mojo {
 
 class Spy;
@@ -43,11 +39,6 @@ class Context : ApplicationManager::Delegate {
   ApplicationManager* application_manager() { return &application_manager_; }
   MojoURLResolver* mojo_url_resolver() { return &mojo_url_resolver_; }
 
-#if defined(OS_ANDROID)
-  base::MessageLoop* ui_loop() const { return ui_loop_; }
-  void set_ui_loop(base::MessageLoop* ui_loop) { ui_loop_ = ui_loop; }
-#endif  // defined(OS_ANDROID)
-
  private:
   class NativeViewportApplicationLoader;
 
@@ -61,9 +52,6 @@ class Context : ApplicationManager::Delegate {
   ApplicationManager application_manager_;
   MojoURLResolver mojo_url_resolver_;
   scoped_ptr<Spy> spy_;
-#if defined(OS_ANDROID)
-  base::MessageLoop* ui_loop_;
-#endif  // defined(OS_ANDROID)
 
   DISALLOW_COPY_AND_ASSIGN(Context);
 };

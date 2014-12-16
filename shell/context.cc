@@ -31,14 +31,7 @@
 #include "shell/in_process_dynamic_service_runner.h"
 #include "shell/out_of_process_dynamic_service_runner.h"
 #include "shell/switches.h"
-#include "shell/ui_application_loader_android.h"
 #include "url/gurl.h"
-
-#if defined(OS_ANDROID)
-#include "services/gles2/gpu_impl.h"
-#include "services/native_viewport/native_viewport_impl.h"
-#include "shell/android/android_handler_loader.h"
-#endif  // defined(OS_ANDROID)
 
 namespace mojo {
 namespace shell {
@@ -122,56 +115,6 @@ bool ConfigureURLMappings(const std::string& mappings,
 
 }  // namespace
 
-#if defined(OS_ANDROID)
-class Context::NativeViewportApplicationLoader
-    : public ApplicationLoader,
-      public ApplicationDelegate,
-      public InterfaceFactory<NativeViewport>,
-      public InterfaceFactory<Gpu> {
- public:
-  NativeViewportApplicationLoader() : gpu_state_(new gles2::GpuImpl::State) {}
-  virtual ~NativeViewportApplicationLoader() {}
-
- private:
-  // ApplicationLoader implementation.
-  virtual void Load(ApplicationManager* manager,
-                    const GURL& url,
-                    ScopedMessagePipeHandle shell_handle,
-                    LoadCallback callback) override {
-    DCHECK(shell_handle.is_valid());
-    app_.reset(new ApplicationImpl(this, shell_handle.Pass()));
-  }
-
-  virtual void OnApplicationError(ApplicationManager* manager,
-                                  const GURL& url) override {}
-
-  // ApplicationDelegate implementation.
-  virtual bool ConfigureIncomingConnection(
-      mojo::ApplicationConnection* connection) override {
-    connection->AddService<NativeViewport>(this);
-    connection->AddService<Gpu>(this);
-    return true;
-  }
-
-  // InterfaceFactory<NativeViewport> implementation.
-  virtual void Create(ApplicationConnection* connection,
-                      InterfaceRequest<NativeViewport> request) override {
-    BindToRequest(new native_viewport::NativeViewportImpl(app_.get(), false),
-                  &request);
-  }
-
-  // InterfaceFactory<Gpu> implementation.
-  virtual void Create(ApplicationConnection* connection,
-                      InterfaceRequest<Gpu> request) override {
-    new gles2::GpuImpl(request.Pass(), gpu_state_);
-  }
-
-  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
-  scoped_ptr<ApplicationImpl> app_;
-  DISALLOW_COPY_AND_ASSIGN(NativeViewportApplicationLoader);
-};
-#endif
-
 Context::Context() : application_manager_(this) {
   DCHECK(!base::MessageLoop::current());
 }
@@ -231,17 +174,6 @@ bool Context::Init() {
   application_manager_.set_default_loader(
       scoped_ptr<ApplicationLoader>(dynamic_application_loader));
 
-// The native viewport service synchronously waits for certain messages. If we
-// don't run it on its own thread we can easily deadlock. Long term native
-// viewport should run its own process so that this isn't an issue.
-#if defined(OS_ANDROID)
-  application_manager_.SetLoaderForURL(
-      scoped_ptr<ApplicationLoader>(new UIApplicationLoader(
-          scoped_ptr<ApplicationLoader>(new NativeViewportApplicationLoader()),
-          this)),
-      GURL("mojo:native_viewport_service"));
-#endif
-
   if (command_line->HasSwitch(switches::kSpy)) {
     spy_.reset(
         new mojo::Spy(&application_manager_,
@@ -250,20 +182,6 @@ bool Context::Init() {
     // the Spy::WebSocketDelegate is implemented. In the original repo this
     // was implemented by src\mojo\spy\websocket_server.h and .cc.
   }
-
-#if defined(OS_ANDROID)
-  {
-    // Android handler is bundled with the Mojo shell, because it uses the
-    // MojoShell application as the JNI bridge to bootstrap execution of other
-    // Android Mojo apps that need JNI.
-    scoped_ptr<BackgroundShellApplicationLoader> loader(
-        new BackgroundShellApplicationLoader(
-            scoped_ptr<ApplicationLoader>(new AndroidHandlerLoader()),
-            "android_handler", base::MessageLoop::TYPE_DEFAULT));
-    application_manager_.SetLoaderForURL(loader.Pass(),
-                                         GURL("mojo:android_handler"));
-  }
-#endif
 
   tracing::TraceDataCollectorPtr trace_data_collector_ptr;
   application_manager_.ConnectToService(GURL("mojo:tracing"),

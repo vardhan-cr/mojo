@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * A placeholder class to call native functions.
  **/
-@JNINamespace("mojo")
+@JNINamespace("mojo::shell")
 public class MojoMain {
     private static final String TAG = "MojoMain";
 
