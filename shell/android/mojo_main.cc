@@ -109,8 +109,8 @@ void ConfigureAndroidServices(Context* context) {
 
 void RunShell(std::vector<GURL> app_urls) {
   Context* context = g_context.Pointer()->get();
-  context->Init();
   ConfigureAndroidServices(context);
+  context->Init();
   for (std::vector<GURL>::const_iterator it = app_urls.begin();
        it != app_urls.end(); ++it) {
     context->Run(*it);
