@@ -34,6 +34,7 @@ struct ViewProperty;
 class View {
  public:
   using Children = std::vector<View*>;
+  using SharedProperties = std::map<std::string, std::vector<uint8_t>>;
 
   // Creates and returns a new View (which is owned by the ViewManager). Views
   // are initially hidden, use SetVisible(true) to show.
@@ -57,9 +58,7 @@ class View {
 
   // Returns the set of string to bag of byte properties. These properties are
   // shared with the view manager.
-  const std::map<std::string, std::vector<uint8_t>>& shared_properties() const {
-    return properties_;
-  }
+  const SharedProperties& shared_properties() const { return properties_; }
   // Sets a property. If |data| is null, this property is deleted.
   void SetSharedProperty(const std::string& name,
                          const std::vector<uint8_t>* data);
@@ -180,7 +179,7 @@ class View {
 
   bool visible_;
 
-  std::map<std::string, std::vector<uint8_t>> properties_;
+  SharedProperties properties_;
 
   // Drawn state is derived from the visible state and the parent's visible
   // state. This field is only used if the view has no parent (eg it's a root).

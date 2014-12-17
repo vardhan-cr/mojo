@@ -1,0 +1,30 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+mojo_native_application("window_manager") {
+  output_name = "recipe_window_manager"
+
+  sources = [
+    "main.cc",
+    "window_manager.cc",
+    "window_manager.h",
+  ]
+
+  deps = [
+    ":constants",
+    "//mojo/application",
+    "//mojo/services/input_events/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
+    "//services/window_manager:lib",
+  ]
+}
+
+source_set("constants") {
+  sources = [
+    "constants.cc",
+    "constants.h",
+  ]
+}

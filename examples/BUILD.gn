@@ -15,6 +15,7 @@ group("examples") {
     "//examples/http_handler",
     "//examples/indirect_service",
     "//examples/png_viewer",
+    "//examples/recipes",
     "//examples/recursive_content_handler",
     "//examples/sample_app",
     "//examples/sky_compositor_app",
