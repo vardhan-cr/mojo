@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/callback.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/path_service.h"
@@ -223,14 +224,14 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   return result;
 }
 
-static Dart_Isolate createIsolateHelper(void* dart_app,
-                                        Dart_IsolateCreateCallback app_callback,
+static Dart_Isolate CreateIsolateHelper(void* dart_app,
+                                        IsolateCallbacks callbacks,
                                         const std::string& script,
                                         const std::string& script_uri,
                                         const std::string& package_root,
                                         char** error) {
   IsolateData* isolate_data =
-      new IsolateData(dart_app, app_callback, script, script_uri, package_root);
+      new IsolateData(dart_app, callbacks, script, script_uri, package_root);
   Dart_Isolate isolate = Dart_CreateIsolate(
       script_uri.c_str(), "main", snapshot_buffer, isolate_data, error);
   if (isolate == nullptr) {
@@ -246,12 +247,12 @@ static Dart_Isolate createIsolateHelper(void* dart_app,
   Builtin::SetNativeResolver(Builtin::kBuiltinLibrary);
   Builtin::SetNativeResolver(Builtin::kMojoCoreLibrary);
 
-  if (app_callback) {
-    app_callback(script_uri.c_str(),
-                 "main",
-                 package_root.c_str(),
-                 isolate_data,
-                 error);
+  if (!callbacks.create.is_null()) {
+    callbacks.create.Run(script_uri.c_str(),
+                         "main",
+                         package_root.c_str(),
+                         isolate_data,
+                         error);
   }
 
   // Set up the library tag handler for this isolate.
@@ -301,7 +302,7 @@ static Dart_Isolate createIsolateHelper(void* dart_app,
   return isolate;
 }
 
-static Dart_Isolate isolateCreateCallback(const char* script_uri,
+static Dart_Isolate IsolateCreateCallback(const char* script_uri,
                                           const char* main,
                                           const char* package_root,
                                           void* callback_data,
@@ -325,15 +326,34 @@ static Dart_Isolate isolateCreateCallback(const char* script_uri,
   } else {
     package_root_string = std::string(package_root);
   }
-  return createIsolateHelper(parent_isolate_data->app,
-                             parent_isolate_data->app_callback,
+  return CreateIsolateHelper(parent_isolate_data->app,
+                             parent_isolate_data->callbacks,
                              parent_isolate_data->script,
                              script_uri_string,
                              package_root_string,
                              error);
 }
 
-static Dart_Isolate serviceIsolateCreateCallback(void* callback_data,
+static void IsolateShutdownCallback(void* callback_data) {
+  IsolateData* isolate_data = reinterpret_cast<IsolateData*>(callback_data);
+  if (!isolate_data->callbacks.shutdown.is_null()) {
+    isolate_data->callbacks.shutdown.Run(callback_data);
+  }
+  delete isolate_data;
+}
+
+static void UnhandledExceptionCallback(Dart_Handle error) {
+  Dart_Isolate isolate = Dart_CurrentIsolate();
+  void* data = Dart_IsolateData(isolate);
+  IsolateData* isolate_data = reinterpret_cast<IsolateData*>(data);
+  if (!isolate_data->callbacks.exception.is_null()) {
+    // TODO(zra): Instead of passing an error handle, it may make life easier
+    // for clients if we pass any error string here instead.
+    isolate_data->callbacks.exception.Run(error);
+  }
+}
+
+static Dart_Isolate ServiceIsolateCreateCallback(void* callback_data,
                                                  char** error) {
   if (error != nullptr) {
     *error = strdup("There should be no service isolate");
@@ -342,8 +362,7 @@ static Dart_Isolate serviceIsolateCreateCallback(void* callback_data,
 }
 
 bool DartController::vmIsInitialized = false;
-void DartController::initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
-                                    Dart_EntropySource entropy,
+void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** arguments,
                                     int arguments_count) {
   // TODO(zra): If runDartScript can be called from multiple threads
@@ -374,26 +393,24 @@ void DartController::initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
   bool result = Dart_SetVMFlags(kNumArgs, args);
   CHECK(result);
 
-  // TODO(zra): Provide unhandled exception callback.
-  result = Dart_Initialize(isolateCreateCallback,
+  result = Dart_Initialize(IsolateCreateCallback,
                            nullptr,  // Isolate interrupt callback.
-                           nullptr,  // Unhandled exception callback.
-                           shutdown,
+                           UnhandledExceptionCallback,
+                           IsolateShutdownCallback,
                            // File IO callbacks.
                            nullptr, nullptr, nullptr, nullptr,
                            entropy,
-                           serviceIsolateCreateCallback);
+                           ServiceIsolateCreateCallback);
   CHECK(result);
   vmIsInitialized = true;
 }
 
-bool DartController::runDartScript(const DartControllerConfig& config) {
-  initVmIfNeeded(config.shutdown_callback,
-                 config.entropy_callback,
+bool DartController::RunDartScript(const DartControllerConfig& config) {
+  InitVmIfNeeded(config.entropy,
                  config.arguments,
                  config.arguments_count);
-  Dart_Isolate isolate = createIsolateHelper(config.application_data,
-                                             config.create_callback,
+  Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
+                                             config.callbacks,
                                              config.script,
                                              config.script_uri,
                                              config.package_root,

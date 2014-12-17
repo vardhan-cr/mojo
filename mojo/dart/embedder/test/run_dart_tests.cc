@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
@@ -21,6 +22,10 @@ namespace {
 static bool generateEntropy(uint8_t* buffer, intptr_t length) {
   crypto::RandBytes(reinterpret_cast<void*>(buffer), length);
   return true;
+}
+
+static void exceptionCallback(bool* exception, Dart_Handle error) {
+  *exception = true;
 }
 
 static void RunTest(const std::string& test,
@@ -56,22 +61,24 @@ static void RunTest(const std::string& test,
   }
 
   char* error = NULL;
+  bool unhandled_exception = false;
   DartControllerConfig config;
   config.script = source;
   config.script_uri = path.AsUTF8Unsafe();
   config.package_root = package_root.AsUTF8Unsafe();
   config.application_data = nullptr;
-  config.create_callback = nullptr;
-  config.shutdown_callback = nullptr;
-  config.entropy_callback = generateEntropy;
+  config.callbacks.exception =
+      base::Bind(&exceptionCallback, &unhandled_exception);
+  config.entropy = generateEntropy;
   config.arguments = args;
   config.arguments_count = kNumArgs;
   config.handle = MOJO_HANDLE_INVALID;
   config.compile_all = compile_all;
   config.error = &error;
 
-  bool success = DartController::runDartScript(config);
+  bool success = DartController::RunDartScript(config);
   EXPECT_TRUE(success) << error;
+  EXPECT_FALSE(unhandled_exception);
 }
 
 // TODO(zra): instead of listing all these tests, search //mojo/dart/test for

@@ -6,6 +6,7 @@
 #define MOJO_DART_EMBEDDER_DART_CONTROLLER_H_
 
 #include "dart/runtime/include/dart_api.h"
+#include "mojo/dart/embedder/isolate_data.h"
 #include "mojo/public/c/system/types.h"
 
 namespace mojo {
@@ -16,9 +17,8 @@ struct DartControllerConfig {
   std::string script;
   std::string script_uri;
   std::string package_root;
-  Dart_IsolateCreateCallback create_callback;
-  Dart_IsolateShutdownCallback shutdown_callback;
-  Dart_EntropySource entropy_callback;
+  IsolateCallbacks callbacks;
+  Dart_EntropySource entropy;
   const char** arguments;
   int arguments_count;
   MojoHandle handle;
@@ -29,11 +29,10 @@ struct DartControllerConfig {
 
 class DartController {
  public:
-  static bool runDartScript(const DartControllerConfig& config);
+  static bool RunDartScript(const DartControllerConfig& config);
 
  private:
-  static void initVmIfNeeded(Dart_IsolateShutdownCallback shutdown,
-                             Dart_EntropySource entropy,
+  static void InitVmIfNeeded(Dart_EntropySource entropy,
                              const char** arguments,
                              int arguments_count);
   static bool vmIsInitialized;

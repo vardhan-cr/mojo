@@ -247,7 +247,7 @@ class DartToCppTest : public testing::Test {
  public:
   DartToCppTest() {}
 
-  void RunTest(const std::string& test, CppSideConnection* cpp_side) {
+  bool RunTest(const std::string& test, CppSideConnection* cpp_side) {
     // Putting Dart on its own thread so we can use Dart_RunLoop (called from
     // DartController::runDartScript) and base::RunLoop::Run together. Passing
     // the thread to RunWithDartOnThread instead of inlining that function here
@@ -258,25 +258,29 @@ class DartToCppTest : public testing::Test {
     // join while handles are still open, until the C++ side closes them.
     base::Thread dart_thread("dart");
     cpp_side->set_run_loop(&run_loop_);
-    RunWithDartOnThread(&dart_thread, test, cpp_side);
+    return RunWithDartOnThread(&dart_thread, test, cpp_side);
   }
 
  private:
-  base::ShadowingAtExitManager at_exit_;
   base::MessageLoop loop;
   base::RunLoop run_loop_;
 
-  static bool generateEntropy(uint8_t* buffer, intptr_t length) {
+  static void UnhandledExceptionCallback(bool* exception, Dart_Handle error) {
+    *exception = true;
+  }
+
+  static bool GenerateEntropy(uint8_t* buffer, intptr_t length) {
     crypto::RandBytes(reinterpret_cast<void*>(buffer), length);
     return true;
   }
 
-  void InitializeDartConfig(DartControllerConfig* config,
-                            const std::string& test,
-                            MojoHandle handle,
-                            const char** arguments,
-                            int arguments_count,
-                            char** error) {
+  static void InitializeDartConfig(DartControllerConfig* config,
+                                   const std::string& test,
+                                   MojoHandle handle,
+                                   const char** arguments,
+                                   int arguments_count,
+                                   bool* unhandled_exception,
+                                   char** error) {
     base::FilePath path;
     PathService::Get(base::DIR_SOURCE_ROOT, &path);
     path = path.AppendASCII("mojo")
@@ -298,9 +302,9 @@ class DartToCppTest : public testing::Test {
     config->script_uri = path.AsUTF8Unsafe();
     config->package_root = package_root.AsUTF8Unsafe();
     config->application_data = nullptr;
-    config->create_callback = nullptr;
-    config->shutdown_callback = nullptr;
-    config->entropy_callback = generateEntropy;
+    config->callbacks.exception =
+        base::Bind(&UnhandledExceptionCallback, unhandled_exception);
+    config->entropy = GenerateEntropy;
     config->handle = handle;
     config->arguments = arguments;
     config->arguments_count = arguments_count;
@@ -309,10 +313,10 @@ class DartToCppTest : public testing::Test {
   }
 
   static void RunDartSide(const DartControllerConfig& config) {
-    DartController::runDartScript(config);
+    DartController::RunDartScript(config);
   }
 
-  void RunWithDartOnThread(base::Thread* dart_thread,
+  bool RunWithDartOnThread(base::Thread* dart_thread,
                            const std::string& test,
                            CppSideConnection* cpp_side) {
     MessagePipe pipe;
@@ -332,14 +336,22 @@ class DartToCppTest : public testing::Test {
     args[1] = "--enable_type_checks";
     args[2] = "--error_on_bad_type";
     char* error;
+    bool unhandled_exception = false;
     InitializeDartConfig(
-        &config, test, pipe.handle1.release().value(), args, kNumArgs, &error);
+        &config,
+        test,
+        pipe.handle1.release().value(),
+        args,
+        kNumArgs,
+        &unhandled_exception,
+        &error);
 
     dart_thread->Start();
     dart_thread->message_loop()->PostTask(FROM_HERE,
         base::Bind(&RunDartSide, base::ConstRef(config)));
 
     run_loop_.Run();
+    return unhandled_exception;
   }
 
   DISALLOW_COPY_AND_ASSIGN(DartToCppTest);
@@ -347,14 +359,18 @@ class DartToCppTest : public testing::Test {
 
 TEST_F(DartToCppTest, Ping) {
   PingCppSideConnection cpp_side_connection;
-  RunTest("dart_to_cpp_tests.dart", &cpp_side_connection);
+  bool unhandled_exception =
+      RunTest("dart_to_cpp_tests.dart", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
+  EXPECT_FALSE(unhandled_exception);
 }
 
 TEST_F(DartToCppTest, Echo) {
   EchoCppSideConnection cpp_side_connection;
-  RunTest("dart_to_cpp_tests.dart", &cpp_side_connection);
+  bool unhandled_exception =
+      RunTest("dart_to_cpp_tests.dart", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
+  EXPECT_FALSE(unhandled_exception);
 }
 
 }  // namespace dart

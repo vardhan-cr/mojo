@@ -9,29 +9,25 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/embedder/test/dart_to_cpp.mojom.dart';
 
-class DartSide {
+class DartSide extends DartSideInterface {
   static const int BAD_VALUE = 13;
   static const int ELEMENT_BYTES = 1;
   static const int CAPACITY_BYTES = 64;
 
-  core.MojoMessagePipeEndpoint endpoint;
-  DartSideInterface interface;
-  Uint8List sampleData;
-  Uint8List sampleMessage;
+  Uint8List _sampleData;
+  Uint8List _sampleMessage;
+  Completer _completer;
 
-  bool receivedPing = false;
-  bool receivedEcho = false;
-
-  DartSide(this.endpoint) {
-    interface = new DartSideInterface(endpoint);
-    sampleData = new Uint8List(CAPACITY_BYTES);
-    for (int i = 0; i < sampleData.length; ++i) {
-      sampleData[i] = i;
+  DartSide(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
+    _sampleData = new Uint8List(CAPACITY_BYTES);
+    for (int i = 0; i < _sampleData.length; ++i) {
+      _sampleData[i] = i;
     }
-    sampleMessage = new Uint8List(CAPACITY_BYTES);
-    for (int i = 0; i < sampleMessage.length; ++i) {
-      sampleMessage[i] = 255 - i;
+    _sampleMessage = new Uint8List(CAPACITY_BYTES);
+    for (int i = 0; i < _sampleMessage.length; ++i) {
+      _sampleMessage[i] = 255 - i;
     }
+    _completer = new Completer();
   }
 
   EchoArgsList createEchoArgsList(List<EchoArgs> list) {
@@ -43,12 +39,14 @@ class DartSide {
     });
   }
 
-  void handlePing() {
-    receivedPing = true;
-    interface.pingResponse();
+  void ping(params) {
+    callPingResponse();
+    _completer.complete(null);
   }
 
-  void handleEcho(int numIterations, EchoArgs arg) {
+  void echo(params) {
+    int numIterations = params.numIterations;
+    EchoArgs arg = params.arg;
     if (arg.si64 > 0) {
       arg.si64 = BAD_VALUE;
     }
@@ -80,39 +78,25 @@ class DartSide {
       specialArg.data_handle = dataPipe2.consumer.handle;
       specialArg.message_handle = messagePipe2.endpoints[0].handle;
 
-      dataPipe1.producer.write(sampleData.buffer.asByteData());
-      dataPipe2.producer.write(sampleData.buffer.asByteData());
-      messagePipe1.endpoints[1].write(sampleMessage.buffer.asByteData());
-      messagePipe2.endpoints[1].write(sampleMessage.buffer.asByteData());
+      dataPipe1.producer.write(_sampleData.buffer.asByteData());
+      dataPipe2.producer.write(_sampleData.buffer.asByteData());
+      messagePipe1.endpoints[1].write(_sampleMessage.buffer.asByteData());
+      messagePipe2.endpoints[1].write(_sampleMessage.buffer.asByteData());
 
-      interface.echoResponse(createEchoArgsList([arg, specialArg]));
+      callEchoResponse(createEchoArgsList([arg, specialArg]));
 
       dataPipe1.producer.handle.close();
       dataPipe2.producer.handle.close();
       messagePipe1.endpoints[1].handle.close();
       messagePipe2.endpoints[1].handle.close();
     }
-    receivedEcho = true;
-    interface.testFinished();
+    callTestFinished();
+    _completer.complete(null);
   }
 
-  Future<bool> dartSideInterfaceListen() {
-    var completer = new Completer();
-    var sub = interface.listen((msg) {
-      if (msg is DartSide_Ping_Params) {
-        handlePing();
-        completer.complete(true);
-      } else if (msg is DartSide_Echo_Params) {
-        handleEcho(msg.numIterations, msg.arg);
-        completer.complete(true);
-      } else {
-        throw 'Unexpected message: $msg';
-      }
-    });
-    interface.startTest();
-    return completer.future;
-  }
+  Future<bool> get future => _completer.future;
 }
+
 
 main(List<int> args) {
   assert(args.length == 1);
@@ -120,7 +104,9 @@ main(List<int> args) {
   var rawHandle = new core.RawMojoHandle(mojoHandle);
   var endpoint = new core.MojoMessagePipeEndpoint(rawHandle);
   var dartSide = new DartSide(endpoint);
-  dartSide.dartSideInterfaceListen().then((_) {
-    assert(dartSide.receivedPing || dartSide.receivedEcho);
+  dartSide.listen();
+  dartSide.callStartTest();
+  dartSide.future.then((_) {
+    print('Success');
   });
 }

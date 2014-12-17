@@ -44,14 +44,20 @@ const int kEchoStringResponse_name = 1;
 class EchoInterface extends bindings.Interface {
   EchoInterface(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
-  bindings.Message handleMessage(bindings.MessageReader reader,
-                                 Function messageHandler) {
+  EchoStringResponse echoString(EchoString es) {
+    var response = new EchoStringResponse();
+    response.a = es.a;
+    return response;
+  }
+
+  bindings.Message handleMessage(bindings.MessageReader reader) {
     switch (reader.name) {
       case kEchoString_name:
         var es = reader.decodeStruct(EchoString);
-        var response = messageHandler(es);
+        var response = echoString(es);
         return buildResponseWithID(EchoStringResponse,
                                    kEchoStringResponse_name,
+                                   reader.requestID,
                                    bindings.kMessageIsResponse,
                                    response);
         break;
@@ -73,6 +79,7 @@ class EchoClient extends bindings.Client {
     es.a = a;
     return enqueueMessageWithRequestID(EchoString,
                                        kEchoString_name,
+                                       0,
                                        bindings.kMessageExpectsResponse,
                                        es);
   }
@@ -94,13 +101,7 @@ class EchoClient extends bindings.Client {
 
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
   var provider = new EchoInterface(endpoint);
-  provider.listen((msg) {
-    if (msg is EchoString) {
-      var response = new EchoStringResponse();
-      response.a = msg.a;
-      return response;
-    }
-  });
+  provider.listen();
 }
 
 
