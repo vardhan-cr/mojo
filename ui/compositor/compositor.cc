@@ -203,6 +203,10 @@ Compositor::~Compositor() {
   context_factory_->RemoveCompositor(this);
 }
 
+void Compositor::SetOutputSurface(scoped_ptr<cc::OutputSurface> surface) {
+  host_->SetOutputSurface(surface.Pass());
+}
+
 void Compositor::ScheduleDraw() {
   if (compositor_thread_loop_.get()) {
     host_->SetNeedsCommit();
@@ -215,20 +219,10 @@ void Compositor::ScheduleDraw() {
 }
 
 void Compositor::DidInitializeOutputSurface() {
-  num_failed_recreate_attempts_ = 0;
 }
 
 void Compositor::DidFailToInitializeOutputSurface() {
-  num_failed_recreate_attempts_++;
-
-  // Tolerate a certain number of recreation failures to work around races
-  // in the output-surface-lost machinery.
-  if (num_failed_recreate_attempts_ >= MAX_OUTPUT_SURFACE_RETRIES)
-    LOG(FATAL) << "Failed to create a fallback OutputSurface.";
-
-  base::MessageLoop::current()->PostTask(
-      FROM_HERE, base::Bind(&Compositor::RequestNewOutputSurface,
-                            weak_ptr_factory_.GetWeakPtr()));
+  NOTREACHED() << "We don't support fallback";
 }
 
 void Compositor::SetRootLayer(Layer* root_layer) {
@@ -385,9 +379,8 @@ void Compositor::Layout() {
 }
 
 void Compositor::RequestNewOutputSurface() {
-  bool fallback =
-      num_failed_recreate_attempts_ >= OUTPUT_SURFACE_RETRIES_BEFORE_FALLBACK;
-  context_factory_->CreateOutputSurface(weak_ptr_factory_.GetWeakPtr().get(),
+  bool fallback = false;
+  context_factory_->CreateOutputSurface(weak_ptr_factory_.GetWeakPtr(),
                                         fallback);
 }
 

@@ -12,6 +12,7 @@ namespace mojo {
 ContextProviderMojo::ContextProviderMojo(
     ScopedMessagePipeHandle command_buffer_handle)
     : command_buffer_handle_(command_buffer_handle.Pass()),
+      context_(nullptr),
       context_lost_(false) {
 }
 
@@ -26,14 +27,14 @@ bool ContextProviderMojo::BindToCurrentThread() {
 
 gpu::gles2::GLES2Interface* ContextProviderMojo::ContextGL() {
   if (!context_)
-    return NULL;
+    return nullptr;
   return static_cast<gpu::gles2::GLES2Interface*>(
       MojoGLES2GetGLES2Interface(context_));
 }
 
 gpu::ContextSupport* ContextProviderMojo::ContextSupport() {
   if (!context_)
-    return NULL;
+    return nullptr;
   return static_cast<gpu::ContextSupport*>(
       MojoGLES2GetContextSupport(context_));
 }

@@ -181,7 +181,7 @@ SurfaceBinding::PerViewManagerState::CreateOutputSurface(View* view) {
   gpu_->CreateOffscreenGLES2Context(GetProxy(&cb));
   scoped_refptr<cc::ContextProvider> context_provider(
       new ContextProviderMojo(cb.PassMessagePipe()));
-  return scoped_ptr<cc::OutputSurface>(new OutputSurfaceImpl(
+  return make_scoped_ptr(new OutputSurfaceImpl(
       view, context_provider, surface_.get(), surface_id_allocator_.get()));
 }
 
