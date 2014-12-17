@@ -427,37 +427,32 @@ def _CheckGNCheck(input_api, output_api):
       import shutil
       shutil.rmtree(self.path)
 
-  for target_os in [None, 'android']:
-    with _TemporaryDirectory() as out_dir:
-      try:
-        command = ['gn', 'gen', out_dir]
-        if target_os:
-           command.append('--args=%s' % r'''os="android"''')
-        input_api.subprocess.check_output(command)
-      except input_api.subprocess.CalledProcessError, error:
-        return [output_api.PresubmitError(
-            'gn gen must not fail.', long_text=error.output)]
+  with _TemporaryDirectory() as out_dir:
+    try:
+      input_api.subprocess.check_output(['gn', 'gen', out_dir])
+    except input_api.subprocess.CalledProcessError, error:
+      return [output_api.PresubmitError(
+          'gn gen must not fail.', long_text=error.output)]
 
-      # TODO(eseidel): Currently only these are known to pass, once everything
-      # passes we can just call 'gn check' once without a filter!
-      KNOWN_PASSING = [
-        '//examples/*',
-        '//mojo/*',
-        '//services/*',
-        '//shell/*',
+    # TODO(eseidel): Currently only these are known to pass,
+    # once everything passes we can just call 'gn check' once without a filter!
+    KNOWN_PASSING = [
+      '//examples/*',
+      '//mojo/*',
+      '//services/*',
+      '//shell/*',
+    ]
+    if input_api.platform != 'win32':
+      KNOWN_PASSING += [
+        '//sky/*',
       ]
-      if input_api.platform != 'win32':
-        KNOWN_PASSING += [
-          '//sky/*',
-        ]
-      for target_filter in KNOWN_PASSING:
-        try:
-          input_api.subprocess.check_output(['gn', 'check', out_dir,
-              target_filter])
-        except input_api.subprocess.CalledProcessError, error:
-          error_title = 'gn check %s must not fail.' % target_filter
-          return [output_api.PresubmitError(error_title,
-                                            long_text=error.output)]
+    for target_filter in KNOWN_PASSING:
+      try:
+        input_api.subprocess.check_output(['gn', 'check', out_dir,
+            target_filter])
+      except input_api.subprocess.CalledProcessError, error:
+        error_title = 'gn check %s must not fail.' % target_filter
+        return [output_api.PresubmitError(error_title, long_text=error.output)]
   return []
 
 
