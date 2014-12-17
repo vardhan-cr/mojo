@@ -68,6 +68,8 @@ if (!use_prebuilt_mojo_shell) {
 
       deps += [
         ":jni_headers",
+        "//mojo/application_manager:application_manager",
+        "//services/native_viewport:lib",
         "//ui/gl",
       ]
     }
@@ -194,6 +196,8 @@ source_set("lib") {
       "android/android_handler.h",
       "android/android_handler_loader.cc",
       "android/android_handler_loader.h",
+      "android/native_viewport_application_loader.cc",
+      "android/native_viewport_application_loader.h",
       "android/ui_application_loader_android.cc",
       "android/ui_application_loader_android.h",
     ]
@@ -253,6 +257,10 @@ if (is_android) {
   source_set("run_android_application_function") {
     sources = [
       "android/run_android_application_function.h",
+    ]
+
+    deps = [
+      "//base",
     ]
   }
 

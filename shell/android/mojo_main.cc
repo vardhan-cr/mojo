@@ -18,11 +18,9 @@
 #include "base/message_loop/message_loop.h"
 #include "jni/MojoMain_jni.h"
 #include "mojo/application_manager/application_loader.h"
-#include "mojo/application_manager/application_manager.h"
 #include "mojo/application_manager/background_shell_application_loader.h"
-#include "services/gles2/gpu_impl.h"
-#include "services/native_viewport/native_viewport_impl.h"
 #include "shell/android/android_handler_loader.h"
+#include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
 #include "shell/context.h"
 #include "shell/init.h"
@@ -42,53 +40,6 @@ LazyInstance<scoped_ptr<Context>> g_context = LAZY_INSTANCE_INITIALIZER;
 
 LazyInstance<scoped_ptr<base::android::JavaHandlerThread>> g_shell_thread =
     LAZY_INSTANCE_INITIALIZER;
-
-class NativeViewportApplicationLoader : public ApplicationLoader,
-                                        public ApplicationDelegate,
-                                        public InterfaceFactory<NativeViewport>,
-                                        public InterfaceFactory<Gpu> {
- public:
-  NativeViewportApplicationLoader() : gpu_state_(new gles2::GpuImpl::State) {}
-  ~NativeViewportApplicationLoader() override {}
-
- private:
-  // ApplicationLoader implementation.
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
-            LoadCallback callback) override {
-    DCHECK(shell_handle.is_valid());
-    app_.reset(new ApplicationImpl(this, shell_handle.Pass()));
-  }
-
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override {}
-
-  // ApplicationDelegate implementation.
-  bool ConfigureIncomingConnection(
-      mojo::ApplicationConnection* connection) override {
-    connection->AddService<NativeViewport>(this);
-    connection->AddService<Gpu>(this);
-    return true;
-  }
-
-  // InterfaceFactory<NativeViewport> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<NativeViewport> request) override {
-    BindToRequest(new native_viewport::NativeViewportImpl(app_.get(), false),
-                  &request);
-  }
-
-  // InterfaceFactory<Gpu> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<Gpu> request) override {
-    new gles2::GpuImpl(request.Pass(), gpu_state_);
-  }
-
-  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
-  scoped_ptr<ApplicationImpl> app_;
-  DISALLOW_COPY_AND_ASSIGN(NativeViewportApplicationLoader);
-};
 
 void ConfigureAndroidServices(Context* context) {
   context->application_manager()->SetLoaderForURL(
