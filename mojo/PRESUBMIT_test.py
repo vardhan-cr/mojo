@@ -201,6 +201,16 @@ class SourceSetTypesInBuildFilesTest(unittest.TestCase):
     self.assertEqual(1, len(warnings))
     self.checkWarningWithSingleItem(warnings[0], 'SDK', _SDK_BUILD_FILE, 2)
 
+  def testPythonSourceSetInSDKBuildFile(self):
+    """Tests that a python_binary_source_set within an SDK buildfile is
+    accepted."""
+    mock_input_api = self.inputApiContainingFileWithSourceSets(
+        _SDK_BUILD_FILE,
+        [ 'mojo_sdk_source_set(', 'python_binary_source_set(' ])
+    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
+
+    self.assertEqual(0, len(warnings))
+
   def testEDKSourceSetInSDKBuildFile(self):
     """Tests that a mojo_edk_source_set within an SDK buildfile is flagged."""
     mock_input_api = self.inputApiContainingFileWithSourceSets(

@@ -20,8 +20,10 @@ _SDK_WHITELISTED_EXTERNAL_PATHS = [
 _PACKAGE_PATH_PREFIXES = {"SDK": "mojo/public/",
                           "EDK": "mojo/edk/"}
 
-_PACKAGE_SOURCE_SET_TYPES = {"SDK": "mojo_sdk_source_set",
-                             "EDK": "mojo_edk_source_set"}
+# TODO(etiennej): python_binary_source_set added due to crbug.com/443147
+_PACKAGE_SOURCE_SET_TYPES = {"SDK": ["mojo_sdk_source_set",
+                                     "python_binary_source_set"],
+                             "EDK": ["mojo_edk_source_set"]}
 
 _ILLEGAL_EXTERNAL_PATH_WARNING_MESSAGE = \
     "Found disallowed external paths within SDK buildfiles."
@@ -161,7 +163,7 @@ def _CheckSourceSetsAreOfCorrectType(input_api, output_api, package):
       if not m:
         continue
       source_set_type = m.group(0)[:-1]
-      if source_set_type == required_source_set_type:
+      if source_set_type in required_source_set_type:
         continue
       problems.append(_IncorrectSourceSetTypeWarningItem(f.LocalPath(),
                                                          line_num))
