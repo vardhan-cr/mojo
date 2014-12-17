@@ -107,18 +107,22 @@ mojo_native_application("apptests") {
 
   sources = [
     "udp_socket_apptest.cc",
+    "url_loader_impl_apptest.cc",
   ]
 
   deps = [
+    ":lib",
     ":network",
     "//base",
     "//mojo/application",
     "//mojo/application:test_support",
+    "//mojo/common",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/services/network/public/cpp",
     "//mojo/services/network/public/interfaces",
     "//net",
+    "//net:test_support",
     "//testing/gtest",
   ]
 }
