@@ -6,6 +6,7 @@
 """A "smart" test runner for gtest unit tests (that caches successes)."""
 
 import argparse
+import ast
 import logging
 import os
 import platform
@@ -34,7 +35,8 @@ def main():
                         action='store_true')
 
   parser.add_argument("gtest_list_file",
-                      help="The file containing the tests to run.")
+                      help="The file containing the tests to run.",
+                      type=file)
   parser.add_argument("root_dir", help="The build directory.")
   parser.add_argument("successes_cache_filename",
                       help="The file caching test results.", default=None,
@@ -42,8 +44,7 @@ def main():
   args = parser.parse_args()
 
   _logging.debug("Test list file: %s", args.gtest_list_file)
-  with open(args.gtest_list_file, 'rb') as f:
-    gtest_list = eval(f.read())
+  gtest_list = ast.literal_eval(args.gtest_list_file.read())
   _logging.debug("Test list: %s" % gtest_list)
 
   print "Running tests in directory: %s" % args.root_dir

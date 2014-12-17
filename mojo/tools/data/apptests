@@ -1,5 +1,23 @@
-mojo:clipboard_apptests
-mojo:example_apptests
-mojo:network_service_apptests
-mojo:view_manager_service_apptests
-mojo:js_apptests
+# This file contains a list of Mojo gtest unit tests.
+# This must be a valid python dictionary.
+# TODO(vtl|msw): Add a way of specifying data dependencies.
+[
+  {
+    "test": "mojo:clipboard_apptests",
+  },
+  {
+    "test": "mojo:example_apptests",
+    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+    "test-args": ["--example_apptest_arg"],
+  },
+  {
+    "test": "mojo:network_service_apptests",
+  },
+  {
+    "test": "mojo:view_manager_service_apptests",
+    "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
+  },
+  {
+    "test": "mojo:js_apptests",
+  },
+]

@@ -6,8 +6,8 @@
 """A test runner for gtest application tests."""
 
 import argparse
+import ast
 import logging
-import os
 import sys
 
 _logging = logging.getLogger()
@@ -24,19 +24,25 @@ def main():
   parser = argparse.ArgumentParser(description='A test runner for gtest '
                                    'application tests.')
 
-  parser.add_argument('apptests', type=file, metavar='gtest_app_list_file')
+  parser.add_argument('apptest_list_file', type=file)
   parser.add_argument('build_dir', type=str)
   args = parser.parse_args()
 
-  apptest_list = [y.rstrip() for y in args.apptests \
-                      if not y.strip().startswith('#')]
+  _logging.debug("Test list file: %s", args.apptest_list_file)
+  apptest_list = ast.literal_eval(args.apptest_list_file.read())
   _logging.debug("Test list: %s" % apptest_list)
 
   mopy.gtest.set_color()
   mojo_shell = Paths(build_dir=args.build_dir).mojo_shell_path
 
   exit_code = 0
-  for apptest in apptest_list:
+  for apptest_dict in apptest_list:
+    if apptest_dict.get("disabled"):
+      continue
+
+    apptest = apptest_dict["test"]
+    apptest_args = apptest_dict.get("test-args", [])
+    shell_args = apptest_dict.get("shell-args", [])
     print "Running " + apptest + "...",
     sys.stdout.flush()
 
@@ -51,14 +57,10 @@ def main():
 
     apptest_result = "Succeeded"
     for fixture in fixtures:
-      # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
-      # TODO(msw): Enable passing arguments to tests down from the test harness.
-      command = [mojo_shell,
-                 "--args-for={0} --example_apptest_arg --gtest_filter={1}"
-                     .format(apptest, fixture),
-                 "--args-for=mojo:native_viewport_service "
-                     "--use-headless-config --use-osmesa",
-                 apptest]
+      args_for_apptest = " ".join(["--args-for=" + apptest,
+                                   "--gtest_filter=" + fixture] + apptest_args)
+      command = [mojo_shell, apptest, args_for_apptest] + shell_args
+
       if not mopy.gtest.run_test(command):
         apptest_result = "Failed test(s) in " + apptest
         exit_code = 1
