@@ -27,6 +27,7 @@ v8.log
 /testing/gmock/
 /testing/gtest/
 /third_party/android_tools/
+/third_party/appurify-python/
 /third_party/angle/
 /third_party/bison/
 /third_party/boringssl/src/
@@ -49,6 +50,7 @@ v8.log
 /third_party/ots/
 /third_party/pdfium/
 /third_party/pywebsocket/src/
+/third_party/requests/src/
 /third_party/sfntly/cpp/
 /third_party/skia/
 /third_party/smhasher/src/
