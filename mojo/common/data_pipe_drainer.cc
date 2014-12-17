@@ -2,12 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "sky/engine/config.h"
-#include "sky/engine/platform/fetcher/DataPipeDrainer.h"
-
+#include "mojo/common/data_pipe_drainer.h"
 #include "base/bind.h"
 
-namespace blink {
+namespace mojo {
+namespace common {
 
 DataPipeDrainer::DataPipeDrainer(Client* client,
                                  mojo::ScopedDataPipeConsumerHandle source)
@@ -49,4 +48,5 @@ void DataPipeDrainer::WaitComplete(MojoResult result) {
   ReadData();
 }
 
-}  // namespace blink
+}  // namespace common
+}  // namespace mojo

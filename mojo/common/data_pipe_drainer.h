@@ -2,14 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_PLATFORM_FETCHER_DATAPIPEDRAINER_H_
-#define SKY_ENGINE_PLATFORM_FETCHER_DATAPIPEDRAINER_H_
+#ifndef MOJO_COMMON_DATA_PIPE_DRAINER_H_
+#define MOJO_COMMON_DATA_PIPE_DRAINER_H_
 
 #include "base/memory/weak_ptr.h"
 #include "mojo/common/handle_watcher.h"
 #include "mojo/public/cpp/system/core.h"
 
-namespace blink {
+namespace mojo {
+namespace common {
 
 class DataPipeDrainer {
  public:
@@ -39,6 +40,7 @@ class DataPipeDrainer {
   DISALLOW_COPY_AND_ASSIGN(DataPipeDrainer);
 };
 
-}  // namespace blink
+}  // namespace common
+}  // namespace mojo
 
-#endif  // SKY_ENGINE_PLATFORM_FETCHER_DATAPIPEDRAINER_H_
+#endif  // MOJO_COMMON_DATA_PIPE_DRAINER_H_
