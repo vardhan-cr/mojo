@@ -42,7 +42,6 @@ class Main : public mojo::ApplicationDelegate,
 
   // Overridden from mojo::ViewManagerDelegate:
   void OnEmbed(
-      mojo::ViewManager* view_manager,
       mojo::View* root,
       mojo::ServiceProviderImpl* exported_services,
       scoped_ptr<mojo::ServiceProvider> remote_service_provider) override {

@@ -59,8 +59,7 @@ class NestingApp
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     root->AddObserver(this);
@@ -68,7 +67,7 @@ class NestingApp
     bitmap_uploader_->Init(shell_);
     bitmap_uploader_->SetColor(SK_ColorCYAN);
 
-    nested_ = View::Create(view_manager);
+    nested_ = View::Create(root->view_manager());
     root->AddChild(nested_);
     Rect rect;
     rect.x = rect.y = 20;

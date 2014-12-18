@@ -29,7 +29,6 @@ class SimpleWM : public mojo::ApplicationDelegate,
   SimpleWM()
       : shell_(nullptr),
         window_manager_app_(new window_manager::WindowManagerApp(this, this)),
-        view_manager_(NULL),
         root_(NULL),
         window_container_(NULL),
         next_window_origin_(10, 10) {}
@@ -53,14 +52,12 @@ class SimpleWM : public mojo::ApplicationDelegate,
 
   // Overridden from mojo::ViewManagerDelegate:
   virtual void OnEmbed(
-      mojo::ViewManager* view_manager,
       mojo::View* root,
       mojo::ServiceProviderImpl* exported_services,
       scoped_ptr<mojo::ServiceProvider> remote_service_provider) override {
-    view_manager_ = view_manager;
     root_ = root;
 
-    window_container_ = mojo::View::Create(view_manager_);
+    window_container_ = mojo::View::Create(root->view_manager());
     window_container_->SetBounds(root_->bounds());
     root_->AddChild(window_container_);
     window_container_->SetVisible(true);
@@ -70,7 +67,6 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
   virtual void OnViewManagerDisconnected(
       mojo::ViewManager* view_manager) override {
-    view_manager_ = NULL;
     root_ = NULL;
   }
 
@@ -78,7 +74,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
   virtual void Embed(
       const mojo::String& url,
       mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
-    DCHECK(view_manager_);
+    DCHECK(root_);
     mojo::View* app_view = NULL;
     CreateTopLevelWindow(&app_view);
 
@@ -111,7 +107,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
 
   mojo::View* CreateTopLevelWindow(mojo::View** app_view) {
-    mojo::View* frame_view = mojo::View::Create(view_manager_);
+    mojo::View* frame_view = mojo::View::Create(root_->view_manager());
     // Add the View to it's parent before showing so that animations can happen.
     window_container_->AddChild(frame_view);
     mojo::Rect rect;
@@ -132,7 +128,6 @@ class SimpleWM : public mojo::ApplicationDelegate,
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
-  mojo::ViewManager* view_manager_;
   mojo::View* root_;
   mojo::View* window_container_;
 

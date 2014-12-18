@@ -71,8 +71,7 @@ class EmbeddedApp
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     root->AddObserver(this);

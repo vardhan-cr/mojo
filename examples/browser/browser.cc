@@ -154,8 +154,7 @@ class Browser : public ApplicationDelegate,
                 public views::TextfieldController,
                 public ViewObserver {
  public:
-  Browser()
-      : shell_(nullptr), view_manager_(NULL), root_(NULL), widget_(NULL) {}
+  Browser() : shell_(nullptr), root_(NULL), widget_(NULL) {}
 
   virtual ~Browser() {
     if (root_)
@@ -203,13 +202,11 @@ class Browser : public ApplicationDelegate,
   }
 
   // ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     // TODO: deal with OnEmbed() being invoked multiple times.
     ConnectToService(imported_services.get(), &navigator_host_);
-    view_manager_ = view_manager;
     root_ = root;
     root_->AddObserver(this);
     root_->SetFocus();
@@ -217,8 +214,6 @@ class Browser : public ApplicationDelegate,
   }
   virtual void OnViewManagerDisconnected(
       ViewManager* view_manager) override {
-    DCHECK_EQ(view_manager_, view_manager);
-    view_manager_ = NULL;
     base::MessageLoop::current()->Quit();
   }
 
@@ -259,7 +254,6 @@ class Browser : public ApplicationDelegate,
 
   scoped_ptr<ViewsInit> views_init_;
 
-  ViewManager* view_manager_;
   scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
   View* root_;
   views::Widget* widget_;

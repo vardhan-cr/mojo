@@ -82,8 +82,7 @@ class PDFView : public ApplicationDelegate,
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     DCHECK(embedder_for_roots_.find(root) == embedder_for_roots_.end());

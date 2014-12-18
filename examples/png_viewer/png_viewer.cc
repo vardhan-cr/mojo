@@ -91,8 +91,7 @@ class PNGView : public ApplicationDelegate,
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     // TODO(qsr): The same view should be embeddable on multiple views.

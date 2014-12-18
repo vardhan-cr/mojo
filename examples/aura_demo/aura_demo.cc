@@ -114,7 +114,6 @@ class AuraDemo : public mojo::ApplicationDelegate,
  private:
   // Overridden from ViewManagerDelegate:
   virtual void OnEmbed(
-      mojo::ViewManager* view_manager,
       mojo::View* root,
       mojo::ServiceProviderImpl* exported_services,
       scoped_ptr<mojo::ServiceProvider> imported_services) override {

@@ -346,12 +346,11 @@ class WindowManager : public ApplicationDelegate,
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     DCHECK(!view_manager_);
-    view_manager_ = view_manager;
+    view_manager_ = root->view_manager();
 
     View* view = View::Create(view_manager_);
     root->AddChild(view);
@@ -366,10 +365,8 @@ class WindowManager : public ApplicationDelegate,
     Id control_panel_id = CreateControlPanel(view);
 
     root_layout_manager_.reset(
-        new RootLayoutManager(view_manager, root,
-                              content_view_id_,
-                              launcher_ui_id,
-                              control_panel_id));
+        new RootLayoutManager(view_manager_, root, content_view_id_,
+                              launcher_ui_id, control_panel_id));
     root->AddObserver(root_layout_manager_.get());
 
     // TODO(erg): In the aura version, we explicitly added ourselves as a

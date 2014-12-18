@@ -27,9 +27,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
                              public WindowManagerDelegate {
  public:
   DefaultWindowManager()
-      : window_manager_app_(new WindowManagerApp(this, this)),
-        view_manager_(NULL),
-        root_(NULL) {}
+      : window_manager_app_(new WindowManagerApp(this, this)), root_(nullptr) {}
   ~DefaultWindowManager() override {}
 
  private:
@@ -45,11 +43,9 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
   }
 
   // Overridden from ViewManagerDelegate:
-  void OnEmbed(ViewManager* view_manager,
-               View* root,
+  void OnEmbed(View* root,
                mojo::ServiceProviderImpl* exported_services,
                scoped_ptr<mojo::ServiceProvider> imported_services) override {
-    view_manager_ = view_manager;
     root_ = root;
   }
   void OnViewManagerDisconnected(ViewManager* view_manager) override {}
@@ -58,7 +54,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
   void Embed(
       const mojo::String& url,
       mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
-    View* view = View::Create(view_manager_);
+    View* view = View::Create(root_->view_manager());
     root_->AddChild(view);
     view->SetVisible(true);
     view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(
@@ -67,7 +63,6 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
 
   scoped_ptr<WindowManagerApp> window_manager_app_;
 
-  ViewManager* view_manager_;
   View* root_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(DefaultWindowManager);

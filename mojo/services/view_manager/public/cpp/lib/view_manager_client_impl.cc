@@ -281,7 +281,7 @@ void ViewManagerClientImpl::OnEmbed(
   window_manager_->GetFocusedAndActiveViews(
       base::Bind(&ViewManagerClientImpl::OnGotFocusedAndActiveViews,
                  base::Unretained(this)));
-  delegate_->OnEmbed(this, root_, exported_services, remote.Pass());
+  delegate_->OnEmbed(root_, exported_services, remote.Pass());
 }
 
 void ViewManagerClientImpl::OnEmbeddedAppDisconnected(Id view_id) {

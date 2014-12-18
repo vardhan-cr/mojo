@@ -55,7 +55,6 @@ WindowManagerApp::WindowManagerApp(
       native_viewport_event_dispatcher_factory_(this),
       wrapped_view_manager_delegate_(view_manager_delegate),
       window_manager_delegate_(window_manager_delegate),
-      view_manager_(nullptr),
       root_(nullptr) {
 }
 
@@ -74,25 +73,25 @@ void WindowManagerApp::RemoveConnection(WindowManagerImpl* connection) {
 }
 
 void WindowManagerApp::SetCapture(Id view_id) {
-  View* view = view_manager_->GetViewById(view_id);
+  View* view = view_manager()->GetViewById(view_id);
   DCHECK(view);
   capture_controller_->SetCapture(view);
 }
 
 void WindowManagerApp::FocusWindow(Id view_id) {
-  View* view = view_manager_->GetViewById(view_id);
+  View* view = view_manager()->GetViewById(view_id);
   DCHECK(view);
   focus_controller_->FocusView(view);
 }
 
 void WindowManagerApp::ActivateWindow(Id view_id) {
-  View* view = view_manager_->GetViewById(view_id);
+  View* view = view_manager()->GetViewById(view_id);
   DCHECK(view);
   focus_controller_->ActivateView(view);
 }
 
 bool WindowManagerApp::IsReady() const {
-  return view_manager_ && root_;
+  return root_;
 }
 
 void WindowManagerApp::InitFocus(scoped_ptr<FocusRules> rules) {
@@ -110,7 +109,7 @@ void WindowManagerApp::InitFocus(scoped_ptr<FocusRules> rules) {
 void WindowManagerApp::Embed(
     const mojo::String& url,
     mojo::InterfaceRequest<ServiceProvider> service_provider) {
-  if (view_manager_) {
+  if (view_manager()) {
     window_manager_delegate_->Embed(url, service_provider.Pass());
     return;
   }
@@ -137,12 +136,10 @@ bool WindowManagerApp::ConfigureIncomingConnection(
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, ViewManagerDelegate implementation:
 
-void WindowManagerApp::OnEmbed(mojo::ViewManager* view_manager,
-                               View* root,
+void WindowManagerApp::OnEmbed(View* root,
                                mojo::ServiceProviderImpl* exported_services,
                                scoped_ptr<ServiceProvider> imported_services) {
-  DCHECK(!view_manager_ && !root_);
-  view_manager_ = view_manager;
+  DCHECK(!root_);
   root_ = root;
 
   view_event_dispatcher_.reset(new ViewEventDispatcher);
@@ -150,8 +147,8 @@ void WindowManagerApp::OnEmbed(mojo::ViewManager* view_manager,
   RegisterSubtree(root_);
 
   if (wrapped_view_manager_delegate_) {
-    wrapped_view_manager_delegate_->OnEmbed(
-        view_manager, root, exported_services, imported_services.Pass());
+    wrapped_view_manager_delegate_->OnEmbed(root, exported_services,
+                                            imported_services.Pass());
   }
 
   for (PendingEmbed* pending_embed : pending_embeds_)
@@ -161,10 +158,11 @@ void WindowManagerApp::OnEmbed(mojo::ViewManager* view_manager,
 
 void WindowManagerApp::OnViewManagerDisconnected(
     mojo::ViewManager* view_manager) {
-  DCHECK_EQ(view_manager_, view_manager);
+  DCHECK(this->view_manager());
+  DCHECK_EQ(this->view_manager(), view_manager);
   if (wrapped_view_manager_delegate_)
     wrapped_view_manager_delegate_->OnViewManagerDisconnected(view_manager);
-  view_manager_ = nullptr;
+  root_ = nullptr;
   base::MessageLoop::current()->Quit();
 }
 

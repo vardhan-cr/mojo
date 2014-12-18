@@ -82,7 +82,6 @@ class WMFlowApp : public mojo::ApplicationDelegate,
 
   // Overridden from mojo::ViewManagerDelegate:
   virtual void OnEmbed(
-      mojo::ViewManager* view_manager,
       mojo::View* root,
       mojo::ServiceProviderImpl* exported_services,
       scoped_ptr<mojo::ServiceProvider> imported_services) override {
@@ -92,7 +91,7 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     uploader->Init(shell_);
     uploader->SetColor(kColors[embed_count_++ % arraysize(kColors)]);
 
-    mojo::View* embed = mojo::View::Create(view_manager);
+    mojo::View* embed = mojo::View::Create(root->view_manager());
     root->AddChild(embed);
     mojo::Rect bounds;
     bounds.x = bounds.y = 25;

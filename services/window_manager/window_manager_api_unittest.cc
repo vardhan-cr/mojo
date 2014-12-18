@@ -105,8 +105,7 @@ class TestApplicationLoader : public mojo::ApplicationLoader,
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  void OnEmbed(mojo::ViewManager* view_manager,
-               View* root,
+  void OnEmbed(View* root,
                mojo::ServiceProviderImpl* exported_services,
                scoped_ptr<mojo::ServiceProvider> imported_services) override {
     root_added_callback_.Run(root);

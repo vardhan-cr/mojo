@@ -12,10 +12,8 @@
 namespace mojo {
 class View;
 
-// Encapsulates a connection to the view manager service.
-// A unique connection is made for every unique embed path for an app. e.g. for
-// app B embed by the following paths: A->B, A->C->B - there are two connections
-// and thus two instances of this class.
+// Encapsulates a connection to the view manager service. A unique connection
+// is made every time an app is embedded.
 class ViewManager {
  public:
   // Returns the URL of the application that embedded this application.

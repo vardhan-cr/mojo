@@ -104,6 +104,10 @@ class WindowManagerApp
   struct PendingEmbed;
   class WindowManagerInternalImpl;
 
+  mojo::ViewManager* view_manager() {
+    return root_ ? root_->view_manager() : nullptr;
+  }
+
   // Creates an ViewTarget for every view in the hierarchy beneath |view|,
   // and adds to the registry so that it can be retrieved later via
   // GetViewTargetForViewId().
@@ -118,8 +122,7 @@ class WindowManagerApp
   void Unregister(mojo::View* view);
 
   // Overridden from ViewManagerDelegate:
-  void OnEmbed(mojo::ViewManager* view_manager,
-               mojo::View* root,
+  void OnEmbed(mojo::View* root,
                mojo::ServiceProviderImpl* exported_services,
                scoped_ptr<mojo::ServiceProvider> imported_services) override;
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override;
@@ -166,7 +169,6 @@ class WindowManagerApp
   ViewManagerDelegate* wrapped_view_manager_delegate_;
   WindowManagerDelegate* window_manager_delegate_;
 
-  mojo::ViewManager* view_manager_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
   mojo::View* root_;
 

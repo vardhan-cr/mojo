@@ -53,7 +53,6 @@ class Keyboard : public ApplicationDelegate,
   Keyboard()
       : shell_(nullptr),
         keyboard_service_factory_(this),
-        view_manager_(NULL),
         keyboard_service_(NULL),
         target_(0) {}
 
@@ -98,18 +97,14 @@ class Keyboard : public ApplicationDelegate,
   }
 
   // ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     // TODO: deal with OnEmbed() being invoked multiple times.
-    view_manager_ = view_manager;
     CreateWidget(root);
   }
   virtual void OnViewManagerDisconnected(
       ViewManager* view_manager) override {
-    DCHECK_EQ(view_manager_, view_manager);
-    view_manager_ = NULL;
     base::MessageLoop::current()->Quit();
   }
 
@@ -128,7 +123,6 @@ class Keyboard : public ApplicationDelegate,
 
   scoped_ptr<ViewsInit> views_init_;
 
-  ViewManager* view_manager_;
   scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
 
   KeyboardServiceImpl* keyboard_service_;

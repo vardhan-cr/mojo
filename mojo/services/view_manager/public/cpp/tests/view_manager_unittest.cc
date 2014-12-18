@@ -47,7 +47,7 @@ class ConnectApplicationLoader : public ApplicationLoader,
                                  public ApplicationDelegate,
                                  public ViewManagerDelegate {
  public:
-  typedef base::Callback<void(ViewManager*, View*)> LoadedCallback;
+  typedef base::Callback<void(View*)> LoadedCallback;
 
   explicit ConnectApplicationLoader(const LoadedCallback& callback)
       : callback_(callback) {}
@@ -80,11 +80,10 @@ class ConnectApplicationLoader : public ApplicationLoader,
   }
 
   // Overridden from ViewManagerDelegate:
-  void OnEmbed(ViewManager* view_manager,
-               View* root,
+  void OnEmbed(View* root,
                ServiceProviderImpl* exported_services,
                scoped_ptr<ServiceProvider> imported_services) override {
-    callback_.Run(view_manager, root);
+    callback_.Run(root);
   }
   void OnViewManagerDisconnected(ViewManager* view_manager) override {}
 
@@ -317,8 +316,8 @@ class ViewManagerTest : public testing::Test {
     // TODO(sky): resolve this. Need to establish initial connection.
   }
 
-  void OnViewManagerLoaded(ViewManager* view_manager, View* root) {
-    loaded_view_manager_ = view_manager;
+  void OnViewManagerLoaded(View* root) {
+    loaded_view_manager_ = root->view_manager();
     connect_loop_->Quit();
   }
 

@@ -198,7 +198,6 @@ class MediaViewer
   MediaViewer()
       : shell_(nullptr),
         app_(NULL),
-        view_manager_(NULL),
         root_view_(NULL),
         control_view_(NULL),
         content_view_(NULL),
@@ -244,18 +243,16 @@ class MediaViewer
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(ViewManager* view_manager,
-                       View* root,
+  virtual void OnEmbed(View* root,
                        ServiceProviderImpl* exported_services,
                        scoped_ptr<ServiceProvider> imported_services) override {
     root_view_ = root;
-    view_manager_ = view_manager;
 
-    control_view_ = View::Create(view_manager_);
+    control_view_ = View::Create(root->view_manager());
     control_view_->SetVisible(true);
     root_view_->AddChild(control_view_);
 
-    content_view_ = View::Create(view_manager_);
+    content_view_ = View::Create(root->view_manager());
     content_view_->SetVisible(true);
     root_view_->AddChild(content_view_);
 
@@ -269,8 +266,6 @@ class MediaViewer
 
   virtual void OnViewManagerDisconnected(
       ViewManager* view_manager) override {
-    DCHECK_EQ(view_manager_, view_manager);
-    view_manager_ = NULL;
     base::MessageLoop::current()->Quit();
   }
 
@@ -314,7 +309,6 @@ class MediaViewer
 
   ApplicationImpl* app_;
   scoped_ptr<ViewsInit> views_init_;
-  ViewManager* view_manager_;
   View* root_view_;
   View* control_view_;
   View* content_view_;
