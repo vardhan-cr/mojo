@@ -92,5 +92,23 @@ TEST_F(JSPingPongTest, PingTargetService) {
   pingpong_service_->Quit();
 }
 
+// Verify that JS can implement an interface "request" parameter.
+TEST_F(JSPingPongTest, GetTargetService) {
+  PingPongServicePtr target;
+  PingPongClientImpl client;
+  pingpong_service_->GetPingPongService(GetProxy(&target));
+  target.set_client(&client);
+  EXPECT_EQ(0, client.last_pong_value());
+  target->Ping(1);
+  EXPECT_TRUE(target.WaitForIncomingMethodCall());
+  EXPECT_EQ(2, client.last_pong_value());
+  target->Ping(100);
+  EXPECT_TRUE(target.WaitForIncomingMethodCall());
+  EXPECT_EQ(101, client.last_pong_value());
+  target->Quit();
+  pingpong_service_->Quit();
+}
+
+
 }  // namespace
 }  // namespace js

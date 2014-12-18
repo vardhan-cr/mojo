@@ -359,7 +359,6 @@ define("main", [
 
     quit() {
       if (this.timer_) {
-        console.log("CANCEL");
         this.timer_.cancel();
         this.timer_ = null;
       }
@@ -381,9 +380,7 @@ define("main", [
           app.onViewportCreated(result.native_viewport_id, viewportSize);
         });
 
-      this.eventDispatcher =
-          new nvModule.NativeViewportEventDispatcher.stubClass(this);
-      this.viewport.setEventDispatcher(this.eventDispatcher);
+      this.viewport.setEventDispatcher(this);
       this.viewport.show();
     }
 

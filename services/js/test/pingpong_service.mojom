@@ -17,6 +17,9 @@ interface PingPongService {
   // after the final Pong() is received.
   PingTargetService(PingPongService service, uint16 count) => (bool ok);
 
+  // Return a PingPongService
+  GetPingPongService(PingPongService& service);
+
   // Make it stop.
   Quit();
 };

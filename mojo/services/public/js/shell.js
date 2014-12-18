@@ -4,16 +4,25 @@
 
 define("mojo/services/public/js/shell", [
   "mojo/public/js/core",
+  "mojo/public/js/connection",
   "mojo/public/interfaces/application/shell.mojom",
   "mojo/public/interfaces/application/service_provider.mojom",
-  "mojo/services/public/js/service_provider",
-], function(coreModule, shellInterfaceModule, spInterfaceModule, spModule) {
+  "mojo/services/public/js/service_provider"
+], function(coreModule,
+            connectionModule,
+            shellInterfaceModule,
+            spInterfaceModule,
+            spModule) {
 
   class Shell {
     constructor(shellHandle, app) {
       this.shellHandle = shellHandle;
-      this.proxy = new shellInterfaceModule.Shell.proxyClass(shellHandle);
-      this.proxy.client$ = app;
+      this.proxy = connectionModule.bindProxyHandle(
+          shellHandle,
+          shellInterfaceModule.Shell.client,
+          shellInterfaceModule.Shell);
+      this.proxy.local$ = app; // The app is the shell's client.
+      // TODO: call this serviceProviders_
       this.applications_ = new Map();
     }
 
@@ -22,15 +31,15 @@ define("mojo/services/public/js/shell", [
       if (application)
         return application;
 
-      var spProxy = new spInterfaceModule.ServiceProvider.proxyClass;
-      this.proxy.connectToApplication(url, spProxy);
-      application = new spModule.ServiceProvider(spProxy);
+      var returnValue = {};
+      this.proxy.connectToApplication(url, returnValue);
+      application = new spModule.ServiceProvider(returnValue.remote$);
       this.applications_.set(url, application);
       return application;
     }
 
     connectToService(url, service, client) {
-      return this.connectToApplication(url).connectToService(service, client);
+      return this.connectToApplication(url).requestService(service, client);
     };
 
     close() {

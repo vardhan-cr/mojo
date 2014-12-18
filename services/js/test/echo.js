@@ -2,7 +2,7 @@
 
 define("main", [
   "mojo/services/public/js/application",
-  "services/js/test/echo_service.mojom",
+  "services/js/test/echo_service.mojom"
 ], function(appModule, echoModule) {
 
   class Echo extends appModule.Application {

@@ -10,11 +10,9 @@ define("main", [
       this.app = app;
       this.client = client;
     }
-
     ping(value) {
       this.client.pong(value + 1);
     }
-
     quit() {
       this.app.quit();
     }

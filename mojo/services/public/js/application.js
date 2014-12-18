@@ -23,9 +23,8 @@ define("mojo/services/public/js/application", [
     initialize(args) {
     }
 
-    doAcceptConnection(url, spHandle) {
-      var service = new spInterfaceModule.ServiceProvider.proxyClass(spHandle);
-      var serviceProvider =  new spModule.ServiceProvider(service);
+    doAcceptConnection(url, serviceProviderProxy) {
+      var serviceProvider =  new spModule.ServiceProvider(serviceProviderProxy);
       this.serviceProviders.push(serviceProvider);
       this.acceptConnection(url, serviceProvider);
     }

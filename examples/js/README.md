@@ -139,41 +139,6 @@ In the netService case above the Shell connects to the Mojo application at
 instance is returned. The netService proxy can be used immediately.
 
 
---- Interface Parameters --- 
-
-Mojo functions with interface valued parameters allow one to request a service
-from a service or to provide a service to a service. The
-indirect_service example demonstrates this.
-
-The NetworkService CreateURLLoader() method has an interface request parameter:
-
-  interface NetworkService {
-    // Connect the loader parameter to a URLLoader service.
-    CreateURLLoader(URLLoader& loader);
-    ...
-  }
-
-Interface request parameters can be specified as an instance of the interface's
-proxy class. Ordinary interface parameters can be specified as an instance of
-the interface's stub class. The stub class constructor has an optional delegate
-parameter that defines the stub's implementation.
-
-Here's an example of an interface request parameter taken from wget.js:
-
-  var urlLoader = new loader.URLLoader.proxyClass;
-  netService.createURLLoader(urlLoader); // interface& parameter
-
-  var urlRequest = new loader.URLRequest({
-    url: "http://www.cnn.com",
-    method: "GET",
-    auto_follow_redirects: true
-  });
-
-  urlLoader.start(urlRequest).then(function(result) {
-      // ..Do something with result.response
-  });
-
-
 --- Mojo Responses are Promises --- 
 
 Mojo functions can return zero or more values called a "response". For example
@@ -197,3 +162,74 @@ be written like this:
   MyEchoStringImpl.prototype.EchoString = function(s) {
     return Promise.resolve({value: s});
   };
+
+--- Interface Parameters --- 
+
+The caller and callee use cases that follow are  in terms of the following mojom:
+
+  [Client=Bar]
+  interface Foo {
+  }
+
+  [Client=Foo] // Redundant but always implicitly true.
+  interface Bar {
+  }
+
+  interface I {
+    provideFoo(Foo foo);
+    requestFoo(Foo& foo); // effectively: provideFoo(Bar bar)
+  } 
+
+-- In General
+
+From a user's point of view, the bindings are in terms of the (remote)
+proxy class and the (local) stub class's implementation delegate
+(internally, that's the stub class's delegate$ property).  The
+bindings will add/use a local$ property on proxy objects which points
+to the stub class's implementation delegate. They also manage remote$
+property on the implementation delegate whose value is the proxy.
+
+All that implies:
+
+fooImpl.remote$.local$ == fooImpl (the stub class's delegate)
+fooProxy.local$.remote$ == fooProxy
+
+
+-- Callers
+
+Assuming that we have a proxy for interface I, iProxy.
+
+An iProxy.provideFoo() call implies that we have an implementation of
+Foo, and want a proxy for Bar (Foo's client).
+
+  var myFooImpl;
+  provideFoo(myFooImpl);
+  myFooImpl.remote$; // A Bar proxy initialized by provideFoo(), undefined if Foo has no client.
+
+An iProxy.requestFoo() call implies that we have an implementation of
+Bar and want a proxy for Foo (Bar's client).
+
+  var myBarImpl; // If Foo has no client then this is just {}.
+  requestFoo(myBarImpl);
+  myBarImpl.remote$; // A Foo proxy initialized by requestFoo.
+
+The wget.js example includes a request for the URLLoader service.
+
+-- Callees
+
+An implementation of provideFoo(Foo foo) implies that we have an
+implementation of Bar (Foo's client) and want a proxy to the Foo
+that has been passed to us.
+
+  void provideFoo(fooProxy) {
+    fooProxy.local$ = myBarImpl; // sets myFooImpl.remote$ = fooProxy
+  }
+
+An implementation of requestFoo(Foo& foo) implies that we have an
+implementation of Foo and want a proxy for the Bar (Foo's client)
+that's been passed to us.
+
+  void requestFoo(barProxy) {
+    barProxy.local$ = myFooImpl; // sets myFooImpl.remote$ = barProxy
+  }
+

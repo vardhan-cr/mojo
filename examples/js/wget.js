@@ -8,11 +8,11 @@
 
 define("main", [
   "console",
+  "mojo/services/public/js/application",
   "mojo/public/js/core",
   "mojo/services/network/public/interfaces/network_service.mojom",
   "mojo/services/network/public/interfaces/url_loader.mojom",
-  "mojo/services/public/js/application",
-], function(console, coreModule, netModule, loaderModule, appModule) {
+], function(console, appModule, coreModule, netModule, loaderModule) {
 
   class WGet extends appModule.Application {
     initialize(args) {
@@ -24,8 +24,9 @@ define("main", [
       var netService = this.shell.connectToService(
         "mojo:network_service", netModule.NetworkService);
 
-      var urlLoader = new loaderModule.URLLoader.proxyClass();
-      netService.createURLLoader(urlLoader);
+      var urlLoaderClient = {};
+      netService.createURLLoader(urlLoaderClient);
+      var urlLoader = urlLoaderClient.remote$;
 
       var urlRequest = new loaderModule.URLRequest({
         url: args[1],
