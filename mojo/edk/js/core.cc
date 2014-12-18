@@ -31,17 +31,63 @@ MojoResult CloseHandle(gin::Handle<HandleWrapper> handle) {
   return MOJO_RESULT_OK;
 }
 
-MojoResult WaitHandle(mojo::Handle handle,
-                      MojoHandleSignals signals,
-                      MojoDeadline deadline) {
-  return MojoWait(handle.value(), signals, deadline);
+gin::Dictionary WaitHandle(const gin::Arguments& args,
+                           mojo::Handle handle,
+                           MojoHandleSignals signals,
+                           MojoDeadline deadline) {
+  v8::Isolate* isolate = args.isolate();
+  gin::Dictionary dictionary = gin::Dictionary::CreateEmpty(isolate);
+
+  MojoHandleSignalsState signals_state;
+  MojoResult result = mojo::Wait(handle, signals, deadline, &signals_state);
+  dictionary.Set("result", result);
+
+  mojo::WaitManyResult wmv(result, 0);
+  if (!wmv.AreSignalsStatesValid()) {
+    dictionary.Set("signalsState", v8::Null(isolate).As<v8::Value>());
+  } else {
+    gin::Dictionary signalsStateDict = gin::Dictionary::CreateEmpty(isolate);
+    signalsStateDict.Set("satisfiedSignals", signals_state.satisfied_signals);
+    signalsStateDict.Set("satisfiableSignals",
+                         signals_state.satisfiable_signals);
+    dictionary.Set("signalsState", signalsStateDict);
+  }
+
+  return dictionary;
 }
 
-MojoResult WaitMany(
-    const std::vector<mojo::Handle>& handles,
-    const std::vector<MojoHandleSignals>& signals,
-    MojoDeadline deadline) {
-  return mojo::WaitMany(handles, signals, deadline);
+gin::Dictionary WaitMany(const gin::Arguments& args,
+                         const std::vector<mojo::Handle>& handles,
+                         const std::vector<MojoHandleSignals>& signals,
+                         MojoDeadline deadline) {
+  v8::Isolate* isolate = args.isolate();
+  gin::Dictionary dictionary = gin::Dictionary::CreateEmpty(isolate);
+
+  std::vector<MojoHandleSignalsState> signals_states(signals.size());
+  mojo::WaitManyResult wmv =
+      mojo::WaitMany(handles, signals, deadline, &signals_states);
+  dictionary.Set("result", wmv.result);
+  if (wmv.IsIndexValid()) {
+    dictionary.Set("index", wmv.index);
+  } else {
+    dictionary.Set("index", v8::Null(isolate).As<v8::Value>());
+  }
+  if (wmv.AreSignalsStatesValid()) {
+    std::vector<gin::Dictionary> vec;
+    for (size_t i = 0; i < handles.size(); ++i) {
+      gin::Dictionary signalsStateDict = gin::Dictionary::CreateEmpty(isolate);
+      signalsStateDict.Set("satisfiedSignals",
+                           signals_states[i].satisfied_signals);
+      signalsStateDict.Set("satisfiableSignals",
+                           signals_states[i].satisfiable_signals);
+      vec.push_back(signalsStateDict);
+    }
+    dictionary.Set("signalsState", vec);
+  } else {
+    dictionary.Set("signalsState", v8::Null(isolate).As<v8::Value>());
+  }
+
+  return dictionary;
 }
 
 gin::Dictionary CreateMessagePipe(const gin::Arguments& args) {
