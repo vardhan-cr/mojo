@@ -5,10 +5,10 @@
 #include "base/at_exit.h"
 #include "base/bind.h"
 #include "base/macros.h"
+#include "base/memory/scoped_vector.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/application_manager/application_manager.h"
-#include "mojo/application_manager/background_shell_application_loader.h"
 #include "mojo/application_manager/test.mojom.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -84,7 +84,7 @@ class TestClientImpl : public TestClient {
       base::MessageLoop::current()->Quit();
   }
 
-  void Test(std::string test_string) {
+  void Test(const std::string& test_string) {
     quit_after_ack_ = true;
     service_->Test(test_string);
   }
@@ -238,10 +238,13 @@ class TesterContext {
 };
 
 // Used to test that the requestor url will be correctly passed.
-class TestAImpl : public InterfaceImpl<TestA> {
+class TestAImpl : public TestA {
  public:
-  TestAImpl(ApplicationConnection* connection, TesterContext* test_context)
-      : test_context_(test_context) {
+  TestAImpl(ApplicationConnection* connection,
+            TesterContext* test_context,
+            InterfaceRequest<TestA> request)
+      : test_context_(test_context),
+        binding_(this, request.Pass()) {
     connection->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
   }
   ~TestAImpl() override {
@@ -267,6 +270,7 @@ class TestAImpl : public InterfaceImpl<TestA> {
 
   TesterContext* test_context_;
   TestBPtr b_;
+  Binding<TestA> binding_;
 };
 
 class TestBImpl : public InterfaceImpl<TestB> {
@@ -359,7 +363,7 @@ class Tester : public ApplicationDelegate,
 
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestA> request) override {
-    BindToRequest(new TestAImpl(connection, context_), &request);
+    a_bindings_.push_back(new TestAImpl(connection, context_, request.Pass()));
   }
 
   void Create(ApplicationConnection* connection,
@@ -375,6 +379,7 @@ class Tester : public ApplicationDelegate,
   TesterContext* context_;
   scoped_ptr<ApplicationImpl> app_;
   std::string requestor_url_;
+  ScopedVector<TestAImpl> a_bindings_;
 };
 
 class TestServiceInterceptor : public ApplicationManager::Interceptor {
@@ -450,19 +455,9 @@ class ApplicationManagerTest : public testing::Test {
     application_manager_.reset(NULL);
   }
 
-  scoped_ptr<BackgroundShellApplicationLoader> MakeLoader(
-      const std::string& requestor_url) {
-    scoped_ptr<ApplicationLoader> real_loader(
-        new Tester(&tester_context_, requestor_url));
-    scoped_ptr<BackgroundShellApplicationLoader> loader(
-        new BackgroundShellApplicationLoader(real_loader.Pass(),
-                                             std::string(),
-                                             base::MessageLoop::TYPE_DEFAULT));
-    return loader.Pass();
-  }
-
   void AddLoaderForURL(const GURL& url, const std::string& requestor_url) {
-    application_manager_->SetLoaderForURL(MakeLoader(requestor_url), url);
+    application_manager_->SetLoaderForURL(
+        make_scoped_ptr(new Tester(&tester_context_, requestor_url)), url);
   }
 
   bool HasFactoryForTestURL() {
