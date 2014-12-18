@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/application_manager/background_shell_application_loader.h"
+#include "shell/android/background_application_loader.h"
 
 #include "base/bind.h"
 #include "base/run_loop.h"
@@ -10,7 +10,7 @@
 
 namespace mojo {
 
-BackgroundShellApplicationLoader::BackgroundShellApplicationLoader(
+BackgroundApplicationLoader::BackgroundApplicationLoader(
     scoped_ptr<ApplicationLoader> real_loader,
     const std::string& thread_name,
     base::MessageLoop::Type message_loop_type)
@@ -20,16 +20,15 @@ BackgroundShellApplicationLoader::BackgroundShellApplicationLoader(
       message_loop_created_(true, false) {
 }
 
-BackgroundShellApplicationLoader::~BackgroundShellApplicationLoader() {
+BackgroundApplicationLoader::~BackgroundApplicationLoader() {
   if (thread_)
     thread_->Join();
 }
 
-void BackgroundShellApplicationLoader::Load(
-    ApplicationManager* manager,
-    const GURL& url,
-    ScopedMessagePipeHandle shell_handle,
-    LoadCallback callback) {
+void BackgroundApplicationLoader::Load(ApplicationManager* manager,
+                                       const GURL& url,
+                                       ScopedMessagePipeHandle shell_handle,
+                                       LoadCallback callback) {
   DCHECK(shell_handle.is_valid());
   if (!thread_) {
     // TODO(tim): It'd be nice if we could just have each Load call
@@ -46,23 +45,22 @@ void BackgroundShellApplicationLoader::Load(
 
   task_runner_->PostTask(
       FROM_HERE,
-      base::Bind(&BackgroundShellApplicationLoader::LoadOnBackgroundThread,
+      base::Bind(&BackgroundApplicationLoader::LoadOnBackgroundThread,
                  base::Unretained(this), manager, url,
                  base::Passed(&shell_handle)));
 }
 
-void BackgroundShellApplicationLoader::OnApplicationError(
+void BackgroundApplicationLoader::OnApplicationError(
     ApplicationManager* manager,
     const GURL& url) {
-  task_runner_->PostTask(FROM_HERE,
-                         base::Bind(&BackgroundShellApplicationLoader::
-                                        OnApplicationErrorOnBackgroundThread,
-                                    base::Unretained(this),
-                                    manager,
-                                    url));
+  task_runner_->PostTask(
+      FROM_HERE,
+      base::Bind(
+          &BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread,
+          base::Unretained(this), manager, url));
 }
 
-void BackgroundShellApplicationLoader::Run() {
+void BackgroundApplicationLoader::Run() {
   base::MessageLoop message_loop(message_loop_type_);
   base::RunLoop loop;
   task_runner_ = message_loop.task_runner();
@@ -74,7 +72,7 @@ void BackgroundShellApplicationLoader::Run() {
   loader_.reset();
 }
 
-void BackgroundShellApplicationLoader::LoadOnBackgroundThread(
+void BackgroundApplicationLoader::LoadOnBackgroundThread(
     ApplicationManager* manager,
     const GURL& url,
     ScopedMessagePipeHandle shell_handle) {
@@ -82,7 +80,7 @@ void BackgroundShellApplicationLoader::LoadOnBackgroundThread(
   loader_->Load(manager, url, shell_handle.Pass(), SimpleLoadCallback());
 }
 
-void BackgroundShellApplicationLoader::OnApplicationErrorOnBackgroundThread(
+void BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread(
     ApplicationManager* manager,
     const GURL& url) {
   DCHECK(task_runner_->RunsTasksOnCurrentThread());

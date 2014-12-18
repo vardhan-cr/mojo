@@ -17,7 +17,6 @@
 #include "build/build_config.h"
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/application_manager/application_manager.h"
-#include "mojo/application_manager/background_shell_application_loader.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"

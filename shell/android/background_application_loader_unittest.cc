@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/application_manager/background_shell_application_loader.h"
+#include "shell/android/background_application_loader.h"
 
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -36,18 +36,18 @@ class DummyLoader : public ApplicationLoader {
 }  // namespace
 
 // Tests that the loader can start and stop gracefully.
-TEST(BackgroundShellApplicationLoaderTest, StartStop) {
+TEST(BackgroundApplicationLoaderTest, StartStop) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
-  BackgroundShellApplicationLoader loader(
-      real_loader.Pass(), "test", base::MessageLoop::TYPE_DEFAULT);
+  BackgroundApplicationLoader loader(real_loader.Pass(), "test",
+                                     base::MessageLoop::TYPE_DEFAULT);
 }
 
 // Tests that the loader can load a service that is well behaved (quits
 // itself).
-TEST(BackgroundShellApplicationLoaderTest, Load) {
+TEST(BackgroundApplicationLoaderTest, Load) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
-  BackgroundShellApplicationLoader loader(
-      real_loader.Pass(), "test", base::MessageLoop::TYPE_DEFAULT);
+  BackgroundApplicationLoader loader(real_loader.Pass(), "test",
+                                     base::MessageLoop::TYPE_DEFAULT);
   MessagePipe dummy;
   loader.Load(NULL, GURL(), dummy.handle0.Pass(),
               ApplicationLoader::SimpleLoadCallback());

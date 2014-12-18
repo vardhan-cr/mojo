@@ -18,8 +18,8 @@
 #include "base/message_loop/message_loop.h"
 #include "jni/MojoMain_jni.h"
 #include "mojo/application_manager/application_loader.h"
-#include "mojo/application_manager/background_shell_application_loader.h"
 #include "shell/android/android_handler_loader.h"
+#include "shell/android/background_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
 #include "shell/context.h"
@@ -52,7 +52,7 @@ void ConfigureAndroidServices(Context* context) {
   // MojoShell application as the JNI bridge to bootstrap execution of other
   // Android Mojo apps that need JNI.
   context->application_manager()->SetLoaderForURL(
-      make_scoped_ptr(new BackgroundShellApplicationLoader(
+      make_scoped_ptr(new BackgroundApplicationLoader(
           make_scoped_ptr(new AndroidHandlerLoader()), "android_handler",
           base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:android_handler"));

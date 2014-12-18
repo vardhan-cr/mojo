@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_APPLICATION_MANAGER_BACKGROUND_SHELL_APPLICATION_LOADER_H_
-#define MOJO_APPLICATION_MANAGER_BACKGROUND_SHELL_APPLICATION_LOADER_H_
+#ifndef SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_
+#define SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
@@ -14,17 +14,14 @@
 
 namespace mojo {
 
-// TODO(tim): Eventually this should be Android-only to support services
-// that we need to bundle with the shell (such as NetworkService). Perhaps
-// we should move it to shell/ as well.
-class MOJO_APPLICATION_MANAGER_EXPORT BackgroundShellApplicationLoader
+class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
     : public ApplicationLoader,
       public base::DelegateSimpleThread::Delegate {
  public:
-  BackgroundShellApplicationLoader(scoped_ptr<ApplicationLoader> real_loader,
-                                   const std::string& thread_name,
-                                   base::MessageLoop::Type message_loop_type);
-  ~BackgroundShellApplicationLoader() override;
+  BackgroundApplicationLoader(scoped_ptr<ApplicationLoader> real_loader,
+                              const std::string& thread_name,
+                              base::MessageLoop::Type message_loop_type);
+  ~BackgroundApplicationLoader() override;
 
   // ApplicationLoader overrides:
   void Load(ApplicationManager* manager,
@@ -65,9 +62,9 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundShellApplicationLoader
 
   scoped_ptr<base::DelegateSimpleThread> thread_;
 
-  DISALLOW_COPY_AND_ASSIGN(BackgroundShellApplicationLoader);
+  DISALLOW_COPY_AND_ASSIGN(BackgroundApplicationLoader);
 };
 
 }  // namespace mojo
 
-#endif  // MOJO_APPLICATION_MANAGER_BACKGROUND_SHELL_APPLICATION_LOADER_H_
+#endif  // SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_

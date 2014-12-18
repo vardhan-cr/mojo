@@ -196,6 +196,8 @@ source_set("lib") {
       "android/android_handler.h",
       "android/android_handler_loader.cc",
       "android/android_handler_loader.h",
+      "android/background_application_loader.cc",
+      "android/background_application_loader.h",
       "android/native_viewport_application_loader.cc",
       "android/native_viewport_application_loader.h",
       "android/ui_application_loader_android.cc",
@@ -398,6 +400,8 @@ test("mojo_shell_tests") {
   ]
 
   if (is_android) {
+    sources += [ "android/background_application_loader_unittest.cc" ]
+
     deps += [
       # TODO(GYP):
       #'../testing/android/native_test.gyp:native_test_native_code',
