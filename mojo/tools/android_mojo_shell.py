@@ -36,7 +36,7 @@ USAGE = ("android_mojo_shell.py "
          "[--disable-cache] "
          "[--enable-multiprocess] "
          "[--url-mappings=from1=to1,from2=to2] "
-         "[<mojo-app> | --no-url] "
+         "[<mojo-app>] "
          """
 
 A <mojo-app> is a Mojo URL or a Mojo URL and arguments within quotes.
@@ -70,9 +70,6 @@ def main():
                            default=True, action='store_true')
   debug_group.add_argument('--release', help='Release build', default=False,
                            dest='debug', action='store_false')
-  parser.add_argument('--no-url',
-                      help='Allows not to provide a application URL',
-                      action='store_true')
   launcher_args, args = parser.parse_known_args()
 
   paths = Paths(Config(target_os=Config.OS_ANDROID,
@@ -105,18 +102,8 @@ def main():
   parameters = [
       '--origin=http://127.0.0.1:%d/' % device_port
   ]
-
-  url = None
-  if launcher_args.no_url:
-    parameters += args
-  else:
-    url = args[-1]
-    parameters += args[:-1]
-
+  parameters += args
   cmd += ' --esa parameters \"%s\"' % ','.join(parameters)
-
-  if url:
-    cmd += ' -d %s' % url
 
   device.RunShellCommand('logcat -c')
   device.RunShellCommand(cmd)

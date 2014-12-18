@@ -8,14 +8,11 @@
 #include "base/at_exit.h"
 #include "base/bind.h"
 #include "base/command_line.h"
-#include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "base/strings/string_split.h"
-#include "base/strings/utf_string_conversions.h"
 #include "shell/child_process.h"
+#include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
-#include "shell/mojo_url_resolver.h"
 #include "shell/switches.h"
 
 namespace {
@@ -24,49 +21,6 @@ namespace {
 // Copied from ui/gfx/switches.cc to avoid a dependency on //ui/gfx
 const char kEnableHarfBuzzRenderText[] = "enable-harfbuzz-rendertext";
 #endif
-
-bool IsEmpty(const std::string& s) {
-  return s.empty();
-}
-
-// The value of app_url_and_args is "<mojo_app_url> [<args>...]", where args
-// is a list of "configuration" arguments separated by spaces. If one or more
-// arguments are specified they will be available when the Mojo application
-// is initialized. See ApplicationImpl::args().
-GURL GetAppURLAndSetArgs(const std::string& app_url_and_args,
-                         mojo::shell::Context* context) {
-  // SplitString() returns empty strings for extra delimeter characters (' ').
-  std::vector<std::string> argv;
-  base::SplitString(app_url_and_args, ' ', &argv);
-  argv.erase(std::remove_if(argv.begin(), argv.end(), IsEmpty), argv.end());
-
-  if (argv.empty())
-    return GURL::EmptyGURL();
-  GURL app_url(argv[0]);
-  if (!app_url.is_valid()) {
-    LOG(ERROR) << "Error: invalid URL: " << argv[0];
-    return app_url;
-  }
-  if (argv.size() > 1)
-    context->application_manager()->SetArgsForURL(argv, app_url);
-  return app_url;
-}
-
-void RunApps(mojo::shell::Context* context) {
-  const auto& command_line = *base::CommandLine::ForCurrentProcess();
-  for (const auto& arg : command_line.GetArgs()) {
-    std::string arg2;
-#if defined(OS_WIN)
-    arg2 = base::UTF16ToUTF8(arg);
-#else
-    arg2 = arg;
-#endif
-    GURL url = GetAppURLAndSetArgs(arg2, context);
-    if (!url.is_valid())
-      return;
-    context->Run(GetAppURLAndSetArgs(arg2, context));
-  }
-}
 
 void Usage() {
   std::cerr << "Launch Mojo applications.\n";
@@ -87,21 +41,6 @@ void Usage() {
       << "The value of <handlers> is a comma separated list like:\n"
       << "text/html,mojo:html_viewer,"
       << "application/javascript,mojo:js_content_handler\n";
-}
-
-bool IsArgsFor(const std::string& arg, std::string* value) {
-  const std::string kArgsForSwitches[] = {
-      "-" + std::string(switches::kArgsFor),
-      "--" + std::string(switches::kArgsFor),
-  };
-  for (size_t i = 0; i < arraysize(kArgsForSwitches); i++) {
-    std::string argsfor_switch(kArgsForSwitches[i]);
-    if (arg.compare(0, argsfor_switch.size(), argsfor_switch) == 0) {
-      *value = arg.substr(argsfor_switch.size() + 1, std::string::npos);
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace
@@ -160,12 +99,12 @@ int main(int argc, char** argv) {
       // because it can appear more than once. The base::CommandLine class
       // collapses multiple occurrences of the same switch.
       for (int i = 1; i < argc; i++) {
-        std::string args_for_value;
-        if (IsArgsFor(argv[i], &args_for_value))
-          GetAppURLAndSetArgs(args_for_value, &shell_context);
+        ApplyApplicationArgs(&shell_context, argv[i]);
       }
 
-      message_loop.PostTask(FROM_HERE, base::Bind(RunApps, &shell_context));
+      message_loop.PostTask(
+          FROM_HERE,
+          base::Bind(&mojo::shell::RunCommandLineApps, &shell_context));
       message_loop.Run();
     }
   }

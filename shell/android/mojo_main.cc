@@ -4,9 +4,9 @@
 
 #include "shell/android/mojo_main.h"
 
-#include "base/android/command_line_android.h"
 #include "base/android/java_handler_thread.h"
 #include "base/android/jni_android.h"
+#include "base/android/jni_array.h"
 #include "base/android/jni_string.h"
 #include "base/at_exit.h"
 #include "base/bind.h"
@@ -22,6 +22,7 @@
 #include "shell/android/background_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
+#include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
 #include "ui/gl/gl_surface_egl.h"
@@ -58,14 +59,11 @@ void ConfigureAndroidServices(Context* context) {
       GURL("mojo:android_handler"));
 }
 
-void RunShell(std::vector<GURL> app_urls) {
+void StartShellOnShellThread() {
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
   context->Init();
-  for (std::vector<GURL>::const_iterator it = app_urls.begin();
-       it != app_urls.end(); ++it) {
-    context->Run(*it);
-  }
+  RunCommandLineApps(context);
 }
 
 }  // namespace
@@ -79,10 +77,14 @@ static void Init(JNIEnv* env,
   base::android::ScopedJavaLocalRef<jobject> scoped_context(env, context);
   base::android::InitApplicationContext(env, scoped_context);
 
-  base::android::InitNativeCommandLineFromJavaArray(env, jparameters);
-  base::FilePath mojo_shell_file_path(
+  std::vector<std::string> parameters;
+  parameters.push_back(
       base::android::ConvertJavaStringToUTF8(env, mojo_shell_path));
-  base::CommandLine::ForCurrentProcess()->SetProgram(mojo_shell_file_path);
+  base::android::AppendJavaStringArrayToStringVector(env, jparameters,
+                                                     &parameters);
+  CommandLine::Init(0, nullptr);
+  base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
+
   InitializeLogging();
 
   // We want ~MessageLoop to happen prior to ~Context. Initializing
@@ -91,6 +93,9 @@ static void Init(JNIEnv* env,
   Context* shell_context = new Context();
   shell_context->mojo_url_resolver()->SetLocalAppsPath(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
+  for (auto& args : parameters)
+    ApplyApplicationArgs(shell_context, args);
+
   g_context.Get().reset(shell_context);
 
   g_java_message_loop.Get().reset(new base::MessageLoopForUI);
@@ -102,22 +107,27 @@ static void Init(JNIEnv* env,
   gfx::GLSurface::InitializeOneOff();
 }
 
-static void Start(JNIEnv* env, jclass clazz, jstring jurl) {
-  std::vector<GURL> app_urls;
+static jboolean Start(JNIEnv* env, jclass clazz) {
+  if (!base::CommandLine::ForCurrentProcess()->GetArgs().size())
+    return false;
+
 #if defined(MOJO_SHELL_DEBUG_URL)
-  app_urls.push_back(GURL(MOJO_SHELL_DEBUG_URL));
+  base::CommandLine::ForCurrentProcess()->AppendArg(MOJO_SHELL_DEBUG_URL);
   // Sleep for 5 seconds to give the debugger a chance to attach.
   sleep(5);
-#else
-  if (jurl)
-    app_urls.push_back(GURL(base::android::ConvertJavaStringToUTF8(env, jurl)));
 #endif
 
   g_shell_thread.Get().reset(
       new base::android::JavaHandlerThread("shell_thread"));
   g_shell_thread.Get()->Start();
   g_shell_thread.Get()->message_loop()->PostTask(
-      FROM_HERE, base::Bind(&RunShell, app_urls));
+      FROM_HERE, base::Bind(&StartShellOnShellThread));
+  return true;
+}
+
+static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
+  base::CommandLine::ForCurrentProcess()->AppendArg(
+      base::android::ConvertJavaStringToUTF8(env, jurl));
 }
 
 bool RegisterMojoMain(JNIEnv* env) {

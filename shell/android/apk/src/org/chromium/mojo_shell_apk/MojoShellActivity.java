@@ -22,8 +22,18 @@ public class MojoShellActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String appUrl = getUrlFromIntent(getIntent());
-        if (appUrl == null) {
+        // TODO(ppi): Gotcha - the call below will work only once per process lifetime, but the OS
+        // has no obligation to kill the application process between destroying and restarting the
+        // activity. If the application process is kept alive, initialization parameters sent with
+        // the intent will be stale.
+        // TODO(qsr): We should be passing application context here as required by
+        // InitApplicationContext on the native side. Currently we can't, as PlatformViewportAndroid
+        // relies on this being the activity context.
+        MojoMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
+
+        if (MojoMain.start()) {
+            Log.i(TAG, "Mojo started");
+        } else {
             Log.i(TAG, "No URL provided via intent, prompting user...");
             AlertDialog.Builder alert = new AlertDialog.Builder(this);
             alert.setTitle("Enter a URL");
@@ -34,17 +44,13 @@ public class MojoShellActivity extends Activity {
                 @Override
                 public void onClick(DialogInterface dialog, int button) {
                     String url = input.getText().toString();
-                    startWithURL(url);
+                    MojoMain.addApplicationURL(url);
+                    MojoMain.start();
+                    Log.i(TAG, "Mojo started");
                 }
             });
             alert.show();
-        } else {
-            startWithURL(appUrl);
         }
-    }
-
-    private static String getUrlFromIntent(Intent intent) {
-        return intent != null ? intent.getDataString() : null;
     }
 
     private static String[] getParametersFromIntent(Intent intent) {
@@ -52,15 +58,5 @@ public class MojoShellActivity extends Activity {
     }
 
     private void startWithURL(String url) {
-        // TODO(ppi): Gotcha - the call below will work only once per process lifetime, but the OS
-        // has no obligation to kill the application process between destroying and restarting the
-        // activity. If the application process is kept alive, initialization parameters sent with
-        // the intent will be stale.
-        // TODO(qsr): We should be passing application context here as required by
-        // InitApplicationContext on the native side. Currently we can't, as PlatformViewportAndroid
-        // relies on this being the activity context.
-        MojoMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
-        MojoMain.start(url);
-        Log.i(TAG, "Mojo started: " + url);
     }
 }

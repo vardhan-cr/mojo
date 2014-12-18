@@ -56,7 +56,6 @@ public class MojoMain {
 
             List<String> parametersList = new ArrayList<String>();
             // Program name.
-            parametersList.add("mojo_shell");
             if (parameters != null) {
                 parametersList.addAll(Arrays.asList(parameters));
             }
@@ -74,9 +73,18 @@ public class MojoMain {
 
     /**
      * Starts the specified application in the specified context.
+     *
+     * @return <code>true</code> if an application has been launched.
      **/
-    static void start(final String appUrl) {
-        nativeStart(appUrl);
+    static boolean start() {
+        return nativeStart();
+    }
+
+    /**
+     * Adds the given URL to the set of mojo applications to run on start.
+     */
+    static void addApplicationURL(String url) {
+        nativeAddApplicationURL(url);
     }
 
     private static File getLocalAppsDir(Context context) {
@@ -90,6 +98,7 @@ public class MojoMain {
             String[] parameters,
             String bundledAppsDirectory);
 
-    private static native void nativeStart(String appUrl);
+    private static native boolean nativeStart();
 
+    private static native void nativeAddApplicationURL(String url);
 }
