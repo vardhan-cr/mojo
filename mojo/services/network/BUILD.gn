@@ -24,6 +24,8 @@ if (is_android) {
 
     deps = [
       ":sources",
+      "//base",
+      "//net",
     ]
   }
 

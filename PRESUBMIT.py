@@ -414,6 +414,7 @@ def _CheckValidHostsInDEPS(input_api, output_api):
 
 def _CheckGNCheck(input_api, output_api):
   """Checks that gn gen and gn check pass"""
+  import os.path
 
   class _TemporaryDirectory(object):
     """Context manager for tempfile.mkdtemp()"""
@@ -427,32 +428,44 @@ def _CheckGNCheck(input_api, output_api):
       import shutil
       shutil.rmtree(self.path)
 
-  with _TemporaryDirectory() as out_dir:
-    try:
-      input_api.subprocess.check_output(['gn', 'gen', out_dir])
-    except input_api.subprocess.CalledProcessError, error:
-      return [output_api.PresubmitError(
-          'gn gen must not fail.', long_text=error.output)]
-
-    # TODO(eseidel): Currently only these are known to pass,
-    # once everything passes we can just call 'gn check' once without a filter!
-    KNOWN_PASSING = [
-      '//examples/*',
-      '//mojo/*',
-      '//services/*',
-      '//shell/*',
-    ]
-    if input_api.platform != 'win32':
-      KNOWN_PASSING += [
-        '//sky/*',
-      ]
-    for target_filter in KNOWN_PASSING:
+  available_os = [None]
+  # android tools directory is used as a sentinel to check if the current
+  # checkout is an android checkout.
+  android_tools_dir = os.path.join(input_api.change.RepositoryRoot(),
+                                   'third_party', 'android_tools')
+  if os.path.isdir(android_tools_dir):
+    available_os.append('android')
+  for target_os in available_os:
+    with _TemporaryDirectory() as out_dir:
       try:
-        input_api.subprocess.check_output(['gn', 'check', out_dir,
-            target_filter])
+        command = ['gn', 'gen', out_dir]
+        if target_os:
+           command.append('--args=%s' % r'''os="android"''')
+        input_api.subprocess.check_output(command)
       except input_api.subprocess.CalledProcessError, error:
-        error_title = 'gn check %s must not fail.' % target_filter
-        return [output_api.PresubmitError(error_title, long_text=error.output)]
+        return [output_api.PresubmitError(
+            'gn gen must not fail.', long_text=error.output)]
+
+      # TODO(eseidel): Currently only these are known to pass, once everything
+      # passes we can just call 'gn check' once without a filter!
+      KNOWN_PASSING = [
+        '//examples/*',
+        '//mojo/*',
+        '//services/*',
+        '//shell/*',
+      ]
+      if input_api.platform != 'win32':
+        KNOWN_PASSING += [
+          '//sky/*',
+        ]
+      for target_filter in KNOWN_PASSING:
+        try:
+          input_api.subprocess.check_output(['gn', 'check', out_dir,
+              target_filter])
+        except input_api.subprocess.CalledProcessError, error:
+          error_title = 'gn check %s must not fail.' % target_filter
+          return [output_api.PresubmitError(error_title,
+                                            long_text=error.output)]
   return []
 
 
