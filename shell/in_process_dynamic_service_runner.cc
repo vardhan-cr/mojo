@@ -18,17 +18,14 @@ InProcessDynamicServiceRunner::InProcessDynamicServiceRunner(Context* context)
 }
 
 InProcessDynamicServiceRunner::~InProcessDynamicServiceRunner() {
+  // It is important to let the thread exit before unloading the DSO (when
+  // app_library_ is destructed), because the library may have registered
+  // thread-local data and destructors to run on thread termination.
   if (thread_) {
     DCHECK(thread_->HasBeenStarted());
     DCHECK(!thread_->HasBeenJoined());
     thread_->Join();
   }
-
-  // It is important to let the thread exit before unloading the DSO because
-  // the library may have registered thread-local data and destructors to run
-  // on thread termination.
-  if (app_library_)
-    base::UnloadNativeLibrary(app_library_);
 }
 
 void InProcessDynamicServiceRunner::Start(
@@ -55,7 +52,7 @@ void InProcessDynamicServiceRunner::Run() {
            << app_path_.value()
            << " thread id=" << base::PlatformThread::CurrentId();
 
-  app_library_ = LoadAndRunService(app_path_, service_handle_.Pass());
+  app_library_.Reset(LoadAndRunService(app_path_, service_handle_.Pass()));
   app_completed_callback_runner_.Run();
   app_completed_callback_runner_.Reset();
 }
