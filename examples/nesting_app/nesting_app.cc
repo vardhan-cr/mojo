@@ -67,7 +67,7 @@ class NestingApp
     bitmap_uploader_->Init(shell_);
     bitmap_uploader_->SetColor(SK_ColorCYAN);
 
-    nested_ = View::Create(root->view_manager());
+    nested_ = root->view_manager()->CreateView();
     root->AddChild(nested_);
     Rect rect;
     rect.x = rect.y = 20;

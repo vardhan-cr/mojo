@@ -99,7 +99,7 @@ class KeyboardManager : public KeyboardClient,
             View* parent,
             const Rect& bounds) {
     view_manager_ = view_manager;
-    view_ = View::Create(view_manager);
+    view_ = view_manager->CreateView();
     view_->SetBounds(bounds);
     parent->AddChild(view_);
     view_->Embed("mojo:keyboard");
@@ -352,7 +352,7 @@ class WindowManager : public ApplicationDelegate,
     DCHECK(!view_manager_);
     view_manager_ = root->view_manager();
 
-    View* view = View::Create(view_manager_);
+    View* view = view_manager_->CreateView();
     root->AddChild(view);
     Rect rect;
     rect.width = root->bounds().width;
@@ -462,7 +462,7 @@ class WindowManager : public ApplicationDelegate,
 
   Window* CreateWindow(const Rect& bounds) {
     View* content = view_manager_->GetViewById(content_view_id_);
-    View* view = View::Create(view_manager_);
+    View* view = view_manager_->CreateView();
     content->AddChild(view);
     view->SetBounds(bounds);
     view->SetVisible(true);
@@ -476,7 +476,7 @@ class WindowManager : public ApplicationDelegate,
   }
 
   Id CreateControlPanel(View* root) {
-    View* view = View::Create(view_manager_);
+    View* view = view_manager_->CreateView();
     root->AddChild(view);
 
     Rect bounds;

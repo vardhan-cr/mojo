@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "examples/recipes/window_manager/constants.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_property.h"
 
 using mojo::View;
@@ -41,7 +42,7 @@ WindowManager::~WindowManager() {
 }
 
 View* WindowManager::Create() {
-  View* view = View::Create(root_->view_manager());
+  View* view = root_->view_manager()->CreateView();
   UpdateBounds(view);
   view->AddObserver(this);
   views_.insert(view);

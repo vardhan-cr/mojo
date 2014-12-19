@@ -36,10 +36,6 @@ class View {
   using Children = std::vector<View*>;
   using SharedProperties = std::map<std::string, std::vector<uint8_t>>;
 
-  // Creates and returns a new View (which is owned by the ViewManager). Views
-  // are initially hidden, use SetVisible(true) to show.
-  static View* Create(ViewManager* view_manager);
-
   // Destroys this view and all its children.
   void Destroy();
 
@@ -138,7 +134,7 @@ class View {
   friend class ViewPrivate;
   friend class ViewManagerClientImpl;
 
-  explicit View(ViewManager* manager);
+  View(ViewManager* manager, Id id);
 
   // Called by the public {Set,Get,Clear}Property functions.
   int64 SetLocalPropertyInternal(const void* key,

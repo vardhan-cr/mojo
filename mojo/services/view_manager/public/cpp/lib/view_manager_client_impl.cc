@@ -80,8 +80,8 @@ class RootObserver : public ViewObserver {
   // Overridden from ViewObserver:
   void OnViewDestroyed(View* view) override {
     DCHECK_EQ(view, root_);
-    static_cast<ViewManagerClientImpl*>(
-        ViewPrivate(root_).view_manager())->RootDestroyed(root_);
+    static_cast<ViewManagerClientImpl*>(root_->view_manager())
+        ->RootDestroyed(root_);
     view->RemoveObserver(this);
     delete this;
   }
@@ -127,13 +127,6 @@ ViewManagerClientImpl::~ViewManagerClientImpl() {
     delete non_owned[i];
 
   delegate_->OnViewManagerDisconnected(this);
-}
-
-Id ViewManagerClientImpl::CreateView() {
-  DCHECK(connected_);
-  const Id view_id = MakeTransportId(connection_id_, ++next_id_);
-  service_->CreateView(view_id, ActionCompletedCallbackWithErrorCode());
-  return view_id;
 }
 
 void ViewManagerClientImpl::DestroyView(Id view_id) {
@@ -230,6 +223,13 @@ void ViewManagerClientImpl::RemoveView(Id view_id) {
 ////////////////////////////////////////////////////////////////////////////////
 // ViewManagerClientImpl, ViewManager implementation:
 
+Id ViewManagerClientImpl::CreateViewOnServer() {
+  DCHECK(connected_);
+  const Id view_id = MakeTransportId(connection_id_, ++next_id_);
+  service_->CreateView(view_id, ActionCompletedCallbackWithErrorCode());
+  return view_id;
+}
+
 const std::string& ViewManagerClientImpl::GetEmbedderURL() const {
   return creator_url_;
 }
@@ -245,6 +245,12 @@ View* ViewManagerClientImpl::GetViewById(Id id) {
 
 View* ViewManagerClientImpl::GetFocusedView() {
   return focused_view_;
+}
+
+View* ViewManagerClientImpl::CreateView() {
+  View* view = new View(this, CreateViewOnServer());
+  AddView(view);
+  return view;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

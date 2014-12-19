@@ -29,6 +29,10 @@ class ViewManager {
   // focused.
   virtual View* GetFocusedView() = 0;
 
+  // Creates and returns a new View (which is owned by the ViewManager). Views
+  // are initially hidden, use SetVisible(true) to show.
+  virtual View* CreateView() = 0;
+
  protected:
   virtual ~ViewManager() {}
 };

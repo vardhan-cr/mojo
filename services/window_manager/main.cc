@@ -54,7 +54,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
   void Embed(
       const mojo::String& url,
       mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
-    View* view = View::Create(root_->view_manager());
+    View* view = root_->view_manager()->CreateView();
     root_->AddChild(view);
     view->SetVisible(true);
     view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(

@@ -91,7 +91,7 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     uploader->Init(shell_);
     uploader->SetColor(kColors[embed_count_++ % arraysize(kColors)]);
 
-    mojo::View* embed = mojo::View::Create(root->view_manager());
+    mojo::View* embed = root->view_manager()->CreateView();
     root->AddChild(embed);
     mojo::Rect bounds;
     bounds.x = bounds.y = 25;

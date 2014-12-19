@@ -57,7 +57,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
       scoped_ptr<mojo::ServiceProvider> remote_service_provider) override {
     root_ = root;
 
-    window_container_ = mojo::View::Create(root->view_manager());
+    window_container_ = root->view_manager()->CreateView();
     window_container_->SetBounds(root_->bounds());
     root_->AddChild(window_container_);
     window_container_->SetVisible(true);
@@ -107,7 +107,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
 
   mojo::View* CreateTopLevelWindow(mojo::View** app_view) {
-    mojo::View* frame_view = mojo::View::Create(root_->view_manager());
+    mojo::View* frame_view = root_->view_manager()->CreateView();
     // Add the View to it's parent before showing so that animations can happen.
     window_container_->AddChild(frame_view);
     mojo::Rect rect;

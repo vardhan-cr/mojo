@@ -8,6 +8,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/views/native_widget_mojo.h"
 #include "services/window_manager/capture_controller.h"
 #include "services/window_manager/window_manager_app.h"
@@ -115,7 +116,7 @@ FrameController::FrameController(
     mojo::View** app_view,
     window_manager::WindowManagerApp* window_manager_app)
     : view_(view),
-      app_view_(mojo::View::Create(view->view_manager())),
+      app_view_(view->view_manager()->CreateView()),
       frame_view_(new views::View),
       frame_view_layout_manager_(new LayoutManager(this)),
       widget_(new views::Widget),

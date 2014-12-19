@@ -248,11 +248,11 @@ class MediaViewer
                        scoped_ptr<ServiceProvider> imported_services) override {
     root_view_ = root;
 
-    control_view_ = View::Create(root->view_manager());
+    control_view_ = root->view_manager()->CreateView();
     control_view_->SetVisible(true);
     root_view_->AddChild(control_view_);
 
-    content_view_ = View::Create(root->view_manager());
+    content_view_ = root->view_manager()->CreateView();
     content_view_->SetVisible(true);
     root_view_->AddChild(content_view_);
 
