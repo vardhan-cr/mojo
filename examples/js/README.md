@@ -163,6 +163,123 @@ be written like this:
     return Promise.resolve({value: s});
   };
 
+
+- Applications can request and provide services
+
+When an application starts, its initialize() method runs and then its
+acceptConnection() method runs. The acceptConnection() method
+indicates that another application has connected to this one and it
+always runs at least once.
+
+  acceptConnection(initiatorURL, serviceProvider) {
+    // provide services to the initiator here
+    // request services from the initiator here
+  }
+
+The acceptConnection serviceProvider argument can be used to provide
+services to the initiator, and to request services from the
+initiator. An application can decide exactly what to do based on the
+initiator's URL. The serviceProvider argument is-a JS ServiceProvider,
+an object that wraps a Mojo ServiceProvider proxy. 
+
+The ServiceProvider requestService() method gets a proxy for a service
+from the initator and optionally provides a client implementation.
+
+The ServiceProvider provideService() method registers an interface
+implementation factory for a Mojo interface. The factory function is
+provided with an proxy for the interface's client, if it has one.
+
+An application can also connect to other applications and their
+services using its shell's connectToApplication() and
+connectToService() methods. The shell's connectToApplication() returns
+a ServiceProvider. The shell's connectToService() method is just a
+convenience, it's defined like this:
+
+  connectToService(url, service, client) {
+    return this.connectToApplication(url).requestService(service, clientImpl);
+  };
+
+The value of service is an interface object that identifies a Mojo
+interface that the application at url implements.
+
+The usage examples that follow are based on the following trivial Mojo
+interface:
+
+interface EchoService {
+  EchoString(string? value) => (string? value);
+};
+
+-- Requesting a service using the Application's Shell
+
+Given the URL of a Mojo application that implements the EchoService we
+can use the application's shell to get an EchoService proxy. Here's a
+complete application:
+
+  #!mojo:js_content_handler
+
+  define("main", [
+    "console",
+    "mojo/services/public/js/application",
+    "services/js/test/echo_service.mojom"
+  ], function(console, appModule, echoModule) {
+
+    class EchoShellRequest extends appModule.Application {
+      initialize(args) {
+        var url = "file:/foo/bar/echo.js";
+        var echoService = this.shell.connectToService(url, echoModule.EchoService);
+        echoService.echoString("foo").then(function(result) {
+          console.log("echoString(foo) => " + result.value);
+        });
+      }
+    }
+    return EchoShellRequest;
+  });
+
+
+-- Providing a service
+
+A complete application that unconditionally provides the EchoService
+looks like this:
+
+  #!mojo:js_content_handler
+
+  define("main", [
+    "mojo/services/public/js/application",
+    "services/js/test/echo_service.mojom"
+  ], function(appModule, echoModule) {
+
+    class EchoService extends appModule.Application {
+      acceptConnection(initiatorURL, serviceProvider) {
+        function EchoServiceImpl(client) {
+          this.echoString = function(s) {
+            return Promise.resolve({value: s});
+          };
+        }
+        serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
+      }
+    }
+    return EchoService;
+  });
+
+As you can see, EchoServiceImpl is just a function that returns an
+object that implements the methods in the Mojo EchoService
+interface. If the EchoService defined a client interface, the factory
+function's client parameter would be a proxy for the initiator's
+client service. EchoService doesn't have a client so we could have
+omitted this parameter.
+
+Each time another application connects to this one, the EchoServiceImpl
+function will be called. The caller will be able to run the
+echoString() method and will get its response via a Promise.
+
+
+-- Final note
+
+An initiator's serviceProvider object can be retained and used to
+request or provide services at any time, not just from within
+application's acceptConnection() method.
+
+
 --- Interface Parameters --- 
 
 The caller and callee use cases that follow are  in terms of the following mojom:
