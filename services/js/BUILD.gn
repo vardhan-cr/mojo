@@ -61,6 +61,7 @@ mojo_native_application("js_apptests") {
   sources = [
     "echo_apptest.cc",
     "pingpong_apptest.cc",
+    "network_apptest.cc",
   ]
 
   deps = [
@@ -69,6 +70,7 @@ mojo_native_application("js_apptests") {
     "//mojo/public/cpp/system",
     "//services/js/test:echo_service",
     "//services/js/test:js_application_test_base",
+    "//services/js/test:network_test_service",
     "//services/js/test:pingpong_service",
   ]
 }

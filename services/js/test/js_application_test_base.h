@@ -19,6 +19,7 @@ class JSApplicationTestBase : public mojo::test::ApplicationTestBase {
   ~JSApplicationTestBase() override;
 
  protected:
+  const base::FilePath JSAppPath(const std::string& filename);
   const std::string JSAppURL(const std::string& filename);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(JSApplicationTestBase);

@@ -30,3 +30,9 @@ mojom("pingpong_service") {
     "pingpong_service.mojom",
   ]
 }
+
+mojom("network_test_service") {
+  sources = [
+    "network_test_service.mojom",
+  ]
+}

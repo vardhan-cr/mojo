@@ -10,14 +10,18 @@ namespace test {
 JSApplicationTestBase::JSApplicationTestBase() {}
 JSApplicationTestBase::~JSApplicationTestBase() {}
 
-const std::string JSApplicationTestBase::JSAppURL(const std::string& filename) {
-  base::FilePath path;
+const base::FilePath JSApplicationTestBase::JSAppPath(
+    const std::string& filename) {
+ base::FilePath path;
   PathService::Get(base::DIR_SOURCE_ROOT, &path);
-  path = path.AppendASCII("services")
+  return path.AppendASCII("services")
       .AppendASCII("js")
       .AppendASCII("test")
       .AppendASCII(filename);
-  return "file://" + path.AsUTF8Unsafe();
+}
+
+const std::string JSApplicationTestBase::JSAppURL(const std::string& filename) {
+  return "file://" + JSAppPath(filename).AsUTF8Unsafe();
 }
 
 }  // namespace test
