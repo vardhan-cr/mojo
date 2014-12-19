@@ -260,9 +260,10 @@ void Scheduler::NotifyReadyToCommit() {
   ProcessScheduledActions();
 }
 
-void Scheduler::BeginMainFrameAborted(bool did_handle) {
-  TRACE_EVENT0("cc", "Scheduler::BeginMainFrameAborted");
-  state_machine_.BeginMainFrameAborted(did_handle);
+void Scheduler::BeginMainFrameAborted(CommitEarlyOutReason reason) {
+  TRACE_EVENT1("cc", "Scheduler::BeginMainFrameAborted", "reason",
+               CommitEarlyOutReasonToString(reason));
+  state_machine_.BeginMainFrameAborted(reason);
   ProcessScheduledActions();
 }
 
@@ -446,7 +447,7 @@ bool Scheduler::OnBeginFrameMixInDelegate(const BeginFrameArgs& args) {
 void Scheduler::SetChildrenNeedBeginFrames(bool children_need_begin_frames) {
   DCHECK(settings_.forward_begin_frames_to_children);
   state_machine_.SetChildrenNeedBeginFrames(children_need_begin_frames);
-  DCHECK_EQ(state_machine_.NextAction(), SchedulerStateMachine::ACTION_NONE);
+  ProcessScheduledActions();
 }
 
 // BeginRetroFrame is called for BeginFrames that we've deferred because

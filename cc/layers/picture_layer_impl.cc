@@ -69,8 +69,6 @@ PictureLayerImpl::PictureLayerImpl(LayerTreeImpl* tree_impl,
     : LayerImpl(tree_impl, id),
       twin_layer_(nullptr),
       tilings_(CreatePictureLayerTilingSet()),
-      // TODO(danakj): Can this be null to start?
-      raster_source_(PicturePileImpl::Create()),
       ideal_page_scale_(0.f),
       ideal_device_scale_(0.f),
       ideal_source_scale_(0.f),
@@ -82,7 +80,6 @@ PictureLayerImpl::PictureLayerImpl(LayerTreeImpl* tree_impl,
       low_res_raster_contents_scale_(0.f),
       raster_source_scale_is_fixed_(false),
       was_screen_space_transform_animating_(false),
-      needs_post_commit_initialization_(true),
       should_update_tile_priorities_(false),
       only_used_low_res_last_append_quads_(false),
       is_mask_(is_mask),
@@ -124,9 +121,6 @@ scoped_ptr<LayerImpl> PictureLayerImpl::CreateLayerImpl(
 }
 
 void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
-  // It's possible this layer was never drawn or updated (e.g. because it was
-  // a descendant of an opacity 0 layer).
-  DoPostCommitInitializationIfNeeded();
   PictureLayerImpl* layer_impl = static_cast<PictureLayerImpl*>(base_layer);
   DCHECK_EQ(layer_impl->is_mask_, is_mask_);
 
@@ -166,9 +160,6 @@ void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
 
   layer_impl->SanityCheckTilingState();
 
-  layer_impl->needs_post_commit_initialization_ = false;
-  needs_post_commit_initialization_ = true;
-
   // We always need to push properties.
   // See http://crbug.com/303943
   // TODO(danakj): Stop always pushing properties since we don't swap tilings.
@@ -178,7 +169,6 @@ void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
 void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
                                    const Occlusion& occlusion_in_content_space,
                                    AppendQuadsData* append_quads_data) {
-  DCHECK(!needs_post_commit_initialization_);
   // The bounds and the pile size may differ if the pile wasn't updated (ie.
   // PictureLayer::Update didn't happen). In that case the pile will be empty.
   DCHECK_IMPLIES(!raster_source_->GetSize().IsEmpty(),
@@ -463,8 +453,6 @@ void PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
   DCHECK_EQ(1.f, contents_scale_x());
   DCHECK_EQ(1.f, contents_scale_y());
 
-  DoPostCommitInitializationIfNeeded();
-
   if (!resourceless_software_draw) {
     visible_rect_for_tile_priority_ = visible_content_rect();
   }
@@ -585,7 +573,9 @@ void PictureLayerImpl::UpdateRasterSource(
       << " bounds " << bounds().ToString() << " pile "
       << raster_source->GetSize().ToString();
 
-  bool could_have_tilings = CanHaveTilings();
+  // The |raster_source_| is initially null, so have to check for that for the
+  // first frame.
+  bool could_have_tilings = raster_source_.get() && CanHaveTilings();
   raster_source_.swap(raster_source);
 
   // The |new_invalidation| must be cleared before updating tilings since they
@@ -608,8 +598,7 @@ void PictureLayerImpl::UpdateRasterSource(
   // tilings that are going to disappear on the pending tree (if scale changed).
   // But that would also be more complicated, so we just do it here for now.
   tilings_->UpdateTilingsToCurrentRasterSource(
-      raster_source_.get(), pending_set, raster_source_->GetSize(),
-      invalidation_, MinimumContentsScale());
+      raster_source_.get(), pending_set, invalidation_, MinimumContentsScale());
 }
 
 void PictureLayerImpl::NotifyTileStateChanged(const Tile* tile) {
@@ -821,13 +810,6 @@ void PictureLayerImpl::SetNearestNeighbor(bool nearest_neighbor) {
 
   nearest_neighbor_ = nearest_neighbor;
   NoteLayerPropertyChanged();
-}
-
-void PictureLayerImpl::DoPostCommitInitialization() {
-  // TODO(danakj): Remove this.
-  DCHECK(needs_post_commit_initialization_);
-  DCHECK(layer_tree_impl()->IsPendingTree());
-  needs_post_commit_initialization_ = false;
 }
 
 PictureLayerTiling* PictureLayerImpl::AddTiling(float contents_scale) {
@@ -1204,7 +1186,6 @@ void PictureLayerImpl::GetAllTilesForTracing(
 }
 
 void PictureLayerImpl::AsValueInto(base::debug::TracedValue* state) const {
-  const_cast<PictureLayerImpl*>(this)->DoPostCommitInitializationIfNeeded();
   LayerImpl::AsValueInto(state);
   state->SetDouble("ideal_contents_scale", ideal_contents_scale_);
   state->SetDouble("geometry_contents_scale", MaximumTilingContentsScale());
@@ -1248,7 +1229,6 @@ void PictureLayerImpl::AsValueInto(base::debug::TracedValue* state) const {
 }
 
 size_t PictureLayerImpl::GPUMemoryUsageInBytes() const {
-  const_cast<PictureLayerImpl*>(this)->DoPostCommitInitializationIfNeeded();
   return tilings_->GPUMemoryUsageInBytes();
 }
 

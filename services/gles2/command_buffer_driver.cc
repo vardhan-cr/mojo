@@ -17,6 +17,7 @@
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/memory_tracking.h"
 #include "gpu/command_buffer/service/sync_point_manager.h"
+#include "gpu/command_buffer/service/valuebuffer_manager.h"
 #include "services/gles2/command_buffer_type_conversions.h"
 #include "services/gles2/mojo_buffer_backing.h"
 #include "ui/gfx/vsync_provider.h"
@@ -122,9 +123,10 @@ bool CommandBufferDriver::DoInitialize(
   // TODO(piman): ShaderTranslatorCache is currently per-ContextGroup but
   // only needs to be per-thread.
   scoped_refptr<gpu::gles2::ContextGroup> context_group =
-      new gpu::gles2::ContextGroup(
-          mailbox_manager_.get(), new MemoryTrackerStub,
-          new gpu::gles2::ShaderTranslatorCache, nullptr, nullptr, true);
+      new gpu::gles2::ContextGroup(mailbox_manager_.get(),
+                                   new MemoryTrackerStub,
+                                   new gpu::gles2::ShaderTranslatorCache,
+                                   nullptr, nullptr, nullptr, true);
 
   command_buffer_.reset(
       new gpu::CommandBufferService(context_group->transfer_buffer_manager()));

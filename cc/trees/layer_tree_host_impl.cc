@@ -278,11 +278,11 @@ LayerTreeHostImpl::~LayerTreeHostImpl() {
   DestroyTileManager();
 }
 
-void LayerTreeHostImpl::BeginMainFrameAborted(bool did_handle) {
+void LayerTreeHostImpl::BeginMainFrameAborted(CommitEarlyOutReason reason) {
   // If the begin frame data was handled, then scroll and scale set was applied
   // by the main thread, so the active tree needs to be updated as if these sent
   // values were applied and committed.
-  if (did_handle) {
+  if (CommitEarlyOutHandledCommit(reason)) {
     active_tree_->ApplySentScrollAndScaleDeltasFromAbortedCommit();
     active_tree_->ResetContentsTexturesPurged();
   }
@@ -474,7 +474,8 @@ LayerTreeHostImpl::CreateLatencyInfoSwapPromiseMonitor(
 
 ScrollElasticityHelper* LayerTreeHostImpl::CreateScrollElasticityHelper() {
   DCHECK(!scroll_elasticity_helper_);
-  scroll_elasticity_helper_.reset(new ScrollElasticityHelper(this));
+  scroll_elasticity_helper_.reset(
+      ScrollElasticityHelper::CreateForLayerTreeHostImpl(this));
   return scroll_elasticity_helper_.get();
 }
 
@@ -2563,10 +2564,6 @@ bool LayerTreeHostImpl::ShouldTopControlsConsumeScroll(
   // Always consume if it's in the direction to show the top controls.
   if (scroll_delta.y() < 0)
     return true;
-
-  if (CurrentlyScrollingLayer() != InnerViewportScrollLayer() &&
-      CurrentlyScrollingLayer() != OuterViewportScrollLayer())
-    return false;
 
   if (active_tree()->TotalScrollOffset().y() <
       active_tree()->TotalMaxScrollOffset().y())

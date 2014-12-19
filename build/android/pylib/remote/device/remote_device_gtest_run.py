@@ -10,15 +10,10 @@ import sys
 
 from pylib import constants
 from pylib.base import base_test_result
+from pylib.remote.device import appurify_sanitized
 from pylib.remote.device import remote_device_test_run
 from pylib.remote.device import remote_device_helper
 
-sys.path.append(os.path.join(
-    constants.DIR_SOURCE_ROOT, 'third_party', 'requests', 'src'))
-sys.path.append(os.path.join(
-    constants.DIR_SOURCE_ROOT, 'third_party', 'appurify-python', 'src'))
-import appurify.api
-import appurify.utils
 
 class RemoteDeviceGtestRun(remote_device_test_run.RemoteDeviceTestRun):
   """Run gtests and uirobot tests on a remote device."""
@@ -27,12 +22,14 @@ class RemoteDeviceGtestRun(remote_device_test_run.RemoteDeviceTestRun):
   DEFAULT_RUNNER_PACKAGE = (
       'org.chromium.native_test.ChromiumNativeTestInstrumentationTestRunner')
 
+  #override
   def TestPackage(self):
-    pass
+    return self._test_instance.suite
 
   #override
   def _TriggerSetUp(self):
     """Set up the triggering of a test run."""
+    logging.info('Triggering test run.')
     self._app_id = self._UploadAppToDevice(self._test_instance.apk)
 
     if not self._env.runner_type:
@@ -52,8 +49,15 @@ class RemoteDeviceGtestRun(remote_device_test_run.RemoteDeviceTestRun):
     config_body = {'runner': runner_package}
     self._SetTestConfig(runner_type, config_body)
 
+  _INSTRUMENTATION_STREAM_LEADER = 'INSTRUMENTATION_STATUS: stream='
+
   #override
   def _ParseTestResults(self):
-    # TODO(rnephew): Populate test results object.
+    logging.info('Parsing results from stdout.')
+    output = self._results['results']['output'].splitlines()
+    output = (l[len(self._INSTRUMENTATION_STREAM_LEADER):] for l in output
+              if l.startswith(self._INSTRUMENTATION_STREAM_LEADER))
+    results_list = self._test_instance.ParseGTestOutput(output)
     results = base_test_result.TestRunResults()
+    results.AddResults(results_list)
     return results

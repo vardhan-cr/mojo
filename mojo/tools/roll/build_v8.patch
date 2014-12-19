@@ -1,0 +1,14 @@
+diff --git a/build/module_args/v8.gni b/build/module_args/v8.gni
+index e4bbf46..d42babd 100644
+--- a/build/module_args/v8.gni
++++ b/build/module_args/v8.gni
+@@ -6,5 +6,7 @@ if (is_android) {
+   import("//build/config/android/config.gni")
+ }
+ 
+-v8_use_external_startup_data =
+-    !((is_android && is_android_webview_build) || is_chromeos || is_win)
++# Many V8 users in mojo do not support external startup data for V8, so
++# we disable it. If enabled, special care should be taken to ensure the
++# appropriate startup data is correctly bundled for apps.
++v8_use_external_startup_data = false

@@ -7,6 +7,7 @@
 #include <string>
 
 #include "base/memory/scoped_ptr.h"
+#include "base/version.h"
 #include "net/base/test_data_directory.h"
 #include "net/cert/ct_ev_whitelist.h"
 #include "net/cert/ct_verify_result.h"
@@ -33,6 +34,8 @@ class DummyEVCertsWhitelist : public ct::EVCertsWhitelist {
     return canned_contains_response_;
   }
 
+  base::Version Version() const override { return base::Version(); }
+
  protected:
   ~DummyEVCertsWhitelist() override {}
 
@@ -44,7 +47,7 @@ class DummyEVCertsWhitelist : public ct::EVCertsWhitelist {
 class CertPolicyEnforcerTest : public ::testing::Test {
  public:
   virtual void SetUp() override {
-    policy_enforcer_.reset(new CertPolicyEnforcer(5, true));
+    policy_enforcer_.reset(new CertPolicyEnforcer(true));
 
     std::string der_test_cert(ct::GetDerEncodedX509Cert());
     chain_ = X509Certificate::CreateFromBytes(der_test_cert.data(),
@@ -74,8 +77,8 @@ TEST_F(CertPolicyEnforcerTest, ConformsToCTEVPolicyWithNonEmbeddedSCTs) {
   FillResultWithSCTsOfOrigin(
       ct::SignedCertificateTimestamp::SCT_FROM_TLS_EXTENSION, 2, &result);
 
-  EXPECT_TRUE(
-      policy_enforcer_->DoesConformToCTEVPolicy(chain_.get(), nullptr, result));
+  EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(chain_.get(), nullptr,
+                                                        result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, ConformsToCTEVPolicyWithEmbeddedSCTs) {
@@ -84,8 +87,8 @@ TEST_F(CertPolicyEnforcerTest, ConformsToCTEVPolicyWithEmbeddedSCTs) {
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 5,
                              &result);
 
-  EXPECT_TRUE(
-      policy_enforcer_->DoesConformToCTEVPolicy(chain_.get(), nullptr, result));
+  EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(chain_.get(), nullptr,
+                                                        result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, DoesNotConformToCTEVPolicyNotEnoughSCTs) {
@@ -99,24 +102,25 @@ TEST_F(CertPolicyEnforcerTest, DoesNotConformToCTEVPolicyNotEnoughSCTs) {
                              &result);
 
   EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(
-      chain_.get(), non_including_whitelist.get(), result));
+      chain_.get(), non_including_whitelist.get(), result, BoundNetLog()));
 
   // ... but should be OK if whitelisted.
   scoped_refptr<ct::EVCertsWhitelist> whitelist(
       new DummyEVCertsWhitelist(true, true));
   EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(
-      chain_.get(), whitelist.get(), result));
+      chain_.get(), whitelist.get(), result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, DoesNotEnforceCTPolicyIfNotRequired) {
-  scoped_ptr<CertPolicyEnforcer> enforcer(new CertPolicyEnforcer(3, false));
+  scoped_ptr<CertPolicyEnforcer> enforcer(new CertPolicyEnforcer(false));
 
   ct::CTVerifyResult result;
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 1,
                              &result);
   // Expect true despite the chain not having enough SCTs as the policy
   // is not enforced.
-  EXPECT_TRUE(enforcer->DoesConformToCTEVPolicy(chain_.get(), nullptr, result));
+  EXPECT_TRUE(enforcer->DoesConformToCTEVPolicy(chain_.get(), nullptr, result,
+                                                BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, DoesNotConformToPolicyInvalidDates) {
@@ -126,12 +130,12 @@ TEST_F(CertPolicyEnforcerTest, DoesNotConformToPolicyInvalidDates) {
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 5,
                              &result);
   EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(
-      no_valid_dates_cert.get(), nullptr, result));
+      no_valid_dates_cert.get(), nullptr, result, BoundNetLog()));
   // ... but should be OK if whitelisted.
   scoped_refptr<ct::EVCertsWhitelist> whitelist(
       new DummyEVCertsWhitelist(true, true));
   EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(
-      chain_.get(), whitelist.get(), result));
+      chain_.get(), whitelist.get(), result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest,
@@ -152,29 +156,16 @@ TEST_F(CertPolicyEnforcerTest,
     for (size_t j = 0; j < curr_required_scts - 1; ++j) {
       FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED,
                                  1, &result);
-      EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(cert.get(),
-                                                             nullptr, result))
+      EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(
+          cert.get(), nullptr, result, BoundNetLog()))
           << " for: " << curr_validity << " and " << curr_required_scts
           << " scts=" << result.verified_scts.size() << " j=" << j;
     }
     FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 1,
                                &result);
-    EXPECT_TRUE(
-        policy_enforcer_->DoesConformToCTEVPolicy(cert.get(), nullptr, result));
+    EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(
+        cert.get(), nullptr, result, BoundNetLog()));
   }
-}
-
-TEST_F(CertPolicyEnforcerTest,
-       ConformsToPolicyButDoesNotRequireMoreThanNumLogs) {
-  scoped_ptr<CertPolicyEnforcer> enforcer(new CertPolicyEnforcer(2, true));
-
-  ct::CTVerifyResult result;
-  FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 2,
-                             &result);
-  // Expect true despite the chain not having enough SCTs according to the
-  // policy
-  // since we only have 2 logs.
-  EXPECT_TRUE(enforcer->DoesConformToCTEVPolicy(chain_.get(), nullptr, result));
 }
 
 TEST_F(CertPolicyEnforcerTest, ConformsToPolicyByEVWhitelistPresence) {
@@ -185,7 +176,7 @@ TEST_F(CertPolicyEnforcerTest, ConformsToPolicyByEVWhitelistPresence) {
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 1,
                              &result);
   EXPECT_TRUE(policy_enforcer_->DoesConformToCTEVPolicy(
-      chain_.get(), whitelist.get(), result));
+      chain_.get(), whitelist.get(), result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, IgnoresInvalidEVWhitelist) {
@@ -196,15 +187,15 @@ TEST_F(CertPolicyEnforcerTest, IgnoresInvalidEVWhitelist) {
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 1,
                              &result);
   EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(
-      chain_.get(), whitelist.get(), result));
+      chain_.get(), whitelist.get(), result, BoundNetLog()));
 }
 
 TEST_F(CertPolicyEnforcerTest, IgnoresNullEVWhitelist) {
   ct::CTVerifyResult result;
   FillResultWithSCTsOfOrigin(ct::SignedCertificateTimestamp::SCT_EMBEDDED, 1,
                              &result);
-  EXPECT_FALSE(
-      policy_enforcer_->DoesConformToCTEVPolicy(chain_.get(), nullptr, result));
+  EXPECT_FALSE(policy_enforcer_->DoesConformToCTEVPolicy(
+      chain_.get(), nullptr, result, BoundNetLog()));
 }
 
 }  // namespace

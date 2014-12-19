@@ -215,7 +215,7 @@ class PDFViewer : public ApplicationDelegate,
  public:
   PDFViewer() : content_handler_factory_(this) {
     v8::V8::InitializeICU();
-    FPDF_InitLibrary(NULL);
+    FPDF_InitLibrary();
   }
 
   virtual ~PDFViewer() { FPDF_DestroyLibrary(); }

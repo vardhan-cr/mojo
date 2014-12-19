@@ -103,85 +103,6 @@ class _PatchedFunction(object):
     self.mocked = mocked
 
 
-class MockFileSystem(object):
-
-  @staticmethod
-  def osStatResult(
-      st_mode=None, st_ino=None, st_dev=None, st_nlink=None, st_uid=None,
-      st_gid=None, st_size=None, st_atime=None, st_mtime=None, st_ctime=None):
-    MockOSStatResult = collections.namedtuple('MockOSStatResult', [
-        'st_mode', 'st_ino', 'st_dev', 'st_nlink', 'st_uid', 'st_gid',
-        'st_size', 'st_atime', 'st_mtime', 'st_ctime'])
-    return MockOSStatResult(st_mode, st_ino, st_dev, st_nlink, st_uid, st_gid,
-                            st_size, st_atime, st_mtime, st_ctime)
-
-  MOCKED_FUNCTIONS = [
-    ('os.listdir', []),
-    ('os.path.abspath', ''),
-    ('os.path.dirname', ''),
-    ('os.path.exists', False),
-    ('os.path.getsize', 0),
-    ('os.path.isdir', False),
-    ('os.stat', osStatResult.__func__()),
-    ('os.walk', []),
-  ]
-
-  def _get(self, mocked, path, default_val):
-    if self._verbose:
-      logging.debug('%s(%s)' % (mocked, path))
-    return (self.mock_file_info[path][mocked]
-            if path in self.mock_file_info
-            else default_val)
-
-  def _patched(self, target, default_val=None):
-    r = lambda f: self._get(target, f, default_val)
-    return _PatchedFunction(patched=mock.patch(target, side_effect=r))
-
-  def __init__(self, verbose=False):
-    self.mock_file_info = {}
-    self._patched_functions = [
-        self._patched(m, d) for m, d in type(self).MOCKED_FUNCTIONS]
-    self._verbose = verbose
-
-  def addMockFile(self, path, **kw):
-    self._addMockThing(path, False, **kw)
-
-  def addMockDirectory(self, path, **kw):
-    self._addMockThing(path, True, **kw)
-
-  def _addMockThing(self, path, is_dir, listdir=None, size=0, stat=None,
-                    walk=None):
-    if listdir is None:
-      listdir = []
-    if stat is None:
-      stat = self.osStatResult()
-    if walk is None:
-      walk = []
-
-    dirname = os.sep.join(path.rstrip(os.sep).split(os.sep)[:-1])
-    if dirname and not dirname in self.mock_file_info:
-      self._addMockThing(dirname, True)
-
-    self.mock_file_info[path] = {
-      'os.listdir': listdir,
-      'os.path.abspath': path,
-      'os.path.dirname': dirname,
-      'os.path.exists': True,
-      'os.path.isdir': is_dir,
-      'os.path.getsize': size,
-      'os.stat': stat,
-      'os.walk': walk,
-    }
-
-  def __enter__(self):
-    for p in self._patched_functions:
-      p.mocked = p.patched.__enter__()
-
-  def __exit__(self, exc_type, exc_val, exc_tb):
-    for p in self._patched_functions:
-      p.patched.__exit__()
-
-
 class DeviceUtilsOldImplTest(unittest.TestCase):
 
   class AndroidCommandsCalls(object):
@@ -737,13 +658,13 @@ class DeviceUtilsKillAllTest(DeviceUtilsNewImplTest):
           self.device.KillAll('some.process', signum=signal.SIGTERM))
 
 
-class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
+class DeviceUtilsStartActivityTest(DeviceUtilsNewImplTest):
 
   def testStartActivity_actionOnly(self):
     test_intent = intent.Intent(action='android.intent.action.VIEW')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -751,10 +672,10 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -762,10 +683,10 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main'),
         'Error: Failed to start test activity'):
       with self.assertRaises(device_errors.CommandFailedError):
         self.device.StartActivity(test_intent)
@@ -774,11 +695,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-W "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-W '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent, blocking=True)
 
@@ -787,27 +708,26 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 category='android.intent.category.HOME')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-c android.intent.category.HOME "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-c android.intent.category.HOME '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
   def testStartActivity_withMultipleCategories(self):
-    # The new implementation will start the activity with all provided
-    # categories. The old one only uses the first category.
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 category=['android.intent.category.HOME',
                                           'android.intent.category.BROWSABLE'])
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-c android.intent.category.HOME "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-c android.intent.category.HOME '
+                            '-c android.intent.category.BROWSABLE '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -816,11 +736,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 data='http://www.google.com/')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "-d \"http://www.google.com/\"'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-d http://www.google.com/ '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -829,11 +749,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 extras={'foo': 'test'})
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "--es foo test'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main '
+                            '--es foo test'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -842,11 +762,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 extras={'foo': True})
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "--ez foo True'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main '
+                            '--ez foo True'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -855,11 +775,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 extras={'foo': 123})
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "--ei foo 123'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main '
+                            '--ei foo 123'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -867,11 +787,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "--start-profiler test_trace_file.out'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '--start-profiler test_trace_file.out '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent,
                                 trace_file_name='test_trace_file.out')
@@ -880,11 +800,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
     test_intent = intent.Intent(action='android.intent.action.VIEW',
                                 package='this.is.a.test.package',
                                 activity='.Main')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-S "
-            "-n this.is.a.test.package/.Main'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-S '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent, force_stop=True)
 
@@ -893,11 +813,11 @@ class DeviceUtilsStartActivityTest(DeviceUtilsOldImplTest):
                                 package='this.is.a.test.package',
                                 activity='.Main',
                                 flags='0x10000000')
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'am start "
-            "-a android.intent.action.VIEW "
-            "-n this.is.a.test.package/.Main "
-            "-f 0x10000000'",
+    with self.assertCall(
+        self.call.adb.Shell('am start '
+                            '-a android.intent.action.VIEW '
+                            '-n this.is.a.test.package/.Main '
+                            '-f 0x10000000'),
         'Starting: Intent { act=android.intent.action.VIEW }'):
       self.device.StartActivity(test_intent)
 
@@ -958,7 +878,7 @@ class DeviceUtilsBroadcastIntentTest(DeviceUtilsNewImplTest):
                                 extras={'foo': 'bar value'})
     with self.assertCall(
         self.call.adb.Shell(
-            "am broadcast -a test.package.with.an.INTENT -e foo 'bar value'"),
+            "am broadcast -a test.package.with.an.INTENT --es foo 'bar value'"),
         'Broadcasting: Intent { act=test.package.with.an.INTENT } '):
       self.device.BroadcastIntent(test_intent)
 
@@ -967,7 +887,7 @@ class DeviceUtilsBroadcastIntentTest(DeviceUtilsNewImplTest):
                                 extras={'foo': None})
     with self.assertCall(
         self.call.adb.Shell(
-            'am broadcast -a test.package.with.an.INTENT -e foo'),
+            'am broadcast -a test.package.with.an.INTENT --esn foo'),
         'Broadcasting: Intent { act=test.package.with.an.INTENT } '):
       self.device.BroadcastIntent(test_intent)
 
@@ -1445,28 +1365,18 @@ class DeviceUtilsGetPidsTest(DeviceUtilsNewImplTest):
           self.device.GetPids('exact.match'))
 
 
-class DeviceUtilsTakeScreenshotTest(DeviceUtilsOldImplTest):
+class DeviceUtilsTakeScreenshotTest(DeviceUtilsNewImplTest):
 
   def testTakeScreenshot_fileNameProvided(self):
-    mock_fs = MockFileSystem()
-    mock_fs.addMockDirectory('/test/host')
-    mock_fs.addMockFile('/test/host/screenshot.png')
-
-    with mock_fs:
-      with self.assertCallsSequence(
-          cmd_ret=[
-              (r"adb -s 0123456789abcdef shell 'echo \$EXTERNAL_STORAGE'",
-               '/test/external/storage\r\n'),
-              (r"adb -s 0123456789abcdef shell '/system/bin/screencap -p \S+'",
-               ''),
-              (r"adb -s 0123456789abcdef shell ls \S+",
-               '/test/external/storage/screenshot.png\r\n'),
-              (r'adb -s 0123456789abcdef pull \S+ /test/host/screenshot.png',
-               '100 B/s (100 B in 1.000s)\r\n'),
-              (r"adb -s 0123456789abcdef shell 'rm -f \S+'", '')
-          ],
-          comp=re.match):
-        self.device.TakeScreenshot('/test/host/screenshot.png')
+    with self.assertCalls(
+        (mock.call.pylib.utils.device_temp_file.DeviceTempFile(
+            self.adb, suffix='.png'),
+         MockTempFile('/tmp/path/temp-123.png')),
+        (self.call.adb.Shell('/system/bin/screencap -p /tmp/path/temp-123.png'),
+         ''),
+        self.call.device.PullFile('/tmp/path/temp-123.png',
+                                  '/test/host/screenshot.png')):
+      self.device.TakeScreenshot('/test/host/screenshot.png')
 
 
 class DeviceUtilsGetIOStatsTest(DeviceUtilsOldImplTest):

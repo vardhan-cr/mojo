@@ -125,6 +125,7 @@
       'trees/layer_tree_impl_unittest.cc',
       'trees/occlusion_tracker_unittest.cc',
       'trees/occlusion_unittest.cc',
+      'trees/property_tree_unittest.cc',
       'trees/tree_synchronizer_unittest.cc',
     ],
     'cc_surfaces_unit_tests_source_files': [
@@ -150,6 +151,8 @@
       'test/fake_delegated_renderer_layer.h',
       'test/fake_delegated_renderer_layer_impl.cc',
       'test/fake_delegated_renderer_layer_impl.h',
+      'test/fake_external_begin_frame_source.cc',
+      'test/fake_external_begin_frame_source.h',
       'test/fake_impl_proxy.h',
       'test/fake_layer_tree_host.cc',
       'test/fake_layer_tree_host.h',

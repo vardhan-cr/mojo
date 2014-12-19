@@ -32,11 +32,13 @@ ContextGroup::ContextGroup(
     const scoped_refptr<MemoryTracker>& memory_tracker,
     const scoped_refptr<ShaderTranslatorCache>& shader_translator_cache,
     const scoped_refptr<FeatureInfo>& feature_info,
+    const scoped_refptr<SubscriptionRefSet>& subscription_ref_set,
     const scoped_refptr<ValueStateMap>& pending_valuebuffer_state,
     bool bind_generates_resource)
     : mailbox_manager_(mailbox_manager),
       memory_tracker_(memory_tracker),
       shader_translator_cache_(shader_translator_cache),
+      subscription_ref_set_(subscription_ref_set),
       pending_valuebuffer_state_(pending_valuebuffer_state),
       enforce_gl_minimums_(CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnforceGLMinimums)),
@@ -56,6 +58,8 @@ ContextGroup::ContextGroup(
   {
     if (!mailbox_manager_.get())
       mailbox_manager_ = new MailboxManagerImpl;
+    if (!subscription_ref_set_.get())
+      subscription_ref_set_ = new SubscriptionRefSet();
     if (!pending_valuebuffer_state_.get())
       pending_valuebuffer_state_ = new ValueStateMap();
     if (!feature_info.get())
@@ -128,7 +132,8 @@ bool ContextGroup::Initialize(
       depth24_supported));
   shader_manager_.reset(new ShaderManager());
   valuebuffer_manager_.reset(
-      new ValuebufferManager(pending_valuebuffer_state_.get()));
+      new ValuebufferManager(subscription_ref_set_.get(),
+                             pending_valuebuffer_state_.get()));
 
   // Lookup GL things we need to know.
   const GLint kGLES2RequiredMinimumVertexAttribs = 8u;
@@ -151,21 +156,35 @@ bool ContextGroup::Initialize(
 
   GLint max_texture_size = 0;
   GLint max_cube_map_texture_size = 0;
+  GLint max_rectangle_texture_size = 0;
   const GLint kMinTextureSize = 2048;  // GL actually says 64!?!?
   const GLint kMinCubeMapSize = 256;  // GL actually says 16!?!?
-  if (!QueryGLFeature(
-      GL_MAX_TEXTURE_SIZE, kMinTextureSize, &max_texture_size) ||
-      !QueryGLFeature(
-      GL_MAX_CUBE_MAP_TEXTURE_SIZE, kMinCubeMapSize,
-      &max_cube_map_texture_size)) {
-    LOG(ERROR) << "ContextGroup::Initialize failed because maximum texture size"
-               << "is too small.";
+  const GLint kMinRectangleTextureSize = 64;
+  if (!QueryGLFeature(GL_MAX_TEXTURE_SIZE, kMinTextureSize,
+                      &max_texture_size) ||
+      !QueryGLFeature(GL_MAX_CUBE_MAP_TEXTURE_SIZE, kMinCubeMapSize,
+                      &max_cube_map_texture_size)) {
+    LOG(ERROR) << "ContextGroup::Initialize failed because maximum "
+               << " texture size is too small.";
     return false;
+  }
+  if (feature_info_->feature_flags().arb_texture_rectangle) {
+    if (!QueryGLFeature(GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB,
+                        kMinRectangleTextureSize,
+                        &max_rectangle_texture_size)) {
+      LOG(ERROR) << "ContextGroup::Initialize failed because maximum "
+                 << "rectangle texture size is too small.";
+      return false;
+    }
   }
 
   if (feature_info_->workarounds().max_texture_size) {
     max_texture_size = std::min(
-        max_texture_size, feature_info_->workarounds().max_texture_size);
+        max_texture_size,
+        feature_info_->workarounds().max_texture_size);
+    max_rectangle_texture_size = std::min(
+        max_rectangle_texture_size,
+        feature_info_->workarounds().max_texture_size);
   }
   if (feature_info_->workarounds().max_cube_map_texture_size) {
     max_cube_map_texture_size = std::min(
@@ -177,6 +196,7 @@ bool ContextGroup::Initialize(
                                             feature_info_.get(),
                                             max_texture_size,
                                             max_cube_map_texture_size,
+                                            max_rectangle_texture_size,
                                             bind_generates_resource_));
   texture_manager_->set_framebuffer_manager(framebuffer_manager_.get());
 

@@ -17,7 +17,7 @@ class WebGraphicsContext3D;
 }
 
 namespace cc {
-class ExternalBeginFrameSourceForTest;
+class FakeExternalBeginFrameSource;
 class FakeLayerTreeHostClient;
 class FakeOutputSurface;
 class LayerImpl;
@@ -43,7 +43,7 @@ class TestHooks : public AnimationDelegate {
   virtual void WillBeginImplFrameOnThread(LayerTreeHostImpl* host_impl,
                                           const BeginFrameArgs& args) {}
   virtual void BeginMainFrameAbortedOnThread(LayerTreeHostImpl* host_impl,
-                                             bool did_handle) {}
+                                             CommitEarlyOutReason reason) {}
   virtual void BeginCommitOnThread(LayerTreeHostImpl* host_impl) {}
   virtual void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) {}
   virtual void WillActivateTreeOnThread(LayerTreeHostImpl* host_impl) {}
@@ -216,7 +216,7 @@ class LayerTreeTest : public testing::Test, public TestHooks {
   scoped_ptr<LayerTreeHostClientForTesting> client_;
   scoped_ptr<LayerTreeHost> layer_tree_host_;
   FakeOutputSurface* output_surface_;
-  ExternalBeginFrameSourceForTest* external_begin_frame_source_;
+  FakeExternalBeginFrameSource* external_begin_frame_source_;
 
   bool beginning_;
   bool end_when_begin_returns_;

@@ -2543,6 +2543,54 @@ TEST_F(LayerTreeHostImplTopControlsTest, FixedContainerDelta) {
   host_impl_->top_controls_manager()->ScrollEnd();
 }
 
+// Test that if a scrollable sublayer doesn't consume the scroll,
+// top controls should hide when scrolling down.
+TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollableSublayer) {
+  gfx::Size sub_content_size(100, 400);
+  gfx::Size sub_content_layer_size(100, 300);
+  SetupTopControlsAndScrollLayerWithVirtualViewport(
+      gfx::Size(100, 50), gfx::Size(100, 100), gfx::Size(100, 100));
+  DrawFrame();
+
+  // Show top controls
+  EXPECT_EQ(top_controls_height_,
+            host_impl_->active_tree()->total_top_controls_content_offset());
+
+  LayerImpl* outer_viewport_scroll_layer =
+      host_impl_->active_tree()->OuterViewportScrollLayer();
+  int id = outer_viewport_scroll_layer->id();
+
+  scoped_ptr<LayerImpl> child =
+      LayerImpl::Create(host_impl_->active_tree(), id + 2);
+  scoped_ptr<LayerImpl> child_clip =
+      LayerImpl::Create(host_impl_->active_tree(), id + 3);
+
+  child_clip->SetBounds(sub_content_layer_size);
+  child->SetScrollClipLayer(child_clip->id());
+  child->SetBounds(sub_content_size);
+  child->SetContentBounds(sub_content_size);
+  child->SetPosition(gfx::PointF());
+  child->SetDrawsContent(true);
+  child->SetIsContainerForFixedPositionLayers(true);
+
+  // scroll child to limit
+  child->SetScrollDelta(gfx::Vector2dF(0, 100.f));
+  child_clip->AddChild(child.Pass());
+  outer_viewport_scroll_layer->AddChild(child_clip.Pass());
+
+  // Scroll 25px to hide top controls
+  gfx::Vector2dF scroll_delta(0.f, 25.f);
+  EXPECT_EQ(InputHandler::ScrollStarted,
+            host_impl_->ScrollBegin(gfx::Point(), InputHandler::Gesture));
+  host_impl_->ScrollBy(gfx::Point(), scroll_delta);
+  host_impl_->ScrollEnd();
+
+  // Top controls should be hidden
+  EXPECT_EQ(scroll_delta.y(),
+            top_controls_height_ -
+                host_impl_->active_tree()->total_top_controls_content_offset());
+}
+
 // Ensure setting the top controls position explicitly using the setters on the
 // TreeImpl correctly affects the top controls manager and viewport bounds.
 TEST_F(LayerTreeHostImplTopControlsTest, PositionTopControlsExplicitly) {
@@ -7768,8 +7816,18 @@ TEST_F(LayerTreeHostImplTest, ScrollAnimated) {
 
 TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
   host_impl_->CreatePendingTree();
-  host_impl_->pending_tree()->SetRootLayer(
-      PictureLayerImpl::Create(host_impl_->pending_tree(), 10, false));
+
+  scoped_ptr<PictureLayerImpl> layer =
+      PictureLayerImpl::Create(host_impl_->pending_tree(), 10, false);
+  layer->SetBounds(gfx::Size(10, 10));
+
+  scoped_refptr<RasterSource> pile(FakePicturePileImpl::CreateEmptyPile(
+      gfx::Size(10, 10), gfx::Size(10, 10)));
+  Region empty_invalidation;
+  const PictureLayerTilingSet* null_tiling_set = nullptr;
+  layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+
+  host_impl_->pending_tree()->SetRootLayer(layer.Pass());
 
   LayerTreeImpl* pending_tree = host_impl_->pending_tree();
   LayerImpl* pending_layer = pending_tree->root_layer();
@@ -7837,7 +7895,6 @@ TEST_F(LayerTreeHostImplTest, DidBecomeActive) {
 
   scoped_ptr<FakePictureLayerImpl> pending_layer =
       FakePictureLayerImpl::Create(pending_tree, 10);
-  pending_layer->DoPostCommitInitializationIfNeeded();
   FakePictureLayerImpl* raw_pending_layer = pending_layer.get();
   pending_tree->SetRootLayer(pending_layer.Pass());
   ASSERT_EQ(raw_pending_layer, pending_tree->root_layer());
@@ -7848,7 +7905,6 @@ TEST_F(LayerTreeHostImplTest, DidBecomeActive) {
 
   scoped_ptr<FakePictureLayerImpl> mask_layer =
       FakePictureLayerImpl::Create(pending_tree, 11);
-  mask_layer->DoPostCommitInitializationIfNeeded();
   FakePictureLayerImpl* raw_mask_layer = mask_layer.get();
   raw_pending_layer->SetMaskLayer(mask_layer.Pass());
   ASSERT_EQ(raw_mask_layer, raw_pending_layer->mask_layer());
@@ -7863,7 +7919,6 @@ TEST_F(LayerTreeHostImplTest, DidBecomeActive) {
       FakePictureLayerImpl::Create(pending_tree, 12);
   scoped_ptr<FakePictureLayerImpl> replica_mask_layer =
       FakePictureLayerImpl::Create(pending_tree, 13);
-  replica_mask_layer->DoPostCommitInitializationIfNeeded();
   FakePictureLayerImpl* raw_replica_mask_layer = replica_mask_layer.get();
   replica_layer->SetMaskLayer(replica_mask_layer.Pass());
   raw_pending_layer->SetReplicaLayer(replica_layer.Pass());

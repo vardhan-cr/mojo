@@ -2506,7 +2506,7 @@ class LayerTreeHostTestAbortedCommitDoesntStall : public LayerTreeHostTest {
   }
 
   void BeginMainFrameAbortedOnThread(LayerTreeHostImpl* host_impl,
-                                     bool did_handle) override {
+                                     CommitEarlyOutReason reason) override {
     commit_abort_count_++;
     // Initiate another abortable commit.
     host_impl->SetNeedsCommit();
@@ -4786,7 +4786,7 @@ class LayerTreeHostTestBreakSwapPromiseForVisibilityAbortedCommit
   }
 
   void BeginMainFrameAbortedOnThread(LayerTreeHostImpl* host_impl,
-                                     bool did_handle) override {
+                                     CommitEarlyOutReason reason) override {
     EndTest();
   }
 
@@ -4827,7 +4827,7 @@ class LayerTreeHostTestBreakSwapPromiseForContextAbortedCommit
   }
 
   void BeginMainFrameAbortedOnThread(LayerTreeHostImpl* host_impl,
-                                     bool did_handle) override {
+                                     CommitEarlyOutReason reason) override {
     // This is needed so that the impl-thread state matches main-thread state.
     host_impl->DidLoseOutputSurface();
     EndTest();
@@ -5957,5 +5957,42 @@ class LayerTreeHostTestOneActivatePerPrepareTiles : public LayerTreeHostTest {
 };
 
 MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestOneActivatePerPrepareTiles);
+
+// This tests an assertion that DidCommit and WillCommit happen in the same
+// stack frame with no tasks that run between them.  Various embedders of
+// cc depend on this logic.  ui::Compositor holds a compositor lock between
+// these events and the inspector timeline wants begin/end CompositeLayers
+// to be properly nested with other begin/end events.
+class LayerTreeHostTestNoTasksBetweenWillAndDidCommit
+    : public LayerTreeHostTest {
+ public:
+  LayerTreeHostTestNoTasksBetweenWillAndDidCommit() : did_commit_(false) {}
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  void WillCommit() override {
+    MainThreadTaskRunner()->PostTask(
+        FROM_HERE, base::Bind(&LayerTreeHostTestNoTasksBetweenWillAndDidCommit::
+                                  EndTestShouldRunAfterDidCommit,
+                              base::Unretained(this)));
+  }
+
+  void EndTestShouldRunAfterDidCommit() {
+    EXPECT_TRUE(did_commit_);
+    EndTest();
+  }
+
+  void DidCommit() override {
+    EXPECT_FALSE(did_commit_);
+    did_commit_ = true;
+  }
+
+  void AfterTest() override { EXPECT_TRUE(did_commit_); }
+
+ private:
+  bool did_commit_;
+};
+
+SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostTestNoTasksBetweenWillAndDidCommit);
 
 }  // namespace cc
