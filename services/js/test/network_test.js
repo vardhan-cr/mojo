@@ -6,13 +6,22 @@ define("main", [
   "mojo/services/network/public/interfaces/network_service.mojom",
   "mojo/services/network/public/interfaces/url_loader.mojom",
   "services/js/test/network_test_service.mojom",
-], function(appModule, coreModule, netModule, loaderModule, ntsModule) {
+], function(application,
+            core,
+            networkServiceMojom,
+            urlLoaderMojom,
+            networkTestServiceMojom) {
+
+  const Application = application.Application;
+  const NetworkService = networkServiceMojom.NetworkService;
+  const URLRequest = urlLoaderMojom.URLRequest;
+  const NetworkTestService = networkTestServiceMojom.NetworkTestService;
 
   class NetworkTestServiceImpl {
     constructor(app) {
       this.app = app;
       var netService = app.shell.connectToService(
-        "mojo:network_service", netModule.NetworkService);
+          "mojo:network_service", NetworkService);
       var urlLoaderClient = {};
       netService.createURLLoader(urlLoaderClient);
       this.urlLoader = urlLoaderClient.remote$;
@@ -21,13 +30,13 @@ define("main", [
     getFileSize(url) {
       var impl = this;
       return new Promise(function(resolve) {
-        var urlRequest = new loaderModule.URLRequest({
+        var urlRequest = new URLRequest({
           url: url,
           method: "GET",
           auto_follow_redirects: true
         });
         impl.urlLoader.start(urlRequest).then(function(result) {
-          coreModule.drainData(result.response.body).then(
+          core.drainData(result.response.body).then(
             function(result) {
               resolve({ok: true, size: result.buffer.byteLength});
             });
@@ -42,10 +51,10 @@ define("main", [
     }
   }
 
-  class NetworkTest extends appModule.Application {
+  class NetworkTest extends Application {
     acceptConnection(url, serviceProvider) {
       serviceProvider.provideService(
-          ntsModule.NetworkTestService,
+          NetworkTestService,
           NetworkTestServiceImpl.bind(null, this));
     }
   }

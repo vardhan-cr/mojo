@@ -5,8 +5,9 @@
 define("mojo/services/public/js/service_provider", [
   "mojo/public/interfaces/application/service_provider.mojom",
   "mojo/public/js/connection",
-  "mojo/public/js/core"
-], function(spInterfaceModule, connectionModule, coreModule) {
+], function(serviceProviderMojom, connection) {
+
+  const ServiceProviderInterface = serviceProviderMojom.ServiceProvider;
 
   function checkServiceProvider(sp) {
     if (!sp.providers_)
@@ -15,7 +16,7 @@ define("mojo/services/public/js/service_provider", [
 
   class ServiceProvider {
     constructor(service) {
-      if (!(service instanceof spInterfaceModule.ServiceProvider.proxyClass))
+      if (!(service instanceof ServiceProviderInterface.proxyClass))
         throw new Error("service must be a ServiceProvider proxy");
       service.local$ = this; // Implicitly sets this.remote$ to service.
       this.providers_ = new Map(); // serviceName => see provideService() below
@@ -32,7 +33,7 @@ define("mojo/services/public/js/service_provider", [
         this.pendingRequests_.set(serviceName, serviceHandle);
         return;
       }
-      var proxy = connectionModule.bindProxyHandle(
+      var proxy = connection.bindProxyHandle(
           serviceHandle, provider.service, provider.service.client);
       proxy.local$ = new provider.factory(proxy);
       provider.connections.push(proxy.connection$);
@@ -65,7 +66,7 @@ define("mojo/services/public/js/service_provider", [
 
       if (!clientImpl)
         clientImpl = {};
-      var messagePipeHandle = connectionModule.bindProxyClient(
+      var messagePipeHandle = connection.bindProxyClient(
           clientImpl, interfaceObject.client, interfaceObject);
       this.remote$.connectToService(interfaceObject.name, messagePipeHandle);
       return clientImpl.remote$;

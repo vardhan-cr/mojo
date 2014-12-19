@@ -3,9 +3,12 @@
 define("main", [
   "mojo/services/public/js/application",
   "services/js/test/echo_service.mojom"
-], function(appModule, echoModule) {
+], function(application, echoServiceMojom) {
 
-  class Echo extends appModule.Application {
+  const Application = application.Application;
+  const EchoService = echoServiceMojom.EchoService;
+
+  class Echo extends Application {
     acceptConnection(url, serviceProvider) {
       var app = this;
       function EchoServiceImpl(client) {
@@ -15,7 +18,7 @@ define("main", [
           return Promise.resolve({value: s});
         };
       }
-      serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
+      serviceProvider.provideService(EchoService, EchoServiceImpl);
     }
   }
 

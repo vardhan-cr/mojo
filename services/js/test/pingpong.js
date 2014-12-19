@@ -3,7 +3,10 @@
 define("main", [
   "mojo/services/public/js/application",
   "services/js/test/pingpong_service.mojom"
-], function(appModule, ppModule) {
+], function(application, pingPongServiceMojom) {
+
+  const Application = application.Application;
+  const PingPongService = pingPongServiceMojom.PingPongService;
 
   class PingPongServiceImpl {
     constructor(app, client) {
@@ -30,7 +33,7 @@ define("main", [
           }
         };
         var pingTargetService = app.shell.connectToService(
-            url, ppModule.PingPongService, pingTargetClient);
+            url, PingPongService, pingTargetClient);
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });
@@ -59,10 +62,10 @@ define("main", [
     }
   }
 
-  class PingPong extends appModule.Application {
+  class PingPong extends Application {
     acceptConnection(url, serviceProvider) {
       serviceProvider.provideService(
-          ppModule.PingPongService, PingPongServiceImpl.bind(null, this));
+          PingPongService, PingPongServiceImpl.bind(null, this));
     }
   }
 

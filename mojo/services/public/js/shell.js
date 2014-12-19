@@ -8,19 +8,21 @@ define("mojo/services/public/js/shell", [
   "mojo/public/interfaces/application/shell.mojom",
   "mojo/public/interfaces/application/service_provider.mojom",
   "mojo/services/public/js/service_provider"
-], function(coreModule,
-            connectionModule,
-            shellInterfaceModule,
-            spInterfaceModule,
-            spModule) {
+], function(core,
+            connection,
+            shellMojom,
+            serviceProviderMojom,
+            serviceProvider) {
+
+  const ServiceProvider = serviceProvider.ServiceProvider;
+  const ServiceProviderInterface = serviceProviderMojom.ServiceProvider;
+  const ShellInterface = shellMojom.Shell;
 
   class Shell {
     constructor(shellHandle, app) {
       this.shellHandle = shellHandle;
-      this.proxy = connectionModule.bindProxyHandle(
-          shellHandle,
-          shellInterfaceModule.Shell.client,
-          shellInterfaceModule.Shell);
+      this.proxy = connection.bindProxyHandle(
+          shellHandle, ShellInterface.client, ShellInterface);
       this.proxy.local$ = app; // The app is the shell's client.
       // TODO: call this serviceProviders_
       this.applications_ = new Map();
@@ -33,7 +35,7 @@ define("mojo/services/public/js/shell", [
 
       var returnValue = {};
       this.proxy.connectToApplication(url, returnValue);
-      application = new spModule.ServiceProvider(returnValue.remote$);
+      application = new ServiceProvider(returnValue.remote$);
       this.applications_.set(url, application);
       return application;
     }
@@ -47,7 +49,7 @@ define("mojo/services/public/js/shell", [
         application.close();
       });
       this.applications_.clear();
-      coreModule.close(this.shellHandle);
+      core.close(this.shellHandle);
     }
   }
 
