@@ -7,7 +7,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.chromium.mojo_shell_apk">
+    package="org.chromium.mojo.shell">
 
     <application android:name="MojoShellApplication"
             android:label="Mojo Shell">

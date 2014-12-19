@@ -227,16 +227,15 @@ source_set("lib") {
 if (is_android) {
   generate_jni("jni_headers") {
     sources = [
-      "android/apk/src/org/chromium/mojo_shell_apk/AndroidHandler.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
+      "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
+      "android/apk/src/org/chromium/mojo/shell/Bootstrap.java",
+      "android/apk/src/org/chromium/mojo/shell/MojoMain.java",
     ]
     jni_package = "mojo/shell"
   }
 
   android_library("bootstrap_java") {
-    java_files =
-        [ "android/apk/src/org/chromium/mojo_shell_apk/Bootstrap.java" ]
+    java_files = [ "android/apk/src/org/chromium/mojo/shell/Bootstrap.java" ]
 
     deps = [
       "//base:base_java",
@@ -270,11 +269,11 @@ if (is_android) {
 
   android_library("java") {
     java_files = [
-      "android/apk/src/org/chromium/mojo_shell_apk/AndroidHandler.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/FileHelper.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/MojoMain.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/MojoShellActivity.java",
-      "android/apk/src/org/chromium/mojo_shell_apk/MojoShellApplication.java",
+      "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
+      "android/apk/src/org/chromium/mojo/shell/FileHelper.java",
+      "android/apk/src/org/chromium/mojo/shell/MojoMain.java",
+      "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",
+      "android/apk/src/org/chromium/mojo/shell/MojoShellApplication.java",
     ]
 
     deps = [
@@ -284,7 +283,7 @@ if (is_android) {
 
   android_resources("resources") {
     resource_dirs = [ "android/apk/res" ]
-    custom_package = "org.chromium.mojo_shell_apk"
+    custom_package = "org.chromium.mojo.shell"
   }
 
   mojo_shell_assets_dir = "$root_build_dir/mojo_shell_assets"

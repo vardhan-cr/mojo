@@ -97,7 +97,7 @@ def main():
          ' -W'
          ' -S'
          ' -a android.intent.action.VIEW'
-         ' -n org.chromium.mojo_shell_apk/.MojoShellActivity')
+         ' -n org.chromium.mojo.shell/.MojoShellActivity')
 
   parameters = [
       '--origin=http://127.0.0.1:%d/' % device_port
@@ -108,7 +108,7 @@ def main():
   device.RunShellCommand('logcat -c')
   device.RunShellCommand(cmd)
   os.system("%s logcat -s %s" % (constants.GetAdbPath(), ' '.join(TAGS)))
-  device.RunShellCommand("am force-stop org.chromium.mojo_shell_apk")
+  device.RunShellCommand("am force-stop org.chromium.mojo.shell")
   return 0
 
 if __name__ == "__main__":

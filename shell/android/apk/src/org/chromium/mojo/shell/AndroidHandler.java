@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.chromium.mojo_shell_apk;
+package org.chromium.mojo.shell;
 
 import android.content.Context;
 import android.util.Log;
@@ -30,7 +30,7 @@ public class AndroidHandler {
     private static final String BOOTSTRAP_JAVA_LIBRARY = "bootstrap_java.dex.jar";
     private static final String BOOTSTRAP_NATIVE_LIBRARY = "libbootstrap.so";
     // Name of the bootstrapping runnable shipped in the packaged Java library.
-    private static final String BOOTSTRAP_CLASS = "org.chromium.mojo_shell_apk.Bootstrap";
+    private static final String BOOTSTRAP_CLASS = "org.chromium.mojo.shell.Bootstrap";
 
     // File extensions used to identify application libraries in the provided archive.
     private static final String JAVA_LIBRARY_SUFFIX = ".dex.jar";

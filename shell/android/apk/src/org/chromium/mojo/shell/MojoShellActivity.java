@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.chromium.mojo_shell_apk;
+package org.chromium.mojo.shell;
 
 import android.app.Activity;
 import android.app.AlertDialog;
