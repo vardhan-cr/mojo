@@ -95,9 +95,9 @@ class FixedInvalidationPictureLayerTilingClient
       const Region invalidation)
       : base_client_(base_client), invalidation_(invalidation) {}
 
-  scoped_refptr<Tile> CreateTile(PictureLayerTiling* tiling,
+  scoped_refptr<Tile> CreateTile(float contents_scale,
                                  const gfx::Rect& content_rect) override {
-    return base_client_->CreateTile(tiling, content_rect);
+    return base_client_->CreateTile(contents_scale, content_rect);
   }
 
   gfx::Size CalculateTileSize(const gfx::Size& content_bounds) const override {
@@ -209,13 +209,13 @@ void RasterizeAndRecordBenchmarkImpl::RunOnLayer(PictureLayerImpl* layer) {
   // it takes to rasterize content. As such, the actual settings used here don't
   // really matter.
   const LayerTreeSettings& settings = layer->layer_tree_impl()->settings();
-  auto tiling_set = PictureLayerTilingSet::Create(
+  scoped_ptr<PictureLayerTilingSet> tiling_set = PictureLayerTilingSet::Create(
       &client, settings.max_tiles_for_interest_area,
       settings.skewport_target_time_in_seconds,
       settings.skewport_extrapolation_limit_in_content_pixels);
 
-  PictureLayerTiling* tiling =
-      tiling_set->AddTiling(layer->contents_scale_x(), layer->bounds());
+  PictureLayerTiling* tiling = tiling_set->AddTiling(layer->contents_scale_x(),
+                                                     layer->GetRasterSource());
   tiling->CreateAllTilesForTesting();
   for (PictureLayerTiling::CoverageIterator it(
            tiling, layer->contents_scale_x(), layer->visible_content_rect());

@@ -68,7 +68,7 @@ class CC_EXPORT PictureLayerImpl
   skia::RefPtr<SkPicture> GetPicture() override;
 
   // PictureLayerTilingClient overrides.
-  scoped_refptr<Tile> CreateTile(PictureLayerTiling* tiling,
+  scoped_refptr<Tile> CreateTile(float contents_scale,
                                  const gfx::Rect& content_rect) override;
   gfx::Size CalculateTileSize(const gfx::Size& content_bounds) const override;
   const Region* GetPendingInvalidation() override;
@@ -105,7 +105,7 @@ class CC_EXPORT PictureLayerImpl
   bool AllTilesRequiredForDrawAreReadyToDraw() const;
 
   // Used for benchmarking
-  const RasterSource* GetRasterSource() const { return raster_source_.get(); }
+  RasterSource* GetRasterSource() const { return raster_source_.get(); }
 
  protected:
   friend class LayerRasterTileIterator;
@@ -121,11 +121,11 @@ class CC_EXPORT PictureLayerImpl
   void CleanUpTilingsOnActiveLayer(
       std::vector<PictureLayerTiling*> used_tilings);
   float MinimumContentsScale() const;
+  float MaximumContentsScale() const;
   void ResetRasterScale();
   gfx::Rect GetViewportForTilePriorityInContentSpace() const;
   PictureLayerImpl* GetRecycledTwinLayer() const;
 
-  bool CanHaveTilingWithScale(float contents_scale) const;
   void SanityCheckTilingState() const;
   // Checks if all tiles required for a certain action (e.g. activation) are
   // ready to draw.  is_tile_required_callback gets called on all candidate

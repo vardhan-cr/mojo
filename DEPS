@@ -22,23 +22,23 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'eacaa2819d04fc5807562d497215a0f6aca67d62',
+  'skia_revision': '6cc53f3fa7ed2945605c8f6d29e0185b601a9fc4',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '528cf701ec0bd2ac2173434cd7885c6cf5792a54',
+  'v8_revision': 'b061b1e2e98ae688ba697cf368b61a174d38b34a',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  "angle_revision": "797ff4c0ecf1b4950f6948175ea38ccbe888de7f",
+  "angle_revision": "2609bf4ca44972379ff82bcda370ad6f13b817cc",
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '4995faa4a7ad968f1fa1917c26edd5cea295582f',
+  'buildtools_revision': '23a4e2f545c7b6340d7e5a2b74801941b0a86535',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': 'f6505100fc132ef866adaf3ff1fb7f06d0ca7a9b',
+  'pdfium_revision': '5a35129bce7ca777e155e5498e8d4792fa6a4819',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
@@ -117,7 +117,7 @@ deps = {
     Var('chromium_git') + '/external/pywebsocket/src.git' + '@' + 'cb349e87ddb30ff8d1fa1a89be39cec901f4a29c',
 
   'src/third_party/mesa/src':
-   Var('chromium_git') + '/chromium/deps/mesa.git' + '@' + '9731cb962963bca8a05f3d0f6ea40c3a781f0537',
+   Var('chromium_git') + '/chromium/deps/mesa.git' + '@' + '071d25db04c23821a12a8b260ab9d96a097402f0',
 
   'src/third_party/pdfium':
    'https://pdfium.googlesource.com/pdfium.git' + '@' +  Var('pdfium_revision'),

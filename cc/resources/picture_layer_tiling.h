@@ -35,9 +35,8 @@ class CC_EXPORT PictureLayerTilingClient {
  public:
   // Create a tile at the given content_rect (in the contents scale of the
   // tiling) This might return null if the client cannot create such a tile.
-  virtual scoped_refptr<Tile> CreateTile(
-    PictureLayerTiling* tiling,
-    const gfx::Rect& content_rect) = 0;
+  virtual scoped_refptr<Tile> CreateTile(float contents_scale,
+                                         const gfx::Rect& content_rect) = 0;
   virtual gfx::Size CalculateTileSize(
     const gfx::Size& content_bounds) const = 0;
   // This invalidation region defines the area (if any, it can by null) that
@@ -108,21 +107,18 @@ class CC_EXPORT PictureLayerTiling {
 
   ~PictureLayerTiling();
 
-  // Create a tiling with no tiles.  CreateTiles must be called to add some.
-  // TODO(danakj): Pass the raster_source here instead of the size, store the
-  // raster source instead of layer bounds?
+  // Create a tiling with no tiles. CreateTile() must be called to add some.
   static scoped_ptr<PictureLayerTiling> Create(
       float contents_scale,
-      const gfx::Size& layer_bounds,
+      scoped_refptr<RasterSource> raster_source,
       PictureLayerTilingClient* client,
       size_t max_tiles_for_interest_area,
       float skewport_target_time_in_seconds,
       int skewport_extrapolation_limit_in_content_pixels);
 
-  gfx::Size layer_bounds() const { return layer_bounds_; }
-  void Resize(const gfx::Size& new_layer_bounds);
+  void SetRasterSourceAndResize(scoped_refptr<RasterSource> raster_source);
   void Invalidate(const Region& layer_invalidation);
-  void SetRasterSource(scoped_refptr<RasterSource> raster_source);
+  void SetRasterSourceOnTiles();
   void CreateMissingTilesInLiveTilesRect();
 
   void CloneTilesAndPropertiesFrom(const PictureLayerTiling& twin_tiling);
@@ -133,6 +129,7 @@ class CC_EXPORT PictureLayerTiling {
     can_require_tiles_for_activation_ = can_require_tiles;
   }
 
+  RasterSource* raster_source() const { return raster_source_.get(); }
   gfx::Size tiling_size() const { return tiling_data_.tiling_size(); }
   gfx::Rect live_tiles_rect() const { return live_tiles_rect_; }
   gfx::Size tile_size() const { return tiling_data_.max_texture_size(); }
@@ -236,17 +233,10 @@ class CC_EXPORT PictureLayerTiling {
 
   void Reset();
 
-  void ComputeTilePriorityRects(const gfx::Rect& viewport_in_layer_space,
+  bool ComputeTilePriorityRects(const gfx::Rect& viewport_in_layer_space,
                                 float ideal_contents_scale,
                                 double current_frame_time_in_seconds,
                                 const Occlusion& occlusion_in_layer_space);
-
-  bool NeedsUpdateForFrameAtTimeAndViewport(
-      double frame_time_in_seconds,
-      const gfx::Rect& viewport_in_layer_space) {
-    return frame_time_in_seconds != last_impl_frame_time_in_seconds_ ||
-           viewport_in_layer_space != last_viewport_in_layer_space_;
-  }
 
   void GetAllTilesForTracing(std::set<const Tile*>* tiles) const;
   void AsValueInto(base::debug::TracedValue* array) const;
@@ -281,7 +271,7 @@ class CC_EXPORT PictureLayerTiling {
   typedef base::hash_map<TileMapKey, scoped_refptr<Tile>> TileMap;
 
   PictureLayerTiling(float contents_scale,
-                     const gfx::Size& layer_bounds,
+                     scoped_refptr<RasterSource> raster_source,
                      PictureLayerTilingClient* client,
                      size_t max_tiles_for_interest_area,
                      float skewport_target_time_in_seconds,
@@ -313,6 +303,12 @@ class CC_EXPORT PictureLayerTiling {
 
   void UpdateTileAndTwinPriority(Tile* tile) const;
   void UpdateTilePriority(Tile* tile) const;
+  bool NeedsUpdateForFrameAtTimeAndViewport(
+      double frame_time_in_seconds,
+      const gfx::Rect& viewport_in_layer_space) {
+    return frame_time_in_seconds != last_impl_frame_time_in_seconds_ ||
+           viewport_in_layer_space != last_viewport_in_layer_space_;
+  }
 
   const size_t max_tiles_for_interest_area_;
   const float skewport_target_time_in_seconds_;
@@ -321,7 +317,7 @@ class CC_EXPORT PictureLayerTiling {
   // Given properties.
   const float contents_scale_;
   PictureLayerTilingClient* const client_;
-  gfx::Size layer_bounds_;
+  scoped_refptr<RasterSource> raster_source_;
   TileResolution resolution_;
 
   // Internal data.

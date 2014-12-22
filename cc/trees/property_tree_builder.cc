@@ -112,7 +112,7 @@ void AddTransformNodeIfNeeded(const DataForRecursion& data_from_ancestor,
   const bool is_fixed = layer->position_constraint().is_fixed_position();
 
   const bool has_significant_transform =
-      !layer->transform().IsIdentityOrTranslation();
+      !layer->transform().IsIdentityOr2DTranslation();
 
   const bool has_animated_transform =
       layer->layer_animation_controller()->IsAnimatingProperty(
