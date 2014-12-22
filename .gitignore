@@ -20,6 +20,7 @@ v8.log
 # The Chrome OS build creates a /c symlink due to http://crbug.com/54866.
 # TODO(vtl): Check if this is still true.
 /c
+/dart/
 /mojo/public/tools/prebuilt/
 /out/
 /out_*/
@@ -27,8 +28,8 @@ v8.log
 /testing/gmock/
 /testing/gtest/
 /third_party/android_tools/
-/third_party/appurify-python/
 /third_party/angle/
+/third_party/appurify-python/
 /third_party/bison/
 /third_party/boringssl/src/
 /third_party/brotli/src/
@@ -59,4 +60,3 @@ v8.log
 /tools/grit/
 /tools/gyp/
 /v8/
-/dart/
