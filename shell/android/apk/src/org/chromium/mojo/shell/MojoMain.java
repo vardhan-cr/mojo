@@ -35,14 +35,6 @@ public class MojoMain {
     private static boolean sInitialized = false;
 
     /**
-     * Deletes directories holding the temporary files. This should be called early on shell startup
-     * to clean up after the previous run.
-     */
-    static void clearTemporaryFiles(Context context) {
-        FileHelper.deleteRecursively(getLocalAppsDir(context));
-    }
-
-    /**
      * Initializes the native system.
      **/
     static void ensureInitialized(Context applicationContext, String[] parameters) {

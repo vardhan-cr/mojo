@@ -66,5 +66,6 @@
   {
     "test": "mojo_shell_tests",
     "cacheable": False,
+    "run_on_android": True,
   },
 ]

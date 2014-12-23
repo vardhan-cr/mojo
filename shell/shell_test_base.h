@@ -32,27 +32,19 @@ class ShellTestBase : public testing::Test {
   ScopedMessagePipeHandle ConnectToService(const GURL& application_url,
                                            const std::string& service_name);
 
-  ScopedMessagePipeHandle ConnectToServiceViaNetwork(
-      const GURL& application_url,
-      const std::string& service_name);
-
   template <typename Interface>
   void ConnectToService(const GURL& application_url,
                         InterfacePtr<Interface>* ptr) {
     ptr->Bind(ConnectToService(application_url, Interface::Name_).Pass());
   }
 
-  template <typename Interface>
-  void ConnectToServiceViaNetwork(const GURL& application_url,
-                                  InterfacePtr<Interface>* ptr) {
-    ptr->Bind(
-        ConnectToServiceViaNetwork(application_url, Interface::Name_).Pass());
-  }
-
   base::MessageLoop* message_loop() { return &message_loop_; }
   Context* shell_context() { return &shell_context_; }
 
  private:
+  // Set up the test applications so that mojo: URL resolves to those.
+  void SetUpTestApplications();
+
   Context shell_context_;
   base::MessageLoop message_loop_;
 

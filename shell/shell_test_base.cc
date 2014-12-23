@@ -24,14 +24,19 @@ ShellTestBase::~ShellTestBase() {
 }
 
 void ShellTestBase::SetUp() {
+  SetUpTestApplications();
   shell_context_.Init();
-  base::FilePath service_dir;
-  CHECK(PathService::Get(base::DIR_MODULE, &service_dir));
 }
 
 ScopedMessagePipeHandle ShellTestBase::ConnectToService(
     const GURL& application_url,
     const std::string& service_name) {
+  return shell_context_.ConnectToServiceByName(application_url, service_name)
+      .Pass();
+}
+
+#if !defined(OS_ANDROID)
+void ShellTestBase::SetUpTestApplications() {
   // Set the MojoURLResolver origin to be the same as the base file path for
   // local files. This is primarily for test convenience, so that references
   // to unknown mojo: urls that do not have specific local file or custom
@@ -40,17 +45,8 @@ ScopedMessagePipeHandle ShellTestBase::ConnectToService(
   CHECK(PathService::Get(base::DIR_MODULE, &service_dir));
   shell_context_.mojo_url_resolver()->SetBaseURL(
       FilePathToFileURL(service_dir));
-
-  return shell_context_.ConnectToServiceByName(application_url, service_name)
-      .Pass();
 }
-
-ScopedMessagePipeHandle ShellTestBase::ConnectToServiceViaNetwork(
-    const GURL& application_url,
-    const std::string& service_name) {
-  return shell_context_.ConnectToServiceByName(application_url, service_name)
-      .Pass();
-}
+#endif
 
 }  // namespace test
 }  // namespace shell

@@ -160,7 +160,8 @@ TEST_F(ShellTestBaseTest, DISABLED_ConnectBasicNetwork) {
 // subsequent tests can't init properly.
 TEST_F(ShellTestBaseTest, DISABLED_ConnectInvalidServiceNetwork) {
   InterfacePtr<TestService> test_service;
-  ConnectToServiceViaNetwork(GURL("mojo:non_existent_service"), &test_service);
+  ConnectToService(GURL("http://example.com/non_existent_service"),
+                   &test_service);
   QuitMessageLoopErrorHandler quitter;
   test_service.set_error_handler(&quitter);
   bool was_run = false;

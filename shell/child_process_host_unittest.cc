@@ -33,7 +33,13 @@ class TestChildProcessHostDelegate : public ChildProcessHost::Delegate {
 
 typedef testing::Test ChildProcessHostTest;
 
-TEST_F(ChildProcessHostTest, Basic) {
+#if defined(OS_ANDROID)
+// TODO(qsr): Multiprocess shell tests are not supported on android.
+#define MAYBE_Basic DISABLED_Basic
+#else
+#define MAYBE_Basic Basic
+#endif  // defined(OS_ANDROID)
+TEST_F(ChildProcessHostTest, MAYBE_Basic) {
   Context context;
   base::MessageLoop message_loop(
       scoped_ptr<base::MessagePump>(new common::MessagePumpMojo()));
