@@ -393,7 +393,7 @@ RenderText::~RenderText() {
 }
 
 RenderText* RenderText::CreateInstance() {
-  return CommandLine::ForCurrentProcess()->HasSwitch(
+  return base::CommandLine::ForCurrentProcess()->HasSwitch(
       switches::kDisableHarfBuzzRenderText) ? CreateNativeInstance() :
       new RenderTextHarfBuzz;
 }

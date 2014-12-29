@@ -50,7 +50,7 @@ ScaleGestureDetector::Config DefaultScaleGestureDetectorConfig() {
   config.min_scaling_touch_major = GestureConfiguration::default_radius() * 2;
   config.min_scaling_span = GestureConfiguration::min_scaling_span_in_pixels();
   config.min_pinch_update_span_delta =
-      CommandLine::ForCurrentProcess()->HasSwitch(
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kCompensateForUnstablePinchZoom) ?
       GestureConfiguration::min_pinch_update_distance_in_pixels() : 0;
   return config;

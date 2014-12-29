@@ -82,7 +82,7 @@ static void Init(JNIEnv* env,
       base::android::ConvertJavaStringToUTF8(env, mojo_shell_path));
   base::android::AppendJavaStringArrayToStringVector(env, jparameters,
                                                      &parameters);
-  CommandLine::Init(0, nullptr);
+  base::CommandLine::Init(0, nullptr);
   base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
 
   InitializeLogging();

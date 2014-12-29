@@ -111,7 +111,7 @@ Compositor::Compositor(gfx::AcceleratedWidget widget,
       weak_ptr_factory_(this) {
   root_web_layer_ = cc::Layer::Create();
 
-  CommandLine* command_line = CommandLine::ForCurrentProcess();
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
 
   cc::LayerTreeSettings settings;
   settings.renderer_settings.refresh_rate =

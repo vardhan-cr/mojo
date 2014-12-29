@@ -6,6 +6,8 @@
 
 #include "base/command_line.h"
 
+using base::CommandLine;
+
 namespace switches {
 
 // Enable compositing individual elements via hardware overlays when

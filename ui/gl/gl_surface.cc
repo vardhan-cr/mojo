@@ -37,7 +37,7 @@ bool GLSurface::InitializeOneOff(GLImplementation impl) {
   GetAllowedGLImplementations(&allowed_impls);
   DCHECK(!allowed_impls.empty());
 
-  CommandLine* cmd = CommandLine::ForCurrentProcess();
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
 
   // The default implementation is always the first one in list.
   if (impl == kGLImplementationNone)
@@ -109,7 +109,8 @@ void GLSurface::InitializeOneOffForTests() {
 
   // We usually use OSMesa as this works on all bots. The command line can
   // override this behaviour to use hardware GL.
-  if (CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseGpuInTests))
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kUseGpuInTests))
     use_osmesa = false;
 
 #if defined(OS_ANDROID)
@@ -125,7 +126,7 @@ void GLSurface::InitializeOneOffForTests() {
   if (use_osmesa)
     impl = kGLImplementationOSMesaGL;
 
-  DCHECK(!CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseGL))
+  DCHECK(!base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseGL))
       << "kUseGL has not effect in tests";
 
   bool fallback_to_osmesa = false;
@@ -138,7 +139,7 @@ void GLSurface::InitializeOneOffForTests() {
 
 // static
 void GLSurface::InitializeOneOffWithMockBindingsForTests() {
-  DCHECK(!CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseGL))
+  DCHECK(!base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseGL))
       << "kUseGL has not effect in tests";
 
   // This method may be called multiple times in the same process to set up
@@ -192,8 +193,25 @@ unsigned int GLSurface::GetBackingFrameBufferObject() {
   return 0;
 }
 
+bool GLSurface::SwapBuffersAsync(const SwapCompletionCallback& callback) {
+  DCHECK(!IsSurfaceless());
+  bool success = SwapBuffers();
+  callback.Run();
+  return success;
+}
+
 bool GLSurface::PostSubBuffer(int x, int y, int width, int height) {
   return false;
+}
+
+bool GLSurface::PostSubBufferAsync(int x,
+                                   int y,
+                                   int width,
+                                   int height,
+                                   const SwapCompletionCallback& callback) {
+  bool success = PostSubBuffer(x, y, width, height);
+  callback.Run();
+  return success;
 }
 
 bool GLSurface::OnMakeCurrent(GLContext* context) {
@@ -303,8 +321,19 @@ bool GLSurfaceAdapter::SwapBuffers() {
   return surface_->SwapBuffers();
 }
 
+bool GLSurfaceAdapter::SwapBuffersAsync(
+    const SwapCompletionCallback& callback) {
+  return surface_->SwapBuffersAsync(callback);
+}
+
 bool GLSurfaceAdapter::PostSubBuffer(int x, int y, int width, int height) {
   return surface_->PostSubBuffer(x, y, width, height);
+}
+
+bool GLSurfaceAdapter::PostSubBufferAsync(
+    int x, int y, int width, int height,
+        const SwapCompletionCallback& callback) {
+  return surface_->PostSubBufferAsync(x, y, width, height, callback);
 }
 
 bool GLSurfaceAdapter::SupportsPostSubBuffer() {
