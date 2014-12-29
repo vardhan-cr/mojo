@@ -13,12 +13,11 @@ define("main", [
 
   class Hello extends appModule.Application {
     initialize(args) {
-      if (args.length != 2) {
-        console.log("Expected hello.js URL argument");
-        return;
-      }
       console.log(this.url + ": Hello");
-      this.shell.connectToApplication(args[1]);
+      if (args && args.length == 2) // args is a nullable parameter
+        this.shell.connectToApplication(args[1]);
+      else
+        console.log("Error: expected hello.js <URL for world.js>");
       this.quit();
     }
   }
