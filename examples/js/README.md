@@ -11,7 +11,7 @@ cube.js - A JS version of examples/sample_app.
 
 A Mojo application written in JavaScript is launched with mojo_shell like this:
 
-  mojo_shell <js-application-url>
+  mojo_shell &lt;js-application-url&gt;
 
 Where js-application-url is a URL understood by the shell. For example
 a file or an http URL that names a JS source file. The JS file itself
