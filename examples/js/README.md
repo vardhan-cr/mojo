@@ -30,27 +30,29 @@ depends on.
 
 This is the overall structure of a JS Mojo application:
 
-  #!mojo:js_content_handler
+```javascript
+#!mojo:js_content_handler
 
-  define("main", ["mojo/services/public/js/application", 
-    <list of other modules that this application depends on>
+define("main", ["mojo/services/public/js/application", 
+  <list of other modules that this application depends on>
 ],
-    function(appModule, <one parameter per dependent module>) {
-      class MyApplication extends appModule.Application {
-        constructor(appShell, url) {
-          super(appShell, url); // Initializes this.shell, this.url.
-          // MyApplication initializations here. 
-        }
-
-        initialize(args) {
-        }
-
-        acceptConnection(url, serviceProvider) {
-        }
+  function(appModule, <one parameter per dependent module>) {
+    class MyApplication extends appModule.Application {
+      constructor(appShell, url) {
+        super(appShell, url); // Initializes this.shell, this.url.
+        // MyApplication initializations here. 
       }
 
-      return MyApplication;
-    });
+      initialize(args) {
+      }
+
+      acceptConnection(url, serviceProvider) {
+      }
+    }
+
+    return MyApplication;
+  });
+```
 
 The hello.js example is little more than this basic skeleton.
 
@@ -100,22 +102,24 @@ The JS bindings for a Mojo interface's API are delivered as a JS module whose
 name is based on the '.mojom' file's path. For example, to use the Mojo network
 service you need the JS module based on network_service.mojom:
 
-  define("main", [
-    "mojo/services/network/public/interfaces/network_service.mojom",
-    "mojo/services/public/js/application",
-  ]
-    function(netModule, appModule) {
-      class MyApplication extends appModule.Application {
-        initialize(args) {
-          var netService = this.shell.connectToService(
-              "mojo:network_service", netModule.NetworkService);
-          // Use netService's NetworkService methods.
-        }
-        ...
+```javascript
+define("main", [
+  "mojo/services/network/public/interfaces/network_service.mojom",
+  "mojo/services/public/js/application",
+]
+  function(netModule, appModule) {
+    class MyApplication extends appModule.Application {
+      initialize(args) {
+        var netService = this.shell.connectToService(
+            "mojo:network_service", netModule.NetworkService);
+        // Use netService's NetworkService methods.
       }
+      ...
+    }
 
-      return MyApplication;
-    });
+    return MyApplication;
+  });
+```
 
 The first connectToService() parameter is the Mojo URL for the network service
 application and the second is the JS "interface" object for NetworkService. The
@@ -123,12 +127,14 @@ JS interface object's properties identify the (generated) JS bindings classes
 used to provide or connect to a service. For example (from
 network_service.mojom.js):
 
-  var NetworkService = {
-    name: 'mojo::NetworkService', // Fully qualified Mojo interface name.
-    proxyClass: NetworkServiceProxy,
-    stubClass: NetworkServiceStub,
-    // ...
-  };
+```javascript
+var NetworkService = {
+  name: 'mojo::NetworkService', // Fully qualified Mojo interface name.
+  proxyClass: NetworkServiceProxy,
+  stubClass: NetworkServiceStub,
+  // ...
+};
+```
 
 The 'proxyClass' is used to access another application's NetworkService and the
 'stubClass' is used to create an implementation of NetworkService. 
@@ -144,9 +150,11 @@ instance is returned. The netService proxy can be used immediately.
 Mojo functions can return zero or more values called a "response". For example
 the EchoString function below returns a string or null.
 
+```javascript
 interface EchoService {
   EchoString(string? value) => (string? value);
 };
+```
 
 The response is delivered to the function caller asynchronously. In C++ the 
 caller provides a Callback object whose Run() method has one argument for
@@ -159,10 +167,11 @@ Similarly, the implementation of a Mojo interface functions that specify a
 response, must return a Promise. The implementation of EchoString() could
 be written like this:
 
-  MyEchoStringImpl.prototype.EchoString = function(s) {
-    return Promise.resolve({value: s});
-  };
-
+```javascript
+MyEchoStringImpl.prototype.EchoString = function(s) {
+  return Promise.resolve({value: s});
+};
+```
 
 - Applications can request and provide services
 
@@ -171,10 +180,12 @@ acceptConnection() method runs. The acceptConnection() method
 indicates that another application has connected to this one and it
 always runs at least once.
 
-  acceptConnection(initiatorURL, serviceProvider) {
-    // provide services to the initiator here
-    // request services from the initiator here
-  }
+```javascript
+acceptConnection(initiatorURL, serviceProvider) {
+  // provide services to the initiator here
+  // request services from the initiator here
+}
+```
 
 The acceptConnection serviceProvider argument can be used to provide
 services to the initiator, and to request services from the
@@ -195,9 +206,11 @@ connectToService() methods. The shell's connectToApplication() returns
 a ServiceProvider. The shell's connectToService() method is just a
 convenience, it's defined like this:
 
-  connectToService(url, service, client) {
-    return this.connectToApplication(url).requestService(service, clientImpl);
-  };
+```javascript
+connectToService(url, service, client) {
+  return this.connectToApplication(url).requestService(service, clientImpl);
+};
+```
 
 The value of service is an interface object that identifies a Mojo
 interface that the application at url implements.
@@ -205,9 +218,11 @@ interface that the application at url implements.
 The usage examples that follow are based on the following trivial Mojo
 interface:
 
+```javascript
 interface EchoService {
   EchoString(string? value) => (string? value);
 };
+```
 
 -- Requesting a service using the Application's Shell
 
@@ -215,25 +230,27 @@ Given the URL of a Mojo application that implements the EchoService we
 can use the application's shell to get an EchoService proxy. Here's a
 complete application:
 
-  #!mojo:js_content_handler
+```javascript
+#!mojo:js_content_handler
 
-  define("main", [
-    "console",
-    "mojo/services/public/js/application",
-    "services/js/test/echo_service.mojom"
-  ], function(console, appModule, echoModule) {
+define("main", [
+  "console",
+  "mojo/services/public/js/application",
+  "services/js/test/echo_service.mojom"
+], function(console, appModule, echoModule) {
 
-    class EchoShellRequest extends appModule.Application {
-      initialize(args) {
-        var url = "file:/foo/bar/echo.js";
-        var echoService = this.shell.connectToService(url, echoModule.EchoService);
-        echoService.echoString("foo").then(function(result) {
-          console.log("echoString(foo) => " + result.value);
-        });
-      }
+  class EchoShellRequest extends appModule.Application {
+    initialize(args) {
+      var url = "file:/foo/bar/echo.js";
+      var echoService = this.shell.connectToService(url, echoModule.EchoService);
+      echoService.echoString("foo").then(function(result) {
+        console.log("echoString(foo) => " + result.value);
+      });
     }
-    return EchoShellRequest;
-  });
+  }
+  return EchoShellRequest;
+});
+```
 
 
 -- Providing a service
@@ -241,25 +258,27 @@ complete application:
 A complete application that unconditionally provides the EchoService
 looks like this:
 
-  #!mojo:js_content_handler
+```javascript
+#!mojo:js_content_handler
 
-  define("main", [
-    "mojo/services/public/js/application",
-    "services/js/test/echo_service.mojom"
-  ], function(appModule, echoModule) {
+define("main", [
+  "mojo/services/public/js/application",
+  "services/js/test/echo_service.mojom"
+], function(appModule, echoModule) {
 
-    class EchoService extends appModule.Application {
-      acceptConnection(initiatorURL, serviceProvider) {
-        function EchoServiceImpl(client) {
-          this.echoString = function(s) {
-            return Promise.resolve({value: s});
-          };
-        }
-        serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
+  class EchoService extends appModule.Application {
+    acceptConnection(initiatorURL, serviceProvider) {
+      function EchoServiceImpl(client) {
+        this.echoString = function(s) {
+          return Promise.resolve({value: s});
+        };
       }
+      serviceProvider.provideService(echoModule.EchoService, EchoServiceImpl);
     }
-    return EchoService;
-  });
+  }
+  return EchoService;
+});
+```
 
 As you can see, EchoServiceImpl is just a function that returns an
 object that implements the methods in the Mojo EchoService
@@ -284,18 +303,20 @@ application's acceptConnection() method.
 
 The caller and callee use cases that follow are  in terms of the following mojom:
 
-  [Client=Bar]
-  interface Foo {
-  }
+```
+[Client=Bar]
+interface Foo {
+}
 
-  [Client=Foo] // Redundant but always implicitly true.
-  interface Bar {
-  }
+[Client=Foo] // Redundant but always implicitly true.
+interface Bar {
+}
 
-  interface I {
-    provideFoo(Foo foo);
-    requestFoo(Foo& foo); // effectively: provideFoo(Bar bar)
-  } 
+interface I {
+  provideFoo(Foo foo);
+  requestFoo(Foo& foo); // effectively: provideFoo(Bar bar)
+} 
+```
 
 -- In General
 
@@ -319,16 +340,20 @@ Assuming that we have a proxy for interface I, iProxy.
 An iProxy.provideFoo() call implies that we have an implementation of
 Foo, and want a proxy for Bar (Foo's client).
 
-  var myFooImpl;
-  provideFoo(myFooImpl);
-  myFooImpl.remote$; // A Bar proxy initialized by provideFoo(), undefined if Foo has no client.
+```javascript
+var myFooImpl;
+provideFoo(myFooImpl);
+myFooImpl.remote$; // A Bar proxy initialized by provideFoo(), undefined if Foo has no client.
+```
 
 An iProxy.requestFoo() call implies that we have an implementation of
 Bar and want a proxy for Foo (Bar's client).
 
-  var myBarImpl; // If Foo has no client then this is just {}.
-  requestFoo(myBarImpl);
-  myBarImpl.remote$; // A Foo proxy initialized by requestFoo.
+```javascript
+var myBarImpl; // If Foo has no client then this is just {}.
+requestFoo(myBarImpl);
+myBarImpl.remote$; // A Foo proxy initialized by requestFoo.
+```
 
 The wget.js example includes a request for the URLLoader service.
 
@@ -338,15 +363,19 @@ An implementation of provideFoo(Foo foo) implies that we have an
 implementation of Bar (Foo's client) and want a proxy to the Foo
 that has been passed to us.
 
-  void provideFoo(fooProxy) {
-    fooProxy.local$ = myBarImpl; // sets myFooImpl.remote$ = fooProxy
-  }
+```javascript
+void provideFoo(fooProxy) {
+  fooProxy.local$ = myBarImpl; // sets myFooImpl.remote$ = fooProxy
+}
+```
 
 An implementation of requestFoo(Foo& foo) implies that we have an
 implementation of Foo and want a proxy for the Bar (Foo's client)
 that's been passed to us.
 
-  void requestFoo(barProxy) {
-    barProxy.local$ = myFooImpl; // sets myFooImpl.remote$ = barProxy
-  }
+```javascript
+void requestFoo(barProxy) {
+  barProxy.local$ = myFooImpl; // sets myFooImpl.remote$ = barProxy
+}
+```
 
