@@ -280,7 +280,7 @@ unsigned CoreTestBase_MockHandleInfo::GetCancelAllAwakablesCallCount() const {
   return cancel_all_awakables_call_count_;
 }
 
-unsigned CoreTestBase_MockHandleInfo::GetAddedAwakableSize() const {
+size_t CoreTestBase_MockHandleInfo::GetAddedAwakableSize() const {
   base::AutoLock locker(lock_);
   return added_awakables_.size();
 }

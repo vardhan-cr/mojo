@@ -509,7 +509,7 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
 
 // Not yet implemented (on Windows).
 // Android multi-process tests are not executing the new process. This is flaky.
-#if defined(OS_POSIX) and !defined(OS_ANDROID)
+#if defined(OS_POSIX) && !defined(OS_ANDROID)
 INSTANTIATE_TEST_CASE_P(PipeCount,
                         MultiprocessMessagePipeTestWithPipeCount,
                         testing::Values(1u, 10u, 25u));

@@ -63,7 +63,7 @@ class CoreTestBase_MockHandleInfo {
   unsigned GetRemoveAwakableCallCount() const;
   unsigned GetCancelAllAwakablesCallCount() const;
 
-  unsigned GetAddedAwakableSize() const;
+  size_t GetAddedAwakableSize() const;
   Awakable* GetAddedAwakableAt(unsigned i) const;
 
   // For use by |MockDispatcher|:
