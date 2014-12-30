@@ -17,6 +17,7 @@ SurfacesScheduler::SurfacesScheduler(Client* client) : client_(client) {
   scheduler_->SetCanStart();
   scheduler_->SetVisible(true);
   scheduler_->SetCanDraw(true);
+  scheduler_->SetNeedsCommit();
 }
 
 SurfacesScheduler::~SurfacesScheduler() {
@@ -35,6 +36,8 @@ void SurfacesScheduler::WillBeginImplFrame(const cc::BeginFrameArgs& args) {
 }
 
 void SurfacesScheduler::ScheduledActionSendBeginMainFrame() {
+  scheduler_->NotifyBeginMainFrameStarted();
+  scheduler_->NotifyReadyToCommit();
 }
 
 cc::DrawResult SurfacesScheduler::ScheduledActionDrawAndSwapIfPossible() {
