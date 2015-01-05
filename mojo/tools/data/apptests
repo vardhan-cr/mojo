@@ -11,6 +11,15 @@
     "test-args": ["--example_apptest_arg"],
   },
   {
+    # Runs mojo:example_apptests, replacing the mojo:example_service dependency
+    # with the alternate test:example_service, launched via mojo launcher."
+    "test": "mojo:example_apptests",
+    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+    "test-args": ["--example_apptest_arg"],
+    "shell-args": ["--url-mappings=mojo:example_service=test:example_service"],
+    "launched-services": ["test:example_service"],
+  },
+  {
     "test": "mojo:network_service_apptests",
   },
   {

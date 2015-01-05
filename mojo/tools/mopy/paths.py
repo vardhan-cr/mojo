@@ -33,13 +33,16 @@ class Paths(object):
       self.build_dir = None
 
     if self.build_dir is not None:
+      self.mojo_launcher_path = os.path.join(self.build_dir, "mojo_launcher")
       self.mojo_shell_path = os.path.join(self.build_dir, "mojo_shell")
       # TODO(vtl): Use the host OS here, since |config| may not be available.
       # In any case, if the target is Windows, but the host isn't, using
       # |os.path| isn't correct....
       if Config.GetHostOS() == Config.OS_WINDOWS:
+        self.mojo_launcher_path += ".exe"
         self.mojo_shell_path += ".exe"
     else:
+      self.mojo_launcher_path = None
       self.mojo_shell_path = None
 
   def RelPath(self, path):
@@ -49,3 +52,20 @@ class Paths(object):
   def SrcRelPath(self, path):
     """Returns the given path, relative to self.src_root."""
     return os.path.relpath(path, self.src_root)
+
+  def FileFromUrl(self, url):
+    """Given an app URL (<scheme>:<appname>), return 'build_dir/appname.mojo'.
+    If self.build_dir is None, just return appname.mojo
+    """
+    (_, name) = url.split(':')
+    if self.build_dir:
+      return os.path.join(self.build_dir, name + '.mojo')
+    return name + '.mojo'
+
+  @staticmethod
+  def IsValidAppUrl(url):
+    """Returns False if url is malformed, True otherwise."""
+    try:
+      return len(url.split(':')) == 2
+    except ValueError:
+      return False
