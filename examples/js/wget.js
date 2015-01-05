@@ -24,9 +24,8 @@ define("main", [
       var netService = this.shell.connectToService(
         "mojo:network_service", netModule.NetworkService);
 
-      var urlLoaderClient = {};
-      netService.createURLLoader(urlLoaderClient);
-      var urlLoader = urlLoaderClient.remote$;
+      var urlLoader;
+      netService.createURLLoader(function(x){urlLoader = x;});
 
       var urlRequest = new loaderModule.URLRequest({
         url: args[1],

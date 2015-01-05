@@ -1,10 +1,13 @@
 #!mojo:js_content_handler
 
 define("main", [
+  "mojo/public/js/bindings",
   "mojo/services/public/js/application",
   "services/js/test/pingpong_service.mojom"
-], function(application, pingPongServiceMojom) {
+], function(bindings, application, pingPongServiceMojom) {
 
+  const ProxyBindings = bindings.ProxyBindings;
+  const StubBindings = bindings.StubBindings;
   const Application = application.Application;
   const PingPongService = pingPongServiceMojom.PingPongService;
 
@@ -50,7 +53,7 @@ define("main", [
             }
           }
         };
-        pingTargetService.local$ = pingTargetClient;
+        ProxyBindings(pingTargetService).setLocalDelegate(pingTargetClient);
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });
@@ -58,7 +61,8 @@ define("main", [
 
     // This method is only used by the GetTargetService test.
     getPingPongService(clientProxy) {
-      clientProxy.local$ = new PingPongServiceImpl(this, clientProxy);
+      ProxyBindings(clientProxy).setLocalDelegate(
+          new PingPongServiceImpl(this, clientProxy));
     }
   }
 

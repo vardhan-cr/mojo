@@ -22,9 +22,9 @@ define("main", [
       this.app = app;
       var netService = app.shell.connectToService(
           "mojo:network_service", NetworkService);
-      var urlLoaderClient = {};
-      netService.createURLLoader(urlLoaderClient);
-      this.urlLoader = urlLoaderClient.remote$;
+      var urlLoader;
+      netService.createURLLoader(function(x){urlLoader = x;});
+      this.urlLoader = urlLoader;
     }
 
     getFileSize(url) {
