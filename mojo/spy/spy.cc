@@ -42,8 +42,7 @@ class MessageProcessor :
  public:
   MessageProcessor(mojo::Spy::WebSocketDelegate* websocket_delegate,
                    base::MessageLoopProxy* control_loop_proxy)
-      : last_result_(MOJO_RESULT_OK),
-        bytes_transfered_(0),
+      : bytes_transfered_(0),
         websocket_delegate_(websocket_delegate),
         control_loop_proxy_(control_loop_proxy) {
     message_count_[0] = 0;
@@ -62,29 +61,27 @@ class MessageProcessor :
     handle_signals.push_back(MOJO_HANDLE_SIGNAL_READABLE);
     handle_signals.push_back(MOJO_HANDLE_SIGNAL_READABLE);
 
-    scoped_ptr<char[]> mbuf(new char[kMessageBufSize]);
-    scoped_ptr<MojoHandle[]> hbuf(new MojoHandle[kHandleBufSize]);
+    char mbuf[kMessageBufSize];
+    MojoHandle hbuf[kHandleBufSize];
 
     // Main processing loop:
     // 1- Wait for an endpoint to have a message.
     // 2- Read the message
     // 3- Log data
-    // 4- Wait until the opposite port is ready for writting
-    // 4- Write the message to opposite port.
+    // 4- Wait until the opposite port is ready for writing
+    // 5- Write the message to opposite port.
 
     for (;;) {
-      int r = WaitMany(pipes, handle_signals, MOJO_DEADLINE_INDEFINITE);
-      if ((r < 0) || (r > 1)) {
-        last_result_ = r;
+      mojo::WaitManyResult wmr =
+          WaitMany(pipes, handle_signals, MOJO_DEADLINE_INDEFINITE, nullptr);
+      if (wmr.result != MOJO_RESULT_OK || wmr.index > 1)
         break;
-      }
 
       uint32_t bytes_read = kMessageBufSize;
       uint32_t handles_read = kHandleBufSize;
 
-      if (!CheckResult(ReadMessageRaw(pipes[r],
-                                      mbuf.get(), &bytes_read,
-                                      hbuf.get(), &handles_read,
+      if (!CheckResult(ReadMessageRaw(pipes[wmr.index], mbuf, &bytes_read, hbuf,
+                                      &handles_read,
                                       MOJO_READ_MESSAGE_FLAG_NONE)))
         break;
 
@@ -92,7 +89,7 @@ class MessageProcessor :
         continue;
 
       if (handles_read) {
-        handle_count_[r] += handles_read;
+        handle_count_[wmr.index] += handles_read;
 
         // Intercept message pipes which are returned via the ReadMessageRaw
         // call
@@ -119,28 +116,28 @@ class MessageProcessor :
                            base::Passed(&interceptor),
                            url),
                 true);
-            hbuf.get()[i] = faux_client.release().value();
+            hbuf[i] = faux_client.release().value();
           }
         }
       }
-      ++message_count_[r];
+      ++message_count_[wmr.index];
       bytes_transfered_ += bytes_read;
 
-      LogMessageInfo(mbuf.get(), url);
+      LogMessageInfo(mbuf, url);
 
-      mojo::MessagePipeHandle write_handle = (r == 0) ? pipes[1] : pipes[0];
+      mojo::MessagePipeHandle write_handle =
+          (wmr.index == 0) ? pipes[1] : pipes[0];
       if (!CheckResult(Wait(write_handle,
                             MOJO_HANDLE_SIGNAL_WRITABLE,
                             MOJO_DEADLINE_INDEFINITE)))
         break;
 
-      if (!CheckResult(WriteMessageRaw(write_handle,
-                                       mbuf.get(), bytes_read,
-                                       hbuf.get(), handles_read,
+      if (!CheckResult(WriteMessageRaw(write_handle, mbuf, bytes_read, hbuf,
+                                       handles_read,
                                        MOJO_WRITE_MESSAGE_FLAG_NONE))) {
         // On failure we own the handles. For now just close them.
         if (handles_read)
-          CloseHandles(hbuf.get(), handles_read);
+          CloseHandles(hbuf, handles_read);
         break;
       }
     }
@@ -151,10 +148,7 @@ class MessageProcessor :
   virtual ~MessageProcessor() {}
 
   bool CheckResult(MojoResult mr) {
-    if (mr == MOJO_RESULT_OK)
-      return true;
-    last_result_ = mr;
-    return false;
+    return (mr == MOJO_RESULT_OK);
   }
 
   void LogInvalidMessage(const mojo::MojoMessageHeader& header) {
@@ -218,7 +212,6 @@ class MessageProcessor :
     }
   }
 
-  MojoResult last_result_;
   uint32_t bytes_transfered_;
   uint32_t message_count_[2];
   uint32_t handle_count_[2];
