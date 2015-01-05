@@ -24,18 +24,20 @@ namespace {
 
 void DrawViewTree(mojo::Pass* pass,
                   const ServerView* view,
-                  const gfx::Vector2d& offset,
+                  const gfx::Vector2d& parent_to_root_origin_offset,
                   float opacity) {
   if (!view->visible())
     return;
 
-  const gfx::Rect node_bounds = view->bounds() + offset;
+  const gfx::Rect absolute_bounds =
+      view->bounds() + parent_to_root_origin_offset;
   std::vector<const ServerView*> children(view->GetChildren());
   const float combined_opacity = opacity * view->opacity();
   for (std::vector<const ServerView*>::reverse_iterator it = children.rbegin();
        it != children.rend();
        ++it) {
-    DrawViewTree(pass, *it, node_bounds.OffsetFromOrigin(), combined_opacity);
+    DrawViewTree(pass, *it, absolute_bounds.OffsetFromOrigin(),
+                 combined_opacity);
   }
 
   cc::SurfaceId node_id = view->surface_id();
@@ -44,19 +46,20 @@ void DrawViewTree(mojo::Pass* pass,
   surface_quad_state->surface = mojo::SurfaceId::From(node_id);
 
   gfx::Transform node_transform;
-  node_transform.Translate(node_bounds.x(), node_bounds.y());
+  node_transform.Translate(absolute_bounds.x(), absolute_bounds.y());
 
+  const gfx::Rect bounds_at_origin(view->bounds().size());
   auto surface_quad = mojo::Quad::New();
   surface_quad->material = mojo::Material::MATERIAL_SURFACE_CONTENT;
-  surface_quad->rect = Rect::From(node_bounds);
-  surface_quad->opaque_rect = Rect::From(node_bounds);
-  surface_quad->visible_rect = Rect::From(node_bounds);
+  surface_quad->rect = Rect::From(bounds_at_origin);
+  surface_quad->opaque_rect = Rect::From(bounds_at_origin);
+  surface_quad->visible_rect = Rect::From(bounds_at_origin);
   surface_quad->needs_blending = true;
   surface_quad->shared_quad_state_index =
       base::saturated_cast<int32_t>(pass->shared_quad_states.size());
   surface_quad->surface_quad_state = surface_quad_state.Pass();
 
-  auto sqs = CreateDefaultSQS(*Size::From(node_bounds.size()));
+  auto sqs = CreateDefaultSQS(*Size::From(view->bounds().size()));
   sqs->blend_mode = mojo::SK_XFERMODE_kSrcOver_Mode;
   sqs->opacity = combined_opacity;
   sqs->content_to_target_transform = mojo::Transform::From(node_transform);
