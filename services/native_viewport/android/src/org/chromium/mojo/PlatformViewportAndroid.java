@@ -67,25 +67,26 @@ public class PlatformViewportAndroid extends SurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return nativeTouchEvent(mNativeMojoViewport,
-                                event.getPointerId(0),
-                                event.getAction(),
-                                event.getX(), event.getY(),
-                                event.getEventTime());
+        return nativeTouchEvent(mNativeMojoViewport, event.getPointerId(0), event.getAction(),
+                event.getX(), event.getY(), event.getEventTime());
     }
 
     private static native void nativeDestroy(long nativePlatformViewportAndroid);
+
     private static native void nativeSurfaceCreated(
             long nativePlatformViewportAndroid, Surface surface);
+
     private static native void nativeSurfaceDestroyed(
             long nativePlatformViewportAndroid);
+
     private static native void nativeSurfaceSetSize(
             long nativePlatformViewportAndroid,
             int width, int height);
+
     private static native boolean nativeTouchEvent(
             long nativePlatformViewportAndroid,
             int pointerId,
             int action,
             float x, float y,
             long timeMs);
-};
+}

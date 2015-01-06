@@ -158,7 +158,9 @@ class FileHelper {
                 deleteRecursively(child);
             }
         }
-        file.delete();
+        if (!file.delete()) {
+            Log.w(TAG, "Unable to delete file: " + file.getAbsolutePath());
+        }
     }
 
     private static void writeStreamToFile(InputStream inputStream, File outputFile)

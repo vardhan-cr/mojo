@@ -56,7 +56,4 @@ public class MojoShellActivity extends Activity {
     private static String[] getParametersFromIntent(Intent intent) {
         return intent != null ? intent.getStringArrayExtra("parameters") : null;
     }
-
-    private void startWithURL(String url) {
-    }
 }

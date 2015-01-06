@@ -50,8 +50,7 @@ public class MojoShellApplication extends BaseChromiumApplication {
             LibraryLoader.ensureInitialized();
         } catch (ProcessInitException e) {
             Log.e(TAG, "libmojo_shell initialization failed.", e);
-            System.exit(-1);
-            return;
+            throw new RuntimeException(e);
         }
     }
 }
