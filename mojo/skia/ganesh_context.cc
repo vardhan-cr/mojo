@@ -18,11 +18,22 @@ const int kMaxGaneshResourceCacheCount = 2048;
 // The limit of the bytes allocated toward GPU resources in the GrContext's
 // GPU cache.
 const size_t kMaxGaneshResourceCacheBytes = 96 * 1024 * 1024;
+
+void EnsureInitialized() {
+  static bool initialized;
+  if (initialized)
+    return;
+  gles2::Initialize();
+  initialized = true;
+}
 }
 
 GaneshContext::Scope::Scope(GaneshContext* context)
     : previous_(gles2::GetGLContext()) {
-  gles2::SetGLContext(context->gl_context_->gl());
+  auto gl = context->gl_context_->gl();
+  DCHECK(gl);
+  gles2::SetGLContext(gl);
+  DCHECK(gles2::GetGLContext());
 }
 
 GaneshContext::Scope::~Scope() {
@@ -31,6 +42,9 @@ GaneshContext::Scope::~Scope() {
 
 GaneshContext::GaneshContext(base::WeakPtr<GLContext> gl_context)
     : gl_context_(gl_context) {
+  EnsureInitialized();
+
+  DCHECK(gl_context_);
   gl_context_->AddObserver(this);
   Scope scope(this);
 
