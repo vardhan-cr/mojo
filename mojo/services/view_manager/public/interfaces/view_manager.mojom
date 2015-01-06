@@ -130,7 +130,7 @@ interface ViewManagerService {
   // any services it provided are not broken and continue to be valid.
   Embed(string url,
         uint32 view_id,
-        ServiceProvider&? service_provider) => (bool success);
+        ServiceProvider& service_provider) => (bool success);
 };
 
 // Changes to views are not sent to the connection that originated the
@@ -144,7 +144,7 @@ interface ViewManagerClient {
   OnEmbed(uint16 connection_id,
           string embedder_url,
           ViewData root,
-          ServiceProvider&? parent_service_provider,
+          ServiceProvider& parent_service_provider,
           handle<message_pipe> window_manager_pipe);
 
   // Invoked when the application embedded at |view| is disconnected.

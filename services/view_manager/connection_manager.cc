@@ -215,9 +215,10 @@ void ConnectionManager::SetWindowManagerClientConnection(
   CHECK(!window_manager_client_connection_);
   window_manager_client_connection_ = connection.release();
   AddConnection(window_manager_client_connection_);
+  mojo::ServiceProviderPtr sp;
   window_manager_client_connection_->service()->Init(
       window_manager_client_connection_->client(),
-      mojo::InterfaceRequest<mojo::ServiceProvider>());
+      GetProxy(&sp));
 }
 
 bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {

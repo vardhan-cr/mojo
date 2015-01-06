@@ -274,12 +274,11 @@ void ViewManagerClientImpl::OnEmbed(
   ServiceProviderImpl* exported_services = nullptr;
   scoped_ptr<ServiceProvider> remote;
 
-  if (parent_services.is_pending()) {
-    // BindToRequest() binds the lifetime of |exported_services| to the pipe.
-    exported_services = new ServiceProviderImpl;
-    BindToRequest(exported_services, &parent_services);
-    remote.reset(exported_services->CreateRemoteServiceProvider());
-  }
+  // BindToRequest() binds the lifetime of |exported_services| to the pipe.
+  exported_services = new ServiceProviderImpl;
+  BindToRequest(exported_services, &parent_services);
+  remote.reset(exported_services->CreateRemoteServiceProvider());
+
   window_manager_.Bind(window_manager_pipe.Pass());
   window_manager_.set_client(this);
   // base::Unretained() is safe here as |window_manager_| is bound to our
