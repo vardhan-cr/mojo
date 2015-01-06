@@ -124,8 +124,7 @@ def _CheckNoIllegalAbsolutePathsInBuildFiles(input_api, output_api, package):
       sdk_references.append(reference_string)
     elif package == "SDK":
       external_deps_references.append(reference_string)
-    else:
-      assert referenced_path.startswith("//mojo/edk")
+    elif referenced_path.startswith("//mojo/edk"):
       edk_references.append(reference_string)
 
   # Package up categorized illegal references into results.
