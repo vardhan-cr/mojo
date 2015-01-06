@@ -26,16 +26,16 @@ mojo_native_application("wm") {
   ]
 
   deps = [
+    ":wm_bindings",
     "//base",
-    "//skia",
-    "//ui/aura",
-    "//ui/views",
-    "//ui/wm:wm",
     "//mojo/application",
+    "//mojo/converters/geometry",
     "//mojo/services/input_events/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
-    "//mojo/views:views",
     "//services/window_manager:lib",
+    "//skia",
+    "//ui/gfx/geometry",
+    "//url",
   ]
 }
 
@@ -54,8 +54,9 @@ mojo_native_application("app") {
     "//mojo/application",
     "//mojo/public/interfaces/application:application",
     "//mojo/services/view_manager/public/cpp",
-    "//skia",
     "//services/window_manager:lib",
+    "//skia",
+    "//url",
   ]
 }
 
@@ -75,6 +76,13 @@ mojo_native_application("embedded") {
     "//mojo/services/view_manager/public/cpp",
     "//services/window_manager:lib",
     "//skia",
+    "//url",
+  ]
+}
+
+mojom("wm_bindings") {
+  sources = [
+    "wm/window_frame_host.mojom",
   ]
 }
 

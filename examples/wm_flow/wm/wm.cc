@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <vector>
-
 #include "examples/wm_flow/wm/frame_controller.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
@@ -14,10 +12,10 @@
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
-#include "mojo/views/views_init.h"
 #include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
+#include "url/gurl.h"
 
 namespace examples {
 
@@ -27,8 +25,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
                  public mojo::ViewObserver {
  public:
   SimpleWM()
-      : shell_(nullptr),
-        window_manager_app_(new window_manager::WindowManagerApp(this, this)),
+      : window_manager_app_(new window_manager::WindowManagerApp(this, this)),
         root_(NULL),
         window_container_(NULL),
         next_window_origin_(10, 10) {}
@@ -37,11 +34,9 @@ class SimpleWM : public mojo::ApplicationDelegate,
  private:
   // Overridden from mojo::ApplicationDelegate:
   virtual void Initialize(mojo::ApplicationImpl* impl) override {
-    // Create views_init here as we need ApplicationRunnerChromium to install
-    // an AtExitManager and CommandLine.
-    if (!views_init_.get())
-      views_init_.reset(new mojo::ViewsInit);
-    shell_ = impl->shell();
+    // FIXME: Mojo applications don't know their URLs yet:
+    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
+    url_ = GURL(impl->args()[1]);
     window_manager_app_->Initialize(impl);
   }
   virtual bool ConfigureIncomingConnection(
@@ -117,17 +112,15 @@ class SimpleWM : public mojo::ApplicationDelegate,
     frame_view->SetBounds(rect);
     next_window_origin_.Offset(50, 50);
 
-    new FrameController(
-        shell_, frame_view, app_view, window_manager_app_.get());
+    GURL frame_url = url_.Resolve("/examples/wm_flow/wm/window_frame.sky");
+    new FrameController(frame_url, frame_view, app_view,
+                        window_manager_app_.get());
     return frame_view;
   }
 
-  mojo::Shell* shell_;
-
-  scoped_ptr<mojo::ViewsInit> views_init_;
-
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
+  GURL url_;
   mojo::View* root_;
   mojo::View* window_container_;
 

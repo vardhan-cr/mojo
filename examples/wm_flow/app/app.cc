@@ -26,6 +26,7 @@
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "third_party/skia/include/core/SkColor.h"
+#include "url/gurl.h"
 
 namespace examples {
 namespace {
@@ -68,6 +69,9 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     view_manager_client_factory_.reset(
         new mojo::ViewManagerClientFactory(app->shell(), this));
     view_manager_context_.reset(new mojo::ViewManagerContext(app));
+    // FIXME: Mojo applications don't know their URLs yet:
+    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
+    url_ = GURL(app->args()[1]);
     OpenNewWindow();
     OpenNewWindow();
     OpenNewWindow();
@@ -89,6 +93,10 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     mojo::BitmapUploader* uploader = new mojo::BitmapUploader(root);
     uploaders_[root] = uploader;
     uploader->Init(shell_);
+    // BitmapUploader does not track view size changes, we would
+    // need to subscribe to OnViewBoundsChanged and tell the bitmap uploader
+    // to invalidate itself.  This is better done once if had a per-view
+    // object instead of holding per-view state on the ApplicationDelegate.
     uploader->SetColor(kColors[embed_count_++ % arraysize(kColors)]);
 
     mojo::View* embed = root->view_manager()->CreateView();
@@ -104,8 +112,15 @@ class WMFlowApp : public mojo::ApplicationDelegate,
         new mojo::ServiceProviderImpl);
     // Expose some services to the embeddee...
     registry->AddService(&embedder_factory_);
+
+    GURL embedded_app_url = url_.Resolve("wm_flow_embedded.mojo");
     scoped_ptr<mojo::ServiceProvider> imported =
-        embed->Embed("mojo:wm_flow_embedded", registry.Pass());
+        embed->Embed(embedded_app_url.spec(), registry.Pass());
+    // FIXME: This is wrong.  We're storing per-view state on this per-app
+    // delegate.  Every time a new view is created embedee_ is replaced
+    // causing the previous one to shut down.  This class should not
+    // be a ViewManagerDelegate, but rather a separate object should be
+    // created for each embedding.
     mojo::ConnectToService(imported.get(), &embeddee_);
     embeddee_->HelloBack(base::Bind(&WMFlowApp::HelloBackAck,
                                     base::Unretained(this)));
@@ -136,7 +151,7 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     printf("HelloBack() ack'ed\n");
   }
 
-  void OpenNewWindow() { view_manager_context_->Embed("mojo:wm_flow_app"); }
+  void OpenNewWindow() { view_manager_context_->Embed(url_.spec()); }
 
   mojo::Shell* shell_;
   int embed_count_;
@@ -145,6 +160,7 @@ class WMFlowApp : public mojo::ApplicationDelegate,
   scoped_ptr<mojo::ViewManagerContext> view_manager_context_;
   EmbeddeePtr embeddee_;
   ViewToUploader uploaders_;
+  GURL url_;
 
   DISALLOW_COPY_AND_ASSIGN(WMFlowApp);
 };

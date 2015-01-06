@@ -26,9 +26,19 @@ bool BlockingCopyHelper(ScopedDataPipeConsumerHandle source,
         source.get(), &buffer, &num_bytes, MOJO_READ_DATA_FLAG_NONE);
     if (result == MOJO_RESULT_OK) {
       size_t bytes_written = write_bytes.Run(buffer, num_bytes);
-      result = EndReadDataRaw(source.get(), num_bytes);
-      if (bytes_written < num_bytes || result != MOJO_RESULT_OK)
+      if (bytes_written < num_bytes) {
+        LOG(ERROR) << "write_bytes callback wrote fewer bytes ("
+                   << bytes_written << ") written than expected (" << num_bytes
+                   << ") in BlockingCopyHelper "
+                   << "(pipe closed? out of disk space?)" << std::endl;
         return false;
+      }
+      result = EndReadDataRaw(source.get(), num_bytes);
+      if (result != MOJO_RESULT_OK) {
+        LOG(ERROR) << "EndReadDataRaw error (" << result
+                   << ") in BlockingCopyHelper" << std::endl;
+        return false;
+      }
     } else if (result == MOJO_RESULT_SHOULD_WAIT) {
       result = Wait(source.get(),
                     MOJO_HANDLE_SIGNAL_READABLE,
@@ -41,6 +51,8 @@ bool BlockingCopyHelper(ScopedDataPipeConsumerHandle source,
       // If the producer handle was closed, then treat as EOF.
       return true;
     } else {
+      LOG(ERROR) << "Unhandled error " << result << " in BlockingCopyHelper"
+                 << std::endl;
       // Some other error occurred.
       break;
     }
@@ -120,8 +132,11 @@ bool BlockingCopyToString(ScopedDataPipeConsumerHandle source,
 bool BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
                         const base::FilePath& destination) {
   base::ScopedFILE fp(base::OpenFile(destination, "wb"));
-  if (!fp)
+  if (!fp) {
+    LOG(ERROR) << "OpenFile('" << destination.value()
+               << "'failed in BlockingCopyToFile" << std::endl;
     return false;
+  }
   return BlockingCopyHelper(
       source.Pass(), base::Bind(&CopyToFileHelper, fp.get()));
 }

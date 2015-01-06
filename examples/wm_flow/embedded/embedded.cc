@@ -67,9 +67,16 @@ class WMFlowEmbedded : public mojo::ApplicationDelegate,
       scoped_ptr<mojo::ServiceProvider> imported_services) override {
     bitmap_uploader_.reset(new mojo::BitmapUploader(root));
     bitmap_uploader_->Init(shell_);
+    // BitmapUploader does not track view size changes, we would
+    // need to subscribe to OnViewBoundsChanged and tell the bitmap uploader
+    // to invalidate itself.  This is better done once if had a per-view
+    // object instead of holding per-view state on the ApplicationDelegate.
     bitmap_uploader_->SetColor(SK_ColorMAGENTA);
 
     exported_services->AddService(&embeddee_factory_);
+    // FIXME: embedder_ is wrong for the same reason the embedee_ storage is
+    // wrong in app.cc.  We need separate per-instance storage not on the
+    // application delegate.
     mojo::ConnectToService(imported_services.get(), &embedder_);
     embedder_->HelloWorld(base::Bind(&WMFlowEmbedded::HelloWorldAck,
                                      base::Unretained(this)));

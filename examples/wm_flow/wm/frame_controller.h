@@ -6,19 +6,17 @@
 #define EXAMPLES_WM_FLOW_WM_FRAME_CONTROLLER_H_
 
 #include "base/memory/scoped_ptr.h"
+#include "examples/wm_flow/wm/window_frame_host.mojom.h"
+#include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "services/window_manager/focus_controller.h"
 #include "ui/gfx/geometry/rect.h"
 
+class GURL;
+
 namespace mojo {
 class NativeWidgetViewManager;
-class Shell;
 class View;
-}
-
-namespace views {
-class View;
-class Widget;
 }
 
 namespace window_manager {
@@ -28,37 +26,42 @@ class WindowManagerApp;
 // FrameController encapsulates the window manager's frame additions to a window
 // created by an application. It renders the content of the frame and responds
 // to any events targeted at it.
-class FrameController : mojo::ViewObserver {
+class FrameController
+    : public examples::WindowFrameHost,
+      public mojo::ViewObserver,
+      public mojo::InterfaceFactory<examples::WindowFrameHost> {
  public:
-  FrameController(mojo::Shell* shell,
+  FrameController(const GURL& frame_app_url,
                   mojo::View* view,
                   mojo::View** app_view,
                   window_manager::WindowManagerApp* window_manager_app);
   virtual ~FrameController();
 
-  void CloseWindow();
-  void ToggleMaximize();
+  // mojo::InterfaceFactory<examples::WindowFrameHost> implementation.
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<examples::WindowFrameHost> request) override;
 
-  void ActivateWindow();
-
-  void SetCapture(bool frame_has_capture);
+  // examples::WindowFrameHost
+  void CloseWindow() override;
+  void ToggleMaximize() override;
+  void ActivateWindow() override;
+  void SetCapture(bool frame_has_capture) override;
 
  private:
-  class LayoutManager;
-  friend class LayoutManager;
-  class FrameEventHandler;
-
-  virtual void OnViewDestroyed(mojo::View* view) override;
+  void OnViewDestroyed(mojo::View* view) override;
+  void OnViewBoundsChanged(mojo::View* view,
+                           const mojo::Rect& old_bounds,
+                           const mojo::Rect& new_bounds) override;
 
   mojo::View* view_;
   mojo::View* app_view_;
-  views::View* frame_view_;
-  LayoutManager* frame_view_layout_manager_;
-  views::Widget* widget_;
   bool maximized_;
   gfx::Rect restored_bounds_;
   window_manager::WindowManagerApp* window_manager_app_;
-  scoped_ptr<FrameEventHandler> frame_event_handler_;
+  scoped_ptr<mojo::ServiceProvider> viewer_services_;
+
+  mojo::Binding<examples::WindowFrameHost> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(FrameController);
 };

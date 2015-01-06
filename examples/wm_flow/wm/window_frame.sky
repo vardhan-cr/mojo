@@ -1,0 +1,84 @@
+#!mojo:sky_viewer
+<!--
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+-->
+<sky>
+<import src="/gen/examples/wm_flow/wm/window_frame_host.mojom.sky" as="example" />
+<import src="/sky/framework/embedder.sky" as="embedder" />
+<import src="/sky/framework/sky-button/sky-button.sky"/>
+<import src="/sky/framework/sky-checkbox/sky-checkbox.sky"/>
+<import src="/sky/framework/sky-element/sky-element.sky" as="SkyElement"/>
+
+<style>
+/* FIXME: Hack until the requirement of a single root element is lifted. */
+sky { height: 100%; }
+</style>
+
+<sky-element name="window-frame">
+<template>
+  <style>
+  :host {
+    height: 100%;
+    background-color: lightgrey;
+  }
+  /* Nest two flexboxes and make the right side take up as much as possible */
+  window-bar {
+    display: flex;
+  }
+  left {
+    flex: 1;
+    display: flex;
+    align-content: flex-start;
+  }
+  /* Also making the checkbox and label a flexbox for convenience */
+  right {
+    display: flex;
+  }
+
+  /* Style sky controls to make them look more like ui/views */
+  sky-button {
+    border: none;
+    border: 1px solid blue;
+    padding: 2px;
+  }
+  sky-button:hover {
+    border: 1px solid lightblue;
+    background-color: darkgrey;
+  }
+  </style>
+  <window-bar>
+    <left>
+      <sky-checkbox on-click="handleCaptureClick" />Capture
+    </left>
+    <right>
+      <sky-button on-click="handleEmbiggenClick">Embiggen</sky-button>
+      <sky-button on-click="handleBegoneClick">Begone</sky-button>
+    </right>
+  </window-bar>
+</template>
+<script>
+module.exports = class extends SkyElement {
+  created() {
+    this.embedder = embedder.connectToEmbedderService(example.WindowFrameHost);
+    this.addEventListener('mousedown', function() {
+      this.embedder.activateWindow();
+    }.bind(this));
+  }
+  handleCaptureClick(event) {
+    this.embedder.setCapture(event.target.checked);
+  }
+  handleEmbiggenClick(event) {
+    this.embedder.toggleMaximize();
+  }
+  handleBegoneClick(event) {
+    this.embedder.closeWindow();
+  }
+}.register();
+</script>
+</sky-element>
+
+<window-frame />
+
+</sky>

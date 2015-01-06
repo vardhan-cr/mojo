@@ -290,10 +290,8 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
       return;
     }
     base::CreateTemporaryFile(&path_);
-#if defined(OS_ANDROID)
     // This is used to extract symbols on android.
     LOG(INFO) << "Caching mojo app " << url_ << " at " << path_.value();
-#endif
     common::CopyToFile(response_->body.Pass(), path_, task_runner,
                        base::Bind(callback, path_));
   }
