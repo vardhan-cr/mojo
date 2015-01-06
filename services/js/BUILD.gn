@@ -19,8 +19,6 @@ mojo_native_application("js_content_handler") {
     "js_app_message_loop_observers.h",
     "js_app_runner_delegate.cc",
     "js_app_runner_delegate.h",
-    "js_app_bridge_module.cc",
-    "js_app_bridge_module.h",
   ]
 
   deps = [

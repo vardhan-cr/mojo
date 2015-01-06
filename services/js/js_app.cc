@@ -14,7 +14,6 @@
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
-#include "services/js/js_app_bridge_module.h"
 #include "services/js/js_app_message_loop_observers.h"
 
 namespace js {
@@ -30,9 +29,6 @@ JSApp::JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response)
   std::string url(response->url);
   std::string source;
   CHECK(mojo::common::BlockingCopyToString(response->body.Pass(), &source));
-
-  runner_delegate_.AddBuiltinModule(AppBridge::kModuleName,
-      base::Bind(&AppBridge::GetModule, base::Unretained(this)));
 
   shell_runner_.reset(new gin::ShellRunner(&runner_delegate_, isolate));
   gin::Runner::Scope scope(shell_runner_.get());
@@ -65,16 +61,6 @@ void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
   app_instance_.Reset(isolate, app_class->NewInstance(arraysize(argv), argv));
   if (try_catch.HasCaught())
     runner_delegate_.UnhandledException(shell_runner_.get(), try_catch);
-}
-
-void JSApp::Quit() {
-  base::MessageLoop::current()->PostTask(
-      FROM_HERE, base::Bind(&JSApp::QuitInternal, base::Unretained(this)));
-}
-
-void JSApp::QuitInternal() {
-  shell_runner_.reset();
-  base::MessageLoop::current()->QuitWhenIdle();
 }
 
 }  // namespace js

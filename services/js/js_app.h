@@ -28,13 +28,10 @@ class JSApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
   JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response);
   virtual ~JSApp();
 
-  void Quit();
-
  private:
   static const char kMainModuleName[];
 
   void OnAppLoaded(std::string url, v8::Handle<v8::Value> module);
-  void QuitInternal();
 
   mojo::ShellPtr shell_;
   JSAppRunnerDelegate runner_delegate_;
