@@ -11,6 +11,7 @@ group("examples") {
     "//examples/apptest",
     "//examples/content_handler_demo",
     "//examples/echo",
+    "//examples/embedded_app",
     "//examples/ganesh_app",
     "//examples/http_handler",
     "//examples/indirect_service",
@@ -27,7 +28,6 @@ group("examples") {
     deps += [
       "//examples/aura_demo:aura_demo",
       "//examples/browser",
-      "//examples/embedded_app",
       "//examples/media_viewer",
       "//examples/nesting_app",
       "//examples/keyboard",

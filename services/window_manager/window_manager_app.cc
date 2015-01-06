@@ -158,6 +158,7 @@ void WindowManagerApp::OnEmbed(View* root,
 
 void WindowManagerApp::OnViewManagerDisconnected(
     mojo::ViewManager* view_manager) {
+  DCHECK(root_);
   DCHECK(this->view_manager());
   DCHECK_EQ(this->view_manager(), view_manager);
   if (wrapped_view_manager_delegate_)
