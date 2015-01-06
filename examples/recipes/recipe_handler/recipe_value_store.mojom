@@ -1,0 +1,28 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module recipes;
+
+// RecipeValueStore maintains a set of key/value pairs. Modifying a value
+// results in notifying all observers. Observers are removed when then pipe is
+// closed.
+interface RecipeValueStore {
+  // Updates the set of key/value pairs. Keys with a null value are removed.
+  UpdateValues(map<string, array<uint8>> values);
+
+  // Attaches an observer. This results in calling OnValuesChanged() with the
+  // current set of key/value pairs on the observer. The observer is removed
+  // when the pipe is closed.
+  SetObserver(RecipeValueStoreObserver observer);
+};
+
+struct RecipeChangeValue {
+  // At least one of old or new is non-null.
+  array<uint8>? old_value;
+  array<uint8>? new_value;
+};
+
+interface RecipeValueStoreObserver {
+  OnValuesChanged(map<string, RecipeChangeValue> changed_values);
+};

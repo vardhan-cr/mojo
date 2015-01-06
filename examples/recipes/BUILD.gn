@@ -4,6 +4,7 @@
 
 group("recipes") {
   deps = [
+    "recipe_handler",
     "window_manager",
   ]
 }

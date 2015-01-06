@@ -1,0 +1,41 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
+
+mojom("interfaces") {
+  sources = [
+    "recipe.mojom",
+    "recipe_value_store.mojom",
+  ]
+}
+
+mojo_native_application("recipe_handler") {
+  sources = [
+    "recipe_factory.cc",
+    "recipe_factory.h",
+    "recipe_handler_main.cc",
+    "recipe_impl.cc",
+    "recipe_impl.h",
+    "recipe_value_store_impl.cc",
+    "recipe_value_store_impl.h",
+    "value_store.cc",
+    "value_store.h",
+    "value_store_observer.cc",
+    "value_store_observer.h",
+  ]
+
+  deps = [
+    ":interfaces",
+    "//base",
+    "//mojo/common",
+    "//mojo/application",
+    "//mojo/application:content_handler",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/utility",
+    "//mojo/services/content_handler/public/interfaces",
+    "//url",
+  ]
+}
