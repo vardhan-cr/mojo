@@ -10,8 +10,7 @@
 namespace mojo {
 namespace shell {
 
-NativeViewportApplicationLoader::NativeViewportApplicationLoader()
-    : gpu_state_(new gles2::GpuImpl::State) {
+NativeViewportApplicationLoader::NativeViewportApplicationLoader() {
 }
 
 NativeViewportApplicationLoader::~NativeViewportApplicationLoader() {
@@ -47,6 +46,8 @@ void NativeViewportApplicationLoader::Create(
 void NativeViewportApplicationLoader::Create(
     ApplicationConnection* connection,
     InterfaceRequest<Gpu> request) {
+  if (!gpu_state_)
+    gpu_state_ = new gles2::GpuImpl::State;
   new gles2::GpuImpl(request.Pass(), gpu_state_);
 }
 
