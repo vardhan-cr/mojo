@@ -9,9 +9,11 @@
 define("main", [
   "console",
   "mojo/services/public/js/application",
-], function(console, appModule) {
+], function(console, application) {
 
-  class Hello extends appModule.Application {
+  var Application = application.Application;
+
+  class Hello extends Application {
     initialize(args) {
       console.log(this.url + ": Hello");
       if (args && args.length == 2) // args is a nullable parameter

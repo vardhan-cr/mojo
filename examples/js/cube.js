@@ -7,7 +7,6 @@
 define("main", [
   "console",
   "mojo/services/public/js/application",
-  "mojo/services/gpu/public/interfaces/command_buffer.mojom",
   "mojo/services/geometry/public/interfaces/geometry.mojom",
   "mojo/services/gpu/public/interfaces/gpu.mojom",
   "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom",
@@ -17,16 +16,22 @@ define("main", [
   "services/js/modules/clock",
   "timer",
 ], function(console,
-            appModule,
-            cbModule,
-            geoModule,
-            gpuModule,
-            vplModule,
-            nvModule,
-            coreModule,
-            glModule,
-            clockModule,
-            timerModule) {
+            application,
+            geometry,
+            gpu,
+            vpl,
+            nv,
+            core,
+            gl,
+            clock,
+            timer) {
+
+  var Application = application.Application;
+  var Context = gl.Context;
+  var Gpu = gpu.Gpu;
+  var Size = geometry.Size;
+  var ViewportParameterListener = vpl.ViewportParameterListener;
+  var NativeViewport = nv.NativeViewport;
 
   const VERTEX_SHADER_SOURCE = [
     'uniform mat4 u_mvpMatrix;',
@@ -285,8 +290,8 @@ define("main", [
 
   class GLES2ClientImpl {
     constructor (remotePipe, size) {
-      this.gl_ = new glModule.Context(remotePipe, this.contextLost.bind(this));
-      this.lastTime_ = clockModule.seconds();
+      this.gl_ = new Context(remotePipe, this.contextLost.bind(this));
+      this.lastTime_ = clock.seconds();
       this.angle_ = 45;
 
       this.program_ = loadProgram(this.gl_);
@@ -301,7 +306,7 @@ define("main", [
       this.gl_.clearColor(0, 0, 0, 0);
       this.setDimensions(size);
       this.timer_ =
-          timerModule.createRepeating(16, this.handleTimer.bind(this));
+          timer.createRepeating(16, this.handleTimer.bind(this));
     }
 
     setDimensions(size) {
@@ -326,7 +331,7 @@ define("main", [
     };
 
     handleTimer() {
-      var now = clockModule.seconds();
+      var now = clock.seconds();
       var secondsDelta = now - this.lastTime_;
       this.lastTime_ = now;
 
@@ -365,16 +370,16 @@ define("main", [
     }
   }
 
-  class CubeDemo extends appModule.Application {
+  class CubeDemo extends Application {
     initialize(args) {
       this.viewport = this.shell.connectToService(
-          "mojo:native_viewport_service", nvModule.NativeViewport, this);
+          "mojo:native_viewport_service", NativeViewport, this);
 
       this.gpu = this.shell.connectToService(
-          "mojo:native_viewport_service", gpuModule.Gpu);
+          "mojo:native_viewport_service", Gpu);
 
       var app = this;
-      var viewportSize = new geoModule.Size({width: 800, height: 600});
+      var viewportSize = new Size({width: 800, height: 600});
       this.viewport.create(viewportSize).then(
         function(result) {
           app.onViewportCreated(result.native_viewport_id, viewportSize);
@@ -385,12 +390,12 @@ define("main", [
     }
 
     onViewportCreated(id, size) {
-      this.vpl = new vplModule.ViewportParameterListener.stubClass({
+      this.vpl = new ViewportParameterListener.stubClass({
         onVSyncParametersUpdated: function(timebase, interval) {
           console.log("onVSyncParametersUpdated");
         }
       });
-      var pipe = coreModule.createMessagePipe();
+      var pipe = core.createMessagePipe();
       this.gpu.createOnscreenGLES2Context(id, size, pipe.handle1, this.vpl);
       this.gles2_ = new GLES2ClientImpl(pipe.handle0, size);
     }

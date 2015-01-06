@@ -12,9 +12,13 @@ define("main", [
   "mojo/public/js/core",
   "mojo/services/network/public/interfaces/network_service.mojom",
   "mojo/services/network/public/interfaces/url_loader.mojom",
-], function(console, appModule, coreModule, netModule, loaderModule) {
+], function(console, application, core, network, loader) {
 
-  class WGet extends appModule.Application {
+  var Application = application.Application;
+  var NetworkService = network.NetworkService;
+  var URLRequest = loader.URLRequest;
+
+  class WGet extends Application {
     initialize(args) {
       if (args.length != 2) {
         console.log("Expected URL argument");
@@ -22,12 +26,12 @@ define("main", [
       }
 
       var netService = this.shell.connectToService(
-        "mojo:network_service", netModule.NetworkService);
+        "mojo:network_service", NetworkService);
 
       var urlLoader;
       netService.createURLLoader(function(x){urlLoader = x;});
 
-      var urlRequest = new loaderModule.URLRequest({
+      var urlRequest = new URLRequest({
         url: args[1],
         method: "GET",
         auto_follow_redirects: true
@@ -39,7 +43,7 @@ define("main", [
         console.log("status_line => " + result.response["status_line"]);
         console.log("mime_type => " + result.response["mime_type"]);
 
-        coreModule.drainData(result.response.body).then(
+        core.drainData(result.response.body).then(
           function(result) {
             console.log("read " + result.buffer.byteLength + " bytes");
           })

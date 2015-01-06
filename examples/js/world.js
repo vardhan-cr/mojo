@@ -3,9 +3,11 @@
 define("main", [
   "console",
   "mojo/services/public/js/application",
-], function(console, appModule) {
+], function(console, application) {
 
-  class World extends appModule.Application {
+  var Application = application.Application;
+
+  class World extends Application {
     initialize(args) {
       console.log(this.url + ": World");
       this.quit();
