@@ -30,7 +30,6 @@ group("examples") {
       "//examples/browser",
       "//examples/media_viewer",
       "//examples/nesting_app",
-      "//examples/keyboard",
       "//examples/window_manager",
       "//examples/wm_flow",
     ]

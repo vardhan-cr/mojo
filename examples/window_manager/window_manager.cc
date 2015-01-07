@@ -4,7 +4,6 @@
 
 #include "base/bind.h"
 #include "base/macros.h"
-#include "examples/keyboard/keyboard.mojom.h"
 #include "examples/window_manager/debug_panel_host.mojom.h"
 #include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
@@ -57,8 +56,6 @@ class WindowManagerConnection : public InterfaceImpl<IWindowManager> {
  private:
   // Overridden from IWindowManager:
   virtual void CloseWindow(Id view_id) override;
-  virtual void ShowKeyboard(Id view_id, RectPtr bounds) override;
-  virtual void HideKeyboard(Id view_id) override;
 
   WindowManager* window_manager_;
 
@@ -80,78 +77,6 @@ class NavigatorHostImpl : public InterfaceImpl<NavigatorHost> {
   Id view_id_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);
-};
-
-class KeyboardManager : public KeyboardClient,
-                        public ViewObserver {
- public:
-  KeyboardManager() : view_manager_(NULL), view_(NULL) {
-  }
-  virtual ~KeyboardManager() {
-    if (view_)
-      view_->parent()->RemoveObserver(this);
-  }
-
-  View* view() { return view_; }
-
-  void Init(ApplicationImpl* application,
-            ViewManager* view_manager,
-            View* parent,
-            const Rect& bounds) {
-    view_manager_ = view_manager;
-    view_ = view_manager->CreateView();
-    view_->SetBounds(bounds);
-    parent->AddChild(view_);
-    view_->Embed("mojo:keyboard");
-    application->ConnectToService("mojo:keyboard", &keyboard_service_);
-    keyboard_service_.set_client(this);
-    parent->AddObserver(this);
-  }
-
-  void Show(Id view_id, const Rect& bounds) {
-    keyboard_service_->SetTarget(view_id);
-    view_->SetVisible(true);
-  }
-
-  void Hide(Id view_id) {
-    keyboard_service_->SetTarget(0);
-    view_->SetVisible(false);
-  }
-
- private:
-  // KeyboardClient:
-  virtual void OnKeyboardEvent(Id view_id,
-                               int32_t code,
-                               int32_t flags) override {
-    // TODO(sky): figure this out. Code use to dispatch events, but that's a
-    // hack. Instead strings should be passed through, or maybe a richer text
-    // input interface.
-  }
-
-  // Overridden from ViewObserver:
-  virtual void OnViewBoundsChanged(View* parent,
-                                   const Rect& old_bounds,
-                                   const Rect& new_bounds) override {
-    Rect keyboard_bounds(view_->bounds());
-    keyboard_bounds.y =
-        new_bounds.y + new_bounds.height - keyboard_bounds.height;
-    keyboard_bounds.width =
-        keyboard_bounds.width + new_bounds.width - old_bounds.width;
-    view_->SetBounds(keyboard_bounds);
-  }
-  virtual void OnViewDestroyed(View* parent) override {
-    DCHECK_EQ(parent, view_->parent());
-    parent->RemoveObserver(this);
-    view_ = NULL;
-  }
-
-  KeyboardServicePtr keyboard_service_;
-  ViewManager* view_manager_;
-
-  // View the keyboard is attached to.
-  View* view_;
-
-  DISALLOW_COPY_AND_ASSIGN(KeyboardManager);
 };
 
 class RootLayoutManager : public ViewObserver {
@@ -286,32 +211,6 @@ class WindowManager : public ApplicationDelegate,
     window->view()->Destroy();
   }
 
-  void ShowKeyboard(Id view_id, const Rect& bounds) {
-    // TODO: this needs to validate |view_id|. That is, it shouldn't assume
-    // |view_id| is valid and it also needs to make sure the client that sent
-    // this really owns |view_id|.
-    // TODO: honor |bounds|.
-    if (!keyboard_manager_) {
-      keyboard_manager_.reset(new KeyboardManager);
-      View* parent = view_manager_->GetRoot();
-      int ideal_height = 200;
-      // TODO(sky): 10 is a bit of a hack here. There is a bug that causes
-      // white strips to appear when 0 is used. Figure this out!
-      Rect keyboard_bounds;
-      keyboard_bounds.x =  10;
-      keyboard_bounds.y = parent->bounds().height - ideal_height;
-      keyboard_bounds.width = parent->bounds().width - 20;
-      keyboard_bounds.height = ideal_height;
-      keyboard_manager_->Init(app_, view_manager_, parent, keyboard_bounds);
-    }
-    keyboard_manager_->Show(view_id, bounds);
-  }
-
-  void HideKeyboard(Id view_id) {
-    // See comment in ShowKeyboard() about validating args.
-    if (keyboard_manager_)
-      keyboard_manager_->Hide(view_id);
-  }
 
   void DidNavigateLocally(uint32 source_view_id, const mojo::String& url) {
     LOG(ERROR) << "DidNavigateLocally: source_view_id: " << source_view_id
@@ -414,10 +313,8 @@ class WindowManager : public ApplicationDelegate,
   virtual void OnEvent(ui::Event* event) override {
     View* view =
         static_cast<window_manager::ViewTarget*>(event->target())->view();
-    if (event->type() == ui::ET_MOUSE_PRESSED &&
-        !IsDescendantOfKeyboard(view)) {
+    if (event->type() == ui::ET_MOUSE_PRESSED)
       view->SetFocus();
-    }
   }
 
   void OnLaunch(uint32 source_view_id,
@@ -490,11 +387,6 @@ class WindowManager : public ApplicationDelegate,
     return new Window(this, view);
   }
 
-  bool IsDescendantOfKeyboard(View* target) {
-    return keyboard_manager_.get() &&
-        keyboard_manager_->view()->Contains(target);
-  }
-
   Id CreateControlPanel(View* root) {
     View* view = view_manager_->CreateView();
     root->AddChild(view);
@@ -542,7 +434,7 @@ class WindowManager : public ApplicationDelegate,
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
-  // Id of the view most content is added to. The keyboard is NOT added here.
+  // Id of the view most content is added to.
   Id content_view_id_;
 
   // Id of the debug panel.
@@ -551,7 +443,6 @@ class WindowManager : public ApplicationDelegate,
   GURL url_;
   Target navigation_target_;
 
-  scoped_ptr<KeyboardManager> keyboard_manager_;
   ApplicationImpl* app_;
 
   mojo::Binding<examples::DebugPanelHost> binding_;
@@ -561,14 +452,6 @@ class WindowManager : public ApplicationDelegate,
 
 void WindowManagerConnection::CloseWindow(Id view_id) {
   window_manager_->CloseWindow(view_id);
-}
-
-void WindowManagerConnection::ShowKeyboard(Id view_id, RectPtr bounds) {
-  window_manager_->ShowKeyboard(view_id, *bounds);
-}
-
-void WindowManagerConnection::HideKeyboard(Id view_id) {
-  window_manager_->HideKeyboard(view_id);
 }
 
 void NavigatorHostImpl::DidNavigateLocally(const mojo::String& url) {

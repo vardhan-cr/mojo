@@ -17,7 +17,6 @@ if (use_aura) {
     deps = [
       ":bindings",
       "//base",
-      "//examples/keyboard:bindings",
       "//mojo/application",
       "//mojo/converters/geometry",
       "//mojo/converters/input_events",
