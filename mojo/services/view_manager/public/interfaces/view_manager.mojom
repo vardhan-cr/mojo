@@ -4,11 +4,11 @@
 
 module mojo;
 
+import "../../../geometry/public/interfaces/geometry.mojom";
+import "../../../input_events/public/interfaces/input_events.mojom";
+import "../../../surfaces/public/interfaces/surface_id.mojom";
 import "mojo/public/interfaces/application/service_provider.mojom";
-import "mojo/services/geometry/public/interfaces/geometry.mojom";
-import "mojo/services/input_events/public/interfaces/input_events.mojom";
-import "mojo/services/surfaces/public/interfaces/surface_id.mojom";
-import "mojo/services/view_manager/public/interfaces/view_manager_constants.mojom";
+import "view_manager_constants.mojom";
 
 struct ViewData {
   uint32 parent_id;
