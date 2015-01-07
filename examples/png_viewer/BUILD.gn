@@ -11,7 +11,6 @@ mojo_native_application("png_viewer") {
 
   deps = [
     "//examples/bitmap_uploader",
-    "//examples/media_viewer:bindings",
     "//mojo/application",
     "//mojo/application:content_handler",
     "//mojo/public/cpp/bindings",

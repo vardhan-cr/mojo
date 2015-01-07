@@ -9,7 +9,6 @@
 #include "base/message_loop/message_loop.h"
 #include "base/strings/string_tokenizer.h"
 #include "examples/bitmap_uploader/bitmap_uploader.h"
-#include "examples/media_viewer/media_viewer.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/public/c/system/main.h"

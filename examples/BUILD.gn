@@ -28,7 +28,6 @@ group("examples") {
     deps += [
       "//examples/aura_demo:aura_demo",
       "//examples/browser",
-      "//examples/media_viewer",
       "//examples/nesting_app",
       "//examples/window_manager",
       "//examples/wm_flow",
