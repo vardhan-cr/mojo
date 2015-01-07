@@ -1,0 +1,70 @@
+#!mojo:sky_viewer
+<!--
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+-->
+<sky>
+
+<import src="/gen/examples/window_manager/debug_panel_host.mojom.sky" as="example" />
+<import src="/mojo/services/navigation/public/interfaces/navigation.mojom.sky" as="navigation" />
+
+<import src="/sky/framework/embedder.sky" as="embedder" />
+<import src="/sky/framework/sky-element/sky-element.sky" as="SkyElement" />
+<import src="/sky/framework/sky-button/sky-button.sky" as="SkyButton" />
+<import src="/sky/framework/sky-box/sky-box.sky" as="SkyBox" />
+<import src="/sky/framework/sky-checkbox/sky-checkbox.sky" as="SkyCheckbox" />
+<import src="/sky/framework/sky-radio/sky-radio.sky" as="SkyRadio" />
+
+<sky-element name="debug-panel">
+<template>
+  <style>
+  div { display: paragraph; }
+  </style>
+
+  <sky-box title='Navigation target:'>
+    <div><sky-radio group='nav-target' selected='true'
+                    on-click="handleRadioDefault"/>Default</div>
+    <div><sky-radio group='nav-target' on-click="handleRadioNewWindow"/>New window</div>
+    <div><sky-radio group='nav-target' on-click="handleRadioSourceWindow"/>Source window</div>
+  </sky-box>
+
+  <sky-button on-click="handleLocalNavClick">Local nav test</sky-button>
+  <sky-button on-click="handleCloseLastWindow">Close last window</sky-button>
+  <sky-button on-click="handleCrossAppNavTest">Cross-app nav test</sky-button>
+</template>
+<script>
+module.exports = class extends SkyElement {
+  created() {
+    this.embedder = embedder.connectToEmbedderService(example.DebugPanelHost)
+  }
+
+  handleRadioDefault(event) {
+    this.embedder.setNavigationTarget(navigation.Target.DEFAULT);
+  }
+
+  handleRadioNewWindow(event) {
+    this.embedder.setNavigationTarget(navigation.Target.NEW_NODE);
+  }
+
+  handleRadioSourceWindow(event) {
+    this.embedder.setNavigationTarget(navigation.Target.SOURCE_NODE);
+  }
+
+  handleLocalNavClick(event) {
+    this.embedder.navigateTo("mojo:embedded_app");
+  }
+
+  handleCloseLastWindow(event) {
+    this.embedder.closeTopWindow();
+  }
+
+  handleCrossAppNavTest(event) {
+    this.embedder.navigateTo("http://www.aaronboodman.com/z_dropbox/test.html");
+  }
+}.register();
+</script>
+</sky-element>
+
+<debug-panel />
+</sky>

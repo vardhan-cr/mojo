@@ -5,7 +5,7 @@
 #include "base/bind.h"
 #include "base/macros.h"
 #include "examples/keyboard/keyboard.mojom.h"
-#include "examples/window_manager/debug_panel.h"
+#include "examples/window_manager/debug_panel_host.mojom.h"
 #include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
@@ -22,7 +22,6 @@
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
-#include "mojo/views/views_init.h"
 #include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/window_manager_app.h"
@@ -30,6 +29,7 @@
 #include "ui/events/event.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/geometry/size_conversions.h"
+#include "url/gurl.h"
 
 #if defined CreateWindow
 #undef CreateWindow
@@ -253,10 +253,11 @@ class Window : public InterfaceFactory<NavigatorHost> {
 };
 
 class WindowManager : public ApplicationDelegate,
-                      public DebugPanel::Delegate,
+                      public examples::DebugPanelHost,
                       public ViewManagerDelegate,
                       public window_manager::WindowManagerDelegate,
-                      public ui::EventHandler {
+                      public ui::EventHandler,
+                      public mojo::InterfaceFactory<examples::DebugPanelHost> {
  public:
   WindowManager()
       : shell_(nullptr),
@@ -264,7 +265,9 @@ class WindowManager : public ApplicationDelegate,
         launcher_ui_(NULL),
         view_manager_(NULL),
         window_manager_app_(new window_manager::WindowManagerApp(this, this)),
-        app_(NULL) {}
+        navigation_target_(TARGET_DEFAULT),
+        app_(NULL),
+        binding_(this) {}
 
   virtual ~WindowManager() {
     // host() may be destroyed by the time we get here.
@@ -315,16 +318,31 @@ class WindowManager : public ApplicationDelegate,
                << " url: " << url.To<std::string>();
   }
 
-  // Overridden from DebugPanel::Delegate:
-  virtual void CloseTopWindow() override {
+  void RequestNavigate(uint32 source_view_id,
+                       Target target,
+                       URLRequestPtr request) {
+    OnLaunch(source_view_id, target, request->url);
+  }
+
+  // Overridden from mojo::DebugPanelHost:
+  void CloseTopWindow() override {
     if (!windows_.empty())
       CloseWindow(windows_.back()->view()->id());
   }
 
-  virtual void RequestNavigate(uint32 source_view_id,
-                               Target target,
-                               URLRequestPtr request) override {
-    OnLaunch(source_view_id, target, request->url);
+  void NavigateTo(const String& url) override {
+    OnLaunch(control_panel_id_, TARGET_NEW_NODE, url);
+  }
+
+  void SetNavigationTarget(Target t) override {
+    navigation_target_ = t;
+  }
+
+  // mojo::InterfaceFactory<examples::DebugPanelHost> implementation.
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<examples::DebugPanelHost> request) override {
+    binding_.Bind(request.Pass());
   }
 
  private:
@@ -334,7 +352,9 @@ class WindowManager : public ApplicationDelegate,
   virtual void Initialize(ApplicationImpl* app) override {
     shell_ = app->shell();
     app_ = app;
-    views_init_.reset(new ViewsInit);
+    // FIXME: Mojo applications don't know their URLs yet:
+    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
+    url_ = GURL(app->args()[1]);
     window_manager_app_->Initialize(app);
   }
 
@@ -362,11 +382,11 @@ class WindowManager : public ApplicationDelegate,
     content_view_id_ = view->id();
 
     Id launcher_ui_id = CreateLauncherUI();
-    Id control_panel_id = CreateControlPanel(view);
+    control_panel_id_ = CreateControlPanel(view);
 
     root_layout_manager_.reset(
         new RootLayoutManager(view_manager_, root, content_view_id_,
-                              launcher_ui_id, control_panel_id));
+                              launcher_ui_id, control_panel_id_));
     root->AddObserver(root_layout_manager_.get());
 
     // TODO(erg): In the aura version, we explicitly added ourselves as a
@@ -403,7 +423,7 @@ class WindowManager : public ApplicationDelegate,
   void OnLaunch(uint32 source_view_id,
                 Target requested_target,
                 const mojo::String& url) {
-    Target target = debug_panel_->navigation_target();
+    Target target = navigation_target_;
     if (target == TARGET_DEFAULT) {
       if (requested_target != TARGET_DEFAULT) {
         target = requested_target;
@@ -488,7 +508,13 @@ class WindowManager : public ApplicationDelegate,
     view->SetBounds(bounds);
     view->SetVisible(true);
 
-    debug_panel_ = new DebugPanel(this, shell_, view);
+    scoped_ptr<mojo::ServiceProviderImpl> exported_services(
+        new mojo::ServiceProviderImpl());
+    exported_services->AddService(this);
+
+    GURL frame_url = url_.Resolve("/examples/window_manager/debug_panel.sky");
+    debug_panel_ = view->Embed(frame_url.spec(), exported_services.Pass());
+
     return view->id();
   }
 
@@ -508,8 +534,7 @@ class WindowManager : public ApplicationDelegate,
   InterfaceFactoryImplWithContext<WindowManagerConnection, WindowManager>
       window_manager_factory_;
 
-  scoped_ptr<ViewsInit> views_init_;
-  DebugPanel* debug_panel_;
+  scoped_ptr<mojo::ServiceProvider> debug_panel_;
   Window* launcher_ui_;
   WindowVector windows_;
   ViewManager* view_manager_;
@@ -520,8 +545,16 @@ class WindowManager : public ApplicationDelegate,
   // Id of the view most content is added to. The keyboard is NOT added here.
   Id content_view_id_;
 
+  // Id of the debug panel.
+  Id control_panel_id_;
+
+  GURL url_;
+  Target navigation_target_;
+
   scoped_ptr<KeyboardManager> keyboard_manager_;
   ApplicationImpl* app_;
+
+  mojo::Binding<examples::DebugPanelHost> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };

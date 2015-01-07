@@ -40,7 +40,10 @@ def main():
   server = SkyServer(sky_paths, HTTP_PORT, configuration, paths.src_root)
 
   if args.demo == 'browser':
+    base_url = server.path_as_url(paths.build_dir)
+    wm_url = os.path.join(base_url, 'example_window_manager.mojo')
     cmd.append('--url-mappings=mojo:window_manager=mojo:example_window_manager')
+    cmd.append('--args-for=mojo:window_manager %s' % (wm_url))
     cmd.append('mojo:window_manager')
   elif args.demo == 'wm_flow':
     base_url = server.path_as_url(paths.build_dir)

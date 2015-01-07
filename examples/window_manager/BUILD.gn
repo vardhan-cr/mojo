@@ -11,8 +11,6 @@ if (use_aura) {
     output_name = "example_window_manager"
 
     sources = [
-      "debug_panel.cc",
-      "debug_panel.h",
       "window_manager.cc",
     ]
 
@@ -21,7 +19,6 @@ if (use_aura) {
       "//base",
       "//examples/keyboard:bindings",
       "//mojo/application",
-      "//mojo/aura",
       "//mojo/converters/geometry",
       "//mojo/converters/input_events",
       "//mojo/public/c/gles2",
@@ -31,25 +28,25 @@ if (use_aura) {
       "//mojo/services/input_events/public/interfaces",
       "//mojo/services/navigation/public/interfaces",
       "//mojo/services/view_manager/public/cpp",
-      "//mojo/views:views",
       "//services/window_manager:lib",
-      "//ui/aura",
       "//ui/base",
+      "//ui/events:events",
       "//ui/gfx",
       "//ui/gfx/geometry",
       "//ui/gl",
       "//ui/resources",
-      "//ui/views",
-      "//ui/wm",
+      "//url:url",
     ]
   }
 }
 
 mojom("bindings") {
   sources = [
+    "debug_panel_host.mojom",
     "window_manager.mojom",
   ]
   deps = [
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/network/public/interfaces",
   ]
 }
