@@ -198,8 +198,7 @@ def _CheckChangePylintsClean(input_api, output_api):
   temporary_black_list = input_api.DEFAULT_BLACK_LIST + \
       (r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]pylib[\\\/]mojom[\\\/]"
            r"generate[\\\/].+\.py$",
-       r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]generators[\\\/].+\.py$",
-       r".*\bspy[\\\/]ui[\\\/].+\.py$")
+       r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]generators[\\\/].+\.py$")
 
   results = []
   pylint_extra_paths = [

@@ -47,16 +47,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
     DISALLOW_COPY_AND_ASSIGN(TestAPI);
   };
 
-  // Interface class for debugging only.
-  class Interceptor {
-   public:
-    virtual ~Interceptor() {}
-    // Called when ApplicationManager::Connect is called.
-    virtual ServiceProviderPtr OnConnectToClient(
-        const GURL& url,
-        ServiceProviderPtr service_provider) = 0;
-  };
-
   ApplicationManager(Delegate* delegate);
   ~ApplicationManager();
 
@@ -93,9 +83,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   // These strings will be passed to the Initialize() method when an
   // Application is instantiated.
   void SetArgsForURL(const std::vector<std::string>& args, const GURL& url);
-
-  // Allows to interpose a debugger to service connections.
-  void SetInterceptor(Interceptor* interceptor);
 
   // Destroys all Shell-ends of connections established with Applications.
   // Applications connected by this ApplicationManager will observe pipe errors
@@ -151,7 +138,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   URLToLoaderMap url_to_loader_;
   SchemeToLoaderMap scheme_to_loader_;
   scoped_ptr<ApplicationLoader> default_loader_;
-  Interceptor* interceptor_;
 
   URLToShellImplMap url_to_shell_impl_;
   URLToContentHandlerMap url_to_content_handler_;

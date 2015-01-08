@@ -23,7 +23,6 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/spy/spy.h"
 #include "services/tracing/tracing.mojom.h"
 #include "shell/dynamic_application_loader.h"
 #include "shell/external_application_listener.h"
@@ -172,15 +171,6 @@ bool Context::Init() {
   InitContentHandlers(dynamic_application_loader, command_line);
   application_manager_.set_default_loader(
       scoped_ptr<ApplicationLoader>(dynamic_application_loader));
-
-  if (command_line->HasSwitch(switches::kSpy)) {
-    spy_.reset(
-        new mojo::Spy(&application_manager_,
-                      command_line->GetSwitchValueASCII(switches::kSpy)));
-    // TODO(cpu): the spy can snoop, but can't tell anybody until
-    // the Spy::WebSocketDelegate is implemented. In the original repo this
-    // was implemented by src\mojo\spy\websocket_server.h and .cc.
-  }
 
   tracing::TraceDataCollectorPtr trace_data_collector_ptr;
   application_manager_.ConnectToService(GURL("mojo:tracing"),

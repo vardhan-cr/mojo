@@ -382,32 +382,6 @@ class Tester : public ApplicationDelegate,
   ScopedVector<TestAImpl> a_bindings_;
 };
 
-class TestServiceInterceptor : public ApplicationManager::Interceptor {
- public:
-  TestServiceInterceptor() : call_count_(0) {}
-
-  ServiceProviderPtr OnConnectToClient(
-      const GURL& url,
-      ServiceProviderPtr service_provider) override {
-    ++call_count_;
-    url_ = url;
-    return service_provider.Pass();
-  }
-
-  std::string url_spec() const {
-    if (!url_.is_valid())
-      return "invalid url";
-    return url_.spec();
-  }
-
-  int call_count() const { return call_count_; }
-
- private:
-  int call_count_;
-  GURL url_;
-  DISALLOW_COPY_AND_ASSIGN(TestServiceInterceptor);
-};
-
 class TestDelegate : public ApplicationManager::Delegate {
  public:
   void AddMapping(const GURL& from, const GURL& to) {
@@ -676,22 +650,6 @@ TEST_F(ApplicationManagerTest, NoServiceNoLoad) {
 
   loop_.Run();
   EXPECT_TRUE(c.encountered_error());
-}
-
-TEST_F(ApplicationManagerTest, Interceptor) {
-  TestServiceInterceptor interceptor;
-  TestApplicationLoader* default_loader = new TestApplicationLoader;
-  application_manager_->set_default_loader(
-      scoped_ptr<ApplicationLoader>(default_loader));
-  application_manager_->SetInterceptor(&interceptor);
-
-  std::string url("test:test3");
-  TestServicePtr test_service;
-  application_manager_->ConnectToService(GURL(url), &test_service);
-
-  EXPECT_EQ(1, interceptor.call_count());
-  EXPECT_EQ(url, interceptor.url_spec());
-  EXPECT_EQ(1, default_loader->num_loads());
 }
 
 TEST_F(ApplicationManagerTest, MappedURLsShouldNotCauseDuplicateLoad) {

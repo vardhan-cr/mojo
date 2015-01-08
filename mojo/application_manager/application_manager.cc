@@ -164,7 +164,6 @@ bool ApplicationManager::TestAPI::HasFactoryForURL(const GURL& url) const {
 
 ApplicationManager::ApplicationManager(Delegate* delegate)
     : delegate_(delegate),
-      interceptor_(NULL),
       weak_ptr_factory_(this) {
 }
 
@@ -233,13 +232,7 @@ void ApplicationManager::ConnectToClient(ShellImpl* shell_impl,
                                          const GURL& url,
                                          const GURL& requestor_url,
                                          ServiceProviderPtr service_provider) {
-  if (interceptor_) {
-    shell_impl->ConnectToClient(
-        requestor_url,
-        interceptor_->OnConnectToClient(url, service_provider.Pass()));
-  } else {
-    shell_impl->ConnectToClient(requestor_url, service_provider.Pass());
-  }
+  shell_impl->ConnectToClient(requestor_url, service_provider.Pass());
 }
 
 void ApplicationManager::RegisterExternalApplication(
@@ -288,10 +281,6 @@ void ApplicationManager::SetLoaderForScheme(
 void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
                                        const GURL& url) {
   url_to_args_[url] = args;
-}
-
-void ApplicationManager::SetInterceptor(Interceptor* interceptor) {
-  interceptor_ = interceptor;
 }
 
 ApplicationLoader* ApplicationManager::GetLoaderForURL(

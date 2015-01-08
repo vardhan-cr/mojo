@@ -14,8 +14,6 @@
 
 namespace mojo {
 
-class Spy;
-
 namespace shell {
 
 class DynamicApplicationLoader;
@@ -51,7 +49,6 @@ class Context : ApplicationManager::Delegate {
   scoped_ptr<ExternalApplicationListener> listener_;
   ApplicationManager application_manager_;
   MojoURLResolver mojo_url_resolver_;
-  scoped_ptr<Spy> spy_;
 
   DISALLOW_COPY_AND_ASSIGN(Context);
 };

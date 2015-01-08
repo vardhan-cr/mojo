@@ -21,7 +21,6 @@ extern const char kDisableCache[];
 extern const char kEnableExternalApplications[];
 extern const char kEnableMultiprocess[];
 extern const char kOrigin[];
-extern const char kSpy[];
 extern const char kURLMappings[];
 
 extern const std::set<std::string> GetAllSwitches();

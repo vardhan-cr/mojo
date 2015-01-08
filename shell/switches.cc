@@ -49,10 +49,6 @@ const char kHelp[] = "help";
 // mojo_url_resolver.cc for details.
 const char kOrigin[] = "origin";
 
-// Enables the mojo spy, which acts as a man-in-the-middle inspector for
-// message pipes and other activities. This is work in progress.
-const char kSpy[] = "spy";
-
 // Specifies a set of mappings to apply when resolving urls. The value is set of
 // ',' separated mappings, where each mapping consists of a pair of urls giving
 // the to/from url to map. For example, 'a=b,c=d' contains two mappings, the
@@ -68,7 +64,6 @@ const char* kSwitchArray[] = {kV,
                               kEnableMultiprocess,
                               kHelp,
                               kOrigin,
-                              kSpy,
                               kURLMappings};
 
 const std::set<std::string> GetAllSwitches() {

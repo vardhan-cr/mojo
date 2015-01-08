@@ -186,7 +186,6 @@ source_set("lib") {
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
     "//shell/domain_socket",
-    "//mojo/spy",
     "//services/tracing:bindings",
     "//url",
   ]
