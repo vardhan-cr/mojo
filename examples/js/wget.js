@@ -1,4 +1,4 @@
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 // Demonstrate use of the Mojo network service to load a URL. To run this
 // application with mojo_shell, set DIR to be the absolute path for this
 // directory, then:

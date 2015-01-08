@@ -13,7 +13,7 @@ content handler. In other words, the first line of the JS source file
 must be:
 
 ```javascript
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 ```
 
 Following the shebang should be a single AMD module called "main" whose value
@@ -39,7 +39,7 @@ services of its own.
 This is the overall structure of a JS Mojo application:
 
 ```javascript
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 
 define("main", ["mojo/services/public/js/application", 
   <list of other modules that this application depends on>
@@ -430,7 +430,7 @@ can use the application's shell to get an EchoService proxy. Here's a
 complete application:
 
 ```javascript
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 
 define("main", [
   "console",
@@ -467,7 +467,7 @@ A complete application that unconditionally provides the EchoService
 looks like this:
 
 ```javascript
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 
 define("main", [
   "mojo/services/public/js/application",

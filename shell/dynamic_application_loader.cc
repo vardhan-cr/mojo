@@ -31,7 +31,7 @@ namespace shell {
 
 namespace {
 
-static const char kMojoMagic[] = "#!mojo:";
+static const char kMojoMagic[] = "#!mojo ";
 static const size_t kMaxShebangLength = 2048;
 
 void IgnoreResult(bool result) {
@@ -81,7 +81,7 @@ class DynamicApplicationLoader::Loader {
   virtual bool PeekFirstLine(std::string* line) = 0;
 
   void Load() {
-    // If the response begins with a #!mojo:<content-handler-url>, use it.
+    // If the response begins with a #!mojo <content-handler-url>, use it.
     GURL url;
     std::string shebang;
     if (PeekContentHandler(&shebang, &url)) {
@@ -116,7 +116,7 @@ class DynamicApplicationLoader::Loader {
                           GURL* mojo_content_handler_url) {
     std::string shebang;
     if (HasMojoMagic() && PeekFirstLine(&shebang)) {
-      GURL url(shebang.substr(2, std::string::npos));
+      GURL url(shebang.substr(arraysize(kMojoMagic) - 1, std::string::npos));
       if (url.is_valid()) {
         *mojo_shebang = shebang;
         *mojo_content_handler_url = url;

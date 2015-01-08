@@ -1,4 +1,4 @@
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 // Demonstrate using the ServiceProvider returned by the Shell
 // connectToApplication() method to provide a service to the
 // target application and to request a service from the target

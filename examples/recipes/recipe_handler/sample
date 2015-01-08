@@ -1,4 +1,4 @@
-#!mojo:recipe_handler
+#!mojo mojo:recipe_handler
 {
   // URL of the app responsible for rendering this recipe.
   "renderer" : "mojo:bar",

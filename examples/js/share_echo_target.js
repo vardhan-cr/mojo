@@ -1,4 +1,4 @@
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 // Demonstrate sharing services via application ServiceProviders.
 // This application is launched by share_echo.js. It both provides
 // and requests an EchoService implementation.

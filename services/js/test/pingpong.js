@@ -1,4 +1,4 @@
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 
 define("main", [
   "mojo/public/js/bindings",

@@ -1,4 +1,4 @@
-#!mojo:js_content_handler
+#!mojo mojo:js_content_handler
 // Demonstrate one JS Mojo application connecting to another to emit "hello
 // world". To run this application with mojo_shell, set DIR to be the absolute
 // path for this directory, then:
