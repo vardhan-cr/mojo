@@ -171,7 +171,7 @@ class PDFView : public ApplicationDelegate,
                                       MOJO_READ_DATA_FLAG_NONE);
       if (result == MOJO_RESULT_SHOULD_WAIT) {
         Wait(response->body.get(), MOJO_HANDLE_SIGNAL_READABLE,
-             MOJO_DEADLINE_INDEFINITE);
+             MOJO_DEADLINE_INDEFINITE, nullptr);
       } else if (result == MOJO_RESULT_OK) {
         buf += num_bytes;
         num_bytes = bytes_remaining -= num_bytes;

@@ -98,7 +98,8 @@ bool BlockingPeekHelper(DataPipeConsumerHandle source,
     } else if (result == MOJO_RESULT_SHOULD_WAIT) {
       MojoTimeTicks now(GetTimeTicksNow());
       if (timeout == MOJO_DEADLINE_INDEFINITE || now < deadline)
-        result = Wait(source, MOJO_HANDLE_SIGNAL_READABLE, deadline - now);
+        result =
+            Wait(source, MOJO_HANDLE_SIGNAL_READABLE, deadline - now, nullptr);
     }
   } while (result == MOJO_RESULT_OK);
 

@@ -51,7 +51,8 @@ class ResponsePrinter {
       if (result == MOJO_RESULT_SHOULD_WAIT) {
         Wait(body.get(),
              MOJO_HANDLE_SIGNAL_READABLE,
-             MOJO_DEADLINE_INDEFINITE);
+             MOJO_DEADLINE_INDEFINITE,
+             nullptr);
       } else if (result == MOJO_RESULT_OK) {
         if (fwrite(buf, num_bytes, 1, stdout) != 1) {
           printf("\nUnexpected error writing to file\n");

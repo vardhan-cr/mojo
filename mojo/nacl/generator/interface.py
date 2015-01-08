@@ -78,20 +78,9 @@ def MakeInterface():
   f.Param('handle').In('MojoHandle')
   f.Param('signals').In('MojoHandleSignals')
   f.Param('deadline').In('MojoDeadline')
-
-  f = mojo.Func('MojoWaitMany', 'MojoResult')
-  f.Param('handles').InArray('MojoHandle', 'num_handles')
-  f.Param('signals').InArray('MojoHandleSignals', 'num_handles')
-  f.Param('num_handles').In('uint32_t')
-  f.Param('deadline').In('MojoDeadline')
-
-  f = mojo.Func('MojoNewWait', 'MojoResult')
-  f.Param('handle').In('MojoHandle')
-  f.Param('signals').In('MojoHandleSignals')
-  f.Param('deadline').In('MojoDeadline')
   f.Param('signals_state').OutFixedStruct('MojoHandleSignalsState').Optional()
 
-  f = mojo.Func('MojoNewWaitMany', 'MojoResult')
+  f = mojo.Func('MojoWaitMany', 'MojoResult')
   f.Param('handles').InArray('MojoHandle', 'num_handles')
   f.Param('signals').InArray('MojoHandleSignals', 'num_handles')
   f.Param('num_handles').In('uint32_t')
