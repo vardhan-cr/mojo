@@ -5,7 +5,7 @@
 #ifndef SERVICES_ICU_DATA_DATA_H_
 #define SERVICES_ICU_DATA_DATA_H_
 
-#include <stdint.h>
+#include <cstddef>
 
 namespace icu_data {
 
