@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 import mojo_unittest
-from mojo.bindings import reflection
+from mojo_bindings import reflection
 
 
 class GenerationTest(mojo_unittest.MojoTestCase):

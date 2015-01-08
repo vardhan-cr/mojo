@@ -7,8 +7,8 @@ import math
 import mojo_unittest
 
 # pylint: disable=E0611,F0401
-import mojo.bindings.serialization as serialization
-import mojo.system
+import mojo_bindings.serialization as serialization
+import mojo_system
 
 # Generated files
 # pylint: disable=F0401
@@ -18,7 +18,7 @@ import sample_service_mojom
 
 
 def _NewHandle():
-  return mojo.system.MessagePipe().handle0
+  return mojo_system.MessagePipe().handle0
 
 
 def _NewBar():

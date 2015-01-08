@@ -5,8 +5,8 @@
 import unittest
 
 # pylint: disable=E0611,F0401
-import mojo.embedder
-import mojo.system
+import mojo_embedder
+import mojo_system
 
 
 class MojoTestCase(unittest.TestCase):
@@ -16,9 +16,9 @@ class MojoTestCase(unittest.TestCase):
 
   def run(self, *args, **kwargs):
     try:
-      mojo.embedder.Init()
-      self.loop = mojo.system.RunLoop()
+      mojo_embedder.Init()
+      self.loop = mojo_system.RunLoop()
       unittest.TestCase.run(self, *args, **kwargs)
     finally:
       self.loop = None
-      assert mojo.embedder.ShutdownForTest()
+      assert mojo_embedder.ShutdownForTest()

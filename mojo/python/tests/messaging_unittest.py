@@ -5,10 +5,10 @@
 import unittest
 
 import mojo_unittest
-from mojo.bindings import messaging
+from mojo_bindings import messaging
 
 # pylint: disable=E0611
-from mojo import system
+import mojo_system as system
 
 
 class _ForwardingConnectionErrorHandler(messaging.ConnectionErrorHandler):

@@ -6,10 +6,9 @@ import gc
 import weakref
 
 # pylint: disable=F0401,E0611
-import mojo.system as system
-
+import mojo_bindings.promise as promise
+import mojo_system as system
 import mojo_unittest
-import mojo.bindings.promise as promise
 import regression_tests_mojom
 import sample_factory_mojom
 import sample_service_mojom

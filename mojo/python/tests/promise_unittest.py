@@ -5,7 +5,7 @@
 import unittest
 
 # pylint: disable=F0401
-from mojo.bindings import promise
+from mojo_bindings import promise
 
 
 class PromiseTest(unittest.TestCase):

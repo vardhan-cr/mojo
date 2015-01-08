@@ -7,8 +7,8 @@
 from libc.stdint cimport uintptr_t
 from libcpp cimport bool
 
-from mojo import system
-from mojo import system_impl
+import mojo_system
+import mojo_system_impl
 
 cdef extern from "third_party/cython/python_export.h":
   pass
@@ -43,8 +43,8 @@ def Init():
   InitCEmbedder(scoped_ptr[PlatformSupport](
       new SimplePlatformSupport()))
   cdef MojoSystemThunks thunks = MojoMakeSystemThunks()
-  system.SetSystemThunks(<uintptr_t>(&thunks))
-  system_impl.SetSystemThunks(<uintptr_t>(&thunks))
+  mojo_system.SetSystemThunks(<uintptr_t>(&thunks))
+  mojo_system_impl.SetSystemThunks(<uintptr_t>(&thunks))
 
 def ShutdownForTest():
   return ShutdownCEmbedderForTest()

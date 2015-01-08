@@ -6,7 +6,7 @@ import math
 import unittest
 
 # pylint: disable=E0611,F0401
-import mojo.system
+import mojo_system
 
 # Generated files
 # pylint: disable=F0401
@@ -161,7 +161,7 @@ class StructBindingsTest(unittest.TestCase):
     # Handles
     foo_instance = sample_service_mojom.Foo()
     foo_instance.source = None
-    foo_instance.source = mojo.system.Handle()
+    foo_instance.source = mojo_system.Handle()
     with self.assertRaises(TypeError):
       foo_instance.source = 1
     with self.assertRaises(TypeError):

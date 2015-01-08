@@ -10,9 +10,9 @@ import mojo_unittest
 import validation_test_interfaces_mojom
 
 # pylint: disable=E0611
-from mojo import system
-from mojo.bindings import messaging
-from mojo.tests import validation_util
+import mojo_system as system
+from mojo_bindings import messaging
+from mojo_tests import validation_util
 from mopy.paths import Paths
 
 logging.basicConfig(level=logging.ERROR)
