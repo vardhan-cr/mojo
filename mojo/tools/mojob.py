@@ -78,7 +78,7 @@ def sync(config):
 
 
 def gn(config):
-  command = ['gn', 'gen']
+  command = ['gn', 'gen', '--check']
 
   gn_args = []
   gn_args.append('is_debug=' + ('true' if config.is_debug else 'false'))

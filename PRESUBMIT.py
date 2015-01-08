@@ -412,63 +412,6 @@ def _CheckValidHostsInDEPS(input_api, output_api):
         long_text=error.output)]
 
 
-def _CheckGNCheck(input_api, output_api):
-  """Checks that gn gen and gn check pass"""
-  import os.path
-
-  class _TemporaryDirectory(object):
-    """Context manager for tempfile.mkdtemp()"""
-    def __enter__(self):
-      self.path = input_api.tempfile.mkdtemp()
-      return self.path
-
-    def __exit__(self, exc_type, exc_value, traceback):
-      # input_api does not include shutil or any nice way to delete
-      # a directory, so we hackishly import it here.
-      import shutil
-      shutil.rmtree(self.path)
-
-  available_os = [None]
-  # android tools directory is used as a sentinel to check if the current
-  # checkout is an android checkout.
-  android_tools_dir = os.path.join(input_api.change.RepositoryRoot(),
-                                   'third_party', 'android_tools')
-  if os.path.isdir(android_tools_dir):
-    available_os.append('android')
-  for target_os in available_os:
-    with _TemporaryDirectory() as out_dir:
-      try:
-        command = ['gn', 'gen', out_dir]
-        if target_os:
-           command.append('--args=%s' % r'''os="android"''')
-        input_api.subprocess.check_output(command)
-      except input_api.subprocess.CalledProcessError, error:
-        return [output_api.PresubmitError(
-            'gn gen must not fail.', long_text=error.output)]
-
-      # TODO(eseidel): Currently only these are known to pass, once everything
-      # passes we can just call 'gn check' once without a filter!
-      KNOWN_PASSING = [
-        '//examples/*',
-        '//mojo/*',
-        '//services/*',
-        '//shell/*',
-      ]
-      if input_api.platform != 'win32':
-        KNOWN_PASSING += [
-          '//sky/*',
-        ]
-      for target_filter in KNOWN_PASSING:
-        try:
-          input_api.subprocess.check_output(['gn', 'check', out_dir,
-              target_filter])
-        except input_api.subprocess.CalledProcessError, error:
-          error_title = 'gn check %s must not fail.' % target_filter
-          return [output_api.PresubmitError(error_title,
-                                            long_text=error.output)]
-  return []
-
-
 def _CheckNoBannedFunctions(input_api, output_api):
   """Make sure that banned functions are not used."""
   warnings = []
@@ -1331,7 +1274,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckParseErrors(input_api, output_api))
   results.extend(_CheckForIPCRules(input_api, output_api))
   results.extend(_CheckForOverrideAndFinalRules(input_api, output_api))
-  results.extend(_CheckGNCheck(input_api, output_api))
   results.extend(_CheckForMojoURL(input_api, output_api))
 
   if any('PRESUBMIT.py' == f.LocalPath() for f in input_api.AffectedFiles()):
