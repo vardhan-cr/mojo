@@ -29,7 +29,9 @@ define("main", [
         "mojo:network_service", NetworkService);
 
       var urlLoader;
-      netService.createURLLoader(function(x){urlLoader = x;});
+      netService.createURLLoader(function(urlLoaderProxy) {
+        urlLoader = urlLoaderProxy;
+      });
 
       var urlRequest = new URLRequest({
         url: args[1],
