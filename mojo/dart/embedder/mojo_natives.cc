@@ -11,33 +11,34 @@
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/public/c/system/core.h"
+#include "mojo/public/cpp/system/core.h"
 
 namespace mojo {
 namespace dart {
 
-#define MOJO_NATIVE_LIST(V)                                                    \
-  V(MojoSharedBuffer_Create, 2)                                                \
-  V(MojoSharedBuffer_Duplicate, 2)                                             \
-  V(MojoSharedBuffer_Map, 5)                                                   \
-  V(MojoSharedBuffer_Unmap, 1)                                                 \
-  V(MojoDataPipe_Create, 3)                                                    \
-  V(MojoDataPipe_WriteData, 4)                                                 \
-  V(MojoDataPipe_BeginWriteData, 3)                                            \
-  V(MojoDataPipe_EndWriteData, 2)                                              \
-  V(MojoDataPipe_ReadData, 4)                                                  \
-  V(MojoDataPipe_BeginReadData, 3)                                             \
-  V(MojoDataPipe_EndReadData, 2)                                               \
-  V(MojoMessagePipe_Create, 1)                                                 \
-  V(MojoMessagePipe_Write, 5)                                                  \
-  V(MojoMessagePipe_Read, 5)                                                   \
-  V(MojoHandle_Close, 1)                                                       \
-  V(MojoHandle_Wait, 3)                                                        \
-  V(MojoHandle_Register, 1)                                                    \
-  V(MojoHandle_WaitMany, 4)                                                    \
-  V(MojoHandleWatcher_SendControlData, 4)                                      \
-  V(MojoHandleWatcher_RecvControlData, 1)                                      \
-  V(MojoHandleWatcher_SetControlHandle, 1)                                     \
-  V(MojoHandleWatcher_GetControlHandle, 0)                                     \
+#define MOJO_NATIVE_LIST(V)                \
+  V(MojoSharedBuffer_Create, 2)            \
+  V(MojoSharedBuffer_Duplicate, 2)         \
+  V(MojoSharedBuffer_Map, 5)               \
+  V(MojoSharedBuffer_Unmap, 1)             \
+  V(MojoDataPipe_Create, 3)                \
+  V(MojoDataPipe_WriteData, 4)             \
+  V(MojoDataPipe_BeginWriteData, 3)        \
+  V(MojoDataPipe_EndWriteData, 2)          \
+  V(MojoDataPipe_ReadData, 4)              \
+  V(MojoDataPipe_BeginReadData, 3)         \
+  V(MojoDataPipe_EndReadData, 2)           \
+  V(MojoMessagePipe_Create, 1)             \
+  V(MojoMessagePipe_Write, 5)              \
+  V(MojoMessagePipe_Read, 5)               \
+  V(MojoHandle_Close, 1)                   \
+  V(MojoHandle_Wait, 3)                    \
+  V(MojoHandle_Register, 1)                \
+  V(MojoHandle_WaitMany, 3)                \
+  V(MojoHandleWatcher_SendControlData, 4)  \
+  V(MojoHandleWatcher_RecvControlData, 1)  \
+  V(MojoHandleWatcher_SetControlHandle, 1) \
+  V(MojoHandleWatcher_GetControlHandle, 0)
 
 MOJO_NATIVE_LIST(DECLARE_FUNCTION);
 
@@ -85,6 +86,19 @@ static void SetNullReturn(Dart_NativeArguments arguments) {
 static void SetInvalidArgumentReturn(Dart_NativeArguments arguments) {
   Dart_SetIntegerReturnValue(
       arguments, static_cast<int64_t>(MOJO_RESULT_INVALID_ARGUMENT));
+}
+
+static Dart_Handle MojoLib() {
+  Dart_Handle core_lib_name = Dart_NewStringFromCString("dart:mojo_core");
+  return Dart_LookupLibrary(core_lib_name);
+}
+
+static Dart_Handle SignalsStateToDart(Dart_Handle klass,
+                                      const MojoHandleSignalsState& state) {
+  Dart_Handle arg1 = Dart_NewInteger(state.satisfied_signals);
+  Dart_Handle arg2 = Dart_NewInteger(state.satisfiable_signals);
+  Dart_Handle args[] = {arg1, arg2};
+  return Dart_New(klass, Dart_Null(), 2, args);
 }
 
 #define CHECK_INTEGER_ARGUMENT(args, num, result, failure)                     \
@@ -178,20 +192,33 @@ void MojoHandle_Wait(Dart_NativeArguments arguments) {
   CHECK_INTEGER_ARGUMENT(arguments, 1, &signals, InvalidArgument);
   CHECK_INTEGER_ARGUMENT(arguments, 2, &deadline, InvalidArgument);
 
-  MojoResult r = MojoWait(static_cast<MojoHandle>(handle),
-                          static_cast<MojoHandleSignals>(signals),
-                          static_cast<MojoDeadline>(deadline));
+  MojoHandleSignalsState state;
+  MojoResult r = mojo::Wait(mojo::Handle(static_cast<MojoHandle>(handle)),
+                            static_cast<MojoHandleSignals>(signals),
+                            static_cast<MojoDeadline>(deadline), &state);
 
-  Dart_SetIntegerReturnValue(arguments, static_cast<int64_t>(r));
+  Dart_Handle klass = Dart_GetClass(
+      MojoLib(), Dart_NewStringFromCString("MojoHandleSignalsState"));
+  DART_CHECK_VALID(klass);
+
+  // The return value is structured as a list of length 2:
+  // [0] MojoResult
+  // [1] MojoHandleSignalsState. (may be null)
+  Dart_Handle list = Dart_NewList(2);
+  Dart_ListSetAt(list, 0, Dart_NewInteger(r));
+  if (mojo::WaitManyResult(r).AreSignalsStatesValid()) {
+    Dart_ListSetAt(list, 1, SignalsStateToDart(klass, state));
+  } else {
+    Dart_ListSetAt(list, 1, Dart_Null());
+  }
+  Dart_SetReturnValue(arguments, list);
 }
 
 void MojoHandle_WaitMany(Dart_NativeArguments arguments) {
-  int64_t num_handles = 0;
   int64_t deadline = 0;
   Dart_Handle handles = Dart_GetNativeArgument(arguments, 0);
   Dart_Handle signals = Dart_GetNativeArgument(arguments, 1);
-  CHECK_INTEGER_ARGUMENT(arguments, 2, &num_handles, InvalidArgument);
-  CHECK_INTEGER_ARGUMENT(arguments, 3, &deadline, InvalidArgument);
+  CHECK_INTEGER_ARGUMENT(arguments, 2, &deadline, InvalidArgument);
 
   if (!Dart_IsList(handles) || !Dart_IsList(signals)) {
     SetInvalidArgumentReturn(arguments);
@@ -202,16 +229,15 @@ void MojoHandle_WaitMany(Dart_NativeArguments arguments) {
   intptr_t signals_len = 0;
   Dart_ListLength(handles, &handles_len);
   Dart_ListLength(signals, &signals_len);
-  if ((handles_len != num_handles) || (signals_len != num_handles)) {
+  if (handles_len != signals_len) {
     SetInvalidArgumentReturn(arguments);
     return;
   }
 
-  scoped_ptr<MojoHandle[]> mojo_handles(new MojoHandle[num_handles]);
-  scoped_ptr<MojoHandleSignals[]> mojo_signals(
-      new MojoHandleSignals[num_handles]);
+  std::vector<mojo::Handle> mojo_handles(handles_len);
+  std::vector<MojoHandleSignals> mojo_signals(handles_len);
 
-  for (int i = 0; i < num_handles; i++) {
+  for (int i = 0; i < handles_len; i++) {
     Dart_Handle dart_handle = Dart_ListGetAt(handles, i);
     Dart_Handle dart_signal = Dart_ListGetAt(signals, i);
     if (!Dart_IsInteger(dart_handle) || !Dart_IsInteger(dart_signal)) {
@@ -222,14 +248,38 @@ void MojoHandle_WaitMany(Dart_NativeArguments arguments) {
     int64_t mojo_signal = 0;
     Dart_IntegerToInt64(dart_handle, &mojo_handle);
     Dart_IntegerToInt64(dart_signal, &mojo_signal);
-    mojo_handles[i] = static_cast<MojoHandle>(mojo_handle);
+    mojo_handles[i] = mojo::Handle(mojo_handle);
     mojo_signals[i] = static_cast<MojoHandleSignals>(mojo_signal);
   }
 
-  MojoResult res = MojoWaitMany(mojo_handles.get(), mojo_signals.get(),
-                                static_cast<uint32_t>(num_handles),
-                                static_cast<MojoDeadline>(deadline));
-  Dart_SetIntegerReturnValue(arguments, static_cast<int64_t>(res));
+  std::vector<MojoHandleSignalsState> states(handles_len);
+  mojo::WaitManyResult wmr = mojo::WaitMany(
+      mojo_handles, mojo_signals, static_cast<MojoDeadline>(deadline), &states);
+
+  Dart_Handle klass = Dart_GetClass(
+      MojoLib(), Dart_NewStringFromCString("MojoHandleSignalsState"));
+  DART_CHECK_VALID(klass);
+
+  // The return value is structured as a list of length 3:
+  // [0] MojoResult
+  // [1] index of handle that caused a return (may be null)
+  // [2] list of MojoHandleSignalsState. (may be null)
+  Dart_Handle list = Dart_NewList(3);
+  Dart_ListSetAt(list, 0, Dart_NewInteger(wmr.result));
+  if (wmr.IsIndexValid())
+    Dart_ListSetAt(list, 1, Dart_NewInteger(wmr.index));
+  else
+    Dart_ListSetAt(list, 1, Dart_Null());
+  if (wmr.AreSignalsStatesValid()) {
+    Dart_Handle stateList = Dart_NewList(handles_len);
+    for (int i = 0; i < handles_len; i++) {
+      Dart_ListSetAt(stateList, i, SignalsStateToDart(klass, states[i]));
+    }
+    Dart_ListSetAt(list, 2, stateList);
+  } else {
+    Dart_ListSetAt(list, 2, Dart_Null());
+  }
+  Dart_SetReturnValue(arguments, list);
 }
 
 void MojoSharedBuffer_Create(Dart_NativeArguments arguments) {
