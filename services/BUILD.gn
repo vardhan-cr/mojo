@@ -7,10 +7,11 @@ import("//build/config/ui.gni")
 group("services") {
   deps = [
     "//services/clipboard",
-    "//services/gles2:lib",
     "//services/fake_surfaces",
+    "//services/gles2:lib",
     "//services/http_server",
     "//services/http_server/public",
+    "//services/icu_data",
     "//services/js",
     "//services/native_viewport",
     "//services/surfaces",
