@@ -1,8 +1,8 @@
 include_rules = [
+  "!base",
   "+geometry/public",
   "+input_events/public",
   "+surfaces/public",
-  "+ui/gfx/geometry",
   "+view_manager/public",
   "+window_manager/public",
 ]
