@@ -51,7 +51,7 @@ void NativeViewportImpl::Create(
     mojo::SizePtr size,
     const mojo::Callback<void(uint64_t)>& callback) {
   create_callback_ = callback;
-  size_ = size.To<gfx::Size>();
+  metrics_->size = size.Clone();
   if (is_headless_)
     platform_viewport_ = PlatformViewportHeadless::Create(this);
   else
@@ -82,11 +82,10 @@ void NativeViewportImpl::SubmittedFrame(mojo::SurfaceIdPtr child_surface_id) {
     // initialize that system.
     // TODO(jamesr): When everything is converted to surfaces initialize this
     // eagerly.
-    viewport_surface_.reset(
-        new ViewportSurface(surfaces_service_.get(),
-                            gpu_service_.get(),
-                            size_,
-                            child_surface_id.To<cc::SurfaceId>()));
+    viewport_surface_.reset(new ViewportSurface(
+        surfaces_service_.get(), gpu_service_.get(),
+        metrics_->size.To<gfx::Size>(),
+        child_surface_id.To<cc::SurfaceId>()));
     if (widget_id_)
       viewport_surface_->SetWidgetId(widget_id_);
   }
@@ -100,15 +99,15 @@ void NativeViewportImpl::SetEventDispatcher(
   event_dispatcher_ = dispatcher.Pass();
 }
 
-void NativeViewportImpl::OnBoundsChanged(const gfx::Rect& bounds) {
-  if (size_ == bounds.size())
+void NativeViewportImpl::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
+  if (metrics_->Equals(*metrics))
     return;
 
-  size_ = bounds.size();
+  metrics_ = metrics.Pass();
 
   // Wait for the accelerated widget before telling the client of the bounds.
   if (create_callback_.is_null())
-    ProcessOnBoundsChanged();
+    ProcessOnMetricsChanged();
 }
 
 void NativeViewportImpl::OnAcceleratedWidgetAvailable(
@@ -117,9 +116,9 @@ void NativeViewportImpl::OnAcceleratedWidgetAvailable(
   // TODO(jamesr): Remove once everything is converted to surfaces.
   create_callback_.Run(widget_id_);
   create_callback_.reset();
-  // Immediately tell the client of the size. The size may be wrong, if so we'll
-  // get the right one in the next OnBoundsChanged() call.
-  ProcessOnBoundsChanged();
+  // Immediately tell the client the metrics. The size may be wrong, if so we'll
+  // get the right one in the next OnMetricsChanged() call.
+  ProcessOnMetricsChanged();
   if (viewport_surface_)
     viewport_surface_->SetWidgetId(widget_id_);
 }
@@ -160,10 +159,10 @@ void NativeViewportImpl::AckEvent() {
   waiting_for_event_ack_ = false;
 }
 
-void NativeViewportImpl::ProcessOnBoundsChanged() {
-  client()->OnSizeChanged(mojo::Size::From(size_));
+void NativeViewportImpl::ProcessOnMetricsChanged() {
+  client()->OnMetricsChanged(metrics_.Clone());
   if (viewport_surface_)
-    viewport_surface_->SetSize(size_);
+    viewport_surface_->SetSize(metrics_->size.To<gfx::Size>());
 }
 
 }  // namespace native_viewport

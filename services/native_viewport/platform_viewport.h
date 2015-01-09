@@ -6,6 +6,7 @@
 #define SERVICES_NATIVE_VIEWPORT_PLATFORM_VIEWPORT_H_
 
 #include "base/memory/scoped_ptr.h"
+#include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
@@ -26,7 +27,7 @@ class PlatformViewport {
    public:
     virtual ~Delegate() {}
 
-    virtual void OnBoundsChanged(const gfx::Rect& rect) = 0;
+    virtual void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) = 0;
     virtual void OnAcceleratedWidgetAvailable(
         gfx::AcceleratedWidget widget) = 0;
     virtual bool OnEvent(ui::Event* ui_event) = 0;

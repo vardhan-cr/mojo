@@ -4,6 +4,8 @@
 
 #include "services/native_viewport/platform_viewport_headless.h"
 
+#include "mojo/converters/geometry/geometry_type_converters.h"
+
 namespace native_viewport {
 
 PlatformViewportHeadless::PlatformViewportHeadless(Delegate* delegate)
@@ -14,7 +16,8 @@ PlatformViewportHeadless::~PlatformViewportHeadless() {
 }
 
 void PlatformViewportHeadless::Init(const gfx::Rect& bounds) {
-  bounds_ = bounds;
+  metrics_ = mojo::ViewportMetrics::New();
+  metrics_->size = mojo::Size::From(bounds.size());
 }
 
 void PlatformViewportHeadless::Show() {
@@ -28,12 +31,12 @@ void PlatformViewportHeadless::Close() {
 }
 
 gfx::Size PlatformViewportHeadless::GetSize() {
-  return bounds_.size();
+  return metrics_->size.To<gfx::Size>();
 }
 
 void PlatformViewportHeadless::SetBounds(const gfx::Rect& bounds) {
-  bounds_ = bounds;
-  delegate_->OnBoundsChanged(bounds_);
+  metrics_->size = mojo::Size::From(bounds.size());
+  delegate_->OnMetricsChanged(metrics_->Clone());
 }
 
 void PlatformViewportHeadless::SetCapture() {

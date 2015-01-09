@@ -170,8 +170,8 @@ void DefaultDisplayManager::OnDestroyed() {
   native_viewport_closed_callback_.Run();
 }
 
-void DefaultDisplayManager::OnSizeChanged(mojo::SizePtr size) {
-  size_ = size.To<gfx::Size>();
+void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
+  size_ = metrics->size.To<gfx::Size>();
   connection_manager_->root()->SetBounds(gfx::Rect(size_));
   if (surface_id_.is_null())
     return;
