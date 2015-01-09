@@ -6,4 +6,13 @@ module mojo;
 
 interface EchoService {
   EchoString(string? value) => (string? value);
+
+  // Provide the EchoService to the echo_target.js
+  // application. The full URL for echo_target.js is
+  // computed relative to this application's URL.
+  // Return after echo_target has called EchoString().
+  ShareEchoService() => (bool ok);
+
+  // Make it stop.
+  Quit();
 };

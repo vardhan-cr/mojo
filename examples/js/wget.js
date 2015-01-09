@@ -14,9 +14,9 @@ define("main", [
   "mojo/services/network/public/interfaces/url_loader.mojom",
 ], function(console, application, core, network, loader) {
 
-  var Application = application.Application;
-  var NetworkService = network.NetworkService;
-  var URLRequest = loader.URLRequest;
+  const Application = application.Application;
+  const NetworkService = network.NetworkService;
+  const URLRequest = loader.URLRequest;
 
   class WGet extends Application {
     initialize(args) {

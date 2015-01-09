@@ -9,16 +9,32 @@ define("main", [
   "examples/echo/echo_service.mojom",
 ], function(console, application, echo) {
 
-  var Application = application.Application;
-  var EchoService = echo.EchoService;
+  const Application = application.Application;
+  const EchoService = echo.EchoService;
+
+  var shareEchoTargetApp;
+  var everythingDone = {providedService: false, requestedService: false};
+
+  // This application will quit after the EchoServiceImpl has been used once
+  // and the EchoService we requested has responded once.
+  function quitIfEverythingIsDone(doneNow) {
+    everythingDone[doneNow] = true;
+    if (everythingDone.providedService && everythingDone.requestedService)
+      shareEchoTargetApp.quit();
+  }
 
   class EchoServiceImpl {
     echoString(s) {
+      quitIfEverythingIsDone("providedService");
       return Promise.resolve({value: "ShareEchoTarget: " + s});
     }
   }
 
   class ShareEchoTarget extends Application {
+    initialize(args) {
+      shareEchoTargetApp = this;
+    }
+
     acceptConnection(initiatorURL, shareEchoSP) {
       // The shareEchoSP parameter is-a JS ServiceProvider that's
       // connected to the share_echo.js application. We can request the
@@ -27,6 +43,7 @@ define("main", [
       var echoService = shareEchoSP.requestService(EchoService);
       echoService.echoString("ShareEchoTarget").then(function(response) {
         console.log(response.value);
+        quitIfEverythingIsDone("requestedService");
       });
       shareEchoSP.provideService(EchoService, EchoServiceImpl);
     }

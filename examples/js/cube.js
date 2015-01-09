@@ -26,12 +26,12 @@ define("main", [
             clock,
             timer) {
 
-  var Application = application.Application;
-  var Context = gl.Context;
-  var Gpu = gpu.Gpu;
-  var Size = geometry.Size;
-  var ViewportParameterListener = vpl.ViewportParameterListener;
-  var NativeViewport = nv.NativeViewport;
+  const Application = application.Application;
+  const Context = gl.Context;
+  const Gpu = gpu.Gpu;
+  const Size = geometry.Size;
+  const ViewportParameterListener = vpl.ViewportParameterListener;
+  const NativeViewport = nv.NativeViewport;
 
   const VERTEX_SHADER_SOURCE = [
     'uniform mat4 u_mvpMatrix;',

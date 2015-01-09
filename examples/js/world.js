@@ -5,7 +5,7 @@ define("main", [
   "mojo/services/public/js/application",
 ], function(console, application) {
 
-  var Application = application.Application;
+  const Application = application.Application;
 
   class World extends Application {
     initialize(args) {

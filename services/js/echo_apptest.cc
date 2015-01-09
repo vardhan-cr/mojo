@@ -29,6 +29,26 @@ class JSEchoTest : public test::JSApplicationTestBase {
   MOJO_DISALLOW_COPY_AND_ASSIGN(JSEchoTest);
 };
 
+class JSServiceProviderEchoTest : public test::JSApplicationTestBase {
+ public:
+  JSServiceProviderEchoTest() : JSApplicationTestBase() {}
+  ~JSServiceProviderEchoTest() override {}
+
+ protected:
+  // ApplicationTestBase:
+  void SetUp() override {
+    ApplicationTestBase::SetUp();
+    const std::string& url = JSAppURL("echo.js");
+    application_impl()->shell()->ConnectToApplication(
+        url, GetProxy(&echo_service_provider_));
+  }
+
+  mojo::ServiceProviderPtr echo_service_provider_;
+
+ private:
+  MOJO_DISALLOW_COPY_AND_ASSIGN(JSServiceProviderEchoTest);
+};
+
 struct EchoStringCallback {
   explicit EchoStringCallback(String *s) : echo_value(s) {}
   void Run(const String& value) const {
@@ -37,13 +57,21 @@ struct EchoStringCallback {
   String *echo_value;
 };
 
+struct ShareEchoServiceCallback {
+  explicit ShareEchoServiceCallback(bool *b) : value(b) {}
+  void Run(bool callback_value) const {
+    *value = callback_value;
+  }
+  bool *value;
+};
+
 TEST_F(JSEchoTest, EchoString) {
   String foo;
   EchoStringCallback callback(&foo);
   echo_service_->EchoString("foo", callback);
   EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
   EXPECT_EQ("foo", foo);
-  echo_service_->EchoString("quit", callback);
+  echo_service_->Quit();
 }
 
 TEST_F(JSEchoTest, EchoEmptyString) {
@@ -52,7 +80,7 @@ TEST_F(JSEchoTest, EchoEmptyString) {
   echo_service_->EchoString("", callback);
   EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
   EXPECT_EQ("", empty);
-  echo_service_->EchoString("quit", callback);
+  echo_service_->Quit();
 }
 
 TEST_F(JSEchoTest, EchoNullString) {
@@ -61,8 +89,35 @@ TEST_F(JSEchoTest, EchoNullString) {
   echo_service_->EchoString(nullptr, callback);
   EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
   EXPECT_TRUE(null.is_null());
-  echo_service_->EchoString("quit", callback);
+  echo_service_->Quit();
+}
+
+// Verify that a JS app's ServiceProvider can request and provide services.
+// This test exercises the same code paths as examples/js/share_echo.js.
+TEST_F(JSEchoTest, ShareEchoService) {
+  bool returned_value;
+  ShareEchoServiceCallback callback(&returned_value);
+  echo_service_->ShareEchoService(callback);
+  EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(returned_value);
+  echo_service_->Quit();
+}
+
+// Verify that connecting via the echo service application's ServiceProvider
+// behaves the same as connecting to the echo service directly.
+TEST_F(JSServiceProviderEchoTest, UseApplicationServiceProvider) {
+  mojo::EchoServicePtr echo_service;
+  mojo::MessagePipe pipe;
+  echo_service.Bind(pipe.handle0.Pass());
+  echo_service_provider_->ConnectToService(
+      mojo::EchoService::Name_, pipe.handle1.Pass());
+  String foo;
+  EchoStringCallback callback(&foo);
+  echo_service->EchoString("foo", callback);
+  EXPECT_TRUE(echo_service.WaitForIncomingMethodCall());
+  EXPECT_EQ("foo", foo);
+  echo_service->Quit();
 }
 
 } // namespace
-}  // namespace js
+} // namespace js
