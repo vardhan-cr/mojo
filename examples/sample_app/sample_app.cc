@@ -53,10 +53,10 @@ class SampleApp
 
   void OnDestroyed() override { mojo::RunLoop::current()->Quit(); }
 
-  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override {
-    assert(metrics);
+  void OnSizeChanged(mojo::SizePtr size) override {
+    assert(size);
     if (gles2_client_)
-      gles2_client_->SetSize(*metrics->size);
+      gles2_client_->SetSize(*size);
   }
 
   void OnEvent(mojo::EventPtr event,

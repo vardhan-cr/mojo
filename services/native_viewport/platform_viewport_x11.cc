@@ -6,7 +6,6 @@
 
 #include "base/command_line.h"
 #include "base/message_loop/message_loop.h"
-#include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/mojo_extended_key_event_data.h"
 #include "ui/events/event.h"
 #include "ui/events/event_utils.h"
@@ -38,9 +37,6 @@ class PlatformViewportX11 : public PlatformViewport,
 
     event_source_ = ui::PlatformEventSource::CreateDefault();
 
-    metrics_ = mojo::ViewportMetrics::New();
-    metrics_->size = mojo::Size::From(bounds.size());
-
     platform_window_.reset(new ui::X11Window(this));
     platform_window_->SetBounds(bounds);
   }
@@ -51,7 +47,7 @@ class PlatformViewportX11 : public PlatformViewport,
 
   void Close() override { platform_window_->Close(); }
 
-  gfx::Size GetSize() override { return metrics_->size.To<gfx::Size>(); }
+  gfx::Size GetSize() override { return bounds_.size(); }
 
   void SetBounds(const gfx::Rect& bounds) override {
     platform_window_->SetBounds(bounds);
@@ -63,8 +59,8 @@ class PlatformViewportX11 : public PlatformViewport,
 
   // ui::PlatformWindowDelegate:
   void OnBoundsChanged(const gfx::Rect& new_bounds) override {
-    metrics_->size = mojo::Size::From(new_bounds.size());
-    delegate_->OnMetricsChanged(metrics_.Clone());
+    bounds_ = new_bounds;
+    delegate_->OnBoundsChanged(new_bounds);
   }
 
   void OnDamageRect(const gfx::Rect& damaged_region) override {}
@@ -121,7 +117,7 @@ class PlatformViewportX11 : public PlatformViewport,
   scoped_ptr<ui::PlatformEventSource> event_source_;
   scoped_ptr<ui::PlatformWindow> platform_window_;
   Delegate* delegate_;
-  mojo::ViewportMetricsPtr metrics_;
+  gfx::Rect bounds_;
 
   DISALLOW_COPY_AND_ASSIGN(PlatformViewportX11);
 };

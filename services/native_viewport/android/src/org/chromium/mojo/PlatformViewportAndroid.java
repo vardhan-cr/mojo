@@ -35,13 +35,11 @@ public class PlatformViewportAndroid extends SurfaceView {
         mNativeMojoViewport = nativeViewport;
         assert mNativeMojoViewport != 0;
 
-        final float density = context.getResources().getDisplayMetrics().density;
-
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 assert mNativeMojoViewport != 0;
-                nativeSurfaceSetSize(mNativeMojoViewport, width, height, density);
+                nativeSurfaceSetSize(mNativeMojoViewport, width, height);
             }
 
             @Override
@@ -82,7 +80,8 @@ public class PlatformViewportAndroid extends SurfaceView {
             long nativePlatformViewportAndroid);
 
     private static native void nativeSurfaceSetSize(
-            long nativePlatformViewportAndroid, int width, int height, float density);
+            long nativePlatformViewportAndroid,
+            int width, int height);
 
     private static native boolean nativeTouchEvent(
             long nativePlatformViewportAndroid,

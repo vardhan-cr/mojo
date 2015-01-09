@@ -404,9 +404,9 @@ define("main", [
       return Promise.resolve(); // This just gates the next event delivery
     }
 
-    onMetricsChanged(metrics) {
+    onSizeChanged(size) {
       if (this.gles2_)
-        this.gles2_.setDimensions(metrics.size);
+        this.gles2_.setDimensions(size);
     }
 
     onDestroyed() {

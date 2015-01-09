@@ -95,7 +95,7 @@ class SurfacesApp : public ApplicationDelegate,
     DCHECK(!resources.size());
   }
   // NativeViewportClient implementation.
-  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override {}
+  void OnSizeChanged(mojo::SizePtr size) override {}
   void OnDestroyed() override {}
 
  private:
