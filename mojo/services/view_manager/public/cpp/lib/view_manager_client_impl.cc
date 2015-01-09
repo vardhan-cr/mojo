@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/services/view_manager/public/cpp/lib/view_manager_client_impl.h"
+#include "view_manager/public/cpp/lib/view_manager_client_impl.h"
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
@@ -12,10 +12,10 @@
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
-#include "mojo/services/view_manager/public/cpp/lib/view_private.h"
-#include "mojo/services/view_manager/public/cpp/util.h"
-#include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
-#include "mojo/services/view_manager/public/cpp/view_observer.h"
+#include "view_manager/public/cpp/lib/view_private.h"
+#include "view_manager/public/cpp/util.h"
+#include "view_manager/public/cpp/view_manager_delegate.h"
+#include "view_manager/public/cpp/view_observer.h"
 
 namespace mojo {
 

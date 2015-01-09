@@ -53,6 +53,10 @@ source_set("view_manager_lib") {
     "window_manager_access_policy.h",
   ]
 
+  public_deps = [
+    "//mojo/services/view_manager/public/cpp",
+  ]
+
   deps = [
     "//base",
     "//cc/surfaces",
@@ -91,6 +95,7 @@ source_set("test_support") {
     "//mojo/common",
     "//mojo/public/cpp/bindings:bindings",
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/cpp:common",
     "//mojo/services/view_manager/public/interfaces",
   ]
@@ -148,6 +153,7 @@ mojo_native_application("view_manager_service_apptests") {
     "//mojo/common",
     "//mojo/public/cpp/bindings",
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
   ]
