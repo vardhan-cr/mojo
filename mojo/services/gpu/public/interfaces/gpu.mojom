@@ -12,6 +12,6 @@ interface Gpu {
   CreateOnscreenGLES2Context(uint64 native_viewport_id,
                              Size size,
                              CommandBuffer& gles2_client,
-                             ViewportParameterListener listener);
+                             ViewportParameterListener? listener);
   CreateOffscreenGLES2Context(CommandBuffer& gles2_client);
 };
