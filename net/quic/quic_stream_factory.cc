@@ -374,13 +374,20 @@ int QuicStreamFactory::Job::DoLoadServerInfo() {
 
   // To mitigate the effects of disk cache taking too long to load QUIC server
   // information, set up a timer to cancel WaitForDataReady's callback.
-  if (factory_->load_server_info_timeout_ms_ > 0) {
+  int64 load_server_info_timeout_ms = factory_->load_server_info_timeout_ms_;
+  if (factory_->load_server_info_timeout_srtt_multiplier_ > 0) {
+    DCHECK_EQ(0, load_server_info_timeout_ms);
+    load_server_info_timeout_ms =
+        (factory_->load_server_info_timeout_srtt_multiplier_ *
+         factory_->GetServerNetworkStatsSmoothedRttInMicroseconds(server_id_)) /
+        1000;
+  }
+  if (load_server_info_timeout_ms > 0) {
     factory_->task_runner_->PostDelayedTask(
         FROM_HERE,
         base::Bind(&QuicStreamFactory::Job::CancelWaitForDataReadyCallback,
                    weak_factory_.GetWeakPtr()),
-        base::TimeDelta::FromMilliseconds(
-            factory_->load_server_info_timeout_ms_));
+        base::TimeDelta::FromMilliseconds(load_server_info_timeout_ms));
   }
 
   disk_cache_load_start_time_ = base::TimeTicks::Now();
@@ -428,6 +435,11 @@ int QuicStreamFactory::Job::DoConnect() {
     return ERR_CONNECTION_CLOSED;
   }
 
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile1(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::Job::DoConnect1"));
+
   session_->StartReading();
   if (!session_->connection()->connected()) {
     return ERR_QUIC_PROTOCOL_ERROR;
@@ -435,6 +447,12 @@ int QuicStreamFactory::Job::DoConnect() {
   bool require_confirmation =
       factory_->require_confirmation() || is_post_ ||
       was_alternate_protocol_recently_broken_;
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile2(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::Job::DoConnect2"));
+
   rv = session_->CryptoConnect(
       require_confirmation,
       base::Bind(&QuicStreamFactory::Job::OnIOComplete,
@@ -546,6 +564,7 @@ QuicStreamFactory::QuicStreamFactory(
     bool disable_connection_pooling,
     int load_server_info_timeout,
     bool disable_loading_server_info_for_new_servers,
+    float load_server_info_timeout_srtt_multiplier,
     const QuicTagVector& connection_options)
     : require_confirmation_(true),
       host_resolver_(host_resolver),
@@ -566,6 +585,8 @@ QuicStreamFactory::QuicStreamFactory(
       load_server_info_timeout_ms_(load_server_info_timeout),
       disable_loading_server_info_for_new_servers_(
           disable_loading_server_info_for_new_servers),
+      load_server_info_timeout_srtt_multiplier_(
+          load_server_info_timeout_srtt_multiplier),
       port_seed_(random_generator_->RandUint64()),
       check_persisted_supports_quic_(true),
       task_runner_(nullptr),
@@ -908,6 +929,11 @@ int QuicStreamFactory::CreateSession(
     const AddressList& address_list,
     const BoundNetLog& net_log,
     QuicClientSession** session) {
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile1(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession1"));
+
   bool enable_port_selection = enable_port_selection_;
   if (enable_port_selection &&
       ContainsKey(gone_away_aliases_, server_id)) {
@@ -930,7 +956,19 @@ int QuicStreamFactory::CreateSession(
           bind_type,
           base::Bind(&PortSuggester::SuggestPort, port_suggester),
           net_log.net_log(), net_log.source()));
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile2(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession2"));
+
   int rv = socket->Connect(addr);
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile3(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession3"));
+
   if (rv != OK) {
     HistogramCreateSessionFailure(CREATION_ERROR_CONNECTING_SOCKET);
     return rv;
@@ -983,6 +1021,11 @@ int QuicStreamFactory::CreateSession(
         clock_.get(), random_generator_));
   }
 
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile4(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession4"));
+
   QuicConnection* connection = new QuicConnection(connection_id,
                                                   addr,
                                                   helper_.get(),
@@ -993,6 +1036,11 @@ int QuicStreamFactory::CreateSession(
                                                   supported_versions_);
   connection->set_max_packet_length(max_packet_length_);
 
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile5(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession5"));
+
   InitializeCachedStateInCryptoConfig(server_id, server_info);
 
   QuicConfig config = config_;
@@ -1000,17 +1048,16 @@ int QuicStreamFactory::CreateSession(
   config.SetInitialFlowControlWindowToSend(kInitialReceiveWindowSize);
   config.SetInitialStreamFlowControlWindowToSend(kInitialReceiveWindowSize);
   config.SetInitialSessionFlowControlWindowToSend(kInitialReceiveWindowSize);
-  if (http_server_properties_) {
-    const HttpServerProperties::NetworkStats* stats =
-        http_server_properties_->GetServerNetworkStats(
-            server_id.host_port_pair());
-    if (stats != nullptr) {
-      config.SetInitialRoundTripTimeUsToSend(
-          static_cast<uint32>(stats->srtt.InMicroseconds()));
-    }
-  }
+  int64 srtt = GetServerNetworkStatsSmoothedRttInMicroseconds(server_id);
+  if (srtt > 0)
+    config.SetInitialRoundTripTimeUsToSend(static_cast<uint32>(srtt));
 
   if (quic_server_info_factory_ && !server_info) {
+    // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+    tracked_objects::ScopedTracker tracking_profile6(
+        FROM_HERE_WITH_EXPLICIT_FUNCTION(
+            "422516 QuicStreamFactory::CreateSession6"));
+
     // Start the disk cache loading so that we can persist the newer QUIC server
     // information and/or inform the disk cache that we have reused
     // |server_info|.
@@ -1024,6 +1071,12 @@ int QuicStreamFactory::CreateSession(
       base::MessageLoop::current()->message_loop_proxy().get(),
       net_log.net_log());
   all_sessions_[*session] = server_id;  // owning pointer
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile7(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession7"));
+
   (*session)->InitializeSession(server_id,  &crypto_config_,
                                 quic_crypto_client_stream_factory_);
   bool closed_during_initialize =
@@ -1054,6 +1107,18 @@ void QuicStreamFactory::ActivateSession(
                                 server_id.is_https());
   DCHECK(!ContainsKey(ip_aliases_[ip_alias_key], session));
   ip_aliases_[ip_alias_key].insert(session);
+}
+
+int64 QuicStreamFactory::GetServerNetworkStatsSmoothedRttInMicroseconds(
+    const QuicServerId& server_id) const {
+  if (!http_server_properties_)
+    return 0;
+  const ServerNetworkStats* stats =
+      http_server_properties_->GetServerNetworkStats(
+          server_id.host_port_pair());
+  if (stats == nullptr)
+    return 0;
+  return stats->srtt.InMicroseconds();
 }
 
 void QuicStreamFactory::InitializeCachedStateInCryptoConfig(
@@ -1112,7 +1177,7 @@ void QuicStreamFactory::ProcessGoingAwaySession(
 
   const QuicConnectionStats& stats = session->connection()->GetStats();
   if (session->IsCryptoHandshakeConfirmed()) {
-    HttpServerProperties::NetworkStats network_stats;
+    ServerNetworkStats network_stats;
     network_stats.srtt = base::TimeDelta::FromMicroseconds(stats.srtt_us);
     network_stats.bandwidth_estimate = stats.estimated_bandwidth;
     http_server_properties_->SetServerNetworkStats(server_id.host_port_pair(),

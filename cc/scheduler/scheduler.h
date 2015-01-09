@@ -65,6 +65,8 @@ class CC_EXPORT SchedulerFrameSourcesConstructor {
   virtual BeginFrameSource* ConstructPrimaryFrameSource(Scheduler* scheduler);
   virtual BeginFrameSource* ConstructBackgroundFrameSource(
       Scheduler* scheduler);
+  virtual BeginFrameSource* ConstructUnthrottledFrameSource(
+      Scheduler* scheduler);
 
  protected:
   SchedulerFrameSourcesConstructor() {}
@@ -112,6 +114,7 @@ class CC_EXPORT Scheduler : public BeginFrameObserverMixIn,
   void SetCanDraw(bool can_draw);
   void NotifyReadyToActivate();
   void NotifyReadyToDraw();
+  void SetThrottleFrameProduction(bool throttle);
 
   void SetNeedsCommit();
 
@@ -184,12 +187,15 @@ class CC_EXPORT Scheduler : public BeginFrameObserverMixIn,
   scoped_ptr<BeginFrameSourceMultiplexer> frame_source_;
   BeginFrameSource* primary_frame_source_;
   BeginFrameSource* background_frame_source_;
+  BeginFrameSource* unthrottled_frame_source_;
 
   // Storage when frame sources are internal
   scoped_ptr<BeginFrameSource> primary_frame_source_internal_;
   scoped_ptr<SyntheticBeginFrameSource> background_frame_source_internal_;
+  scoped_ptr<BeginFrameSource> unthrottled_frame_source_internal_;
 
   VSyncParameterObserver* vsync_observer_;
+  bool throttle_frame_production_;
 
   const SchedulerSettings settings_;
   SchedulerClient* client_;
@@ -200,18 +206,16 @@ class CC_EXPORT Scheduler : public BeginFrameObserverMixIn,
 
   base::TimeDelta estimated_parent_draw_time_;
 
-  bool begin_retro_frame_posted_;
   std::deque<BeginFrameArgs> begin_retro_frame_args_;
   BeginFrameArgs begin_impl_frame_args_;
   SchedulerStateMachine::BeginImplFrameDeadlineMode
       begin_impl_frame_deadline_mode_;
 
   base::Closure begin_retro_frame_closure_;
-  base::Closure begin_unthrottled_frame_closure_;
-
   base::Closure begin_impl_frame_deadline_closure_;
   base::Closure poll_for_draw_triggers_closure_;
   base::Closure advance_commit_state_closure_;
+  base::CancelableClosure begin_retro_frame_task_;
   base::CancelableClosure begin_impl_frame_deadline_task_;
   base::CancelableClosure poll_for_draw_triggers_task_;
   base::CancelableClosure advance_commit_state_task_;
@@ -225,7 +229,7 @@ class CC_EXPORT Scheduler : public BeginFrameObserverMixIn,
   void RescheduleBeginImplFrameDeadlineIfNeeded();
   void SetupNextBeginFrameIfNeeded();
   void PostBeginRetroFrameIfNeeded();
-  void SetupPollingMechanisms(bool needs_begin_frame);
+  void SetupPollingMechanisms();
   void DrawAndSwapIfPossible();
   void ProcessScheduledActions();
   bool CanCommitAndActivateBeforeDeadline() const;
@@ -238,6 +242,7 @@ class CC_EXPORT Scheduler : public BeginFrameObserverMixIn,
   void PollToAdvanceCommitState();
   void SetupPowerMonitoring();
   void TeardownPowerMonitoring();
+  void UpdateActiveFrameSource();
 
   base::TimeDelta EstimatedParentDrawTime() {
     return estimated_parent_draw_time_;

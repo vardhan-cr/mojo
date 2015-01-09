@@ -967,10 +967,10 @@
         }],
 
         # By default, use ICU data file (icudtl.dat) on all platforms
-        # except when building Android WebView or Chromecast.
+        # except when building Android WebView.
         # TODO(jshin): Handle 'use_system_icu' on Linux (Chromium).
         # Set the data reduction proxy origin for Android Webview.
-        ['android_webview_build==0 and android_webview_telemetry_build==0 and chromecast==0', {
+        ['android_webview_build==0 and android_webview_telemetry_build==0', {
           'icu_use_data_file_flag%' : 1,
         }, {
           'icu_use_data_file_flag%' : 0,
@@ -2136,6 +2136,18 @@
       ['clang_use_chrome_plugins==1 and OS!="win"', {
         'clang_chrome_plugins_flags': [
           '<!@(<(DEPTH)/tools/clang/scripts/plugin_flags.sh)'
+        ],
+        'conditions': [
+          # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
+          # on all platforms is currently underway.
+          ['OS=="linux" and chromeos==0', {
+            'clang_chrome_plugins_flags': [
+              '-Xclang',
+              '-plugin-arg-find-bad-constructs',
+              '-Xclang',
+              'strict-virtual-specifiers',
+            ],
+          }],
         ],
       }],
       ['asan==1 or msan==1 or lsan==1 or tsan==1', {
@@ -3372,11 +3384,18 @@
                 # "/Oy /Oy-" and warnings about overriding.
                 'AdditionalOptions': ['/Oy-'],
               }],
+              ['asan==0', {
+                # Put data in separate COMDATs. This allows the linker
+                # to put bit-identical constants at the same address even if
+                # they're unrelated constants, which saves binary size.
+                # This optimization can't be used when ASan is enabled because
+                # it is not compatible with the ASan ODR checker.
+                'AdditionalOptions': ['/Gw'],
+              }],
             ],
             'AdditionalOptions': [
                 '/d2Zi+',  # Improve debugging of Release builds.
                 '/Zc:inline',  # Remove unreferenced COMDAT (faster links).
-                '/Gw',  # Put data in separate COMDATs.
                 '<@(win_release_extra_cflags)',
             ],
           },
@@ -5255,6 +5274,11 @@
                 'VCLinkerTool': {
                   # Set /LTCG for the official builds.
                   'LinkTimeCodeGeneration': '1',
+                  'AdditionalOptions': [
+                    # Set the number of LTCG code-gen threads to eight.
+                    # The default is four. This gives a 5-10% link speedup.
+                    '/cgthreads:8',
+                  ],
                 },
               },
               'target_conditions': [

@@ -5737,6 +5737,48 @@ class LayerTreeHostTestCrispUpAfterPinchEndsWithOneCopy
 
 MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestCrispUpAfterPinchEndsWithOneCopy);
 
+class RasterizeWithGpuRasterizationCreatesResources : public LayerTreeHostTest {
+ protected:
+  RasterizeWithGpuRasterizationCreatesResources() {}
+
+  void InitializeSettings(LayerTreeSettings* settings) override {
+    settings->impl_side_painting = true;
+    settings->gpu_rasterization_forced = true;
+  }
+
+  void SetupTree() override {
+    client_.set_fill_with_nonsolid_color(true);
+
+    scoped_refptr<Layer> root = Layer::Create();
+    root->SetBounds(gfx::Size(500, 500));
+
+    scoped_ptr<FakePicturePile> pile(new FakePicturePile);
+    scoped_refptr<FakePictureLayer> layer =
+        FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
+    layer->SetBounds(gfx::Size(500, 500));
+    layer->SetContentsOpaque(true);
+    root->AddChild(layer);
+
+    layer_tree_host()->SetRootLayer(root);
+    LayerTreeHostTest::SetupTree();
+  }
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
+                                   LayerTreeHostImpl::FrameData* frame_data,
+                                   DrawResult draw_result) override {
+    EXPECT_NE(0u, host_impl->resource_provider()->num_resources());
+    EndTest();
+    return draw_result;
+  }
+  void AfterTest() override {}
+
+  FakeContentLayerClient client_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(RasterizeWithGpuRasterizationCreatesResources);
+
 class LayerTreeHostTestContinuousDrawWhenCreatingVisibleTiles
     : public LayerTreeHostTest {
  protected:
@@ -5969,6 +6011,50 @@ class LayerTreeHostTestOneActivatePerPrepareTiles : public LayerTreeHostTest {
 };
 
 MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestOneActivatePerPrepareTiles);
+
+class LayerTreeHostTestActivationCausesPrepareTiles : public LayerTreeHostTest {
+ public:
+  LayerTreeHostTestActivationCausesPrepareTiles()
+      : scheduled_prepare_tiles_count_(0) {}
+
+  void SetupTree() override {
+    client_.set_fill_with_nonsolid_color(true);
+    scoped_refptr<FakePictureLayer> root_layer =
+        FakePictureLayer::Create(&client_);
+    root_layer->SetBounds(gfx::Size(150, 150));
+    root_layer->SetIsDrawable(true);
+
+    layer_tree_host()->SetRootLayer(root_layer);
+    LayerTreeHostTest::SetupTree();
+  }
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  void NotifyReadyToActivateOnThread(LayerTreeHostImpl* impl) override {
+    // Ensure we've already activated.
+    EXPECT_FALSE(impl->pending_tree());
+
+    // After activating, we either need to prepare tiles, or we've already
+    // called a scheduled prepare tiles. This is done because activation might
+    // cause us to have to memory available (old active tree is gone), so we
+    // need to ensure we will get a PrepareTiles call.
+    if (!impl->prepare_tiles_needed())
+      EXPECT_GE(scheduled_prepare_tiles_count_, 1);
+    EndTest();
+  }
+
+  void ScheduledActionPrepareTiles() override {
+    ++scheduled_prepare_tiles_count_;
+  }
+
+  void AfterTest() override {}
+
+ protected:
+  FakeContentLayerClient client_;
+  int scheduled_prepare_tiles_count_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestActivationCausesPrepareTiles);
 
 // This tests an assertion that DidCommit and WillCommit happen in the same
 // stack frame with no tasks that run between them.  Various embedders of

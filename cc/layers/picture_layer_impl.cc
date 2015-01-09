@@ -342,15 +342,10 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
 
           TileDrawQuad* quad =
               render_pass->CreateAndAppendDrawQuad<TileDrawQuad>();
-          quad->SetNew(shared_quad_state,
-                       geometry_rect,
-                       opaque_rect,
-                       visible_geometry_rect,
-                       draw_info.get_resource_id(),
-                       texture_rect,
-                       iter.texture_size(),
-                       draw_info.contents_swizzled(),
-                       nearest_neighbor_);
+          quad->SetNew(shared_quad_state, geometry_rect, opaque_rect,
+                       visible_geometry_rect, draw_info.resource_id(),
+                       texture_rect, draw_info.resource_size(),
+                       draw_info.contents_swizzled(), nearest_neighbor_);
           has_draw_quad = true;
           break;
         }
@@ -371,20 +366,18 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
           PictureDrawQuad* quad =
               render_pass->CreateAndAppendDrawQuad<PictureDrawQuad>();
           quad->SetNew(shared_quad_state, geometry_rect, opaque_rect,
-                       visible_geometry_rect, texture_rect, iter.texture_size(),
-                       nearest_neighbor_, format, iter->content_rect(),
-                       iter->contents_scale(), raster_source_);
+                       visible_geometry_rect, texture_rect,
+                       iter->desired_texture_size(), nearest_neighbor_, format,
+                       iter->content_rect(), iter->contents_scale(),
+                       raster_source_);
           has_draw_quad = true;
           break;
         }
         case TileDrawInfo::SOLID_COLOR_MODE: {
           SolidColorDrawQuad* quad =
               render_pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
-          quad->SetNew(shared_quad_state,
-                       geometry_rect,
-                       visible_geometry_rect,
-                       draw_info.get_solid_color(),
-                       false);
+          quad->SetNew(shared_quad_state, geometry_rect, visible_geometry_rect,
+                       draw_info.solid_color(), false);
           has_draw_quad = true;
           break;
         }
@@ -449,7 +442,7 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
   CleanUpTilingsOnActiveLayer(seen_tilings);
 }
 
-void PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
+bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
                                    bool resourceless_software_draw) {
   DCHECK_EQ(1.f, contents_scale_x());
   DCHECK_EQ(1.f, contents_scale_y());
@@ -464,7 +457,7 @@ void PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
     ideal_contents_scale_ = 0.f;
     ideal_source_scale_ = 0.f;
     SanityCheckTilingState();
-    return;
+    return false;
   }
 
   UpdateIdealScales();
@@ -488,10 +481,10 @@ void PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
 
   should_update_tile_priorities_ = true;
 
-  UpdateTilePriorities(occlusion_in_content_space);
+  return UpdateTilePriorities(occlusion_in_content_space);
 }
 
-void PictureLayerImpl::UpdateTilePriorities(
+bool PictureLayerImpl::UpdateTilePriorities(
     const Occlusion& occlusion_in_content_space) {
   DCHECK_IMPLIES(raster_source_->IsSolidColor(), tilings_->num_tilings() == 0);
 
@@ -523,10 +516,7 @@ void PictureLayerImpl::UpdateTilePriorities(
       viewport_rect_in_layer_space, ideal_contents_scale_,
       current_frame_time_in_seconds, occlusion_in_content_space,
       can_require_tiles_for_activation);
-
-  // TODO(vmpstr): See if this can be removed in favour of calling it from LTHI
-  if (updated)
-    layer_tree_impl()->DidModifyTilePriorities();
+  return updated;
 }
 
 gfx::Rect PictureLayerImpl::GetViewportForTilePriorityInContentSpace() const {
@@ -609,12 +599,6 @@ void PictureLayerImpl::NotifyTileStateChanged(const Tile* tile) {
         gfx::ScaleRect(tile->content_rect(), 1.f / tile->contents_scale());
     AddDamageRect(layer_damage_rect);
   }
-}
-
-void PictureLayerImpl::DidBecomeActive() {
-  LayerImpl::DidBecomeActive();
-  // TODO(vmpstr): See if this can be removed in favour of calling it from LTHI
-  layer_tree_impl()->DidModifyTilePriorities();
 }
 
 void PictureLayerImpl::DidBeginTracing() {
@@ -797,8 +781,8 @@ void PictureLayerImpl::GetContentsResourceId(
     return;
   }
 
-  *resource_id = draw_info.get_resource_id();
-  *resource_size = iter.texture_size();
+  *resource_id = draw_info.resource_id();
+  *resource_size = draw_info.resource_size();
 }
 
 void PictureLayerImpl::SetNearestNeighbor(bool nearest_neighbor) {

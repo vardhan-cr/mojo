@@ -138,6 +138,16 @@
 #define SK_SUPPORT_UNITTEST
 #endif
 
+/* If cross process SkPictureImageFilters are not explicitly enabled then
+   they are always disabled.
+ */
+#ifndef SK_ALLOW_CROSSPROCESS_PICTUREIMAGEFILTERS
+    #ifndef SK_DISALLOW_CROSSPROCESS_PICTUREIMAGEFILTERS
+        #define SK_DISALLOW_CROSSPROCESS_PICTUREIMAGEFILTERS
+    #endif
+#endif
+
+
 /* If your system embeds skia and has complex event logging, define this
    symbol to name a file that maps the following macros to your system's
    equivalents:
@@ -267,6 +277,26 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 
 #ifndef    SK_IGNORE_GPU_DITHER
 #   define SK_IGNORE_GPU_DITHER
+#endif
+
+#ifndef SK_SUPPORT_LEGACY_ADDOVAL
+#   define SK_SUPPORT_LEGACY_ADDOVAL
+#endif
+
+#ifndef SK_SUPPORT_LEGACY_ADDRRECT
+#   define SK_SUPPORT_LEGACY_ADDRRECT
+#endif
+
+#ifndef SK_IGNORE_GPU_LAYER_HOISTING
+#   define SK_IGNORE_GPU_LAYER_HOISTING
+#endif
+
+#ifndef SK_SUPPORT_LEGACY_DRAWDATA
+#   define SK_SUPPORT_LEGACY_DRAWDATA
+#endif
+
+#ifndef SK_SUPPORT_LEGACY_CANVAS_VIRTUAL
+#   define SK_SUPPORT_LEGACY_CANVAS_VIRTUAL
 #endif
 
 // If this goes well, we can have Skia respect DYNAMIC_ANNOTATIONS_ENABLED directly.

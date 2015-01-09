@@ -15,7 +15,6 @@ group("python") {
 
 # GYP version: mojo/mojo.gyp:mojo_python_embedder
 python_binary_module("mojo_embedder") {
-  python_base_module = ""
   cython_sources = [ "system/mojo_embedder.pyx" ]
   deps = [
     "//mojo/edk/system",

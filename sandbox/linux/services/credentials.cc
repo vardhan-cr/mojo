@@ -21,7 +21,6 @@
 #include "base/template_util.h"
 #include "base/third_party/valgrind/valgrind.h"
 #include "base/threading/thread.h"
-#include "sandbox/linux/services/proc_util.h"
 #include "sandbox/linux/services/syscall_wrappers.h"
 
 namespace {
@@ -59,7 +58,8 @@ struct FILECloser {
 // TODO(jln): fix base/.
 typedef scoped_ptr<FILE, FILECloser> ScopedFILE;
 
-COMPILE_ASSERT((base::is_same<uid_t, gid_t>::value), UidAndGidAreSameType);
+static_assert((base::is_same<uid_t, gid_t>::value),
+              "uid_t and gid_t should be the same type");
 // generic_id_t can be used for either uid_t or gid_t.
 typedef uid_t generic_id_t;
 
@@ -101,8 +101,8 @@ void ChrootToThreadFdInfo(base::PlatformThreadId tid, bool* result) {
   DCHECK(result);
   *result = false;
 
-  COMPILE_ASSERT((base::is_same<base::PlatformThreadId, int>::value),
-                 TidIsAnInt);
+  static_assert((base::is_same<base::PlatformThreadId, int>::value),
+                "platform thread id should be an int");
   const std::string current_thread_fdinfo = "/proc/" +
       base::IntToString(tid) + "/fdinfo/";
 
@@ -248,9 +248,6 @@ bool Credentials::MoveToNewUserNS() {
 }
 
 bool Credentials::DropFileSystemAccess() {
-  // Chrooting to a safe empty dir will only be safe if no directory file
-  // descriptor is available to the process.
-  DCHECK(!ProcUtil::HasOpenDirectory(-1));
   return ChrootToSafeEmptyDir();
 }
 

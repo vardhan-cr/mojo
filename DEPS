@@ -22,15 +22,15 @@ vars = {
   'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
   'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '001db8599e1f2e2749a5ee65ee83821b0bde569b',
+  'skia_revision': '9558f653877b982df415e4d075db55b7558f7654',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': 'ed47c2dcd9a30eea73c9cf7b7f120f2d089ad938',
+  'v8_revision': 'cc2b2f487bfa07c4f8f33ac574a4580ad9ec0374',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  "angle_revision": "2609bf4ca44972379ff82bcda370ad6f13b817cc",
+  "angle_revision": "cd1db9e6c937a69f8efb5f73a3fcad14a737c436",
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
@@ -38,11 +38,11 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': '5a35129bce7ca777e155e5498e8d4792fa6a4819',
+  'pdfium_revision': 'a48ead9b7e3dc01f1bde83f69062eebd960edfdc',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': '306e520cda7d2f0afee9ba634dae629f994b096c',
+  'boringssl_revision': 'aac2f6a6a00921499ed85787aace287724fbc07e',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -126,7 +126,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + 'fe00999dfaee449d3465a9316778434884da4fa7', # from svn revision 2010
+    Var('chromium_git') + '/external/gyp.git' + '@' + '82b08049cc0b1f9e0bdcc0702ac6b523360f635f', # from svn revision 2020
 }
 
 

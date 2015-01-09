@@ -84,6 +84,22 @@ QuicClient::~QuicClient() {
 bool QuicClient::Initialize() {
   DCHECK(!initialized_);
 
+  // If an initial flow control window has not explicitly been set, then use the
+  // same value that Chrome uses: 10 Mb.
+  const uint32 kInitialFlowControlWindow = 10 * 1024 * 1024;  // 10 Mb
+  if (config_.GetInitialFlowControlWindowToSend() ==
+      kMinimumFlowControlSendWindow) {
+    config_.SetInitialFlowControlWindowToSend(kInitialFlowControlWindow);
+  }
+  if (config_.GetInitialStreamFlowControlWindowToSend() ==
+      kMinimumFlowControlSendWindow) {
+    config_.SetInitialStreamFlowControlWindowToSend(kInitialFlowControlWindow);
+  }
+  if (config_.GetInitialSessionFlowControlWindowToSend() ==
+      kMinimumFlowControlSendWindow) {
+    config_.SetInitialSessionFlowControlWindowToSend(kInitialFlowControlWindow);
+  }
+
   epoll_server_->set_timeout_in_us(50 * 1000);
 
   if (!CreateUDPSocket()) {
@@ -174,16 +190,14 @@ bool QuicClient::CreateUDPSocket() {
 }
 
 bool QuicClient::Connect() {
-  if (!StartConnect()) {
-    return false;
-  }
+  StartConnect();
   while (EncryptionBeingEstablished()) {
     WaitForEvents();
   }
   return session_->connection()->connected();
 }
 
-bool QuicClient::StartConnect() {
+void QuicClient::StartConnect() {
   DCHECK(initialized_);
   DCHECK(!connected());
 
@@ -208,7 +222,7 @@ bool QuicClient::StartConnect() {
     writer_.reset(writer);
   }
   session_->InitializeSession(server_id_, &crypto_config_);
-  return session_->CryptoConnect();
+  session_->CryptoConnect();
 }
 
 bool QuicClient::EncryptionBeingEstablished() {
