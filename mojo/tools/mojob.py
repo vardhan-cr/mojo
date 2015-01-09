@@ -52,6 +52,9 @@ def _args_to_config(args):
   if 'with_dart' in args:
     additional_args['with_dart'] = args.with_dart
 
+  if 'nacl' in args:
+    additional_args['use_nacl'] = args.nacl
+
   if 'dry_run' in args:
     additional_args['dry_run'] = args.dry_run
 
@@ -99,6 +102,9 @@ def gn(config):
 
   if config.values['with_dart']:
     gn_args.append('mojo_use_dart=true')
+
+  if config.values['use_nacl']:
+    gn_args.append('mojo_use_nacl=true')
 
   if config.target_os == Config.OS_ANDROID:
     gn_args.append(r'''os=\"android\" cpu_arch=\"arm\"''')
@@ -216,6 +222,7 @@ def main():
   gn_parser.set_defaults(func=gn)
   gn_parser.add_argument('--with-dart', help='Configure the Dart bindings',
                          action='store_true')
+  gn_parser.add_argument('--nacl', help='Add in NaCl', action='store_true')
   clang_group = gn_parser.add_mutually_exclusive_group()
   clang_group.add_argument('--clang', help='Use Clang (default)', default=None,
                            action='store_true')

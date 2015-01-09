@@ -22,6 +22,7 @@ v8.log
 /c
 /dart/
 /mojo/public/tools/prebuilt/
+/native_client/
 /out/
 /out_*/
 /sdch/open-vcdiff/
