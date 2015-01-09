@@ -103,13 +103,13 @@ class TestFoo {
   bool a = true;
   bool b = false;
   bool c = false;
-  core.RawMojoHandle source = null;
+  core.MojoHandle source = null;
   TestBar bar = null;
   List<int> data = null;
   List<TestBar> extra_bars = null;
   String name = kFooby;
-  List<core.RawMojoHandle> input_streams = null;
-  List<core.RawMojoHandle> output_streams = null;
+  List<core.MojoHandle> input_streams = null;
+  List<core.MojoHandle> output_streams = null;
   List<List<bool>> array_of_array_of_bools = null;
   List<List<List<String>>> multi_array_of_strings = null;
   List<bool> array_of_bools = null;
@@ -202,7 +202,7 @@ void testFoo() {
   }
   foo.name = "I am a banana";
   // This is supposed to be a handle, but we fake it with an integer.
-  foo.source = new core.RawMojoHandle(23423782);
+  foo.source = new core.MojoHandle(23423782);
   foo.array_of_array_of_bools = [
     [true], [false, true]
   ];
@@ -232,8 +232,8 @@ void testFoo() {
   var actualMemory = allActualMemory.sublist(0, expectedMemory.length);
   Expect.listEquals(expectedMemory, actualMemory);
 
-  var expectedHandles = <core.RawMojoHandle>[
-    new core.RawMojoHandle(23423782),
+  var expectedHandles = <core.MojoHandle>[
+    new core.MojoHandle(23423782),
   ];
 
   Expect.listEquals(expectedHandles, message.handles);

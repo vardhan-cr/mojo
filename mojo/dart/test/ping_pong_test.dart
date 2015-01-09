@@ -35,20 +35,21 @@ void expectStringFromEndpoint(
 }
 
 void pipeTestIsolate(core.MojoMessagePipeEndpoint endpoint) {
-  var handle = new core.MojoHandle(endpoint.handle);
-  handle.listen((int signal) {
-    if (core.MojoHandleSignals.isReadWrite(signal)) {
+  var eventStream = new core.MojoEventStream(endpoint.handle);
+  eventStream.listen((List<int> event) {
+    var mojoSignals = new core.MojoHandleSignals(event[1]);
+    if (mojoSignals.isReadWrite) {
       throw 'We should only be reading or writing, not both.';
-    } else if (core.MojoHandleSignals.isReadable(signal)) {
+    } else if (mojoSignals.isReadable) {
       expectStringFromEndpoint("Ping", endpoint);
-      handle.enableWriteEvents();
-    } else if (core.MojoHandleSignals.isWritable(signal)) {
+      eventStream.enableWriteEvents();
+    } else if (mojoSignals.isWritable) {
       endpoint.write(byteDataOfString("Pong"));
-      handle.disableWriteEvents();
-    } else if (core.MojoHandleSignals.isNone(signal)) {
-      handle.close();
+      eventStream.enableReadEvents();
+    } else if (mojoSignals.isPeerClosed) {
+      eventStream.close();
     } else {
-      throw 'Unexpected signal.';
+      throw 'Unexpected event.';
     }
   });
 }
@@ -56,23 +57,24 @@ void pipeTestIsolate(core.MojoMessagePipeEndpoint endpoint) {
 main() {
   var pipe = new core.MojoMessagePipe();
   var endpoint = pipe.endpoints[0];
-  var handle = new core.MojoHandle(endpoint.handle);
+  var eventStream = new core.MojoEventStream(endpoint.handle);
   Isolate.spawn(pipeTestIsolate, pipe.endpoints[1]).then((_) {
-    handle.enableWriteEvents();
-    handle.listen((int signal) {
-      if (core.MojoHandleSignals.isReadWrite(signal)) {
+    eventStream.listen((List<int> event) {
+      var mojoSignals = new core.MojoHandleSignals(event[1]);
+      if (mojoSignals.isReadWrite) {
         throw 'We should only be reading or writing, not both.';
-      } else if (core.MojoHandleSignals.isReadable(signal)) {
+      } else if (mojoSignals.isReadable) {
         expectStringFromEndpoint("Pong", endpoint);
-        handle.close();
-      } else if (core.MojoHandleSignals.isWritable(signal)) {
+        eventStream.close();
+      } else if (mojoSignals.isWritable) {
         endpoint.write(byteDataOfString("Ping"));
-        handle.disableWriteEvents();
-      } else if (core.MojoHandleSignals.isNone(signal)) {
+        eventStream.enableReadEvents();
+      } else if (mojoSignals.isPeerClosed) {
         throw 'This end should close first.';
       } else {
-        throw 'Unexpected signal.';
+        throw 'Unexpected event.';
       }
     });
+    eventStream.enableWriteEvents();
   });
 }

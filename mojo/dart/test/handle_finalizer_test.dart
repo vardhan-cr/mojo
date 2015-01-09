@@ -9,14 +9,14 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
 
-RawMojoHandle leakMojoHandle() {
+MojoHandle leakMojoHandle() {
   var pipe = new MojoMessagePipe();
   Expect.isNotNull(pipe);
 
   var endpoint = pipe.endpoints[0];
   Expect.isTrue(endpoint.handle.isValid);
 
-  var handle = new MojoHandle(endpoint.handle);
+  var eventStream = new MojoEventStream(endpoint.handle);
   // After making a high-level MojoHandle, the underlying mojo handle will have
   // the native MojoClose called on it when the MojoHandle is GC'd or the VM
   // shuts down.
@@ -31,7 +31,7 @@ List<int> triggerGC() {
 }
 
 test() {
-  RawMojoHandle handle = leakMojoHandle();
+  MojoHandle handle = leakMojoHandle();
   triggerGC();
 
   // The handle will be closed by the MojoHandle finalizer during GC, so the

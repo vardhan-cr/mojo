@@ -7,22 +7,20 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
 
-
 invalidHandleTest() {
-  RawMojoHandle invalidHandle = new RawMojoHandle(RawMojoHandle.INVALID);
+  MojoHandle invalidHandle = new MojoHandle(MojoHandle.INVALID);
 
   // Close.
   MojoResult result = invalidHandle.close();
   Expect.isTrue(result.isInvalidArgument);
 
   // Wait.
-  MojoWaitResult mwr = invalidHandle.wait(MojoHandleSignals.READWRITE, 1000000);
+  MojoWaitResult mwr = invalidHandle.wait(MojoHandleSignals.kReadWrite, 1000000);
   Expect.isTrue(mwr.result.isInvalidArgument);
 
-  MojoWaitManyResult mwmr = RawMojoHandle.waitMany(
-                                            [invalidHandle.h],
-                                            [MojoHandleSignals.READWRITE],
-                                            RawMojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([invalidHandle.h],
+                                                [MojoHandleSignals.kReadWrite],
+                                                MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isInvalidArgument);
 
   // Message pipe.
@@ -88,11 +86,11 @@ basicMessagePipeTest() {
   Expect.isTrue(end1.handle.isValid);
 
   // Not readable, yet.
-  MojoWaitResult mwr = end0.handle.wait(MojoHandleSignals.READABLE, 0);
+  MojoWaitResult mwr = end0.handle.wait(MojoHandleSignals.kReadable, 0);
   Expect.isTrue(mwr.result.isDeadlineExceeded);
 
   // Should be writable.
-  mwr = end0.handle.wait(MojoHandleSignals.WRITABLE, 0);
+  mwr = end0.handle.wait(MojoHandleSignals.kWritable, 0);
   Expect.isTrue(mwr.result.isOk);
 
   // Try to read.
@@ -108,9 +106,9 @@ basicMessagePipeTest() {
   Expect.isTrue(result.isOk);
 
   // end0 should now be readable.
-  MojoWaitManyResult mwmr = RawMojoHandle.waitMany([end0.handle.h],
-                                   [MojoHandleSignals.READABLE],
-                                   RawMojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([end0.handle.h],
+                                                [MojoHandleSignals.kReadable],
+                                                MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isOk);
 
   // Read from end0.
@@ -125,7 +123,7 @@ basicMessagePipeTest() {
   Expect.equals(hello_result, "hello");
 
   // end0 should no longer be readable.
-  mwr = end0.handle.wait(MojoHandleSignals.READABLE, 10);
+  mwr = end0.handle.wait(MojoHandleSignals.kReadable, 10);
   Expect.isTrue(mwr.result.isDeadlineExceeded);
 
   // Close end0's handle.
@@ -133,7 +131,7 @@ basicMessagePipeTest() {
   Expect.isTrue(result.isOk);
 
   // end1 should no longer be readable or writable.
-  mwr = end1.handle.wait(MojoHandleSignals.READWRITE, 1000);
+  mwr = end1.handle.wait(MojoHandleSignals.kReadWrite, 1000);
   Expect.isTrue(mwr.result.isFailedPrecondition);
 
   result = end1.handle.close();
@@ -154,11 +152,11 @@ basicDataPipeTest() {
   Expect.isTrue(consumer.handle.isValid);
 
   // Consumer should not be readable.
-  MojoWaitResult mwr = consumer.handle.wait(MojoHandleSignals.READABLE, 0);
+  MojoWaitResult mwr = consumer.handle.wait(MojoHandleSignals.kReadable, 0);
   Expect.isTrue(mwr.result.isDeadlineExceeded);
 
   // Producer should be writable.
-  mwr = producer.handle.wait(MojoHandleSignals.WRITABLE, 0);
+  mwr = producer.handle.wait(MojoHandleSignals.kWritable, 0);
   Expect.isTrue(mwr.result.isOk);
 
   // Try to read from consumer.
@@ -181,10 +179,9 @@ basicDataPipeTest() {
   Expect.equals(written, helloData.lengthInBytes);
 
   // Now that we have written, the consumer should be readable.
-  MojoWaitManyResult mwmr = RawMojoHandle.waitMany(
-                                            [consumer.handle.h],
-                                            [MojoHandleSignals.READABLE],
-                                            RawMojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([consumer.handle.h],
+                                                [MojoHandleSignals.kReadable],
+                                                MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwr.result.isOk);
 
   // Do a two-phase write to the producer.
@@ -209,7 +206,7 @@ basicDataPipeTest() {
   Expect.isTrue(result.isOk);
 
   // Consumer should still be readable.
-  mwr = consumer.handle.wait(MojoHandleSignals.READABLE, 0);
+  mwr = consumer.handle.wait(MojoHandleSignals.kReadable, 0);
   Expect.isTrue(mwr.result.isOk);
 
   // Get the number of remaining bytes.
@@ -248,7 +245,7 @@ basicSharedBufferTest() {
   Expect.isNotNull(mojoBuffer.status);
   Expect.isTrue(mojoBuffer.status.isOk);
   Expect.isNotNull(mojoBuffer.handle);
-  Expect.isTrue(mojoBuffer.handle is RawMojoHandle);
+  Expect.isTrue(mojoBuffer.handle is MojoHandle);
   Expect.isTrue(mojoBuffer.handle.isValid);
 
   mojoBuffer.map(0, 100, MojoSharedBuffer.MAP_FLAG_NONE);
@@ -264,7 +261,7 @@ basicSharedBufferTest() {
   Expect.isNotNull(duplicate);
   Expect.isNotNull(duplicate.status);
   Expect.isTrue(duplicate.status.isOk);
-  Expect.isTrue(duplicate.handle is RawMojoHandle);
+  Expect.isTrue(duplicate.handle is MojoHandle);
   Expect.isTrue(duplicate.handle.isValid);
 
   duplicate.map(0, 100, MojoSharedBuffer.MAP_FLAG_NONE);

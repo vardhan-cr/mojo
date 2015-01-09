@@ -13,17 +13,17 @@ main() {
   var endpoint = pipe.endpoints[0];
   assert(endpoint.handle.isValid);
 
-  var handle = new core.MojoHandle(endpoint.handle);
+  var eventStream = new core.MojoEventStream(endpoint.handle);
   var completer = new Completer();
   int numEvents = 0;
 
-  handle.enableWriteEvents();
-  handle.listen((_) {
+  eventStream.listen((_) {
     numEvents++;
-    handle.close();
+    eventStream.close();
   }, onDone: () {
     completer.complete(numEvents);
   });
+  eventStream.enableWriteEvents();
 
   completer.future.then((int numEvents) {
     assert(numEvents ==1);

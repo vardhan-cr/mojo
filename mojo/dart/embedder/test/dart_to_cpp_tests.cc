@@ -249,7 +249,7 @@ class DartToCppTest : public testing::Test {
 
   bool RunTest(const std::string& test, CppSideConnection* cpp_side) {
     // Putting Dart on its own thread so we can use Dart_RunLoop (called from
-    // DartController::runDartScript) and base::RunLoop::Run together. Passing
+    // DartController::RunDartScript) and base::RunLoop::Run together. Passing
     // the thread to RunWithDartOnThread instead of inlining that function here
     // so that we are sure the MessagePipe destructor runs and closes the
     // handles on the C++ side before the Thread destructor runs and joins on

@@ -39,14 +39,12 @@ class DartSide extends DartSideInterface {
     });
   }
 
-  void ping(params) {
+  void ping() {
     callPingResponse();
     _completer.complete(null);
   }
 
-  void echo(params) {
-    int numIterations = params.numIterations;
-    EchoArgs arg = params.arg;
+  void echo(int numIterations, EchoArgs arg) {
     if (arg.si64 > 0) {
       arg.si64 = BAD_VALUE;
     }
@@ -98,10 +96,10 @@ class DartSide extends DartSideInterface {
 }
 
 
-main(List<int> args) {
+main(List args) {
   assert(args.length == 1);
   int mojoHandle = args[0];
-  var rawHandle = new core.RawMojoHandle(mojoHandle);
+  var rawHandle = new core.MojoHandle(mojoHandle);
   var endpoint = new core.MojoMessagePipeEndpoint(rawHandle);
   var dartSide = new DartSide(endpoint);
   dartSide.listen();

@@ -7,11 +7,22 @@ action("generate_snapshot_bin") {
     "//dart/runtime/bin:gen_snapshot",
   ]
   inputs = [
+    "snapshot.dart",
     "//dart/runtime/tools/create_snapshot_bin.py",
     "//mojo/dart/embedder/builtin.dart",
     "//mojo/public/dart/bindings.dart",
     "//mojo/public/dart/core.dart",
-    "snapshot.dart",
+    "//mojo/public/dart/src/buffer.dart",
+    "//mojo/public/dart/src/client.dart",
+    "//mojo/public/dart/src/codec.dart",
+    "//mojo/public/dart/src/data_pipe.dart",
+    "//mojo/public/dart/src/handle.dart",
+    "//mojo/public/dart/src/handle_watcher.dart",
+    "//mojo/public/dart/src/interface.dart",
+    "//mojo/public/dart/src/message_pipe.dart",
+    "//mojo/public/dart/src/timer_impl.dart",
+    "//mojo/public/dart/src/timer_queue.dart",
+    "//mojo/public/dart/src/types.dart",
   ]
   output = "$target_gen_dir/snapshot_gen.bin"
   outputs = [
@@ -70,7 +81,13 @@ source_set("dart_controller") {
 
   deps = [
     ":generate_snapshot_file",
+    "//base",
+    "//base:i18n",
+    "//crypto",
+    "//dart/runtime:libdart",
     "//dart/runtime/bin:libdart_embedder_noio",
+    "//mojo/public/c/system",
+    "//mojo/public/cpp/system",
   ]
 
   defines = []

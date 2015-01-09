@@ -16,17 +16,17 @@ void simpleTest() {
   var endpoint = pipe.endpoints[0];
   Expect.isTrue(endpoint.handle.isValid);
 
-  var handle = new MojoHandle(endpoint.handle);
+  var eventStream = new MojoEventStream(endpoint.handle);
   var completer = new Completer();
   int numEvents = 0;
 
-  handle.enableWriteEvents();
-  handle.listen((_) {
+  eventStream.listen((_) {
     numEvents++;
-    handle.close();
+    eventStream.close();
   }, onDone: () {
     completer.complete(numEvents);
   });
+  eventStream.enableWriteEvents();
 
   completer.future.then((int numEvents) {
     Expect.equals(1, numEvents);
@@ -41,13 +41,13 @@ Future simpleAsyncAwaitTest() async {
   var endpoint = pipe.endpoints[0];
   Expect.isTrue(endpoint.handle.isValid);
 
-  var handle = new MojoHandle(endpoint.handle);
+  var eventStream =
+      new MojoEventStream(endpoint.handle, MojoHandleSignals.READWRITE);
 
   int numEvents = 0;
-  handle.enableWriteEvents();
-  await for (var signal in handle) {
+  await for (List<int> event in eventStream) {
     numEvents++;
-    handle.close();
+    eventStream.close();
   }
   Expect.equals(1, numEvents);
 }
@@ -86,22 +86,23 @@ void expectStringFromEndpoint(String expected,
 Future pingPongIsolate(MojoMessagePipeEndpoint endpoint) async {
   int pings = 0;
   int pongs = 0;
-  var handle = new MojoHandle(endpoint.handle);
-  await for (var signal in handle) {
-    if (MojoHandleSignals.isReadWrite(signal)) {
+  var eventStream = new MojoEventStream(endpoint.handle);
+  await for (List<int> event in eventStream) {
+    var mojoSignals = new MojoHandleSignals(event[1]);
+    if (mojoSignals.isReadWrite) {
       // We are either sending or receiving.
-      throw new Exception("Unexpected signal");
-    } else if (MojoHandleSignals.isReadable(signal)) {
+      throw new Exception("Unexpected event");
+    } else if (mojoSignals.isReadable) {
       expectStringFromEndpoint("Ping", endpoint);
       pings++;
-      handle.enableWriteEvents();
-    } else if (MojoHandleSignals.isWritable(signal)) {
+      eventStream.enableWriteEvents();
+    } else if (mojoSignals.isWritable) {
       endpoint.write(byteDataOfString("Pong"));
       pongs++;
-      handle.disableWriteEvents();
+      eventStream.enableReadEvents();
     }
   }
-  handle.close();
+  eventStream.close();
   Expect.equals(10, pings);
   Expect.equals(10, pongs);
 }
@@ -111,28 +112,29 @@ Future pingPongTest() async {
   var pipe = new MojoMessagePipe();
   var isolate = await Isolate.spawn(pingPongIsolate, pipe.endpoints[0]);
   var endpoint = pipe.endpoints[1];
-  var handle = new MojoHandle(endpoint.handle);
+  var eventStream =
+      new MojoEventStream(endpoint.handle,  MojoHandleSignals.READWRITE);
 
   int pings = 0;
   int pongs = 0;
-  handle.enableWriteEvents();  // This side will send first.
-  await for (var signal in handle) {
-    if (MojoHandleSignals.isReadWrite(signal)) {
+  await for (List<int> event in eventStream) {
+    var mojoSignals = new MojoHandleSignals(event[1]);
+    if (mojoSignals.isReadWrite) {
       // We are either sending or receiving.
-      throw new Exception("Unexpected signal");
-    } else if (MojoHandleSignals.isReadable(signal)) {
+      throw new Exception("Unexpected event");
+    } else if (mojoSignals.isReadable) {
       expectStringFromEndpoint("Pong", endpoint);
       pongs++;
       if (pongs == 10) {
-        handle.close();
+        eventStream.close();
       }
-      handle.enableWriteEvents();  // Now it is our turn to send.
-    } else if (MojoHandleSignals.isWritable(signal)) {
+      eventStream.enableWriteEvents();  // Now it is our turn to send.
+    } else if (mojoSignals.isWritable) {
       if (pings < 10) {
         endpoint.write(byteDataOfString("Ping"));
         pings++;
       }
-      handle.disableWriteEvents();  // Don't send while waiting for reply.
+      eventStream.enableReadEvents();  // Don't send while waiting for reply.
     }
   }
   Expect.equals(10, pings);

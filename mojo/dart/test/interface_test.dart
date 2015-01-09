@@ -10,6 +10,8 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
 
+const int kEchoesCount = 100;
+
 class EchoString {
   String a = null;
 
@@ -44,22 +46,25 @@ const int kEchoStringResponse_name = 1;
 class EchoInterface extends bindings.Interface {
   EchoInterface(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
-  EchoStringResponse echoString(EchoString es) {
+  Future<EchoStringResponse> echoString(EchoString es) {
     var response = new EchoStringResponse();
     response.a = es.a;
-    return response;
+    return new Future.value(response);
   }
 
-  bindings.Message handleMessage(bindings.MessageReader reader) {
+  Future<bindings.Message> handleMessage(bindings.MessageReader reader) {
     switch (reader.name) {
       case kEchoString_name:
         var es = reader.decodeStruct(EchoString);
-        var response = echoString(es);
-        return buildResponseWithID(EchoStringResponse,
-                                   kEchoStringResponse_name,
-                                   reader.requestID,
-                                   bindings.kMessageIsResponse,
-                                   response);
+        return echoString(es).then((response) {
+          if (response != null) {
+            return buildResponseWithID(EchoStringResponse,
+                                       kEchoStringResponse_name,
+                                       reader.requestID,
+                                       bindings.kMessageIsResponse,
+                                       response);
+          }
+        });
         break;
       default:
         throw new Exception("Unexpected case");
@@ -79,7 +84,7 @@ class EchoClient extends bindings.Client {
     es.a = a;
     return enqueueMessageWithRequestID(EchoString,
                                        kEchoString_name,
-                                       0,
+                                       -1,
                                        bindings.kMessageExpectsResponse,
                                        es);
   }
@@ -88,7 +93,8 @@ class EchoClient extends bindings.Client {
     switch (reader.name) {
       case kEchoStringResponse_name:
         var esr = reader.decodeStruct(EchoStringResponse);
-        Completer c = completerQueue.removeAt(0);
+        Completer c = completerMap[reader.requestID];
+        completerMap[reader.requestID] = null;
         c.complete(esr);
         break;
       default:
@@ -112,7 +118,7 @@ Future<bool> runTest() async {
   var client = new EchoClient(pipe.endpoints[0]);
   await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
-  int n = 100;
+  int n = kEchoesCount;
   int count = 0;
   client.open();
   for (int i = 0; i < n; i++) {
@@ -135,7 +141,7 @@ Future runAwaitTest() async {
   var client = new EchoClient(pipe.endpoints[0]);
   await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
-  int n = 100;
+  int n = kEchoesCount;
   client.open();
   for (int i = 0; i < n; i++) {
     var response = await client.echoString("Hello");
@@ -146,6 +152,6 @@ Future runAwaitTest() async {
 
 
 main() async {
-  Expect.equals(100, await runTest());
+  Expect.equals(kEchoesCount, await runTest());
   await runAwaitTest();
 }
