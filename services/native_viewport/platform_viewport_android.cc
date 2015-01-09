@@ -13,19 +13,31 @@
 #include "ui/gfx/point.h"
 
 namespace native_viewport {
+namespace {
 
 ui::EventType MotionEventActionToEventType(jint action) {
   switch (action) {
     case AMOTION_EVENT_ACTION_DOWN:
       return ui::ET_TOUCH_PRESSED;
-    case AMOTION_EVENT_ACTION_MOVE:
-      return ui::ET_TOUCH_MOVED;
     case AMOTION_EVENT_ACTION_UP:
       return ui::ET_TOUCH_RELEASED;
+    case AMOTION_EVENT_ACTION_MOVE:
+      return ui::ET_TOUCH_MOVED;
+    case AMOTION_EVENT_ACTION_CANCEL:
+      return ui::ET_TOUCH_CANCELLED;
+    // case AMOTION_EVENT_ACTION_OUTSIDE:
+    // case AMOTION_EVENT_ACTION_POINTER_DOWN:
+    // case AMOTION_EVENT_ACTION_POINTER_UP:
+    // case AMOTION_EVENT_ACTION_HOVER_MOVE:
+    // case AMOTION_EVENT_ACTION_SCROLL:
+    // case AMOTION_EVENT_ACTION_HOVER_ENTER:
+    // case AMOTION_EVENT_ACTION_HOVER_EXIT:
     default:
-      NOTREACHED();
+      NOTIMPLEMENTED() << "Unimplemented motion action: " << action;
   }
   return ui::ET_UNKNOWN;
+}
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,16 +91,17 @@ void PlatformViewportAndroid::SurfaceSetSize(JNIEnv* env, jobject obj,
 
 bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
                                          jint pointer_id,
-                                         jint action,
+                                         jint action_and_index,
                                          jfloat x, jfloat y,
                                          jlong time_ms) {
   gfx::Point location(static_cast<int>(x), static_cast<int>(y));
+  jint action = action_and_index & AMOTION_EVENT_ACTION_MASK;
   ui::TouchEvent event(MotionEventActionToEventType(action), location,
                        id_generator_.GetGeneratedID(pointer_id),
                        base::TimeDelta::FromMilliseconds(time_ms));
   // TODO(beng): handle multiple touch-points.
   delegate_->OnEvent(&event);
-  if (action == ui::ET_TOUCH_RELEASED)
+  if (action == ui::ET_TOUCH_RELEASED || action == ui::ET_TOUCH_CANCELLED)
     id_generator_.ReleaseNumber(pointer_id);
 
   return true;
