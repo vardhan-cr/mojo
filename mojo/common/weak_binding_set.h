@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifndef MOJO_COMMON_WEAK_BINDING_SET_H_
+#define MOJO_COMMON_WEAK_BINDING_SET_H_
+
 #include <algorithm>
 #include <vector>
 
@@ -88,3 +91,5 @@ class WeakBinding : public ErrorHandler {
 };
 
 }  // namespace mojo
+
+#endif  // MOJO_COMMON_WEAK_BINDING_SET_H_
