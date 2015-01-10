@@ -4,6 +4,7 @@
 
 #include "services/native_viewport/platform_viewport.h"
 
+#include "mojo/converters/geometry/geometry_type_converters.h"
 #include "ui/events/event.h"
 #include "ui/events/platform/platform_event_dispatcher.h"
 #include "ui/events/platform/platform_event_source.h"
@@ -56,7 +57,9 @@ class PlatformViewportOzone : public PlatformViewport,
 
   // ui::PlatformWindowDelegate:
   virtual void OnBoundsChanged(const gfx::Rect& new_bounds) override {
-    delegate_->OnBoundsChanged(new_bounds);
+    mojo::ViewportMetricsPtr metrics = mojo::ViewportMetrics::New();
+    metrics->size = new_bounds.size();
+    delegate_->OnMetricsChanged(metrics.Pass());
   }
 
   virtual void OnDamageRect(const gfx::Rect& damaged_region) override {}

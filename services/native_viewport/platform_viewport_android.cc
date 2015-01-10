@@ -9,6 +9,7 @@
 
 #include "base/android/jni_android.h"
 #include "jni/PlatformViewportAndroid_jni.h"
+#include "mojo/converters/geometry/geometry_type_converters.h"
 #include "ui/events/event.h"
 #include "ui/gfx/point.h"
 
@@ -83,10 +84,17 @@ void PlatformViewportAndroid::SurfaceDestroyed(JNIEnv* env, jobject obj) {
   ReleaseWindow();
 }
 
-void PlatformViewportAndroid::SurfaceSetSize(JNIEnv* env, jobject obj,
-                                             jint width, jint height) {
-  bounds_ = gfx::Rect(width, height);
-  delegate_->OnBoundsChanged(bounds_);
+void PlatformViewportAndroid::SurfaceSetSize(JNIEnv* env,
+                                             jobject obj,
+                                             jint width,
+                                             jint height,
+                                             jfloat density) {
+  metrics_ = mojo::ViewportMetrics::New();
+  metrics_->size = mojo::Size::New();
+  metrics_->size->width = static_cast<int>(width);
+  metrics_->size->height = static_cast<int>(height);
+  metrics_->device_pixel_ratio = density;
+  delegate_->OnMetricsChanged(metrics_.Clone());
 }
 
 bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
@@ -134,7 +142,7 @@ void PlatformViewportAndroid::Close() {
 }
 
 gfx::Size PlatformViewportAndroid::GetSize() {
-  return bounds_.size();
+  return metrics_->size.To<gfx::Size>();
 }
 
 void PlatformViewportAndroid::SetBounds(const gfx::Rect& bounds) {

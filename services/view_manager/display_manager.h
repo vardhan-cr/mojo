@@ -69,7 +69,7 @@ class DefaultDisplayManager : public DisplayManager,
 
   // NativeViewportClient:
   void OnDestroyed() override;
-  void OnSizeChanged(mojo::SizePtr size) override;
+  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override;
 
   // SurfaceClient:
   void SetIdNamespace(uint32_t id_namespace) override;

@@ -31,7 +31,7 @@ class PlatformViewportHeadless : public PlatformViewport {
   void ReleaseCapture() override;
 
   Delegate* delegate_;
-  gfx::Rect bounds_;
+  mojo::ViewportMetricsPtr metrics_;
 
   DISALLOW_COPY_AND_ASSIGN(PlatformViewportHeadless);
 };

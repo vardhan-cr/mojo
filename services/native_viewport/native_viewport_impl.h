@@ -43,7 +43,7 @@ class NativeViewportImpl : public mojo::InterfaceImpl<mojo::NativeViewport>,
       mojo::NativeViewportEventDispatcherPtr dispatcher) override;
 
   // PlatformViewport::Delegate implementation.
-  void OnBoundsChanged(const gfx::Rect& bounds) override;
+  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override;
   void OnAcceleratedWidgetAvailable(gfx::AcceleratedWidget widget) override;
   bool OnEvent(ui::Event* ui_event) override;
   void OnDestroyed() override;
@@ -51,13 +51,13 @@ class NativeViewportImpl : public mojo::InterfaceImpl<mojo::NativeViewport>,
   void AckEvent();
 
  private:
-  void ProcessOnBoundsChanged();
+  void ProcessOnMetricsChanged();
 
   bool is_headless_;
   scoped_ptr<PlatformViewport> platform_viewport_;
   scoped_ptr<ViewportSurface> viewport_surface_;
   uint64_t widget_id_;
-  gfx::Size size_;
+  mojo::ViewportMetricsPtr metrics_;
   mojo::GpuPtr gpu_service_;
   mojo::SurfacesServicePtr surfaces_service_;
   cc::SurfaceId child_surface_id_;

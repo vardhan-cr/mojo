@@ -33,7 +33,11 @@ class PlatformViewportAndroid : public PlatformViewport {
   void Destroy(JNIEnv* env, jobject obj);
   void SurfaceCreated(JNIEnv* env, jobject obj, jobject jsurface);
   void SurfaceDestroyed(JNIEnv* env, jobject obj);
-  void SurfaceSetSize(JNIEnv* env, jobject obj, jint width, jint height);
+  void SurfaceSetSize(JNIEnv* env,
+                      jobject obj,
+                      jint width,
+                      jint height,
+                      jfloat density);
   bool TouchEvent(JNIEnv* env, jobject obj, jint pointer_id, jint action,
                   jfloat x, jfloat y, jlong time_ms);
 
@@ -52,7 +56,7 @@ class PlatformViewportAndroid : public PlatformViewport {
 
   Delegate* delegate_;
   ANativeWindow* window_;
-  gfx::Rect bounds_;
+  mojo::ViewportMetricsPtr metrics_;
   ui::SequentialIDGenerator id_generator_;
 
   base::WeakPtrFactory<PlatformViewportAndroid> weak_factory_;
