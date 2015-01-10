@@ -75,10 +75,12 @@ DefaultDisplayManager::DefaultDisplayManager(
     const mojo::Callback<void()>& native_viewport_closed_callback)
     : app_connection_(app_connection),
       connection_manager_(nullptr),
-      size_(800, 600),
       draw_timer_(false, false),
       native_viewport_closed_callback_(native_viewport_closed_callback),
       weak_factory_(this) {
+  metrics_.size = mojo::Size::New();
+  metrics_.size->width = 800;
+  metrics_.size->height = 600;
 }
 
 void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
@@ -87,7 +89,7 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
                                     &native_viewport_);
   native_viewport_.set_client(this);
   native_viewport_->Create(
-      Size::From(size_),
+      metrics_.size->Clone(),
       base::Bind(&DefaultDisplayManager::OnCreatedNativeViewport,
                  weak_factory_.GetWeakPtr()));
   native_viewport_->Show();
@@ -125,6 +127,10 @@ void DefaultDisplayManager::SetViewportSize(const gfx::Size& size) {
   native_viewport_->SetSize(Size::From(size));
 }
 
+const mojo::ViewportMetrics& DefaultDisplayManager::GetViewportMetrics() {
+  return metrics_;
+}
+
 void DefaultDisplayManager::OnCreatedNativeViewport(
     uint64_t native_viewport_id) {
 }
@@ -146,8 +152,8 @@ void DefaultDisplayManager::Draw() {
   }
 
   Rect rect;
-  rect.width = size_.width();
-  rect.height = size_.height();
+  rect.width = metrics_.size->width;
+  rect.height = metrics_.size->height;
   auto pass = CreateDefaultPass(1, rect);
   pass->damage_rect = Rect::From(dirty_rect_);
 
@@ -171,13 +177,15 @@ void DefaultDisplayManager::OnDestroyed() {
 }
 
 void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
-  size_ = metrics->size.To<gfx::Size>();
-  connection_manager_->root()->SetBounds(gfx::Rect(size_));
+  metrics_.size = metrics->size.Pass();
+  metrics_.device_pixel_ratio = metrics->device_pixel_ratio;
+  gfx::Rect bounds(metrics_.size.To<gfx::Size>());
+  connection_manager_->root()->SetBounds(bounds);
   if (surface_id_.is_null())
     return;
   surface_->DestroySurface(mojo::SurfaceId::From(surface_id_));
   surface_id_ = cc::SurfaceId();
-  SchedulePaint(connection_manager_->root(), gfx::Rect(size_));
+  SchedulePaint(connection_manager_->root(), bounds);
 }
 
 void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {

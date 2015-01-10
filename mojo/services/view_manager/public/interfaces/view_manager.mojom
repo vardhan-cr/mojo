@@ -6,6 +6,7 @@ module mojo;
 
 import "../../../geometry/public/interfaces/geometry.mojom";
 import "../../../input_events/public/interfaces/input_events.mojom";
+import "../../../native_viewport/public/interfaces/native_viewport.mojom";
 import "../../../surfaces/public/interfaces/surface_id.mojom";
 import "mojo/public/interfaces/application/service_provider.mojom";
 import "view_manager_constants.mojom";
@@ -21,6 +22,7 @@ struct ViewData {
   // True if this view is drawn on screen. A view is drawn if attached to the
   // root and all ancestors (including this view) are visible.
   bool drawn;
+  ViewportMetrics viewport_metrics;
 };
 
 enum ErrorCode {

@@ -36,6 +36,7 @@ View* AddViewToViewManager(ViewManagerClientImpl* client,
   private_view.set_id(view_data->view_id);
   private_view.set_visible(view_data->visible);
   private_view.set_drawn(view_data->drawn);
+  private_view.set_viewport_metrics(view_data->viewport_metrics.Pass());
   private_view.set_properties(
       view_data->properties.To<std::map<std::string, std::vector<uint8_t>>>());
   client->AddView(view);

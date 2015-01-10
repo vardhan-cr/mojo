@@ -90,6 +90,7 @@ class ConnectionManager : public ServerViewDelegate,
   ServerView* GetView(const ViewId& id);
 
   ServerView* root() { return root_.get(); }
+  DisplayManager* display_manager() { return display_manager_.get(); }
 
   bool IsProcessingChange() const { return current_change_ != NULL; }
 

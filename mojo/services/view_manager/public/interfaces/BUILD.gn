@@ -17,6 +17,7 @@ mojom("interfaces") {
   deps = [
     "../../../geometry/public/interfaces",
     "../../../input_events/public/interfaces",
+    "../../../native_viewport/public/interfaces",
     "../../../surfaces/public/interfaces:surface_id",
   ]
 }

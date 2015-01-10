@@ -16,6 +16,7 @@
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "ui/gfx/rect.h"
 
 namespace cc {
@@ -43,6 +44,8 @@ class DisplayManager {
                              const gfx::Rect& bounds) = 0;
 
   virtual void SetViewportSize(const gfx::Size& size) = 0;
+
+  virtual const mojo::ViewportMetrics& GetViewportMetrics() = 0;
 };
 
 // DisplayManager implementation that connects to the services necessary to
@@ -60,6 +63,7 @@ class DefaultDisplayManager : public DisplayManager,
   void Init(ConnectionManager* connection_manager) override;
   void SchedulePaint(const ServerView* view, const gfx::Rect& bounds) override;
   void SetViewportSize(const gfx::Size& size) override;
+  const mojo::ViewportMetrics& GetViewportMetrics() override;
 
  private:
   void OnCreatedNativeViewport(uint64_t native_viewport_id);
@@ -79,7 +83,7 @@ class DefaultDisplayManager : public DisplayManager,
   mojo::ApplicationConnection* app_connection_;
   ConnectionManager* connection_manager_;
 
-  gfx::Size size_;
+  mojo::ViewportMetrics metrics_;
   gfx::Rect dirty_rect_;
   base::Timer draw_timer_;
 

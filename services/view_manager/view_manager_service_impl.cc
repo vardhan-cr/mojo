@@ -12,6 +12,7 @@
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/connection_manager.h"
 #include "services/view_manager/default_access_policy.h"
+#include "services/view_manager/display_manager.h"
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/window_manager_access_policy.h"
 
@@ -412,6 +413,8 @@ ViewDataPtr ViewManagerServiceImpl::ViewToViewData(const ServerView* view) {
       mojo::Map<String, Array<uint8_t>>::From(view->properties());
   view_data->visible = view->visible();
   view_data->drawn = view->IsDrawn(connection_manager_->root());
+  view_data->viewport_metrics =
+      connection_manager_->display_manager()->GetViewportMetrics().Clone();
   return view_data.Pass();
 }
 

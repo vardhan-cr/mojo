@@ -14,6 +14,7 @@
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "surfaces/public/interfaces/surface_id.mojom.h"
 #include "view_manager/public/cpp/types.h"
+#include "view_manager/public/interfaces/view_manager.mojom.h"
 #include "view_manager/public/interfaces/view_manager_constants.mojom.h"
 
 namespace mojo {
@@ -51,6 +52,8 @@ class View {
   // Visibility (also see IsDrawn()). When created views are hidden.
   bool visible() const { return visible_; }
   void SetVisible(bool value);
+
+  const ViewportMetrics& viewport_metrics() { return *viewport_metrics_; }
 
   // Returns the set of string to bag of byte properties. These properties are
   // shared with the view manager.
@@ -172,6 +175,7 @@ class View {
   ObserverList<ViewObserver> observers_;
 
   Rect bounds_;
+  ViewportMetricsPtr viewport_metrics_;
 
   bool visible_;
 
