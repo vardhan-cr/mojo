@@ -12,31 +12,65 @@ import 'package:mojo/dart/testing/expect.dart';
 
 const int kEchoesCount = 100;
 
-class EchoString {
+class EchoString extends bindings.Struct {
+  static const int kStructSize = 16;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 1);
   String a = null;
 
-  EchoString();
+  EchoString() : super(kStructSize);
 
-  static const int encodedSize = bindings.kStructHeaderSize + 8;
-  static EchoString decode(bindings.MojoDecoder decoder) {
-    var val = new EchoString();
-    var numBytes = decoder.readUint32();
-    var numFields = decoder.readUint32();
-    val.a = decoder.decodeStruct(bindings.MojoString);
-    return val;
+  static EchoString deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
   }
-  static void encode(bindings.MojoEncoder encoder, EchoString val) {
-    encoder.writeUint32(encodedSize);
-    encoder.writeUint32(1);
-    encoder.encodeStruct(bindings.MojoString, val.a);
+
+  static EchoString decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    EchoString result = new EchoString();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.a = decoder0.decodeString(8, false);
+    }
+    return result;
+  }
+
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeString(a, 8, false);
   }
 }
 
 
-class EchoStringResponse extends EchoString {
-  static const int encodedSize = EchoString.encodedSize;
-  static var decode = EchoString.decode;
-  static var encode = EchoString.encode;
+class EchoStringResponse extends bindings.Struct {
+  static const int kStructSize = 16;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 1);
+  String a = null;
+
+  EchoStringResponse() : super(kStructSize);
+
+  static EchoStringResponse deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
+  }
+
+  static EchoStringResponse decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    EchoStringResponse result = new EchoStringResponse();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.a = decoder0.decodeString(8, false);
+    }
+    return result;
+  }
+
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeString(a, 8, false);
+  }
 }
 
 
@@ -52,17 +86,17 @@ class EchoInterface extends bindings.Interface {
     return new Future.value(response);
   }
 
-  Future<bindings.Message> handleMessage(bindings.MessageReader reader) {
-    switch (reader.name) {
+  Future<bindings.Message> handleMessage(bindings.ServiceMessage message) {
+    switch (message.header.type) {
       case kEchoString_name:
-        var es = reader.decodeStruct(EchoString);
+        var es = EchoString.deserialize(message.payload);
         return echoString(es).then((response) {
           if (response != null) {
-            return buildResponseWithID(EchoStringResponse,
-                                       kEchoStringResponse_name,
-                                       reader.requestID,
-                                       bindings.kMessageIsResponse,
-                                       response);
+            return buildResponseWithId(
+                response,
+                kEchoStringResponse_name,
+                message.header.requestId,
+                bindings.MessageHeader.kMessageIsResponse);
           }
         });
         break;
@@ -82,19 +116,19 @@ class EchoClient extends bindings.Client {
     // compose message.
     var es = new EchoString();
     es.a = a;
-    return enqueueMessageWithRequestID(EchoString,
-                                       kEchoString_name,
-                                       -1,
-                                       bindings.kMessageExpectsResponse,
-                                       es);
+    return enqueueMessageWithRequestId(
+        es,
+        kEchoString_name,
+        -1,
+        bindings.MessageHeader.kMessageExpectsResponse);
   }
 
-  void handleResponse(bindings.MessageReader reader) {
-    switch (reader.name) {
+  void handleResponse(bindings.ServiceMessage message) {
+    switch (message.header.type) {
       case kEchoStringResponse_name:
-        var esr = reader.decodeStruct(EchoStringResponse);
-        Completer c = completerMap[reader.requestID];
-        completerMap[reader.requestID] = null;
+        var esr = EchoStringResponse.deserialize(message.payload);
+        Completer c = completerMap[message.header.requestId];
+        completerMap[message.header.requestId] = null;
         c.complete(esr);
         break;
       default:

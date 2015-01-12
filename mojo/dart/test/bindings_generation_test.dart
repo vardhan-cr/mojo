@@ -16,26 +16,26 @@ class ProviderImpl extends sample.ProviderInterface {
   ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
   echoString(String a) {
-    var response = new sample.Provider_EchoString_ResponseParams();
+    var response = new sample.ProviderEchoStringResponseParams();
     response.a = a;
     return new Future.value(response);
   }
 
   echoStrings(String a, String b) {
-    var response = new sample.Provider_EchoStrings_ResponseParams();
+    var response = new sample.ProviderEchoStringsResponseParams();
     response.a = a;
     response.b = b;
     return new Future.value(response);
   }
 
   echoMessagePipeHanlde(core.MojoHandle a) {
-    var response = new sample.Provider_EchoMessagePipeHandle_ResponseParams();
+    var response = new sample.ProviderEchoMessagePipeHandleResponseParams();
     response.a = a;
     return new Future.value(response);
   }
 
   echoEnum(int a) {
-    var response = new sample.Provider_EchoEnum_ResponseParams();
+    var response = new sample.ProviderEchoEnumResponseParams();
     response.a = a;
     return new Future.value(response);
   }

@@ -8,62 +8,70 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/testing/expect.dart';
 
-class TestBar {
-  static const int TYPE_VERTICAL = 1;
-  static const int TYPE_HORIZONTAL = TYPE_VERTICAL + 1;
-  static const int TYPE_BOTH = TYPE_VERTICAL + 1;
-  static const int TYPE_INVALID = TYPE_BOTH + 1;
+class Bar extends bindings.Struct {
+  static const int kStructSize = 16;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 4);
 
-  int alpha = 0xff;
-  int beta = 0;
-  int gamma = 0;
-  int type = TYPE_VERTICAL;
+  static final int Type_VERTICAL = 1;
+  static final int Type_HORIZONTAL = Type_VERTICAL + 1;
+  static final int Type_BOTH = Type_HORIZONTAL + 1;
+  static final int Type_INVALID = Type_BOTH + 1;
+  int alpha;
+  int beta;
+  int gamma;
+  int type;
 
-  TestBar();
-
-  static const int encodedSize = bindings.kStructHeaderSize + 8;
-
-  static TestBar decode(bindings.MojoDecoder decoder) {
-    var val = new TestBar();
-    var num_bytes = decoder.readUint32();
-    var num_fields = decoder.readUint32();
-    val.alpha = decoder.decodeStruct(bindings.Uint8);
-    val.beta = decoder.decodeStruct(bindings.Uint8);
-    val.gamma = decoder.decodeStruct(bindings.Uint8);
-    decoder.skip(1);
-    val.type = decoder.decodeStruct(bindings.Int32);
-    return val;
+  Bar() : super(kStructSize) {
+    alpha = 0xff;
+    type = Bar.Type_VERTICAL;
   }
 
-  static void encode(bindings.MojoEncoder encoder, TestBar val) {
-    encoder.writeUint32(encodedSize);
-    encoder.writeUint32(4);
-    encoder.encodeStruct(bindings.Uint8, val.alpha);
-    encoder.encodeStruct(bindings.Uint8, val.beta);
-    encoder.encodeStruct(bindings.Uint8, val.gamma);
-    encoder.skip(1);
-    encoder.encodeStruct(bindings.Int32, val.type);
+  static Bar deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
   }
 
-  String toString() {
-    return "alpha=$alpha, beta=$beta, gamma=$gamma, type=$type";
+  static Bar decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    Bar result = new Bar();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.alpha = decoder0.decodeUint8(8);
+    }
+    if (mainDataHeader.numFields > 1) {
+      result.beta = decoder0.decodeUint8(9);
+    }
+    if (mainDataHeader.numFields > 2) {
+      result.gamma = decoder0.decodeUint8(10);
+    }
+    if (mainDataHeader.numFields > 3) {
+      result.type = decoder0.decodeInt32(12);
+    }
+    return result;
+  }
+
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeUint8(alpha, 8);
+    encoder0.encodeUint8(beta, 9);
+    encoder0.encodeUint8(gamma, 10);
+    encoder0.encodeInt32(type, 12);
   }
 }
 
 
 void testBar() {
-  var bar = new TestBar();
+  var bar = new Bar();
   bar.alpha = 1;
   bar.beta = 2;
   bar.gamma = 3;
   bar.type = 0x08070605;
 
   int name = 42;
-  int payloadSize = TestBar.encodedSize;
-
-  var builder = new bindings.MessageBuilder(name, payloadSize);
-  builder.encodeStruct(TestBar, bar);
-  var message = builder.finish();
+  var header = new bindings.MessageHeader(name);
+  var message = bar.serializeWithHeader(header);
 
   var expectedMemory = new Uint8List.fromList([
     16, 0, 0, 0,
@@ -81,12 +89,12 @@ void testBar() {
   var actualMemory = message.buffer.buffer.asUint8List();
   Expect.listEquals(expectedMemory, actualMemory);
 
-  var reader = new bindings.MessageReader(message);
+  var receivedMessage = new bindings.ServiceMessage.fromMessage(message);
 
-  Expect.equals(payloadSize, reader.payloadSize);
-  Expect.equals(name, reader.name);
+  Expect.equals(receivedMessage.header.size, header.size);
+  Expect.equals(receivedMessage.header.type, header.type);
 
-  var bar2 = reader.decodeStruct(TestBar);
+  var bar2 = Bar.deserialize(receivedMessage.payload);
 
   Expect.equals(bar.alpha, bar2.alpha);
   Expect.equals(bar.beta, bar2.beta);
@@ -95,129 +103,285 @@ void testBar() {
 }
 
 
-class TestFoo {
-  static const String kFooby = "Fooby";
-
+class Foo extends bindings.Struct {
+  static const int kStructSize = 96;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 15);
+  static final kFooby = "Fooby";
   int x = 0;
   int y = 0;
   bool a = true;
   bool b = false;
   bool c = false;
   core.MojoHandle source = null;
-  TestBar bar = null;
+  Bar bar = null;
   List<int> data = null;
-  List<TestBar> extra_bars = null;
-  String name = kFooby;
-  List<core.MojoHandle> input_streams = null;
-  List<core.MojoHandle> output_streams = null;
-  List<List<bool>> array_of_array_of_bools = null;
-  List<List<List<String>>> multi_array_of_strings = null;
-  List<bool> array_of_bools = null;
+  List<Bar> extraBars = null;
+  String name = Foo.kFooby;
+  List<core.MojoHandle> inputStreams = null;
+  List<core.MojoHandle> outputStreams = null;
+  List<List<bool>> arrayOfArrayOfBools = null;
+  List<List<List<String>>> multiArrayOfStrings = null;
+  List<bool> arrayOfBools = null;
 
-  TestFoo();
+  Foo() : super(kStructSize);
 
-  static const int encodedSize = bindings.kStructHeaderSize + 88;
-
-  static TestFoo decode(bindings.MojoDecoder decoder) {
-    int packed;
-    var val = new TestFoo();
-    var num_bytes = decoder.readUint32();
-    var num_fields = decoder.readUint32();
-    val.x = decoder.decodeStruct(bindings.Int32);
-    val.y = decoder.decodeStruct(bindings.Int32);
-    packed = decoder.readUint8();
-    val.a = ((packed >> 0) & 1) != 0 ? true : false;
-    val.b = ((packed >> 1) & 1) != 0 ? true : false;
-    val.c = ((packed >> 2) & 1) != 0 ? true : false;
-    decoder.skip(1);
-    decoder.skip(1);
-    decoder.skip(1);
-    val.source = decoder.decodeStruct(bindings.NullableHandle);
-    val.bar = decoder.decodeStructPointer(TestBar);
-    val.data = decoder.decodeArrayPointer(bindings.Uint8);
-    val.extra_bars =
-        decoder.decodeArrayPointer(new bindings.PointerTo(TestBar));
-    val.name = decoder.decodeStruct(bindings.MojoString);
-    val.input_streams = decoder.decodeArrayPointer(bindings.Handle);
-    val.output_streams = decoder.decodeArrayPointer(bindings.Handle);
-    val.array_of_array_of_bools =
-        decoder.decodeArrayPointer(new bindings.ArrayOf(bindings.PackedBool));
-    val.multi_array_of_strings = decoder.decodeArrayPointer(
-        new bindings.ArrayOf(new bindings.ArrayOf(bindings.MojoString)));
-    val.array_of_bools = decoder.decodeArrayPointer(bindings.PackedBool);
-    return val;
+  static Foo deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
   }
 
-  static void encode(bindings.MojoEncoder encoder, TestFoo val) {
-    int packed = 0;
-    encoder.writeUint32(encodedSize);
-    encoder.writeUint32(15);
-    encoder.encodeStruct(bindings.Int32, val.x);
-    encoder.encodeStruct(bindings.Int32, val.y);
-    packed |= (val.a ? 1 : 0) << 0;
-    packed |= (val.b ? 1 : 0) << 1;
-    packed |= (val.c ? 1 : 0) << 2;
-    encoder.writeUint8(packed);
-    encoder.skip(1);
-    encoder.skip(1);
-    encoder.skip(1);
-    encoder.encodeStruct(bindings.NullableHandle, val.source);
-    encoder.encodeStructPointer(TestBar, val.bar);
-    encoder.encodeArrayPointer(bindings.Uint8, val.data);
-    encoder.encodeArrayPointer(new bindings.PointerTo(TestBar), val.extra_bars);
-    encoder.encodeStruct(bindings.MojoString, val.name);
-    encoder.encodeArrayPointer(bindings.Handle, val.input_streams);
-    encoder.encodeArrayPointer(bindings.Handle, val.output_streams);
-    encoder.encodeArrayPointer(
-        new bindings.ArrayOf(bindings.PackedBool), val.array_of_array_of_bools);
-    encoder.encodeArrayPointer(
-        new bindings.ArrayOf(new bindings.ArrayOf(bindings.MojoString)),
-        val.multi_array_of_strings);
-    encoder.encodeArrayPointer(bindings.PackedBool, val.array_of_bools);
+  static Foo decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    Foo result = new Foo();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.x = decoder0.decodeInt32(8);
+    }
+    if (mainDataHeader.numFields > 1) {
+      result.y = decoder0.decodeInt32(12);
+    }
+    if (mainDataHeader.numFields > 2) {
+      result.a = decoder0.decodeBool(16, 0);
+    }
+    if (mainDataHeader.numFields > 3) {
+      result.b = decoder0.decodeBool(16, 1);
+    }
+    if (mainDataHeader.numFields > 4) {
+      result.c = decoder0.decodeBool(16, 2);
+    }
+    if (mainDataHeader.numFields > 9) {
+      result.source = decoder0.decodeHandle(20, true);
+    }
+    if (mainDataHeader.numFields > 5) {
+      var decoder1 = decoder0.decodePointer(24, true);
+      result.bar = Bar.decode(decoder1);
+    }
+    if (mainDataHeader.numFields > 6) {
+      result.data = decoder0.decodeUint8Array(
+          32, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+    }
+    if (mainDataHeader.numFields > 7) {
+      var decoder1 = decoder0.decodePointer(40, true);
+      if (decoder1 == null) {
+        result.extraBars = null;
+      } else {
+        var si1 = decoder1.decodeDataHeaderForPointerArray(
+            bindings.kUnspecifiedArrayLength);
+        result.extraBars = new List<Bar>(si1.numFields);
+        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+          var decoder2 = decoder1.decodePointer(
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              false);
+          result.extraBars[i1] = Bar.decode(decoder2);
+        }
+      }
+    }
+    if (mainDataHeader.numFields > 8) {
+      result.name = decoder0.decodeString(48, false);
+    }
+    if (mainDataHeader.numFields > 10) {
+      result.inputStreams = decoder0.decodeHandleArray(
+          56, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+    }
+    if (mainDataHeader.numFields > 11) {
+      result.outputStreams = decoder0.decodeHandleArray(
+          64, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+    }
+    if (mainDataHeader.numFields > 12) {
+      var decoder1 = decoder0.decodePointer(72, true);
+      if (decoder1 == null) {
+        result.arrayOfArrayOfBools = null;
+      } else {
+        var si1 = decoder1.decodeDataHeaderForPointerArray(
+            bindings.kUnspecifiedArrayLength);
+        result.arrayOfArrayOfBools = new List<List<bool>>(si1.numFields);
+        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+          result.arrayOfArrayOfBools[i1] = decoder1.decodeBoolArray(
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              bindings.kNothingNullable,
+              bindings.kUnspecifiedArrayLength);
+        }
+      }
+    }
+    if (mainDataHeader.numFields > 13) {
+      var decoder1 = decoder0.decodePointer(80, true);
+      if (decoder1 == null) {
+        result.multiArrayOfStrings = null;
+      } else {
+        var si1 = decoder1.decodeDataHeaderForPointerArray(
+            bindings.kUnspecifiedArrayLength);
+        result.multiArrayOfStrings =
+            new List<List<List<String>>>(si1.numFields);
+        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+          var decoder2 = decoder1.decodePointer(
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              false);
+          {
+            var si2 = decoder2.decodeDataHeaderForPointerArray(
+                bindings.kUnspecifiedArrayLength);
+            result.multiArrayOfStrings[i1] =
+                new List<List<String>>(si2.numFields);
+            for (int i2 = 0; i2 < si2.numFields; ++i2) {
+              var decoder3 = decoder2.decodePointer(
+                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i2,
+                  false);
+              {
+                var si3 = decoder3.decodeDataHeaderForPointerArray(
+                    bindings.kUnspecifiedArrayLength);
+                result.multiArrayOfStrings[i1][i2] =
+                    new List<String>(si3.numFields);
+                for (int i3 = 0; i3 < si3.numFields; ++i3) {
+                  var length = bindings.DataHeader.kHeaderSize +
+                               bindings.kPointerSize * i3;
+                  result.multiArrayOfStrings[i1][i2][i3] =
+                      decoder3.decodeString(length, false);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if (mainDataHeader.numFields > 14) {
+      result.arrayOfBools = decoder0.decodeBoolArray(
+          88, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+    }
+    return result;
+  }
+
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeInt32(x, 8);
+    encoder0.encodeInt32(y, 12);
+    encoder0.encodeBool(a, 16, 0);
+    encoder0.encodeBool(b, 16, 1);
+    encoder0.encodeBool(c, 16, 2);
+    encoder0.encodeHandle(source, 20, true);
+    encoder0.encodeStruct(bar, 24, true);
+    encoder0.encodeUint8Array(
+        data, 32, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+
+    if (extraBars == null) {
+      encoder0.encodeNullPointer(40, true);
+    } else {
+      var encoder1 = encoder0.encodePointerArray(
+          extraBars.length, 40, bindings.kUnspecifiedArrayLength);
+      for (int i0 = 0; i0 < extraBars.length; ++i0) {
+        encoder1.encodeStruct(
+            extraBars[i0],
+            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            false);
+      }
+    }
+
+    encoder0.encodeString(name, 48, false);
+    encoder0.encodeHandleArray(inputStreams,
+                               56,
+                               bindings.kArrayNullable,
+                               bindings.kUnspecifiedArrayLength);
+    encoder0.encodeHandleArray(outputStreams,
+                               64,
+                               bindings.kArrayNullable,
+                               bindings.kUnspecifiedArrayLength);
+
+    if (arrayOfArrayOfBools == null) {
+      encoder0.encodeNullPointer(72, true);
+    } else {
+      var encoder1 = encoder0.encodePointerArray(
+          arrayOfArrayOfBools.length, 72, bindings.kUnspecifiedArrayLength);
+      for (int i0 = 0; i0 < arrayOfArrayOfBools.length; ++i0) {
+        encoder1.encodeBoolArray(
+            arrayOfArrayOfBools[i0],
+            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            bindings.kNothingNullable,
+            bindings.kUnspecifiedArrayLength);
+      }
+    }
+
+    if (multiArrayOfStrings == null) {
+      encoder0.encodeNullPointer(80, true);
+    } else {
+      var encoder1 = encoder0.encodePointerArray(
+          multiArrayOfStrings.length, 80, bindings.kUnspecifiedArrayLength);
+      for (int i0 = 0; i0 < multiArrayOfStrings.length; ++i0) {
+        if (multiArrayOfStrings[i0] == null) {
+          encoder1.encodeNullPointer(
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+              false);
+        } else {
+          var encoder2 = encoder1.encodePointerArray(
+              multiArrayOfStrings[i0].length,
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+              bindings.kUnspecifiedArrayLength);
+          for (int i1 = 0; i1 < multiArrayOfStrings[i0].length; ++i1) {
+            if (multiArrayOfStrings[i0][i1] == null) {
+              encoder2.encodeNullPointer(
+                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+                  false);
+            } else {
+              var encoder3 = encoder2.encodePointerArray(
+                  multiArrayOfStrings[i0][i1].length,
+                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+                  bindings.kUnspecifiedArrayLength);
+              for (int i2 = 0; i2 < multiArrayOfStrings[i0][i1].length; ++i2) {
+                var length = bindings.DataHeader.kHeaderSize +
+                             bindings.kPointerSize * i2;
+                encoder3.encodeString(
+                    multiArrayOfStrings[i0][i1][i2],
+                    length,
+                    false);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    encoder0.encodeBoolArray(arrayOfBools,
+                             88,
+                             bindings.kArrayNullable,
+                             bindings.kUnspecifiedArrayLength);
   }
 }
 
 
 void testFoo() {
-  var foo = new TestFoo();
+  var foo = new Foo();
   foo.x = 0x212B4D5;
   foo.y = 0x16E93;
   foo.a = true;
   foo.b = false;
   foo.c = true;
-  foo.bar = new TestBar();
+  foo.bar = new Bar();
   foo.bar.alpha = 91;
   foo.bar.beta = 82;
   foo.bar.gamma = 73;
   foo.data = [
     4, 5, 6, 7, 8,
   ];
-  foo.extra_bars = [
-    new TestBar(), new TestBar(), new TestBar(),
+  foo.extraBars = [
+    new Bar(), new Bar(), new Bar(),
   ];
-  for (int i = 0; i < foo.extra_bars.length; ++i) {
-    foo.extra_bars[i].alpha = 1 * i;
-    foo.extra_bars[i].beta = 2 * i;
-    foo.extra_bars[i].gamma = 3 * i;
+  for (int i = 0; i < foo.extraBars.length; ++i) {
+    foo.extraBars[i].alpha = 1 * i;
+    foo.extraBars[i].beta = 2 * i;
+    foo.extraBars[i].gamma = 3 * i;
   }
   foo.name = "I am a banana";
   // This is supposed to be a handle, but we fake it with an integer.
   foo.source = new core.MojoHandle(23423782);
-  foo.array_of_array_of_bools = [
+  foo.arrayOfArrayOfBools = [
     [true], [false, true]
   ];
-  foo.array_of_bools = [
+  foo.arrayOfBools = [
     true, false, true, false, true, false, true, true
   ];
 
-
-  var name = 31;
-  var payloadSize = 304;
-
-  var builder = new bindings.MessageBuilder(name, payloadSize);
-  builder.encodeStruct(TestFoo, foo);
-
-  var message = builder.finish();
+  int name = 31;
+  var header = new bindings.MessageHeader(name);
+  var message = foo.serializeWithHeader(header);
 
   var expectedMemory = new Uint8List.fromList([
     /*  0: */   16,    0,    0,    0,    2,    0,    0,    0,
@@ -227,7 +391,7 @@ void testFoo() {
     /* 32: */    5,    0,    0,    0,    0,    0,    0,    0,
     /* 40: */   72,    0,    0,    0,    0,    0,    0,    0,
   ]);
-  // TODO(abarth): Test more of the message's raw memory.
+
   var allActualMemory = message.buffer.buffer.asUint8List();
   var actualMemory = allActualMemory.sublist(0, expectedMemory.length);
   Expect.listEquals(expectedMemory, actualMemory);
@@ -238,12 +402,12 @@ void testFoo() {
 
   Expect.listEquals(expectedHandles, message.handles);
 
-  var reader = new bindings.MessageReader(message);
+  var receivedMessage = new bindings.ServiceMessage.fromMessage(message);
 
-  Expect.equals(payloadSize, reader.payloadSize);
-  Expect.equals(name, reader.name);
+  Expect.equals(receivedMessage.header.size, header.size);
+  Expect.equals(receivedMessage.header.type, header.type);
 
-  var foo2 = reader.decodeStruct(TestFoo);
+  var foo2 = Foo.deserialize(receivedMessage.payload);
 
   Expect.equals(foo.x, foo2.x);
   Expect.equals(foo.y, foo2.y);
@@ -258,63 +422,78 @@ void testFoo() {
   Expect.equals(foo.bar.type, foo2.bar.type);
   Expect.listEquals(foo.data, foo2.data);
 
-  for (int i = 0; i < foo2.extra_bars.length; i++) {
-    Expect.equals(foo.extra_bars[i].alpha, foo2.extra_bars[i].alpha);
-    Expect.equals(foo.extra_bars[i].beta, foo2.extra_bars[i].beta);
-    Expect.equals(foo.extra_bars[i].gamma, foo2.extra_bars[i].gamma);
-    Expect.equals(foo.extra_bars[i].type, foo2.extra_bars[i].type);
+  for (int i = 0; i < foo2.extraBars.length; i++) {
+    Expect.equals(foo.extraBars[i].alpha, foo2.extraBars[i].alpha);
+    Expect.equals(foo.extraBars[i].beta, foo2.extraBars[i].beta);
+    Expect.equals(foo.extraBars[i].gamma, foo2.extraBars[i].gamma);
+    Expect.equals(foo.extraBars[i].type, foo2.extraBars[i].type);
   }
 
   Expect.equals(foo.name, foo2.name);
   Expect.equals(foo.source, foo2.source);
 
-  Expect.listEquals(foo.array_of_bools, foo2.array_of_bools);
-  for (int i = 0; i < foo2.array_of_array_of_bools.length; i++) {
-    Expect.listEquals(foo.array_of_array_of_bools[i],
-                      foo2.array_of_array_of_bools[i]);
+  Expect.listEquals(foo.arrayOfBools, foo2.arrayOfBools);
+  for (int i = 0; i < foo2.arrayOfArrayOfBools.length; i++) {
+    Expect.listEquals(foo.arrayOfArrayOfBools[i],
+                      foo2.arrayOfArrayOfBools[i]);
   }
 }
 
 
-class TestRect {
-  int x = 0;
-  int y = 0;
-  int width = 0;
-  int height = 0;
+class Rect extends bindings.Struct {
+  static const int kStructSize = 24;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 4);
+  int x;
+  int y;
+  int width;
+  int height;
 
-  TestRect();
+  Rect() : super(kStructSize);
 
-  static const int encodedSize = bindings.kStructHeaderSize + 16;
-
-  static TestRect decode(bindings.MojoDecoder decoder) {
-    var val = new TestRect();
-    var num_bytes = decoder.readUint32();
-    var num_fields = decoder.readUint32();
-    val.x = decoder.decodeStruct(bindings.Int32);
-    val.y = decoder.decodeStruct(bindings.Int32);
-    val.width = decoder.decodeStruct(bindings.Int32);
-    val.height = decoder.decodeStruct(bindings.Int32);
-    return val;
+  static Rect deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
   }
 
-  static void encode(bindings.MojoEncoder encoder, TestRect val) {
-    encoder.writeUint32(encodedSize);
-    encoder.writeUint32(4);
-    encoder.encodeStruct(bindings.Int32, val.x);
-    encoder.encodeStruct(bindings.Int32, val.y);
-    encoder.encodeStruct(bindings.Int32, val.width);
-    encoder.encodeStruct(bindings.Int32, val.height);
+  static Rect decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    Rect result = new Rect();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.x = decoder0.decodeInt32(8);
+    }
+    if (mainDataHeader.numFields > 1) {
+      result.y = decoder0.decodeInt32(12);
+    }
+    if (mainDataHeader.numFields > 2) {
+      result.width = decoder0.decodeInt32(16);
+    }
+    if (mainDataHeader.numFields > 3) {
+      result.height = decoder0.decodeInt32(20);
+    }
+    return result;
   }
 
-  bool operator ==(TestRect other) {
-    return (x == other.x) && (y == other.y) && (width == other.width) &&
-           (height == other.height);
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeInt32(x, 8);
+    encoder0.encodeInt32(y, 12);
+    encoder0.encodeInt32(width, 16);
+    encoder0.encodeInt32(height, 20);
   }
+
+  bool operator==(Rect other) =>
+      (this.x == other.x) &&
+      (this.y == other.y) &&
+      (this.width == other.width) &&
+      (this.height == other.height);
 }
 
 
-TestRect createRect(int x, int y, int width, int height) {
-  var r = new TestRect();
+Rect createRect(int x, int y, int width, int height) {
+  var r = new Rect();
   r.x = x;
   r.y = y;
   r.width = width;
@@ -323,41 +502,76 @@ TestRect createRect(int x, int y, int width, int height) {
 }
 
 
-class TestNamedRegion {
-  String name = null;
-  List<TestRect> rects = null;
+class NamedRegion extends bindings.Struct {
+  static const int kStructSize = 24;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 2);
+  String name;
+  List<Rect> rects;
 
-  TestNamedRegion();
+  NamedRegion() : super(kStructSize);
 
-  static const int encodedSize = bindings.kStructHeaderSize + 16;
-
-  static TestNamedRegion decode(bindings.MojoDecoder decoder) {
-    var val = new TestNamedRegion();
-    var num_bytes = decoder.readUint32();
-    var num_fields = decoder.readUint32();
-    val.name = decoder.decodeStruct(bindings.NullableMojoString);
-    val.rects = decoder.decodeArrayPointer(new bindings.PointerTo(TestRect));
-    return val;
+  static NamedRegion deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
   }
 
-  static void encode(bindings.MojoEncoder encoder, TestNamedRegion val) {
-    encoder.writeUint32(TestNamedRegion.encodedSize);
-    encoder.writeUint32(2);
-    encoder.encodeStruct(bindings.NullableMojoString, val.name);
-    encoder.encodeArrayPointer(new bindings.PointerTo(TestRect), val.rects);
+  static NamedRegion decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    NamedRegion result = new NamedRegion();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    if (mainDataHeader.numFields > 0) {
+      result.name = decoder0.decodeString(8, true);
+    }
+    if (mainDataHeader.numFields > 1) {
+      var decoder1 = decoder0.decodePointer(16, true);
+      if (decoder1 == null) {
+        result.rects = null;
+      } else {
+        var si1 = decoder1.decodeDataHeaderForPointerArray(
+            bindings.kUnspecifiedArrayLength);
+        result.rects = new List<Rect>(si1.numFields);
+        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+          var decoder2 = decoder1.decodePointer(
+              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              false);
+          result.rects[i1] = Rect.decode(decoder2);
+        }
+      }
+    }
+    return result;
+  }
+
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeString(name, 8, true);
+    if (rects == null) {
+      encoder0.encodeNullPointer(16, true);
+    } else {
+      var encoder1 = encoder0.encodePointerArray(
+          rects.length, 16, bindings.kUnspecifiedArrayLength);
+      for (int i0 = 0; i0 < rects.length; ++i0) {
+        encoder1.encodeStruct(
+            rects[i0],
+            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            false);
+      }
+    }
   }
 }
 
 
 testNamedRegion() {
-  var r = new TestNamedRegion();
+  var r = new NamedRegion();
   r.name = "rectangle";
   r.rects = [createRect(1, 2, 3, 4), createRect(10, 20, 30, 40)];
 
-  var builder = new bindings.MessageBuilder(1, TestNamedRegion.encodedSize);
-  builder.encodeStruct(TestNamedRegion, r);
-  var reader = new bindings.MessageReader(builder.finish());
-  var result = reader.decodeStruct(TestNamedRegion);
+  int name = 1;
+  var header = new bindings.MessageHeader(name);
+  var message = r.serializeWithHeader(header);
+  var resultMessage = new bindings.ServiceMessage.fromMessage(message);
+  var result = NamedRegion.deserialize(resultMessage.payload);
 
   Expect.equals("rectangle", result.name);
   Expect.equals(createRect(1, 2, 3, 4), result.rects[0]);
@@ -394,72 +608,67 @@ void testAlign() {
   }
 }
 
-void encodeDecode(Object t, Object input, Object expected, [int encoded_size]) {
-  int name = 42;
-  int payloadSize =
-      (encoded_size != null) ? encoded_size : bindings.getEncodedSize(t);
 
-  var builder = new bindings.MessageBuilder(name, payloadSize);
-  builder.encodeStruct(t, input);
-  var message = builder.finish();
+class MojoString extends bindings.Struct {
+  static const int kStructSize = 16;
+  static const bindings.DataHeader kDefaultStructInfo =
+      const bindings.DataHeader(kStructSize, 1);
+  String string;
+  MojoString() : super(kStructSize);
 
-  var reader = new bindings.MessageReader(message);
-  Expect.equals(payloadSize, reader.payloadSize);
-  Expect.equals(name, reader.name);
+  static MojoString deserialize(bindings.Message message) {
+    return decode(new bindings.Decoder(message));
+  }
 
-  var result = reader.decodeStruct(t);
-  Expect.equals(expected, result);
-}
+  static MojoString decode(bindings.Decoder decoder0) {
+    if (decoder0 == null) {
+      return null;
+    }
+    MojoString result = new MojoString();
+    var mainDataHeader = decoder0.decodeDataHeader();
+    result.string = decoder0.decodeString(8, false);
+    return result;
+  }
 
-
-void testTypes() {
-  encodeDecode(bindings.MojoString, "banana", "banana", 24);
-  encodeDecode(bindings.NullableMojoString, null, null, 8);
-  encodeDecode(bindings.Int8, -1, -1);
-  encodeDecode(bindings.Int8, 0xff, -1);
-  encodeDecode(bindings.Int16, -1, -1);
-  encodeDecode(bindings.Int16, 0xff, 0xff);
-  encodeDecode(bindings.Int16, 0xffff, -1);
-  encodeDecode(bindings.Int32, -1, -1);
-  encodeDecode(bindings.Int32, 0xffff, 0xffff);
-  encodeDecode(bindings.Int32, 0xffffffff, -1);
-  encodeDecode(bindings.Float, 1.0, 1.0);
-  encodeDecode(bindings.Double, 1.0, 1.0);
+  void encode(bindings.Encoder encoder) {
+    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    encoder0.encodeString(string, 8, false);
+  }
 }
 
 
 testUtf8() {
-  var str = "B\u03ba\u1f79";  // some UCS-2 codepoints
+  var str = "B\u03ba\u1f79";  // some UCS-2 codepoints.
   var name = 42;
   var payloadSize = 24;
 
-  var builder = new bindings.MessageBuilder(name, payloadSize);
-  var encoder = builder.createEncoder(8);
-  encoder.encodeStringPointer(str);
-  var message = builder.finish();
+  var mojoString = new MojoString();
+  mojoString.string = str;
+
+  var header = new bindings.MessageHeader(name);
+  var message = mojoString.serializeWithHeader(header);
+  var resultMessage = new bindings.ServiceMessage.fromMessage(message);
+  var result = MojoString.deserialize(resultMessage.payload);
+
   var expectedMemory = new Uint8List.fromList([
     /*  0: */   16,    0,    0,    0,    2,    0,    0,    0,
     /*  8: */   42,    0,    0,    0,    0,    0,    0,    0,
-    /* 16: */    8,    0,    0,    0,    0,    0,    0,    0,
-    /* 24: */   14,    0,    0,    0,    6,    0,    0,    0,
-    /* 32: */ 0x42, 0xCE, 0xBA, 0xE1, 0xBD, 0xB9,    0,    0,
+    /* 16: */   16,    0,    0,    0,    1,    0,    0,    0,
+    /* 24: */   8,     0,    0,    0,    0,    0,    0,    0,
+    /* 32: */   14,    0,    0,    0,    6,    0,    0,    0,
+    /* 40: */ 0x42, 0xCE, 0xBA, 0xE1, 0xBD, 0xB9,    0,    0,
   ]);
-  var actualMemory = message.buffer.buffer.asUint8List();
+  var allActualMemory = message.buffer.buffer.asUint8List();
+  var actualMemory = allActualMemory.sublist(0, expectedMemory.length);
   Expect.equals(expectedMemory.length, actualMemory.length);
   Expect.listEquals(expectedMemory, actualMemory);
 
-  var reader = new bindings.MessageReader(message);
-  Expect.equals(payloadSize, reader.payloadSize);
-  Expect.equals(name, reader.name);
-
-  var str2 = reader.decoder.decodeStringPointer();
-  Expect.equals(str, str2);
+  Expect.equals(str, result.string);
 }
 
 
 main() {
   testAlign();
-  testTypes();
   testBar();
   testFoo();
   testNamedRegion();
