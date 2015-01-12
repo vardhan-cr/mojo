@@ -14,6 +14,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/strings/string_split.h"
+#include "base/strings/string_util.h"
 #include "build/build_config.h"
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/application_manager/application_manager.h"
@@ -70,11 +71,24 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
   if (handlers_spec.empty())
     return;
 
+#if defined(OS_ANDROID)
+  // TODO(eseidel): On Android we pass command line arguments is via the
+  // 'parameters' key on the intent, which we specify during 'am shell start'
+  // via --esa, however that expects comma-separated values and says:
+  //   am shell --help:
+  //     [--esa <EXTRA_KEY> <EXTRA_STRING_VALUE>[,<EXTRA_STRING_VALUE...]]
+  //     (to embed a comma into a string escape it using "\,")
+  // Whatever takes 'parameters' and constructs a CommandLine is failing to
+  // un-escape the commas, we need to move this fix to that file.
+  ReplaceSubstringsAfterOffset(&handlers_spec, 0, "\\,", ",");
+#endif
+
   std::vector<std::string> parts;
   base::SplitString(handlers_spec, ',', &parts);
   if (parts.size() % 2 != 0) {
     LOG(ERROR) << "Invalid value for switch " << switches::kContentHandlers
-               << ": must be a comma-separated list of mimetype/url pairs.";
+               << ": must be a comma-separated list of mimetype/url pairs."
+               << handlers_spec;
     return;
   }
 
@@ -85,6 +99,8 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
                  << ": '" << parts[i + 1] << "' is not a valid URL.";
       return;
     }
+    // TODO(eseidel): We should also validate that the mimetype is valid
+    // net/base/mime_util.h could do this, but we don't want to depend on net.
     loader->RegisterContentHandler(parts[i], url);
   }
 }
