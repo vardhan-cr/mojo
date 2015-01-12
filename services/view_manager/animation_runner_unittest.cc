@@ -105,7 +105,7 @@ TEST_F(AnimationRunnerTest, SingleProperty) {
   element.target_value = AnimationValue::New();
   element.target_value->float_value = .5;
 
-  const uint32_t animation_id = runner_.Schedule(&view, group);
+  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
   EXPECT_EQ("scheduled view=0,0", runner_observer_.changes()->at(0));
@@ -162,7 +162,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   done_transform.Scale(2, 4);
   element2.target_value->transform = Transform::From(done_transform);
 
-  const uint32_t animation_id = runner_.Schedule(&view, group);
+  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
   // Nothing in the view should have changed yet.
@@ -231,7 +231,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
   done_transform.Scale(2, 4);
   element2.target_value->transform = Transform::From(done_transform);
 
-  const uint32_t animation_id = runner_.Schedule(&view, group);
+  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
 
   runner_observer_.clear_changes();
 
@@ -302,7 +302,7 @@ TEST_F(AnimationRunnerTest, Cycles) {
   element3.target_value = AnimationValue::New();
   element3.target_value->float_value = .5f;
 
-  runner_.Schedule(&view, group);
+  runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
   // Nothing in the view should have changed yet.
@@ -352,7 +352,7 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   element.target_value = AnimationValue::New();
   element.target_value->float_value = .5f;
 
-  const uint32_t animation_id = runner_.Schedule(&view, group);
+  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
   // Animate half way.
@@ -362,7 +362,8 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
   // Schedule again. We should get an interrupt, but opacity shouldn't change.
-  const uint32_t animation2_id = runner_.Schedule(&view, group);
+  const uint32_t animation2_id = runner_.Schedule(
+      &view, group, initial_time_ + base::TimeDelta::FromMicroseconds(500));
 
   // Id should have changed.
   EXPECT_NE(animation_id, animation2_id);
@@ -407,7 +408,7 @@ TEST_F(AnimationRunnerTest, CancelAnimationForView) {
   element.target_value = AnimationValue::New();
   element.target_value->float_value = .5;
 
-  const uint32_t animation_id = runner_.Schedule(&view, group);
+  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
   EXPECT_EQ(&view, runner_.GetViewForAnimation(animation_id));
 
@@ -459,7 +460,7 @@ TEST_F(AnimationRunnerTest, InfiniteRepeatWithHugeGap) {
   element2.target_value = AnimationValue::New();
   element2.target_value->float_value = .5f;
 
-  runner_.Schedule(&view, group);
+  runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
   runner_.Tick(initial_time_ +
@@ -497,11 +498,11 @@ TEST_F(AnimationRunnerTest, RescheduleSetsPropertiesToFinalValue) {
   gfx::Transform done_transform;
   done_transform.Scale(2, 4);
   element2.target_value->transform = Transform::From(done_transform);
-  runner_.Schedule(&view, group);
+  runner_.Schedule(&view, group, initial_time_);
 
   // Schedule() again, this time without animating opacity.
   element.property = ANIMATION_PROPERTY_NONE;
-  runner_.Schedule(&view, group);
+  runner_.Schedule(&view, group, initial_time_);
 
   // Opacity should go to final value.
   EXPECT_EQ(.5f, view.opacity());

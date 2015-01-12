@@ -35,11 +35,12 @@ void AnimationRunner::RemoveObserver(AnimationRunnerObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-uint32_t AnimationRunner::Schedule(
-    ServerView* view,
-    const mojo::AnimationGroup& transport_group) {
-  scoped_ptr<ScheduledAnimationGroup> group(ScheduledAnimationGroup::Create(
-      view, last_tick_time_, next_id_++, transport_group));
+uint32_t AnimationRunner::Schedule(ServerView* view,
+                                   const mojo::AnimationGroup& transport_group,
+                                   base::TimeTicks now) {
+  DCHECK_GE(now, last_tick_time_);
+  scoped_ptr<ScheduledAnimationGroup> group(
+      ScheduledAnimationGroup::Create(view, now, next_id_++, transport_group));
   if (!group.get())
     return 0;
 

@@ -37,7 +37,8 @@ class AnimationRunner {
   // but are no longer animating are set to their target value.
   // Returns 0 if |transport_group| is not valid.
   uint32_t Schedule(ServerView* view,
-                    const mojo::AnimationGroup& transport_group);
+                    const mojo::AnimationGroup& transport_group,
+                    base::TimeTicks now);
 
   // Returns the view the animation identified by |id| was scheduled for.
   ServerView* GetViewForAnimation(uint32_t id);
