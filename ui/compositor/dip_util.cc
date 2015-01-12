@@ -18,7 +18,7 @@
 #include "ui/gfx/size.h"
 #include "ui/gfx/size_conversions.h"
 
-#if DCHECK_IS_ON
+#if DCHECK_IS_ON()
 #include "ui/compositor/layer_animator.h"
 #endif
 
@@ -76,7 +76,7 @@ gfx::Rect ConvertRectToPixel(const Layer* layer,
                  gfx::ScaleSize(rect_in_dip.size(), scale)));
 }
 
-#if DCHECK_IS_ON
+#if DCHECK_IS_ON()
 namespace {
 
 void CheckSnapped(float snapped_position) {
@@ -107,7 +107,7 @@ void SnapLayerToPhysicalPixelBoundary(ui::Layer* snapped_layer,
   gfx::Vector2dF fudge = view_offset_snapped - view_offset;
   fudge.Scale(1.0 / scale_factor);
   layer_to_snap->SetSubpixelPositionOffset(fudge);
-#if DCHECK_IS_ON
+#if DCHECK_IS_ON()
   gfx::Point layer_offset;
   gfx::PointF origin;
   Layer::ConvertPointToLayer(

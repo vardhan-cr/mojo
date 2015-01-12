@@ -293,6 +293,12 @@ void LayerTreeHostImpl::BeginMainFrameAborted(CommitEarlyOutReason reason) {
 void LayerTreeHostImpl::BeginCommit() {
   TRACE_EVENT0("cc", "LayerTreeHostImpl::BeginCommit");
 
+  // Ensure all textures are returned so partial texture updates can happen
+  // during the commit. Impl-side-painting doesn't upload during commits, so
+  // is unaffected.
+  if (!settings_.impl_side_painting)
+    output_surface_->ForceReclaimResources();
+
   if (UsePendingTreeForSync())
     CreatePendingTree();
 }
@@ -875,7 +881,7 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
       output_surface_->capabilities().draw_and_swap_full_viewport_every_frame)
     draw_result = DRAW_SUCCESS;
 
-#if DCHECK_IS_ON
+#if DCHECK_IS_ON()
   for (const auto& render_pass : frame->render_passes) {
     for (const auto& quad : render_pass->quad_list)
       DCHECK(quad->shared_quad_state);

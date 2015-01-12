@@ -62,6 +62,12 @@ class RemoteDeviceEnvironment(environment.Environment):
     self._runner_type = args.runner_type
     self._device = ''
     self._verbose_count = args.verbose_count
+    self._timeouts = {
+        'queueing': 60 * 10,
+        'installing': 60 * 10,
+        'in-progress': 60 * 30,
+        'unknown': 60 * 5
+    }
 
     if not args.trigger and not args.collect:
       self._trigger = True
@@ -135,7 +141,8 @@ class RemoteDeviceEnvironment(environment.Environment):
       if (self._remote_device_os
           and device['os_version'] != self._remote_device_os):
         continue
-      if device['available_devices_count'] > 0:
+      if ((self._remote_device and self._remote_device_os)
+          or device['available_devices_count']):
         logging.info('Found device: %s %s',
                      device['name'], device['os_version'])
         return device['device_type_id']
@@ -189,3 +196,7 @@ class RemoteDeviceEnvironment(environment.Environment):
   @property
   def verbose_count(self):
     return self._verbose_count
+
+  @property
+  def timeouts(self):
+    return self._timeouts

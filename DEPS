@@ -19,10 +19,8 @@
 
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
-  'libcxx_revision': '48198f9110397fff47fe7c37cbfa296be7d44d3d',
-  'libcxxabi_revision': '4ad1009ab3a59fa7a6896d74d5e4de5885697f95',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '9558f653877b982df415e4d075db55b7558f7654',
+  'skia_revision': '0899696e9fec7d376b63655bedaed76871cb15c2',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
@@ -30,19 +28,19 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  "angle_revision": "cd1db9e6c937a69f8efb5f73a3fcad14a737c436",
+  'angle_revision': '04184fb0465ea2692b90cf0fa8b203df6c31cebf',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '23a4e2f545c7b6340d7e5a2b74801941b0a86535',
+  'buildtools_revision': '451dcd05a5b34936f5be67b2472cd63aaa508401',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': 'a48ead9b7e3dc01f1bde83f69062eebd960edfdc',
+  'pdfium_revision': 'f8105c665856863ad95da37fee6c12b98b953e2c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': 'aac2f6a6a00921499ed85787aace287724fbc07e',
+  'boringssl_revision': 'ca9a538aa0f2ebdd261783efa032e69a2ea17fbc',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -78,13 +76,7 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '51c1a4ce5f362676aa1f1cfdb5b7e52edabfa5aa',
-
-  'src/third_party/libc++/trunk':
-   Var('chromium_git') + '/chromium/llvm-project/libcxx.git' + '@' +  Var('libcxx_revision'),
-
-  'src/third_party/libc++abi/trunk':
-   Var('chromium_git') + '/chromium/llvm-project/libcxxabi.git' + '@' +  Var('libcxxabi_revision'),
+   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '4e3266f32c62d30a3f9e2232a753c60129d1e670',
 
   'src/tools/grit':
     Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'a5890a8118c0c80cc0560e6d8d5cf65e5d725509', # from svn revision 185
@@ -152,7 +144,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + '8fe116f93f350dcf73c6fe70db893985bf1b91d5',
+     Var('chromium_git') + '/android_tools.git' + '@' + '56b3d3e8ce785e468eac3262cd6b107ebe569e94',
 
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',

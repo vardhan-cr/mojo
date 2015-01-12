@@ -207,14 +207,14 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 #define SK_CPU_LENDIAN
 #undef  SK_CPU_BENDIAN
 
-#elif defined(SK_BUILD_FOR_UNIX)
+#elif defined(SK_BUILD_FOR_UNIX) || defined(SK_BUILD_FOR_ANDROID)
 
 // Prefer FreeType's emboldening algorithm to Skia's
 // TODO: skia used to just use hairline, but has improved since then, so
 // we should revisit this choice...
 #define SK_USE_FREETYPE_EMBOLDEN
 
-#ifdef SK_CPU_BENDIAN
+#if defined(SK_BUILD_FOR_UNIX) && defined(SK_CPU_BENDIAN)
 // Above we set the order for ARGB channels in registers. I suspect that, on
 // big endian machines, you can keep this the same and everything will work.
 // The in-memory order will be different, of course, but as long as everything
@@ -267,10 +267,6 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 #   define SK_SUPPORT_LEGACY_PUBLIC_IMAGEINFO_FIELDS
 #endif
 
-#ifndef    SK_SUPPORT_LEGACY_GRADIENT_PRECISION
-#   define SK_SUPPORT_LEGACY_GRADIENT_PRECISION
-#endif
-
 #ifndef    SK_IGNORE_ETC1_SUPPORT
 #   define SK_IGNORE_ETC1_SUPPORT
 #endif
@@ -289,14 +285,6 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 
 #ifndef SK_IGNORE_GPU_LAYER_HOISTING
 #   define SK_IGNORE_GPU_LAYER_HOISTING
-#endif
-
-#ifndef SK_SUPPORT_LEGACY_DRAWDATA
-#   define SK_SUPPORT_LEGACY_DRAWDATA
-#endif
-
-#ifndef SK_SUPPORT_LEGACY_CANVAS_VIRTUAL
-#   define SK_SUPPORT_LEGACY_CANVAS_VIRTUAL
 #endif
 
 // If this goes well, we can have Skia respect DYNAMIC_ANNOTATIONS_ENABLED directly.

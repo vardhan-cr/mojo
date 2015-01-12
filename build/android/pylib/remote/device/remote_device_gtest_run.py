@@ -19,7 +19,7 @@ class RemoteDeviceGtestRun(remote_device_test_run.RemoteDeviceTestRun):
   """Run gtests and uirobot tests on a remote device."""
 
   DEFAULT_RUNNER_PACKAGE = (
-      'org.chromium.native_test.ChromiumNativeTestInstrumentationTestRunner')
+      'org.chromium.native_test.ChromeNativeTestInstrumentationTestRunner')
 
   #override
   def TestPackage(self):
@@ -62,4 +62,8 @@ class RemoteDeviceGtestRun(remote_device_test_run.RemoteDeviceTestRun):
                 if l.startswith(self._INSTRUMENTATION_STREAM_LEADER))
       results_list = self._test_instance.ParseGTestOutput(output)
       results.AddResults(results_list)
+      if not self._results['results']['pass']:
+        results.AddResult(base_test_result.BaseTestResult(
+            'Remote Service detected error.',
+            base_test_result.ResultType.FAIL))
     return results
