@@ -154,6 +154,15 @@ def GetTestList(config):
                   os.path.join("mojo", "tools", "data", "dart_unittests"),
                   build_dir, "mojob_test_successes"])
 
+  # NaCl tests:
+  if ShouldRunTest("nacl"):
+    AddEntry("NaCl tests",
+             [os.path.join(build_dir, "monacl_shell"),
+              os.path.join(build_dir, "irt_" + config.target_arch,
+                           "irt_core.nexe"),
+              os.path.join(build_dir, "clang_newlib_" + config.target_arch,
+                           "monacl_test.nexe")])
+
   # ----------------------------------------------------------------------------
 
   return test_list

@@ -195,6 +195,10 @@ def darttest(config):
   return _run_tests(config, ['dart'])
 
 
+def nacltest(config):
+  return _run_tests(config, ['nacl'])
+
+
 def main():
   os.chdir(Paths().src_root)
 
@@ -282,6 +286,10 @@ def main():
   darttest_parser = subparsers.add_parser('darttest', parents=[parent_parser],
       help='Run Dart unit tests (does not build).')
   darttest_parser.set_defaults(func=darttest)
+
+  nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
+      help='Run NaCl unit tests (does not build).')
+  nacltest_parser.set_defaults(func=nacltest)
 
   args = parser.parse_args()
   config = _args_to_config(args)
