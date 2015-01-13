@@ -10,3 +10,5 @@ JavaScript Mojo Example Applications
 - cube.js - A JS version of examples/sample_app.
 
 - share_echo.js, share_echo_target.js - Peer to peer service sharing.
+
+- show_image.js - Simple use of the window_manager interface.
