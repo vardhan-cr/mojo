@@ -38,6 +38,7 @@ class ICUDataImpl : public mojo::ApplicationDelegate,
            const mojo::Callback<void(mojo::ScopedSharedBufferHandle)>& callback)
       override {
     if (std::string(sha1hash) != std::string(kICUDataTableHash)) {
+      LOG(WARNING) << "Failed to match sha1sum. Expected " << kICUDataTableHash;
       callback.Run(mojo::ScopedSharedBufferHandle());
       return;
     }

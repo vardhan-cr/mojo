@@ -18,8 +18,8 @@ namespace icu {
 namespace {
 
 // These values are for Android arm32.
-const char kDataHash[] = "750429c6b974f0207c476910cb688f08936317aa";
-const int64_t kDataSize = 6038640;
+const char kDataHash[] = "3ef55e413a9d429e404e10fe8ec566009d3889f3";
+const int64_t kDataSize = 6037440;
 
 class Callback {
  public:

@@ -30,7 +30,7 @@ for i in range(0, len(values), chunk_size):
 with open(out_file, "w") as f:
     f.write('#include "services/icu_data/data.h"\n')
     f.write("namespace icu_data {\n")
-    f.write("const char kICUDataTable[] = {\n")
+    f.write("const char kICUDataTable[%d] = {\n" % len(data))
     f.write(",\n".join(lines))
     f.write("\n};\n")
     f.write("const size_t kICUDataTableSize = sizeof(kICUDataTable);\n")
