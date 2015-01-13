@@ -26,6 +26,10 @@ def _args_to_config(args):
   elif args.chromeos:
     target_os = Config.OS_CHROMEOS
 
+  if args.cpu_arch is None and args.android:
+    args.cpu_arch = 'arm'
+  target_arch = args.cpu_arch
+
   additional_args = {}
 
   if 'clang' in args:
@@ -52,8 +56,7 @@ def _args_to_config(args):
   if 'with_dart' in args:
     additional_args['with_dart'] = args.with_dart
 
-  if 'nacl' in args:
-    additional_args['use_nacl'] = args.nacl
+  additional_args['use_nacl'] = args.nacl
 
   if 'dry_run' in args:
     additional_args['dry_run'] = args.dry_run
@@ -67,7 +70,8 @@ def _args_to_config(args):
   if 'test_results_server' in args:
     additional_args['test_results_server'] = args.test_results_server
 
-  return Config(target_os=target_os, is_debug=args.debug, **additional_args)
+  return Config(target_os=target_os, target_arch=target_arch,
+                is_debug=args.debug, **additional_args)
 
 
 def _get_out_dir(config):
@@ -107,10 +111,12 @@ def gn(config):
     gn_args.append('mojo_use_nacl=true')
 
   if config.target_os == Config.OS_ANDROID:
-    gn_args.append(r'''os=\"android\" cpu_arch=\"arm\"''')
+    gn_args.append(r'''os=\"android\"''')
   elif config.target_os == Config.OS_CHROMEOS:
     gn_args.append(r'''os=\"chromeos\" ui_base_build_ime=false
                    use_system_harfbuzz=false''')
+
+  gn_args.append(r'''cpu_arch=\"%s\"''' % config.target_arch)
 
   out_dir = _get_out_dir(config)
   command.append(out_dir)
@@ -211,6 +217,13 @@ def main():
   os_group.add_argument('--chromeos', help='Build for ChromeOS',
                         action='store_true')
 
+  parent_parser.add_argument('--cpu-arch',
+                             help='CPU architecture to build for.',
+                             choices=['x64', 'x86', 'arm'])
+
+  parent_parser.add_argument('--nacl', help='Add in NaCl', default=False,
+                             action='store_true')
+
   subparsers = parser.add_subparsers()
 
   sync_parser = subparsers.add_parser('sync', parents=[parent_parser],
@@ -222,7 +235,6 @@ def main():
   gn_parser.set_defaults(func=gn)
   gn_parser.add_argument('--with-dart', help='Configure the Dart bindings',
                          action='store_true')
-  gn_parser.add_argument('--nacl', help='Add in NaCl', action='store_true')
   clang_group = gn_parser.add_mutually_exclusive_group()
   clang_group.add_argument('--clang', help='Use Clang (default)', default=None,
                            action='store_true')
