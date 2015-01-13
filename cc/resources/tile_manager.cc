@@ -418,28 +418,6 @@ void TileManager::SynchronouslyRasterizeTiles(
       tiles_that_need_to_be_rasterized, resource_pool_,
       base::Bind(&TileManager::UpdateTileDrawInfo, base::Unretained(this)));
 
-  // Use on-demand raster for any required-for-activation tiles that have not
-  // been been assigned memory after reaching a steady memory state. This
-  // ensures that we activate even when OOM. Note that we have to rebuilt the
-  // queue in case the last AssignGpuMemoryToTiles evicted some tiles that would
-  // otherwise not be picked up by the old raster queue.
-  client_->BuildRasterQueue(&raster_priority_queue_,
-                            global_state_.tree_priority);
-
-  // Use on-demand raster for any tiles that have not been been assigned
-  // memory. This ensures that we draw even when OOM.
-  while (!raster_priority_queue_.IsEmpty()) {
-    Tile* tile = raster_priority_queue_.Top();
-    TileDrawInfo& draw_info = tile->draw_info();
-
-    if (tile->required_for_draw() && !draw_info.IsReadyToDraw()) {
-      draw_info.set_rasterize_on_demand();
-      client_->NotifyTileStateChanged(tile);
-    }
-    raster_priority_queue_.Pop();
-  }
-  raster_priority_queue_.Reset();
-
   TRACE_EVENT_INSTANT1("cc", "DidRasterize", TRACE_EVENT_SCOPE_THREAD, "state",
                        BasicStateAsValue());
 
@@ -580,8 +558,11 @@ void TileManager::AssignGpuMemoryToTiles(
                            resource_pool_->acquired_resource_count());
 
   eviction_priority_queue_is_up_to_date_ = false;
+  // TODO(vmpstr): Take this as a parameter and have SynchronousRaster build a
+  // REQUIRED_FOR_DRAW queue.
   client_->BuildRasterQueue(&raster_priority_queue_,
-                            global_state_.tree_priority);
+                            global_state_.tree_priority,
+                            RasterTilePriorityQueue::Type::ALL);
 
   while (!raster_priority_queue_.IsEmpty()) {
     Tile* tile = raster_priority_queue_.Top();
@@ -880,6 +861,8 @@ bool TileManager::IsReadyToActivate() const {
   TRACE_EVENT0("cc", "TileManager::IsReadyToActivate");
   const std::vector<PictureLayerImpl*>& layers = client_->GetPictureLayers();
 
+  // TODO(vmpstr): Replace this with building a REQUIRED_TO_ACTIVATE raster
+  // queue and checking if it's empty.
   for (const auto& layer : layers) {
     if (!layer->AllTilesRequiredForActivationAreReadyToDraw())
       return false;
@@ -891,6 +874,8 @@ bool TileManager::IsReadyToActivate() const {
 bool TileManager::IsReadyToDraw() const {
   const std::vector<PictureLayerImpl*>& layers = client_->GetPictureLayers();
 
+  // TODO(vmpstr): Replace this with building a REQUIRED_TO_DRAW raster queue
+  // and checking if it's empty.
   for (const auto& layer : layers) {
     if (!layer->AllTilesRequiredForDrawAreReadyToDraw())
       return false;
@@ -979,8 +964,10 @@ void TileManager::CheckIfMoreTilesNeedToBePrepared() {
   // ensures that we activate even when OOM. Note that we have to rebuilt the
   // queue in case the last AssignGpuMemoryToTiles evicted some tiles that
   // would otherwise not be picked up by the old raster queue.
+  // TODO(vmpstr): Make this use REQUIRED_FOR_ACTIVAITON queue.
   client_->BuildRasterQueue(&raster_priority_queue_,
-                            global_state_.tree_priority);
+                            global_state_.tree_priority,
+                            RasterTilePriorityQueue::Type::ALL);
   bool ready_to_activate = true;
   while (!raster_priority_queue_.IsEmpty()) {
     Tile* tile = raster_priority_queue_.Top();

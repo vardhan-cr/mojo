@@ -309,8 +309,8 @@ char kTSanDefaultSuppressions[] =
 // https://code.google.com/p/skia/issues/detail?id=3294
 "race:SkBaseMutex::acquire\n"
 
-// https://crbug.com/447461
-"race:net::SSLConfig::SSLConfig\n"
+// https://crbug.com/430533
+"race:TileTaskGraphRunner::Run\n"
 
 // End of suppressions.
 ;  // Please keep this semicolon.
