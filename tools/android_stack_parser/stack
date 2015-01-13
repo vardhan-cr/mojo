@@ -118,14 +118,33 @@ def GetBasenameFromMojoApp(url):
   return url[(index + 1):] if index != -1 else url
 
 
+def GetSymboledNameForMojoApp(path):
+  """Used by GetSymbolMapping to get the non-stripped library name for an
+  installed mojo app."""
+  # e.g. tracing.mojo -> libtracing_library.so
+  name, ext = os.path.splitext(path)
+  if ext != '.mojo':
+    return path
+  return 'lib%s_library.so' % name
+
+
 def GetSymbolMapping(lines):
   """Returns a mapping (dictionary) from download file to .so."""
   regex = re.compile('Caching mojo app (\S+) at (\S+)')
+  # lib_mojo_shell.so moved to mojo_shell as part of building the APK
+  # currently this is the only library for which we do this.
+  # The install path of the apk can change every install, hence the regexp.
+  lib_mojo_regexp = re.compile(r'(/data/app/.*/libmojo_shell\.so)')
   mappings = {}
   for line in lines:
+    lib_mojo_result = lib_mojo_regexp.search(line)
+    if lib_mojo_result:
+      mappings[lib_mojo_result.group(1)] = 'mojo_shell'
+
     result = regex.search(line)
     if result:
-      mappings[result.group(2)] = GetBasenameFromMojoApp(result.group(1))
+      url = GetBasenameFromMojoApp(result.group(1))
+      mappings[result.group(2)] = GetSymboledNameForMojoApp(url)
   return mappings
 
 
