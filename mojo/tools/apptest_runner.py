@@ -37,7 +37,7 @@ def main():
   _logging.debug("Test list: %s" % apptest_list)
 
   mopy.gtest.set_color()
-  mojo_paths = Paths(Config(build_dir=args.build_dir))
+  mojo_paths = Paths(build_dir=args.build_dir)
 
   exit_code = 0
   for apptest_dict in apptest_list:
