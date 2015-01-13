@@ -14,33 +14,22 @@ define("main", [
   "mojo/services/public/js/application",
   "mojo/services/public/js/service_provider",
   "mojo/services/window_manager/public/interfaces/window_manager.mojom",
-], function(application, serviceProvider, windowManager) {
+  "third_party/js/url",
+], function(application, serviceProvider, windowManager, url) {
 
   const Application = application.Application;
   const ServiceProvider = serviceProvider.ServiceProvider;
   const WindowManager = windowManager.WindowManager;
+  const URL = url.URL;
   const defaultImageURL =
       "http://upload.wikimedia.org/wikipedia/commons/8/87/Google_Chrome_icon_%282011%29.png";
 
-  var windowManager;
-  var windowManagerSP;
-
-  class WindowManagerClientImpl {
-    // An empty stub for now.
-  }
-
   class ShowImage extends Application {
     initialize() {
-      var imageURLKey = "?url=";
-      var imageURLIndex = this.url.indexOf(imageURLKey);
-      var imageURL = (imageURLIndex == -1) ? defaultImageURL :
-          this.url.substring(imageURLIndex + imageURLKey.length);
-
-      windowManager = this.shell.connectToService(
-          "mojo:window_manager", WindowManager, new WindowManagerClientImpl);
-      windowManager.embed(imageURL, function(spProxy) {
-        windowManagerSP = new ServiceProvider(spProxy);
-      });
+      var imageURL = new URL(this.url, true).query.url || defaultImageURL;
+      var windowManager = this.shell.connectToService(
+        "mojo:window_manager", WindowManager, {} /* empty WindowManagerClient */);
+      windowManager.embed(imageURL, function() { /* no ServiceProvider */ });
 
       // Displaying imageURL is now the responsibility of the Mojo application
       // launched by its content handler. We're done.
