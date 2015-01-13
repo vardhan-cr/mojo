@@ -1704,7 +1704,6 @@ TEST_P(QuicConnectionTest, RemoveFECFromInflightOnRetransmissionTimeout) {
   EXPECT_CALL(*send_algorithm_, OnRetransmissionTimeout(true));
   EXPECT_CALL(*send_algorithm_, OnPacketSent(_, _, _, _, _)).Times(1);
   connection_.GetRetransmissionAlarm()->Fire();
-  ;
 
   size_t data_only = QuicSentPacketManagerPeer::GetBytesInFlight(manager);
   EXPECT_LT(0u, data_only);
@@ -3178,9 +3177,6 @@ TEST_P(QuicConnectionTest, LoopThroughSendingPackets) {
 }
 
 TEST_P(QuicConnectionTest, LoopThroughSendingPacketsWithTruncation) {
-  ValueRestore<bool> old_flag(&FLAGS_allow_truncated_connection_ids_for_quic,
-                              true);
-
   // Set up a larger payload than will fit in one packet.
   const string payload(connection_.max_packet_length(), 'a');
   EXPECT_CALL(*send_algorithm_, SetFromConfig(_, _, _)).Times(AnyNumber());

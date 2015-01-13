@@ -20,7 +20,7 @@
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '4fc48af0d7bec93a911d32330f251386a8adec98',
+  'skia_revision': '199ba8e19b0cafb37eea3beab162bc4b52728fff',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
@@ -28,7 +28,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '04184fb0465ea2692b90cf0fa8b203df6c31cebf',
+  'angle_revision': '9e0478f62fbc2f24d4ec233ef655d50b9dc0b812',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
