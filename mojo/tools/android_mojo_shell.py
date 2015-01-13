@@ -28,6 +28,7 @@ The value of <handlers> is a comma separated list like:
 text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
 """)
 
+
 def main():
   logging.basicConfig()
 
@@ -44,10 +45,11 @@ def main():
 
   context = android.PrepareShellRun(config)
   android.CleanLogs(context)
-  android.StartShell(context, args)
-  android.ShowLogs()
+  p = android.ShowLogs()
+  android.StartShell(context, args, sys.stdout, p.terminate)
 
   return 0
+
 
 if __name__ == "__main__":
   sys.exit(main())

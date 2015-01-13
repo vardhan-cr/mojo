@@ -9,6 +9,7 @@ import os.path
 import subprocess
 import sys
 import threading
+import time
 
 import SimpleHTTPServer
 import SocketServer
@@ -65,6 +66,37 @@ def _GetHandlerClassForPath(base_path):
   return RequestHandler
 
 
+def _ExitIfNeeded(process):
+  """
+  Exits |process| if it is still alive.
+  """
+  if process.poll() is None:
+    process.kill()
+
+
+def _ReadFifo(context, fifo_path, pipe, on_fifo_closed):
+  """
+  Reads |fifo_path| on the device and write the contents to |pipe|. Calls
+  |on_fifo_closed| when the fifo is closed. This method will block until
+  |fifo_path| exists.
+  """
+  def Run():
+    while not context.device.FileExistsOnDevice(fifo_path):
+      time.sleep(1)
+    stdout_cat = subprocess.Popen([constants.GetAdbPath(),
+                                   'shell',
+                                   'cat',
+                                   fifo_path],
+                                  stdout=pipe)
+    atexit.register(_ExitIfNeeded, stdout_cat)
+    stdout_cat.wait()
+    if on_fifo_closed:
+      on_fifo_closed()
+
+  thread = threading.Thread(target=Run, name="StdoutRedirector")
+  thread.start()
+
+
 def PrepareShellRun(config):
   """
   Returns a context allowing a shell to be run.
@@ -102,10 +134,14 @@ def PrepareShellRun(config):
   return context
 
 
-def StartShell(context, arguments):
+def StartShell(context, arguments, stdout=None, on_application_stop=None):
   """
   Starts the mojo shell, passing it the given arguments.
+
+  If stdout is not None, it should be a valid argument for subprocess.Popen.
   """
+  STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
+
   cmd = ('am start'
          ' -W'
          ' -S'
@@ -113,6 +149,10 @@ def StartShell(context, arguments):
          ' -n %s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME)
 
   parameters = ['--origin=http://127.0.0.1:%d/' % context.device_port]
+  if stdout or on_application_stop:
+    context.device.RunShellCommand('rm %s' % STDOUT_PIPE)
+    parameters.append('--fifo-path=%s' % STDOUT_PIPE)
+    _ReadFifo(context, STDOUT_PIPE, stdout, on_application_stop)
   parameters += arguments
   cmd += ' --esa parameters \"%s\"' % ','.join(parameters)
 
@@ -135,13 +175,16 @@ def CleanLogs(context):
 def ShowLogs():
   """
   Displays the log for the mojo shell.
+
+  Returns the process responsible for reading the logs.
   """
   logcat = subprocess.Popen([constants.GetAdbPath(),
                              'logcat',
                              '-s',
-                             ' '.join(LOGCAT_TAGS)])
-  atexit.register(logcat.kill)
-  logcat.wait()
+                             ' '.join(LOGCAT_TAGS)],
+                            stdout=sys.stdout)
+  atexit.register(_ExitIfNeeded, logcat)
+  return logcat
 
 
 def GetFilePath(filename):
