@@ -4,7 +4,7 @@
 
 #include "shell/android/mojo_main.h"
 
-#include "base/android/java_handler_thread.h"
+#include "base/android/fifo_utils.h"
 #include "base/android/jni_android.h"
 #include "base/android/jni_array.h"
 #include "base/android/jni_string.h"
@@ -12,12 +12,16 @@
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
+#include "base/run_loop.h"
+#include "base/threading/simple_thread.h"
 #include "jni/MojoMain_jni.h"
 #include "mojo/application_manager/application_loader.h"
+#include "mojo/common/message_pump_mojo.h"
 #include "shell/android/android_handler_loader.h"
 #include "shell/android/background_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
@@ -34,12 +38,34 @@ namespace shell {
 
 namespace {
 
+// Tag for logging.
+const char kLogTag[] = "chromium";
+
+// Command line argument for the communication fifo.
+const char kFifoPath[] = "fifo-path";
+
+class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
+ public:
+  MojoShellRunner() {}
+  ~MojoShellRunner() override {}
+
+ private:
+  void Run() override;
+
+  DISALLOW_COPY_AND_ASSIGN(MojoShellRunner);
+};
+
 LazyInstance<scoped_ptr<base::MessageLoop>> g_java_message_loop =
     LAZY_INSTANCE_INITIALIZER;
 
 LazyInstance<scoped_ptr<Context>> g_context = LAZY_INSTANCE_INITIALIZER;
 
-LazyInstance<scoped_ptr<base::android::JavaHandlerThread>> g_shell_thread =
+LazyInstance<MojoShellRunner> g_shell_runner = LAZY_INSTANCE_INITIALIZER;
+
+LazyInstance<scoped_ptr<base::DelegateSimpleThread>> g_shell_thread =
+    LAZY_INSTANCE_INITIALIZER;
+
+LazyInstance<base::android::ScopedJavaGlobalRef<jobject>> g_main_activiy =
     LAZY_INSTANCE_INITIALIZER;
 
 void ConfigureAndroidServices(Context* context) {
@@ -59,23 +85,58 @@ void ConfigureAndroidServices(Context* context) {
       GURL("mojo:android_handler"));
 }
 
-void StartShellOnShellThread() {
+void QuitShellThread() {
+  g_shell_thread.Get()->Join();
+  g_shell_thread.Pointer()->reset();
+  Java_MojoMain_finishActivity(base::android::AttachCurrentThread(),
+                               g_main_activiy.Get().obj());
+  exit(0);
+}
+
+void MojoShellRunner::Run() {
+  base::MessageLoop loop(common::MessagePumpMojo::Create());
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
   context->Init();
+
   RunCommandLineApps(context);
+  loop.Run();
+
+  g_java_message_loop.Pointer()->get()->PostTask(FROM_HERE,
+                                                 base::Bind(&QuitShellThread));
+}
+
+// Initialize stdout redirection if the command line switch is present.
+void InitializeRedirection() {
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(kFifoPath))
+    return;
+
+  base::FilePath fifo_path =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(kFifoPath);
+  base::FilePath directory = fifo_path.DirName();
+  CHECK(base::CreateDirectoryAndGetError(directory, nullptr))
+      << "Unable to create directory: " << directory.value();
+  unlink(fifo_path.value().c_str());
+  CHECK(base::android::CreateFIFO(fifo_path, 0666))
+      << "Unable to create fifo: " << fifo_path.value();
+  CHECK(base::android::RedirectStream(stdout, fifo_path, "w"))
+      << "Failed to redirect stdout to file: " << fifo_path.value();
+  CHECK(dup2(STDOUT_FILENO, STDERR_FILENO) != -1)
+      << "Unable to redirect stderr to stdout.";
 }
 
 }  // namespace
 
 static void Init(JNIEnv* env,
                  jclass clazz,
-                 jobject context,
+                 jobject activity,
                  jstring mojo_shell_path,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory) {
-  base::android::ScopedJavaLocalRef<jobject> scoped_context(env, context);
-  base::android::InitApplicationContext(env, scoped_context);
+  g_main_activiy.Get().Reset(env, activity);
+
+  base::android::ScopedJavaLocalRef<jobject> scoped_activity(env, activity);
+  base::android::InitApplicationContext(env, scoped_activity);
 
   std::vector<std::string> parameters;
   parameters.push_back(
@@ -86,6 +147,8 @@ static void Init(JNIEnv* env,
   base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
 
   InitializeLogging();
+
+  InitializeRedirection();
 
   // We want ~MessageLoop to happen prior to ~Context. Initializing
   // LazyInstances is akin to stack-allocating objects; their destructors
@@ -118,10 +181,8 @@ static jboolean Start(JNIEnv* env, jclass clazz) {
 #endif
 
   g_shell_thread.Get().reset(
-      new base::android::JavaHandlerThread("shell_thread"));
+      new base::DelegateSimpleThread(g_shell_runner.Pointer(), "ShellThread"));
   g_shell_thread.Get()->Start();
-  g_shell_thread.Get()->message_loop()->PostTask(
-      FROM_HERE, base::Bind(&StartShellOnShellThread));
   return true;
 }
 

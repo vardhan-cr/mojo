@@ -4,9 +4,11 @@
 
 package org.chromium.mojo.shell;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
+import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 
 import java.io.File;
@@ -81,6 +83,11 @@ public class MojoMain {
 
     private static File getLocalAppsDir(Context context) {
         return context.getDir(LOCAL_APP_DIRECTORY, Context.MODE_PRIVATE);
+    }
+
+    @CalledByNative
+    private static void finishActivity(Activity activity) {
+        activity.finish();
     }
 
     /**
