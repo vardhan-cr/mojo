@@ -48,13 +48,14 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
     DISALLOW_COPY_AND_ASSIGN(TestAPI);
   };
 
-  ApplicationManager(Delegate* delegate);
+  explicit ApplicationManager(Delegate* delegate);
   ~ApplicationManager();
 
   // Loads a service if necessary and establishes a new client connection.
   void ConnectToApplication(const GURL& application_url,
                             const GURL& requestor_url,
-                            ServiceProviderPtr service_provider);
+                            InterfaceRequest<ServiceProvider> services,
+                            ServiceProviderPtr exposed_services);
 
   template <typename Interface>
   inline void ConnectToService(const GURL& application_url,
@@ -110,13 +111,15 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   void ConnectToApplicationImpl(const GURL& requested_url,
                                 const GURL& resolved_url,
                                 const GURL& requestor_url,
-                                ServiceProviderPtr service_provider,
+                                InterfaceRequest<ServiceProvider> services,
+                                ServiceProviderPtr exposed_services,
                                 ApplicationLoader* loader);
 
   void ConnectToClient(ShellImpl* shell_impl,
                        const GURL& url,
                        const GURL& requestor_url,
-                       ServiceProviderPtr service_provider);
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services);
 
   void LoadWithContentHandler(const GURL& content_handler_url,
                               ScopedMessagePipeHandle shell_handle,

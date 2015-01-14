@@ -39,8 +39,16 @@ class JSServiceProviderEchoTest : public test::JSApplicationTestBase {
   void SetUp() override {
     ApplicationTestBase::SetUp();
     const std::string& url = JSAppURL("echo.js");
+    // TODO(hansmuller): We should be able to pass a null ServiceProviderPtr
+    // here as the third parameter to ConnectToApplication since the parameter
+    // is annotated as nullable in the mojom, but the JS bindings currently
+    // don't correctly handle a null handle. So instead we allocate (and
+    // immediately close) a MessagePipe.
+    mojo::MessagePipe throwaway_pipe;
+    mojo::ServiceProviderPtr exposed_services;
+    exposed_services.Bind(throwaway_pipe.handle0.Pass());
     application_impl()->shell()->ConnectToApplication(
-        url, GetProxy(&echo_service_provider_));
+        url, GetProxy(&echo_service_provider_), exposed_services.Pass());
   }
 
   mojo::ServiceProviderPtr echo_service_provider_;

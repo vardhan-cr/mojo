@@ -45,13 +45,13 @@ BitmapUploader::BitmapUploader(View* view)
 void BitmapUploader::Init(Shell* shell) {
   ServiceProviderPtr surfaces_service_provider;
   shell->ConnectToApplication("mojo:surfaces_service",
-                              GetProxy(&surfaces_service_provider));
+                              GetProxy(&surfaces_service_provider), nullptr);
   ConnectToService(surfaces_service_provider.get(), &surface_);
   surface_.set_client(this);
 
   ServiceProviderPtr gpu_service_provider;
   shell->ConnectToApplication("mojo:native_viewport_service",
-                              GetProxy(&gpu_service_provider));
+                              GetProxy(&gpu_service_provider), nullptr);
   ConnectToService(gpu_service_provider.get(), &gpu_service_);
 
   CommandBufferPtr gles2_client;

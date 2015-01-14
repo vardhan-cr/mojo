@@ -24,7 +24,8 @@ class PrintBodyApplication : public InterfaceImpl<Application> {
   virtual void Initialize(Array<String> args) override {}
 
   virtual void AcceptConnection(const String& requestor_url,
-                                ServiceProviderPtr service_provider) override {
+                                InterfaceRequest<ServiceProvider> services,
+                                ServiceProviderPtr exported_services) override {
     printf("ContentHandler::OnConnect - requestor_url:%s - body follows\n\n",
            requestor_url.To<std::string>().c_str());
     PrintResponse(body_.Pass());

@@ -13,17 +13,17 @@ namespace mojo {
 GLContext::Observer::~Observer() {
 }
 
-GLContext::GLContext(mojo::Shell* shell) : weak_factory_(this) {
-  mojo::ServiceProviderPtr native_viewport;
+GLContext::GLContext(Shell* shell) : weak_factory_(this) {
+  ServiceProviderPtr native_viewport;
   shell->ConnectToApplication("mojo:native_viewport_service",
-                              mojo::GetProxy(&native_viewport));
-  mojo::GpuPtr gpu_service;
-  mojo::ConnectToService(native_viewport.get(), &gpu_service);
-  mojo::CommandBufferPtr command_buffer;
-  gpu_service->CreateOffscreenGLES2Context(mojo::GetProxy(&command_buffer));
+                              GetProxy(&native_viewport), nullptr);
+  GpuPtr gpu_service;
+  ConnectToService(native_viewport.get(), &gpu_service);
+  CommandBufferPtr command_buffer;
+  gpu_service->CreateOffscreenGLES2Context(GetProxy(&command_buffer));
   context_ = MojoGLES2CreateContext(
       command_buffer.PassMessagePipe().release().value(), &ContextLostThunk,
-      this, mojo::Environment::GetDefaultAsyncWaiter());
+      this, Environment::GetDefaultAsyncWaiter());
   gl_ = static_cast<gpu::gles2::GLES2Interface*>(
       MojoGLES2GetGLES2Interface(context_));
 }
@@ -32,7 +32,7 @@ GLContext::~GLContext() {
   MojoGLES2DestroyContext(context_);
 }
 
-base::WeakPtr<GLContext> GLContext::Create(mojo::Shell* shell) {
+base::WeakPtr<GLContext> GLContext::Create(Shell* shell) {
   return (new GLContext(shell))->weak_factory_.GetWeakPtr();
 }
 

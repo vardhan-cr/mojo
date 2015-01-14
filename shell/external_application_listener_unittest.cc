@@ -74,12 +74,11 @@ namespace {
 
 class StubShellImpl : public InterfaceImpl<Shell> {
  private:
-  void ConnectToApplication(
-      const String& requestor_url,
-      InterfaceRequest<ServiceProvider> in_service_provider) override {
-    ServiceProviderPtr out_service_provider;
-    out_service_provider.Bind(in_service_provider.PassMessagePipe());
-    client()->AcceptConnection(requestor_url, out_service_provider.Pass());
+  void ConnectToApplication(const String& requestor_url,
+                            InterfaceRequest<ServiceProvider> services,
+                            ServiceProviderPtr exposed_services) override {
+    client()->AcceptConnection(requestor_url, services.Pass(),
+                               exposed_services.Pass());
   }
 };
 
@@ -125,7 +124,8 @@ class QuitLoopOnConnectApplicationImpl : public InterfaceImpl<Application> {
   void Initialize(Array<String> args) override {}
 
   void AcceptConnection(const String& requestor_url,
-                        ServiceProviderPtr p) override {
+                        InterfaceRequest<ServiceProvider> services,
+                        ServiceProviderPtr exposed_services) override {
     DVLOG(1) << url_ << " accepting connection from " << requestor_url;
     to_quit_->PostTask(FROM_HERE, quit_callback_);
   }
@@ -158,7 +158,7 @@ class FakeExternalApplication {
 
   void ConnectToAppByUrl(std::string app_url) {
     ServiceProviderPtr sp;
-    ptr_->ConnectToApplication(app_url, GetProxy(&sp));
+    ptr_->ConnectToApplication(app_url, GetProxy(&sp), nullptr);
   }
 
   const std::string& url() { return url_; }

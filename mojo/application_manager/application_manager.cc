@@ -52,12 +52,10 @@ class ApplicationManager::ContentHandlerConnection : public ErrorHandler {
   ContentHandlerConnection(ApplicationManager* manager,
                            const GURL& content_handler_url)
       : manager_(manager), content_handler_url_(content_handler_url) {
-    ServiceProviderPtr service_provider;
-    StubServiceProvider* service_provider_impl =
-        BindToProxy(new StubServiceProvider, &service_provider);
-    manager->ConnectToApplication(
-        content_handler_url, GURL(), service_provider.Pass());
-    mojo::ConnectToService(service_provider_impl->client(), &content_handler_);
+    ServiceProviderPtr services;
+    manager->ConnectToApplication(content_handler_url, GURL(),
+                                  GetProxy(&services), nullptr);
+    mojo::ConnectToService(services.get(), &content_handler_);
     content_handler_.set_error_handler(this);
   }
 
@@ -112,13 +110,14 @@ void ApplicationManager::TerminateShellConnections() {
 void ApplicationManager::ConnectToApplication(
     const GURL& requested_url,
     const GURL& requestor_url,
-    ServiceProviderPtr service_provider) {
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services) {
   DCHECK(requested_url.is_valid());
   ApplicationLoader* loader = GetLoaderForURL(requested_url,
                                               DONT_INCLUDE_DEFAULT_LOADER);
   if (loader) {
     ConnectToApplicationImpl(requested_url, requested_url, requestor_url,
-                             service_provider.Pass(), loader);
+                             services.Pass(), exposed_services.Pass(), loader);
     return;
   }
 
@@ -126,7 +125,7 @@ void ApplicationManager::ConnectToApplication(
   loader = GetLoaderForURL(resolved_url, INCLUDE_DEFAULT_LOADER);
   if (loader) {
     ConnectToApplicationImpl(requested_url, resolved_url, requestor_url,
-                             service_provider.Pass(), loader);
+                             services.Pass(), exposed_services.Pass(), loader);
     return;
   }
 
@@ -138,7 +137,8 @@ void ApplicationManager::ConnectToApplicationImpl(
     const GURL& requested_url,
     const GURL& resolved_url,
     const GURL& requestor_url,
-    ServiceProviderPtr service_provider,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     ApplicationLoader* loader) {
   ShellImpl* shell = nullptr;
   URLToShellImplMap::const_iterator shell_it =
@@ -156,14 +156,18 @@ void ApplicationManager::ConnectToApplicationImpl(
                  base::Bind(&ApplicationManager::LoadWithContentHandler,
                             weak_ptr_factory_.GetWeakPtr()));
   }
-  ConnectToClient(shell, resolved_url, requestor_url, service_provider.Pass());
+  ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
+                  exposed_services.Pass());
 }
 
-void ApplicationManager::ConnectToClient(ShellImpl* shell_impl,
-                                         const GURL& url,
-                                         const GURL& requestor_url,
-                                         ServiceProviderPtr service_provider) {
-  shell_impl->ConnectToClient(requestor_url, service_provider.Pass());
+void ApplicationManager::ConnectToClient(
+    ShellImpl* shell_impl,
+    const GURL& url,
+    const GURL& requestor_url,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services) {
+  shell_impl->ConnectToClient(requestor_url, services.Pass(),
+                              exposed_services.Pass());
 }
 
 void ApplicationManager::RegisterExternalApplication(
@@ -256,13 +260,10 @@ void ApplicationManager::OnContentHandlerError(
 ScopedMessagePipeHandle ApplicationManager::ConnectToServiceByName(
     const GURL& application_url,
     const std::string& interface_name) {
-  StubServiceProvider* stub_sp = new StubServiceProvider;
-  ServiceProviderPtr spp;
-  BindToProxy(stub_sp, &spp);
-  ConnectToApplication(application_url, GURL(), spp.Pass());
+  ServiceProviderPtr services;
+  ConnectToApplication(application_url, GURL(), GetProxy(&services), nullptr);
   MessagePipe pipe;
-  stub_sp->GetRemoteServiceProvider()->ConnectToService(interface_name,
-                                                        pipe.handle1.Pass());
+  services->ConnectToService(interface_name, pipe.handle1.Pass());
   return pipe.handle0.Pass();
 }
 

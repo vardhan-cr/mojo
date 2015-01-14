@@ -30,9 +30,10 @@ ShellImpl::~ShellImpl() {
 }
 
 void ShellImpl::ConnectToClient(const GURL& requestor_url,
-                                ServiceProviderPtr service_provider) {
-  client()->AcceptConnection(String::From(requestor_url),
-                             service_provider.Pass());
+                                InterfaceRequest<ServiceProvider> services,
+                                ServiceProviderPtr exposed_services) {
+  client()->AcceptConnection(String::From(requestor_url), services.Pass(),
+                             exposed_services.Pass());
 }
 
 ShellImpl::ShellImpl(ApplicationManager* manager,
@@ -46,17 +47,16 @@ ShellImpl::ShellImpl(ApplicationManager* manager,
 }
 
 // Shell implementation:
-void ShellImpl::ConnectToApplication(
-    const String& app_url,
-    InterfaceRequest<ServiceProvider> in_service_provider) {
-  ServiceProviderPtr out_service_provider;
-  out_service_provider.Bind(in_service_provider.PassMessagePipe());
+void ShellImpl::ConnectToApplication(const String& app_url,
+                                     InterfaceRequest<ServiceProvider> services,
+                                     ServiceProviderPtr exposed_services) {
   GURL app_gurl(app_url);
   if (!app_gurl.is_valid()) {
     LOG(ERROR) << "Error: invalid URL: " << app_url;
     return;
   }
-  manager_->ConnectToApplication(app_gurl, url_, out_service_provider.Pass());
+  manager_->ConnectToApplication(app_gurl, url_, services.Pass(),
+                                 exposed_services.Pass());
 }
 
 void ShellImpl::OnConnectionError() {

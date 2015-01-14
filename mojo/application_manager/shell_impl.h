@@ -29,7 +29,8 @@ class ShellImpl : public Shell, public ErrorHandler {
   ~ShellImpl() override;
 
   void ConnectToClient(const GURL& requestor_url,
-                       ServiceProviderPtr service_provider);
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services);
 
   Application* client() { return binding_.client(); }
   const GURL& url() const { return url_; }
@@ -41,9 +42,9 @@ class ShellImpl : public Shell, public ErrorHandler {
             const GURL& url);
 
   // Shell implementation:
-  void ConnectToApplication(
-      const String& app_url,
-      InterfaceRequest<ServiceProvider> in_service_provider) override;
+  void ConnectToApplication(const String& app_url,
+                            InterfaceRequest<ServiceProvider> services,
+                            ServiceProviderPtr exposed_services) override;
 
   // ErrorHandler implementation:
   void OnConnectionError() override;

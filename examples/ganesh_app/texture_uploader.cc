@@ -35,7 +35,8 @@ TextureUploader::TextureUploader(Client* client,
 
   mojo::ServiceProviderPtr surfaces_service_provider;
   shell->ConnectToApplication("mojo:surfaces_service",
-                              mojo::GetProxy(&surfaces_service_provider));
+                              mojo::GetProxy(&surfaces_service_provider),
+                              nullptr);
   mojo::ConnectToService(surfaces_service_provider.get(), &surface_);
   surface_.set_client(this);
 }

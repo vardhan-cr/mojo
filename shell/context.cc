@@ -105,12 +105,6 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
   }
 }
 
-class EmptyServiceProvider : public InterfaceImpl<ServiceProvider> {
- private:
-  void ConnectToService(const mojo::String& service_name,
-                        ScopedMessagePipeHandle client_handle) override {}
-};
-
 bool ConfigureURLMappings(const std::string& mappings,
                           mojo::shell::MojoURLResolver* resolver) {
   base::StringPairs pairs;
@@ -212,12 +206,12 @@ GURL Context::ResolveURL(const GURL& url) {
 }
 
 void Context::Run(const GURL& url) {
-  EmptyServiceProvider* sp = new EmptyServiceProvider;
-  ServiceProviderPtr spp;
-  BindToProxy(sp, &spp);
+  ServiceProviderPtr services;
+  ServiceProviderPtr exposed_services;
 
   app_urls_.insert(url);
-  application_manager_.ConnectToApplication(url, GURL(), spp.Pass());
+  application_manager_.ConnectToApplication(url, GURL(), GetProxy(&services),
+                                            exposed_services.Pass());
 }
 
 ScopedMessagePipeHandle Context::ConnectToServiceByName(

@@ -29,7 +29,7 @@ class GLContext {
     virtual ~Observer();
   };
 
-  static base::WeakPtr<GLContext> Create(mojo::Shell* shell);
+  static base::WeakPtr<GLContext> Create(Shell* shell);
 
   void MakeCurrent();
   void Destroy();
@@ -40,7 +40,7 @@ class GLContext {
   void RemoveObserver(Observer* observer);
 
  private:
-  explicit GLContext(mojo::Shell* shell);
+  explicit GLContext(Shell* shell);
   ~GLContext();
 
   static void ContextLostThunk(void* self);
