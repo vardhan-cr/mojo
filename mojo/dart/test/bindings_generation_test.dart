@@ -52,7 +52,6 @@ Future<bool> test() {
   var pipe = new core.MojoMessagePipe();
   var client = new sample.ProviderClient(pipe.endpoints[0]);
   var c = new Completer();
-  client.open();
   Isolate.spawn(providerIsolate, pipe.endpoints[1]).then((_) {
     client.callEchoString("hello!").then((echoStringResponse) {
       Expect.equals("hello!", echoStringResponse.a);
@@ -74,7 +73,6 @@ Future testAwait() async {
   var client = new sample.ProviderClient(pipe.endpoints[0]);
   var isolate = await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
-  client.open();
   var echoStringResponse = await client.callEchoString("hello!");
   Expect.equals("hello!", echoStringResponse.a);
 

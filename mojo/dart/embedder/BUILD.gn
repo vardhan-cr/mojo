@@ -16,6 +16,7 @@ action("generate_snapshot_bin") {
     "//mojo/public/dart/src/client.dart",
     "//mojo/public/dart/src/codec.dart",
     "//mojo/public/dart/src/data_pipe.dart",
+    "//mojo/public/dart/src/event_stream.dart",
     "//mojo/public/dart/src/handle.dart",
     "//mojo/public/dart/src/handle_watcher.dart",
     "//mojo/public/dart/src/interface.dart",

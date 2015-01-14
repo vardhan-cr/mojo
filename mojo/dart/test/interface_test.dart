@@ -116,7 +116,7 @@ class EchoClient extends bindings.Client {
     // compose message.
     var es = new EchoString();
     es.a = a;
-    return enqueueMessageWithRequestId(
+    return sendMessageWithRequestId(
         es,
         kEchoString_name,
         -1,
@@ -154,7 +154,6 @@ Future<bool> runTest() async {
 
   int n = kEchoesCount;
   int count = 0;
-  client.open();
   for (int i = 0; i < n; i++) {
     client.echoString("hello").then((response) {
       Expect.equals("hello", response.a);
@@ -176,7 +175,6 @@ Future runAwaitTest() async {
   await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
   int n = kEchoesCount;
-  client.open();
   for (int i = 0; i < n; i++) {
     var response = await client.echoString("Hello");
     Expect.equals("Hello", response.a);
