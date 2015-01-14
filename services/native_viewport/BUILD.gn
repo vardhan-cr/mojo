@@ -62,7 +62,6 @@ source_set("lib") {
     "platform_viewport_android.h",
     "platform_viewport_headless.cc",
     "platform_viewport_headless.h",
-    "platform_viewport_ozone.cc",
     "platform_viewport_stub.cc",
     "platform_viewport_win.cc",
     "platform_viewport_x11.cc",
@@ -72,10 +71,6 @@ source_set("lib") {
 
   if (!is_ios) {
     sources -= [ "platform_viewport_stub.cc" ]
-  }
-
-  if (!use_ozone) {
-    sources -= [ "platform_viewport_ozone.cc" ]
   }
 
   deps = [

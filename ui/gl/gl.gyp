@@ -56,7 +56,6 @@
         'gl_context.h',
         'gl_context_android.cc',
         'gl_context_mac.mm',
-        'gl_context_ozone.cc',
         'gl_context_osmesa.cc',
         'gl_context_osmesa.h',
         'gl_context_stub.cc',
@@ -86,7 +85,6 @@
         'gl_implementation.cc',
         'gl_implementation.h',
         'gl_implementation_android.cc',
-        'gl_implementation_ozone.cc',
         'gl_implementation_mac.cc',
         'gl_implementation_win.cc',
         'gl_implementation_x11.cc',
@@ -106,7 +104,6 @@
         'gl_surface_x11.cc',
         'gl_surface_osmesa.cc',
         'gl_surface_osmesa.h',
-        'gl_surface_ozone.cc',
         'gl_switches.cc',
         'gl_switches.h',
         'gl_version_info.cc',
@@ -302,12 +299,6 @@
         }],
         ['OS!="android"', {
           'sources/': [ ['exclude', '^android/'] ],
-        }],
-        ['use_ozone==1', {
-          'dependencies': [
-            '../ozone/ozone.gyp:ozone',
-            '../ozone/ozone.gyp:ozone_base',
-          ],
         }],
         ['OS=="android" and android_webview_build==0', {
           'dependencies': [

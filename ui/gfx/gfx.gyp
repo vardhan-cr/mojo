@@ -203,8 +203,6 @@
         'mac/coordinate_conversion.mm',
         'mac/scoped_ns_disable_screen_updates.h',
         'native_widget_types.h',
-        'nine_image_painter.cc',
-        'nine_image_painter.h',
         'overlay_transform.h',
         'pango_util.cc',
         'pango_util.h',
@@ -221,7 +219,6 @@
         'platform_font_ios.mm',
         'platform_font_mac.h',
         'platform_font_mac.mm',
-        'platform_font_ozone.cc',
         'platform_font_pango.cc',
         'platform_font_pango.h',
         'platform_font_win.cc',
@@ -236,7 +233,6 @@
         'render_text_harfbuzz.h',
         'render_text_mac.cc',
         'render_text_mac.h',
-        'render_text_ozone.cc',
         'render_text_pango.cc',
         'render_text_pango.h',
         'render_text_win.cc',
@@ -353,12 +349,6 @@
             ],
           },
         }],
-        ['use_aura==0 and toolkit_views==0', {
-          'sources!': [
-            'nine_image_painter.cc',
-            'nine_image_painter.h',
-          ],
-        }],
         ['OS=="android" and use_aura==0', {
           'sources!': [
             'path.cc',
@@ -392,10 +382,6 @@
         ['use_pango==1', {
           'dependencies': [
             '<(DEPTH)/build/linux/system.gyp:pangocairo',
-          ],
-          'sources!': [
-            'platform_font_ozone.cc',
-            'render_text_ozone.cc',
           ],
         }],
         ['desktop_linux==1 or chromeos==1', {

@@ -146,20 +146,7 @@ component("events") {
     deps += [ "//ui/gfx/x" ]
   }
 
-  if (!is_chromeos && is_linux) {
-    sources += [
-      "linux/text_edit_command_auralinux.cc",
-      "linux/text_edit_command_auralinux.h",
-      "linux/text_edit_key_bindings_delegate_auralinux.cc",
-      "linux/text_edit_key_bindings_delegate_auralinux.h",
-    ]
-  }
-
-  if (use_ozone) {
-    sources += [ "ozone/events_ozone.cc" ]
-  }
-
-  if (is_win || is_mac || use_x11 || use_ozone) {
+  if (is_win || is_mac || use_x11) {
     sources -= [ "events_stub.cc" ]
   }
 }
@@ -303,13 +290,6 @@ test("events_unittests") {
     deps += [ "//ui/gfx/x" ]
   } else {
     sources -= [ "x/events_x_unittest.cc" ]
-  }
-
-  if (use_ozone) {
-    sources += [
-      "ozone/evdev/key_event_converter_evdev_unittest.cc",
-      "ozone/evdev/touch_event_converter_evdev_unittest.cc",
-    ]
   }
 
   if (use_aura) {

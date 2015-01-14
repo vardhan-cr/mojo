@@ -13,11 +13,7 @@
 namespace {
 
 bool IsXI2Available() {
-#if defined(USE_AURA)
-  return ui::DeviceDataManagerX11::GetInstance()->IsXInput2Available();
-#else
   return false;
-#endif
 }
 
 }

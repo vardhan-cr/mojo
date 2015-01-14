@@ -47,7 +47,6 @@
         # Note: file list duplicated in GN build.
         'chromeos/display_configurator.cc',
         'chromeos/display_configurator.h',
-        'chromeos/ozone/display_configurator_ozone.cc',
         'chromeos/x11/display_configurator_x11.cc',
         'chromeos/x11/display_mode_x11.cc',
         'chromeos/x11/display_mode_x11.h',
@@ -76,11 +75,6 @@
         ['chromeos == 1', {
           'dependencies': [
             'display_types',
-          ],
-        }],
-        ['use_ozone == 1', {
-          'dependencies': [
-            '../../ui/ozone/ozone.gyp:ozone',
           ],
         }],
       ],

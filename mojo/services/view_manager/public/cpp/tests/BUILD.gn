@@ -20,13 +20,9 @@ test("mojo_view_manager_lib_unittests") {
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
+    "//mojo/services/view_manager/public/cpp/lib:run_unittests",
     "//mojo/services/view_manager/public/interfaces",
     "//shell:test_support",
     "//testing/gtest",
   ]
-  if (use_aura) {
-    deps += [ "//mojo/services/view_manager/public/cpp/lib:run_unittests" ]
-  } else {
-    deps += [ "//mojo/edk/test:run_all_unittests" ]
-  }
 }

@@ -6,8 +6,6 @@ import("//build/config/ui.gni")
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 
-assert(use_aura)
-
 mojo_native_application("browser") {
   sources = [
     "browser.cc",
@@ -19,7 +17,6 @@ mojo_native_application("browser") {
     "//cc",
     "//examples/window_manager:bindings",
     "//mojo/application",
-    "//mojo/aura",
     "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
@@ -28,15 +25,12 @@ mojo_native_application("browser") {
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/interfaces",
-    "//mojo/views:views",
     "//third_party/icu",
-    "//ui/aura",
     "//ui/base",
-    "//ui/compositor",
+    "//ui/events:events",
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/resources",
-    "//ui/views",
     "//url",
   ]
 }

@@ -190,13 +190,6 @@
             'use_ash%': 0,
           }],
 
-          # Set default value of toolkit_views based on OS.
-          ['OS=="win" or chromeos==1 or use_aura==1', {
-            'toolkit_views%': 1,
-          }, {
-            'toolkit_views%': 0,
-          }],
-
           # Embedded builds use aura without ash or views.
           ['embedded==1', {
             'use_aura%': 1,
@@ -2588,9 +2581,6 @@
       }],
       ['component=="shared_library"', {
         'defines': ['COMPONENT_BUILD'],
-      }],
-      ['toolkit_views==1', {
-        'defines': ['TOOLKIT_VIEWS=1'],
       }],
       ['ui_compositor_image_transport==1', {
         'defines': ['UI_COMPOSITOR_IMAGE_TRANSPORT'],

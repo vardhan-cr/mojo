@@ -111,15 +111,6 @@
             }],
           ],
         }],
-        ['use_ozone==1 and use_pango==0', {
-          'sources!': [
-            'canvas_unittest.cc',
-            'font_list_unittest.cc',
-            'font_unittest.cc',
-            'render_text_unittest.cc',
-            'text_elider_unittest.cc',
-          ],
-        }],
         ['OS == "android"', {
           'dependencies': [
             '../../testing/android/native_test.gyp:native_test_native_code',

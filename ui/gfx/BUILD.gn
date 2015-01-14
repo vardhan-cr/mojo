@@ -128,8 +128,6 @@ component("gfx") {
     "mac/coordinate_conversion.mm",
     "mac/scoped_ns_disable_screen_updates.h",
     "native_widget_types.h",
-    "nine_image_painter.cc",
-    "nine_image_painter.h",
     "path.cc",
     "path.h",
     "path_aura.cc",
@@ -244,8 +242,6 @@ component("gfx") {
       sources += [ "render_text_mac.cc" ]
     } else if (use_pango) {
       sources += [ "render_text_pango.cc" ]
-    } else if (use_ozone) {
-      sources += [ "render_text_ozone.cc" ]
     }
   }
 
@@ -315,15 +311,8 @@ component("gfx") {
     configs += [ "//build/config/linux:fontconfig" ]
   }
 
-  # Ozone stuff.
-  if (use_ozone) {
-    sources += [ "platform_font_ozone.cc" ]
-  }
-
   if (!use_aura) {
     sources -= [
-      "nine_image_painter.cc",
-      "nine_image_painter.h",
       "path_aura.cc",
       "screen_aura.cc",
     ]
@@ -343,9 +332,6 @@ component("gfx") {
       "platform_font_pango.h",
     ]
     configs += [ "//build/config/linux:pangocairo" ]
-  }
-  if (use_pango && use_ozone) {
-    sources -= [ "platform_font_ozone.cc" ]
   }
 }
 
@@ -476,16 +462,6 @@ test("gfx_unittests") {
     sources += [
       "transform_unittest.cc",
       "interpolated_transform_unittest.cc",
-    ]
-  }
-
-  if (use_ozone && !use_pango) {
-    sources -= [
-      "canvas_unittest.cc",
-      "font_list_unittest.cc",
-      "font_unittest.cc",
-      "render_text_unittest.cc",
-      "text_elider_unittest.cc",
     ]
   }
 

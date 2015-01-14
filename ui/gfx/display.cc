@@ -56,9 +56,6 @@ Display::Display(int64 id, const gfx::Rect& bounds)
       device_scale_factor_(GetForcedDeviceScaleFactor()),
       rotation_(ROTATE_0),
       touch_support_(TOUCH_SUPPORT_UNKNOWN) {
-#if defined(USE_AURA)
-  SetScaleAndBounds(device_scale_factor_, bounds);
-#endif
 }
 
 Display::~Display() {

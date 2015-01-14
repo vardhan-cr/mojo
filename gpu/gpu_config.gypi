@@ -31,7 +31,6 @@
     'config/gpu_info_collector_linux.cc',
     'config/gpu_info_collector_linux.h',
     'config/gpu_info_collector_mac.mm',
-    'config/gpu_info_collector_ozone.cc',
     'config/gpu_info_collector_win.cc',
     'config/gpu_info_collector_x11.cc',
     'config/gpu_info_collector.cc',
@@ -65,7 +64,7 @@
         '../third_party/amd/amd_videocard_info_win.cc',
       ],
     }],
-    ['OS=="linux" and use_libpci==1 and (use_x11==1 or use_ozone==1)', {
+    ['OS=="linux" and use_libpci==1 and use_x11==1', {
       'dependencies': [
         '../build/linux/system.gyp:libpci',
       ],

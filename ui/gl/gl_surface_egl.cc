@@ -29,10 +29,6 @@ extern "C" {
 }
 #endif
 
-#if defined (USE_OZONE)
-#include "ui/ozone/public/surface_factory_ozone.h"
-#endif
-
 #if !defined(EGL_FIXED_SIZE_ANGLE)
 #define EGL_FIXED_SIZE_ANGLE 0x3201
 #endif

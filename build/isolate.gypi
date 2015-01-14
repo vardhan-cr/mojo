@@ -90,7 +90,6 @@
         '--config-variable', 'libpeer_target_type=<(libpeer_target_type)',
         '--config-variable', 'use_openssl=<(use_openssl)',
         '--config-variable', 'target_arch=<(target_arch)',
-        '--config-variable', 'use_ozone=<(use_ozone)',
         '--config-variable', 'disable_nacl=<(disable_nacl)',
       ],
       'conditions': [

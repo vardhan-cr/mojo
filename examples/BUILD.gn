@@ -24,15 +24,12 @@ group("examples") {
     "//examples/wget",
   ]
 
-  if (use_aura) {
-    deps += [
-      "//examples/aura_demo:aura_demo",
-      "//examples/browser",
-      "//examples/nesting_app",
-      "//examples/window_manager",
-      "//examples/wm_flow",
-    ]
-  }
+  deps += [
+    "//examples/browser",
+    "//examples/nesting_app",
+    "//examples/window_manager",
+    "//examples/wm_flow",
+  ]
 
   if (!is_android) {
     deps += [ "//examples/pdf_viewer" ]

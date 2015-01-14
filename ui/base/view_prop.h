@@ -10,8 +10,8 @@
 #include "ui/base/ui_base_export.h"
 #include "ui/gfx/native_widget_types.h"
 
-#if !defined(OS_WIN) && !defined(USE_AURA)
-#error view_prop.h is only for windows and aura builds.
+#if !defined(OS_WIN)
+#error view_prop.h is only for windows builds.
 #endif
 
 namespace ui {

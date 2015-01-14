@@ -71,9 +71,6 @@
         ['exclude', '(^|/)x/'],
       ],
     }],
-    ['<(toolkit_views)==0 or >(nacl_untrusted_build)==1', {
-      'sources/': [ ['exclude', '_views(_browsertest|_unittest)?\\.(h|cc)$'] ]
-    }],
     ['<(use_aura)==0 or >(nacl_untrusted_build)==1', {
       'sources/': [ ['exclude', '_aura(_browsertest|_unittest)?\\.(h|cc)$'],
                     ['exclude', '(^|/)aura/'],
@@ -95,21 +92,6 @@
     }],
     ['<(use_ash)==0 or OS!="win" or >(nacl_untrusted_build)==1', {
       'sources/': [ ['exclude', '_ashwin\\.(h|cc)$'] ]
-    }],
-    ['<(use_ozone)==0 or >(nacl_untrusted_build)==1', {
-      'sources/': [ ['exclude', '_ozone(_browsertest|_unittest)?\\.(h|cc)$'],
-                    ['exclude', '(^|/)ozone/'],
-      ]
-    }],
-    ['<(use_ozone_evdev)==0 or >(nacl_untrusted_build)==1', {
-      'sources/': [ ['exclude', '_evdev(_browsertest|_unittest)?\\.(h|cc)$'],
-                    ['exclude', '(^|/)evdev/'],
-      ]
-    }],
-    ['<(ozone_platform_dri)==0 or >(nacl_untrusted_build)==1', {
-      'sources/': [ ['exclude', '_dri(_browsertest|_unittest)?\\.(h|cc)$'],
-                    ['exclude', '(^|/)dri/'],
-      ]
     }],
     ['<(use_pango)==0', {
       'sources/': [ ['exclude', '(^|_)pango(_util|_browsertest|_unittest)?\\.(h|cc)$'], ],

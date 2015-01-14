@@ -6,37 +6,35 @@ import("//build/config/ui.gni")
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 
-if (use_aura) {
-  mojo_native_application("window_manager") {
-    output_name = "example_window_manager"
+mojo_native_application("window_manager") {
+  output_name = "example_window_manager"
 
-    sources = [
-      "window_manager.cc",
-    ]
+  sources = [
+    "window_manager.cc",
+  ]
 
-    deps = [
-      ":bindings",
-      "//base",
-      "//mojo/application",
-      "//mojo/converters/geometry",
-      "//mojo/converters/input_events",
-      "//mojo/public/c/gles2",
-      "//mojo/public/cpp/bindings",
-      "//mojo/public/cpp/utility",
-      "//mojo/services/geometry/public/interfaces",
-      "//mojo/services/input_events/public/interfaces",
-      "//mojo/services/navigation/public/interfaces",
-      "//mojo/services/view_manager/public/cpp",
-      "//services/window_manager:lib",
-      "//ui/base",
-      "//ui/events:events",
-      "//ui/gfx",
-      "//ui/gfx/geometry",
-      "//ui/gl",
-      "//ui/resources",
-      "//url:url",
-    ]
-  }
+  deps = [
+    ":bindings",
+    "//base",
+    "//mojo/application",
+    "//mojo/converters/geometry",
+    "//mojo/converters/input_events",
+    "//mojo/public/c/gles2",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/utility",
+    "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/input_events/public/interfaces",
+    "//mojo/services/navigation/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
+    "//services/window_manager:lib",
+    "//ui/base",
+    "//ui/events:events",
+    "//ui/gfx",
+    "//ui/gfx/geometry",
+    "//ui/gl",
+    "//ui/resources",
+    "//url:url",
+  ]
 }
 
 mojom("bindings") {
