@@ -134,6 +134,8 @@ mojom("bindings") {
     "//mojo/services/surfaces/public/interfaces:surface_id",
   ]
 
+  import_dirs = [ get_path_info("../../mojo/services", "abspath") ]
+
   sources = [
     "child.mojom",
   ]

@@ -4,11 +4,11 @@
 
 module mojo;
 
-import "mojo/services/geometry/public/interfaces/geometry.mojom";
-import "mojo/services/gpu/public/interfaces/command_buffer.mojom";
-import "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom";
-import "mojo/services/surfaces/public/interfaces/quads.mojom";
-import "mojo/services/surfaces/public/interfaces/surface_id.mojom";
+import "geometry/public/interfaces/geometry.mojom";
+import "gpu/public/interfaces/command_buffer.mojom";
+import "gpu/public/interfaces/viewport_parameter_listener.mojom";
+import "surfaces/public/interfaces/quads.mojom";
+import "surfaces/public/interfaces/surface_id.mojom";
 
 enum ResourceFormat {
   RGBA_8888,
