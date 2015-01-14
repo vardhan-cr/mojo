@@ -12,11 +12,9 @@
 #include "base/macros.h"
 #include "base/stl_util.h"
 #include "mojo/application_manager/application_loader.h"
-#include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 
@@ -48,73 +46,6 @@ void ApplicationManager::Delegate::OnApplicationError(const GURL& url) {
 GURL ApplicationManager::Delegate::ResolveURL(const GURL& url) {
   return url;
 }
-
-
-class ApplicationManager::ShellImpl : public Shell, public ErrorHandler {
- public:
-  ShellImpl(ScopedMessagePipeHandle handle,
-            ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url)
-      : ShellImpl(manager, requested_url, url) {
-    binding_.Bind(handle.Pass());
-  }
-
-  ShellImpl(ShellPtr* ptr,
-            ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url)
-      : ShellImpl(manager, requested_url, url) {
-    binding_.Bind(ptr);
-  }
-
-  ~ShellImpl() override {}
-
-  void ConnectToClient(const GURL& requestor_url,
-                       ServiceProviderPtr service_provider) {
-    client()->AcceptConnection(String::From(requestor_url),
-                               service_provider.Pass());
-  }
-
-  Application* client() { return binding_.client(); }
-  const GURL& url() const { return url_; }
-  const GURL& requested_url() const { return requested_url_; }
-
- private:
-  ShellImpl(ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url)
-      : manager_(manager),
-        requested_url_(requested_url),
-        url_(url),
-        binding_(this) {
-    binding_.set_error_handler(this);
-  }
-
-  // Shell implementation:
-  void ConnectToApplication(
-      const String& app_url,
-      InterfaceRequest<ServiceProvider> in_service_provider) override {
-    ServiceProviderPtr out_service_provider;
-    out_service_provider.Bind(in_service_provider.PassMessagePipe());
-    GURL app_gurl(app_url);
-    if (!app_gurl.is_valid()) {
-      LOG(ERROR) << "Error: invalid URL: " << app_url;
-      return;
-    }
-    manager_->ConnectToApplication(app_gurl, url_, out_service_provider.Pass());
-  }
-
-  // ErrorHandler implementation:
-  void OnConnectionError() override { manager_->OnShellImplError(this); }
-
-  ApplicationManager* const manager_;
-  const GURL requested_url_;
-  const GURL url_;
-  Binding<Shell> binding_;
-
-  DISALLOW_COPY_AND_ASSIGN(ShellImpl);
-};
 
 class ApplicationManager::ContentHandlerConnection : public ErrorHandler {
  public:

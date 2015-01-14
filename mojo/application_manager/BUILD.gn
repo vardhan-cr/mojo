@@ -13,6 +13,8 @@ component("application_manager") {
     "application_manager.cc",
     "application_manager.h",
     "application_manager_export.h",
+    "shell_impl.cc",
+    "shell_impl.h",
   ]
 
   defines = [ "MOJO_APPLICATION_MANAGER_IMPLEMENTATION" ]

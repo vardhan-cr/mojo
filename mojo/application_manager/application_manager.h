@@ -14,6 +14,7 @@
 #include "base/memory/weak_ptr.h"
 #include "mojo/application_manager/application_loader.h"
 #include "mojo/application_manager/application_manager_export.h"
+#include "mojo/application_manager/shell_impl.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "url/gurl.h"
 
@@ -89,6 +90,9 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   // and have a chance to shutdown.
   void TerminateShellConnections();
 
+  // Removes a ShellImpl when it encounters an error.
+  void OnShellImplError(ShellImpl* shell_impl);
+
  private:
   enum IncludeDefaultLoader {
     INCLUDE_DEFAULT_LOADER,
@@ -96,7 +100,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   };
 
   class ContentHandlerConnection;
-  class ShellImpl;
 
   typedef std::map<std::string, ApplicationLoader*> SchemeToLoaderMap;
   typedef std::map<GURL, ApplicationLoader*> URLToLoaderMap;
@@ -124,9 +127,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   ApplicationLoader* GetLoaderForURL(const GURL& url,
                                      IncludeDefaultLoader fallback);
 
-  // Removes a ShellImpl when it encounters an error.
-  void OnShellImplError(ShellImpl* shell_impl);
-  //
   // Removes a ContentHandler when it encounters an error.
   void OnContentHandlerError(ContentHandlerConnection* content_handler);
 
