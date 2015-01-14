@@ -4,6 +4,7 @@
 
 import("//build/config/ui.gni")
 import("//mojo/public/mojo_application.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
 
 assert(use_aura)
 
@@ -13,6 +14,7 @@ mojo_native_application("browser") {
   ]
 
   deps = [
+    ":bindings",
     "//base",
     "//cc",
     "//examples/window_manager:bindings",
@@ -36,5 +38,11 @@ mojo_native_application("browser") {
     "//ui/resources",
     "//ui/views",
     "//url",
+  ]
+}
+
+mojom("bindings") {
+  sources = [
+    "browser_host.mojom",
   ]
 }

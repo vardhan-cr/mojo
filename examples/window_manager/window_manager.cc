@@ -43,7 +43,7 @@ namespace {
 
 const int kBorderInset = 25;
 const int kControlPanelWidth = 200;
-const int kTextfieldHeight = 25;
+const int kTextfieldHeight = 39;
 
 }  // namespace
 
@@ -293,7 +293,7 @@ class WindowManager : public ApplicationDelegate,
     // analogous here.
 
     window_manager_app_->InitFocus(
-        make_scoped_ptr(new window_manager::BasicFocusRules(view)));
+        make_scoped_ptr(new window_manager::BasicFocusRules(root)));
   }
   virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
     DCHECK_EQ(view_manager_, view_manager);

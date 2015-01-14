@@ -42,8 +42,10 @@ def main():
   if args.demo == 'browser':
     base_url = server.path_as_url(paths.build_dir)
     wm_url = os.path.join(base_url, 'example_window_manager.mojo')
+    browser_url = os.path.join(base_url, 'browser.mojo')
     cmd.append('--url-mappings=mojo:window_manager=mojo:example_window_manager')
     cmd.append('--args-for=mojo:window_manager %s' % (wm_url))
+    cmd.append('--args-for=mojo:browser %s' % (browser_url))
     cmd.append('mojo:window_manager')
   elif args.demo == 'wm_flow':
     base_url = server.path_as_url(paths.build_dir)
