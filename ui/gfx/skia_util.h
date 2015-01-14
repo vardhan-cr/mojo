@@ -35,37 +35,12 @@ GFX_EXPORT RectF SkRectToRectF(const SkRect& rect);
 GFX_EXPORT void TransformToFlattenedSkMatrix(const gfx::Transform& transform,
                                              SkMatrix* flattened);
 
-// Creates a bitmap shader for the image rep with the image rep's scale factor.
-// Sets the created shader's local matrix such that it displays the image rep at
-// the correct scale factor.
-// The shader's local matrix should not be changed after the shader is created.
-// TODO(pkotwicz): Allow shader's local matrix to be changed after the shader
-// is created.
-//
-GFX_EXPORT skia::RefPtr<SkShader> CreateImageRepShader(
-    const gfx::ImageSkiaRep& image_rep,
-    SkShader::TileMode tile_mode,
-    const SkMatrix& local_matrix);
-
-// Creates a bitmap shader for the image rep with the passed in scale factor.
-GFX_EXPORT skia::RefPtr<SkShader> CreateImageRepShaderForScale(
-    const gfx::ImageSkiaRep& image_rep,
-    SkShader::TileMode tile_mode,
-    const SkMatrix& local_matrix,
-    SkScalar scale);
-
 // Creates a vertical gradient shader. The caller owns the shader.
 // Example usage to avoid leaks:
 GFX_EXPORT skia::RefPtr<SkShader> CreateGradientShader(int start_point,
                                                        int end_point,
                                                        SkColor start_color,
                                                        SkColor end_color);
-
-// Creates a draw looper to generate |shadows|. The caller owns the draw looper.
-// NULL is returned if |shadows| is empty since no draw looper is needed in
-// this case.
-GFX_EXPORT skia::RefPtr<SkDrawLooper> CreateShadowDrawLooper(
-    const std::vector<ShadowValue>& shadows);
 
 // Returns true if the two bitmaps contain the same pixels.
 GFX_EXPORT bool BitmapsAreEqual(const SkBitmap& bitmap1,

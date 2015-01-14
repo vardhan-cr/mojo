@@ -32,7 +32,6 @@ mojo_native_application("window_manager") {
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/gl",
-    "//ui/resources",
     "//url:url",
   ]
 }

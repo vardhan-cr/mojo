@@ -12,7 +12,6 @@
 #include "services/window_manager/view_targeter.h"
 #include "services/window_manager/window_manager_test_util.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "ui/events/test/event_generator.h"
 #include "ui/gfx/geometry/rect.h"
 
 using mojo::View;

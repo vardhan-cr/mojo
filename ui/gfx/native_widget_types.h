@@ -42,16 +42,10 @@
 // 'views' and with our Chrome UI code where the elements are also called
 // 'views'.
 
-#if defined(USE_AURA)
 class SkRegion;
-namespace aura {
-class Window;
-}
 namespace ui {
-class Cursor;
 class Event;
 }
-#endif  // defined(USE_AURA)
 
 #if defined(OS_WIN)
 #include <windows.h>  // NOLINT
@@ -109,27 +103,15 @@ class SkBitmap;
 
 namespace gfx {
 
-#if defined(USE_AURA)
-typedef ui::Cursor NativeCursor;
-typedef aura::Window* NativeView;
-typedef aura::Window* NativeWindow;
+#if defined(OS_LINUX) || defined(OS_WIN)
 typedef SkRegion* NativeRegion;
 typedef ui::Event* NativeEvent;
 #elif defined(OS_IOS)
-typedef void* NativeCursor;
-typedef UIView* NativeView;
-typedef UIWindow* NativeWindow;
 typedef UIEvent* NativeEvent;
 #elif defined(OS_MACOSX)
-typedef NSCursor* NativeCursor;
-typedef NSView* NativeView;
-typedef NSWindow* NativeWindow;
 typedef void* NativeRegion;
 typedef NSEvent* NativeEvent;
 #elif defined(OS_ANDROID)
-typedef void* NativeCursor;
-typedef ui::ViewAndroid* NativeView;
-typedef ui::WindowAndroid* NativeWindow;
 typedef void* NativeRegion;
 typedef jobject NativeEvent;
 #endif
@@ -170,10 +152,8 @@ typedef void* NativeViewAccessible;
 #endif
 
 // A constant value to indicate that gfx::NativeCursor refers to no cursor.
-#if defined(USE_AURA)
+#if defined(OS_LINUX) || defined(OS_WIN)
 const int kNullCursor = 0;
-#else
-const gfx::NativeCursor kNullCursor = static_cast<gfx::NativeCursor>(NULL);
 #endif
 
 #if defined(OS_IOS)

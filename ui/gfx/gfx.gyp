@@ -171,8 +171,6 @@
         'gfx_paths.h',
         'gpu_memory_buffer.cc',
         'gpu_memory_buffer.h',
-        'image/canvas_image_source.cc',
-        'image/canvas_image_source.h',
         'image/image.cc',
         'image/image.h',
         'image/image_family.cc',

@@ -113,8 +113,7 @@ def gn(config):
   if config.target_os == Config.OS_ANDROID:
     gn_args.append(r'''os=\"android\"''')
   elif config.target_os == Config.OS_CHROMEOS:
-    gn_args.append(r'''os=\"chromeos\" ui_base_build_ime=false
-                   use_system_harfbuzz=false''')
+    gn_args.append(r'''os=\"chromeos\" use_system_harfbuzz=false''')
 
   gn_args.append(r'''cpu_arch=\"%s\"''' % config.target_arch)
 

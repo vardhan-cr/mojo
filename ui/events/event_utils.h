@@ -154,12 +154,6 @@ EVENTS_EXPORT bool GetScrollOffsets(const base::NativeEvent& native_event,
                                     float* y_offset_ordinal,
                                     int* finger_count);
 
-// Returns whether natural scrolling should be used for touchpad.
-EVENTS_EXPORT bool ShouldDefaultToNaturalScroll();
-
-// Returns whether or not the internal display produces touch events.
-EVENTS_EXPORT gfx::Display::TouchSupport GetInternalDisplayTouchSupport();
-
 #if defined(OS_WIN)
 EVENTS_EXPORT int GetModifiersFromACCEL(const ACCEL& accel);
 EVENTS_EXPORT int GetModifiersFromKeyState();

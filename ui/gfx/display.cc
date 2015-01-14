@@ -127,7 +127,7 @@ void Display::SetScaleAndBounds(
 
 void Display::SetSize(const gfx::Size& size_in_pixel) {
   gfx::Point origin = bounds_.origin();
-#if defined(USE_AURA)
+#if !defined(OS_LINUX)
   gfx::PointF origin_f = origin;
   origin_f.Scale(device_scale_factor_);
   origin.SetPoint(origin_f.x(), origin_f.y());

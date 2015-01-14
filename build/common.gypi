@@ -1464,9 +1464,6 @@
     # Set to 1 to compile with MSE support for MPEG2 TS
     'enable_mpeg2ts_stream_parser%': 0,
 
-    # Support ChromeOS touchpad gestures with ozone.
-    'use_evdev_gestures%': 0,
-
     # Default ozone platform (if no --ozone-platform flag).
     'ozone_platform%': "",
 
@@ -2584,9 +2581,6 @@
       }],
       ['ui_compositor_image_transport==1', {
         'defines': ['UI_COMPOSITOR_IMAGE_TRANSPORT'],
-      }],
-      ['use_aura==1', {
-        'defines': ['USE_AURA=1'],
       }],
       ['use_ash==1', {
         'defines': ['USE_ASH=1'],

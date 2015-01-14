@@ -243,16 +243,6 @@ UI_BASE_EXPORT void EnumerateTopLevelWindows(
 // order.
 UI_BASE_EXPORT bool GetXWindowStack(XID window, std::vector<XID>* windows);
 
-// Copies |source_bounds| from |drawable| to |canvas| at offset |dest_offset|.
-// |source_bounds| is in physical pixels, while |dest_offset| is relative to
-// the canvas's scale. Note that this function is slow since it uses
-// XGetImage() to copy the data from the X server to this process before
-// copying it to |canvas|.
-UI_BASE_EXPORT bool CopyAreaToCanvas(XID drawable,
-                                     gfx::Rect source_bounds,
-                                     gfx::Point dest_offset,
-                                     gfx::Canvas* canvas);
-
 enum WindowManagerName {
   WM_UNKNOWN,
 

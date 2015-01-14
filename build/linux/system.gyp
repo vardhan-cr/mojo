@@ -427,44 +427,6 @@
         },
       ],  # targets
     }],
-    ['use_evdev_gestures==1', {
-      'targets': [
-        {
-          'target_name': 'libevdev-cros',
-          'type': 'none',
-          'direct_dependent_settings': {
-            'cflags': [
-              '<!@(<(pkg-config) --cflags libevdev-cros)'
-            ],
-          },
-          'link_settings': {
-            'ldflags': [
-              '<!@(<(pkg-config) --libs-only-L --libs-only-other libevdev-cros)',
-            ],
-            'libraries': [
-              '<!@(<(pkg-config) --libs-only-l libevdev-cros)',
-            ],
-          },
-        },
-        {
-          'target_name': 'libgestures',
-          'type': 'none',
-          'direct_dependent_settings': {
-            'cflags': [
-              '<!@(<(pkg-config) --cflags libgestures)'
-            ],
-          },
-          'link_settings': {
-            'ldflags': [
-              '<!@(<(pkg-config) --libs-only-L --libs-only-other libgestures)',
-            ],
-            'libraries': [
-              '<!@(<(pkg-config) --libs-only-l libgestures)',
-            ],
-          },
-        },
-      ],
-    }],
     ['use_xkbcommon==1', {
       'targets': [
         {

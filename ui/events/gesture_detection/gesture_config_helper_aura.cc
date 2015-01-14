@@ -9,7 +9,6 @@
 #include "base/command_line.h"
 #include "ui/events/event_switches.h"
 #include "ui/events/gestures/gesture_configuration.h"
-#include "ui/gfx/screen.h"
 
 namespace ui {
 namespace {
@@ -57,10 +56,6 @@ ScaleGestureDetector::Config DefaultScaleGestureDetectorConfig() {
 
 GestureProvider::Config DefaultGestureProviderConfig() {
   GestureProvider::Config config;
-  gfx::Screen* screen = gfx::Screen::GetScreenByType(gfx::SCREEN_TYPE_NATIVE);
-  // |screen| is sometimes NULL during tests.
-  if (screen)
-    config.display = screen->GetPrimaryDisplay();
   config.gesture_detector_config = DefaultGestureDetectorConfig();
   config.scale_gesture_detector_config = DefaultScaleGestureDetectorConfig();
   config.gesture_begin_end_types_enabled = true;
