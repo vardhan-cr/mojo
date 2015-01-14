@@ -24,6 +24,7 @@
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/window_manager_impl.h"
 #include "ui/events/event_handler.h"
+#include "ui/events/gestures/gesture_provider_impl.h"
 
 namespace gfx {
 class Size;
@@ -52,6 +53,7 @@ class WindowManagerApp
       public mojo::ViewManagerDelegate,
       public mojo::ViewObserver,
       public ui::EventHandler,
+      public ui::GestureProviderImplClient,
       public FocusControllerObserver,
       public CaptureControllerObserver,
       public mojo::InterfaceFactory<mojo::WindowManager>,
@@ -134,6 +136,9 @@ class WindowManagerApp
   // Overridden from ui::EventHandler:
   void OnEvent(ui::Event* event) override;
 
+  // Overridden from ui::GestureProviderImplClient:
+  void OnGestureEvent(ui::GestureEvent* event) override;
+
   // Overridden from mojo::FocusControllerObserver:
   void OnViewFocused(mojo::View* gained_focus, mojo::View* lost_focus) override;
   void OnViewActivated(mojo::View* gained_active,
@@ -172,6 +177,7 @@ class WindowManagerApp
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
   mojo::View* root_;
 
+  ui::GestureProviderImpl gesture_provider_;
   scoped_ptr<FocusController> focus_controller_;
   scoped_ptr<CaptureController> capture_controller_;
 

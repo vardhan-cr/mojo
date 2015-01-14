@@ -111,8 +111,15 @@ component("events") {
     "event_utils.h",
     "events_export.h",
     "events_stub.cc",
+    "gestures/gesture_provider_impl.cc",
+    "gestures/gesture_provider_impl.h",
+    "gestures/gesture_recognizer.h",
+    "gestures/gesture_recognizer_impl.cc",
+    "gestures/gesture_recognizer_impl.h",
     "gestures/gesture_recognizer_impl_mac.cc",
     "gestures/gesture_types.h",
+    "gestures/motion_event_impl.cc",
+    "gestures/motion_event_impl.h",
     "win/events_win.cc",
   ]
 
@@ -150,18 +157,6 @@ component("events") {
 
   if (use_ozone) {
     sources += [ "ozone/events_ozone.cc" ]
-  }
-
-  if (use_aura) {
-    sources += [
-      "gestures/gesture_provider_aura.cc",
-      "gestures/gesture_provider_aura.h",
-      "gestures/motion_event_aura.cc",
-      "gestures/motion_event_aura.h",
-      "gestures/gesture_recognizer.h",
-      "gestures/gesture_recognizer_impl.cc",
-      "gestures/gesture_recognizer_impl.h",
-    ]
   }
 
   if (is_win || is_mac || use_x11 || use_ozone) {
@@ -206,6 +201,7 @@ component("gesture_detection") {
     "gesture_detection/velocity_tracker_state.h",
     "gesture_detection/velocity_tracker.cc",
     "gesture_detection/velocity_tracker.h",
+    "gesture_detection/gesture_config_helper_aura.cc",
   ]
 
   deps = [
@@ -216,14 +212,6 @@ component("gesture_detection") {
   ]
 
   defines = [ "GESTURE_DETECTION_IMPLEMENTATION" ]
-
-  if (is_android) {
-    sources += [ "gesture_detection/gesture_config_helper_android.cc" ]
-  } else if (use_aura) {
-    sources += [ "gesture_detection/gesture_config_helper_aura.cc" ]
-  } else {
-    sources += [ "gesture_detection/gesture_config_helper.cc" ]
-  }
 }
 
 source_set("test_support") {
@@ -325,6 +313,6 @@ test("events_unittests") {
   }
 
   if (use_aura) {
-    sources += [ "gestures/gesture_provider_aura_unittest.cc" ]
+    sources += [ "gestures/gesture_provider_impl_unittest.cc" ]
   }
 }

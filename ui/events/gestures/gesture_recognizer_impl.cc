@@ -58,8 +58,8 @@ void TransferTouchIdToConsumerMap(
   }
 }
 
-GestureProviderAura* CreateGestureProvider(GestureProviderAuraClient* client) {
-  return new GestureProviderAura(client);
+GestureProviderImpl* CreateGestureProvider(GestureProviderImplClient* client) {
+  return new GestureProviderImpl(client);
 }
 
 }  // namespace
@@ -98,11 +98,11 @@ GestureConsumer* GestureRecognizerImpl::GetTargetForLocation(
   int closest_touch_id = 0;
   double closest_distance_squared = std::numeric_limits<double>::infinity();
 
-  std::map<GestureConsumer*, GestureProviderAura*>::iterator i;
+  std::map<GestureConsumer*, GestureProviderImpl*>::iterator i;
   for (i = consumer_gesture_provider_.begin();
        i != consumer_gesture_provider_.end();
        ++i) {
-    const MotionEventAura& pointer_state = i->second->pointer_state();
+    const MotionEventImpl& pointer_state = i->second->pointer_state();
     for (size_t j = 0; j < pointer_state.GetPointerCount(); ++j) {
       if (source_device_id != pointer_state.GetSourceDeviceId(j))
         continue;
@@ -134,7 +134,7 @@ void GestureRecognizerImpl::TransferEventsTo(GestureConsumer* current_consumer,
   // for them at the end.
 
   std::vector<GestureConsumer*> consumers;
-  std::map<GestureConsumer*, GestureProviderAura*>::iterator i;
+  std::map<GestureConsumer*, GestureProviderImpl*>::iterator i;
   for (i = consumer_gesture_provider_.begin();
        i != consumer_gesture_provider_.end();
        ++i) {
@@ -174,7 +174,7 @@ bool GestureRecognizerImpl::CancelActiveTouches(GestureConsumer* consumer) {
   bool cancelled_touch = false;
   if (consumer_gesture_provider_.count(consumer) == 0)
     return false;
-  const MotionEventAura& pointer_state =
+  const MotionEventImpl& pointer_state =
       consumer_gesture_provider_[consumer]->pointer_state();
   if (pointer_state.GetPointerCount() == 0)
     return false;
@@ -203,9 +203,9 @@ bool GestureRecognizerImpl::CancelActiveTouches(GestureConsumer* consumer) {
 ////////////////////////////////////////////////////////////////////////////////
 // GestureRecognizerImpl, private:
 
-GestureProviderAura* GestureRecognizerImpl::GetGestureProviderForConsumer(
+GestureProviderImpl* GestureRecognizerImpl::GetGestureProviderForConsumer(
     GestureConsumer* consumer) {
-  GestureProviderAura* gesture_provider = consumer_gesture_provider_[consumer];
+  GestureProviderImpl* gesture_provider = consumer_gesture_provider_[consumer];
   if (!gesture_provider) {
     gesture_provider = CreateGestureProvider(this);
     consumer_gesture_provider_[consumer] = gesture_provider;
@@ -242,7 +242,7 @@ bool GestureRecognizerImpl::ProcessTouchEventPreDispatch(
   if (event.result() & ER_CONSUMED)
     return false;
 
-  GestureProviderAura* gesture_provider =
+  GestureProviderImpl* gesture_provider =
       GetGestureProviderForConsumer(consumer);
   return gesture_provider->OnTouchEvent(event);
 }
@@ -252,7 +252,7 @@ GestureRecognizerImpl::ProcessTouchEventPostDispatch(
     const TouchEvent& event,
     ui::EventResult result,
     GestureConsumer* consumer) {
-  GestureProviderAura* gesture_provider =
+  GestureProviderImpl* gesture_provider =
       GetGestureProviderForConsumer(consumer);
   gesture_provider->OnTouchEventAck(result != ER_UNHANDLED);
   return gesture_provider->GetAndResetPendingGestures();
@@ -264,7 +264,7 @@ GestureRecognizer::Gestures* GestureRecognizerImpl::ProcessTouchEventOnAsyncAck(
     GestureConsumer* consumer) {
   if (result & ui::ER_CONSUMED)
     return NULL;
-  GestureProviderAura* gesture_provider =
+  GestureProviderImpl* gesture_provider =
       GetGestureProviderForConsumer(consumer);
   gesture_provider->OnTouchEventAck(result != ER_UNHANDLED);
   return gesture_provider->GetAndResetPendingGestures();

@@ -12,26 +12,26 @@
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 #include "ui/events/gesture_detection/gesture_event_data_packet.h"
 #include "ui/events/gesture_detection/touch_disposition_gesture_filter.h"
-#include "ui/events/gestures/motion_event_aura.h"
+#include "ui/events/gestures/motion_event_impl.h"
 
 namespace ui {
 
-class EVENTS_EXPORT GestureProviderAuraClient {
+class EVENTS_EXPORT GestureProviderImplClient {
  public:
-  virtual ~GestureProviderAuraClient() {}
+  virtual ~GestureProviderImplClient() {}
   virtual void OnGestureEvent(GestureEvent* event) = 0;
 };
 
 // Provides gesture detection and dispatch given a sequence of touch events
 // and touch event acks.
-class EVENTS_EXPORT GestureProviderAura : public GestureProviderClient {
+class EVENTS_EXPORT GestureProviderImpl : public GestureProviderClient {
  public:
-  GestureProviderAura(GestureProviderAuraClient* client);
-  virtual ~GestureProviderAura();
+  GestureProviderImpl(GestureProviderImplClient* client);
+  virtual ~GestureProviderImpl();
 
   bool OnTouchEvent(const TouchEvent& event);
   void OnTouchEventAck(bool event_consumed);
-  const MotionEventAura& pointer_state() { return pointer_state_; }
+  const MotionEventImpl& pointer_state() { return pointer_state_; }
   ScopedVector<GestureEvent>* GetAndResetPendingGestures();
 
   // GestureProviderClient implementation
@@ -43,15 +43,15 @@ class EVENTS_EXPORT GestureProviderAura : public GestureProviderClient {
 
   scoped_ptr<GestureEventData> previous_tap_;
 
-  GestureProviderAuraClient* client_;
-  MotionEventAura pointer_state_;
+  GestureProviderImplClient* client_;
+  MotionEventImpl pointer_state_;
   FilteredGestureProvider filtered_gesture_provider_;
 
   ui::LatencyInfo last_touch_event_latency_info_;
   bool handling_event_;
   ScopedVector<GestureEvent> pending_gestures_;
 
-  DISALLOW_COPY_AND_ASSIGN(GestureProviderAura);
+  DISALLOW_COPY_AND_ASSIGN(GestureProviderImpl);
 };
 
 }  // namespace ui

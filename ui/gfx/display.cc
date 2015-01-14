@@ -19,22 +19,6 @@
 namespace gfx {
 namespace {
 
-bool HasForceDeviceScaleFactorImpl() {
-  return base::CommandLine::ForCurrentProcess()->HasSwitch(
-      switches::kForceDeviceScaleFactor);
-}
-
-float GetForcedDeviceScaleFactorImpl() {
-  double scale_in_double = 1.0;
-  if (HasForceDeviceScaleFactorImpl()) {
-    std::string value = base::CommandLine::ForCurrentProcess()->
-        GetSwitchValueASCII(switches::kForceDeviceScaleFactor);
-    if (!base::StringToDouble(value, &scale_in_double))
-      LOG(ERROR) << "Failed to parse the default device scale factor:" << value;
-  }
-  return static_cast<float>(scale_in_double);
-}
-
 int64 internal_display_id_ = -1;
 
 }  // namespace
@@ -43,16 +27,12 @@ const int64 Display::kInvalidDisplayID = -1;
 
 // static
 float Display::GetForcedDeviceScaleFactor() {
-  static const float kForcedDeviceScaleFactor =
-      GetForcedDeviceScaleFactorImpl();
-  return kForcedDeviceScaleFactor;
+  return 1.0f;
 }
 
 //static
 bool Display::HasForceDeviceScaleFactor() {
-  static const bool kHasForceDeviceScaleFactor =
-      HasForceDeviceScaleFactorImpl();
-  return kHasForceDeviceScaleFactor;
+  return false;
 }
 
 Display::Display()

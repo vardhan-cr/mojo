@@ -5,7 +5,7 @@
 // MSVC++ requires this to be set before any other includes to get M_PI.
 #define _USE_MATH_DEFINES
 
-#include "ui/events/gestures/motion_event_aura.h"
+#include "ui/events/gestures/motion_event_impl.h"
 
 #include <cmath>
 
@@ -14,11 +14,11 @@
 
 namespace ui {
 
-MotionEventAura::MotionEventAura()
+MotionEventImpl::MotionEventImpl()
     : pointer_count_(0), cached_action_index_(-1) {
 }
 
-MotionEventAura::MotionEventAura(
+MotionEventImpl::MotionEventImpl(
     size_t pointer_count,
     const base::TimeTicks& last_touch_time,
     Action cached_action,
@@ -35,9 +35,9 @@ MotionEventAura::MotionEventAura(
     active_touches_[i] = active_touches[i];
 }
 
-MotionEventAura::~MotionEventAura() {}
+MotionEventImpl::~MotionEventImpl() {}
 
-MotionEventAura::PointData MotionEventAura::GetPointDataFromTouchEvent(
+MotionEventImpl::PointData MotionEventImpl::GetPointDataFromTouchEvent(
     const TouchEvent& touch) {
   PointData point_data;
   point_data.x = touch.x();
@@ -78,7 +78,7 @@ MotionEventAura::PointData MotionEventAura::GetPointDataFromTouchEvent(
   return point_data;
 }
 
-void MotionEventAura::OnTouch(const TouchEvent& touch) {
+void MotionEventImpl::OnTouch(const TouchEvent& touch) {
   switch (touch.type()) {
     case ET_TOUCH_PRESSED:
       AddTouch(touch);
@@ -103,15 +103,15 @@ void MotionEventAura::OnTouch(const TouchEvent& touch) {
   last_touch_time_ = touch.time_stamp() + base::TimeTicks();
 }
 
-int MotionEventAura::GetId() const {
+int MotionEventImpl::GetId() const {
   return GetPointerId(0);
 }
 
-MotionEvent::Action MotionEventAura::GetAction() const {
+MotionEvent::Action MotionEventImpl::GetAction() const {
   return cached_action_;
 }
 
-int MotionEventAura::GetActionIndex() const {
+int MotionEventImpl::GetActionIndex() const {
   DCHECK(cached_action_ == ACTION_POINTER_DOWN ||
          cached_action_ == ACTION_POINTER_UP);
   DCHECK_GE(cached_action_index_, 0);
@@ -119,86 +119,86 @@ int MotionEventAura::GetActionIndex() const {
   return cached_action_index_;
 }
 
-size_t MotionEventAura::GetPointerCount() const { return pointer_count_; }
+size_t MotionEventImpl::GetPointerCount() const { return pointer_count_; }
 
-int MotionEventAura::GetPointerId(size_t pointer_index) const {
+int MotionEventImpl::GetPointerId(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].touch_id;
 }
 
-float MotionEventAura::GetX(size_t pointer_index) const {
+float MotionEventImpl::GetX(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].x;
 }
 
-float MotionEventAura::GetY(size_t pointer_index) const {
+float MotionEventImpl::GetY(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].y;
 }
 
-float MotionEventAura::GetRawX(size_t pointer_index) const {
+float MotionEventImpl::GetRawX(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].raw_x;
 }
 
-float MotionEventAura::GetRawY(size_t pointer_index) const {
+float MotionEventImpl::GetRawY(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].raw_y;
 }
 
-float MotionEventAura::GetTouchMajor(size_t pointer_index) const {
+float MotionEventImpl::GetTouchMajor(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].touch_major;
 }
 
-float MotionEventAura::GetTouchMinor(size_t pointer_index) const {
+float MotionEventImpl::GetTouchMinor(size_t pointer_index) const {
   DCHECK_LE(pointer_index, pointer_count_);
   return active_touches_[pointer_index].touch_minor;
 }
 
-float MotionEventAura::GetOrientation(size_t pointer_index) const {
+float MotionEventImpl::GetOrientation(size_t pointer_index) const {
   DCHECK_LE(pointer_index, pointer_count_);
   return active_touches_[pointer_index].orientation;
 }
 
-float MotionEventAura::GetPressure(size_t pointer_index) const {
+float MotionEventImpl::GetPressure(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].pressure;
 }
 
-MotionEvent::ToolType MotionEventAura::GetToolType(size_t pointer_index) const {
+MotionEvent::ToolType MotionEventImpl::GetToolType(size_t pointer_index) const {
   // TODO(jdduke): Plumb tool type from the platform, crbug.com/404128.
   DCHECK_LT(pointer_index, pointer_count_);
   return MotionEvent::TOOL_TYPE_UNKNOWN;
 }
 
-int MotionEventAura::GetButtonState() const {
+int MotionEventImpl::GetButtonState() const {
   NOTIMPLEMENTED();
   return 0;
 }
 
-int MotionEventAura::GetFlags() const {
+int MotionEventImpl::GetFlags() const {
   return flags_;
 }
 
-base::TimeTicks MotionEventAura::GetEventTime() const {
+base::TimeTicks MotionEventImpl::GetEventTime() const {
   return last_touch_time_;
 }
 
-scoped_ptr<MotionEvent> MotionEventAura::Clone() const {
-  return scoped_ptr<MotionEvent>(new MotionEventAura(pointer_count_,
+scoped_ptr<MotionEvent> MotionEventImpl::Clone() const {
+  return scoped_ptr<MotionEvent>(new MotionEventImpl(pointer_count_,
                                                      last_touch_time_,
                                                      cached_action_,
                                                      cached_action_index_,
                                                      flags_,
                                                      active_touches_));
 }
-scoped_ptr<MotionEvent> MotionEventAura::Cancel() const {
-  return scoped_ptr<MotionEvent>(new MotionEventAura(
+scoped_ptr<MotionEvent> MotionEventImpl::Cancel() const {
+  return scoped_ptr<MotionEvent>(new MotionEventImpl(
       pointer_count_, last_touch_time_, ACTION_CANCEL, -1, 0, active_touches_));
 }
 
-void MotionEventAura::CleanupRemovedTouchPoints(const TouchEvent& event) {
+void MotionEventImpl::CleanupRemovedTouchPoints(const TouchEvent& event) {
   if (event.type() != ET_TOUCH_RELEASED &&
       event.type() != ET_TOUCH_CANCELLED) {
     return;
@@ -209,7 +209,7 @@ void MotionEventAura::CleanupRemovedTouchPoints(const TouchEvent& event) {
   active_touches_[index_to_delete] = active_touches_[pointer_count_];
 }
 
-MotionEventAura::PointData::PointData()
+MotionEventImpl::PointData::PointData()
     : x(0),
       y(0),
       raw_x(0),
@@ -222,12 +222,12 @@ MotionEventAura::PointData::PointData()
       orientation(0) {
 }
 
-int MotionEventAura::GetSourceDeviceId(size_t pointer_index) const {
+int MotionEventImpl::GetSourceDeviceId(size_t pointer_index) const {
   DCHECK_LT(pointer_index, pointer_count_);
   return active_touches_[pointer_index].source_device_id;
 }
 
-void MotionEventAura::AddTouch(const TouchEvent& touch) {
+void MotionEventImpl::AddTouch(const TouchEvent& touch) {
   if (pointer_count_ == MotionEvent::MAX_TOUCH_POINT_COUNT)
     return;
 
@@ -236,12 +236,12 @@ void MotionEventAura::AddTouch(const TouchEvent& touch) {
 }
 
 
-void MotionEventAura::UpdateTouch(const TouchEvent& touch) {
+void MotionEventImpl::UpdateTouch(const TouchEvent& touch) {
   active_touches_[GetIndexFromId(touch.touch_id())] =
       GetPointDataFromTouchEvent(touch);
 }
 
-void MotionEventAura::UpdateCachedAction(const TouchEvent& touch) {
+void MotionEventImpl::UpdateCachedAction(const TouchEvent& touch) {
   DCHECK(pointer_count_);
   switch (touch.type()) {
     case ET_TOUCH_PRESSED:
@@ -275,7 +275,7 @@ void MotionEventAura::UpdateCachedAction(const TouchEvent& touch) {
   }
 }
 
-size_t MotionEventAura::GetIndexFromId(int id) const {
+size_t MotionEventImpl::GetIndexFromId(int id) const {
   for (size_t i = 0; i < pointer_count_; ++i) {
     if (active_touches_[i].touch_id == id)
       return i;

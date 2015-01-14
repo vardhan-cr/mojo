@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/gestures/gesture_provider_aura.h"
+#include "ui/events/gestures/gesture_provider_impl.h"
 
 #include "base/auto_reset.h"
 #include "base/logging.h"
@@ -13,16 +13,17 @@
 
 namespace ui {
 
-GestureProviderAura::GestureProviderAura(GestureProviderAuraClient* client)
+GestureProviderImpl::GestureProviderImpl(GestureProviderImplClient* client)
     : client_(client),
       filtered_gesture_provider_(ui::DefaultGestureProviderConfig(), this),
       handling_event_(false) {
   filtered_gesture_provider_.SetDoubleTapSupportForPlatformEnabled(false);
 }
 
-GestureProviderAura::~GestureProviderAura() {}
+GestureProviderImpl::~GestureProviderImpl() {
+}
 
-bool GestureProviderAura::OnTouchEvent(const TouchEvent& event) {
+bool GestureProviderImpl::OnTouchEvent(const TouchEvent& event) {
   int index = pointer_state_.FindPointerIndexOfId(event.touch_id());
   bool pointer_id_is_active = index != -1;
 
@@ -52,7 +53,7 @@ bool GestureProviderAura::OnTouchEvent(const TouchEvent& event) {
   return result;
 }
 
-void GestureProviderAura::OnTouchEventAck(bool event_consumed) {
+void GestureProviderImpl::OnTouchEventAck(bool event_consumed) {
   DCHECK(pending_gestures_.empty());
   DCHECK(!handling_event_);
   base::AutoReset<bool> handling_event(&handling_event_, true);
@@ -60,8 +61,7 @@ void GestureProviderAura::OnTouchEventAck(bool event_consumed) {
   last_touch_event_latency_info_.Clear();
 }
 
-void GestureProviderAura::OnGestureEvent(
-    const GestureEventData& gesture) {
+void GestureProviderImpl::OnGestureEvent(const GestureEventData& gesture) {
   GestureEventDetails details = gesture.details;
   details.set_oldest_touch_id(gesture.motion_event_id);
 
@@ -80,20 +80,15 @@ void GestureProviderAura::OnGestureEvent(
   }
 
   scoped_ptr<ui::GestureEvent> event(
-      new ui::GestureEvent(gesture.x,
-                           gesture.y,
-                           gesture.flags,
-                           gesture.time - base::TimeTicks(),
-                           details));
+      new ui::GestureEvent(gesture.x, gesture.y, gesture.flags,
+                           gesture.time - base::TimeTicks(), details));
 
   ui::LatencyInfo* gesture_latency = event->latency();
 
-  gesture_latency->CopyLatencyFrom(
-      last_touch_event_latency_info_,
-      ui::INPUT_EVENT_LATENCY_ORIGINAL_COMPONENT);
-  gesture_latency->CopyLatencyFrom(
-      last_touch_event_latency_info_,
-      ui::INPUT_EVENT_LATENCY_UI_COMPONENT);
+  gesture_latency->CopyLatencyFrom(last_touch_event_latency_info_,
+                                   ui::INPUT_EVENT_LATENCY_ORIGINAL_COMPONENT);
+  gesture_latency->CopyLatencyFrom(last_touch_event_latency_info_,
+                                   ui::INPUT_EVENT_LATENCY_UI_COMPONENT);
   gesture_latency->CopyLatencyFrom(
       last_touch_event_latency_info_,
       ui::INPUT_EVENT_LATENCY_ACKED_TOUCH_COMPONENT);
@@ -107,7 +102,7 @@ void GestureProviderAura::OnGestureEvent(
   }
 }
 
-ScopedVector<GestureEvent>* GestureProviderAura::GetAndResetPendingGestures() {
+ScopedVector<GestureEvent>* GestureProviderImpl::GetAndResetPendingGestures() {
   if (pending_gestures_.empty())
     return NULL;
   // Caller is responsible for deleting old_pending_gestures.
@@ -117,7 +112,7 @@ ScopedVector<GestureEvent>* GestureProviderAura::GetAndResetPendingGestures() {
   return old_pending_gestures;
 }
 
-bool GestureProviderAura::IsConsideredDoubleTap(
+bool GestureProviderImpl::IsConsideredDoubleTap(
     const GestureEventData& previous_tap,
     const GestureEventData& current_tap) const {
   if (current_tap.time - previous_tap.time >

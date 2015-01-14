@@ -55,7 +55,8 @@ WindowManagerApp::WindowManagerApp(
       native_viewport_event_dispatcher_factory_(this),
       wrapped_view_manager_delegate_(view_manager_delegate),
       window_manager_delegate_(window_manager_delegate),
-      root_(nullptr) {
+      root_(nullptr),
+      gesture_provider_(this) {
 }
 
 WindowManagerApp::~WindowManagerApp() {
@@ -219,6 +220,27 @@ void WindowManagerApp::OnEvent(ui::Event* event) {
 
   window_manager_client_->DispatchInputEventToView(view->id(),
                                                    mojo::Event::From(*event));
+
+  if (event->IsTouchEvent()) {
+    gesture_provider_.OnTouchEvent(*static_cast<ui::TouchEvent*>(event));
+    scoped_ptr<ScopedVector<ui::GestureEvent>> gestures(
+        gesture_provider_.GetAndResetPendingGestures());
+    if (gestures) {
+      for (auto& gesture : *gestures) {
+        window_manager_client_->DispatchInputEventToView(
+            view->id(), mojo::Event::From(*gesture));
+      }
+    }
+    gesture_provider_.OnTouchEventAck(false);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// WindowManagerApp, ui::GestureProviderImplClient implementation:
+
+void WindowManagerApp::OnGestureEvent(ui::GestureEvent* event) {
+  DCHECK(!event->IsTouchEvent());
+  // TODO(abarth): Do we need to dispatch this |event|?
 }
 
 ////////////////////////////////////////////////////////////////////////////////

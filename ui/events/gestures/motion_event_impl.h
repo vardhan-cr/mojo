@@ -16,10 +16,10 @@
 namespace ui {
 
 // Implementation of MotionEvent which takes a stream of ui::TouchEvents.
-class EVENTS_EXPORT MotionEventAura : public MotionEvent {
+class EVENTS_EXPORT MotionEventImpl : public MotionEvent {
  public:
-  MotionEventAura();
-  virtual ~MotionEventAura();
+  MotionEventImpl();
+  virtual ~MotionEventImpl();
 
   void OnTouch(const TouchEvent& touch);
 
@@ -69,7 +69,7 @@ class EVENTS_EXPORT MotionEventAura : public MotionEvent {
     float orientation;
   };
 
-  MotionEventAura(
+  MotionEventImpl(
       size_t pointer_count,
       const base::TimeTicks& last_touch_time,
       Action cached_action,
@@ -94,7 +94,7 @@ class EVENTS_EXPORT MotionEventAura : public MotionEvent {
   // We want constant time indexing by pointer_index, and fast indexing by id.
   PointData active_touches_[MotionEvent::MAX_TOUCH_POINT_COUNT];
 
-  DISALLOW_COPY_AND_ASSIGN(MotionEventAura);
+  DISALLOW_COPY_AND_ASSIGN(MotionEventImpl);
 };
 
 }  // namespace ui

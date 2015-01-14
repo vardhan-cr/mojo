@@ -33,6 +33,11 @@ struct MOJO_INPUT_EVENTS_EXPORT TypeConverter<EventPtr, ui::KeyEvent> {
 };
 
 template <>
+struct MOJO_INPUT_EVENTS_EXPORT TypeConverter<EventPtr, ui::GestureEvent> {
+  static EventPtr Convert(const ui::GestureEvent& input);
+};
+
+template <>
 struct MOJO_INPUT_EVENTS_EXPORT TypeConverter<scoped_ptr<ui::Event>, EventPtr> {
   static scoped_ptr<ui::Event> Convert(const EventPtr& input);
 };

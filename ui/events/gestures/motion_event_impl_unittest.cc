@@ -9,7 +9,7 @@
 
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/events/event.h"
-#include "ui/events/gestures/motion_event_aura.h"
+#include "ui/events/gestures/motion_event_impl.h"
 
 namespace {
 
@@ -69,12 +69,12 @@ base::TimeTicks MsToTicks(int ms) {
 
 namespace ui {
 
-TEST(MotionEventAuraTest, PointerCountAndIds) {
+TEST(MotionEventImplTest, PointerCountAndIds) {
   // Test that |PointerCount()| returns the correct number of pointers, and ids
   // are assigned correctly.
   int ids[] = {4, 6, 1};
 
-  MotionEventAura event;
+  MotionEventImpl event;
   EXPECT_EQ(0U, event.GetPointerCount());
 
   TouchEvent press0 = TouchWithType(ET_TOUCH_PRESSED, ids[0]);
@@ -126,12 +126,12 @@ TEST(MotionEventAuraTest, PointerCountAndIds) {
   EXPECT_EQ(0U, event.GetPointerCount());
 }
 
-TEST(MotionEventAuraTest, GetActionIndexAfterRemoval) {
+TEST(MotionEventImplTest, GetActionIndexAfterRemoval) {
   // Test that |GetActionIndex()| returns the correct index when points have
   // been removed.
   int ids[] = {4, 6, 9};
 
-  MotionEventAura event;
+  MotionEventImpl event;
   EXPECT_EQ(0U, event.GetPointerCount());
 
   TouchEvent press0 = TouchWithType(ET_TOUCH_PRESSED, ids[0]);
@@ -160,9 +160,9 @@ TEST(MotionEventAuraTest, GetActionIndexAfterRemoval) {
   EXPECT_EQ(0U, event.GetPointerCount());
 }
 
-TEST(MotionEventAuraTest, PointerLocations) {
+TEST(MotionEventImplTest, PointerLocations) {
   // Test that location information is stored correctly.
-  MotionEventAura event;
+  MotionEventImpl event;
 
   const float kRawOffsetX = 11.1f;
   const float kRawOffsetY = 13.3f;
@@ -204,8 +204,8 @@ TEST(MotionEventAuraTest, PointerLocations) {
   // Test cloning of pointer location information.
   scoped_ptr<MotionEvent> clone = event.Clone();
   {
-    const MotionEventAura* raw_clone_aura =
-        static_cast<MotionEventAura*>(clone.get());
+    const MotionEventImpl* raw_clone_aura =
+        static_cast<MotionEventImpl*>(clone.get());
     EXPECT_EQ(2U, raw_clone_aura->GetPointerCount());
     EXPECT_FLOAT_EQ(x, raw_clone_aura->GetX(1));
     EXPECT_FLOAT_EQ(y, raw_clone_aura->GetY(1));
@@ -240,9 +240,9 @@ TEST(MotionEventAuraTest, PointerLocations) {
   EXPECT_FLOAT_EQ(raw_y, event.GetRawY(0));
 }
 
-TEST(MotionEventAuraTest, TapParams) {
+TEST(MotionEventImplTest, TapParams) {
   // Test that touch params are stored correctly.
-  MotionEventAura event;
+  MotionEventImpl event;
 
   int ids[] = {15, 13};
 
@@ -282,8 +282,8 @@ TEST(MotionEventAuraTest, TapParams) {
   // Test cloning of tap params
   scoped_ptr<MotionEvent> clone = event.Clone();
   {
-    const MotionEventAura* raw_clone_aura =
-        static_cast<MotionEventAura*>(clone.get());
+    const MotionEventImpl* raw_clone_aura =
+        static_cast<MotionEventImpl*>(clone.get());
     EXPECT_EQ(2U, raw_clone_aura->GetPointerCount());
     EXPECT_FLOAT_EQ(radius_y, raw_clone_aura->GetTouchMajor(1) / 2);
     EXPECT_FLOAT_EQ(radius_x, raw_clone_aura->GetTouchMinor(1) / 2);
@@ -307,9 +307,9 @@ TEST(MotionEventAuraTest, TapParams) {
   EXPECT_FLOAT_EQ(pressure, event.GetPressure(1));
 }
 
-TEST(MotionEventAuraTest, Timestamps) {
+TEST(MotionEventImplTest, Timestamps) {
   // Test that timestamp information is stored and converted correctly.
-  MotionEventAura event;
+  MotionEventImpl event;
   int ids[] = {7, 13};
   int times_in_ms[] = {59436, 60263, 82175};
 
@@ -333,10 +333,10 @@ TEST(MotionEventAuraTest, Timestamps) {
   EXPECT_EQ(MsToTicks(times_in_ms[2]), clone->GetEventTime());
 }
 
-TEST(MotionEventAuraTest, CachedAction) {
+TEST(MotionEventImplTest, CachedAction) {
   // Test that the cached action and cached action index are correct.
   int ids[] = {4, 6};
-  MotionEventAura event;
+  MotionEventImpl event;
 
   TouchEvent press0 = TouchWithType(ET_TOUCH_PRESSED, ids[0]);
   event.OnTouch(press0);
@@ -374,9 +374,9 @@ TEST(MotionEventAuraTest, CachedAction) {
   EXPECT_EQ(0U, event.GetPointerCount());
 }
 
-TEST(MotionEventAuraTest, Cancel) {
+TEST(MotionEventImplTest, Cancel) {
   int ids[] = {4, 6};
-  MotionEventAura event;
+  MotionEventImpl event;
 
   TouchEvent press0 = TouchWithType(ET_TOUCH_PRESSED, ids[0]);
   event.OnTouch(press0);
@@ -391,11 +391,11 @@ TEST(MotionEventAuraTest, Cancel) {
 
   scoped_ptr<MotionEvent> cancel = event.Cancel();
   EXPECT_EQ(MotionEvent::ACTION_CANCEL, cancel->GetAction());
-  EXPECT_EQ(2U, static_cast<MotionEventAura*>(cancel.get())->GetPointerCount());
+  EXPECT_EQ(2U, static_cast<MotionEventImpl*>(cancel.get())->GetPointerCount());
 }
 
-TEST(MotionEventAuraTest, ToolType) {
-  MotionEventAura event;
+TEST(MotionEventImplTest, ToolType) {
+  MotionEventImpl event;
 
   // For now, all pointers have an unknown tool type.
   // TODO(jdduke): Expand this test when ui::TouchEvent identifies the source
@@ -405,9 +405,9 @@ TEST(MotionEventAuraTest, ToolType) {
   EXPECT_EQ(MotionEvent::TOOL_TYPE_UNKNOWN, event.GetToolType(0));
 }
 
-TEST(MotionEventAuraTest, Flags) {
+TEST(MotionEventImplTest, Flags) {
   int ids[] = {7, 11};
-  MotionEventAura event;
+  MotionEventImpl event;
 
   TouchEvent press0 = TouchWithType(ET_TOUCH_PRESSED, ids[0]);
   press0.set_flags(EF_CONTROL_DOWN);

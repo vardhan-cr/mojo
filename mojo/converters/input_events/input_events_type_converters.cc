@@ -96,7 +96,7 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
   event->flags = EventFlags(input.flags());
   event->time_stamp = input.time_stamp().ToInternalValue();
 
-  if (input.IsMouseEvent() || input.IsTouchEvent()) {
+  if (input.IsMouseEvent() || input.IsTouchEvent() || input.IsGestureEvent()) {
     const ui::LocatedEvent* located_event =
         static_cast<const ui::LocatedEvent*>(&input);
 
@@ -116,6 +116,9 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
     TouchDataPtr touch_data(TouchData::New());
     touch_data->pointer_id = touch_event->touch_id();
     event->touch_data = touch_data.Pass();
+  } else if (input.IsGestureEvent()) {
+    // TODO(abarth): Create GestureData struct for |event| once we have that
+    // struct in input_events.mojom.
   } else if (input.IsKeyEvent()) {
     const ui::KeyEvent* key_event = static_cast<const ui::KeyEvent*>(&input);
     KeyDataPtr key_data(KeyData::New());
@@ -154,6 +157,12 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
 // static
 EventPtr TypeConverter<EventPtr, ui::KeyEvent>::Convert(
     const ui::KeyEvent& input) {
+  return Event::From(static_cast<const ui::Event&>(input));
+}
+
+// static
+EventPtr TypeConverter<EventPtr, ui::GestureEvent>::Convert(
+    const ui::GestureEvent& input) {
   return Event::From(static_cast<const ui::Event&>(input));
 }
 
