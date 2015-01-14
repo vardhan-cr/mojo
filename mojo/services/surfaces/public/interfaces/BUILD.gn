@@ -12,6 +12,8 @@ mojom("interfaces") {
     "surfaces_service.mojom",
   ]
 
+  import_dirs = [ get_path_info("../../../", "abspath") ]
+
   deps = [
     ":surface_id",
     "//mojo/services/geometry/public/interfaces",
