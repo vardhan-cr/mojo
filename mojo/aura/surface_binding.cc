@@ -16,36 +16,17 @@
 #include "cc/resources/shared_bitmap_manager.h"
 #include "mojo/aura/window_tree_host_mojo.h"
 #include "mojo/cc/context_provider_mojo.h"
-#include "mojo/cc/output_surface_mojo.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 
 namespace mojo {
 namespace {
-
-// SurfaceclientImpl -----------------------------------------------------------
-
-class SurfaceClientImpl : public SurfaceClient {
- public:
-  SurfaceClientImpl() {}
-  ~SurfaceClientImpl() override {}
-
-  // SurfaceClient:
-  void SetIdNamespace(uint32_t id_namespace) override {}
-  void ReturnResources(Array<ReturnedResourcePtr> resources) override {
-    // TODO (sky|jamesr): figure out right way to recycle resources.
-  }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SurfaceClientImpl);
-};
 
 // OutputSurface ---------------------------------------------------------------
 
@@ -56,7 +37,8 @@ class OutputSurfaceImpl : public cc::OutputSurface {
   OutputSurfaceImpl(View* view,
                     const scoped_refptr<cc::ContextProvider>& context_provider,
                     Surface* surface,
-                    cc::SurfaceIdAllocator* id_allocator);
+                    uint32_t id_namespace,
+                    uint32_t* next_local_id);
   ~OutputSurfaceImpl() override;
 
   // cc::OutputSurface:
@@ -65,8 +47,9 @@ class OutputSurfaceImpl : public cc::OutputSurface {
  private:
   View* view_;
   Surface* surface_;
-  cc::SurfaceIdAllocator* id_allocator_;
-  cc::SurfaceId surface_id_;
+  uint32_t id_namespace_;
+  uint32_t* next_local_id_;  // Owned by PerViewManagerState.
+  uint32_t local_id_;
   gfx::Size surface_size_;
 
   DISALLOW_COPY_AND_ASSIGN(OutputSurfaceImpl);
@@ -76,11 +59,14 @@ OutputSurfaceImpl::OutputSurfaceImpl(
     View* view,
     const scoped_refptr<cc::ContextProvider>& context_provider,
     Surface* surface,
-    cc::SurfaceIdAllocator* id_allocator)
+    uint32_t id_namespace,
+    uint32_t* next_local_id)
     : cc::OutputSurface(context_provider),
       view_(view),
       surface_(surface),
-      id_allocator_(id_allocator) {
+      id_namespace_(id_namespace),
+      next_local_id_(next_local_id),
+      local_id_(0u) {
   capabilities_.delegated_rendering = true;
   capabilities_.max_frames_pending = 1;
 }
@@ -92,16 +78,18 @@ void OutputSurfaceImpl::SwapBuffers(cc::CompositorFrame* frame) {
   gfx::Size frame_size =
       frame->delegated_frame_data->render_pass_list.back()->output_rect.size();
   if (frame_size != surface_size_) {
-    if (!surface_id_.is_null())
-      surface_->DestroySurface(SurfaceId::From(surface_id_));
-    surface_id_ = id_allocator_->GenerateId();
-    surface_->CreateSurface(SurfaceId::From(surface_id_));
-    view_->SetSurfaceId(SurfaceId::From(surface_id_));
+    if (local_id_ != 0u)
+      surface_->DestroySurface(local_id_);
+    local_id_ = (*next_local_id_)++;
+    surface_->CreateSurface(local_id_);
+    auto qualified_id = mojo::SurfaceId::New();
+    qualified_id->local = local_id_;
+    qualified_id->id_namespace = id_namespace_;
+    view_->SetSurfaceId(qualified_id.Pass());
     surface_size_ = frame_size;
   }
 
-  surface_->SubmitFrame(SurfaceId::From(surface_id_), Frame::From(*frame),
-                        mojo::Closure());
+  surface_->SubmitFrame(local_id_, Frame::From(*frame), mojo::Closure());
 
   client_->DidSwapBuffers();
   client_->DidSwapBuffersComplete();
@@ -117,7 +105,8 @@ void OutputSurfaceImpl::SwapBuffers(cc::CompositorFrame* frame) {
 // stored in a thread local map. When no more refereces to a PerViewManagerState
 // remain the PerViewManagerState is deleted and the underlying map cleaned up.
 class SurfaceBinding::PerViewManagerState
-    : public base::RefCounted<PerViewManagerState> {
+    : public base::RefCounted<PerViewManagerState>,
+      public mojo::SurfaceClient {
  public:
   static PerViewManagerState* Get(Shell* shell, ViewManager* view_manager);
 
@@ -133,8 +122,10 @@ class SurfaceBinding::PerViewManagerState
 
   void Init();
 
-  // Callback when a Surface has been created.
-  void OnCreatedSurfaceConnection(SurfacePtr surface, uint32_t id_namespace);
+  // SurfaceClient:
+  void SetIdNamespace(uint32_t id_namespace) override;
+  void ReturnResources(
+      mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
   static base::LazyInstance<
       base::ThreadLocalPointer<ViewManagerToStateMap>>::Leaky view_states;
@@ -143,11 +134,10 @@ class SurfaceBinding::PerViewManagerState
   ViewManager* view_manager_;
 
   // Set of state needed to create an OutputSurface.
-  scoped_ptr<SurfaceClient> surface_client_;
   GpuPtr gpu_;
   SurfacePtr surface_;
-  SurfacesServicePtr surfaces_service_;
-  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+  uint32_t id_namespace_;
+  uint32_t next_local_id_;
 
   DISALLOW_COPY_AND_ASSIGN(PerViewManagerState);
 };
@@ -182,13 +172,16 @@ SurfaceBinding::PerViewManagerState::CreateOutputSurface(View* view) {
   scoped_refptr<cc::ContextProvider> context_provider(
       new ContextProviderMojo(cb.PassMessagePipe()));
   return make_scoped_ptr(new OutputSurfaceImpl(
-      view, context_provider, surface_.get(), surface_id_allocator_.get()));
+      view, context_provider, surface_.get(), id_namespace_, &next_local_id_));
 }
 
 SurfaceBinding::PerViewManagerState::PerViewManagerState(
     Shell* shell,
     ViewManager* view_manager)
-    : shell_(shell), view_manager_(view_manager) {
+    : shell_(shell),
+      view_manager_(view_manager),
+      id_namespace_(0u),
+      next_local_id_(0u) {
 }
 
 SurfaceBinding::PerViewManagerState::~PerViewManagerState() {
@@ -203,23 +196,16 @@ SurfaceBinding::PerViewManagerState::~PerViewManagerState() {
 }
 
 void SurfaceBinding::PerViewManagerState::Init() {
-  DCHECK(!surfaces_service_.get());
+  DCHECK(!surface_.get());
 
   ServiceProviderPtr surfaces_service_provider;
   shell_->ConnectToApplication("mojo:surfaces_service",
                                GetProxy(&surfaces_service_provider));
-  ConnectToService(surfaces_service_provider.get(), &surfaces_service_);
-  // base::Unretained is ok here as we block until the call is received.
-  surfaces_service_->CreateSurfaceConnection(
-      base::Bind(&PerViewManagerState::OnCreatedSurfaceConnection,
-                 base::Unretained(this)));
-  // Block until we get the surface. This is done to make it easy for client
-  // code. OTOH blocking is ick and leads to all sorts of problems.
-  // TODO(sky): ick! There needs to be a better way to deal with this.
-  surfaces_service_.WaitForIncomingMethodCall();
-  DCHECK(surface_.get());
-  surface_client_.reset(new SurfaceClientImpl);
-  surface_.set_client(surface_client_.get());
+  ConnectToService(surfaces_service_provider.get(), &surface_);
+  surface_.set_client(this);
+  // Block until we receive our id namespace.
+  surface_.WaitForIncomingMethodCall();
+  DCHECK_NE(0u, id_namespace_);
 
   ServiceProviderPtr gpu_service_provider;
   // TODO(jamesr): Should be mojo:gpu_service
@@ -228,11 +214,13 @@ void SurfaceBinding::PerViewManagerState::Init() {
   ConnectToService(gpu_service_provider.get(), &gpu_);
 }
 
-void SurfaceBinding::PerViewManagerState::OnCreatedSurfaceConnection(
-    SurfacePtr surface,
+void SurfaceBinding::PerViewManagerState::SetIdNamespace(
     uint32_t id_namespace) {
-  surface_id_allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
-  surface_ = surface.Pass();
+  id_namespace_ = id_namespace;
+}
+
+void SurfaceBinding::PerViewManagerState::ReturnResources(
+    mojo::Array<mojo::ReturnedResourcePtr> resources) {
 }
 
 // SurfaceBinding --------------------------------------------------------------

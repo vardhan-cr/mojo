@@ -14,16 +14,12 @@
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
 
-namespace cc {
-class SurfaceIdAllocator;
-}
-
 namespace native_viewport {
 
 // This manages the surface that draws to a particular NativeViewport instance.
 class ViewportSurface : public mojo::SurfaceClient {
  public:
-  ViewportSurface(mojo::SurfacesService* surfaces_service,
+  ViewportSurface(mojo::SurfacePtr surface,
                   mojo::Gpu* gpu_service,
                   const gfx::Size& size,
                   cc::SurfaceId child_id);
@@ -34,8 +30,6 @@ class ViewportSurface : public mojo::SurfaceClient {
   void SetChildId(cc::SurfaceId child_id);
 
  private:
-  void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
-                                  uint32_t id_namespace);
   void BindSurfaceToNativeViewport();
   void SubmitFrame();
 
@@ -48,8 +42,7 @@ class ViewportSurface : public mojo::SurfaceClient {
   mojo::Gpu* gpu_service_;
   uint64_t widget_id_;
   gfx::Size size_;
-  scoped_ptr<cc::SurfaceIdAllocator> id_allocator_;
-  cc::SurfaceId id_;
+  bool gles2_bound_surface_created_;
   cc::SurfaceId child_id_;
   base::WeakPtrFactory<ViewportSurface> weak_factory_;
 

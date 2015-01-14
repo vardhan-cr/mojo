@@ -8,7 +8,6 @@
 #include "base/callback.h"
 #include "base/containers/hash_tables.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
@@ -44,7 +43,6 @@ class BitmapUploader : public SurfaceClient {
 
  private:
   void Upload();
-  void OnSurfaceConnectionCreated(SurfacePtr surface, uint32_t id_namespace);
   uint32_t BindTextureForSize(const Size size);
   uint32_t TextureFormat();
 
@@ -53,7 +51,6 @@ class BitmapUploader : public SurfaceClient {
   void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
   View* view_;
-  SurfacesServicePtr surfaces_service_;
   GpuPtr gpu_service_;
   MojoGLES2Context gles2_context_;
 
@@ -67,10 +64,8 @@ class BitmapUploader : public SurfaceClient {
   Size surface_size_;
   uint32_t next_resource_id_;
   uint32_t id_namespace_;
-  SurfaceIdPtr surface_id_;
+  uint32_t local_id_;
   base::hash_map<uint32_t, uint32_t> resource_to_texture_id_map_;
-
-  base::WeakPtrFactory<BitmapUploader> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(BitmapUploader);
 };

@@ -54,14 +54,14 @@ class SurfacesImpl : public mojo::Surface,
   ~SurfacesImpl() override;
 
   // Surface implementation.
-  void CreateSurface(mojo::SurfaceIdPtr id) override;
-  void SubmitFrame(mojo::SurfaceIdPtr id,
+  void CreateSurface(uint32_t local_id) override;
+  void SubmitFrame(uint32_t local_id,
                    mojo::FramePtr frame,
                    const mojo::Closure& callback) override;
-  void DestroySurface(mojo::SurfaceIdPtr id) override;
+  void DestroySurface(uint32_t local_id) override;
   void CreateGLES2BoundSurface(
       mojo::CommandBufferPtr gles2_client,
-      mojo::SurfaceIdPtr id,
+      uint32_t local_id,
       mojo::SizePtr size,
       mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request)
       override;
@@ -87,6 +87,8 @@ class SurfacesImpl : public mojo::Surface,
   SurfacesImpl(cc::SurfaceManager* manager,
                uint32_t id_namespace,
                Client* client);
+
+  cc::SurfaceId QualifyIdentifier(uint32_t local_id);
 
   cc::SurfaceManager* manager_;
   cc::SurfaceFactory factory_;

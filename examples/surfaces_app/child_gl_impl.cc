@@ -46,12 +46,12 @@ static void ContextLostThunk(void*) {
 
 ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
                          CommandBufferPtr command_buffer)
-    : start_time_(base::TimeTicks::Now()),
-      next_resource_id_(1),
-      weak_factory_(this) {
+    : id_namespace_(0u),
+      local_id_(1u),
+      start_time_(base::TimeTicks::Now()),
+      next_resource_id_(1) {
   surfaces_service_connection->ConnectToService(&surface_);
   surface_.set_client(this);
-  surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
   context_ =
       MojoGLES2CreateContext(command_buffer.PassMessagePipe().release().value(),
                              &ContextLostThunk,
@@ -63,26 +63,36 @@ ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
 
 ChildGLImpl::~ChildGLImpl() {
   MojoGLES2DestroyContext(context_);
-  surface_->DestroySurface(mojo::SurfaceId::From(id_));
+  surface_->DestroySurface(local_id_);
 }
 
-void ChildGLImpl::ProduceFrame(
-    ColorPtr color,
-    SizePtr size,
-    const mojo::Callback<void(SurfaceIdPtr id)>& callback) {
+void ChildGLImpl::ProduceFrame(ColorPtr color,
+                               SizePtr size,
+                               const ProduceCallback& callback) {
   color_ = color.To<SkColor>();
   size_ = size.To<gfx::Size>();
   cube_.Init(size_.width(), size_.height());
   cube_.set_color(
       SkColorGetR(color_), SkColorGetG(color_), SkColorGetB(color_));
-  id_ = allocator_->GenerateId();
-  surface_->CreateSurface(mojo::SurfaceId::From(id_));
-  callback.Run(SurfaceId::From(id_));
+  surface_->CreateSurface(local_id_);
+  produce_callback_ = callback;
+  if (id_namespace_ != 0u)
+    RunProduceCallback();
   Draw();
 }
 
 void ChildGLImpl::SetIdNamespace(uint32_t id_namespace) {
-  allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
+  id_namespace_ = id_namespace;
+  if (!produce_callback_.is_null())
+    RunProduceCallback();
+  produce_callback_.reset();
+}
+
+void ChildGLImpl::RunProduceCallback() {
+  auto id = SurfaceId::New();
+  id->id_namespace = id_namespace_;
+  id->local = local_id_;
+  produce_callback_.Run(id.Pass());
 }
 
 void ChildGLImpl::ReturnResources(Array<ReturnedResourcePtr> resources) {
@@ -169,8 +179,7 @@ void ChildGLImpl::Draw() {
   scoped_ptr<CompositorFrame> frame(new CompositorFrame);
   frame->delegated_frame_data = delegated_frame_data.Pass();
 
-  surface_->SubmitFrame(mojo::SurfaceId::From(id_), mojo::Frame::From(*frame),
-                        mojo::Closure());
+  surface_->SubmitFrame(local_id_, mojo::Frame::From(*frame), mojo::Closure());
 
   base::MessageLoop::current()->PostDelayedTask(
       FROM_HERE,

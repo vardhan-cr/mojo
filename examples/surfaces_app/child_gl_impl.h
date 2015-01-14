@@ -8,10 +8,8 @@
 #include "base/containers/hash_tables.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
 #include "cc/surfaces/surface_id.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "examples/sample_app/spinning_cube.h"
 #include "examples/surfaces_app/child.mojom.h"
 #include "mojo/public/c/gles2/gles2.h"
@@ -38,31 +36,32 @@ class ChildGLImpl : public InterfaceImpl<Child>, public SurfaceClient {
               CommandBufferPtr command_buffer);
   ~ChildGLImpl() override;
 
+ private:
+  using ProduceCallback = mojo::Callback<void(SurfaceIdPtr id)>;
+
+  // Child implementation.
+  void ProduceFrame(ColorPtr color,
+                    SizePtr size,
+                    const ProduceCallback& callback) override;
+
   // SurfaceClient implementation
   void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
- private:
-  // Child implementation.
-  void ProduceFrame(
-      ColorPtr color,
-      SizePtr size,
-      const mojo::Callback<void(SurfaceIdPtr id)>& callback) override;
-
-  void AllocateSurface();
   void Draw();
+  void RunProduceCallback();
 
   SkColor color_;
   gfx::Size size_;
-  scoped_ptr<cc::SurfaceIdAllocator> allocator_;
   SurfacePtr surface_;
   MojoGLES2Context context_;
-  cc::SurfaceId id_;
+  uint32_t id_namespace_;
+  uint32_t local_id_;
   ::examples::SpinningCube cube_;
   base::TimeTicks start_time_;
   uint32_t next_resource_id_;
   base::hash_map<uint32_t, GLuint> id_to_tex_map_;
-  base::WeakPtrFactory<ChildGLImpl> weak_factory_;
+  ProduceCallback produce_callback_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildGLImpl);
 };

@@ -5,7 +5,6 @@
 #include "services/native_viewport/viewport_surface.h"
 
 #include "base/bind.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
@@ -14,20 +13,22 @@
 using mojo::Size;
 using mojo::SurfaceId;
 
+static uint32_t kGLES2BoundSurfaceLocalId = 1u;
+
 namespace native_viewport {
 
-ViewportSurface::ViewportSurface(mojo::SurfacesService* surfaces_service,
+ViewportSurface::ViewportSurface(mojo::SurfacePtr surface,
                                  mojo::Gpu* gpu_service,
                                  const gfx::Size& size,
                                  cc::SurfaceId child_id)
-    : gpu_service_(gpu_service),
+    : surface_(surface.Pass()),
+      gpu_service_(gpu_service),
       widget_id_(0u),
       size_(size),
+      gles2_bound_surface_created_(false),
       child_id_(child_id),
       weak_factory_(this) {
-  surfaces_service->CreateSurfaceConnection(
-      base::Bind(&ViewportSurface::OnSurfaceConnectionCreated,
-                 weak_factory_.GetWeakPtr()));
+  surface_.set_client(this);
 }
 
 ViewportSurface::~ViewportSurface() {
@@ -35,8 +36,7 @@ ViewportSurface::~ViewportSurface() {
 
 void ViewportSurface::SetWidgetId(uint64_t widget_id) {
   widget_id_ = widget_id;
-  if (id_allocator_)
-    BindSurfaceToNativeViewport();
+  BindSurfaceToNativeViewport();
 }
 
 void ViewportSurface::SetSize(const gfx::Size& size) {
@@ -44,10 +44,10 @@ void ViewportSurface::SetSize(const gfx::Size& size) {
     return;
 
   size_ = size;
-  if (id_.is_null())
+  if (!gles2_bound_surface_created_)
     return;
 
-  surface_->DestroySurface(SurfaceId::From(id_));
+  surface_->DestroySurface(kGLES2BoundSurfaceLocalId);
   if (widget_id_)
     BindSurfaceToNativeViewport();
 }
@@ -55,15 +55,6 @@ void ViewportSurface::SetSize(const gfx::Size& size) {
 void ViewportSurface::SetChildId(cc::SurfaceId child_id) {
   child_id_ = child_id;
   SubmitFrame();
-}
-
-void ViewportSurface::OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
-                                                 uint32_t id_namespace) {
-  surface_ = surface.Pass();
-  surface_.set_client(this);
-  id_allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
-  if (widget_id_ != 0u)
-    BindSurfaceToNativeViewport();
 }
 
 void ViewportSurface::BindSurfaceToNativeViewport() {
@@ -74,15 +65,16 @@ void ViewportSurface::BindSurfaceToNativeViewport() {
                                            GetProxy(&command_buffer),
                                            listener.Pass());
 
-  id_ = id_allocator_->GenerateId();
-  surface_->CreateGLES2BoundSurface(command_buffer.Pass(), SurfaceId::From(id_),
+  gles2_bound_surface_created_ = true;
+  surface_->CreateGLES2BoundSurface(command_buffer.Pass(),
+                                    kGLES2BoundSurfaceLocalId,
                                     Size::From(size_), listener_request.Pass());
 
   SubmitFrame();
 }
 
 void ViewportSurface::SubmitFrame() {
-  if (child_id_.is_null() || id_.is_null())
+  if (child_id_.is_null() || !gles2_bound_surface_created_)
     return;
 
   auto surface_quad_state = mojo::SurfaceQuadState::New();
@@ -108,10 +100,13 @@ void ViewportSurface::SubmitFrame() {
   auto frame = mojo::Frame::New();
   frame->passes.push_back(pass.Pass());
   frame->resources.resize(0u);
-  surface_->SubmitFrame(SurfaceId::From(id_), frame.Pass(), mojo::Closure());
+  surface_->SubmitFrame(kGLES2BoundSurfaceLocalId, frame.Pass(),
+                        mojo::Closure());
 }
 
 void ViewportSurface::SetIdNamespace(uint32_t id_namespace) {
+  // We never pass our surface ID to anyone else, so we never need to generate a
+  // fully qualified id and thus don't care about our namespace.
 }
 
 void ViewportSurface::ReturnResources(

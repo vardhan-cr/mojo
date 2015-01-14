@@ -13,7 +13,6 @@
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 
 namespace mojo {
 class Shell;
@@ -47,19 +46,18 @@ class TextureUploader : public mojo::SurfaceClient,
   void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
-  void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
-                                  uint32_t id_namespace);
+
   void EnsureSurfaceForSize(const mojo::Size& size);
+  void SendFullyQualifiedID();
 
   Client* client_;
   base::WeakPtr<mojo::GLContext> context_;
-  mojo::SurfacesServicePtr surfaces_service_;
   scoped_ptr<mojo::GLTexture> pending_upload_;
   mojo::SurfacePtr surface_;
   mojo::Size surface_size_;
   uint32_t next_resource_id_;
   uint32_t id_namespace_;
-  mojo::SurfaceIdPtr surface_id_;
+  uint32_t local_id_;
   base::hash_map<uint32_t, mojo::GLTexture*> resource_to_texture_map_;
 
   base::WeakPtrFactory<TextureUploader> weak_factory_;

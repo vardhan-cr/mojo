@@ -38,22 +38,22 @@ BitmapUploader::BitmapUploader(View* view)
       height_(0),
       format_(BGRA),
       next_resource_id_(1u),
-      id_namespace_(0),
-      weak_factory_(this) {
+      id_namespace_(0u),
+      local_id_(0u) {
 }
 
 void BitmapUploader::Init(Shell* shell) {
   ServiceProviderPtr surfaces_service_provider;
   shell->ConnectToApplication("mojo:surfaces_service",
                               GetProxy(&surfaces_service_provider));
-  ConnectToService(surfaces_service_provider.get(), &surfaces_service_);
+  ConnectToService(surfaces_service_provider.get(), &surface_);
+  surface_.set_client(this);
+
   ServiceProviderPtr gpu_service_provider;
   shell->ConnectToApplication("mojo:native_viewport_service",
                               GetProxy(&gpu_service_provider));
   ConnectToService(gpu_service_provider.get(), &gpu_service_);
 
-  surfaces_service_->CreateSurfaceConnection(base::Bind(
-      &BitmapUploader::OnSurfaceConnectionCreated, weak_factory_.GetWeakPtr()));
   CommandBufferPtr gles2_client;
   gpu_service_->CreateOffscreenGLES2Context(GetProxy(&gles2_client));
   gles2_context_ =
@@ -96,19 +96,20 @@ void BitmapUploader::Upload() {
     view_->SetSurfaceId(SurfaceId::New());
     return;
   }
-  if (!surface_)  // Can't upload yet, store for later.
+  if (id_namespace_ == 0u)  // Can't generate a qualified ID yet.
     return;
-  if (!surface_id_ || size != surface_size_) {
-    if (surface_id_) {
-      surface_->DestroySurface(surface_id_.Clone());
-    } else {
-      surface_id_ = SurfaceId::New();
-      surface_id_->id_namespace = id_namespace_;
+
+  if (size != surface_size_) {
+    if (local_id_ != 0u) {
+      surface_->DestroySurface(local_id_);
     }
-    surface_id_->local++;
-    surface_->CreateSurface(surface_id_.Clone());
-    view_->SetSurfaceId(surface_id_.Clone());
+    local_id_++;
+    surface_->CreateSurface(local_id_);
     surface_size_ = size;
+    auto qualified_id = SurfaceId::New();
+    qualified_id->id_namespace = id_namespace_;
+    qualified_id->local = local_id_;
+    view_->SetSurfaceId(qualified_id.Pass());
   }
 
   Rect bounds;
@@ -222,10 +223,13 @@ void BitmapUploader::Upload() {
 
   frame->passes.push_back(pass.Pass());
 
-  surface_->SubmitFrame(surface_id_.Clone(), frame.Pass(), mojo::Closure());
+  surface_->SubmitFrame(local_id_, frame.Pass(), mojo::Closure());
 }
 
 void BitmapUploader::SetIdNamespace(uint32_t id_namespace) {
+  id_namespace_ = id_namespace;
+  if (color_ != TRANSPARENT_COLOR || bitmap_.get())
+    Upload();
 }
 
 void BitmapUploader::ReturnResources(Array<ReturnedResourcePtr> resources) {
@@ -242,15 +246,6 @@ void BitmapUploader::ReturnResources(Array<ReturnedResourcePtr> resources) {
     resource_to_texture_id_map_.erase(resource->id);
     glDeleteTextures(1, &texture_id);
   }
-}
-
-void BitmapUploader::OnSurfaceConnectionCreated(SurfacePtr surface,
-                                                uint32_t id_namespace) {
-  surface_ = surface.Pass();
-  surface_.set_client(this);
-  id_namespace_ = id_namespace;
-  if (color_ != TRANSPARENT_COLOR || bitmap_.get())
-    Upload();
 }
 
 uint32_t BitmapUploader::BindTextureForSize(const Size size) {

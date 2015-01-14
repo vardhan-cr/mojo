@@ -25,11 +25,13 @@
 namespace mojo {
 namespace examples {
 
+static const uint32_t kLocalId = 1u;
+
 class SurfacesApp : public ApplicationDelegate,
                     public SurfaceClient,
                     public NativeViewportClient {
  public:
-  SurfacesApp() : onscreen_id_(SurfaceId::New()), weak_factory_(this) {}
+  SurfacesApp() : id_namespace_(0u), weak_factory_(this) {}
   ~SurfacesApp() override {}
 
   // ApplicationDelegate implementation
@@ -39,7 +41,7 @@ class SurfacesApp : public ApplicationDelegate,
 
     connection->ConnectToService("mojo:surfaces_service", &surface_);
     surface_.set_client(this);
-    embedder_.set_surface(surface_.get());
+    embedder_.reset(new Embedder(kLocalId, surface_.get()));
 
     size_ = gfx::Size(800, 600);
 
@@ -59,6 +61,8 @@ class SurfacesApp : public ApplicationDelegate,
                              Size::From(child_size_),
                              base::Bind(&SurfacesApp::ChildTwoProducedFrame,
                                         base::Unretained(this)));
+    surface_->CreateSurface(kLocalId);
+    Draw(10);
     return true;
   }
 
@@ -74,8 +78,8 @@ class SurfacesApp : public ApplicationDelegate,
     int bounced_offset = offset;
     if (offset > 200)
       bounced_offset = 400 - offset;
-    embedder_.ProduceFrame(child_one_id_, child_two_id_, child_size_, size_,
-                           bounced_offset);
+    embedder_->ProduceFrame(child_one_id_, child_two_id_, child_size_, size_,
+                            bounced_offset);
     base::MessageLoop::current()->PostDelayedTask(
         FROM_HERE,
         base::Bind(
@@ -85,11 +89,10 @@ class SurfacesApp : public ApplicationDelegate,
 
   // SurfaceClient implementation.
   void SetIdNamespace(uint32_t id_namespace) override {
-    onscreen_id_->id_namespace = id_namespace;
-    embedder_.set_surface_id(onscreen_id_.Clone());
-    surface_->CreateSurface(onscreen_id_.Clone());
-    viewport_->SubmittedFrame(onscreen_id_.Clone());
-    Draw(10);
+    auto qualified_id = mojo::SurfaceId::New();
+    qualified_id->id_namespace = id_namespace;
+    qualified_id->local = kLocalId;
+    viewport_->SubmittedFrame(qualified_id.Pass());
   }
   void ReturnResources(Array<ReturnedResourcePtr> resources) override {
     DCHECK(!resources.size());
@@ -102,8 +105,9 @@ class SurfacesApp : public ApplicationDelegate,
   void OnCreatedNativeViewport(uint64_t native_viewport_id) {}
 
   SurfacePtr surface_;
+  uint32_t id_namespace_;
   SurfaceIdPtr onscreen_id_;
-  Embedder embedder_;
+  scoped_ptr<Embedder> embedder_;
   ChildPtr child_one_;
   cc::SurfaceId child_one_id_;
   ChildPtr child_two_;

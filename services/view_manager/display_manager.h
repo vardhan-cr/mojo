@@ -67,8 +67,6 @@ class DefaultDisplayManager : public DisplayManager,
 
  private:
   void OnCreatedNativeViewport(uint64_t native_viewport_id);
-  void OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
-                                  uint32_t id_namespace);
   void Draw();
 
   // NativeViewportClient:
@@ -87,10 +85,9 @@ class DefaultDisplayManager : public DisplayManager,
   gfx::Rect dirty_rect_;
   base::Timer draw_timer_;
 
-  mojo::SurfacesServicePtr surfaces_service_;
   mojo::SurfacePtr surface_;
-  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
-  cc::SurfaceId surface_id_;
+  uint32_t id_namespace_;
+  bool surface_allocated_;
   mojo::NativeViewportPtr native_viewport_;
   mojo::Callback<void()> native_viewport_closed_callback_;
   base::WeakPtrFactory<DefaultDisplayManager> weak_factory_;

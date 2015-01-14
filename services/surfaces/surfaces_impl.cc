@@ -47,59 +47,31 @@ SurfacesImpl::~SurfacesImpl() {
   factory_.DestroyAll();
 }
 
-void SurfacesImpl::CreateSurface(SurfaceIdPtr id) {
-  cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
-  if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
-    // Bad message, do something bad to the caller?
-    NOTREACHED();
-    return;
-  }
-  factory_.Create(id.To<cc::SurfaceId>());
+void SurfacesImpl::CreateSurface(uint32_t local_id) {
+  factory_.Create(QualifyIdentifier(local_id));
 }
 
-void SurfacesImpl::SubmitFrame(SurfaceIdPtr id,
-                               mojo::FramePtr frame_ptr,
+void SurfacesImpl::SubmitFrame(uint32_t local_id,
+                               mojo::FramePtr frame,
                                const mojo::Closure& callback) {
   TRACE_EVENT0("mojo", "SurfacesImpl::SubmitFrame");
-  cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
-  if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
-    // Bad message, do something bad to the caller?
-    LOG(FATAL) << "Received frame for id " << cc_id.id << " namespace "
-               << cc::SurfaceIdAllocator::NamespaceForId(cc_id)
-               << " should be namespace " << id_namespace_;
-    return;
-  }
-  factory_.SubmitFrame(id.To<cc::SurfaceId>(),
-                       frame_ptr.To<scoped_ptr<cc::CompositorFrame>>(),
+  factory_.SubmitFrame(QualifyIdentifier(local_id),
+                       frame.To<scoped_ptr<cc::CompositorFrame>>(),
                        base::Bind(&CallCallback, callback));
   client_->FrameSubmitted();
 }
 
-void SurfacesImpl::DestroySurface(SurfaceIdPtr id) {
-  cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
-  if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
-    // Bad message, do something bad to the caller?
-    NOTREACHED();
-    return;
-  }
-  factory_.Destroy(id.To<cc::SurfaceId>());
+void SurfacesImpl::DestroySurface(uint32_t local_id) {
+  factory_.Destroy(QualifyIdentifier(local_id));
 }
 
 void SurfacesImpl::CreateGLES2BoundSurface(
     mojo::CommandBufferPtr gles2_client,
-    SurfaceIdPtr id,
+    uint32_t local_id,
     mojo::SizePtr size,
     mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request) {
   command_buffer_handle_ = gles2_client.PassMessagePipe();
 
-  cc::SurfaceId cc_id = id.To<cc::SurfaceId>();
-  if (cc::SurfaceIdAllocator::NamespaceForId(cc_id) != id_namespace_) {
-    // Bad message, do something bad to the caller?
-    LOG(FATAL) << "Received request for id " << cc_id.id << " namespace "
-               << cc::SurfaceIdAllocator::NamespaceForId(cc_id)
-               << " should be namespace " << id_namespace_;
-    return;
-  }
   if (!display_) {
     cc::RendererSettings settings;
     display_.reset(new cc::Display(this, manager_, nullptr, nullptr, settings));
@@ -107,6 +79,7 @@ void SurfacesImpl::CreateGLES2BoundSurface(
     display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
         new mojo::ContextProviderMojo(command_buffer_handle_.Pass()))));
   }
+  cc::SurfaceId cc_id = QualifyIdentifier(local_id);
   factory_.Create(cc_id);
   display_->SetSurfaceId(cc_id, 1.f);
   display_->Resize(size.To<gfx::Size>());
@@ -114,6 +87,8 @@ void SurfacesImpl::CreateGLES2BoundSurface(
 }
 
 void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
+  if (resources.empty())
+    return;
   mojo::Array<mojo::ReturnedResourcePtr> ret(resources.size());
   for (size_t i = 0; i < resources.size(); ++i) {
     ret[i] = mojo::ReturnedResource::From(resources[i]);
@@ -155,6 +130,10 @@ SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
       id_namespace_(id_namespace),
       client_(client),
       binding_(this) {
+}
+
+cc::SurfaceId SurfacesImpl::QualifyIdentifier(uint32_t local_id) {
+  return cc::SurfaceId(static_cast<uint64_t>(id_namespace_) << 32 | local_id);
 }
 
 }  // namespace mojo

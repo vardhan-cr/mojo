@@ -37,7 +37,7 @@ NativeViewportImpl::NativeViewportImpl(mojo::ApplicationImpl* app,
       metrics_(mojo::ViewportMetrics::New()),
       waiting_for_event_ack_(false),
       weak_factory_(this) {
-  app->ConnectToService("mojo:surfaces_service", &surfaces_service_);
+  app->ConnectToService("mojo:surfaces_service", &surface_);
   // TODO(jamesr): Should be mojo_gpu_service
   app->ConnectToService("mojo:native_viewport_service", &gpu_service_);
 }
@@ -84,8 +84,7 @@ void NativeViewportImpl::SubmittedFrame(mojo::SurfaceIdPtr child_surface_id) {
     // TODO(jamesr): When everything is converted to surfaces initialize this
     // eagerly.
     viewport_surface_.reset(new ViewportSurface(
-        surfaces_service_.get(), gpu_service_.get(),
-        metrics_->size.To<gfx::Size>(),
+        surface_.Pass(), gpu_service_.get(), metrics_->size.To<gfx::Size>(),
         child_surface_id.To<cc::SurfaceId>()));
     if (widget_id_)
       viewport_surface_->SetWidgetId(widget_id_);

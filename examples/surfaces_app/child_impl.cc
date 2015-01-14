@@ -28,19 +28,22 @@ using cc::SolidColorDrawQuad;
 using cc::DelegatedFrameData;
 using cc::CompositorFrame;
 
-ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection) {
+static const uint32_t kLocalId = 1u;
+
+ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection)
+    : id_namespace_(0u) {
   surfaces_service_connection->ConnectToService(&surface_);
   surface_.set_client(this);
   surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
+  DCHECK_NE(0u, id_namespace_);
 }
 
 ChildImpl::~ChildImpl() {
-  if (surface_)
-    surface_->DestroySurface(mojo::SurfaceId::From(id_));
+  surface_->DestroySurface(kLocalId);
 }
 
 void ChildImpl::SetIdNamespace(uint32_t id_namespace) {
-  allocator_.reset(new cc::SurfaceIdAllocator(id_namespace));
+  id_namespace_ = id_namespace;
 }
 
 void ChildImpl::ReturnResources(
@@ -48,12 +51,9 @@ void ChildImpl::ReturnResources(
   DCHECK(!resources.size());
 }
 
-void ChildImpl::ProduceFrame(
-    ColorPtr color,
-    SizePtr size_ptr,
-    const mojo::Callback<void(SurfaceIdPtr id)>& callback) {
-  id_ = allocator_->GenerateId();
-  surface_->CreateSurface(mojo::SurfaceId::From(id_));
+void ChildImpl::ProduceFrame(ColorPtr color,
+                             SizePtr size_ptr,
+                             const ProduceCallback& callback) {
   gfx::Size size = size_ptr.To<gfx::Size>();
   gfx::Rect rect(size);
   RenderPassId id(1, 1);
@@ -65,11 +65,8 @@ void ChildImpl::ProduceFrame(
   SolidColorDrawQuad* color_quad =
       pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
   bool force_anti_aliasing_off = false;
-  color_quad->SetNew(pass->shared_quad_state_list.back(),
-                     rect,
-                     rect,
-                     color.To<SkColor>(),
-                     force_anti_aliasing_off);
+  color_quad->SetNew(pass->shared_quad_state_list.back(), rect, rect,
+                     color.To<SkColor>(), force_anti_aliasing_off);
 
   scoped_ptr<DelegatedFrameData> delegated_frame_data(new DelegatedFrameData);
   delegated_frame_data->render_pass_list.push_back(pass.Pass());
@@ -77,9 +74,12 @@ void ChildImpl::ProduceFrame(
   scoped_ptr<CompositorFrame> frame(new CompositorFrame);
   frame->delegated_frame_data = delegated_frame_data.Pass();
 
-  surface_->SubmitFrame(mojo::SurfaceId::From(id_), mojo::Frame::From(*frame),
-                        mojo::Closure());
-  callback.Run(SurfaceId::From(id_));
+  surface_->CreateSurface(kLocalId);
+  surface_->SubmitFrame(kLocalId, mojo::Frame::From(*frame), mojo::Closure());
+  auto qualified_id = mojo::SurfaceId::New();
+  qualified_id->id_namespace = id_namespace_;
+  qualified_id->local = kLocalId;
+  callback.Run(qualified_id.Pass());
 }
 
 }  // namespace examples

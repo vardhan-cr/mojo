@@ -40,19 +40,20 @@ class ChildImpl : public InterfaceImpl<Child>, public SurfaceClient {
   ~ChildImpl() override;
 
  private:
+  using ProduceCallback = mojo::Callback<void(SurfaceIdPtr id)>;
+
   // SurfaceClient implementation
   void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
   // Child implementation.
-  void ProduceFrame(
-      ColorPtr color,
-      SizePtr size,
-      const mojo::Callback<void(SurfaceIdPtr id)>& callback) override;
+  void ProduceFrame(ColorPtr color,
+                    SizePtr size,
+                    const ProduceCallback& callback) override;
 
   scoped_ptr<cc::SurfaceIdAllocator> allocator_;
   SurfacePtr surface_;
-  cc::SurfaceId id_;
+  uint32_t id_namespace_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildImpl);
 };

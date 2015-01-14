@@ -27,24 +27,20 @@ TextureUploader::TextureUploader(Client* client,
                                  base::WeakPtr<mojo::GLContext> context)
     : client_(client),
       context_(context),
-      next_resource_id_(0),
-      id_namespace_(0),
+      next_resource_id_(0u),
+      id_namespace_(0u),
+      local_id_(0u),
       weak_factory_(this) {
   context_->AddObserver(this);
 
   mojo::ServiceProviderPtr surfaces_service_provider;
   shell->ConnectToApplication("mojo:surfaces_service",
                               mojo::GetProxy(&surfaces_service_provider));
-  mojo::ConnectToService(surfaces_service_provider.get(), &surfaces_service_);
-
-  surfaces_service_->CreateSurfaceConnection(
-      base::Bind(&TextureUploader::OnSurfaceConnectionCreated,
-                 weak_factory_.GetWeakPtr()));
+  mojo::ConnectToService(surfaces_service_provider.get(), &surface_);
+  surface_.set_client(this);
 }
 
 TextureUploader::~TextureUploader() {
-  if (surface_id_)
-    surface_->DestroySurface(surface_id_.Clone());
   if (context_.get())
     context_->RemoveObserver(this);
 }
@@ -121,24 +117,28 @@ void TextureUploader::Upload(scoped_ptr<mojo::GLTexture> texture) {
   pass->quads.push_back(quad.Pass());
 
   frame->passes.push_back(pass.Pass());
-  surface_->SubmitFrame(surface_id_.Clone(), frame.Pass(), mojo::Closure());
+  surface_->SubmitFrame(local_id_, frame.Pass(), mojo::Closure());
 }
 
 void TextureUploader::EnsureSurfaceForSize(const mojo::Size& size) {
-  if (surface_id_ && size == surface_size_)
+  if (local_id_ != 0u && size == surface_size_)
     return;
 
-  if (surface_id_) {
-    surface_->DestroySurface(surface_id_.Clone());
-  } else {
-    surface_id_ = mojo::SurfaceId::New();
-    surface_id_->id_namespace = id_namespace_;
+  if (local_id_ != 0u) {
+    surface_->DestroySurface(local_id_);
   }
 
-  surface_id_->local++;
-  surface_->CreateSurface(surface_id_.Clone());
-  client_->OnSurfaceIdAvailable(surface_id_.Clone());
+  local_id_++;
+  surface_->CreateSurface(local_id_);
   surface_size_ = size;
+  if (id_namespace_ != 0u)
+    SendFullyQualifiedID();
+}
+void TextureUploader::SendFullyQualifiedID() {
+  auto qualified_id = mojo::SurfaceId::New();
+  qualified_id->id_namespace = id_namespace_;
+  qualified_id->local = local_id_;
+  client_->OnSurfaceIdAvailable(qualified_id.Pass());
 }
 
 void TextureUploader::OnContextLost() {
@@ -146,6 +146,9 @@ void TextureUploader::OnContextLost() {
 }
 
 void TextureUploader::SetIdNamespace(uint32_t id_namespace) {
+  id_namespace_ = id_namespace;
+  if (local_id_ != 0u)
+    SendFullyQualifiedID();
 }
 
 void TextureUploader::ReturnResources(
@@ -162,16 +165,6 @@ void TextureUploader::ReturnResources(
     resource_to_texture_map_.erase(resource->id);
     delete texture;
   }
-}
-
-void TextureUploader::OnSurfaceConnectionCreated(mojo::SurfacePtr surface,
-                                                 uint32_t id_namespace) {
-  surface_ = surface.Pass();
-  surface_.set_client(this);
-  id_namespace_ = id_namespace;
-
-  if (pending_upload_)
-    Upload(pending_upload_.Pass());
 }
 
 }  // namespace examples

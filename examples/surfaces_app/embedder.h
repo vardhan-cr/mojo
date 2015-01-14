@@ -23,11 +23,8 @@ namespace examples {
 // Simple example of a surface embedder that embeds two other surfaces.
 class Embedder {
  public:
-  Embedder();
+  Embedder(uint32_t local_id, Surface* surface);
   ~Embedder();
-
-  void set_surface(Surface* surface) { surface_ = surface; }
-  void set_surface_id(SurfaceIdPtr id) { id_ = id.Clone(); }
 
   void ProduceFrame(cc::SurfaceId child_one,
                     cc::SurfaceId child_two,
@@ -36,7 +33,7 @@ class Embedder {
                     int offset);
 
  private:
-  SurfaceIdPtr id_;
+  uint32_t local_id_;
   Surface* surface_;
 
   DISALLOW_COPY_AND_ASSIGN(Embedder);

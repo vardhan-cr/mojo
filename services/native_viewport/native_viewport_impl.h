@@ -10,7 +10,7 @@
 #include "cc/surfaces/surface_id.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -59,7 +59,7 @@ class NativeViewportImpl : public mojo::InterfaceImpl<mojo::NativeViewport>,
   uint64_t widget_id_;
   mojo::ViewportMetricsPtr metrics_;
   mojo::GpuPtr gpu_service_;
-  mojo::SurfacesServicePtr surfaces_service_;
+  mojo::SurfacePtr surface_;
   cc::SurfaceId child_surface_id_;
   bool waiting_for_event_ack_;
   mojo::Callback<void(uint64_t)> create_callback_;

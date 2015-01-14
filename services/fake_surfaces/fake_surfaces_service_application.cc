@@ -16,16 +16,17 @@ namespace fake_surfaces {
 
 class FakeSurfaceImpl : public mojo::Surface {
  public:
-  FakeSurfaceImpl(uint32_t id_namespace, mojo::SurfacePtr* ptr)
-      : binding_(this, ptr) {
+  FakeSurfaceImpl(uint32_t id_namespace,
+                  mojo::InterfaceRequest<mojo::Surface> request)
+      : binding_(this, request.Pass()) {
     binding_.client()->SetIdNamespace(id_namespace);
   }
   ~FakeSurfaceImpl() override {}
 
   // mojo::Surface implementation.
-  void CreateSurface(mojo::SurfaceIdPtr id) override {}
+  void CreateSurface(uint32_t local_id) override {}
 
-  void SubmitFrame(mojo::SurfaceIdPtr id,
+  void SubmitFrame(uint32_t local_id,
                    mojo::FramePtr frame,
                    const mojo::Closure& callback) override {
     callback.Run();
@@ -44,15 +45,14 @@ class FakeSurfaceImpl : public mojo::Surface {
     binding_.client()->ReturnResources(returned.Pass());
   }
 
-  void DestroySurface(mojo::SurfaceIdPtr id) override {}
+  void DestroySurface(uint32_t local_id) override {}
 
   void CreateGLES2BoundSurface(
       mojo::CommandBufferPtr gles2_client,
-      mojo::SurfaceIdPtr id,
+      uint32_t local_id,
       mojo::SizePtr size,
       mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request)
-      override {
-  }
+      override {}
 
  private:
   mojo::StrongBinding<mojo::Surface> binding_;
@@ -73,7 +73,7 @@ class FakeSurfacesServiceImpl : public mojo::SurfacesService {
       override {
     mojo::SurfacePtr surface;
     uint32_t id_namespace = (*next_id_namespace_)++;
-    new FakeSurfaceImpl(id_namespace, &surface);
+    new FakeSurfaceImpl(id_namespace, GetProxy(&surface));
     callback.Run(surface.Pass(), id_namespace);
   }
 
@@ -97,7 +97,8 @@ void FakeSurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
 
 bool FakeSurfacesServiceApplication::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
-  connection->AddService(this);
+  connection->AddService<mojo::SurfacesService>(this);
+  connection->AddService<mojo::Surface>(this);
   return true;
 }
 
@@ -105,6 +106,12 @@ void FakeSurfacesServiceApplication::Create(
     mojo::ApplicationConnection* connection,
     InterfaceRequest<mojo::SurfacesService> request) {
   new FakeSurfacesServiceImpl(&next_id_namespace_, request.Pass());
+}
+
+void FakeSurfacesServiceApplication::Create(
+    mojo::ApplicationConnection* connection,
+    InterfaceRequest<mojo::Surface> request) {
+  new FakeSurfaceImpl(next_id_namespace_++, request.Pass());
 }
 
 }  // namespace fake_surfaces

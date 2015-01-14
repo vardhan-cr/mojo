@@ -18,7 +18,8 @@ namespace fake_surfaces {
 
 class FakeSurfacesServiceApplication
     : public mojo::ApplicationDelegate,
-      public mojo::InterfaceFactory<mojo::SurfacesService> {
+      public mojo::InterfaceFactory<mojo::SurfacesService>,
+      public mojo::InterfaceFactory<mojo::Surface> {
  public:
   FakeSurfacesServiceApplication();
   ~FakeSurfacesServiceApplication() override;
@@ -31,6 +32,10 @@ class FakeSurfacesServiceApplication
   // InterfaceFactory<SurfacsService> implementation.
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::SurfacesService> request) override;
+
+  // InterfaceFactory<mojo::Surface> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::Surface> request) override;
 
  private:
   uint32_t next_id_namespace_;
