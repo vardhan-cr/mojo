@@ -163,7 +163,7 @@ static jint Wait(JNIEnv* env,
   DCHECK(buffer_start);
   DCHECK_EQ(reinterpret_cast<const uintptr_t>(buffer_start) % 8, 0u);
   DCHECK_EQ(sizeof(struct MojoHandleSignalsState),
-            env->GetDirectBufferCapacity(buffer));
+            static_cast<size_t>(env->GetDirectBufferCapacity(buffer)));
   struct MojoHandleSignalsState* signals_state =
       static_cast<struct MojoHandleSignalsState*>(buffer_start);
   return MojoWait(mojo_handle, signals, deadline, signals_state);
