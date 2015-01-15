@@ -64,8 +64,8 @@ class DartSide extends DartSideInterface {
       var messagePipe1 = new core.MojoMessagePipe();
       var messagePipe2 = new core.MojoMessagePipe();
 
-      arg.dataHandle = dataPipe1.consumer.handle;
-      arg.messageHandle = messagePipe1.endpoints[0].handle;
+      arg.dataHandle = dataPipe1.consumer;
+      arg.messageHandle = messagePipe1.endpoints[0];
 
       var specialArg = new EchoArgs();
       specialArg.si64 = -1;
@@ -73,8 +73,8 @@ class DartSide extends DartSideInterface {
       specialArg.si16 = -1;
       specialArg.si8 = -1;
       specialArg.name = 'going';
-      specialArg.dataHandle = dataPipe2.consumer.handle;
-      specialArg.messageHandle = messagePipe2.endpoints[0].handle;
+      specialArg.dataHandle = dataPipe2.consumer;
+      specialArg.messageHandle = messagePipe2.endpoints[0];
 
       dataPipe1.producer.write(_sampleData.buffer.asByteData());
       dataPipe2.producer.write(_sampleData.buffer.asByteData());

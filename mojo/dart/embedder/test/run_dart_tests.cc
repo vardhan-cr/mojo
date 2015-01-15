@@ -140,6 +140,10 @@ TEST(DartTest, bindings_generation_test) {
   RunTest("bindings_generation_test.dart", false, nullptr, 0);
 }
 
+TEST(DartTest, sample_service_test) {
+  RunTest("sample_service_test.dart", false, nullptr, 0);
+}
+
 TEST(DartTest, compile_all_interfaces_test) {
   RunTest("compile_all_interfaces_test.dart", true, nullptr, 0);
 }

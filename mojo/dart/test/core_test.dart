@@ -60,13 +60,13 @@ invalidHandleTest() {
   Expect.isTrue(dataPipe.consumer.status.isInvalidArgument);
 
   // Shared buffer.
-  MojoSharedBuffer sharedBuffer = new MojoSharedBuffer(10);
+  MojoSharedBuffer sharedBuffer = new MojoSharedBuffer.create(10);
   Expect.isNotNull(sharedBuffer);
   sharedBuffer.close();
   MojoSharedBuffer duplicate = new MojoSharedBuffer.duplicate(sharedBuffer);
   Expect.isNull(duplicate);
 
-  sharedBuffer = new MojoSharedBuffer(10);
+  sharedBuffer = new MojoSharedBuffer.create(10);
   Expect.isNotNull(sharedBuffer);
   sharedBuffer.close();
   result = sharedBuffer.map(0, 10);
@@ -239,7 +239,7 @@ basicDataPipeTest() {
 
 
 basicSharedBufferTest() {
-  MojoSharedBuffer mojoBuffer = new MojoSharedBuffer(
+  MojoSharedBuffer mojoBuffer = new MojoSharedBuffer.create(
       100, MojoSharedBuffer.CREATE_FLAG_NONE);
   Expect.isNotNull(mojoBuffer);
   Expect.isNotNull(mojoBuffer.status);
