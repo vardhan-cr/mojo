@@ -63,7 +63,7 @@ class WMFlowApp : public mojo::ApplicationDelegate,
  private:
   typedef std::map<mojo::View*, mojo::BitmapUploader*> ViewToUploader;
 
-  // Overridden from Application:
+  // Overridden from ApplicationDelegate:
   virtual void Initialize(mojo::ApplicationImpl* app) override {
     shell_ = app->shell();
     view_manager_client_factory_.reset(
@@ -81,8 +81,6 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
-
-  void OnConnect(bool success) {}
 
   // Overridden from mojo::ViewManagerDelegate:
   virtual void OnEmbed(

@@ -68,6 +68,7 @@ group("tests") {
     "//services/js:js_apptests",
     "//services/view_manager:view_manager_service_apptests",
     "//services/view_manager:view_manager_service_unittests",
+    "//services/window_manager:window_manager_apptests",
     "//services/window_manager:window_manager_unittests",
   ]
 

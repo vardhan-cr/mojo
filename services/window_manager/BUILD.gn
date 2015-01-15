@@ -17,7 +17,6 @@ mojo_native_application("window_manager") {
   deps = [
     "//base",
     "//mojo/application",
-    "//mojo/common:tracing_impl",
     "//mojo/services/view_manager/public/cpp",
   ]
 }
@@ -102,4 +101,27 @@ test("window_manager_unittests") {
   if (use_x11) {
     deps += [ "//ui/gfx/x" ]
   }
+}
+
+mojo_native_application("window_manager_apptests") {
+  testonly = true
+
+  sources = [
+    "window_manager_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/environment:chromium",
+    "//mojo/public/c/system:for_shared_library",
+    "//mojo/public/cpp/system:system",
+    "//mojo/services/view_manager/public/cpp",
+    "//mojo/services/window_manager/public/interfaces",
+  ]
+
+  datadeps = [
+    ":window_manager",
+  ]
 }

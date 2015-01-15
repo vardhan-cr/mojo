@@ -4,7 +4,6 @@
 
 #include "services/view_manager/view_manager_app.h"
 
-#include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -22,8 +21,7 @@ using mojo::WindowManagerInternalClient;
 
 namespace view_manager {
 
-ViewManagerApp::ViewManagerApp() : wm_app_connection_(nullptr) {
-}
+ViewManagerApp::ViewManagerApp() : wm_app_connection_(nullptr) {}
 ViewManagerApp::~ViewManagerApp() {}
 
 void ViewManagerApp::Initialize(ApplicationImpl* app) {

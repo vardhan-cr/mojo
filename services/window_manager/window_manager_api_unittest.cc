@@ -5,6 +5,7 @@
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/memory/scoped_vector.h"
+#include "base/run_loop.h"
 #include "mojo/application_manager/application_manager.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -203,8 +204,8 @@ class WindowManagerApiTest : public testing::Test {
     window_manager_.set_client(window_manager_client());
     connect_loop.Run();
 
-    // The RunLoop above ensures the connection to the windowmanager completes.
-    // Without this the ApplicationManager would loads the windowmanager twice.
+    // The RunLoop above ensures the connection to the window manager completes.
+    // Without this the ApplicationManager would load the window manager twice.
     test_helper_->application_manager()->ConnectToService(
         GURL("mojo:core_window_manager"), &window_manager_);
   }

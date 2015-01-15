@@ -56,10 +56,24 @@ WindowManagerApp::WindowManagerApp(
       native_viewport_event_dispatcher_factory_(this),
       wrapped_view_manager_delegate_(view_manager_delegate),
       window_manager_delegate_(window_manager_delegate),
-      root_(nullptr) {
+      root_(nullptr),
+      gesture_provider_(this) {
 }
 
 WindowManagerApp::~WindowManagerApp() {
+  // TODO(msw|sky): Should this destructor explicitly delete the ViewManager?
+  mojo::ViewManager* cached_view_manager = view_manager();
+  for (RegisteredViewIdSet::const_iterator it = registered_view_id_set_.begin();
+       cached_view_manager && it != registered_view_id_set_.end(); ++it) {
+    View* view = cached_view_manager->GetViewById(*it);
+    if (view && view == root_)
+      root_ = nullptr;
+    if (view)
+      view->RemoveObserver(this);
+  }
+  registered_view_id_set_.clear();
+  DCHECK(!root_);
+
   STLDeleteElements(&connections_);
   ui::GestureRecognizer::Get()->CleanupStateForConsumer(this);
 }
@@ -160,13 +174,12 @@ void WindowManagerApp::OnEmbed(View* root,
 
 void WindowManagerApp::OnViewManagerDisconnected(
     mojo::ViewManager* view_manager) {
-  DCHECK(root_);
-  DCHECK(this->view_manager());
-  DCHECK_EQ(this->view_manager(), view_manager);
   if (wrapped_view_manager_delegate_)
     wrapped_view_manager_delegate_->OnViewManagerDisconnected(view_manager);
-  root_ = nullptr;
-  base::MessageLoop::current()->Quit();
+
+  base::MessageLoop* message_loop = base::MessageLoop::current();
+  if (message_loop && message_loop->is_running())
+    message_loop->Quit();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -194,15 +207,14 @@ void WindowManagerApp::OnTreeChanged(
 }
 
 void WindowManagerApp::OnViewDestroying(View* view) {
-  if (view != root_) {
-    Unregister(view);
-    return;
+  Unregister(view);
+  if (view == root_) {
+    root_ = nullptr;
+    if (focus_controller_)
+      focus_controller_->RemoveObserver(this);
+    if (capture_controller_)
+      capture_controller_->RemoveObserver(this);
   }
-  root_ = nullptr;
-  if (focus_controller_)
-    focus_controller_->RemoveObserver(this);
-  if (capture_controller_)
-    capture_controller_->RemoveObserver(this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

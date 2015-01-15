@@ -4,7 +4,6 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
@@ -27,14 +26,16 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
                              public WindowManagerDelegate {
  public:
   DefaultWindowManager()
-      : window_manager_app_(new WindowManagerApp(this, this)), root_(nullptr) {}
+      : window_manager_app_(new WindowManagerApp(this, this)),
+        root_(nullptr),
+        window_offset_(10) {
+  }
   ~DefaultWindowManager() override {}
 
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* impl) override {
     window_manager_app_->Initialize(impl);
-    mojo::TracingImpl::Create(impl);
   }
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
@@ -54,8 +55,16 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
   void Embed(
       const mojo::String& url,
       mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
+    DCHECK(root_);
     View* view = root_->view_manager()->CreateView();
     root_->AddChild(view);
+
+    mojo::Rect rect;
+    rect.x = rect.y = window_offset_;
+    rect.width = rect.height = 100;
+    view->SetBounds(rect);
+    window_offset_ += 10;
+
     view->SetVisible(true);
     view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(
         new mojo::ServiceProviderImpl).Pass());
@@ -64,6 +73,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
   scoped_ptr<WindowManagerApp> window_manager_app_;
 
   View* root_;
+  int window_offset_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(DefaultWindowManager);
 };

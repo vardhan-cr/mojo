@@ -73,10 +73,11 @@ bool ViewTargeter::EventLocationInsideBounds(
 ViewTarget* ViewTargeter::FindTargetForKeyEvent(ViewTarget* view_target,
                                                 const ui::KeyEvent& key) {
   FocusController* focus_controller = GetFocusController(view_target->view());
-  mojo::View* focused_view = focus_controller->GetFocusedView();
-  if (focused_view)
-    return ViewTarget::TargetFromView(focused_view);
-
+  if (focus_controller) {
+    mojo::View* focused_view = focus_controller->GetFocusedView();
+    if (focused_view)
+      return ViewTarget::TargetFromView(focused_view);
+  }
   return view_target;
 }
 
@@ -88,10 +89,11 @@ ViewTarget* ViewTargeter::FindTargetInRootView(ViewTarget* root_view,
 
   CaptureController* capture_controller =
       GetCaptureController(root_view->view());
-  DCHECK(capture_controller);
-  mojo::View* capture_view = capture_controller->GetCapture();
-  if (capture_view)
-    return ViewTarget::TargetFromView(capture_view);
+  if (capture_controller) {
+    mojo::View* capture_view = capture_controller->GetCapture();
+    if (capture_view)
+      return ViewTarget::TargetFromView(capture_view);
+  }
 
   // TODO(erg): There's a whole bunch of junk about handling touch events
   // here. Handle later.
