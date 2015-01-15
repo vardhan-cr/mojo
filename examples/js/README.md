@@ -12,3 +12,5 @@ JavaScript Mojo Example Applications
 - share_echo.js, share_echo_target.js - Peer to peer service sharing.
 
 - show_image.js - Simple use of the window_manager interface.
+
+- maps/demo.js - Demo the Google Gecoder and Maps APIs

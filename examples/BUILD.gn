@@ -15,6 +15,7 @@ group("examples") {
     "//examples/ganesh_app",
     "//examples/http_handler",
     "//examples/indirect_service",
+    "//examples/js/maps",
     "//examples/png_viewer",
     "//examples/recipes",
     "//examples/recursive_content_handler",
