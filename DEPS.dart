@@ -8,7 +8,7 @@ execfile(os.path.join(path, 'src', 'DEPS'))  # Include proper Mojo DEPS.
 
 vars.update({
   'dart_svn': 'https://dart.googlecode.com',
-  'dart_revision': '41678',
+  'dart_revision': '42887',
 })
 
 deps.update({

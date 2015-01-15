@@ -38,6 +38,7 @@ action("generate_snapshot_bin") {
   core_path = rebase_path("//mojo/public/dart/core.dart")
   args = [
     "--executable", rebase_path("$root_out_dir/gen_snapshot"),
+    "--package_root", rebase_path("$root_gen_dir"),
     "--script", rebase_path("snapshot.dart"),
     "--output_bin", rebase_path(output, root_build_dir),
     "--target_os", os,
