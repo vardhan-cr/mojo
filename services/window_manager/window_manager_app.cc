@@ -56,8 +56,7 @@ WindowManagerApp::WindowManagerApp(
       native_viewport_event_dispatcher_factory_(this),
       wrapped_view_manager_delegate_(view_manager_delegate),
       window_manager_delegate_(window_manager_delegate),
-      root_(nullptr),
-      gesture_provider_(this) {
+      root_(nullptr) {
 }
 
 WindowManagerApp::~WindowManagerApp() {
