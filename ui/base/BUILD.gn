@@ -203,7 +203,6 @@ if (false) {
     # buildbot code to reference the new 'ui_base_unittests' target.
     # After buildbot is updated, we can make the changes in Chromium and
     # remove 'ui_unittests' target. crbug.com/331829
-    # GYP version: ui/base/ui_base_tests.gyp:ui_unittests
     test("ui_unittests") {
       sources = [
         "layout_unittest.cc",
