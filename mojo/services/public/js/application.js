@@ -32,7 +32,7 @@ define("mojo/services/public/js/application", [
 
       var exposedServiceProvider =
           new ServiceProvider(exposedServiceProviderProxy);
-      this.exposedServiceProviders.push(exposedServiceProvider)
+      this.exposedServiceProviders.push(exposedServiceProvider);
 
       this.acceptConnection(url, serviceProvider, exposedServiceProvider);
     }
