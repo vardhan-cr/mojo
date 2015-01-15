@@ -1068,42 +1068,6 @@
       ],
     },
     {
-      'target_name': 'pangocairo',
-      'type': 'none',
-      'toolsets': ['host', 'target'],
-      'conditions': [
-        ['_toolset=="target"', {
-          'direct_dependent_settings': {
-            'cflags': [
-              '<!@(<(pkg-config) --cflags pangocairo pangoft2)',
-            ],
-          },
-          'link_settings': {
-            'ldflags': [
-              '<!@(<(pkg-config) --libs-only-L --libs-only-other pangocairo pangoft2)',
-            ],
-            'libraries': [
-              '<!@(<(pkg-config) --libs-only-l pangocairo pangoft2)',
-            ],
-          },
-        }, {
-          'direct_dependent_settings': {
-            'cflags': [
-              '<!@(pkg-config --cflags pangocairo pangoft2)',
-            ],
-          },
-          'link_settings': {
-            'ldflags': [
-              '<!@(pkg-config --libs-only-L --libs-only-other pangocairo pangoft2)',
-            ],
-            'libraries': [
-              '<!@(pkg-config --libs-only-l pangocairo pangoft2)',
-            ],
-          },
-        }],
-      ],
-    },
-    {
       'target_name': 'ssl',
       'type': 'none',
       'conditions': [

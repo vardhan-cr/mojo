@@ -94,23 +94,6 @@
             'interpolated_transform_unittest.cc',
           ],
         }],
-        ['use_pango == 1', {
-          'dependencies': [
-            '../../build/linux/system.gyp:fontconfig',
-            '../../build/linux/system.gyp:pangocairo',
-          ],
-          'sources': [
-            'font_render_params_linux_unittest.cc',
-            'platform_font_pango_unittest.cc',
-          ],
-          'conditions': [
-            ['use_allocator!="none"', {
-              'dependencies': [
-                '../../base/allocator/allocator.gyp:allocator',
-              ],
-            }],
-          ],
-        }],
         ['OS == "android"', {
           'dependencies': [
             '../../testing/android/native_test.gyp:native_test_native_code',

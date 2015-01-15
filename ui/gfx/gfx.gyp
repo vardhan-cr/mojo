@@ -377,11 +377,6 @@
             'x/gfx_x11.gyp:gfx_x11',
           ],
         }],
-        ['use_pango==1', {
-          'dependencies': [
-            '<(DEPTH)/build/linux/system.gyp:pangocairo',
-          ],
-        }],
         ['desktop_linux==1 or chromeos==1', {
           'dependencies': [
             # font_render_params_linux.cc uses fontconfig

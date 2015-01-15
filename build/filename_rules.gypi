@@ -93,8 +93,5 @@
     ['<(use_ash)==0 or OS!="win" or >(nacl_untrusted_build)==1', {
       'sources/': [ ['exclude', '_ashwin\\.(h|cc)$'] ]
     }],
-    ['<(use_pango)==0', {
-      'sources/': [ ['exclude', '(^|_)pango(_util|_browsertest|_unittest)?\\.(h|cc)$'], ],
-    }],
   ]
 }

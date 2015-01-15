@@ -52,10 +52,6 @@ pkg_config("glib") {
   ]
 }
 
-pkg_config("pangocairo") {
-  packages = [ "pangocairo" ]
-}
-
 pkg_config("pangoft2") {
   packages = [ "pangoft2" ]
 }

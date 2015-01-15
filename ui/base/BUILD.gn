@@ -260,10 +260,6 @@ if (false) {
         ]
       }
 
-      if (use_pango) {
-        configs += [ "//build/config/linux:pangocairo" ]
-      }
-
       if (use_x11) {
         configs += [ "//build/config/linux:x11" ]
 

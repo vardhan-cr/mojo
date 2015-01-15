@@ -439,11 +439,6 @@
             }],
           ],
         }],
-        ['use_pango==1', {
-          'dependencies': [
-            '../../build/linux/system.gyp:pangocairo',
-          ],
-        }],
         ['OS=="win" or use_clipboard_aurax11==1', {
           'sources!': [
             'clipboard/clipboard_aura.cc',

@@ -82,9 +82,6 @@ config("feature_flags") {
     # TODO(brettw) should probably be "=1".
     defines += [ "UI_COMPOSITOR_IMAGE_TRANSPORT" ]
   }
-  if (use_cairo) {
-    defines += [ "USE_CAIRO=1" ]
-  }
   if (use_glib) {
     defines += [ "USE_GLIB=1" ]
   }

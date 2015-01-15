@@ -133,18 +133,6 @@
         '../../testing/android/native_test.gyp:native_test_native_code',
       ],
     }],
-    ['use_pango == 1', {
-      'dependencies': [
-        '../../build/linux/system.gyp:pangocairo',
-      ],
-      'conditions': [
-        ['use_allocator!="none"', {
-          'dependencies': [
-            '../../base/allocator/allocator.gyp:allocator',
-          ],
-        }],
-      ],
-    }],
     ['use_x11==1', {
       'dependencies': [
         '../../build/linux/system.gyp:x11',
