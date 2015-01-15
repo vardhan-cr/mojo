@@ -36,7 +36,6 @@
 #include "skia/ext/image_operations.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "third_party/skia/include/core/SkPostConfig.h"
-#include "ui/base/x/x11_menu_list.h"
 #include "ui/base/x/x11_util_internal.h"
 #include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_code_conversion_x.h"
@@ -1082,81 +1081,6 @@ bool IsWindowNamed(XID window) {
 
   XFree(prop.value);
   return true;
-}
-
-bool EnumerateChildren(EnumerateWindowsDelegate* delegate, XID window,
-                       const int max_depth, int depth) {
-  if (depth > max_depth)
-    return false;
-
-  std::vector<XID> windows;
-  std::vector<XID>::iterator iter;
-  if (depth == 0) {
-    XMenuList::GetInstance()->InsertMenuWindowXIDs(&windows);
-    // Enumerate the menus first.
-    for (iter = windows.begin(); iter != windows.end(); iter++) {
-      if (delegate->ShouldStopIterating(*iter))
-        return true;
-    }
-    windows.clear();
-  }
-
-  XID root, parent, *children;
-  unsigned int num_children;
-  int status = XQueryTree(gfx::GetXDisplay(), window, &root, &parent, &children,
-                          &num_children);
-  if (status == 0)
-    return false;
-
-  for (int i = static_cast<int>(num_children) - 1; i >= 0; i--)
-    windows.push_back(children[i]);
-
-  XFree(children);
-
-  // XQueryTree returns the children of |window| in bottom-to-top order, so
-  // reverse-iterate the list to check the windows from top-to-bottom.
-  for (iter = windows.begin(); iter != windows.end(); iter++) {
-    if (IsWindowNamed(*iter) && delegate->ShouldStopIterating(*iter))
-      return true;
-  }
-
-  // If we're at this point, we didn't find the window we're looking for at the
-  // current level, so we need to recurse to the next level.  We use a second
-  // loop because the recursion and call to XQueryTree are expensive and is only
-  // needed for a small number of cases.
-  if (++depth <= max_depth) {
-    for (iter = windows.begin(); iter != windows.end(); iter++) {
-      if (EnumerateChildren(delegate, *iter, max_depth, depth))
-        return true;
-    }
-  }
-
-  return false;
-}
-
-bool EnumerateAllWindows(EnumerateWindowsDelegate* delegate, int max_depth) {
-  XID root = GetX11RootWindow();
-  return EnumerateChildren(delegate, root, max_depth, 0);
-}
-
-void EnumerateTopLevelWindows(ui::EnumerateWindowsDelegate* delegate) {
-  std::vector<XID> stack;
-  if (!ui::GetXWindowStack(ui::GetX11RootWindow(), &stack)) {
-    // Window Manager doesn't support _NET_CLIENT_LIST_STACKING, so fall back
-    // to old school enumeration of all X windows.  Some WMs parent 'top-level'
-    // windows in unnamed actual top-level windows (ion WM), so extend the
-    // search depth to all children of top-level windows.
-    const int kMaxSearchDepth = 1;
-    ui::EnumerateAllWindows(delegate, kMaxSearchDepth);
-    return;
-  }
-  XMenuList::GetInstance()->InsertMenuWindowXIDs(&stack);
-
-  std::vector<XID>::iterator iter;
-  for (iter = stack.begin(); iter != stack.end(); iter++) {
-    if (delegate->ShouldStopIterating(*iter))
-      return;
-  }
 }
 
 bool GetXWindowStack(Window window, std::vector<XID>* windows) {

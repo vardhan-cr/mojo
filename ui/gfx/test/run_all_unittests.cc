@@ -9,8 +9,6 @@
 #include "base/test/launcher/unit_test_launcher.h"
 #include "base/test/test_suite.h"
 #include "testing/gtest/include/gtest/gtest.h"
-#include "ui/base/resource/resource_bundle.h"
-#include "ui/base/ui_base_paths.h"
 
 #if defined(OS_ANDROID)
 #include "base/android/jni_android.h"
@@ -38,16 +36,9 @@ class GfxTestSuite : public base::TestSuite {
 #if defined(OS_MACOSX) && !defined(OS_IOS)
     mock_cr_app::RegisterMockCrApp();
 #endif
-
-    ui::RegisterPathProvider();
-
-    base::FilePath ui_test_pak_path;
-    ASSERT_TRUE(PathService::Get(ui::UI_TEST_PAK, &ui_test_pak_path));
-    ui::ResourceBundle::InitSharedInstanceWithPakPath(ui_test_pak_path);
   }
 
   void Shutdown() override {
-    ui::ResourceBundle::CleanupSharedInstance();
     base::TestSuite::Shutdown();
   }
 

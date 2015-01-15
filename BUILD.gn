@@ -12,6 +12,7 @@ group("default") {
     "//services",
     "//shell",
     "//sky",
+    "//ui/gfx:gfx_unittests",
   ]
 
   if (!is_android && !is_win) {

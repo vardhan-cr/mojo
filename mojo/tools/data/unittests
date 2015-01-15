@@ -48,6 +48,11 @@
     "test": "window_manager_unittests",
   },
 
+  # Tests for components we depend on:
+  {
+    "test": "gfx_unittests",
+  },
+
   # JavaScript tests:
   {
     "test": "js_unittests",

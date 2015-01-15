@@ -8,13 +8,11 @@
 #include "base/android/jni_registrar.h"
 #include "ui/base/android/view_android.h"
 #include "ui/base/android/window_android.h"
-#include "ui/base/touch/touch_device.h"
 
 namespace ui {
 namespace android {
 
 static base::android::RegistrationMethod kUiRegisteredMethods[] = {
-  { "TouchDevice", RegisterTouchDeviceAndroid },
   { "ViewAndroid", ViewAndroid::RegisterViewAndroid },
   { "WindowAndroid", WindowAndroid::RegisterWindowAndroid },
 };

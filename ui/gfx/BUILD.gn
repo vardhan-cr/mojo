@@ -226,7 +226,6 @@ test("gfx_unittests") {
       "geometry/vector2d_unittest.cc",
       "geometry/vector3d_unittest.cc",
       "sequential_id_generator_unittest.cc",
-      "shadow_value_unittest.cc",
       "skrect_conversion_unittest.cc",
       "transform_util_unittest.cc",
     ]

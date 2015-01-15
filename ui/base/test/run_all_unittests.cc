@@ -8,8 +8,6 @@
 #include "base/test/launcher/unit_test_launcher.h"
 #include "base/test/test_suite.h"
 #include "build/build_config.h"
-#include "ui/base/resource/resource_bundle.h"
-#include "ui/base/ui_base_paths.h"
 
 #if defined(OS_ANDROID)
 #include "base/android/jni_android.h"
@@ -64,36 +62,9 @@ void UIBaseTestSuite::Initialize() {
 
 #if defined(OS_MACOSX) && !defined(OS_IOS)
   mock_cr_app::RegisterMockCrApp();
-
-  // On Mac, a test Framework bundle is created that links locale.pak and
-  // chrome_100_percent.pak at the appropriate places to ui_test.pak.
-  base::mac::SetOverrideFrameworkBundlePath(
-      exe_path.AppendASCII("ui_unittests Framework.framework"));
-  ui::ResourceBundle::InitSharedInstanceWithLocale(
-      "en-US", NULL, ui::ResourceBundle::LOAD_COMMON_RESOURCES);
-
-#elif defined(OS_IOS) || defined(OS_ANDROID)
-  // On iOS, the ui_unittests binary is itself a mini bundle, with resources
-  // built in. On Android, ui_unittests_apk provides the necessary framework.
-  ui::ResourceBundle::InitSharedInstanceWithLocale(
-      "en-US", NULL, ui::ResourceBundle::LOAD_COMMON_RESOURCES);
-
-#else
-  // On other platforms, the (hardcoded) paths for chrome_100_percent.pak and
-  // locale.pak get populated by later build steps. To avoid clobbering them,
-  // load the test .pak files directly.
-  ui::ResourceBundle::InitSharedInstanceWithPakPath(
-      exe_path.AppendASCII("ui_test.pak"));
-
-  // ui_unittests can't depend on the locales folder which Chrome will make
-  // later, so use the path created by ui_test_pak.
-  PathService::Override(ui::DIR_LOCALES, exe_path.AppendASCII("ui"));
-#endif
 }
 
 void UIBaseTestSuite::Shutdown() {
-  ui::ResourceBundle::CleanupSharedInstance();
-
 #if defined(OS_MACOSX) && !defined(OS_IOS)
   base::mac::SetOverrideFrameworkBundle(NULL);
 #endif

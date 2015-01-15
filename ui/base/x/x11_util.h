@@ -218,27 +218,6 @@ bool GetWindowDesktop(XID window, int* desktop);
 // Translates an X11 error code into a printable string.
 UI_BASE_EXPORT std::string GetX11ErrorString(XDisplay* display, int err);
 
-// Implementers of this interface receive a notification for every X window of
-// the main display.
-class EnumerateWindowsDelegate {
- public:
-  // |xid| is the X Window ID of the enumerated window.  Return true to stop
-  // further iteration.
-  virtual bool ShouldStopIterating(XID xid) = 0;
-
- protected:
-  virtual ~EnumerateWindowsDelegate() {}
-};
-
-// Enumerates all windows in the current display.  Will recurse into child
-// windows up to a depth of |max_depth|.
-UI_BASE_EXPORT bool EnumerateAllWindows(EnumerateWindowsDelegate* delegate,
-                                        int max_depth);
-
-// Enumerates the top-level windows of the current display.
-UI_BASE_EXPORT void EnumerateTopLevelWindows(
-    ui::EnumerateWindowsDelegate* delegate);
-
 // Returns all children windows of a given window in top-to-bottom stacking
 // order.
 UI_BASE_EXPORT bool GetXWindowStack(XID window, std::vector<XID>* windows);
