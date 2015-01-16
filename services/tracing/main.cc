@@ -44,11 +44,9 @@ class TracingApp : public mojo::ApplicationDelegate,
   }
 
   // tracing::TraceCoordinator implementation.
-  void Start(const mojo::String& base_name,
+  void Start(mojo::ScopedDataPipeProducerHandle stream,
              const mojo::String& categories) override {
-    base::FilePath base_name_path =
-        base::FilePath::FromUTF8Unsafe(base_name.To<std::string>());
-    sink_.reset(new TraceDataSink(base_name_path));
+    sink_.reset(new TraceDataSink(stream.Pass()));
     collector_bindings_.ForAllBindings([categories](
         TraceController* controller) { controller->StartTracing(categories); });
   }

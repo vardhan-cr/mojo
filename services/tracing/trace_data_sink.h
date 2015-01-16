@@ -7,20 +7,21 @@
 
 #include <string>
 
-#include "base/files/file_path.h"
+#include "base/basictypes.h"
+#include "mojo/public/cpp/system/data_pipe.h"
 
 namespace tracing {
 
 class TraceDataSink {
  public:
-  explicit TraceDataSink(base::FilePath base_name);
+  explicit TraceDataSink(mojo::ScopedDataPipeProducerHandle pipe);
   ~TraceDataSink();
 
   void AddChunk(const std::string& json);
   void Flush();
 
  private:
-  FILE* file_;
+  mojo::ScopedDataPipeProducerHandle pipe_;
   bool empty_;
 
   DISALLOW_COPY_AND_ASSIGN(TraceDataSink);

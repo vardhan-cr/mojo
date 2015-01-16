@@ -22,9 +22,9 @@ interface TraceDataCollector {
 };
 
 interface TraceCoordinator {
-  // Request tracing data from all connected TraceControllers to save in a file
-  // derived from |base_name|.
-  Start(string base_name, string categories);
+  // Request tracing data from all connected TraceControllers to stream to
+  // |stream|.
+  Start(handle<data_pipe_producer> stream, string categories);
 
   // Stop tracing and flush results to file.
   StopAndFlush();

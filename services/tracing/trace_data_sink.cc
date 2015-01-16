@@ -4,38 +4,44 @@
 
 #include "services/tracing/trace_data_sink.h"
 
-#include "base/files/file_util.h"
+#include "base/logging.h"
 
 namespace tracing {
+namespace {
 
-TraceDataSink::TraceDataSink(base::FilePath base_name) : empty_(true) {
-  file_ =
-      base::OpenFile(base_name.AddExtension(FILE_PATH_LITERAL(".trace")), "w+");
-  static const char start[] = "{\"traceEvents\":[";
-  fwrite(start, 1, strlen(start), file_);
+const char kStart[] = "{\"traceEvents\":[";
+const char kEnd[] = "]}";
+
+void Write(const mojo::ScopedDataPipeProducerHandle& pipe,
+           const char* string,
+           uint32_t num_bytes) {
+  CHECK_EQ(MOJO_RESULT_OK,
+           mojo::WriteDataRaw(pipe.get(), string, &num_bytes,
+                              MOJO_WRITE_DATA_FLAG_ALL_OR_NONE));
+}
+}
+
+TraceDataSink::TraceDataSink(mojo::ScopedDataPipeProducerHandle pipe)
+    : pipe_(pipe.Pass()), empty_(true) {
+  Write(pipe_, kStart, strlen(kStart));
 }
 
 TraceDataSink::~TraceDataSink() {
-  if (file_)
+  if (pipe_.is_valid())
     Flush();
-  DCHECK(!file_);
+  DCHECK(!pipe_.is_valid());
 }
 
 void TraceDataSink::AddChunk(const std::string& json) {
-  if (!empty_) {
-    fwrite(",", 1, 1, file_);
-  }
-
+  if (!empty_)
+    Write(pipe_, ",", 1);
   empty_ = false;
-
-  fwrite(json.data(), 1, json.length(), file_);
+  Write(pipe_, json.data(), json.length());
 }
 
 void TraceDataSink::Flush() {
-  static const char end[] = "]}";
-  fwrite(end, 1, strlen(end), file_);
-  base::CloseFile(file_);
-  file_ = nullptr;
+  Write(pipe_, kEnd, strlen(kEnd));
+  pipe_.reset();
 }
 
 }  // namespace tracing
