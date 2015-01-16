@@ -117,8 +117,36 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
     touch_data->pointer_id = touch_event->touch_id();
     event->touch_data = touch_data.Pass();
   } else if (input.IsGestureEvent()) {
-    // TODO(abarth): Create GestureData struct for |event| once we have that
-    // struct in input_events.mojom.
+    auto details = input.AsGestureEvent()->details();
+    GestureDataPtr gesture_data(GestureData::New());
+    gesture_data->bounding_box = RectF::From(details.bounding_box_f());
+    switch (input.type()) {
+      case ui::ET_GESTURE_SCROLL_UPDATE:
+        gesture_data->scroll_x = details.scroll_x();
+        gesture_data->scroll_y = details.scroll_y();
+        break;
+      case ui::ET_SCROLL_FLING_START:
+        gesture_data->velocity_x = details.velocity_x();
+        gesture_data->velocity_y = details.velocity_y();
+        break;
+      case ui::ET_GESTURE_PINCH_UPDATE:
+        gesture_data->scale = details.scale();
+        break;
+      case ui::ET_GESTURE_SWIPE:
+        gesture_data->swipe_left = details.swipe_left();
+        gesture_data->swipe_right = details.swipe_right();
+        gesture_data->swipe_up = details.swipe_up();
+        gesture_data->swipe_down = details.swipe_down();
+        break;
+      case ui::ET_GESTURE_TAP:
+      case ui::ET_GESTURE_TAP_UNCONFIRMED:
+      case ui::ET_GESTURE_DOUBLE_TAP:
+        gesture_data->tap_count = details.tap_count();
+        break;
+      default:
+        break;
+    }
+    event->gesture_data = gesture_data.Pass();
   } else if (input.IsKeyEvent()) {
     const ui::KeyEvent* key_event = static_cast<const ui::KeyEvent*>(&input);
     KeyDataPtr key_data(KeyData::New());
