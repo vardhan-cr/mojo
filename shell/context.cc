@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include "base/base_switches.h"
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
@@ -136,14 +137,17 @@ void Context::EnsureEmbedderIsInitialized() {
 }
 
 bool Context::Init() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+
+  if (command_line->HasSwitch(switches::kWaitForDebugger))
+    base::debug::WaitForDebugger(60, true);
+
   EnsureEmbedderIsInitialized();
   task_runners_.reset(
       new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
 
   for (size_t i = 0; i < arraysize(kLocalMojoURLs); ++i)
     mojo_url_resolver_.AddLocalFileMapping(GURL(kLocalMojoURLs[i]));
-
-  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
 
   if (command_line->HasSwitch(switches::kEnableExternalApplications)) {
     listener_ = ExternalApplicationListener::Create(

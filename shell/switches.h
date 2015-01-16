@@ -14,12 +14,12 @@ namespace switches {
 // alongside the definition of their values in the .cc file and, as needed,
 // in mojo_main's Usage() function.
 extern const char kArgsFor[];
-extern const char kHelp[];
 extern const char kChildProcessType[];
 extern const char kContentHandlers[];
 extern const char kDisableCache[];
 extern const char kEnableExternalApplications[];
 extern const char kEnableMultiprocess[];
+extern const char kHelp[];
 extern const char kOrigin[];
 extern const char kURLMappings[];
 
