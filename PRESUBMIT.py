@@ -1493,6 +1493,8 @@ def GetDefaultTryConfigs(bots=None):
   builders_and_tests = {
       'Mojo Linux Try': ['defaulttests'],
       'Mojo Linux (dbg) Try': ['defaulttests'],
+      'Mojo Linux NaCl Try': ['defaulttests'],
+      'Mojo Linux NaCl (dbg) Try': ['defaulttests'],
       'Mojo Android Builder Try': ['defaulttests'],
       'Mojo Android Builder (dbg) Try': ['defaulttests'],
       'Mojo ChromeOS Builder Try': ['defaulttests'],
@@ -1534,6 +1536,8 @@ def GetPreferredTryMasters(project, change):
   builders = [
       'Mojo Linux Try',
       'Mojo Linux (dbg) Try',
+      'Mojo Linux NaCl Try',
+      'Mojo Linux NaCl (dbg) Try',
       'Mojo Android Builder Try',
       'Mojo Android Builder (dbg) Try',
       'Mojo ChromeOS Builder Try',
