@@ -5,12 +5,12 @@
 #ifndef MOJO_SHELL_ANDROID_NATIVE_VIEWPORT_APPLICATION_LOADER_H_
 #define MOJO_SHELL_ANDROID_NATIVE_VIEWPORT_APPLICATION_LOADER_H_
 
-#include "mojo/application_manager/application_loader.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "services/gles2/gpu_impl.h"
+#include "shell/application_manager/application_loader.h"
 
 namespace mojo {
 

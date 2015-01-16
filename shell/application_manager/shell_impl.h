@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_APPLICATION_MANAGER_SHELL_IMPL_H_
-#define MOJO_APPLICATION_MANAGER_SHELL_IMPL_H_
+#ifndef SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_
+#define SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_
 
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
@@ -59,4 +59,4 @@ class ShellImpl : public Shell, public ErrorHandler {
 
 }  // namespace mojo
 
-#endif  // MOJO_APPLICATION_MANAGER_SHELL_IMPL_H_
+#endif  // SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_

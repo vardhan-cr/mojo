@@ -13,7 +13,6 @@ test("mojo_view_manager_lib_unittests") {
   deps = [
     "//base",
     "//base/test:test_support",
-    "//mojo/application_manager",
     "//mojo/converters/geometry",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/application",
@@ -22,6 +21,7 @@ test("mojo_view_manager_lib_unittests") {
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/cpp/lib:run_unittests",
     "//mojo/services/view_manager/public/interfaces",
+    "//shell/application_manager",
     "//shell:test_support",
     "//testing/gtest",
   ]

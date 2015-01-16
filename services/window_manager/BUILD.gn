@@ -82,7 +82,6 @@ test("window_manager_unittests") {
 
   deps = [
     "//base/test:test_support",
-    "//mojo/application_manager",
     "//mojo/converters/geometry",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
@@ -90,6 +89,7 @@ test("window_manager_unittests") {
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
+    "//shell/application_manager",
     "//shell:test_support",
     "//testing/gtest",
     "//ui/events:test_support",

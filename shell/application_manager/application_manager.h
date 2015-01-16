@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
-#define MOJO_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
+#ifndef SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
+#define SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
 
 #include <map>
 #include <set>
@@ -12,10 +12,10 @@
 #include "base/gtest_prod_util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/application_manager/application_loader.h"
-#include "mojo/application_manager/application_manager_export.h"
-#include "mojo/application_manager/shell_impl.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
+#include "shell/application_manager/application_loader.h"
+#include "shell/application_manager/application_manager_export.h"
+#include "shell/application_manager/shell_impl.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -153,4 +153,4 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
 
 }  // namespace mojo
 
-#endif  // MOJO_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
+#endif  // SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_

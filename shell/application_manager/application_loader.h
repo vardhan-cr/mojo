@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_APPLICATION_MANAGER_APPLICATION_LOADER_H_
-#define MOJO_APPLICATION_MANAGER_APPLICATION_LOADER_H_
+#ifndef SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_
+#define SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_
 
 #include "base/callback.h"
-#include "mojo/application_manager/application_manager_export.h"
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
+#include "shell/application_manager/application_manager_export.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -55,4 +55,4 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
 
 }  // namespace mojo
 
-#endif  // MOJO_APPLICATION_MANAGER_APPLICATION_LOADER_H_
+#endif  // SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_

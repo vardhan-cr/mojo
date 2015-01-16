@@ -35,6 +35,7 @@ group("tests") {
   deps = [
     ":external_application_unittests",
     ":mojo_shell_tests",
+    "//shell/application_manager:mojo_application_manager_unittests",
   ]
 }
 
@@ -71,8 +72,8 @@ if (!use_prebuilt_mojo_shell) {
 
       deps += [
         ":jni_headers",
-        "//mojo/application_manager:application_manager",
         "//services/native_viewport:lib",
+        "//shell/application_manager",
         "//ui/gl",
       ]
     }
@@ -178,13 +179,13 @@ source_set("lib") {
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
     "//mojo/application",
-    "//mojo/application_manager",
     "//mojo/common",
     "//mojo/common:tracing_impl",
     "//mojo/edk/system",
     "//mojo/public/cpp/bindings",
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
+    "//shell/application_manager",
     "//shell/domain_socket",
     "//services/tracing:bindings",
     "//url",
@@ -424,12 +425,12 @@ test("mojo_shell_tests") {
     "//testing/gtest",
     "//net:test_support",
     "//url",
-    "//mojo/application_manager",
     "//mojo/common",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/bindings",
     "//services/test_service:bindings",
+    "//shell/application_manager",
   ]
 
   datadeps = [
@@ -458,8 +459,8 @@ source_set("test_support") {
     ":init",
     ":lib",
     "//base",
-    "//mojo/application_manager",
     "//mojo/edk/system",
+    "//shell/application_manager",
   ]
 }
 
@@ -479,10 +480,10 @@ test("external_application_unittests") {
     "//testing/gtest",
     "//url",
     "//mojo/application",
-    "//mojo/application_manager",
     "//mojo/common",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
+    "//shell/application_manager",
     "//shell/domain_socket",
     "//shell/domain_socket:tests",
   ]

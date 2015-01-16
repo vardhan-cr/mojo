@@ -4,7 +4,6 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-# GYP version: mojo.gyp:mojo_application_manager
 component("application_manager") {
   output_name = "mojo_application_manager"
   sources = [
@@ -37,7 +36,6 @@ component("application_manager") {
   ]
 }
 
-# GYP version: mojo.gyp:mojo_application_manager_unittests
 test("mojo_application_manager_unittests") {
   sources = [
     "application_manager_unittest.cc",

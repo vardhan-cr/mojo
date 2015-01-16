@@ -8,7 +8,7 @@
 #include <string>
 
 #include "base/macros.h"
-#include "mojo/application_manager/application_manager.h"
+#include "shell/application_manager/application_manager.h"
 #include "shell/mojo_url_resolver.h"
 #include "shell/task_runners.h"
 

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/application_manager/application_loader.h"
+#include "shell/application_manager/application_loader.h"
 
 #include "base/bind.h"
 #include "base/logging.h"

@@ -8,7 +8,7 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/run_loop.h"
-#include "mojo/application_manager/application_loader.h"
+#include "shell/application_manager/application_loader.h"
 #include "shell/context.h"
 
 class GURL;

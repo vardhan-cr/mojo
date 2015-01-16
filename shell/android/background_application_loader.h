@@ -10,7 +10,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/simple_thread.h"
-#include "mojo/application_manager/application_loader.h"
+#include "shell/application_manager/application_loader.h"
 
 namespace mojo {
 

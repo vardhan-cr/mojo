@@ -6,7 +6,6 @@
 #include "base/command_line.h"
 #include "base/memory/scoped_vector.h"
 #include "base/run_loop.h"
-#include "mojo/application_manager/application_manager.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
@@ -18,6 +17,7 @@
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
+#include "shell/application_manager/application_manager.h"
 #include "shell/shell_test_helper.h"
 #include "testing/gtest/include/gtest/gtest.h"
 

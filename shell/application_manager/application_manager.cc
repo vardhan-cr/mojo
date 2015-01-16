@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/application_manager/application_manager.h"
+#include "shell/application_manager/application_manager.h"
 
 #include <stdio.h>
 
@@ -11,7 +11,6 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/stl_util.h"
-#include "mojo/application_manager/application_loader.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"

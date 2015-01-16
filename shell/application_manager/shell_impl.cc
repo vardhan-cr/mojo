@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/application_manager/shell_impl.h"
+#include "shell/application_manager/shell_impl.h"
 
-#include "mojo/application_manager/application_manager.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
+#include "shell/application_manager/application_manager.h"
 
 namespace mojo {
 

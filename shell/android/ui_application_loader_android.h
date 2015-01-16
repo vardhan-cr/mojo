@@ -7,7 +7,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "mojo/application_manager/application_loader.h"
+#include "shell/application_manager/application_loader.h"
 
 namespace base {
 class MessageLoop;

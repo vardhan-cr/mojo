@@ -7,14 +7,14 @@
 #include "base/macros.h"
 #include "base/memory/scoped_vector.h"
 #include "base/message_loop/message_loop.h"
-#include "mojo/application_manager/application_loader.h"
-#include "mojo/application_manager/application_manager.h"
-#include "mojo/application_manager/test.mojom.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
+#include "shell/application_manager/application_loader.h"
+#include "shell/application_manager/application_manager.h"
+#include "shell/application_manager/test.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
