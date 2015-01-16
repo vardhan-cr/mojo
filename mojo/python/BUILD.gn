@@ -10,7 +10,6 @@ group("python") {
     ":mojo_embedder",
     ":validation_util",
     "//mojo/public/python",
-    "//mojo/python/content_handler",
   ]
 }
 

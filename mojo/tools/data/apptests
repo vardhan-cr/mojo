@@ -23,12 +23,6 @@
     "test": "mojo:network_service_apptests",
   },
   {
-    "test": "mojo:example_apptests",
-    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
-    "test-args": ["--example_apptest_arg"],
-    "shell-args": ["--url-mappings=mojo:example_service=mojo:python_example_service"],
-  },
-  {
     "test": "mojo:view_manager_service_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
