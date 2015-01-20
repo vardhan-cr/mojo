@@ -21,22 +21,18 @@
   }
   </style>
 
-  <sky-input id="text" value="http://" on-keydown="handleKeyDown" />
+  <sky-input id="text" value="{{ url }}" on-keydown="handleKeyDown" />
 </template>
 <script>
 module.exports = class extends SkyElement {
   created() {
     this.embedder = embedder.connectToEmbedderService(example.BrowserHost)
-    this.myText = null;
-  }
-
-  attached() {
-    this.myText = this.shadowRoot.getElementById('text');
+    this.url = "http://";
   }
 
   handleKeyDown(event) {
     if (event.keyCode == 0xD)
-      this.embedder.navigateTo(this.myText.value);
+      this.embedder.navigateTo(this.url);
   }
 }.register();
 </script>
