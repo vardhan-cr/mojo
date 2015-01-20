@@ -21,41 +21,7 @@ component("base") {
     "android/window_android.h",
     "android/window_android_compositor.h",
     "android/window_android_observer.h",
-    "cursor/cursor.h",
-    "hit_test.h",
     "ui_base_export.h",
-    "ui_base_switches.cc",
-    "ui_base_switches.h",
-    "view_prop.cc",
-    "view_prop.h",
-    "win/accessibility_ids_win.h",
-    "win/accessibility_misc_utils.cc",
-    "win/accessibility_misc_utils.h",
-    "win/atl_module.h",
-    "win/foreground_helper.cc",
-    "win/foreground_helper.h",
-    "win/hidden_window.cc",
-    "win/hidden_window.h",
-    "win/hwnd_subclass.cc",
-    "win/hwnd_subclass.h",
-    "win/internal_constants.cc",
-    "win/internal_constants.h",
-    "win/lock_state.cc",
-    "win/lock_state.h",
-    "win/open_file_name_win.cc",
-    "win/open_file_name_win.h",
-    "win/message_box_win.cc",
-    "win/message_box_win.h",
-    "win/mouse_wheel_util.cc",
-    "win/mouse_wheel_util.h",
-    "win/scoped_ole_initializer.cc",
-    "win/scoped_ole_initializer.h",
-    "win/shell.cc",
-    "win/shell.h",
-    "win/touch_input.cc",
-    "win/touch_input.h",
-    "win/window_event_target.cc",
-    "win/window_event_target.h",
   ]
 
   defines = [ "UI_BASE_IMPLEMENTATION" ]
@@ -77,15 +43,6 @@ component("base") {
     "//third_party/icu",
     "//url",
   ]
-
-  if (use_x11) {
-    sources += [
-      "x/x11_util.cc",
-      "x/x11_util.h",
-      "x/x11_util_internal.h",
-    ]
-    deps += [ "//ui/gfx/x" ]
-  }
 
   if (is_linux) {
     configs += [
@@ -114,11 +71,6 @@ component("base") {
       "d2d1.lib",
       "dwmapi.lib",
       "oleacc.lib",
-    ]
-  } else {
-    sources -= [
-      "view_prop.cc",
-      "view_prop.h",
     ]
   }
 
@@ -181,10 +133,7 @@ if (false) {
         "test/run_all_unittests.cc",
       ]
 
-      sources += [
-        "test/data/resource.h",
-        "view_prop_unittest.cc",
-      ]
+      sources += [ "test/data/resource.h" ]
 
       deps = [
         "//base",
@@ -203,11 +152,6 @@ if (false) {
       ]
 
       if (is_win) {
-        sources += [
-          "win/hwnd_subclass_unittest.cc",
-          "win/open_file_name_win_unittest.cc",
-        ]
-
         ldflags = [
           "/DELAYLOAD:d2d1.dll",
           "/DELAYLOAD:d3d10_1.dll",

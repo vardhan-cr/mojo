@@ -16,11 +16,11 @@
 #include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/focus_rules.h"
+#include "services/window_manager/hit_test.h"
 #include "services/window_manager/view_event_dispatcher.h"
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/view_targeter.h"
 #include "services/window_manager/window_manager_delegate.h"
-#include "ui/base/hit_test.h"
 #include "ui/events/gestures/gesture_recognizer.h"
 
 using mojo::ApplicationConnection;

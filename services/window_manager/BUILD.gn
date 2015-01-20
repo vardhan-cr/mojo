@@ -49,7 +49,6 @@ source_set("lib") {
 
   deps = [
     "//base",
-    "//ui/base",
     "//ui/events",
     "//ui/gfx",
     "//ui/gfx/geometry",

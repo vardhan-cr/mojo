@@ -13,7 +13,6 @@ component("platform_window") {
 
   deps = [
     "//base",
-    "//ui/base",
     "//ui/gfx",
   ]
 }
