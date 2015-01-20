@@ -22,6 +22,7 @@ class PrintBodyApplication : public InterfaceImpl<Application> {
   }
 
   virtual void Initialize(Array<String> args) override {}
+  virtual void RequestQuit() override {}
 
   virtual void AcceptConnection(const String& requestor_url,
                                 InterfaceRequest<ServiceProvider> services,

@@ -130,6 +130,9 @@ class QuitLoopOnConnectApplicationImpl : public InterfaceImpl<Application> {
     to_quit_->PostTask(FROM_HERE, quit_callback_);
   }
 
+  void RequestQuit() override {
+  }
+
   const std::string url_;
   scoped_refptr<base::TaskRunner> to_quit_;
   base::Closure quit_callback_;
