@@ -12,9 +12,9 @@
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
-#include "sky/compositor/display_delegate_ganesh.h"
 #include "sky/compositor/layer.h"
 #include "sky/compositor/layer_host.h"
+#include "sky/compositor/rasterizer_ganesh.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 
 namespace examples {
@@ -41,9 +41,6 @@ class SkyCompositorApp : public mojo::ApplicationDelegate,
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new mojo::ViewManagerClientFactory(app->shell(), this));
-
-    sky::DisplayDelegate::setDisplayDelegateCreateFunction(
-        sky::DisplayDelegateGanesh::create);
   }
 
   bool ConfigureIncomingConnection(
@@ -60,6 +57,8 @@ class SkyCompositorApp : public mojo::ApplicationDelegate,
 
     layer_host_.reset(new sky::LayerHost(this));
     root_layer_ = make_scoped_refptr(new sky::Layer(this));
+    root_layer_->set_rasterizer(
+        make_scoped_ptr(new sky::RasterizerGanesh(layer_host_.get())));
     layer_host_->SetRootLayer(root_layer_);
     layer_host_->SetNeedsAnimate();
   }
