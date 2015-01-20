@@ -4,8 +4,7 @@
 
 #include "services/view_manager/animation_runner.h"
 
-#include <set>
-
+#include "base/memory/scoped_vector.h"
 #include "services/view_manager/animation_runner_observer.h"
 #include "services/view_manager/scheduled_animation_group.h"
 #include "services/view_manager/server_view.h"
@@ -13,10 +12,21 @@
 namespace view_manager {
 namespace {
 
-struct AnimationDoneState {
-  ServerView* view;
-  uint32_t animation_id;
-};
+bool ConvertViewAndAnimationPairToScheduledAnimationGroup(
+    const std::vector<AnimationRunner::ViewAndAnimationPair>& views,
+    AnimationRunner::AnimationId id,
+    base::TimeTicks now,
+    ScopedVector<ScheduledAnimationGroup>* groups) {
+  for (const auto& view_animation_pair : views) {
+    DCHECK(view_animation_pair.second);
+    scoped_ptr<ScheduledAnimationGroup> group(ScheduledAnimationGroup::Create(
+        view_animation_pair.first, now, id, *(view_animation_pair.second)));
+    if (!group.get())
+      return false;
+    groups->push_back(group.release());
+  }
+  return true;
+}
 
 }  // namespace
 
@@ -35,78 +45,112 @@ void AnimationRunner::RemoveObserver(AnimationRunnerObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-uint32_t AnimationRunner::Schedule(ServerView* view,
-                                   const mojo::AnimationGroup& transport_group,
-                                   base::TimeTicks now) {
+AnimationRunner::AnimationId AnimationRunner::Schedule(
+    const std::vector<ViewAndAnimationPair>& views,
+    base::TimeTicks now) {
   DCHECK_GE(now, last_tick_time_);
-  scoped_ptr<ScheduledAnimationGroup> group(
-      ScheduledAnimationGroup::Create(view, now, next_id_++, transport_group));
-  if (!group.get())
-    return 0;
 
-  if (animation_map_.contains(view)) {
-    animation_map_.get(view)->SetValuesToTargetValuesForPropertiesNotIn(*group);
-    const uint32_t animation_id = animation_map_.get(view)->id();
-    animation_map_.erase(view);
-    FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
-                      OnAnimationInterrupted(view, animation_id));
+  const AnimationId animation_id = next_id_++;
+  ScopedVector<ScheduledAnimationGroup> groups;
+  if (!ConvertViewAndAnimationPairToScheduledAnimationGroup(views, animation_id,
+                                                            now, &groups)) {
+    return 0;
   }
 
-  group->ObtainStartValues();
+  // Cancel any animations for the views.
+  for (auto* group : groups) {
+    ScheduledAnimationGroup* current_group =
+        view_to_animation_map_.get(group->view());
+    if (current_group)
+      current_group->SetValuesToTargetValuesForPropertiesNotIn(*group);
 
-  const uint32_t id = group->id();
-  animation_map_.set(view, group.Pass());
+    CancelAnimationForViewImpl(group->view(), CANCEL_SOURCE_SCHEDULE);
+  }
+
+  for (auto* group : groups) {
+    group->ObtainStartValues();
+    view_to_animation_map_.set(group->view(), make_scoped_ptr(group));
+    DCHECK(!id_to_views_map_[animation_id].count(group->view()));
+    id_to_views_map_[animation_id].insert(group->view());
+  }
+  // |view_to_animation_map_| owns the groups.
+  groups.weak_clear();
 
   FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
-                    OnAnimationScheduled(view, id));
-  return id;
+                    OnAnimationScheduled(animation_id));
+  return animation_id;
 }
 
-ServerView* AnimationRunner::GetViewForAnimation(uint32_t id) {
-  for (ViewAnimationMap::iterator i = animation_map_.begin();
-       i != animation_map_.end(); ++i) {
-    if (i->second->id() == id)
-      return i->first;
-  }
-  return nullptr;
+void AnimationRunner::CancelAnimation(AnimationId id) {
+  if (id_to_views_map_.count(id) == 0)
+    return;
+
+  std::set<ServerView*> views(id_to_views_map_[id]);
+  for (ServerView* view : views)
+    CancelAnimationForView(view);
 }
 
 void AnimationRunner::CancelAnimationForView(ServerView* view) {
-  if (!animation_map_.contains(view))
-    return;
-
-  const uint32_t id = animation_map_.get(view)->id();
-  animation_map_.erase(view);
-  FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
-                    OnAnimationCanceled(view, id));
+  CancelAnimationForViewImpl(view, CANCEL_SOURCE_CANCEL);
 }
 
 void AnimationRunner::Tick(base::TimeTicks time) {
   DCHECK(time >= last_tick_time_);
   last_tick_time_ = time;
-  if (animation_map_.empty())
+  if (view_to_animation_map_.empty())
     return;
 
-  std::vector<AnimationDoneState> animations_done;
-  for (ViewAnimationMap::iterator i = animation_map_.begin();
-       i != animation_map_.end(); ) {
-    // Any animations that complete are notified at the end of the loop. This
-    // way if the obsevert attempts to schedule another animation or mutate us
-    // in some other way we aren't in a bad state.
+  // The animation ids of any views whose animation completes are added here. We
+  // notify after processing all views so that if an observer mutates us in some
+  // way we're aren't left in a weird state.
+  std::set<AnimationId> animations_completed;
+  for (ViewToAnimationMap::iterator i = view_to_animation_map_.begin();
+       i != view_to_animation_map_.end();) {
     if (i->second->Tick(time)) {
-      AnimationDoneState done_state;
-      done_state.view = i->first;
-      done_state.animation_id = i->second->id();
-      animations_done.push_back(done_state);
-      animation_map_.erase(i++);
+      const AnimationId animation_id = i->second->id();
+      ServerView* view = i->first;
+      ++i;
+      if (RemoveViewFromMaps(view))
+        animations_completed.insert(animation_id);
     } else {
       ++i;
     }
   }
-  for (const AnimationDoneState& done : animations_done) {
-    FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
-                      OnAnimationDone(done.view, done.animation_id));
+  for (const AnimationId& id : animations_completed)
+    FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_, OnAnimationDone(id));
+}
+
+void AnimationRunner::CancelAnimationForViewImpl(ServerView* view,
+                                                 CancelSource source) {
+  if (!view_to_animation_map_.contains(view))
+    return;
+
+  const AnimationId animation_id = view_to_animation_map_.get(view)->id();
+  if (RemoveViewFromMaps(view)) {
+    // This was the last view in the group.
+    if (source == CANCEL_SOURCE_CANCEL) {
+      FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
+                        OnAnimationCanceled(animation_id));
+    } else {
+      FOR_EACH_OBSERVER(AnimationRunnerObserver, observers_,
+                        OnAnimationInterrupted(animation_id));
+    }
   }
+}
+
+bool AnimationRunner::RemoveViewFromMaps(ServerView* view) {
+  DCHECK(view_to_animation_map_.contains(view));
+
+  const AnimationId animation_id = view_to_animation_map_.get(view)->id();
+  view_to_animation_map_.erase(view);
+
+  DCHECK(id_to_views_map_.count(animation_id));
+  id_to_views_map_[animation_id].erase(view);
+  if (!id_to_views_map_[animation_id].empty())
+    return false;
+
+  id_to_views_map_.erase(animation_id);
+  return true;
 }
 
 }  // namespace view_manager

@@ -14,6 +14,7 @@
 #include "mojo/public/cpp/bindings/array.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
+#include "services/view_manager/animation_runner.h"
 #include "services/view_manager/ids.h"
 #include "services/view_manager/server_view_delegate.h"
 
@@ -222,6 +223,8 @@ class ConnectionManager : public ServerViewDelegate,
 
   // TODO(sky): nuke! Just a proof of concept until get real animation api.
   base::RepeatingTimer<ConnectionManager> animation_timer_;
+
+  AnimationRunner animation_runner_;
 
   DISALLOW_COPY_AND_ASSIGN(ConnectionManager);
 };

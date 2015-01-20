@@ -44,25 +44,21 @@ class TestAnimationRunnerObserver : public AnimationRunnerObserver {
   }
 
   // AnimationRunnerDelgate:
-  void OnAnimationScheduled(const ServerView* view, uint32_t id) override {
+  void OnAnimationScheduled(uint32_t id) override {
     change_ids_.push_back(id);
-    changes_.push_back(base::StringPrintf(
-        "scheduled view=%d,%d", view->id().connection_id, view->id().view_id));
+    changes_.push_back("scheduled");
   }
-  void OnAnimationDone(const ServerView* view, uint32_t id) override {
+  void OnAnimationDone(uint32_t id) override {
     change_ids_.push_back(id);
-    changes_.push_back(base::StringPrintf(
-        "done view=%d,%d", view->id().connection_id, view->id().view_id));
+    changes_.push_back("done");
   }
-  void OnAnimationInterrupted(const ServerView* view, uint32_t id) override {
+  void OnAnimationInterrupted(uint32_t id) override {
     change_ids_.push_back(id);
-    changes_.push_back(base::StringPrintf(
-        "interruped view=%d,%d", view->id().connection_id, view->id().view_id));
+    changes_.push_back("interrupted");
   }
-  void OnAnimationCanceled(const ServerView* view, uint32_t id) override {
+  void OnAnimationCanceled(uint32_t id) override {
     change_ids_.push_back(id);
-    changes_.push_back(base::StringPrintf(
-        "canceled view=%d,%d", view->id().connection_id, view->id().view_id));
+    changes_.push_back("canceled");
   }
 
  private:
@@ -145,6 +141,23 @@ class AnimationRunnerTest : public testing::Test {
   ~AnimationRunnerTest() override { runner_.RemoveObserver(&runner_observer_); }
 
  protected:
+  // Convenience to schedule an animation for a single view/group pair.
+  AnimationRunner::AnimationId ScheduleForSingleView(
+      ServerView* view,
+      const AnimationGroup* group,
+      base::TimeTicks now) {
+    std::vector<AnimationRunner::ViewAndAnimationPair> pairs;
+    pairs.push_back(std::make_pair(view, group));
+    return runner_.Schedule(pairs, now);
+  }
+
+  // If |id| is valid and there is only one view schedule against the animation
+  // it is returned; otherwise returns null.
+  ServerView* GetSingleViewAnimating(AnimationRunner::AnimationId id) {
+    std::set<ServerView*> views(runner_.GetViewsAnimating(id));
+    return views.size() == 1 ? *views.begin() : nullptr;
+  }
+
   const base::TimeTicks initial_time_;
   TestAnimationRunnerObserver runner_observer_;
   AnimationRunner runner_;
@@ -163,10 +176,11 @@ TEST_F(AnimationRunnerTest, SingleProperty) {
   AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
                     AnimationValuePtr(), FloatAnimationValue(.5));
 
-  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
+  const uint32_t animation_id =
+      ScheduleForSingleView(&view, &group, initial_time_);
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("scheduled view=0,0", runner_observer_.changes()->at(0));
+  EXPECT_EQ("scheduled", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
   runner_observer_.clear_changes();
 
@@ -187,7 +201,7 @@ TEST_F(AnimationRunnerTest, SingleProperty) {
   EXPECT_EQ(.5f, view.opacity());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("done view=0,0", runner_observer_.changes()->at(0));
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
 
   EXPECT_FALSE(runner_.HasAnimations());
@@ -209,7 +223,8 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
                       AnimationValuePtr(),
                       TransformAnimationValue(done_transform));
 
-  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
+  const uint32_t animation_id =
+      ScheduleForSingleView(&view, &group, initial_time_);
   runner_observer_.clear_changes();
 
   // Nothing in the view should have changed yet.
@@ -242,7 +257,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   EXPECT_EQ(done_transform, view.transform());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("done view=0,0", runner_observer_.changes()->at(0));
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
 }
 
@@ -264,7 +279,8 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
                       AnimationValuePtr(),
                       TransformAnimationValue(done_transform));
 
-  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
+  const uint32_t animation_id =
+      ScheduleForSingleView(&view, &group, initial_time_);
 
   runner_observer_.clear_changes();
 
@@ -299,7 +315,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
   EXPECT_EQ(done_transform, view.transform());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("done view=1,1", runner_observer_.changes()->at(0));
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
 }
 
@@ -319,7 +335,7 @@ TEST_F(AnimationRunnerTest, Cycles) {
   AddOpacityElement(&group, TimeDelta::FromMicroseconds(500),
                     AnimationValuePtr(), FloatAnimationValue(.5));
 
-  runner_.Schedule(&view, group, initial_time_);
+  ScheduleForSingleView(&view, &group, initial_time_);
   runner_observer_.clear_changes();
 
   // Nothing in the view should have changed yet.
@@ -348,7 +364,7 @@ TEST_F(AnimationRunnerTest, Cycles) {
   EXPECT_EQ(.5f, view.opacity());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("done view=1,2", runner_observer_.changes()->at(0));
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
 }
 
 // Verifies scheduling the same view twice sends an interrupt.
@@ -361,7 +377,8 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
                     AnimationValuePtr(), FloatAnimationValue(.5));
 
-  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
+  const uint32_t animation_id =
+      ScheduleForSingleView(&view, &group, initial_time_);
   runner_observer_.clear_changes();
 
   // Animate half way.
@@ -371,20 +388,20 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
   // Schedule again. We should get an interrupt, but opacity shouldn't change.
-  const uint32_t animation2_id = runner_.Schedule(
-      &view, group, initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  const uint32_t animation2_id = ScheduleForSingleView(
+      &view, &group, initial_time_ + TimeDelta::FromMicroseconds(500));
 
   // Id should have changed.
   EXPECT_NE(animation_id, animation2_id);
 
-  EXPECT_EQ(nullptr, runner_.GetViewForAnimation(animation_id));
-  EXPECT_EQ(&view, runner_.GetViewForAnimation(animation2_id));
+  EXPECT_FALSE(runner_.IsAnimating(animation_id));
+  EXPECT_EQ(&view, GetSingleViewAnimating(animation2_id));
 
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_EQ(2u, runner_observer_.changes()->size());
-  EXPECT_EQ("interruped view=1,2", runner_observer_.changes()->at(0));
+  EXPECT_EQ("interrupted", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
-  EXPECT_EQ("scheduled view=1,2", runner_observer_.changes()->at(1));
+  EXPECT_EQ("scheduled", runner_observer_.changes()->at(1));
   EXPECT_EQ(animation2_id, runner_observer_.change_ids()->at(1));
   runner_observer_.clear_changes();
 
@@ -395,7 +412,7 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(2000));
   EXPECT_EQ(.5f, view.opacity());
   EXPECT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("done view=1,2", runner_observer_.changes()->at(0));
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation2_id, runner_observer_.change_ids()->at(0));
 }
 
@@ -409,9 +426,10 @@ TEST_F(AnimationRunnerTest, CancelAnimationForView) {
   AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
                     AnimationValuePtr(), FloatAnimationValue(.5));
 
-  const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
+  const uint32_t animation_id =
+      ScheduleForSingleView(&view, &group, initial_time_);
   runner_observer_.clear_changes();
-  EXPECT_EQ(&view, runner_.GetViewForAnimation(animation_id));
+  EXPECT_EQ(&view, GetSingleViewAnimating(animation_id));
 
   EXPECT_TRUE(runner_.HasAnimations());
 
@@ -424,12 +442,12 @@ TEST_F(AnimationRunnerTest, CancelAnimationForView) {
   runner_.CancelAnimationForView(&view);
 
   EXPECT_FALSE(runner_.HasAnimations());
-  EXPECT_EQ(nullptr, runner_.GetViewForAnimation(animation_id));
+  EXPECT_EQ(nullptr, GetSingleViewAnimating(animation_id));
 
   EXPECT_EQ(.75f, view.opacity());
 
   EXPECT_EQ(1u, runner_observer_.changes()->size());
-  EXPECT_EQ("canceled view=0,0", runner_observer_.changes()->at(0));
+  EXPECT_EQ("canceled", runner_observer_.changes()->at(0));
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
 }
 
@@ -448,7 +466,7 @@ TEST_F(AnimationRunnerTest, InfiniteRepeatWithHugeGap) {
   AddOpacityElement(&group, TimeDelta::FromMicroseconds(500),
                     AnimationValuePtr(), FloatAnimationValue(.5));
 
-  runner_.Schedule(&view, group, initial_time_);
+  ScheduleForSingleView(&view, &group, initial_time_);
   runner_observer_.clear_changes();
 
   runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1000000000750));
@@ -475,17 +493,148 @@ TEST_F(AnimationRunnerTest, RescheduleSetsPropertiesToFinalValue) {
                       AnimationValuePtr(),
                       TransformAnimationValue(done_transform));
 
-  runner_.Schedule(&view, group, initial_time_);
+  ScheduleForSingleView(&view, &group, initial_time_);
 
   // Schedule() again, this time without animating opacity.
   group.sequences[0]->elements[0]->property = ANIMATION_PROPERTY_NONE;
-  runner_.Schedule(&view, group, initial_time_);
+  ScheduleForSingleView(&view, &group, initial_time_);
 
   // Opacity should go to final value.
   EXPECT_EQ(.5f, view.opacity());
   // Transform shouldn't have changed since newly scheduled animation also has
   // transform in it.
   EXPECT_TRUE(view.transform().IsIdentity());
+}
+
+// Opacity from 1 to .5 over 1000 of v1 and v2 transform to 2x,4x over 500.
+TEST_F(AnimationRunnerTest, TwoViews) {
+  TestServerViewDelegate view_delegate;
+  ServerView view1(&view_delegate, ViewId());
+  ServerView view2(&view_delegate, ViewId(1, 2));
+
+  AnimationGroup group1;
+  InitGroupForView(&group1, view1.id(), 1);
+  AddOpacityElement(&group1, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
+
+  AnimationGroup group2;
+  InitGroupForView(&group2, view2.id(), 1);
+  gfx::Transform done_transform;
+  done_transform.Scale(2, 4);
+  AddTransformElement(&group2, TimeDelta::FromMicroseconds(500),
+                      AnimationValuePtr(),
+                      TransformAnimationValue(done_transform));
+
+  std::vector<AnimationRunner::ViewAndAnimationPair> pairs;
+  pairs.push_back(std::make_pair(&view1, &group1));
+  pairs.push_back(std::make_pair(&view2, &group2));
+
+  const uint32_t animation_id = runner_.Schedule(pairs, initial_time_);
+
+  ASSERT_EQ(1u, runner_observer_.changes()->size());
+  EXPECT_EQ("scheduled", runner_observer_.changes()->at(0));
+  EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
+  runner_observer_.clear_changes();
+
+  EXPECT_TRUE(runner_.HasAnimations());
+  EXPECT_TRUE(runner_.IsAnimating(animation_id));
+
+  // Properties should be at the initial value.
+  EXPECT_EQ(1.f, view1.opacity());
+  EXPECT_TRUE(view2.transform().IsIdentity());
+
+  // Animate 250ms in, which is quarter way for opacity and half way for
+  // transform.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(250));
+  EXPECT_EQ(.875f, view1.opacity());
+  gfx::Transform half_way_transform;
+  half_way_transform.Scale(1.5, 2.5);
+  EXPECT_EQ(half_way_transform, view2.transform());
+  std::set<ServerView*> views_animating(
+      runner_.GetViewsAnimating(animation_id));
+  EXPECT_EQ(2u, views_animating.size());
+  EXPECT_EQ(1u, views_animating.count(&view1));
+  EXPECT_EQ(1u, views_animating.count(&view2));
+
+  // Animate 750ms in, view1 should be done 3/4 done, and view2 done.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(750));
+  EXPECT_EQ(.625, view1.opacity());
+  EXPECT_EQ(done_transform, view2.transform());
+  views_animating = runner_.GetViewsAnimating(animation_id);
+  EXPECT_EQ(1u, views_animating.size());
+  EXPECT_EQ(1u, views_animating.count(&view1));
+  EXPECT_TRUE(runner_.HasAnimations());
+  EXPECT_TRUE(runner_.IsAnimating(animation_id));
+
+  // Animate to end.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1750));
+  EXPECT_EQ(.5, view1.opacity());
+  EXPECT_EQ(done_transform, view2.transform());
+  views_animating = runner_.GetViewsAnimating(animation_id);
+  EXPECT_TRUE(views_animating.empty());
+  EXPECT_FALSE(runner_.HasAnimations());
+  EXPECT_FALSE(runner_.IsAnimating(animation_id));
+}
+
+TEST_F(AnimationRunnerTest, Reschedule) {
+  TestServerViewDelegate view_delegate;
+  ServerView view(&view_delegate, ViewId());
+
+  // Animation from 1-0 over 1ms and in parallel transform to 2x,4x over 1ms.
+  AnimationGroup group;
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(0));
+  group.sequences.push_back(AnimationSequence::New());
+  group.sequences[1]->cycle_count = 1;
+  gfx::Transform done_transform;
+  done_transform.Scale(2, 4);
+  AddTransformElement(&group, TimeDelta::FromMicroseconds(1000),
+                      AnimationValuePtr(),
+                      TransformAnimationValue(done_transform));
+  const uint32_t animation_id1 =
+      ScheduleForSingleView(&view, &group, initial_time_);
+
+  // Animate half way in.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
+  EXPECT_EQ(.5f, view.opacity());
+  gfx::Transform half_way_transform;
+  half_way_transform.Scale(1.5, 2.5);
+  EXPECT_EQ(half_way_transform, view.transform());
+
+  runner_observer_.clear_changes();
+
+  // Schedule the same view animating opacity to 1.
+  AnimationGroup group2;
+  InitGroupForView(&group2, view.id(), 1);
+  AddOpacityElement(&group2, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(1));
+  const uint32_t animation_id2 = ScheduleForSingleView(
+      &view, &group2, initial_time_ + TimeDelta::FromMicroseconds(500));
+
+  // Opacity should remain at .5, but transform should go to end state.
+  EXPECT_EQ(.5f, view.opacity());
+  EXPECT_EQ(done_transform, view.transform());
+
+  ASSERT_EQ(2u, runner_observer_.changes()->size());
+  EXPECT_EQ("interrupted", runner_observer_.changes()->at(0));
+  EXPECT_EQ(animation_id1, runner_observer_.change_ids()->at(0));
+  EXPECT_EQ("scheduled", runner_observer_.changes()->at(1));
+  EXPECT_EQ(animation_id2, runner_observer_.change_ids()->at(1));
+  runner_observer_.clear_changes();
+
+  // Animate half way through new sequence. Opacity should be the only thing
+  // changing.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1000));
+  EXPECT_EQ(.75f, view.opacity());
+  EXPECT_EQ(done_transform, view.transform());
+  ASSERT_EQ(0u, runner_observer_.changes()->size());
+
+  // Animate to end.
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(2000));
+  ASSERT_EQ(1u, runner_observer_.changes()->size());
+  EXPECT_EQ("done", runner_observer_.changes()->at(0));
+  EXPECT_EQ(animation_id2, runner_observer_.change_ids()->at(0));
 }
 
 }  // namespace view_manager

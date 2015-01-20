@@ -90,6 +90,8 @@ class ScheduledAnimationGroup {
   // is done (nothing left to animate).
   bool Tick(base::TimeTicks time);
 
+  ServerView* view() { return view_; }
+
  private:
   ScheduledAnimationGroup(ServerView* view,
                           uint32_t id,

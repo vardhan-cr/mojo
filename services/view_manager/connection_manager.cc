@@ -119,7 +119,8 @@ ConnectionManager::ConnectionManager(ConnectionManagerDelegate* delegate,
       root_(new ServerView(this, RootViewId())),
       wm_internal_(wm_internal),
       current_change_(nullptr),
-      in_destructor_(false) {
+      in_destructor_(false),
+      animation_runner_(base::TimeTicks::Now()) {
   root_->SetBounds(gfx::Rect(800, 600));
   root_->SetVisible(true);
   display_manager_->Init(this);
@@ -313,6 +314,8 @@ void ConnectionManager::OnWillDestroyView(ServerView* view) {
     ServerView* parent_above = view;
     ReparentClonedViews(view->parent(), &parent_above, view);
   }
+
+  animation_runner_.CancelAnimationForView(view);
 }
 
 void ConnectionManager::OnViewDestroyed(const ServerView* view) {
@@ -336,6 +339,8 @@ void ConnectionManager::OnWillChangeViewHierarchy(ServerView* view,
   }
 
   ProcessWillChangeViewHierarchy(view, new_parent, old_parent);
+
+  animation_runner_.CancelAnimationForView(view);
 }
 
 void ConnectionManager::OnViewHierarchyChanged(const ServerView* view,
@@ -407,6 +412,11 @@ void ConnectionManager::OnWillChangeViewVisibility(ServerView* view) {
     pair.second->service()->ProcessWillChangeViewVisibility(
         view, IsChangeSource(pair.first));
   }
+
+  const bool is_parent_drawn =
+      view->parent() && view->parent()->IsDrawn(root_.get());
+  if (!is_parent_drawn || !view->visible())
+    animation_runner_.CancelAnimationForView(view);
 }
 
 void ConnectionManager::OnViewSharedPropertyChanged(

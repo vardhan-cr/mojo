@@ -7,14 +7,12 @@
 
 namespace view_manager {
 
-class ServerView;
-
 class AnimationRunnerObserver {
  public:
-  virtual void OnAnimationScheduled(const ServerView* view, uint32_t id) = 0;
-  virtual void OnAnimationDone(const ServerView* view, uint32_t id) = 0;
-  virtual void OnAnimationInterrupted(const ServerView* view, uint32_t id) = 0;
-  virtual void OnAnimationCanceled(const ServerView* view, uint32_t id) = 0;
+  virtual void OnAnimationScheduled(uint32_t id) = 0;
+  virtual void OnAnimationDone(uint32_t id) = 0;
+  virtual void OnAnimationInterrupted(uint32_t id) = 0;
+  virtual void OnAnimationCanceled(uint32_t id) = 0;
 
  protected:
   virtual ~AnimationRunnerObserver() {}
