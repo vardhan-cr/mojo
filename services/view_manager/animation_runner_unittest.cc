@@ -13,14 +13,18 @@
 #include "services/view_manager/test_server_view_delegate.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
+using base::TimeDelta;
 using mojo::ANIMATION_PROPERTY_NONE;
 using mojo::ANIMATION_PROPERTY_OPACITY;
 using mojo::ANIMATION_PROPERTY_TRANSFORM;
 using mojo::ANIMATION_TWEEN_TYPE_LINEAR;
 using mojo::AnimationElement;
 using mojo::AnimationGroup;
+using mojo::AnimationProperty;
 using mojo::AnimationSequence;
+using mojo::AnimationTweenType;
 using mojo::AnimationValue;
+using mojo::AnimationValuePtr;
 using mojo::Transform;
 
 namespace view_manager {
@@ -68,6 +72,68 @@ class TestAnimationRunnerObserver : public AnimationRunnerObserver {
   DISALLOW_COPY_AND_ASSIGN(TestAnimationRunnerObserver);
 };
 
+// Creates an AnimationValuePtr from the specified float value.
+AnimationValuePtr FloatAnimationValue(float float_value) {
+  AnimationValuePtr value(AnimationValue::New());
+  value->float_value = float_value;
+  return value.Pass();
+}
+
+// Creates an AnimationValuePtr from the specified transform.
+AnimationValuePtr TransformAnimationValue(const gfx::Transform& transform) {
+  AnimationValuePtr value(AnimationValue::New());
+  value->transform = Transform::From(transform);
+  return value.Pass();
+}
+
+// Adds an AnimationElement to |group|s last sequence with the specified value.
+void AddElement(AnimationGroup* group,
+                TimeDelta time,
+                AnimationValuePtr start_value,
+                AnimationValuePtr target_value,
+                AnimationProperty property,
+                AnimationTweenType tween_type) {
+  AnimationSequence& sequence =
+      *(group->sequences[group->sequences.size() - 1]);
+  sequence.elements.push_back(AnimationElement::New());
+  AnimationElement& element =
+      *(sequence.elements[sequence.elements.size() - 1]);
+  element.property = property;
+  element.duration = time.InMicroseconds();
+  element.tween_type = tween_type;
+  element.start_value = start_value.Pass();
+  element.target_value = target_value.Pass();
+}
+
+void AddOpacityElement(AnimationGroup* group,
+                       TimeDelta time,
+                       AnimationValuePtr start_value,
+                       AnimationValuePtr target_value) {
+  AddElement(group, time, start_value.Pass(), target_value.Pass(),
+             ANIMATION_PROPERTY_OPACITY, ANIMATION_TWEEN_TYPE_LINEAR);
+}
+
+void AddTransformElement(AnimationGroup* group,
+                         TimeDelta time,
+                         AnimationValuePtr start_value,
+                         AnimationValuePtr target_value) {
+  AddElement(group, time, start_value.Pass(), target_value.Pass(),
+             ANIMATION_PROPERTY_TRANSFORM, ANIMATION_TWEEN_TYPE_LINEAR);
+}
+
+void AddPauseElement(AnimationGroup* group, TimeDelta time) {
+  AddElement(group, time, AnimationValuePtr(), AnimationValuePtr(),
+             ANIMATION_PROPERTY_NONE, ANIMATION_TWEEN_TYPE_LINEAR);
+}
+
+void InitGroupForView(AnimationGroup* group,
+                      const ViewId& id,
+                      int cycle_count) {
+  group->view_id = ViewIdToTransportId(id);
+  group->sequences.push_back(AnimationSequence::New());
+  group->sequences[group->sequences.size() - 1]->cycle_count = cycle_count;
+}
+
 }  // namespace
 
 class AnimationRunnerTest : public testing::Test {
@@ -93,17 +159,9 @@ TEST_F(AnimationRunnerTest, SingleProperty) {
   ServerView view(&view_delegate, ViewId());
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = .5;
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
 
   const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
 
@@ -118,14 +176,14 @@ TEST_F(AnimationRunnerTest, SingleProperty) {
   EXPECT_EQ(1.f, view.opacity());
 
   // Animate half way.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
 
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
   // Run well past the end. Value should progress to end and delegate should
   // be notified.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromSeconds(10));
+  runner_.Tick(initial_time_ + TimeDelta::FromSeconds(10));
   EXPECT_EQ(.5f, view.opacity());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
@@ -141,26 +199,15 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   ServerView view(&view_delegate, ViewId());
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = .5;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element2 = *(sequence.elements[1]);
-  element2.property = ANIMATION_PROPERTY_TRANSFORM;
-  element2.duration = 2000;
-  element2.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element2.target_value = AnimationValue::New();
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5f));
+
   gfx::Transform done_transform;
   done_transform.Scale(2, 4);
-  element2.target_value->transform = Transform::From(done_transform);
+  AddTransformElement(&group, TimeDelta::FromMicroseconds(2000),
+                      AnimationValuePtr(),
+                      TransformAnimationValue(done_transform));
 
   const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
@@ -170,18 +217,18 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   EXPECT_TRUE(view.transform().IsIdentity());
 
   // Animate half way from through opacity animation.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
 
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_TRUE(view.transform().IsIdentity());
 
   // Finish first element (opacity).
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(1000));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1000));
   EXPECT_EQ(.5f, view.opacity());
   EXPECT_TRUE(view.transform().IsIdentity());
 
   // Half way through second (transform).
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(2000));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(2000));
   EXPECT_EQ(.5f, view.opacity());
   gfx::Transform half_way_transform;
   half_way_transform.Scale(1.5, 2.5);
@@ -190,7 +237,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
   // To end.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(3500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(3500));
   EXPECT_EQ(.5f, view.opacity());
   EXPECT_EQ(done_transform, view.transform());
 
@@ -199,37 +246,23 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInSequence) {
   EXPECT_EQ(animation_id, runner_observer_.change_ids()->at(0));
 }
 
-// Opacity from .5 to 1 over 1000, transform to 2x,3x over 500.
+// Opacity from .5 to 1 over 1000, transform to 2x,4x over 500.
 TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
   TestServerViewDelegate view_delegate;
   ServerView view(&view_delegate, ViewId(1, 1));
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    FloatAnimationValue(.5f), FloatAnimationValue(1));
+
   group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.start_value = AnimationValue::New();
-  element.start_value->float_value = .5;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = 1;
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence2 = *(group.sequences[1]);
-  sequence2.cycle_count = 1;
-  sequence2.elements.push_back(AnimationElement::New());
-  AnimationElement& element2 = *(sequence2.elements[0]);
-  element2.property = ANIMATION_PROPERTY_TRANSFORM;
-  element2.duration = 500;
-  element2.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element2.target_value = AnimationValue::New();
+  group.sequences[1]->cycle_count = 1;
   gfx::Transform done_transform;
   done_transform.Scale(2, 4);
-  element2.target_value->transform = Transform::From(done_transform);
+  AddTransformElement(&group, TimeDelta::FromMicroseconds(500),
+                      AnimationValuePtr(),
+                      TransformAnimationValue(done_transform));
 
   const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
 
@@ -241,7 +274,7 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
 
   // Animate to 250, which is 1/4 way through opacity and half way through
   // transform.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(250));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(250));
 
   EXPECT_EQ(.625f, view.opacity());
   gfx::Transform half_way_transform;
@@ -249,19 +282,19 @@ TEST_F(AnimationRunnerTest, TwoPropertiesInParallel) {
   EXPECT_EQ(half_way_transform, view.transform());
 
   // Animate to 500, which is 1/2 way through opacity and transform done.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_EQ(done_transform, view.transform());
 
   // Animate to 750, which is 3/4 way through opacity and transform done.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(750));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(750));
   EXPECT_EQ(.875f, view.opacity());
   EXPECT_EQ(done_transform, view.transform());
 
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
   // To end.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(3500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(3500));
   EXPECT_EQ(1.f, view.opacity());
   EXPECT_EQ(done_transform, view.transform());
 
@@ -279,28 +312,12 @@ TEST_F(AnimationRunnerTest, Cycles) {
   view.SetOpacity(.5f);
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 3;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element2 = *(sequence.elements[1]);
-  element2.property = ANIMATION_PROPERTY_NONE;
-  element2.duration = 500;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element3 = *(sequence.elements[2]);
-  element3.property = ANIMATION_PROPERTY_OPACITY;
-  element3.duration = 500;
-  element3.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element3.target_value = AnimationValue::New();
-  element3.target_value->float_value = .5f;
+  InitGroupForView(&group, view.id(), 3);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(1));
+  AddPauseElement(&group, TimeDelta::FromMicroseconds(500));
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(500),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
 
   runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
@@ -308,26 +325,26 @@ TEST_F(AnimationRunnerTest, Cycles) {
   // Nothing in the view should have changed yet.
   EXPECT_EQ(.5f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
   EXPECT_EQ(.75f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(1250));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1250));
   EXPECT_EQ(1.f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(1750));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1750));
   EXPECT_EQ(.75f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(2500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(2500));
   EXPECT_EQ(.75f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(3250));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(3250));
   EXPECT_EQ(1.f, view.opacity());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(3750));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(3750));
   EXPECT_EQ(.75f, view.opacity());
 
   // Animate to the end.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(6500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(6500));
   EXPECT_EQ(.5f, view.opacity());
 
   ASSERT_EQ(1u, runner_observer_.changes()->size());
@@ -340,23 +357,15 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   ServerView view(&view_delegate, ViewId(1, 2));
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = .5f;
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
 
   const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
   // Animate half way.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
 
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_TRUE(runner_observer_.changes()->empty());
@@ -379,11 +388,11 @@ TEST_F(AnimationRunnerTest, ScheduleTwice) {
   EXPECT_EQ(animation2_id, runner_observer_.change_ids()->at(1));
   runner_observer_.clear_changes();
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(1000));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1000));
   EXPECT_EQ(.625f, view.opacity());
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(2000));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(2000));
   EXPECT_EQ(.5f, view.opacity());
   EXPECT_EQ(1u, runner_observer_.changes()->size());
   EXPECT_EQ("done view=1,2", runner_observer_.changes()->at(0));
@@ -396,17 +405,9 @@ TEST_F(AnimationRunnerTest, CancelAnimationForView) {
   TestServerViewDelegate view_delegate;
   ServerView view(&view_delegate, ViewId());
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = .5;
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
 
   const uint32_t animation_id = runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
@@ -415,7 +416,7 @@ TEST_F(AnimationRunnerTest, CancelAnimationForView) {
   EXPECT_TRUE(runner_.HasAnimations());
 
   // Animate half way.
-  runner_.Tick(initial_time_ + base::TimeDelta::FromMicroseconds(500));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(500));
   EXPECT_EQ(.75f, view.opacity());
   EXPECT_TRUE(runner_observer_.changes()->empty());
 
@@ -441,30 +442,16 @@ TEST_F(AnimationRunnerTest, InfiniteRepeatWithHugeGap) {
   view.SetOpacity(.5f);
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 0;  // Repeats forever.
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 500;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element2 = *(sequence.elements[1]);
-  element2.property = ANIMATION_PROPERTY_OPACITY;
-  element2.duration = 500;
-  element2.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element2.target_value = AnimationValue::New();
-  element2.target_value->float_value = .5f;
+  InitGroupForView(&group, view.id(), 0);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(500),
+                    AnimationValuePtr(), FloatAnimationValue(1));
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(500),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
 
   runner_.Schedule(&view, group, initial_time_);
   runner_observer_.clear_changes();
 
-  runner_.Tick(initial_time_ +
-               base::TimeDelta::FromMicroseconds(1000000000750));
+  runner_.Tick(initial_time_ + TimeDelta::FromMicroseconds(1000000000750));
 
   EXPECT_EQ(.75f, view.opacity());
 
@@ -478,30 +465,20 @@ TEST_F(AnimationRunnerTest, RescheduleSetsPropertiesToFinalValue) {
   ServerView view(&view_delegate, ViewId());
 
   AnimationGroup group;
-  group.view_id = ViewIdToTransportId(view.id());
-  group.sequences.push_back(AnimationSequence::New());
-  AnimationSequence& sequence = *(group.sequences[0]);
-  sequence.cycle_count = 1;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.duration = 1000;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element.target_value = AnimationValue::New();
-  element.target_value->float_value = .5;
-  sequence.elements.push_back(AnimationElement::New());
-  AnimationElement& element2 = *(sequence.elements[1]);
-  element2.property = ANIMATION_PROPERTY_TRANSFORM;
-  element2.duration = 500;
-  element2.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
-  element2.target_value = AnimationValue::New();
+  InitGroupForView(&group, view.id(), 1);
+  AddOpacityElement(&group, TimeDelta::FromMicroseconds(1000),
+                    AnimationValuePtr(), FloatAnimationValue(.5));
+
   gfx::Transform done_transform;
   done_transform.Scale(2, 4);
-  element2.target_value->transform = Transform::From(done_transform);
+  AddTransformElement(&group, TimeDelta::FromMicroseconds(500),
+                      AnimationValuePtr(),
+                      TransformAnimationValue(done_transform));
+
   runner_.Schedule(&view, group, initial_time_);
 
   // Schedule() again, this time without animating opacity.
-  element.property = ANIMATION_PROPERTY_NONE;
+  group.sequences[0]->elements[0]->property = ANIMATION_PROPERTY_NONE;
   runner_.Schedule(&view, group, initial_time_);
 
   // Opacity should go to final value.
