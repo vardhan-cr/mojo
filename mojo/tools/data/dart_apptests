@@ -1,0 +1,8 @@
+# This file contains a list of Mojo gtest unit tests.
+# This must be a valid python dictionary.
+# TODO(zra): Merge with apptests file when Dart is no longer under a flag.
+[
+  {
+    "test": "mojo:dart_apptests",
+  },
+]

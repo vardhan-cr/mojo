@@ -97,7 +97,7 @@ class DartSide extends DartSideInterface {
 
 
 main(List args) {
-  assert(args.length == 1);
+  assert(args.length == 2);
   int mojoHandle = args[0];
   var rawHandle = new core.MojoHandle(mojoHandle);
   var endpoint = new core.MojoMessagePipeEndpoint(rawHandle);

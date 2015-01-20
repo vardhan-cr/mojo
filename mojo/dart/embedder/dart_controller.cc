@@ -371,7 +371,7 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
     return;
   }
 
-  const int kNumArgs = arguments_count + 1;
+  const int kNumArgs = arguments_count + 2;
   const char* args[kNumArgs];
 
   // TODO(zra): Fix Dart VM Shutdown race.
@@ -383,8 +383,12 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   // that isn't there anymore.
   args[0] = "--worker-timeout-millis=0";
 
+  // Stacktraces for exceptions thrown during await statements are NYI.
+  // TODO(zra): Remove this flag when fixed.
+  args[1] = "--print-stacktrace-at-throw";
+
   for (int i = 0; i < arguments_count; ++i) {
-    args[i + 1] = arguments[i];
+    args[i + 2] = arguments[i];
   }
 
   bool result = Dart_SetVMFlags(kNumArgs, args);
@@ -420,17 +424,10 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
   Dart_Handle result;
   Dart_EnterScope();
 
-  Dart_Handle root_lib = Dart_RootLibrary();
-  DART_CHECK_VALID(root_lib);
-
-  Dart_Handle builtin_lib =
-      Builtin::LoadAndCheckLibrary(Builtin::kBuiltinLibrary);
-  DART_CHECK_VALID(builtin_lib);
+  // Start the MojoHandleWatcher.
   Dart_Handle mojo_core_lib =
       Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
   DART_CHECK_VALID(mojo_core_lib);
-
-  // Start the MojoHandleWatcher.
   Dart_Handle handle_watcher_type = Dart_GetType(
       mojo_core_lib,
       Dart_NewStringFromCString("MojoHandleWatcher"),
@@ -448,6 +445,12 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
   result = Dart_RunLoop();
   DART_CHECK_VALID(result);
 
+  // Load the root library into the builtin library so that main can be found.
+  Dart_Handle builtin_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kBuiltinLibrary);
+  DART_CHECK_VALID(builtin_lib);
+  Dart_Handle root_lib = Dart_RootLibrary();
+  DART_CHECK_VALID(root_lib);
   result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
   DART_CHECK_VALID(result);
 
@@ -468,9 +471,14 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
   const intptr_t kNumIsolateArgs = 2;
   Dart_Handle isolate_args[kNumIsolateArgs];
   isolate_args[0] = main_closure;     // entryPoint
-  isolate_args[1] = Dart_NewList(1);  // args
+  isolate_args[1] = Dart_NewList(2);  // args
   DART_CHECK_VALID(isolate_args[1]);
+
+  Dart_Handle script_uri = Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>(config.script_uri.data()),
+      config.script_uri.length());
   Dart_ListSetAt(isolate_args[1], 0, Dart_NewInteger(config.handle));
+  Dart_ListSetAt(isolate_args[1], 1, script_uri);
 
   Dart_Handle isolate_lib =
       Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));

@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-library bindings;
-
 import 'dart:async';
+import 'dart:core';
+import 'dart:collection';
 import 'dart:convert';
-import 'dart:mojo_core' as core;
+import 'dart:isolate';
+import 'dart:math';
+import 'dart:mirrors';
+import 'dart:mojo_application';
+import 'dart:mojo_bindings';
+import 'dart:mojo_builtin';
+import 'dart:mojo_core';
 import 'dart:typed_data';
-
-part 'src/client.dart';
-part 'src/codec.dart';
-part 'src/interface.dart';
-part 'src/message.dart';
-part 'src/struct.dart';

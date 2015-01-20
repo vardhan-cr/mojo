@@ -2,75 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-action("generate_snapshot_bin") {
-  deps = [
-    "//dart/runtime/bin:gen_snapshot",
-  ]
-  inputs = [
-    "snapshot.dart",
-    "//dart/runtime/tools/create_snapshot_bin.py",
-    "//mojo/dart/embedder/builtin.dart",
-    "//mojo/public/dart/bindings.dart",
-    "//mojo/public/dart/core.dart",
-    "//mojo/public/dart/src/buffer.dart",
-    "//mojo/public/dart/src/client.dart",
-    "//mojo/public/dart/src/codec.dart",
-    "//mojo/public/dart/src/data_pipe.dart",
-    "//mojo/public/dart/src/event_stream.dart",
-    "//mojo/public/dart/src/handle.dart",
-    "//mojo/public/dart/src/handle_watcher.dart",
-    "//mojo/public/dart/src/interface.dart",
-    "//mojo/public/dart/src/message.dart",
-    "//mojo/public/dart/src/message_pipe.dart",
-    "//mojo/public/dart/src/struct.dart",
-    "//mojo/public/dart/src/timer_impl.dart",
-    "//mojo/public/dart/src/timer_queue.dart",
-    "//mojo/public/dart/src/types.dart",
-  ]
-  output = "$target_gen_dir/snapshot_gen.bin"
-  outputs = [
-    output,
-  ]
-
-  script = "//dart/runtime/tools/create_snapshot_bin.py"
-  builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
-  bindings_path = rebase_path("//mojo/public/dart/bindings.dart")
-  core_path = rebase_path("//mojo/public/dart/core.dart")
-  args = [
-    "--executable", rebase_path("$root_out_dir/gen_snapshot"),
-    "--package_root", rebase_path("$root_gen_dir"),
-    "--script", rebase_path("snapshot.dart"),
-    "--output_bin", rebase_path(output, root_build_dir),
-    "--target_os", os,
-    "--url_mapping=dart:mojo_bindings,$bindings_path",
-    "--url_mapping=dart:mojo_builtin,$builtin_path",
-    "--url_mapping=dart:mojo_core,$core_path",
-  ]
-}
-
-action("generate_snapshot_file") {
-  deps = [
-    ":generate_snapshot_bin",
-  ]
-  inputs = [
-    "//dart/runtime/tools/create_snapshot_file.py",
-    "snapshot.cc.tmpl",
-    "$target_gen_dir/snapshot_gen.bin",
-  ]
-  output = "$target_gen_dir/snapshot.cc"
-  outputs = [
-    output,
-  ]
-
-  script = "//dart/runtime/tools/create_snapshot_file.py"
-  args = [
-    "--input_bin", rebase_path("$target_gen_dir/snapshot_gen.bin"),
-    "--input_cc", rebase_path("snapshot.cc.tmpl"),
-    "--output", rebase_path(output),
-  ]
-}
-
-source_set("dart_controller") {
+source_set("dart_controller_no_snapshot") {
   sources = [
     "builtin.cc",
     "builtin.h",
@@ -80,11 +12,9 @@ source_set("dart_controller") {
     "isolate_data.h",
     "mojo_natives.cc",
     "mojo_natives.h",
-    "$target_gen_dir/snapshot.cc",
   ]
 
   deps = [
-    ":generate_snapshot_file",
     "//base",
     "//base:i18n",
     "//crypto",

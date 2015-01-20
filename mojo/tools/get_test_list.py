@@ -153,6 +153,10 @@ def GetTestList(config):
                  [os.path.join("mojo", "tools", "test_runner.py"),
                   os.path.join("mojo", "tools", "data", "dart_unittests"),
                   build_dir, "mojob_test_successes"])
+    AddXvfbEntry("Dart App tests",
+                 [os.path.join("mojo", "tools", "apptest_runner.py"),
+                  os.path.join("mojo", "tools", "data", "dart_apptests"),
+                  build_dir])
 
   # NaCl tests:
   if ShouldRunTest("nacl"):

@@ -2,14 +2,21 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//mojo/public/tools/bindings/mojom.gni")
+import("//mojo/public/mojo_application.gni")
 
-action("generate_test_snapshot_bin") {
+group("dart") {
+  deps = [
+    ":dart_content_handler",
+  ]
+}
+
+action("generate_snapshot_bin") {
   deps = [
     "//dart/runtime/bin:gen_snapshot",
+    "//mojo/public/interfaces/application",
   ]
   inputs = [
-    "test_snapshot.dart",
+    "snapshot.dart",
     "//dart/runtime/tools/create_snapshot_bin.py",
     "//mojo/dart/embedder/builtin.dart",
     "//mojo/public/dart/bindings.dart",
@@ -29,113 +36,107 @@ action("generate_test_snapshot_bin") {
     "//mojo/public/dart/src/timer_impl.dart",
     "//mojo/public/dart/src/timer_queue.dart",
     "//mojo/public/dart/src/types.dart",
+    "//services/dart/lib/application.dart",
+    "//services/dart/lib/src/application.dart",
+    "//services/dart/lib/src/service_provider.dart",
   ]
-  output = "$target_gen_dir/test_snapshot_gen.bin"
+  output = "$target_gen_dir/snapshot_gen.bin"
   outputs = [
     output,
   ]
 
   script = "//dart/runtime/tools/create_snapshot_bin.py"
+  application_path = rebase_path("//services/dart/lib/application.dart")
   builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
   bindings_path = rebase_path("//mojo/public/dart/bindings.dart")
   core_path = rebase_path("//mojo/public/dart/core.dart")
   args = [
     "--executable", rebase_path("$root_out_dir/gen_snapshot"),
     "--package_root", rebase_path("$root_gen_dir"),
-    "--script", rebase_path("test_snapshot.dart"),
+    "--script", rebase_path("snapshot.dart"),
     "--output_bin", rebase_path(output, root_build_dir),
     "--target_os", os,
+    "--url_mapping=dart:mojo_application,$application_path",
     "--url_mapping=dart:mojo_bindings,$bindings_path",
     "--url_mapping=dart:mojo_builtin,$builtin_path",
     "--url_mapping=dart:mojo_core,$core_path",
   ]
 }
 
-action("generate_test_snapshot_file") {
+action("generate_snapshot_file") {
   deps = [
-    ":generate_test_snapshot_bin",
+    ":generate_snapshot_bin",
   ]
   inputs = [
     "//dart/runtime/tools/create_snapshot_file.py",
     "//mojo/dart/embedder/snapshot.cc.tmpl",
-    "$target_gen_dir/test_snapshot_gen.bin",
+    "$target_gen_dir/snapshot_gen.bin",
   ]
-  output = "$target_gen_dir/test_snapshot.cc"
+  output = "$target_gen_dir/snapshot.cc"
   outputs = [
     output,
   ]
 
   script = "//dart/runtime/tools/create_snapshot_file.py"
   args = [
-    "--input_bin", rebase_path("$target_gen_dir/test_snapshot_gen.bin"),
+    "--input_bin", rebase_path("$target_gen_dir/snapshot_gen.bin"),
     "--input_cc", rebase_path("//mojo/dart/embedder/snapshot.cc.tmpl"),
     "--output", rebase_path(output),
   ]
 }
 
-source_set("dart_controller_for_test") {
-  testonly=true
+source_set("dart_controller") {
   sources = [
-    "$target_gen_dir/test_snapshot.cc",
+    "$target_gen_dir/snapshot.cc",
   ]
 
   deps = [
-    ":generate_test_snapshot_file",
+    ":generate_snapshot_file",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
   ]
 }
 
-test("dart_unittests") {
+mojo_native_application("dart_content_handler") {
   sources = [
-    "run_dart_tests.cc",
+    "content_handler_main.cc",
+    "dart_app.cc",
+    "dart_app.h",
   ]
+
   deps = [
-    ":dart_controller_for_test",
-    ":dart_to_cpp_unittests",
-    ":expect",
+    ":dart_controller",
     "//base",
-    "//crypto:crypto",
+    "//base:i18n",
+    "//crypto",
+    "//dart/runtime:libdart",
+    "//mojo/application",
+    "//mojo/application:application",
+    "//mojo/application:content_handler",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
-    "//mojo/edk/test:run_all_unittests",
-    "//mojo/edk/test:test_support",
-    "//mojo/public/cpp/environment",
+    "//mojo/common",
+    "//mojo/environment:chromium",
+    "//mojo/icu",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
-    "//mojo/environment:chromium",
-    "//testing/gtest",
+    "//mojo/public/interfaces/application",
+    "//mojo/services/content_handler/public/interfaces",
+    "//mojo/services/network/public/interfaces",
   ]
 }
 
-copy("expect") {
-  sources = [
-    "//mojo/dart/testing/expect.dart",
-  ]
-  outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}",
-  ]
-}
-
-source_set("dart_to_cpp_unittests") {
+mojo_native_application("dart_apptests") {
   testonly = true
+
   sources = [
-    "dart_to_cpp_tests.cc",
+    "echo_apptest.cc",
   ]
+
   deps = [
-    ":dart_controller_for_test",
-    ":dart_to_cpp_bindings",
     "//base",
-    "//crypto",
-    "//mojo/dart/embedder:dart_controller_no_snapshot",
-    "//mojo/edk/test:test_support",
+    "//mojo/application",
+    "//mojo/application:test_support",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
-    "//mojo/public/interfaces/bindings/tests:test_interfaces",
-    "//testing/gtest",
-  ]
-}
-
-mojom("dart_to_cpp_bindings") {
-  sources = [
-    "dart_to_cpp.mojom",
+    "//services/dart/test:echo_service",
   ]
 }

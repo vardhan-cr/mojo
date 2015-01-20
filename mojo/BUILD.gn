@@ -76,6 +76,9 @@ group("tests") {
   }
 
   if (mojo_use_dart) {
-    deps += [ "//mojo/dart/embedder/test:dart_unittests" ]
+    deps += [
+      "//mojo/dart/embedder/test:dart_unittests",
+      "//services/dart:dart_apptests",
+    ]
   }
 }
