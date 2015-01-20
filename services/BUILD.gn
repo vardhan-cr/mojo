@@ -22,7 +22,7 @@ group("services") {
     "//services/window_manager",
   ]
 
-  if (mojo_use_dart) {
+  if (!is_android) {
     deps += [ "//services/dart" ]
   }
 }

@@ -53,9 +53,6 @@ def _args_to_config(args):
       additional_args['use_goma'] = False
       additional_args['goma_dir'] = None
 
-  if 'with_dart' in args:
-    additional_args['with_dart'] = args.with_dart
-
   additional_args['use_nacl'] = args.nacl
 
   if 'dry_run' in args:
@@ -103,9 +100,6 @@ def gn(config):
     gn_args.append(r'''goma_dir=\"%s\"''' % config.values['goma_dir'])
   else:
     gn_args.append('use_goma=false')
-
-  if config.values['with_dart']:
-    gn_args.append('mojo_use_dart=true')
 
   if config.values['use_nacl']:
     gn_args.append('mojo_use_nacl=true')
@@ -236,8 +230,6 @@ def main():
   gn_parser = subparsers.add_parser('gn', parents=[parent_parser],
                                     help='Run gn for mojo (does not sync).')
   gn_parser.set_defaults(func=gn)
-  gn_parser.add_argument('--with-dart', help='Configure the Dart bindings',
-                         action='store_true')
   clang_group = gn_parser.add_mutually_exclusive_group()
   clang_group.add_argument('--clang', help='Use Clang (default)', default=None,
                            action='store_true')
