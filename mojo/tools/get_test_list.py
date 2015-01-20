@@ -129,8 +129,25 @@ def GetTestList(config):
   # Perf tests -----------------------------------------------------------------
 
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_PERF):
-    AddEntry("Perf tests",
-             [os.path.join(build_dir, "mojo_public_system_perftests")])
+    perf_id = "linux_%s" % "debug" if config.is_debug else "release"
+    test_names = ["mojo_public_system_perftests"]
+
+    for test_name in test_names:
+      command = ["python",
+                 os.path.join("mojo", "tools", "perf_test_runner.py"),
+                 "--perf-id", perf_id,
+                 "--test-name", test_name,
+                 "--perf-data-path",
+                 os.path.join(build_dir, test_name + "_perf.log")]
+      if config.values.get("builder_name"):
+        command += ["--builder-name", config.values["builder_name"]]
+      if config.values.get("build_number"):
+        command += ["--build-number", config.values["build_number"]]
+      if config.values.get("master_name"):
+        command += ["--master-name", config.values["master_name"]]
+      command += [os.path.join(build_dir, test_name)]
+
+      AddEntry(test_name, command)
 
   # Integration tests ----------------------------------------------------------
 

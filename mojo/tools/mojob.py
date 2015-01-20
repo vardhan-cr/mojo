@@ -263,17 +263,6 @@ def main():
                            help='Print instead of executing commands',
                            default=False, action='store_true')
 
-  # Arguments required for uploading to the flakiness dashboard.
-  test_parser.add_argument('--master-name',
-      help='The name of the buildbot master.')
-  test_parser.add_argument('--builder-name',
-      help=('The name of the builder shown on the waterfall running '
-            'this script e.g. Mojo Linux.'))
-  test_parser.add_argument('--build-number',
-      help='The build number of the builder running this script.')
-  test_parser.add_argument('--test-results-server',
-      help='Upload results json files to this appengine server.')
-
   perftest_parser = subparsers.add_parser('perftest', parents=[parent_parser],
       help='Run perf tests (does not build).')
   perftest_parser.set_defaults(func=perftest)
