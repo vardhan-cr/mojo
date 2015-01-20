@@ -19,6 +19,7 @@
 
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
+  'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
   'skia_revision': '199ba8e19b0cafb37eea3beab162bc4b52728fff',
   # Three lines of non-changing comments so that
@@ -33,6 +34,10 @@ vars = {
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
   'buildtools_revision': '451dcd05a5b34936f5be67b2472cd63aaa508401',
+  # Three lines of non-changing comments so that
+  # the commit queue can handle CLs rolling Dart
+  # and whatever else without interference from each other.
+  'dart_revision': '42887',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
@@ -54,8 +59,9 @@ vars = {
 # Only these hosts are allowed for dependencies in this DEPS file.
 # If you need to add a new host, contact chrome infrastructure team.
 allowed_hosts = [
-  'chromium.googlesource.com',
   'boringssl.googlesource.com',
+  'chromium.googlesource.com',
+  'dart.googlecode.com',
   'pdfium.googlesource.com',
 ]
 
@@ -83,6 +89,15 @@ deps = {
 
   'src/v8':
     Var('chromium_git') + '/v8/v8.git' + '@' +  Var('v8_revision'),
+
+  'src/dart/runtime':
+    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/runtime' + '@' + Var('dart_revision'),
+
+  'src/dart/sdk/lib':
+    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/sdk/lib' + '@' + Var('dart_revision'),
+
+  'src/dart/tools':
+    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/tools' + '@' + Var('dart_revision'),
 
   'src/third_party/sfntly/cpp/src':
     Var('chromium_git') + '/external/sfntly/cpp/src.git' + '@' +  Var('sfntly_revision'),
