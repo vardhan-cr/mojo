@@ -60,15 +60,6 @@ gfx::Vector2d GetMouseWheelOffset(const base::NativeEvent& native_event) {
   return gfx::Vector2d();
 }
 
-base::NativeEvent CopyNativeEvent(const base::NativeEvent& event) {
-  NOTIMPLEMENTED() <<
-      "Don't know how to copy base::NativeEvent for this platform";
-  return NULL;
-}
-
-void ReleaseCopiedNativeEvent(const base::NativeEvent& event) {
-}
-
 void IncrementTouchIdRefCount(const base::NativeEvent& native_event) {
   NOTIMPLEMENTED();
 }

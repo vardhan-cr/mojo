@@ -12,7 +12,6 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/mojo_extended_key_event_data.h"
 #include "mojo/services/input_events/public/interfaces/input_events.mojom.h"
-#include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 
 namespace mojo {
@@ -102,10 +101,8 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
 
     LocationDataPtr location_data(LocationData::New());
     location_data->in_view_location = Point::From(located_event->location());
-    if (input.HasNativeEvent()) {
-      location_data->screen_location =
-          Point::From(ui::EventSystemLocationFromNative(input.native_event()));
-    }
+    location_data->screen_location =
+        Point::From(located_event->screen_location());
 
     event->location_data = location_data.Pass();
   }

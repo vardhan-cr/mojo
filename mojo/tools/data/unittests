@@ -52,6 +52,9 @@
   {
     "test": "gfx_unittests",
   },
+  {
+    "test": "events_unittests",
+  },
 
   # JavaScript tests:
   {

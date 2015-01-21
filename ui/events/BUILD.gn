@@ -59,7 +59,6 @@ component("events_base") {
 
   public_deps = [
     "//base",
-    "//ui/events/platform",
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
@@ -267,6 +266,7 @@ test("events_unittests") {
     "keycodes/dom4/keycode_converter_unittest.cc",
     "latency_info_unittest.cc",
     "platform/platform_event_source_unittest.cc",
+    "platform/platform_event_builder_x_unittest.cc",
     "x/events_x_unittest.cc",
   ]
 
@@ -288,6 +288,9 @@ test("events_unittests") {
     configs += [ "//build/config/linux:x11" ]
     deps += [ "//ui/gfx/x" ]
   } else {
-    sources -= [ "x/events_x_unittest.cc" ]
+    sources -= [
+      "platform/platform_event_builder_x_unittest.cc",
+      "x/events_x_unittest.cc",
+    ]
   }
 }

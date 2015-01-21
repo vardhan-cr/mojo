@@ -53,15 +53,14 @@ class EVENTS_EXPORT Event {
     DISALLOW_COPY_AND_ASSIGN(DispatcherApi);
   };
 
-  const base::NativeEvent& native_event() const { return native_event_; }
   EventType type() const { return type_; }
-  const std::string& name() const { return name_; }
+  void set_type(EventType type) { type_ = type; }
+
   // time_stamp represents time since machine was booted.
   const base::TimeDelta& time_stamp() const { return time_stamp_; }
-  int flags() const { return flags_; }
+  void set_time_stamp(const base::TimeDelta& stamp) { time_stamp_ = stamp; }
 
-  // This is only intended to be used externally by classes that are modifying
-  // events in an EventRewriter.
+  int flags() const { return flags_; }
   void set_flags(int flags) { flags_ = flags; }
 
   EventTarget* target() const { return target_; }
@@ -73,6 +72,7 @@ class EVENTS_EXPORT Event {
   void set_latency(const LatencyInfo& latency) { latency_ = latency; }
 
   int source_device_id() const { return source_device_id_; }
+  void set_source_device_id(const int id) { source_device_id_ = id; }
 
   // By default, events are "cancelable", this means any default processing that
   // the containing abstraction layer may perform can be prevented by calling
@@ -199,9 +199,6 @@ class EVENTS_EXPORT Event {
   GestureEvent* AsGestureEvent();
   const GestureEvent* AsGestureEvent() const;
 
-  // Returns true if the event has a valid |native_event_|.
-  bool HasNativeEvent() const;
-
   // Immediately stops the propagation of the event. This must be called only
   // from an EventHandler during an event-dispatch. Any event handler that may
   // be in the list will not receive the event after this is called.
@@ -218,31 +215,19 @@ class EVENTS_EXPORT Event {
   bool handled() const { return result_ != ER_UNHANDLED; }
 
  protected:
+  Event();
   Event(EventType type, base::TimeDelta time_stamp, int flags);
-  Event(const base::NativeEvent& native_event, EventType type, int flags);
   Event(const Event& copy);
   void SetType(EventType type);
-  void set_delete_native_event(bool delete_native_event) {
-    delete_native_event_ = delete_native_event;
-  }
   void set_cancelable(bool cancelable) { cancelable_ = cancelable; }
-
-  void set_time_stamp(const base::TimeDelta& time_stamp) {
-    time_stamp_ = time_stamp;
-  }
-
-  void set_name(const std::string& name) { name_ = name; }
 
  private:
   friend class EventTestApi;
 
   EventType type_;
-  std::string name_;
   base::TimeDelta time_stamp_;
   LatencyInfo latency_;
   int flags_;
-  base::NativeEvent native_event_;
-  bool delete_native_event_;
   bool cancelable_;
   EventTarget* target_;
   EventPhase phase_;
@@ -261,6 +246,7 @@ class EVENTS_EXPORT CancelModeEvent : public Event {
 
 class EVENTS_EXPORT LocatedEvent : public Event {
  public:
+  LocatedEvent();
   ~LocatedEvent() override;
 
   float x() const { return location_.x(); }
@@ -278,6 +264,10 @@ class EVENTS_EXPORT LocatedEvent : public Event {
   }
   const gfx::PointF& root_location_f() const {
     return root_location_;
+  }
+  const gfx::Point& screen_location() const { return screen_location_; }
+  void set_screen_location(const gfx::Point& screen_location) {
+    screen_location_ = screen_location;
   }
 
   // Transform the locations using |inverted_root_transform|.
@@ -298,7 +288,6 @@ class EVENTS_EXPORT LocatedEvent : public Event {
 
  protected:
   friend class LocatedEventTestApi;
-  explicit LocatedEvent(const base::NativeEvent& native_event);
 
   // Create a new LocatedEvent which is identical to the provided model.
   // If source / target windows are provided, the model location will be
@@ -307,7 +296,8 @@ class EVENTS_EXPORT LocatedEvent : public Event {
   LocatedEvent(const LocatedEvent& model, T* source, T* target)
       : Event(model),
         location_(model.location_),
-        root_location_(model.root_location_) {
+        root_location_(model.root_location_),
+        screen_location_(model.screen_location_) {
     ConvertLocationToTarget(source, target);
   }
 
@@ -323,11 +313,14 @@ class EVENTS_EXPORT LocatedEvent : public Event {
   // |location_| multiplied by an optional transformation matrix for
   // rotations, animations and skews.
   gfx::PointF root_location_;
+
+  // The system provided location of the event.
+  gfx::Point screen_location_;
 };
 
 class EVENTS_EXPORT MouseEvent : public LocatedEvent {
  public:
-  explicit MouseEvent(const base::NativeEvent& native_event);
+  MouseEvent();
 
   // Create a new MouseEvent based on the provided model.
   // Uses the provided |type| and |flags| for the new event.
@@ -413,26 +406,16 @@ class EVENTS_EXPORT MouseEvent : public LocatedEvent {
   // Updates the button that changed.
   void set_changed_button_flags(int flags) { changed_button_flags_ = flags; }
 
- private:
-  FRIEND_TEST_ALL_PREFIXES(EventTest, DoubleClickRequiresRelease);
-  FRIEND_TEST_ALL_PREFIXES(EventTest, SingleClickRightLeft);
-
   // Returns the repeat count based on the previous mouse click, if it is
   // recent enough and within a small enough distance.
   static int GetRepeatCount(const MouseEvent& click_event);
 
-  // Resets the last_click_event_ for unit tests.
-  static void ResetLastClickForTest();
+ private:
+  FRIEND_TEST_ALL_PREFIXES(EventTest, DoubleClickRequiresRelease);
+  FRIEND_TEST_ALL_PREFIXES(EventTest, SingleClickRightLeft);
 
   // See description above getter for details.
   int changed_button_flags_;
-
-  static MouseEvent* last_click_event_;
-
-  // We can create a MouseEvent for a native event more than once. We set this
-  // to true when the next event either has a different timestamp or we see a
-  // release signalling that the press (click) event was completed.
-  static bool last_click_complete_;
 };
 
 class ScrollEvent;
@@ -442,7 +425,7 @@ class EVENTS_EXPORT MouseWheelEvent : public MouseEvent {
   // See |offset| for details.
   static const int kWheelDelta;
 
-  explicit MouseWheelEvent(const base::NativeEvent& native_event);
+  MouseWheelEvent();
   explicit MouseWheelEvent(const ScrollEvent& scroll_event);
   MouseWheelEvent(const MouseEvent& mouse_event, int x_offset, int y_offset);
   MouseWheelEvent(const MouseWheelEvent& mouse_wheel_event);
@@ -467,6 +450,7 @@ class EVENTS_EXPORT MouseWheelEvent : public MouseEvent {
   int x_offset() const { return offset_.x(); }
   int y_offset() const { return offset_.y(); }
   const gfx::Vector2d& offset() const { return offset_; }
+  void set_offset(const gfx::Vector2d& offset) { offset_ = offset; }
 
   // Overridden from LocatedEvent.
   void UpdateForRootTransform(
@@ -478,7 +462,7 @@ class EVENTS_EXPORT MouseWheelEvent : public MouseEvent {
 
 class EVENTS_EXPORT TouchEvent : public LocatedEvent {
  public:
-  explicit TouchEvent(const base::NativeEvent& native_event);
+  TouchEvent();
 
   // Create a new TouchEvent which is identical to the provided model.
   // If source / target windows are provided, the model location will be
@@ -511,14 +495,20 @@ class EVENTS_EXPORT TouchEvent : public LocatedEvent {
   ~TouchEvent() override;
 
   int touch_id() const { return touch_id_; }
-  float radius_x() const { return radius_x_; }
-  float radius_y() const { return radius_y_; }
-  float rotation_angle() const { return rotation_angle_; }
-  float force() const { return force_; }
+  void set_touch_id(int touch_id) { touch_id_ = touch_id; }
 
-  // Used for unit tests.
+  float radius_x() const { return radius_x_; }
   void set_radius_x(const float r) { radius_x_ = r; }
+  float radius_y() const { return radius_y_; }
   void set_radius_y(const float r) { radius_y_ = r; }
+
+  float rotation_angle() const { return rotation_angle_; }
+  void set_rotation_angle(float rotation_angle) {
+    rotation_angle_ = rotation_angle;
+  }
+
+  float force() const { return force_; }
+  void set_force(float force) { force_ = force; }
 
   // Overridden from LocatedEvent.
   void UpdateForRootTransform(
@@ -530,16 +520,10 @@ class EVENTS_EXPORT TouchEvent : public LocatedEvent {
     radius_y_ = radius_y;
   }
 
-  void set_rotation_angle(float rotation_angle) {
-    rotation_angle_ = rotation_angle;
-  }
-
-  void set_force(float force) { force_ = force; }
-
  private:
   // The identity (typically finger) of the touch starting at 0 and incrementing
   // for each separable additional touch that the hardware can detect.
-  const int touch_id_;
+  int touch_id_;
 
   // Radius of the X (major) axis of the touch ellipse. 0.0 if unknown.
   float radius_x_;
@@ -593,10 +577,7 @@ class EVENTS_EXPORT ExtendedKeyEventData {
 //
 class EVENTS_EXPORT KeyEvent : public Event {
  public:
-  // Create a KeyEvent from a NativeEvent. For Windows this native event can
-  // be either a keystroke message (WM_KEYUP/WM_KEYDOWN) or a character message
-  // (WM_CHAR). Other systems have only keystroke events.
-  explicit KeyEvent(const base::NativeEvent& native_event);
+  KeyEvent();
 
   // Create a keystroke event.
   KeyEvent(EventType type, KeyboardCode key_code, int flags);
@@ -648,8 +629,8 @@ class EVENTS_EXPORT KeyEvent : public Event {
   base::char16 GetText() const;
 
   // Gets the platform key code. For XKB, this is the xksym value.
-  void set_platform_keycode(uint32 keycode) { platform_keycode_ = keycode; }
   uint32 platform_keycode() const { return platform_keycode_; }
+  void set_platform_keycode(uint32 keycode) { platform_keycode_ = keycode; }
 
   // Gets the associated (Windows-based) KeyboardCode for this key event.
   // Historically, this has also been used to obtain the character associated
@@ -657,13 +638,11 @@ class EVENTS_EXPORT KeyEvent : public Event {
   // This should be avoided; if necessary for backwards compatibility, use
   // GetConflatedWindowsKeyCode().
   KeyboardCode key_code() const { return key_code_; }
+  void set_key_code(KeyboardCode key_code) { key_code_ = key_code; }
 
   // True if this is a character event, false if this is a keystroke event.
   bool is_char() const { return is_char_; }
-
-  // This is only intended to be used externally by classes that are modifying
-  // events in an EventRewriter.
-  void set_key_code(KeyboardCode key_code) { key_code_ = key_code; }
+  void set_is_char(bool is_char) { is_char_ = is_char; }
 
   // Returns the same value as key_code(), except that located codes are
   // returned in place of non-located ones (e.g. VKEY_LSHIFT or VKEY_RSHIFT
@@ -681,6 +660,7 @@ class EVENTS_EXPORT KeyEvent : public Event {
   bool IsUnicodeKeyCode() const;
 
   std::string code() const { return code_; }
+  void set_code(const std::string& code) { code_ = code; }
 
   // Normalizes flags_ so that it describes the state after the event.
   // (Native X11 event flags describe the state before the event.)
@@ -694,9 +674,6 @@ class EVENTS_EXPORT KeyEvent : public Event {
 
  protected:
   friend class KeyEventTestApi;
-
-  // This allows a subclass TranslatedKeyEvent to be a non character event.
-  void set_is_char(bool is_char) { is_char_ = is_char; }
 
  private:
   // True if the key press originated from a 'right' key (VKEY_RSHIFT, etc.).
@@ -731,15 +708,11 @@ class EVENTS_EXPORT KeyEvent : public Event {
   // mojo instead serializes and deserializes events in potentially different
   // processes, we need to have a mechanism to keep track of this data.
   scoped_ptr<ExtendedKeyEventData> extended_key_event_data_;
-
-  static bool IsRepeated(const KeyEvent& event);
-
-  static KeyEvent* last_key_event_;
 };
 
 class EVENTS_EXPORT ScrollEvent : public MouseEvent {
  public:
-  explicit ScrollEvent(const base::NativeEvent& native_event);
+  ScrollEvent();
   template <class T>
   ScrollEvent(const ScrollEvent& model,
               T* source,
@@ -770,9 +743,20 @@ class EVENTS_EXPORT ScrollEvent : public MouseEvent {
 
   float x_offset() const { return x_offset_; }
   float y_offset() const { return y_offset_; }
+  void set_offset(float x, float y) {
+    x_offset_ = x;
+    y_offset_ = y;
+  }
+
   float x_offset_ordinal() const { return x_offset_ordinal_; }
   float y_offset_ordinal() const { return y_offset_ordinal_; }
+  void set_offset_ordinal(float x, float y) {
+    x_offset_ordinal_ = x;
+    y_offset_ordinal_ = y;
+  }
+
   int finger_count() const { return finger_count_; }
+  void set_finger_count(int finger_count) { finger_count_ = finger_count; }
 
  private:
   // Potential accelerated offsets.

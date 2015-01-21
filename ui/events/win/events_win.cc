@@ -292,13 +292,6 @@ gfx::Vector2d GetMouseWheelOffset(const base::NativeEvent& native_event) {
   return gfx::Vector2d(GET_WHEEL_DELTA_WPARAM(native_event.wParam), 0);
 }
 
-base::NativeEvent CopyNativeEvent(const base::NativeEvent& event) {
-  return event;
-}
-
-void ReleaseCopiedNativeEvent(const base::NativeEvent& event) {
-}
-
 void IncrementTouchIdRefCount(const base::NativeEvent& event) {
   NOTIMPLEMENTED();
 }
@@ -354,30 +347,6 @@ bool GetFlingData(const base::NativeEvent& native_event,
   // Not supported in Windows.
   NOTIMPLEMENTED();
   return false;
-}
-
-int GetModifiersFromACCEL(const ACCEL& accel) {
-  int modifiers = EF_NONE;
-  if (accel.fVirt & FSHIFT)
-    modifiers |= EF_SHIFT_DOWN;
-  if (accel.fVirt & FCONTROL)
-    modifiers |= EF_CONTROL_DOWN;
-  if (accel.fVirt & FALT)
-    modifiers |= EF_ALT_DOWN;
-  return modifiers;
-}
-
-int GetModifiersFromKeyState() {
-  int modifiers = EF_NONE;
-  if (base::win::IsShiftPressed())
-    modifiers |= EF_SHIFT_DOWN;
-  if (base::win::IsCtrlPressed())
-    modifiers |= EF_CONTROL_DOWN;
-  if (base::win::IsAltPressed())
-    modifiers |= EF_ALT_DOWN;
-  if (base::win::IsAltGrPressed())
-    modifiers |= EF_ALTGR_DOWN;
-  return modifiers;
 }
 
 // Windows emulates mouse messages for touch events.

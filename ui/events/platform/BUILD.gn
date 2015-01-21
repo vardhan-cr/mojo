@@ -9,6 +9,8 @@ component("platform") {
     # Allow this target to include events_export.h without depending on the
     # events target (which would be circular).
     "../events_export.h",
+    "platform_event_builder.cc",
+    "platform_event_builder.h",
     "platform_event_dispatcher.h",
     "platform_event_observer.h",
     "platform_event_source.cc",
@@ -23,6 +25,10 @@ component("platform") {
 
   deps = [
     "//base",
+
+    # TODO(erg): Figure out what to do with this dependency later. Maybe get to
+    # the point where we can remove it before we commit this.
+    "//ui/events",
   ]
 
   if (use_x11) {

@@ -11,6 +11,7 @@
 
 #include "ui/events/event.h"
 #include "ui/events/event_utils.h"
+#include "ui/events/platform/platform_event_builder.h"
 #include "ui/events/platform/platform_event_dispatcher.h"
 #include "ui/events/platform/platform_event_source.h"
 #include "ui/events/platform/x11/x11_event_source.h"
@@ -73,7 +74,7 @@ void X11Window::ProcessXInput2Event(XEvent* xev) {
   switch (event_type) {
     case ET_KEY_PRESSED:
     case ET_KEY_RELEASED: {
-      KeyEvent key_event(xev);
+      KeyEvent key_event = PlatformEventBuilder::BuildKeyEvent(xev);
       delegate_->DispatchEvent(&key_event);
       break;
     }
@@ -81,19 +82,20 @@ void X11Window::ProcessXInput2Event(XEvent* xev) {
     case ET_MOUSE_MOVED:
     case ET_MOUSE_DRAGGED:
     case ET_MOUSE_RELEASED: {
-      MouseEvent mouse_event(xev);
+      MouseEvent mouse_event = PlatformEventBuilder::BuildMouseEvent(xev);
       delegate_->DispatchEvent(&mouse_event);
       break;
     }
     case ET_MOUSEWHEEL: {
-      MouseWheelEvent wheel_event(xev);
+      MouseWheelEvent wheel_event =
+          PlatformEventBuilder::BuildMouseWheelEvent(xev);
       delegate_->DispatchEvent(&wheel_event);
       break;
     }
     case ET_SCROLL_FLING_START:
     case ET_SCROLL_FLING_CANCEL:
     case ET_SCROLL: {
-      ScrollEvent scroll_event(xev);
+      ScrollEvent scroll_event = PlatformEventBuilder::BuildScrollEvent(xev);
       delegate_->DispatchEvent(&scroll_event);
       break;
     }
@@ -101,8 +103,14 @@ void X11Window::ProcessXInput2Event(XEvent* xev) {
     case ET_TOUCH_PRESSED:
     case ET_TOUCH_CANCELLED:
     case ET_TOUCH_RELEASED: {
-      TouchEvent touch_event(xev);
+      TouchEvent touch_event = PlatformEventBuilder::BuildTouchEvent(xev);
+
+      if (touch_event.type() == ET_TOUCH_PRESSED)
+        IncrementTouchIdRefCount(xev);
+
       delegate_->DispatchEvent(&touch_event);
+
+      ClearTouchIdIfReleased(xev);
       break;
     }
     default:
@@ -260,14 +268,14 @@ uint32_t X11Window::DispatchEvent(const PlatformEvent& event) {
     case EnterNotify: {
       // EnterNotify creates ET_MOUSE_MOVED. Mark as synthesized as this is
       // not real mouse move event.
-      MouseEvent mouse_event(xev);
+      MouseEvent mouse_event = PlatformEventBuilder::BuildMouseEvent(xev);
       CHECK_EQ(ET_MOUSE_MOVED, mouse_event.type());
       mouse_event.set_flags(mouse_event.flags() | EF_IS_SYNTHESIZED);
       delegate_->DispatchEvent(&mouse_event);
       break;
     }
     case LeaveNotify: {
-      MouseEvent mouse_event(xev);
+      MouseEvent mouse_event = PlatformEventBuilder::BuildMouseEvent(xev);
       delegate_->DispatchEvent(&mouse_event);
       break;
     }
@@ -283,7 +291,7 @@ uint32_t X11Window::DispatchEvent(const PlatformEvent& event) {
 
     case KeyPress:
     case KeyRelease: {
-      KeyEvent key_event(xev);
+      KeyEvent key_event = PlatformEventBuilder::BuildKeyEvent(xev);
       delegate_->DispatchEvent(&key_event);
       break;
     }
@@ -292,13 +300,14 @@ uint32_t X11Window::DispatchEvent(const PlatformEvent& event) {
     case ButtonRelease: {
       switch (EventTypeFromNative(xev)) {
         case ET_MOUSEWHEEL: {
-          MouseWheelEvent mouseev(xev);
+          MouseWheelEvent mouseev =
+              PlatformEventBuilder::BuildMouseWheelEvent(xev);
           delegate_->DispatchEvent(&mouseev);
           break;
         }
         case ET_MOUSE_PRESSED:
         case ET_MOUSE_RELEASED: {
-          MouseEvent mouseev(xev);
+          MouseEvent mouseev = PlatformEventBuilder::BuildMouseEvent(xev);
           delegate_->DispatchEvent(&mouseev);
           break;
         }

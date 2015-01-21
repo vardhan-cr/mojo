@@ -17,24 +17,6 @@
 
 namespace ui {
 
-TEST(EventTest, NoNativeEvent) {
-  KeyEvent keyev(ET_KEY_PRESSED, VKEY_SPACE, EF_NONE);
-  EXPECT_FALSE(keyev.HasNativeEvent());
-}
-
-TEST(EventTest, NativeEvent) {
-#if defined(OS_WIN)
-  MSG native_event = { NULL, WM_KEYUP, VKEY_A, 0 };
-  KeyEvent keyev(native_event);
-  EXPECT_TRUE(keyev.HasNativeEvent());
-#elif defined(USE_X11)
-  ScopedXI2Event event;
-  event.InitKeyEvent(ET_KEY_RELEASED, VKEY_A, EF_NONE);
-  KeyEvent keyev(event);
-  EXPECT_TRUE(keyev.HasNativeEvent());
-#endif
-}
-
 TEST(EventTest, GetCharacter) {
   // Check if Control+Enter returns 10.
   KeyEvent keyev1(ET_KEY_PRESSED, VKEY_RETURN, EF_CONTROL_DOWN);
@@ -42,18 +24,6 @@ TEST(EventTest, GetCharacter) {
   // Check if Enter returns 13.
   KeyEvent keyev2(ET_KEY_PRESSED, VKEY_RETURN, EF_NONE);
   EXPECT_EQ(13, keyev2.GetCharacter());
-
-#if defined(USE_X11)
-  // For X11, test the functions with native_event() as well. crbug.com/107837
-  ScopedXI2Event event;
-  event.InitKeyEvent(ET_KEY_PRESSED, VKEY_RETURN, EF_CONTROL_DOWN);
-  KeyEvent keyev3(event);
-  EXPECT_EQ(10, keyev3.GetCharacter());
-
-  event.InitKeyEvent(ET_KEY_PRESSED, VKEY_RETURN, EF_NONE);
-  KeyEvent keyev4(event);
-  EXPECT_EQ(13, keyev4.GetCharacter());
-#endif
 }
 
 TEST(EventTest, ClickCount) {
@@ -96,68 +66,6 @@ TEST(EventTest, RepeatedClick) {
   test_ev1.set_time_stamp(start);
   test_ev2.set_time_stamp(later);
   EXPECT_FALSE(MouseEvent::IsRepeatedClickEvent(mouse_ev1, mouse_ev2));
-}
-
-// Tests that an event only increases the click count and gets marked as a
-// double click if a release event was seen for the previous click. This
-// prevents the same PRESSED event from being processed twice:
-// http://crbug.com/389162
-TEST(EventTest, DoubleClickRequiresRelease) {
-  const gfx::Point origin1(0, 0);
-  const gfx::Point origin2(100, 0);
-  scoped_ptr<MouseEvent> ev;
-  base::TimeDelta start = base::TimeDelta::FromMilliseconds(0);
-
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin1, origin1, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin1, origin1, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin2, origin2, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_RELEASED, origin2, origin2, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin2, origin2, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(2, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_RELEASED, origin2, origin2, 0, 0));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(2, MouseEvent::GetRepeatCount(*ev));
-  MouseEvent::ResetLastClickForTest();
-}
-
-// Tests that clicking right and then left clicking does not generate a double
-// click.
-TEST(EventTest, SingleClickRightLeft) {
-  const gfx::Point origin(0, 0);
-  scoped_ptr<MouseEvent> ev;
-  base::TimeDelta start = base::TimeDelta::FromMilliseconds(0);
-
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin, origin,
-                          ui::EF_RIGHT_MOUSE_BUTTON,
-                          ui::EF_RIGHT_MOUSE_BUTTON));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin, origin,
-                          ui::EF_LEFT_MOUSE_BUTTON,
-                          ui::EF_LEFT_MOUSE_BUTTON));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_RELEASED, origin, origin,
-                          ui::EF_LEFT_MOUSE_BUTTON,
-                          ui::EF_LEFT_MOUSE_BUTTON));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(1, MouseEvent::GetRepeatCount(*ev));
-  ev.reset(new MouseEvent(ET_MOUSE_PRESSED, origin, origin,
-                          ui::EF_LEFT_MOUSE_BUTTON,
-                          ui::EF_LEFT_MOUSE_BUTTON));
-  ev->set_time_stamp(start);
-  EXPECT_EQ(2, MouseEvent::GetRepeatCount(*ev));
-  MouseEvent::ResetLastClickForTest();
 }
 
 TEST(EventTest, KeyEvent) {
@@ -252,41 +160,6 @@ TEST(EventTest, KeyEventDirectUnicode) {
 }
 
 TEST(EventTest, NormalizeKeyEventFlags) {
-#if defined(USE_X11)
-  // Normalize flags when KeyEvent is created from XEvent.
-  ScopedXI2Event event;
-  {
-    event.InitKeyEvent(ET_KEY_PRESSED, VKEY_SHIFT, EF_SHIFT_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_SHIFT_DOWN, keyev.flags());
-  }
-  {
-    event.InitKeyEvent(ET_KEY_RELEASED, VKEY_SHIFT, EF_SHIFT_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_NONE, keyev.flags());
-  }
-  {
-    event.InitKeyEvent(ET_KEY_PRESSED, VKEY_CONTROL, EF_CONTROL_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_CONTROL_DOWN, keyev.flags());
-  }
-  {
-    event.InitKeyEvent(ET_KEY_RELEASED, VKEY_CONTROL, EF_CONTROL_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_NONE, keyev.flags());
-  }
-  {
-    event.InitKeyEvent(ET_KEY_PRESSED, VKEY_MENU,  EF_ALT_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_ALT_DOWN, keyev.flags());
-  }
-  {
-    event.InitKeyEvent(ET_KEY_RELEASED, VKEY_MENU, EF_ALT_DOWN);
-    KeyEvent keyev(event);
-    EXPECT_EQ(EF_NONE, keyev.flags());
-  }
-#endif
-
   // Do not normalize flags for synthesized events without
   // KeyEvent::NormalizeFlags called explicitly.
   {
@@ -351,15 +224,6 @@ TEST(EventTest, KeyEventCode) {
     KeyEvent key(ET_KEY_PRESSED, VKEY_SPACE, EF_NONE);
     EXPECT_TRUE(key.code().empty());
   }
-#if defined(USE_X11)
-  {
-    // KeyEvent converts from the native keycode (XKB) to the code.
-    ScopedXI2Event xevent;
-    xevent.InitKeyEvent(ET_KEY_PRESSED, VKEY_SPACE, kNativeCodeSpace);
-    KeyEvent key(xevent);
-    EXPECT_EQ(kCodeForSpace, key.code());
-  }
-#endif  // USE_X11
 #if defined(OS_WIN)
   {
     // Test a non extended key.
@@ -388,65 +252,5 @@ TEST(EventTest, KeyEventCode) {
   }
 #endif  // OS_WIN
 }
-
-#if defined(USE_X11) || defined(OS_WIN)
-TEST(EventTest, AutoRepeat) {
-  const uint16 kNativeCodeA = ui::KeycodeConverter::CodeToNativeKeycode("KeyA");
-  const uint16 kNativeCodeB = ui::KeycodeConverter::CodeToNativeKeycode("KeyB");
-#if defined(USE_X11)
-  ScopedXI2Event native_event_a_pressed;
-  native_event_a_pressed.InitKeyEvent(ET_KEY_PRESSED, VKEY_A, kNativeCodeA);
-  ScopedXI2Event native_event_a_released;
-  native_event_a_released.InitKeyEvent(ET_KEY_RELEASED, VKEY_A, kNativeCodeA);
-  ScopedXI2Event native_event_b_pressed;
-  native_event_b_pressed.InitKeyEvent(ET_KEY_PRESSED, VKEY_B, kNativeCodeB);
-  ScopedXI2Event native_event_a_pressed_nonstandard_state;
-  native_event_a_pressed_nonstandard_state.InitKeyEvent(
-      ET_KEY_PRESSED, VKEY_A, kNativeCodeA);
-  // IBUS-GTK uses the mask (1 << 25) to detect reposted event.
-  static_cast<XEvent*>(native_event_a_pressed_nonstandard_state)->xkey.state |=
-      1 << 25;
-#elif defined(OS_WIN)
-  const LPARAM lParam_a = GetLParamFromScanCode(kNativeCodeA);
-  const LPARAM lParam_b = GetLParamFromScanCode(kNativeCodeB);
-  MSG native_event_a_pressed = { NULL, WM_KEYDOWN, VKEY_A, lParam_a };
-  MSG native_event_a_released = { NULL, WM_KEYUP, VKEY_A, lParam_a };
-  MSG native_event_b_pressed = { NULL, WM_KEYUP, VKEY_B, lParam_b };
-#endif
-  KeyEvent key_a1(native_event_a_pressed);
-  EXPECT_FALSE(key_a1.IsRepeat());
-  KeyEvent key_a1_released(native_event_a_released);
-  EXPECT_FALSE(key_a1_released.IsRepeat());
-
-  KeyEvent key_a2(native_event_a_pressed);
-  EXPECT_FALSE(key_a2.IsRepeat());
-  KeyEvent key_a2_repeated(native_event_a_pressed);
-  EXPECT_TRUE(key_a2_repeated.IsRepeat());
-  KeyEvent key_a2_released(native_event_a_released);
-  EXPECT_FALSE(key_a2_released.IsRepeat());
-
-  KeyEvent key_a3(native_event_a_pressed);
-  EXPECT_FALSE(key_a3.IsRepeat());
-  KeyEvent key_b(native_event_b_pressed);
-  EXPECT_FALSE(key_b.IsRepeat());
-  KeyEvent key_a3_again(native_event_a_pressed);
-  EXPECT_FALSE(key_a3_again.IsRepeat());
-  KeyEvent key_a3_repeated(native_event_a_pressed);
-  EXPECT_TRUE(key_a3_repeated.IsRepeat());
-  KeyEvent key_a3_repeated2(native_event_a_pressed);
-  EXPECT_TRUE(key_a3_repeated2.IsRepeat());
-  KeyEvent key_a3_released(native_event_a_released);
-  EXPECT_FALSE(key_a3_released.IsRepeat());
-
-#if defined(USE_X11)
-  KeyEvent key_a4_pressed(native_event_a_pressed);
-  EXPECT_FALSE(key_a4_pressed.IsRepeat());
-
-  KeyEvent key_a4_pressed_nonstandard_state(
-      native_event_a_pressed_nonstandard_state);
-  EXPECT_FALSE(key_a4_pressed_nonstandard_state.IsRepeat());
-#endif
-}
-#endif  // USE_X11 || OS_WIN
 
 }  // namespace ui

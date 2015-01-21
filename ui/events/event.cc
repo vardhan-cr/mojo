@@ -13,7 +13,6 @@
 #include <cmath>
 #include <cstring>
 
-#include "base/metrics/histogram.h"
 #include "base/strings/stringprintf.h"
 #include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_code_conversion.h"
@@ -25,88 +24,7 @@
 
 #if defined(USE_X11)
 #include "ui/events/keycodes/keyboard_code_conversion_x.h"
-#elif defined(USE_OZONE)
-#include "ui/events/keycodes/keyboard_code_conversion.h"
 #endif
-
-namespace {
-
-std::string EventTypeName(ui::EventType type) {
-#define RETURN_IF_TYPE(t) if (type == ui::t)  return #t
-#define CASE_TYPE(t) case ui::t:  return #t
-  switch (type) {
-    CASE_TYPE(ET_UNKNOWN);
-    CASE_TYPE(ET_MOUSE_PRESSED);
-    CASE_TYPE(ET_MOUSE_DRAGGED);
-    CASE_TYPE(ET_MOUSE_RELEASED);
-    CASE_TYPE(ET_MOUSE_MOVED);
-    CASE_TYPE(ET_MOUSE_ENTERED);
-    CASE_TYPE(ET_MOUSE_EXITED);
-    CASE_TYPE(ET_KEY_PRESSED);
-    CASE_TYPE(ET_KEY_RELEASED);
-    CASE_TYPE(ET_MOUSEWHEEL);
-    CASE_TYPE(ET_MOUSE_CAPTURE_CHANGED);
-    CASE_TYPE(ET_TOUCH_RELEASED);
-    CASE_TYPE(ET_TOUCH_PRESSED);
-    CASE_TYPE(ET_TOUCH_MOVED);
-    CASE_TYPE(ET_TOUCH_CANCELLED);
-    CASE_TYPE(ET_DROP_TARGET_EVENT);
-    CASE_TYPE(ET_TRANSLATED_KEY_PRESS);
-    CASE_TYPE(ET_TRANSLATED_KEY_RELEASE);
-    CASE_TYPE(ET_GESTURE_SCROLL_BEGIN);
-    CASE_TYPE(ET_GESTURE_SCROLL_END);
-    CASE_TYPE(ET_GESTURE_SCROLL_UPDATE);
-    CASE_TYPE(ET_GESTURE_SHOW_PRESS);
-    CASE_TYPE(ET_GESTURE_WIN8_EDGE_SWIPE);
-    CASE_TYPE(ET_GESTURE_TAP);
-    CASE_TYPE(ET_GESTURE_TAP_DOWN);
-    CASE_TYPE(ET_GESTURE_TAP_CANCEL);
-    CASE_TYPE(ET_GESTURE_BEGIN);
-    CASE_TYPE(ET_GESTURE_END);
-    CASE_TYPE(ET_GESTURE_TWO_FINGER_TAP);
-    CASE_TYPE(ET_GESTURE_PINCH_BEGIN);
-    CASE_TYPE(ET_GESTURE_PINCH_END);
-    CASE_TYPE(ET_GESTURE_PINCH_UPDATE);
-    CASE_TYPE(ET_GESTURE_LONG_PRESS);
-    CASE_TYPE(ET_GESTURE_LONG_TAP);
-    CASE_TYPE(ET_GESTURE_SWIPE);
-    CASE_TYPE(ET_GESTURE_TAP_UNCONFIRMED);
-    CASE_TYPE(ET_GESTURE_DOUBLE_TAP);
-    CASE_TYPE(ET_SCROLL);
-    CASE_TYPE(ET_SCROLL_FLING_START);
-    CASE_TYPE(ET_SCROLL_FLING_CANCEL);
-    CASE_TYPE(ET_CANCEL_MODE);
-    CASE_TYPE(ET_UMA_DATA);
-    case ui::ET_LAST: NOTREACHED(); return std::string();
-    // Don't include default, so that we get an error when new type is added.
-  }
-#undef CASE_TYPE
-
-  NOTREACHED();
-  return std::string();
-}
-
-bool IsX11SendEventTrue(const base::NativeEvent& event) {
-#if defined(USE_X11)
-  return event && event->xany.send_event;
-#else
-  return false;
-#endif
-}
-
-bool X11EventHasNonStandardState(const base::NativeEvent& event) {
-#if defined(USE_X11)
-  const unsigned int kAllStateMask =
-      Button1Mask | Button2Mask | Button3Mask | Button4Mask | Button5Mask |
-      Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask | ShiftMask |
-      LockMask | ControlMask | AnyModifier;
-  return event && (event->xkey.state & ~kAllStateMask) != 0;
-#else
-  return false;
-#endif
-}
-
-}  // namespace
 
 namespace ui {
 
@@ -148,8 +66,6 @@ scoped_ptr<Event> Event::Clone(const Event& event) {
 }
 
 Event::~Event() {
-  if (delete_native_event_)
-    ReleaseCopiedNativeEvent(native_event_);
 }
 
 GestureEvent* Event::AsGestureEvent() {
@@ -160,12 +76,6 @@ GestureEvent* Event::AsGestureEvent() {
 const GestureEvent* Event::AsGestureEvent() const {
   CHECK(IsGestureEvent());
   return static_cast<const GestureEvent*>(this);
-}
-
-bool Event::HasNativeEvent() const {
-  base::NativeEvent null_event;
-  std::memset(&null_event, 0, sizeof(null_event));
-  return !!std::memcmp(&native_event_, &null_event, sizeof(null_event));
 }
 
 void Event::StopPropagation() {
@@ -184,59 +94,26 @@ void Event::SetHandled() {
   result_ = static_cast<EventResult>(result_ | ER_HANDLED);
 }
 
+Event::Event()
+    : type_(ET_UNKNOWN),
+      time_stamp_(base::TimeDelta()),
+      flags_(EF_NONE),
+      cancelable_(true),
+      target_(NULL),
+      phase_(EP_PREDISPATCH),
+      result_(ER_UNHANDLED),
+      source_device_id_(ED_UNKNOWN_DEVICE) {
+}
+
 Event::Event(EventType type, base::TimeDelta time_stamp, int flags)
     : type_(type),
       time_stamp_(time_stamp),
       flags_(flags),
-      native_event_(base::NativeEvent()),
-      delete_native_event_(false),
       cancelable_(true),
       target_(NULL),
       phase_(EP_PREDISPATCH),
       result_(ER_UNHANDLED),
       source_device_id_(ED_UNKNOWN_DEVICE) {
-  if (type_ < ET_LAST)
-    name_ = EventTypeName(type_);
-}
-
-Event::Event(const base::NativeEvent& native_event,
-             EventType type,
-             int flags)
-    : type_(type),
-      time_stamp_(EventTimeFromNative(native_event)),
-      flags_(flags),
-      native_event_(native_event),
-      delete_native_event_(false),
-      cancelable_(true),
-      target_(NULL),
-      phase_(EP_PREDISPATCH),
-      result_(ER_UNHANDLED),
-      source_device_id_(ED_UNKNOWN_DEVICE) {
-  base::TimeDelta delta = EventTimeForNow() - time_stamp_;
-  if (type_ < ET_LAST)
-    name_ = EventTypeName(type_);
-  base::HistogramBase::Sample delta_sample =
-      static_cast<base::HistogramBase::Sample>(delta.InMicroseconds());
-  UMA_HISTOGRAM_CUSTOM_COUNTS("Event.Latency.Browser", delta_sample, 1, 1000000,
-                              100);
-  std::string name_for_event =
-      base::StringPrintf("Event.Latency.Browser.%s", name_.c_str());
-  base::HistogramBase* counter_for_type =
-      base::Histogram::FactoryGet(
-          name_for_event,
-          1,
-          1000000,
-          100,
-          base::HistogramBase::kUmaTargetedHistogramFlag);
-  counter_for_type->Add(delta_sample);
-
-#if defined(USE_X11)
-  if (native_event->type == GenericEvent) {
-    XIDeviceEvent* xiev =
-        static_cast<XIDeviceEvent*>(native_event->xcookie.data);
-    source_device_id_ = xiev->sourceid;
-  }
-#endif
 }
 
 Event::Event(const Event& copy)
@@ -244,23 +121,15 @@ Event::Event(const Event& copy)
       time_stamp_(copy.time_stamp_),
       latency_(copy.latency_),
       flags_(copy.flags_),
-      native_event_(CopyNativeEvent(copy.native_event_)),
-      delete_native_event_(true),
       cancelable_(true),
       target_(NULL),
       phase_(EP_PREDISPATCH),
       result_(ER_UNHANDLED),
       source_device_id_(copy.source_device_id_) {
-  if (type_ < ET_LAST)
-    name_ = EventTypeName(type_);
 }
 
 void Event::SetType(EventType type) {
-  if (type_ < ET_LAST)
-    name_ = std::string();
   type_ = type;
-  if (type_ < ET_LAST)
-    name_ = EventTypeName(type_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -277,15 +146,10 @@ CancelModeEvent::~CancelModeEvent() {
 ////////////////////////////////////////////////////////////////////////////////
 // LocatedEvent
 
-LocatedEvent::~LocatedEvent() {
+LocatedEvent::LocatedEvent() : Event() {
 }
 
-LocatedEvent::LocatedEvent(const base::NativeEvent& native_event)
-    : Event(native_event,
-            EventTypeFromNative(native_event),
-            EventFlagsFromNative(native_event)),
-      location_(EventLocationFromNative(native_event)),
-      root_location_(location_) {
+LocatedEvent::~LocatedEvent() {
 }
 
 LocatedEvent::LocatedEvent(EventType type,
@@ -310,12 +174,7 @@ void LocatedEvent::UpdateForRootTransform(
 ////////////////////////////////////////////////////////////////////////////////
 // MouseEvent
 
-MouseEvent::MouseEvent(const base::NativeEvent& native_event)
-    : LocatedEvent(native_event),
-      changed_button_flags_(
-          GetChangedMouseButtonFlagsFromNative(native_event)) {
-  if (type() == ET_MOUSE_PRESSED || type() == ET_MOUSE_RELEASED)
-    SetClickCount(GetRepeatCount(*this));
+MouseEvent::MouseEvent() : LocatedEvent(), changed_button_flags_(0) {
 }
 
 MouseEvent::MouseEvent(EventType type,
@@ -361,51 +220,6 @@ bool MouseEvent::IsRepeatedClickEvent(
   return true;
 }
 
-// static
-int MouseEvent::GetRepeatCount(const MouseEvent& event) {
-  int click_count = 1;
-  if (last_click_event_) {
-    if (event.type() == ui::ET_MOUSE_RELEASED) {
-      if (event.changed_button_flags() ==
-              last_click_event_->changed_button_flags()) {
-        last_click_complete_ = true;
-        return last_click_event_->GetClickCount();
-      } else {
-        // If last_click_event_ has changed since this button was pressed
-        // return a click count of 1.
-        return click_count;
-      }
-    }
-    if (event.time_stamp() != last_click_event_->time_stamp())
-      last_click_complete_ = true;
-    if (!last_click_complete_ ||
-        IsX11SendEventTrue(event.native_event())) {
-      click_count = last_click_event_->GetClickCount();
-    } else if (IsRepeatedClickEvent(*last_click_event_, event)) {
-      click_count = last_click_event_->GetClickCount() + 1;
-    }
-    delete last_click_event_;
-  }
-  last_click_event_ = new MouseEvent(event);
-  last_click_complete_ = false;
-  if (click_count > 3)
-    click_count = 3;
-  last_click_event_->SetClickCount(click_count);
-  return click_count;
-}
-
-void MouseEvent::ResetLastClickForTest() {
-  if (last_click_event_) {
-    delete last_click_event_;
-    last_click_event_ = NULL;
-    last_click_complete_ = false;
-  }
-}
-
-// static
-MouseEvent* MouseEvent::last_click_event_ = NULL;
-bool MouseEvent::last_click_complete_ = false;
-
 int MouseEvent::GetClickCount() const {
   if (type() != ET_MOUSE_PRESSED && type() != ET_MOUSE_RELEASED)
     return 0;
@@ -446,9 +260,7 @@ void MouseEvent::SetClickCount(int click_count) {
 ////////////////////////////////////////////////////////////////////////////////
 // MouseWheelEvent
 
-MouseWheelEvent::MouseWheelEvent(const base::NativeEvent& native_event)
-    : MouseEvent(native_event),
-      offset_(GetMouseWheelOffset(native_event)) {
+MouseWheelEvent::MouseWheelEvent() : MouseEvent(), offset_() {
 }
 
 MouseWheelEvent::MouseWheelEvent(const ScrollEvent& scroll_event)
@@ -509,24 +321,13 @@ void MouseWheelEvent::UpdateForRootTransform(
 ////////////////////////////////////////////////////////////////////////////////
 // TouchEvent
 
-TouchEvent::TouchEvent(const base::NativeEvent& native_event)
-    : LocatedEvent(native_event),
-      touch_id_(GetTouchId(native_event)),
-      radius_x_(GetTouchRadiusX(native_event)),
-      radius_y_(GetTouchRadiusY(native_event)),
-      rotation_angle_(GetTouchAngle(native_event)),
-      force_(GetTouchForce(native_event)) {
-  latency()->AddLatencyNumberWithTimestamp(
-      INPUT_EVENT_LATENCY_ORIGINAL_COMPONENT,
-      0,
-      0,
-      base::TimeTicks::FromInternalValue(time_stamp().ToInternalValue()),
-      1);
-
-  latency()->AddLatencyNumber(INPUT_EVENT_LATENCY_UI_COMPONENT, 0, 0);
-
-  if (type() == ET_TOUCH_PRESSED)
-    IncrementTouchIdRefCount(native_event);
+TouchEvent::TouchEvent()
+    : LocatedEvent(),
+      touch_id_(0),
+      radius_x_(0),
+      radius_y_(0),
+      rotation_angle_(0),
+      force_(0) {
 }
 
 TouchEvent::TouchEvent(EventType type,
@@ -561,11 +362,6 @@ TouchEvent::TouchEvent(EventType type,
 }
 
 TouchEvent::~TouchEvent() {
-  // In ctor TouchEvent(native_event) we call GetTouchId() which in X11
-  // platform setups the tracking_id to slot mapping. So in dtor here,
-  // if this touch event is a release event, we clear the mapping accordingly.
-  if (HasNativeEvent())
-    ClearTouchIdIfReleased(native_event());
 }
 
 void TouchEvent::UpdateForRootTransform(
@@ -583,62 +379,13 @@ void TouchEvent::UpdateForRootTransform(
 ////////////////////////////////////////////////////////////////////////////////
 // KeyEvent
 
-// static
-KeyEvent* KeyEvent::last_key_event_ = NULL;
-
-// static
-bool KeyEvent::IsRepeated(const KeyEvent& event) {
-  // A safe guard in case if there were continous key pressed events that are
-  // not auto repeat.
-  const int kMaxAutoRepeatTimeMs = 2000;
-  // Ignore key events that have non standard state masks as it may be
-  // reposted by an IME. IBUS-GTK uses this field to detect the
-  // re-posted event for example. crbug.com/385873.
-  if (X11EventHasNonStandardState(event.native_event()))
-    return false;
-  if (event.is_char())
-    return false;
-  if (event.type() == ui::ET_KEY_RELEASED) {
-    delete last_key_event_;
-    last_key_event_ = NULL;
-    return false;
-  }
-  CHECK_EQ(ui::ET_KEY_PRESSED, event.type());
-  if (!last_key_event_) {
-    last_key_event_ = new KeyEvent(event);
-    return false;
-  }
-  if (event.key_code() == last_key_event_->key_code() &&
-      event.flags() == last_key_event_->flags() &&
-      (event.time_stamp() - last_key_event_->time_stamp()).InMilliseconds() <
-      kMaxAutoRepeatTimeMs) {
-    return true;
-  }
-  delete last_key_event_;
-  last_key_event_ = new KeyEvent(event);
-  return false;
-}
-
-KeyEvent::KeyEvent(const base::NativeEvent& native_event)
-    : Event(native_event,
-            EventTypeFromNative(native_event),
-            EventFlagsFromNative(native_event)),
-      key_code_(KeyboardCodeFromNative(native_event)),
-      code_(CodeFromNative(native_event)),
-      is_char_(IsCharFromNative(native_event)),
-      platform_keycode_(PlatformKeycodeFromNative(native_event)),
+KeyEvent::KeyEvent()
+    : Event(),
+      key_code_(VKEY_UNKNOWN),
+      code_(),
+      is_char_(false),
+      platform_keycode_(0),
       character_(0) {
-  if (IsRepeated(*this))
-    set_flags(flags() | ui::EF_IS_REPEAT);
-
-#if defined(USE_X11)
-  NormalizeFlags();
-#endif
-#if defined(OS_WIN)
-  // Only Windows has native character events.
-  if (is_char_)
-    character_ = native_event.wParam;
-#endif
 }
 
 KeyEvent::KeyEvent(EventType type,
@@ -716,30 +463,9 @@ base::char16 KeyEvent::GetCharacter() const {
   character_ = GetCharacterFromKeyCode(key_code_, flags());
   return character_;
 #elif defined(USE_X11)
-  if (!native_event()) {
-    character_ = GetCharacterFromKeyCode(key_code_, flags());
-    return character_;
-  }
-
-  DCHECK(native_event()->type == KeyPress ||
-         native_event()->type == KeyRelease ||
-         (native_event()->type == GenericEvent &&
-          (native_event()->xgeneric.evtype == XI_KeyPress ||
-           native_event()->xgeneric.evtype == XI_KeyRelease)));
-
-  // When a control key is held, prefer ASCII characters to non ASCII
-  // characters in order to use it for shortcut keys.  GetCharacterFromKeyCode
-  // returns 'a' for VKEY_A even if the key is actually bound to 'à' in X11.
-  // GetCharacterFromXEvent returns 'à' in that case.
-  return IsControlDown() ?
-      GetCharacterFromKeyCode(key_code_, flags()) :
-      GetCharacterFromXEvent(native_event());
+  character_ = GetCharacterFromKeyCode(key_code_, flags());
+  return character_;
 #else
-  if (native_event()) {
-    DCHECK(EventTypeFromNative(native_event()) == ET_KEY_PRESSED ||
-           EventTypeFromNative(native_event()) == ET_KEY_RELEASED);
-  }
-
   return GetCharacterFromKeyCode(key_code_, flags());
 #endif
 }
@@ -911,23 +637,7 @@ uint16 KeyEvent::GetConflatedWindowsKeyCode() const {
 ////////////////////////////////////////////////////////////////////////////////
 // ScrollEvent
 
-ScrollEvent::ScrollEvent(const base::NativeEvent& native_event)
-    : MouseEvent(native_event) {
-  if (type() == ET_SCROLL) {
-    GetScrollOffsets(native_event,
-                     &x_offset_, &y_offset_,
-                     &x_offset_ordinal_, &y_offset_ordinal_,
-                     &finger_count_);
-  } else if (type() == ET_SCROLL_FLING_START ||
-             type() == ET_SCROLL_FLING_CANCEL) {
-    GetFlingData(native_event,
-                 &x_offset_, &y_offset_,
-                 &x_offset_ordinal_, &y_offset_ordinal_,
-                 NULL);
-  } else {
-    NOTREACHED() << "Unexpected event type " << type()
-        << " when constructing a ScrollEvent.";
-  }
+ScrollEvent::ScrollEvent() : MouseEvent() {
 }
 
 ScrollEvent::ScrollEvent(EventType type,
