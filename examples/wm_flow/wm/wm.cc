@@ -72,13 +72,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
     DCHECK(root_);
     mojo::View* app_view = NULL;
     CreateTopLevelWindow(&app_view);
-
-    // TODO(beng): We're dropping the |service_provider| passed from the client
-    //             on the floor here and passing our own. Seems like we should
-    //             be sending both. I'm not yet sure how this sould work for
-    //             N levels of proxying.
-    app_view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(
-        new mojo::ServiceProviderImpl).Pass());
+    app_view->Embed(url, service_provider.Pass());
   }
 
   // Overridden from mojo::ViewObserver:

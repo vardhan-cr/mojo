@@ -33,6 +33,11 @@ class Main : public mojo::ApplicationDelegate,
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* impl) override {
     window_manager_app_->Initialize(impl);
+
+    for (size_t i = 1; i < impl->args().size(); ++i) {
+      mojo::InterfaceRequest<mojo::ServiceProvider> empty_request;
+      window_manager_app_->Embed(impl->args()[i], empty_request.Pass());
+    }
   }
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
@@ -60,13 +65,7 @@ class Main : public mojo::ApplicationDelegate,
       mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
     DCHECK(window_manager_.get());
     mojo::View* view = window_manager_->Create();
-
-    // TODO(beng): We're dropping the |service_provider| passed from the client
-    //             on the floor here and passing our own. Seems like we should
-    //             be sending both. I'm not yet sure how this sould work for
-    //             N levels of proxying.
-    view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(
-                         new mojo::ServiceProviderImpl).Pass());
+    view->Embed(url, service_provider.Pass());
   }
 
   scoped_ptr<::window_manager::WindowManagerApp> window_manager_app_;

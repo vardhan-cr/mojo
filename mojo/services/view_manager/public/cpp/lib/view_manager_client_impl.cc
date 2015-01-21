@@ -195,19 +195,19 @@ void ViewManagerClientImpl::SetProperty(
 }
 
 void ViewManagerClientImpl::Embed(const String& url, Id view_id) {
-  ServiceProviderPtr sp;
-  BindToProxy(new ServiceProviderImpl, &sp);
-  Embed(url, view_id, sp.Pass());
+  MessagePipe pipe;
+  InterfaceRequest<ServiceProvider> request;
+  request.Bind(pipe.handle0.Pass());
+  Embed(url, view_id, request.Pass());
 }
 
 void ViewManagerClientImpl::Embed(
     const String& url,
     Id view_id,
-    ServiceProviderPtr service_provider) {
+    InterfaceRequest<ServiceProvider> service_provider) {
   DCHECK(connected_);
-  service_->Embed(url, view_id,
-      MakeRequest<ServiceProvider>(service_provider.PassMessagePipe()),
-      ActionCompletedCallback());
+  service_->Embed(url, view_id, service_provider.Pass(),
+                  ActionCompletedCallback());
 }
 
 void ViewManagerClientImpl::AddView(View* view) {

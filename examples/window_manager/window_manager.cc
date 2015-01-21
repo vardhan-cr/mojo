@@ -302,9 +302,8 @@ class WindowManager : public ApplicationDelegate,
   }
 
   // Overridden from WindowManagerDelegate:
-  virtual void Embed(
-      const String& url,
-      InterfaceRequest<ServiceProvider> service_provider) override {
+  void Embed(const String& url,
+             InterfaceRequest<ServiceProvider> service_provider) override {
     const Id kInvalidSourceViewId = 0;
     OnLaunch(kInvalidSourceViewId, TARGET_DEFAULT, url);
   }

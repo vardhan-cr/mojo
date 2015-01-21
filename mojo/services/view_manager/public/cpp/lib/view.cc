@@ -370,8 +370,15 @@ scoped_ptr<ServiceProvider>
     BindToProxy(registry, &sp);
     imported_services.reset(registry->CreateRemoteServiceProvider());
   }
-  static_cast<ViewManagerClientImpl*>(manager_)->Embed(url, id_, sp.Pass());
+  static_cast<ViewManagerClientImpl*>(manager_)
+      ->Embed(url, id_, MakeRequest<ServiceProvider>(sp.PassMessagePipe()));
   return imported_services.Pass();
+}
+
+void View::Embed(const String& url,
+                 InterfaceRequest<ServiceProvider> exported_services) {
+  static_cast<ViewManagerClientImpl*>(manager_)
+      ->Embed(url, id_, exported_services.Pass());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

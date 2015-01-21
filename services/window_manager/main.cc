@@ -66,8 +66,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
     window_offset_ += 10;
 
     view->SetVisible(true);
-    view->Embed(url, scoped_ptr<mojo::ServiceProviderImpl>(
-        new mojo::ServiceProviderImpl).Pass());
+    view->Embed(url, service_provider.Pass());
   }
 
   scoped_ptr<WindowManagerApp> window_manager_app_;

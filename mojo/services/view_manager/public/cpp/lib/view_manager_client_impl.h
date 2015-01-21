@@ -63,7 +63,7 @@ class ViewManagerClientImpl : public ViewManager,
   void Embed(const String& url, Id view_id);
   void Embed(const String& url,
              Id view_id,
-             ServiceProviderPtr service_provider);
+             InterfaceRequest<ServiceProvider> service_provider);
 
   void set_change_acked_callback(const base::Callback<void(void)>& callback) {
     change_acked_callback_ = callback;
