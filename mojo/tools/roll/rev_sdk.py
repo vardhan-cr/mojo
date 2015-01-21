@@ -21,7 +21,6 @@ dirs_to_clone = [
   "mojo/services/input_events/public",
   "mojo/services/native_viewport/public",
   "mojo/services/navigation/public",
-  "mojo/services/network/public",
   "mojo/services/surfaces/public",
   "mojo/services/view_manager/public",
   "mojo/services/window_manager/public",

@@ -80,8 +80,10 @@ dirs_to_snapshot = [
 
 # These directories are temporarily cloned in order to support the network
 # bootstrap library until we get that sorted out.
-net_dirs = ["crypto",
-    "net"]
+net_dirs = [
+    "crypto",
+    "net",
+    "mojo/services/network"]
 
 files_to_copy = ["sandbox/sandbox_export.h",
     ".clang-format"]
