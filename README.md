@@ -179,7 +179,7 @@ $ ninja -C out/Debug -j 1000
     adb logcat | ./tools/android_stack_parser/stack
     ```
 
-### On Linux and Windows
+### On Linux
 
 1. Build the mojo target, which builds the shell and all examples:
     ```
