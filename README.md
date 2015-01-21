@@ -150,3 +150,50 @@ Now you can dramatically increase the number of parallel tasks:
 ```
 $ ninja -C out/Debug -j 1000
 ```
+
+## Run Mojo Shell
+
+### On Android
+
+0. Prerequisites:
+    * Before you start, you'll need a device with an unlocked bootloader, otherwise you won't be able to run adb root (or any of the commands that require root). For Googlers, <a href="http://go/mojo-internal-build-instructions">follow this link</a> and follow the instructions before returning to this page.
+    * Ensure your device is running Lollipop and has an userdebug build.
+
+1. Build changed files:
+    ```
+    mojob.py build --android
+    ```
+
+2. Push mojo_shell to to your device:
+    ```
+    adb install -r out/android_Debug/apks/MojoShell.apk
+    ```
+
+3. Run Mojo Shell on the device:
+    ```
+    ./mojo/tools/android_mojo_shell.py mojo:sample_app
+    ```
+
+4. If you get a crash you won't see symbols. Use tools/android_stack_parser/stack to map back to symbols, e.g.:
+    ```
+    adb logcat | ./tools/android_stack_parser/stack
+    ```
+
+### On Linux and Windows
+
+1. Build the mojo target, which builds the shell and all examples:
+    ```
+    ninja -C out/Release mojo
+    ```
+
+2. Run Mojo Shell:
+    ```
+    ./out/Release/mojo_shell mojo:sample_app
+    ```
+
+3. Optional: Run Mojo Shell with an HTTP server
+    ```
+    cd out/Release
+    python -m SimpleHTTPServer 4444 & 
+    ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:mojo_sample_app
+    ```
