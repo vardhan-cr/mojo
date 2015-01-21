@@ -5,11 +5,10 @@
 #include "base/bind.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
-#include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/public/cpp/application/interface_factory_impl.h"
-#include "mojo/public/cpp/application/service_provider_impl.h"
+#include "mojo/public/cpp/bindings/interface_ptr.h"
+#include "mojo/public/cpp/system/message_pipe.h"
 #include "services/http_server/public/http_server.mojom.h"
 #include "services/http_server/public/http_server_util.h"
 
@@ -20,24 +19,26 @@ namespace examples {
 // service to handle the HTTP protocol details, and just contains the logic for
 // handling its registered urls.
 class HttpHandler : public ApplicationDelegate,
-                    public http_server::HttpServerClient {
+                    public http_server::HttpHandler {
  public:
-  HttpHandler() {}
+  HttpHandler() : binding_(this) {}
   ~HttpHandler() override {}
 
  private:
   // ApplicationDelegate:
   void Initialize(ApplicationImpl* app) override {
-    app->ConnectToService("mojo:http_server", &http_server_service_);
+    http_server::HttpHandlerPtr http_handler_ptr;
+    binding_.Bind(GetProxy(&http_handler_ptr));
 
-    http_server_service_.set_client(this);
-    http_server_service_->AddHandler(
+    app->ConnectToService("mojo:http_server", &http_server_);
+    http_server_->SetHandler(
         "/test",
+        http_handler_ptr.Pass(),
         base::Bind(&HttpHandler::AddHandlerCallback, base::Unretained(this)));
   }
 
-  // HttpServerClient:
-  void OnHandleRequest(
+  // http_server::HttpHandler:
+  void HandleRequest(
       http_server::HttpRequestPtr request,
       const Callback<void(http_server::HttpResponsePtr)>& callback) override {
     callback.Run(http_server::CreateHttpResponse(200, "Hello World\n"));
@@ -47,7 +48,8 @@ class HttpHandler : public ApplicationDelegate,
     CHECK(result);
   }
 
-  http_server::HttpServerServicePtr http_server_service_;
+  Binding<http_server::HttpHandler> binding_;
+  http_server::HttpServerPtr http_server_;
 
   DISALLOW_COPY_AND_ASSIGN(HttpHandler);
 };

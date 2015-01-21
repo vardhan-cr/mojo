@@ -7,15 +7,17 @@ module http_server;
 import "services/http_server/public/http_request.mojom";
 import "services/http_server/public/http_response.mojom";
 
-[Client=HttpServerClient]
-interface HttpServerService {
-  // Add a handler for the given regex path.
-  AddHandler(string path) => (bool success);
-
-  // Remove a previously registered handler.
-  RemoveHandler(string path) => (bool success);
+interface HttpServer {
+  // Set a handler for URLs mathing a regex pattern. Handlers are considered in
+  // the order they were registered.
+  //
+  // Returns false if there was already a handler registered for the given
+  // pattern.
+  //
+  // To unregister a handler, destroy the underlying pipe.
+  SetHandler(string pattern, HttpHandler handler) => (bool success);
 };
 
-interface HttpServerClient {
-  OnHandleRequest(HttpRequest request) => (HttpResponse response);
+interface HttpHandler {
+  HandleRequest(HttpRequest request) => (HttpResponse response);
 };
