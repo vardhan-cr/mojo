@@ -13,6 +13,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/message_loop/message_loop.h"
+#include "base/process/process.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
@@ -109,7 +110,7 @@ class DynamicApplicationLoader::Loader {
            base::Bind(&Loader::RunLibrary, weak_ptr_factory_.GetWeakPtr()));
   }
 
-  void ReportComplete() { loader_complete_callback_.Run(this); }
+  virtual void ReportComplete() { loader_complete_callback_.Run(this); }
 
  private:
   bool PeekContentHandler(std::string* mojo_shebang,
@@ -281,6 +282,28 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
     return response_.Pass();
   }
 
+  static void RecordCacheToURLMapping(const base::FilePath& path,
+                                      const GURL& url) {
+    // This is used to extract symbols on android.
+    // TODO(eseidel): All users of this log should move to using the map file.
+    LOG(INFO) << "Caching mojo app " << url << " at " << path.value();
+
+    base::FilePath temp_dir;
+    base::GetTempDir(&temp_dir);
+    base::ProcessId pid = base::Process::Current().pid();
+    std::string map_name = base::StringPrintf("mojo_shell.%d.maps", pid);
+    base::FilePath map_path = temp_dir.Append(map_name);
+
+    // TODO(eseidel): Paths or URLs with spaces will need quoting.
+    std::string map_entry =
+        base::StringPrintf("%s %s\n", path.value().data(), url.spec().data());
+    // TODO(eseidel): AppendToFile is missing O_CREAT, crbug.com/450696
+    if (!PathExists(map_path))
+      base::WriteFile(map_path, map_entry.data(), map_entry.length());
+    else
+      base::AppendToFile(map_path, map_entry.data(), map_entry.length());
+  }
+
   void AsPath(
       base::TaskRunner* task_runner,
       base::Callback<void(const base::FilePath&, bool)> callback) override {
@@ -289,11 +312,14 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
           FROM_HERE, base::Bind(callback, path_, base::PathExists(path_)));
       return;
     }
+    // We don't use the created file, just want the directory and random name.
     base::CreateTemporaryFile(&path_);
-    // This is used to extract symbols on android.
-    LOG(INFO) << "Caching mojo app " << url_ << " at " << path_.value();
+    base::DeleteFile(path_, false);
+    path_ = path_.AddExtension(".mojo");  // Make libraries easy to spot.
     common::CopyToFile(response_->body.Pass(), path_, task_runner,
                        base::Bind(callback, path_));
+
+    RecordCacheToURLMapping(path_, url_);
   }
 
   std::string MimeType() override {
@@ -339,6 +365,14 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
     }
     response_ = response.Pass();
     Load();
+  }
+
+  void ReportComplete() override {
+    Loader::ReportComplete();
+    // As soon as we've loaded the library we can delete the cache file.
+    // Tools can read the mojo_shell.PID.maps file to find the original library.
+    if (!path_.empty())
+      DeleteFile(path_, false);
   }
 
   const GURL url_;
