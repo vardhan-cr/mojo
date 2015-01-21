@@ -61,38 +61,38 @@ class TestServiceImpl : public InterfaceImpl<TestService> {
   }
 
   // TestService implementation:
-  void Test(const String& test_string) override {
+  void Test(const String& test_string,
+            const mojo::Callback<void()>& callback) override {
     context_->last_test_string = test_string;
-    client()->AckTest();
+    callback.Run();
   }
 
  private:
   TestContext* context_;
 };
 
-class TestClientImpl : public TestClient {
+class TestClient {
  public:
-  explicit TestClientImpl(TestServicePtr service)
-      : service_(service.Pass()), quit_after_ack_(false) {
-    service_.set_client(this);
-  }
+  explicit TestClient(TestServicePtr service)
+      : service_(service.Pass()), quit_after_ack_(false) {}
 
-  ~TestClientImpl() override { service_.reset(); }
+  ~TestClient() { service_.reset(); }
 
-  void AckTest() override {
+  void AckTest() {
     if (quit_after_ack_)
       base::MessageLoop::current()->Quit();
   }
 
   void Test(const std::string& test_string) {
     quit_after_ack_ = true;
-    service_->Test(test_string);
+    service_->Test(test_string,
+                   base::Bind(&TestClient::AckTest, base::Unretained(this)));
   }
 
  private:
   TestServicePtr service_;
   bool quit_after_ack_;
-  DISALLOW_COPY_AND_ASSIGN(TestClientImpl);
+  DISALLOW_COPY_AND_ASSIGN(TestClient);
 };
 
 class TestApplicationLoader : public ApplicationLoader,
@@ -433,7 +433,7 @@ class ApplicationManagerTest : public testing::Test {
     TestServicePtr service_proxy;
     application_manager_->ConnectToService(GURL(kTestURLString),
                                            &service_proxy);
-    test_client_.reset(new TestClientImpl(service_proxy.Pass()));
+    test_client_.reset(new TestClient(service_proxy.Pass()));
   }
 
   void TearDown() override {
@@ -458,7 +458,7 @@ class ApplicationManagerTest : public testing::Test {
   TesterContext tester_context_;
   TestContext context_;
   base::MessageLoop loop_;
-  scoped_ptr<TestClientImpl> test_client_;
+  scoped_ptr<TestClient> test_client_;
   scoped_ptr<ApplicationManager> application_manager_;
   DISALLOW_COPY_AND_ASSIGN(ApplicationManagerTest);
 };
@@ -478,7 +478,7 @@ TEST_F(ApplicationManagerTest, NoArgs) {
   am.SetLoaderForURL(scoped_ptr<ApplicationLoader>(loader), test_url);
   TestServicePtr test_service;
   am.ConnectToService(test_url, &test_service);
-  TestClientImpl test_client(test_service.Pass());
+  TestClient test_client(test_service.Pass());
   test_client.Test("test");
   loop_.Run();
   std::vector<std::string> app_args = loader->GetArgs();
@@ -498,7 +498,7 @@ TEST_F(ApplicationManagerTest, Args) {
   am.SetLoaderForURL(scoped_ptr<ApplicationLoader>(loader), test_url);
   TestServicePtr test_service;
   am.ConnectToService(test_url, &test_service);
-  TestClientImpl test_client(test_service.Pass());
+  TestClient test_client(test_service.Pass());
   test_client.Test("test");
   loop_.Run();
   std::vector<std::string> app_args = loader->GetArgs();

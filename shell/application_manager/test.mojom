@@ -4,13 +4,8 @@
 
 module mojo;
 
-[Client=TestClient]
 interface TestService {
-  Test(string test_string);
-};
-
-interface TestClient {
-  AckTest();
+  Test(string test_string) => ();
 };
 
 interface TestA {
