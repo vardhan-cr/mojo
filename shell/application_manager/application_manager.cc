@@ -46,6 +46,10 @@ GURL ApplicationManager::Delegate::ResolveURL(const GURL& url) {
   return url;
 }
 
+GURL ApplicationManager::Delegate::ResolveMappings(const GURL& url) {
+  return url;
+}
+
 class ApplicationManager::ContentHandlerConnection : public ErrorHandler {
  public:
   ContentHandlerConnection(ApplicationManager* manager,
@@ -112,15 +116,16 @@ void ApplicationManager::ConnectToApplication(
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
   DCHECK(requested_url.is_valid());
-  ApplicationLoader* loader = GetLoaderForURL(requested_url,
-                                              DONT_INCLUDE_DEFAULT_LOADER);
+  GURL mapped_url = delegate_->ResolveMappings(requested_url);
+  ApplicationLoader* loader =
+      GetLoaderForURL(mapped_url, DONT_INCLUDE_DEFAULT_LOADER);
   if (loader) {
-    ConnectToApplicationImpl(requested_url, requested_url, requestor_url,
+    ConnectToApplicationImpl(requested_url, mapped_url, requestor_url,
                              services.Pass(), exposed_services.Pass(), loader);
     return;
   }
 
-  GURL resolved_url = delegate_->ResolveURL(requested_url);
+  GURL resolved_url = delegate_->ResolveURL(mapped_url);
   loader = GetLoaderForURL(resolved_url, INCLUDE_DEFAULT_LOADER);
   if (loader) {
     ConnectToApplicationImpl(requested_url, resolved_url, requestor_url,

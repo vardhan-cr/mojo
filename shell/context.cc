@@ -209,6 +209,10 @@ GURL Context::ResolveURL(const GURL& url) {
   return mojo_url_resolver_.Resolve(url);
 }
 
+GURL Context::ResolveMappings(const GURL& url) {
+  return mojo_url_resolver_.ApplyCustomMappings(url);
+}
+
 void Context::Run(const GURL& url) {
   ServiceProviderPtr services;
   ServiceProviderPtr exposed_services;

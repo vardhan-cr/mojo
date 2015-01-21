@@ -43,6 +43,7 @@ class Context : ApplicationManager::Delegate {
   // ApplicationManager::Delegate override.
   void OnApplicationError(const GURL& url) override;
   GURL ResolveURL(const GURL& url) override;
+  GURL ResolveMappings(const GURL& url) override;
 
   std::set<GURL> app_urls_;
   scoped_ptr<TaskRunners> task_runners_;

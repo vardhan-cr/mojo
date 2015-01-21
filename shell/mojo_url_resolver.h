@@ -45,12 +45,12 @@ class MojoURLResolver {
   // code for the corresponding Mojo App.
   GURL Resolve(const GURL& mojo_url) const;
 
- private:
   // Applies all custom mappings for |url|, returning the last non-mapped url.
   // For example, if 'a' maps to 'b' and 'b' maps to 'c' calling this with 'a'
   // returns 'c'.
   GURL ApplyCustomMappings(const GURL& url) const;
 
+ private:
   std::map<GURL, GURL> url_map_;
   std::set<GURL> local_file_set_;
   GURL local_apps_url_;

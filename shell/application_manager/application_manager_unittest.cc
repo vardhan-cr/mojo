@@ -389,11 +389,23 @@ class TestDelegate : public ApplicationManager::Delegate {
   }
 
   // ApplicationManager::Delegate
-  virtual GURL ResolveURL(const GURL& url) override {
+  virtual GURL ResolveMappings(const GURL& url) override {
     auto it = mappings_.find(url);
     if (it != mappings_.end())
       return it->second;
     return url;
+  }
+
+  // ApplicationManager::Delegate
+  virtual GURL ResolveURL(const GURL& url) override {
+    GURL mapped_url = ResolveMappings(url);
+    // The shell automatically map mojo URLs.
+    if (mapped_url.scheme() == "mojo") {
+      url::Replacements<char> replacements;
+      replacements.SetScheme("file", url::Component(0, 4));
+      mapped_url = mapped_url.ReplaceComponents(replacements);
+    }
+    return mapped_url;
   }
 
   virtual void OnApplicationError(const GURL& url) override {
@@ -668,6 +680,20 @@ TEST_F(ApplicationManagerTest, MappedURLsShouldNotCauseDuplicateLoad) {
   TestServicePtr test_service3;
   application_manager_->ConnectToService(GURL("bar:bar"), &test_service2);
   EXPECT_EQ(3, test_loader_->num_loads());
+}
+
+TEST_F(ApplicationManagerTest, MappedURLsShouldWorkWithLoaders) {
+  TestApplicationLoader* custom_loader = new TestApplicationLoader;
+  TestContext context;
+  custom_loader->set_context(&context);
+  application_manager_->SetLoaderForURL(make_scoped_ptr(custom_loader),
+                                        GURL("mojo:foo"));
+  test_delegate_.AddMapping(GURL("mojo:foo2"), GURL("mojo:foo"));
+
+  TestServicePtr test_service;
+  application_manager_->ConnectToService(GURL("mojo:foo2"), &test_service);
+  EXPECT_EQ(1, custom_loader->num_loads());
+  custom_loader->set_context(nullptr);
 }
 
 }  // namespace mojo

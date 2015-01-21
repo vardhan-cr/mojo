@@ -29,6 +29,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
     // Shell pipe goes away.
     virtual void OnApplicationError(const GURL& url);
     virtual GURL ResolveURL(const GURL& url);
+    virtual GURL ResolveMappings(const GURL& url);
   };
 
   // API for testing.
