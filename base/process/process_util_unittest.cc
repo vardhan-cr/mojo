@@ -607,7 +607,7 @@ std::string TestLaunchProcess(const std::vector<std::string>& args,
 #else
   CHECK_EQ(0, clone_flags);
 #endif  // OS_LINUX
-  EXPECT_TRUE(base::LaunchProcess(args, options, NULL));
+  EXPECT_TRUE(base::LaunchProcess(args, options).IsValid());
   PCHECK(IGNORE_EINTR(close(fds[1])) == 0);
 
   char buf[512];
@@ -679,10 +679,8 @@ TEST_F(ProcessUtilTest, LaunchProcess) {
   // Test a non-trival value for clone_flags.
   // Don't test on Valgrind as it has limited support for clone().
   if (!RunningOnValgrind()) {
-    EXPECT_EQ(
-        "wibble\n",
-        TestLaunchProcess(
-            echo_base_test, env_changes, no_clear_environ, CLONE_FS | SIGCHLD));
+    EXPECT_EQ("wibble\n", TestLaunchProcess(echo_base_test, env_changes,
+                                            no_clear_environ, CLONE_FS));
   }
 
   EXPECT_EQ(

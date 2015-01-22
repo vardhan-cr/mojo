@@ -49,9 +49,6 @@ bool FindBadConstructsAction::ParseArgs(const CompilerInstance& instance,
     if (args[i] == "check-base-classes") {
       // TODO(rsleevi): Remove this once http://crbug.com/123295 is fixed.
       options_.check_base_classes = true;
-    } else if (args[i] == "check-weak-ptr-factory-order") {
-      // TODO(dmichael): Remove this once http://crbug.com/303818 is fixed.
-      options_.check_weak_ptr_factory_order = true;
     } else if (args[i] == "check-enum-last-value") {
       // TODO(tsepez): Enable this by default once http://crbug.com/356815
       // and http://crbug.com/356816 are fixed.
@@ -60,6 +57,8 @@ bool FindBadConstructsAction::ParseArgs(const CompilerInstance& instance,
       options_.strict_virtual_specifiers = true;
     } else if (args[i] == "with-ast-visitor") {
       options_.with_ast_visitor = true;
+    } else if (args[i] == "check-templates") {
+      options_.check_templates = true;
     } else {
       parsed = false;
       llvm::errs() << "Unknown clang plugin argument: " << args[i] << "\n";

@@ -99,8 +99,9 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
     // rasterizer.h
   };
 
-  COMPILE_ASSERT(NamedTaskSet::ALL == (kNumberOfTaskSets - 1),
-                 NamedTaskSet_ALL_not_kNumberOfTaskSets_minus_1);
+  static_assert(NamedTaskSet::ALL == (kNumberOfTaskSets - 1),
+                "NamedTaskSet::ALL should be equal to kNumberOfTaskSets"
+                "minus 1");
 
   static scoped_ptr<TileManager> Create(TileManagerClient* client,
                                         base::SequencedTaskRunner* task_runner,
@@ -138,7 +139,8 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
     for (size_t i = 0; i < tiles.size(); ++i) {
       TileDrawInfo& draw_info = tiles[i]->draw_info();
       draw_info.resource_ =
-          resource_pool_->AcquireResource(tiles[i]->desired_texture_size());
+          resource_pool_->AcquireResource(tiles[i]->desired_texture_size(),
+                                          resource_pool_->default_format());
     }
   }
 
@@ -200,9 +202,9 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
   virtual void ScheduleTasks(
       const TileVector& tiles_that_need_to_be_rasterized);
 
-  void AssignGpuMemoryToTiles(TileVector* tiles_that_need_to_be_rasterized,
+  void AssignGpuMemoryToTiles(RasterTilePriorityQueue* raster_priority_queue,
                               size_t scheduled_raser_task_limit,
-                              bool required_for_draw_only);
+                              TileVector* tiles_that_need_to_be_rasterized);
 
   void SynchronouslyRasterizeTiles(
       const GlobalStateThatImpactsTilePriority& state);
@@ -303,7 +305,6 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
   UniqueNotifier ready_to_draw_check_notifier_;
   UniqueNotifier more_tiles_need_prepare_check_notifier_;
 
-  RasterTilePriorityQueue raster_priority_queue_;
   EvictionTilePriorityQueue eviction_priority_queue_;
   bool eviction_priority_queue_is_up_to_date_;
 

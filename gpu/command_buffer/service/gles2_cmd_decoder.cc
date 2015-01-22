@@ -6427,12 +6427,17 @@ bool GLES2DecoderImpl::PrepareTexturesForRender() {
           glBindTexture(
               textarget,
               texture_manager()->black_texture_id(uniform_info->type));
-          LOCAL_RENDER_WARNING(
-              std::string("texture bound to texture unit ") +
-              base::IntToString(texture_unit_index) +
-              " is not renderable. It maybe non-power-of-2 and have"
-              " incompatible texture filtering or is not"
-              " 'texture complete'");
+          if (!texture_ref) {
+            LOCAL_RENDER_WARNING(
+                std::string("there is no texture bound to the unit ") +
+                base::IntToString(texture_unit_index));
+          } else {
+            LOCAL_RENDER_WARNING(
+                std::string("texture bound to texture unit ") +
+                base::IntToString(texture_unit_index) +
+                " is not renderable. It maybe non-power-of-2 and have"
+                " incompatible texture filtering.");
+          }
           continue;
         }
 
@@ -9140,10 +9145,17 @@ void GLES2DecoderImpl::DoCopyTexSubImage2D(
   Clip(x, width, size.width(), &copyX, &copyWidth);
   Clip(y, height, size.height(), &copyY, &copyHeight);
 
-  if (!texture_manager()->ClearTextureLevel(this, texture_ref, target, level)) {
-    LOCAL_SET_GL_ERROR(
-        GL_OUT_OF_MEMORY, "glCopyTexSubImage2D", "dimensions too big");
-    return;
+  if (xoffset != 0 || yoffset != 0 || width != size.width() ||
+      height != size.height()) {
+    if (!texture_manager()->ClearTextureLevel(this, texture_ref, target,
+                                              level)) {
+      LOCAL_SET_GL_ERROR(GL_OUT_OF_MEMORY, "glCopyTexSubImage2D",
+                         "dimensions too big");
+      return;
+    }
+  } else {
+    // Write all pixels in below.
+    texture_manager()->SetLevelCleared(texture_ref, target, level, true);
   }
 
   if (copyX != x ||
@@ -9747,6 +9759,9 @@ void GLES2DecoderImpl::DoSwapBuffers() {
   {
     TRACE_EVENT_SYNTHETIC_DELAY("gpu.PresentingFrame");
   }
+
+  ScopedGPUTrace scoped_gpu_trace(gpu_tracer_.get(), kTraceDecoder,
+                                  "gpu_toplevel", "SwapBuffer");
 
   bool is_tracing;
   TRACE_EVENT_CATEGORY_GROUP_ENABLED(TRACE_DISABLED_BY_DEFAULT("gpu.debug"),

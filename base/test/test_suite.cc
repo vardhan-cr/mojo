@@ -135,12 +135,12 @@ void TestSuite::PreInitialize(bool create_at_exit_manager) {
   testing::GTEST_FLAG(catch_exceptions) = false;
 #endif
   base::EnableTerminationOnHeapCorruption();
-#if defined(OS_LINUX) && !defined(OS_ANDROID)
+#if defined(OS_LINUX) && defined(USE_AURA)
   // When calling native char conversion functions (e.g wrctomb) we need to
   // have the locale set. In the absence of such a call the "C" locale is the
   // default. In the gtk code (below) gtk_init() implicitly sets a locale.
   setlocale(LC_ALL, "");
-#endif  // defined(OS_LINUX) && !defined(OS_ANDROID)
+#endif  // defined(OS_LINUX) && defined(USE_AURA)
 
   // On Android, AtExitManager is created in
   // testing/android/native_test_wrapper.cc before main() is called.

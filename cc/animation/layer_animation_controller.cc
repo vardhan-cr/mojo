@@ -61,11 +61,15 @@ struct HasAnimationId {
 };
 
 void LayerAnimationController::RemoveAnimation(int animation_id) {
-  animations_.erase(cc::remove_if(&animations_,
-                                  animations_.begin(),
-                                  animations_.end(),
-                                  HasAnimationId(animation_id)),
-                    animations_.end());
+  auto animations_to_remove =
+      animations_.remove_if(HasAnimationId(animation_id));
+  for (auto it = animations_to_remove; it != animations_.end(); ++it) {
+    if ((*it)->target_property() == Animation::ScrollOffset) {
+      NotifyObserversScrollOffsetAnimationRemoved();
+      break;
+    }
+  }
+  animations_.erase(animations_to_remove, animations_.end());
   UpdateActivation(NormalActivation);
 }
 
@@ -85,12 +89,13 @@ struct HasAnimationIdAndProperty {
 void LayerAnimationController::RemoveAnimation(
     int animation_id,
     Animation::TargetProperty target_property) {
-  animations_.erase(
-      cc::remove_if(&animations_,
-                    animations_.begin(),
-                    animations_.end(),
-                    HasAnimationIdAndProperty(animation_id, target_property)),
-      animations_.end());
+  auto animations_to_remove = animations_.remove_if(
+      HasAnimationIdAndProperty(animation_id, target_property));
+  if (target_property == Animation::ScrollOffset &&
+      animations_to_remove != animations_.end())
+    NotifyObserversScrollOffsetAnimationRemoved();
+
+  animations_.erase(animations_to_remove, animations_.end());
   UpdateActivation(NormalActivation);
 }
 
@@ -261,16 +266,6 @@ void LayerAnimationController::AddAnimation(scoped_ptr<Animation> animation) {
 }
 
 Animation* LayerAnimationController::GetAnimation(
-    int group_id,
-    Animation::TargetProperty target_property) const {
-  for (size_t i = 0; i < animations_.size(); ++i)
-    if (animations_[i]->group() == group_id &&
-        animations_[i]->target_property() == target_property)
-      return animations_[i];
-  return 0;
-}
-
-Animation* LayerAnimationController::GetAnimation(
     Animation::TargetProperty target_property) const {
   for (size_t i = 0; i < animations_.size(); ++i) {
     size_t index = animations_.size() - i - 1;
@@ -278,6 +273,13 @@ Animation* LayerAnimationController::GetAnimation(
       return animations_[index];
   }
   return 0;
+}
+
+Animation* LayerAnimationController::GetAnimationById(int animation_id) const {
+  for (size_t i = 0; i < animations_.size(); ++i)
+    if (animations_[i]->id() == animation_id)
+      return animations_[i];
+  return nullptr;
 }
 
 bool LayerAnimationController::HasActiveAnimation() const {
@@ -554,8 +556,7 @@ void LayerAnimationController::PushNewAnimationsToImplThread(
   for (size_t i = 0; i < animations_.size(); ++i) {
     // If the animation is already running on the impl thread, there is no
     // need to copy it over.
-    if (controller_impl->GetAnimation(animations_[i]->group(),
-                                      animations_[i]->target_property()))
+    if (controller_impl->GetAnimationById(animations_[i]->id()))
       continue;
 
     // If the animation is not running on the impl thread, it does not
@@ -599,8 +600,7 @@ static bool IsCompleted(
   if (animation->is_impl_only()) {
     return (animation->run_state() == Animation::WaitingForDeletion);
   } else {
-    return !main_thread_controller->GetAnimation(animation->group(),
-                                                 animation->target_property());
+    return !main_thread_controller->GetAnimationById(animation->id());
   }
 }
 
@@ -630,8 +630,8 @@ void LayerAnimationController::RemoveAnimationsCompletedOnMainThread(
 void LayerAnimationController::PushPropertiesToImplThread(
     LayerAnimationController* controller_impl) const {
   for (size_t i = 0; i < animations_.size(); ++i) {
-    Animation* current_impl = controller_impl->GetAnimation(
-        animations_[i]->group(), animations_[i]->target_property());
+    Animation* current_impl =
+        controller_impl->GetAnimationById(animations_[i]->id());
     if (current_impl)
       animations_[i]->PushPropertiesTo(current_impl);
   }
@@ -1032,6 +1032,11 @@ void LayerAnimationController::NotifyObserversAnimationWaitingForDeletion() {
   FOR_EACH_OBSERVER(LayerAnimationValueObserver,
                     value_observers_,
                     OnAnimationWaitingForDeletion());
+}
+
+void LayerAnimationController::NotifyObserversScrollOffsetAnimationRemoved() {
+  FOR_EACH_OBSERVER(LayerAnimationValueObserver, value_observers_,
+                    OnScrollOffsetAnimationRemoved());
 }
 
 bool LayerAnimationController::HasValueObserver() {

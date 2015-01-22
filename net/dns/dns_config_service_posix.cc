@@ -411,9 +411,9 @@ ConfigParsePosixResult ConvertResStateToDnsConfig(const struct __res_state& res,
     dns_config->nameservers.push_back(ipe);
   }
 #elif defined(OS_LINUX)
-  COMPILE_ASSERT(arraysize(res.nsaddr_list) >= MAXNS &&
-                 arraysize(res._u._ext.nsaddrs) >= MAXNS,
-                 incompatible_libresolv_res_state);
+  static_assert(arraysize(res.nsaddr_list) >= MAXNS &&
+                    arraysize(res._u._ext.nsaddrs) >= MAXNS,
+                "incompatible libresolv res_state");
   DCHECK_LE(res.nscount, MAXNS);
   // Initially, glibc stores IPv6 in |_ext.nsaddrs| and IPv4 in |nsaddr_list|.
   // In res_send.c:res_nsend, it merges |nsaddr_list| into |nsaddrs|,
@@ -459,7 +459,14 @@ ConfigParsePosixResult ConvertResStateToDnsConfig(const struct __res_state& res,
 #if defined(RES_ROTATE)
   dns_config->rotate = res.options & RES_ROTATE;
 #endif
+#if defined(RES_USE_EDNS0)
   dns_config->edns0 = res.options & RES_USE_EDNS0;
+#endif
+#if !defined(RES_USE_DNSSEC)
+  // Some versions of libresolv don't have support for the DO bit. In this
+  // case, we proceed without it.
+  static const int RES_USE_DNSSEC = 0;
+#endif
 
   // The current implementation assumes these options are set. They normally
   // cannot be overwritten by /etc/resolv.conf

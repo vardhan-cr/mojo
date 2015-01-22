@@ -427,6 +427,44 @@
         },
       ],  # targets
     }],
+    ['use_evdev_gestures==1', {
+      'targets': [
+        {
+          'target_name': 'libevdev-cros',
+          'type': 'none',
+          'direct_dependent_settings': {
+            'cflags': [
+              '<!@(<(pkg-config) --cflags libevdev-cros)'
+            ],
+          },
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg-config) --libs-only-L --libs-only-other libevdev-cros)',
+            ],
+            'libraries': [
+              '<!@(<(pkg-config) --libs-only-l libevdev-cros)',
+            ],
+          },
+        },
+        {
+          'target_name': 'libgestures',
+          'type': 'none',
+          'direct_dependent_settings': {
+            'cflags': [
+              '<!@(<(pkg-config) --cflags libgestures)'
+            ],
+          },
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg-config) --libs-only-L --libs-only-other libgestures)',
+            ],
+            'libraries': [
+              '<!@(<(pkg-config) --libs-only-l libgestures)',
+            ],
+          },
+        },
+      ],
+    }],
     ['use_xkbcommon==1', {
       'targets': [
         {
@@ -1065,6 +1103,46 @@
           'message': 'Generating libspeechd library loader',
           'process_outputs_as_sources': 1,
         },
+      ],
+    },
+    {
+      'target_name': 'pangocairo',
+      'type': 'none',
+      'toolsets': ['host', 'target'],
+      'conditions': [
+        ['use_pango==1 and use_cairo==1', {
+          'conditions': [
+            ['_toolset=="target"', {
+              'direct_dependent_settings': {
+                'cflags': [
+                  '<!@(<(pkg-config) --cflags pangocairo pangoft2)',
+                ],
+              },
+              'link_settings': {
+                'ldflags': [
+                  '<!@(<(pkg-config) --libs-only-L --libs-only-other pangocairo pangoft2)',
+                ],
+                'libraries': [
+                  '<!@(<(pkg-config) --libs-only-l pangocairo pangoft2)',
+                ],
+              },
+            }, {
+              'direct_dependent_settings': {
+                'cflags': [
+                  '<!@(pkg-config --cflags pangocairo pangoft2)',
+                ],
+              },
+              'link_settings': {
+                'ldflags': [
+                  '<!@(pkg-config --libs-only-L --libs-only-other pangocairo pangoft2)',
+                ],
+                'libraries': [
+                  '<!@(pkg-config --libs-only-l pangocairo pangoft2)',
+                ],
+              },
+            }],
+          ],
+        }],
       ],
     },
     {

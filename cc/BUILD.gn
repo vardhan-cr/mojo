@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//testing/test.gni")
+
 component("cc") {
   sources = [
     "animation/animation.cc",
@@ -78,6 +80,8 @@ component("cc") {
     "debug/devtools_instrumentation.h",
     "debug/frame_rate_counter.cc",
     "debug/frame_rate_counter.h",
+    "debug/frame_timing_tracker.cc",
+    "debug/frame_timing_tracker.h",
     "debug/frame_viewer_instrumentation.cc",
     "debug/frame_viewer_instrumentation.h",
     "debug/invalidation_benchmark.cc",
@@ -329,6 +333,8 @@ component("cc") {
     "resources/bitmap_skpicture_content_layer_updater.h",
     "resources/clip_display_item.cc",
     "resources/clip_display_item.h",
+    "resources/clip_path_display_item.cc",
+    "resources/clip_path_display_item.h",
     "resources/content_layer_updater.cc",
     "resources/content_layer_updater.h",
     "resources/display_item.cc",
@@ -724,6 +730,7 @@ test("cc_unittests") {
     "base/simple_enclosed_region_unittest.cc",
     "base/tiling_data_unittest.cc",
     "base/util_unittest.cc",
+    "debug/frame_timing_tracker_unittest.cc",
     "debug/micro_benchmark_controller_unittest.cc",
     "input/top_controls_manager_unittest.cc",
     "layers/contents_scaling_layer_unittest.cc",
@@ -743,6 +750,7 @@ test("cc_unittests") {
     "layers/nine_patch_layer_unittest.cc",
     "layers/painted_scrollbar_layer_impl_unittest.cc",
     "layers/picture_image_layer_impl_unittest.cc",
+    "layers/picture_image_layer_unittest.cc",
     "layers/picture_layer_impl_unittest.cc",
     "layers/picture_layer_unittest.cc",
     "layers/render_surface_unittest.cc",

@@ -294,7 +294,8 @@ class TestSpdyVisitor : public SpdyFramerVisitorInterface,
     std::cerr << "OnStreamFrameData(" << stream_id << ", \"";
     if (len > 0) {
       for (size_t i = 0 ; i < len; ++i) {
-        std::cerr << std::hex << (0xFF & (unsigned int)data[i]) << std::dec;
+        std::cerr << std::hex << (0xFF & static_cast<unsigned int>(data[i]))
+                  << std::dec;
       }
     }
     std::cerr << "\", " << len << ")\n";
@@ -667,7 +668,6 @@ class SpdyFramerTest : public ::testing::TestWithParam<SpdyMajorVersion> {
   bool IsSpdy2() { return spdy_version_ == SPDY2; }
   bool IsSpdy3() { return spdy_version_ == SPDY3; }
   bool IsSpdy4() { return spdy_version_ == SPDY4; }
-  bool IsSpdy5() { return spdy_version_ == SPDY5; }
 
   // Version of SPDY protocol to be used.
   SpdyMajorVersion spdy_version_;
@@ -4674,7 +4674,7 @@ TEST_P(SpdyFramerTest, ReadGarbageHPACKEncoding) {
 
 TEST_P(SpdyFramerTest, SizesTest) {
   SpdyFramer framer(spdy_version_);
-  if (IsSpdy4() || IsSpdy5()) {
+  if (IsSpdy4()) {
     EXPECT_EQ(9u, framer.GetDataFrameMinimumSize());
     EXPECT_EQ(9u, framer.GetControlFrameHeaderSize());
     EXPECT_EQ(14u, framer.GetSynStreamMinimumSize());

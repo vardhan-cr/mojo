@@ -16,6 +16,10 @@
 #include <time.h>
 #include <X11/Xlib.h>
 
+#if defined(USE_AURA)
+#include <X11/extensions/XInput2.h>
+#endif
+
 void Sleep(int duration_ms) {
   struct timespec sleep_time, remaining;
 
@@ -73,6 +77,33 @@ int main(int argc, char* argv[]) {
 
   fprintf(stderr, "Connected after %d retries\n", tries);
 
+#if defined(USE_AURA)
+  // Check for XInput2
+  int opcode, event, err;
+  if (!XQueryExtension(scoped_display.display(), "XInputExtension", &opcode,
+                       &event, &err)) {
+    fprintf(stderr,
+        "Failed to get XInputExtension on %s.\n", XDisplayName(NULL));
+    return -2;
+  }
+
+  int major = 2, minor = 0;
+  if (XIQueryVersion(scoped_display.display(), &major, &minor) == BadRequest) {
+    fprintf(stderr,
+        "Server does not have XInput2 on %s.\n", XDisplayName(NULL));
+    return -3;
+  }
+
+  // Ask for the list of devices. This can cause some Xvfb to crash.
+  int count = 0;
+  XIDeviceInfo* devices =
+      XIQueryDevice(scoped_display.display(), XIAllDevices, &count);
+  if (devices)
+    XIFreeDeviceInfo(devices);
+
+  fprintf(stderr,
+      "XInput2 verified initially sane on %s.\n", XDisplayName(NULL));
+#endif
   return 0;
 }
 

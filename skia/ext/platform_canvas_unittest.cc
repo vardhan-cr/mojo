@@ -207,6 +207,8 @@ TEST(PlatformCanvas, SkLayer) {
   EXPECT_TRUE(VerifyBlackRect(*canvas, kLayerX, kLayerY, kLayerW, kLayerH));
 }
 
+#if !defined(USE_AURA)  // http://crbug.com/154358
+
 // Test native clipping.
 TEST(PlatformCanvas, ClipRegion) {
   // Initialize a white canvas
@@ -231,6 +233,8 @@ TEST(PlatformCanvas, ClipRegion) {
   }
   EXPECT_TRUE(VerifyCanvasColor(*canvas, SK_ColorWHITE));
 }
+
+#endif  // !defined(USE_AURA)
 
 // Test the layers get filled properly by native rendering.
 TEST(PlatformCanvas, FillLayer) {
@@ -288,6 +292,8 @@ TEST(PlatformCanvas, FillLayer) {
   canvas->restore();
   EXPECT_TRUE(VerifyBlackRect(*canvas, kInnerX, kInnerY, kInnerW, kInnerH));
 }
+
+#if !defined(USE_AURA)  // http://crbug.com/154358
 
 // Test that translation + make layer works properly.
 TEST(PlatformCanvas, TranslateLayer) {
@@ -388,6 +394,8 @@ TEST(PlatformCanvas, TranslateLayer) {
                                 kInnerX + 1, kInnerY + 1, kInnerW, kInnerH));
 #endif
 }
+
+#endif  // #if !defined(USE_AURA)
 
 TEST(PlatformBitmapTest, PlatformBitmap) {
   const int kWidth = 400;

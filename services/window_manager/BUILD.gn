@@ -4,6 +4,7 @@
 
 import("//build/config/ui.gni")
 import("//mojo/public/mojo_application.gni")
+import("//testing/test.gni")
 
 mojo_native_application("window_manager") {
   sources = [

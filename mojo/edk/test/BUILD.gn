@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("../mojo_edk.gni")
+import("//testing/test.gni")
 
 mojo_edk_source_set("test_support") {
   testonly = true

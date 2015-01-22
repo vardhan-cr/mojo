@@ -117,6 +117,15 @@ vector<TestParams> GetTestParams() {
   // TODO(rtenneti): Add kTBBR after BBR code is checked in.
   // QuicTag congestion_control_tags[] = {kRENO, kTBBR, kQBIC};
   QuicTag congestion_control_tags[] = {kRENO, kQBIC};
+  QuicVersionVector spdy3_versions;
+  QuicVersionVector spdy4_versions;
+  for (QuicVersion version : all_supported_versions) {
+    if (version > QUIC_VERSION_23) {
+      spdy4_versions.push_back(version);
+    } else {
+      spdy3_versions.push_back(version);
+    }
+  }
   for (size_t congestion_control_index = 0;
        congestion_control_index < arraysize(congestion_control_tags);
        congestion_control_index++) {
@@ -124,27 +133,29 @@ vector<TestParams> GetTestParams() {
         congestion_control_tags[congestion_control_index];
     for (int use_fec = 0; use_fec < 2; ++use_fec) {
       for (int use_pacing = 0; use_pacing < 2; ++use_pacing) {
-        // Add an entry for server and client supporting all versions.
-        params.push_back(TestParams(all_supported_versions,
-                                    all_supported_versions,
-                                    all_supported_versions[0],
-                                    use_pacing != 0,
-                                    use_fec != 0,
-                                    congestion_control_tag));
+        for (int spdy_version = 3; spdy_version <= 4; ++spdy_version) {
+          const QuicVersionVector* client_versions =
+              spdy_version == 3 ? &spdy3_versions : &spdy4_versions;
+          // Add an entry for server and client supporting all versions.
+          params.push_back(TestParams(*client_versions, all_supported_versions,
+                                      (*client_versions)[0], use_pacing != 0,
+                                      use_fec != 0, congestion_control_tag));
 
-        // Test client supporting all versions and server supporting 1 version.
-        // Simulate an old server and exercise version downgrade in the client.
-        // Protocol negotiation should occur. Skip the i = 0 case because it is
-        // essentially the same as the default case.
-        for (size_t i = 1; i < all_supported_versions.size(); ++i) {
-          QuicVersionVector server_supported_versions;
-          server_supported_versions.push_back(all_supported_versions[i]);
-          params.push_back(TestParams(all_supported_versions,
-                                      server_supported_versions,
-                                      server_supported_versions[0],
-                                      use_pacing != 0,
-                                      use_fec != 0,
-                                      congestion_control_tag));
+          // Test client supporting all versions and server supporting 1
+          // version.
+          // Simulate an old server and exercise version downgrade in the
+          // client.
+          // Protocol negotiation should occur. Skip the i = 0 case because it
+          // is
+          // essentially the same as the default case.
+          for (QuicVersion version : *client_versions) {
+            QuicVersionVector server_supported_versions;
+            server_supported_versions.push_back(version);
+            params.push_back(
+                TestParams(*client_versions, server_supported_versions,
+                           server_supported_versions[0], use_pacing != 0,
+                           use_fec != 0, congestion_control_tag));
+          }
         }
       }
     }
@@ -1374,9 +1385,7 @@ class TestAckNotifierDelegate : public QuicAckNotifier::DelegateInterface {
  public:
   TestAckNotifierDelegate() {}
 
-  void OnAckNotification(int /*num_original_packets*/,
-                         int /*num_original_bytes*/,
-                         int /*num_retransmitted_packets*/,
+  void OnAckNotification(int /*num_retransmitted_packets*/,
                          int /*num_retransmitted_bytes*/,
                          QuicTime::Delta /*delta_largest_observed*/) override {
     ASSERT_FALSE(has_been_notified_);
@@ -1393,13 +1402,15 @@ class TestAckNotifierDelegate : public QuicAckNotifier::DelegateInterface {
   bool has_been_notified_ = false;
 };
 
-TEST_P(EndToEndTest, AckNotifierWithPacketLoss) {
-  // Verify that even in the presence of packet loss, an AckNotifierDelegate
-  // will get informed that the data it is interested in has been ACKed. This
-  // tests end-to-end ACK notification, and demonstrates that retransmissions do
-  // not break this functionality.
+TEST_P(EndToEndTest, AckNotifierWithPacketLossAndBlockedSocket) {
+  // Verify that even in the presence of packet loss and occasionally blocked
+  // socket,  an AckNotifierDelegate will get informed that the data it is
+  // interested in has been ACKed. This tests end-to-end ACK notification, and
+  // demonstrates that retransmissions do not break this functionality.
   ValueRestore<bool> old_flag(&FLAGS_quic_attach_ack_notifiers_to_packets,
                               true);
+  ValueRestore<bool> old_flag2(&FLAGS_quic_ack_notifier_informed_on_serialized,
+                               true);
 
   SetPacketLossPercentage(5);
   ASSERT_TRUE(Initialize());
@@ -1407,6 +1418,7 @@ TEST_P(EndToEndTest, AckNotifierWithPacketLoss) {
   // Wait for the server SHLO before upping the packet loss.
   client_->client()->WaitForCryptoHandshakeConfirmed();
   SetPacketLossPercentage(30);
+  client_writer_->set_fake_blocked_socket_percentage(10);
 
   // Create a POST request and send the headers only.
   HTTPMessage request(HttpConstants::HTTP_1_1, HttpConstants::POST, "/foo");
@@ -1430,11 +1442,14 @@ TEST_P(EndToEndTest, AckNotifierWithPacketLoss) {
   // Send another request to flush out any pending ACKs on the server.
   client_->SendSynchronousRequest(request_string);
 
+  // Pause the server to avoid races.
+  server_thread_->Pause();
   // Make sure the delegate does get the notification it expects.
   while (!delegate->has_been_notified()) {
     // Waits for up to 50 ms.
     client_->client()->WaitForEvents();
   }
+  server_thread_->Resume();
 }
 
 }  // namespace

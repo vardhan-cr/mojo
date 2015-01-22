@@ -21,15 +21,15 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '199ba8e19b0cafb37eea3beab162bc4b52728fff',
+  'skia_revision': '3e3b58d57a358e2d52bc23ad2409a95d59310100',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': 'cc2b2f487bfa07c4f8f33ac574a4580ad9ec0374',
+  'v8_revision': '3efdae6669030b03a841c8d579655ba1f36b1f87',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '9e0478f62fbc2f24d4ec233ef655d50b9dc0b812',
+  'angle_revision': '2a30ccefd0c47608380a1621a983bf46685e5ad9',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
@@ -41,11 +41,11 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': 'f8105c665856863ad95da37fee6c12b98b953e2c',
+  'pdfium_revision': 'aa7b4ede03764a5701a477b601720a32c88d8e42',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': 'ca9a538aa0f2ebdd261783efa032e69a2ea17fbc',
+  'boringssl_revision': 'e49da742cb8da281bbeaa7a54aad90aa5d3d19fe',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -73,7 +73,7 @@ deps = {
    Var('chromium_git') + '/external/open-vcdiff.git' + '@' + '438f2a5be6d809bc21611a94cd37bfc8c28ceb33', # from svn revision 41
 
   'src/testing/gtest':
-   Var('chromium_git') + '/external/googletest.git' + '@' + '8245545b6dc9c4703e6496d1efd19e975ad2b038', # from svn revision 700
+   Var('chromium_git') + '/external/googletest.git' + '@' + 'be1868139ffe0ccd0e8e3b37292b84c821d9c8ad', # from svn revision 704
 
   'src/testing/gmock':
    Var('chromium_git') + '/external/googlemock.git' + '@' + '29763965ab52f24565299976b936d1265cb6a271', # from svn revision 501
@@ -133,7 +133,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + '82b08049cc0b1f9e0bdcc0702ac6b523360f635f', # from svn revision 2020
+    Var('chromium_git') + '/external/gyp.git' + '@' + '194ec65a55edf24c1976d4265f57e8c90ef5bb2f', # from svn revision 2023
 }
 
 

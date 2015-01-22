@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/mojo_application.gni")
+import("//testing/test.gni")
 
 group("js") {
   deps = [

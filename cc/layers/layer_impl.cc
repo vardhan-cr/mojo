@@ -60,6 +60,7 @@ LayerImpl::LayerImpl(LayerTreeImpl* tree_impl, int id)
       draw_checkerboard_for_missing_tiles_(false),
       draws_content_(false),
       hide_layer_and_subtree_(false),
+      clear_scroll_delta_at_activation_(false),
       transform_is_invertible_(true),
       is_container_for_fixed_position_layers_(false),
       background_color_(0),
@@ -356,6 +357,10 @@ void LayerImpl::SetSentScrollDelta(const gfx::Vector2dF& sent_scroll_delta) {
   sent_scroll_delta_ = sent_scroll_delta;
 }
 
+void LayerImpl::ClearScrollDeltaAtActivation() {
+  clear_scroll_delta_at_activation_ = true;
+}
+
 gfx::Vector2dF LayerImpl::ScrollBy(const gfx::Vector2dF& scroll) {
   gfx::Vector2dF adjusted_scroll = scroll;
   if (layer_tree_impl()->settings().use_pinch_virtual_viewport) {
@@ -544,7 +549,11 @@ void LayerImpl::PushPropertiesTo(LayerImpl* layer) {
   // Save the difference but clear the sent delta so that we don't subtract
   // it again in SetScrollOffsetAndDelta's pending twin mirroring logic.
   gfx::Vector2dF remaining_delta =
-      layer->ScrollDelta() - layer->sent_scroll_delta();
+      clear_scroll_delta_at_activation_
+          ? gfx::Vector2dF()
+          : layer->ScrollDelta() - layer->sent_scroll_delta();
+  clear_scroll_delta_at_activation_ = false;
+
   layer->SetSentScrollDelta(gfx::Vector2dF());
   layer->SetScrollOffsetAndDelta(scroll_offset_, remaining_delta);
 
@@ -781,6 +790,9 @@ void LayerImpl::OnScrollOffsetAnimated(const gfx::ScrollOffset& scroll_offset) {
 }
 
 void LayerImpl::OnAnimationWaitingForDeletion() {}
+
+void LayerImpl::OnScrollOffsetAnimationRemoved() {
+}
 
 bool LayerImpl::IsActive() const {
   return layer_tree_impl_->IsActiveTree();
@@ -1162,6 +1174,8 @@ gfx::Vector2dF LayerImpl::ScrollDelta() const {
 }
 
 void LayerImpl::SetScrollDelta(const gfx::Vector2dF& scroll_delta) {
+  if (!IsActive() && clear_scroll_delta_at_activation_)
+    return;
   SetScrollOffsetAndDelta(scroll_offset_, scroll_delta);
 }
 
@@ -1452,35 +1466,24 @@ void LayerImpl::AsValueInto(base::debug::TracedValue* state) const {
       LayerTypeAsString(),
       this);
   state->SetInteger("layer_id", id());
-  state->BeginDictionary("bounds");
-  MathUtil::AddToTracedValue(bounds_, state);
-  state->EndDictionary();
+  MathUtil::AddToTracedValue("bounds", bounds_, state);
 
   state->SetDouble("opacity", opacity());
 
-  state->BeginArray("position");
-  MathUtil::AddToTracedValue(position_, state);
-  state->EndArray();
+  MathUtil::AddToTracedValue("position", position_, state);
 
   state->SetInteger("draws_content", DrawsContent());
   state->SetInteger("gpu_memory_usage", GPUMemoryUsageInBytes());
 
-  state->BeginArray("scroll_offset");
-  MathUtil::AddToTracedValue(scroll_offset_, state);
-  state->EndArray();
-
-  state->BeginArray("transform_origin");
-  MathUtil::AddToTracedValue(transform_origin_, state);
-  state->EndArray();
+  MathUtil::AddToTracedValue("scroll_offset", scroll_offset_, state);
+  MathUtil::AddToTracedValue("transform_origin", transform_origin_, state);
 
   bool clipped;
   gfx::QuadF layer_quad = MathUtil::MapQuad(
       screen_space_transform(),
       gfx::QuadF(gfx::Rect(content_bounds())),
       &clipped);
-  state->BeginArray("layer_quad");
-  MathUtil::AddToTracedValue(layer_quad, state);
-  state->EndArray();
+  MathUtil::AddToTracedValue("layer_quad", layer_quad, state);
   if (!touch_event_handler_region_.IsEmpty()) {
     state->BeginArray("touch_event_handler_region");
     touch_event_handler_region_.AsValueInto(state);
@@ -1538,11 +1541,8 @@ void LayerImpl::AsValueInto(base::debug::TracedValue* state) const {
       layer_animation_controller()->HasAnimationThatInflatesBounds());
 
   gfx::BoxF box;
-  if (LayerUtils::GetAnimationBounds(*this, &box)) {
-    state->BeginArray("animation_bounds");
-    MathUtil::AddToTracedValue(box, state);
-    state->EndArray();
-  }
+  if (LayerUtils::GetAnimationBounds(*this, &box))
+    MathUtil::AddToTracedValue("animation_bounds", box, state);
 
   if (debug_info_.get()) {
     std::string str;

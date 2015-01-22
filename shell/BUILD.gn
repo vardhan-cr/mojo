@@ -5,6 +5,7 @@
 import("//build/config/ui.gni")
 import("//mojo/public/mojo.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//testing/test.gni")
 
 # We don't support building in the component build since mojo apps are
 # inherently components.
@@ -25,7 +26,6 @@ group("shell") {
   if (is_android) {
     deps += [
       ":mojo_shell_apk",
-      ":mojo_shell_tests_apk",
     ]
   }
 }
@@ -328,13 +328,13 @@ if (is_android) {
 
     native_libs = [ "libmojo_shell.so" ]
 
-    asset_location = mojo_shell_assets_dir
 
     deps = [
       ":copy_mojo_shell",
       ":copy_mojo_shell_assets",
       ":java",
       ":resources",
+      "//base:base_java",
       "//services/native_viewport:native_viewport_java",
     ]
   }
@@ -346,18 +346,6 @@ if (is_android) {
     deps = [
       ":java",
       "//base:base_java",
-    ]
-  }
-
-  unittest_apk("mojo_shell_tests_apk") {
-    unittests_dep = ":mojo_shell_tests"
-
-    asset_location = mojo_shell_test_assets_dir
-
-    deps = [
-      unittests_dep,
-      ":copy_mojo_shell_test_assets",
-      ":mojo_shell_tests_java",
     ]
   }
 }
@@ -443,8 +431,12 @@ test("mojo_shell_tests") {
 
     deps += [
       ":jni_headers",
+      ":copy_mojo_shell_test_assets",
+      ":mojo_shell_tests_java",
       "//testing/android:native_test_native_code",
     ]
+
+# TODO(qsr): asset_location = mojo_shell_assets_dir ?
   }
 }
 

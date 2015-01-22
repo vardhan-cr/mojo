@@ -30,6 +30,7 @@ source_set("config") {
     "gpu_info_collector_linux.cc",
     "gpu_info_collector_linux.h",
     "gpu_info_collector_mac.mm",
+    "gpu_info_collector_ozone.cc",
     "gpu_info_collector_win.cc",
     "gpu_info_collector_x11.cc",
     "gpu_info_collector.cc",
@@ -75,7 +76,7 @@ source_set("config") {
   if (use_libpci) {
     defines += [ "USE_LIBPCI=1" ]
   }
-  if (is_linux && use_libpci && use_x11) {
+  if (is_linux && use_libpci && (use_x11 || use_ozone)) {
     deps += [ "//build/config/linux:libpci" ]
   }
   if (is_linux && use_x11) {
@@ -83,8 +84,14 @@ source_set("config") {
       "//build/config/linux:x11",
       "//build/config/linux:xext",
     ]
-    deps += [ "//third_party/libXNVCtrl" ]
+    deps += [
+      "//third_party/libXNVCtrl",
+      "//ui/gfx/x",
+    ]
   } else {
     sources -= [ "gpu_info_collector_x11.cc" ]
+  }
+  if (!use_ozone) {
+    sources -= [ "gpu_info_collector_ozone.cc" ]
   }
 }

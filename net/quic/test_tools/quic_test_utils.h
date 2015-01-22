@@ -171,8 +171,6 @@ class MockFramerVisitor : public QuicFramerVisitorInterface {
   MOCK_METHOD1(OnFecProtectedPayload, void(base::StringPiece payload));
   MOCK_METHOD1(OnStreamFrame, bool(const QuicStreamFrame& frame));
   MOCK_METHOD1(OnAckFrame, bool(const QuicAckFrame& frame));
-  MOCK_METHOD1(OnCongestionFeedbackFrame,
-               bool(const QuicCongestionFeedbackFrame& frame));
   MOCK_METHOD1(OnStopWaitingFrame, bool(const QuicStopWaitingFrame& frame));
   MOCK_METHOD1(OnPingFrame, bool(const QuicPingFrame& frame));
   MOCK_METHOD1(OnFecData, void(const QuicFecData& fec));
@@ -207,8 +205,6 @@ class NoOpFramerVisitor : public QuicFramerVisitorInterface {
   void OnFecProtectedPayload(base::StringPiece payload) override {}
   bool OnStreamFrame(const QuicStreamFrame& frame) override;
   bool OnAckFrame(const QuicAckFrame& frame) override;
-  bool OnCongestionFeedbackFrame(
-      const QuicCongestionFeedbackFrame& frame) override;
   bool OnStopWaitingFrame(const QuicStopWaitingFrame& frame) override;
   bool OnPingFrame(const QuicPingFrame& frame) override;
   void OnFecData(const QuicFecData& fec) override {}
@@ -460,9 +456,6 @@ class MockSendAlgorithm : public SendAlgorithmInterface {
                                    bool using_pacing));
   MOCK_METHOD1(SetNumEmulatedConnections, void(int num_connections));
   MOCK_METHOD1(SetMaxPacketSize, void(QuicByteCount max_packet_size));
-  MOCK_METHOD2(OnIncomingQuicCongestionFeedbackFrame,
-               void(const QuicCongestionFeedbackFrame&,
-                    QuicTime feedback_receive_time));
   MOCK_METHOD4(OnCongestionEvent, void(bool rtt_updated,
                                        QuicByteCount bytes_in_flight,
                                        const CongestionVector& acked_packets,
@@ -539,11 +532,10 @@ class MockAckNotifierDelegate : public QuicAckNotifier::DelegateInterface {
  public:
   MockAckNotifierDelegate();
 
-  MOCK_METHOD5(OnAckNotification, void(int num_original_packets,
-                                       int num_original_bytes,
-                                       int num_retransmitted_packets,
-                                       int num_retransmitted_bytes,
-                                       QuicTime::Delta delta_largest_observed));
+  MOCK_METHOD3(OnAckNotification,
+               void(int num_retransmitted_packets,
+                    int num_retransmitted_bytes,
+                    QuicTime::Delta delta_largest_observed));
 
  protected:
   // Object is ref counted.

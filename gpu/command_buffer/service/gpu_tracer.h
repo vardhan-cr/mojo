@@ -134,12 +134,10 @@ class Outputter : public base::RefCounted<Outputter> {
                            int64 end_time) = 0;
 
   virtual void TraceServiceBegin(const std::string& category,
-                                 const std::string& name,
-                                 void* id) = 0;
+                                 const std::string& name) = 0;
 
   virtual void TraceServiceEnd(const std::string& category,
-                               const std::string& name,
-                               void* id) = 0;
+                               const std::string& name) = 0;
 
  protected:
   virtual ~Outputter() {}
@@ -155,12 +153,10 @@ class TraceOutputter : public Outputter {
                    int64 end_time) override;
 
   void TraceServiceBegin(const std::string& category,
-                         const std::string& name,
-                         void* id) override;
+                         const std::string& name) override;
 
   void TraceServiceEnd(const std::string& category,
-                       const std::string& name,
-                       void* id) override;
+                       const std::string& name) override;
 
  protected:
   friend class base::RefCounted<Outputter>;
@@ -211,6 +207,24 @@ class GPU_EXPORT GPUTrace
   GLuint queries_[2];
 
   DISALLOW_COPY_AND_ASSIGN(GPUTrace);
+};
+
+class ScopedGPUTrace {
+  public:
+    ScopedGPUTrace(GPUTracer* gpu_tracer, GpuTracerSource source,
+                   const std::string& category, const std::string& name)
+        : gpu_tracer_(gpu_tracer),
+          source_(source) {
+      gpu_tracer_->Begin(category, name, source_);
+    }
+
+    ~ScopedGPUTrace() {
+      gpu_tracer_->End(source_);
+    }
+
+   private:
+    GPUTracer* gpu_tracer_;
+    GpuTracerSource source_;
 };
 
 }  // namespace gles2

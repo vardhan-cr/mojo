@@ -4,11 +4,9 @@
 
 import("//build/config/features.gni")
 import("//build/config/ui.gni")
+import("//testing/test.gni")
 if (cpu_arch == "arm") {
   import("//build/config/arm.gni")
-}
-if (is_android) {
-  import("//build/config/android/rules.gni")
 }
 
 skia_support_gpu = !is_ios
@@ -479,6 +477,11 @@ component("skia") {
       "ext/bitmap_platform_device_mac.cc",
       "ext/bitmap_platform_device_mac.h",
     ]
+  } else if (use_cairo) {
+    sources += [
+      "ext/bitmap_platform_device_cairo.cc",
+      "ext/bitmap_platform_device_cairo.h",
+    ]
   } else {
     sources += [
       "ext/bitmap_platform_device_skia.cc",
@@ -519,6 +522,7 @@ component("skia") {
     configs += [
       "//build/config/linux:fontconfig",
       "//build/config/linux:freetype2",
+      "//build/config/linux:pangocairo",
     ]
     deps += [ "//third_party/icu:icuuc" ]
   }
@@ -726,14 +730,4 @@ test("skia_unittests") {
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
-}
-
-if (is_android) {
-  # GYP: //skia/skia_tests.gyp:skia_unittests_apk
-  unittest_apk("skia_unittests_apk") {
-    unittests_dep = ":skia_unittests"
-    deps = [
-      ":skia_unittests",
-    ]
-  }
 }

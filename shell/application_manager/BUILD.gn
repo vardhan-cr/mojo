@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//testing/test.gni")
 
 component("application_manager") {
   output_name = "mojo_application_manager"

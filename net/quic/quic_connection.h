@@ -162,10 +162,6 @@ class NET_EXPORT_PRIVATE QuicConnectionDebugVisitor
   // Called when a AckFrame has been parsed.
   virtual void OnAckFrame(const QuicAckFrame& frame) {}
 
-  // Called when a CongestionFeedbackFrame has been parsed.
-  virtual void OnCongestionFeedbackFrame(
-      const QuicCongestionFeedbackFrame& frame) {}
-
   // Called when a StopWaitingFrame has been parsed.
   virtual void OnStopWaitingFrame(const QuicStopWaitingFrame& frame) {}
 
@@ -360,8 +356,6 @@ class NET_EXPORT_PRIVATE QuicConnection
   void OnFecProtectedPayload(base::StringPiece payload) override;
   bool OnStreamFrame(const QuicStreamFrame& frame) override;
   bool OnAckFrame(const QuicAckFrame& frame) override;
-  bool OnCongestionFeedbackFrame(
-      const QuicCongestionFeedbackFrame& frame) override;
   bool OnStopWaitingFrame(const QuicStopWaitingFrame& frame) override;
   bool OnPingFrame(const QuicPingFrame& frame) override;
   bool OnRstStreamFrame(const QuicRstStreamFrame& frame) override;
@@ -377,7 +371,6 @@ class NET_EXPORT_PRIVATE QuicConnection
                             HasRetransmittableData retransmittable,
                             IsHandshake handshake) override;
   QuicAckFrame* CreateAckFrame() override;
-  QuicCongestionFeedbackFrame* CreateFeedbackFrame() override;
   QuicStopWaitingFrame* CreateStopWaitingFrame() override;
   void OnSerializedPacket(const SerializedPacket& packet) override;
 
@@ -450,6 +443,10 @@ class NET_EXPORT_PRIVATE QuicConnection
   // Called when an RTO fires.  Resets the retransmission alarm if there are
   // remaining unacked packets.
   void OnRetransmissionTimeout();
+
+  // Called when a data packet is sent. Starts an alarm if the data sent in
+  // |sequence_number| was FEC protected.
+  void MaybeSetFecAlarm(QuicPacketSequenceNumber sequence_number);
 
   // Retransmits all unacked packets with retransmittable frames if
   // |retransmission_type| is ALL_UNACKED_PACKETS, otherwise retransmits only
@@ -707,7 +704,6 @@ class NET_EXPORT_PRIVATE QuicConnection
   QuicPacketHeader last_header_;
   std::vector<QuicStreamFrame> last_stream_frames_;
   std::vector<QuicAckFrame> last_ack_frames_;
-  std::vector<QuicCongestionFeedbackFrame> last_congestion_frames_;
   std::vector<QuicStopWaitingFrame> last_stop_waiting_frames_;
   std::vector<QuicRstStreamFrame> last_rst_frames_;
   std::vector<QuicGoAwayFrame> last_goaway_frames_;
@@ -715,8 +711,6 @@ class NET_EXPORT_PRIVATE QuicConnection
   std::vector<QuicBlockedFrame> last_blocked_frames_;
   std::vector<QuicPingFrame> last_ping_frames_;
   std::vector<QuicConnectionCloseFrame> last_close_frames_;
-
-  QuicCongestionFeedbackFrame outgoing_congestion_feedback_;
 
   // Track some peer state so we can do less bookkeeping
   // Largest sequence sent by the peer which had an ack frame (latest ack info).
@@ -780,6 +774,9 @@ class NET_EXPORT_PRIVATE QuicConnection
   QuicConnectionVisitorInterface* visitor_;
   scoped_ptr<QuicConnectionDebugVisitor> debug_visitor_;
   QuicPacketGenerator packet_generator_;
+
+  // An alarm that fires when an FEC packet should be sent.
+  scoped_ptr<QuicAlarm> fec_alarm_;
 
   // Network idle time before we kill of this connection.
   QuicTime::Delta idle_network_timeout_;

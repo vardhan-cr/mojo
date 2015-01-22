@@ -24,25 +24,21 @@ namespace shell {
 ChildProcessHost::ChildProcessHost(Context* context,
                                    Delegate* delegate,
                                    ChildProcess::Type type)
-    : context_(context),
-      delegate_(delegate),
-      type_(type),
-      child_process_handle_(base::kNullProcessHandle) {
+    : context_(context), delegate_(delegate), type_(type) {
   DCHECK(delegate);
   platform_channel_ = platform_channel_pair_.PassServerHandle();
   CHECK(platform_channel_.is_valid());
 }
 
 ChildProcessHost::~ChildProcessHost() {
-  if (child_process_handle_ != base::kNullProcessHandle) {
+  if (child_process_.IsValid()) {
     LOG(WARNING) << "Destroying ChildProcessHost with unjoined child";
-    base::CloseProcessHandle(child_process_handle_);
-    child_process_handle_ = base::kNullProcessHandle;
+    child_process_.Close();
   }
 }
 
 void ChildProcessHost::Start() {
-  DCHECK_EQ(child_process_handle_, base::kNullProcessHandle);
+  DCHECK(!child_process_.IsValid());
 
   delegate_->WillStart();
 
@@ -53,12 +49,11 @@ void ChildProcessHost::Start() {
 }
 
 int ChildProcessHost::Join() {
-  DCHECK_NE(child_process_handle_, base::kNullProcessHandle);
+  DCHECK(child_process_.IsValid());
   int rv = -1;
-  // Note: |WaitForExitCode()| closes the process handle.
-  LOG_IF(ERROR, !base::WaitForExitCode(child_process_handle_, &rv))
+  LOG_IF(ERROR, child_process_.WaitForExit(&rv))
       << "Failed to wait for child process";
-  child_process_handle_ = base::kNullProcessHandle;
+  child_process_.Close();
   return rv;
 }
 
@@ -86,8 +81,8 @@ bool ChildProcessHost::DoLaunch() {
 #elif defined(OS_POSIX)
   options.fds_to_remap = &handle_passing_info;
 #endif
-
-  if (!base::LaunchProcess(child_command_line, options, &child_process_handle_))
+  child_process_ = base::LaunchProcess(child_command_line, options);
+  if (!child_process_.IsValid())
     return false;
 
   platform_channel_pair_.ChildProcessLaunched();

@@ -876,6 +876,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:test_support_base',
+        '../crypto/crypto.gyp:crypto',
         '../net/tools/tld_cleanup/tld_cleanup.gyp:tld_cleanup_util',
         '../testing/gtest.gyp:gtest',
         '../testing/gmock.gyp:gmock',
@@ -967,6 +968,8 @@
         'test/url_request/url_request_mock_data_job.h',
         'test/url_request/url_request_mock_http_job.cc',
         'test/url_request/url_request_mock_http_job.h',
+        'test/url_request/url_request_slow_download_job.cc',
+        'test/url_request/url_request_slow_download_job.h',
         'url_request/test_url_fetcher_factory.cc',
         'url_request/test_url_fetcher_factory.h',
         'url_request/test_url_request_interceptor.cc',

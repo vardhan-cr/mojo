@@ -49,6 +49,11 @@ class BASE_EXPORT Process {
   // Returns an object for the current process.
   static Process Current();
 
+  // Returns a Process for the given |pid|. On Windows the handle is opened
+  // with more access rights and must only be used by trusted code (can read the
+  // address space and duplicate handles).
+  static Process OpenWithExtraPriviles(ProcessId pid);
+
   // Creates an object from a |handle| owned by someone else.
   // Don't use this for new code. It is only intended to ease the migration to
   // a strict ownership model.
@@ -111,6 +116,25 @@ class BASE_EXPORT Process {
   ProcessHandle process_;
 #endif
 };
+
+#if defined(OS_LINUX)
+// A wrapper for clone with fork-like behavior, meaning that it returns the
+// child's pid in the parent and 0 in the child. |flags|, |ptid|, and |ctid| are
+// as in the clone system call (the CLONE_VM flag is not supported).
+//
+// This function uses the libc clone wrapper (which updates libc's pid cache)
+// internally, so callers may expect things like getpid() to work correctly
+// after in both the child and parent. An exception is when this code is run
+// under Valgrind. Valgrind does not support the libc clone wrapper, so the libc
+// pid cache may be incorrect after this function is called under Valgrind.
+//
+// As with fork(), callers should be extremely careful when calling this while
+// multiple threads are running, since at the time the fork happened, the
+// threads could have been in any state (potentially holding locks, etc.).
+// Callers should most likely call execve() in the child soon after calling
+// this.
+BASE_EXPORT pid_t ForkWithFlags(unsigned long flags, pid_t* ptid, pid_t* ctid);
+#endif
 
 }  // namespace base
 

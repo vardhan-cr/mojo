@@ -118,10 +118,38 @@ if (is_desktop_linux) {
   ]
 }
 
+if (toolkit_views) {
+  grit_defines += [
+    "-D",
+    "toolkit_views",
+  ]
+}
+
+if (use_aura) {
+  grit_defines += [
+    "-D",
+    "use_aura",
+  ]
+}
+
+if (use_ash) {
+  grit_defines += [
+    "-D",
+    "use_ash",
+  ]
+}
+
 if (use_nss_certs) {
   grit_defines += [
     "-D",
     "use_nss",
+  ]
+}
+
+if (use_ozone) {
+  grit_defines += [
+    "-D",
+    "use_ozone",
   ]
 }
 

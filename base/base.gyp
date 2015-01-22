@@ -757,6 +757,11 @@
             'message_loop/message_pump_glib_unittest.cc',
           ]
         }],
+        ['use_ozone == 1', {
+          'sources!': [
+            'message_loop/message_pump_glib_unittest.cc',
+          ]
+        }],
         ['OS == "linux" and use_allocator!="none"', {
             'dependencies': [
               'allocator/allocator.gyp:allocator',

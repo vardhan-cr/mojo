@@ -277,9 +277,13 @@ void CloseSuperfluousFds(const base::InjectiveMultimap& saved_mapping) {
   }
 }
 
-bool LaunchProcess(const std::vector<std::string>& argv,
-                   const LaunchOptions& options,
-                   ProcessHandle* process_handle) {
+Process LaunchProcess(const CommandLine& cmdline,
+                      const LaunchOptions& options) {
+  return LaunchProcess(cmdline.argv(), options);
+}
+
+Process LaunchProcess(const std::vector<std::string>& argv,
+                      const LaunchOptions& options) {
   size_t fd_shuffle_size = 0;
   if (options.fds_to_remap) {
     fd_shuffle_size = options.fds_to_remap->size();
@@ -311,7 +315,17 @@ bool LaunchProcess(const std::vector<std::string>& argv,
     // and that signal handling follows the process-creation rules.
     RAW_CHECK(
         !(options.clone_flags & (CLONE_SIGHAND | CLONE_THREAD | CLONE_VM)));
-    pid = syscall(__NR_clone, options.clone_flags, 0, 0, 0);
+
+    // We specify a null ptid and ctid.
+    RAW_CHECK(
+        !(options.clone_flags &
+          (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | CLONE_PARENT_SETTID)));
+
+    // Since we use waitpid, we do not support custom termination signals in the
+    // clone flags.
+    RAW_CHECK((options.clone_flags & 0xff) == 0);
+
+    pid = ForkWithFlags(options.clone_flags | SIGCHLD, nullptr, nullptr);
   } else
 #endif
   {
@@ -325,7 +339,7 @@ bool LaunchProcess(const std::vector<std::string>& argv,
 
   if (pid < 0) {
     DPLOG(ERROR) << "fork";
-    return false;
+    return Process();
   } else if (pid == 0) {
     // Child process
 
@@ -448,6 +462,12 @@ bool LaunchProcess(const std::vector<std::string>& argv,
     }
 #endif
 
+#if defined(OS_POSIX)
+    if (options.pre_exec_delegate != nullptr) {
+      options.pre_exec_delegate->RunAsyncSafe();
+    }
+#endif
+
     for (size_t i = 0; i < argv.size(); i++)
       argv_cstr[i] = const_cast<char*>(argv[i].c_str());
     argv_cstr[argv.size()] = NULL;
@@ -465,37 +485,9 @@ bool LaunchProcess(const std::vector<std::string>& argv,
       pid_t ret = HANDLE_EINTR(waitpid(pid, 0, 0));
       DPCHECK(ret > 0);
     }
-
-    if (process_handle)
-      *process_handle = pid;
   }
 
-  return true;
-}
-
-Process LaunchProcess(const std::vector<std::string>& argv,
-                      const LaunchOptions& options) {
-  ProcessHandle process_handle;
-  if (LaunchProcess(argv, options, &process_handle))
-    return Process(process_handle);
-
-  return Process();
-}
-
-
-bool LaunchProcess(const CommandLine& cmdline,
-                   const LaunchOptions& options,
-                   ProcessHandle* process_handle) {
-  return LaunchProcess(cmdline.argv(), options, process_handle);
-}
-
-Process LaunchProcess(const CommandLine& cmdline,
-                      const LaunchOptions& options) {
-  ProcessHandle process_handle;
-  if (LaunchProcess(cmdline, options, &process_handle))
-    return Process(process_handle);
-
-  return Process();
+  return Process(pid);
 }
 
 void RaiseProcessToHighPriority() {

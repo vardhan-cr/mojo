@@ -78,9 +78,30 @@ config("feature_flags") {
     # TODO(brettw) should probably be "=1".
     defines += [ "USE_UDEV" ]
   }
+  if (toolkit_views) {
+    defines += [ "TOOLKIT_VIEWS=1" ]
+  }
   if (ui_compositor_image_transport) {
     # TODO(brettw) should probably be "=1".
     defines += [ "UI_COMPOSITOR_IMAGE_TRANSPORT" ]
+  }
+  if (use_ash) {
+    defines += [ "USE_ASH=1" ]
+  }
+  if (use_aura) {
+    defines += [ "USE_AURA=1" ]
+  }
+  if (use_pango) {
+    defines += [ "USE_PANGO=1" ]
+  }
+  if (use_cairo) {
+    defines += [ "USE_CAIRO=1" ]
+  }
+  if (use_clipboard_aurax11) {
+    defines += [ "USE_CLIPBOARD_AURAX11=1" ]
+  }
+  if (use_default_render_theme) {
+    defines += [ "USE_DEFAULT_RENDER_THEME=1" ]
   }
   if (use_glib) {
     defines += [ "USE_GLIB=1" ]
@@ -95,6 +116,9 @@ config("feature_flags") {
     # (like USE_OPENSSL_CERTS) and not "we're linking to NSS." It might be nice
     # to rename this but we're hoping to transition away from NSS.
     defines += [ "USE_NSS=1" ]
+  }
+  if (use_ozone) {
+    defines += [ "USE_OZONE=1" ]
   }
   if (use_x11) {
     defines += [ "USE_X11=1" ]
@@ -171,9 +195,6 @@ config("feature_flags") {
   }
   if (enable_one_click_signin) {
     defines += [ "ENABLE_ONE_CLICK_SIGNIN" ]
-  }
-  if (use_athena) {
-    defines += [ "USE_ATHENA=1" ]
   }
   if (enable_hidpi) {
     defines += [ "ENABLE_HIDPI=1" ]

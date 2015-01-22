@@ -190,6 +190,13 @@
             'use_ash%': 0,
           }],
 
+          # Set default value of toolkit_views based on OS.
+          ['OS=="win" or chromeos==1 or use_aura==1', {
+            'toolkit_views%': 1,
+          }, {
+            'toolkit_views%': 0,
+          }],
+
           # Embedded builds use aura without ash or views.
           ['embedded==1', {
             'use_aura%': 1,
@@ -424,11 +431,11 @@
       # -fsanitize=undefined only works with clang, but ubsan=1 implies clang=1
       # See http://clang.llvm.org/docs/UsersManual.html
       'ubsan%': 0,
+      'ubsan_blacklist%': '<(PRODUCT_DIR)/../../tools/ubsan/blacklist.txt',
 
       # Enable building with UBsan's vptr (Clang's -fsanitize=vptr option).
       # -fsanitize=vptr only works with clang, but ubsan_vptr=1 implies clang=1
       'ubsan_vptr%': 0,
-      'ubsan_vptr_blacklist%': '<(PRODUCT_DIR)/../../tools/ubsan_vptr/blacklist.txt',
 
       # Use the dynamic libraries instrumented by one of the sanitizers
       # instead of the standard system libraries.
@@ -982,9 +989,9 @@
           'optimize_jni_generation%': 0,
         }],
 
-        # TODO(baixo): Enable v8_use_external_startup_data
+        # TODO(rmcilroy): Enable v8_use_external_startup_data on ChromeOS
         # http://crbug.com/421063
-        ['android_webview_build==0 and chromecast==0 and chromeos==0 and (OS=="android" or OS=="linux" or OS=="mac")', {
+        ['android_webview_build==0 and chromecast==0 and chromeos==0 and OS!="ios"', {
           'v8_use_external_startup_data%': 1,
         }, {
           'v8_use_external_startup_data%': 0,
@@ -1123,8 +1130,8 @@
     'tsan%': '<(tsan)',
     'tsan_blacklist%': '<(tsan_blacklist)',
     'ubsan%': '<(ubsan)',
+    'ubsan_blacklist%': '<(ubsan_blacklist)',
     'ubsan_vptr%': '<(ubsan_vptr)',
-    'ubsan_vptr_blacklist%': '<(ubsan_vptr_blacklist)',
     'use_instrumented_libraries%': '<(use_instrumented_libraries)',
     'use_custom_libcxx%': '<(use_custom_libcxx)',
     'use_system_libcxx%': '<(use_system_libcxx)',
@@ -1191,9 +1198,6 @@
     'video_hole%': '<(video_hole)',
     'support_pre_M6_history_database%': '<(support_pre_M6_history_database)',
     'v8_use_external_startup_data%': '<(v8_use_external_startup_data)',
-
-    # Whether or not we are building the Athena shell.
-    'use_athena%': '0',
 
     # Use system protobuf instead of bundled one.
     'use_system_protobuf%': 0,
@@ -1449,6 +1453,10 @@
     # Compile d8 for the host toolset.
     'v8_toolset_for_d8': 'host',
 
+    # Enable the V8 heap verification code. The verification itself is enabled
+    # via a command line option.
+    'v8_enable_verify_heap%': 1,
+
     # Use brlapi from brltty for braille display support.
     'use_brlapi%': 0,
 
@@ -1463,6 +1471,9 @@
 
     # Set to 1 to compile with MSE support for MPEG2 TS
     'enable_mpeg2ts_stream_parser%': 0,
+
+    # Support ChromeOS touchpad gestures with ozone.
+    'use_evdev_gestures%': 0,
 
     # Default ozone platform (if no --ozone-platform flag).
     'ozone_platform%': "",
@@ -2126,7 +2137,7 @@
         'conditions': [
           # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
           # on all platforms is currently underway.
-          ['OS=="linux" and chromeos==0', {
+          ['(OS=="linux" and chromeos==0) or OS=="mac" or OS=="ios"', {
             'clang_chrome_plugins_flags': [
               '-Xclang',
               '-plugin-arg-find-bad-constructs',
@@ -2340,11 +2351,6 @@
          'use_seccomp_bpf%': 1,
       }, {
          'use_seccomp_bpf%': 0,
-      }],
-      # Set component build with LTO until all tests pass.
-      # This also reduces link time.
-      ['use_lto==1', {
-        'component%': "shared_library",
       }],
     ],
 
@@ -2579,8 +2585,14 @@
       ['component=="shared_library"', {
         'defines': ['COMPONENT_BUILD'],
       }],
+      ['toolkit_views==1', {
+        'defines': ['TOOLKIT_VIEWS=1'],
+      }],
       ['ui_compositor_image_transport==1', {
         'defines': ['UI_COMPOSITOR_IMAGE_TRANSPORT'],
+      }],
+      ['use_aura==1', {
+        'defines': ['USE_AURA=1'],
       }],
       ['use_ash==1', {
         'defines': ['USE_ASH=1'],
@@ -3518,6 +3530,14 @@
         ],
       },
     }],
+    # TODO(thakis): Enable this everywhere. http://crbug.com/371125
+    ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and use_ozone!=1', {
+      'target_defaults': {
+        'ldflags': [
+          '-Wl,-z,defs',
+        ],
+      },
+    }],
     ['os_posix==1 and chromeos==0', {
       # Chrome OS enables -fstack-protector-strong via its build wrapper,
       # and we want to avoid overriding this, so stack-protector is only
@@ -4193,8 +4213,7 @@
               ['_toolset=="target"', {
                 'cflags': [
                   '-fsanitize=undefined',
-                  # -fsanitize=vptr is incompatible with -fno-rtti.
-                  '-fno-sanitize=vptr',
+                  '-fsanitize-blacklist=<(ubsan_blacklist)',
                   # Employ the experimental PBQP register allocator to avoid
                   # slow compilation on files with too many basic blocks.
                   # See http://crbug.com/426271.
@@ -4203,10 +4222,17 @@
                   # generated by PBQP regallocator. May increase compile time.
                   '-mllvm -pbqp-coalescing',
                 ],
+                'cflags_cc!': [
+                  '-fno-rtti',
+                ],
+                'cflags!': [
+                  '-fno-rtti',
+                ],
                 'ldflags': [
                   '-fsanitize=undefined',
-                  # -fsanitize=vptr is incompatible with -fno-rtti.
-                  '-fno-sanitize=vptr',
+                ],
+                'defines': [
+                  'UNDEFINED_SANITIZER',
                 ],
               }],
             ],
@@ -4216,7 +4242,7 @@
               ['_toolset=="target"', {
                 'cflags': [
                   '-fsanitize=vptr',
-                  '-fsanitize-blacklist=<(ubsan_vptr_blacklist)',
+                  '-fsanitize-blacklist=<(ubsan_blacklist)',
                 ],
                 'cflags_cc!': [
                   '-fno-rtti',
@@ -5522,13 +5548,13 @@
                   # invoked via /fallback. This is critical for using macros
                   # like ASAN_UNPOISON_MEMORY_REGION in files where we fall
                   # back.
-                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.6.0/include_sanitizer',
+                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/include_sanitizer',
                 ],
               },
               'VCLinkerTool': {
                 'AdditionalLibraryDirectories': [
                   # TODO(hans): If make_clang_dir is absolute, this breaks.
-                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.6.0/lib/windows',
+                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/lib/windows',
                 ],
               },
               'target_conditions': [

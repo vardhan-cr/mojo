@@ -27,6 +27,7 @@
 #include "net/quic/quic_config.h"
 #include "net/quic/quic_fec_group.h"
 #include "net/quic/quic_flags.h"
+#include "net/quic/quic_packet_generator.h"
 #include "net/quic/quic_utils.h"
 
 using base::StringPiece;
@@ -161,6 +162,23 @@ class PingAlarm : public QuicAlarm::Delegate {
   DISALLOW_COPY_AND_ASSIGN(PingAlarm);
 };
 
+// This alarm may be scheduled when an FEC protected packet is sent out.
+class FecAlarm : public QuicAlarm::Delegate {
+ public:
+  explicit FecAlarm(QuicPacketGenerator* packet_generator)
+      : packet_generator_(packet_generator) {}
+
+  QuicTime OnAlarm() override {
+    packet_generator_->OnFecTimeout();
+    return QuicTime::Zero();
+  }
+
+ private:
+  QuicPacketGenerator* packet_generator_;
+
+  DISALLOW_COPY_AND_ASSIGN(FecAlarm);
+};
+
 }  // namespace
 
 QuicConnection::QueuedPacket::QueuedPacket(SerializedPacket packet,
@@ -226,6 +244,7 @@ QuicConnection::QuicConnection(QuicConnectionId connection_id,
       timeout_alarm_(helper->CreateAlarm(new TimeoutAlarm(this))),
       ping_alarm_(helper->CreateAlarm(new PingAlarm(this))),
       packet_generator_(connection_id_, &framer_, random_generator_, this),
+      fec_alarm_(helper->CreateAlarm(new FecAlarm(&packet_generator_))),
       idle_network_timeout_(QuicTime::Delta::Infinite()),
       overall_connection_timeout_(QuicTime::Delta::Infinite()),
       time_of_last_received_packet_(clock_->ApproximateNow()),
@@ -325,10 +344,20 @@ void QuicConnection::OnError(QuicFramer* framer) {
   SendConnectionCloseWithDetails(framer->error(), framer->detailed_error());
 }
 
+void QuicConnection::MaybeSetFecAlarm(
+    QuicPacketSequenceNumber sequence_number) {
+  if (fec_alarm_->IsSet()) {
+    return;
+  }
+  QuicTime::Delta timeout = packet_generator_.GetFecTimeout(sequence_number);
+  if (!timeout.IsInfinite()) {
+    fec_alarm_->Set(clock_->ApproximateNow().Add(timeout));
+  }
+}
+
 void QuicConnection::OnPacket() {
   DCHECK(last_stream_frames_.empty() &&
          last_ack_frames_.empty() &&
-         last_congestion_frames_.empty() &&
          last_stop_waiting_frames_.empty() &&
          last_rst_frames_.empty() &&
          last_goaway_frames_.empty() &&
@@ -627,16 +656,6 @@ void QuicConnection::ProcessStopWaitingFrame(
   CloseFecGroupsBefore(stop_waiting.least_unacked + 1);
 }
 
-bool QuicConnection::OnCongestionFeedbackFrame(
-    const QuicCongestionFeedbackFrame& feedback) {
-  DCHECK(connected_);
-  if (debug_visitor_.get() != nullptr) {
-    debug_visitor_->OnCongestionFeedbackFrame(feedback);
-  }
-  last_congestion_frames_.push_back(feedback);
-  return connected_;
-}
-
 bool QuicConnection::OnStopWaitingFrame(const QuicStopWaitingFrame& frame) {
   DCHECK(connected_);
 
@@ -828,7 +847,6 @@ void QuicConnection::OnPacketComplete() {
            << " packet " << last_header_.packet_sequence_number
            << " with " << last_stream_frames_.size()<< " stream frames "
            << last_ack_frames_.size() << " acks, "
-           << last_congestion_frames_.size() << " congestions, "
            << last_stop_waiting_frames_.size() << " stop_waiting, "
            << last_rst_frames_.size() << " rsts, "
            << last_goaway_frames_.size() << " goaways, "
@@ -881,10 +899,6 @@ void QuicConnection::OnPacketComplete() {
   for (size_t i = 0; i < last_ack_frames_.size(); ++i) {
     ProcessAckFrame(last_ack_frames_[i]);
   }
-  for (size_t i = 0; i < last_congestion_frames_.size(); ++i) {
-    sent_packet_manager_.OnIncomingQuicCongestionFeedbackFrame(
-        last_congestion_frames_[i], time_of_last_received_packet_);
-  }
   for (size_t i = 0; i < last_stop_waiting_frames_.size(); ++i) {
     ProcessStopWaitingFrame(last_stop_waiting_frames_[i]);
   }
@@ -928,7 +942,6 @@ void QuicConnection::MaybeQueueAck() {
 void QuicConnection::ClearLastFrames() {
   last_stream_frames_.clear();
   last_ack_frames_.clear();
-  last_congestion_frames_.clear();
   last_stop_waiting_frames_.clear();
   last_rst_frames_.clear();
   last_goaway_frames_.clear();
@@ -962,10 +975,6 @@ QuicAckFrame* QuicConnection::CreateAckFrame() {
       outgoing_ack, clock_->ApproximateNow());
   DVLOG(1) << ENDPOINT << "Creating ack frame: " << *outgoing_ack;
   return outgoing_ack;
-}
-
-QuicCongestionFeedbackFrame* QuicConnection::CreateFeedbackFrame() {
-  return new QuicCongestionFeedbackFrame(outgoing_congestion_feedback_);
 }
 
 QuicStopWaitingFrame* QuicConnection::CreateStopWaitingFrame() {
@@ -1069,9 +1078,7 @@ QuicConsumedData QuicConnection::SendStreamData(
     QuicAckNotifier::DelegateInterface* delegate) {
   if (!fin && data.Empty()) {
     LOG(DFATAL) << "Attempt to send empty stream frame";
-    if (FLAGS_quic_empty_data_no_fin_early_return) {
-      return QuicConsumedData(0, false);
-    }
+    return QuicConsumedData(0, false);
   }
 
   // Opportunistically bundle an ack with every outgoing packet.
@@ -1499,6 +1506,7 @@ bool QuicConnection::WritePacketInner(QueuedPacket* packet) {
     time_of_last_sent_new_packet_ = packet_send_time;
   }
   SetPingAlarm();
+  MaybeSetFecAlarm(sequence_number);
   DVLOG(1) << ENDPOINT << "time "
            << (FLAGS_quic_record_send_time_before_write ?
                "we began writing " : "we finished writing ")
@@ -1593,6 +1601,14 @@ void QuicConnection::OnSerializedPacket(
   if (serialized_packet.retransmittable_frames) {
     serialized_packet.retransmittable_frames->
         set_encryption_level(encryption_level_);
+
+    if (FLAGS_quic_ack_notifier_informed_on_serialized) {
+      sent_packet_manager_.OnSerializedPacket(serialized_packet);
+    }
+  }
+  if (serialized_packet.packet->is_fec_packet() && fec_alarm_->IsSet()) {
+    // If an FEC packet is serialized with the FEC alarm set, cancel the alarm.
+    fec_alarm_->Cancel();
   }
   SendOrQueuePacket(QueuedPacket(serialized_packet, encryption_level_));
 }
@@ -1656,19 +1672,8 @@ void QuicConnection::SendAck() {
   ack_alarm_->Cancel();
   stop_waiting_count_ = 0;
   num_packets_received_since_last_ack_sent_ = 0;
-  bool send_feedback = false;
 
-  // Deprecating the Congestion Feedback Frame after QUIC_VERSION_22.
-  if (version() <= QUIC_VERSION_22) {
-    if (received_packet_manager_.GenerateCongestionFeedback(
-            &outgoing_congestion_feedback_)) {
-      DVLOG(1) << ENDPOINT << "Sending feedback: "
-               << outgoing_congestion_feedback_;
-      send_feedback = true;
-    }
-  }
-
-  packet_generator_.SetShouldSendAck(send_feedback, true);
+  packet_generator_.SetShouldSendAck(true);
 }
 
 void QuicConnection::OnRetransmissionTimeout() {
@@ -1892,6 +1897,7 @@ void QuicConnection::CloseConnection(QuicErrorCode error, bool from_peer) {
   // connection is closed.
   ack_alarm_->Cancel();
   ping_alarm_->Cancel();
+  fec_alarm_->Cancel();
   resume_writes_alarm_->Cancel();
   retransmission_alarm_->Cancel();
   send_alarm_->Cancel();

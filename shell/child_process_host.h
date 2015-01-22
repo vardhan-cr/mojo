@@ -6,7 +6,7 @@
 #define SHELL_CHILD_PROCESS_HOST_H_
 
 #include "base/macros.h"
-#include "base/process/process_handle.h"
+#include "base/process/process.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "shell/child_process.h"  // For |ChildProcess::Type|.
@@ -65,7 +65,7 @@ class ChildProcessHost {
   Delegate* const delegate_;
   const ChildProcess::Type type_;
 
-  base::ProcessHandle child_process_handle_;
+  base::Process child_process_;
 
   embedder::PlatformChannelPair platform_channel_pair_;
 
