@@ -45,10 +45,7 @@ component("base") {
   ]
 
   if (is_linux) {
-    configs += [
-      "//build/config/linux:fontconfig",
-      "//build/config/linux:glib",
-    ]
+    configs += [ "//build/config/linux:fontconfig" ]
   }
 
   libs = []

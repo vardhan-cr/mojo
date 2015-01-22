@@ -49,17 +49,8 @@ component("platform") {
       "x11/touch_factory_x11.h",
       "x11/x11_event_source.cc",
       "x11/x11_event_source.h",
-      "x11/x11_event_source_glib.cc",
       "x11/x11_event_source_libevent.cc",
     ]
-
-    if (is_linux) {
-      sources -= [ "x11/x11_event_source_libevent.cc" ]
-
-      configs += [ "//build/config/linux:glib" ]
-    } else {
-      sources -= [ "x11/x11_event_source_glib.cc" ]
-    }
 
     deps += [ "//ui/gfx/x" ]
   } else {
