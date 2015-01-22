@@ -51,7 +51,7 @@ void ChildProcessHost::Start() {
 int ChildProcessHost::Join() {
   DCHECK(child_process_.IsValid());
   int rv = -1;
-  LOG_IF(ERROR, child_process_.WaitForExit(&rv))
+  LOG_IF(ERROR, !child_process_.WaitForExit(&rv))
       << "Failed to wait for child process";
   child_process_.Close();
   return rv;
