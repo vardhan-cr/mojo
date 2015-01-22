@@ -6,7 +6,6 @@
 #include "base/files/file_util.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/message_loop/message_loop.h"
-#include "base/run_loop.h"
 #include "mojo/edk/embedder/channel_init.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "shell/domain_socket/net_errors.h"
@@ -48,12 +47,6 @@ class ListeningFailsDelegate : public IncomingConnectionListener::Delegate {
   const int expected_error_;
 };
 
-// For ExternalApplicationRegistrarConnection::Connect() callbacks.
-void OnConnect(base::Closure quit_callback, int rv) {
-  EXPECT_EQ(net::OK, rv);
-  base::MessageLoop::current()->PostTask(FROM_HERE, quit_callback);
-}
-
 }  // namespace
 
 class IncomingConnectionListenerTest : public testing::Test {
@@ -68,7 +61,6 @@ class IncomingConnectionListenerTest : public testing::Test {
 
  protected:
   base::MessageLoopForIO loop_;
-  base::RunLoop run_loop_;
 
   base::ScopedTempDir temp_dir_;
   base::FilePath socket_path_;
@@ -93,9 +85,7 @@ TEST_F(IncomingConnectionListenerTest, ConnectSuccess) {
   ASSERT_TRUE(base::PathExists(socket_path_));
 
   ExternalApplicationRegistrarConnection connection(socket_path_);
-  connection.Connect(base::Bind(&OnConnect, run_loop_.QuitClosure()));
-
-  run_loop_.Run();
+  EXPECT_TRUE(connection.Connect());
 }
 
 TEST_F(IncomingConnectionListenerTest, ConnectSuccess_SocketFileExists) {
@@ -107,9 +97,7 @@ TEST_F(IncomingConnectionListenerTest, ConnectSuccess_SocketFileExists) {
   listener.StartListening();
 
   ExternalApplicationRegistrarConnection connection(socket_path_);
-  connection.Connect(base::Bind(&OnConnect, run_loop_.QuitClosure()));
-
-  run_loop_.Run();
+  EXPECT_TRUE(connection.Connect());
 }
 
 TEST_F(IncomingConnectionListenerTest, ConnectFails_SocketFileUndeletable) {

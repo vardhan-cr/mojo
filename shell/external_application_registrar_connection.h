@@ -34,11 +34,9 @@ class ExternalApplicationRegistrarConnection : public ErrorHandler {
   // Implementation of ErrorHandler
   void OnConnectionError() override;
 
-  // Connects client_socket_ and binds it to registrar_.
-  // Status code is passed to callback upon success or failure.
-  // May return either synchronously or asynchronously, depending on the
-  // status of the underlying socket.
-  void Connect(const CompletionCallback& callback);
+  // Connects the client socket and spins a message loop until the connection is
+  // initiated, returning false if it was unable to do so.
+  bool Connect();
 
   // Registers this app with the shell at the provided URL.
   void Register(const GURL& app_url,
@@ -47,8 +45,7 @@ class ExternalApplicationRegistrarConnection : public ErrorHandler {
  private:
   // Handles the result of Connect(). If it was successful, promotes the socket
   // to a MessagePipe and binds it to registrar_.
-  // Hands rv to callback regardless.
-  void OnConnect(CompletionCallback callback, int rv);
+  void OnConnect(const base::Closure& cb, int rv);
 
   scoped_ptr<UnixDomainClientSocket> client_socket_;
   mojo::embedder::ChannelInit channel_init_;

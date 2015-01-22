@@ -86,18 +86,12 @@ void DoLocalRegister(const GURL& app_url, ScopedMessagePipeHandle shell) {
   BindToPipe(new StubShellImpl, shell.Pass());
 }
 
-void QuitLoopOnConnect(scoped_refptr<base::TaskRunner> loop,
-                       base::Closure quit_callback,
-                       int rv) {
-  EXPECT_EQ(net::OK, rv);
-  loop->PostTask(FROM_HERE, quit_callback);
-}
-
 void ConnectOnIOThread(const base::FilePath& socket_path,
                        scoped_refptr<base::TaskRunner> to_quit,
                        base::Closure quit_callback) {
   ExternalApplicationRegistrarConnection connection(socket_path);
-  connection.Connect(base::Bind(&QuitLoopOnConnect, to_quit, quit_callback));
+  EXPECT_TRUE(connection.Connect());
+  to_quit->PostTask(FROM_HERE, quit_callback);
 }
 
 }  // namespace
@@ -144,9 +138,7 @@ class FakeExternalApplication {
 
   void ConnectSynchronously(const base::FilePath& socket_path) {
     connection_.reset(new ExternalApplicationRegistrarConnection(socket_path));
-    TestCompletionCallback connect_callback;
-    connection_->Connect(connect_callback.callback());
-    connect_callback.WaitForResult();
+    EXPECT_TRUE(connection_->Connect());
   }
 
   // application_impl is the the actual implementation to be registered.

@@ -8,6 +8,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
+#include "base/run_loop.h"
 #include "mojo/edk/embedder/channel_init.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
@@ -35,18 +36,20 @@ void ExternalApplicationRegistrarConnection::OnConnectionError() {
   channel_init_.WillDestroySoon();
 }
 
-void ExternalApplicationRegistrarConnection::Connect(
-    const CompletionCallback& callback) {
+bool ExternalApplicationRegistrarConnection::Connect() {
   DCHECK(client_socket_) << "Single use only.";
+  base::RunLoop loop;
   int rv = client_socket_->Connect(
       base::Bind(&ExternalApplicationRegistrarConnection::OnConnect,
-                 base::Unretained(this), callback));
+                 base::Unretained(this), loop.QuitClosure()));
   if (rv != net::ERR_IO_PENDING) {
     DVLOG(1) << "Connect returning immediately: " << net::ErrorToString(rv);
-    OnConnect(callback, rv);
-    return;
+    OnConnect(base::Bind(&base::DoNothing), rv);
+    return registrar_;
   }
   DVLOG(1) << "Waiting for connection.";
+  loop.Run();
+  return registrar_;
 }
 
 void ExternalApplicationRegistrarConnection::Register(
@@ -56,12 +59,11 @@ void ExternalApplicationRegistrarConnection::Register(
   registrar_->Register(String::From(app_url), register_complete_callback);
 }
 
-void ExternalApplicationRegistrarConnection::OnConnect(
-    CompletionCallback callback,
-    int rv) {
-  DVLOG(1) << "OnConnect called: " << net::ErrorToString(rv);
+void ExternalApplicationRegistrarConnection::OnConnect(const base::Closure& cb,
+                                                       int rv) {
   if (rv != net::OK) {
-    callback.Run(rv);
+    LOG(ERROR) << "OnConnect called with error: " << net::ErrorToString(rv);
+    cb.Run();
     return;
   }
 
@@ -72,7 +74,7 @@ void ExternalApplicationRegistrarConnection::OnConnect(
   client_socket_.reset();  // This is dead now, ensure it can't be reused.
 
   registrar_.Bind(ptr_message_pipe_handle.Pass());
-  callback.Run(rv);
+  cb.Run();
 }
 
 }  // namespace shell

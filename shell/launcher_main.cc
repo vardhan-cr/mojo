@@ -28,23 +28,13 @@ class Launcher {
         app_url_(command_line->GetSwitchValueASCII(kAppURL)),
         loop_(base::MessageLoop::TYPE_IO),
         connection_(
-            base::FilePath(command_line->GetSwitchValuePath(kShellPath))),
-        connect_result_(0) {}
+            base::FilePath(command_line->GetSwitchValuePath(kShellPath))) {}
   ~Launcher() {}
 
-  int Connect() {
-    DCHECK(!run_loop_.get());
-    run_loop_.reset(new base::RunLoop);
-    connection_.Connect(
-        base::Bind(&Launcher::OnConnected, base::Unretained(this)));
-    run_loop_->Run();
-    run_loop_.reset();
-    return connect_result_;
-  }
+  bool Connect() { return connection_.Connect(); }
 
   bool Register() {
     DCHECK(!run_loop_.get());
-    DCHECK(connect_result_ == 0);
     run_loop_.reset(new base::RunLoop);
     connection_.Register(
         app_url_, base::Bind(&Launcher::OnRegistered, base::Unretained(this)));
@@ -66,11 +56,6 @@ class Launcher {
   }
 
  private:
-  void OnConnected(int result) {
-    connect_result_ = result;
-    run_loop_->Quit();
-  }
-
   void OnRegistered(mojo::ShellPtr shell) {
     shell_handle_ = shell.PassMessagePipe();
     run_loop_->Quit();
@@ -82,7 +67,6 @@ class Launcher {
   const GURL app_url_;
   base::MessageLoop loop_;
   mojo::shell::ExternalApplicationRegistrarConnection connection_;
-  int connect_result_;
   mojo::ScopedMessagePipeHandle shell_handle_;
   scoped_ptr<base::RunLoop> run_loop_;
 };
@@ -101,9 +85,8 @@ int main(int argc, char** argv) {
   mojo::shell::InitializeLogging();
 
   Launcher launcher(command_line);
-  int result = launcher.Connect();
-  if (result < 0) {
-    LOG(ERROR) << "Error(" << result << ") connecting on socket "
+  if (!launcher.Connect()) {
+    LOG(ERROR) << "Failed to connect on socket "
                << command_line->GetSwitchValueASCII(kShellPath);
     return MOJO_RESULT_INVALID_ARGUMENT;
   }
