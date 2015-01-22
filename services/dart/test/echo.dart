@@ -11,34 +11,27 @@ import 'dart:mojo_core';
 
 import 'package:services/dart/test/echo_service.mojom.dart';
 
-// TODO(zra): Interface implementations that delegate to another implementation
-// will all look the same, more or less. Maybe we should generate them?
 class EchoServiceImpl extends EchoServiceInterface {
-  EchoServiceInterface _delegate;
+  Application _application;
 
-  EchoServiceImpl(this._delegate, MojoMessagePipeEndpoint endpoint) :
+  EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint) :
+      _application = application,
       super(endpoint);
 
-  echoString(String value) => _delegate.echoString(value);
+  echoString(String value, Function responseFactory) {
+    if (value == "quit") {
+      close();
+      _application.close();
+    }
+    return new Future.value(responseFactory(value));
+  }
 }
 
-class EchoApplication extends Application implements EchoServiceInterface {
-  EchoApplication(MojoMessagePipeEndpoint endpoint) : super(endpoint);
-
+class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  Function interfaceFactoryClosure() {
-    return (endpoint) => new EchoServiceImpl(this, endpoint);
-  }
-
-  echoString(String value) {
-    var response = new EchoServiceEchoStringResponseParams();
-    if (value == 'quit') {
-      close();
-    }
-    response.value = value;
-    return new Future.value(response);
-  }
+  Function interfaceFactoryClosure() =>
+      (endpoint) => new EchoServiceImpl(this, endpoint);
 }
 
 main(List args) {

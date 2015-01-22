@@ -129,6 +129,7 @@ mojo_native_application("dart_apptests") {
 
   sources = [
     "echo_apptest.cc",
+    "pingpong_apptest.cc",
   ]
 
   deps = [
@@ -138,5 +139,6 @@ mojo_native_application("dart_apptests") {
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//services/dart/test:echo_service",
+    "//services/dart/test:pingpong_service",
   ]
 }

@@ -361,13 +361,15 @@ static Dart_Isolate ServiceIsolateCreateCallback(void* callback_data,
   return nullptr;
 }
 
-bool DartController::vmIsInitialized = false;
+bool DartController::initialized_ = false;
+Dart_Isolate DartController::root_isolate_ = nullptr;
+
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** arguments,
                                     int arguments_count) {
   // TODO(zra): If runDartScript can be called from multiple threads
-  // concurrently, then vmIsInitialized will need to be protected by a lock.
-  if (vmIsInitialized) {
+  // concurrently, then initialized_ will need to be protected by a lock.
+  if (initialized_) {
     return;
   }
 
@@ -403,10 +405,10 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                            entropy,
                            ServiceIsolateCreateCallback);
   CHECK(result);
-  vmIsInitialized = true;
+  initialized_ = true;
 }
 
-bool DartController::RunDartScript(const DartControllerConfig& config) {
+bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   InitVmIfNeeded(config.entropy,
                  config.arguments,
                  config.arguments_count);
@@ -508,6 +510,171 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
   Dart_ShutdownIsolate();
   Dart_Cleanup();
   return true;
+}
+
+static bool generateEntropy(uint8_t* buffer, intptr_t length) {
+  crypto::RandBytes(reinterpret_cast<void*>(buffer), length);
+  return true;
+}
+
+bool DartController::Initialize(bool checked_mode) {
+  char* error;
+  int numArgs = 0;
+  const char** args = nullptr;
+
+  const int kNumArgs = 3;
+  const char* checkedArgs[kNumArgs];
+  checkedArgs[0] = "--enable_asserts";
+  checkedArgs[1] = "--enable_type_checks";
+  checkedArgs[2] = "--error_on_bad_type";
+
+  if (checked_mode) {
+    numArgs = kNumArgs;
+    args = checkedArgs;
+  }
+
+  // No callbacks for root isolate.
+  IsolateCallbacks callbacks;
+  InitVmIfNeeded(generateEntropy, args, numArgs);
+  root_isolate_ = CreateIsolateHelper(nullptr, callbacks, "", "", "", &error);
+  if (root_isolate_ == nullptr) {
+    LOG(ERROR) << error;
+    Dart_Cleanup();
+    initialized_ = false;
+    return false;
+  }
+
+  Dart_EnterIsolate(root_isolate_);
+  Dart_Handle result;
+  Dart_EnterScope();
+
+  // Start the MojoHandleWatcher.
+  Dart_Handle mojo_core_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
+  Dart_Handle handle_watcher_type = Dart_GetType(
+      mojo_core_lib,
+      Dart_NewStringFromCString("MojoHandleWatcher"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(handle_watcher_type);
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("Start"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(result);
+
+  // RunLoop until the handle watcher isolate is spun-up.
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
+
+  Dart_ExitScope();
+  Dart_ExitIsolate();
+  return true;
+}
+
+bool DartController::RunDartScript(const DartControllerConfig& config) {
+  CHECK(root_isolate_ != nullptr);
+  Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
+                                             config.callbacks,
+                                             config.script,
+                                             config.script_uri,
+                                             config.package_root,
+                                             config.error);
+  if (isolate == nullptr) {
+    return false;
+  }
+
+  Dart_EnterIsolate(isolate);
+  Dart_Handle result;
+  Dart_EnterScope();
+
+  // Load the root library into the builtin library so that main can be found.
+  Dart_Handle builtin_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kBuiltinLibrary);
+  DART_CHECK_VALID(builtin_lib);
+  Dart_Handle root_lib = Dart_RootLibrary();
+  DART_CHECK_VALID(root_lib);
+  result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
+  DART_CHECK_VALID(result);
+
+  if (config.compile_all) {
+    result = Dart_CompileAll();
+    DART_CHECK_VALID(result);
+  }
+
+  Dart_Handle main_closure = Dart_Invoke(
+      builtin_lib,
+      Dart_NewStringFromCString("_getMainClosure"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(main_closure);
+
+  // Call _startIsolate in the isolate library to enable dispatching the
+  // initial startup message.
+  const intptr_t kNumIsolateArgs = 2;
+  Dart_Handle isolate_args[kNumIsolateArgs];
+  isolate_args[0] = main_closure;     // entryPoint
+  isolate_args[1] = Dart_NewList(2);  // args
+  DART_CHECK_VALID(isolate_args[1]);
+
+  Dart_Handle script_uri = Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>(config.script_uri.data()),
+      config.script_uri.length());
+  Dart_ListSetAt(isolate_args[1], 0, Dart_NewInteger(config.handle));
+  Dart_ListSetAt(isolate_args[1], 1, script_uri);
+
+  Dart_Handle isolate_lib =
+      Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));
+  DART_CHECK_VALID(isolate_lib);
+
+  result = Dart_Invoke(isolate_lib,
+                       Dart_NewStringFromCString("_startMainIsolate"),
+                       kNumIsolateArgs,
+                       isolate_args);
+  DART_CHECK_VALID(result);
+
+  // Run main until completion.
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
+
+  Dart_ExitScope();
+  Dart_ShutdownIsolate();
+  return true;
+}
+
+void DartController::Shutdown() {
+  CHECK(root_isolate_ != nullptr);
+  Dart_EnterIsolate(root_isolate_);
+  Dart_Handle result;
+  Dart_EnterScope();
+
+  // Stop the MojoHandleWatcher.
+  Dart_Handle mojo_core_lib =
+      Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
+  Dart_Handle handle_watcher_type = Dart_GetType(
+      mojo_core_lib,
+      Dart_NewStringFromCString("MojoHandleWatcher"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(handle_watcher_type);
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("Stop"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(result);
+
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
+
+  Dart_ExitScope();
+  Dart_ShutdownIsolate();
+  Dart_Cleanup();
+  root_isolate_ = nullptr;
+  initialized_ = false;
 }
 
 }  // namespace apps

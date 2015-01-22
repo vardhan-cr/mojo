@@ -4,6 +4,7 @@
 
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
+#include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/icu/icu.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -16,11 +17,20 @@ class DartContentHandler : public mojo::ApplicationDelegate,
                            public mojo::ContentHandlerFactory::ManagedDelegate {
  public:
   DartContentHandler() : content_handler_factory_(this) {}
+  ~DartContentHandler() {
+    mojo::dart::DartController::Shutdown();
+  }
 
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
+    // TODO(zra): Maybe have two different content handlers, one with checking
+    // and one without.
+    bool success = mojo::dart::DartController::Initialize(true);
+    if (!success) {
+      LOG(ERROR) << "Dart VM Initialization failed";
+    }
   }
 
   // Overridden from ApplicationDelegate:

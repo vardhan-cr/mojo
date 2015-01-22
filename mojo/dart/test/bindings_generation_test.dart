@@ -15,30 +15,17 @@ import 'package:mojo/public/interfaces/bindings/tests/sample_interfaces.mojom.da
 class ProviderImpl extends sample.ProviderInterface {
   ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
-  echoString(String a) {
-    var response = new sample.ProviderEchoStringResponseParams();
-    response.a = a;
-    return new Future.value(response);
-  }
+  echoString(String a, Function responseFactory) =>
+      new Future.value(responseFactory(a));
 
-  echoStrings(String a, String b) {
-    var response = new sample.ProviderEchoStringsResponseParams();
-    response.a = a;
-    response.b = b;
-    return new Future.value(response);
-  }
+  echoStrings(String a, String b, Function responseFactory) =>
+      new Future.value(responseFactory(a, b));
 
-  echoMessagePipeHanlde(core.MojoHandle a) {
-    var response = new sample.ProviderEchoMessagePipeHandleResponseParams();
-    response.a = a;
-    return new Future.value(response);
-  }
+  echoMessagePipeHanlde(core.MojoHandle a, Function responseFactory) =>
+      new Future.value(responseFactory(a));
 
-  echoEnum(int a) {
-    var response = new sample.ProviderEchoEnumResponseParams();
-    response.a = a;
-    return new Future.value(response);
-  }
+  echoEnum(int a, Function responseFactory) =>
+      new Future.value(responseFactory(a));
 }
 
 

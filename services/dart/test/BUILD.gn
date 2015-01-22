@@ -9,3 +9,9 @@ mojom("echo_service") {
     "echo_service.mojom",
   ]
 }
+
+mojom("pingpong_service") {
+  sources = [
+    "pingpong_service.mojom",
+  ]
+}

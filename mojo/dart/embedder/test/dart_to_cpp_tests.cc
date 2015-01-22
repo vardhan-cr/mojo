@@ -173,7 +173,7 @@ class CppSideConnection : public dart_to_cpp::CppSide {
   DISALLOW_COPY_AND_ASSIGN(CppSideConnection);
 };
 
-// Trivial test to verify a message sent from JS is received.
+// Trivial test to verify a message sent from Dart is received.
 class PingCppSideConnection : public CppSideConnection {
  public:
   PingCppSideConnection() : got_message_(false) {}
@@ -313,7 +313,7 @@ class DartToCppTest : public testing::Test {
   }
 
   static void RunDartSide(const DartControllerConfig& config) {
-    DartController::RunDartScript(config);
+    DartController::RunSingleDartScript(config);
   }
 
   bool RunWithDartOnThread(base::Thread* dart_thread,

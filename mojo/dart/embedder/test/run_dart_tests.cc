@@ -76,7 +76,7 @@ static void RunTest(const std::string& test,
   config.compile_all = compile_all;
   config.error = &error;
 
-  bool success = DartController::RunDartScript(config);
+  bool success = DartController::RunSingleDartScript(config);
   EXPECT_TRUE(success) << error;
   EXPECT_FALSE(unhandled_exception);
 }
