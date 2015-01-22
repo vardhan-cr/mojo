@@ -115,7 +115,8 @@ void ContentHandlerFactory::ManagedDelegate::RunApplication(
     URLResponsePtr response) {
   base::MessageLoop loop(common::MessagePumpMojo::Create());
   auto application = this->CreateApplication(shell.Pass(), response.Pass());
-  loop.Run();
+  if (application)
+    loop.Run();
 }
 
 void ContentHandlerFactory::Create(ApplicationConnection* connection,
