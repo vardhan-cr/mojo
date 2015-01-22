@@ -6,10 +6,12 @@ package org.chromium.mojo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
@@ -31,6 +33,9 @@ public class PlatformViewportAndroid extends SurfaceView {
 
     public PlatformViewportAndroid(Context context, long nativeViewport) {
         super(context);
+
+        setFocusable(true);
+        setFocusableInTouchMode(true);
 
         mNativeMojoViewport = nativeViewport;
         assert mNativeMojoViewport != 0;
@@ -68,9 +73,47 @@ public class PlatformViewportAndroid extends SurfaceView {
     }
 
     @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (visibility == View.VISIBLE) {
+            requestFocusFromTouch();
+            requestFocus();
+        }
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         return nativeTouchEvent(mNativeMojoViewport, event.getPointerId(0), event.getAction(),
                 event.getX(), event.getY(), event.getEventTime());
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (privateDispatchKeyEvent(event)) {
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean dispatchKeyEventPreIme(KeyEvent event) {
+        if (privateDispatchKeyEvent(event)) {
+            return true;
+        }
+        return super.dispatchKeyEventPreIme(event);
+    }
+
+    @Override
+    public boolean dispatchKeyShortcutEvent(KeyEvent event) {
+        if (privateDispatchKeyEvent(event)) {
+            return true;
+        }
+        return super.dispatchKeyShortcutEvent(event);
+    }
+
+    private boolean privateDispatchKeyEvent(KeyEvent event) {
+        return nativeKeyEvent(mNativeMojoViewport, event.getAction() == KeyEvent.ACTION_DOWN,
+                event.getKeyCode(), event.getUnicodeChar());
     }
 
     private static native void nativeDestroy(long nativePlatformViewportAndroid);
@@ -90,4 +133,7 @@ public class PlatformViewportAndroid extends SurfaceView {
             int action,
             float x, float y,
             long timeMs);
+
+    private static native boolean nativeKeyEvent(
+            long nativePlatformViewportAndroid, boolean pressed, int keyCode, int unicodeCharacter);
 }

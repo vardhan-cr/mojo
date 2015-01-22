@@ -6,6 +6,7 @@
 
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/native_viewport/native_viewport_impl.h"
+#include "shell/android/keyboard_impl.h"
 
 namespace mojo {
 namespace shell {
@@ -33,6 +34,7 @@ bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
   connection->AddService<NativeViewport>(this);
   connection->AddService<Gpu>(this);
+  connection->AddService<Keyboard>(this);
   return true;
 }
 
@@ -45,7 +47,12 @@ void NativeViewportApplicationLoader::Create(
 
 void NativeViewportApplicationLoader::Create(
     ApplicationConnection* connection,
-    InterfaceRequest<Gpu> request) {
+    InterfaceRequest<Keyboard> request) {
+  new KeyboardImpl(request.Pass());
+}
+
+void NativeViewportApplicationLoader::Create(ApplicationConnection* connection,
+                                             InterfaceRequest<Gpu> request) {
   if (!gpu_state_)
     gpu_state_ = new gles2::GpuImpl::State;
   new gles2::GpuImpl(request.Pass(), gpu_state_);

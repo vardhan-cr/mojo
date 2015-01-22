@@ -8,6 +8,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
+#include "mojo/services/keyboard/public/interfaces/keyboard.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 #include "services/gles2/gpu_impl.h"
 #include "shell/application_manager/application_loader.h"
@@ -20,6 +21,7 @@ namespace shell {
 
 class NativeViewportApplicationLoader : public ApplicationLoader,
                                         public ApplicationDelegate,
+                                        public InterfaceFactory<Keyboard>,
                                         public InterfaceFactory<NativeViewport>,
                                         public InterfaceFactory<Gpu> {
  public:
@@ -47,6 +49,10 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
   // InterfaceFactory<Gpu> implementation.
   void Create(ApplicationConnection* connection,
               InterfaceRequest<Gpu> request) override;
+
+  // InterfaceFactory<Keyboard> implementation.
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<Keyboard> request) override;
 
   scoped_refptr<gles2::GpuImpl::State> gpu_state_;
   scoped_ptr<ApplicationImpl> app_;

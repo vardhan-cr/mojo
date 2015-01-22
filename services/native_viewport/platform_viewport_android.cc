@@ -11,6 +11,7 @@
 #include "jni/PlatformViewportAndroid_jni.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "ui/events/event.h"
+#include "ui/events/keycodes/keyboard_code_conversion_android.h"
 #include "ui/gfx/point.h"
 
 namespace native_viewport {
@@ -112,6 +113,24 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
   if (action == ui::ET_TOUCH_RELEASED || action == ui::ET_TOUCH_CANCELLED)
     id_generator_.ReleaseNumber(pointer_id);
 
+  return true;
+}
+
+bool PlatformViewportAndroid::KeyEvent(JNIEnv* env,
+                                       jobject obj,
+                                       bool pressed,
+                                       jint key_code,
+                                       jint unicode_character) {
+  ui::KeyEvent event(pressed ? ui::ET_KEY_PRESSED : ui::ET_KEY_RELEASED,
+                     ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
+  event.set_platform_keycode(key_code);
+  delegate_->OnEvent(&event);
+  if (pressed && unicode_character) {
+    ui::KeyEvent char_event(unicode_character,
+                            ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
+    char_event.set_platform_keycode(key_code);
+    delegate_->OnEvent(&char_event);
+  }
   return true;
 }
 

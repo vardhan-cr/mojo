@@ -9,12 +9,14 @@
 #include "base/logging.h"
 #include "services/native_viewport/platform_viewport_android.h"
 #include "shell/android/android_handler.h"
+#include "shell/android/keyboard_impl.h"
 #include "shell/android/mojo_main.h"
 
 namespace {
 
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
     {"AndroidHandler", mojo::RegisterAndroidHandlerJni},
+    {"Keyboard", mojo::shell::RegisterKeyboardJni},
     {"MojoMain", mojo::shell::RegisterMojoMain},
     {"PlatformViewportAndroid",
      native_viewport::PlatformViewportAndroid::Register},

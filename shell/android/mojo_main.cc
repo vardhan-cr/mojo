@@ -83,6 +83,10 @@ void ConfigureAndroidServices(Context* context) {
           make_scoped_ptr(new AndroidHandlerLoader()), "android_handler",
           base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:android_handler"));
+
+  // By default, the keyboard is handled by the native_viewport_service.
+  context->mojo_url_resolver()->AddCustomMapping(
+      GURL("mojo:keyboard"), GURL("mojo:native_viewport_service"));
 }
 
 void QuitShellThread() {

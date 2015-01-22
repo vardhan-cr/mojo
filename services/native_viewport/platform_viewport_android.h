@@ -40,6 +40,11 @@ class PlatformViewportAndroid : public PlatformViewport {
                       jfloat density);
   bool TouchEvent(JNIEnv* env, jobject obj, jint pointer_id, jint action,
                   jfloat x, jfloat y, jlong time_ms);
+  bool KeyEvent(JNIEnv* env,
+                jobject obj,
+                bool pressed,
+                jint key_code,
+                jint unicode_character);
 
  private:
   // Overridden from PlatformViewport:
