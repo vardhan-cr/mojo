@@ -2058,6 +2058,9 @@
         'grit_defines': ['-D', 'scale_factors=2x'],
       }],
       ['OS == "ios"', {
+        'variables': {
+          'enable_coverage%': 0,
+        },
         'grit_defines': [
           '-t', 'ios',
           # iOS uses a whitelist to filter resources.
@@ -2073,7 +2076,10 @@
 
           # TODO(sdefresne): Remove the target_subarch check once Apple has
           # upstreamed the support for "arm64". http://crbug.com/341453
-          ['target_subarch!="arm32" or "<(GENERATOR)"=="xcode"', {
+          # TODO(eugenebut): Remove enable_coverage check once
+          # libclang_rt.profile_ios.a is bundled with Chromium's clang.
+          # http://crbug.com/450379
+          ['target_subarch!="arm32" or enable_coverage or "<(GENERATOR)"=="xcode"', {
             'clang_xcode%': 1,
           }],
         ],
@@ -3531,7 +3537,7 @@
       },
     }],
     # TODO(thakis): Enable this everywhere. http://crbug.com/371125
-    ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and use_ozone!=1', {
+    ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and ubsan==0 and ubsan_vptr==0 and use_ozone!=1', {
       'target_defaults': {
         'ldflags': [
           '-Wl,-z,defs',

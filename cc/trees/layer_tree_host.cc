@@ -130,6 +130,7 @@ LayerTreeHost::LayerTreeHost(
       background_color_(SK_ColorWHITE),
       has_transparent_background_(false),
       partial_texture_update_requests_(0),
+      did_complete_scale_animation_(false),
       in_paint_layer_contents_(false),
       total_frames_used_for_lcd_text_metrics_(0),
       id_(s_layer_tree_host_sequence_number.GetNext() + 1),
@@ -182,8 +183,6 @@ void LayerTreeHost::InitializeProxy(scoped_ptr<Proxy> proxy) {
 
 LayerTreeHost::~LayerTreeHost() {
   TRACE_EVENT0("cc", "LayerTreeHost::~LayerTreeHost");
-
-  overhang_ui_resource_ = nullptr;
 
   if (root_layer_.get())
     root_layer_->SetLayerTreeHost(NULL);
@@ -360,11 +359,6 @@ void LayerTreeHost::FinishCommitOnImplThread(LayerTreeHostImpl* host_impl) {
     sync_tree->set_ui_resource_request_queue(ui_resource_request_queue_);
     ui_resource_request_queue_.clear();
   }
-  if (overhang_ui_resource_) {
-    host_impl->SetOverhangUIResource(
-        overhang_ui_resource_->id(),
-        GetUIResourceSize(overhang_ui_resource_->id()));
-  }
 
   DCHECK(!sync_tree->ViewportSizeInvalid());
 
@@ -403,6 +397,10 @@ void LayerTreeHost::UpdateHudLayer() {
 void LayerTreeHost::CommitComplete() {
   source_frame_number_++;
   client_->DidCommit();
+  if (did_complete_scale_animation_) {
+    client_->DidCompletePageScaleAnimation();
+    did_complete_scale_animation_ = false;
+  }
 }
 
 void LayerTreeHost::SetOutputSurface(scoped_ptr<OutputSurface> surface) {
@@ -715,23 +713,6 @@ void LayerTreeHost::SetPageScaleFactorAndLimits(float page_scale_factor,
   SetNeedsCommit();
 }
 
-void LayerTreeHost::SetOverhangBitmap(const SkBitmap& bitmap) {
-  DCHECK(bitmap.width() && bitmap.height());
-  DCHECK_EQ(bitmap.bytesPerPixel(), 4);
-
-  SkBitmap bitmap_copy;
-  if (bitmap.isImmutable()) {
-    bitmap_copy = bitmap;
-  } else {
-    bitmap.copyTo(&bitmap_copy);
-    bitmap_copy.setImmutable();
-  }
-
-  UIResourceBitmap overhang_bitmap(bitmap_copy);
-  overhang_bitmap.SetWrapMode(UIResourceBitmap::REPEAT);
-  overhang_ui_resource_ = ScopedUIResource::Create(this, overhang_bitmap);
-}
-
 void LayerTreeHost::SetVisible(bool visible) {
   if (visible_ == visible)
     return;
@@ -786,6 +767,10 @@ bool LayerTreeHost::UpdateLayers(ResourceUpdateQueue* queue) {
   micro_benchmark_controller_.DidUpdateLayers();
 
   return result || next_commit_forces_redraw_;
+}
+
+void LayerTreeHost::DidCompletePageScaleAnimation() {
+  did_complete_scale_animation_ = true;
 }
 
 static Layer* FindFirstScrollableLayer(Layer* layer) {

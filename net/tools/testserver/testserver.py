@@ -193,6 +193,8 @@ class HTTPSServer(tlslite.api.TLSSocketServerMixIn,
             }[cert_type])
 
     self.ssl_handshake_settings = tlslite.api.HandshakeSettings()
+    # Enable SSLv3 for testing purposes.
+    self.ssl_handshake_settings.minVersion = (3, 0)
     if ssl_bulk_ciphers is not None:
       self.ssl_handshake_settings.cipherNames = ssl_bulk_ciphers
     if ssl_key_exchanges is not None:
@@ -674,7 +676,12 @@ class TestPageHandler(testserver_base.BasePageHandler):
     if not self._ShouldHandleRequest("/echo"):
       return False
 
-    self.send_response(200)
+    _, _, _, _, query, _ = urlparse.urlparse(self.path)
+    query_params = cgi.parse_qs(query, True)
+    if 'status' in query_params:
+      self.send_response(int(query_params['status'][0]))
+    else:
+      self.send_response(200)
     self.send_header('Content-Type', 'text/html')
     self.end_headers()
     self.wfile.write(self.ReadRequestBody())

@@ -546,6 +546,14 @@ void GLES2Implementation::DeleteSamplers(GLsizei n, const GLuint* samplers) {
   CheckGLError();
 }
 
+void GLES2Implementation::DeleteSync(GLsync sync) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glDeleteSync(" << sync << ")");
+  GPU_CLIENT_DCHECK(sync != 0);
+  DeleteSyncHelper(sync);
+  CheckGLError();
+}
+
 void GLES2Implementation::DeleteShader(GLuint shader) {
   GPU_CLIENT_SINGLE_THREAD_CHECK();
   GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glDeleteShader(" << shader << ")");
@@ -629,6 +637,27 @@ void GLES2Implementation::DetachShader(GLuint program, GLuint shader) {
                      << shader << ")");
   helper_->DetachShader(program, shader);
   CheckGLError();
+}
+
+GLsync GLES2Implementation::FenceSync(GLenum condition, GLbitfield flags) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glFenceSync("
+                     << GLES2Util::GetStringSyncCondition(condition) << ", "
+                     << flags << ")");
+  if (condition != 0x9117) {
+    SetGLError(GL_INVALID_ENUM, "glFenceSync", "condition GL_INVALID_ENUM");
+    return 0;
+  }
+  if (flags != 0) {
+    SetGLError(GL_INVALID_VALUE, "glFenceSync", "flags GL_INVALID_VALUE");
+    return 0;
+  }
+  GLuint client_id;
+  GetIdHandler(id_namespaces::kSyncs)->MakeIds(this, 0, 1, &client_id);
+  helper_->FenceSync(client_id);
+  GPU_CLIENT_LOG("returned " << client_id);
+  CheckGLError();
+  return reinterpret_cast<GLsync>(client_id);
 }
 
 void GLES2Implementation::FramebufferRenderbuffer(GLenum target,
@@ -1463,6 +1492,24 @@ GLboolean GLES2Implementation::IsShader(GLuint shader) {
   return result_value;
 }
 
+GLboolean GLES2Implementation::IsSync(GLsync sync) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  TRACE_EVENT0("gpu", "GLES2Implementation::IsSync");
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glIsSync(" << sync << ")");
+  typedef cmds::IsSync::Result Result;
+  Result* result = GetResultAs<Result*>();
+  if (!result) {
+    return GL_FALSE;
+  }
+  *result = 0;
+  helper_->IsSync(ToGLuint(sync), GetResultShmId(), GetResultShmOffset());
+  WaitForCmd();
+  GLboolean result_value = *result != 0;
+  GPU_CLIENT_LOG("returned " << result_value);
+  CheckGLError();
+  return result_value;
+}
+
 GLboolean GLES2Implementation::IsTexture(GLuint texture) {
   GPU_CLIENT_SINGLE_THREAD_CHECK();
   TRACE_EVENT0("gpu", "GLES2Implementation::IsTexture");
@@ -1643,6 +1690,104 @@ void GLES2Implementation::Scissor(GLint x,
     return;
   }
   helper_->Scissor(x, y, width, height);
+  CheckGLError();
+}
+
+void GLES2Implementation::ShaderSource(GLuint shader,
+                                       GLsizei count,
+                                       const GLchar* const* str,
+                                       const GLint* length) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glShaderSource(" << shader << ", "
+                     << count << ", " << static_cast<const void*>(str) << ", "
+                     << static_cast<const void*>(length) << ")");
+  GPU_CLIENT_LOG_CODE_BLOCK({
+    for (GLsizei ii = 0; ii < count; ++ii) {
+      if (str[ii]) {
+        if (length && length[ii] >= 0) {
+          const std::string my_str(str[ii], length[ii]);
+          GPU_CLIENT_LOG("  " << ii << ": ---\n" << my_str << "\n---");
+        } else {
+          GPU_CLIENT_LOG("  " << ii << ": ---\n" << str[ii] << "\n---");
+        }
+      } else {
+        GPU_CLIENT_LOG("  " << ii << ": NULL");
+      }
+    }
+  });
+  if (count < 0) {
+    SetGLError(GL_INVALID_VALUE, "glShaderSource", "count < 0");
+    return;
+  }
+  // Compute the total size.
+  base::CheckedNumeric<size_t> total_size = count;
+  total_size += 1;
+  total_size *= sizeof(GLint);
+  if (!total_size.IsValid()) {
+    SetGLError(GL_INVALID_VALUE, "glShaderSource", "overflow");
+    return;
+  }
+  size_t header_size = total_size.ValueOrDefault(0);
+  std::vector<GLint> header(count + 1);
+  header[0] = static_cast<GLint>(count);
+  for (GLsizei ii = 0; ii < count; ++ii) {
+    GLint len = 0;
+    if (str[ii]) {
+      len = (length && length[ii] >= 0)
+                ? length[ii]
+                : base::checked_cast<GLint>(strlen(str[ii]));
+    }
+    total_size += len;
+    total_size += 1;  // NULL at the end of each char array.
+    if (!total_size.IsValid()) {
+      SetGLError(GL_INVALID_VALUE, "glShaderSource", "overflow");
+      return;
+    }
+    header[ii + 1] = len;
+  }
+  // Pack data into a bucket on the service.
+  helper_->SetBucketSize(kResultBucketId, total_size.ValueOrDefault(0));
+  size_t offset = 0;
+  for (GLsizei ii = 0; ii <= count; ++ii) {
+    const char* src =
+        (ii == 0) ? reinterpret_cast<const char*>(&header[0]) : str[ii - 1];
+    base::CheckedNumeric<size_t> checked_size =
+        (ii == 0) ? header_size : static_cast<size_t>(header[ii]);
+    if (ii > 0) {
+      checked_size += 1;  // NULL in the end.
+    }
+    if (!checked_size.IsValid()) {
+      SetGLError(GL_INVALID_VALUE, "glShaderSource", "overflow");
+      return;
+    }
+    size_t size = checked_size.ValueOrDefault(0);
+    while (size) {
+      ScopedTransferBufferPtr buffer(size, helper_, transfer_buffer_);
+      if (!buffer.valid() || buffer.size() == 0) {
+        SetGLError(GL_OUT_OF_MEMORY, "glShaderSource", "too large");
+        return;
+      }
+      size_t copy_size = buffer.size();
+      if (ii > 0 && buffer.size() == size)
+        --copy_size;
+      if (copy_size)
+        memcpy(buffer.address(), src, copy_size);
+      if (copy_size < buffer.size()) {
+        // Append NULL in the end.
+        DCHECK(copy_size + 1 == buffer.size());
+        char* str = reinterpret_cast<char*>(buffer.address());
+        str[copy_size] = 0;
+      }
+      helper_->SetBucketData(kResultBucketId, offset, buffer.size(),
+                             buffer.shm_id(), buffer.offset());
+      offset += buffer.size();
+      src += buffer.size();
+      size -= buffer.size();
+    }
+  }
+  DCHECK_EQ(total_size.ValueOrDefault(0), offset);
+  helper_->ShaderSourceBucket(shader, kResultBucketId);
+  helper_->SetBucketSize(kResultBucketId, 0);
   CheckGLError();
 }
 

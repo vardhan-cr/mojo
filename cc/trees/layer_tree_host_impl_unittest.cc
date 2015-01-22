@@ -88,6 +88,7 @@ class LayerTreeHostImplTest : public testing::Test,
         did_request_redraw_(false),
         did_request_animate_(false),
         did_request_prepare_tiles_(false),
+        did_complete_page_scale_animation_(false),
         reduce_memory_result_(true),
         current_limit_bytes_(0),
         current_priority_cutoff_value_(0) {
@@ -151,6 +152,9 @@ class LayerTreeHostImplTest : public testing::Test,
   }
   void DidActivateSyncTree() override {}
   void DidPrepareTiles() override {}
+  void DidCompletePageScaleAnimationOnImplThread() override {
+    did_complete_page_scale_animation_ = true;
+  }
 
   void set_reduce_memory_result(bool reduce_memory_result) {
     reduce_memory_result_ = reduce_memory_result;
@@ -394,6 +398,7 @@ class LayerTreeHostImplTest : public testing::Test,
   bool did_request_redraw_;
   bool did_request_animate_;
   bool did_request_prepare_tiles_;
+  bool did_complete_page_scale_animation_;
   bool reduce_memory_result_;
   base::Closure scrollbar_fade_start_;
   base::TimeDelta requested_scrollbar_animation_delay_;
@@ -1339,6 +1344,38 @@ TEST_F(LayerTreeHostImplTest, PageScaleAnimationTransferedOnSyncTreeActivate) {
       host_impl_->ProcessScrollDeltas();
   EXPECT_EQ(scroll_info->page_scale_delta, target_scale);
   ExpectContains(*scroll_info, scroll_layer->id(), gfx::Vector2d(-50, -50));
+}
+
+TEST_F(LayerTreeHostImplTest, PageScaleAnimationCompletedNotification) {
+  SetupScrollAndContentsLayers(gfx::Size(100, 100));
+  host_impl_->SetViewportSize(gfx::Size(50, 50));
+  DrawFrame();
+
+  LayerImpl* scroll_layer = host_impl_->InnerViewportScrollLayer();
+  DCHECK(scroll_layer);
+
+  base::TimeTicks start_time =
+      base::TimeTicks() + base::TimeDelta::FromSeconds(1);
+  base::TimeDelta duration = base::TimeDelta::FromMilliseconds(100);
+  base::TimeTicks halfway_through_animation = start_time + duration / 2;
+  base::TimeTicks end_time = start_time + duration;
+
+  host_impl_->active_tree()->PushPageScaleFromMainThread(1.f, 0.5f, 4.f);
+  scroll_layer->SetScrollOffset(gfx::ScrollOffset(50, 50));
+
+  did_complete_page_scale_animation_ = false;
+  host_impl_->active_tree()->SetPendingPageScaleAnimation(
+      scoped_ptr<PendingPageScaleAnimation>(new PendingPageScaleAnimation(
+          gfx::Vector2d(), false, 2.f, duration)));
+  host_impl_->ActivateSyncTree();
+  host_impl_->Animate(start_time);
+  EXPECT_FALSE(did_complete_page_scale_animation_);
+
+  host_impl_->Animate(halfway_through_animation);
+  EXPECT_FALSE(did_complete_page_scale_animation_);
+
+  host_impl_->Animate(end_time);
+  EXPECT_TRUE(did_complete_page_scale_animation_);
 }
 
 class LayerTreeHostImplOverridePhysicalTime : public LayerTreeHostImpl {
@@ -4711,49 +4748,6 @@ TEST_F(LayerTreeHostImplViewportCoveredTest, ViewportCoveredScaled) {
   host_impl_->SetDeviceScaleFactor(2.f);
   host_impl_->SetViewportSize(DipSizeToPixelSize(viewport_size_));
   SetupActiveTreeLayers();
-  TestLayerCoversFullViewport();
-  TestEmptyLayer();
-  TestLayerInMiddleOfViewport();
-  TestLayerIsLargerThanViewport();
-}
-
-TEST_F(LayerTreeHostImplViewportCoveredTest, ViewportCoveredOverhangBitmap) {
-  viewport_size_ = gfx::Size(1000, 1000);
-
-  bool always_draw = false;
-  CreateHostImpl(DefaultSettings(), CreateFakeOutputSurface(always_draw));
-
-  host_impl_->SetViewportSize(DipSizeToPixelSize(viewport_size_));
-  SetupActiveTreeLayers();
-
-  // Specify an overhang bitmap to use.
-  bool is_opaque = false;
-  UIResourceBitmap ui_resource_bitmap(gfx::Size(2, 2), is_opaque);
-  ui_resource_bitmap.SetWrapMode(UIResourceBitmap::REPEAT);
-  UIResourceId ui_resource_id = 12345;
-  host_impl_->CreateUIResource(ui_resource_id, ui_resource_bitmap);
-  host_impl_->SetOverhangUIResource(ui_resource_id, gfx::Size(32, 32));
-  set_gutter_quad_material(DrawQuad::TEXTURE_CONTENT);
-  set_gutter_texture_size(gfx::Size(32, 32));
-
-  TestLayerCoversFullViewport();
-  TestEmptyLayer();
-  TestLayerInMiddleOfViewport();
-  TestLayerIsLargerThanViewport();
-
-  // Change the resource size.
-  host_impl_->SetOverhangUIResource(ui_resource_id, gfx::Size(128, 16));
-  set_gutter_texture_size(gfx::Size(128, 16));
-
-  TestLayerCoversFullViewport();
-  TestEmptyLayer();
-  TestLayerInMiddleOfViewport();
-  TestLayerIsLargerThanViewport();
-
-  // Change the device scale factor
-  host_impl_->SetDeviceScaleFactor(2.f);
-  host_impl_->SetViewportSize(DipSizeToPixelSize(viewport_size_));
-
   TestLayerCoversFullViewport();
   TestEmptyLayer();
   TestLayerInMiddleOfViewport();

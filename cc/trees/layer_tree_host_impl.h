@@ -108,6 +108,9 @@ class LayerTreeHostImplClient {
   virtual void DidActivateSyncTree() = 0;
   virtual void DidPrepareTiles() = 0;
 
+  // Called when page scale animation has completed on the impl thread.
+  virtual void DidCompletePageScaleAnimationOnImplThread() = 0;
+
  protected:
   virtual ~LayerTreeHostImplClient() {}
 };
@@ -355,9 +358,6 @@ class CC_EXPORT LayerTreeHostImpl
 
   void SetViewportSize(const gfx::Size& device_viewport_size);
   gfx::Size device_viewport_size() const { return device_viewport_size_; }
-
-  void SetOverhangUIResource(UIResourceId overhang_ui_resource_id,
-                             const gfx::Size& overhang_ui_resource_size);
 
   void SetDeviceScaleFactor(float device_scale_factor);
   float device_scale_factor() const { return device_scale_factor_; }
@@ -685,10 +685,6 @@ class CC_EXPORT LayerTreeHostImpl
   // Conversion factor from CSS pixels to physical pixels when
   // pageScaleFactor=1.
   float device_scale_factor_;
-
-  // UI resource to use for drawing overhang gutters.
-  UIResourceId overhang_ui_resource_id_;
-  gfx::Size overhang_ui_resource_size_;
 
   // Optional top-level constraints that can be set by the OutputSurface.
   // - external_transform_ applies a transform above the root layer

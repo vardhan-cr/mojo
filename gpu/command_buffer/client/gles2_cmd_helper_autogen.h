@@ -427,6 +427,13 @@ void DeleteSamplersImmediate(GLsizei n, const GLuint* samplers) {
   }
 }
 
+void DeleteSync(GLuint sync) {
+  gles2::cmds::DeleteSync* c = GetCmdSpace<gles2::cmds::DeleteSync>();
+  if (c) {
+    c->Init(sync);
+  }
+}
+
 void DeleteShader(GLuint shader) {
   gles2::cmds::DeleteShader* c = GetCmdSpace<gles2::cmds::DeleteShader>();
   if (c) {
@@ -526,6 +533,13 @@ void EnableVertexAttribArray(GLuint index) {
       GetCmdSpace<gles2::cmds::EnableVertexAttribArray>();
   if (c) {
     c->Init(index);
+  }
+}
+
+void FenceSync(uint32_t client_id) {
+  gles2::cmds::FenceSync* c = GetCmdSpace<gles2::cmds::FenceSync>();
+  if (c) {
+    c->Init(client_id);
   }
 }
 
@@ -1042,6 +1056,13 @@ void IsShader(GLuint shader,
   }
 }
 
+void IsSync(GLuint sync, uint32_t result_shm_id, uint32_t result_shm_offset) {
+  gles2::cmds::IsSync* c = GetCmdSpace<gles2::cmds::IsSync>();
+  if (c) {
+    c->Init(sync, result_shm_id, result_shm_offset);
+  }
+}
+
 void IsTexture(GLuint texture,
                uint32_t result_shm_id,
                uint32_t result_shm_offset) {
@@ -1217,11 +1238,11 @@ void ShaderBinary(GLsizei n,
   }
 }
 
-void ShaderSourceBucket(GLuint shader, uint32_t data_bucket_id) {
+void ShaderSourceBucket(GLuint shader, uint32_t str_bucket_id) {
   gles2::cmds::ShaderSourceBucket* c =
       GetCmdSpace<gles2::cmds::ShaderSourceBucket>();
   if (c) {
-    c->Init(shader, data_bucket_id);
+    c->Init(shader, str_bucket_id);
   }
 }
 

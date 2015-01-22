@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include "base/bind.h"
+#include "base/numerics/safe_math.h"
 #include "gpu/command_buffer/client/buffer_tracker.h"
 #include "gpu/command_buffer/client/gpu_control.h"
 #include "gpu/command_buffer/client/program_info_manager.h"
@@ -975,6 +976,20 @@ void GLES2Implementation::DeleteShaderStub(
   helper_->DeleteShader(shaders[0]);
 }
 
+void GLES2Implementation::DeleteSyncHelper(GLsync sync) {
+  GLuint sync_uint = ToGLuint(sync);
+  if (!GetIdHandler(id_namespaces::kSyncs)->FreeIds(
+      this, 1, &sync_uint, &GLES2Implementation::DeleteSyncStub)) {
+    SetGLError(
+        GL_INVALID_VALUE,
+        "glDeleteSync", "id not created by this context.");
+  }
+}
+
+void GLES2Implementation::DeleteSyncStub(GLsizei n, const GLuint* syncs) {
+  DCHECK_EQ(1, n);
+  helper_->DeleteSync(syncs[0]);
+}
 
 GLint GLES2Implementation::GetAttribLocationHelper(
     GLuint program, const char* name) {
@@ -1187,78 +1202,6 @@ void GLES2Implementation::VertexAttribDivisorANGLE(
   // Record the info on the client side.
   vertex_array_object_manager_->SetAttribDivisor(index, divisor);
   helper_->VertexAttribDivisorANGLE(index, divisor);
-  CheckGLError();
-}
-
-void GLES2Implementation::ShaderSource(
-    GLuint shader,
-    GLsizei count,
-    const GLchar* const* source,
-    const GLint* length) {
-  GPU_CLIENT_SINGLE_THREAD_CHECK();
-  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glShaderSource("
-      << shader << ", " << count << ", "
-      << static_cast<const void*>(source) << ", "
-      << static_cast<const void*>(length) << ")");
-  GPU_CLIENT_LOG_CODE_BLOCK({
-    for (GLsizei ii = 0; ii < count; ++ii) {
-      if (source[ii]) {
-        if (length && length[ii] >= 0) {
-          std::string str(source[ii], length[ii]);
-          GPU_CLIENT_LOG("  " << ii << ": ---\n" << str << "\n---");
-        } else {
-          GPU_CLIENT_LOG("  " << ii << ": ---\n" << source[ii] << "\n---");
-        }
-      } else {
-        GPU_CLIENT_LOG("  " << ii << ": NULL");
-      }
-    }
-  });
-  if (count < 0) {
-    SetGLError(GL_INVALID_VALUE, "glShaderSource", "count < 0");
-    return;
-  }
-  if (shader == 0) {
-    SetGLError(GL_INVALID_VALUE, "glShaderSource", "shader == 0");
-    return;
-  }
-
-  // Compute the total size.
-  uint32 total_size = 1;
-  for (GLsizei ii = 0; ii < count; ++ii) {
-    if (source[ii]) {
-      total_size += (length && length[ii] >= 0) ?
-          static_cast<size_t>(length[ii]) : strlen(source[ii]);
-    }
-  }
-
-  // Concatenate all the strings in to a bucket on the service.
-  helper_->SetBucketSize(kResultBucketId, total_size);
-  uint32 offset = 0;
-  for (GLsizei ii = 0; ii <= count; ++ii) {
-    const char* src = ii < count ? source[ii] : "";
-    if (src) {
-      uint32 size = ii < count ?
-          (length ? static_cast<size_t>(length[ii]) : strlen(src)) : 1;
-      while (size) {
-        ScopedTransferBufferPtr buffer(size, helper_, transfer_buffer_);
-        if (!buffer.valid()) {
-          return;
-        }
-        memcpy(buffer.address(), src, buffer.size());
-        helper_->SetBucketData(kResultBucketId, offset, buffer.size(),
-                               buffer.shm_id(), buffer.offset());
-        offset += buffer.size();
-        src += buffer.size();
-        size -= buffer.size();
-      }
-    }
-  }
-
-  DCHECK_EQ(total_size, offset);
-
-  helper_->ShaderSourceBucket(shader, kResultBucketId);
-  helper_->SetBucketSize(kResultBucketId, 0);
   CheckGLError();
 }
 

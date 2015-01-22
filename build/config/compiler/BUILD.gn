@@ -6,6 +6,9 @@ import("//build/config/android/config.gni")
 if (cpu_arch == "arm") {
   import("//build/config/arm.gni")
 }
+if (cpu_arch == "mipsel" || cpu_arch == "mips64el") {
+  import("//build/config/mips.gni")
+}
 if (is_posix) {
   import("//build/config/gcc/gcc_version.gni")
 }
@@ -272,6 +275,51 @@ config("compiler") {
           ]
         }
       }
+    } else if (cpu_arch == "mipsel") {
+      # Don't set the compiler flags for the WebView build. These will come
+      # from the Android build system.
+      if (!is_android_webview_build) {
+        if (mips_arch_variant == "r6") {
+          cflags += [
+            "-mips32r6",
+            "-Wa,-mips32r6",
+          ]
+          if (is_android) {
+            ldflags += [
+              "-mips32r6",
+              "-Wl,-melf32ltsmip",
+            ]
+          }
+        } else if (mips_arch_variant == "r2") {
+          cflags += [
+            "-mips32r2",
+            "-Wa,-mips32r2",
+          ]
+        } else if (mips_arch_variant == "r1") {
+          cflags += [
+            "-mips32",
+            "-Wa,-mips32",
+          ]
+        }
+      }
+    } else if (cpu_arch == "mips64el") {
+      # Don't set the compiler flags for the WebView build. These will come
+      # from the Android build system.
+      if (!is_android_webview_build) {
+        if (mips_arch_variant == "r6") {
+          cflags += [
+            "-mips64r6",
+            "-Wa,-mips64r6",
+          ]
+          ldflags += [ "-mips64r6" ]
+        } else if (mips_arch_variant == "r2") {
+          cflags += [
+            "-mips64r2",
+            "-Wa,-mips64r2",
+          ]
+          ldflags += [ "-mips64r2" ]
+        }
+      }
     }
 
     defines += [ "_FILE_OFFSET_BITS=64" ]
@@ -301,8 +349,13 @@ config("compiler") {
       "-Wl,-z,noexecstack",
       "-Wl,-z,now",
       "-Wl,-z,relro",
-      "-Wl,-z,defs",
     ]
+
+    # TODO(zork): The mipsel build is broken in ffmpeg, guard this flag for now
+    # to hide the breakage. https://crbug.com/450771
+    if (!using_sanitizer && cpu_arch != "mipsel") {
+      ldflags += [ "-Wl,-z,defs" ]
+    }
   }
 
   # Linux-specific compiler flags setup.

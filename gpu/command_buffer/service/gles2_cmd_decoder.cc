@@ -1170,9 +1170,9 @@ class GLES2DecoderImpl : public GLES2Decoder,
     GLuint client_id, uint32 location_shm_id, uint32 location_shm_offset,
     const std::string& name_str);
 
-  // Helper for glShaderSource.
-  error::Error ShaderSourceHelper(
-      GLuint client_id, const char* data, uint32 data_size);
+  // Wrapper for glShaderSource.
+  void DoShaderSource(
+      GLuint client_id, GLsizei count, const char** data, const GLint* length);
 
   // Clear any textures used by the current program.
   bool ClearUnclearedTextures();
@@ -1277,12 +1277,6 @@ class GLES2DecoderImpl : public GLES2Decoder,
   // Helper for glGetVertexAttrib
   void GetVertexAttribHelper(
     const VertexAttrib* attrib, GLenum pname, GLint* param);
-
-  // Wrapper for glCreateProgram
-  bool CreateProgramHelper(GLuint client_id);
-
-  // Wrapper for glCreateShader
-  bool CreateShaderHelper(GLenum type, GLuint client_id);
 
   // Wrapper for glActiveTexture
   void DoActiveTexture(GLenum texture_unit);
@@ -4047,28 +4041,6 @@ error::Error GLES2DecoderImpl::DoCommands(unsigned int num_commands,
 
 void GLES2DecoderImpl::RemoveBuffer(GLuint client_id) {
   buffer_manager()->RemoveBuffer(client_id);
-}
-
-bool GLES2DecoderImpl::CreateProgramHelper(GLuint client_id) {
-  if (GetProgram(client_id)) {
-    return false;
-  }
-  GLuint service_id = glCreateProgram();
-  if (service_id != 0) {
-    CreateProgram(client_id, service_id);
-  }
-  return true;
-}
-
-bool GLES2DecoderImpl::CreateShaderHelper(GLenum type, GLuint client_id) {
-  if (GetShader(client_id)) {
-    return false;
-  }
-  GLuint service_id = glCreateShader(type);
-  if (service_id != 0) {
-    CreateShader(client_id, service_id, type);
-  }
-  return true;
 }
 
 void GLES2DecoderImpl::DoFinish() {
@@ -7066,35 +7038,19 @@ GLuint GLES2DecoderImpl::DoGetMaxValueInBufferCHROMIUM(
   return max_vertex_accessed;
 }
 
-// Calls glShaderSource for the various versions of the ShaderSource command.
-// Assumes that data / data_size points to a piece of memory that is in range
-// of whatever context it came from (shared memory, immediate memory, bucket
-// memory.)
-error::Error GLES2DecoderImpl::ShaderSourceHelper(
-    GLuint client_id, const char* data, uint32 data_size) {
-  std::string str(data, data + data_size);
+void GLES2DecoderImpl::DoShaderSource(
+    GLuint client_id, GLsizei count, const char** data, const GLint* length) {
+  std::string str;
+  for (GLsizei ii = 0; ii < count; ++ii) {
+    str.append(data[ii]);
+  }
   Shader* shader = GetShaderInfoNotProgram(client_id, "glShaderSource");
   if (!shader) {
-    return error::kNoError;
+    return;
   }
   // Note: We don't actually call glShaderSource here. We wait until
   // the call to glCompileShader.
   shader->set_source(str);
-  return error::kNoError;
-}
-
-error::Error GLES2DecoderImpl::HandleShaderSourceBucket(
-    uint32 immediate_data_size,
-    const void* cmd_data) {
-  const gles2::cmds::ShaderSourceBucket& c =
-      *static_cast<const gles2::cmds::ShaderSourceBucket*>(cmd_data);
-  Bucket* bucket = GetBucket(c.data_bucket_id);
-  if (!bucket || bucket->size() == 0) {
-    return error::kInvalidArguments;
-  }
-  return ShaderSourceHelper(
-      c.shader, bucket->GetDataAs<const char*>(0, bucket->size() - 1),
-      bucket->size() - 1);
 }
 
 void GLES2DecoderImpl::DoCompileShader(GLuint client_id) {

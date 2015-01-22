@@ -100,6 +100,7 @@ GLES2DecoderTestBase::GLES2DecoderTestBase()
       client_vertexarray_id_(124),
       client_valuebuffer_id_(125),
       client_transformfeedback_id_(126),
+      client_sync_id_(127),
       service_renderbuffer_id_(0),
       service_renderbuffer_valid_(false),
       ignore_cached_state_for_test_(GetParam()),
@@ -430,6 +431,7 @@ void GLES2DecoderTestBase::InitDecoderWithCommandLine(
       .WillOnce(SetArgumentPointee<1>(kServiceTransformFeedbackId))
       .RetiresOnSaturation();
   GenHelper<cmds::GenTransformFeedbacksImmediate>(client_transformfeedback_id_);
+  DoFenceSync(client_sync_id_, kServiceSyncId);
   if (reset_unsafe_es3_apis_enabled) {
     decoder_->set_unsafe_es3_apis_enabled(false);
   }
@@ -536,6 +538,17 @@ void GLES2DecoderTestBase::DoDeleteProgram(
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
 }
 
+void GLES2DecoderTestBase::DoFenceSync(
+    GLuint client_id, GLuint service_id) {
+  EXPECT_CALL(*gl_, FenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0))
+      .Times(1)
+      .WillOnce(Return(reinterpret_cast<GLsync>(service_id)))
+      .RetiresOnSaturation();
+  cmds::FenceSync cmd;
+  cmd.Init(client_id);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+}
+
 void GLES2DecoderTestBase::SetBucketAsCString(
     uint32 bucket_id, const char* str) {
   uint32 size = str ? (strlen(str) + 1) : 0;
@@ -549,6 +562,39 @@ void GLES2DecoderTestBase::SetBucketAsCString(
     EXPECT_EQ(error::kNoError, ExecuteCmd(cmd2));
     ClearSharedMemory();
   }
+}
+
+void GLES2DecoderTestBase::SetBucketAsCStrings(
+    uint32 bucket_id, GLsizei count, const char** str,
+    GLsizei count_in_header, char str_end) {
+  uint32_t header_size = sizeof(GLint) * (count + 1);
+  uint32_t total_size = header_size;
+  scoped_ptr<GLint[]> header(new GLint[count + 1]);
+  header[0] = static_cast<GLint>(count_in_header);
+  for (GLsizei ii = 0; ii < count; ++ii) {
+    header[ii + 1] = str && str[ii] ? strlen(str[ii]) : 0;
+    total_size += header[ii + 1] + 1;
+  }
+  cmd::SetBucketSize cmd1;
+  cmd1.Init(bucket_id, total_size);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd1));
+  memcpy(shared_memory_address_, header.get(), header_size);
+  uint32_t offset = header_size;
+  for (GLsizei ii = 0; ii < count; ++ii) {
+    if (str && str[ii]) {
+      size_t str_len = strlen(str[ii]);
+      memcpy(reinterpret_cast<char*>(shared_memory_address_) + offset,
+             str[ii], str_len);
+      offset += str_len;
+    }
+    memcpy(reinterpret_cast<char*>(shared_memory_address_) + offset,
+           &str_end, 1);
+    offset += 1;
+  }
+  cmd::SetBucketData cmd2;
+  cmd2.Init(bucket_id, 0, total_size, kSharedMemoryId, kSharedMemoryOffset);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd2));
+  ClearSharedMemory();
 }
 
 void GLES2DecoderTestBase::SetupClearTextureExpectations(
@@ -1274,6 +1320,7 @@ const GLuint GLES2DecoderTestBase::kServiceElementBufferId;
 const GLuint GLES2DecoderTestBase::kServiceQueryId;
 const GLuint GLES2DecoderTestBase::kServiceVertexArrayId;
 const GLuint GLES2DecoderTestBase::kServiceTransformFeedbackId;
+const GLuint GLES2DecoderTestBase::kServiceSyncId;
 
 const int32 GLES2DecoderTestBase::kSharedMemoryId;
 const size_t GLES2DecoderTestBase::kSharedBufferSize;

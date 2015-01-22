@@ -21,15 +21,15 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '3e3b58d57a358e2d52bc23ad2409a95d59310100',
+  'skia_revision': 'faff2c45985a5e0fdb72bdf416d97babecd44833',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '3efdae6669030b03a841c8d579655ba1f36b1f87',
+  'v8_revision': 'c9b8b474d525faf44f9848edf448f913151f297b',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '2a30ccefd0c47608380a1621a983bf46685e5ad9',
+  'angle_revision': 'dd806c2b58aac61f010c7b1c6831f9541209f490',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
@@ -133,7 +133,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + '194ec65a55edf24c1976d4265f57e8c90ef5bb2f', # from svn revision 2023
+    Var('chromium_git') + '/external/gyp.git' + '@' + 'adb7d24b9fc166f01ab2da50478556b518a9218f', # from svn revision 2023
 }
 
 

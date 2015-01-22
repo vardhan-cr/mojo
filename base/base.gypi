@@ -72,6 +72,8 @@
           'android/path_service_android.h',
           'android/path_utils.cc',
           'android/path_utils.h',
+          'android/record_histogram.cc',
+          'android/record_histogram.h',
           'android/sys_utils.cc',
           'android/sys_utils.h',
           'android/thread_utils.h',
@@ -927,7 +929,6 @@
               '<(DEPTH)/third_party/wtl/include',
             ],
             'sources!': [
-              'event_recorder_stubs.cc',
               'files/file_path_watcher_fsevents.cc',
               'files/file_path_watcher_fsevents.h',
               'files/file_path_watcher_kqueue.cc',
