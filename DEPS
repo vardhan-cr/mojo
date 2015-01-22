@@ -21,11 +21,11 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'faff2c45985a5e0fdb72bdf416d97babecd44833',
+  'skia_revision': '2dca817edb0d741b7d8930009417bf9bd071808d',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': 'c9b8b474d525faf44f9848edf448f913151f297b',
+  'v8_revision': '3efdae6669030b03a841c8d579655ba1f36b1f87',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
@@ -159,7 +159,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + '56b3d3e8ce785e468eac3262cd6b107ebe569e94',
+     Var('chromium_git') + '/android_tools.git' + '@' + 'aaeda3d69df4b4352e3cac7c16bea7f16bd1ec12',
 
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',
