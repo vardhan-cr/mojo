@@ -26,6 +26,7 @@ group("shell") {
   if (is_android) {
     deps += [
       ":mojo_shell_apk",
+      ":mojo_shell_tests_apk",
     ]
   }
 }
@@ -333,6 +334,7 @@ if (is_android) {
 
     native_libs = [ "libmojo_shell.so" ]
 
+    asset_location = mojo_shell_assets_dir
 
     deps = [
       ":copy_mojo_shell",
@@ -434,14 +436,14 @@ test("mojo_shell_tests") {
   if (is_android) {
     sources += [ "android/background_application_loader_unittest.cc" ]
 
-    deps += [
-      ":jni_headers",
+    deps += [ ":jni_headers" ]
+
+    apk_deps = [
       ":copy_mojo_shell_test_assets",
       ":mojo_shell_tests_java",
-      "//testing/android:native_test_native_code",
     ]
 
-# TODO(qsr): asset_location = mojo_shell_assets_dir ?
+    apk_asset_location = mojo_shell_test_assets_dir
   }
 }
 

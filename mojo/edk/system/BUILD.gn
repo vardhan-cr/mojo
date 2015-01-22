@@ -174,10 +174,6 @@ test("mojo_system_unittests") {
     "//testing/gtest",
   ]
 
-  if (is_android) {
-    deps += [ "//testing/android:native_test_native_code" ]
-  }
-
   allow_circular_includes_from = [ "../embedder:embedder_unittests" ]
 }
 
