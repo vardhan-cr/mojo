@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/x/device_data_manager_x11.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
 
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
@@ -13,9 +13,9 @@
 #include "base/sys_info.h"
 #include "ui/events/event_constants.h"
 #include "ui/events/event_switches.h"
-#include "ui/events/keycodes/keyboard_code_conversion_x.h"
-#include "ui/events/x/device_list_cache_x.h"
-#include "ui/events/x/touch_factory_x11.h"
+#include "ui/events/platform/x11/device_list_cache_x.h"
+#include "ui/events/platform/x11/keyboard_code_conversion_x11.h"
+#include "ui/events/platform/x11/touch_factory_x11.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/point3_f.h"
 #include "ui/gfx/x/x11_types.h"
@@ -29,9 +29,9 @@
 // Multi-touch support was introduced in XI 2.2. Add XI event types here
 // for backward-compatibility with older versions of XInput.
 #if !defined(XI_TouchBegin)
-#define XI_TouchBegin  18
+#define XI_TouchBegin 18
 #define XI_TouchUpdate 19
-#define XI_TouchEnd    20
+#define XI_TouchEnd 20
 #endif
 
 // Copied from xserver-properties.h
@@ -40,21 +40,21 @@
 
 // CMT specific timings
 #define AXIS_LABEL_PROP_ABS_DBL_START_TIME "Abs Dbl Start Timestamp"
-#define AXIS_LABEL_PROP_ABS_DBL_END_TIME   "Abs Dbl End Timestamp"
+#define AXIS_LABEL_PROP_ABS_DBL_END_TIME "Abs Dbl End Timestamp"
 
 // Ordinal values
-#define AXIS_LABEL_PROP_ABS_DBL_ORDINAL_X   "Abs Dbl Ordinal X"
-#define AXIS_LABEL_PROP_ABS_DBL_ORDINAL_Y   "Abs Dbl Ordinal Y"
+#define AXIS_LABEL_PROP_ABS_DBL_ORDINAL_X "Abs Dbl Ordinal X"
+#define AXIS_LABEL_PROP_ABS_DBL_ORDINAL_Y "Abs Dbl Ordinal Y"
 
 // Fling properties
-#define AXIS_LABEL_PROP_ABS_DBL_FLING_VX   "Abs Dbl Fling X Velocity"
-#define AXIS_LABEL_PROP_ABS_DBL_FLING_VY   "Abs Dbl Fling Y Velocity"
-#define AXIS_LABEL_PROP_ABS_FLING_STATE   "Abs Fling State"
+#define AXIS_LABEL_PROP_ABS_DBL_FLING_VX "Abs Dbl Fling X Velocity"
+#define AXIS_LABEL_PROP_ABS_DBL_FLING_VY "Abs Dbl Fling Y Velocity"
+#define AXIS_LABEL_PROP_ABS_FLING_STATE "Abs Fling State"
 
-#define AXIS_LABEL_PROP_ABS_FINGER_COUNT   "Abs Finger Count"
+#define AXIS_LABEL_PROP_ABS_FINGER_COUNT "Abs Finger Count"
 
 // Cros metrics gesture from touchpad
-#define AXIS_LABEL_PROP_ABS_METRICS_TYPE      "Abs Metrics Type"
+#define AXIS_LABEL_PROP_ABS_METRICS_TYPE "Abs Metrics Type"
 #define AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA1 "Abs Dbl Metrics Data 1"
 #define AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA2 "Abs Dbl Metrics Data 2"
 
@@ -62,40 +62,38 @@
 #define AXIS_LABEL_ABS_MT_TOUCH_MAJOR "Abs MT Touch Major"
 #define AXIS_LABEL_ABS_MT_TOUCH_MINOR "Abs MT Touch Minor"
 #define AXIS_LABEL_ABS_MT_ORIENTATION "Abs MT Orientation"
-#define AXIS_LABEL_ABS_MT_PRESSURE    "Abs MT Pressure"
-#define AXIS_LABEL_ABS_MT_POSITION_X  "Abs MT Position X"
-#define AXIS_LABEL_ABS_MT_POSITION_Y  "Abs MT Position Y"
+#define AXIS_LABEL_ABS_MT_PRESSURE "Abs MT Pressure"
+#define AXIS_LABEL_ABS_MT_POSITION_X "Abs MT Position X"
+#define AXIS_LABEL_ABS_MT_POSITION_Y "Abs MT Position Y"
 #define AXIS_LABEL_ABS_MT_TRACKING_ID "Abs MT Tracking ID"
-#define AXIS_LABEL_TOUCH_TIMESTAMP    "Touch Timestamp"
+#define AXIS_LABEL_TOUCH_TIMESTAMP "Touch Timestamp"
 
 // When you add new data types, please make sure the order here is aligned
 // with the order in the DataType enum in the header file because we assume
 // they are in sync when updating the device list (see UpdateDeviceList).
-const char* kCachedAtoms[] = {
-  AXIS_LABEL_PROP_REL_HWHEEL,
-  AXIS_LABEL_PROP_REL_WHEEL,
-  AXIS_LABEL_PROP_ABS_DBL_ORDINAL_X,
-  AXIS_LABEL_PROP_ABS_DBL_ORDINAL_Y,
-  AXIS_LABEL_PROP_ABS_DBL_START_TIME,
-  AXIS_LABEL_PROP_ABS_DBL_END_TIME,
-  AXIS_LABEL_PROP_ABS_DBL_FLING_VX,
-  AXIS_LABEL_PROP_ABS_DBL_FLING_VY,
-  AXIS_LABEL_PROP_ABS_FLING_STATE,
-  AXIS_LABEL_PROP_ABS_METRICS_TYPE,
-  AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA1,
-  AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA2,
-  AXIS_LABEL_PROP_ABS_FINGER_COUNT,
-  AXIS_LABEL_ABS_MT_TOUCH_MAJOR,
-  AXIS_LABEL_ABS_MT_TOUCH_MINOR,
-  AXIS_LABEL_ABS_MT_ORIENTATION,
-  AXIS_LABEL_ABS_MT_PRESSURE,
-  AXIS_LABEL_ABS_MT_POSITION_X,
-  AXIS_LABEL_ABS_MT_POSITION_Y,
-  AXIS_LABEL_ABS_MT_TRACKING_ID,
-  AXIS_LABEL_TOUCH_TIMESTAMP,
+const char* kCachedAtoms[] = {AXIS_LABEL_PROP_REL_HWHEEL,
+                              AXIS_LABEL_PROP_REL_WHEEL,
+                              AXIS_LABEL_PROP_ABS_DBL_ORDINAL_X,
+                              AXIS_LABEL_PROP_ABS_DBL_ORDINAL_Y,
+                              AXIS_LABEL_PROP_ABS_DBL_START_TIME,
+                              AXIS_LABEL_PROP_ABS_DBL_END_TIME,
+                              AXIS_LABEL_PROP_ABS_DBL_FLING_VX,
+                              AXIS_LABEL_PROP_ABS_DBL_FLING_VY,
+                              AXIS_LABEL_PROP_ABS_FLING_STATE,
+                              AXIS_LABEL_PROP_ABS_METRICS_TYPE,
+                              AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA1,
+                              AXIS_LABEL_PROP_ABS_DBL_METRICS_DATA2,
+                              AXIS_LABEL_PROP_ABS_FINGER_COUNT,
+                              AXIS_LABEL_ABS_MT_TOUCH_MAJOR,
+                              AXIS_LABEL_ABS_MT_TOUCH_MINOR,
+                              AXIS_LABEL_ABS_MT_ORIENTATION,
+                              AXIS_LABEL_ABS_MT_PRESSURE,
+                              AXIS_LABEL_ABS_MT_POSITION_X,
+                              AXIS_LABEL_ABS_MT_POSITION_Y,
+                              AXIS_LABEL_ABS_MT_TRACKING_ID,
+                              AXIS_LABEL_TOUCH_TIMESTAMP,
 
-  NULL
-};
+                              NULL};
 
 // Constants for checking if a data type lies in the range of CMT/Touch data
 // types.
@@ -147,13 +145,13 @@ bool DeviceDataManagerX11::InitializeXInputInternal() {
   // Check if XInput is available on the system.
   xi_opcode_ = -1;
   int opcode, event, error;
-  if (!XQueryExtension(
-      gfx::GetXDisplay(), "XInputExtension", &opcode, &event, &error)) {
+  if (!XQueryExtension(gfx::GetXDisplay(), "XInputExtension", &opcode, &event,
+                       &error)) {
     VLOG(1) << "X Input extension not available: error=" << error;
     return false;
   }
 
-  // Check the XInput version.
+// Check the XInput version.
 #if defined(USE_XI2_MT)
   int major = 2, minor = USE_XI2_MT;
 #else
@@ -166,7 +164,7 @@ bool DeviceDataManagerX11::InitializeXInputInternal() {
 #if defined(USE_XI2_MT)
   if (major < 2 || (major == 2 && minor < USE_XI2_MT)) {
     DVLOG(1) << "XI version on server is " << major << "." << minor << ". "
-            << "But 2." << USE_XI2_MT << " is required.";
+             << "But 2." << USE_XI2_MT << " is required.";
     return false;
   }
 #endif
@@ -248,8 +246,8 @@ void DeviceDataManagerX11::UpdateDeviceList(Display* display) {
       continue;
 
     valuator_lookup_[deviceid].resize(DT_LAST_ENTRY, -1);
-    data_type_lookup_[deviceid].resize(
-        valuator_count_[deviceid], DT_LAST_ENTRY);
+    data_type_lookup_[deviceid].resize(valuator_count_[deviceid],
+                                       DT_LAST_ENTRY);
     valuator_min_[deviceid].resize(DT_LAST_ENTRY, 0);
     valuator_max_[deviceid].resize(DT_LAST_ENTRY, 0);
     for (int j = 0; j < kMaxSlotNum; j++)
@@ -319,7 +317,8 @@ void DeviceDataManagerX11::GetEventRawData(const XEvent& xev, EventData* data) {
 }
 
 bool DeviceDataManagerX11::GetEventData(const XEvent& xev,
-    const DataType type, double* value) {
+                                        const DataType type,
+                                        double* value) {
   if (xev.type != GenericEvent)
     return false;
 
@@ -333,8 +332,7 @@ bool DeviceDataManagerX11::GetEventData(const XEvent& xev,
   if (type == DT_TOUCH_TRACKING_ID) {
     // With XInput2 MT, Tracking ID is provided in the detail field for touch
     // events.
-    if (xiev->evtype == XI_TouchBegin ||
-        xiev->evtype == XI_TouchEnd ||
+    if (xiev->evtype == XI_TouchBegin || xiev->evtype == XI_TouchEnd ||
         xiev->evtype == XI_TouchUpdate) {
       *value = xiev->detail;
     } else {
@@ -401,13 +399,12 @@ bool DeviceDataManagerX11::IsCMTDeviceEvent(
 
 bool DeviceDataManagerX11::IsCMTGestureEvent(
     const base::NativeEvent& native_event) const {
-  return (IsScrollEvent(native_event) ||
-          IsFlingEvent(native_event) ||
+  return (IsScrollEvent(native_event) || IsFlingEvent(native_event) ||
           IsCMTMetricsEvent(native_event));
 }
 
-bool DeviceDataManagerX11::HasEventData(
-    const XIDeviceEvent* xiev, const DataType type) const {
+bool DeviceDataManagerX11::HasEventData(const XIDeviceEvent* xiev,
+                                        const DataType type) const {
   const int idx = valuator_lookup_[xiev->sourceid][type];
   return (idx >= 0) && XIMaskIsSet(xiev->valuators.mask, idx);
 }
@@ -417,8 +414,7 @@ bool DeviceDataManagerX11::IsScrollEvent(
   if (!IsCMTDeviceEvent(native_event))
     return false;
 
-  XIDeviceEvent* xiev =
-      static_cast<XIDeviceEvent*>(native_event->xcookie.data);
+  XIDeviceEvent* xiev = static_cast<XIDeviceEvent*>(native_event->xcookie.data);
   return (HasEventData(xiev, DT_CMT_SCROLL_X) ||
           HasEventData(xiev, DT_CMT_SCROLL_Y));
 }
@@ -428,8 +424,7 @@ bool DeviceDataManagerX11::IsFlingEvent(
   if (!IsCMTDeviceEvent(native_event))
     return false;
 
-  XIDeviceEvent* xiev =
-      static_cast<XIDeviceEvent*>(native_event->xcookie.data);
+  XIDeviceEvent* xiev = static_cast<XIDeviceEvent*>(native_event->xcookie.data);
   return (HasEventData(xiev, DT_CMT_FLING_X) &&
           HasEventData(xiev, DT_CMT_FLING_Y) &&
           HasEventData(xiev, DT_CMT_FLING_STATE));
@@ -440,8 +435,7 @@ bool DeviceDataManagerX11::IsCMTMetricsEvent(
   if (!IsCMTDeviceEvent(native_event))
     return false;
 
-  XIDeviceEvent* xiev =
-      static_cast<XIDeviceEvent*>(native_event->xcookie.data);
+  XIDeviceEvent* xiev = static_cast<XIDeviceEvent*>(native_event->xcookie.data);
   return (HasEventData(xiev, DT_CMT_METRICS_TYPE) &&
           HasEventData(xiev, DT_CMT_METRICS_DATA1) &&
           HasEventData(xiev, DT_CMT_METRICS_DATA2));
@@ -452,8 +446,7 @@ bool DeviceDataManagerX11::HasGestureTimes(
   if (!IsCMTDeviceEvent(native_event))
     return false;
 
-  XIDeviceEvent* xiev =
-      static_cast<XIDeviceEvent*>(native_event->xcookie.data);
+  XIDeviceEvent* xiev = static_cast<XIDeviceEvent*>(native_event->xcookie.data);
   return (HasEventData(xiev, DT_CMT_START_TIME) &&
           HasEventData(xiev, DT_CMT_END_TIME));
 }
@@ -486,13 +479,12 @@ void DeviceDataManagerX11::GetScrollOffsets(
     *finger_count = static_cast<int>(data[DT_CMT_FINGER_COUNT]);
 }
 
-void DeviceDataManagerX11::GetFlingData(
-    const base::NativeEvent& native_event,
-    float* vx,
-    float* vy,
-    float* vx_ordinal,
-    float* vy_ordinal,
-    bool* is_cancel) {
+void DeviceDataManagerX11::GetFlingData(const base::NativeEvent& native_event,
+                                        float* vx,
+                                        float* vy,
+                                        float* vx_ordinal,
+                                        float* vy_ordinal,
+                                        bool* is_cancel) {
   *vx = 0;
   *vy = 0;
   *vx_ordinal = 0;
@@ -514,11 +506,10 @@ void DeviceDataManagerX11::GetFlingData(
     *vy_ordinal = data[DT_CMT_ORDINAL_Y];
 }
 
-void DeviceDataManagerX11::GetMetricsData(
-    const base::NativeEvent& native_event,
-    GestureMetricsType* type,
-    float* data1,
-    float* data2) {
+void DeviceDataManagerX11::GetMetricsData(const base::NativeEvent& native_event,
+                                          GestureMetricsType* type,
+                                          float* data1,
+                                          float* data2) {
   *type = kGestureMetricsTypeUnknown;
   *data1 = 0;
   *data2 = 0;
@@ -540,13 +531,12 @@ void DeviceDataManagerX11::GetMetricsData(
 }
 
 int DeviceDataManagerX11::GetMappedButton(int button) {
-  return button > 0 && button <= button_map_count_ ? button_map_[button - 1] :
-                                                     button;
+  return button > 0 && button <= button_map_count_ ? button_map_[button - 1]
+                                                   : button;
 }
 
 void DeviceDataManagerX11::UpdateButtonMap() {
-  button_map_count_ = XGetPointerMapping(gfx::GetXDisplay(),
-                                         button_map_,
+  button_map_count_ = XGetPointerMapping(gfx::GetXDisplay(), button_map_,
                                          arraysize(button_map_));
 }
 
@@ -673,9 +663,8 @@ bool DeviceDataManagerX11::TouchEventNeedsCalibrate(int touch_device_id) const {
 }
 
 void DeviceDataManagerX11::SetDisabledKeyboardAllowedKeys(
-    scoped_ptr<std::set<KeyboardCode> > excepted_keys) {
-  DCHECK(!excepted_keys.get() ||
-         !blocked_keyboard_allowed_keys_.get());
+    scoped_ptr<std::set<KeyboardCode>> excepted_keys) {
+  DCHECK(!excepted_keys.get() || !blocked_keyboard_allowed_keys_.get());
   blocked_keyboard_allowed_keys_ = excepted_keys.Pass();
 }
 
@@ -698,9 +687,8 @@ bool DeviceDataManagerX11::IsEventBlocked(
   // Allow any key events from blocked_keyboard_allowed_keys_.
   if (blocked_keyboard_allowed_keys_ &&
       (xievent->evtype == XI_KeyPress || xievent->evtype == XI_KeyRelease) &&
-      blocked_keyboard_allowed_keys_->find(
-          KeyboardCodeFromXKeyEvent(native_event)) !=
-          blocked_keyboard_allowed_keys_->end()) {
+      blocked_keyboard_allowed_keys_->find(KeyboardCodeFromXKeyEvent(
+          native_event)) != blocked_keyboard_allowed_keys_->end()) {
     return false;
   }
 

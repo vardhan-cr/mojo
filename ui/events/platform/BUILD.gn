@@ -15,7 +15,6 @@ component("platform") {
     "platform_event_observer.h",
     "platform_event_source.cc",
     "platform_event_source.h",
-    "platform_event_source_stub.cc",
     "platform_event_types.h",
     "scoped_event_dispatcher.cc",
     "scoped_event_dispatcher.h",
@@ -32,6 +31,41 @@ component("platform") {
   ]
 
   if (use_x11) {
-    sources -= [ "platform_event_source_stub.cc" ]
+    configs += [ "//build/config/linux:x11" ]
+
+    sources += [
+      "x11/device_data_manager_x11.cc",
+      "x11/device_data_manager_x11.h",
+      "x11/device_list_cache_x.cc",
+      "x11/device_list_cache_x.h",
+      "x11/hotplug_event_handler_x11.cc",
+      "x11/hotplug_event_handler_x11.h",
+      "x11/keyboard_code_conversion_x11.cc",
+      "x11/keyboard_code_conversion_x11.h",
+      "x11/keysym_to_unicode.cc",
+      "x11/keysym_to_unicode.h",
+      "x11/platform_event_utils_x11.cc",
+      "x11/touch_factory_x11.cc",
+      "x11/touch_factory_x11.h",
+      "x11/x11_event_source.cc",
+      "x11/x11_event_source.h",
+      "x11/x11_event_source_glib.cc",
+      "x11/x11_event_source_libevent.cc",
+    ]
+
+    if (is_linux) {
+      sources -= [ "x11/x11_event_source_libevent.cc" ]
+
+      configs += [ "//build/config/linux:glib" ]
+    } else {
+      sources -= [ "x11/x11_event_source_glib.cc" ]
+    }
+
+    deps += [ "//ui/gfx/x" ]
+  } else {
+    sources += [
+      "platform_event_source_stub.cc",
+      "platform_event_stub.cc",
+    ]
   }
 }

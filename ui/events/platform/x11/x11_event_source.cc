@@ -6,14 +6,14 @@
 
 #include <X11/extensions/XInput2.h>
 #include <X11/X.h>
-#include <X11/Xlib.h>
 #include <X11/XKBlib.h>
+#include <X11/Xlib.h>
 
 #include "base/logging.h"
-#include "ui/events/event_utils.h"
 #include "ui/events/platform/platform_event_dispatcher.h"
-#include "ui/events/x/device_data_manager_x11.h"
-#include "ui/events/x/hotplug_event_handler_x11.h"
+#include "ui/events/platform/platform_event_utils.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
+#include "ui/events/platform/x11/hotplug_event_handler_x11.h"
 #include "ui/gfx/x/x11_types.h"
 
 namespace ui {

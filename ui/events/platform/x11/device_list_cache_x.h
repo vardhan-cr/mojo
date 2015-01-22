@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef UI_EVENTS_X_DEVICE_LIST_CACHE_X_H_
-#define UI_EVENTS_X_DEVICE_LIST_CACHE_X_H_
+#ifndef UI_EVENTS_PLATFORM_X11_DEVICE_LIST_CACHE_X_H_
+#define UI_EVENTS_PLATFORM_X11_DEVICE_LIST_CACHE_X_H_
 
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
@@ -13,17 +13,15 @@
 #include "base/basictypes.h"
 #include "ui/events/events_base_export.h"
 
-template <typename T> struct DefaultSingletonTraits;
+template <typename T>
+struct DefaultSingletonTraits;
 
 typedef struct _XDisplay Display;
 
 template <typename T>
 struct DeviceList {
-  DeviceList() : devices(NULL), count(0) {
-  }
-  T& operator[] (int x) {
-    return devices[x];
-  }
+  DeviceList() : devices(NULL), count(0) {}
+  T& operator[](int x) { return devices[x]; }
   const T& operator[](int x) const { return devices[x]; }
   T* devices;
   int count;
@@ -67,5 +65,4 @@ class EVENTS_BASE_EXPORT DeviceListCacheX {
 
 }  // namespace ui
 
-#endif  // UI_EVENTS_X_DEVICE_LIST_CACHE_X_H_
-
+#endif  // UI_EVENTS_PLATFORM_X11_DEVICE_LIST_CACHE_X_H_

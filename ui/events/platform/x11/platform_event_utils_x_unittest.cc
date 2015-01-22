@@ -6,9 +6,9 @@
 #include <set>
 
 #include <X11/extensions/XInput2.h>
+#include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/XKBlib.h>
 
 // Generically-named #defines from Xlib that conflict with symbols in GTest.
 #undef Bool
@@ -20,10 +20,11 @@
 #include "ui/events/event_constants.h"
 #include "ui/events/event_utils.h"
 #include "ui/events/platform/platform_event_builder.h"
+#include "ui/events/platform/platform_event_utils.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
+#include "ui/events/platform/x11/touch_factory_x11.h"
 #include "ui/events/test/events_test_utils.h"
 #include "ui/events/test/events_test_utils_x11.h"
-#include "ui/events/x/device_data_manager_x11.h"
-#include "ui/events/x/touch_factory_x11.h"
 #include "ui/gfx/point.h"
 
 namespace ui {
@@ -81,20 +82,21 @@ bool HasFunctionKeyFlagSetIfSupported(Display* display, int x_keysym) {
 
 }  // namespace
 
-class EventsXTest : public testing::Test {
+class PlatformEventUtilsXTest : public testing::Test {
  public:
-  EventsXTest() {}
-  virtual ~EventsXTest() {}
+  PlatformEventUtilsXTest() {}
+  virtual ~PlatformEventUtilsXTest() {}
 
   virtual void SetUp() override {
     DeviceDataManagerX11::CreateInstance();
     ui::TouchFactory::GetInstance()->ResetForTest();
   }
+
  private:
-  DISALLOW_COPY_AND_ASSIGN(EventsXTest);
+  DISALLOW_COPY_AND_ASSIGN(PlatformEventUtilsXTest);
 };
 
-TEST_F(EventsXTest, ButtonEvents) {
+TEST_F(PlatformEventUtilsXTest, ButtonEvents) {
   XEvent event;
   gfx::Point location(5, 10);
   gfx::Vector2d offset;
@@ -106,9 +108,9 @@ TEST_F(EventsXTest, ButtonEvents) {
 
   InitButtonEvent(&event, true, location, 2, Button1Mask | ShiftMask);
   EXPECT_EQ(ui::ET_MOUSE_PRESSED, ui::EventTypeFromNative(&event));
-  EXPECT_EQ(ui::EF_LEFT_MOUSE_BUTTON | ui::EF_MIDDLE_MOUSE_BUTTON |
-                ui::EF_SHIFT_DOWN,
-            ui::EventFlagsFromNative(&event));
+  EXPECT_EQ(
+      ui::EF_LEFT_MOUSE_BUTTON | ui::EF_MIDDLE_MOUSE_BUTTON | ui::EF_SHIFT_DOWN,
+      ui::EventFlagsFromNative(&event));
   EXPECT_EQ(location, ui::EventLocationFromNative(&event));
 
   InitButtonEvent(&event, false, location, 3, 0);
@@ -155,7 +157,7 @@ TEST_F(EventsXTest, ButtonEvents) {
   // TODO(derat): Test XInput code.
 }
 
-TEST_F(EventsXTest, AvoidExtraEventsOnWheelRelease) {
+TEST_F(PlatformEventUtilsXTest, AvoidExtraEventsOnWheelRelease) {
   XEvent event;
   gfx::Point location(5, 10);
 
@@ -170,7 +172,7 @@ TEST_F(EventsXTest, AvoidExtraEventsOnWheelRelease) {
   // TODO(derat): Test XInput code.
 }
 
-TEST_F(EventsXTest, EnterLeaveEvent) {
+TEST_F(PlatformEventUtilsXTest, EnterLeaveEvent) {
   XEvent event;
   event.xcrossing.type = EnterNotify;
   event.xcrossing.x = 10;
@@ -195,7 +197,7 @@ TEST_F(EventsXTest, EnterLeaveEvent) {
   EXPECT_EQ("230,240", ui::EventSystemLocationFromNative(&event).ToString());
 }
 
-TEST_F(EventsXTest, ClickCount) {
+TEST_F(PlatformEventUtilsXTest, ClickCount) {
   XEvent event;
   gfx::Point location(5, 10);
 
@@ -217,7 +219,7 @@ TEST_F(EventsXTest, ClickCount) {
 }
 
 #if defined(USE_XI2_MT)
-TEST_F(EventsXTest, TouchEventBasic) {
+TEST_F(PlatformEventUtilsXTest, TouchEventBasic) {
   std::vector<unsigned int> devices;
   devices.push_back(0);
   ui::SetUpTouchDevicesForTest(devices);
@@ -229,8 +231,8 @@ TEST_F(EventsXTest, TouchEventBasic) {
       Valuator(DeviceDataManagerX11::DT_TOUCH_ORIENTATION, 0.3f));
   valuators.push_back(Valuator(DeviceDataManagerX11::DT_TOUCH_PRESSURE, 100));
   ui::ScopedXI2Event scoped_xevent;
-  scoped_xevent.InitTouchEvent(
-      0, XI_TouchBegin, 5, gfx::Point(10, 10), valuators);
+  scoped_xevent.InitTouchEvent(0, XI_TouchBegin, 5, gfx::Point(10, 10),
+                               valuators);
   EXPECT_EQ(ui::ET_TOUCH_PRESSED, ui::EventTypeFromNative(scoped_xevent));
   EXPECT_EQ("10,10", ui::EventLocationFromNative(scoped_xevent).ToString());
   EXPECT_EQ(GetTouchId(scoped_xevent), 0);
@@ -242,8 +244,8 @@ TEST_F(EventsXTest, TouchEventBasic) {
   valuators.clear();
   valuators.push_back(
       Valuator(DeviceDataManagerX11::DT_TOUCH_ORIENTATION, 0.5f));
-  scoped_xevent.InitTouchEvent(
-      0, XI_TouchUpdate, 5, gfx::Point(20, 20), valuators);
+  scoped_xevent.InitTouchEvent(0, XI_TouchUpdate, 5, gfx::Point(20, 20),
+                               valuators);
   EXPECT_EQ(ui::ET_TOUCH_MOVED, ui::EventTypeFromNative(scoped_xevent));
   EXPECT_EQ("20,20", ui::EventLocationFromNative(scoped_xevent).ToString());
   EXPECT_EQ(GetTouchId(scoped_xevent), 0);
@@ -254,11 +256,11 @@ TEST_F(EventsXTest, TouchEventBasic) {
   // Another touch with tracking id 6, touch id 1.
   valuators.clear();
   valuators.push_back(Valuator(DeviceDataManagerX11::DT_TOUCH_MAJOR, 100));
-  valuators.push_back(Valuator(
-      DeviceDataManagerX11::DT_TOUCH_ORIENTATION, 0.9f));
+  valuators.push_back(
+      Valuator(DeviceDataManagerX11::DT_TOUCH_ORIENTATION, 0.9f));
   valuators.push_back(Valuator(DeviceDataManagerX11::DT_TOUCH_PRESSURE, 500));
-  scoped_xevent.InitTouchEvent(
-      0, XI_TouchBegin, 6, gfx::Point(200, 200), valuators);
+  scoped_xevent.InitTouchEvent(0, XI_TouchBegin, 6, gfx::Point(200, 200),
+                               valuators);
   EXPECT_EQ(ui::ET_TOUCH_PRESSED, ui::EventTypeFromNative(scoped_xevent));
   EXPECT_EQ("200,200", ui::EventLocationFromNative(scoped_xevent).ToString());
   EXPECT_EQ(GetTouchId(scoped_xevent), 1);
@@ -270,8 +272,8 @@ TEST_F(EventsXTest, TouchEventBasic) {
   // value.
   valuators.clear();
   valuators.push_back(Valuator(DeviceDataManagerX11::DT_TOUCH_PRESSURE, 50));
-  scoped_xevent.InitTouchEvent(
-      0, XI_TouchEnd, 5, gfx::Point(30, 30), valuators);
+  scoped_xevent.InitTouchEvent(0, XI_TouchEnd, 5, gfx::Point(30, 30),
+                               valuators);
   EXPECT_EQ(ui::ET_TOUCH_RELEASED, ui::EventTypeFromNative(scoped_xevent));
   EXPECT_EQ("30,30", ui::EventLocationFromNative(scoped_xevent).ToString());
   EXPECT_EQ(GetTouchId(scoped_xevent), 0);
@@ -283,8 +285,8 @@ TEST_F(EventsXTest, TouchEventBasic) {
   // radius value.
   valuators.clear();
   valuators.push_back(Valuator(DeviceDataManagerX11::DT_TOUCH_MAJOR, 50));
-  scoped_xevent.InitTouchEvent(
-      0, XI_TouchEnd, 6, gfx::Point(200, 200), valuators);
+  scoped_xevent.InitTouchEvent(0, XI_TouchEnd, 6, gfx::Point(200, 200),
+                               valuators);
   EXPECT_EQ(ui::ET_TOUCH_RELEASED, ui::EventTypeFromNative(scoped_xevent));
   EXPECT_EQ("200,200", ui::EventLocationFromNative(scoped_xevent).ToString());
   EXPECT_EQ(GetTouchId(scoped_xevent), 1);
@@ -302,7 +304,7 @@ int GetTouchIdForTrackingId(uint32 tracking_id) {
   return -1;
 }
 
-TEST_F(EventsXTest, TouchEventIdRefcounting) {
+TEST_F(PlatformEventUtilsXTest, TouchEventIdRefcounting) {
   std::vector<unsigned int> devices;
   devices.push_back(0);
   ui::SetUpTouchDevicesForTest(devices);
@@ -313,15 +315,15 @@ TEST_F(EventsXTest, TouchEventIdRefcounting) {
 
   // Increment ref count once for first touch.
   ui::ScopedXI2Event xpress0;
-  xpress0.InitTouchEvent(
-      0, XI_TouchBegin, kTrackingId0, gfx::Point(10, 10), valuators);
+  xpress0.InitTouchEvent(0, XI_TouchBegin, kTrackingId0, gfx::Point(10, 10),
+                         valuators);
   scoped_ptr<ui::TouchEvent> upress0(new ui::TouchEvent(xpress0));
   EXPECT_EQ(0, GetTouchIdForTrackingId(kTrackingId0));
 
   // Increment ref count 4 times for second touch.
   ui::ScopedXI2Event xpress1;
-  xpress1.InitTouchEvent(
-      0, XI_TouchBegin, kTrackingId1, gfx::Point(20, 20), valuators);
+  xpress1.InitTouchEvent(0, XI_TouchBegin, kTrackingId1, gfx::Point(20, 20),
+                         valuators);
 
   for (int i = 0; i < 4; ++i) {
     ui::TouchEvent upress1(xpress1);
@@ -329,8 +331,8 @@ TEST_F(EventsXTest, TouchEventIdRefcounting) {
   }
 
   ui::ScopedXI2Event xrelease1;
-  xrelease1.InitTouchEvent(
-      0, XI_TouchEnd, kTrackingId1, gfx::Point(10, 10), valuators);
+  xrelease1.InitTouchEvent(0, XI_TouchEnd, kTrackingId1, gfx::Point(10, 10),
+                           valuators);
 
   // Decrement ref count 3 times for second touch.
   for (int i = 0; i < 3; ++i) {
@@ -345,15 +347,15 @@ TEST_F(EventsXTest, TouchEventIdRefcounting) {
 
   // This should clear the touch id of the first touch.
   ui::ScopedXI2Event xrelease0;
-  xrelease0.InitTouchEvent(
-      0, XI_TouchEnd, kTrackingId0, gfx::Point(10, 10), valuators);
+  xrelease0.InitTouchEvent(0, XI_TouchEnd, kTrackingId0, gfx::Point(10, 10),
+                           valuators);
   scoped_ptr<ui::TouchEvent> urelease0(new ui::TouchEvent(xrelease0));
   urelease0.reset();
   EXPECT_EQ(-1, GetTouchIdForTrackingId(kTrackingId0));
 }
 #endif
 
-TEST_F(EventsXTest, NumpadKeyEvents) {
+TEST_F(PlatformEventUtilsXTest, NumpadKeyEvents) {
   XEvent event;
   Display* display = gfx::GetXDisplay();
 
@@ -361,93 +363,94 @@ TEST_F(EventsXTest, NumpadKeyEvents) {
     bool is_numpad_key;
     int x_keysym;
   } keys[] = {
-    // XK_KP_Space and XK_KP_Equal are the extrema in the conventional
-    // keysymdef.h numbering.
-    { true,  XK_KP_Space },
-    { true,  XK_KP_Equal },
-    // Other numpad keysyms. (This is actually exhaustive in the current list.)
-    { true,  XK_KP_Tab },
-    { true,  XK_KP_Enter },
-    { true,  XK_KP_F1 },
-    { true,  XK_KP_F2 },
-    { true,  XK_KP_F3 },
-    { true,  XK_KP_F4 },
-    { true,  XK_KP_Home },
-    { true,  XK_KP_Left },
-    { true,  XK_KP_Up },
-    { true,  XK_KP_Right },
-    { true,  XK_KP_Down },
-    { true,  XK_KP_Prior },
-    { true,  XK_KP_Page_Up },
-    { true,  XK_KP_Next },
-    { true,  XK_KP_Page_Down },
-    { true,  XK_KP_End },
-    { true,  XK_KP_Begin },
-    { true,  XK_KP_Insert },
-    { true,  XK_KP_Delete },
-    { true,  XK_KP_Multiply },
-    { true,  XK_KP_Add },
-    { true,  XK_KP_Separator },
-    { true,  XK_KP_Subtract },
-    { true,  XK_KP_Decimal },
-    { true,  XK_KP_Divide },
-    { true,  XK_KP_0 },
-    { true,  XK_KP_1 },
-    { true,  XK_KP_2 },
-    { true,  XK_KP_3 },
-    { true,  XK_KP_4 },
-    { true,  XK_KP_5 },
-    { true,  XK_KP_6 },
-    { true,  XK_KP_7 },
-    { true,  XK_KP_8 },
-    { true,  XK_KP_9 },
-    // Largest keysym preceding XK_KP_Space.
-    { false, XK_Num_Lock },
-    // Smallest keysym following XK_KP_Equal.
-    { false, XK_F1 },
-    // Non-numpad analogues of numpad keysyms.
-    { false, XK_Tab },
-    { false, XK_Return },
-    { false, XK_F1 },
-    { false, XK_F2 },
-    { false, XK_F3 },
-    { false, XK_F4 },
-    { false, XK_Home },
-    { false, XK_Left },
-    { false, XK_Up },
-    { false, XK_Right },
-    { false, XK_Down },
-    { false, XK_Prior },
-    { false, XK_Page_Up },
-    { false, XK_Next },
-    { false, XK_Page_Down },
-    { false, XK_End },
-    { false, XK_Insert },
-    { false, XK_Delete },
-    { false, XK_multiply },
-    { false, XK_plus },
-    { false, XK_minus },
-    { false, XK_period },
-    { false, XK_slash },
-    { false, XK_0 },
-    { false, XK_1 },
-    { false, XK_2 },
-    { false, XK_3 },
-    { false, XK_4 },
-    { false, XK_5 },
-    { false, XK_6 },
-    { false, XK_7 },
-    { false, XK_8 },
-    { false, XK_9 },
-    // Miscellaneous other keysyms.
-    { false, XK_BackSpace },
-    { false, XK_Scroll_Lock },
-    { false, XK_Multi_key },
-    { false, XK_Select },
-    { false, XK_Num_Lock },
-    { false, XK_Shift_L },
-    { false, XK_space },
-    { false, XK_A },
+      // XK_KP_Space and XK_KP_Equal are the extrema in the conventional
+      // keysymdef.h numbering.
+      {true, XK_KP_Space},
+      {true, XK_KP_Equal},
+      // Other numpad keysyms. (This is actually exhaustive in the current
+      // list.)
+      {true, XK_KP_Tab},
+      {true, XK_KP_Enter},
+      {true, XK_KP_F1},
+      {true, XK_KP_F2},
+      {true, XK_KP_F3},
+      {true, XK_KP_F4},
+      {true, XK_KP_Home},
+      {true, XK_KP_Left},
+      {true, XK_KP_Up},
+      {true, XK_KP_Right},
+      {true, XK_KP_Down},
+      {true, XK_KP_Prior},
+      {true, XK_KP_Page_Up},
+      {true, XK_KP_Next},
+      {true, XK_KP_Page_Down},
+      {true, XK_KP_End},
+      {true, XK_KP_Begin},
+      {true, XK_KP_Insert},
+      {true, XK_KP_Delete},
+      {true, XK_KP_Multiply},
+      {true, XK_KP_Add},
+      {true, XK_KP_Separator},
+      {true, XK_KP_Subtract},
+      {true, XK_KP_Decimal},
+      {true, XK_KP_Divide},
+      {true, XK_KP_0},
+      {true, XK_KP_1},
+      {true, XK_KP_2},
+      {true, XK_KP_3},
+      {true, XK_KP_4},
+      {true, XK_KP_5},
+      {true, XK_KP_6},
+      {true, XK_KP_7},
+      {true, XK_KP_8},
+      {true, XK_KP_9},
+      // Largest keysym preceding XK_KP_Space.
+      {false, XK_Num_Lock},
+      // Smallest keysym following XK_KP_Equal.
+      {false, XK_F1},
+      // Non-numpad analogues of numpad keysyms.
+      {false, XK_Tab},
+      {false, XK_Return},
+      {false, XK_F1},
+      {false, XK_F2},
+      {false, XK_F3},
+      {false, XK_F4},
+      {false, XK_Home},
+      {false, XK_Left},
+      {false, XK_Up},
+      {false, XK_Right},
+      {false, XK_Down},
+      {false, XK_Prior},
+      {false, XK_Page_Up},
+      {false, XK_Next},
+      {false, XK_Page_Down},
+      {false, XK_End},
+      {false, XK_Insert},
+      {false, XK_Delete},
+      {false, XK_multiply},
+      {false, XK_plus},
+      {false, XK_minus},
+      {false, XK_period},
+      {false, XK_slash},
+      {false, XK_0},
+      {false, XK_1},
+      {false, XK_2},
+      {false, XK_3},
+      {false, XK_4},
+      {false, XK_5},
+      {false, XK_6},
+      {false, XK_7},
+      {false, XK_8},
+      {false, XK_9},
+      // Miscellaneous other keysyms.
+      {false, XK_BackSpace},
+      {false, XK_Scroll_Lock},
+      {false, XK_Multi_key},
+      {false, XK_Select},
+      {false, XK_Num_Lock},
+      {false, XK_Shift_L},
+      {false, XK_space},
+      {false, XK_A},
   };
 
   for (size_t k = 0; k < arraysize(keys); ++k) {
@@ -464,7 +467,7 @@ TEST_F(EventsXTest, NumpadKeyEvents) {
   }
 }
 
-TEST_F(EventsXTest, FunctionKeyEvents) {
+TEST_F(PlatformEventUtilsXTest, FunctionKeyEvents) {
   Display* display = gfx::GetXDisplay();
 
   // Min  function key code minus 1.
@@ -512,68 +515,51 @@ TEST_F(EventsXTest, FunctionKeyEvents) {
 #if defined(USE_XI2_MT)
 // Verifies that the type of events from a disabled keyboard is ET_UNKNOWN, but
 // that an exception list of keys can still be processed.
-TEST_F(EventsXTest, DisableKeyboard) {
+TEST_F(PlatformEventUtilsXTest, DisableKeyboard) {
   DeviceDataManagerX11* device_data_manager =
-      static_cast<DeviceDataManagerX11*>(
-          DeviceDataManager::GetInstance());
+      static_cast<DeviceDataManagerX11*>(DeviceDataManager::GetInstance());
   unsigned int blocked_device_id = 1;
   unsigned int other_device_id = 2;
   unsigned int master_device_id = 3;
   device_data_manager->DisableDevice(blocked_device_id);
 
-  scoped_ptr<std::set<KeyboardCode> > excepted_keys(new std::set<KeyboardCode>);
+  scoped_ptr<std::set<KeyboardCode>> excepted_keys(new std::set<KeyboardCode>);
   excepted_keys->insert(VKEY_B);
   device_data_manager->SetDisabledKeyboardAllowedKeys(excepted_keys.Pass());
 
   ScopedXI2Event xev;
   // A is not allowed on the blocked keyboard, and should return ET_UNKNOWN.
-  xev.InitGenericKeyEvent(master_device_id,
-                          blocked_device_id,
-                          ui::ET_KEY_PRESSED,
-                          ui::VKEY_A,
-                          0);
+  xev.InitGenericKeyEvent(master_device_id, blocked_device_id,
+                          ui::ET_KEY_PRESSED, ui::VKEY_A, 0);
   EXPECT_EQ(ui::ET_UNKNOWN, ui::EventTypeFromNative(xev));
 
   // The B key is allowed as an exception, and should return KEY_PRESSED.
-  xev.InitGenericKeyEvent(master_device_id,
-                          blocked_device_id,
-                          ui::ET_KEY_PRESSED,
-                          ui::VKEY_B,
-                          0);
+  xev.InitGenericKeyEvent(master_device_id, blocked_device_id,
+                          ui::ET_KEY_PRESSED, ui::VKEY_B, 0);
   EXPECT_EQ(ui::ET_KEY_PRESSED, ui::EventTypeFromNative(xev));
 
   // Both A and B are allowed on an unblocked keyboard device.
-  xev.InitGenericKeyEvent(master_device_id,
-                          other_device_id,
-                          ui::ET_KEY_PRESSED,
-                          ui::VKEY_A,
-                          0);
+  xev.InitGenericKeyEvent(master_device_id, other_device_id, ui::ET_KEY_PRESSED,
+                          ui::VKEY_A, 0);
   EXPECT_EQ(ui::ET_KEY_PRESSED, ui::EventTypeFromNative(xev));
-  xev.InitGenericKeyEvent(master_device_id,
-                          other_device_id,
-                          ui::ET_KEY_PRESSED,
-                          ui::VKEY_B,
-                          0);
+  xev.InitGenericKeyEvent(master_device_id, other_device_id, ui::ET_KEY_PRESSED,
+                          ui::VKEY_B, 0);
   EXPECT_EQ(ui::ET_KEY_PRESSED, ui::EventTypeFromNative(xev));
 
   device_data_manager->EnableDevice(blocked_device_id);
   device_data_manager->SetDisabledKeyboardAllowedKeys(
-      scoped_ptr<std::set<KeyboardCode> >());
+      scoped_ptr<std::set<KeyboardCode>>());
 
   // A key returns KEY_PRESSED as per usual now that keyboard was re-enabled.
-  xev.InitGenericKeyEvent(master_device_id,
-                          blocked_device_id,
-                          ui::ET_KEY_PRESSED,
-                          ui::VKEY_A,
-                          0);
+  xev.InitGenericKeyEvent(master_device_id, blocked_device_id,
+                          ui::ET_KEY_PRESSED, ui::VKEY_A, 0);
   EXPECT_EQ(ui::ET_KEY_PRESSED, ui::EventTypeFromNative(xev));
 }
 
 // Verifies that the type of events from a disabled mouse is ET_UNKNOWN.
-TEST_F(EventsXTest, DisableMouse) {
+TEST_F(PlatformEventUtilsXTest, DisableMouse) {
   DeviceDataManagerX11* device_data_manager =
-      static_cast<DeviceDataManagerX11*>(
-          DeviceDataManager::GetInstance());
+      static_cast<DeviceDataManagerX11*>(DeviceDataManager::GetInstance());
   unsigned int blocked_device_id = 1;
   unsigned int other_device_id = 2;
   std::vector<unsigned int> device_list;
@@ -585,27 +571,27 @@ TEST_F(EventsXTest, DisableMouse) {
 
   ScopedXI2Event xev;
   xev.InitGenericButtonEvent(blocked_device_id, ET_MOUSE_PRESSED, gfx::Point(),
-      EF_LEFT_MOUSE_BUTTON);
+                             EF_LEFT_MOUSE_BUTTON);
   EXPECT_EQ(ui::ET_UNKNOWN, ui::EventTypeFromNative(xev));
 
   xev.InitGenericButtonEvent(other_device_id, ET_MOUSE_PRESSED, gfx::Point(),
-      EF_LEFT_MOUSE_BUTTON);
+                             EF_LEFT_MOUSE_BUTTON);
   EXPECT_EQ(ui::ET_MOUSE_PRESSED, ui::EventTypeFromNative(xev));
 
   device_data_manager->EnableDevice(blocked_device_id);
 
   xev.InitGenericButtonEvent(blocked_device_id, ET_MOUSE_PRESSED, gfx::Point(),
-      EF_LEFT_MOUSE_BUTTON);
+                             EF_LEFT_MOUSE_BUTTON);
   EXPECT_EQ(ui::ET_MOUSE_PRESSED, ui::EventTypeFromNative(xev));
 }
 #endif  // defined(USE_XI2_MT)
 
 #if !defined(OS_CHROMEOS)
-TEST_F(EventsXTest, ImeFabricatedKeyEvents) {
+TEST_F(PlatformEventUtilsXTest, ImeFabricatedKeyEvents) {
   Display* display = gfx::GetXDisplay();
 
   unsigned int state_to_be_fabricated[] = {
-    0, ShiftMask, LockMask, ShiftMask | LockMask,
+      0, ShiftMask, LockMask, ShiftMask | LockMask,
   };
   for (size_t i = 0; i < arraysize(state_to_be_fabricated); ++i) {
     unsigned int state = state_to_be_fabricated[i];
@@ -622,7 +608,7 @@ TEST_F(EventsXTest, ImeFabricatedKeyEvents) {
   }
 
   unsigned int state_to_be_not_fabricated[] = {
-    ControlMask, Mod1Mask, Mod2Mask, ShiftMask | ControlMask,
+      ControlMask, Mod1Mask, Mod2Mask, ShiftMask | ControlMask,
   };
   for (size_t i = 0; i < arraysize(state_to_be_not_fabricated); ++i) {
     unsigned int state = state_to_be_not_fabricated[i];

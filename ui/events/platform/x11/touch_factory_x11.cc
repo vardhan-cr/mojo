@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/x/touch_factory_x11.h"
+#include "ui/events/platform/x11/touch_factory_x11.h"
 
-#include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
 #include <X11/extensions/XIproto.h>
+#include <X11/Xatom.h>
 
 #include "base/basictypes.h"
 #include "base/command_line.h"
@@ -20,8 +20,8 @@
 #include "base/strings/string_split.h"
 #include "base/sys_info.h"
 #include "ui/events/event_switches.h"
-#include "ui/events/x/device_data_manager_x11.h"
-#include "ui/events/x/device_list_cache_x.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
+#include "ui/events/platform/x11/device_list_cache_x.h"
 #include "ui/gfx/x/x11_types.h"
 
 namespace ui {
@@ -40,7 +40,8 @@ TouchFactory::TouchFactory()
   UpdateDeviceList(display);
 
   base::CommandLine* cmdline = base::CommandLine::ForCurrentProcess();
-  touch_events_disabled_ = cmdline->HasSwitch(switches::kTouchEvents) &&
+  touch_events_disabled_ =
+      cmdline->HasSwitch(switches::kTouchEvents) &&
       cmdline->GetSwitchValueASCII(switches::kTouchEvents) ==
           switches::kTouchEventsDisabled;
 }
@@ -68,7 +69,7 @@ void TouchFactory::SetTouchDeviceListFromCommandLine() {
     unsigned int devid;
     base::SplitString(touch_devices, ',', &devs);
     for (std::vector<std::string>::iterator iter = devs.begin();
-        iter != devs.end(); ++iter) {
+         iter != devs.end(); ++iter) {
       if (base::StringToInt(*iter, reinterpret_cast<int*>(&devid)))
         device_ids.push_back(devid);
       else
@@ -168,8 +169,7 @@ bool TouchFactory::ShouldProcessXI2Event(XEvent* xev) {
   XIDeviceEvent* xiev = reinterpret_cast<XIDeviceEvent*>(event);
 
 #if defined(USE_XI2_MT)
-  if (event->evtype == XI_TouchBegin ||
-      event->evtype == XI_TouchUpdate ||
+  if (event->evtype == XI_TouchBegin || event->evtype == XI_TouchUpdate ||
       event->evtype == XI_TouchEnd) {
     return !touch_events_disabled_ && IsTouchDevice(xiev->deviceid);
   }
@@ -180,8 +180,7 @@ bool TouchFactory::ShouldProcessXI2Event(XEvent* xev) {
            (virtual_core_keyboard_device_ == xiev->deviceid);
   }
 
-  if (event->evtype != XI_ButtonPress &&
-      event->evtype != XI_ButtonRelease &&
+  if (event->evtype != XI_ButtonPress && event->evtype != XI_ButtonRelease &&
       event->evtype != XI_Motion)
     return true;
 
@@ -240,15 +239,15 @@ void TouchFactory::SetTouchDeviceList(
 }
 
 bool TouchFactory::IsTouchDevice(unsigned deviceid) const {
-  return deviceid < touch_device_lookup_.size() ?
-      touch_device_lookup_[deviceid] : false;
+  return deviceid < touch_device_lookup_.size() ? touch_device_lookup_[deviceid]
+                                                : false;
 }
 
 bool TouchFactory::IsMultiTouchDevice(unsigned int deviceid) const {
   return (deviceid < touch_device_lookup_.size() &&
-          touch_device_lookup_[deviceid]) ?
-          touch_device_list_.find(deviceid)->second :
-          false;
+          touch_device_lookup_[deviceid])
+             ? touch_device_list_.find(deviceid)->second
+             : false;
 }
 
 bool TouchFactory::QuerySlotForTrackingID(uint32 tracking_id, int* slot) {
@@ -322,19 +321,18 @@ void TouchFactory::CacheTouchscreenIds(Display* display, int device_id) {
   int actual_format_return;
   unsigned long nitems_return;
   unsigned long bytes_after_return;
-  unsigned char *prop_return;
+  unsigned char* prop_return;
 
   const char kDeviceProductIdString[] = "Device Product ID";
   Atom device_product_id_atom =
       XInternAtom(display, kDeviceProductIdString, false);
 
   if (device_product_id_atom != None &&
-      XGetDeviceProperty(display, device, device_product_id_atom, 0, 2,
-                         False, XA_INTEGER, &actual_type_return,
-                         &actual_format_return, &nitems_return,
-                         &bytes_after_return, &prop_return) == Success) {
-    if (actual_type_return == XA_INTEGER &&
-        actual_format_return == 32 &&
+      XGetDeviceProperty(display, device, device_product_id_atom, 0, 2, False,
+                         XA_INTEGER, &actual_type_return, &actual_format_return,
+                         &nitems_return, &bytes_after_return,
+                         &prop_return) == Success) {
+    if (actual_type_return == XA_INTEGER && actual_format_return == 32 &&
         nitems_return == 2) {
       // An actual_format_return of 32 implies that the returned data is an
       // array of longs. See the description of |prop_return| in `man

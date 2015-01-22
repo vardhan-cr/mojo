@@ -2,24 +2,25 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/event_constants.h"
+#include "ui/events/platform/platform_event_utils.h"
 
-#include <cmath>
 #include <string.h>
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
+#include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/XKBlib.h>
+#include <cmath>
 
 #include "base/logging.h"
 #include "base/memory/singleton.h"
 #include "ui/events/event.h"
+#include "ui/events/event_constants.h"
 #include "ui/events/event_utils.h"
-#include "ui/events/keycodes/keyboard_code_conversion_x.h"
-#include "ui/events/x/device_data_manager_x11.h"
-#include "ui/events/x/device_list_cache_x.h"
-#include "ui/events/x/touch_factory_x11.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
+#include "ui/events/platform/x11/device_list_cache_x.h"
+#include "ui/events/platform/x11/keyboard_code_conversion_x11.h"
+#include "ui/events/platform/x11/touch_factory_x11.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/point.h"
 #include "ui/gfx/rect.h"
@@ -37,7 +38,7 @@ const int kMaxWheelButton = 7;
 // A class to track current modifier state on master device. Only track ctrl,
 // alt, shift and caps lock keys currently. The tracked state can then be used
 // by floating device.
-class XModifierStateWatcher{
+class XModifierStateWatcher {
  public:
   static XModifierStateWatcher* GetInstance() {
     return Singleton<XModifierStateWatcher>::get();
@@ -101,7 +102,7 @@ class XModifierStateWatcher{
  private:
   friend struct DefaultSingletonTraits<XModifierStateWatcher>;
 
-  XModifierStateWatcher() : state_(0) { }
+  XModifierStateWatcher() : state_(0) {}
 
   unsigned int state_;
 
@@ -116,8 +117,7 @@ class XModifierStateWatcher{
 bool TouchEventIsGeneratedHack(const base::NativeEvent& native_event) {
   XIDeviceEvent* event =
       static_cast<XIDeviceEvent*>(native_event->xcookie.data);
-  CHECK(event->evtype == XI_TouchBegin ||
-        event->evtype == XI_TouchUpdate ||
+  CHECK(event->evtype == XI_TouchBegin || event->evtype == XI_TouchUpdate ||
         event->evtype == XI_TouchEnd);
 
   // Force is normalized to [0, 1].
@@ -132,7 +132,7 @@ bool TouchEventIsGeneratedHack(const base::NativeEvent& native_event) {
   unsigned int deviceid =
       static_cast<XIDeviceEvent*>(native_event->xcookie.data)->sourceid;
   if (!ui::DeviceDataManagerX11::GetInstance()->GetDataRange(
-      deviceid, ui::DeviceDataManagerX11::DT_TOUCH_MAJOR, &min, &max)) {
+          deviceid, ui::DeviceDataManagerX11::DT_TOUCH_MAJOR, &min, &max)) {
     return false;
   }
 
@@ -182,18 +182,18 @@ int GetEventFlagsFromXKeyEvent(XEvent* xevent) {
   // handle the character compositions.
   const unsigned int shift_lock_mask = ShiftMask | LockMask;
   const bool fabricated_by_xim =
-      xevent->xkey.keycode == 0 &&
-      (xevent->xkey.state & ~shift_lock_mask) == 0;
+      xevent->xkey.keycode == 0 && (xevent->xkey.state & ~shift_lock_mask) == 0;
   const int ime_fabricated_flag =
       fabricated_by_xim ? ui::EF_IME_FABRICATED_KEY : 0;
 #endif
 
   return GetEventFlagsFromXState(xevent->xkey.state) |
-      (xevent->xkey.send_event ? ui::EF_FINAL : 0) |
-      (IsKeypadKey(XLookupKeysym(&xevent->xkey, 0)) ? ui::EF_NUMPAD_KEY : 0) |
-      (IsFunctionKey(XLookupKeysym(&xevent->xkey, 0)) ?
-          ui::EF_FUNCTION_KEY : 0) |
-      ime_fabricated_flag;
+         (xevent->xkey.send_event ? ui::EF_FINAL : 0) |
+         (IsKeypadKey(XLookupKeysym(&xevent->xkey, 0)) ? ui::EF_NUMPAD_KEY
+                                                       : 0) |
+         (IsFunctionKey(XLookupKeysym(&xevent->xkey, 0)) ? ui::EF_FUNCTION_KEY
+                                                         : 0) |
+         ime_fabricated_flag;
 }
 
 int GetEventFlagsFromXGenericEvent(XEvent* xevent) {
@@ -234,8 +234,10 @@ int GetButtonMaskForX2Event(XIDeviceEvent* xievent) {
   int buttonflags = 0;
   for (int i = 0; i < 8 * xievent->buttons.mask_len; i++) {
     if (XIMaskIsSet(xievent->buttons.mask, i)) {
-      int button = (xievent->sourceid == xievent->deviceid) ?
-          ui::DeviceDataManagerX11::GetInstance()->GetMappedButton(i) : i;
+      int button =
+          (xievent->sourceid == xievent->deviceid)
+              ? ui::DeviceDataManagerX11::GetInstance()->GetMappedButton(i)
+              : i;
       buttonflags |= GetEventFlagsForButton(button);
     }
   }
@@ -246,16 +248,16 @@ ui::EventType GetTouchEventType(const base::NativeEvent& native_event) {
   XIDeviceEvent* event =
       static_cast<XIDeviceEvent*>(native_event->xcookie.data);
 #if defined(USE_XI2_MT)
-  switch(event->evtype) {
+  switch (event->evtype) {
     case XI_TouchBegin:
-      return TouchEventIsGeneratedHack(native_event) ? ui::ET_UNKNOWN :
-                                                       ui::ET_TOUCH_PRESSED;
+      return TouchEventIsGeneratedHack(native_event) ? ui::ET_UNKNOWN
+                                                     : ui::ET_TOUCH_PRESSED;
     case XI_TouchUpdate:
-      return TouchEventIsGeneratedHack(native_event) ? ui::ET_UNKNOWN :
-                                                       ui::ET_TOUCH_MOVED;
+      return TouchEventIsGeneratedHack(native_event) ? ui::ET_UNKNOWN
+                                                     : ui::ET_TOUCH_MOVED;
     case XI_TouchEnd:
-      return TouchEventIsGeneratedHack(native_event) ? ui::ET_TOUCH_CANCELLED :
-                                                       ui::ET_TOUCH_RELEASED;
+      return TouchEventIsGeneratedHack(native_event) ? ui::ET_TOUCH_CANCELLED
+                                                     : ui::ET_TOUCH_RELEASED;
   }
 #endif  // defined(USE_XI2_MT)
 
@@ -268,8 +270,7 @@ ui::EventType GetTouchEventType(const base::NativeEvent& native_event) {
     case XI_Motion:
       // Should not convert any emulated Motion event from touch device to
       // touch event.
-      if (!(event->flags & XIPointerEmulated) &&
-          GetButtonMaskForX2Event(event))
+      if (!(event->flags & XIPointerEmulated) && GetButtonMaskForX2Event(event))
         return ui::ET_TOUCH_MOVED;
       return ui::ET_UNKNOWN;
     default:
@@ -279,18 +280,18 @@ ui::EventType GetTouchEventType(const base::NativeEvent& native_event) {
 }
 
 double GetTouchParamFromXEvent(XEvent* xev,
-                              ui::DeviceDataManagerX11::DataType val,
-                              double default_value) {
-  ui::DeviceDataManagerX11::GetInstance()->GetEventData(
-      *xev, val, &default_value);
+                               ui::DeviceDataManagerX11::DataType val,
+                               double default_value) {
+  ui::DeviceDataManagerX11::GetInstance()->GetEventData(*xev, val,
+                                                        &default_value);
   return default_value;
 }
 
 void ScaleTouchRadius(XEvent* xev, double* radius) {
   DCHECK_EQ(GenericEvent, xev->type);
   XIDeviceEvent* xiev = static_cast<XIDeviceEvent*>(xev->xcookie.data);
-  ui::DeviceDataManagerX11::GetInstance()->ApplyTouchRadiusScale(
-      xiev->sourceid, radius);
+  ui::DeviceDataManagerX11::GetInstance()->ApplyTouchRadiusScale(xiev->sourceid,
+                                                                 radius);
 }
 
 bool GetGestureTimes(const base::NativeEvent& native_event,
@@ -326,8 +327,8 @@ EventType EventTypeFromNative(const base::NativeEvent& native_event) {
   // ET_UNKNOWN as the type so this event will not be further processed.
   // NOTE: During some events unittests there is no device data manager.
   if (DeviceDataManager::HasInstance() &&
-      static_cast<DeviceDataManagerX11*>(DeviceDataManager::GetInstance())->
-          IsEventBlocked(native_event)) {
+      static_cast<DeviceDataManagerX11*>(DeviceDataManager::GetInstance())
+          ->IsEventBlocked(native_event)) {
     return ET_UNKNOWN;
   }
 
@@ -488,7 +489,7 @@ int EventFlagsFromNative(const base::NativeEvent& native_event) {
 }
 
 base::TimeDelta EventTimeFromNative(const base::NativeEvent& native_event) {
-  switch(native_event->type) {
+  switch (native_event->type) {
     case KeyPress:
     case KeyRelease:
       return base::TimeDelta::FromMilliseconds(native_event->xkey.time);
@@ -510,9 +511,9 @@ base::TimeDelta EventTimeFromNative(const base::NativeEvent& native_event) {
         // If the driver supports gesture times, use them.
         return base::TimeDelta::FromMicroseconds(end * 1000000);
       } else if (DeviceDataManagerX11::GetInstance()->GetEventData(
-          *native_event,
-          DeviceDataManagerX11::DT_TOUCH_RAW_TIMESTAMP,
-          &touch_timestamp)) {
+                     *native_event,
+                     DeviceDataManagerX11::DT_TOUCH_RAW_TIMESTAMP,
+                     &touch_timestamp)) {
         return base::TimeDelta::FromMicroseconds(touch_timestamp * 1000000);
       } else {
         XIDeviceEvent* xide =
@@ -592,8 +593,9 @@ int EventButtonFromNative(const base::NativeEvent& native_event) {
       static_cast<XIDeviceEvent*>(native_event->xcookie.data);
   int button = xievent->detail;
 
-  return (xievent->sourceid == xievent->deviceid) ?
-         DeviceDataManagerX11::GetInstance()->GetMappedButton(button) : button;
+  return (xievent->sourceid == xievent->deviceid)
+             ? DeviceDataManagerX11::GetInstance()->GetMappedButton(button)
+             : button;
 }
 
 KeyboardCode KeyboardCodeFromNative(const base::NativeEvent& native_event) {
@@ -668,14 +670,14 @@ int GetChangedMouseButtonFlagsFromNative(
 
 gfx::Vector2d GetMouseWheelOffset(const base::NativeEvent& native_event) {
   float x_offset, y_offset;
-  if (GetScrollOffsets(
-      native_event, &x_offset, &y_offset, NULL, NULL, NULL)) {
+  if (GetScrollOffsets(native_event, &x_offset, &y_offset, NULL, NULL, NULL)) {
     return gfx::Vector2d(static_cast<int>(x_offset),
                          static_cast<int>(y_offset));
   }
 
-  int button = native_event->type == GenericEvent ?
-      EventButtonFromNative(native_event) : native_event->xbutton.button;
+  int button = native_event->type == GenericEvent
+                   ? EventButtonFromNative(native_event)
+                   : native_event->xbutton.button;
 
   switch (button) {
     case 4:
@@ -705,13 +707,13 @@ void IncrementTouchIdRefCount(const base::NativeEvent& xev) {
 
 void ClearTouchIdIfReleased(const base::NativeEvent& xev) {
   ui::EventType type = ui::EventTypeFromNative(xev);
-  if (type == ui::ET_TOUCH_CANCELLED ||
-      type == ui::ET_TOUCH_RELEASED) {
+  if (type == ui::ET_TOUCH_CANCELLED || type == ui::ET_TOUCH_RELEASED) {
     ui::TouchFactory* factory = ui::TouchFactory::GetInstance();
     ui::DeviceDataManagerX11* manager = ui::DeviceDataManagerX11::GetInstance();
     double tracking_id;
-    if (manager->GetEventData(
-        *xev, ui::DeviceDataManagerX11::DT_TOUCH_TRACKING_ID, &tracking_id)) {
+    if (manager->GetEventData(*xev,
+                              ui::DeviceDataManagerX11::DT_TOUCH_TRACKING_ID,
+                              &tracking_id)) {
       factory->ReleaseSlotForTrackingID(tracking_id);
     }
   }
@@ -722,7 +724,7 @@ int GetTouchId(const base::NativeEvent& xev) {
   ui::DeviceDataManagerX11* manager = ui::DeviceDataManagerX11::GetInstance();
   double tracking_id;
   if (!manager->GetEventData(
-      *xev, ui::DeviceDataManagerX11::DT_TOUCH_TRACKING_ID, &tracking_id)) {
+          *xev, ui::DeviceDataManagerX11::DT_TOUCH_TRACKING_ID, &tracking_id)) {
     LOG(ERROR) << "Could not get the tracking ID for the event. Using 0.";
   } else {
     ui::TouchFactory* factory = ui::TouchFactory::GetInstance();
@@ -732,33 +734,39 @@ int GetTouchId(const base::NativeEvent& xev) {
 }
 
 float GetTouchRadiusX(const base::NativeEvent& native_event) {
-  double radius = GetTouchParamFromXEvent(native_event,
-      ui::DeviceDataManagerX11::DT_TOUCH_MAJOR, 0.0) / 2.0;
+  double radius =
+      GetTouchParamFromXEvent(native_event,
+                              ui::DeviceDataManagerX11::DT_TOUCH_MAJOR, 0.0) /
+      2.0;
   ScaleTouchRadius(native_event, &radius);
   return radius;
 }
 
 float GetTouchRadiusY(const base::NativeEvent& native_event) {
-  double radius = GetTouchParamFromXEvent(native_event,
-      ui::DeviceDataManagerX11::DT_TOUCH_MINOR, 0.0) / 2.0;
+  double radius =
+      GetTouchParamFromXEvent(native_event,
+                              ui::DeviceDataManagerX11::DT_TOUCH_MINOR, 0.0) /
+      2.0;
   ScaleTouchRadius(native_event, &radius);
   return radius;
 }
 
 float GetTouchAngle(const base::NativeEvent& native_event) {
   return GetTouchParamFromXEvent(native_event,
-      ui::DeviceDataManagerX11::DT_TOUCH_ORIENTATION, 0.0) / 2.0;
+                                 ui::DeviceDataManagerX11::DT_TOUCH_ORIENTATION,
+                                 0.0) /
+         2.0;
 }
 
 float GetTouchForce(const base::NativeEvent& native_event) {
   double force = 0.0;
-  force = GetTouchParamFromXEvent(native_event,
-      ui::DeviceDataManagerX11::DT_TOUCH_PRESSURE, 0.0);
+  force = GetTouchParamFromXEvent(
+      native_event, ui::DeviceDataManagerX11::DT_TOUCH_PRESSURE, 0.0);
   unsigned int deviceid =
       static_cast<XIDeviceEvent*>(native_event->xcookie.data)->sourceid;
   // Force is normalized to fall into [0, 1]
   if (!ui::DeviceDataManagerX11::GetInstance()->NormalizeData(
-      deviceid, ui::DeviceDataManagerX11::DT_TOUCH_PRESSURE, &force))
+          deviceid, ui::DeviceDataManagerX11::DT_TOUCH_PRESSURE, &force))
     force = 0.0;
   return force;
 }
@@ -788,9 +796,7 @@ bool GetScrollOffsets(const base::NativeEvent& native_event,
     finger_count = &finger_count_;
 
   DeviceDataManagerX11::GetInstance()->GetScrollOffsets(
-      native_event,
-      x_offset, y_offset,
-      x_offset_ordinal, y_offset_ordinal,
+      native_event, x_offset, y_offset, x_offset_ordinal, y_offset_ordinal,
       finger_count);
   return true;
 }

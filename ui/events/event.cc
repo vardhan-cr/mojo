@@ -22,10 +22,6 @@
 #include "ui/gfx/transform.h"
 #include "ui/gfx/transform_util.h"
 
-#if defined(USE_X11)
-#include "ui/events/keycodes/keyboard_code_conversion_x.h"
-#endif
-
 namespace ui {
 
 ////////////////////////////////////////////////////////////////////////////////

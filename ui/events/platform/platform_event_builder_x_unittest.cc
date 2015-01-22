@@ -7,9 +7,9 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/events/event.h"
 #include "ui/events/keycodes/dom4/keycode_converter.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
+#include "ui/events/platform/x11/touch_factory_x11.h"
 #include "ui/events/test/events_test_utils_x11.h"
-#include "ui/events/x/device_data_manager_x11.h"
-#include "ui/events/x/touch_factory_x11.h"
 
 namespace ui {
 

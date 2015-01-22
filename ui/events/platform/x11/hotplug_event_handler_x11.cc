@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/x/hotplug_event_handler_x11.h"
+#include "ui/events/platform/x11/hotplug_event_handler_x11.h"
 
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput2.h>
@@ -55,17 +55,8 @@ bool IsTouchscreenInternal(XDisplay* dpy, int device_id) {
   if (!dev)
     return false;
 
-  if (XGetDeviceProperty(dpy,
-                         dev,
-                         device_node,
-                         0,
-                         1000,
-                         False,
-                         AnyPropertyType,
-                         &actual_type,
-                         &actual_format,
-                         &nitems,
-                         &bytes_after,
+  if (XGetDeviceProperty(dpy, dev, device_node, 0, 1000, False, AnyPropertyType,
+                         &actual_type, &actual_format, &nitems, &bytes_after,
                          &data) != Success) {
     XCloseDevice(dpy, dev);
     return false;
@@ -84,13 +75,11 @@ bool IsTouchscreenInternal(XDisplay* dpy, int device_id) {
   // I2C input device registers its dev input node at
   // /sys/bus/i2c/devices/*/input/inputXXX/eventXXX
   FileEnumerator i2c_enum(FilePath(FILE_PATH_LITERAL("/sys/bus/i2c/devices/")),
-                          false,
-                          base::FileEnumerator::DIRECTORIES);
+                          false, base::FileEnumerator::DIRECTORIES);
   for (FilePath i2c_name = i2c_enum.Next(); !i2c_name.empty();
        i2c_name = i2c_enum.Next()) {
     FileEnumerator input_enum(i2c_name.Append(FILE_PATH_LITERAL("input")),
-                              false,
-                              base::FileEnumerator::DIRECTORIES,
+                              false, base::FileEnumerator::DIRECTORIES,
                               FILE_PATH_LITERAL("input*"));
     for (base::FilePath input = input_enum.Next(); !input.empty();
          input = input_enum.Next()) {

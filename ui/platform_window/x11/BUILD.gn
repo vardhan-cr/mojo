@@ -9,7 +9,7 @@ component("x11") {
     "//base",
     "//skia",
     "//ui/events",
-    "//ui/events/platform/x11",
+    "//ui/events/platform",
     "//ui/gfx/x",
     "//ui/platform_window",
   ]

@@ -8,7 +8,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "ui/events/event_constants.h"
 #include "ui/events/keycodes/keyboard_codes.h"
-#include "ui/events/x/device_data_manager_x11.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
 #include "ui/gfx/point.h"
 #include "ui/gfx/x/x11_types.h"
 

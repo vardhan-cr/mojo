@@ -2,20 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "ui/events/x/device_list_cache_x.h"
+#include "ui/events/platform/x11/device_list_cache_x.h"
 
 #include <algorithm>
 
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
-#include "ui/events/x/device_data_manager_x11.h"
+#include "ui/events/platform/x11/device_data_manager_x11.h"
 
 namespace {
 
 bool IsXI2Available() {
   return false;
 }
-
 }
 
 namespace ui {
@@ -49,8 +48,10 @@ void DeviceListCacheX::UpdateDeviceList(Display* display) {
   XIDeviceList& new_xi_dev_list = xi_dev_list_map_[display];
   if (new_xi_dev_list.devices)
     XIFreeDeviceInfo(new_xi_dev_list.devices);
-  new_xi_dev_list.devices = IsXI2Available() ?
-      XIQueryDevice(display, XIAllDevices, &new_xi_dev_list.count) : NULL;
+  new_xi_dev_list.devices =
+      IsXI2Available()
+          ? XIQueryDevice(display, XIAllDevices, &new_xi_dev_list.count)
+          : NULL;
 }
 
 const XDeviceList& DeviceListCacheX::GetXDeviceList(Display* display) {
@@ -64,11 +65,10 @@ const XDeviceList& DeviceListCacheX::GetXDeviceList(Display* display) {
 const XIDeviceList& DeviceListCacheX::GetXI2DeviceList(Display* display) {
   XIDeviceList& xi_dev_list = xi_dev_list_map_[display];
   if (!xi_dev_list.devices && !xi_dev_list.count) {
-    xi_dev_list.devices = XIQueryDevice(display, XIAllDevices,
-                                       &xi_dev_list.count);
+    xi_dev_list.devices =
+        XIQueryDevice(display, XIAllDevices, &xi_dev_list.count);
   }
   return xi_dev_list;
 }
 
 }  // namespace ui
-

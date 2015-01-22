@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef UI_EVENTS_X_TOUCH_FACTORY_X11_H_
-#define UI_EVENTS_X_TOUCH_FACTORY_X11_H_
+#ifndef UI_EVENTS_PLATFORM_X11_TOUCH_FACTORY_X11_H_
+#define UI_EVENTS_PLATFORM_X11_TOUCH_FACTORY_X11_H_
 
 #include <bitset>
 #include <map>
@@ -15,7 +15,8 @@
 #include "ui/events/events_base_export.h"
 #include "ui/gfx/sequential_id_generator.h"
 
-template <typename T> struct DefaultSingletonTraits;
+template <typename T>
+struct DefaultSingletonTraits;
 
 typedef unsigned long Cursor;
 typedef unsigned long Window;
@@ -79,7 +80,7 @@ class EVENTS_BASE_EXPORT TouchFactory {
   bool IsTouchDevicePresent();
 
   // Pairs of <vendor id, product id> of external touch screens.
-  const std::set<std::pair<int, int> >& GetTouchscreenIds() const {
+  const std::set<std::pair<int, int>>& GetTouchscreenIds() const {
     return touchscreen_ids_;
   }
 
@@ -132,7 +133,7 @@ class EVENTS_BASE_EXPORT TouchFactory {
   std::map<int, bool> touch_device_list_;
 
   // Touch screen <vid, pid>s.
-  std::set<std::pair<int, int> > touchscreen_ids_;
+  std::set<std::pair<int, int>> touchscreen_ids_;
 
   // Maps from a tracking id to the number of times |ReleaseSlotForTrackingID|
   // must be called before the tracking id is released.
@@ -154,4 +155,4 @@ class EVENTS_BASE_EXPORT TouchFactory {
 
 }  // namespace ui
 
-#endif  // UI_EVENTS_X_TOUCH_FACTORY_X11_H_
+#endif  // UI_EVENTS_PLATFORM_X11_TOUCH_FACTORY_X11_H_

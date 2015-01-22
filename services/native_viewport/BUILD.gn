@@ -103,10 +103,7 @@ source_set("lib") {
   }
 
   if (use_x11) {
-    deps += [
-      "//ui/events/platform/x11",
-      "//ui/platform_window/x11",
-    ]
+    deps += [ "//ui/platform_window/x11" ]
   } else {
     sources -= [ "platform_viewport_x11.cc" ]
   }

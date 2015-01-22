@@ -11,7 +11,7 @@
 #endif
 
 #include "ui/events/event.h"
-#include "ui/events/event_utils.h"
+#include "ui/events/platform/platform_event_utils.h"
 
 namespace ui {
 namespace {

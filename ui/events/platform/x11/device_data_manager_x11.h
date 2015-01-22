@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef UI_EVENTS_X_DEVICE_DATA_MANAGER_X11_H_
-#define UI_EVENTS_X_DEVICE_DATA_MANAGER_X11_H_
+#ifndef UI_EVENTS_PLATFORM_X11_DEVICE_DATA_MANAGER_X11_H_
+#define UI_EVENTS_PLATFORM_X11_DEVICE_DATA_MANAGER_X11_H_
 
 // Generically-named #defines from Xlib is conflicting with symbols in GTest.
 // So many tests .cc file #undef Bool before including device_data_manager.h,
@@ -51,37 +51,37 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
   enum DataType {
     // Define the valuators used the CrOS CMT driver. Used by mice and CrOS
     // touchpads.
-    DT_CMT_SCROLL_X = 0,  // Scroll amount on the X (horizontal) direction.
-    DT_CMT_SCROLL_Y,      // Scroll amount on the Y (vertical) direction.
-    DT_CMT_ORDINAL_X,     // Original (unaccelerated) value on the X direction.
-                          // Can be used both for scrolls and flings.
-    DT_CMT_ORDINAL_Y,     // Original (unaccelerated) value on the Y direction.
-                          // Can be used both for scrolls and flings.
-    DT_CMT_START_TIME,    // Gesture start time.
-    DT_CMT_END_TIME,      // Gesture end time.
-    DT_CMT_FLING_X,       // Fling amount on the X (horizontal) direction.
-    DT_CMT_FLING_Y,       // Fling amount on the Y (vertical) direction.
-    DT_CMT_FLING_STATE,   // The state of fling gesture (whether the user just
-                          // start flinging or that he/she taps down).
-    DT_CMT_METRICS_TYPE,  // Metrics type of the metrics gesture, which are
-                          // used to wrap interesting patterns that we would
-                          // like to track via the UMA system.
-    DT_CMT_METRICS_DATA1, // Complementary data 1 of the metrics gesture.
-    DT_CMT_METRICS_DATA2, // Complementary data 2 of the metrics gesture.
-    DT_CMT_FINGER_COUNT,  // Finger counts in the current gesture. A same type
-                          // of gesture can have very different meanings based
-                          // on that (e.g. 2f scroll v.s. 3f swipe).
+    DT_CMT_SCROLL_X = 0,   // Scroll amount on the X (horizontal) direction.
+    DT_CMT_SCROLL_Y,       // Scroll amount on the Y (vertical) direction.
+    DT_CMT_ORDINAL_X,      // Original (unaccelerated) value on the X direction.
+                           // Can be used both for scrolls and flings.
+    DT_CMT_ORDINAL_Y,      // Original (unaccelerated) value on the Y direction.
+                           // Can be used both for scrolls and flings.
+    DT_CMT_START_TIME,     // Gesture start time.
+    DT_CMT_END_TIME,       // Gesture end time.
+    DT_CMT_FLING_X,        // Fling amount on the X (horizontal) direction.
+    DT_CMT_FLING_Y,        // Fling amount on the Y (vertical) direction.
+    DT_CMT_FLING_STATE,    // The state of fling gesture (whether the user just
+                           // start flinging or that he/she taps down).
+    DT_CMT_METRICS_TYPE,   // Metrics type of the metrics gesture, which are
+                           // used to wrap interesting patterns that we would
+                           // like to track via the UMA system.
+    DT_CMT_METRICS_DATA1,  // Complementary data 1 of the metrics gesture.
+    DT_CMT_METRICS_DATA2,  // Complementary data 2 of the metrics gesture.
+    DT_CMT_FINGER_COUNT,   // Finger counts in the current gesture. A same type
+                           // of gesture can have very different meanings based
+                           // on that (e.g. 2f scroll v.s. 3f swipe).
 
     // End of CMT data types.
     // Beginning of touch data types.
 
     // Define the valuators following the Multi-touch Protocol. Used by
     // touchscreen devices.
-    DT_TOUCH_MAJOR,       // Length of the touch area.
-    DT_TOUCH_MINOR,       // Width of the touch area.
-    DT_TOUCH_ORIENTATION, // Angle between the X-axis and the major axis of the
-                          // touch area.
-    DT_TOUCH_PRESSURE,    // Pressure of the touch contact.
+    DT_TOUCH_MAJOR,        // Length of the touch area.
+    DT_TOUCH_MINOR,        // Width of the touch area.
+    DT_TOUCH_ORIENTATION,  // Angle between the X-axis and the major axis of the
+                           // touch area.
+    DT_TOUCH_PRESSURE,     // Pressure of the touch contact.
 
     DT_TOUCH_POSITION_X,  // Touch X position.
     DT_TOUCH_POSITION_Y,  // Touch Y position.
@@ -90,14 +90,14 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
     // track individual touch. 'Tracking ID' is an unsigned 32-bit value and
     // is increased for each new touch. It will wrap back to 0 when reaching
     // the numerical limit.
-    DT_TOUCH_TRACKING_ID, // ID of the touch point.
+    DT_TOUCH_TRACKING_ID,  // ID of the touch point.
 
     // Kernel timestamp from touch screen (if available).
     DT_TOUCH_RAW_TIMESTAMP,
 
     // End of touch data types.
 
-    DT_LAST_ENTRY         // This must come last.
+    DT_LAST_ENTRY  // This must come last.
   };
 
   // Data struct to store extracted data from an input event.
@@ -203,9 +203,7 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
   // *value = (*value - min_value_of_tp) / (max_value_of_tp - min_value_of_tp)
   // Returns true and sets the normalized value in|value| if normalization is
   // successful. Returns false and |value| is unchanged otherwise.
-  bool NormalizeData(unsigned int deviceid,
-                     const DataType type,
-                     double* value);
+  bool NormalizeData(unsigned int deviceid, const DataType type, double* value);
 
   // Extract the range of the data type. Return true if the range is available
   // and written into min & max, false if the range is not available.
@@ -229,7 +227,7 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
 
   // Sets the keys which are still allowed on a disabled keyboard device.
   void SetDisabledKeyboardAllowedKeys(
-      scoped_ptr<std::set<KeyboardCode> > excepted_keys);
+      scoped_ptr<std::set<KeyboardCode>> excepted_keys);
 
   // Disables and enables events from devices by device id.
   void DisableDevice(unsigned int deviceid);
@@ -273,7 +271,7 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
   std::bitset<kMaxDeviceNum> blocked_devices_;
 
   // The set of keys allowed while the keyboard is blocked.
-  scoped_ptr<std::set<KeyboardCode> > blocked_keyboard_allowed_keys_;
+  scoped_ptr<std::set<KeyboardCode>> blocked_keyboard_allowed_keys_;
 
   // Number of valuators on the specific device.
   int valuator_count_[kMaxDeviceNum];
@@ -311,4 +309,4 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
 
 }  // namespace ui
 
-#endif  // UI_EVENTS_X_DEVICE_DATA_MANAGER_X11_H_
+#endif  // UI_EVENTS_PLATFORM_X11_DEVICE_DATA_MANAGER_X11_H_

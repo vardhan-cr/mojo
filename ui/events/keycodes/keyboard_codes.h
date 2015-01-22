@@ -7,9 +7,7 @@
 
 #include "build/build_config.h"
 
-#if defined(OS_WIN)
-#include "ui/events/keycodes/keyboard_codes_win.h"
-#elif defined(OS_POSIX)
+#if defined(OS_POSIX)
 #include "ui/events/keycodes/keyboard_codes_posix.h"
 #endif
 

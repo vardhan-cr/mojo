@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef UI_EVENTS_X_HOTPLUG_EVENT_HANDLER_H_
-#define UI_EVENTS_X_HOTPLUG_EVENT_HANDLER_H_
+#ifndef UI_EVENTS_PLATFORM_X11_HOTPLUG_EVENT_HANDLER_H_
+#define UI_EVENTS_PLATFORM_X11_HOTPLUG_EVENT_HANDLER_H_
 
-#include "ui/events/x/device_list_cache_x.h"
+#include "ui/events/platform/x11/device_list_cache_x.h"
 
 namespace ui {
 
@@ -31,4 +31,4 @@ class EVENTS_BASE_EXPORT HotplugEventHandlerX11 {
 
 }  // namespace ui
 
-#endif  // UI_EVENTS_X_HOTPLUG_EVENT_HANDLER_H_
+#endif  // UI_EVENTS_PLATFORM_X11_HOTPLUG_EVENT_HANDLER_H_

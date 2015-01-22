@@ -19,8 +19,6 @@ static_library("dom4_keycode_converter") {
 
 component("events_base") {
   sources = [
-    "android/scroller.cc",
-    "android/scroller.h",
     "device_data_manager.cc",
     "device_data_manager.h",
     "device_hotplug_event_observer.h",
@@ -41,8 +39,6 @@ component("events_base") {
     "keycodes/keyboard_code_conversion_android.h",
     "keycodes/keyboard_code_conversion_mac.h",
     "keycodes/keyboard_code_conversion_mac.mm",
-    "keycodes/keyboard_code_conversion_win.cc",
-    "keycodes/keyboard_code_conversion_win.h",
     "keycodes/keyboard_codes.h",
     "latency_info.cc",
     "latency_info.h",
@@ -63,34 +59,10 @@ component("events_base") {
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
-
-  if (use_x11) {
-    configs += [ "//build/config/linux:x11" ]
-
-    sources += [
-      "keycodes/keyboard_code_conversion_x.cc",
-      "keycodes/keyboard_code_conversion_x.h",
-      "x/device_data_manager_x11.cc",
-      "x/device_data_manager_x11.h",
-      "x/device_list_cache_x.cc",
-      "x/device_list_cache_x.h",
-      "x/hotplug_event_handler_x11.cc",
-      "x/hotplug_event_handler_x11.h",
-      "x/keysym_to_unicode.cc",
-      "x/keysym_to_unicode.h",
-      "x/touch_factory_x11.cc",
-      "x/touch_factory_x11.h",
-    ]
-
-    deps += [ "//ui/gfx/x" ]
-  }
 }
 
 component("events") {
   sources = [
-    "cocoa/cocoa_event_utils.h",
-    "cocoa/cocoa_event_utils.mm",
-    "cocoa/events_mac.mm",
     "event.cc",
     "event.h",
     "event_dispatcher.cc",
@@ -110,7 +82,6 @@ component("events") {
     "event_utils.cc",
     "event_utils.h",
     "events_export.h",
-    "events_stub.cc",
     "gestures/gesture_provider_impl.cc",
     "gestures/gesture_provider_impl.h",
     "gestures/gesture_recognizer.h",
@@ -120,7 +91,6 @@ component("events") {
     "gestures/gesture_types.h",
     "gestures/motion_event_impl.cc",
     "gestures/motion_event_impl.h",
-    "win/events_win.cc",
   ]
 
   defines = [ "EVENTS_IMPLEMENTATION" ]
@@ -136,19 +106,6 @@ component("events") {
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
-
-  if (use_x11) {
-    sources += [ "x/events_x.cc" ]
-    configs += [
-      "//build/config/linux:glib",
-      "//build/config/linux:x11",
-    ]
-    deps += [ "//ui/gfx/x" ]
-  }
-
-  if (is_win || is_mac || use_x11) {
-    sources -= [ "events_stub.cc" ]
-  }
 }
 
 component("gesture_detection") {
@@ -203,8 +160,6 @@ component("gesture_detection") {
 
 source_set("test_support") {
   sources = [
-    "test/cocoa_test_event_utils.h",
-    "test/cocoa_test_event_utils.mm",
     "test/events_test_utils.cc",
     "test/events_test_utils.h",
     "test/mock_motion_event.cc",
@@ -231,13 +186,6 @@ source_set("test_support") {
     "//ui/gfx/geometry",
   ]
 
-  if (is_ios) {
-    sources -= [
-      "test/cocoa_test_event_utils.h",
-      "test/cocoa_test_event_utils.mm",
-    ]
-  }
-
   if (use_x11) {
     sources += [
       "test/events_test_utils_x11.cc",
@@ -249,8 +197,6 @@ source_set("test_support") {
 
 test("events_unittests") {
   sources = [
-    "android/scroller_unittest.cc",
-    "cocoa/events_mac_unittest.mm",
     "event_dispatcher_unittest.cc",
     "event_processor_unittest.cc",
     "event_rewriter_unittest.cc",
@@ -268,7 +214,7 @@ test("events_unittests") {
     "latency_info_unittest.cc",
     "platform/platform_event_source_unittest.cc",
     "platform/platform_event_builder_x_unittest.cc",
-    "x/events_x_unittest.cc",
+    "platform/x11/platform_event_utils_x_unittest.cc",
   ]
 
   deps = [
@@ -291,7 +237,7 @@ test("events_unittests") {
   } else {
     sources -= [
       "platform/platform_event_builder_x_unittest.cc",
-      "x/events_x_unittest.cc",
+      "platform/x11/platform_event_utils_x_unittest.cc",
     ]
   }
 }
