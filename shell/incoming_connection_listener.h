@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_INCOMING_CONNECTION_LISTENER_POSIX_H_
-#define SHELL_INCOMING_CONNECTION_LISTENER_POSIX_H_
+#ifndef SHELL_INCOMING_CONNECTION_LISTENER_H_
+#define SHELL_INCOMING_CONNECTION_LISTENER_H_
 
 #include "base/files/file_path.h"
 #include "base/memory/weak_ptr.h"
@@ -17,7 +17,7 @@ namespace shell {
 // Asynchronously listens for incoming connections on a unix domain
 // socket at the provided path. Expects the parent directory in the
 // path to exist.  Must be run on an IO thread.
-class IncomingConnectionListenerPosix {
+class IncomingConnectionListener {
  public:
   class Delegate {
    public:
@@ -32,9 +32,9 @@ class IncomingConnectionListenerPosix {
     virtual void OnConnection(SocketDescriptor incoming) = 0;
   };
 
-  IncomingConnectionListenerPosix(const base::FilePath& socket_path,
-                                  Delegate* delegate);
-  virtual ~IncomingConnectionListenerPosix();
+  IncomingConnectionListener(const base::FilePath& socket_path,
+                             Delegate* delegate);
+  virtual ~IncomingConnectionListener();
 
   // Attempts to bind a unix domain socket, set up for listening, at
   // socket_path_.
@@ -64,10 +64,10 @@ class IncomingConnectionListenerPosix {
 
   SocketDescriptor incoming_socket_;
 
-  base::WeakPtrFactory<IncomingConnectionListenerPosix> weak_ptr_factory_;
+  base::WeakPtrFactory<IncomingConnectionListener> weak_ptr_factory_;
 };
 
 }  // namespace shell
 }  // namespace mojo
 
-#endif  // SHELL_INCOMING_CONNECTION_LISTENER_POSIX_H_
+#endif  // SHELL_INCOMING_CONNECTION_LISTENER_H_

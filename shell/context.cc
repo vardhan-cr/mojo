@@ -150,8 +150,8 @@ bool Context::Init() {
     mojo_url_resolver_.AddLocalFileMapping(GURL(kLocalMojoURLs[i]));
 
   if (command_line->HasSwitch(switches::kEnableExternalApplications)) {
-    listener_ = ExternalApplicationListener::Create(
-        task_runners_->shell_runner(), task_runners_->io_runner());
+    listener_.reset(new ExternalApplicationListener(
+        task_runners_->shell_runner(), task_runners_->io_runner()));
 
     base::FilePath socket_path =
         command_line->GetSwitchValuePath(switches::kEnableExternalApplications);

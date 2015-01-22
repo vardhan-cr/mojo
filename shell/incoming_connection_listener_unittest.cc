@@ -14,7 +14,7 @@
 #include "shell/domain_socket/test_completion_callback.h"
 #include "shell/domain_socket/unix_domain_client_socket_posix.h"
 #include "shell/external_application_registrar_connection.h"
-#include "shell/incoming_connection_listener_posix.h"
+#include "shell/incoming_connection_listener.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -22,7 +22,7 @@ namespace shell {
 namespace {
 
 // Delegate implementation that expects success.
-class TestDelegate : public IncomingConnectionListenerPosix::Delegate {
+class TestDelegate : public IncomingConnectionListener::Delegate {
  public:
   TestDelegate() {}
   ~TestDelegate() override {}
@@ -34,8 +34,7 @@ class TestDelegate : public IncomingConnectionListenerPosix::Delegate {
 };
 
 // Delegate implementation that expects a (configurable) failure to listen.
-class ListeningFailsDelegate
-    : public IncomingConnectionListenerPosix::Delegate {
+class ListeningFailsDelegate : public IncomingConnectionListener::Delegate {
  public:
   explicit ListeningFailsDelegate(int expected) : expected_error_(expected) {}
   ~ListeningFailsDelegate() override {}
@@ -78,7 +77,7 @@ class IncomingConnectionListenerTest : public testing::Test {
 TEST_F(IncomingConnectionListenerTest, CleanupCheck) {
   TestDelegate delegate;
   {
-    IncomingConnectionListenerPosix cleanup_check(socket_path_, &delegate);
+    IncomingConnectionListener cleanup_check(socket_path_, &delegate);
     cleanup_check.StartListening();
     ASSERT_TRUE(base::PathExists(socket_path_));
   }
@@ -87,7 +86,7 @@ TEST_F(IncomingConnectionListenerTest, CleanupCheck) {
 
 TEST_F(IncomingConnectionListenerTest, ConnectSuccess) {
   TestDelegate delegate;
-  IncomingConnectionListenerPosix listener(socket_path_, &delegate);
+  IncomingConnectionListener listener(socket_path_, &delegate);
 
   ASSERT_FALSE(base::PathExists(socket_path_));
   listener.StartListening();
@@ -101,7 +100,7 @@ TEST_F(IncomingConnectionListenerTest, ConnectSuccess) {
 
 TEST_F(IncomingConnectionListenerTest, ConnectSuccess_SocketFileExists) {
   TestDelegate delegate;
-  IncomingConnectionListenerPosix listener(socket_path_, &delegate);
+  IncomingConnectionListener listener(socket_path_, &delegate);
 
   ASSERT_EQ(1, base::WriteFile(socket_path_, "1", 1));
   ASSERT_TRUE(base::PathExists(socket_path_));
@@ -115,7 +114,7 @@ TEST_F(IncomingConnectionListenerTest, ConnectSuccess_SocketFileExists) {
 
 TEST_F(IncomingConnectionListenerTest, ConnectFails_SocketFileUndeletable) {
   ListeningFailsDelegate fail_delegate(net::ERR_FILE_EXISTS);
-  IncomingConnectionListenerPosix listener(socket_path_, &fail_delegate);
+  IncomingConnectionListener listener(socket_path_, &fail_delegate);
 
   // Create the socket file.
   ASSERT_EQ(1, base::WriteFile(socket_path_, "1", 1));
@@ -140,7 +139,7 @@ TEST_F(IncomingConnectionListenerTest, ConnectFails_SocketDirNonexistent) {
                                      .Append(FILE_PATH_LITERAL("file")));
 
   ListeningFailsDelegate fail_delegate(net::ERR_FILE_NOT_FOUND);
-  IncomingConnectionListenerPosix listener(nonexistent_dir, &fail_delegate);
+  IncomingConnectionListener listener(nonexistent_dir, &fail_delegate);
 
   // The listener should fail to start up.
   listener.StartListening();

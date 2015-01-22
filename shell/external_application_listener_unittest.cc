@@ -17,7 +17,7 @@
 #include "shell/domain_socket/net_errors.h"
 #include "shell/domain_socket/test_completion_callback.h"
 #include "shell/domain_socket/unix_domain_client_socket_posix.h"
-#include "shell/external_application_listener_posix.h"
+#include "shell/external_application_listener.h"
 #include "shell/external_application_registrar.mojom.h"
 #include "shell/external_application_registrar_connection.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -54,8 +54,8 @@ class ExternalApplicationListenerTest : public testing::Test {
     options.message_loop_type = base::MessageLoop::TYPE_IO;
     io_thread_.StartWithOptions(options);
 
-    listener_.reset(new ExternalApplicationListenerPosix(
-        loop_.task_runner(), io_thread_.task_runner()));
+    listener_.reset(new ExternalApplicationListener(loop_.task_runner(),
+                                                    io_thread_.task_runner()));
     ASSERT_TRUE(temp_dir_.CreateUniqueTempDir());
     socket_path_ = temp_dir_.path().Append(FILE_PATH_LITERAL("socket"));
   }

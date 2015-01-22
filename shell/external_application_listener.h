@@ -9,9 +9,15 @@
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "base/sequenced_task_runner.h"
-#include "mojo/public/cpp/system/message_pipe.h"
+#include "base/synchronization/waitable_event.h"
+#include "base/threading/thread_checker.h"
+#include "mojo/edk/embedder/channel_init.h"
+#include "mojo/public/interfaces/application/shell.mojom.h"
 #include "shell/domain_socket/socket_descriptor.h"
+#include "shell/external_application_registrar.mojom.h"
+#include "shell/incoming_connection_listener.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -24,45 +30,102 @@ namespace shell {
 // URL. Registration implies that the app can be connected to at that
 // URL from then on out, and that the app has received a usable ShellPtr.
 //
+// This class implements most of the mojo_shell side of external application
+// registration. It handles:
+//  1) discoverability - sets up a unix domain socket at a well-known location,
+//  2) incoming connections - listens for and accepts incoming connections on
+//     that socket, and
+//  3) registration requests - forwarded to a RegisterCallback that implements
+//     the actual registration logic.
+//
 // External applications can connect to the shell using the
 // ExternalApplicationRegistrarConnection class.
-class ExternalApplicationListener {
+class ExternalApplicationListener
+    : public IncomingConnectionListener::Delegate {
  public:
   // When run, a RegisterCallback should note that an app has asked to be
   // registered at app_url and Bind the provided pipe handle to a ShellImpl.
-  typedef base::Callback<void(const GURL& app_url,
-                              ScopedMessagePipeHandle shell)> RegisterCallback;
-  typedef base::Callback<void(int rv)> ErrorCallback;
+  using RegisterCallback =
+      base::Callback<void(const GURL& app_url, ScopedMessagePipeHandle shell)>;
+  using ErrorCallback = base::Callback<void(int rv)>;
 
-  virtual ~ExternalApplicationListener() {}
+  static base::FilePath ConstructDefaultSocketPath();
 
-  // Implementations of this class may use two threads, an IO thread for
-  // listening and accepting incoming sockets, and a "main" thread
-  // where all Mojo traffic is processed and provided callbacks are run.
-  static scoped_ptr<ExternalApplicationListener> Create(
+  // This class uses two threads, an IO thread for listening and accepting
+  // incoming sockets, and a "main" thread where all Mojo traffic is processed
+  // and provided callbacks are run.
+  ExternalApplicationListener(
       const scoped_refptr<base::SequencedTaskRunner>& shell_runner,
       const scoped_refptr<base::SequencedTaskRunner>& io_runner);
 
-  static base::FilePath ConstructDefaultSocketPath();
+  // Some of this class' internal state needs to be destroyed on io_runner_,
+  // so the destructor will post a task to that thread to call StopListening()
+  // and then wait for it to complete.
+  ~ExternalApplicationListener() override;
 
   // Begin listening (on io_runner) to a socket at listen_socket_path.
   // Incoming registration requests will be forwarded to register_callback.
   // Errors are ignored.
-  virtual void ListenInBackground(
-      const base::FilePath& listen_socket_path,
-      const RegisterCallback& register_callback) = 0;
+  void ListenInBackground(const base::FilePath& listen_socket_path,
+                          const RegisterCallback& register_callback);
 
   // Begin listening (on io_runner) to a socket at listen_socket_path.
   // Incoming registration requests will be forwarded to register_callback.
   // Errors are reported via error_callback.
-  virtual void ListenInBackgroundWithErrorCallback(
+  void ListenInBackgroundWithErrorCallback(
       const base::FilePath& listen_socket_path,
       const RegisterCallback& register_callback,
-      const ErrorCallback& error_callback) = 0;
+      const ErrorCallback& error_callback);
 
   // Block the current thread until listening has started on io_runner.
   // If listening has already started, returns immediately.
-  virtual void WaitForListening() = 0;
+  void WaitForListening();
+
+ private:
+  class RegistrarImpl;
+
+  // MUST be called on io_runner.
+  // Creates listener_ and tells it to StartListening() on a socket it creates
+  // at listen_socket_path.
+  void StartListening(const base::FilePath& listen_socket_path);
+
+  // MUST be called on io_runner.
+  // Destroys listener_ and signals event when done.
+  void StopListening(base::WaitableEvent* event);
+
+  // Implementation of IncomingConnectionListener::Delegate
+  void OnListening(int rv) override;
+  void OnConnection(SocketDescriptor incoming) override;
+
+  // If listener_ fails to start listening, this method is run on shell_runner_
+  // to report the error.
+  void RunErrorCallbackIfListeningFailed(int rv);
+
+  // When a connection succeeds, it is passed to this method running
+  // on shell_runner_, where it is "promoted" to a Mojo MessagePipe and
+  // bound to a RegistrarImpl.
+  void CreatePipeAndBindToRegistrarImpl(SocketDescriptor incoming_socket);
+
+  scoped_refptr<base::SequencedTaskRunner> shell_runner_;
+  scoped_refptr<base::SequencedTaskRunner> io_runner_;
+
+  // MUST be created, used, and destroyed on io_runner_.
+  scoped_ptr<IncomingConnectionListener> listener_;
+
+  // Callers can wait on this event, which will be signalled once listening
+  // has either successfully begun or definitively failed.
+  base::WaitableEvent signal_on_listening_;
+
+  // Locked to thread on which StartListening() is run (should be io_runner_).
+  // All methods that touch listener_ check that they're on that same thread.
+  base::ThreadChecker listener_thread_checker_;
+
+  ErrorCallback error_callback_;
+  RegisterCallback register_callback_;
+  base::ThreadChecker register_thread_checker_;
+
+  // Used on shell_runner_.
+  base::WeakPtrFactory<ExternalApplicationListener> weak_ptr_factory_;
 };
 
 }  // namespace shell

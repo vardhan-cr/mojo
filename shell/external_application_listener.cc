@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/external_application_listener_posix.h"
+#include "shell/external_application_listener.h"
 
 #include "base/callback.h"
 #include "base/files/file_path.h"
@@ -21,7 +21,7 @@
 #include "shell/domain_socket/net_errors.h"
 #include "shell/domain_socket/socket_descriptor.h"
 #include "shell/external_application_registrar.mojom.h"
-#include "shell/incoming_connection_listener_posix.h"
+#include "shell/incoming_connection_listener.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -36,15 +36,7 @@ base::FilePath ExternalApplicationListener::ConstructDefaultSocketPath() {
   return base::FilePath(FILE_PATH_LITERAL(kDefaultListenSocketPath));
 }
 
-// static
-scoped_ptr<ExternalApplicationListener> ExternalApplicationListener::Create(
-    const scoped_refptr<base::SequencedTaskRunner>& shell_runner,
-    const scoped_refptr<base::SequencedTaskRunner>& io_runner) {
-  return make_scoped_ptr(
-      new ExternalApplicationListenerPosix(shell_runner, io_runner));
-}
-
-class ExternalApplicationListenerPosix::RegistrarImpl
+class ExternalApplicationListener::RegistrarImpl
     : public InterfaceImpl<ExternalApplicationRegistrar> {
  public:
   explicit RegistrarImpl(const RegisterCallback& callback);
@@ -62,7 +54,7 @@ class ExternalApplicationListenerPosix::RegistrarImpl
   const RegisterCallback register_callback_;
 };
 
-ExternalApplicationListenerPosix::ExternalApplicationListenerPosix(
+ExternalApplicationListener::ExternalApplicationListener(
     const scoped_refptr<base::SequencedTaskRunner>& shell_runner,
     const scoped_refptr<base::SequencedTaskRunner>& io_runner)
     : shell_runner_(shell_runner),
@@ -74,7 +66,7 @@ ExternalApplicationListenerPosix::ExternalApplicationListenerPosix(
   listener_thread_checker_.DetachFromThread();  // Will attach in StartListener.
 }
 
-ExternalApplicationListenerPosix::~ExternalApplicationListenerPosix() {
+ExternalApplicationListener::~ExternalApplicationListener() {
   DCHECK(register_thread_checker_.CalledOnValidThread());
   weak_ptr_factory_.InvalidateWeakPtrs();
 
@@ -82,12 +74,12 @@ ExternalApplicationListenerPosix::~ExternalApplicationListenerPosix() {
   // this object does, as it holds a pointer back to this instance.
   base::WaitableEvent stop_listening_event(true, false);
   io_runner_->PostTask(
-      FROM_HERE, base::Bind(&ExternalApplicationListenerPosix::StopListening,
+      FROM_HERE, base::Bind(&ExternalApplicationListener::StopListening,
                             base::Unretained(this), &stop_listening_event));
   stop_listening_event.Wait();
 }
 
-void ExternalApplicationListenerPosix::ListenInBackground(
+void ExternalApplicationListener::ListenInBackground(
     const base::FilePath& listen_socket_path,
     const RegisterCallback& register_callback) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
@@ -95,7 +87,7 @@ void ExternalApplicationListenerPosix::ListenInBackground(
                                       ErrorCallback());
 }
 
-void ExternalApplicationListenerPosix::ListenInBackgroundWithErrorCallback(
+void ExternalApplicationListener::ListenInBackgroundWithErrorCallback(
     const base::FilePath& listen_socket_path,
     const RegisterCallback& register_callback,
     const ErrorCallback& error_callback) {
@@ -103,60 +95,56 @@ void ExternalApplicationListenerPosix::ListenInBackgroundWithErrorCallback(
   register_callback_ = register_callback;
   error_callback_ = error_callback;
 
-  io_runner_->PostTask(
-      FROM_HERE, base::Bind(&ExternalApplicationListenerPosix::StartListening,
-                            base::Unretained(this), listen_socket_path));
+  io_runner_->PostTask(FROM_HERE,
+                       base::Bind(&ExternalApplicationListener::StartListening,
+                                  base::Unretained(this), listen_socket_path));
 }
 
-void ExternalApplicationListenerPosix::WaitForListening() {
+void ExternalApplicationListener::WaitForListening() {
   DCHECK(register_thread_checker_.CalledOnValidThread());
   signal_on_listening_.Wait();
 }
 
-void ExternalApplicationListenerPosix::StartListening(
+void ExternalApplicationListener::StartListening(
     const base::FilePath& listen_socket_path) {
   CHECK_EQ(base::MessageLoop::current()->type(), base::MessageLoop::TYPE_IO);
   DCHECK(listener_thread_checker_.CalledOnValidThread());
-  listener_.reset(
-      new IncomingConnectionListenerPosix(listen_socket_path, this));
+  listener_.reset(new IncomingConnectionListener(listen_socket_path, this));
   listener_->StartListening();
 }
 
-void ExternalApplicationListenerPosix::StopListening(
-    base::WaitableEvent* event) {
+void ExternalApplicationListener::StopListening(base::WaitableEvent* event) {
   DCHECK(listener_thread_checker_.CalledOnValidThread());
   listener_.reset();
   event->Signal();
 }
 
-void ExternalApplicationListenerPosix::OnListening(int rv) {
+void ExternalApplicationListener::OnListening(int rv) {
   DCHECK(listener_thread_checker_.CalledOnValidThread());
   signal_on_listening_.Signal();
   shell_runner_->PostTask(
       FROM_HERE,
       base::Bind(
-          &ExternalApplicationListenerPosix::RunErrorCallbackIfListeningFailed,
+          &ExternalApplicationListener::RunErrorCallbackIfListeningFailed,
           weak_ptr_factory_.GetWeakPtr(), rv));
 }
 
-void ExternalApplicationListenerPosix::OnConnection(SocketDescriptor incoming) {
+void ExternalApplicationListener::OnConnection(SocketDescriptor incoming) {
   DCHECK(listener_thread_checker_.CalledOnValidThread());
   shell_runner_->PostTask(
       FROM_HERE,
-      base::Bind(
-          &ExternalApplicationListenerPosix::CreatePipeAndBindToRegistrarImpl,
-          weak_ptr_factory_.GetWeakPtr(), incoming));
+      base::Bind(&ExternalApplicationListener::CreatePipeAndBindToRegistrarImpl,
+                 weak_ptr_factory_.GetWeakPtr(), incoming));
 }
 
-void ExternalApplicationListenerPosix::RunErrorCallbackIfListeningFailed(
-    int rv) {
+void ExternalApplicationListener::RunErrorCallbackIfListeningFailed(int rv) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
   if (rv != net::OK && !error_callback_.is_null()) {
     error_callback_.Run(rv);
   }
 }
 
-void ExternalApplicationListenerPosix::CreatePipeAndBindToRegistrarImpl(
+void ExternalApplicationListener::CreatePipeAndBindToRegistrarImpl(
     SocketDescriptor incoming_socket) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
 
@@ -170,19 +158,19 @@ void ExternalApplicationListenerPosix::CreatePipeAndBindToRegistrarImpl(
   BindToPipe(registrar.release(), message_pipe.Pass());
 }
 
-ExternalApplicationListenerPosix::RegistrarImpl::RegistrarImpl(
+ExternalApplicationListener::RegistrarImpl::RegistrarImpl(
     const RegisterCallback& callback)
     : register_callback_(callback) {
 }
 
-ExternalApplicationListenerPosix::RegistrarImpl::~RegistrarImpl() {
+ExternalApplicationListener::RegistrarImpl::~RegistrarImpl() {
 }
 
-void ExternalApplicationListenerPosix::RegistrarImpl::OnConnectionError() {
+void ExternalApplicationListener::RegistrarImpl::OnConnectionError() {
   channel_init.WillDestroySoon();
 }
 
-void ExternalApplicationListenerPosix::RegistrarImpl::Register(
+void ExternalApplicationListener::RegistrarImpl::Register(
     const String& app_url,
     const mojo::Callback<void(ShellPtr)>& callback) {
   MessagePipe pipe;

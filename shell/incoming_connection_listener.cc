@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/incoming_connection_listener_posix.h"
+#include "shell/incoming_connection_listener.h"
 
 #include "base/callback.h"
 #include "base/files/file_path.h"
@@ -26,7 +26,7 @@ bool Yes(const UnixDomainServerSocket::Credentials& ignored) {
 }
 }  // anonymous namespace
 
-IncomingConnectionListenerPosix::IncomingConnectionListenerPosix(
+IncomingConnectionListener::IncomingConnectionListener(
     const base::FilePath& socket_path,
     Delegate* delegate)
     : delegate_(delegate),
@@ -37,13 +37,13 @@ IncomingConnectionListenerPosix::IncomingConnectionListenerPosix(
   DCHECK(delegate_);
 }
 
-IncomingConnectionListenerPosix::~IncomingConnectionListenerPosix() {
+IncomingConnectionListener::~IncomingConnectionListener() {
   weak_ptr_factory_.InvalidateWeakPtrs();
   if (!base::DeleteFile(socket_path_, false))
     PLOG(ERROR) << "Listening Unix domain socket can't be destroyed.";
 }
 
-void IncomingConnectionListenerPosix::StartListening() {
+void IncomingConnectionListener::StartListening() {
   DCHECK(listen_thread_checker_.CalledOnValidThread());
 
   int rv = net::OK;
@@ -68,10 +68,10 @@ void IncomingConnectionListenerPosix::StartListening() {
     Accept();
 }
 
-void IncomingConnectionListenerPosix::Accept() {
+void IncomingConnectionListener::Accept() {
   DCHECK(listen_thread_checker_.CalledOnValidThread());
   int rv = listen_socket_.Accept(
-      &incoming_socket_, base::Bind(&IncomingConnectionListenerPosix::OnAccept,
+      &incoming_socket_, base::Bind(&IncomingConnectionListener::OnAccept,
                                     weak_ptr_factory_.GetWeakPtr()));
 
   // If rv == net::ERR_IO_PENDING), listen_socket_ will call
@@ -82,7 +82,7 @@ void IncomingConnectionListenerPosix::Accept() {
   }
 }
 
-void IncomingConnectionListenerPosix::OnAccept(int rv) {
+void IncomingConnectionListener::OnAccept(int rv) {
   DCHECK(listen_thread_checker_.CalledOnValidThread());
 
   if (rv != net::OK || incoming_socket_ == kInvalidSocket) {
