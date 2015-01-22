@@ -130,6 +130,9 @@ Finally, perform the build. The result will be in out/android_Debug:
 $ src/mojo/tools/mojob.py build --android
 ```
 
+If you see javac compile errors, make sure you have an up-to-date JDK:
+https://code.google.com/p/chromium/wiki/AndroidBuildInstructions#Install_Java_JDK
+
 ## Googlers
 
 If you're a Googler, you can use Goma, a distributed compiler service for open-source projects such as Chrome and Android. The instructions below assume that Goma is installed in the default location (~/goma).
@@ -194,6 +197,6 @@ $ ninja -C out/Debug -j 1000
 3. Optional: Run Mojo Shell with an HTTP server
     ```
     cd out/Release
-    python -m SimpleHTTPServer 4444 & 
+    python -m SimpleHTTPServer 4444 &
     ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:mojo_sample_app
     ```
