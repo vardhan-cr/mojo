@@ -36,9 +36,9 @@ action("generate_snapshot_bin") {
     "//mojo/public/dart/src/timer_impl.dart",
     "//mojo/public/dart/src/timer_queue.dart",
     "//mojo/public/dart/src/types.dart",
-    "//services/dart/lib/application.dart",
-    "//services/dart/lib/src/application.dart",
-    "//services/dart/lib/src/service_provider.dart",
+    "//mojo/public/dart/application.dart",
+    "//mojo/public/dart/src/application.dart",
+    "//mojo/public/dart/src/service_provider.dart",
   ]
   output = "$target_gen_dir/snapshot_gen.bin"
   outputs = [
@@ -46,7 +46,7 @@ action("generate_snapshot_bin") {
   ]
 
   script = "//dart/runtime/tools/create_snapshot_bin.py"
-  application_path = rebase_path("//services/dart/lib/application.dart")
+  application_path = rebase_path("//mojo/public/dart/application.dart")
   builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
   bindings_path = rebase_path("//mojo/public/dart/bindings.dart")
   core_path = rebase_path("//mojo/public/dart/core.dart")
