@@ -46,10 +46,9 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  virtual void OnEmbed(
-      mojo::View* root,
-      mojo::ServiceProviderImpl* exported_services,
-      scoped_ptr<mojo::ServiceProvider> remote_service_provider) override {
+  virtual void OnEmbed(mojo::View* root,
+                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                       mojo::ServiceProviderPtr exposed_services) override {
     root_ = root;
 
     window_container_ = root->view_manager()->CreateView();
@@ -66,13 +65,13 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::WindowManagerDelegate:
-  virtual void Embed(
-      const mojo::String& url,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
+  virtual void Embed(const mojo::String& url,
+                     mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                     mojo::ServiceProviderPtr exposed_services) override {
     DCHECK(root_);
     mojo::View* app_view = NULL;
     CreateTopLevelWindow(&app_view);
-    app_view->Embed(url, service_provider.Pass());
+    app_view->Embed(url, services.Pass(), exposed_services.Pass());
   }
 
   // Overridden from mojo::ViewObserver:

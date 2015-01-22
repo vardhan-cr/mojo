@@ -43,10 +43,11 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
                          const ViewId& root_id);
   ~ViewManagerServiceImpl() override;
 
-  // |service_provider| is the ServiceProvider to pass to the client via
-  // OnEmbed().
+  // |services| and |exposed_services| are the ServiceProviders to pass to the
+  // client via OnEmbed().
   void Init(mojo::ViewManagerClient* client,
-            mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
+            mojo::InterfaceRequest<mojo::ServiceProvider> services,
+            mojo::ServiceProviderPtr exposed_services);
 
   mojo::ConnectionSpecificId id() const { return id_; }
   mojo::ConnectionSpecificId creator_id() const { return creator_id_; }
@@ -80,7 +81,8 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   bool SetViewVisibility(const ViewId& view_id, bool visible);
   bool Embed(const std::string& url,
              const ViewId& view_id,
-             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services);
 
   // The following methods are invoked after the corresponding change has been
   // processed. They do the appropriate bookkeeping and update the client as
@@ -195,7 +197,8 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
                        const mojo::Callback<void(bool)>& callback) override;
   void Embed(const mojo::String& url,
              mojo::Id view_id,
-             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider,
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services,
              const mojo::Callback<void(bool)>& callback) override;
 
   // AccessPolicyDelegate:

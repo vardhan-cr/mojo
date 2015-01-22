@@ -7,7 +7,7 @@
 #include "base/macros.h"
 #include "base/strings/utf_string_conversions.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/public/cpp/application/service_provider_impl.h"
+#include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "services/window_manager/capture_controller.h"
@@ -31,12 +31,11 @@ FrameController::FrameController(
   view_->SetVisible(true);  // FIXME: This should not be our responsibility?
   *app_view = app_view_;
 
-  scoped_ptr<mojo::ServiceProviderImpl> exported_services(
-      new mojo::ServiceProviderImpl());
-  exported_services->AddService(this);
+  viewer_services_impl_.AddService(this);
+  mojo::ServiceProviderPtr viewer_services;
+  viewer_services_impl_.Bind(GetProxy(&viewer_services));
 
-  viewer_services_ =
-      view_->Embed(frame_app_url.spec(), exported_services.Pass());
+  view_->Embed(frame_app_url.spec(), nullptr, viewer_services.Pass());
 
   // We weren't observing when our initial bounds was set:
   OnViewBoundsChanged(view, view->bounds(), view->bounds());

@@ -124,11 +124,9 @@ class View {
 
   // Embedding.
   void Embed(const String& url);
-  scoped_ptr<ServiceProvider> Embed(
-      const String& url,
-      scoped_ptr<ServiceProviderImpl> exported_services);
   void Embed(const String& url,
-             InterfaceRequest<ServiceProvider> service_provider);
+             InterfaceRequest<ServiceProvider> services,
+             ServiceProviderPtr exposed_services);
 
  protected:
   // This class is subclassed only by test classes that provide a public ctor.

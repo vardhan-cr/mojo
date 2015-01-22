@@ -44,7 +44,9 @@ class EmbeddeeImpl : public mojo::InterfaceImpl<Embeddee> {
 class WMFlowEmbedded : public mojo::ApplicationDelegate,
                        public mojo::ViewManagerDelegate {
  public:
-  WMFlowEmbedded() : shell_(nullptr) {}
+  WMFlowEmbedded() : shell_(nullptr) {
+    embeddee_provider_impl_.AddService(&embeddee_factory_);
+  }
   virtual ~WMFlowEmbedded() {}
 
  private:
@@ -61,10 +63,9 @@ class WMFlowEmbedded : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  virtual void OnEmbed(
-      mojo::View* root,
-      mojo::ServiceProviderImpl* exported_services,
-      scoped_ptr<mojo::ServiceProvider> imported_services) override {
+  virtual void OnEmbed(mojo::View* root,
+                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                       mojo::ServiceProviderPtr exposed_services) override {
     bitmap_uploader_.reset(new mojo::BitmapUploader(root));
     bitmap_uploader_->Init(shell_);
     // BitmapUploader does not track view size changes, we would
@@ -73,11 +74,11 @@ class WMFlowEmbedded : public mojo::ApplicationDelegate,
     // object instead of holding per-view state on the ApplicationDelegate.
     bitmap_uploader_->SetColor(SK_ColorMAGENTA);
 
-    exported_services->AddService(&embeddee_factory_);
+    embeddee_provider_impl_.Bind(services.Pass());
     // FIXME: embedder_ is wrong for the same reason the embedee_ storage is
     // wrong in app.cc.  We need separate per-instance storage not on the
     // application delegate.
-    mojo::ConnectToService(imported_services.get(), &embedder_);
+    mojo::ConnectToService(exposed_services.get(), &embedder_);
     embedder_->HelloWorld(base::Bind(&WMFlowEmbedded::HelloWorldAck,
                                      base::Unretained(this)));
   }
@@ -91,6 +92,7 @@ class WMFlowEmbedded : public mojo::ApplicationDelegate,
   mojo::Shell* shell_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
   EmbedderPtr embedder_;
+  mojo::ServiceProviderImpl embeddee_provider_impl_;
   mojo::InterfaceFactoryImpl<EmbeddeeImpl> embeddee_factory_;
   scoped_ptr<mojo::BitmapUploader> bitmap_uploader_;
 

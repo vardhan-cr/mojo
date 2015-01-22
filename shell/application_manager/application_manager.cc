@@ -22,16 +22,6 @@ namespace mojo {
 namespace {
 // Used by TestAPI.
 bool has_created_instance = false;
-
-class StubServiceProvider : public InterfaceImpl<ServiceProvider> {
- public:
-  ServiceProvider* GetRemoteServiceProvider() { return client(); }
-
- private:
-  void ConnectToService(const String& service_name,
-                        ScopedMessagePipeHandle client_handle) override {}
-};
-
 }  // namespace
 
 

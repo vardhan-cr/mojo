@@ -34,8 +34,8 @@ class GaneshApp : public mojo::ApplicationDelegate,
   }
 
   void OnEmbed(mojo::View* root,
-               mojo::ServiceProviderImpl* exported_services,
-               scoped_ptr<mojo::ServiceProvider> imported_services) override {
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     new GaneshView(shell_, root);
   }
 

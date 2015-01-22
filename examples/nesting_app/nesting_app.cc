@@ -60,8 +60,8 @@ class NestingApp
 
   // Overridden from ViewManagerDelegate:
   virtual void OnEmbed(View* root,
-                       ServiceProviderImpl* exported_services,
-                       scoped_ptr<ServiceProvider> imported_services) override {
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
     bitmap_uploader_.reset(new BitmapUploader(root));
     bitmap_uploader_->Init(shell_);

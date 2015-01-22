@@ -38,9 +38,9 @@ class WindowManagerImpl : public mojo::WindowManager,
   }
 
   // mojo::WindowManager:
-  void Embed(
-      const mojo::String& url,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override;
+  void Embed(const mojo::String& url,
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services) override;
   void SetCapture(uint32_t view_id,
                   const mojo::Callback<void(bool)>& callback) override;
   void FocusWindow(uint32_t view_id,

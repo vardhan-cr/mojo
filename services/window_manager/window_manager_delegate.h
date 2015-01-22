@@ -13,9 +13,9 @@ namespace window_manager {
 class WindowManagerDelegate {
  public:
   // See WindowManager::Embed() for details.
-  virtual void Embed(
-      const mojo::String& url,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) = 0;
+  virtual void Embed(const mojo::String& url,
+                     mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                     mojo::ServiceProviderPtr exposed_services) = 0;
 
  protected:
   virtual ~WindowManagerDelegate() {}

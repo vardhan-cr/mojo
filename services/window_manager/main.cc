@@ -45,16 +45,16 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
 
   // Overridden from ViewManagerDelegate:
   void OnEmbed(View* root,
-               mojo::ServiceProviderImpl* exported_services,
-               scoped_ptr<mojo::ServiceProvider> imported_services) override {
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     root_ = root;
   }
   void OnViewManagerDisconnected(ViewManager* view_manager) override {}
 
   // Overridden from WindowManagerDelegate:
-  void Embed(
-      const mojo::String& url,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
+  void Embed(const mojo::String& url,
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services) override {
     DCHECK(root_);
     View* view = root_->view_manager()->CreateView();
     root_->AddChild(view);
@@ -66,7 +66,7 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
     window_offset_ += 10;
 
     view->SetVisible(true);
-    view->Embed(url, service_provider.Pass());
+    view->Embed(url, services.Pass(), exposed_services.Pass());
   }
 
   scoped_ptr<WindowManagerApp> window_manager_app_;

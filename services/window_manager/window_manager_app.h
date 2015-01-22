@@ -91,7 +91,8 @@ class WindowManagerApp
   // then forwards to delegate, otherwise waits for connection to establish then
   // forwards.
   void Embed(const mojo::String& url,
-             mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services);
 
   // Overridden from ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* impl) override;
@@ -125,8 +126,8 @@ class WindowManagerApp
 
   // Overridden from ViewManagerDelegate:
   void OnEmbed(mojo::View* root,
-               mojo::ServiceProviderImpl* exported_services,
-               scoped_ptr<mojo::ServiceProvider> imported_services) override;
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override;
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override;
 
   // Overridden from ViewObserver:

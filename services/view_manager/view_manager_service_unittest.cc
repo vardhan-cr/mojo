@@ -28,6 +28,7 @@ using mojo::Array;
 using mojo::ERROR_CODE_NONE;
 using mojo::InterfaceRequest;
 using mojo::ServiceProvider;
+using mojo::ServiceProviderPtr;
 using mojo::String;
 using mojo::ViewDataPtr;
 
@@ -50,7 +51,8 @@ class TestViewManagerClient : public mojo::ViewManagerClient {
   void OnEmbed(uint16_t connection_id,
                const String& embedder_url,
                ViewDataPtr root,
-               InterfaceRequest<ServiceProvider> parent_service_provider,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services,
                mojo::ScopedMessagePipeHandle window_manager_pipe) override {
     tracker_.OnEmbed(connection_id, embedder_url, root.Pass());
   }
@@ -270,8 +272,7 @@ void SetUpAnimate1(ViewManagerServiceTest* test, ViewId* embed_view_id) {
   EXPECT_TRUE(test->wm_connection()->SetViewVisibility(*embed_view_id, true));
   EXPECT_TRUE(test->wm_connection()->AddView(*(test->wm_connection()->root()),
                                              *embed_view_id));
-  EXPECT_TRUE(test->wm_connection()->Embed(
-      std::string(), *embed_view_id, InterfaceRequest<ServiceProvider>()));
+  test->wm_connection()->Embed(std::string(), *embed_view_id, nullptr, nullptr);
   ViewManagerServiceImpl* connection1 =
       test->connection_manager()->GetConnectionWithRoot(*embed_view_id);
   ASSERT_TRUE(connection1 != nullptr);
@@ -407,8 +408,7 @@ TEST_F(ViewManagerServiceTest, CloneAndAnimateLargerDepth) {
   EXPECT_TRUE(wm_connection()->SetViewVisibility(embed_view_id, true));
   EXPECT_TRUE(
       wm_connection()->AddView(*(wm_connection()->root()), embed_view_id));
-  EXPECT_TRUE(wm_connection()->Embed(std::string(), embed_view_id,
-                                     InterfaceRequest<ServiceProvider>()));
+  wm_connection()->Embed(std::string(), embed_view_id, nullptr, nullptr);
   ViewManagerServiceImpl* connection1 =
       connection_manager()->GetConnectionWithRoot(embed_view_id);
   ASSERT_TRUE(connection1 != nullptr);

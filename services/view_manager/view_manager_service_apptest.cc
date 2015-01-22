@@ -29,6 +29,7 @@ using mojo::ORDER_DIRECTION_BELOW;
 using mojo::OrderDirection;
 using mojo::RectPtr;
 using mojo::ServiceProvider;
+using mojo::ServiceProviderPtr;
 using mojo::String;
 using mojo::ViewDataPtr;
 using mojo::ViewManagerClient;
@@ -82,9 +83,7 @@ bool Embed(ViewManagerService* vm, Id root_id) {
   bool result = false;
   base::RunLoop run_loop;
   {
-    mojo::ServiceProviderPtr sp;
-    vm->Embed("mojo:view_manager_service_apptests", root_id,
-              GetProxy(&sp),
+    vm->Embed("mojo:view_manager_service_apptests", root_id, nullptr, nullptr,
               base::Bind(&BoolResultCallback, &run_loop, &result));
   }
   run_loop.Run();
@@ -266,6 +265,7 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
                const String& creator_url,
                ViewDataPtr root,
                InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services,
                mojo::ScopedMessagePipeHandle window_manager_pipe) override {
     tracker()->OnEmbed(connection_id, creator_url, root.Pass());
     got_embed_ = true;

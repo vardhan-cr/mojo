@@ -359,26 +359,11 @@ void View::Embed(const String& url) {
   static_cast<ViewManagerClientImpl*>(manager_)->Embed(url, id_);
 }
 
-scoped_ptr<ServiceProvider>
-    View::Embed(const String& url,
-                scoped_ptr<ServiceProviderImpl> exported_services) {
-  scoped_ptr<ServiceProvider> imported_services;
-  // BindToProxy() takes ownership of |exported_services|.
-  ServiceProviderImpl* registry = exported_services.release();
-  ServiceProviderPtr sp;
-  if (registry) {
-    BindToProxy(registry, &sp);
-    imported_services.reset(registry->CreateRemoteServiceProvider());
-  }
-  static_cast<ViewManagerClientImpl*>(manager_)
-      ->Embed(url, id_, MakeRequest<ServiceProvider>(sp.PassMessagePipe()));
-  return imported_services.Pass();
-}
-
 void View::Embed(const String& url,
-                 InterfaceRequest<ServiceProvider> exported_services) {
+                 InterfaceRequest<ServiceProvider> services,
+                 ServiceProviderPtr exposed_services) {
   static_cast<ViewManagerClientImpl*>(manager_)
-      ->Embed(url, id_, exported_services.Pass());
+      ->Embed(url, id_, services.Pass(), exposed_services.Pass());
 }
 
 ////////////////////////////////////////////////////////////////////////////////

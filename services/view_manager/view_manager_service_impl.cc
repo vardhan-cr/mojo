@@ -23,6 +23,7 @@ using mojo::InterfaceRequest;
 using mojo::OrderDirection;
 using mojo::Rect;
 using mojo::ServiceProvider;
+using mojo::ServiceProviderPtr;
 using mojo::String;
 using mojo::ViewDataPtr;
 
@@ -52,9 +53,9 @@ ViewManagerServiceImpl::~ViewManagerServiceImpl() {
   DestroyViews();
 }
 
-void ViewManagerServiceImpl::Init(
-    mojo::ViewManagerClient* client,
-    InterfaceRequest<ServiceProvider> service_provider) {
+void ViewManagerServiceImpl::Init(mojo::ViewManagerClient* client,
+                                  InterfaceRequest<ServiceProvider> services,
+                                  ServiceProviderPtr exposed_services) {
   DCHECK(!client_);
   client_ = client;
   std::vector<const ServerView*> to_send;
@@ -65,7 +66,8 @@ void ViewManagerServiceImpl::Init(
   connection_manager_->wm_internal()->CreateWindowManagerForViewManagerClient(
       id_, pipe.handle1.Pass());
   client->OnEmbed(id_, creator_url_, ViewToViewData(to_send.front()),
-                  service_provider.Pass(), pipe.handle0.Pass());
+                  services.Pass(), exposed_services.Pass(),
+                  pipe.handle0.Pass());
 }
 
 const ServerView* ViewManagerServiceImpl::GetView(const ViewId& id) const {
@@ -137,10 +139,10 @@ bool ViewManagerServiceImpl::SetViewVisibility(const ViewId& view_id,
   return true;
 }
 
-bool ViewManagerServiceImpl::Embed(
-    const std::string& url,
-    const ViewId& view_id,
-    InterfaceRequest<ServiceProvider> service_provider) {
+bool ViewManagerServiceImpl::Embed(const std::string& url,
+                                   const ViewId& view_id,
+                                   InterfaceRequest<ServiceProvider> services,
+                                   ServiceProviderPtr exposed_services) {
   const ServerView* view = GetView(view_id);
   if (!view || !access_policy_->CanEmbed(view))
     return false;
@@ -156,7 +158,8 @@ bool ViewManagerServiceImpl::Embed(
     connection_manager_->OnConnectionMessagedClient(id_);
     existing_owner->RemoveRoot();
   }
-  connection_manager_->EmbedAtView(id_, url, view_id, service_provider.Pass());
+  connection_manager_->EmbedAtView(id_, url, view_id, services.Pass(),
+                                   exposed_services.Pass());
   return true;
 }
 
@@ -583,14 +586,14 @@ void ViewManagerServiceImpl::SetViewProperty(
   callback.Run(success);
 }
 
-void ViewManagerServiceImpl::Embed(
-    const String& url,
-    Id transport_view_id,
-    InterfaceRequest<ServiceProvider> service_provider,
-    const Callback<void(bool)>& callback) {
+void ViewManagerServiceImpl::Embed(const String& url,
+                                   Id transport_view_id,
+                                   InterfaceRequest<ServiceProvider> services,
+                                   ServiceProviderPtr exposed_services,
+                                   const Callback<void(bool)>& callback) {
   callback.Run(Embed(url.To<std::string>(),
-                     ViewIdFromTransportId(transport_view_id),
-                     service_provider.Pass()));
+                     ViewIdFromTransportId(transport_view_id), services.Pass(),
+                     exposed_services.Pass()));
 }
 
 bool ViewManagerServiceImpl::IsRootForAccessPolicy(const ViewId& id) const {

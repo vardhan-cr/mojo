@@ -11,6 +11,7 @@
 #include "examples/wm_flow/app/embedder.mojom.h"
 #include "examples/wm_flow/embedded/embeddee.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/weak_binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -45,6 +46,30 @@ class EmbedderImpl : public mojo::InterfaceImpl<Embedder> {
   }
 
   DISALLOW_COPY_AND_ASSIGN(EmbedderImpl);
+};
+
+class EmbedderImplProvider : public mojo::ServiceProvider {
+ public:
+  EmbedderImplProvider() {}
+  ~EmbedderImplProvider() override {}
+
+  void AddBinding(mojo::InterfaceRequest<mojo::ServiceProvider> request) {
+    embeddee_exposed_services_.AddBinding(this, request.Pass());
+  }
+
+ private:
+  // mojo::ServiceProvider implementation
+  void ConnectToService(const mojo::String& interface_name,
+                        mojo::ScopedMessagePipeHandle pipe_handle) override {
+    if (interface_name != Embedder::Name_)
+      return;
+    auto request = mojo::MakeRequest<Embedder>(pipe_handle.Pass());
+    mojo::BindToRequest(new EmbedderImpl, &request);
+  }
+
+  mojo::WeakBindingSet<mojo::ServiceProvider> embeddee_exposed_services_;
+
+  DISALLOW_COPY_AND_ASSIGN(EmbedderImplProvider);
 };
 
 }  // namespace
@@ -83,10 +108,9 @@ class WMFlowApp : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  virtual void OnEmbed(
-      mojo::View* root,
-      mojo::ServiceProviderImpl* exported_services,
-      scoped_ptr<mojo::ServiceProvider> imported_services) override {
+  virtual void OnEmbed(mojo::View* root,
+                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                       mojo::ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
     mojo::BitmapUploader* uploader = new mojo::BitmapUploader(root);
     uploaders_[root] = uploader;
@@ -106,14 +130,13 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     embed->SetBounds(bounds);
     embed->SetVisible(true);
 
-    scoped_ptr<mojo::ServiceProviderImpl> registry(
-        new mojo::ServiceProviderImpl);
-    // Expose some services to the embeddee...
-    registry->AddService(&embedder_factory_);
+    mojo::ServiceProviderPtr embedee_exposed_services;
+    embeddee_provider_.AddBinding(GetProxy(&embedee_exposed_services));
 
     GURL embedded_app_url = url_.Resolve("wm_flow_embedded.mojo");
-    scoped_ptr<mojo::ServiceProvider> imported =
-        embed->Embed(embedded_app_url.spec(), registry.Pass());
+    mojo::ServiceProviderPtr imported;
+    embed->Embed(embedded_app_url.spec(), GetProxy(&imported),
+                 embedee_exposed_services.Pass());
     // FIXME: This is wrong.  We're storing per-view state on this per-app
     // delegate.  Every time a new view is created embedee_ is replaced
     // causing the previous one to shut down.  This class should not
@@ -154,9 +177,9 @@ class WMFlowApp : public mojo::ApplicationDelegate,
   mojo::Shell* shell_;
   int embed_count_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
-  mojo::InterfaceFactoryImpl<EmbedderImpl> embedder_factory_;
   scoped_ptr<mojo::ViewManagerContext> view_manager_context_;
   EmbeddeePtr embeddee_;
+  EmbedderImplProvider embeddee_provider_;
   ViewToUploader uploaders_;
   GURL url_;
 

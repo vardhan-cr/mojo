@@ -36,7 +36,9 @@ class Browser : public ApplicationDelegate,
                 public examples::BrowserHost,
                 public mojo::InterfaceFactory<examples::BrowserHost> {
  public:
-  Browser() : shell_(nullptr), root_(NULL), binding_(this) {}
+  Browser() : shell_(nullptr), root_(NULL), binding_(this) {
+    browser_host_services_impl_.AddService(this);
+  }
 
   virtual ~Browser() {
     if (root_)
@@ -63,10 +65,10 @@ class Browser : public ApplicationDelegate,
 
   // ViewManagerDelegate:
   void OnEmbed(View* root,
-               ServiceProviderImpl* exported_services,
-               scoped_ptr<ServiceProvider> imported_services) override {
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     // TODO: deal with OnEmbed() being invoked multiple times.
-    ConnectToService(imported_services.get(), &navigator_host_);
+    ConnectToService(exposed_services.get(), &navigator_host_);
     root_ = root;
     root_->AddObserver(this);
     root_->SetFocus();
@@ -83,13 +85,11 @@ class Browser : public ApplicationDelegate,
     view->SetVisible(true);
     root->SetVisible(true);
 
-    scoped_ptr<mojo::ServiceProviderImpl> browser_host_services(
-        new mojo::ServiceProviderImpl());
-    browser_host_services->AddService(this);
+    ServiceProviderPtr browser_host_services;
+    browser_host_services_impl_.Bind(GetProxy(&browser_host_services));
 
     GURL frame_url = url_.Resolve("/examples/browser/browser.sky");
-    browser_input_ =
-        view->Embed(frame_url.spec(), browser_host_services.Pass());
+    view->Embed(frame_url.spec(), nullptr, browser_host_services.Pass());
   }
 
   void OnViewManagerDisconnected(ViewManager* view_manager) override {
@@ -118,12 +118,11 @@ class Browser : public ApplicationDelegate,
 
   Shell* shell_;
 
-  scoped_ptr<mojo::ServiceProvider> browser_input_;
-
   scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
   View* root_;
   NavigatorHostPtr navigator_host_;
   IWindowManagerPtr window_manager_;
+  ServiceProviderImpl browser_host_services_impl_;
 
   GURL url_;
 

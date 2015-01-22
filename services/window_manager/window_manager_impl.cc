@@ -49,8 +49,9 @@ void WindowManagerImpl::NotifyCaptureChanged(Id new_capture_id,
 
 void WindowManagerImpl::Embed(
     const mojo::String& url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) {
-  window_manager_->Embed(url, service_provider.Pass());
+    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+    mojo::ServiceProviderPtr exposed_services) {
+  window_manager_->Embed(url, services.Pass(), exposed_services.Pass());
 }
 
 void WindowManagerImpl::SetCapture(Id view,

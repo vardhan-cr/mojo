@@ -8,6 +8,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "examples/wm_flow/wm/window_frame_host.mojom.h"
 #include "mojo/public/cpp/application/interface_factory.h"
+#include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "services/window_manager/focus_controller.h"
 #include "ui/gfx/geometry/rect.h"
@@ -59,7 +60,7 @@ class FrameController
   bool maximized_;
   gfx::Rect restored_bounds_;
   window_manager::WindowManagerApp* window_manager_app_;
-  scoped_ptr<mojo::ServiceProvider> viewer_services_;
+  mojo::ServiceProviderImpl viewer_services_impl_;
 
   mojo::Binding<examples::WindowFrameHost> binding_;
 

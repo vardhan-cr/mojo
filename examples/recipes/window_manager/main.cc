@@ -35,8 +35,7 @@ class Main : public mojo::ApplicationDelegate,
     window_manager_app_->Initialize(impl);
 
     for (size_t i = 1; i < impl->args().size(); ++i) {
-      mojo::InterfaceRequest<mojo::ServiceProvider> empty_request;
-      window_manager_app_->Embed(impl->args()[i], empty_request.Pass());
+      window_manager_app_->Embed(impl->args()[i], nullptr, nullptr);
     }
   }
   bool ConfigureIncomingConnection(
@@ -46,10 +45,9 @@ class Main : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  void OnEmbed(
-      mojo::View* root,
-      mojo::ServiceProviderImpl* exported_services,
-      scoped_ptr<mojo::ServiceProvider> remote_service_provider) override {
+  void OnEmbed(mojo::View* root,
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     window_manager_.reset(new WindowManager(root));
 
     window_manager_app_->InitFocus(
@@ -60,12 +58,12 @@ class Main : public mojo::ApplicationDelegate,
   }
 
   // Overridden from ::window_manager::WindowManagerDelegate:
-  void Embed(
-      const mojo::String& url,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider) override {
+  void Embed(const mojo::String& url,
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services) override {
     DCHECK(window_manager_.get());
     mojo::View* view = window_manager_->Create();
-    view->Embed(url, service_provider.Pass());
+    view->Embed(url, services.Pass(), exposed_services.Pass());
   }
 
   scoped_ptr<::window_manager::WindowManagerApp> window_manager_app_;

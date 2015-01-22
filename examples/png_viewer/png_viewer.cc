@@ -91,8 +91,8 @@ class PNGView : public ApplicationDelegate,
 
   // Overridden from ViewManagerDelegate:
   virtual void OnEmbed(View* root,
-                       ServiceProviderImpl* exported_services,
-                       scoped_ptr<ServiceProvider> imported_services) override {
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services) override {
     // TODO(qsr): The same view should be embeddable on multiple views.
     DCHECK(embedder_for_roots_.find(root) == embedder_for_roots_.end());
     root->AddObserver(this);

@@ -33,9 +33,7 @@ const SkColor kColors[] = {SK_ColorYELLOW, SK_ColorRED, SK_ColorGREEN,
                            SK_ColorMAGENTA};
 
 struct Window {
-  Window(View* root,
-         scoped_ptr<ServiceProvider> embedder_service_provider,
-         Shell* shell)
+  Window(View* root, ServiceProviderPtr embedder_service_provider, Shell* shell)
       : root(root),
         embedder_service_provider(embedder_service_provider.Pass()),
         bitmap_uploader(root) {
@@ -43,7 +41,7 @@ struct Window {
   }
 
   View* root;
-  scoped_ptr<ServiceProvider> embedder_service_provider;
+  ServiceProviderPtr embedder_service_provider;
   BitmapUploader bitmap_uploader;
 };
 
@@ -72,10 +70,10 @@ class EmbeddedApp
 
   // Overridden from ViewManagerDelegate:
   virtual void OnEmbed(View* root,
-                       ServiceProviderImpl* exported_services,
-                       scoped_ptr<ServiceProvider> imported_services) override {
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
-    Window* window = new Window(root, imported_services.Pass(), shell_);
+    Window* window = new Window(root, exposed_services.Pass(), shell_);
     windows_[root->id()] = window;
     window->bitmap_uploader.SetColor(
         kColors[next_color_++ % arraysize(kColors)]);

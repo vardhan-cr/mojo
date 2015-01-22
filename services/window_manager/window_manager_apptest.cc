@@ -43,8 +43,8 @@ class TestApplication : public ApplicationDelegate, public ViewManagerDelegate {
 
   // ViewManagerDelegate:
   void OnEmbed(View* root,
-               ServiceProviderImpl* exported_services,
-               scoped_ptr<ServiceProvider> imported_services) override {
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     root_ = root;
     embed_callback_.Run();
   }
@@ -74,10 +74,7 @@ class WindowManagerApplicationTest : public test::ApplicationTestBase {
   }
 
   void EmbedApplicationWithURL(const std::string& url) {
-    ServiceProviderPtr service_provider;
-    BindToProxy(new ServiceProviderImpl, &service_provider);
-    window_manager_->Embed(
-        url, MakeRequest<ServiceProvider>(service_provider.PassMessagePipe()));
+    window_manager_->Embed(url, nullptr, nullptr);
 
     base::RunLoop run_loop;
     test_application_.set_embed_callback(run_loop.QuitClosure());

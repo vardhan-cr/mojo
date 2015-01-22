@@ -107,8 +107,8 @@ class TestApplicationLoader : public mojo::ApplicationLoader,
 
   // Overridden from mojo::ViewManagerDelegate:
   void OnEmbed(View* root,
-               mojo::ServiceProviderImpl* exported_services,
-               scoped_ptr<mojo::ServiceProvider> imported_services) override {
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     root_added_callback_.Run(root);
   }
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {}
@@ -166,10 +166,7 @@ class WindowManagerApiTest : public testing::Test {
 
   Id OpenWindowWithURL(const std::string& url) {
     base::RunLoop run_loop;
-    mojo::ServiceProviderPtr sp;
-    BindToProxy(new mojo::ServiceProviderImpl, &sp);
-    window_manager_->Embed(
-        url, mojo::MakeRequest<mojo::ServiceProvider>(sp.PassMessagePipe()));
+    window_manager_->Embed(url, nullptr, nullptr);
     run_loop.Run();
     return WaitForEmbed();
   }

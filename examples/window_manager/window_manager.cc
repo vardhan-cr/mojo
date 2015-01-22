@@ -152,17 +152,19 @@ class RootLayoutManager : public ViewObserver {
 class Window : public InterfaceFactory<NavigatorHost> {
  public:
   Window(WindowManager* window_manager, View* view)
-      : window_manager_(window_manager), view_(view) {}
+      : window_manager_(window_manager), view_(view) {
+    exposed_services_impl_.AddService<NavigatorHost>(this);
+  }
 
   virtual ~Window() {}
 
   View* view() const { return view_; }
 
   void Embed(const std::string& url) {
-    scoped_ptr<ServiceProviderImpl> service_provider_impl(
-        new ServiceProviderImpl());
-    service_provider_impl->AddService<NavigatorHost>(this);
-    view_->Embed(url, service_provider_impl.Pass());
+    // TODO: Support embedding multiple times?
+    ServiceProviderPtr exposed_services;
+    exposed_services_impl_.Bind(GetProxy(&exposed_services));
+    view_->Embed(url, nullptr, exposed_services.Pass());
   }
 
  private:
@@ -175,6 +177,7 @@ class Window : public InterfaceFactory<NavigatorHost> {
 
   WindowManager* window_manager_;
   View* view_;
+  ServiceProviderImpl exposed_services_impl_;
 };
 
 class WindowManager : public ApplicationDelegate,
@@ -266,8 +269,8 @@ class WindowManager : public ApplicationDelegate,
 
   // Overridden from ViewManagerDelegate:
   virtual void OnEmbed(View* root,
-                       ServiceProviderImpl* exported_services,
-                       scoped_ptr<ServiceProvider> imported_services) override {
+                       InterfaceRequest<ServiceProvider> services,
+                       ServiceProviderPtr exposed_services) override {
     DCHECK(!view_manager_);
     view_manager_ = root->view_manager();
 
@@ -303,7 +306,8 @@ class WindowManager : public ApplicationDelegate,
 
   // Overridden from WindowManagerDelegate:
   void Embed(const String& url,
-             InterfaceRequest<ServiceProvider> service_provider) override {
+             InterfaceRequest<ServiceProvider> services,
+             ServiceProviderPtr exposed_services) override {
     const Id kInvalidSourceViewId = 0;
     OnLaunch(kInvalidSourceViewId, TARGET_DEFAULT, url);
   }
@@ -399,12 +403,12 @@ class WindowManager : public ApplicationDelegate,
     view->SetBounds(bounds);
     view->SetVisible(true);
 
-    scoped_ptr<mojo::ServiceProviderImpl> exported_services(
-        new mojo::ServiceProviderImpl());
-    exported_services->AddService(this);
+    ServiceProviderPtr exposed_services;
+    control_panel_exposed_services_impl_.Bind(GetProxy(&exposed_services));
+    control_panel_exposed_services_impl_.AddService(this);
 
     GURL frame_url = url_.Resolve("/examples/window_manager/debug_panel.sky");
-    debug_panel_ = view->Embed(frame_url.spec(), exported_services.Pass());
+    view->Embed(frame_url.spec(), nullptr, exposed_services.Pass());
 
     return view->id();
   }
@@ -425,11 +429,11 @@ class WindowManager : public ApplicationDelegate,
   InterfaceFactoryImplWithContext<WindowManagerConnection, WindowManager>
       window_manager_factory_;
 
-  scoped_ptr<mojo::ServiceProvider> debug_panel_;
   Window* launcher_ui_;
   WindowVector windows_;
   ViewManager* view_manager_;
   scoped_ptr<RootLayoutManager> root_layout_manager_;
+  ServiceProviderImpl control_panel_exposed_services_impl_;
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 

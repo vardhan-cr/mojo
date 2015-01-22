@@ -43,7 +43,8 @@ Id GetIdForView(View* view) {
 // ViewManager.
 struct WindowManagerApp::PendingEmbed {
   mojo::String url;
-  mojo::InterfaceRequest<ServiceProvider> service_provider;
+  mojo::InterfaceRequest<ServiceProvider> services;
+  mojo::ServiceProviderPtr exposed_services;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,14 +124,17 @@ void WindowManagerApp::InitFocus(scoped_ptr<FocusRules> rules) {
 
 void WindowManagerApp::Embed(
     const mojo::String& url,
-    mojo::InterfaceRequest<ServiceProvider> service_provider) {
+    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+    mojo::ServiceProviderPtr exposed_services) {
   if (view_manager()) {
-    window_manager_delegate_->Embed(url, service_provider.Pass());
+    window_manager_delegate_->Embed(url, services.Pass(),
+                                    exposed_services.Pass());
     return;
   }
   scoped_ptr<PendingEmbed> pending_embed(new PendingEmbed);
   pending_embed->url = url;
-  pending_embed->service_provider = service_provider.Pass();
+  pending_embed->services = services.Pass();
+  pending_embed->exposed_services = exposed_services.Pass();
   pending_embeds_.push_back(pending_embed.release());
 }
 
@@ -151,9 +155,10 @@ bool WindowManagerApp::ConfigureIncomingConnection(
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, ViewManagerDelegate implementation:
 
-void WindowManagerApp::OnEmbed(View* root,
-                               mojo::ServiceProviderImpl* exported_services,
-                               scoped_ptr<ServiceProvider> imported_services) {
+void WindowManagerApp::OnEmbed(
+    View* root,
+    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+    mojo::ServiceProviderPtr exposed_services) {
   DCHECK(!root_);
   root_ = root;
 
@@ -162,12 +167,14 @@ void WindowManagerApp::OnEmbed(View* root,
   RegisterSubtree(root_);
 
   if (wrapped_view_manager_delegate_) {
-    wrapped_view_manager_delegate_->OnEmbed(root, exported_services,
-                                            imported_services.Pass());
+    wrapped_view_manager_delegate_->OnEmbed(root, services.Pass(),
+                                            exposed_services.Pass());
   }
 
-  for (PendingEmbed* pending_embed : pending_embeds_)
-    Embed(pending_embed->url, pending_embed->service_provider.Pass());
+  for (PendingEmbed* pending_embed : pending_embeds_) {
+    Embed(pending_embed->url, pending_embed->services.Pass(),
+          pending_embed->exposed_services.Pass());
+  }
   pending_embeds_.clear();
 }
 

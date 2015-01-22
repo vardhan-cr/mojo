@@ -77,11 +77,11 @@ class ConnectionManager : public ServerViewDelegate,
 
   // See description of ViewManagerService::Embed() for details. This assumes
   // |transport_view_id| is valid.
-  void EmbedAtView(
-      mojo::ConnectionSpecificId creator_id,
-      const std::string& url,
-      const ViewId& view_id,
-      mojo::InterfaceRequest<mojo::ServiceProvider> service_provider);
+  void EmbedAtView(mojo::ConnectionSpecificId creator_id,
+                   const std::string& url,
+                   const ViewId& view_id,
+                   mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                   mojo::ServiceProviderPtr exposed_services);
 
   // Returns the connection by id.
   ViewManagerServiceImpl* GetConnection(
