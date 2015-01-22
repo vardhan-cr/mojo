@@ -22,7 +22,6 @@
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
-#include "ui/events/event.h"
 #include "url/gurl.h"
 
 namespace mojo {

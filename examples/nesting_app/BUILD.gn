@@ -20,9 +20,6 @@ mojo_native_application("nesting_app") {
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//skia",
-    "//ui/events:events_base",
-    "//ui/gfx/geometry",
-    "//ui/gl",
     "//url",
   ]
 }

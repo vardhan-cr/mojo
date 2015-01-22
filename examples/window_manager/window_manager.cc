@@ -27,7 +27,6 @@
 #include "services/window_manager/window_manager_delegate.h"
 #include "ui/events/event.h"
 #include "ui/events/event_constants.h"
-#include "ui/gfx/geometry/size_conversions.h"
 #include "url/gurl.h"
 
 #if defined CreateWindow

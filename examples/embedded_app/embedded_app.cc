@@ -22,7 +22,6 @@
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "third_party/skia/include/core/SkColor.h"
-#include "ui/events/event_constants.h"
 #include "url/gurl.h"
 #include "url/url_util.h"
 
