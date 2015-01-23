@@ -71,10 +71,6 @@ group("tests") {
     "//services/window_manager:window_manager_unittests",
   ]
 
-  if (is_android) {
-    deps += [ "//mojo/edk/system:mojo_system_unittests_apk" ]
-  }
-
   if (!is_android && !is_asan) {
     deps += [
       "//mojo/dart/embedder/test:dart_unittests",

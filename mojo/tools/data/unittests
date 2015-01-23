@@ -12,26 +12,33 @@
   {
     "test": "mojo_public_bindings_unittests",
     "cacheable": False,
+    "run_on_android": True,
   },
   {
     "test": "mojo_public_environment_unittests",
+    "run_on_android": True,
   },
   {
     "test": "mojo_public_system_unittests",
+    "run_on_android": True,
   },
   {
     "test": "mojo_public_utility_unittests",
+    "run_on_android": True,
   },
 
   # Non-system, non-public tests:
   {
     "test": "mojo_application_manager_unittests",
+    "run_on_android": True,
   },
   {
     "test": "mojo_common_unittests",
+    "run_on_android": True,
   },
   {
     "test": "external_application_unittests",
+    "run_on_android": True,
   },
   {
     # These tests currently crash. We should re-enable them when they pass.
@@ -40,12 +47,15 @@
   },
   {
     "test": "mojo_surfaces_lib_unittests",
+    "run_on_android": True,
   },
   {
     "test": "view_manager_service_unittests",
+    "run_on_android": True,
   },
   {
     "test": "window_manager_unittests",
+    "run_on_android": True,
   },
 
   # Tests for components we depend on:
