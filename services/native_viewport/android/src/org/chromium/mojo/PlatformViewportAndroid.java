@@ -112,8 +112,35 @@ public class PlatformViewportAndroid extends SurfaceView {
     }
 
     private boolean privateDispatchKeyEvent(KeyEvent event) {
-        return nativeKeyEvent(mNativeMojoViewport, event.getAction() == KeyEvent.ACTION_DOWN,
-                event.getKeyCode(), event.getUnicodeChar());
+        if (event.getAction() == KeyEvent.ACTION_MULTIPLE) {
+            boolean result = false;
+            if (event.getKeyCode() == KeyEvent.KEYCODE_UNKNOWN && event.getCharacters() != null) {
+                String characters = event.getCharacters();
+                for (int i = 0; i < characters.length(); ++i) {
+                    char c = characters.charAt(i);
+                    int codepoint = c;
+                    if (codepoint >= Character.MIN_SURROGATE
+                            && codepoint < (Character.MAX_SURROGATE + 1)) {
+                        i++;
+                        char c2 = characters.charAt(i);
+                        codepoint = Character.toCodePoint(c, c2);
+                    }
+                    result |= nativeKeyEvent(mNativeMojoViewport, true, 0, codepoint);
+                    result |= nativeKeyEvent(mNativeMojoViewport, false, 0, codepoint);
+                }
+            } else {
+                for (int i = 0; i < event.getRepeatCount(); ++i) {
+                    result |= nativeKeyEvent(
+                            mNativeMojoViewport, true, event.getKeyCode(), event.getUnicodeChar());
+                    result |= nativeKeyEvent(
+                            mNativeMojoViewport, false, event.getKeyCode(), event.getUnicodeChar());
+                }
+            }
+            return result;
+        } else {
+            return nativeKeyEvent(mNativeMojoViewport, event.getAction() == KeyEvent.ACTION_DOWN,
+                    event.getKeyCode(), event.getUnicodeChar());
+        }
     }
 
     private static native void nativeDestroy(long nativePlatformViewportAndroid);
