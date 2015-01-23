@@ -1491,14 +1491,15 @@ def GetDefaultTryConfigs(bots=None):
   """
 
   builders_and_tests = {
-      'Mojo Linux Try': ['defaulttests'],
-      'Mojo Linux (dbg) Try': ['defaulttests'],
-      'Mojo Linux NaCl Try': ['defaulttests'],
-      'Mojo Linux NaCl (dbg) Try': ['defaulttests'],
-      'Mojo Android Builder Try': ['defaulttests'],
       'Mojo Android Builder (dbg) Try': ['defaulttests'],
-      'Mojo ChromeOS Builder Try': ['defaulttests'],
+      'Mojo Android Builder Try': ['defaulttests'],
       'Mojo ChromeOS Builder (dbg) Try': ['defaulttests'],
+      'Mojo ChromeOS Builder Try': ['defaulttests'],
+      'Mojo Linux (dbg) Try': ['defaulttests'],
+      'Mojo Linux ASan Try': ['defaulttests'],
+      'Mojo Linux NaCl (dbg) Try': ['defaulttests'],
+      'Mojo Linux NaCl Try': ['defaulttests'],
+      'Mojo Linux Try': ['defaulttests'],
   }
 
   if bots:
