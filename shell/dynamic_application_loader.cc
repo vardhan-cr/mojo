@@ -6,10 +6,12 @@
 
 #include "base/bind.h"
 #include "base/command_line.h"
+#include "base/files/file.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/format_macros.h"
 #include "base/logging.h"
+#include "base/md5.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/message_loop/message_loop.h"
@@ -296,12 +298,74 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
 
     // TODO(eseidel): Paths or URLs with spaces will need quoting.
     std::string map_entry =
-        base::StringPrintf("%s %s\n", path.value().data(), url.spec().data());
+        base::StringPrintf("%s %s\n", path.value().c_str(), url.spec().c_str());
     // TODO(eseidel): AppendToFile is missing O_CREAT, crbug.com/450696
     if (!PathExists(map_path))
       base::WriteFile(map_path, map_entry.data(), map_entry.length());
     else
       base::AppendToFile(map_path, map_entry.data(), map_entry.length());
+  }
+
+  // AppIds should be be both predictable and unique, but any hash would work.
+  // TODO(eseidel): Use sha256 once it has an incremental API, crbug.com/451588
+  // Derived from tools/android/md5sum/md5sum.cc with fstream usage removed.
+  static bool ComputeAppId(const base::FilePath& path,
+                           std::string* digest_string) {
+
+    base::File file(path, base::File::FLAG_OPEN | base::File::FLAG_READ);
+    if (!file.IsValid()) {
+      LOG(ERROR) << "Failed to open " << path.value() << " for computing AppId";
+      return false;
+    }
+    base::MD5Context ctx;
+    base::MD5Init(&ctx);
+    char buf[1024];
+    while (file.IsValid()) {
+      int bytes_read = file.ReadAtCurrentPos(buf, sizeof(buf));
+      if (bytes_read == 0)
+        break;
+      base::MD5Update(&ctx, base::StringPiece(buf, bytes_read));
+    }
+    if (!file.IsValid()) {
+      LOG(ERROR) << "Error reading " << path.value();
+      return false;
+    }
+    base::MD5Digest digest;
+    base::MD5Final(&digest, &ctx);
+    *digest_string = base::MD5DigestToBase16(digest);
+    return true;
+  }
+
+  static bool RenameToAppId(const base::FilePath& old_path,
+                            base::FilePath* new_path) {
+    std::string app_id;
+    if (!ComputeAppId(old_path, &app_id))
+      return false;
+
+    base::FilePath temp_dir;
+    base::GetTempDir(&temp_dir);
+    std::string unique_name = base::StringPrintf("%s.mojo", app_id.c_str());
+    *new_path = temp_dir.Append(unique_name);
+    return base::Move(old_path, *new_path);
+  }
+
+  void CopyCompleted(base::Callback<void(const base::FilePath&, bool)> callback,
+                     bool success) {
+    // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
+    if (success) {
+      success = false;
+      base::FilePath new_path;
+      if (RenameToAppId(path_, &new_path)) {
+        if (base::PathExists(new_path)) {
+          path_ = new_path;
+          success = true;
+          RecordCacheToURLMapping(path_, url_);
+        }
+      }
+    }
+
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, path_, success));
   }
 
   void AsPath(
@@ -312,14 +376,11 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
           FROM_HERE, base::Bind(callback, path_, base::PathExists(path_)));
       return;
     }
-    // We don't use the created file, just want the directory and random name.
-    base::CreateTemporaryFile(&path_);
-    base::DeleteFile(path_, false);
-    path_ = path_.AddExtension(".mojo");  // Make libraries easy to spot.
-    common::CopyToFile(response_->body.Pass(), path_, task_runner,
-                       base::Bind(callback, path_));
 
-    RecordCacheToURLMapping(path_, url_);
+    base::CreateTemporaryFile(&path_);
+    common::CopyToFile(response_->body.Pass(), path_, task_runner,
+                       base::Bind(&NetworkLoader::CopyCompleted,
+                                  weak_ptr_factory_.GetWeakPtr(), callback));
   }
 
   std::string MimeType() override {
