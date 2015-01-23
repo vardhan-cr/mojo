@@ -16,12 +16,7 @@ class ApplicationManager;
 
 class ShellImpl : public Shell, public ErrorHandler {
  public:
-  ShellImpl(ScopedMessagePipeHandle handle,
-            ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url);
-
-  ShellImpl(ShellPtr* ptr,
+  ShellImpl(InterfaceRequest<Shell> shell_request,
             ApplicationManager* manager,
             const GURL& requested_url,
             const GURL& url);
@@ -37,10 +32,6 @@ class ShellImpl : public Shell, public ErrorHandler {
   const GURL& requested_url() const { return requested_url_; }
 
  private:
-  ShellImpl(ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url);
-
   // Shell implementation:
   void ConnectToApplication(const String& app_url,
                             InterfaceRequest<ServiceProvider> services,

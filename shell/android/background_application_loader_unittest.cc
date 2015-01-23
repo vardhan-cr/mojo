@@ -18,7 +18,7 @@ class DummyLoader : public ApplicationLoader {
   // ApplicationLoader overrides:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
+            ShellPtr shell,
             LoadCallback callback) override {
     if (simulate_app_quit_)
       base::MessageLoop::current()->Quit();
@@ -48,8 +48,9 @@ TEST(BackgroundApplicationLoaderTest, Load) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
-  MessagePipe dummy;
-  loader.Load(NULL, GURL(), dummy.handle0.Pass(),
+  ShellPtr shell;
+  auto dummy = GetProxy(&shell);
+  loader.Load(NULL, GURL(), shell.Pass(),
               ApplicationLoader::SimpleLoadCallback());
 }
 

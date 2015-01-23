@@ -15,11 +15,10 @@ AndroidHandlerLoader::~AndroidHandlerLoader() {
 
 void AndroidHandlerLoader::Load(ApplicationManager* manager,
                                 const GURL& url,
-                                ScopedMessagePipeHandle shell_handle,
+                                ShellPtr shell,
                                 LoadCallback callback) {
-  DCHECK(shell_handle.is_valid());
-  application_.reset(
-      new ApplicationImpl(&android_handler_, shell_handle.Pass()));
+  DCHECK(shell);
+  application_.reset(new ApplicationImpl(&android_handler_, shell.Pass()));
 }
 
 void AndroidHandlerLoader::OnApplicationError(ApplicationManager* manager,

@@ -63,11 +63,10 @@ class ConnectApplicationLoader : public ApplicationLoader,
   // Overridden from ApplicationLoader:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
+            ShellPtr shell,
             LoadCallback callback) override {
-    ASSERT_TRUE(shell_handle.is_valid());
-    scoped_ptr<ApplicationImpl> app(
-        new ApplicationImpl(this, shell_handle.Pass()));
+    ASSERT_TRUE(shell);
+    scoped_ptr<ApplicationImpl> app(new ApplicationImpl(this, shell.Pass()));
     apps_.push_back(app.release());
   }
 

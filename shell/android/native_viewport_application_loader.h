@@ -32,7 +32,7 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
   // ApplicationLoader implementation.
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
+            ShellPtr shell,
             LoadCallback callback) override;
 
   void OnApplicationError(ApplicationManager* manager,

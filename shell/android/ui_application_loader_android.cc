@@ -24,13 +24,13 @@ UIApplicationLoader::~UIApplicationLoader() {
 
 void UIApplicationLoader::Load(ApplicationManager* manager,
                                const GURL& url,
-                               ScopedMessagePipeHandle shell_handle,
+                               ShellPtr shell,
                                LoadCallback callback) {
-  DCHECK(shell_handle.is_valid());
+  DCHECK(shell);
   ui_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(&UIApplicationLoader::LoadOnUIThread, base::Unretained(this),
-                 manager, url, base::Passed(&shell_handle)));
+                 manager, url, base::Passed(&shell)));
 }
 
 void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
@@ -42,8 +42,8 @@ void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
 
 void UIApplicationLoader::LoadOnUIThread(ApplicationManager* manager,
                                          const GURL& url,
-                                         ScopedMessagePipeHandle shell_handle) {
-  loader_->Load(manager, url, shell_handle.Pass(), SimpleLoadCallback());
+                                         ShellPtr shell) {
+  loader_->Load(manager, url, shell.Pass(), SimpleLoadCallback());
 }
 
 void UIApplicationLoader::OnApplicationErrorOnUIThread(

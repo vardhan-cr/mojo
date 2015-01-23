@@ -410,12 +410,12 @@ void DynamicApplicationLoader::RegisterContentHandler(
 
 void DynamicApplicationLoader::Load(ApplicationManager* manager,
                                     const GURL& url,
-                                    ScopedMessagePipeHandle shell_handle,
+                                    ShellPtr shell,
                                     LoadCallback load_callback) {
   if (url.SchemeIsFile()) {
     loaders_.push_back(new LocalLoader(
         url, &mime_type_to_url_, context_, runner_factory_.get(),
-        shell_handle.Pass(), load_callback, loader_complete_callback_));
+        shell.PassMessagePipe(), load_callback, loader_complete_callback_));
     return;
   }
 
@@ -424,10 +424,10 @@ void DynamicApplicationLoader::Load(ApplicationManager* manager,
         GURL("mojo:network_service"), &network_service_);
   }
 
-  loaders_.push_back(
-      new NetworkLoader(url, network_service_.get(), &mime_type_to_url_,
-                        context_, runner_factory_.get(), shell_handle.Pass(),
-                        load_callback, loader_complete_callback_));
+  loaders_.push_back(new NetworkLoader(
+      url, network_service_.get(), &mime_type_to_url_, context_,
+      runner_factory_.get(), shell.PassMessagePipe(), load_callback,
+      loader_complete_callback_));
 }
 
 void DynamicApplicationLoader::OnApplicationError(ApplicationManager* manager,

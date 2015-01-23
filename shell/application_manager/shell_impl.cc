@@ -10,20 +10,15 @@
 
 namespace mojo {
 
-ShellImpl::ShellImpl(ScopedMessagePipeHandle handle,
+ShellImpl::ShellImpl(InterfaceRequest<Shell> shell_request,
                      ApplicationManager* manager,
                      const GURL& requested_url,
                      const GURL& url)
-    : ShellImpl(manager, requested_url, url) {
-  binding_.Bind(handle.Pass());
-}
-
-ShellImpl::ShellImpl(ShellPtr* ptr,
-                     ApplicationManager* manager,
-                     const GURL& requested_url,
-                     const GURL& url)
-    : ShellImpl(manager, requested_url, url) {
-  binding_.Bind(ptr);
+    : manager_(manager),
+      requested_url_(requested_url),
+      url_(url),
+      binding_(this, shell_request.Pass()) {
+  binding_.set_error_handler(this);
 }
 
 ShellImpl::~ShellImpl() {
@@ -34,16 +29,6 @@ void ShellImpl::ConnectToClient(const GURL& requestor_url,
                                 ServiceProviderPtr exposed_services) {
   client()->AcceptConnection(String::From(requestor_url), services.Pass(),
                              exposed_services.Pass());
-}
-
-ShellImpl::ShellImpl(ApplicationManager* manager,
-                     const GURL& requested_url,
-                     const GURL& url)
-    : manager_(manager),
-      requested_url_(requested_url),
-      url_(url),
-      binding_(this) {
-  binding_.set_error_handler(this);
 }
 
 // Shell implementation:

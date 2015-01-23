@@ -140,13 +140,13 @@ void ApplicationManager::ConnectToApplicationImpl(
   if (shell_it != url_to_shell_impl_.end()) {
     shell = shell_it->second;
   } else {
-    MessagePipe pipe;
+    ShellPtr shell_ptr;
     shell =
-        new ShellImpl(pipe.handle0.Pass(), this, requested_url, resolved_url);
+        new ShellImpl(GetProxy(&shell_ptr), this, requested_url, resolved_url);
     url_to_shell_impl_[resolved_url] = shell;
     shell->client()->Initialize(GetArgsForURL(requested_url));
 
-    loader->Load(this, resolved_url, pipe.handle1.Pass(),
+    loader->Load(this, resolved_url, shell_ptr.Pass(),
                  base::Bind(&ApplicationManager::LoadWithContentHandler,
                             weak_ptr_factory_.GetWeakPtr()));
   }
@@ -167,7 +167,8 @@ void ApplicationManager::ConnectToClient(
 void ApplicationManager::RegisterExternalApplication(
     const GURL& url,
     ScopedMessagePipeHandle shell_handle) {
-  ShellImpl* shell_impl = new ShellImpl(shell_handle.Pass(), this, url, url);
+  ShellImpl* shell_impl =
+      new ShellImpl(MakeRequest<Shell>(shell_handle.Pass()), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
   shell_impl->client()->Initialize(GetArgsForURL(url));
 }

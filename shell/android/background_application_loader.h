@@ -26,7 +26,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
   // ApplicationLoader overrides:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ScopedMessagePipeHandle shell_handle,
+            ShellPtr shell,
             LoadCallback callback) override;
   void OnApplicationError(ApplicationManager* manager,
                           const GURL& url) override;
@@ -41,7 +41,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
   // isn't thread safe).
   void LoadOnBackgroundThread(ApplicationManager* manager,
                               const GURL& url,
-                              ScopedMessagePipeHandle shell_handle);
+                              ShellPtr shell);
   void OnApplicationErrorOnBackgroundThread(ApplicationManager* manager,
                                             const GURL& url);
   bool quit_on_shutdown_;

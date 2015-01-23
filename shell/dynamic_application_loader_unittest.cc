@@ -82,8 +82,9 @@ TEST_F(DynamicApplicationLoaderTest, DoesNotExist) {
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
   base::FilePath nonexistent_file(FILE_PATH_LITERAL("nonexistent.txt"));
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
-  MessagePipe pipe;
-  loader_->Load(context_.application_manager(), url, pipe.handle0.Pass(),
+  ShellPtr shell;
+  auto throwaway = GetProxy(&shell);
+  loader_->Load(context_.application_manager(), url, shell.Pass(),
                 ApplicationLoader::SimpleLoadCallback());
   EXPECT_FALSE(state_.runner_was_created);
   EXPECT_FALSE(state_.runner_was_started);

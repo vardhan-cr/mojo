@@ -7,6 +7,7 @@
 
 #include "base/callback.h"
 #include "mojo/public/cpp/system/core.h"
+#include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "shell/application_manager/application_manager_export.h"
 #include "url/gurl.h"
@@ -42,7 +43,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
   //    must implement the mojo.ContentHandler interface.
   virtual void Load(ApplicationManager* application_manager,
                     const GURL& url,
-                    ScopedMessagePipeHandle shell_handle,
+                    ShellPtr shell,
                     LoadCallback callback) = 0;
 
   // Called when the Application exits.

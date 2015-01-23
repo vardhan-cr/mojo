@@ -19,10 +19,10 @@ NativeViewportApplicationLoader::~NativeViewportApplicationLoader() {
 
 void NativeViewportApplicationLoader::Load(ApplicationManager* manager,
                                            const GURL& url,
-                                           ScopedMessagePipeHandle shell_handle,
+                                           ShellPtr shell,
                                            LoadCallback callback) {
-  DCHECK(shell_handle.is_valid());
-  app_.reset(new ApplicationImpl(this, shell_handle.Pass()));
+  DCHECK(shell);
+  app_.reset(new ApplicationImpl(this, shell.Pass()));
 }
 
 void NativeViewportApplicationLoader::OnApplicationError(
