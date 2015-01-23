@@ -9,8 +9,10 @@ define("main", [
   const PingPongService = pingPongServiceMojom.PingPongService;
 
   class PingPongServiceImpl {
-    constructor(app, client) {
+    constructor(app) {
       this.app = app;
+    }
+    setClient(client) {
       this.client = client;
     }
     ping(value) {

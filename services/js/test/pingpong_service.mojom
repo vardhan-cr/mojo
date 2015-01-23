@@ -4,8 +4,9 @@
 
 module js;
 
-[Client=PingPongClient]
 interface PingPongService {
+  SetClient(PingPongClient client);
+
   // Typically calls PingPongClient::Pong(ping_value + 1)
   Ping(uint16 ping_value);
 

@@ -3,7 +3,7 @@
 define("main", [
   "mojo/public/js/bindings",
   "mojo/services/public/js/application",
-  "services/js/test/pingpong_service.mojom"
+  "services/js/test/pingpong_service.mojom",
 ], function(bindings, application, pingPongServiceMojom) {
 
   const ProxyBindings = bindings.ProxyBindings;
@@ -12,8 +12,10 @@ define("main", [
   const PingPongService = pingPongServiceMojom.PingPongService;
 
   class PingPongServiceImpl {
-    constructor(app, client) {
+    constructor(app) {
       this.app = app;
+    }
+    setClient(client) {
       this.client = client;
     }
     ping(value) {
@@ -35,8 +37,9 @@ define("main", [
             }
           }
         };
-        var pingTargetService = app.shell.connectToService(
-            url, PingPongService, pingTargetClient);
+        var pingTargetService =
+            app.shell.connectToService(url, PingPongService);
+        pingTargetService.setClient(pingTargetClient);
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });
@@ -53,16 +56,16 @@ define("main", [
             }
           }
         };
-        ProxyBindings(pingTargetService).setLocalDelegate(pingTargetClient);
+        pingTargetService.setClient(pingTargetClient);
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });
     }
 
     // This method is only used by the GetTargetService test.
-    getPingPongService(clientProxy) {
-      ProxyBindings(clientProxy).setLocalDelegate(
-          new PingPongServiceImpl(this, clientProxy));
+    getPingPongService(pingPongServiceProxy) {
+      ProxyBindings(pingPongServiceProxy).setLocalDelegate(
+          new PingPongServiceImpl(this));
     }
   }
 
