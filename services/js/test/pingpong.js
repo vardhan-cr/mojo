@@ -63,9 +63,9 @@ define("main", [
     }
 
     // This method is only used by the GetTargetService test.
-    getPingPongService(pingPongServiceProxy) {
-      ProxyBindings(pingPongServiceProxy).setLocalDelegate(
-          new PingPongServiceImpl(this));
+    getPingPongService(pingPongServiceStub) {
+      var impl = new PingPongServiceImpl(this);
+      StubBindings(pingPongServiceStub).delegate = impl;
     }
   }
 

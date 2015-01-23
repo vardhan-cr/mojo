@@ -3,13 +3,11 @@
 // found in the LICENSE file.
 
 define("mojo/services/public/js/application", [
-  "mojo/public/js/bindings",
   "mojo/public/js/threading",
   "mojo/services/public/js/service_provider",
   "mojo/services/public/js/shell",
-], function(bindings, threading, serviceProvider, shell) {
+], function(threading, serviceProvider, shell) {
 
-  const ProxyBindings = bindings.ProxyBindings;
   const ServiceProvider = serviceProvider.ServiceProvider;
   const Shell = shell.Shell;
 
@@ -39,12 +37,9 @@ define("mojo/services/public/js/application", [
     doAcceptConnection(requestorUrl, servicesRequest, exposedServicesProxy) {
       // Construct a new js ServiceProvider that can make outgoing calls on
       // exposedServicesProxy.
-      var serviceProvider = new ServiceProvider(exposedServicesProxy);
+      var serviceProvider =
+          new ServiceProvider(servicesRequest, exposedServicesProxy);
       this.serviceProviders.push(serviceProvider);
-
-      // Then associate incoming calls with the serviceProvider.
-      ProxyBindings(servicesRequest).setLocalDelegate(serviceProvider);
-
       this.acceptConnection(requestorUrl, serviceProvider);
     }
 
