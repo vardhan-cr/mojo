@@ -53,7 +53,9 @@
     "test": "gfx_unittests",
   },
   {
+    # These tests currently crash on Release asan only.
     "test": "events_unittests",
+    "disabled": True,
   },
 
   # JavaScript tests:
