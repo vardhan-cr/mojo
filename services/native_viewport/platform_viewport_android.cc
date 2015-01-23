@@ -110,7 +110,8 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
                        base::TimeDelta::FromMilliseconds(time_ms));
   // TODO(beng): handle multiple touch-points.
   delegate_->OnEvent(&event);
-  if (action == ui::ET_TOUCH_RELEASED || action == ui::ET_TOUCH_CANCELLED)
+  if (event.type() == ui::ET_TOUCH_RELEASED ||
+      event.type() == ui::ET_TOUCH_CANCELLED)
     id_generator_.ReleaseNumber(pointer_id);
 
   return true;

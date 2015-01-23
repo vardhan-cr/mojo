@@ -133,6 +133,10 @@ void FocusController::OnScrollEvent(ui::ScrollEvent* event) {
 }
 
 void FocusController::OnTouchEvent(ui::TouchEvent* event) {
+  if (event->type() == ui::ET_TOUCH_PRESSED && !event->handled()) {
+    View* view = static_cast<ViewTarget*>(event->target())->view();
+    ViewFocusedFromInputEvent(view);
+  }
 }
 
 void FocusController::OnGestureEvent(ui::GestureEvent* event) {
