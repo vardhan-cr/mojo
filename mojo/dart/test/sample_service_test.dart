@@ -9,35 +9,35 @@ import 'dart:mojo_core' as core;
 
 import 'package:mojo/public/interfaces/bindings/tests/sample_service.mojom.dart' as sample;
 
-class ExpectPortInterfaceImpl implements sample.PortInterface {
+class ExpectPortStubImpl implements sample.PortStub {
   String _expected;
-  ExpectPortInterfaceImpl([this._expected = ""]);
+  ExpectPortStubImpl([this._expected = ""]);
 
-  void postMessage(String messageText, sample.PortClient port) {
+  void postMessage(String messageText, sample.PortProxy port) {
     assert(messageText == _expected);
     port.close();
   }
 }
 
-class ServiceImpl extends sample.ServiceInterface {
+class ServiceImpl extends sample.ServiceStub {
   ServiceImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
-  void frobinate(sample.Foo foo, int baz, sample.PortClient portClient) {
-    var portInterface = new sample.PortInterface.unbound();
-    portInterface.delegate = new ExpectPortInterfaceImpl();
-    portClient.callPostMessage("frobinated", portInterface);
-    portInterface.listen();
+  void frobinate(sample.Foo foo, int baz, sample.PortProxy portProxy) {
+    var portStub = new sample.PortStub.unbound();
+    portStub.delegate = new ExpectPortStubImpl();
+    portProxy.callPostMessage("frobinated", portStub);
+    portStub.listen();
     callDidFrobinate(42);
-    portClient.close();
+    portProxy.close();
   }
 
-  void getPort(sample.PortInterface portInterface) {
-    portInterface.delegate = new ExpectPortInterfaceImpl("port");
-    portInterface.listen();
+  void getPort(sample.PortStub portStub) {
+    portStub.delegate = new ExpectPortStubImpl("port");
+    portStub.listen();
   }
 }
 
-class ServiceClientImpl extends sample.ServiceClientInterface
+class ServiceClientImpl extends sample.ServiceClientStub
                         with sample.ServiceCalls {
   Completer completer;
 
@@ -52,14 +52,14 @@ class ServiceClientImpl extends sample.ServiceClientInterface
     completer = new Completer();
 
     listen();
-    var portClient = new sample.PortClient.unbound();
-    callGetPort(portClient);
-    portClient.close();
+    var portProxy = new sample.PortProxy.unbound();
+    callGetPort(portProxy);
+    portProxy.close();
 
-    var portInterface = new sample.PortInterface.unbound();
-    portInterface.delegate = new ExpectPortInterfaceImpl("frobinated");
-    callFrobinate(new sample.Foo(), sample.BazOptions_EXTRA, portInterface);
-    portInterface.listen();
+    var portStub = new sample.PortStub.unbound();
+    portStub.delegate = new ExpectPortStubImpl("frobinated");
+    callFrobinate(new sample.Foo(), sample.BazOptions_EXTRA, portStub);
+    portStub.listen();
     return completer.future;
   }
 }

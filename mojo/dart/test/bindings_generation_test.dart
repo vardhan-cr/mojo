@@ -12,7 +12,7 @@ import 'package:mojo/dart/testing/expect.dart';
 import 'package:mojo/public/interfaces/bindings/tests/sample_interfaces.mojom.dart' as sample;
 
 
-class ProviderImpl extends sample.ProviderInterface {
+class ProviderImpl extends sample.ProviderStub {
   ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
   echoString(String a, Function responseFactory) =>
@@ -37,7 +37,7 @@ void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
 
 Future<bool> test() {
   var pipe = new core.MojoMessagePipe();
-  var client = new sample.ProviderClient(pipe.endpoints[0]);
+  var client = new sample.ProviderProxy(pipe.endpoints[0]);
   var c = new Completer();
   Isolate.spawn(providerIsolate, pipe.endpoints[1]).then((_) {
     client.callEchoString("hello!").then((echoStringResponse) {
@@ -57,7 +57,7 @@ Future<bool> test() {
 
 Future testAwait() async {
   var pipe = new core.MojoMessagePipe();
-  var client = new sample.ProviderClient(pipe.endpoints[0]);
+  var client = new sample.ProviderProxy(pipe.endpoints[0]);
   var isolate = await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
   var echoStringResponse = await client.callEchoString("hello!");

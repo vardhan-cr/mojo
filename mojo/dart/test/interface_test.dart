@@ -77,8 +77,8 @@ class EchoStringResponse extends bindings.Struct {
 const int kEchoString_name = 0;
 const int kEchoStringResponse_name = 1;
 
-class EchoInterface extends bindings.Interface {
-  EchoInterface(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
+class EchoStub extends bindings.Stub {
+  EchoStub(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
   Future<EchoStringResponse> echoString(EchoString es) {
     var response = new EchoStringResponse();
@@ -109,8 +109,8 @@ class EchoInterface extends bindings.Interface {
 }
 
 
-class EchoClient extends bindings.Client {
-  EchoClient(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
+class EchoProxy extends bindings.Proxy {
+  EchoProxy(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
 
   Future<EchoStringResponse> echoString(String a) {
     // compose message.
@@ -140,7 +140,7 @@ class EchoClient extends bindings.Client {
 
 
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
-  var provider = new EchoInterface(endpoint);
+  var provider = new EchoStub(endpoint);
   provider.listen();
 }
 
@@ -149,17 +149,17 @@ Future<bool> runTest() async {
   var testCompleter = new Completer();
 
   var pipe = new core.MojoMessagePipe();
-  var client = new EchoClient(pipe.endpoints[0]);
+  var proxy = new EchoProxy(pipe.endpoints[0]);
   await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
   int n = kEchoesCount;
   int count = 0;
   for (int i = 0; i < n; i++) {
-    client.echoString("hello").then((response) {
+    proxy.echoString("hello").then((response) {
       Expect.equals("hello", response.a);
       count++;
       if (i == (n - 1)) {
-        client.close();
+        proxy.close();
         testCompleter.complete(count);
       }
     });
@@ -171,15 +171,15 @@ Future<bool> runTest() async {
 
 Future runAwaitTest() async {
   var pipe = new core.MojoMessagePipe();
-  var client = new EchoClient(pipe.endpoints[0]);
+  var proxy = new EchoProxy(pipe.endpoints[0]);
   await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
   int n = kEchoesCount;
   for (int i = 0; i < n; i++) {
-    var response = await client.echoString("Hello");
+    var response = await proxy.echoString("Hello");
     Expect.equals("Hello", response.a);
   }
-  client.close();
+  proxy.close();
 }
 
 

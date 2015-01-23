@@ -9,7 +9,7 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/embedder/test/dart_to_cpp.mojom.dart';
 
-class DartSide extends DartSideInterface {
+class DartSide extends DartSideStub {
   static const int BAD_VALUE = 13;
   static const int ELEMENT_BYTES = 1;
   static const int CAPACITY_BYTES = 64;

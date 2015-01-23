@@ -17,9 +17,9 @@ MojoHandle leakMojoHandle() {
   Expect.isTrue(endpoint.handle.isValid);
 
   var eventStream = new MojoEventStream(endpoint.handle);
-  // After making a high-level MojoHandle, the underlying mojo handle will have
-  // the native MojoClose called on it when the MojoHandle is GC'd or the VM
-  // shuts down.
+  // After making a MojoEventStream, the underlying mojo handle will have
+  // the native MojoClose called on it when the MojoEventStream is GC'd or the
+  // VM shuts down.
 
   return endpoint.handle;
 }

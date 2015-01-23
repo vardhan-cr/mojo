@@ -11,7 +11,7 @@ import 'dart:mojo_core';
 
 import 'package:services/dart/test/echo_service.mojom.dart';
 
-class EchoServiceImpl extends EchoServiceInterface {
+class EchoServiceImpl extends EchoServiceStub {
   Application _application;
 
   EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint) :
@@ -30,7 +30,7 @@ class EchoServiceImpl extends EchoServiceInterface {
 class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  Function interfaceFactoryClosure() =>
+  Function stubFactoryClosure() =>
       (endpoint) => new EchoServiceImpl(this, endpoint);
 }
 

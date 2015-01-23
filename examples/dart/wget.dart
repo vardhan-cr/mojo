@@ -14,8 +14,8 @@ import 'package:mojo/services/network/public/interfaces/network_service.mojom.da
 import 'package:mojo/services/network/public/interfaces/url_loader.mojom.dart';
 
 class WGet extends Application {
-  NetworkServiceClient _networkServiceClient;
-  UrlLoaderClient _urlLoaderClient;
+  NetworkServiceProxy _networkService;
+  UrlLoaderProxy _urlLoaderProxy;
 
   WGet.fromHandle(MojoHandle shellHandle) : super.fromHandle(shellHandle);
 
@@ -31,18 +31,18 @@ class WGet extends Application {
     ByteData bodyData = await _getUrl(args[1]);
     print("read ${bodyData.lengthInBytes} bytes");
 
-    _closeClients();
+    _closeProxies();
     close();
   }
 
   Future<ByteData> _getUrl(String url) async {
-    _initClientsIfNeeded();
+    _initProxiesIfNeeded();
 
     var urlRequest = new UrlRequest()
         ..url = url
         ..autoFollowRedirects = true;
 
-    var urlResponse = await _urlLoaderClient.callStart(urlRequest);
+    var urlResponse = await _urlLoaderProxy.callStart(urlRequest);
     print("url => ${urlResponse.response.url}");
     print("status_line => ${urlResponse.response.statusLine}");
     print("mime_type => ${urlResponse.response.mimeType}");
@@ -50,24 +50,22 @@ class WGet extends Application {
     return DataPipeDrainer.drainHandle(urlResponse.response.body);
   }
 
-  void _initClientsIfNeeded() {
-    if (_networkServiceClient == null) {
-      var networkServiceClientEndpoint = connectToService(
-          "mojo:network_service", NetworkServiceInterface.name);
-      _networkServiceClient =
-          new NetworkServiceClient(networkServiceClientEndpoint);
+  void _initProxiesIfNeeded() {
+    if (_networkService == null) {
+      _networkService = new NetworkServiceProxy.unbound();
+      connectToService("mojo:network_service", _networkService);
     }
-    if (_urlLoaderClient == null) {
-      _urlLoaderClient = new UrlLoaderClient.unbound();
-      _networkServiceClient.callCreateUrlLoader(_urlLoaderClient);
+    if (_urlLoaderProxy == null) {
+      _urlLoaderProxy = new UrlLoaderProxy.unbound();
+      _networkService.callCreateUrlLoader(_urlLoaderProxy);
     }
   }
 
-  void _closeClients() {
-    _urlLoaderClient.close();
-    _networkServiceClient.close();
-    _urlLoaderClient = null;
-    _networkServiceClient = null;
+  void _closeProxies() {
+    _urlLoaderProxy.close();
+    _networkService.close();
+    _urlLoaderProxy = null;
+    _networkService = null;
   }
 }
 
