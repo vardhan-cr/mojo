@@ -16,6 +16,7 @@ import sys
 from get_test_list import GetTestList
 from mopy.config import Config
 from mopy.paths import Paths
+from mopy.gn import GNArgsForConfig, ParseGNConfig, CommandLineForGNArgs
 
 
 def _args_to_config(args):
@@ -84,63 +85,23 @@ def sync(config):
 def gn(config):
   command = ['gn', 'gen', '--check']
 
-  gn_args = []
-  gn_args.append('is_debug=' + ('true' if config.is_debug else 'false'))
-  gn_args.append('is_asan=' + ('true' if config.sanitizer ==
-                               Config.SANITIZER_ASAN else 'false'))
-  if config.is_clang is not None:
-    gn_args.append('is_clang=' + ('true' if config.is_clang else 'false'))
-  else:
-    gn_args.append('is_clang=' + ('true' if config.target_os not in
-                                  (Config.OS_ANDROID, Config.OS_WINDOWS)
-                                  else 'false'))
-
-  if config.values['use_goma']:
-    gn_args.append('use_goma=true')
-    gn_args.append(r'''goma_dir=\"%s\"''' % config.values['goma_dir'])
-  else:
-    gn_args.append('use_goma=false')
-
-  if config.values['use_nacl']:
-    gn_args.append('mojo_use_nacl=true')
-
-  if config.target_os == Config.OS_ANDROID:
-    gn_args.append(r'''os=\"android\"''')
-  elif config.target_os == Config.OS_CHROMEOS:
-    gn_args.append(r'''os=\"chromeos\" use_system_harfbuzz=false''')
-    gn_args.append(r'''use_glib=false''')
-  elif config.target_os == Config.OS_LINUX:
-    gn_args.append(r'''use_system_harfbuzz=false is_desktop_linux=false''')
-    gn_args.append(r'''use_glib=false use_aura=false''')
-
-  gn_args.append(r'''cpu_arch=\"%s\"''' % config.target_arch)
-
+  gn_args = CommandLineForGNArgs(GNArgsForConfig(config))
   out_dir = _get_out_dir(config)
   command.append(out_dir)
-  command.append('--args="%s"' % ' '.join(gn_args))
+  command.append('--args=%s' % ' '.join(gn_args))
 
-  print 'Running %s ...' % ' '.join(command)
-  return subprocess.call(' '.join(command), shell=True)
-
-
-def _get_gn_arg_value(out_dir, arg):
-  args_file_path = os.path.join(out_dir, 'args.gn')
-  if os.path.isfile(args_file_path):
-    key_value_regex = re.compile(r'^%s = (.+)$' % arg)
-    with open(args_file_path, 'r') as args_file:
-      for line in args_file.readlines():
-        m = key_value_regex.search(line)
-        if m:
-          return m.group(1).strip('"')
-  return ''
+  print 'Running %s %s ...' % (command[0],
+                               ' '.join('\'%s\'' % x for x in command[1:]))
+  return subprocess.call(command)
 
 
 def build(config):
   out_dir = _get_out_dir(config)
+  gn_args = ParseGNConfig(out_dir)
   print 'Building in %s ...' % out_dir
-  if _get_gn_arg_value(out_dir, 'use_goma') == 'true':
+  if gn_args.get('use_goma'):
     # Use the configured goma directory.
-    local_goma_dir = _get_gn_arg_value(out_dir, 'goma_dir')
+    local_goma_dir = gn_args.get('goma_dir')
     print 'Ensuring goma (in %s) started ...' % local_goma_dir
     command = ['python',
                os.path.join(local_goma_dir, 'goma_ctl.py'),
