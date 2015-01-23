@@ -107,6 +107,24 @@ void ApplicationManager::ConnectToApplication(
     ServiceProviderPtr exposed_services) {
   DCHECK(requested_url.is_valid());
   GURL mapped_url = delegate_->ResolveMappings(requested_url);
+
+  // We check both the mapped and resolved urls for existing shell_impls because
+  // external applications can be registered for the unresolved mojo:foo urls.
+  ShellImpl* shell_impl = GetShellImpl(mapped_url);
+  if (shell_impl) {
+    ConnectToClient(shell_impl, mapped_url, requestor_url, services.Pass(),
+                    exposed_services.Pass());
+    return;
+  }
+
+  GURL resolved_url = delegate_->ResolveURL(mapped_url);
+  shell_impl = GetShellImpl(resolved_url);
+  if (shell_impl) {
+    ConnectToClient(shell_impl, resolved_url, requestor_url, services.Pass(),
+                    exposed_services.Pass());
+    return;
+  }
+
   ApplicationLoader* loader =
       GetLoaderForURL(mapped_url, DONT_INCLUDE_DEFAULT_LOADER);
   if (loader) {
@@ -115,7 +133,6 @@ void ApplicationManager::ConnectToApplication(
     return;
   }
 
-  GURL resolved_url = delegate_->ResolveURL(mapped_url);
   loader = GetLoaderForURL(resolved_url, INCLUDE_DEFAULT_LOADER);
   if (loader) {
     ConnectToApplicationImpl(requested_url, resolved_url, requestor_url,
@@ -134,24 +151,24 @@ void ApplicationManager::ConnectToApplicationImpl(
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
     ApplicationLoader* loader) {
-  ShellImpl* shell = nullptr;
-  URLToShellImplMap::const_iterator shell_it =
-      url_to_shell_impl_.find(resolved_url);
-  if (shell_it != url_to_shell_impl_.end()) {
-    shell = shell_it->second;
-  } else {
-    ShellPtr shell_ptr;
-    shell =
-        new ShellImpl(GetProxy(&shell_ptr), this, requested_url, resolved_url);
-    url_to_shell_impl_[resolved_url] = shell;
-    shell->client()->Initialize(GetArgsForURL(requested_url));
+  ShellPtr shell_ptr;
+  ShellImpl* shell =
+      new ShellImpl(GetProxy(&shell_ptr), this, requested_url, resolved_url);
+  url_to_shell_impl_[resolved_url] = shell;
+  shell->client()->Initialize(GetArgsForURL(requested_url));
 
-    loader->Load(this, resolved_url, shell_ptr.Pass(),
-                 base::Bind(&ApplicationManager::LoadWithContentHandler,
-                            weak_ptr_factory_.GetWeakPtr()));
-  }
+  loader->Load(this, resolved_url, shell_ptr.Pass(),
+               base::Bind(&ApplicationManager::LoadWithContentHandler,
+                          weak_ptr_factory_.GetWeakPtr()));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
+}
+
+ShellImpl* ApplicationManager::GetShellImpl(const GURL& url) {
+  const auto& shell_it = url_to_shell_impl_.find(url);
+  if (shell_it != url_to_shell_impl_.end())
+    return shell_it->second;
+  return nullptr;
 }
 
 void ApplicationManager::ConnectToClient(

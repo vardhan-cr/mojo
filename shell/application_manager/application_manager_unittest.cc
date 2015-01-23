@@ -415,6 +415,34 @@ class TestDelegate : public ApplicationManager::Delegate {
   std::map<GURL, GURL> mappings_;
 };
 
+class TestExternal : public ApplicationDelegate {
+ public:
+  TestExternal()
+      : initialize_called_(false),
+        configure_incoming_connection_called_(false) {}
+
+  virtual void Initialize(ApplicationImpl* app) override {
+    initialize_called_ = true;
+    base::MessageLoop::current()->Quit();
+  }
+
+  virtual bool ConfigureIncomingConnection(
+      ApplicationConnection* connection) override {
+    configure_incoming_connection_called_ = true;
+    base::MessageLoop::current()->Quit();
+    return true;
+  }
+
+  bool initialize_called() const { return initialize_called_; }
+  bool configure_incoming_connection_called() const {
+    return configure_incoming_connection_called_;
+  }
+
+ private:
+  bool initialize_called_;
+  bool configure_incoming_connection_called_;
+};
+
 }  // namespace
 
 class ApplicationManagerTest : public testing::Test {
@@ -695,5 +723,19 @@ TEST_F(ApplicationManagerTest, MappedURLsShouldWorkWithLoaders) {
   EXPECT_EQ(1, custom_loader->num_loads());
   custom_loader->set_context(nullptr);
 }
+
+TEST_F(ApplicationManagerTest, ExternalApp) {
+  MessagePipe shell_pipe;
+  TestExternal external;
+  ApplicationImpl app(&external, shell_pipe.handle0.Pass());
+  application_manager_->RegisterExternalApplication(
+      GURL("mojo:test"), shell_pipe.handle1.Pass());
+  loop_.Run();
+  EXPECT_TRUE(external.initialize_called());
+  application_manager_->ConnectToServiceByName(
+      GURL("mojo:test"), std::string());
+  loop_.Run();
+  EXPECT_TRUE(external.configure_incoming_connection_called());
+};
 
 }  // namespace mojo

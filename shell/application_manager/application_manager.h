@@ -116,6 +116,8 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
                                 ServiceProviderPtr exposed_services,
                                 ApplicationLoader* loader);
 
+  ShellImpl* GetShellImpl(const GURL& url);
+
   void ConnectToClient(ShellImpl* shell_impl,
                        const GURL& url,
                        const GURL& requestor_url,
