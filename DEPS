@@ -317,6 +317,13 @@ hooks = [
                 '-s', 'src/build/linux/bin/eu-strip.sha1',
     ],
   },
+  # Pull the prebuilt network service binaries according to
+  # services/network/VERSION.
+  {
+    'name': 'download_network_service',
+    'pattern': '',
+    'action': [ 'python', 'src/services/network/download_network_service.py' ],
+  },
   {
     # Ensure that we don't accidentally reference any .pyc files whose
     # corresponding .py files have already been deleted.
