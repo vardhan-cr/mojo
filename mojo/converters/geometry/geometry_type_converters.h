@@ -89,12 +89,28 @@ struct MOJO_GEOMETRY_EXPORT TypeConverter<gfx::Rect, Rect> {
 
 }  // namespace mojo
 
+inline bool operator==(const mojo::Size& lhs, const mojo::Size& rhs) {
+  return lhs.width == rhs.width && lhs.height == rhs.height;
+}
+
 inline bool operator==(const gfx::Size& lhs, const mojo::Size& rhs) {
   return lhs.width() == rhs.width && lhs.height() == rhs.height;
 }
 
 inline bool operator==(const mojo::Size& lhs, const gfx::Size& rhs) {
   return rhs == lhs;
+}
+
+inline bool operator!=(const mojo::Size& lhs, const mojo::Size& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator!=(const gfx::Size& lhs, const mojo::Size& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator!=(const mojo::Size& lhs, const gfx::Size& rhs) {
+  return !(lhs == rhs);
 }
 
 #endif  // MOJO_CONVERTERS_GEOMETRY_GEOMETRY_TYPE_CONVERTERS_H_
