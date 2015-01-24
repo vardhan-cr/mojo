@@ -55,8 +55,9 @@ MojoResult ApplicationRunnerChromium::Run(MojoHandle shell_handle) {
     else
       loop.reset(new base::MessageLoop(message_loop_type_));
 
-    ApplicationImpl impl(delegate_.get(),
-                         MakeScopedHandle(MessagePipeHandle(shell_handle)));
+    ShellPtr shell;
+    shell.Bind(MakeScopedHandle(MessagePipeHandle(shell_handle)));
+    ApplicationImpl impl(delegate_.get(), shell.Pass());
     loop->Run();
   }
   delegate_.reset();

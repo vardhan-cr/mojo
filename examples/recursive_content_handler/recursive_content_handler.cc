@@ -33,8 +33,8 @@ class RecursiveContentHandler : public ApplicationDelegate,
   virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(ShellPtr shell, URLResponsePtr response) override {
     LOG(INFO) << "RecursiveContentHandler called with url: " << response->url;
-    return make_handled_factory_holder(new mojo::ApplicationImpl(
-        new RecursiveContentHandler(), shell.PassMessagePipe()));
+    return make_handled_factory_holder(
+        new mojo::ApplicationImpl(new RecursiveContentHandler(), shell.Pass()));
   }
 
   ContentHandlerFactory content_handler_factory_;

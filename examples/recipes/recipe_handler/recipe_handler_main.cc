@@ -64,7 +64,7 @@ class RecipeHandlerApp : public mojo::ApplicationDelegate,
       return nullptr;
 
     return make_handled_factory_holder(
-        new mojo::ApplicationImpl(recipe, shell.PassMessagePipe()));
+        new mojo::ApplicationImpl(recipe, shell.Pass()));
   }
 
   mojo::ContentHandlerFactory content_handler_factory_;

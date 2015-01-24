@@ -10,5 +10,7 @@ MojoResult MojoMain(MojoHandle shell_handle) {
   // An AtExitManager instance is needed to construct message loops.
   base::AtExitManager at_exit;
 
-  return mojo::test::RunAllTests(shell_handle);
+  mojo::ShellPtr shell;
+  shell.Bind(MakeScopedHandle(mojo::MessagePipeHandle(shell_handle)));
+  return mojo::test::RunAllTests(shell.Pass());
 }
