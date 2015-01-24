@@ -726,8 +726,10 @@ TEST_F(ApplicationManagerTest, MappedURLsShouldWorkWithLoaders) {
 
 TEST_F(ApplicationManagerTest, ExternalApp) {
   MessagePipe shell_pipe;
+  ShellPtr shell;
+  shell.Bind(shell_pipe.handle0.Pass());
   TestExternal external;
-  ApplicationImpl app(&external, shell_pipe.handle0.Pass());
+  ApplicationImpl app(&external, shell.Pass());
   application_manager_->RegisterExternalApplication(
       GURL("mojo:test"), shell_pipe.handle1.Pass());
   loop_.Run();
