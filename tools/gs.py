@@ -5,6 +5,7 @@
 
 import os
 import subprocess
+import sys
 import find_depot_tools
 
 def download_from_public_bucket(gs_path, output_path):
