@@ -2,31 +2,30 @@
 // Demonstrate using the ServiceProvider returned by the Shell
 // connectToApplication() method to provide a service to the
 // target application and to request a service from the target
-// application. To run this application with mojo_shell, set DIR
-// to be the absolute path for this directory, then:
-//   mojo_shell "file://$DIR/share_echo.js file://$DIR/share_echo_target.js"
+// application. To run this application with mojo_shell:
+//   mojo_shell file://full/path/to/share_echo.js
 
 define("main", [
   "console",
   "mojo/services/public/js/application",
-  "examples/echo/echo_service.mojom",
+  "examples/echo/echo.mojom",
 ], function(console, application, echo) {
 
   const Application = application.Application;
-  const EchoService = echo.EchoService;
+  const Echo = echo.Echo;
 
   var shareEchoApp;
   var everythingDone = {providedService: false, requestedService: false};
 
-  // This application will quit after the EchoServiceImpl has been used once
-  // and the EchoService we requested has responded once.
+  // This application will quit after the EchoImpl has been used once
+  // and the target Echo application has responded once.
   function quitIfEverythingIsDone(doneNow) {
     everythingDone[doneNow] = true;
     if (everythingDone.providedService && everythingDone.requestedService)
       shareEchoApp.quit();
   }
 
-  class EchoServiceImpl {
+  class EchoImpl {
     echoString(s) {
       quitIfEverythingIsDone("providedService");
       return Promise.resolve({value: "ShareEcho: " + s});
@@ -35,20 +34,25 @@ define("main", [
 
   class ShareEcho extends Application {
     initialize(args) {
-      if (args.length != 2) {
-        console.log("Expected URL argument");
-        return;
-      }
+      // The Application object is a singleton. Remember it.
       shareEchoApp = this;
-      var shareEchoTargetURL = args[1];
+
+      var shareEchoTargetURL =
+          this.url.replace("share_echo.js", "share_echo_target.js");
+
       // The value of targetSP is-a JS ServiceProvider that's connected to the
       // share_echo_target.js application. We provide our implementation of
-      // EchoService to the share_echo_target.js application and request its
-      // EchoService implementation.
+      // Echo to the share_echo_target.js application and request its
+      // Echo implementation.
       var targetSP = this.shell.connectToApplication(shareEchoTargetURL);
-      targetSP.provideService(EchoService, EchoServiceImpl);
-      var shareEchoTargetApp = this;
-      var echoService = targetSP.requestService(EchoService);
+
+      // Make our implementation of Echo available to the other end.
+      // Note that we pass the class, not an instance.
+      targetSP.provideService(Echo, EchoImpl);
+
+      // Get the implementation at the other end, call it, and prepare for
+      // the async callback.
+      var echoService = targetSP.requestService(Echo);
       echoService.echoString("ShareEcho").then(function(response) {
         console.log(response.value);
         quitIfEverythingIsDone("requestedService");

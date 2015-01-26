@@ -9,29 +9,29 @@
 define("main", [
   "console",
   "mojo/services/public/js/application",
-  "examples/echo/echo_service.mojom",
+  "examples/echo/echo.mojom",
 ], function(console, application, echo) {
 
   const Application = application.Application;
-  const EchoService = echo.EchoService;
-  var echoServiceApp;
+  const Echo = echo.Echo;
+  var echoServerApp;
 
-  class EchoServiceImpl {
+  class EchoImpl {
     echoString(s) {
-      echoServiceApp.quit();
+      echoServerApp.quit();
       return Promise.resolve({value: s});
     }
   }
 
-  class EchoServiceApp extends Application {
+  class EchoServerApp extends Application {
     initialize(args) {
-      echoServiceApp = this;
+      echoServerApp = this;
     }
 
     acceptConnection(initiatorURL, initiatorSP) {
-      initiatorSP.provideService(EchoService, EchoServiceImpl);
+      initiatorSP.provideService(Echo, EchoImpl);
     }
   }
 
-  return EchoServiceApp;
+  return EchoServerApp;
 });

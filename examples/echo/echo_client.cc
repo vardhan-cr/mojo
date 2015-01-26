@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-#include "examples/echo/echo_service.mojom.h"
+#include "examples/echo/echo.mojom.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -26,13 +26,13 @@ class ResponsePrinter {
 class EchoClientDelegate : public ApplicationDelegate {
  public:
   virtual void Initialize(ApplicationImpl* app) override {
-    app->ConnectToService("mojo:echo_service", &echo_service_);
+    app->ConnectToService("mojo:echo_server", &echo_);
 
-    echo_service_->EchoString("hello world", ResponsePrinter());
+    echo_->EchoString("hello world", ResponsePrinter());
   }
 
  private:
-  EchoServicePtr echo_service_;
+  EchoPtr echo_;
 };
 
 }  // namespace examples

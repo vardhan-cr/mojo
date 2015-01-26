@@ -4,6 +4,6 @@
 
 module mojo.examples;
 
-interface EchoService {
+interface Echo {
   EchoString(string? value) => (string? value);
 };
