@@ -1,0 +1,17 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module reaper;
+
+// Reaper maintains a graph of references between applications and based on that
+// decides when to shut down applications.
+interface Reaper {
+  // Create a new reference. A reference is composed of two nodes.Initially,
+  // both nodes are owned by the calling application. Node ids must be unique
+  // within a given application.
+  CreateReference(uint32 source_node, uint32 target_node);
+
+  // Drop a node. The node and containing reference both becomes invalid.
+  DropNode(uint32 node);
+};

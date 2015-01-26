@@ -1,0 +1,23 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module reaper;
+
+// Diagnostic and test support for the reaper.
+interface Diagnostics {
+  // Returns all live nodes, in no particular order.
+  DumpNodes() => (array<Node> nodes);
+
+  // Clear all state.
+  Reset() => ();
+};
+
+struct Node {
+  string app_url;
+  uint32 id;
+  string other_app_url;
+  uint32 other_id;
+  bool is_source;
+  bool is_being_transferred;
+};

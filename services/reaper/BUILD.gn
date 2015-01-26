@@ -1,0 +1,58 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
+
+mojo_native_application("reaper") {
+  sources = [
+    "main.cc",
+    "reaper_binding.cc",
+    "reaper_binding.h",
+    "reaper_impl.cc",
+    "reaper_impl.h",
+  ]
+
+  deps = [
+    ":bindings",
+    "//base",
+    "//url",
+    "//mojo/application",
+    "//mojo/common",
+    "//mojo/environment:chromium",
+    "//mojo/public/cpp/application",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/public/cpp/system",
+  ]
+}
+
+mojom("bindings") {
+  sources = [
+    "diagnostics.mojom",
+    "reaper.mojom",
+  ]
+}
+
+mojo_native_application("tests") {
+  output_name = "reaper_apptests"
+
+  testonly = true
+
+  sources = [
+    "reaper_apptest.cc",
+  ]
+
+  deps = [
+    ":bindings",
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/common",
+    "//mojo/public/cpp/bindings",
+  ]
+
+  datadeps = [
+    ":reaper",
+  ]
+}

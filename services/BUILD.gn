@@ -15,6 +15,7 @@ group("services") {
     "//services/icu_data",
     "//services/js",
     "//services/native_viewport",
+    "//services/reaper",
     "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",
