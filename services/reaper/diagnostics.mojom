@@ -15,7 +15,7 @@ interface Diagnostics {
 
 struct Node {
   string app_url;
-  uint32 id;
+  uint32 node_id;
   string other_app_url;
   uint32 other_id;
   bool is_source;

@@ -11,19 +11,20 @@
 namespace reaper {
 
 struct ReaperImpl::NodeLocator {
-  NodeLocator() : id(0) {}
+  NodeLocator() : node_id(0) {}
   NodeLocator(const NodeLocator& other) = default;
-  NodeLocator(const GURL& app_url, uint32 id) : app_url(app_url), id(id) {}
+  NodeLocator(AppId app_id, uint32 node_id)
+      : app_id(app_id), node_id(node_id) {}
   bool operator<(const NodeLocator& rhs) const {
-    if (app_url < rhs.app_url)
+    if (app_id < rhs.app_id)
       return true;
-    else if (app_url == rhs.app_url && id < rhs.id)
+    else if (app_id == rhs.app_id && node_id < rhs.node_id)
       return true;
     else
       return false;
   }
-  GURL app_url;
-  uint32 id;
+  AppId app_id;
+  uint32 node_id;
 };
 
 struct ReaperImpl::NodeInfo {
@@ -36,17 +37,25 @@ struct ReaperImpl::NodeInfo {
   bool is_being_transferred;
 };
 
-ReaperImpl::ReaperImpl() {
+ReaperImpl::ReaperImpl() : next_app_id_(1) {
 }
 
 ReaperImpl::~ReaperImpl() {
 }
 
+ReaperImpl::AppId ReaperImpl::GetAppId(const GURL& app_url) {
+  auto result = app_ids_[app_url];
+  if (result == 0) {
+    result = app_ids_[app_url] = next_app_id_++;
+  }
+  return result;
+}
+
 void ReaperImpl::CreateReference(GURL caller_app,
                                  uint32 source_node_id,
                                  uint32 target_node_id) {
-  NodeLocator source_locator(caller_app, source_node_id);
-  NodeLocator target_locator(caller_app, target_node_id);
+  NodeLocator source_locator(GetAppId(caller_app), source_node_id);
+  NodeLocator target_locator(GetAppId(caller_app), target_node_id);
 
   if (nodes_.find(source_locator) != nodes_.end()) {
     LOG(ERROR) << "Duplicate source node: " << source_node_id;
@@ -67,7 +76,7 @@ void ReaperImpl::CreateReference(GURL caller_app,
 }
 
 void ReaperImpl::DropNode(GURL caller_app, uint32 node_id) {
-  const auto& it = nodes_.find(NodeLocator(caller_app, node_id));
+  const auto& it = nodes_.find(NodeLocator(GetAppId(caller_app), node_id));
   if (it == nodes_.end()) {
     LOG(ERROR) << "Specified node does not exist: " << node_id;
     return;
@@ -96,13 +105,16 @@ void ReaperImpl::Create(mojo::ApplicationConnection* connection,
 
 void ReaperImpl::DumpNodes(
     const mojo::Callback<void(mojo::Array<NodePtr>)>& callback) {
+  std::map<AppId, GURL> app_urls;
+  for (const auto& it : app_ids_)
+    app_urls[it.second] = it.first;
   mojo::Array<NodePtr> result(0u);
   for (const auto& entry : nodes_) {
     NodePtr node(Node::New());
-    node->app_url = entry.first.app_url.spec();
-    node->id = entry.first.id;
-    node->other_app_url = entry.second.other_node.app_url.spec();
-    node->other_id = entry.second.other_node.id;
+    node->app_url = app_urls[entry.first.app_id].spec();
+    node->node_id = entry.first.node_id;
+    node->other_app_url = app_urls[entry.second.other_node.app_id].spec();
+    node->other_id = entry.second.other_node.node_id;
     node->is_source = entry.second.is_source;
     node->is_being_transferred = entry.second.is_being_transferred;
     result.push_back(node.Pass());

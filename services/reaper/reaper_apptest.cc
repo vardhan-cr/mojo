@@ -61,13 +61,13 @@ TEST_F(ReaperAppTest, CreateAndRead) {
 
   EXPECT_EQ(1u,
             std::count_if(lookup.begin(), lookup.end(), [&is_self](Node* node) {
-    return is_self(node->app_url) && node->id == 1u &&
+    return is_self(node->app_url) && node->node_id == 1u &&
            is_self(node->other_app_url) && node->other_id == 2u &&
            node->is_source && !node->is_being_transferred;
   }));
   EXPECT_EQ(1u,
             std::count_if(lookup.begin(), lookup.end(), [&is_self](Node* node) {
-    return is_self(node->app_url) && node->id == 2u &&
+    return is_self(node->app_url) && node->node_id == 2u &&
            is_self(node->other_app_url) && node->other_id == 1u &&
            !node->is_source && !node->is_being_transferred;
   }));
@@ -103,7 +103,7 @@ TEST_F(ReaperAppTest, DropOneNode) {
   for (size_t i = 0; i < nodes.size(); ++i)
     lookup.push_back(nodes[i].get());
   EXPECT_EQ(1u, std::count_if(lookup.begin(), lookup.end(),
-                              [](Node* node) { return node->id == 2u; }));
+                              [](Node* node) { return node->node_id == 2u; }));
 }
 
 }  // namespace reaper

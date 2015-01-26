@@ -37,8 +37,12 @@ class ReaperImpl : public Diagnostics,
   void DropNode(GURL caller_app, uint32 node);
 
  private:
+  typedef int AppId;
+
   struct NodeLocator;
   struct NodeInfo;
+
+  AppId GetAppId(const GURL& app_url);
 
   // mojo::ApplicationDelegate
   bool ConfigureIncomingConnection(
@@ -56,6 +60,10 @@ class ReaperImpl : public Diagnostics,
   void DumpNodes(
       const mojo::Callback<void(mojo::Array<NodePtr>)>& callback) override;
   void Reset(const mojo::Callback<void()>&) override;
+
+  // There will be a lot of nodes in a running system, so we intern app urls.
+  std::map<GURL, AppId> app_ids_;
+  int next_app_id_;
 
   std::map<NodeLocator, NodeInfo> nodes_;
   mojo::WeakBindingSet<Diagnostics> diagnostics_bindings_;
