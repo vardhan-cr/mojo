@@ -41,9 +41,7 @@
     "run_on_android": True,
   },
   {
-    # These tests currently crash. We should re-enable them when they pass.
     "test": "mojo_view_manager_lib_unittests",
-    "disabled": True,
   },
   {
     "test": "mojo_surfaces_lib_unittests",
