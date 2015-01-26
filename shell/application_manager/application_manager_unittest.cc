@@ -417,12 +417,10 @@ class TestDelegate : public ApplicationManager::Delegate {
 
 class TestExternal : public ApplicationDelegate {
  public:
-  TestExternal()
-      : initialize_called_(false),
-        configure_incoming_connection_called_(false) {}
+  TestExternal() : configure_incoming_connection_called_(false) {}
 
   virtual void Initialize(ApplicationImpl* app) override {
-    initialize_called_ = true;
+    initialize_args_ = app->args();
     base::MessageLoop::current()->Quit();
   }
 
@@ -433,13 +431,16 @@ class TestExternal : public ApplicationDelegate {
     return true;
   }
 
-  bool initialize_called() const { return initialize_called_; }
+  const std::vector<std::string>& initialize_args() const {
+    return initialize_args_;
+  }
+
   bool configure_incoming_connection_called() const {
     return configure_incoming_connection_called_;
   }
 
  private:
-  bool initialize_called_;
+  std::vector<std::string> initialize_args_;
   bool configure_incoming_connection_called_;
 };
 
@@ -729,11 +730,13 @@ TEST_F(ApplicationManagerTest, ExternalApp) {
   ShellPtr shell;
   shell.Bind(shell_pipe.handle0.Pass());
   TestExternal external;
+  std::vector<std::string> args;
+  args.push_back("test");
   ApplicationImpl app(&external, shell.Pass());
-  application_manager_->RegisterExternalApplication(
-      GURL("mojo:test"), shell_pipe.handle1.Pass());
+  application_manager_->RegisterExternalApplication(GURL("mojo:test"), args,
+                                                    shell_pipe.handle1.Pass());
   loop_.Run();
-  EXPECT_TRUE(external.initialize_called());
+  EXPECT_EQ(args, external.initialize_args());
   application_manager_->ConnectToServiceByName(
       GURL("mojo:test"), std::string());
   loop_.Run();

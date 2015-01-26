@@ -26,6 +26,7 @@ class Launcher {
   explicit Launcher(base::CommandLine* command_line)
       : app_path_(command_line->GetSwitchValuePath(kAppPath)),
         app_url_(command_line->GetSwitchValueASCII(kAppURL)),
+        app_args_(command_line->GetArgs()),
         loop_(base::MessageLoop::TYPE_IO),
         connection_(
             base::FilePath(command_line->GetSwitchValuePath(kShellPath))) {}
@@ -37,7 +38,8 @@ class Launcher {
     DCHECK(!run_loop_.get());
     run_loop_.reset(new base::RunLoop);
     connection_.Register(
-        app_url_, base::Bind(&Launcher::OnRegistered, base::Unretained(this)));
+        app_url_, app_args_,
+        base::Bind(&Launcher::OnRegistered, base::Unretained(this)));
     run_loop_->Run();
     run_loop_.reset();
     return shell_handle_.is_valid();
@@ -65,6 +67,7 @@ class Launcher {
 
   const base::FilePath app_path_;
   const GURL app_url_;
+  std::vector<std::string> app_args_;
   base::MessageLoop loop_;
   mojo::shell::ExternalApplicationRegistrarConnection connection_;
   mojo::ScopedMessagePipeHandle shell_handle_;

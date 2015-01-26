@@ -71,6 +71,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
       const std::string& interface_name);
 
   void RegisterExternalApplication(const GURL& application_url,
+                                   const std::vector<std::string>& args,
                                    ScopedMessagePipeHandle shell_handle);
 
   // Sets the default Loader to be used if not overridden by SetLoaderForURL()

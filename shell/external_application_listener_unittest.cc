@@ -82,7 +82,9 @@ class StubShellImpl : public InterfaceImpl<Shell> {
   }
 };
 
-void DoLocalRegister(const GURL& app_url, ScopedMessagePipeHandle shell) {
+void DoLocalRegister(const GURL& app_url,
+                     const std::vector<std::string>& args,
+                     ScopedMessagePipeHandle shell) {
   BindToPipe(new StubShellImpl, shell.Pass());
 }
 
@@ -145,7 +147,7 @@ class FakeExternalApplication {
   void Register(scoped_ptr<InterfaceImpl<Application>> application_impl,
                 base::Closure register_complete_callback) {
     connection_->Register(
-        GURL(url_),
+        GURL(url_), std::vector<std::string>(),
         base::Bind(&FakeExternalApplication::OnRegister, base::Unretained(this),
                    register_complete_callback));
     application_impl_ = application_impl.Pass();

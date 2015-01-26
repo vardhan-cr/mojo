@@ -46,7 +46,9 @@ class ExternalApplicationListener
   // When run, a RegisterCallback should note that an app has asked to be
   // registered at app_url and Bind the provided pipe handle to a ShellImpl.
   using RegisterCallback =
-      base::Callback<void(const GURL& app_url, ScopedMessagePipeHandle shell)>;
+      base::Callback<void(const GURL& app_url,
+                          const std::vector<std::string>& args,
+                          ScopedMessagePipeHandle shell)>;
   using ErrorCallback = base::Callback<void(int rv)>;
 
   static base::FilePath ConstructDefaultSocketPath();

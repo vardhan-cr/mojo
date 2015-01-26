@@ -40,6 +40,7 @@ class ExternalApplicationRegistrarConnection : public ErrorHandler {
 
   // Registers this app with the shell at the provided URL.
   void Register(const GURL& app_url,
+                const std::vector<std::string>& args,
                 base::Callback<void(ShellPtr)> register_complete_callback);
 
  private:

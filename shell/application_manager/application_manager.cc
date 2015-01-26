@@ -183,11 +183,16 @@ void ApplicationManager::ConnectToClient(
 
 void ApplicationManager::RegisterExternalApplication(
     const GURL& url,
+    const std::vector<std::string>& args,
     ScopedMessagePipeHandle shell_handle) {
   ShellImpl* shell_impl =
       new ShellImpl(MakeRequest<Shell>(shell_handle.Pass()), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
-  shell_impl->client()->Initialize(GetArgsForURL(url));
+
+  if (args.empty())
+    shell_impl->client()->Initialize(GetArgsForURL(url));
+  else
+    shell_impl->client()->Initialize(Array<String>::From(args));
 }
 
 void ApplicationManager::LoadWithContentHandler(

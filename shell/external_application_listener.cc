@@ -49,6 +49,7 @@ class ExternalApplicationListener::RegistrarImpl
  private:
   virtual void Register(
       const String& app_url,
+      Array<String> args,
       const mojo::Callback<void(ShellPtr)>& callback) override;
 
   const RegisterCallback register_callback_;
@@ -172,9 +173,12 @@ void ExternalApplicationListener::RegistrarImpl::OnConnectionError() {
 
 void ExternalApplicationListener::RegistrarImpl::Register(
     const String& app_url,
+    Array<String> args,
     const mojo::Callback<void(ShellPtr)>& callback) {
   MessagePipe pipe;
-  register_callback_.Run(app_url.To<GURL>(), pipe.handle0.Pass());
+  register_callback_.Run(app_url.To<GURL>(),
+                         args.To<std::vector<std::string>>(),
+                         pipe.handle0.Pass());
   callback.Run(MakeProxy<Shell>(pipe.handle1.Pass()));
 }
 

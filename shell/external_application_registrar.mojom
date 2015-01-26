@@ -12,5 +12,5 @@ import "mojo/public/interfaces/application/shell.mojom";
 // available to other apps at that URL and pass back a Shell bound to
 // an impl capable of servicing the external application's connection requests.
 interface ExternalApplicationRegistrar {
-  Register(string application_url) => (Shell shell);
+  Register(string application_url, array<string>? args) => (Shell shell);
 };
