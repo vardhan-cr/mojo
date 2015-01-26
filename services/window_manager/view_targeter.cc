@@ -42,6 +42,8 @@ ui::EventTarget* ViewTargeter::FindTargetForLocatedEvent(
       return target;
     }
   }
+  if (view->view()->shared_properties().count("event-root"))
+    return view;
   return EventTargeter::FindTargetForLocatedEvent(view, event);
 }
 

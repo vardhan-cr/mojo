@@ -43,6 +43,7 @@ WindowManager::~WindowManager() {
 
 View* WindowManager::Create() {
   View* view = root_->view_manager()->CreateView();
+  root_->AddChild(view);
   UpdateBounds(view);
   view->AddObserver(this);
   views_.insert(view);

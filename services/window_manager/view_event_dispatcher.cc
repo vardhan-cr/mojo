@@ -25,9 +25,6 @@ ui::EventTarget* ViewEventDispatcher::GetRootTarget() {
 }
 
 void ViewEventDispatcher::OnEventProcessingStarted(ui::Event* event) {
-  // TODO(erg): In the aura version of this class, we perform a DIP based
-  // transformation here. Do we want to do any sort of analogous transformation
-  // here.
 }
 
 bool ViewEventDispatcher::CanDispatchToTarget(ui::EventTarget* target) {

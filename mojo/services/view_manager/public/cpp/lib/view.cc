@@ -5,6 +5,7 @@
 #include "view_manager/public/cpp/view.h"
 
 #include <set>
+#include <string>
 
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "view_manager/public/cpp/lib/view_manager_client_impl.h"
@@ -245,6 +246,18 @@ void View::SetSharedProperty(const std::string& name,
     properties_[name] = *value;
   } else if (it != properties_.end()) {
     properties_.erase(it);
+  }
+
+  // TODO: add test coverage of this (450303).
+  if (manager_) {
+    Array<uint8_t> transport_value;
+    if (value) {
+      transport_value.resize(value->size());
+      if (value->size())
+        memcpy(&transport_value.front(), &(value->front()), value->size());
+    }
+    static_cast<ViewManagerClientImpl*>(manager_)->SetProperty(
+        id_, name, transport_value.Pass());
   }
 
   FOR_EACH_OBSERVER(
