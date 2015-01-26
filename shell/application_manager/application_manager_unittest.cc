@@ -11,6 +11,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
@@ -45,19 +46,18 @@ class QuitMessageLoopErrorHandler : public ErrorHandler {
   DISALLOW_COPY_AND_ASSIGN(QuitMessageLoopErrorHandler);
 };
 
-class TestServiceImpl : public InterfaceImpl<TestService> {
+class TestServiceImpl : public TestService {
  public:
-  explicit TestServiceImpl(TestContext* context) : context_(context) {
+  TestServiceImpl(TestContext* context, InterfaceRequest<TestService> request)
+      : context_(context), binding_(this, request.Pass()) {
     ++context_->num_impls;
   }
 
-  ~TestServiceImpl() override { --context_->num_impls; }
-
-  void OnConnectionError() override {
+  ~TestServiceImpl() override {
+    --context_->num_impls;
     if (!base::MessageLoop::current()->is_running())
       return;
     base::MessageLoop::current()->Quit();
-    InterfaceImpl::OnConnectionError();
   }
 
   // TestService implementation:
@@ -69,14 +69,13 @@ class TestServiceImpl : public InterfaceImpl<TestService> {
 
  private:
   TestContext* context_;
+  StrongBinding<TestService> binding_;
 };
 
 class TestClient {
  public:
   explicit TestClient(TestServicePtr service)
       : service_(service.Pass()), quit_after_ack_(false) {}
-
-  ~TestClient() { service_.reset(); }
 
   void AckTest() {
     if (quit_after_ack_)
@@ -133,7 +132,7 @@ class TestApplicationLoader : public ApplicationLoader,
   // InterfaceFactory implementation.
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestService> request) override {
-    BindToRequest(new TestServiceImpl(context_), &request);
+    new TestServiceImpl(context_, request.Pass());
   }
 
   scoped_ptr<ApplicationImpl> test_app_;
@@ -247,6 +246,7 @@ class TestAImpl : public TestA {
         binding_(this, request.Pass()) {
     connection->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
   }
+
   ~TestAImpl() override {
     test_context_->IncrementNumADeletes();
     if (base::MessageLoop::current()->is_running())
@@ -270,13 +270,15 @@ class TestAImpl : public TestA {
 
   TesterContext* test_context_;
   TestBPtr b_;
-  Binding<TestA> binding_;
+  StrongBinding<TestA> binding_;
 };
 
-class TestBImpl : public InterfaceImpl<TestB> {
+class TestBImpl : public TestB {
  public:
-  TestBImpl(ApplicationConnection* connection, TesterContext* test_context)
-      : test_context_(test_context) {
+  TestBImpl(ApplicationConnection* connection,
+            TesterContext* test_context,
+            InterfaceRequest<TestB> request)
+      : test_context_(test_context), binding_(this, request.Pass()) {
     connection->ConnectToService(&c_);
   }
 
@@ -300,12 +302,15 @@ class TestBImpl : public InterfaceImpl<TestB> {
 
   TesterContext* test_context_;
   TestCPtr c_;
+  StrongBinding<TestB> binding_;
 };
 
-class TestCImpl : public InterfaceImpl<TestC> {
+class TestCImpl : public TestC {
  public:
-  TestCImpl(ApplicationConnection* connection, TesterContext* test_context)
-      : test_context_(test_context) {}
+  TestCImpl(ApplicationConnection* connection,
+            TesterContext* test_context,
+            InterfaceRequest<TestC> request)
+      : test_context_(test_context), binding_(this, request.Pass()) {}
 
   ~TestCImpl() override { test_context_->IncrementNumCDeletes(); }
 
@@ -314,7 +319,9 @@ class TestCImpl : public InterfaceImpl<TestC> {
     test_context_->IncrementNumCCalls();
     callback.Run();
   }
+
   TesterContext* test_context_;
+  StrongBinding<TestC> binding_;
 };
 
 class Tester : public ApplicationDelegate,
@@ -368,12 +375,12 @@ class Tester : public ApplicationDelegate,
 
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestB> request) override {
-    BindToRequest(new TestBImpl(connection, context_), &request);
+    new TestBImpl(connection, context_, request.Pass());
   }
 
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestC> request) override {
-    BindToRequest(new TestCImpl(connection, context_), &request);
+    new TestCImpl(connection, context_, request.Pass());
   }
 
   TesterContext* context_;
