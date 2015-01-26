@@ -9,9 +9,9 @@
 <import src="/gen/examples/browser/browser_host.mojom.sky" as="example" />
 
 <import src="/sky/framework/embedder.sky" as="embedder" />
+<import src="/sky/framework/sky-box.sky"/>
 <import src="/sky/framework/sky-element/sky-element.sky" as="SkyElement" />
 <import src="/sky/framework/sky-input.sky" />
-<import src="/sky/framework/sky-box/sky-box.sky"/>
 
 <sky-element name="browser-panel">
 <template>

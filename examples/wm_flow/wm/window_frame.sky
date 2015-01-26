@@ -7,8 +7,8 @@
 <sky>
 <import src="/gen/examples/wm_flow/wm/window_frame_host.mojom.sky" as="example" />
 <import src="/sky/framework/embedder.sky" as="embedder" />
-<import src="/sky/framework/sky-button/sky-button.sky"/>
-<import src="/sky/framework/sky-checkbox/sky-checkbox.sky"/>
+<import src="/sky/framework/sky-button.sky"/>
+<import src="/sky/framework/sky-checkbox.sky"/>
 <import src="/sky/framework/sky-element/sky-element.sky" as="SkyElement"/>
 
 <style>

@@ -10,11 +10,11 @@
 <import src="/mojo/services/navigation/public/interfaces/navigation.mojom.sky" as="navigation" />
 
 <import src="/sky/framework/embedder.sky" as="embedder" />
+<import src="/sky/framework/sky-box.sky" as="SkyBox" />
+<import src="/sky/framework/sky-button.sky" as="SkyButton" />
+<import src="/sky/framework/sky-checkbox.sky" as="SkyCheckbox" />
 <import src="/sky/framework/sky-element/sky-element.sky" as="SkyElement" />
-<import src="/sky/framework/sky-button/sky-button.sky" as="SkyButton" />
-<import src="/sky/framework/sky-box/sky-box.sky" as="SkyBox" />
-<import src="/sky/framework/sky-checkbox/sky-checkbox.sky" as="SkyCheckbox" />
-<import src="/sky/framework/sky-radio/sky-radio.sky" as="SkyRadio" />
+<import src="/sky/framework/sky-radio.sky" as="SkyRadio" />
 
 <sky-element name="debug-panel">
 <template>
