@@ -1535,14 +1535,15 @@ def GetPreferredTryMasters(project, change):
     return {}
 
   builders = [
-      'Mojo Linux Try',
-      'Mojo Linux (dbg) Try',
-      'Mojo Linux NaCl Try',
-      'Mojo Linux NaCl (dbg) Try',
-      'Mojo Android Builder Try',
       'Mojo Android Builder (dbg) Try',
-      'Mojo ChromeOS Builder Try',
+      'Mojo Android Builder Try',
       'Mojo ChromeOS Builder (dbg) Try',
+      'Mojo ChromeOS Builder Try',
+      'Mojo Linux (dbg) Try',
+      'Mojo Linux ASan Try',
+      'Mojo Linux NaCl (dbg) Try',
+      'Mojo Linux NaCl Try',
+      'Mojo Linux Try',
   ]
 
   return GetDefaultTryConfigs(builders)
