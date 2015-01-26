@@ -75,7 +75,8 @@ def main():
 
   result = perf_data_uploader.UploadPerfData(
       args.master_name, args.perf_id, args.test_name, args.builder_name,
-      args.build_number, revision, perf_data, point_id)
+      args.build_number, revision, perf_data, point_id, False,
+      args.testing_dashboard)
 
   return 0 if result else 1
 
