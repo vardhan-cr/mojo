@@ -23,7 +23,7 @@ group("services") {
     "//services/window_manager",
   ]
 
-  if (!is_android && !is_asan) {
+  if (!is_asan) {
     deps += [ "//services/dart" ]
   }
 }

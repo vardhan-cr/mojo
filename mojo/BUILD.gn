@@ -72,7 +72,7 @@ group("tests") {
     "//services/window_manager:window_manager_unittests",
   ]
 
-  if (!is_android && !is_asan) {
+  if (!is_asan) {
     deps += [
       "//mojo/dart/embedder/test:dart_unittests",
       "//services/dart:dart_apptests",
