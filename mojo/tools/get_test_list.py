@@ -138,7 +138,8 @@ def GetTestList(config):
                  "--perf-id", perf_id,
                  "--test-name", test_name,
                  "--perf-data-path",
-                 os.path.join(build_dir, test_name + "_perf.log")]
+                 os.path.join(build_dir, test_name + "_perf.log"),
+                 "--production-dashboard"]
       if config.values.get("builder_name"):
         command += ["--builder-name", config.values["builder_name"]]
       if config.values.get("build_number"):
