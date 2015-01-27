@@ -186,6 +186,7 @@ TEST_F(ReaperAppTest, GetApplicationSecret) {
   EXPECT_EQ(secret1, secret2);
 
   diagnostics_->Reset();
+  Ping(&diagnostics_);
   uint64 secret3 = 0u;
   reaper_->GetApplicationSecret(SecretCatcher(&secret3));
   Ping(&reaper_);
