@@ -18,6 +18,7 @@
 #include "mojo/common/common_type_converters.h"
 #include "mojo/edk/embedder/channel_init.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "shell/domain_socket/net_errors.h"
 #include "shell/domain_socket/socket_descriptor.h"
 #include "shell/external_application_registrar.mojom.h"
@@ -29,32 +30,47 @@ namespace shell {
 
 namespace {
 const char kDefaultListenSocketPath[] = "/var/run/mojo/system_socket";
+
+class RegistrarImpl : public ExternalApplicationRegistrar, public ErrorHandler {
+ public:
+  RegistrarImpl(const ExternalApplicationListener::RegisterCallback& callback,
+                SocketDescriptor incoming_socket,
+                scoped_refptr<base::TaskRunner> io_runner)
+      : register_callback_(callback),
+        binding_(this, channel_init_.Init(incoming_socket, io_runner)) {
+    binding_.set_error_handler(this);
+  }
+
+  ~RegistrarImpl() override {}
+
+ private:
+  void OnConnectionError() override { channel_init_.WillDestroySoon(); }
+
+  void Register(
+      const String& app_url,
+      Array<String> args,
+      const Callback<void(InterfaceRequest<Application>)>& callback) override {
+    ApplicationPtr application;
+    InterfaceRequest<Application> application_request = GetProxy(&application);
+    register_callback_.Run(app_url.To<GURL>(),
+                           args.To<std::vector<std::string>>(),
+                           application.Pass());
+    callback.Run(application_request.Pass());
+  }
+
+  embedder::ChannelInit channel_init_;
+  const ExternalApplicationListener::RegisterCallback register_callback_;
+  StrongBinding<ExternalApplicationRegistrar> binding_;
+
+  DISALLOW_COPY_AND_ASSIGN(RegistrarImpl);
+};
+
 }  // namespace
 
 // static
 base::FilePath ExternalApplicationListener::ConstructDefaultSocketPath() {
   return base::FilePath(FILE_PATH_LITERAL(kDefaultListenSocketPath));
 }
-
-class ExternalApplicationListener::RegistrarImpl
-    : public InterfaceImpl<ExternalApplicationRegistrar> {
- public:
-  explicit RegistrarImpl(const RegisterCallback& callback);
-  ~RegistrarImpl() override;
-
-  void OnConnectionError() override;
-
-  embedder::ChannelInit channel_init;
-
- private:
-  virtual void Register(
-      const String& app_url,
-      Array<String> args,
-      const mojo::Callback<void(InterfaceRequest<Application>)>& callback)
-      override;
-
-  const RegisterCallback register_callback_;
-};
 
 ExternalApplicationListener::ExternalApplicationListener(
     const scoped_refptr<base::SequencedTaskRunner>& shell_runner,
@@ -134,54 +150,23 @@ void ExternalApplicationListener::OnListening(int rv) {
 void ExternalApplicationListener::OnConnection(SocketDescriptor incoming) {
   DCHECK(listener_thread_checker_.CalledOnValidThread());
   shell_runner_->PostTask(
-      FROM_HERE,
-      base::Bind(&ExternalApplicationListener::CreatePipeAndBindToRegistrarImpl,
-                 weak_ptr_factory_.GetWeakPtr(), incoming));
+      FROM_HERE, base::Bind(&ExternalApplicationListener::CreateRegistrar,
+                            weak_ptr_factory_.GetWeakPtr(), incoming));
 }
 
 void ExternalApplicationListener::RunErrorCallbackIfListeningFailed(int rv) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
-  if (rv != net::OK && !error_callback_.is_null()) {
+  if (rv != net::OK && !error_callback_.is_null())
     error_callback_.Run(rv);
-  }
 }
 
-void ExternalApplicationListener::CreatePipeAndBindToRegistrarImpl(
+void ExternalApplicationListener::CreateRegistrar(
     SocketDescriptor incoming_socket) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
 
   DVLOG(1) << "Accepted incoming connection";
-  scoped_ptr<RegistrarImpl> registrar(new RegistrarImpl(register_callback_));
-  // Passes ownership of incoming_socket to registrar->channel_init.
-  mojo::ScopedMessagePipeHandle message_pipe =
-      registrar->channel_init.Init(incoming_socket, io_runner_);
-  CHECK(message_pipe.is_valid());
-
-  BindToPipe(registrar.release(), message_pipe.Pass());
-}
-
-ExternalApplicationListener::RegistrarImpl::RegistrarImpl(
-    const RegisterCallback& callback)
-    : register_callback_(callback) {
-}
-
-ExternalApplicationListener::RegistrarImpl::~RegistrarImpl() {
-}
-
-void ExternalApplicationListener::RegistrarImpl::OnConnectionError() {
-  channel_init.WillDestroySoon();
-}
-
-void ExternalApplicationListener::RegistrarImpl::Register(
-    const String& app_url,
-    Array<String> args,
-    const mojo::Callback<void(InterfaceRequest<Application>)>& callback) {
-  ApplicationPtr application;
-  InterfaceRequest<Application> application_request = GetProxy(&application);
-  register_callback_.Run(app_url.To<GURL>(),
-                         args.To<std::vector<std::string>>(),
-                         application.Pass());
-  callback.Run(application_request.Pass());
+  // Passes ownership of incoming_socket to registrar.
+  new RegistrarImpl(register_callback_, incoming_socket, io_runner_);
 }
 
 }  // namespace shell

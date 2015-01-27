@@ -87,8 +87,6 @@ class ExternalApplicationListener
   void WaitForListening();
 
  private:
-  class RegistrarImpl;
-
   // MUST be called on io_runner.
   // Creates listener_ and tells it to StartListening() on a socket it creates
   // at listen_socket_path.
@@ -108,8 +106,8 @@ class ExternalApplicationListener
 
   // When a connection succeeds, it is passed to this method running
   // on shell_runner_, where it is "promoted" to a Mojo MessagePipe and
-  // bound to a RegistrarImpl.
-  void CreatePipeAndBindToRegistrarImpl(SocketDescriptor incoming_socket);
+  // bound to a Registrar.
+  void CreateRegistrar(SocketDescriptor incoming_socket);
 
   scoped_refptr<base::SequencedTaskRunner> shell_runner_;
   scoped_refptr<base::SequencedTaskRunner> io_runner_;
