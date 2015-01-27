@@ -88,22 +88,14 @@ TEST_F(ReaperAppTest, CreateDuplicate) {
 
 TEST_F(ReaperAppTest, DropOneNode) {
   reaper_->CreateReference(1u, 2u);
-
-  // For now, because we don't have GC, this should just result in us having a
-  // dangling node. Later, it will result in other node, and perhaps other refs
-  // also being dropped.
   reaper_->DropNode(1u);
 
   mojo::Array<NodePtr> nodes;
   diagnostics_->DumpNodes(NodeCatcher(&nodes));
   diagnostics_.WaitForIncomingMethodCall();
 
-  ASSERT_EQ(1u, nodes.size());
-  std::vector<Node*> lookup;
-  for (size_t i = 0; i < nodes.size(); ++i)
-    lookup.push_back(nodes[i].get());
-  EXPECT_EQ(1, std::count_if(lookup.begin(), lookup.end(),
-                             [](Node* node) { return node->node_id == 2u; }));
+  // The other node gets dropped immediately.
+  ASSERT_EQ(0u, nodes.size());
 }
 
 }  // namespace reaper

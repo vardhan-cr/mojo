@@ -81,6 +81,12 @@ void ReaperImpl::DropNode(GURL caller_app, uint32 node_id) {
     LOG(ERROR) << "Specified node does not exist: " << node_id;
     return;
   }
+
+  const auto& other_it = nodes_.find(
+      NodeLocator(it->second.other_node.app_id, it->second.other_node.node_id));
+  DCHECK(other_it != nodes_.end());
+  nodes_.erase(other_it->first);
+
   nodes_.erase(it);
 }
 
