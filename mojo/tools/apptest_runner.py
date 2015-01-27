@@ -8,14 +8,15 @@
 import argparse
 import ast
 import logging
-import os
 import sys
 
 _logging = logging.getLogger()
 
+from mopy import android
+from mopy import gtest
 from mopy.background_app_group import BackgroundAppGroup
 from mopy.config import Config
-import mopy.gtest
+from mopy.gn import ConfigForGNArgs, ParseGNConfig
 from mopy.paths import Paths
 
 
@@ -36,8 +37,12 @@ def main():
   apptest_list = ast.literal_eval(args.apptest_list_file.read())
   _logging.debug("Test list: %s" % apptest_list)
 
-  mopy.gtest.set_color()
-  mojo_paths = Paths(build_dir=args.build_dir)
+  config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
+  is_android = (config.target_os == Config.OS_ANDROID)
+  android_context = android.PrepareShellRun(config) if is_android else None
+
+  gtest.set_color()
+  mojo_paths = Paths(config)
 
   exit_code = 0
   for apptest_dict in apptest_list:
@@ -54,7 +59,7 @@ def main():
 
     # List the apptest fixtures so they can be run independently for isolation.
     # TODO(msw): Run some apptests without fixture isolation?
-    fixtures = mopy.gtest.get_fixtures(mojo_paths.mojo_shell_path, apptest)
+    fixtures = gtest.get_fixtures(config, apptest, android_context)
 
     if not fixtures:
       print "Failed with no tests found."
@@ -68,16 +73,14 @@ def main():
 
     apptest_result = "Succeeded"
     for fixture in fixtures:
-      args_for_apptest = " ".join(["--args-for=" + apptest,
-                                   "--gtest_filter=" + fixture] + apptest_args)
-
+      args_for_apptest = apptest_args + ["--gtest_filter=%s" % fixture]
       if launched_services:
-        success = RunApptestInLauncher(mojo_paths, apptest,
-                                       shell_args + [args_for_apptest],
+        success = RunApptestInLauncher(config, mojo_paths, apptest,
+                                       args_for_apptest, shell_args,
                                        launched_services)
       else:
-        success = RunApptestInShell(mojo_paths, apptest,
-                                    shell_args + [args_for_apptest])
+        success = RunApptestInShell(config, apptest, args_for_apptest,
+                                    shell_args, android_context)
 
       if not success:
         apptest_result = "Failed test(s) in %r" % apptest_dict
@@ -88,17 +91,24 @@ def main():
   return exit_code
 
 
-def RunApptestInShell(mojo_paths, apptest, shell_args):
-  return mopy.gtest.run_test([mojo_paths.mojo_shell_path, apptest] + shell_args)
+def RunApptestInShell(config, application, application_args, shell_args,
+                      android_context):
+  return gtest.run_test(config, shell_args,
+                        {application: application_args}, android_context)
 
 
-def RunApptestInLauncher(mojo_paths, apptest, shell_args, launched_services):
-  with BackgroundAppGroup(mojo_paths, launched_services, shell_args) as apps:
-    command = [mojo_paths.mojo_launcher_path,
-               '--shell-path=' + apps.socket_path,
-               '--app-url=' + apptest,
-               '--app-path=' + mojo_paths.FileFromUrl(apptest)]
-    return mopy.gtest.run_test(command)
+def RunApptestInLauncher(config, mojo_paths, application, application_args,
+                         shell_args, launched_services):
+  with BackgroundAppGroup(
+      mojo_paths, launched_services,
+      gtest.build_shell_arguments(shell_args,
+                                  {application: application_args},
+                                  run_apps=False)) as apps:
+    launcher_args = [
+        '--shell-path=' + apps.socket_path,
+        '--app-url=' + application,
+        '--app-path=' + mojo_paths.FileFromUrl(application)]
+    return gtest.run_test(config, launcher_args, run_launcher=True)
 
 
 if __name__ == '__main__':

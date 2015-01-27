@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 import atexit
+import logging
 import os
 import os.path
 import subprocess
@@ -43,6 +44,20 @@ class Context(object):
   def __init__(self, device, device_port):
     self.device = device
     self.device_port = device_port
+
+
+class _SilentTCPServer(SocketServer.TCPServer):
+  """
+  A TCPServer that won't display any error, unless debugging is enabled. This is
+  useful because the client might stop while it is fetching an URL, which causes
+  spurious error messages.
+  """
+  def handle_error(self, request, client_address):
+    """
+    Override the base class method to have conditional logging.
+    """
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+      super(_SilentTCPServer, self).handle_error(request, client_address)
 
 
 def _GetHandlerClassForPath(base_path):
@@ -108,8 +123,7 @@ def PrepareShellRun(config):
   build_dir = Paths(config).build_dir
   constants.SetOutputDirectort(build_dir)
 
-  httpd = SocketServer.TCPServer(('127.0.0.1', 0),
-                                 _GetHandlerClassForPath(build_dir))
+  httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(build_dir))
   atexit.register(httpd.shutdown)
   host_port = httpd.server_address[1]
 
