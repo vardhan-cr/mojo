@@ -111,6 +111,12 @@ def MakeInterface():
   f.Param('num_handles').InOut('uint32_t').Optional()
   f.Param('flags').In('MojoReadMessageFlags')
 
+  # This function is not provided by the Mojo system APIs, but instead allows
+  # trusted code to provide a handle for use by untrusted code. See the
+  # implementation in mojo_syscall.cc.tmpl.
+  f = mojo.Func('MojoGetServiceProviderHandle', 'MojoResult')
+  f.Param('handle').Out('MojoHandle')
+
   mojo.Finalize()
 
   return mojo
