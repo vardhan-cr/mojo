@@ -12,6 +12,7 @@ group("examples") {
     "//examples/content_handler_demo",
     "//examples/echo",
     "//examples/embedded_app",
+    "//examples/forwarding_content_handler",
     "//examples/ganesh_app",
     "//examples/http_handler",
     "//examples/indirect_service",
