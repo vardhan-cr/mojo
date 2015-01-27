@@ -30,7 +30,7 @@ OutOfProcessDynamicServiceRunner::~OutOfProcessDynamicServiceRunner() {
 
 void OutOfProcessDynamicServiceRunner::Start(
     const base::FilePath& app_path,
-    ScopedMessagePipeHandle service_handle,
+    InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
 
@@ -41,9 +41,8 @@ void OutOfProcessDynamicServiceRunner::Start(
   app_child_process_host_->Start();
 
   // TODO(vtl): |app_path.AsUTF8Unsafe()| is unsafe.
-  app_child_process_host_->controller()->StartApp(
-      app_path.AsUTF8Unsafe(), ScopedMessagePipeHandle(MessagePipeHandle(
-                                   service_handle.release().value())));
+  app_child_process_host_->controller()->StartApp(app_path.AsUTF8Unsafe(),
+                                                  application_request.Pass());
 }
 
 void OutOfProcessDynamicServiceRunner::AppCompleted(int32_t result) {

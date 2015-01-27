@@ -6,11 +6,9 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle handle) {
   // An AtExitManager instance is needed to construct message loops.
   base::AtExitManager at_exit;
 
-  mojo::ShellPtr shell;
-  shell.Bind(MakeScopedHandle(mojo::MessagePipeHandle(shell_handle)));
-  return mojo::test::RunAllTests(shell.Pass());
+  return mojo::test::RunAllTests(handle);
 }

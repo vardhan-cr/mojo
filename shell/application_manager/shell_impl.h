@@ -16,18 +16,20 @@ class ApplicationManager;
 
 class ShellImpl : public Shell, public ErrorHandler {
  public:
-  ShellImpl(InterfaceRequest<Shell> shell_request,
+  ShellImpl(ApplicationPtr application,
             ApplicationManager* manager,
             const GURL& requested_url,
             const GURL& url);
 
   ~ShellImpl() override;
 
+  void InitializeApplication(Array<String> args);
+
   void ConnectToClient(const GURL& requestor_url,
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);
 
-  Application* client() { return binding_.client(); }
+  Application* application() { return application_.get(); }
   const GURL& url() const { return url_; }
   const GURL& requested_url() const { return requested_url_; }
 
@@ -43,6 +45,7 @@ class ShellImpl : public Shell, public ErrorHandler {
   ApplicationManager* const manager_;
   const GURL requested_url_;
   const GURL url_;
+  ApplicationPtr application_;
   Binding<Shell> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ShellImpl);

@@ -151,13 +151,14 @@ void ApplicationManager::ConnectToApplicationImpl(
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
     ApplicationLoader* loader) {
-  ShellPtr shell_ptr;
+  ApplicationPtr application;
+  InterfaceRequest<Application> application_request = GetProxy(&application);
   ShellImpl* shell =
-      new ShellImpl(GetProxy(&shell_ptr), this, requested_url, resolved_url);
+      new ShellImpl(application.Pass(), this, requested_url, resolved_url);
   url_to_shell_impl_[resolved_url] = shell;
-  shell->client()->Initialize(GetArgsForURL(requested_url));
+  shell->InitializeApplication(GetArgsForURL(requested_url));
 
-  loader->Load(this, resolved_url, shell_ptr.Pass(),
+  loader->Load(this, resolved_url, application_request.Pass(),
                base::Bind(&ApplicationManager::LoadWithContentHandler,
                           weak_ptr_factory_.GetWeakPtr()));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
@@ -184,20 +185,19 @@ void ApplicationManager::ConnectToClient(
 void ApplicationManager::RegisterExternalApplication(
     const GURL& url,
     const std::vector<std::string>& args,
-    ScopedMessagePipeHandle shell_handle) {
-  ShellImpl* shell_impl =
-      new ShellImpl(MakeRequest<Shell>(shell_handle.Pass()), this, url, url);
+    ApplicationPtr application) {
+  ShellImpl* shell_impl = new ShellImpl(application.Pass(), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
 
   if (args.empty())
-    shell_impl->client()->Initialize(GetArgsForURL(url));
+    shell_impl->InitializeApplication(GetArgsForURL(url));
   else
-    shell_impl->client()->Initialize(Array<String>::From(args));
+    shell_impl->InitializeApplication(Array<String>::From(args));
 }
 
 void ApplicationManager::LoadWithContentHandler(
     const GURL& content_handler_url,
-    ScopedMessagePipeHandle shell_handle,
+    InterfaceRequest<Application> application_request,
     URLResponsePtr url_response) {
   ContentHandlerConnection* connection = NULL;
   URLToContentHandlerMap::iterator iter =
@@ -209,8 +209,8 @@ void ApplicationManager::LoadWithContentHandler(
     url_to_content_handler_[content_handler_url] = connection;
   }
 
-  connection->content_handler()->StartApplication(
-      MakeProxy<Shell>(shell_handle.Pass()), url_response.Pass());
+  connection->content_handler()->StartApplication(application_request.Pass(),
+                                                  url_response.Pass());
 }
 
 void ApplicationManager::SetLoaderForURL(scoped_ptr<ApplicationLoader> loader,

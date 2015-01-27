@@ -114,10 +114,10 @@ class TestApplicationLoader : public ApplicationLoader,
   // ApplicationLoader implementation.
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ShellPtr shell,
+            InterfaceRequest<Application> application_request,
             LoadCallback callback) override {
     ++num_loads_;
-    test_app_.reset(new ApplicationImpl(this, shell.Pass()));
+    test_app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
 
   void OnApplicationError(ApplicationManager* manager,
@@ -337,9 +337,9 @@ class Tester : public ApplicationDelegate,
  private:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ShellPtr shell,
+            InterfaceRequest<Application> application_request,
             LoadCallback callback) override {
-    app_.reset(new ApplicationImpl(this, shell.Pass()));
+    app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
 
   void OnApplicationError(ApplicationManager* manager,
@@ -733,15 +733,13 @@ TEST_F(ApplicationManagerTest, MappedURLsShouldWorkWithLoaders) {
 }
 
 TEST_F(ApplicationManagerTest, ExternalApp) {
-  MessagePipe shell_pipe;
-  ShellPtr shell;
-  shell.Bind(shell_pipe.handle0.Pass());
+  ApplicationPtr application;
   TestExternal external;
   std::vector<std::string> args;
   args.push_back("test");
-  ApplicationImpl app(&external, shell.Pass());
+  ApplicationImpl app(&external, GetProxy(&application));
   application_manager_->RegisterExternalApplication(GURL("mojo:test"), args,
-                                                    shell_pipe.handle1.Pass());
+                                                    application.Pass());
   loop_.Run();
   EXPECT_EQ(args, external.initialize_args());
   application_manager_->ConnectToServiceByName(

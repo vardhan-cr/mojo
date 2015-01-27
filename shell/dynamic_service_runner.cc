@@ -40,7 +40,7 @@ bool SetThunks(Thunks (*make_thunks)(),
 
 base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
     const base::FilePath& app_path,
-    ScopedMessagePipeHandle service_handle) {
+    InterfaceRequest<Application> application_request) {
   DVLOG(2) << "Loading/running Mojo app in process from library: "
            << app_path.value();
   base::NativeLibraryLoadError error;
@@ -98,7 +98,8 @@ base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
       break;
     }
     // |MojoMain()| takes ownership of the service handle.
-    MojoResult result = main_function(service_handle.release().value());
+    MojoHandle handle = application_request.PassMessagePipe().release().value();
+    MojoResult result = main_function(handle);
     if (result < MOJO_RESULT_OK) {
       LOG(ERROR) << app_path.value() << " MojoMain returned error(" << result
                  << ")";

@@ -29,17 +29,18 @@ class ApplicationThread : public base::PlatformThread::Delegate {
       scoped_refptr<base::MessageLoopProxy> handler_thread,
       const base::Callback<void(ApplicationThread*)>& termination_callback,
       ContentHandlerFactory::Delegate* handler_delegate,
-      ShellPtr shell,
+      InterfaceRequest<Application> application_request,
       URLResponsePtr response)
       : handler_thread_(handler_thread),
         termination_callback_(termination_callback),
         handler_delegate_(handler_delegate),
-        shell_(shell.Pass()),
+        application_request_(application_request.Pass()),
         response_(response.Pass()) {}
 
  private:
   void ThreadMain() override {
-    handler_delegate_->RunApplication(shell_.Pass(), response_.Pass());
+    handler_delegate_->RunApplication(application_request_.Pass(),
+                                      response_.Pass());
     handler_thread_->PostTask(FROM_HERE,
                               base::Bind(termination_callback_, this));
   }
@@ -47,7 +48,7 @@ class ApplicationThread : public base::PlatformThread::Delegate {
   scoped_refptr<base::MessageLoopProxy> handler_thread_;
   base::Callback<void(ApplicationThread*)> termination_callback_;
   ContentHandlerFactory::Delegate* handler_delegate_;
-  ShellPtr shell_;
+  InterfaceRequest<Application> application_request_;
   URLResponsePtr response_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationThread);
@@ -71,15 +72,14 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
 
  private:
   // Overridden from ContentHandler:
-  virtual void StartApplication(ShellPtr shell,
-                                URLResponsePtr response) override {
+  virtual void StartApplication(
+      InterfaceRequest<Application> application_request,
+      URLResponsePtr response) override {
     ApplicationThread* thread = new ApplicationThread(
         base::MessageLoopProxy::current(),
         base::Bind(&ContentHandlerImpl::OnThreadEnd,
                    weak_factory_.GetWeakPtr()),
-        delegate_,
-        shell.Pass(),
-        response.Pass());
+        delegate_, application_request.Pass(), response.Pass());
     base::PlatformThreadHandle handle;
     bool launched = base::PlatformThread::Create(0, thread, &handle);
     DCHECK(launched);
@@ -111,10 +111,11 @@ ContentHandlerFactory::~ContentHandlerFactory() {
 }
 
 void ContentHandlerFactory::ManagedDelegate::RunApplication(
-    ShellPtr shell,
+    InterfaceRequest<Application> application_request,
     URLResponsePtr response) {
   base::MessageLoop loop(common::MessagePumpMojo::Create());
-  auto application = this->CreateApplication(shell.Pass(), response.Pass());
+  auto application =
+      this->CreateApplication(application_request.Pass(), response.Pass());
   if (application)
     loop.Run();
 }

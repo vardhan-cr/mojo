@@ -18,12 +18,8 @@ define("mojo/services/public/js/shell", [
   const ShellInterface = shellMojom.Shell;
 
   class Shell {
-    constructor(shellHandle, app) {
-      this.shellHandle = shellHandle;
-      this.shellProxy = connection.bindProxyHandle(
-          shellHandle, ShellInterface.client, ShellInterface);
-
-      ProxyBindings(this.shellProxy).setLocalDelegate(app);
+    constructor(shellProxy) {
+      this.shellProxy = shellProxy;
       this.applications_ = new Map();
     }
 
@@ -50,8 +46,9 @@ define("mojo/services/public/js/shell", [
       this.applications_.forEach(function(application, url) {
         application.close();
       });
+      // TODO(hansmuller): Use a proper API on Proxy to close.
+      core.close(this.shellProxy.handleStash);
       this.applications_.clear();
-      core.close(this.shellHandle);
     }
   }
 

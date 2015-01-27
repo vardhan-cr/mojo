@@ -14,6 +14,7 @@
 
 namespace mojo {
 
+class Application;
 class ApplicationManager;
 
 // Interface to allowing loading behavior to be established for schemes,
@@ -25,8 +26,9 @@ class ApplicationManager;
 // apps and services.
 class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
  public:
-  typedef base::Callback<
-      void(const GURL&, ScopedMessagePipeHandle, URLResponsePtr)> LoadCallback;
+  typedef base::Callback<void(const GURL& content_handler_url,
+                              InterfaceRequest<Application> application_request,
+                              URLResponsePtr url_request)> LoadCallback;
   virtual ~ApplicationLoader() {}
 
   // Returns a callback that will should never be called.
@@ -43,7 +45,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
   //    must implement the mojo.ContentHandler interface.
   virtual void Load(ApplicationManager* application_manager,
                     const GURL& url,
-                    ShellPtr shell,
+                    InterfaceRequest<Application> application_request,
                     LoadCallback callback) = 0;
 
   // Called when the Application exits.

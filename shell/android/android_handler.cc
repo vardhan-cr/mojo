@@ -33,7 +33,8 @@ void RunAndroidApplication(JNIEnv* env,
                            jobject j_context,
                            const base::FilePath& app_path,
                            jint j_handle) {
-  ScopedMessagePipeHandle handle((mojo::MessagePipeHandle(j_handle)));
+  InterfaceRequest<Application> application_request = MakeRequest<Application>(
+      MakeScopedHandle(mojo::MessagePipeHandle(j_handle)));
 
   // Load the library, so that we can set the application context there if
   // needed.
@@ -63,7 +64,8 @@ void RunAndroidApplication(JNIEnv* env,
 
   // Run the application.
   base::ScopedNativeLibrary app_library_from_runner(
-      shell::DynamicServiceRunner::LoadAndRunService(app_path, handle.Pass()));
+      shell::DynamicServiceRunner::LoadAndRunService(
+          app_path, application_request.Pass()));
 }
 }  // namespace
 
@@ -73,7 +75,9 @@ AndroidHandler::AndroidHandler() : content_handler_factory_(this) {
 AndroidHandler::~AndroidHandler() {
 }
 
-void AndroidHandler::RunApplication(ShellPtr shell, URLResponsePtr response) {
+void AndroidHandler::RunApplication(
+    InterfaceRequest<Application> application_request,
+    URLResponsePtr response) {
   JNIEnv* env = AttachCurrentThread();
   ScopedJavaLocalRef<jstring> j_archive_path =
       Java_AndroidHandler_getNewTempArchivePath(env, GetApplicationContext());
@@ -84,7 +88,7 @@ void AndroidHandler::RunApplication(ShellPtr shell, URLResponsePtr response) {
   RunAndroidApplicationFn run_android_application_fn = &RunAndroidApplication;
   Java_AndroidHandler_bootstrap(
       env, GetApplicationContext(), j_archive_path.obj(),
-      shell.PassMessagePipe().release().value(),
+      application_request.PassMessagePipe().release().value(),
       reinterpret_cast<jlong>(run_android_application_fn));
 }
 

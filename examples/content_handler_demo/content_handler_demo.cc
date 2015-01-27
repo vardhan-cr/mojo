@@ -9,19 +9,21 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_runner.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 
 namespace mojo {
 namespace examples {
 
-class PrintBodyApplication : public InterfaceImpl<Application> {
+class PrintBodyApplication : public Application {
  public:
-  PrintBodyApplication(ShellPtr shell, ScopedDataPipeConsumerHandle body)
-      : shell_(shell.Pass()), body_(body.Pass()) {
-    shell_.set_client(this);
-  }
+  PrintBodyApplication(InterfaceRequest<Application> request,
+                       ScopedDataPipeConsumerHandle body)
+      : binding_(this, request.Pass()), body_(body.Pass()) {}
 
-  virtual void Initialize(Array<String> args) override {}
+  virtual void Initialize(ShellPtr shell, Array<String> args) override {
+    shell_ = shell.Pass();
+  }
   virtual void RequestQuit() override {}
 
   virtual void AcceptConnection(const String& requestor_url,
@@ -58,6 +60,7 @@ class PrintBodyApplication : public InterfaceImpl<Application> {
     }
   }
 
+  StrongBinding<Application> binding_;
   ShellPtr shell_;
   ScopedDataPipeConsumerHandle body_;
 
@@ -70,10 +73,10 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
   virtual ~ContentHandlerImpl() {}
 
  private:
-  virtual void StartApplication(ShellPtr shell,
+  virtual void StartApplication(InterfaceRequest<Application> application,
                                 URLResponsePtr response) override {
     // The application will delete itself after being connected to.
-    new PrintBodyApplication(shell.Pass(), response->body.Pass());
+    new PrintBodyApplication(application.Pass(), response->body.Pass());
   }
 };
 

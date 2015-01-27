@@ -20,8 +20,9 @@ namespace js {
 
 const char JSApp::kMainModuleName[] = "main";
 
-JSApp::JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response)
-    : shell_(shell.Pass()) {
+JSApp::JSApp(mojo::InterfaceRequest<mojo::Application> application_request,
+             mojo::URLResponsePtr response)
+    : application_request_(application_request.Pass()) {
   v8::Isolate* isolate = isolate_holder_.isolate();
   message_loop_observers_.reset(new JSAppMessageLoopObservers(isolate));
 
@@ -52,9 +53,9 @@ void JSApp::OnAppLoaded(std::string url, v8::Handle<v8::Value> main_module) {
   v8::Isolate* isolate = isolate_holder_.isolate();
 
   v8::Handle<v8::Value> argv[] = {
-    gin::ConvertToV8(isolate, shell_.PassMessagePipe().release()),
-    gin::ConvertToV8(isolate, url)
-  };
+      gin::ConvertToV8(isolate,
+                       application_request_.PassMessagePipe().release()),
+      gin::ConvertToV8(isolate, url)};
 
   v8::Handle<v8::Function> app_class;
   CHECK(gin::ConvertFromV8(isolate, main_module, &app_class));

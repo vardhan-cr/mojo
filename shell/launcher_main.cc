@@ -42,24 +42,25 @@ class Launcher {
         base::Bind(&Launcher::OnRegistered, base::Unretained(this)));
     run_loop_->Run();
     run_loop_.reset();
-    return shell_handle_.is_valid();
+    return application_request_.is_pending();
   }
 
   void Run() {
     DCHECK(!run_loop_.get());
-    DCHECK(shell_handle_.is_valid());
+    DCHECK(application_request_.is_pending());
     mojo::shell::InProcessDynamicServiceRunner service_runner(nullptr);
     run_loop_.reset(new base::RunLoop);
     service_runner.Start(
-        app_path_, shell_handle_.Pass(),
+        app_path_, application_request_.Pass(),
         base::Bind(&Launcher::OnAppCompleted, base::Unretained(this)));
     run_loop_->Run();
     run_loop_.reset();
   }
 
  private:
-  void OnRegistered(mojo::ShellPtr shell) {
-    shell_handle_ = shell.PassMessagePipe();
+  void OnRegistered(
+      mojo::InterfaceRequest<mojo::Application> application_request) {
+    application_request_ = application_request.Pass();
     run_loop_->Quit();
   }
 
@@ -70,7 +71,7 @@ class Launcher {
   std::vector<std::string> app_args_;
   base::MessageLoop loop_;
   mojo::shell::ExternalApplicationRegistrarConnection connection_;
-  mojo::ScopedMessagePipeHandle shell_handle_;
+  mojo::InterfaceRequest<mojo::Application> application_request_;
   scoped_ptr<base::RunLoop> run_loop_;
 };
 

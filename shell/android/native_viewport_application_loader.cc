@@ -17,12 +17,13 @@ NativeViewportApplicationLoader::NativeViewportApplicationLoader() {
 NativeViewportApplicationLoader::~NativeViewportApplicationLoader() {
 }
 
-void NativeViewportApplicationLoader::Load(ApplicationManager* manager,
-                                           const GURL& url,
-                                           ShellPtr shell,
-                                           LoadCallback callback) {
-  DCHECK(shell);
-  app_.reset(new ApplicationImpl(this, shell.Pass()));
+void NativeViewportApplicationLoader::Load(
+    ApplicationManager* manager,
+    const GURL& url,
+    InterfaceRequest<Application> application_request,
+    LoadCallback callback) {
+  DCHECK(application_request.is_pending());
+  app_.reset(new ApplicationImpl(this, application_request.Pass()));
 }
 
 void NativeViewportApplicationLoader::OnApplicationError(

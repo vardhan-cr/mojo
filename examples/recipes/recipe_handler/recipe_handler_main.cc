@@ -37,8 +37,9 @@ class RecipeHandlerApp : public mojo::ApplicationDelegate,
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
   scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
-  CreateApplication(mojo::ShellPtr shell,
-                    mojo::URLResponsePtr response) override {
+  CreateApplication(
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      mojo::URLResponsePtr response) override {
     std::string recipe_string;
     if (!mojo::common::BlockingCopyToString(response->body.Pass(),
                                             &recipe_string)) {
@@ -64,7 +65,7 @@ class RecipeHandlerApp : public mojo::ApplicationDelegate,
       return nullptr;
 
     return make_handled_factory_holder(
-        new mojo::ApplicationImpl(recipe, shell.Pass()));
+        new mojo::ApplicationImpl(recipe, application_request.Pass()));
   }
 
   mojo::ContentHandlerFactory content_handler_factory_;

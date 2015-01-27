@@ -14,11 +14,12 @@ import shell_mojom
 import mojo_system
 
 class ApplicationImpl(application_mojom.Application):
-  def __init__(self):
+  def __init__(self, app_request_handle):
     self._providers = []
+    application_mojom.Application.manager.Bind(self, app_request_handle)
 
-  def Initialize(self, args):
-    pass
+  def Initialize(self, shell, args):
+    self.shell = shell
 
   def AcceptConnection(self, requestor_url, services, exposed_services):
     # We keep a reference to ServiceProviderImpl to ensure neither it nor
@@ -27,6 +28,7 @@ class ApplicationImpl(application_mojom.Application):
     service_provider.AddService(ExampleServiceImpl)
     services.Bind(service_provider)
     self._providers.append(services)
+    # TODO(qsr): Handle exposed_services
 
 
 class ServiceProviderImpl(service_provider_mojom.ServiceProvider):
@@ -52,12 +54,11 @@ class ExampleServiceImpl(example_service_mojom.ExampleService):
   def RunCallback(self):
     return {}
 
-def MojoMain(shell_handle):
+def MojoMain(app_request_handle):
   """MojoMain is the entry point for a python Mojo module."""
   loop = mojo_system.RunLoop()
 
-  shell = shell_mojom.Shell.manager.Proxy(mojo_system.Handle(shell_handle))
-  shell.client = ApplicationImpl()
-  shell.manager.AddOnErrorCallback(loop.Quit)
+  application = ApplicationImpl(mojo_system.Handle(app_request_handle))
+  application.manager.AddOnErrorCallback(loop.Quit)
 
   loop.Run()

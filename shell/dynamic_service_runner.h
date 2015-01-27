@@ -8,6 +8,7 @@
 #include "base/callback_forward.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/native_library.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace base {
@@ -15,6 +16,8 @@ class FilePath;
 }
 
 namespace mojo {
+class Application;
+
 namespace shell {
 
 class Context;
@@ -29,7 +32,7 @@ class DynamicServiceRunner {
   // runs it on some other thread/process. |app_completed_callback| is posted
   // (to the thread on which |Start()| was called) after |MojoMain()| completes.
   virtual void Start(const base::FilePath& app_path,
-                     ScopedMessagePipeHandle service_handle,
+                     InterfaceRequest<Application> application_request,
                      const base::Closure& app_completed_callback) = 0;
 
   // Loads the service in the DSO specificed by |app_path| and prepares it for
@@ -39,7 +42,7 @@ class DynamicServiceRunner {
   // thread is destroyed and any thread-local destructors have been executed.
   static base::NativeLibrary LoadAndRunService(
       const base::FilePath& app_path,
-      ScopedMessagePipeHandle service_handle);
+      InterfaceRequest<Application> application_request);
 };
 
 class DynamicServiceRunnerFactory {

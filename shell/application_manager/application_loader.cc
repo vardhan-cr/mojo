@@ -12,7 +12,7 @@ namespace mojo {
 namespace {
 
 void NotReached(const GURL& url,
-                ScopedMessagePipeHandle shell_handle,
+                InterfaceRequest<Application> application_request,
                 URLResponsePtr response) {
   NOTREACHED();
 }

@@ -3,28 +3,41 @@
 // found in the LICENSE file.
 
 define("mojo/services/public/js/application", [
+  "mojo/public/js/bindings",
+  "mojo/public/js/core",
+  "mojo/public/js/connection",
   "mojo/public/js/threading",
+  "mojo/public/interfaces/application/application.mojom",
   "mojo/services/public/js/service_provider",
   "mojo/services/public/js/shell",
-], function(threading, serviceProvider, shell) {
+], function(bindings, core, connection, threading, applicationMojom, serviceProvider, shell) {
 
+  const ApplicationInterface = applicationMojom.Application;
+  const ProxyBindings = bindings.ProxyBindings;
   const ServiceProvider = serviceProvider.ServiceProvider;
   const Shell = shell.Shell;
 
   class Application {
-    constructor(shellHandle, url) {
+    constructor(appRequestHandle, url) {
       this.url = url;
       this.serviceProviders = [];
       this.exposedServiceProviders = [];
-      this.shellHandle_ = shellHandle;
-      this.shell = new Shell(shellHandle, {
-        initialize: this.initialize.bind(this),
-        acceptConnection: this.doAcceptConnection.bind(this),
-      });
+      this.appRequestHandle_ = appRequestHandle;
+      this.appStub_ =
+          connection.bindHandleToStub(appRequestHandle, ApplicationInterface);
+      bindings.StubBindings(this.appStub_).delegate = {
+          initialize: this.doInitialize.bind(this),
+          acceptConnection: this.doAcceptConnection.bind(this),
+      };
     }
 
-    initialize(args) {
+    doInitialize(shellProxy, args) {
+      this.shellProxy_ = shellProxy;
+      this.shell = new Shell(shellProxy);
+      this.initialize(args);
     }
+
+    initialize(args) {}
 
     // The mojom signature of this function is:
     //   AcceptConnection(string requestor_url,
@@ -43,14 +56,14 @@ define("mojo/services/public/js/application", [
       this.acceptConnection(requestorUrl, serviceProvider);
     }
 
-    acceptConnection(requestorUrl, serviceProvider) {
-    }
+    acceptConnection(requestorUrl, serviceProvider) {}
 
     quit() {
       this.serviceProviders.forEach(function(sp) {
         sp.close();
       });
       this.shell.close();
+      core.close(this.appRequestHandle_);
       threading.quit();
     }
   }

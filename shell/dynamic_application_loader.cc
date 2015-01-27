@@ -56,10 +56,10 @@ class DynamicApplicationLoader::Loader {
   Loader(MimeTypeToURLMap* mime_type_to_url,
          Context* context,
          DynamicServiceRunnerFactory* runner_factory,
-         ScopedMessagePipeHandle shell_handle,
+         InterfaceRequest<Application> application_request,
          ApplicationLoader::LoadCallback load_callback,
          const LoaderCompleteCallback& loader_complete_callback)
-      : shell_handle_(shell_handle.Pass()),
+      : application_request_(application_request.Pass()),
         load_callback_(load_callback),
         loader_complete_callback_(loader_complete_callback),
         context_(context),
@@ -89,7 +89,7 @@ class DynamicApplicationLoader::Loader {
     std::string shebang;
     if (PeekContentHandler(&shebang, &url)) {
       load_callback_.Run(
-          url, shell_handle_.Pass(),
+          url, application_request_.Pass(),
           AsURLResponse(context_->task_runners()->blocking_pool(),
                         static_cast<int>(shebang.size())));
       return;
@@ -98,7 +98,7 @@ class DynamicApplicationLoader::Loader {
     MimeTypeToURLMap::iterator iter = mime_type_to_url_->find(MimeType());
     if (iter != mime_type_to_url_->end()) {
       load_callback_.Run(
-          iter->second, shell_handle_.Pass(),
+          iter->second, application_request_.Pass(),
           AsURLResponse(context_->task_runners()->blocking_pool(), 0));
       return;
     }
@@ -130,7 +130,7 @@ class DynamicApplicationLoader::Loader {
   }
 
   void RunLibrary(const base::FilePath& path, bool path_exists) {
-    DCHECK(shell_handle_.is_valid());
+    DCHECK(application_request_.is_pending());
 
     if (!path_exists) {
       LOG(ERROR) << "Library not started because library path '" << path.value()
@@ -141,11 +141,11 @@ class DynamicApplicationLoader::Loader {
 
     runner_ = runner_factory_->Create(context_);
     runner_->Start(
-        path, shell_handle_.Pass(),
+        path, application_request_.Pass(),
         base::Bind(&Loader::ReportComplete, weak_ptr_factory_.GetWeakPtr()));
   }
 
-  ScopedMessagePipeHandle shell_handle_;
+  InterfaceRequest<Application> application_request_;
   ApplicationLoader::LoadCallback load_callback_;
   LoaderCompleteCallback loader_complete_callback_;
   Context* context_;
@@ -162,13 +162,13 @@ class DynamicApplicationLoader::LocalLoader : public Loader {
               MimeTypeToURLMap* mime_type_to_url,
               Context* context,
               DynamicServiceRunnerFactory* runner_factory,
-              ScopedMessagePipeHandle shell_handle,
+              InterfaceRequest<Application> application_request,
               ApplicationLoader::LoadCallback load_callback,
               const LoaderCompleteCallback& loader_complete_callback)
       : Loader(mime_type_to_url,
                context,
                runner_factory,
-               shell_handle.Pass(),
+               application_request.Pass(),
                load_callback,
                loader_complete_callback),
         url_(url),
@@ -250,13 +250,13 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
                 MimeTypeToURLMap* mime_type_to_url,
                 Context* context,
                 DynamicServiceRunnerFactory* runner_factory,
-                ScopedMessagePipeHandle shell_handle,
+                InterfaceRequest<Application> application_request,
                 ApplicationLoader::LoadCallback load_callback,
                 const LoaderCompleteCallback& loader_complete_callback)
       : Loader(mime_type_to_url,
                context,
                runner_factory,
-               shell_handle.Pass(),
+               application_request.Pass(),
                load_callback,
                loader_complete_callback),
         url_(url),
@@ -469,14 +469,15 @@ void DynamicApplicationLoader::RegisterContentHandler(
   mime_type_to_url_[mime_type] = content_handler_url;
 }
 
-void DynamicApplicationLoader::Load(ApplicationManager* manager,
-                                    const GURL& url,
-                                    ShellPtr shell,
-                                    LoadCallback load_callback) {
+void DynamicApplicationLoader::Load(
+    ApplicationManager* manager,
+    const GURL& url,
+    InterfaceRequest<Application> application_request,
+    LoadCallback load_callback) {
   if (url.SchemeIsFile()) {
     loaders_.push_back(new LocalLoader(
         url, &mime_type_to_url_, context_, runner_factory_.get(),
-        shell.PassMessagePipe(), load_callback, loader_complete_callback_));
+        application_request.Pass(), load_callback, loader_complete_callback_));
     return;
   }
 
@@ -487,7 +488,7 @@ void DynamicApplicationLoader::Load(ApplicationManager* manager,
 
   loaders_.push_back(new NetworkLoader(
       url, network_service_.get(), &mime_type_to_url_, context_,
-      runner_factory_.get(), shell.PassMessagePipe(), load_callback,
+      runner_factory_.get(), application_request.Pass(), load_callback,
       loader_complete_callback_));
 }
 

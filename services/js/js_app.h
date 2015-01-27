@@ -25,7 +25,8 @@ class ApplicationDelegateImpl;
 
 class JSApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
-  JSApp(mojo::ShellPtr shell, mojo::URLResponsePtr response);
+  JSApp(mojo::InterfaceRequest<mojo::Application> application_request,
+        mojo::URLResponsePtr response);
   virtual ~JSApp();
 
  private:
@@ -33,7 +34,7 @@ class JSApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
 
   void OnAppLoaded(std::string url, v8::Handle<v8::Value> module);
 
-  mojo::ShellPtr shell_;
+  mojo::InterfaceRequest<mojo::Application> application_request_;
   JSAppRunnerDelegate runner_delegate_;
   gin::IsolateHolder isolate_holder_;
   scoped_ptr<gin::ShellRunner> shell_runner_;

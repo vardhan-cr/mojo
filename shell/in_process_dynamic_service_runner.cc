@@ -30,12 +30,12 @@ InProcessDynamicServiceRunner::~InProcessDynamicServiceRunner() {
 
 void InProcessDynamicServiceRunner::Start(
     const base::FilePath& app_path,
-    ScopedMessagePipeHandle service_handle,
+    InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
 
-  DCHECK(!service_handle_.is_valid());
-  service_handle_ = service_handle.Pass();
+  DCHECK(!application_request_.is_pending());
+  application_request_ = application_request.Pass();
 
   DCHECK(app_completed_callback_runner_.is_null());
   app_completed_callback_runner_ =
@@ -52,7 +52,7 @@ void InProcessDynamicServiceRunner::Run() {
            << app_path_.value()
            << " thread id=" << base::PlatformThread::CurrentId();
 
-  app_library_.Reset(LoadAndRunService(app_path_, service_handle_.Pass()));
+  app_library_.Reset(LoadAndRunService(app_path_, application_request_.Pass()));
   app_completed_callback_runner_.Run();
   app_completed_callback_runner_.Reset();
 }

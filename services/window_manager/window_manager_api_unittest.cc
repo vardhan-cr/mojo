@@ -83,10 +83,11 @@ class TestApplicationLoader : public mojo::ApplicationLoader,
   // Overridden from mojo::ApplicationLoader:
   void Load(mojo::ApplicationManager* application_manager,
             const GURL& url,
-            mojo::ShellPtr shell,
+            mojo::InterfaceRequest<mojo::Application> application_request,
             LoadCallback callback) override {
-    ASSERT_TRUE(shell);
-    scoped_ptr<ApplicationImpl> app(new ApplicationImpl(this, shell.Pass()));
+    ASSERT_TRUE(application_request.is_pending());
+    scoped_ptr<ApplicationImpl> app(
+        new ApplicationImpl(this, application_request.Pass()));
     apps_.push_back(app.release());
   }
   void OnApplicationError(mojo::ApplicationManager* application_manager,

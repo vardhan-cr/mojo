@@ -21,13 +21,14 @@ class ApplicationDelegateImpl;
 
 class DartApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
-  DartApp(mojo::ShellPtr shell, mojo::URLResponsePtr response);
+  DartApp(mojo::InterfaceRequest<mojo::Application> application_request,
+          mojo::URLResponsePtr response);
   virtual ~DartApp();
 
  private:
   void OnAppLoaded();
 
-  mojo::ShellPtr shell_;
+  mojo::InterfaceRequest<mojo::Application> application_request_;
   mojo::dart::DartControllerConfig config_;
   DISALLOW_COPY_AND_ASSIGN(DartApp);
 };

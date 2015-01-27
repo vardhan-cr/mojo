@@ -99,7 +99,8 @@ class PythonContentHandler : public ApplicationDelegate,
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  void RunApplication(ShellPtr shell, URLResponsePtr response) override {
+  void RunApplication(InterfaceRequest<Application> application_request,
+                      URLResponsePtr response) override {
     std::unique_ptr<base::ScopedTempDir> temp_dir =
         ExtractApplication(response.Pass());
     base::FilePath directory_path = temp_dir->path();
@@ -135,12 +136,14 @@ class PythonContentHandler : public ApplicationDelegate,
       }
 
       if (PyCallable_Check(py_function)) {
-        MojoHandle shell_handle = shell.PassMessagePipe().release().value();
-        ScopedPyRef py_input(PyInt_FromLong(shell_handle));
+        MojoHandle application_request_handle =
+            application_request.PassMessagePipe().release().value();
+        ScopedPyRef py_input(PyInt_FromLong(application_request_handle));
         ScopedPyRef py_arguments(PyTuple_New(1));
         // py_input reference is stolen by py_arguments
         PyTuple_SetItem(py_arguments, 0, py_input.Release());
-        // Run MojoMain with shell_handle as the first and only argument.
+        // Run MojoMain with application_request_handle as the first and only
+        // argument.
         ScopedPyRef py_output(PyObject_CallObject(py_function, py_arguments));
 
         if (!py_output) {

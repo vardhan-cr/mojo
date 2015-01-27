@@ -14,10 +14,13 @@
 #include "mojo/dart/embedder/isolate_data.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 
+using mojo::Application;
+
 namespace dart {
 
-DartApp::DartApp(mojo::ShellPtr shell, mojo::URLResponsePtr response)
-    : shell_(shell.Pass()) {
+DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
+                 mojo::URLResponsePtr response)
+    : application_request_(application_request.Pass()) {
   DCHECK(!response.is_null());
   std::string url(response->url);
   std::string source;
@@ -46,7 +49,7 @@ DartApp::~DartApp() {
 
 void DartApp::OnAppLoaded() {
   char* error = nullptr;
-  config_.handle = shell_.PassMessagePipe().release().value();
+  config_.handle = application_request_.PassMessagePipe().release().value();
   config_.error = &error;
   bool success = mojo::dart::DartController::RunDartScript(config_);
   if (!success) {

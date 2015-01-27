@@ -35,7 +35,7 @@ class TestDynamicServiceRunner : public DynamicServiceRunner {
     base::MessageLoop::current()->Quit();
   }
   void Start(const base::FilePath& app_path,
-             ScopedMessagePipeHandle service_handle,
+             InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;
   }
@@ -82,9 +82,8 @@ TEST_F(DynamicApplicationLoaderTest, DoesNotExist) {
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
   base::FilePath nonexistent_file(FILE_PATH_LITERAL("nonexistent.txt"));
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
-  ShellPtr shell;
-  auto throwaway = GetProxy(&shell);
-  loader_->Load(context_.application_manager(), url, shell.Pass(),
+  ApplicationPtr application;
+  loader_->Load(context_.application_manager(), url, GetProxy(&application),
                 ApplicationLoader::SimpleLoadCallback());
   EXPECT_FALSE(state_.runner_was_created);
   EXPECT_FALSE(state_.runner_was_started);

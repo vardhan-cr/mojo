@@ -14,7 +14,7 @@
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread_checker.h"
 #include "mojo/edk/embedder/channel_init.h"
-#include "mojo/public/interfaces/application/shell.mojom.h"
+#include "mojo/public/interfaces/application/application.mojom.h"
 #include "shell/domain_socket/socket_descriptor.h"
 #include "shell/external_application_registrar.mojom.h"
 #include "shell/incoming_connection_listener.h"
@@ -23,12 +23,14 @@
 namespace mojo {
 namespace shell {
 
-// In order to support Mojo apps whose lifetime is managed by
-// something other than mojo_shell, mojo_shell needs to support a
-// mechanism by which such an application can discover a running shell
-// instance, connect to it, and ask to be "registered" at a given
-// URL. Registration implies that the app can be connected to at that
-// URL from then on out, and that the app has received a usable ShellPtr.
+// In order to support Mojo apps whose lifetime is managed by something other
+// than mojo_shell, mojo_shell needs to support a mechanism by which such an
+// application can discover a running shell instance, connect to it, and ask to
+// be "registered" at a given URL. Registration implies that the app can be
+// connected to at that URL from then on out, and that the app has a connection
+// to the shell.  Once registered the shell will treat the external application
+// as if it was started from the shell and make a mojo.Application.Initialize()
+// call on it, passing it a handle to the mojo.Shell interface.
 //
 // This class implements most of the mojo_shell side of external application
 // registration. It handles:
@@ -44,11 +46,12 @@ class ExternalApplicationListener
     : public IncomingConnectionListener::Delegate {
  public:
   // When run, a RegisterCallback should note that an app has asked to be
-  // registered at app_url and Bind the provided pipe handle to a ShellImpl.
+  // registered at app_url and Bind the provided pipe handle to an
+  // ApplicationPtr to be initialized.
   using RegisterCallback =
       base::Callback<void(const GURL& app_url,
                           const std::vector<std::string>& args,
-                          ScopedMessagePipeHandle shell)>;
+                          ApplicationPtr application)>;
   using ErrorCallback = base::Callback<void(int rv)>;
 
   static base::FilePath ConstructDefaultSocketPath();

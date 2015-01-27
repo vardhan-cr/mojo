@@ -210,9 +210,10 @@ class PNGViewer : public ApplicationDelegate,
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
   virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
-  CreateApplication(ShellPtr shell, URLResponsePtr response) override {
-    return make_handled_factory_holder(
-        new mojo::ApplicationImpl(new PNGView(response.Pass()), shell.Pass()));
+  CreateApplication(InterfaceRequest<Application> application_request,
+                    URLResponsePtr response) override {
+    return make_handled_factory_holder(new mojo::ApplicationImpl(
+        new PNGView(response.Pass()), application_request.Pass()));
   }
 
   ContentHandlerFactory content_handler_factory_;

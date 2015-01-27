@@ -10,25 +10,32 @@
 
 namespace mojo {
 
-ShellImpl::ShellImpl(InterfaceRequest<Shell> shell_request,
+ShellImpl::ShellImpl(ApplicationPtr application,
                      ApplicationManager* manager,
                      const GURL& requested_url,
                      const GURL& url)
     : manager_(manager),
       requested_url_(requested_url),
       url_(url),
-      binding_(this, shell_request.Pass()) {
+      application_(application.Pass()),
+      binding_(this) {
   binding_.set_error_handler(this);
 }
 
 ShellImpl::~ShellImpl() {
 }
 
+void ShellImpl::InitializeApplication(Array<String> args) {
+  ShellPtr shell;
+  binding_.Bind(GetProxy(&shell));
+  application_->Initialize(shell.Pass(), args.Pass());
+}
+
 void ShellImpl::ConnectToClient(const GURL& requestor_url,
                                 InterfaceRequest<ServiceProvider> services,
                                 ServiceProviderPtr exposed_services) {
-  client()->AcceptConnection(String::From(requestor_url), services.Pass(),
-                             exposed_services.Pass());
+  application_->AcceptConnection(String::From(requestor_url), services.Pass(),
+                                 exposed_services.Pass());
 }
 
 // Shell implementation:

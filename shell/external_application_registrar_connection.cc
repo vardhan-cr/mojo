@@ -55,10 +55,10 @@ bool ExternalApplicationRegistrarConnection::Connect() {
 void ExternalApplicationRegistrarConnection::Register(
     const GURL& app_url,
     const std::vector<std::string>& args,
-    base::Callback<void(ShellPtr)> register_complete_callback) {
+    const RegisterCallback& register_callback) {
   DCHECK(!client_socket_);
   registrar_->Register(String::From(app_url), Array<String>::From(args),
-                       register_complete_callback);
+                       register_callback);
 }
 
 void ExternalApplicationRegistrarConnection::OnConnect(const base::Closure& cb,

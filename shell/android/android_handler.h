@@ -30,7 +30,8 @@ class AndroidHandler : public ApplicationDelegate,
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
   // ContentHandlerFactory::Delegate:
-  void RunApplication(ShellPtr shell, URLResponsePtr response) override;
+  void RunApplication(InterfaceRequest<Application> application_request,
+                      URLResponsePtr response) override;
 
   ContentHandlerFactory content_handler_factory_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(AndroidHandler);

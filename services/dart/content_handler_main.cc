@@ -42,9 +42,11 @@ class DartContentHandler : public mojo::ApplicationDelegate,
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
   scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
-  CreateApplication(mojo::ShellPtr shell,
-                    mojo::URLResponsePtr response) override {
-    return make_scoped_ptr(new DartApp(shell.Pass(), response.Pass()));
+  CreateApplication(
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      mojo::URLResponsePtr response) override {
+    return make_scoped_ptr(
+        new DartApp(application_request.Pass(), response.Pass()));
   }
 
   mojo::ContentHandlerFactory content_handler_factory_;

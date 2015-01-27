@@ -24,7 +24,7 @@ class AndroidHandlerLoader : public ApplicationLoader {
   // ApplicationLoader overrides:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ShellPtr shell,
+            InterfaceRequest<Application> application_request,
             LoadCallback callback) override;
   void OnApplicationError(ApplicationManager* manager,
                           const GURL& url) override;

@@ -4,6 +4,7 @@
 
 #include "shell/android/background_application_loader.h"
 
+#include "mojo/public/interfaces/application/application.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -18,7 +19,7 @@ class DummyLoader : public ApplicationLoader {
   // ApplicationLoader overrides:
   void Load(ApplicationManager* manager,
             const GURL& url,
-            ShellPtr shell,
+            InterfaceRequest<Application> application_request,
             LoadCallback callback) override {
     if (simulate_app_quit_)
       base::MessageLoop::current()->Quit();
@@ -48,9 +49,8 @@ TEST(BackgroundApplicationLoaderTest, Load) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
-  ShellPtr shell;
-  auto dummy = GetProxy(&shell);
-  loader.Load(NULL, GURL(), shell.Pass(),
+  ApplicationPtr application;
+  loader.Load(NULL, GURL(), GetProxy(&application),
               ApplicationLoader::SimpleLoadCallback());
 }
 

@@ -9,6 +9,9 @@
 #include "base/run_loop.h"
 #include "base/threading/thread.h"
 #include "mojo/common/common_type_converters.h"
+#include "mojo/public/cpp/application/application_delegate.h"
+#include "mojo/public/cpp/application/application_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
@@ -33,7 +36,7 @@ class NotAnApplicationLoader : public ApplicationLoader {
 
   void Load(ApplicationManager* application_manager,
             const GURL& url,
-            ShellPtr shell,
+            InterfaceRequest<Application> application_request,
             LoadCallback callback) override {
     NOTREACHED();
   }
@@ -72,20 +75,32 @@ class ExternalApplicationListenerTest : public testing::Test {
 
 namespace {
 
-class StubShellImpl : public InterfaceImpl<Shell> {
+class StubShellImpl : public Shell {
+ public:
+  StubShellImpl(ApplicationPtr application)
+      : application_(application.Pass()), binding_(this) {
+    ShellPtr shell;
+    binding_.Bind(GetProxy(&shell));
+    application_->Initialize(shell.Pass(), Array<String>());
+  }
+  ~StubShellImpl() override {}
+
  private:
   void ConnectToApplication(const String& requestor_url,
                             InterfaceRequest<ServiceProvider> services,
                             ServiceProviderPtr exposed_services) override {
-    client()->AcceptConnection(requestor_url, services.Pass(),
-                               exposed_services.Pass());
+    application_->AcceptConnection(requestor_url, services.Pass(),
+                                   exposed_services.Pass());
   }
+
+  ApplicationPtr application_;
+  StrongBinding<Shell> binding_;
 };
 
 void DoLocalRegister(const GURL& app_url,
                      const std::vector<std::string>& args,
-                     ScopedMessagePipeHandle shell) {
-  BindToPipe(new StubShellImpl, shell.Pass());
+                     ApplicationPtr application) {
+  new StubShellImpl(application.Pass());
 }
 
 void ConnectOnIOThread(const base::FilePath& socket_path,
@@ -109,24 +124,19 @@ TEST_F(ExternalApplicationListenerTest, ConnectConnection) {
 
 namespace {
 
-class QuitLoopOnConnectApplicationImpl : public InterfaceImpl<Application> {
+class QuitLoopOnConnectApp : public ApplicationDelegate {
  public:
-  QuitLoopOnConnectApplicationImpl(const std::string& url,
-                                   scoped_refptr<base::TaskRunner> loop,
-                                   base::Closure quit_callback)
+  QuitLoopOnConnectApp(const std::string& url,
+                       scoped_refptr<base::TaskRunner> loop,
+                       base::Closure quit_callback)
       : url_(url), to_quit_(loop), quit_callback_(quit_callback) {}
 
  private:
-  void Initialize(Array<String> args) override {}
-
-  void AcceptConnection(const String& requestor_url,
-                        InterfaceRequest<ServiceProvider> services,
-                        ServiceProviderPtr exposed_services) override {
-    DVLOG(1) << url_ << " accepting connection from " << requestor_url;
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    DVLOG(1) << url_ << " accepting connection from "
+             << connection->GetRemoteApplicationURL();
     to_quit_->PostTask(FROM_HERE, quit_callback_);
-  }
-
-  void RequestQuit() override {
+    return true;
   }
 
   const std::string url_;
@@ -136,40 +146,43 @@ class QuitLoopOnConnectApplicationImpl : public InterfaceImpl<Application> {
 
 class FakeExternalApplication {
  public:
-  FakeExternalApplication(const std::string& url) : url_(url) {}
+  explicit FakeExternalApplication(const std::string& url) : url_(url) {}
 
   void ConnectSynchronously(const base::FilePath& socket_path) {
     connection_.reset(new ExternalApplicationRegistrarConnection(socket_path));
     EXPECT_TRUE(connection_->Connect());
   }
 
-  // application_impl is the the actual implementation to be registered.
-  void Register(scoped_ptr<InterfaceImpl<Application>> application_impl,
-                base::Closure register_complete_callback) {
+  // application_delegate is the the actual implementation to be registered.
+  void Register(scoped_ptr<ApplicationDelegate> application_delegate,
+                const base::Closure& register_complete_callback) {
     connection_->Register(
         GURL(url_), std::vector<std::string>(),
         base::Bind(&FakeExternalApplication::OnRegister, base::Unretained(this),
                    register_complete_callback));
-    application_impl_ = application_impl.Pass();
+    application_delegate_ = application_delegate.Pass();
   }
 
   void ConnectToAppByUrl(std::string app_url) {
     ServiceProviderPtr sp;
-    ptr_->ConnectToApplication(app_url, GetProxy(&sp), nullptr);
+    application_impl_->WaitForInitialize();
+    application_impl_->shell()->ConnectToApplication(app_url, GetProxy(&sp),
+                                                     nullptr);
   }
 
   const std::string& url() { return url_; }
 
  private:
-  void OnRegister(base::Closure complete_callback, ShellPtr shell) {
-    ptr_ = shell.Pass();
-    ptr_.set_client(application_impl_.get());
-    complete_callback.Run();
+  void OnRegister(const base::Closure& callback,
+                  InterfaceRequest<Application> application_request) {
+    application_impl_.reset(new ApplicationImpl(application_delegate_.get(),
+                                                application_request.Pass()));
+    callback.Run();
   }
 
   const std::string url_;
-  scoped_ptr<InterfaceImpl<Application>> application_impl_;
-  ShellPtr ptr_;
+  scoped_ptr<ApplicationDelegate> application_delegate_;
+  scoped_ptr<ApplicationImpl> application_impl_;
 
   scoped_ptr<ExternalApplicationRegistrarConnection> connection_;
 };
@@ -177,9 +190,6 @@ class FakeExternalApplication {
 void ConnectToApp(FakeExternalApplication* connector,
                   FakeExternalApplication* connectee) {
   connector->ConnectToAppByUrl(connectee->url());
-}
-
-void NoOp() {
 }
 
 void ConnectAndRegisterOnIOThread(const base::FilePath& socket_path,
@@ -191,22 +201,22 @@ void ConnectAndRegisterOnIOThread(const base::FilePath& socket_path,
   connector->ConnectSynchronously(socket_path);
   // connector will use this implementation of the Mojo Application interface
   // once registration complete.
-  scoped_ptr<QuitLoopOnConnectApplicationImpl> connector_app_impl(
-      new QuitLoopOnConnectApplicationImpl(connector->url(), loop,
-                                           quit_callback));
+  scoped_ptr<QuitLoopOnConnectApp> connector_app(
+      new QuitLoopOnConnectApp(connector->url(), loop, quit_callback));
+
   // Since connectee won't be ready when connector is done registering, pass
   // in a do-nothing callback.
-  connector->Register(connector_app_impl.Pass(), base::Bind(&NoOp));
+  connector->Register(connector_app.Pass(), base::Bind(&base::DoNothing));
 
   // Connect the second app to the registrar.
   connectee->ConnectSynchronously(socket_path);
-  scoped_ptr<QuitLoopOnConnectApplicationImpl> connectee_app_impl(
-      new QuitLoopOnConnectApplicationImpl(connectee->url(), loop,
-                                           quit_callback));
+
+  scoped_ptr<QuitLoopOnConnectApp> connectee_app(
+      new QuitLoopOnConnectApp(connectee->url(), loop, quit_callback));
   // After connectee is successfully registered, connector should be
   // able to connect to is by URL. Pass in a callback to attempt the
   // app -> app connection.
-  connectee->Register(connectee_app_impl.Pass(),
+  connectee->Register(connectee_app.Pass(),
                       base::Bind(&ConnectToApp, connector, connectee));
 }
 

@@ -25,11 +25,12 @@ BackgroundApplicationLoader::~BackgroundApplicationLoader() {
     thread_->Join();
 }
 
-void BackgroundApplicationLoader::Load(ApplicationManager* manager,
-                                       const GURL& url,
-                                       ShellPtr shell,
-                                       LoadCallback callback) {
-  DCHECK(shell);
+void BackgroundApplicationLoader::Load(
+    ApplicationManager* manager,
+    const GURL& url,
+    InterfaceRequest<Application> application_request,
+    LoadCallback callback) {
+  DCHECK(application_request.is_pending());
   if (!thread_) {
     // TODO(tim): It'd be nice if we could just have each Load call
     // result in a new thread like DynamicService{Loader, Runner}. But some
@@ -46,7 +47,8 @@ void BackgroundApplicationLoader::Load(ApplicationManager* manager,
   task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&BackgroundApplicationLoader::LoadOnBackgroundThread,
-                 base::Unretained(this), manager, url, base::Passed(&shell)));
+                 base::Unretained(this), manager, url,
+                 base::Passed(&application_request)));
 }
 
 void BackgroundApplicationLoader::OnApplicationError(
@@ -74,9 +76,9 @@ void BackgroundApplicationLoader::Run() {
 void BackgroundApplicationLoader::LoadOnBackgroundThread(
     ApplicationManager* manager,
     const GURL& url,
-    ShellPtr shell) {
+    InterfaceRequest<Application> application_request) {
   DCHECK(task_runner_->RunsTasksOnCurrentThread());
-  loader_->Load(manager, url, shell.Pass(), SimpleLoadCallback());
+  loader_->Load(manager, url, application_request.Pass(), SimpleLoadCallback());
 }
 
 void BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread(

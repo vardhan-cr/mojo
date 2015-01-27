@@ -19,6 +19,9 @@
 #include "url/gurl.h"
 
 namespace mojo {
+
+class Application;
+
 namespace shell {
 
 // Externally-running applications can use this class to discover and register
@@ -38,10 +41,12 @@ class ExternalApplicationRegistrarConnection : public ErrorHandler {
   // initiated, returning false if it was unable to do so.
   bool Connect();
 
+  using RegisterCallback = base::Callback<void(InterfaceRequest<Application>)>;
+
   // Registers this app with the shell at the provided URL.
   void Register(const GURL& app_url,
                 const std::vector<std::string>& args,
-                base::Callback<void(ShellPtr)> register_complete_callback);
+                const RegisterCallback& callback);
 
  private:
   // Handles the result of Connect(). If it was successful, promotes the socket

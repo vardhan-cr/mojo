@@ -13,12 +13,14 @@ AndroidHandlerLoader::AndroidHandlerLoader() {
 AndroidHandlerLoader::~AndroidHandlerLoader() {
 }
 
-void AndroidHandlerLoader::Load(ApplicationManager* manager,
-                                const GURL& url,
-                                ShellPtr shell,
-                                LoadCallback callback) {
-  DCHECK(shell);
-  application_.reset(new ApplicationImpl(&android_handler_, shell.Pass()));
+void AndroidHandlerLoader::Load(
+    ApplicationManager* manager,
+    const GURL& url,
+    InterfaceRequest<Application> application_request,
+    LoadCallback callback) {
+  DCHECK(application_request.is_pending());
+  application_.reset(
+      new ApplicationImpl(&android_handler_, application_request.Pass()));
 }
 
 void AndroidHandlerLoader::OnApplicationError(ApplicationManager* manager,

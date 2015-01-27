@@ -72,7 +72,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
 
   void RegisterExternalApplication(const GURL& application_url,
                                    const std::vector<std::string>& args,
-                                   ScopedMessagePipeHandle shell_handle);
+                                   ApplicationPtr application);
 
   // Sets the default Loader to be used if not overridden by SetLoaderForURL()
   // or SetLoaderForScheme().
@@ -126,7 +126,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
                        ServiceProviderPtr exposed_services);
 
   void LoadWithContentHandler(const GURL& content_handler_url,
-                              ScopedMessagePipeHandle shell_handle,
+                              InterfaceRequest<Application> application_request,
                               URLResponsePtr url_response);
 
   // Return the appropriate loader for |url|. This can return NULL if there is

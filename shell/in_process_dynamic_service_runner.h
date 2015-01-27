@@ -26,7 +26,7 @@ class InProcessDynamicServiceRunner
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
-             ScopedMessagePipeHandle service_handle,
+             InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
  private:
@@ -34,7 +34,7 @@ class InProcessDynamicServiceRunner
   void Run() override;
 
   base::FilePath app_path_;
-  ScopedMessagePipeHandle service_handle_;
+  InterfaceRequest<Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 
   base::ScopedNativeLibrary app_library_;

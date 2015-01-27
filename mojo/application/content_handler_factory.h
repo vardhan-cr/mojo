@@ -25,7 +25,9 @@ class ContentHandlerFactory : public InterfaceFactory<ContentHandler> {
     virtual ~Delegate() {}
     // Implement this method to create the Application. This method will be
     // called on a new thread. Leaving this method will quit the application.
-    virtual void RunApplication(ShellPtr shell, URLResponsePtr response) = 0;
+    virtual void RunApplication(
+        InterfaceRequest<Application> application_request,
+        URLResponsePtr response) = 0;
   };
 
   class ManagedDelegate : public Delegate {
@@ -36,11 +38,12 @@ class ContentHandlerFactory : public InterfaceFactory<ContentHandler> {
     // on this new thread, and the returned value will be kept alive until the
     // application ends.
     virtual scoped_ptr<HandledApplicationHolder> CreateApplication(
-        ShellPtr shell,
+        InterfaceRequest<Application> application_request,
         URLResponsePtr response) = 0;
 
    private:
-    void RunApplication(ShellPtr shell, URLResponsePtr response) override;
+    void RunApplication(InterfaceRequest<Application> application_request,
+                        URLResponsePtr response) override;
   };
 
   explicit ContentHandlerFactory(Delegate* delegate);

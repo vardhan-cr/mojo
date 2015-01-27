@@ -4,7 +4,7 @@
 
 module mojo;
 
-import "mojo/public/interfaces/application/shell.mojom";
+import "mojo/public/interfaces/application/application.mojom";
 
 // This interface allows applications running outside the auspices of a Shell
 // to request registration at the given application_url.
@@ -12,5 +12,6 @@ import "mojo/public/interfaces/application/shell.mojom";
 // available to other apps at that URL and pass back a Shell bound to
 // an impl capable of servicing the external application's connection requests.
 interface ExternalApplicationRegistrar {
-  Register(string application_url, array<string>? args) => (Shell shell);
+  Register(string application_url, array<string>? args) =>
+      (Application& application_request);
 };
