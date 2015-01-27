@@ -27,4 +27,13 @@ void ReaperBinding::DropNode(uint32 node) {
   impl_->DropNode(caller_url_, node);
 }
 
+void ReaperBinding::StartTransfer(uint32 node,
+                                  mojo::InterfaceRequest<Transfer> request) {
+  impl_->StartTransfer(caller_url_, node, request.Pass());
+}
+
+void ReaperBinding::Ping(const mojo::Closure& closure) {
+  closure.Run();
+}
+
 }  // namespace reaper

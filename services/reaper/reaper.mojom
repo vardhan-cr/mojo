@@ -4,6 +4,8 @@
 
 module reaper;
 
+import "services/reaper/transfer.mojom";
+
 // Reaper maintains a graph of references between applications and based on that
 // decides when to shut down applications.
 interface Reaper {
@@ -18,4 +20,12 @@ interface Reaper {
 
   // Drop a node. The node and containing reference both becomes invalid.
   DropNode(uint32 node);
+
+  // Initiates a transfer of |node| to another application. Pass the other end
+  // of |transfer| to the destination application. The destination application
+  // should then call Complete() on |transfer| to finalize the transfer.
+  StartTransfer(uint32 node, Transfer& transfer);
+
+  // No-op used for creating ordering between interfaces.
+  Ping() => ();
 };

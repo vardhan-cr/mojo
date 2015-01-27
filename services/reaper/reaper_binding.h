@@ -8,6 +8,7 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "services/reaper/reaper.mojom.h"
+#include "services/reaper/transfer.mojom.h"
 #include "url/gurl.h"
 
 namespace reaper {
@@ -31,6 +32,9 @@ class ReaperBinding : public Reaper {
       const mojo::Callback<void(uint64)>& callback) override;
   void CreateReference(uint32 source_node, uint32 target_node) override;
   void DropNode(uint32 node) override;
+  void StartTransfer(uint32 node,
+                     mojo::InterfaceRequest<Transfer> request) override;
+  void Ping(const mojo::Closure& callback) override;
 
   GURL caller_url_;
   ReaperImpl* impl_;

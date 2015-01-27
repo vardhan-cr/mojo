@@ -8,6 +8,7 @@
 #include "crypto/random.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "services/reaper/reaper_binding.h"
+#include "services/reaper/transfer_binding.h"
 
 namespace reaper {
 
@@ -29,16 +30,16 @@ struct ReaperImpl::NodeLocator {
 };
 
 struct ReaperImpl::NodeInfo {
-  NodeInfo() : is_source(false), is_being_transferred(false) {}
+  NodeInfo() : is_source(false) {}
   NodeInfo(const NodeInfo& other) = default;
   NodeInfo(const NodeLocator& other_node)
-      : other_node(other_node), is_source(false), is_being_transferred(false) {}
+      : other_node(other_node), is_source(false) {}
   NodeLocator other_node;
   bool is_source;
-  bool is_being_transferred;
 };
 
-ReaperImpl::ReaperImpl() : next_app_id_(1) {
+ReaperImpl::ReaperImpl()
+    : reaper_url_("mojo:reaper"), next_app_id_(1), next_transfer_id_(1) {
 }
 
 ReaperImpl::~ReaperImpl() {
@@ -50,6 +51,30 @@ ReaperImpl::AppId ReaperImpl::GetAppId(const GURL& app_url) {
     result = app_ids_[app_url] = next_app_id_++;
   }
   return result;
+}
+
+const GURL& ReaperImpl::GetAppURLSlowly(AppId app_id) const {
+  for (const auto& it : app_ids_) {
+    if (it.second == app_id)
+      return it.first;
+  }
+  return GURL::EmptyGURL();
+}
+
+bool ReaperImpl::MoveNode(const NodeLocator& source, const NodeLocator& dest) {
+  const auto& source_it = nodes_.find(source);
+  if (source_it == nodes_.end())
+    return false;
+
+  const auto& dest_it = nodes_.find(dest);
+  if (dest_it != nodes_.end())
+    return false;
+
+  nodes_[dest] = source_it->second;
+  nodes_.erase(source_it);
+
+  nodes_[nodes_[dest].other_node].other_node = dest;
+  return true;
 }
 
 void ReaperImpl::GetApplicationSecret(
@@ -105,6 +130,40 @@ void ReaperImpl::DropNode(const GURL& caller_app, uint32 node_id) {
   nodes_.erase(it);
 }
 
+void ReaperImpl::StartTransfer(const GURL& caller_app,
+                               uint32 node_id,
+                               mojo::InterfaceRequest<Transfer> request) {
+  AppId transfer_id = next_transfer_id_++;
+  NodeLocator source(GetAppId(caller_app), node_id);
+  if (!MoveNode(source, NodeLocator(GetAppId(reaper_url_), transfer_id))) {
+    LOG(ERROR) << "Could not start node transfer because move failed from: ("
+               << caller_app.spec() << "," << node_id << ") to: ("
+               << reaper_url_.spec() << "," << transfer_id << ")";
+    return;
+  }
+  new TransferBinding(transfer_id, this, request.Pass());
+}
+
+void ReaperImpl::CompleteTransfer(uint32 source_node_id,
+                                  uint64 dest_app_secret,
+                                  uint32 dest_node_id) {
+  AppId dest_app_id = app_secret_to_id_[dest_app_secret];
+  if (dest_app_id == 0u) {
+    LOG(ERROR) << "Specified destination app secret does not exist: "
+               << dest_app_secret;
+    return;
+  }
+
+  NodeLocator source(GetAppId(reaper_url_), source_node_id);
+  NodeLocator dest(dest_app_id, dest_node_id);
+  if (!MoveNode(source, dest)) {
+    LOG(ERROR) << "Could not complete transfer because move failed from: ("
+               << reaper_url_.spec() << "," << source_node_id << ") to: ("
+               << GetAppURLSlowly(dest_app_id).spec() << "," << dest_node_id
+               << ")";
+  }
+}
+
 bool ReaperImpl::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
   connection->AddService<Reaper>(this);
@@ -114,8 +173,7 @@ bool ReaperImpl::ConfigureIncomingConnection(
 
 void ReaperImpl::Create(mojo::ApplicationConnection* connection,
                         mojo::InterfaceRequest<Reaper> request) {
-  new ReaperBinding(GURL(connection->GetRemoteApplicationURL()), this,
-                    request.Pass());
+  GetReaperForApp(connection->GetRemoteApplicationURL(), request.Pass());
 }
 
 void ReaperImpl::Create(mojo::ApplicationConnection* connection,
@@ -137,17 +195,24 @@ void ReaperImpl::DumpNodes(
     node->other_app_url = app_urls[entry.second.other_node.app_id].spec();
     node->other_id = entry.second.other_node.node_id;
     node->is_source = entry.second.is_source;
-    node->is_being_transferred = entry.second.is_being_transferred;
     result.push_back(node.Pass());
   }
   callback.Run(result.Pass());
 }
 
-void ReaperImpl::Reset(const mojo::Callback<void()>& callback) {
+void ReaperImpl::Reset() {
   nodes_.clear();
   app_id_to_secret_.clear();
   app_secret_to_id_.clear();
-  callback.Run();
+}
+
+void ReaperImpl::GetReaperForApp(const mojo::String& app_url,
+                                 mojo::InterfaceRequest<Reaper> request) {
+  new ReaperBinding(GURL(app_url), this, request.Pass());
+}
+
+void ReaperImpl::Ping(const mojo::Closure& closure) {
+  closure.Run();
 }
 
 }  // namespace reaper

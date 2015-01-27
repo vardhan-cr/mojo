@@ -12,6 +12,8 @@ mojo_native_application("reaper") {
     "reaper_binding.h",
     "reaper_impl.cc",
     "reaper_impl.h",
+    "transfer_binding.cc",
+    "transfer_binding.h",
   ]
 
   deps = [
@@ -32,6 +34,7 @@ mojom("bindings") {
   sources = [
     "diagnostics.mojom",
     "reaper.mojom",
+    "transfer.mojom",
   ]
 }
 

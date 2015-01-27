@@ -39,6 +39,12 @@ class ReaperImpl : public Diagnostics,
                        uint32 source_node_id,
                        uint32 target_node_id);
   void DropNode(const GURL& caller_app, uint32 node);
+  void StartTransfer(const GURL& caller_app,
+                     uint32 node,
+                     mojo::InterfaceRequest<Transfer> request);
+  void CompleteTransfer(uint32 source_node_id,
+                        uint64 dest_app_secret,
+                        uint32 dest_node_id);
 
  private:
   typedef int AppId;
@@ -47,6 +53,8 @@ class ReaperImpl : public Diagnostics,
   struct NodeInfo;
 
   AppId GetAppId(const GURL& app_url);
+  const GURL& GetAppURLSlowly(const AppId app_id) const;
+  bool MoveNode(const NodeLocator& source, const NodeLocator& dest);
 
   // mojo::ApplicationDelegate
   bool ConfigureIncomingConnection(
@@ -63,11 +71,19 @@ class ReaperImpl : public Diagnostics,
   // Diagnostics
   void DumpNodes(
       const mojo::Callback<void(mojo::Array<NodePtr>)>& callback) override;
-  void Reset(const mojo::Callback<void()>&) override;
+  void Reset() override;
+  void GetReaperForApp(const mojo::String& url,
+                       mojo::InterfaceRequest<Reaper> request) override;
+  void Ping(const mojo::Closure& callback) override;
+
+  GURL reaper_url_;
 
   // There will be a lot of nodes in a running system, so we intern app urls.
   std::map<GURL, AppId> app_ids_;
-  int next_app_id_;
+  AppId next_app_id_;
+
+  // These are the ids assigned to nodes while they are being transferred.
+  AppId next_transfer_id_;
 
   std::map<AppId, AppSecret> app_id_to_secret_;
   std::map<AppSecret, AppId> app_secret_to_id_;

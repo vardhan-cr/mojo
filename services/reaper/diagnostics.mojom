@@ -4,13 +4,21 @@
 
 module reaper;
 
+import "services/reaper/reaper.mojom";
+
 // Diagnostic and test support for the reaper.
 interface Diagnostics {
   // Returns all live nodes, in no particular order.
   DumpNodes() => (array<Node> nodes);
 
   // Clear all state.
-  Reset() => ();
+  Reset();
+
+  // Get a reaper for any app URL.
+  GetReaperForApp(string app_url, Reaper& reaper);
+
+  // No-op used for creating ordering between interfaces.
+  Ping() => ();
 };
 
 struct Node {
@@ -19,5 +27,4 @@ struct Node {
   string other_app_url;
   uint32 other_id;
   bool is_source;
-  bool is_being_transferred;
 };
