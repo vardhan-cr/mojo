@@ -158,7 +158,7 @@ static void Init(JNIEnv* env,
   // LazyInstances is akin to stack-allocating objects; their destructors
   // will be invoked first-in-last-out.
   Context* shell_context = new Context();
-  shell_context->mojo_url_resolver()->SetLocalAppsPath(base::FilePath(
+  shell_context->SetShellFileRoot(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
   for (auto& args : parameters)
     ApplyApplicationArgs(shell_context, args);

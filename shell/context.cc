@@ -14,6 +14,7 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
+#include "base/path_service.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "build/build_config.h"
@@ -28,6 +29,7 @@
 #include "shell/application_manager/application_manager.h"
 #include "shell/dynamic_application_loader.h"
 #include "shell/external_application_listener.h"
+#include "shell/filename_util.h"
 #include "shell/in_process_dynamic_service_runner.h"
 #include "shell/out_of_process_dynamic_service_runner.h"
 #include "shell/switches.h"
@@ -36,12 +38,6 @@
 namespace mojo {
 namespace shell {
 namespace {
-
-// These mojo: URLs are loaded directly from the local filesystem. They
-// correspond to shared libraries bundled alongside the mojo_shell.
-const char* kLocalMojoURLs[] = {
-    "mojo:network_service",
-};
 
 // Used to ensure we only init once.
 class Setup {
@@ -106,18 +102,46 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
   }
 }
 
-bool ConfigureURLMappings(const std::string& mappings,
-                          mojo::shell::MojoURLResolver* resolver) {
-  base::StringPairs pairs;
-  if (!base::SplitStringIntoKeyValuePairs(mappings, '=', ',', &pairs))
+bool ConfigureURLMappings(base::CommandLine* command_line,
+                          Context* context) {
+  MojoURLResolver* resolver = context->mojo_url_resolver();
+
+  // Configure the resolution of unknown mojo: URLs.
+  GURL base_url;
+  if (command_line->HasSwitch(switches::kOrigin))
+    base_url = GURL(command_line->GetSwitchValueASCII(switches::kOrigin));
+  else
+    // Use the shell's file root if the base was not specified.
+    base_url = context->ResolveShellFileURL("");
+
+  if (!base_url.is_valid())
     return false;
-  using StringPair = std::pair<std::string, std::string>;
-  for (const StringPair& pair : pairs) {
-    const GURL from(pair.first);
-    const GURL to(pair.second);
-    if (!from.is_valid() || !to.is_valid())
+
+  resolver->SetBaseURL(base_url);
+
+  // The network service must be loaded from the filesystem.
+  // This mapping is done before the command line URL mapping are processed, so
+  // that it can be overridden.
+  resolver->AddCustomMapping(
+      GURL("mojo:network_service"),
+      context->ResolveShellFileURL("file:network_service.mojo"));
+
+  // Command line URL mapping.
+  if (command_line->HasSwitch(switches::kURLMappings)) {
+    const std::string mappings =
+      command_line->GetSwitchValueASCII(switches::kURLMappings);
+
+    base::StringPairs pairs;
+    if (!base::SplitStringIntoKeyValuePairs(mappings, '=', ',', &pairs))
       return false;
-    resolver->AddCustomMapping(from, to);
+    using StringPair = std::pair<std::string, std::string>;
+    for (const StringPair& pair : pairs) {
+      const GURL from(pair.first);
+      const GURL to(pair.second);
+      if (!from.is_valid() || !to.is_valid())
+        return false;
+      resolver->AddCustomMapping(from, to);
+    }
   }
   return true;
 }
@@ -126,6 +150,13 @@ bool ConfigureURLMappings(const std::string& mappings,
 
 Context::Context() : application_manager_(this) {
   DCHECK(!base::MessageLoop::current());
+
+  // By default assume that the local apps reside alongside the shell.
+  // TODO(ncbray): really, this should be passed in rather than defaulting.
+  // This default makes sense for desktop but not Android.
+  base::FilePath shell_dir;
+  PathService::Get(base::DIR_MODULE, &shell_dir);
+  SetShellFileRoot(shell_dir);
 }
 
 Context::~Context() {
@@ -134,6 +165,14 @@ Context::~Context() {
 
 void Context::EnsureEmbedderIsInitialized() {
   setup.Get();
+}
+
+void Context::SetShellFileRoot(const base::FilePath& path) {
+  shell_file_root_ = AddTrailingSlashIfNeeded(FilePathToFileURL(path));
+}
+
+GURL Context::ResolveShellFileURL(const std::string& path) {
+  return shell_file_root_.Resolve(path);
 }
 
 bool Context::Init() {
@@ -146,8 +185,10 @@ bool Context::Init() {
   task_runners_.reset(
       new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
 
-  for (size_t i = 0; i < arraysize(kLocalMojoURLs); ++i)
-    mojo_url_resolver_.AddLocalFileMapping(GURL(kLocalMojoURLs[i]));
+  if (!shell_file_root_.is_valid())
+    return false;
+  if (!ConfigureURLMappings(command_line, this))
+    return false;
 
   if (command_line->HasSwitch(switches::kEnableExternalApplications)) {
     listener_.reset(new ExternalApplicationListener(
@@ -162,16 +203,6 @@ bool Context::Init() {
         socket_path,
         base::Bind(&ApplicationManager::RegisterExternalApplication,
                    base::Unretained(&application_manager_)));
-  }
-  if (command_line->HasSwitch(switches::kOrigin)) {
-    mojo_url_resolver()->SetBaseURL(
-        GURL(command_line->GetSwitchValueASCII(switches::kOrigin)));
-  }
-  if (command_line->HasSwitch(switches::kURLMappings) &&
-      !ConfigureURLMappings(
-          command_line->GetSwitchValueASCII(switches::kURLMappings),
-          mojo_url_resolver())) {
-    return false;
   }
 
   scoped_ptr<DynamicServiceRunnerFactory> runner_factory;

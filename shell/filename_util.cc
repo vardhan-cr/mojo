@@ -57,4 +57,14 @@ GURL FilePathToFileURL(const base::FilePath& path) {
   return GURL(url_string);
 }
 
+GURL AddTrailingSlashIfNeeded(const GURL& url) {
+  if (!url.has_path() || *url.path().rbegin() == '/')
+    return url;
+
+  std::string path(url.path() + '/');
+  GURL::Replacements replacements;
+  replacements.SetPathStr(path);
+  return url.ReplaceComponents(replacements);
+}
+
 }  // namespace mojo

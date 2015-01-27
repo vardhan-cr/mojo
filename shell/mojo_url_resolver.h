@@ -29,17 +29,9 @@ class MojoURLResolver {
   // inserted.
   void SetBaseURL(const GURL& base_url);
 
-  // Set the location of applications bundled with the Mojo Shell.
-  void SetLocalAppsPath(const base::FilePath& local_apps_path);
-
   // Add a custom mapping for a particular "mojo:" URL. If |resolved_url| is
   // itself a mojo url normal resolution rules apply.
   void AddCustomMapping(const GURL& mojo_url, const GURL& resolved_url);
-
-  // Add a local file mapping for a particular "mojo:" URL. This causes the
-  // "mojo:" URL to be resolved to a location where local apps are stored
-  // (base::DIR_MODULE unless overriden using SetLocalAppsPath()).
-  void AddLocalFileMapping(const GURL& mojo_url);
 
   // Resolve the given "mojo:" URL to the URL that should be used to fetch the
   // code for the corresponding Mojo App.
@@ -52,8 +44,6 @@ class MojoURLResolver {
 
  private:
   std::map<GURL, GURL> url_map_;
-  std::set<GURL> local_file_set_;
-  GURL local_apps_url_;
   GURL base_url_;
 
   DISALLOW_COPY_AND_ASSIGN(MojoURLResolver);

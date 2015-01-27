@@ -25,6 +25,16 @@ class Context : ApplicationManager::Delegate {
   Context();
   ~Context() override;
 
+  // Point to the directory containing installed services, such as the network
+  // service. By default this directory is used as the base URL for resolving
+  // unknown mojo: URLs. The network service will be loaded from this directory,
+  // even when the base URL for unknown mojo: URLs is overridden.
+  void SetShellFileRoot(const base::FilePath& path);
+
+  // Resolve an URL relative to the shell file root. This is a nop for
+  // everything but relative file URLs or URLs without a scheme.
+  GURL ResolveShellFileURL(const std::string& path);
+
   static void EnsureEmbedderIsInitialized();
   bool Init();
 
@@ -50,6 +60,7 @@ class Context : ApplicationManager::Delegate {
   scoped_ptr<ExternalApplicationListener> listener_;
   ApplicationManager application_manager_;
   MojoURLResolver mojo_url_resolver_;
+  GURL shell_file_root_;
 
   DISALLOW_COPY_AND_ASSIGN(Context);
 };

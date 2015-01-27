@@ -17,6 +17,10 @@ namespace mojo {
 // may not be valid if the input is malformed.
 GURL FilePathToFileURL(const base::FilePath& path);
 
+// This URL is going to be treated as a directory. Ensure there is a trailing
+// slash so that GURL.Resolve(...) works correctly.
+GURL AddTrailingSlashIfNeeded(const GURL& url);
+
 }  // namespace mojo
 
 #endif  // SHELL_FILENAME_UTIL_H_
