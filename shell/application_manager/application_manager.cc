@@ -186,13 +186,15 @@ void ApplicationManager::RegisterExternalApplication(
     const GURL& url,
     const std::vector<std::string>& args,
     ApplicationPtr application) {
+  const auto& args_it = url_to_args_.find(url);
+  if (args_it != url_to_args_.end()) {
+    LOG(WARNING) << "--args-for provided for external application "
+                 << url
+                 << " <ignored>";
+  }
   ShellImpl* shell_impl = new ShellImpl(application.Pass(), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
-
-  if (args.empty())
-    shell_impl->InitializeApplication(GetArgsForURL(url));
-  else
-    shell_impl->InitializeApplication(Array<String>::From(args));
+  shell_impl->InitializeApplication(Array<String>::From(args));
 }
 
 void ApplicationManager::LoadWithContentHandler(
@@ -285,7 +287,7 @@ ScopedMessagePipeHandle ApplicationManager::ConnectToServiceByName(
 }
 
 Array<String> ApplicationManager::GetArgsForURL(const GURL& url) {
-  URLToArgsMap::const_iterator args_it = url_to_args_.find(url);
+  const auto& args_it = url_to_args_.find(url);
   if (args_it != url_to_args_.end())
     return Array<String>::From(args_it->second);
   return Array<String>();
