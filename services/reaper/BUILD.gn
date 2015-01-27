@@ -17,6 +17,7 @@ mojo_native_application("reaper") {
   deps = [
     ":bindings",
     "//base",
+    "//crypto",
     "//url",
     "//mojo/application",
     "//mojo/common",

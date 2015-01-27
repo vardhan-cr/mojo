@@ -7,6 +7,10 @@ module reaper;
 // Reaper maintains a graph of references between applications and based on that
 // decides when to shut down applications.
 interface Reaper {
+  // Generates a secret that identifies the calling application for use with
+  // reaper::Transfer::Complete().
+  GetApplicationSecret() => (uint64 secret);
+
   // Create a new reference. A reference is composed of two nodes.Initially,
   // both nodes are owned by the calling application. Node ids must be unique
   // within a given application.

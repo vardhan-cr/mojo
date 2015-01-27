@@ -27,6 +27,8 @@ class ReaperBinding : public Reaper {
 
  private:
   // Reaper
+  void GetApplicationSecret(
+      const mojo::Callback<void(uint64)>& callback) override;
   void CreateReference(uint32 source_node, uint32 target_node) override;
   void DropNode(uint32 node) override;
 

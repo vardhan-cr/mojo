@@ -14,6 +14,11 @@ ReaperBinding::ReaperBinding(const GURL& caller_url,
     : caller_url_(caller_url), impl_(impl), binding_(this, request.Pass()) {
 }
 
+void ReaperBinding::GetApplicationSecret(
+    const mojo::Callback<void(uint64)>& callback) {
+  impl_->GetApplicationSecret(caller_url_, callback);
+}
+
 void ReaperBinding::CreateReference(uint32 source_node, uint32 target_node) {
   impl_->CreateReference(caller_url_, source_node, target_node);
 }

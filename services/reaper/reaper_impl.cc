@@ -5,6 +5,7 @@
 #include "services/reaper/reaper_impl.h"
 
 #include "base/logging.h"
+#include "crypto/random.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "services/reaper/reaper_binding.h"
 
@@ -51,7 +52,21 @@ ReaperImpl::AppId ReaperImpl::GetAppId(const GURL& app_url) {
   return result;
 }
 
-void ReaperImpl::CreateReference(GURL caller_app,
+void ReaperImpl::GetApplicationSecret(
+    const GURL& caller_app,
+    const mojo::Callback<void(AppSecret)>& callback) {
+  AppId app_id = GetAppId(caller_app);
+  AppSecret secret = app_id_to_secret_[app_id];
+  if (secret == 0u) {
+    crypto::RandBytes(&secret, sizeof(AppSecret));
+    CHECK_NE(secret, 0u);
+    app_id_to_secret_[app_id] = secret;
+    app_secret_to_id_[secret] = app_id;
+  }
+  callback.Run(secret);
+}
+
+void ReaperImpl::CreateReference(const GURL& caller_app,
                                  uint32 source_node_id,
                                  uint32 target_node_id) {
   NodeLocator source_locator(GetAppId(caller_app), source_node_id);
@@ -75,7 +90,7 @@ void ReaperImpl::CreateReference(GURL caller_app,
   nodes_[target_locator] = target_node;
 }
 
-void ReaperImpl::DropNode(GURL caller_app, uint32 node_id) {
+void ReaperImpl::DropNode(const GURL& caller_app, uint32 node_id) {
   const auto& it = nodes_.find(NodeLocator(GetAppId(caller_app), node_id));
   if (it == nodes_.end()) {
     LOG(ERROR) << "Specified node does not exist: " << node_id;
@@ -130,6 +145,8 @@ void ReaperImpl::DumpNodes(
 
 void ReaperImpl::Reset(const mojo::Callback<void()>& callback) {
   nodes_.clear();
+  app_id_to_secret_.clear();
+  app_secret_to_id_.clear();
   callback.Run();
 }
 

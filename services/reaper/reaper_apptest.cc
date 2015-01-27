@@ -40,6 +40,12 @@ struct NodeCatcher {
   mojo::Array<NodePtr>* nodes;
 };
 
+struct SecretCatcher {
+  SecretCatcher(uint64* secret) : secret(secret) {}
+  void Run(uint64 secret) const { *(this->secret) = secret; }
+  uint64* secret;
+};
+
 TEST_F(ReaperAppTest, CreateAndRead) {
   reaper_->CreateReference(1u, 2u);
 
@@ -96,6 +102,27 @@ TEST_F(ReaperAppTest, DropOneNode) {
 
   // The other node gets dropped immediately.
   ASSERT_EQ(0u, nodes.size());
+}
+
+TEST_F(ReaperAppTest, GetApplicationSecret) {
+  uint64 secret1 = 0u;
+  reaper_->GetApplicationSecret(SecretCatcher(&secret1));
+  reaper_.WaitForIncomingMethodCall();
+  EXPECT_NE(0u, secret1);
+
+  uint64 secret2 = 0u;
+  reaper_->GetApplicationSecret(SecretCatcher(&secret2));
+  reaper_.WaitForIncomingMethodCall();
+  EXPECT_EQ(secret1, secret2);
+
+  diagnostics_->Reset(mojo::Callback<void()>());
+  diagnostics_.WaitForIncomingMethodCall();
+  uint64 secret3 = 0u;
+  reaper_->GetApplicationSecret(SecretCatcher(&secret3));
+  reaper_.WaitForIncomingMethodCall();
+  EXPECT_NE(0u, secret3);
+  EXPECT_NE(secret1, secret3);
+  EXPECT_NE(secret2, secret3);
 }
 
 }  // namespace reaper

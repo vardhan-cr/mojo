@@ -28,13 +28,17 @@ class ReaperImpl : public Diagnostics,
                    public mojo::InterfaceFactory<Reaper>,
                    public mojo::InterfaceFactory<Diagnostics> {
  public:
+  typedef uint64 AppSecret;
+
   ReaperImpl();
   ~ReaperImpl();
 
-  void CreateReference(GURL caller_app,
+  void GetApplicationSecret(const GURL& caller_app,
+                            const mojo::Callback<void(AppSecret)>&);
+  void CreateReference(const GURL& caller_app,
                        uint32 source_node_id,
                        uint32 target_node_id);
-  void DropNode(GURL caller_app, uint32 node);
+  void DropNode(const GURL& caller_app, uint32 node);
 
  private:
   typedef int AppId;
@@ -64,6 +68,9 @@ class ReaperImpl : public Diagnostics,
   // There will be a lot of nodes in a running system, so we intern app urls.
   std::map<GURL, AppId> app_ids_;
   int next_app_id_;
+
+  std::map<AppId, AppSecret> app_id_to_secret_;
+  std::map<AppSecret, AppId> app_secret_to_id_;
 
   std::map<NodeLocator, NodeInfo> nodes_;
   mojo::WeakBindingSet<Diagnostics> diagnostics_bindings_;
