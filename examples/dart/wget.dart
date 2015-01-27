@@ -17,7 +17,10 @@ class WGet extends Application {
   NetworkServiceProxy _networkService;
   UrlLoaderProxy _urlLoaderProxy;
 
-  WGet.fromHandle(MojoHandle shellHandle) : super.fromHandle(shellHandle);
+  WGet.fromHandle(MojoHandle handle) : super.fromHandle(handle);
+
+  // This Application provides no services.
+  Function stubFactoryClosure() => (endpoint) => null;
 
   void initialize(List<String> args) {
     run(args);
@@ -70,8 +73,8 @@ class WGet extends Application {
 }
 
 main(List args) {
-  MojoHandle shellHandle = new MojoHandle(args[0]);
+  MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  var wget = new WGet.fromHandle(shellHandle);
+  var wget = new WGet.fromHandle(appHandle);
   wget.listen();
 }

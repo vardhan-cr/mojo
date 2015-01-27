@@ -35,8 +35,8 @@ class EchoApplication extends Application {
 }
 
 main(List args) {
-  MojoHandle shellHandle = new MojoHandle(args[0]);
+  MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  var echoApplication = new EchoApplication.fromHandle(shellHandle);
+  var echoApplication = new EchoApplication.fromHandle(appHandle);
   echoApplication.listen();
 }

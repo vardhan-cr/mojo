@@ -94,6 +94,9 @@ class PingPongServiceImpl extends PingPongServiceStub {
       _proxy.close();
     }
     close();
+    if (_application != null) {
+      _application.close();
+    }
   }
 }
 
@@ -105,8 +108,8 @@ class PingPongApplication extends Application {
 }
 
 main(List args) {
-  MojoHandle shellHandle = new MojoHandle(args[0]);
+  MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  var pingPongApplication = new PingPongApplication.fromHandle(shellHandle);
+  var pingPongApplication = new PingPongApplication.fromHandle(appHandle);
   pingPongApplication.listen();
 }
