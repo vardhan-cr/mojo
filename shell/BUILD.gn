@@ -360,6 +360,10 @@ mojom("app_child_process_bindings") {
   sources = [
     "app_child_process.mojom",
   ]
+
+  deps = [
+    "//mojo/public/interfaces/application",
+  ]
 }
 
 mojom("external_application_registrar_bindings") {
