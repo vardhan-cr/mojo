@@ -35,6 +35,14 @@ class Context : ApplicationManager::Delegate {
   // everything but relative file URLs or URLs without a scheme.
   GURL ResolveShellFileURL(const std::string& path);
 
+  // Override the CWD, which is used for resolving file URLs passed in from the
+  // command line.
+  void SetCommandLineCWD(const base::FilePath& path);
+
+  // Resolve an URL relative to the CWD mojo_shell was invoked from. This is a
+  // nop for everything but relative file URLs or URLs without a scheme.
+  GURL ResolveCommandLineURL(const std::string& path);
+
   static void EnsureEmbedderIsInitialized();
   bool Init();
 
@@ -61,6 +69,7 @@ class Context : ApplicationManager::Delegate {
   ApplicationManager application_manager_;
   MojoURLResolver mojo_url_resolver_;
   GURL shell_file_root_;
+  GURL command_line_cwd_;
 
   DISALLOW_COPY_AND_ASSIGN(Context);
 };

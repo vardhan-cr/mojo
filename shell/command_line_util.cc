@@ -20,7 +20,7 @@ namespace {
 GURL GetAppURLAndSetArgs(const std::string& app_url_and_args,
                          Context* context) {
   std::vector<std::string> args;
-  GURL app_url = GetAppURLAndArgs(app_url_and_args, &args);
+  GURL app_url = GetAppURLAndArgs(context, app_url_and_args, &args);
 
   if (args.size() > 1)
     context->application_manager()->SetArgsForURL(args, app_url);
@@ -43,7 +43,8 @@ bool ParseArgsFor(const std::string& arg, std::string* value) {
   return false;
 }
 
-GURL GetAppURLAndArgs(const std::string& app_url_and_args,
+GURL GetAppURLAndArgs(Context* context,
+                      const std::string& app_url_and_args,
                       std::vector<std::string>* args) {
   // SplitString() returns empty strings for extra delimeter characters (' ').
   base::SplitString(app_url_and_args, ' ', args);
@@ -53,7 +54,7 @@ GURL GetAppURLAndArgs(const std::string& app_url_and_args,
 
   if (args->empty())
     return GURL();
-  GURL app_url((*args)[0]);
+  GURL app_url = context->ResolveCommandLineURL((*args)[0]);
   if (!app_url.is_valid()) {
     LOG(ERROR) << "Error: invalid URL: " << (*args)[0];
     return app_url;

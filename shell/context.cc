@@ -137,7 +137,7 @@ bool ConfigureURLMappings(base::CommandLine* command_line,
     using StringPair = std::pair<std::string, std::string>;
     for (const StringPair& pair : pairs) {
       const GURL from(pair.first);
-      const GURL to(pair.second);
+      const GURL to = context->ResolveCommandLineURL(pair.second);
       if (!from.is_valid() || !to.is_valid())
         return false;
       resolver->AddCustomMapping(from, to);
@@ -157,6 +157,10 @@ Context::Context() : application_manager_(this) {
   base::FilePath shell_dir;
   PathService::Get(base::DIR_MODULE, &shell_dir);
   SetShellFileRoot(shell_dir);
+
+  base::FilePath cwd;
+  PathService::Get(base::DIR_CURRENT, &cwd);
+  SetCommandLineCWD(cwd);
 }
 
 Context::~Context() {
@@ -173,6 +177,14 @@ void Context::SetShellFileRoot(const base::FilePath& path) {
 
 GURL Context::ResolveShellFileURL(const std::string& path) {
   return shell_file_root_.Resolve(path);
+}
+
+void Context::SetCommandLineCWD(const base::FilePath& path) {
+  command_line_cwd_ = AddTrailingSlashIfNeeded(FilePathToFileURL(path));
+}
+
+GURL Context::ResolveCommandLineURL(const std::string& path) {
+  return command_line_cwd_.Resolve(path);
 }
 
 bool Context::Init() {

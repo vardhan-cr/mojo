@@ -20,7 +20,8 @@ bool ParseArgsFor(const std::string& arg, std::string* value);
 // arguments are specified they will be available when the Mojo application
 // is initialized. This returns the mojo_app_url, and set args to the list of
 // arguments.
-GURL GetAppURLAndArgs(const std::string& app_url_and_args,
+GURL GetAppURLAndArgs(Context* context,
+                      const std::string& app_url_and_args,
                       std::vector<std::string>* args);
 
 // Apply arguments for an application from a line with the following format:

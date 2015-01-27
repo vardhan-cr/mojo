@@ -46,7 +46,10 @@ TEST(CommandLineUtil, GetAppURLAndArgs) {
     const char** values;
   } EXPECTATIONS[] = {
       {"", nullptr, nullptr},
-      {"foo", nullptr, nullptr},
+      {"foo", "file:///root/foo", NO_ARGUMENTS},
+      {"/foo", "file:///foo", NO_ARGUMENTS},
+      {"file:foo", "file:///root/foo", NO_ARGUMENTS},
+      {"file:///foo", "file:///foo", NO_ARGUMENTS},
       {"http://example.com", "http://example.com", NO_ARGUMENTS},
       {"http://example.com 1", "http://example.com", ONE_ARGUMENTS},
       {"http://example.com 1 ", "http://example.com", ONE_ARGUMENTS},
@@ -55,9 +58,11 @@ TEST(CommandLineUtil, GetAppURLAndArgs) {
       {"   http://example.com  1  two   ",
        "http://example.com",
        TWO_ARGUMENTS}};
+  Context context;
+  context.SetCommandLineCWD(base::FilePath("/root"));
   for (auto& expectation : EXPECTATIONS) {
     std::vector<std::string> args;
-    GURL result(GetAppURLAndArgs(expectation.args, &args));
+    GURL result(GetAppURLAndArgs(&context, expectation.args, &args));
     EXPECT_EQ(bool(expectation.url), result.is_valid());
     if (expectation.url && result.is_valid()) {
       EXPECT_EQ(GURL(expectation.url), result);
