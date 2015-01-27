@@ -1,5 +1,9 @@
 include_rules = [
+  "+mojo/services/geometry/public",
+  "!base/auto_reset.h",
+  "!base/bind.h",
+  "!base/logging.h",
+  "!base/strings/stringprintf.h",
   "!shell/application_manager",
   "!shell/shell_test_helper.h",
-  "+mojo/services/geometry/public",
 ]
