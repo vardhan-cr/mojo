@@ -46,8 +46,7 @@ define("mojo/services/public/js/shell", [
       this.applications_.forEach(function(application, url) {
         application.close();
       });
-      // TODO(hansmuller): Use a proper API on Proxy to close.
-      core.close(this.shellProxy.handleStash);
+      ProxyBindings(this.shellProxy).close();
       this.applications_.clear();
     }
   }
