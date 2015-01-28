@@ -11,22 +11,31 @@ for more details about the presubmit API built into depot_tools.
 import os.path
 import re
 
-_SDK_WHITELISTED_EXTERNAL_PATHS = [
-  "//testing/gtest",
-  "//third_party/cython",
-  "//third_party/khronos",
-]
+# NOTE: The EDK allows all external paths, so doesn't need a whitelist.
+_PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
+    "SDK": ["//testing/gtest",
+            "//third_party/cython",
+            "//third_party/khronos"],
+    "services":  [ "//testing/gtest" ]
+}
+
 
 _PACKAGE_PATH_PREFIXES = {"SDK": "mojo/public/",
-                          "EDK": "mojo/edk/"}
+                          "EDK": "mojo/edk/",
+                          "services": "mojo/services"}
 
 # TODO(etiennej): python_binary_source_set added due to crbug.com/443147
 _PACKAGE_SOURCE_SET_TYPES = {"SDK": ["mojo_sdk_source_set",
                                      "python_binary_source_set"],
-                             "EDK": ["mojo_edk_source_set"]}
+                             "EDK": ["mojo_edk_source_set"],
+                             "services": ["mojo_sdk_source_set"]}
 
 _ILLEGAL_EXTERNAL_PATH_WARNING_MESSAGE = \
     "Found disallowed external paths within SDK buildfiles."
+
+_ILLEGAL_SERVICES_ABSOLUTE_PATH_WARNING_MESSAGE = \
+    "Found references to services' public buildfiles via absolute paths " \
+    "within services' public buildfiles.",
 
 _ILLEGAL_EDK_ABSOLUTE_PATH_WARNING_MESSAGE = \
     "Found references to the EDK via absolute paths within EDK buildfiles.",
@@ -37,21 +46,24 @@ _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGE_TEMPLATE = \
 _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGES = {
   "SDK": _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGE_TEMPLATE % "SDK",
   "EDK": _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGE_TEMPLATE % "EDK",
+  "services": _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGE_TEMPLATE
+      % "services' public",
 }
 
 _INCORRECT_SOURCE_SET_TYPE_WARNING_MESSAGE_TEMPLATE = \
-    "All source sets in the %s must be constructed via %s."
+    "All source sets in %s must be constructed via %s."
 
 _INCORRECT_SOURCE_SET_TYPE_WARNING_MESSAGES = {
   "SDK": _INCORRECT_SOURCE_SET_TYPE_WARNING_MESSAGE_TEMPLATE
-      % ("SDK", _PACKAGE_SOURCE_SET_TYPES["SDK"]),
+      % ("the SDK", _PACKAGE_SOURCE_SET_TYPES["SDK"]),
   "EDK": _INCORRECT_SOURCE_SET_TYPE_WARNING_MESSAGE_TEMPLATE
-      % ("EDK", _PACKAGE_SOURCE_SET_TYPES["EDK"]),
+      % ("the EDK", _PACKAGE_SOURCE_SET_TYPES["EDK"]),
+  "services": _INCORRECT_SOURCE_SET_TYPE_WARNING_MESSAGE_TEMPLATE
+      % ("services' client libs", _PACKAGE_SOURCE_SET_TYPES["services"]),
 }
 
 def _IsBuildFileWithinPackage(f, package):
-  """Returns whether |f| specifies a GN build file within |package| ("SDK" or
-  "EDK")."""
+  """Returns whether |f| specifies a GN build file within |package|."""
   assert package in _PACKAGE_PATH_PREFIXES
   package_path_prefix = _PACKAGE_PATH_PREFIXES[package]
 
@@ -63,16 +75,16 @@ def _IsBuildFileWithinPackage(f, package):
   return True
 
 def _AffectedBuildFilesWithinPackage(input_api, package):
-  """Returns all the affected build files within |package| ("SDK" or "EDK")."""
+  """Returns all the affected build files within |package|."""
   return [f for f in input_api.AffectedFiles()
       if _IsBuildFileWithinPackage(f, package)]
 
 def _FindIllegalAbsolutePathsInBuildFiles(input_api, package):
   """Finds illegal absolute paths within the build files in
-  |input_api.AffectedFiles()| that are within |package| ("SDK" or "EDK").
-  An illegal absolute path within the SDK is one that is to the SDK itself
-  or a non-whitelisted external path. An illegal absolute path within the
-  EDK is one that is to the SDK or the EDK.
+  |input_api.AffectedFiles()| that are within |package|.
+  An illegal absolute path within the SDK or a service's SDK is one that is to
+  the SDK itself or a non-whitelisted external path. An illegal absolute path
+  within the EDK is one that is to the SDK or the EDK.
   Returns any such references in a list of (file_path, line_number,
   referenced_path) tuples."""
   illegal_references = []
@@ -84,13 +96,14 @@ def _FindIllegalAbsolutePathsInBuildFiles(input_api, package):
         continue
       referenced_path = m.group(1)
 
-      # In the EDK, all external absolute paths are allowed.
-      if package == "EDK" and not referenced_path.startswith("//mojo"):
-        continue
+      if not referenced_path.startswith("//mojo"):
+        # In the EDK, all external absolute paths are allowed.
+        if package == "EDK":
+          continue
 
-      # Determine if this is a whitelisted external path.
-      if referenced_path in _SDK_WHITELISTED_EXTERNAL_PATHS:
-        continue
+        # Determine if this is a whitelisted external path.
+        if referenced_path in _PACKAGE_WHITELISTED_EXTERNAL_PATHS[package]:
+          continue
 
       illegal_references.append((f.LocalPath(), line_num, referenced_path))
 
@@ -107,12 +120,13 @@ def _IncorrectSourceSetTypeWarningItem(build_file, line_num):
   return "%s, line %d" % (build_file, line_num)
 
 def _CheckNoIllegalAbsolutePathsInBuildFiles(input_api, output_api, package):
-  """Makes sure that the BUILD.gn files within |package| ("SDK" or "EDK") do not
-  reference the SDK/EDK via absolute paths, and do not reference disallowed
-  external dependencies."""
+  """Makes sure that the BUILD.gn files within |package| do not reference the
+  SDK/EDK via absolute paths, and do not reference disallowed external
+  dependencies."""
   sdk_references = []
   edk_references = []
   external_deps_references = []
+  services_references = []
 
   # Categorize any illegal references.
   illegal_references = _FindIllegalAbsolutePathsInBuildFiles(input_api, package)
@@ -124,6 +138,11 @@ def _CheckNoIllegalAbsolutePathsInBuildFiles(input_api, output_api, package):
       sdk_references.append(reference_string)
     elif package == "SDK":
       external_deps_references.append(reference_string)
+    elif package == "services":
+      if referenced_path.startswith("//mojo/services"):
+        services_references.append(reference_string)
+      else:
+        external_deps_references.append(reference_string)
     elif referenced_path.startswith("//mojo/edk"):
       edk_references.append(reference_string)
 
@@ -135,10 +154,16 @@ def _CheckNoIllegalAbsolutePathsInBuildFiles(input_api, output_api, package):
         items=sdk_references)])
 
   if external_deps_references:
-    assert package == "SDK"
+    assert package == "SDK" or package == "services"
     results.extend([output_api.PresubmitError(
         _ILLEGAL_EXTERNAL_PATH_WARNING_MESSAGE,
         items=external_deps_references)])
+
+  if services_references:
+    assert package == "services"
+    results.extend([output_api.PresubmitError(
+        _ILLEGAL_SERVICES_ABSOLUTE_PATH_WARNING_MESSAGE,
+        items=services_references)])
 
   if edk_references:
     assert package == "EDK"
@@ -215,9 +240,9 @@ def _CheckChangePylintsClean(input_api, output_api):
   return results
 
 def _BuildFileChecks(input_api, output_api):
-  """Performs checks on SDK and EDK buildfiles."""
+  """Performs checks on SDK, EDK, and services' public buildfiles."""
   results = []
-  for package in ["SDK", "EDK"]:
+  for package in ["SDK", "EDK", "services"]:
     results.extend(_CheckNoIllegalAbsolutePathsInBuildFiles(input_api,
                                                             output_api,
                                                             package))

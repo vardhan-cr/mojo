@@ -15,11 +15,13 @@ from PRESUBMIT_test_mocks import MockInputApi, MockOutputApi
 
 _SDK_BUILD_FILE = 'mojo/public/some/path/BUILD.gn'
 _EDK_BUILD_FILE = 'mojo/edk/some/path/BUILD.gn'
+_SERVICE_BUILD_FILE = 'mojo/services/some_service/public/BUILD.gn'
 _IRRELEVANT_BUILD_FILE = 'mojo/foo/some/path/BUILD.gn'
 
 _PACKAGE_BUILDFILES = {
     'SDK' : _SDK_BUILD_FILE,
     'EDK' : _EDK_BUILD_FILE,
+    'services' : _SERVICE_BUILD_FILE
 }
 
 class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
@@ -30,6 +32,8 @@ class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
     self.sdk_relative_path = 'mojo/public/some/relative/path'
     self.edk_absolute_path = '//mojo/edk/some/absolute/path'
     self.edk_relative_path = 'mojo/edk/some/relative/path'
+    self.service_absolute_path = '//mojo/services/some/service'
+    self.service_relative_path = '../../../some/service'
     self.whitelisted_external_path = '//testing/gtest'
     self.non_whitelisted_external_path = '//base'
 
@@ -158,6 +162,33 @@ class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
     """Tests that an external path in an EDK buildfile is not flagged."""
     self._testExternalReferenceInPackage('EDK')
 
+  def testAbsoluteSDKReferenceInServiceBuildFile(self):
+    """Tests that an absolute SDK path within a service's public buildfile is
+    flagged."""
+    self._testAbsoluteSDKReferenceInPackage("services")
+
+  def testAbsoluteServiceReferenceInServiceBuildFile(self):
+    """Tests that an absolute path to a service within a service's public
+    buildfile is flagged."""
+    mock_input_api = self.inputApiContainingFileWithPaths(
+        _SERVICE_BUILD_FILE,
+        [ self.service_relative_path, self.service_absolute_path ])
+    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
+
+    self.assertEqual(1, len(warnings))
+    expected_message = \
+        PRESUBMIT._ILLEGAL_SERVICES_ABSOLUTE_PATH_WARNING_MESSAGE
+    self.checkWarningWithSingleItem(warnings[0],
+                                    expected_message,
+                                    _SERVICE_BUILD_FILE,
+                                    2,
+                                    self.service_absolute_path)
+
+  def testExternalReferenceInServiceBuildFile(self):
+    """Tests that an illegal external path in a service's buildfile is flagged
+    ."""
+    self._testExternalReferenceInPackage("services")
+
   def testIrrelevantBuildFile(self):
     """Tests that nothing is flagged in a non SDK/EDK buildfile."""
     mock_input_api = self.inputApiContainingFileWithPaths(
@@ -256,6 +287,16 @@ class SourceSetTypesInBuildFilesTest(unittest.TestCase):
   def testSDKSourceSetInEDKBuildFile(self):
     """Tests that a mojo_sdk_source_set within an EDK buildfile is flagged."""
     self._testWrongTypeOfWrapperSourceSetInPackage('EDK')
+
+  def testNakedSourceSetInServiceBuildFile(self):
+    """Tests that a source_set within a service's public buildfile is flagged.
+    """
+    self._testNakedSourceSetInPackage("services")
+
+  def testEDKSourceSetInServiceBuildFile(self):
+    """Tests that a mojo_edk_source_set within a service's public buildfile is
+    flagged."""
+    self._testWrongTypeOfWrapperSourceSetInPackage("services")
 
   def testIrrelevantBuildFile(self):
     """Tests that a source_set in a non-SDK/EDK buildfile isn't flagged."""
