@@ -24,8 +24,8 @@ ShellTestBase::~ShellTestBase() {
 }
 
 void ShellTestBase::SetUp() {
-  SetUpTestApplications();
   shell_context_.Init();
+  SetUpTestApplications();
 }
 
 ScopedMessagePipeHandle ShellTestBase::ConnectToService(
