@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "base/bind.h"
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/output/gl_renderer.h"
 #include "cc/resources/resource_provider.h"
 #include "gpu/GLES2/gl2extchromium.h"
@@ -388,6 +388,8 @@ VideoFrameExternalResources VideoResourceUpdater::CreateForHardwarePlanes(
       TextureMailbox(mailbox_holder->mailbox,
                      mailbox_holder->texture_target,
                      mailbox_holder->sync_point));
+  external_resources.mailboxes.back().set_allow_overlay(
+      video_frame->allow_overlay());
   external_resources.release_callbacks.push_back(
       base::Bind(&ReturnTexture, AsWeakPtr(), video_frame));
   return external_resources;

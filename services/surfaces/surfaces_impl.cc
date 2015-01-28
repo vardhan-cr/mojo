@@ -19,7 +19,7 @@ using mojo::SurfaceIdPtr;
 namespace surfaces {
 
 namespace {
-void CallCallback(const mojo::Closure& callback, bool frame_drawn) {
+void CallCallback(const mojo::Closure& callback, cc::SurfaceDrawStatus status) {
   callback.Run();
 }
 }

@@ -54,6 +54,11 @@ Process Process::OpenWithExtraPriviles(ProcessId pid) {
 }
 
 // static
+Process Process::OpenWithAccess(ProcessId pid, DWORD desired_access) {
+  return Process(::OpenProcess(desired_access, FALSE, pid));
+}
+
+// static
 Process Process::DeprecatedGetProcessFromHandle(ProcessHandle handle) {
   DCHECK_NE(handle, ::GetCurrentProcess());
   ProcessHandle out_handle;
@@ -95,7 +100,7 @@ Process Process::Duplicate() const {
   return Process(out_handle);
 }
 
-ProcessId Process::pid() const {
+ProcessId Process::Pid() const {
   DCHECK(IsValid());
   return GetProcId(Handle());
 }

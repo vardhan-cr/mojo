@@ -19,4 +19,15 @@ const std::vector<PictureLayerImpl*>& FakeTileManagerClient::GetPictureLayers()
   return picture_layers_;
 }
 
+scoped_ptr<RasterTilePriorityQueue> FakeTileManagerClient::BuildRasterQueue(
+    TreePriority tree_priority,
+    RasterTilePriorityQueue::Type type) {
+  return nullptr;
+}
+
+scoped_ptr<EvictionTilePriorityQueue> FakeTileManagerClient::BuildEvictionQueue(
+    TreePriority tree_priority) {
+  return nullptr;
+}
+
 }  // namespace cc

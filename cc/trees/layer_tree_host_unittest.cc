@@ -41,6 +41,7 @@
 #include "cc/test/fake_proxy.h"
 #include "cc/test/fake_scoped_ui_resource.h"
 #include "cc/test/geometry_test_utils.h"
+#include "cc/test/impl_side_painting_settings.h"
 #include "cc/test/layer_tree_test.h"
 #include "cc/test/test_shared_bitmap_manager.h"
 #include "cc/test/test_web_graphics_context_3d.h"
@@ -5549,7 +5550,9 @@ class LayerTreeHostTestCrispUpAfterPinchEnds : public LayerTreeHostTest {
     pinch->SetIsContainerForFixedPositionLayers(true);
     root->AddChild(pinch);
 
-    scoped_ptr<FakePicturePile> pile(new FakePicturePile);
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
     pile->SetPlaybackAllowedEvent(&playback_allowed_event_);
     scoped_refptr<FakePictureLayer> layer =
         FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
@@ -5752,7 +5755,9 @@ class RasterizeWithGpuRasterizationCreatesResources : public LayerTreeHostTest {
     scoped_refptr<Layer> root = Layer::Create();
     root->SetBounds(gfx::Size(500, 500));
 
-    scoped_ptr<FakePicturePile> pile(new FakePicturePile);
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
     scoped_refptr<FakePictureLayer> layer =
         FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
     layer->SetBounds(gfx::Size(500, 500));
@@ -5792,7 +5797,9 @@ class GpuRasterizationRasterizesVisibleOnly : public LayerTreeHostTest {
   void SetupTree() override {
     client_.set_fill_with_nonsolid_color(true);
 
-    scoped_ptr<FakePicturePile> pile(new FakePicturePile);
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
     scoped_refptr<FakePictureLayer> root =
         FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
     root->SetBounds(gfx::Size(viewport_size_.width(), 10000));
@@ -5812,12 +5819,11 @@ class GpuRasterizationRasterizesVisibleOnly : public LayerTreeHostTest {
 
     // Verify which tiles got resources using an eviction iterator, which has to
     // return all tiles that have resources.
-    EvictionTilePriorityQueue eviction_queue;
-    host_impl->BuildEvictionQueue(&eviction_queue,
-                                  SAME_PRIORITY_FOR_BOTH_TREES);
+    scoped_ptr<EvictionTilePriorityQueue> eviction_queue(
+        host_impl->BuildEvictionQueue(SAME_PRIORITY_FOR_BOTH_TREES));
     int tile_count = 0;
-    for (; !eviction_queue.IsEmpty(); eviction_queue.Pop()) {
-      Tile* tile = eviction_queue.Top();
+    for (; !eviction_queue->IsEmpty(); eviction_queue->Pop()) {
+      Tile* tile = eviction_queue->Top();
       // Ensure this tile is within the viewport.
       EXPECT_TRUE(tile->content_rect().Intersects(gfx::Rect(viewport_size_)));
       // Ensure that the tile is 1/4 of the viewport tall (plus padding).
@@ -5863,7 +5869,9 @@ class LayerTreeHostTestContinuousDrawWhenCreatingVisibleTiles
     pinch->SetIsContainerForFixedPositionLayers(true);
     root->AddChild(pinch);
 
-    scoped_ptr<FakePicturePile> pile(new FakePicturePile);
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
     pile->SetPlaybackAllowedEvent(&playback_allowed_event_);
     scoped_refptr<FakePictureLayer> layer =
         FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());

@@ -9,10 +9,10 @@
 #include <string>
 
 #include "base/bind.h"
-#include "base/debug/trace_event_argument.h"
 #include "base/json/json_writer.h"
 #include "base/logging.h"
 #include "base/metrics/histogram.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/debug/devtools_instrumentation.h"
 #include "cc/debug/frame_viewer_instrumentation.h"
 #include "cc/debug/traced_value.h"
@@ -240,7 +240,6 @@ TileManager::TileManager(
           task_runner_.get(),
           base::Bind(&TileManager::CheckIfMoreTilesNeedToBePrepared,
                      base::Unretained(this))),
-      eviction_priority_queue_is_up_to_date_(false),
       did_notify_ready_to_activate_(false),
       did_notify_ready_to_draw_(false) {
   tile_task_runner_->SetClient(this);
@@ -360,11 +359,11 @@ void TileManager::PrepareTiles(
     CleanUpReleasedTiles();
 
     TileVector tiles_that_need_to_be_rasterized;
-    RasterTilePriorityQueue raster_priority_queue;
-    client_->BuildRasterQueue(&raster_priority_queue,
-                              global_state_.tree_priority,
-                              RasterTilePriorityQueue::Type::ALL);
-    AssignGpuMemoryToTiles(&raster_priority_queue, scheduled_raster_task_limit_,
+    scoped_ptr<RasterTilePriorityQueue> raster_priority_queue(
+        client_->BuildRasterQueue(global_state_.tree_priority,
+                                  RasterTilePriorityQueue::Type::ALL));
+    AssignGpuMemoryToTiles(raster_priority_queue.get(),
+                           scheduled_raster_task_limit_,
                            &tiles_that_need_to_be_rasterized);
 
     // Schedule tile tasks.
@@ -374,15 +373,12 @@ void TileManager::PrepareTiles(
     did_notify_ready_to_draw_ = false;
   } else {
     if (global_state_.hard_memory_limit_in_bytes == 0) {
-      // TODO(vmpstr): Add a function to unconditionally create an eviction
-      // queue and guard the rest of the calls sites with this flag, instead of
-      // clearing here and building, which is a bit awkward.
-      eviction_priority_queue_is_up_to_date_ = false;
       resource_pool_->CheckBusyResources(false);
       MemoryUsage memory_limit(0, 0);
       MemoryUsage memory_usage(resource_pool_->acquired_memory_usage_bytes(),
                                resource_pool_->acquired_resource_count());
-      FreeTileResourcesUntilUsageIsWithinLimit(memory_limit, &memory_usage);
+      FreeTileResourcesUntilUsageIsWithinLimit(nullptr, memory_limit,
+                                               &memory_usage);
     }
 
     did_notify_ready_to_activate_ = false;
@@ -411,12 +407,12 @@ void TileManager::SynchronouslyRasterizeTiles(
   FreeResourcesForReleasedTiles();
   CleanUpReleasedTiles();
 
-  RasterTilePriorityQueue required_for_draw_queue;
-  client_->BuildRasterQueue(&required_for_draw_queue,
-                            global_state_.tree_priority,
-                            RasterTilePriorityQueue::Type::REQUIRED_FOR_DRAW);
+  scoped_ptr<RasterTilePriorityQueue> required_for_draw_queue(
+      client_->BuildRasterQueue(
+          global_state_.tree_priority,
+          RasterTilePriorityQueue::Type::REQUIRED_FOR_DRAW));
   TileVector tiles_that_need_to_be_rasterized;
-  AssignGpuMemoryToTiles(&required_for_draw_queue,
+  AssignGpuMemoryToTiles(required_for_draw_queue.get(),
                          std::numeric_limits<size_t>::max(),
                          &tiles_that_need_to_be_rasterized);
 
@@ -427,21 +423,21 @@ void TileManager::SynchronouslyRasterizeTiles(
   // Run and complete all raster task synchronously.
   rasterizer_->RasterizeTiles(
       tiles_that_need_to_be_rasterized, resource_pool_,
+      tile_task_runner_->GetResourceFormat(),
       base::Bind(&TileManager::UpdateTileDrawInfo, base::Unretained(this)));
 
   // Use on-demand raster for any required-for-draw tiles that have not been
   // assigned memory after reaching a steady memory state.
   // TODO(hendrikw): Figure out why this would improve jank on some tests - See
   // crbug.com/449288
-  required_for_draw_queue.Reset();
-  client_->BuildRasterQueue(&required_for_draw_queue,
-                            global_state_.tree_priority,
-                            RasterTilePriorityQueue::Type::REQUIRED_FOR_DRAW);
+  required_for_draw_queue = client_->BuildRasterQueue(
+      global_state_.tree_priority,
+      RasterTilePriorityQueue::Type::REQUIRED_FOR_DRAW);
 
   // Use on-demand raster for any tiles that have not been been assigned
   // memory. This ensures that we draw even when OOM.
-  for (; !required_for_draw_queue.IsEmpty(); required_for_draw_queue.Pop()) {
-    Tile* tile = required_for_draw_queue.Top();
+  for (; !required_for_draw_queue->IsEmpty(); required_for_draw_queue->Pop()) {
+    Tile* tile = required_for_draw_queue->Top();
     tile->draw_info().set_rasterize_on_demand();
     client_->NotifyTileStateChanged(tile);
   }
@@ -492,54 +488,50 @@ void TileManager::BasicStateAsValueInto(base::debug::TracedValue* state) const {
   state->EndDictionary();
 }
 
-void TileManager::RebuildEvictionQueueIfNeeded() {
-  TRACE_EVENT1("cc",
-               "TileManager::RebuildEvictionQueueIfNeeded",
-               "eviction_priority_queue_is_up_to_date",
-               eviction_priority_queue_is_up_to_date_);
-  if (eviction_priority_queue_is_up_to_date_)
-    return;
-
-  eviction_priority_queue_.Reset();
-  client_->BuildEvictionQueue(&eviction_priority_queue_,
-                              global_state_.tree_priority);
-  eviction_priority_queue_is_up_to_date_ = true;
-}
-
-bool TileManager::FreeTileResourcesUntilUsageIsWithinLimit(
+scoped_ptr<EvictionTilePriorityQueue>
+TileManager::FreeTileResourcesUntilUsageIsWithinLimit(
+    scoped_ptr<EvictionTilePriorityQueue> eviction_priority_queue,
     const MemoryUsage& limit,
     MemoryUsage* usage) {
   while (usage->Exceeds(limit)) {
-    RebuildEvictionQueueIfNeeded();
-    if (eviction_priority_queue_.IsEmpty())
-      return false;
+    if (!eviction_priority_queue) {
+      eviction_priority_queue =
+          client_->BuildEvictionQueue(global_state_.tree_priority);
+    }
+    if (eviction_priority_queue->IsEmpty())
+      break;
 
-    Tile* tile = eviction_priority_queue_.Top();
+    Tile* tile = eviction_priority_queue->Top();
     *usage -= MemoryUsage::FromTile(tile);
     FreeResourcesForTileAndNotifyClientIfTileWasReadyToDraw(tile);
-    eviction_priority_queue_.Pop();
+    eviction_priority_queue->Pop();
   }
-  return true;
+  return eviction_priority_queue;
 }
 
-bool TileManager::FreeTileResourcesWithLowerPriorityUntilUsageIsWithinLimit(
+scoped_ptr<EvictionTilePriorityQueue>
+TileManager::FreeTileResourcesWithLowerPriorityUntilUsageIsWithinLimit(
+    scoped_ptr<EvictionTilePriorityQueue> eviction_priority_queue,
     const MemoryUsage& limit,
     const TilePriority& other_priority,
     MemoryUsage* usage) {
   while (usage->Exceeds(limit)) {
-    RebuildEvictionQueueIfNeeded();
-    if (eviction_priority_queue_.IsEmpty())
-      return false;
+    if (!eviction_priority_queue) {
+      eviction_priority_queue =
+          client_->BuildEvictionQueue(global_state_.tree_priority);
+    }
+    if (eviction_priority_queue->IsEmpty())
+      break;
 
-    Tile* tile = eviction_priority_queue_.Top();
+    Tile* tile = eviction_priority_queue->Top();
     if (!other_priority.IsHigherPriorityThan(tile->combined_priority()))
-      return false;
+      break;
 
     *usage -= MemoryUsage::FromTile(tile);
     FreeResourcesForTileAndNotifyClientIfTileWasReadyToDraw(tile);
-    eviction_priority_queue_.Pop();
+    eviction_priority_queue->Pop();
   }
-  return true;
+  return eviction_priority_queue;
 }
 
 bool TileManager::TilePriorityViolatesMemoryPolicy(
@@ -584,7 +576,7 @@ void TileManager::AssignGpuMemoryToTiles(
   MemoryUsage memory_usage(resource_pool_->acquired_memory_usage_bytes(),
                            resource_pool_->acquired_resource_count());
 
-  eviction_priority_queue_is_up_to_date_ = false;
+  scoped_ptr<EvictionTilePriorityQueue> eviction_priority_queue;
   for (; !raster_priority_queue->IsEmpty(); raster_priority_queue->Pop()) {
     Tile* tile = raster_priority_queue->Top();
     TilePriority priority = tile->combined_priority();
@@ -615,7 +607,7 @@ void TileManager::AssignGpuMemoryToTiles(
     MemoryUsage memory_required_by_tile_to_be_scheduled;
     if (!tile->raster_task_.get()) {
       memory_required_by_tile_to_be_scheduled = MemoryUsage::FromConfig(
-          tile->desired_texture_size(), resource_pool_->default_format());
+          tile->desired_texture_size(), tile_task_runner_->GetResourceFormat());
     }
 
     bool tile_is_needed_now = priority.priority_bin == TilePriority::NOW;
@@ -626,10 +618,14 @@ void TileManager::AssignGpuMemoryToTiles(
     MemoryUsage& tile_memory_limit =
         tile_is_needed_now ? hard_memory_limit : soft_memory_limit;
 
-    bool memory_usage_is_within_limit =
+    const MemoryUsage& scheduled_tile_memory_limit =
+        tile_memory_limit - memory_required_by_tile_to_be_scheduled;
+    eviction_priority_queue =
         FreeTileResourcesWithLowerPriorityUntilUsageIsWithinLimit(
-            tile_memory_limit - memory_required_by_tile_to_be_scheduled,
+            eviction_priority_queue.Pass(), scheduled_tile_memory_limit,
             priority, &memory_usage);
+    bool memory_usage_is_within_limit =
+        !memory_usage.Exceeds(scheduled_tile_memory_limit);
 
     // If we couldn't fit the tile into our current memory limit, then we're
     // done.
@@ -647,7 +643,8 @@ void TileManager::AssignGpuMemoryToTiles(
   // Note that we should try and further reduce memory in case the above loop
   // didn't reduce memory. This ensures that we always release as many resources
   // as possible to stay within the memory limit.
-  FreeTileResourcesUntilUsageIsWithinLimit(hard_memory_limit, &memory_usage);
+  eviction_priority_queue = FreeTileResourcesUntilUsageIsWithinLimit(
+      eviction_priority_queue.Pass(), hard_memory_limit, &memory_usage);
 
   UMA_HISTOGRAM_BOOLEAN("TileManager.ExceededMemoryBudget",
                         !had_enough_memory_to_schedule_tiles_needed_now);
@@ -746,7 +743,7 @@ scoped_refptr<ImageDecodeTask> TileManager::CreateImageDecodeTask(
 scoped_refptr<RasterTask> TileManager::CreateRasterTask(Tile* tile) {
   scoped_ptr<ScopedResource> resource =
       resource_pool_->AcquireResource(tile->desired_texture_size(),
-                                      resource_pool_->default_format());
+                                      tile_task_runner_->GetResourceFormat());
   const ScopedResource* const_resource = resource.get();
 
   // Create and queue all image decode tasks that this tile depends on.
@@ -944,10 +941,11 @@ void TileManager::CheckIfMoreTilesNeedToBePrepared() {
   // When OOM, keep re-assigning memory until we reach a steady state
   // where top-priority tiles are initialized.
   TileVector tiles_that_need_to_be_rasterized;
-  RasterTilePriorityQueue raster_priority_queue;
-  client_->BuildRasterQueue(&raster_priority_queue, global_state_.tree_priority,
-                            RasterTilePriorityQueue::Type::ALL);
-  AssignGpuMemoryToTiles(&raster_priority_queue, scheduled_raster_task_limit_,
+  scoped_ptr<RasterTilePriorityQueue> raster_priority_queue(
+      client_->BuildRasterQueue(global_state_.tree_priority,
+                                RasterTilePriorityQueue::Type::ALL));
+  AssignGpuMemoryToTiles(raster_priority_queue.get(),
+                         scheduled_raster_task_limit_,
                          &tiles_that_need_to_be_rasterized);
 
   // |tiles_that_need_to_be_rasterized| will be empty when we reach a
@@ -977,20 +975,20 @@ void TileManager::CheckIfMoreTilesNeedToBePrepared() {
   // we used for AssignGpuMemoryToTiles, since the AssignGpuMemoryToTiles call
   // could have evicted some tiles that would not be picked up by the old raster
   // queue.
-  RasterTilePriorityQueue required_for_activation_queue;
-  client_->BuildRasterQueue(
-      &required_for_activation_queue, global_state_.tree_priority,
-      RasterTilePriorityQueue::Type::REQUIRED_FOR_ACTIVATION);
+  scoped_ptr<RasterTilePriorityQueue> required_for_activation_queue(
+      client_->BuildRasterQueue(
+          global_state_.tree_priority,
+          RasterTilePriorityQueue::Type::REQUIRED_FOR_ACTIVATION));
 
   // If we have tiles to mark as rasterize on demand, but we don't allow
   // rasterize on demand, then skip activation and return early.
-  if (!required_for_activation_queue.IsEmpty() && !allow_rasterize_on_demand)
+  if (!required_for_activation_queue->IsEmpty() && !allow_rasterize_on_demand)
     return;
 
   // Mark required tiles as rasterize on demand.
-  for (; !required_for_activation_queue.IsEmpty();
-       required_for_activation_queue.Pop()) {
-    Tile* tile = required_for_activation_queue.Top();
+  for (; !required_for_activation_queue->IsEmpty();
+       required_for_activation_queue->Pop()) {
+    Tile* tile = required_for_activation_queue->Top();
     tile->draw_info().set_rasterize_on_demand();
     client_->NotifyTileStateChanged(tile);
   }

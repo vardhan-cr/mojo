@@ -711,28 +711,19 @@ TEST_P(GLES2DecoderTest, ShaderSourceBucketAndGetShaderSourceValidArgs) {
                       kSource0, bucket->size()));
 }
 
-TEST_P(GLES2DecoderTest, ShaderSourceBucketInvalidArgs) {
+#if GLES2_TEST_SHADER_VS_PROGRAM_IDS
+TEST_P(GLES2DecoderTest, ShaderSourceBucketWithProgramId) {
   const uint32 kBucketId = 123;
   const char kSource0[] = "hello";
   const char* kSource[] = { kSource0 };
   const char kValidStrEnd = 0;
-  ShaderSourceBucket cmd;
-  // Test no bucket.
-  cmd.Init(client_shader_id_, kBucketId);
-  EXPECT_NE(error::kNoError, ExecuteCmd(cmd));
-  // Test invalid client.
   SetBucketAsCStrings(kBucketId, 1, kSource, 1, kValidStrEnd);
-  cmd.Init(kInvalidClientId, kBucketId);
-  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-  EXPECT_EQ(GL_INVALID_VALUE, GetGLError());
-#if GLES2_TEST_SHADER_VS_PROGRAM_IDS
-  SetBucketAsCStrings(kBucketId, 1, kSource);
-  cmd.Init(
-      client_program_id_, kBucketId);
+  ShaderSourceBucket cmd;
+  cmd.Init(client_program_id_, kBucketId);
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
   EXPECT_EQ(GL_INVALID_OPERATION, GetGLError());
-#endif  // GLES2_TEST_SHADER_VS_PROGRAM_IDS
 }
+#endif  // GLES2_TEST_SHADER_VS_PROGRAM_IDS
 
 TEST_P(GLES2DecoderTest, ShaderSourceStripComments) {
   const uint32 kInBucketId = 123;
@@ -743,45 +734,6 @@ TEST_P(GLES2DecoderTest, ShaderSourceStripComments) {
   ShaderSourceBucket cmd;
   cmd.Init(client_shader_id_, kInBucketId);
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
-}
-
-TEST_P(GLES2DecoderTest, ShaderSourceInvalidHeader) {
-  const uint32 kInBucketId = 123;
-  const char kSource0[] = "hello";
-  const char* kSource[] = { kSource0 };
-  const char kValidStrEnd = 0;
-  const GLsizei kCount = 1;
-  const GLsizei kTests[] = {
-      kCount + 1,
-      0,
-      std::numeric_limits<GLsizei>::max(),
-      -1,
-      kCount
-  };
-  size_t kTestCount = 5;
-  for (size_t ii = 0; ii < kTestCount; ++ii) {
-    SetBucketAsCStrings(kInBucketId, 1, kSource, kTests[ii], kValidStrEnd);
-    ShaderSourceBucket cmd;
-    cmd.Init(client_shader_id_, kInBucketId);
-    if (kTests[ii] == kCount) {
-      EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
-    } else {
-      EXPECT_EQ(error::kInvalidArguments, ExecuteCmd(cmd));
-    }
-  }
-  EXPECT_EQ(GL_NO_ERROR, GetGLError());
-}
-
-TEST_P(GLES2DecoderTest, ShaderSourceInvalidStringEnding) {
-  const uint32 kInBucketId = 123;
-  const char kSource0[] = "hello";
-  const char* kSource[] = { kSource0 };
-  const char kInvalidStrEnd = '*';
-  SetBucketAsCStrings(kInBucketId, 1, kSource, 1, kInvalidStrEnd);
-  ShaderSourceBucket cmd;
-  cmd.Init(client_shader_id_, kInBucketId);
-  EXPECT_EQ(error::kInvalidArguments, ExecuteCmd(cmd));
   EXPECT_EQ(GL_NO_ERROR, GetGLError());
 }
 
@@ -905,6 +857,58 @@ TEST_P(GLES2DecoderWithShaderTest, GetAttribLocationInvalidArgs) {
   EXPECT_EQ(-1, *result);
   // Check bad program id.
   SetBucketAsCString(kBucketId, kAttrib2Name);
+  cmd.Init(kInvalidClientId, kBucketId, kSharedMemoryId, kSharedMemoryOffset);
+  *result = -1;
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(-1, *result);
+  EXPECT_EQ(GL_INVALID_VALUE, GetGLError());
+  // Check bad memory
+  cmd.Init(client_program_id_,
+           kBucketId,
+           kInvalidSharedMemoryId,
+           kSharedMemoryOffset);
+  EXPECT_NE(error::kNoError, ExecuteCmd(cmd));
+  cmd.Init(client_program_id_,
+           kBucketId,
+           kSharedMemoryId,
+           kInvalidSharedMemoryOffset);
+  EXPECT_NE(error::kNoError, ExecuteCmd(cmd));
+}
+
+TEST_P(GLES2DecoderWithShaderTest, GetFragDataLocation) {
+  const uint32 kBucketId = 123;
+  const GLint kLocation = 10;
+  const char* kName = "color";
+  typedef GetFragDataLocation::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>();
+  SetBucketAsCString(kBucketId, kName);
+  *result = -1;
+  GetFragDataLocation cmd;
+  cmd.Init(client_program_id_, kBucketId, kSharedMemoryId, kSharedMemoryOffset);
+  EXPECT_CALL(*gl_, GetFragDataLocation(kServiceProgramId, StrEq(kName)))
+      .WillOnce(Return(kLocation))
+      .RetiresOnSaturation();
+  decoder_->set_unsafe_es3_apis_enabled(true);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(kLocation, *result);
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand, ExecuteCmd(cmd));
+}
+
+TEST_P(GLES2DecoderWithShaderTest, GetFragDataLocationInvalidArgs) {
+  const uint32 kBucketId = 123;
+  typedef GetFragDataLocation::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>();
+  *result = -1;
+  GetFragDataLocation cmd;
+  decoder_->set_unsafe_es3_apis_enabled(true);
+  // Check no bucket
+  cmd.Init(client_program_id_, kBucketId, kSharedMemoryId, kSharedMemoryOffset);
+  EXPECT_NE(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(-1, *result);
+  // Check bad program id.
+  const char* kName = "color";
+  SetBucketAsCString(kBucketId, kName);
   cmd.Init(kInvalidClientId, kBucketId, kSharedMemoryId, kSharedMemoryOffset);
   *result = -1;
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));

@@ -82,7 +82,6 @@ PictureLayerImpl::PictureLayerImpl(LayerTreeImpl* tree_impl,
       low_res_raster_contents_scale_(0.f),
       raster_source_scale_is_fixed_(false),
       was_screen_space_transform_animating_(false),
-      should_update_tile_priorities_(false),
       only_used_low_res_last_append_quads_(false),
       is_mask_(is_mask),
       nearest_neighbor_(false) {
@@ -462,8 +461,6 @@ bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
   if (draw_transform_is_animating())
     raster_source_->SetShouldAttemptToUseDistanceFieldText();
 
-  should_update_tile_priorities_ = true;
-
   return UpdateTilePriorities(occlusion_in_content_space);
 }
 
@@ -557,6 +554,9 @@ void PictureLayerImpl::UpdateRasterSource(
   invalidation_.Swap(new_invalidation);
 
   bool can_have_tilings = CanHaveTilings();
+  DCHECK_IMPLIES(
+      pending_set,
+      can_have_tilings == GetPendingOrActiveTwinLayer()->CanHaveTilings());
 
   // Need to call UpdateTiles again if CanHaveTilings changed.
   if (could_have_tilings != can_have_tilings)
@@ -589,9 +589,8 @@ void PictureLayerImpl::DidBeginTracing() {
 
 void PictureLayerImpl::ReleaseResources() {
   // Recreate tilings with new settings, since some of those might change when
-  // we release resources. If tilings_ is null, then leave it as null.
-  if (tilings_)
-    tilings_ = CreatePictureLayerTilingSet();
+  // we release resources.
+  tilings_ = CreatePictureLayerTilingSet();
   ResetRasterScale();
 
   // To avoid an edge case after lost context where the tree is up to date but
@@ -784,8 +783,7 @@ PictureLayerTiling* PictureLayerImpl::AddTiling(float contents_scale) {
 }
 
 void PictureLayerImpl::RemoveAllTilings() {
-  if (tilings_)
-    tilings_->RemoveAllTilings();
+  tilings_->RemoveAllTilings();
   // If there are no tilings, then raster scales are no longer meaningful.
   ResetRasterScale();
 }
@@ -1076,10 +1074,6 @@ void PictureLayerImpl::ResetRasterScale() {
   raster_contents_scale_ = 0.f;
   low_res_raster_contents_scale_ = 0.f;
   raster_source_scale_is_fixed_ = false;
-
-  // When raster scales aren't valid, don't update tile priorities until
-  // this layer has been updated via UpdateDrawProperties.
-  should_update_tile_priorities_ = false;
 }
 
 bool PictureLayerImpl::CanHaveTilings() const {

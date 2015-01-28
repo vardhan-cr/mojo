@@ -1,0 +1,194 @@
+diff --git a/mojo/services/network/net_address_type_converters.h b/mojo/services/network/net_address_type_converters.h
+index a1af10e..b4d1537 100644
+--- a/mojo/services/network/net_address_type_converters.h
++++ b/mojo/services/network/net_address_type_converters.h
+@@ -7,7 +7,7 @@
+ 
+ #include "mojo/services/network/public/interfaces/net_address.mojom.h"
+ #include "net/base/ip_endpoint.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/type_converter.h"
++#include "mojo/public/cpp/bindings/type_converter.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/network_service.cc b/mojo/services/network/network_service.cc
+index 8079ba1..6a82903 100644
+--- a/mojo/services/network/network_service.cc
++++ b/mojo/services/network/network_service.cc
+@@ -11,11 +11,11 @@
+ #include "mojo/application/application_runner_chromium.h"
+ #include "mojo/services/network/network_context.h"
+ #include "mojo/services/network/network_service_impl.h"
+-#include "third_party/mojo/src/mojo/public/c/system/main.h"
+-#include "third_party/mojo/src/mojo/public/cpp/application/application_connection.h"
+-#include "third_party/mojo/src/mojo/public/cpp/application/application_delegate.h"
+-#include "third_party/mojo/src/mojo/public/cpp/application/interface_factory.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_ptr.h"
++#include "mojo/public/c/system/main.h"
++#include "mojo/public/cpp/application/application_connection.h"
++#include "mojo/public/cpp/application/application_delegate.h"
++#include "mojo/public/cpp/application/interface_factory.h"
++#include "mojo/public/cpp/bindings/interface_ptr.h"
+ 
+ class NetworkServiceDelegate
+     : public mojo::ApplicationDelegate,
+diff --git a/mojo/services/network/network_service_impl.cc b/mojo/services/network/network_service_impl.cc
+index 64eb337..2ea696e 100644
+--- a/mojo/services/network/network_service_impl.cc
++++ b/mojo/services/network/network_service_impl.cc
+@@ -10,7 +10,7 @@
+ #include "mojo/services/network/udp_socket_impl.h"
+ #include "mojo/services/network/url_loader_impl.h"
+ #include "mojo/services/network/web_socket_impl.h"
+-#include "third_party/mojo/src/mojo/public/cpp/application/application_connection.h"
++#include "mojo/public/cpp/application/application_connection.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/network_service_impl.h b/mojo/services/network/network_service_impl.h
+index 9d4baae..41c5a69 100644
+--- a/mojo/services/network/network_service_impl.h
++++ b/mojo/services/network/network_service_impl.h
+@@ -7,7 +7,7 @@
+ 
+ #include "base/compiler_specific.h"
+ #include "mojo/services/network/public/interfaces/network_service.mojom.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ #include "url/gurl.h"
+ 
+ namespace mojo {
+diff --git a/mojo/services/network/public/cpp/udp_socket_wrapper.cc b/mojo/services/network/public/cpp/udp_socket_wrapper.cc
+index 4510c27..8d8b7ea 100644
+--- a/mojo/services/network/public/cpp/udp_socket_wrapper.cc
++++ b/mojo/services/network/public/cpp/udp_socket_wrapper.cc
+@@ -6,7 +6,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "third_party/mojo/src/mojo/public/cpp/environment/logging.h"
++#include "mojo/public/cpp/environment/logging.h"
+ 
+ namespace mojo {
+ namespace {
+diff --git a/mojo/services/network/public/cpp/web_socket_read_queue.h b/mojo/services/network/public/cpp/web_socket_read_queue.h
+index 2731510..905f94e 100644
+--- a/mojo/services/network/public/cpp/web_socket_read_queue.h
++++ b/mojo/services/network/public/cpp/web_socket_read_queue.h
+@@ -8,7 +8,7 @@
+ #include "base/callback.h"
+ #include "base/memory/scoped_vector.h"
+ #include "mojo/common/handle_watcher.h"
+-#include "third_party/mojo/src/mojo/public/cpp/system/data_pipe.h"
++#include "mojo/public/cpp/system/data_pipe.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/public/cpp/web_socket_write_queue.h b/mojo/services/network/public/cpp/web_socket_write_queue.h
+index b2c48fc..e683be4 100644
+--- a/mojo/services/network/public/cpp/web_socket_write_queue.h
++++ b/mojo/services/network/public/cpp/web_socket_write_queue.h
+@@ -8,7 +8,7 @@
+ #include "base/callback.h"
+ #include "base/memory/scoped_vector.h"
+ #include "mojo/common/handle_watcher.h"
+-#include "third_party/mojo/src/mojo/public/cpp/system/data_pipe.h"
++#include "mojo/public/cpp/system/data_pipe.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/tcp_bound_socket_impl.h b/mojo/services/network/tcp_bound_socket_impl.h
+index e5e1b6c..7a281c5 100644
+--- a/mojo/services/network/tcp_bound_socket_impl.h
++++ b/mojo/services/network/tcp_bound_socket_impl.h
+@@ -8,7 +8,7 @@
+ #include "base/memory/scoped_ptr.h"
+ #include "mojo/services/network/public/interfaces/tcp_bound_socket.mojom.h"
+ #include "net/socket/tcp_socket.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/tcp_connected_socket_impl.h b/mojo/services/network/tcp_connected_socket_impl.h
+index 0eb95e2..106d47a 100644
+--- a/mojo/services/network/tcp_connected_socket_impl.h
++++ b/mojo/services/network/tcp_connected_socket_impl.h
+@@ -10,7 +10,7 @@
+ #include "mojo/common/handle_watcher.h"
+ #include "mojo/services/network/public/interfaces/tcp_connected_socket.mojom.h"
+ #include "net/socket/tcp_socket.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/tcp_server_socket_impl.h b/mojo/services/network/tcp_server_socket_impl.h
+index 0039f8d..978830a 100644
+--- a/mojo/services/network/tcp_server_socket_impl.h
++++ b/mojo/services/network/tcp_server_socket_impl.h
+@@ -9,7 +9,7 @@
+ #include "mojo/services/network/public/interfaces/tcp_server_socket.mojom.h"
+ #include "net/base/ip_endpoint.h"
+ #include "net/socket/tcp_socket.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/udp_socket_impl.h b/mojo/services/network/udp_socket_impl.h
+index eb63d93..1d8c9f3 100644
+--- a/mojo/services/network/udp_socket_impl.h
++++ b/mojo/services/network/udp_socket_impl.h
+@@ -12,7 +12,7 @@
+ #include "mojo/services/network/public/interfaces/udp_socket.mojom.h"
+ #include "net/base/ip_endpoint.h"
+ #include "net/udp/udp_socket.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace net {
+ class IOBuffer;
+diff --git a/mojo/services/network/udp_socket_unittest.cc b/mojo/services/network/udp_socket_unittest.cc
+index ddb9d93..6982803 100644
+--- a/mojo/services/network/udp_socket_unittest.cc
++++ b/mojo/services/network/udp_socket_unittest.cc
+@@ -11,7 +11,7 @@
+ #include "mojo/shell/shell_test_helper.h"
+ #include "net/base/net_errors.h"
+ #include "testing/gtest/include/gtest/gtest.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/callback.h"
++#include "mojo/public/cpp/bindings/callback.h"
+ #include "url/gurl.h"
+ 
+ namespace mojo {
+diff --git a/mojo/services/network/url_loader_impl.h b/mojo/services/network/url_loader_impl.h
+index 8c259bd..ec06ec5 100644
+--- a/mojo/services/network/url_loader_impl.h
++++ b/mojo/services/network/url_loader_impl.h
+@@ -11,9 +11,9 @@
+ #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
+ #include "net/base/net_errors.h"
+ #include "net/url_request/url_request.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/binding.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/error_handler.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/binding.h"
++#include "mojo/public/cpp/bindings/error_handler.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace mojo {
+ 
+diff --git a/mojo/services/network/web_socket_impl.h b/mojo/services/network/web_socket_impl.h
+index bb41104..07aa327 100644
+--- a/mojo/services/network/web_socket_impl.h
++++ b/mojo/services/network/web_socket_impl.h
+@@ -7,7 +7,7 @@
+ 
+ #include "base/memory/scoped_ptr.h"
+ #include "mojo/services/network/public/interfaces/web_socket.mojom.h"
+-#include "third_party/mojo/src/mojo/public/cpp/bindings/interface_impl.h"
++#include "mojo/public/cpp/bindings/interface_impl.h"
+ 
+ namespace net {
+ class WebSocketChannel;

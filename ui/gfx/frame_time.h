@@ -15,8 +15,6 @@ namespace gfx {
 class FrameTime {
  public:
   static base::TimeTicks Now() {
-    if (TimestampsAreHighRes())
-      return base::TimeTicks::HighResNow();
     return base::TimeTicks::Now();
   }
 

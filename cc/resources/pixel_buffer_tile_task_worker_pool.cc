@@ -7,9 +7,9 @@
 #include <algorithm>
 
 #include "base/containers/stack_container.h"
-#include "base/debug/trace_event.h"
-#include "base/debug/trace_event_argument.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/debug/traced_value.h"
 #include "cc/resources/raster_buffer.h"
 #include "cc/resources/resource.h"
@@ -305,6 +305,10 @@ void PixelBufferTileTaskWorkerPool::CheckForCompletedTasks() {
     task->RunReplyOnOriginThread();
   }
   completed_raster_tasks_.clear();
+}
+
+ResourceFormat PixelBufferTileTaskWorkerPool::GetResourceFormat() {
+  return resource_provider_->memory_efficient_texture_format();
 }
 
 scoped_ptr<RasterBuffer> PixelBufferTileTaskWorkerPool::AcquireBufferForRaster(

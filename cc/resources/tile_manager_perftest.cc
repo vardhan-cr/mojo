@@ -64,6 +64,9 @@ class FakeTileTaskRunnerImpl : public TileTaskRunner, public TileTaskClient {
     }
     completed_tasks_.clear();
   }
+  ResourceFormat GetResourceFormat() override {
+    return RGBA_8888;
+  }
 
   // Overridden from TileTaskClient:
   scoped_ptr<RasterBuffer> AcquireBufferForRaster(
@@ -180,9 +183,8 @@ class TileManagerPerfTest : public testing::Test {
 
     timer_.Reset();
     do {
-      RasterTilePriorityQueue queue;
-      host_impl_.BuildRasterQueue(&queue, priorities[priority_count],
-                                  RasterTilePriorityQueue::Type::ALL);
+      scoped_ptr<RasterTilePriorityQueue> queue(host_impl_.BuildRasterQueue(
+          priorities[priority_count], RasterTilePriorityQueue::Type::ALL));
       priority_count = (priority_count + 1) % arraysize(priorities);
       timer_.NextLap();
     } while (!timer_.HasTimeLimitExpired());
@@ -211,13 +213,12 @@ class TileManagerPerfTest : public testing::Test {
     timer_.Reset();
     do {
       int count = tile_count;
-      RasterTilePriorityQueue queue;
-      host_impl_.BuildRasterQueue(&queue, priorities[priority_count],
-                                  RasterTilePriorityQueue::Type::ALL);
+      scoped_ptr<RasterTilePriorityQueue> queue(host_impl_.BuildRasterQueue(
+          priorities[priority_count], RasterTilePriorityQueue::Type::ALL));
       while (count--) {
-        ASSERT_FALSE(queue.IsEmpty());
-        ASSERT_TRUE(queue.Top() != NULL);
-        queue.Pop();
+        ASSERT_FALSE(queue->IsEmpty());
+        ASSERT_TRUE(queue->Top() != NULL);
+        queue->Pop();
       }
       priority_count = (priority_count + 1) % arraysize(priorities);
       timer_.NextLap();
@@ -251,8 +252,8 @@ class TileManagerPerfTest : public testing::Test {
 
     timer_.Reset();
     do {
-      EvictionTilePriorityQueue queue;
-      host_impl_.BuildEvictionQueue(&queue, priorities[priority_count]);
+      scoped_ptr<EvictionTilePriorityQueue> queue(
+          host_impl_.BuildEvictionQueue(priorities[priority_count]));
       priority_count = (priority_count + 1) % arraysize(priorities);
       timer_.NextLap();
     } while (!timer_.HasTimeLimitExpired());
@@ -287,12 +288,12 @@ class TileManagerPerfTest : public testing::Test {
     timer_.Reset();
     do {
       int count = tile_count;
-      EvictionTilePriorityQueue queue;
-      host_impl_.BuildEvictionQueue(&queue, priorities[priority_count]);
+      scoped_ptr<EvictionTilePriorityQueue> queue(
+          host_impl_.BuildEvictionQueue(priorities[priority_count]));
       while (count--) {
-        ASSERT_FALSE(queue.IsEmpty());
-        ASSERT_TRUE(queue.Top() != NULL);
-        queue.Pop();
+        ASSERT_FALSE(queue->IsEmpty());
+        ASSERT_TRUE(queue->Top() != NULL);
+        queue->Pop();
       }
       priority_count = (priority_count + 1) % arraysize(priorities);
       timer_.NextLap();

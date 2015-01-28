@@ -23,7 +23,7 @@ TEST_F(GLES2ImplementationTest, AttachShader) {
   gl_->AttachShader(1, 2);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for BindAttribLocation
+// TODO(zmo): Implement unit test for BindAttribLocation
 
 TEST_F(GLES2ImplementationTest, BindBuffer) {
   struct Cmds {
@@ -309,8 +309,8 @@ TEST_F(GLES2ImplementationTest, CompileShader) {
   gl_->CompileShader(1);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for CompressedTexImage2D
-// TODO: Implement unit test for CompressedTexSubImage2D
+// TODO(zmo): Implement unit test for CompressedTexImage2D
+// TODO(zmo): Implement unit test for CompressedTexSubImage2D
 
 TEST_F(GLES2ImplementationTest, CopyBufferSubData) {
   struct Cmds {
@@ -738,10 +738,10 @@ TEST_F(GLES2ImplementationTest, GenTransformFeedbacks) {
   EXPECT_EQ(kTransformFeedbacksStartId, ids[0]);
   EXPECT_EQ(kTransformFeedbacksStartId + 1, ids[1]);
 }
-// TODO: Implement unit test for GetActiveAttrib
-// TODO: Implement unit test for GetActiveUniform
-// TODO: Implement unit test for GetAttachedShaders
-// TODO: Implement unit test for GetAttribLocation
+// TODO(zmo): Implement unit test for GetActiveAttrib
+// TODO(zmo): Implement unit test for GetActiveUniform
+// TODO(zmo): Implement unit test for GetAttachedShaders
+// TODO(zmo): Implement unit test for GetAttribLocation
 
 TEST_F(GLES2ImplementationTest, GetBooleanv) {
   struct Cmds {
@@ -793,6 +793,7 @@ TEST_F(GLES2ImplementationTest, GetFloatv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_EQ(static_cast<Result::Type>(1), result);
 }
+// TODO(zmo): Implement unit test for GetFragDataLocation
 
 TEST_F(GLES2ImplementationTest, GetFramebufferAttachmentParameteriv) {
   struct Cmds {
@@ -866,7 +867,7 @@ TEST_F(GLES2ImplementationTest, GetProgramiv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_EQ(static_cast<Result::Type>(1), result);
 }
-// TODO: Implement unit test for GetProgramInfoLog
+// TODO(zmo): Implement unit test for GetProgramInfoLog
 
 TEST_F(GLES2ImplementationTest, GetRenderbufferParameteriv) {
   struct Cmds {
@@ -935,8 +936,8 @@ TEST_F(GLES2ImplementationTest, GetShaderiv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_EQ(static_cast<Result::Type>(1), result);
 }
-// TODO: Implement unit test for GetShaderInfoLog
-// TODO: Implement unit test for GetShaderPrecisionFormat
+// TODO(zmo): Implement unit test for GetShaderInfoLog
+// TODO(zmo): Implement unit test for GetShaderPrecisionFormat
 
 TEST_F(GLES2ImplementationTest, GetTexParameterfv) {
   struct Cmds {
@@ -971,9 +972,9 @@ TEST_F(GLES2ImplementationTest, GetTexParameteriv) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_EQ(static_cast<Result::Type>(1), result);
 }
-// TODO: Implement unit test for GetUniformfv
-// TODO: Implement unit test for GetUniformiv
-// TODO: Implement unit test for GetUniformLocation
+// TODO(zmo): Implement unit test for GetUniformfv
+// TODO(zmo): Implement unit test for GetUniformiv
+// TODO(zmo): Implement unit test for GetUniformLocation
 
 TEST_F(GLES2ImplementationTest, GetVertexAttribfv) {
   struct Cmds {
@@ -1401,6 +1402,93 @@ TEST_F(GLES2ImplementationTest, Scissor) {
   expected.cmd.Init(1, 2, 3, 4);
 
   gl_->Scissor(1, 2, 3, 4);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, ShaderSource) {
+  const uint32 kBucketId = GLES2Implementation::kResultBucketId;
+  const char* kString1 = "happy";
+  const char* kString2 = "ending";
+  const size_t kString1Size = ::strlen(kString1) + 1;
+  const size_t kString2Size = ::strlen(kString2) + 1;
+  const size_t kHeaderSize = sizeof(GLint) * 3;
+  const size_t kSourceSize = kHeaderSize + kString1Size + kString2Size;
+  const size_t kPaddedHeaderSize =
+      transfer_buffer_->RoundToAlignment(kHeaderSize);
+  const size_t kPaddedString1Size =
+      transfer_buffer_->RoundToAlignment(kString1Size);
+  const size_t kPaddedString2Size =
+      transfer_buffer_->RoundToAlignment(kString2Size);
+  struct Cmds {
+    cmd::SetBucketSize set_bucket_size;
+    cmd::SetBucketData set_bucket_header;
+    cmd::SetToken set_token1;
+    cmd::SetBucketData set_bucket_data1;
+    cmd::SetToken set_token2;
+    cmd::SetBucketData set_bucket_data2;
+    cmd::SetToken set_token3;
+    cmds::ShaderSourceBucket shader_source_bucket;
+    cmd::SetBucketSize clear_bucket_size;
+  };
+
+  ExpectedMemoryInfo mem0 = GetExpectedMemory(kPaddedHeaderSize);
+  ExpectedMemoryInfo mem1 = GetExpectedMemory(kPaddedString1Size);
+  ExpectedMemoryInfo mem2 = GetExpectedMemory(kPaddedString2Size);
+
+  Cmds expected;
+  expected.set_bucket_size.Init(kBucketId, kSourceSize);
+  expected.set_bucket_header.Init(kBucketId, 0, kHeaderSize, mem0.id,
+                                  mem0.offset);
+  expected.set_token1.Init(GetNextToken());
+  expected.set_bucket_data1.Init(kBucketId, kHeaderSize, kString1Size, mem1.id,
+                                 mem1.offset);
+  expected.set_token2.Init(GetNextToken());
+  expected.set_bucket_data2.Init(kBucketId, kHeaderSize + kString1Size,
+                                 kString2Size, mem2.id, mem2.offset);
+  expected.set_token3.Init(GetNextToken());
+  expected.shader_source_bucket.Init(1, kBucketId);
+  expected.clear_bucket_size.Init(kBucketId, 0);
+  const char* kStrings[] = {kString1, kString2};
+  gl_->ShaderSource(1, 2, kStrings, NULL);
+  EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
+}
+
+TEST_F(GLES2ImplementationTest, ShaderSourceWithLength) {
+  const uint32 kBucketId = GLES2Implementation::kResultBucketId;
+  const char* kString = "foobar******";
+  const size_t kStringSize = 6;  // We only need "foobar".
+  const size_t kHeaderSize = sizeof(GLint) * 2;
+  const size_t kSourceSize = kHeaderSize + kStringSize + 1;
+  const size_t kPaddedHeaderSize =
+      transfer_buffer_->RoundToAlignment(kHeaderSize);
+  const size_t kPaddedStringSize =
+      transfer_buffer_->RoundToAlignment(kStringSize + 1);
+  struct Cmds {
+    cmd::SetBucketSize set_bucket_size;
+    cmd::SetBucketData set_bucket_header;
+    cmd::SetToken set_token1;
+    cmd::SetBucketData set_bucket_data;
+    cmd::SetToken set_token2;
+    cmds::ShaderSourceBucket shader_source_bucket;
+    cmd::SetBucketSize clear_bucket_size;
+  };
+
+  ExpectedMemoryInfo mem0 = GetExpectedMemory(kPaddedHeaderSize);
+  ExpectedMemoryInfo mem1 = GetExpectedMemory(kPaddedStringSize);
+
+  Cmds expected;
+  expected.set_bucket_size.Init(kBucketId, kSourceSize);
+  expected.set_bucket_header.Init(kBucketId, 0, kHeaderSize, mem0.id,
+                                  mem0.offset);
+  expected.set_token1.Init(GetNextToken());
+  expected.set_bucket_data.Init(kBucketId, kHeaderSize, kStringSize + 1,
+                                mem1.id, mem1.offset);
+  expected.set_token2.Init(GetNextToken());
+  expected.shader_source_bucket.Init(1, kBucketId);
+  expected.clear_bucket_size.Init(kBucketId, 0);
+  const char* kStrings[] = {kString};
+  const GLint kLength[] = {kStringSize};
+  gl_->ShaderSource(1, 1, kStrings, kLength);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
 
@@ -2447,7 +2535,7 @@ TEST_F(GLES2ImplementationTest, DeleteQueriesEXT) {
   gl_->DeleteQueriesEXT(arraysize(ids), &ids[0]);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for BeginQueryEXT
+// TODO(zmo): Implement unit test for BeginQueryEXT
 
 TEST_F(GLES2ImplementationTest, BeginTransformFeedback) {
   struct Cmds {
@@ -2470,8 +2558,8 @@ TEST_F(GLES2ImplementationTest, EndTransformFeedback) {
   gl_->EndTransformFeedback();
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for InsertEventMarkerEXT
-// TODO: Implement unit test for PushGroupMarkerEXT
+// TODO(zmo): Implement unit test for InsertEventMarkerEXT
+// TODO(zmo): Implement unit test for PushGroupMarkerEXT
 
 TEST_F(GLES2ImplementationTest, PopGroupMarkerEXT) {
   struct Cmds {
@@ -2534,7 +2622,7 @@ TEST_F(GLES2ImplementationTest, IsVertexArrayOES) {
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
   EXPECT_TRUE(result);
 }
-// TODO: Implement unit test for EnableFeatureCHROMIUM
+// TODO(zmo): Implement unit test for EnableFeatureCHROMIUM
 
 TEST_F(GLES2ImplementationTest, ResizeCHROMIUM) {
   struct Cmds {
@@ -2546,9 +2634,9 @@ TEST_F(GLES2ImplementationTest, ResizeCHROMIUM) {
   gl_->ResizeCHROMIUM(1, 2, 3);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for GetRequestableExtensionsCHROMIUM
-// TODO: Implement unit test for CreateStreamTextureCHROMIUM
-// TODO: Implement unit test for GetTranslatedShaderSourceANGLE
+// TODO(zmo): Implement unit test for GetRequestableExtensionsCHROMIUM
+// TODO(zmo): Implement unit test for CreateStreamTextureCHROMIUM
+// TODO(zmo): Implement unit test for GetTranslatedShaderSourceANGLE
 
 TEST_F(GLES2ImplementationTest, TexImageIOSurface2DCHROMIUM) {
   struct Cmds {
@@ -2593,8 +2681,8 @@ TEST_F(GLES2ImplementationTest, VertexAttribDivisorANGLE) {
   gl_->VertexAttribDivisorANGLE(1, 2);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for GenMailboxCHROMIUM
-// TODO: Implement unit test for BindUniformLocationCHROMIUM
+// TODO(zmo): Implement unit test for GenMailboxCHROMIUM
+// TODO(zmo): Implement unit test for BindUniformLocationCHROMIUM
 
 TEST_F(GLES2ImplementationTest, GenValuebuffersCHROMIUM) {
   GLuint ids[2] = {
@@ -2749,7 +2837,7 @@ TEST_F(GLES2ImplementationTest, LoseContextCHROMIUM) {
                            GL_GUILTY_CONTEXT_RESET_ARB);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
 }
-// TODO: Implement unit test for InsertSyncPointCHROMIUM
+// TODO(zmo): Implement unit test for InsertSyncPointCHROMIUM
 
 TEST_F(GLES2ImplementationTest, WaitSyncPointCHROMIUM) {
   struct Cmds {

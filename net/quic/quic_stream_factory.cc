@@ -565,7 +565,6 @@ QuicStreamFactory::QuicStreamFactory(
     bool always_require_handshake_confirmation,
     bool disable_connection_pooling,
     int load_server_info_timeout,
-    bool disable_loading_server_info_for_new_servers,
     float load_server_info_timeout_srtt_multiplier,
     bool enable_truncated_connection_ids,
     const QuicTagVector& connection_options)
@@ -586,8 +585,6 @@ QuicStreamFactory::QuicStreamFactory(
           always_require_handshake_confirmation),
       disable_connection_pooling_(disable_connection_pooling),
       load_server_info_timeout_ms_(load_server_info_timeout),
-      disable_loading_server_info_for_new_servers_(
-          disable_loading_server_info_for_new_servers),
       load_server_info_timeout_srtt_multiplier_(
           load_server_info_timeout_srtt_multiplier),
       enable_truncated_connection_ids_(enable_truncated_connection_ids),
@@ -652,7 +649,7 @@ int QuicStreamFactory::Create(const HostPortPair& host_port_pair,
   QuicServerInfo* quic_server_info = nullptr;
   if (quic_server_info_factory_) {
     bool load_from_disk_cache = true;
-    if (disable_loading_server_info_for_new_servers_) {
+    if (http_server_properties_) {
       const AlternateProtocolMap& alternate_protocol_map =
           http_server_properties_->alternate_protocol_map();
       AlternateProtocolMap::const_iterator it =
@@ -706,17 +703,14 @@ bool QuicStreamFactory::OnResolution(
   if (disable_connection_pooling_) {
     return false;
   }
-  for (size_t i = 0; i < address_list.size(); ++i) {
-    const IPEndPoint& address = address_list[i];
+  for (const IPEndPoint& address : address_list) {
     const IpAliasKey ip_alias_key(address, server_id.is_https());
     if (!ContainsKey(ip_aliases_, ip_alias_key))
       continue;
 
     const SessionSet& sessions = ip_aliases_[ip_alias_key];
-    for (SessionSet::const_iterator i = sessions.begin();
-         i != sessions.end(); ++i) {
-      QuicClientSession* session = *i;
-      if (!session->CanPool(server_id.host()))
+    for (QuicClientSession* session : sessions) {
+      if (!session->CanPool(server_id.host(), server_id.privacy_mode()))
         continue;
       active_sessions_[server_id] = session;
       session_aliases_[session].insert(server_id);
@@ -1110,6 +1104,11 @@ int QuicStreamFactory::CreateSession(
     server_info.reset(quic_server_info_factory_->GetForServer(server_id));
     server_info->Start();
   }
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile6(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicStreamFactory::CreateSession61"));
 
   *session = new QuicClientSession(
       connection, socket.Pass(), this, transport_security_state_,

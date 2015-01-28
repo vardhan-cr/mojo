@@ -2143,7 +2143,7 @@
         'conditions': [
           # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
           # on all platforms is currently underway.
-          ['(OS=="linux" and chromeos==0) or OS=="mac" or OS=="ios"', {
+          ['(OS=="linux" and (chromeos==0 or use_ozone==0)) or OS=="mac" or OS=="ios"', {
             'clang_chrome_plugins_flags': [
               '-Xclang',
               '-plugin-arg-find-bad-constructs',
@@ -2854,6 +2854,10 @@
                   '/wd28301', # Inconsistent SAL annotations
                   '/wd6340',  # Sign mismatch in function parameter
                   '/wd28182', # Dereferencing NULL pointer
+                  # C6285 is ~16% of raw warnings and has low value
+                  '/wd6285',  # non-zero constant || non-zero constant
+                  # C6334 is ~80% of raw warnings and has low value
+                  '/wd6334',  # sizeof applied to an expression with an operator
                 ],
               },
             },
@@ -2865,15 +2869,6 @@
           'LOG_DISABLED=0',
         ],
         'conditions': [
-          ['target_arch=="arm"', {
-            'defines': [
-              # TODO(lcwu): Work around an error when building Chromium
-              # with gcc-4.5.3 (e.g. v8/src/platform-linux.cc). Remove
-              # this define once the toolchain is updated.
-              # See crbug.com/388933.
-              '__SOFTFP',
-            ],
-          }],
           ['use_playready==1', {
             'defines': [
               'PLAYREADY_CDM_AVAILABLE',
@@ -5155,6 +5150,9 @@
       },  # target_defaults
     }],  # OS=="mac"
     ['OS=="ios"', {
+      'includes': [
+        'ios/coverage.gypi',
+      ],
       'target_defaults': {
         'xcode_settings' : {
           'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
@@ -5545,52 +5543,6 @@
                 ],
               },
             }],
-            ['asan==1', {
-              # ASan on Windows is a work in progress and very experimental.
-              # See crbug.com/345874.
-              'VCCLCompilerTool': {
-                'AdditionalOptions': [
-                  '-fsanitize=address',
-                ],
-                'AdditionalIncludeDirectories': [
-                  # MSVC needs to be able to find the sanitizer headers when
-                  # invoked via /fallback. This is critical for using macros
-                  # like ASAN_UNPOISON_MEMORY_REGION in files where we fall
-                  # back.
-                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/include_sanitizer',
-                ],
-              },
-              'VCLinkerTool': {
-                'AdditionalLibraryDirectories': [
-                  # TODO(hans): If make_clang_dir is absolute, this breaks.
-                  '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/lib/windows',
-                ],
-              },
-              'target_conditions': [
-                ['component=="shared_library"', {
-                  'VCLinkerTool': {
-                    'AdditionalDependencies': [
-                       'clang_rt.asan_dynamic-i386.lib',
-                       'clang_rt.asan_dynamic_runtime_thunk-i386.lib',
-                    ],
-                  },
-                }],
-                ['_type=="executable" and component=="static_library"', {
-                  'VCLinkerTool': {
-                    'AdditionalDependencies': [
-                       'clang_rt.asan-i386.lib',
-                    ],
-                  },
-                }],
-                ['(_type=="shared_library" or _type=="loadable_module") and component=="static_library"', {
-                  'VCLinkerTool': {
-                    'AdditionalDependencies': [
-                       'clang_rt.asan_dll_thunk-i386.lib',
-                    ],
-                  },
-                }],
-              ],
-            }],
           ],
         },
       },
@@ -5625,12 +5577,61 @@
                   '/ignore:4221',
                   '/nxcompat',
                 ],
-                'conditions': [
-                  ['syzyasan==0', {
-                    'AdditionalOptions': ['/largeaddressaware'],
-                  }],
-                ],
               },
+              'conditions': [
+                ['syzyasan==0', {
+                  'VCLinkerTool': {
+                    'AdditionalOptions': ['/largeaddressaware'],
+                  },
+                }],
+                ['asan==1', {
+                  # TODO(asan/win): Move this down into the general
+                  # win-target_defaults section once the 64-bit asan runtime
+                  # exists.  See crbug.com/345874.
+                  'VCCLCompilerTool': {
+                    'AdditionalOptions': [
+                      '-fsanitize=address',
+                    ],
+                    'AdditionalIncludeDirectories': [
+                      # MSVC needs to be able to find the sanitizer headers when
+                      # invoked via /fallback. This is critical for using macros
+                      # like ASAN_UNPOISON_MEMORY_REGION in files where we fall
+                      # back.
+                      '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/include_sanitizer',
+                    ],
+                  },
+                  'VCLinkerTool': {
+                    'AdditionalLibraryDirectories': [
+                      # TODO(hans): If make_clang_dir is absolute, this breaks.
+                      '<(DEPTH)/<(make_clang_dir)/lib/clang/3.7.0/lib/windows',
+                    ],
+                  },
+                  'target_conditions': [
+                    ['component=="shared_library"', {
+                      'VCLinkerTool': {
+                        'AdditionalDependencies': [
+                           'clang_rt.asan_dynamic-i386.lib',
+                           'clang_rt.asan_dynamic_runtime_thunk-i386.lib',
+                        ],
+                      },
+                    }],
+                    ['_type=="executable" and component=="static_library"', {
+                      'VCLinkerTool': {
+                        'AdditionalDependencies': [
+                           'clang_rt.asan-i386.lib',
+                        ],
+                      },
+                    }],
+                    ['(_type=="shared_library" or _type=="loadable_module") and component=="static_library"', {
+                      'VCLinkerTool': {
+                        'AdditionalDependencies': [
+                           'clang_rt.asan_dll_thunk-i386.lib',
+                        ],
+                      },
+                    }],
+                  ],
+                }],
+              ],
             },
           },
           'x64_Base': {

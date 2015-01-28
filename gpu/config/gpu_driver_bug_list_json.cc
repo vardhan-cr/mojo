@@ -19,7 +19,7 @@ const char kGpuDriverBugListJson[] = LONG_STRING_CONST(
 {
   "name": "gpu driver bug list",
   // Please update the version number whenever you change this file.
-  "version": "7.13",
+  "version": "7.14",
   "entries": [
     {
       "id": 1,
@@ -1052,7 +1052,7 @@ LONG_STRING_CONST(
         "type": "android",
         "version": {
           "op": "<=",
-          "value": "5.0.1"
+          "value": "5.0.2"
         }
       },
       "gl_vendor": "NVIDIA.*",
@@ -1104,6 +1104,19 @@ LONG_STRING_CONST(
       "gl_renderer": "Intel.*BayTrail",
       "features": [
         "disable_multisampling"
+      ]
+    },
+    {
+      "id": 98,
+      "description": "PowerVR SGX 540 drivers throw GL_OUT_OF_MEMORY error when a buffer object's size is set to 0",
+      "cr_bugs": [451501],
+      "os": {
+        "type": "android"
+      },
+      "gl_vendor": "Imagination.*",
+      "gl_renderer": "PowerVR SGX 540",
+      "features": [
+        "use_non_zero_size_for_client_side_stream_buffers"
       ]
     }
   ]

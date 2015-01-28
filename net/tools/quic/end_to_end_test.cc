@@ -70,8 +70,8 @@ namespace tools {
 namespace test {
 namespace {
 
-const char* kFooResponseBody = "Artichoke hearts make me happy.";
-const char* kBarResponseBody = "Palm hearts are pretty delicious, also.";
+const char kFooResponseBody[] = "Artichoke hearts make me happy.";
+const char kBarResponseBody[] = "Palm hearts are pretty delicious, also.";
 
 // Run all tests with the cross products of all versions.
 struct TestParams {
@@ -142,12 +142,9 @@ vector<TestParams> GetTestParams() {
                                       use_fec != 0, congestion_control_tag));
 
           // Test client supporting all versions and server supporting 1
-          // version.
-          // Simulate an old server and exercise version downgrade in the
-          // client.
-          // Protocol negotiation should occur. Skip the i = 0 case because it
-          // is
-          // essentially the same as the default case.
+          // version. Simulate an old server and exercise version downgrade in
+          // the client. Protocol negotiation should occur. Skip the i = 0 case
+          // because it is essentially the same as the default case.
           for (QuicVersion version : *client_versions) {
             QuicVersionVector server_supported_versions;
             server_supported_versions.push_back(version);

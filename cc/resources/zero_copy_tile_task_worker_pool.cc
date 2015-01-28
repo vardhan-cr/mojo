@@ -6,9 +6,9 @@
 
 #include <algorithm>
 
-#include "base/debug/trace_event.h"
-#include "base/debug/trace_event_argument.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/debug/traced_value.h"
 #include "cc/resources/raster_buffer.h"
 #include "cc/resources/resource.h"
@@ -163,6 +163,10 @@ void ZeroCopyTileTaskWorkerPool::CheckForCompletedTasks() {
     task->RunReplyOnOriginThread();
   }
   completed_tasks_.clear();
+}
+
+ResourceFormat ZeroCopyTileTaskWorkerPool::GetResourceFormat() {
+  return resource_provider_->best_texture_format();
 }
 
 scoped_ptr<RasterBuffer> ZeroCopyTileTaskWorkerPool::AcquireBufferForRaster(

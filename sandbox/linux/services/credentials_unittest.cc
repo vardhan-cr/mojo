@@ -71,9 +71,9 @@ SANDBOX_TEST(Credentials, MoveToNewUserNS) {
   CHECK(!Credentials::HasAnyCapability());
 }
 
-SANDBOX_TEST(Credentials, SupportsUserNS) {
+SANDBOX_TEST(Credentials, CanCreateProcessInNewUserNS) {
   CHECK(Credentials::DropAllCapabilities());
-  bool user_ns_supported = Credentials::SupportsNewUserNS();
+  bool user_ns_supported = Credentials::CanCreateProcessInNewUserNS();
   bool moved_to_new_ns = Credentials::MoveToNewUserNS();
   CHECK_EQ(user_ns_supported, moved_to_new_ns);
 }
@@ -137,6 +137,7 @@ SANDBOX_TEST(Credentials, DISABLE_ON_LSAN(DropFileSystemAccessIsSafe)) {
   CHECK(Credentials::DropFileSystemAccess());
   CHECK(!base::DirectoryExists(base::FilePath("/proc")));
   CHECK(WorkingDirectoryIsRoot());
+  CHECK(base::IsDirectoryEmpty(base::FilePath("/")));
   // We want the chroot to never have a subdirectory. A subdirectory
   // could allow a chroot escape.
   CHECK_NE(0, mkdir("/test", 0700));
@@ -153,7 +154,7 @@ SANDBOX_TEST(Credentials, DISABLE_ON_LSAN(CannotRegainPrivileges)) {
 
   // The kernel should now prevent us from regaining capabilities because we
   // are in a chroot.
-  CHECK(!Credentials::SupportsNewUserNS());
+  CHECK(!Credentials::CanCreateProcessInNewUserNS());
   CHECK(!Credentials::MoveToNewUserNS());
 }
 

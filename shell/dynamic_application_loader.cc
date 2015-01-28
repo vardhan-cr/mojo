@@ -297,7 +297,7 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
 
     base::FilePath temp_dir;
     base::GetTempDir(&temp_dir);
-    base::ProcessId pid = base::Process::Current().pid();
+    base::ProcessId pid = base::Process::Current().Pid();
     std::string map_name = base::StringPrintf("mojo_shell.%d.maps", pid);
     base::FilePath map_path = temp_dir.Append(map_name);
 

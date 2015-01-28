@@ -295,7 +295,7 @@ void LayerTreeHostImpl::BeginCommit() {
   // Ensure all textures are returned so partial texture updates can happen
   // during the commit. Impl-side-painting doesn't upload during commits, so
   // is unaffected.
-  if (!settings_.impl_side_painting)
+  if (!settings_.impl_side_painting && output_surface_)
     output_surface_->ForceReclaimResources();
 
   if (UsePendingTreeForSync())
@@ -691,7 +691,7 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
         render_surface->contributes_to_drawn_surface() ||
         render_surface_layer->HasCopyRequest();
     if (should_draw_into_render_pass)
-      render_surface_layer->render_surface()->AppendRenderPasses(frame);
+      render_surface->AppendRenderPasses(frame);
   }
 
   // When we are displaying the HUD, change the root damage rect to cover the
@@ -1194,13 +1194,14 @@ void LayerTreeHostImpl::GetPictureLayerImplPairs(
   }
 }
 
-void LayerTreeHostImpl::BuildRasterQueue(RasterTilePriorityQueue* queue,
-                                         TreePriority tree_priority,
-                                         RasterTilePriorityQueue::Type type) {
+scoped_ptr<RasterTilePriorityQueue> LayerTreeHostImpl::BuildRasterQueue(
+    TreePriority tree_priority,
+    RasterTilePriorityQueue::Type type) {
   TRACE_EVENT0("cc", "LayerTreeHostImpl::BuildRasterQueue");
   picture_layer_pairs_.clear();
   GetPictureLayerImplPairs(&picture_layer_pairs_, true);
-  queue->Build(picture_layer_pairs_, tree_priority, type);
+  scoped_ptr<RasterTilePriorityQueue> queue(RasterTilePriorityQueue::Create(
+      picture_layer_pairs_, tree_priority, type));
 
   if (!queue->IsEmpty()) {
     // Only checking the Top() tile here isn't a definite answer that there is
@@ -1215,14 +1216,17 @@ void LayerTreeHostImpl::BuildRasterQueue(RasterTilePriorityQueue* queue,
   } else {
     required_for_draw_tile_is_top_of_raster_queue_ = false;
   }
+  return queue;
 }
 
-void LayerTreeHostImpl::BuildEvictionQueue(EvictionTilePriorityQueue* queue,
-                                           TreePriority tree_priority) {
+scoped_ptr<EvictionTilePriorityQueue> LayerTreeHostImpl::BuildEvictionQueue(
+    TreePriority tree_priority) {
   TRACE_EVENT0("cc", "LayerTreeHostImpl::BuildEvictionQueue");
+  scoped_ptr<EvictionTilePriorityQueue> queue(new EvictionTilePriorityQueue);
   picture_layer_pairs_.clear();
   GetPictureLayerImplPairs(&picture_layer_pairs_, false);
   queue->Build(picture_layer_pairs_, tree_priority);
+  return queue;
 }
 
 const std::vector<PictureLayerImpl*>& LayerTreeHostImpl::GetPictureLayers()
@@ -1592,7 +1596,7 @@ bool LayerTreeHostImpl::SwapBuffers(const LayerTreeHostImpl::FrameData& frame) {
   active_tree()->FinishSwapPromises(&metadata);
   for (size_t i = 0; i < metadata.latency_info.size(); i++) {
     TRACE_EVENT_FLOW_STEP0(
-        "input",
+        "input,benchmark",
         "LatencyInfo.Flow",
         TRACE_ID_DONT_MANGLE(metadata.latency_info[i].trace_id),
         "SwapBuffers");
@@ -1969,9 +1973,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
   ContextProvider* context_provider = output_surface_->context_provider();
   if (!context_provider) {
     *resource_pool =
-        ResourcePool::Create(resource_provider_.get(),
-                             GL_TEXTURE_2D,
-                             resource_provider_->best_texture_format());
+        ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
     *tile_task_worker_pool = BitmapTileTaskWorkerPool::Create(
         task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
@@ -1981,12 +1983,11 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
 
   if (use_gpu_rasterization_) {
     *resource_pool =
-        ResourcePool::Create(resource_provider_.get(),
-                             GL_TEXTURE_2D,
-                             resource_provider_->best_texture_format());
+        ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
     *tile_task_worker_pool = GpuTileTaskWorkerPool::Create(
-        task_runner, TileTaskWorkerPool::GetTaskGraphRunner());
+        task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
+        resource_provider_.get());
     return;
   }
 
@@ -2001,8 +2002,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
 
     if (settings_.use_zero_copy || IsSynchronousSingleThreaded()) {
       *resource_pool =
-          ResourcePool::Create(resource_provider_.get(), image_target,
-                               resource_provider_->best_texture_format());
+          ResourcePool::Create(resource_provider_.get(), image_target);
 
       TaskGraphRunner* task_graph_runner;
       if (IsSynchronousSingleThreaded()) {
@@ -2021,11 +2021,9 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
     if (settings_.use_one_copy) {
       // We need to create a staging resource pool when using copy rasterizer.
       *staging_resource_pool =
-          ResourcePool::Create(resource_provider_.get(), image_target,
-                               resource_provider_->best_texture_format());
+          ResourcePool::Create(resource_provider_.get(), image_target);
       *resource_pool =
-          ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D,
-                               resource_provider_->best_texture_format());
+          ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
       *tile_task_worker_pool = OneCopyTileTaskWorkerPool::Create(
           task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
@@ -2036,8 +2034,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
   }
 
   *resource_pool = ResourcePool::Create(
-      resource_provider_.get(), GL_TEXTURE_2D,
-      resource_provider_->memory_efficient_texture_format());
+      resource_provider_.get(), GL_TEXTURE_2D);
 
   *tile_task_worker_pool = PixelBufferTileTaskWorkerPool::Create(
       task_runner, TileTaskWorkerPool::GetTaskGraphRunner(), context_provider,

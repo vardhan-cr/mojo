@@ -7,8 +7,8 @@
 #include <algorithm>
 
 #include "base/bind.h"
-#include "base/debug/trace_event.h"
 #include "base/metrics/histogram.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/debug/devtools_instrumentation.h"
 #include "cc/debug/frame_viewer_instrumentation.h"
 #include "cc/output/context_provider.h"
@@ -59,6 +59,7 @@ PrepareTilesMode GpuRasterizer::GetPrepareTilesMode() {
 void GpuRasterizer::RasterizeTiles(
     const TileVector& tiles,
     ResourcePool* resource_pool,
+    ResourceFormat resource_format,
     const UpdateTileDrawInfoCallback& update_tile_draw_info) {
   ScopedGpuRaster gpu_raster(context_provider_);
 
@@ -69,7 +70,7 @@ void GpuRasterizer::RasterizeTiles(
     // See crbug.com/445919
     scoped_ptr<ScopedResource> resource =
         resource_pool->AcquireResource(tile->desired_texture_size(),
-                                       resource_pool->default_format());
+                                       resource_format);
     const ScopedResource* const_resource = resource.get();
 
     RasterSource::SolidColorAnalysis analysis;

@@ -60,15 +60,15 @@ class CC_EXPORT TileManagerClient {
   // Given an empty raster tile priority queue, this will build a priority queue
   // that will return tiles in order in which they should be rasterized.
   // Note if the queue was previous built, Reset must be called on it.
-  virtual void BuildRasterQueue(RasterTilePriorityQueue* queue,
-                                TreePriority tree_priority,
-                                RasterTilePriorityQueue::Type type) = 0;
+  virtual scoped_ptr<RasterTilePriorityQueue> BuildRasterQueue(
+      TreePriority tree_priority,
+      RasterTilePriorityQueue::Type type) = 0;
 
   // Given an empty eviction tile priority queue, this will build a priority
   // queue that will return tiles in order in which they should be evicted.
   // Note if the queue was previous built, Reset must be called on it.
-  virtual void BuildEvictionQueue(EvictionTilePriorityQueue* queue,
-                                  TreePriority tree_priority) = 0;
+  virtual scoped_ptr<EvictionTilePriorityQueue> BuildEvictionQueue(
+      TreePriority tree_priority) = 0;
 
  protected:
   virtual ~TileManagerClient() {}
@@ -138,9 +138,9 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
   void InitializeTilesWithResourcesForTesting(const std::vector<Tile*>& tiles) {
     for (size_t i = 0; i < tiles.size(); ++i) {
       TileDrawInfo& draw_info = tiles[i]->draw_info();
-      draw_info.resource_ =
-          resource_pool_->AcquireResource(tiles[i]->desired_texture_size(),
-                                          resource_pool_->default_format());
+      draw_info.resource_ = resource_pool_->AcquireResource(
+          tiles[i]->desired_texture_size(),
+          tile_task_runner_->GetResourceFormat());
     }
   }
 
@@ -247,10 +247,14 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
                                                        SkPixelRef* pixel_ref);
   scoped_refptr<RasterTask> CreateRasterTask(Tile* tile);
 
-  void RebuildEvictionQueueIfNeeded();
-  bool FreeTileResourcesUntilUsageIsWithinLimit(const MemoryUsage& limit,
-                                                MemoryUsage* usage);
-  bool FreeTileResourcesWithLowerPriorityUntilUsageIsWithinLimit(
+  scoped_ptr<EvictionTilePriorityQueue>
+  FreeTileResourcesUntilUsageIsWithinLimit(
+      scoped_ptr<EvictionTilePriorityQueue> eviction_priority_queue,
+      const MemoryUsage& limit,
+      MemoryUsage* usage);
+  scoped_ptr<EvictionTilePriorityQueue>
+  FreeTileResourcesWithLowerPriorityUntilUsageIsWithinLimit(
+      scoped_ptr<EvictionTilePriorityQueue> eviction_priority_queue,
       const MemoryUsage& limit,
       const TilePriority& oother_priority,
       MemoryUsage* usage);
@@ -292,8 +296,6 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
 
   std::vector<Tile*> released_tiles_;
 
-  ResourceFormat resource_format_;
-
   // Queue used when scheduling raster tasks.
   TileTaskQueue raster_queue_;
 
@@ -304,9 +306,6 @@ class CC_EXPORT TileManager : public TileTaskRunnerClient,
   UniqueNotifier ready_to_activate_check_notifier_;
   UniqueNotifier ready_to_draw_check_notifier_;
   UniqueNotifier more_tiles_need_prepare_check_notifier_;
-
-  EvictionTilePriorityQueue eviction_priority_queue_;
-  bool eviction_priority_queue_is_up_to_date_;
 
   bool did_notify_ready_to_activate_;
   bool did_notify_ready_to_draw_;

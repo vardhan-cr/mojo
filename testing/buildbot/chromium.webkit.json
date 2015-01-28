@@ -83,9 +83,14 @@
       },
       "sql_unittests",
       "nacl_loader_unittests",
-      "app_shell_browsertests",
       "app_shell_unittests",
       "chromevox_tests",
+      {
+        "test": "extensions_browsertests",
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        }
+      },
       "skia_unittests"
     ]
   },
@@ -163,13 +168,18 @@
           "shards": 20
         }
       },
-      "app_shell_browsertests",
       "app_shell_unittests",
       {
         "test": "content_browsertests",
         "swarming": {
           "can_use_on_swarming_builders": true,
           "shards": 2
+        }
+      },
+      {
+        "test": "extensions_browsertests",
+        "swarming": {
+          "can_use_on_swarming_builders": true
         }
       },
       "gcm_unit_tests",
