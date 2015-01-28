@@ -11,25 +11,27 @@ import 'dart:mojo_core';
 
 import 'package:services/dart/test/pingpong_service.mojom.dart';
 
-class PingPongServiceImpl extends PingPongServiceStub {
+class PingPongServiceImpl extends PingPongService {
   Application _application;
   PingPongClientProxy _proxy;
 
-  PingPongServiceImpl(MojoMessagePipeEndpoint endpoint, Application application)
-      : _application = application,
-        super(endpoint);
+  PingPongServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
+      : _application = application, super(endpoint) {
+    super.delegate = this;
+  }
 
   void setClient(PingPongClientProxy proxy) {
+    assert(_proxy == null);
     _proxy = proxy;
   }
 
-  void ping(int pingValue) => _proxy.callPong(pingValue + 1);
+  void ping(int pingValue) => _proxy.pong(pingValue + 1);
 
   void quit() {
     if (_proxy != null) {
       _proxy.close();
     }
-    close();
+    super.close();
     if (_application != null) {
       _application.close();
     }
@@ -39,8 +41,11 @@ class PingPongServiceImpl extends PingPongServiceStub {
 class PingPongApplication extends Application {
   PingPongApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  Function stubFactoryClosure() =>
-      (endpoint) => new PingPongServiceImpl(endpoint, this);
+  void acceptConnection(String requestorUrl, ServiceProvider serviceProvider) {
+    serviceProvider.factory =
+        (endpoint) => new PingPongServiceImpl(this, endpoint);
+    serviceProvider.listen();
+  }
 }
 
 main(List args) {

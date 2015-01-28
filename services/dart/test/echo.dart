@@ -11,12 +11,13 @@ import 'dart:mojo_core';
 
 import 'package:services/dart/test/echo_service.mojom.dart';
 
-class EchoServiceImpl extends EchoServiceStub {
+class EchoServiceImpl extends EchoService {
   Application _application;
 
-  EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint) :
-      _application = application,
-      super(endpoint);
+  EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
+    : _application = application, super(endpoint) {
+    super.delegate = this;
+  }
 
   echoString(String value, Function responseFactory) {
     if (value == "quit") {
@@ -30,8 +31,10 @@ class EchoServiceImpl extends EchoServiceStub {
 class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  Function stubFactoryClosure() =>
-      (endpoint) => new EchoServiceImpl(this, endpoint);
+  void acceptConnection(String requestorUrl, ServiceProvider serviceProvider) {
+    serviceProvider.factory = (endpoint) => new EchoServiceImpl(this, endpoint);
+    serviceProvider.listen();
+  }
 }
 
 main(List args) {

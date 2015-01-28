@@ -136,7 +136,7 @@ void CheckSampleEchoArgsList(const dart_to_cpp::EchoArgsListPtr& list) {
 // Base Provider implementation class. It's expected that tests subclass and
 // override the appropriate Provider functions. When test is done quit the
 // run_loop().
-class CppSideConnection : public dart_to_cpp::CppSide {
+class CppSideConnection : public mojo::InterfaceImpl<dart_to_cpp::CppSide> {
  public:
   CppSideConnection() :
       run_loop_(NULL),
@@ -322,7 +322,10 @@ class DartToCppTest : public testing::Test {
     MessagePipe pipe;
     dart_to_cpp::DartSidePtr dart_side =
         MakeProxy<dart_to_cpp::DartSide>(pipe.handle0.Pass());
-    dart_side.set_client(cpp_side);
+
+    dart_to_cpp::CppSidePtr cpp_side_ptr;
+    BindToProxy(cpp_side, &cpp_side_ptr);
+    dart_side->SetClient(cpp_side_ptr.Pass());
 
     dart_side.internal_state()->router_for_testing()->EnableTestingMode();
 

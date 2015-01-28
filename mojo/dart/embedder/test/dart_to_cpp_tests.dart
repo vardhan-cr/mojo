@@ -9,16 +9,19 @@ import 'dart:typed_data';
 
 import 'package:mojo/dart/embedder/test/dart_to_cpp.mojom.dart';
 
-class DartSide extends DartSideStub {
+class DartSideImpl extends DartSide {
   static const int BAD_VALUE = 13;
   static const int ELEMENT_BYTES = 1;
   static const int CAPACITY_BYTES = 64;
+
+  CppSideProxy cppSide;
 
   Uint8List _sampleData;
   Uint8List _sampleMessage;
   Completer _completer;
 
-  DartSide(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
+  DartSideImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
+    super.delegate = this;
     _sampleData = new Uint8List(CAPACITY_BYTES);
     for (int i = 0; i < _sampleData.length; ++i) {
       _sampleData[i] = i;
@@ -39,9 +42,16 @@ class DartSide extends DartSideStub {
     });
   }
 
+  void setClient(CppSideProxy proxy) {
+    assert(cppSide == null);
+    cppSide = proxy;
+    cppSide.startTest();
+  }
+
   void ping() {
-    callPingResponse();
+    cppSide.pingResponse();
     _completer.complete(null);
+    cppSide.close();
   }
 
   void echo(int numIterations, EchoArgs arg) {
@@ -81,15 +91,16 @@ class DartSide extends DartSideStub {
       messagePipe1.endpoints[1].write(_sampleMessage.buffer.asByteData());
       messagePipe2.endpoints[1].write(_sampleMessage.buffer.asByteData());
 
-      callEchoResponse(createEchoArgsList([arg, specialArg]));
+      cppSide.echoResponse(createEchoArgsList([arg, specialArg]));
 
       dataPipe1.producer.handle.close();
       dataPipe2.producer.handle.close();
       messagePipe1.endpoints[1].handle.close();
       messagePipe2.endpoints[1].handle.close();
     }
-    callTestFinished();
+    cppSide.testFinished();
     _completer.complete(null);
+    cppSide.close();
   }
 
   Future<bool> get future => _completer.future;
@@ -101,9 +112,8 @@ main(List args) {
   int mojoHandle = args[0];
   var rawHandle = new core.MojoHandle(mojoHandle);
   var endpoint = new core.MojoMessagePipeEndpoint(rawHandle);
-  var dartSide = new DartSide(endpoint);
+  var dartSide = new DartSideImpl(endpoint);
   dartSide.listen();
-  dartSide.callStartTest();
   dartSide.future.then((_) {
     print('Success');
   });

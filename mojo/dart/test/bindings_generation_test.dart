@@ -12,8 +12,10 @@ import 'package:mojo/dart/testing/expect.dart';
 import 'package:mojo/public/interfaces/bindings/tests/sample_interfaces.mojom.dart' as sample;
 
 
-class ProviderImpl extends sample.ProviderStub {
-  ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
+class ProviderImpl extends sample.Provider {
+  ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
+    super.delegate = this;
+  }
 
   echoString(String a, Function responseFactory) =>
       new Future.value(responseFactory(a));
@@ -40,10 +42,10 @@ Future<bool> test() {
   var client = new sample.ProviderProxy(pipe.endpoints[0]);
   var c = new Completer();
   Isolate.spawn(providerIsolate, pipe.endpoints[1]).then((_) {
-    client.callEchoString("hello!").then((echoStringResponse) {
+    client.echoString("hello!").then((echoStringResponse) {
       Expect.equals("hello!", echoStringResponse.a);
     }).then((_) {
-      client.callEchoStrings("hello", "mojo!").then((echoStringsResponse) {
+      client.echoStrings("hello", "mojo!").then((echoStringsResponse) {
         Expect.equals("hello", echoStringsResponse.a);
         Expect.equals("mojo!", echoStringsResponse.b);
         client.close();
@@ -60,10 +62,10 @@ Future testAwait() async {
   var client = new sample.ProviderProxy(pipe.endpoints[0]);
   var isolate = await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
-  var echoStringResponse = await client.callEchoString("hello!");
+  var echoStringResponse = await client.echoString("hello!");
   Expect.equals("hello!", echoStringResponse.a);
 
-  var echoStringsResponse = await client.callEchoStrings("hello", "mojo!");
+  var echoStringsResponse = await client.echoStrings("hello", "mojo!");
   Expect.equals("hello", echoStringsResponse.a);
   Expect.equals("mojo!", echoStringsResponse.b);
 

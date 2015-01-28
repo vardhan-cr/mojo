@@ -4,6 +4,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Run with, e.g.:
+// mojo_shell "file:///path/to/wget.dart http://www.google.com"
+
 import 'dart:async';
 import 'dart:mojo_application';
 import 'dart:mojo_bindings';
@@ -18,9 +21,6 @@ class WGet extends Application {
   UrlLoaderProxy _urlLoaderProxy;
 
   WGet.fromHandle(MojoHandle handle) : super.fromHandle(handle);
-
-  // This Application provides no services.
-  Function stubFactoryClosure() => (endpoint) => null;
 
   void initialize(List<String> args) {
     run(args);
@@ -45,7 +45,7 @@ class WGet extends Application {
         ..url = url
         ..autoFollowRedirects = true;
 
-    var urlResponse = await _urlLoaderProxy.callStart(urlRequest);
+    var urlResponse = await _urlLoaderProxy.start(urlRequest);
     print("url => ${urlResponse.response.url}");
     print("status_line => ${urlResponse.response.statusLine}");
     print("mime_type => ${urlResponse.response.mimeType}");
@@ -60,7 +60,7 @@ class WGet extends Application {
     }
     if (_urlLoaderProxy == null) {
       _urlLoaderProxy = new UrlLoaderProxy.unbound();
-      _networkService.callCreateUrlLoader(_urlLoaderProxy);
+      _networkService.createUrlLoader(_urlLoaderProxy);
     }
   }
 

@@ -46,8 +46,8 @@ interface CppSide {
   EchoResponse(EchoArgsList list);
 };
 
-[Client=CppSide]
 interface DartSide {
+  SetClient(CppSide cppSide);
   Ping();
   Echo(int32 numIterations, EchoArgs arg);
 };
