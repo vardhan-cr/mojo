@@ -122,11 +122,12 @@ bool CommandBufferDriver::DoInitialize(
 
   // TODO(piman): ShaderTranslatorCache is currently per-ContextGroup but
   // only needs to be per-thread.
+  bool bind_generates_resource = false;
   scoped_refptr<gpu::gles2::ContextGroup> context_group =
-      new gpu::gles2::ContextGroup(mailbox_manager_.get(),
-                                   new MemoryTrackerStub,
-                                   new gpu::gles2::ShaderTranslatorCache,
-                                   nullptr, nullptr, nullptr, true);
+      new gpu::gles2::ContextGroup(
+          mailbox_manager_.get(), new MemoryTrackerStub,
+          new gpu::gles2::ShaderTranslatorCache, nullptr, nullptr, nullptr,
+          bind_generates_resource);
 
   command_buffer_.reset(
       new gpu::CommandBufferService(context_group->transfer_buffer_manager()));

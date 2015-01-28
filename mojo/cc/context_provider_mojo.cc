@@ -22,6 +22,7 @@ bool ContextProviderMojo::BindToCurrentThread() {
                                     &ContextLostThunk,
                                     this,
                                     Environment::GetDefaultAsyncWaiter());
+  DCHECK(context_);
   return !!context_;
 }
 
