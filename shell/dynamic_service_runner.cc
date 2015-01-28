@@ -5,6 +5,7 @@
 #include "shell/dynamic_service_runner.h"
 
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/logging.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
@@ -40,11 +41,14 @@ bool SetThunks(Thunks (*make_thunks)(),
 
 base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
     const base::FilePath& app_path,
+    DynamicServiceRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request) {
   DVLOG(2) << "Loading/running Mojo app in process from library: "
            << app_path.value();
   base::NativeLibraryLoadError error;
   base::NativeLibrary app_library = base::LoadNativeLibrary(app_path, &error);
+  if (cleanup_behavior == DeleteAppPath)
+    DeleteFile(app_path, false);
   do {
     if (!app_library) {
       LOG(ERROR) << "Failed to load app library (error: " << error.ToString()

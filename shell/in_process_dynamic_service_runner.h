@@ -26,6 +26,7 @@ class InProcessDynamicServiceRunner
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
+             DynamicServiceRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
@@ -34,6 +35,7 @@ class InProcessDynamicServiceRunner
   void Run() override;
 
   base::FilePath app_path_;
+  DynamicServiceRunner::CleanupBehavior cleanup_behavior_;
   InterfaceRequest<Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 

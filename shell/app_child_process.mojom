@@ -8,7 +8,9 @@ import "mojo/public/interfaces/application/application.mojom";
 
 [Client=AppChildControllerClient]
 interface AppChildController {
-  StartApp(string app_path, mojo.Application& application_request);
+  StartApp(string app_path,
+           bool clean_app_path,
+           mojo.Application& application_request);
 };
 
 interface AppChildControllerClient {

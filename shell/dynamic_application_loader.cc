@@ -53,13 +53,15 @@ void IgnoreResult(bool result) {
 // while the async operation is outstanding.
 class DynamicApplicationLoader::Loader {
  public:
-  Loader(MimeTypeToURLMap* mime_type_to_url,
+  Loader(DynamicServiceRunner::CleanupBehavior cleanup_behavior,
+         MimeTypeToURLMap* mime_type_to_url,
          Context* context,
          DynamicServiceRunnerFactory* runner_factory,
          InterfaceRequest<Application> application_request,
          ApplicationLoader::LoadCallback load_callback,
          const LoaderCompleteCallback& loader_complete_callback)
-      : application_request_(application_request.Pass()),
+      : cleanup_behavior_(cleanup_behavior),
+        application_request_(application_request.Pass()),
         load_callback_(load_callback),
         loader_complete_callback_(loader_complete_callback),
         context_(context),
@@ -112,7 +114,7 @@ class DynamicApplicationLoader::Loader {
            base::Bind(&Loader::RunLibrary, weak_ptr_factory_.GetWeakPtr()));
   }
 
-  virtual void ReportComplete() { loader_complete_callback_.Run(this); }
+  void ReportComplete() { loader_complete_callback_.Run(this); }
 
  private:
   bool PeekContentHandler(std::string* mojo_shebang,
@@ -141,10 +143,11 @@ class DynamicApplicationLoader::Loader {
 
     runner_ = runner_factory_->Create(context_);
     runner_->Start(
-        path, application_request_.Pass(),
+        path, cleanup_behavior_, application_request_.Pass(),
         base::Bind(&Loader::ReportComplete, weak_ptr_factory_.GetWeakPtr()));
   }
 
+  DynamicServiceRunner::CleanupBehavior cleanup_behavior_;
   InterfaceRequest<Application> application_request_;
   ApplicationLoader::LoadCallback load_callback_;
   LoaderCompleteCallback loader_complete_callback_;
@@ -165,7 +168,8 @@ class DynamicApplicationLoader::LocalLoader : public Loader {
               InterfaceRequest<Application> application_request,
               ApplicationLoader::LoadCallback load_callback,
               const LoaderCompleteCallback& loader_complete_callback)
-      : Loader(mime_type_to_url,
+      : Loader(DynamicServiceRunner::DontDeleteAppPath,
+               mime_type_to_url,
                context,
                runner_factory,
                application_request.Pass(),
@@ -253,7 +257,8 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
                 InterfaceRequest<Application> application_request,
                 ApplicationLoader::LoadCallback load_callback,
                 const LoaderCompleteCallback& loader_complete_callback)
-      : Loader(mime_type_to_url,
+      : Loader(DynamicServiceRunner::DeleteAppPath,
+               mime_type_to_url,
                context,
                runner_factory,
                application_request.Pass(),
@@ -426,14 +431,6 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
     }
     response_ = response.Pass();
     Load();
-  }
-
-  void ReportComplete() override {
-    Loader::ReportComplete();
-    // As soon as we've loaded the library we can delete the cache file.
-    // Tools can read the mojo_shell.PID.maps file to find the original library.
-    if (!path_.empty())
-      DeleteFile(path_, false);
   }
 
   const GURL url_;

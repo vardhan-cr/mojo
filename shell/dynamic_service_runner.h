@@ -28,10 +28,15 @@ class DynamicServiceRunner {
  public:
   virtual ~DynamicServiceRunner() {}
 
-  // Takes ownership of the file at |app_path|. Loads the app in that file and
-  // runs it on some other thread/process. |app_completed_callback| is posted
-  // (to the thread on which |Start()| was called) after |MojoMain()| completes.
+  // Parameter for |Start| to specify its cleanup behavior.
+  enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
+
+  // Loads the app in the file at |app_path| and runs it on some other
+  // thread/process. If |cleanup_behavior| is |true|, takes ownership of the
+  // file. |app_completed_callback| is posted (to the thread on which |Start()|
+  // was called) after |MojoMain()| completes.
   virtual void Start(const base::FilePath& app_path,
+                     DynamicServiceRunner::CleanupBehavior cleanup_behavior,
                      InterfaceRequest<Application> application_request,
                      const base::Closure& app_completed_callback) = 0;
 
@@ -42,6 +47,7 @@ class DynamicServiceRunner {
   // thread is destroyed and any thread-local destructors have been executed.
   static base::NativeLibrary LoadAndRunService(
       const base::FilePath& app_path,
+      DynamicServiceRunner::CleanupBehavior cleanup_behavior,
       InterfaceRequest<Application> application_request);
 };
 

@@ -10,6 +10,7 @@
 #include "base/run_loop.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
+#include "shell/dynamic_service_runner.h"
 #include "shell/external_application_registrar_connection.h"
 #include "shell/in_process_dynamic_service_runner.h"
 #include "shell/init.h"
@@ -51,7 +52,8 @@ class Launcher {
     mojo::shell::InProcessDynamicServiceRunner service_runner(nullptr);
     run_loop_.reset(new base::RunLoop);
     service_runner.Start(
-        app_path_, application_request_.Pass(),
+        app_path_, mojo::shell::DynamicServiceRunner::DontDeleteAppPath,
+        application_request_.Pass(),
         base::Bind(&Launcher::OnAppCompleted, base::Unretained(this)));
     run_loop_->Run();
     run_loop_.reset();

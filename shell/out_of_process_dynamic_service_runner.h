@@ -25,6 +25,7 @@ class OutOfProcessDynamicServiceRunner : public DynamicServiceRunner,
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
+             DynamicServiceRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 

@@ -65,7 +65,8 @@ void RunAndroidApplication(JNIEnv* env,
   // Run the application.
   base::ScopedNativeLibrary app_library_from_runner(
       shell::DynamicServiceRunner::LoadAndRunService(
-          app_path, application_request.Pass()));
+          app_path, shell::DynamicServiceRunner::DeleteAppPath,
+          application_request.Pass()));
 }
 }  // namespace
 
@@ -84,7 +85,7 @@ void AndroidHandler::RunApplication(
   base::FilePath archive_path(
       ConvertJavaStringToUTF8(env, j_archive_path.obj()));
 
-  mojo::common::BlockingCopyToFile(response->body.Pass(), archive_path);
+  common::BlockingCopyToFile(response->body.Pass(), archive_path);
   RunAndroidApplicationFn run_android_application_fn = &RunAndroidApplication;
   Java_AndroidHandler_bootstrap(
       env, GetApplicationContext(), j_archive_path.obj(),

@@ -35,6 +35,7 @@ class TestDynamicServiceRunner : public DynamicServiceRunner {
     base::MessageLoop::current()->Quit();
   }
   void Start(const base::FilePath& app_path,
+             DynamicServiceRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;

@@ -184,12 +184,16 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
 
   // |AppChildController| methods:
   void StartApp(const String& app_path,
+                bool clean_app_path,
                 InterfaceRequest<Application> application_request) override {
     DVLOG(2) << "AppChildControllerImpl::StartApp(" << app_path << ", ...)";
     DCHECK(thread_checker_.CalledOnValidThread());
 
     unblocker_.Unblock(base::Bind(&AppChildControllerImpl::StartAppOnMainThread,
                                   base::FilePath::FromUTF8Unsafe(app_path),
+                                  clean_app_path
+                                      ? DynamicServiceRunner::DeleteAppPath
+                                      : DynamicServiceRunner::DontDeleteAppPath,
                                   base::Passed(&application_request)));
   }
 
@@ -207,6 +211,7 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
 
   static void StartAppOnMainThread(
       const base::FilePath& app_path,
+      DynamicServiceRunner::CleanupBehavior cleanup_behavior,
       InterfaceRequest<Application> application_request) {
     // TODO(vtl): This is copied from in_process_dynamic_service_runner.cc.
     DVLOG(2) << "Loading/running Mojo app from " << app_path.value()
@@ -214,7 +219,7 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
 
     // We intentionally don't unload the native library as its lifetime is the
     // same as that of the process.
-    DynamicServiceRunner::LoadAndRunService(app_path,
+    DynamicServiceRunner::LoadAndRunService(app_path, cleanup_behavior,
                                             application_request.Pass());
   }
 
