@@ -173,10 +173,11 @@ void DefaultDisplayManager::OnDestroyed() {
 }
 
 void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
-  metrics_.size = metrics->size.Pass();
+  metrics_.size = metrics->size.Clone();
   metrics_.device_pixel_ratio = metrics->device_pixel_ratio;
   gfx::Rect bounds(metrics_.size.To<gfx::Size>());
   connection_manager_->root()->SetBounds(bounds);
+  connection_manager_->ProcessViewportMetricsChanged(metrics_, *metrics);
   if (!surface_allocated_)
     return;
   surface_->DestroySurface(kLocalSurfaceID);

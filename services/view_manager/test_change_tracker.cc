@@ -49,6 +49,10 @@ std::string ChangeToDescription1(const Change& change) {
           RectToString(change.bounds).c_str(),
           RectToString(change.bounds2).c_str());
 
+    case CHANGE_TYPE_NODE_VIEWPORT_METRICS_CHANGED:
+      // TODO(sky): Not implemented.
+      return "ViewportMetricsChanged";
+
     case CHANGE_TYPE_NODE_HIERARCHY_CHANGED:
       return base::StringPrintf(
           "HierarchyChanged view=%s new_parent=%s old_parent=%s",
@@ -195,6 +199,15 @@ void TestChangeTracker::OnViewBoundsChanged(Id view_id,
   change.bounds2.y = new_bounds->y;
   change.bounds2.width = new_bounds->width;
   change.bounds2.height = new_bounds->height;
+  AddChange(change);
+}
+
+void TestChangeTracker::OnViewViewportMetricsChanged(
+    mojo::ViewportMetricsPtr old_metrics,
+    mojo::ViewportMetricsPtr new_metrics) {
+  Change change;
+  change.type = CHANGE_TYPE_NODE_VIEWPORT_METRICS_CHANGED;
+  // NOT IMPLEMENTED
   AddChange(change);
 }
 

@@ -130,6 +130,8 @@ class ConnectionManager : public ServerViewDelegate,
   void ProcessViewBoundsChanged(const ServerView* view,
                                 const gfx::Rect& old_bounds,
                                 const gfx::Rect& new_bounds);
+  void ProcessViewportMetricsChanged(const mojo::ViewportMetrics& old_metrics,
+                                     const mojo::ViewportMetrics& new_metrics);
   void ProcessWillChangeViewHierarchy(const ServerView* view,
                                       const ServerView* new_parent,
                                       const ServerView* old_parent);

@@ -64,6 +64,12 @@ class TestViewManagerClient : public mojo::ViewManagerClient {
                            mojo::RectPtr new_bounds) override {
     tracker_.OnViewBoundsChanged(view, old_bounds.Pass(), new_bounds.Pass());
   }
+  void OnViewViewportMetricsChanged(
+      mojo::ViewportMetricsPtr old_metrics,
+      mojo::ViewportMetricsPtr new_metrics) override {
+    tracker_.OnViewViewportMetricsChanged(old_metrics.Pass(),
+                                          new_metrics.Pass());
+  }
   void OnViewHierarchyChanged(uint32_t view,
                               uint32_t new_parent,
                               uint32_t old_parent,

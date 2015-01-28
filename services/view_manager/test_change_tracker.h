@@ -21,6 +21,7 @@ enum ChangeType {
   CHANGE_TYPE_EMBEDDED_APP_DISCONNECTED,
   // TODO(sky): NODE->VIEW.
   CHANGE_TYPE_NODE_BOUNDS_CHANGED,
+  CHANGE_TYPE_NODE_VIEWPORT_METRICS_CHANGED,
   CHANGE_TYPE_NODE_HIERARCHY_CHANGED,
   CHANGE_TYPE_NODE_REORDERED,
   CHANGE_TYPE_NODE_VISIBILITY_CHANGED,
@@ -124,6 +125,8 @@ class TestChangeTracker {
   void OnViewBoundsChanged(mojo::Id view_id,
                            mojo::RectPtr old_bounds,
                            mojo::RectPtr new_bounds);
+  void OnViewViewportMetricsChanged(mojo::ViewportMetricsPtr old_bounds,
+                                    mojo::ViewportMetricsPtr new_bounds);
   void OnViewHierarchyChanged(mojo::Id view_id,
                               mojo::Id new_parent_id,
                               mojo::Id old_parent_id,

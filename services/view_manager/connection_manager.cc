@@ -245,6 +245,15 @@ void ConnectionManager::ProcessViewBoundsChanged(const ServerView* view,
   }
 }
 
+void ConnectionManager::ProcessViewportMetricsChanged(
+    const mojo::ViewportMetrics& old_metrics,
+    const mojo::ViewportMetrics& new_metrics) {
+  for (auto& pair : connection_map_) {
+    pair.second->service()->ProcessViewportMetricsChanged(
+        old_metrics, new_metrics, IsChangeSource(pair.first));
+  }
+}
+
 void ConnectionManager::ProcessWillChangeViewHierarchy(
     const ServerView* view,
     const ServerView* new_parent,

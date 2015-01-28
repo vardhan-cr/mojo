@@ -175,6 +175,14 @@ void ViewManagerServiceImpl::ProcessViewBoundsChanged(
                                 Rect::From(new_bounds));
 }
 
+void ViewManagerServiceImpl::ProcessViewportMetricsChanged(
+    const mojo::ViewportMetrics& old_metrics,
+    const mojo::ViewportMetrics& new_metrics,
+    bool originated_change) {
+  client()->OnViewViewportMetricsChanged(old_metrics.Clone(),
+                                         new_metrics.Clone());
+}
+
 void ViewManagerServiceImpl::ProcessWillChangeViewHierarchy(
     const ServerView* view,
     const ServerView* new_parent,

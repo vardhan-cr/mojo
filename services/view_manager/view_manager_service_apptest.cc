@@ -34,6 +34,7 @@ using mojo::String;
 using mojo::ViewDataPtr;
 using mojo::ViewManagerClient;
 using mojo::ViewManagerService;
+using mojo::ViewportMetricsPtr;
 
 namespace view_manager {
 
@@ -280,6 +281,11 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
                            RectPtr new_bounds) override {
     tracker()->OnViewBoundsChanged(view_id, old_bounds.Pass(),
                                    new_bounds.Pass());
+  }
+  void OnViewViewportMetricsChanged(ViewportMetricsPtr old_metrics,
+                                    ViewportMetricsPtr new_metrics) override {
+    tracker()->OnViewViewportMetricsChanged(old_metrics.Pass(),
+                                            new_metrics.Pass());
   }
   void OnViewHierarchyChanged(Id view,
                               Id new_parent,

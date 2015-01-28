@@ -382,10 +382,20 @@ void View::Embed(const String& url,
 ////////////////////////////////////////////////////////////////////////////////
 // View, protected:
 
+namespace {
+
+ViewportMetricsPtr CreateEmptyViewportMetrics() {
+  ViewportMetricsPtr metrics = ViewportMetrics::New();
+  metrics->size = Size::New();
+  return metrics;
+}
+}
+
 View::View()
     : manager_(NULL),
       id_(static_cast<Id>(-1)),
       parent_(NULL),
+      viewport_metrics_(CreateEmptyViewportMetrics()),
       visible_(true),
       drawn_(false) {
 }
@@ -425,6 +435,7 @@ View::View(ViewManager* manager, Id id)
     : manager_(manager),
       id_(id),
       parent_(nullptr),
+      viewport_metrics_(CreateEmptyViewportMetrics()),
       visible_(false),
       drawn_(false) {
 }
@@ -487,6 +498,15 @@ void View::LocalSetBounds(const Rect& old_bounds,
   DCHECK(old_bounds.height == bounds_.height);
   ScopedSetBoundsNotifier notifier(this, old_bounds, new_bounds);
   bounds_ = new_bounds;
+}
+
+void View::LocalSetViewportMetrics(const ViewportMetrics& old_metrics,
+                                   const ViewportMetrics& new_metrics) {
+  // TODO(eseidel): We could check old_metrics against viewport_metrics_.
+  viewport_metrics_ = new_metrics.Clone();
+  FOR_EACH_OBSERVER(
+      ViewObserver, observers_,
+      OnViewViewportMetricsChanged(this, old_metrics, new_metrics));
 }
 
 void View::LocalSetDrawn(bool value) {

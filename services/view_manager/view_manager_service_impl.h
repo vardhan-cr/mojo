@@ -91,6 +91,9 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
                                 const gfx::Rect& old_bounds,
                                 const gfx::Rect& new_bounds,
                                 bool originated_change);
+  void ProcessViewportMetricsChanged(const mojo::ViewportMetrics& old_metrics,
+                                     const mojo::ViewportMetrics& new_metrics,
+                                     bool originated_change);
   void ProcessWillChangeViewHierarchy(const ServerView* view,
                                       const ServerView* new_parent,
                                       const ServerView* old_parent,

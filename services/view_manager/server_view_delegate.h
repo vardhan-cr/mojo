@@ -11,6 +11,10 @@ namespace gfx {
 class Rect;
 }
 
+namespace mojo {
+class ViewportMetrics;
+}
+
 namespace view_manager {
 
 class ServerView;
