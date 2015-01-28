@@ -33,9 +33,16 @@ class Paths(object):
       if Config.GetHostOS() == Config.OS_WINDOWS:
         self.mojo_launcher_path += ".exe"
         self.mojo_shell_path += ".exe"
+      if config and config.target_os == Config.OS_ANDROID:
+        self.target_mojo_shell_path = os.path.join(self.build_dir,
+                                                   "apks",
+                                                   "MojoShell.apk")
+      else:
+        self.target_mojo_shell_path = self.mojo_shell_path
     else:
       self.mojo_launcher_path = None
       self.mojo_shell_path = None
+      self.target_mojo_shell_path = None
 
   def RelPath(self, path):
     """Returns the given path, relative to the current directory."""
