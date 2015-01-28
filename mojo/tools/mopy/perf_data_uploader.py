@@ -129,7 +129,16 @@ def UploadPerfData(master_name, perf_id, test_name, builder_name, build_number,
     except _UploadException as e:
       print e
       return False
-    print "Done successfully."
+
+    print "Done."
+
+    dashboard_params = urllib.urlencode({
+        "masters": master_name,
+        "bots": perf_id,
+        "tests": test_name,
+        "rev": point_id
+    })
+    print "Results Dashboard: %s/report?%s" % (server_url, dashboard_params)
 
   return True
 
