@@ -18,7 +18,7 @@ MojoHandle g_mojo_handle = MOJO_HANDLE_INVALID;
 
 namespace {
 
-MojoResult MojoGetServiceProviderHandle(MojoHandle* handle) {
+MojoResult _MojoGetInitialHandle(MojoHandle* handle) {
   *handle = g_mojo_handle;
   return MOJO_RESULT_OK;
 }

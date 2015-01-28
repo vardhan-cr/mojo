@@ -114,7 +114,7 @@ def MakeInterface():
   # This function is not provided by the Mojo system APIs, but instead allows
   # trusted code to provide a handle for use by untrusted code. See the
   # implementation in mojo_syscall.cc.tmpl.
-  f = mojo.Func('MojoGetServiceProviderHandle', 'MojoResult')
+  f = mojo.Func('_MojoGetInitialHandle', 'MojoResult')
   f.Param('handle').Out('MojoHandle')
 
   mojo.Finalize()
