@@ -299,7 +299,7 @@ void ViewManagerClientImpl::OnViewBoundsChanged(Id view_id,
 
 namespace {
 
-void SetViewportMetricsOnDecendents(View* root,
+void SetViewportMetricsOnDecendants(View* root,
                                     const ViewportMetrics& old_metrics,
                                     const ViewportMetrics& new_metrics) {
   ViewPrivate(root).LocalSetViewportMetrics(old_metrics, new_metrics);
