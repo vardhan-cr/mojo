@@ -11,39 +11,31 @@ import tempfile
 import time
 import zipfile
 
-import mopy.gn as gn
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.version import Version
 
-def upload(config, dry_run, verbose):
-  paths = Paths(config)
+paths = Paths(Config(target_os=Config.OS_LINUX, is_debug=False))
 
-  sys.path.insert(0, os.path.join(paths.src_root, "tools"))
-  # pylint: disable=F0401
-  import find_depot_tools
+sys.path.insert(0, os.path.join(paths.src_root, "tools"))
+# pylint: disable=F0401
+import find_depot_tools
 
-  depot_tools_path = find_depot_tools.add_depot_tools_to_path()
-  gsutil_exe = os.path.join(depot_tools_path, "third_party", "gsutil", "gsutil")
+depot_tools_path = find_depot_tools.add_depot_tools_to_path()
+gsutil_exe = os.path.join(depot_tools_path, "third_party", "gsutil", "gsutil")
 
-  zipfile_name = "%s-%s" % (config.target_os, config.target_arch)
-  dest = "gs://mojo/shell/" + Version().version + "/" + zipfile_name + ".zip"
+def upload(dry_run, verbose):
+  dest = "gs://mojo/shell/" + Version().version + "/linux-x64.zip"
 
   with tempfile.NamedTemporaryFile() as zip_file:
     with zipfile.ZipFile(zip_file, 'w') as z:
-      shell_path = paths.target_mojo_shell_path
-      with open(shell_path) as shell_binary:
-        shell_filename = os.path.basename(shell_path)
-        zipinfo = zipfile.ZipInfo(shell_filename)
+      with open(paths.mojo_shell_path) as shell_binary:
+        zipinfo = zipfile.ZipInfo("mojo_shell")
         zipinfo.external_attr = 0777 << 16L
-        compress_type = zipfile.ZIP_DEFLATED
-        if config.target_os == Config.OS_ANDROID:
-          # The APK is already compressed.
-          compress_type = zipfile.ZIP_STORED
-        zipinfo.compress_type = compress_type
-        zipinfo.date_time = time.gmtime(os.path.getmtime(shell_path))
+        zipinfo.compress_type = zipfile.ZIP_DEFLATED
+        zipinfo.date_time = time.gmtime(os.path.getmtime(paths.mojo_shell_path))
         if verbose:
-          print "zipping %s" % shell_path
+          print "zipping %s" % paths.mojo_shell_path
         z.writestr(zipinfo, shell_binary.read())
     if dry_run:
       print str([gsutil_exe, "cp", zip_file.name, dest])
@@ -57,15 +49,8 @@ def main():
       "upload", action="store_true")
   parser.add_argument("-v", "--verbose", help="Verbose mode",
       action="store_true")
-  parser.add_argument("--build_dir",
-                      type=str,
-                      metavar="<build_dir>",
-                      help="The build dir containing the shell to be uploaded",
-                      default="out/Release")
   args = parser.parse_args()
-
-  config = gn.ConfigForGNArgs(gn.ParseGNConfig(args.build_dir))
-  upload(config, args.dry_run, args.verbose)
+  upload(args.dry_run, args.verbose)
   return 0
 
 if __name__ == "__main__":
