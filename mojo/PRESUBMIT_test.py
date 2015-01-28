@@ -17,6 +17,11 @@ _SDK_BUILD_FILE = 'mojo/public/some/path/BUILD.gn'
 _EDK_BUILD_FILE = 'mojo/edk/some/path/BUILD.gn'
 _IRRELEVANT_BUILD_FILE = 'mojo/foo/some/path/BUILD.gn'
 
+_PACKAGE_BUILDFILES = {
+    'SDK' : _SDK_BUILD_FILE,
+    'EDK' : _EDK_BUILD_FILE,
+}
+
 class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
   """Tests the checking for illegal absolute paths within SDK/EDK buildfiles.
   """
@@ -71,34 +76,49 @@ class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
                                     line_num,
                                     referenced_path)
 
-  def testAbsoluteSDKReferenceInSDKBuildFile(self):
-    """Tests that an absolute SDK path within an SDK buildfile is flagged."""
+  def _testAbsoluteSDKReferenceInPackage(self, package):
+    """Tests that an absolute SDK path within |package| is flagged."""
+    buildfile = _PACKAGE_BUILDFILES[package]
     mock_input_api = self.inputApiContainingFileWithPaths(
-        _SDK_BUILD_FILE,
+        buildfile,
         [ self.sdk_relative_path, self.sdk_absolute_path ])
     warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
 
     self.assertEqual(1, len(warnings))
     self.checkSDKAbsolutePathWarningWithSingleItem(warnings[0],
-                                                   'SDK',
-                                                   _SDK_BUILD_FILE,
+                                                   package,
+                                                   buildfile,
                                                    2,
                                                    self.sdk_absolute_path)
 
-  def testExternalReferenceInSDKBuildFile(self):
-    """Tests that an illegal external path in an SDK buildfile is flagged."""
+  def _testExternalReferenceInPackage(self, package):
+    """Tests that an illegal external path within |package| is flagged."""
+    buildfile = _PACKAGE_BUILDFILES[package]
     mock_input_api = self.inputApiContainingFileWithPaths(
-        _SDK_BUILD_FILE,
+        buildfile,
         [ self.non_whitelisted_external_path, self.whitelisted_external_path ])
     warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
+
+    if package == 'EDK':
+      # All external paths are allowed in the EDK.
+      self.assertEqual(0, len(warnings))
+      return
 
     self.assertEqual(1, len(warnings))
     expected_message = PRESUBMIT._ILLEGAL_EXTERNAL_PATH_WARNING_MESSAGE
     self.checkWarningWithSingleItem(warnings[0],
                                     expected_message,
-                                    _SDK_BUILD_FILE,
+                                    buildfile,
                                     1,
                                     self.non_whitelisted_external_path)
+
+  def testAbsoluteSDKReferenceInSDKBuildFile(self):
+    """Tests that an absolute SDK path within an SDK buildfile is flagged."""
+    self._testAbsoluteSDKReferenceInPackage('SDK')
+
+  def testExternalReferenceInSDKBuildFile(self):
+    """Tests that an illegal external path in an SDK buildfile is flagged."""
+    self._testExternalReferenceInPackage('SDK')
 
   def testAbsoluteEDKReferenceInSDKBuildFile(self):
     """Tests that an absolute EDK path in an SDK buildfile is flagged."""
@@ -117,16 +137,7 @@ class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
 
   def testAbsoluteSDKReferenceInEDKBuildFile(self):
     """Tests that an absolute SDK path within an EDK buildfile is flagged."""
-    mock_input_api = self.inputApiContainingFileWithPaths(
-        _EDK_BUILD_FILE,
-        [ self.sdk_relative_path, self.sdk_absolute_path ])
-    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
-    self.assertEqual(1, len(warnings))
-    self.checkSDKAbsolutePathWarningWithSingleItem(warnings[0],
-                                                   'EDK',
-                                                   _EDK_BUILD_FILE,
-                                                   2,
-                                                   self.sdk_absolute_path)
+    self._testAbsoluteSDKReferenceInPackage('EDK')
 
   def testAbsoluteEDKReferenceInEDKBuildFile(self):
     """Tests that an absolute EDK path in an EDK buildfile is flagged."""
@@ -145,11 +156,7 @@ class AbsoluteReferencesInBuildFilesTest(unittest.TestCase):
 
   def testExternalReferenceInEDKBuildFile(self):
     """Tests that an external path in an EDK buildfile is not flagged."""
-    mock_input_api = self.inputApiContainingFileWithPaths(
-        _EDK_BUILD_FILE,
-        [ self.non_whitelisted_external_path, self.whitelisted_external_path ])
-    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
-    self.assertEqual(0, len(warnings))
+    self._testExternalReferenceInPackage('EDK')
 
   def testIrrelevantBuildFile(self):
     """Tests that nothing is flagged in a non SDK/EDK buildfile."""
@@ -191,15 +198,42 @@ class SourceSetTypesInBuildFilesTest(unittest.TestCase):
         build_file, line_num)
     self.assertEqual(expected_item, warning.items[0])
 
-  def testNakedSourceSetInSDKBuildFile(self):
-    """Tests that a source_set within an SDK buildfile is flagged."""
+  def _testNakedSourceSetInPackage(self, package):
+    """Tests that a source_set within |package| is flagged."""
+    buildfile = _PACKAGE_BUILDFILES[package]
+    naked_source_set = 'source_set('
+    correct_source_set = 'mojo_sdk_source_set('
+    if package == 'EDK':
+      correct_source_set = 'mojo_edk_source_set('
     mock_input_api = self.inputApiContainingFileWithSourceSets(
-        _SDK_BUILD_FILE,
-        [ 'mojo_sdk_source_set(', 'source_set(' ])
+        buildfile,
+        [ correct_source_set, naked_source_set ])
     warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
 
     self.assertEqual(1, len(warnings))
-    self.checkWarningWithSingleItem(warnings[0], 'SDK', _SDK_BUILD_FILE, 2)
+    self.checkWarningWithSingleItem(warnings[0], package, buildfile, 2)
+
+  def _testWrongTypeOfWrapperSourceSetInPackage(self, package):
+    """Tests that the wrong type of wrapper source_set in |package| is flagged
+    (e.g., mojo_edk_source_set within the SDK)."""
+    buildfile = _PACKAGE_BUILDFILES[package]
+    mock_input_api = self.inputApiContainingFileWithSourceSets(
+        buildfile,
+        [ 'mojo_sdk_source_set(', 'mojo_edk_source_set(' ])
+    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
+
+    self.assertEqual(1, len(warnings))
+    warning_line = 2
+    if package == 'EDK':
+      warning_line = 1
+    self.checkWarningWithSingleItem(warnings[0],
+                                    package,
+                                    buildfile,
+                                    warning_line)
+
+  def testNakedSourceSetInSDKBuildFile(self):
+    """Tests that a source_set within the SDK is flagged."""
+    self._testNakedSourceSetInPackage('SDK')
 
   def testPythonSourceSetInSDKBuildFile(self):
     """Tests that a python_binary_source_set within an SDK buildfile is
@@ -213,33 +247,15 @@ class SourceSetTypesInBuildFilesTest(unittest.TestCase):
 
   def testEDKSourceSetInSDKBuildFile(self):
     """Tests that a mojo_edk_source_set within an SDK buildfile is flagged."""
-    mock_input_api = self.inputApiContainingFileWithSourceSets(
-        _SDK_BUILD_FILE,
-        [ 'mojo_sdk_source_set(', 'mojo_edk_source_set(' ])
-    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
-
-    self.assertEqual(1, len(warnings))
-    self.checkWarningWithSingleItem(warnings[0], 'SDK', _SDK_BUILD_FILE, 2)
+    self._testWrongTypeOfWrapperSourceSetInPackage('SDK')
 
   def testNakedSourceSetInEDKBuildFile(self):
-    """Tests that a source_set within an EDK buildfile is flagged."""
-    mock_input_api = self.inputApiContainingFileWithSourceSets(
-        _EDK_BUILD_FILE,
-        [ 'source_set(', 'mojo_edk_source_set(' ])
-    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
-
-    self.assertEqual(1, len(warnings))
-    self.checkWarningWithSingleItem(warnings[0], 'EDK', _EDK_BUILD_FILE, 1)
+    """Tests that a source_set within the EDK is flagged."""
+    self._testNakedSourceSetInPackage('EDK')
 
   def testSDKSourceSetInEDKBuildFile(self):
     """Tests that a mojo_sdk_source_set within an EDK buildfile is flagged."""
-    mock_input_api = self.inputApiContainingFileWithSourceSets(
-        _EDK_BUILD_FILE,
-        [ 'mojo_sdk_source_set(', 'mojo_edk_source_set(' ])
-    warnings = PRESUBMIT._BuildFileChecks(mock_input_api, MockOutputApi())
-
-    self.assertEqual(1, len(warnings))
-    self.checkWarningWithSingleItem(warnings[0], 'EDK', _EDK_BUILD_FILE, 1)
+    self._testWrongTypeOfWrapperSourceSetInPackage('EDK')
 
   def testIrrelevantBuildFile(self):
     """Tests that a source_set in a non-SDK/EDK buildfile isn't flagged."""
