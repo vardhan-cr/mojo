@@ -55,7 +55,7 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
   // mojo::InterfaceFactory<NativeViewport> implementation.
   void Create(ApplicationConnection* connection,
               mojo::InterfaceRequest<NativeViewport> request) override {
-    BindToRequest(new NativeViewportImpl(app_, is_headless_), &request);
+    new NativeViewportImpl(app_, is_headless_, request.Pass());
   }
 
   // mojo::InterfaceFactory<Gpu> implementation.

@@ -91,7 +91,7 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
   connection_manager_ = connection_manager;
   app_connection_->ConnectToService("mojo:native_viewport_service",
                                     &native_viewport_);
-  native_viewport_.set_client(this);
+  native_viewport_.set_error_handler(this);
   native_viewport_->Create(
       metrics_.size->Clone(),
       base::Bind(&DefaultDisplayManager::OnCreatedNativeViewport,
@@ -134,7 +134,9 @@ const mojo::ViewportMetrics& DefaultDisplayManager::GetViewportMetrics() {
 }
 
 void DefaultDisplayManager::OnCreatedNativeViewport(
-    uint64_t native_viewport_id) {
+    uint64_t native_viewport_id,
+    mojo::ViewportMetricsPtr metrics) {
+  OnMetricsChanged(metrics.Pass());
 }
 
 void DefaultDisplayManager::Draw() {
@@ -166,12 +168,6 @@ void DefaultDisplayManager::Draw() {
   native_viewport_->SubmittedFrame(qualified_id.Pass());
 }
 
-void DefaultDisplayManager::OnDestroyed() {
-  // This is called when the native_viewport is torn down before
-  // ~DefaultDisplayManager may be called.
-  native_viewport_closed_callback_.Run();
-}
-
 void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
   metrics_.size = metrics->size.Clone();
   metrics_.device_pixel_ratio = metrics->device_pixel_ratio;
@@ -183,6 +179,8 @@ void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
   surface_->DestroySurface(kLocalSurfaceID);
   surface_allocated_ = false;
   SchedulePaint(connection_manager_->root(), bounds);
+  native_viewport_->RequestMetrics(base::Bind(
+      &DefaultDisplayManager::OnMetricsChanged, weak_factory_.GetWeakPtr()));
 }
 
 void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {
@@ -198,6 +196,12 @@ void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {
 void DefaultDisplayManager::ReturnResources(
     mojo::Array<mojo::ReturnedResourcePtr> resources) {
   DCHECK_EQ(0u, resources.size());
+}
+
+void DefaultDisplayManager::OnConnectionError() {
+  // This is called when the native_viewport is torn down before
+  // ~DefaultDisplayManager may be called.
+  native_viewport_closed_callback_.Run();
 }
 
 }  // namespace view_manager

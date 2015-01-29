@@ -27,9 +27,7 @@ namespace examples {
 
 static const uint32_t kLocalId = 1u;
 
-class SurfacesApp : public ApplicationDelegate,
-                    public SurfaceClient,
-                    public NativeViewportClient {
+class SurfacesApp : public ApplicationDelegate, public SurfaceClient {
  public:
   SurfacesApp() : id_namespace_(0u), weak_factory_(this) {}
   ~SurfacesApp() override {}
@@ -37,7 +35,6 @@ class SurfacesApp : public ApplicationDelegate,
   // ApplicationDelegate implementation
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->ConnectToService("mojo:native_viewport_service", &viewport_);
-    viewport_.set_client(this);
 
     connection->ConnectToService("mojo:surfaces_service", &surface_);
     surface_.set_client(this);
@@ -87,6 +84,7 @@ class SurfacesApp : public ApplicationDelegate,
         base::TimeDelta::FromMilliseconds(50));
   }
 
+ private:
   // SurfaceClient implementation.
   void SetIdNamespace(uint32_t id_namespace) override {
     auto qualified_id = mojo::SurfaceId::New();
@@ -97,12 +95,8 @@ class SurfacesApp : public ApplicationDelegate,
   void ReturnResources(Array<ReturnedResourcePtr> resources) override {
     DCHECK(!resources.size());
   }
-  // NativeViewportClient implementation.
-  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override {}
-  void OnDestroyed() override {}
-
- private:
-  void OnCreatedNativeViewport(uint64_t native_viewport_id) {}
+  void OnCreatedNativeViewport(uint64_t native_viewport_id,
+                               mojo::ViewportMetricsPtr metrics) {}
 
   SurfacePtr surface_;
   uint32_t id_namespace_;

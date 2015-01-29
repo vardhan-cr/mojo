@@ -51,8 +51,8 @@ class DisplayManager {
 // DisplayManager implementation that connects to the services necessary to
 // actually display.
 class DefaultDisplayManager : public DisplayManager,
-                              public mojo::NativeViewportClient,
-                              public mojo::SurfaceClient {
+                              public mojo::SurfaceClient,
+                              public mojo::ErrorHandler {
  public:
   DefaultDisplayManager(
       mojo::ApplicationConnection* app_connection,
@@ -66,17 +66,19 @@ class DefaultDisplayManager : public DisplayManager,
   const mojo::ViewportMetrics& GetViewportMetrics() override;
 
  private:
-  void OnCreatedNativeViewport(uint64_t native_viewport_id);
+  void OnCreatedNativeViewport(uint64_t native_viewport_id,
+                               mojo::ViewportMetricsPtr metrics);
   void Draw();
 
-  // NativeViewportClient:
-  void OnDestroyed() override;
-  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override;
+  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics);
 
   // SurfaceClient:
   void SetIdNamespace(uint32_t id_namespace) override;
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
+
+  // ErrorHandler:
+  void OnConnectionError() override;
 
   mojo::ApplicationConnection* app_connection_;
   ConnectionManager* connection_manager_;

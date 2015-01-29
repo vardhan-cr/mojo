@@ -42,8 +42,7 @@ bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
 void NativeViewportApplicationLoader::Create(
     ApplicationConnection* connection,
     InterfaceRequest<NativeViewport> request) {
-  BindToRequest(new native_viewport::NativeViewportImpl(app_.get(), false),
-                &request);
+  new native_viewport::NativeViewportImpl(app_.get(), false, request.Pass());
 }
 
 void NativeViewportApplicationLoader::Create(

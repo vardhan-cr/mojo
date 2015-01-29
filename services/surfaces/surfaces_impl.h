@@ -25,8 +25,6 @@ class ApplicationManager;
 
 namespace surfaces {
 
-class SurfaceNativeViewportClient;
-
 class SurfacesImpl : public mojo::Surface,
                      public mojo::ViewportParameterListener,
                      public cc::SurfaceFactoryClient,

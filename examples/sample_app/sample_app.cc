@@ -6,7 +6,7 @@
 #include <string>
 
 #include "base/bind.h"
-#include "base/memory/weak_ptr.h"
+#include "base/memory/scoped_ptr.h"
 #include "examples/sample_app/gles2_client_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -21,12 +21,11 @@
 
 namespace examples {
 
-class SampleApp
-    : public mojo::ApplicationDelegate,
-      public mojo::NativeViewportClient,
-      public mojo::InterfaceImpl<mojo::NativeViewportEventDispatcher> {
+class SampleApp : public mojo::ApplicationDelegate,
+                  public mojo::NativeViewportEventDispatcher,
+                  public mojo::ErrorHandler {
  public:
-  SampleApp() : weak_factory_(this) {}
+  SampleApp() : dispatcher_binding_(this) {}
 
   ~SampleApp() override {
     // TODO(darin): Fix shutdown so we don't need to leak this.
@@ -35,7 +34,7 @@ class SampleApp
 
   void Initialize(mojo::ApplicationImpl* app) override {
     app->ConnectToService("mojo:native_viewport_service", &viewport_);
-    viewport_.set_client(this);
+    viewport_.set_error_handler(this);
 
     SetEventDispatcher();
 
@@ -47,16 +46,16 @@ class SampleApp
     size->height = 600;
     viewport_->Create(size.Pass(),
                       base::Bind(&SampleApp::OnCreatedNativeViewport,
-                                 weak_factory_.GetWeakPtr()));
+                                 base::Unretained(this)));
     viewport_->Show();
   }
 
-  void OnDestroyed() override { mojo::RunLoop::current()->Quit(); }
-
-  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override {
+  void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
     assert(metrics);
     if (gles2_client_)
       gles2_client_->SetSize(*metrics->size);
+    viewport_->RequestMetrics(
+        base::Bind(&SampleApp::OnMetricsChanged, base::Unretained(this)));
   }
 
   void OnEvent(mojo::EventPtr event,
@@ -69,28 +68,31 @@ class SampleApp
 
  private:
   void SetEventDispatcher() {
-    mojo::NativeViewportEventDispatcherPtr proxy;
-    mojo::WeakBindToProxy(this, &proxy);
-    viewport_->SetEventDispatcher(proxy.Pass());
+    mojo::NativeViewportEventDispatcherPtr ptr;
+    dispatcher_binding_.Bind(GetProxy(&ptr));
+    viewport_->SetEventDispatcher(ptr.Pass());
   }
 
-  void OnCreatedNativeViewport(uint64_t native_viewport_id) {
-    mojo::SizePtr size = mojo::Size::New();
-    size->width = 800;
-    size->height = 600;
+  void OnCreatedNativeViewport(uint64_t native_viewport_id,
+                               mojo::ViewportMetricsPtr metrics) {
     mojo::ViewportParameterListenerPtr listener;
     mojo::CommandBufferPtr command_buffer;
     // TODO(jamesr): Output to a surface instead.
-    gpu_service_->CreateOnscreenGLES2Context(native_viewport_id, size.Pass(),
-                                             GetProxy(&command_buffer),
-                                             listener.Pass());
+    gpu_service_->CreateOnscreenGLES2Context(
+        native_viewport_id, metrics->size.Clone(), GetProxy(&command_buffer),
+        listener.Pass());
     gles2_client_.reset(new GLES2ClientImpl(command_buffer.Pass()));
+    viewport_->RequestMetrics(
+        base::Bind(&SampleApp::OnMetricsChanged, base::Unretained(this)));
   }
+
+  // ErrorHandler implementation.
+  void OnConnectionError() override { mojo::RunLoop::current()->Quit(); }
 
   scoped_ptr<GLES2ClientImpl> gles2_client_;
   mojo::NativeViewportPtr viewport_;
   mojo::GpuPtr gpu_service_;
-  base::WeakPtrFactory<SampleApp> weak_factory_;
+  mojo::Binding<NativeViewportEventDispatcher> dispatcher_binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SampleApp);
 };
