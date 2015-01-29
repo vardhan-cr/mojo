@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "sky/tools/debugger/navigator_host_impl.h"
+#include "services/kiosk_wm/navigator_host_impl.h"
 
-#include "sky/tools/debugger/debugger.h"
+#include "services/kiosk_wm/kiosk_wm.h"
 
-namespace sky {
-namespace debugger {
+namespace mojo {
+namespace kiosk_wm {
 
-NavigatorHostImpl::NavigatorHostImpl(SkyDebugger* debugger)
-    : debugger_(debugger->GetWeakPtr()) {
+NavigatorHostImpl::NavigatorHostImpl(KioskWM* window_manager)
+    : kiosk_wm_(window_manager->GetWeakPtr()) {
 }
 
 NavigatorHostImpl::~NavigatorHostImpl() {
@@ -22,10 +22,12 @@ void NavigatorHostImpl::DidNavigateLocally(const mojo::String& url) {
 
 void NavigatorHostImpl::RequestNavigate(mojo::Target target,
                                         mojo::URLRequestPtr request) {
-  if (!debugger_)
+  if (!kiosk_wm_)
     return;
-  debugger_->NavigateToURL(request->url);
+
+  // kiosk_wm sets up default services including navigation.
+  kiosk_wm_->ReplaceContentWithURL(request->url);
 }
 
-}  // namespace debugger
-}  // namespace sky
+}  // namespace kiosk_wm
+}  // namespace mojo

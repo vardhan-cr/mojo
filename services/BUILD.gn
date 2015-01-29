@@ -14,6 +14,7 @@ group("services") {
     "//services/http_server/public",
     "//services/icu_data",
     "//services/js",
+    "//services/kiosk_wm",
     "//services/native_viewport",
     "//services/reaper",
     "//services/surfaces",

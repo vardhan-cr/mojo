@@ -5,9 +5,10 @@
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
 
-#include "sky/tools/debugger/debugger.h"
+#include "services/kiosk_wm/kiosk_wm.h"
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new sky::debugger::SkyDebugger);
+  mojo::ApplicationRunnerChromium runner(
+      new mojo::kiosk_wm::KioskWM);
   return runner.Run(shell_handle);
 }
