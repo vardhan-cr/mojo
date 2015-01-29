@@ -8,6 +8,7 @@
 #include "base/command_line.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/strings/string_split.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "shell/dynamic_service_runner.h"
@@ -17,6 +18,7 @@
 #include "url/gurl.h"
 
 namespace {
+const char kAppArgs[] = "app-args";
 const char kAppPath[] = "app-path";
 const char kAppURL[] = "app-url";
 const char kShellPath[] = "shell-path";
@@ -27,10 +29,13 @@ class Launcher {
   explicit Launcher(base::CommandLine* command_line)
       : app_path_(command_line->GetSwitchValuePath(kAppPath)),
         app_url_(command_line->GetSwitchValueASCII(kAppURL)),
-        app_args_(command_line->GetArgs()),
         loop_(base::MessageLoop::TYPE_IO),
         connection_(
-            base::FilePath(command_line->GetSwitchValuePath(kShellPath))) {}
+            base::FilePath(command_line->GetSwitchValuePath(kShellPath))) {
+    base::SplitStringAlongWhitespace(
+        command_line->GetSwitchValueASCII(kAppArgs), &app_args_);
+  }
+
   ~Launcher() {}
 
   bool Connect() { return connection_.Connect(); }

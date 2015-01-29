@@ -78,18 +78,16 @@ def get_fixtures(config, apptest, context):
   return []
 
 
-def build_shell_arguments(shell_args, apps_and_args, run_apps=True):
+def build_shell_arguments(shell_args, apps_and_args=None):
   """Build the list of arguments for the shell. |shell_args| are the base
-  arguments, |apps_and_args| is a dictionary that associate each application to
-  its specific arguments, and |run_apps| is True if the shell must run the
-  applications in |apps_and_args|.
+  arguments, |apps_and_args| is a dictionary that associates each application to
+  its specific arguments|. Each app included will be run by the shell.
   """
   result = shell_args[:]
   if apps_and_args:
     for (application, args) in apps_and_args.items():
       result += ["--args-for=%s %s" % (application, " ".join(args))]
-    if run_apps:
-      result += apps_and_args.keys()
+    result += apps_and_args.keys()
   return result
 
 
@@ -104,13 +102,11 @@ def _get_shell_executable(config, run_launcher):
     return paths.mojo_shell_path
 
 
-def _build_command_line(config, shell_args, apps_and_args, run_apps=True,
-                        run_launcher=False):
+def _build_command_line(config, shell_args, apps_and_args, run_launcher=False):
   executable = _get_shell_executable(config, run_launcher)
   return "%s %s" % (executable, " ".join(["%r" % x for x in
-                                          build_shell_arguments(shell_args,
-                                                                apps_and_args,
-                                                                run_apps)]))
+                                          build_shell_arguments(
+                                              shell_args, apps_and_args)]))
 
 
 def _run_test_android(shell_args, apps_and_args, context):

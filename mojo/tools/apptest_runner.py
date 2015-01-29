@@ -103,13 +103,12 @@ def RunApptestInLauncher(config, mojo_paths, application, application_args,
                          shell_args, launched_services):
   with BackgroundAppGroup(
       mojo_paths, launched_services,
-      gtest.build_shell_arguments(shell_args,
-                                  {application: application_args},
-                                  run_apps=False)) as apps:
+      gtest.build_shell_arguments(shell_args)) as apps:
     launcher_args = [
         '--shell-path=' + apps.socket_path,
         '--app-url=' + application,
-        '--app-path=' + mojo_paths.FileFromUrl(application)]
+        '--app-path=' + mojo_paths.FileFromUrl(application),
+        '--app-args=' + " ".join(application_args)]
     return gtest.run_test(config, launcher_args, run_launcher=True)
 
 
