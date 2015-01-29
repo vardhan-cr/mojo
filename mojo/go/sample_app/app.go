@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"code.google.com/p/go.mobile/app"
-	"mojo/public/go/system/impl"
+	"mojo/public/go/system"
 )
 
 //#include "mojo/public/c/system/types.h"
@@ -12,7 +12,7 @@ import "C"
 
 //export MojoMain
 func MojoMain(handle C.MojoHandle) C.MojoResult {
-	if core := impl.GetCore(); core != nil {
+	if core := system.GetCore(); core != nil {
 		log.Printf("GetTimeTicksNow:%v", core.GetTimeTicksNow())
 	}
 	return C.MOJO_RESULT_OK

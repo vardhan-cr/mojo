@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"testing"
 
-	"mojo/go/system/embedder"
 	"mojo/public/go/system"
 )
 
@@ -21,11 +20,6 @@ const (
 		system.MOJO_HANDLE_SIGNAL_WRITABLE |
 		system.MOJO_HANDLE_SIGNAL_PEER_CLOSED)
 )
-
-func init() {
-	embedder.InitializeMojoEmbedder()
-	core = system.GetCore()
-}
 
 func TestGetTimeTicksNow(t *testing.T) {
 	x := core.GetTimeTicksNow()

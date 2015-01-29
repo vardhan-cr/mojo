@@ -10,8 +10,48 @@ import (
 	"math"
 	"strings"
 
+	"mojo/go/system/embedder"
+	"mojo/public/go/bindings"
 	"mojo/public/go/system"
 )
+
+func init() {
+	embedder.InitializeMojoEmbedder()
+	core = system.GetCore()
+}
+
+type mockHandle struct {
+	bindings.InvalidHandle
+	handle system.MojoHandle
+}
+
+func (h *mockHandle) IsValid() bool {
+	return true
+}
+
+func (h *mockHandle) ReleaseNativeHandle() system.MojoHandle {
+	return h.handle
+}
+
+func (h *mockHandle) ToUntypedHandle() system.UntypedHandle {
+	return h
+}
+
+func (h *mockHandle) ToConsumerHandle() system.ConsumerHandle {
+	return h
+}
+
+func (h *mockHandle) ToProducerHandle() system.ProducerHandle {
+	return h
+}
+
+func (h *mockHandle) ToMessagePipeHandle() system.MessagePipeHandle {
+	return h
+}
+
+func (h *mockHandle) ToSharedBufferHandle() system.SharedBufferHandle {
+	return h
+}
 
 // inputParser parses validation tests input format as described in
 // |mojo/public/cpp/bindings/tests/validation_test_input_parser.h|
@@ -60,10 +100,11 @@ func (p *inputParser) parseToDataItems(s string) []dataItem {
 
 // Parse parses a validation tests input string that has no comments.
 // Panics if input has errors.
-func (p *inputParser) Parse(s string) ([]byte, []system.Handle) {
+func (p *inputParser) Parse(s string) ([]byte, []system.UntypedHandle) {
 	var bytes []byte
-	var handles []system.Handle
 	var buf [8]byte
+	// We need non-nil slice for comparing values with reflect.DeepEqual.
+	handles := []system.UntypedHandle{}
 	pointers := make(map[string]pointerPlaceholder)
 	for _, item := range p.parseToDataItems(s) {
 		switch item.Type {
@@ -143,9 +184,9 @@ func (p *inputParser) Parse(s string) ([]byte, []system.Handle) {
 		case "handles":
 			var value int
 			fmt.Sscan(item.Value, &value)
-			handles = make([]system.Handle, value)
+			handles = make([]system.UntypedHandle, value)
 			for i, _ := range handles {
-				handles[i] = system.GetCore().AcquireNativeHandle(0)
+				handles[i] = &mockHandle{handle: system.MojoHandle(i + 1)}
 			}
 		default:
 			panic(fmt.Sprintf("unsupported item type: %v", item.Type))
