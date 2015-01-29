@@ -11,14 +11,16 @@
 #include "base/files/file_util.h"
 #include "base/format_macros.h"
 #include "base/logging.h"
-#include "base/md5.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/process/process.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
+#include "crypto/secure_hash.h"
+#include "crypto/sha2.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/cpp/system/data_pipe.h"
@@ -312,32 +314,33 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
   }
 
   // AppIds should be be both predictable and unique, but any hash would work.
-  // TODO(eseidel): Use sha256 once it has an incremental API, crbug.com/451588
-  // Derived from tools/android/md5sum/md5sum.cc with fstream usage removed.
+  // Currently we use sha256 from crypto/secure_hash.h
   static bool ComputeAppId(const base::FilePath& path,
                            std::string* digest_string) {
-
+    scoped_ptr<crypto::SecureHash> ctx(
+        crypto::SecureHash::Create(crypto::SecureHash::SHA256));
     base::File file(path, base::File::FLAG_OPEN | base::File::FLAG_READ);
     if (!file.IsValid()) {
       LOG(ERROR) << "Failed to open " << path.value() << " for computing AppId";
       return false;
     }
-    base::MD5Context ctx;
-    base::MD5Init(&ctx);
     char buf[1024];
     while (file.IsValid()) {
       int bytes_read = file.ReadAtCurrentPos(buf, sizeof(buf));
       if (bytes_read == 0)
         break;
-      base::MD5Update(&ctx, base::StringPiece(buf, bytes_read));
+      ctx->Update(buf, bytes_read);
     }
     if (!file.IsValid()) {
       LOG(ERROR) << "Error reading " << path.value();
       return false;
     }
-    base::MD5Digest digest;
-    base::MD5Final(&digest, &ctx);
-    *digest_string = base::MD5DigestToBase16(digest);
+    // The output is really a vector of unit8, we're cheating by using a string.
+    std::string output(crypto::kSHA256Length, 0);
+    ctx->Finish(string_as_array(&output), output.size());
+    output = base::HexEncode(output.c_str(), output.size());
+    // Using lowercase for compatiblity with sha256sum output.
+    *digest_string = base::StringToLowerASCII(output);
     return true;
   }
 
