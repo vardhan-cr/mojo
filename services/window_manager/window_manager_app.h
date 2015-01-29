@@ -24,7 +24,6 @@
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/window_manager_impl.h"
 #include "ui/events/event_handler.h"
-#include "ui/events/gestures/gesture_types.h"
 
 namespace gfx {
 class Size;
@@ -53,7 +52,6 @@ class WindowManagerApp
       public mojo::ViewManagerDelegate,
       public mojo::ViewObserver,
       public ui::EventHandler,
-      public ui::GestureConsumer,
       public FocusControllerObserver,
       public CaptureControllerObserver,
       public mojo::InterfaceFactory<mojo::WindowManager>,

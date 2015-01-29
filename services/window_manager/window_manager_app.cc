@@ -21,7 +21,6 @@
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/view_targeter.h"
 #include "services/window_manager/window_manager_delegate.h"
-#include "ui/events/gestures/gesture_recognizer.h"
 
 using mojo::ApplicationConnection;
 using mojo::Id;
@@ -75,7 +74,6 @@ WindowManagerApp::~WindowManagerApp() {
   DCHECK(!root_);
 
   STLDeleteElements(&connections_);
-  ui::GestureRecognizer::Get()->CleanupStateForConsumer(this);
 }
 
 void WindowManagerApp::AddConnection(WindowManagerImpl* connection) {
@@ -237,28 +235,8 @@ void WindowManagerApp::OnEvent(ui::Event* event) {
   if (focus_controller_)
     focus_controller_->OnEvent(event);
 
-  auto gesture_recognizer = ui::GestureRecognizer::Get();
-  ui::TouchEvent* touch_event =
-      event->IsTouchEvent() ? static_cast<ui::TouchEvent*>(event) : nullptr;
-
-  if (touch_event)
-    gesture_recognizer->ProcessTouchEventPreDispatch(*touch_event, this);
-
   window_manager_client_->DispatchInputEventToView(view->id(),
                                                    mojo::Event::From(*event));
-
-  if (touch_event) {
-    scoped_ptr<ScopedVector<ui::GestureEvent>> gestures(
-        gesture_recognizer->ProcessTouchEventPostDispatch(
-            *touch_event, ui::ER_UNHANDLED, this));
-
-    if (gestures) {
-      for (auto& gesture : *gestures) {
-        window_manager_client_->DispatchInputEventToView(
-            view->id(), mojo::Event::From(*gesture));
-      }
-    }
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
