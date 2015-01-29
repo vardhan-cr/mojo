@@ -14,6 +14,7 @@
 #include "base/threading/thread.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/connection_manager.h"
+#include "mojo/edk/system/system_impl_export.h"
 
 namespace base {
 class TaskRunner;
@@ -35,7 +36,8 @@ namespace system {
 // (via |Shutdown()|), and destroyed on the same thread (the "creation thread").
 // Otherwise, its public methods are thread-safe (except that they may not be
 // called from its internal, private thread).
-class MasterConnectionManager : public ConnectionManager {
+class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager
+    : public ConnectionManager {
  public:
   // Note: None of the public methods may be called from |private_thread_|.
 
