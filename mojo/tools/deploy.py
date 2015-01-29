@@ -76,6 +76,9 @@ def main():
     copy(src_path('sky/framework'), deploy_path('sky/framework'), sky_filter)
     copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), sky_filter)
 
+    shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
+        args.deploy_root)
+
     subprocess.check_call(['git', 'add', '.'], cwd=args.deploy_root)
     subprocess.check_call([
         'git', 'commit',
