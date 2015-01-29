@@ -24,6 +24,7 @@ def main():
   parser.add_argument('build_directory')
   parser.add_argument('output_file')
   parser.add_argument('src_root')
+  parser.add_argument('out_root')
   parser.add_argument('cgo_cflags')
   parser.add_argument('cgo_ldflags')
   parser.add_argument('go_option', nargs='*')
@@ -37,6 +38,7 @@ def main():
   go_path = os.path.abspath(os.path.join(src_root, ".."))
   # GOPATH also includes any third_party/go libraries that have been imported
   go_path += ":" +  os.path.abspath(os.path.join(src_root, "third_party/go"))
+  go_path += ":" +  os.path.abspath(os.path.join(args.out_root, "gen", "go"))
   go_options = args.go_option
   try:
     shutil.rmtree(build_dir, True)
