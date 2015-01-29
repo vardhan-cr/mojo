@@ -6,6 +6,7 @@ library mojo_builtin;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:_internal';
 import 'dart:mojo_core';
 // import 'root_library'; happens here from C Code
 
@@ -44,6 +45,10 @@ var _workingDirectoryUri;
 var _entryPointScript;
 // The directory to look in to resolve "package:" scheme URIs.
 var _packageRoot;
+
+_setupHooks() {
+  VMLibraryHooks.eventHandlerSendData = MojoHandleWatcher.timer;
+}
 
 
 _enforceTrailingSlash(uri) {

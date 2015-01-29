@@ -27,7 +27,6 @@ action("generate_test_snapshot_bin") {
     "//mojo/public/dart/src/proxy.dart",
     "//mojo/public/dart/src/struct.dart",
     "//mojo/public/dart/src/stub.dart",
-    "//mojo/public/dart/src/timer_impl.dart",
     "//mojo/public/dart/src/timer_queue.dart",
     "//mojo/public/dart/src/types.dart",
   ]

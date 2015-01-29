@@ -141,6 +141,10 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   DART_CHECK_VALID(url);
   Dart_Handle async_lib = Dart_LookupLibrary(url);
   DART_CHECK_VALID(async_lib);
+  url = Dart_NewStringFromCString(kIsolateLibURL);
+  DART_CHECK_VALID(url);
+  Dart_Handle isolate_lib = Dart_LookupLibrary(url);
+  DART_CHECK_VALID(isolate_lib);
   Dart_Handle mojo_core_lib =
       Builtin::LoadAndCheckLibrary(Builtin::kMojoCoreLibrary);
   DART_CHECK_VALID(mojo_core_lib);
@@ -165,26 +169,12 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
                          print);
   DART_CHECK_VALID(result);
 
-  // Setup the 'timer' factory.
-  Dart_Handle timer_closure = Dart_Invoke(
-      mojo_core_lib,
-      Dart_NewStringFromCString("_getTimerFactoryClosure"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(timer_closure);
-  Dart_Handle timer_args[1];
-  timer_args[0] = timer_closure;
-  result = Dart_Invoke(async_lib,
-                       Dart_NewStringFromCString("_setTimerFactoryClosure"),
-                       1,
-                       timer_args);
-  DART_CHECK_VALID(result);
+  DART_CHECK_VALID(Dart_Invoke(
+      builtin_lib, Dart_NewStringFromCString("_setupHooks"), 0, NULL));
+  DART_CHECK_VALID(Dart_Invoke(
+      isolate_lib, Dart_NewStringFromCString("_setupHooks"), 0, NULL));
 
   // Setup the 'scheduleImmediate' closure.
-  url = Dart_NewStringFromCString(kIsolateLibURL);
-  DART_CHECK_VALID(url);
-  Dart_Handle isolate_lib = Dart_LookupLibrary(url);
-  DART_CHECK_VALID(isolate_lib);
   Dart_Handle schedule_immediate_closure = Dart_Invoke(
       isolate_lib,
       Dart_NewStringFromCString("_getIsolateScheduleImmediateClosure"),
