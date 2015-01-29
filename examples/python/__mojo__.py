@@ -27,8 +27,7 @@ class ApplicationImpl(application_mojom.Application):
     service_provider = ServiceProviderImpl(services)
     service_provider.AddService(ExampleServiceImpl)
     services.Bind(service_provider)
-    self._providers.append(services)
-    # TODO(qsr): Handle exposed_services
+    self._providers.append(service_provider)
 
 
 class ServiceProviderImpl(service_provider_mojom.ServiceProvider):
