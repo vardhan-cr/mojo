@@ -5,12 +5,8 @@
 package org.chromium.mojo.shell;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.EditText;
 
 /**
  * Activity for managing the Mojo Shell.
@@ -31,26 +27,8 @@ public class MojoShellActivity extends Activity {
         // relies on this being the activity context.
         MojoMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
 
-        if (MojoMain.start()) {
-            Log.i(TAG, "Mojo started");
-        } else {
-            Log.i(TAG, "No URL provided via intent, prompting user...");
-            AlertDialog.Builder alert = new AlertDialog.Builder(this);
-            alert.setTitle("Enter a URL");
-            alert.setMessage("Enter a URL");
-            final EditText input = new EditText(this);
-            alert.setView(input);
-            alert.setPositiveButton("Load", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int button) {
-                    String url = input.getText().toString();
-                    MojoMain.addApplicationURL(url);
-                    MojoMain.start();
-                    Log.i(TAG, "Mojo started");
-                }
-            });
-            alert.show();
-        }
+        // TODO(eseidel): MojoMain can fail, but we're ignoring the return.
+        MojoMain.start();
     }
 
     private static String[] getParametersFromIntent(Intent intent) {
