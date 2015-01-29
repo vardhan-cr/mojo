@@ -48,6 +48,8 @@ def main():
   for apptest_dict in apptest_list:
     if apptest_dict.get("disabled"):
       continue
+    if not config.match_target_os(apptest_dict.get("target_os", [])):
+      continue
 
     apptest = apptest_dict["test"]
     apptest_args = apptest_dict.get("test-args", [])

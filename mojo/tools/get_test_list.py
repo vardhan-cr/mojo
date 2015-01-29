@@ -75,16 +75,13 @@ def GetTestList(config):
   # C++ unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT):
     unit_test_command = [os.path.join("mojo", "tools", "test_runner.py")]
-    if target_os == Config.OS_ANDROID:
-      unit_test_command.append("--android")
     unit_test_command.extend(
         [os.path.join("mojo", "tools", "data", "unittests"), build_dir,
         "mojob_test_successes"])
     AddXvfbEntry("Unit tests", unit_test_command)
 
   # C++ app tests:
-  if target_os != Config.OS_ANDROID and ShouldRunTest(Config.TEST_TYPE_DEFAULT,
-                                                      "app"):
+  if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
     AddXvfbEntry("App tests",
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "apptests"),

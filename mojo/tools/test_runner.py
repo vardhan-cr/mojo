@@ -16,6 +16,8 @@ import sys
 _logging = logging.getLogger()
 
 import mopy.gtest
+from mopy.config import Config
+from mopy.gn import ConfigForGNArgs, ParseGNConfig
 from mopy.paths import Paths
 from mopy.transitive_hash import file_hash, transitive_hash
 
@@ -30,10 +32,6 @@ def main():
       description="A 'smart' test runner for gtest unit tests (that caches "
                   "successes).")
 
-  os_group = parser.add_mutually_exclusive_group()
-  os_group.add_argument("--android", help="Run tests for android",
-                        action='store_true')
-
   parser.add_argument("gtest_list_file",
                       help="The file containing the tests to run.",
                       type=file)
@@ -46,6 +44,8 @@ def main():
   _logging.debug("Test list file: %s", args.gtest_list_file)
   gtest_list = ast.literal_eval(args.gtest_list_file.read())
   _logging.debug("Test list: %s" % gtest_list)
+
+  config = ConfigForGNArgs(ParseGNConfig(args.root_dir))
 
   print "Running tests in directory: %s" % args.root_dir
   os.chdir(args.root_dir)
@@ -78,7 +78,7 @@ def main():
   for gtest_dict in gtest_list:
     if gtest_dict.get("disabled"):
       continue
-    if args.android and not gtest_dict.get("run_on_android"):
+    if not config.match_target_os(gtest_dict.get("target_os", [])):
       continue
 
     gtest = gtest_dict["test"]
@@ -89,13 +89,13 @@ def main():
     gtest_file = gtest
     if platform.system() == 'Windows':
       gtest_file += ".exe"
-    if args.android:
+    if config.target_os == Config.OS_ANDROID:
       gtest_file = gtest + "_apk/" + gtest + "-debug.apk"
 
     if successes_cache_file and cacheable:
       _logging.debug("Getting transitive hash for %s ... " % gtest)
       try:
-        if args.android:
+        if config.target_os == Config.OS_ANDROID:
           gtest_hash = file_hash(gtest_file)
         else:
           gtest_hash = transitive_hash(gtest_file)
@@ -111,7 +111,7 @@ def main():
     print "Running %s...." % gtest,
     sys.stdout.flush()
     try:
-      if args.android:
+      if config.target_os == Config.OS_ANDROID:
         command = [
             "python",
             os.path.join(paths.src_root, "build", "android", "test_runner.py"),
