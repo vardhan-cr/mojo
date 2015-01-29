@@ -27,16 +27,11 @@ class WindowManagerImpl : public mojo::WindowManager,
 
   void Bind(mojo::ScopedMessagePipeHandle window_manager_pipe);
 
-  void NotifyViewFocused(mojo::Id new_focused_id, mojo::Id old_focused_id);
-  void NotifyWindowActivated(mojo::Id new_active_id, mojo::Id old_active_id);
-  void NotifyCaptureChanged(mojo::Id new_capture_id, mojo::Id old_capture_id);
+  void NotifyViewFocused(mojo::Id focused_id);
+  void NotifyWindowActivated(mojo::Id active_id);
+  void NotifyCaptureChanged(mojo::Id capture_id);
 
  private:
-  mojo::WindowManagerClient* client() {
-    DCHECK(from_vm_);
-    return binding_.client();
-  }
-
   // mojo::WindowManager:
   void Embed(const mojo::String& url,
              mojo::InterfaceRequest<mojo::ServiceProvider> services,
@@ -48,7 +43,9 @@ class WindowManagerImpl : public mojo::WindowManager,
   void ActivateWindow(uint32_t view_id,
                       const mojo::Callback<void(bool)>& callback) override;
   void GetFocusedAndActiveViews(
-      const mojo::Callback<void(uint32_t, uint32_t)>& callback) override;
+      mojo::WindowManagerObserverPtr observer,
+      const mojo::WindowManager::GetFocusedAndActiveViewsCallback& callback)
+      override;
 
   // mojo::ErrorHandler:
   void OnConnectionError() override;
@@ -61,6 +58,7 @@ class WindowManagerImpl : public mojo::WindowManager,
   const bool from_vm_;
 
   mojo::Binding<mojo::WindowManager> binding_;
+  mojo::WindowManagerObserverPtr observer_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerImpl);
 };

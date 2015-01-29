@@ -32,41 +32,39 @@ const char kTestServiceURL[] = "mojo:test_url";
 
 void EmptyResultCallback(bool result) {}
 
-class TestWindowManagerClient : public mojo::WindowManagerClient {
+class TestWindowManagerObserver : public mojo::WindowManagerObserver {
  public:
-  typedef base::Callback<void(Id, Id)>
-      TwoNodeCallback;
+  using NodeIdCallback = base::Callback<void(Id)>;
 
-  explicit TestWindowManagerClient(base::RunLoop* run_loop)
-      : run_loop_(run_loop) {}
-  ~TestWindowManagerClient() override {}
+  explicit TestWindowManagerObserver(
+      mojo::InterfaceRequest<mojo::WindowManagerObserver> observer_request)
+      : binding_(this, observer_request.Pass()) {}
+  ~TestWindowManagerObserver() override {}
 
-  void set_focus_changed_callback(const TwoNodeCallback& callback) {
+  void set_focus_changed_callback(const NodeIdCallback& callback) {
     focus_changed_callback_ = callback;
   }
-  void set_active_window_changed_callback(const TwoNodeCallback& callback) {
+  void set_active_window_changed_callback(const NodeIdCallback& callback) {
     active_window_changed_callback_ = callback;
   }
 
  private:
   // Overridden from mojo::WindowManagerClient:
-  void OnCaptureChanged(Id old_capture_node_id,
-                        Id new_capture_node_id) override {}
-  void OnFocusChanged(Id old_focused_node_id, Id new_focused_node_id) override {
+  void OnCaptureChanged(Id new_capture_node_id) override {}
+  void OnFocusChanged(Id focused_node_id) override {
     if (!focus_changed_callback_.is_null())
-      focus_changed_callback_.Run(old_focused_node_id, new_focused_node_id);
+      focus_changed_callback_.Run(focused_node_id);
   }
-  void OnActiveWindowChanged(Id old_active_window,
-                             Id new_active_window) override {
+  void OnActiveWindowChanged(Id active_window) override {
     if (!active_window_changed_callback_.is_null())
-      active_window_changed_callback_.Run(old_active_window, new_active_window);
+      active_window_changed_callback_.Run(active_window);
   }
 
-  base::RunLoop* run_loop_;
-  TwoNodeCallback focus_changed_callback_;
-  TwoNodeCallback active_window_changed_callback_;
+  NodeIdCallback focus_changed_callback_;
+  NodeIdCallback active_window_changed_callback_;
+  mojo::Binding<WindowManagerObserver> binding_;
 
-  DISALLOW_COPY_AND_ASSIGN(TestWindowManagerClient);
+  DISALLOW_COPY_AND_ASSIGN(TestWindowManagerObserver);
 };
 
 class TestApplicationLoader : public mojo::ApplicationLoader,
@@ -129,8 +127,6 @@ class WindowManagerApiTest : public testing::Test {
   ~WindowManagerApiTest() override {}
 
  protected:
-  typedef std::pair<Id, Id> TwoIds;
-
   Id WaitForEmbed() {
     Id id;
     base::RunLoop run_loop;
@@ -140,24 +136,24 @@ class WindowManagerApiTest : public testing::Test {
     return id;
   }
 
-  TwoIds WaitForFocusChange() {
-    TwoIds old_and_new;
+  Id WaitForFocusChange() {
+    Id new_focused;
     base::RunLoop run_loop;
-    window_manager_client()->set_focus_changed_callback(
+    window_manager_observer()->set_focus_changed_callback(
         base::Bind(&WindowManagerApiTest::OnFocusChanged,
-                   base::Unretained(this), &old_and_new, &run_loop));
+                   base::Unretained(this), &new_focused, &run_loop));
     run_loop.Run();
-    return old_and_new;
+    return new_focused;
   }
 
-  TwoIds WaitForActiveWindowChange() {
-    TwoIds old_and_new;
+  Id WaitForActiveWindowChange() {
+    Id new_active;
     base::RunLoop run_loop;
-    window_manager_client()->set_active_window_changed_callback(
+    window_manager_observer()->set_active_window_changed_callback(
         base::Bind(&WindowManagerApiTest::OnActiveWindowChanged,
-                   base::Unretained(this), &old_and_new, &run_loop));
+                   base::Unretained(this), &new_active, &run_loop));
     run_loop.Run();
-    return old_and_new;
+    return new_active;
   }
 
   Id OpenWindow() {
@@ -171,8 +167,8 @@ class WindowManagerApiTest : public testing::Test {
     return WaitForEmbed();
   }
 
-  TestWindowManagerClient* window_manager_client() {
-    return window_manager_client_.get();
+  TestWindowManagerObserver* window_manager_observer() {
+    return window_manager_observer_.get();
   }
 
   mojo::WindowManagerPtr window_manager_;
@@ -197,8 +193,14 @@ class WindowManagerApiTest : public testing::Test {
     test_helper_->application_manager()->ConnectToService(
         GURL("mojo:window_manager"), &window_manager_);
     base::RunLoop connect_loop;
-    window_manager_client_.reset(new TestWindowManagerClient(&connect_loop));
-    window_manager_.set_client(window_manager_client());
+    mojo::WindowManagerObserverPtr observer;
+    window_manager_observer_.reset(
+        new TestWindowManagerObserver(GetProxy(&observer)));
+
+    window_manager_->GetFocusedAndActiveViews(
+        observer.Pass(),
+        base::Bind(&WindowManagerApiTest::GotFocusedAndActiveViews,
+                   base::Unretained(this)));
     connect_loop.Run();
 
     // The RunLoop above ensures the connection to the window manager completes.
@@ -206,6 +208,8 @@ class WindowManagerApiTest : public testing::Test {
     test_helper_->application_manager()->ConnectToService(
         GURL("mojo:core_window_manager"), &window_manager_);
   }
+
+  void GotFocusedAndActiveViews(uint32_t, uint32_t, uint32_t) {}
 
   void OnRootAdded(View* root) {
     if (!root_added_callback_.is_null())
@@ -219,28 +223,22 @@ class WindowManagerApiTest : public testing::Test {
     loop->Quit();
   }
 
-  void OnFocusChanged(TwoIds* old_and_new,
+  void OnFocusChanged(Id* new_focused,
                       base::RunLoop* run_loop,
-                      Id old_focused_node_id,
-                      Id new_focused_node_id) {
-    DCHECK(old_and_new);
-    old_and_new->first = old_focused_node_id;
-    old_and_new->second = new_focused_node_id;
+                      Id focused_node_id) {
+    *new_focused = focused_node_id;
     run_loop->Quit();
   }
 
-  void OnActiveWindowChanged(TwoIds* old_and_new,
+  void OnActiveWindowChanged(Id* new_active,
                              base::RunLoop* run_loop,
-                             Id old_focused_node_id,
-                             Id new_focused_node_id) {
-    DCHECK(old_and_new);
-    old_and_new->first = old_focused_node_id;
-    old_and_new->second = new_focused_node_id;
+                             Id active_node_id) {
+    *new_active = active_node_id;
     run_loop->Quit();
   }
 
   scoped_ptr<mojo::shell::ShellTestHelper> test_helper_;
-  scoped_ptr<TestWindowManagerClient> window_manager_client_;
+  scoped_ptr<TestWindowManagerObserver> window_manager_observer_;
   TestApplicationLoader::RootAddedCallback root_added_callback_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerApiTest);
@@ -252,16 +250,14 @@ class WindowManagerApiTest : public testing::Test {
 TEST_F(WindowManagerApiTest, DISABLED_FocusAndActivateWindow) {
   Id first_window = OpenWindow();
   window_manager_->FocusWindow(first_window, base::Bind(&EmptyResultCallback));
-  TwoIds ids = WaitForFocusChange();
-  EXPECT_TRUE(ids.first == 0);
-  EXPECT_EQ(ids.second, first_window);
+  Id id = WaitForFocusChange();
+  EXPECT_EQ(id, first_window);
 
   Id second_window = OpenWindow();
   window_manager_->ActivateWindow(second_window,
                                   base::Bind(&EmptyResultCallback));
-  ids = WaitForActiveWindowChange();
-  EXPECT_EQ(ids.first, first_window);
-  EXPECT_EQ(ids.second, second_window);
+  id = WaitForActiveWindowChange();
+  EXPECT_EQ(id, second_window);
 }
 
 }  // namespace window_manager

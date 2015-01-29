@@ -43,13 +43,11 @@ class FocusNotificationObserver : public FocusControllerObserver {
 
  protected:
   // Overridden from FocusControllerObserver:
-  void OnViewActivated(View* gained_active, View* lost_active) override {
+  void OnActivated(View* gained_active) override {
     ++activation_changed_count_;
   }
 
-  void OnViewFocused(View* gained_focus, View* lost_focus) override {
-    ++focus_changed_count_;
-  }
+  void OnFocused(View* gained_focus) override { ++focus_changed_count_; }
 
   void OnAttemptToReactivateView(View* request_active,
                                  View* actual_active) override {
@@ -84,6 +82,8 @@ class RecordingFocusNotificationObserver : public FocusNotificationObserver {
                                      ViewDestroyer* destroyer)
       : focus_controller_(focus_controller),
         destroyer_(destroyer),
+        active_(nullptr),
+        focus_(nullptr),
         was_notified_with_destroyed_view_(false) {
     focus_controller_->AddObserver(this);
   }
@@ -96,14 +96,16 @@ class RecordingFocusNotificationObserver : public FocusNotificationObserver {
   }
 
   // Overridden from FocusNotificationObserver:
-  void OnViewActivated(View* gained_active, View* lost_active) override {
-    if (lost_active && lost_active == destroyer_->GetDestroyedView())
+  void OnActivated(View* gained_active) override {
+    if (active_ && active_ == destroyer_->GetDestroyedView())
       was_notified_with_destroyed_view_ = true;
+    active_ = gained_active;
   }
 
-  void OnViewFocused(View* gained_focus, View* lost_focus) override {
-    if (lost_focus && lost_focus == destroyer_->GetDestroyedView())
+  void OnFocused(View* gained_focus) override {
+    if (focus_ && focus_ == destroyer_->GetDestroyedView())
       was_notified_with_destroyed_view_ = true;
+    focus_ = gained_focus;
   }
 
  private:
@@ -111,6 +113,8 @@ class RecordingFocusNotificationObserver : public FocusNotificationObserver {
 
   // Not owned.
   ViewDestroyer* destroyer_;
+  View* active_;
+  View* focus_;
 
   // Whether the observer was notified about the loss of activation or the
   // loss of focus with a view already destroyed by |destroyer_| as the
@@ -126,9 +130,11 @@ class DestroyOnLoseActivationFocusNotificationObserver
  public:
   DestroyOnLoseActivationFocusNotificationObserver(
       FocusController* focus_controller,
-      View* view_to_destroy)
+      View* view_to_destroy,
+      View* initial_active)
       : focus_controller_(focus_controller),
         view_to_destroy_(view_to_destroy),
+        active_(initial_active),
         did_destroy_(false) {
     focus_controller_->AddObserver(this);
   }
@@ -137,11 +143,12 @@ class DestroyOnLoseActivationFocusNotificationObserver
   }
 
   // Overridden from FocusNotificationObserver:
-  void OnViewActivated(View* gained_active, View* lost_active) override {
-    if (view_to_destroy_ && lost_active == view_to_destroy_) {
+  void OnActivated(View* gained_active) override {
+    if (view_to_destroy_ && active_ == view_to_destroy_) {
       view_to_destroy_->Destroy();
       did_destroy_ = true;
     }
+    active_ = gained_active;
   }
 
   // Overridden from ViewDestroyer:
@@ -152,6 +159,7 @@ class DestroyOnLoseActivationFocusNotificationObserver
  private:
   FocusController* focus_controller_;
   View* view_to_destroy_;
+  View* active_;
   bool did_destroy_;
 
   DISALLOW_COPY_AND_ASSIGN(DestroyOnLoseActivationFocusNotificationObserver);
@@ -178,8 +186,13 @@ class ScopedFilteringFocusNotificationObserver
     : public FocusNotificationObserver {
  public:
   ScopedFilteringFocusNotificationObserver(FocusController* focus_controller,
-                                           View* target)
-      : focus_controller_(focus_controller), target_(target) {
+                                           View* target,
+                                           View* initial_active,
+                                           View* initial_focus)
+      : focus_controller_(focus_controller),
+        target_(target),
+        active_(initial_active),
+        focus_(initial_focus) {
     focus_controller_->AddObserver(this);
   }
   ~ScopedFilteringFocusNotificationObserver() override {
@@ -188,14 +201,16 @@ class ScopedFilteringFocusNotificationObserver
 
  private:
   // Overridden from FocusControllerObserver:
-  void OnViewActivated(View* gained_active, View* lost_active) override {
-    if (gained_active == target_ || lost_active == target_)
-      FocusNotificationObserver::OnViewActivated(gained_active, lost_active);
+  void OnActivated(View* gained_active) override {
+    if (gained_active == target_ || active_ == target_)
+      FocusNotificationObserver::OnActivated(gained_active);
+    active_ = gained_active;
   }
 
-  void OnViewFocused(View* gained_focus, View* lost_focus) override {
-    if (gained_focus == target_ || lost_focus == target_)
-      FocusNotificationObserver::OnViewFocused(gained_focus, lost_focus);
+  void OnFocused(View* gained_focus) override {
+    if (gained_focus == target_ || focus_ == target_)
+      FocusNotificationObserver::OnFocused(gained_focus);
+    focus_ = gained_focus;
   }
 
   void OnAttemptToReactivateView(View* request_active,
@@ -208,6 +223,8 @@ class ScopedFilteringFocusNotificationObserver
 
   FocusController* focus_controller_;
   View* target_;
+  View* active_;
+  View* focus_;
 
   DISALLOW_COPY_AND_ASSIGN(ScopedFilteringFocusNotificationObserver);
 };
@@ -246,15 +263,14 @@ class FocusShiftingActivationObserver
 
  private:
   // Overridden from FocusControllerObserver:
-  void OnViewActivated(View* gained_active,
-                       View* lost_active) override {
+  void OnActivated(View* gained_active) override {
     // Shift focus to a child. This should prevent the default focusing from
     // occurring in FocusController::FocusView().
     if (gained_active == activated_view_)
       focus_controller_->FocusView(shift_focus_to_);
   }
 
-  void OnViewFocused(View* gained_focus, View* lost_focus) override {}
+  void OnFocused(View* gained_focus) override {}
 
   FocusController* focus_controller_;
   View* activated_view_;
@@ -505,30 +521,39 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
   }
   void FocusEvents() override {
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
-                                                       GetViewById(1));
-    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
-                                                       GetViewById(2));
+    ScopedFilteringFocusNotificationObserver observer1(
+        focus_controller(), GetViewById(1), GetActiveView(), GetFocusedView());
+    ScopedFilteringFocusNotificationObserver observer2(
+        focus_controller(), GetViewById(2), GetActiveView(), GetFocusedView());
 
-    root_observer.ExpectCounts(0, 0);
-    observer1.ExpectCounts(0, 0);
-    observer2.ExpectCounts(0, 0);
+    {
+      SCOPED_TRACE("initial state");
+      root_observer.ExpectCounts(0, 0);
+      observer1.ExpectCounts(0, 0);
+      observer2.ExpectCounts(0, 0);
+    }
 
     FocusViewById(1);
-    root_observer.ExpectCounts(1, 1);
-    observer1.ExpectCounts(1, 1);
-    observer2.ExpectCounts(0, 0);
+    {
+      SCOPED_TRACE("FocusViewById(1)");
+      root_observer.ExpectCounts(1, 1);
+      observer1.ExpectCounts(1, 1);
+      observer2.ExpectCounts(0, 0);
+    }
 
     FocusViewById(2);
-    root_observer.ExpectCounts(2, 2);
-    observer1.ExpectCounts(2, 2);
-    observer2.ExpectCounts(1, 1);
+    {
+      SCOPED_TRACE("FocusViewById(2)");
+      root_observer.ExpectCounts(2, 2);
+      observer1.ExpectCounts(2, 2);
+      observer2.ExpectCounts(1, 1);
+    }
   }
   void DuplicateFocusEvents() override {
     // Focusing an existing focused view should not resend focus events.
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
-                                                       GetViewById(1));
+    ScopedFilteringFocusNotificationObserver observer1(
+        focus_controller(), GetViewById(1), GetActiveView(), GetFocusedView());
 
     root_observer.ExpectCounts(0, 0);
     observer1.ExpectCounts(0, 0);
@@ -545,10 +570,10 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     ActivateViewById(1);
 
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
-                                                       GetViewById(1));
-    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
-                                                       GetViewById(2));
+    ScopedFilteringFocusNotificationObserver observer1(
+        focus_controller(), GetViewById(1), GetActiveView(), GetFocusedView());
+    ScopedFilteringFocusNotificationObserver observer2(
+        focus_controller(), GetViewById(2), GetActiveView(), GetFocusedView());
 
     root_observer.ExpectCounts(0, 0);
     observer1.ExpectCounts(0, 0);
@@ -574,14 +599,13 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
               root_observer.reactivation_actual_view());
   }
   void DuplicateActivationEvents() override {
-    // Activating an existing active view should not resend activation events.
     ActivateViewById(1);
 
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer1(focus_controller(),
-                                                       GetViewById(1));
-    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
-                                                       GetViewById(2));
+    ScopedFilteringFocusNotificationObserver observer1(
+        focus_controller(), GetViewById(1), GetActiveView(), GetFocusedView());
+    ScopedFilteringFocusNotificationObserver observer2(
+        focus_controller(), GetViewById(2), GetActiveView(), GetFocusedView());
 
     root_observer.ExpectCounts(0, 0);
     observer1.ExpectCounts(0, 0);
@@ -592,6 +616,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     observer1.ExpectCounts(1, 1);
     observer2.ExpectCounts(1, 1);
 
+    // Activating an existing active view should not resend activation events.
     ActivateViewById(2);
     root_observer.ExpectCounts(1, 1);
     observer1.ExpectCounts(1, 1);
@@ -755,7 +780,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     {
       View* to_destroy = root_view()->GetChildById(1);
       DestroyOnLoseActivationFocusNotificationObserver observer1(
-          focus_controller(), to_destroy);
+          focus_controller(), to_destroy, GetActiveView());
       RecordingFocusNotificationObserver observer2(focus_controller(),
                                                    &observer1);
 
@@ -771,7 +796,7 @@ class FocusControllerDirectTestBase : public FocusControllerTestBase {
     {
       View* to_destroy = root_view()->GetChildById(2);
       DestroyOnLoseActivationFocusNotificationObserver observer1(
-          focus_controller(), to_destroy);
+          focus_controller(), to_destroy, GetActiveView());
       RecordingFocusNotificationObserver observer2(focus_controller(),
                                                    &observer1);
 
@@ -889,14 +914,28 @@ class FocusControllerImplicitTestBase : public FocusControllerTestBase {
     FocusView(w211);
 
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer211(focus_controller(),
-                                                         GetViewById(211));
-    root_observer.ExpectCounts(0, 0);
-    observer211.ExpectCounts(0, 0);
+    ScopedFilteringFocusNotificationObserver observer211(
+        focus_controller(), GetViewById(211), GetActiveView(),
+        GetFocusedView());
+
+    {
+      SCOPED_TRACE("first");
+      root_observer.ExpectCounts(0, 0);
+      observer211.ExpectCounts(0, 0);
+    }
 
     ChangeViewDisposition(w211);
-    root_observer.ExpectCounts(0, 1);
-    observer211.ExpectCounts(0, 1);
+    {
+      SCOPED_TRACE("second");
+      {
+        SCOPED_TRACE("root_observer");
+        root_observer.ExpectCounts(0, 1);
+      }
+      {
+        SCOPED_TRACE("observer211");
+        observer211.ExpectCounts(0, 1);
+      }
+    }
   }
 
   void ActivationEvents() override {
@@ -906,10 +945,10 @@ class FocusControllerImplicitTestBase : public FocusControllerTestBase {
     ActivateView(w2);
 
     ScopedFocusNotificationObserver root_observer(focus_controller());
-    ScopedFilteringFocusNotificationObserver observer2(focus_controller(),
-                                                       GetViewById(2));
-    ScopedFilteringFocusNotificationObserver observer3(focus_controller(),
-                                                       GetViewById(3));
+    ScopedFilteringFocusNotificationObserver observer2(
+        focus_controller(), GetViewById(2), GetActiveView(), GetFocusedView());
+    ScopedFilteringFocusNotificationObserver observer3(
+        focus_controller(), GetViewById(3), GetActiveView(), GetFocusedView());
     root_observer.ExpectCounts(0, 0);
     observer2.ExpectCounts(0, 0);
     observer3.ExpectCounts(0, 0);

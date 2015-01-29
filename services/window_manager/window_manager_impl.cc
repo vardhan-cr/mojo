@@ -5,6 +5,7 @@
 #include "services/window_manager/window_manager_impl.h"
 
 #include "mojo/services/view_manager/public/cpp/view.h"
+#include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/window_manager_app.h"
 
@@ -29,22 +30,19 @@ void WindowManagerImpl::Bind(
   binding_.Bind(window_manager_pipe.Pass());
 }
 
-void WindowManagerImpl::NotifyViewFocused(Id new_focused_id,
-                                          Id old_focused_id) {
-  if (from_vm_)
-    client()->OnFocusChanged(old_focused_id, new_focused_id);
+void WindowManagerImpl::NotifyViewFocused(Id focused_id) {
+  if (from_vm_ && observer_)
+    observer_->OnFocusChanged(focused_id);
 }
 
-void WindowManagerImpl::NotifyWindowActivated(Id new_active_id,
-                                              Id old_active_id) {
-  if (from_vm_)
-    client()->OnActiveWindowChanged(old_active_id, new_active_id);
+void WindowManagerImpl::NotifyWindowActivated(Id active_id) {
+  if (from_vm_ && observer_)
+    observer_->OnActiveWindowChanged(active_id);
 }
 
-void WindowManagerImpl::NotifyCaptureChanged(Id new_capture_id,
-                                             Id old_capture_id) {
-  if (from_vm_)
-    client()->OnCaptureChanged(old_capture_id, new_capture_id);
+void WindowManagerImpl::NotifyCaptureChanged(Id capture_id) {
+  if (from_vm_ && observer_)
+    observer_->OnCaptureChanged(capture_id);
 }
 
 void WindowManagerImpl::Embed(
@@ -88,18 +86,23 @@ void WindowManagerImpl::ActivateWindow(Id view,
 }
 
 void WindowManagerImpl::GetFocusedAndActiveViews(
-    const mojo::Callback<void(uint32_t, uint32_t)>& callback) {
+    mojo::WindowManagerObserverPtr observer,
+    const mojo::WindowManager::GetFocusedAndActiveViewsCallback& callback) {
+  observer_ = observer.Pass();
   if (!window_manager_->focus_controller()) {
     // TODO(sky): add typedef for 0.
-    callback.Run(0, 0);
+    callback.Run(0, 0, 0);
     return;
   }
+  mojo::View* capture_view =
+      window_manager_->capture_controller()->GetCapture();
   mojo::View* active_view =
       window_manager_->focus_controller()->GetActiveView();
   mojo::View* focused_view =
       window_manager_->focus_controller()->GetFocusedView();
   // TODO(sky): sanitize ids for client.
-  callback.Run(focused_view ? focused_view->id() : 0,
+  callback.Run(capture_view ? capture_view->id() : 0,
+               focused_view ? focused_view->id() : 0,
                active_view ? active_view->id() : 0);
 }
 

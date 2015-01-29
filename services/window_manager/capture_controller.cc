@@ -66,11 +66,9 @@ void CaptureController::NotifyCaptureChange(mojo::View* new_capture,
     view_tracker.Add(old_capture);
 
   FOR_EACH_OBSERVER(
-      CaptureControllerObserver,
-      capture_controller_observers_,
-      OnCaptureChanged(
-          view_tracker.Contains(new_capture) ? new_capture : nullptr,
-          view_tracker.Contains(old_capture) ? old_capture : nullptr));
+      CaptureControllerObserver, capture_controller_observers_,
+      OnCaptureChanged(view_tracker.Contains(new_capture) ? new_capture
+                                                          : nullptr));
 }
 
 void CaptureController::OnViewDestroying(mojo::View* view) {

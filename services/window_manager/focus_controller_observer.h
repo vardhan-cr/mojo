@@ -14,15 +14,11 @@ namespace window_manager {
 class FocusControllerObserver {
  public:
   // Called when |active| gains focus, or there is no active view
-  // (|active| is null in this case.) |old_active| refers to the
-  // previous active view or null if there was no previously active
-  // view.
-  virtual void OnViewActivated(mojo::View* gained_active,
-                               mojo::View* lost_active) = 0;
+  // (|active| is null in this case.).
+  virtual void OnActivated(mojo::View* gained_active) = 0;
 
-  // Called when focus moves from |lost_focus| to |gained_focus|.
-  virtual void OnViewFocused(mojo::View* gained_focus,
-                             mojo::View* lost_focus) = 0;
+  // Called when focus moves to |gained_focus|.
+  virtual void OnFocused(mojo::View* gained_focus) = 0;
 
   // Called when during view activation the currently active view is
   // selected for activation. This can happen when a view requested for

@@ -264,21 +264,17 @@ void WindowManagerApp::OnEvent(ui::Event* event) {
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, mojo::FocusControllerObserver implementation:
 
-void WindowManagerApp::OnViewFocused(View* gained_focus,
-                                     View* lost_focus) {
+void WindowManagerApp::OnFocused(View* gained_focus) {
   for (Connections::const_iterator it = connections_.begin();
        it != connections_.end(); ++it) {
-    (*it)->NotifyViewFocused(GetIdForView(gained_focus),
-                             GetIdForView(lost_focus));
+    (*it)->NotifyViewFocused(GetIdForView(gained_focus));
   }
 }
 
-void WindowManagerApp::OnViewActivated(View* gained_active,
-                                       View* lost_active) {
+void WindowManagerApp::OnActivated(View* gained_active) {
   for (Connections::const_iterator it = connections_.begin();
        it != connections_.end(); ++it) {
-    (*it)->NotifyWindowActivated(GetIdForView(gained_active),
-                                 GetIdForView(lost_active));
+    (*it)->NotifyWindowActivated(GetIdForView(gained_active));
   }
   if (gained_active)
     gained_active->MoveToFront();
@@ -287,12 +283,10 @@ void WindowManagerApp::OnViewActivated(View* gained_active,
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, mojo::CaptureControllerObserver implementation:
 
-void WindowManagerApp::OnCaptureChanged(View* gained_capture,
-                                        View* lost_capture) {
+void WindowManagerApp::OnCaptureChanged(View* gained_capture) {
   for (Connections::const_iterator it = connections_.begin();
        it != connections_.end(); ++it) {
-    (*it)->NotifyCaptureChanged(GetIdForView(gained_capture),
-                                GetIdForView(lost_capture));
+    (*it)->NotifyCaptureChanged(GetIdForView(gained_capture));
   }
   if (gained_capture)
     gained_capture->MoveToFront();

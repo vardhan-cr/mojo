@@ -9,8 +9,7 @@ namespace window_manager {
 
 class CaptureControllerObserver {
  public:
-  virtual void OnCaptureChanged(mojo::View* gained_capture,
-                                mojo::View* lost_capture) = 0;
+  virtual void OnCaptureChanged(mojo::View* gained_capture) = 0;
 
  protected:
   virtual ~CaptureControllerObserver() {}

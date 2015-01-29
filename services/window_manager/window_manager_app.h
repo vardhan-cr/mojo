@@ -138,13 +138,11 @@ class WindowManagerApp
   void OnEvent(ui::Event* event) override;
 
   // Overridden from mojo::FocusControllerObserver:
-  void OnViewFocused(mojo::View* gained_focus, mojo::View* lost_focus) override;
-  void OnViewActivated(mojo::View* gained_active,
-                       mojo::View* lost_active) override;
+  void OnFocused(mojo::View* gained_focus) override;
+  void OnActivated(mojo::View* gained_active) override;
 
   // Overridden from mojo::CaptureControllerObserver:
-  void OnCaptureChanged(mojo::View* gained_capture,
-                        mojo::View* lost_capture) override;
+  void OnCaptureChanged(mojo::View* gained_capture) override;
 
   // Creates the connection to the ViewManager.
   void LaunchViewManager(mojo::ApplicationImpl* app);

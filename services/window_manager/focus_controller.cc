@@ -212,11 +212,8 @@ void FocusController::SetFocusedView(View* view) {
   if (focused_view_ && !observer_manager_.IsObserving(focused_view_))
     observer_manager_.Add(focused_view_);
 
-  FOR_EACH_OBSERVER(FocusControllerObserver,
-                    focus_controller_observers_,
-                    OnViewFocused(focused_view_,
-                                  view_tracker.Contains(lost_focus) ?
-                                  lost_focus : nullptr));
+  FOR_EACH_OBSERVER(FocusControllerObserver, focus_controller_observers_,
+                    OnFocused(focused_view_));
 
   // TODO(erg): In aura, there's a concept of a single FocusChangeObserver that
   // is attached to an aura::Window. We don't currently have this in
@@ -271,11 +268,8 @@ void FocusController::SetActiveView(View* requested_view, View* view) {
   // OnWindowActivated message to both the window that lost activation, and the
   // window that gained it.
 
-  FOR_EACH_OBSERVER(FocusControllerObserver,
-                    focus_controller_observers_,
-                    OnViewActivated(active_view_,
-                                    view_tracker.Contains(lost_activation) ?
-                                    lost_activation : nullptr));
+  FOR_EACH_OBSERVER(FocusControllerObserver, focus_controller_observers_,
+                    OnActivated(active_view_));
 }
 
 void FocusController::ViewLostFocusFromDispositionChange(

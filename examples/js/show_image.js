@@ -28,7 +28,7 @@ define("main", [
     initialize() {
       var imageURL = new URL(this.url, true).query.url || defaultImageURL;
       var windowManager = this.shell.connectToService(
-        "mojo:window_manager", WindowManager, {} /* empty WindowManagerClient */);
+          "mojo:window_manager", WindowManager);
       windowManager.embed(imageURL, function() { /* no ServiceProvider */ });
 
       // Displaying imageURL is now the responsibility of the Mojo application
