@@ -10,33 +10,41 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
-#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/bindings/binding.h"
+#include "mojo/public/cpp/utility/run_loop.h"
+#include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 
 namespace mojo {
 namespace examples {
 
-class ForwardingApplicationImpl : public ApplicationImpl,
-                                  public ApplicationDelegate {
+class ForwardingApplicationImpl : public Application {
  public:
   ForwardingApplicationImpl(InterfaceRequest<Application> request,
                             std::string target_url)
-      : ApplicationImpl(this, request.Pass()),
+      : binding_(this, request.Pass()),
         target_url_(target_url) {
   }
 
  private:
-  // ApplicationImpl:
+  // Application:
+  void Initialize(ShellPtr shell, Array<String> args) override {
+    shell_ = shell.Pass();
+  }
   void AcceptConnection(const String& requestor_url,
                         InterfaceRequest<ServiceProvider> services,
                         ServiceProviderPtr exposed_services) override {
-    shell()->ConnectToApplication(target_url_, services.Pass(),
+    shell_->ConnectToApplication(target_url_, services.Pass(),
                                   exposed_services.Pass());
   }
+  void RequestQuit() override {
+    RunLoop::current()->Quit();
+  }
 
+  Binding<Application> binding_;
   std::string target_url_;
+  ShellPtr shell_;
 };
 
 class ForwardingContentHandler : public ApplicationDelegate,
