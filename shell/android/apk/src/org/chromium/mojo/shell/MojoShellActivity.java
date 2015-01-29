@@ -9,14 +9,8 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.JsonReader;
 import android.util.Log;
 import android.widget.EditText;
-
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Activity for managing the Mojo Shell.
@@ -60,27 +54,6 @@ public class MojoShellActivity extends Activity {
     }
 
     private static String[] getParametersFromIntent(Intent intent) {
-        if (intent == null) {
-            return null;
-        }
-        String[] parameters = intent.getStringArrayExtra("parameters");
-        if (parameters != null) {
-            return parameters;
-        }
-        String encodedParameters = intent.getStringExtra("encodedParameters");
-        JsonReader reader = new JsonReader(new StringReader(encodedParameters));
-        List<String> parametersList = new ArrayList<String>();
-        try {
-            reader.beginArray();
-            while (reader.hasNext()) {
-                parametersList.add(reader.nextString());
-            }
-            reader.endArray();
-            reader.close();
-            return parametersList.toArray(new String[parametersList.size()]);
-        } catch (IOException e) {
-            Log.w(TAG, e.getMessage(), e);
-        }
-        return null;
+        return intent != null ? intent.getStringArrayExtra("parameters") : null;
     }
 }
