@@ -10,7 +10,6 @@
 #include "cc/surfaces/surface_manager.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "services/surfaces/surfaces_impl.h"
 #include "services/surfaces/surfaces_scheduler.h"
 
@@ -22,7 +21,6 @@ namespace surfaces {
 
 class SurfacesServiceApplication
     : public mojo::ApplicationDelegate,
-      public mojo::InterfaceFactory<mojo::SurfacesService>,
       public mojo::InterfaceFactory<mojo::Surface>,
       public SurfacesImpl::Client,
       public SurfacesScheduler::Client {
@@ -34,10 +32,6 @@ class SurfacesServiceApplication
   void Initialize(mojo::ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
-
-  // InterfaceFactory<SurfacesServicee> implementation.
-  void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<mojo::SurfacesService> request) override;
 
   // InterfaceFactory<Surface> implementation.
   void Create(mojo::ApplicationConnection* connection,

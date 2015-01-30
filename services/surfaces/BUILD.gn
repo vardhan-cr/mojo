@@ -13,8 +13,6 @@ mojo_native_application("surfaces") {
     "surfaces_scheduler.h",
     "surfaces_service_application.cc",
     "surfaces_service_application.h",
-    "surfaces_service_impl.cc",
-    "surfaces_service_impl.h",
   ]
 
   deps = [

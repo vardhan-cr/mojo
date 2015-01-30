@@ -14,7 +14,6 @@
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/size.h"
 

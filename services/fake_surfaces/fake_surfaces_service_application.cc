@@ -60,30 +60,6 @@ class FakeSurfaceImpl : public mojo::Surface {
   DISALLOW_COPY_AND_ASSIGN(FakeSurfaceImpl);
 };
 
-class FakeSurfacesServiceImpl : public mojo::SurfacesService {
- public:
-  FakeSurfacesServiceImpl(uint32_t* id_namespace,
-                          InterfaceRequest<mojo::SurfacesService> request)
-      : binding_(this, request.Pass()), next_id_namespace_(id_namespace) {}
-  ~FakeSurfacesServiceImpl() override {}
-
-  // mojo::SurfacesService implementation.
-  void CreateSurfaceConnection(
-      const mojo::Callback<void(mojo::SurfacePtr, uint32_t)>& callback)
-      override {
-    mojo::SurfacePtr surface;
-    uint32_t id_namespace = (*next_id_namespace_)++;
-    new FakeSurfaceImpl(id_namespace, GetProxy(&surface));
-    callback.Run(surface.Pass(), id_namespace);
-  }
-
- private:
-  mojo::StrongBinding<mojo::SurfacesService> binding_;
-  uint32_t* next_id_namespace_;
-
-  DISALLOW_COPY_AND_ASSIGN(FakeSurfacesServiceImpl);
-};
-
 FakeSurfacesServiceApplication::FakeSurfacesServiceApplication()
     : next_id_namespace_(1u) {
 }
@@ -97,15 +73,8 @@ void FakeSurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
 
 bool FakeSurfacesServiceApplication::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
-  connection->AddService<mojo::SurfacesService>(this);
-  connection->AddService<mojo::Surface>(this);
+  connection->AddService(this);
   return true;
-}
-
-void FakeSurfacesServiceApplication::Create(
-    mojo::ApplicationConnection* connection,
-    InterfaceRequest<mojo::SurfacesService> request) {
-  new FakeSurfacesServiceImpl(&next_id_namespace_, request.Pass());
 }
 
 void FakeSurfacesServiceApplication::Create(

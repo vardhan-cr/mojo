@@ -8,7 +8,7 @@
 #include "base/macros.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces_service.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 
 namespace mojo {
 class ApplicationConnection;
@@ -18,7 +18,6 @@ namespace fake_surfaces {
 
 class FakeSurfacesServiceApplication
     : public mojo::ApplicationDelegate,
-      public mojo::InterfaceFactory<mojo::SurfacesService>,
       public mojo::InterfaceFactory<mojo::Surface> {
  public:
   FakeSurfacesServiceApplication();
@@ -28,10 +27,6 @@ class FakeSurfacesServiceApplication
   void Initialize(mojo::ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
-
-  // InterfaceFactory<SurfacsService> implementation.
-  void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<mojo::SurfacesService> request) override;
 
   // InterfaceFactory<mojo::Surface> implementation.
   void Create(mojo::ApplicationConnection* connection,
