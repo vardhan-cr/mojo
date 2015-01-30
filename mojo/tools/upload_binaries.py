@@ -25,8 +25,6 @@ def find_apps_to_upload(build_dir):
     _, ext = os.path.splitext(path)
     if ext != '.mojo':
       continue
-    if 'apptests' in os.path.basename(path):
-      continue
     apps.append(path)
   return apps
 
