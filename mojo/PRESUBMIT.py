@@ -35,10 +35,10 @@ _ILLEGAL_EXTERNAL_PATH_WARNING_MESSAGE = \
 
 _ILLEGAL_SERVICES_ABSOLUTE_PATH_WARNING_MESSAGE = \
     "Found references to services' public buildfiles via absolute paths " \
-    "within services' public buildfiles.",
+    "within services' public buildfiles."
 
 _ILLEGAL_EDK_ABSOLUTE_PATH_WARNING_MESSAGE = \
-    "Found references to the EDK via absolute paths within EDK buildfiles.",
+    "Found references to the EDK via absolute paths within EDK buildfiles."
 
 _ILLEGAL_SDK_ABSOLUTE_PATH_WARNING_MESSAGE_TEMPLATE = \
     "Found references to the SDK via absolute paths within %s buildfiles."
