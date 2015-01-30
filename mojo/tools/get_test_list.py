@@ -81,9 +81,7 @@ def GetTestList(config):
     AddXvfbEntry("Unit tests", unit_test_command)
 
   # C++ app tests:
-  # Disabled on android because the bot cannot run those yet.
-  if (target_os == Config.OS_LINUX and
-      ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app")):
+  if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
     AddXvfbEntry("App tests",
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "apptests"),

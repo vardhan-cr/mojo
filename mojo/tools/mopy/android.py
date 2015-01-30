@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 import atexit
+import json
 import logging
 import os
 import os.path
@@ -89,15 +90,23 @@ def _ExitIfNeeded(process):
     process.kill()
 
 
-def _ReadFifo(context, fifo_path, pipe, on_fifo_closed):
+def _ReadFifo(context, fifo_path, pipe, on_fifo_closed, max_attempts=5):
   """
   Reads |fifo_path| on the device and write the contents to |pipe|. Calls
-  |on_fifo_closed| when the fifo is closed. This method will block until
-  |fifo_path| exists.
+  |on_fifo_closed| when the fifo is closed. This method will try to find the
+  path up to |max_attempts|, waiting 1 second between each attempt. If it cannot
+  find |fifo_path|, a exception will be raised.
   """
   def Run():
-    while not context.device.FileExistsOnDevice(fifo_path):
-      time.sleep(1)
+    def _WaitForFifo():
+      for _ in xrange(max_attempts):
+        if context.device.FileExistsOnDevice(fifo_path):
+          return
+        time.sleep(1)
+      if on_fifo_closed:
+        on_fifo_closed()
+      raise Exception("Unable to find fifo.")
+    _WaitForFifo()
     stdout_cat = subprocess.Popen([constants.GetAdbPath(),
                                    'shell',
                                    'cat',
@@ -156,11 +165,14 @@ def StartShell(context, arguments, stdout=None, on_application_stop=None):
   """
   STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
 
-  cmd = ('am start'
-         ' -W'
-         ' -S'
-         ' -a android.intent.action.VIEW'
-         ' -n %s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME)
+  cmd = [constants.GetAdbPath(),
+         'shell',
+         'am',
+         'start',
+         '-W',
+         '-S',
+         '-a', 'android.intent.action.VIEW',
+         '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME]
 
   parameters = ['--origin=http://127.0.0.1:%d/' % context.device_port]
   if stdout or on_application_stop:
@@ -168,9 +180,13 @@ def StartShell(context, arguments, stdout=None, on_application_stop=None):
     parameters.append('--fifo-path=%s' % STDOUT_PIPE)
     _ReadFifo(context, STDOUT_PIPE, stdout, on_application_stop)
   parameters += arguments
-  cmd += ' --esa parameters \"%s\"' % ','.join(parameters)
 
-  context.device.RunShellCommand(cmd)
+  if parameters:
+    encodedParameters = json.dumps(parameters)
+    cmd += [ '--es', 'encodedParameters', encodedParameters]
+
+  with open(os.devnull, 'w') as devnull:
+    subprocess.Popen(cmd, stdout=devnull).wait()
 
 
 def StopShell(context):

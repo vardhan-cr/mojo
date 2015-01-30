@@ -7,6 +7,13 @@ package org.chromium.mojo.shell;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.JsonReader;
+import android.util.Log;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Activity for managing the Mojo Shell.
@@ -32,6 +39,29 @@ public class MojoShellActivity extends Activity {
     }
 
     private static String[] getParametersFromIntent(Intent intent) {
-        return intent != null ? intent.getStringArrayExtra("parameters") : null;
+        if (intent == null) {
+            return null;
+        }
+        String[] parameters = intent.getStringArrayExtra("parameters");
+        if (parameters != null) {
+            return parameters;
+        }
+        String encodedParameters = intent.getStringExtra("encodedParameters");
+        if (encodedParameters != null) {
+            JsonReader reader = new JsonReader(new StringReader(encodedParameters));
+            List<String> parametersList = new ArrayList<String>();
+            try {
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    parametersList.add(reader.nextString());
+                }
+                reader.endArray();
+                reader.close();
+                return parametersList.toArray(new String[parametersList.size()]);
+            } catch (IOException e) {
+                Log.w(TAG, e.getMessage(), e);
+            }
+        }
+        return null;
     }
 }
