@@ -22,11 +22,11 @@ v8.log
 /c
 /dart/
 /mojo/public/tools/prebuilt/
+/mojo/services/network/prebuilt/
 /native_client/
 /out/
 /out_*/
 /sdch/open-vcdiff/
-/services/network/prebuilt/
 /testing/gmock/
 /testing/gtest/
 /third_party/android_tools/

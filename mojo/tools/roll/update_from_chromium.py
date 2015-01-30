@@ -82,8 +82,7 @@ dirs_to_snapshot = [
 # bootstrap library until we get that sorted out.
 net_dirs = [
     "crypto",
-    "net",
-    "mojo/services/network"]
+    "net"]
 
 files_to_copy = ["sandbox/sandbox_export.h",
     ".clang-format"]

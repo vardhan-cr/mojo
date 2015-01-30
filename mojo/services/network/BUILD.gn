@@ -8,46 +8,27 @@
 import("../mojo_sdk_root.gni")
 import("$mojo_sdk_root/mojo/public/mojo_application.gni")
 
-if (is_android) {
-  import("//build/config/android/rules.gni")
+group("network") {
+  deps = [
+    ":copy_prebuilt_network_service",
+  ]
+}
 
-  java_library_path = "$target_out_dir/java_library.dex.jar"
-
-  mojo_android_application("network") {
-    output_name = "network_service"
-    input_so = "$root_out_dir/lib.stripped/libnetwork_service.so"
-    input_dex_jar = java_library_path
-  }
-
-  shared_library("native_library") {
-    output_name = "network_service"
-
+copy("copy_prebuilt_network_service") {
+  filename = "network_service.mojo"
+  if (is_android) {
     sources = [
-      "android_hooks.cc",
+      "prebuilt/android-arm/$filename",
     ]
-
-    deps = [
-      ":sources",
-      "//base",
-      "//net",
-    ]
-  }
-
-  android_standalone_library("java_library") {
-    dex_path = java_library_path
-
-    deps = [
-      "//net/android:net_java",
+  } else {
+    assert(is_linux)
+    sources = [
+      "prebuilt/linux-x64/$filename",
     ]
   }
-} else {
-  mojo_native_application("network") {
-    output_name = "network_service"
-
-    deps = [
-      ":sources",
-    ]
-  }
+  outputs = [
+    "$root_out_dir/$filename",
+  ]
 }
 
 source_set("lib") {
@@ -89,24 +70,6 @@ source_set("lib") {
   ]
 }
 
-source_set("sources") {
-  visibility = [ ":*" ]
-
-  sources = [
-    "network_service.cc",
-  ]
-
-  deps = [
-    ":lib",
-    "$mojo_sdk_root/mojo/public/c/system:for_shared_library",
-    "$mojo_sdk_root/mojo/public/cpp/bindings:bindings",
-    "//base",
-    "//mojo/application",
-    "//mojo/services/network/public/cpp",
-    "//mojo/services/network/public/interfaces",
-  ]
-}
-
 mojo_native_application("apptests") {
   output_name = "network_service_apptests"
   testonly = true
@@ -117,8 +80,8 @@ mojo_native_application("apptests") {
   ]
 
   deps = [
+    ":copy_prebuilt_network_service",
     ":lib",
-    ":network",
     "$mojo_sdk_root/mojo/public/cpp/bindings",
     "$mojo_sdk_root/mojo/public/cpp/bindings:callback",
     "//base",

@@ -19,8 +19,9 @@ import gs
 
 def roll(target_version):
   mojoms_gs_path = "gs://mojo/network/%s/mojoms.zip" % (target_version,)
-  network_service_path = os.path.join(mojo_root_dir, "services", "network")
-  mojoms_path = os.path.join(network_service_path, "interfaces")
+  network_service_path = os.path.join(
+      mojo_root_dir, "mojo", "services", "network")
+  mojoms_path = os.path.join(network_service_path, "public", "interfaces")
   version_path = os.path.join(network_service_path, "VERSION")
 
   with tempfile.NamedTemporaryFile() as temp_zip_file:
@@ -31,7 +32,7 @@ def roll(target_version):
   with open(version_path, 'w') as stamp_file:
     stamp_file.write(target_version)
 
-  system(["git", "add", "interfaces"], cwd=network_service_path)
+  system(["git", "add", "public"], cwd=network_service_path)
   system(["git", "add", "VERSION"], cwd=network_service_path)
   chromium_rev = chromium_rev_number(target_version)
   commit("Roll the network service to https://crrev.com/" + chromium_rev,

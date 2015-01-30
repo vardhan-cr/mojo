@@ -17,7 +17,7 @@ if not sys.platform.startswith("linux"):
 
 # Add //tools to the system path so that we can import the gs helper.
 script_dir = os.path.dirname(os.path.realpath(__file__))
-tools_path = os.path.join(script_dir, os.pardir, os.pardir, "tools")
+tools_path = os.path.join(script_dir, os.pardir, os.pardir, os.pardir, "tools")
 sys.path.insert(0, tools_path)
 # pylint: disable=F0401
 import gs
