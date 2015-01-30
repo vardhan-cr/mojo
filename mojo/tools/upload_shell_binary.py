@@ -51,27 +51,22 @@ def upload(config, dry_run, verbose):
       subprocess.check_call([gsutil_exe, "cp", zip_file.name, dest])
 
 def main():
-  # Default to the build dir used by the Linux release config so that the script
-  # works correctly on the Linux release bot, where it is invoked without the
-  # --build_dir argument.
-  # TODO(blundell): Remove this hack once the Linux bot is passing the build dir
-  # to this script.
-  linux_release_config = Config(target_os=Config.OS_LINUX, is_debug=False)
-  default_build_dir = Paths(linux_release_config).build_dir
   parser = argparse.ArgumentParser(description="Upload mojo_shell binary to "+
-      "google storage")
+      "google storage (by default on Linux, but this can be changed via options"
+      ".")
   parser.add_argument("-n", "--dry_run", help="Dry run, do not actually "+
       "upload", action="store_true")
   parser.add_argument("-v", "--verbose", help="Verbose mode",
       action="store_true")
-  parser.add_argument("--build_dir",
-                      type=str,
-                      metavar="<build_dir>",
-                      help="The build dir containing the shell to be uploaded",
-                      default=default_build_dir)
+  parser.add_argument("--android",
+                      action="store_true",
+                      help="Upload the shell for Android")
   args = parser.parse_args()
 
-  config = gn.ConfigForGNArgs(gn.ParseGNConfig(args.build_dir))
+  target_os = Config.OS_LINUX
+  if args.android:
+    target_os = Config.OS_ANDROID
+  config = Config(target_os=target_os, is_debug=False)
   upload(config, args.dry_run, args.verbose)
   return 0
 
