@@ -19,6 +19,11 @@ _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
     "services":  [ "//testing/gtest" ]
 }
 
+# These files are not part of the exported package.
+_PACKAGE_IGNORED_BUILD_FILES = {
+    "services":  {"mojo/services/BUILD.gn"},
+}
+
 
 _PACKAGE_PATH_PREFIXES = {"SDK": "mojo/public/",
                           "EDK": "mojo/edk/",
@@ -71,6 +76,8 @@ def _IsBuildFileWithinPackage(f, package):
     return False
   if (not f.LocalPath().endswith("/BUILD.gn") and
       not f.LocalPath().endswith(".gni")):
+    return False
+  if f.LocalPath() in _PACKAGE_IGNORED_BUILD_FILES[package]:
     return False
   return True
 
