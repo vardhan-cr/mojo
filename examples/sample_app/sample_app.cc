@@ -82,6 +82,7 @@ class SampleApp : public mojo::ApplicationDelegate,
         native_viewport_id, metrics->size.Clone(), GetProxy(&command_buffer),
         listener.Pass());
     gles2_client_.reset(new GLES2ClientImpl(command_buffer.Pass()));
+    gles2_client_->SetSize(*metrics->size);
     viewport_->RequestMetrics(
         base::Bind(&SampleApp::OnMetricsChanged, base::Unretained(this)));
   }
