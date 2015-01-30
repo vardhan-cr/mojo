@@ -57,8 +57,14 @@ class Config(object):
     self.values = {}
     self.values["target_os"] = (self.GetHostOS() if target_os is None else
                                 target_os)
-    self.values["target_arch"] = (self.GetHostCPUArch() if target_arch is None
-                                  else target_arch)
+
+    if target_arch is None:
+      if target_os == Config.OS_ANDROID:
+        target_arch = Config.ARCH_ARM
+      else:
+        target_arch = self.GetHostCPUArch()
+    self.values["target_arch"] = target_arch
+
     self.values["is_debug"] = is_debug
     self.values["is_clang"] = is_clang
     self.values["sanitizer"] = sanitizer
