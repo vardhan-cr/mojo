@@ -90,11 +90,13 @@ source_set("dart_controller_for_test") {
 test("dart_unittests") {
   sources = [
     "run_dart_tests.cc",
+    "validation_unittest.cc",
   ]
   deps = [
     ":dart_controller_for_test",
     ":dart_to_cpp_unittests",
     ":expect",
+    ":validation_test_input_parser",
     "//base",
     "//crypto:crypto",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
@@ -111,6 +113,15 @@ test("dart_unittests") {
 copy("expect") {
   sources = [
     "//mojo/dart/testing/expect.dart",
+  ]
+  outputs = [
+    "{{source_gen_dir}}/{{source_file_part}}",
+  ]
+}
+
+copy("validation_test_input_parser") {
+  sources = [
+    "//mojo/dart/testing/validation_test_input_parser.dart",
   ]
   outputs = [
     "{{source_gen_dir}}/{{source_file_part}}",

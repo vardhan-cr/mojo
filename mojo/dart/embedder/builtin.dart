@@ -210,8 +210,15 @@ Uri _createUri(String userUri) {
 }
 
 
+// TODO(zra): readSync and enumerateFiles are exposed for testing purposes only.
+// Eventually, there will be different builtin libraries for testing and
+// production(i.e. the content handler). In the content handler's builtin
+// library, File IO capabilities will be removed.
 // This uses the synchronous base::ReadFileToString exposed by Mojo.
-List<int> _readSync(String uri) native "Builtin_ReadSync";
+List<int> readSync(String uri) native "Builtin_ReadSync";
+
+// This uses base::FileEnumerator.
+List<String> enumerateFiles(String path) native "Builtin_EnumerateFiles";
 
 // Asynchronously loads script data through a http[s] or file uri.
 _loadDataAsync(int tag, String uri, String libraryUri, List<int> source) {
@@ -237,7 +244,7 @@ _loadDataAsync(int tag, String uri, String libraryUri, List<int> source) {
   } else {
     // Mojo does not expose any asynchronous file IO calls, but we'll maintain
     // the same structure as the standalone embedder here in case it ever does.
-    var data = _readSync(resourceUri.toFilePath());
+    var data = readSync(resourceUri.toFilePath());
     _loadScript(tag, uri, libraryUri, data);
   }
 }

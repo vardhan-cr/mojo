@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
+#include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "crypto/random.h"
@@ -24,6 +26,7 @@ namespace dart {
   V(Crypto_GetRandomBytes, 1)                                                  \
   V(Logger_PrintString, 1)                                                     \
   V(Builtin_ReadSync, 1)                                                       \
+  V(Builtin_EnumerateFiles, 1)                                                 \
   V(Builtin_LoadScript, 4)                                                     \
   V(Builtin_AsyncLoadError, 3)                                                 \
   V(Builtin_DoneLoading, 0)
@@ -114,7 +117,52 @@ void Builtin_ReadSync(Dart_NativeArguments args) {
     Dart_SetReturnValue(args, data);
     return;
   }
+  LOG(ERROR) << "Failed to read path: " << chars;
   Dart_SetReturnValue(args, Dart_Null());
+}
+
+void Builtin_EnumerateFiles(Dart_NativeArguments args) {
+  intptr_t chars_length = 0;
+  uint8_t* chars = nullptr;
+  Dart_Handle path = Dart_GetNativeArgument(args, 0);
+  if (!Dart_IsString(path)) {
+    Dart_PropagateError(path);
+  }
+
+  intptr_t path_length = 0;
+  Dart_Handle result = Dart_StringLength(path, &path_length);
+  if (Dart_IsError(result)) {
+    Dart_PropagateError(result);
+  }
+
+  result = Dart_StringToUTF8(path, &chars, &chars_length);
+  if (Dart_IsError(result)) {
+    Dart_PropagateError(result);
+  }
+
+  chars[path_length] = '\0';
+  base::FilePath dir_path(base::FilePath::FromUTF8Unsafe(
+      std::string(reinterpret_cast<char*>(chars))));
+
+  std::vector<std::string> entries;
+  base::FileEnumerator enumerator(dir_path, false, base::FileEnumerator::FILES);
+  while (true) {
+    base::FilePath file_path = enumerator.Next();
+    std::string file_path_string = file_path.AsUTF8Unsafe();
+    if (file_path_string == "") {
+      break;
+    }
+    entries.push_back(file_path_string);
+  }
+
+  Dart_Handle list = Dart_NewList(entries.size());
+  for (uintptr_t i = 0; i < entries.size(); i++) {
+    Dart_Handle entry = Dart_NewStringFromUTF8(
+        reinterpret_cast<const uint8_t*>(entries[i].data()),
+        entries[i].length());
+    Dart_ListSetAt(list, i, entry);
+  }
+  Dart_SetReturnValue(args, list);
 }
 
 // Callback function, gets called from asynchronous script and library

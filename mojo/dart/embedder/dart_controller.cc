@@ -363,7 +363,7 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
     return;
   }
 
-  const int kNumArgs = arguments_count + 2;
+  const int kNumArgs = arguments_count + 1;
   const char* args[kNumArgs];
 
   // TODO(zra): Fix Dart VM Shutdown race.
@@ -375,12 +375,8 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   // that isn't there anymore.
   args[0] = "--worker-timeout-millis=0";
 
-  // Stacktraces for exceptions thrown during await statements are NYI.
-  // TODO(zra): Remove this flag when fixed.
-  args[1] = "--print-stacktrace-at-throw";
-
   for (int i = 0; i < arguments_count; ++i) {
-    args[i + 2] = arguments[i];
+    args[i + 1] = arguments[i];
   }
 
   bool result = Dart_SetVMFlags(kNumArgs, args);
