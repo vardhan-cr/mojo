@@ -9,9 +9,19 @@ from utils import commit
 from utils import mojo_root_dir
 from utils import system
 
-dirs_to_clone = [
+sdk_prefix_in_chromium = "third_party/mojo/src"
+sdk_dirs_to_clone = [
   "mojo/edk",
   "mojo/public",
+]
+
+
+services_prefix_in_mojo = "mojo/services"
+services_prefix_in_chromium = "third_party/mojo_services/src"
+
+# Note: Services are placed under |services_prefix_in_chromium| at their
+# location relative to |services_prefix_in_mojo|.
+services_dirs_to_clone = [
   "mojo/services/public",
   "mojo/services/accessibility/public",
   "mojo/services/clipboard/public",
@@ -26,17 +36,23 @@ dirs_to_clone = [
   "mojo/services/window_manager/public",
 ]
 
-cloned_dir_prefixes = {
-  "mojo/edk" : "third_party/mojo/src",
-  "mojo/public" : "third_party/mojo/src",
-}
+# A dictionary mapping dirs to clone to their destination locations in Chromium.
+dirs_to_clone = {}
+
+for sdk_dir in sdk_dirs_to_clone:
+  sdk_dir_in_chromium = os.path.join(sdk_prefix_in_chromium, sdk_dir)
+  dirs_to_clone[sdk_dir] = sdk_dir_in_chromium
+
+for service_dir in services_dirs_to_clone:
+  service_relpath = os.path.relpath(service_dir, services_prefix_in_mojo)
+  service_dir_in_chromium = os.path.join(services_prefix_in_chromium,
+                                         service_relpath)
+  dirs_to_clone[service_dir] = service_dir_in_chromium
 
 def rev(source_dir, chromium_dir):
   src_commit = system(["git", "show-ref", "HEAD", "-s"], cwd=source_dir).strip()
 
-  for input_dir in dirs_to_clone:
-    prefix_in_chromium = cloned_dir_prefixes.get(input_dir, "")
-    dest_dir = os.path.join(prefix_in_chromium, input_dir)
+  for input_dir, dest_dir in dirs_to_clone.iteritems():
     if os.path.exists(os.path.join(chromium_dir, dest_dir)):
       print "removing directory %s" % dest_dir
       system(["git", "rm", "-r", dest_dir], cwd=chromium_dir)
@@ -47,14 +63,17 @@ def rev(source_dir, chromium_dir):
       # chromium side.
       if os.path.basename(f) == "PRESUBMIT.py":
         continue
-      dest_path = os.path.join(chromium_dir, prefix_in_chromium, f)
+
+      # Clone |f| into Chromium under |dest_dir| at its location relative to
+      # |input_dir|.
+      f_relpath = os.path.relpath(f, input_dir)
+      dest_path = os.path.join(chromium_dir, dest_dir, f_relpath)
       system(["mkdir", "-p", os.path.dirname(dest_path)])
       system(["cp", os.path.join(source_dir, f), dest_path])
     os.chdir(chromium_dir)
     system(["git", "add", dest_dir], cwd=chromium_dir)
 
-  mojo_public_dest_dir = os.path.join(cloned_dir_prefixes.get("mojo/public"),
-                                      "mojo/public")
+  mojo_public_dest_dir = os.path.join(sdk_prefix_in_chromium, "mojo/public")
   version_filename = os.path.join(mojo_public_dest_dir, "VERSION")
   with open(version_filename, "w") as version_file:
     version_file.write(src_commit)
