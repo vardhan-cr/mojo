@@ -43,7 +43,7 @@ def main():
   try:
     shutil.rmtree(build_dir, True)
     os.mkdir(build_dir)
-  except:
+  except Exception:
     pass
   old_directory = os.getcwd()
   os.chdir(build_dir)
@@ -57,7 +57,7 @@ def main():
   os.chdir(old_directory)
   try:
     shutil.rmtree(build_dir, True)
-  except:
+  except Exception:
     pass
 
 if __name__ == '__main__':
