@@ -48,7 +48,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
 
   // Shuts down the channel specified by the given ID. It is up to the caller to
   // guarantee that this is only called once per channel (that was added using
-  // |AddChannel()|). If called from the chanel's creation thread (i.e.,
+  // |AddChannel()|). If called from the channel's creation thread (i.e.,
   // |base::MessageLoopProxy::current()| is the channel thread's |TaskRunner|),
   // this will complete synchronously.
   void ShutdownChannel(ChannelId channel_id);
