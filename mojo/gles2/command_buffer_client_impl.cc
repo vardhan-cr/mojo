@@ -116,13 +116,13 @@ CommandBufferClientImpl::CommandBufferClientImpl(
     const MojoAsyncWaiter* async_waiter,
     mojo::ScopedMessagePipeHandle command_buffer_handle)
     : delegate_(delegate),
+      observer_binding_(this),
       shared_state_(NULL),
       last_put_offset_(-1),
       next_transfer_buffer_id_(0),
       async_waiter_(async_waiter) {
   command_buffer_.Bind(command_buffer_handle.Pass(), async_waiter);
   command_buffer_.set_error_handler(this);
-  command_buffer_.set_client(this);
 }
 
 CommandBufferClientImpl::~CommandBufferClientImpl() {}
@@ -147,7 +147,11 @@ bool CommandBufferClientImpl::Initialize() {
   sync_point_client_impl_.reset(
       new SyncPointClientImpl(&sync_point_client, async_waiter_));
 
-  command_buffer_->Initialize(sync_client.Pass(), sync_point_client.Pass(),
+  mojo::CommandBufferLostContextObserverPtr observer_ptr;
+  observer_binding_.Bind(GetProxy(&observer_ptr), async_waiter_);
+  command_buffer_->Initialize(sync_client.Pass(),
+                              sync_point_client.Pass(),
+                              observer_ptr.Pass(),
                               duped.Pass());
 
   // Wait for DidInitialize to come on the sync client pipe.
@@ -290,11 +294,7 @@ uint32_t CommandBufferClientImpl::CreateStreamTexture(uint32_t texture_id) {
   return 0;
 }
 
-void CommandBufferClientImpl::DidDestroy() {
-  LostContext(gpu::error::kUnknown);
-}
-
-void CommandBufferClientImpl::LostContext(int32_t lost_reason) {
+void CommandBufferClientImpl::DidLoseContext(int32_t lost_reason) {
   last_state_.error = gpu::error::kLostContext;
   last_state_.context_lost_reason =
       static_cast<gpu::error::ContextLostReason>(lost_reason);
@@ -302,7 +302,7 @@ void CommandBufferClientImpl::LostContext(int32_t lost_reason) {
 }
 
 void CommandBufferClientImpl::OnConnectionError() {
-  LostContext(gpu::error::kUnknown);
+  DidLoseContext(gpu::error::kUnknown);
 }
 
 void CommandBufferClientImpl::TryUpdateState() {
@@ -317,7 +317,7 @@ void CommandBufferClientImpl::MakeProgressAndUpdateState() {
   if (!state) {
     VLOG(1) << "Channel encountered error while waiting for command buffer";
     // TODO(piman): is it ok for this to re-enter?
-    DidDestroy();
+    DidLoseContext(gpu::error::kUnknown);
     return;
   }
 

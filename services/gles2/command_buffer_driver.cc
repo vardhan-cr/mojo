@@ -81,13 +81,14 @@ CommandBufferDriver::~CommandBufferDriver() {
     bool have_context = decoder_->MakeCurrent();
     decoder_->Destroy(have_context);
   }
-  client_->DidDestroy();
 }
 
 void CommandBufferDriver::Initialize(
     mojo::CommandBufferSyncClientPtr sync_client,
+    mojo::CommandBufferLostContextObserverPtr loss_observer,
     mojo::ScopedSharedBufferHandle shared_state) {
   sync_client_ = sync_client.Pass();
+  loss_observer_ = loss_observer.Pass();
   bool success = DoInitialize(shared_state.Pass());
   mojo::GpuCapabilitiesPtr capabilities =
       success ? mojo::GpuCapabilities::From(decoder_->GetCapabilities())
@@ -238,7 +239,8 @@ void CommandBufferDriver::OnSyncPointRetired() {
 }
 
 void CommandBufferDriver::OnContextLost(uint32_t reason) {
-  client_->LostContext(reason);
+  loss_observer_->DidLoseContext(reason);
+  client_->DidLoseContext();
 }
 
 void CommandBufferDriver::OnUpdateVSyncParameters(

@@ -35,6 +35,7 @@ class CommandBufferImpl : public mojo::CommandBuffer {
 
   void Initialize(mojo::CommandBufferSyncClientPtr sync_client,
                   mojo::CommandBufferSyncPointClientPtr sync_point_client,
+                  mojo::CommandBufferLostContextObserverPtr loss_observer,
                   mojo::ScopedSharedBufferHandle shared_state) override;
   void SetGetBuffer(int32_t buffer) override;
   void Flush(int32_t put_offset) override;
@@ -47,7 +48,7 @@ class CommandBufferImpl : public mojo::CommandBuffer {
   void RetireSyncPoint(uint32_t sync_point) override;
   void Echo(const mojo::Callback<void()>& callback) override;
 
-  void LostContext(int32_t reason);
+  void DidLoseContext();
   void UpdateVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval);
 

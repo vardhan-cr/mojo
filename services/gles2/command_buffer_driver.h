@@ -37,13 +37,10 @@ class CommandBufferDriver {
  public:
   class Client {
    public:
-    virtual void DidDestroy() = 0;
+    virtual ~Client();
     virtual void UpdateVSyncParameters(base::TimeTicks timebase,
                                        base::TimeDelta interval) = 0;
-    virtual void LostContext(int32_t lost_reason) = 0;
-
-   protected:
-    virtual ~Client();
+    virtual void DidLoseContext() = 0;
   };
   // Offscreen.
   CommandBufferDriver(gfx::GLShareGroup* share_group,
@@ -57,9 +54,10 @@ class CommandBufferDriver {
                       gpu::SyncPointManager* sync_point_manager);
   ~CommandBufferDriver();
 
-  void set_client(Client* client) { client_ = client; }
+  void set_client(scoped_ptr<Client> client) { client_ = client.Pass(); }
 
   void Initialize(mojo::CommandBufferSyncClientPtr sync_client,
+                  mojo::CommandBufferLostContextObserverPtr loss_observer,
                   mojo::ScopedSharedBufferHandle shared_state);
   void SetGetBuffer(int32_t buffer);
   void Flush(int32_t put_offset);
@@ -80,8 +78,9 @@ class CommandBufferDriver {
   void OnUpdateVSyncParameters(const base::TimeTicks timebase,
                                const base::TimeDelta interval);
 
-  Client* client_;
+  scoped_ptr<Client> client_;
   mojo::CommandBufferSyncClientPtr sync_client_;
+  mojo::CommandBufferLostContextObserverPtr loss_observer_;
   gfx::AcceleratedWidget widget_;
   gfx::Size size_;
   scoped_ptr<gpu::CommandBufferService> command_buffer_;

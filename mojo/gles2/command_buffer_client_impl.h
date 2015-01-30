@@ -28,7 +28,7 @@ class CommandBufferDelegate {
   virtual void ContextLost();
 };
 
-class CommandBufferClientImpl : public mojo::CommandBufferClient,
+class CommandBufferClientImpl : public mojo::CommandBufferLostContextObserver,
                                 public mojo::ErrorHandler,
                                 public gpu::CommandBuffer,
                                 public gpu::GpuControl {
@@ -75,11 +75,10 @@ class CommandBufferClientImpl : public mojo::CommandBufferClient,
   class SyncClientImpl;
   class SyncPointClientImpl;
 
-  // CommandBufferClient implementation:
-  void DidDestroy() override;
-  void LostContext(int32_t lost_reason) override;
+  // mojo::CommandBufferLostContextObserver implementation:
+  void DidLoseContext(int32_t lost_reason) override;
 
-  // ErrorHandler implementation:
+  // mojo::ErrorHandler implementation:
   void OnConnectionError() override;
 
   void TryUpdateState();
@@ -88,6 +87,7 @@ class CommandBufferClientImpl : public mojo::CommandBufferClient,
   gpu::CommandBufferSharedState* shared_state() const { return shared_state_; }
 
   CommandBufferDelegate* delegate_;
+  mojo::Binding<mojo::CommandBufferLostContextObserver> observer_binding_;
   mojo::CommandBufferPtr command_buffer_;
   scoped_ptr<SyncClientImpl> sync_client_impl_;
   scoped_ptr<SyncPointClientImpl> sync_point_client_impl_;

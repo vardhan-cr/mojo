@@ -28,8 +28,6 @@ class CommandBufferDriverClientImpl : public CommandBufferDriver::Client {
         control_task_runner_(control_task_runner) {}
 
  private:
-  void DidDestroy() override { delete this; }
-
   void UpdateVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval) override {
     control_task_runner_->PostTask(
@@ -37,10 +35,10 @@ class CommandBufferDriverClientImpl : public CommandBufferDriver::Client {
                               command_buffer_, timebase, interval));
   }
 
-  void LostContext(int32_t lost_reason) override {
+  void DidLoseContext() override {
     control_task_runner_->PostTask(
-        FROM_HERE, base::Bind(&CommandBufferImpl::LostContext, command_buffer_,
-                              lost_reason));
+        FROM_HERE, base::Bind(&CommandBufferImpl::DidLoseContext,
+           command_buffer_));
   }
 
   base::WeakPtr<CommandBufferImpl> command_buffer_;
@@ -60,8 +58,8 @@ CommandBufferImpl::CommandBufferImpl(
       viewport_parameter_listener_(listener.Pass()),
       binding_(this),
       weak_factory_(this) {
-  driver_->set_client(new CommandBufferDriverClientImpl(
-      weak_factory_.GetWeakPtr(), control_task_runner));
+  driver_->set_client(make_scoped_ptr(new CommandBufferDriverClientImpl(
+      weak_factory_.GetWeakPtr(), control_task_runner)));
 
   control_task_runner->PostTask(
       FROM_HERE, base::Bind(&CommandBufferImpl::BindToRequest,
@@ -69,7 +67,6 @@ CommandBufferImpl::CommandBufferImpl(
 }
 
 CommandBufferImpl::~CommandBufferImpl() {
-  binding_.client()->DidDestroy();
   driver_task_runner_->PostTask(
       FROM_HERE, base::Bind(&DestroyDriver, base::Passed(&driver_)));
 }
@@ -77,12 +74,14 @@ CommandBufferImpl::~CommandBufferImpl() {
 void CommandBufferImpl::Initialize(
     mojo::CommandBufferSyncClientPtr sync_client,
     mojo::CommandBufferSyncPointClientPtr sync_point_client,
+    mojo::CommandBufferLostContextObserverPtr loss_observer,
     mojo::ScopedSharedBufferHandle shared_state) {
   sync_point_client_ = sync_point_client.Pass();
   driver_task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&CommandBufferDriver::Initialize,
                  base::Unretained(driver_.get()), base::Passed(&sync_client),
+                 base::Passed(&loss_observer),
                  base::Passed(&shared_state)));
 }
 
@@ -146,8 +145,8 @@ void CommandBufferImpl::BindToRequest(
   binding_.Bind(request.Pass());
 }
 
-void CommandBufferImpl::LostContext(int32_t reason) {
-  binding_.client()->LostContext(reason);
+void CommandBufferImpl::DidLoseContext() {
+  binding_.OnConnectionError();
 }
 
 void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
