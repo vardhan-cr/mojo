@@ -39,9 +39,15 @@ system::ChannelId MakeChannel(
   channel->Init(system::RawChannel::Create(platform_handle.Pass()));
   channel->SetBootstrapEndpoint(channel_endpoint);
 
+  // You can use any nonzero, unique (in the set of |Channel|s managed by the
+  // given |ChannelManager|) value as ID. So here we just use the address of the
+  // channel.
+  system::ChannelId id = static_cast<system::ChannelId>(
+      reinterpret_cast<uintptr_t>(channel.get()));
   DCHECK(internal::g_channel_manager);
-  return internal::g_channel_manager->AddChannel(
-      channel, base::MessageLoopProxy::current());
+  internal::g_channel_manager->AddChannel(id, channel,
+                                          base::MessageLoopProxy::current());
+  return id;
 }
 
 // Helper for |CreateChannel()|. Called on the channel creation thread.

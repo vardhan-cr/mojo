@@ -52,8 +52,8 @@ TEST_F(ChannelManagerTest, Basic) {
   embedder::PlatformChannelPair channel_pair;
   ch->Init(RawChannel::Create(channel_pair.PassServerHandle()));
 
-  ChannelId id = cm.AddChannel(ch, base::MessageLoopProxy::current());
-  EXPECT_NE(id, 0u);
+  const ChannelId id = 1;
+  cm.AddChannel(id, ch, base::MessageLoopProxy::current());
   // |ChannelManager| should take a ref.
   EXPECT_FALSE(ch->HasOneRef());
 
@@ -81,13 +81,12 @@ TEST_F(ChannelManagerTest, TwoChannels) {
   ch1->Init(RawChannel::Create(channel_pair.PassServerHandle()));
   ch2->Init(RawChannel::Create(channel_pair.PassClientHandle()));
 
-  ChannelId id1 = cm.AddChannel(ch1, base::MessageLoopProxy::current());
-  EXPECT_NE(id1, 0u);
+  const ChannelId id1 = 1;
+  cm.AddChannel(id1, ch1, base::MessageLoopProxy::current());
   EXPECT_FALSE(ch1->HasOneRef());
 
-  ChannelId id2 = cm.AddChannel(ch2, base::MessageLoopProxy::current());
-  EXPECT_NE(id2, 0u);
-  EXPECT_NE(id2, id1);
+  const ChannelId id2 = 2;
+  cm.AddChannel(id2, ch2, base::MessageLoopProxy::current());
   EXPECT_FALSE(ch2->HasOneRef());
 
   // Calling |WillShutdownChannel()| multiple times (on |id1|) is okay.
@@ -122,9 +121,11 @@ class OtherThread : public base::SimpleThread {
     // See comment above constructor.
     ASSERT_TRUE(channel_->HasOneRef());
 
-    ChannelId id = channel_manager_->AddChannel(make_scoped_refptr(channel_),
-                                                task_runner_);
-    EXPECT_NE(id, 0u);
+    // You can use any unique, nonzero value as the ID.
+    const ChannelId id =
+        static_cast<ChannelId>(reinterpret_cast<uintptr_t>(channel_));
+    channel_manager_->AddChannel(id, make_scoped_refptr(channel_),
+                                 task_runner_);
     // |ChannelManager| should take a ref.
     EXPECT_FALSE(channel_->HasOneRef());
 

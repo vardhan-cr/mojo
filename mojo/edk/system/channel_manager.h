@@ -20,10 +20,7 @@ namespace system {
 
 // IDs for |Channel|s managed by a |ChannelManager|. (IDs should be thought of
 // as specific to a given |ChannelManager|.) 0 is never a valid ID.
-//
-// Note: We currently just use the pointer of the |Channel| casted to a
-// |uintptr_t|, but we reserve the right to change this.
-typedef uintptr_t ChannelId;
+typedef uint64_t ChannelId;
 
 // This class manages and "owns" |Channel|s (which typically connect to other
 // processes) for a given process. This class is thread-safe.
@@ -32,14 +29,15 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   ChannelManager();
   ~ChannelManager();
 
-  // Adds |channel| to the set of |Channel|s managed by this |ChannelManager|;
+  // Adds |channel| to the set of |Channel|s managed by this |ChannelManager|.
+  // |channel_id| should be a nonzero value that is not "assigned" to any other
+  // |Channel| being managed by this |ChannelManager|.
   // |channel_thread_task_runner| should be the task runner for |channel|'s
-  // creation (a.k.a. I/O) thread. |channel| should either already be
-  // initialized. It should not be managed by any |ChannelManager| yet. Returns
-  // the ID for the added channel.
-  ChannelId AddChannel(
-      scoped_refptr<Channel> channel,
-      scoped_refptr<base::TaskRunner> channel_thread_task_runner);
+  // creation (a.k.a. I/O) thread. |channel| should already be initialized and
+  // not be managed by any |ChannelManager| yet.
+  void AddChannel(ChannelId channel_id,
+                  scoped_refptr<Channel> channel,
+                  scoped_refptr<base::TaskRunner> channel_thread_task_runner);
 
   // Informs the channel manager (and thus channel) that it will be shutdown
   // soon (by calling |ShutdownChannel()|). Calling this is optional (and may in
@@ -56,15 +54,6 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   void ShutdownChannel(ChannelId channel_id);
 
  private:
-  // Gets the ID for a given channel.
-  //
-  // Note: This is currently a static method and thus may be called under
-  // |lock_|. If this is ever made non-static (i.e., made specific to a given
-  // |ChannelManager|), those call sites may have to changed.
-  static ChannelId GetChannelId(const Channel* channel) {
-    return reinterpret_cast<ChannelId>(channel);
-  }
-
   // Gets the |ChannelInfo| for the channel specified by the given ID. (This
   // should *not* be called under lock.)
   ChannelInfo GetChannelInfo(ChannelId channel_id);

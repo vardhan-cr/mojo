@@ -35,20 +35,17 @@ ChannelManager::~ChannelManager() {
     ShutdownChannelHelper(map_elem.second);
 }
 
-ChannelId ChannelManager::AddChannel(
+void ChannelManager::AddChannel(
+    ChannelId channel_id,
     scoped_refptr<Channel> channel,
     scoped_refptr<base::TaskRunner> channel_thread_task_runner) {
-  ChannelId channel_id = GetChannelId(channel.get());
-
   {
     base::AutoLock locker(lock_);
-    DCHECK(channel_infos_.find(channel_id) == channel_infos_.end());
+    CHECK(channel_infos_.find(channel_id) == channel_infos_.end());
     channel_infos_[channel_id] =
         ChannelInfo(channel, channel_thread_task_runner);
   }
   channel->SetChannelManager(this);
-
-  return channel_id;
 }
 
 void ChannelManager::WillShutdownChannel(ChannelId channel_id) {

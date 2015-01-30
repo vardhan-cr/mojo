@@ -64,8 +64,6 @@ MOJO_SYSTEM_IMPL_EXPORT Configuration* GetConfiguration();
 //
 // The destruction functions are similarly synchronous and asynchronous,
 // respectively, and take the |ChannelInfo*| produced by the creation functions.
-//
-// TODO(vtl): Figure out channel teardown.
 
 // Creates a channel; must only be called from the I/O thread. |platform_handle|
 // should be a handle to a connected OS "pipe". Eventually (even on failure),
