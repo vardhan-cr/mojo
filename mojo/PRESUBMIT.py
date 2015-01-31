@@ -16,12 +16,14 @@ _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
     "SDK": ["//testing/gtest",
             "//third_party/cython",
             "//third_party/khronos"],
-    "services":  [ "//testing/gtest" ]
+    "services": ["//testing/gtest"],
 }
 
 # These files are not part of the exported package.
 _PACKAGE_IGNORED_BUILD_FILES = {
-    "services":  {"mojo/services/BUILD.gn"},
+    "SDK": {},
+    "EDK": {},
+    "services": {"mojo/services/BUILD.gn"},
 }
 
 
