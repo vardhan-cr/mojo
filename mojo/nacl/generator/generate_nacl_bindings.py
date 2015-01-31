@@ -5,6 +5,7 @@
 
 # pylint: disable=W0104,W0106,F0401,R0201
 
+import errno
 import optparse
 import os.path
 import sys
@@ -401,7 +402,12 @@ def GenerateMojoSyscall(functions, out):
 
 def OutFile(dir_path, name):
   if not os.path.exists(dir_path):
-    os.makedirs(dir_path)
+    try:
+      os.makedirs(dir_path)
+    except OSError as e:
+      # There may have been a race to create this directory.
+      if e.errno != errno.EEXIST:
+        raise
   return open(os.path.join(dir_path, name), 'w')
 
 
