@@ -64,7 +64,14 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
 
   // ---------------------------------------------------------------------------
 
-  // System calls implementation:
+  // The following methods are essentially implementations of the Mojo Core
+  // functions of the Mojo API, with the C interface translated to C++ by
+  // "mojo/edk/embedder/entrypoints.cc". The best way to understand the contract
+  // of these methods is to look at the header files defining the corresponding
+  // API functions, referenced below.
+
+  // These methods correspond to the API functions defined in
+  // "mojo/public/c/system/functions.h":
   MojoTimeTicks GetTimeTicksNow();
   MojoResult Close(MojoHandle handle);
   MojoResult Wait(MojoHandle handle,
@@ -77,6 +84,9 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
                       MojoDeadline deadline,
                       UserPointer<uint32_t> result_index,
                       UserPointer<MojoHandleSignalsState> signals_states);
+
+  // These methods correspond to the API functions defined in
+  // "mojo/public/c/system/message_pipe.h":
   MojoResult CreateMessagePipe(
       UserPointer<const MojoCreateMessagePipeOptions> options,
       UserPointer<MojoHandle> message_pipe_handle0,
@@ -93,6 +103,9 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
                          UserPointer<MojoHandle> handles,
                          UserPointer<uint32_t> num_handles,
                          MojoReadMessageFlags flags);
+
+  // These methods correspond to the API functions defined in
+  // "mojo/public/c/system/data_pipe.h":
   MojoResult CreateDataPipe(
       UserPointer<const MojoCreateDataPipeOptions> options,
       UserPointer<MojoHandle> data_pipe_producer_handle,
@@ -117,6 +130,9 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
                            MojoReadDataFlags flags);
   MojoResult EndReadData(MojoHandle data_pipe_consumer_handle,
                          uint32_t num_bytes_read);
+
+  // These methods correspond to the API functions defined in
+  // "mojo/public/c/system/buffer.h":
   MojoResult CreateSharedBuffer(
       UserPointer<const MojoCreateSharedBufferOptions> options,
       uint64_t num_bytes,
