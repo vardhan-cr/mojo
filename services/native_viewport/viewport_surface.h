@@ -16,13 +16,13 @@
 namespace native_viewport {
 
 // This manages the surface that draws to a particular NativeViewport instance.
-class ViewportSurface : public mojo::SurfaceClient {
+class ViewportSurface {
  public:
   ViewportSurface(mojo::SurfacePtr surface,
                   mojo::Gpu* gpu_service,
                   const gfx::Size& size,
                   cc::SurfaceId child_id);
-  ~ViewportSurface() override;
+  ~ViewportSurface();
 
   void SetWidgetId(uint64_t widget_id);
   void SetSize(const gfx::Size& size);
@@ -31,11 +31,6 @@ class ViewportSurface : public mojo::SurfaceClient {
  private:
   void BindSurfaceToNativeViewport();
   void SubmitFrame();
-
-  // SurfaceClient implementation.
-  void SetIdNamespace(uint32_t id_namespace) override;
-  void ReturnResources(
-      mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
   mojo::SurfacePtr surface_;
   mojo::Gpu* gpu_service_;

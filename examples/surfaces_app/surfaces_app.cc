@@ -27,7 +27,7 @@ namespace examples {
 
 static const uint32_t kLocalId = 1u;
 
-class SurfacesApp : public ApplicationDelegate, public SurfaceClient {
+class SurfacesApp : public ApplicationDelegate {
  public:
   SurfacesApp() : id_namespace_(0u), weak_factory_(this) {}
   ~SurfacesApp() override {}
@@ -37,7 +37,8 @@ class SurfacesApp : public ApplicationDelegate, public SurfaceClient {
     connection->ConnectToService("mojo:native_viewport_service", &viewport_);
 
     connection->ConnectToService("mojo:surfaces_service", &surface_);
-    surface_.set_client(this);
+    surface_->GetIdNamespace(
+        base::Bind(&SurfacesApp::SetIdNamespace, base::Unretained(this)));
     embedder_.reset(new Embedder(kLocalId, surface_.get()));
 
     size_ = gfx::Size(800, 600);
@@ -85,15 +86,11 @@ class SurfacesApp : public ApplicationDelegate, public SurfaceClient {
   }
 
  private:
-  // SurfaceClient implementation.
-  void SetIdNamespace(uint32_t id_namespace) override {
+  void SetIdNamespace(uint32_t id_namespace) {
     auto qualified_id = mojo::SurfaceId::New();
     qualified_id->id_namespace = id_namespace;
     qualified_id->local = kLocalId;
     viewport_->SubmittedFrame(qualified_id.Pass());
-  }
-  void ReturnResources(Array<ReturnedResourcePtr> resources) override {
-    DCHECK(!resources.size());
   }
   void OnCreatedNativeViewport(uint64_t native_viewport_id,
                                mojo::ViewportMetricsPtr metrics) {}

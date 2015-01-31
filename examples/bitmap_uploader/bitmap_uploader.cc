@@ -39,7 +39,8 @@ BitmapUploader::BitmapUploader(View* view)
       format_(BGRA),
       next_resource_id_(1u),
       id_namespace_(0u),
-      local_id_(0u) {
+      local_id_(0u),
+      returner_binding_(this) {
 }
 
 void BitmapUploader::Init(Shell* shell) {
@@ -47,7 +48,11 @@ void BitmapUploader::Init(Shell* shell) {
   shell->ConnectToApplication("mojo:surfaces_service",
                               GetProxy(&surfaces_service_provider), nullptr);
   ConnectToService(surfaces_service_provider.get(), &surface_);
-  surface_.set_client(this);
+  surface_->GetIdNamespace(
+      base::Bind(&BitmapUploader::SetIdNamespace, base::Unretained(this)));
+  mojo::ResourceReturnerPtr returner_ptr;
+  returner_binding_.Bind(GetProxy(&returner_ptr));
+  surface_->SetResourceReturner(returner_ptr.Pass());
 
   ServiceProviderPtr gpu_service_provider;
   shell->ConnectToApplication("mojo:native_viewport_service",
@@ -233,8 +238,6 @@ void BitmapUploader::SetIdNamespace(uint32_t id_namespace) {
 }
 
 void BitmapUploader::ReturnResources(Array<ReturnedResourcePtr> resources) {
-  if (!resources.size())
-    return;
   MojoGLES2MakeCurrent(gles2_context_);
   // TODO(jamesr): Recycle.
   for (size_t i = 0; i < resources.size(); ++i) {

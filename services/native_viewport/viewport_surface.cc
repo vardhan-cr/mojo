@@ -28,7 +28,6 @@ ViewportSurface::ViewportSurface(mojo::SurfacePtr surface,
       gles2_bound_surface_created_(false),
       child_id_(child_id),
       weak_factory_(this) {
-  surface_.set_client(this);
 }
 
 ViewportSurface::~ViewportSurface() {
@@ -102,17 +101,6 @@ void ViewportSurface::SubmitFrame() {
   frame->resources.resize(0u);
   surface_->SubmitFrame(kGLES2BoundSurfaceLocalId, frame.Pass(),
                         mojo::Closure());
-}
-
-void ViewportSurface::SetIdNamespace(uint32_t id_namespace) {
-  // We never pass our surface ID to anyone else, so we never need to generate a
-  // fully qualified id and thus don't care about our namespace.
-}
-
-void ViewportSurface::ReturnResources(
-    mojo::Array<mojo::ReturnedResourcePtr> resources) {
-  // We never submit resources so we should never get any back.
-  DCHECK_EQ(0u, resources.size());
 }
 
 }  // namespace native_viewport

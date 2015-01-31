@@ -33,7 +33,8 @@ static const uint32_t kLocalId = 1u;
 ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection)
     : id_namespace_(0u) {
   surfaces_service_connection->ConnectToService(&surface_);
-  surface_.set_client(this);
+  surface_->GetIdNamespace(
+      base::Bind(&ChildImpl::SetIdNamespace, base::Unretained(this)));
   surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
   DCHECK_NE(0u, id_namespace_);
 }
@@ -44,11 +45,6 @@ ChildImpl::~ChildImpl() {
 
 void ChildImpl::SetIdNamespace(uint32_t id_namespace) {
   id_namespace_ = id_namespace;
-}
-
-void ChildImpl::ReturnResources(
-    Array<ReturnedResourcePtr> resources) {
-  DCHECK(!resources.size());
 }
 
 void ChildImpl::ProduceFrame(ColorPtr color,

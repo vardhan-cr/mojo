@@ -28,7 +28,7 @@ class ApplicationConnection;
 namespace examples {
 
 // Simple example of a child app using surfaces.
-class ChildImpl : public InterfaceImpl<Child>, public SurfaceClient {
+class ChildImpl : public InterfaceImpl<Child> {
  public:
   class Context {
    public:
@@ -41,9 +41,7 @@ class ChildImpl : public InterfaceImpl<Child>, public SurfaceClient {
  private:
   using ProduceCallback = mojo::Callback<void(SurfaceIdPtr id)>;
 
-  // SurfaceClient implementation
-  void SetIdNamespace(uint32_t id_namespace) override;
-  void ReturnResources(Array<ReturnedResourcePtr> resources) override;
+  void SetIdNamespace(uint32_t id_namespace);
 
   // Child implementation.
   void ProduceFrame(ColorPtr color,

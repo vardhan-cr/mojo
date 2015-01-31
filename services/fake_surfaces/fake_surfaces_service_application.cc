@@ -18,19 +18,26 @@ class FakeSurfaceImpl : public mojo::Surface {
  public:
   FakeSurfaceImpl(uint32_t id_namespace,
                   mojo::InterfaceRequest<mojo::Surface> request)
-      : binding_(this, request.Pass()) {
-    binding_.client()->SetIdNamespace(id_namespace);
-  }
+      : id_namespace_(id_namespace), binding_(this, request.Pass()) {}
   ~FakeSurfaceImpl() override {}
 
   // mojo::Surface implementation.
+  void GetIdNamespace(
+      const Surface::GetIdNamespaceCallback& callback) override {
+    callback.Run(id_namespace_);
+  }
+
+  void SetResourceReturner(mojo::ResourceReturnerPtr returner) override {
+    returner_ = returner.Pass();
+  }
+
   void CreateSurface(uint32_t local_id) override {}
 
   void SubmitFrame(uint32_t local_id,
                    mojo::FramePtr frame,
                    const mojo::Closure& callback) override {
     callback.Run();
-    if (frame->resources.size() == 0u)
+    if (frame->resources.size() == 0u || !returner_)
       return;
     mojo::Array<mojo::ReturnedResourcePtr> returned;
     returned.resize(frame->resources.size());
@@ -42,7 +49,7 @@ class FakeSurfaceImpl : public mojo::Surface {
       ret->lost = false;
       returned[i] = ret.Pass();
     }
-    binding_.client()->ReturnResources(returned.Pass());
+    returner_->ReturnResources(returned.Pass());
   }
 
   void DestroySurface(uint32_t local_id) override {}
@@ -55,6 +62,8 @@ class FakeSurfaceImpl : public mojo::Surface {
       override {}
 
  private:
+  const uint32_t id_namespace_;
+  mojo::ResourceReturnerPtr returner_;
   mojo::StrongBinding<mojo::Surface> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(FakeSurfaceImpl);

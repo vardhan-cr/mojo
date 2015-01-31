@@ -49,9 +49,14 @@ ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
     : id_namespace_(0u),
       local_id_(1u),
       start_time_(base::TimeTicks::Now()),
-      next_resource_id_(1) {
+      next_resource_id_(1),
+      returner_binding_(this) {
   surfaces_service_connection->ConnectToService(&surface_);
-  surface_.set_client(this);
+  surface_->GetIdNamespace(
+      base::Bind(&ChildGLImpl::SetIdNamespace, base::Unretained(this)));
+  ResourceReturnerPtr returner_ptr;
+  returner_binding_.Bind(GetProxy(&returner_ptr));
+  surface_->SetResourceReturner(returner_ptr.Pass());
   context_ =
       MojoGLES2CreateContext(command_buffer.PassMessagePipe().release().value(),
                              &ContextLostThunk,

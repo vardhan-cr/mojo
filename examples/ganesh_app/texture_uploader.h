@@ -20,7 +20,7 @@ class Shell;
 
 namespace examples {
 
-class TextureUploader : public mojo::SurfaceClient,
+class TextureUploader : public mojo::ResourceReturner,
                         public mojo::GLContext::Observer {
  public:
   class Client {
@@ -42,11 +42,11 @@ class TextureUploader : public mojo::SurfaceClient,
   // mojo::GLContext::Observer
   void OnContextLost() override;
 
-  // mojo::SurfaceClient
-  void SetIdNamespace(uint32_t id_namespace) override;
+  // mojo::ResourceReturner
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
+  void SetIdNamespace(uint32_t id_namespace);
   void EnsureSurfaceForSize(const mojo::Size& size);
   void SendFullyQualifiedID();
 
@@ -59,6 +59,7 @@ class TextureUploader : public mojo::SurfaceClient,
   uint32_t id_namespace_;
   uint32_t local_id_;
   base::hash_map<uint32_t, mojo::GLTexture*> resource_to_texture_map_;
+  mojo::Binding<mojo::ResourceReturner> returner_binding_;
 
   base::WeakPtrFactory<TextureUploader> weak_factory_;
 

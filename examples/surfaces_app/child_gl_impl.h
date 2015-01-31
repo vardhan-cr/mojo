@@ -30,7 +30,7 @@ class ApplicationConnection;
 namespace examples {
 
 // Simple example of a child app using surfaces + GL.
-class ChildGLImpl : public InterfaceImpl<Child>, public SurfaceClient {
+class ChildGLImpl : public InterfaceImpl<Child>, public ResourceReturner {
  public:
   ChildGLImpl(ApplicationConnection* surfaces_service_connection,
               CommandBufferPtr command_buffer);
@@ -44,10 +44,10 @@ class ChildGLImpl : public InterfaceImpl<Child>, public SurfaceClient {
                     SizePtr size,
                     const ProduceCallback& callback) override;
 
-  // SurfaceClient implementation
-  void SetIdNamespace(uint32_t id_namespace) override;
+  // ResourceReturner implementation
   void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
+  void SetIdNamespace(uint32_t id_namespace);
   void Draw();
   void RunProduceCallback();
 
@@ -62,6 +62,7 @@ class ChildGLImpl : public InterfaceImpl<Child>, public SurfaceClient {
   uint32_t next_resource_id_;
   base::hash_map<uint32_t, GLuint> id_to_tex_map_;
   ProduceCallback produce_callback_;
+  Binding<ResourceReturner> returner_binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildGLImpl);
 };

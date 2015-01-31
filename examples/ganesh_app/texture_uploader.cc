@@ -30,6 +30,7 @@ TextureUploader::TextureUploader(Client* client,
       next_resource_id_(0u),
       id_namespace_(0u),
       local_id_(0u),
+      returner_binding_(this),
       weak_factory_(this) {
   context_->AddObserver(this);
 
@@ -38,7 +39,11 @@ TextureUploader::TextureUploader(Client* client,
                               mojo::GetProxy(&surfaces_service_provider),
                               nullptr);
   mojo::ConnectToService(surfaces_service_provider.get(), &surface_);
-  surface_.set_client(this);
+  surface_->GetIdNamespace(
+      base::Bind(&TextureUploader::SetIdNamespace, base::Unretained(this)));
+  mojo::ResourceReturnerPtr returner_ptr;
+  returner_binding_.Bind(GetProxy(&returner_ptr));
+  surface_->SetResourceReturner(returner_ptr.Pass());
 }
 
 TextureUploader::~TextureUploader() {
@@ -121,6 +126,24 @@ void TextureUploader::Upload(scoped_ptr<mojo::GLTexture> texture) {
   surface_->SubmitFrame(local_id_, frame.Pass(), mojo::Closure());
 }
 
+void TextureUploader::OnContextLost() {
+  LOG(FATAL) << "Context lost.";
+}
+
+void TextureUploader::ReturnResources(
+    mojo::Array<mojo::ReturnedResourcePtr> resources) {
+  context_->MakeCurrent();
+  for (size_t i = 0u; i < resources.size(); ++i) {
+    mojo::ReturnedResourcePtr resource = resources[i].Pass();
+    DCHECK_EQ(1, resource->count);
+    glWaitSyncPointCHROMIUM(resource->sync_point);
+    mojo::GLTexture* texture = resource_to_texture_map_[resource->id];
+    DCHECK_NE(0u, texture->texture_id());
+    resource_to_texture_map_.erase(resource->id);
+    delete texture;
+  }
+}
+
 void TextureUploader::EnsureSurfaceForSize(const mojo::Size& size) {
   if (local_id_ != 0u && size == surface_size_)
     return;
@@ -142,30 +165,10 @@ void TextureUploader::SendFullyQualifiedID() {
   client_->OnSurfaceIdAvailable(qualified_id.Pass());
 }
 
-void TextureUploader::OnContextLost() {
-  LOG(FATAL) << "Context lost.";
-}
-
 void TextureUploader::SetIdNamespace(uint32_t id_namespace) {
   id_namespace_ = id_namespace;
   if (local_id_ != 0u)
     SendFullyQualifiedID();
-}
-
-void TextureUploader::ReturnResources(
-    mojo::Array<mojo::ReturnedResourcePtr> resources) {
-  if (!resources.size())
-    return;
-  context_->MakeCurrent();
-  for (size_t i = 0u; i < resources.size(); ++i) {
-    mojo::ReturnedResourcePtr resource = resources[i].Pass();
-    DCHECK_EQ(1, resource->count);
-    glWaitSyncPointCHROMIUM(resource->sync_point);
-    mojo::GLTexture* texture = resource_to_texture_map_[resource->id];
-    DCHECK_NE(0u, texture->texture_id());
-    resource_to_texture_map_.erase(resource->id);
-    delete texture;
-  }
 }
 
 }  // namespace examples

@@ -30,7 +30,6 @@ SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
                            mojo::InterfaceRequest<mojo::Surface> request)
     : SurfacesImpl(manager, id_namespace, client) {
   binding_.Bind(request.Pass());
-  binding_.client()->SetIdNamespace(id_namespace);
 }
 
 SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
@@ -39,12 +38,20 @@ SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
                            mojo::SurfacePtr* surface)
     : SurfacesImpl(manager, id_namespace, client) {
   binding_.Bind(surface);
-  binding_.client()->SetIdNamespace(id_namespace);
 }
 
 SurfacesImpl::~SurfacesImpl() {
   client_->OnDisplayBeingDestroyed(display_.get());
   factory_.DestroyAll();
+}
+
+void SurfacesImpl::GetIdNamespace(
+    const Surface::GetIdNamespaceCallback& callback) {
+  callback.Run(id_namespace_);
+}
+
+void SurfacesImpl::SetResourceReturner(mojo::ResourceReturnerPtr returner) {
+  returner_ = returner.Pass();
 }
 
 void SurfacesImpl::CreateSurface(uint32_t local_id) {
@@ -87,13 +94,13 @@ void SurfacesImpl::CreateGLES2BoundSurface(
 }
 
 void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
-  if (resources.empty())
+  if (resources.empty() || !returner_)
     return;
   mojo::Array<mojo::ReturnedResourcePtr> ret(resources.size());
   for (size_t i = 0; i < resources.size(); ++i) {
     ret[i] = mojo::ReturnedResource::From(resources[i]);
   }
-  binding_.client()->ReturnResources(ret.Pass());
+  returner_->ReturnResources(ret.Pass());
 }
 
 void SurfacesImpl::DisplayDamaged() {

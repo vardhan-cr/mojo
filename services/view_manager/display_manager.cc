@@ -99,7 +99,8 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
   native_viewport_->Show();
 
   app_connection_->ConnectToService("mojo:surfaces_service", &surface_);
-  surface_.set_client(this);
+  surface_->GetIdNamespace(base::Bind(&DefaultDisplayManager::SetIdNamespace,
+                                      base::Unretained(this)));
 
   mojo::NativeViewportEventDispatcherPtr event_dispatcher;
   app_connection_->ConnectToService(&event_dispatcher);
@@ -191,11 +192,6 @@ void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {
     qualified_id->local = kLocalSurfaceID;
     native_viewport_->SubmittedFrame(qualified_id.Pass());
   }
-}
-
-void DefaultDisplayManager::ReturnResources(
-    mojo::Array<mojo::ReturnedResourcePtr> resources) {
-  DCHECK_EQ(0u, resources.size());
 }
 
 void DefaultDisplayManager::OnConnectionError() {

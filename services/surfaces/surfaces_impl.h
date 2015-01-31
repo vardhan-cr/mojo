@@ -52,6 +52,8 @@ class SurfacesImpl : public mojo::Surface,
   ~SurfacesImpl() override;
 
   // Surface implementation.
+  void GetIdNamespace(const Surface::GetIdNamespaceCallback& callback) override;
+  void SetResourceReturner(mojo::ResourceReturnerPtr returner) override;
   void CreateSurface(uint32_t local_id) override;
   void SubmitFrame(uint32_t local_id,
                    mojo::FramePtr frame,
@@ -90,11 +92,12 @@ class SurfacesImpl : public mojo::Surface,
 
   cc::SurfaceManager* manager_;
   cc::SurfaceFactory factory_;
-  uint32_t id_namespace_;
+  const uint32_t id_namespace_;
   Client* client_;
   scoped_ptr<cc::Display> display_;
   mojo::ScopedMessagePipeHandle command_buffer_handle_;
   mojo::WeakBindingSet<ViewportParameterListener> parameter_listeners_;
+  mojo::ResourceReturnerPtr returner_;
   mojo::StrongBinding<Surface> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesImpl);

@@ -50,7 +50,6 @@ class DisplayManager {
 // DisplayManager implementation that connects to the services necessary to
 // actually display.
 class DefaultDisplayManager : public DisplayManager,
-                              public mojo::SurfaceClient,
                               public mojo::ErrorHandler {
  public:
   DefaultDisplayManager(
@@ -71,10 +70,7 @@ class DefaultDisplayManager : public DisplayManager,
 
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics);
 
-  // SurfaceClient:
-  void SetIdNamespace(uint32_t id_namespace) override;
-  void ReturnResources(
-      mojo::Array<mojo::ReturnedResourcePtr> resources) override;
+  void SetIdNamespace(uint32_t id_namespace);
 
   // ErrorHandler:
   void OnConnectionError() override;

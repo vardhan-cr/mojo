@@ -19,7 +19,7 @@ class Shell;
 class View;
 
 // BitmapUploader is useful if you want to draw a bitmap or color in a View.
-class BitmapUploader : public SurfaceClient {
+class BitmapUploader : public ResourceReturner {
  public:
   explicit BitmapUploader(View* view);
   virtual ~BitmapUploader();
@@ -45,8 +45,9 @@ class BitmapUploader : public SurfaceClient {
   uint32_t BindTextureForSize(const Size size);
   uint32_t TextureFormat();
 
-  // SurfaceClient implementation.
-  void SetIdNamespace(uint32_t id_namespace) override;
+  void SetIdNamespace(uint32_t id_namespace);
+
+  // ResourceReturner implementation.
   void ReturnResources(Array<ReturnedResourcePtr> resources) override;
 
   View* view_;
@@ -65,6 +66,7 @@ class BitmapUploader : public SurfaceClient {
   uint32_t id_namespace_;
   uint32_t local_id_;
   base::hash_map<uint32_t, uint32_t> resource_to_texture_id_map_;
+  mojo::Binding<mojo::ResourceReturner> returner_binding_;
 
   DISALLOW_COPY_AND_ASSIGN(BitmapUploader);
 };
