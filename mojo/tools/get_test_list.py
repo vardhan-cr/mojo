@@ -178,7 +178,7 @@ def GetTestList(config):
     AddEntry("NaCl tests",
              [os.path.join(build_dir, "monacl_shell"),
               os.path.join(build_dir, "irt_" + config.target_arch,
-                           "irt_core.nexe"),
+                           "irt_mojo.nexe"),
               os.path.join(build_dir, "clang_newlib_" + config.target_arch,
                            "monacl_test.nexe")])
 

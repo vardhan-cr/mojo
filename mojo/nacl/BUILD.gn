@@ -86,11 +86,23 @@ if (is_nacl) {
       ":mojo",
     ]
   }
+
+  executable("irt_mojo") {
+    cflags_c = [ "-std=c99" ]
+    sources = [
+      "irt_entry_mojo.c",
+    ]
+
+    deps = [
+      "//native_client/build/config/nacl:nacl_base",
+      "//native_client/src/untrusted/irt:irt_core_lib",
+    ]
+  }
 }
 
 group("mojo_nacl") {
   deps = [
-    "//native_client/src/untrusted/irt:irt_core(//native_client/build/toolchain/nacl:irt_${cpu_arch})",
+    ":irt_mojo(//native_client/build/toolchain/nacl:irt_${cpu_arch})",
   ]
 }
 
