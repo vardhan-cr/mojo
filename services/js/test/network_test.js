@@ -52,8 +52,8 @@ define("main", [
   }
 
   class NetworkTest extends Application {
-    acceptConnection(url, serviceProvider) {
-      serviceProvider.provideService(
+    acceptConnection(url, serviceExchange) {
+      serviceExchange.provideService(
           NetworkTestService,
           NetworkTestServiceImpl.bind(null, this));
     }

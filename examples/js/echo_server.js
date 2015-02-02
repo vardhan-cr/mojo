@@ -28,8 +28,8 @@ define("main", [
       echoServerApp = this;
     }
 
-    acceptConnection(initiatorURL, initiatorSP) {
-      initiatorSP.provideService(Echo, EchoImpl);
+    acceptConnection(initiatorURL, initiatorServiceExchange) {
+      initiatorServiceExchange.provideService(Echo, EchoImpl);
     }
   }
 

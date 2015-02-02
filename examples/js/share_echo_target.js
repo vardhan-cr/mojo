@@ -35,17 +35,17 @@ define("main", [
       shareEchoTargetApp = this;
     }
 
-    acceptConnection(initiatorURL, shareEchoSP) {
-      // The shareEchoSP parameter is-a JS ServiceProvider that's
-      // connected to the share_echo.js application. We can request the
-      // share_echo.js implementation of Echo and provide the
-      // share_echo.js application with our own Echo implementation.
-      var echoService = shareEchoSP.requestService(Echo);
+    acceptConnection(initiatorURL, shareEchoServiceExchange) {
+      // The shareEchoServiceExchange parameter is-a JS ServiceExchange
+      // that's connected to the share_echo.js application. We can
+      // request the share_echo.js implementation of Echo and provide
+      // the share_echo.js application with our own Echo implementation.
+      var echoService = shareEchoServiceExchange.requestService(Echo);
       echoService.echoString("ShareEchoTarget").then(function(response) {
         console.log(response.value);
         quitIfEverythingIsDone("requestedService");
       });
-      shareEchoSP.provideService(Echo, EchoImpl);
+      shareEchoServiceExchange.provideService(Echo, EchoImpl);
     }
   }
 

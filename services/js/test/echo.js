@@ -37,9 +37,9 @@ define("main", [
   }
 
   class Echo extends Application {
-    acceptConnection(url, serviceProvider) {
+    acceptConnection(url, serviceExchange) {
       echoApp = this;
-      serviceProvider.provideService(EchoService, EchoServiceImpl);
+      serviceExchange.provideService(EchoService, EchoServiceImpl);
     }
   }
 

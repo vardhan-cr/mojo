@@ -24,8 +24,8 @@ define("main", [
   }
 
   class PingPongTarget extends Application {
-    acceptConnection(url, serviceProvider) {
-      serviceProvider.provideService(
+    acceptConnection(url, serviceExchange) {
+      serviceExchange.provideService(
           PingPongService, PingPongServiceImpl.bind(null, this));
     }
   }
