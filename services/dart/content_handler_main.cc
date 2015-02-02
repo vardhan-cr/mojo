@@ -25,8 +25,8 @@ class DartContentHandler : public mojo::ApplicationDelegate,
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
-    // TODO(zra): Maybe have two different content handlers, one with checking
-    // and one without.
+    // TODO(zra): Modify VM to allow setting checked-mode flags on a per-Isolate
+    // basis. Figure out how to specify running in checked-mode from a script.
     bool success = mojo::dart::DartController::Initialize(true);
     if (!success) {
       LOG(ERROR) << "Dart VM Initialization failed";

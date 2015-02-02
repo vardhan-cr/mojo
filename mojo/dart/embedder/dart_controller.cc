@@ -508,11 +508,12 @@ bool DartController::Initialize(bool checked_mode) {
   int numArgs = 0;
   const char** args = nullptr;
 
-  const int kNumArgs = 3;
+  const int kNumArgs = 4;
   const char* checkedArgs[kNumArgs];
   checkedArgs[0] = "--enable_asserts";
   checkedArgs[1] = "--enable_type_checks";
   checkedArgs[2] = "--error_on_bad_type";
+  checkedArgs[3] = "--error_on_bad_override";
 
   if (checked_mode) {
     numArgs = kNumArgs;
