@@ -1,6 +1,0 @@
-include_rules = [
-  "+base",
-  "+gpu/command_buffer/client",
-  "+mojo/public",
-  "+mojo/services/public",
-]

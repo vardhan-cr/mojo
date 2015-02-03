@@ -1,8 +1,0 @@
-include_rules = [
-  "+base",
-  "+gpu/command_buffer/client",
-  "+gpu/skia_bindings",
-  "+mojo/gpu",
-  "+skia",
-  "+third_party/skia",
-]

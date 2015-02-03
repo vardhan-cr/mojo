@@ -1,8 +1,0 @@
-include_rules = [
-  "+base",
-  "+build",
-  "+mojo",
-  "+services",
-  "+testing",
-  "-mojo/edk/system",
-]
