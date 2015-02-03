@@ -39,7 +39,9 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
   // ---------------------------------------------------------------------------
 
   // These methods are only to be used by via the embedder API (and internally):
-  explicit Core(scoped_ptr<embedder::PlatformSupport> platform_support);
+
+  // |*platform_support| must outlive this object.
+  explicit Core(embedder::PlatformSupport* platform_support);
   virtual ~Core();
 
   // Adds |dispatcher| to the handle table, returning the handle for it. Returns
@@ -59,7 +61,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
                        base::Callback<void(MojoResult)> callback);
 
   embedder::PlatformSupport* platform_support() const {
-    return platform_support_.get();
+    return platform_support_;
   }
 
   // ---------------------------------------------------------------------------
@@ -162,7 +164,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Core {
                               uint32_t* result_index,
                               HandleSignalsState* signals_states);
 
-  const scoped_ptr<embedder::PlatformSupport> platform_support_;
+  embedder::PlatformSupport* const platform_support_;
 
   // TODO(vtl): |handle_table_lock_| should be a reader-writer lock (if only we
   // had them).

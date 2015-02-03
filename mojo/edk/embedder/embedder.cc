@@ -33,9 +33,9 @@ system::ChannelId MakeChannel(
   DCHECK(platform_handle.is_valid());
 
   // Create and initialize a |system::Channel|.
-  DCHECK(internal::g_core);
+  DCHECK(internal::g_platform_support);
   scoped_refptr<system::Channel> channel =
-      new system::Channel(internal::g_core->platform_support());
+      new system::Channel(internal::g_platform_support);
   channel->Init(system::RawChannel::Create(platform_handle.Pass()));
   channel->SetBootstrapEndpoint(channel_endpoint);
 
@@ -74,14 +74,21 @@ void CreateChannelHelper(
 namespace internal {
 
 // Declared in embedder_internal.h.
+PlatformSupport* g_platform_support = nullptr;
 system::Core* g_core = nullptr;
 system::ChannelManager* g_channel_manager = nullptr;
 
 }  // namespace internal
 
 void Init(scoped_ptr<PlatformSupport> platform_support) {
+  DCHECK(platform_support);
+
+  DCHECK(!internal::g_platform_support);
+  internal::g_platform_support = platform_support.release();
+
   DCHECK(!internal::g_core);
-  internal::g_core = new system::Core(platform_support.Pass());
+  internal::g_core = new system::Core(internal::g_platform_support);
+
   DCHECK(!internal::g_channel_manager);
   internal::g_channel_manager = new system::ChannelManager();
 }
