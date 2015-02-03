@@ -47,27 +47,6 @@ system::ChannelId MakeChannelId() {
   return static_cast<system::ChannelId>(-new_counter_value);
 }
 
-// Helper for |CreateChannel...()|. Returns 0 on failure. Called on the channel
-// creation thread.
-system::ChannelId MakeChannel(
-    ScopedPlatformHandle platform_handle,
-    scoped_refptr<system::ChannelEndpoint> channel_endpoint) {
-  DCHECK(platform_handle.is_valid());
-
-  // Create and initialize a |system::Channel|.
-  DCHECK(internal::g_platform_support);
-  scoped_refptr<system::Channel> channel =
-      new system::Channel(internal::g_platform_support);
-  channel->Init(system::RawChannel::Create(platform_handle.Pass()));
-  channel->SetBootstrapEndpoint(channel_endpoint);
-
-  system::ChannelId id = MakeChannelId();
-  DCHECK(internal::g_channel_manager);
-  internal::g_channel_manager->AddChannel(id, channel,
-                                          base::MessageLoopProxy::current());
-  return id;
-}
-
 // Helper for |CreateChannel()|. Called on the channel creation thread.
 void CreateChannelHelper(
     ScopedPlatformHandle platform_handle,
@@ -75,8 +54,9 @@ void CreateChannelHelper(
     scoped_refptr<system::ChannelEndpoint> channel_endpoint,
     DidCreateChannelCallback callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
-  channel_info->channel_id =
-      MakeChannel(platform_handle.Pass(), channel_endpoint);
+  channel_info->channel_id = MakeChannelId();
+  internal::g_channel_manager->CreateChannelOnIOThread(
+      channel_info->channel_id, platform_handle.Pass(), channel_endpoint);
 
   // Hand the channel back to the embedder.
   if (callback_thread_task_runner) {
@@ -108,7 +88,8 @@ void Init(scoped_ptr<PlatformSupport> platform_support) {
   internal::g_core = new system::Core(internal::g_platform_support);
 
   DCHECK(!internal::g_channel_manager);
-  internal::g_channel_manager = new system::ChannelManager();
+  internal::g_channel_manager =
+      new system::ChannelManager(internal::g_platform_support);
 }
 
 Configuration* GetConfiguration() {
@@ -130,8 +111,9 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
 
-  *channel_info =
-      new ChannelInfo(MakeChannel(platform_handle.Pass(), channel_endpoint));
+  *channel_info = new ChannelInfo(MakeChannelId());
+  internal::g_channel_manager->CreateChannelOnIOThread(
+      (*channel_info)->channel_id, platform_handle.Pass(), channel_endpoint);
 
   return rv.Pass();
 }

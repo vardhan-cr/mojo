@@ -42,7 +42,7 @@ class ChannelManagerTest : public testing::Test {
 };
 
 TEST_F(ChannelManagerTest, Basic) {
-  ChannelManager cm;
+  ChannelManager cm(platform_support());
 
   // Hang on to a ref to the |Channel|, so that we can check that the
   // |ChannelManager| takes/releases refs to it.
@@ -68,7 +68,7 @@ TEST_F(ChannelManagerTest, Basic) {
 }
 
 TEST_F(ChannelManagerTest, TwoChannels) {
-  ChannelManager cm;
+  ChannelManager cm(platform_support());
 
   // Hang on to a ref to each |Channel|, so that we can check that the
   // |ChannelManager| takes/releases refs to them.
@@ -161,7 +161,7 @@ class OtherThread : public base::SimpleThread {
 };
 
 TEST_F(ChannelManagerTest, CallsFromOtherThread) {
-  ChannelManager cm;
+  ChannelManager cm(platform_support());
 
   // Hang on to a ref to the |Channel|, so that we can check that the
   // |ChannelManager| takes/releases refs to it.

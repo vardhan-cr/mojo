@@ -26,13 +26,31 @@ void ShutdownChannelHelper(const ChannelInfo& channel_info) {
 
 }  // namespace
 
-ChannelManager::ChannelManager() {
+ChannelManager::ChannelManager(embedder::PlatformSupport* platform_support)
+    : platform_support_(platform_support) {
 }
 
 ChannelManager::~ChannelManager() {
   // No need to take the lock.
   for (const auto& map_elem : channel_infos_)
     ShutdownChannelHelper(map_elem.second);
+}
+
+void ChannelManager::CreateChannelOnIOThread(
+    ChannelId channel_id,
+    embedder::ScopedPlatformHandle platform_handle,
+    scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint) {
+  DCHECK_NE(channel_id, kInvalidChannelId);
+  DCHECK(platform_handle.is_valid());
+  DCHECK(bootstrap_channel_endpoint);
+
+  // Create and initialize a |system::Channel|.
+  scoped_refptr<system::Channel> channel =
+      new system::Channel(platform_support_);
+  channel->Init(system::RawChannel::Create(platform_handle.Pass()));
+  channel->SetBootstrapEndpoint(bootstrap_channel_endpoint);
+
+  AddChannel(channel_id, channel, base::MessageLoopProxy::current());
 }
 
 void ChannelManager::AddChannel(
