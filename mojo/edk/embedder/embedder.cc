@@ -4,6 +4,7 @@
 
 #include "mojo/edk/embedder/embedder.h"
 
+#include "base/atomicops.h"
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -25,6 +26,27 @@ namespace embedder {
 
 namespace {
 
+// TODO(vtl): For now, we need this to be thread-safe (since theoretically we
+// currently support multiple channel creation threads -- possibly one per
+// channel). Eventually, we won't need it to be thread-safe (we'll require a
+// single I/O thread), and eventually we won't need it at all. Remember to
+// remove the base/atomicops.h include.
+system::ChannelId MakeChannelId() {
+  // Note that |AtomicWord| is signed.
+  static base::subtle::AtomicWord counter = 0;
+
+  base::subtle::AtomicWord new_counter_value =
+      base::subtle::NoBarrier_AtomicIncrement(&counter, 1);
+  // Don't allow the counter to wrap. Note that any (strictly) positive value is
+  // a valid |ChannelId| (and |NoBarrier_AtomicIncrement()| returns the value
+  // post-increment).
+  CHECK_GT(new_counter_value, 0);
+  // Use "negative" values for these IDs, so that we'll also be able to use
+  // "positive" "process identifiers" (see connection_manager.h) as IDs (and
+  // they won't conflict).
+  return static_cast<system::ChannelId>(-new_counter_value);
+}
+
 // Helper for |CreateChannel...()|. Returns 0 on failure. Called on the channel
 // creation thread.
 system::ChannelId MakeChannel(
@@ -39,11 +61,7 @@ system::ChannelId MakeChannel(
   channel->Init(system::RawChannel::Create(platform_handle.Pass()));
   channel->SetBootstrapEndpoint(channel_endpoint);
 
-  // You can use any nonzero, unique (in the set of |Channel|s managed by the
-  // given |ChannelManager|) value as ID. So here we just use the address of the
-  // channel.
-  system::ChannelId id = static_cast<system::ChannelId>(
-      reinterpret_cast<uintptr_t>(channel.get()));
+  system::ChannelId id = MakeChannelId();
   DCHECK(internal::g_channel_manager);
   internal::g_channel_manager->AddChannel(id, channel,
                                           base::MessageLoopProxy::current());
