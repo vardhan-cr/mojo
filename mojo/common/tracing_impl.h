@@ -5,42 +5,27 @@
 #ifndef MOJO_COMMON_TRACING_IMPL_H_
 #define MOJO_COMMON_TRACING_IMPL_H_
 
-#include "base/basictypes.h"
-#include "base/files/file_path.h"
-#include "base/memory/ref_counted.h"
-#include "base/memory/ref_counted_memory.h"
-#include "mojo/public/cpp/bindings/strong_binding.h"
+#include "base/macros.h"
+#include "mojo/public/cpp/application/interface_factory.h"
 #include "services/tracing/tracing.mojom.h"
 
 namespace mojo {
 
 class ApplicationImpl;
 
-class TracingImpl : public tracing::TraceController {
+class TracingImpl : public InterfaceFactory<tracing::TraceController> {
  public:
-  // This constructs a TracingImpl and connects to the tracing service. The
-  // lifetime of the TracingImpl is bound to the connection to the tracing
-  // service.
-  static void Create(ApplicationImpl* app);
+  TracingImpl();
+  ~TracingImpl() override;
 
-  // This constructs a TracingImpl around a tracing::TraceDataCollectorPtr
-  // already bound to the service.
-  static void Create(tracing::TraceDataCollectorPtr ptr);
-
-  virtual ~TracingImpl();
+  // This connects to the tracing service and registers ourselves to provide
+  // tracing data on demand.
+  void Initialize(ApplicationImpl* app);
 
  private:
-  explicit TracingImpl(ApplicationImpl* app);
-  explicit TracingImpl(tracing::TraceDataCollectorPtr ptr);
-
-  // Overridden from tracing::TraceController:
-  void StartTracing(const String& categories) override;
-  void StopTracing() override;
-
-  void SendChunk(const scoped_refptr<base::RefCountedString>& events_str,
-                 bool has_more_events);
-
-  StrongBinding<tracing::TraceController> binding_;
+  // InterfaceFactory<tracing::TraceController> implementation.
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<tracing::TraceController> request) override;
 
   DISALLOW_COPY_AND_ASSIGN(TracingImpl);
 };

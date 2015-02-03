@@ -6,19 +6,16 @@ module tracing;
 
 // To particate in the tracing ecosystem, implement the TraceController
 // interface and connect to the tracing app. Then, when the controller's Start()
-// function is called collect tracing data and pass it back via the
+// function is called collect tracing data and pass it back via the provided
 // TraceDataCollector interface up until Stop() is called.
 
-[Client=TraceDataCollector]
 interface TraceController {
-  StartTracing(string categories);
+  StartTracing(string categories, TraceDataCollector collector);
   StopTracing();
 };
 
-[Client=TraceController]
 interface TraceDataCollector {
   DataCollected(string json);
-  EndTracing();
 };
 
 interface TraceCoordinator {

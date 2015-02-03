@@ -18,6 +18,7 @@ mojo_native_application("window_manager") {
   deps = [
     "//base",
     "//mojo/application",
+    "//mojo/common:tracing_impl",
     "//mojo/services/view_manager/public/cpp",
   ]
 }

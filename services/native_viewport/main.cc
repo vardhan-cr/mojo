@@ -34,7 +34,7 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
   void Initialize(mojo::ApplicationImpl* application) override {
     app_ = application;
 
-    mojo::TracingImpl::Create(application);
+    tracing_.Initialize(app_);
 
     if (app_->HasArg(mojo::kUseTestConfig))
       gfx::GLSurface::InitializeOneOffForTests();
@@ -69,6 +69,8 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
   mojo::ApplicationImpl* app_;
   scoped_refptr<gles2::GpuImpl::State> gpu_state_;
   bool is_headless_;
+  mojo::TracingImpl tracing_;
+
   DISALLOW_COPY_AND_ASSIGN(NativeViewportAppDelegate);
 };
 }

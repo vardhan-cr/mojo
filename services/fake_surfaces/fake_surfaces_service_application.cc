@@ -5,9 +5,9 @@
 #include "services/fake_surfaces/fake_surfaces_service_application.h"
 
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 
 using mojo::InterfaceRequest;
@@ -77,7 +77,7 @@ FakeSurfacesServiceApplication::~FakeSurfacesServiceApplication() {
 }
 
 void FakeSurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
-  mojo::TracingImpl::Create(app);
+  tracing_.Initialize(app);
 }
 
 bool FakeSurfacesServiceApplication::ConfigureIncomingConnection(

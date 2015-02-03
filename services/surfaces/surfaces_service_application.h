@@ -8,6 +8,7 @@
 #include "base/macros.h"
 #include "base/timer/timer.h"
 #include "cc/surfaces/surface_manager.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "services/surfaces/surfaces_impl.h"
@@ -52,6 +53,7 @@ class SurfacesServiceApplication
   uint32_t next_id_namespace_;
   cc::Display* display_;
   scoped_ptr<SurfacesScheduler> scheduler_;
+  mojo::TracingImpl tracing_;
 
   DISALLOW_COPY_AND_ASSIGN(SurfacesServiceApplication);
 };

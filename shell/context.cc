@@ -18,6 +18,7 @@
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "build/build_config.h"
+#include "mojo/common/trace_controller_impl.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
@@ -146,6 +147,26 @@ bool ConfigureURLMappings(base::CommandLine* command_line,
   return true;
 }
 
+class TracingServiceProvider : public ServiceProvider {
+ public:
+  explicit TracingServiceProvider(InterfaceRequest<ServiceProvider> request)
+      : binding_(this, request.Pass()) {}
+  ~TracingServiceProvider() override {}
+
+  void ConnectToService(const mojo::String& service_name,
+                        ScopedMessagePipeHandle client_handle) override {
+    if (service_name == tracing::TraceController::Name_) {
+      new TraceControllerImpl(
+          MakeRequest<tracing::TraceController>(client_handle.Pass()));
+    }
+  }
+
+ private:
+  StrongBinding<ServiceProvider> binding_;
+
+  DISALLOW_COPY_AND_ASSIGN(TracingServiceProvider);
+};
+
 }  // namespace
 
 Context::Context() : application_manager_(this) {
@@ -229,10 +250,11 @@ bool Context::Init() {
   application_manager_.set_default_loader(
       scoped_ptr<ApplicationLoader>(dynamic_application_loader));
 
-  tracing::TraceDataCollectorPtr trace_data_collector_ptr;
-  application_manager_.ConnectToService(GURL("mojo:tracing"),
-                                        &trace_data_collector_ptr);
-  TracingImpl::Create(trace_data_collector_ptr.Pass());
+  ServiceProviderPtr tracing_service_provider_ptr;
+  new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));
+  application_manager_.ConnectToApplication(
+      GURL("mojo:tracing"), GURL(""), nullptr,
+      tracing_service_provider_ptr.Pass());
 
   if (listener_)
     listener_->WaitForListening();

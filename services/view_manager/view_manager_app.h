@@ -6,6 +6,7 @@
 #define SERVICES_VIEW_MANAGER_VIEW_MANAGER_APP_H_
 
 #include "base/memory/scoped_ptr.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/binding.h"
@@ -60,6 +61,7 @@ class ViewManagerApp
       wm_internal_client_binding_;
   mojo::WindowManagerInternalPtr wm_internal_;
   scoped_ptr<ConnectionManager> connection_manager_;
+  mojo::TracingImpl tracing_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewManagerApp);
 };

@@ -6,6 +6,7 @@
 #define FAKE_SERVICES_SURFACES_SURFACES_SERVICE_APPLICATION_H_
 
 #include "base/macros.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
@@ -34,6 +35,7 @@ class FakeSurfacesServiceApplication
 
  private:
   uint32_t next_id_namespace_;
+  mojo::TracingImpl tracing_;
 
   DISALLOW_COPY_AND_ASSIGN(FakeSurfacesServiceApplication);
 };

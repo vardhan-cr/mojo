@@ -65,6 +65,8 @@ test("mojo_common_unittests") {
 
 source_set("tracing_impl") {
   sources = [
+    "trace_controller_impl.cc",
+    "trace_controller_impl.h",
     "tracing_impl.cc",
     "tracing_impl.h",
   ]

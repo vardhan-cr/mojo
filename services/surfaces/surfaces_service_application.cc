@@ -6,7 +6,6 @@
 
 #include "cc/surfaces/display.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "services/surfaces/surfaces_impl.h"
 
@@ -20,7 +19,7 @@ SurfacesServiceApplication::~SurfacesServiceApplication() {
 }
 
 void SurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
-  mojo::TracingImpl::Create(app);
+  tracing_.Initialize(app);
   scheduler_.reset(new SurfacesScheduler(this));
 }
 
