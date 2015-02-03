@@ -133,9 +133,10 @@ void HttpServerPropertiesManager::Clear(const base::Closure& completion) {
   UpdatePrefsFromCacheOnNetworkThread(completion);
 }
 
-bool HttpServerPropertiesManager::SupportsSpdy(const HostPortPair& server) {
+bool HttpServerPropertiesManager::SupportsRequestPriority(
+    const HostPortPair& server) {
   DCHECK(network_task_runner_->RunsTasksOnCurrentThread());
-  return http_server_properties_impl_->SupportsSpdy(server);
+  return http_server_properties_impl_->SupportsRequestPriority(server);
 }
 
 void HttpServerPropertiesManager::SetSupportsSpdy(const HostPortPair& server,
@@ -146,14 +147,13 @@ void HttpServerPropertiesManager::SetSupportsSpdy(const HostPortPair& server,
   ScheduleUpdatePrefsOnNetworkThread();
 }
 
-bool HttpServerPropertiesManager::RequiresHTTP11(
-    const net::HostPortPair& server) {
+bool HttpServerPropertiesManager::RequiresHTTP11(const HostPortPair& server) {
   DCHECK(network_task_runner_->RunsTasksOnCurrentThread());
   return http_server_properties_impl_->RequiresHTTP11(server);
 }
 
 void HttpServerPropertiesManager::SetHTTP11Required(
-    const net::HostPortPair& server) {
+    const HostPortPair& server) {
   DCHECK(network_task_runner_->RunsTasksOnCurrentThread());
 
   http_server_properties_impl_->SetHTTP11Required(server);
@@ -613,7 +613,7 @@ void HttpServerPropertiesManager::UpdatePrefsFromCacheOnNetworkThread(
        it != map.end() && count < kMaxAlternateProtocolHostsToPersist; ++it) {
     const HostPortPair& server = it->first;
     std::string canonical_suffix =
-        http_server_properties_impl_->GetCanonicalSuffix(server);
+        http_server_properties_impl_->GetCanonicalSuffix(server.host());
     if (!canonical_suffix.empty()) {
       if (persisted_map.find(canonical_suffix) != persisted_map.end())
         continue;

@@ -9,11 +9,11 @@
 
 #include "base/basictypes.h"
 #include "base/containers/hash_tables.h"
-#include "base/debug/trace_event_argument.h"
 #include "base/json/json_writer.h"
 #include "base/metrics/histogram.h"
 #include "base/stl_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/animation/animation_id_provider.h"
 #include "cc/animation/scroll_offset_animation_curve.h"
 #include "cc/animation/scrollbar_animation_controller.h"
@@ -88,10 +88,10 @@ class ViewportAnchor {
   ViewportAnchor(LayerImpl* inner_scroll, LayerImpl* outer_scroll)
   : inner_(inner_scroll),
     outer_(outer_scroll) {
-    viewport_in_content_coordinates_ = inner_->TotalScrollOffset();
+    viewport_in_content_coordinates_ = inner_->CurrentScrollOffset();
 
     if (outer_)
-      viewport_in_content_coordinates_ += outer_->TotalScrollOffset();
+      viewport_in_content_coordinates_ += outer_->CurrentScrollOffset();
   }
 
   void ResetViewportToAnchoredPosition() {
@@ -100,8 +100,8 @@ class ViewportAnchor {
     inner_->ClampScrollToMaxScrollOffset();
     outer_->ClampScrollToMaxScrollOffset();
 
-    gfx::ScrollOffset viewport_location = inner_->TotalScrollOffset() +
-                                          outer_->TotalScrollOffset();
+    gfx::ScrollOffset viewport_location =
+        inner_->CurrentScrollOffset() + outer_->CurrentScrollOffset();
 
     gfx::Vector2dF delta =
         viewport_in_content_coordinates_.DeltaFrom(viewport_location);
@@ -229,7 +229,7 @@ LayerTreeHostImpl::LayerTreeHostImpl(
       gpu_memory_buffer_manager_(gpu_memory_buffer_manager),
       id_(id),
       requires_high_res_to_draw_(false),
-      required_for_draw_tile_is_top_of_raster_queue_(false) {
+      is_likely_to_require_a_draw_(false) {
   DCHECK(proxy_->IsImplThread());
   DidVisibilityChange(this, visible_);
   animation_registrar_->set_supports_scroll_animations(
@@ -305,8 +305,6 @@ void LayerTreeHostImpl::BeginCommit() {
 void LayerTreeHostImpl::CommitComplete() {
   TRACE_EVENT0("cc", "LayerTreeHostImpl::CommitComplete");
 
-  if (pending_tree_)
-    pending_tree_->ApplyScrollDeltasSinceBeginMainFrame();
   sync_tree()->set_needs_update_draw_properties();
 
   if (settings_.impl_side_painting) {
@@ -457,6 +455,18 @@ bool LayerTreeHostImpl::IsCurrentlyScrollingLayerAt(
   LayerImpl* scrolling_layer_impl = FindScrollLayerForDeviceViewportPoint(
       device_viewport_point, type, layer_impl, &scroll_on_main_thread, NULL);
   return CurrentlyScrollingLayer() == scrolling_layer_impl;
+}
+
+bool LayerTreeHostImpl::HaveWheelEventHandlersAt(
+    const gfx::Point& viewport_point) {
+  gfx::PointF device_viewport_point =
+      gfx::ScalePoint(viewport_point, device_scale_factor_);
+
+  LayerImpl* layer_impl =
+      active_tree_->FindLayerWithWheelHandlerThatIsHitByPoint(
+          device_viewport_point);
+
+  return layer_impl != NULL;
 }
 
 bool LayerTreeHostImpl::HaveTouchEventHandlersAt(
@@ -752,7 +762,7 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
 
     occlusion_tracker.EnterLayer(it);
 
-    AppendQuadsData append_quads_data(target_render_pass_id);
+    AppendQuadsData append_quads_data;
 
     if (it.represents_target_render_surface()) {
       if (it->HasCopyRequest()) {
@@ -789,7 +799,6 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
             RenderPass* render_pass =
                 frame->render_passes_by_id[contributing_render_pass_id];
 
-            AppendQuadsData append_quads_data(render_pass->id);
             AppendQuadsForLayer(render_pass,
                                 *it,
                                 occlusion_tracker,
@@ -1200,23 +1209,8 @@ scoped_ptr<RasterTilePriorityQueue> LayerTreeHostImpl::BuildRasterQueue(
   TRACE_EVENT0("cc", "LayerTreeHostImpl::BuildRasterQueue");
   picture_layer_pairs_.clear();
   GetPictureLayerImplPairs(&picture_layer_pairs_, true);
-  scoped_ptr<RasterTilePriorityQueue> queue(RasterTilePriorityQueue::Create(
-      picture_layer_pairs_, tree_priority, type));
-
-  if (!queue->IsEmpty()) {
-    // Only checking the Top() tile here isn't a definite answer that there is
-    // or isn't something required for draw in this raster queue. It's just a
-    // heuristic to let us hit the common case and proactively tell the
-    // scheduler that we expect to draw within each vsync until we get all the
-    // tiles ready to draw. If we happen to miss a required for draw tile here,
-    // then we will miss telling the scheduler each frame that we intend to draw
-    // so it may make worse scheduling decisions.
-    required_for_draw_tile_is_top_of_raster_queue_ =
-        queue->Top()->required_for_draw();
-  } else {
-    required_for_draw_tile_is_top_of_raster_queue_ = false;
-  }
-  return queue;
+  return RasterTilePriorityQueue::Create(picture_layer_pairs_, tree_priority,
+                                         type);
 }
 
 scoped_ptr<EvictionTilePriorityQueue> LayerTreeHostImpl::BuildEvictionQueue(
@@ -1227,6 +1221,15 @@ scoped_ptr<EvictionTilePriorityQueue> LayerTreeHostImpl::BuildEvictionQueue(
   GetPictureLayerImplPairs(&picture_layer_pairs_, false);
   queue->Build(picture_layer_pairs_, tree_priority);
   return queue;
+}
+
+void LayerTreeHostImpl::SetIsLikelyToRequireADraw(
+    bool is_likely_to_require_a_draw) {
+  // Proactively tell the scheduler that we expect to draw within each vsync
+  // until we get all the tiles ready to draw. If we happen to miss a required
+  // for draw tile here, then we will miss telling the scheduler each frame that
+  // we intend to draw so it may make worse scheduling decisions.
+  is_likely_to_require_a_draw_ = is_likely_to_require_a_draw;
 }
 
 const std::vector<PictureLayerImpl*>& LayerTreeHostImpl::GetPictureLayers()
@@ -1242,7 +1245,7 @@ void LayerTreeHostImpl::NotifyReadyToDraw() {
   // Tiles that are ready will cause NotifyTileStateChanged() to be called so we
   // don't need to schedule a draw here. Just stop WillBeginImplFrame() from
   // causing optimistic requests to draw a frame.
-  required_for_draw_tile_is_top_of_raster_queue_ = false;
+  is_likely_to_require_a_draw_ = false;
 
   client_->NotifyReadyToDraw();
 }
@@ -1612,10 +1615,10 @@ void LayerTreeHostImpl::WillBeginImplFrame(const BeginFrameArgs& args) {
   // Cache the begin impl frame interval
   begin_impl_frame_interval_ = args.interval;
 
-  if (required_for_draw_tile_is_top_of_raster_queue_) {
-    // Optimistically schedule a draw, as a tile required for draw is at the top
-    // of the current raster queue. This will let us expect the tile to complete
-    // and draw it within the impl frame we are beginning now.
+  if (is_likely_to_require_a_draw_) {
+    // Optimistically schedule a draw. This will let us expect the tile manager
+    // to complete its work so that we can draw new tiles within the impl frame
+    // we are beginning now.
     SetNeedsRedraw();
   }
 }
@@ -1956,7 +1959,8 @@ scoped_ptr<Rasterizer> LayerTreeHostImpl::CreateRasterizer() {
   ContextProvider* context_provider = output_surface_->context_provider();
   if (use_gpu_rasterization_ && context_provider) {
     return GpuRasterizer::Create(context_provider, resource_provider_.get(),
-                                 settings_.use_distance_field_text, false);
+                                 settings_.use_distance_field_text, false,
+                                 settings_.gpu_rasterization_msaa_sample_count);
   }
   return SoftwareRasterizer::Create();
 }
@@ -2401,7 +2405,7 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollAnimated(
       if (!layer_impl->scrollable())
         continue;
 
-      gfx::ScrollOffset current_offset = layer_impl->TotalScrollOffset();
+      gfx::ScrollOffset current_offset = layer_impl->CurrentScrollOffset();
       gfx::ScrollOffset target_offset =
           ScrollOffsetWithDelta(current_offset, pending_delta);
       target_offset.SetToMax(gfx::ScrollOffset());
@@ -2491,14 +2495,15 @@ gfx::Vector2dF LayerTreeHostImpl::ScrollLayerWithViewportSpaceDelta(
   local_end_point.Scale(width_scale, height_scale);
 
   // Apply the scroll delta.
-  gfx::Vector2dF previous_delta = layer_impl->ScrollDelta();
+  gfx::ScrollOffset previous_offset = layer_impl->CurrentScrollOffset();
   layer_impl->ScrollBy(local_end_point - local_start_point);
+  gfx::ScrollOffset scrolled =
+      layer_impl->CurrentScrollOffset() - previous_offset;
 
   // Get the end point in the layer's content space so we can apply its
   // ScreenSpaceTransform.
-  gfx::PointF actual_local_end_point = local_start_point +
-                                       layer_impl->ScrollDelta() -
-                                       previous_delta;
+  gfx::PointF actual_local_end_point =
+      local_start_point + gfx::Vector2dF(scrolled.x(), scrolled.y());
   gfx::PointF actual_local_content_end_point =
       gfx::ScalePoint(actual_local_end_point,
                       1.f / width_scale,
@@ -2522,11 +2527,13 @@ static gfx::Vector2dF ScrollLayerWithLocalDelta(
     LayerImpl* layer_impl,
     const gfx::Vector2dF& local_delta,
     float page_scale_factor) {
-  gfx::Vector2dF previous_delta(layer_impl->ScrollDelta());
+  gfx::ScrollOffset previous_offset = layer_impl->CurrentScrollOffset();
   gfx::Vector2dF delta = local_delta;
   delta.Scale(1.f / page_scale_factor);
   layer_impl->ScrollBy(delta);
-  return layer_impl->ScrollDelta() - previous_delta;
+  gfx::ScrollOffset scrolled =
+      layer_impl->CurrentScrollOffset() - previous_offset;
+  return gfx::Vector2dF(scrolled.x(), scrolled.y());
 }
 
 bool LayerTreeHostImpl::ShouldTopControlsConsumeScroll(
@@ -2976,14 +2983,13 @@ static void CollectScrollDeltas(ScrollAndScaleSet* scroll_info,
   if (!layer_impl)
     return;
 
-  gfx::Vector2d scroll_delta =
-      gfx::ToFlooredVector2d(layer_impl->ScrollDelta());
+  gfx::ScrollOffset scroll_delta = layer_impl->PullDeltaForMainThread();
+
   if (!scroll_delta.IsZero()) {
     LayerTreeHostCommon::ScrollUpdateInfo scroll;
     scroll.layer_id = layer_impl->id();
-    scroll.scroll_delta = scroll_delta;
+    scroll.scroll_delta = gfx::Vector2d(scroll_delta.x(), scroll_delta.y());
     scroll_info->scrolls.push_back(scroll);
-    layer_impl->SetSentScrollDelta(scroll_delta);
   }
 
   for (size_t i = 0; i < layer_impl->children().size(); ++i)

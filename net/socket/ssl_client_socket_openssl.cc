@@ -18,6 +18,7 @@
 #include "base/environment.h"
 #include "base/memory/singleton.h"
 #include "base/metrics/histogram.h"
+#include "base/metrics/sparse_histogram.h"
 #include "base/profiler/scoped_tracker.h"
 #include "base/strings/string_piece.h"
 #include "base/synchronization/lock.h"
@@ -191,6 +192,10 @@ class SSLClientSocketOpenSSL::SSLContext {
     SSL_CTX_set_cert_verify_callback(ssl_ctx_.get(), CertVerifyCallback, NULL);
     SSL_CTX_set_cert_cb(ssl_ctx_.get(), ClientCertRequestCallback, NULL);
     SSL_CTX_set_verify(ssl_ctx_.get(), SSL_VERIFY_PEER, NULL);
+    // This stops |SSL_shutdown| from generating the close_notify message, which
+    // is currently not sent on the network.
+    // TODO(haavardm): Remove setting quiet shutdown once 118366 is fixed.
+    SSL_CTX_set_quiet_shutdown(ssl_ctx_.get(), 1);
     // TODO(kristianm): Only select this if ssl_config_.next_proto is not empty.
     // It would be better if the callback were not a global setting,
     // but that is an OpenSSL issue.
@@ -468,6 +473,7 @@ int SSLClientSocketOpenSSL::Connect(const CompletionCallback& callback) {
   int rv = Init();
   if (rv != OK) {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
+    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     return rv;
   }
 
@@ -480,6 +486,7 @@ int SSLClientSocketOpenSSL::Connect(const CompletionCallback& callback) {
     user_connect_callback_ = callback;
   } else {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
+    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     if (rv < OK)
       OnHandshakeCompletion();
   }
@@ -1359,6 +1366,7 @@ void SSLClientSocketOpenSSL::OnHandshakeIOComplete(int result) {
   int rv = DoHandshakeLoop(result);
   if (rv != ERR_IO_PENDING) {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
+    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     DoConnectCallback(rv);
   }
 }

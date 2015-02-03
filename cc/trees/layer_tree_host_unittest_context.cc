@@ -404,40 +404,56 @@ class MultipleCompositeDoesNotCreateOutputSurface
 
 SINGLE_THREAD_NOIMPL_TEST_F(MultipleCompositeDoesNotCreateOutputSurface);
 
+// This test makes sure that once a SingleThreadProxy issues a
+// DidFailToInitializeOutputSurface, that future Composite calls will not
+// trigger additional requests for output surfaces.
 class FailedCreateDoesNotCreateExtraOutputSurface
     : public LayerTreeHostContextTest {
  public:
   FailedCreateDoesNotCreateExtraOutputSurface()
-      : LayerTreeHostContextTest(), request_count_(0) {}
+      : LayerTreeHostContextTest(), num_requests_(0), has_failed_(false) {}
 
   void InitializeSettings(LayerTreeSettings* settings) override {
     settings->single_thread_proxy_scheduler = false;
   }
 
   void RequestNewOutputSurface() override {
-    if (request_count_ == 0) {
-      ExpectCreateToFail();
-      layer_tree_host()->SetOutputSurface(
-          make_scoped_ptr(new FailureOutputSurface(false)));
-    }
+    num_requests_++;
+    // There should be one initial request and then one request from
+    // the LayerTreeTest test hooks DidFailToInitializeOutputSurface (which is
+    // hard to skip).  This second request is just ignored and is test cruft.
+    EXPECT_LE(num_requests_, 2);
+    if (num_requests_ > 1)
+      return;
+    ExpectCreateToFail();
+    layer_tree_host()->SetOutputSurface(
+        make_scoped_ptr(new FailureOutputSurface(false)));
   }
 
   void BeginTest() override {
+    // First composite tries to create a surface.
     layer_tree_host()->Composite(base::TimeTicks());
+    EXPECT_EQ(num_requests_, 2);
+    EXPECT_TRUE(has_failed_);
+
+    // Second composite should not request or fail.
     layer_tree_host()->Composite(base::TimeTicks());
+    EXPECT_EQ(num_requests_, 2);
+    EndTest();
   }
 
   void DidInitializeOutputSurface() override { EXPECT_TRUE(false); }
 
   void DidFailToInitializeOutputSurface() override {
     LayerTreeHostContextTest::DidFailToInitializeOutputSurface();
-    EXPECT_GE(2, ++request_count_);
-    EndTest();
+    EXPECT_FALSE(has_failed_);
+    has_failed_ = true;
   }
 
   void AfterTest() override {}
 
-  int request_count_;
+  int num_requests_;
+  bool has_failed_;
 };
 
 SINGLE_THREAD_NOIMPL_TEST_F(FailedCreateDoesNotCreateExtraOutputSurface);
@@ -1694,12 +1710,7 @@ class LayerTreeHostContextTestLoseAfterSendingBeginMainFrame
     deferred_ = true;
 
     // Defer commits before the BeginFrame arrives, causing it to be delayed.
-    MainThreadTaskRunner()->PostTask(
-        FROM_HERE,
-        base::Bind(&LayerTreeHostContextTestLoseAfterSendingBeginMainFrame::
-                       DeferCommitsOnMainThread,
-                   base::Unretained(this),
-                   true));
+    PostSetDeferCommitsToMainThread(true);
     // Meanwhile, lose the context while we are in defer commits.
     ImplThreadTaskRunner()->PostTask(
         FROM_HERE,
@@ -1712,16 +1723,7 @@ class LayerTreeHostContextTestLoseAfterSendingBeginMainFrame
     LoseContext();
 
     // After losing the context, stop deferring commits.
-    MainThreadTaskRunner()->PostTask(
-        FROM_HERE,
-        base::Bind(&LayerTreeHostContextTestLoseAfterSendingBeginMainFrame::
-                       DeferCommitsOnMainThread,
-                   base::Unretained(this),
-                   false));
-  }
-
-  void DeferCommitsOnMainThread(bool defer_commits) {
-    layer_tree_host()->SetDeferCommits(defer_commits);
+    PostSetDeferCommitsToMainThread(false);
   }
 
   void WillBeginMainFrame() override {

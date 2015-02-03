@@ -38,10 +38,13 @@ class CC_EXPORT PictureLayerImpl
     PictureLayerImpl* pending;
   };
 
-  static scoped_ptr<PictureLayerImpl> Create(LayerTreeImpl* tree_impl,
-                                             int id,
-                                             bool is_mask) {
-    return make_scoped_ptr(new PictureLayerImpl(tree_impl, id, is_mask));
+  static scoped_ptr<PictureLayerImpl> Create(
+      LayerTreeImpl* tree_impl,
+      int id,
+      bool is_mask,
+      scoped_refptr<SyncedScrollOffset> scroll_offset) {
+    return make_scoped_ptr(
+        new PictureLayerImpl(tree_impl, id, is_mask, scroll_offset));
   }
   ~PictureLayerImpl() override;
 
@@ -97,8 +100,6 @@ class CC_EXPORT PictureLayerImpl
   bool IsOnActiveOrPendingTree() const;
   // Virtual for testing.
   virtual bool HasValidTilePriorities() const;
-  bool AllTilesRequiredForActivationAreReadyToDraw() const;
-  bool AllTilesRequiredForDrawAreReadyToDraw() const;
 
   // Used for benchmarking
   RasterSource* GetRasterSource() const { return raster_source_.get(); }
@@ -107,7 +108,10 @@ class CC_EXPORT PictureLayerImpl
   friend class LayerRasterTileIterator;
   using TileRequirementCheck = bool (PictureLayerTiling::*)(const Tile*) const;
 
-  PictureLayerImpl(LayerTreeImpl* tree_impl, int id, bool is_mask);
+  PictureLayerImpl(LayerTreeImpl* tree_impl,
+                   int id,
+                   bool is_mask,
+                   scoped_refptr<SyncedScrollOffset> scroll_offset);
   PictureLayerTiling* AddTiling(float contents_scale);
   void RemoveAllTilings();
   void AddTilingsForRasterScale();
@@ -115,7 +119,7 @@ class CC_EXPORT PictureLayerImpl
   virtual bool ShouldAdjustRasterScale() const;
   virtual void RecalculateRasterScales();
   void CleanUpTilingsOnActiveLayer(
-      std::vector<PictureLayerTiling*> used_tilings);
+      const std::vector<PictureLayerTiling*>& used_tilings);
   float MinimumContentsScale() const;
   float MaximumContentsScale() const;
   void ResetRasterScale();
@@ -123,12 +127,6 @@ class CC_EXPORT PictureLayerImpl
   PictureLayerImpl* GetRecycledTwinLayer() const;
 
   void SanityCheckTilingState() const;
-  // Checks if all tiles required for a certain action (e.g. activation) are
-  // ready to draw.  is_tile_required_callback gets called on all candidate
-  // tiles and returns true if the tile is required for the action.
-  bool AllTilesRequiredAreReadyToDraw(
-      TileRequirementCheck is_tile_required_callback) const;
-
   bool ShouldAdjustRasterScaleDuringScaleAnimations() const;
 
   void GetDebugBorderProperties(SkColor* color, float* width) const override;
@@ -171,6 +169,13 @@ class CC_EXPORT PictureLayerImpl
   // frame that has a valid viewport for prioritizing tiles.
   gfx::Rect visible_rect_for_tile_priority_;
   gfx::Rect viewport_rect_for_tile_priority_in_content_space_;
+
+  // List of tilings that were used last time we appended quads. This can be
+  // used as an optimization not to remove tilings if they are still being
+  // drawn. Note that accessing this vector should only be done in the context
+  // of comparing pointers, since objects pointed to are not guaranteed to
+  // exist.
+  std::vector<PictureLayerTiling*> last_append_quads_tilings_;
 
   DISALLOW_COPY_AND_ASSIGN(PictureLayerImpl);
 };

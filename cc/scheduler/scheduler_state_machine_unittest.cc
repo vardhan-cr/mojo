@@ -4,7 +4,7 @@
 
 #include "cc/scheduler/scheduler_state_machine.h"
 
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/scheduler/scheduler.h"
 #include "cc/test/begin_frame_args_test.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -1811,6 +1811,29 @@ TEST(SchedulerStateMachineTest, TestForwardBeginFramesToChildren) {
   EXPECT_FALSE(state.BeginFrameNeeded());
   state.SetChildrenNeedBeginFrames(true);
   EXPECT_TRUE(state.BeginFrameNeeded());
+}
+
+TEST(SchedulerStateMachineTest, TestDeferCommit) {
+  SchedulerSettings settings;
+  StateMachine state(settings);
+  SET_UP_STATE(state)
+
+  state.SetDeferCommits(true);
+
+  state.SetNeedsCommit();
+  EXPECT_TRUE(state.BeginFrameNeeded());
+  EXPECT_ACTION_UPDATE_STATE(SchedulerStateMachine::ACTION_NONE);
+
+  state.OnBeginImplFrame(CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE));
+  EXPECT_ACTION_UPDATE_STATE(SchedulerStateMachine::ACTION_NONE);
+
+  state.OnBeginImplFrameDeadline();
+  EXPECT_ACTION_UPDATE_STATE(SchedulerStateMachine::ACTION_NONE);
+
+  state.SetDeferCommits(false);
+  state.OnBeginImplFrame(CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE));
+  EXPECT_ACTION_UPDATE_STATE(
+      SchedulerStateMachine::ACTION_SEND_BEGIN_MAIN_FRAME);
 }
 
 }  // namespace

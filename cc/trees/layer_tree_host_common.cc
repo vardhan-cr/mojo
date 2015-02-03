@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/base/math_util.h"
 #include "cc/layers/heads_up_display_layer_impl.h"
 #include "cc/layers/layer.h"
@@ -46,19 +46,28 @@ static void SortLayers(LayerImplList::iterator first,
 
 template <typename LayerType>
 static gfx::Vector2dF GetEffectiveScrollDelta(LayerType* layer) {
-  gfx::Vector2dF scroll_delta = layer->ScrollDelta();
+  // Layer's scroll offset can have an integer part and fractional part.
+  // Due to Blink's limitation, it only counter-scrolls the position-fixed
+  // layer using the integer part of Layer's scroll offset.
+  // CC scrolls the layer using the full scroll offset, so we have to
+  // add the ScrollCompensationAdjustment (fractional part of the scroll
+  // offset) to the effective scroll delta which is used to counter-scroll
+  // the position-fixed layer.
+  gfx::Vector2dF scroll_delta =
+      layer->ScrollDelta() + layer->ScrollCompensationAdjustment();
   // The scroll parent's scroll delta is the amount we've scrolled on the
   // compositor thread since the commit for this layer tree's source frame.
   // we last reported to the main thread. I.e., it's the discrepancy between
   // a scroll parent's scroll delta and offset, so we must add it here.
   if (layer->scroll_parent())
-    scroll_delta += layer->scroll_parent()->ScrollDelta();
+    scroll_delta += layer->scroll_parent()->ScrollDelta() +
+        layer->ScrollCompensationAdjustment();
   return scroll_delta;
 }
 
 template <typename LayerType>
-static gfx::ScrollOffset GetEffectiveTotalScrollOffset(LayerType* layer) {
-  gfx::ScrollOffset offset = layer->TotalScrollOffset();
+static gfx::ScrollOffset GetEffectiveCurrentScrollOffset(LayerType* layer) {
+  gfx::ScrollOffset offset = layer->CurrentScrollOffset();
   // The scroll parent's total scroll offset (scroll offset + scroll delta)
   // can't be used because its scroll offset has already been applied to the
   // scroll children's positions by the main thread layer positioning code.
@@ -1666,7 +1675,7 @@ static void CalculateDrawPropertiesInternal(
         layer->parent()->screen_space_transform_is_animating();
   }
   gfx::Point3F transform_origin = layer->transform_origin();
-  gfx::ScrollOffset scroll_offset = GetEffectiveTotalScrollOffset(layer);
+  gfx::ScrollOffset scroll_offset = GetEffectiveCurrentScrollOffset(layer);
   gfx::PointF position =
       layer->position() - ScrollOffsetToVector2dF(scroll_offset);
   gfx::Transform combined_transform = data_from_ancestor.parent_matrix;

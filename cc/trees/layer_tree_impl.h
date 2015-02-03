@@ -135,7 +135,6 @@ class CC_EXPORT LayerTreeImpl {
   LayerImpl* OuterViewportScrollLayer() const;
   gfx::ScrollOffset TotalScrollOffset() const;
   gfx::ScrollOffset TotalMaxScrollOffset() const;
-  gfx::Vector2dF TotalScrollDelta() const;
 
   LayerImpl* InnerViewportContainerLayer() const;
   LayerImpl* OuterViewportContainerLayer() const;
@@ -153,7 +152,6 @@ class CC_EXPORT LayerTreeImpl {
   }
   LayerImpl* page_scale_layer() { return page_scale_layer_; }
   void ApplySentScrollAndScaleDeltasFromAbortedCommit();
-  void ApplyScrollDeltasSinceBeginMainFrame();
 
   SkColor background_color() const { return background_color_; }
   void set_background_color(SkColor color) { background_color_ = color; }
@@ -281,6 +279,9 @@ class CC_EXPORT LayerTreeImpl {
 
   LayerImpl* FindLayerThatIsHitByPoint(const gfx::PointF& screen_space_point);
 
+  LayerImpl* FindLayerWithWheelHandlerThatIsHitByPoint(
+      const gfx::PointF& screen_space_point);
+
   LayerImpl* FindLayerThatIsHitByPointInTouchHandlerRegion(
       const gfx::PointF& screen_space_point);
 
@@ -343,6 +344,7 @@ class CC_EXPORT LayerTreeImpl {
   bool SetPageScaleFactorLimits(float min_page_scale_factor,
                                 float max_page_scale_factor);
   void DidUpdatePageScale();
+  void HideInnerViewportScrollbarsIfNearMinimumScale();
 
   LayerTreeHostImpl* layer_tree_host_impl_;
   int source_frame_number_;

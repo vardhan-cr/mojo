@@ -86,6 +86,12 @@ NET_EXPORT_PRIVATE AlternateProtocol AlternateProtocolFromNextProto(
     NextProto next_proto);
 
 struct NET_EXPORT AlternateProtocolInfo {
+  AlternateProtocolInfo()
+      : port(0),
+        protocol(UNINITIALIZED_ALTERNATE_PROTOCOL),
+        probability(0),
+        is_broken(false) {}
+
   AlternateProtocolInfo(uint16 port,
                         AlternateProtocol protocol,
                         double probability)
@@ -162,8 +168,9 @@ class NET_EXPORT HttpServerProperties {
   // Deletes all data.
   virtual void Clear() = 0;
 
-  // Returns true if |server| supports SPDY.
-  virtual bool SupportsSpdy(const HostPortPair& server) = 0;
+  // Returns true if |server| supports a network protocol which honors
+  // request prioritization.
+  virtual bool SupportsRequestPriority(const HostPortPair& server) = 0;
 
   // Add |server| into the persistent store. Should only be called from IO
   // thread.

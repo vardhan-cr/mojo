@@ -9,8 +9,8 @@
 #include <limits>
 #include <set>
 
-#include "base/debug/trace_event_argument.h"
 #include "base/time/time.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/base/math_util.h"
 #include "cc/base/util.h"
 #include "cc/debug/debug_colors.h"
@@ -65,10 +65,12 @@ PictureLayerImpl::Pair::Pair(PictureLayerImpl* active_layer,
 PictureLayerImpl::Pair::~Pair() {
 }
 
-PictureLayerImpl::PictureLayerImpl(LayerTreeImpl* tree_impl,
-                                   int id,
-                                   bool is_mask)
-    : LayerImpl(tree_impl, id),
+PictureLayerImpl::PictureLayerImpl(
+    LayerTreeImpl* tree_impl,
+    int id,
+    bool is_mask,
+    scoped_refptr<SyncedScrollOffset> scroll_offset)
+    : LayerImpl(tree_impl, id, scroll_offset),
       twin_layer_(nullptr),
       tilings_(CreatePictureLayerTilingSet()),
       ideal_page_scale_(0.f),
@@ -100,7 +102,8 @@ const char* PictureLayerImpl::LayerTypeAsString() const {
 
 scoped_ptr<LayerImpl> PictureLayerImpl::CreateLayerImpl(
     LayerTreeImpl* tree_impl) {
-  return PictureLayerImpl::Create(tree_impl, id(), is_mask_);
+  return PictureLayerImpl::Create(tree_impl, id(), is_mask_,
+                                  synced_scroll_offset());
 }
 
 void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
@@ -276,7 +279,7 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
 
   // Keep track of the tilings that were used so that tilings that are
   // unused can be considered for removal.
-  std::vector<PictureLayerTiling*> seen_tilings;
+  last_append_quads_tilings_.clear();
 
   // Ignore missing tiles outside of viewport for tile priority. This is
   // normally the same as draw viewport but can be independently overridden by
@@ -403,8 +406,10 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
     if (iter.resolution() != LOW_RESOLUTION)
       only_used_low_res_last_append_quads_ = false;
 
-    if (seen_tilings.empty() || seen_tilings.back() != iter.CurrentTiling())
-      seen_tilings.push_back(iter.CurrentTiling());
+    if (last_append_quads_tilings_.empty() ||
+        last_append_quads_tilings_.back() != iter.CurrentTiling()) {
+      last_append_quads_tilings_.push_back(iter.CurrentTiling());
+    }
   }
 
   if (missing_tile_count) {
@@ -421,7 +426,7 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
   // that this is at the expense of doing cause more frequent re-painting. A
   // better scheme would be to maintain a tighter visible_content_rect for the
   // finer tilings.
-  CleanUpTilingsOnActiveLayer(seen_tilings);
+  CleanUpTilingsOnActiveLayer(last_append_quads_tilings_);
 }
 
 bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
@@ -442,6 +447,14 @@ bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
     return false;
   }
 
+  // Remove any non-ideal tilings that were not used last time we generated
+  // quads to save memory and processing time. Note that pending tree should
+  // only have one or two tilings (high and low res), so only clean up the
+  // active layer. This cleans it up here in case AppendQuads didn't run.
+  // If it did run, this would not remove any additional tilings.
+  if (GetTree() == ACTIVE_TREE)
+    CleanUpTilingsOnActiveLayer(last_append_quads_tilings_);
+
   UpdateIdealScales();
 
   if (!raster_contents_scale_ || ShouldAdjustRasterScale()) {
@@ -460,7 +473,6 @@ bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
 
   if (draw_transform_is_animating())
     raster_source_->SetShouldAttemptToUseDistanceFieldText();
-
   return UpdateTilePriorities(occlusion_in_content_space);
 }
 
@@ -992,7 +1004,7 @@ void PictureLayerImpl::RecalculateRasterScales() {
 }
 
 void PictureLayerImpl::CleanUpTilingsOnActiveLayer(
-    std::vector<PictureLayerTiling*> used_tilings) {
+    const std::vector<PictureLayerTiling*>& used_tilings) {
   DCHECK(layer_tree_impl()->IsActiveTree());
   if (tilings_->num_tilings() == 0)
     return;
@@ -1220,70 +1232,6 @@ bool PictureLayerImpl::IsOnActiveOrPendingTree() const {
 
 bool PictureLayerImpl::HasValidTilePriorities() const {
   return IsOnActiveOrPendingTree() && IsDrawnRenderSurfaceLayerListMember();
-}
-
-bool PictureLayerImpl::AllTilesRequiredAreReadyToDraw(
-    TileRequirementCheck is_tile_required_callback) const {
-  if (!HasValidTilePriorities())
-    return true;
-
-  if (!tilings_)
-    return true;
-
-  if (visible_rect_for_tile_priority_.IsEmpty())
-    return true;
-
-  gfx::Rect rect = viewport_rect_for_tile_priority_in_content_space_;
-  rect.Intersect(visible_rect_for_tile_priority_);
-
-  // The high resolution tiling is the only tiling that can mark tiles as
-  // requiring either draw or activation. There is an explicit check in those
-  // callbacks to return false if they are not high resolution tilings. This
-  // check needs to remain since there are other callers of that function that
-  // rely on it. However, for the purposes of this function, we don't have to
-  // check other tilings.
-  PictureLayerTiling* tiling =
-      tilings_->FindTilingWithResolution(HIGH_RESOLUTION);
-  if (!tiling)
-    return true;
-
-  for (PictureLayerTiling::CoverageIterator iter(tiling, 1.f, rect); iter;
-       ++iter) {
-    const Tile* tile = *iter;
-    // A null tile (i.e. missing recording) can just be skipped.
-    // TODO(vmpstr): Verify this is true if we create tiles in raster
-    // iterators.
-    if (!tile)
-      continue;
-
-    // We can't check tile->required_for_activation, because that value might
-    // be out of date. It is updated in the raster/eviction iterators.
-    // TODO(vmpstr): Remove the comment once you can't access this information
-    // from the tile.
-    if ((tiling->*is_tile_required_callback)(tile) && !tile->IsReadyToDraw()) {
-      TRACE_EVENT_INSTANT0("cc", "Tile required, but not ready to draw.",
-                           TRACE_EVENT_SCOPE_THREAD);
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool PictureLayerImpl::AllTilesRequiredForActivationAreReadyToDraw() const {
-  if (!layer_tree_impl()->IsPendingTree())
-    return true;
-
-  return AllTilesRequiredAreReadyToDraw(
-      &PictureLayerTiling::IsTileRequiredForActivationIfVisible);
-}
-
-bool PictureLayerImpl::AllTilesRequiredForDrawAreReadyToDraw() const {
-  if (!layer_tree_impl()->IsActiveTree())
-    return true;
-
-  return AllTilesRequiredAreReadyToDraw(
-      &PictureLayerTiling::IsTileRequiredForDrawIfVisible);
 }
 
 }  // namespace cc

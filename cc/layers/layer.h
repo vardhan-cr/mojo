@@ -266,6 +266,10 @@ class CC_EXPORT Layer : public base::RefCounted<Layer>,
 
   RenderSurface* render_surface() const { return render_surface_.get(); }
   void SetScrollOffset(const gfx::ScrollOffset& scroll_offset);
+  void SetScrollCompensationAdjustment(
+      const gfx::Vector2dF& scroll_compensation_adjustment);
+  gfx::Vector2dF ScrollCompensationAdjustment() const;
+
   gfx::ScrollOffset scroll_offset() const { return scroll_offset_; }
   void SetScrollOffsetFromImplSide(const gfx::ScrollOffset& scroll_offset);
 
@@ -314,9 +318,7 @@ class CC_EXPORT Layer : public base::RefCounted<Layer>,
   bool force_render_surface() const { return force_render_surface_; }
 
   gfx::Vector2dF ScrollDelta() const { return gfx::Vector2dF(); }
-  gfx::ScrollOffset TotalScrollOffset() const {
-    return ScrollOffsetWithDelta(scroll_offset(), ScrollDelta());
-  }
+  gfx::ScrollOffset CurrentScrollOffset() const { return scroll_offset_; }
 
   void SetDoubleSided(bool double_sided);
   bool double_sided() const { return double_sided_; }
@@ -636,6 +638,7 @@ class CC_EXPORT Layer : public base::RefCounted<Layer>,
   gfx::Size bounds_;
 
   gfx::ScrollOffset scroll_offset_;
+  gfx::Vector2dF scroll_compensation_adjustment_;
   // This variable indicates which ancestor layer (if any) whose size,
   // transformed relative to this layer, defines the maximum scroll offset for
   // this layer.

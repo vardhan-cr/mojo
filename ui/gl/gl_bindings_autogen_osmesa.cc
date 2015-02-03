@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_enums.h"
@@ -46,13 +46,8 @@ void DriverOSMESA::InitializeStaticBindings() {
       GetGLProcAddress("OSMesaMakeCurrent"));
   fn.OSMesaPixelStoreFn = reinterpret_cast<OSMesaPixelStoreProc>(
       GetGLProcAddress("OSMesaPixelStore"));
-}
-
-void DriverOSMESA::InitializeDynamicBindings(GLContext* context) {
-  DCHECK(context && context->IsCurrent(NULL));
-  const GLVersionInfo* ver = context->GetVersionInfo();
-  ALLOW_UNUSED_LOCAL(ver);
-  std::string extensions = context->GetExtensions() + " ";
+  std::string extensions(GetPlatformExtensions());
+  extensions += " ";
   ALLOW_UNUSED_LOCAL(extensions);
 
   if (g_debugBindingsInitialized)

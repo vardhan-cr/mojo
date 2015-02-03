@@ -7,12 +7,12 @@
 #include <limits>
 #include <math.h>
 
-#include "base/debug/trace_event.h"
 #include "base/message_loop/message_loop.h"
 #include "base/metrics/histogram.h"
 #include "base/process/memory.h"
 #include "base/profiler/scoped_tracker.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event.h"
 #include "base/win/wrapped_window_proc.h"
 
 namespace base {
@@ -165,9 +165,9 @@ void MessagePumpForUI::ScheduleDelayedWork(const TimeTicks& delayed_work_time) {
 LRESULT CALLBACK MessagePumpForUI::WndProcThunk(
     HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
   // TODO(vadimt): Remove ScopedTracker below once crbug.com/440919 is fixed.
-  tracked_objects::ScopedTracker tracking_profile(
+  tracked_objects::ScopedTracker tracking_profile1(
       FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "440919 MessagePumpForUI::WndProcThunk"));
+          "440919 MessagePumpForUI::WndProcThunk1"));
 
   switch (message) {
     case kMsgHaveWork:
@@ -177,6 +177,12 @@ LRESULT CALLBACK MessagePumpForUI::WndProcThunk(
       reinterpret_cast<MessagePumpForUI*>(wparam)->HandleTimerMessage();
       break;
   }
+
+  // TODO(vadimt): Remove ScopedTracker below once crbug.com/440919 is fixed.
+  tracked_objects::ScopedTracker tracking_profile2(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "440919 MessagePumpForUI::WndProcThunk2"));
+
   return DefWindowProc(hwnd, message, wparam, lparam);
 }
 

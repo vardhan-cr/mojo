@@ -31,20 +31,23 @@ scoped_ptr<GpuRasterizer> GpuRasterizer::Create(
     ContextProvider* context_provider,
     ResourceProvider* resource_provider,
     bool use_distance_field_text,
-    bool tile_prepare_enabled) {
-  return make_scoped_ptr<GpuRasterizer>(
-      new GpuRasterizer(context_provider, resource_provider,
-                        use_distance_field_text, tile_prepare_enabled));
+    bool tile_prepare_enabled,
+    int msaa_sample_count) {
+  return make_scoped_ptr<GpuRasterizer>(new GpuRasterizer(
+      context_provider, resource_provider, use_distance_field_text,
+      tile_prepare_enabled, msaa_sample_count));
 }
 
 GpuRasterizer::GpuRasterizer(ContextProvider* context_provider,
                              ResourceProvider* resource_provider,
                              bool use_distance_field_text,
-                             bool tile_prepare_enabled)
+                             bool tile_prepare_enabled,
+                             int msaa_sample_count)
     : context_provider_(context_provider),
       resource_provider_(resource_provider),
       use_distance_field_text_(use_distance_field_text),
-      tile_prepare_enabled_(tile_prepare_enabled) {
+      tile_prepare_enabled_(tile_prepare_enabled),
+      msaa_sample_count_(msaa_sample_count) {
   DCHECK(context_provider_);
 }
 
@@ -66,25 +69,22 @@ void GpuRasterizer::RasterizeTiles(
   ScopedResourceWriteLocks locks;
 
   for (Tile* tile : tiles) {
-    // TODO(hendrikw): Don't create resources for solid color tiles.
-    // See crbug.com/445919
-    scoped_ptr<ScopedResource> resource =
-        resource_pool->AcquireResource(tile->desired_texture_size(),
-                                       resource_format);
-    const ScopedResource* const_resource = resource.get();
-
     RasterSource::SolidColorAnalysis analysis;
 
     if (tile->use_picture_analysis())
       PerformSolidColorAnalysis(tile, &analysis);
 
-    if (!analysis.is_solid_color)
-      AddToMultiPictureDraw(tile, const_resource, &locks);
-
+    scoped_ptr<ScopedResource> resource;
+    if (!analysis.is_solid_color) {
+      resource = resource_pool->AcquireResource(tile->desired_texture_size(),
+                                                resource_format);
+      AddToMultiPictureDraw(tile, resource.get(), &locks);
+    }
     update_tile_draw_info.Run(tile, resource.Pass(), analysis);
   }
 
-  multi_picture_draw_.draw();
+  // If MSAA is enabled, tell Skia to resolve each render target after draw.
+  multi_picture_draw_.draw(msaa_sample_count_ > 0);
 }
 
 void GpuRasterizer::PerformSolidColorAnalysis(
@@ -120,15 +120,15 @@ void GpuRasterizer::AddToMultiPictureDraw(const Tile* tile,
       use_distance_field_text_ ||
       tile->raster_source()->ShouldAttemptToUseDistanceFieldText();
   scoped_ptr<ResourceProvider::ScopedWriteLockGr> lock(
-      new ResourceProvider::ScopedWriteLockGr(resource_provider_,
-                                              resource->id()));
-  SkSurface* sk_surface = lock->GetSkSurface(
-      use_distance_field_text, tile->raster_source()->CanUseLCDText());
+      new ResourceProvider::ScopedWriteLockGr(
+          resource_provider_, resource->id(), use_distance_field_text,
+          tile->raster_source()->CanUseLCDText(), msaa_sample_count_));
 
-  locks->push_back(lock.Pass());
-
+  SkSurface* sk_surface = lock->get_sk_surface();
   if (!sk_surface)
     return;
+
+  locks->push_back(lock.Pass());
 
   SkRTreeFactory factory;
   SkPictureRecorder recorder;

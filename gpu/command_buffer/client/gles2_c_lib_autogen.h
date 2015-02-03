@@ -181,6 +181,18 @@ void GLES2CopyTexSubImage2D(GLenum target,
   gles2::GetGLContext()->CopyTexSubImage2D(target, level, xoffset, yoffset, x,
                                            y, width, height);
 }
+void GLES2CopyTexSubImage3D(GLenum target,
+                            GLint level,
+                            GLint xoffset,
+                            GLint yoffset,
+                            GLint zoffset,
+                            GLint x,
+                            GLint y,
+                            GLsizei width,
+                            GLsizei height) {
+  gles2::GetGLContext()->CopyTexSubImage3D(target, level, xoffset, yoffset,
+                                           zoffset, x, y, width, height);
+}
 GLuint GLES2CreateProgram() {
   return gles2::GetGLContext()->CreateProgram();
 }
@@ -663,6 +675,13 @@ void GLES2TexSubImage3D(GLenum target,
   gles2::GetGLContext()->TexSubImage3D(target, level, xoffset, yoffset, zoffset,
                                        width, height, depth, format, type,
                                        pixels);
+}
+void GLES2TransformFeedbackVaryings(GLuint program,
+                                    GLsizei count,
+                                    const char* const* varyings,
+                                    GLenum buffermode) {
+  gles2::GetGLContext()->TransformFeedbackVaryings(program, count, varyings,
+                                                   buffermode);
 }
 void GLES2Uniform1f(GLint location, GLfloat x) {
   gles2::GetGLContext()->Uniform1f(location, x);
@@ -1364,6 +1383,10 @@ extern const NameToFunc g_gles2_function_table[] = {
      reinterpret_cast<GLES2FunctionPointer>(glCopyTexSubImage2D),
     },
     {
+     "glCopyTexSubImage3D",
+     reinterpret_cast<GLES2FunctionPointer>(glCopyTexSubImage3D),
+    },
+    {
      "glCreateProgram",
      reinterpret_cast<GLES2FunctionPointer>(glCreateProgram),
     },
@@ -1819,6 +1842,10 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glTexSubImage3D",
      reinterpret_cast<GLES2FunctionPointer>(glTexSubImage3D),
+    },
+    {
+     "glTransformFeedbackVaryings",
+     reinterpret_cast<GLES2FunctionPointer>(glTransformFeedbackVaryings),
     },
     {
      "glUniform1f",

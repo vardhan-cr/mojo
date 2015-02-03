@@ -179,7 +179,6 @@
         'command_buffer/client/gles2_implementation_unittest.cc',
         'command_buffer/client/mapped_memory_unittest.cc',
         'command_buffer/client/query_tracker_unittest.cc',
-        'command_buffer/client/program_info_manager_unittest.cc',
         'command_buffer/client/ring_buffer_test.cc',
         'command_buffer/client/transfer_buffer_unittest.cc',
         'command_buffer/client/vertex_array_object_manager_unittest.cc',
@@ -279,6 +278,23 @@
       ],
       # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
       'msvs_disabled_warnings': [ 4267, ],
+    },
+    {
+      # GN version: //gpu/gpu_perftests
+      'target_name': 'gpu_perftests',
+      'type': '<(gtest_target_type)',
+      'dependencies': [
+        '../base/base.gyp:base',
+        '../base/base.gyp:test_support_base',
+        '../testing/gtest.gyp:gtest',
+        '../testing/perf/perf_test.gyp:perf_test',
+        '../ui/gfx/gfx.gyp:gfx_geometry',
+        '../ui/gl/gl.gyp:gl',
+      ],
+      'sources': [
+        'perftests/run_all_tests.cc',
+        'perftests/texture_upload_perftest.cc',
+      ],
     },
     {
       # GN version: //gpu:gl_tests

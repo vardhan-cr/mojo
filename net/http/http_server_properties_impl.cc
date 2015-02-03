@@ -168,7 +168,7 @@ void HttpServerPropertiesImpl::Clear() {
   server_network_stats_map_.Clear();
 }
 
-bool HttpServerPropertiesImpl::SupportsSpdy(
+bool HttpServerPropertiesImpl::SupportsRequestPriority(
     const HostPortPair& host_port_pair) {
   DCHECK(CalledOnValidThread());
   if (host_port_pair.host().empty())
@@ -176,9 +176,14 @@ bool HttpServerPropertiesImpl::SupportsSpdy(
 
   SpdyServerHostPortMap::iterator spdy_host_port =
       spdy_servers_map_.Get(host_port_pair.ToString());
-  if (spdy_host_port != spdy_servers_map_.end())
-    return spdy_host_port->second;
-  return false;
+  if (spdy_host_port != spdy_servers_map_.end() && spdy_host_port->second)
+    return true;
+
+  if (!HasAlternateProtocol(host_port_pair))
+    return false;
+
+  AlternateProtocolInfo info = GetAlternateProtocol(host_port_pair);
+  return info.protocol == QUIC;
 }
 
 void HttpServerPropertiesImpl::SetSupportsSpdy(
@@ -234,12 +239,12 @@ bool HttpServerPropertiesImpl::HasAlternateProtocol(
 }
 
 std::string HttpServerPropertiesImpl::GetCanonicalSuffix(
-    const HostPortPair& server) {
+    const std::string& host) {
   // If this host ends with a canonical suffix, then return the canonical
   // suffix.
   for (size_t i = 0; i < canonical_suffixes_.size(); ++i) {
     std::string canonical_suffix = canonical_suffixes_[i];
-    if (EndsWith(server.host(), canonical_suffixes_[i], false)) {
+    if (EndsWith(host, canonical_suffixes_[i], false)) {
       return canonical_suffix;
     }
   }
@@ -341,8 +346,7 @@ void HttpServerPropertiesImpl::SetBrokenAlternateProtocol(
   RemoveCanonicalHost(server);
 
   // If this is the only entry in the list, schedule an expiration task.
-  // Otherwse it will be rescheduled automatically when the pending
-  // task runs.
+  // Otherwise it will be rescheduled automatically when the pending task runs.
   if (broken_alternate_protocol_list_.size() == 1) {
     ScheduleBrokenAlternateProtocolMappingsExpiration();
   }

@@ -17,13 +17,13 @@
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/command_line.h"
-#include "base/debug/trace_event.h"
-#include "base/debug/trace_event_synthetic_delay.h"
 #include "base/float_util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/numerics/safe_math.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
+#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_synthetic_delay.h"
 #include "build/build_config.h"
 #define GLES2_GPU_SERVICE 1
 #include "gpu/command_buffer/common/debug_marker_manager.h"
@@ -1177,6 +1177,11 @@ class GLES2DecoderImpl : public GLES2Decoder,
   // Wrapper for glShaderSource.
   void DoShaderSource(
       GLuint client_id, GLsizei count, const char** data, const GLint* length);
+
+  // Wrapper for glTransformFeedbackVaryings.
+  void DoTransformFeedbackVaryings(
+      GLuint client_program_id, GLsizei count, const char* const* varyings,
+      GLenum buffer_mode);
 
   // Clear any textures used by the current program.
   bool ClearUnclearedTextures();
@@ -7055,6 +7060,18 @@ void GLES2DecoderImpl::DoShaderSource(
   // Note: We don't actually call glShaderSource here. We wait until
   // the call to glCompileShader.
   shader->set_source(str);
+}
+
+void GLES2DecoderImpl::DoTransformFeedbackVaryings(
+    GLuint client_program_id, GLsizei count, const char* const* varyings,
+    GLenum buffer_mode) {
+  Program* program = GetProgramInfoNotShader(
+      client_program_id, "glTransformFeedbackVaryings");
+  if (!program) {
+    return;
+  }
+  glTransformFeedbackVaryings(
+      program->service_id(), count, varyings, buffer_mode);
 }
 
 void GLES2DecoderImpl::DoCompileShader(GLuint client_id) {

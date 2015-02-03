@@ -5,7 +5,7 @@
 #include "cc/trees/single_thread_proxy.h"
 
 #include "base/auto_reset.h"
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/debug/benchmark_instrumentation.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/output_surface.h"
@@ -45,7 +45,6 @@ SingleThreadProxy::SingleThreadProxy(
       next_frame_is_newly_committed_frame_(false),
       inside_draw_(false),
       defer_commits_(false),
-      commit_was_deferred_(false),
       commit_requested_(false),
       inside_synchronous_composite_(false),
       output_surface_creation_requested_(false),
@@ -91,6 +90,7 @@ void SingleThreadProxy::SetLayerTreeHostClientReady() {
   if (layer_tree_host_->settings().single_thread_proxy_scheduler &&
       !scheduler_on_impl_thread_) {
     SchedulerSettings scheduler_settings(layer_tree_host_->settings());
+    // SingleThreadProxy should run in main thread low latency mode.
     scheduler_settings.main_thread_should_always_be_low_latency = true;
     scheduler_on_impl_thread_ =
         Scheduler::Create(this,
@@ -135,7 +135,7 @@ void SingleThreadProxy::SetOutputSurface(
     scoped_ptr<OutputSurface> output_surface) {
   DCHECK(Proxy::IsMainThread());
   DCHECK(layer_tree_host_->output_surface_lost());
-  output_surface_creation_requested_ = false;
+  DCHECK(output_surface_creation_requested_);
   renderer_capabilities_for_main_thread_ = RendererCapabilities();
 
   bool success;
@@ -153,7 +153,10 @@ void SingleThreadProxy::SetOutputSurface(
       scheduler_on_impl_thread_->DidCreateAndInitializeOutputSurface();
     else if (!inside_synchronous_composite_)
       SetNeedsCommit();
+    output_surface_creation_requested_ = false;
   } else {
+    // DidFailToInitializeOutputSurface is treated as a RequestNewOutputSurface,
+    // and so output_surface_creation_requested remains true.
     layer_tree_host_->DidFailToInitializeOutputSurface();
   }
 }
@@ -309,10 +312,7 @@ void SingleThreadProxy::SetDeferCommits(bool defer_commits) {
     TRACE_EVENT_ASYNC_END0("cc", "SingleThreadProxy::SetDeferCommits", this);
 
   defer_commits_ = defer_commits;
-  if (!defer_commits_ && commit_was_deferred_) {
-    commit_was_deferred_ = false;
-    BeginMainFrame();
-  }
+  scheduler_on_impl_thread_->SetDeferCommits(defer_commits);
 }
 
 bool SingleThreadProxy::CommitRequested() const {
@@ -434,6 +434,9 @@ void SingleThreadProxy::DidActivateSyncTree() {
     // the pending tree is not actually ready in the SingleThreadProxy.
     layer_tree_host_impl_->SetRequiresHighResToDraw();
 
+    // Synchronously call to CommitComplete. Resetting
+    // |commit_blocking_task_runner| would make sure all tasks posted during
+    // commit/activation before CommitComplete.
     CommitComplete();
   }
 
@@ -673,9 +676,10 @@ void SingleThreadProxy::ScheduledActionSendBeginMainFrame() {
 
 void SingleThreadProxy::BeginMainFrame() {
   if (defer_commits_) {
-    DCHECK(!commit_was_deferred_);
-    commit_was_deferred_ = true;
-    layer_tree_host_->DidDeferCommit();
+    TRACE_EVENT_INSTANT0("cc", "EarlyOut_DeferCommit",
+                         TRACE_EVENT_SCOPE_THREAD);
+    BeginMainFrameAbortedOnImplThread(
+        CommitEarlyOutReason::ABORTED_DEFERRED_COMMIT);
     return;
   }
 

@@ -134,8 +134,9 @@ int HttpStreamFactoryImpl::Job::Preconnect(int num_streams) {
   DCHECK_GT(num_streams, 0);
   base::WeakPtr<HttpServerProperties> http_server_properties =
       session_->http_server_properties();
-  if (http_server_properties && http_server_properties->SupportsSpdy(
-      HostPortPair::FromURL(request_info_.url))) {
+  if (http_server_properties &&
+      http_server_properties->SupportsRequestPriority(
+          HostPortPair::FromURL(request_info_.url))) {
     num_streams_ = 1;
   } else {
     num_streams_ = num_streams;
@@ -168,6 +169,7 @@ void HttpStreamFactoryImpl::Job::MarkAsAlternate(
     AlternateProtocolInfo alternate) {
   DCHECK(!original_url_.get());
   original_url_.reset(new GURL(original_url));
+  alternate_protocol_ = alternate;
   if (alternate.protocol == QUIC) {
     DCHECK(session_->params().enable_quic);
     using_quic_ = true;
@@ -1453,6 +1455,7 @@ void HttpStreamFactoryImpl::Job::ReportJobSuccededForRequest() {
 void HttpStreamFactoryImpl::Job::MarkOtherJobComplete(const Job& job) {
   DCHECK_EQ(STATUS_RUNNING, other_job_status_);
   other_job_status_ = job.job_status_;
+  other_job_alternate_protocol_ = job.alternate_protocol_;
   MaybeMarkAlternateProtocolBroken();
 }
 

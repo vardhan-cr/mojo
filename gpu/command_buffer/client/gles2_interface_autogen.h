@@ -113,6 +113,15 @@ virtual void CopyTexSubImage2D(GLenum target,
                                GLint y,
                                GLsizei width,
                                GLsizei height) = 0;
+virtual void CopyTexSubImage3D(GLenum target,
+                               GLint level,
+                               GLint xoffset,
+                               GLint yoffset,
+                               GLint zoffset,
+                               GLint x,
+                               GLint y,
+                               GLsizei width,
+                               GLsizei height) = 0;
 virtual GLuint CreateProgram() = 0;
 virtual GLuint CreateShader(GLenum type) = 0;
 virtual void CullFace(GLenum mode) = 0;
@@ -365,6 +374,10 @@ virtual void TexSubImage3D(GLenum target,
                            GLenum format,
                            GLenum type,
                            const void* pixels) = 0;
+virtual void TransformFeedbackVaryings(GLuint program,
+                                       GLsizei count,
+                                       const char* const* varyings,
+                                       GLenum buffermode) = 0;
 virtual void Uniform1f(GLint location, GLfloat x) = 0;
 virtual void Uniform1fv(GLint location, GLsizei count, const GLfloat* v) = 0;
 virtual void Uniform1i(GLint location, GLint x) = 0;

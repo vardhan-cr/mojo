@@ -2143,7 +2143,7 @@
         'conditions': [
           # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
           # on all platforms is currently underway.
-          ['(OS=="linux" and (chromeos==0 or use_ozone==0)) or OS=="mac" or OS=="ios"', {
+          ['OS=="linux" or OS=="mac" or OS=="ios"', {
             'clang_chrome_plugins_flags': [
               '-Xclang',
               '-plugin-arg-find-bad-constructs',
@@ -2982,6 +2982,12 @@
       }],
       ['v8_use_external_startup_data==1', {
        'defines': ['V8_USE_EXTERNAL_STARTUP_DATA'],
+      }],
+      ['use_lto==1 and (target_arch=="ia32" or target_arch=="x64")', {
+        # Required for third_party/zlib/crc_folding.c and various other code
+        # that uses SSE. TODO(pcc): Remove this once we properly support
+        # subtarget specific code generation in LLVM.
+        'ldflags': ['-Wl,-plugin-opt,mcpu=corei7-avx'],
       }],
     ],  # conditions for 'target_defaults'
     'target_conditions': [
@@ -5591,6 +5597,7 @@
                   'VCCLCompilerTool': {
                     'AdditionalOptions': [
                       '-fsanitize=address',
+                      '-fsanitize-blacklist=<(PRODUCT_DIR)/../../tools/memory/asan/blacklist_win.txt',
                     ],
                     'AdditionalIncludeDirectories': [
                       # MSVC needs to be able to find the sanitizer headers when
@@ -5781,18 +5788,39 @@
           ['_toolset=="target"', {
             'cflags': [
               '-flto',
+            ],
+          }],
+        ],
+      },
+    }],
+    ['use_lto==1 and clang==0', {
+      'target_defaults': {
+        'target_conditions': [
+          ['_toolset=="target"', {
+            'cflags': [
               '-ffat-lto-objects',
             ],
           }],
         ],
       },
     }],
-    ['use_lto==1 or use_lto_o2==1', {
+    ['(use_lto==1 or use_lto_o2==1) and clang==0', {
       'target_defaults': {
         'target_conditions': [
           ['_toolset=="target"', {
             'ldflags': [
               '-flto=32',
+            ],
+          }],
+        ],
+      },
+    }],
+    ['(use_lto==1 or use_lto_o2==1) and clang==1', {
+      'target_defaults': {
+        'target_conditions': [
+          ['_toolset=="target"', {
+            'ldflags': [
+              '-flto',
             ],
           }],
         ],

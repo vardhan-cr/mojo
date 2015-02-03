@@ -17,43 +17,17 @@ CHROME_SANDBOX_ENV = 'CHROME_DEVEL_SANDBOX'
 CHROME_SANDBOX_PATH = '/opt/chromium/chrome_sandbox'
 
 
-def should_enable_sandbox(cmd, sandbox_path):
-  """Return a boolean indicating that the current slave is capable of using the
-  sandbox and should enable it.  This should return True iff the slave is a
-  Linux host with the sandbox file present and configured correctly."""
-  if not (sys.platform.startswith('linux') and
-          os.path.exists(sandbox_path)):
-    return False
-
-  # Copy the check in tools/build/scripts/slave/runtest.py.
-  if '--lsan=1' in cmd:
-    return False
-
-  sandbox_stat = os.stat(sandbox_path)
-  if ((sandbox_stat.st_mode & stat.S_ISUID) and
-      (sandbox_stat.st_mode & stat.S_IRUSR) and
-      (sandbox_stat.st_mode & stat.S_IXUSR) and
-      (sandbox_stat.st_uid == 0)):
-    return True
-  return False
-
-
-def get_sandbox_env(cmd, env, verbose=False):
-  """Checks enables the sandbox if it is required, otherwise it disables it.
-  Returns the environment flags to set."""
+def get_sandbox_env(env):
+  """Returns the environment flags needed for the SUID sandbox to work."""
   extra_env = {}
   chrome_sandbox_path = env.get(CHROME_SANDBOX_ENV, CHROME_SANDBOX_PATH)
-
-  if should_enable_sandbox(cmd, chrome_sandbox_path):
-    if verbose:
-      print 'Enabling sandbox. Setting environment variable:'
-      print '  %s="%s"' % (CHROME_SANDBOX_ENV, chrome_sandbox_path)
-    extra_env[CHROME_SANDBOX_ENV] = chrome_sandbox_path
-  else:
-    if verbose:
-      print 'Disabling sandbox.  Setting environment variable:'
-      print '  CHROME_DEVEL_SANDBOX=""'
-    extra_env['CHROME_DEVEL_SANDBOX'] = ''
+  # The above would silently disable the SUID sandbox if the env value were
+  # an empty string. We don't want to allow that. http://crbug.com/245376
+  # TODO(jln): Remove this check once it's no longer possible to disable the
+  # sandbox that way.
+  if not chrome_sandbox_path:
+    chrome_sandbox_path = CHROME_SANDBOX_PATH
+  extra_env[CHROME_SANDBOX_ENV] = chrome_sandbox_path
 
   return extra_env
 
@@ -131,11 +105,47 @@ def get_asan_env(cmd, lsan):
   return extra_env
 
 
+def get_sanitizer_symbolize_command(json_path=None):
+  """Construct the command to invoke offline symbolization script."""
+  script_path = '../tools/valgrind/asan/asan_symbolize.py'
+  cmd = [sys.executable, script_path]
+  if json_path is not None:
+    cmd.append('--test-summary-json-file=%s' % json_path)
+  return cmd
+
+
+def get_json_path(cmd):
+  """Extract the JSON test summary path from a command line."""
+  json_path_flag = '--test-launcher-summary-output='
+  for arg in cmd:
+    if arg.startswith(json_path_flag):
+      return arg.split(json_path_flag).pop()
+  return None
+
+
+def symbolize_snippets_in_json(cmd, env):
+  """Symbolize output snippets inside the JSON test summary."""
+  json_path = get_json_path(cmd)
+  if json_path is None:
+    return
+
+  try:
+    symbolize_command = get_sanitizer_symbolize_command(json_path=json_path)
+    p = subprocess.Popen(symbolize_command, stderr=subprocess.PIPE, env=env)
+    (_, stderr) = p.communicate()
+  except OSError as e:
+      print 'Exception while symbolizing snippets: %s' % e
+
+  if p.returncode != 0:
+    print "Error: failed to symbolize snippets in JSON:\n"
+    print stderr
+
+
 def run_executable(cmd, env):
   """Runs an executable with:
     - environment variable CR_SOURCE_ROOT set to the root directory.
     - environment variable LANGUAGE to en_US.UTF-8.
-    - environment variable CHROME_DEVEL_SANDBOX set if need
+    - environment variable CHROME_DEVEL_SANDBOX set
     - Reuses sys.executable automatically.
   """
   extra_env = {}
@@ -144,14 +154,18 @@ def run_executable(cmd, env):
   # Used by base/base_paths_linux.cc as an override. Just make sure the default
   # logic is used.
   env.pop('CR_SOURCE_ROOT', None)
-  extra_env.update(get_sandbox_env(cmd, env))
+  extra_env.update(get_sandbox_env(env))
 
   # Copy logic from  tools/build/scripts/slave/runtest.py.
   asan = '--asan=1' in cmd
   lsan = '--lsan=1' in cmd
+  use_symbolization_script = asan and not lsan
 
   if asan:
     extra_env.update(get_asan_env(cmd, lsan))
+    # ASan is not yet sandbox-friendly on Windows (http://crbug.com/382867).
+    if sys.platform == 'win32':
+      cmd.append('--no-sandbox')
   if lsan:
     cmd.append('--no-sandbox')
 
@@ -169,15 +183,17 @@ def run_executable(cmd, env):
   env.update(extra_env or {})
   try:
     # See above comment regarding offline symbolization.
-    if asan and not lsan:
+    if use_symbolization_script:
       # Need to pipe to the symbolizer script.
       p1 = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
                             stderr=sys.stdout)
-      p2 = subprocess.Popen(["../tools/valgrind/asan/asan_symbolize.py"],
+      p2 = subprocess.Popen(get_sanitizer_symbolize_command(),
                             env=env, stdin=p1.stdout)
       p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
       p1.wait()
       p2.wait()
+      # Also feed the out-of-band JSON output to the symbolizer script.
+      symbolize_snippets_in_json(cmd, env)
       return p1.returncode
     else:
       return subprocess.call(cmd, env=env)

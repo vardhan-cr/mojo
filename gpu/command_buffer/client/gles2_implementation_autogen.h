@@ -147,6 +147,16 @@ void CopyTexSubImage2D(GLenum target,
                        GLsizei width,
                        GLsizei height) override;
 
+void CopyTexSubImage3D(GLenum target,
+                       GLint level,
+                       GLint xoffset,
+                       GLint yoffset,
+                       GLint zoffset,
+                       GLint x,
+                       GLint y,
+                       GLsizei width,
+                       GLsizei height) override;
+
 GLuint CreateProgram() override;
 
 GLuint CreateShader(GLenum type) override;
@@ -498,6 +508,11 @@ void TexSubImage3D(GLenum target,
                    GLenum format,
                    GLenum type,
                    const void* pixels) override;
+
+void TransformFeedbackVaryings(GLuint program,
+                               GLsizei count,
+                               const char* const* varyings,
+                               GLenum buffermode) override;
 
 void Uniform1f(GLint location, GLfloat x) override;
 

@@ -359,6 +359,22 @@ void CopyTexSubImage2D(GLenum target,
   }
 }
 
+void CopyTexSubImage3D(GLenum target,
+                       GLint level,
+                       GLint xoffset,
+                       GLint yoffset,
+                       GLint zoffset,
+                       GLint x,
+                       GLint y,
+                       GLsizei width,
+                       GLsizei height) {
+  gles2::cmds::CopyTexSubImage3D* c =
+      GetCmdSpace<gles2::cmds::CopyTexSubImage3D>();
+  if (c) {
+    c->Init(target, level, xoffset, yoffset, zoffset, x, y, width, height);
+  }
+}
+
 void CreateProgram(uint32_t client_id) {
   gles2::cmds::CreateProgram* c = GetCmdSpace<gles2::cmds::CreateProgram>();
   if (c) {
@@ -1416,6 +1432,16 @@ void TexSubImage3D(GLenum target,
   if (c) {
     c->Init(target, level, xoffset, yoffset, zoffset, width, height, depth,
             format, type, pixels_shm_id, pixels_shm_offset, internal);
+  }
+}
+
+void TransformFeedbackVaryingsBucket(GLuint program,
+                                     uint32_t varyings_bucket_id,
+                                     GLenum buffermode) {
+  gles2::cmds::TransformFeedbackVaryingsBucket* c =
+      GetCmdSpace<gles2::cmds::TransformFeedbackVaryingsBucket>();
+  if (c) {
+    c->Init(program, varyings_bucket_id, buffermode);
   }
 }
 

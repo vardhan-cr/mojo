@@ -7,10 +7,10 @@
 #include <algorithm>
 
 #include "base/auto_reset.h"
-#include "base/debug/trace_event.h"
-#include "base/debug/trace_event_argument.h"
 #include "base/logging.h"
 #include "base/single_thread_task_runner.h"
+#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/debug/devtools_instrumentation.h"
 #include "cc/debug/traced_value.h"
 #include "cc/scheduler/delay_based_time_source.h"
@@ -669,6 +669,14 @@ void Scheduler::PollToAdvanceCommitState() {
 void Scheduler::DrawAndSwapIfPossible() {
   DrawResult result = client_->ScheduledActionDrawAndSwapIfPossible();
   state_machine_.DidDrawIfPossibleCompleted(result);
+}
+
+void Scheduler::SetDeferCommits(bool defer_commits) {
+  TRACE_EVENT1("cc", "Scheduler::SetDeferCommits",
+                "defer_commits",
+                defer_commits);
+  state_machine_.SetDeferCommits(defer_commits);
+  ProcessScheduledActions();
 }
 
 void Scheduler::ProcessScheduledActions() {

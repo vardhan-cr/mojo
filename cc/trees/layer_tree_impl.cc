@@ -7,8 +7,8 @@
 #include <limits>
 #include <set>
 
-#include "base/debug/trace_event.h"
-#include "base/debug/trace_event_argument.h"
+#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_argument.h"
 #include "cc/animation/keyframed_animation_curve.h"
 #include "cc/animation/scrollbar_animation_controller.h"
 #include "cc/animation/scrollbar_animation_controller_linear_fade.h"
@@ -50,11 +50,11 @@ class LayerScrollOffsetDelegateProxy : public LayerImpl::ScrollOffsetDelegate {
   }
 
   // LayerScrollOffsetDelegate implementation.
-  void SetTotalScrollOffset(const gfx::ScrollOffset& new_offset) override {
+  void SetCurrentScrollOffset(const gfx::ScrollOffset& new_offset) override {
     last_set_scroll_offset_ = new_offset;
   }
 
-  gfx::ScrollOffset GetTotalScrollOffset() override {
+  gfx::ScrollOffset GetCurrentScrollOffset() override {
     return layer_tree_impl_->GetDelegatedScrollOffset(layer_);
   }
 
@@ -154,10 +154,10 @@ gfx::ScrollOffset LayerTreeImpl::TotalScrollOffset() const {
   gfx::ScrollOffset offset;
 
   if (inner_viewport_scroll_layer_)
-    offset += inner_viewport_scroll_layer_->TotalScrollOffset();
+    offset += inner_viewport_scroll_layer_->CurrentScrollOffset();
 
   if (outer_viewport_scroll_layer_)
-    offset += outer_viewport_scroll_layer_->TotalScrollOffset();
+    offset += outer_viewport_scroll_layer_->CurrentScrollOffset();
 
   return offset;
 }
@@ -172,15 +172,6 @@ gfx::ScrollOffset LayerTreeImpl::TotalMaxScrollOffset() const {
     offset += outer_viewport_scroll_layer_->MaxScrollOffset();
 
   return offset;
-}
-gfx::Vector2dF LayerTreeImpl::TotalScrollDelta() const {
-  DCHECK(inner_viewport_scroll_layer_);
-  gfx::Vector2dF delta = inner_viewport_scroll_layer_->ScrollDelta();
-
-  if (outer_viewport_scroll_layer_)
-    delta += outer_viewport_scroll_layer_->ScrollDelta();
-
-  return delta;
 }
 
 scoped_ptr<LayerImpl> LayerTreeImpl::DetachLayerTree() {
@@ -395,6 +386,29 @@ void LayerTreeImpl::DidUpdatePageScale() {
   }
 
   ForceScrollbarParameterUpdateAfterScaleChange(page_scale_layer());
+
+  HideInnerViewportScrollbarsIfNearMinimumScale();
+}
+
+void LayerTreeImpl::HideInnerViewportScrollbarsIfNearMinimumScale() {
+  if (!InnerViewportContainerLayer())
+    return;
+
+  LayerImpl::ScrollbarSet* scrollbars =
+      InnerViewportContainerLayer()->scrollbars();
+
+  if (!scrollbars)
+    return;
+
+  for (LayerImpl::ScrollbarSet::iterator it = scrollbars->begin();
+       it != scrollbars->end();
+       ++it) {
+    ScrollbarLayerImplBase* scrollbar = *it;
+    float minimum_scale_to_show_at =
+        min_page_scale_factor() * settings().scrollbar_show_scale_threshold;
+    scrollbar->SetHideLayerAndSubtree(
+        current_page_scale_factor() < minimum_scale_to_show_at);
+  }
 }
 
 SyncedProperty<ScaleGroup>* LayerTreeImpl::page_scale_factor() {
@@ -445,19 +459,6 @@ void LayerTreeImpl::ApplySentScrollAndScaleDeltasFromAbortedCommit() {
       root_layer(), base::Bind(&ApplySentScrollDeltasFromAbortedCommitTo));
 }
 
-static void ApplyScrollDeltasSinceBeginMainFrameTo(LayerImpl* layer) {
-  layer->ApplyScrollDeltasSinceBeginMainFrame();
-}
-
-void LayerTreeImpl::ApplyScrollDeltasSinceBeginMainFrame() {
-  DCHECK(IsPendingTree());
-  if (!root_layer())
-    return;
-
-  LayerTreeHostCommon::CallFunctionForSubtree(
-      root_layer(), base::Bind(&ApplyScrollDeltasSinceBeginMainFrameTo));
-}
-
 void LayerTreeImpl::SetViewportLayersFromIds(
     int overscroll_elasticity_layer_id,
     int page_scale_layer_id,
@@ -475,6 +476,8 @@ void LayerTreeImpl::SetViewportLayersFromIds(
       LayerById(outer_viewport_scroll_layer_id);
   DCHECK(outer_viewport_scroll_layer_ ||
          outer_viewport_scroll_layer_id == Layer::INVALID_ID);
+
+  HideInnerViewportScrollbarsIfNearMinimumScale();
 
   if (!root_layer_scroll_offset_delegate_)
     return;
@@ -972,6 +975,11 @@ void LayerTreeImpl::SetRootLayerScrollOffsetDelegate(
     }
 
     if (inner_viewport_scroll_layer_)
+      inner_viewport_scroll_layer_->RefreshFromScrollDelegate();
+    if (outer_viewport_scroll_layer_)
+      outer_viewport_scroll_layer_->RefreshFromScrollDelegate();
+
+    if (inner_viewport_scroll_layer_)
       UpdateScrollOffsetDelegate();
   }
 }
@@ -979,10 +987,10 @@ void LayerTreeImpl::SetRootLayerScrollOffsetDelegate(
 void LayerTreeImpl::OnRootLayerDelegatedScrollOffsetChanged() {
   DCHECK(root_layer_scroll_offset_delegate_);
   if (inner_viewport_scroll_layer_) {
-    inner_viewport_scroll_layer_->DidScroll();
+    inner_viewport_scroll_layer_->RefreshFromScrollDelegate();
   }
   if (outer_viewport_scroll_layer_) {
-    outer_viewport_scroll_layer_->DidScroll();
+    outer_viewport_scroll_layer_->RefreshFromScrollDelegate();
   }
 }
 
@@ -1404,6 +1412,25 @@ static bool LayerHasTouchEventHandlersAt(const gfx::PointF& screen_space_point,
     return false;
 
   return true;
+}
+
+struct FindWheelEventLayerFunctor {
+  bool operator()(LayerImpl* layer) const {
+    return layer->have_wheel_event_handlers();
+  }
+};
+
+LayerImpl* LayerTreeImpl::FindLayerWithWheelHandlerThatIsHitByPoint(
+    const gfx::PointF& screen_space_point) {
+  if (!root_layer())
+    return NULL;
+  if (!UpdateDrawProperties())
+    return NULL;
+  FindWheelEventLayerFunctor func;
+  FindClosestMatchingLayerDataForRecursion data_for_recursion;
+  FindClosestMatchingLayer(screen_space_point, root_layer(), func,
+                           &data_for_recursion);
+  return data_for_recursion.closest_match;
 }
 
 struct FindTouchEventLayerFunctor {

@@ -7,11 +7,11 @@
 #include <algorithm>
 
 #include "base/atomic_sequence_num.h"
-#include "base/debug/trace_event.h"
 #include "base/location.h"
 #include "base/metrics/histogram.h"
 #include "base/single_thread_task_runner.h"
 #include "base/time/time.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/animation/animation.h"
 #include "cc/animation/animation_events.h"
 #include "cc/animation/animation_registrar.h"
@@ -672,6 +672,18 @@ void Layer::SetScrollOffset(const gfx::ScrollOffset& scroll_offset) {
   SetNeedsCommit();
 }
 
+void Layer::SetScrollCompensationAdjustment(
+    const gfx::Vector2dF& scroll_compensation_adjustment) {
+  if (scroll_compensation_adjustment_ == scroll_compensation_adjustment)
+    return;
+  scroll_compensation_adjustment_ = scroll_compensation_adjustment;
+  SetNeedsCommit();
+}
+
+gfx::Vector2dF Layer::ScrollCompensationAdjustment() const {
+  return scroll_compensation_adjustment_;
+}
+
 void Layer::SetScrollOffsetFromImplSide(
     const gfx::ScrollOffset& scroll_offset) {
   DCHECK(IsPropertyChangeAllowed());
@@ -966,21 +978,11 @@ void Layer::PushPropertiesTo(LayerImpl* layer) {
     layer->SetClipChildren(nullptr);
   }
 
-  // Adjust the scroll delta to be just the scrolls that have happened since
-  // the BeginMainFrame was sent.  This happens for impl-side painting
-  // in LayerImpl::ApplyScrollDeltasSinceBeginMainFrame in a separate tree walk.
-  if (layer->layer_tree_impl()->settings().impl_side_painting) {
-    layer->SetScrollOffset(scroll_offset_);
-  } else {
-    if (layer_animation_controller_
-            ->scroll_offset_animation_was_interrupted()) {
-      layer->SetScrollOffsetAndDelta(scroll_offset_, gfx::Vector2dF());
-    } else {
-      layer->SetScrollOffsetAndDelta(
-          scroll_offset_, layer->ScrollDelta() - layer->sent_scroll_delta());
-    }
-    layer->SetSentScrollDelta(gfx::Vector2dF());
-  }
+  layer->PushScrollOffsetFromMainThread(scroll_offset_);
+  if (layer_animation_controller_->scroll_offset_animation_was_interrupted() &&
+      layer->IsActive())
+    layer->SetScrollDelta(gfx::Vector2dF());
+  layer->SetScrollCompensationAdjustment(ScrollCompensationAdjustment());
 
   // Wrap the copy_requests_ in a PostTask to the main thread.
   ScopedPtrVector<CopyOutputRequest> main_thread_copy_requests;
@@ -1028,7 +1030,8 @@ void Layer::PushPropertiesTo(LayerImpl* layer) {
 }
 
 scoped_ptr<LayerImpl> Layer::CreateLayerImpl(LayerTreeImpl* tree_impl) {
-  return LayerImpl::Create(tree_impl, layer_id_);
+  return LayerImpl::Create(tree_impl, layer_id_,
+                           new LayerImpl::SyncedScrollOffset);
 }
 
 bool Layer::DrawsContent() const {
@@ -1122,7 +1125,7 @@ void Layer::ClearRenderSurfaceLayerList() {
 }
 
 gfx::ScrollOffset Layer::ScrollOffsetForAnimation() const {
-  return TotalScrollOffset();
+  return CurrentScrollOffset();
 }
 
 // On<Property>Animated is called due to an ongoing accelerated animation.

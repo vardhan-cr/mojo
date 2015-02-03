@@ -155,6 +155,16 @@ void GLES2InterfaceStub::CopyTexSubImage2D(GLenum /* target */,
                                            GLsizei /* width */,
                                            GLsizei /* height */) {
 }
+void GLES2InterfaceStub::CopyTexSubImage3D(GLenum /* target */,
+                                           GLint /* level */,
+                                           GLint /* xoffset */,
+                                           GLint /* yoffset */,
+                                           GLint /* zoffset */,
+                                           GLint /* x */,
+                                           GLint /* y */,
+                                           GLsizei /* width */,
+                                           GLsizei /* height */) {
+}
 GLuint GLES2InterfaceStub::CreateProgram() {
   return 0;
 }
@@ -594,6 +604,12 @@ void GLES2InterfaceStub::TexSubImage3D(GLenum /* target */,
                                        GLenum /* format */,
                                        GLenum /* type */,
                                        const void* /* pixels */) {
+}
+void GLES2InterfaceStub::TransformFeedbackVaryings(
+    GLuint /* program */,
+    GLsizei /* count */,
+    const char* const* /* varyings */,
+    GLenum /* buffermode */) {
 }
 void GLES2InterfaceStub::Uniform1f(GLint /* location */, GLfloat /* x */) {
 }
