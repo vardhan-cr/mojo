@@ -87,6 +87,10 @@ net_dirs = [
 files_to_copy = ["sandbox/sandbox_export.h",
     ".clang-format"]
 
+# The contents of these files before the roll will be preserved after the roll,
+# even though they live in directories rolled in from Chromium.
+files_not_to_roll = [ "build/config/mojo.gni" ]
+
 dirs = dirs_to_snapshot + net_dirs
 
 def chromium_rev_number(src_commit):
@@ -122,8 +126,17 @@ def main():
       "snapshot of things imported from chromium.")
   parser.add_argument("chromium_dir", help="chromium source dir")
   args = parser.parse_args()
+  pre_roll_commit = system(
+      ["git", "rev-parse", "HEAD"], cwd=mojo_root_dir).strip()
+
   rev(args.chromium_dir)
   patch.patch()
+
+  print "Restoring files whose contents don't track Chromium"
+  for f in files_not_to_roll:
+    system(["git", "checkout", pre_roll_commit, "--", f], cwd=mojo_root_dir)
+  if files_not_to_roll:
+    commit("Restored pre-roll versions of files that don't get rolled")
   return 0
 
 if __name__ == "__main__":
