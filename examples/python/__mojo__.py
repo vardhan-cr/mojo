@@ -48,10 +48,8 @@ class ServiceProviderImpl(service_provider_mojom.ServiceProvider):
 
 class ExampleServiceImpl(example_service_mojom.ExampleService):
   def Ping(self, ping_value):
-    self.client.Pong(ping_value)
+    return ping_value
 
-  def RunCallback(self):
-    return {}
 
 def MojoMain(app_request_handle):
   """MojoMain is the entry point for a python Mojo module."""

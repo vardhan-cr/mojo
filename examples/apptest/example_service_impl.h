@@ -20,8 +20,8 @@ class ExampleServiceImpl : public ExampleService {
 
  private:
   // ExampleService overrides.
-  void Ping(uint16_t ping_value) override;
-  void RunCallback(const Callback<void()>& callback) override;
+  void Ping(uint16_t ping_value,
+            const ExampleService::PingCallback& callback) override;
 
   // ExampleServiceImpl is strongly bound to the pipe.
   StrongBinding<ExampleService> binding_;

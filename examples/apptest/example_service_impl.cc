@@ -12,12 +12,9 @@ ExampleServiceImpl::ExampleServiceImpl(InterfaceRequest<ExampleService> request)
 
 ExampleServiceImpl::~ExampleServiceImpl() {}
 
-void ExampleServiceImpl::Ping(uint16_t ping_value) {
-  binding_.client()->Pong(ping_value);
-}
-
-void ExampleServiceImpl::RunCallback(const Callback<void()>& callback) {
-  callback.Run();
+void ExampleServiceImpl::Ping(uint16_t ping_value,
+                              const ExampleService::PingCallback& callback) {
+  callback.Run(ping_value);
 }
 
 }  // namespace mojo
