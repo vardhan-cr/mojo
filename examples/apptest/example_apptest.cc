@@ -11,6 +11,7 @@
 
 namespace mojo {
 namespace {
+
 // Exemplifies ApplicationTestBase's application testing pattern.
 class ExampleApplicationTest : public test::ApplicationTestBase {
  public:
@@ -49,8 +50,7 @@ TEST_F(ExampleApplicationTest, PingServiceToPong) {
 }
 
 TEST_F(ExampleApplicationTest, CheckCommandLineArg) {
-  // apptest_runner.py adds this argument unconditionally, so we can check for
-  // it here to verify that command line args are getting passed to apptests.
+  // Ensure the test runner passes along this example command line argument.
   ASSERT_TRUE(application_impl()->HasArg("--example_apptest_arg"));
 }
 
