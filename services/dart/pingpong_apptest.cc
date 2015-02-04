@@ -35,21 +35,11 @@ class DartPingPongTest : public mojo::test::ApplicationTestBase {
   ~DartPingPongTest() override {}
 
  protected:
-  const std::string DartAppURL(const std::string& filename) {
-    base::FilePath path;
-    PathService::Get(base::DIR_SOURCE_ROOT, &path);
-    path = path.AppendASCII("services")
-        .AppendASCII("dart")
-        .AppendASCII("test")
-        .AppendASCII(filename);
-    return "file://" + path.AsUTF8Unsafe();
-  }
-
   // ApplicationTestBase:
   void SetUp() override {
     ApplicationTestBase::SetUp();
-    const std::string& url = DartAppURL("pingpong.dart");
-    application_impl()->ConnectToService(url, &pingpong_service_);
+    application_impl()->ConnectToService("mojo:dart_pingpong",
+                                         &pingpong_service_);
   }
 
   PingPongServicePtr pingpong_service_;
@@ -90,8 +80,7 @@ TEST_F(DartPingPongTest, PingServiceToPongClient) {
 TEST_F(DartPingPongTest, PingTargetURL) {
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
-  pingpong_service_->PingTargetURL(
-      DartAppURL("pingpong_target.dart"), 9, callback);
+  pingpong_service_->PingTargetURL("mojo:dart_pingpong_target", 9, callback);
   EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
   EXPECT_TRUE(returned_value);
   pingpong_service_->Quit();
@@ -101,8 +90,7 @@ TEST_F(DartPingPongTest, PingTargetURL) {
 // pingpong_target.dart URL, we provide a connection to its PingPongService.
 TEST_F(DartPingPongTest, PingTargetService) {
   PingPongServicePtr target;
-  application_impl()->ConnectToService(
-      DartAppURL("pingpong_target.dart"), &target);
+  application_impl()->ConnectToService("mojo:dart_pingpong_target", &target);
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
   pingpong_service_->PingTargetService(target.Pass(), 9, callback);

@@ -1,0 +1,16 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/dart/rules.gni")
+
+dart_packaged_application("pingpong_target") {
+  output_name = "dart_pingpong_target"
+  sources = [
+    "main.dart",
+  ]
+  deps = [
+    "//services/dart/test:pingpong_service_interface",
+    "//mojo/public/interfaces/application",
+  ]
+}

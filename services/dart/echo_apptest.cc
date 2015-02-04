@@ -20,21 +20,10 @@ class DartEchoTest : public mojo::test::ApplicationTestBase {
   ~DartEchoTest() override {}
 
  protected:
-  const std::string DartAppURL(const std::string& filename) {
-    base::FilePath path;
-    PathService::Get(base::DIR_SOURCE_ROOT, &path);
-    path = path.AppendASCII("services")
-        .AppendASCII("dart")
-        .AppendASCII("test")
-        .AppendASCII(filename);
-    return "file://" + path.AsUTF8Unsafe();
-  }
-
   // ApplicationTestBase:
   void SetUp() override {
     ApplicationTestBase::SetUp();
-    const std::string& url = DartAppURL("echo.dart");
-    application_impl()->ConnectToService(url, &echo_service_);
+    application_impl()->ConnectToService("mojo:dart_echo", &echo_service_);
   }
 
   mojo::EchoServicePtr echo_service_;

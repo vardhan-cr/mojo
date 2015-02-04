@@ -1,11 +1,9 @@
-#!mojo mojo:dart_content_handler
-
 // Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 // Run with, e.g.:
-// mojo_shell "file:///path/to/wget.dart http://www.google.com"
+// mojo_shell "mojo:dart_wget http://www.google.com"
 
 import 'dart:async';
 import 'dart:mojo_application';

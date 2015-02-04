@@ -5,6 +5,7 @@
 #ifndef SERVICES_DART_DART_APP_H_
 #define SERVICES_DART_DART_APP_H_
 
+#include "base/files/scoped_temp_dir.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/public/cpp/system/message_pipe.h"
@@ -28,8 +29,20 @@ class DartApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  private:
   void OnAppLoaded();
 
+  // Extracts the target application into a temporary directory. This directory
+  // is deleted at the end of the life of the DartContentHandler object.
+  void ExtractApplication(mojo::URLResponsePtr response);
+
+  // Reads all the data out of a pipe into a string.
+  std::string CopyToString(mojo::ScopedDataPipeConsumerHandle body);
+
   mojo::InterfaceRequest<mojo::Application> application_request_;
   mojo::dart::DartControllerConfig config_;
+
+  // A reference to our unpacked application. This directory gets cleaned up
+  // once we go out of scope.
+  base::ScopedTempDir unpacked_app_directory_;
+
   DISALLOW_COPY_AND_ASSIGN(DartApp);
 };
 

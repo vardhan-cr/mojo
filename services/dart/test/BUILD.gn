@@ -4,13 +4,13 @@
 
 import("//mojo/public/tools/bindings/mojom.gni")
 
-mojom("echo_service") {
+mojom("echo_service_interface") {
   sources = [
     "echo_service.mojom",
   ]
 }
 
-mojom("pingpong_service") {
+mojom("pingpong_service_interface") {
   sources = [
     "pingpong_service.mojom",
   ]

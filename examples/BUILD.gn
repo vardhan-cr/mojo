@@ -9,7 +9,9 @@ group("examples") {
 
   deps = [
     "//examples/apptest",
+    "//examples/browser",
     "//examples/content_handler_demo",
+    "//examples/dart/wget",
     "//examples/echo",
     "//examples/embedded_app",
     "//examples/forwarding_content_handler",
@@ -17,6 +19,7 @@ group("examples") {
     "//examples/http_handler",
     "//examples/indirect_service",
     "//examples/js/maps",
+    "//examples/nesting_app",
     "//examples/png_viewer",
     "//examples/recipes",
     "//examples/recursive_content_handler",
@@ -24,11 +27,6 @@ group("examples") {
     "//examples/sky_compositor_app",
     "//examples/surfaces_app",
     "//examples/wget",
-  ]
-
-  deps += [
-    "//examples/browser",
-    "//examples/nesting_app",
     "//examples/window_manager",
     "//examples/wm_flow",
   ]
