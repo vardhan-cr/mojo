@@ -34,10 +34,15 @@ def main():
                       help='The build output directory.')
   args = parser.parse_args()
 
-  apptest_list = ast.literal_eval(args.apptest_list_file.read())
+  config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
+
+  execution_globals = {
+      "config": config,
+  }
+  exec args.apptest_list_file in execution_globals
+  apptest_list = execution_globals["tests"]
   _logging.debug("Test list: %s" % apptest_list)
 
-  config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
   is_android = (config.target_os == Config.OS_ANDROID)
   android_context = android.PrepareShellRun(config) if is_android else None
 
@@ -46,11 +51,6 @@ def main():
 
   exit_code = 0
   for apptest_dict in apptest_list:
-    if apptest_dict.get("disabled"):
-      continue
-    if not config.match_target_os(apptest_dict.get("target_os", [])):
-      continue
-
     apptest = apptest_dict["test"]
     apptest_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", [])

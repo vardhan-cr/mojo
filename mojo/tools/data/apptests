@@ -1,7 +1,10 @@
 # This file contains a list of Mojo gtest unit tests.
-# This must be a valid python dictionary.
+# This must be valid python. It can use the |config| global that will be a
+# mopy.config.Config object and must set a |tests| global that will contain the
+# tests to run.
 # TODO(vtl|msw): Add a way of specifying data dependencies.
-[
+
+tests = [
   {
     "test": "mojo:clipboard_apptests",
   },
@@ -11,38 +14,47 @@
     "test-args": ["--example_apptest_arg"],
   },
   {
-    # Runs mojo:example_apptests, replacing the mojo:example_service dependency
-    # with the alternate test:example_service, launched via mojo launcher."
-    "test": "mojo:example_apptests",
-    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
-    "test-args": ["--example_apptest_arg"],
-    "shell-args": ["--url-mappings=mojo:example_service=test:example_service"],
-    "launched-services": ["test:example_service"],
-    "target_os": ["!android"],
-  },
-  {
     "test": "mojo:network_service_apptests",
-  },
-  {
-    "test": "mojo:example_apptests",
-    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
-    "test-args": ["--example_apptest_arg"],
-    "shell-args": ["--url-mappings=mojo:example_service=mojo:python_example_service"],
-    "target_os": ["!*", "linux"],
   },
   {
     "test": "mojo:view_manager_service_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
   {
-    "test": "mojo:js_apptests",
-    "target_os": ["!android"],
-  },
-  {
     "test": "mojo:window_manager_apptests",
   },
-  {
-    "test": "mojo:reaper_apptests",
-    "target_os": ["!android"],
-  },
 ]
+
+if config.target_os == config.OS_LINUX:
+  tests += [
+    {
+      "test": "mojo:example_apptests",
+      # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+      "test-args": ["--example_apptest_arg"],
+      "shell-args": [
+        "--url-mappings=mojo:example_service=mojo:python_example_service"
+      ],
+    },
+  ]
+
+if config.target_os != config.OS_ANDROID:
+  tests += [
+    {
+      # Runs mojo:example_apptests, replacing the mojo:example_service
+      # dependency with the alternate test:example_service, launched via mojo
+      # launcher."
+      "test": "mojo:example_apptests",
+      # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+      "test-args": ["--example_apptest_arg"],
+      "shell-args": [
+        "--url-mappings=mojo:example_service=test:example_service"
+      ],
+      "launched-services": ["test:example_service"],
+    },
+    {
+      "test": "mojo:js_apptests",
+    },
+    {
+      "test": "mojo:reaper_apptests",
+    },
+  ]

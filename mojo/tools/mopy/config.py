@@ -125,25 +125,3 @@ class Config(object):
   def test_types(self):
     """List of test types to run."""
     return self.values.get("test_types", [Config.TEST_TYPE_DEFAULT])
-
-  # Utility methods ------------------------------------------------------------
-
-  def match_target_os(self, selector):
-    """Returns whether the current config matches the target os selector.
-
-    |selector| is a list of strings. Each string is either:
-    *          : matches everything.
-    target_os  : matches the given target os.
-    !*         : rejects everything
-    !target_os : rejects the given target os.
-
-    The last matching selector is considered. If no selector match, the config
-    matches.
-    """
-    for match in reversed(selector):
-      invert = match[0] == "!"
-      if invert:
-        match = match[1:]
-      if match == "*" or self.target_os == match:
-        return not invert
-    return True

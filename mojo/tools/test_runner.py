@@ -41,11 +41,15 @@ def main():
                       nargs='?')
   args = parser.parse_args()
 
-  _logging.debug("Test list file: %s", args.gtest_list_file)
-  gtest_list = ast.literal_eval(args.gtest_list_file.read())
-  _logging.debug("Test list: %s" % gtest_list)
-
   config = ConfigForGNArgs(ParseGNConfig(args.root_dir))
+
+  _logging.debug("Test list file: %s", args.gtest_list_file)
+  execution_globals = {
+      "config": config,
+  }
+  exec args.gtest_list_file in execution_globals
+  gtest_list = execution_globals["tests"]
+  _logging.debug("Test list: %s" % gtest_list)
 
   print "Running tests in directory: %s" % args.root_dir
   os.chdir(args.root_dir)
@@ -76,11 +80,6 @@ def main():
   successes_cache_file = open(args.successes_cache_filename, 'ab') \
       if args.successes_cache_filename else None
   for gtest_dict in gtest_list:
-    if gtest_dict.get("disabled"):
-      continue
-    if not config.match_target_os(gtest_dict.get("target_os", [])):
-      continue
-
     gtest = gtest_dict["test"]
     cacheable = gtest_dict.get("cacheable", True)
     if not cacheable:
