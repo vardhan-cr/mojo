@@ -5,6 +5,7 @@
 #include "services/reaper/reaper_impl.h"
 
 #include "base/logging.h"
+#include "base/stl_util.h"
 #include "crypto/random.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "services/reaper/reaper_binding.h"
@@ -12,20 +13,17 @@
 
 namespace reaper {
 
+struct ReaperImpl::InternedURL {
+  bool operator<(const InternedURL& other) const { return url < other.url; }
+  GURL* url = NULL;
+};
+
 struct ReaperImpl::NodeLocator {
   NodeLocator() : node_id(0) {}
   NodeLocator(const NodeLocator& other) = default;
-  NodeLocator(AppId app_id, uint32 node_id)
-      : app_id(app_id), node_id(node_id) {}
-  bool operator<(const NodeLocator& rhs) const {
-    if (app_id < rhs.app_id)
-      return true;
-    else if (app_id == rhs.app_id && node_id < rhs.node_id)
-      return true;
-    else
-      return false;
-  }
-  AppId app_id;
+  NodeLocator(InternedURL app_url, uint32 node_id)
+      : app_url(app_url), node_id(node_id) {}
+  InternedURL app_url;
   uint32 node_id;
 };
 
@@ -38,55 +36,68 @@ struct ReaperImpl::NodeInfo {
   bool is_source;
 };
 
-ReaperImpl::ReaperImpl()
-    : reaper_url_("mojo:reaper"), next_app_id_(1), next_transfer_id_(1) {
+ReaperImpl::ReaperImpl() : reaper_url_("mojo:reaper"), next_transfer_id_(1) {
 }
 
 ReaperImpl::~ReaperImpl() {
+  STLDeleteValues(&interned_urls_);
 }
 
-ReaperImpl::AppId ReaperImpl::GetAppId(const GURL& app_url) {
-  auto result = app_ids_[app_url];
-  if (result == 0) {
-    result = app_ids_[app_url] = next_app_id_++;
+ReaperImpl::InternedURL ReaperImpl::InternURL(const GURL& url) {
+  auto interned = interned_urls_[url];
+  if (!interned) {
+    interned = new GURL(url);
+    interned_urls_[url] = interned;
   }
+  InternedURL result;
+  result.url = interned;
   return result;
 }
 
-const GURL& ReaperImpl::GetAppURLSlowly(AppId app_id) const {
-  for (const auto& it : app_ids_) {
-    if (it.second == app_id)
-      return it.first;
-  }
-  return GURL::EmptyGURL();
+ReaperImpl::NodeInfo* ReaperImpl::GetNode(
+    const ReaperImpl::NodeLocator& locator) {
+  auto app = nodes_.find(locator.app_url);
+  if (app == nodes_.end())
+    return NULL;
+
+  auto node = app->second.find(locator.node_id);
+  if (node == app->second.end())
+    return NULL;
+
+  return &(node->second);
 }
 
-bool ReaperImpl::MoveNode(const NodeLocator& source, const NodeLocator& dest) {
-  const auto& source_it = nodes_.find(source);
-  if (source_it == nodes_.end())
+bool ReaperImpl::MoveNode(const ReaperImpl::NodeLocator& source_locator,
+                          const ReaperImpl::NodeLocator& dest_locator) {
+  NodeInfo* source = GetNode(source_locator);
+  if (!source) {
     return false;
+  }
 
-  const auto& dest_it = nodes_.find(dest);
-  if (dest_it != nodes_.end())
+  NodeInfo* dest = GetNode(dest_locator);
+  if (dest) {
     return false;
+  }
 
-  nodes_[dest] = source_it->second;
-  nodes_.erase(source_it);
+  NodeInfo* other = GetNode(source->other_node);
+  DCHECK(other);
 
-  nodes_[nodes_[dest].other_node].other_node = dest;
+  nodes_[dest_locator.app_url][dest_locator.node_id] = *source;
+  nodes_[source_locator.app_url].erase(source_locator.node_id);
+  other->other_node = dest_locator;
   return true;
 }
 
 void ReaperImpl::GetApplicationSecret(
     const GURL& caller_app,
     const mojo::Callback<void(AppSecret)>& callback) {
-  AppId app_id = GetAppId(caller_app);
-  AppSecret secret = app_id_to_secret_[app_id];
+  InternedURL app_url = InternURL(caller_app);
+  AppSecret secret = app_url_to_secret_[app_url];
   if (secret == 0u) {
     crypto::RandBytes(&secret, sizeof(AppSecret));
     CHECK_NE(secret, 0u);
-    app_id_to_secret_[app_id] = secret;
-    app_secret_to_id_[secret] = app_id;
+    app_url_to_secret_[app_url] = secret;
+    app_secret_to_url_[secret] = app_url;
   }
   callback.Run(secret);
 }
@@ -94,48 +105,49 @@ void ReaperImpl::GetApplicationSecret(
 void ReaperImpl::CreateReference(const GURL& caller_app,
                                  uint32 source_node_id,
                                  uint32 target_node_id) {
-  NodeLocator source_locator(GetAppId(caller_app), source_node_id);
-  NodeLocator target_locator(GetAppId(caller_app), target_node_id);
+  InternedURL app_url = InternURL(caller_app);
 
-  if (nodes_.find(source_locator) != nodes_.end()) {
+  NodeLocator source_locator(app_url, source_node_id);
+  NodeLocator target_locator(app_url, target_node_id);
+
+  if (GetNode(source_locator) != NULL) {
     LOG(ERROR) << "Duplicate source node: " << source_node_id;
     return;
   }
 
-  if (nodes_.find(target_locator) != nodes_.end()) {
+  if (GetNode(target_locator) != NULL) {
     LOG(ERROR) << "Duplicate target node: " << target_node_id;
     return;
   }
 
   NodeInfo source_node(target_locator);
   source_node.is_source = true;
-  nodes_[source_locator] = source_node;
+  nodes_[source_locator.app_url][source_locator.node_id] = source_node;
 
   NodeInfo target_node(source_locator);
-  nodes_[target_locator] = target_node;
+  nodes_[target_locator.app_url][target_locator.node_id] = target_node;
 }
 
 void ReaperImpl::DropNode(const GURL& caller_app, uint32 node_id) {
-  const auto& it = nodes_.find(NodeLocator(GetAppId(caller_app), node_id));
-  if (it == nodes_.end()) {
+  NodeLocator locator(InternURL(caller_app), node_id);
+  NodeInfo* node = GetNode(locator);
+  if (!node) {
     LOG(ERROR) << "Specified node does not exist: " << node_id;
     return;
   }
 
-  const auto& other_it = nodes_.find(
-      NodeLocator(it->second.other_node.app_id, it->second.other_node.node_id));
-  DCHECK(other_it != nodes_.end());
-  nodes_.erase(other_it->first);
-
-  nodes_.erase(it);
+  NodeLocator other_locator = node->other_node;
+  DCHECK(GetNode(other_locator));
+  nodes_[locator.app_url].erase(locator.node_id);
+  nodes_[other_locator.app_url].erase(other_locator.node_id);
 }
 
 void ReaperImpl::StartTransfer(const GURL& caller_app,
                                uint32 node_id,
                                mojo::InterfaceRequest<Transfer> request) {
-  AppId transfer_id = next_transfer_id_++;
-  NodeLocator source(GetAppId(caller_app), node_id);
-  if (!MoveNode(source, NodeLocator(GetAppId(reaper_url_), transfer_id))) {
+  uint32 transfer_id = next_transfer_id_++;
+  NodeLocator source(InternURL(caller_app), node_id);
+  if (!MoveNode(source, NodeLocator(InternURL(reaper_url_), transfer_id))) {
     LOG(ERROR) << "Could not start node transfer because move failed from: ("
                << caller_app.spec() << "," << node_id << ") to: ("
                << reaper_url_.spec() << "," << transfer_id << ")";
@@ -147,20 +159,20 @@ void ReaperImpl::StartTransfer(const GURL& caller_app,
 void ReaperImpl::CompleteTransfer(uint32 source_node_id,
                                   uint64 dest_app_secret,
                                   uint32 dest_node_id) {
-  AppId dest_app_id = app_secret_to_id_[dest_app_secret];
-  if (dest_app_id == 0u) {
+  InternedURL dest_app_url = app_secret_to_url_[dest_app_secret];
+  if (!dest_app_url.url) {
     LOG(ERROR) << "Specified destination app secret does not exist: "
                << dest_app_secret;
     return;
   }
 
-  NodeLocator source(GetAppId(reaper_url_), source_node_id);
-  NodeLocator dest(dest_app_id, dest_node_id);
+  InternedURL source_app_url(InternURL(reaper_url_));
+  NodeLocator source(source_app_url, source_node_id);
+  NodeLocator dest(dest_app_url, dest_node_id);
   if (!MoveNode(source, dest)) {
     LOG(ERROR) << "Could not complete transfer because move failed from: ("
-               << reaper_url_.spec() << "," << source_node_id << ") to: ("
-               << GetAppURLSlowly(dest_app_id).spec() << "," << dest_node_id
-               << ")";
+               << *source_app_url.url << "," << source_node_id << ") to: ("
+               << *dest_app_url.url << "," << dest_node_id << ")";
   }
 }
 
@@ -184,26 +196,25 @@ void ReaperImpl::Create(mojo::ApplicationConnection* connection,
 
 void ReaperImpl::DumpNodes(
     const mojo::Callback<void(mojo::Array<NodePtr>)>& callback) {
-  std::map<AppId, GURL> app_urls;
-  for (const auto& it : app_ids_)
-    app_urls[it.second] = it.first;
   mojo::Array<NodePtr> result(0u);
-  for (const auto& entry : nodes_) {
-    NodePtr node(Node::New());
-    node->app_url = app_urls[entry.first.app_id].spec();
-    node->node_id = entry.first.node_id;
-    node->other_app_url = app_urls[entry.second.other_node.app_id].spec();
-    node->other_id = entry.second.other_node.node_id;
-    node->is_source = entry.second.is_source;
-    result.push_back(node.Pass());
+  for (const auto& app : nodes_) {
+    for (const auto& node_info : app.second) {
+      NodePtr node(Node::New());
+      node->app_url = app.first.url->spec();
+      node->node_id = node_info.first;
+      node->other_app_url = node_info.second.other_node.app_url.url->spec();
+      node->other_id = node_info.second.other_node.node_id;
+      node->is_source = node_info.second.is_source;
+      result.push_back(node.Pass());
+    }
   }
   callback.Run(result.Pass());
 }
 
 void ReaperImpl::Reset() {
   nodes_.clear();
-  app_id_to_secret_.clear();
-  app_secret_to_id_.clear();
+  app_url_to_secret_.clear();
+  app_secret_to_url_.clear();
 }
 
 void ReaperImpl::GetReaperForApp(const mojo::String& app_url,

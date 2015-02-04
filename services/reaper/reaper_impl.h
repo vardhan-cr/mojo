@@ -47,13 +47,12 @@ class ReaperImpl : public Diagnostics,
                         uint32 dest_node_id);
 
  private:
-  typedef int AppId;
-
+  struct InternedURL;
   struct NodeLocator;
   struct NodeInfo;
 
-  AppId GetAppId(const GURL& app_url);
-  const GURL& GetAppURLSlowly(const AppId app_id) const;
+  InternedURL InternURL(const GURL& app_url);
+  NodeInfo* GetNode(const NodeLocator& locator);
   bool MoveNode(const NodeLocator& source, const NodeLocator& dest);
 
   // mojo::ApplicationDelegate
@@ -79,16 +78,18 @@ class ReaperImpl : public Diagnostics,
   GURL reaper_url_;
 
   // There will be a lot of nodes in a running system, so we intern app urls.
-  std::map<GURL, AppId> app_ids_;
-  AppId next_app_id_;
+  std::map<GURL, GURL*> interned_urls_;
 
   // These are the ids assigned to nodes while they are being transferred.
-  AppId next_transfer_id_;
+  uint32 next_transfer_id_;
 
-  std::map<AppId, AppSecret> app_id_to_secret_;
-  std::map<AppSecret, AppId> app_secret_to_id_;
+  std::map<InternedURL, AppSecret> app_url_to_secret_;
+  std::map<AppSecret, InternedURL> app_secret_to_url_;
 
-  std::map<NodeLocator, NodeInfo> nodes_;
+  // TODO(aa): The values in at least the first-level map should probably be
+  // heap-allocated.
+  std::map<InternedURL, std::map<uint32, NodeInfo>> nodes_;
+
   mojo::WeakBindingSet<Diagnostics> diagnostics_bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(ReaperImpl);
