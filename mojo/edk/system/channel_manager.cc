@@ -50,24 +50,24 @@ void ChannelManager::CreateChannelOnIOThread(
   channel->Init(system::RawChannel::Create(platform_handle.Pass()));
   channel->SetBootstrapEndpoint(bootstrap_channel_endpoint);
 
-  AddChannel(channel_id, channel, base::MessageLoopProxy::current());
-}
-
-void ChannelManager::AddChannel(
-    ChannelId channel_id,
-    scoped_refptr<Channel> channel,
-    scoped_refptr<base::TaskRunner> channel_thread_task_runner) {
   {
     base::AutoLock locker(lock_);
     CHECK(channel_infos_.find(channel_id) == channel_infos_.end());
     channel_infos_[channel_id] =
-        ChannelInfo(channel, channel_thread_task_runner);
+        ChannelInfo(channel, base::MessageLoopProxy::current());
   }
   channel->SetChannelManager(this);
 }
 
+scoped_refptr<Channel> ChannelManager::GetChannel(ChannelId channel_id) const {
+  base::AutoLock locker(lock_);
+  auto it = channel_infos_.find(channel_id);
+  DCHECK(it != channel_infos_.end());
+  return it->second.channel;
+}
+
 void ChannelManager::WillShutdownChannel(ChannelId channel_id) {
-  GetChannelInfo(channel_id).channel->WillShutdownSoon();
+  GetChannel(channel_id)->WillShutdownSoon();
 }
 
 void ChannelManager::ShutdownChannel(ChannelId channel_id) {
@@ -80,13 +80,6 @@ void ChannelManager::ShutdownChannel(ChannelId channel_id) {
     channel_infos_.erase(it);
   }
   ShutdownChannelHelper(channel_info);
-}
-
-ChannelInfo ChannelManager::GetChannelInfo(ChannelId channel_id) {
-  base::AutoLock locker(lock_);
-  auto it = channel_infos_.find(channel_id);
-  DCHECK(it != channel_infos_.end());
-  return it->second;
 }
 
 }  // namespace system
