@@ -69,12 +69,12 @@ source_set("lib") {
 test("window_manager_unittests") {
   sources = [
     "focus_controller_unittest.cc",
+    "run_all_unittests.cc",
     "view_target_unittest.cc",
     "view_targeter_unittest.cc",
     "window_manager_api_unittest.cc",
     "window_manager_test_util.cc",
     "window_manager_test_util.h",
-    "window_manager_unittests.cc",
   ]
 
   public_deps = [
