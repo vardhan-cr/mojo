@@ -2,7 +2,7 @@
 # Prepend * to indicate that results shouldn't be cached (e.g., if the test has
 # other data dependencies).
 # TODO(zra): Merge with unittests when Dart is no longer under a flag.
-[
+tests = [
   # Dart tests:
   {
     "test": "dart_unittests",
