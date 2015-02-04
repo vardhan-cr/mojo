@@ -25,7 +25,7 @@ class WGet extends Application {
   }
 
   run(List<String> args) async {
-    if (args.length != 2) {
+    if (args == null || args.length != 2) {
       throw "Expected URL argument";
     }
 
