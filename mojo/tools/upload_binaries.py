@@ -72,16 +72,16 @@ def upload_app(app_binary_path, config, dry_run):
   upload(config, app_binary_path, dest, dry_run)
 
 def main():
-  parser = argparse.ArgumentParser(description="Upload mojo_shell binary to "+
-      "google storage (by default on Linux, but this can be changed via options"
-      ".")
+  parser = argparse.ArgumentParser(description="Upload binaries for apps and "
+      "the Mojo shell to google storage (by default on Linux, but this can be "
+      "changed via options).")
   parser.add_argument("-n", "--dry_run", help="Dry run, do not actually "+
       "upload", action="store_true")
   parser.add_argument("-v", "--verbose", help="Verbose mode",
       action="store_true")
   parser.add_argument("--android",
                       action="store_true",
-                      help="Upload the shell for Android")
+                      help="Upload the shell and apps for Android")
   args = parser.parse_args()
 
   target_os = Config.OS_LINUX
