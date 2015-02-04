@@ -47,26 +47,6 @@ system::ChannelId MakeChannelId() {
   return static_cast<system::ChannelId>(-new_counter_value);
 }
 
-// Helper for |CreateChannel()|. Called on the channel creation thread.
-void CreateChannelHelper(
-    ScopedPlatformHandle platform_handle,
-    scoped_ptr<ChannelInfo> channel_info,
-    scoped_refptr<system::ChannelEndpoint> channel_endpoint,
-    DidCreateChannelCallback callback,
-    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
-  channel_info->channel_id = MakeChannelId();
-  internal::g_channel_manager->CreateChannelOnIOThread(
-      channel_info->channel_id, platform_handle.Pass(), channel_endpoint);
-
-  // Hand the channel back to the embedder.
-  if (callback_thread_task_runner) {
-    callback_thread_task_runner->PostTask(
-        FROM_HERE, base::Bind(callback, channel_info.release()));
-  } else {
-    callback.Run(channel_info.release());
-  }
-}
-
 }  // namespace
 
 namespace internal {
@@ -139,11 +119,12 @@ ScopedMessagePipeHandle CreateChannel(
   scoped_ptr<ChannelInfo> channel_info(new ChannelInfo());
 
   if (rv.is_valid()) {
-    io_thread_task_runner->PostTask(
-        FROM_HERE,
-        base::Bind(&CreateChannelHelper, base::Passed(&platform_handle),
-                   base::Passed(&channel_info), channel_endpoint, callback,
-                   callback_thread_task_runner));
+    channel_info->channel_id = MakeChannelId();
+    internal::g_channel_manager->CreateChannel(
+        channel_info->channel_id, platform_handle.Pass(), channel_endpoint,
+        io_thread_task_runner,
+        base::Bind(callback, base::Unretained(channel_info.release())),
+        callback_thread_task_runner);
   } else {
     (callback_thread_task_runner ? callback_thread_task_runner
                                  : io_thread_task_runner)

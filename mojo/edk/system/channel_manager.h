@@ -11,10 +11,13 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
-#include "base/task_runner.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_info.h"
+
+namespace base {
+class TaskRunner;
+}
 
 namespace mojo {
 
@@ -46,12 +49,30 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   // TODO(vtl): Currently, this should be called on any I/O thread (which will
   // become the new channel's "channel thread"). Eventually, the channel manager
   // will have an assigned I/O thread, on which this must be called.
-  // TODO(vtl): Maybe this should return a message pipe dispatcher (for the
+  // TODO(vtl): Probably this should return a message pipe dispatcher (for the
   // bootstrap message pipe) instead.
   void CreateChannelOnIOThread(
       ChannelId channel_id,
       embedder::ScopedPlatformHandle platform_handle,
       scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint);
+
+  // Like |CreateChannelOnIOThread()|, but may be called from any thread. On
+  // completion, will call |callback| ("on" |io_thread_task_runner| if
+  // |callback_thread_task_runner| is null else by posting to using
+  // |callback_thread_task_runner|). Note: This will always post a task to the
+  // I/O thread, even if |io_thread_task_runner| is the task runner for the
+  // current thread.
+  // TODO(vtl): The |io_thread_task_runner| argument is temporary (we should use
+  // the channel manager's I/O thread).
+  // TODO(vtl): Probably this should return a message pipe dispatcher (for the
+  // bootstrap message pipe) instead.
+  void CreateChannel(
+      ChannelId channel_id,
+      embedder::ScopedPlatformHandle platform_handle,
+      scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint,
+      scoped_refptr<base::TaskRunner> io_thread_task_runner,
+      base::Closure callback,
+      scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
   // Gets the |Channel| with the given ID (which must exist).
   scoped_refptr<Channel> GetChannel(ChannelId channel_id) const;
@@ -71,6 +92,13 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   void ShutdownChannel(ChannelId channel_id);
 
  private:
+  void CreateChannelHelper(
+      ChannelId channel_id,
+      embedder::ScopedPlatformHandle platform_handle,
+      scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint,
+      base::Closure callback,
+      scoped_refptr<base::TaskRunner> callback_thread_task_runner);
+
   embedder::PlatformSupport* const platform_support_;
 
   // Note: |Channel| methods should not be called under |lock_|.
