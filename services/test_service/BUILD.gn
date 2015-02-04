@@ -14,14 +14,14 @@ mojom("bindings") {
 
 mojo_native_application("test_app") {
   sources = [
-    "test_request_tracker_client_impl.cc",
-    "test_request_tracker_client_impl.h",
     "test_service_application.cc",
     "test_service_application.h",
     "test_service_impl.cc",
     "test_service_impl.h",
     "test_time_service_impl.cc",
     "test_time_service_impl.h",
+    "tracked_service.cc",
+    "tracked_service.h",
   ]
 
   deps = [
@@ -38,14 +38,14 @@ mojo_native_application("test_app") {
 
 mojo_native_application("test_request_tracker_app") {
   sources = [
-    "test_request_tracker_client_impl.cc",
-    "test_request_tracker_client_impl.h",
     "test_request_tracker_application.cc",
     "test_request_tracker_application.h",
-    "test_time_service_impl.cc",
-    "test_time_service_impl.h",
     "test_request_tracker_impl.cc",
     "test_request_tracker_impl.h",
+    "test_time_service_impl.cc",
+    "test_time_service_impl.h",
+    "tracked_service.cc",
+    "tracked_service.h",
   ]
 
   deps = [

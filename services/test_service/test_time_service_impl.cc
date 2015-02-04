@@ -5,8 +5,8 @@
 #include "base/time/time.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "services/test_service/test_request_tracker.mojom.h"
-#include "services/test_service/test_request_tracker_client_impl.h"
 #include "services/test_service/test_time_service_impl.h"
+#include "services/test_service/tracked_service.h"
 
 namespace mojo {
 namespace test {
@@ -24,8 +24,7 @@ void TestTimeServiceImpl::StartTrackingRequests(
     const mojo::Callback<void()>& callback) {
   TestRequestTrackerPtr tracker;
   application_->ConnectToService("mojo:test_request_tracker_app", &tracker);
-  tracking_.reset(new TestRequestTrackerClientImpl(
-      tracker.Pass(), Name_, callback));
+  tracking_.reset(new TrackedService(tracker.Pass(), Name_, callback));
 }
 
 void TestTimeServiceImpl::GetPartyTime(

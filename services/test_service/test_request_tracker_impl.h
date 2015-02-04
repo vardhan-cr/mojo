@@ -6,6 +6,7 @@
 #define SERVICES_TEST_SERVICE_TEST_REQUEST_TRACKER_IMPL_H_
 
 #include "base/memory/weak_ptr.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "services/test_service/test_request_tracker.mojom.h"
 
@@ -25,19 +26,21 @@ struct TrackingContext {
   uint64_t next_id;
 };
 
-class TestRequestTrackerImpl : public InterfaceImpl<TestRequestTracker> {
+class TestRequestTrackerImpl : public TestRequestTracker {
  public:
-  explicit TestRequestTrackerImpl(TrackingContext* context);
+  TestRequestTrackerImpl(InterfaceRequest<TestRequestTracker> request,
+                         TrackingContext* context);
   ~TestRequestTrackerImpl() override;
 
   // TestRequestTracker.
+  void SetNameAndReturnId(const String& service_name,
+                          const Callback<void(uint64_t id)>& callback) override;
   void RecordStats(uint64_t client_id, ServiceStatsPtr stats) override;
-
-  void OnConnectionEstablished();
 
  private:
   void UploaderNameCallback(uint64_t id, const mojo::String& name);
   TrackingContext* context_;
+  StrongBinding<TestRequestTracker> binding_;
   base::WeakPtrFactory<TestRequestTrackerImpl> weak_factory_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestRequestTrackerImpl);
 };

@@ -17,7 +17,7 @@ class ApplicationConnection;
 
 namespace test {
 
-class TestRequestTrackerClientImpl;
+class TrackedService;
 
 class TestTimeServiceImpl : public TestTimeService {
  public:
@@ -32,7 +32,7 @@ class TestTimeServiceImpl : public TestTimeService {
 
  private:
   ApplicationConnection* application_;
-  scoped_ptr<TestRequestTrackerClientImpl> tracking_;
+  scoped_ptr<TrackedService> tracking_;
   StrongBinding<TestTimeService> binding_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestTimeServiceImpl);
 };

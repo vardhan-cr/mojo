@@ -13,7 +13,7 @@ namespace mojo {
 class ApplicationConnection;
 namespace test {
 
-class TestRequestTrackerClientImpl;
+class TrackedService;
 class TestServiceApplication;
 
 class TestServiceImpl : public InterfaceImpl<TestService> {
@@ -34,7 +34,7 @@ class TestServiceImpl : public InterfaceImpl<TestService> {
   TestServiceApplication* const application_;
   ApplicationConnection* const connection_;
   TestTimeServicePtr time_service_;
-  scoped_ptr<TestRequestTrackerClientImpl> tracking_;
+  scoped_ptr<TrackedService> tracking_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestServiceImpl);
 };

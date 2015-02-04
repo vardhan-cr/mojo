@@ -40,9 +40,7 @@ void TestRequestTrackerApplication::Create(
 void TestRequestTrackerApplication::Create(
     ApplicationConnection* connection,
     InterfaceRequest<TestRequestTracker> request) {
-  TestRequestTrackerImpl* impl =
-      BindToRequest(new TestRequestTrackerImpl(&context_), &request);
-  impl->OnConnectionEstablished();
+  new TestRequestTrackerImpl(request.Pass(), &context_);
 }
 
 }  // namespace test

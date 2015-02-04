@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SERVICES_TEST_SERVICE_TEST_REQUEST_TRACKER_CLIENT_IMPL_H_
-#define SERVICES_TEST_SERVICE_TEST_REQUEST_TRACKER_CLIENT_IMPL_H_
+#ifndef SERVICES_TEST_SERVICE_TRACKED_SERVICE_H_
+#define SERVICES_TEST_SERVICE_TRACKED_SERVICE_H_
 
 #include "mojo/public/cpp/system/macros.h"
 #include "services/test_service/test_request_tracker.mojom.h"
@@ -11,24 +11,20 @@
 namespace mojo {
 namespace test {
 
-class TestRequestTrackerClientImpl : public TestRequestTrackerClient {
+class TrackedService {
  public:
-  TestRequestTrackerClientImpl(
-      TestRequestTrackerPtr tracker,
-      const std::string& service_name,
-      const mojo::Callback<void()>& tracking_connected_callback);
-  ~TestRequestTrackerClientImpl() override;
+  TrackedService(TestRequestTrackerPtr tracker,
+                 const std::string& service_name,
+                 const mojo::Callback<void()>& tracking_connected_callback);
+  ~TrackedService();
 
   // Call whenever an event happens that you want to be recorded.
   void RecordNewRequest();
 
-  // TestRequestTrackerClient impl.
-  void SetIdAndReturnName(
-      uint64_t id,
-      const mojo::Callback<void(mojo::String)>& callback) override;
-
  private:
+  void SetId(uint64_t id);
   void SendStats();
+
   uint64_t id_;
   uint64_t requests_since_upload_;
   const std::string service_name_;
@@ -39,4 +35,4 @@ class TestRequestTrackerClientImpl : public TestRequestTrackerClient {
 }  // namespace test
 }  // namespace mojo
 
-#endif  // SERVICES_TEST_SERVICE_TEST_REQUEST_TRACKER_CLIENT_IMPL_H_
+#endif  // SERVICES_TEST_SERVICE_TRACKED_SERVICE_H_
