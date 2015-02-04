@@ -47,6 +47,14 @@ static bool IsDartIOLibURL(const char* url_name) {
   return (strcmp(url_name, kIOLibURL) == 0);
 }
 
+static void ReportScriptError(Dart_Handle handle) {
+  // The normal DART_CHECK_VALID macro displays error information and a stack
+  // dump for the C++ application, which is confusing. Only show the Dart error.
+  if (Dart_IsError((handle))) {
+    LOG(ERROR) << "Dart runtime error:\n" << Dart_GetError(handle) << "\n";
+  }
+}
+
 Dart_Handle ResolveUri(Dart_Handle library_url,
                        Dart_Handle url,
                        Dart_Handle builtin_lib) {
@@ -307,7 +315,7 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
 
   // Run event-loop and wait for script loading to complete.
   result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
+  ReportScriptError(result);
 
   // Make the isolate runnable so that it is ready to handle messages.
   Dart_ExitScope();
@@ -650,7 +658,7 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
 
   // Run main until completion.
   result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
+  ReportScriptError(result);
 
   Dart_ExitScope();
   Dart_ShutdownIsolate();
