@@ -458,7 +458,7 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,
-      Dart_NewStringFromCString("Start"),
+      Dart_NewStringFromCString("_start"),
       0,
       nullptr);
   DART_CHECK_VALID(result);
@@ -518,7 +518,7 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   // Stop the MojoHandleWatcher.
   result = Dart_Invoke(
       handle_watcher_type,
-      Dart_NewStringFromCString("Stop"),
+      Dart_NewStringFromCString("_stop"),
       0,
       nullptr);
   DART_CHECK_VALID(result);
@@ -581,7 +581,7 @@ bool DartController::Initialize(bool checked_mode) {
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,
-      Dart_NewStringFromCString("Start"),
+      Dart_NewStringFromCString("_start"),
       0,
       nullptr);
   DART_CHECK_VALID(result);
@@ -683,7 +683,7 @@ void DartController::Shutdown() {
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,
-      Dart_NewStringFromCString("Stop"),
+      Dart_NewStringFromCString("_stop"),
       0,
       nullptr);
   DART_CHECK_VALID(result);
