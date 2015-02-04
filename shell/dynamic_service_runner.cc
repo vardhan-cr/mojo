@@ -55,17 +55,6 @@ base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
                  << ")";
       break;
     }
-    // Go shared library support requires us to initialize the runtime before we
-    // start running any go code. This is a temporary patch.
-    typedef void (*InitGoRuntimeFn)();
-    InitGoRuntimeFn init_go_runtime = reinterpret_cast<InitGoRuntimeFn>(
-        base::GetFunctionPointerFromNativeLibrary(app_library,
-                                                  "InitGoRuntime"));
-    if (init_go_runtime) {
-      DVLOG(2) << "InitGoRuntime: Initializing Go Runtime found in app";
-      init_go_runtime();
-    }
-
     if (!SetThunks(&MojoMakeSystemThunks, "MojoSetSystemThunks", app_library)) {
       LOG(ERROR) << app_path.value() << " MojoSetSystemThunks not found";
       break;
@@ -93,6 +82,17 @@ base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
     }
     // Unlike system thunks, we don't warn on a lack of GLES2 thunks because
     // not everything is a visual app.
+
+    // Go shared library support requires us to initialize the runtime before we
+    // start running any go code. This is a temporary patch.
+    typedef void (*InitGoRuntimeFn)();
+    InitGoRuntimeFn init_go_runtime = reinterpret_cast<InitGoRuntimeFn>(
+        base::GetFunctionPointerFromNativeLibrary(app_library,
+                                                  "InitGoRuntime"));
+    if (init_go_runtime) {
+      DVLOG(2) << "InitGoRuntime: Initializing Go Runtime found in app";
+      init_go_runtime();
+    }
 
     typedef MojoResult (*MojoMainFunction)(MojoHandle);
     MojoMainFunction main_function = reinterpret_cast<MojoMainFunction>(
