@@ -32,6 +32,17 @@ static bool IsDartSchemeURL(const char* url_name) {
   return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
 }
 
+static bool IsServiceIsolateURL(const char* url_name) {
+  if (url_name == nullptr) {
+    return false;
+  }
+  static const intptr_t kServiceIsolateNameLen =
+      strlen(DART_VM_SERVICE_ISOLATE_NAME);
+  return (strncmp(url_name,
+                  DART_VM_SERVICE_ISOLATE_NAME,
+                  kServiceIsolateNameLen) == 0);
+}
+
 static bool IsDartIOLibURL(const char* url_name) {
   return (strcmp(url_name, kIOLibURL) == 0);
 }
@@ -214,6 +225,25 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   return result;
 }
 
+static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
+                                               char** error) {
+  // TODO(johnmccutchan): Add support the service isolate.
+  // No callbacks for service isolate.
+  IsolateCallbacks callbacks;
+  IsolateData* isolate_data =
+      new IsolateData(NULL, callbacks, "", "", "");
+  Dart_Isolate isolate = Dart_CreateIsolate(script_uri,
+                                            "main",
+                                            snapshot_buffer,
+                                            isolate_data,
+                                            error);
+  if (isolate == nullptr) {
+    delete isolate_data;
+    return nullptr;
+  }
+  return isolate;
+}
+
 static Dart_Isolate CreateIsolateHelper(void* dart_app,
                                         IsolateCallbacks callbacks,
                                         const std::string& script,
@@ -229,6 +259,7 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
     return nullptr;
   }
 
+  DPCHECK(!Dart_IsServiceIsolate(isolate));
   Dart_EnterScope();
 
   // Setup the native resolvers for the builtin libraries as they are not set
@@ -302,6 +333,9 @@ static Dart_Isolate IsolateCreateCallback(const char* script_uri,
   std::string script_uri_string;
   std::string package_root_string;
 
+  if (IsServiceIsolateURL(script_uri)) {
+    return CreateServiceIsolateHelper(script_uri, error);
+  }
   if (script_uri == nullptr) {
     if (callback_data == nullptr) {
       *error = strdup("Invalid 'callback_data' - Unable to spawn new isolate");
@@ -343,13 +377,6 @@ static void UnhandledExceptionCallback(Dart_Handle error) {
   }
 }
 
-static Dart_Isolate ServiceIsolateCreateCallback(void* callback_data,
-                                                 char** error) {
-  if (error != nullptr) {
-    *error = strdup("There should be no service isolate");
-  }
-  return nullptr;
-}
 
 bool DartController::initialized_ = false;
 Dart_Isolate DartController::root_isolate_ = nullptr;
@@ -388,8 +415,7 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                            IsolateShutdownCallback,
                            // File IO callbacks.
                            nullptr, nullptr, nullptr, nullptr,
-                           entropy,
-                           ServiceIsolateCreateCallback);
+                           entropy);
   CHECK(result);
   initialized_ = true;
 }
