@@ -53,7 +53,6 @@ group("tests") {
     "//mojo/edk/js/test:js_integration_tests",
     "//mojo/edk/system:tests",
     "//mojo/edk/test:public_tests",
-    "//mojo/services/network:apptests",
     "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
     "//mojo/tools:message_generator",
     "//services/clipboard:apptests",

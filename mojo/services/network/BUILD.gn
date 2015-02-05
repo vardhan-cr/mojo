@@ -2,12 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# TODO(ppi): Switch this file back to using absolute paths to refer to the Mojo
-# SDK once it is no longer being used to build the network service impl in
-# Mojo.
-import("../mojo_sdk_root.gni")
-import("$mojo_sdk_root/mojo/public/mojo_application.gni")
-
 group("network") {
   deps = [
     ":copy_prebuilt_network_service",
@@ -28,70 +22,5 @@ copy("copy_prebuilt_network_service") {
   }
   outputs = [
     "$root_out_dir/$filename",
-  ]
-}
-
-source_set("lib") {
-  sources = [
-    "cookie_store_impl.cc",
-    "cookie_store_impl.h",
-    "net_adapters.cc",
-    "net_adapters.h",
-    "net_address_type_converters.cc",
-    "net_address_type_converters.h",
-    "network_context.cc",
-    "network_context.h",
-    "network_service_impl.cc",
-    "network_service_impl.h",
-    "tcp_bound_socket_impl.cc",
-    "tcp_bound_socket_impl.h",
-    "tcp_connected_socket_impl.cc",
-    "tcp_connected_socket_impl.h",
-    "tcp_server_socket_impl.cc",
-    "tcp_server_socket_impl.h",
-    "udp_socket_impl.cc",
-    "udp_socket_impl.h",
-    "url_loader_impl.cc",
-    "url_loader_impl.h",
-    "web_socket_impl.cc",
-    "web_socket_impl.h",
-  ]
-
-  deps = [
-    "$mojo_sdk_root/mojo/public/cpp/bindings",
-    "//base",
-    "//mojo/application",
-    "//mojo/common",
-    "//mojo/environment:chromium",
-    "//mojo/services/network/public/cpp",
-    "//mojo/services/network/public/interfaces",
-    "//net",
-    "//url",
-  ]
-}
-
-mojo_native_application("apptests") {
-  output_name = "network_service_apptests"
-  testonly = true
-
-  sources = [
-    "udp_socket_apptest.cc",
-    "url_loader_impl_apptest.cc",
-  ]
-
-  deps = [
-    ":copy_prebuilt_network_service",
-    ":lib",
-    "$mojo_sdk_root/mojo/public/cpp/bindings",
-    "$mojo_sdk_root/mojo/public/cpp/bindings:callback",
-    "//base",
-    "//mojo/application",
-    "//mojo/application:test_support",
-    "//mojo/common",
-    "//mojo/services/network/public/cpp",
-    "//mojo/services/network/public/interfaces",
-    "//net",
-    "//net:test_support",
-    "//testing/gtest",
   ]
 }
