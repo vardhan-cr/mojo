@@ -8,8 +8,6 @@
 import argparse
 from copy import deepcopy
 import os
-import platform
-import re
 import subprocess
 import sys
 
@@ -27,9 +25,7 @@ def _args_to_config(args):
   elif args.chromeos:
     target_os = Config.OS_CHROMEOS
 
-  if args.cpu_arch is None and args.android:
-    args.cpu_arch = 'arm'
-  target_arch = args.cpu_arch
+  target_arch = args.target_arch
 
   additional_args = {}
 
@@ -179,7 +175,7 @@ def main():
   os_group.add_argument('--chromeos', help='Build for ChromeOS',
                         action='store_true')
 
-  parent_parser.add_argument('--cpu-arch',
+  parent_parser.add_argument('--target-arch',
                              help='CPU architecture to build for.',
                              choices=['x64', 'x86', 'arm'])
 
