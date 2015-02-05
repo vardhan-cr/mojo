@@ -15,15 +15,25 @@
 namespace mojo {
 namespace shell {
 
-AppChildProcessHost::AppChildProcessHost(
-    Context* context,
-    AppChildControllerClient* controller_client)
+AppChildProcessHost::AppChildProcessHost(Context* context)
     : ChildProcessHost(context, this, ChildProcess::TYPE_APP),
-      controller_client_(controller_client),
       channel_info_(NULL) {
 }
 
 AppChildProcessHost::~AppChildProcessHost() {
+}
+
+void AppChildProcessHost::StartApp(
+    const String& app_path,
+    bool clean_app_path,
+    InterfaceRequest<Application> application_request,
+    const AppChildController::StartAppCallback& on_app_complete) {
+  DCHECK(controller_);
+
+  on_app_complete_ = on_app_complete;
+  controller_->StartApp(
+      app_path, clean_app_path, application_request.Pass(),
+      base::Bind(&AppChildProcessHost::AppCompleted, base::Unretained(this)));
 }
 
 void AppChildProcessHost::WillStart() {
@@ -36,7 +46,6 @@ void AppChildProcessHost::WillStart() {
       base::MessageLoop::current()->message_loop_proxy()));
 
   controller_.Bind(handle.Pass());
-  controller_.set_client(controller_client_);
 }
 
 void AppChildProcessHost::DidStart(bool success) {
@@ -44,7 +53,7 @@ void AppChildProcessHost::DidStart(bool success) {
 
   if (!success) {
     LOG(ERROR) << "Failed to start app child process";
-    controller_client_->AppCompleted(MOJO_RESULT_UNKNOWN);
+    AppCompleted(MOJO_RESULT_UNKNOWN);
     return;
   }
 }
@@ -56,6 +65,14 @@ void AppChildProcessHost::DidCreateChannel(
 
   CHECK(channel_info);
   channel_info_ = channel_info;
+}
+
+void AppChildProcessHost::AppCompleted(int32_t result) {
+  if (!on_app_complete_.is_null()) {
+    auto on_app_complete = on_app_complete_;
+    on_app_complete_.reset();
+    on_app_complete.Run(result);
+  }
 }
 
 }  // namespace shell

@@ -151,7 +151,7 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
     DCHECK(thread_checker_.CalledOnValidThread());
 
     // TODO(vtl): Pass in the result from |MainMain()|.
-    client()->AppCompleted(MOJO_RESULT_UNIMPLEMENTED);
+    on_app_complete_.Run(MOJO_RESULT_UNIMPLEMENTED);
   }
 
   // To be executed on the controller thread. Creates the |AppChildController|,
@@ -173,22 +173,26 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
                    base::Unretained(impl.get())),
         base::MessageLoopProxy::current()));
 
-    BindToPipe(impl.get(), host_message_pipe.Pass());
+    WeakBindToPipe(impl.get(), host_message_pipe.Pass());
 
     app_context->set_controller(impl.Pass());
   }
 
   void OnConnectionError() override {
-    // TODO(darin): How should we handle a connection error here?
+    // A connection error means the connection to the shell is lost. This is not
+    // recoverable.
+    CHECK(false) << "Connection error to the shell.";
   }
 
   // |AppChildController| methods:
   void StartApp(const String& app_path,
                 bool clean_app_path,
-                InterfaceRequest<Application> application_request) override {
+                InterfaceRequest<Application> application_request,
+                const StartAppCallback& on_app_complete) override {
     DVLOG(2) << "AppChildControllerImpl::StartApp(" << app_path << ", ...)";
     DCHECK(thread_checker_.CalledOnValidThread());
 
+    on_app_complete_ = on_app_complete;
     unblocker_.Unblock(base::Bind(&AppChildControllerImpl::StartAppOnMainThread,
                                   base::FilePath::FromUTF8Unsafe(app_path),
                                   clean_app_path
@@ -226,6 +230,7 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
   base::ThreadChecker thread_checker_;
   AppContext* const app_context_;
   Blocker::Unblocker unblocker_;
+  StartAppCallback on_app_complete_;
 
   embedder::ChannelInfo* channel_info_;
 

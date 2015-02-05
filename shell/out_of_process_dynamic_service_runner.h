@@ -8,6 +8,7 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/macros.h"
+#include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/app_child_process.mojom.h"
 #include "shell/app_child_process_host.h"
 #include "shell/dynamic_service_runner.h"
@@ -17,8 +18,7 @@ namespace shell {
 
 // An implementation of |DynamicServiceRunner| that loads/runs the given app
 // (from the file system) in a separate process (of its own).
-class OutOfProcessDynamicServiceRunner : public DynamicServiceRunner,
-                                         public AppChildControllerClient {
+class OutOfProcessDynamicServiceRunner : public DynamicServiceRunner {
  public:
   explicit OutOfProcessDynamicServiceRunner(Context* context);
   ~OutOfProcessDynamicServiceRunner() override;
@@ -30,8 +30,8 @@ class OutOfProcessDynamicServiceRunner : public DynamicServiceRunner,
              const base::Closure& app_completed_callback) override;
 
  private:
-  // |AppChildControllerClient| method:
-  void AppCompleted(int32_t result) override;
+  // |AppChildController::StartApp| callback:
+  void AppCompleted(int32_t result);
 
   Context* const context_;
 

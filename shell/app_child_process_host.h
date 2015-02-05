@@ -16,16 +16,19 @@ namespace shell {
 // A subclass of |ChildProcessHost| to host a |TYPE_APP| child process, which
 // runs a single app (loaded from the file system).
 //
-// Note: After |Start()|, this object must remain alive until the controller
-// client's |AppCompleted()| is called.
+// Note: After |Start()|, |StartApp| must be called and this object must
+// remained alive until the |on_app_complete| callback is called.
 class AppChildProcessHost : public ChildProcessHost,
                             public ChildProcessHost::Delegate {
  public:
-  AppChildProcessHost(Context* context,
-                      AppChildControllerClient* controller_client);
+  explicit AppChildProcessHost(Context* context);
   ~AppChildProcessHost() override;
 
-  AppChildController* controller() { return controller_.get(); }
+  // See |AppChildController::StartApp|.
+  void StartApp(const String& app_path,
+                bool clean_app_path,
+                InterfaceRequest<Application> application_request,
+                const AppChildController::StartAppCallback& on_app_complete);
 
  private:
   // |ChildProcessHost::Delegate| methods:
@@ -35,10 +38,11 @@ class AppChildProcessHost : public ChildProcessHost,
   // Callback for |embedder::CreateChannel()|.
   void DidCreateChannel(embedder::ChannelInfo* channel_info);
 
-  AppChildControllerClient* const controller_client_;
+  void AppCompleted(int32_t result);
 
   AppChildControllerPtr controller_;
   embedder::ChannelInfo* channel_info_;
+  AppChildController::StartAppCallback on_app_complete_;
 
   DISALLOW_COPY_AND_ASSIGN(AppChildProcessHost);
 };

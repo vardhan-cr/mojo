@@ -6,13 +6,8 @@ module mojo.shell;
 
 import "mojo/public/interfaces/application/application.mojom";
 
-[Client=AppChildControllerClient]
 interface AppChildController {
   StartApp(string app_path,
            bool clean_app_path,
-           mojo.Application& application_request);
-};
-
-interface AppChildControllerClient {
-  AppCompleted(int32 result);
+           mojo.Application& application_request) => (int32 result);
 };
