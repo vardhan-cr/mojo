@@ -7,7 +7,9 @@ import argparse
 import os
 import sys
 import tempfile
+import urllib2
 import zipfile
+
 from update_from_chromium import chromium_rev_number
 from utils import commit
 from utils import mojo_root_dir
@@ -18,23 +20,37 @@ sys.path.insert(0, os.path.join(mojo_root_dir, "tools"))
 import gs
 
 def roll(target_version):
+  try:
+    chromium_rev = chromium_rev_number(target_version)
+  except urllib2.HTTPError:
+    print ("Failed to identify a Chromium revision associated with %s. "
+           "Ensure that target_version is a Chromium origin/master "
+           "commit.") % (target_version)
+    return 1
+
   mojoms_gs_path = "gs://mojo/network/%s/mojoms.zip" % (target_version,)
   network_service_path = os.path.join(
       mojo_root_dir, "mojo", "services", "network")
   mojoms_path = os.path.join(network_service_path, "public", "interfaces")
   version_path = os.path.join(network_service_path, "VERSION")
 
-  with tempfile.NamedTemporaryFile() as temp_zip_file:
-    gs.download_from_public_bucket(mojoms_gs_path, temp_zip_file.name)
-    with zipfile.ZipFile(temp_zip_file.name) as z:
-      z.extractall(mojoms_path)
+  try:
+    with tempfile.NamedTemporaryFile() as temp_zip_file:
+      gs.download_from_public_bucket(mojoms_gs_path, temp_zip_file.name)
+      with zipfile.ZipFile(temp_zip_file.name) as z:
+        z.extractall(mojoms_path)
+  # pylint: disable=C0302,bare-except
+  except:
+    print ("Failed to download the mojom files associated with %s. Ensure that "
+           "the corresponding network service artifacts were uploaded to "
+           "Google Storage.") % (target_version)
+    return 1
 
   with open(version_path, 'w') as stamp_file:
     stamp_file.write(target_version)
 
   system(["git", "add", "public"], cwd=network_service_path)
   system(["git", "add", "VERSION"], cwd=network_service_path)
-  chromium_rev = chromium_rev_number(target_version)
   commit("Roll the network service to https://crrev.com/" + chromium_rev,
          cwd=mojo_root_dir)
   return 0
@@ -43,7 +59,8 @@ def main():
   parser = argparse.ArgumentParser(
       description="Update the pinned version of the network service " +
                   "and the corresponding checked out mojoms.")
-  parser.add_argument("version", help="version to roll to")
+  parser.add_argument("version", help="version to roll to (a Chromium "
+                                      "origin/master commit)")
   args = parser.parse_args()
   roll(args.version)
   return 0
