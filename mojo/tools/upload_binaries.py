@@ -59,8 +59,8 @@ def upload_shell(config, dry_run, verbose):
 
   # Zip the shell binary and upload it.
   with tempfile.NamedTemporaryFile() as zip_file:
+    dest = dest_prefix + ".zip"
     with zipfile.ZipFile(zip_file, 'w') as z:
-      dest = dest_prefix + ".zip"
       with open(shell_path) as shell_binary:
         shell_filename = os.path.basename(shell_path)
         zipinfo = zipfile.ZipInfo(shell_filename)
@@ -70,7 +70,7 @@ def upload_shell(config, dry_run, verbose):
         if verbose:
           print "zipping %s" % shell_path
         z.writestr(zipinfo, shell_binary.read())
-        upload(config, zip_file.name, dest, dry_run)
+    upload(config, zip_file.name, dest, dry_run)
 
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
