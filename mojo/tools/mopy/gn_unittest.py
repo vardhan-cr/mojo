@@ -36,7 +36,7 @@ class GTestListTestsTest(unittest.TestCase):
     """Tests that gn to config to gn is the identity"""
     configs_to_test = {
       "os": [None, "android", "chromeos"],
-      "cpu_arch": ["x86", "x64", "arm"],
+      "target_arch": ["x86", "x64", "arm"],
       "is_debug": [False, True],
       "is_clang": [False, True],
       "is_asan": [False, True],
