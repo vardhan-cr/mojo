@@ -66,7 +66,7 @@ def GNArgsForConfig(config):
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False
 
-  gn_args["cpu_arch"] = config.target_arch
+  gn_args["target_arch"] = config.target_arch
 
   return gn_args
 
@@ -97,7 +97,7 @@ def ConfigForGNArgs(args):
     config_args["goma_dir"] = args.get("goma_dir")
   config_args["use_nacl"] = args.get("mojo_use_nacl", False)
   config_args["target_os"] = args.get("os")
-  config_args["target_arch"] = args.get("cpu_arch")
+  config_args["target_arch"] = args.get("target_arch")
   return Config(**config_args)
 
 
