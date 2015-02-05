@@ -35,7 +35,6 @@ class CaptureController;
 class FocusController;
 class FocusRules;
 class ViewEventDispatcher;
-class WindowManagerClient;
 class WindowManagerDelegate;
 class WindowManagerImpl;
 

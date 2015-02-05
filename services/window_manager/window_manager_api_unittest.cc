@@ -49,7 +49,7 @@ class TestWindowManagerObserver : public mojo::WindowManagerObserver {
   }
 
  private:
-  // Overridden from mojo::WindowManagerClient:
+  // Overridden from mojo::WindowManagerObserver:
   void OnCaptureChanged(Id new_capture_node_id) override {}
   void OnFocusChanged(Id focused_node_id) override {
     if (!focus_changed_callback_.is_null())

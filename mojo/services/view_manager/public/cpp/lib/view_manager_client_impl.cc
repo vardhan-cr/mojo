@@ -400,7 +400,7 @@ void ViewManagerClientImpl::OnViewInputEvent(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ViewManagerClientImpl, WindowManagerClient implementation:
+// ViewManagerClientImpl, WindowManagerObserver implementation:
 
 void ViewManagerClientImpl::OnCaptureChanged(Id capture_view_id) {
   View* gained_capture = GetViewById(capture_view_id);
