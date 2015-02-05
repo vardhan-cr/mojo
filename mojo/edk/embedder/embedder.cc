@@ -13,7 +13,6 @@
 #include "mojo/edk/embedder/embedder_internal.h"
 #include "mojo/edk/embedder/platform_support.h"
 #include "mojo/edk/system/channel.h"
-#include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_manager.h"
 #include "mojo/edk/system/configuration.h"
 #include "mojo/edk/system/core.h"
@@ -83,19 +82,15 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
   DCHECK(platform_handle.is_valid());
   DCHECK(channel_info);
 
-  scoped_refptr<system::ChannelEndpoint> channel_endpoint;
+  *channel_info = new ChannelInfo(MakeChannelId());
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
-      system::MessagePipeDispatcher::CreateRemoteMessagePipe(&channel_endpoint);
+      internal::g_channel_manager->CreateChannelOnIOThread(
+          (*channel_info)->channel_id, platform_handle.Pass());
 
-  DCHECK(internal::g_core);
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
-
-  *channel_info = new ChannelInfo(MakeChannelId());
-  internal::g_channel_manager->CreateChannelOnIOThread(
-      (*channel_info)->channel_id, platform_handle.Pass(), channel_endpoint);
-
-  return rv.Pass();
+  CHECK(rv.is_valid());
+  return rv;
 }
 
 ScopedMessagePipeHandle CreateChannel(
@@ -107,31 +102,18 @@ ScopedMessagePipeHandle CreateChannel(
   DCHECK(io_thread_task_runner);
   DCHECK(!callback.is_null());
 
-  scoped_refptr<system::ChannelEndpoint> channel_endpoint;
+  scoped_ptr<ChannelInfo> channel_info(new ChannelInfo(MakeChannelId()));
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
-      system::MessagePipeDispatcher::CreateRemoteMessagePipe(&channel_endpoint);
+      internal::g_channel_manager->CreateChannel(
+          channel_info->channel_id, platform_handle.Pass(),
+          io_thread_task_runner,
+          base::Bind(callback, base::Unretained(channel_info.release())),
+          callback_thread_task_runner);
 
-  DCHECK(internal::g_core);
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
-
-  // We'll have to set |channel_info->channel_id| on the I/O thread.
-  scoped_ptr<ChannelInfo> channel_info(new ChannelInfo());
-
-  if (rv.is_valid()) {
-    channel_info->channel_id = MakeChannelId();
-    internal::g_channel_manager->CreateChannel(
-        channel_info->channel_id, platform_handle.Pass(), channel_endpoint,
-        io_thread_task_runner,
-        base::Bind(callback, base::Unretained(channel_info.release())),
-        callback_thread_task_runner);
-  } else {
-    (callback_thread_task_runner ? callback_thread_task_runner
-                                 : io_thread_task_runner)
-        ->PostTask(FROM_HERE, base::Bind(callback, channel_info.release()));
-  }
-
-  return rv.Pass();
+  CHECK(rv.is_valid());
+  return rv;
 }
 
 // TODO(vtl): Write tests for this.
