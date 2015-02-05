@@ -12,9 +12,7 @@ import "C"
 
 //export MojoMain
 func MojoMain(handle C.MojoHandle) C.MojoResult {
-	if core := system.GetCore(); core != nil {
-		log.Printf("GetTimeTicksNow:%v", core.GetTimeTicksNow())
-	}
+	log.Printf("GetTimeTicksNow:%v", system.GetCore().GetTimeTicksNow())
 	return C.MOJO_RESULT_OK
 }
 
