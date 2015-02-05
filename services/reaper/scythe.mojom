@@ -1,0 +1,15 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module reaper;
+
+// Scythe is a delegate that Reaper invokes to kill applications. It will
+// typically be implemented by the shell.
+interface Scythe {
+  // Kill the application with the specified URL.
+  KillApplication(string url);
+
+  // No-op used for creating ordering between interfaces.
+  Ping() => ();
+};

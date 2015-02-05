@@ -6,6 +6,7 @@
 #define SERVICES_REAPER_REAPER_IMPL_H_
 
 #include <map>
+#include <set>
 
 #include "base/macros.h"
 #include "mojo/common/weak_binding_set.h"
@@ -15,6 +16,7 @@
 #include "mojo/public/cpp/bindings/callback.h"
 #include "services/reaper/diagnostics.mojom.h"
 #include "services/reaper/reaper.mojom.h"
+#include "services/reaper/scythe.mojom.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -54,6 +56,8 @@ class ReaperImpl : public Diagnostics,
   InternedURL InternURL(const GURL& app_url);
   NodeInfo* GetNode(const NodeLocator& locator);
   bool MoveNode(const NodeLocator& source, const NodeLocator& dest);
+  void Mark(InternedURL app_url, std::set<InternedURL>* marked);
+  void Collect();
 
   // mojo::ApplicationDelegate
   bool ConfigureIncomingConnection(
@@ -74,6 +78,8 @@ class ReaperImpl : public Diagnostics,
   void GetReaperForApp(const mojo::String& url,
                        mojo::InterfaceRequest<Reaper> request) override;
   void Ping(const mojo::Closure& callback) override;
+  void SetIsRoot(const mojo::String& url, bool is_root) override;
+  void SetScythe(ScythePtr scythe) override;
 
   GURL reaper_url_;
 
@@ -88,9 +94,14 @@ class ReaperImpl : public Diagnostics,
 
   // TODO(aa): The values in at least the first-level map should probably be
   // heap-allocated.
-  std::map<InternedURL, std::map<uint32, NodeInfo>> nodes_;
+  typedef std::map<uint32, NodeInfo> NodeMap;
+  typedef std::map<InternedURL, NodeMap> AppMap;
+  AppMap nodes_;
 
   mojo::WeakBindingSet<Diagnostics> diagnostics_bindings_;
+
+  std::set<InternedURL> roots_;
+  ScythePtr scythe_;
 
   DISALLOW_COPY_AND_ASSIGN(ReaperImpl);
 };

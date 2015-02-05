@@ -34,6 +34,7 @@ mojom("bindings") {
   sources = [
     "diagnostics.mojom",
     "reaper.mojom",
+    "scythe.mojom",
     "transfer.mojom",
   ]
 }

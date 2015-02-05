@@ -5,6 +5,7 @@
 module reaper;
 
 import "services/reaper/reaper.mojom";
+import "services/reaper/scythe.mojom";
 
 // Diagnostic and test support for the reaper.
 interface Diagnostics {
@@ -16,6 +17,12 @@ interface Diagnostics {
 
   // Get a reaper for any app URL.
   GetReaperForApp(string app_url, Reaper& reaper);
+
+  // Set whether a particular URL is a GC root or not.
+  SetIsRoot(string app_url, bool is_root);
+
+  // Set the tool Reaper will use to kill applications.
+  SetScythe(Scythe scythe);
 
   // No-op used for creating ordering between interfaces.
   Ping() => ();

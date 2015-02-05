@@ -4,6 +4,8 @@
 
 #include "services/reaper/reaper_impl.h"
 
+#include <stack>
+
 #include "base/logging.h"
 #include "base/stl_util.h"
 #include "crypto/random.h"
@@ -37,6 +39,7 @@ struct ReaperImpl::NodeInfo {
 };
 
 ReaperImpl::ReaperImpl() : reaper_url_("mojo:reaper"), next_transfer_id_(1) {
+  Reset();
 }
 
 ReaperImpl::~ReaperImpl() {
@@ -86,6 +89,86 @@ bool ReaperImpl::MoveNode(const ReaperImpl::NodeLocator& source_locator,
   nodes_[source_locator.app_url].erase(source_locator.node_id);
   other->other_node = dest_locator;
   return true;
+}
+
+void ReaperImpl::Mark(InternedURL root_url, std::set<InternedURL>* marked) {
+  struct StackState {
+    StackState(AppMap::iterator app, NodeMap::iterator node)
+        : app(app), node(node) {}
+    AppMap::iterator app;
+    NodeMap::iterator node;
+  };
+
+  auto root_app = nodes_.find(root_url);
+  if (root_app == nodes_.end()) {
+    // This can happen because roots don't need to always have at least one
+    // reference.
+    return;
+  }
+
+  std::stack<StackState> stack;
+  stack.push(StackState(root_app, root_app->second.begin()));
+
+  while (!stack.empty()) {
+    StackState current = stack.top();
+    InternedURL url = current.app->first;
+    const NodeMap& nodes = current.app->second;
+    if (current.node == nodes.begin()) {
+      if (marked->find(url) != marked->end()) {
+        stack.pop();
+        continue;
+      }
+      marked->insert(url);
+    }
+
+    if (current.node == nodes.end()) {
+      stack.pop();
+      continue;
+    }
+
+    ++(stack.top().node);
+
+    NodeInfo* node_info = &(current.node->second);
+    // References are directed, so we only consider the outbound nodes.
+    if (node_info->is_source) {
+      auto next_app = nodes_.find(node_info->other_node.app_url);
+      // This should not be possible since we will not remove an app unless
+      // there are no nodes pointing to it.
+      DCHECK(next_app != nodes_.end());
+      stack.push(StackState(next_app, next_app->second.begin()));
+    }
+  }
+}
+
+void ReaperImpl::Collect() {
+  std::set<InternedURL> marked;
+
+  // Explore all the edges starting from the root apps.
+  for (auto root_id : roots_) {
+    Mark(root_id, &marked);
+  }
+
+  // Sweep all apps not marked.
+  std::set<InternedURL> doooomed;
+  for (const auto& node : nodes_) {
+    if (marked.find(node.first) == marked.end()) {
+      doooomed.insert(node.first);
+    }
+  }
+
+  for (InternedURL url : doooomed) {
+    // Clean up nodes and edges related to this app.
+    for (const auto& node : nodes_[url]) {
+      NodeLocator other = node.second.other_node;
+      nodes_[other.app_url].erase(other.node_id);
+    }
+    nodes_.erase(url);
+
+    // Actually kill the app.
+    if (scythe_.get()) {
+      scythe_->KillApplication(url.url->spec());
+    }
+  }
 }
 
 void ReaperImpl::GetApplicationSecret(
@@ -140,6 +223,8 @@ void ReaperImpl::DropNode(const GURL& caller_app, uint32 node_id) {
   DCHECK(GetNode(other_locator));
   nodes_[locator.app_url].erase(locator.node_id);
   nodes_[other_locator.app_url].erase(other_locator.node_id);
+
+  Collect();
 }
 
 void ReaperImpl::StartTransfer(const GURL& caller_app,
@@ -174,6 +259,8 @@ void ReaperImpl::CompleteTransfer(uint32 source_node_id,
                << *source_app_url.url << "," << source_node_id << ") to: ("
                << *dest_app_url.url << "," << dest_node_id << ")";
   }
+
+  Collect();
 }
 
 bool ReaperImpl::ConfigureIncomingConnection(
@@ -212,14 +299,29 @@ void ReaperImpl::DumpNodes(
 }
 
 void ReaperImpl::Reset() {
-  nodes_.clear();
   app_url_to_secret_.clear();
   app_secret_to_url_.clear();
+  nodes_.clear();
+  roots_.clear();
+  roots_.insert(InternURL(reaper_url_));
 }
 
 void ReaperImpl::GetReaperForApp(const mojo::String& app_url,
                                  mojo::InterfaceRequest<Reaper> request) {
   new ReaperBinding(GURL(app_url), this, request.Pass());
+}
+
+void ReaperImpl::SetIsRoot(const mojo::String& url, bool is_root) {
+  InternedURL interned(InternURL(GURL(url)));
+  if (is_root) {
+    roots_.insert(interned);
+  } else {
+    roots_.erase(interned);
+  }
+}
+
+void ReaperImpl::SetScythe(ScythePtr scythe) {
+  scythe_ = scythe.Pass();
 }
 
 void ReaperImpl::Ping(const mojo::Closure& closure) {

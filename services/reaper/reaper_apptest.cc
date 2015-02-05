@@ -4,12 +4,14 @@
 
 #include "base/bind.h"
 #include "base/run_loop.h"
-#include "base/strings/string_util.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "services/reaper/diagnostics.mojom.h"
 #include "services/reaper/reaper.mojom.h"
+#include "services/reaper/scythe.mojom.h"
+#include "services/reaper/transfer.mojom.h"
 
 namespace reaper {
 
@@ -23,22 +25,93 @@ void Ping(T* service) {
   run_loop.Run();
 }
 
+struct SecretCatcher {
+  SecretCatcher(uint64* secret) : secret(secret) {}
+  void Run(uint64 secret) const { *(this->secret) = secret; }
+  uint64* secret;
+};
+
+class ScytheImpl : public Scythe {
+ public:
+  ScytheImpl(mojo::InterfaceRequest<Scythe> request)
+      : binding_(this, request.Pass()) {}
+  void WaitForKills(size_t num) {
+    while (deds.size() < num) {
+      binding_.WaitForIncomingMethodCall();
+    }
+  }
+  std::vector<std::string> deds;
+
+ private:
+  void KillApplication(const mojo::String& url) override {
+    deds.push_back(url);
+    std::sort(deds.begin(), deds.end());
+  }
+  void Ping(const mojo::Closure& callback) override { callback.Run(); }
+  mojo::StrongBinding<Scythe> binding_;
+};
+
 class ReaperAppTest : public mojo::test::ApplicationTestBase {
  public:
-  ReaperAppTest() : ApplicationTestBase() {}
+  ReaperAppTest() : ApplicationTestBase(), scythe_(NULL) {}
   ~ReaperAppTest() override {}
 
   void SetUp() override {
     mojo::test::ApplicationTestBase::SetUp();
-    application_impl()->ConnectToService("mojo:reaper", &reaper_);
     application_impl()->ConnectToService("mojo:reaper", &diagnostics_);
+
     diagnostics_->Reset();
+    ScythePtr scythe_ptr;
+    scythe_ = new ScytheImpl(GetProxy(&scythe_ptr).Pass());
+    diagnostics_->SetScythe(scythe_ptr.Pass());
     Ping(&diagnostics_);
+
+    diagnostics_->GetReaperForApp(app1_url_, GetProxy(&reaper1_));
+    diagnostics_->GetReaperForApp(app2_url_, GetProxy(&reaper2_));
+    diagnostics_->GetReaperForApp(app3_url_, GetProxy(&reaper3_));
+    reaper1_->GetApplicationSecret(SecretCatcher(&app1_secret_));
+    reaper2_->GetApplicationSecret(SecretCatcher(&app2_secret_));
+    reaper3_->GetApplicationSecret(SecretCatcher(&app3_secret_));
+    Ping(&reaper1_);
+    Ping(&reaper2_);
+    Ping(&reaper3_);
   }
 
  protected:
-  ReaperPtr reaper_;
+  TransferPtr StartTransfer(ReaperPtr* reaper, uint32 node_id) {
+    TransferPtr transfer;
+    (*reaper)->StartTransfer(node_id, GetProxy(&transfer));
+    Ping(reaper);
+    return transfer.Pass();
+  }
+
+  void CompleteTransfer(TransferPtr* transfer,
+                        uint64 app_secret,
+                        uint32 node_id) {
+    (*transfer)->Complete(app_secret, node_id);
+    Ping(transfer);
+  }
+
+  void Transfer(ReaperPtr* from_app_reaper,
+                uint32 from_node,
+                uint64 to_app_secret,
+                uint32 to_node) {
+    TransferPtr transfer(StartTransfer(from_app_reaper, from_node));
+    CompleteTransfer(&transfer, to_app_secret, to_node);
+  }
+
+  ScytheImpl* scythe_;
   DiagnosticsPtr diagnostics_;
+  std::string app1_url_ = "https://a1/";
+  std::string app2_url_ = "https://a2/";
+  std::string app3_url_ = "https://a3/";
+  std::string reaper_url_ = "mojo:reaper";
+  uint64 app1_secret_;
+  uint64 app2_secret_;
+  uint64 app3_secret_;
+  ReaperPtr reaper1_;
+  ReaperPtr reaper2_;
+  ReaperPtr reaper3_;
 
   DISALLOW_COPY_AND_ASSIGN(ReaperAppTest);
 };
@@ -47,12 +120,6 @@ struct NodeCatcher {
   NodeCatcher(mojo::Array<NodePtr>* nodes) : nodes(nodes) {}
   void Run(mojo::Array<NodePtr> nodes) const { *(this->nodes) = nodes.Pass(); }
   mojo::Array<NodePtr>* nodes;
-};
-
-struct SecretCatcher {
-  SecretCatcher(uint64* secret) : secret(secret) {}
-  void Run(uint64 secret) const { *(this->secret) = secret; }
-  uint64* secret;
 };
 
 NodePtr CreateNode(const std::string& app_url,
@@ -103,69 +170,55 @@ void DumpNodes(DiagnosticsPtr* diagnostics, mojo::Array<NodePtr>* nodes) {
   Ping(diagnostics);
 }
 
-void ExpectEqual(const std::vector<const NodePtr*>& expected,
-                 const std::vector<const NodePtr*>& actual,
+void ExpectEqual(const mojo::Array<NodePtr>& expected,
+                 const mojo::Array<NodePtr>& actual,
                  const std::string& message) {
-  EXPECT_EQ(expected.size(), actual.size()) << message;
+  auto expected_vec = GetNodeVec(expected);
+  auto actual_vec = GetNodeVec(actual);
+  EXPECT_EQ(expected_vec.size(), actual_vec.size()) << message;
   for (size_t i = 0; i < expected.size(); ++i) {
-    const NodePtr& ex = *expected[i];
-    const NodePtr& ac = *actual[i];
-    EXPECT_TRUE(ex.Equals(ac)) << i << ": " << message;
+    EXPECT_TRUE(expected_vec[i]->Equals(*actual_vec[i])) << message << " : "
+                                                         << i;
   }
+}
+
+void ExpectEqual(const mojo::Array<NodePtr>& expected,
+                 const mojo::Array<NodePtr>& actual) {
+  ExpectEqual(expected, actual, "");
 }
 
 }  // namespace
 
 TEST_F(ReaperAppTest, CreateAndRead) {
-  reaper_->CreateReference(1u, 2u);
-  Ping(&reaper_);
+  reaper1_->CreateReference(1u, 2u);
+  Ping(&reaper1_);
 
-  mojo::Array<NodePtr> nodes;
-  DumpNodes(&diagnostics_, &nodes);
+  mojo::Array<NodePtr> actual;
+  DumpNodes(&diagnostics_, &actual);
+  ASSERT_EQ(2u, actual.size());
 
-  ASSERT_EQ(2u, nodes.size());
-  // TODO(aa): Need to build STL iteration into mojo::Array.
-  std::vector<Node*> lookup;
-  for (size_t i = 0; i < nodes.size(); ++i)
-    lookup.push_back(nodes[i].get());
-
-  // TODO(aa): It would be good to test complete URL, but we don't have it yet
-  // because native apps aren't implemented via the ContentHandler interface.
-  auto is_self = [](const std::string& url) {
-    return EndsWith(url, "/reaper_apptests.mojo", false);
-  };
-
-  EXPECT_EQ(1,
-            std::count_if(lookup.begin(), lookup.end(), [&is_self](Node* node) {
-    return is_self(node->app_url) && node->node_id == 1u &&
-           is_self(node->other_app_url) && node->other_id == 2u &&
-           node->is_source;
-  }));
-  EXPECT_EQ(1,
-            std::count_if(lookup.begin(), lookup.end(), [&is_self](Node* node) {
-    return is_self(node->app_url) && node->node_id == 2u &&
-           is_self(node->other_app_url) && node->other_id == 1u &&
-           !node->is_source;
-  }));
+  mojo::Array<NodePtr> expected;
+  expected.push_back(CreateNode(app1_url_, 1u, app1_url_, 2u, true).Pass());
+  expected.push_back(CreateNode(app1_url_, 2u, app1_url_, 1u, false).Pass());
+  ExpectEqual(expected, actual);
 }
 
 TEST_F(ReaperAppTest, CreateDuplicate) {
-  reaper_->CreateReference(1u, 2u);
+  reaper1_->CreateReference(1u, 2u);
 
   // The duplicate nodes should be silently ignored.
-  reaper_->CreateReference(1u, 2u);
-  Ping(&reaper_);
+  reaper1_->CreateReference(1u, 2u);
+  Ping(&reaper1_);
 
   mojo::Array<NodePtr> nodes;
   DumpNodes(&diagnostics_, &nodes);
-
   ASSERT_EQ(2u, nodes.size());
 }
 
 TEST_F(ReaperAppTest, DropOneNode) {
-  reaper_->CreateReference(1u, 2u);
-  reaper_->DropNode(1u);
-  Ping(&reaper_);
+  reaper1_->CreateReference(1u, 2u);
+  reaper1_->DropNode(1u);
+  Ping(&reaper1_);
 
   mojo::Array<NodePtr> nodes;
   DumpNodes(&diagnostics_, &nodes);
@@ -175,72 +228,91 @@ TEST_F(ReaperAppTest, DropOneNode) {
 }
 
 TEST_F(ReaperAppTest, GetApplicationSecret) {
-  uint64 secret1 = 0u;
-  reaper_->GetApplicationSecret(SecretCatcher(&secret1));
-  Ping(&reaper_);
-  EXPECT_NE(0u, secret1);
+  EXPECT_NE(0u, app1_secret_);
+  EXPECT_NE(0u, app2_secret_);
 
-  uint64 secret2 = 0u;
-  reaper_->GetApplicationSecret(SecretCatcher(&secret2));
-  Ping(&reaper_);
-  EXPECT_EQ(secret1, secret2);
-
-  diagnostics_->Reset();
-  Ping(&diagnostics_);
-  uint64 secret3 = 0u;
-  reaper_->GetApplicationSecret(SecretCatcher(&secret3));
-  Ping(&reaper_);
-  EXPECT_NE(0u, secret3);
-  EXPECT_NE(secret1, secret3);
-  EXPECT_NE(secret2, secret3);
+  uint64 secret1b = 0u;
+  reaper1_->GetApplicationSecret(SecretCatcher(&secret1b));
+  Ping(&reaper1_);
+  EXPECT_EQ(app1_secret_, secret1b);
 }
 
 TEST_F(ReaperAppTest, Transfer) {
-  std::string app1_url("http://a.com/1");
-  std::string app2_url("http://a.com/2");
-  std::string reaper_url("mojo:reaper");
-  ReaperPtr reaper1;
-  ReaperPtr reaper2;
-  diagnostics_->GetReaperForApp(app1_url, GetProxy(&reaper1));
-  diagnostics_->GetReaperForApp(app2_url, GetProxy(&reaper2));
-  reaper1->CreateReference(1u, 2u);
-  Ping(&reaper1);
+  reaper1_->CreateReference(1u, 2u);
+  Ping(&reaper1_);
+
+  diagnostics_->SetIsRoot(app1_url_, true);
+  Ping(&diagnostics_);
 
   mojo::Array<NodePtr> expected;
-  AddReference(&expected, app1_url, 1u, app1_url, 2u);
+  AddReference(&expected, app1_url_, 1u, app1_url_, 2u);
   mojo::Array<NodePtr> actual;
   DumpNodes(&diagnostics_, &actual);
-  ExpectEqual(GetNodeVec(expected), GetNodeVec(actual), "before start");
+  ExpectEqual(expected, actual, "before start");
 
-  uint64 app2_secret = 0u;
-  reaper2->GetApplicationSecret(SecretCatcher(&app2_secret));
-  Ping(&reaper2);
-  ASSERT_NE(0u, app2_secret);
-
-  TransferPtr transfer;
-  reaper1->StartTransfer(1u, GetProxy(&transfer));
-  Ping(&reaper1);
+  TransferPtr transfer(StartTransfer(&reaper1_, 2u));
   expected.reset();
-  AddReference(&expected, reaper_url, 1u, app1_url, 2u);
+  AddReference(&expected, app1_url_, 1u, reaper_url_, 1u);
   DumpNodes(&diagnostics_, &actual);
-  ExpectEqual(GetNodeVec(expected), GetNodeVec(actual), "after start");
+  ExpectEqual(expected, actual, "after start");
 
-  transfer->Complete(app2_secret, 1u);
-  Ping(&transfer);
+  CompleteTransfer(&transfer, app2_secret_, 1u);
   expected.reset();
-  AddReference(&expected, app2_url, 1u, app1_url, 2u);
+  AddReference(&expected, app1_url_, 1u, app2_url_, 1u);
   DumpNodes(&diagnostics_, &actual);
-  ExpectEqual(GetNodeVec(expected), GetNodeVec(actual), "after complete");
+  ExpectEqual(expected, actual, "after complete");
 
   // Shouldn't crash or change anything on second call.
-  uint64 app1_secret = 0u;
-  reaper1->GetApplicationSecret(SecretCatcher(&app1_secret));
-  Ping(&reaper1);
-  ASSERT_NE(0u, app1_secret);
-  transfer->Complete(app1_secret, 3u);
-  Ping(&transfer);
+  CompleteTransfer(&transfer, app1_secret_, 3u);
   DumpNodes(&diagnostics_, &actual);
-  ExpectEqual(GetNodeVec(expected), GetNodeVec(actual), "after reuse transfer");
+  ExpectEqual(expected, actual, "after reuse transfer");
+}
+
+TEST_F(ReaperAppTest, Collect1) {
+  // Create a reference that goes nowhere and drop it. This triggers a GC, so we
+  // should see the app be killed.
+  reaper1_->CreateReference(1u, 2u);
+  reaper1_->DropNode(1u);
+  Ping(&reaper1_);
+  scythe_->WaitForKills(1u);
+  EXPECT_EQ(1u, scythe_->deds.size());
+  EXPECT_EQ(app1_url_, scythe_->deds[0]);
+
+  // Create a ref that goes from a root to itself, and drop it. Nothing should
+  // be killed.
+  scythe_->deds.clear();
+  diagnostics_->SetIsRoot(app1_url_, true);
+  reaper1_->CreateReference(3u, 4u);
+  reaper1_->CreateReference(5u, 6u);
+  reaper1_->DropNode(3u);
+  Ping(&reaper1_);
+
+  mojo::Array<NodePtr> expected;
+  AddReference(&expected, app1_url_, 5u, app1_url_, 6u);
+  mojo::Array<NodePtr> actual;
+  DumpNodes(&diagnostics_, &actual);
+  ExpectEqual(expected, actual);
+}
+
+TEST_F(ReaperAppTest, CollectNodesAreDirected) {
+  diagnostics_->SetIsRoot(app1_url_, true);
+  Ping(&diagnostics_);
+  reaper1_->CreateReference(1u, 2u);
+
+  // Transfer the *source* node to app2. Now app2 is referencing app1.
+  Transfer(&reaper1_, 1u, app2_secret_, 1u);
+
+  // Since app2 is not a root, it should get collected.
+  scythe_->WaitForKills(1u);
+  ASSERT_EQ(1u, scythe_->deds.size());
+  EXPECT_EQ(app2_url_, scythe_->deds[0]);
+
+  // Should have cleaned up the graph too.
+  mojo::Array<NodePtr> expected;
+  mojo::Array<NodePtr> actual;
+  DumpNodes(&diagnostics_, &actual);
+  ExpectEqual(expected, actual);
+
 }
 
 }  // namespace reaper
