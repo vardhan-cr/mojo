@@ -1,0 +1,22 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
+
+mojo_native_application("console") {
+  sources = [
+    "console.cc",
+  ]
+
+  deps = [
+    "//base:base",
+    "//mojo/application",
+    "//mojo/common",
+    "//mojo/environment:chromium",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/services/console/public/interfaces",
+  ]
+}

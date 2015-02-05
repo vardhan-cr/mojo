@@ -8,6 +8,7 @@ import("//mojo/public/mojo.gni")
 group("services") {
   deps = [
     "//services/clipboard",
+    "//services/console",
     "//services/fake_surfaces",
     "//services/gles2:lib",
     "//services/http_server",

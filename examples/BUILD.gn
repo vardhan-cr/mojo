@@ -11,6 +11,7 @@ group("examples") {
     "//examples/apptest",
     "//examples/browser",
     "//examples/content_handler_demo",
+    "//examples/dart/console_example",
     "//examples/dart/wget",
     "//examples/echo",
     "//examples/embedded_app",
