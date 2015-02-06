@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:mojo_application';
 import 'dart:mojo_bindings';
 import 'dart:mojo_core';
@@ -16,13 +17,15 @@ class ConsoleApplication extends Application {
   void initialize(List<String> args) {
     _proxy = new ConsoleProxy.unbound();
     connectToService("mojo:console", _proxy);
+    run();
+  }
 
-    _proxy.readLine().then((result) {
-        _proxy.printLines([result.line]).then((result) {
-            _proxy.close();
-            close();
-          });
-      });
+  run() async {
+    var result = await _proxy.readLine();
+    await _proxy.printLines([result.line]);
+
+    _proxy.close();
+    close();
   }
 }
 
