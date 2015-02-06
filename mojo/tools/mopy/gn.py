@@ -22,6 +22,8 @@ def BuildDirectoryForConfig(config, src_root):
   subdir = ""
   if config.target_os == Config.OS_ANDROID:
     subdir += "android_"
+    if config.target_arch != Config.ARCH_ARM:
+      subdir += config.target_arch + "_"
   elif config.target_os == Config.OS_CHROMEOS:
     subdir += "chromeos_"
   subdir += "Debug" if config.is_debug else "Release"
