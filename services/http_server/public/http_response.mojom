@@ -8,7 +8,7 @@ struct HttpResponse {
   // The HTTP status code.
   uint32 status_code = 200;
 
-  // The payload for the request body. Only set for "POST" or "PUT".
+  // The payload for the response body.
   handle<data_pipe_consumer>? body;
 
   // This must be the number of bytes in |body|.
@@ -16,7 +16,7 @@ struct HttpResponse {
 
   // The content type.
   string content_type = "text/html; charset=utf-8";
-  
+
   // Additional HTTP response headers.
   map<string, string>? custom_headers;
 };
