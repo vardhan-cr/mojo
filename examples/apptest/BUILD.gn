@@ -51,9 +51,7 @@ mojo_native_application("apptests") {
     "//mojo/public/cpp/system",
   ]
 
-  datadeps = [
-    ":service",
-  ]
+  data_deps = [ ":service" ]
 }
 
 mojom("bindings") {

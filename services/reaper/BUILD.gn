@@ -57,7 +57,5 @@ mojo_native_application("tests") {
     "//mojo/public/cpp/bindings",
   ]
 
-  datadeps = [
-    ":reaper",
-  ]
+  data_deps = [ ":reaper" ]
 }

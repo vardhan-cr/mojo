@@ -152,7 +152,7 @@ mojo_native_application("dart_apptests") {
     "//services/dart/test:echo_service_interface",
     "//services/dart/test:pingpong_service_interface",
   ]
-  datadeps = [
+  data_deps = [
     "//services/dart/test/echo",
     "//services/dart/test/pingpong",
     "//services/dart/test/pingpong_target",

@@ -40,7 +40,5 @@ mojo_native_application("apptests") {
     "//mojo/services/clipboard/public/interfaces",
   ]
 
-  datadeps = [
-    ":clipboard",
-  ]
+  data_deps = [ ":clipboard" ]
 }
