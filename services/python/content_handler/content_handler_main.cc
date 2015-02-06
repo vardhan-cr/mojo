@@ -28,8 +28,18 @@ extern "C" {
   void initmojo_system_impl();
 }
 
-namespace mojo {
+namespace services {
 namespace python {
+namespace content_handler {
+
+using mojo::Application;
+using mojo::ApplicationConnection;
+using mojo::ApplicationDelegate;
+using mojo::ContentHandlerFactory;
+using mojo::InterfaceRequest;
+using mojo::ScopedDataPipeConsumerHandle;
+using mojo::URLResponsePtr;
+using mojo::python::ScopedPyRef;
 
 class PythonContentHandler : public ApplicationDelegate,
                              public ContentHandlerFactory::Delegate {
@@ -160,7 +170,7 @@ class PythonContentHandler : public ApplicationDelegate,
 
   std::string CopyToString(ScopedDataPipeConsumerHandle body) {
     std::string body_str;
-    bool result = common::BlockingCopyToString(body.Pass(), &body_str);
+    bool result = mojo::common::BlockingCopyToString(body.Pass(), &body_str);
     DCHECK(result);
     return body_str;
   }
@@ -170,11 +180,12 @@ class PythonContentHandler : public ApplicationDelegate,
   DISALLOW_COPY_AND_ASSIGN(PythonContentHandler);
 };
 
+}  // namespace content_handler
 }  // namespace python
-}  // namespace mojo
+}  // namespace services
 
 MojoResult MojoMain(MojoHandle shell_handle) {
   mojo::ApplicationRunnerChromium runner(
-      new mojo::python::PythonContentHandler());
+      new services::python::content_handler::PythonContentHandler());
   return runner.Run(shell_handle);
 }

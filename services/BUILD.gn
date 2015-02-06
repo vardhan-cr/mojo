@@ -17,6 +17,7 @@ group("services") {
     "//services/js",
     "//services/kiosk_wm",
     "//services/native_viewport",
+    "//services/python/content_handler",
     "//services/reaper",
     "//services/surfaces",
     "//services/test_service:bindings",

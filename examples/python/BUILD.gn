@@ -21,6 +21,6 @@ python_packaged_application("python_example_service") {
     "//mojo/public/python:packaged_bindings",
   ]
   datadeps = [
-    "//mojo/python/content_handler",
+    "//services/python/content_handler",
   ]
 }

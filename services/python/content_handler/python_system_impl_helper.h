@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_PYTHON_CONTENT_HANDLER_PYTHON_SYSTEM_IMPL_HELPER_H_
-#define MOJO_PYTHON_CONTENT_HANDLER_PYTHON_SYSTEM_IMPL_HELPER_H_
+#ifndef SERVICES_PYTHON_PYTHON_SYSTEM_IMPL_HELPER_H_
+#define SERVICES_PYTHON_PYTHON_SYSTEM_IMPL_HELPER_H_
 
 #include <Python.h>
 
@@ -14,8 +14,9 @@
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/public/python/src/common.h"
 
-namespace mojo {
+namespace services {
 namespace python {
+namespace content_handler {
 
 // Run loop for python
 class PythonRunLoop {
@@ -36,10 +37,11 @@ class PythonRunLoop {
   base::MessageLoop loop_;
 };
 
-PythonAsyncWaiter* NewAsyncWaiter();
+mojo::python::PythonAsyncWaiter* NewAsyncWaiter();
 
+}  // namespace content_handler
 }  // namespace python
-}  // namespace mojo
+}  // namespace services
 
-#endif  // MOJO_PYTHON_CONTENT_HANDLER_PYTHON_SYSTEM_IMPL_HELPER_H_
+#endif  // SERVICES_PYTHON_PYTHON_SYSTEM_IMPL_HELPER_H_
 

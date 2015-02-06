@@ -8,9 +8,10 @@ from libc.stdint cimport int64_t
 
 cimport c_async_waiter
 
-cdef extern from "mojo/python/content_handler/python_system_impl_helper.h" \
-    namespace "mojo::python" nogil:
-  cdef cppclass PythonRunLoop "mojo::python::PythonRunLoop":
+cdef extern from "services/python/content_handler/python_system_impl_helper.h" \
+    namespace "services::python::content_handler" nogil:
+  cdef cppclass PythonRunLoop \
+      "services::python::content_handler::PythonRunLoop":
     PythonRunLoop()
     void Run()
     void RunUntilIdle()

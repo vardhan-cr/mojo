@@ -24,10 +24,12 @@ class QuitCurrentRunLoop : public mojo::Closure::Runnable {
 };
 
 }  // namespace
-namespace mojo {
+namespace services {
 namespace python {
+namespace content_handler {
 
-PythonRunLoop::PythonRunLoop() : loop_(common::MessagePumpMojo::Create()) {
+PythonRunLoop::PythonRunLoop()
+    : loop_(mojo::common::MessagePumpMojo::Create()) {
 }
 
 PythonRunLoop::~PythonRunLoop() {
@@ -46,8 +48,8 @@ void PythonRunLoop::Quit() {
 }
 
 void PythonRunLoop::PostDelayedTask(PyObject* callable, MojoTimeTicks delay) {
-  Closure::Runnable* quit_runnable =
-      NewRunnableFromCallable(callable, loop_.QuitClosure());
+  mojo::Closure::Runnable* quit_runnable =
+      mojo::python::NewRunnableFromCallable(callable, loop_.QuitClosure());
 
   loop_.PostDelayedTask(
       FROM_HERE, base::Bind(&mojo::Closure::Run,
@@ -55,10 +57,11 @@ void PythonRunLoop::PostDelayedTask(PyObject* callable, MojoTimeTicks delay) {
       base::TimeDelta::FromMicroseconds(delay));
 }
 
-PythonAsyncWaiter* NewAsyncWaiter() {
-  return new PythonAsyncWaiter(
+mojo::python::PythonAsyncWaiter* NewAsyncWaiter() {
+  return new mojo::python::PythonAsyncWaiter(
       mojo::Closure(QuitCurrentRunLoop::NewInstance()));
 }
 
+}  // namespace content_handler
 }  // namespace python
-}  // namespace mojo
+}  // namespace services
