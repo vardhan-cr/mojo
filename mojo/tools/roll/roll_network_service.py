@@ -5,6 +5,7 @@
 
 import argparse
 import os
+import subprocess
 import sys
 import tempfile
 import urllib2
@@ -37,6 +38,14 @@ def roll(target_version):
   try:
     with tempfile.NamedTemporaryFile() as temp_zip_file:
       gs.download_from_public_bucket(mojoms_gs_path, temp_zip_file.name)
+
+      try:
+        system(["git", "rm", "-r", mojoms_path], cwd=mojo_root_dir)
+      except subprocess.CalledProcessError:
+        print ("Could not remove %s. "
+               "Ensure your local tree is in a clean state." % mojoms_path)
+        return 1
+
       with zipfile.ZipFile(temp_zip_file.name) as z:
         z.extractall(mojoms_path)
   # pylint: disable=C0302,bare-except
