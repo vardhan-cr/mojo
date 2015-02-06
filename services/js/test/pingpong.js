@@ -39,7 +39,10 @@ define("main", [
         };
         var pingTargetService =
             app.shell.connectToService(url, PingPongService);
-        pingTargetService.setClient(pingTargetClient);
+        pingTargetService.setClient(function(stub) {
+          StubBindings(stub).delegate = pingTargetClient;
+          app.pingClientStub = stub;
+        });
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });
@@ -47,6 +50,7 @@ define("main", [
 
     // This method is only used by the PingTargetService test.
     pingTargetService(pingTargetService, count) {
+      var app = this.app;
       return new Promise(function(resolve) {
         var pingTargetClient = {
           pong: function(value) {
@@ -56,7 +60,10 @@ define("main", [
             }
           }
         };
-        pingTargetService.setClient(pingTargetClient);
+        pingTargetService.setClient(function(stub) {
+          StubBindings(stub).delegate = pingTargetClient;
+          app.pingTargetStub = stub;
+        });
         for(var i = 0; i <= count; i++)
           pingTargetService.ping(i);
       });

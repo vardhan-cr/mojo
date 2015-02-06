@@ -7,6 +7,7 @@
 define("main", [
   "console",
   "mojo/services/public/js/application",
+  "mojo/public/js/bindings",
   "mojo/services/geometry/public/interfaces/geometry.mojom",
   "mojo/services/gpu/public/interfaces/gpu.mojom",
   "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom",
@@ -17,6 +18,7 @@ define("main", [
   "timer",
 ], function(console,
             application,
+            bindings,
             geometry,
             gpu,
             vpl,
@@ -30,6 +32,7 @@ define("main", [
   const Context = gl.Context;
   const Gpu = gpu.Gpu;
   const Size = geometry.Size;
+  const StubBindings = bindings.StubBindings;
   const ViewportParameterListener = vpl.ViewportParameterListener;
   const NativeViewport = nv.NativeViewport;
 
@@ -385,18 +388,24 @@ define("main", [
           app.onViewportCreated(result.native_viewport_id, viewportSize);
         });
 
-      this.viewport.setEventDispatcher(this);
+      this.viewport.setEventDispatcher(function(stub) {
+        app.eventDispatcherStub = stub;
+        StubBindings(stub).delegate = app;
+      });
       this.viewport.show();
     }
 
     onViewportCreated(id, size) {
-      this.vpl = new ViewportParameterListener.stubClass({
-        onVSyncParametersUpdated: function(timebase, interval) {
-          console.log("onVSyncParametersUpdated");
+      var vpl = function(stub) {
+        StubBindings(stub).delegate = {
+          onVSyncParametersUpdated: function(timebase, interval) {
+            console.log("onVSyncParametersUpdated");
+          }
         }
-      });
+      };
+
       var pipe = core.createMessagePipe();
-      this.gpu.createOnscreenGLES2Context(id, size, pipe.handle1, this.vpl);
+      this.gpu.createOnscreenGLES2Context(id, size, pipe.handle1, vpl);
       this.gles2_ = new GLES2ClientImpl(pipe.handle0, size);
     }
 
