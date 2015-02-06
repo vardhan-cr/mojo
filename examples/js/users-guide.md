@@ -234,17 +234,9 @@ of these classes using functions called StubBindings and ProxyBindings.
 The caller and callee use cases that follow are  in terms of the following mojom:
 
 ```
-[Client=Bar]
-interface Foo {
-}
-
-[Client=Foo] // Redundant but always implicitly true.
-interface Bar {
-}
-
 interface I {
-  provideFoo(Foo foo);
-  requestFoo(Foo& foo); // effectively: provideFoo(Bar bar)
+  provideFoo(Foo foo);  // TODO: Explain
+  requestFoo(Foo& foo);  // TODO: Explain
 } 
 ```
 
