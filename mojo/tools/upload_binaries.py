@@ -17,6 +17,13 @@ from mopy.config import Config
 from mopy.paths import Paths
 from mopy.version import Version
 
+BLACKLISTED_APPS = [
+    # The network service apps are not produced out of the Mojo repo, but may
+    # be present in the build dir.
+    "network_service.mojo",
+    "network_service_apptests.mojo",
+]
+
 def find_apps_to_upload(build_dir):
   apps = []
   for path in glob.glob(build_dir + "/*"):
@@ -24,6 +31,8 @@ def find_apps_to_upload(build_dir):
       continue
     _, ext = os.path.splitext(path)
     if ext != '.mojo':
+      continue
+    if os.path.basename(path) in BLACKLISTED_APPS:
       continue
     apps.append(path)
   return apps
