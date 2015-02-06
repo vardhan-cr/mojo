@@ -147,18 +147,6 @@ static void Init(JNIEnv* env,
       base::android::ConvertJavaStringToUTF8(env, mojo_shell_path));
   base::android::AppendJavaStringArrayToStringVector(env, jparameters,
                                                      &parameters);
-
-  // TODO(eseidel): Remove this as soon as we agree on a better solution!
-  // Only here to unblock other work towards carry. http://crbug.com/451620
-  if (parameters.size() == 1) {
-    parameters.push_back("--origin=https://domokit.github.io/mojo");
-    parameters.push_back(
-        "--url-mappings=mojo:window_manager=mojo:kiosk_wm");
-    parameters.push_back(
-        "--args-for=mojo:window_manager https://domokit.github.io/home");
-    parameters.push_back("mojo:window_manager");
-  }
-
   base::CommandLine::Init(0, nullptr);
   base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
 
