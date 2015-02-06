@@ -53,28 +53,20 @@ def upload(config, source, dest, dry_run):
 
 def upload_shell(config, dry_run, verbose):
   paths = Paths(config)
-  shell_path = paths.target_mojo_shell_path
-  target = "%s-%s" % (config.target_os, config.target_arch)
-  dest_prefix = "gs://mojo/shell/" + Version().version + "/" + target
-
-  if config.target_os == Config.OS_ANDROID:
-    # The APK is already compressed, so zipping it is redundant. We could zip it
-    # using zipfile.ZIP_STORED, but not all unzip utilities can correctly unzip
-    # a file zipped that way.
-    shell_binary_name = os.path.basename(shell_path)
-    dest = dest_prefix + "/" + shell_binary_name
-    upload(config, shell_path, dest, dry_run)
-    return
-
-  # Zip the shell binary and upload it.
+  zipfile_name = "%s-%s" % (config.target_os, config.target_arch)
+  dest = "gs://mojo/shell/" + Version().version + "/" + zipfile_name + ".zip"
   with tempfile.NamedTemporaryFile() as zip_file:
-    dest = dest_prefix + ".zip"
     with zipfile.ZipFile(zip_file, 'w') as z:
+      shell_path = paths.target_mojo_shell_path
       with open(shell_path) as shell_binary:
         shell_filename = os.path.basename(shell_path)
         zipinfo = zipfile.ZipInfo(shell_filename)
         zipinfo.external_attr = 0777 << 16L
-        zipinfo.compress_type = zipfile.ZIP_DEFLATED
+        compress_type = zipfile.ZIP_DEFLATED
+        if config.target_os == Config.OS_ANDROID:
+          # The APK is already compressed.
+          compress_type = zipfile.ZIP_STORED
+        zipinfo.compress_type = compress_type
         zipinfo.date_time = time.gmtime(os.path.getmtime(shell_path))
         if verbose:
           print "zipping %s" % shell_path
