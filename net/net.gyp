@@ -837,6 +837,7 @@
         'cookies/cookie_monster_perftest.cc',
         'disk_cache/blockfile/disk_cache_perftest.cc',
         'proxy/proxy_resolver_perftest.cc',
+        'udp/udp_socket_perftest.cc',
         'websockets/websocket_frame_perftest.cc',
       ],
       'conditions': [
@@ -1200,6 +1201,22 @@
           ],
           # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
           'msvs_disabled_warnings': [4267, ],
+        },
+      ],
+    }],
+    ['use_v8_in_net == 1 and OS != "android"', {
+      'targets': [
+        {
+          # GN version: //net/interfaces
+          'target_name': 'net_interfaces',
+          'type': 'static_library',
+          'sources': [
+            'interfaces/host_resolver_service.mojom',
+            'interfaces/proxy_resolver_service.mojom',
+          ],
+          'includes': [
+            '../third_party/mojo/mojom_bindings_generator.gypi',
+          ],
         },
       ],
     }],

@@ -19,10 +19,16 @@
 #include "cc/resources/ui_resource_client.h"
 
 namespace base {
-namespace debug {
+namespace trace_event {
 class TracedValue;
 }
+
+// TODO(ssid): remove these aliases after the tracing clients are moved to the
+// new trace_event namespace. See crbug.com/451032. ETA: March 2015
+namespace debug {
+using ::base::trace_event::TracedValue;
 }
+}  // namespace base
 
 namespace cc {
 
@@ -64,6 +70,7 @@ class CC_EXPORT LayerTreeImpl {
 
   void Shutdown();
   void ReleaseResources();
+  void RecreateResources();
 
   // Methods called by the layer tree that pass-through or access LTHI.
   // ---------------------------------------------------------------------------
@@ -336,7 +343,8 @@ class CC_EXPORT LayerTreeImpl {
       LayerTreeHostImpl* layer_tree_host_impl,
       scoped_refptr<SyncedProperty<ScaleGroup>> page_scale_factor,
       scoped_refptr<SyncedElasticOverscroll> elastic_overscroll);
-  void ReleaseResourcesRecursive(LayerImpl* current);
+  void ProcessLayersRecursive(LayerImpl* current,
+                              void (LayerImpl::*function)());
   float ClampPageScaleFactorToLimits(float page_scale_factor) const;
   void PushPageScaleFactorAndLimits(const float* page_scale_factor,
                                     float min_page_scale_factor,

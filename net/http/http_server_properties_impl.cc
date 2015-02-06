@@ -102,12 +102,9 @@ void HttpServerPropertiesImpl::InitializeSpdySettingsServers(
 }
 
 void HttpServerPropertiesImpl::InitializeSupportsQuic(
-    SupportsQuicMap* supports_quic_map) {
-  for (SupportsQuicMap::reverse_iterator it = supports_quic_map->rbegin();
-       it != supports_quic_map->rend();
-       ++it) {
-    supports_quic_map_.insert(std::make_pair(it->first, it->second));
-  }
+    IPAddressNumber* last_address) {
+  if (last_address)
+    last_quic_address_ = *last_address;
 }
 
 void HttpServerPropertiesImpl::InitializeServerNetworkStats(
@@ -164,7 +161,7 @@ void HttpServerPropertiesImpl::Clear() {
   alternate_protocol_map_.Clear();
   canonical_host_to_origin_map_.clear();
   spdy_settings_map_.Clear();
-  supports_quic_map_.clear();
+  last_quic_address_.clear();
   server_network_stats_map_.Clear();
 }
 
@@ -179,10 +176,7 @@ bool HttpServerPropertiesImpl::SupportsRequestPriority(
   if (spdy_host_port != spdy_servers_map_.end() && spdy_host_port->second)
     return true;
 
-  if (!HasAlternateProtocol(host_port_pair))
-    return false;
-
-  AlternateProtocolInfo info = GetAlternateProtocol(host_port_pair);
+  const AlternateProtocolInfo info = GetAlternateProtocol(host_port_pair);
   return info.protocol == QUIC;
 }
 
@@ -228,16 +222,6 @@ void HttpServerPropertiesImpl::MaybeForceHTTP11(const HostPortPair& server,
   }
 }
 
-bool HttpServerPropertiesImpl::HasAlternateProtocol(
-    const HostPortPair& server) {
-  if (g_forced_alternate_protocol)
-    return true;
-  AlternateProtocolMap::const_iterator it =
-      GetAlternateProtocolIterator(server);
-  return it != alternate_protocol_map_.end() &&
-         it->second.probability >= alternate_protocol_probability_threshold_;
-}
-
 std::string HttpServerPropertiesImpl::GetCanonicalSuffix(
     const std::string& host) {
   // If this host ends with a canonical suffix, then return the canonical
@@ -251,19 +235,19 @@ std::string HttpServerPropertiesImpl::GetCanonicalSuffix(
   return std::string();
 }
 
-AlternateProtocolInfo
-HttpServerPropertiesImpl::GetAlternateProtocol(
+AlternateProtocolInfo HttpServerPropertiesImpl::GetAlternateProtocol(
     const HostPortPair& server) {
-  DCHECK(HasAlternateProtocol(server));
-
   AlternateProtocolMap::const_iterator it =
       GetAlternateProtocolIterator(server);
-  if (it != alternate_protocol_map_.end())
+  if (it != alternate_protocol_map_.end() &&
+      it->second.probability >= alternate_protocol_probability_threshold_)
     return it->second;
 
-  // We must be forcing an alternate.
-  DCHECK(g_forced_alternate_protocol);
-  return *g_forced_alternate_protocol;
+  if (g_forced_alternate_protocol)
+    return *g_forced_alternate_protocol;
+
+  AlternateProtocolInfo uninitialized_alternate_protocol;
+  return uninitialized_alternate_protocol;
 }
 
 void HttpServerPropertiesImpl::SetAlternateProtocol(
@@ -322,24 +306,26 @@ void HttpServerPropertiesImpl::SetAlternateProtocol(
 void HttpServerPropertiesImpl::SetBrokenAlternateProtocol(
     const HostPortPair& server) {
   AlternateProtocolMap::iterator it = alternate_protocol_map_.Get(server);
+  const AlternateProtocolInfo alternate = GetAlternateProtocol(server);
   if (it == alternate_protocol_map_.end()) {
-    if (!HasAlternateProtocol(server)) {
+    if (alternate.protocol == UNINITIALIZED_ALTERNATE_PROTOCOL) {
       LOG(DFATAL) << "Trying to mark unknown alternate protocol broken.";
       return;
     }
     // This server's alternate protocol information is coming from a canonical
     // server. Add an entry in the map for this server explicitly so that
     // it can be marked as broken.
-    it = alternate_protocol_map_.Put(server, GetAlternateProtocol(server));
+    it = alternate_protocol_map_.Put(server, alternate);
   }
   it->second.is_broken = true;
-  int count = ++broken_alternate_protocol_map_[server];
+  const BrokenAlternateProtocolEntry entry(server, alternate.port,
+                                           alternate.protocol);
+  int count = ++broken_alternate_protocol_map_[entry];
   base::TimeDelta delay =
       base::TimeDelta::FromSeconds(kBrokenAlternateProtocolDelaySecs);
-  BrokenAlternateProtocolEntry entry;
-  entry.server = server;
-  entry.when = base::TimeTicks::Now() + delay * (1 << (count - 1));
-  broken_alternate_protocol_list_.push_back(entry);
+  base::TimeTicks when = base::TimeTicks::Now() + delay * (1 << (count - 1));
+  broken_alternate_protocol_list_.push_back(
+      BrokenAlternateProtocolEntryWithTime(entry, when));
 
   // Do not leave this host as canonical so that we don't infer the other
   // hosts are also broken without testing them first.
@@ -354,12 +340,22 @@ void HttpServerPropertiesImpl::SetBrokenAlternateProtocol(
 
 bool HttpServerPropertiesImpl::WasAlternateProtocolRecentlyBroken(
     const HostPortPair& server) {
-  return ContainsKey(broken_alternate_protocol_map_, server);
+  const AlternateProtocolInfo alternate_protocol = GetAlternateProtocol(server);
+  if (alternate_protocol.protocol == UNINITIALIZED_ALTERNATE_PROTOCOL)
+    return false;
+  const BrokenAlternateProtocolEntry entry(server, alternate_protocol.port,
+                                           alternate_protocol.protocol);
+  return ContainsKey(broken_alternate_protocol_map_, entry);
 }
 
 void HttpServerPropertiesImpl::ConfirmAlternateProtocol(
     const HostPortPair& server) {
-  broken_alternate_protocol_map_.erase(server);
+  const AlternateProtocolInfo alternate_protocol = GetAlternateProtocol(server);
+  if (alternate_protocol.protocol == UNINITIALIZED_ALTERNATE_PROTOCOL)
+    return;
+  const BrokenAlternateProtocolEntry entry(server, alternate_protocol.port,
+                                           alternate_protocol.protocol);
+  broken_alternate_protocol_map_.erase(entry);
 }
 
 void HttpServerPropertiesImpl::ClearAlternateProtocol(
@@ -423,26 +419,22 @@ HttpServerPropertiesImpl::spdy_settings_map() const {
   return spdy_settings_map_;
 }
 
-SupportsQuic HttpServerPropertiesImpl::GetSupportsQuic(
-    const HostPortPair& host_port_pair) const {
-  SupportsQuicMap::const_iterator it = supports_quic_map_.find(host_port_pair);
-  if (it == supports_quic_map_.end()) {
-    CR_DEFINE_STATIC_LOCAL(SupportsQuic, kEmptySupportsQuic, ());
-    return kEmptySupportsQuic;
+bool HttpServerPropertiesImpl::GetSupportsQuic(
+    IPAddressNumber* last_address) const {
+  if (last_quic_address_.empty())
+    return false;
+
+  *last_address = last_quic_address_;
+  return true;
+}
+
+void HttpServerPropertiesImpl::SetSupportsQuic(bool used_quic,
+                                               const IPAddressNumber& address) {
+  if (!used_quic) {
+    last_quic_address_.clear();
+  } else {
+    last_quic_address_ = address;
   }
-  return it->second;
-}
-
-void HttpServerPropertiesImpl::SetSupportsQuic(
-    const HostPortPair& host_port_pair,
-    bool used_quic,
-    const std::string& address) {
-  SupportsQuic supports_quic(used_quic, address);
-  supports_quic_map_.insert(std::make_pair(host_port_pair, supports_quic));
-}
-
-const SupportsQuicMap& HttpServerPropertiesImpl::supports_quic_map() const {
-  return supports_quic_map_;
 }
 
 void HttpServerPropertiesImpl::SetServerNetworkStats(
@@ -513,12 +505,14 @@ void HttpServerPropertiesImpl::RemoveCanonicalHost(
 void HttpServerPropertiesImpl::ExpireBrokenAlternateProtocolMappings() {
   base::TimeTicks now = base::TimeTicks::Now();
   while (!broken_alternate_protocol_list_.empty()) {
-    BrokenAlternateProtocolEntry entry =
+    BrokenAlternateProtocolEntryWithTime entry_with_time =
         broken_alternate_protocol_list_.front();
-    if (now < entry.when) {
+    if (now < entry_with_time.when) {
       break;
     }
 
+    const BrokenAlternateProtocolEntry& entry =
+        entry_with_time.broken_alternate_protocol_entry;
     ClearAlternateProtocol(entry.server);
     broken_alternate_protocol_list_.pop_front();
   }

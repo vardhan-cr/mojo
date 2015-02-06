@@ -27,6 +27,7 @@
 #include "cc/layers/layer_lists.h"
 #include "cc/layers/layer_position_constraint.h"
 #include "cc/layers/render_surface_impl.h"
+#include "cc/layers/scroll_blocks_on.h"
 #include "cc/output/filter_operations.h"
 #include "cc/quads/shared_quad_state.h"
 #include "cc/resources/resource_provider.h"
@@ -41,13 +42,19 @@
 #include "ui/gfx/transform.h"
 
 namespace base {
-namespace debug {
+namespace trace_event {
 class ConvertableToTraceFormat;
 class TracedValue;
 }
 
-class DictionaryValue;
+// TODO(ssid): remove these aliases after the tracing clients are moved to the
+// new trace_event namespace. See crbug.com/451032. ETA: March 2015
+namespace debug {
+using ::base::trace_event::ConvertableToTraceFormat;
+using ::base::trace_event::TracedValue;
 }
+class DictionaryValue;
+}  // namespace base
 
 namespace cc {
 
@@ -399,6 +406,11 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
 
   void SetCurrentScrollOffset(const gfx::ScrollOffset& scroll_offset);
   void PushScrollOffsetFromMainThread(const gfx::ScrollOffset& scroll_offset);
+  // This method is similar to PushScrollOffsetFromMainThread but will cause the
+  // scroll offset given to clobber any scroll changes on the active tree in the
+  // time until this value is pushed to the active tree.
+  void PushScrollOffsetFromMainThreadAndClobberActiveValue(
+      const gfx::ScrollOffset& scroll_offset);
   gfx::ScrollOffset PullDeltaForMainThread();
   gfx::ScrollOffset CurrentScrollOffset() const;
   gfx::ScrollOffset BaseScrollOffset() const;
@@ -474,6 +486,10 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
     return touch_event_handler_region_;
   }
 
+  void SetScrollBlocksOn(ScrollBlocksOn scroll_blocks_on) {
+    scroll_blocks_on_ = scroll_blocks_on;
+  }
+  ScrollBlocksOn scroll_blocks_on() const { return scroll_blocks_on_; }
   void SetDrawCheckerboardForMissingTiles(bool checkerboard) {
     draw_checkerboard_for_missing_tiles_ = checkerboard;
   }
@@ -483,7 +499,8 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
 
   InputHandler::ScrollStatus TryScroll(
       const gfx::PointF& screen_space_point,
-      InputHandler::ScrollInputType type) const;
+      InputHandler::ScrollInputType type,
+      ScrollBlocksOn effective_block_mode) const;
 
   void SetDoubleSided(bool double_sided);
   bool double_sided() const { return double_sided_; }
@@ -529,6 +546,10 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   // Release resources held by this layer. Called when the output surface
   // that rendered this layer was lost or a rendering mode switch has occured.
   virtual void ReleaseResources();
+
+  // Recreate resources that are required after they were released by a
+  // ReleaseResources call.
+  virtual void RecreateResources();
 
   ScrollbarAnimationController* scrollbar_animation_controller() const {
     return scrollbar_animation_controller_.get();
@@ -657,6 +678,10 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   bool should_scroll_on_main_thread_ : 1;
   bool have_wheel_event_handlers_ : 1;
   bool have_scroll_event_handlers_ : 1;
+
+  static_assert(ScrollBlocksOnMax < (1 << 3), "ScrollBlocksOn too big");
+  ScrollBlocksOn scroll_blocks_on_ : 3;
+
   bool user_scrollable_horizontal_ : 1;
   bool user_scrollable_vertical_ : 1;
   bool stacking_order_changed_ : 1;

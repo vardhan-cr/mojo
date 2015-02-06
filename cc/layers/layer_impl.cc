@@ -54,6 +54,7 @@ LayerImpl::LayerImpl(LayerTreeImpl* tree_impl,
       should_scroll_on_main_thread_(false),
       have_wheel_event_handlers_(false),
       have_scroll_event_handlers_(false),
+      scroll_blocks_on_(ScrollBlocksOnNone),
       user_scrollable_horizontal_(true),
       user_scrollable_vertical_(true),
       stacking_order_changed_(false),
@@ -392,7 +393,8 @@ void LayerImpl::ApplySentScrollDeltasFromAbortedCommit() {
 
 InputHandler::ScrollStatus LayerImpl::TryScroll(
     const gfx::PointF& screen_space_point,
-    InputHandler::ScrollInputType type) const {
+    InputHandler::ScrollInputType type,
+    ScrollBlocksOn effective_block_mode) const {
   if (should_scroll_on_main_thread()) {
     TRACE_EVENT0("cc", "LayerImpl::TryScroll: Failed ShouldScrollOnMainThread");
     return InputHandler::ScrollOnMainThread;
@@ -430,7 +432,14 @@ InputHandler::ScrollStatus LayerImpl::TryScroll(
     }
   }
 
-  if (type == InputHandler::Wheel && have_wheel_event_handlers()) {
+  if (have_scroll_event_handlers() &&
+      effective_block_mode & ScrollBlocksOnScrollEvent) {
+    TRACE_EVENT0("cc", "LayerImpl::tryScroll: Failed ScrollEventHandlers");
+    return InputHandler::ScrollOnMainThread;
+  }
+
+  if (type == InputHandler::Wheel && have_wheel_event_handlers() &&
+      effective_block_mode & ScrollBlocksOnWheelEvent) {
     TRACE_EVENT0("cc", "LayerImpl::tryScroll: Failed WheelEventHandlers");
     return InputHandler::ScrollOnMainThread;
   }
@@ -487,6 +496,7 @@ void LayerImpl::PushPropertiesTo(LayerImpl* layer) {
   layer->SetShouldScrollOnMainThread(should_scroll_on_main_thread_);
   layer->SetHaveWheelEventHandlers(have_wheel_event_handlers_);
   layer->SetHaveScrollEventHandlers(have_scroll_event_handlers_);
+  layer->SetScrollBlocksOn(scroll_blocks_on_);
   layer->SetNonFastScrollableRegion(non_fast_scrollable_region_);
   layer->SetTouchEventHandlerRegion(touch_event_handler_region_);
   layer->SetContentsOpaque(contents_opaque_);
@@ -647,6 +657,17 @@ base::DictionaryValue* LayerImpl::LayerTreeAsJson() const {
   if (!touch_event_handler_region_.IsEmpty()) {
     scoped_ptr<base::Value> region = touch_event_handler_region_.AsValue();
     result->Set("TouchRegion", region.release());
+  }
+
+  if (scroll_blocks_on_) {
+    list = new base::ListValue;
+    if (scroll_blocks_on_ & ScrollBlocksOnStartTouch)
+      list->AppendString("StartTouch");
+    if (scroll_blocks_on_ & ScrollBlocksOnWheelEvent)
+      list->AppendString("WheelEvent");
+    if (scroll_blocks_on_ & ScrollBlocksOnScrollEvent)
+      list->AppendString("ScrollEvent");
+    result->Set("ScrollBlocksOn", list);
   }
 
   list = new base::ListValue;
@@ -1080,22 +1101,15 @@ void LayerImpl::PushScrollOffsetFromMainThread(
   PushScrollOffset(&scroll_offset);
 }
 
+void LayerImpl::PushScrollOffsetFromMainThreadAndClobberActiveValue(
+    const gfx::ScrollOffset& scroll_offset) {
+  scroll_offset_->set_clobber_active_value();
+  PushScrollOffset(&scroll_offset);
+}
+
 gfx::ScrollOffset LayerImpl::PullDeltaForMainThread() {
   RefreshFromScrollDelegate();
-
-  // TODO(aelias, miletus): Remove all this temporary flooring machinery when
-  // Blink fully supports fractional scrolls.
-  gfx::ScrollOffset current_offset = CurrentScrollOffset();
-  gfx::Vector2dF current_delta = ScrollDelta();
-  gfx::Vector2dF floored_delta(floor(current_delta.x()),
-                               floor(current_delta.y()));
-  gfx::Vector2dF diff_delta = floored_delta - current_delta;
-  gfx::ScrollOffset tmp_offset = ScrollOffsetWithDelta(current_offset,
-                                                       diff_delta);
-  scroll_offset_->SetCurrent(tmp_offset);
-  gfx::ScrollOffset delta = scroll_offset_->PullDeltaForMainThread();
-  scroll_offset_->SetCurrent(current_offset);
-  return delta;
+  return scroll_offset_->PullDeltaForMainThread();
 }
 
 void LayerImpl::RefreshFromScrollDelegate() {
@@ -1140,8 +1154,6 @@ void LayerImpl::PushScrollOffset(const gfx::ScrollOffset* scroll_offset) {
   }
   if (IsActive()) {
     changed |= scroll_offset_->PushPendingToActive();
-    if (layer_animation_controller_->scroll_offset_animation_was_interrupted())
-      SetScrollDelta(gfx::Vector2dF());
   }
 
   if (changed)
@@ -1176,6 +1188,9 @@ SimpleEnclosedRegion LayerImpl::VisibleContentOpaqueRegion() const {
 void LayerImpl::DidBeginTracing() {}
 
 void LayerImpl::ReleaseResources() {}
+
+void LayerImpl::RecreateResources() {
+}
 
 gfx::ScrollOffset LayerImpl::MaxScrollOffset() const {
   if (!scroll_clip_layer_ || bounds().IsEmpty())
@@ -1439,6 +1454,9 @@ void LayerImpl::AsValueInto(base::debug::TracedValue* state) const {
     state->BeginArray("non_fast_scrollable_region");
     non_fast_scrollable_region_.AsValueInto(state);
     state->EndArray();
+  }
+  if (scroll_blocks_on_) {
+    state->SetInteger("scroll_blocks_on", scroll_blocks_on_);
   }
 
   state->BeginArray("children");

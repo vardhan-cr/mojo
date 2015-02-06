@@ -9,7 +9,9 @@
 #include "cc/base/cc_export.h"
 #include "cc/debug/layer_tree_debug_state.h"
 #include "cc/output/renderer_settings.h"
+#include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkColor.h"
+#include "third_party/skia/include/core/SkTypeface.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
@@ -36,6 +38,7 @@ class CC_EXPORT LayerTreeSettings {
   bool gpu_rasterization_enabled;
   bool gpu_rasterization_forced;
   int gpu_rasterization_msaa_sample_count;
+  bool threaded_gpu_rasterization_enabled;
   bool create_low_res_tiling;
 
   enum ScrollbarAnimator {
@@ -82,6 +85,7 @@ class CC_EXPORT LayerTreeSettings {
   bool record_full_layer;
   bool use_display_lists;
   bool verify_property_trees;
+  skia::RefPtr<SkTypeface> hud_typeface;
 
   LayerTreeDebugState initial_debug_state;
 };

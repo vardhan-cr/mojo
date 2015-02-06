@@ -461,11 +461,12 @@ HANDLE LEAK
 name=http://crbug.com/371348
 system call NtCreateSection
 KERNELBASE.dll!CreateFileMappingW
-base.dll!base::SharedMemory::Create
-base.dll!base::SharedMemory::CreateAnonymous
-content.dll!content::ChildThread::AllocateSharedMemory
-content.dll!content::ChildSharedBitmapManager::AllocateSharedBitmap
-cc.dll!cc::ResourceProvider::CreateBitmap
+*!base::SharedMemory::Create
+*!base::SharedMemory::CreateAnonymous
+*!content::ChildThreadImpl::AllocateSharedMemory
+...
+*!content::ChildSharedBitmapManager::AllocateSharedBitmap
+*!cc::ResourceProvider::CreateBitmap
 
 HANDLE LEAK
 name=http://crbug.com/371357
@@ -711,3 +712,62 @@ system call NtOpenProcess
 KERNELBASE.dll!OpenProcess
 base.dll!base::Process::OpenWithExtraPriviles
 content.dll!content::BrowserMessageFilter::Internal::OnChannelConnected
+
+UNADDRESSABLE ACCESS
+name=http://crbug.com/455060
+*!content::FrameAccessibility::GetParent
+*!content::RenderFrameHostImpl::AccessibilityGetParentFrame
+*!content::BrowserAccessibilityManager::GetDelegateFromRootManager
+*!content::BrowserAccessibilityManager::OnWindowBlurred
+...
+*!content::RenderWidgetHostViewAura::Destroy
+
+UNADDRESSABLE ACCESS
+name=http://crbug.com/455066
+system call NtReadFile parameter #4
+KERNELBASE.dll!ReadFile
+KERNEL32.dll!ReadFile
+*!net::FileStream::Context::ReadAsync
+*!base::internal::RunnableAdapter<>::Run
+
+INVALID HEAP ARGUMENT
+name=http://crbug.com/455994
+drmemorylib.dll!replace_operator_delete
+*!IPC::Listener::`vector deleting destructor'
+*!content::RenderFrameImpl::~RenderFrameImpl
+*!content::RenderFrameImpl::`vector deleting destructor'
+*!content::RenderViewImpl::~RenderViewImpl
+*!content::RenderViewImpl::`vector deleting destructor'
+*!scoped_refptr<>::Release
+*!base::internal::BindState<>::`scalar deleting destructor'
+*!scoped_refptr<>::Release
+*!base::internal::CallbackBase::~CallbackBase
+*!base::MessagePumpDefault::Run
+*!base::MessageLoop::RunHandler
+*!base::MessageLoop::Run
+*!content::RendererMain
+*!content::RunNamedProcessTypeMain
+*!content::ContentMainRunnerImpl::Run
+*!content::ContentMain
+*!content::LaunchTests
+
+UNADDRESSABLE ACCESS
+name=http://crbug.com/456131
+...
+*!content::NavigateToURL
+*!content::BrowserSideNavigationBrowserTest_BrowserInitiatedNavigations_Test::RunTestOnMainThread
+*!content::ContentBrowserTest::RunTestOnMainThreadLoop
+*!content::BrowserTestBase::ProxyRunTestOnMainThreadLoop
+*!content::ShellBrowserMainParts::PreMainMessageLoopRun
+*!content::BrowserMainLoop::PreMainMessageLoopRun
+*!base::internal::Invoker<>::Run
+*!content::StartupTaskRunner::RunAllTasksNow
+*!content::BrowserMainLoop::CreateStartupTasks
+*!content::BrowserMainRunnerImpl::Initialize
+*!ShellBrowserMain
+*!content::ShellMainDelegate::RunProcess
+*!content::RunNamedProcessTypeMain
+*!content::ContentMainRunnerImpl::Run
+*!content::ContentMain
+*!content::BrowserTestBase::SetUp
+*!content::ContentBrowserTest::SetUp

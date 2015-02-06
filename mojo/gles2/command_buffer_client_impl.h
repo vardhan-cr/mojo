@@ -42,14 +42,15 @@ class CommandBufferClientImpl : public mojo::CommandBufferLostContextObserver,
   // CommandBuffer implementation:
   bool Initialize() override;
   State GetLastState() override;
-  int32 GetLastToken() override;
-  void Flush(int32 put_offset) override;
-  void WaitForTokenInRange(int32 start, int32 end) override;
-  void WaitForGetOffsetInRange(int32 start, int32 end) override;
-  void SetGetBuffer(int32 shm_id) override;
+  int32_t GetLastToken() override;
+  void Flush(int32_t put_offset) override;
+  void OrderingBarrier(int32_t put_offset) override;
+  void WaitForTokenInRange(int32_t start, int32_t end) override;
+  void WaitForGetOffsetInRange(int32_t start, int32_t end) override;
+  void SetGetBuffer(int32_t shm_id) override;
   scoped_refptr<gpu::Buffer> CreateTransferBuffer(size_t size,
-                                                  int32* id) override;
-  void DestroyTransferBuffer(int32 id) override;
+                                                  int32_t* id) override;
+  void DestroyTransferBuffer(int32_t id) override;
 
   // gpu::GpuControl implementation:
   gpu::Capabilities GetCapabilities() override;
@@ -96,8 +97,8 @@ class CommandBufferClientImpl : public mojo::CommandBufferLostContextObserver,
   State last_state_;
   mojo::ScopedSharedBufferHandle shared_state_handle_;
   gpu::CommandBufferSharedState* shared_state_;
-  int32 last_put_offset_;
-  int32 next_transfer_buffer_id_;
+  int32_t last_put_offset_;
+  int32_t next_transfer_buffer_id_;
 
   const MojoAsyncWaiter* async_waiter_;
 };

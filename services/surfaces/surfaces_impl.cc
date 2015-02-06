@@ -4,7 +4,7 @@
 
 #include "services/surfaces/surfaces_impl.h"
 
-#include "base/debug/trace_event.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/resources/returned_resource.h"
 #include "cc/surfaces/display.h"

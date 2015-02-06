@@ -6,7 +6,7 @@
 
 Eventually, this will be based on adb_wrapper.
 """
-# pylint: disable=W0613
+# pylint: disable=unused-argument
 
 import logging
 import multiprocessing
@@ -24,6 +24,7 @@ from pylib.device import adb_wrapper
 from pylib.device import decorators
 from pylib.device import device_errors
 from pylib.device import intent
+from pylib.device import logcat_monitor
 from pylib.device.commands import install_commands
 from pylib.utils import apk_helper
 from pylib.utils import device_temp_file
@@ -102,6 +103,9 @@ class DeviceUtils(object):
 
   _MAX_ADB_COMMAND_LENGTH = 512
   _VALID_SHELL_VARIABLE = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+  # Property in /data/local.prop that controls Java assertions.
+  JAVA_ASSERT_PROPERTY = 'dalvik.vm.enableassertions'
 
   def __init__(self, device, default_timeout=_DEFAULT_TIMEOUT,
                default_retries=_DEFAULT_RETRIES):
@@ -350,11 +354,13 @@ class DeviceUtils(object):
   @decorators.WithTimeoutAndRetriesDefaults(
       REBOOT_DEFAULT_TIMEOUT,
       REBOOT_DEFAULT_RETRIES)
-  def Reboot(self, block=True, timeout=None, retries=None):
+  def Reboot(self, block=True, wifi=False, timeout=None, retries=None):
     """Reboot the device.
 
     Args:
       block: A boolean indicating if we should wait for the reboot to complete.
+      wifi: A boolean indicating if we should wait for wifi to be enabled after
+        the reboot. The option has no effect unless |block| is also True.
       timeout: timeout in seconds
       retries: number of retries
 
@@ -369,7 +375,7 @@ class DeviceUtils(object):
     self._cache = {}
     timeout_retry.WaitFor(device_offline, wait_period=1)
     if block:
-      self.WaitUntilFullyBooted()
+      self.WaitUntilFullyBooted(wifi=wifi)
 
   INSTALL_DEFAULT_TIMEOUT = 4 * _DEFAULT_TIMEOUT
   INSTALL_DEFAULT_RETRIES = _DEFAULT_RETRIES
@@ -1038,7 +1044,43 @@ class DeviceUtils(object):
     Raises:
       CommandTimeoutError on timeout.
     """
-    return self.old_interface.SetJavaAssertsEnabled(enabled)
+    def find_property(lines, property_name):
+      for index, line in enumerate(lines):
+        key, value = (s.strip() for s in line.split('=', 1))
+        if key == property_name:
+          return index, value
+      return None, ''
+
+    new_value = 'all' if enabled else ''
+
+    # First ensure the desired property is persisted.
+    try:
+      properties = self.ReadFile(
+          constants.DEVICE_LOCAL_PROPERTIES_PATH).splitlines()
+    except device_errors.CommandFailedError:
+      properties = []
+    index, value = find_property(properties, self.JAVA_ASSERT_PROPERTY)
+    if new_value != value:
+      if new_value:
+        new_line = '%s=%s' % (self.JAVA_ASSERT_PROPERTY, new_value)
+        if index is None:
+          properties.append(new_line)
+        else:
+          properties[index] = new_line
+      else:
+        assert index is not None # since new_value == '' and new_value != value
+        properties.pop(index)
+      self.WriteFile(constants.DEVICE_LOCAL_PROPERTIES_PATH,
+                     _JoinLines(properties))
+
+    # Next, check the current runtime value is what we need, and
+    # if not, set it and report that a reboot is required.
+    value = self.GetProp(self.JAVA_ASSERT_PROPERTY)
+    if new_value != value:
+      self.SetProp(self.JAVA_ASSERT_PROPERTY, new_value)
+      return True
+    else:
+      return False
 
 
   @property
@@ -1287,6 +1329,19 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
     """
     return self.old_interface.GetMemoryUsageForPid(pid)
+
+  @decorators.WithTimeoutAndRetriesFromInstance()
+  def GetLogcatMonitor(self, timeout=None, retries=None, *args, **kwargs):
+    """Returns a new LogcatMonitor associated with this device.
+
+    Parameters passed to this function are passed directly to
+    |logcat_monitor.LogcatMonitor| and are documented there.
+
+    Args:
+      timeout: timeout in seconds
+      retries: number of retries
+    """
+    return logcat_monitor.LogcatMonitor(self.adb, *args, **kwargs)
 
   def __str__(self):
     """Returns the device serial."""

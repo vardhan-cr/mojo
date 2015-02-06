@@ -318,7 +318,7 @@
       # Only used on Windows.
       'win_z7%' : 0,
 
-      # Set to 1 to enable dcheck in release.
+      # Set to 1 to enable dcheck in Release build.
       'dcheck_always_on%': 0,
 
       # Set to 1 to make a build that disables unshipped tracing events.
@@ -1588,6 +1588,18 @@
             'sysroot%': '<(sysroot)',
             'CXX%': '<(CXX)',
           }],
+          # Use a 64-bit linker to avoid running out of address space. The
+          # buildbots should have a 64-bit kernel and a 64-bit libc installed.
+          ['host_arch=="ia32" and target_arch=="ia32"', {
+            # TODO(thestig) This is a horrible way to force the desired
+            # configuration. Our gyp variable scoping is likely wrong and
+            # needs to be cleaned up. The GN configuration should be changed
+            # to match.
+            'binutils_version%': 224,
+            'linux_use_bundled_binutils%': '1',
+            'linux_use_bundled_gold%': '1',
+            'binutils_dir%': 'third_party/binutils/Linux_x64/Release/bin',
+          }],
           # All Chrome builds have breakpad symbols, but only process the
           # symbols from official builds.
           ['(branding=="Chrome" and buildtype=="Official")', {
@@ -1596,16 +1608,6 @@
             # Omit unwind support in official release builds to save space. We
             # can use breakpad for these builds.
             'release_unwind_tables%': 0,
-
-            'conditions': [
-              # For official builds, use a 64-bit linker to avoid running out
-              # of address space. The buildbots should have a 64-bit kernel
-              # and a 64-bit libc installed.
-              ['host_arch=="ia32" and target_arch=="ia32"', {
-                'linux_use_bundled_gold%': '1',
-                'binutils_dir%': 'third_party/binutils/Linux_x64/Release/bin',
-              }],
-            ],
           }],
         ],
       }],  # os_posix==1 and OS!="mac" and OS!="ios"
@@ -1666,7 +1668,7 @@
           'android_ndk_root%': '<(android_ndk_root)',
           'android_sdk_root%': '<(android_sdk_root)',
           'android_sdk_version%': '<(android_sdk_version)',
-          'android_stlport_root': '<(android_ndk_root)/sources/cxx-stl/stlport',
+          'android_libcpp_root': '<(android_ndk_root)/sources/cxx-stl/llvm-libc++',
           'host_os%': '<(host_os)',
 
           'android_sdk%': '<(android_sdk_root)/platforms/android-<(android_sdk_version)',
@@ -1743,9 +1745,10 @@
         'android_sdk%': '<(android_sdk)',
         'android_sdk_jar%': '<(android_sdk)/android.jar',
 
-        'android_stlport_root': '<(android_stlport_root)',
-        'android_stlport_include': '<(android_stlport_root)/stlport',
-        'android_stlport_libs_dir': '<(android_stlport_root)/libs/<(android_app_abi)',
+        'android_libcpp_root': '<(android_libcpp_root)',
+        'android_libcpp_include': '<(android_libcpp_root)/libcxx/include',
+        'android_libcpp_libs_dir': '<(android_libcpp_root)/libs/<(android_app_abi)',
+
         'host_os%': '<(host_os)',
 
         # Location of the "objcopy" binary, used by both gyp and scripts.
@@ -2143,7 +2146,7 @@
         'conditions': [
           # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
           # on all platforms is currently underway.
-          ['OS=="linux" or OS=="mac" or OS=="ios"', {
+          ['OS=="android" or OS=="linux" or OS=="mac" or OS=="ios"', {
             'clang_chrome_plugins_flags': [
               '-Xclang',
               '-plugin-arg-find-bad-constructs',
@@ -4403,10 +4406,8 @@
                   # https://groups.google.com/a/chromium.org/group/chromium-dev/browse_thread/thread/281527606915bb36
                   # Only apply this to the target linker, since the host
                   # linker might not be gold, but isn't used much anyway.
-                  # TODO(raymes): Disable threading because gold is frequently
-                  # crashing on the bots: crbug.com/161942.
-                  # '-Wl,--threads',
-                  # '-Wl,--thread-count=4',
+                  '-Wl,--threads',
+                  '-Wl,--thread-count=4',
                 ],
               }],
             ],
@@ -4498,9 +4499,9 @@
           # Figure this out early since it needs symbols from libgcc.a, so it
           # has to be before that in the set of libraries.
           ['component=="shared_library"', {
-              'android_stlport_library': 'stlport_shared',
+              'android_libcpp_library': 'c++_shared',
           }, {
-              'android_stlport_library': 'stlport_static',
+              'android_libcpp_library': 'c++_static',
           }],
         ],
 
@@ -4584,8 +4585,6 @@
             'defines': [
               'ANDROID',
               '__GNU_SOURCE=1',  # Necessary for clone()
-              'USE_STLPORT=1',
-              '_STLP_USE_PTR_SPECIALIZATIONS=1',
               'CHROME_BUILD_ID="<(chrome_build_id)"',
             ],
             'ldflags!': [
@@ -4659,12 +4658,13 @@
                   '-nostdlib',
                 ],
                 'libraries': [
-                  '-l<(android_stlport_library)',
+                  '-l<(android_libcpp_library)',
+                  '-latomic',
                   # Manually link the libgcc.a that the cross compiler uses.
                   '<!(<(android_toolchain)/*-gcc -print-libgcc-file-name)',
+                  '-lm',
                   '-lc',
                   '-ldl',
-                  '-lm',
                 ],
               }],
               ['android_webview_build==1', {
@@ -4716,20 +4716,20 @@
                   '-Wl,--icf=safe',
                 ],
               }],
-              # NOTE: The stlport header include paths below are specified in
-              # cflags rather than include_dirs because they need to come
-              # after include_dirs. Think of them like system headers, but
-              # don't use '-isystem' because the arm-linux-androideabi-4.4.3
-              # toolchain (circa Gingerbread) will exhibit strange errors.
-              # The include ordering here is important; change with caution.
               ['android_webview_build==0', {
                 'cflags': [
-                  '-isystem<(android_stlport_include)',
+                  '-isystem<(android_libcpp_include)',
+                  '-isystem<(android_ndk_root)/sources/cxx-stl/llvm-libc++abi/libcxxabi/include',
+                  '-isystem<(android_ndk_root)/sources/android/support/include',
                 ],
                 'ldflags': [
-                  '-L<(android_stlport_libs_dir)',
+                  '-L<(android_libcpp_libs_dir)',
                 ],
               }, { # else: android_webview_build!=0
+                'defines': [
+                  'USE_STLPORT=1',
+                  '_STLP_USE_PTR_SPECIALIZATIONS=1',
+                ],
                 'aosp_build_settings': {
                   # Specify that we want to statically link stlport from the
                   # NDK. This will provide all the include and library paths

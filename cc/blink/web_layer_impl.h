@@ -31,10 +31,16 @@ struct WebFloatRect;
 }
 
 namespace base {
-namespace debug {
+namespace trace_event {
 class ConvertableToTraceFormat;
 }
+
+// TODO(ssid): remove these aliases after the tracing clients are moved to the
+// new trace_event namespace. See crbug.com/451032. ETA: March 2015.
+namespace debug {
+using ::base::trace_event::ConvertableToTraceFormat;
 }
+}  // namespace base
 
 namespace cc {
 class Layer;
@@ -123,6 +129,8 @@ class WebLayerImpl : public blink::WebLayer, public cc::LayerClient {
   virtual void setTouchEventHandlerRegion(
       const blink::WebVector<blink::WebRect>& region);
   virtual blink::WebVector<blink::WebRect> touchEventHandlerRegion() const;
+  virtual void setScrollBlocksOn(blink::WebScrollBlocksOn);
+  virtual blink::WebScrollBlocksOn scrollBlocksOn() const;
   virtual void setIsContainerForFixedPositionLayers(bool is_container);
   virtual bool isContainerForFixedPositionLayers() const;
   virtual void setPositionConstraint(

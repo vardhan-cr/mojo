@@ -21,19 +21,19 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'fef4c32bdf02f1bf3cde722cd48c4ac4cd137ab6',
+  'skia_revision': '02c8fd0ad5e5279004dd49ec49fbae00f8522ec0',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '224d14897d9b7df09e08a94e4cbc13feb339346d',
+  'v8_revision': '0aa5f75929fa3b383ec749555e045e47199ba6d5',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': 'bc393df9cd8ae893da686533644da29a8c4911ae',
+  'angle_revision': '592ab9dd91e653f5c2d4f7395267046d229e20c1',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '451dcd05a5b34936f5be67b2472cd63aaa508401',
+  'buildtools_revision': 'da0df3fdac6036e862addb1155a2d6c11b6c18d5',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Dart
   # and whatever else without interference from each other.
@@ -41,11 +41,11 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': 'b3a788e5e37955620b26be5b6e3048d37b605e00',
+  'pdfium_revision': '7061d1af45752617fafa85e2242dc5b2844650b5',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': 'be629e0e920ae32cca691f5e45410ff00db1a849',
+  'boringssl_revision': '8f5e2ebcee628ef02add9b21955402b0c6256624',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -159,7 +159,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + 'aaeda3d69df4b4352e3cac7c16bea7f16bd1ec12',
+     Var('chromium_git') + '/android_tools.git' + '@' + 'f6e2370dff438125897bb3b3800de1ad7aa62c27',
 
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',

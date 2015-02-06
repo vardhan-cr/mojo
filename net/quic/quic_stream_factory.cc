@@ -63,9 +63,6 @@ const int32 kInitialReceiveWindowSize = 10 * 1024 * 1024;  // 10MB
 // Set the maximum number of undecryptable packets the connection will store.
 const int32 kMaxUndecryptablePackets = 100;
 
-const char kDummyHostname[] = "quic.global.props";
-const uint16 kDummyPort = 0;
-
 void HistogramCreateSessionFailure(enum CreateSessionFailure error) {
   UMA_HISTOGRAM_ENUMERATION("Net.QuicSession.CreationError", error,
                             CREATION_ERROR_MAX);
@@ -619,11 +616,8 @@ QuicStreamFactory::~QuicStreamFactory() {
 void QuicStreamFactory::set_require_confirmation(bool require_confirmation) {
   require_confirmation_ = require_confirmation;
   if (http_server_properties_ && (!(local_address_ == IPEndPoint()))) {
-    // TODO(rtenneti): Delete host_port_pair and persist data in globals.
-    HostPortPair host_port_pair(kDummyHostname, kDummyPort);
-    http_server_properties_->SetSupportsQuic(
-        host_port_pair, !require_confirmation,
-        local_address_.ToStringWithoutPort());
+    http_server_properties_->SetSupportsQuic(!require_confirmation,
+                                             local_address_.address());
   }
 }
 
@@ -1002,11 +996,9 @@ int QuicStreamFactory::CreateSession(
   socket->GetLocalAddress(&local_address_);
   if (check_persisted_supports_quic_ && http_server_properties_) {
     check_persisted_supports_quic_ = false;
-    // TODO(rtenneti): Delete host_port_pair and persist data in globals.
-    HostPortPair host_port_pair(kDummyHostname, kDummyPort);
-    SupportsQuic supports_quic(true, local_address_.ToStringWithoutPort());
-    if (http_server_properties_->GetSupportsQuic(
-            host_port_pair).Equals(supports_quic)) {
+    IPAddressNumber last_address;
+    if (http_server_properties_->GetSupportsQuic(&last_address) &&
+        last_address == local_address_.address()) {
       require_confirmation_ = false;
     }
   }
@@ -1249,7 +1241,9 @@ void QuicStreamFactory::ProcessGoingAwaySession(
   const HostPortPair& server = server_id.host_port_pair();
   // Don't try to change the alternate-protocol state, if the
   // alternate-protocol state is unknown.
-  if (!http_server_properties_->HasAlternateProtocol(server))
+  const AlternateProtocolInfo alternate =
+      http_server_properties_->GetAlternateProtocol(server);
+  if (alternate.protocol == UNINITIALIZED_ALTERNATE_PROTOCOL)
     return;
 
   // TODO(rch):  In the special case where the session has received no
@@ -1258,8 +1252,6 @@ void QuicStreamFactory::ProcessGoingAwaySession(
   // session connected until the handshake has been confirmed.
   HistogramBrokenAlternateProtocolLocation(
       BROKEN_ALTERNATE_PROTOCOL_LOCATION_QUIC_STREAM_FACTORY);
-  AlternateProtocolInfo alternate =
-      http_server_properties_->GetAlternateProtocol(server);
   DCHECK_EQ(QUIC, alternate.protocol);
 
   // Since the session was active, there's no longer an

@@ -116,18 +116,14 @@ class ViewportAnchor {
   gfx::ScrollOffset viewport_in_content_coordinates_;
 };
 
-
 void DidVisibilityChange(LayerTreeHostImpl* id, bool visible) {
   if (visible) {
-    TRACE_EVENT_ASYNC_BEGIN1("webkit",
-                             "LayerTreeHostImpl::SetVisible",
-                             id,
-                             "LayerTreeHostImpl",
-                             id);
+    TRACE_EVENT_ASYNC_BEGIN1("cc", "LayerTreeHostImpl::SetVisible", id,
+                             "LayerTreeHostImpl", id);
     return;
   }
 
-  TRACE_EVENT_ASYNC_END0("webkit", "LayerTreeHostImpl::SetVisible", id);
+  TRACE_EVENT_ASYNC_END0("cc", "LayerTreeHostImpl::SetVisible", id);
 }
 
 size_t GetMaxTransferBufferUsageBytes(
@@ -229,7 +225,8 @@ LayerTreeHostImpl::LayerTreeHostImpl(
       gpu_memory_buffer_manager_(gpu_memory_buffer_manager),
       id_(id),
       requires_high_res_to_draw_(false),
-      is_likely_to_require_a_draw_(false) {
+      is_likely_to_require_a_draw_(false),
+      frame_timing_tracker_(FrameTimingTracker::Create()) {
   DCHECK(proxy_->IsImplThread());
   DidVisibilityChange(this, visible_);
   animation_registrar_->set_supports_scroll_animations(
@@ -469,16 +466,39 @@ bool LayerTreeHostImpl::HaveWheelEventHandlersAt(
   return layer_impl != NULL;
 }
 
-bool LayerTreeHostImpl::HaveTouchEventHandlersAt(
-    const gfx::Point& viewport_point) {
+static LayerImpl* NextScrollLayer(LayerImpl* layer) {
+  if (LayerImpl* scroll_parent = layer->scroll_parent())
+    return scroll_parent;
+  return layer->parent();
+}
 
+static ScrollBlocksOn EffectiveScrollBlocksOn(LayerImpl* layer) {
+  ScrollBlocksOn blocks = ScrollBlocksOnNone;
+  for (; layer; layer = NextScrollLayer(layer)) {
+    blocks |= layer->scroll_blocks_on();
+  }
+  return blocks;
+}
+
+bool LayerTreeHostImpl::DoTouchEventsBlockScrollAt(
+    const gfx::Point& viewport_point) {
   gfx::PointF device_viewport_point =
       gfx::ScalePoint(viewport_point, device_scale_factor_);
 
+  // First check if scrolling at this point is required to block on any
+  // touch event handlers.  Note that we must start at the innermost layer
+  // (as opposed to only the layer found to contain a touch handler region
+  // below) to ensure all relevant scroll-blocks-on values are applied.
   LayerImpl* layer_impl =
-      active_tree_->FindLayerThatIsHitByPointInTouchHandlerRegion(
-          device_viewport_point);
+      active_tree_->FindLayerThatIsHitByPoint(device_viewport_point);
+  ScrollBlocksOn blocking = EffectiveScrollBlocksOn(layer_impl);
+  if (!(blocking & ScrollBlocksOnStartTouch))
+    return false;
 
+  // Now determine if there are actually any handlers at that point.
+  // TODO(rbyers): Consider also honoring touch-action (crbug.com/347272).
+  layer_impl = active_tree_->FindLayerThatIsHitByPointInTouchHandlerRegion(
+      device_viewport_point);
   return layer_impl != NULL;
 }
 
@@ -674,6 +694,7 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
   if (root_surface_has_contributing_layers &&
       root_surface_has_no_visible_damage &&
       active_tree_->LayersWithCopyOutputRequest().empty() &&
+      !output_surface_->capabilities().can_force_reclaim_resources &&
       !hud_wants_to_draw_) {
     TRACE_EVENT0("cc",
                  "LayerTreeHostImpl::CalculateRenderPasses::EmptyDamageRect");
@@ -813,6 +834,18 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
                             *it,
                             occlusion_tracker,
                             &append_quads_data);
+
+        // For layers that represent themselves, add composite frame timing
+        // requests if the visible rect intersects the requested rect.
+        for (const auto& request : it->frame_timing_requests()) {
+          const gfx::Rect& request_content_rect =
+              it->LayerRectToContentRect(request.rect());
+          if (request_content_rect.Intersects(it->visible_content_rect())) {
+            frame->composite_events.push_back(
+                FrameTimingTracker::FrameAndRectIds(
+                    active_tree_->source_frame_number(), request.id()));
+          }
+        }
       }
 
       ++layers_drawn;
@@ -1438,6 +1471,11 @@ void LayerTreeHostImpl::DrawLayers(FrameData* frame,
   TRACE_EVENT0("cc", "LayerTreeHostImpl::DrawLayers");
   DCHECK(CanDraw());
 
+  if (!frame->composite_events.empty()) {
+    frame_timing_tracker_->SaveTimeStamps(frame_begin_time,
+                                          frame->composite_events);
+  }
+
   if (frame->has_no_damage) {
     TRACE_EVENT_INSTANT0("cc", "EarlyOut_NoDamage", TRACE_EVENT_SCOPE_THREAD);
     DCHECK(!output_surface_->capabilities()
@@ -1577,6 +1615,7 @@ void LayerTreeHostImpl::SetUseGpuRasterization(bool use_gpu) {
     DestroyTileManager();
     CreateAndSetTileManager();
   }
+  RecreateTreeResources();
 
   // We have released tilings for both active and pending tree.
   // We would not have any content to draw until the pending tree is activated.
@@ -1895,6 +1934,14 @@ void LayerTreeHostImpl::ReleaseTreeResources() {
   EvictAllUIResources();
 }
 
+void LayerTreeHostImpl::RecreateTreeResources() {
+  active_tree_->RecreateResources();
+  if (pending_tree_)
+    pending_tree_->RecreateResources();
+  if (recycle_tree_)
+    recycle_tree_->RecreateResources();
+}
+
 void LayerTreeHostImpl::CreateAndSetRenderer() {
   DCHECK(!renderer_);
   DCHECK(output_surface_);
@@ -1959,7 +2006,8 @@ scoped_ptr<Rasterizer> LayerTreeHostImpl::CreateRasterizer() {
   ContextProvider* context_provider = output_surface_->context_provider();
   if (use_gpu_rasterization_ && context_provider) {
     return GpuRasterizer::Create(context_provider, resource_provider_.get(),
-                                 settings_.use_distance_field_text, false,
+                                 settings_.use_distance_field_text,
+                                 settings_.threaded_gpu_rasterization_enabled,
                                  settings_.gpu_rasterization_msaa_sample_count);
   }
   return SoftwareRasterizer::Create();
@@ -2085,8 +2133,12 @@ bool LayerTreeHostImpl::InitializeRenderer(
   resource_provider_ = nullptr;
   output_surface_ = nullptr;
 
-  if (!output_surface->BindToClient(this))
+  if (!output_surface->BindToClient(this)) {
+    // Avoid recreating tree resources because we might not have enough
+    // information to do this yet (eg. we don't have a TileManager at this
+    // point).
     return false;
+  }
 
   output_surface_ = output_surface.Pass();
   resource_provider_ = ResourceProvider::Create(
@@ -2103,6 +2155,7 @@ bool LayerTreeHostImpl::InitializeRenderer(
 
   if (settings_.impl_side_painting)
     CreateAndSetTileManager();
+  RecreateTreeResources();
 
   // Initialize vsync parameters to sane values.
   const base::TimeDelta display_refresh_interval =
@@ -2152,6 +2205,7 @@ void LayerTreeHostImpl::DeferredInitialize() {
   CreateAndSetRenderer();
   EnforceZeroBudget(false);
   CreateAndSetTileManager();
+  RecreateTreeResources();
 
   client_->SetNeedsCommitOnImplThread();
 }
@@ -2171,6 +2225,7 @@ void LayerTreeHostImpl::ReleaseGL() {
   CreateAndSetRenderer();
   EnforceZeroBudget(true);
   CreateAndSetTileManager();
+  RecreateTreeResources();
 
   client_->SetNeedsCommitOnImplThread();
 }
@@ -2178,6 +2233,10 @@ void LayerTreeHostImpl::ReleaseGL() {
 void LayerTreeHostImpl::SetViewportSize(const gfx::Size& device_viewport_size) {
   if (device_viewport_size == device_viewport_size_)
     return;
+  TRACE_EVENT_INSTANT2("cc", "LayerTreeHostImpl::SetViewportSize",
+                       TRACE_EVENT_SCOPE_THREAD, "width",
+                       device_viewport_size.width(), "height",
+                       device_viewport_size.height());
 
   if (pending_tree_)
     active_tree_->SetViewportSizeInvalid();
@@ -2255,12 +2314,6 @@ void LayerTreeHostImpl::BindToClient(InputHandlerClient* client) {
   input_handler_client_ = client;
 }
 
-static LayerImpl* NextScrollLayer(LayerImpl* layer) {
-  if (LayerImpl* scroll_parent = layer->scroll_parent())
-    return scroll_parent;
-  return layer->parent();
-}
-
 LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
     const gfx::PointF& device_viewport_point,
     InputHandler::ScrollInputType type,
@@ -2269,12 +2322,15 @@ LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
     bool* optional_has_ancestor_scroll_handler) const {
   DCHECK(scroll_on_main_thread);
 
+  ScrollBlocksOn block_mode = EffectiveScrollBlocksOn(layer_impl);
+
   // Walk up the hierarchy and look for a scrollable layer.
   LayerImpl* potentially_scrolling_layer_impl = NULL;
   for (; layer_impl; layer_impl = NextScrollLayer(layer_impl)) {
     // The content layer can also block attempts to scroll outside the main
     // thread.
-    ScrollStatus status = layer_impl->TryScroll(device_viewport_point, type);
+    ScrollStatus status =
+        layer_impl->TryScroll(device_viewport_point, type, block_mode);
     if (status == ScrollOnMainThread) {
       *scroll_on_main_thread = true;
       return NULL;
@@ -2284,7 +2340,8 @@ LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
     if (!scroll_layer_impl)
       continue;
 
-    status = scroll_layer_impl->TryScroll(device_viewport_point, type);
+    status =
+        scroll_layer_impl->TryScroll(device_viewport_point, type, block_mode);
     // If any layer wants to divert the scroll event to the main thread, abort.
     if (status == ScrollOnMainThread) {
       *scroll_on_main_thread = true;
@@ -2988,7 +3045,7 @@ static void CollectScrollDeltas(ScrollAndScaleSet* scroll_info,
   if (!scroll_delta.IsZero()) {
     LayerTreeHostCommon::ScrollUpdateInfo scroll;
     scroll.layer_id = layer_impl->id();
-    scroll.scroll_delta = gfx::Vector2d(scroll_delta.x(), scroll_delta.y());
+    scroll.scroll_delta = gfx::Vector2dF(scroll_delta.x(), scroll_delta.y());
     scroll_info->scrolls.push_back(scroll);
   }
 

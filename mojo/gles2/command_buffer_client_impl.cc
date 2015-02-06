@@ -180,6 +180,11 @@ void CommandBufferClientImpl::Flush(int32 put_offset) {
   command_buffer_->Flush(put_offset);
 }
 
+void CommandBufferClientImpl::OrderingBarrier(int32_t put_offset) {
+  // TODO(jamesr): Implement this more efficiently.
+  Flush(put_offset);
+}
+
 void CommandBufferClientImpl::WaitForTokenInRange(int32 start, int32 end) {
   TryUpdateState();
   while (!InRange(start, end, last_state_.token) &&

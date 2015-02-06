@@ -5,6 +5,7 @@
 #ifndef NET_HTTP_HTTP_SERVER_PROPERTIES_IMPL_H_
 #define NET_HTTP_HTTP_SERVER_PROPERTIES_IMPL_H_
 
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
@@ -43,7 +44,7 @@ class NET_EXPORT HttpServerPropertiesImpl
 
   void InitializeSpdySettingsServers(SpdySettingsMap* spdy_settings_map);
 
-  void InitializeSupportsQuic(SupportsQuicMap* supports_quic_map);
+  void InitializeSupportsQuic(IPAddressNumber* last_address);
 
   void InitializeServerNetworkStats(
       ServerNetworkStatsMap* server_network_stats_map);
@@ -79,7 +80,6 @@ class NET_EXPORT HttpServerPropertiesImpl
   void SetHTTP11Required(const HostPortPair& server) override;
   void MaybeForceHTTP11(const HostPortPair& server,
                         SSLConfig* ssl_config) override;
-  bool HasAlternateProtocol(const HostPortPair& server) override;
   AlternateProtocolInfo GetAlternateProtocol(
       const HostPortPair& server) override;
   void SetAlternateProtocol(const HostPortPair& server,
@@ -101,12 +101,8 @@ class NET_EXPORT HttpServerPropertiesImpl
   void ClearSpdySettings(const HostPortPair& host_port_pair) override;
   void ClearAllSpdySettings() override;
   const SpdySettingsMap& spdy_settings_map() const override;
-  SupportsQuic GetSupportsQuic(
-      const HostPortPair& host_port_pair) const override;
-  void SetSupportsQuic(const HostPortPair& host_port_pair,
-                       bool used_quic,
-                       const std::string& address) override;
-  const SupportsQuicMap& supports_quic_map() const override;
+  bool GetSupportsQuic(IPAddressNumber* last_address) const override;
+  void SetSupportsQuic(bool used_quic, const IPAddressNumber& address) override;
   void SetServerNetworkStats(const HostPortPair& host_port_pair,
                              ServerNetworkStats stats) override;
   const ServerNetworkStats* GetServerNetworkStats(
@@ -120,16 +116,48 @@ class NET_EXPORT HttpServerPropertiesImpl
   typedef std::map<HostPortPair, HostPortPair> CanonicalHostMap;
   typedef std::vector<std::string> CanonicalSufficList;
   typedef std::set<HostPortPair> Http11ServerHostPortSet;
-  // List of broken host:ports and the times when they can be expired.
+
+  // Server, port, and AlternateProtocol: an entity that can be broken.  (Once
+  // we use AlternativeService, the same AltSvc can be broken for one server but
+  // not for another depending on what certificate it can offer.)
   struct BrokenAlternateProtocolEntry {
+    BrokenAlternateProtocolEntry(const BrokenAlternateProtocolEntry&) = default;
+    BrokenAlternateProtocolEntry(const HostPortPair& server,
+                                 uint16 port,
+                                 AlternateProtocol protocol)
+        : server(server), port(port), protocol(protocol) {}
+
+    bool operator<(const BrokenAlternateProtocolEntry& other) const {
+      if (!server.Equals(other.server))
+        return server < other.server;
+      if (port != other.port)
+        return port < other.port;
+      return protocol < other.protocol;
+    }
+
     HostPortPair server;
+    uint16 port;
+    AlternateProtocol protocol;
+  };
+  // BrokenAlternateProtocolEntry with expiration time.
+  struct BrokenAlternateProtocolEntryWithTime {
+    BrokenAlternateProtocolEntryWithTime(
+        const BrokenAlternateProtocolEntry& broken_alternate_protocol_entry,
+        base::TimeTicks when)
+        : broken_alternate_protocol_entry(broken_alternate_protocol_entry),
+          when(when) {}
+
+    BrokenAlternateProtocolEntry broken_alternate_protocol_entry;
     base::TimeTicks when;
   };
-  typedef std::list<BrokenAlternateProtocolEntry>
+  // Deque of BrokenAlternateProtocolEntryWithTime items, ordered by expiration
+  // time.
+  typedef std::deque<BrokenAlternateProtocolEntryWithTime>
       BrokenAlternateProtocolList;
-  // Map from host:port to the number of times alternate protocol has
-  // been marked broken.
-  typedef std::map<HostPortPair, int> BrokenAlternateProtocolMap;
+  // Map from (server, alternate protocol and port) to the number of
+  // times that alternate protocol has been marked broken for that server.
+  typedef std::map<BrokenAlternateProtocolEntry, int>
+      BrokenAlternateProtocolMap;
 
   // Return the iterator for |server|, or for its canonical host, or end.
   AlternateProtocolMap::const_iterator GetAlternateProtocolIterator(
@@ -149,8 +177,8 @@ class NET_EXPORT HttpServerPropertiesImpl
   BrokenAlternateProtocolList broken_alternate_protocol_list_;
   BrokenAlternateProtocolMap broken_alternate_protocol_map_;
 
+  IPAddressNumber last_quic_address_;
   SpdySettingsMap spdy_settings_map_;
-  SupportsQuicMap supports_quic_map_;
   ServerNetworkStatsMap server_network_stats_map_;
   // Contains a map of servers which could share the same alternate protocol.
   // Map from a Canonical host/port (host is some postfix of host names) to an

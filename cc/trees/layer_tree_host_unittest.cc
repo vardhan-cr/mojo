@@ -1104,17 +1104,16 @@ class TestOpacityChangeLayerDelegate : public ContentLayerClient {
 
   void SetTestLayer(Layer* test_layer) { test_layer_ = test_layer; }
 
-  void PaintContents(
-      SkCanvas* canvas,
-      const gfx::Rect& clip,
-      ContentLayerClient::GraphicsContextStatus gc_status) override {
+  void PaintContents(SkCanvas* canvas,
+                     const gfx::Rect& clip,
+                     PaintingControlSetting picture_control) override {
     // Set layer opacity to 0.
     if (test_layer_)
       test_layer_->SetOpacity(0.f);
   }
   scoped_refptr<DisplayItemList> PaintContentsToDisplayList(
       const gfx::Rect& clip,
-      GraphicsContextStatus gc_status) override {
+      PaintingControlSetting picture_control) override {
     NOTIMPLEMENTED();
     return DisplayItemList::Create();
   }
@@ -2066,7 +2065,7 @@ class LayerTreeHostTestDeferCommits : public LayerTreeHostTest {
   }
 
   void AfterTest() override {
-    EXPECT_GE(3, num_will_begin_impl_frame_);
+    EXPECT_GE(num_will_begin_impl_frame_, 3);
     EXPECT_EQ(2, num_send_begin_main_frame_);
   }
 
@@ -2327,17 +2326,16 @@ class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
 
     int paint_count() const { return paint_count_; }
 
-    void PaintContents(
-        SkCanvas* canvas,
-        const gfx::Rect& clip,
-        ContentLayerClient::GraphicsContextStatus gc_status) override {
-      FakeContentLayerClient::PaintContents(canvas, clip, gc_status);
+    void PaintContents(SkCanvas* canvas,
+                       const gfx::Rect& clip,
+                       PaintingControlSetting picture_control) override {
+      FakeContentLayerClient::PaintContents(canvas, clip, picture_control);
       ++paint_count_;
     }
 
     scoped_refptr<DisplayItemList> PaintContentsToDisplayList(
         const gfx::Rect& clip,
-        GraphicsContextStatus gc_status) override {
+        PaintingControlSetting picture_control) override {
       NOTIMPLEMENTED();
       return DisplayItemList::Create();
     }
@@ -2605,16 +2603,15 @@ class LayerTreeHostTestChangeLayerPropertiesInPaintContents
 
     void set_layer(Layer* layer) { layer_ = layer; }
 
-    void PaintContents(
-        SkCanvas* canvas,
-        const gfx::Rect& clip,
-        ContentLayerClient::GraphicsContextStatus gc_status) override {
+    void PaintContents(SkCanvas* canvas,
+                       const gfx::Rect& clip,
+                       PaintingControlSetting picture_control) override {
       layer_->SetBounds(gfx::Size(2, 2));
     }
 
     scoped_refptr<DisplayItemList> PaintContentsToDisplayList(
         const gfx::Rect& clip,
-        GraphicsContextStatus gc_status) override {
+        PaintingControlSetting picture_control) override {
       NOTIMPLEMENTED();
       return DisplayItemList::Create();
     }
@@ -5518,8 +5515,8 @@ class LayerTreeHostAcceptsDeltasFromImplWithoutRootLayer
     EndTest();
   }
 
-  void ApplyViewportDeltas(const gfx::Vector2d& inner,
-                           const gfx::Vector2d& outer,
+  void ApplyViewportDeltas(const gfx::Vector2dF& inner,
+                           const gfx::Vector2dF& outer,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float scale_delta,
                            float top_controls_delta) override {
@@ -6095,6 +6092,73 @@ class LayerTreeHostTestOneActivatePerPrepareTiles : public LayerTreeHostTest {
 };
 
 MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestOneActivatePerPrepareTiles);
+
+class LayerTreeHostTestFrameTimingRequestsSaveTimestamps
+    : public LayerTreeHostTest {
+ public:
+  LayerTreeHostTestFrameTimingRequestsSaveTimestamps()
+      : check_results_on_commit_(false) {}
+
+  void SetupTree() override {
+    scoped_refptr<FakePictureLayer> root_layer =
+        FakePictureLayer::Create(&client_);
+    root_layer->SetBounds(gfx::Size(200, 200));
+    root_layer->SetIsDrawable(true);
+
+    scoped_refptr<FakePictureLayer> child_layer =
+        FakePictureLayer::Create(&client_);
+    child_layer->SetBounds(gfx::Size(1500, 1500));
+    child_layer->SetIsDrawable(true);
+
+    std::vector<FrameTimingRequest> requests;
+    requests.push_back(FrameTimingRequest(1, gfx::Rect(0, 0, 100, 100)));
+    requests.push_back(FrameTimingRequest(2, gfx::Rect(300, 0, 100, 100)));
+    child_layer->SetFrameTimingRequests(requests);
+
+    root_layer->AddChild(child_layer);
+    layer_tree_host()->SetRootLayer(root_layer);
+    LayerTreeHostTest::SetupTree();
+  }
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  void BeginCommitOnThread(LayerTreeHostImpl* host_impl) override {
+    if (!check_results_on_commit_)
+      return;
+
+    // Since in reality, the events will be read by LayerTreeHost during commit,
+    // we check the requests here to ensure that they are correct at the next
+    // commit time (as opposed to checking in DrawLayers for instance).
+    // TODO(vmpstr): Change this to read things from the main thread when this
+    // information is propagated to the main thread (not yet implemented).
+    FrameTimingTracker* tracker = host_impl->frame_timing_tracker();
+    scoped_ptr<FrameTimingTracker::CompositeTimingSet> timing_set =
+        tracker->GroupCountsByRectId();
+    EXPECT_EQ(1u, timing_set->size());
+    auto rect_1_it = timing_set->find(1);
+    EXPECT_TRUE(rect_1_it != timing_set->end());
+    const auto& timing_events = rect_1_it->second;
+    EXPECT_EQ(1u, timing_events.size());
+    EXPECT_EQ(host_impl->active_tree()->source_frame_number(),
+              timing_events[0].frame_id);
+    EXPECT_GT(timing_events[0].timestamp, base::TimeTicks());
+
+    EndTest();
+  }
+
+  void DrawLayersOnThread(LayerTreeHostImpl* host_impl) override {
+    check_results_on_commit_ = true;
+    PostSetNeedsCommitToMainThread();
+  }
+
+  void AfterTest() override {}
+
+ private:
+  FakeContentLayerClient client_;
+  bool check_results_on_commit_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestFrameTimingRequestsSaveTimestamps);
 
 class LayerTreeHostTestActivationCausesPrepareTiles : public LayerTreeHostTest {
  public:

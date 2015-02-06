@@ -227,12 +227,6 @@ bool URLRequest::has_upload() const {
   return upload_data_stream_.get() != NULL;
 }
 
-void URLRequest::SetExtraRequestHeaderById(int id, const string& value,
-                                           bool overwrite) {
-  DCHECK(!is_pending_ || is_redirecting_);
-  NOTREACHED() << "implement me!";
-}
-
 void URLRequest::SetExtraRequestHeaderByName(const string& name,
                                              const string& value,
                                              bool overwrite) {
@@ -273,6 +267,10 @@ int64 URLRequest::GetTotalReceivedBytes() const {
 }
 
 LoadStateWithParam URLRequest::GetLoadState() const {
+  // TODO(pkasting): Remove ScopedTracker below once crbug.com/455952 is
+  // fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION("455952 URLRequest::GetLoadState"));
   // The !blocked_by_.empty() check allows |this| to report it's blocked on a
   // delegate before it has been started.
   if (calling_delegate_ || !blocked_by_.empty()) {
@@ -378,26 +376,12 @@ UploadProgress URLRequest::GetUploadProgress() const {
   return job_->GetUploadProgress();
 }
 
-void URLRequest::GetResponseHeaderById(int id, string* value) {
-  DCHECK(job_.get());
-  NOTREACHED() << "implement me!";
-}
-
 void URLRequest::GetResponseHeaderByName(const string& name, string* value) {
   DCHECK(value);
   if (response_info_.headers.get()) {
     response_info_.headers->GetNormalizedHeader(name, value);
   } else {
     value->clear();
-  }
-}
-
-void URLRequest::GetAllResponseHeaders(string* headers) {
-  DCHECK(headers);
-  if (response_info_.headers.get()) {
-    response_info_.headers->GetNormalizedHeaders(headers);
-  } else {
-    headers->clear();
   }
 }
 

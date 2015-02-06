@@ -111,7 +111,8 @@ char kTSanDefaultSuppressions[] =
 "race:content::GpuWatchdogThread::CheckArmed\n"
 
 // http://crbug.com/257396
-"race:base::debug::TraceEventTestFixture_TraceSamplingScope_Test::TestBody\n"
+"race:base::trace_event::"
+    "TraceEventTestFixture_TraceSamplingScope_Test::TestBody\n"
 
 // http://crbug.com/258479
 "race:SamplingStateScope\n"
@@ -291,10 +292,10 @@ char kTSanDefaultSuppressions[] =
 
 // http://crbug.com/397022
 "deadlock:"
-"base::debug::TraceEventTestFixture_ThreadOnceBlocking_Test::TestBody\n"
+"base::trace_event::TraceEventTestFixture_ThreadOnceBlocking_Test::TestBody\n"
 
 // http://crbug.com/415472
-"deadlock:base::debug::TraceLog::GetCategoryGroupEnabled\n"
+"deadlock:base::trace_event::TraceLog::GetCategoryGroupEnabled\n"
 
 // http://crbug.com/425057
 "deadlock:webrtc::ViEChannelManagerScoped::ViEChannelManagerScoped\n"
@@ -314,6 +315,15 @@ char kTSanDefaultSuppressions[] =
 
 // https://crbug.com/448203
 "race:blink::RemoteFrame::detach\n"
+
+// https://crbug.com/455638
+"deadlock:dbus::Bus::ShutdownAndBlock\n"
+
+// https://crbug.com/455665
+"race:mojo::common::*::tick_clock\n"
+
+// https://crbug.com/456095
+"race:blink::Scheduler\n"
 
 // End of suppressions.
 ;  // Please keep this semicolon.

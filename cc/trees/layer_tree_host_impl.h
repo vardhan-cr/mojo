@@ -18,6 +18,7 @@
 #include "cc/animation/scrollbar_animation_controller.h"
 #include "cc/base/cc_export.h"
 #include "cc/base/synced_property.h"
+#include "cc/debug/frame_timing_tracker.h"
 #include "cc/debug/micro_benchmark_controller_impl.h"
 #include "cc/input/input_handler.h"
 #include "cc/input/layer_scroll_offset_delegate.h"
@@ -167,7 +168,7 @@ class CC_EXPORT LayerTreeHostImpl
   bool IsCurrentlyScrollingLayerAt(const gfx::Point& viewport_point,
                                    InputHandler::ScrollInputType type) override;
   bool HaveWheelEventHandlersAt(const gfx::Point& viewport_point) override;
-  bool HaveTouchEventHandlersAt(const gfx::Point& viewport_port) override;
+  bool DoTouchEventsBlockScrollAt(const gfx::Point& viewport_port) override;
   scoped_ptr<SwapPromiseMonitor> CreateLatencyInfoSwapPromiseMonitor(
       ui::LatencyInfo* latency) override;
   ScrollElasticityHelper* CreateScrollElasticityHelper() override;
@@ -185,6 +186,7 @@ class CC_EXPORT LayerTreeHostImpl
 
     std::vector<gfx::Rect> occluding_screen_space_rects;
     std::vector<gfx::Rect> non_occluding_screen_space_rects;
+    std::vector<FrameTimingTracker::FrameAndRectIds> composite_events;
     RenderPassList render_passes;
     RenderPassIdHashMap render_passes_by_id;
     const LayerImplList* render_surface_layer_list;
@@ -514,6 +516,10 @@ class CC_EXPORT LayerTreeHostImpl
 
   bool prepare_tiles_needed() const { return tile_priorities_dirty_; }
 
+  FrameTimingTracker* frame_timing_tracker() {
+    return frame_timing_tracker_.get();
+  }
+
  protected:
   LayerTreeHostImpl(
       const LayerTreeSettings& settings,
@@ -541,6 +547,7 @@ class CC_EXPORT LayerTreeHostImpl
   void CreateAndSetTileManager();
   void DestroyTileManager();
   void ReleaseTreeResources();
+  void RecreateTreeResources();
   void EnforceZeroBudget(bool zero_budget);
 
   bool UsePendingTreeForSync() const;
@@ -731,6 +738,8 @@ class CC_EXPORT LayerTreeHostImpl
 
   bool requires_high_res_to_draw_;
   bool is_likely_to_require_a_draw_;
+
+  scoped_ptr<FrameTimingTracker> frame_timing_tracker_;
 
   DISALLOW_COPY_AND_ASSIGN(LayerTreeHostImpl);
 };
