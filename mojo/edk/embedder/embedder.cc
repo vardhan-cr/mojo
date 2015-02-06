@@ -54,8 +54,14 @@ namespace internal {
 PlatformSupport* g_platform_support = nullptr;
 system::Core* g_core = nullptr;
 system::ChannelManager* g_channel_manager = nullptr;
+MasterProcessDelegate* g_master_process_delegate = nullptr;
+SlaveProcessDelegate* g_slave_process_delegate = nullptr;
 
 }  // namespace internal
+
+Configuration* GetConfiguration() {
+  return system::GetMutableConfiguration();
+}
 
 void Init(scoped_ptr<PlatformSupport> platform_support) {
   DCHECK(platform_support);
@@ -71,8 +77,27 @@ void Init(scoped_ptr<PlatformSupport> platform_support) {
       new system::ChannelManager(internal::g_platform_support);
 }
 
-Configuration* GetConfiguration() {
-  return system::GetMutableConfiguration();
+void InitMaster(scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
+                MasterProcessDelegate* master_process_delegate,
+                scoped_refptr<base::TaskRunner> io_thread_task_runner) {
+  // |Init()| must have already been called.
+  DCHECK(internal::g_core);
+
+  // TODO(vtl): This is temporary. We really want to construct a
+  // |MasterConnectionManager| here, which will in turn hold on to the delegate.
+  internal::g_master_process_delegate = master_process_delegate;
+}
+
+void InitSlave(scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
+               SlaveProcessDelegate* slave_process_delegate,
+               scoped_refptr<base::TaskRunner> io_thread_task_runner,
+               ScopedPlatformHandle platform_handle) {
+  // |Init()| must have already been called.
+  DCHECK(internal::g_core);
+
+  // TODO(vtl): This is temporary. We really want to construct a
+  // |SlaveConnectionManager| here, which will in turn hold on to the delegate.
+  internal::g_slave_process_delegate = slave_process_delegate;
 }
 
 // TODO(vtl): Write tests for this.
