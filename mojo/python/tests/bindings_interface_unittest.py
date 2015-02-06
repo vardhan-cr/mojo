@@ -92,39 +92,6 @@ class InterfaceTest(mojo_unittest.MojoTestCase):
     with self.assertRaises(NotImplementedError):
       service.Frobinate()
 
-  def testCallingImplementation(self):
-    service_impl = ServiceImpl()
-    service_client_impl = ServiceClientImpl()
-    # pylint: disable=W0201
-    service_impl.client = service_client_impl
-    service_impl.Frobinate(None, 42, None)
-    self.assertEquals(service_client_impl.last_res, 42)
-
-  def testCallingImplementationThroughPipes(self):
-    service_impl = ServiceImpl()
-    # Only keep a weak reference on the service implementation.
-    r = weakref.ref(service_impl)
-    proxy = _BuildProxy(service_impl)
-    del service_impl
-
-    # Check that the service is kept alive by the handle.
-    gc.collect()
-    self.assertIsNotNone(r())
-
-    service_client_impl = ServiceClientImpl()
-    proxy.client = service_client_impl
-    response = proxy.Frobinate(None, 42, None)
-
-    self.assertEquals(response.state, promise.Promise.STATE_FULLFILLED)
-    self.loop.RunUntilIdle()
-    self.assertEquals(service_client_impl.last_res, 42)
-
-    # Check that closing the proxy release the service.
-    proxy = None
-    self.loop.RunUntilIdle()
-    gc.collect()
-    self.assertIsNone(r())
-
   def testServiceWithReturnValue(self):
     proxy = _BuildProxy(DelegatingNamedObject())
     p1 = proxy.GetName()
@@ -144,31 +111,13 @@ class InterfaceTest(mojo_unittest.MojoTestCase):
     name = _ExtractValue(p2)
     self.assertEquals(name, 'hello')
 
-  def testCloseImplementation(self):
-    service_impl = ServiceImpl()
-    proxy = _BuildProxy(service_impl)
-    service_client_impl = ServiceClientImpl()
-    proxy.client = service_client_impl
-    response = proxy.Frobinate(None, 42, None)
-    service_impl.manager.Close()
-
-    self.assertEquals(response.state, promise.Promise.STATE_FULLFILLED)
-    self.loop.RunUntilIdle()
-
-    self.assertIsNone(service_client_impl.last_res)
-
   def testCloseProxy(self):
-    service_impl = ServiceImpl()
-    proxy = _BuildProxy(service_impl)
-    service_client_impl = ServiceClientImpl()
-    proxy.client = service_client_impl
-    response = proxy.Frobinate(None, 42, None)
+    named_object_impl = NamedObjectImpl()
+    proxy = _BuildProxy(named_object_impl)
+    response = proxy.GetName()
     proxy.manager.Close()
 
-    self.assertEquals(response.state, promise.Promise.STATE_FULLFILLED)
-    self.loop.RunUntilIdle()
-
-    self.assertIsNone(service_client_impl.last_res)
+    self.assertEquals(response.state, promise.Promise.STATE_REJECTED)
 
   def testCloseImplementationWithResponse(self):
     impl = DelegatingNamedObject()
