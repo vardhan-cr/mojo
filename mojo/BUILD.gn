@@ -25,7 +25,10 @@ group("mojo") {
   ]
 
   if (is_android) {
-    deps += [ "//mojo/android" ]
+    deps += [
+      "//mojo/android",
+      "//mojo/tools/android_shortcuts",
+    ]
   }
 
   if (mojo_use_go) {
