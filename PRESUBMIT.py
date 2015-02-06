@@ -512,60 +512,6 @@ def _CheckNoTrinaryTrueFalse(input_api, output_api):
       '\n'.join(problems))]
 
 
-def _CheckUnwantedDependencies(input_api, output_api):
-  """Runs checkdeps on #include statements added in this
-  change. Breaking - rules is an error, breaking ! rules is a
-  warning.
-  """
-  import sys
-  # We need to wait until we have an input_api object and use this
-  # roundabout construct to import checkdeps because this file is
-  # eval-ed and thus doesn't have __file__.
-  original_sys_path = sys.path
-  try:
-    sys.path = sys.path + [input_api.os_path.join(
-        input_api.PresubmitLocalPath(), 'buildtools', 'checkdeps')]
-    import checkdeps
-    from cpp_checker import CppChecker
-    from rules import Rule
-  finally:
-    # Restore sys.path to what it was before.
-    sys.path = original_sys_path
-
-  added_includes = []
-  for f in input_api.AffectedFiles():
-    if not CppChecker.IsCppFile(f.LocalPath()):
-      continue
-
-    changed_lines = [line for line_num, line in f.ChangedContents()]
-    added_includes.append([f.LocalPath(), changed_lines])
-
-  deps_checker = checkdeps.DepsChecker(input_api.PresubmitLocalPath())
-
-  error_descriptions = []
-  warning_descriptions = []
-  for path, rule_type, rule_description in deps_checker.CheckAddedCppIncludes(
-      added_includes):
-    description_with_path = '%s\n    %s' % (path, rule_description)
-    if rule_type == Rule.DISALLOW:
-      error_descriptions.append(description_with_path)
-    else:
-      warning_descriptions.append(description_with_path)
-
-  results = []
-  if error_descriptions:
-    results.append(output_api.PresubmitError(
-        'You added one or more #includes that violate checkdeps rules.',
-        error_descriptions))
-  if warning_descriptions:
-    results.append(output_api.PresubmitPromptOrNotify(
-        'You added one or more #includes of files that are temporarily\n'
-        'allowed but being removed. Can you avoid introducing the\n'
-        '#include? See relevant DEPS file(s) for details and contacts.',
-        warning_descriptions))
-  return results
-
-
 def _CheckFilePermissions(input_api, output_api):
   """Check that all files have their permissions properly set."""
   if input_api.platform == 'win32':
@@ -1248,7 +1194,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckNoBannedFunctions(input_api, output_api))
   results.extend(_CheckNoPragmaOnce(input_api, output_api))
   results.extend(_CheckNoTrinaryTrueFalse(input_api, output_api))
-  results.extend(_CheckUnwantedDependencies(input_api, output_api))
   results.extend(_CheckFilePermissions(input_api, output_api))
   results.extend(_CheckNoAuraWindowPropertyHInHeaders(input_api, output_api))
   results.extend(_CheckIncludeOrder(input_api, output_api))
