@@ -51,6 +51,7 @@ class TestViewManagerClient : public mojo::ViewManagerClient {
   void OnEmbed(uint16_t connection_id,
                const String& embedder_url,
                ViewDataPtr root,
+               mojo::ViewManagerServicePtr view_manager_service,
                InterfaceRequest<ServiceProvider> services,
                ServiceProviderPtr exposed_services,
                mojo::ScopedMessagePipeHandle window_manager_pipe) override {
@@ -110,9 +111,7 @@ class TestViewManagerClient : public mojo::ViewManagerClient {
 class TestClientConnection : public ClientConnection {
  public:
   explicit TestClientConnection(scoped_ptr<ViewManagerServiceImpl> service_impl)
-      : ClientConnection(service_impl.Pass()) {
-    set_client(&client_);
-  }
+      : ClientConnection(service_impl.Pass(), &client_) {}
   ~TestClientConnection() override {}
 
   TestViewManagerClient* client() { return &client_; }
@@ -143,6 +142,7 @@ class TestConnectionManagerDelegate : public ConnectionManagerDelegate {
 
   ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
+      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
       mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,
@@ -193,6 +193,7 @@ class TestWindowManagerInternal : public mojo::WindowManagerInternal {
   void CreateWindowManagerForViewManagerClient(
       uint16_t connection_id,
       mojo::ScopedMessagePipeHandle window_manager_pipe) override {}
+  void SetViewManagerClient(mojo::ScopedMessagePipeHandle) override {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(TestWindowManagerInternal);

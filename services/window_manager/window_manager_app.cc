@@ -323,20 +323,12 @@ void WindowManagerApp::LaunchViewManager(mojo::ApplicationImpl* app) {
   view_manager_client_factory_.reset(
       new mojo::ViewManagerClientFactory(shell_, this));
 
-  mojo::MessagePipe pipe;
   ApplicationConnection* view_manager_app =
       app->ConnectToApplication("mojo:view_manager");
-  ServiceProvider* view_manager_service_provider =
-      view_manager_app->GetServiceProvider();
-  view_manager_service_provider->ConnectToService(
-      mojo::ViewManagerService::Name_, pipe.handle1.Pass());
-  view_manager_client_ =
-      mojo::ViewManagerClientFactory::WeakBindViewManagerToPipe(
-          pipe.handle0.Pass(), shell_, this).Pass();
+  view_manager_app->ConnectToService(&view_manager_service_);
 
   view_manager_app->AddService(&native_viewport_event_dispatcher_factory_);
-  view_manager_app->AddService(
-      static_cast<InterfaceFactory<WindowManagerInternal>*>(this));
+  view_manager_app->AddService<WindowManagerInternal>(this);
 
   view_manager_app->ConnectToService(&window_manager_client_);
 }
@@ -369,6 +361,15 @@ void WindowManagerApp::CreateWindowManagerForViewManagerClient(
   wm->Bind(window_manager_pipe.Pass());
   // WindowManagerImpl is deleted when the connection has an error, or from our
   // destructor.
+}
+
+void WindowManagerApp::SetViewManagerClient(
+    mojo::ScopedMessagePipeHandle view_manager_client_request) {
+  view_manager_client_ =
+      mojo::ViewManagerClientFactory::WeakBindViewManagerToPipe(
+          mojo::MakeRequest<mojo::ViewManagerClient>(
+              view_manager_client_request.Pass()),
+          view_manager_service_.Pass(), shell_, this).Pass();
 }
 
 }  // namespace window_manager

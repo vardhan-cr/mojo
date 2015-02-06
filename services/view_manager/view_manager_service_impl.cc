@@ -54,6 +54,7 @@ ViewManagerServiceImpl::~ViewManagerServiceImpl() {
 }
 
 void ViewManagerServiceImpl::Init(mojo::ViewManagerClient* client,
+                                  mojo::ViewManagerServicePtr service_ptr,
                                   InterfaceRequest<ServiceProvider> services,
                                   ServiceProviderPtr exposed_services) {
   DCHECK(!client_);
@@ -66,7 +67,7 @@ void ViewManagerServiceImpl::Init(mojo::ViewManagerClient* client,
   connection_manager_->wm_internal()->CreateWindowManagerForViewManagerClient(
       id_, pipe.handle1.Pass());
   client->OnEmbed(id_, creator_url_, ViewToViewData(to_send.front()),
-                  services.Pass(), exposed_services.Pass(),
+                  service_ptr.Pass(), services.Pass(), exposed_services.Pass(),
                   pipe.handle0.Pass());
 }
 

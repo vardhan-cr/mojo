@@ -21,6 +21,7 @@ mojo_native_application("view_manager") {
     "//mojo/environment:chromium",
     "//mojo/converters/geometry",
     "//mojo/public/cpp/bindings:bindings",
+    "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
   ]
 }

@@ -171,12 +171,14 @@ void ConnectionManager::EmbedAtView(
   if (it != connection_map_.end())
     creator_url = it->second->service()->url();
 
+  mojo::ViewManagerServicePtr service_ptr;
   ClientConnection* client_connection =
       delegate_->CreateClientConnectionForEmbedAtView(
-          this, creator_id, creator_url, url, view_id);
+          this, GetProxy(&service_ptr), creator_id, creator_url, url, view_id);
   AddConnection(client_connection);
   client_connection->service()->Init(client_connection->client(),
-                                     services.Pass(), exposed_services.Pass());
+                                     service_ptr.Pass(), services.Pass(),
+                                     exposed_services.Pass());
   OnConnectionMessagedClient(client_connection->service()->id());
 }
 
@@ -218,7 +220,7 @@ void ConnectionManager::SetWindowManagerClientConnection(
   window_manager_client_connection_ = connection.release();
   AddConnection(window_manager_client_connection_);
   window_manager_client_connection_->service()->Init(
-      window_manager_client_connection_->client(), nullptr, nullptr);
+      window_manager_client_connection_->client(), nullptr, nullptr, nullptr);
 }
 
 bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {

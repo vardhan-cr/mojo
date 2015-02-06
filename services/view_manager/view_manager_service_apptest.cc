@@ -217,8 +217,9 @@ bool HasClonedView(const std::vector<TestView>& views) {
 class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
                               public TestChangeTracker::Delegate {
  public:
-  ViewManagerClientImpl() : got_embed_(false) { tracker_.set_delegate(this); }
+  ViewManagerClientImpl() { tracker_.set_delegate(this); }
 
+  mojo::ViewManagerService* service() { return service_.get(); }
   TestChangeTracker* tracker() { return &tracker_; }
 
   // Runs a nested MessageLoop until |count| changes (calls to
@@ -236,7 +237,7 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
 
   // Runs a nested MessageLoop until OnEmbed() has been encountered.
   void WaitForOnEmbed() {
-    if (got_embed_)
+    if (service_)
       return;
     embed_run_loop_.reset(new base::RunLoop);
     embed_run_loop_->Run();
@@ -265,11 +266,12 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
   void OnEmbed(ConnectionSpecificId connection_id,
                const String& creator_url,
                ViewDataPtr root,
+               mojo::ViewManagerServicePtr view_manager_service,
                InterfaceRequest<ServiceProvider> services,
                ServiceProviderPtr exposed_services,
                mojo::ScopedMessagePipeHandle window_manager_pipe) override {
+    service_ = view_manager_service.Pass();
     tracker()->OnEmbed(connection_id, creator_url, root.Pass());
-    got_embed_ = true;
     if (embed_run_loop_)
       embed_run_loop_->Quit();
   }
@@ -319,8 +321,7 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
 
   TestChangeTracker tracker_;
 
-  // Whether OnEmbed() has been encountered.
-  bool got_embed_;
+  mojo::ViewManagerServicePtr service_;
 
   // If non-null we're waiting for OnEmbed() using this RunLoop.
   scoped_ptr<base::RunLoop> embed_run_loop_;
@@ -368,10 +369,13 @@ class ViewManagerClientFactory
   DISALLOW_COPY_AND_ASSIGN(ViewManagerClientFactory);
 };
 
-class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
-                                  public ApplicationDelegate {
+class ViewManagerServiceAppTest
+    : public mojo::test::ApplicationTestBase,
+      public ApplicationDelegate,
+      public mojo::InterfaceFactory<mojo::WindowManagerInternal>,
+      public mojo::WindowManagerInternal {
  public:
-  ViewManagerServiceAppTest() {}
+  ViewManagerServiceAppTest() : wm_internal_binding_(this) {}
   ~ViewManagerServiceAppTest() override {}
 
  protected:
@@ -383,8 +387,8 @@ class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
   // Various connections. |vm1()|, being the first connection, has special
   // permissions (it's treated as the window manager).
   ViewManagerService* vm1() { return vm1_.get(); }
-  ViewManagerService* vm2() { return vm_client2_->client(); }
-  ViewManagerService* vm3() { return vm_client3_->client(); }
+  ViewManagerService* vm2() { return vm_client2_->service(); }
+  ViewManagerService* vm3() { return vm_client3_->service(); }
 
   void EstablishSecondConnectionWithRoot(Id root_id) {
     ASSERT_TRUE(vm_client2_.get() == nullptr);
@@ -439,10 +443,16 @@ class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
     ApplicationTestBase::SetUp();
     ApplicationConnection* vm_connection =
         application_impl()->ConnectToApplication("mojo:view_manager");
+    vm_connection->AddService(this);
     vm_connection->ConnectToService(&vm1_);
-    vm1_.set_client(&vm_client1_);
-    vm_connection->ConnectToService(&wm_internal_);
-    vm1_.WaitForIncomingMethodCall();
+    vm_connection->ConnectToService(&wm_internal_client_);
+    // Spin a run loop until the view manager service sends us the
+    // ViewManagerClient pipe to use for the "window manager" connection.
+    view_manager_setup_run_loop_.reset(new base::RunLoop);
+    view_manager_setup_run_loop_->Run();
+    view_manager_setup_run_loop_ = nullptr;
+    // Next we should get an embed call on the "window manager" client.
+    vm_client1_.WaitForIncomingMethodCall();
     ASSERT_EQ(1u, changes1()->size());
     EXPECT_EQ(CHANGE_TYPE_EMBED, (*changes1())[0].type);
     // All these tests assume 1 for the client id. The only real assertion here
@@ -458,7 +468,28 @@ class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
     return true;
   }
 
-  mojo::WindowManagerInternalClientPtr wm_internal_;
+  // mojo::InterfaceFactory<mojo::WindowManagerInternal> implementation.
+  void Create(
+      ApplicationConnection* connection,
+      mojo::InterfaceRequest<mojo::WindowManagerInternal> request) override {
+    DCHECK(!wm_internal_binding_.is_bound());
+    wm_internal_binding_.Bind(request.Pass());
+  }
+
+  // mojo::WindowManagerInternal implementation.
+  void CreateWindowManagerForViewManagerClient(
+      uint16_t connection_id,
+      mojo::ScopedMessagePipeHandle window_manager_pipe) override {}
+  void SetViewManagerClient(
+      mojo::ScopedMessagePipeHandle view_manager_client_request) override {
+    auto typed_request = mojo::MakeRequest<mojo::ViewManagerClient>(
+        view_manager_client_request.Pass());
+    WeakBindToRequest(&vm_client1_, &typed_request);
+    view_manager_setup_run_loop_->Quit();
+  }
+
+  mojo::Binding<mojo::WindowManagerInternal> wm_internal_binding_;
+  mojo::WindowManagerInternalClientPtr wm_internal_client_;
   ViewManagerClientImpl vm_client1_;
   scoped_ptr<ViewManagerClientImpl> vm_client2_;
   scoped_ptr<ViewManagerClientImpl> vm_client3_;
@@ -466,6 +497,7 @@ class ViewManagerServiceAppTest : public mojo::test::ApplicationTestBase,
  private:
   mojo::ViewManagerServicePtr vm1_;
   ViewManagerClientFactory client_factory_;
+  scoped_ptr<base::RunLoop> view_manager_setup_run_loop_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ViewManagerServiceAppTest);
 };
@@ -1050,7 +1082,8 @@ TEST_F(ViewManagerServiceAppTest, OnViewInputEvent) {
   {
     EventPtr event(mojo::Event::New());
     event->action = static_cast<mojo::EventType>(1);
-    wm_internal_->DispatchInputEventToView(BuildViewId(1, 1), event.Pass());
+    wm_internal_client_->DispatchInputEventToView(BuildViewId(1, 1),
+                                                  event.Pass());
     vm_client2_->WaitForChangeCount(1);
     EXPECT_EQ("InputEvent view=1,1 event_action=1",
               SingleChangeToDescription(*changes2()));
@@ -1397,7 +1430,7 @@ TEST_F(ViewManagerServiceAppTest, CloneAndAnimate) {
   ASSERT_TRUE(WaitForAllMessages(vm1()));
   changes1()->clear();
 
-  wm_internal_->CloneAndAnimate(BuildViewId(2, 3));
+  wm_internal_client_->CloneAndAnimate(BuildViewId(2, 3));
   ASSERT_TRUE(WaitForAllMessages(vm1()));
 
   ASSERT_TRUE(WaitForAllMessages(vm1()));

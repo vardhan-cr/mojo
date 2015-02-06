@@ -11,6 +11,7 @@
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
+#include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/connection_manager_delegate.h"
 
@@ -38,6 +39,7 @@ class ViewManagerApp
   void OnLostConnectionToWindowManager() override;
   ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
+      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
       mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,
@@ -59,6 +61,7 @@ class ViewManagerApp
   mojo::ApplicationConnection* wm_app_connection_;
   scoped_ptr<mojo::Binding<mojo::WindowManagerInternalClient>>
       wm_internal_client_binding_;
+  mojo::InterfaceRequest<mojo::ViewManagerClient> wm_internal_client_request_;
   mojo::WindowManagerInternalPtr wm_internal_;
   scoped_ptr<ConnectionManager> connection_manager_;
   mojo::TracingImpl tracing_;

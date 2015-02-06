@@ -19,16 +19,14 @@ class ViewManagerServiceImpl;
 // to the view manager.
 class ClientConnection {
  public:
-  explicit ClientConnection(scoped_ptr<ViewManagerServiceImpl> service);
+  ClientConnection(scoped_ptr<ViewManagerServiceImpl> service,
+                   mojo::ViewManagerClient* client);
   virtual ~ClientConnection();
 
   ViewManagerServiceImpl* service() { return service_.get(); }
   const ViewManagerServiceImpl* service() const { return service_.get(); }
 
   mojo::ViewManagerClient* client() { return client_; }
-
- protected:
-  void set_client(mojo::ViewManagerClient* client) { client_ = client; }
 
  private:
   scoped_ptr<ViewManagerServiceImpl> service_;
@@ -41,9 +39,11 @@ class ClientConnection {
 class DefaultClientConnection : public ClientConnection,
                                 public mojo::ErrorHandler {
  public:
-  DefaultClientConnection(scoped_ptr<ViewManagerServiceImpl> service_impl,
-                          ConnectionManager* connection_manager,
-                          mojo::ScopedMessagePipeHandle handle);
+  DefaultClientConnection(
+      scoped_ptr<ViewManagerServiceImpl> service_impl,
+      ConnectionManager* connection_manager,
+      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
+      mojo::ViewManagerClientPtr client);
   ~DefaultClientConnection() override;
 
  private:
@@ -52,6 +52,7 @@ class DefaultClientConnection : public ClientConnection,
 
   ConnectionManager* connection_manager_;
   mojo::Binding<mojo::ViewManagerService> binding_;
+  mojo::ViewManagerClientPtr client_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultClientConnection);
 };

@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/services/view_manager/public/cpp/types.h"
 
 namespace mojo {
@@ -27,6 +28,7 @@ class ConnectionManagerDelegate {
   // ConnectionManager.
   virtual ClientConnection* CreateClientConnectionForEmbedAtView(
       ConnectionManager* connection_manager,
+      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
       mojo::ConnectionSpecificId creator_id,
       const std::string& creator_url,
       const std::string& url,

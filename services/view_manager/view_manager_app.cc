@@ -58,20 +58,18 @@ void ViewManagerApp::OnLostConnectionToWindowManager() {
 
 ClientConnection* ViewManagerApp::CreateClientConnectionForEmbedAtView(
     ConnectionManager* connection_manager,
+    mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
     mojo::ConnectionSpecificId creator_id,
     const std::string& creator_url,
     const std::string& url,
     const ViewId& root_id) {
-  mojo::MessagePipe pipe;
+  mojo::ViewManagerClientPtr client;
+  wm_app_connection_->ConnectToApplication(url)->ConnectToService(&client);
 
-  mojo::ServiceProvider* view_manager_service_provider =
-      wm_app_connection_->ConnectToApplication(url)->GetServiceProvider();
-  view_manager_service_provider->ConnectToService(
-      ViewManagerServiceImpl::Client::Name_, pipe.handle1.Pass());
   scoped_ptr<ViewManagerServiceImpl> service(new ViewManagerServiceImpl(
       connection_manager, creator_id, creator_url, url, root_id));
   return new DefaultClientConnection(service.Pass(), connection_manager,
-                                     pipe.handle0.Pass());
+                                     service_request.Pass(), client.Pass());
 }
 
 void ViewManagerApp::Create(ApplicationConnection* connection,
@@ -84,8 +82,11 @@ void ViewManagerApp::Create(ApplicationConnection* connection,
   scoped_ptr<ViewManagerServiceImpl> service(new ViewManagerServiceImpl(
       connection_manager_.get(), kInvalidConnectionId, std::string(),
       std::string("mojo:window_manager"), RootViewId()));
-  scoped_ptr<ClientConnection> client_connection(new DefaultClientConnection(
-      service.Pass(), connection_manager_.get(), request.PassMessagePipe()));
+  mojo::ViewManagerClientPtr client;
+  wm_internal_client_request_ = GetProxy(&client);
+  scoped_ptr<ClientConnection> client_connection(
+      new DefaultClientConnection(service.Pass(), connection_manager_.get(),
+                                  request.Pass(), client.Pass()));
   connection_manager_->SetWindowManagerClientConnection(
       client_connection.Pass());
 }
@@ -104,6 +105,8 @@ void ViewManagerApp::Create(
       new mojo::Binding<WindowManagerInternalClient>(connection_manager_.get(),
                                                      request.Pass()));
   wm_internal_client_binding_->set_error_handler(this);
+  wm_internal_->SetViewManagerClient(
+      wm_internal_client_request_.PassMessagePipe());
 }
 
 void ViewManagerApp::OnConnectionError() {

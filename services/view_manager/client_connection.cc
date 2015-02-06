@@ -9,8 +9,9 @@
 
 namespace view_manager {
 
-ClientConnection::ClientConnection(scoped_ptr<ViewManagerServiceImpl> service)
-    : service_(service.Pass()), client_(nullptr) {
+ClientConnection::ClientConnection(scoped_ptr<ViewManagerServiceImpl> service,
+                                   mojo::ViewManagerClient* client)
+    : service_(service.Pass()), client_(client) {
 }
 
 ClientConnection::~ClientConnection() {
@@ -19,12 +20,13 @@ ClientConnection::~ClientConnection() {
 DefaultClientConnection::DefaultClientConnection(
     scoped_ptr<ViewManagerServiceImpl> service_impl,
     ConnectionManager* connection_manager,
-    mojo::ScopedMessagePipeHandle handle)
-    : ClientConnection(service_impl.Pass()),
+    mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
+    mojo::ViewManagerClientPtr client)
+    : ClientConnection(service_impl.Pass(), client.get()),
       connection_manager_(connection_manager),
-      binding_(service(), handle.Pass()) {
+      binding_(service(), service_request.Pass()),
+      client_(client.Pass()) {
   binding_.set_error_handler(this);
-  set_client(binding_.client());
 }
 
 DefaultClientConnection::~DefaultClientConnection() {

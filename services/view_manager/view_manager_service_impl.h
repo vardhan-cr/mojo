@@ -46,6 +46,7 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   // |services| and |exposed_services| are the ServiceProviders to pass to the
   // client via OnEmbed().
   void Init(mojo::ViewManagerClient* client,
+            mojo::ViewManagerServicePtr service_ptr,
             mojo::InterfaceRequest<mojo::ServiceProvider> services,
             mojo::ServiceProviderPtr exposed_services);
 

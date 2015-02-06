@@ -157,6 +157,8 @@ class WindowManagerApp
   void CreateWindowManagerForViewManagerClient(
       uint16_t connection_id,
       mojo::ScopedMessagePipeHandle window_manager_pipe) override;
+  void SetViewManagerClient(
+      mojo::ScopedMessagePipeHandle view_manager_client_request) override;
 
   mojo::Shell* shell_;
 
@@ -167,6 +169,7 @@ class WindowManagerApp
   ViewManagerDelegate* wrapped_view_manager_delegate_;
   WindowManagerDelegate* window_manager_delegate_;
 
+  mojo::ViewManagerServicePtr view_manager_service_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
   mojo::View* root_;
 
