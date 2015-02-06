@@ -17,7 +17,6 @@ group("services") {
     "//services/js",
     "//services/kiosk_wm",
     "//services/native_viewport",
-    "//services/python/content_handler",
     "//services/reaper",
     "//services/surfaces",
     "//services/test_service:bindings",
@@ -28,5 +27,9 @@ group("services") {
 
   if (!is_asan) {
     deps += [ "//services/dart" ]
+  }
+
+  if (is_linux) {
+    deps += [ "//services/python/content_handler" ]
   }
 }
