@@ -49,7 +49,7 @@ typedef base::Callback<void(HttpRequestPtr, Connection*)> HandleRequestCallback;
 const char* GetHttpReasonPhrase(uint32_t code_in) {
   switch (code_in) {
 #define HTTP_STATUS(label, code, reason) case code: return reason;
-#include "net/http/http_status_code_list.h"
+#include "services/http_server/http_status_code_list.h"
 #undef HTTP_STATUS
 
     default:
