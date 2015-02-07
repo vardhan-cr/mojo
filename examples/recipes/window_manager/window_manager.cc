@@ -150,6 +150,9 @@ void WindowManager::OnViewDestroying(View* view) {
 }
 
 void WindowManager::OnViewVisibilityChanged(View* view) {
+  if (view->parent() != root_)
+    return;
+
   if (!view->visible()) {
     ProcessViewShouldNoLongerBeActive(view);
     return;

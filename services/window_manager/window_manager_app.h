@@ -70,9 +70,9 @@ class WindowManagerApp
   void RemoveConnection(WindowManagerImpl* connection);
 
   // These are canonical implementations of the window manager API methods.
-  void SetCapture(mojo::Id view);
-  void FocusWindow(mojo::Id view);
-  void ActivateWindow(mojo::Id view);
+  bool SetCapture(mojo::Id view);
+  bool FocusWindow(mojo::Id view);
+  bool ActivateWindow(mojo::Id view);
 
   void DispatchInputEventToView(mojo::View* view, mojo::EventPtr event);
   void SetViewportSize(const gfx::Size& size);

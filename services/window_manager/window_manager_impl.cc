@@ -54,29 +54,20 @@ void WindowManagerImpl::Embed(
 
 void WindowManagerImpl::SetCapture(Id view,
                                    const Callback<void(bool)>& callback) {
-  // See comments for |from_vm_| on this.
-  bool success = from_vm_ && window_manager_->IsReady();
-  if (success)
-    window_manager_->SetCapture(view);
-  callback.Run(success);
+  callback.Run(from_vm_ && window_manager_->IsReady() &&
+               window_manager_->SetCapture(view));
 }
 
 void WindowManagerImpl::FocusWindow(Id view,
                                     const Callback<void(bool)>& callback) {
-  // See comments for |from_vm_| on this.
-  bool success = from_vm_ && window_manager_->IsReady();
-  if (success)
-    window_manager_->FocusWindow(view);
-  callback.Run(success);
+  callback.Run(from_vm_ && window_manager_->IsReady() &&
+               window_manager_->FocusWindow(view));
 }
 
 void WindowManagerImpl::ActivateWindow(Id view,
                                        const Callback<void(bool)>& callback) {
-  // See comments for |from_vm_| on this.
-  bool success = from_vm_ && window_manager_->IsReady();
-  if (success)
-    window_manager_->ActivateWindow(view);
-  callback.Run(success);
+  callback.Run(from_vm_ && window_manager_->IsReady() &&
+               window_manager_->ActivateWindow(view));
 }
 
 void WindowManagerImpl::GetFocusedAndActiveViews(

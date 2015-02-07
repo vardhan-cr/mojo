@@ -86,22 +86,28 @@ void WindowManagerApp::RemoveConnection(WindowManagerImpl* connection) {
   connections_.erase(connection);
 }
 
-void WindowManagerApp::SetCapture(Id view_id) {
+bool WindowManagerApp::SetCapture(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  DCHECK(view);
+  if (!view)
+    return false;
   capture_controller_->SetCapture(view);
+  return capture_controller_->GetCapture() == view;
 }
 
-void WindowManagerApp::FocusWindow(Id view_id) {
+bool WindowManagerApp::FocusWindow(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  DCHECK(view);
+  if (!view)
+    return false;
   focus_controller_->FocusView(view);
+  return focus_controller_->GetFocusedView() == view;
 }
 
-void WindowManagerApp::ActivateWindow(Id view_id) {
+bool WindowManagerApp::ActivateWindow(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  DCHECK(view);
+  if (!view)
+    return false;
   focus_controller_->ActivateView(view);
+  return focus_controller_->GetActiveView() == view;
 }
 
 bool WindowManagerApp::IsReady() const {
