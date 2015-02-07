@@ -52,8 +52,7 @@ group("tests") {
   deps = [
     "//mojo/common:mojo_common_unittests",
     "//mojo/converters/surfaces/tests:mojo_surfaces_lib_unittests",
-    "//mojo/edk/js/test:js_unittests",
-    "//mojo/edk/js/test:js_integration_tests",
+    "//mojo/edk/js:tests",
     "//mojo/edk/system:tests",
     "//mojo/edk/test:public_tests",
     "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
