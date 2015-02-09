@@ -10,6 +10,7 @@ import tempfile
 import zipfile
 
 _PLATFORMS = ["linux-x64", "android-arm"]
+_APPS = ["network_service", "network_service_apptests"]
 
 if not sys.platform.startswith("linux"):
   print "Not supported for your platform"
@@ -23,10 +24,10 @@ sys.path.insert(0, tools_path)
 import gs
 
 
-def download_binary(version, platform, prebuilt_directory):
-  gs_path = "gs://mojo/network/%s/%s.zip" % (version, platform)
+def download_app(app, version, platform, prebuilt_directory):
+  binary_name = app + ".mojo"
+  gs_path = "gs://mojo/%s/%s/%s/%s.zip" % (app, version, platform, binary_name)
   output_directory = os.path.join(prebuilt_directory, platform)
-  binary_name = "network_service.mojo"
 
   with tempfile.NamedTemporaryFile() as temp_zip_file:
     gs.download_from_public_bucket(gs_path, temp_zip_file.name)
@@ -58,7 +59,8 @@ def main():
     pass  # If the stamp file does not exist we need to download a new binary.
 
   for platform in _PLATFORMS:
-    download_binary(version, platform, prebuilt_directory_path)
+    for app in _APPS:
+      download_app(app, version, platform, prebuilt_directory_path)
 
   with open(stamp_path, 'w') as stamp_file:
     stamp_file.write(version)

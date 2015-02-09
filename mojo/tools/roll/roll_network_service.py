@@ -29,7 +29,7 @@ def roll(target_version):
            "commit.") % (target_version)
     return 1
 
-  mojoms_gs_path = "gs://mojo/network/%s/mojoms.zip" % (target_version,)
+  mojoms_gs_path = "gs://mojo/network_service/%s/mojoms.zip" % (target_version,)
   network_service_path = os.path.join(
       mojo_root_dir, "mojo", "services", "network")
   mojoms_path = os.path.join(network_service_path, "public", "interfaces")
