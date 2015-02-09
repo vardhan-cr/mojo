@@ -13,13 +13,9 @@ tests = [
     # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
     "test-args": ["--example_apptest_arg"],
   },
-  # Network service is now developed in Chromium and we run apptests there,
-  # but we should be downloading their apptest binaries along with the service
-  # binaries and reenable the test here, as we have better platform coverage on
-  # the Mojo waterfall. TODO(ppi): reenable.
-  #{
-  #  "test": "mojo:network_service_apptests",
-  #},
+  {
+    "test": "mojo:network_service_apptests",
+  },
   {
     "test": "mojo:view_manager_service_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],

@@ -5,11 +5,29 @@
 group("network") {
   deps = [
     ":copy_prebuilt_network_service",
+    ":copy_prebuilt_network_service_apptests",
   ]
 }
 
 copy("copy_prebuilt_network_service") {
   filename = "network_service.mojo"
+  if (is_android) {
+    sources = [
+      "prebuilt/android-arm/$filename",
+    ]
+  } else {
+    assert(is_linux)
+    sources = [
+      "prebuilt/linux-x64/$filename",
+    ]
+  }
+  outputs = [
+    "$root_out_dir/$filename",
+  ]
+}
+
+copy("copy_prebuilt_network_service_apptests") {
+  filename = "network_service_apptests.mojo"
   if (is_android) {
     sources = [
       "prebuilt/android-arm/$filename",
