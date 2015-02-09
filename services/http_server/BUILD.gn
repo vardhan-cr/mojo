@@ -6,6 +6,8 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("http_server") {
   sources = [
+    "connection.cc",
+    "connection.h",
     "http_request_parser.cc",
     "http_request_parser.h",
     "http_server.cc",
