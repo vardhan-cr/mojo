@@ -113,8 +113,10 @@ interface ViewManagerService {
   // . With the second variant a ViewManagerClient is directly supplied.
   //
   // In both cases the new ViewManagerClient is configured with a root of
-  // |view_id|. The call fails if the originating connection did not create
-  // the view identified by |view_id|.
+  // |view_id|.
+  //
+  // The caller must have created |view_id|. If not the request fails and the
+  // response is false.
   //
   // A view may only be a root of one connection at a time. Subsequent calls to
   // Embed() for the same view result in the view being removed from the
