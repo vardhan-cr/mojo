@@ -87,7 +87,7 @@ def MakeInterface():
   f.Param('deadline').In('MojoDeadline')
   f.Param('result_index').Out('uint32_t').Optional()
   p = f.Param('signals_states')
-  p.OutArray('MojoHandleSignalsState', 'num_handles').Optional()
+  p.OutFixedStructArray('MojoHandleSignalsState', 'num_handles').Optional()
 
   f = mojo.Func('MojoCreateMessagePipe', 'MojoResult')
   p = f.Param('options')
