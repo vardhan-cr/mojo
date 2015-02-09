@@ -80,10 +80,11 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   bool AddView(const ViewId& parent_id, const ViewId& child_id);
   std::vector<const ServerView*> GetViewTree(const ViewId& view_id) const;
   bool SetViewVisibility(const ViewId& view_id, bool visible);
-  bool Embed(const std::string& url,
-             const ViewId& view_id,
-             mojo::InterfaceRequest<mojo::ServiceProvider> services,
-             mojo::ServiceProviderPtr exposed_services);
+  bool EmbedUrl(const std::string& url,
+                const ViewId& view_id,
+                mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                mojo::ServiceProviderPtr exposed_services);
+  bool Embed(const ViewId& view_id, mojo::ViewManagerClientPtr client);
 
   // The following methods are invoked after the corresponding change has been
   // processed. They do the appropriate bookkeeping and update the client as
@@ -167,6 +168,8 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   // Deletes all Views we own.
   void DestroyViews();
 
+  bool PrepareForEmbed(const ViewId& view_id);
+
   // ViewManagerService:
   void CreateView(
       mojo::Id transport_view_id,
@@ -199,10 +202,13 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
                        const mojo::String& name,
                        mojo::Array<uint8_t> value,
                        const mojo::Callback<void(bool)>& callback) override;
-  void Embed(const mojo::String& url,
-             mojo::Id view_id,
-             mojo::InterfaceRequest<mojo::ServiceProvider> services,
-             mojo::ServiceProviderPtr exposed_services,
+  void EmbedUrl(const mojo::String& url,
+                mojo::Id transport_view_id,
+                mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                mojo::ServiceProviderPtr exposed_services,
+                const mojo::Callback<void(bool)>& callback) override;
+  void Embed(mojo::Id transport_view_id,
+             mojo::ViewManagerClientPtr client,
              const mojo::Callback<void(bool)>& callback) override;
 
   // AccessPolicyDelegate:
@@ -224,6 +230,8 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   mojo::ConnectionSpecificId creator_id_;
 
   // The URL of the app that embedded the app this connection was created for.
+  // NOTE: this is empty if the connection was created by way of directly
+  // supplying the ViewManagerClient.
   const std::string creator_url_;
 
   mojo::ViewManagerClient* client_;

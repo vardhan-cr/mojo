@@ -82,6 +82,9 @@ class ConnectionManager : public ServerViewDelegate,
                    const ViewId& view_id,
                    mojo::InterfaceRequest<mojo::ServiceProvider> services,
                    mojo::ServiceProviderPtr exposed_services);
+  void EmbedAtView(mojo::ConnectionSpecificId creator_id,
+                   const ViewId& view_id,
+                   mojo::ViewManagerClientPtr client);
 
   // Returns the connection by id.
   ViewManagerServiceImpl* GetConnection(

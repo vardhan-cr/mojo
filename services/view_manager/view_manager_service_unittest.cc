@@ -152,6 +152,16 @@ class TestConnectionManagerDelegate : public ConnectionManagerDelegate {
     last_connection_ = new TestClientConnection(service.Pass());
     return last_connection_;
   }
+  ClientConnection* CreateClientConnectionForEmbedAtView(
+      ConnectionManager* connection_manager,
+      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
+      mojo::ConnectionSpecificId creator_id,
+      const std::string& creator_url,
+      const ViewId& root_id,
+      mojo::ViewManagerClientPtr client) override {
+    NOTIMPLEMENTED();
+    return nullptr;
+  }
 
   TestClientConnection* last_connection_;
 
@@ -279,7 +289,8 @@ void SetUpAnimate1(ViewManagerServiceTest* test, ViewId* embed_view_id) {
   EXPECT_TRUE(test->wm_connection()->SetViewVisibility(*embed_view_id, true));
   EXPECT_TRUE(test->wm_connection()->AddView(*(test->wm_connection()->root()),
                                              *embed_view_id));
-  test->wm_connection()->Embed(std::string(), *embed_view_id, nullptr, nullptr);
+  test->wm_connection()->EmbedUrl(std::string(), *embed_view_id, nullptr,
+                                  nullptr);
   ViewManagerServiceImpl* connection1 =
       test->connection_manager()->GetConnectionWithRoot(*embed_view_id);
   ASSERT_TRUE(connection1 != nullptr);
@@ -415,7 +426,7 @@ TEST_F(ViewManagerServiceTest, CloneAndAnimateLargerDepth) {
   EXPECT_TRUE(wm_connection()->SetViewVisibility(embed_view_id, true));
   EXPECT_TRUE(
       wm_connection()->AddView(*(wm_connection()->root()), embed_view_id));
-  wm_connection()->Embed(std::string(), embed_view_id, nullptr, nullptr);
+  wm_connection()->EmbedUrl(std::string(), embed_view_id, nullptr, nullptr);
   ViewManagerServiceImpl* connection1 =
       connection_manager()->GetConnectionWithRoot(embed_view_id);
   ASSERT_TRUE(connection1 != nullptr);

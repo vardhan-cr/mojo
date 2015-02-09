@@ -182,6 +182,25 @@ void ConnectionManager::EmbedAtView(
   OnConnectionMessagedClient(client_connection->service()->id());
 }
 
+void ConnectionManager::EmbedAtView(mojo::ConnectionSpecificId creator_id,
+                                    const ViewId& view_id,
+                                    mojo::ViewManagerClientPtr client) {
+  std::string creator_url;
+  ConnectionMap::const_iterator it = connection_map_.find(creator_id);
+  if (it != connection_map_.end())
+    creator_url = it->second->service()->url();
+
+  mojo::ViewManagerServicePtr service_ptr;
+  ClientConnection* client_connection =
+      delegate_->CreateClientConnectionForEmbedAtView(
+          this, GetProxy(&service_ptr), creator_id, creator_url, view_id,
+          client.Pass());
+  AddConnection(client_connection);
+  client_connection->service()->Init(client_connection->client(),
+                                     service_ptr.Pass(), nullptr, nullptr);
+  OnConnectionMessagedClient(client_connection->service()->id());
+}
+
 ViewManagerServiceImpl* ConnectionManager::GetConnection(
     ConnectionSpecificId connection_id) {
   ConnectionMap::iterator i = connection_map_.find(connection_id);

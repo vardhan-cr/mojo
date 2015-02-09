@@ -80,11 +80,24 @@ bool CreateView(ViewManagerService* vm, Id view_id) {
   return result == ERROR_CODE_NONE;
 }
 
-bool Embed(ViewManagerService* vm, Id root_id) {
+bool EmbedUrl(ViewManagerService* vm, Id root_id) {
   bool result = false;
   base::RunLoop run_loop;
   {
-    vm->Embed("mojo:view_manager_service_apptests", root_id, nullptr, nullptr,
+    vm->EmbedUrl("mojo:view_manager_service_apptests", root_id, nullptr,
+                 nullptr, base::Bind(&BoolResultCallback, &run_loop, &result));
+  }
+  run_loop.Run();
+  return result;
+}
+
+bool Embed(ViewManagerService* vm,
+           Id root_id,
+           mojo::ViewManagerClientPtr client) {
+  bool result = false;
+  base::RunLoop run_loop;
+  {
+    vm->Embed(root_id, client.Pass(),
               base::Bind(&BoolResultCallback, &run_loop, &result));
   }
   run_loop.Run();
@@ -417,7 +430,7 @@ class ViewManagerServiceAppTest
   scoped_ptr<ViewManagerClientImpl> EstablishConnectionViaEmbed(
       ViewManagerService* owner,
       Id root_id) {
-    if (!Embed(owner, root_id)) {
+    if (!EmbedUrl(owner, root_id)) {
       ADD_FAILURE() << "Embed() failed";
       return nullptr;
     }
@@ -1321,7 +1334,6 @@ TEST_F(ViewManagerServiceAppTest, SetViewVisibilityNotifications) {
 }
 
 TEST_F(ViewManagerServiceAppTest, SetViewProperty) {
-  // Create 1 and 2 in the first connection and parent both to the root.
   ASSERT_TRUE(CreateView(vm1(), BuildViewId(1, 1)));
 
   ASSERT_NO_FATAL_FAILURE(EstablishSecondConnection(false));
@@ -1448,6 +1460,19 @@ TEST_F(ViewManagerServiceAppTest, CloneAndAnimate) {
 
   GetViewTree(vm2(), BuildViewId(1, 1), &views);
   EXPECT_FALSE(HasClonedView(views));
+}
+
+// Verifies Embed() works when supplying a ViewManagerClient.
+TEST_F(ViewManagerServiceAppTest, EmbedSupplyingViewManagerClient) {
+  ASSERT_TRUE(CreateView(vm1(), BuildViewId(1, 1)));
+
+  ViewManagerClientImpl client2;
+  mojo::ViewManagerClientPtr client2_ptr;
+  mojo::Binding<ViewManagerClient> client2_binding(&client2, &client2_ptr);
+  ASSERT_TRUE(Embed(vm1(), BuildViewId(1, 1), client2_ptr.Pass()));
+  client2.WaitForOnEmbed();
+  EXPECT_EQ("OnEmbed creator=mojo:window_manager",
+            SingleChangeToDescription(*client2.tracker()->changes()));
 }
 
 // TODO(sky): need to better track changes to initial connection. For example,

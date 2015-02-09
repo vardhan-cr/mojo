@@ -140,27 +140,23 @@ bool ViewManagerServiceImpl::SetViewVisibility(const ViewId& view_id,
   return true;
 }
 
-bool ViewManagerServiceImpl::Embed(const std::string& url,
-                                   const ViewId& view_id,
-                                   InterfaceRequest<ServiceProvider> services,
-                                   ServiceProviderPtr exposed_services) {
-  const ServerView* view = GetView(view_id);
-  if (!view || !access_policy_->CanEmbed(view))
+bool ViewManagerServiceImpl::EmbedUrl(
+    const std::string& url,
+    const ViewId& view_id,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services) {
+  if (!PrepareForEmbed(view_id))
     return false;
-
-  // Only allow a node to be the root for one connection.
-  ViewManagerServiceImpl* existing_owner =
-      connection_manager_->GetConnectionWithRoot(view_id);
-
-  ConnectionManager::ScopedChange change(this, connection_manager_, true);
-  RemoveChildrenAsPartOfEmbed(view_id);
-  if (existing_owner) {
-    // Never message the originating connection.
-    connection_manager_->OnConnectionMessagedClient(id_);
-    existing_owner->RemoveRoot();
-  }
   connection_manager_->EmbedAtView(id_, url, view_id, services.Pass(),
                                    exposed_services.Pass());
+  return true;
+}
+
+bool ViewManagerServiceImpl::Embed(const ViewId& view_id,
+                                   mojo::ViewManagerClientPtr client) {
+  if (!client.get() || !PrepareForEmbed(view_id))
+    return false;
+  connection_manager_->EmbedAtView(id_, view_id, client.Pass());
   return true;
 }
 
@@ -476,6 +472,25 @@ void ViewManagerServiceImpl::DestroyViews() {
   }
 }
 
+bool ViewManagerServiceImpl::PrepareForEmbed(const ViewId& view_id) {
+  const ServerView* view = GetView(view_id);
+  if (!view || !access_policy_->CanEmbed(view))
+    return false;
+
+  // Only allow a node to be the root for one connection.
+  ViewManagerServiceImpl* existing_owner =
+      connection_manager_->GetConnectionWithRoot(view_id);
+
+  ConnectionManager::ScopedChange change(this, connection_manager_, true);
+  RemoveChildrenAsPartOfEmbed(view_id);
+  if (existing_owner) {
+    // Never message the originating connection.
+    connection_manager_->OnConnectionMessagedClient(id_);
+    existing_owner->RemoveRoot();
+  }
+  return true;
+}
+
 void ViewManagerServiceImpl::CreateView(
     Id transport_view_id,
     const Callback<void(mojo::ErrorCode)>& callback) {
@@ -595,14 +610,21 @@ void ViewManagerServiceImpl::SetViewProperty(
   callback.Run(success);
 }
 
-void ViewManagerServiceImpl::Embed(const String& url,
-                                   Id transport_view_id,
-                                   InterfaceRequest<ServiceProvider> services,
-                                   ServiceProviderPtr exposed_services,
-                                   const Callback<void(bool)>& callback) {
-  callback.Run(Embed(url.To<std::string>(),
-                     ViewIdFromTransportId(transport_view_id), services.Pass(),
-                     exposed_services.Pass()));
+void ViewManagerServiceImpl::EmbedUrl(
+    const String& url,
+    Id transport_view_id,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
+    const Callback<void(bool)>& callback) {
+  callback.Run(EmbedUrl(url.To<std::string>(),
+                        ViewIdFromTransportId(transport_view_id),
+                        services.Pass(), exposed_services.Pass()));
+}
+
+void ViewManagerServiceImpl::Embed(mojo::Id transport_view_id,
+                                   mojo::ViewManagerClientPtr client,
+                                   const mojo::Callback<void(bool)>& callback) {
+  callback.Run(Embed(ViewIdFromTransportId(transport_view_id), client.Pass()));
 }
 
 bool ViewManagerServiceImpl::IsRootForAccessPolicy(const ViewId& id) const {

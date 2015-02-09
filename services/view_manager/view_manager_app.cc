@@ -72,6 +72,20 @@ ClientConnection* ViewManagerApp::CreateClientConnectionForEmbedAtView(
                                      service_request.Pass(), client.Pass());
 }
 
+ClientConnection* ViewManagerApp::CreateClientConnectionForEmbedAtView(
+    ConnectionManager* connection_manager,
+    mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
+    mojo::ConnectionSpecificId creator_id,
+    const std::string& creator_url,
+    const ViewId& root_id,
+    mojo::ViewManagerClientPtr view_manager_client) {
+  scoped_ptr<ViewManagerServiceImpl> service(new ViewManagerServiceImpl(
+      connection_manager, creator_id, creator_url, std::string(), root_id));
+  return new DefaultClientConnection(service.Pass(), connection_manager,
+                                     service_request.Pass(),
+                                     view_manager_client.Pass());
+}
+
 void ViewManagerApp::Create(ApplicationConnection* connection,
                             InterfaceRequest<ViewManagerService> request) {
   if (connection_manager_->has_window_manager_client_connection()) {
