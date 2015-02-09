@@ -115,7 +115,9 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
   CHECK(rv.is_valid());
-  return rv;
+  // TODO(vtl): The |.Pass()| below is only needed due to an MSVS bug; remove it
+  // once that's fixed.
+  return rv.Pass();
 }
 
 ScopedMessagePipeHandle CreateChannel(
@@ -138,7 +140,9 @@ ScopedMessagePipeHandle CreateChannel(
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
   CHECK(rv.is_valid());
-  return rv;
+  // TODO(vtl): The |.Pass()| below is only needed due to an MSVS bug; remove it
+  // once that's fixed.
+  return rv.Pass();
 }
 
 // TODO(vtl): Write tests for this.
