@@ -42,8 +42,6 @@ ui::EventTarget* ViewTargeter::FindTargetForLocatedEvent(
       return target;
     }
   }
-  if (view->view()->shared_properties().count("event-root"))
-    return view;
   return EventTargeter::FindTargetForLocatedEvent(view, event);
 }
 
@@ -57,6 +55,11 @@ bool ViewTargeter::SubtreeCanAcceptEvent(ui::EventTarget* target,
   // TODO(erg): We may need to keep track of the parent on ViewTarget, because
   // we have a check here about
   // WindowDelegate::ShouldDescendIntoChildForEventHandling().
+
+  // TODO(sky): decide if we really want this. If we do, it should be a public
+  // constant and documented.
+  if (view->view()->shared_properties().count("deliver-events-to-parent"))
+    return false;
 
   return true;
 }

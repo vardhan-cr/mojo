@@ -449,11 +449,6 @@ void ConnectionManager::DispatchInputEventToView(mojo::Id transport_view_id,
   const ViewId view_id(ViewIdFromTransportId(transport_view_id));
 
   ViewManagerServiceImpl* connection = GetConnectionWithRoot(view_id);
-  // We only allow the connection that created a view to set properties on it.
-  // If the connection set 'event-root', then the connection wants the event and
-  // not any views that are embedded in it.
-  if (connection && GetView(view_id)->properties().count("event-root") > 0)
-    connection = nullptr;
   if (!connection)
     connection = GetConnection(view_id.connection_id);
   if (connection) {
