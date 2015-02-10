@@ -24,6 +24,7 @@ class GTestListTestsTest(unittest.TestCase):
       "sanitizer": [None, Config.SANITIZER_ASAN],
       "use_goma": [False],
       "use_nacl": [False, True],
+      "dcheck_always_on": [False, True],
     }
 
     for args in _iterate_over_config(configs_to_test):
@@ -42,6 +43,7 @@ class GTestListTestsTest(unittest.TestCase):
       "is_asan": [False, True],
       "use_goma": [False],
       "mojo_use_nacl": [False, True],
+      "dcheck_always_on": [False, True],
     }
 
     for args in _iterate_over_config(configs_to_test):

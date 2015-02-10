@@ -65,7 +65,8 @@ def _args_to_config(args):
     additional_args['test_results_server'] = args.test_results_server
 
   return Config(target_os=target_os, target_arch=target_arch,
-                is_debug=args.debug, **additional_args)
+                is_debug=args.debug, dcheck_always_on=args.dcheck_always_on,
+                **additional_args)
 
 
 def _get_out_dir(config):
@@ -161,6 +162,10 @@ def main():
 
   parent_parser = argparse.ArgumentParser(add_help=False)
   parent_parser.add_argument('--asan', help='Use Address Sanitizer',
+                             action='store_true')
+  parent_parser.add_argument('--dcheck_always_on',
+                             help='DCHECK and MOJO_DCHECK are fatal even in '
+                             'release builds',
                              action='store_true')
 
   debug_group = parent_parser.add_mutually_exclusive_group()

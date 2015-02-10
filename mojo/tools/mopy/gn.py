@@ -29,6 +29,8 @@ def BuildDirectoryForConfig(config, src_root):
   subdir += "Debug" if config.is_debug else "Release"
   if config.sanitizer == Config.SANITIZER_ASAN:
     subdir += "_asan"
+  if not(config.is_debug) and config.dcheck_always_on:
+    subdir += "_dcheck"
   return os.path.join(src_root, "out", subdir)
 
 
@@ -53,6 +55,8 @@ def GNArgsForConfig(config):
     gn_args["goma_dir"] = config.values["goma_dir"]
   else:
     gn_args["use_goma"] = False
+
+  gn_args["dcheck_always_on"] = config.dcheck_always_on
 
   gn_args["mojo_use_nacl"] = config.values.get("use_nacl", False)
 
@@ -100,6 +104,7 @@ def ConfigForGNArgs(args):
   config_args["use_nacl"] = args.get("mojo_use_nacl", False)
   config_args["target_os"] = args.get("os")
   config_args["target_arch"] = args.get("target_arch")
+  config_args["dcheck_always_on"] = args.get("dcheck_always_on")
   return Config(**config_args)
 
 

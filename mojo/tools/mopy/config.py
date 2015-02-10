@@ -40,7 +40,8 @@ class Config(object):
   TEST_TYPE_INTEGRATION = "integration"
 
   def __init__(self, target_os=None, target_arch=None, is_debug=True,
-               is_clang=None, sanitizer=None, **kwargs):
+               is_clang=None, sanitizer=None, dcheck_always_on=False,
+               **kwargs):
     """Constructs a Config with key-value pairs specified via keyword arguments.
     If target_os is not specified, it will be set to the host OS."""
 
@@ -68,6 +69,7 @@ class Config(object):
     self.values["is_debug"] = is_debug
     self.values["is_clang"] = is_clang
     self.values["sanitizer"] = sanitizer
+    self.values["dcheck_always_on"] = dcheck_always_on
 
     self.values.update(kwargs)
 
@@ -110,6 +112,11 @@ class Config(object):
   def is_debug(self):
     """Is Debug build?"""
     return self.values["is_debug"]
+
+  @property
+  def dcheck_always_on(self):
+    """DCHECK and MOJO_DCHECK are fatal even in release builds"""
+    return self.values["dcheck_always_on"]
 
   @property
   def is_clang(self):
