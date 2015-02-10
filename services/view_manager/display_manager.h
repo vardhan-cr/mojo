@@ -24,6 +24,7 @@ class SurfaceIdAllocator;
 
 namespace mojo {
 class ApplicationConnection;
+class ApplicationImpl;
 }
 
 namespace view_manager {
@@ -53,6 +54,7 @@ class DefaultDisplayManager : public DisplayManager,
                               public mojo::ErrorHandler {
  public:
   DefaultDisplayManager(
+      mojo::ApplicationImpl* app_impl,
       mojo::ApplicationConnection* app_connection,
       const mojo::Callback<void()>& native_viewport_closed_callback);
   ~DefaultDisplayManager() override;
@@ -75,6 +77,7 @@ class DefaultDisplayManager : public DisplayManager,
   // ErrorHandler:
   void OnConnectionError() override;
 
+  mojo::ApplicationImpl* app_impl_;
   mojo::ApplicationConnection* app_connection_;
   ConnectionManager* connection_manager_;
 

@@ -21,7 +21,7 @@ class TrackedService;
 
 class TestTimeServiceImpl : public TestTimeService {
  public:
-  TestTimeServiceImpl(ApplicationConnection* application,
+  TestTimeServiceImpl(ApplicationImpl* app_impl,
                       InterfaceRequest<TestTimeService> request);
   ~TestTimeServiceImpl() override;
 
@@ -31,7 +31,7 @@ class TestTimeServiceImpl : public TestTimeService {
   void StartTrackingRequests(const mojo::Callback<void()>& callback) override;
 
  private:
-  ApplicationConnection* application_;
+  ApplicationImpl* app_impl_;
   scoped_ptr<TrackedService> tracking_;
   StrongBinding<TestTimeService> binding_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestTimeServiceImpl);

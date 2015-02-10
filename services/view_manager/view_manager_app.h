@@ -15,6 +15,10 @@
 #include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
 #include "services/view_manager/connection_manager_delegate.h"
 
+namespace mojo {
+class ApplicationImpl;
+}
+
 namespace view_manager {
 
 class ConnectionManager;
@@ -65,6 +69,7 @@ class ViewManagerApp
   // ErrorHandler (for |wm_internal_| and |wm_internal_client_binding_|).
   void OnConnectionError() override;
 
+  mojo::ApplicationImpl* app_impl_;
   mojo::ApplicationConnection* wm_app_connection_;
   scoped_ptr<mojo::Binding<mojo::WindowManagerInternalClient>>
       wm_internal_client_binding_;

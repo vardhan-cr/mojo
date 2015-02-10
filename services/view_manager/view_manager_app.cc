@@ -22,10 +22,14 @@ using mojo::WindowManagerInternalClient;
 
 namespace view_manager {
 
-ViewManagerApp::ViewManagerApp() : wm_app_connection_(nullptr) {}
+ViewManagerApp::ViewManagerApp()
+    : app_impl_(nullptr), wm_app_connection_(nullptr) {
+}
+
 ViewManagerApp::~ViewManagerApp() {}
 
 void ViewManagerApp::Initialize(ApplicationImpl* app) {
+  app_impl_ = app;
   tracing_.Initialize(app);
 }
 
@@ -45,8 +49,9 @@ bool ViewManagerApp::ConfigureIncomingConnection(
   // wm_internal_.set_error_handler(this);
 
   scoped_ptr<DefaultDisplayManager> display_manager(new DefaultDisplayManager(
-      connection, base::Bind(&ViewManagerApp::OnLostConnectionToWindowManager,
-                             base::Unretained(this))));
+      app_impl_, connection,
+      base::Bind(&ViewManagerApp::OnLostConnectionToWindowManager,
+                 base::Unretained(this))));
   connection_manager_.reset(
       new ConnectionManager(this, display_manager.Pass(), wm_internal_.get()));
   return true;
@@ -64,7 +69,7 @@ ClientConnection* ViewManagerApp::CreateClientConnectionForEmbedAtView(
     const std::string& url,
     const ViewId& root_id) {
   mojo::ViewManagerClientPtr client;
-  wm_app_connection_->ConnectToApplication(url)->ConnectToService(&client);
+  app_impl_->ConnectToService(url, &client);
 
   scoped_ptr<ViewManagerServiceImpl> service(new ViewManagerServiceImpl(
       connection_manager, creator_id, creator_url, url, root_id));

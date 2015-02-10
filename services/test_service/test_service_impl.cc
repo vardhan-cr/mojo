@@ -7,7 +7,7 @@
 #include "base/bind.h"
 #include "base/i18n/time_formatting.h"
 #include "base/strings/utf_string_conversions.h"
-#include "mojo/public/cpp/application/application_connection.h"
+#include "mojo/public/cpp/application/application_impl.h"
 #include "services/test_service/test_service_application.h"
 #include "services/test_service/test_time_service_impl.h"
 #include "services/test_service/tracked_service.h"
@@ -15,9 +15,9 @@
 namespace mojo {
 namespace test {
 
-TestServiceImpl::TestServiceImpl(ApplicationConnection* connection,
+TestServiceImpl::TestServiceImpl(ApplicationImpl* app_impl,
                                  TestServiceApplication* application)
-    : application_(application), connection_(connection) {
+    : application_(application), app_impl_(app_impl) {
 }
 
 TestServiceImpl::~TestServiceImpl() {
@@ -42,7 +42,7 @@ void SendTimeResponse(
 void TestServiceImpl::ConnectToAppAndGetTime(
     const mojo::String& app_url,
     const mojo::Callback<void(int64_t)>& callback) {
-  connection_->ConnectToService(app_url, &time_service_);
+  app_impl_->ConnectToService(app_url, &time_service_);
   if (tracking_) {
     tracking_->RecordNewRequest();
     time_service_->StartTrackingRequests(mojo::Callback<void()>());
@@ -53,7 +53,7 @@ void TestServiceImpl::ConnectToAppAndGetTime(
 void TestServiceImpl::StartTrackingRequests(
     const mojo::Callback<void()>& callback) {
   TestRequestTrackerPtr tracker;
-  connection_->ConnectToService("mojo:test_request_tracker_app", &tracker);
+  app_impl_->ConnectToService("mojo:test_request_tracker_app", &tracker);
   tracking_.reset(new TrackedService(tracker.Pass(), Name_, callback));
 }
 

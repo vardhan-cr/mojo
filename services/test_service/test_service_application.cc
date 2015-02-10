@@ -16,10 +16,15 @@
 namespace mojo {
 namespace test {
 
-TestServiceApplication::TestServiceApplication() : ref_count_(0) {
+TestServiceApplication::TestServiceApplication()
+    : ref_count_(0), app_impl_(nullptr) {
 }
 
 TestServiceApplication::~TestServiceApplication() {
+}
+
+void TestServiceApplication::Initialize(ApplicationImpl* app) {
+  app_impl_ = app;
 }
 
 bool TestServiceApplication::ConfigureIncomingConnection(
@@ -31,13 +36,13 @@ bool TestServiceApplication::ConfigureIncomingConnection(
 
 void TestServiceApplication::Create(ApplicationConnection* connection,
                                     InterfaceRequest<TestService> request) {
-  BindToRequest(new TestServiceImpl(connection, this), &request);
+  BindToRequest(new TestServiceImpl(app_impl_, this), &request);
   AddRef();
 }
 
 void TestServiceApplication::Create(ApplicationConnection* connection,
                                     InterfaceRequest<TestTimeService> request) {
-  new TestTimeServiceImpl(connection, request.Pass());
+  new TestTimeServiceImpl(app_impl_, request.Pass());
 }
 
 void TestServiceApplication::AddRef() {

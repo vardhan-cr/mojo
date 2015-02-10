@@ -10,7 +10,7 @@
 #include "services/test_service/test_service.mojom.h"
 
 namespace mojo {
-class ApplicationConnection;
+class ApplicationImpl;
 namespace test {
 
 class TrackedService;
@@ -18,7 +18,7 @@ class TestServiceApplication;
 
 class TestServiceImpl : public InterfaceImpl<TestService> {
  public:
-  TestServiceImpl(ApplicationConnection* connection,
+  TestServiceImpl(ApplicationImpl* app_impl,
                   TestServiceApplication* application);
   ~TestServiceImpl() override;
 
@@ -32,7 +32,7 @@ class TestServiceImpl : public InterfaceImpl<TestService> {
 
  private:
   TestServiceApplication* const application_;
-  ApplicationConnection* const connection_;
+  ApplicationImpl* const app_impl_;
   TestTimeServicePtr time_service_;
   scoped_ptr<TrackedService> tracking_;
 

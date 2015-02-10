@@ -15,6 +15,7 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
+#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
@@ -29,14 +30,16 @@ static const uint32_t kLocalId = 1u;
 
 class SurfacesApp : public ApplicationDelegate {
  public:
-  SurfacesApp() : id_namespace_(0u), weak_factory_(this) {}
+  SurfacesApp() : app_impl_(nullptr), id_namespace_(0u), weak_factory_(this) {}
   ~SurfacesApp() override {}
+
+  void Initialize(ApplicationImpl* app) override { app_impl_ = app; }
 
   // ApplicationDelegate implementation
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    connection->ConnectToService("mojo:native_viewport_service", &viewport_);
+    app_impl_->ConnectToService("mojo:native_viewport_service", &viewport_);
 
-    connection->ConnectToService("mojo:surfaces_service", &surface_);
+    app_impl_->ConnectToService("mojo:surfaces_service", &surface_);
     surface_->GetIdNamespace(
         base::Bind(&SurfacesApp::SetIdNamespace, base::Unretained(this)));
     embedder_.reset(new Embedder(kLocalId, surface_.get()));
@@ -49,8 +52,8 @@ class SurfacesApp : public ApplicationDelegate {
     viewport_->Show();
 
     child_size_ = gfx::Size(size_.width() / 3, size_.height() / 2);
-    connection->ConnectToService("mojo:surfaces_child_app", &child_one_);
-    connection->ConnectToService("mojo:surfaces_child_gl_app", &child_two_);
+    app_impl_->ConnectToService("mojo:surfaces_child_app", &child_one_);
+    app_impl_->ConnectToService("mojo:surfaces_child_gl_app", &child_two_);
     child_one_->ProduceFrame(Color::From(SK_ColorBLUE),
                              Size::From(child_size_),
                              base::Bind(&SurfacesApp::ChildOneProducedFrame,
@@ -95,6 +98,7 @@ class SurfacesApp : public ApplicationDelegate {
   void OnCreatedNativeViewport(uint64_t native_viewport_id,
                                mojo::ViewportMetricsPtr metrics) {}
 
+  ApplicationImpl* app_impl_;
   SurfacePtr surface_;
   uint32_t id_namespace_;
   SurfaceIdPtr onscreen_id_;

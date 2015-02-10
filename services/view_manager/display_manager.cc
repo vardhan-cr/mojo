@@ -9,6 +9,7 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/public/cpp/application/application_connection.h"
+#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
 #include "mojo/services/surfaces/public/interfaces/quads.mojom.h"
@@ -73,9 +74,11 @@ void DrawViewTree(mojo::Pass* pass,
 }  // namespace
 
 DefaultDisplayManager::DefaultDisplayManager(
+    mojo::ApplicationImpl* app_impl,
     mojo::ApplicationConnection* app_connection,
     const mojo::Callback<void()>& native_viewport_closed_callback)
-    : app_connection_(app_connection),
+    : app_impl_(app_impl),
+      app_connection_(app_connection),
       connection_manager_(nullptr),
       draw_timer_(false, false),
       id_namespace_(0u),
@@ -89,8 +92,8 @@ DefaultDisplayManager::DefaultDisplayManager(
 
 void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
   connection_manager_ = connection_manager;
-  app_connection_->ConnectToService("mojo:native_viewport_service",
-                                    &native_viewport_);
+  app_impl_->ConnectToService("mojo:native_viewport_service",
+                              &native_viewport_);
   native_viewport_.set_error_handler(this);
   native_viewport_->Create(
       metrics_.size->Clone(),
@@ -98,7 +101,7 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
                  weak_factory_.GetWeakPtr()));
   native_viewport_->Show();
 
-  app_connection_->ConnectToService("mojo:surfaces_service", &surface_);
+  app_impl_->ConnectToService("mojo:surfaces_service", &surface_);
   surface_->GetIdNamespace(base::Bind(&DefaultDisplayManager::SetIdNamespace,
                                       base::Unretained(this)));
 

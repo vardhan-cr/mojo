@@ -239,12 +239,11 @@ class TesterContext {
 // Used to test that the requestor url will be correctly passed.
 class TestAImpl : public TestA {
  public:
-  TestAImpl(ApplicationConnection* connection,
+  TestAImpl(ApplicationImpl* app_impl,
             TesterContext* test_context,
             InterfaceRequest<TestA> request)
-      : test_context_(test_context),
-        binding_(this, request.Pass()) {
-    connection->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
+      : test_context_(test_context), binding_(this, request.Pass()) {
+    app_impl->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
   }
 
   ~TestAImpl() override {
@@ -370,7 +369,7 @@ class Tester : public ApplicationDelegate,
 
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestA> request) override {
-    a_bindings_.push_back(new TestAImpl(connection, context_, request.Pass()));
+    a_bindings_.push_back(new TestAImpl(app_.get(), context_, request.Pass()));
   }
 
   void Create(ApplicationConnection* connection,

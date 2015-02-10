@@ -23,6 +23,8 @@ class TestServiceApplication : public ApplicationDelegate,
   TestServiceApplication();
   ~TestServiceApplication() override;
 
+  void Initialize(ApplicationImpl* app) override;
+
   // ApplicationDelegate implementation.
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
@@ -39,6 +41,7 @@ class TestServiceApplication : public ApplicationDelegate,
 
  private:
   int ref_count_;
+  ApplicationImpl* app_impl_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestServiceApplication);
 };

@@ -11,6 +11,7 @@
 #include "services/test_service/test_request_tracker_impl.h"
 
 namespace mojo {
+class ApplicationImpl;
 namespace test {
 class TestTimeService;
 
@@ -22,6 +23,8 @@ class TestRequestTrackerApplication
  public:
   TestRequestTrackerApplication();
   ~TestRequestTrackerApplication() override;
+
+  void Initialize(ApplicationImpl* app) override;
 
   // ApplicationDelegate methods:
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
@@ -35,6 +38,7 @@ class TestRequestTrackerApplication
               InterfaceRequest<TestRequestTracker> request) override;
 
  private:
+  ApplicationImpl* app_impl_;
   TrackingContext context_;
   typedef InterfaceFactoryImplWithContext<TestTrackedRequestServiceImpl,
                                           TrackingContext>

@@ -15,10 +15,14 @@ namespace mojo {
 namespace test {
 
 TestRequestTrackerApplication::TestRequestTrackerApplication()
-    : test_tracked_request_factory_(&context_) {
+    : app_impl_(nullptr), test_tracked_request_factory_(&context_) {
 }
 
 TestRequestTrackerApplication::~TestRequestTrackerApplication() {
+}
+
+void TestRequestTrackerApplication::Initialize(ApplicationImpl* app) {
+  app_impl_ = app;
 }
 
 bool TestRequestTrackerApplication::ConfigureIncomingConnection(
@@ -34,7 +38,7 @@ bool TestRequestTrackerApplication::ConfigureIncomingConnection(
 void TestRequestTrackerApplication::Create(
     ApplicationConnection* connection,
     InterfaceRequest<TestTimeService> request) {
-  new TestTimeServiceImpl(connection, request.Pass());
+  new TestTimeServiceImpl(app_impl_, request.Pass());
 }
 
 void TestRequestTrackerApplication::Create(
