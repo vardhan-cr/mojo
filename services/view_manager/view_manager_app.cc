@@ -45,8 +45,7 @@ bool ViewManagerApp::ConfigureIncomingConnection(
   connection->AddService<ViewManagerService>(this);
   connection->AddService<WindowManagerInternalClient>(this);
   connection->ConnectToService(&wm_internal_);
-  // TODO(sky): add this back. It's causing tests to hang, figure out why.
-  // wm_internal_.set_error_handler(this);
+  wm_internal_.set_error_handler(this);
 
   scoped_ptr<DefaultDisplayManager> display_manager(new DefaultDisplayManager(
       app_impl_, connection,
