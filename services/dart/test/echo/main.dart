@@ -30,7 +30,8 @@ class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
   void acceptConnection(String requestorUrl, ServiceProvider serviceProvider) {
-    serviceProvider.factory = (endpoint) => new EchoServiceImpl(this, endpoint);
+    serviceProvider.registerFactory(EchoService.name, (endpoint) =>
+        new EchoServiceImpl(this, endpoint));
     serviceProvider.listen();
   }
 }
