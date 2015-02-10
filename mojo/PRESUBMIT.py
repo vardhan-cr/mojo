@@ -13,10 +13,14 @@ import re
 
 # NOTE: The EDK allows all external paths, so doesn't need a whitelist.
 _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
-    "SDK": ["//testing/gtest",
+    "SDK": ["//build/config/mojo.gni",
+            "//build/module_args/mojo.gni",
+            "//testing/gtest",
             "//third_party/cython",
             "//third_party/khronos"],
-    "services": ["//testing/gtest"],
+    "services": ["//build/config/mojo.gni",
+                 "//build/module_args/mojo.gni",
+                 "//testing/gtest"],
 }
 
 # These files are not part of the exported package.
