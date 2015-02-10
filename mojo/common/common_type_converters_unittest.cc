@@ -4,7 +4,10 @@
 
 #include "mojo/common/common_type_converters.h"
 
+#include "base/bind.h"
 #include "base/strings/utf_string_conversions.h"
+#include "mojo/public/cpp/bindings/callback.h"
+#include "mojo/public/cpp/bindings/map.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
@@ -32,8 +35,6 @@ void ExpectEqualsMojoString(const base::string16& expected,
                             const String& str) {
   EXPECT_EQ(expected, str.To<base::string16>());
 }
-
-}  // namespace
 
 TEST(CommonTypeConvertersTest, StringPiece) {
   std::string kText("hello world");
@@ -105,6 +106,98 @@ TEST(CommonTypeConvertersTest, StdStringToArrayUint8) {
   EXPECT_EQ('a', data[3]);
 }
 
+struct RunnableNoArgs {
+  RunnableNoArgs(int* calls) : calls(calls) {}
+  void Run() const { (*calls)++; }
+
+  int* calls;
+};
+
+TEST(CommonTypeConvertersTest, BaseBindToMojoCallbackNoParams) {
+  mojo::Callback<void()> cb;
+  int calls = 0;
+  RunnableNoArgs r(&calls);
+  cb = r;
+  cb.Run();
+  EXPECT_EQ(1, calls);
+
+  cb = base::Bind(&RunnableNoArgs::Run, base::Unretained(&r));
+  cb.Run();
+  EXPECT_EQ(2, calls);
+}
+
+struct RunnableOnePrimitiveArg {
+  explicit RunnableOnePrimitiveArg(int* calls) : calls(calls) {}
+  void Run(int a) const { (*calls)++; }
+
+  int* calls;
+};
+
+TEST(CommonTypeConvertersTest, BaseBindToMojoCallbackPrimitiveParam) {
+  mojo::Callback<void(int)> mojo_callback;
+  int calls = 0;
+  RunnableOnePrimitiveArg r(&calls);
+  mojo_callback = r;
+  mojo_callback.Run(0);
+  EXPECT_EQ(1, calls);
+
+  base::Callback<void(int)> base_callback =
+      base::Bind(&RunnableOnePrimitiveArg::Run, base::Unretained(&r));
+  mojo_callback = base_callback;
+  mojo_callback.Run(0);
+  EXPECT_EQ(2, calls);
+}
+
+struct RunnableOneMojoStringParam {
+  explicit RunnableOneMojoStringParam(int* calls) : calls(calls) {}
+  void Run(const String& s) const { (*calls)++; }
+
+  int* calls;
+};
+
+TEST(CommonTypeConvertersTest, BaseBindToMojoCallbackMojoStringParam) {
+  // The mojo type is a callback on mojo::String, but it'll expect to invoke
+  // callbacks with a parameter of type 'const Mojo::String&'.
+  mojo::Callback<void(mojo::String)> mojo_callback;
+  int calls = 0;
+  RunnableOneMojoStringParam r(&calls);
+  mojo_callback = r;
+  mojo_callback.Run(0);
+  EXPECT_EQ(1, calls);
+
+  base::Callback<void(const mojo::String&)> base_callback =
+      base::Bind(&RunnableOneMojoStringParam::Run, base::Unretained(&r));
+  mojo_callback = base_callback;
+  mojo_callback.Run(0);
+  EXPECT_EQ(2, calls);
+}
+
+using ExampleMoveOnlyType = Map<int, int>;
+
+struct RunnableOneMoveOnlyParam {
+  explicit RunnableOneMoveOnlyParam(int* calls) : calls(calls) {}
+
+  void Run(ExampleMoveOnlyType m) const { (*calls)++; }
+  int* calls;
+};
+
+TEST(CommonTypeConvertersTest, BaseBindToMoveOnlyParam) {
+  mojo::Callback<void(ExampleMoveOnlyType)> mojo_callback;
+  int calls = 0;
+  RunnableOneMoveOnlyParam r(&calls);
+  mojo_callback = r;
+  ExampleMoveOnlyType m;
+  mojo_callback.Run(m.Clone());
+  EXPECT_EQ(1, calls);
+
+  base::Callback<void(ExampleMoveOnlyType)> base_callback =
+      base::Bind(&RunnableOneMoveOnlyParam::Run, base::Unretained(&r));
+  mojo_callback = base_callback;
+  mojo_callback.Run(m.Clone());
+  EXPECT_EQ(2, calls);
+}
+
+}  // namespace
 }  // namespace test
 }  // namespace common
 }  // namespace mojo
