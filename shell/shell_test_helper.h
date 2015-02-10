@@ -36,9 +36,9 @@ class ShellTestHelper {
   // the thread this class spawns.
   void SetLoaderForURL(scoped_ptr<ApplicationLoader> loader, const GURL& url);
 
-  // Adds a mapping that is used when resolving mojo urls. See MojoURLResolver
+  // Adds a mapping that is used when resolving mojo urls. See URLResolver
   // for details.
-  void AddCustomMapping(const GURL& mojo_url, const GURL& resolved_url);
+  void AddURLMapping(const GURL& url, const GURL& resolved_url);
 
  private:
   Context context_;

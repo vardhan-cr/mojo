@@ -46,7 +46,7 @@ const char kEnableMultiprocess[] = "enable-multiprocess";
 const char kHelp[] = "help";
 
 // Map mojo: URLs to a shared library of similar name at this origin. See
-// mojo_url_resolver.cc for details.
+// url_resolver.cc for details.
 const char kOrigin[] = "origin";
 
 // Specifies a set of mappings to apply when resolving urls. The value is set of

@@ -37,7 +37,7 @@ void ShellTestBase::SetUpTestApplications() {
   base::android::ScopedJavaLocalRef<jstring> service_dir(
       Java_ShellTestBase_extractMojoApplications(
           env, base::android::GetApplicationContext()));
-  shell_context_.mojo_url_resolver()->SetBaseURL(
+  shell_context_.url_resolver()->SetMojoBaseURL(
       FilePathToFileURL(base::FilePath(
           base::android::ConvertJavaStringToUTF8(env, service_dir.obj()))));
 }

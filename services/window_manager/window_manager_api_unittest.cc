@@ -178,8 +178,8 @@ class WindowManagerApiTest : public testing::Test {
   void SetUp() override {
     test_helper_.reset(new mojo::shell::ShellTestHelper);
     test_helper_->Init();
-    test_helper_->AddCustomMapping(GURL("mojo:window_manager"),
-                                   GURL("mojo:core_window_manager"));
+    test_helper_->AddURLMapping(GURL("mojo:window_manager"),
+                                GURL("mojo:core_window_manager"));
     test_helper_->SetLoaderForURL(
         scoped_ptr<mojo::ApplicationLoader>(
             new TestApplicationLoader(base::Bind(

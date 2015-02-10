@@ -9,8 +9,8 @@
 
 #include "base/macros.h"
 #include "shell/application_manager/application_manager.h"
-#include "shell/mojo_url_resolver.h"
 #include "shell/task_runners.h"
+#include "shell/url_resolver.h"
 
 namespace mojo {
 
@@ -53,7 +53,7 @@ class Context : ApplicationManager::Delegate {
 
   TaskRunners* task_runners() { return task_runners_.get(); }
   ApplicationManager* application_manager() { return &application_manager_; }
-  MojoURLResolver* mojo_url_resolver() { return &mojo_url_resolver_; }
+  URLResolver* url_resolver() { return &url_resolver_; }
 
  private:
   class NativeViewportApplicationLoader;
@@ -67,7 +67,7 @@ class Context : ApplicationManager::Delegate {
   scoped_ptr<TaskRunners> task_runners_;
   scoped_ptr<ExternalApplicationListener> listener_;
   ApplicationManager application_manager_;
-  MojoURLResolver mojo_url_resolver_;
+  URLResolver url_resolver_;
   GURL shell_file_root_;
   GURL command_line_cwd_;
 

@@ -105,7 +105,7 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
 
 bool ConfigureURLMappings(base::CommandLine* command_line,
                           Context* context) {
-  MojoURLResolver* resolver = context->mojo_url_resolver();
+  URLResolver* resolver = context->url_resolver();
 
   // Configure the resolution of unknown mojo: URLs.
   GURL base_url;
@@ -118,12 +118,12 @@ bool ConfigureURLMappings(base::CommandLine* command_line,
   if (!base_url.is_valid())
     return false;
 
-  resolver->SetBaseURL(base_url);
+  resolver->SetMojoBaseURL(base_url);
 
   // The network service must be loaded from the filesystem.
   // This mapping is done before the command line URL mapping are processed, so
   // that it can be overridden.
-  resolver->AddCustomMapping(
+  resolver->AddURLMapping(
       GURL("mojo:network_service"),
       context->ResolveShellFileURL("file:network_service.mojo"));
 
@@ -141,7 +141,7 @@ bool ConfigureURLMappings(base::CommandLine* command_line,
       const GURL to = context->ResolveCommandLineURL(pair.second);
       if (!from.is_valid() || !to.is_valid())
         return false;
-      resolver->AddCustomMapping(from, to);
+      resolver->AddURLMapping(from, to);
     }
   }
   return true;
@@ -271,11 +271,11 @@ void Context::OnApplicationError(const GURL& url) {
 }
 
 GURL Context::ResolveURL(const GURL& url) {
-  return mojo_url_resolver_.Resolve(url);
+  return url_resolver_.ResolveMojoURL(url);
 }
 
 GURL Context::ResolveMappings(const GURL& url) {
-  return mojo_url_resolver_.ApplyCustomMappings(url);
+  return url_resolver_.ApplyURLMappings(url);
 }
 
 void Context::Run(const GURL& url) {

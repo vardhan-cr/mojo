@@ -37,14 +37,13 @@ ScopedMessagePipeHandle ShellTestBase::ConnectToService(
 
 #if !defined(OS_ANDROID)
 void ShellTestBase::SetUpTestApplications() {
-  // Set the MojoURLResolver origin to be the same as the base file path for
+  // Set the URLResolver origin to be the same as the base file path for
   // local files. This is primarily for test convenience, so that references
   // to unknown mojo: urls that do not have specific local file or custom
   // mappings registered on the URL resolver are treated as shared libraries.
   base::FilePath service_dir;
   CHECK(PathService::Get(base::DIR_MODULE, &service_dir));
-  shell_context_.mojo_url_resolver()->SetBaseURL(
-      FilePathToFileURL(service_dir));
+  shell_context_.url_resolver()->SetMojoBaseURL(FilePathToFileURL(service_dir));
 }
 #endif
 
