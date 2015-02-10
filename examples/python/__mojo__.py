@@ -18,7 +18,7 @@ class ApplicationImpl(application_mojom.Application):
     self._providers = []
     application_mojom.Application.manager.Bind(self, app_request_handle)
 
-  def Initialize(self, shell, args):
+  def Initialize(self, shell, url, args):
     self.shell = shell
 
   def AcceptConnection(self, requestor_url, services, exposed_services):

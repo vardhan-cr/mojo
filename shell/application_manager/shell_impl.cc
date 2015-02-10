@@ -28,7 +28,7 @@ ShellImpl::~ShellImpl() {
 void ShellImpl::InitializeApplication(Array<String> args) {
   ShellPtr shell;
   binding_.Bind(GetProxy(&shell));
-  application_->Initialize(shell.Pass(), args.Pass());
+  application_->Initialize(shell.Pass(), args.Pass(), url_.spec());
 }
 
 void ShellImpl::ConnectToClient(const GURL& requestor_url,

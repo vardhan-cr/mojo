@@ -81,7 +81,7 @@ class StubShellImpl : public Shell {
       : application_(application.Pass()), binding_(this) {
     ShellPtr shell;
     binding_.Bind(GetProxy(&shell));
-    application_->Initialize(shell.Pass(), Array<String>());
+    application_->Initialize(shell.Pass(), Array<String>(), "");
   }
   ~StubShellImpl() override {}
 

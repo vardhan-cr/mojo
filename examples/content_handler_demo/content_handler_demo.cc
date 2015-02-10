@@ -21,7 +21,9 @@ class PrintBodyApplication : public Application {
                        ScopedDataPipeConsumerHandle body)
       : binding_(this, request.Pass()), body_(body.Pass()) {}
 
-  virtual void Initialize(ShellPtr shell, Array<String> args) override {
+  virtual void Initialize(ShellPtr shell,
+                          Array<String> args,
+                          const mojo::String& url) override {
     shell_ = shell.Pass();
   }
   virtual void RequestQuit() override {}

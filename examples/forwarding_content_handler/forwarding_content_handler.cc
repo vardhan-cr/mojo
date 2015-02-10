@@ -29,7 +29,9 @@ class ForwardingApplicationImpl : public Application {
 
  private:
   // Application:
-  void Initialize(ShellPtr shell, Array<String> args) override {
+  void Initialize(ShellPtr shell,
+                  Array<String> args,
+                  const mojo::String& url) override {
     shell_ = shell.Pass();
   }
   void AcceptConnection(const String& requestor_url,
