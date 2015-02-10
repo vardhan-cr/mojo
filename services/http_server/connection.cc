@@ -64,8 +64,8 @@ void Connection::SendResponse(HttpResponsePtr response) {
                       response->content_type.data());
   for (auto it = response->custom_headers.begin();
        it != response->custom_headers.end(); ++it) {
-    const std::string& header_name = it.GetValue();
-    const std::string& header_value = it.GetKey();
+    const std::string& header_name = it.GetKey();
+    const std::string& header_value = it.GetValue();
     DCHECK(header_value.find_first_of("\n\r") == std::string::npos)
         << "Malformed header value.";
     base::StringAppendF(&response_, "%s: %s\r\n", header_name.c_str(),
