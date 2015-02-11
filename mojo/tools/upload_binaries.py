@@ -24,6 +24,9 @@ BLACKLISTED_APPS = [
     "network_service_apptests.mojo",
 ]
 
+def target(config):
+  return config.target_os + "-" + config.target_arch
+
 def find_apps_to_upload(build_dir):
   apps = []
   for path in glob.glob(build_dir + "/*"):
@@ -53,7 +56,9 @@ def upload(config, source, dest, dry_run):
 
 def upload_shell(config, dry_run, verbose):
   paths = Paths(config)
-  zipfile_name = "%s-%s" % (config.target_os, config.target_arch)
+  zipfile_name = target(config)
+  # TODO(blundell): Change this to be in the same structure as the LATEST files,
+  # e.g., gs://mojo/shell/linux-x64/<version>/shell.zip.
   dest = "gs://mojo/shell/" + Version().version + "/" + zipfile_name + ".zip"
   with tempfile.NamedTemporaryFile() as zip_file:
     with zipfile.ZipFile(zip_file, 'w') as z:
@@ -75,9 +80,9 @@ def upload_shell(config, dry_run, verbose):
 
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
-  target = config.target_os + "-" + config.target_arch
   version = Version().version
-  dest = "gs://mojo/services/" + target + "/" + version + "/" + app_binary_name
+  dest = ("gs://mojo/services/" + target(config) + "/" + version + "/" +
+          app_binary_name)
   upload(config, app_binary_path, dest, dry_run)
 
 def update_version(config, subdir, dry_run):
@@ -85,7 +90,7 @@ def update_version(config, subdir, dry_run):
     version = Version().version
     temp_version_file.write(version)
     temp_version_file.flush()
-    dest = "gs://mojo/%s/LATEST" % subdir
+    dest = "gs://mojo/%s/%s/LATEST" % (subdir, target(config))
     upload(config, temp_version_file.name, dest, dry_run)
 
 def main():
