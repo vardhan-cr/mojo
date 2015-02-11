@@ -80,6 +80,14 @@ def upload_app(app_binary_path, config, dry_run):
   dest = "gs://mojo/services/" + target + "/" + version + "/" + app_binary_name
   upload(config, app_binary_path, dest, dry_run)
 
+def update_version(config, subdir, dry_run):
+  with tempfile.NamedTemporaryFile() as temp_version_file:
+    version = Version().version
+    temp_version_file.write(version)
+    temp_version_file.flush()
+    dest = "gs://mojo/%s/LATEST" % subdir
+    upload(config, temp_version_file.name, dest, dry_run)
+
 def main():
   parser = argparse.ArgumentParser(description="Upload binaries for apps and "
       "the Mojo shell to google storage (by default on Linux, but this can be "
@@ -98,11 +106,14 @@ def main():
     target_os = Config.OS_ANDROID
   config = Config(target_os=target_os, is_debug=False)
   upload_shell(config, args.dry_run, args.verbose)
+  update_version(config, "shell", args.dry_run)
 
   apps_to_upload = find_apps_to_upload(
       gn.BuildDirectoryForConfig(config, Paths(config).src_root))
   for app in apps_to_upload:
     upload_app(app, config, args.dry_run)
+  update_version(config, "services", args.dry_run)
+
   return 0
 
 if __name__ == "__main__":
