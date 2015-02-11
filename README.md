@@ -59,8 +59,8 @@ mojo/tools/mojob.py test
 
 You can update your repo like this:
 ```
-$ gclient sync
 $ git pull --rebase
+$ gclient sync
 ```
 
 You do not need to rerun "gn gen out/Debug". Ninja will do so automatically as needed.
