@@ -10,7 +10,9 @@ mojo_native_application("http_server") {
     "connection.h",
     "http_request_parser.cc",
     "http_request_parser.h",
-    "http_server.cc",
+    "http_server_app.cc",
+    "http_server_impl.cc",
+    "http_server_impl.h",
     "http_status_code_list.h",
   ]
 
