@@ -123,7 +123,7 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
 ScopedMessagePipeHandle CreateChannel(
     ScopedPlatformHandle platform_handle,
     scoped_refptr<base::TaskRunner> io_thread_task_runner,
-    DidCreateChannelCallback callback,
+    const DidCreateChannelCallback& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   DCHECK(platform_handle.is_valid());
   DCHECK(io_thread_task_runner);
@@ -158,7 +158,7 @@ void DestroyChannelOnIOThread(ChannelInfo* channel_info) {
 // TODO(vtl): Write tests for this.
 void DestroyChannel(
     ChannelInfo* channel_info,
-    DidDestroyChannelCallback callback,
+    const DidDestroyChannelCallback& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   DCHECK(channel_info);
   DCHECK(channel_info->channel_id);
@@ -228,7 +228,7 @@ MojoResult PassWrappedPlatformHandle(MojoHandle platform_handle_wrapper_handle,
 
 MojoResult AsyncWait(MojoHandle handle,
                      MojoHandleSignals signals,
-                     base::Callback<void(MojoResult)> callback) {
+                     const base::Callback<void(MojoResult)>& callback) {
   return internal::g_core->AsyncWait(handle, signals, callback);
 }
 

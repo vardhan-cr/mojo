@@ -20,7 +20,7 @@ namespace {
 
 void ShutdownChannelHelper(
     const ChannelInfo& channel_info,
-    base::Closure callback,
+    const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   DCHECK(base::MessageLoopProxy::current() ==
          channel_info.channel_thread_task_runner);
@@ -73,7 +73,7 @@ scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannel(
     ChannelId channel_id,
     embedder::ScopedPlatformHandle platform_handle,
     scoped_refptr<base::TaskRunner> io_thread_task_runner,
-    base::Closure callback,
+    const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   DCHECK(io_thread_task_runner);
   DCHECK(!callback.is_null());
@@ -120,7 +120,7 @@ void ChannelManager::ShutdownChannelOnIOThread(ChannelId channel_id) {
 
 void ChannelManager::ShutdownChannel(
     ChannelId channel_id,
-    base::Closure callback,
+    const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   ChannelInfo channel_info;
   {
@@ -176,7 +176,7 @@ void ChannelManager::CreateChannelHelper(
     ChannelId channel_id,
     embedder::ScopedPlatformHandle platform_handle,
     scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint,
-    base::Closure callback,
+    const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   CreateChannelOnIOThreadHelper(channel_id, platform_handle.Pass(),
                                 bootstrap_channel_endpoint);

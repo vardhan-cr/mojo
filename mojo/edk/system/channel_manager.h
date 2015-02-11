@@ -69,7 +69,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       ChannelId channel_id,
       embedder::ScopedPlatformHandle platform_handle,
       scoped_refptr<base::TaskRunner> io_thread_task_runner,
-      base::Closure callback,
+      const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
   // Gets the |Channel| with the given ID (which must exist).
@@ -96,7 +96,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   // TODO(vtl): "channel thread" will become "this object's I/O thread".
   void ShutdownChannel(
       ChannelId channel_id,
-      base::Closure callback,
+      const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
   // DEPRECATED. TODO(vtl): Remove.
@@ -120,7 +120,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       ChannelId channel_id,
       embedder::ScopedPlatformHandle platform_handle,
       scoped_refptr<system::ChannelEndpoint> bootstrap_channel_endpoint,
-      base::Closure callback,
+      const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
   embedder::PlatformSupport* const platform_support_;

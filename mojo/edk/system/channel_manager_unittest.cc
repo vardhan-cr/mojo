@@ -106,7 +106,7 @@ class OtherThread : public base::SimpleThread {
   OtherThread(scoped_refptr<base::TaskRunner> task_runner,
               ChannelManager* channel_manager,
               ChannelId channel_id,
-              base::Closure quit_closure)
+              const base::Closure& quit_closure)
       : base::SimpleThread("other_thread"),
         task_runner_(task_runner),
         channel_manager_(channel_manager),

@@ -100,7 +100,7 @@ scoped_refptr<Dispatcher> Core::GetDispatcher(MojoHandle handle) {
 
 MojoResult Core::AsyncWait(MojoHandle handle,
                            MojoHandleSignals signals,
-                           base::Callback<void(MojoResult)> callback) {
+                           const base::Callback<void(MojoResult)>& callback) {
   scoped_refptr<Dispatcher> dispatcher = GetDispatcher(handle);
   DCHECK(dispatcher);
 

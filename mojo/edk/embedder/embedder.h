@@ -111,7 +111,7 @@ typedef base::Callback<void(ChannelInfo*)> DidCreateChannelCallback;
 MOJO_SYSTEM_IMPL_EXPORT ScopedMessagePipeHandle
 CreateChannel(ScopedPlatformHandle platform_handle,
               scoped_refptr<base::TaskRunner> io_thread_task_runner,
-              DidCreateChannelCallback callback,
+              const DidCreateChannelCallback& callback,
               scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
 // Destroys a channel that was created using |CreateChannel()| (or
@@ -130,7 +130,7 @@ typedef base::Closure DidDestroyChannelCallback;
 // the callback has been executed.
 MOJO_SYSTEM_IMPL_EXPORT void DestroyChannel(
     ChannelInfo* channel_info,
-    DidDestroyChannelCallback callback,
+    const DidDestroyChannelCallback& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
 // DEPRECATED. TODO(vtl): Remove.
@@ -172,7 +172,7 @@ PassWrappedPlatformHandle(MojoHandle platform_handle_wrapper_handle,
 MOJO_SYSTEM_IMPL_EXPORT MojoResult
 AsyncWait(MojoHandle handle,
           MojoHandleSignals signals,
-          base::Callback<void(MojoResult)> callback);
+          const base::Callback<void(MojoResult)>& callback);
 
 }  // namespace embedder
 }  // namespace mojo
