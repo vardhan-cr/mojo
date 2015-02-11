@@ -51,7 +51,7 @@ gcloud compute ssh YOUR-VM-NAME-HERE --command "mkdir ~/mojo" --zone us-central1
 For this example, we'll use the examples/http_handler binary which is a minimal Mojo HTTP app. Assuming you've built the release binary:
 
 ```
-gcloud compute copy-files out/Release/libhttp_handler.so out/Release/libhttp_server.so out/Release/libnetwork_service.so out/Release/mojo_shell YOUR-VM-NAME-HERE:~/mojo --zone us-central1-a
+gcloud compute copy-files out/Release/http_handler.mojo out/Release/http_server.mojo out/Release/network_service.mojo out/Release/mojo_shell YOUR-VM-NAME-HERE:~/mojo --zone us-central1-a
 ```
 
 
