@@ -19,7 +19,7 @@ ChannelInit::~ChannelInit() {
   // thread, which outlives the I/O thread, and we're destroyed after the I/O
   // thread is destroyed.
   if (channel_info_)
-    DestroyChannel(channel_info_);
+    DestroyChannelDeprecated(channel_info_);
 }
 
 ScopedMessagePipeHandle ChannelInit::Init(
@@ -44,7 +44,7 @@ void ChannelInit::OnCreatedChannel(base::WeakPtr<ChannelInit> self,
                                    ChannelInfo* channel) {
   // If |self| was already destroyed, shut the channel down.
   if (!self) {
-    DestroyChannel(channel);
+    DestroyChannelDeprecated(channel);
     return;
   }
 

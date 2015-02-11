@@ -115,6 +115,26 @@ CreateChannel(ScopedPlatformHandle platform_handle,
               scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
 // Destroys a channel that was created using |CreateChannel()| (or
+// |CreateChannelOnIOThread()|); must be called from the channel's I'O thread.
+// |channel_info| should be the value provided to the callback to
+// |CreateChannel()| (or returned by |CreateChannelOnIOThread()|). Completes
+// synchronously (and posts no tasks).
+MOJO_SYSTEM_IMPL_EXPORT void DestroyChannelOnIOThread(
+    ChannelInfo* channel_info);
+
+typedef base::Closure DidDestroyChannelCallback;
+// Like |DestroyChannelOnIOThread()|, but asynchronous and may be called from
+// any thread. The callback will be called using |callback_thread_task_runner|
+// if that is non-null, or otherwise it will be called on the "channel thread".
+// The "channel thread" must remain alive and continue to process tasks until
+// the callback has been executed.
+MOJO_SYSTEM_IMPL_EXPORT void DestroyChannel(
+    ChannelInfo* channel_info,
+    DidDestroyChannelCallback callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner);
+
+// DEPRECATED. TODO(vtl): Remove.
+// Destroys a channel that was created using |CreateChannel()| (or
 // |CreateChannelOnIOThread()|); may be called from any thread. |channel_info|
 // should be the value provided to the callback to |CreateChannel()| (or
 // returned by |CreateChannelOnIOThread()|). If called from the I/O thread, this
@@ -122,7 +142,8 @@ CreateChannel(ScopedPlatformHandle platform_handle,
 // TODO(vtl): If called from some other thread, it'll post tasks to the I/O
 // thread. This is obviously potentially problematic if you want to shut the I/O
 // thread down.
-MOJO_SYSTEM_IMPL_EXPORT void DestroyChannel(ChannelInfo* channel_info);
+MOJO_SYSTEM_IMPL_EXPORT void DestroyChannelDeprecated(
+    ChannelInfo* channel_info);
 
 // Inform the channel that it will soon be destroyed (doing so is optional).
 // This may be called from any thread, but the caller must ensure that this is

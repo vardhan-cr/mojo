@@ -146,7 +146,30 @@ ScopedMessagePipeHandle CreateChannel(
 }
 
 // TODO(vtl): Write tests for this.
-void DestroyChannel(ChannelInfo* channel_info) {
+void DestroyChannelOnIOThread(ChannelInfo* channel_info) {
+  DCHECK(channel_info);
+  DCHECK(channel_info->channel_id);
+  DCHECK(internal::g_channel_manager);
+  internal::g_channel_manager->ShutdownChannelOnIOThread(
+      channel_info->channel_id);
+  delete channel_info;
+}
+
+// TODO(vtl): Write tests for this.
+void DestroyChannel(
+    ChannelInfo* channel_info,
+    DidDestroyChannelCallback callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
+  DCHECK(channel_info);
+  DCHECK(channel_info->channel_id);
+  DCHECK(!callback.is_null());
+  DCHECK(internal::g_channel_manager);
+  internal::g_channel_manager->ShutdownChannel(
+      channel_info->channel_id, callback, callback_thread_task_runner);
+  delete channel_info;
+}
+
+void DestroyChannelDeprecated(ChannelInfo* channel_info) {
   DCHECK(channel_info);
   DCHECK(channel_info->channel_id);
   DCHECK(internal::g_channel_manager);
