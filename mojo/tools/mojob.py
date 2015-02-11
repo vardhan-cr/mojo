@@ -122,6 +122,7 @@ def _run_tests(config, test_types):
   test_list = GetTestList(config)
   dry_run = config.values.get('dry_run')
   final_exit_code = 0
+  failure_list = []
   for entry in test_list:
     print 'Running: %s' % entry['name']
     print 'Command: %s' % entry['command']
@@ -129,8 +130,22 @@ def _run_tests(config, test_types):
       continue
 
     exit_code = subprocess.call(entry['command'])
-    if not final_exit_code:
-      final_exit_code = exit_code
+    if exit_code:
+      if not final_exit_code:
+        final_exit_code = exit_code
+      failure_list.append(entry['name'])
+
+  print 72 * '='
+  print 'SUMMARY:',
+  if dry_run:
+    print 'Dry run: no tests run'
+  elif not failure_list:
+    assert not final_exit_code
+    print 'All tests passed'
+  else:
+    assert final_exit_code
+    print 'The following had failures:', ', '.join(failure_list)
+
   return final_exit_code
 
 
