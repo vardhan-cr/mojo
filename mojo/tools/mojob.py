@@ -161,10 +161,6 @@ def pytest(config):
   return _run_tests(config, ['python'])
 
 
-def darttest(config):
-  return _run_tests(config, ['dart'])
-
-
 def nacltest(config):
   return _run_tests(config, ['nacl'])
 
@@ -243,10 +239,6 @@ def main():
   pytest_parser = subparsers.add_parser('pytest', parents=[parent_parser],
       help='Run Python unit tests (does not build).')
   pytest_parser.set_defaults(func=pytest)
-
-  darttest_parser = subparsers.add_parser('darttest', parents=[parent_parser],
-      help='Run Dart unit tests (does not build).')
-  darttest_parser.set_defaults(func=darttest)
 
   nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
       help='Run NaCl unit tests (does not build).')

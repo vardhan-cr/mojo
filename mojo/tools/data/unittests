@@ -79,3 +79,12 @@ if config.target_os != config.OS_ANDROID:
       "cacheable": False,
     },
   ]
+
+# TODO: get dart unittests working with asan and android.
+if not config.sanitizer and config.target_os != config.OS_ANDROID:
+  tests += [
+    {
+      "test": "dart_unittests",
+      "cacheable": False,
+    },
+  ]
