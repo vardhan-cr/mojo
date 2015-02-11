@@ -77,7 +77,7 @@ class ScopedTreeNotifier {
  private:
   ViewObserver::TreeChangeParams params_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScopedTreeNotifier);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ScopedTreeNotifier);
 };
 
 void RemoveChildImpl(View* child, View::Children* children) {
@@ -112,7 +112,7 @@ class ScopedOrderChangedNotifier {
   View* relative_view_;
   OrderDirection direction_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScopedOrderChangedNotifier);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ScopedOrderChangedNotifier);
 };
 
 // Returns true if the order actually changed.
@@ -168,7 +168,7 @@ class ScopedSetBoundsNotifier {
   const Rect old_bounds_;
   const Rect new_bounds_;
 
-  DISALLOW_COPY_AND_ASSIGN(ScopedSetBoundsNotifier);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ScopedSetBoundsNotifier);
 };
 
 // Some operations are only permitted in the connection that created the view.

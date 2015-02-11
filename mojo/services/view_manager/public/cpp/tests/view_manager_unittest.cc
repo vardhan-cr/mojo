@@ -7,6 +7,7 @@
 #include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/logging.h"
+#include "base/memory/scoped_vector.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -91,7 +92,7 @@ class ConnectApplicationLoader : public ApplicationLoader,
   LoadedCallback callback_;
   scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
 
-  DISALLOW_COPY_AND_ASSIGN(ConnectApplicationLoader);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ConnectApplicationLoader);
 };
 
 class BoundsChangeObserver : public ViewObserver {
@@ -110,7 +111,7 @@ class BoundsChangeObserver : public ViewObserver {
 
   View* view_;
 
-  DISALLOW_COPY_AND_ASSIGN(BoundsChangeObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(BoundsChangeObserver);
 };
 
 // Wait until the bounds of the supplied view change.
@@ -152,7 +153,7 @@ class TreeSizeMatchesObserver : public ViewObserver {
   View* tree_;
   size_t tree_size_;
 
-  DISALLOW_COPY_AND_ASSIGN(TreeSizeMatchesObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(TreeSizeMatchesObserver);
 };
 
 void WaitForTreeSizeToMatch(View* view, size_t tree_size) {
@@ -187,7 +188,7 @@ class DestructionObserver : public ViewObserver {
 
   std::set<Id>* views_;
 
-  DISALLOW_COPY_AND_ASSIGN(DestructionObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(DestructionObserver);
 };
 
 void WaitForDestruction(ViewManager* view_manager, std::set<Id>* views) {
@@ -220,7 +221,7 @@ class OrderChangeObserver : public ViewObserver {
 
   View* view_;
 
-  DISALLOW_COPY_AND_ASSIGN(OrderChangeObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(OrderChangeObserver);
 };
 
 void WaitForOrderChange(ViewManager* view_manager, View* view) {
@@ -251,7 +252,7 @@ class ViewTracker : public ViewObserver {
   int id_;
   View* view_;
 
-  DISALLOW_COPY_AND_ASSIGN(ViewTracker);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ViewTracker);
 };
 
 }  // namespace
@@ -337,7 +338,7 @@ class ViewManagerTest : public testing::Test {
   ViewManager* window_manager_;
   int commit_count_;
 
-  DISALLOW_COPY_AND_ASSIGN(ViewManagerTest);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ViewManagerTest);
 };
 
 // TODO(sky): all of these tests are disabled as each test triggers running
@@ -543,7 +544,7 @@ class VisibilityChangeObserver : public ViewObserver {
 
   View* view_;
 
-  DISALLOW_COPY_AND_ASSIGN(VisibilityChangeObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(VisibilityChangeObserver);
 };
 
 }  // namespace
@@ -606,7 +607,7 @@ class DrawnChangeObserver : public ViewObserver {
 
   View* view_;
 
-  DISALLOW_COPY_AND_ASSIGN(DrawnChangeObserver);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(DrawnChangeObserver);
 };
 
 }  // namespace

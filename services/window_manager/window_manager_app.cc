@@ -371,11 +371,11 @@ void WindowManagerApp::CreateWindowManagerForViewManagerClient(
 
 void WindowManagerApp::SetViewManagerClient(
     mojo::ScopedMessagePipeHandle view_manager_client_request) {
-  view_manager_client_ =
+  view_manager_client_.reset(
       mojo::ViewManagerClientFactory::WeakBindViewManagerToPipe(
           mojo::MakeRequest<mojo::ViewManagerClient>(
               view_manager_client_request.Pass()),
-          view_manager_service_.Pass(), shell_, this).Pass();
+          view_manager_service_.Pass(), shell_, this));
 }
 
 }  // namespace window_manager

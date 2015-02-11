@@ -18,6 +18,7 @@ test("mojo_view_manager_lib_unittests") {
     "//base",
     "//base/test:test_support",
     "//mojo/public/cpp/application",
+    "//mojo/public/cpp/system",
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
