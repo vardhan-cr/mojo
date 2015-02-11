@@ -25,10 +25,12 @@ void ShutdownChannelHelper(
   DCHECK(base::MessageLoopProxy::current() ==
          channel_info.channel_thread_task_runner);
   channel_info.channel->Shutdown();
-  if (callback_thread_task_runner)
-    callback_thread_task_runner->PostTask(FROM_HERE, callback);
-  else
+  if (callback_thread_task_runner) {
+    bool ok = callback_thread_task_runner->PostTask(FROM_HERE, callback);
+    DCHECK(ok);
+  } else {
     callback.Run();
+  }
 }
 
 void ShutdownChannelDeprecatedHelper(const ChannelInfo& channel_info) {
@@ -37,8 +39,9 @@ void ShutdownChannelDeprecatedHelper(const ChannelInfo& channel_info) {
     channel_info.channel->Shutdown();
   } else {
     channel_info.channel->WillShutdownSoon();
-    channel_info.channel_thread_task_runner->PostTask(
+    bool ok = channel_info.channel_thread_task_runner->PostTask(
         FROM_HERE, base::Bind(&Channel::Shutdown, channel_info.channel));
+    DCHECK(ok);
   }
 }
 
@@ -80,12 +83,13 @@ scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannel(
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
       system::MessagePipeDispatcher::CreateRemoteMessagePipe(
           &bootstrap_channel_endpoint);
-  io_thread_task_runner->PostTask(
+  bool ok = io_thread_task_runner->PostTask(
       FROM_HERE,
       base::Bind(&ChannelManager::CreateChannelHelper, base::Unretained(this),
                  channel_id, base::Passed(&platform_handle),
                  bootstrap_channel_endpoint, callback,
                  callback_thread_task_runner));
+  DCHECK(ok);
   return dispatcher;
 }
 
@@ -127,9 +131,10 @@ void ChannelManager::ShutdownChannel(
     channel_infos_.erase(it);
   }
   channel_info.channel->WillShutdownSoon();
-  channel_info.channel_thread_task_runner->PostTask(
+  bool ok = channel_info.channel_thread_task_runner->PostTask(
       FROM_HERE, base::Bind(&ShutdownChannelHelper, channel_info, callback,
                             callback_thread_task_runner));
+  DCHECK(ok);
 }
 
 void ChannelManager::ShutdownChannelDeprecated(ChannelId channel_id) {
@@ -175,10 +180,12 @@ void ChannelManager::CreateChannelHelper(
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   CreateChannelOnIOThreadHelper(channel_id, platform_handle.Pass(),
                                 bootstrap_channel_endpoint);
-  if (callback_thread_task_runner)
-    callback_thread_task_runner->PostTask(FROM_HERE, callback);
-  else
+  if (callback_thread_task_runner) {
+    bool ok = callback_thread_task_runner->PostTask(FROM_HERE, callback);
+    DCHECK(ok);
+  } else {
     callback.Run();
+  }
 }
 
 }  // namespace system

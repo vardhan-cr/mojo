@@ -7,7 +7,7 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
-#include "base/threading/thread.h"
+#include "base/test/test_io_thread.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -49,28 +49,40 @@ class NotAnApplicationLoader : public ApplicationLoader {
 
 class ExternalApplicationListenerTest : public testing::Test {
  public:
-  ExternalApplicationListenerTest() : io_thread_("io thread") {}
+  ExternalApplicationListenerTest()
+      : io_thread_(base::TestIOThread::kAutoStart) {}
   ~ExternalApplicationListenerTest() override {}
 
   void SetUp() override {
-    base::Thread::Options options;
-    options.message_loop_type = base::MessageLoop::TYPE_IO;
-    io_thread_.StartWithOptions(options);
-
-    listener_.reset(new ExternalApplicationListener(loop_.task_runner(),
-                                                    io_thread_.task_runner()));
+    listener_.reset(
+        new ExternalApplicationListener(main_runner(), io_runner()));
     ASSERT_TRUE(temp_dir_.CreateUniqueTempDir());
     socket_path_ = temp_dir_.path().Append(FILE_PATH_LITERAL("socket"));
   }
 
  protected:
-  base::MessageLoop loop_;
-  base::RunLoop run_loop_;
-  base::Thread io_thread_;
+  scoped_refptr<base::SingleThreadTaskRunner> io_runner() {
+    return io_thread_.task_runner();
+  }
+  scoped_refptr<base::SingleThreadTaskRunner> main_runner() {
+    return message_loop_.task_runner();
+  }
+  ExternalApplicationListener* listener() { return listener_.get(); }
+  const base::FilePath& socket_path() const { return socket_path_; }
+
+ private:
+  base::TestIOThread io_thread_;
+
+  // Note: This must be *after* |io_thread_|, since it needs to be destroyed
+  // first (to destroy all bound message pipes).
+  base::MessageLoop message_loop_;
+
+  scoped_ptr<ExternalApplicationListener> listener_;
 
   base::ScopedTempDir temp_dir_;
   base::FilePath socket_path_;
-  scoped_ptr<ExternalApplicationListener> listener_;
+
+  DISALLOW_COPY_AND_ASSIGN(ExternalApplicationListenerTest);
 };
 
 namespace {
@@ -114,12 +126,13 @@ void ConnectOnIOThread(const base::FilePath& socket_path,
 }  // namespace
 
 TEST_F(ExternalApplicationListenerTest, ConnectConnection) {
-  listener_->ListenInBackground(socket_path_, base::Bind(&DoLocalRegister));
-  listener_->WaitForListening();
-  io_thread_.task_runner()->PostTask(
-      FROM_HERE, base::Bind(&ConnectOnIOThread, socket_path_,
-                            loop_.task_runner(), run_loop_.QuitClosure()));
-  run_loop_.Run();
+  listener()->ListenInBackground(socket_path(), base::Bind(&DoLocalRegister));
+  listener()->WaitForListening();
+  base::RunLoop run_loop;
+  io_runner()->PostTask(
+      FROM_HERE, base::Bind(&ConnectOnIOThread, socket_path(), main_runner(),
+                            run_loop.QuitClosure()));
+  run_loop.Run();
 }
 
 namespace {
@@ -234,10 +247,11 @@ TEST_F(ExternalApplicationListenerTest, ConnectTwoExternalApplications) {
   application_manager.set_default_loader(
       scoped_ptr<ApplicationLoader>(new NotAnApplicationLoader));
 
-  listener_->ListenInBackground(
-      socket_path_, base::Bind(&ApplicationManager::RegisterExternalApplication,
-                               base::Unretained(&application_manager)));
-  listener_->WaitForListening();
+  listener()->ListenInBackground(
+      socket_path(),
+      base::Bind(&ApplicationManager::RegisterExternalApplication,
+                 base::Unretained(&application_manager)));
+  listener()->WaitForListening();
 
   // Create two external apps.
   scoped_ptr<FakeExternalApplication> supersweet_app(
@@ -246,14 +260,15 @@ TEST_F(ExternalApplicationListenerTest, ConnectTwoExternalApplications) {
       new FakeExternalApplication("http://my.awesome.app"));
 
   // Connecting and talking to the registrar has to happen on the IO thread.
-  io_thread_.task_runner()->PostTask(
-      FROM_HERE, base::Bind(&ConnectAndRegisterOnIOThread, socket_path_,
-                            loop_.task_runner(), run_loop_.QuitClosure(),
-                            supersweet_app.get(), awesome_app.get()));
-  run_loop_.Run();
+  base::RunLoop run_loop;
+  io_runner()->PostTask(FROM_HERE,
+                        base::Bind(&ConnectAndRegisterOnIOThread, socket_path(),
+                                   main_runner(), run_loop.QuitClosure(),
+                                   supersweet_app.get(), awesome_app.get()));
+  run_loop.Run();
 
   // The apps need to be destroyed on the thread where they did socket stuff.
-  io_thread_.task_runner()->PostTask(
+  io_runner()->PostTask(
       FROM_HERE, base::Bind(&DestroyOnIOThread, base::Passed(&supersweet_app),
                             base::Passed(&awesome_app)));
 }
