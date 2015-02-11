@@ -18,7 +18,20 @@ namespace system {
 
 namespace {
 
-void ShutdownChannelHelper(const ChannelInfo& channel_info) {
+void ShutdownChannelHelper(
+    const ChannelInfo& channel_info,
+    base::Closure callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
+  DCHECK(base::MessageLoopProxy::current() ==
+         channel_info.channel_thread_task_runner);
+  channel_info.channel->Shutdown();
+  if (callback_thread_task_runner)
+    callback_thread_task_runner->PostTask(FROM_HERE, callback);
+  else
+    callback.Run();
+}
+
+void ShutdownChannelDeprecatedHelper(const ChannelInfo& channel_info) {
   if (base::MessageLoopProxy::current() ==
       channel_info.channel_thread_task_runner) {
     channel_info.channel->Shutdown();
@@ -38,7 +51,7 @@ ChannelManager::ChannelManager(embedder::PlatformSupport* platform_support)
 ChannelManager::~ChannelManager() {
   // No need to take the lock.
   for (const auto& map_elem : channel_infos_)
-    ShutdownChannelHelper(map_elem.second);
+    ShutdownChannelDeprecatedHelper(map_elem.second);
 }
 
 scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannelOnIOThread(
@@ -87,7 +100,7 @@ void ChannelManager::WillShutdownChannel(ChannelId channel_id) {
   GetChannel(channel_id)->WillShutdownSoon();
 }
 
-void ChannelManager::ShutdownChannel(ChannelId channel_id) {
+void ChannelManager::ShutdownChannelOnIOThread(ChannelId channel_id) {
   ChannelInfo channel_info;
   {
     base::AutoLock locker(lock_);
@@ -96,7 +109,39 @@ void ChannelManager::ShutdownChannel(ChannelId channel_id) {
     channel_info.Swap(&it->second);
     channel_infos_.erase(it);
   }
-  ShutdownChannelHelper(channel_info);
+  DCHECK(base::MessageLoopProxy::current() ==
+         channel_info.channel_thread_task_runner);
+  channel_info.channel->Shutdown();
+}
+
+void ChannelManager::ShutdownChannel(
+    ChannelId channel_id,
+    base::Closure callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
+  ChannelInfo channel_info;
+  {
+    base::AutoLock locker(lock_);
+    auto it = channel_infos_.find(channel_id);
+    DCHECK(it != channel_infos_.end());
+    channel_info.Swap(&it->second);
+    channel_infos_.erase(it);
+  }
+  channel_info.channel->WillShutdownSoon();
+  channel_info.channel_thread_task_runner->PostTask(
+      FROM_HERE, base::Bind(&ShutdownChannelHelper, channel_info, callback,
+                            callback_thread_task_runner));
+}
+
+void ChannelManager::ShutdownChannelDeprecated(ChannelId channel_id) {
+  ChannelInfo channel_info;
+  {
+    base::AutoLock locker(lock_);
+    auto it = channel_infos_.find(channel_id);
+    DCHECK(it != channel_infos_.end());
+    channel_info.Swap(&it->second);
+    channel_infos_.erase(it);
+  }
+  ShutdownChannelDeprecatedHelper(channel_info);
 }
 
 void ChannelManager::CreateChannelOnIOThreadHelper(

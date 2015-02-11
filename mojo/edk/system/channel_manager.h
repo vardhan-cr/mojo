@@ -82,12 +82,30 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   // the channel).
   void WillShutdownChannel(ChannelId channel_id);
 
+  // Shuts down the channel specified by the given ID. This, or
+  // |ShutdownChannel()|, should be called once per channel (created using
+  // |CreateChannelOnIOThread()| or |CreateChannel()|). This must be called from
+  // the channel's "channel thread", and completes synchronously.
+  // TODO(vtl): "channel thread" will become "this object's I/O thread".
+  void ShutdownChannelOnIOThread(ChannelId channel_id);
+
+  // Like |ShutdownChannelOnIOThread()|, but may be called from any thread. It
+  // will always post a task to the channel's "channel thread", and post
+  // |callback| to |callback_thread_task_runner| (or execute it directly on the
+  // "channel thread" if |callback_thread_task_runner| is null) on completion.
+  // TODO(vtl): "channel thread" will become "this object's I/O thread".
+  void ShutdownChannel(
+      ChannelId channel_id,
+      base::Closure callback,
+      scoped_refptr<base::TaskRunner> callback_thread_task_runner);
+
+  // DEPRECATED. TODO(vtl): Remove.
   // Shuts down the channel specified by the given ID. It is up to the caller to
   // guarantee that this is only called once per channel (that was added using
-  // |CreateChannelOnIOThread()|). If called from the channel's creation thread
-  // (i.e., |base::MessageLoopProxy::current()| is the channel thread's
-  // |TaskRunner|), this will complete synchronously.
-  void ShutdownChannel(ChannelId channel_id);
+  // |CreateChannelOnIOThread()| or |CreateChannel()|). If called from the
+  // channel's creation thread (i.e., |base::MessageLoopProxy::current()| is the
+  // channel thread's |TaskRunner|), this will complete synchronously.
+  void ShutdownChannelDeprecated(ChannelId channel_id);
 
  private:
   // Used by |CreateChannelOnIOThread()| and |CreateChannelHelper()|. Called on

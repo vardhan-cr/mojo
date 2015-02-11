@@ -10,10 +10,7 @@
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/run_loop.h"
 #include "base/task_runner.h"
-#include "base/test/test_timeouts.h"
-#include "base/threading/platform_thread.h"
 #include "base/threading/simple_thread.h"
-#include "base/time/time.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
@@ -61,8 +58,7 @@ TEST_F(ChannelManagerTest, Basic) {
   // |ChannelManager| should still have a ref.
   EXPECT_FALSE(ch->HasOneRef());
 
-  cm.ShutdownChannel(id);
-  // On the "I/O" thread, so shutdown should happen synchronously.
+  cm.ShutdownChannelOnIOThread(id);
   // |ChannelManager| should have given up its ref.
   EXPECT_TRUE(ch->HasOneRef());
 
@@ -94,9 +90,9 @@ TEST_F(ChannelManagerTest, TwoChannels) {
   EXPECT_FALSE(ch1->HasOneRef());
   // Not calling |WillShutdownChannel()| (on |id2|) is okay too.
 
-  cm.ShutdownChannel(id1);
+  cm.ShutdownChannelOnIOThread(id1);
   EXPECT_TRUE(ch1->HasOneRef());
-  cm.ShutdownChannel(id2);
+  cm.ShutdownChannelOnIOThread(id2);
   EXPECT_TRUE(ch2->HasOneRef());
 
   EXPECT_EQ(MOJO_RESULT_OK, d1->Close());
@@ -132,20 +128,12 @@ class OtherThread : public base::SimpleThread {
     // |ChannelManager| should still have a ref.
     EXPECT_FALSE(ch->HasOneRef());
 
-    channel_manager_->ShutdownChannel(channel_id_);
-    // This doesn't happen synchronously, so we "wait" until it does.
-    // TODO(vtl): Probably |Channel| should provide some notification of being
-    // shut down.
-    base::TimeTicks start_time(base::TimeTicks::Now());
-    for (;;) {
-      if (ch->HasOneRef())
-        break;
-
-      // Check, instead of assert, since if things go wrong, dying is more
-      // reliable than tearing down.
-      CHECK_LT(base::TimeTicks::Now() - start_time,
-               TestTimeouts::action_timeout());
-      base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(20));
+    {
+      base::MessageLoop message_loop;
+      base::RunLoop run_loop;
+      channel_manager_->ShutdownChannel(channel_id_, run_loop.QuitClosure(),
+                                        message_loop.task_runner());
+      run_loop.Run();
     }
 
     CHECK(task_runner_->PostTask(FROM_HERE, quit_closure_));
