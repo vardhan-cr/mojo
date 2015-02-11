@@ -30,6 +30,9 @@ HttpServerImpl::HttpServerImpl(mojo::ApplicationImpl* app)
   Start();
 }
 
+HttpServerImpl::~HttpServerImpl() {
+}
+
 void HttpServerImpl::AddBinding(mojo::InterfaceRequest<HttpServer> request) {
   bindings_.AddBinding(this, request.Pass());
 }
@@ -157,6 +160,9 @@ void HttpServerImpl::OnResponse(Connection* connection,
 HttpServerImpl::Handler::Handler(const std::string& pattern,
                                  HttpHandlerPtr http_handler)
     : pattern(new RE2(pattern.c_str())), http_handler(http_handler.Pass()) {
+}
+
+HttpServerImpl::Handler::~Handler() {
 }
 
 }  // namespace http_server

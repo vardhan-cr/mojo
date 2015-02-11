@@ -24,6 +24,7 @@ class Connection;
 class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
  public:
   HttpServerImpl(mojo::ApplicationImpl* app);
+  ~HttpServerImpl() override;
 
   void AddBinding(mojo::InterfaceRequest<HttpServer> request);
 
@@ -54,6 +55,7 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
 
   struct Handler {
     Handler(const std::string& pattern, HttpHandlerPtr http_handler);
+    ~Handler();
     scoped_ptr<re2::RE2> pattern;
     HttpHandlerPtr http_handler;
 
