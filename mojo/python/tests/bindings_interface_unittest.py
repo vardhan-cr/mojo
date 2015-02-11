@@ -42,17 +42,7 @@ class ServiceImpl(sample_service_mojom.Service):
 
   # pylint: disable=C0102,W0613
   def Frobinate(self, foo, baz, port):
-    if self.client:
-      self.client.DidFrobinate(baz)
-
-
-class ServiceClientImpl(sample_service_mojom.ServiceClient):
-
-  def __init__(self):
-    self.last_res = None
-
-  def DidFrobinate(self, result):
-    self.last_res = result
+    return baz
 
 
 class NamedObjectImpl(sample_factory_mojom.NamedObject):
@@ -130,8 +120,3 @@ class InterfaceTest(mojo_unittest.MojoTestCase):
     self.loop.RunUntilIdle()
 
     self.assertEquals(p1.state, promise.Promise.STATE_REJECTED)
-
-  def testImportedClient(self):
-    pipe = system.MessagePipe()
-    regression_tests_mojom.InterfaceWithClientImported.manager.Proxy(
-        pipe.handle0)

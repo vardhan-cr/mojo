@@ -11,8 +11,8 @@ import org.chromium.base.test.util.UrlUtils;
 import org.chromium.mojo.HandleMock;
 import org.chromium.mojo.MojoTestCase;
 import org.chromium.mojo.bindings.test.mojom.mojo.ConformanceTestInterface;
-import org.chromium.mojo.bindings.test.mojom.mojo.IntegrationTestInterface1;
-import org.chromium.mojo.bindings.test.mojom.mojo.IntegrationTestInterface2TestHelper;
+import org.chromium.mojo.bindings.test.mojom.mojo.IntegrationTestInterface;
+import org.chromium.mojo.bindings.test.mojom.mojo.IntegrationTestInterfaceTestHelper;
 import org.chromium.mojo.system.Handle;
 
 import java.io.File;
@@ -120,10 +120,11 @@ public class ValidationTest extends MojoTestCase {
     }
 
     private static class RoutingMessageReceiver implements MessageReceiver {
-        private final MessageReceiver mRequest;
+        private final MessageReceiverWithResponder mRequest;
         private final MessageReceiver mResponse;
 
-        private RoutingMessageReceiver(MessageReceiver request, MessageReceiver response) {
+        private RoutingMessageReceiver(MessageReceiverWithResponder request,
+                MessageReceiver response) {
             this.mRequest = request;
             this.mResponse = response;
         }
@@ -138,7 +139,7 @@ public class ValidationTest extends MojoTestCase {
                 if (header.hasFlag(MessageHeader.MESSAGE_IS_RESPONSE_FLAG)) {
                     return mResponse.accept(message);
                 } else {
-                    return mRequest.accept(message);
+                    return mRequest.acceptWithResponder(message, new SinkMessageReceiver());
                 }
             } catch (DeserializationException e) {
                 return false;
@@ -161,7 +162,7 @@ public class ValidationTest extends MojoTestCase {
 
         @Override
         public boolean accept(Message message) {
-            return false;
+            return true;
         }
 
         @Override
@@ -170,7 +171,7 @@ public class ValidationTest extends MojoTestCase {
 
         @Override
         public boolean acceptWithResponder(Message message, MessageReceiver responder) {
-            return false;
+            return true;
         }
     }
 
@@ -189,10 +190,10 @@ public class ValidationTest extends MojoTestCase {
     @SmallTest
     public void testIntegration() throws FileNotFoundException {
         runTest("integration_",
-                new RoutingMessageReceiver(IntegrationTestInterface1.MANAGER.buildStub(null,
-                        IntegrationTestInterface1.MANAGER.buildProxy(null,
+                new RoutingMessageReceiver(IntegrationTestInterface.MANAGER.buildStub(null,
+                        IntegrationTestInterface.MANAGER.buildProxy(null,
                                 new SinkMessageReceiver())),
-                        IntegrationTestInterface2TestHelper
-                                .newIntegrationTestInterface2MethodCallback()));
+                        IntegrationTestInterfaceTestHelper
+                                .newIntegrationTestInterfaceMethodCallback()));
     }
 }

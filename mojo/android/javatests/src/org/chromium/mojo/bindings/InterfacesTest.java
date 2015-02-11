@@ -10,14 +10,12 @@ import org.chromium.mojo.MojoTestCase;
 import org.chromium.mojo.bindings.BindingsTestUtils.CapturingErrorHandler;
 import org.chromium.mojo.bindings.test.mojom.imported.ImportedInterface;
 import org.chromium.mojo.bindings.test.mojom.sample.Factory;
-import org.chromium.mojo.bindings.test.mojom.sample.FactoryClient;
 import org.chromium.mojo.bindings.test.mojom.sample.NamedObject;
 import org.chromium.mojo.bindings.test.mojom.sample.NamedObject.GetNameResponse;
 import org.chromium.mojo.bindings.test.mojom.sample.Request;
 import org.chromium.mojo.bindings.test.mojom.sample.Response;
 import org.chromium.mojo.system.DataPipe.ConsumerHandle;
 import org.chromium.mojo.system.MessagePipeHandle;
-import org.chromium.mojo.system.MojoException;
 import org.chromium.mojo.system.Pair;
 import org.chromium.mojo.system.impl.CoreImpl;
 
@@ -101,16 +99,9 @@ public class InterfacesTest extends MojoTestCase {
     public class MockFactoryImpl extends CapturingErrorHandler implements Factory {
 
         private boolean mClosed = false;
-        private FactoryClient mFactoryClient;
 
         public boolean isClosed() {
             return mClosed;
-        }
-
-        @Override
-        public void setClient(FactoryClient client) {
-            mFactoryClient = client;
-            mCloseablesToClose.add(client);
         }
 
         /**
@@ -122,17 +113,18 @@ public class InterfacesTest extends MojoTestCase {
         }
 
         @Override
-        public void doStuff(Request request, MessagePipeHandle pipe) {
+        public void doStuff(Request request, MessagePipeHandle pipe, DoStuffResponse callback) {
             if (pipe != null) {
                 pipe.close();
             }
             Response response = new Response();
             response.x = 42;
-            mFactoryClient.didStuff(response, "Hello");
+            callback.call(response, "Hello");
         }
 
         @Override
-        public void doStuff2(ConsumerHandle pipe) {
+        public void doStuff2(ConsumerHandle pipe, DoStuff2Response callback) {
+            callback.call("World");
         }
 
         @Override
@@ -154,51 +146,19 @@ public class InterfacesTest extends MojoTestCase {
     }
 
     /**
-     * Basic implementation of {@link FactoryClient}.
+     * Implementation of DoStuffResponse that keeps track of if the response is called.
      */
-    public static class MockFactoryClientImpl implements FactoryClient {
+    public class DoStuffResponseImpl implements Factory.DoStuffResponse {
+        private boolean mResponseCalled = false;
 
-        private boolean mClosed = false;
-        private boolean mDidStuffCalled = false;
-
-        public boolean isClosed() {
-            return mClosed;
+        public boolean wasResponseCalled() {
+            return mResponseCalled;
         }
 
-        public boolean wasDidStuffCalled() {
-            return mDidStuffCalled;
-        }
-
-        /**
-         * @see org.chromium.mojo.bindings.Interface#close()
-         */
         @Override
-        public void close() {
-            mClosed = true;
+        public void call(Response response, String string) {
+            mResponseCalled = true;
         }
-
-        /**
-         * @see ConnectionErrorHandler#onConnectionError(MojoException)
-         */
-        @Override
-        public void onConnectionError(MojoException e) {
-        }
-
-        /**
-         * @see FactoryClient#didStuff(Response, java.lang.String)
-         */
-        @Override
-        public void didStuff(Response response, String text) {
-            mDidStuffCalled = true;
-        }
-
-        /**
-         * @see FactoryClient#didStuff2(String)
-         */
-        @Override
-        public void didStuff2(String text) {
-        }
-
     }
 
     /**
@@ -220,17 +180,6 @@ public class InterfacesTest extends MojoTestCase {
         Pair<MessagePipeHandle, MessagePipeHandle> handles =
                 CoreImpl.getInstance().createMessagePipe(null);
         P proxy = manager.attachProxy(handles.first);
-        mCloseablesToClose.add(proxy);
-        manager.bind(impl, handles.second);
-        return proxy;
-    }
-
-    private <I extends InterfaceWithClient<C>, P extends InterfaceWithClient.Proxy<C>,
-            C extends Interface> P newProxyOverPipeWithClient(
-            InterfaceWithClient.Manager<I, P, C> manager, I impl, C client) {
-        Pair<MessagePipeHandle, MessagePipeHandle> handles =
-                CoreImpl.getInstance().createMessagePipe(null);
-        P proxy = manager.attachProxy(handles.first, client);
         mCloseablesToClose.add(proxy);
         manager.bind(impl, handles.second);
         return proxy;
@@ -311,34 +260,31 @@ public class InterfacesTest extends MojoTestCase {
     @SmallTest
     public void testInterfaceClosing() {
         MockFactoryImpl impl = new MockFactoryImpl();
-        MockFactoryClientImpl client = new MockFactoryClientImpl();
-        Factory.Proxy proxy = newProxyOverPipeWithClient(
-                Factory.MANAGER, impl, client);
+        Factory.Proxy proxy = newProxyOverPipe(Factory.MANAGER, impl);
 
         assertFalse(impl.isClosed());
-        assertFalse(client.isClosed());
 
         proxy.close();
         runLoopUntilIdle();
 
         assertTrue(impl.isClosed());
-        assertTrue(client.isClosed());
     }
 
     @SmallTest
     public void testClient() {
         MockFactoryImpl impl = new MockFactoryImpl();
-        MockFactoryClientImpl client = new MockFactoryClientImpl();
-        Factory.Proxy proxy = newProxyOverPipeWithClient(
-                Factory.MANAGER, impl, client);
+        Factory.Proxy proxy = newProxyOverPipe(Factory.MANAGER, impl);
         Request request = new Request();
         request.x = 42;
-        proxy.doStuff(request, null);
+        Pair<MessagePipeHandle, MessagePipeHandle> handles =
+                CoreImpl.getInstance().createMessagePipe(null);
+        DoStuffResponseImpl response = new DoStuffResponseImpl();
+        proxy.doStuff(request, handles.first, response);
 
-        assertFalse(client.wasDidStuffCalled());
+        assertFalse(response.wasResponseCalled());
 
         runLoopUntilIdle();
 
-        assertTrue(client.wasDidStuffCalled());
+        assertTrue(response.wasResponseCalled());
     }
 }
