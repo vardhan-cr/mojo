@@ -14,7 +14,7 @@ class ConsoleApplication extends Application {
 
   ConsoleApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void initialize(List<String> args) {
+  void initialize(List<String> args, String url) {
     _proxy = new ConsoleProxy.unbound();
     connectToService("mojo:console", _proxy);
     run();

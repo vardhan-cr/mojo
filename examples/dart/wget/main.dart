@@ -20,7 +20,7 @@ class WGet extends Application {
 
   WGet.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void initialize(List<String> args) {
+  void initialize(List<String> args, String url) {
     run(args);
   }
 
@@ -72,7 +72,6 @@ class WGet extends Application {
 
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
-  String url = args[1];
   var wget = new WGet.fromHandle(appHandle);
   wget.listen();
 }
