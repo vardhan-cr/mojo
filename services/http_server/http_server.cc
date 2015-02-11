@@ -67,11 +67,9 @@ class HttpServerApp : public HttpServer,
   // ErrorHandler:
   void OnConnectionError() override {
     handlers_.erase(
-        std::remove_if(handlers_.begin(),
-                       handlers_.end(),
-                       [](Handler* h) {
-                         return h->http_handler.encountered_error();
-                       }));
+        std::remove_if(handlers_.begin(), handlers_.end(), [](Handler* h) {
+      return h->http_handler.encountered_error();
+    }), handlers_.end());
   }
 
   // ApplicationDelegate:
