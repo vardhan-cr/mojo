@@ -11,13 +11,16 @@ group("default") {
     "//mojo",
     "//services",
     "//shell",
-    "//sky",
     "//ui/gfx:gfx_unittests",
     "//ui/events:events_unittests",
   ]
 
   if (!is_android && !is_win) {
     deps += [ "//tools/xdisplaycheck" ]
+  }
+
+  if (!is_asan) {
+    deps += [ "//sky" ]
   }
 }
 
