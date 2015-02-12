@@ -161,6 +161,10 @@ $ ninja -C out/Debug -j 1000
 0. Prerequisites:
     * Before you start, you'll need a device with an unlocked bootloader, otherwise you won't be able to run adb root (or any of the commands that require root). For Googlers, <a href="http://go/mojo-internal-build-instructions">follow this link</a> and follow the instructions before returning to this page.
     * Ensure your device is running Lollipop and has an userdebug build.
+    * Set up environment for building on Android. This sets up the adb path, etc. You may need to remove /usr/bin/adb.
+    ```
+    source build/android/envsetup.sh
+    ```
 
 1. Build changed files:
     ```
