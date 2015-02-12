@@ -33,17 +33,10 @@ class ExampleApplicationTest : public test::ApplicationTestBase {
   MOJO_DISALLOW_COPY_AND_ASSIGN(ExampleApplicationTest);
 };
 
-struct PongCallback {
-  explicit PongCallback(uint16_t* pong_value) : pong_value(pong_value) {}
-
-  void Run(uint16_t value) const { *pong_value = value; }
-
-  uint16_t* pong_value;
-};
-
 TEST_F(ExampleApplicationTest, PingServiceToPong) {
   uint16_t pong_value = 0u;
-  example_service_->Ping(1u, PongCallback(&pong_value));
+  example_service_->Ping(1u,
+                         [&pong_value](uint16_t value) { pong_value = value; });
   EXPECT_TRUE(example_service_.WaitForIncomingMethodCall());
   // Test making a call and receiving the reply.
   EXPECT_EQ(1u, pong_value);
