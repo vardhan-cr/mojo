@@ -36,7 +36,7 @@ tests = [
     "test": "external_application_unittests",
   },
   {
-    "test": "mojo_view_manager_lib_unittests",
+    "test": "mojo_view_lib_unittests",
   },
   {
     "test": "mojo_surfaces_lib_unittests",

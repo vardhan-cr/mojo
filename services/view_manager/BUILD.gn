@@ -140,6 +140,21 @@ test("view_manager_service_unittests") {
   }
 }
 
+mojo_native_application("mojo_view_manager_client_apptests") {
+  testonly = true
+
+  sources = [
+    "view_manager_client_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/services/view_manager/public/cpp",
+  ]
+}
+
 mojo_native_application("view_manager_service_apptests") {
   testonly = true
 
