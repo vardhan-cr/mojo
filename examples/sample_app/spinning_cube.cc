@@ -22,54 +22,117 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mojo/public/cpp/environment/logging.h"
+
 namespace examples {
 
 namespace {
 
 const float kPi = 3.14159265359f;
+const int kNumVertices = 24;
 
 int GenerateCube(GLuint *vbo_vertices,
                  GLuint *vbo_indices) {
   const int num_indices = 36;
 
-  const GLfloat cube_vertices[] = {
+  const GLfloat cube_vertices[kNumVertices * 3] = {
+    // -Y side.
     -0.5f, -0.5f, -0.5f,
     -0.5f, -0.5f,  0.5f,
     0.5f, -0.5f,  0.5f,
     0.5f, -0.5f, -0.5f,
+
+    // +Y side.
     -0.5f,  0.5f, -0.5f,
     -0.5f,  0.5f,  0.5f,
     0.5f,  0.5f,  0.5f,
     0.5f,  0.5f, -0.5f,
+
+    // -Z side.
     -0.5f, -0.5f, -0.5f,
     -0.5f,  0.5f, -0.5f,
     0.5f,  0.5f, -0.5f,
     0.5f, -0.5f, -0.5f,
+
+    // +Z side.
     -0.5f, -0.5f, 0.5f,
     -0.5f,  0.5f, 0.5f,
     0.5f,  0.5f, 0.5f,
     0.5f, -0.5f, 0.5f,
+
+    // -X side.
     -0.5f, -0.5f, -0.5f,
     -0.5f, -0.5f,  0.5f,
     -0.5f,  0.5f,  0.5f,
     -0.5f,  0.5f, -0.5f,
+
+    // +X side.
     0.5f, -0.5f, -0.5f,
     0.5f, -0.5f,  0.5f,
     0.5f,  0.5f,  0.5f,
     0.5f,  0.5f, -0.5f,
   };
 
+  const GLfloat vertex_normals[kNumVertices * 3] = {
+    // -Y side.
+    0.0f, -1.0f, 0.0f,
+    0.0f, -1.0f, 0.0f,
+    0.0f, -1.0f, 0.0f,
+    0.0f, -1.0f, 0.0f,
+
+    // +Y side.
+    0.0f, 1.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+
+    // -Z side.
+    0.0f, 0.0f, -1.0f,
+    0.0f, 0.0f, -1.0f,
+    0.0f, 0.0f, -1.0f,
+    0.0f, 0.0f, -1.0f,
+
+    // +Z side.
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f,
+
+    // -X side.
+    -1.0f, 0.0f, 0.0f,
+    -1.0f, 0.0f, 0.0f,
+    -1.0f, 0.0f, 0.0f,
+    -1.0f, 0.0f, 0.0f,
+
+    // +X side.
+    1.0f, 0.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,
+    1.0f, 0.0f, 0.0f,
+  };
+
   const GLushort cube_indices[] = {
+    // -Y side.
     0, 2, 1,
     0, 3, 2,
+
+    // +Y side.
     4, 5, 6,
     4, 6, 7,
+
+    // -Z side.
     8, 9, 10,
     8, 10, 11,
+
+    // +Z side.
     12, 15, 14,
     12, 14, 13,
+
+    // -X side.
     16, 17, 18,
     16, 18, 19,
+
+    // +X side.
     20, 23, 22,
     20, 22, 21
   };
@@ -78,9 +141,12 @@ int GenerateCube(GLuint *vbo_vertices,
     glGenBuffers(1, vbo_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_vertices);
     glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(cube_vertices),
-                 cube_vertices,
+                 sizeof(cube_vertices) + sizeof(vertex_normals),
+                 nullptr,
                  GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cube_vertices), cube_vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cube_vertices),
+                    sizeof(vertex_normals), vertex_normals);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
   }
 
@@ -107,6 +173,14 @@ GLuint LoadShader(GLenum type,
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 
   if (!compiled) {
+    GLsizei expected_length = 0;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &expected_length);
+    std::string log;
+    log.resize(expected_length);  // Includes null terminator.
+    GLsizei actual_length = 0;
+    glGetShaderInfoLog(shader, expected_length, &actual_length, &log[0]);
+    log.resize(actual_length);  // Excludes null terminator.
+    MOJO_LOG(FATAL) << "Compilation of shader failed: " << log;
     glDeleteShader(shader);
     return 0;
   }
@@ -114,10 +188,10 @@ GLuint LoadShader(GLenum type,
   return shader;
 }
 
-GLuint LoadProgram(const char* vertext_shader_source,
+GLuint LoadProgram(const char* vertex_shader_source,
                    const char* fragment_shader_source) {
   GLuint vertex_shader = LoadShader(GL_VERTEX_SHADER,
-                                    vertext_shader_source);
+                                    vertex_shader_source);
   if (!vertex_shader)
     return 0;
 
@@ -131,16 +205,22 @@ GLuint LoadProgram(const char* vertext_shader_source,
   GLuint program_object = glCreateProgram();
   glAttachShader(program_object, vertex_shader);
   glAttachShader(program_object, fragment_shader);
-
   glLinkProgram(program_object);
-
   glDeleteShader(vertex_shader);
   glDeleteShader(fragment_shader);
 
   GLint linked = 0;
   glGetProgramiv(program_object, GL_LINK_STATUS, &linked);
-
   if (!linked) {
+    GLsizei expected_length = 0;
+    glGetProgramiv(program_object, GL_INFO_LOG_LENGTH, &expected_length);
+    std::string log;
+    log.resize(expected_length);  // Includes null terminator.
+    GLsizei actual_length = 0;
+    glGetProgramInfoLog(program_object, expected_length, &actual_length,
+                        &log[0]);
+    log.resize(actual_length);  // Excludes null terminator.
+    MOJO_LOG(FATAL) << "Linking program failed: " << log;
     glDeleteProgram(program_object);
     return 0;
   }
@@ -312,8 +392,8 @@ class SpinningCube::GLState {
 
   GLuint program_object_;
   GLint position_location_;
+  GLint normal_location_;
   GLint mvp_location_;
-  GLint color_location_;
   GLuint vbo_vertices_;
   GLuint vbo_indices_;
   int num_indices_;
@@ -328,8 +408,8 @@ SpinningCube::GLState::GLState()
 void SpinningCube::GLState::OnGLContextLost() {
   program_object_ = 0;
   position_location_ = 0;
+  normal_location_ = 0;
   mvp_location_ = 0;
-  color_location_ = 0;
   vbo_vertices_ = 0;
   vbo_indices_ = 0;
   num_indices_ = 0;
@@ -362,34 +442,45 @@ void SpinningCube::Init(uint32_t width, uint32_t height) {
   width_ = width;
   height_ = height;
 
-  const char vertext_shader_source[] =
-      "uniform mat4 u_mvpMatrix;                   \n"
-      "attribute vec4 a_position;                  \n"
-      "void main()                                 \n"
-      "{                                           \n"
-      "   gl_Position = u_mvpMatrix * a_position;  \n"
-      "}                                           \n";
+  const char vertex_shader_source[] =
+      "uniform mat4 u_mvpMatrix;                                       \n"
+      "attribute vec4 a_position;                                      \n"
+      "attribute vec4 a_normal;                                        \n"
+      "varying vec4 v_color;                                           \n"
+      "void main()                                                     \n"
+      "{                                                               \n"
+      "   gl_Position = u_mvpMatrix * a_position;                      \n"
+      "   vec4 rotated_normal = u_mvpMatrix * a_normal;                \n"
+      "   vec4 light_direction = normalize(vec4(0.0, 1.0, -1.0, 0.0)); \n"
+      "   float directional_capture =                                  \n"
+      "       clamp(dot(rotated_normal, light_direction), 0.0, 1.0);   \n"
+      "   float light_intensity = 0.6 * directional_capture + 0.4;     \n"
+      "   vec3 base_color = a_position.xyz + 0.5;                      \n"
+      "   v_color = vec4(base_color * light_intensity, 1.0);           \n"
+      "}                                                               \n";
 
   const char fragment_shader_source[] =
       "precision mediump float;                            \n"
-      "uniform vec4 u_color;                               \n"
+      "varying vec4 v_color;                               \n"
       "void main()                                         \n"
       "{                                                   \n"
-      "  gl_FragColor = u_color;                           \n"
+      "   gl_FragColor = v_color;                          \n"
       "}                                                   \n";
 
   state_->program_object_ = LoadProgram(
-      vertext_shader_source, fragment_shader_source);
+      vertex_shader_source, fragment_shader_source);
   state_->position_location_ = glGetAttribLocation(
       state_->program_object_, "a_position");
+  state_->normal_location_ = glGetAttribLocation(
+      state_->program_object_, "a_normal");
   state_->mvp_location_ = glGetUniformLocation(
       state_->program_object_, "u_mvpMatrix");
-  state_->color_location_ = glGetUniformLocation(
-      state_->program_object_, "u_color");
   state_->num_indices_ = GenerateCube(
       &state_->vbo_vertices_, &state_->vbo_indices_);
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_DEPTH_TEST);
   initialized_ = true;
 }
 
@@ -431,25 +522,21 @@ void SpinningCube::UpdateForDragDistance(float distance) {
 
 void SpinningCube::Draw() {
   glViewport(0, 0, width_, height_);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(state_->program_object_);
   glBindBuffer(GL_ARRAY_BUFFER, state_->vbo_vertices_);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state_->vbo_indices_);
-  glVertexAttribPointer(state_->position_location_,
-                           3,
-                           GL_FLOAT,
-                           GL_FALSE, 3 * sizeof(GLfloat),
-                           0);
+  glVertexAttribPointer(state_->position_location_, 3, GL_FLOAT, GL_FALSE,
+                        3 * sizeof(GLfloat), 0);
+  glVertexAttribPointer(state_->normal_location_, 3, GL_FLOAT, GL_FALSE,
+                        3 * sizeof(GLfloat),
+                        reinterpret_cast<void*>(3 * sizeof(GLfloat) *
+                                                kNumVertices));
   glEnableVertexAttribArray(state_->position_location_);
-  glUniformMatrix4fv(state_->mvp_location_,
-                        1,
-                        GL_FALSE,
-                        (GLfloat*) &state_->mvp_matrix_.m[0][0]);
-  glUniform4f(state_->color_location_, color_[0], color_[1], color_[2], 1.0);
-  glDrawElements(GL_TRIANGLES,
-                    state_->num_indices_,
-                    GL_UNSIGNED_SHORT,
-                    0);
+  glEnableVertexAttribArray(state_->normal_location_);
+  glUniformMatrix4fv(state_->mvp_location_, 1, GL_FALSE,
+                     static_cast<GLfloat*>(&state_->mvp_matrix_.m[0][0]));
+  glDrawElements(GL_TRIANGLES, state_->num_indices_, GL_UNSIGNED_SHORT, 0);
 }
 
 void SpinningCube::Update() {

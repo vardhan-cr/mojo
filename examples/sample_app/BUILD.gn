@@ -35,5 +35,6 @@ source_set("spinning_cube") {
   deps = [
     "//base",
     "//mojo/public/c/gles2",
+    "//mojo/public/cpp/environment",
   ]
 }
