@@ -17,10 +17,6 @@ tests = [
     "test": "mojo:network_service_apptests",
   },
   {
-    "test": "mojo:mojo_view_manager_client_apptests",
-    "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
-  },
-  {
     "test": "mojo:view_manager_service_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },

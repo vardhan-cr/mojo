@@ -4,41 +4,96 @@
 
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 
+#include "base/auto_reset.h"
+#include "base/bind.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
-#include "base/run_loop.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/geometry/public/cpp/geometry_util.h"
 #include "mojo/services/view_manager/public/cpp/lib/view_manager_client_impl.h"
+#include "mojo/services/view_manager/public/cpp/lib/view_private.h"
+#include "mojo/services/view_manager/public/cpp/util.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
-#include "mojo/services/view_manager/public/cpp/view_manager_context.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
+#include "shell/application_manager/application_manager.h"
+#include "shell/shell_test_helper.h"
+#include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
 
 namespace {
 
-const char kViewManagerClientTestAppURL[] =
-    "mojo:mojo_view_manager_client_apptests";
+const char kWindowManagerURL[] = "mojo:window_manager";
+const char kEmbeddedApp1URL[] = "mojo:embedded_app_1";
 
-base::RunLoop* current_run_loop = nullptr;
+base::RunLoop* current_run_loop = NULL;
 
 void DoRunLoop() {
   base::RunLoop run_loop;
   current_run_loop = &run_loop;
   current_run_loop->Run();
-  current_run_loop = nullptr;
+  current_run_loop = NULL;
 }
 
 void QuitRunLoop() {
   current_run_loop->Quit();
 }
+
+class ConnectApplicationLoader : public ApplicationLoader,
+                                 public ApplicationDelegate,
+                                 public ViewManagerDelegate {
+ public:
+  typedef base::Callback<void(View*)> LoadedCallback;
+
+  explicit ConnectApplicationLoader(const LoadedCallback& callback)
+      : callback_(callback) {}
+  ~ConnectApplicationLoader() override {}
+
+ private:
+  // Overridden from ApplicationDelegate:
+  void Initialize(ApplicationImpl* app) override {
+    view_manager_client_factory_.reset(
+        new ViewManagerClientFactory(app->shell(), this));
+  }
+
+  // Overridden from ApplicationLoader:
+  void Load(ApplicationManager* manager,
+            const GURL& url,
+            InterfaceRequest<Application> application_request,
+            LoadCallback callback) override {
+    ASSERT_TRUE(application_request.is_pending());
+    scoped_ptr<ApplicationImpl> app(
+        new ApplicationImpl(this, application_request.Pass()));
+    apps_.push_back(app.release());
+  }
+
+  void OnApplicationError(ApplicationManager* manager,
+                          const GURL& url) override {}
+
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    connection->AddService(view_manager_client_factory_.get());
+    return true;
+  }
+
+  // Overridden from ViewManagerDelegate:
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
+    callback_.Run(root);
+  }
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {}
+
+  ScopedVector<ApplicationImpl> apps_;
+  LoadedCallback callback_;
+  scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
+
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ConnectApplicationLoader);
+};
 
 class BoundsChangeObserver : public ViewObserver {
  public:
@@ -72,10 +127,13 @@ void WaitForBoundsToChange(View* view) {
 class TreeSizeMatchesObserver : public ViewObserver {
  public:
   TreeSizeMatchesObserver(View* tree, size_t tree_size)
-      : tree_(tree), tree_size_(tree_size) {}
+      : tree_(tree),
+        tree_size_(tree_size) {}
   ~TreeSizeMatchesObserver() override {}
 
-  bool IsTreeCorrectSize() { return CountViews(tree_) == tree_size_; }
+  bool IsTreeCorrectSize() {
+    return CountViews(tree_) == tree_size_;
+  }
 
  private:
   // Overridden from ViewObserver:
@@ -100,17 +158,56 @@ class TreeSizeMatchesObserver : public ViewObserver {
 
 void WaitForTreeSizeToMatch(View* view, size_t tree_size) {
   TreeSizeMatchesObserver observer(view, tree_size);
-  if (observer.IsTreeCorrectSize()) {
+  if (observer.IsTreeCorrectSize())
     return;
-  }
   view->AddObserver(&observer);
   DoRunLoop();
   view->RemoveObserver(&observer);
 }
 
+// Utility class that waits for the destruction of some number of views and
+// views.
+class DestructionObserver : public ViewObserver {
+ public:
+  // |views| or |views| can be NULL.
+  explicit DestructionObserver(std::set<Id>* views) : views_(views) {}
+
+ private:
+  // Overridden from ViewObserver:
+  void OnViewDestroyed(View* view) override {
+    std::set<Id>::iterator it = views_->find(view->id());
+    if (it != views_->end())
+      views_->erase(it);
+    if (CanQuit())
+      QuitRunLoop();
+  }
+
+  bool CanQuit() {
+    return !views_ || views_->empty();
+  }
+
+  std::set<Id>* views_;
+
+  MOJO_DISALLOW_COPY_AND_ASSIGN(DestructionObserver);
+};
+
+void WaitForDestruction(ViewManager* view_manager, std::set<Id>* views) {
+  DestructionObserver observer(views);
+  DCHECK(views);
+  if (views) {
+    for (std::set<Id>::const_iterator it = views->begin();
+          it != views->end(); ++it) {
+      view_manager->GetViewById(*it)->AddObserver(&observer);
+    }
+  }
+  DoRunLoop();
+}
+
 class OrderChangeObserver : public ViewObserver {
  public:
-  OrderChangeObserver(View* view) : view_(view) { view_->AddObserver(this); }
+  OrderChangeObserver(View* view) : view_(view) {
+    view_->AddObserver(this);
+  }
   ~OrderChangeObserver() override { view_->RemoveObserver(this); }
 
  private:
@@ -135,7 +232,9 @@ void WaitForOrderChange(ViewManager* view_manager, View* view) {
 // Tracks a view's destruction. Query is_valid() for current state.
 class ViewTracker : public ViewObserver {
  public:
-  explicit ViewTracker(View* view) : view_(view) { view_->AddObserver(this); }
+  explicit ViewTracker(View* view) : view_(view) {
+    view_->AddObserver(this);
+  }
   ~ViewTracker() override {
     if (view_)
       view_->RemoveObserver(this);
@@ -147,7 +246,7 @@ class ViewTracker : public ViewObserver {
   // Overridden from ViewObserver:
   void OnViewDestroyed(View* view) override {
     DCHECK_EQ(view, view_);
-    view_ = nullptr;
+    view_ = NULL;
   }
 
   int id_;
@@ -163,114 +262,136 @@ class ViewTracker : public ViewObserver {
 // These tests model synchronization of two peer connections to the view manager
 // service, that are given access to some root view.
 
-class ViewManagerTest : public test::ApplicationTestBase,
-                        public ApplicationDelegate,
-                        public ViewManagerDelegate {
+class ViewManagerTest : public testing::Test {
  public:
   ViewManagerTest()
-      : most_recent_view_manager_(nullptr), window_manager_(nullptr) {}
+      : connect_loop_(NULL),
+        loaded_view_manager_(NULL),
+        window_manager_(NULL),
+        commit_count_(0) {}
 
-  // Overridden from ApplicationDelegate:
-  void Initialize(ApplicationImpl* app) override {
-    view_manager_client_factory_.reset(
-        new ViewManagerClientFactory(app->shell(), this));
-  }
-
-  // ApplicationDelegate implementation.
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    connection->AddService(view_manager_client_factory_.get());
-    return true;
-  }
-
+ protected:
   ViewManager* window_manager() { return window_manager_; }
+
+  View* CreateViewInParent(View* parent) {
+    ViewManager* parent_manager = parent->view_manager();
+    View* view = parent_manager->CreateView();
+    view->SetVisible(true);
+    parent->AddChild(view);
+    return view;
+  }
 
   // Embeds another version of the test app @ view.
   ViewManager* Embed(ViewManager* view_manager, View* view) {
     DCHECK_EQ(view_manager, view->view_manager());
-    view->Embed(kViewManagerClientTestAppURL);
-    DoRunLoop();
-    ViewManager* vm = nullptr;
-    std::swap(vm, most_recent_view_manager_);
-    return vm;
+    view->Embed(kEmbeddedApp1URL);
+    RunRunLoop();
+    return GetLoadedViewManager();
   }
 
-  ApplicationDelegate* GetApplicationDelegate() override { return this; }
-
-  // Overridden from ViewManagerDelegate:
-  void OnEmbed(View* root,
-               InterfaceRequest<ServiceProvider> services,
-               ServiceProviderPtr exposed_services) override {
-    most_recent_view_manager_ = root->view_manager();
-    QuitRunLoop();
+  ViewManager* GetLoadedViewManager() {
+    ViewManager* view_manager = loaded_view_manager_;
+    loaded_view_manager_ = NULL;
+    return view_manager;
   }
-  void OnViewManagerDisconnected(ViewManager* view_manager) override {}
+
+  void UnloadApplication(const GURL& url) {
+    test_helper_.SetLoaderForURL(scoped_ptr<ApplicationLoader>(), url);
+  }
 
  private:
   // Overridden from testing::Test:
   void SetUp() override {
-    ApplicationTestBase::SetUp();
+    ConnectApplicationLoader::LoadedCallback ready_callback = base::Bind(
+        &ViewManagerTest::OnViewManagerLoaded, base::Unretained(this));
+    test_helper_.Init();
+    test_helper_.SetLoaderForURL(
+        scoped_ptr<ApplicationLoader>(
+            new ConnectApplicationLoader(ready_callback)),
+        GURL(kWindowManagerURL));
+    test_helper_.SetLoaderForURL(
+        scoped_ptr<ApplicationLoader>(
+            new ConnectApplicationLoader(ready_callback)),
+        GURL(kEmbeddedApp1URL));
 
-    view_manager_context_.reset(new ViewManagerContext(application_impl()));
-    view_manager_context_->Embed(kViewManagerClientTestAppURL);
-    DoRunLoop();
-    std::swap(window_manager_, most_recent_view_manager_);
+    // TODO(sky): resolve this. Need to establish initial connection.
   }
 
-  // Overridden from testing::Test:
-  void TearDown() override { ApplicationTestBase::TearDown(); }
+  void OnViewManagerLoaded(View* root) {
+    loaded_view_manager_ = root->view_manager();
+    connect_loop_->Quit();
+  }
 
-  scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
+  void RunRunLoop() {
+    base::RunLoop run_loop;
+    connect_loop_ = &run_loop;
+    connect_loop_->Run();
+    connect_loop_ = NULL;
+  }
 
-  scoped_ptr<ViewManagerContext> view_manager_context_;
-
+  base::RunLoop* connect_loop_;
+  shell::ShellTestHelper test_helper_;
   // Used to receive the most recent view manager loaded by an embed action.
-  ViewManager* most_recent_view_manager_;
+  ViewManager* loaded_view_manager_;
   // The View Manager connection held by the window manager (app running at the
   // root view).
   ViewManager* window_manager_;
+  int commit_count_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ViewManagerTest);
 };
 
-TEST_F(ViewManagerTest, RootView) {
-  ASSERT_NE(nullptr, window_manager());
-  EXPECT_NE(nullptr, window_manager()->GetRoot());
-  EXPECT_EQ("mojo:window_manager", window_manager()->GetEmbedderURL());
-}
+// TODO(sky): all of these tests are disabled as each test triggers running
+// ViewsInit, which tries to register the same set of paths with the
+// PathService, triggering a DCHECK.
+TEST_F(ViewManagerTest, DISABLED_SetUp) {}
 
-TEST_F(ViewManagerTest, Embed) {
+TEST_F(ViewManagerTest, DISABLED_Embed) {
   View* view = window_manager()->CreateView();
-  ASSERT_NE(nullptr, view);
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
-  ASSERT_NE(nullptr, embedded);
+  EXPECT_TRUE(NULL != embedded);
 
   View* view_in_embedded = embedded->GetRoot();
-  ASSERT_NE(nullptr, view_in_embedded);
-  EXPECT_EQ(view->id(), view_in_embedded->id());
-  EXPECT_EQ(nullptr, view_in_embedded->parent());
-  EXPECT_TRUE(view_in_embedded->children().empty());
+  EXPECT_EQ(view->parent(), window_manager()->GetRoot());
+  EXPECT_EQ(NULL, view_in_embedded->parent());
 }
 
 // Window manager has two views, N1 and N11. Embeds A at N1. A should not see
 // N11.
-TEST_F(ViewManagerTest, EmbeddedDoesntSeeChild) {
+// TODO(sky): Update client lib to match server.
+TEST_F(ViewManagerTest, DISABLED_EmbeddedDoesntSeeChild) {
   View* view = window_manager()->CreateView();
-  ASSERT_NE(nullptr, view);
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   View* nested = window_manager()->CreateView();
-  ASSERT_NE(nullptr, nested);
   nested->SetVisible(true);
   view->AddChild(nested);
 
   ViewManager* embedded = Embed(window_manager(), view);
-  ASSERT_NE(nullptr, embedded);
-  View* view_in_embedded = embedded->GetRoot();
-  EXPECT_EQ(view->id(), view_in_embedded->id());
-  EXPECT_EQ(nullptr, view_in_embedded->parent());
-  EXPECT_TRUE(view_in_embedded->children().empty());
+  EXPECT_EQ(embedded->GetRoot()->children().front()->id(),
+            nested->id());
+  EXPECT_TRUE(embedded->GetRoot()->children().empty());
+  EXPECT_TRUE(nested->parent() == NULL);
+}
+
+// http://crbug.com/396300
+TEST_F(ViewManagerTest, DISABLED_ViewManagerDestroyed_CleanupView) {
+  View* view = window_manager()->CreateView();
+  view->SetVisible(true);
+  window_manager()->GetRoot()->AddChild(view);
+  ViewManager* embedded = Embed(window_manager(), view);
+
+  Id view_id = view->id();
+
+  UnloadApplication(GURL(kWindowManagerURL));
+
+  std::set<Id> views;
+  views.insert(view_id);
+  WaitForDestruction(embedded, &views);
+
+  EXPECT_EQ(nullptr, embedded->GetRoot());
 }
 
 // TODO(beng): write a replacement test for the one that once existed here:
@@ -287,7 +408,7 @@ TEST_F(ViewManagerTest, EmbeddedDoesntSeeChild) {
 
 // Verifies that bounds changes applied to a view hierarchy in one connection
 // are reflected to another.
-TEST_F(ViewManagerTest, SetBounds) {
+TEST_F(ViewManagerTest, DISABLED_SetBounds) {
   View* view = window_manager()->CreateView();
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
@@ -299,13 +420,14 @@ TEST_F(ViewManagerTest, SetBounds) {
   Rect rect;
   rect.width = rect.height = 100;
   view->SetBounds(rect);
+  EXPECT_NE(view->bounds(), view_in_embedded->bounds());
   WaitForBoundsToChange(view_in_embedded);
   EXPECT_EQ(view->bounds(), view_in_embedded->bounds());
 }
 
 // Verifies that bounds changes applied to a view owned by a different
 // connection are refused.
-TEST_F(ViewManagerTest, SetBoundsSecurity) {
+TEST_F(ViewManagerTest, DISABLED_SetBoundsSecurity) {
   View* view = window_manager()->CreateView();
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
@@ -326,7 +448,7 @@ TEST_F(ViewManagerTest, SetBoundsSecurity) {
 }
 
 // Verifies that a view can only be destroyed by the connection that created it.
-TEST_F(ViewManagerTest, DestroySecurity) {
+TEST_F(ViewManagerTest, DISABLED_DestroySecurity) {
   View* view = window_manager()->CreateView();
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
@@ -344,7 +466,7 @@ TEST_F(ViewManagerTest, DestroySecurity) {
   EXPECT_FALSE(tracker1.is_valid());
 }
 
-TEST_F(ViewManagerTest, MultiRoots) {
+TEST_F(ViewManagerTest, DISABLED_MultiRoots) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view1);
@@ -353,19 +475,17 @@ TEST_F(ViewManagerTest, MultiRoots) {
   window_manager()->GetRoot()->AddChild(view2);
   ViewManager* embedded1 = Embed(window_manager(), view1);
   ViewManager* embedded2 = Embed(window_manager(), view2);
-  EXPECT_NE(embedded1, embedded2);
+  EXPECT_EQ(embedded1, embedded2);
 }
 
-TEST_F(ViewManagerTest, EmbeddingIdentity) {
+TEST_F(ViewManagerTest, DISABLED_EmbeddingIdentity) {
   View* view = window_manager()->CreateView();
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
-  EXPECT_EQ(kViewManagerClientTestAppURL, embedded->GetEmbedderURL());
+  EXPECT_EQ(kWindowManagerURL, embedded->GetEmbedderURL());
 }
 
-// TODO(alhaad): Currently, the RunLoop gets stuck waiting for order change.
-// Debug and re-enable this.
 TEST_F(ViewManagerTest, DISABLED_Reorder) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
@@ -380,27 +500,29 @@ TEST_F(ViewManagerTest, DISABLED_Reorder) {
   view12->SetVisible(true);
   embedded->GetRoot()->AddChild(view12);
 
-  View* root_in_embedded = embedded->GetRoot();
+  View* view1_in_wm = window_manager()->GetViewById(view1->id());
 
   {
-    WaitForTreeSizeToMatch(root_in_embedded, 3u);
+    WaitForTreeSizeToMatch(view1, 2u);
     view11->MoveToFront();
-    WaitForOrderChange(embedded, root_in_embedded);
+    WaitForOrderChange(window_manager(),
+                       window_manager()->GetViewById(view11->id()));
 
-    EXPECT_EQ(root_in_embedded->children().front(),
-              embedded->GetViewById(view12->id()));
-    EXPECT_EQ(root_in_embedded->children().back(),
-              embedded->GetViewById(view11->id()));
+    EXPECT_EQ(view1_in_wm->children().front(),
+              window_manager()->GetViewById(view12->id()));
+    EXPECT_EQ(view1_in_wm->children().back(),
+              window_manager()->GetViewById(view11->id()));
   }
 
   {
     view11->MoveToBack();
-    WaitForOrderChange(embedded, embedded->GetViewById(view11->id()));
+    WaitForOrderChange(window_manager(),
+                       window_manager()->GetViewById(view11->id()));
 
-    EXPECT_EQ(root_in_embedded->children().front(),
-              embedded->GetViewById(view11->id()));
-    EXPECT_EQ(root_in_embedded->children().back(),
-              embedded->GetViewById(view12->id()));
+    EXPECT_EQ(view1_in_wm->children().front(),
+              window_manager()->GetViewById(view11->id()));
+    EXPECT_EQ(view1_in_wm->children().back(),
+              window_manager()->GetViewById(view12->id()));
   }
 }
 
@@ -427,7 +549,7 @@ class VisibilityChangeObserver : public ViewObserver {
 
 }  // namespace
 
-TEST_F(ViewManagerTest, Visible) {
+TEST_F(ViewManagerTest, DISABLED_Visible) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view1);
@@ -490,7 +612,7 @@ class DrawnChangeObserver : public ViewObserver {
 
 }  // namespace
 
-TEST_F(ViewManagerTest, Drawn) {
+TEST_F(ViewManagerTest, DISABLED_Drawn) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view1);

@@ -5,11 +5,12 @@
 import("//build/config/ui.gni")
 import("//testing/test.gni")
 
-test("mojo_view_lib_unittests") {
+test("mojo_view_manager_lib_unittests") {
   sources = [
     "run_all_unittests.cc",
     "view_manager_test_suite.cc",
     "view_manager_test_suite.h",
+    "view_manager_unittest.cc",
     "view_unittest.cc",
   ]
 
@@ -21,6 +22,8 @@ test("mojo_view_lib_unittests") {
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
+    "//mojo/services/view_manager/public/interfaces",
+    "//shell/application_manager",
     "//shell:test_support",
     "//testing/gtest",
   ]
