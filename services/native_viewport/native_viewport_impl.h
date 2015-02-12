@@ -44,7 +44,7 @@ class NativeViewportImpl : public mojo::NativeViewport,
                      mojo::InterfaceRequest<mojo::NativeViewport> request);
   ~NativeViewportImpl() override;
 
-  // InterfaceImpl<NativeViewport> implementation.
+  // NativeViewport implementation.
   void Create(mojo::SizePtr size, const CreateCallback& callback) override;
   void RequestMetrics(const MetricsCallback& callback) override;
   void Show() override;
