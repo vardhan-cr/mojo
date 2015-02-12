@@ -61,12 +61,14 @@ public class ValidationTest extends MojoTestCase {
     }
 
     private static String getStringContent(File f) throws FileNotFoundException {
-        Scanner scanner = new Scanner(f).useDelimiter("\\Z");
-        StringBuilder result = new StringBuilder();
-        while (scanner.hasNext()) {
-            result.append(scanner.next());
+        try (Scanner scanner = new Scanner(f)) {
+            scanner.useDelimiter("\\Z");
+            StringBuilder result = new StringBuilder();
+            while (scanner.hasNext()) {
+                result.append(scanner.next());
+            }
+            return result.toString().trim();
         }
-        return result.toString().trim();
     }
 
     private static List<TestData> getTestData(String prefix)

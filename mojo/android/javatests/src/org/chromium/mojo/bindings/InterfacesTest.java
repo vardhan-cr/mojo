@@ -271,7 +271,7 @@ public class InterfacesTest extends MojoTestCase {
     }
 
     @SmallTest
-    public void testClient() {
+    public void testResponse() {
         MockFactoryImpl impl = new MockFactoryImpl();
         Factory.Proxy proxy = newProxyOverPipe(Factory.MANAGER, impl);
         Request request = new Request();
