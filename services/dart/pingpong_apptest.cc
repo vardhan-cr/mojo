@@ -7,25 +7,32 @@
 #include "base/path_service.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "services/dart/test/pingpong_service.mojom.h"
 
 namespace dart {
 namespace {
 
-class PingPongClientImpl : public mojo::InterfaceImpl<PingPongClient> {
+class PingPongClientImpl : public PingPongClient {
  public:
-  PingPongClientImpl() : last_pong_value_(0) {};
-  ~PingPongClientImpl() override {};
+  PingPongClientImpl(mojo::InterfaceRequest<PingPongClient> request)
+      : last_pong_value_(0), binding_(this, request.Pass()) {}
+  ~PingPongClientImpl() override {}
 
-  int16_t last_pong_value() const { return last_pong_value_; }
+  int16_t WaitForPongValue() {
+    if (!binding_.WaitForIncomingMethodCall())
+      return 0;
+    return last_pong_value_;
+  }
 
+ private:
   // PingPongClient overrides.
   void Pong(uint16_t pong_value) override {
     last_pong_value_ = pong_value;
   }
 
- private:
   int16_t last_pong_value_;
+  mojo::StrongBinding<PingPongClient> binding_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(PingPongClientImpl);
 };
 
@@ -60,17 +67,13 @@ struct PingTargetCallback {
 // and sends responses to our client.
 TEST_F(DartPingPongTest, PingServiceToPongClient) {
   PingPongClientPtr client;
-  PingPongClientImpl* pingpong_client = new PingPongClientImpl();
-  BindToProxy(pingpong_client, &client);
+  auto pingpong_client = new PingPongClientImpl(GetProxy(&client));
   pingpong_service_->SetClient(client.Pass());
 
-  EXPECT_EQ(0, pingpong_client->last_pong_value());
   pingpong_service_->Ping(1);
-  EXPECT_TRUE(pingpong_client->WaitForIncomingMethodCall());
-  EXPECT_EQ(2, pingpong_client->last_pong_value());
+  EXPECT_EQ(2, pingpong_client->WaitForPongValue());
   pingpong_service_->Ping(100);
-  EXPECT_TRUE(pingpong_client->WaitForIncomingMethodCall());
-  EXPECT_EQ(101, pingpong_client->last_pong_value());
+  EXPECT_EQ(101, pingpong_client->WaitForPongValue());
   pingpong_service_->Quit();
 }
 
@@ -103,19 +106,15 @@ TEST_F(DartPingPongTest, PingTargetService) {
 TEST_F(DartPingPongTest, GetTargetService) {
   PingPongServicePtr target;
   PingPongClientPtr client;
-  PingPongClientImpl* pingpong_client = new PingPongClientImpl();
-  BindToProxy(pingpong_client, &client);
+  auto pingpong_client = new PingPongClientImpl(GetProxy(&client));
 
   pingpong_service_->GetPingPongService(GetProxy(&target));
   target->SetClient(client.Pass());
 
-  EXPECT_EQ(0, pingpong_client->last_pong_value());
   target->Ping(1);
-  EXPECT_TRUE(pingpong_client->WaitForIncomingMethodCall());
-  EXPECT_EQ(2, pingpong_client->last_pong_value());
+  EXPECT_EQ(2, pingpong_client->WaitForPongValue());
   target->Ping(100);
-  EXPECT_TRUE(pingpong_client->WaitForIncomingMethodCall());
-  EXPECT_EQ(101, pingpong_client->last_pong_value());
+  EXPECT_EQ(101, pingpong_client->WaitForPongValue());
   target->Quit();
   pingpong_service_->Quit();
 }
