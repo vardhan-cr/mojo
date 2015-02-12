@@ -133,18 +133,6 @@ MOJO_SYSTEM_IMPL_EXPORT void DestroyChannel(
     const DidDestroyChannelCallback& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
-// DEPRECATED. TODO(vtl): Remove.
-// Destroys a channel that was created using |CreateChannel()| (or
-// |CreateChannelOnIOThread()|); may be called from any thread. |channel_info|
-// should be the value provided to the callback to |CreateChannel()| (or
-// returned by |CreateChannelOnIOThread()|). If called from the I/O thread, this
-// will complete synchronously (in particular, it will post no tasks).
-// TODO(vtl): If called from some other thread, it'll post tasks to the I/O
-// thread. This is obviously potentially problematic if you want to shut the I/O
-// thread down.
-MOJO_SYSTEM_IMPL_EXPORT void DestroyChannelDeprecated(
-    ChannelInfo* channel_info);
-
 // Inform the channel that it will soon be destroyed (doing so is optional).
 // This may be called from any thread, but the caller must ensure that this is
 // called before |DestroyChannel()|.

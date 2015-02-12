@@ -6,7 +6,6 @@
 #include "base/files/file_util.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/message_loop/message_loop.h"
-#include "mojo/edk/embedder/channel_init.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "shell/domain_socket/net_errors.h"
 #include "shell/domain_socket/socket_descriptor.h"

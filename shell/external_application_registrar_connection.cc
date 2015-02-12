@@ -9,7 +9,9 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
-#include "mojo/edk/embedder/channel_init.h"
+#include "mojo/edk/embedder/embedder.h"
+#include "mojo/edk/embedder/platform_handle.h"
+#include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
@@ -24,16 +26,19 @@ namespace shell {
 
 ExternalApplicationRegistrarConnection::ExternalApplicationRegistrarConnection(
     const base::FilePath& socket_path)
-    : client_socket_(new UnixDomainClientSocket(socket_path.value(), false)) {
+    : client_socket_(new UnixDomainClientSocket(socket_path.value(), false)),
+      channel_info_(nullptr) {
 }
 
 ExternalApplicationRegistrarConnection::
     ~ExternalApplicationRegistrarConnection() {
-  channel_init_.WillDestroySoon();
+  if (channel_info_)
+    embedder::DestroyChannelOnIOThread(channel_info_);
 }
 
 void ExternalApplicationRegistrarConnection::OnConnectionError() {
-  channel_init_.WillDestroySoon();
+  DCHECK(channel_info_);
+  embedder::WillDestroyChannelSoon(channel_info_);
 }
 
 bool ExternalApplicationRegistrarConnection::Connect() {
@@ -69,9 +74,12 @@ void ExternalApplicationRegistrarConnection::OnConnect(const base::Closure& cb,
     return;
   }
 
-  mojo::ScopedMessagePipeHandle ptr_message_pipe_handle =
-      channel_init_.Init(client_socket_->ReleaseConnectedSocket(),
-                         base::MessageLoopProxy::current());
+  ScopedMessagePipeHandle ptr_message_pipe_handle =
+      embedder::CreateChannelOnIOThread(
+          embedder::ScopedPlatformHandle(embedder::PlatformHandle(
+              client_socket_->ReleaseConnectedSocket())),
+          &channel_info_);
+
   CHECK(ptr_message_pipe_handle.is_valid());
   client_socket_.reset();  // This is dead now, ensure it can't be reused.
 

@@ -52,6 +52,8 @@ ChannelManager::ChannelManager(embedder::PlatformSupport* platform_support)
 }
 
 ChannelManager::~ChannelManager() {
+  // TODO(vtl): Change to explicit shutdown (since this posts tasks, with no way
+  // for the caller to know when shutdown is actually done).
   // No need to take the lock.
   for (const auto& map_elem : channel_infos_)
     ShutdownChannelDeprecatedHelper(map_elem.second);
@@ -135,18 +137,6 @@ void ChannelManager::ShutdownChannel(
       FROM_HERE, base::Bind(&ShutdownChannelHelper, channel_info, callback,
                             callback_thread_task_runner));
   DCHECK(ok);
-}
-
-void ChannelManager::ShutdownChannelDeprecated(ChannelId channel_id) {
-  ChannelInfo channel_info;
-  {
-    base::AutoLock locker(lock_);
-    auto it = channel_infos_.find(channel_id);
-    DCHECK(it != channel_infos_.end());
-    channel_info.Swap(&it->second);
-    channel_infos_.erase(it);
-  }
-  ShutdownChannelDeprecatedHelper(channel_info);
 }
 
 void ChannelManager::CreateChannelOnIOThreadHelper(

@@ -169,17 +169,6 @@ void DestroyChannel(
   delete channel_info;
 }
 
-void DestroyChannelDeprecated(ChannelInfo* channel_info) {
-  DCHECK(channel_info);
-  DCHECK(channel_info->channel_id);
-  DCHECK(internal::g_channel_manager);
-  // This will destroy the channel synchronously if called from the channel
-  // thread.
-  internal::g_channel_manager->ShutdownChannelDeprecated(
-      channel_info->channel_id);
-  delete channel_info;
-}
-
 void WillDestroyChannelSoon(ChannelInfo* channel_info) {
   DCHECK(channel_info);
   DCHECK(internal::g_channel_manager);

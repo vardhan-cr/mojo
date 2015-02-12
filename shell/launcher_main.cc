@@ -6,6 +6,7 @@
 #include "base/bind.h"
 #include "base/bind_helpers.h"
 #include "base/command_line.h"
+#include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
 #include "base/strings/string_split.h"
@@ -41,37 +42,32 @@ class Launcher {
   bool Connect() { return connection_.Connect(); }
 
   bool Register() {
-    DCHECK(!run_loop_.get());
-    run_loop_.reset(new base::RunLoop);
+    base::RunLoop run_loop;
     connection_.Register(
         app_url_, app_args_,
-        base::Bind(&Launcher::OnRegistered, base::Unretained(this)));
-    run_loop_->Run();
-    run_loop_.reset();
+        base::Bind(&Launcher::OnRegistered, base::Unretained(this),
+                   base::Unretained(&run_loop)));
+    run_loop.Run();
     return application_request_.is_pending();
   }
 
   void Run() {
-    DCHECK(!run_loop_.get());
     DCHECK(application_request_.is_pending());
     mojo::shell::InProcessDynamicServiceRunner service_runner(nullptr);
-    run_loop_.reset(new base::RunLoop);
-    service_runner.Start(
-        app_path_, mojo::shell::DynamicServiceRunner::DontDeleteAppPath,
-        application_request_.Pass(),
-        base::Bind(&Launcher::OnAppCompleted, base::Unretained(this)));
-    run_loop_->Run();
-    run_loop_.reset();
+    base::RunLoop run_loop;
+    service_runner.Start(app_path_,
+                         mojo::shell::DynamicServiceRunner::DontDeleteAppPath,
+                         application_request_.Pass(), run_loop.QuitClosure());
+    run_loop.Run();
   }
 
  private:
   void OnRegistered(
+      base::RunLoop* run_loop,
       mojo::InterfaceRequest<mojo::Application> application_request) {
     application_request_ = application_request.Pass();
-    run_loop_->Quit();
+    run_loop->Quit();
   }
-
-  void OnAppCompleted() { run_loop_->Quit(); }
 
   const base::FilePath app_path_;
   const GURL app_url_;
@@ -79,17 +75,14 @@ class Launcher {
   base::MessageLoop loop_;
   mojo::shell::ExternalApplicationRegistrarConnection connection_;
   mojo::InterfaceRequest<mojo::Application> application_request_;
-  scoped_ptr<base::RunLoop> run_loop_;
+
+  DISALLOW_COPY_AND_ASSIGN(Launcher);
 };
 
-#if defined(OS_WIN)
-int main(int argc, wchar_t** argv) {
-#else
 int main(int argc, char** argv) {
-#endif
   base::AtExitManager at_exit;
-  mojo::embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
-      new mojo::embedder::SimplePlatformSupport()));
+  mojo::embedder::Init(
+      make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
 
   base::CommandLine::Init(argc, argv);
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
@@ -99,15 +92,15 @@ int main(int argc, char** argv) {
   if (!launcher.Connect()) {
     LOG(ERROR) << "Failed to connect on socket "
                << command_line->GetSwitchValueASCII(kShellPath);
-    return MOJO_RESULT_INVALID_ARGUMENT;
+    return 1;
   }
 
   if (!launcher.Register()) {
     LOG(ERROR) << "Error registering "
                << command_line->GetSwitchValueASCII(kAppURL);
-    return MOJO_RESULT_INVALID_ARGUMENT;
+    return 1;
   }
 
   launcher.Run();
-  return MOJO_RESULT_OK;
+  return 0;
 }

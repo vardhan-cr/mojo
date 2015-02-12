@@ -11,8 +11,6 @@ mojo_edk_source_set("embedder") {
 
   sources = [
     "channel_info_forward.h",
-    "channel_init.cc",
-    "channel_init.h",
     "configuration.h",
     "embedder.cc",
     "embedder.h",

@@ -9,7 +9,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/common/common_type_converters.h"
-#include "mojo/edk/embedder/channel_init.h"
+#include "mojo/edk/embedder/channel_info_forward.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
@@ -54,7 +54,7 @@ class ExternalApplicationRegistrarConnection : public ErrorHandler {
   void OnConnect(const base::Closure& cb, int rv);
 
   scoped_ptr<UnixDomainClientSocket> client_socket_;
-  mojo::embedder::ChannelInit channel_init_;
+  embedder::ChannelInfo* channel_info_;
   ExternalApplicationRegistrarPtr registrar_;
 };
 

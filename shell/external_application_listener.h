@@ -7,13 +7,14 @@
 
 #include "base/callback.h"
 #include "base/files/file_path.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/sequenced_task_runner.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread_checker.h"
-#include "mojo/edk/embedder/channel_init.h"
+#include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "shell/domain_socket/socket_descriptor.h"
 #include "shell/external_application_registrar.mojom.h"
@@ -107,7 +108,7 @@ class ExternalApplicationListener
   // When a connection succeeds, it is passed to this method running
   // on shell_runner_, where it is "promoted" to a Mojo MessagePipe and
   // bound to a Registrar.
-  void CreateRegistrar(SocketDescriptor incoming_socket);
+  void CreateRegistrar(embedder::ScopedPlatformHandle incoming_socket);
 
   scoped_refptr<base::SequencedTaskRunner> shell_runner_;
   scoped_refptr<base::SequencedTaskRunner> io_runner_;
@@ -129,6 +130,8 @@ class ExternalApplicationListener
 
   // Used on shell_runner_.
   base::WeakPtrFactory<ExternalApplicationListener> weak_ptr_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(ExternalApplicationListener);
 };
 
 }  // namespace shell

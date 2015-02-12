@@ -16,7 +16,7 @@
 #include "base/threading/thread_checker.h"
 #include "base/tracked_objects.h"
 #include "mojo/common/common_type_converters.h"
-#include "mojo/edk/embedder/channel_init.h"
+#include "mojo/edk/embedder/embedder.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "shell/domain_socket/net_errors.h"
@@ -29,22 +29,41 @@ namespace mojo {
 namespace shell {
 
 namespace {
+
 const char kDefaultListenSocketPath[] = "/var/run/mojo/system_socket";
 
 class RegistrarImpl : public ExternalApplicationRegistrar, public ErrorHandler {
  public:
   RegistrarImpl(const ExternalApplicationListener::RegisterCallback& callback,
-                SocketDescriptor incoming_socket,
+                embedder::ScopedPlatformHandle incoming_socket,
                 scoped_refptr<base::TaskRunner> io_runner)
       : register_callback_(callback),
-        binding_(this, channel_init_.Init(incoming_socket, io_runner)) {
+        binding_(this),
+        channel_info_(nullptr),
+        weak_ptr_factory_(this) {
+    binding_.Bind(
+        embedder::CreateChannel(incoming_socket.Pass(), io_runner,
+                                base::Bind(&RegistrarImpl::OnChannelCreated,
+                                           weak_ptr_factory_.GetWeakPtr()),
+                                base::MessageLoop::current()->task_runner()));
     binding_.set_error_handler(this);
   }
 
-  ~RegistrarImpl() override {}
+  ~RegistrarImpl() override {
+    if (channel_info_) {
+      // TODO(vtl): The |base::DoNothing| here is bad. We're relying on the I/O
+      // thread being destroyed after us (and probably also relying on the work
+      // on the I/O thread to be relatively prompt).
+      embedder::DestroyChannel(channel_info_, base::Bind(&base::DoNothing),
+                               nullptr);
+    }
+  }
 
  private:
-  void OnConnectionError() override { channel_init_.WillDestroySoon(); }
+  void OnConnectionError() override {
+    DCHECK(channel_info_);
+    embedder::WillDestroyChannelSoon(channel_info_);
+  }
 
   void Register(
       const String& app_url,
@@ -58,9 +77,21 @@ class RegistrarImpl : public ExternalApplicationRegistrar, public ErrorHandler {
     callback.Run(application_request.Pass());
   }
 
-  embedder::ChannelInit channel_init_;
+  static void OnChannelCreated(base::WeakPtr<RegistrarImpl> self,
+                               embedder::ChannelInfo* channel_info) {
+    if (self) {
+      self->channel_info_ = channel_info;
+    } else {
+      // TODO(vtl): See TODO in destructor.
+      embedder::DestroyChannel(channel_info, base::Bind(&base::DoNothing),
+                               nullptr);
+    }
+  }
+
   const ExternalApplicationListener::RegisterCallback register_callback_;
   StrongBinding<ExternalApplicationRegistrar> binding_;
+  embedder::ChannelInfo* channel_info_;
+  base::WeakPtrFactory<RegistrarImpl> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(RegistrarImpl);
 };
@@ -149,9 +180,13 @@ void ExternalApplicationListener::OnListening(int rv) {
 
 void ExternalApplicationListener::OnConnection(SocketDescriptor incoming) {
   DCHECK(listener_thread_checker_.CalledOnValidThread());
+  embedder::ScopedPlatformHandle incoming_socket(
+      (embedder::PlatformHandle(incoming)));
+
   shell_runner_->PostTask(
       FROM_HERE, base::Bind(&ExternalApplicationListener::CreateRegistrar,
-                            weak_ptr_factory_.GetWeakPtr(), incoming));
+                            weak_ptr_factory_.GetWeakPtr(),
+                            base::Passed(&incoming_socket)));
 }
 
 void ExternalApplicationListener::RunErrorCallbackIfListeningFailed(int rv) {
@@ -161,12 +196,12 @@ void ExternalApplicationListener::RunErrorCallbackIfListeningFailed(int rv) {
 }
 
 void ExternalApplicationListener::CreateRegistrar(
-    SocketDescriptor incoming_socket) {
+    embedder::ScopedPlatformHandle incoming_socket) {
   DCHECK(register_thread_checker_.CalledOnValidThread());
 
   DVLOG(1) << "Accepted incoming connection";
   // Passes ownership of incoming_socket to registrar.
-  new RegistrarImpl(register_callback_, incoming_socket, io_runner_);
+  new RegistrarImpl(register_callback_, incoming_socket.Pass(), io_runner_);
 }
 
 }  // namespace shell

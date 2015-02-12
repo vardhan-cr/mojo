@@ -99,14 +99,6 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
-  // DEPRECATED. TODO(vtl): Remove.
-  // Shuts down the channel specified by the given ID. It is up to the caller to
-  // guarantee that this is only called once per channel (that was added using
-  // |CreateChannelOnIOThread()| or |CreateChannel()|). If called from the
-  // channel's creation thread (i.e., |base::MessageLoopProxy::current()| is the
-  // channel thread's |TaskRunner|), this will complete synchronously.
-  void ShutdownChannelDeprecated(ChannelId channel_id);
-
  private:
   // Used by |CreateChannelOnIOThread()| and |CreateChannelHelper()|. Called on
   // the I/O thread.
