@@ -75,8 +75,6 @@ class WeakBinding : public ErrorHandler {
 
   ~WeakBinding() override {}
 
-  typename Interface::Client* client() { return binding_.client(); }
-
   void set_error_handler(ErrorHandler* error_handler) {
     error_handler_ = error_handler;
   }
