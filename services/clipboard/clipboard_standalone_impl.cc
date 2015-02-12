@@ -46,7 +46,9 @@ class ClipboardStandaloneImpl::ClipboardData {
   DISALLOW_COPY_AND_ASSIGN(ClipboardData);
 };
 
-ClipboardStandaloneImpl::ClipboardStandaloneImpl() {
+ClipboardStandaloneImpl::ClipboardStandaloneImpl(
+    mojo::InterfaceRequest<mojo::Clipboard> request)
+    : binding_(this, request.Pass()) {
   for (int i = 0; i < kNumClipboards; ++i) {
     sequence_number_[i] = 0;
     clipboard_state_[i].reset(new ClipboardData);

@@ -8,6 +8,7 @@
 #include <base/memory/scoped_ptr.h>
 #include <string>
 
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/clipboard/public/interfaces/clipboard.mojom.h"
 
 namespace clipboard {
@@ -19,15 +20,16 @@ namespace clipboard {
 // ui::Clipboard interface is synchronous (which is what we'd use), mojo is
 // asynchronous across processes, and the WebClipboard interface is synchronous
 // (which is at least tractable).
-class ClipboardStandaloneImpl : public mojo::InterfaceImpl<mojo::Clipboard> {
+class ClipboardStandaloneImpl : public mojo::Clipboard {
  public:
   // mojo::Clipboard exposes three possible clipboards.
   static const int kNumClipboards = 3;
 
-  ClipboardStandaloneImpl();
+  explicit ClipboardStandaloneImpl(
+      mojo::InterfaceRequest<mojo::Clipboard> request);
   ~ClipboardStandaloneImpl() override;
 
-  // InterfaceImpl<mojo::Clipboard> implementation.
+  // mojo::Clipboard implementation.
   void GetSequenceNumber(
       mojo::Clipboard::Type clipboard_type,
       const mojo::Callback<void(uint64_t)>& callback) override;
@@ -50,6 +52,7 @@ class ClipboardStandaloneImpl : public mojo::InterfaceImpl<mojo::Clipboard> {
 
   // The current clipboard state. This is what is read from.
   scoped_ptr<ClipboardData> clipboard_state_[kNumClipboards];
+  mojo::StrongBinding<mojo::Clipboard> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ClipboardStandaloneImpl);
 };
