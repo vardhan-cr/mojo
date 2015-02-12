@@ -103,8 +103,7 @@ void InitContentHandlers(DynamicApplicationLoader* loader,
   }
 }
 
-bool ConfigureURLMappings(base::CommandLine* command_line,
-                          Context* context) {
+bool ConfigureURLMappings(base::CommandLine* command_line, Context* context) {
   URLResolver* resolver = context->url_resolver();
 
   // Configure the resolution of unknown mojo: URLs.
@@ -130,7 +129,7 @@ bool ConfigureURLMappings(base::CommandLine* command_line,
   // Command line URL mapping.
   if (command_line->HasSwitch(switches::kURLMappings)) {
     const std::string mappings =
-      command_line->GetSwitchValueASCII(switches::kURLMappings);
+        command_line->GetSwitchValueASCII(switches::kURLMappings);
 
     base::StringPairs pairs;
     if (!base::SplitStringIntoKeyValuePairs(mappings, '=', ',', &pairs))

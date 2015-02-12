@@ -63,7 +63,7 @@ class DynamicServiceRunnerFactoryImpl : public DynamicServiceRunnerFactory {
  public:
   DynamicServiceRunnerFactoryImpl() {}
   virtual ~DynamicServiceRunnerFactoryImpl() {}
-  virtual scoped_ptr<DynamicServiceRunner> Create(Context* context) override {
+  scoped_ptr<DynamicServiceRunner> Create(Context* context) override {
     return scoped_ptr<DynamicServiceRunner>(
         new DynamicServiceRunnerImpl(context));
   }

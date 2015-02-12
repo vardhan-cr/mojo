@@ -108,7 +108,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   typedef std::map<GURL, ApplicationLoader*> URLToLoaderMap;
   typedef std::map<GURL, ShellImpl*> URLToShellImplMap;
   typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
-  typedef std::map<GURL, std::vector<std::string> > URLToArgsMap;
+  typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
 
   void ConnectToApplicationImpl(const GURL& requested_url,
                                 const GURL& resolved_url,

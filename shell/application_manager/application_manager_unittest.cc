@@ -390,12 +390,10 @@ class Tester : public ApplicationDelegate,
 
 class TestDelegate : public ApplicationManager::Delegate {
  public:
-  void AddMapping(const GURL& from, const GURL& to) {
-    mappings_[from] = to;
-  }
+  void AddMapping(const GURL& from, const GURL& to) { mappings_[from] = to; }
 
   // ApplicationManager::Delegate
-  virtual GURL ResolveMappings(const GURL& url) override {
+  GURL ResolveMappings(const GURL& url) override {
     auto it = mappings_.find(url);
     if (it != mappings_.end())
       return it->second;
@@ -403,7 +401,7 @@ class TestDelegate : public ApplicationManager::Delegate {
   }
 
   // ApplicationManager::Delegate
-  virtual GURL ResolveURL(const GURL& url) override {
+  GURL ResolveURL(const GURL& url) override {
     GURL mapped_url = ResolveMappings(url);
     // The shell automatically map mojo URLs.
     if (mapped_url.scheme() == "mojo") {
@@ -414,8 +412,7 @@ class TestDelegate : public ApplicationManager::Delegate {
     return mapped_url;
   }
 
-  virtual void OnApplicationError(const GURL& url) override {
-  }
+  void OnApplicationError(const GURL& url) override {}
 
  private:
   std::map<GURL, GURL> mappings_;
@@ -425,13 +422,12 @@ class TestExternal : public ApplicationDelegate {
  public:
   TestExternal() : configure_incoming_connection_called_(false) {}
 
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     initialize_args_ = app->args();
     base::MessageLoop::current()->Quit();
   }
 
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     configure_incoming_connection_called_ = true;
     base::MessageLoop::current()->Quit();
     return true;
@@ -741,8 +737,8 @@ TEST_F(ApplicationManagerTest, ExternalApp) {
                                                     application.Pass());
   loop_.Run();
   EXPECT_EQ(args, external.initialize_args());
-  application_manager_->ConnectToServiceByName(
-      GURL("mojo:test"), std::string());
+  application_manager_->ConnectToServiceByName(GURL("mojo:test"),
+                                               std::string());
   loop_.Run();
   EXPECT_TRUE(external.configure_incoming_connection_called());
 };

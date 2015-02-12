@@ -24,7 +24,6 @@ namespace {
 bool has_created_instance = false;
 }  // namespace
 
-
 ApplicationManager::Delegate::~Delegate() {
 }
 
@@ -85,8 +84,7 @@ bool ApplicationManager::TestAPI::HasFactoryForURL(const GURL& url) const {
 }
 
 ApplicationManager::ApplicationManager(Delegate* delegate)
-    : delegate_(delegate),
-      weak_ptr_factory_(this) {
+    : delegate_(delegate), weak_ptr_factory_(this) {
 }
 
 ApplicationManager::~ApplicationManager() {
@@ -237,7 +235,8 @@ void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
 }
 
 ApplicationLoader* ApplicationManager::GetLoaderForURL(
-    const GURL& url, IncludeDefaultLoader include_default_loader) {
+    const GURL& url,
+    IncludeDefaultLoader include_default_loader) {
   auto url_it = url_to_loader_.find(url);
   if (url_it != url_to_loader_.end())
     return url_it->second;
@@ -258,8 +257,8 @@ void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
   DCHECK(it != url_to_shell_impl_.end());
   delete it->second;
   url_to_shell_impl_.erase(it);
-  ApplicationLoader* loader = GetLoaderForURL(requested_url,
-                                              INCLUDE_DEFAULT_LOADER);
+  ApplicationLoader* loader =
+      GetLoaderForURL(requested_url, INCLUDE_DEFAULT_LOADER);
   if (loader)
     loader->OnApplicationError(this, url);
   delegate_->OnApplicationError(requested_url);

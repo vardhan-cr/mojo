@@ -38,8 +38,7 @@ void OutOfProcessDynamicServiceRunner::Start(
   DCHECK(app_completed_callback_.is_null());
   app_completed_callback_ = app_completed_callback;
 
-  app_child_process_host_.reset(
-      new AppChildProcessHost(context_));
+  app_child_process_host_.reset(new AppChildProcessHost(context_));
   app_child_process_host_->Start();
 
   // TODO(vtl): |app_path.AsUTF8Unsafe()| is unsafe.
