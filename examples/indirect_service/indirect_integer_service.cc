@@ -9,14 +9,16 @@
 #include "mojo/public/cpp/application/application_runner.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/bindings/binding.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 
 namespace mojo {
 namespace examples {
 
-class IndirectIntegerServiceImpl :
-    public InterfaceImpl<IndirectIntegerService>, public IntegerService {
+class IndirectIntegerServiceImpl : public IndirectIntegerService,
+                                   public IntegerService {
  public:
-  IndirectIntegerServiceImpl() {}
+  IndirectIntegerServiceImpl(InterfaceRequest<IndirectIntegerService> request)
+      : binding_(this, request.Pass()) {}
 
   ~IndirectIntegerServiceImpl() override {
    for (auto itr = bindings_.begin(); itr < bindings_.end(); itr++)
@@ -43,19 +45,25 @@ class IndirectIntegerServiceImpl :
 private:
   IntegerServicePtr integer_service_;
   std::vector<Binding<IntegerService>*> bindings_;
+  StrongBinding<IndirectIntegerService> binding_;
 };
 
-class IndirectIntegerServiceAppDelegate : public ApplicationDelegate {
+class IndirectIntegerServiceAppDelegate
+    : public ApplicationDelegate,
+      public InterfaceFactory<IndirectIntegerService> {
  public:
   bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
-    connection->AddService(&indirect_integer_service_factory_);
+    connection->AddService(this);
     return true;
   }
 
  private:
-  InterfaceFactoryImpl<IndirectIntegerServiceImpl>
-      indirect_integer_service_factory_;
+  // InterfaceFactory<IndirectIntegerService>
+  void Create(ApplicationConnection* app,
+              InterfaceRequest<IndirectIntegerService> request) override {
+    new IndirectIntegerServiceImpl(request.Pass());
+  }
 };
 
 }  // namespace examples

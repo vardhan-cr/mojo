@@ -7,14 +7,15 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_runner.h"
-#include "mojo/public/cpp/application/interface_factory_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 
 namespace mojo {
 namespace examples {
 
-class IntegerServiceImpl : public InterfaceImpl<IntegerService> {
+class IntegerServiceImpl : public IntegerService {
  public:
-  IntegerServiceImpl() : value_(0) {}
+  explicit IntegerServiceImpl(InterfaceRequest<IntegerService> request)
+      : value_(0), binding_(this, request.Pass()) {}
   ~IntegerServiceImpl() override {}
 
   void Increment(const Callback<void(int32_t)>& callback) override {
@@ -23,18 +24,24 @@ class IntegerServiceImpl : public InterfaceImpl<IntegerService> {
 
  private:
   int32_t value_;
+  StrongBinding<IntegerService> binding_;
 };
 
-class IntegerServiceAppDelegate : public ApplicationDelegate {
+class IntegerServiceAppDelegate : public ApplicationDelegate,
+                                  public InterfaceFactory<IntegerService> {
  public:
   bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
-    connection->AddService(&integer_service_factory_);
+    connection->AddService(this);
     return true;
   }
 
  private:
-  InterfaceFactoryImpl<IntegerServiceImpl> integer_service_factory_;
+  // InterfaceFactory<IntegerService>
+  void Create(ApplicationConnection* app,
+              InterfaceRequest<IntegerService> request) override {
+    new IntegerServiceImpl(request.Pass());
+  }
 };
 
 }  // namespace examples
