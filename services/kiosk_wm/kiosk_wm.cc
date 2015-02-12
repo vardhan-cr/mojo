@@ -6,16 +6,14 @@
 
 #include "services/window_manager/basic_focus_rules.h"
 
-namespace mojo {
 namespace kiosk_wm {
 
 KioskWM::KioskWM()
     : window_manager_app_(new window_manager::WindowManagerApp(this, this)),
       root_(nullptr),
       content_(nullptr),
-      navigator_host_factory_(this),
       weak_factory_(this) {
-  exposed_services_impl_.AddService(&navigator_host_factory_);
+  exposed_services_impl_.AddService(this);
 }
 
 KioskWM::~KioskWM() {
@@ -90,6 +88,11 @@ void KioskWM::Embed(
   content_->Embed(url, nullptr, exposed_services.Pass());
 }
 
+void KioskWM::Create(mojo::ApplicationConnection* connection,
+                     mojo::InterfaceRequest<mojo::NavigatorHost> request) {
+  new NavigatorHostImpl(this, request.Pass());
+}
+
 void KioskWM::OnViewManagerDisconnected(
     mojo::ViewManager* view_manager) {
   root_ = nullptr;
@@ -111,4 +114,3 @@ void KioskWM::ReplaceContentWithURL(const mojo::String& url) {
 }
 
 }  // namespace kiosk_wm
-}  // namespace mojo

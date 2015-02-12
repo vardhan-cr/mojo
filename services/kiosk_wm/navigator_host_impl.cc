@@ -6,11 +6,12 @@
 
 #include "services/kiosk_wm/kiosk_wm.h"
 
-namespace mojo {
 namespace kiosk_wm {
 
-NavigatorHostImpl::NavigatorHostImpl(KioskWM* window_manager)
-    : kiosk_wm_(window_manager->GetWeakPtr()) {
+NavigatorHostImpl::NavigatorHostImpl(
+    KioskWM* window_manager,
+    mojo::InterfaceRequest<mojo::NavigatorHost> request)
+    : kiosk_wm_(window_manager->GetWeakPtr()), binding_(this, request.Pass()) {
 }
 
 NavigatorHostImpl::~NavigatorHostImpl() {
@@ -30,4 +31,3 @@ void NavigatorHostImpl::RequestNavigate(mojo::Target target,
 }
 
 }  // namespace kiosk_wm
-}  // namespace mojo
