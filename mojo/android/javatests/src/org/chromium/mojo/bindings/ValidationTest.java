@@ -187,11 +187,37 @@ public class ValidationTest extends MojoTestCase {
     }
 
     /**
-     * Testing the integration suite.
+     * Testing the integration suite for message headers.
      */
     @SmallTest
-    public void testIntegration() throws FileNotFoundException {
-        runTest("integration_",
+    public void testIntegrationMessageHeader() throws FileNotFoundException {
+        runTest("integration_msghdr_",
+                new RoutingMessageReceiver(IntegrationTestInterface.MANAGER.buildStub(null,
+                        IntegrationTestInterface.MANAGER.buildProxy(null,
+                                new SinkMessageReceiver())),
+                        IntegrationTestInterfaceTestHelper
+                                .newIntegrationTestInterfaceMethodCallback()));
+    }
+
+    /**
+     * Testing the integration suite for request messages.
+     */
+    @SmallTest
+    public void testIntegrationRequestMessage() throws FileNotFoundException {
+        runTest("integration_intf_rqst_",
+                new RoutingMessageReceiver(IntegrationTestInterface.MANAGER.buildStub(null,
+                        IntegrationTestInterface.MANAGER.buildProxy(null,
+                                new SinkMessageReceiver())),
+                        IntegrationTestInterfaceTestHelper
+                                .newIntegrationTestInterfaceMethodCallback()));
+    }
+
+    /**
+     * Testing the integration suite for response messages.
+     */
+    @SmallTest
+    public void testIntegrationResponseMessage() throws FileNotFoundException {
+        runTest("integration_intf_resp_",
                 new RoutingMessageReceiver(IntegrationTestInterface.MANAGER.buildStub(null,
                         IntegrationTestInterface.MANAGER.buildProxy(null,
                                 new SinkMessageReceiver())),
