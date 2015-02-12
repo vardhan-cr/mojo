@@ -45,10 +45,11 @@ class TestRequestTrackerImpl : public TestRequestTracker {
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestRequestTrackerImpl);
 };
 
-class TestTrackedRequestServiceImpl
-    : public InterfaceImpl<TestTrackedRequestService> {
+class TestTrackedRequestServiceImpl : public TestTrackedRequestService {
  public:
-  explicit TestTrackedRequestServiceImpl(TrackingContext* context);
+  TestTrackedRequestServiceImpl(
+      InterfaceRequest<TestTrackedRequestService> request,
+      TrackingContext* context);
   ~TestTrackedRequestServiceImpl() override;
 
   // |TestTrackedRequestService| implementation.
@@ -57,6 +58,8 @@ class TestTrackedRequestServiceImpl
 
  private:
   TrackingContext* context_;
+  StrongBinding<TestTrackedRequestService> binding_;
+
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestTrackedRequestServiceImpl);
 };
 

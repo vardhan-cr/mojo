@@ -40,8 +40,9 @@ void TestRequestTrackerImpl::SetNameAndReturnId(
 }
 
 TestTrackedRequestServiceImpl::TestTrackedRequestServiceImpl(
+    InterfaceRequest<TestTrackedRequestService> request,
     TrackingContext* context)
-    : context_(context) {
+    : context_(context), binding_(this, request.Pass()) {
 }
 
 TestTrackedRequestServiceImpl::~TestTrackedRequestServiceImpl() {

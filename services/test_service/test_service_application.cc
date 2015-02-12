@@ -36,7 +36,7 @@ bool TestServiceApplication::ConfigureIncomingConnection(
 
 void TestServiceApplication::Create(ApplicationConnection* connection,
                                     InterfaceRequest<TestService> request) {
-  BindToRequest(new TestServiceImpl(app_impl_, this), &request);
+  new TestServiceImpl(app_impl_, this, request.Pass());
   AddRef();
 }
 

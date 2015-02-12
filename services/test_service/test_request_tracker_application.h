@@ -19,7 +19,8 @@ class TestTimeService;
 class TestRequestTrackerApplication
     : public ApplicationDelegate,
       public InterfaceFactory<TestTimeService>,
-      public InterfaceFactory<TestRequestTracker> {
+      public InterfaceFactory<TestRequestTracker>,
+      public InterfaceFactory<TestTrackedRequestService> {
  public:
   TestRequestTrackerApplication();
   ~TestRequestTrackerApplication() override;
@@ -37,13 +38,13 @@ class TestRequestTrackerApplication
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestRequestTracker> request) override;
 
+  // InterfaceFactory<TestTrackedRequestService> methods:
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<TestTrackedRequestService> request) override;
+
  private:
   ApplicationImpl* app_impl_;
   TrackingContext context_;
-  typedef InterfaceFactoryImplWithContext<TestTrackedRequestServiceImpl,
-                                          TrackingContext>
-      TestTrackedRequestFactory;
-  TestTrackedRequestFactory test_tracked_request_factory_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestRequestTrackerApplication);
 };
 

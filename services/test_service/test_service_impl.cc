@@ -16,8 +16,12 @@ namespace mojo {
 namespace test {
 
 TestServiceImpl::TestServiceImpl(ApplicationImpl* app_impl,
-                                 TestServiceApplication* application)
-    : application_(application), app_impl_(app_impl) {
+                                 TestServiceApplication* application,
+                                 InterfaceRequest<TestService> request)
+    : application_(application),
+      app_impl_(app_impl),
+      binding_(this, request.Pass()) {
+  binding_.set_error_handler(this);
 }
 
 TestServiceImpl::~TestServiceImpl() {
