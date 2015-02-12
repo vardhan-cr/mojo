@@ -14,8 +14,8 @@ const int kEchoesCount = 100;
 
 class EchoString extends bindings.Struct {
   static const int kStructSize = 16;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 1);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 1);
   String a = null;
 
   EchoString() : super(kStructSize);
@@ -29,15 +29,15 @@ class EchoString extends bindings.Struct {
       return null;
     }
     EchoString result = new EchoString();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.a = decoder0.decodeString(8, false);
     }
     return result;
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeString(a, 8, false);
   }
 }
@@ -45,8 +45,8 @@ class EchoString extends bindings.Struct {
 
 class EchoStringResponse extends bindings.Struct {
   static const int kStructSize = 16;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 1);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 1);
   String a = null;
 
   EchoStringResponse() : super(kStructSize);
@@ -60,15 +60,15 @@ class EchoStringResponse extends bindings.Struct {
       return null;
     }
     EchoStringResponse result = new EchoStringResponse();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.a = decoder0.decodeString(8, false);
     }
     return result;
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeString(a, 8, false);
   }
 }

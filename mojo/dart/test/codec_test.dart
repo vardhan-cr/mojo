@@ -10,8 +10,8 @@ import 'package:mojo/dart/testing/expect.dart';
 
 class Bar extends bindings.Struct {
   static const int kStructSize = 16;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 4);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 4);
 
   static final int Type_VERTICAL = 1;
   static final int Type_HORIZONTAL = Type_VERTICAL + 1;
@@ -36,24 +36,24 @@ class Bar extends bindings.Struct {
       return null;
     }
     Bar result = new Bar();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.alpha = decoder0.decodeUint8(8);
     }
-    if (mainDataHeader.numFields > 1) {
+    if (mainDataHeader.version > 1) {
       result.beta = decoder0.decodeUint8(9);
     }
-    if (mainDataHeader.numFields > 2) {
+    if (mainDataHeader.version > 2) {
       result.gamma = decoder0.decodeUint8(10);
     }
-    if (mainDataHeader.numFields > 3) {
+    if (mainDataHeader.version > 3) {
       result.type = decoder0.decodeInt32(12);
     }
     return result;
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeUint8(alpha, 8);
     encoder0.encodeUint8(beta, 9);
     encoder0.encodeUint8(gamma, 10);
@@ -105,8 +105,8 @@ void testBar() {
 
 class Foo extends bindings.Struct {
   static const int kStructSize = 96;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 15);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 15);
   static final kFooby = "Fooby";
   int x = 0;
   int y = 0;
@@ -135,77 +135,77 @@ class Foo extends bindings.Struct {
       return null;
     }
     Foo result = new Foo();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.x = decoder0.decodeInt32(8);
     }
-    if (mainDataHeader.numFields > 1) {
+    if (mainDataHeader.version > 1) {
       result.y = decoder0.decodeInt32(12);
     }
-    if (mainDataHeader.numFields > 2) {
+    if (mainDataHeader.version > 2) {
       result.a = decoder0.decodeBool(16, 0);
     }
-    if (mainDataHeader.numFields > 3) {
+    if (mainDataHeader.version > 3) {
       result.b = decoder0.decodeBool(16, 1);
     }
-    if (mainDataHeader.numFields > 4) {
+    if (mainDataHeader.version > 4) {
       result.c = decoder0.decodeBool(16, 2);
     }
-    if (mainDataHeader.numFields > 9) {
+    if (mainDataHeader.version > 9) {
       result.source = decoder0.decodeHandle(20, true);
     }
-    if (mainDataHeader.numFields > 5) {
+    if (mainDataHeader.version > 5) {
       var decoder1 = decoder0.decodePointer(24, true);
       result.bar = Bar.decode(decoder1);
     }
-    if (mainDataHeader.numFields > 6) {
+    if (mainDataHeader.version > 6) {
       result.data = decoder0.decodeUint8Array(
           32, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
     }
-    if (mainDataHeader.numFields > 7) {
+    if (mainDataHeader.version > 7) {
       var decoder1 = decoder0.decodePointer(40, true);
       if (decoder1 == null) {
         result.extraBars = null;
       } else {
         var si1 = decoder1.decodeDataHeaderForPointerArray(
             bindings.kUnspecifiedArrayLength);
-        result.extraBars = new List<Bar>(si1.numFields);
-        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+        result.extraBars = new List<Bar>(si1.numElements);
+        for (int i1 = 0; i1 < si1.numElements; ++i1) {
           var decoder2 = decoder1.decodePointer(
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i1,
               false);
           result.extraBars[i1] = Bar.decode(decoder2);
         }
       }
     }
-    if (mainDataHeader.numFields > 8) {
+    if (mainDataHeader.version > 8) {
       result.name = decoder0.decodeString(48, false);
     }
-    if (mainDataHeader.numFields > 10) {
+    if (mainDataHeader.version > 10) {
       result.inputStreams = decoder0.decodeHandleArray(
           56, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
     }
-    if (mainDataHeader.numFields > 11) {
+    if (mainDataHeader.version > 11) {
       result.outputStreams = decoder0.decodeHandleArray(
           64, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
     }
-    if (mainDataHeader.numFields > 12) {
+    if (mainDataHeader.version > 12) {
       var decoder1 = decoder0.decodePointer(72, true);
       if (decoder1 == null) {
         result.arrayOfArrayOfBools = null;
       } else {
         var si1 = decoder1.decodeDataHeaderForPointerArray(
             bindings.kUnspecifiedArrayLength);
-        result.arrayOfArrayOfBools = new List<List<bool>>(si1.numFields);
-        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+        result.arrayOfArrayOfBools = new List<List<bool>>(si1.numElements);
+        for (int i1 = 0; i1 < si1.numElements; ++i1) {
           result.arrayOfArrayOfBools[i1] = decoder1.decodeBoolArray(
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i1,
               bindings.kNothingNullable,
               bindings.kUnspecifiedArrayLength);
         }
       }
     }
-    if (mainDataHeader.numFields > 13) {
+    if (mainDataHeader.version > 13) {
       var decoder1 = decoder0.decodePointer(80, true);
       if (decoder1 == null) {
         result.multiArrayOfStrings = null;
@@ -213,27 +213,28 @@ class Foo extends bindings.Struct {
         var si1 = decoder1.decodeDataHeaderForPointerArray(
             bindings.kUnspecifiedArrayLength);
         result.multiArrayOfStrings =
-            new List<List<List<String>>>(si1.numFields);
-        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+            new List<List<List<String>>>(si1.numElements);
+        for (int i1 = 0; i1 < si1.numElements; ++i1) {
           var decoder2 = decoder1.decodePointer(
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i1,
               false);
           {
             var si2 = decoder2.decodeDataHeaderForPointerArray(
                 bindings.kUnspecifiedArrayLength);
             result.multiArrayOfStrings[i1] =
-                new List<List<String>>(si2.numFields);
-            for (int i2 = 0; i2 < si2.numFields; ++i2) {
+                new List<List<String>>(si2.numElements);
+            for (int i2 = 0; i2 < si2.numElements; ++i2) {
               var decoder3 = decoder2.decodePointer(
-                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i2,
+                  bindings.ArrayDataHeader.kHeaderSize +
+                      bindings.kPointerSize * i2,
                   false);
               {
                 var si3 = decoder3.decodeDataHeaderForPointerArray(
                     bindings.kUnspecifiedArrayLength);
                 result.multiArrayOfStrings[i1][i2] =
-                    new List<String>(si3.numFields);
-                for (int i3 = 0; i3 < si3.numFields; ++i3) {
-                  var length = bindings.DataHeader.kHeaderSize +
+                    new List<String>(si3.numElements);
+                for (int i3 = 0; i3 < si3.numElements; ++i3) {
+                  var length = bindings.ArrayDataHeader.kHeaderSize +
                                bindings.kPointerSize * i3;
                   result.multiArrayOfStrings[i1][i2][i3] =
                       decoder3.decodeString(length, false);
@@ -244,7 +245,7 @@ class Foo extends bindings.Struct {
         }
       }
     }
-    if (mainDataHeader.numFields > 14) {
+    if (mainDataHeader.version > 14) {
       result.arrayOfBools = decoder0.decodeBoolArray(
           88, bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
     }
@@ -252,7 +253,7 @@ class Foo extends bindings.Struct {
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeInt32(x, 8);
     encoder0.encodeInt32(y, 12);
     encoder0.encodeBool(a, 16, 0);
@@ -271,7 +272,7 @@ class Foo extends bindings.Struct {
       for (int i0 = 0; i0 < extraBars.length; ++i0) {
         encoder1.encodeStruct(
             extraBars[i0],
-            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
             false);
       }
     }
@@ -294,7 +295,7 @@ class Foo extends bindings.Struct {
       for (int i0 = 0; i0 < arrayOfArrayOfBools.length; ++i0) {
         encoder1.encodeBoolArray(
             arrayOfArrayOfBools[i0],
-            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
             bindings.kNothingNullable,
             bindings.kUnspecifiedArrayLength);
       }
@@ -308,25 +309,27 @@ class Foo extends bindings.Struct {
       for (int i0 = 0; i0 < multiArrayOfStrings.length; ++i0) {
         if (multiArrayOfStrings[i0] == null) {
           encoder1.encodeNullPointer(
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
               false);
         } else {
           var encoder2 = encoder1.encodePointerArray(
               multiArrayOfStrings[i0].length,
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
               bindings.kUnspecifiedArrayLength);
           for (int i1 = 0; i1 < multiArrayOfStrings[i0].length; ++i1) {
             if (multiArrayOfStrings[i0][i1] == null) {
               encoder2.encodeNullPointer(
-                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+                  bindings.ArrayDataHeader.kHeaderSize +
+                      bindings.kPointerSize * i1,
                   false);
             } else {
               var encoder3 = encoder2.encodePointerArray(
                   multiArrayOfStrings[i0][i1].length,
-                  bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+                  bindings.ArrayDataHeader.kHeaderSize +
+                      bindings.kPointerSize * i1,
                   bindings.kUnspecifiedArrayLength);
               for (int i2 = 0; i2 < multiArrayOfStrings[i0][i1].length; ++i2) {
-                var length = bindings.DataHeader.kHeaderSize +
+                var length = bindings.ArrayDataHeader.kHeaderSize +
                              bindings.kPointerSize * i2;
                 encoder3.encodeString(
                     multiArrayOfStrings[i0][i1][i2],
@@ -442,8 +445,8 @@ void testFoo() {
 
 class Rect extends bindings.Struct {
   static const int kStructSize = 24;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 4);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 4);
   int x;
   int y;
   int width;
@@ -460,24 +463,24 @@ class Rect extends bindings.Struct {
       return null;
     }
     Rect result = new Rect();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.x = decoder0.decodeInt32(8);
     }
-    if (mainDataHeader.numFields > 1) {
+    if (mainDataHeader.version > 1) {
       result.y = decoder0.decodeInt32(12);
     }
-    if (mainDataHeader.numFields > 2) {
+    if (mainDataHeader.version > 2) {
       result.width = decoder0.decodeInt32(16);
     }
-    if (mainDataHeader.numFields > 3) {
+    if (mainDataHeader.version > 3) {
       result.height = decoder0.decodeInt32(20);
     }
     return result;
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeInt32(x, 8);
     encoder0.encodeInt32(y, 12);
     encoder0.encodeInt32(width, 16);
@@ -504,8 +507,8 @@ Rect createRect(int x, int y, int width, int height) {
 
 class NamedRegion extends bindings.Struct {
   static const int kStructSize = 24;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 2);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 2);
   String name;
   List<Rect> rects;
 
@@ -520,21 +523,21 @@ class NamedRegion extends bindings.Struct {
       return null;
     }
     NamedRegion result = new NamedRegion();
-    var mainDataHeader = decoder0.decodeDataHeader();
-    if (mainDataHeader.numFields > 0) {
+    var mainDataHeader = decoder0.decodeStructDataHeader();
+    if (mainDataHeader.version > 0) {
       result.name = decoder0.decodeString(8, true);
     }
-    if (mainDataHeader.numFields > 1) {
+    if (mainDataHeader.version > 1) {
       var decoder1 = decoder0.decodePointer(16, true);
       if (decoder1 == null) {
         result.rects = null;
       } else {
         var si1 = decoder1.decodeDataHeaderForPointerArray(
             bindings.kUnspecifiedArrayLength);
-        result.rects = new List<Rect>(si1.numFields);
-        for (int i1 = 0; i1 < si1.numFields; ++i1) {
+        result.rects = new List<Rect>(si1.numElements);
+        for (int i1 = 0; i1 < si1.numElements; ++i1) {
           var decoder2 = decoder1.decodePointer(
-              bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i1,
+              bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i1,
               false);
           result.rects[i1] = Rect.decode(decoder2);
         }
@@ -544,7 +547,7 @@ class NamedRegion extends bindings.Struct {
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeString(name, 8, true);
     if (rects == null) {
       encoder0.encodeNullPointer(16, true);
@@ -554,7 +557,7 @@ class NamedRegion extends bindings.Struct {
       for (int i0 = 0; i0 < rects.length; ++i0) {
         encoder1.encodeStruct(
             rects[i0],
-            bindings.DataHeader.kHeaderSize + bindings.kPointerSize * i0,
+            bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
             false);
       }
     }
@@ -611,8 +614,8 @@ void testAlign() {
 
 class MojoString extends bindings.Struct {
   static const int kStructSize = 16;
-  static const bindings.DataHeader kDefaultStructInfo =
-      const bindings.DataHeader(kStructSize, 1);
+  static const bindings.StructDataHeader kDefaultStructInfo =
+      const bindings.StructDataHeader(kStructSize, 1);
   String string;
   MojoString() : super(kStructSize);
 
@@ -625,13 +628,13 @@ class MojoString extends bindings.Struct {
       return null;
     }
     MojoString result = new MojoString();
-    var mainDataHeader = decoder0.decodeDataHeader();
+    var mainDataHeader = decoder0.decodeStructDataHeader();
     result.string = decoder0.decodeString(8, false);
     return result;
   }
 
   void encode(bindings.Encoder encoder) {
-    var encoder0 = encoder.getEncoderAtOffset(kDefaultStructInfo);
+    var encoder0 = encoder.getStructEncoderAtOffset(kDefaultStructInfo);
     encoder0.encodeString(string, 8, false);
   }
 }
