@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import os.path
+import random
 import subprocess
 import sys
 import threading
@@ -21,7 +22,6 @@ from mopy.paths import Paths
 sys.path.insert(0, os.path.join(Paths().src_root, 'build', 'android'))
 from pylib import android_commands
 from pylib import constants
-from pylib import forwarder
 
 
 # Tags used by the mojo shell application logs.
@@ -120,6 +120,32 @@ def _ReadFifo(context, fifo_path, pipe, on_fifo_closed, max_attempts=5):
   thread.start()
 
 
+def _MapPort(device, device_port, host_port):
+  """
+  Maps the device port to the host port. If |device_port| is 0, a random
+  available port is chosen. Returns the device port.
+  """
+  def _FindAvailablePortOnDevice(device):
+    opened = device.RunShellCommand('netstat')
+    opened = [int(x.strip().split()[3].split(':')[1])
+              for x in opened if x.startswith(' tcp')]
+    while True:
+      port = random.randint(4096, 16384)
+      if port not in opened:
+        return port
+  if device_port == 0:
+    device_port = _FindAvailablePortOnDevice(device)
+  adb_path = constants.GetAdbPath()
+  subprocess.Popen([adb_path,
+                    "reverse",
+                    "tcp:%d" % device_port,
+                    "tcp:%d" % host_port]).wait()
+  def _UnmapPort():
+    subprocess.Popen([adb_path, "reverse", "--remove",  "tcp:%d" % device_port])
+  atexit.register(_UnmapPort)
+  return device_port
+
+
 def PrepareShellRun(config):
   """
   Returns a context allowing a shell to be run.
@@ -147,10 +173,7 @@ def PrepareShellRun(config):
                         keep_data=True,
                         package_name=MOJO_SHELL_PACKAGE_NAME)
 
-  atexit.register(forwarder.Forwarder.UnmapAllDevicePorts, device)
-  forwarder.Forwarder.Map([(0, host_port)], device)
-  context = Context(device,
-                    forwarder.Forwarder.DevicePortForHostPort(host_port))
+  context = Context(device, _MapPort(device, 0, host_port))
 
   atexit.register(StopShell, context)
   return context
