@@ -13,13 +13,11 @@ import re
 
 # NOTE: The EDK allows all external paths, so doesn't need a whitelist.
 _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
-    "SDK": ["//build/config/mojo.gni",
-            "//build/module_args/mojo.gni",
+    "SDK": ["//build/module_args/mojo.gni",
             "//testing/gtest",
             "//third_party/cython",
             "//third_party/khronos"],
-    "services": ["//build/config/mojo.gni",
-                 "//build/module_args/mojo.gni",
+    "services": ["//build/module_args/mojo.gni",
                  "//testing/gtest"],
 }
 

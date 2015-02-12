@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# This variable should point to the parent directory of the Mojo SDK.
+mojo_sdk_root = "//"
+
 # To use the prebuilt shell, simply omit this variable. Note that the prebuilt
 # shell will be used only on platforms for which it is published (currently
 # Linux and Android).
