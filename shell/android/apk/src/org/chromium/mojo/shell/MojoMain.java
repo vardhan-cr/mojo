@@ -54,10 +54,10 @@ public class MojoMain {
                 parametersList.addAll(Arrays.asList(parameters));
             }
 
-            nativeInit(applicationContext,
-                    mojoShell.getAbsolutePath(),
+            nativeInit(applicationContext, mojoShell.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
-                    getLocalAppsDir(applicationContext).getAbsolutePath());
+                    getLocalAppsDir(applicationContext).getAbsolutePath(),
+                    getTmpDir(applicationContext).getAbsolutePath());
             sInitialized = true;
         } catch (Exception e) {
             Log.e(TAG, "MojoMain initialization failed.", e);
@@ -85,6 +85,10 @@ public class MojoMain {
         return context.getDir(LOCAL_APP_DIRECTORY, Context.MODE_PRIVATE);
     }
 
+    private static File getTmpDir(Context context) {
+        return new File(context.getCacheDir(), "tmp");
+    }
+
     @CalledByNative
     private static void finishActivity(Activity activity) {
         activity.finish();
@@ -94,8 +98,7 @@ public class MojoMain {
      * Initializes the native system. This API should be called only once per process.
      **/
     private static native void nativeInit(Context context, String mojoShellPath,
-            String[] parameters,
-            String bundledAppsDirectory);
+            String[] parameters, String bundledAppsDirectory, String tmpDir);
 
     private static native boolean nativeStart();
 

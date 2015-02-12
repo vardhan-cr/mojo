@@ -59,10 +59,9 @@ if config.target_os != config.OS_ANDROID:
     },
   ]
 
-# TODO: get dart unittests working with asan and android.
-if not config.sanitizer and config.target_os != config.OS_ANDROID:
+# TODO: get dart unittests working with asan.
+if not config.sanitizer:
   tests += [
-    # TODO: make work on android.
     {
       "test": "mojo:dart_apptests",
     },

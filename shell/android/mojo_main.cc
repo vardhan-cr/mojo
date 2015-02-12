@@ -136,8 +136,16 @@ static void Init(JNIEnv* env,
                  jobject activity,
                  jstring mojo_shell_path,
                  jobjectArray jparameters,
-                 jstring j_local_apps_directory) {
+                 jstring j_local_apps_directory,
+                 jstring j_tmp_dir) {
   g_main_activiy.Get().Reset(env, activity);
+
+  // Setting the TMPDIR environment variable so that applications can use it.
+  // TODO(qsr) We will need our subprocesses to inherit this.
+  int return_value =
+      setenv("TMPDIR",
+             base::android::ConvertJavaStringToUTF8(env, j_tmp_dir).c_str(), 1);
+  DCHECK_EQ(return_value, 0);
 
   base::android::ScopedJavaLocalRef<jobject> scoped_activity(env, activity);
   base::android::InitApplicationContext(env, scoped_activity);
