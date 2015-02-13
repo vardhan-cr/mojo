@@ -24,7 +24,6 @@ v8.log
 /c
 /dart/
 /mojo/public/tools/prebuilt/
-/mojo/services/network/prebuilt/
 /native_client/
 /out/
 /out_*/

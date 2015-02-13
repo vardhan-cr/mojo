@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//build/config/ui.gni")
+import("//build/module_args/mojo.gni")
 import("//mojo/public/mojo.gni")
 
 # TODO(beng): this meta target should probably move to the root dir's BUILD.gn.
@@ -67,6 +68,10 @@ group("tests") {
     "//services/window_manager:window_manager_apptests",
     "//services/window_manager:window_manager_unittests",
   ]
+
+  if (use_prebuilt_network_service) {
+    deps += [ "//mojo/public/tools:copy_network_service_apptests" ]
+  }
 
   if (!is_asan) {
     deps += [

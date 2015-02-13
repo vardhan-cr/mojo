@@ -318,11 +318,11 @@ hooks = [
     ],
   },
   # Pull the prebuilt network service binaries according to
-  # services/network/VERSION.
+  # mojo/public/tools/NETWORK_SERVICE_VERSION.
   {
     'name': 'download_network_service',
     'pattern': '',
-    'action': [ 'python', 'src/mojo/services/network/download_network_service.py' ],
+    'action': [ 'python', 'src/mojo/public/tools/download_network_service.py' ],
   },
   {
     # Ensure that we don't accidentally reference any .pyc files whose
