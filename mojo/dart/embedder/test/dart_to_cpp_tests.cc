@@ -16,6 +16,7 @@
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/dart/embedder/test/dart_to_cpp.mojom.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -136,14 +137,19 @@ void CheckSampleEchoArgsList(const dart_to_cpp::EchoArgsListPtr& list) {
 // Base Provider implementation class. It's expected that tests subclass and
 // override the appropriate Provider functions. When test is done quit the
 // run_loop().
-class CppSideConnection : public mojo::InterfaceImpl<dart_to_cpp::CppSide> {
+class CppSideConnection : public dart_to_cpp::CppSide {
  public:
   CppSideConnection() :
       run_loop_(NULL),
       dart_side_(NULL),
-      mishandled_messages_(0) {
+      mishandled_messages_(0),
+      binding_(this) {
   }
   ~CppSideConnection() override {}
+
+  void Bind(InterfaceRequest<dart_to_cpp::CppSide> request) {
+    binding_.Bind(request.Pass());
+  }
 
   void set_run_loop(base::RunLoop* run_loop) { run_loop_ = run_loop; }
   base::RunLoop* run_loop() { return run_loop_; }
@@ -170,6 +176,7 @@ class CppSideConnection : public mojo::InterfaceImpl<dart_to_cpp::CppSide> {
   int mishandled_messages_;
 
  private:
+  StrongBinding<dart_to_cpp::CppSide> binding_;
   DISALLOW_COPY_AND_ASSIGN(CppSideConnection);
 };
 
@@ -320,17 +327,16 @@ class DartToCppTest : public testing::Test {
   bool RunWithDartOnThread(base::Thread* dart_thread,
                            const std::string& test,
                            CppSideConnection* cpp_side) {
-    MessagePipe pipe;
-    dart_to_cpp::DartSidePtr dart_side =
-        MakeProxy<dart_to_cpp::DartSide>(pipe.handle0.Pass());
+    dart_to_cpp::DartSidePtr dart_side_ptr;
+    auto dart_side_request = GetProxy(&dart_side_ptr);
 
     dart_to_cpp::CppSidePtr cpp_side_ptr;
-    BindToProxy(cpp_side, &cpp_side_ptr);
-    dart_side->SetClient(cpp_side_ptr.Pass());
+    cpp_side->Bind(GetProxy(&cpp_side_ptr));
+    dart_side_ptr->SetClient(cpp_side_ptr.Pass());
 
-    dart_side.internal_state()->router_for_testing()->EnableTestingMode();
+    dart_side_ptr.internal_state()->router_for_testing()->EnableTestingMode();
 
-    cpp_side->set_dart_side(dart_side.get());
+    cpp_side->set_dart_side(dart_side_ptr.get());
 
     DartControllerConfig config;
     char* error;
@@ -338,7 +344,7 @@ class DartToCppTest : public testing::Test {
     InitializeDartConfig(
         &config,
         test,
-        pipe.handle1.release().value(),
+        dart_side_request.PassMessagePipe().release().value(),
         nullptr,
         0,
         &unhandled_exception,
