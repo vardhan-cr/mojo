@@ -470,7 +470,6 @@ test("external_application_unittests") {
   sources = [
     "incoming_connection_listener_unittest.cc",
     "external_application_listener_unittest.cc",
-    "external_application_test_main.cc",
   ]
 
   deps = [
@@ -484,6 +483,7 @@ test("external_application_unittests") {
     "//mojo/application",
     "//mojo/common",
     "//mojo/edk/system",
+    "//mojo/edk/test:run_all_unittests",
     "//mojo/environment:chromium",
     "//shell/application_manager",
     "//shell/domain_socket",
