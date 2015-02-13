@@ -39,19 +39,32 @@ define("main", [
   const VERTEX_SHADER_SOURCE = [
     'uniform mat4 u_mvpMatrix;',
     'attribute vec4 a_position;',
+    'attribute vec4 a_normal;',
+    'varying vec4 v_color;',
     'void main()',
     '{',
-    '   gl_Position = u_mvpMatrix * a_position;',
+    '  gl_Position = u_mvpMatrix * a_position;',
+    '  vec4 rotated_normal = u_mvpMatrix * a_normal;',
+    '  vec4 light_direction = normalize(vec4(0.0, 1.0, -1.0, 0.0));',
+    '  float directional_capture = ',
+    '      clamp(dot(rotated_normal, light_direction), 0.0, 1.0);',
+    '  float light_intensity = 0.6 * directional_capture + 0.4;',
+    '  vec3 base_color = a_position.xyz + 0.5;',
+    '  v_color = vec4(base_color * light_intensity, 1.0);',
     '}'
   ].join('\n');
 
   const FRAGMENT_SHADER_SOURCE = [
     'precision mediump float;',
+    'varying vec4 v_color;',
     'void main()',
     '{',
-    '  gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );',
+    '  gl_FragColor = v_color;',
     '}'
   ].join('\n');
+
+  // The number of vertices in the cube.
+  const NUM_VERTICES = 24;
 
   class ESMatrix {
     constructor() {
@@ -231,61 +244,119 @@ define("main", [
   var vboVertices;
   var vboIndices;
   function generateCube(gl) {
-    var numVertices = 24 * 3;
-    var numIndices = 12 * 3;
-
-    var cubeVertices = new Float32Array([
+    var cubeVertices = [
+      // -Y side.
       -0.5, -0.5, -0.5,
       -0.5, -0.5,  0.5,
       0.5, -0.5,  0.5,
       0.5, -0.5, -0.5,
+
+      // +Y side.
       -0.5,  0.5, -0.5,
       -0.5,  0.5,  0.5,
       0.5,  0.5,  0.5,
       0.5,  0.5, -0.5,
+
+      // -Z side.
       -0.5, -0.5, -0.5,
       -0.5,  0.5, -0.5,
       0.5,  0.5, -0.5,
       0.5, -0.5, -0.5,
+
+      // +Z side.
       -0.5, -0.5, 0.5,
       -0.5,  0.5, 0.5,
       0.5,  0.5, 0.5,
       0.5, -0.5, 0.5,
+
+      // -X side.
       -0.5, -0.5, -0.5,
       -0.5, -0.5,  0.5,
       -0.5,  0.5,  0.5,
       -0.5,  0.5, -0.5,
+
+      // +X side.
       0.5, -0.5, -0.5,
       0.5, -0.5,  0.5,
       0.5,  0.5,  0.5,
       0.5,  0.5, -0.5
-    ]);
+    ];
 
-    var cubeIndices = new Uint16Array([
+    var vertexNormals = [
+      // -Y side.
+      0.0, -1.0, 0.0,
+      0.0, -1.0, 0.0,
+      0.0, -1.0, 0.0,
+      0.0, -1.0, 0.0,
+
+      // +Y side.
+      0.0, 1.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 1.0, 0.0,
+      0.0, 1.0, 0.0,
+
+      // -Z side.
+      0.0, 0.0, -1.0,
+      0.0, 0.0, -1.0,
+      0.0, 0.0, -1.0,
+      0.0, 0.0, -1.0,
+
+      // +Z side.
+      0.0, 0.0, 1.0,
+      0.0, 0.0, 1.0,
+      0.0, 0.0, 1.0,
+      0.0, 0.0, 1.0,
+
+      // -X side.
+      -1.0, 0.0, 0.0,
+      -1.0, 0.0, 0.0,
+      -1.0, 0.0, 0.0,
+      -1.0, 0.0, 0.0,
+
+      // +X side.
+      1.0, 0.0, 0.0,
+      1.0, 0.0, 0.0,
+      1.0, 0.0, 0.0,
+      1.0, 0.0, 0.0,
+    ];
+
+    var cubeIndices = [
+      // -Y side.
       0, 2, 1,
       0, 3, 2,
+
+      // +Y side.
       4, 5, 6,
       4, 6, 7,
+
+      // -Z side.
       8, 9, 10,
       8, 10, 11,
+
+      // +Z side.
       12, 15, 14,
       12, 14, 13,
+
+      // -X side.
       16, 17, 18,
       16, 18, 19,
+
+      // +X side.
       20, 23, 22,
       20, 22, 21
-    ]);
+    ];
 
-    // TODO(aa): The C++ program branches here on whether the pointer is
-    // non-NULL.
     vboVertices = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vboVertices);
-    gl.bufferData(gl.ARRAY_BUFFER, cubeVertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER,
+                  new Float32Array(cubeVertices.concat(vertexNormals)),
+                  gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, 0);
 
     vboIndices = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vboIndices);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIndices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+                  new Uint16Array(cubeIndices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0);
 
     return cubeIndices.length;
@@ -300,6 +371,8 @@ define("main", [
       this.program_ = loadProgram(this.gl_);
       this.positionLocation_ =
         this.gl_.getAttribLocation(this.program_, 'a_position');
+      this.normalLocation_ =
+        this.gl_.getAttribLocation(this.program_, 'a_normal');
       this.mvpLocation_ =
         this.gl_.getUniformLocation(this.program_, 'u_mvpMatrix');
       this.numIndices_ = generateCube(this.gl_);
@@ -307,6 +380,7 @@ define("main", [
       this.mvpMatrix_.loadIdentity();
 
       this.gl_.clearColor(0, 0, 0, 0);
+      this.gl_.enable(this.gl_.DEPTH_TEST);
       this.setDimensions(size);
       this.timer_ =
           timer.createRepeating(16, this.handleTimer.bind(this));
@@ -320,13 +394,16 @@ define("main", [
 
     drawCube() {
       this.gl_.viewport(0, 0, this.width_, this.height_);
-      this.gl_.clear(this.gl_.COLOR_BUFFER_BIT);
+      this.gl_.clear(this.gl_.COLOR_BUFFER_BIT | this.gl_.DEPTH_BUFFER_BIT);
       this.gl_.useProgram(this.program_);
       this.gl_.bindBuffer(this.gl_.ARRAY_BUFFER, vboVertices);
       this.gl_.bindBuffer(this.gl_.ELEMENT_ARRAY_BUFFER, vboIndices);
       this.gl_.vertexAttribPointer(this.positionLocation_, 3, this.gl_.FLOAT,
-                                   false, 12, 0);
+                                   false, 3 * 4, 0);
+      this.gl_.vertexAttribPointer(this.normalLocation_, 3, this.gl_.FLOAT,
+                                   false, 3 * 4, 3 * 4 * NUM_VERTICES);
       this.gl_.enableVertexAttribArray(this.positionLocation_);
+      this.gl_.enableVertexAttribArray(this.normalLocation_);
       this.gl_.uniformMatrix4fv(this.mvpLocation_, false, this.mvpMatrix_.m);
       this.gl_.drawElements(this.gl_.TRIANGLES, this.numIndices_,
                             this.gl_.UNSIGNED_SHORT, 0);
@@ -386,6 +463,8 @@ define("main", [
       this.viewport.create(viewportSize).then(
         function(result) {
           app.onViewportCreated(result.native_viewport_id, viewportSize);
+        }).catch(function(e) {
+          console.log("onViewportCreated() failed: " + e.stack);
         });
 
       this.viewport.setEventDispatcher(function(stub) {

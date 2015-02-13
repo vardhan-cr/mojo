@@ -479,7 +479,6 @@ void SpinningCube::Init(uint32_t width, uint32_t height) {
       &state_->vbo_vertices_, &state_->vbo_indices_);
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glDepthFunc(GL_LESS);
   glEnable(GL_DEPTH_TEST);
   initialized_ = true;
 }

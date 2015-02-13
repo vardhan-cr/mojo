@@ -15,6 +15,7 @@
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/environment/environment.h"
+#include "mojo/public/cpp/environment/logging.h"
 
 namespace gin {
 template<>
@@ -52,10 +53,13 @@ void Context::BufferData(GLenum target, const gin::ArrayBufferView& buffer,
 void Context::CompileShader(const gin::Arguments& args, GLuint shader) {
   glCompileShader(shader);
   GLint compiled = 0;
+  // TODO(ggowan): Do something similar to this for linkProgram() as well, for
+  // consistency.
   glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
   if (!compiled) {
-    args.ThrowTypeError(std::string("Could not compile shader: ") +
-                        GetShaderInfoLog(shader));
+    std::string log = GetShaderInfoLog(shader);
+    MOJO_LOG(WARNING) << "Shader compilation failed: " << log;
+    args.ThrowTypeError(std::string("Could not compile shader: ") + log);
   }
 }
 
@@ -79,17 +83,25 @@ GLint Context::GetAttribLocation(GLuint program, const std::string& name) {
 std::string Context::GetProgramInfoLog(GLuint program) {
   GLint info_log_length = 0;
   glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_log_length);
-  std::string info_log(info_log_length, 0);
-  glGetProgramInfoLog(program, info_log_length, NULL, &info_log.at(0));
-  return info_log;
+  if (info_log_length > 1) {
+    std::string info_log(info_log_length, 0);
+    glGetProgramInfoLog(program, info_log_length, NULL, &info_log.at(0));
+    return info_log;
+  } else {
+    return std::string();
+  }
 }
 
 std::string Context::GetShaderInfoLog(GLuint shader) {
   GLint info_log_length = 0;
   glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_length);
-  std::string info_log(info_log_length, 0);
-  glGetShaderInfoLog(shader, info_log_length, NULL, &info_log.at(0));
-  return info_log;
+  if (info_log_length > 1) {
+    std::string info_log(info_log_length, 0);
+    glGetShaderInfoLog(shader, info_log_length, NULL, &info_log.at(0));
+    return info_log;
+  } else {
+    return std::string();
+  }
 }
 
 GLint Context::GetUniformLocation(GLuint program, const std::string& name) {
@@ -119,6 +131,8 @@ gin::ObjectTemplateBuilder Context::GetObjectTemplateBuilder(
   return gin::ObjectTemplateBuilder(isolate)
       .SetValue("ARRAY_BUFFER", GL_ARRAY_BUFFER)
       .SetValue("COLOR_BUFFER_BIT", GL_COLOR_BUFFER_BIT)
+      .SetValue("DEPTH_BUFFER_BIT", GL_DEPTH_BUFFER_BIT)
+      .SetValue("DEPTH_TEST", GL_DEPTH_TEST)
       .SetValue("ELEMENT_ARRAY_BUFFER", GL_ELEMENT_ARRAY_BUFFER)
       .SetValue("FLOAT", GL_FLOAT)
       .SetValue("FRAGMENT_SHADER", GL_FRAGMENT_SHADER)
@@ -137,6 +151,7 @@ gin::ObjectTemplateBuilder Context::GetObjectTemplateBuilder(
       .SetMethod("createShader", glCreateShader)
       .SetMethod("deleteShader", glDeleteShader)
       .SetMethod("drawElements", DrawElements)
+      .SetMethod("enable", glEnable)
       .SetMethod("enableVertexAttribArray", glEnableVertexAttribArray)
       .SetMethod("getAttribLocation", GetAttribLocation)
       .SetMethod("getProgramInfoLog", GetProgramInfoLog)
