@@ -45,12 +45,14 @@ static void ContextLostThunk(void*) {
 }
 
 ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
-                         CommandBufferPtr command_buffer)
+                         CommandBufferPtr command_buffer,
+                         InterfaceRequest<Child> request)
     : id_namespace_(0u),
       local_id_(1u),
       start_time_(base::TimeTicks::Now()),
       next_resource_id_(1),
-      returner_binding_(this) {
+      returner_binding_(this),
+      binding_(this, request.Pass()) {
   surfaces_service_connection->ConnectToService(&surface_);
   surface_->GetIdNamespace(
       base::Bind(&ChildGLImpl::SetIdNamespace, base::Unretained(this)));
@@ -126,13 +128,22 @@ void ChildGLImpl::Draw() {
   GLuint fbo = 0u;
   glGenFramebuffers(1, &fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  GLuint depth_buffer = 0u;
+  glGenRenderbuffers(1, &depth_buffer);
+  glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, size_.width(),
+                        size_.height());
   glFramebufferTexture2D(
       GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, depth_buffer);
   DCHECK_EQ(static_cast<GLenum>(GL_FRAMEBUFFER_COMPLETE),
             glCheckFramebufferStatus(GL_FRAMEBUFFER));
   glClearColor(1, 0, 0, 0.5);
   cube_.UpdateForTimeDelta(0.16f);
   cube_.Draw();
+  glDeleteFramebuffers(1, &fbo);
+  glDeleteRenderbuffers(1, &depth_buffer);
 
   // Then, put the texture into a mailbox.
   gpu::Mailbox mailbox = gpu::Mailbox::Generate();

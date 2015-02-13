@@ -30,8 +30,9 @@ using cc::CompositorFrame;
 
 static const uint32_t kLocalId = 1u;
 
-ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection)
-    : id_namespace_(0u) {
+ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection,
+                     InterfaceRequest<Child> request)
+    : id_namespace_(0u), binding_(this, request.Pass()) {
   surfaces_service_connection->ConnectToService(&surface_);
   surface_->GetIdNamespace(
       base::Bind(&ChildImpl::SetIdNamespace, base::Unretained(this)));

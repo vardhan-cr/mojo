@@ -34,7 +34,7 @@ class ChildApp : public ApplicationDelegate, public InterfaceFactory<Child> {
   // InterfaceFactory<Child> implementation.
   virtual void Create(ApplicationConnection* connection,
                       InterfaceRequest<Child> request) override {
-    BindToRequest(new ChildImpl(surfaces_service_connection_), &request);
+    new ChildImpl(surfaces_service_connection_, request.Pass());
   }
 
  private:

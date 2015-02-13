@@ -12,6 +12,7 @@
 #include "cc/surfaces/surface_id_allocator.h"
 #include "examples/surfaces_app/child.mojom.h"
 #include "mojo/public/cpp/bindings/string.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
@@ -28,14 +29,15 @@ class ApplicationConnection;
 namespace examples {
 
 // Simple example of a child app using surfaces.
-class ChildImpl : public InterfaceImpl<Child> {
+class ChildImpl : public Child {
  public:
   class Context {
    public:
     virtual ApplicationConnection* ShellConnection(
         const mojo::String& application_url) = 0;
   };
-  explicit ChildImpl(ApplicationConnection* surfaces_service_connection);
+  ChildImpl(ApplicationConnection* surfaces_service_connection,
+            InterfaceRequest<Child> request);
   ~ChildImpl() override;
 
  private:
@@ -51,6 +53,7 @@ class ChildImpl : public InterfaceImpl<Child> {
   scoped_ptr<cc::SurfaceIdAllocator> allocator_;
   SurfacePtr surface_;
   uint32_t id_namespace_;
+  StrongBinding<Child> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildImpl);
 };

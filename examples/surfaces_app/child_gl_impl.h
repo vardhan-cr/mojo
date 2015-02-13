@@ -14,6 +14,7 @@
 #include "examples/surfaces_app/child.mojom.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/bindings/string.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
@@ -30,10 +31,11 @@ class ApplicationConnection;
 namespace examples {
 
 // Simple example of a child app using surfaces + GL.
-class ChildGLImpl : public InterfaceImpl<Child>, public ResourceReturner {
+class ChildGLImpl : public Child, public ResourceReturner {
  public:
   ChildGLImpl(ApplicationConnection* surfaces_service_connection,
-              CommandBufferPtr command_buffer);
+              CommandBufferPtr command_buffer,
+              InterfaceRequest<Child> request);
   ~ChildGLImpl() override;
 
  private:
@@ -63,6 +65,7 @@ class ChildGLImpl : public InterfaceImpl<Child>, public ResourceReturner {
   base::hash_map<uint32_t, GLuint> id_to_tex_map_;
   ProduceCallback produce_callback_;
   Binding<ResourceReturner> returner_binding_;
+  StrongBinding<Child> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildGLImpl);
 };
