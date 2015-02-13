@@ -13,22 +13,22 @@ class PingPongClientImpl : public PingPongClient {
   PingPongClientImpl() : last_pong_value_(0), binding_(this) {};
   ~PingPongClientImpl() override {};
 
-  int16_t last_pong_value() const { return last_pong_value_; }
-
   void Bind(mojo::InterfaceRequest<PingPongClient> request) {
     binding_.Bind(request.Pass());
   }
 
-  bool WaitForIncomingMethodCall() {
-    return binding_.WaitForIncomingMethodCall();
+  int16_t WaitForPongValue() {
+    if (!binding_.WaitForIncomingMethodCall())
+      return 0;
+    return last_pong_value_;
   }
 
+ private:
   // PingPongClient overrides.
   void Pong(uint16_t pong_value) override {
     last_pong_value_ = pong_value;
   }
 
- private:
   int16_t last_pong_value_;
   mojo::Binding<PingPongClient> binding_;
 
@@ -69,13 +69,10 @@ struct PingTargetCallback {
 // Verify that "pingpong.js" implements the PingPongService interface
 // and sends responses to our client.
 TEST_F(JSPingPongTest, PingServiceToPongClient) {
-  EXPECT_EQ(0, pingpong_client_.last_pong_value());
   pingpong_service_->Ping(1);
-  EXPECT_TRUE(pingpong_client_.WaitForIncomingMethodCall());
-  EXPECT_EQ(2, pingpong_client_.last_pong_value());
+  EXPECT_EQ(2, pingpong_client_.WaitForPongValue());
   pingpong_service_->Ping(100);
-  EXPECT_TRUE(pingpong_client_.WaitForIncomingMethodCall());
-  EXPECT_EQ(101, pingpong_client_.last_pong_value());
+  EXPECT_EQ(101, pingpong_client_.WaitForPongValue());
   pingpong_service_->Quit();
 }
 
@@ -116,13 +113,10 @@ TEST_F(JSPingPongTest, GetTargetService) {
   PingPongClientPtr client_ptr;
   client.Bind(GetProxy(&client_ptr));
   target->SetClient(client_ptr.Pass());
-  EXPECT_EQ(0, client.last_pong_value());
   target->Ping(1);
-  EXPECT_TRUE(client.WaitForIncomingMethodCall());
-  EXPECT_EQ(2, client.last_pong_value());
+  EXPECT_EQ(2, client.WaitForPongValue());
   target->Ping(100);
-  EXPECT_TRUE(client.WaitForIncomingMethodCall());
-  EXPECT_EQ(101, client.last_pong_value());
+  EXPECT_EQ(101, client.WaitForPongValue());
   target->Quit();
   pingpong_service_->Quit();
 }
