@@ -145,7 +145,7 @@ class AppContext {
 
 // AppChildControllerImpl ------------------------------------------------------
 
-class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
+class AppChildControllerImpl : public AppChildController, public ErrorHandler {
  public:
   ~AppChildControllerImpl() override {
     DCHECK(thread_checker_.CalledOnValidThread());
@@ -173,11 +173,14 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
                    base::Unretained(impl.get())),
         base::MessageLoopProxy::current()));
 
-    WeakBindToPipe(impl.get(), host_message_pipe.Pass());
+    impl->Bind(host_message_pipe.Pass());
 
     app_context->set_controller(impl.Pass());
   }
 
+  void Bind(ScopedMessagePipeHandle handle) { binding_.Bind(handle.Pass()); }
+
+  // |ErrorHandler| methods:
   void OnConnectionError() override {
     // A connection error means the connection to the shell is lost. This is not
     // recoverable.
@@ -204,7 +207,12 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
  private:
   AppChildControllerImpl(AppContext* app_context,
                          const Blocker::Unblocker& unblocker)
-      : app_context_(app_context), unblocker_(unblocker), channel_info_(NULL) {}
+      : app_context_(app_context),
+        unblocker_(unblocker),
+        channel_info_(nullptr),
+        binding_(this) {
+    binding_.set_error_handler(this);
+  }
 
   // Callback for |embedder::CreateChannel()|.
   void DidCreateChannel(embedder::ChannelInfo* channel_info) {
@@ -233,6 +241,7 @@ class AppChildControllerImpl : public InterfaceImpl<AppChildController> {
   StartAppCallback on_app_complete_;
 
   embedder::ChannelInfo* channel_info_;
+  Binding<AppChildController> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(AppChildControllerImpl);
 };
