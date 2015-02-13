@@ -117,7 +117,6 @@ component("system") {
   deps = [
     "//base",
     "//base/third_party/dynamic_annotations",
-    "//crypto",
   ]
 
   allow_circular_includes_from = [ "../embedder" ]
