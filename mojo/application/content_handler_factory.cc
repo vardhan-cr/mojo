@@ -16,7 +16,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
-#include "mojo/public/cpp/bindings/interface_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 
 namespace mojo {
@@ -54,11 +54,14 @@ class ApplicationThread : public base::PlatformThread::Delegate {
   DISALLOW_COPY_AND_ASSIGN(ApplicationThread);
 };
 
-class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
+class ContentHandlerImpl : public ContentHandler {
  public:
-  explicit ContentHandlerImpl(ContentHandlerFactory::Delegate* delegate)
-      : delegate_(delegate), weak_factory_(this) {}
-  ~ContentHandlerImpl() {
+  ContentHandlerImpl(ContentHandlerFactory::Delegate* delegate,
+                     InterfaceRequest<ContentHandler> request)
+      : delegate_(delegate),
+        binding_(this, request.Pass()),
+        weak_factory_(this) {}
+  ~ContentHandlerImpl() override {
     // We're shutting down and doing cleanup. Cleanup may trigger calls back to
     // OnThreadEnd(). As we're doing the cleanup here we don't want to do it in
     // OnThreadEnd() as well. InvalidateWeakPtrs() ensures we don't get any
@@ -72,9 +75,8 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
 
  private:
   // Overridden from ContentHandler:
-  virtual void StartApplication(
-      InterfaceRequest<Application> application_request,
-      URLResponsePtr response) override {
+  void StartApplication(InterfaceRequest<Application> application_request,
+                        URLResponsePtr response) override {
     ApplicationThread* thread = new ApplicationThread(
         base::MessageLoopProxy::current(),
         base::Bind(&ContentHandlerImpl::OnThreadEnd,
@@ -96,6 +98,7 @@ class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
 
   ContentHandlerFactory::Delegate* delegate_;
   std::map<ApplicationThread*, base::PlatformThreadHandle> active_threads_;
+  StrongBinding<ContentHandler> binding_;
   base::WeakPtrFactory<ContentHandlerImpl> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentHandlerImpl);
@@ -122,7 +125,7 @@ void ContentHandlerFactory::ManagedDelegate::RunApplication(
 
 void ContentHandlerFactory::Create(ApplicationConnection* connection,
                                    InterfaceRequest<ContentHandler> request) {
-  BindToRequest(new ContentHandlerImpl(delegate_), &request);
+  new ContentHandlerImpl(delegate_, request.Pass());
 }
 
 }  // namespace mojo
