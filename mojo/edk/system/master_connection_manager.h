@@ -35,10 +35,10 @@ const ProcessIdentifier kMasterProcessIdentifier = 1;
 
 // The |ConnectionManager| implementation for the master process.
 //
-// Objects of this class may be created and destroyed on any thread. However,
-// |Init()| and |Shutdown()| must be called on the "delegate thread". Otherwise,
-// its public methods are thread-safe (except that they may not be called from
-// its internal, private thread).
+// This class is thread-safe (except that no public methods may be called from
+// its internal, private thread), with condition that |Init()| be called before
+// anything else and |Shutdown()| be called before destruction (and no other
+// public methods may be called during/after |Shutdown()|).
 class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager
     : public ConnectionManager {
  public:
@@ -96,11 +96,6 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager
   void OnError(ProcessIdentifier process_identifier);
   // Posts a call to |master_process_delegate_->OnSlaveDisconnect()|.
   void CallOnSlaveDisconnect(scoped_ptr<embedder::SlaveInfo> slave_info);
-
-  // Asserts that the current thread is the delegate thread. (This actually
-  // checks the current message loop.)
-  // TODO(vtl): Probably we should actually check the thread.
-  void AssertOnDelegateThread() const;
 
   // Asserts that the current thread is *not* |private_thread_| (no-op if
   // DCHECKs are not enabled). This should only be called while
