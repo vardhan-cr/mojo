@@ -24,10 +24,10 @@ define("main", [
           this.url.replace("echo_client.js", "echo_server.js");
       var echoServer =
           this.shell.connectToService(echoServerURL, Echo);
-      var echoServerApp = this;
+      var echoClientApp = this;
       echoServer.echoString("Hello World").then(function(response) {
         console.log("Response: " + response.value);
-        echoServerApp.quit();
+        echoClientApp.quit();
       });
     }
   }
