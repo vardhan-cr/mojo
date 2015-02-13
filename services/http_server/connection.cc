@@ -6,6 +6,7 @@
 
 #include "base/bind.h"
 #include "base/format_macros.h"
+#include "base/strings/string_piece.h"
 #include "base/strings/stringprintf.h"
 
 namespace http_server {
@@ -88,7 +89,8 @@ void Connection::OnRequestDataReady(MojoResult result) {
   result = ReadDataRaw(receiver_.get(), buffer.get(), &num_bytes,
                        MOJO_READ_DATA_FLAG_ALL_OR_NONE);
 
-  request_parser_.ProcessChunk(reinterpret_cast<char*>(buffer.get()));
+  request_parser_.ProcessChunk(
+      base::StringPiece(reinterpret_cast<char*>(buffer.get()), num_bytes));
   if (request_parser_.ParseRequest() == HttpRequestParser::ACCEPTED) {
     handle_request_callback_.Run(this, request_parser_.GetRequest());
   }
