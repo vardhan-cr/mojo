@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright 2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -6,10 +5,8 @@
 import os
 import subprocess
 import sys
-import find_depot_tools
 
-def download_from_public_bucket(gs_path, output_path):
-  depot_tools_path = find_depot_tools.add_depot_tools_to_path()
+def download_from_public_bucket(gs_path, output_path, depot_tools_path):
   gsutil_exe = os.path.join(depot_tools_path, "third_party", "gsutil", "gsutil")
 
   # We're downloading from a public bucket which does not need authentication,

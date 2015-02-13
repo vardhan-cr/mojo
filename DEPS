@@ -322,7 +322,10 @@ hooks = [
   {
     'name': 'download_network_service',
     'pattern': '',
-    'action': [ 'python', 'src/mojo/public/tools/download_network_service.py' ],
+    'action': [ 'python',
+                'src/mojo/public/tools/download_network_service.py',
+                '--tools-directory', '../../../tools',
+    ],
   },
   {
     # Ensure that we don't accidentally reference any .pyc files whose

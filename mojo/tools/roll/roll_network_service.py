@@ -16,11 +16,17 @@ from utils import commit
 from utils import mojo_root_dir
 from utils import system
 
-sys.path.insert(0, os.path.join(mojo_root_dir, "tools"))
+sys.path.insert(0, os.path.join(mojo_root_dir, "mojo/public/tools/pylib"))
 # pylint: disable=F0401
 import gs
 
 def roll(target_version):
+  find_depot_tools_path = os.path.join(mojo_root_dir, "tools")
+  sys.path.insert(0, find_depot_tools_path)
+  # pylint: disable=F0401
+  import find_depot_tools
+  depot_tools_path = find_depot_tools.add_depot_tools_to_path()
+
   try:
     chromium_rev = chromium_rev_number(target_version)
   except urllib2.HTTPError:
@@ -39,7 +45,8 @@ def roll(target_version):
 
   try:
     with tempfile.NamedTemporaryFile() as temp_zip_file:
-      gs.download_from_public_bucket(mojoms_gs_path, temp_zip_file.name)
+      gs.download_from_public_bucket(mojoms_gs_path, temp_zip_file.name,
+                                     depot_tools_path)
 
       try:
         system(["git", "rm", "-r", mojoms_path], cwd=mojo_root_dir)
