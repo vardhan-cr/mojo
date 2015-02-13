@@ -70,6 +70,11 @@ void SurfacesImpl::SubmitFrame(uint32_t local_id,
 
 void SurfacesImpl::DestroySurface(uint32_t local_id) {
   factory_.Destroy(QualifyIdentifier(local_id));
+  if (local_id == displayed_surface_) {
+    displayed_surface_ = 0;
+    client_->OnDisplayBeingDestroyed(display_.get());
+    display_.reset();
+  }
 }
 
 void SurfacesImpl::CreateGLES2BoundSurface(
@@ -86,6 +91,7 @@ void SurfacesImpl::CreateGLES2BoundSurface(
     display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
         new mojo::ContextProviderMojo(command_buffer_handle_.Pass()))));
   }
+  displayed_surface_ = local_id;
   cc::SurfaceId cc_id = QualifyIdentifier(local_id);
   factory_.Create(cc_id);
   display_->SetSurfaceId(cc_id, 1.f);
@@ -136,6 +142,7 @@ SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
       factory_(manager, this),
       id_namespace_(id_namespace),
       client_(client),
+      displayed_surface_(0),
       binding_(this) {
 }
 

@@ -94,6 +94,7 @@ class SurfacesImpl : public mojo::Surface,
   cc::SurfaceFactory factory_;
   const uint32_t id_namespace_;
   Client* client_;
+  uint32_t displayed_surface_;
   scoped_ptr<cc::Display> display_;
   mojo::ScopedMessagePipeHandle command_buffer_handle_;
   mojo::WeakBindingSet<ViewportParameterListener> parameter_listeners_;
