@@ -69,33 +69,42 @@ class PrintBodyApplication : public Application {
   MOJO_DISALLOW_COPY_AND_ASSIGN(PrintBodyApplication);
 };
 
-class ContentHandlerImpl : public InterfaceImpl<ContentHandler> {
+class ContentHandlerImpl : public ContentHandler {
  public:
-  explicit ContentHandlerImpl() {}
-  virtual ~ContentHandlerImpl() {}
+  explicit ContentHandlerImpl(InterfaceRequest<ContentHandler> request)
+      : binding_(this, request.Pass()) {}
+  ~ContentHandlerImpl() override {}
 
  private:
-  virtual void StartApplication(InterfaceRequest<Application> application,
-                                URLResponsePtr response) override {
+  void StartApplication(InterfaceRequest<Application> application,
+                        URLResponsePtr response) override {
     // The application will delete itself after being connected to.
     new PrintBodyApplication(application.Pass(), response->body.Pass());
   }
+
+  StrongBinding<ContentHandler> binding_;
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ContentHandlerImpl);
 };
 
-class ContentHandlerApp : public ApplicationDelegate {
+class ContentHandlerApp : public ApplicationDelegate,
+                          public InterfaceFactory<ContentHandler> {
  public:
-  ContentHandlerApp() : content_handler_factory_() {}
+  ContentHandlerApp() {}
+  ~ContentHandlerApp() override {}
 
-  virtual void Initialize(ApplicationImpl* app) override {}
+  void Initialize(ApplicationImpl* app) override {}
 
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
-    connection->AddService(&content_handler_factory_);
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    connection->AddService(this);
     return true;
   }
 
+  void Create(ApplicationConnection* app,
+              InterfaceRequest<ContentHandler> request) override {
+    new ContentHandlerImpl(request.Pass());
+  }
+
  private:
-  InterfaceFactoryImpl<ContentHandlerImpl> content_handler_factory_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ContentHandlerApp);
 };
