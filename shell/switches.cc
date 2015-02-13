@@ -45,6 +45,10 @@ const char kEnableMultiprocess[] = "enable-multiprocess";
 // Print the usage message and exit.
 const char kHelp[] = "help";
 
+// Specify origin to map to base url. See url_resolver.cc for details.
+// Can be used multiple times.
+const char kMapOrigin[] = "map-origin";
+
 // Map mojo: URLs to a shared library of similar name at this origin. See
 // url_resolver.cc for details.
 const char kOrigin[] = "origin";
@@ -63,6 +67,7 @@ const char* kSwitchArray[] = {kV,
                               kEnableExternalApplications,
                               kEnableMultiprocess,
                               kHelp,
+                              kMapOrigin,
                               kOrigin,
                               kURLMappings};
 

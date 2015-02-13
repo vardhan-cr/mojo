@@ -28,6 +28,7 @@
 #include "services/tracing/tracing.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
+#include "shell/command_line_util.h"
 #include "shell/dynamic_application_loader.h"
 #include "shell/external_application_listener.h"
 #include "shell/filename_util.h"
@@ -127,6 +128,12 @@ bool ConfigureURLMappings(base::CommandLine* command_line, Context* context) {
       context->ResolveShellFileURL("file:network_service.mojo"));
 
   // Command line URL mapping.
+  std::vector<URLResolver::OriginMapping> origin_mappings =
+      URLResolver::GetOriginMappings(command_line->argv());
+  for (const auto& origin_mapping : origin_mappings)
+    resolver->AddOriginMapping(GURL(origin_mapping.origin),
+                               GURL(origin_mapping.base_url));
+
   if (command_line->HasSwitch(switches::kURLMappings)) {
     const std::string mappings =
         command_line->GetSwitchValueASCII(switches::kURLMappings);
@@ -274,7 +281,7 @@ GURL Context::ResolveURL(const GURL& url) {
 }
 
 GURL Context::ResolveMappings(const GURL& url) {
-  return url_resolver_.ApplyURLMappings(url);
+  return url_resolver_.ApplyMappings(url);
 }
 
 void Context::Run(const GURL& url) {

@@ -20,6 +20,7 @@ extern const char kDisableCache[];
 extern const char kEnableExternalApplications[];
 extern const char kEnableMultiprocess[];
 extern const char kHelp[];
+extern const char kMapOrigin[];
 extern const char kOrigin[];
 extern const char kURLMappings[];
 

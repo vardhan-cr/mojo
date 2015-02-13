@@ -8,6 +8,7 @@
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "shell/filename_util.h"
+#include "shell/switches.h"
 #include "url/url_util.h"
 
 namespace mojo {
@@ -21,18 +22,64 @@ URLResolver::URLResolver() {
 URLResolver::~URLResolver() {
 }
 
-void URLResolver::AddURLMapping(const GURL& url, const GURL& resolved_url) {
-  url_map_[url] = resolved_url;
+// static
+std::vector<URLResolver::OriginMapping> URLResolver::GetOriginMappings(
+    const std::vector<std::string> args) {
+  std::vector<OriginMapping> origin_mappings;
+  const std::string kArgsForSwitches[] = {
+      "-" + std::string(switches::kMapOrigin) + "=",
+      "--" + std::string(switches::kMapOrigin) + "=",
+  };
+  for (auto& arg : args) {
+    for (size_t i = 0; i < arraysize(kArgsForSwitches); i++) {
+      const std::string& argsfor_switch = kArgsForSwitches[i];
+      if (arg.compare(0, argsfor_switch.size(), argsfor_switch) == 0) {
+        std::string value =
+            arg.substr(argsfor_switch.size(), std::string::npos);
+        size_t delim = value.find('=');
+        if (delim <= 0 || delim >= value.size())
+          continue;
+        origin_mappings.push_back(
+            OriginMapping(value.substr(0, delim),
+                          value.substr(delim + 1, std::string::npos)));
+      }
+    }
+  }
+  return origin_mappings;
 }
 
-GURL URLResolver::ApplyURLMappings(const GURL& url) const {
+void URLResolver::AddURLMapping(const GURL& url, const GURL& mapped_url) {
+  url_map_[url] = mapped_url;
+}
+
+void URLResolver::AddOriginMapping(const GURL& origin, const GURL& base_url) {
+  if (!origin.is_valid() || !base_url.is_valid() ||
+      origin != origin.GetOrigin()) {
+    // Disallow invalid mappings.
+    LOG(ERROR) << "Invalid origin for mapping: " << origin;
+    return;
+  }
+  // Force both origin and base_url to have trailing slashes.
+  origin_map_[origin] = AddTrailingSlashIfNeeded(base_url);
+}
+
+GURL URLResolver::ApplyMappings(const GURL& url) const {
   GURL mapped_url(url);
   for (;;) {
-    const auto& it = url_map_.find(mapped_url);
-    if (it == url_map_.end())
+    const auto& url_it = url_map_.find(mapped_url);
+    if (url_it != url_map_.end()) {
+      mapped_url = url_it->second;
+      continue;
+    }
+
+    GURL origin = mapped_url.GetOrigin();
+    const auto& origin_it = origin_map_.find(origin);
+    if (origin_it == origin_map_.end())
       break;
-    mapped_url = it->second;
+    mapped_url = GURL(origin_it->second.spec() +
+                      mapped_url.spec().substr(origin.spec().length()));
   }
+
   return mapped_url;
 }
 
