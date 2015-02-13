@@ -11,6 +11,8 @@ mojo_native_application("http_server") {
     "http_request_parser.cc",
     "http_request_parser.h",
     "http_server_app.cc",
+    "http_server_factory_impl.cc",
+    "http_server_factory_impl.h",
     "http_server_impl.cc",
     "http_server_impl.h",
     "http_status_code_list.h",
@@ -36,4 +38,29 @@ mojo_native_application("http_server") {
       "/wd4267",
     ]
   }
+}
+
+mojo_native_application("apptests") {
+  output_name = "http_server_apptests"
+
+  testonly = true
+
+  sources = [
+    "http_server_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/common",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/public/cpp/environment",
+    "//mojo/public/cpp/system",
+    "//mojo/services/network/public/interfaces",
+    "//services/http_server/public",
+    "//services/http_server/public:util",
+  ]
+
+  data_deps = [ ":http_server" ]
 }

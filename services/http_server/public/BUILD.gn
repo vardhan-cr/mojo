@@ -9,6 +9,7 @@ mojom("public") {
     "http_request.mojom",
     "http_response.mojom",
     "http_server.mojom",
+    "http_server_factory.mojom",
   ]
 }
 

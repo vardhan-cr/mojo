@@ -6,6 +6,7 @@
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/common/weak_binding_set.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "services/http_server/public/http_request.mojom.h"
@@ -20,10 +21,13 @@ class ApplicationImpl;
 namespace http_server {
 
 class Connection;
+class HttpServerFactoryImpl;
 
 class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
  public:
-  HttpServerImpl(mojo::ApplicationImpl* app);
+  HttpServerImpl(mojo::ApplicationImpl* app,
+                 HttpServerFactoryImpl* factory,
+                 uint16_t port);
   ~HttpServerImpl() override;
 
   void AddBinding(mojo::InterfaceRequest<HttpServer> request);
@@ -32,6 +36,8 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
   void SetHandler(const mojo::String& path,
                   HttpHandlerPtr http_handler,
                   const mojo::Callback<void(bool)>& callback) override;
+
+  void GetPort(const GetPortCallback& callback) override;
 
  private:
   // ErrorHandler:
@@ -62,6 +68,12 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
    private:
     DISALLOW_COPY_AND_ASSIGN(Handler);
   };
+
+  HttpServerFactoryImpl* factory_;
+
+  uint16_t requested_port_;
+  uint16_t assigned_port_;
+  std::vector<GetPortCallback> pending_get_port_callbacks_;
 
   mojo::WeakBindingSet<HttpServer> bindings_;
 

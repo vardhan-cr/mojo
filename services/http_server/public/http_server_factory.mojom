@@ -1,0 +1,22 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module http_server;
+
+import "services/http_server/public/http_server.mojom";
+
+interface HttpServerFactory {
+  // Creates an http server running on the specified TCP port. If |port| is 0,
+  // the operating system will pick one of available ports. You can use
+  // HttpServer::GetPort() to retrieve the allocated port.
+  //
+  // Only one backing server will be created for each port. It will be shared
+  // among clients, if more than one client requests a server running on a
+  // particular port.
+  //
+  // TODO(ppi): would it be better to create a server only for the first caller
+  // and require the access to it to be explicitly shared by the party that
+  // requests it first?
+  CreateHttpServer(HttpServer& server_request, uint16 port);
+};

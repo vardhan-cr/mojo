@@ -19,15 +19,21 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 #include "services/http_server/connection.h"
+#include "services/http_server/http_server_factory_impl.h"
 #include "services/http_server/public/http_server_util.h"
-#include "third_party/re2/re2/re2.h"
 
 namespace http_server {
 
-HttpServerImpl::HttpServerImpl(mojo::ApplicationImpl* app)
-    : weak_ptr_factory_(this) {
+HttpServerImpl::HttpServerImpl(mojo::ApplicationImpl* app,
+                               HttpServerFactoryImpl* factory,
+                               uint16_t port)
+    : factory_(factory),
+      requested_port_(port),
+      assigned_port_(0),
+      weak_ptr_factory_(this) {
   app->ConnectToService("mojo:network_service", &network_service_);
   Start();
+  bindings_.set_error_handler(this);
 }
 
 HttpServerImpl::~HttpServerImpl() {
@@ -50,11 +56,24 @@ void HttpServerImpl::SetHandler(const mojo::String& path,
   callback.Run(true);
 }
 
+void HttpServerImpl::GetPort(const GetPortCallback& callback) {
+  if (assigned_port_) {
+    callback.Run(assigned_port_);
+  } else {
+    pending_get_port_callbacks_.push_back(callback);
+  }
+}
+
 void HttpServerImpl::OnConnectionError() {
   handlers_.erase(
       std::remove_if(handlers_.begin(), handlers_.end(), [](Handler* h) {
     return h->http_handler.encountered_error();
   }), handlers_.end());
+
+  if (handlers_.empty()) {
+    // The call deregisters the server from the factory and deletes |this|.
+    factory_->DeleteServer(this, requested_port_);
+  }
 }
 
 void HttpServerImpl::OnSocketBound(mojo::NetworkErrorPtr err,
@@ -63,6 +82,14 @@ void HttpServerImpl::OnSocketBound(mojo::NetworkErrorPtr err,
     printf("Bound err = %d\n", err->code);
     return;
   }
+
+  assigned_port_ = bound_address->ipv4->port;
+  DCHECK(requested_port_ == 0u || requested_port_ == assigned_port_);
+
+  for (GetPortCallback& port_callback : pending_get_port_callbacks_) {
+    port_callback.Run(assigned_port_);
+  }
+  pending_get_port_callbacks_.clear();
 
   printf("Got address %d.%d.%d.%d:%d\n", (int)bound_address->ipv4->addr[0],
          (int)bound_address->ipv4->addr[1], (int)bound_address->ipv4->addr[2],
@@ -124,7 +151,7 @@ void HttpServerImpl::Start() {
   net_address->ipv4->addr[1] = 0;
   net_address->ipv4->addr[2] = 0;
   net_address->ipv4->addr[3] = 0;
-  net_address->ipv4->port = 80;
+  net_address->ipv4->port = requested_port_;
 
   // Note that we can start using the proxies right away even thought the
   // callbacks have not been called yet. If a previous step fails, they'll

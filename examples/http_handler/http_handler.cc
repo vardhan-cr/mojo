@@ -10,6 +10,7 @@
 #include "mojo/public/cpp/bindings/interface_ptr.h"
 #include "mojo/public/cpp/system/message_pipe.h"
 #include "services/http_server/public/http_server.mojom.h"
+#include "services/http_server/public/http_server_factory.mojom.h"
 #include "services/http_server/public/http_server_util.h"
 
 namespace mojo {
@@ -30,7 +31,9 @@ class HttpHandler : public ApplicationDelegate,
     http_server::HttpHandlerPtr http_handler_ptr;
     binding_.Bind(GetProxy(&http_handler_ptr));
 
-    app->ConnectToService("mojo:http_server", &http_server_);
+    http_server::HttpServerFactoryPtr http_server_factory;
+    app->ConnectToService("mojo:http_server", &http_server_factory);
+    http_server_factory->CreateHttpServer(GetProxy(&http_server_).Pass(), 80);
     http_server_->SetHandler(
         "/test",
         http_handler_ptr.Pass(),

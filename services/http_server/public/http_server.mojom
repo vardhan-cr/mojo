@@ -8,14 +8,18 @@ import "services/http_server/public/http_request.mojom";
 import "services/http_server/public/http_response.mojom";
 
 interface HttpServer {
-  // Set a handler for URLs mathing a regex pattern. Handlers are considered in
-  // the order they were registered.
+  // Sets a handler for URLs matching a regex pattern. Handlers are considered
+  // in the order they were registered.
   //
   // Returns false if there was already a handler registered for the given
   // pattern.
   //
   // To unregister a handler, destroy the underlying pipe.
   SetHandler(string pattern, HttpHandler handler) => (bool success);
+
+  // Returns the TCP port at which the server is running. This will not return
+  // until the server is ready, ie. listening for connections.
+  GetPort() => (uint16 port);
 };
 
 interface HttpHandler {
