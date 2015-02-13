@@ -49,7 +49,11 @@ GURL URLResolver::ResolveMojoURL(const GURL& mojo_url) const {
     return mojo_url;
   } else {
     // It's still a mojo: URL, use the default mapping scheme.
-    std::string lib = mojo_url.host() + ".mojo";
+    std::string suffix = "";
+    if (mojo_url.has_query()) {
+      suffix = "?" + mojo_url.query();
+    }
+    std::string lib = mojo_url.host() + ".mojo" + suffix;
     return mojo_base_url_.Resolve(lib);
   }
 }

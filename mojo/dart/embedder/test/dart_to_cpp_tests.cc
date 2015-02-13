@@ -298,6 +298,7 @@ class DartToCppTest : public testing::Test {
     PathService::Get(base::DIR_EXE, &package_root);
     package_root = package_root.AppendASCII("gen");
 
+    config->strict_compilation = true;
     config->script = source;
     config->script_uri = path.AsUTF8Unsafe();
     config->package_root = package_root.AsUTF8Unsafe();
@@ -332,20 +333,14 @@ class DartToCppTest : public testing::Test {
     cpp_side->set_dart_side(dart_side.get());
 
     DartControllerConfig config;
-    // All tests run with these arguments.
-    const int kNumArgs = 3;
-    const char* args[kNumArgs];
-    args[0] = "--enable_asserts";
-    args[1] = "--enable_type_checks";
-    args[2] = "--error_on_bad_type";
     char* error;
     bool unhandled_exception = false;
     InitializeDartConfig(
         &config,
         test,
         pipe.handle1.release().value(),
-        args,
-        kNumArgs,
+        nullptr,
+        0,
         &unhandled_exception,
         &error);
 

@@ -25,17 +25,20 @@ struct IsolateCallbacks {
 class IsolateData {
  public:
   IsolateData(void* app,
+              bool strict_compilation,
               IsolateCallbacks callbacks,
               const std::string& script,
               const std::string& script_uri,
               const std::string& package_root)
       : app(app),
+        strict_compilation(strict_compilation),
         callbacks(callbacks),
         script(script),
         script_uri(script_uri),
         package_root(package_root) {}
 
   void* app;
+  bool strict_compilation;
   IsolateCallbacks callbacks;
   std::string script;
   std::string script_uri;

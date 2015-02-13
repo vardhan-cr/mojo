@@ -13,4 +13,5 @@ dart_packaged_application("pingpong") {
     "//services/dart/test:pingpong_service_interface",
     "//mojo/public/interfaces/application",
   ]
+  strict = is_debug
 }

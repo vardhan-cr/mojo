@@ -6,7 +6,6 @@ import("//mojo/public/dart/rules.gni")
 
 dart_packaged_application("echo") {
   output_name = "dart_echo"
-
   sources = [
     "main.dart",
   ]
@@ -14,4 +13,5 @@ dart_packaged_application("echo") {
     "//services/dart/test:echo_service_interface",
     "//mojo/public/interfaces/application",
   ]
+  strict = is_debug
 }

@@ -11,4 +11,5 @@ dart_packaged_application("hello") {
   deps = [
     "//mojo/public/interfaces/application",
   ]
+  strict = is_debug
 }

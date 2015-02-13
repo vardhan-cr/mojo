@@ -239,7 +239,7 @@ static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
   // No callbacks for service isolate.
   IsolateCallbacks callbacks;
   IsolateData* isolate_data =
-      new IsolateData(NULL, callbacks, "", "", "");
+      new IsolateData(NULL, false, callbacks, "", "", "");
   Dart_Isolate isolate = Dart_CreateIsolate(script_uri,
                                             "main",
                                             snapshot_buffer,
@@ -253,13 +253,19 @@ static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
 }
 
 static Dart_Isolate CreateIsolateHelper(void* dart_app,
+                                        bool strict_compilation,
                                         IsolateCallbacks callbacks,
                                         const std::string& script,
                                         const std::string& script_uri,
                                         const std::string& package_root,
                                         char** error) {
-  IsolateData* isolate_data =
-      new IsolateData(dart_app, callbacks, script, script_uri, package_root);
+  IsolateData* isolate_data = new IsolateData(
+      dart_app,
+      strict_compilation,
+      callbacks,
+      script,
+      script_uri,
+      package_root);
   Dart_Isolate isolate = Dart_CreateIsolate(
       script_uri.c_str(), "main", snapshot_buffer, isolate_data, error);
   if (isolate == nullptr) {
@@ -269,6 +275,8 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
 
   DPCHECK(!Dart_IsServiceIsolate(isolate));
   Dart_EnterScope();
+
+  Dart_IsolateSetStrictCompilation(strict_compilation);
 
   // Setup the native resolvers for the builtin libraries as they are not set
   // up when the snapshot is read.
@@ -359,6 +367,7 @@ static Dart_Isolate IsolateCreateCallback(const char* script_uri,
     package_root_string = std::string(package_root);
   }
   return CreateIsolateHelper(parent_isolate_data->app,
+                             parent_isolate_data->strict_compilation,
                              parent_isolate_data->callbacks,
                              parent_isolate_data->script,
                              script_uri_string,
@@ -388,6 +397,7 @@ static void UnhandledExceptionCallback(Dart_Handle error) {
 
 bool DartController::initialized_ = false;
 Dart_Isolate DartController::root_isolate_ = nullptr;
+bool DartController::strict_compilation_ = false;
 
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** arguments,
@@ -433,6 +443,7 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
                  config.arguments,
                  config.arguments_count);
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
+                                             config.strict_compilation,
                                              config.callbacks,
                                              config.script,
                                              config.script_uri,
@@ -537,27 +548,15 @@ static bool generateEntropy(uint8_t* buffer, intptr_t length) {
   return true;
 }
 
-bool DartController::Initialize(bool checked_mode) {
+bool DartController::Initialize(bool strict_compilation) {
   char* error;
-  int numArgs = 0;
-  const char** args = nullptr;
-
-  const int kNumArgs = 4;
-  const char* checkedArgs[kNumArgs];
-  checkedArgs[0] = "--enable_asserts";
-  checkedArgs[1] = "--enable_type_checks";
-  checkedArgs[2] = "--error_on_bad_type";
-  checkedArgs[3] = "--error_on_bad_override";
-
-  if (checked_mode) {
-    numArgs = kNumArgs;
-    args = checkedArgs;
-  }
+  strict_compilation_ = strict_compilation;
 
   // No callbacks for root isolate.
   IsolateCallbacks callbacks;
-  InitVmIfNeeded(generateEntropy, args, numArgs);
-  root_isolate_ = CreateIsolateHelper(nullptr, callbacks, "", "", "", &error);
+  InitVmIfNeeded(generateEntropy, nullptr, 0);
+  root_isolate_ = CreateIsolateHelper(
+      nullptr, false, callbacks, "", "", "", &error);
   if (root_isolate_ == nullptr) {
     LOG(ERROR) << error;
     Dart_Cleanup();
@@ -598,6 +597,7 @@ bool DartController::Initialize(bool checked_mode) {
 bool DartController::RunDartScript(const DartControllerConfig& config) {
   CHECK(root_isolate_ != nullptr);
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
+                                             strict_compilation_,
                                              config.callbacks,
                                              config.script,
                                              config.script_uri,

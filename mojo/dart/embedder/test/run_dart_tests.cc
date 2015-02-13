@@ -48,21 +48,10 @@ static void RunTest(const std::string& test,
   PathService::Get(base::DIR_EXE, &package_root);
   package_root = package_root.AppendASCII("gen");
 
-  // All tests run with these arguments.
-  const int kNumArgs = num_extra_args + 3;
-  const char* args[kNumArgs];
-  args[0] = "--enable_asserts";
-  args[1] = "--enable_type_checks";
-  args[2] = "--error_on_bad_type";
-
-  // Copy the passed in arguments.
-  for (int i = 0; i < num_extra_args; ++i) {
-    args[i + 3] = extra_args[i];
-  }
-
   char* error = NULL;
   bool unhandled_exception = false;
   DartControllerConfig config;
+  config.strict_compilation = true;
   config.script = source;
   config.script_uri = path.AsUTF8Unsafe();
   config.package_root = package_root.AsUTF8Unsafe();
@@ -70,8 +59,8 @@ static void RunTest(const std::string& test,
   config.callbacks.exception =
       base::Bind(&exceptionCallback, &unhandled_exception);
   config.entropy = generateEntropy;
-  config.arguments = args;
-  config.arguments_count = kNumArgs;
+  config.arguments = extra_args;
+  config.arguments_count = num_extra_args;
   config.handle = MOJO_HANDLE_INVALID;
   config.compile_all = compile_all;
   config.error = &error;

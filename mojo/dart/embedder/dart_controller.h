@@ -14,6 +14,7 @@ namespace dart {
 
 struct DartControllerConfig {
   void* application_data;
+  bool strict_compilation;
   std::string script;
   std::string script_uri;
   std::string package_root;
@@ -36,8 +37,9 @@ class DartController {
   static bool RunSingleDartScript(const DartControllerConfig& config);
 
   // Initializes the Dart VM, and starts up Dart's handle watcher.
-  // If checked_mode is true, asserts and type checks are enabled.
-  static bool Initialize(bool checked_mode);
+  // If strict_compilation is true, the VM runs scripts with assertions and
+  // type checking enabled.
+  static bool Initialize(bool strict_compilation);
 
   // Assumes Initialize has been called. Runs the main function using the
   // script, arguments, and package_root given by 'config'.
@@ -51,6 +53,7 @@ class DartController {
                              const char** arguments,
                              int arguments_count);
   static bool initialized_;
+  static bool strict_compilation_;
   static Dart_Isolate root_isolate_;
 };
 

@@ -11,4 +11,5 @@ dart_packaged_application("console_example") {
   deps = [
     "//mojo/services/console/public/interfaces",
   ]
+  strict = is_debug
 }

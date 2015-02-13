@@ -132,6 +132,7 @@ mojo_native_application("dart_content_handler") {
     "//mojo/services/content_handler/public/interfaces",
     "//mojo/services/network/public/interfaces",
     "//third_party/zlib:zip",
+    "//url:url"
   ]
 }
 

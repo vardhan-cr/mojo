@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/strings/string_util.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/dart/embedder/dart_controller.h"
@@ -10,6 +11,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/dart/dart_app.h"
+#include "url/gurl.h"
 
 namespace dart {
 
@@ -25,9 +27,19 @@ class DartContentHandler : public mojo::ApplicationDelegate,
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
-    // TODO(zra): Modify VM to allow setting checked-mode flags on a per-Isolate
-    // basis. Figure out how to specify running in checked-mode from a script.
-    bool success = mojo::dart::DartController::Initialize(true);
+
+    bool strict_compilation = false;
+    GURL url(app->url());
+    if (url.has_query()) {
+      std::vector<std::string> query_parameters;
+      Tokenize(url.query(), "&", &query_parameters);
+      strict_compilation = std::find(query_parameters.begin(),
+                                     query_parameters.end(),
+                                     "strict=true")
+                           != query_parameters.end();
+    }
+
+    bool success = mojo::dart::DartController::Initialize(strict_compilation);
     if (!success) {
       LOG(ERROR) << "Dart VM Initialization failed";
     }
