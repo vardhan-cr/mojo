@@ -34,7 +34,7 @@ void DataPipeDrainer::ReadData() {
   } else if (rv == MOJO_RESULT_FAILED_PRECONDITION) {
     client_->OnDataComplete();
   } else {
-    DCHECK(false);
+    DCHECK(false) << "Unhandled MojoResult: " << rv;
   }
 }
 
