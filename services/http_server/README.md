@@ -11,7 +11,7 @@ Install Google Cloud Platform SDK: https://cloud.google.com/sdk/
 ## Authenticate
 You'll need to set a project for the Google Cloud Platform scripts. If you're a Googler, note that you shouldn't use a corporate card for this.
 
-If you're on the Mojo team, ping jam to get added to the "mojodemos" project first.
+If you're on the Mojo team, ping blundell to get added to the "mojodemos" project first.
 
 If you're not on Mojo team, then create a project on Google Compute Engine and replace "mojodemos" with your project-id below.  Also make sure to enable the "Google Compute Engine" API" at your project's console https://console.developers.google.com
 
