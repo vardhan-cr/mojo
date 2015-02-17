@@ -28,7 +28,31 @@
 namespace mojo {
 namespace embedder {
 
+namespace internal {
+
+// Declared in embedder_internal.h.
+PlatformSupport* g_platform_support = nullptr;
+system::Core* g_core = nullptr;
+ProcessType g_process_type = ProcessType::UNINITIALIZED;
+
+}  // namespace internal
+
 namespace {
+
+// The following global variables are set in |InitIPCSupport()| and reset by
+// |ShutdownIPCSupport()|/|ShutdownIPCSupportOnIOThread()|.
+
+// Note: This needs to be |AddRef()|ed/|Release()|d.
+base::TaskRunner* g_delegate_thread_task_runner = nullptr;
+
+ProcessDelegate* g_process_delegate = nullptr;
+
+// Note: This needs to be |AddRef()|ed/|Release()|d.
+base::TaskRunner* g_io_thread_task_runner = nullptr;
+
+// Instance of |ChannelManager| used by the channel management functions
+// (|CreateChannel()|, etc.).
+system::ChannelManager* g_channel_manager = nullptr;
 
 // TODO(vtl): For now, we need this to be thread-safe (since theoretically we
 // currently support multiple channel creation threads -- possibly one per
@@ -55,8 +79,8 @@ system::ChannelId MakeChannelId() {
 void ShutdownIPCSupportHelper() {
   // Save these before nuking them using |ShutdownChannelOnIOThread()|.
   scoped_refptr<base::TaskRunner> delegate_thread_task_runner(
-      internal::g_delegate_thread_task_runner);
-  ProcessDelegate* process_delegate = internal::g_process_delegate;
+      g_delegate_thread_task_runner);
+  ProcessDelegate* process_delegate = g_process_delegate;
 
   ShutdownIPCSupportOnIOThread();
 
@@ -67,19 +91,6 @@ void ShutdownIPCSupportHelper() {
 }
 
 }  // namespace
-
-namespace internal {
-
-// Declared in embedder_internal.h.
-PlatformSupport* g_platform_support = nullptr;
-system::Core* g_core = nullptr;
-ProcessType g_process_type = ProcessType::UNINITIALIZED;
-base::TaskRunner* g_delegate_thread_task_runner = nullptr;
-ProcessDelegate* g_process_delegate = nullptr;
-base::TaskRunner* g_io_thread_task_runner = nullptr;
-system::ChannelManager* g_channel_manager = nullptr;
-
-}  // namespace internal
 
 Configuration* GetConfiguration() {
   return system::GetMutableConfiguration();
@@ -154,22 +165,22 @@ void InitIPCSupport(ProcessType process_type,
   internal::g_process_type = process_type;
 
   DCHECK(delegate_thread_task_runner);
-  DCHECK(!internal::g_delegate_thread_task_runner);
-  internal::g_delegate_thread_task_runner = delegate_thread_task_runner.get();
-  internal::g_delegate_thread_task_runner->AddRef();
+  DCHECK(!g_delegate_thread_task_runner);
+  g_delegate_thread_task_runner = delegate_thread_task_runner.get();
+  g_delegate_thread_task_runner->AddRef();
 
   DCHECK(process_delegate->GetType() == process_type);
-  DCHECK(!internal::g_process_delegate);
-  internal::g_process_delegate = process_delegate;
+  DCHECK(!g_process_delegate);
+  g_process_delegate = process_delegate;
 
   DCHECK(io_thread_task_runner);
-  DCHECK(!internal::g_io_thread_task_runner);
-  internal::g_io_thread_task_runner = io_thread_task_runner.get();
-  internal::g_io_thread_task_runner->AddRef();
+  DCHECK(!g_io_thread_task_runner);
+  g_io_thread_task_runner = io_thread_task_runner.get();
+  g_io_thread_task_runner->AddRef();
 
-  DCHECK(!internal::g_channel_manager);
-  internal::g_channel_manager = new system::ChannelManager(
-      internal::g_platform_support, io_thread_task_runner);
+  DCHECK(!g_channel_manager);
+  g_channel_manager = new system::ChannelManager(internal::g_platform_support,
+                                                 io_thread_task_runner);
 
   switch (process_type) {
     case ProcessType::UNINITIALIZED:
@@ -192,17 +203,17 @@ void ShutdownIPCSupportOnIOThread() {
 
   // TODO(vtl): Tear down the connection manager here, once it's been created.
 
-  internal::g_channel_manager->ShutdownOnIOThread();
-  delete internal::g_channel_manager;
-  internal::g_channel_manager = nullptr;
+  g_channel_manager->ShutdownOnIOThread();
+  delete g_channel_manager;
+  g_channel_manager = nullptr;
 
-  internal::g_io_thread_task_runner->Release();
-  internal::g_io_thread_task_runner = nullptr;
+  g_io_thread_task_runner->Release();
+  g_io_thread_task_runner = nullptr;
 
-  internal::g_delegate_thread_task_runner->Release();
-  internal::g_delegate_thread_task_runner = nullptr;
+  g_delegate_thread_task_runner->Release();
+  g_delegate_thread_task_runner = nullptr;
 
-  internal::g_process_delegate = nullptr;
+  g_process_delegate = nullptr;
 
   internal::g_process_type = ProcessType::UNINITIALIZED;
 }
@@ -210,7 +221,7 @@ void ShutdownIPCSupportOnIOThread() {
 void ShutdownIPCSupport() {
   DCHECK(internal::g_process_type != ProcessType::UNINITIALIZED);
 
-  bool ok = internal::g_io_thread_task_runner->PostTask(
+  bool ok = g_io_thread_task_runner->PostTask(
       FROM_HERE, base::Bind(&ShutdownIPCSupportHelper));
   DCHECK(ok);
 }
@@ -224,8 +235,8 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
 
   *channel_info = new ChannelInfo(MakeChannelId());
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
-      internal::g_channel_manager->CreateChannelOnIOThread(
-          (*channel_info)->channel_id, platform_handle.Pass());
+      g_channel_manager->CreateChannelOnIOThread((*channel_info)->channel_id,
+                                                 platform_handle.Pass());
 
   ScopedMessagePipeHandle rv(
       MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
@@ -247,7 +258,7 @@ ScopedMessagePipeHandle CreateChannel(
   system::ChannelId channel_id = MakeChannelId();
   scoped_ptr<ChannelInfo> channel_info(new ChannelInfo(channel_id));
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
-      internal::g_channel_manager->CreateChannel(
+      g_channel_manager->CreateChannel(
           channel_id, platform_handle.Pass(), io_thread_task_runner,
           base::Bind(callback, base::Unretained(channel_info.release())),
           callback_thread_task_runner);
@@ -264,9 +275,8 @@ ScopedMessagePipeHandle CreateChannel(
 void DestroyChannelOnIOThread(ChannelInfo* channel_info) {
   DCHECK(channel_info);
   DCHECK(channel_info->channel_id);
-  DCHECK(internal::g_channel_manager);
-  internal::g_channel_manager->ShutdownChannelOnIOThread(
-      channel_info->channel_id);
+  DCHECK(g_channel_manager);
+  g_channel_manager->ShutdownChannelOnIOThread(channel_info->channel_id);
   delete channel_info;
 }
 
@@ -278,16 +288,16 @@ void DestroyChannel(
   DCHECK(channel_info);
   DCHECK(channel_info->channel_id);
   DCHECK(!callback.is_null());
-  DCHECK(internal::g_channel_manager);
-  internal::g_channel_manager->ShutdownChannel(
-      channel_info->channel_id, callback, callback_thread_task_runner);
+  DCHECK(g_channel_manager);
+  g_channel_manager->ShutdownChannel(channel_info->channel_id, callback,
+                                     callback_thread_task_runner);
   delete channel_info;
 }
 
 void WillDestroyChannelSoon(ChannelInfo* channel_info) {
   DCHECK(channel_info);
-  DCHECK(internal::g_channel_manager);
-  internal::g_channel_manager->WillShutdownChannel(channel_info->channel_id);
+  DCHECK(g_channel_manager);
+  g_channel_manager->WillShutdownChannel(channel_info->channel_id);
 }
 
 }  // namespace embedder

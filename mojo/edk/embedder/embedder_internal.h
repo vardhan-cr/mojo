@@ -52,19 +52,11 @@ extern PlatformSupport* g_platform_support;
 // Instance of |Core| used by the system functions (|Mojo...()|).
 extern system::Core* g_core;
 
+// Type of process initialized in |InitIPCSupport()| (set to |UNINITIALIZED| if
+// "outside" |InitIPCSupport()|/|ShutdownIPCSupport()|). This is declared here
+// so that |mojo::embedder::test::Shutdown()| can check that it's only called
+// after |ShutdownIPCSupport()|.
 extern ProcessType g_process_type;
-
-// Note: This needs to be |AddRef()|ed/|Release()|d.
-extern base::TaskRunner* g_delegate_thread_task_runner;
-
-extern ProcessDelegate* g_process_delegate;
-
-// Note: This needs to be |AddRef()|ed/|Release()|d.
-extern base::TaskRunner* g_io_thread_task_runner;
-
-// Instance of |ChannelManager| used by the channel management functions
-// (|mojo::embedder::CreateChannel()|, etc.).
-extern system::ChannelManager* g_channel_manager;
 
 }  // namespace internal
 
