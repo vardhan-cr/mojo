@@ -8,6 +8,7 @@
 #include <string>
 
 #include "base/macros.h"
+#include "mojo/edk/embedder/process_delegate.h"
 #include "shell/application_manager/application_manager.h"
 #include "shell/task_runners.h"
 #include "shell/url_resolver.h"
@@ -20,7 +21,7 @@ class DynamicApplicationLoader;
 class ExternalApplicationListener;
 
 // The "global" context for the shell's main process.
-class Context : ApplicationManager::Delegate {
+class Context : ApplicationManager::Delegate, embedder::ProcessDelegate {
  public:
   Context();
   ~Context() override;
@@ -58,10 +59,15 @@ class Context : ApplicationManager::Delegate {
  private:
   class NativeViewportApplicationLoader;
 
-  // ApplicationManager::Delegate override.
+  void Shutdown();
+
+  // ApplicationManager::Delegate overrides.
   void OnApplicationError(const GURL& url) override;
   GURL ResolveURL(const GURL& url) override;
   GURL ResolveMappings(const GURL& url) override;
+
+  // ProcessDelegate implementation.
+  void OnShutdownComplete() override;
 
   std::set<GURL> app_urls_;
   scoped_ptr<TaskRunners> task_runners_;

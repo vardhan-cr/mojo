@@ -50,10 +50,6 @@ bool Shutdown() {
   // been called first.
   CHECK(internal::g_process_type == ProcessType::UNINITIALIZED);
 
-  CHECK(internal::g_channel_manager);
-  delete internal::g_channel_manager;
-  internal::g_channel_manager = nullptr;
-
   CHECK(internal::g_core);
   bool rv = system::internal::ShutdownCheckNoLeaks(internal::g_core);
   delete internal::g_core;

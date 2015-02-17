@@ -7,6 +7,7 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
+#include "mojo/edk/test/scoped_ipc_support.h"
 #include "shell/domain_socket/net_errors.h"
 #include "shell/domain_socket/socket_descriptor.h"
 #include "shell/domain_socket/test_completion_callback.h"
@@ -50,7 +51,7 @@ class ListeningFailsDelegate : public IncomingConnectionListener::Delegate {
 
 class IncomingConnectionListenerTest : public testing::Test {
  public:
-  IncomingConnectionListenerTest() {}
+  IncomingConnectionListenerTest() : ipc_support_(loop_.task_runner()) {}
   ~IncomingConnectionListenerTest() override {}
 
   void SetUp() override {
@@ -60,6 +61,8 @@ class IncomingConnectionListenerTest : public testing::Test {
 
  protected:
   base::MessageLoopForIO loop_;
+  // Must be destroyed before |loop_|.
+  test::ScopedIPCSupport ipc_support_;
 
   base::ScopedTempDir temp_dir_;
   base::FilePath socket_path_;

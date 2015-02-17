@@ -9,6 +9,7 @@
 #include "base/run_loop.h"
 #include "base/test/test_io_thread.h"
 #include "mojo/common/common_type_converters.h"
+#include "mojo/edk/test/scoped_ipc_support.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
@@ -50,7 +51,8 @@ class NotAnApplicationLoader : public ApplicationLoader {
 class ExternalApplicationListenerTest : public testing::Test {
  public:
   ExternalApplicationListenerTest()
-      : io_thread_(base::TestIOThread::kAutoStart) {}
+      : io_thread_(base::TestIOThread::kAutoStart),
+        ipc_support_(io_thread_.task_runner()) {}
   ~ExternalApplicationListenerTest() override {}
 
   void SetUp() override {
@@ -71,7 +73,13 @@ class ExternalApplicationListenerTest : public testing::Test {
   const base::FilePath& socket_path() const { return socket_path_; }
 
  private:
+  // Note: The order here is important. The (main thread) message loop must be
+  // destroyed first (to destroy all bound message pipes). Then
+  // |ScopedIPCSupport| has to be destroyed before the I/O thread is destroyed.
+
   base::TestIOThread io_thread_;
+
+  test::ScopedIPCSupport ipc_support_;
 
   // Note: This must be *after* |io_thread_|, since it needs to be destroyed
   // first (to destroy all bound message pipes).

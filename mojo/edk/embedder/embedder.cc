@@ -59,9 +59,9 @@ namespace internal {
 PlatformSupport* g_platform_support = nullptr;
 system::Core* g_core = nullptr;
 ProcessType g_process_type = ProcessType::UNINITIALIZED;
-system::ChannelManager* g_channel_manager = nullptr;
 base::TaskRunner* g_delegate_thread_task_runner = nullptr;
 ProcessDelegate* g_process_delegate = nullptr;
+system::ChannelManager* g_channel_manager = nullptr;
 
 }  // namespace internal
 
@@ -77,10 +77,6 @@ void Init(scoped_ptr<PlatformSupport> platform_support) {
 
   DCHECK(!internal::g_core);
   internal::g_core = new system::Core(internal::g_platform_support);
-
-  DCHECK(!internal::g_channel_manager);
-  internal::g_channel_manager =
-      new system::ChannelManager(internal::g_platform_support);
 }
 
 MojoResult AsyncWait(MojoHandle handle,
@@ -142,11 +138,17 @@ void InitIPCSupport(ProcessType process_type,
   internal::g_process_type = process_type;
 
   DCHECK(delegate_thread_task_runner);
+  DCHECK(!internal::g_delegate_thread_task_runner);
   internal::g_delegate_thread_task_runner = delegate_thread_task_runner.get();
   internal::g_delegate_thread_task_runner->AddRef();
 
   DCHECK(process_delegate->GetType() == process_type);
+  DCHECK(!internal::g_process_delegate);
   internal::g_process_delegate = process_delegate;
+
+  DCHECK(!internal::g_channel_manager);
+  internal::g_channel_manager =
+      new system::ChannelManager(internal::g_platform_support);
 
   switch (process_type) {
     case ProcessType::UNINITIALIZED:
@@ -169,6 +171,11 @@ void ShutdownIPCSupportOnIOThread() {
 
   // TODO(vtl): Tear down the connection manager here, once it's been created.
 
+  // TODO(vtl): This isn't right at all, but it'll have to do for now.
+  DCHECK(internal::g_channel_manager);
+  delete internal::g_channel_manager;
+  internal::g_channel_manager = nullptr;
+
   internal::g_delegate_thread_task_runner->Release();
   internal::g_delegate_thread_task_runner = nullptr;
 
@@ -182,6 +189,13 @@ void ShutdownIPCSupport() {
 
   // TODO(vtl): This will actually have to tear down other stuff. For now, just
   // post the shutdown complete call.
+
+  // TODO(vtl): This isn't right at all (we need to shut down the channel
+  // manager, which will happen asynchronously here), but it'll have to do for
+  // now.
+  DCHECK(internal::g_channel_manager);
+  delete internal::g_channel_manager;
+  internal::g_channel_manager = nullptr;
 
   scoped_refptr<base::TaskRunner> delegate_thread_task_runner(
       internal::g_delegate_thread_task_runner);

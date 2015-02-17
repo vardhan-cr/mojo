@@ -224,10 +224,17 @@ bool Context::Init() {
   task_runners_.reset(
       new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
 
+  // TODO(vtl): Probably these failures should be checked before |Init()|, and
+  // this function simply shouldn't fail.
   if (!shell_file_root_.is_valid())
     return false;
   if (!ConfigureURLMappings(command_line, this))
     return false;
+
+  // TODO(vtl): This should be MASTER, not NONE.
+  embedder::InitIPCSupport(
+      embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
+      task_runners_->io_runner(), embedder::ScopedPlatformHandle());
 
   if (command_line->HasSwitch(switches::kEnableExternalApplications)) {
     listener_.reset(new ExternalApplicationListener(
@@ -268,11 +275,15 @@ bool Context::Init() {
   return true;
 }
 
+void Context::Shutdown() {
+  embedder::ShutdownIPCSupport();
+}
+
 void Context::OnApplicationError(const GURL& url) {
   if (app_urls_.find(url) != app_urls_.end()) {
     app_urls_.erase(url);
     if (app_urls_.empty() && base::MessageLoop::current()->is_running())
-      base::MessageLoop::current()->Quit();
+      Shutdown();
   }
 }
 
@@ -282,6 +293,12 @@ GURL Context::ResolveURL(const GURL& url) {
 
 GURL Context::ResolveMappings(const GURL& url) {
   return url_resolver_.ApplyMappings(url);
+}
+
+void Context::OnShutdownComplete() {
+  DCHECK_EQ(base::MessageLoop::current()->task_runner(),
+            task_runners_->shell_runner());
+  base::MessageLoop::current()->Quit();
 }
 
 void Context::Run(const GURL& url) {

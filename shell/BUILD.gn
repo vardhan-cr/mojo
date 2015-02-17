@@ -484,6 +484,7 @@ test("external_application_unittests") {
     "//mojo/common",
     "//mojo/edk/system",
     "//mojo/edk/test:run_all_unittests",
+    "//mojo/edk/test:test_support",
     "//mojo/environment:chromium",
     "//shell/application_manager",
     "//shell/domain_socket",

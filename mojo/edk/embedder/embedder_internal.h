@@ -54,14 +54,14 @@ extern system::Core* g_core;
 
 extern ProcessType g_process_type;
 
-// Instance of |ChannelManager| used by the channel management functions
-// (|mojo::embedder::CreateChannel()|, etc.).
-extern system::ChannelManager* g_channel_manager;
-
 // Note: This needs to be |AddRef()|ed/|Release()|d.
 extern base::TaskRunner* g_delegate_thread_task_runner;
 
 extern ProcessDelegate* g_process_delegate;
+
+// Instance of |ChannelManager| used by the channel management functions
+// (|mojo::embedder::CreateChannel()|, etc.).
+extern system::ChannelManager* g_channel_manager;
 
 }  // namespace internal
 

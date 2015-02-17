@@ -18,6 +18,7 @@
 #include "mojo/edk/embedder/test_embedder.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/test/multiprocess_test_helper.h"
+#include "mojo/edk/test/scoped_ipc_support.h"
 #include "mojo/public/c/system/core.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -128,6 +129,8 @@ class EmbedderTest : public testing::Test {
 };
 
 TEST_F(EmbedderTest, ChannelsBasic) {
+  mojo::test::ScopedIPCSupport ipc_support(test_io_task_runner());
+
   PlatformChannelPair channel_pair;
   ScopedTestChannel server_channel(test_io_task_runner(),
                                    channel_pair.PassServerHandle());
@@ -255,6 +258,8 @@ TEST_F(EmbedderTest, AsyncWait) {
 }
 
 TEST_F(EmbedderTest, ChannelsHandlePassing) {
+  mojo::test::ScopedIPCSupport ipc_support(test_io_task_runner());
+
   PlatformChannelPair channel_pair;
   ScopedTestChannel server_channel(test_io_task_runner(),
                                    channel_pair.PassServerHandle());
@@ -397,6 +402,10 @@ TEST_F(EmbedderTest, ChannelsHandlePassing) {
 #define MAYBE_MultiprocessChannels MultiprocessChannels
 #endif  // defined(OS_ANDROID)
 TEST_F(EmbedderTest, MAYBE_MultiprocessChannels) {
+  // TODO(vtl): This should eventually initialize a master process instead,
+  // probably.
+  mojo::test::ScopedIPCSupport ipc_support(test_io_task_runner());
+
   mojo::test::MultiprocessTestHelper multiprocess_test_helper;
   multiprocess_test_helper.StartChild("MultiprocessChannelsClient");
 
@@ -520,6 +529,10 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessChannelsClient) {
   test::InitWithSimplePlatformSupport();
 
   {
+    // TODO(vtl): This should eventually initialize a slave process instead,
+    // probably.
+    mojo::test::ScopedIPCSupport ipc_support(test_io_thread.task_runner());
+
     ScopedTestChannel client_channel(test_io_thread.task_runner(),
                                      client_platform_handle.Pass());
     MojoHandle client_mp = client_channel.bootstrap_message_pipe();
