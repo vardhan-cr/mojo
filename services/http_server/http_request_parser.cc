@@ -166,10 +166,12 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseHeaders() {
 }
 
 HttpRequestParser::ParseResult HttpRequestParser::ParseContent() {
+  // Bytes available for read in the input buffer.
   const size_t available_bytes = buffer_.size() - buffer_position_;
-  uint32_t fetch_bytes = std::min(
-      available_bytes,
-      declared_content_length_ - GetBodySize());
+  // Bytes that are yet to be read according to the declared content size.
+  const size_t remaining_bytes = declared_content_length_ - GetBodySize();
+  uint32_t fetch_bytes = std::min(available_bytes, remaining_bytes);
+
   MojoResult result = WriteDataRaw(
       producer_handle_.get(),
       buffer_.data() + buffer_position_,
@@ -178,8 +180,9 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseContent() {
   DCHECK_EQ(result, MOJO_RESULT_OK);
   buffer_position_ += fetch_bytes;
 
-  if (declared_content_length_ == buffer_.size()) {
+  if (fetch_bytes == remaining_bytes) {
     state_ = STATE_ACCEPTED;
+    producer_handle_.reset();
     return ACCEPTED;
   }
 
