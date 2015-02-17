@@ -51,6 +51,21 @@ system::ChannelId MakeChannelId() {
   return static_cast<system::ChannelId>(-new_counter_value);
 }
 
+// Note: Called on the I/O thread.
+void ShutdownIPCSupportHelper() {
+  // Save these before nuking them using |ShutdownChannelOnIOThread()|.
+  scoped_refptr<base::TaskRunner> delegate_thread_task_runner(
+      internal::g_delegate_thread_task_runner);
+  ProcessDelegate* process_delegate = internal::g_process_delegate;
+
+  ShutdownIPCSupportOnIOThread();
+
+  bool ok = delegate_thread_task_runner->PostTask(
+      FROM_HERE, base::Bind(&ProcessDelegate::OnShutdownComplete,
+                            base::Unretained(process_delegate)));
+  DCHECK(ok);
+}
+
 }  // namespace
 
 namespace internal {
@@ -61,6 +76,7 @@ system::Core* g_core = nullptr;
 ProcessType g_process_type = ProcessType::UNINITIALIZED;
 base::TaskRunner* g_delegate_thread_task_runner = nullptr;
 ProcessDelegate* g_process_delegate = nullptr;
+base::TaskRunner* g_io_thread_task_runner = nullptr;
 system::ChannelManager* g_channel_manager = nullptr;
 
 }  // namespace internal
@@ -146,9 +162,14 @@ void InitIPCSupport(ProcessType process_type,
   DCHECK(!internal::g_process_delegate);
   internal::g_process_delegate = process_delegate;
 
+  DCHECK(io_thread_task_runner);
+  DCHECK(!internal::g_io_thread_task_runner);
+  internal::g_io_thread_task_runner = io_thread_task_runner.get();
+  internal::g_io_thread_task_runner->AddRef();
+
   DCHECK(!internal::g_channel_manager);
-  internal::g_channel_manager =
-      new system::ChannelManager(internal::g_platform_support);
+  internal::g_channel_manager = new system::ChannelManager(
+      internal::g_platform_support, io_thread_task_runner);
 
   switch (process_type) {
     case ProcessType::UNINITIALIZED:
@@ -171,10 +192,12 @@ void ShutdownIPCSupportOnIOThread() {
 
   // TODO(vtl): Tear down the connection manager here, once it's been created.
 
-  // TODO(vtl): This isn't right at all, but it'll have to do for now.
-  DCHECK(internal::g_channel_manager);
+  internal::g_channel_manager->ShutdownOnIOThread();
   delete internal::g_channel_manager;
   internal::g_channel_manager = nullptr;
+
+  internal::g_io_thread_task_runner->Release();
+  internal::g_io_thread_task_runner = nullptr;
 
   internal::g_delegate_thread_task_runner->Release();
   internal::g_delegate_thread_task_runner = nullptr;
@@ -187,29 +210,8 @@ void ShutdownIPCSupportOnIOThread() {
 void ShutdownIPCSupport() {
   DCHECK(internal::g_process_type != ProcessType::UNINITIALIZED);
 
-  // TODO(vtl): This will actually have to tear down other stuff. For now, just
-  // post the shutdown complete call.
-
-  // TODO(vtl): This isn't right at all (we need to shut down the channel
-  // manager, which will happen asynchronously here), but it'll have to do for
-  // now.
-  DCHECK(internal::g_channel_manager);
-  delete internal::g_channel_manager;
-  internal::g_channel_manager = nullptr;
-
-  scoped_refptr<base::TaskRunner> delegate_thread_task_runner(
-      internal::g_delegate_thread_task_runner);
-  internal::g_delegate_thread_task_runner->Release();
-  internal::g_delegate_thread_task_runner = nullptr;
-
-  ProcessDelegate* process_delegate = internal::g_process_delegate;
-  internal::g_process_delegate = nullptr;
-
-  internal::g_process_type = ProcessType::UNINITIALIZED;
-
-  bool ok = delegate_thread_task_runner->PostTask(
-      FROM_HERE, base::Bind(&ProcessDelegate::OnShutdownComplete,
-                            base::Unretained(process_delegate)));
+  bool ok = internal::g_io_thread_task_runner->PostTask(
+      FROM_HERE, base::Bind(&ShutdownIPCSupportHelper));
   DCHECK(ok);
 }
 

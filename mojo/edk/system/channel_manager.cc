@@ -33,30 +33,50 @@ void ShutdownChannelHelper(
   }
 }
 
-void ShutdownChannelDeprecatedHelper(const ChannelInfo& channel_info) {
-  if (base::MessageLoopProxy::current() ==
-      channel_info.channel_thread_task_runner) {
-    channel_info.channel->Shutdown();
-  } else {
-    channel_info.channel->WillShutdownSoon();
-    bool ok = channel_info.channel_thread_task_runner->PostTask(
-        FROM_HERE, base::Bind(&Channel::Shutdown, channel_info.channel));
-    DCHECK(ok);
-  }
-}
-
 }  // namespace
 
-ChannelManager::ChannelManager(embedder::PlatformSupport* platform_support)
-    : platform_support_(platform_support) {
+ChannelManager::ChannelManager(
+    embedder::PlatformSupport* platform_support,
+    scoped_refptr<base::TaskRunner> io_thread_task_runner)
+    : platform_support_(platform_support),
+      io_thread_task_runner_(io_thread_task_runner) {
+  DCHECK(platform_support_);
+  DCHECK(io_thread_task_runner_);
 }
 
 ChannelManager::~ChannelManager() {
-  // TODO(vtl): Change to explicit shutdown (since this posts tasks, with no way
-  // for the caller to know when shutdown is actually done).
-  // No need to take the lock.
-  for (const auto& map_elem : channel_infos_)
-    ShutdownChannelDeprecatedHelper(map_elem.second);
+  // |Shutdown()| must be called before destruction and have been completed.
+  // TODO(vtl): This doesn't verify the above condition very strictly at all
+  // (e.g., we may never have had any channels, or we may have manually shut all
+  // the channels down).
+  DCHECK(channel_infos_.empty());
+}
+
+void ChannelManager::ShutdownOnIOThread() {
+  // Taking this lock really shouldn't be necessary, but we do it for
+  // consistency.
+  base::hash_map<ChannelId, ChannelInfo> channel_infos;
+  {
+    base::AutoLock locker(lock_);
+    channel_infos.swap(channel_infos_);
+  }
+
+  for (const auto& map_elem : channel_infos) {
+    const ChannelInfo& channel_info = map_elem.second;
+    DCHECK(base::MessageLoopProxy::current() ==
+           channel_info.channel_thread_task_runner);
+    channel_info.channel->Shutdown();
+  }
+}
+
+void ChannelManager::Shutdown(
+    const base::Closure& callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
+  bool ok = io_thread_task_runner_->PostTask(
+      FROM_HERE,
+      base::Bind(&ChannelManager::ShutdownHelper, base::Unretained(this),
+                 callback, callback_thread_task_runner));
+  DCHECK(ok);
 }
 
 scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannelOnIOThread(
@@ -77,7 +97,8 @@ scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannel(
     scoped_refptr<base::TaskRunner> io_thread_task_runner,
     const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
-  DCHECK(io_thread_task_runner);
+  // TODO(vtl): Remove |io_thread_task_runner| argument.
+  DCHECK_EQ(io_thread_task_runner, io_thread_task_runner_);
   DCHECK(!callback.is_null());
   // (|callback_thread_task_runner| may be null.)
 
@@ -85,7 +106,7 @@ scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannel(
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
       system::MessagePipeDispatcher::CreateRemoteMessagePipe(
           &bootstrap_channel_endpoint);
-  bool ok = io_thread_task_runner->PostTask(
+  bool ok = io_thread_task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&ChannelManager::CreateChannelHelper, base::Unretained(this),
                  channel_id, base::Passed(&platform_handle),
@@ -137,6 +158,18 @@ void ChannelManager::ShutdownChannel(
       FROM_HERE, base::Bind(&ShutdownChannelHelper, channel_info, callback,
                             callback_thread_task_runner));
   DCHECK(ok);
+}
+
+void ChannelManager::ShutdownHelper(
+    const base::Closure& callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
+  ShutdownOnIOThread();
+  if (callback_thread_task_runner) {
+    bool ok = callback_thread_task_runner->PostTask(FROM_HERE, callback);
+    DCHECK(ok);
+  } else {
+    callback.Run();
+  }
 }
 
 void ChannelManager::CreateChannelOnIOThreadHelper(

@@ -59,6 +59,9 @@ extern base::TaskRunner* g_delegate_thread_task_runner;
 
 extern ProcessDelegate* g_process_delegate;
 
+// Note: This needs to be |AddRef()|ed/|Release()|d.
+extern base::TaskRunner* g_io_thread_task_runner;
+
 // Instance of |ChannelManager| used by the channel management functions
 // (|mojo::embedder::CreateChannel()|, etc.).
 extern system::ChannelManager* g_channel_manager;
