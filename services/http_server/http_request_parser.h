@@ -61,16 +61,13 @@ class HttpRequestParser {
   // no line available.
   std::string ShiftLine();
 
-  // Returns the number of bytes in |http_request_->body|.
-  uint32_t GetBodySize();
-
   HttpRequestPtr http_request_;
   mojo::ScopedDataPipeProducerHandle producer_handle_;
   std::string buffer_;
   size_t buffer_position_;  // Current position in the internal buffer.
   State state_;
-  // Content length of the request currently being parsed.
-  size_t declared_content_length_;
+  // Remaining bytes of the request content not yet put onto request->body.
+  size_t remaining_content_bytes_;
 
   DISALLOW_COPY_AND_ASSIGN(HttpRequestParser);
 };

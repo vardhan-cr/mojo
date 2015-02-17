@@ -31,7 +31,7 @@ HttpRequestParser::HttpRequestParser()
     : http_request_(HttpRequest::New()),
       buffer_position_(0),
       state_(STATE_HEADERS),
-      declared_content_length_(0) {
+      remaining_content_bytes_(0) {
 }
 
 HttpRequestParser::~HttpRequestParser() {
@@ -50,14 +50,6 @@ std::string HttpRequestParser::ShiftLine() {
   std::string result = buffer_.substr(buffer_position_, line_length);
   buffer_position_ += line_length + 2;
   return result;
-}
-
-uint32_t HttpRequestParser::GetBodySize() {
-  uint32_t num_bytes = 0;
-  MojoResult result = ReadDataRaw(
-      http_request_->body.get(), NULL, &num_bytes, MOJO_READ_DATA_FLAG_QUERY);
-  DCHECK_EQ(result, MOJO_RESULT_OK);
-  return num_bytes;
 }
 
 HttpRequestParser::ParseResult HttpRequestParser::ParseRequest() {
@@ -131,15 +123,15 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseHeaders() {
   }
 
   // Headers done. Is any content data attached to the request?
-  declared_content_length_ = 0;
+  size_t declared_content_length = 0;
   if (http_request_->headers.find("Content-Length") !=
       http_request_->headers.end()) {
     const bool success = base::StringToSizeT(
         http_request_->headers["Content-Length"].To<std::string>(),
-        &declared_content_length_);
+        &declared_content_length);
     DCHECK(success) << "Malformed Content-Length header's value.";
   }
-  if (declared_content_length_ == 0) {
+  if (declared_content_length == 0) {
     // No content data, so parsing is finished.
     state_ = STATE_ACCEPTED;
     return ACCEPTED;
@@ -150,17 +142,18 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseHeaders() {
   MojoCreateDataPipeOptions options = {sizeof(MojoCreateDataPipeOptions),
                                        MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,
                                        1,
-                                       declared_content_length_};
+                                       declared_content_length};
   MojoResult result = CreateDataPipe(
       &options, &producer_handle_, &http_request_->body);
   if (result != MOJO_RESULT_OK) {
     NOTREACHED() << "Couldn't create data pipe of size "
-                 << declared_content_length_;
+                 << declared_content_length;
     return PARSE_ERROR;
   }
 
   // The request has not yet been parsed yet, content data is still to be
   // processed.
+  remaining_content_bytes_ = declared_content_length;
   state_ = STATE_CONTENT;
   return WAITING;
 }
@@ -168,9 +161,7 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseHeaders() {
 HttpRequestParser::ParseResult HttpRequestParser::ParseContent() {
   // Bytes available for read in the input buffer.
   const size_t available_bytes = buffer_.size() - buffer_position_;
-  // Bytes that are yet to be read according to the declared content size.
-  const size_t remaining_bytes = declared_content_length_ - GetBodySize();
-  uint32_t fetch_bytes = std::min(available_bytes, remaining_bytes);
+  uint32_t fetch_bytes = std::min(available_bytes, remaining_content_bytes_);
 
   MojoResult result = WriteDataRaw(
       producer_handle_.get(),
@@ -179,8 +170,9 @@ HttpRequestParser::ParseResult HttpRequestParser::ParseContent() {
       MOJO_WRITE_DATA_FLAG_ALL_OR_NONE);
   DCHECK_EQ(result, MOJO_RESULT_OK);
   buffer_position_ += fetch_bytes;
+  remaining_content_bytes_ -= fetch_bytes;
 
-  if (fetch_bytes == remaining_bytes) {
+  if (remaining_content_bytes_ == 0) {
     state_ = STATE_ACCEPTED;
     producer_handle_.reset();
     return ACCEPTED;
