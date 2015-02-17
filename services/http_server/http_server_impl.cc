@@ -4,14 +4,6 @@
 
 #include "services/http_server/http_server_impl.h"
 
-#if defined(OS_WIN)
-#include <winsock2.h>
-#elif defined(OS_POSIX)
-#include <arpa/inet.h>
-#endif
-
-#include <algorithm>
-
 #include "base/bind.h"
 #include "base/logging.h"
 #include "mojo/public/cpp/application/application_impl.h"
