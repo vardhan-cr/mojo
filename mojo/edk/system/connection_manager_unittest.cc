@@ -114,6 +114,8 @@ class MockMasterProcessDelegate : public embedder::MasterProcessDelegate {
   }
 
   // |embedder::MasterProcessDelegate| implementation:
+  void OnShutdownComplete() override { NOTREACHED(); }
+
   void OnSlaveDisconnect(scoped_ptr<embedder::SlaveInfo> slave_info) override {
     CHECK(thread_checker_.CalledOnValidThread());
     on_slave_disconnect_calls_++;
@@ -156,6 +158,8 @@ class MockSlaveProcessDelegate : public embedder::SlaveProcessDelegate {
   }
 
   // |embedder::SlaveProcessDelegate| implementation:
+  void OnShutdownComplete() override { NOTREACHED(); }
+
   void OnMasterDisconnect() override {
     CHECK(thread_checker_.CalledOnValidThread());
     on_master_disconnect_calls_++;

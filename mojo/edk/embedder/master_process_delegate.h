@@ -7,6 +7,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "mojo/edk/embedder/process_delegate.h"
 #include "mojo/edk/system/system_impl_export.h"
 
 namespace mojo {
@@ -25,8 +26,10 @@ class MOJO_SYSTEM_IMPL_EXPORT SlaveInfo {
 
 // An interface for the master process delegate (which lives in the master
 // process).
-class MOJO_SYSTEM_IMPL_EXPORT MasterProcessDelegate {
+class MOJO_SYSTEM_IMPL_EXPORT MasterProcessDelegate : public ProcessDelegate {
  public:
+  ProcessType GetType() const override;
+
   // Called when contact with the slave process specified by |slave_info| has
   // been lost.
   // TODO(vtl): Obviously, there needs to be a suitable embedder API for
@@ -35,11 +38,15 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterProcessDelegate {
 
  protected:
   MasterProcessDelegate() {}
-  virtual ~MasterProcessDelegate() {}
+  ~MasterProcessDelegate() override {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(MasterProcessDelegate);
 };
+
+inline ProcessType MasterProcessDelegate::GetType() const {
+  return ProcessType::MASTER;
+}
 
 }  // namespace embedder
 }  // namespace mojo

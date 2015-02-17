@@ -99,6 +99,8 @@ mojo_edk_source_set("delegates") {
 
   sources = [
     "master_process_delegate.h",
+    "process_delegate.h",
+    "process_type.h",
     "slave_process_delegate.h",
   ]
 

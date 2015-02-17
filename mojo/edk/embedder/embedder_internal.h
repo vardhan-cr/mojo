@@ -11,6 +11,12 @@
 
 #include <stdint.h>
 
+#include "mojo/edk/embedder/process_type.h"
+
+namespace base {
+class TaskRunner;
+}
+
 namespace mojo {
 
 namespace system {
@@ -26,9 +32,7 @@ typedef uint64_t ChannelId;
 namespace embedder {
 
 class PlatformSupport;
-// TODO(vtl): Remove these (see below).
-class MasterProcessDelegate;
-class SlaveProcessDelegate;
+class ProcessDelegate;
 
 // This is a type that's opaque to users of the embedder API (which only
 // gives/takes |ChannelInfo*|s). We make it a struct to make it
@@ -48,15 +52,16 @@ extern PlatformSupport* g_platform_support;
 // Instance of |Core| used by the system functions (|Mojo...()|).
 extern system::Core* g_core;
 
+extern ProcessType g_process_type;
+
 // Instance of |ChannelManager| used by the channel management functions
 // (|mojo::embedder::CreateChannel()|, etc.).
 extern system::ChannelManager* g_channel_manager;
 
-// TODO(vtl): Remove these: We'll eventually really want to hold on to a
-// |MasterConnectionManager*| or a |SlaveConnectionManager*|. For now, keep
-// these around as globals to avoid triggering leak detectors.
-extern MasterProcessDelegate* g_master_process_delegate;
-extern SlaveProcessDelegate* g_slave_process_delegate;
+// Note: This needs to be |AddRef()|ed/|Release()|d.
+extern base::TaskRunner* g_delegate_thread_task_runner;
+
+extern ProcessDelegate* g_process_delegate;
 
 }  // namespace internal
 

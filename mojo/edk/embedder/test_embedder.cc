@@ -46,6 +46,10 @@ void InitWithSimplePlatformSupport() {
 }
 
 bool Shutdown() {
+  // If |InitIPCSupport()| was called, then |ShutdownIPCSupport()| must have
+  // been called first.
+  CHECK(internal::g_process_type == ProcessType::UNINITIALIZED);
+
   CHECK(internal::g_channel_manager);
   delete internal::g_channel_manager;
   internal::g_channel_manager = nullptr;

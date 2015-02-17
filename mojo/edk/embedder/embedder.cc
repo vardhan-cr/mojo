@@ -6,12 +6,17 @@
 
 #include "base/atomicops.h"
 #include "base/bind.h"
+#include "base/bind_helpers.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop_proxy.h"
+#include "base/task_runner.h"
 #include "mojo/edk/embedder/embedder_internal.h"
+#include "mojo/edk/embedder/master_process_delegate.h"
 #include "mojo/edk/embedder/platform_support.h"
+#include "mojo/edk/embedder/process_delegate.h"
+#include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_manager.h"
 #include "mojo/edk/system/configuration.h"
@@ -53,9 +58,10 @@ namespace internal {
 // Declared in embedder_internal.h.
 PlatformSupport* g_platform_support = nullptr;
 system::Core* g_core = nullptr;
+ProcessType g_process_type = ProcessType::UNINITIALIZED;
 system::ChannelManager* g_channel_manager = nullptr;
-MasterProcessDelegate* g_master_process_delegate = nullptr;
-SlaveProcessDelegate* g_slave_process_delegate = nullptr;
+base::TaskRunner* g_delegate_thread_task_runner = nullptr;
+ProcessDelegate* g_process_delegate = nullptr;
 
 }  // namespace internal
 
@@ -77,27 +83,120 @@ void Init(scoped_ptr<PlatformSupport> platform_support) {
       new system::ChannelManager(internal::g_platform_support);
 }
 
-void InitMaster(scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
-                MasterProcessDelegate* master_process_delegate,
-                scoped_refptr<base::TaskRunner> io_thread_task_runner) {
-  // |Init()| must have already been called.
-  DCHECK(internal::g_core);
-
-  // TODO(vtl): This is temporary. We really want to construct a
-  // |MasterConnectionManager| here, which will in turn hold on to the delegate.
-  internal::g_master_process_delegate = master_process_delegate;
+MojoResult AsyncWait(MojoHandle handle,
+                     MojoHandleSignals signals,
+                     const base::Callback<void(MojoResult)>& callback) {
+  return internal::g_core->AsyncWait(handle, signals, callback);
 }
 
-void InitSlave(scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
-               SlaveProcessDelegate* slave_process_delegate,
-               scoped_refptr<base::TaskRunner> io_thread_task_runner,
-               ScopedPlatformHandle platform_handle) {
+MojoResult CreatePlatformHandleWrapper(
+    ScopedPlatformHandle platform_handle,
+    MojoHandle* platform_handle_wrapper_handle) {
+  DCHECK(platform_handle_wrapper_handle);
+
+  scoped_refptr<system::Dispatcher> dispatcher(
+      new system::PlatformHandleDispatcher(platform_handle.Pass()));
+
+  DCHECK(internal::g_core);
+  MojoHandle h = internal::g_core->AddDispatcher(dispatcher);
+  if (h == MOJO_HANDLE_INVALID) {
+    LOG(ERROR) << "Handle table full";
+    dispatcher->Close();
+    return MOJO_RESULT_RESOURCE_EXHAUSTED;
+  }
+
+  *platform_handle_wrapper_handle = h;
+  return MOJO_RESULT_OK;
+}
+
+MojoResult PassWrappedPlatformHandle(MojoHandle platform_handle_wrapper_handle,
+                                     ScopedPlatformHandle* platform_handle) {
+  DCHECK(platform_handle);
+
+  DCHECK(internal::g_core);
+  scoped_refptr<system::Dispatcher> dispatcher(
+      internal::g_core->GetDispatcher(platform_handle_wrapper_handle));
+  if (!dispatcher)
+    return MOJO_RESULT_INVALID_ARGUMENT;
+
+  if (dispatcher->GetType() != system::Dispatcher::kTypePlatformHandle)
+    return MOJO_RESULT_INVALID_ARGUMENT;
+
+  *platform_handle =
+      static_cast<system::PlatformHandleDispatcher*>(dispatcher.get())
+          ->PassPlatformHandle()
+          .Pass();
+  return MOJO_RESULT_OK;
+}
+
+void InitIPCSupport(ProcessType process_type,
+                    scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
+                    ProcessDelegate* process_delegate,
+                    scoped_refptr<base::TaskRunner> io_thread_task_runner,
+                    ScopedPlatformHandle platform_handle) {
   // |Init()| must have already been called.
   DCHECK(internal::g_core);
+  // And not |InitIPCSupport()| (without |ShutdownIPCSupport()|).
+  DCHECK(internal::g_process_type == ProcessType::UNINITIALIZED);
 
-  // TODO(vtl): This is temporary. We really want to construct a
-  // |SlaveConnectionManager| here, which will in turn hold on to the delegate.
-  internal::g_slave_process_delegate = slave_process_delegate;
+  internal::g_process_type = process_type;
+
+  DCHECK(delegate_thread_task_runner);
+  internal::g_delegate_thread_task_runner = delegate_thread_task_runner.get();
+  internal::g_delegate_thread_task_runner->AddRef();
+
+  DCHECK(process_delegate->GetType() == process_type);
+  internal::g_process_delegate = process_delegate;
+
+  switch (process_type) {
+    case ProcessType::UNINITIALIZED:
+      CHECK(false);
+      break;
+    case ProcessType::NONE:
+      // TODO(vtl): Construct a "DummyConnectionManager" here, or something.
+      break;
+    case ProcessType::MASTER:
+      // TODO(vtl): Construct a |MasterConnectionManager| here.
+      break;
+    case ProcessType::SLAVE:
+      // TODO(vtl): Construct a |SlaveConnectionManager| here.
+      break;
+  }
+}
+
+void ShutdownIPCSupportOnIOThread() {
+  DCHECK(internal::g_process_type != ProcessType::UNINITIALIZED);
+
+  // TODO(vtl): Tear down the connection manager here, once it's been created.
+
+  internal::g_delegate_thread_task_runner->Release();
+  internal::g_delegate_thread_task_runner = nullptr;
+
+  internal::g_process_delegate = nullptr;
+
+  internal::g_process_type = ProcessType::UNINITIALIZED;
+}
+
+void ShutdownIPCSupport() {
+  DCHECK(internal::g_process_type != ProcessType::UNINITIALIZED);
+
+  // TODO(vtl): This will actually have to tear down other stuff. For now, just
+  // post the shutdown complete call.
+
+  scoped_refptr<base::TaskRunner> delegate_thread_task_runner(
+      internal::g_delegate_thread_task_runner);
+  internal::g_delegate_thread_task_runner->Release();
+  internal::g_delegate_thread_task_runner = nullptr;
+
+  ProcessDelegate* process_delegate = internal::g_process_delegate;
+  internal::g_process_delegate = nullptr;
+
+  internal::g_process_type = ProcessType::UNINITIALIZED;
+
+  bool ok = delegate_thread_task_runner->PostTask(
+      FROM_HERE, base::Bind(&ProcessDelegate::OnShutdownComplete,
+                            base::Unretained(process_delegate)));
+  DCHECK(ok);
 }
 
 // TODO(vtl): Write tests for this.
@@ -173,52 +272,6 @@ void WillDestroyChannelSoon(ChannelInfo* channel_info) {
   DCHECK(channel_info);
   DCHECK(internal::g_channel_manager);
   internal::g_channel_manager->WillShutdownChannel(channel_info->channel_id);
-}
-
-MojoResult CreatePlatformHandleWrapper(
-    ScopedPlatformHandle platform_handle,
-    MojoHandle* platform_handle_wrapper_handle) {
-  DCHECK(platform_handle_wrapper_handle);
-
-  scoped_refptr<system::Dispatcher> dispatcher(
-      new system::PlatformHandleDispatcher(platform_handle.Pass()));
-
-  DCHECK(internal::g_core);
-  MojoHandle h = internal::g_core->AddDispatcher(dispatcher);
-  if (h == MOJO_HANDLE_INVALID) {
-    LOG(ERROR) << "Handle table full";
-    dispatcher->Close();
-    return MOJO_RESULT_RESOURCE_EXHAUSTED;
-  }
-
-  *platform_handle_wrapper_handle = h;
-  return MOJO_RESULT_OK;
-}
-
-MojoResult PassWrappedPlatformHandle(MojoHandle platform_handle_wrapper_handle,
-                                     ScopedPlatformHandle* platform_handle) {
-  DCHECK(platform_handle);
-
-  DCHECK(internal::g_core);
-  scoped_refptr<system::Dispatcher> dispatcher(
-      internal::g_core->GetDispatcher(platform_handle_wrapper_handle));
-  if (!dispatcher)
-    return MOJO_RESULT_INVALID_ARGUMENT;
-
-  if (dispatcher->GetType() != system::Dispatcher::kTypePlatformHandle)
-    return MOJO_RESULT_INVALID_ARGUMENT;
-
-  *platform_handle =
-      static_cast<system::PlatformHandleDispatcher*>(dispatcher.get())
-          ->PassPlatformHandle()
-          .Pass();
-  return MOJO_RESULT_OK;
-}
-
-MojoResult AsyncWait(MojoHandle handle,
-                     MojoHandleSignals signals,
-                     const base::Callback<void(MojoResult)>& callback) {
-  return internal::g_core->AsyncWait(handle, signals, callback);
 }
 
 }  // namespace embedder
