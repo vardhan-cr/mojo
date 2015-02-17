@@ -4,8 +4,6 @@
 
 #include "services/http_server/http_server_impl.h"
 
-#include <stdio.h>
-
 #if defined(OS_WIN)
 #include <winsock2.h>
 #elif defined(OS_POSIX)
@@ -15,6 +13,7 @@
 #include <algorithm>
 
 #include "base/bind.h"
+#include "base/logging.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/system/data_pipe.h"
@@ -79,7 +78,7 @@ void HttpServerImpl::OnConnectionError() {
 void HttpServerImpl::OnSocketBound(mojo::NetworkErrorPtr err,
                                    mojo::NetAddressPtr bound_address) {
   if (err->code != 0) {
-    printf("Bound err = %d\n", err->code);
+    LOG(ERROR) << "Failed to bind the socket, err = " << err->code;
     return;
   }
 
@@ -90,24 +89,19 @@ void HttpServerImpl::OnSocketBound(mojo::NetworkErrorPtr err,
     port_callback.Run(assigned_port_);
   }
   pending_get_port_callbacks_.clear();
-
-  printf("Got address %d.%d.%d.%d:%d\n", (int)bound_address->ipv4->addr[0],
-         (int)bound_address->ipv4->addr[1], (int)bound_address->ipv4->addr[2],
-         (int)bound_address->ipv4->addr[3], (int)bound_address->ipv4->port);
 }
 
 void HttpServerImpl::OnSocketListening(mojo::NetworkErrorPtr err) {
   if (err->code != 0) {
-    printf("Listen err = %d\n", err->code);
+    LOG(ERROR) << "Failed to listen on the socket, err = " << err->code;
     return;
   }
-  printf("Waiting for incoming connections...\n");
 }
 
 void HttpServerImpl::OnConnectionAccepted(mojo::NetworkErrorPtr err,
                                           mojo::NetAddressPtr remote_address) {
   if (err->code != 0) {
-    printf("Accepted socket error = %d\n", err->code);
+    LOG(ERROR) << "Failed to accept a connection, err = " << err->code;
     return;
   }
 
