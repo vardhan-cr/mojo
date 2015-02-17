@@ -235,6 +235,12 @@ hooks = [
     'action': ['python', 'src/tools/clang/scripts/update.py', '--if-needed'],
   },
   {
+    # Pull dart sdk if needed
+    'name': 'dart',
+    'pattern': '.',
+    'action': ['python', 'src/tools/dart/update.py'],
+  },
+  {
     # Update the Windows toolchain if necessary.
     'name': 'win_toolchain',
     'pattern': '.',
