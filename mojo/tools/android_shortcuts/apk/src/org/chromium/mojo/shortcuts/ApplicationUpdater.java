@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,8 +46,12 @@ public class ApplicationUpdater {
         /**
          * Returns the application update URL.
          */
-        public URL getURL() throws MalformedURLException {
-            return new URL(mURL);
+        public URL getURL() {
+            try {
+                return new URL(mURL);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -77,6 +82,35 @@ public class ApplicationUpdater {
         return false;
     }
 
+    private static String hex(byte bytes[]) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
+    }
+
+    private static String getFilename(URL url) {
+        try {
+            return hex(url.toString().getBytes("UTF8"));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void cleanDownloadDirectory() {
+        File directory = getDownloadDirectory();
+        for (File file : directory.listFiles()) {
+            file.delete();
+        }
+    }
+
+    private static File getDownloadDirectory() {
+        File directory = new File(Environment.getExternalStorageDirectory(), "mojo_shortcuts");
+        directory.mkdirs();
+        return directory;
+    }
+
     private static void updateApplication(Context context, ApplicationLocation application) {
         try {
             URL url = application.getURL();
@@ -84,9 +118,7 @@ public class ApplicationUpdater {
             c.setRequestMethod("GET");
             c.connect();
 
-            File file = new File(Environment.getExternalStorageDirectory(), "download");
-            file.mkdirs();
-            File outputFile = new File(file, "update.apk");
+            File outputFile = new File(getDownloadDirectory(), getFilename(url));
 
             FileOutputStream fos = new FileOutputStream(outputFile);
             try {
@@ -115,6 +147,7 @@ public class ApplicationUpdater {
     }
 
     public static void checkAndUpdateApplications(Context context) {
+        cleanDownloadDirectory();
         for (ApplicationLocation application : APPLICATIONS) {
             if (applicationNeedsUpdate(context, application)) {
                 updateApplication(context, application);
