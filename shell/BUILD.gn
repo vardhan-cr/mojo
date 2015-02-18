@@ -421,7 +421,6 @@ test("mojo_shell_tests") {
     "//base:i18n",
     "//base/test:test_support",
     "//testing/gtest",
-    "//net:test_support",
     "//url",
     "//mojo/common",
     "//mojo/edk/system",

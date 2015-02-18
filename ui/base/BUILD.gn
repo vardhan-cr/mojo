@@ -39,7 +39,6 @@ component("base") {
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
     "//base:i18n",
-    "//net",
     "//third_party/icu",
     "//url",
   ]
