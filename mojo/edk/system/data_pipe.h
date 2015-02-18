@@ -11,6 +11,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
+#include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/handle_signals_state.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/system_impl_export.h"
@@ -22,6 +23,7 @@ namespace system {
 
 class Awakable;
 class AwakableList;
+class Channel;
 
 // |DataPipe| is a base class for secondary objects implementing data pipes,
 // similar to |MessagePipe| (see the explanatory comment in core.cc). It is
@@ -90,6 +92,13 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
                                  HandleSignalsState* signals_state);
   void ConsumerRemoveAwakable(Awakable* awakable,
                               HandleSignalsState* signals_state);
+  void ConsumerStartSerialize(Channel* channel,
+                              size_t* max_size,
+                              size_t* max_platform_handles);
+  bool ConsumerEndSerialize(Channel* channel,
+                            void* destination,
+                            size_t* actual_size,
+                            embedder::PlatformHandleVector* platform_handles);
   bool ConsumerIsBusy() const;
 
  protected:
@@ -139,6 +148,15 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   // Note: A consumer should not be writable during a two-phase read.
   virtual HandleSignalsState ConsumerGetHandleSignalsStateImplNoLock()
       const = 0;
+  virtual void ConsumerStartSerializeImplNoLock(
+      Channel* channel,
+      size_t* max_size,
+      size_t* max_platform_handles) = 0;
+  virtual bool ConsumerEndSerializeImplNoLock(
+      Channel* channel,
+      void* destination,
+      size_t* actual_size,
+      embedder::PlatformHandleVector* platform_handles) = 0;
 
   // Thread-safe and fast (they don't take the lock):
   bool may_discard() const { return may_discard_; }

@@ -302,6 +302,25 @@ HandleSignalsState LocalDataPipe::ConsumerGetHandleSignalsStateImplNoLock()
   return rv;
 }
 
+void LocalDataPipe::ConsumerStartSerializeImplNoLock(
+    Channel* channel,
+    size_t* max_size,
+    size_t* max_platform_handles) {
+  // TODO(vtl): Support serializing consumer data pipe handles.
+  *max_size = 0;
+  *max_platform_handles = 0;
+}
+
+bool LocalDataPipe::ConsumerEndSerializeImplNoLock(
+    Channel* channel,
+    void* destination,
+    size_t* actual_size,
+    embedder::PlatformHandleVector* platform_handles) {
+  // TODO(vtl): Support serializing consumer data pipe handles.
+  ConsumerCloseImplNoLock();
+  return false;
+}
+
 void LocalDataPipe::EnsureBufferNoLock() {
   DCHECK(producer_open_no_lock());
   if (buffer_)

@@ -430,6 +430,25 @@ void DataPipe::ConsumerRemoveAwakable(Awakable* awakable,
     *signals_state = ConsumerGetHandleSignalsStateImplNoLock();
 }
 
+void DataPipe::ConsumerStartSerialize(Channel* channel,
+                                      size_t* max_size,
+                                      size_t* max_platform_handles) {
+  base::AutoLock locker(lock_);
+  DCHECK(has_local_consumer_no_lock());
+  ConsumerStartSerializeImplNoLock(channel, max_size, max_platform_handles);
+}
+
+bool DataPipe::ConsumerEndSerialize(
+    Channel* channel,
+    void* destination,
+    size_t* actual_size,
+    embedder::PlatformHandleVector* platform_handles) {
+  base::AutoLock locker(lock_);
+  DCHECK(has_local_consumer_no_lock());
+  return ConsumerEndSerializeImplNoLock(channel, destination, actual_size,
+                                        platform_handles);
+}
+
 bool DataPipe::ConsumerIsBusy() const {
   base::AutoLock locker(lock_);
   return consumer_in_two_phase_read_no_lock();
