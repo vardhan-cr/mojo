@@ -29,10 +29,10 @@ class EchoServiceImpl extends EchoService {
 class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void acceptConnection(String requestorUrl, ServiceProvider serviceProvider) {
-    serviceProvider.registerFactory(EchoService.name, (endpoint) =>
+  void acceptConnection(String requestorUrl, ApplicationConnection connection) {
+    connection.provideService(EchoService.name, (endpoint) =>
         new EchoServiceImpl(this, endpoint));
-    serviceProvider.listen();
+    connection.listen();
   }
 }
 

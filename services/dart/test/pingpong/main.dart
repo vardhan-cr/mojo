@@ -107,10 +107,10 @@ class PingPongServiceImpl extends PingPongService {
 class PingPongApplication extends Application {
   PingPongApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void acceptConnection(String requestorUrl, ServiceProvider serviceProvider) {
-    serviceProvider.registerFactory(PingPongService.name,
+  void acceptConnection(String requestorUrl, ApplicationConnection connection) {
+    connection.provideService(PingPongService.name,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
-    serviceProvider.listen();
+    connection.listen();
   }
 }
 
