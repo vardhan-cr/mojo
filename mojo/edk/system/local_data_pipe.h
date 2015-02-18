@@ -43,6 +43,14 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipe : public DataPipe {
   MojoResult ProducerEndWriteDataImplNoLock(
       uint32_t num_bytes_written) override;
   HandleSignalsState ProducerGetHandleSignalsStateImplNoLock() const override;
+  void ProducerStartSerializeImplNoLock(Channel* channel,
+                                        size_t* max_size,
+                                        size_t* max_platform_handles) override;
+  bool ProducerEndSerializeImplNoLock(
+      Channel* channel,
+      void* destination,
+      size_t* actual_size,
+      embedder::PlatformHandleVector* platform_handles) override;
   void ConsumerCloseImplNoLock() override;
   MojoResult ConsumerReadDataImplNoLock(UserPointer<void> elements,
                                         UserPointer<uint32_t> num_bytes,

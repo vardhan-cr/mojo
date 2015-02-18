@@ -167,6 +167,25 @@ HandleSignalsState LocalDataPipe::ProducerGetHandleSignalsStateImplNoLock()
   return rv;
 }
 
+void LocalDataPipe::ProducerStartSerializeImplNoLock(
+    Channel* channel,
+    size_t* max_size,
+    size_t* max_platform_handles) {
+  // TODO(vtl): Support serializing producer data pipe handles.
+  *max_size = 0;
+  *max_platform_handles = 0;
+}
+
+bool LocalDataPipe::ProducerEndSerializeImplNoLock(
+    Channel* channel,
+    void* destination,
+    size_t* actual_size,
+    embedder::PlatformHandleVector* platform_handles) {
+  // TODO(vtl): Support serializing producer data pipe handles.
+  ProducerCloseImplNoLock();
+  return false;
+}
+
 void LocalDataPipe::ConsumerCloseImplNoLock() {
   // If the producer is around and in a two-phase write, we have to keep the
   // buffer around. (We then don't free it until the producer is closed. This

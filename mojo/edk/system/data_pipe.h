@@ -66,6 +66,13 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
                                  HandleSignalsState* signals_state);
   void ProducerRemoveAwakable(Awakable* awakable,
                               HandleSignalsState* signals_state);
+  void ProducerStartSerialize(Channel* channel,
+                              size_t* max_size,
+                              size_t* max_platform_handles);
+  bool ProducerEndSerialize(Channel* channel,
+                            void* destination,
+                            size_t* actual_size,
+                            embedder::PlatformHandleVector* platform_handles);
   bool ProducerIsBusy() const;
 
   // These are called by the consumer dispatcher to implement its methods of
@@ -125,6 +132,15 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   // Note: A producer should not be writable during a two-phase write.
   virtual HandleSignalsState ProducerGetHandleSignalsStateImplNoLock()
       const = 0;
+  virtual void ProducerStartSerializeImplNoLock(
+      Channel* channel,
+      size_t* max_size,
+      size_t* max_platform_handles) = 0;
+  virtual bool ProducerEndSerializeImplNoLock(
+      Channel* channel,
+      void* destination,
+      size_t* actual_size,
+      embedder::PlatformHandleVector* platform_handles) = 0;
 
   virtual void ConsumerCloseImplNoLock() = 0;
   // |*num_bytes| will be a nonzero multiple of |element_num_bytes_|.

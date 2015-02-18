@@ -239,6 +239,25 @@ void DataPipe::ProducerRemoveAwakable(Awakable* awakable,
     *signals_state = ProducerGetHandleSignalsStateImplNoLock();
 }
 
+void DataPipe::ProducerStartSerialize(Channel* channel,
+                                      size_t* max_size,
+                                      size_t* max_platform_handles) {
+  base::AutoLock locker(lock_);
+  DCHECK(has_local_producer_no_lock());
+  ProducerStartSerializeImplNoLock(channel, max_size, max_platform_handles);
+}
+
+bool DataPipe::ProducerEndSerialize(
+    Channel* channel,
+    void* destination,
+    size_t* actual_size,
+    embedder::PlatformHandleVector* platform_handles) {
+  base::AutoLock locker(lock_);
+  DCHECK(has_local_producer_no_lock());
+  return ProducerEndSerializeImplNoLock(channel, destination, actual_size,
+                                        platform_handles);
+}
+
 bool DataPipe::ProducerIsBusy() const {
   base::AutoLock locker(lock_);
   return producer_in_two_phase_write_no_lock();
