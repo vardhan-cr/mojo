@@ -30,9 +30,9 @@ The "fetch mojo" command does the following:
 
 If the fetch command fails, you will need to delete the src directory and start over.
 
-## Build Mojo
+## <a name="buildmojo"></a>Build Mojo
 
-Build Mojo by running:
+Build Mojo for Linux by running:
 
 ```
 $ ninja -C out/Debug -j 10
@@ -55,6 +55,13 @@ Run the tests:
 mojo/tools/mojob.py test
 ```
 
+Create a release build:
+```
+mojo/tools/mojob.py gn --release
+mojo/tools/mojob.py build --release
+mojo/tools/mojob.py test --release
+```
+
 ## Update your repo
 
 You can update your repo like this:
@@ -65,7 +72,7 @@ $ gclient sync
 (update all modules as directed by the DEPS file)
 ```
 
-You do not need to rerun "gn gen out/Debug". Ninja will do so automatically as needed.
+You do not need to rerun `gn gen out/Debug` or `mojo/tools/mojob.py gn`. Ninja will do so automatically as needed.
 
 ## Contribute
 
@@ -123,13 +130,13 @@ $ gclient sync
 Prepare the build directory for Android:
 
 ```
-$ src/mojo/tools/mojob.py gn --android
+$ mojo/tools/mojob.py gn --android
 ```
 
 Finally, perform the build. The result will be in out/android_Debug:
 
 ```
-$ src/mojo/tools/mojob.py build --android
+$ mojo/tools/mojob.py build --android
 ```
 
 If you see javac compile errors, make sure you have an up-to-date JDK:
@@ -170,7 +177,7 @@ $ ninja -C out/Debug -j 1000
 
 1. Build changed files:
     ```
-    mojob.py build --android
+    mojo/tools/mojob.py build --android
     ```
 
 2. Push mojo_shell to to your device:
@@ -180,7 +187,7 @@ $ ninja -C out/Debug -j 1000
 
 3. Run Mojo Shell on the device:
     ```
-    ./mojo/tools/android_mojo_shell.py mojo:sample_app
+    mojo/tools/android_mojo_shell.py mojo:sample_app
     ```
 
 4. If you get a crash you won't see symbols. Use tools/android_stack_parser/stack to map back to symbols, e.g.:
@@ -190,19 +197,16 @@ $ ninja -C out/Debug -j 1000
 
 ### On Linux
 
-1. Build the mojo target, which builds the shell and all examples:
-    ```
-    ninja -C out/Release mojo
-    ```
+1. Build the mojo target as described under [link](#buildmojo).
 
 2. Run Mojo Shell:
     ```
-    ./out/Release/mojo_shell mojo:sample_app
+    ./out/Debug/mojo_shell mojo:sample_app
     ```
 
 3. Optional: Run Mojo Shell with an HTTP server
     ```
-    cd out/Release
+    cd out/Debug
     python -m SimpleHTTPServer 4444 &
     ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:mojo_sample_app
     ```
