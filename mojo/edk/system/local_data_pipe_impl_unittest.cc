@@ -27,7 +27,7 @@ TEST(LocalDataPipeImplTest, Creation) {
     MojoCreateDataPipeOptions default_options = {0};
     EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                   NullUserPointer(), &default_options));
-    scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(default_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(default_options));
     dp->ProducerClose();
     dp->ConsumerClose();
   }
@@ -44,8 +44,7 @@ TEST(LocalDataPipeImplTest, Creation) {
     EXPECT_EQ(MOJO_RESULT_OK,
               DataPipe::ValidateCreateOptions(MakeUserPointer(&options),
                                               &validated_options));
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     dp->ProducerClose();
     dp->ConsumerClose();
   }
@@ -60,8 +59,7 @@ TEST(LocalDataPipeImplTest, Creation) {
     EXPECT_EQ(MOJO_RESULT_OK,
               DataPipe::ValidateCreateOptions(MakeUserPointer(&options),
                                               &validated_options));
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     dp->ProducerClose();
     dp->ConsumerClose();
   }
@@ -76,8 +74,7 @@ TEST(LocalDataPipeImplTest, Creation) {
     EXPECT_EQ(MOJO_RESULT_OK,
               DataPipe::ValidateCreateOptions(MakeUserPointer(&options),
                                               &validated_options));
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     dp->ProducerClose();
     dp->ConsumerClose();
   }
@@ -93,8 +90,7 @@ TEST(LocalDataPipeImplTest, Creation) {
     EXPECT_EQ(MOJO_RESULT_OK,
               DataPipe::ValidateCreateOptions(MakeUserPointer(&options),
                                               &validated_options));
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     dp->ProducerClose();
     dp->ConsumerClose();
   }
@@ -111,7 +107,7 @@ TEST(LocalDataPipeImplTest, SimpleReadWrite) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   int32_t elements[10] = {0};
   uint32_t num_bytes = 0;
@@ -231,7 +227,7 @@ TEST(LocalDataPipeImplTest, BasicProducerWaiting) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
   Waiter waiter;
   uint32_t context = 0;
   HandleSignalsState hss;
@@ -412,8 +408,7 @@ TEST(LocalDataPipeImplTest, PeerClosedWaiting) {
 
   // Check MOJO_HANDLE_SIGNAL_PEER_CLOSED on producer.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     // Add a waiter.
     waiter.Init();
     ASSERT_EQ(MOJO_RESULT_OK,
@@ -437,8 +432,7 @@ TEST(LocalDataPipeImplTest, PeerClosedWaiting) {
 
   // Check MOJO_HANDLE_SIGNAL_PEER_CLOSED on consumer.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     // Add a waiter.
     waiter.Init();
     ASSERT_EQ(MOJO_RESULT_OK,
@@ -473,8 +467,7 @@ TEST(LocalDataPipeImplTest, BasicConsumerWaiting) {
                                 MakeUserPointer(&options), &validated_options));
 
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     Waiter waiter;
     uint32_t context = 0;
     HandleSignalsState hss;
@@ -629,8 +622,7 @@ TEST(LocalDataPipeImplTest, BasicConsumerWaiting) {
   // Test with two-phase APIs and closing the producer with an active consumer
   // waiter.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
     Waiter waiter;
     uint32_t context = 0;
     HandleSignalsState hss;
@@ -732,7 +724,7 @@ TEST(LocalDataPipeImplTest, BasicTwoPhaseWaiting) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
   Waiter waiter;
   HandleSignalsState hss;
 
@@ -885,7 +877,7 @@ TEST(LocalDataPipeImplTest, BasicMayDiscardWaiting) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
   Waiter waiter;
   HandleSignalsState hss;
 
@@ -1017,7 +1009,7 @@ TEST(LocalDataPipeImplTest, MayDiscard) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   int32_t buffer[100] = {0};
   uint32_t num_bytes = 0;
@@ -1210,7 +1202,7 @@ TEST(LocalDataPipeImplTest, AllOrNone) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // Try writing way too much.
   uint32_t num_bytes = 20u * sizeof(int32_t);
@@ -1370,7 +1362,7 @@ TEST(LocalDataPipeImplTest, AllOrNoneMayDiscard) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // Try writing way too much.
   uint32_t num_bytes = 20u * sizeof(int32_t);
@@ -1469,7 +1461,7 @@ TEST(LocalDataPipeImplTest, TwoPhaseAllOrNone) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // Try writing way too much (two-phase).
   uint32_t num_bytes = 20u * sizeof(int32_t);
@@ -1611,7 +1603,7 @@ TEST(LocalDataPipeImplTest, WrapAround) {
   // pipe more space.
   ASSERT_EQ(100u, validated_options.capacity_num_bytes);
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // Write 20 bytes.
   uint32_t num_bytes = 20u;
@@ -1694,8 +1686,7 @@ TEST(LocalDataPipeImplTest, CloseWriteRead) {
 
   // Close producer first, then consumer.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
     // Write some data, so we'll have something to read.
     uint32_t num_bytes = kTestDataSize;
@@ -1751,8 +1742,7 @@ TEST(LocalDataPipeImplTest, CloseWriteRead) {
 
   // Close consumer first, then producer.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
     // Write some data, so we'll have something to read.
     uint32_t num_bytes = kTestDataSize;
@@ -1808,8 +1798,7 @@ TEST(LocalDataPipeImplTest, CloseWriteRead) {
   // Test closing the consumer first, then the producer, with an active
   // two-phase write.
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
     // Start two-phase write.
     void* write_buffer_ptr = nullptr;
@@ -1826,8 +1815,7 @@ TEST(LocalDataPipeImplTest, CloseWriteRead) {
 
   // Test closing the producer and then trying to read (with no data).
   {
-    scoped_refptr<LocalDataPipeImpl> dp(
-        new LocalDataPipeImpl(validated_options));
+    scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
     // Write some data, so we'll have something to read.
     uint32_t num_bytes = kTestDataSize;
@@ -1890,7 +1878,7 @@ TEST(LocalDataPipeImplTest, TwoPhaseMoreInvalidArguments) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // No data.
   uint32_t num_bytes = 1000u;
@@ -2016,7 +2004,7 @@ TEST(LocalDataPipeImplTest, DISABLED_MayDiscardTwoPhaseConsistent) {
   EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(
                                 MakeUserPointer(&options), &validated_options));
 
-  scoped_refptr<LocalDataPipeImpl> dp(new LocalDataPipeImpl(validated_options));
+  scoped_refptr<DataPipe> dp(DataPipe::CreateLocal(validated_options));
 
   // Write some elements.
   char elements[2] = {'a', 'b'};
