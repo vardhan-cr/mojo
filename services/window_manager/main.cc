@@ -10,6 +10,7 @@
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
+#include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
 
@@ -50,6 +51,8 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
                mojo::InterfaceRequest<mojo::ServiceProvider> services,
                mojo::ServiceProviderPtr exposed_services) override {
     root_ = root;
+    window_manager_app_->InitFocus(
+        make_scoped_ptr(new window_manager::BasicFocusRules(root_)));
   }
   void OnViewManagerDisconnected(ViewManager* view_manager) override {}
 

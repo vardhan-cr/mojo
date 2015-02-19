@@ -518,12 +518,66 @@ TEST_F(ViewManagerTest, Drawn) {
 // TODO(beng): tests for view event dispatcher.
 // - verify that we see events for all views.
 
-// TODO(beng): tests for focus:
-// - focus between two views known to a connection
-// - focus between views unknown to one of the connections.
-// - focus between views unknown to either connection.
+namespace {
 
-// TODO(sky): need test of root being destroyed with existing views. See
-// 434555 for specific case.
+class FocusChangeObserver : public ViewObserver {
+ public:
+  explicit FocusChangeObserver(View* view)
+      : view_(view), last_gained_focus_(nullptr), last_lost_focus_(nullptr) {
+    view_->AddObserver(this);
+  }
+  ~FocusChangeObserver() override { view_->RemoveObserver(this); }
+
+  View* last_gained_focus() { return last_gained_focus_; }
+
+  View* last_lost_focus() { return last_lost_focus_; }
+
+ private:
+  // Overridden from ViewObserver.
+  void OnViewFocusChanged(View* gained_focus, View* lost_focus) override {
+    last_gained_focus_ = gained_focus;
+    last_lost_focus_ = lost_focus;
+    QuitRunLoop();
+  }
+
+  View* view_;
+  View* last_gained_focus_;
+  View* last_lost_focus_;
+
+  MOJO_DISALLOW_COPY_AND_ASSIGN(FocusChangeObserver);
+};
+
+}  // namespace
+
+TEST_F(ViewManagerTest, Focus) {
+  View* view1 = window_manager()->CreateView();
+  view1->SetVisible(true);
+  window_manager()->GetRoot()->AddChild(view1);
+
+  ViewManager* embedded = Embed(window_manager(), view1);
+  View* view11 = embedded->CreateView();
+  view11->SetVisible(true);
+  embedded->GetRoot()->AddChild(view11);
+
+  // TODO(alhaad): Figure out why switching focus between views from different
+  // connections is causing the tests to crash and add tests for that.
+  {
+    View* embedded_root = embedded->GetRoot();
+    FocusChangeObserver observer(embedded_root);
+    embedded_root->SetFocus();
+    DoRunLoop();
+    ASSERT_NE(nullptr, observer.last_gained_focus());
+    EXPECT_EQ(embedded_root->id(), observer.last_gained_focus()->id());
+  }
+  {
+    FocusChangeObserver observer(view11);
+    view11->SetFocus();
+    DoRunLoop();
+    ASSERT_NE(nullptr, observer.last_gained_focus());
+    ASSERT_NE(nullptr, observer.last_lost_focus());
+    EXPECT_EQ(view11->id(), observer.last_gained_focus()->id());
+    EXPECT_EQ(embedded->GetRoot()->id(), observer.last_lost_focus()->id());
+  }
+}
 
 }  // namespace mojo
