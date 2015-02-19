@@ -25,6 +25,7 @@ class ShellTestBase : public testing::Test {
   ~ShellTestBase() override;
 
   void SetUp() override;
+  void TearDown() override;
 
   // |application_url| should typically be a mojo: URL (the origin will be set
   // to an "appropriate" file: URL).

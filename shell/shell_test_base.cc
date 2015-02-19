@@ -24,8 +24,12 @@ ShellTestBase::~ShellTestBase() {
 }
 
 void ShellTestBase::SetUp() {
-  shell_context_.Init();
+  CHECK(shell_context_.Init());
   SetUpTestApplications();
+}
+
+void ShellTestBase::TearDown() {
+  shell_context_.Shutdown();
 }
 
 ScopedMessagePipeHandle ShellTestBase::ConnectToService(

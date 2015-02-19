@@ -14,6 +14,7 @@ TEST(InProcessDynamicServiceRunnerTest, NotStarted) {
   base::MessageLoop loop;
   context.Init();
   InProcessDynamicServiceRunner runner(&context);
+  context.Shutdown();
   // Shouldn't crash or DCHECK on destruction.
 }
 

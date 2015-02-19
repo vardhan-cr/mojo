@@ -15,6 +15,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/path_service.h"
+#include "base/run_loop.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "build/build_config.h"
@@ -54,8 +55,6 @@ class Setup {
  private:
   DISALLOW_COPY_AND_ASSIGN(Setup);
 };
-
-static base::LazyInstance<Setup>::Leaky setup = LAZY_INSTANCE_INITIALIZER;
 
 void InitContentHandlers(NativeApplicationLoader* loader,
                          base::CommandLine* command_line) {
@@ -194,7 +193,9 @@ Context::~Context() {
   DCHECK(!base::MessageLoop::current());
 }
 
+// static
 void Context::EnsureEmbedderIsInitialized() {
+  static base::LazyInstance<Setup>::Leaky setup = LAZY_INSTANCE_INITIALIZER;
   setup.Get();
 }
 
@@ -276,14 +277,21 @@ bool Context::Init() {
 }
 
 void Context::Shutdown() {
+  DCHECK_EQ(base::MessageLoop::current()->task_runner(),
+            task_runners_->shell_runner());
   embedder::ShutdownIPCSupport();
+  // We'll quit when we get OnShutdownComplete().
+  base::MessageLoop::current()->Run();
 }
 
 void Context::OnApplicationError(const GURL& url) {
   if (app_urls_.find(url) != app_urls_.end()) {
     app_urls_.erase(url);
-    if (app_urls_.empty() && base::MessageLoop::current()->is_running())
-      Shutdown();
+    if (app_urls_.empty() && base::MessageLoop::current()->is_running()) {
+      DCHECK_EQ(base::MessageLoop::current()->task_runner(),
+                task_runners_->shell_runner());
+      base::MessageLoop::current()->Quit();
+    }
   }
 }
 

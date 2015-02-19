@@ -26,6 +26,8 @@ class Context : ApplicationManager::Delegate, embedder::ProcessDelegate {
   Context();
   ~Context() override;
 
+  static void EnsureEmbedderIsInitialized();
+
   // Point to the directory containing installed services, such as the network
   // service. By default this directory is used as the base URL for resolving
   // unknown mojo: URLs. The network service will be loaded from this directory,
@@ -44,8 +46,13 @@ class Context : ApplicationManager::Delegate, embedder::ProcessDelegate {
   // nop for everything but relative file URLs or URLs without a scheme.
   GURL ResolveCommandLineURL(const std::string& path);
 
-  static void EnsureEmbedderIsInitialized();
+  // This must be called with a message loop set up for the current thread,
+  // which must remain alive until after Shutdown() is called. Returns true on
+  // success.
   bool Init();
+
+  // If Init() was called and succeeded, this must be called before destruction.
+  void Shutdown();
 
   void Run(const GURL& url);
   ScopedMessagePipeHandle ConnectToServiceByName(
@@ -58,8 +65,6 @@ class Context : ApplicationManager::Delegate, embedder::ProcessDelegate {
 
  private:
   class NativeViewportApplicationLoader;
-
-  void Shutdown();
 
   // ApplicationManager::Delegate overrides.
   void OnApplicationError(const GURL& url) override;

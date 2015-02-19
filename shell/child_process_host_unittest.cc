@@ -52,6 +52,8 @@ TEST_F(ChildProcessHostTest, MAYBE_Basic) {
   int exit_code = child_process_host.Join();
   VLOG(2) << "Joined child: exit_code = " << exit_code;
   EXPECT_EQ(0, exit_code);
+
+  context.Shutdown();
 }
 
 }  // namespace

@@ -70,6 +70,7 @@ class NativeApplicationLoaderTest : public testing::Test {
         new TestDynamicServiceRunnerFactory(&state_));
     loader_.reset(new NativeApplicationLoader(&context_, factory.Pass()));
   }
+  void TearDown() override { context_.Shutdown(); }
 
  protected:
   Context context_;
