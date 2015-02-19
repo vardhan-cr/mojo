@@ -13,8 +13,8 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/input_events/public/interfaces/input_events.mojom.h"
 #include "mojo/services/navigation/public/interfaces/navigation.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
@@ -46,34 +46,40 @@ const int kTextfieldHeight = 39;
 
 }  // namespace
 
-class WindowManagerConnection : public InterfaceImpl<IWindowManager> {
+class WindowManagerConnection : public IWindowManager {
  public:
-  explicit WindowManagerConnection(WindowManager* window_manager)
-      : window_manager_(window_manager) {}
-  virtual ~WindowManagerConnection() {}
+  WindowManagerConnection(WindowManager* window_manager,
+                          InterfaceRequest<IWindowManager> request)
+      : window_manager_(window_manager), binding_(this, request.Pass()) {}
+  ~WindowManagerConnection() override {}
 
  private:
   // Overridden from IWindowManager:
-  virtual void CloseWindow(Id view_id) override;
+  void CloseWindow(Id view_id) override;
 
   WindowManager* window_manager_;
+  StrongBinding<IWindowManager> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerConnection);
 };
 
-class NavigatorHostImpl : public InterfaceImpl<NavigatorHost> {
+class NavigatorHostImpl : public NavigatorHost {
  public:
-  explicit NavigatorHostImpl(WindowManager* window_manager, Id view_id)
-      : window_manager_(window_manager), view_id_(view_id) {}
-  virtual ~NavigatorHostImpl() {
-  }
+  NavigatorHostImpl(WindowManager* window_manager,
+                    Id view_id,
+                    InterfaceRequest<NavigatorHost> request)
+      : window_manager_(window_manager),
+        view_id_(view_id),
+        binding_(this, request.Pass()) {}
+  ~NavigatorHostImpl() override {}
 
  private:
-  virtual void DidNavigateLocally(const mojo::String& url) override;
-  virtual void RequestNavigate(Target target, URLRequestPtr request) override;
+  void DidNavigateLocally(const mojo::String& url) override;
+  void RequestNavigate(Target target, URLRequestPtr request) override;
 
   WindowManager* window_manager_;
   Id view_id_;
+  StrongBinding<NavigatorHost> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);
 };
@@ -170,8 +176,7 @@ class Window : public InterfaceFactory<NavigatorHost> {
   // InterfaceFactory<NavigatorHost>
   virtual void Create(ApplicationConnection* connection,
                       InterfaceRequest<NavigatorHost> request) override {
-    BindToRequest(new NavigatorHostImpl(window_manager_, view_->id()),
-                  &request);
+    new NavigatorHostImpl(window_manager_, view_->id(), request.Pass());
   }
 
   WindowManager* window_manager_;
@@ -184,11 +189,11 @@ class WindowManager : public ApplicationDelegate,
                       public ViewManagerDelegate,
                       public window_manager::WindowManagerDelegate,
                       public ui::EventHandler,
-                      public mojo::InterfaceFactory<examples::DebugPanelHost> {
+                      public mojo::InterfaceFactory<examples::DebugPanelHost>,
+                      public InterfaceFactory<IWindowManager> {
  public:
   WindowManager()
       : shell_(nullptr),
-        window_manager_factory_(this),
         launcher_ui_(NULL),
         view_manager_(NULL),
         window_manager_app_(new window_manager::WindowManagerApp(this, this)),
@@ -246,6 +251,12 @@ class WindowManager : public ApplicationDelegate,
     binding_.Bind(request.Pass());
   }
 
+  // mojo::InterfaceFactory<mojo::IWindowManager> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::IWindowManager> request) override {
+    new WindowManagerConnection(this, request.Pass());
+  }
+
  private:
   typedef std::vector<Window*> WindowVector;
 
@@ -261,7 +272,7 @@ class WindowManager : public ApplicationDelegate,
 
   virtual bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
-    connection->AddService(&window_manager_factory_);
+    connection->AddService<IWindowManager>(this);
     window_manager_app_->ConfigureIncomingConnection(connection);
     return true;
   }
@@ -404,7 +415,7 @@ class WindowManager : public ApplicationDelegate,
 
     ServiceProviderPtr exposed_services;
     control_panel_exposed_services_impl_.Bind(GetProxy(&exposed_services));
-    control_panel_exposed_services_impl_.AddService(this);
+    control_panel_exposed_services_impl_.AddService<IWindowManager>(this);
 
     GURL frame_url = url_.Resolve("/examples/window_manager/debug_panel.sky");
     view->Embed(frame_url.spec(), nullptr, exposed_services.Pass());
@@ -424,9 +435,6 @@ class WindowManager : public ApplicationDelegate,
   }
 
   Shell* shell_;
-
-  InterfaceFactoryImplWithContext<WindowManagerConnection, WindowManager>
-      window_manager_factory_;
 
   Window* launcher_ui_;
   WindowVector windows_;
