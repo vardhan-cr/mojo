@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_H_
-#define MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_H_
+#ifndef MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
+#define MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
 
 #include "base/macros.h"
 #include "base/memory/aligned_memory.h"
@@ -15,19 +15,20 @@
 namespace mojo {
 namespace system {
 
-// |LocalDataPipe| is a subclass that "implements" |DataPipe| for data pipes
+// |LocalDataPipeImpl| is a subclass that "implements" |DataPipe| for data pipes
 // whose producer and consumer are both local. This class is thread-safe (with
 // protection provided by |DataPipe|'s |lock_|.
-class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipe : public DataPipe {
+class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipe {
  public:
   // |validated_options| should be the output of |DataPipe::ValidateOptions()|.
   // In particular: |struct_size| is ignored (so |validated_options| must be the
   // current version of the struct) and |capacity_num_bytes| must be nonzero.
-  explicit LocalDataPipe(const MojoCreateDataPipeOptions& validated_options);
+  explicit LocalDataPipeImpl(
+      const MojoCreateDataPipeOptions& validated_options);
 
  private:
-  friend class base::RefCountedThreadSafe<LocalDataPipe>;
-  ~LocalDataPipe() override;
+  friend class base::RefCountedThreadSafe<LocalDataPipeImpl>;
+  ~LocalDataPipeImpl() override;
 
   // |DataPipe| implementation:
   void ProducerCloseImplNoLock() override;
@@ -96,10 +97,10 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipe : public DataPipe {
   size_t start_index_;
   size_t current_num_bytes_;
 
-  DISALLOW_COPY_AND_ASSIGN(LocalDataPipe);
+  DISALLOW_COPY_AND_ASSIGN(LocalDataPipeImpl);
 };
 
 }  // namespace system
 }  // namespace mojo
 
-#endif  // MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_H_
+#endif  // MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_

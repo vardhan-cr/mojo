@@ -8,7 +8,7 @@
 // saved by the limit on capacity -- the maximum size of the buffer, checked in
 // |DataPipe::ValidateOptions()|, is currently sufficiently small.)
 
-#include "mojo/edk/system/local_data_pipe.h"
+#include "mojo/edk/system/local_data_pipe_impl.h"
 
 #include <string.h>
 
@@ -20,16 +20,16 @@
 namespace mojo {
 namespace system {
 
-LocalDataPipe::LocalDataPipe(const MojoCreateDataPipeOptions& options)
+LocalDataPipeImpl::LocalDataPipeImpl(const MojoCreateDataPipeOptions& options)
     : DataPipe(true, true, options), start_index_(0), current_num_bytes_(0) {
   // Note: |buffer_| is lazily allocated, since a common case will be that one
   // of the handles is immediately passed off to another process.
 }
 
-LocalDataPipe::~LocalDataPipe() {
+LocalDataPipeImpl::~LocalDataPipeImpl() {
 }
 
-void LocalDataPipe::ProducerCloseImplNoLock() {
+void LocalDataPipeImpl::ProducerCloseImplNoLock() {
   // If the consumer is still open and we still have data, we have to keep the
   // buffer around. Currently, we won't free it even if it empties later. (We
   // could do this -- requiring a check on every read -- but that seems to be
@@ -42,7 +42,7 @@ void LocalDataPipe::ProducerCloseImplNoLock() {
   }
 }
 
-MojoResult LocalDataPipe::ProducerWriteDataImplNoLock(
+MojoResult LocalDataPipeImpl::ProducerWriteDataImplNoLock(
     UserPointer<const void> elements,
     UserPointer<uint32_t> num_bytes,
     uint32_t max_num_bytes_to_write,
@@ -101,7 +101,7 @@ MojoResult LocalDataPipe::ProducerWriteDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ProducerBeginWriteDataImplNoLock(
+MojoResult LocalDataPipeImpl::ProducerBeginWriteDataImplNoLock(
     UserPointer<void*> buffer,
     UserPointer<uint32_t> buffer_num_bytes,
     uint32_t min_num_bytes_to_write) {
@@ -142,7 +142,7 @@ MojoResult LocalDataPipe::ProducerBeginWriteDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ProducerEndWriteDataImplNoLock(
+MojoResult LocalDataPipeImpl::ProducerEndWriteDataImplNoLock(
     uint32_t num_bytes_written) {
   DCHECK_LE(num_bytes_written,
             producer_two_phase_max_num_bytes_written_no_lock());
@@ -152,7 +152,7 @@ MojoResult LocalDataPipe::ProducerEndWriteDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-HandleSignalsState LocalDataPipe::ProducerGetHandleSignalsStateImplNoLock()
+HandleSignalsState LocalDataPipeImpl::ProducerGetHandleSignalsStateImplNoLock()
     const {
   HandleSignalsState rv;
   if (consumer_open_no_lock()) {
@@ -167,7 +167,7 @@ HandleSignalsState LocalDataPipe::ProducerGetHandleSignalsStateImplNoLock()
   return rv;
 }
 
-void LocalDataPipe::ProducerStartSerializeImplNoLock(
+void LocalDataPipeImpl::ProducerStartSerializeImplNoLock(
     Channel* channel,
     size_t* max_size,
     size_t* max_platform_handles) {
@@ -176,7 +176,7 @@ void LocalDataPipe::ProducerStartSerializeImplNoLock(
   *max_platform_handles = 0;
 }
 
-bool LocalDataPipe::ProducerEndSerializeImplNoLock(
+bool LocalDataPipeImpl::ProducerEndSerializeImplNoLock(
     Channel* channel,
     void* destination,
     size_t* actual_size,
@@ -186,7 +186,7 @@ bool LocalDataPipe::ProducerEndSerializeImplNoLock(
   return false;
 }
 
-void LocalDataPipe::ConsumerCloseImplNoLock() {
+void LocalDataPipeImpl::ConsumerCloseImplNoLock() {
   // If the producer is around and in a two-phase write, we have to keep the
   // buffer around. (We then don't free it until the producer is closed. This
   // could be rectified, but again seems like optimizing for the uncommon case.)
@@ -195,7 +195,7 @@ void LocalDataPipe::ConsumerCloseImplNoLock() {
   current_num_bytes_ = 0;
 }
 
-MojoResult LocalDataPipe::ConsumerReadDataImplNoLock(
+MojoResult LocalDataPipeImpl::ConsumerReadDataImplNoLock(
     UserPointer<void> elements,
     UserPointer<uint32_t> num_bytes,
     uint32_t max_num_bytes_to_read,
@@ -236,7 +236,7 @@ MojoResult LocalDataPipe::ConsumerReadDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ConsumerDiscardDataImplNoLock(
+MojoResult LocalDataPipeImpl::ConsumerDiscardDataImplNoLock(
     UserPointer<uint32_t> num_bytes,
     uint32_t max_num_bytes_to_discard,
     uint32_t min_num_bytes_to_discard) {
@@ -264,14 +264,14 @@ MojoResult LocalDataPipe::ConsumerDiscardDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ConsumerQueryDataImplNoLock(
+MojoResult LocalDataPipeImpl::ConsumerQueryDataImplNoLock(
     UserPointer<uint32_t> num_bytes) {
   // Note: This cast is safe, since the capacity fits into a |uint32_t|.
   num_bytes.Put(static_cast<uint32_t>(current_num_bytes_));
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ConsumerBeginReadDataImplNoLock(
+MojoResult LocalDataPipeImpl::ConsumerBeginReadDataImplNoLock(
     UserPointer<const void*> buffer,
     UserPointer<uint32_t> buffer_num_bytes,
     uint32_t min_num_bytes_to_read) {
@@ -296,7 +296,7 @@ MojoResult LocalDataPipe::ConsumerBeginReadDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-MojoResult LocalDataPipe::ConsumerEndReadDataImplNoLock(
+MojoResult LocalDataPipeImpl::ConsumerEndReadDataImplNoLock(
     uint32_t num_bytes_read) {
   DCHECK_LE(num_bytes_read, consumer_two_phase_max_num_bytes_read_no_lock());
   DCHECK_LE(start_index_ + num_bytes_read, capacity_num_bytes());
@@ -305,7 +305,7 @@ MojoResult LocalDataPipe::ConsumerEndReadDataImplNoLock(
   return MOJO_RESULT_OK;
 }
 
-HandleSignalsState LocalDataPipe::ConsumerGetHandleSignalsStateImplNoLock()
+HandleSignalsState LocalDataPipeImpl::ConsumerGetHandleSignalsStateImplNoLock()
     const {
   HandleSignalsState rv;
   if (current_num_bytes_ > 0) {
@@ -321,7 +321,7 @@ HandleSignalsState LocalDataPipe::ConsumerGetHandleSignalsStateImplNoLock()
   return rv;
 }
 
-void LocalDataPipe::ConsumerStartSerializeImplNoLock(
+void LocalDataPipeImpl::ConsumerStartSerializeImplNoLock(
     Channel* channel,
     size_t* max_size,
     size_t* max_platform_handles) {
@@ -330,7 +330,7 @@ void LocalDataPipe::ConsumerStartSerializeImplNoLock(
   *max_platform_handles = 0;
 }
 
-bool LocalDataPipe::ConsumerEndSerializeImplNoLock(
+bool LocalDataPipeImpl::ConsumerEndSerializeImplNoLock(
     Channel* channel,
     void* destination,
     size_t* actual_size,
@@ -340,7 +340,7 @@ bool LocalDataPipe::ConsumerEndSerializeImplNoLock(
   return false;
 }
 
-void LocalDataPipe::EnsureBufferNoLock() {
+void LocalDataPipeImpl::EnsureBufferNoLock() {
   DCHECK(producer_open_no_lock());
   if (buffer_)
     return;
@@ -349,7 +349,7 @@ void LocalDataPipe::EnsureBufferNoLock() {
                          GetConfiguration().data_pipe_buffer_alignment_bytes)));
 }
 
-void LocalDataPipe::DestroyBufferNoLock() {
+void LocalDataPipeImpl::DestroyBufferNoLock() {
 #ifndef NDEBUG
   // Scribble on the buffer to help detect use-after-frees. (This also helps the
   // unit test detect certain bugs without needing ASAN or similar.)
@@ -359,7 +359,7 @@ void LocalDataPipe::DestroyBufferNoLock() {
   buffer_.reset();
 }
 
-size_t LocalDataPipe::GetMaxNumBytesToWriteNoLock() {
+size_t LocalDataPipeImpl::GetMaxNumBytesToWriteNoLock() {
   size_t next_index = start_index_ + current_num_bytes_;
   if (next_index >= capacity_num_bytes()) {
     next_index %= capacity_num_bytes();
@@ -371,13 +371,13 @@ size_t LocalDataPipe::GetMaxNumBytesToWriteNoLock() {
   return capacity_num_bytes() - next_index;
 }
 
-size_t LocalDataPipe::GetMaxNumBytesToReadNoLock() {
+size_t LocalDataPipeImpl::GetMaxNumBytesToReadNoLock() {
   if (start_index_ + current_num_bytes_ > capacity_num_bytes())
     return capacity_num_bytes() - start_index_;
   return current_num_bytes_;
 }
 
-void LocalDataPipe::MarkDataAsConsumedNoLock(size_t num_bytes) {
+void LocalDataPipeImpl::MarkDataAsConsumedNoLock(size_t num_bytes) {
   DCHECK_LE(num_bytes, current_num_bytes_);
   start_index_ += num_bytes;
   start_index_ %= capacity_num_bytes();

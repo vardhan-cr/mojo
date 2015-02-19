@@ -17,7 +17,7 @@
 #include "mojo/edk/system/data_pipe_producer_dispatcher.h"
 #include "mojo/edk/system/dispatcher.h"
 #include "mojo/edk/system/handle_signals_state.h"
-#include "mojo/edk/system/local_data_pipe.h"
+#include "mojo/edk/system/local_data_pipe_impl.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_pipe.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
@@ -381,7 +381,7 @@ MojoResult Core::CreateDataPipe(
   }
   DCHECK_NE(handle_pair.second, MOJO_HANDLE_INVALID);
 
-  scoped_refptr<DataPipe> data_pipe(new LocalDataPipe(validated_options));
+  scoped_refptr<DataPipe> data_pipe(new LocalDataPipeImpl(validated_options));
   producer_dispatcher->Init(data_pipe);
   consumer_dispatcher->Init(data_pipe);
 
