@@ -116,6 +116,9 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   friend class base::RefCountedThreadSafe<DataPipe>;
   virtual ~DataPipe();
 
+  void ProducerCloseNoLock();
+  void ConsumerCloseNoLock();
+
   virtual void ProducerCloseImplNoLock() = 0;
   // |num_bytes.Get()| will be a nonzero multiple of |element_num_bytes_|.
   virtual MojoResult ProducerWriteDataImplNoLock(

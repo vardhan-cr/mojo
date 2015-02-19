@@ -182,7 +182,7 @@ bool LocalDataPipe::ProducerEndSerializeImplNoLock(
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
   // TODO(vtl): Support serializing producer data pipe handles.
-  ProducerCloseImplNoLock();
+  ProducerCloseNoLock();
   return false;
 }
 
@@ -336,7 +336,7 @@ bool LocalDataPipe::ConsumerEndSerializeImplNoLock(
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
   // TODO(vtl): Support serializing consumer data pipe handles.
-  ConsumerCloseImplNoLock();
+  ConsumerCloseNoLock();
   return false;
 }
 

@@ -91,17 +91,7 @@ void DataPipe::ProducerCancelAllAwakables() {
 
 void DataPipe::ProducerClose() {
   base::AutoLock locker(lock_);
-  DCHECK(producer_open_);
-  producer_open_ = false;
-  DCHECK(has_local_producer_no_lock());
-  producer_awakable_list_.reset();
-  // Not a bug, except possibly in "user" code.
-  DVLOG_IF(2, producer_in_two_phase_write_no_lock())
-      << "Producer closed with active two-phase write";
-  producer_two_phase_max_num_bytes_written_ = 0;
-  ProducerCloseImplNoLock();
-  AwakeConsumerAwakablesForStateChangeNoLock(
-      ConsumerGetHandleSignalsStateImplNoLock());
+  ProducerCloseNoLock();
 }
 
 MojoResult DataPipe::ProducerWriteData(UserPointer<const void> elements,
@@ -271,17 +261,7 @@ void DataPipe::ConsumerCancelAllAwakables() {
 
 void DataPipe::ConsumerClose() {
   base::AutoLock locker(lock_);
-  DCHECK(consumer_open_);
-  consumer_open_ = false;
-  DCHECK(has_local_consumer_no_lock());
-  consumer_awakable_list_.reset();
-  // Not a bug, except possibly in "user" code.
-  DVLOG_IF(2, consumer_in_two_phase_read_no_lock())
-      << "Consumer closed with active two-phase read";
-  consumer_two_phase_max_num_bytes_read_ = 0;
-  ConsumerCloseImplNoLock();
-  AwakeProducerAwakablesForStateChangeNoLock(
-      ProducerGetHandleSignalsStateImplNoLock());
+  ConsumerCloseNoLock();
 }
 
 MojoResult DataPipe::ConsumerReadData(UserPointer<void> elements,
@@ -499,6 +479,36 @@ DataPipe::~DataPipe() {
   DCHECK(!consumer_open_);
   DCHECK(!producer_awakable_list_);
   DCHECK(!consumer_awakable_list_);
+}
+
+void DataPipe::ProducerCloseNoLock() {
+  lock_.AssertAcquired();
+  DCHECK(producer_open_);
+  producer_open_ = false;
+  DCHECK(has_local_producer_no_lock());
+  producer_awakable_list_.reset();
+  // Not a bug, except possibly in "user" code.
+  DVLOG_IF(2, producer_in_two_phase_write_no_lock())
+      << "Producer closed with active two-phase write";
+  producer_two_phase_max_num_bytes_written_ = 0;
+  ProducerCloseImplNoLock();
+  AwakeConsumerAwakablesForStateChangeNoLock(
+      ConsumerGetHandleSignalsStateImplNoLock());
+}
+
+void DataPipe::ConsumerCloseNoLock() {
+  lock_.AssertAcquired();
+  DCHECK(consumer_open_);
+  consumer_open_ = false;
+  DCHECK(has_local_consumer_no_lock());
+  consumer_awakable_list_.reset();
+  // Not a bug, except possibly in "user" code.
+  DVLOG_IF(2, consumer_in_two_phase_read_no_lock())
+      << "Consumer closed with active two-phase read";
+  consumer_two_phase_max_num_bytes_read_ = 0;
+  ConsumerCloseImplNoLock();
+  AwakeProducerAwakablesForStateChangeNoLock(
+      ProducerGetHandleSignalsStateImplNoLock());
 }
 
 void DataPipe::AwakeProducerAwakablesForStateChangeNoLock(
