@@ -227,10 +227,14 @@ bool HasClonedView(const std::vector<TestView>& views) {
 // -----------------------------------------------------------------------------
 
 // A ViewManagerClient implementation that logs all changes to a tracker.
-class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
+class ViewManagerClientImpl : public mojo::ViewManagerClient,
                               public TestChangeTracker::Delegate {
  public:
-  ViewManagerClientImpl() { tracker_.set_delegate(this); }
+  ViewManagerClientImpl() : binding_(this) { tracker_.set_delegate(this); }
+
+  void Bind(mojo::InterfaceRequest<mojo::ViewManagerClient> request) {
+    binding_.Bind(request.Pass());
+  }
 
   mojo::ViewManagerService* service() { return service_.get(); }
   TestChangeTracker* tracker() { return &tracker_; }
@@ -255,6 +259,10 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
     embed_run_loop_.reset(new base::RunLoop);
     embed_run_loop_->Run();
     embed_run_loop_.reset();
+  }
+
+  bool WaitForIncomingMethodCall() {
+    return binding_.WaitForIncomingMethodCall();
   }
 
  private:
@@ -343,6 +351,7 @@ class ViewManagerClientImpl : public mojo::InterfaceImpl<ViewManagerClient>,
   // be encountered.
   scoped_ptr<WaitState> wait_state_;
 
+  mojo::Binding<ViewManagerClient> binding_;
   DISALLOW_COPY_AND_ASSIGN(ViewManagerClientImpl);
 };
 
@@ -371,7 +380,7 @@ class ViewManagerClientFactory
   void Create(ApplicationConnection* connection,
               InterfaceRequest<ViewManagerClient> request) override {
     client_impl_.reset(new ViewManagerClientImpl);
-    WeakBindToRequest(client_impl_.get(), &request);
+    client_impl_->Bind(request.Pass());
     if (run_loop_.get())
       run_loop_->Quit();
   }
@@ -497,7 +506,7 @@ class ViewManagerServiceAppTest
       mojo::ScopedMessagePipeHandle view_manager_client_request) override {
     auto typed_request = mojo::MakeRequest<mojo::ViewManagerClient>(
         view_manager_client_request.Pass());
-    WeakBindToRequest(&vm_client1_, &typed_request);
+    vm_client1_.Bind(typed_request.Pass());
     view_manager_setup_run_loop_->Quit();
   }
 
