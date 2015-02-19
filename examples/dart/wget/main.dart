@@ -30,7 +30,9 @@ class WGet extends Application {
     }
 
     ByteData bodyData = await _getUrl(args[1]);
-    print("read ${bodyData.lengthInBytes} bytes");
+    print(">>> Body <<<");
+    print(new String.fromCharCodes(bodyData.buffer.asUint8List()));
+    print(">>> EOF <<<");
 
     _closeProxies();
     close();
@@ -44,9 +46,8 @@ class WGet extends Application {
         ..autoFollowRedirects = true;
 
     var urlResponse = await _urlLoaderProxy.start(urlRequest);
-    print("url => ${urlResponse.response.url}");
-    print("status_line => ${urlResponse.response.statusLine}");
-    print("mime_type => ${urlResponse.response.mimeType}");
+    print(">>> Headers <<<");
+    print(urlResponse.response.headers.join('\n'));
 
     return DataPipeDrainer.drainHandle(urlResponse.response.body);
   }
