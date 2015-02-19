@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/dynamic_application_loader.h"
+#include "shell/native_application_loader.h"
 
 #include "base/bind.h"
 #include "base/command_line.h"
@@ -46,21 +46,21 @@ void IgnoreResult(bool result) {
 
 // Encapsulates loading and running one individual application.
 //
-// Loaders are owned by DynamicApplicationLoader. DynamicApplicationLoader must
+// Loaders are owned by NativeApplicationLoader. NativeApplicationLoader must
 // ensure that all the parameters passed to Loader subclasses stay valid through
 // Loader's lifetime.
 //
 // Async operations are done with WeakPtr to protect against
-// DynamicApplicationLoader going away (and taking all the Loaders with it)
+// NativeApplicationLoader going away (and taking all the Loaders with it)
 // while the async operation is outstanding.
-class DynamicApplicationLoader::Loader {
+class NativeApplicationLoader::Loader {
  public:
   Loader(DynamicServiceRunner::CleanupBehavior cleanup_behavior,
          MimeTypeToURLMap* mime_type_to_url,
          Context* context,
          DynamicServiceRunnerFactory* runner_factory,
          InterfaceRequest<Application> application_request,
-         ApplicationLoader::LoadCallback load_callback,
+         LoadCallback load_callback,
          const LoaderCompleteCallback& loader_complete_callback)
       : cleanup_behavior_(cleanup_behavior),
         application_request_(application_request.Pass()),
@@ -151,7 +151,7 @@ class DynamicApplicationLoader::Loader {
 
   DynamicServiceRunner::CleanupBehavior cleanup_behavior_;
   InterfaceRequest<Application> application_request_;
-  ApplicationLoader::LoadCallback load_callback_;
+  LoadCallback load_callback_;
   LoaderCompleteCallback loader_complete_callback_;
   Context* context_;
   MimeTypeToURLMap* mime_type_to_url_;
@@ -161,14 +161,14 @@ class DynamicApplicationLoader::Loader {
 };
 
 // A loader for local files.
-class DynamicApplicationLoader::LocalLoader : public Loader {
+class NativeApplicationLoader::LocalLoader : public Loader {
  public:
   LocalLoader(const GURL& url,
               MimeTypeToURLMap* mime_type_to_url,
               Context* context,
               DynamicServiceRunnerFactory* runner_factory,
               InterfaceRequest<Application> application_request,
-              ApplicationLoader::LoadCallback load_callback,
+              LoadCallback load_callback,
               const LoaderCompleteCallback& loader_complete_callback)
       : Loader(DynamicServiceRunner::DontDeleteAppPath,
                mime_type_to_url,
@@ -249,7 +249,7 @@ class DynamicApplicationLoader::LocalLoader : public Loader {
 };
 
 // A loader for network files.
-class DynamicApplicationLoader::NetworkLoader : public Loader {
+class NativeApplicationLoader::NetworkLoader : public Loader {
  public:
   NetworkLoader(const GURL& url,
                 NetworkService* network_service,
@@ -257,7 +257,7 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
                 Context* context,
                 DynamicServiceRunnerFactory* runner_factory,
                 InterfaceRequest<Application> application_request,
-                ApplicationLoader::LoadCallback load_callback,
+                LoadCallback load_callback,
                 const LoaderCompleteCallback& loader_complete_callback)
       : Loader(DynamicServiceRunner::DeleteAppPath,
                mime_type_to_url,
@@ -445,23 +445,23 @@ class DynamicApplicationLoader::NetworkLoader : public Loader {
   DISALLOW_COPY_AND_ASSIGN(NetworkLoader);
 };
 
-DynamicApplicationLoader::DynamicApplicationLoader(
+NativeApplicationLoader::NativeApplicationLoader(
     Context* context,
     scoped_ptr<DynamicServiceRunnerFactory> runner_factory)
     : context_(context),
       runner_factory_(runner_factory.Pass()),
 
-      // Unretained() is correct here because DynamicApplicationLoader owns the
+      // Unretained() is correct here because NativeApplicationLoader owns the
       // loaders that we pass this callback to.
       loader_complete_callback_(
-          base::Bind(&DynamicApplicationLoader::LoaderComplete,
+          base::Bind(&NativeApplicationLoader::LoaderComplete,
                      base::Unretained(this))) {
 }
 
-DynamicApplicationLoader::~DynamicApplicationLoader() {
+NativeApplicationLoader::~NativeApplicationLoader() {
 }
 
-void DynamicApplicationLoader::RegisterContentHandler(
+void NativeApplicationLoader::RegisterContentHandler(
     const std::string& mime_type,
     const GURL& content_handler_url) {
   DCHECK(content_handler_url.is_valid())
@@ -469,8 +469,7 @@ void DynamicApplicationLoader::RegisterContentHandler(
   mime_type_to_url_[mime_type] = content_handler_url;
 }
 
-void DynamicApplicationLoader::Load(
-    ApplicationManager* manager,
+void NativeApplicationLoader::Load(
     const GURL& url,
     InterfaceRequest<Application> application_request,
     LoadCallback load_callback) {
@@ -492,13 +491,7 @@ void DynamicApplicationLoader::Load(
       loader_complete_callback_));
 }
 
-void DynamicApplicationLoader::OnApplicationError(ApplicationManager* manager,
-                                                  const GURL& url) {
-  // TODO(darin): What should we do about service errors? This implies that
-  // the app closed its handle to the service manager. Maybe we don't care?
-}
-
-void DynamicApplicationLoader::LoaderComplete(Loader* loader) {
+void NativeApplicationLoader::LoaderComplete(Loader* loader) {
   loaders_.erase(std::find(loaders_.begin(), loaders_.end(), loader));
 }
 

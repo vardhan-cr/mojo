@@ -79,10 +79,9 @@ class TestApplicationLoader : public mojo::ApplicationLoader,
 
  private:
   // Overridden from mojo::ApplicationLoader:
-  void Load(mojo::ApplicationManager* application_manager,
-            const GURL& url,
-            mojo::InterfaceRequest<mojo::Application> application_request,
-            LoadCallback callback) override {
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override {
     ASSERT_TRUE(application_request.is_pending());
     scoped_ptr<ApplicationImpl> app(
         new ApplicationImpl(this, application_request.Pass()));

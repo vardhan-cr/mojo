@@ -112,10 +112,8 @@ class TestApplicationLoader : public ApplicationLoader,
 
  private:
   // ApplicationLoader implementation.
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override {
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override {
     ++num_loads_;
     test_app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
@@ -334,10 +332,8 @@ class Tester : public ApplicationDelegate,
   ~Tester() override {}
 
  private:
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override {
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override {
     app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
 

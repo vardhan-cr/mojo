@@ -17,10 +17,8 @@ class DummyLoader : public ApplicationLoader {
   ~DummyLoader() override {}
 
   // ApplicationLoader overrides:
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override {
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override {
     if (simulate_app_quit_)
       base::MessageLoop::current()->Quit();
   }
@@ -50,8 +48,7 @@ TEST(BackgroundApplicationLoaderTest, Load) {
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
   ApplicationPtr application;
-  loader.Load(NULL, GURL(), GetProxy(&application),
-              ApplicationLoader::SimpleLoadCallback());
+  loader.Load(GURL(), GetProxy(&application));
 }
 
 }  // namespace mojo

@@ -18,10 +18,8 @@ NativeViewportApplicationLoader::~NativeViewportApplicationLoader() {
 }
 
 void NativeViewportApplicationLoader::Load(
-    ApplicationManager* manager,
     const GURL& url,
-    InterfaceRequest<Application> application_request,
-    LoadCallback callback) {
+    InterfaceRequest<Application> application_request) {
   DCHECK(application_request.is_pending());
   app_.reset(new ApplicationImpl(this, application_request.Pass()));
 }

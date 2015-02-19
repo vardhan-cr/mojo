@@ -79,6 +79,10 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   void set_default_loader(scoped_ptr<ApplicationLoader> loader) {
     default_loader_ = loader.Pass();
   }
+  void set_native_application_loader(
+      scoped_ptr<NativeApplicationLoader> loader) {
+    native_application_loader_ = loader.Pass();
+  }
   // Sets a Loader to be used for a specific url.
   void SetLoaderForURL(scoped_ptr<ApplicationLoader> loader, const GURL& url);
   // Sets a Loader to be used for a specific url scheme.
@@ -97,11 +101,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   void OnShellImplError(ShellImpl* shell_impl);
 
  private:
-  enum IncludeDefaultLoader {
-    INCLUDE_DEFAULT_LOADER,
-    DONT_INCLUDE_DEFAULT_LOADER,
-  };
-
   class ContentHandlerConnection;
 
   typedef std::map<std::string, ApplicationLoader*> SchemeToLoaderMap;
@@ -110,12 +109,25 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
 
-  void ConnectToApplicationImpl(const GURL& requested_url,
-                                const GURL& resolved_url,
-                                const GURL& requestor_url,
-                                InterfaceRequest<ServiceProvider> services,
-                                ServiceProviderPtr exposed_services,
-                                ApplicationLoader* loader);
+  bool ConnectToRunningApplication(const GURL& application_url,
+                                   const GURL& requestor_url,
+                                   InterfaceRequest<ServiceProvider>* services,
+                                   ServiceProviderPtr* exposed_services);
+
+  bool ConnectToApplicationWithLoader(
+      const GURL& requested_url,
+      const GURL& resolved_url,
+      const GURL& requestor_url,
+      InterfaceRequest<ServiceProvider>* services,
+      ServiceProviderPtr* exposed_services,
+      ApplicationLoader* loader);
+
+  InterfaceRequest<Application> RegisterShell(
+      const GURL& requested_url,
+      const GURL& resolved_url,
+      const GURL& requestor_url,
+      InterfaceRequest<ServiceProvider> services,
+      ServiceProviderPtr exposed_services);
 
   ShellImpl* GetShellImpl(const GURL& url);
 
@@ -130,9 +142,8 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
                               URLResponsePtr url_response);
 
   // Return the appropriate loader for |url|. This can return NULL if there is
-  // no default loader configured.
-  ApplicationLoader* GetLoaderForURL(const GURL& url,
-                                     IncludeDefaultLoader fallback);
+  // no loader configured for the URL.
+  ApplicationLoader* GetLoaderForURL(const GURL& url);
 
   // Removes a ContentHandler when it encounters an error.
   void OnContentHandlerError(ContentHandlerConnection* content_handler);
@@ -142,9 +153,11 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
 
   Delegate* delegate_;
   // Loader management.
+  // Loaders are chosen in the order they are listed here.
   URLToLoaderMap url_to_loader_;
   SchemeToLoaderMap scheme_to_loader_;
   scoped_ptr<ApplicationLoader> default_loader_;
+  scoped_ptr<NativeApplicationLoader> native_application_loader_;
 
   URLToShellImplMap url_to_shell_impl_;
   URLToContentHandlerMap url_to_content_handler_;

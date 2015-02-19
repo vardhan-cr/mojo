@@ -886,7 +886,7 @@ def _CheckSpamLogging(input_api, output_api):
                 input_api.DEFAULT_BLACK_LIST +
                 (r"^base[\\\/]logging\.h$",
                  r"^base[\\\/]logging\.cc$",
-                 r"^shell[\\\/]dynamic_application_loader\.cc$",
+                 r"^shell[\\\/]native_application_loader\.cc$",
                  r"^sandbox[\\\/]linux[\\\/].*",
                  r"^tools[\\\/]",
                  r"^ui[\\\/]aura[\\\/]bench[\\\/]bench_main\.cc$",))

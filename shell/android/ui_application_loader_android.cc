@@ -23,15 +23,13 @@ UIApplicationLoader::~UIApplicationLoader() {
 }
 
 void UIApplicationLoader::Load(
-    ApplicationManager* manager,
     const GURL& url,
-    InterfaceRequest<Application> application_request,
-    LoadCallback callback) {
+    InterfaceRequest<Application> application_request) {
   DCHECK(application_request.is_pending());
   ui_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(&UIApplicationLoader::LoadOnUIThread, base::Unretained(this),
-                 manager, url, base::Passed(&application_request)));
+                 url, base::Passed(&application_request)));
 }
 
 void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
@@ -42,10 +40,9 @@ void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
 }
 
 void UIApplicationLoader::LoadOnUIThread(
-    ApplicationManager* manager,
     const GURL& url,
     InterfaceRequest<Application> application_request) {
-  loader_->Load(manager, url, application_request.Pass(), SimpleLoadCallback());
+  loader_->Load(url, application_request.Pass());
 }
 
 void UIApplicationLoader::OnApplicationErrorOnUIThread(

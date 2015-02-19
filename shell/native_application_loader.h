@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_DYNAMIC_APPLICATION_LOADER_H_
-#define SHELL_DYNAMIC_APPLICATION_LOADER_H_
+#ifndef SHELL_NATIVE_APPLICATION_LOADER_H_
+#define SHELL_NATIVE_APPLICATION_LOADER_H_
 
 #include <map>
 
@@ -24,26 +24,24 @@ class Context;
 class DynamicServiceRunnerFactory;
 class DynamicServiceRunner;
 
-// An implementation of ApplicationLoader that retrieves a dynamic library
-// containing the implementation of the service and loads/runs it (via a
-// DynamicServiceRunner).
-class DynamicApplicationLoader : public ApplicationLoader {
+// Loads applications that might be either DSOs or content applications.
+// TODO(aa): Tear this apart into:
+// - fetching urls (probably two sublcasses for http/file)
+// - detecting type of response (dso, content, nacl (future))
+// - executing response (either via DynamicServiceRunner or a content handler)
+class NativeApplicationLoader : public mojo::NativeApplicationLoader {
  public:
-  DynamicApplicationLoader(
+  NativeApplicationLoader(
       Context* context,
       scoped_ptr<DynamicServiceRunnerFactory> runner_factory);
-  ~DynamicApplicationLoader() override;
+  ~NativeApplicationLoader() override;
 
   void RegisterContentHandler(const std::string& mime_type,
                               const GURL& content_handler_url);
 
-  // ApplicationLoader methods:
-  void Load(ApplicationManager* manager,
-            const GURL& url,
+  void Load(const GURL& url,
             InterfaceRequest<Application> application_request,
             LoadCallback callback) override;
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override;
 
  private:
   class Loader;
@@ -62,10 +60,10 @@ class DynamicApplicationLoader : public ApplicationLoader {
   ScopedVector<Loader> loaders_;
   LoaderCompleteCallback loader_complete_callback_;
 
-  DISALLOW_COPY_AND_ASSIGN(DynamicApplicationLoader);
+  DISALLOW_COPY_AND_ASSIGN(NativeApplicationLoader);
 };
 
 }  // namespace shell
 }  // namespace mojo
 
-#endif  // SHELL_DYNAMIC_APPLICATION_LOADER_H_
+#endif  // SHELL_NATIVE_APPLICATION_LOADER_H_

@@ -104,37 +104,48 @@ void ApplicationManager::ConnectToApplication(
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
   DCHECK(requested_url.is_valid());
-  GURL mapped_url = delegate_->ResolveMappings(requested_url);
 
   // We check both the mapped and resolved urls for existing shell_impls because
   // external applications can be registered for the unresolved mojo:foo urls.
-  ShellImpl* shell_impl = GetShellImpl(mapped_url);
-  if (shell_impl) {
-    ConnectToClient(shell_impl, mapped_url, requestor_url, services.Pass(),
-                    exposed_services.Pass());
+
+  GURL mapped_url = delegate_->ResolveMappings(requested_url);
+  if (ConnectToRunningApplication(mapped_url, requestor_url, &services,
+                                  &exposed_services)) {
     return;
   }
 
   GURL resolved_url = delegate_->ResolveURL(mapped_url);
-  shell_impl = GetShellImpl(resolved_url);
-  if (shell_impl) {
-    ConnectToClient(shell_impl, resolved_url, requestor_url, services.Pass(),
-                    exposed_services.Pass());
+  if (ConnectToRunningApplication(resolved_url, requestor_url, &services,
+                                  &exposed_services)) {
     return;
   }
 
-  ApplicationLoader* loader =
-      GetLoaderForURL(mapped_url, DONT_INCLUDE_DEFAULT_LOADER);
-  if (loader) {
-    ConnectToApplicationImpl(requested_url, mapped_url, requestor_url,
-                             services.Pass(), exposed_services.Pass(), loader);
+  if (ConnectToApplicationWithLoader(requested_url, mapped_url, requestor_url,
+                                     &services, &exposed_services,
+                                     GetLoaderForURL(mapped_url))) {
     return;
   }
 
-  loader = GetLoaderForURL(resolved_url, INCLUDE_DEFAULT_LOADER);
-  if (loader) {
-    ConnectToApplicationImpl(requested_url, resolved_url, requestor_url,
-                             services.Pass(), exposed_services.Pass(), loader);
+  if (ConnectToApplicationWithLoader(requested_url, resolved_url, requestor_url,
+                                     &services, &exposed_services,
+                                     GetLoaderForURL(resolved_url))) {
+    return;
+  }
+
+  if (ConnectToApplicationWithLoader(requested_url, resolved_url, requestor_url,
+                                     &services, &exposed_services,
+                                     default_loader_.get())) {
+    return;
+  }
+
+  // TODO(aa): This case should go away, see comments in
+  // NativeApplicationLoader.
+  if (native_application_loader_.get()) {
+    native_application_loader_->Load(
+        resolved_url, RegisterShell(requested_url, resolved_url, requestor_url,
+                                    services.Pass(), exposed_services.Pass()),
+        base::Bind(&ApplicationManager::LoadWithContentHandler,
+                   weak_ptr_factory_.GetWeakPtr()));
     return;
   }
 
@@ -142,25 +153,51 @@ void ApplicationManager::ConnectToApplication(
                << requested_url.spec();
 }
 
-void ApplicationManager::ConnectToApplicationImpl(
+bool ApplicationManager::ConnectToRunningApplication(
+    const GURL& application_url,
+    const GURL& requestor_url,
+    InterfaceRequest<ServiceProvider>* services,
+    ServiceProviderPtr* exposed_services) {
+  ShellImpl* shell_impl = GetShellImpl(application_url);
+  if (!shell_impl)
+    return false;
+
+  ConnectToClient(shell_impl, application_url, requestor_url, services->Pass(),
+                  exposed_services->Pass());
+  return true;
+}
+
+bool ApplicationManager::ConnectToApplicationWithLoader(
+    const GURL& requested_url,
+    const GURL& resolved_url,
+    const GURL& requestor_url,
+    InterfaceRequest<ServiceProvider>* services,
+    ServiceProviderPtr* exposed_services,
+    ApplicationLoader* loader) {
+  if (!loader)
+    return false;
+
+  loader->Load(resolved_url,
+               RegisterShell(requested_url, resolved_url, requestor_url,
+                             services->Pass(), exposed_services->Pass()));
+  return true;
+}
+
+InterfaceRequest<Application> ApplicationManager::RegisterShell(
     const GURL& requested_url,
     const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
-    ServiceProviderPtr exposed_services,
-    ApplicationLoader* loader) {
+    ServiceProviderPtr exposed_services) {
   ApplicationPtr application;
   InterfaceRequest<Application> application_request = GetProxy(&application);
   ShellImpl* shell =
       new ShellImpl(application.Pass(), this, requested_url, resolved_url);
   url_to_shell_impl_[resolved_url] = shell;
   shell->InitializeApplication(GetArgsForURL(requested_url));
-
-  loader->Load(this, resolved_url, application_request.Pass(),
-               base::Bind(&ApplicationManager::LoadWithContentHandler,
-                          weak_ptr_factory_.GetWeakPtr()));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
+  return application_request.Pass();
 }
 
 ShellImpl* ApplicationManager::GetShellImpl(const GURL& url) {
@@ -234,17 +271,13 @@ void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
   url_to_args_[url] = args;
 }
 
-ApplicationLoader* ApplicationManager::GetLoaderForURL(
-    const GURL& url,
-    IncludeDefaultLoader include_default_loader) {
+ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
   auto url_it = url_to_loader_.find(url);
   if (url_it != url_to_loader_.end())
     return url_it->second;
   auto scheme_it = scheme_to_loader_.find(url.scheme());
   if (scheme_it != scheme_to_loader_.end())
     return scheme_it->second;
-  if (include_default_loader == INCLUDE_DEFAULT_LOADER)
-    return default_loader_.get();
   return NULL;
 }
 
@@ -257,10 +290,6 @@ void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
   DCHECK(it != url_to_shell_impl_.end());
   delete it->second;
   url_to_shell_impl_.erase(it);
-  ApplicationLoader* loader =
-      GetLoaderForURL(requested_url, INCLUDE_DEFAULT_LOADER);
-  if (loader)
-    loader->OnApplicationError(this, url);
   delegate_->OnApplicationError(requested_url);
 }
 

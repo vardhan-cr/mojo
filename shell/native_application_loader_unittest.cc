@@ -4,9 +4,9 @@
 
 #include "base/files/scoped_temp_dir.h"
 #include "shell/context.h"
-#include "shell/dynamic_application_loader.h"
 #include "shell/dynamic_service_runner.h"
 #include "shell/filename_util.h"
+#include "shell/native_application_loader.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -60,32 +60,32 @@ class TestDynamicServiceRunnerFactory : public DynamicServiceRunnerFactory {
 
 }  // namespace
 
-class DynamicApplicationLoaderTest : public testing::Test {
+class NativeApplicationLoaderTest : public testing::Test {
  public:
-  DynamicApplicationLoaderTest() {}
-  ~DynamicApplicationLoaderTest() override {}
+  NativeApplicationLoaderTest() {}
+  ~NativeApplicationLoaderTest() override {}
   void SetUp() override {
     context_.Init();
     scoped_ptr<DynamicServiceRunnerFactory> factory(
         new TestDynamicServiceRunnerFactory(&state_));
-    loader_.reset(new DynamicApplicationLoader(&context_, factory.Pass()));
+    loader_.reset(new NativeApplicationLoader(&context_, factory.Pass()));
   }
 
  protected:
   Context context_;
   base::MessageLoop loop_;
-  scoped_ptr<DynamicApplicationLoader> loader_;
+  scoped_ptr<NativeApplicationLoader> loader_;
   TestState state_;
 };
 
-TEST_F(DynamicApplicationLoaderTest, DoesNotExist) {
+TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
   base::ScopedTempDir temp_dir;
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
   base::FilePath nonexistent_file(FILE_PATH_LITERAL("nonexistent.txt"));
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
   ApplicationPtr application;
-  loader_->Load(context_.application_manager(), url, GetProxy(&application),
-                ApplicationLoader::SimpleLoadCallback());
+  loader_->Load(url, GetProxy(&application),
+                NativeApplicationLoader::SimpleLoadCallback());
   EXPECT_FALSE(state_.runner_was_created);
   EXPECT_FALSE(state_.runner_was_started);
   EXPECT_FALSE(state_.runner_was_destroyed);

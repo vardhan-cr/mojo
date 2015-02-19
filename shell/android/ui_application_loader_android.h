@@ -27,10 +27,8 @@ class UIApplicationLoader : public ApplicationLoader {
   ~UIApplicationLoader() override;
 
   // ApplicationLoader overrides:
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override;
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override;
   void OnApplicationError(ApplicationManager* manager,
                           const GURL& url) override;
 
@@ -41,8 +39,7 @@ class UIApplicationLoader : public ApplicationLoader {
   // to |background_loader_| to do the actual loading.
   // TODO: having this code take a |manager| is fragile (as ApplicationManager
   // isn't thread safe).
-  void LoadOnUIThread(ApplicationManager* manager,
-                      const GURL& url,
+  void LoadOnUIThread(const GURL& url,
                       InterfaceRequest<Application> application_request);
   void OnApplicationErrorOnUIThread(ApplicationManager* manager,
                                     const GURL& url);

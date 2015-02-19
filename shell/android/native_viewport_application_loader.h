@@ -30,10 +30,8 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
 
  private:
   // ApplicationLoader implementation.
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override;
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override;
 
   void OnApplicationError(ApplicationManager* manager,
                           const GURL& url) override;

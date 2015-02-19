@@ -19,7 +19,7 @@ void NotReached(const GURL& url,
 
 }  // namespace
 
-ApplicationLoader::LoadCallback ApplicationLoader::SimpleLoadCallback() {
+LoadCallback NativeApplicationLoader::SimpleLoadCallback() {
   return base::Bind(&NotReached);
 }
 

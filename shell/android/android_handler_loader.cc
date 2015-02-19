@@ -14,10 +14,8 @@ AndroidHandlerLoader::~AndroidHandlerLoader() {
 }
 
 void AndroidHandlerLoader::Load(
-    ApplicationManager* manager,
     const GURL& url,
-    InterfaceRequest<Application> application_request,
-    LoadCallback callback) {
+    InterfaceRequest<Application> application_request) {
   DCHECK(application_request.is_pending());
   application_.reset(
       new ApplicationImpl(&android_handler_, application_request.Pass()));

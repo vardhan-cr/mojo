@@ -26,10 +26,8 @@ BackgroundApplicationLoader::~BackgroundApplicationLoader() {
 }
 
 void BackgroundApplicationLoader::Load(
-    ApplicationManager* manager,
     const GURL& url,
-    InterfaceRequest<Application> application_request,
-    LoadCallback callback) {
+    InterfaceRequest<Application> application_request) {
   DCHECK(application_request.is_pending());
   if (!thread_) {
     // TODO(tim): It'd be nice if we could just have each Load call
@@ -47,7 +45,7 @@ void BackgroundApplicationLoader::Load(
   task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&BackgroundApplicationLoader::LoadOnBackgroundThread,
-                 base::Unretained(this), manager, url,
+                 base::Unretained(this), url,
                  base::Passed(&application_request)));
 }
 
@@ -74,11 +72,10 @@ void BackgroundApplicationLoader::Run() {
 }
 
 void BackgroundApplicationLoader::LoadOnBackgroundThread(
-    ApplicationManager* manager,
     const GURL& url,
     InterfaceRequest<Application> application_request) {
   DCHECK(task_runner_->RunsTasksOnCurrentThread());
-  loader_->Load(manager, url, application_request.Pass(), SimpleLoadCallback());
+  loader_->Load(url, application_request.Pass());
 }
 
 void BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread(

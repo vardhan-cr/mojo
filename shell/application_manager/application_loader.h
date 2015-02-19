@@ -17,36 +17,14 @@ namespace mojo {
 class Application;
 class ApplicationManager;
 
-// Interface to allowing loading behavior to be established for schemes,
-// specific urls or as the default.
-// A ApplicationLoader is responsible to using whatever mechanism is appropriate
-// to load the application at url.
-// The handle to the shell is passed to that application so it can bind it to
-// a Shell instance. This will give the Application a way to connect to other
-// apps and services.
+// Interface to implement special application loading behavior for a particular
+// URL or scheme.
 class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
  public:
-  typedef base::Callback<void(const GURL& content_handler_url,
-                              InterfaceRequest<Application> application_request,
-                              URLResponsePtr url_request)> LoadCallback;
   virtual ~ApplicationLoader() {}
 
-  // Returns a callback that will should never be called.
-  static LoadCallback SimpleLoadCallback();
-
-  // Load the application named |url|. Applications can be loaded two ways:
-  //
-  // 1. |url| can refer directly to a Mojo application. In this case,
-  //    shell_handle should be used to implement the mojo.Application interface.
-  //
-  // 2. |url| can refer to some content that can be handled by some other Mojo
-  //    application. In this case, call callbacks and specify the URL of the
-  //    application that should handle the content.  The specified application
-  //    must implement the mojo.ContentHandler interface.
-  virtual void Load(ApplicationManager* application_manager,
-                    const GURL& url,
-                    InterfaceRequest<Application> application_request,
-                    LoadCallback callback) = 0;
+  virtual void Load(const GURL& url,
+                    InterfaceRequest<Application> application_request) = 0;
 
   // Called when the Application exits.
   virtual void OnApplicationError(ApplicationManager* manager,
@@ -54,6 +32,26 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
 
  protected:
   ApplicationLoader() {}
+};
+
+// TODO(aa): Remove this temporary interface. This is just here as a stepping
+// stone, until I can tear apart NativeApplicationLoader into smaller pieces.
+// See comments at top of shell/native_application_loader.h.
+
+typedef base::Callback<void(const GURL& content_handler_url,
+                            InterfaceRequest<Application> application_request,
+                            URLResponsePtr url_request)> LoadCallback;
+
+class NativeApplicationLoader {
+ public:
+  // Returns a callback that should never be called.
+  static LoadCallback SimpleLoadCallback();
+
+  virtual ~NativeApplicationLoader() {}
+
+  virtual void Load(const GURL& url,
+                    InterfaceRequest<Application> application_request,
+                    LoadCallback callback) {}
 };
 
 }  // namespace mojo

@@ -24,10 +24,8 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
   ~BackgroundApplicationLoader() override;
 
   // ApplicationLoader overrides:
-  void Load(ApplicationManager* manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override;
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override;
   void OnApplicationError(ApplicationManager* manager,
                           const GURL& url) override;
 
@@ -37,10 +35,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
 
   // These functions are exected on the background thread. They call through
   // to |background_loader_| to do the actual loading.
-  // TODO: having this code take a |manager| is fragile (as ApplicationManager
-  // isn't thread safe).
   void LoadOnBackgroundThread(
-      ApplicationManager* manager,
       const GURL& url,
       InterfaceRequest<Application> application_request);
   void OnApplicationErrorOnBackgroundThread(ApplicationManager* manager,

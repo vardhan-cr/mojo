@@ -29,10 +29,10 @@
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
 #include "shell/command_line_util.h"
-#include "shell/dynamic_application_loader.h"
 #include "shell/external_application_listener.h"
 #include "shell/filename_util.h"
 #include "shell/in_process_dynamic_service_runner.h"
+#include "shell/native_application_loader.h"
 #include "shell/out_of_process_dynamic_service_runner.h"
 #include "shell/switches.h"
 #include "url/gurl.h"
@@ -57,7 +57,7 @@ class Setup {
 
 static base::LazyInstance<Setup>::Leaky setup = LAZY_INSTANCE_INITIALIZER;
 
-void InitContentHandlers(DynamicApplicationLoader* loader,
+void InitContentHandlers(NativeApplicationLoader* loader,
                          base::CommandLine* command_line) {
   // Default content handlers.
   loader->RegisterContentHandler("application/pdf", GURL("mojo:pdf_viewer"));
@@ -257,11 +257,11 @@ bool Context::Init() {
   else
     runner_factory.reset(new InProcessDynamicServiceRunnerFactory());
 
-  DynamicApplicationLoader* dynamic_application_loader =
-      new DynamicApplicationLoader(this, runner_factory.Pass());
-  InitContentHandlers(dynamic_application_loader, command_line);
-  application_manager_.set_default_loader(
-      scoped_ptr<ApplicationLoader>(dynamic_application_loader));
+  scoped_ptr<NativeApplicationLoader> native_application_loader(
+      new NativeApplicationLoader(this, runner_factory.Pass()));
+  InitContentHandlers(native_application_loader.get(), command_line);
+  application_manager_.set_native_application_loader(
+      scoped_ptr<NativeApplicationLoader>(native_application_loader.Pass()));
 
   ServiceProviderPtr tracing_service_provider_ptr;
   new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));

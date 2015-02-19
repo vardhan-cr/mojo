@@ -35,10 +35,8 @@ class NotAnApplicationLoader : public ApplicationLoader {
   NotAnApplicationLoader() {}
   ~NotAnApplicationLoader() override {}
 
-  void Load(ApplicationManager* application_manager,
-            const GURL& url,
-            InterfaceRequest<Application> application_request,
-            LoadCallback callback) override {
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override {
     NOTREACHED();
   }
 
