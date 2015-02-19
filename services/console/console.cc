@@ -11,14 +11,15 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/public/cpp/bindings/interface_ptr.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/console/public/interfaces/console.mojom.h"
 
 namespace mojo {
 
-class ConsoleImpl : public InterfaceImpl<Console> {
+class ConsoleImpl : public Console {
  public:
-  explicit ConsoleImpl(const std::string& app_name) : app_name_(app_name) {}
+  ConsoleImpl(const std::string& app_name, InterfaceRequest<Console> request)
+      : app_name_(app_name), binding_(this, request.Pass()) {}
   ~ConsoleImpl() override {}
 
   void ReadLine(const Callback<void(bool, String)>& callback) override {
@@ -47,6 +48,7 @@ class ConsoleImpl : public InterfaceImpl<Console> {
 
  private:
   const std::string app_name_;
+  StrongBinding<Console> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ConsoleImpl);
 };
@@ -66,8 +68,7 @@ class ConsoleDelegate : public ApplicationDelegate,
   // InterfaceFactory<Console> implementation.
   void Create(ApplicationConnection* connection,
               InterfaceRequest<Console> request) override {
-    BindToRequest(new ConsoleImpl(connection->GetRemoteApplicationURL()),
-                  &request);
+    new ConsoleImpl(connection->GetRemoteApplicationURL(), request.Pass());
   }
 
  private:
