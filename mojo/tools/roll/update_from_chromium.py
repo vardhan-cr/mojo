@@ -78,12 +78,6 @@ dirs_to_snapshot = [
     "ui/gl",
     ]
 
-# These directories are temporarily cloned in order to support the network
-# bootstrap library until we get that sorted out.
-net_dirs = [
-    "crypto",
-    "net"]
-
 files_to_copy = ["sandbox/sandbox_export.h",
     ".clang-format"]
 
@@ -91,7 +85,7 @@ files_to_copy = ["sandbox/sandbox_export.h",
 # even though they live in directories rolled in from Chromium.
 files_not_to_roll = [ "build/module_args/mojo.gni" ]
 
-dirs = dirs_to_snapshot + net_dirs
+dirs = dirs_to_snapshot
 
 def chromium_rev_number(src_commit):
   base_url = "https://cr-rev.appspot.com/_ah/api/crrev/v1/commit/"
