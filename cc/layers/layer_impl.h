@@ -46,15 +46,8 @@ namespace trace_event {
 class ConvertableToTraceFormat;
 class TracedValue;
 }
-
-// TODO(ssid): remove these aliases after the tracing clients are moved to the
-// new trace_event namespace. See crbug.com/451032. ETA: March 2015
-namespace debug {
-using ::base::trace_event::ConvertableToTraceFormat;
-using ::base::trace_event::TracedValue;
-}
 class DictionaryValue;
-}  // namespace base
+}
 
 namespace cc {
 
@@ -205,6 +198,7 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   LayerTreeImpl* layer_tree_impl() const { return layer_tree_impl_; }
 
   void PopulateSharedQuadState(SharedQuadState* state) const;
+  void PopulateScaledSharedQuadState(SharedQuadState* state, float scale) const;
   // WillDraw must be called before AppendQuads. If WillDraw returns false,
   // AppendQuads and DidDraw will not be called. If WillDraw returns true,
   // DidDraw is guaranteed to be called before another WillDraw or before
@@ -214,7 +208,6 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   virtual bool WillDraw(DrawMode draw_mode,
                         ResourceProvider* resource_provider);
   virtual void AppendQuads(RenderPass* render_pass,
-                           const Occlusion& occlusion_in_content_space,
                            AppendQuadsData* append_quads_data) {}
   virtual void DidDraw(ResourceProvider* resource_provider);
 
@@ -226,11 +219,6 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   virtual RenderPassId FirstContributingRenderPassId() const;
   virtual RenderPassId NextContributingRenderPassId(RenderPassId id) const;
 
-  // Updates the layer's tiles. This should return true if meaningful work was
-  // done. That is, if an early-out was hit and as a result the internal state
-  // of tiles didn't change, this function should return false.
-  virtual bool UpdateTiles(const Occlusion& occlusion_in_layer_space,
-                           bool resourceless_software_draw);
   virtual void NotifyTileStateChanged(const Tile* tile) {}
 
   virtual ScrollbarLayerImplBase* ToScrollbarLayer();
@@ -574,7 +562,7 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   virtual void PushPropertiesTo(LayerImpl* layer);
 
   virtual void GetAllTilesForTracing(std::set<const Tile*>* tiles) const;
-  virtual void AsValueInto(base::debug::TracedValue* dict) const;
+  virtual void AsValueInto(base::trace_event::TracedValue* dict) const;
 
   virtual size_t GPUMemoryUsageInBytes() const;
 
@@ -593,7 +581,7 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   virtual void RunMicroBenchmark(MicroBenchmarkImpl* benchmark);
 
   virtual void SetDebugInfo(
-      scoped_refptr<base::debug::ConvertableToTraceFormat> other);
+      scoped_refptr<base::trace_event::ConvertableToTraceFormat> other);
 
   bool IsDrawnRenderSurfaceLayerListMember() const;
 
@@ -769,7 +757,7 @@ class CC_EXPORT LayerImpl : public LayerAnimationValueObserver,
   // hierarchy before layers can be drawn.
   DrawProperties<LayerImpl> draw_properties_;
 
-  scoped_refptr<base::debug::ConvertableToTraceFormat> debug_info_;
+  scoped_refptr<base::trace_event::ConvertableToTraceFormat> debug_info_;
   scoped_ptr<RenderSurfaceImpl> render_surface_;
 
   std::vector<FrameTimingRequest> frame_timing_requests_;

@@ -29,19 +29,22 @@ Shader::Shader(GLuint service_id, GLenum shader_type)
         shader_state_(kShaderStateWaiting),
         service_id_(service_id),
         shader_type_(shader_type),
+        source_type_(kANGLE),
         valid_(false) {
 }
 
 Shader::~Shader() {
 }
 
-void Shader::RequestCompile() {
+void Shader::RequestCompile(scoped_refptr<ShaderTranslatorInterface> translator,
+                            TranslatedShaderSourceType type) {
   shader_state_ = kShaderStateCompileRequested;
+  translator_ = translator;
+  source_type_ = type;
   last_compiled_source_ = source_;
 }
 
-void Shader::DoCompile(ShaderTranslatorInterface* translator,
-                       TranslatedShaderSourceType type) {
+void Shader::DoCompile() {
   // We require that RequestCompile() must be called before DoCompile(),
   // so we can return early if the shader state is not what we expect.
   if (shader_state_ != kShaderStateCompileRequested) {
@@ -51,19 +54,21 @@ void Shader::DoCompile(ShaderTranslatorInterface* translator,
   // Signify the shader has been compiled, whether or not it is valid
   // is dependent on the |valid_| member variable.
   shader_state_ = kShaderStateCompiled;
+  valid_ = false;
 
   // Translate GL ES 2.0 shader to Desktop GL shader and pass that to
   // glShaderSource and then glCompileShader.
   const char* source_for_driver = last_compiled_source_.c_str();
+  ShaderTranslatorInterface* translator = translator_.get();
   if (translator) {
-    valid_ = translator->Translate(last_compiled_source_,
-                                   &log_info_,
-                                   &translated_source_,
-                                   &attrib_map_,
-                                   &uniform_map_,
-                                   &varying_map_,
-                                   &name_map_);
-    if (!valid_) {
+    bool success = translator->Translate(last_compiled_source_,
+                                         &log_info_,
+                                         &translated_source_,
+                                         &attrib_map_,
+                                         &uniform_map_,
+                                         &varying_map_,
+                                         &name_map_);
+    if (!success) {
       return;
     }
     source_for_driver = translated_source_.c_str();
@@ -71,7 +76,7 @@ void Shader::DoCompile(ShaderTranslatorInterface* translator,
 
   glShaderSource(service_id_, 1, &source_for_driver, NULL);
   glCompileShader(service_id_);
-  if (type == kANGLE) {
+  if (source_type_ == kANGLE) {
     GLint max_len = 0;
     glGetShaderiv(service_id_,
                   GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE,
@@ -84,11 +89,14 @@ void Shader::DoCompile(ShaderTranslatorInterface* translator,
     DCHECK(max_len == 0 || len < max_len);
     DCHECK(len == 0 || translated_source_[len] == '\0');
     translated_source_.resize(len);
+    source_for_driver = translated_source_.c_str();
   }
 
   GLint status = GL_FALSE;
   glGetShaderiv(service_id_, GL_COMPILE_STATUS, &status);
-  if (status != GL_TRUE) {
+  if (status == GL_TRUE) {
+    valid_ = true;
+  } else {
     // We cannot reach here if we are using the shader translator.
     // All invalid shaders must be rejected by the translator.
     // All translated shaders must compile.

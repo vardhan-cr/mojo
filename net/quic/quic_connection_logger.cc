@@ -11,6 +11,7 @@
 #include "base/callback.h"
 #include "base/metrics/histogram.h"
 #include "base/metrics/sparse_histogram.h"
+#include "base/profiler/scoped_tracker.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/values.h"
 #include "net/base/net_log.h"
@@ -267,6 +268,11 @@ void UpdatePublicResetAddressMismatchHistogram(
 }
 
 const char* GetConnectionDescriptionString() {
+  // TODO(rtenneti): Remove ScopedTracker below once crbug.com/422516 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION(
+          "422516 QuicConnectionLogger GetConnectionDescriptionString"));
+
   NetworkChangeNotifier::ConnectionType type =
       NetworkChangeNotifier::GetConnectionType();
   const char* description = NetworkChangeNotifier::ConnectionTypeToString(type);
@@ -326,9 +332,11 @@ QuicConnectionLogger::QuicConnectionLogger(QuicSession* session,
       session_(session),
       last_received_packet_sequence_number_(0),
       last_received_packet_size_(0),
+      previous_received_packet_size_(0),
       largest_received_packet_sequence_number_(0),
       largest_received_missing_packet_sequence_number_(0),
       num_out_of_order_received_packets_(0),
+      num_out_of_order_large_received_packets_(0),
       num_packets_received_(0),
       num_truncated_acks_sent_(0),
       num_truncated_acks_received_(0),
@@ -345,6 +353,8 @@ QuicConnectionLogger::QuicConnectionLogger(QuicSession* session,
 QuicConnectionLogger::~QuicConnectionLogger() {
   UMA_HISTOGRAM_COUNTS("Net.QuicSession.OutOfOrderPacketsReceived",
                        num_out_of_order_received_packets_);
+  UMA_HISTOGRAM_COUNTS("Net.QuicSession.OutOfOrderLargePacketsReceived",
+                       num_out_of_order_large_received_packets_);
   UMA_HISTOGRAM_COUNTS("Net.QuicSession.TruncatedAcksSent",
                        num_truncated_acks_sent_);
   UMA_HISTOGRAM_COUNTS("Net.QuicSession.TruncatedAcksReceived",
@@ -496,6 +506,7 @@ void QuicConnectionLogger::OnPacketReceived(const IPEndPoint& self_address,
                               ADDRESS_FAMILY_LAST);
   }
 
+  previous_received_packet_size_ = last_received_packet_size_;
   last_received_packet_size_ = packet.length();
   net_log_.AddEvent(
       NetLog::TYPE_QUIC_SESSION_PACKET_RECEIVED,
@@ -546,6 +557,8 @@ void QuicConnectionLogger::OnPacketHeader(const QuicPacketHeader& header) {
   }
   if (header.packet_sequence_number < last_received_packet_sequence_number_) {
     ++num_out_of_order_received_packets_;
+    if (previous_received_packet_size_ < last_received_packet_size_)
+      ++num_out_of_order_large_received_packets_;
     UMA_HISTOGRAM_COUNTS(
         "Net.QuicSession.OutOfOrderGapReceived",
         static_cast<base::HistogramBase::Sample>(

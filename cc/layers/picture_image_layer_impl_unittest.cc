@@ -80,7 +80,7 @@ class PictureImageLayerImplTest : public testing::Test {
         animating_transform_to_screen;
     layer->draw_properties().visible_content_rect = viewport_rect;
     bool resourceless_software_draw = false;
-    layer->UpdateTiles(Occlusion(), resourceless_software_draw);
+    layer->UpdateTiles(resourceless_software_draw);
   }
 
  protected:
@@ -149,7 +149,7 @@ TEST_F(PictureImageLayerImplTest, IgnoreIdealContentScale) {
   scoped_ptr<RenderPass> render_pass = RenderPass::Create();
   AppendQuadsData data;
   active_layer->WillDraw(DRAW_MODE_SOFTWARE, nullptr);
-  active_layer->AppendQuads(render_pass.get(), Occlusion(), &data);
+  active_layer->AppendQuads(render_pass.get(), &data);
   active_layer->DidDraw(nullptr);
 
   EXPECT_EQ(DrawQuad::TILED_CONTENT, render_pass->quad_list.front()->material);

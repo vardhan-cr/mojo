@@ -176,20 +176,18 @@ class QuicSentPacketManagerTest : public ::testing::TestWithParam<bool> {
 
   SerializedPacket CreatePacket(QuicPacketSequenceNumber sequence_number,
                                 bool retransmittable) {
-    packets_.push_back(QuicPacket::NewDataPacket(
-        nullptr, kDefaultLength, false, PACKET_8BYTE_CONNECTION_ID, false,
-        PACKET_6BYTE_SEQUENCE_NUMBER));
+    packets_.push_back(new QuicEncryptedPacket(nullptr, kDefaultLength));
     return SerializedPacket(
         sequence_number, PACKET_6BYTE_SEQUENCE_NUMBER, packets_.back(), 0u,
         retransmittable ? new RetransmittableFrames() : nullptr);
   }
 
   SerializedPacket CreateFecPacket(QuicPacketSequenceNumber sequence_number) {
-    packets_.push_back(QuicPacket::NewFecPacket(
-        nullptr, kDefaultLength, false, PACKET_8BYTE_CONNECTION_ID, false,
-        PACKET_6BYTE_SEQUENCE_NUMBER));
-    return SerializedPacket(sequence_number, PACKET_6BYTE_SEQUENCE_NUMBER,
-                            packets_.back(), 0u, nullptr);
+    packets_.push_back(new QuicEncryptedPacket(nullptr, kDefaultLength));
+    SerializedPacket serialized(sequence_number, PACKET_6BYTE_SEQUENCE_NUMBER,
+                                packets_.back(), 0u, nullptr);
+    serialized.is_fec_packet = true;
+    return serialized;
   }
 
   void SendDataPacket(QuicPacketSequenceNumber sequence_number) {
@@ -256,7 +254,7 @@ class QuicSentPacketManagerTest : public ::testing::TestWithParam<bool> {
   }
 
   QuicSentPacketManager manager_;
-  vector<QuicPacket*> packets_;
+  vector<QuicEncryptedPacket*> packets_;
   MockClock clock_;
   QuicConnectionStats stats_;
   MockSendAlgorithm* send_algorithm_;
@@ -1156,6 +1154,8 @@ TEST_F(QuicSentPacketManagerTest, NewRetransmissionTimeout) {
   EXPECT_CALL(*network_change_visitor_, OnCongestionWindowChange());
   EXPECT_CALL(*network_change_visitor_, OnRttChange());
   EXPECT_CALL(*send_algorithm_, SetFromConfig(_, _, _));
+  EXPECT_CALL(*send_algorithm_, PacingRate())
+      .WillRepeatedly(Return(QuicBandwidth::Zero()));
   manager_.SetFromConfig(client_config);
   EXPECT_TRUE(QuicSentPacketManagerPeer::GetUseNewRto(&manager_));
 
@@ -1723,6 +1723,8 @@ TEST_F(QuicSentPacketManagerTest, NegotiateReceiveWindowFromOptions) {
   QuicConfig client_config;
   QuicConfigPeer::SetReceivedSocketReceiveBuffer(&client_config, 1024);
   EXPECT_CALL(*send_algorithm_, SetFromConfig(_, _, _));
+  EXPECT_CALL(*send_algorithm_, PacingRate())
+      .WillRepeatedly(Return(QuicBandwidth::Zero()));
   EXPECT_CALL(*network_change_visitor_, OnCongestionWindowChange());
   EXPECT_CALL(*network_change_visitor_, OnRttChange());
   manager_.SetFromConfig(client_config);

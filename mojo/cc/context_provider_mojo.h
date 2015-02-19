@@ -6,6 +6,7 @@
 #define MOJO_CC_CONTEXT_PROVIDER_MOJO_H_
 
 #include "base/macros.h"
+#include "base/synchronization/lock.h"
 #include "cc/output/context_provider.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/system/core.h"
@@ -31,6 +32,8 @@ class ContextProviderMojo : public cc::ContextProvider {
   void SetMemoryPolicyChangedCallback(
       const MemoryPolicyChangedCallback& memory_policy_changed_callback)
       override {}
+  void SetupLock() override;
+  base::Lock* GetLock() override;
 
  protected:
   friend class base::RefCountedThreadSafe<ContextProviderMojo>;
@@ -46,6 +49,8 @@ class ContextProviderMojo : public cc::ContextProvider {
   ScopedMessagePipeHandle command_buffer_handle_;
   MojoGLES2Context context_;
   bool context_lost_;
+
+  base::Lock context_lock_;
 
   DISALLOW_COPY_AND_ASSIGN(ContextProviderMojo);
 };

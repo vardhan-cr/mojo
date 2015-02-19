@@ -9,7 +9,6 @@
 #include "base/stl_util.h"
 #include "net/base/net_errors.h"
 #include "net/quic/congestion_control/loss_detection_interface.h"
-#include "net/quic/congestion_control/receive_algorithm_interface.h"
 #include "net/quic/congestion_control/send_algorithm_interface.h"
 #include "net/quic/crypto/null_encrypter.h"
 #include "net/quic/crypto/quic_decrypter.h"
@@ -64,17 +63,6 @@ const QuicPacketEntropyHash kTestEntropyHash = 76;
 
 const int kDefaultRetransmissionTimeMs = 500;
 
-class TestReceiveAlgorithm : public ReceiveAlgorithmInterface {
- public:
-  TestReceiveAlgorithm() {}
-
-  MOCK_METHOD3(RecordIncomingPacket,
-               void(QuicByteCount, QuicPacketSequenceNumber, QuicTime));
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(TestReceiveAlgorithm);
-};
-
 // TaggingEncrypter appends kTagSize bytes of |tag| to the end of each message.
 class TaggingEncrypter : public QuicEncrypter {
  public:
@@ -99,13 +87,20 @@ class TaggingEncrypter : public QuicEncrypter {
     return true;
   }
 
-  QuicData* EncryptPacket(QuicPacketSequenceNumber sequence_number,
-                          StringPiece associated_data,
-                          StringPiece plaintext) override {
+  bool EncryptPacket(QuicPacketSequenceNumber sequence_number,
+                     StringPiece associated_data,
+                     StringPiece plaintext,
+                     char* output,
+                     size_t* output_length,
+                     size_t max_output_length) override {
     const size_t len = plaintext.size() + kTagSize;
-    uint8* buffer = new uint8[len];
-    Encrypt(StringPiece(), associated_data, plaintext, buffer);
-    return new QuicData(reinterpret_cast<char*>(buffer), len, true);
+    if (max_output_length < len) {
+      return false;
+    }
+    Encrypt(StringPiece(), associated_data, plaintext,
+            reinterpret_cast<unsigned char*>(output));
+    *output_length = len;
+    return true;
   }
 
   size_t GetKeySize() const override { return 0; }
@@ -144,20 +139,21 @@ class TaggingDecrypter : public QuicDecrypter {
 
   bool SetNoncePrefix(StringPiece nonce_prefix) override { return true; }
 
-  QuicData* DecryptPacket(QuicPacketSequenceNumber sequence_number,
-                          StringPiece associated_data,
-                          StringPiece ciphertext) override {
+  bool DecryptPacket(QuicPacketSequenceNumber sequence_number,
+                     const StringPiece& associated_data,
+                     const StringPiece& ciphertext,
+                     char* output,
+                     size_t* output_length,
+                     size_t max_output_length) override {
     if (ciphertext.size() < kTagSize) {
-      return nullptr;
+      return false;
     }
     if (!CheckTag(ciphertext, GetTag(ciphertext))) {
-      return nullptr;
+      return false;
     }
-    const size_t len = ciphertext.size() - kTagSize;
-    uint8* buf = new uint8[len];
-    memcpy(buf, ciphertext.data(), len);
-    return new QuicData(reinterpret_cast<char*>(buf), len,
-                        true /* owns buffer */);
+    *output_length = ciphertext.size() - kTagSize;
+    memcpy(output, ciphertext.data(), *output_length);
+    return true;
   }
 
   StringPiece GetKey() const override { return StringPiece(); }
@@ -408,10 +404,6 @@ class TestConnection : public QuicConnection {
     QuicConnectionPeer::SendAck(this);
   }
 
-  void SetReceiveAlgorithm(TestReceiveAlgorithm* receive_algorithm) {
-     QuicConnectionPeer::SetReceiveAlgorithm(this, receive_algorithm);
-  }
-
   void SetSendAlgorithm(SendAlgorithmInterface* send_algorithm) {
     QuicConnectionPeer::SetSendAlgorithm(this, send_algorithm);
   }
@@ -430,9 +422,13 @@ class TestConnection : public QuicConnection {
         retransmittable == HAS_RETRANSMITTABLE_DATA
             ? new RetransmittableFrames()
             : nullptr;
-    OnSerializedPacket(
-        SerializedPacket(sequence_number, PACKET_6BYTE_SEQUENCE_NUMBER,
-                         packet, entropy_hash, retransmittable_frames));
+    QuicEncryptedPacket* encrypted =
+        QuicConnectionPeer::GetFramer(this)
+            ->EncryptPacket(ENCRYPTION_NONE, sequence_number, *packet);
+    delete packet;
+    OnSerializedPacket(SerializedPacket(sequence_number,
+                                        PACKET_6BYTE_SEQUENCE_NUMBER, encrypted,
+                                        entropy_hash, retransmittable_frames));
   }
 
   QuicConsumedData SendStreamDataWithString(
@@ -603,7 +599,6 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
         peer_creator_(connection_id_, &framer_, &random_generator_),
         send_algorithm_(new StrictMock<MockSendAlgorithm>),
         loss_algorithm_(new MockLossAlgorithm()),
-        receive_algorithm_(new TestReceiveAlgorithm),
         helper_(new TestConnectionHelper(&clock_, &random_generator_)),
         writer_(new TestPacketWriter(version(), &clock_)),
         factory_(writer_.get()),
@@ -624,12 +619,9 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
     connection_.SetSendAlgorithm(send_algorithm_);
     connection_.SetLossAlgorithm(loss_algorithm_);
     framer_.set_received_entropy_calculator(&entropy_calculator_);
-    connection_.SetReceiveAlgorithm(receive_algorithm_);
     EXPECT_CALL(
         *send_algorithm_, TimeUntilSend(_, _, _)).WillRepeatedly(Return(
             QuicTime::Delta::Zero()));
-    EXPECT_CALL(*receive_algorithm_,
-                RecordIncomingPacket(_, _, _)).Times(AnyNumber());
     EXPECT_CALL(*send_algorithm_, OnPacketSent(_, _, _, _, _))
         .Times(AnyNumber());
     EXPECT_CALL(*send_algorithm_, RetransmissionDelay()).WillRepeatedly(
@@ -662,14 +654,13 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
   }
 
   QuicAckFrame* outgoing_ack() {
-    outgoing_ack_.reset(QuicConnectionPeer::CreateAckFrame(&connection_));
-    return outgoing_ack_.get();
+    QuicConnectionPeer::PopulateAckFrame(&connection_, &ack_);
+    return &ack_;
   }
 
   QuicStopWaitingFrame* stop_waiting() {
-    stop_waiting_.reset(
-        QuicConnectionPeer::CreateStopWaitingFrame(&connection_));
-    return stop_waiting_.get();
+    QuicConnectionPeer::PopulateStopWaitingFrame(&connection_, &stop_waiting_);
+    return &stop_waiting_;
   }
 
   QuicPacketSequenceNumber least_unacked() {
@@ -695,10 +686,7 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
                                                   connection_.is_server());
     SerializedPacket serialized_packet =
         peer_creator_.SerializeAllFrames(frames);
-    scoped_ptr<QuicPacket> packet(serialized_packet.packet);
-    scoped_ptr<QuicEncryptedPacket> encrypted(
-        framer_.EncryptPacket(ENCRYPTION_NONE,
-                              serialized_packet.sequence_number, *packet));
+    scoped_ptr<QuicEncryptedPacket> encrypted(serialized_packet.packet);
     connection_.ProcessUdpPacket(IPEndPoint(), IPEndPoint(), *encrypted);
     return serialized_packet.entropy_hash;
   }
@@ -796,7 +784,7 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
     fec_data.redundancy = data_packet->FecProtectedData();
 
     scoped_ptr<QuicPacket> fec_packet(
-        framer_.BuildFecPacket(header_, fec_data).packet);
+        framer_.BuildFecPacket(header_, fec_data));
     scoped_ptr<QuicEncryptedPacket> encrypted(
         framer_.EncryptPacket(ENCRYPTION_NONE, number, *fec_packet));
 
@@ -861,8 +849,7 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
     QuicFrames frames;
     QuicFrame frame(&frame1_);
     frames.push_back(frame);
-    QuicPacket* packet =
-        BuildUnsizedDataPacket(&framer_, header_, frames).packet;
+    QuicPacket* packet = BuildUnsizedDataPacket(&framer_, header_, frames);
     EXPECT_TRUE(packet != nullptr);
     return packet;
   }
@@ -882,8 +869,7 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
     QuicFrames frames;
     QuicFrame frame(&ping);
     frames.push_back(frame);
-    QuicPacket* packet =
-        BuildUnsizedDataPacket(&framer_, header_, frames).packet;
+    QuicPacket* packet = BuildUnsizedDataPacket(&framer_, header_, frames);
     EXPECT_TRUE(packet != nullptr);
     return packet;
   }
@@ -905,8 +891,7 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
     QuicFrames frames;
     QuicFrame frame(&qccf);
     frames.push_back(frame);
-    QuicPacket* packet =
-        BuildUnsizedDataPacket(&framer_, header_, frames).packet;
+    QuicPacket* packet = BuildUnsizedDataPacket(&framer_, header_, frames);
     EXPECT_TRUE(packet != nullptr);
     return packet;
   }
@@ -991,7 +976,6 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
 
   MockSendAlgorithm* send_algorithm_;
   MockLossAlgorithm* loss_algorithm_;
-  TestReceiveAlgorithm* receive_algorithm_;
   MockClock clock_;
   MockRandom random_generator_;
   scoped_ptr<TestConnectionHelper> helper_;
@@ -1006,8 +990,8 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
   QuicPacketHeader header_;
   QuicStreamFrame frame1_;
   QuicStreamFrame frame2_;
-  scoped_ptr<QuicAckFrame> outgoing_ack_;
-  scoped_ptr<QuicStopWaitingFrame> stop_waiting_;
+  QuicAckFrame ack_;
+  QuicStopWaitingFrame stop_waiting_;
   QuicSequenceNumberLength sequence_number_length_;
   QuicConnectionIdLength connection_id_length_;
 
@@ -1019,6 +1003,64 @@ class QuicConnectionTest : public ::testing::TestWithParam<QuicVersion> {
 INSTANTIATE_TEST_CASE_P(SupportedVersion,
                         QuicConnectionTest,
                         ::testing::ValuesIn(QuicSupportedVersions()));
+
+TEST_P(QuicConnectionTest, MaxPacketSize) {
+  EXPECT_FALSE(connection_.is_server());
+  EXPECT_EQ(1350u, connection_.max_packet_length());
+}
+
+TEST_P(QuicConnectionTest, SmallerServerMaxPacketSize) {
+  ValueRestore<bool> old_flag(&FLAGS_quic_small_default_packet_size, true);
+  QuicConnectionId connection_id = 42;
+  bool kIsServer = true;
+  TestConnection connection(connection_id, IPEndPoint(), helper_.get(),
+                            factory_, kIsServer, version());
+  EXPECT_TRUE(connection.is_server());
+  EXPECT_EQ(1000u, connection.max_packet_length());
+}
+
+TEST_P(QuicConnectionTest, ServerMaxPacketSize) {
+  ValueRestore<bool> old_flag(&FLAGS_quic_small_default_packet_size, false);
+  QuicConnectionId connection_id = 42;
+  bool kIsServer = true;
+  TestConnection connection(connection_id, IPEndPoint(), helper_.get(),
+                            factory_, kIsServer, version());
+  EXPECT_TRUE(connection.is_server());
+  EXPECT_EQ(1350u, connection.max_packet_length());
+}
+
+TEST_P(QuicConnectionTest, IncreaseServerMaxPacketSize) {
+  EXPECT_CALL(visitor_, OnSuccessfulVersionNegotiation(_));
+
+  connection_.set_is_server(true);
+  connection_.set_max_packet_length(1000);
+
+  QuicPacketHeader header;
+  header.public_header.connection_id = connection_id_;
+  header.public_header.reset_flag = false;
+  header.public_header.version_flag = true;
+  header.entropy_flag = false;
+  header.fec_flag = false;
+  header.packet_sequence_number = 1;
+  header.fec_group = 0;
+
+  QuicFrames frames;
+  QuicPaddingFrame padding;
+  frames.push_back(QuicFrame(&frame1_));
+  frames.push_back(QuicFrame(&padding));
+
+  scoped_ptr<QuicPacket> packet(
+      BuildUnsizedDataPacket(&framer_, header, frames));
+  scoped_ptr<QuicEncryptedPacket> encrypted(
+      framer_.EncryptPacket(ENCRYPTION_NONE, 12, *packet));
+  EXPECT_EQ(kMaxPacketSize, encrypted->length());
+
+  framer_.set_version(version());
+  EXPECT_CALL(visitor_, OnStreamFrames(_)).Times(1);
+  connection_.ProcessUdpPacket(IPEndPoint(), IPEndPoint(), *encrypted);
+
+  EXPECT_EQ(kMaxPacketSize, connection_.max_packet_length());
+}
 
 TEST_P(QuicConnectionTest, PacketsInOrder) {
   EXPECT_CALL(visitor_, OnSuccessfulVersionNegotiation(_));
@@ -3157,7 +3199,6 @@ TEST_P(QuicConnectionTest, TimeoutAfterSend) {
 TEST_P(QuicConnectionTest, TimeoutAfterSendSilentClose) {
   // Same test as above, but complete a handshake which enables silent close,
   // causing no connection close packet to be sent.
-  ValueRestore<bool> old_flag(&FLAGS_quic_allow_silent_close, true);
   EXPECT_TRUE(connection_.connected());
   EXPECT_CALL(*send_algorithm_, SetFromConfig(_, _, _));
   QuicConfig config;
@@ -3701,7 +3742,7 @@ TEST_P(QuicConnectionTest, ServerSendsVersionNegotiationPacket) {
   QuicFrame frame(&frame1_);
   frames.push_back(frame);
   scoped_ptr<QuicPacket> packet(
-      BuildUnsizedDataPacket(&framer_, header, frames).packet);
+      BuildUnsizedDataPacket(&framer_, header, frames));
   scoped_ptr<QuicEncryptedPacket> encrypted(
       framer_.EncryptPacket(ENCRYPTION_NONE, 12, *packet));
 
@@ -3739,7 +3780,7 @@ TEST_P(QuicConnectionTest, ServerSendsVersionNegotiationPacketSocketBlocked) {
   QuicFrame frame(&frame1_);
   frames.push_back(frame);
   scoped_ptr<QuicPacket> packet(
-      BuildUnsizedDataPacket(&framer_, header, frames).packet);
+      BuildUnsizedDataPacket(&framer_, header, frames));
   scoped_ptr<QuicEncryptedPacket> encrypted(
       framer_.EncryptPacket(ENCRYPTION_NONE, 12, *packet));
 
@@ -3784,7 +3825,7 @@ TEST_P(QuicConnectionTest,
   QuicFrame frame(&frame1_);
   frames.push_back(frame);
   scoped_ptr<QuicPacket> packet(
-      BuildUnsizedDataPacket(&framer_, header, frames).packet);
+      BuildUnsizedDataPacket(&framer_, header, frames));
   scoped_ptr<QuicEncryptedPacket> encrypted(
       framer_.EncryptPacket(ENCRYPTION_NONE, 12, *packet));
 
@@ -3829,7 +3870,7 @@ TEST_P(QuicConnectionTest, ClientHandlesVersionNegotiation) {
   QuicFrame frame(&frame1_);
   frames.push_back(frame);
   scoped_ptr<QuicPacket> packet(
-      BuildUnsizedDataPacket(&framer_, header, frames).packet);
+      BuildUnsizedDataPacket(&framer_, header, frames));
   encrypted.reset(framer_.EncryptPacket(ENCRYPTION_NONE, 12, *packet));
   EXPECT_CALL(visitor_, OnStreamFrames(_)).Times(1);
   EXPECT_CALL(visitor_, OnSuccessfulVersionNegotiation(_));
@@ -3974,7 +4015,7 @@ TEST_P(QuicConnectionTest, ProcessFramesIfPacketClosedConnection) {
   frames.push_back(stream_frame);
   frames.push_back(close_frame);
   scoped_ptr<QuicPacket> packet(
-      BuildUnsizedDataPacket(&framer_, header_, frames).packet);
+      BuildUnsizedDataPacket(&framer_, header_, frames));
   EXPECT_TRUE(nullptr != packet.get());
   scoped_ptr<QuicEncryptedPacket> encrypted(framer_.EncryptPacket(
       ENCRYPTION_NONE, 1, *packet));
@@ -4268,8 +4309,7 @@ TEST_P(QuicConnectionTest, AckNotifierCallbackAfterFECRecovery) {
   ack_header.is_in_fec_group = IN_FEC_GROUP;
   ack_header.fec_group = 1;
 
-  QuicPacket* packet =
-      BuildUnsizedDataPacket(&framer_, ack_header, frames).packet;
+  QuicPacket* packet = BuildUnsizedDataPacket(&framer_, ack_header, frames);
 
   // Take the packet which contains the ACK frame, and construct and deliver an
   // FEC packet which allows the ACK packet to be recovered.

@@ -153,7 +153,6 @@ void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
 }
 
 void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
-                                   const Occlusion& occlusion_in_content_space,
                                    AppendQuadsData* append_quads_data) {
   // The bounds and the pile size may differ if the pile wasn't updated (ie.
   // PictureLayer::Update didn't happen). In that case the pile will be empty.
@@ -172,50 +171,35 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
         render_pass, bounds(), shared_quad_state, append_quads_data);
 
     SolidColorLayerImpl::AppendSolidQuads(
-        render_pass, occlusion_in_content_space, shared_quad_state,
-        visible_content_rect(), raster_source_->GetSolidColor(),
-        append_quads_data);
+        render_pass, draw_properties().occlusion_in_content_space,
+        shared_quad_state, visible_content_rect(),
+        raster_source_->GetSolidColor(), append_quads_data);
     return;
   }
 
   float max_contents_scale = MaximumTilingContentsScale();
-  gfx::Transform scaled_draw_transform = draw_transform();
-  scaled_draw_transform.Scale(SK_MScalar1 / max_contents_scale,
-                              SK_MScalar1 / max_contents_scale);
-  gfx::Size scaled_content_bounds =
-      gfx::ToCeiledSize(gfx::ScaleSize(bounds(), max_contents_scale));
-  gfx::Rect scaled_visible_content_rect =
-      gfx::ScaleToEnclosingRect(visible_content_rect(), max_contents_scale);
-  scaled_visible_content_rect.Intersect(gfx::Rect(scaled_content_bounds));
+  PopulateScaledSharedQuadState(shared_quad_state, max_contents_scale);
   Occlusion scaled_occlusion =
-      occlusion_in_content_space.GetOcclusionWithGivenDrawTransform(
-          scaled_draw_transform);
-
-  shared_quad_state->SetAll(
-      scaled_draw_transform, scaled_content_bounds, scaled_visible_content_rect,
-      draw_properties().clip_rect, draw_properties().is_clipped,
-      draw_properties().opacity, draw_properties().blend_mode,
-      sorting_context_id_);
+      draw_properties()
+          .occlusion_in_content_space.GetOcclusionWithGivenDrawTransform(
+              shared_quad_state->content_to_target_transform);
 
   if (current_draw_mode_ == DRAW_MODE_RESOURCELESS_SOFTWARE) {
     AppendDebugBorderQuad(
-        render_pass,
-        scaled_content_bounds,
-        shared_quad_state,
-        append_quads_data,
-        DebugColors::DirectPictureBorderColor(),
+        render_pass, shared_quad_state->content_bounds, shared_quad_state,
+        append_quads_data, DebugColors::DirectPictureBorderColor(),
         DebugColors::DirectPictureBorderWidth(layer_tree_impl()));
 
-    gfx::Rect geometry_rect = scaled_visible_content_rect;
+    gfx::Rect geometry_rect = shared_quad_state->visible_content_rect;
     gfx::Rect opaque_rect = contents_opaque() ? geometry_rect : gfx::Rect();
     gfx::Rect visible_geometry_rect =
         scaled_occlusion.GetUnoccludedContentRect(geometry_rect);
     if (visible_geometry_rect.IsEmpty())
       return;
 
-    gfx::Size texture_size = scaled_visible_content_rect.size();
+    gfx::Rect quad_content_rect = shared_quad_state->visible_content_rect;
+    gfx::Size texture_size = quad_content_rect.size();
     gfx::RectF texture_rect = gfx::RectF(texture_size);
-    gfx::Rect quad_content_rect = scaled_visible_content_rect;
 
     PictureDrawQuad* quad =
         render_pass->CreateAndAppendDrawQuad<PictureDrawQuad>();
@@ -226,17 +210,14 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
     return;
   }
 
-  AppendDebugBorderQuad(
-      render_pass, scaled_content_bounds, shared_quad_state, append_quads_data);
+  AppendDebugBorderQuad(render_pass, shared_quad_state->content_bounds,
+                        shared_quad_state, append_quads_data);
 
   if (ShowDebugBorders()) {
     for (PictureLayerTilingSet::CoverageIterator iter(
-             tilings_.get(),
-             max_contents_scale,
-             scaled_visible_content_rect,
-             ideal_contents_scale_);
-         iter;
-         ++iter) {
+             tilings_.get(), max_contents_scale,
+             shared_quad_state->visible_content_rect, ideal_contents_scale_);
+         iter; ++iter) {
       SkColor color;
       float width;
       if (*iter && iter->IsReadyToDraw()) {
@@ -290,12 +271,10 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
   size_t missing_tile_count = 0u;
   size_t on_demand_missing_tile_count = 0u;
   only_used_low_res_last_append_quads_ = true;
-  for (PictureLayerTilingSet::CoverageIterator iter(tilings_.get(),
-                                                    max_contents_scale,
-                                                    scaled_visible_content_rect,
-                                                    ideal_contents_scale_);
-       iter;
-       ++iter) {
+  for (PictureLayerTilingSet::CoverageIterator iter(
+           tilings_.get(), max_contents_scale,
+           shared_quad_state->visible_content_rect, ideal_contents_scale_);
+       iter; ++iter) {
     gfx::Rect geometry_rect = iter.geometry_rect();
     gfx::Rect opaque_rect = contents_opaque() ? geometry_rect : gfx::Rect();
     gfx::Rect visible_geometry_rect =
@@ -429,8 +408,7 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
   CleanUpTilingsOnActiveLayer(last_append_quads_tilings_);
 }
 
-bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
-                                   bool resourceless_software_draw) {
+bool PictureLayerImpl::UpdateTiles(bool resourceless_software_draw) {
   DCHECK_EQ(1.f, contents_scale_x());
   DCHECK_EQ(1.f, contents_scale_y());
 
@@ -452,7 +430,7 @@ bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
   // only have one or two tilings (high and low res), so only clean up the
   // active layer. This cleans it up here in case AppendQuads didn't run.
   // If it did run, this would not remove any additional tilings.
-  if (GetTree() == ACTIVE_TREE)
+  if (layer_tree_impl()->IsActiveTree())
     CleanUpTilingsOnActiveLayer(last_append_quads_tilings_);
 
   UpdateIdealScales();
@@ -473,12 +451,6 @@ bool PictureLayerImpl::UpdateTiles(const Occlusion& occlusion_in_content_space,
 
   if (draw_transform_is_animating())
     raster_source_->SetShouldAttemptToUseDistanceFieldText();
-  return UpdateTilePriorities(occlusion_in_content_space);
-}
-
-bool PictureLayerImpl::UpdateTilePriorities(
-    const Occlusion& occlusion_in_content_space) {
-  DCHECK_IMPLIES(raster_source_->IsSolidColor(), tilings_->num_tilings() == 0);
 
   double current_frame_time_in_seconds =
       (layer_tree_impl()->CurrentBeginFrameArgs().frame_time -
@@ -500,6 +472,12 @@ bool PictureLayerImpl::UpdateTilePriorities(
   bool can_require_tiles_for_activation =
       !only_used_low_res_last_append_quads_ || RequiresHighResToDraw() ||
       !layer_tree_impl()->SmoothnessTakesPriority();
+
+  static const Occlusion kEmptyOcclusion;
+  const Occlusion& occlusion_in_content_space =
+      layer_tree_impl()->settings().use_occlusion_for_tile_prioritization
+          ? draw_properties().occlusion_in_content_space
+          : kEmptyOcclusion;
 
   // Pass |occlusion_in_content_space| for |occlusion_in_layer_space| since
   // they are the same space in picture layer, as contents scale is always 1.
@@ -1139,7 +1117,7 @@ PictureLayerImpl::CreatePictureLayerTilingSet() {
   return PictureLayerTilingSet::Create(
       this, settings.max_tiles_for_interest_area,
       layer_tree_impl()->use_gpu_rasterization()
-          ? 0.f
+          ? settings.gpu_rasterization_skewport_target_time_in_seconds
           : settings.skewport_target_time_in_seconds,
       settings.skewport_extrapolation_limit_in_content_pixels);
 }
@@ -1180,7 +1158,8 @@ void PictureLayerImpl::GetAllTilesForTracing(
   tilings_->GetAllTilesForTracing(tiles);
 }
 
-void PictureLayerImpl::AsValueInto(base::debug::TracedValue* state) const {
+void PictureLayerImpl::AsValueInto(
+    base::trace_event::TracedValue* state) const {
   LayerImpl::AsValueInto(state);
   state->SetDouble("ideal_contents_scale", ideal_contents_scale_);
   state->SetDouble("geometry_contents_scale", MaximumTilingContentsScale());

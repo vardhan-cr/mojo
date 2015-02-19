@@ -186,11 +186,20 @@ virtual void GetActiveUniform(GLuint program,
                               GLint* size,
                               GLenum* type,
                               char* name) = 0;
+virtual void GetActiveUniformBlockiv(GLuint program,
+                                     GLuint index,
+                                     GLenum pname,
+                                     GLint* params) = 0;
 virtual void GetActiveUniformBlockName(GLuint program,
                                        GLuint index,
                                        GLsizei bufsize,
                                        GLsizei* length,
                                        char* name) = 0;
+virtual void GetActiveUniformsiv(GLuint program,
+                                 GLsizei count,
+                                 const GLuint* indices,
+                                 GLenum pname,
+                                 GLint* params) = 0;
 virtual void GetAttachedShaders(GLuint program,
                                 GLsizei maxcount,
                                 GLsizei* count,
@@ -245,9 +254,20 @@ virtual void GetTexParameterfv(GLenum target,
                                GLenum pname,
                                GLfloat* params) = 0;
 virtual void GetTexParameteriv(GLenum target, GLenum pname, GLint* params) = 0;
+virtual void GetTransformFeedbackVarying(GLuint program,
+                                         GLuint index,
+                                         GLsizei bufsize,
+                                         GLsizei* length,
+                                         GLsizei* size,
+                                         GLenum* type,
+                                         char* name) = 0;
 virtual GLuint GetUniformBlockIndex(GLuint program, const char* name) = 0;
 virtual void GetUniformfv(GLuint program, GLint location, GLfloat* params) = 0;
 virtual void GetUniformiv(GLuint program, GLint location, GLint* params) = 0;
+virtual void GetUniformIndices(GLuint program,
+                               GLsizei count,
+                               const char* const* names,
+                               GLuint* indices) = 0;
 virtual GLint GetUniformLocation(GLuint program, const char* name) = 0;
 virtual void GetVertexAttribfv(GLuint index, GLenum pname, GLfloat* params) = 0;
 virtual void GetVertexAttribiv(GLuint index, GLenum pname, GLint* params) = 0;
@@ -417,6 +437,9 @@ virtual void Uniform4ui(GLint location,
                         GLuint z,
                         GLuint w) = 0;
 virtual void Uniform4uiv(GLint location, GLsizei count, const GLuint* v) = 0;
+virtual void UniformBlockBinding(GLuint program,
+                                 GLuint index,
+                                 GLuint binding) = 0;
 virtual void UniformMatrix2fv(GLint location,
                               GLsizei count,
                               GLboolean transpose,
@@ -575,6 +598,14 @@ virtual void GetUniformBlocksCHROMIUM(GLuint program,
                                       GLsizei bufsize,
                                       GLsizei* size,
                                       void* info) = 0;
+virtual void GetTransformFeedbackVaryingsCHROMIUM(GLuint program,
+                                                  GLsizei bufsize,
+                                                  GLsizei* size,
+                                                  void* info) = 0;
+virtual void GetUniformsES3CHROMIUM(GLuint program,
+                                    GLsizei bufsize,
+                                    GLsizei* size,
+                                    void* info) = 0;
 virtual GLuint CreateStreamTextureCHROMIUM(GLuint texture) = 0;
 virtual GLuint CreateImageCHROMIUM(ClientBuffer buffer,
                                    GLsizei width,

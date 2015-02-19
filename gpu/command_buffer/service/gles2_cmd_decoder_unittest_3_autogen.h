@@ -12,6 +12,64 @@
 #ifndef GPU_COMMAND_BUFFER_SERVICE_GLES2_CMD_DECODER_UNITTEST_3_AUTOGEN_H_
 #define GPU_COMMAND_BUFFER_SERVICE_GLES2_CMD_DECODER_UNITTEST_3_AUTOGEN_H_
 
+TEST_P(GLES2DecoderTest3, VertexAttrib3fValidArgs) {
+  EXPECT_CALL(*gl_, VertexAttrib3f(1, 2, 3, 4));
+  SpecializedSetup<cmds::VertexAttrib3f, 0>(true);
+  cmds::VertexAttrib3f cmd;
+  cmd.Init(1, 2, 3, 4);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+}
+
+TEST_P(GLES2DecoderTest3, VertexAttrib3fvImmediateValidArgs) {
+  cmds::VertexAttrib3fvImmediate& cmd =
+      *GetImmediateAs<cmds::VertexAttrib3fvImmediate>();
+  SpecializedSetup<cmds::VertexAttrib3fvImmediate, 0>(true);
+  GLfloat temp[3] = {
+      0,
+  };
+  cmd.Init(1, &temp[0]);
+  EXPECT_CALL(*gl_, VertexAttrib3fv(1, reinterpret_cast<GLfloat*>(
+                                           ImmediateDataAddress(&cmd))));
+  EXPECT_EQ(error::kNoError, ExecuteImmediateCmd(cmd, sizeof(temp)));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+}
+
+TEST_P(GLES2DecoderTest3, VertexAttrib4fValidArgs) {
+  EXPECT_CALL(*gl_, VertexAttrib4f(1, 2, 3, 4, 5));
+  SpecializedSetup<cmds::VertexAttrib4f, 0>(true);
+  cmds::VertexAttrib4f cmd;
+  cmd.Init(1, 2, 3, 4, 5);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+}
+
+TEST_P(GLES2DecoderTest3, VertexAttrib4fvImmediateValidArgs) {
+  cmds::VertexAttrib4fvImmediate& cmd =
+      *GetImmediateAs<cmds::VertexAttrib4fvImmediate>();
+  SpecializedSetup<cmds::VertexAttrib4fvImmediate, 0>(true);
+  GLfloat temp[4] = {
+      0,
+  };
+  cmd.Init(1, &temp[0]);
+  EXPECT_CALL(*gl_, VertexAttrib4fv(1, reinterpret_cast<GLfloat*>(
+                                           ImmediateDataAddress(&cmd))));
+  EXPECT_EQ(error::kNoError, ExecuteImmediateCmd(cmd, sizeof(temp)));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+}
+
+TEST_P(GLES2DecoderTest3, VertexAttribI4iValidArgs) {
+  EXPECT_CALL(*gl_, VertexAttribI4i(1, 2, 3, 4, 5));
+  SpecializedSetup<cmds::VertexAttribI4i, 0>(true);
+  cmds::VertexAttribI4i cmd;
+  cmd.Init(1, 2, 3, 4, 5);
+  decoder_->set_unsafe_es3_apis_enabled(true);
+  EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
+  EXPECT_EQ(GL_NO_ERROR, GetGLError());
+  decoder_->set_unsafe_es3_apis_enabled(false);
+  EXPECT_EQ(error::kUnknownCommand, ExecuteCmd(cmd));
+}
+
 TEST_P(GLES2DecoderTest3, VertexAttribI4ivImmediateValidArgs) {
   cmds::VertexAttribI4ivImmediate& cmd =
       *GetImmediateAs<cmds::VertexAttribI4ivImmediate>();
@@ -143,6 +201,10 @@ TEST_P(GLES2DecoderTest3, PopGroupMarkerEXTValidArgs) {
 // TODO(gman): GetProgramInfoCHROMIUM
 
 // TODO(gman): GetUniformBlocksCHROMIUM
+
+// TODO(gman): GetTransformFeedbackVaryingsCHROMIUM
+
+// TODO(gman): GetUniformsES3CHROMIUM
 
 // TODO(gman): GetTranslatedShaderSourceANGLE
 // TODO(gman): PostSubBufferCHROMIUM

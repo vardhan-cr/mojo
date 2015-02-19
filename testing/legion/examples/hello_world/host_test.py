@@ -32,7 +32,7 @@ class ExampleController(host_controller.HostController):
     client = self.NewClient(
         isolate_file='client_test.isolate',
         config_vars={'multi_machine': '1'},
-        dimensions={'os': 'Linux', 'pool': 'legion'}, priority=200,
+        dimensions={'os': 'legion-linux'}, priority=200,
         idle_timeout_secs=90, connection_timeout_secs=90,
         verbosity=logging.INFO)
     client.Create()
@@ -60,13 +60,16 @@ class ExampleController(host_controller.HostController):
   def CallEcho(self, client):
     """Call rpc.Echo on a client."""
     logging.info('Calling Echo on %s', client.name)
-    logging.info(self.client1.rpc.Echo(client.name))
+    logging.info(client.rpc.Echo(client.name))
 
   def CallClientTest(self, client):
     """Call client_test.py name on a client."""
     logging.info('Calling Subprocess to run "./client_test.py %s"', client.name)
-    retcode, stdout, stderr = client.rpc.Subprocess(
-        ['./client_test.py', client.name])
+    proc = client.rpc.subprocess.Popen(['./client_test.py', client.name])
+    client.rpc.subprocess.Wait(proc)
+    retcode = client.rpc.subprocess.GetReturncode(proc)
+    stdout = client.rpc.subprocess.ReadStdout(proc)
+    stderr = client.rpc.subprocess.ReadStderr(proc)
     logging.info('retcode: %s, stdout: %s, stderr: %s', retcode, stdout, stderr)
 
 

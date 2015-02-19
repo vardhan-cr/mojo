@@ -27,6 +27,7 @@ namespace net {
 class BoundNetLog;
 class DeterministicMockClientSocketFactory;
 class DeterministicSocketData;
+class ProxyService;
 class URLRequestContext;
 class WebSocketHandshakeStreamCreateHelper;
 struct SSLSocketDataProvider;
@@ -44,27 +45,37 @@ class LinearCongruentialGenerator {
 // use only. The differences are the use of a |create_helper| argument in place
 // of |requested_subprotocols| and taking |timer| as the handshake timeout
 // timer. Implemented in websocket_stream.cc.
-NET_EXPORT_PRIVATE extern scoped_ptr<WebSocketStreamRequest>
-    CreateAndConnectStreamForTesting(
-        const GURL& socket_url,
-        scoped_ptr<WebSocketHandshakeStreamCreateHelper> create_helper,
-        const url::Origin& origin,
-        URLRequestContext* url_request_context,
-        const BoundNetLog& net_log,
-        scoped_ptr<WebSocketStream::ConnectDelegate> connect_delegate,
-        scoped_ptr<base::Timer> timer);
+NET_EXPORT_PRIVATE scoped_ptr<WebSocketStreamRequest>
+CreateAndConnectStreamForTesting(
+    const GURL& socket_url,
+    scoped_ptr<WebSocketHandshakeStreamCreateHelper> create_helper,
+    const url::Origin& origin,
+    URLRequestContext* url_request_context,
+    const BoundNetLog& net_log,
+    scoped_ptr<WebSocketStream::ConnectDelegate> connect_delegate,
+    scoped_ptr<base::Timer> timer);
 
 // Generates a standard WebSocket handshake request. The challenge key used is
 // "dGhlIHNhbXBsZSBub25jZQ==". Each header in |extra_headers| must be terminated
 // with "\r\n".
-extern std::string WebSocketStandardRequest(const std::string& path,
-                                            const std::string& host,
-                                            const std::string& origin,
-                                            const std::string& extra_headers);
+std::string WebSocketStandardRequest(const std::string& path,
+                                     const std::string& host,
+                                     const std::string& origin,
+                                     const std::string& extra_headers);
+
+// Generates a standard WebSocket handshake request. The challenge key used is
+// "dGhlIHNhbXBsZSBub25jZQ==". |cookies| must be empty or terminated with
+// "\r\n". Each header in |extra_headers| must be terminated with "\r\n".
+std::string WebSocketStandardRequestWithCookies(
+    const std::string& path,
+    const std::string& host,
+    const std::string& origin,
+    const std::string& cookies,
+    const std::string& extra_headers);
 
 // A response with the appropriate accept header to match the above challenge
 // key. Each header in |extra_headers| must be terminated with "\r\n".
-extern std::string WebSocketStandardResponse(const std::string& extra_headers);
+std::string WebSocketStandardResponse(const std::string& extra_headers);
 
 // This class provides a convenient way to construct a
 // DeterministicMockClientSocketFactory for WebSocket tests.
@@ -123,6 +134,12 @@ struct WebSocketTestURLRequestContextHost {
   void AddSSLSocketDataProvider(
       scoped_ptr<SSLSocketDataProvider> ssl_socket_data);
 
+  // Allow a proxy to be set. Usage:
+  //   SetProxyConfig("proxy1:8000");
+  // Any syntax accepted by net::ProxyConfig::ParseFromString() will work.
+  // Do not call after GetURLRequestContext() has been called.
+  void SetProxyConfig(const std::string& proxy_rules);
+
   // Call after calling one of SetExpections() or AddRawExpectations(). The
   // returned pointer remains owned by this object.
   TestURLRequestContext* GetURLRequestContext();
@@ -131,6 +148,7 @@ struct WebSocketTestURLRequestContextHost {
   WebSocketDeterministicMockClientSocketFactoryMaker maker_;
   TestURLRequestContext url_request_context_;
   TestNetworkDelegate network_delegate_;
+  scoped_ptr<ProxyService> proxy_service_;
   bool url_request_context_initialized_;
 
   DISALLOW_COPY_AND_ASSIGN(WebSocketTestURLRequestContextHost);

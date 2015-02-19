@@ -222,10 +222,24 @@ class GLES2_IMPL_EXPORT GLES2Implementation
       GLint* size, GLenum* type, char* name);
   void GetUniformBlocksCHROMIUMHelper(
       GLuint program, std::vector<int8>* result);
+  void GetUniformsES3CHROMIUMHelper(
+      GLuint program, std::vector<int8>* result);
   GLuint GetUniformBlockIndexHelper(GLuint program, const char* name);
   bool GetActiveUniformBlockNameHelper(
       GLuint program, GLuint index, GLsizei bufsize,
       GLsizei* length, char* name);
+  bool GetActiveUniformBlockivHelper(
+      GLuint program, GLuint index, GLenum pname, GLint* params);
+  void GetTransformFeedbackVaryingsCHROMIUMHelper(
+      GLuint program, std::vector<int8>* result);
+  bool GetTransformFeedbackVaryingHelper(
+      GLuint program, GLuint index, GLsizei bufsize, GLsizei* length,
+      GLint* size, GLenum* type, char* name);
+  bool GetUniformIndicesHelper(
+      GLuint program, GLsizei count, const char* const* names, GLuint* indices);
+  bool GetActiveUniformsivHelper(
+      GLuint program, GLsizei count, const GLuint* indices,
+      GLenum pname, GLint* params);
 
   void FreeUnusedSharedMemory();
   void FreeEverything();
@@ -624,6 +638,13 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   BufferTracker::Buffer* GetBoundPixelUnpackTransferBufferIfValid(
       GLuint buffer_id,
       const char* function_name, GLuint offset, GLsizei size);
+
+  // Pack 2D arrays of char into a bucket.
+  // Helper function for ShaderSource(), TransformFeedbackVaryings(), etc.
+  bool PackStringsToBucket(GLsizei count,
+                           const char* const* str,
+                           const GLint* length,
+                           const char* func_name);
 
   const std::string& GetLogPrefix() const;
 

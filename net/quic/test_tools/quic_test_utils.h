@@ -103,12 +103,17 @@ QuicAckFrame MakeAckFrame(QuicPacketSequenceNumber largest_observed);
 QuicAckFrame MakeAckFrameWithNackRanges(size_t num_nack_ranges,
                                         QuicPacketSequenceNumber least_unacked);
 
-// Returns a SerializedPacket whose |packet| member is owned by the caller, and
+// Returns a QuicPacket that is owned by the caller, and
 // is populated with the fields in |header| and |frames|, or is nullptr if the
 // packet could not be created.
-SerializedPacket BuildUnsizedDataPacket(QuicFramer* framer,
-                                        const QuicPacketHeader& header,
-                                        const QuicFrames& frames);
+QuicPacket* BuildUnsizedDataPacket(QuicFramer* framer,
+                                   const QuicPacketHeader& header,
+                                   const QuicFrames& frames);
+// Returns a QuicPacket that is owned by the caller, and of size |packet_size|.
+QuicPacket* BuildUnsizedDataPacket(QuicFramer* framer,
+                                   const QuicPacketHeader& header,
+                                   const QuicFrames& frames,
+                                   size_t packet_size);
 
 template<typename SaveType>
 class ValueRestore {
@@ -345,7 +350,6 @@ class PacketSavingConnection : public MockConnection {
 
   void SendOrQueuePacket(QueuedPacket packet) override;
 
-  std::vector<QuicPacket*> packets_;
   std::vector<QuicEncryptedPacket*> encrypted_packets_;
 
  private:

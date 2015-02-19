@@ -78,6 +78,8 @@ static std::string GetStringTextureUsage(uint32_t value);
 static std::string GetStringTextureWrapMode(uint32_t value);
 static std::string GetStringTransformFeedbackBindTarget(uint32_t value);
 static std::string GetStringTransformFeedbackPrimitiveMode(uint32_t value);
+static std::string GetStringUniformBlockParameter(uint32_t value);
+static std::string GetStringUniformParameter(uint32_t value);
 static std::string GetStringValueBufferTarget(uint32_t value);
 static std::string GetStringVertexAttribType(uint32_t value);
 static std::string GetStringVertexAttribute(uint32_t value);

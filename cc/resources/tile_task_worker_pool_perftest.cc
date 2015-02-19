@@ -9,6 +9,7 @@
 #include "cc/debug/lap_timer.h"
 #include "cc/output/context_provider.h"
 #include "cc/resources/bitmap_tile_task_worker_pool.h"
+#include "cc/resources/gpu_rasterizer.h"
 #include "cc/resources/gpu_tile_task_worker_pool.h"
 #include "cc/resources/one_copy_tile_task_worker_pool.h"
 #include "cc/resources/pixel_buffer_tile_task_worker_pool.h"
@@ -89,6 +90,8 @@ class PerfContextProvider : public ContextProvider {
         reinterpret_cast<GrBackendContext>(null_interface.get())));
     return gr_context_.get();
   }
+  void SetupLock() override {}
+  base::Lock* GetLock() override { return &context_lock_; }
   bool IsContextLost() override { return false; }
   void VerifyContexts() override {}
   void DeleteCachedResources() override {}
@@ -103,6 +106,7 @@ class PerfContextProvider : public ContextProvider {
   scoped_ptr<PerfGLES2Interface> context_gl_;
   skia::RefPtr<class GrContext> gr_context_;
   TestContextSupport support_;
+  base::Lock context_lock_;
 };
 
 enum TileTaskWorkerPoolType {
@@ -228,6 +232,7 @@ class TileTaskWorkerPoolPerfTestBase {
   FakeOutputSurfaceClient output_surface_client_;
   scoped_ptr<FakeOutputSurface> output_surface_;
   scoped_ptr<ResourceProvider> resource_provider_;
+  scoped_ptr<Rasterizer> rasterizer_;
   scoped_refptr<base::TestSimpleTaskRunner> task_runner_;
   scoped_ptr<TaskGraphRunner> task_graph_runner_;
   LapTimer timer_;
@@ -267,7 +272,7 @@ class TileTaskWorkerPoolPerfTest
         Create3dOutputSurfaceAndResourceProvider();
         tile_task_worker_pool_ = GpuTileTaskWorkerPool::Create(
             task_runner_.get(), task_graph_runner_.get(),
-            resource_provider_.get());
+            static_cast<GpuRasterizer*>(rasterizer_.get()));
         break;
       case TILE_TASK_WORKER_POOL_TYPE_BITMAP:
         CreateSoftwareOutputSurfaceAndResourceProvider();

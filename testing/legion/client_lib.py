@@ -18,10 +18,8 @@ import xmlrpclib
 #pylint: disable=relative-import
 import common_lib
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-SWARMING_DIR = os.path.join(THIS_DIR, '..', '..', 'tools/swarming_client')
-ISOLATE_PY = os.path.join(SWARMING_DIR, 'isolate.py')
-SWARMING_PY = os.path.join(SWARMING_DIR, 'swarming.py')
+ISOLATE_PY = os.path.join(common_lib.SWARMING_DIR, 'isolate.py')
+SWARMING_PY = os.path.join(common_lib.SWARMING_DIR, 'swarming.py')
 
 
 class Error(Exception):
@@ -202,7 +200,6 @@ class ClientController(object):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, stderr = p.communicate()
     if p.returncode != 0:
-      stderr.seek(0)
       raise Error(stderr)
 
   def OnConnect(self, ip_address):

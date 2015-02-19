@@ -5,6 +5,9 @@
             "trybots": {
                 "launched": {
                     "tryserver.chromium.linux": {
+                        "cast_shell": ["defaulttests"],
+                        "cast_shell_apk": ["defaulttests"],
+                        "linux_android_rel_ng": ["defaulttests"],
                         "linux_chromium_asan_rel_ng": ["defaulttests"]
                     },
                     "tryserver.chromium.mac": {
@@ -59,7 +62,7 @@
               "linux_chromium_gn_dbg": ["defaulttests"],
               "linux_chromium_gn_rel": ["defaulttests"],
               "linux_chromium_rel_ng": ["defaulttests"],
-              "android_dbg_tests_recipe": ["defaulttests"],
+              "android_rel_tests_recipe": ["defaulttests"],
               "android_arm64_dbg_recipe": ["defaulttests"],
               "android_clang_dbg_recipe": ["defaulttests"],
               "android_aosp": ["compile"],
@@ -89,15 +92,9 @@
               "win_chromium_compile_dbg_ng": ["defaulttests"],
               "win_chromium_rel_ng": ["defaulttests"],
               "win_chromium_x64_rel_ng": ["defaulttests"]
-            },
-            "tryserver.chromium.gpu": {
-                "win_gpu": ["defaulttests"]
             }
         },
         "triggered": {
-            "tryserver.chromium.gpu": {
-                "win_gpu_triggered_tests": "win_gpu"
-            }
         }
     }
 }

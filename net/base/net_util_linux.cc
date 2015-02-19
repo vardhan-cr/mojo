@@ -18,7 +18,6 @@
 #include "base/files/scoped_file.h"
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/stl_util.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_tokenizer.h"
 #include "base/strings/string_util.h"
@@ -69,7 +68,11 @@ bool TryConvertNativeToNetIPAttributes(int native_attributes,
 namespace internal {
 
 inline const unsigned char* GetIPAddressData(const IPAddressNumber& ip) {
-  return vector_as_array(&ip);
+#if defined(OS_ANDROID)
+  return ip.begin();
+#else
+  return ip.data();
+#endif
 }
 
 // Gets the connection type for interface |ifname| by checking for wireless
@@ -98,6 +101,21 @@ NetworkChangeNotifier::ConnectionType GetInterfaceConnectionType(
 #endif  // !defined(OS_ANDROID)
 
   return NetworkChangeNotifier::CONNECTION_UNKNOWN;
+}
+
+std::string GetInterfaceSSID(const std::string& ifname) {
+  base::ScopedFD ioctl_socket(socket(AF_INET, SOCK_DGRAM, 0));
+  if (!ioctl_socket.is_valid())
+    return "";
+  struct iwreq wreq = {};
+  strncpy(wreq.ifr_name, ifname.c_str(), IFNAMSIZ - 1);
+
+  char ssid[IW_ESSID_MAX_SIZE + 1] = {0};
+  wreq.u.essid.pointer = ssid;
+  wreq.u.essid.length = IW_ESSID_MAX_SIZE;
+  if (ioctl(ioctl_socket.get(), SIOCGIWESSID, &wreq) != -1)
+    return ssid;
+  return "";
 }
 
 bool GetNetworkListImpl(
@@ -169,6 +187,23 @@ bool GetNetworkListImpl(
   return true;
 }
 
+std::string GetWifiSSIDFromInterfaceListInternal(
+    const NetworkInterfaceList& interfaces,
+    internal::GetInterfaceSSIDFunction get_interface_ssid) {
+  std::string connected_ssid;
+  for (size_t i = 0; i < interfaces.size(); ++i) {
+    if (interfaces[i].type != NetworkChangeNotifier::CONNECTION_WIFI)
+      return "";
+    std::string ssid = get_interface_ssid(interfaces[i].name);
+    if (i == 0) {
+      connected_ssid = ssid;
+    } else if (ssid != connected_ssid) {
+      return "";
+    }
+  }
+  return connected_ssid;
+}
+
 }  // namespace internal
 
 bool GetNetworkList(NetworkInterfaceList* networks, int policy) {
@@ -181,6 +216,15 @@ bool GetNetworkList(NetworkInterfaceList* networks, int policy) {
   return internal::GetNetworkListImpl(
       networks, policy, tracker.GetOnlineLinks(), tracker.GetAddressMap(),
       &internal::AddressTrackerLinux::GetInterfaceName);
+}
+
+std::string GetWifiSSID() {
+  NetworkInterfaceList networks;
+  if (GetNetworkList(&networks, net::INCLUDE_HOST_SCOPE_VIRTUAL_INTERFACES)) {
+    return internal::GetWifiSSIDFromInterfaceListInternal(
+        networks, internal::GetInterfaceSSID);
+  }
+  return "";
 }
 
 }  // namespace net

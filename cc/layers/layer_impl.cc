@@ -175,7 +175,7 @@ void LayerImpl::SetScrollParent(LayerImpl* parent) {
 }
 
 void LayerImpl::SetDebugInfo(
-    scoped_refptr<base::debug::ConvertableToTraceFormat> other) {
+    scoped_refptr<base::trace_event::ConvertableToTraceFormat> other) {
   debug_info_ = other;
   SetNeedsPushProperties();
 }
@@ -261,6 +261,23 @@ void LayerImpl::PopulateSharedQuadState(SharedQuadState* state) const {
       draw_properties_.blend_mode, sorting_context_id_);
 }
 
+void LayerImpl::PopulateScaledSharedQuadState(SharedQuadState* state,
+                                              float scale) const {
+  gfx::Transform scaled_draw_transform =
+      draw_properties_.target_space_transform;
+  scaled_draw_transform.Scale(SK_MScalar1 / scale, SK_MScalar1 / scale);
+  gfx::Size scaled_content_bounds =
+      gfx::ToCeiledSize(gfx::ScaleSize(bounds(), scale));
+  gfx::Rect scaled_visible_content_rect =
+      gfx::ScaleToEnclosingRect(visible_content_rect(), scale);
+  scaled_visible_content_rect.Intersect(gfx::Rect(scaled_content_bounds));
+
+  state->SetAll(scaled_draw_transform, scaled_content_bounds,
+                scaled_visible_content_rect, draw_properties().clip_rect,
+                draw_properties().is_clipped, draw_properties().opacity,
+                draw_properties().blend_mode, sorting_context_id_);
+}
+
 bool LayerImpl::WillDraw(DrawMode draw_mode,
                          ResourceProvider* resource_provider) {
   // WillDraw/DidDraw must be matched.
@@ -327,6 +344,22 @@ void LayerImpl::AppendDebugBorderQuad(RenderPass* render_pass,
       render_pass->CreateAndAppendDrawQuad<DebugBorderDrawQuad>();
   debug_border_quad->SetNew(
       shared_quad_state, quad_rect, visible_quad_rect, color, width);
+  if (contents_opaque()) {
+    // When opaque, draw a second inner border that is thicker than the outer
+    // border, but more transparent.
+    static const float kFillOpacity = 0.3f;
+    SkColor fill_color = SkColorSetA(
+        color, static_cast<uint8_t>(SkColorGetA(color) * kFillOpacity));
+    float fill_width = width * 3;
+    gfx::Rect fill_rect = quad_rect;
+    fill_rect.Inset(fill_width / 2.f, fill_width / 2.f);
+    gfx::Rect visible_fill_rect =
+        gfx::IntersectRects(visible_quad_rect, fill_rect);
+    DebugBorderDrawQuad* fill_quad =
+        render_pass->CreateAndAppendDrawQuad<DebugBorderDrawQuad>();
+    fill_quad->SetNew(shared_quad_state, fill_rect, visible_fill_rect,
+                      fill_color, fill_width);
+  }
 }
 
 bool LayerImpl::HasDelegatedContent() const {
@@ -343,11 +376,6 @@ RenderPassId LayerImpl::FirstContributingRenderPassId() const {
 
 RenderPassId LayerImpl::NextContributingRenderPassId(RenderPassId id) const {
   return RenderPassId(0, 0);
-}
-
-bool LayerImpl::UpdateTiles(const Occlusion& occlusion_in_layer_space,
-                            bool resourceless_software_draw) {
-  return false;
 }
 
 void LayerImpl::GetContentsResourceId(ResourceProvider::ResourceId* resource_id,
@@ -1401,7 +1429,7 @@ void LayerImpl::RemoveDependentNeedsPushProperties() {
 void LayerImpl::GetAllTilesForTracing(std::set<const Tile*>* tiles) const {
 }
 
-void LayerImpl::AsValueInto(base::debug::TracedValue* state) const {
+void LayerImpl::AsValueInto(base::trace_event::TracedValue* state) const {
   TracedValue::MakeDictIntoImplicitSnapshotWithCategory(
       TRACE_DISABLED_BY_DEFAULT("cc.debug"),
       state,

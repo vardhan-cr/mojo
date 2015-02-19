@@ -87,7 +87,9 @@ QuicCryptoClientStream::QuicCryptoClientStream(
       channel_id_source_callback_run_(false),
       channel_id_source_callback_(nullptr),
       verify_context_(verify_context),
-      proof_verify_callback_(nullptr) {}
+      proof_verify_callback_(nullptr) {
+  DCHECK(!session->connection()->is_server());
+}
 
 QuicCryptoClientStream::~QuicCryptoClientStream() {
   if (channel_id_source_callback_) {
@@ -196,7 +198,7 @@ void QuicCryptoClientStream::DoHandshakeLoop(
         break;
       case STATE_SEND_CHLO:
         DoSendCHLO(in, cached);
-        return;
+        return;  // return waiting to hear from server.
       case STATE_RECV_REJ:
         DoReceiveREJ(in, cached);
         break;
@@ -638,7 +640,7 @@ bool QuicCryptoClientStream::RequiresChannelID(
     return false;
   }
   const CryptoHandshakeMessage* scfg = cached->GetServerConfig();
-  if (!scfg) {  // scfg may be null when we send an inchoate CHLO.
+  if (!scfg) {  // scfg may be null then we send an inchoate CHLO.
     return false;
   }
   const QuicTag* their_proof_demands;

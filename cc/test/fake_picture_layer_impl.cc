@@ -86,10 +86,8 @@ void FakePictureLayerImpl::PushPropertiesTo(LayerImpl* layer_impl) {
 
 void FakePictureLayerImpl::AppendQuads(
     RenderPass* render_pass,
-    const Occlusion& occlusion_in_content_space,
     AppendQuadsData* append_quads_data) {
-  PictureLayerImpl::AppendQuads(
-      render_pass, occlusion_in_content_space, append_quads_data);
+  PictureLayerImpl::AppendQuads(render_pass, append_quads_data);
   ++append_quads_count_;
 }
 
@@ -135,6 +133,12 @@ void FakePictureLayerImpl::SetRasterSourceOnPending(
   Region invalidation_temp = invalidation;
   const PictureLayerTilingSet* pending_set = nullptr;
   UpdateRasterSource(raster_source, &invalidation_temp, pending_set);
+}
+
+void FakePictureLayerImpl::SetIsDrawnRenderSurfaceLayerListMember(bool is) {
+  draw_properties().last_drawn_render_surface_layer_list_id =
+      is ? layer_tree_impl()->current_render_surface_list_id()
+         : layer_tree_impl()->current_render_surface_list_id() - 1;
 }
 
 void FakePictureLayerImpl::CreateAllTiles() {

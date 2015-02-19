@@ -624,7 +624,7 @@ void GLRenderer::DrawDebugBorderQuad(const DrawingFrame* frame,
 static skia::RefPtr<SkImage> ApplyImageFilter(
     scoped_ptr<GLRenderer::ScopedUseGrContext> use_gr_context,
     ResourceProvider* resource_provider,
-    const gfx::Point& origin,
+    const gfx::Rect& rect,
     const gfx::Vector2dF& scale,
     SkImageFilter* filter,
     ScopedResource* source_texture_resource) {
@@ -693,7 +693,12 @@ static skia::RefPtr<SkImage> ApplyImageFilter(
   paint.setImageFilter(filter);
   canvas->clear(SK_ColorTRANSPARENT);
 
-  canvas->translate(SkIntToScalar(-origin.x()), SkIntToScalar(-origin.y()));
+  // The origin of the filter is top-left and the origin of the source is
+  // bottom-left, but the orientation is the same, so we must translate the
+  // filter so that it renders at the bottom of the texture to avoid
+  // misregistration.
+  int y_translate = source.height() - rect.height() - rect.origin().y();
+  canvas->translate(-rect.origin().x(), y_translate);
   canvas->scale(scale.x(), scale.y());
   canvas->drawSprite(source, 0, 0, &paint);
 
@@ -858,13 +863,9 @@ skia::RefPtr<SkImage> GLRenderer::ApplyBackgroundFilters(
   skia::RefPtr<SkImageFilter> filter = RenderSurfaceFilters::BuildImageFilter(
       quad->background_filters, background_texture->size());
 
-  skia::RefPtr<SkImage> background_with_filters =
-      ApplyImageFilter(ScopedUseGrContext::Create(this, frame),
-                       resource_provider_,
-                       quad->rect.origin(),
-                       quad->filters_scale,
-                       filter.get(),
-                       background_texture);
+  skia::RefPtr<SkImage> background_with_filters = ApplyImageFilter(
+      ScopedUseGrContext::Create(this, frame), resource_provider_, quad->rect,
+      quad->filters_scale, filter.get(), background_texture);
   return background_with_filters;
 }
 
@@ -970,12 +971,9 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
         // in the compositor.
         use_color_matrix = true;
       } else {
-        filter_image = ApplyImageFilter(ScopedUseGrContext::Create(this, frame),
-                                        resource_provider_,
-                                        quad->rect.origin(),
-                                        quad->filters_scale,
-                                        filter.get(),
-                                        contents_texture);
+        filter_image = ApplyImageFilter(
+            ScopedUseGrContext::Create(this, frame), resource_provider_,
+            quad->rect, quad->filters_scale, filter.get(), contents_texture);
       }
     }
   }
@@ -2711,6 +2709,8 @@ bool GLRenderer::BindFramebufferToTexture(DrawingFrame* frame,
                                           const gfx::Rect& target_rect) {
   DCHECK(texture->id());
 
+  // Explicitly release lock, otherwise we can crash when try to lock
+  // same texture again.
   current_framebuffer_lock_ = nullptr;
 
   SetStencilEnabled(false);

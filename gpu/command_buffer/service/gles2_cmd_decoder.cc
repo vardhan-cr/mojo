@@ -1684,6 +1684,11 @@ class GLES2DecoderImpl : public GLES2Decoder,
            surface_->DeferDraws();
   }
 
+  bool IsRobustnessSupported() {
+    return has_robustness_extension_ &&
+           context_->WasAllocatedUsingRobustnessExtension();
+  }
+
   error::Error WillAccessBoundFramebufferForDraw() {
     if (ShouldDeferDraws())
       return error::kDeferCommandUntilLater;
@@ -1820,8 +1825,8 @@ class GLES2DecoderImpl : public GLES2Decoder,
   error::Error current_decoder_error_;
 
   bool use_shader_translator_;
-  scoped_refptr<ShaderTranslator> vertex_translator_;
-  scoped_refptr<ShaderTranslator> fragment_translator_;
+  scoped_refptr<ShaderTranslatorInterface> vertex_translator_;
+  scoped_refptr<ShaderTranslatorInterface> fragment_translator_;
 
   DisallowedFeatures disallowed_features_;
 
@@ -5837,15 +5842,7 @@ void GLES2DecoderImpl::DoLinkProgram(GLuint program_id) {
   }
 
   LogClientServiceForInfo(program, program_id, "glLinkProgram");
-  ShaderTranslator* vertex_translator = NULL;
-  ShaderTranslator* fragment_translator = NULL;
-  if (use_shader_translator_) {
-    vertex_translator = vertex_translator_.get();
-    fragment_translator = fragment_translator_.get();
-  }
   if (program->Link(shader_manager(),
-                    vertex_translator,
-                    fragment_translator,
                     workarounds().count_all_in_varyings_packing ?
                         Program::kCountAll : Program::kCountOnlyStaticallyUsed,
                     shader_cache_callback_)) {
@@ -7091,24 +7088,17 @@ void GLES2DecoderImpl::DoCompileShader(GLuint client_id) {
   if (!shader) {
     return;
   }
-  ShaderTranslator* translator = NULL;
+
+  scoped_refptr<ShaderTranslatorInterface> translator;
   if (use_shader_translator_) {
-    translator = shader->shader_type() == GL_VERTEX_SHADER ?
-        vertex_translator_.get() : fragment_translator_.get();
+      translator = shader->shader_type() == GL_VERTEX_SHADER ?
+                   vertex_translator_ : fragment_translator_;
   }
 
-  shader->RequestCompile();
-
-  // TODO(dyen): Currently we compile immediately when glCompileShader is
-  // requested. Eventually this should be deffered to the linker stage.
-  shader->DoCompile(
-     translator,
-     feature_info_->feature_flags().angle_translated_shader_source ?
-         Shader::kANGLE : Shader::kGL);
-
-  // CompileShader can be very slow.  Exit command processing to allow for
-  // context preemption and GPU watchdog checks.
-  ExitCommandProcessingEarly();
+  const Shader::TranslatedShaderSourceType source_type =
+      feature_info_->feature_flags().angle_translated_shader_source ?
+      Shader::kANGLE : Shader::kGL;
+  shader->RequestCompile(translator, source_type);
 }
 
 void GLES2DecoderImpl::DoGetShaderiv(
@@ -7117,6 +7107,19 @@ void GLES2DecoderImpl::DoGetShaderiv(
   if (!shader) {
     return;
   }
+
+  // Compile now for statuses that require it.
+  switch (pname) {
+    case GL_COMPILE_STATUS:
+    case GL_INFO_LOG_LENGTH:
+    case GL_TRANSLATED_SHADER_SOURCE_LENGTH_ANGLE:
+      shader->DoCompile();
+      break;
+
+    default:
+    break;
+  }
+
   switch (pname) {
     case GL_SHADER_SOURCE_LENGTH:
       *params = shader->source().size();
@@ -7174,6 +7177,9 @@ error::Error GLES2DecoderImpl::HandleGetTranslatedShaderSourceANGLE(
     return error::kNoError;
   }
 
+  // Make sure translator has been utilized in compile.
+  shader->DoCompile();
+
   bucket->SetFromString(shader->translated_source().c_str());
   return error::kNoError;
 }
@@ -7209,6 +7215,10 @@ error::Error GLES2DecoderImpl::HandleGetShaderInfoLog(
     bucket->SetFromString("");
     return error::kNoError;
   }
+
+  // Shader must be compiled in order to get the info log.
+  shader->DoCompile();
+
   bucket->SetFromString(shader->log_info().c_str());
   return error::kNoError;
 }
@@ -8158,6 +8168,58 @@ error::Error GLES2DecoderImpl::HandleGetUniformLocation(
   }
   return GetUniformLocationHelper(
     c.program, c.location_shm_id, c.location_shm_offset, name_str);
+}
+
+error::Error GLES2DecoderImpl::HandleGetUniformIndices(
+    uint32 immediate_data_size,
+    const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetUniformIndices& c =
+      *static_cast<const gles2::cmds::GetUniformIndices*>(cmd_data);
+  Bucket* bucket = GetBucket(c.names_bucket_id);
+  if (!bucket) {
+    return error::kInvalidArguments;
+  }
+  GLsizei count = 0;
+  std::vector<char*> names;
+  std::vector<GLint> len;
+  if (!bucket->GetAsStrings(&count, &names, &len) || count <= 0) {
+    return error::kInvalidArguments;
+  }
+  typedef cmds::GetUniformIndices::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>(
+      c.indices_shm_id, c.indices_shm_offset,
+      Result::ComputeSize(static_cast<size_t>(count)));
+  GLuint* indices = result ? result->GetData() : NULL;
+  if (indices == NULL) {
+    return error::kOutOfBounds;
+  }
+  // Check that the client initialized the result.
+  if (result->size != 0) {
+    return error::kInvalidArguments;
+  }
+  Program* program = GetProgramInfoNotShader(c.program, "glGetUniformIndices");
+  if (!program) {
+    return error::kNoError;
+  }
+  GLuint service_id = program->service_id();
+  GLint link_status = GL_FALSE;
+  glGetProgramiv(service_id, GL_LINK_STATUS, &link_status);
+  if (link_status != GL_TRUE) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION,
+        "glGetUniformIndices", "program not linked");
+    return error::kNoError;
+  }
+  LOCAL_COPY_REAL_GL_ERRORS_TO_WRAPPER("GetUniformIndices");
+  glGetUniformIndices(service_id, count, &names[0], indices);
+  GLenum error = glGetError();
+  if (error == GL_NO_ERROR) {
+    result->SetNumResults(count);
+  } else {
+    LOCAL_SET_GL_ERROR(error, "GetUniformIndices", "");
+  }
+  return error::kNoError;
 }
 
 error::Error GLES2DecoderImpl::GetFragDataLocationHelper(
@@ -9730,6 +9792,63 @@ error::Error GLES2DecoderImpl::HandleGetActiveUniform(
   return error::kNoError;
 }
 
+error::Error GLES2DecoderImpl::HandleGetActiveUniformBlockiv(
+    uint32 immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetActiveUniformBlockiv& c =
+      *static_cast<const gles2::cmds::GetActiveUniformBlockiv*>(cmd_data);
+  GLuint program_id = c.program;
+  GLuint index = static_cast<GLuint>(c.index);
+  GLenum pname = static_cast<GLenum>(c.pname);
+  Program* program = GetProgramInfoNotShader(
+      program_id, "glGetActiveUniformBlockiv");
+  if (!program) {
+    return error::kNoError;
+  }
+  GLuint service_id = program->service_id();
+  GLint link_status = GL_FALSE;
+  glGetProgramiv(service_id, GL_LINK_STATUS, &link_status);
+  if (link_status != GL_TRUE) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION,
+        "glGetActiveActiveUniformBlockiv", "program not linked");
+    return error::kNoError;
+  }
+  LOCAL_COPY_REAL_GL_ERRORS_TO_WRAPPER("GetActiveUniformBlockiv");
+  GLsizei num_values = 1;
+  if (pname == GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES) {
+    GLint num = 0;
+    glGetActiveUniformBlockiv(
+        service_id, index, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &num);
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+      // Assume this will the same error if calling with pname.
+      LOCAL_SET_GL_ERROR(error, "GetActiveUniformBlockiv", "");
+      return error::kNoError;
+    }
+    num_values = static_cast<GLsizei>(num);
+  }
+  typedef cmds::GetActiveUniformBlockiv::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>(
+      c.params_shm_id, c.params_shm_offset, Result::ComputeSize(num_values));
+  GLint* params = result ? result->GetData() : NULL;
+  if (params == NULL) {
+    return error::kOutOfBounds;
+  }
+  // Check that the client initialized the result.
+  if (result->size != 0) {
+    return error::kInvalidArguments;
+  }
+  glGetActiveUniformBlockiv(service_id, index, pname, params);
+  GLenum error = glGetError();
+  if (error == GL_NO_ERROR) {
+    result->SetNumResults(num_values);
+  } else {
+    LOCAL_SET_GL_ERROR(error, "GetActiveUniformBlockiv", "");
+  }
+  return error::kNoError;
+}
+
 error::Error GLES2DecoderImpl::HandleGetActiveUniformBlockName(
     uint32 immediate_data_size, const void* cmd_data) {
   if (!unsafe_es3_apis_enabled())
@@ -9780,6 +9899,55 @@ error::Error GLES2DecoderImpl::HandleGetActiveUniformBlockName(
   DCHECK_GT(buf_size, length);
   DCHECK_EQ(0, buffer[length]);
   bucket->SetFromString(&buffer[0]);
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleGetActiveUniformsiv(
+    uint32 immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetActiveUniformsiv& c =
+      *static_cast<const gles2::cmds::GetActiveUniformsiv*>(cmd_data);
+  GLuint program_id = c.program;
+  GLenum pname = static_cast<GLenum>(c.pname);
+  Bucket* bucket = GetBucket(c.indices_bucket_id);
+  if (!bucket) {
+    return error::kInvalidArguments;
+  }
+  GLsizei count = static_cast<GLsizei>(bucket->size() / sizeof(GLuint));
+  const GLuint* indices = bucket->GetDataAs<const GLuint*>(0, bucket->size());
+  typedef cmds::GetActiveUniformsiv::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>(
+      c.params_shm_id, c.params_shm_offset, Result::ComputeSize(count));
+  GLint* params = result ? result->GetData() : NULL;
+  if (params == NULL) {
+    return error::kOutOfBounds;
+  }
+  // Check that the client initialized the result.
+  if (result->size != 0) {
+    return error::kInvalidArguments;
+  }
+  Program* program = GetProgramInfoNotShader(
+      program_id, "glGetActiveUniformsiv");
+  if (!program) {
+    return error::kNoError;
+  }
+  GLuint service_id = program->service_id();
+  GLint link_status = GL_FALSE;
+  glGetProgramiv(service_id, GL_LINK_STATUS, &link_status);
+  if (link_status != GL_TRUE) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION,
+        "glGetActiveUniformsiv", "program not linked");
+    return error::kNoError;
+  }
+  LOCAL_COPY_REAL_GL_ERRORS_TO_WRAPPER("GetActiveUniformsiv");
+  glGetActiveUniformsiv(service_id, count, indices, pname, params);
+  GLenum error = glGetError();
+  if (error == GL_NO_ERROR) {
+    result->SetNumResults(count);
+  } else {
+    LOCAL_SET_GL_ERROR(error, "GetActiveUniformsiv", "");
+  }
   return error::kNoError;
 }
 
@@ -10136,6 +10304,104 @@ error::Error GLES2DecoderImpl::HandleGetUniformBlocksCHROMIUM(
   return error::kNoError;
 }
 
+error::Error GLES2DecoderImpl::HandleGetUniformsES3CHROMIUM(
+    uint32 immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetUniformsES3CHROMIUM& c =
+      *static_cast<const gles2::cmds::GetUniformsES3CHROMIUM*>(cmd_data);
+  GLuint program_id = static_cast<GLuint>(c.program);
+  uint32 bucket_id = c.bucket_id;
+  Bucket* bucket = CreateBucket(bucket_id);
+  bucket->SetSize(sizeof(UniformsES3Header));  // in case we fail.
+  Program* program = NULL;
+  program = GetProgram(program_id);
+  if (!program || !program->IsValid()) {
+    return error::kNoError;
+  }
+  program->GetUniformsES3(bucket);
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleGetTransformFeedbackVarying(
+    uint32 immediate_data_size,
+    const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetTransformFeedbackVarying& c =
+      *static_cast<const gles2::cmds::GetTransformFeedbackVarying*>(cmd_data);
+  GLuint program_id = c.program;
+  GLuint index = c.index;
+  uint32 name_bucket_id = c.name_bucket_id;
+  typedef cmds::GetTransformFeedbackVarying::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>(
+      c.result_shm_id, c.result_shm_offset, sizeof(*result));
+  if (!result) {
+    return error::kOutOfBounds;
+  }
+  // Check that the client initialized the result.
+  if (result->success != 0) {
+    return error::kInvalidArguments;
+  }
+  Program* program = GetProgramInfoNotShader(
+      program_id, "glGetTransformFeedbackVarying");
+  if (!program) {
+    return error::kNoError;
+  }
+  GLuint service_id = program->service_id();
+  GLint link_status = GL_FALSE;
+  glGetProgramiv(service_id, GL_LINK_STATUS, &link_status);
+  if (link_status != GL_TRUE) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION,
+        "glGetTransformFeedbackVarying", "program not linked");
+    return error::kNoError;
+  }
+  GLint max_length = 0;
+  glGetProgramiv(
+      service_id, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &max_length);
+  max_length = std::max(1, max_length);
+  std::vector<char> buffer(max_length);
+  GLsizei length = 0;
+  GLsizei size = 0;
+  GLenum type = 0;
+  LOCAL_COPY_REAL_GL_ERRORS_TO_WRAPPER("GetTransformFeedbackVarying");
+  glGetTransformFeedbackVarying(
+      service_id, index, max_length, &length, &size, &type, &buffer[0]);
+  GLenum error = glGetError();
+  if (error != GL_NO_ERROR) {
+    LOCAL_SET_GL_ERROR(error, "glGetTransformFeedbackVarying", "");
+    return error::kNoError;
+  }
+  result->success = 1;  // true.
+  result->size = static_cast<int32_t>(size);
+  result->type = static_cast<uint32_t>(type);
+  Bucket* bucket = CreateBucket(name_bucket_id);
+  DCHECK(length >= 0 && length < max_length);
+  buffer[length] = '\0';  // Just to be safe.
+  bucket->SetFromString(&buffer[0]);
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleGetTransformFeedbackVaryingsCHROMIUM(
+    uint32 immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::GetTransformFeedbackVaryingsCHROMIUM& c =
+      *static_cast<const gles2::cmds::GetTransformFeedbackVaryingsCHROMIUM*>(
+          cmd_data);
+  GLuint program_id = static_cast<GLuint>(c.program);
+  uint32 bucket_id = c.bucket_id;
+  Bucket* bucket = CreateBucket(bucket_id);
+  bucket->SetSize(sizeof(TransformFeedbackVaryingsHeader));  // in case we fail.
+  Program* program = NULL;
+  program = GetProgram(program_id);
+  if (!program || !program->IsValid()) {
+    return error::kNoError;
+  }
+  program->GetTransformFeedbackVaryings(bucket);
+  return error::kNoError;
+}
+
 error::ContextLostReason GLES2DecoderImpl::GetContextLostReason() {
   switch (reset_status_) {
     case GL_NO_ERROR:
@@ -10172,10 +10438,8 @@ bool GLES2DecoderImpl::WasContextLost() {
     MaybeExitOnContextLost();
     return true;
   }
-  if (context_->WasAllocatedUsingRobustnessExtension()) {
-    GLenum status = GL_NO_ERROR;
-    if (has_robustness_extension_)
-      status = glGetGraphicsResetStatusARB();
+  if (IsRobustnessSupported()) {
+    GLenum status = glGetGraphicsResetStatusARB();
     if (status != GL_NO_ERROR) {
       // The graphics card was reset. Signal a lost context to the application.
       reset_status_ = status;
@@ -10207,7 +10471,7 @@ void GLES2DecoderImpl::LoseContext(uint32 reset_status) {
       reset_status = GL_UNKNOWN_CONTEXT_RESET_ARB;
     }
   } else if (reset_status == GL_UNKNOWN_CONTEXT_RESET_ARB &&
-      has_robustness_extension_) {
+             IsRobustnessSupported()) {
     // If the reason for the call was a GL error, we can try to determine the
     // reset status more accurately.
     GLenum driver_status = glGetGraphicsResetStatusARB();
@@ -11769,6 +12033,25 @@ error::Error GLES2DecoderImpl::HandleWaitAllAsyncTexImage2DCHROMIUM(
 
   GetAsyncPixelTransferManager()->WaitAllAsyncTexImage2D();
   ProcessFinishedAsyncTransfers();
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleUniformBlockBinding(
+    uint32_t immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled())
+    return error::kUnknownCommand;
+  const gles2::cmds::UniformBlockBinding& c =
+      *static_cast<const gles2::cmds::UniformBlockBinding*>(cmd_data);
+  GLuint client_id = c.program;
+  GLuint index = static_cast<GLuint>(c.index);
+  GLuint binding = static_cast<GLuint>(c.binding);
+  Program* program = GetProgramInfoNotShader(
+      client_id, "glUniformBlockBinding");
+  if (!program) {
+    return error::kNoError;
+  }
+  GLuint service_id = program->service_id();
+  glUniformBlockBinding(service_id, index, binding);
   return error::kNoError;
 }
 

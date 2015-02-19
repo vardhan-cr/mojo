@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/environment/logging.h"
 
 namespace examples {

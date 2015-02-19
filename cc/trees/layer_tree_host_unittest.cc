@@ -82,7 +82,8 @@ class LayerTreeHostTestReadyToActivateEmpty : public LayerTreeHostTest {
   void BeginTest() override { PostSetNeedsCommitToMainThread(); }
 
   void CommitCompleteOnThread(LayerTreeHostImpl* impl) override {
-    const std::vector<PictureLayerImpl*>& layers = impl->GetPictureLayers();
+    const std::vector<PictureLayerImpl*>& layers =
+        impl->sync_tree()->picture_layers();
     required_for_activation_count_ = 0;
     for (const auto& layer : layers) {
       FakePictureLayerImpl* fake_layer =
@@ -139,7 +140,9 @@ class LayerTreeHostTestReadyToActivateNonEmpty
   FakeContentLayerClient client_;
 };
 
-SINGLE_AND_MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestReadyToActivateNonEmpty);
+// Multi-thread only because in single thread the commit goes directly to the
+// active tree, so notify ready to activate is skipped.
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestReadyToActivateNonEmpty);
 
 // Test if the LTHI receives ReadyToDraw notifications from the TileManager when
 // no raster tasks get scheduled.
@@ -154,7 +157,8 @@ class LayerTreeHostTestReadyToDrawEmpty : public LayerTreeHostTest {
 
   void NotifyReadyToDrawOnThread(LayerTreeHostImpl* impl) override {
     did_notify_ready_to_draw_ = true;
-    const std::vector<PictureLayerImpl*>& layers = impl->GetPictureLayers();
+    const std::vector<PictureLayerImpl*>& layers =
+        impl->active_tree()->picture_layers();
     all_tiles_required_for_draw_are_ready_to_draw_ =
         impl->tile_manager()->IsReadyToDraw();
     for (const auto& layer : layers) {
@@ -578,7 +582,7 @@ class LayerTreeHostTestNoExtraCommitFromScrollbarInvalidate
 
   void AfterTest() override {
     EXPECT_EQ(gfx::Size(40, 40).ToString(),
-              scrollbar_->content_bounds().ToString());
+              scrollbar_->internal_content_bounds().ToString());
   }
 
  private:
@@ -1793,7 +1797,6 @@ class EvictionTestLayerImpl : public LayerImpl {
   ~EvictionTestLayerImpl() override {}
 
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override {
     ASSERT_TRUE(has_texture_);
     ASSERT_NE(0u, layer_tree_impl()->resource_provider()->num_resources());
@@ -2940,8 +2943,10 @@ class LayerTreeHostTestDeferredInitialize : public LayerTreeHostTest {
         static_cast<FakeOutputSurface*>(host_impl->output_surface());
     scoped_refptr<TestContextProvider> context_provider =
         TestContextProvider::Create();  // Not bound to thread.
-    EXPECT_TRUE(
-        fake_output_surface->InitializeAndSetContext3d(context_provider));
+    scoped_refptr<TestContextProvider> worker_context_provider =
+        TestContextProvider::Create();  // Not bound to thread.
+    EXPECT_TRUE(fake_output_surface->InitializeAndSetContext3d(
+        context_provider, worker_context_provider));
     did_initialize_gl_ = true;
   }
 
@@ -5172,7 +5177,7 @@ class LayerTreeHostTestGpuRasterizationForced : public LayerTreeHostTest {
   }
 
   void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
-    EXPECT_TRUE(host_impl->pending_tree()->use_gpu_rasterization());
+    EXPECT_TRUE(host_impl->sync_tree()->use_gpu_rasterization());
     EXPECT_TRUE(host_impl->use_gpu_rasterization());
   }
 
@@ -5797,14 +5802,17 @@ class RasterizeWithGpuRasterizationCreatesResources : public LayerTreeHostTest {
 
 MULTI_THREAD_IMPL_TEST_F(RasterizeWithGpuRasterizationCreatesResources);
 
-class GpuRasterizationRasterizesVisibleOnly : public LayerTreeHostTest {
+class SynchronousGpuRasterizationRasterizesVisibleOnly
+    : public LayerTreeHostTest {
  protected:
-  GpuRasterizationRasterizesVisibleOnly() : viewport_size_(1024, 2048) {}
+  SynchronousGpuRasterizationRasterizesVisibleOnly()
+      : viewport_size_(1024, 2048) {}
 
   void InitializeSettings(LayerTreeSettings* settings) override {
     settings->impl_side_painting = true;
     settings->gpu_rasterization_enabled = true;
     settings->gpu_rasterization_forced = true;
+    settings->threaded_gpu_rasterization_enabled = false;
   }
 
   void SetupTree() override {
@@ -5856,7 +5864,54 @@ class GpuRasterizationRasterizesVisibleOnly : public LayerTreeHostTest {
   gfx::Size viewport_size_;
 };
 
-MULTI_THREAD_IMPL_TEST_F(GpuRasterizationRasterizesVisibleOnly);
+MULTI_THREAD_IMPL_TEST_F(SynchronousGpuRasterizationRasterizesVisibleOnly);
+
+class ThreadedGpuRasterizationRasterizesBorderTiles : public LayerTreeHostTest {
+ protected:
+  ThreadedGpuRasterizationRasterizesBorderTiles()
+      : viewport_size_(1024, 2048) {}
+
+  void InitializeSettings(LayerTreeSettings* settings) override {
+    settings->impl_side_painting = true;
+    settings->gpu_rasterization_enabled = true;
+    settings->gpu_rasterization_forced = true;
+    settings->threaded_gpu_rasterization_enabled = true;
+  }
+
+  void SetupTree() override {
+    client_.set_fill_with_nonsolid_color(true);
+
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
+    scoped_refptr<FakePictureLayer> root =
+        FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
+    root->SetBounds(gfx::Size(10000, 10000));
+    root->SetContentsOpaque(true);
+
+    layer_tree_host()->SetRootLayer(root);
+    LayerTreeHostTest::SetupTree();
+    layer_tree_host()->SetViewportSize(viewport_size_);
+  }
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
+                                   LayerTreeHostImpl::FrameData* frame_data,
+                                   DrawResult draw_result) override {
+    EXPECT_EQ(10u, host_impl->resource_provider()->num_resources());
+    EndTest();
+    return draw_result;
+  }
+
+  void AfterTest() override {}
+
+ private:
+  FakeContentLayerClient client_;
+  gfx::Size viewport_size_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(ThreadedGpuRasterizationRasterizesBorderTiles);
 
 class LayerTreeHostTestContinuousDrawWhenCreatingVisibleTiles
     : public LayerTreeHostTest {

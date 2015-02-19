@@ -107,6 +107,7 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
       int load_server_info_timeout,
       float load_server_info_timeout_srtt_multiplier,
       bool enable_truncated_connection_ids,
+      bool enable_connection_racing,
       const QuicTagVector& connection_options);
   ~QuicStreamFactory() override;
 
@@ -178,6 +179,11 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
     quic_server_info_factory_ = quic_server_info_factory;
   }
 
+  bool enable_connection_racing() const { return enable_connection_racing_; }
+  void set_enable_connection_racing(bool enable_connection_racing) {
+    enable_connection_racing_ = enable_connection_racing;
+  }
+
  private:
   class Job;
   friend class test::QuicStreamFactoryPeer;
@@ -204,10 +210,17 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
   typedef std::set<QuicClientSession*> SessionSet;
   typedef std::map<IpAliasKey, SessionSet> IPAliasMap;
   typedef std::map<QuicServerId, QuicCryptoClientConfig*> CryptoConfigMap;
-  typedef std::map<QuicServerId, Job*> JobMap;
-  typedef std::map<QuicStreamRequest*, Job*> RequestMap;
+  typedef std::set<Job*> JobSet;
+  typedef std::map<QuicServerId, JobSet> JobMap;
+  typedef std::map<QuicStreamRequest*, QuicServerId> RequestMap;
   typedef std::set<QuicStreamRequest*> RequestSet;
-  typedef std::map<Job*, RequestSet> JobRequestsMap;
+  typedef std::map<QuicServerId, RequestSet> ServerIDRequestsMap;
+
+  // Creates a job which doesn't wait for server config to be loaded from the
+  // disk cache. This job is started via a PostTask.
+  void CreateAuxilaryJob(const QuicServerId server_id,
+                         bool is_post,
+                         const BoundNetLog& net_log);
 
   // Returns a newly created QuicHttpStream owned by the caller, if a
   // matching session already exists.  Returns NULL otherwise.
@@ -232,6 +245,10 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
   // have ServerNetworkStats for the given |server_id|.
   int64 GetServerNetworkStatsSmoothedRttInMicroseconds(
       const QuicServerId& server_id) const;
+
+  // Helped methods.
+  bool WasAlternateProtocolRecentlyBroken(const QuicServerId& server_id) const;
+  bool CryptoConfigCacheIsEmpty(const QuicServerId& server_id);
 
   // Initializes the cached state associated with |server_id| in
   // |crypto_config_| with the information in |server_info|.
@@ -274,7 +291,7 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
   QuicCryptoClientConfig crypto_config_;
 
   JobMap active_jobs_;
-  JobRequestsMap job_requests_map_;
+  ServerIDRequestsMap job_requests_map_;
   RequestMap active_requests_;
 
   QuicVersionVector supported_versions_;
@@ -304,6 +321,11 @@ class NET_EXPORT_PRIVATE QuicStreamFactory
 
   // Set this for setting config's BytesForConnectionIdToSend (TCID param) to 0.
   bool enable_truncated_connection_ids_;
+
+  // Set if we want to race connections - one connection that sends
+  // INCHOATE_HELLO and another connection that sends CHLO after loading server
+  // config from the disk cache.
+  bool enable_connection_racing_;
 
   // Each profile will (probably) have a unique port_seed_ value.  This value is
   // used to help seed a pseudo-random number generator (PortSuggester) so that

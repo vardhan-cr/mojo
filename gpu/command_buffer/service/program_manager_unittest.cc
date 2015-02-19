@@ -242,7 +242,7 @@ class ProgramManagerWithShaderTest : public GpuServiceTest {
 
     program_->AttachShader(&shader_manager_, vertex_shader);
     program_->AttachShader(&shader_manager_, fragment_shader);
-    program_->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+    program_->Link(NULL, Program::kCountOnlyStaticallyUsed,
                    base::Bind(&ShaderCacheCb));
   }
 
@@ -272,7 +272,7 @@ class ProgramManagerWithShaderTest : public GpuServiceTest {
       SetupShader(kAttribs, kNumAttribs, kUniforms, kNumUniforms,
                   service_id);
     }
-    program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+    program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                   base::Bind(&ShaderCacheCb));
     GLint link_status;
     program->GetProgramiv(GL_LINK_STATUS, &link_status);
@@ -715,7 +715,7 @@ TEST_F(ProgramManagerWithShaderTest, GLDriverReturnsGLUnderscoreUniform) {
   ASSERT_TRUE(program != NULL);
   EXPECT_TRUE(program->AttachShader(&shader_manager_, vshader));
   EXPECT_TRUE(program->AttachShader(&shader_manager_, fshader));
-  program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+  program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                 base::Bind(&ShaderCacheCb));
   GLint value = 0;
   program->GetProgramiv(GL_ACTIVE_ATTRIBUTES, &value);
@@ -784,7 +784,7 @@ TEST_F(ProgramManagerWithShaderTest, SimilarArrayNames) {
   ASSERT_TRUE(program != NULL);
   EXPECT_TRUE(program->AttachShader(&shader_manager_, vshader));
   EXPECT_TRUE(program->AttachShader(&shader_manager_, fshader));
-  program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+  program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                 base::Bind(&ShaderCacheCb));
 
   // Check that we get the correct locations.
@@ -880,7 +880,7 @@ TEST_F(ProgramManagerWithShaderTest, GLDriverReturnsWrongTypeInfo) {
   ASSERT_TRUE(program!= NULL);
   EXPECT_TRUE(program->AttachShader(&shader_manager_, vshader));
   EXPECT_TRUE(program->AttachShader(&shader_manager_, fshader));
-  program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+  program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                 base::Bind(&ShaderCacheCb));
   // Check that we got the good type, not the bad.
   // Check Attribs
@@ -1221,6 +1221,199 @@ TEST_F(ProgramManagerWithShaderTest, ProgramInfoGetUniformBlocksValid) {
         .RetiresOnSaturation();
   }
   program->GetUniformBlocks(&bucket);
+  EXPECT_EQ(sizeof(Data), bucket.size());
+  Data* bucket_data = bucket.GetDataAs<Data*>(0, sizeof(Data));
+  EXPECT_TRUE(bucket_data != NULL);
+  EXPECT_EQ(0, memcmp(&data, bucket_data, sizeof(Data)));
+}
+
+TEST_F(ProgramManagerWithShaderTest,
+       ProgramInfoGetTransformFeedbackVaryingsNone) {
+  CommonDecoder::Bucket bucket;
+  const Program* program = manager_.GetProgram(kClientProgramId);
+  ASSERT_TRUE(program != NULL);
+  // The program's previous link failed.
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_FALSE))
+      .RetiresOnSaturation();
+  EXPECT_TRUE(program->GetTransformFeedbackVaryings(&bucket));
+  EXPECT_EQ(sizeof(TransformFeedbackVaryingsHeader), bucket.size());
+  TransformFeedbackVaryingsHeader* header =
+      bucket.GetDataAs<TransformFeedbackVaryingsHeader*>(
+          0, sizeof(TransformFeedbackVaryingsHeader));
+  EXPECT_TRUE(header != NULL);
+  EXPECT_EQ(0u, header->num_transform_feedback_varyings);
+  // Zero uniform blocks.
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_TRUE))
+      .RetiresOnSaturation();
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(
+                  kServiceProgramId, GL_TRANSFORM_FEEDBACK_VARYINGS, _))
+      .WillOnce(SetArgPointee<2>(0))
+      .RetiresOnSaturation();
+  EXPECT_TRUE(program->GetTransformFeedbackVaryings(&bucket));
+  EXPECT_EQ(sizeof(TransformFeedbackVaryingsHeader), bucket.size());
+  header = bucket.GetDataAs<TransformFeedbackVaryingsHeader*>(
+      0, sizeof(TransformFeedbackVaryingsHeader));
+  EXPECT_TRUE(header != NULL);
+  EXPECT_EQ(0u, header->num_transform_feedback_varyings);
+}
+
+TEST_F(ProgramManagerWithShaderTest,
+       ProgramInfoGetTransformFeedbackVaryingsValid) {
+  CommonDecoder::Bucket bucket;
+  const Program* program = manager_.GetProgram(kClientProgramId);
+  ASSERT_TRUE(program != NULL);
+  struct Data {
+    TransformFeedbackVaryingsHeader header;
+    TransformFeedbackVaryingInfo entry[2];
+    char name0[4];
+    char name1[8];
+  };
+  Data data;
+  // The names needs to be of size 4*k-1 to avoid padding in the struct Data.
+  // This is a testing only problem.
+  const char* kName[] = { "cow", "chicken" };
+  data.header.num_transform_feedback_varyings = 2;
+  data.entry[0].size = 1;
+  data.entry[0].type = GL_FLOAT_VEC2;
+  data.entry[0].name_offset = ComputeOffset(&data, data.name0);
+  data.entry[0].name_length = arraysize(data.name0);
+  data.entry[1].size = 2;
+  data.entry[1].type = GL_FLOAT;
+  data.entry[1].name_offset = ComputeOffset(&data, data.name1);
+  data.entry[1].name_length = arraysize(data.name1);
+  memcpy(data.name0, kName[0], arraysize(data.name0));
+  memcpy(data.name1, kName[1], arraysize(data.name1));
+
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_TRUE))
+      .RetiresOnSaturation();
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(
+                  kServiceProgramId, GL_TRANSFORM_FEEDBACK_VARYINGS, _))
+      .WillOnce(SetArgPointee<2>(data.header.num_transform_feedback_varyings))
+      .RetiresOnSaturation();
+  GLsizei max_length = 1 + std::max(strlen(kName[0]), strlen(kName[1]));
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId,
+                           GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, _))
+      .WillOnce(SetArgPointee<2>(max_length))
+      .RetiresOnSaturation();
+  for (uint32_t ii = 0; ii < data.header.num_transform_feedback_varyings;
+       ++ii) {
+    EXPECT_CALL(*(gl_.get()),
+                GetTransformFeedbackVarying(
+                    kServiceProgramId, ii, max_length, _, _, _, _))
+        .WillOnce(DoAll(
+            SetArgPointee<3>(data.entry[ii].name_length - 1),
+            SetArgPointee<4>(data.entry[ii].size),
+            SetArgPointee<5>(data.entry[ii].type),
+            SetArrayArgument<6>(
+                kName[ii], kName[ii] + data.entry[ii].name_length)))
+        .RetiresOnSaturation();
+  }
+  program->GetTransformFeedbackVaryings(&bucket);
+  EXPECT_EQ(sizeof(Data), bucket.size());
+  Data* bucket_data = bucket.GetDataAs<Data*>(0, sizeof(Data));
+  EXPECT_TRUE(bucket_data != NULL);
+  EXPECT_EQ(0, memcmp(&data, bucket_data, sizeof(Data)));
+}
+
+TEST_F(ProgramManagerWithShaderTest, ProgramInfoGetUniformsES3None) {
+  CommonDecoder::Bucket bucket;
+  const Program* program = manager_.GetProgram(kClientProgramId);
+  ASSERT_TRUE(program != NULL);
+  // The program's previous link failed.
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_FALSE))
+      .RetiresOnSaturation();
+  EXPECT_TRUE(program->GetUniformsES3(&bucket));
+  EXPECT_EQ(sizeof(UniformsES3Header), bucket.size());
+  UniformsES3Header* header =
+      bucket.GetDataAs<UniformsES3Header*>(0, sizeof(UniformsES3Header));
+  EXPECT_TRUE(header != NULL);
+  EXPECT_EQ(0u, header->num_uniforms);
+  // Zero uniform blocks.
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_TRUE))
+      .RetiresOnSaturation();
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_ACTIVE_UNIFORMS, _))
+      .WillOnce(SetArgPointee<2>(0))
+      .RetiresOnSaturation();
+  EXPECT_TRUE(program->GetUniformsES3(&bucket));
+  EXPECT_EQ(sizeof(UniformsES3Header), bucket.size());
+  header =
+      bucket.GetDataAs<UniformsES3Header*>(0, sizeof(UniformsES3Header));
+  EXPECT_TRUE(header != NULL);
+  EXPECT_EQ(0u, header->num_uniforms);
+}
+
+TEST_F(ProgramManagerWithShaderTest, ProgramInfoGetUniformsES3Valid) {
+  CommonDecoder::Bucket bucket;
+  const Program* program = manager_.GetProgram(kClientProgramId);
+  ASSERT_TRUE(program != NULL);
+  struct Data {
+    UniformsES3Header header;
+    UniformES3Info entry[2];
+  };
+  Data data;
+  const GLint kBlockIndex[] = { -1, 2 };
+  const GLint kOffset[] = { 3, 4 };
+  const GLint kArrayStride[] = { 7, 8 };
+  const GLint kMatrixStride[] = { 9, 10 };
+  const GLint kIsRowMajor[] = { 0, 1 };
+  data.header.num_uniforms = 2;
+  for (uint32_t ii = 0; ii < data.header.num_uniforms; ++ii) {
+    data.entry[ii].block_index = kBlockIndex[ii];
+    data.entry[ii].offset = kOffset[ii];
+    data.entry[ii].array_stride = kArrayStride[ii];
+    data.entry[ii].matrix_stride = kMatrixStride[ii];
+    data.entry[ii].is_row_major = kIsRowMajor[ii];
+  }
+
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_LINK_STATUS, _))
+      .WillOnce(SetArgPointee<2>(GL_TRUE))
+      .RetiresOnSaturation();
+  EXPECT_CALL(*(gl_.get()),
+              GetProgramiv(kServiceProgramId, GL_ACTIVE_UNIFORMS, _))
+      .WillOnce(SetArgPointee<2>(data.header.num_uniforms))
+      .RetiresOnSaturation();
+
+  const GLenum kPname[] = {
+    GL_UNIFORM_BLOCK_INDEX,
+    GL_UNIFORM_OFFSET,
+    GL_UNIFORM_ARRAY_STRIDE,
+    GL_UNIFORM_MATRIX_STRIDE,
+    GL_UNIFORM_IS_ROW_MAJOR,
+  };
+  const GLint* kParams[] = {
+    kBlockIndex,
+    kOffset,
+    kArrayStride,
+    kMatrixStride,
+    kIsRowMajor,
+  };
+  const size_t kNumIterations = arraysize(kPname);
+  for (size_t ii = 0; ii < kNumIterations; ++ii) {
+    EXPECT_CALL(*(gl_.get()),
+                GetActiveUniformsiv(
+                    kServiceProgramId, data.header.num_uniforms, _,
+                    kPname[ii], _))
+      .WillOnce(SetArrayArgument<4>(
+          kParams[ii], kParams[ii] + data.header.num_uniforms))
+      .RetiresOnSaturation();
+  }
+
+  program->GetUniformsES3(&bucket);
   EXPECT_EQ(sizeof(Data), bucket.size());
   Data* bucket_data = bucket.GetDataAs<Data*>(0, sizeof(Data));
   EXPECT_TRUE(bucket_data != NULL);
@@ -1631,7 +1824,7 @@ TEST_F(ProgramManagerWithShaderTest, ClearWithSamplerTypes) {
     const size_t kNumUniforms = arraysize(kUniforms);
     SetupShader(kAttribs, kNumAttribs, kUniforms, kNumUniforms,
                 kServiceProgramId);
-    program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+    program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                   base::Bind(&ShaderCacheCb));
     SetupExpectationsForClearingUniforms(kUniforms, kNumUniforms);
     manager_.ClearUniforms(program);
@@ -1704,7 +1897,7 @@ TEST_F(ProgramManagerWithShaderTest, BindUniformLocation) {
   const size_t kNumUniforms = arraysize(kUniforms);
   SetupShader(kAttribs, kNumAttribs, kUniforms, kNumUniforms,
               kServiceProgramId);
-  program->Link(NULL, NULL, NULL, Program::kCountOnlyStaticallyUsed,
+  program->Link(NULL, Program::kCountOnlyStaticallyUsed,
                 base::Bind(&ShaderCacheCb));
 
   EXPECT_EQ(kUniform1DesiredLocation,
@@ -1765,9 +1958,7 @@ class ProgramManagerWithCacheTest : public GpuServiceTest {
   void SetProgramCached() {
     cache_->LinkedProgramCacheSuccess(
         vertex_shader_->source(),
-        NULL,
         fragment_shader_->source(),
-        NULL,
         &program_->bind_attrib_location_map());
   }
 
@@ -1784,9 +1975,7 @@ class ProgramManagerWithCacheTest : public GpuServiceTest {
     EXPECT_CALL(*cache_.get(), SaveLinkedProgram(
         program->service_id(),
         vertex_shader,
-        NULL,
         fragment_shader,
-        NULL,
         &program->bind_attrib_location_map(),
         _)).Times(1);
   }
@@ -1804,9 +1993,7 @@ class ProgramManagerWithCacheTest : public GpuServiceTest {
     EXPECT_CALL(*cache_.get(), SaveLinkedProgram(
         program->service_id(),
         vertex_shader,
-        NULL,
         fragment_shader,
-        NULL,
         &program->bind_attrib_location_map(),
         _)).Times(0);
   }
@@ -1828,9 +2015,7 @@ class ProgramManagerWithCacheTest : public GpuServiceTest {
     EXPECT_CALL(*cache_.get(),
                 LoadLinkedProgram(service_program_id,
                                   vertex_shader,
-                                  NULL,
                                   fragment_shader,
-                                  NULL,
                                   &program->bind_attrib_location_map(),
                                   _))
         .WillOnce(Return(result));
@@ -1921,8 +2106,8 @@ TEST_F(ProgramManagerWithCacheTest, CacheProgramOnSuccessfulLink) {
   SetShadersCompiled();
   SetExpectationsForProgramLink();
   SetExpectationsForProgramCached();
-  EXPECT_TRUE(program_->Link(NULL, NULL, NULL,
-      Program::kCountOnlyStaticallyUsed, base::Bind(&ShaderCacheCb)));
+  EXPECT_TRUE(program_->Link(NULL, Program::kCountOnlyStaticallyUsed,
+                             base::Bind(&ShaderCacheCb)));
 }
 
 TEST_F(ProgramManagerWithCacheTest, LoadProgramOnProgramCacheHit) {
@@ -1935,8 +2120,8 @@ TEST_F(ProgramManagerWithCacheTest, LoadProgramOnProgramCacheHit) {
   SetExpectationsForNotCachingProgram();
   SetExpectationsForProgramLoadSuccess();
 
-  EXPECT_TRUE(program_->Link(NULL, NULL, NULL,
-      Program::kCountOnlyStaticallyUsed, base::Bind(&ShaderCacheCb)));
+  EXPECT_TRUE(program_->Link(NULL, Program::kCountOnlyStaticallyUsed,
+                             base::Bind(&ShaderCacheCb)));
 }
 
 }  // namespace gles2

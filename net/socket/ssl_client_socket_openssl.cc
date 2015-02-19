@@ -18,7 +18,6 @@
 #include "base/environment.h"
 #include "base/memory/singleton.h"
 #include "base/metrics/histogram.h"
-#include "base/metrics/sparse_histogram.h"
 #include "base/profiler/scoped_tracker.h"
 #include "base/strings/string_piece.h"
 #include "base/synchronization/lock.h"
@@ -473,12 +472,16 @@ int SSLClientSocketOpenSSL::Connect(const CompletionCallback& callback) {
   int rv = Init();
   if (rv != OK) {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
-    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     return rv;
   }
 
   // Set SSL to client mode. Handshake happens in the loop below.
   SSL_set_connect_state(ssl_);
+
+  // Enable fastradio padding.
+  SSL_enable_fastradio_padding(ssl_,
+                               ssl_config_.fastradio_padding_enabled &&
+                                   ssl_config_.fastradio_padding_eligible);
 
   GotoState(STATE_HANDSHAKE);
   rv = DoHandshakeLoop(OK);
@@ -486,7 +489,6 @@ int SSLClientSocketOpenSSL::Connect(const CompletionCallback& callback) {
     user_connect_callback_ = callback;
   } else {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
-    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     if (rv < OK)
       OnHandshakeCompletion();
   }
@@ -1087,6 +1089,7 @@ int SSLClientSocketOpenSSL::DoHandshake() {
 }
 
 int SSLClientSocketOpenSSL::DoChannelIDLookup() {
+  net_log_.AddEvent(NetLog::TYPE_SSL_CHANNEL_ID_REQUESTED);
   GotoState(STATE_CHANNEL_ID_LOOKUP_COMPLETE);
   return channel_id_service_->GetOrCreateChannelID(
       host_and_port_.host(),
@@ -1133,6 +1136,7 @@ int SSLClientSocketOpenSSL::DoChannelIDLookupComplete(int result) {
 
   // Return to the handshake.
   set_channel_id_sent(true);
+  net_log_.AddEvent(NetLog::TYPE_SSL_CHANNEL_ID_PROVIDED);
   GotoState(STATE_HANDSHAKE);
   return OK;
 }
@@ -1366,7 +1370,6 @@ void SSLClientSocketOpenSSL::OnHandshakeIOComplete(int result) {
   int rv = DoHandshakeLoop(result);
   if (rv != ERR_IO_PENDING) {
     net_log_.EndEventWithNetErrorCode(NetLog::TYPE_SSL_CONNECT, rv);
-    UMA_HISTOGRAM_SPARSE_SLOWLY("Net.SSL_Connection_Error", std::abs(rv));
     DoConnectCallback(rv);
   }
 }

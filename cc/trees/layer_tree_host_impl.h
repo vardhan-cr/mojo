@@ -174,15 +174,18 @@ class CC_EXPORT LayerTreeHostImpl
   ScrollElasticityHelper* CreateScrollElasticityHelper() override;
 
   // TopControlsManagerClient implementation.
-  void SetControlsTopOffset(float offset) override;
-  float ControlsTopOffset() const override;
+  float TopControlsHeight() const override;
+  void SetCurrentTopControlsShownRatio(float offset) override;
+  float CurrentTopControlsShownRatio() const override;
   void DidChangeTopControlsPosition() override;
   bool HaveRootScrollLayer() const override;
+
+  void UpdateViewportContainerSizes();
 
   struct CC_EXPORT FrameData : public RenderPassSink {
     FrameData();
     ~FrameData() override;
-    void AsValueInto(base::debug::TracedValue* value) const;
+    void AsValueInto(base::trace_event::TracedValue* value) const;
 
     std::vector<gfx::Rect> occluding_screen_space_rects;
     std::vector<gfx::Rect> non_occluding_screen_space_rects;
@@ -254,10 +257,6 @@ class CC_EXPORT LayerTreeHostImpl
       TreePriority tree_priority) override;
   void SetIsLikelyToRequireADraw(bool is_likely_to_require_a_draw) override;
 
-  // Returns existing picture layers.
-  // TODO(vmpstr): Remove this, it's only used in tests.
-  const std::vector<PictureLayerImpl*>& GetPictureLayers() const;
-
   // ScrollbarAnimationControllerClient implementation.
   void PostDelayedScrollbarFade(const base::Closure& start_fade,
                                 base::TimeDelta delay) override;
@@ -314,6 +313,7 @@ class CC_EXPORT LayerTreeHostImpl
   }
   ResourcePool* resource_pool() { return resource_pool_.get(); }
   Renderer* renderer() { return renderer_.get(); }
+  Rasterizer* rasterizer() { return rasterizer_.get(); }
   const RendererCapabilitiesImpl& GetRendererCapabilities() const;
 
   virtual bool SwapBuffers(const FrameData& frame);
@@ -449,15 +449,15 @@ class CC_EXPORT LayerTreeHostImpl
     return begin_impl_frame_interval_;
   }
 
-  void AsValueInto(base::debug::TracedValue* value) const;
+  void AsValueInto(base::trace_event::TracedValue* value) const;
   void AsValueWithFrameInto(FrameData* frame,
-                            base::debug::TracedValue* value) const;
-  scoped_refptr<base::debug::ConvertableToTraceFormat> AsValue() const;
-  scoped_refptr<base::debug::ConvertableToTraceFormat> AsValueWithFrame(
+                            base::trace_event::TracedValue* value) const;
+  scoped_refptr<base::trace_event::ConvertableToTraceFormat> AsValue() const;
+  scoped_refptr<base::trace_event::ConvertableToTraceFormat> AsValueWithFrame(
       FrameData* frame) const;
-  scoped_refptr<base::debug::ConvertableToTraceFormat> ActivationStateAsValue()
-      const;
-  void ActivationStateAsValueInto(base::debug::TracedValue* value) const;
+  scoped_refptr<base::trace_event::ConvertableToTraceFormat>
+  ActivationStateAsValue() const;
+  void ActivationStateAsValueInto(base::trace_event::TracedValue* value) const;
 
   bool page_scale_animation_active() const { return !!page_scale_animation_; }
 
@@ -495,9 +495,6 @@ class CC_EXPORT LayerTreeHostImpl
   void InsertSwapPromiseMonitor(SwapPromiseMonitor* monitor);
   void RemoveSwapPromiseMonitor(SwapPromiseMonitor* monitor);
 
-  void RegisterPictureLayerImpl(PictureLayerImpl* layer);
-  void UnregisterPictureLayerImpl(PictureLayerImpl* layer);
-
   void GetPictureLayerImplPairs(std::vector<PictureLayerImpl::Pair>* layers,
                                 bool need_valid_tile_priorities) const;
 
@@ -530,7 +527,6 @@ class CC_EXPORT LayerTreeHostImpl
       gpu::GpuMemoryBufferManager* gpu_memory_buffer_manager,
       int id);
 
-  void UpdateViewportContainerSizes();
 
   // Virtual for testing.
   virtual void AnimateLayers(base::TimeTicks monotonic_time);
@@ -550,7 +546,6 @@ class CC_EXPORT LayerTreeHostImpl
   void RecreateTreeResources();
   void EnforceZeroBudget(bool zero_budget);
 
-  bool UsePendingTreeForSync() const;
   bool IsSynchronousSingleThreaded() const;
 
   // Scroll by preferring to move the outer viewport first, only moving the
@@ -732,8 +727,6 @@ class CC_EXPORT LayerTreeHostImpl
   int id_;
 
   std::set<SwapPromiseMonitor*> swap_promise_monitor_;
-
-  std::vector<PictureLayerImpl*> picture_layers_;
   std::vector<PictureLayerImpl::Pair> picture_layer_pairs_;
 
   bool requires_high_res_to_draw_;

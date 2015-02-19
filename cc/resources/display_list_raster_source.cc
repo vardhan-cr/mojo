@@ -50,8 +50,8 @@ DisplayListRasterSource::DisplayListRasterSource()
 DisplayListRasterSource::DisplayListRasterSource(
     const DisplayListRecordingSource* other)
     : display_list_(other->display_list_),
-      background_color_(SK_ColorTRANSPARENT),
-      requires_clear_(true),
+      background_color_(other->background_color_),
+      requires_clear_(other->requires_clear_),
       can_use_lcd_text_(other->can_use_lcd_text_),
       is_solid_color_(other->is_solid_color_),
       solid_color_(other->solid_color_),
@@ -178,20 +178,12 @@ void DisplayListRasterSource::SetShouldAttemptToUseDistanceFieldText() {
   should_attempt_to_use_distance_field_text_ = true;
 }
 
-void DisplayListRasterSource::SetBackgoundColor(SkColor background_color) {
-  background_color_ = background_color;
-}
-
-void DisplayListRasterSource::SetRequiresClear(bool requires_clear) {
-  requires_clear_ = requires_clear;
-}
-
 bool DisplayListRasterSource::ShouldAttemptToUseDistanceFieldText() const {
   return should_attempt_to_use_distance_field_text_;
 }
 
 void DisplayListRasterSource::AsValueInto(
-    base::debug::TracedValue* array) const {
+    base::trace_event::TracedValue* array) const {
   if (display_list_.get())
     TracedValue::AppendIDRef(display_list_.get(), array);
 }

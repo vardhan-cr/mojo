@@ -10,6 +10,7 @@ import argparse
 import base64
 import json
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -247,8 +248,11 @@ def main():
   set_symbolizer_path()
   asan_symbolize.demangle = True
   asan_symbolize.fix_filename_patterns = args.strip_path_prefix
+  # Most source paths for Chromium binaries start with
+  # /path/to/src/out/Release/../../
+  asan_symbolize.fix_filename_patterns.append('Release/../../')
   binary_name_filter = None
-  if os.uname()[0] == 'Darwin':
+  if platform.uname()[0] == 'Darwin':
     binary_name_filter = make_chrome_osx_binary_name_filter(
         chrome_product_dir_path(args.executable_path))
   loop = asan_symbolize.SymbolizationLoop(

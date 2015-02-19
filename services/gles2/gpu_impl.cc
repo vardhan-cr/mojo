@@ -17,7 +17,7 @@ namespace gles2 {
 
 GpuImpl::State::State()
     : control_thread_("gpu_command_buffer_control"),
-      sync_point_manager_(new gpu::SyncPointManager),
+      sync_point_manager_(gpu::SyncPointManager::Create(true)),
       share_group_(new gfx::GLShareGroup),
       mailbox_manager_(new gpu::gles2::MailboxManagerImpl) {
   control_thread_.Start();

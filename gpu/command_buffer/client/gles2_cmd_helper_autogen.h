@@ -702,6 +702,18 @@ void GetActiveUniform(GLuint program,
   }
 }
 
+void GetActiveUniformBlockiv(GLuint program,
+                             GLuint index,
+                             GLenum pname,
+                             uint32_t params_shm_id,
+                             uint32_t params_shm_offset) {
+  gles2::cmds::GetActiveUniformBlockiv* c =
+      GetCmdSpace<gles2::cmds::GetActiveUniformBlockiv>();
+  if (c) {
+    c->Init(program, index, pname, params_shm_id, params_shm_offset);
+  }
+}
+
 void GetActiveUniformBlockName(GLuint program,
                                GLuint index,
                                uint32_t name_bucket_id,
@@ -711,6 +723,19 @@ void GetActiveUniformBlockName(GLuint program,
       GetCmdSpace<gles2::cmds::GetActiveUniformBlockName>();
   if (c) {
     c->Init(program, index, name_bucket_id, result_shm_id, result_shm_offset);
+  }
+}
+
+void GetActiveUniformsiv(GLuint program,
+                         uint32_t indices_bucket_id,
+                         GLenum pname,
+                         uint32_t params_shm_id,
+                         uint32_t params_shm_offset) {
+  gles2::cmds::GetActiveUniformsiv* c =
+      GetCmdSpace<gles2::cmds::GetActiveUniformsiv>();
+  if (c) {
+    c->Init(program, indices_bucket_id, pname, params_shm_id,
+            params_shm_offset);
   }
 }
 
@@ -933,6 +958,18 @@ void GetTexParameteriv(GLenum target,
   }
 }
 
+void GetTransformFeedbackVarying(GLuint program,
+                                 GLuint index,
+                                 uint32_t name_bucket_id,
+                                 uint32_t result_shm_id,
+                                 uint32_t result_shm_offset) {
+  gles2::cmds::GetTransformFeedbackVarying* c =
+      GetCmdSpace<gles2::cmds::GetTransformFeedbackVarying>();
+  if (c) {
+    c->Init(program, index, name_bucket_id, result_shm_id, result_shm_offset);
+  }
+}
+
 void GetUniformBlockIndex(GLuint program,
                           uint32_t name_bucket_id,
                           uint32_t index_shm_id,
@@ -961,6 +998,17 @@ void GetUniformiv(GLuint program,
   gles2::cmds::GetUniformiv* c = GetCmdSpace<gles2::cmds::GetUniformiv>();
   if (c) {
     c->Init(program, location, params_shm_id, params_shm_offset);
+  }
+}
+
+void GetUniformIndices(GLuint program,
+                       uint32_t names_bucket_id,
+                       uint32_t indices_shm_id,
+                       uint32_t indices_shm_offset) {
+  gles2::cmds::GetUniformIndices* c =
+      GetCmdSpace<gles2::cmds::GetUniformIndices>();
+  if (c) {
+    c->Init(program, names_bucket_id, indices_shm_id, indices_shm_offset);
   }
 }
 
@@ -1660,6 +1708,14 @@ void Uniform4uivImmediate(GLint location, GLsizei count, const GLuint* v) {
   }
 }
 
+void UniformBlockBinding(GLuint program, GLuint index, GLuint binding) {
+  gles2::cmds::UniformBlockBinding* c =
+      GetCmdSpace<gles2::cmds::UniformBlockBinding>();
+  if (c) {
+    c->Init(program, index, binding);
+  }
+}
+
 void UniformMatrix2fvImmediate(GLint location,
                                GLsizei count,
                                const GLfloat* value) {
@@ -2171,6 +2227,22 @@ void GetProgramInfoCHROMIUM(GLuint program, uint32_t bucket_id) {
 void GetUniformBlocksCHROMIUM(GLuint program, uint32_t bucket_id) {
   gles2::cmds::GetUniformBlocksCHROMIUM* c =
       GetCmdSpace<gles2::cmds::GetUniformBlocksCHROMIUM>();
+  if (c) {
+    c->Init(program, bucket_id);
+  }
+}
+
+void GetTransformFeedbackVaryingsCHROMIUM(GLuint program, uint32_t bucket_id) {
+  gles2::cmds::GetTransformFeedbackVaryingsCHROMIUM* c =
+      GetCmdSpace<gles2::cmds::GetTransformFeedbackVaryingsCHROMIUM>();
+  if (c) {
+    c->Init(program, bucket_id);
+  }
+}
+
+void GetUniformsES3CHROMIUM(GLuint program, uint32_t bucket_id) {
+  gles2::cmds::GetUniformsES3CHROMIUM* c =
+      GetCmdSpace<gles2::cmds::GetUniformsES3CHROMIUM>();
   if (c) {
     c->Init(program, bucket_id);
   }

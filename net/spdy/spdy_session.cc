@@ -15,7 +15,6 @@
 #include "base/metrics/field_trial.h"
 #include "base/metrics/histogram.h"
 #include "base/metrics/sparse_histogram.h"
-#include "base/metrics/stats_counters.h"
 #include "base/profiler/scoped_tracker.h"
 #include "base/stl_util.h"
 #include "base/strings/string_number_conversions.h"
@@ -718,9 +717,6 @@ void SpdySession::InitializeWithSocket(
   // requires re-working CreateFakeSpdySession(), though.
   DCHECK(connection->socket());
 
-  base::StatsCounter spdy_sessions("spdy.sessions");
-  spdy_sessions.Increment();
-
   connection_ = connection.Pass();
   is_secure_ = is_secure;
   certificate_error_code_ = certificate_error_code;
@@ -1084,8 +1080,6 @@ scoped_ptr<SpdyFrame> SpdySession::CreateSynStream(
     syn_frame.reset(buffered_spdy_framer_->SerializeFrame(headers));
   }
 
-  base::StatsCounter spdy_requests("spdy.requests");
-  spdy_requests.Increment();
   streams_initiated_count_++;
 
   if (net_log().IsLogging()) {
@@ -1468,6 +1462,9 @@ int SpdySession::DoReadComplete(int result) {
 }
 
 void SpdySession::PumpWriteLoop(WriteState expected_write_state, int result) {
+  // TODO(pkasting): Remove ScopedTracker below once crbug.com/457517 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION("457517 SpdySession::PumpWriteLoop"));
   CHECK(!in_io_loop_);
   DCHECK_EQ(write_state_, expected_write_state);
 
@@ -1519,6 +1516,9 @@ int SpdySession::DoWriteLoop(WriteState expected_write_state, int result) {
 }
 
 int SpdySession::DoWrite() {
+  // TODO(pkasting): Remove ScopedTracker below once crbug.com/457517 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION("457517 SpdySession::DoWrite"));
   CHECK(in_io_loop_);
 
   DCHECK(buffered_spdy_framer_);
@@ -1582,6 +1582,9 @@ int SpdySession::DoWrite() {
 }
 
 int SpdySession::DoWriteComplete(int result) {
+  // TODO(pkasting): Remove ScopedTracker below once crbug.com/457517 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION("457517 SpdySession::DoWriteComplete"));
   CHECK(in_io_loop_);
   DCHECK_NE(result, ERR_IO_PENDING);
   DCHECK_GT(in_flight_write_->GetRemainingSize(), 0u);
@@ -1649,6 +1652,9 @@ void SpdySession::DcheckDraining() const {
 
 void SpdySession::StartGoingAway(SpdyStreamId last_good_stream_id,
                                  Error status) {
+  // TODO(pkasting): Remove ScopedTracker below once crbug.com/457517 is fixed.
+  tracked_objects::ScopedTracker tracking_profile(
+      FROM_HERE_WITH_EXPLICIT_FUNCTION("457517 SpdySession::StartGoingAway"));
   DCHECK_GE(availability_state_, STATE_GOING_AWAY);
 
   // The loops below are carefully written to avoid reentrancy problems.
@@ -1768,13 +1774,9 @@ void SpdySession::LogAbandonedActiveStream(ActiveStreamMap::const_iterator it,
   DCHECK_GT(it->first, 0u);
   LogAbandonedStream(it->second.stream, status);
   ++streams_abandoned_count_;
-  base::StatsCounter abandoned_streams("spdy.abandoned_streams");
-  abandoned_streams.Increment();
   if (it->second.stream->type() == SPDY_PUSH_STREAM &&
       unclaimed_pushed_streams_.find(it->second.stream->url()) !=
       unclaimed_pushed_streams_.end()) {
-    base::StatsCounter abandoned_push_streams("spdy.abandoned_push_streams");
-    abandoned_push_streams.Increment();
   }
 }
 
@@ -1962,8 +1964,6 @@ void SpdySession::DeleteStream(scoped_ptr<SpdyStream> stream, int status) {
 }
 
 base::WeakPtr<SpdyStream> SpdySession::GetActivePushStream(const GURL& url) {
-  base::StatsCounter used_push_streams("spdy.claimed_push_streams");
-
   PushedStreamMap::iterator unclaimed_it = unclaimed_pushed_streams_.find(url);
   if (unclaimed_it == unclaimed_pushed_streams_.end())
     return base::WeakPtr<SpdyStream>();
@@ -1980,7 +1980,6 @@ base::WeakPtr<SpdyStream> SpdySession::GetActivePushStream(const GURL& url) {
   net_log_.AddEvent(NetLog::TYPE_SPDY_STREAM_ADOPTED_PUSH_STREAM,
                     base::Bind(&NetLogSpdyAdoptedPushStreamCallback,
                                active_it->second.stream->stream_id(), &url));
-  used_push_streams.Increment();
   return active_it->second.stream->GetWeakPtr();
 }
 
@@ -2255,14 +2254,9 @@ void SpdySession::OnSynStream(SpdyStreamId stream_id,
     return;
   }
 
-  if (OnInitialResponseHeadersReceived(response_headers,
-                                       response_time,
-                                       recv_first_byte_time,
-                                       active_it->second.stream) != OK)
-    return;
-
-  base::StatsCounter push_requests("spdy.pushed_streams");
-  push_requests.Increment();
+  OnInitialResponseHeadersReceived(response_headers, response_time,
+                                   recv_first_byte_time,
+                                   active_it->second.stream);
 }
 
 void SpdySession::DeleteExpiredPushedStreams() {
@@ -2758,9 +2752,6 @@ void SpdySession::OnPushPromise(SpdyStreamId stream_id,
   // TODO(baranovich): pass parent stream id priority?
   if (!TryCreatePushStream(promised_stream_id, stream_id, 0, headers))
     return;
-
-  base::StatsCounter push_requests("spdy.pushed_streams");
-  push_requests.Increment();
 }
 
 void SpdySession::SendStreamWindowUpdate(SpdyStreamId stream_id,

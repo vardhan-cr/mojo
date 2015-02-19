@@ -62,7 +62,12 @@
           "can_use_on_swarming_builders": true
         }
       },
-      "crypto_unittests",
+      {
+        "test": "crypto_unittests",
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        }
+      },
       "dbus_unittests",
       "device_unittests",
       "display_unittests",
@@ -240,7 +245,12 @@
           "can_use_on_swarming_builders": true
         }
       },
-      "crypto_unittests",
+      {
+        "test": "crypto_unittests",
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        }
+      },
       "dbus_unittests",
       "device_unittests",
       "display_unittests",
@@ -398,7 +408,12 @@
           "can_use_on_swarming_builders": true
         }
       },
-      "crypto_unittests",
+      {
+        "test": "crypto_unittests",
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        }
+      },
       "dbus_unittests",
       "device_unittests",
       "display_unittests",
@@ -538,6 +553,22 @@
       "ui_base_unittests",
       "unit_tests",
       "skia_unittests"
+    ]
+  },
+  "Android Tests (dbg)": {
+    "scripts": [
+      {
+        "name": "check_licenses",
+        "script": "webview_licenses.py"
+      }
+    ]
+  },
+  "Android Tests": {
+    "scripts": [
+      {
+        "name": "check_licenses",
+        "script": "webview_licenses.py"
+      }
     ]
   }
 }

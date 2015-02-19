@@ -500,6 +500,14 @@ void GLES2TraceImplementation::GetActiveUniform(GLuint program,
   gl_->GetActiveUniform(program, index, bufsize, length, size, type, name);
 }
 
+void GLES2TraceImplementation::GetActiveUniformBlockiv(GLuint program,
+                                                       GLuint index,
+                                                       GLenum pname,
+                                                       GLint* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetActiveUniformBlockiv");
+  gl_->GetActiveUniformBlockiv(program, index, pname, params);
+}
+
 void GLES2TraceImplementation::GetActiveUniformBlockName(GLuint program,
                                                          GLuint index,
                                                          GLsizei bufsize,
@@ -507,6 +515,15 @@ void GLES2TraceImplementation::GetActiveUniformBlockName(GLuint program,
                                                          char* name) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetActiveUniformBlockName");
   gl_->GetActiveUniformBlockName(program, index, bufsize, length, name);
+}
+
+void GLES2TraceImplementation::GetActiveUniformsiv(GLuint program,
+                                                   GLsizei count,
+                                                   const GLuint* indices,
+                                                   GLenum pname,
+                                                   GLint* params) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetActiveUniformsiv");
+  gl_->GetActiveUniformsiv(program, count, indices, pname, params);
 }
 
 void GLES2TraceImplementation::GetAttachedShaders(GLuint program,
@@ -662,6 +679,19 @@ void GLES2TraceImplementation::GetTexParameteriv(GLenum target,
   gl_->GetTexParameteriv(target, pname, params);
 }
 
+void GLES2TraceImplementation::GetTransformFeedbackVarying(GLuint program,
+                                                           GLuint index,
+                                                           GLsizei bufsize,
+                                                           GLsizei* length,
+                                                           GLsizei* size,
+                                                           GLenum* type,
+                                                           char* name) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu",
+                                "GLES2Trace::GetTransformFeedbackVarying");
+  gl_->GetTransformFeedbackVarying(program, index, bufsize, length, size, type,
+                                   name);
+}
+
 GLuint GLES2TraceImplementation::GetUniformBlockIndex(GLuint program,
                                                       const char* name) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetUniformBlockIndex");
@@ -680,6 +710,14 @@ void GLES2TraceImplementation::GetUniformiv(GLuint program,
                                             GLint* params) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetUniformiv");
   gl_->GetUniformiv(program, location, params);
+}
+
+void GLES2TraceImplementation::GetUniformIndices(GLuint program,
+                                                 GLsizei count,
+                                                 const char* const* names,
+                                                 GLuint* indices) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetUniformIndices");
+  gl_->GetUniformIndices(program, count, names, indices);
 }
 
 GLint GLES2TraceImplementation::GetUniformLocation(GLuint program,
@@ -1230,6 +1268,13 @@ void GLES2TraceImplementation::Uniform4uiv(GLint location,
   gl_->Uniform4uiv(location, count, v);
 }
 
+void GLES2TraceImplementation::UniformBlockBinding(GLuint program,
+                                                   GLuint index,
+                                                   GLuint binding) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UniformBlockBinding");
+  gl_->UniformBlockBinding(program, index, binding);
+}
+
 void GLES2TraceImplementation::UniformMatrix2fv(GLint location,
                                                 GLsizei count,
                                                 GLboolean transpose,
@@ -1673,6 +1718,24 @@ void GLES2TraceImplementation::GetUniformBlocksCHROMIUM(GLuint program,
                                                         void* info) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetUniformBlocksCHROMIUM");
   gl_->GetUniformBlocksCHROMIUM(program, bufsize, size, info);
+}
+
+void GLES2TraceImplementation::GetTransformFeedbackVaryingsCHROMIUM(
+    GLuint program,
+    GLsizei bufsize,
+    GLsizei* size,
+    void* info) {
+  TRACE_EVENT_BINARY_EFFICIENT0(
+      "gpu", "GLES2Trace::GetTransformFeedbackVaryingsCHROMIUM");
+  gl_->GetTransformFeedbackVaryingsCHROMIUM(program, bufsize, size, info);
+}
+
+void GLES2TraceImplementation::GetUniformsES3CHROMIUM(GLuint program,
+                                                      GLsizei bufsize,
+                                                      GLsizei* size,
+                                                      void* info) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::GetUniformsES3CHROMIUM");
+  gl_->GetUniformsES3CHROMIUM(program, bufsize, size, info);
 }
 
 GLuint GLES2TraceImplementation::CreateStreamTextureCHROMIUM(GLuint texture) {

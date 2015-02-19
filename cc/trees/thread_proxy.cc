@@ -153,6 +153,12 @@ bool ThreadProxy::IsStarted() const {
   return main().started;
 }
 
+bool ThreadProxy::CommitToActiveTree() const {
+  // With ThreadProxy we use a pending tree and activate it once it's ready to
+  // draw.
+  return false;
+}
+
 void ThreadProxy::SetLayerTreeHostClientReady() {
   TRACE_EVENT0("cc", "ThreadProxy::SetLayerTreeHostClientReady");
   Proxy::ImplThreadTaskRunner()->PostTask(
@@ -1232,12 +1238,12 @@ ThreadProxy::BeginMainFrameAndCommitState::BeginMainFrameAndCommitState()
 
 ThreadProxy::BeginMainFrameAndCommitState::~BeginMainFrameAndCommitState() {}
 
-void ThreadProxy::AsValueInto(base::debug::TracedValue* state) const {
+void ThreadProxy::AsValueInto(base::trace_event::TracedValue* state) const {
   CompletionEvent completion;
   {
     DebugScopedSetMainThreadBlocked main_thread_blocked(
         const_cast<ThreadProxy*>(this));
-    scoped_refptr<base::debug::TracedValue> state_refptr(state);
+    scoped_refptr<base::trace_event::TracedValue> state_refptr(state);
     Proxy::ImplThreadTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(&ThreadProxy::AsValueOnImplThread,
@@ -1248,8 +1254,9 @@ void ThreadProxy::AsValueInto(base::debug::TracedValue* state) const {
   }
 }
 
-void ThreadProxy::AsValueOnImplThread(CompletionEvent* completion,
-                                      base::debug::TracedValue* state) const {
+void ThreadProxy::AsValueOnImplThread(
+    CompletionEvent* completion,
+    base::trace_event::TracedValue* state) const {
   state->BeginDictionary("layer_tree_host_impl");
   impl().layer_tree_host_impl->AsValueInto(state);
   state->EndDictionary();

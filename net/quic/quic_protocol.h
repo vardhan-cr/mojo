@@ -48,9 +48,10 @@ typedef std::map<QuicTag, std::string> QuicTagValueMap;
 // QuicPriority is uint32. Use SpdyPriority when we change the QUIC_VERSION.
 typedef uint32 QuicPriority;
 
-// TODO(rch): Consider Quic specific names for these constants.
 // Default and initial maximum size in bytes of a QUIC packet.
 const QuicByteCount kDefaultMaxPacketSize = 1350;
+// Default initial maximum size in bytes of a QUIC packet for servers.
+const QuicByteCount kDefaultServerMaxPacketSize = 1000;
 // The maximum packet size of any QUIC packet, based on ethernet's max size,
 // minus the IP and UDP headers. IPv6 has a 40 byte header, UPD adds an
 // additional 8 bytes.  This is a total overhead of 48 bytes.  Ethernet's
@@ -513,6 +514,8 @@ enum QuicErrorCode {
   QUIC_TOO_MANY_OUTSTANDING_SENT_PACKETS = 68,
   // The connection has too many outstanding received packets.
   QUIC_TOO_MANY_OUTSTANDING_RECEIVED_PACKETS = 69,
+  // The quic connection job to load server config is cancelled.
+  QUIC_CONNECTION_CANCELLED = 70,
 
   // Crypto errors.
 
@@ -570,7 +573,7 @@ enum QuicErrorCode {
   QUIC_VERSION_NEGOTIATION_MISMATCH = 55,
 
   // No error. Used as bound while iterating.
-  QUIC_LAST_ERROR = 70,
+  QUIC_LAST_ERROR = 71,
 };
 
 struct NET_EXPORT_PRIVATE QuicPacketPublicHeader {
@@ -918,48 +921,22 @@ class NET_EXPORT_PRIVATE QuicData {
 
 class NET_EXPORT_PRIVATE QuicPacket : public QuicData {
  public:
-  static QuicPacket* NewDataPacket(
-      char* buffer,
-      size_t length,
-      bool owns_buffer,
-      QuicConnectionIdLength connection_id_length,
-      bool includes_version,
-      QuicSequenceNumberLength sequence_number_length) {
-    return new QuicPacket(buffer, length, owns_buffer, connection_id_length,
-                          includes_version, sequence_number_length, false);
-  }
-
-  static QuicPacket* NewFecPacket(
-      char* buffer,
-      size_t length,
-      bool owns_buffer,
-      QuicConnectionIdLength connection_id_length,
-      bool includes_version,
-      QuicSequenceNumberLength sequence_number_length) {
-    return new QuicPacket(buffer, length, owns_buffer, connection_id_length,
-                          includes_version, sequence_number_length, true);
-  }
+  QuicPacket(char* buffer,
+             size_t length,
+             bool owns_buffer,
+             QuicConnectionIdLength connection_id_length,
+             bool includes_version,
+             QuicSequenceNumberLength sequence_number_length);
 
   base::StringPiece FecProtectedData() const;
   base::StringPiece AssociatedData() const;
   base::StringPiece BeforePlaintext() const;
   base::StringPiece Plaintext() const;
 
-  bool is_fec_packet() const { return is_fec_packet_; }
-
   char* mutable_data() { return buffer_; }
 
  private:
-  QuicPacket(char* buffer,
-             size_t length,
-             bool owns_buffer,
-             QuicConnectionIdLength connection_id_length,
-             bool includes_version,
-             QuicSequenceNumberLength sequence_number_length,
-             bool is_fec_packet);
-
   char* buffer_;
-  const bool is_fec_packet_;
   const QuicConnectionIdLength connection_id_length_;
   const bool includes_version_;
   const QuicSequenceNumberLength sequence_number_length_;
@@ -1021,16 +998,17 @@ class NET_EXPORT_PRIVATE RetransmittableFrames {
 struct NET_EXPORT_PRIVATE SerializedPacket {
   SerializedPacket(QuicPacketSequenceNumber sequence_number,
                    QuicSequenceNumberLength sequence_number_length,
-                   QuicPacket* packet,
+                   QuicEncryptedPacket* packet,
                    QuicPacketEntropyHash entropy_hash,
                    RetransmittableFrames* retransmittable_frames);
   ~SerializedPacket();
 
   QuicPacketSequenceNumber sequence_number;
   QuicSequenceNumberLength sequence_number_length;
-  QuicPacket* packet;
+  QuicEncryptedPacket* packet;
   QuicPacketEntropyHash entropy_hash;
   RetransmittableFrames* retransmittable_frames;
+  bool is_fec_packet;
 
   // Optional notifiers which will be informed when this packet has been ACKed.
   std::list<QuicAckNotifier*> notifiers;

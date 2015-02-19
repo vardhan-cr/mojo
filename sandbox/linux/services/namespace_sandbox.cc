@@ -11,6 +11,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "base/command_line.h"
 #include "base/environment.h"
@@ -27,18 +28,26 @@ namespace {
 
 class WriteUidGidMapDelegate : public base::LaunchOptions::PreExecDelegate {
  public:
-  WriteUidGidMapDelegate() : uid_(getuid()), gid_(getgid()) {}
+  WriteUidGidMapDelegate()
+      : uid_(getuid()),
+        gid_(getgid()),
+        supports_deny_setgroups_(
+            NamespaceUtils::KernelSupportsDenySetgroups()) {}
 
   ~WriteUidGidMapDelegate() override {}
 
   void RunAsyncSafe() override {
+    if (supports_deny_setgroups_) {
+      RAW_CHECK(NamespaceUtils::DenySetgroups());
+    }
     RAW_CHECK(NamespaceUtils::WriteToIdMapFile("/proc/self/uid_map", uid_));
     RAW_CHECK(NamespaceUtils::WriteToIdMapFile("/proc/self/gid_map", gid_));
   }
 
  private:
-  uid_t uid_;
-  gid_t gid_;
+  const uid_t uid_;
+  const gid_t gid_;
+  const bool supports_deny_setgroups_;
   DISALLOW_COPY_AND_ASSIGN(WriteUidGidMapDelegate);
 };
 
@@ -58,6 +67,13 @@ const char kSandboxNETNSEnvironmentVarName[] = "SBX_NET_NS";
 // static
 base::Process NamespaceSandbox::LaunchProcess(
     const base::CommandLine& cmdline,
+    const base::LaunchOptions& options) {
+  return LaunchProcess(cmdline.argv(), options);
+}
+
+// static
+base::Process NamespaceSandbox::LaunchProcess(
+    const std::vector<std::string>& argv,
     const base::LaunchOptions& options) {
   int clone_flags = 0;
   int ns_types[] = {CLONE_NEWUSER, CLONE_NEWPID, CLONE_NEWNET};
@@ -91,7 +107,7 @@ base::Process NamespaceSandbox::LaunchProcess(
     SetEnvironForNamespaceType(environ, environ_name, clone_flags & flag);
   }
 
-  return base::LaunchProcess(cmdline, launch_options);
+  return base::LaunchProcess(argv, launch_options);
 }
 
 // static

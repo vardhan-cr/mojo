@@ -24,16 +24,16 @@ void TraceControllerImpl::StartTracing(
   DCHECK(!collector_.get());
   collector_ = collector.Pass();
   std::string categories_str = categories.To<std::string>();
-  base::debug::TraceLog::GetInstance()->SetEnabled(
-      base::debug::CategoryFilter(categories_str),
-      base::debug::TraceLog::RECORDING_MODE,
-      base::debug::TraceOptions(base::debug::RECORD_UNTIL_FULL));
+  base::trace_event::TraceLog::GetInstance()->SetEnabled(
+      base::trace_event::CategoryFilter(categories_str),
+      base::trace_event::TraceLog::RECORDING_MODE,
+      base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
 }
 
 void TraceControllerImpl::StopTracing() {
-  base::debug::TraceLog::GetInstance()->SetDisabled();
+  base::trace_event::TraceLog::GetInstance()->SetDisabled();
 
-  base::debug::TraceLog::GetInstance()->Flush(
+  base::trace_event::TraceLog::GetInstance()->Flush(
       base::Bind(&TraceControllerImpl::SendChunk, base::Unretained(this)));
 }
 

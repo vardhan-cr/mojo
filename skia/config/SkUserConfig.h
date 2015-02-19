@@ -257,18 +257,38 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 #   define SK_IGNORE_GPU_DITHER
 #endif
 
+#ifndef SK_SUPPORT_LEGACY_ARCTO_QUADS
+#   define SK_SUPPORT_LEGACY_ARCTO_QUADS
+#endif
+
 #ifndef SK_SUPPORT_LEGACY_ADDOVAL
 #   define SK_SUPPORT_LEGACY_ADDOVAL
 #endif
 
-#ifndef SK_SUPPORT_LEGACY_ADDRRECT
-#   define SK_SUPPORT_LEGACY_ADDRRECT
-#endif
+///////////////////////// Imported from BUILD.gn and skia_common.gypi
 
-// If this goes well, we can have Skia respect DYNAMIC_ANNOTATIONS_ENABLED directly.
-#if DYNAMIC_ANNOTATIONS_ENABLED
-#    define SK_DYNAMIC_ANNOTATIONS_ENABLED 1
-#endif
+/* In some places Skia can use static initializers for global initialization,
+ *  or fall back to lazy runtime initialization. Chrome always wants the latter.
+ */
+#define SK_ALLOW_STATIC_GLOBAL_INITIALIZERS 0
+
+/* Forcing the unoptimized path for the offset image filter in skia until
+ * all filters used in Blink support the optimized path properly
+ */
+#define SK_DISABLE_OFFSETIMAGEFILTER_OPTIMIZATION
+
+/* This flag forces Skia not to use typographic metrics with GDI.
+ */
+#define SK_GDI_ALWAYS_USE_TEXTMETRICS_FOR_FONT_METRICS
+
+#define IGNORE_ROT_AA_RECT_OPT
+#define SK_IGNORE_BLURRED_RRECT_OPT
+#define SK_USE_DISCARDABLE_SCALEDIMAGECACHE
+#define SK_WILL_NEVER_DRAW_PERSPECTIVE_TEXT
+
+#define SK_ATTR_DEPRECATED          SK_NOTHING_ARG1
+#define SK_ENABLE_INST_COUNT        0
+#define GR_GL_CUSTOM_SETUP_HEADER   "GrGLConfig_chrome.h"
 
 // ===== End Chrome-specific definitions =====
 

@@ -330,4 +330,7 @@ void CommandBufferClientImpl::MakeProgressAndUpdateState() {
     last_state_ = state.To<State>();
 }
 
+void CommandBufferClientImpl::SetLock(base::Lock* lock) {
+}
+
 }  // namespace gles2

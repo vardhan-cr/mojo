@@ -185,11 +185,20 @@ void GetActiveUniform(GLuint program,
                       GLint* size,
                       GLenum* type,
                       char* name) override;
+void GetActiveUniformBlockiv(GLuint program,
+                             GLuint index,
+                             GLenum pname,
+                             GLint* params) override;
 void GetActiveUniformBlockName(GLuint program,
                                GLuint index,
                                GLsizei bufsize,
                                GLsizei* length,
                                char* name) override;
+void GetActiveUniformsiv(GLuint program,
+                         GLsizei count,
+                         const GLuint* indices,
+                         GLenum pname,
+                         GLint* params) override;
 void GetAttachedShaders(GLuint program,
                         GLsizei maxcount,
                         GLsizei* count,
@@ -240,9 +249,20 @@ void GetShaderSource(GLuint shader,
 const GLubyte* GetString(GLenum name) override;
 void GetTexParameterfv(GLenum target, GLenum pname, GLfloat* params) override;
 void GetTexParameteriv(GLenum target, GLenum pname, GLint* params) override;
+void GetTransformFeedbackVarying(GLuint program,
+                                 GLuint index,
+                                 GLsizei bufsize,
+                                 GLsizei* length,
+                                 GLsizei* size,
+                                 GLenum* type,
+                                 char* name) override;
 GLuint GetUniformBlockIndex(GLuint program, const char* name) override;
 void GetUniformfv(GLuint program, GLint location, GLfloat* params) override;
 void GetUniformiv(GLuint program, GLint location, GLint* params) override;
+void GetUniformIndices(GLuint program,
+                       GLsizei count,
+                       const char* const* names,
+                       GLuint* indices) override;
 GLint GetUniformLocation(GLuint program, const char* name) override;
 void GetVertexAttribfv(GLuint index, GLenum pname, GLfloat* params) override;
 void GetVertexAttribiv(GLuint index, GLenum pname, GLint* params) override;
@@ -410,6 +430,7 @@ void Uniform4ui(GLint location,
                 GLuint z,
                 GLuint w) override;
 void Uniform4uiv(GLint location, GLsizei count, const GLuint* v) override;
+void UniformBlockBinding(GLuint program, GLuint index, GLuint binding) override;
 void UniformMatrix2fv(GLint location,
                       GLsizei count,
                       GLboolean transpose,
@@ -562,6 +583,14 @@ void GetUniformBlocksCHROMIUM(GLuint program,
                               GLsizei bufsize,
                               GLsizei* size,
                               void* info) override;
+void GetTransformFeedbackVaryingsCHROMIUM(GLuint program,
+                                          GLsizei bufsize,
+                                          GLsizei* size,
+                                          void* info) override;
+void GetUniformsES3CHROMIUM(GLuint program,
+                            GLsizei bufsize,
+                            GLsizei* size,
+                            void* info) override;
 GLuint CreateStreamTextureCHROMIUM(GLuint texture) override;
 GLuint CreateImageCHROMIUM(ClientBuffer buffer,
                            GLsizei width,

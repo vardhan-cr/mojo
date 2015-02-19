@@ -128,10 +128,11 @@ index 784d951..0000000
 -
 -#endif  // CC_LAYERS_VIDEO_FRAME_PROVIDER_H_
 diff --git a/cc/layers/video_frame_provider_client_impl.cc b/cc/layers/video_frame_provider_client_impl.cc
-index 2b12567..e69de29 100644
+deleted file mode 100644
+index 4bbd92f..0000000
 --- a/cc/layers/video_frame_provider_client_impl.cc
-+++ b/cc/layers/video_frame_provider_client_impl.cc
-@@ -1,95 +0,0 @@
++++ /dev/null
+@@ -1,116 +0,0 @@
 -// Copyright 2013 The Chromium Authors. All rights reserved.
 -// Use of this source code is governed by a BSD-style license that can be
 -// found in the LICENSE file.
@@ -173,15 +174,32 @@ index 2b12567..e69de29 100644
 -      0.0, 0.0, 0.0, 1.0);
 -}
 -
+-void VideoFrameProviderClientImpl::SetActiveVideoLayer(
+-    VideoLayerImpl* video_layer) {
+-  DCHECK(thread_checker_.CalledOnValidThread());
+-  DCHECK(video_layer);
+-  active_video_layer_ = video_layer;
+-}
+-
 -void VideoFrameProviderClientImpl::Stop() {
+-  // It's called when the main thread is blocked, so lock isn't needed.
 -  if (!provider_)
 -    return;
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  provider_->SetVideoFrameProviderClient(nullptr);
 -  provider_ = nullptr;
 -}
 -
+-bool VideoFrameProviderClientImpl::Stopped() {
+-  DCHECK(thread_checker_.CalledOnValidThread());
+-  // |provider_| is changed while the main thread is blocked, and not changed
+-  // thereafter, so lock isn't needed.
+-  return !provider_;
+-}
+-
 -scoped_refptr<media::VideoFrame>
 -VideoFrameProviderClientImpl::AcquireLockAndCurrentFrame() {
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  provider_lock_.Acquire();  // Balanced by call to ReleaseLock().
 -  if (!provider_)
 -    return nullptr;
@@ -191,11 +209,13 @@ index 2b12567..e69de29 100644
 -
 -void VideoFrameProviderClientImpl::PutCurrentFrame(
 -    const scoped_refptr<media::VideoFrame>& frame) {
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  provider_lock_.AssertAcquired();
 -  provider_->PutCurrentFrame(frame);
 -}
 -
 -void VideoFrameProviderClientImpl::ReleaseLock() {
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  provider_lock_.AssertAcquired();
 -  provider_lock_.Release();
 -}
@@ -212,11 +232,13 @@ index 2b12567..e69de29 100644
 -               "VideoFrameProviderClientImpl::DidReceiveFrame",
 -               "active_video_layer",
 -               !!active_video_layer_);
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  if (active_video_layer_)
 -    active_video_layer_->SetNeedsRedraw();
 -}
 -
 -void VideoFrameProviderClientImpl::DidUpdateMatrix(const float* matrix) {
+-  DCHECK(thread_checker_.CalledOnValidThread());
 -  stream_texture_matrix_ = gfx::Transform(
 -      matrix[0], matrix[4], matrix[8], matrix[12],
 -      matrix[1], matrix[5], matrix[9], matrix[13],
@@ -228,7 +250,7 @@ index 2b12567..e69de29 100644
 -
 -}  // namespace cc
 diff --git a/cc/output/gl_renderer.cc b/cc/output/gl_renderer.cc
-index 45d98b6..5a15efa 100644
+index a394a1a..2612f10 100644
 --- a/cc/output/gl_renderer.cc
 +++ b/cc/output/gl_renderer.cc
 @@ -13,7 +13,6 @@
@@ -240,7 +262,7 @@ index 45d98b6..5a15efa 100644
  #include "cc/output/compositor_frame_metadata.h"
  #include "cc/output/context_provider.h"
 diff --git a/cc/output/renderer_pixeltest.cc b/cc/output/renderer_pixeltest.cc
-index d503cc4..c7582fe 100644
+index 36765ce..d7d1211 100644
 --- a/cc/output/renderer_pixeltest.cc
 +++ b/cc/output/renderer_pixeltest.cc
 @@ -12,7 +12,6 @@
@@ -706,7 +728,7 @@ index d503cc4..c7582fe 100644
    gfx::Rect viewport_rect(this->device_viewport_size_);
  
 diff --git a/cc/quads/yuv_video_draw_quad.h b/cc/quads/yuv_video_draw_quad.h
-index 61f11a2..7ad0ba4 100644
+index 99ed7e2..d57d56f 100644
 --- a/cc/quads/yuv_video_draw_quad.h
 +++ b/cc/quads/yuv_video_draw_quad.h
 @@ -8,7 +8,6 @@
@@ -718,7 +740,7 @@ index 61f11a2..7ad0ba4 100644
  
  namespace cc {
 diff --git a/cc/resources/drawing_display_item.cc b/cc/resources/drawing_display_item.cc
-index 29cc2d3..351fade 100644
+index 0fe86f4..1ef149f 100644
 --- a/cc/resources/drawing_display_item.cc
 +++ b/cc/resources/drawing_display_item.cc
 @@ -6,6 +6,7 @@
@@ -730,7 +752,7 @@ index 29cc2d3..351fade 100644
  #include "base/trace_event/trace_event_argument.h"
  #include "cc/debug/picture_debug_util.h"
 diff --git a/cc/trees/layer_tree_host_impl_unittest.cc b/cc/trees/layer_tree_host_impl_unittest.cc
-index cb33686..b016fff 100644
+index aa46125..07fb048 100644
 --- a/cc/trees/layer_tree_host_impl_unittest.cc
 +++ b/cc/trees/layer_tree_host_impl_unittest.cc
 @@ -27,7 +27,6 @@
@@ -773,7 +795,7 @@ index cb33686..b016fff 100644
    }
  
    LayerTreeSettings DefaultSettings() {
-@@ -5312,18 +5307,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
+@@ -5489,18 +5484,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
    root_layer->SetBounds(gfx::Size(10, 10));
    root_layer->SetHasRenderSurface(true);
  
@@ -792,7 +814,7 @@ index cb33686..b016fff 100644
    scoped_ptr<IOSurfaceLayerImpl> io_surface_layer =
        IOSurfaceLayerImpl::Create(host_impl_->active_tree(), 5);
    io_surface_layer->SetBounds(gfx::Size(10, 10));
-@@ -6403,16 +6386,6 @@ TEST_F(LayerTreeHostImplTest,
+@@ -6580,16 +6563,6 @@ TEST_F(LayerTreeHostImplTest,
    scoped_ptr<SolidColorLayerImpl> root_layer =
        SolidColorLayerImpl::Create(host_impl_->active_tree(), 1);
  
@@ -810,7 +832,7 @@ index cb33686..b016fff 100644
    EXPECT_EQ(DRAW_SUCCESS, host_impl_->PrepareToDraw(&frame));
    host_impl_->DrawLayers(&frame, gfx::FrameTime::Now());
 diff --git a/cc/trees/layer_tree_host_unittest.cc b/cc/trees/layer_tree_host_unittest.cc
-index a3c37ed..d4bfb6e 100644
+index bb315e7..bb6dc17 100644
 --- a/cc/trees/layer_tree_host_unittest.cc
 +++ b/cc/trees/layer_tree_host_unittest.cc
 @@ -18,7 +18,6 @@
@@ -829,7 +851,7 @@ index a3c37ed..d4bfb6e 100644
  #include "cc/test/geometry_test_utils.h"
  #include "cc/test/impl_side_painting_settings.h"
  #include "cc/test/layer_tree_test.h"
-@@ -4200,28 +4198,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
+@@ -4202,28 +4200,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
    int num_draws_;
  };
  
@@ -859,7 +881,7 @@ index a3c37ed..d4bfb6e 100644
  // to the compositor thread, even though no resources are updated in
  // response to that invalidation.
 diff --git a/cc/trees/layer_tree_host_unittest_context.cc b/cc/trees/layer_tree_host_unittest_context.cc
-index 56e52ad..fb0c9c8 100644
+index 596adc0..fb0c9c8 100644
 --- a/cc/trees/layer_tree_host_unittest_context.cc
 +++ b/cc/trees/layer_tree_host_unittest_context.cc
 @@ -15,8 +15,6 @@
@@ -897,7 +919,7 @@ index 56e52ad..fb0c9c8 100644
    }
  
    void LoseContext() {
-@@ -1057,43 +1050,6 @@ class LayerTreeHostContextTestDontUseLostResources
+@@ -1057,41 +1050,6 @@ class LayerTreeHostContextTestDontUseLostResources
      layer_with_mask->SetMaskLayer(mask.get());
      root->AddChild(layer_with_mask);
  
@@ -925,14 +947,12 @@ index 56e52ad..fb0c9c8 100644
 -        make_scoped_ptr(
 -            new gpu::MailboxHolder(mailbox, GL_TEXTURE_2D, sync_point)),
 -        media::VideoFrame::ReleaseMailboxCB(), gfx::Size(4, 4),
--        gfx::Rect(0, 0, 4, 4), gfx::Size(4, 4), base::TimeDelta(),
--        VideoFrame::ReadPixelsCB(), false);
+-        gfx::Rect(0, 0, 4, 4), gfx::Size(4, 4), base::TimeDelta(), false);
 -    scaled_hw_video_frame_ = VideoFrame::WrapNativeTexture(
 -        make_scoped_ptr(
 -            new gpu::MailboxHolder(mailbox, GL_TEXTURE_2D, sync_point)),
 -        media::VideoFrame::ReleaseMailboxCB(), gfx::Size(4, 4),
--        gfx::Rect(0, 0, 3, 2), gfx::Size(4, 4), base::TimeDelta(),
--        VideoFrame::ReadPixelsCB(), false);
+-        gfx::Rect(0, 0, 3, 2), gfx::Size(4, 4), base::TimeDelta(), false);
 -
 -    color_frame_provider_.set_frame(color_video_frame_);
 -    hw_frame_provider_.set_frame(hw_video_frame_);
@@ -941,7 +961,7 @@ index 56e52ad..fb0c9c8 100644
      if (!delegating_renderer()) {
        // TODO(danakj): IOSurface layer can not be transported. crbug.com/239335
        scoped_refptr<IOSurfaceLayer> io_surface = IOSurfaceLayer::Create();
-@@ -1123,14 +1079,6 @@ class LayerTreeHostContextTestDontUseLostResources
+@@ -1121,14 +1079,6 @@ class LayerTreeHostContextTestDontUseLostResources
  
    void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
      LayerTreeHostContextTest::CommitCompleteOnThread(host_impl);
@@ -956,7 +976,7 @@ index 56e52ad..fb0c9c8 100644
    }
  
    DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
-@@ -1179,14 +1127,6 @@ class LayerTreeHostContextTestDontUseLostResources
+@@ -1177,14 +1127,6 @@ class LayerTreeHostContextTestDontUseLostResources
    scoped_refptr<DelegatedFrameResourceCollection>
        delegated_resource_collection_;
    scoped_refptr<DelegatedFrameProvider> delegated_frame_provider_;

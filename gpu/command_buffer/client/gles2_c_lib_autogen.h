@@ -338,6 +338,12 @@ void GLES2GetActiveUniform(GLuint program,
   gles2::GetGLContext()->GetActiveUniform(program, index, bufsize, length, size,
                                           type, name);
 }
+void GLES2GetActiveUniformBlockiv(GLuint program,
+                                  GLuint index,
+                                  GLenum pname,
+                                  GLint* params) {
+  gles2::GetGLContext()->GetActiveUniformBlockiv(program, index, pname, params);
+}
 void GLES2GetActiveUniformBlockName(GLuint program,
                                     GLuint index,
                                     GLsizei bufsize,
@@ -345,6 +351,14 @@ void GLES2GetActiveUniformBlockName(GLuint program,
                                     char* name) {
   gles2::GetGLContext()->GetActiveUniformBlockName(program, index, bufsize,
                                                    length, name);
+}
+void GLES2GetActiveUniformsiv(GLuint program,
+                              GLsizei count,
+                              const GLuint* indices,
+                              GLenum pname,
+                              GLint* params) {
+  gles2::GetGLContext()->GetActiveUniformsiv(program, count, indices, pname,
+                                             params);
 }
 void GLES2GetAttachedShaders(GLuint program,
                              GLsizei maxcount,
@@ -439,6 +453,16 @@ void GLES2GetTexParameterfv(GLenum target, GLenum pname, GLfloat* params) {
 void GLES2GetTexParameteriv(GLenum target, GLenum pname, GLint* params) {
   gles2::GetGLContext()->GetTexParameteriv(target, pname, params);
 }
+void GLES2GetTransformFeedbackVarying(GLuint program,
+                                      GLuint index,
+                                      GLsizei bufsize,
+                                      GLsizei* length,
+                                      GLsizei* size,
+                                      GLenum* type,
+                                      char* name) {
+  gles2::GetGLContext()->GetTransformFeedbackVarying(program, index, bufsize,
+                                                     length, size, type, name);
+}
 GLuint GLES2GetUniformBlockIndex(GLuint program, const char* name) {
   return gles2::GetGLContext()->GetUniformBlockIndex(program, name);
 }
@@ -447,6 +471,12 @@ void GLES2GetUniformfv(GLuint program, GLint location, GLfloat* params) {
 }
 void GLES2GetUniformiv(GLuint program, GLint location, GLint* params) {
   gles2::GetGLContext()->GetUniformiv(program, location, params);
+}
+void GLES2GetUniformIndices(GLuint program,
+                            GLsizei count,
+                            const char* const* names,
+                            GLuint* indices) {
+  gles2::GetGLContext()->GetUniformIndices(program, count, names, indices);
 }
 GLint GLES2GetUniformLocation(GLuint program, const char* name) {
   return gles2::GetGLContext()->GetUniformLocation(program, name);
@@ -773,6 +803,9 @@ void GLES2Uniform4ui(GLint location, GLuint x, GLuint y, GLuint z, GLuint w) {
 void GLES2Uniform4uiv(GLint location, GLsizei count, const GLuint* v) {
   gles2::GetGLContext()->Uniform4uiv(location, count, v);
 }
+void GLES2UniformBlockBinding(GLuint program, GLuint index, GLuint binding) {
+  gles2::GetGLContext()->UniformBlockBinding(program, index, binding);
+}
 void GLES2UniformMatrix2fv(GLint location,
                            GLsizei count,
                            GLboolean transpose,
@@ -1057,6 +1090,19 @@ void GLES2GetUniformBlocksCHROMIUM(GLuint program,
                                    GLsizei* size,
                                    void* info) {
   gles2::GetGLContext()->GetUniformBlocksCHROMIUM(program, bufsize, size, info);
+}
+void GLES2GetTransformFeedbackVaryingsCHROMIUM(GLuint program,
+                                               GLsizei bufsize,
+                                               GLsizei* size,
+                                               void* info) {
+  gles2::GetGLContext()->GetTransformFeedbackVaryingsCHROMIUM(program, bufsize,
+                                                              size, info);
+}
+void GLES2GetUniformsES3CHROMIUM(GLuint program,
+                                 GLsizei bufsize,
+                                 GLsizei* size,
+                                 void* info) {
+  gles2::GetGLContext()->GetUniformsES3CHROMIUM(program, bufsize, size, info);
 }
 GLuint GLES2CreateStreamTextureCHROMIUM(GLuint texture) {
   return gles2::GetGLContext()->CreateStreamTextureCHROMIUM(texture);
@@ -1559,8 +1605,16 @@ extern const NameToFunc g_gles2_function_table[] = {
      reinterpret_cast<GLES2FunctionPointer>(glGetActiveUniform),
     },
     {
+     "glGetActiveUniformBlockiv",
+     reinterpret_cast<GLES2FunctionPointer>(glGetActiveUniformBlockiv),
+    },
+    {
      "glGetActiveUniformBlockName",
      reinterpret_cast<GLES2FunctionPointer>(glGetActiveUniformBlockName),
+    },
+    {
+     "glGetActiveUniformsiv",
+     reinterpret_cast<GLES2FunctionPointer>(glGetActiveUniformsiv),
     },
     {
      "glGetAttachedShaders",
@@ -1652,6 +1706,10 @@ extern const NameToFunc g_gles2_function_table[] = {
      reinterpret_cast<GLES2FunctionPointer>(glGetTexParameteriv),
     },
     {
+     "glGetTransformFeedbackVarying",
+     reinterpret_cast<GLES2FunctionPointer>(glGetTransformFeedbackVarying),
+    },
+    {
      "glGetUniformBlockIndex",
      reinterpret_cast<GLES2FunctionPointer>(glGetUniformBlockIndex),
     },
@@ -1662,6 +1720,10 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glGetUniformiv",
      reinterpret_cast<GLES2FunctionPointer>(glGetUniformiv),
+    },
+    {
+     "glGetUniformIndices",
+     reinterpret_cast<GLES2FunctionPointer>(glGetUniformIndices),
     },
     {
      "glGetUniformLocation",
@@ -1976,6 +2038,10 @@ extern const NameToFunc g_gles2_function_table[] = {
      reinterpret_cast<GLES2FunctionPointer>(glUniform4uiv),
     },
     {
+     "glUniformBlockBinding",
+     reinterpret_cast<GLES2FunctionPointer>(glUniformBlockBinding),
+    },
+    {
      "glUniformMatrix2fv",
      reinterpret_cast<GLES2FunctionPointer>(glUniformMatrix2fv),
     },
@@ -2226,6 +2292,15 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glGetUniformBlocksCHROMIUM",
      reinterpret_cast<GLES2FunctionPointer>(glGetUniformBlocksCHROMIUM),
+    },
+    {
+     "glGetTransformFeedbackVaryingsCHROMIUM",
+     reinterpret_cast<GLES2FunctionPointer>(
+         glGetTransformFeedbackVaryingsCHROMIUM),
+    },
+    {
+     "glGetUniformsES3CHROMIUM",
+     reinterpret_cast<GLES2FunctionPointer>(glGetUniformsES3CHROMIUM),
     },
     {
      "glCreateStreamTextureCHROMIUM",

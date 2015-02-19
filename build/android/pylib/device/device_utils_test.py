@@ -656,6 +656,24 @@ class DeviceUtilsRunShellCommandTest(DeviceUtilsNewImplTest):
                         self.device.RunShellCommand(cmd, check_return=False))
 
 
+class DeviceUtilsGetDevicePieWrapper(DeviceUtilsNewImplTest):
+
+  def testGetDevicePieWrapper_jb(self):
+    with self.assertCall(
+        self.call.device.build_version_sdk(),
+        constants.ANDROID_SDK_VERSION_CODES.JELLY_BEAN):
+      self.assertEqual('', self.device.GetDevicePieWrapper())
+
+  def testGetDevicePieWrapper_ics(self):
+    with self.assertCalls(
+        (self.call.device.build_version_sdk(),
+         constants.ANDROID_SDK_VERSION_CODES.ICE_CREAM_SANDWICH),
+        (mock.call.pylib.constants.GetOutDirectory(), '/foo/bar'),
+        (mock.call.os.path.exists(mock.ANY), True),
+        (self.call.adb.Push(mock.ANY, mock.ANY), '')):
+      self.assertNotEqual('', self.device.GetDevicePieWrapper())
+
+
 @mock.patch('time.sleep', mock.Mock())
 class DeviceUtilsKillAllTest(DeviceUtilsNewImplTest):
 
@@ -1045,7 +1063,7 @@ class DeviceUtilsPushChangedFilesZippedTest(DeviceUtilsNewImplTest):
         self.call.device.RunShellCommand(
             ['unzip', '/test/device/external_dir/tmp.zip'],
             as_root=True,
-            env={'PATH': '$PATH:/data/local/tmp/bin'},
+            env={'PATH': '/data/local/tmp/bin:$PATH'},
             check_return=True),
         (self.call.device.IsOnline(), True),
         self.call.device.RunShellCommand(
@@ -1381,22 +1399,6 @@ class DeviceUtilsTakeScreenshotTest(DeviceUtilsNewImplTest):
         self.call.device.PullFile('/tmp/path/temp-123.png',
                                   '/test/host/screenshot.png')):
       self.device.TakeScreenshot('/test/host/screenshot.png')
-
-
-class DeviceUtilsGetIOStatsTest(DeviceUtilsOldImplTest):
-
-  def testGetIOStats(self):
-    with self.assertCalls(
-        "adb -s 0123456789abcdef shell 'cat \"/proc/diskstats\" 2>/dev/null'",
-        '179 0 mmcblk0 1 2 3 4 5 6 7 8 9 10 11\r\n'):
-      self.assertEqual(
-          {
-            'num_reads': 1,
-            'num_writes': 5,
-            'read_ms': 4,
-            'write_ms': 8,
-          },
-          self.device.GetIOStats())
 
 
 class DeviceUtilsGetMemoryUsageForPidTest(DeviceUtilsOldImplTest):

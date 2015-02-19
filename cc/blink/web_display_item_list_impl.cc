@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "cc/blink/web_blend_mode.h"
+#include "cc/blink/web_filter_operations_impl.h"
 #include "cc/resources/clip_display_item.h"
 #include "cc/resources/clip_path_display_item.h"
 #include "cc/resources/drawing_display_item.h"
@@ -30,6 +31,11 @@ WebDisplayItemListImpl::WebDisplayItemListImpl()
 
 scoped_refptr<cc::DisplayItemList> WebDisplayItemListImpl::ToDisplayItemList() {
   return display_item_list_;
+}
+
+void WebDisplayItemListImpl::appendDrawingItem(const SkPicture* picture) {
+  display_item_list_->AppendItem(cc::DrawingDisplayItem::Create(
+      skia::SharePtr(const_cast<SkPicture*>(picture)), gfx::PointF(0, 0)));
 }
 
 void WebDisplayItemListImpl::appendDrawingItem(
@@ -95,12 +101,26 @@ void WebDisplayItemListImpl::appendEndTransparencyItem() {
   display_item_list_->AppendItem(cc::EndTransparencyDisplayItem::Create());
 }
 
+#if FILTER_DISPLAY_ITEM_USES_FILTER_OPERATIONS
+void WebDisplayItemListImpl::appendFilterItem(
+    const blink::WebFilterOperations& filters,
+    const blink::WebFloatRect& bounds) {
+  const WebFilterOperationsImpl& filters_impl =
+      static_cast<const WebFilterOperationsImpl&>(filters);
+  display_item_list_->AppendItem(
+      cc::FilterDisplayItem::Create(filters_impl.AsFilterOperations(), bounds));
+}
+#else
 void WebDisplayItemListImpl::appendFilterItem(
     SkImageFilter* filter,
     const blink::WebFloatRect& bounds) {
+  cc::FilterOperations filter_operations;
+  filter_operations.Append(
+      cc::FilterOperation::CreateReferenceFilter(skia::SharePtr(filter)));
   display_item_list_->AppendItem(
-      cc::FilterDisplayItem::Create(skia::SharePtr(filter), bounds));
+      cc::FilterDisplayItem::Create(filter_operations, bounds));
 }
+#endif
 
 void WebDisplayItemListImpl::appendEndFilterItem() {
   display_item_list_->AppendItem(cc::EndFilterDisplayItem::Create());

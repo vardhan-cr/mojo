@@ -1839,6 +1839,8 @@ TEST_F(LayerTreeHostImplTest, CompositorFrameMetadata) {
     EXPECT_EQ(gfx::SizeF(100.f, 100.f), metadata.root_layer_size);
     EXPECT_EQ(0.5f, metadata.min_page_scale_factor);
     EXPECT_EQ(4.f, metadata.max_page_scale_factor);
+    EXPECT_FALSE(metadata.root_overflow_x_hidden);
+    EXPECT_FALSE(metadata.root_overflow_y_hidden);
   }
 
   // Scrolling should update metadata immediately.
@@ -1855,6 +1857,24 @@ TEST_F(LayerTreeHostImplTest, CompositorFrameMetadata) {
     CompositorFrameMetadata metadata =
         host_impl_->MakeCompositorFrameMetadata();
     EXPECT_EQ(gfx::Vector2dF(0.f, 10.f), metadata.root_scroll_offset);
+  }
+
+  // Root "overflow: hidden" properties should be reflected.
+  {
+    host_impl_->active_tree()
+        ->InnerViewportScrollLayer()
+        ->set_user_scrollable_horizontal(false);
+    CompositorFrameMetadata metadata =
+        host_impl_->MakeCompositorFrameMetadata();
+    EXPECT_TRUE(metadata.root_overflow_x_hidden);
+    EXPECT_FALSE(metadata.root_overflow_y_hidden);
+
+    host_impl_->active_tree()
+        ->InnerViewportScrollLayer()
+        ->set_user_scrollable_vertical(false);
+    metadata = host_impl_->MakeCompositorFrameMetadata();
+    EXPECT_TRUE(metadata.root_overflow_x_hidden);
+    EXPECT_TRUE(metadata.root_overflow_y_hidden);
   }
 
   // Page scale should update metadata correctly (shrinking only the viewport).
@@ -1904,11 +1924,9 @@ class DidDrawCheckLayer : public LayerImpl {
   }
 
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override {
     append_quads_called_ = true;
-    LayerImpl::AppendQuads(
-        render_pass, occlusion_in_content_space, append_quads_data);
+    LayerImpl::AppendQuads(render_pass, append_quads_data);
   }
 
   void DidDraw(ResourceProvider* provider) override {
@@ -2131,10 +2149,8 @@ class MissingTextureAnimatingLayer : public DidDrawCheckLayer {
   }
 
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override {
-    LayerImpl::AppendQuads(
-        render_pass, occlusion_in_content_space, append_quads_data);
+    LayerImpl::AppendQuads(render_pass, append_quads_data);
     if (had_incomplete_tile_)
       append_quads_data->num_incomplete_tiles++;
     if (tile_missing_)
@@ -2456,10 +2472,7 @@ class LayerTreeHostImplTopControlsTest : public LayerTreeHostImplTest {
         LayerTreeHostImplTest::CreateHostImpl(settings, output_surface.Pass());
     if (init && settings.calculate_top_controls_position) {
       host_impl_->active_tree()->set_top_controls_height(top_controls_height_);
-      host_impl_->active_tree()->set_top_controls_delta(top_controls_height_);
-      host_impl_->top_controls_manager()->SetTopControlsHeight(
-          top_controls_height_);
-      host_impl_->DidChangeTopControlsPosition();
+      host_impl_->active_tree()->SetCurrentTopControlsShownRatio(1.f);
     }
     return init;
   }
@@ -2493,6 +2506,7 @@ class LayerTreeHostImplTopControlsTest : public LayerTreeHostImplTest {
     host_impl_->DidChangeTopControlsPosition();
 
     host_impl_->CreatePendingTree();
+    host_impl_->sync_tree()->set_top_controls_height(top_controls_height_);
     root =
         LayerImpl::Create(host_impl_->sync_tree(), 1);
     root_clip =
@@ -2524,6 +2538,7 @@ class LayerTreeHostImplTopControlsTest : public LayerTreeHostImplTest {
       const gfx::Size& scroll_layer_size) {
     CreateHostImpl(settings_, CreateOutputSurface());
     host_impl_->sync_tree()->set_top_controls_shrink_blink_size(true);
+    host_impl_->sync_tree()->set_top_controls_height(top_controls_height_);
     host_impl_->DidChangeTopControlsPosition();
 
     scoped_ptr<LayerImpl> root =
@@ -2602,8 +2617,8 @@ TEST_F(LayerTreeHostImplTopControlsTest, ScrollTopControlsByFractionalAmount) {
       host_impl_->active_tree()->InnerViewportScrollLayer();
   DCHECK(inner_viewport_scroll_layer);
   host_impl_->ScrollEnd();
-  EXPECT_EQ(top_controls_scroll_delta,
-            inner_viewport_scroll_layer->FixedContainerSizeDelta());
+  EXPECT_FLOAT_EQ(top_controls_scroll_delta.y(),
+                  inner_viewport_scroll_layer->FixedContainerSizeDelta().y());
 }
 
 // In this test, the outer viewport is initially unscrollable. We test that a
@@ -2634,8 +2649,7 @@ TEST_F(LayerTreeHostImplTopControlsTest,
 
   // The entire scroll delta should have been used to hide the top controls.
   // The viewport layers should be resized back to their full sizes.
-  EXPECT_EQ(0.f,
-      host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(0.f, host_impl_->active_tree()->CurrentTopControlsShownRatio());
   EXPECT_EQ(0.f, inner_scroll->CurrentScrollOffset().y());
   EXPECT_EQ(100.f, inner_container->BoundsForScrolling().height());
   EXPECT_EQ(100.f, outer_container->BoundsForScrolling().height());
@@ -2657,8 +2671,7 @@ TEST_F(LayerTreeHostImplTopControlsTest,
   // The entire scroll delta should have been used to show the top controls.
   // The outer viewport should be resized to accomodate and scrolled to the
   // bottom of the document to keep the viewport in place.
-  EXPECT_EQ(50.f,
-      host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(1.f, host_impl_->active_tree()->CurrentTopControlsShownRatio());
   EXPECT_EQ(50.f, outer_container->BoundsForScrolling().height());
   EXPECT_EQ(50.f, inner_container->BoundsForScrolling().height());
   EXPECT_EQ(25.f, outer_scroll->CurrentScrollOffset().y());
@@ -2704,8 +2717,8 @@ TEST_F(LayerTreeHostImplTopControlsTest, FixedContainerDelta) {
   gfx::Vector2dF top_controls_scroll_delta(0.f, 20.f);
   host_impl_->top_controls_manager()->ScrollBegin();
   host_impl_->top_controls_manager()->ScrollBy(top_controls_scroll_delta);
-  EXPECT_EQ(top_controls_height_ - top_controls_scroll_delta.y(),
-            host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(top_controls_height_ - top_controls_scroll_delta.y(),
+                  host_impl_->top_controls_manager()->ContentTopOffset());
   EXPECT_VECTOR_EQ(top_controls_scroll_delta,
                    outer_viewport_scroll_layer->FixedContainerSizeDelta());
   host_impl_->ScrollEnd();
@@ -2742,8 +2755,7 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollableSublayer) {
   DrawFrame();
 
   // Show top controls
-  EXPECT_EQ(top_controls_height_,
-            host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(1.f, host_impl_->active_tree()->CurrentTopControlsShownRatio());
 
   LayerImpl* outer_viewport_scroll_layer =
       host_impl_->active_tree()->OuterViewportScrollLayer();
@@ -2777,7 +2789,7 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollableSublayer) {
   // Top controls should be hidden
   EXPECT_EQ(scroll_delta.y(),
             top_controls_height_ -
-                host_impl_->active_tree()->total_top_controls_content_offset());
+                host_impl_->top_controls_manager()->ContentTopOffset());
 }
 
 // Ensure setting the top controls position explicitly using the setters on the
@@ -2787,14 +2799,18 @@ TEST_F(LayerTreeHostImplTopControlsTest, PositionTopControlsExplicitly) {
   SetupTopControlsAndScrollLayer();
   DrawFrame();
 
-  host_impl_->active_tree()->set_top_controls_delta(0.f);
-  host_impl_->active_tree()->set_top_controls_content_offset(30.f);
-  EXPECT_EQ(30.f, host_impl_->top_controls_manager()->ContentTopOffset());
-  EXPECT_EQ(-20.f, host_impl_->top_controls_manager()->ControlsTopOffset());
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(0.f);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushFromMainThread(
+      30.f / top_controls_height_);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushPendingToActive();
+  EXPECT_FLOAT_EQ(30.f, host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(-20.f,
+                  host_impl_->top_controls_manager()->ControlsTopOffset());
 
-  host_impl_->active_tree()->set_top_controls_delta(-30.f);
-  EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ContentTopOffset());
-  EXPECT_EQ(-50.f, host_impl_->top_controls_manager()->ControlsTopOffset());
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(0.f);
+  EXPECT_FLOAT_EQ(0.f, host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(-50.f,
+                  host_impl_->top_controls_manager()->ControlsTopOffset());
 
   host_impl_->DidChangeTopControlsPosition();
 
@@ -2811,18 +2827,22 @@ TEST_F(LayerTreeHostImplTopControlsTest, ApplyDeltaOnTreeActivation) {
   SetupTopControlsAndScrollLayer();
   DrawFrame();
 
-  host_impl_->sync_tree()->set_top_controls_content_offset(15.f);
-
-  host_impl_->active_tree()->set_top_controls_content_offset(20.f);
-  host_impl_->active_tree()->set_top_controls_delta(-20.f);
-  host_impl_->active_tree()->set_sent_top_controls_delta(-5.f);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushFromMainThread(
+      20.f / top_controls_height_);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushPendingToActive();
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(
+      15.f / top_controls_height_);
+  host_impl_->active_tree()
+      ->top_controls_shown_ratio()
+      ->PullDeltaForMainThread();
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(0.f);
+  host_impl_->sync_tree()->PushTopControlsFromMainThread(15.f /
+                                                         top_controls_height_);
 
   host_impl_->DidChangeTopControlsPosition();
   LayerImpl* root_clip_ptr = host_impl_->active_tree()->root_layer();
   EXPECT_EQ(viewport_size_, root_clip_ptr->bounds());
   EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ContentTopOffset());
-  EXPECT_EQ(0.f,
-      host_impl_->active_tree()->total_top_controls_content_offset());
 
   host_impl_->ActivateSyncTree();
 
@@ -2830,11 +2850,13 @@ TEST_F(LayerTreeHostImplTopControlsTest, ApplyDeltaOnTreeActivation) {
   EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ContentTopOffset());
   EXPECT_EQ(viewport_size_, root_clip_ptr->bounds());
 
-  EXPECT_EQ(0.f, host_impl_->active_tree()->sent_top_controls_delta());
-  EXPECT_EQ(-15.f, host_impl_->active_tree()->top_controls_delta());
-  EXPECT_EQ(15.f, host_impl_->active_tree()->top_controls_content_offset());
-  EXPECT_EQ(0.f,
-      host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_FLOAT_EQ(
+      -15.f, host_impl_->active_tree()->top_controls_shown_ratio()->Delta() *
+                 top_controls_height_);
+  EXPECT_FLOAT_EQ(
+      15.f,
+      host_impl_->active_tree()->top_controls_shown_ratio()->ActiveBase() *
+          top_controls_height_);
 }
 
 // Test that changing the top controls layout height is correctly applied to
@@ -2846,11 +2868,13 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsLayoutHeightChanged) {
   SetupTopControlsAndScrollLayer();
   DrawFrame();
 
-  host_impl_->sync_tree()->set_top_controls_content_offset(50.f);
+  host_impl_->sync_tree()->PushTopControlsFromMainThread(1.f);
   host_impl_->sync_tree()->set_top_controls_shrink_blink_size(true);
 
-  host_impl_->active_tree()->set_top_controls_content_offset(50.f);
-  host_impl_->active_tree()->set_top_controls_delta(-50.f);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushFromMainThread(
+      1.f);
+  host_impl_->active_tree()->top_controls_shown_ratio()->PushPendingToActive();
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(0.f);
 
   host_impl_->DidChangeTopControlsPosition();
   LayerImpl* root_clip_ptr = host_impl_->active_tree()->root_layer();
@@ -2872,9 +2896,11 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsLayoutHeightChanged) {
   EXPECT_EQ(viewport_size_, root_clip_ptr->bounds());
   EXPECT_VECTOR_EQ(gfx::Vector2dF(0.f, 50.f), root_clip_ptr->bounds_delta());
 
-  host_impl_->active_tree()->set_top_controls_delta(0.f);
+  host_impl_->active_tree()->SetCurrentTopControlsShownRatio(1.f);
   host_impl_->DidChangeTopControlsPosition();
 
+  EXPECT_EQ(1.f, host_impl_->top_controls_manager()->TopControlsShownRatio());
+  EXPECT_EQ(50.f, host_impl_->top_controls_manager()->TopControlsHeight());
   EXPECT_EQ(50.f, host_impl_->top_controls_manager()->ContentTopOffset());
   EXPECT_VECTOR_EQ(gfx::Vector2dF(0.f, 0.f), root_clip_ptr->bounds_delta());
   EXPECT_EQ(gfx::Size(viewport_size_.width(), viewport_size_.height() - 50.f),
@@ -2889,8 +2915,7 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsViewportOffsetClamping) {
       gfx::Size(100, 100), gfx::Size(200, 200), gfx::Size(200, 400));
   DrawFrame();
 
-  EXPECT_EQ(top_controls_height_,
-            host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(1.f, host_impl_->active_tree()->CurrentTopControlsShownRatio());
 
   LayerImpl* outer_scroll = host_impl_->OuterViewportScrollLayer();
   LayerImpl* inner_scroll = host_impl_->InnerViewportScrollLayer();
@@ -2910,17 +2935,15 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsViewportOffsetClamping) {
   host_impl_->ScrollBy(gfx::Point(), scroll_delta);
 
   // scrolling down at the max extents no longer hides the top controls
-  EXPECT_EQ(0.f,
-            top_controls_height_ -
-                host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(1.f, host_impl_->active_tree()->CurrentTopControlsShownRatio());
 
   // forcefully hide the top controls by 25px
   host_impl_->top_controls_manager()->ScrollBy(scroll_delta);
   host_impl_->ScrollEnd();
 
-  EXPECT_EQ(scroll_delta.y(),
-            top_controls_height_ -
-                host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_FLOAT_EQ(scroll_delta.y(),
+                  top_controls_height_ -
+                      host_impl_->top_controls_manager()->ContentTopOffset());
 
   inner_scroll->ClampScrollToMaxScrollOffset();
   outer_scroll->ClampScrollToMaxScrollOffset();
@@ -2956,8 +2979,8 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsAspectRatio) {
       gfx::Size(100, 100), gfx::Size(200, 200), gfx::Size(200, 400));
   DrawFrame();
 
-  EXPECT_EQ(top_controls_height_,
-            host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_FLOAT_EQ(top_controls_height_,
+                  host_impl_->top_controls_manager()->ContentTopOffset());
 
   gfx::Vector2dF scroll_delta(0.f, 25.f);
   EXPECT_EQ(InputHandler::ScrollStarted,
@@ -2965,9 +2988,9 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsAspectRatio) {
   host_impl_->ScrollBy(gfx::Point(), scroll_delta);
   host_impl_->ScrollEnd();
 
-  EXPECT_EQ(scroll_delta.y(),
-            top_controls_height_ -
-                host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_FLOAT_EQ(scroll_delta.y(),
+                  top_controls_height_ -
+                      host_impl_->top_controls_manager()->ContentTopOffset());
 
   // Top controls were hidden by 25px so the inner viewport should have expanded
   // by that much.
@@ -2993,7 +3016,7 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollOuterViewport) {
   DrawFrame();
 
   EXPECT_EQ(top_controls_height_,
-            host_impl_->active_tree()->total_top_controls_content_offset());
+            host_impl_->top_controls_manager()->ContentTopOffset());
 
   // Send a gesture scroll that will scroll the outer viewport, make sure the
   // top controls get scrolled.
@@ -3005,16 +3028,16 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollOuterViewport) {
             host_impl_->CurrentlyScrollingLayer());
   host_impl_->ScrollEnd();
 
-  EXPECT_EQ(scroll_delta.y(),
-            top_controls_height_ -
-                host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_FLOAT_EQ(scroll_delta.y(),
+                  top_controls_height_ -
+                      host_impl_->top_controls_manager()->ContentTopOffset());
 
   scroll_delta = gfx::Vector2dF(0.f, 50.f);
   EXPECT_EQ(InputHandler::ScrollStarted,
             host_impl_->ScrollBegin(gfx::Point(), InputHandler::Gesture));
   host_impl_->ScrollBy(gfx::Point(), scroll_delta);
 
-  EXPECT_EQ(0, host_impl_->active_tree()->total_top_controls_content_offset());
+  EXPECT_EQ(0, host_impl_->top_controls_manager()->ContentTopOffset());
   EXPECT_EQ(host_impl_->OuterViewportScrollLayer(),
             host_impl_->CurrentlyScrollingLayer());
 
@@ -3031,8 +3054,8 @@ TEST_F(LayerTreeHostImplTopControlsTest, TopControlsScrollOuterViewport) {
   host_impl_->ScrollBy(gfx::Point(), scroll_delta);
 
   EXPECT_EQ(top_controls_height_,
-            host_impl_->active_tree()->total_top_controls_content_offset());
-  EXPECT_EQ(
+            host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(
       inner_viewport_offset.y() + (scroll_delta.y() + top_controls_height_),
       host_impl_->InnerViewportScrollLayer()->ScrollDelta().y());
 
@@ -3065,8 +3088,8 @@ TEST_F(LayerTreeHostImplTopControlsTest,
   host_impl_->top_controls_manager()->ScrollBegin();
   host_impl_->top_controls_manager()->ScrollBy(
       gfx::Vector2dF(0.f, scroll_increment_y));
-  EXPECT_EQ(-scroll_increment_y,
-            host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(-scroll_increment_y,
+                  host_impl_->top_controls_manager()->ContentTopOffset());
   // Now that top controls have moved, expect the clip to resize.
   EXPECT_EQ(gfx::Size(viewport_size_.width(),
                       viewport_size_.height() + scroll_increment_y),
@@ -3075,8 +3098,8 @@ TEST_F(LayerTreeHostImplTopControlsTest,
   host_impl_->top_controls_manager()->ScrollBy(
       gfx::Vector2dF(0.f, scroll_increment_y));
   host_impl_->top_controls_manager()->ScrollEnd();
-  EXPECT_EQ(-2 * scroll_increment_y,
-            host_impl_->top_controls_manager()->ContentTopOffset());
+  EXPECT_FLOAT_EQ(-2 * scroll_increment_y,
+                  host_impl_->top_controls_manager()->ContentTopOffset());
   // Now that top controls have moved, expect the clip to resize.
   EXPECT_EQ(clip_size_, root_clip_ptr->bounds());
 
@@ -4413,7 +4436,6 @@ class BlendStateCheckLayer : public LayerImpl {
   }
 
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override {
     quads_appended_ = true;
 
@@ -5138,7 +5160,6 @@ class FakeLayerWithQuads : public LayerImpl {
   }
 
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override {
     SharedQuadState* shared_quad_state =
         render_pass->CreateAndAppendSharedQuadState();
@@ -6592,8 +6613,8 @@ TEST_F(LayerTreeHostImplTestDeferredInitialize, Success) {
 
   // DeferredInitialize and hardware draw.
   did_update_renderer_capabilities_ = false;
-  EXPECT_TRUE(
-      output_surface_->InitializeAndSetContext3d(onscreen_context_provider_));
+  EXPECT_TRUE(output_surface_->InitializeAndSetContext3d(
+      onscreen_context_provider_, nullptr));
   EXPECT_EQ(onscreen_context_provider_.get(),
             host_impl_->output_surface()->context_provider());
   EXPECT_TRUE(did_update_renderer_capabilities_);
@@ -6623,8 +6644,8 @@ TEST_F(LayerTreeHostImplTestDeferredInitialize, Fails) {
 
   // DeferredInitialize fails.
   did_update_renderer_capabilities_ = false;
-  EXPECT_FALSE(
-      output_surface_->InitializeAndSetContext3d(onscreen_context_provider_));
+  EXPECT_FALSE(output_surface_->InitializeAndSetContext3d(
+      onscreen_context_provider_, nullptr));
   EXPECT_FALSE(host_impl_->output_surface()->context_provider());
   EXPECT_FALSE(did_update_renderer_capabilities_);
 
@@ -7412,9 +7433,8 @@ class LayerTreeHostImplWithTopControlsTest : public LayerTreeHostImplTest {
     settings.calculate_top_controls_position = true;
     CreateHostImpl(settings, CreateOutputSurface());
     host_impl_->active_tree()->set_top_controls_height(top_controls_height_);
-    host_impl_->active_tree()->set_top_controls_delta(top_controls_height_);
-    host_impl_->top_controls_manager()->SetTopControlsHeight(
-        top_controls_height_);
+    host_impl_->sync_tree()->set_top_controls_height(top_controls_height_);
+    host_impl_->active_tree()->SetCurrentTopControlsShownRatio(1.f);
   }
 
  protected:
@@ -7436,23 +7456,23 @@ TEST_F(LayerTreeHostImplWithTopControlsTest, TopControlsHeightIsCommitted) {
   host_impl_->CreatePendingTree();
   host_impl_->sync_tree()->set_top_controls_height(100);
   host_impl_->ActivateSyncTree();
-  EXPECT_EQ(100, host_impl_->top_controls_manager()->top_controls_height());
+  EXPECT_EQ(100, host_impl_->top_controls_manager()->TopControlsHeight());
 }
 
 TEST_F(LayerTreeHostImplWithTopControlsTest,
        TopControlsStayFullyVisibleOnHeightChange) {
   SetupScrollAndContentsLayers(gfx::Size(100, 100));
-  EXPECT_EQ(0.f, host_impl_->ControlsTopOffset());
+  EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ControlsTopOffset());
 
   host_impl_->CreatePendingTree();
   host_impl_->sync_tree()->set_top_controls_height(0);
   host_impl_->ActivateSyncTree();
-  EXPECT_EQ(0.f, host_impl_->ControlsTopOffset());
+  EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ControlsTopOffset());
 
   host_impl_->CreatePendingTree();
   host_impl_->sync_tree()->set_top_controls_height(50);
   host_impl_->ActivateSyncTree();
-  EXPECT_EQ(0.f, host_impl_->ControlsTopOffset());
+  EXPECT_EQ(0.f, host_impl_->top_controls_manager()->ControlsTopOffset());
 }
 
 TEST_F(LayerTreeHostImplWithTopControlsTest, TopControlsAnimationScheduling) {
@@ -8017,17 +8037,26 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
   scoped_ptr<PictureLayerImpl> layer =
       FakePictureLayerImpl::Create(host_impl_->pending_tree(), 10);
   layer->SetBounds(gfx::Size(10, 10));
+  scoped_ptr<FakePictureLayerImpl> nondraw_layer =
+      FakePictureLayerImpl::Create(host_impl_->pending_tree(), 12);
+  nondraw_layer->SetBounds(gfx::Size(10, 10));
 
   scoped_refptr<RasterSource> pile(FakePicturePileImpl::CreateEmptyPile(
       gfx::Size(10, 10), gfx::Size(10, 10)));
   Region empty_invalidation;
   const PictureLayerTilingSet* null_tiling_set = nullptr;
   layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+  nondraw_layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
 
+  layer->AddChild(nondraw_layer.Pass());
   host_impl_->pending_tree()->SetRootLayer(layer.Pass());
 
   LayerTreeImpl* pending_tree = host_impl_->pending_tree();
   LayerImpl* pending_layer = pending_tree->root_layer();
+  FakePictureLayerImpl* pending_nondraw_layer =
+      static_cast<FakePictureLayerImpl*>(pending_layer->children()[0]);
+
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
 
   std::vector<PictureLayerImpl::Pair> layer_pairs;
   host_impl_->GetPictureLayerImplPairs(&layer_pairs, true);
@@ -8039,10 +8068,16 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
 
   LayerTreeImpl* active_tree = host_impl_->active_tree();
   LayerImpl* active_layer = active_tree->root_layer();
+  FakePictureLayerImpl* active_nondraw_layer =
+      static_cast<FakePictureLayerImpl*>(active_layer->children()[0]);
   EXPECT_NE(active_tree, pending_tree);
   EXPECT_NE(active_layer, pending_layer);
+  EXPECT_NE(active_nondraw_layer, pending_nondraw_layer);
   EXPECT_NE(nullptr, active_tree);
   EXPECT_NE(nullptr, active_layer);
+  EXPECT_NE(nullptr, active_nondraw_layer);
+
+  active_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
 
   host_impl_->CreatePendingTree();
 
@@ -8067,20 +8102,192 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
   host_impl_->pending_tree()->root_layer()->AddChild(
       FakePictureLayerImpl::Create(host_impl_->pending_tree(), 11));
 
-  LayerImpl* new_pending_layer = pending_tree->root_layer()->children()[0];
+  LayerImpl* new_pending_layer = pending_tree->root_layer()->children()[1];
 
   layer_pairs.clear();
   host_impl_->GetPictureLayerImplPairs(&layer_pairs, true);
   EXPECT_EQ(2u, layer_pairs.size());
-
   // The pair ordering is flaky, so make it consistent.
   if (layer_pairs[0].active != active_layer)
     std::swap(layer_pairs[0], layer_pairs[1]);
-
   EXPECT_EQ(active_layer, layer_pairs[0].active);
   EXPECT_EQ(pending_layer, layer_pairs[0].pending);
   EXPECT_EQ(new_pending_layer, layer_pairs[1].pending);
   EXPECT_EQ(nullptr, layer_pairs[1].active);
+
+  host_impl_->pending_tree()->root_layer()->RemoveChild(new_pending_layer);
+
+  // Have the pending layer be part of the RSLL now. It should appear in the
+  // list without an active twin.
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(true);
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, true);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[1].pending);
+  EXPECT_EQ(nullptr, layer_pairs[1].active);
+
+  // Have the active layer be part of the RSLL now instead. It should appear in
+  // the list without a pending twin.
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
+  active_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(true);
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, true);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(nullptr, layer_pairs[1].pending);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[1].active);
+}
+
+TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairsWithNonRSLLMembers) {
+  host_impl_->CreatePendingTree();
+
+  scoped_ptr<PictureLayerImpl> layer =
+      FakePictureLayerImpl::Create(host_impl_->pending_tree(), 10);
+  layer->SetBounds(gfx::Size(10, 10));
+  scoped_ptr<FakePictureLayerImpl> nondraw_layer =
+      FakePictureLayerImpl::Create(host_impl_->pending_tree(), 12);
+  nondraw_layer->SetBounds(gfx::Size(10, 10));
+
+  scoped_refptr<RasterSource> pile(FakePicturePileImpl::CreateEmptyPile(
+      gfx::Size(10, 10), gfx::Size(10, 10)));
+  Region empty_invalidation;
+  const PictureLayerTilingSet* null_tiling_set = nullptr;
+  layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+  nondraw_layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+
+  layer->AddChild(nondraw_layer.Pass());
+  host_impl_->pending_tree()->SetRootLayer(layer.Pass());
+
+  LayerTreeImpl* pending_tree = host_impl_->pending_tree();
+  LayerImpl* pending_layer = pending_tree->root_layer();
+  FakePictureLayerImpl* pending_nondraw_layer =
+      static_cast<FakePictureLayerImpl*>(pending_layer->children()[0]);
+
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
+
+  std::vector<PictureLayerImpl::Pair> layer_pairs;
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].pending != pending_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(nullptr, layer_pairs[0].active);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[1].pending);
+  EXPECT_EQ(nullptr, layer_pairs[1].active);
+
+  host_impl_->ActivateSyncTree();
+
+  LayerTreeImpl* active_tree = host_impl_->active_tree();
+  LayerImpl* active_layer = active_tree->root_layer();
+  FakePictureLayerImpl* active_nondraw_layer =
+      static_cast<FakePictureLayerImpl*>(active_layer->children()[0]);
+  EXPECT_NE(active_tree, pending_tree);
+  EXPECT_NE(active_layer, pending_layer);
+  EXPECT_NE(active_nondraw_layer, pending_nondraw_layer);
+  EXPECT_NE(nullptr, active_tree);
+  EXPECT_NE(nullptr, active_layer);
+  EXPECT_NE(nullptr, active_nondraw_layer);
+
+  active_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
+
+  host_impl_->CreatePendingTree();
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[1].pending);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[1].active);
+
+  // Activate, the active layer has no twin now.
+  host_impl_->ActivateSyncTree();
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(nullptr, layer_pairs[0].pending);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[1].active);
+  EXPECT_EQ(nullptr, layer_pairs[1].pending);
+
+  // Create another layer in the pending tree that's not in the active tree. We
+  // should get three pairs including the nondraw layers.
+  host_impl_->CreatePendingTree();
+  host_impl_->pending_tree()->root_layer()->AddChild(
+      FakePictureLayerImpl::Create(host_impl_->pending_tree(), 11));
+
+  LayerImpl* new_pending_layer = pending_tree->root_layer()->children()[1];
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(3u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[2]);
+  if (layer_pairs[1].pending != new_pending_layer)
+    std::swap(layer_pairs[1], layer_pairs[2]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(new_pending_layer, layer_pairs[1].pending);
+  EXPECT_EQ(nullptr, layer_pairs[1].active);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[2].active);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[2].pending);
+
+  host_impl_->pending_tree()->root_layer()->RemoveChild(new_pending_layer);
+
+  // Have the pending layer be part of the RSLL now. It should appear in the
+  // list, as should its active twin since we don't request only layers with
+  // valid draw properties.
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(true);
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[1].pending);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[1].active);
+
+  // Have the active layer be part of the RSLL now instead. It should appear in
+  // the list, as should its pending twin since we don't request only layers
+  // with valid draw properties.
+  pending_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(false);
+  active_nondraw_layer->SetIsDrawnRenderSurfaceLayerListMember(true);
+
+  layer_pairs.clear();
+  host_impl_->GetPictureLayerImplPairs(&layer_pairs, false);
+  EXPECT_EQ(2u, layer_pairs.size());
+  // The pair ordering is flaky, so make it consistent.
+  if (layer_pairs[0].active != active_layer)
+    std::swap(layer_pairs[0], layer_pairs[1]);
+  EXPECT_EQ(active_layer, layer_pairs[0].active);
+  EXPECT_EQ(pending_layer, layer_pairs[0].pending);
+  EXPECT_EQ(active_nondraw_layer, layer_pairs[1].active);
+  EXPECT_EQ(pending_nondraw_layer, layer_pairs[1].pending);
 }
 
 TEST_F(LayerTreeHostImplTest, DidBecomeActive) {

@@ -662,7 +662,7 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
   Tile* last_tile = NULL;
   smoothness_tiles.clear();
   tile_count = 0;
-  // Here we expect to get increasing ACTIVE_TREE priority_bin.
+  // Here we expect to get increasing combined priority_bin.
   queue = host_impl_.BuildEvictionQueue(SMOOTHNESS_TAKES_PRIORITY);
   int distance_increasing = 0;
   int distance_decreasing = 0;
@@ -674,16 +674,16 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     if (!last_tile)
       last_tile = tile;
 
-    EXPECT_GE(last_tile->priority(ACTIVE_TREE).priority_bin,
-              tile->priority(ACTIVE_TREE).priority_bin);
-    if (last_tile->priority(ACTIVE_TREE).priority_bin ==
-        tile->priority(ACTIVE_TREE).priority_bin) {
+    const TilePriority& last_priority = last_tile->combined_priority();
+    const TilePriority& priority = tile->combined_priority();
+
+    EXPECT_GE(last_priority.priority_bin, priority.priority_bin);
+    if (last_priority.priority_bin == priority.priority_bin) {
       EXPECT_LE(last_tile->required_for_activation(),
                 tile->required_for_activation());
       if (last_tile->required_for_activation() ==
           tile->required_for_activation()) {
-        if (last_tile->priority(ACTIVE_TREE).distance_to_visible >=
-            tile->priority(ACTIVE_TREE).distance_to_visible)
+        if (last_priority.distance_to_visible >= priority.distance_to_visible)
           ++distance_decreasing;
         else
           ++distance_increasing;
@@ -696,14 +696,15 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     queue->Pop();
   }
 
+  // Ensure that the distance is decreasing many more times than increasing.
   EXPECT_EQ(3, distance_increasing);
-  EXPECT_EQ(16, distance_decreasing);
+  EXPECT_EQ(17, distance_decreasing);
   EXPECT_EQ(tile_count, smoothness_tiles.size());
   EXPECT_EQ(all_tiles, smoothness_tiles);
 
   std::set<Tile*> new_content_tiles;
   last_tile = NULL;
-  // Here we expect to get increasing PENDING_TREE priority_bin.
+  // Again, we expect to get increasing combined priority_bin.
   queue = host_impl_.BuildEvictionQueue(NEW_CONTENT_TAKES_PRIORITY);
   distance_decreasing = 0;
   distance_increasing = 0;
@@ -714,16 +715,16 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     if (!last_tile)
       last_tile = tile;
 
-    EXPECT_GE(last_tile->priority(PENDING_TREE).priority_bin,
-              tile->priority(PENDING_TREE).priority_bin);
-    if (last_tile->priority(PENDING_TREE).priority_bin ==
-        tile->priority(PENDING_TREE).priority_bin) {
+    const TilePriority& last_priority = last_tile->combined_priority();
+    const TilePriority& priority = tile->combined_priority();
+
+    EXPECT_GE(last_priority.priority_bin, priority.priority_bin);
+    if (last_priority.priority_bin == priority.priority_bin) {
       EXPECT_LE(last_tile->required_for_activation(),
                 tile->required_for_activation());
       if (last_tile->required_for_activation() ==
           tile->required_for_activation()) {
-        if (last_tile->priority(PENDING_TREE).distance_to_visible >=
-            tile->priority(PENDING_TREE).distance_to_visible)
+        if (last_priority.distance_to_visible >= priority.distance_to_visible)
           ++distance_decreasing;
         else
           ++distance_increasing;
@@ -735,8 +736,9 @@ TEST_F(TileManagerTilePriorityQueueTest, EvictionTilePriorityQueue) {
     queue->Pop();
   }
 
+  // Ensure that the distance is decreasing many more times than increasing.
   EXPECT_EQ(3, distance_increasing);
-  EXPECT_EQ(16, distance_decreasing);
+  EXPECT_EQ(17, distance_decreasing);
   EXPECT_EQ(tile_count, new_content_tiles.size());
   EXPECT_EQ(all_tiles, new_content_tiles);
 }
@@ -771,6 +773,12 @@ TEST_F(TileManagerTilePriorityQueueTest,
       CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE, time_ticks));
   host_impl_.pending_tree()->UpdateDrawProperties();
 
+  ActivateTree();
+  SetupPendingTree(pending_pile);
+
+  FakePictureLayerImpl* active_child_layer =
+      static_cast<FakePictureLayerImpl*>(active_layer_->children()[0]);
+
   std::set<Tile*> all_tiles;
   size_t tile_count = 0;
   scoped_ptr<RasterTilePriorityQueue> raster_queue(host_impl_.BuildRasterQueue(
@@ -797,6 +805,15 @@ TEST_F(TileManagerTilePriorityQueueTest,
   pending_child_layer->LowResTiling()->ComputeTilePriorityRects(
       viewport, 1.0f, 1.0, Occlusion());
 
+  active_layer_->HighResTiling()->ComputeTilePriorityRects(viewport, 1.0f, 1.0,
+                                                           Occlusion());
+  active_layer_->LowResTiling()->ComputeTilePriorityRects(viewport, 1.0f, 1.0,
+                                                          Occlusion());
+  active_child_layer->HighResTiling()->ComputeTilePriorityRects(
+      viewport, 1.0f, 1.0, Occlusion());
+  active_child_layer->LowResTiling()->ComputeTilePriorityRects(
+      viewport, 1.0f, 1.0, Occlusion());
+
   // Populate all tiles directly from the tilings.
   all_tiles.clear();
   std::vector<Tile*> pending_high_res_tiles =
@@ -812,12 +829,14 @@ TEST_F(TileManagerTilePriorityQueueTest,
   std::vector<Tile*> pending_child_high_res_tiles =
       pending_child_layer->HighResTiling()->AllTilesForTesting();
   pending_child_layer->HighResTiling()->SetAllTilesOccludedForTesting();
+  active_child_layer->HighResTiling()->SetAllTilesOccludedForTesting();
   all_tiles.insert(pending_child_high_res_tiles.begin(),
                    pending_child_high_res_tiles.end());
 
   std::vector<Tile*> pending_child_low_res_tiles =
       pending_child_layer->LowResTiling()->AllTilesForTesting();
   pending_child_layer->LowResTiling()->SetAllTilesOccludedForTesting();
+  active_child_layer->LowResTiling()->SetAllTilesOccludedForTesting();
   all_tiles.insert(pending_child_low_res_tiles.begin(),
                    pending_child_low_res_tiles.end());
 
@@ -835,7 +854,7 @@ TEST_F(TileManagerTilePriorityQueueTest,
     if (!last_tile)
       last_tile = tile;
 
-    bool tile_is_occluded = tile->is_occluded_for_tree_priority(tree_priority);
+    bool tile_is_occluded = tile->is_occluded_combined();
 
     // The only way we will encounter an occluded tile after an unoccluded
     // tile is if the priorty bin decreased, the tile is required for
@@ -843,8 +862,7 @@ TEST_F(TileManagerTilePriorityQueueTest,
     if (tile_is_occluded) {
       occluded_count++;
 
-      bool last_tile_is_occluded =
-          last_tile->is_occluded_for_tree_priority(tree_priority);
+      bool last_tile_is_occluded = last_tile->is_occluded_combined();
       if (!last_tile_is_occluded) {
         TilePriority::PriorityBin tile_priority_bin =
             tile->priority_for_tree_priority(tree_priority).priority_bin;
@@ -1069,11 +1087,12 @@ TEST_F(TileManagerTilePriorityQueueTest,
        RasterTilePriorityQueueStaticViewport) {
   FakePictureLayerTilingClient client;
 
-  gfx::Rect viewport(50, 50, 100, 100);
-  gfx::Size layer_bounds(800, 800);
+  gfx::Rect viewport(50, 50, 500, 500);
+  gfx::Size layer_bounds(1600, 1600);
 
+  float inset = PictureLayerTiling::CalculateSoonBorderDistance(viewport, 1.0f);
   gfx::Rect soon_rect = viewport;
-  soon_rect.Inset(-312.f, -312.f, -312.f, -312.f);
+  soon_rect.Inset(-inset, -inset);
 
   client.SetTileSize(gfx::Size(30, 30));
   client.set_tree(ACTIVE_TREE);
@@ -1093,7 +1112,7 @@ TEST_F(TileManagerTilePriorityQueueTest,
   tiling_set->UpdateTilePriorities(viewport, 1.0f, 1.0, Occlusion(), true);
   std::vector<Tile*> all_tiles = tiling->AllTilesForTesting();
   // Sanity check.
-  EXPECT_EQ(841u, all_tiles.size());
+  EXPECT_EQ(3364u, all_tiles.size());
 
   // The explanation of each iteration is as follows:
   // 1. First iteration tests that we can get all of the tiles correctly.
@@ -1205,8 +1224,10 @@ TEST_F(TileManagerTilePriorityQueueTest,
   tiling_set->UpdateTilePriorities(moved_viewport, 1.0f, 2.0, Occlusion(),
                                    true);
 
+  float inset =
+      PictureLayerTiling::CalculateSoonBorderDistance(moved_viewport, 1.0f);
   gfx::Rect soon_rect = moved_viewport;
-  soon_rect.Inset(-312.f, -312.f, -312.f, -312.f);
+  soon_rect.Inset(-inset, -inset);
 
   // There are 3 bins in TilePriority.
   bool have_tiles[3] = {};

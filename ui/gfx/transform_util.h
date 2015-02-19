@@ -58,6 +58,9 @@ GFX_EXPORT bool SnapTransform(Transform* out,
                               const Transform& transform,
                               const Rect& viewport);
 
+// Computes the Frobenius norm of (a - b).
+GFX_EXPORT float MatrixDistance(const Transform& a, const Transform& b);
+
 }  // namespace gfx
 
 #endif  // UI_GFX_TRANSFORM_UTIL_H_

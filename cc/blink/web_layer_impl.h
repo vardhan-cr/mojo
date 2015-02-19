@@ -6,6 +6,7 @@
 #define CC_BLINK_WEB_LAYER_IMPL_H_
 
 #include <string>
+#include <utility>
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
@@ -34,13 +35,7 @@ namespace base {
 namespace trace_event {
 class ConvertableToTraceFormat;
 }
-
-// TODO(ssid): remove these aliases after the tracing clients are moved to the
-// new trace_event namespace. See crbug.com/451032. ETA: March 2015.
-namespace debug {
-using ::base::trace_event::ConvertableToTraceFormat;
 }
-}  // namespace base
 
 namespace cc {
 class Layer;
@@ -131,6 +126,8 @@ class WebLayerImpl : public blink::WebLayer, public cc::LayerClient {
   virtual blink::WebVector<blink::WebRect> touchEventHandlerRegion() const;
   virtual void setScrollBlocksOn(blink::WebScrollBlocksOn);
   virtual blink::WebScrollBlocksOn scrollBlocksOn() const;
+  virtual void setFrameTimingRequests(
+      const blink::WebVector<std::pair<int64_t, blink::WebRect>>& requests);
   virtual void setIsContainerForFixedPositionLayers(bool is_container);
   virtual bool isContainerForFixedPositionLayers() const;
   virtual void setPositionConstraint(
@@ -141,7 +138,8 @@ class WebLayerImpl : public blink::WebLayer, public cc::LayerClient {
   virtual void setWebLayerClient(blink::WebLayerClient* client);
 
   // LayerClient implementation.
-  scoped_refptr<base::debug::ConvertableToTraceFormat> TakeDebugInfo() override;
+  scoped_refptr<base::trace_event::ConvertableToTraceFormat> TakeDebugInfo()
+      override;
 
   virtual void setScrollParent(blink::WebLayer* parent);
   virtual void setClipParent(blink::WebLayer* parent);

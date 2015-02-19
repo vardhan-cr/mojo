@@ -391,9 +391,12 @@
       # See https://sites.google.com/a/chromium.org/dev/developers/testing/addresssanitizer
       'asan%': 0,
       'asan_blacklist%': '<(PRODUCT_DIR)/../../tools/memory/asan/blacklist.txt',
-      # Enable coverage gathering instrumentation in ASan. This flag also
-      # controls coverage granularity (1 for function-level coverage, 2 for
-      # block-level coverage).
+      # Enable coverage gathering instrumentation in sanitizer tools. This flag
+      # also controls coverage granularity (1 for function-level coverage, 2
+      # for block-level coverage).
+      'sanitizer_coverage%': 0,
+      # Deprecated, only works if |sanitizer_coverage| isn't set.
+      # TODO(glider): remove this flag.
       'asan_coverage%': 0,
       # Enable intra-object-overflow detection in ASan (experimental).
       'asan_field_padding%': 0,
@@ -1119,6 +1122,7 @@
     'asan%': '<(asan)',
     'asan_blacklist%': '<(asan_blacklist)',
     'asan_coverage%': '<(asan_coverage)',
+    'sanitizer_coverage%': '<(sanitizer_coverage)',
     'asan_field_padding%': '<(asan_field_padding)',
     'use_sanitizer_options%': '<(use_sanitizer_options)',
     'syzyasan%': '<(syzyasan)',
@@ -1668,7 +1672,7 @@
           'android_ndk_root%': '<(android_ndk_root)',
           'android_sdk_root%': '<(android_sdk_root)',
           'android_sdk_version%': '<(android_sdk_version)',
-          'android_libcpp_root': '<(android_ndk_root)/sources/cxx-stl/llvm-libc++',
+          'android_stlport_root': '<(android_ndk_root)/sources/cxx-stl/stlport',
           'host_os%': '<(host_os)',
 
           'android_sdk%': '<(android_sdk_root)/platforms/android-<(android_sdk_version)',
@@ -1745,10 +1749,9 @@
         'android_sdk%': '<(android_sdk)',
         'android_sdk_jar%': '<(android_sdk)/android.jar',
 
-        'android_libcpp_root': '<(android_libcpp_root)',
-        'android_libcpp_include': '<(android_libcpp_root)/libcxx/include',
-        'android_libcpp_libs_dir': '<(android_libcpp_root)/libs/<(android_app_abi)',
-
+        'android_stlport_root': '<(android_stlport_root)',
+        'android_stlport_include': '<(android_stlport_root)/stlport',
+        'android_stlport_libs_dir': '<(android_stlport_root)/libs/<(android_app_abi)',
         'host_os%': '<(host_os)',
 
         # Location of the "objcopy" binary, used by both gyp and scripts.
@@ -2066,10 +2069,10 @@
         },
         'grit_defines': [
           '-t', 'ios',
-          # iOS uses a whitelist to filter resources.
-          '-w', '<(DEPTH)/build/ios/grit_whitelist.txt',
           '--no-output-all-resource-defines',
         ],
+        # iOS uses a whitelist to filter resources.
+        'grit_whitelist%': '<(DEPTH)/build/ios/grit_whitelist.txt',
 
         # Enable host builds when generating with ninja-ios.
         'conditions': [
@@ -2077,12 +2080,10 @@
             'host_os%': "mac",
           }],
 
-          # TODO(sdefresne): Remove the target_subarch check once Apple has
-          # upstreamed the support for "arm64". http://crbug.com/341453
           # TODO(eugenebut): Remove enable_coverage check once
           # libclang_rt.profile_ios.a is bundled with Chromium's clang.
           # http://crbug.com/450379
-          ['target_subarch!="arm32" or enable_coverage or "<(GENERATOR)"=="xcode"', {
+          ['enable_coverage or "<(GENERATOR)"=="xcode"', {
             'clang_xcode%': 1,
           }],
         ],
@@ -2688,74 +2689,47 @@
           'GCC_GENERATE_DEBUGGING_SYMBOLS': 'NO',
         },
         'conditions': [
-          ['clang==1 and asan==0 and msan==0 and tsan==0 and ubsan_vptr==0', {
-            # Clang creates chubby debug information, which makes linking very
-            # slow. For now, don't create debug information with clang.  See
-            # http://crbug.com/70000
-            'conditions': [
-              ['OS=="linux"', {
-                'variables': {
-                  'debug_extra_cflags': '-g0',
-                },
-              }],
-              # Android builds symbols on release by default, disable them.
-              ['OS=="android"', {
-                'variables': {
-                  'debug_extra_cflags': '-g0',
-                  'release_extra_cflags': '-g0',
-                },
-              }],
-            ],
-          }, { # else clang!=1
-            'conditions': [
-              ['OS=="win" and fastbuild==2', {
-                # Completely disable debug information.
-                'msvs_settings': {
-                  'VCLinkerTool': {
-                    'GenerateDebugInformation': 'false',
-                  },
-                  'VCCLCompilerTool': {
-                    'DebugInformationFormat': '0',
-                  },
-                },
-              }],
-              ['OS=="win" and fastbuild==1', {
-                'msvs_settings': {
-                  'VCLinkerTool': {
-                    # This tells the linker to generate .pdbs, so that
-                    # we can get meaningful stack traces.
-                    'GenerateDebugInformation': 'true',
-                  },
-                  'VCCLCompilerTool': {
-                    # No debug info to be generated by compiler.
-                    'DebugInformationFormat': '0',
-                  },
-                },
-              }],
-              ['OS=="linux" and fastbuild==2', {
-                'variables': {
-                  'debug_extra_cflags': '-g0',
-                },
-              }],
-              ['OS=="linux" and fastbuild==1', {
-                'variables': {
-                  'debug_extra_cflags': '-g1',
-                },
-              }],
-              ['OS=="android" and fastbuild==2', {
-                'variables': {
-                  'debug_extra_cflags': '-g0',
-                  'release_extra_cflags': '-g0',
-                },
-              }],
-              ['OS=="android" and fastbuild==1', {
-                'variables': {
-                  'debug_extra_cflags': '-g1',
-                  'release_extra_cflags': '-g1',
-                },
-              }],
-            ],
-          }], # clang!=1
+          ['OS=="win" and fastbuild==2', {
+            # Completely disable debug information.
+            'msvs_settings': {
+              'VCLinkerTool': {
+                'GenerateDebugInformation': 'false',
+              },
+              'VCCLCompilerTool': {
+                'DebugInformationFormat': '0',
+              },
+            },
+          }],
+          ['OS=="win" and fastbuild==1', {
+            'msvs_settings': {
+              'VCLinkerTool': {
+                # This tells the linker to generate .pdbs, so that
+                # we can get meaningful stack traces.
+                'GenerateDebugInformation': 'true',
+              },
+              'VCCLCompilerTool': {
+                # No debug info to be generated by compiler.
+                'DebugInformationFormat': '0',
+              },
+            },
+          }],
+          ['(OS=="android" or OS=="linux") and fastbuild==2', {
+            'variables': { 'debug_extra_cflags': '-g0', },
+          }],
+          ['(OS=="android" or OS=="linux") and fastbuild==1', {
+            # TODO(thakis): Change this to -g1 once http://crbug.com/456947 is
+            # fixed.
+            'variables': { 'debug_extra_cflags': '-g0', },
+          }],
+          # Android builds symbols on release by default, disable them.
+          ['OS=="android" and fastbuild==2', {
+            'variables': { 'release_extra_cflags': '-g0', },
+          }],
+          ['OS=="android" and fastbuild==1', {
+            # TODO(thakis): Change this to -g1 once http://crbug.com/456947 is
+            # fixed.
+            'variables': { 'release_extra_cflags': '-g0', },
+          }],
         ],
       }],  # fastbuild!=0
       ['dont_embed_build_metadata==1', {
@@ -3544,7 +3518,7 @@
       },
     }],
     # TODO(thakis): Enable this everywhere. http://crbug.com/371125
-    ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and ubsan==0 and ubsan_vptr==0 and use_ozone!=1', {
+    ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and ubsan==0 and ubsan_vptr==0', {
       'target_defaults': {
         'ldflags': [
           '-Wl,-z,defs',
@@ -4047,6 +4021,13 @@
                        '-fstack-protector',  # stack protector is always enabled on arm64.
                     ],
                   }],
+                  # TODO: Remove webview test once webview fully compiles from
+                  # Chromium. crbug.com/440793
+                  ['OS=="android" and android_webview_build==0', {
+                    'ldflags': [
+                      '-fuse-ld=gold',
+                    ],
+                  }],
                 ],
               }],
             ],
@@ -4272,11 +4253,26 @@
               }],
             ],
           }],
-          ['asan_coverage!=0', {
+          ['asan_coverage!=0 and sanitizer_coverage==0', {
             'target_conditions': [
               ['_toolset=="target"', {
                 'cflags': [
                   '-fsanitize-coverage=<(asan_coverage)',
+                ],
+                'defines': [
+                  'SANITIZER_COVERAGE',
+                ],
+              }],
+            ],
+          }],
+          ['sanitizer_coverage!=0', {
+            'target_conditions': [
+              ['_toolset=="target"', {
+                'cflags': [
+                  '-fsanitize-coverage=<(sanitizer_coverage)',
+                ],
+                'defines': [
+                  'SANITIZER_COVERAGE',
                 ],
               }],
             ],
@@ -4406,8 +4402,10 @@
                   # https://groups.google.com/a/chromium.org/group/chromium-dev/browse_thread/thread/281527606915bb36
                   # Only apply this to the target linker, since the host
                   # linker might not be gold, but isn't used much anyway.
-                  '-Wl,--threads',
-                  '-Wl,--thread-count=4',
+                  # TODO(raymes): Disable threading because gold is frequently
+                  # crashing on the bots: crbug.com/161942.
+                  # '-Wl,--threads',
+                  # '-Wl,--thread-count=4',
                 ],
               }],
             ],
@@ -4499,9 +4497,9 @@
           # Figure this out early since it needs symbols from libgcc.a, so it
           # has to be before that in the set of libraries.
           ['component=="shared_library"', {
-              'android_libcpp_library': 'c++_shared',
+              'android_stlport_library': 'stlport_shared',
           }, {
-              'android_libcpp_library': 'c++_static',
+              'android_stlport_library': 'stlport_static',
           }],
         ],
 
@@ -4585,6 +4583,8 @@
             'defines': [
               'ANDROID',
               '__GNU_SOURCE=1',  # Necessary for clone()
+              'USE_STLPORT=1',
+              '_STLP_USE_PTR_SPECIALIZATIONS=1',
               'CHROME_BUILD_ID="<(chrome_build_id)"',
             ],
             'ldflags!': [
@@ -4658,13 +4658,12 @@
                   '-nostdlib',
                 ],
                 'libraries': [
-                  '-l<(android_libcpp_library)',
-                  '-latomic',
+                  '-l<(android_stlport_library)',
                   # Manually link the libgcc.a that the cross compiler uses.
                   '<!(<(android_toolchain)/*-gcc -print-libgcc-file-name)',
-                  '-lm',
                   '-lc',
                   '-ldl',
+                  '-lm',
                 ],
               }],
               ['android_webview_build==1', {
@@ -4716,20 +4715,20 @@
                   '-Wl,--icf=safe',
                 ],
               }],
+              # NOTE: The stlport header include paths below are specified in
+              # cflags rather than include_dirs because they need to come
+              # after include_dirs. Think of them like system headers, but
+              # don't use '-isystem' because the arm-linux-androideabi-4.4.3
+              # toolchain (circa Gingerbread) will exhibit strange errors.
+              # The include ordering here is important; change with caution.
               ['android_webview_build==0', {
                 'cflags': [
-                  '-isystem<(android_libcpp_include)',
-                  '-isystem<(android_ndk_root)/sources/cxx-stl/llvm-libc++abi/libcxxabi/include',
-                  '-isystem<(android_ndk_root)/sources/android/support/include',
+                  '-isystem<(android_stlport_include)',
                 ],
                 'ldflags': [
-                  '-L<(android_libcpp_libs_dir)',
+                  '-L<(android_stlport_libs_dir)',
                 ],
               }, { # else: android_webview_build!=0
-                'defines': [
-                  'USE_STLPORT=1',
-                  '_STLP_USE_PTR_SPECIALIZATIONS=1',
-                ],
                 'aosp_build_settings': {
                   # Specify that we want to statically link stlport from the
                   # NDK. This will provide all the include and library paths
@@ -4933,11 +4932,26 @@
               ],
             },
           }],
-          ['asan_coverage!=0', {
+          ['asan_coverage!=0 and sanitizer_coverage==0', {
             'target_conditions': [
               ['_toolset=="target"', {
                 'cflags': [
                   '-fsanitize-coverage=<(asan_coverage)',
+                ],
+                'defines': [
+                  'SANITIZER_COVERAGE',
+                ],
+              }],
+            ],
+          }],
+          ['sanitizer_coverage!=0', {
+            'target_conditions': [
+              ['_toolset=="target"', {
+                'cflags': [
+                  '-fsanitize-coverage=<(sanitizer_coverage)',
+                ],
+                'defines': [
+                  'SANITIZER_COVERAGE',
                 ],
               }],
             ],
@@ -5498,15 +5512,12 @@
             }],
           ],
           'conditions': [
+            # Building with Clang on Windows is a work in progress and very
+            # experimental. See crbug.com/82385.
             ['clang==1', {
-              # Building with Clang on Windows is a work in progress and very
-              # experimental. See crbug.com/82385.
               'VCCLCompilerTool': {
-                'WarnAsError': 'false',
-                'RuntimeTypeInfo': 'false',
                 'AdditionalOptions': [
                   '-fmsc-version=1800',
-                  '/fallback',
 
                   # Many files use intrinsics without including this header.
                   # TODO(hans): Fix those files, or move this to sub-GYPs.
@@ -5546,6 +5557,14 @@
                   '-Wno-unused-variable',
                   '-Wno-unused-local-typedef',  # http://crbug.com/411648
                   '-Wno-inconsistent-missing-override', #http://crbug.com/428099
+                ],
+              },
+            }],
+            ['clang==1 and target_arch=="ia32"', {
+              'VCCLCompilerTool': {
+                'WarnAsError': 'false',
+                'AdditionalOptions': [
+                  '/fallback',
                 ],
               },
             }],

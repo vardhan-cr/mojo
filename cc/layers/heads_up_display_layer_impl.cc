@@ -28,6 +28,7 @@
 #include "third_party/skia/include/effects/SkColorMatrixFilter.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/gfx/geometry/size_conversions.h"
 
 namespace cc {
 
@@ -69,6 +70,7 @@ double HeadsUpDisplayLayerImpl::Graph::UpdateUpperBound() {
 HeadsUpDisplayLayerImpl::HeadsUpDisplayLayerImpl(LayerTreeImpl* tree_impl,
                                                  int id)
     : LayerImpl(tree_impl, id),
+      internal_contents_scale_(1.f),
       fps_graph_(60.0, 80.0),
       paint_time_graph_(16.0, 48.0),
       fade_step_(0) {
@@ -94,8 +96,8 @@ void HeadsUpDisplayLayerImpl::AcquireResource(
 
   scoped_ptr<ScopedResource> resource =
       ScopedResource::Create(resource_provider);
-  resource->Allocate(
-      content_bounds(), ResourceProvider::TextureHintImmutable, RGBA_8888);
+  resource->Allocate(internal_content_bounds_,
+                     ResourceProvider::TextureHintImmutable, RGBA_8888);
   resources_.push_back(resource.Pass());
 }
 
@@ -115,7 +117,7 @@ class ResourceSizeIsEqualTo {
 void HeadsUpDisplayLayerImpl::ReleaseUnmatchedSizeResources(
     ResourceProvider* resource_provider) {
   ScopedPtrVector<ScopedResource>::iterator it_erase =
-      resources_.partition(ResourceSizeIsEqualTo(content_bounds()));
+      resources_.partition(ResourceSizeIsEqualTo(internal_content_bounds_));
   resources_.erase(it_erase, resources_.end());
 }
 
@@ -124,6 +126,10 @@ bool HeadsUpDisplayLayerImpl::WillDraw(DrawMode draw_mode,
   if (draw_mode == DRAW_MODE_RESOURCELESS_SOFTWARE)
     return false;
 
+  internal_contents_scale_ = draw_properties().ideal_contents_scale;
+  internal_content_bounds_ =
+      gfx::ToCeiledSize(gfx::ScaleSize(bounds(), internal_contents_scale_));
+
   ReleaseUnmatchedSizeResources(resource_provider);
   AcquireResource(resource_provider);
   return LayerImpl::WillDraw(draw_mode, resource_provider);
@@ -131,16 +137,15 @@ bool HeadsUpDisplayLayerImpl::WillDraw(DrawMode draw_mode,
 
 void HeadsUpDisplayLayerImpl::AppendQuads(
     RenderPass* render_pass,
-    const Occlusion& occlusion_in_content_space,
     AppendQuadsData* append_quads_data) {
   if (!resources_.back()->id())
     return;
 
   SharedQuadState* shared_quad_state =
       render_pass->CreateAndAppendSharedQuadState();
-  PopulateSharedQuadState(shared_quad_state);
+  PopulateScaledSharedQuadState(shared_quad_state, internal_contents_scale_);
 
-  gfx::Rect quad_rect(content_bounds());
+  gfx::Rect quad_rect(internal_content_bounds_);
   gfx::Rect opaque_rect(contents_opaque() ? quad_rect : gfx::Rect());
   gfx::Rect visible_quad_rect(quad_rect);
   bool premultiplied_alpha = true;
@@ -177,12 +182,13 @@ void HeadsUpDisplayLayerImpl::UpdateHudTexture(
   else
     canvas_size.set(0, 0);
 
-  if (canvas_size.width() != content_bounds().width() ||
-      canvas_size.height() != content_bounds().height() || !hud_surface_) {
+  if (canvas_size.width() != internal_content_bounds_.width() ||
+      canvas_size.height() != internal_content_bounds_.height() ||
+      !hud_surface_) {
     TRACE_EVENT0("cc", "ResizeHudCanvas");
 
     hud_surface_ = skia::AdoptRef(SkSurface::NewRasterN32Premul(
-        content_bounds().width(), content_bounds().height()));
+        internal_content_bounds_.width(), internal_content_bounds_.height()));
   }
 
   UpdateHudContents();
@@ -191,7 +197,8 @@ void HeadsUpDisplayLayerImpl::UpdateHudTexture(
     TRACE_EVENT0("cc", "DrawHudContents");
     hud_surface_->getCanvas()->clear(SkColorSetARGB(0, 0, 0, 0));
     hud_surface_->getCanvas()->save();
-    hud_surface_->getCanvas()->scale(contents_scale_x(), contents_scale_y());
+    hud_surface_->getCanvas()->scale(internal_contents_scale_,
+                                     internal_contents_scale_);
 
     DrawHudContents(hud_surface_->getCanvas());
 
@@ -203,7 +210,7 @@ void HeadsUpDisplayLayerImpl::UpdateHudTexture(
   size_t row_bytes = 0;
   const void* pixels = hud_surface_->getCanvas()->peekPixels(&info, &row_bytes);
   DCHECK(pixels);
-  gfx::Rect content_rect(content_bounds());
+  gfx::Rect content_rect(internal_content_bounds_);
   DCHECK(info.colorType() == kN32_SkColorType);
   resource_provider->SetPixels(resources_.back()->id(),
                                static_cast<const uint8_t*>(pixels),
@@ -677,8 +684,9 @@ void HeadsUpDisplayLayerImpl::DrawDebugRect(
     SkColor fill_color,
     float stroke_width,
     const std::string& label_text) const {
-  gfx::Rect debug_layer_rect = gfx::ScaleToEnclosingRect(
-      rect.rect, 1.0 / contents_scale_x(), 1.0 / contents_scale_y());
+  gfx::Rect debug_layer_rect =
+      gfx::ScaleToEnclosingRect(rect.rect, 1.0 / internal_contents_scale_,
+                                1.0 / internal_contents_scale_);
   SkIRect sk_rect = RectToSkIRect(debug_layer_rect);
   paint->setColor(fill_color);
   paint->setStyle(SkPaint::kFill_Style);
@@ -696,7 +704,7 @@ void HeadsUpDisplayLayerImpl::DrawDebugRect(
     // The debug_layer_rect may be huge, and converting to a floating point may
     // be lossy, so intersect with the HUD layer bounds first to prevent that.
     gfx::Rect clip_rect = debug_layer_rect;
-    clip_rect.Intersect(gfx::Rect(content_bounds()));
+    clip_rect.Intersect(gfx::Rect(internal_content_bounds_));
     SkRect sk_clip_rect = RectToSkRect(clip_rect);
 
     canvas->save();
@@ -764,16 +772,6 @@ void HeadsUpDisplayLayerImpl::DrawDebugRects(
         fill_color = DebugColors::ScreenSpaceLayerRectFillColor();
         stroke_width = DebugColors::ScreenSpaceLayerRectBorderWidth();
         break;
-      case OCCLUDING_RECT_TYPE:
-        stroke_color = DebugColors::OccludingRectBorderColor();
-        fill_color = DebugColors::OccludingRectFillColor();
-        stroke_width = DebugColors::OccludingRectBorderWidth();
-        break;
-      case NONOCCLUDING_RECT_TYPE:
-        stroke_color = DebugColors::NonOccludingRectBorderColor();
-        fill_color = DebugColors::NonOccludingRectFillColor();
-        stroke_width = DebugColors::NonOccludingRectBorderWidth();
-        break;
       case TOUCH_EVENT_HANDLER_RECT_TYPE:
         stroke_color = DebugColors::TouchEventHandlerRectBorderColor();
         fill_color = DebugColors::TouchEventHandlerRectFillColor();
@@ -838,7 +836,7 @@ const char* HeadsUpDisplayLayerImpl::LayerTypeAsString() const {
 }
 
 void HeadsUpDisplayLayerImpl::AsValueInto(
-    base::debug::TracedValue* dict) const {
+    base::trace_event::TracedValue* dict) const {
   LayerImpl::AsValueInto(dict);
   dict->SetString("layer_name", "Heads Up Display Layer");
 }

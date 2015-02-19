@@ -39,21 +39,11 @@ bool FLAGS_quic_enable_bandwidth_resumption_experiment = true;
 // If true, QUIC congestion control will be paced.  If false, pacing may be
 // controlled by QUIC connection options in the config or by enabling BBR
 // congestion control.
-bool FLAGS_quic_enable_pacing = false;
-
-// If true, the silent close option will be honored.
-bool FLAGS_quic_allow_silent_close = true;
-
-// If true, use std::cbrt instead of custom cube root.
-bool FLAGS_quic_use_std_cbrt = true;
+bool FLAGS_quic_enable_pacing = true;
 
 // If true, then the source address tokens generated for QUIC connects will
 // store multiple addresses.
 bool FLAGS_quic_use_multiple_address_in_source_tokens = false;
-
-// If true, if min RTT and/or SRTT have not yet been set then initial RTT is
-// used to initialize them in a call to QuicConnection::GetStats.
-bool FLAGS_quic_use_initial_rtt_for_stats = true;
 
 // If true, uses the last sent packet for the RTO timer instead of the earliest.
 bool FLAGS_quic_rto_uses_last_sent = true;
@@ -61,10 +51,6 @@ bool FLAGS_quic_rto_uses_last_sent = true;
 // If true, attach QuicAckNotifiers to packets rather than individual stream
 // frames.
 bool FLAGS_quic_attach_ack_notifiers_to_packets = true;
-
-// If true, the AckNotifierManager is informed about new packets as soon as they
-// are serialized.
-bool FLAGS_quic_ack_notifier_informed_on_serialized = true;
 
 // If true, QUIC will use the new RTO that waits until an ack arrives to adjust
 // the congestion window.
@@ -87,3 +73,6 @@ int64 FLAGS_quic_time_wait_list_max_connections = 50000;
 // If true, limit the number of connections on the quic time-wait list using a
 // flag.
 bool FLAGS_quic_limit_time_wait_list_size = true;
+
+// Use small QUIC packet sizes by default.
+bool FLAGS_quic_small_default_packet_size = true;

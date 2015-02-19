@@ -412,8 +412,8 @@ class DeviceUtils(object):
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def RunShellCommand(self, cmd, check_return=False, cwd=None, env=None,
-                      as_root=False, single_line=False,
-                      timeout=None, retries=None):
+                      as_root=False, single_line=False, timeout=None,
+                      retries=None):
     """Run an ADB shell command.
 
     The command to run |cmd| should be a sequence of program arguments or else
@@ -847,7 +847,7 @@ class DeviceUtils(object):
         self.RunShellCommand(
             ['unzip', zip_on_device],
             as_root=True,
-            env={'PATH': '$PATH:%s' % install_commands.BIN_DIR},
+            env={'PATH': '%s:$PATH' % install_commands.BIN_DIR},
             check_return=True)
       finally:
         if zip_proc.is_alive():
@@ -1297,23 +1297,6 @@ class DeviceUtils(object):
     return host_path
 
   @decorators.WithTimeoutAndRetriesFromInstance()
-  def GetIOStats(self, timeout=None, retries=None):
-    """Gets cumulative disk IO stats since boot for all processes.
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-
-    Returns:
-      A dict containing |num_reads|, |num_writes|, |read_ms|, and |write_ms|.
-
-    Raises:
-      CommandTimeoutError on timeout.
-      DeviceUnreachableError on missing device.
-    """
-    return self.old_interface.GetIoStats()
-
-  @decorators.WithTimeoutAndRetriesFromInstance()
   def GetMemoryUsageForPid(self, pid, timeout=None, retries=None):
     """Gets the memory usage for the given PID.
 
@@ -1348,6 +1331,41 @@ class DeviceUtils(object):
   def __str__(self):
     """Returns the device serial."""
     return self.adb.GetDeviceSerial()
+
+  @decorators.WithTimeoutAndRetriesFromInstance()
+  def GetDevicePieWrapper(self, timeout=None, retries=None):
+    """Gets the absolute path to the run_pie wrapper on the device.
+
+    We have to build our device executables to be PIE, but they need to be able
+    to run on versions of android that don't support PIE (i.e. ICS and below).
+    To do so, we push a wrapper to the device that lets older android versions
+    run PIE executables. This method pushes that wrapper to the device if
+    necessary and returns the path to it.
+
+    This is exposed publicly to allow clients to write scripts using run_pie
+    (e.g. md5sum.CalculateDeviceMd5Sum).
+
+    Args:
+      timeout: timeout in seconds
+      retries: number of retries
+
+    Returns:
+      The path to the PIE wrapper on the device, or an empty string if the
+      device does not require the wrapper.
+    """
+    if 'run_pie' not in self._cache:
+      pie = ''
+      if (self.build_version_sdk <
+          constants.ANDROID_SDK_VERSION_CODES.JELLY_BEAN):
+        host_pie_path = os.path.join(constants.GetOutDirectory(), 'run_pie')
+        if not os.path.exists(host_pie_path):
+          raise device_errors.CommandFailedError('Please build run_pie')
+        pie = '%s/run_pie' % constants.TEST_EXECUTABLE_DIR
+        self.adb.Push(host_pie_path, pie)
+
+      self._cache['run_pie'] = pie
+
+    return self._cache['run_pie']
 
   @classmethod
   def parallel(cls, devices=None, async=False):

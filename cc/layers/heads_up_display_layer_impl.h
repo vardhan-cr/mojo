@@ -39,7 +39,6 @@ class CC_EXPORT HeadsUpDisplayLayerImpl : public LayerImpl {
   bool WillDraw(DrawMode draw_mode,
                 ResourceProvider* resource_provider) override;
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override;
   void UpdateHudTexture(DrawMode draw_mode,
                         ResourceProvider* resource_provider);
@@ -71,7 +70,7 @@ class CC_EXPORT HeadsUpDisplayLayerImpl : public LayerImpl {
 
   const char* LayerTypeAsString() const override;
 
-  void AsValueInto(base::debug::TracedValue* dict) const override;
+  void AsValueInto(base::trace_event::TracedValue* dict) const override;
 
   void UpdateHudContents();
   void DrawHudContents(SkCanvas* canvas);
@@ -127,6 +126,9 @@ class CC_EXPORT HeadsUpDisplayLayerImpl : public LayerImpl {
 
   ScopedPtrVector<ScopedResource> resources_;
   skia::RefPtr<SkSurface> hud_surface_;
+
+  float internal_contents_scale_;
+  gfx::Size internal_content_bounds_;
 
   Graph fps_graph_;
   Graph paint_time_graph_;

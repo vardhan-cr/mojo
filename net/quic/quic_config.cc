@@ -9,7 +9,6 @@
 #include "base/logging.h"
 #include "net/quic/crypto/crypto_handshake_message.h"
 #include "net/quic/crypto/crypto_protocol.h"
-#include "net/quic/quic_flags.h"
 #include "net/quic/quic_utils.h"
 
 using std::min;
@@ -594,9 +593,8 @@ bool QuicConfig::negotiated() const {
   // TODO(ianswett): Add the negotiated parameters once and iterate over all
   // of them in negotiated, ToHandshakeMessage, ProcessClientHello, and
   // ProcessServerHello.
-  return congestion_feedback_.negotiated() &&
-      idle_connection_state_lifetime_seconds_.negotiated() &&
-      max_streams_per_connection_.negotiated();
+  return idle_connection_state_lifetime_seconds_.negotiated() &&
+         max_streams_per_connection_.negotiated();
 }
 
 void QuicConfig::SetDefaults() {
@@ -609,11 +607,7 @@ void QuicConfig::SetDefaults() {
   congestion_feedback_.set(congestion_feedback, kQBIC);
   idle_connection_state_lifetime_seconds_.set(kMaximumIdleTimeoutSecs,
                                               kDefaultIdleTimeoutSecs);
-  if (FLAGS_quic_allow_silent_close) {
-    silent_close_.set(1, 0);
-  } else {
-    silent_close_.set(0, 0);
-  }
+  silent_close_.set(1, 0);
   SetMaxStreamsPerConnection(kDefaultMaxStreamsPerConnection,
                              kDefaultMaxStreamsPerConnection);
   max_time_before_crypto_handshake_ =
@@ -646,10 +640,6 @@ QuicErrorCode QuicConfig::ProcessPeerHello(
   DCHECK(error_details != nullptr);
 
   QuicErrorCode error = QUIC_NO_ERROR;
-  if (error == QUIC_NO_ERROR) {
-    error = congestion_feedback_.ProcessPeerHello(
-        peer_hello,  hello_type, error_details);
-  }
   if (error == QUIC_NO_ERROR) {
     error = idle_connection_state_lifetime_seconds_.ProcessPeerHello(
         peer_hello, hello_type, error_details);

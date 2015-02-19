@@ -30,7 +30,6 @@ class CC_EXPORT PaintedScrollbarLayerImpl : public ScrollbarLayerImplBase {
   bool WillDraw(DrawMode draw_mode,
                 ResourceProvider* resource_provider) override;
   void AppendQuads(RenderPass* render_pass,
-                   const Occlusion& occlusion_in_content_space,
                    AppendQuadsData* append_quads_data) override;
 
   void SetThumbThickness(int thumb_thickness);
@@ -43,6 +42,12 @@ class CC_EXPORT PaintedScrollbarLayerImpl : public ScrollbarLayerImplBase {
   }
   void set_thumb_ui_resource_id(UIResourceId uid) {
     thumb_ui_resource_id_ = uid;
+  }
+
+  void set_internal_contents_scale_and_bounds(float content_scale,
+                                              const gfx::Size& content_bounds) {
+    internal_contents_scale_ = content_scale;
+    internal_content_bounds_ = content_bounds;
   }
 
  protected:
@@ -62,6 +67,9 @@ class CC_EXPORT PaintedScrollbarLayerImpl : public ScrollbarLayerImplBase {
 
   UIResourceId track_ui_resource_id_;
   UIResourceId thumb_ui_resource_id_;
+
+  float internal_contents_scale_;
+  gfx::Size internal_content_bounds_;
 
   int thumb_thickness_;
   int thumb_length_;

@@ -19,7 +19,7 @@ const char kGpuDriverBugListJson[] = LONG_STRING_CONST(
 {
   "name": "gpu driver bug list",
   // Please update the version number whenever you change this file.
-  "version": "7.15",
+  "version": "7.16",
   "entries": [
     {
       "id": 1,
@@ -1133,6 +1133,31 @@ LONG_STRING_CONST(
       "gl_vendor": "Qualcomm.*",
       "features": [
         "ignore_egl_sync_failures"
+      ]
+    },
+    {
+      "id": 100,
+      "description": "Disable Direct3D11 on systems with AMD switchable graphics",
+      "cr_bugs": [451420],
+      "os": {
+        "type": "win"
+      },
+      "multi_gpu_style": "amd_switchable",
+      "features": [
+        "disable_d3d11"
+      ]
+    },
+    {
+      "id": 101,
+      "description": "The Mali-Txxx driver hangs when reading from currently displayed buffer",
+      "cr_bugs": [457511],
+      "os": {
+        "type": "chromeos"
+      },
+      "gl_vendor": "ARM.*",
+      "gl_renderer": "Mali-T.*",
+      "features": [
+        "disable_post_sub_buffers_for_onscreen_surfaces"
       ]
     }
   ]

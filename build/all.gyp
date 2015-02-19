@@ -59,7 +59,6 @@
             '../third_party/mojo/mojo_edk.gyp:mojo_system_impl',
             '../third_party/mojo/mojo_edk_tests.gyp:mojo_public_bindings_unittests',
             '../third_party/mojo/mojo_edk_tests.gyp:mojo_public_environment_unittests',
-            '../third_party/mojo/mojo_edk_tests.gyp:mojo_public_system_perftests',
             '../third_party/mojo/mojo_edk_tests.gyp:mojo_public_system_unittests',
             '../third_party/mojo/mojo_edk_tests.gyp:mojo_public_utility_unittests',
             '../third_party/mojo/mojo_edk_tests.gyp:mojo_system_unittests',
@@ -230,6 +229,7 @@
         ['use_aura==1', {
           'dependencies': [
             '../ui/aura/aura.gyp:*',
+            '../ui/aura_extra/aura_extra.gyp:*',
           ],
         }],
         ['use_ash==1', {
@@ -1191,13 +1191,6 @@
             '../url/url.gyp:url_unittests',
           ],
         },
-        {
-          'target_name': 'webkit_builder_win',
-          'type': 'none',
-          'dependencies': [
-            'blink_tests',
-          ],
-        },
       ],  # targets
       'conditions': [
         ['branding=="Chrome"', {
@@ -1272,6 +1265,7 @@
             '../skia/skia_tests.gyp:skia_unittests',
             '../ui/app_list/app_list.gyp:*',
             '../ui/aura/aura.gyp:*',
+            '../ui/aura_extra/aura_extra.gyp:*',
             '../ui/base/ui_base_tests.gyp:ui_base_unittests',
             '../ui/compositor/compositor.gyp:*',
             '../ui/display/display.gyp:display_unittests',
@@ -1328,21 +1322,6 @@
           ],
         },
       ],  # targets
-    }, {
-      'conditions': [
-        ['OS=="linux"', {
-          # TODO(thakis): Remove this once the linux gtk bot no longer references
-          # it (probably after the first aura release on linux), see r249162
-          'targets': [
-            {
-              'target_name': 'aura_builder',
-              'type': 'none',
-              'dependencies': [
-                '../chrome/chrome.gyp:chrome',
-              ],
-            },
-          ],  # targets
-      }]], # OS=="linux"
     }], # "use_aura==1"
     ['test_isolation_mode != "noop"', {
       'targets': [

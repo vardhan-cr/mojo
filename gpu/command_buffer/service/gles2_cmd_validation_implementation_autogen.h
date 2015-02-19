@@ -552,6 +552,27 @@ static const GLenum valid_transform_feedback_primitive_mode_table[] = {
     GL_TRIANGLES,
 };
 
+static const GLenum valid_uniform_block_parameter_table[] = {
+    GL_UNIFORM_BLOCK_BINDING,
+    GL_UNIFORM_BLOCK_DATA_SIZE,
+    GL_UNIFORM_BLOCK_NAME_LENGTH,
+    GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,
+    GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
+    GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER,
+    GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER,
+};
+
+static const GLenum valid_uniform_parameter_table[] = {
+    GL_UNIFORM_SIZE,
+    GL_UNIFORM_TYPE,
+    GL_UNIFORM_NAME_LENGTH,
+    GL_UNIFORM_BLOCK_INDEX,
+    GL_UNIFORM_OFFSET,
+    GL_UNIFORM_ARRAY_STRIDE,
+    GL_UNIFORM_MATRIX_STRIDE,
+    GL_UNIFORM_IS_ROW_MAJOR,
+};
+
 static const GLenum valid_value_buffer_target_table[] = {
     GL_SUBSCRIBED_VALUES_BUFFER_CHROMIUM,
 };
@@ -698,6 +719,10 @@ Validators::Validators()
       transform_feedback_primitive_mode(
           valid_transform_feedback_primitive_mode_table,
           arraysize(valid_transform_feedback_primitive_mode_table)),
+      uniform_block_parameter(valid_uniform_block_parameter_table,
+                              arraysize(valid_uniform_block_parameter_table)),
+      uniform_parameter(valid_uniform_parameter_table,
+                        arraysize(valid_uniform_parameter_table)),
       value_buffer_target(valid_value_buffer_target_table,
                           arraysize(valid_value_buffer_target_table)),
       vertex_attrib_size(valid_vertex_attrib_size_table,

@@ -29,8 +29,10 @@ namespace cc {
 DisplayListRecordingSource::DisplayListRecordingSource()
     : slow_down_raster_scale_factor_for_debug_(0),
       can_use_lcd_text_(true),
+      requires_clear_(false),
       is_solid_color_(false),
       solid_color_(SK_ColorTRANSPARENT),
+      background_color_(SK_ColorTRANSPARENT),
       pixel_record_distance_(kPixelDistanceToRecord),
       is_suitable_for_gpu_rasterization_(true) {
 }
@@ -60,10 +62,9 @@ bool DisplayListRecordingSource::UpdateAndExpandInvalidation(
   }
 
   gfx::Rect old_recorded_viewport = recorded_viewport_;
-  // TODO(wangxianzhu): Blink slimming paint doesn't support incremental
-  // painting for now so we must record for the whole layer. Should measure
-  // performance and determine the best choice. Consider display item caching.
-  recorded_viewport_ = gfx::Rect(GetSize());
+  recorded_viewport_ = visible_layer_rect;
+  recorded_viewport_.Inset(-pixel_record_distance_, -pixel_record_distance_);
+  recorded_viewport_.Intersect(gfx::Rect(GetSize()));
 
   if (recorded_viewport_ != old_recorded_viewport) {
     // Invalidate newly-exposed and no-longer-exposed areas.
@@ -133,6 +134,14 @@ void DisplayListRecordingSource::SetEmptyBounds() {
 
 void DisplayListRecordingSource::SetSlowdownRasterScaleFactor(int factor) {
   slow_down_raster_scale_factor_for_debug_ = factor;
+}
+
+void DisplayListRecordingSource::SetBackgroundColor(SkColor background_color) {
+  background_color_ = background_color;
+}
+
+void DisplayListRecordingSource::SetRequiresClear(bool requires_clear) {
+  requires_clear_ = requires_clear;
 }
 
 void DisplayListRecordingSource::SetUnsuitableForGpuRasterizationForTesting() {
