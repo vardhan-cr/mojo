@@ -219,16 +219,6 @@ hooks = [
     ],
   },
   {
-    # Downloads an ARM sysroot image to src/arm-sysroot. This image updates
-    # at about the same rate that the chrome build deps change.
-    # This script is a no-op except for linux users who have
-    # target_arch=arm in their GYP_DEFINES.
-    'name': 'sysroot',
-    'pattern': '.',
-    'action': ['python', 'src/build/linux/install-arm-sysroot.py',
-               '--linux-only'],
-  },
-  {
     # Pull clang if needed or requested via GYP_DEFINES.
     'name': 'clang',
     'pattern': '.',
@@ -241,10 +231,14 @@ hooks = [
     'action': ['python', 'src/tools/dart/update.py'],
   },
   {
-    # Update the Windows toolchain if necessary.
-    'name': 'win_toolchain',
+    # This downloads SDK extras and puts them in the
+    # third_party/android_tools/sdk/extras directory on the bots. Developers
+    # need to manually install these packages and accept the ToS.
+    'name': 'sdkextras',
     'pattern': '.',
-    'action': ['python', 'src/build/vs_toolchain.py', 'update'],
+    # When adding a new sdk extras package to download, add the package
+    # directory and zip file to .gitignore in third_party/android_tools.
+    'action': ['python', 'src/build/download_sdk_extras.py'],
   },
   {
     # Update LASTCHANGE. This is also run by export_tarball.py in
