@@ -19,6 +19,7 @@
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
@@ -34,17 +35,19 @@ namespace {
 
 const SkColor kColors[] = { SK_ColorRED, SK_ColorGREEN, SK_ColorYELLOW };
 
-class EmbedderImpl : public mojo::InterfaceImpl<Embedder> {
+class EmbedderImpl : public Embedder {
  public:
-  EmbedderImpl() {}
-  virtual ~EmbedderImpl() {}
+  explicit EmbedderImpl(mojo::InterfaceRequest<Embedder> request)
+      : binding_(this, request.Pass()) {}
+  ~EmbedderImpl() override {}
 
  private:
   // Overridden from Embedder:
-  virtual void HelloWorld(const mojo::Callback<void()>& callback) override {
+  void HelloWorld(const mojo::Callback<void()>& callback) override {
     callback.Run();
   }
 
+  mojo::StrongBinding<Embedder> binding_;
   DISALLOW_COPY_AND_ASSIGN(EmbedderImpl);
 };
 
@@ -63,8 +66,7 @@ class EmbedderImplProvider : public mojo::ServiceProvider {
                         mojo::ScopedMessagePipeHandle pipe_handle) override {
     if (interface_name != Embedder::Name_)
       return;
-    auto request = mojo::MakeRequest<Embedder>(pipe_handle.Pass());
-    mojo::BindToRequest(new EmbedderImpl, &request);
+    new EmbedderImpl(mojo::MakeRequest<Embedder>(pipe_handle.Pass()));
   }
 
   mojo::WeakBindingSet<mojo::ServiceProvider> embeddee_exposed_services_;
