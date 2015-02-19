@@ -11,8 +11,9 @@
 namespace window_manager {
 
 NativeViewportEventDispatcherImpl::NativeViewportEventDispatcherImpl(
-    WindowManagerApp* app)
-    : app_(app) {
+    WindowManagerApp* app,
+    mojo::InterfaceRequest<mojo::NativeViewportEventDispatcher> request)
+    : app_(app), binding_(this, request.Pass()) {
 }
 NativeViewportEventDispatcherImpl::~NativeViewportEventDispatcherImpl() {
 }

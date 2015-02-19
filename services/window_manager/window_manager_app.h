@@ -55,6 +55,7 @@ class WindowManagerApp
       public CaptureControllerObserver,
       public mojo::InterfaceFactory<mojo::WindowManager>,
       public mojo::InterfaceFactory<mojo::WindowManagerInternal>,
+      public mojo::InterfaceFactory<mojo::NativeViewportEventDispatcher>,
       public mojo::WindowManagerInternal {
  public:
   WindowManagerApp(ViewManagerDelegate* view_manager_delegate,
@@ -153,6 +154,11 @@ class WindowManagerApp
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::WindowManager> request) override;
 
+  // InterfaceFactory<NativeViewportEventDispatcher>:
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::NativeViewportEventDispatcher>
+                  request) override;
+
   // WindowManagerInternal:
   void CreateWindowManagerForViewManagerClient(
       uint16_t connection_id,
@@ -161,10 +167,6 @@ class WindowManagerApp
       mojo::ScopedMessagePipeHandle view_manager_client_request) override;
 
   mojo::Shell* shell_;
-
-  mojo::InterfaceFactoryImplWithContext<NativeViewportEventDispatcherImpl,
-                                        WindowManagerApp>
-      native_viewport_event_dispatcher_factory_;
 
   ViewManagerDelegate* wrapped_view_manager_delegate_;
   WindowManagerDelegate* window_manager_delegate_;

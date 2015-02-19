@@ -53,7 +53,6 @@ WindowManagerApp::WindowManagerApp(
     ViewManagerDelegate* view_manager_delegate,
     WindowManagerDelegate* window_manager_delegate)
     : shell_(nullptr),
-      native_viewport_event_dispatcher_factory_(this),
       wrapped_view_manager_delegate_(view_manager_delegate),
       window_manager_delegate_(window_manager_delegate),
       root_(nullptr) {
@@ -152,7 +151,7 @@ void WindowManagerApp::Initialize(mojo::ApplicationImpl* impl) {
 
 bool WindowManagerApp::ConfigureIncomingConnection(
     ApplicationConnection* connection) {
-  connection->AddService(static_cast<InterfaceFactory<WindowManager>*>(this));
+  connection->AddService<WindowManager>(this);
   return true;
 }
 
@@ -333,8 +332,8 @@ void WindowManagerApp::LaunchViewManager(mojo::ApplicationImpl* app) {
       app->ConnectToApplication("mojo:view_manager");
   view_manager_app->ConnectToService(&view_manager_service_);
 
-  view_manager_app->AddService(&native_viewport_event_dispatcher_factory_);
   view_manager_app->AddService<WindowManagerInternal>(this);
+  view_manager_app->AddService<mojo::NativeViewportEventDispatcher>(this);
 
   view_manager_app->ConnectToService(&window_manager_client_);
 }
@@ -357,6 +356,12 @@ void WindowManagerApp::Create(ApplicationConnection* connection,
   wm->Bind(request.PassMessagePipe());
   // WindowManagerImpl is deleted when the connection has an error, or from our
   // destructor.
+}
+
+void WindowManagerApp::Create(
+    mojo::ApplicationConnection* connection,
+    mojo::InterfaceRequest<mojo::NativeViewportEventDispatcher> request) {
+  new NativeViewportEventDispatcherImpl(this, request.Pass());
 }
 
 void WindowManagerApp::CreateWindowManagerForViewManagerClient(
