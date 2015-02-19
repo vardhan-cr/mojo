@@ -64,10 +64,10 @@ bool IsValidSlaveProcessIdentifier(ProcessIdentifier process_identifier) {
          process_identifier != kMasterProcessIdentifier;
 }
 
-class TestSlaveInfo : public embedder::SlaveInfo {
+class TestSlaveInfo {
  public:
   explicit TestSlaveInfo(const std::string& name) : name_(name) {}
-  ~TestSlaveInfo() override { CHECK(thread_checker_.CalledOnValidThread()); }
+  ~TestSlaveInfo() { CHECK(thread_checker_.CalledOnValidThread()); }
 
   const std::string& name() const { return name_; }
 
@@ -86,7 +86,7 @@ void ConnectSlave(MasterConnectionManager* master,
                   SlaveConnectionManager* slave,
                   const std::string& slave_name) {
   embedder::PlatformChannelPair platform_channel_pair;
-  master->AddSlave(make_scoped_ptr(new TestSlaveInfo(slave_name)),
+  master->AddSlave(new TestSlaveInfo(slave_name),
                    platform_channel_pair.PassServerHandle());
   slave->Init(base::MessageLoop::current()->task_runner(),
               slave_process_delegate, platform_channel_pair.PassClientHandle());
@@ -116,14 +116,14 @@ class MockMasterProcessDelegate : public embedder::MasterProcessDelegate {
   // |embedder::MasterProcessDelegate| implementation:
   void OnShutdownComplete() override { NOTREACHED(); }
 
-  void OnSlaveDisconnect(scoped_ptr<embedder::SlaveInfo> slave_info) override {
+  void OnSlaveDisconnect(embedder::SlaveInfo slave_info) override {
     CHECK(thread_checker_.CalledOnValidThread());
     on_slave_disconnect_calls_++;
     last_slave_disconnect_name_ =
-        static_cast<TestSlaveInfo*>(slave_info.get())->name();
+        static_cast<TestSlaveInfo*>(slave_info)->name();
     DVLOG(1) << "Disconnected from slave process "
              << last_slave_disconnect_name_;
-    slave_info.reset();
+    delete static_cast<TestSlaveInfo*>(slave_info);
 
     if (current_run_loop_)
       current_run_loop_->Quit();
@@ -533,7 +533,7 @@ TEST_F(ConnectionManagerTest, AddSlaveThenImmediateShutdown) {
   MockSlaveProcessDelegate slave_process_delegate;
   SlaveConnectionManager slave;
   embedder::PlatformChannelPair platform_channel_pair;
-  master.AddSlave(make_scoped_ptr(new TestSlaveInfo("slave")),
+  master.AddSlave(new TestSlaveInfo("slave"),
                   platform_channel_pair.PassServerHandle());
   master.Shutdown();
   // Since we never initialized |slave|, we don't have to shut it down.

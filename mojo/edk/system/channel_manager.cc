@@ -37,11 +37,14 @@ void ShutdownChannelHelper(
 
 ChannelManager::ChannelManager(
     embedder::PlatformSupport* platform_support,
-    scoped_refptr<base::TaskRunner> io_thread_task_runner)
+    scoped_refptr<base::TaskRunner> io_thread_task_runner,
+    ConnectionManager* connection_manager)
     : platform_support_(platform_support),
-      io_thread_task_runner_(io_thread_task_runner) {
+      io_thread_task_runner_(io_thread_task_runner),
+      connection_manager_(connection_manager) {
   DCHECK(platform_support_);
   DCHECK(io_thread_task_runner_);
+  // (|connection_manager_| may be null.)
 }
 
 ChannelManager::~ChannelManager() {

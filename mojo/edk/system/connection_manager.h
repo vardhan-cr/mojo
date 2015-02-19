@@ -64,12 +64,18 @@ const ProcessIdentifier kInvalidProcessIdentifier = 0;
 // slave).
 class ConnectionManager {
  public:
-  // All of these methods return true on success or false on failure. Failure is
-  // obviously fatal for the establishment of a particular connection, but
-  // should not be treated as fatal to the process. Failure may, e.g., be caused
-  // by a misbehaving (malicious) untrusted peer process.
+  virtual ~ConnectionManager() {}
+
+  // Shuts down this connection manager. No other methods may be called after
+  // this is (or while it is being) called.
+  virtual void Shutdown() = 0;
 
   // TODO(vtl): Add a "get my own process identifier" method?
+
+  // All of the methods below return true on success or false on failure.
+  // Failure is obviously fatal for the establishment of a particular
+  // connection, but should not be treated as fatal to the process. Failure may,
+  // e.g., be caused by a misbehaving (malicious) untrusted peer process.
 
   // Allows a process who makes the identical call (with equal |connection_id|)
   // to connect to the calling process. (On success, there will be a "pending
@@ -93,7 +99,6 @@ class ConnectionManager {
 
  protected:
   ConnectionManager() {}
-  virtual ~ConnectionManager() {}
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ConnectionManager);

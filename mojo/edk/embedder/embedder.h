@@ -21,6 +21,7 @@ namespace embedder {
 struct Configuration;
 class PlatformSupport;
 class ProcessDelegate;
+typedef void* SlaveInfo;
 
 // Basic configuration/initialization ------------------------------------------
 
@@ -85,7 +86,7 @@ PassWrappedPlatformHandle(MojoHandle platform_handle_wrapper_handle,
 //     |ShutdownIPCSupportOnIOThread()| has completed.
 //   - For slave processes (i.e., |process_type| is |ProcessType::SLAVE|),
 //     |platform_handle| should be connected to the handle passed to
-//     |AddSlave()| (in the master process). For other processes,
+//     |ConnectToSlave()| (in the master process). For other processes,
 //     |platform_handle| is ignored (and should not be valid).
 MOJO_SYSTEM_IMPL_EXPORT void InitIPCSupport(
     ProcessType process_type,
@@ -106,6 +107,17 @@ MOJO_SYSTEM_IMPL_EXPORT void ShutdownIPCSupportOnIOThread();
 MOJO_SYSTEM_IMPL_EXPORT void ShutdownIPCSupport();
 
 // Interprocess communication (IPC) functions ----------------------------------
+
+// Connects to a slave process to the IPC system. This should only be called in
+// a process initialized (using |InitIPCSupport()|) with process type
+// |ProcessType::MASTER|. |slave_info| is caller-dependent slave information,
+// which should remain alive until the master process delegate's
+// |OnSlaveDisconnect()| is called. |platform_handle| should be a handle to one
+// end of an OS "pipe"; the slave process should |InitIPCSupport()| with
+// |ProcessType::SLAVE| and the handle to the other end of this OS "pipe".
+MOJO_SYSTEM_IMPL_EXPORT void ConnectToSlave(
+    SlaveInfo slave_info,
+    ScopedPlatformHandle platform_handle);
 
 // A "channel" is a connection on top of an OS "pipe", on top of which Mojo
 // message pipes (etc.) can be multiplexed. It must "live" on some I/O thread.

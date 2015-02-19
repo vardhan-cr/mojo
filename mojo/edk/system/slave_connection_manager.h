@@ -52,10 +52,8 @@ class MOJO_SYSTEM_IMPL_EXPORT SlaveConnectionManager
             embedder::SlaveProcessDelegate* slave_process_delegate,
             embedder::ScopedPlatformHandle platform_handle);
 
-  // No other methods may be called after this is (or while it is being) called.
-  void Shutdown();
-
   // |ConnectionManager| methods:
+  void Shutdown() override;
   bool AllowConnect(const ConnectionIdentifier& connection_id) override;
   bool CancelConnect(const ConnectionIdentifier& connection_id) override;
   bool Connect(const ConnectionIdentifier& connection_id,

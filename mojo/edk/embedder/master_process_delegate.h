@@ -13,16 +13,7 @@
 namespace mojo {
 namespace embedder {
 
-// An interface for containers of slave process information, to be used by
-// |MasterProcessDelegate| (below).
-class MOJO_SYSTEM_IMPL_EXPORT SlaveInfo {
- public:
-  SlaveInfo() {}
-  virtual ~SlaveInfo() {}
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(SlaveInfo);
-};
+typedef void* SlaveInfo;
 
 // An interface for the master process delegate (which lives in the master
 // process).
@@ -34,7 +25,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterProcessDelegate : public ProcessDelegate {
   // been lost.
   // TODO(vtl): Obviously, there needs to be a suitable embedder API for
   // connecting to a process. What will it be? Mention that here once it exists.
-  virtual void OnSlaveDisconnect(scoped_ptr<SlaveInfo> slave_info) = 0;
+  virtual void OnSlaveDisconnect(SlaveInfo slave_info) = 0;
 
  protected:
   MasterProcessDelegate() {}

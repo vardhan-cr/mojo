@@ -20,10 +20,13 @@
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_manager.h"
 #include "mojo/edk/system/configuration.h"
+#include "mojo/edk/system/connection_manager.h"
 #include "mojo/edk/system/core.h"
+#include "mojo/edk/system/master_connection_manager.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/platform_handle_dispatcher.h"
 #include "mojo/edk/system/raw_channel.h"
+#include "mojo/edk/system/slave_connection_manager.h"
 
 namespace mojo {
 namespace embedder {
@@ -49,6 +52,9 @@ ProcessDelegate* g_process_delegate = nullptr;
 
 // Note: This needs to be |AddRef()|ed/|Release()|d.
 base::TaskRunner* g_io_thread_task_runner = nullptr;
+
+// Instance of |ConnectionManager| used by the channel manager (below).
+system::ConnectionManager* g_connection_manager = nullptr;
 
 // Instance of |ChannelManager| used by the channel management functions
 // (|CreateChannel()|, etc.).
@@ -178,34 +184,50 @@ void InitIPCSupport(ProcessType process_type,
   g_io_thread_task_runner = io_thread_task_runner.get();
   g_io_thread_task_runner->AddRef();
 
-  DCHECK(!g_channel_manager);
-  g_channel_manager = new system::ChannelManager(internal::g_platform_support,
-                                                 io_thread_task_runner);
-
+  DCHECK(!g_connection_manager);
   switch (process_type) {
     case ProcessType::UNINITIALIZED:
       CHECK(false);
       break;
     case ProcessType::NONE:
-      // TODO(vtl): Construct a "DummyConnectionManager" here, or something.
+      DCHECK(!platform_handle.is_valid());  // We wouldn't do anything with it.
+      // Nothing to do.
       break;
     case ProcessType::MASTER:
-      // TODO(vtl): Construct a |MasterConnectionManager| here.
+      DCHECK(!platform_handle.is_valid());  // We wouldn't do anything with it.
+      g_connection_manager = new system::MasterConnectionManager();
+      static_cast<system::MasterConnectionManager*>(g_connection_manager)
+          ->Init(g_delegate_thread_task_runner,
+                 static_cast<MasterProcessDelegate*>(g_process_delegate));
       break;
     case ProcessType::SLAVE:
-      // TODO(vtl): Construct a |SlaveConnectionManager| here.
+      DCHECK(platform_handle.is_valid());
+      g_connection_manager = new system::SlaveConnectionManager();
+      static_cast<system::SlaveConnectionManager*>(g_connection_manager)
+          ->Init(g_delegate_thread_task_runner,
+                 static_cast<SlaveProcessDelegate*>(g_process_delegate),
+                 platform_handle.Pass());
       break;
   }
+
+  DCHECK(!g_channel_manager);
+  g_channel_manager =
+      new system::ChannelManager(internal::g_platform_support,
+                                 io_thread_task_runner, g_connection_manager);
 }
 
 void ShutdownIPCSupportOnIOThread() {
   DCHECK(internal::g_process_type != ProcessType::UNINITIALIZED);
 
-  // TODO(vtl): Tear down the connection manager here, once it's been created.
-
   g_channel_manager->ShutdownOnIOThread();
   delete g_channel_manager;
   g_channel_manager = nullptr;
+
+  if (g_connection_manager) {
+    g_connection_manager->Shutdown();
+    delete g_connection_manager;
+    g_connection_manager = nullptr;
+  }
 
   g_io_thread_task_runner->Release();
   g_io_thread_task_runner = nullptr;
@@ -224,6 +246,14 @@ void ShutdownIPCSupport() {
   bool ok = g_io_thread_task_runner->PostTask(
       FROM_HERE, base::Bind(&ShutdownIPCSupportHelper));
   DCHECK(ok);
+}
+
+void ConnectToSlave(SlaveInfo slave_info,
+                    ScopedPlatformHandle platform_handle) {
+  DCHECK(platform_handle.is_valid());
+  DCHECK(internal::g_process_type == ProcessType::MASTER);
+  static_cast<system::MasterConnectionManager*>(g_connection_manager)
+      ->AddSlave(slave_info, platform_handle.Pass());
 }
 
 // TODO(vtl): Write tests for this.

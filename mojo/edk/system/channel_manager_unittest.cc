@@ -26,7 +26,9 @@ class ChannelManagerTest : public testing::Test {
  public:
   ChannelManagerTest()
       : message_loop_(base::MessageLoop::TYPE_IO),
-        channel_manager_(&platform_support_, message_loop_.task_runner()) {}
+        channel_manager_(&platform_support_,
+                         message_loop_.task_runner(),
+                         nullptr) {}
   ~ChannelManagerTest() override {}
 
  protected:

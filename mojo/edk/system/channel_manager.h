@@ -29,6 +29,7 @@ namespace system {
 
 class Channel;
 class ChannelEndpoint;
+class ConnectionManager;
 class MessagePipeDispatcher;
 
 // IDs for |Channel|s managed by a |ChannelManager|. (IDs should be thought of
@@ -43,11 +44,12 @@ const ChannelId kInvalidChannelId = 0;
 class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
  public:
   // |io_thread_task_runner| should be the |TaskRunner| for the I/O thread, on
-  // which this channel manager will create all channels. |platform_support| and
-  // |io_thread_task_runner| should remain remain alive at least until after the
-  // shutdown callback has been called.
+  // which this channel manager will create all channels. Connection manager is
+  // optional and may be null. All arguments (if non-null) must remain alive at
+  // least until after shutdown completion.
   ChannelManager(embedder::PlatformSupport* platform_support,
-                 scoped_refptr<base::TaskRunner> io_thread_task_runner);
+                 scoped_refptr<base::TaskRunner> io_thread_task_runner,
+                 ConnectionManager* connection_manager);
   ~ChannelManager();
 
   // Shuts down the channel manager, including shutting down all channels (as if
@@ -118,6 +120,8 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
+  ConnectionManager* connection_manager() const { return connection_manager_; }
+
  private:
   // Used by |Shutdown()|. Called on the I/O thread.
   void ShutdownHelper(
@@ -139,8 +143,10 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
+  // Note: These must not be used after shutdown.
   embedder::PlatformSupport* const platform_support_;
   const scoped_refptr<base::TaskRunner> io_thread_task_runner_;
+  ConnectionManager* const connection_manager_;
 
   // Note: |Channel| methods should not be called under |lock_|.
   mutable base::Lock lock_;  // Protects the members below.
