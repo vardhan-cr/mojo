@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
           base::Bind(&mojo::shell::RunCommandLineApps, &shell_context));
       message_loop.Run();
 
-      // Must be called be |message_loop| is destroyed.
+      // Must be called before |message_loop| is destroyed.
       shell_context.Shutdown();
     }
   }
