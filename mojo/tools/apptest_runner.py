@@ -36,6 +36,10 @@ def main():
 
   config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
 
+  # TODO(msw) Remove this DEBUG logging before closing http://crbug.com/460621
+  if config.target_os == Config.OS_ANDROID:
+    _logging.setLevel(logging.DEBUG)
+
   execution_globals = {
       "config": config,
   }
