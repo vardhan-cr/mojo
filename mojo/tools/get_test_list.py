@@ -106,8 +106,11 @@ def GetTestList(config):
               "--build-dir=" + build_dir])
 
   # Sky tests (Linux-only):
-  if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT,
-                                                    "sky"):
+  # TODO(abarth): Re-enabled in ASAN once the DartVM works in ASAN.
+  # See https://code.google.com/p/dart/issues/detail?id=22122
+  if (target_os == Config.OS_LINUX and
+      ShouldRunTest(Config.TEST_TYPE_DEFAULT, "sky") and
+      config.sanitizer != Config.SANITIZER_ASAN):
     sky_command = ["python",
                    "sky/tools/test_sky",
                    "-t", os.path.basename(build_dir),
