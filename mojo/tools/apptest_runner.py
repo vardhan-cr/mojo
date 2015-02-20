@@ -43,8 +43,9 @@ def main():
   apptest_list = execution_globals["tests"]
   _logging.debug("Test list: %s" % apptest_list)
 
-  is_android = (config.target_os == Config.OS_ANDROID)
-  android_context = android.PrepareShellRun(config) if is_android else None
+  android_origin_argument = None
+  if config.target_os == Config.OS_ANDROID:
+    android_origin_argument = android.PrepareShellRun(config)
 
   gtest.set_color()
   mojo_paths = Paths(config)
@@ -52,8 +53,10 @@ def main():
   exit_code = 0
   for apptest_dict in apptest_list:
     apptest = apptest_dict["test"]
-    apptest_args = apptest_dict.get("test-args", [])
+    test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", [])
+    if android_origin_argument:
+      shell_args.append(android_origin_argument)
     launched_services = apptest_dict.get("launched-services", [])
 
     print "Running " + apptest + "...",
@@ -61,7 +64,7 @@ def main():
 
     # List the apptest fixtures so they can be run independently for isolation.
     # TODO(msw): Run some apptests without fixture isolation?
-    fixtures = gtest.get_fixtures(config, apptest, android_context)
+    fixtures = gtest.get_fixtures(config, shell_args, apptest)
 
     if not fixtures:
       print "Failed with no tests found."
@@ -75,14 +78,13 @@ def main():
 
     apptest_result = "Succeeded"
     for fixture in fixtures:
-      args_for_apptest = apptest_args + ["--gtest_filter=%s" % fixture]
+      apptest_args = test_args + ["--gtest_filter=%s" % fixture]
       if launched_services:
         success = RunApptestInLauncher(config, mojo_paths, apptest,
-                                       args_for_apptest, shell_args,
+                                       apptest_args, shell_args,
                                        launched_services)
       else:
-        success = RunApptestInShell(config, apptest, args_for_apptest,
-                                    shell_args, android_context)
+        success = RunApptestInShell(config, apptest, apptest_args, shell_args)
 
       if not success:
         apptest_result = "Failed test(s) in %r" % apptest_dict
@@ -93,10 +95,8 @@ def main():
   return exit_code
 
 
-def RunApptestInShell(config, application, application_args, shell_args,
-                      android_context):
-  return gtest.run_test(config, shell_args,
-                        {application: application_args}, android_context)
+def RunApptestInShell(config, application, application_args, shell_args):
+  return gtest.run_test(config, shell_args, {application: application_args})
 
 
 def RunApptestInLauncher(config, mojo_paths, application, application_args,

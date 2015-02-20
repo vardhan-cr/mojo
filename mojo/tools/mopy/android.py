@@ -20,8 +20,6 @@ from mopy.config import Config
 from mopy.paths import Paths
 
 sys.path.insert(0, os.path.join(Paths().src_root, 'build', 'android'))
-from pylib import android_commands
-from pylib import constants
 
 
 # Tags used by the mojo shell application logs.
@@ -34,16 +32,10 @@ LOGCAT_TAGS = [
     'chromium',
 ]
 
+ADB_PATH = os.path.join(Paths().src_root, 'third_party', 'android_tools', 'sdk',
+                        'platform-tools', 'adb')
+
 MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
-
-
-class Context(object):
-  """
-  The context object allowing to run multiple runs of the shell.
-  """
-  def __init__(self, device, device_port):
-    self.device = device
-    self.device_port = device_port
 
 
 class _SilentTCPServer(SocketServer.TCPServer):
@@ -89,7 +81,7 @@ def _ExitIfNeeded(process):
     process.kill()
 
 
-def _ReadFifo(context, fifo_path, pipe, on_fifo_closed, max_attempts=5):
+def _ReadFifo(fifo_path, pipe, on_fifo_closed, max_attempts=5):
   """
   Reads |fifo_path| on the device and write the contents to |pipe|. Calls
   |on_fifo_closed| when the fifo is closed. This method will try to find the
@@ -98,15 +90,16 @@ def _ReadFifo(context, fifo_path, pipe, on_fifo_closed, max_attempts=5):
   """
   def Run():
     def _WaitForFifo():
+      command = [ADB_PATH, 'shell', 'test -e "%s"; echo $?' % fifo_path]
       for _ in xrange(max_attempts):
-        if context.device.FileExistsOnDevice(fifo_path):
+        if subprocess.check_output(command)[0] == '0':
           return
         time.sleep(1)
       if on_fifo_closed:
         on_fifo_closed()
       raise Exception("Unable to find fifo.")
     _WaitForFifo()
-    stdout_cat = subprocess.Popen([constants.GetAdbPath(),
+    stdout_cat = subprocess.Popen([ADB_PATH,
                                    'shell',
                                    'cat',
                                    fifo_path],
@@ -120,13 +113,13 @@ def _ReadFifo(context, fifo_path, pipe, on_fifo_closed, max_attempts=5):
   thread.start()
 
 
-def _MapPort(device, device_port, host_port):
+def _MapPort(device_port, host_port):
   """
   Maps the device port to the host port. If |device_port| is 0, a random
   available port is chosen. Returns the device port.
   """
-  def _FindAvailablePortOnDevice(device):
-    opened = device.RunShellCommand('netstat')
+  def _FindAvailablePortOnDevice():
+    opened = subprocess.check_output([ADB_PATH, 'shell', 'netstat'])
     opened = [int(x.strip().split()[3].split(':')[1])
               for x in opened if x.startswith(' tcp')]
     while True:
@@ -134,60 +127,51 @@ def _MapPort(device, device_port, host_port):
       if port not in opened:
         return port
   if device_port == 0:
-    device_port = _FindAvailablePortOnDevice(device)
-  adb_path = constants.GetAdbPath()
-  subprocess.Popen([adb_path,
+    device_port = _FindAvailablePortOnDevice()
+  subprocess.Popen([ADB_PATH,
                     "reverse",
                     "tcp:%d" % device_port,
                     "tcp:%d" % host_port]).wait()
   def _UnmapPort():
-    subprocess.Popen([adb_path, "reverse", "--remove",  "tcp:%d" % device_port])
+    subprocess.Popen([ADB_PATH, "reverse", "--remove",  "tcp:%d" % device_port])
   atexit.register(_UnmapPort)
   return device_port
 
 
 def PrepareShellRun(config):
   """
-  Returns a context allowing a shell to be run.
+  Prepares for StartShell. Returns an origin arg with the forwarded device port.
 
-  This will start an internal http server to serve mojo applications, forward a
-  local port on the device to this http server and install the current version
-  of the mojo shell.
+  Start an internal http server to serve mojo applications, forward a local port
+  on the device to this http server, and install the latest mojo shell version.
   """
   build_dir = Paths(config).build_dir
-  constants.SetOutputDirectort(build_dir)
-
   httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(build_dir))
   atexit.register(httpd.shutdown)
-  host_port = httpd.server_address[1]
 
   http_thread = threading.Thread(target=httpd.serve_forever)
   http_thread.daemon = True
   http_thread.start()
 
-  device = android_commands.AndroidCommands(
-      android_commands.GetAttachedDevices()[0])
-  device.EnableAdbRoot()
+  subprocess.check_call([ADB_PATH, 'root'])
+  apk_path = os.path.join(build_dir, 'apks', 'MojoShell.apk')
+  subprocess.check_call(
+      [ADB_PATH, 'install', '-r', apk_path, '-i', MOJO_SHELL_PACKAGE_NAME])
 
-  device.ManagedInstall(os.path.join(build_dir, 'apks', 'MojoShell.apk'),
-                        keep_data=True,
-                        package_name=MOJO_SHELL_PACKAGE_NAME)
-
-  context = Context(device, _MapPort(device, 0, host_port))
-
-  atexit.register(StopShell, context)
-  return context
+  atexit.register(StopShell)
+  return '--origin=http://127.0.0.1:%d/' % _MapPort(0, httpd.server_address[1])
 
 
-def StartShell(context, arguments, stdout=None, on_application_stop=None):
+def StartShell(arguments, stdout=None, on_application_stop=None):
   """
   Starts the mojo shell, passing it the given arguments.
 
-  If stdout is not None, it should be a valid argument for subprocess.Popen.
+  The |arguments| list must contain the "--origin=" arg from PrepareShellRun.
+  If |stdout| is not None, it should be a valid argument for subprocess.Popen.
   """
   STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
 
-  cmd = [constants.GetAdbPath(),
+  cmd = [ADB_PATH,
          'shell',
          'am',
          'start',
@@ -196,11 +180,12 @@ def StartShell(context, arguments, stdout=None, on_application_stop=None):
          '-a', 'android.intent.action.VIEW',
          '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME]
 
-  parameters = ['--origin=http://127.0.0.1:%d/' % context.device_port]
+  parameters = []
   if stdout or on_application_stop:
-    context.device.RunShellCommand('rm %s' % STDOUT_PIPE)
+    subprocess.check_call([ADB_PATH, 'shell', 'rm', STDOUT_PIPE])
     parameters.append('--fifo-path=%s' % STDOUT_PIPE)
-    _ReadFifo(context, STDOUT_PIPE, stdout, on_application_stop)
+    _ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
+  assert any("--origin=http://127.0.0.1:" in arg for arg in arguments)
   parameters += arguments
 
   if parameters:
@@ -211,17 +196,19 @@ def StartShell(context, arguments, stdout=None, on_application_stop=None):
     subprocess.Popen(cmd, stdout=devnull).wait()
 
 
-def StopShell(context):
+def StopShell():
   """
   Stops the mojo shell.
   """
-  context.device.RunShellCommand('am force-stop %s' % MOJO_SHELL_PACKAGE_NAME)
+  subprocess.check_call(
+      [ADB_PATH, 'shell', 'am', 'force-stop', MOJO_SHELL_PACKAGE_NAME])
 
-def CleanLogs(context):
+
+def CleanLogs():
   """
   Cleans the logs on the device.
   """
-  context.device.RunShellCommand('logcat -c')
+  subprocess.check_call([ADB_PATH, 'logcat', '-c'])
 
 
 def ShowLogs():
@@ -230,17 +217,10 @@ def ShowLogs():
 
   Returns the process responsible for reading the logs.
   """
-  logcat = subprocess.Popen([constants.GetAdbPath(),
+  logcat = subprocess.Popen([ADB_PATH,
                              'logcat',
                              '-s',
                              ' '.join(LOGCAT_TAGS)],
                             stdout=sys.stdout)
   atexit.register(_ExitIfNeeded, logcat)
   return logcat
-
-
-def GetFilePath(filename):
-  """
-  Returns a path suitable for the application to create a file.
-  """
-  return '/data/data/%s/files/%s' % (MOJO_SHELL_PACKAGE_NAME, filename)

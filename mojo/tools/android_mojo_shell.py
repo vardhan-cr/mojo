@@ -48,10 +48,10 @@ def main():
                   target_arch=launcher_args.target_arch,
                   is_debug=launcher_args.debug)
 
-  context = android.PrepareShellRun(config)
-  android.CleanLogs(context)
+  args.append(android.PrepareShellRun(config))
+  android.CleanLogs()
   p = android.ShowLogs()
-  android.StartShell(context, args, sys.stdout, p.terminate)
+  android.StartShell(args, sys.stdout, p.terminate)
 
   return 0
 
