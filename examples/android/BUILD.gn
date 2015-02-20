@@ -1,0 +1,21 @@
+import("//services/android/rules.gni")
+
+group("android") {
+  deps = [
+    ":android_example_service",
+  ]
+}
+
+mojo_android_java_application("android_example_service") {
+  sources = [
+    "App.java",
+  ]
+
+  mojo_main = "org.chromium.examples.android.App"
+
+  deps = [
+    "//base:base_java",
+    "//examples/apptest:bindings_java",
+    "//mojo/public/interfaces/application:application_java",
+  ]
+}

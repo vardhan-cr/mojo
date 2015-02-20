@@ -16,6 +16,7 @@ import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojo.system.MojoResult;
 import org.chromium.mojo.system.Pair;
+import org.chromium.mojo.system.RunLoop;
 import org.chromium.mojo.system.SharedBufferHandle;
 import org.chromium.mojo.system.SharedBufferHandle.DuplicateOptions;
 import org.chromium.mojo.system.SharedBufferHandle.MapFlags;
@@ -53,6 +54,11 @@ public class CoreImpl implements Core, AsyncWaiter {
     static final int INVALID_HANDLE = 0;
 
     private static class LazyHolder { private static final Core INSTANCE = new CoreImpl(); }
+
+    /**
+     * The run loop for the current thread.
+     */
+    private ThreadLocal<BaseRunLoop> mCurrentRunLoop = new ThreadLocal<BaseRunLoop>();
 
     /**
      * @return the instance.
@@ -203,6 +209,34 @@ public class CoreImpl implements Core, AsyncWaiter {
     @Override
     public AsyncWaiter getDefaultAsyncWaiter() {
         return this;
+    }
+
+    /**
+     * @see Core#createDefaultRunLoop()
+     */
+    @Override
+    public RunLoop createDefaultRunLoop() {
+        if (mCurrentRunLoop.get() != null) {
+            throw new MojoException(MojoResult.FAILED_PRECONDITION);
+        }
+        BaseRunLoop runLoop = new BaseRunLoop(this);
+        mCurrentRunLoop.set(runLoop);
+        return runLoop;
+    }
+
+    /**
+     * @see Core#getCurrentRunLoop()
+     */
+    @Override
+    public RunLoop getCurrentRunLoop() {
+        return mCurrentRunLoop.get();
+    }
+
+    /**
+     * Remove the current run loop.
+     */
+    void clearCurrentRunLoop() {
+        mCurrentRunLoop.remove();
     }
 
     /**

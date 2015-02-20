@@ -39,7 +39,10 @@ group("examples") {
   }
 
   if (is_android) {
-    deps += [ "//examples/device_name" ]
+    deps += [
+      "//examples/android",
+      "//examples/device_name",
+    ]
   }
 
   if (is_linux) {
