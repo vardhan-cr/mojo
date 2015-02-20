@@ -5,10 +5,20 @@
 #ifndef MOJO_NACL_MONACL_SEL_MAIN_H_
 #define MOJO_NACL_MONACL_SEL_MAIN_H_
 
+#include "mojo/public/c/system/types.h"
+
+struct NaClDesc;
+
 namespace mojo {
 
-void LaunchNaCl(const char* nexe_file, const char* irt_file,
-                int app_argc, char* app_argv[]);
+// Callee assumes ownership of |nexe_desc|, |irt_desc|, and |handle|.
+int LaunchNaCl(NaClDesc* nexe_desc,
+               NaClDesc* irt_desc,
+               int app_argc,
+               char* app_argv[],
+               MojoHandle handle);
+
+void NaClExit(int code);
 
 } // namespace mojo
 
