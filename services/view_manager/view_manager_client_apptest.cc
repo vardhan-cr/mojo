@@ -425,7 +425,10 @@ class VisibilityChangeObserver : public ViewObserver {
 
 }  // namespace
 
-TEST_F(ViewManagerTest, Visible) {
+// TODO(alhaad): Re-enable this once
+// ViewManagerClientImpl::OnViewVisibilityChanged() does not cause a race
+// condition when called from two clients.
+TEST_F(ViewManagerTest, DISABLED_Visible) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view1);
