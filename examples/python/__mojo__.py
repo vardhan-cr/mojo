@@ -6,44 +6,18 @@
 
 import logging
 
-import application_mojom
 import example_service_mojom
-import service_provider_mojom
-import shell_mojom
+from mojo_application import application_delegate
+from mojo_application import service_provider_impl
+from mojo_application import application_runner
 
 import mojo_system
 
-class ApplicationImpl(application_mojom.Application):
-  def __init__(self, app_request_handle):
-    self._providers = []
-    application_mojom.Application.manager.Bind(self, app_request_handle)
-
-  def Initialize(self, shell, url, args):
-    self.shell = shell
-
-  def AcceptConnection(self, requestor_url, services, exposed_services):
-    # We keep a reference to ServiceProviderImpl to ensure neither it nor
-    # provider gets garbage collected.
-    service_provider = ServiceProviderImpl(services)
+class ExampleApp(application_delegate.ApplicationDelegate):
+  def OnAcceptConnection(self, service_provider, requestor_url,
+                         exposed_services):
     service_provider.AddService(ExampleServiceImpl)
-    services.Bind(service_provider)
-    self._providers.append(service_provider)
-
-
-class ServiceProviderImpl(service_provider_mojom.ServiceProvider):
-  def __init__(self, provider):
-    self._provider = provider
-    self._name_to_service_connector = {}
-
-  def AddService(self, service_class):
-    self._name_to_service_connector[service_class.manager.name] = service_class
-
-  def ConnectToService(self, interface_name, pipe):
-    if interface_name in self._name_to_service_connector:
-      service = self._name_to_service_connector[interface_name]
-      service.manager.Bind(service(), pipe)
-    else:
-      logging.error("Unable to find service " + interface_name)
+    return True
 
 
 class ExampleServiceImpl(example_service_mojom.ExampleService):
@@ -52,10 +26,4 @@ class ExampleServiceImpl(example_service_mojom.ExampleService):
 
 
 def MojoMain(app_request_handle):
-  """MojoMain is the entry point for a python Mojo module."""
-  loop = mojo_system.RunLoop()
-
-  application = ApplicationImpl(mojo_system.Handle(app_request_handle))
-  application.manager.AddOnErrorCallback(loop.Quit)
-
-  loop.Run()
+  application_runner.RunMojoApplication(ExampleApp(), app_request_handle)

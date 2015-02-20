@@ -18,6 +18,7 @@ python_packaged_application("python_example_service") {
   deps = [
     "//examples/apptest:bindings",
     "//mojo/public/interfaces/application",
+    "//mojo/public/python:packaged_application",
     "//mojo/public/python:packaged_bindings",
   ]
   datadeps = [
