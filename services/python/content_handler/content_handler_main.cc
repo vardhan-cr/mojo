@@ -8,6 +8,7 @@
 #include "base/files/file_path.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/i18n/icu_util.h"
+#include "base/strings/string_util.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/common/common_type_converters.h"
@@ -18,6 +19,7 @@
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/public/python/src/common.h"
 #include "third_party/zlib/google/zip_reader.h"
+#include "url/gurl.h"
 
 char kMojoSystem[] = "mojo_system";
 char kMojoSystemImpl[] = "mojo_system_impl";
@@ -44,9 +46,20 @@ using mojo::python::ScopedPyRef;
 class PythonContentHandler : public ApplicationDelegate,
                              public ContentHandlerFactory::Delegate {
  public:
-  PythonContentHandler() : content_handler_factory_(this) {}
+  PythonContentHandler() : content_handler_factory_(this), debug_(false) {}
 
  private:
+  // Overridden from ApplicationDelegate:
+  void Initialize(mojo::ApplicationImpl* app) override {
+    GURL url(app->url());
+    if (url.has_query()) {
+      std::vector<std::string> query_parameters;
+      Tokenize(url.query(), "&", &query_parameters);
+      debug_ = std::find(query_parameters.begin(), query_parameters.end(),
+                         "debug=true") != query_parameters.end();
+    }
+  }
+
   // Overridden from ApplicationDelegate:
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
@@ -72,6 +85,18 @@ class PythonContentHandler : public ApplicationDelegate,
     return temp_dir;
   }
 
+  bool RunPythonCommand(std::string command, PyObject* globals) {
+    ScopedPyRef result(
+        PyRun_String(command.c_str(), Py_file_input, globals, NULL));
+
+    if (result == nullptr) {
+      LOG(ERROR) << "Error while running command: '" << command << "'";
+      PyErr_Print();
+      return false;
+    }
+    return true;
+  }
+
   // Sets up the Python interpreter and loads mojo system modules. This method
   // returns the global dictionary for the python environment that should be
   // used for subsequent calls. Takes as input the path of the unpacked
@@ -92,18 +117,22 @@ class PythonContentHandler : public ApplicationDelegate,
         return NULL;
     d = PyModule_GetDict(m);
 
+    // Enable debug information if requested.
+    if (debug_) {
+      std::string enable_logging =
+          "import logging;"
+          "logging.basicConfig();"
+          "logging.getLogger().setLevel(logging.DEBUG)";
+      if (!RunPythonCommand(enable_logging, d))
+        return NULL;
+    }
+
     // Inject the application path into the python search path so that imports
     // from the application work as expected.
     std::string search_path_py_command =
         "import sys; sys.path.append('" + application_path + "');";
-    ScopedPyRef result(
-        PyRun_String(search_path_py_command.c_str(), Py_file_input, d, d));
-
-    if (result == nullptr) {
-      LOG(ERROR) << "Error while configuring path";
-      PyErr_Print();
+    if (!RunPythonCommand(search_path_py_command, d))
       return NULL;
-    }
 
     return d;
   }
@@ -176,6 +205,7 @@ class PythonContentHandler : public ApplicationDelegate,
   }
 
   ContentHandlerFactory content_handler_factory_;
+  bool debug_;
 
   DISALLOW_COPY_AND_ASSIGN(PythonContentHandler);
 };

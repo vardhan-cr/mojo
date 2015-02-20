@@ -32,6 +32,7 @@ python_binary_source_set("content_handler_src") {
     "//mojo/public/python:python_common",
     "//mojo/services/content_handler/public/interfaces",
     "//third_party/zlib:zip",
+    "//url:url",
   ]
 }
 
