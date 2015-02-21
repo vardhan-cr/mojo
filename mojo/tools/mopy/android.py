@@ -49,7 +49,7 @@ class _SilentTCPServer(SocketServer.TCPServer):
     Override the base class method to have conditional logging.
     """
     if logging.getLogger().isEnabledFor(logging.DEBUG):
-      super(_SilentTCPServer, self).handle_error(request, client_address)
+      SocketServer.TCPServer.handle_error(self, request, client_address)
 
 
 def _GetHandlerClassForPath(base_path):
