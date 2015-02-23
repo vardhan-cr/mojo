@@ -12,17 +12,6 @@ void TraceImplExtern::trace(Visitor* visitor) {
 
 template <typename VisitorDispatcher>
 inline void TraceImplExtern::traceImpl(VisitorDispatcher visitor) {
-  visitor->trace(x_);
+  visitor->trace(m_x);
 }
-
-void TraceImplBaseExtern::trace(Visitor* visitor) {
-  traceImpl(visitor);
-}
-
-template <typename VisitorDispatcher>
-inline void TraceImplBaseExtern::traceImpl(VisitorDispatcher visitor) {
-  visitor->trace(x_);
-  Base::trace(visitor);
-}
-
 }

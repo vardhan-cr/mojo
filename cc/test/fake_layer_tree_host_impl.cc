@@ -86,8 +86,7 @@ void FakeLayerTreeHostImpl::UpdateNumChildrenAndDrawPropertiesForActiveTree() {
 void FakeLayerTreeHostImpl::UpdateNumChildrenAndDrawProperties(
     LayerTreeImpl* layerTree) {
   RecursiveUpdateNumChildren(layerTree->root_layer());
-  bool update_lcd_text = false;
-  layerTree->UpdateDrawProperties(update_lcd_text);
+  layerTree->UpdateDrawProperties();
 }
 
 }  // namespace cc

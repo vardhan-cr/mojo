@@ -441,10 +441,6 @@ static void GL_BINDING_CALL Mock_glGetProgramInfoLog(GLuint program,
                                                      GLsizei bufsize,
                                                      GLsizei* length,
                                                      char* infolog);
-static GLint GL_BINDING_CALL
-Mock_glGetProgramResourceLocation(GLuint program,
-                                  GLenum programInterface,
-                                  const char* name);
 static void GL_BINDING_CALL
 Mock_glGetProgramiv(GLuint program, GLenum pname, GLint* params);
 static void GL_BINDING_CALL
@@ -498,8 +494,6 @@ static void GL_BINDING_CALL Mock_glGetShaderSource(GLuint shader,
 static void GL_BINDING_CALL
 Mock_glGetShaderiv(GLuint shader, GLenum pname, GLint* params);
 static const GLubyte* GL_BINDING_CALL Mock_glGetString(GLenum name);
-static const GLubyte* GL_BINDING_CALL
-Mock_glGetStringi(GLenum name, GLuint index);
 static void GL_BINDING_CALL Mock_glGetSynciv(GLsync sync,
                                              GLenum pname,
                                              GLsizei bufSize,

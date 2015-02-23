@@ -44,8 +44,10 @@ int AddOpacityTransition(Target* target,
   int id = AnimationIdProvider::NextAnimationId();
 
   scoped_ptr<Animation> animation(
-      Animation::Create(curve.Pass(), id, AnimationIdProvider::NextGroupId(),
-                        Animation::OPACITY));
+      Animation::Create(curve.Pass(),
+                        id,
+                        AnimationIdProvider::NextGroupId(),
+                        Animation::Opacity));
   animation->set_needs_synchronized_start_time(true);
 
   target->AddAnimation(animation.Pass());
@@ -71,8 +73,10 @@ int AddAnimatedTransform(Target* target,
   int id = AnimationIdProvider::NextAnimationId();
 
   scoped_ptr<Animation> animation(
-      Animation::Create(curve.Pass(), id, AnimationIdProvider::NextGroupId(),
-                        Animation::TRANSFORM));
+      Animation::Create(curve.Pass(),
+                        id,
+                        AnimationIdProvider::NextGroupId(),
+                        Animation::Transform));
   animation->set_needs_synchronized_start_time(true);
 
   target->AddAnimation(animation.Pass());
@@ -118,7 +122,7 @@ int AddAnimatedFilter(Target* target,
   int id = AnimationIdProvider::NextAnimationId();
 
   scoped_ptr<Animation> animation(Animation::Create(
-      curve.Pass(), id, AnimationIdProvider::NextGroupId(), Animation::FILTER));
+      curve.Pass(), id, AnimationIdProvider::NextGroupId(), Animation::Filter));
   animation->set_needs_synchronized_start_time(true);
 
   target->AddAnimation(animation.Pass());

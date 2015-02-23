@@ -93,8 +93,7 @@ TEST_F(OcclusionTrackerPerfTest, UnoccludedContentRect_FullyOccluded) {
   opaque_layer->SetContentBounds(viewport_rect.size());
   active_tree()->root_layer()->AddChild(opaque_layer.Pass());
 
-  bool update_lcd_text = false;
-  active_tree()->UpdateDrawProperties(update_lcd_text);
+  active_tree()->UpdateDrawProperties();
   const LayerImplList& rsll = active_tree()->RenderSurfaceLayerList();
   ASSERT_EQ(1u, rsll.size());
   EXPECT_EQ(1u, rsll[0]->render_surface()->layer_list().size());
@@ -165,8 +164,7 @@ TEST_F(OcclusionTrackerPerfTest, UnoccludedContentRect_10OpaqueLayers) {
     active_tree()->root_layer()->AddChild(opaque_layer.Pass());
   }
 
-  bool update_lcd_text = false;
-  active_tree()->UpdateDrawProperties(update_lcd_text);
+  active_tree()->UpdateDrawProperties();
   const LayerImplList& rsll = active_tree()->RenderSurfaceLayerList();
   ASSERT_EQ(1u, rsll.size());
   EXPECT_EQ(static_cast<size_t>(kNumOpaqueLayers),

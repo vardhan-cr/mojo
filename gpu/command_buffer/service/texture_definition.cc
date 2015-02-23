@@ -159,11 +159,8 @@ scoped_refptr<NativeImageBufferEGL> NativeImageBufferEGL::Create(
   EGLImageKHR egl_image = eglCreateImageKHR(
       egl_display, egl_context, egl_target, egl_buffer, egl_attrib_list);
 
-  if (egl_image == EGL_NO_IMAGE_KHR) {
-    LOG(ERROR) << "eglCreateImageKHR for cross-thread sharing failed: 0x"
-               << std::hex << eglGetError();
+  if (egl_image == EGL_NO_IMAGE_KHR)
     return NULL;
-  }
 
   return new NativeImageBufferEGL(egl_display, egl_image);
 }
@@ -260,18 +257,6 @@ scoped_refptr<NativeImageBuffer> NativeImageBuffer::Create(GLuint texture_id) {
   }
 }
 
-TextureDefinition::LevelInfo::LevelInfo()
-    : target(0),
-      internal_format(0),
-      width(0),
-      height(0),
-      depth(0),
-      border(0),
-      format(0),
-      type(0),
-      cleared(false) {
-}
-
 TextureDefinition::LevelInfo::LevelInfo(GLenum target,
                                         GLenum internal_format,
                                         GLsizei width,
@@ -310,39 +295,53 @@ TextureDefinition::TextureDefinition(
     const scoped_refptr<NativeImageBuffer>& image_buffer)
     : version_(version),
       target_(texture->target()),
-      image_buffer_(image_buffer),
+      image_buffer_(image_buffer.get()
+                        ? image_buffer
+                        : NativeImageBuffer::Create(texture->service_id())),
       min_filter_(texture->min_filter()),
       mag_filter_(texture->mag_filter()),
       wrap_s_(texture->wrap_s()),
       wrap_t_(texture->wrap_t()),
       usage_(texture->usage()),
-      immutable_(texture->IsImmutable()),
-      defined_(texture->IsDefined()) {
-  DCHECK_IMPLIES(image_buffer_.get(), defined_);
-  if (!image_buffer_.get() && defined_) {
-    image_buffer_ = NativeImageBuffer::Create(texture->service_id());
-    DCHECK(image_buffer_.get());
-  }
+      immutable_(texture->IsImmutable()) {
+  // TODO
+  DCHECK(!texture->face_infos_.empty());
+  DCHECK(!texture->face_infos_[0].level_infos.empty());
+  DCHECK(!texture->NeedsMips());
+  DCHECK(texture->face_infos_[0].level_infos[0].width);
+  DCHECK(texture->face_infos_[0].level_infos[0].height);
 
   const Texture::FaceInfo& first_face = texture->face_infos_[0];
-  if (image_buffer_.get()) {
-    scoped_refptr<gfx::GLImage> gl_image(
-        new GLImageSync(image_buffer_,
-                        gfx::Size(first_face.level_infos[0].width,
-                                  first_face.level_infos[0].height)));
-    texture->SetLevelImage(NULL, target_, 0, gl_image.get());
-  }
+  scoped_refptr<gfx::GLImage> gl_image(
+      new GLImageSync(image_buffer_,
+                      gfx::Size(first_face.level_infos[0].width,
+                                first_face.level_infos[0].height)));
+  texture->SetLevelImage(NULL, target_, 0, gl_image.get());
 
+  // TODO: all levels
+  level_infos_.clear();
   const Texture::LevelInfo& level = first_face.level_infos[0];
-  level_info_ = LevelInfo(level.target, level.internal_format, level.width,
-                          level.height, level.depth, level.border, level.format,
-                          level.type, level.cleared);
+  LevelInfo info(level.target,
+                 level.internal_format,
+                 level.width,
+                 level.height,
+                 level.depth,
+                 level.border,
+                 level.format,
+                 level.type,
+                 level.cleared);
+  std::vector<LevelInfo> infos;
+  infos.push_back(info);
+  level_infos_.push_back(infos);
 }
 
 TextureDefinition::~TextureDefinition() {
 }
 
 Texture* TextureDefinition::CreateTexture() const {
+  if (!image_buffer_.get())
+    return NULL;
+
   GLuint texture_id;
   glGenTextures(1, &texture_id);
 
@@ -368,16 +367,28 @@ void TextureDefinition::UpdateTexture(Texture* texture) const {
   // though.
   glFlush();
 
-  if (defined_) {
-    texture->face_infos_.resize(1);
-    texture->face_infos_[0].level_infos.resize(1);
-    texture->SetLevelInfo(NULL, level_info_.target, 0,
-                          level_info_.internal_format, level_info_.width,
-                          level_info_.height, level_info_.depth,
-                          level_info_.border, level_info_.format,
-                          level_info_.type, level_info_.cleared);
+  texture->face_infos_.resize(1);
+  for (size_t i = 0; i < level_infos_.size(); i++) {
+    const LevelInfo& base_info = level_infos_[i][0];
+    const size_t levels_needed = TextureManager::ComputeMipMapCount(
+        base_info.target, base_info.width, base_info.height, base_info.depth);
+    DCHECK(level_infos_.size() <= levels_needed);
+    texture->face_infos_[0].level_infos.resize(levels_needed);
+    for (size_t n = 0; n < level_infos_.size(); n++) {
+      const LevelInfo& info = level_infos_[i][n];
+      texture->SetLevelInfo(NULL,
+                            info.target,
+                            i,
+                            info.internal_format,
+                            info.width,
+                            info.height,
+                            info.depth,
+                            info.border,
+                            info.format,
+                            info.type,
+                            info.cleared);
+    }
   }
-
   if (image_buffer_.get()) {
     texture->SetLevelImage(
         NULL,
@@ -385,7 +396,7 @@ void TextureDefinition::UpdateTexture(Texture* texture) const {
         0,
         new GLImageSync(
             image_buffer_,
-            gfx::Size(level_info_.width, level_info_.height)));
+            gfx::Size(level_infos_[0][0].width, level_infos_[0][0].height)));
   }
 
   texture->target_ = target_;
@@ -407,10 +418,6 @@ bool TextureDefinition::Matches(const Texture* texture) const {
     return false;
   }
 
-  // Texture became defined.
-  if (!image_buffer_.get() && texture->IsDefined())
-    return false;
-
   // All structural changes should have orphaned the texture.
   if (image_buffer_.get() && !texture->GetLevelImage(texture->target(), 0))
     return false;
@@ -419,7 +426,14 @@ bool TextureDefinition::Matches(const Texture* texture) const {
 }
 
 bool TextureDefinition::SafeToRenderFrom() const {
-  return level_info_.cleared;
+  for (const std::vector<LevelInfo>& face_info : level_infos_) {
+    for (const LevelInfo& level_info : face_info) {
+      if (!level_info.cleared) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 }  // namespace gles2

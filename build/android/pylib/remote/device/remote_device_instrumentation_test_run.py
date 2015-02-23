@@ -40,11 +40,10 @@ class RemoteDeviceInstrumentationTestRun(
           base_test_result.ResultType.FAIL))
       return r
 
-    result_code, result_bundle, statuses = (
-        self._test_instance.ParseAmInstrumentRawOutput(
-            self._results['results']['output'].splitlines()))
-    result = self._test_instance.GenerateTestResults(
-        result_code, result_bundle, statuses, 0, 0)
+    _, errors, parsed_output = self._test_instance.ParseAmInstrumentRawOutput(
+        self._results['results']['output'].splitlines())
+    logging.debug(errors)
+    result = self._test_instance.GenerateMultiTestResult(errors, parsed_output)
 
     if isinstance(result, base_test_result.BaseTestResult):
       r.AddResult(result)

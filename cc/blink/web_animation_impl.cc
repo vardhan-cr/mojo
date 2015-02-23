@@ -119,13 +119,13 @@ void WebCompositorAnimationImpl::setTimeOffset(double monotonic_time) {
 blink::WebCompositorAnimation::Direction WebCompositorAnimationImpl::direction()
     const {
   switch (animation_->direction()) {
-    case cc::Animation::DIRECTION_NORMAL:
+    case cc::Animation::Normal:
       return DirectionNormal;
-    case cc::Animation::DIRECTION_REVERSE:
+    case cc::Animation::Reverse:
       return DirectionReverse;
-    case cc::Animation::DIRECTION_ALTERNATE:
+    case cc::Animation::Alternate:
       return DirectionAlternate;
-    case cc::Animation::DIRECTION_ALTERNATE_REVERSE:
+    case cc::Animation::AlternateReverse:
       return DirectionAlternateReverse;
     default:
       NOTREACHED();
@@ -136,16 +136,16 @@ blink::WebCompositorAnimation::Direction WebCompositorAnimationImpl::direction()
 void WebCompositorAnimationImpl::setDirection(Direction direction) {
   switch (direction) {
     case DirectionNormal:
-      animation_->set_direction(cc::Animation::DIRECTION_NORMAL);
+      animation_->set_direction(cc::Animation::Normal);
       break;
     case DirectionReverse:
-      animation_->set_direction(cc::Animation::DIRECTION_REVERSE);
+      animation_->set_direction(cc::Animation::Reverse);
       break;
     case DirectionAlternate:
-      animation_->set_direction(cc::Animation::DIRECTION_ALTERNATE);
+      animation_->set_direction(cc::Animation::Alternate);
       break;
     case DirectionAlternateReverse:
-      animation_->set_direction(cc::Animation::DIRECTION_ALTERNATE_REVERSE);
+      animation_->set_direction(cc::Animation::AlternateReverse);
       break;
   }
 }
@@ -161,13 +161,13 @@ void WebCompositorAnimationImpl::setPlaybackRate(double playback_rate) {
 blink::WebCompositorAnimation::FillMode WebCompositorAnimationImpl::fillMode()
     const {
   switch (animation_->fill_mode()) {
-    case cc::Animation::FILL_MODE_NONE:
+    case cc::Animation::FillModeNone:
       return FillModeNone;
-    case cc::Animation::FILL_MODE_FORWARDS:
+    case cc::Animation::FillModeForwards:
       return FillModeForwards;
-    case cc::Animation::FILL_MODE_BACKWARDS:
+    case cc::Animation::FillModeBackwards:
       return FillModeBackwards;
-    case cc::Animation::FILL_MODE_BOTH:
+    case cc::Animation::FillModeBoth:
       return FillModeBoth;
     default:
       NOTREACHED();
@@ -178,16 +178,16 @@ blink::WebCompositorAnimation::FillMode WebCompositorAnimationImpl::fillMode()
 void WebCompositorAnimationImpl::setFillMode(FillMode fill_mode) {
   switch (fill_mode) {
     case FillModeNone:
-      animation_->set_fill_mode(cc::Animation::FILL_MODE_NONE);
+      animation_->set_fill_mode(cc::Animation::FillModeNone);
       break;
     case FillModeForwards:
-      animation_->set_fill_mode(cc::Animation::FILL_MODE_FORWARDS);
+      animation_->set_fill_mode(cc::Animation::FillModeForwards);
       break;
     case FillModeBackwards:
-      animation_->set_fill_mode(cc::Animation::FILL_MODE_BACKWARDS);
+      animation_->set_fill_mode(cc::Animation::FillModeBackwards);
       break;
     case FillModeBoth:
-      animation_->set_fill_mode(cc::Animation::FILL_MODE_BOTH);
+      animation_->set_fill_mode(cc::Animation::FillModeBoth);
       break;
   }
 }

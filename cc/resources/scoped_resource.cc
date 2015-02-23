@@ -38,7 +38,10 @@ void ScopedResource::AllocateManaged(const gfx::Size& size,
 
   set_dimensions(size, format);
   set_id(resource_provider_->CreateManagedResource(
-      size, target, GL_CLAMP_TO_EDGE, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
+      size,
+      target,
+      GL_CLAMP_TO_EDGE,
+      ResourceProvider::TextureHintImmutable,
       format));
 
 #if DCHECK_IS_ON()

@@ -38,21 +38,6 @@ class WebGraphicsContext3DUploadCounter : public TestWebGraphicsContext3D {
   int upload_count_;
 };
 
-class SharedBitmapManagerAllocationCounter : public TestSharedBitmapManager {
- public:
-  scoped_ptr<SharedBitmap> AllocateSharedBitmap(
-      const gfx::Size& size) override {
-    ++allocation_count_;
-    return TestSharedBitmapManager::AllocateSharedBitmap(size);
-  }
-
-  int AllocationCount() { return allocation_count_; }
-  void ResetAllocationCount() { allocation_count_ = 0; }
-
- private:
-  int allocation_count_;
-};
-
 class VideoResourceUpdaterTest : public testing::Test {
  protected:
   VideoResourceUpdaterTest() {
@@ -64,12 +49,7 @@ class VideoResourceUpdaterTest : public testing::Test {
     output_surface3d_ =
         FakeOutputSurface::Create3d(context3d.Pass());
     CHECK(output_surface3d_->BindToClient(&client_));
-
-    output_surface_software_ = FakeOutputSurface::CreateSoftware(
-        make_scoped_ptr(new SoftwareOutputDevice));
-    CHECK(output_surface_software_->BindToClient(&client_));
-
-    shared_bitmap_manager_.reset(new SharedBitmapManagerAllocationCounter());
+    shared_bitmap_manager_.reset(new TestSharedBitmapManager());
     resource_provider3d_ =
         ResourceProvider::Create(output_surface3d_.get(),
                                  shared_bitmap_manager_.get(),
@@ -78,10 +58,6 @@ class VideoResourceUpdaterTest : public testing::Test {
                                  0,
                                  false,
                                  1);
-
-    resource_provider_software_ = ResourceProvider::Create(
-        output_surface_software_.get(), shared_bitmap_manager_.get(), NULL,
-        NULL, 0, false, 1);
   }
 
   scoped_refptr<media::VideoFrame> CreateTestYUVVideoFrame() {
@@ -109,10 +85,8 @@ class VideoResourceUpdaterTest : public testing::Test {
   WebGraphicsContext3DUploadCounter* context3d_;
   FakeOutputSurfaceClient client_;
   scoped_ptr<FakeOutputSurface> output_surface3d_;
-  scoped_ptr<FakeOutputSurface> output_surface_software_;
-  scoped_ptr<SharedBitmapManagerAllocationCounter> shared_bitmap_manager_;
+  scoped_ptr<TestSharedBitmapManager> shared_bitmap_manager_;
   scoped_ptr<ResourceProvider> resource_provider3d_;
-  scoped_ptr<ResourceProvider> resource_provider_software_;
 };
 
 TEST_F(VideoResourceUpdaterTest, SoftwareFrame) {
@@ -138,7 +112,6 @@ TEST_F(VideoResourceUpdaterTest, ReuseResource) {
   EXPECT_EQ(VideoFrameExternalResources::YUV_RESOURCE, resources.type);
   EXPECT_EQ(size_t(3), resources.mailboxes.size());
   EXPECT_EQ(size_t(3), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(0), resources.software_resources.size());
   // Expect exactly three texture uploads, one for each plane.
   EXPECT_EQ(3, context3d_->UploadCount());
 
@@ -170,7 +143,6 @@ TEST_F(VideoResourceUpdaterTest, ReuseResourceNoDelete) {
   EXPECT_EQ(VideoFrameExternalResources::YUV_RESOURCE, resources.type);
   EXPECT_EQ(size_t(3), resources.mailboxes.size());
   EXPECT_EQ(size_t(3), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(0), resources.software_resources.size());
   // Expect exactly three texture uploads, one for each plane.
   EXPECT_EQ(3, context3d_->UploadCount());
 
@@ -182,73 +154,6 @@ TEST_F(VideoResourceUpdaterTest, ReuseResourceNoDelete) {
   EXPECT_EQ(size_t(3), resources.release_callbacks.size());
   // The data should be reused so expect no texture uploads.
   EXPECT_EQ(0, context3d_->UploadCount());
-}
-
-TEST_F(VideoResourceUpdaterTest, SoftwareFrameSoftwareCompositor) {
-  VideoResourceUpdater updater(nullptr, resource_provider_software_.get());
-  scoped_refptr<media::VideoFrame> video_frame = CreateTestYUVVideoFrame();
-
-  VideoFrameExternalResources resources =
-      updater.CreateExternalResourcesFromVideoFrame(video_frame);
-  EXPECT_EQ(VideoFrameExternalResources::SOFTWARE_RESOURCE, resources.type);
-}
-
-TEST_F(VideoResourceUpdaterTest, ReuseResourceSoftwareCompositor) {
-  VideoResourceUpdater updater(nullptr, resource_provider_software_.get());
-  scoped_refptr<media::VideoFrame> video_frame = CreateTestYUVVideoFrame();
-  video_frame->set_timestamp(base::TimeDelta::FromSeconds(1234));
-
-  // Allocate the resources for a software video frame.
-  shared_bitmap_manager_->ResetAllocationCount();
-  VideoFrameExternalResources resources =
-      updater.CreateExternalResourcesFromVideoFrame(video_frame);
-  EXPECT_EQ(VideoFrameExternalResources::SOFTWARE_RESOURCE, resources.type);
-  EXPECT_EQ(size_t(0), resources.mailboxes.size());
-  EXPECT_EQ(size_t(0), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(1), resources.software_resources.size());
-  // Expect exactly one allocated shared bitmap.
-  EXPECT_EQ(1, shared_bitmap_manager_->AllocationCount());
-
-  // Simulate the ResourceProvider releasing the resource back to the video
-  // updater.
-  resources.software_release_callback.Run(0, false, nullptr);
-
-  // Allocate resources for the same frame.
-  shared_bitmap_manager_->ResetAllocationCount();
-  resources = updater.CreateExternalResourcesFromVideoFrame(video_frame);
-  EXPECT_EQ(VideoFrameExternalResources::SOFTWARE_RESOURCE, resources.type);
-  EXPECT_EQ(size_t(0), resources.mailboxes.size());
-  EXPECT_EQ(size_t(0), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(1), resources.software_resources.size());
-  // The data should be reused so expect no new allocations.
-  EXPECT_EQ(0, shared_bitmap_manager_->AllocationCount());
-}
-
-TEST_F(VideoResourceUpdaterTest, ReuseResourceNoDeleteSoftwareCompositor) {
-  VideoResourceUpdater updater(nullptr, resource_provider_software_.get());
-  scoped_refptr<media::VideoFrame> video_frame = CreateTestYUVVideoFrame();
-  video_frame->set_timestamp(base::TimeDelta::FromSeconds(1234));
-
-  // Allocate the resources for a software video frame.
-  shared_bitmap_manager_->ResetAllocationCount();
-  VideoFrameExternalResources resources =
-      updater.CreateExternalResourcesFromVideoFrame(video_frame);
-  EXPECT_EQ(VideoFrameExternalResources::SOFTWARE_RESOURCE, resources.type);
-  EXPECT_EQ(size_t(0), resources.mailboxes.size());
-  EXPECT_EQ(size_t(0), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(1), resources.software_resources.size());
-  // Expect exactly one allocated shared bitmap.
-  EXPECT_EQ(1, shared_bitmap_manager_->AllocationCount());
-
-  // Allocate resources for the same frame.
-  shared_bitmap_manager_->ResetAllocationCount();
-  resources = updater.CreateExternalResourcesFromVideoFrame(video_frame);
-  EXPECT_EQ(VideoFrameExternalResources::SOFTWARE_RESOURCE, resources.type);
-  EXPECT_EQ(size_t(0), resources.mailboxes.size());
-  EXPECT_EQ(size_t(0), resources.release_callbacks.size());
-  EXPECT_EQ(size_t(1), resources.software_resources.size());
-  // The data should be reused so expect no new allocations.
-  EXPECT_EQ(0, shared_bitmap_manager_->AllocationCount());
 }
 
 }  // namespace

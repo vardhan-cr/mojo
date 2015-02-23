@@ -23,6 +23,7 @@
 #include "base/atomicops.h"
 #include "base/base_export.h"
 #include "base/memory/aligned_memory.h"
+#include "base/third_party/dynamic_annotations/dynamic_annotations.h"
 #include "base/threading/thread_restrictions.h"
 
 namespace base {
@@ -236,6 +237,8 @@ class Singleton {
     // instance_ pointer must acquire visibility over the singleton data.
     base::subtle::AtomicWord value = base::subtle::Acquire_Load(&instance_);
     if (value != 0 && value != base::internal::kBeingCreatedMarker) {
+      // See the corresponding HAPPENS_BEFORE below.
+      ANNOTATE_HAPPENS_AFTER(&instance_);
       return reinterpret_cast<Type*>(value);
     }
 
@@ -247,6 +250,10 @@ class Singleton {
       // stop right after we do this store.
       Type* newval = Traits::New();
 
+      // This annotation helps race detectors recognize correct lock-less
+      // synchronization between different threads calling get().
+      // See the corresponding HAPPENS_AFTER below and above.
+      ANNOTATE_HAPPENS_BEFORE(&instance_);
       // Releases the visibility over instance_ to the readers.
       base::subtle::Release_Store(
           &instance_, reinterpret_cast<base::subtle::AtomicWord>(newval));
@@ -260,6 +267,8 @@ class Singleton {
     // We hit a race. Wait for the other thread to complete it.
     value = base::internal::WaitForInstance(&instance_);
 
+    // See the corresponding HAPPENS_BEFORE above.
+    ANNOTATE_HAPPENS_AFTER(&instance_);
     return reinterpret_cast<Type*>(value);
   }
 

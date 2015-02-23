@@ -3,11 +3,11 @@
 # found in the LICENSE file.
 
 # MIPS arch variant.
-if (current_cpu == "mipsel") {
+if (cpu_arch == "mipsel") {
   declare_args() {
     mips_arch_variant = "r1"
   }
-} else if (current_cpu == "mips64el") {
+} else if (cpu_arch == "mips64el") {
   if (is_android) {
     declare_args() {
       mips_arch_variant = "r6"

@@ -33,7 +33,6 @@ class FakeLayerTreeHostClient : public LayerTreeHostClient,
   void WillBeginMainFrame() override {}
   void DidBeginMainFrame() override {}
   void BeginMainFrame(const BeginFrameArgs& args) override {}
-  void BeginMainFrameNotExpectedSoon() override {}
   void Layout() override {}
   void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,
                            const gfx::Vector2dF& outer_delta,

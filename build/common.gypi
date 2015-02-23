@@ -584,6 +584,9 @@
 
       # If no directory is specified then a temporary directory will be used.
       'test_isolation_outdir%': '',
+      # True if isolate should fail if the isolate files refer to files
+      # that are missing.
+      'test_isolation_fail_on_missing': 1,
 
       'wix_path%': '<(DEPTH)/third_party/wix',
 
@@ -626,9 +629,6 @@
       'use_lto%': 0,
       # Enable LTO on code compiled with -O2.
       'use_lto_o2%': 0,
-
-      # Allowed level of identical code folding in the gold linker.
-      'gold_icf_level%': 'safe',
 
       # Libxkbcommon usage.
       'use_xkbcommon%': 0,
@@ -1157,6 +1157,7 @@
     'use_canvas_skia%': '<(use_canvas_skia)',
     'test_isolation_mode%': '<(test_isolation_mode)',
     'test_isolation_outdir%': '<(test_isolation_outdir)',
+    'test_isolation_fail_on_missing': '<(test_isolation_fail_on_missing)',
     'enable_basic_printing%': '<(enable_basic_printing)',
     'enable_print_preview%': '<(enable_print_preview)',
     'enable_spellcheck%': '<(enable_spellcheck)',
@@ -1198,7 +1199,6 @@
     'gomadir%': '<(gomadir)',
     'use_lto%': '<(use_lto)',
     'use_lto_o2%': '<(use_lto_o2)',
-    'gold_icf_level%': '<(gold_icf_level)',
     'video_hole%': '<(video_hole)',
     'support_pre_M6_history_database%': '<(support_pre_M6_history_database)',
     'v8_use_external_startup_data%': '<(v8_use_external_startup_data)',
@@ -1802,6 +1802,9 @@
 
         # Copy it out one scope.
         'android_webview_build%': '<(android_webview_build)',
+
+        # Default android linker script for shared library exports.
+        'android_linker_script%': '<(SHARED_INTERMEDIATE_DIR)/android_exports.lst',
       }],  # OS=="android"
       ['embedded==1', {
         'use_system_fontconfig%': 0,
@@ -1828,6 +1831,7 @@
         'jni_generator_jarjar_file': '../android_webview/build/jarjar-rules.txt',
       }],
       ['OS=="linux" and target_arch!="mipsel"', {
+        # TODO(thakis): This is here to measure perf for a while.
         'clang%': 1,
       }],  # OS=="mac"
       ['OS=="mac"', {
@@ -2140,13 +2144,23 @@
         'clang_chrome_plugins_flags': [
           '<!@(<(DEPTH)/tools/clang/scripts/plugin_flags.sh)'
         ],
+        'conditions': [
+          # TODO(dcheng): https://crbug.com/417463 -- work to enable this flag
+          # on all platforms is currently underway.
+          ['OS=="android" or OS=="linux" or OS=="mac" or OS=="ios"', {
+            'clang_chrome_plugins_flags': [
+              '-Xclang',
+              '-plugin-arg-find-bad-constructs',
+              '-Xclang',
+              'strict-virtual-specifiers',
+            ],
+          }],
+        ],
       }],
       ['asan==1 or msan==1 or lsan==1 or tsan==1', {
         'clang%': 1,
         'use_allocator%': 'none',
         'use_sanitizer_options%': 1,
-        # Disable ICF in the linker to avoid debug info loss.
-        'gold_icf_level%': 'none',
       }],
       ['asan==1 and OS=="linux" and chromeos==0', {
         'use_custom_libcxx%': 1,
@@ -2460,14 +2474,6 @@
         '-Wno-c++11-extensions',
         '-Wno-unnamed-type-template-args',
       ],
-
-      # By default, Android targets have their exported JNI symbols stripped,
-      # so we test the manual JNI registration code paths that are required
-      # when using the crazy linker. To allow use of native JNI exports (lazily
-      # resolved by the JVM), targets can enable this variable, which will stop
-      # the stripping from happening. Only targets which do not need to be
-      # compatible with the crazy linker are permitted to set this.
-      'use_native_jni_exports%': 0,
 
       'conditions': [
         ['OS=="win" and component=="shared_library"', {
@@ -3511,7 +3517,7 @@
         ],
       },
     }],
-    # -Wl,-z,-defs doesn't work with the sanitiziers, http://crbug.com/452065
+    # TODO(thakis): Enable this everywhere. http://crbug.com/371125
     ['(OS=="linux" or OS=="android") and asan==0 and msan==0 and tsan==0 and ubsan==0 and ubsan_vptr==0', {
       'target_defaults': {
         'ldflags': [
@@ -4408,7 +4414,7 @@
                 'target_conditions': [
                   ['_toolset=="target"', {
                     'ldflags': [
-                      '-Wl,--icf=<(gold_icf_level)',
+                      '-Wl,--icf=safe',
                     ],
                   }],
                 ],
@@ -4588,15 +4594,9 @@
               '-Wl,--no-undefined',
             ],
             'conditions': [
-              ['component=="static_library" and android_webview_build==0', {
-                'target_conditions': [
-                  ['use_native_jni_exports==0', {
-                    # Use a linker version script to strip JNI exports from
-                    # binaries which have not specifically asked to use them.
-                    'ldflags': [
-                      '-Wl,--version-script=<!(cd <(DEPTH) && pwd -P)/build/android/android_no_jni_exports.lst',
-                    ],
-                  }],
+              ['component=="static_library"', {
+                'ldflags': [
+                  '-Wl,--exclude-libs=ALL',
                 ],
               }],
               ['clang==1', {
@@ -4656,20 +4656,6 @@
                 'ldflags': [
                   '--sysroot=<(android_ndk_sysroot)',
                   '-nostdlib',
-                  # Don't allow visible symbols from libgcc or stlport to be
-                  # re-exported.
-                  '-Wl,--exclude-libs=libgcc.a',
-                  '-Wl,--exclude-libs=libstlport_static.a',
-                  # Don't allow visible symbols from libraries that contain
-                  # assembly code with symbols that aren't hidden properly.
-                  # http://crbug.com/448386
-                  '-Wl,--exclude-libs=libcommon_audio.a',
-                  '-Wl,--exclude-libs=libcommon_audio_neon.a',
-                  '-Wl,--exclude-libs=libcommon_audio_sse2.a',
-                  '-Wl,--exclude-libs=libiSACFix.a',
-                  '-Wl,--exclude-libs=libisac_neon.a',
-                  '-Wl,--exclude-libs=libopus.a',
-                  '-Wl,--exclude-libs=libvpx.a',
                 ],
                 'libraries': [
                   '-l<(android_stlport_library)',
@@ -4726,7 +4712,7 @@
               ['target_arch == "arm" and order_profiling==0', {
                 'ldflags': [
                   # Enable identical code folding to reduce size.
-                  '-Wl,--icf=<(gold_icf_level)',
+                  '-Wl,--icf=safe',
                 ],
               }],
               # NOTE: The stlport header include paths below are specified in
@@ -4786,6 +4772,9 @@
                 ],
               }],
               ['_type=="shared_library" or _type=="loadable_module"', {
+                'ldflags!': [
+                  '-Wl,--exclude-libs=ALL',
+                ],
                 'ldflags': [
                   '-Wl,-shared,-Bsymbolic',
                 ],

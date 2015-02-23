@@ -26,12 +26,14 @@ const bool kDefaultClearCanvasSetting = true;
 
 namespace cc {
 
+scoped_refptr<DisplayListRasterSource> DisplayListRasterSource::Create() {
+  return make_scoped_refptr(new DisplayListRasterSource);
+}
+
 scoped_refptr<DisplayListRasterSource>
 DisplayListRasterSource::CreateFromDisplayListRecordingSource(
-    const DisplayListRecordingSource* other,
-    bool can_use_lcd_text) {
-  return make_scoped_refptr(
-      new DisplayListRasterSource(other, can_use_lcd_text));
+    const DisplayListRecordingSource* other) {
+  return make_scoped_refptr(new DisplayListRasterSource(other));
 }
 
 DisplayListRasterSource::DisplayListRasterSource()
@@ -46,12 +48,11 @@ DisplayListRasterSource::DisplayListRasterSource()
 }
 
 DisplayListRasterSource::DisplayListRasterSource(
-    const DisplayListRecordingSource* other,
-    bool can_use_lcd_text)
+    const DisplayListRecordingSource* other)
     : display_list_(other->display_list_),
       background_color_(other->background_color_),
       requires_clear_(other->requires_clear_),
-      can_use_lcd_text_(can_use_lcd_text),
+      can_use_lcd_text_(other->can_use_lcd_text_),
       is_solid_color_(other->is_solid_color_),
       solid_color_(other->solid_color_),
       recorded_viewport_(other->recorded_viewport_),
@@ -60,24 +61,6 @@ DisplayListRasterSource::DisplayListRasterSource(
       slow_down_raster_scale_factor_for_debug_(
           other->slow_down_raster_scale_factor_for_debug_),
       should_attempt_to_use_distance_field_text_(false) {
-}
-
-DisplayListRasterSource::DisplayListRasterSource(
-    const DisplayListRasterSource* other,
-    bool can_use_lcd_text)
-    : display_list_(other->display_list_),
-      background_color_(other->background_color_),
-      requires_clear_(other->requires_clear_),
-      can_use_lcd_text_(can_use_lcd_text),
-      is_solid_color_(other->is_solid_color_),
-      solid_color_(other->solid_color_),
-      recorded_viewport_(other->recorded_viewport_),
-      size_(other->size_),
-      clear_canvas_with_debug_color_(kDefaultClearCanvasSetting),
-      slow_down_raster_scale_factor_for_debug_(
-          other->slow_down_raster_scale_factor_for_debug_),
-      should_attempt_to_use_distance_field_text_(
-          other->should_attempt_to_use_distance_field_text_) {
 }
 
 DisplayListRasterSource::~DisplayListRasterSource() {
@@ -212,13 +195,6 @@ void DisplayListRasterSource::DidBeginTracing() {
 
 bool DisplayListRasterSource::CanUseLCDText() const {
   return can_use_lcd_text_;
-}
-
-scoped_refptr<RasterSource> DisplayListRasterSource::CreateCloneWithoutLCDText()
-    const {
-  bool can_use_lcd_text = false;
-  return scoped_refptr<RasterSource>(
-      new DisplayListRasterSource(this, can_use_lcd_text));
 }
 
 }  // namespace cc

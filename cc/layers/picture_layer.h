@@ -33,6 +33,7 @@ class CC_EXPORT PictureLayer : public Layer {
   bool Update(ResourceUpdateQueue* queue,
               const OcclusionTracker<Layer>* occlusion) override;
   void SetIsMask(bool is_mask) override;
+  bool SupportsLCDText() const override;
   skia::RefPtr<SkPicture> GetPicture() const override;
   bool IsSuitableForGpuRasterization() const override;
 
@@ -55,6 +56,8 @@ class CC_EXPORT PictureLayer : public Layer {
   bool is_mask() const { return is_mask_; }
 
  private:
+  bool UpdateCanUseLCDText();
+
   ContentLayerClient* client_;
   scoped_ptr<RecordingSource> recording_source_;
   devtools_instrumentation::
@@ -66,6 +69,7 @@ class CC_EXPORT PictureLayer : public Layer {
   gfx::Rect last_updated_visible_content_rect_;
 
   int update_source_frame_number_;
+  bool can_use_lcd_text_for_update_;
   bool is_mask_;
   bool nearest_neighbor_;
 

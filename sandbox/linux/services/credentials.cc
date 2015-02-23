@@ -114,7 +114,7 @@ bool ChrootToSafeEmptyDir() {
   int status = -1;
   PCHECK(HANDLE_EINTR(waitpid(pid, &status, 0)) == pid);
 
-  return WIFEXITED(status) && WEXITSTATUS(status) == kExitSuccess;
+  return kExitSuccess == status;
 }
 
 // CHECK() that an attempt to move to a new user namespace raised an expected
@@ -174,14 +174,12 @@ bool Credentials::CanCreateProcessInNewUserNS() {
   // have disappeared. Make sure to not do anything in the child, as this is a
   // fragile execution environment.
   if (pid == 0) {
-    _exit(kExitSuccess);
+    _exit(0);
   }
 
   // Always reap the child.
-  int status = -1;
-  PCHECK(HANDLE_EINTR(waitpid(pid, &status, 0)) == pid);
-  CHECK(WIFEXITED(status));
-  CHECK_EQ(kExitSuccess, WEXITSTATUS(status));
+  siginfo_t infop;
+  PCHECK(0 == HANDLE_EINTR(waitid(P_PID, pid, &infop, WEXITED)));
 
   // clone(2) succeeded, we can use CLONE_NEWUSER.
   return true;

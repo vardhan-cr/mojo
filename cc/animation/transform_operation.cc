@@ -99,14 +99,14 @@ bool TransformOperation::BlendTransformOperations(
     return true;
 
   TransformOperation::Type interpolation_type =
-      TransformOperation::TRANSFORM_OPERATION_IDENTITY;
+      TransformOperation::TransformOperationIdentity;
   if (IsOperationIdentity(to))
     interpolation_type = from->type;
   else
     interpolation_type = to->type;
 
   switch (interpolation_type) {
-    case TransformOperation::TRANSFORM_OPERATION_TRANSLATE: {
+  case TransformOperation::TransformOperationTranslate: {
     SkMScalar from_x = IsOperationIdentity(from) ? 0 : from->translate.x;
     SkMScalar from_y = IsOperationIdentity(from) ? 0 : from->translate.y;
     SkMScalar from_z = IsOperationIdentity(from) ? 0 : from->translate.z;
@@ -118,7 +118,7 @@ bool TransformOperation::BlendTransformOperations(
                         BlendSkMScalars(from_z, to_z, progress));
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_ROTATE: {
+  case TransformOperation::TransformOperationRotate: {
     SkMScalar axis_x = 0;
     SkMScalar axis_y = 0;
     SkMScalar axis_z = 1;
@@ -140,7 +140,7 @@ bool TransformOperation::BlendTransformOperations(
     }
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_SCALE: {
+  case TransformOperation::TransformOperationScale: {
     SkMScalar from_x = IsOperationIdentity(from) ? 1 : from->scale.x;
     SkMScalar from_y = IsOperationIdentity(from) ? 1 : from->scale.y;
     SkMScalar from_z = IsOperationIdentity(from) ? 1 : from->scale.z;
@@ -152,7 +152,7 @@ bool TransformOperation::BlendTransformOperations(
                     BlendSkMScalars(from_z, to_z, progress));
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_SKEW: {
+  case TransformOperation::TransformOperationSkew: {
     SkMScalar from_x = IsOperationIdentity(from) ? 0 : from->skew.x;
     SkMScalar from_y = IsOperationIdentity(from) ? 0 : from->skew.y;
     SkMScalar to_x = IsOperationIdentity(to) ? 0 : to->skew.x;
@@ -161,7 +161,7 @@ bool TransformOperation::BlendTransformOperations(
     result->SkewY(BlendSkMScalars(from_y, to_y, progress));
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_PERSPECTIVE: {
+  case TransformOperation::TransformOperationPerspective: {
     SkMScalar from_perspective_depth =
         IsOperationIdentity(from) ? std::numeric_limits<SkMScalar>::max()
                                   : from->perspective_depth;
@@ -180,7 +180,7 @@ bool TransformOperation::BlendTransformOperations(
     result->ApplyPerspectiveDepth(1.f / blended_perspective_depth);
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_MATRIX: {
+  case TransformOperation::TransformOperationMatrix: {
     gfx::Transform to_matrix;
     if (!IsOperationIdentity(to))
       to_matrix = to->matrix;
@@ -192,7 +192,7 @@ bool TransformOperation::BlendTransformOperations(
       return false;
     break;
   }
-  case TransformOperation::TRANSFORM_OPERATION_IDENTITY:
+  case TransformOperation::TransformOperationIdentity:
     // Do nothing.
     break;
   }
@@ -375,20 +375,20 @@ bool TransformOperation::BlendedBoundsForBox(const gfx::BoxF& box,
   }
 
   TransformOperation::Type interpolation_type =
-      TransformOperation::TRANSFORM_OPERATION_IDENTITY;
+      TransformOperation::TransformOperationIdentity;
   if (is_identity_to)
     interpolation_type = from->type;
   else
     interpolation_type = to->type;
 
   switch (interpolation_type) {
-    case TransformOperation::TRANSFORM_OPERATION_IDENTITY:
+    case TransformOperation::TransformOperationIdentity:
       *bounds = box;
       return true;
-    case TransformOperation::TRANSFORM_OPERATION_TRANSLATE:
-    case TransformOperation::TRANSFORM_OPERATION_SKEW:
-    case TransformOperation::TRANSFORM_OPERATION_PERSPECTIVE:
-    case TransformOperation::TRANSFORM_OPERATION_SCALE: {
+    case TransformOperation::TransformOperationTranslate:
+    case TransformOperation::TransformOperationSkew:
+    case TransformOperation::TransformOperationPerspective:
+    case TransformOperation::TransformOperationScale: {
       gfx::Transform from_transform;
       gfx::Transform to_transform;
       if (!BlendTransformOperations(from, to, min_progress, &from_transform) ||
@@ -404,7 +404,7 @@ bool TransformOperation::BlendedBoundsForBox(const gfx::BoxF& box,
 
       return true;
     }
-    case TransformOperation::TRANSFORM_OPERATION_ROTATE: {
+    case TransformOperation::TransformOperationRotate: {
       SkMScalar axis_x = 0;
       SkMScalar axis_y = 0;
       SkMScalar axis_z = 1;
@@ -429,7 +429,7 @@ bool TransformOperation::BlendedBoundsForBox(const gfx::BoxF& box,
       }
       return true;
     }
-    case TransformOperation::TRANSFORM_OPERATION_MATRIX:
+    case TransformOperation::TransformOperationMatrix:
       return false;
   }
   NOTREACHED();

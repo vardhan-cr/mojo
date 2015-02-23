@@ -16,9 +16,9 @@ namespace cc {
 class CC_EXPORT UIResourceRequest {
  public:
   enum UIResourceRequestType {
-    UI_RESOURCE_CREATE,
-    UI_RESOURCE_DELETE,
-    UI_RESOURCE_INVALID_REQUEST
+    UIResourceCreate,
+    UIResourceDelete,
+    UIResourceInvalidRequest
   };
 
   UIResourceRequest(UIResourceRequestType type, UIResourceId id);

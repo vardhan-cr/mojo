@@ -9,14 +9,21 @@
 #include "base/compiler_specific.h"
 #include "base/trace_event/memory_dump_provider.h"
 #include "base/trace_event/process_memory_dump.h"
-#include "base/trace_event/trace_event_argument.h"
+
+// TODO(primiano): in a separate CL rename DeleteTraceLogForTesting into
+// something like base::internal::TeardownSingletonForTesting so we don't have
+// to add a new friend to singleton each time.
+class DeleteTraceLogForTesting {
+ public:
+  static void Delete() {
+    Singleton<
+        base::trace_event::MemoryDumpManager,
+        LeakySingletonTraits<base::trace_event::MemoryDumpManager>>::OnExit(0);
+  }
+};
 
 namespace base {
 namespace trace_event {
-
-namespace {
-MemoryDumpManager* g_instance_for_testing = nullptr;
-}
 
 // TODO(primiano): this should be smarter and should do something similar to
 // trace event synthetic delays.
@@ -25,16 +32,13 @@ const char MemoryDumpManager::kTraceCategory[] =
 
 // static
 MemoryDumpManager* MemoryDumpManager::GetInstance() {
-  if (g_instance_for_testing)
-    return g_instance_for_testing;
-
   return Singleton<MemoryDumpManager,
                    LeakySingletonTraits<MemoryDumpManager>>::get();
 }
 
 // static
-void MemoryDumpManager::SetInstanceForTesting(MemoryDumpManager* instance) {
-  g_instance_for_testing = instance;
+void MemoryDumpManager::DeleteForTesting() {
+  DeleteTraceLogForTesting::Delete();
 }
 
 MemoryDumpManager::MemoryDumpManager() : memory_tracing_enabled_(0) {
@@ -92,14 +96,15 @@ void MemoryDumpManager::BroadcastDumpRequest() {
 // Creates a dump point for the current process and appends it to the trace.
 void MemoryDumpManager::CreateLocalDumpPoint() {
   AutoLock lock(lock_);
-  scoped_ptr<ProcessMemoryDump> pmd(new ProcessMemoryDump());
+  // TRACE_EVENT_* macros don't induce scoped_refptr type inference, hence we
+  // need the base ConvertableToTraceFormat and the upcast below. The
+  // alternative would be unnecessarily expensive (double Acquire/Release).
+  scoped_refptr<ConvertableToTraceFormat> pmd(new ProcessMemoryDump());
 
   for (MemoryDumpProvider* dump_provider : dump_providers_enabled_) {
-    dump_provider->DumpInto(pmd.get());
+    dump_provider->DumpInto(static_cast<ProcessMemoryDump*>(pmd.get()));
   }
 
-  scoped_refptr<TracedValue> value(new TracedValue());
-  pmd->AsValueInto(value.get());
   // TODO(primiano): add the dump point to the trace at this point.
 }
 

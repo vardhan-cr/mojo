@@ -19,15 +19,14 @@
 namespace cc {
 
 scoped_refptr<PicturePileImpl> PicturePileImpl::CreateFromPicturePile(
-    const PicturePile* other,
-    bool can_use_lcd_text) {
-  return make_scoped_refptr(new PicturePileImpl(other, can_use_lcd_text));
+    const PicturePile* other) {
+  return make_scoped_refptr(new PicturePileImpl(other));
 }
 
 PicturePileImpl::PicturePileImpl()
     : background_color_(SK_ColorTRANSPARENT),
       requires_clear_(true),
-      can_use_lcd_text_(true),
+      can_use_lcd_text_(false),
       is_solid_color_(false),
       solid_color_(SK_ColorTRANSPARENT),
       has_any_recordings_(false),
@@ -37,13 +36,12 @@ PicturePileImpl::PicturePileImpl()
       should_attempt_to_use_distance_field_text_(false) {
 }
 
-PicturePileImpl::PicturePileImpl(const PicturePile* other,
-                                 bool can_use_lcd_text)
+PicturePileImpl::PicturePileImpl(const PicturePile* other)
     : picture_map_(other->picture_map_),
       tiling_(other->tiling_),
       background_color_(other->background_color_),
       requires_clear_(other->requires_clear_),
-      can_use_lcd_text_(can_use_lcd_text),
+      can_use_lcd_text_(other->can_use_lcd_text_),
       is_solid_color_(other->is_solid_color_),
       solid_color_(other->solid_color_),
       recorded_viewport_(other->recorded_viewport_),
@@ -53,25 +51,6 @@ PicturePileImpl::PicturePileImpl(const PicturePile* other,
       slow_down_raster_scale_factor_for_debug_(
           other->slow_down_raster_scale_factor_for_debug_),
       should_attempt_to_use_distance_field_text_(false) {
-}
-
-PicturePileImpl::PicturePileImpl(const PicturePileImpl* other,
-                                 bool can_use_lcd_text)
-    : picture_map_(other->picture_map_),
-      tiling_(other->tiling_),
-      background_color_(other->background_color_),
-      requires_clear_(other->requires_clear_),
-      can_use_lcd_text_(can_use_lcd_text),
-      is_solid_color_(other->is_solid_color_),
-      solid_color_(other->solid_color_),
-      recorded_viewport_(other->recorded_viewport_),
-      has_any_recordings_(other->has_any_recordings_),
-      clear_canvas_with_debug_color_(other->clear_canvas_with_debug_color_),
-      min_contents_scale_(other->min_contents_scale_),
-      slow_down_raster_scale_factor_for_debug_(
-          other->slow_down_raster_scale_factor_for_debug_),
-      should_attempt_to_use_distance_field_text_(
-          other->should_attempt_to_use_distance_field_text_) {
 }
 
 PicturePileImpl::~PicturePileImpl() {
@@ -402,13 +381,6 @@ void PicturePileImpl::AsValueInto(
 
 bool PicturePileImpl::CanUseLCDText() const {
   return can_use_lcd_text_;
-}
-
-scoped_refptr<RasterSource> PicturePileImpl::CreateCloneWithoutLCDText() const {
-  DCHECK(CanUseLCDText());
-  bool can_use_lcd_text = false;
-  return scoped_refptr<RasterSource>(
-      new PicturePileImpl(this, can_use_lcd_text));
 }
 
 PicturePileImpl::PixelRefIterator::PixelRefIterator(

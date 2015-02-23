@@ -33,6 +33,8 @@ class WebDisplayItemListImpl : public blink::WebDisplayItemList {
 
   // blink::WebDisplayItemList implementation.
   virtual void appendDrawingItem(const SkPicture*);
+  virtual void appendDrawingItem(SkPicture*,
+                                 const blink::WebFloatPoint& location);
   virtual void appendClipItem(
       const blink::WebRect& clip_rect,
       const blink::WebVector<SkRRect>& rounded_clip_rects);
@@ -48,12 +50,14 @@ class WebDisplayItemListImpl : public blink::WebDisplayItemList {
   virtual void appendTransparencyItem(float opacity,
                                       blink::WebBlendMode blend_mode);
   virtual void appendEndTransparencyItem();
+#if FILTER_DISPLAY_ITEM_USES_FILTER_OPERATIONS
   virtual void appendFilterItem(const blink::WebFilterOperations& filters,
                                 const blink::WebFloatRect& bounds);
+#else
+  virtual void appendFilterItem(SkImageFilter* filter,
+                                const blink::WebFloatRect& bounds);
+#endif
   virtual void appendEndFilterItem();
-  virtual void appendScrollItem(const blink::WebSize& scrollOffset,
-                                ScrollContainerId);
-  virtual void appendEndScrollItem();
 
  private:
   scoped_refptr<cc::DisplayItemList> display_item_list_;

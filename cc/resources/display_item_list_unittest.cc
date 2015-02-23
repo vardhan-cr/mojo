@@ -37,15 +37,13 @@ TEST(DisplayItemListTest, SingleDrawingItem) {
   unsigned char pixels[4 * 100 * 100] = {0};
   scoped_refptr<DisplayItemList> list = DisplayItemList::Create();
 
-  gfx::PointF offset(8.f, 9.f);
-  gfx::RectF recording_rect(offset, layer_rect.size());
   canvas = skia::SharePtr(
-      recorder.beginRecording(gfx::RectFToSkRect(recording_rect)));
-  canvas->translate(offset.x(), offset.y());
+      recorder.beginRecording(layer_rect.width(), layer_rect.height()));
   canvas->drawRectCoords(0.f, 0.f, 60.f, 60.f, red_paint);
   canvas->drawRectCoords(50.f, 50.f, 75.f, 75.f, blue_paint);
   picture = skia::AdoptRef(recorder.endRecording());
-  list->AppendItem(DrawingDisplayItem::Create(picture));
+  gfx::PointF offset(8.f, 9.f);
+  list->AppendItem(DrawingDisplayItem::Create(picture, offset));
   DrawDisplayList(pixels, layer_rect, list);
 
   SkBitmap expected_bitmap;
@@ -77,26 +75,22 @@ TEST(DisplayItemListTest, ClipItem) {
   unsigned char pixels[4 * 100 * 100] = {0};
   scoped_refptr<DisplayItemList> list = DisplayItemList::Create();
 
-  gfx::PointF first_offset(8.f, 9.f);
-  gfx::RectF first_recording_rect(first_offset, layer_rect.size());
   canvas = skia::SharePtr(
-      recorder.beginRecording(gfx::RectFToSkRect(first_recording_rect)));
-  canvas->translate(first_offset.x(), first_offset.y());
+      recorder.beginRecording(layer_rect.width(), layer_rect.height()));
   canvas->drawRectCoords(0.f, 0.f, 60.f, 60.f, red_paint);
   picture = skia::AdoptRef(recorder.endRecording());
-  list->AppendItem(DrawingDisplayItem::Create(picture));
+  gfx::PointF first_offset(8.f, 9.f);
+  list->AppendItem(DrawingDisplayItem::Create(picture, first_offset));
 
   gfx::Rect clip_rect(60, 60, 10, 10);
   list->AppendItem(ClipDisplayItem::Create(clip_rect, std::vector<SkRRect>()));
 
-  gfx::PointF second_offset(2.f, 3.f);
-  gfx::RectF second_recording_rect(second_offset, layer_rect.size());
   canvas = skia::SharePtr(
-      recorder.beginRecording(gfx::RectFToSkRect(second_recording_rect)));
-  canvas->translate(second_offset.x(), second_offset.y());
+      recorder.beginRecording(layer_rect.width(), layer_rect.height()));
   canvas->drawRectCoords(50.f, 50.f, 75.f, 75.f, blue_paint);
   picture = skia::AdoptRef(recorder.endRecording());
-  list->AppendItem(DrawingDisplayItem::Create(picture));
+  gfx::PointF second_offset(2.f, 3.f);
+  list->AppendItem(DrawingDisplayItem::Create(picture, second_offset));
 
   list->AppendItem(EndClipDisplayItem::Create());
 
@@ -132,27 +126,23 @@ TEST(DisplayItemListTest, TransformItem) {
   unsigned char pixels[4 * 100 * 100] = {0};
   scoped_refptr<DisplayItemList> list = DisplayItemList::Create();
 
-  gfx::PointF first_offset(8.f, 9.f);
-  gfx::RectF first_recording_rect(first_offset, layer_rect.size());
   canvas = skia::SharePtr(
-      recorder.beginRecording(gfx::RectFToSkRect(first_recording_rect)));
-  canvas->translate(first_offset.x(), first_offset.y());
+      recorder.beginRecording(layer_rect.width(), layer_rect.height()));
   canvas->drawRectCoords(0.f, 0.f, 60.f, 60.f, red_paint);
   picture = skia::AdoptRef(recorder.endRecording());
-  list->AppendItem(DrawingDisplayItem::Create(picture));
+  gfx::PointF first_offset(8.f, 9.f);
+  list->AppendItem(DrawingDisplayItem::Create(picture, first_offset));
 
   gfx::Transform transform;
   transform.Rotate(45.0);
   list->AppendItem(TransformDisplayItem::Create(transform));
 
-  gfx::PointF second_offset(2.f, 3.f);
-  gfx::RectF second_recording_rect(second_offset, layer_rect.size());
   canvas = skia::SharePtr(
-      recorder.beginRecording(gfx::RectFToSkRect(second_recording_rect)));
-  canvas->translate(second_offset.x(), second_offset.y());
+      recorder.beginRecording(layer_rect.width(), layer_rect.height()));
   canvas->drawRectCoords(50.f, 50.f, 75.f, 75.f, blue_paint);
   picture = skia::AdoptRef(recorder.endRecording());
-  list->AppendItem(DrawingDisplayItem::Create(picture));
+  gfx::PointF second_offset(2.f, 3.f);
+  list->AppendItem(DrawingDisplayItem::Create(picture, second_offset));
 
   list->AppendItem(EndTransformDisplayItem::Create());
 

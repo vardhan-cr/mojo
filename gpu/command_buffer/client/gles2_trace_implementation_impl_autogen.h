@@ -183,13 +183,6 @@ void GLES2TraceImplementation::ClearStencil(GLint s) {
   gl_->ClearStencil(s);
 }
 
-GLenum GLES2TraceImplementation::ClientWaitSync(GLsync sync,
-                                                GLbitfield flags,
-                                                GLuint64 timeout) {
-  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::ClientWaitSync");
-  return gl_->ClientWaitSync(sync, flags, timeout);
-}
-
 void GLES2TraceImplementation::ColorMask(GLboolean red,
                                          GLboolean green,
                                          GLboolean blue,
@@ -1472,13 +1465,6 @@ void GLES2TraceImplementation::Viewport(GLint x,
                                         GLsizei height) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Viewport");
   gl_->Viewport(x, y, width, height);
-}
-
-void GLES2TraceImplementation::WaitSync(GLsync sync,
-                                        GLbitfield flags,
-                                        GLuint64 timeout) {
-  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::WaitSync");
-  gl_->WaitSync(sync, flags, timeout);
 }
 
 void GLES2TraceImplementation::BlitFramebufferCHROMIUM(GLint srcX0,

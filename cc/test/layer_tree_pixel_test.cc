@@ -63,8 +63,10 @@ scoped_ptr<OutputSurface> LayerTreePixelTest::CreateOutputSurface() {
   return output_surface.Pass();
 }
 
-void LayerTreePixelTest::WillActivateTreeOnThread(LayerTreeHostImpl* impl) {
-  if (impl->sync_tree()->source_frame_number() != 0)
+void LayerTreePixelTest::CommitCompleteOnThread(LayerTreeHostImpl* impl) {
+  LayerTreeImpl* commit_tree =
+      impl->pending_tree() ? impl->pending_tree() : impl->active_tree();
+  if (commit_tree->source_frame_number() != 0)
     return;
 
   DirectRenderer* renderer = static_cast<DirectRenderer*>(impl->renderer());

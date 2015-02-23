@@ -1429,17 +1429,6 @@ _NAMED_TYPE_INFO = {
       '1',
     ],
   },
-  'SyncFlushFlags': {
-    'type': 'GLbitfield',
-    'is_complete': True,
-    'valid': [
-      'GL_SYNC_FLUSH_COMMANDS_BIT',
-      '0',
-    ],
-    'invalid': [
-      '0xFFFFFFFF',
-    ],
-  },
 }
 
 # This table specifies the different pepper interfaces that are supported for
@@ -1652,14 +1641,6 @@ _FUNCTION_INFO = {
     'valid_args': {
       '0': '0.5f'
     },
-  },
-  'ClientWaitSync': {
-    'type': 'Custom',
-    'data_transfer_methods': ['shm'],
-    'cmd_args': 'GLuint sync, GLbitfieldSyncFlushFlags flags, '
-                'GLuint timeout_0, GLuint timeout_1, GLenum* result',
-    'unsafe': True,
-    'result': ['GLenum'],
   },
   'ColorMask': {
     'type': 'StateSet',
@@ -2927,14 +2908,6 @@ _FUNCTION_INFO = {
                 'GLenumVertexAttribType type, GLboolean normalized, '
                 'GLsizei stride, GLuint offset',
     'client_test': False,
-  },
-  'WaitSync': {
-    'type': 'Custom',
-    'cmd_args': 'GLuint sync, GLbitfieldSyncFlushFlags flags, '
-                'GLuint timeout_0, GLuint timeout_1',
-    'impl_func': False,
-    'client_test': False,
-    'unsafe': True,
   },
   'Scissor': {
     'type': 'StateSet',
@@ -8998,12 +8971,11 @@ class GLGenerator(object):
     # Forward declaration of a few enums used in constant argument
     # to avoid including GL header files.
     enum_defines = {
-        'GL_SYNC_GPU_COMMANDS_COMPLETE': '0x9117',
-        'GL_SYNC_FLUSH_COMMANDS_BIT': '0x00000001',
+        'GL_SYNC_GPU_COMMANDS_COMPLETE': 0x9117,
       }
     file.Write('\n')
     for enum in enum_defines:
-      file.Write("#define %s %s\n" % (enum, enum_defines[enum]))
+      file.Write("#define %s 0x%x\n" % (enum, enum_defines[enum]))
     file.Write('\n')
     for func in self.functions:
       if True:

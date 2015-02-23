@@ -13,7 +13,7 @@ class AnonymousDerivedProtectedToPublicInImpl
     : public ProtectedRefCountedVirtualDtorInHeader {
  public:
   AnonymousDerivedProtectedToPublicInImpl() {}
-  ~AnonymousDerivedProtectedToPublicInImpl() override {}
+  virtual ~AnonymousDerivedProtectedToPublicInImpl() {}
 };
 
 // Unsafe; but we should only warn on the base class.

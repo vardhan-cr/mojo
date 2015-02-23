@@ -49,7 +49,6 @@ class SchedulerClient {
   virtual base::TimeDelta CommitToActivateDurationEstimate() = 0;
   virtual void DidBeginImplFrameDeadline() = 0;
   virtual void SendBeginFramesToChildren(const BeginFrameArgs& args) = 0;
-  virtual void SendBeginMainFrameNotExpectedSoon() = 0;
 
  protected:
   virtual ~SchedulerClient() {}

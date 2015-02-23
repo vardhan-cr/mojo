@@ -5,51 +5,59 @@
 #include "base/android/base_jni_onload.h"
 
 #include "base/android/jni_android.h"
-#include "base/android/jni_utils.h"
+#include "base/android/jni_onload_delegate.h"
 #include "base/android/library_loader/library_loader_hooks.h"
-#include "base/bind.h"
 
 namespace base {
 namespace android {
 
 namespace {
 
-bool RegisterJNI(JNIEnv* env) {
+// The JNIOnLoadDelegate implementation in base.
+class BaseJNIOnLoadDelegate : public JNIOnLoadDelegate {
+ public:
+  bool RegisterJNI(JNIEnv* env) override;
+  bool Init() override;
+};
+
+bool BaseJNIOnLoadDelegate::RegisterJNI(JNIEnv* env) {
   return RegisterLibraryLoaderEntryHook(env);
 }
 
-bool Init() {
-  JNIEnv* env = base::android::AttachCurrentThread();
-  base::android::InitReplacementClassLoader(env,
-                                            base::android::GetClassLoader(env));
+bool BaseJNIOnLoadDelegate::Init() {
   return true;
 }
 
 }  // namespace
 
 
-bool OnJNIOnLoadRegisterJNI(JavaVM* vm,
-                            std::vector<RegisterCallback> callbacks) {
+bool OnJNIOnLoad(JavaVM* vm,
+                 std::vector<JNIOnLoadDelegate*>* delegates) {
   base::android::InitVM(vm);
   JNIEnv* env = base::android::AttachCurrentThread();
 
-  callbacks.push_back(base::Bind(&RegisterJNI));
-  for (std::vector<RegisterCallback>::reverse_iterator i =
-           callbacks.rbegin(); i != callbacks.rend(); ++i) {
-    if (!i->Run(env))
-      return false;
+  BaseJNIOnLoadDelegate delegate;
+  delegates->push_back(&delegate);
+  bool ret = true;
+  for (std::vector<JNIOnLoadDelegate*>::reverse_iterator i =
+           delegates->rbegin(); i != delegates->rend(); ++i) {
+    if (!(*i)->RegisterJNI(env)) {
+      ret = false;
+      break;
+    }
   }
-  return true;
-}
 
-bool OnJNIOnLoadInit(std::vector<InitCallback> callbacks) {
-  callbacks.push_back(base::Bind(&Init));
-  for (std::vector<InitCallback>::reverse_iterator i =
-           callbacks.rbegin(); i != callbacks.rend(); ++i) {
-    if (!i->Run())
-      return false;
+  if (ret) {
+    for (std::vector<JNIOnLoadDelegate*>::reverse_iterator i =
+             delegates->rbegin(); i != delegates->rend(); ++i) {
+      if (!(*i)->Init()) {
+        ret = false;
+        break;
+      }
+    }
   }
-  return true;
+  delegates->pop_back();
+  return ret;
 }
 
 }  // namespace android

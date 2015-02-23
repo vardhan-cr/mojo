@@ -212,7 +212,6 @@ void DriverGL::InitializeStaticBindings() {
       GetGLProcAddress("glGetProgramInfoLog"));
   fn.glGetProgramivFn =
       reinterpret_cast<glGetProgramivProc>(GetGLProcAddress("glGetProgramiv"));
-  fn.glGetProgramResourceLocationFn = 0;
   fn.glGetQueryivFn = 0;
   fn.glGetQueryivARBFn = 0;
   fn.glGetQueryObjecti64vFn = 0;
@@ -233,7 +232,6 @@ void DriverGL::InitializeStaticBindings() {
       GetGLProcAddress("glGetShaderSource"));
   fn.glGetStringFn =
       reinterpret_cast<glGetStringProc>(GetGLProcAddress("glGetString"));
-  fn.glGetStringiFn = 0;
   fn.glGetSyncivFn = 0;
   fn.glGetTexLevelParameterfvFn = 0;
   fn.glGetTexLevelParameterivFn = 0;
@@ -1274,14 +1272,6 @@ void DriverGL::InitializeDynamicBindings(GLContext* context) {
     DCHECK(fn.glGetProgramBinaryFn);
   }
 
-  debug_fn.glGetProgramResourceLocationFn = 0;
-  if (ver->IsAtLeastGL(4u, 3u) || ver->IsAtLeastGLES(3u, 1u)) {
-    fn.glGetProgramResourceLocationFn =
-        reinterpret_cast<glGetProgramResourceLocationProc>(
-            GetGLProcAddress("glGetProgramResourceLocation"));
-    DCHECK(fn.glGetProgramResourceLocationFn);
-  }
-
   debug_fn.glGetQueryivFn = 0;
   if (!ver->is_es || ver->IsAtLeastGLES(3u, 0u)) {
     fn.glGetQueryivFn =
@@ -1395,13 +1385,6 @@ void DriverGL::InitializeDynamicBindings(GLContext* context) {
         reinterpret_cast<glGetShaderPrecisionFormatProc>(
             GetGLProcAddress("glGetShaderPrecisionFormat"));
     DCHECK(fn.glGetShaderPrecisionFormatFn);
-  }
-
-  debug_fn.glGetStringiFn = 0;
-  if (ver->IsAtLeastGL(3u, 0u) || ver->IsAtLeastGLES(3u, 0u)) {
-    fn.glGetStringiFn =
-        reinterpret_cast<glGetStringiProc>(GetGLProcAddress("glGetStringi"));
-    DCHECK(fn.glGetStringiFn);
   }
 
   debug_fn.glGetSyncivFn = 0;
@@ -3263,20 +3246,6 @@ Debug_glGetProgramiv(GLuint program, GLenum pname, GLint* params) {
   g_driver_gl.debug_fn.glGetProgramivFn(program, pname, params);
 }
 
-static GLint GL_BINDING_CALL
-Debug_glGetProgramResourceLocation(GLuint program,
-                                   GLenum programInterface,
-                                   const char* name) {
-  GL_SERVICE_LOG("glGetProgramResourceLocation"
-                 << "(" << program << ", "
-                 << GLEnums::GetStringEnum(programInterface) << ", " << name
-                 << ")");
-  GLint result = g_driver_gl.debug_fn.glGetProgramResourceLocationFn(
-      program, programInterface, name);
-  GL_SERVICE_LOG("GL_RESULT: " << result);
-  return result;
-}
-
 static void GL_BINDING_CALL
 Debug_glGetQueryiv(GLenum target, GLenum pname, GLint* params) {
   GL_SERVICE_LOG("glGetQueryiv"
@@ -3418,16 +3387,6 @@ static const GLubyte* GL_BINDING_CALL Debug_glGetString(GLenum name) {
   GL_SERVICE_LOG("glGetString"
                  << "(" << GLEnums::GetStringEnum(name) << ")");
   const GLubyte* result = g_driver_gl.debug_fn.glGetStringFn(name);
-  GL_SERVICE_LOG("GL_RESULT: " << result);
-  return result;
-}
-
-static const GLubyte* GL_BINDING_CALL
-Debug_glGetStringi(GLenum name, GLuint index) {
-  GL_SERVICE_LOG("glGetStringi"
-                 << "(" << GLEnums::GetStringEnum(name) << ", " << index
-                 << ")");
-  const GLubyte* result = g_driver_gl.debug_fn.glGetStringiFn(name, index);
   GL_SERVICE_LOG("GL_RESULT: " << result);
   return result;
 }
@@ -5284,10 +5243,6 @@ void DriverGL::InitializeDebugBindings() {
     debug_fn.glGetProgramivFn = fn.glGetProgramivFn;
     fn.glGetProgramivFn = Debug_glGetProgramiv;
   }
-  if (!debug_fn.glGetProgramResourceLocationFn) {
-    debug_fn.glGetProgramResourceLocationFn = fn.glGetProgramResourceLocationFn;
-    fn.glGetProgramResourceLocationFn = Debug_glGetProgramResourceLocation;
-  }
   if (!debug_fn.glGetQueryivFn) {
     debug_fn.glGetQueryivFn = fn.glGetQueryivFn;
     fn.glGetQueryivFn = Debug_glGetQueryiv;
@@ -5353,10 +5308,6 @@ void DriverGL::InitializeDebugBindings() {
   if (!debug_fn.glGetStringFn) {
     debug_fn.glGetStringFn = fn.glGetStringFn;
     fn.glGetStringFn = Debug_glGetString;
-  }
-  if (!debug_fn.glGetStringiFn) {
-    debug_fn.glGetStringiFn = fn.glGetStringiFn;
-    fn.glGetStringiFn = Debug_glGetStringi;
   }
   if (!debug_fn.glGetSyncivFn) {
     debug_fn.glGetSyncivFn = fn.glGetSyncivFn;
@@ -6701,13 +6652,6 @@ void GLApiBase::glGetProgramivFn(GLuint program, GLenum pname, GLint* params) {
   driver_->fn.glGetProgramivFn(program, pname, params);
 }
 
-GLint GLApiBase::glGetProgramResourceLocationFn(GLuint program,
-                                                GLenum programInterface,
-                                                const char* name) {
-  return driver_->fn.glGetProgramResourceLocationFn(program, programInterface,
-                                                    name);
-}
-
 void GLApiBase::glGetQueryivFn(GLenum target, GLenum pname, GLint* params) {
   driver_->fn.glGetQueryivFn(target, pname, params);
 }
@@ -6794,10 +6738,6 @@ void GLApiBase::glGetShaderSourceFn(GLuint shader,
 
 const GLubyte* GLApiBase::glGetStringFn(GLenum name) {
   return driver_->fn.glGetStringFn(name);
-}
-
-const GLubyte* GLApiBase::glGetStringiFn(GLenum name, GLuint index) {
-  return driver_->fn.glGetStringiFn(name, index);
 }
 
 void GLApiBase::glGetSyncivFn(GLsync sync,
@@ -8512,15 +8452,6 @@ void TraceGLApi::glGetProgramivFn(GLuint program, GLenum pname, GLint* params) {
   gl_api_->glGetProgramivFn(program, pname, params);
 }
 
-GLint TraceGLApi::glGetProgramResourceLocationFn(GLuint program,
-                                                 GLenum programInterface,
-                                                 const char* name) {
-  TRACE_EVENT_BINARY_EFFICIENT0("gpu",
-                                "TraceGLAPI::glGetProgramResourceLocation")
-  return gl_api_->glGetProgramResourceLocationFn(program, programInterface,
-                                                 name);
-}
-
 void TraceGLApi::glGetQueryivFn(GLenum target, GLenum pname, GLint* params) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "TraceGLAPI::glGetQueryiv")
   gl_api_->glGetQueryivFn(target, pname, params);
@@ -8626,11 +8557,6 @@ void TraceGLApi::glGetShaderSourceFn(GLuint shader,
 const GLubyte* TraceGLApi::glGetStringFn(GLenum name) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "TraceGLAPI::glGetString")
   return gl_api_->glGetStringFn(name);
-}
-
-const GLubyte* TraceGLApi::glGetStringiFn(GLenum name, GLuint index) {
-  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "TraceGLAPI::glGetStringi")
-  return gl_api_->glGetStringiFn(name, index);
 }
 
 void TraceGLApi::glGetSyncivFn(GLsync sync,
@@ -10613,16 +10539,6 @@ void NoContextGLApi::glGetProgramivFn(GLuint program,
   LOG(ERROR) << "Trying to call glGetProgramiv() without current GL context";
 }
 
-GLint NoContextGLApi::glGetProgramResourceLocationFn(GLuint program,
-                                                     GLenum programInterface,
-                                                     const char* name) {
-  NOTREACHED() << "Trying to call glGetProgramResourceLocation() without "
-                  "current GL context";
-  LOG(ERROR) << "Trying to call glGetProgramResourceLocation() without current "
-                "GL context";
-  return 0;
-}
-
 void NoContextGLApi::glGetQueryivFn(GLenum target,
                                     GLenum pname,
                                     GLint* params) {
@@ -10757,12 +10673,6 @@ void NoContextGLApi::glGetShaderSourceFn(GLuint shader,
 const GLubyte* NoContextGLApi::glGetStringFn(GLenum name) {
   NOTREACHED() << "Trying to call glGetString() without current GL context";
   LOG(ERROR) << "Trying to call glGetString() without current GL context";
-  return NULL;
-}
-
-const GLubyte* NoContextGLApi::glGetStringiFn(GLenum name, GLuint index) {
-  NOTREACHED() << "Trying to call glGetStringi() without current GL context";
-  LOG(ERROR) << "Trying to call glGetStringi() without current GL context";
   return NULL;
 }
 

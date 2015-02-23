@@ -43,7 +43,6 @@ class SurfacesScheduler : public cc::SchedulerClient {
   base::TimeDelta CommitToActivateDurationEstimate() override;
   void DidBeginImplFrameDeadline() override;
   void SendBeginFramesToChildren(const cc::BeginFrameArgs& args) override;
-  void SendBeginMainFrameNotExpectedSoon() override;
 
   Client* client_;
   scoped_ptr<cc::Scheduler> scheduler_;

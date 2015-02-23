@@ -27,12 +27,15 @@ class InstrumentationTestInstanceTest(unittest.TestCase):
     options = mock.Mock()
     options.tool = ''
 
-  def testGenerateTestResults_noStatus(self):
-    results = instrumentation_test_instance.GenerateTestResults(
-        None, None, [], 0, 1000)
-    self.assertEqual([], results)
+  def testGenerateTestResult_noStatus(self):
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', [], 0, 1000)
+    self.assertEqual('test.package.TestClass#testMethod', result.GetName())
+    self.assertEqual(base_test_result.ResultType.UNKNOWN, result.GetType())
+    self.assertEqual('', result.GetLog())
+    self.assertEqual(1000, result.GetDuration())
 
-  def testGenerateTestResults_testPassed(self):
+  def testGenerateTestResult_testPassed(self):
     statuses = [
       (1, {
         'class': 'test.package.TestClass',
@@ -43,52 +46,65 @@ class InstrumentationTestInstanceTest(unittest.TestCase):
         'test': 'testMethod',
       }),
     ]
-    results = instrumentation_test_instance.GenerateTestResults(
-        None, None, statuses, 0, 1000)
-    self.assertEqual(1, len(results))
-    self.assertEqual(base_test_result.ResultType.PASS, results[0].GetType())
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', statuses, 0, 1000)
+    self.assertEqual(base_test_result.ResultType.PASS, result.GetType())
 
-  def testGenerateTestResults_testSkipped_true(self):
+  def testGenerateTestResult_testSkipped_first(self):
+    statuses = [
+      (0, {
+        'test_skipped': 'true',
+      }),
+      (1, {
+        'class': 'test.package.TestClass',
+        'test': 'testMethod',
+      }),
+      (0, {
+        'class': 'test.package.TestClass',
+        'test': 'testMethod',
+      }),
+    ]
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', statuses, 0, 1000)
+    self.assertEqual(base_test_result.ResultType.SKIP, result.GetType())
+
+  def testGenerateTestResult_testSkipped_last(self):
     statuses = [
       (1, {
+        'class': 'test.package.TestClass',
+        'test': 'testMethod',
+      }),
+      (0, {
         'class': 'test.package.TestClass',
         'test': 'testMethod',
       }),
       (0, {
         'test_skipped': 'true',
-        'class': 'test.package.TestClass',
-        'test': 'testMethod',
-      }),
-      (0, {
-        'class': 'test.package.TestClass',
-        'test': 'testMethod',
       }),
     ]
-    results = instrumentation_test_instance.GenerateTestResults(
-        None, None, statuses, 0, 1000)
-    self.assertEqual(1, len(results))
-    self.assertEqual(base_test_result.ResultType.SKIP, results[0].GetType())
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', statuses, 0, 1000)
+    self.assertEqual(base_test_result.ResultType.SKIP, result.GetType())
 
-  def testGenerateTestResults_testSkipped_false(self):
+  def testGenerateTestResult_testSkipped_false(self):
     statuses = [
+      (0, {
+        'test_skipped': 'false',
+      }),
       (1, {
         'class': 'test.package.TestClass',
         'test': 'testMethod',
       }),
       (0, {
-        'test_skipped': 'false',
-      }),
-      (0, {
         'class': 'test.package.TestClass',
         'test': 'testMethod',
       }),
     ]
-    results = instrumentation_test_instance.GenerateTestResults(
-        None, None, statuses, 0, 1000)
-    self.assertEqual(1, len(results))
-    self.assertEqual(base_test_result.ResultType.PASS, results[0].GetType())
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', statuses, 0, 1000)
+    self.assertEqual(base_test_result.ResultType.PASS, result.GetType())
 
-  def testGenerateTestResults_testFailed(self):
+  def testGenerateTestResult_testFailed(self):
     statuses = [
       (1, {
         'class': 'test.package.TestClass',
@@ -99,10 +115,9 @@ class InstrumentationTestInstanceTest(unittest.TestCase):
         'test': 'testMethod',
       }),
     ]
-    results = instrumentation_test_instance.GenerateTestResults(
-        None, None, statuses, 0, 1000)
-    self.assertEqual(1, len(results))
-    self.assertEqual(base_test_result.ResultType.FAIL, results[0].GetType())
+    result = instrumentation_test_instance.GenerateTestResult(
+        'test.package.TestClass#testMethod', statuses, 0, 1000)
+    self.assertEqual(base_test_result.ResultType.FAIL, result.GetType())
 
 
 if __name__ == '__main__':

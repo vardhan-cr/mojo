@@ -30,8 +30,7 @@ namespace cc {
 class CC_EXPORT PicturePileImpl : public RasterSource {
  public:
   static scoped_refptr<PicturePileImpl> CreateFromPicturePile(
-      const PicturePile* other,
-      bool can_use_lcd_text);
+      const PicturePile* other);
 
   // RasterSource overrides. See RasterSource header for full description.
   // When slow-down-raster-scale-factor is set to a value greater than 1, the
@@ -59,7 +58,6 @@ class CC_EXPORT PicturePileImpl : public RasterSource {
   SkColor GetSolidColor() const override;
   bool HasRecordings() const override;
   bool CanUseLCDText() const override;
-  scoped_refptr<RasterSource> CreateCloneWithoutLCDText() const override;
 
   // Tracing functionality.
   void DidBeginTracing() override;
@@ -101,8 +99,7 @@ class CC_EXPORT PicturePileImpl : public RasterSource {
   using PictureInfo = PicturePile::PictureInfo;
 
   PicturePileImpl();
-  explicit PicturePileImpl(const PicturePile* other, bool can_use_lcd_text);
-  explicit PicturePileImpl(const PicturePileImpl* other, bool can_use_lcd_text);
+  explicit PicturePileImpl(const PicturePile* other);
   ~PicturePileImpl() override;
 
   int buffer_pixels() const { return tiling_.border_texels(); }

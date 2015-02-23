@@ -73,7 +73,8 @@ scoped_refptr<DisplayItemList> PictureImageLayer::PaintContentsToDisplayList(
   PaintContents(canvas, clip, painting_control);
 
   skia::RefPtr<SkPicture> picture = skia::AdoptRef(recorder.endRecording());
-  display_item_list->AppendItem(DrawingDisplayItem::Create(picture));
+  display_item_list->AppendItem(
+      DrawingDisplayItem::Create(picture, gfx::Point()));
   return display_item_list;
 }
 

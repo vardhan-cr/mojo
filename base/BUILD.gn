@@ -42,6 +42,7 @@ component("base") {
     "android/jni_android.h",
     "android/jni_array.cc",
     "android/jni_array.h",
+    "android/jni_onload_delegate.h",
     "android/jni_registrar.cc",
     "android/jni_registrar.h",
     "android/jni_string.cc",
@@ -675,10 +676,6 @@ component("base") {
     "trace_event/memory_dump_provider.h",
     "trace_event/process_memory_dump.cc",
     "trace_event/process_memory_dump.h",
-    "trace_event/process_memory_totals.cc",
-    "trace_event/process_memory_totals.h",
-    "trace_event/process_memory_totals_dump_provider.cc",
-    "trace_event/process_memory_totals_dump_provider.h",
     "trace_event/trace_event.h",
     "trace_event/trace_event_android.cc",
     "trace_event/trace_event_argument.cc",
@@ -872,7 +869,7 @@ component("base") {
     ]
 
     # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-    configs += [ "//build/config/compiler:no_size_t_to_int_warning" ]
+    cflags = [ "/wd4267" ]
 
     libs = [
       "cfgmgr32.lib",
@@ -1031,8 +1028,10 @@ component("i18n") {
     configs += [ "//build/config/compiler:optimize_max" ]
   }
 
-  # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-  configs += [ "//build/config/compiler:no_size_t_to_int_warning" ]
+  if (is_win) {
+    # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
+    cflags = [ "/wd4267" ]
+  }
 }
 
 source_set("prefs") {
@@ -1336,7 +1335,6 @@ test("base_unittests") {
     "timer/timer_unittest.cc",
     "tools_sanity_unittest.cc",
     "trace_event/memory_dump_manager_unittest.cc",
-    "trace_event/process_memory_totals_dump_provider_unittest.cc",
     "trace_event/trace_event_argument_unittest.cc",
     "trace_event/trace_event_memory_unittest.cc",
     "trace_event/trace_event_synthetic_delay_unittest.cc",
@@ -1441,8 +1439,10 @@ test("base_unittests") {
     set_sources_assignment_filter(sources_assignment_filter)
   }
 
-  # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-  configs += [ "//build/config/compiler:no_size_t_to_int_warning" ]
+  if (is_win) {
+    # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
+    cflags = [ "/wd4267" ]
+  }
 }
 
 if (is_android) {

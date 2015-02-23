@@ -48,7 +48,6 @@ dirs_to_snapshot = [
     "third_party/markupsafe",
     "third_party/mesa",
     "third_party/modp_b64",
-    "third_party/ots",
     "third_party/ply",
     "third_party/protobuf",
     "third_party/pymock",

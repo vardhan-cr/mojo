@@ -225,9 +225,9 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
         if (mode == TileDrawInfo::SOLID_COLOR_MODE) {
           color = DebugColors::SolidColorTileBorderColor();
           width = DebugColors::SolidColorTileBorderWidth(layer_tree_impl());
-        } else if (mode == TileDrawInfo::OOM_MODE) {
-          color = DebugColors::OOMTileBorderColor();
-          width = DebugColors::OOMTileBorderWidth(layer_tree_impl());
+        } else if (mode == TileDrawInfo::PICTURE_PILE_MODE) {
+          color = DebugColors::PictureTileBorderColor();
+          width = DebugColors::PictureTileBorderWidth(layer_tree_impl());
         } else if (iter.resolution() == HIGH_RESOLUTION) {
           color = DebugColors::HighResTileBorderColor();
           width = DebugColors::HighResTileBorderWidth(layer_tree_impl());
@@ -313,6 +313,30 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
           has_draw_quad = true;
           break;
         }
+        case TileDrawInfo::PICTURE_PILE_MODE: {
+          if (!layer_tree_impl()
+                   ->GetRendererCapabilities()
+                   .allow_rasterize_on_demand) {
+            ++on_demand_missing_tile_count;
+            break;
+          }
+
+          gfx::RectF texture_rect = iter.texture_rect();
+
+          ResourceProvider* resource_provider =
+              layer_tree_impl()->resource_provider();
+          ResourceFormat format =
+              resource_provider->memory_efficient_texture_format();
+          PictureDrawQuad* quad =
+              render_pass->CreateAndAppendDrawQuad<PictureDrawQuad>();
+          quad->SetNew(shared_quad_state, geometry_rect, opaque_rect,
+                       visible_geometry_rect, texture_rect,
+                       iter->desired_texture_size(), nearest_neighbor_, format,
+                       iter->content_rect(), iter->contents_scale(),
+                       raster_source_);
+          has_draw_quad = true;
+          break;
+        }
         case TileDrawInfo::SOLID_COLOR_MODE: {
           SolidColorDrawQuad* quad =
               render_pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
@@ -321,8 +345,6 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
           has_draw_quad = true;
           break;
         }
-        case TileDrawInfo::OOM_MODE:
-          break;  // Checkerboard.
       }
     }
 
@@ -541,36 +563,6 @@ void PictureLayerImpl::UpdateRasterSource(
   tilings_->UpdateTilingsToCurrentRasterSource(
       raster_source_, pending_set, invalidation_, MinimumContentsScale(),
       MaximumContentsScale());
-}
-
-void PictureLayerImpl::UpdateCanUseLCDTextAfterCommit() {
-  // This function is only allowed to be called after commit, due to it not
-  // being smart about sharing tiles and because otherwise it would cause
-  // flashes by switching out tiles in place that may be currently on screen.
-  DCHECK(layer_tree_impl()->IsSyncTree());
-
-  // Don't allow the LCD text state to change once disabled.
-  if (!RasterSourceUsesLCDText())
-    return;
-  if (can_use_lcd_text() == RasterSourceUsesLCDText())
-    return;
-
-  // Raster sources are considered const, so in order to update the state
-  // a new one must be created and all tiles recreated.
-  scoped_refptr<RasterSource> new_raster_source =
-      raster_source_->CreateCloneWithoutLCDText();
-  // Synthetically invalidate everything.
-  gfx::Rect bounds_rect(bounds());
-  Region invalidation(bounds_rect);
-  UpdateRasterSource(new_raster_source, &invalidation, nullptr);
-  SetUpdateRect(bounds_rect);
-
-  DCHECK(!RasterSourceUsesLCDText());
-}
-
-bool PictureLayerImpl::RasterSourceUsesLCDText() const {
-  return raster_source_ ? raster_source_->CanUseLCDText()
-                        : layer_tree_impl()->settings().can_use_lcd_text;
 }
 
 void PictureLayerImpl::NotifyTileStateChanged(const Tile* tile) {

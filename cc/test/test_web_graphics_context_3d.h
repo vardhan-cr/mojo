@@ -373,7 +373,11 @@ class TestWebGraphicsContext3D {
   void clear_reshape_called() { reshape_called_ = false; }
   float scale_factor() const { return scale_factor_; }
 
-  enum UpdateType { NO_UPDATE = 0, PREPARE_TEXTURE, POST_SUB_BUFFER };
+  enum UpdateType {
+    NoUpdate = 0,
+    PrepareTexture,
+    PostSubBuffer
+  };
 
   gfx::Rect update_rect() const { return update_rect_; }
 

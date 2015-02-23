@@ -4,8 +4,6 @@
 
 #include "gpu/perftests/measurements.h"
 
-#include "base/logging.h"
-#include "gpu/command_buffer/service/gpu_timing.h"
 #include "testing/perf/perf_test.h"
 
 namespace gpu {

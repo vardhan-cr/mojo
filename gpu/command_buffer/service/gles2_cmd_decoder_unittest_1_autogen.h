@@ -486,7 +486,6 @@ TEST_P(GLES2DecoderTest1, ClearStencilValidArgs) {
   EXPECT_EQ(error::kNoError, ExecuteCmd(cmd));
   EXPECT_EQ(GL_NO_ERROR, GetGLError());
 }
-// TODO(gman): ClientWaitSync
 
 TEST_P(GLES2DecoderTest1, ColorMaskValidArgs) {
   SpecializedSetup<cmds::ColorMask, 0>(true);
@@ -1811,4 +1810,6 @@ TEST_P(GLES2DecoderTest1, GetShaderivInvalidArgs2_1) {
 // TODO(gman): GetShaderPrecisionFormat
 
 // TODO(gman): GetShaderSource
+// TODO(gman): GetString
+
 #endif  // GPU_COMMAND_BUFFER_SERVICE_GLES2_CMD_DECODER_UNITTEST_1_AUTOGEN_H_

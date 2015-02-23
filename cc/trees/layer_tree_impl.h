@@ -87,7 +87,6 @@ class CC_EXPORT LayerTreeImpl {
   bool IsActiveTree() const;
   bool IsPendingTree() const;
   bool IsRecycleTree() const;
-  bool IsSyncTree() const;
   LayerImpl* FindActiveTreeLayerById(int id);
   LayerImpl* FindPendingTreeLayerById(int id);
   bool PinchGestureActive() const;
@@ -198,9 +197,8 @@ class CC_EXPORT LayerTreeImpl {
   }
 
   // Updates draw properties and render surface layer list, as well as tile
-  // priorities. Returns false if it was unable to update.  Updating lcd
-  // text may cause invalidations, so should only be done after a commit.
-  bool UpdateDrawProperties(bool update_lcd_text);
+  // priorities. Returns false if it was unable to update.
+  bool UpdateDrawProperties();
 
   void set_needs_update_draw_properties() {
     needs_update_draw_properties_ = true;

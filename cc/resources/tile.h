@@ -88,7 +88,7 @@ class CC_EXPORT Tile : public RefCountedManaged<Tile> {
 
   bool HasResource() const { return draw_info_.has_resource(); }
   bool NeedsRaster() const {
-    return draw_info_.mode() == TileDrawInfo::OOM_MODE ||
+    return draw_info_.mode() == TileDrawInfo::PICTURE_PILE_MODE ||
            !draw_info_.IsReadyToDraw();
   }
 
@@ -150,9 +150,9 @@ class CC_EXPORT Tile : public RefCountedManaged<Tile> {
   gfx::Size desired_texture_size_;
   gfx::Rect content_rect_;
   float contents_scale_;
-  bool is_occluded_[LAST_TREE + 1];
+  bool is_occluded_[NUM_TREES];
 
-  TilePriority priority_[LAST_TREE + 1];
+  TilePriority priority_[NUM_TREES];
   TileDrawInfo draw_info_;
 
   int layer_id_;

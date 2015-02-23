@@ -56,7 +56,6 @@ class LayerTreeHostNoMessageLoopTest
   // LayerTreeHostClient overrides.
   void WillBeginMainFrame() override {}
   void BeginMainFrame(const BeginFrameArgs& args) override {}
-  void BeginMainFrameNotExpectedSoon() override {}
   void DidBeginMainFrame() override {}
   void Layout() override {}
   void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,

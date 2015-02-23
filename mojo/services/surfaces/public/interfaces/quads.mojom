@@ -79,8 +79,7 @@ struct StreamVideoQuadState {};
 
 enum YUVColorSpace {
   REC_601,       // SDTV standard with restricted "studio swing" color range.
-  REC_709,       // HDTV standard with restricted "studio swing" color range.
-  JPEG,          // Full color range [0, 255] JPEG color space.
+  REC_601_JPEG,  // Full color range [0, 255] variant of the above.
 };
 
 struct YUVVideoQuadState {

@@ -27,7 +27,7 @@ class TransformOperations;
 // An animation curve is a function that returns a value given a time.
 class CC_EXPORT AnimationCurve {
  public:
-  enum CurveType { COLOR, FLOAT, TRANSFORM, FILTER, SCROLL_OFFSET };
+  enum CurveType { Color, Float, Transform, Filter, ScrollOffset };
 
   virtual ~AnimationCurve() {}
 

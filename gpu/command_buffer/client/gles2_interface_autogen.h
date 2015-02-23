@@ -70,9 +70,6 @@ virtual void ClearColor(GLclampf red,
                         GLclampf alpha) = 0;
 virtual void ClearDepthf(GLclampf depth) = 0;
 virtual void ClearStencil(GLint s) = 0;
-virtual GLenum ClientWaitSync(GLsync sync,
-                              GLbitfield flags,
-                              GLuint64 timeout) = 0;
 virtual void ColorMask(GLboolean red,
                        GLboolean green,
                        GLboolean blue,
@@ -517,7 +514,6 @@ virtual void VertexAttribPointer(GLuint indx,
                                  GLsizei stride,
                                  const void* ptr) = 0;
 virtual void Viewport(GLint x, GLint y, GLsizei width, GLsizei height) = 0;
-virtual void WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) = 0;
 virtual void BlitFramebufferCHROMIUM(GLint srcX0,
                                      GLint srcY0,
                                      GLint srcX1,

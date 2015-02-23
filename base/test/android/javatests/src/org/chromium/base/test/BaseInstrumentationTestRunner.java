@@ -4,19 +4,18 @@
 
 package org.chromium.base.test;
 
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.test.AndroidTestRunner;
 import android.test.InstrumentationTestRunner;
 import android.util.Log;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestResult;
+import junit.framework.TestSuite;
 
 import org.chromium.base.test.util.MinAndroidSdkLevel;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *  An Instrumentation test runner that checks SDK level for tests with specific requirements.
@@ -25,94 +24,40 @@ public class BaseInstrumentationTestRunner extends InstrumentationTestRunner {
 
     private static final String TAG = "BaseInstrumentationTestRunner";
 
-    /**
-     * An interface for classes that check whether a test case should be skipped.
-     */
-    public interface SkipCheck {
-        /**
-         * Checks whether the given test case should be skipped.
-         *
-         * @param testCase The test case to check.
-         * @return Whether the test case should be skipped.
-         */
-        public boolean shouldSkip(TestCase testCase);
-    }
-
-    /**
-     * A test result that can skip tests.
-     */
-    public class SkippingTestResult extends TestResult {
-
-        private final List<SkipCheck> mSkipChecks;
-
-        /**
-         * Creates an instance of SkippingTestResult.
-         */
-        public SkippingTestResult() {
-            mSkipChecks = new ArrayList<SkipCheck>();
-        }
-
-        /**
-         * Adds a check for whether a test should run.
-         *
-         * @param skipCheck The check to add.
-         */
-        public void addSkipCheck(SkipCheck skipCheck) {
-            mSkipChecks.add(skipCheck);
-        }
-
-        private boolean shouldSkip(final TestCase test) {
-            for (SkipCheck s : mSkipChecks) {
-                if (s.shouldSkip(test)) return true;
-            }
-            return false;
-        }
-
-        @Override
-        protected void run(final TestCase test) {
-            if (shouldSkip(test)) {
-                startTest(test);
-
-                Bundle skipResult = new Bundle();
-                skipResult.putString("class", test.getClass().getName());
-                skipResult.putString("test", test.getName());
-                skipResult.putBoolean("test_skipped", true);
-                sendStatus(0, skipResult);
-
-                endTest(test);
-            } else {
-                super.run(test);
-            }
-        }
-    }
-
     @Override
     protected AndroidTestRunner getAndroidTestRunner() {
-        return new AndroidTestRunner() {
-            @Override
-            protected TestResult createTestResult() {
-                SkippingTestResult r = new SkippingTestResult();
-                r.addSkipCheck(new MinAndroidSdkLevelSkipCheck());
-                return r;
-            }
-        };
+        return new BaseAndroidTestRunner(getContext());
     }
 
     /**
-     * Checks the device's SDK level against any specified minimum requirement.
+     *  Skips tests that don't meet the requirements of the current device.
      */
-    public static class MinAndroidSdkLevelSkipCheck implements SkipCheck {
+    public class BaseAndroidTestRunner extends AndroidTestRunner {
+        private final Context mContext;
 
-        /**
-         * If {@link org.chromium.base.test.util.MinAndroidSdkLevel} is present, checks its value
-         * against the device's SDK level.
-         *
-         * @param testCase The test to check.
-         * @return true if the device's SDK level is below the specified minimum.
-         */
+        public BaseAndroidTestRunner(Context context) {
+            mContext = context;
+        }
+
         @Override
-        public boolean shouldSkip(TestCase testCase) {
-            Class<?> testClass = testCase.getClass();
+        public void setTest(Test test) {
+            super.setTest(test);
+            TestSuite revisedTestSuite = new TestSuite();
+            for (TestCase testCase : this.getTestCases()) {
+                Class<?> testClass = testCase.getClass();
+                if (shouldSkip(testClass, testCase)) {
+                    revisedTestSuite.addTest(new SkippedTest(testCase));
+                    Bundle skipResult = new Bundle();
+                    skipResult.putBoolean("test_skipped", true);
+                    sendStatus(0, skipResult);
+                } else {
+                    revisedTestSuite.addTest(testCase);
+                }
+            }
+            super.setTest(revisedTestSuite);
+        }
+
+        protected boolean shouldSkip(Class<?> testClass, TestCase testCase) {
             if (testClass.isAnnotationPresent(MinAndroidSdkLevel.class)) {
                 MinAndroidSdkLevel v = testClass.getAnnotation(MinAndroidSdkLevel.class);
                 if (Build.VERSION.SDK_INT < v.value()) {
@@ -124,6 +69,28 @@ public class BaseInstrumentationTestRunner extends InstrumentationTestRunner {
             }
             return false;
         }
+
+        protected Context getContext() {
+            return mContext;
+        }
     }
 
+    /**
+     *  Replaces a TestCase that should be skipped.
+     */
+    public static class SkippedTest extends TestCase {
+
+        public SkippedTest(TestCase skipped) {
+            super(skipped.getClass().getName() + "#" + skipped.getName());
+        }
+
+        @Override
+        protected void runTest() throws Throwable {
+        }
+
+        @Override
+        public String toString() {
+            return "SKIPPED " + super.toString();
+        }
+    }
 }

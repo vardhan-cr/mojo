@@ -1320,7 +1320,7 @@ class LayerTreeHostTestDirectRendererAtomicCommit : public LayerTreeHostTest {
     // Make sure partial texture updates are turned off.
     settings->max_partial_texture_updates = 0;
     // Linear fade animator prevents scrollbars from drawing immediately.
-    settings->scrollbar_animator = LayerTreeSettings::NO_ANIMATOR;
+    settings->scrollbar_animator = LayerTreeSettings::NoAnimator;
   }
 
   void SetupTree() override {
@@ -2323,10 +2323,40 @@ SINGLE_AND_MULTI_THREAD_NOIMPL_TEST_F(
 
 class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
  public:
+  class PaintClient : public FakeContentLayerClient {
+   public:
+    PaintClient() : paint_count_(0) {}
+
+    int paint_count() const { return paint_count_; }
+
+    void PaintContents(SkCanvas* canvas,
+                       const gfx::Rect& clip,
+                       PaintingControlSetting picture_control) override {
+      FakeContentLayerClient::PaintContents(canvas, clip, picture_control);
+      ++paint_count_;
+    }
+
+    scoped_refptr<DisplayItemList> PaintContentsToDisplayList(
+        const gfx::Rect& clip,
+        PaintingControlSetting picture_control) override {
+      NOTIMPLEMENTED();
+      return DisplayItemList::Create();
+    }
+
+    bool FillsBoundsCompletely() const override { return false; }
+
+   private:
+    int paint_count_;
+  };
+
   void SetupTree() override {
     num_tiles_rastered_ = 0;
 
-    scoped_refptr<Layer> root_layer = PictureLayer::Create(&client_);
+    scoped_refptr<Layer> root_layer;
+    if (layer_tree_host()->settings().impl_side_painting)
+      root_layer = PictureLayer::Create(&client_);
+    else
+      root_layer = ContentLayer::Create(&client_);
     client_.set_fill_with_nonsolid_color(true);
     root_layer->SetIsDrawable(true);
     root_layer->SetBounds(gfx::Size(10, 10));
@@ -2334,9 +2364,10 @@ class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
 
     layer_tree_host()->SetRootLayer(root_layer);
 
-    // The expectations are based on the assumption that the default
+    // The expecations are based on the assumption that the default
     // LCD settings are:
     EXPECT_TRUE(layer_tree_host()->settings().can_use_lcd_text);
+    EXPECT_FALSE(root_layer->can_use_lcd_text());
 
     LayerTreeHostTest::SetupTree();
   }
@@ -2346,17 +2377,33 @@ class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
   void DidCommitAndDrawFrame() override {
     switch (layer_tree_host()->source_frame_number()) {
       case 1:
+        // The first update consists of a paint of the whole layer.
+        EXPECT_EQ(1, client_.paint_count());
+        // LCD text must have been enabled on the layer.
+        EXPECT_TRUE(layer_tree_host()->root_layer()->can_use_lcd_text());
         PostSetNeedsCommitToMainThread();
         break;
       case 2:
+        // Since nothing changed on layer, there should be no paint.
+        EXPECT_EQ(1, client_.paint_count());
+        // LCD text must not have changed.
+        EXPECT_TRUE(layer_tree_host()->root_layer()->can_use_lcd_text());
         // Change layer opacity that should trigger lcd change.
         layer_tree_host()->root_layer()->SetOpacity(.5f);
         break;
       case 3:
+        // LCD text doesn't require re-recording, so no painting should occur.
+        EXPECT_EQ(1, client_.paint_count());
+        // LCD text must have been disabled on the layer due to opacity.
+        EXPECT_FALSE(layer_tree_host()->root_layer()->can_use_lcd_text());
         // Change layer opacity that should not trigger lcd change.
         layer_tree_host()->root_layer()->SetOpacity(1.f);
         break;
       case 4:
+        // LCD text doesn't require re-recording, so no painting should occur.
+        EXPECT_EQ(1, client_.paint_count());
+        // Even though LCD text could be allowed.
+        EXPECT_TRUE(layer_tree_host()->root_layer()->can_use_lcd_text());
         EndTest();
         break;
     }
@@ -2368,34 +2415,22 @@ class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
   }
 
   void DrawLayersOnThread(LayerTreeHostImpl* host_impl) override {
-    PictureLayerImpl* root_layer =
-        static_cast<PictureLayerImpl*>(host_impl->active_tree()->root_layer());
-    bool can_use_lcd_text =
-        host_impl->active_tree()->root_layer()->can_use_lcd_text();
     switch (host_impl->active_tree()->source_frame_number()) {
       case 0:
         // The first draw.
         EXPECT_EQ(1, num_tiles_rastered_);
-        EXPECT_TRUE(can_use_lcd_text);
-        EXPECT_TRUE(root_layer->RasterSourceUsesLCDText());
         break;
       case 1:
         // Nothing changed on the layer.
         EXPECT_EQ(1, num_tiles_rastered_);
-        EXPECT_TRUE(can_use_lcd_text);
-        EXPECT_TRUE(root_layer->RasterSourceUsesLCDText());
         break;
       case 2:
-        // LCD text was disabled; it should be re-rastered with LCD text off.
+        // LCD text was disabled, it should be re-rastered with LCD text off.
         EXPECT_EQ(2, num_tiles_rastered_);
-        EXPECT_FALSE(can_use_lcd_text);
-        EXPECT_FALSE(root_layer->RasterSourceUsesLCDText());
         break;
       case 3:
-        // LCD text was enabled, but it's sticky and stays off.
+        // LCD text was enabled but it's sticky and stays off.
         EXPECT_EQ(2, num_tiles_rastered_);
-        EXPECT_TRUE(can_use_lcd_text);
-        EXPECT_FALSE(root_layer->RasterSourceUsesLCDText());
         break;
     }
   }
@@ -2403,7 +2438,7 @@ class LayerTreeHostTestLCDChange : public LayerTreeHostTest {
   void AfterTest() override {}
 
  private:
-  FakeContentLayerClient client_;
+  PaintClient client_;
   int num_tiles_rastered_;
 };
 
@@ -6260,84 +6295,5 @@ class LayerTreeHostTestNoTasksBetweenWillAndDidCommit
 };
 
 SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostTestNoTasksBetweenWillAndDidCommit);
-
-// Verify that if a LayerImpl holds onto a copy request for multiple
-// frames that it will continue to have a render surface through
-// multiple commits, even though the Layer itself has no reason
-// to have a render surface.
-class LayerPreserveRenderSurfaceFromOutputRequests : public LayerTreeHostTest {
- protected:
-  void SetupTree() override {
-    scoped_refptr<Layer> root = Layer::Create();
-    root->CreateRenderSurface();
-    root->SetBounds(gfx::Size(10, 10));
-    child_ = Layer::Create();
-    child_->SetBounds(gfx::Size(20, 20));
-    root->AddChild(child_);
-
-    layer_tree_host()->SetRootLayer(root);
-    LayerTreeHostTest::SetupTree();
-  }
-
-  static void CopyOutputCallback(scoped_ptr<CopyOutputResult> result) {}
-
-  void BeginTest() override {
-    child_->RequestCopyOfOutput(
-        CopyOutputRequest::CreateBitmapRequest(base::Bind(CopyOutputCallback)));
-    EXPECT_TRUE(child_->HasCopyRequest());
-    PostSetNeedsCommitToMainThread();
-  }
-
-  void DidCommit() override { EXPECT_FALSE(child_->HasCopyRequest()); }
-
-  void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
-    LayerImpl* child_impl = host_impl->sync_tree()->LayerById(child_->id());
-
-    switch (host_impl->sync_tree()->source_frame_number()) {
-      case 0:
-        EXPECT_TRUE(child_impl->HasCopyRequest());
-        EXPECT_TRUE(child_impl->render_surface());
-        break;
-      case 1:
-        if (host_impl->proxy()->CommitToActiveTree()) {
-          EXPECT_TRUE(child_impl->HasCopyRequest());
-          EXPECT_TRUE(child_impl->render_surface());
-        } else {
-          EXPECT_FALSE(child_impl->HasCopyRequest());
-          EXPECT_FALSE(child_impl->render_surface());
-        }
-        break;
-      default:
-        NOTREACHED();
-        break;
-    }
-  }
-
-  void DidActivateTreeOnThread(LayerTreeHostImpl* host_impl) override {
-    LayerImpl* child_impl = host_impl->active_tree()->LayerById(child_->id());
-    EXPECT_TRUE(child_impl->HasCopyRequest());
-    EXPECT_TRUE(child_impl->render_surface());
-
-    switch (host_impl->active_tree()->source_frame_number()) {
-      case 0:
-        // Lose output surface to prevent drawing and cause another commit.
-        host_impl->DidLoseOutputSurface();
-        break;
-      case 1:
-        EndTest();
-        break;
-      default:
-        NOTREACHED();
-        break;
-    }
-  }
-
-  void AfterTest() override {}
-
- private:
-  scoped_refptr<Layer> child_;
-};
-
-SINGLE_AND_MULTI_THREAD_TEST_F(LayerPreserveRenderSurfaceFromOutputRequests);
 
 }  // namespace cc

@@ -10,50 +10,48 @@
 namespace cc {
 
 const ColorAnimationCurve* AnimationCurve::ToColorAnimationCurve() const {
-  DCHECK(Type() == AnimationCurve::COLOR);
+  DCHECK(Type() == AnimationCurve::Color);
   return static_cast<const ColorAnimationCurve*>(this);
 }
 
-AnimationCurve::CurveType ColorAnimationCurve::Type() const {
-  return COLOR;
-}
+AnimationCurve::CurveType ColorAnimationCurve::Type() const { return Color; }
 
 const FloatAnimationCurve* AnimationCurve::ToFloatAnimationCurve() const {
-  DCHECK(Type() == AnimationCurve::FLOAT);
+  DCHECK(Type() == AnimationCurve::Float);
   return static_cast<const FloatAnimationCurve*>(this);
 }
 
 AnimationCurve::CurveType FloatAnimationCurve::Type() const {
-  return FLOAT;
+  return Float;
 }
 
 const TransformAnimationCurve* AnimationCurve::ToTransformAnimationCurve()
     const {
-  DCHECK(Type() == AnimationCurve::TRANSFORM);
+  DCHECK(Type() == AnimationCurve::Transform);
   return static_cast<const TransformAnimationCurve*>(this);
 }
 
 AnimationCurve::CurveType TransformAnimationCurve::Type() const {
-  return TRANSFORM;
+  return Transform;
 }
 
 const FilterAnimationCurve* AnimationCurve::ToFilterAnimationCurve() const {
-  DCHECK(Type() == AnimationCurve::FILTER);
+  DCHECK(Type() == AnimationCurve::Filter);
   return static_cast<const FilterAnimationCurve*>(this);
 }
 
 AnimationCurve::CurveType FilterAnimationCurve::Type() const {
-  return FILTER;
+  return Filter;
 }
 
 const ScrollOffsetAnimationCurve* AnimationCurve::ToScrollOffsetAnimationCurve()
     const {
-  DCHECK(Type() == AnimationCurve::SCROLL_OFFSET);
+  DCHECK(Type() == AnimationCurve::ScrollOffset);
   return static_cast<const ScrollOffsetAnimationCurve*>(this);
 }
 
 ScrollOffsetAnimationCurve* AnimationCurve::ToScrollOffsetAnimationCurve() {
-  DCHECK(Type() == AnimationCurve::SCROLL_OFFSET);
+  DCHECK(Type() == AnimationCurve::ScrollOffset);
   return static_cast<ScrollOffsetAnimationCurve*>(this);
 }
 

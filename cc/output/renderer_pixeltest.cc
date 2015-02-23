@@ -123,14 +123,19 @@ void CreateTestTextureDrawQuad(const gfx::Rect& rect,
                           SkColorGetR(texel_color),
                           SkColorGetG(texel_color),
                           SkColorGetB(texel_color));
-  size_t num_pixels = static_cast<size_t>(rect.width()) * rect.height();
-  std::vector<uint32_t> pixels(num_pixels, pixel_color);
+  std::vector<uint32_t> pixels(rect.size().GetArea(), pixel_color);
 
-  ResourceProvider::ResourceId resource = resource_provider->CreateResource(
-      rect.size(), GL_CLAMP_TO_EDGE, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
-      RGBA_8888);
-  resource_provider->CopyToResource(
-      resource, reinterpret_cast<uint8_t*>(&pixels.front()), rect.size());
+  ResourceProvider::ResourceId resource =
+      resource_provider->CreateResource(rect.size(),
+                                        GL_CLAMP_TO_EDGE,
+                                        ResourceProvider::TextureHintImmutable,
+                                        RGBA_8888);
+  resource_provider->SetPixels(
+      resource,
+      reinterpret_cast<uint8_t*>(&pixels.front()),
+      rect,
+      rect,
+      gfx::Vector2d());
 
   float vertex_opacity[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -155,13 +160,6 @@ typedef ::testing::Types<GLRenderer,
                          GLRendererWithExpandedViewport,
                          SoftwareRendererWithExpandedViewport> RendererTypes;
 TYPED_TEST_CASE(RendererPixelTest, RendererTypes);
-
-template <typename RendererType>
-class SoftwareRendererPixelTest : public RendererPixelTest<RendererType> {};
-
-typedef ::testing::Types<SoftwareRenderer, SoftwareRendererWithExpandedViewport>
-    SoftwareRendererTypes;
-TYPED_TEST_CASE(SoftwareRendererPixelTest, SoftwareRendererTypes);
 
 template <typename RendererType>
 class FuzzyForSoftwareOnlyPixelComparator : public PixelComparator {
@@ -874,13 +872,18 @@ TYPED_TEST(RendererPixelTest, RenderPassAndMaskWithPartialQuad) {
 
   ResourceProvider::ResourceId mask_resource_id =
       this->resource_provider_->CreateResource(
-          mask_rect.size(), GL_CLAMP_TO_EDGE,
-          ResourceProvider::TEXTURE_HINT_IMMUTABLE, RGBA_8888);
+          mask_rect.size(),
+          GL_CLAMP_TO_EDGE,
+          ResourceProvider::TextureHintImmutable,
+          RGBA_8888);
   {
     SkAutoLockPixels lock(bitmap);
-    this->resource_provider_->CopyToResource(
-        mask_resource_id, reinterpret_cast<uint8_t*>(bitmap.getPixels()),
-        mask_rect.size());
+    this->resource_provider_->SetPixels(
+        mask_resource_id,
+        reinterpret_cast<uint8_t*>(bitmap.getPixels()),
+        mask_rect,
+        mask_rect,
+        gfx::Vector2d());
   }
 
   // This RenderPassDrawQuad does not include the full |viewport_rect| which is
@@ -1376,7 +1379,7 @@ TEST_F(GLRendererPixelTest, AntiAliasingPerspective) {
       FuzzyPixelOffByOneComparator(true)));
 }
 
-TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadIdentityScale) {
+TYPED_TEST(RendererPixelTest, PictureDrawQuadIdentityScale) {
   gfx::Size pile_tile_size(1000, 1000);
   gfx::Rect viewport(this->device_viewport_size_);
   // TODO(enne): the renderer should figure this out on its own.
@@ -1456,7 +1459,7 @@ TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadIdentityScale) {
 }
 
 // Not WithSkiaGPUBackend since that path currently requires tiles for opacity.
-TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadOpacity) {
+TYPED_TEST(RendererPixelTest, PictureDrawQuadOpacity) {
   gfx::Size pile_tile_size(1000, 1000);
   gfx::Rect viewport(this->device_viewport_size_);
   ResourceFormat texture_format = RGBA_8888;
@@ -1533,7 +1536,7 @@ bool IsSoftwareRenderer<SoftwareRendererWithExpandedViewport>() {
 
 // If we disable image filtering, then a 2x2 bitmap should appear as four
 // huge sharp squares.
-TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadDisableImageFiltering) {
+TYPED_TEST(RendererPixelTest, PictureDrawQuadDisableImageFiltering) {
   // We only care about this in software mode since bilinear filtering is
   // cheap in hardware.
   if (!IsSoftwareRenderer<TypeParam>())
@@ -1590,7 +1593,7 @@ TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadDisableImageFiltering) {
 }
 
 // This disables filtering by setting |nearest_neighbor| on the PictureDrawQuad.
-TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadNearestNeighbor) {
+TYPED_TEST(RendererPixelTest, PictureDrawQuadNearestNeighbor) {
   gfx::Size pile_tile_size(1000, 1000);
   gfx::Rect viewport(this->device_viewport_size_);
   ResourceFormat texture_format = RGBA_8888;
@@ -1659,13 +1662,19 @@ TYPED_TEST(RendererPixelTest, TileDrawQuadNearestNeighbor) {
   gfx::Size tile_size(2, 2);
   ResourceProvider::ResourceId resource =
       this->resource_provider_->CreateResource(
-          tile_size, GL_CLAMP_TO_EDGE, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
+          tile_size,
+          GL_CLAMP_TO_EDGE,
+          ResourceProvider::TextureHintImmutable,
           RGBA_8888);
 
   {
     SkAutoLockPixels lock(bitmap);
-    this->resource_provider_->CopyToResource(
-        resource, static_cast<uint8_t*>(bitmap.getPixels()), tile_size);
+    this->resource_provider_->SetPixels(
+        resource,
+        static_cast<uint8_t*>(bitmap.getPixels()),
+        gfx::Rect(tile_size),
+        gfx::Rect(tile_size),
+        gfx::Vector2d());
   }
 
   RenderPassId id(1, 1);
@@ -1691,7 +1700,7 @@ TYPED_TEST(RendererPixelTest, TileDrawQuadNearestNeighbor) {
       ExactPixelComparator(true)));
 }
 
-TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadNonIdentityScale) {
+TYPED_TEST(RendererPixelTest, PictureDrawQuadNonIdentityScale) {
   gfx::Size pile_tile_size(1000, 1000);
   gfx::Rect viewport(this->device_viewport_size_);
   // TODO(enne): the renderer should figure this out on its own.
@@ -1992,6 +2001,45 @@ TEST_F(GLRendererPixelTest, CheckReadbackSubset) {
       &capture_rect));
 }
 
+TEST_F(GLRendererPixelTest, PictureDrawQuadTexture4444) {
+  gfx::Size pile_tile_size(1000, 1000);
+  gfx::Rect viewport(this->device_viewport_size_);
+  ResourceFormat texture_format = RGBA_4444;
+  bool nearest_neighbor = false;
+
+  RenderPassId id(1, 1);
+  gfx::Transform transform_to_root;
+  scoped_ptr<RenderPass> pass =
+      CreateTestRenderPass(id, viewport, transform_to_root);
+
+  // One viewport-filling blue quad
+  scoped_ptr<FakePicturePile> blue_recording =
+      FakePicturePile::CreateFilledPile(pile_tile_size, viewport.size());
+  SkPaint blue_paint;
+  blue_paint.setColor(SK_ColorBLUE);
+  blue_recording->add_draw_rect_with_paint(viewport, blue_paint);
+  blue_recording->RerecordPile();
+  scoped_refptr<FakePicturePileImpl> blue_pile =
+      FakePicturePileImpl::CreateFromPile(blue_recording.get(), nullptr);
+
+  gfx::Transform blue_content_to_target_transform;
+  SharedQuadState* blue_shared_state = CreateTestSharedQuadState(
+      blue_content_to_target_transform, viewport, pass.get());
+
+  PictureDrawQuad* blue_quad = pass->CreateAndAppendDrawQuad<PictureDrawQuad>();
+  blue_quad->SetNew(blue_shared_state, viewport, gfx::Rect(), viewport,
+                    gfx::RectF(0.f, 0.f, 1.f, 1.f), viewport.size(),
+                    nearest_neighbor, texture_format, viewport, 1.f,
+                    blue_pile.get());
+
+  RenderPassList pass_list;
+  pass_list.push_back(pass.Pass());
+
+  EXPECT_TRUE(this->RunPixelTest(&pass_list,
+                                 base::FilePath(FILE_PATH_LITERAL("blue.png")),
+                                 ExactPixelComparator(true)));
+}
+
 TYPED_TEST(RendererPixelTest, WrapModeRepeat) {
   gfx::Rect rect(this->device_viewport_size_);
 
@@ -2001,7 +2049,7 @@ TYPED_TEST(RendererPixelTest, WrapModeRepeat) {
   SharedQuadState* shared_state =
       CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 
-  gfx::Size texture_size(4, 4);
+  gfx::Rect texture_rect(4, 4);
   SkPMColor colors[4] = {
     SkPreMultiplyColor(SkColorSetARGB(255, 0, 255, 0)),
     SkPreMultiplyColor(SkColorSetARGB(255, 0, 128, 0)),
@@ -2016,23 +2064,33 @@ TYPED_TEST(RendererPixelTest, WrapModeRepeat) {
   };
   ResourceProvider::ResourceId resource =
       this->resource_provider_->CreateResource(
-          texture_size, GL_REPEAT, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
+          texture_rect.size(),
+          GL_REPEAT,
+          ResourceProvider::TextureHintImmutable,
           RGBA_8888);
-  this->resource_provider_->CopyToResource(
-      resource, reinterpret_cast<uint8_t*>(pixels), texture_size);
+  this->resource_provider_->SetPixels(
+      resource,
+      reinterpret_cast<uint8_t*>(pixels),
+      texture_rect,
+      texture_rect,
+      gfx::Vector2d());
 
   float vertex_opacity[4] = {1.0f, 1.0f, 1.0f, 1.0f};
   TextureDrawQuad* texture_quad =
       pass->CreateAndAppendDrawQuad<TextureDrawQuad>();
   texture_quad->SetNew(
-      shared_state, gfx::Rect(this->device_viewport_size_), gfx::Rect(),
-      gfx::Rect(this->device_viewport_size_), resource,
+      shared_state,
+      gfx::Rect(this->device_viewport_size_),
+      gfx::Rect(),
+      gfx::Rect(this->device_viewport_size_),
+      resource,
       true,                     // premultiplied_alpha
       gfx::PointF(0.0f, 0.0f),  // uv_top_left
       gfx::PointF(              // uv_bottom_right
-          this->device_viewport_size_.width() / texture_size.width(),
-          this->device_viewport_size_.height() / texture_size.height()),
-      SK_ColorWHITE, vertex_opacity,
+          this->device_viewport_size_.width() / texture_rect.width(),
+          this->device_viewport_size_.height() / texture_rect.height()),
+      SK_ColorWHITE,
+      vertex_opacity,
       false,   // flipped
       false);  // nearest_neighbor
 

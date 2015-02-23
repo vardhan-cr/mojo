@@ -127,8 +127,7 @@ class TileManagerTilePriorityQueueTest : public testing::Test {
         host_impl_.pending_tree()->LayerById(id_));
 
     // Add tilings/tiles for the layer.
-    bool update_lcd_text = false;
-    host_impl_.pending_tree()->UpdateDrawProperties(update_lcd_text);
+    host_impl_.pending_tree()->UpdateDrawProperties();
   }
 
   TileManager* tile_manager() { return host_impl_.tile_manager(); }
@@ -542,8 +541,7 @@ TEST_F(TileManagerTilePriorityQueueTest, ActivationComesBeforeEventually) {
   time_ticks += base::TimeDelta::FromMilliseconds(1);
   host_impl_.SetCurrentBeginFrameArgs(
       CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE, time_ticks));
-  bool update_lcd_text = false;
-  host_impl_.pending_tree()->UpdateDrawProperties(update_lcd_text);
+  host_impl_.pending_tree()->UpdateDrawProperties();
 
   host_impl_.SetRequiresHighResToDraw();
   scoped_ptr<RasterTilePriorityQueue> queue(host_impl_.BuildRasterQueue(
@@ -773,8 +771,7 @@ TEST_F(TileManagerTilePriorityQueueTest,
   time_ticks += base::TimeDelta::FromMilliseconds(1);
   host_impl_.SetCurrentBeginFrameArgs(
       CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE, time_ticks));
-  bool update_lcd_text = false;
-  host_impl_.pending_tree()->UpdateDrawProperties(update_lcd_text);
+  host_impl_.pending_tree()->UpdateDrawProperties();
 
   ActivateTree();
   SetupPendingTree(pending_pile);
@@ -912,15 +909,14 @@ TEST_F(TileManagerTilePriorityQueueTest,
   time_ticks += base::TimeDelta::FromMilliseconds(1);
   host_impl_.SetCurrentBeginFrameArgs(
       CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE, time_ticks));
-  bool update_lcd_text = false;
-  host_impl_.pending_tree()->UpdateDrawProperties(update_lcd_text);
+  host_impl_.pending_tree()->UpdateDrawProperties();
 
   pending_child_layer->SetOpacity(0.0);
 
   time_ticks += base::TimeDelta::FromMilliseconds(1);
   host_impl_.SetCurrentBeginFrameArgs(
       CreateBeginFrameArgsForTesting(BEGINFRAME_FROM_HERE, time_ticks));
-  host_impl_.pending_tree()->UpdateDrawProperties(update_lcd_text);
+  host_impl_.pending_tree()->UpdateDrawProperties();
 
   // Renew all of the tile priorities.
   gfx::Rect viewport(layer_bounds);

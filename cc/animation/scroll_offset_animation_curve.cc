@@ -90,7 +90,7 @@ base::TimeDelta ScrollOffsetAnimationCurve::Duration() const {
 }
 
 AnimationCurve::CurveType ScrollOffsetAnimationCurve::Type() const {
-  return SCROLL_OFFSET;
+  return ScrollOffset;
 }
 
 scoped_ptr<AnimationCurve> ScrollOffsetAnimationCurve::Clone() const {

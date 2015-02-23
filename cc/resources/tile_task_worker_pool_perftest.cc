@@ -206,7 +206,7 @@ class TileTaskWorkerPoolPerfTestBase {
     for (unsigned i = 0; i < num_raster_tasks; ++i) {
       scoped_ptr<ScopedResource> resource(
           ScopedResource::Create(resource_provider_.get()));
-      resource->Allocate(size, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
+      resource->Allocate(size, ResourceProvider::TextureHintImmutable,
                          RGBA_8888);
 
       ImageDecodeTask::Vector dependencies = image_decode_tasks;
@@ -270,8 +270,6 @@ class TileTaskWorkerPoolPerfTest
         break;
       case TILE_TASK_WORKER_POOL_TYPE_GPU:
         Create3dOutputSurfaceAndResourceProvider();
-        rasterizer_ = GpuRasterizer::Create(
-            context_provider_.get(), resource_provider_.get(), false, false, 0);
         tile_task_worker_pool_ = GpuTileTaskWorkerPool::Create(
             task_runner_.get(), task_graph_runner_.get(),
             static_cast<GpuRasterizer*>(rasterizer_.get()));

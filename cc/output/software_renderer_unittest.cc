@@ -155,12 +155,16 @@ TEST_F(SoftwareRendererTest, TileQuad) {
 
   ResourceProvider::ResourceId resource_yellow =
       resource_provider()->CreateResource(
-          outer_size, GL_CLAMP_TO_EDGE,
-          ResourceProvider::TEXTURE_HINT_IMMUTABLE, RGBA_8888);
+          outer_size,
+          GL_CLAMP_TO_EDGE,
+          ResourceProvider::TextureHintImmutable,
+          RGBA_8888);
   ResourceProvider::ResourceId resource_cyan =
       resource_provider()->CreateResource(
-          inner_size, GL_CLAMP_TO_EDGE,
-          ResourceProvider::TEXTURE_HINT_IMMUTABLE, RGBA_8888);
+          inner_size,
+          GL_CLAMP_TO_EDGE,
+          ResourceProvider::TextureHintImmutable,
+          RGBA_8888);
 
   SkBitmap yellow_tile;
   yellow_tile.allocN32Pixels(outer_size.width(), outer_size.height());
@@ -170,11 +174,17 @@ TEST_F(SoftwareRendererTest, TileQuad) {
   cyan_tile.allocN32Pixels(inner_size.width(), inner_size.height());
   cyan_tile.eraseColor(SK_ColorCYAN);
 
-  resource_provider()->CopyToResource(
-      resource_yellow, static_cast<uint8_t*>(yellow_tile.getPixels()),
-      outer_size);
-  resource_provider()->CopyToResource(
-      resource_cyan, static_cast<uint8_t*>(cyan_tile.getPixels()), inner_size);
+  resource_provider()->SetPixels(
+      resource_yellow,
+      static_cast<uint8_t*>(yellow_tile.getPixels()),
+      gfx::Rect(outer_size),
+      gfx::Rect(outer_size),
+      gfx::Vector2d());
+  resource_provider()->SetPixels(resource_cyan,
+                                 static_cast<uint8_t*>(cyan_tile.getPixels()),
+                                 gfx::Rect(inner_size),
+                                 gfx::Rect(inner_size),
+                                 gfx::Vector2d());
 
   gfx::Rect root_rect = outer_rect;
 
@@ -242,7 +252,9 @@ TEST_F(SoftwareRendererTest, TileQuadVisibleRect) {
 
   ResourceProvider::ResourceId resource_cyan =
       resource_provider()->CreateResource(
-          tile_size, GL_CLAMP_TO_EDGE, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
+          tile_size,
+          GL_CLAMP_TO_EDGE,
+          ResourceProvider::TextureHintImmutable,
           RGBA_8888);
 
   SkBitmap cyan_tile;  // The lowest five rows are yellow.
@@ -253,8 +265,11 @@ TEST_F(SoftwareRendererTest, TileQuadVisibleRect) {
           0, visible_rect.bottom() - 1, tile_rect.width(), tile_rect.bottom()),
       SK_ColorYELLOW);
 
-  resource_provider()->CopyToResource(
-      resource_cyan, static_cast<uint8_t*>(cyan_tile.getPixels()), tile_size);
+  resource_provider()->SetPixels(resource_cyan,
+                                 static_cast<uint8_t*>(cyan_tile.getPixels()),
+                                 gfx::Rect(tile_size),
+                                 gfx::Rect(tile_size),
+                                 gfx::Vector2d());
 
   gfx::Rect root_rect(tile_size);
 

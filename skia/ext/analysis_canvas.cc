@@ -9,6 +9,7 @@
 #include "third_party/skia/include/core/SkRRect.h"
 #include "third_party/skia/include/core/SkShader.h"
 #include "third_party/skia/src/core/SkRasterClip.h"
+#include "ui/gfx/geometry/rect_conversions.h"
 
 namespace {
 

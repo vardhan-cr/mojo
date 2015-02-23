@@ -74,11 +74,6 @@ class GPU_EXPORT Framebuffer : public base::RefCounted<Framebuffer> {
     GLenum attachment,
     bool cleared);
 
-  // Unbinds all attachments from this framebuffer for workaround
-  // 'unbind_attachments_on_bound_render_fbo_delete'.  The Framebuffer must be
-  // bound when calling this.
-  void DoUnbindGLAttachmentsForWorkaround(GLenum target);
-
   // Attaches a renderbuffer to a particlar attachment.
   // Pass null to detach.
   void AttachRenderbuffer(

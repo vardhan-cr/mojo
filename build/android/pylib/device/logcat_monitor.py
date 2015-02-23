@@ -22,20 +22,18 @@ class LogcatMonitor(object):
   # Format: <DATE> <TIME> <PID> <TID> <LEVEL> <COMPONENT>: <MESSAGE>
   _THREADTIME_RE_FORMAT = r'\S* +\S* +(%s) +(%s) +(%s) +(%s): +(%s)$'
 
-  def __init__(self, adb, clear=True, filter_specs=None):
+  def __init__(self, adb, clear=True):
     """Create a LogcatMonitor instance.
 
     Args:
       adb: An instance of adb_wrapper.AdbWrapper.
       clear: If True, clear the logcat when monitoring starts.
-      filter_specs: An optional list of '<tag>[:priority]' strings.
     """
     if isinstance(adb, adb_wrapper.AdbWrapper):
       self._adb = adb
     else:
       raise ValueError('Unsupported type passed for argument "device"')
     self._clear = clear
-    self._filter_specs = filter_specs
     self._logcat_out = None
     self._logcat_out_file = None
     self._logcat_proc = None
@@ -78,7 +76,7 @@ class LogcatMonitor(object):
     #    returned.
     #  - failure_regex matches a line, in which case None is returned
     #  - the timeout is hit, in which case a CommandTimeoutError is raised.
-    for l in self._adb.Logcat(filter_specs=self._filter_specs):
+    for l in self._adb.Logcat():
       m = success_regex.search(l)
       if m:
         return m

@@ -20,19 +20,17 @@ const char* GetComponentName(ui::LatencyComponentType type) {
     CASE_TYPE(INPUT_EVENT_LATENCY_BEGIN_RWH_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_BEGIN_PLUGIN_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_BEGIN_SCROLL_UPDATE_MAIN_COMPONENT);
+    CASE_TYPE(INPUT_EVENT_LATENCY_SCROLL_UPDATE_RWH_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_SCROLL_UPDATE_ORIGINAL_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_LATENCY_FIRST_SCROLL_UPDATE_ORIGINAL_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_ORIGINAL_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_UI_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_LATENCY_RENDERING_SCHEDULED_MAIN_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_LATENCY_RENDERING_SCHEDULED_IMPL_COMPONENT);
+    CASE_TYPE(INPUT_EVENT_LATENCY_RENDERING_SCHEDULED_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_FORWARD_SCROLL_UPDATE_TO_MAIN_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_LATENCY_ACK_RWH_COMPONENT);
+    CASE_TYPE(INPUT_EVENT_LATENCY_ACKED_TOUCH_COMPONENT);
     CASE_TYPE(WINDOW_SNAPSHOT_FRAME_NUMBER_COMPONENT);
     CASE_TYPE(WINDOW_OLD_SNAPSHOT_FRAME_NUMBER_COMPONENT);
-    CASE_TYPE(TAB_SHOW_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_LATENCY_RENDERER_SWAP_COMPONENT);
-    CASE_TYPE(INPUT_EVENT_BROWSER_RECEIVED_RENDERER_SWAP_COMPONENT);
+    CASE_TYPE(INPUT_EVENT_BROWSER_COMPOSITE_COMPONENT);
+    CASE_TYPE(INPUT_EVENT_BROWSER_SWAP_BUFFER_COMPONENT);
     CASE_TYPE(INPUT_EVENT_GPU_SWAP_BUFFER_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_TERMINATED_MOUSE_COMPONENT);
     CASE_TYPE(INPUT_EVENT_LATENCY_TERMINATED_TOUCH_COMPONENT);
@@ -73,8 +71,7 @@ bool IsBeginComponent(ui::LatencyComponentType type) {
 }
 
 // This class is for converting latency info to trace buffer friendly format.
-class LatencyInfoTracedValue
-    : public base::trace_event::ConvertableToTraceFormat {
+class LatencyInfoTracedValue : public base::trace_event::ConvertableToTraceFormat {
  public:
   static scoped_refptr<ConvertableToTraceFormat> FromValue(
       scoped_ptr<base::Value> value);
@@ -256,7 +253,7 @@ void LatencyInfo::AddLatencyNumberWithTimestamp(LatencyComponentType component,
     }
 
     TRACE_EVENT_FLOW_BEGIN0(
-        "input,benchmark", "LatencyInfo.Flow", TRACE_ID_DONT_MANGLE(trace_id));
+        "input", "LatencyInfo.Flow", TRACE_ID_DONT_MANGLE(trace_id));
   }
 
   LatencyMap::key_type key = std::make_pair(component, id);
@@ -291,7 +288,7 @@ void LatencyInfo::AddLatencyNumberWithTimestamp(LatencyComponentType component,
     }
 
     TRACE_EVENT_FLOW_END0(
-        "input,benchmark", "LatencyInfo.Flow", TRACE_ID_DONT_MANGLE(trace_id));
+        "input", "LatencyInfo.Flow", TRACE_ID_DONT_MANGLE(trace_id));
   }
 }
 

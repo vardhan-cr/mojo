@@ -332,10 +332,11 @@ void ProgramInfoManager::Program::UpdateES2(const std::vector<int8>& result) {
   if (!link_status_) {
     return;
   }
-  DCHECK_EQ(0u, attrib_infos_.size());
-  DCHECK_EQ(0u, uniform_infos_.size());
-  DCHECK_EQ(0, max_attrib_name_length_);
-  DCHECK_EQ(0, max_uniform_name_length_);
+  attrib_infos_.clear();
+  uniform_infos_.clear();
+  frag_data_locations_.clear();
+  max_attrib_name_length_ = 0;
+  max_uniform_name_length_ = 0;
   const ProgramInput* inputs = LocalGetAs<const ProgramInput*>(
       result, sizeof(*header),
       sizeof(ProgramInput) * (header->num_attribs + header->num_uniforms));
@@ -381,8 +382,8 @@ void ProgramInfoManager::Program::UpdateES3UniformBlocks(
     // This should only happen on a lost context.
     return;
   }
-  DCHECK_EQ(0u, uniform_blocks_.size());
-  DCHECK_EQ(0u, active_uniform_block_max_name_length_);
+  uniform_blocks_.clear();
+  active_uniform_block_max_name_length_ = 0;
 
   // |result| comes from GPU process. We consider it trusted data. Therefore,
   // no need to check for overflows as the GPU side did the checks already.
@@ -452,7 +453,7 @@ void ProgramInfoManager::Program::UpdateES3Uniformsiv(
     // This should only happen on a lost context.
     return;
   }
-  DCHECK_EQ(0u, uniforms_es3_.size());
+  uniforms_es3_.clear();
 
   // |result| comes from GPU process. We consider it trusted data. Therefore,
   // no need to check for overflows as the GPU side did the checks already.
@@ -494,8 +495,8 @@ void ProgramInfoManager::Program::UpdateES3TransformFeedbackVaryings(
     // This should only happen on a lost context.
     return;
   }
-  DCHECK_EQ(0u, transform_feedback_varyings_.size());
-  DCHECK_EQ(0u, transform_feedback_varying_max_length_);
+  transform_feedback_varyings_.clear();
+  transform_feedback_varying_max_length_ = 0;
 
   // |result| comes from GPU process. We consider it trusted data. Therefore,
   // no need to check for overflows as the GPU side did the checks already.

@@ -16,13 +16,13 @@ class VirtualMethodsInImplementation {
 // Stubs to fill in the abstract method
 class ConcreteVirtualMethodsInHeaders : public VirtualMethodsInHeaders {
  public:
-  void MethodIsAbstract() override {}
+  virtual void MethodIsAbstract() override {}
 };
 
 class ConcreteVirtualMethodsInImplementation
     : public VirtualMethodsInImplementation {
  public:
-  void MethodIsAbstract() override {}
+  virtual void MethodIsAbstract() override {}
 };
 
 // Fill in the implementations

@@ -21,9 +21,9 @@ class DisplayItemList;
 
 class CC_EXPORT DisplayListRasterSource : public RasterSource {
  public:
+  static scoped_refptr<DisplayListRasterSource> Create();
   static scoped_refptr<DisplayListRasterSource>
-  CreateFromDisplayListRecordingSource(const DisplayListRecordingSource* other,
-                                       bool can_use_lcd_text);
+  CreateFromDisplayListRecordingSource(const DisplayListRecordingSource* other);
 
   // RasterSource overrides.
   void PlaybackToCanvas(SkCanvas* canvas,
@@ -52,14 +52,10 @@ class CC_EXPORT DisplayListRasterSource : public RasterSource {
   skia::RefPtr<SkPicture> GetFlattenedPicture() override;
   size_t GetPictureMemoryUsage() const override;
   bool CanUseLCDText() const override;
-  scoped_refptr<RasterSource> CreateCloneWithoutLCDText() const override;
 
  protected:
   DisplayListRasterSource();
-  DisplayListRasterSource(const DisplayListRecordingSource* other,
-                          bool can_use_lcd_text);
-  DisplayListRasterSource(const DisplayListRasterSource* other,
-                          bool can_use_lcd_text);
+  explicit DisplayListRasterSource(const DisplayListRecordingSource* other);
   ~DisplayListRasterSource() override;
 
   // These members are const as this raster source may be in use on another

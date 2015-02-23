@@ -11,7 +11,7 @@ declare_args() {
   compile_credentials = is_linux
 
   compile_seccomp_bpf_demo =
-      is_linux && (current_cpu == "x86" || current_cpu == "x64")
+      is_linux && (cpu_arch == "x86" || cpu_arch == "x64")
 }
 
 # We have two principal targets: sandbox and sandbox_linux_unittests
@@ -63,10 +63,8 @@ source_set("sandbox_linux_test_utils") {
   }
 }
 
-# Sources shared by sandbox_linux_unittests and sandbox_linux_jni_unittests.
-source_set("sandbox_linux_unittests_sources") {
-  testonly = true
-
+# The main sandboxing test target.
+test("sandbox_linux_unittests") {
   sources = [
     "services/proc_util_unittest.cc",
     "services/resource_limits_unittests.cc",
@@ -129,24 +127,23 @@ source_set("sandbox_linux_unittests_sources") {
   }
 }
 
-# The main sandboxing test target.
-test("sandbox_linux_unittests") {
-  deps = [
-    ":sandbox_linux_unittests_sources",
-  ]
-}
-
-# This target is the shared library used by Android APK (i.e.
-# JNI-friendly) tests.
-shared_library("sandbox_linux_jni_unittests") {
-  testonly = true
-  deps = [
-    ":sandbox_linux_unittests_sources",
-  ]
-  if (is_android) {
-    deps += [ "//testing/android:native_test_native_code" ]
-  }
-}
+# TODO(GYP) Android version of this test.
+#    {
+#      # This target is the shared library used by Android APK (i.e.
+#      # JNI-friendly) tests.
+#      "target_name": "sandbox_linux_jni_unittests",
+#      "includes": [
+#        "sandbox_linux_test_sources.gypi",
+#      ],
+#      "type": "shared_library",
+#      "conditions": [
+#        [ "OS == "android"", {
+#          "dependencies": [
+#            "../testing/android/native_test.gyp:native_test_native_code",
+#          ],
+#        }],
+#      ],
+#    },
 
 component("seccomp_bpf") {
   sources = [

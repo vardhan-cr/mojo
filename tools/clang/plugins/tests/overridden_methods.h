@@ -21,7 +21,7 @@ class BaseClass {
 };
 
 class InterimClass : public BaseClass {
-  // Should warn about pure virtual methods.
+  // Should not warn about pure virtual methods.
   virtual void SomeMethod() = 0;
 };
 
@@ -42,12 +42,12 @@ class WebKitObserverImpl : blink::WebKitObserver {
 class DerivedClass : public InterimClass,
                      public webkit_glue::WebKitObserverImpl {
  public:
-  // Should warn about destructors.
+  // Should not warn about destructors.
   virtual ~DerivedClass() {}
   // Should warn.
   virtual void SomeMethod();
   // Should not warn if marked as override.
-  void SomeOtherMethod() override;
+  virtual void SomeOtherMethod() override;
   // Should warn for inline implementations.
   virtual void SomeInlineMethod() {}
   // Should not warn if overriding a method whose origin is blink.

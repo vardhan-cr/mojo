@@ -15,16 +15,18 @@ namespace cc {
 
 struct TransformOperation {
   enum Type {
-    TRANSFORM_OPERATION_TRANSLATE,
-    TRANSFORM_OPERATION_ROTATE,
-    TRANSFORM_OPERATION_SCALE,
-    TRANSFORM_OPERATION_SKEW,
-    TRANSFORM_OPERATION_PERSPECTIVE,
-    TRANSFORM_OPERATION_MATRIX,
-    TRANSFORM_OPERATION_IDENTITY
+    TransformOperationTranslate,
+    TransformOperationRotate,
+    TransformOperationScale,
+    TransformOperationSkew,
+    TransformOperationPerspective,
+    TransformOperationMatrix,
+    TransformOperationIdentity
   };
 
-  TransformOperation() : type(TRANSFORM_OPERATION_IDENTITY) {}
+  TransformOperation()
+      : type(TransformOperationIdentity) {
+  }
 
   Type type;
   gfx::Transform matrix;

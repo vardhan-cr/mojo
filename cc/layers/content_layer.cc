@@ -114,6 +114,10 @@ void ContentLayer::SetContentsOpaque(bool opaque) {
     updater_->SetOpaque(opaque);
 }
 
+bool ContentLayer::SupportsLCDText() const {
+  return true;
+}
+
 skia::RefPtr<SkPicture> ContentLayer::GetPicture() const {
   if (!DrawsContent())
     return skia::RefPtr<SkPicture>();

@@ -43,7 +43,6 @@ typedef void GLvoid;
 typedef khronos_intptr_t GLintptr;
 typedef khronos_ssize_t  GLsizeiptr;
 typedef struct __GLsync *GLsync;
-typedef uint64_t GLuint64;
 
 namespace gpu {
 namespace gles2 {

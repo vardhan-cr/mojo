@@ -105,11 +105,6 @@ void GLES2InterfaceStub::ClearDepthf(GLclampf /* depth */) {
 }
 void GLES2InterfaceStub::ClearStencil(GLint /* s */) {
 }
-GLenum GLES2InterfaceStub::ClientWaitSync(GLsync /* sync */,
-                                          GLbitfield /* flags */,
-                                          GLuint64 /* timeout */) {
-  return 0;
-}
 void GLES2InterfaceStub::ColorMask(GLboolean /* red */,
                                    GLboolean /* green */,
                                    GLboolean /* blue */,
@@ -868,10 +863,6 @@ void GLES2InterfaceStub::Viewport(GLint /* x */,
                                   GLint /* y */,
                                   GLsizei /* width */,
                                   GLsizei /* height */) {
-}
-void GLES2InterfaceStub::WaitSync(GLsync /* sync */,
-                                  GLbitfield /* flags */,
-                                  GLuint64 /* timeout */) {
 }
 void GLES2InterfaceStub::BlitFramebufferCHROMIUM(GLint /* srcX0 */,
                                                  GLint /* srcY0 */,

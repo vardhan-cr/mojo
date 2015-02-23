@@ -240,8 +240,7 @@ class TileTaskWorkerPoolTest
   void AppendTask(unsigned id, const gfx::Size& size) {
     scoped_ptr<ScopedResource> resource(
         ScopedResource::Create(resource_provider_.get()));
-    resource->Allocate(size, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
-                       RGBA_8888);
+    resource->Allocate(size, ResourceProvider::TextureHintImmutable, RGBA_8888);
     const Resource* const_resource = resource.get();
 
     ImageDecodeTask::Vector empty;
@@ -259,8 +258,7 @@ class TileTaskWorkerPoolTest
 
     scoped_ptr<ScopedResource> resource(
         ScopedResource::Create(resource_provider_.get()));
-    resource->Allocate(size, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
-                       RGBA_8888);
+    resource->Allocate(size, ResourceProvider::TextureHintImmutable, RGBA_8888);
     const Resource* const_resource = resource.get();
 
     ImageDecodeTask::Vector empty;
@@ -389,8 +387,7 @@ TEST_P(TileTaskWorkerPoolTest, LargeResources) {
     // Verify a resource of this size is larger than the transfer buffer.
     scoped_ptr<ScopedResource> resource(
         ScopedResource::Create(resource_provider_.get()));
-    resource->Allocate(size, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
-                       RGBA_8888);
+    resource->Allocate(size, ResourceProvider::TextureHintImmutable, RGBA_8888);
     EXPECT_GE(resource->bytes(), kMaxTransferBufferUsageBytes);
   }
 

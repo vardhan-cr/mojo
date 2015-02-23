@@ -307,11 +307,8 @@ void LayerTreeHostImpl::CommitComplete() {
   if (settings_.impl_side_painting) {
     // Impl-side painting needs an update immediately post-commit to have the
     // opportunity to create tilings.  Other paths can call UpdateDrawProperties
-    // more lazily when needed prior to drawing.  Because invalidations may
-    // be coming from the main thread, it's safe to do an update for lcd text
-    // at this point and see if lcd text needs to be disabled on any layers.
-    bool update_lcd_text = true;
-    sync_tree()->UpdateDrawProperties(update_lcd_text);
+    // more lazily when needed prior to drawing.
+    sync_tree()->UpdateDrawProperties();
     // Start working on newly created tiles immediately if needed.
     if (tile_manager_ && tile_priorities_dirty_)
       PrepareTiles();
@@ -476,7 +473,7 @@ static LayerImpl* NextScrollLayer(LayerImpl* layer) {
 }
 
 static ScrollBlocksOn EffectiveScrollBlocksOn(LayerImpl* layer) {
-  ScrollBlocksOn blocks = SCROLL_BLOCKS_ON_NONE;
+  ScrollBlocksOn blocks = ScrollBlocksOnNone;
   for (; layer; layer = NextScrollLayer(layer)) {
     blocks |= layer->scroll_blocks_on();
   }
@@ -495,7 +492,7 @@ bool LayerTreeHostImpl::DoTouchEventsBlockScrollAt(
   LayerImpl* layer_impl =
       active_tree_->FindLayerThatIsHitByPoint(device_viewport_point);
   ScrollBlocksOn blocking = EffectiveScrollBlocksOn(layer_impl);
-  if (!(blocking & SCROLL_BLOCKS_ON_START_TOUCH))
+  if (!(blocking & ScrollBlocksOnStartTouch))
     return false;
 
   // Now determine if there are actually any handlers at that point.
@@ -1049,8 +1046,7 @@ DrawResult LayerTreeHostImpl::PrepareToDraw(FrameData* frame) {
   UMA_HISTOGRAM_CUSTOM_COUNTS(
       "Compositing.NumActiveLayers", active_tree_->NumLayers(), 1, 400, 20);
 
-  bool update_lcd_text = false;
-  bool ok = active_tree_->UpdateDrawProperties(update_lcd_text);
+  bool ok = active_tree_->UpdateDrawProperties();
   DCHECK(ok) << "UpdateDrawProperties failed during draw";
 
   // This will cause NotifyTileStateChanged() to be called for any visible tiles
@@ -1623,19 +1619,12 @@ bool LayerTreeHostImpl::SwapBuffers(const LayerTreeHostImpl::FrameData& frame) {
   }
   CompositorFrameMetadata metadata = MakeCompositorFrameMetadata();
   active_tree()->FinishSwapPromises(&metadata);
-  for (auto& latency : metadata.latency_info) {
+  for (size_t i = 0; i < metadata.latency_info.size(); i++) {
     TRACE_EVENT_FLOW_STEP0(
         "input,benchmark",
         "LatencyInfo.Flow",
-        TRACE_ID_DONT_MANGLE(latency.trace_id),
+        TRACE_ID_DONT_MANGLE(metadata.latency_info[i].trace_id),
         "SwapBuffers");
-    // Only add the latency component once for renderer swap, not the browser
-    // swap.
-    if (!latency.FindLatency(ui::INPUT_EVENT_LATENCY_RENDERER_SWAP_COMPONENT,
-                             0, nullptr)) {
-      latency.AddLatencyNumber(ui::INPUT_EVENT_LATENCY_RENDERER_SWAP_COMPONENT,
-                               0, 0);
-    }
   }
   renderer_->SwapBuffers(metadata);
   return true;
@@ -2306,7 +2295,7 @@ LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
     // thread.
     ScrollStatus status =
         layer_impl->TryScroll(device_viewport_point, type, block_mode);
-    if (status == SCROLL_ON_MAIN_THREAD) {
+    if (status == ScrollOnMainThread) {
       *scroll_on_main_thread = true;
       return NULL;
     }
@@ -2318,7 +2307,7 @@ LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
     status =
         scroll_layer_impl->TryScroll(device_viewport_point, type, block_mode);
     // If any layer wants to divert the scroll event to the main thread, abort.
-    if (status == SCROLL_ON_MAIN_THREAD) {
+    if (status == ScrollOnMainThread) {
       *scroll_on_main_thread = true;
       return NULL;
     }
@@ -2327,7 +2316,7 @@ LayerImpl* LayerTreeHostImpl::FindScrollLayerForDeviceViewportPoint(
         scroll_layer_impl->have_scroll_event_handlers())
       *optional_has_ancestor_scroll_handler = true;
 
-    if (status == SCROLL_STARTED && !potentially_scrolling_layer_impl)
+    if (status == ScrollStarted && !potentially_scrolling_layer_impl)
       potentially_scrolling_layer_impl = scroll_layer_impl;
   }
 
@@ -2374,7 +2363,7 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollBegin(
         active_tree_->FindFirstScrollingLayerThatIsHitByPoint(
             device_viewport_point);
     if (scroll_layer_impl && !HasScrollAncestor(layer_impl, scroll_layer_impl))
-      return SCROLL_UNKNOWN;
+      return ScrollUnknown;
   }
 
   bool scroll_on_main_thread = false;
@@ -2387,18 +2376,18 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollBegin(
 
   if (scroll_on_main_thread) {
     UMA_HISTOGRAM_BOOLEAN("TryScroll.SlowScroll", true);
-    return SCROLL_ON_MAIN_THREAD;
+    return ScrollOnMainThread;
   }
 
   if (scrolling_layer_impl) {
     active_tree_->SetCurrentlyScrollingLayer(scrolling_layer_impl);
-    should_bubble_scrolls_ = (type != NON_BUBBLING_GESTURE);
-    wheel_scrolling_ = (type == WHEEL);
+    should_bubble_scrolls_ = (type != NonBubblingGesture);
+    wheel_scrolling_ = (type == Wheel);
     client_->RenewTreePriority();
     UMA_HISTOGRAM_BOOLEAN("TryScroll.SlowScroll", false);
-    return SCROLL_STARTED;
+    return ScrollStarted;
   }
-  return SCROLL_IGNORED;
+  return ScrollIgnored;
 }
 
 InputHandler::ScrollStatus LayerTreeHostImpl::ScrollAnimated(
@@ -2407,9 +2396,9 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollAnimated(
   if (LayerImpl* layer_impl = CurrentlyScrollingLayer()) {
     Animation* animation =
         layer_impl->layer_animation_controller()->GetAnimation(
-            Animation::SCROLL_OFFSET);
+            Animation::ScrollOffset);
     if (!animation)
-      return SCROLL_IGNORED;
+      return ScrollIgnored;
 
     ScrollOffsetAnimationCurve* curve =
         animation->curve()->ToScrollOffsetAnimationCurve();
@@ -2424,13 +2413,13 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollAnimated(
                        CurrentBeginFrameArgs().frame_time).InSecondsF(),
         new_target);
 
-    return SCROLL_STARTED;
+    return ScrollStarted;
   }
   // ScrollAnimated is only used for wheel scrolls. We use the same bubbling
   // behavior as ScrollBy to determine which layer to animate, but we do not
   // do the Android-specific things in ScrollBy like showing top controls.
-  InputHandler::ScrollStatus scroll_status = ScrollBegin(viewport_point, WHEEL);
-  if (scroll_status == SCROLL_STARTED) {
+  InputHandler::ScrollStatus scroll_status = ScrollBegin(viewport_point, Wheel);
+  if (scroll_status == ScrollStarted) {
     gfx::Vector2dF pending_delta = scroll_delta;
     for (LayerImpl* layer_impl = CurrentlyScrollingLayer(); layer_impl;
          layer_impl = layer_impl->parent()) {
@@ -2461,15 +2450,17 @@ InputHandler::ScrollStatus LayerTreeHostImpl::ScrollAnimated(
                                              EaseInOutTimingFunction::Create());
       curve->SetInitialValue(current_offset);
 
-      scoped_ptr<Animation> animation = Animation::Create(
-          curve.Pass(), AnimationIdProvider::NextAnimationId(),
-          AnimationIdProvider::NextGroupId(), Animation::SCROLL_OFFSET);
+      scoped_ptr<Animation> animation =
+          Animation::Create(curve.Pass(),
+                            AnimationIdProvider::NextAnimationId(),
+                            AnimationIdProvider::NextGroupId(),
+                            Animation::ScrollOffset);
       animation->set_is_impl_only(true);
 
       layer_impl->layer_animation_controller()->AddAnimation(animation.Pass());
 
       SetNeedsAnimate();
-      return SCROLL_STARTED;
+      return ScrollStarted;
     }
   }
   ScrollEnd();
@@ -2820,13 +2811,13 @@ void LayerTreeHostImpl::ScrollEnd() {
 
 InputHandler::ScrollStatus LayerTreeHostImpl::FlingScrollBegin() {
   if (!active_tree_->CurrentlyScrollingLayer())
-    return SCROLL_IGNORED;
+    return ScrollIgnored;
 
   if (settings_.ignore_root_layer_flings &&
       (active_tree_->CurrentlyScrollingLayer() == InnerViewportScrollLayer() ||
        active_tree_->CurrentlyScrollingLayer() == OuterViewportScrollLayer())) {
     ClearCurrentlyScrollingLayer();
-    return SCROLL_IGNORED;
+    return ScrollIgnored;
   }
 
   if (!wheel_scrolling_) {
@@ -2836,7 +2827,7 @@ InputHandler::ScrollStatus LayerTreeHostImpl::FlingScrollBegin() {
     should_bubble_scrolls_ = false;
   }
 
-  return SCROLL_STARTED;
+  return ScrollStarted;
 }
 
 float LayerTreeHostImpl::DeviceSpaceDistanceToLayer(
@@ -2880,9 +2871,12 @@ void LayerTreeHostImpl::MouseMoveAt(const gfx::Point& viewport_point) {
   }
 
   bool scroll_on_main_thread = false;
-  LayerImpl* scroll_layer_impl = FindScrollLayerForDeviceViewportPoint(
-      device_viewport_point, InputHandler::GESTURE, layer_impl,
-      &scroll_on_main_thread, NULL);
+  LayerImpl* scroll_layer_impl =
+      FindScrollLayerForDeviceViewportPoint(device_viewport_point,
+                                            InputHandler::Gesture,
+                                            layer_impl,
+                                            &scroll_on_main_thread,
+                                            NULL);
   if (scroll_on_main_thread || !scroll_layer_impl)
     return;
 
@@ -3379,9 +3373,11 @@ void LayerTreeHostImpl::CreateUIResource(UIResourceId uid,
       format = ETC1;
       break;
   }
-  id = resource_provider_->CreateResource(
-      bitmap.GetSize(), wrap_mode, ResourceProvider::TEXTURE_HINT_IMMUTABLE,
-      format);
+  id =
+      resource_provider_->CreateResource(bitmap.GetSize(),
+                                         wrap_mode,
+                                         ResourceProvider::TextureHintImmutable,
+                                         format);
 
   UIResourceData data;
   data.resource_id = id;
@@ -3391,8 +3387,11 @@ void LayerTreeHostImpl::CreateUIResource(UIResourceId uid,
   ui_resource_map_[uid] = data;
 
   AutoLockUIResourceBitmap bitmap_lock(bitmap);
-  resource_provider_->CopyToResource(id, bitmap_lock.GetPixels(),
-                                     bitmap.GetSize());
+  resource_provider_->SetPixels(id,
+                                bitmap_lock.GetPixels(),
+                                gfx::Rect(bitmap.GetSize()),
+                                gfx::Rect(bitmap.GetSize()),
+                                gfx::Vector2d(0, 0));
   MarkUIResourceNotEvicted(uid);
 }
 

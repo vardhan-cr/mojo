@@ -397,17 +397,17 @@ WebVector<WebRect> WebLayerImpl::touchEventHandlerRegion() const {
 }
 
 static_assert(static_cast<ScrollBlocksOn>(blink::WebScrollBlocksOnNone) ==
-                  SCROLL_BLOCKS_ON_NONE,
+                  ScrollBlocksOnNone,
               "ScrollBlocksOn and WebScrollBlocksOn enums must match");
 static_assert(static_cast<ScrollBlocksOn>(blink::WebScrollBlocksOnStartTouch) ==
-                  SCROLL_BLOCKS_ON_START_TOUCH,
+                  ScrollBlocksOnStartTouch,
               "ScrollBlocksOn and WebScrollBlocksOn enums must match");
 static_assert(static_cast<ScrollBlocksOn>(blink::WebScrollBlocksOnWheelEvent) ==
-                  SCROLL_BLOCKS_ON_WHEEL_EVENT,
+                  ScrollBlocksOnWheelEvent,
               "ScrollBlocksOn and WebScrollBlocksOn enums must match");
 static_assert(
     static_cast<ScrollBlocksOn>(blink::WebScrollBlocksOnScrollEvent) ==
-        SCROLL_BLOCKS_ON_SCROLL_EVENT,
+        ScrollBlocksOnScrollEvent,
     "ScrollBlocksOn and WebScrollBlocksOn enums must match");
 
 void WebLayerImpl::setScrollBlocksOn(blink::WebScrollBlocksOn blocks) {

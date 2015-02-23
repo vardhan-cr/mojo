@@ -34,8 +34,7 @@ class FakePicturePile : public PicturePile {
       const gfx::Size& layer_bounds);
 
   // PicturePile overrides.
-  scoped_refptr<RasterSource> CreateRasterSource(
-      bool can_use_lcd_text) const override;
+  scoped_refptr<RasterSource> CreateRasterSource() const override;
 
   using PicturePile::buffer_pixels;
   using PicturePile::CanRasterSlowTileCheck;

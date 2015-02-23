@@ -42,9 +42,9 @@ COMPILE_ASSERT(
     cc::YUVVideoDrawQuad::REC_601 ==
         static_cast<cc::YUVVideoDrawQuad::ColorSpace>(YUV_COLOR_SPACE_REC_601),
     rec_601_enum_matches);
-COMPILE_ASSERT(cc::YUVVideoDrawQuad::JPEG ==
+COMPILE_ASSERT(cc::YUVVideoDrawQuad::REC_601_JPEG ==
                    static_cast<cc::YUVVideoDrawQuad::ColorSpace>(
-                       YUV_COLOR_SPACE_JPEG),
+                       YUV_COLOR_SPACE_REC_601_JPEG),
                rec_601_jpeg_enum_matches);
 
 namespace {
