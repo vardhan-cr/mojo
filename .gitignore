@@ -23,7 +23,6 @@ v8.log
 # TODO(vtl): Check if this is still true.
 /c
 /dart/
-/mojo/public/tools/prebuilt/
 /native_client/
 /out/
 /out_*/
