@@ -220,9 +220,7 @@ void View::SetVisible(bool value) {
 
   if (manager_)
     static_cast<ViewManagerClientImpl*>(manager_)->SetVisible(id_, value);
-  FOR_EACH_OBSERVER(ViewObserver, observers_, OnViewVisibilityChanging(this));
-  visible_ = value;
-  NotifyViewVisibilityChanged(this);
+  LocalSetVisible(value);
 }
 
 void View::SetSharedProperty(const std::string& name,
@@ -529,6 +527,15 @@ void View::LocalSetDrawn(bool value) {
   FOR_EACH_OBSERVER(ViewObserver, observers_, OnViewDrawnChanging(this));
   drawn_ = value;
   FOR_EACH_OBSERVER(ViewObserver, observers_, OnViewDrawnChanged(this));
+}
+
+void View::LocalSetVisible(bool visible) {
+  if (visible_ == visible)
+    return;
+
+  FOR_EACH_OBSERVER(ViewObserver, observers_, OnViewVisibilityChanging(this));
+  visible_ = visible;
+  NotifyViewVisibilityChanged(this);
 }
 
 void View::NotifyViewVisibilityChanged(View* target) {

@@ -159,6 +159,7 @@ class View {
   void LocalSetViewportMetrics(const ViewportMetrics& old_metrics,
                                const ViewportMetrics& new_metrics);
   void LocalSetDrawn(bool drawn);
+  void LocalSetVisible(bool visible);
 
   // Methods implementing visibility change notifications. See ViewObserver
   // for more details.

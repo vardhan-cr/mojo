@@ -379,7 +379,7 @@ void ViewManagerClientImpl::OnViewVisibilityChanged(Id view_id, bool visible) {
   // Deal with this some how.
   View* view = GetViewById(view_id);
   if (view)
-    view->SetVisible(visible);
+    ViewPrivate(view).LocalSetVisible(visible);
 }
 
 void ViewManagerClientImpl::OnViewDrawnStateChanged(Id view_id, bool drawn) {

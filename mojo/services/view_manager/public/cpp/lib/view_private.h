@@ -59,6 +59,7 @@ class ViewPrivate {
     view_->LocalSetBounds(old_bounds, new_bounds);
   }
   void LocalSetDrawn(bool drawn) { view_->LocalSetDrawn(drawn); }
+  void LocalSetVisible(bool visible) { view_->LocalSetVisible(visible); }
 
  private:
   View* view_;
