@@ -126,8 +126,6 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   const MojoCreateDataPipeOptions& validated_options() const {
     return validated_options_;
   }
-  // TODO(vtl): Remove this.
-  bool may_discard() const { return false; }
   size_t element_num_bytes() const {
     return validated_options_.element_num_bytes;
   }

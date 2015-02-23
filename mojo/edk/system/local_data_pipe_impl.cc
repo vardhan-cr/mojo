@@ -53,30 +53,15 @@ MojoResult LocalDataPipeImpl::ProducerWriteData(
   DCHECK_GT(max_num_bytes_to_write, 0u);
   DCHECK(consumer_open());
 
-  size_t num_bytes_to_write = 0;
-  if (may_discard()) {
-    if (min_num_bytes_to_write > capacity_num_bytes())
-      return MOJO_RESULT_OUT_OF_RANGE;
-
-    num_bytes_to_write = std::min(static_cast<size_t>(max_num_bytes_to_write),
-                                  capacity_num_bytes());
-    if (num_bytes_to_write > capacity_num_bytes() - current_num_bytes_) {
-      // Discard as much as needed (discard oldest first).
-      MarkDataAsConsumed(num_bytes_to_write -
-                         (capacity_num_bytes() - current_num_bytes_));
-      // No need to wake up write waiters, since we're definitely going to leave
-      // the buffer full.
-    }
-  } else {
-    if (min_num_bytes_to_write > capacity_num_bytes() - current_num_bytes_) {
-      // Don't return "should wait" since you can't wait for a specified amount
-      // of data.
-      return MOJO_RESULT_OUT_OF_RANGE;
-    }
-
-    num_bytes_to_write = std::min(static_cast<size_t>(max_num_bytes_to_write),
-                                  capacity_num_bytes() - current_num_bytes_);
+  if (min_num_bytes_to_write > capacity_num_bytes() - current_num_bytes_) {
+    // Don't return "should wait" since you can't wait for a specified amount
+    // of data.
+    return MOJO_RESULT_OUT_OF_RANGE;
   }
+
+  size_t num_bytes_to_write =
+      std::min(static_cast<size_t>(max_num_bytes_to_write),
+               capacity_num_bytes() - current_num_bytes_);
   if (num_bytes_to_write == 0)
     return MOJO_RESULT_SHOULD_WAIT;
 
@@ -114,21 +99,9 @@ MojoResult LocalDataPipeImpl::ProducerBeginWriteData(
 
   size_t max_num_bytes_to_write = GetMaxNumBytesToWrite();
   if (min_num_bytes_to_write > max_num_bytes_to_write) {
-    // In "may discard" mode, we can always write from the write index to the
-    // end of the buffer.
-    if (may_discard() &&
-        min_num_bytes_to_write <= capacity_num_bytes() - write_index) {
-      // To do so, we need to discard an appropriate amount of data.
-      // We should only reach here if the start index is after the write index!
-      DCHECK_GE(start_index_, write_index);
-      DCHECK_GT(min_num_bytes_to_write - max_num_bytes_to_write, 0u);
-      MarkDataAsConsumed(min_num_bytes_to_write - max_num_bytes_to_write);
-      max_num_bytes_to_write = min_num_bytes_to_write;
-    } else {
-      // Don't return "should wait" since you can't wait for a specified amount
-      // of data.
-      return MOJO_RESULT_OUT_OF_RANGE;
-    }
+    // Don't return "should wait" since you can't wait for a specified amount
+    // of data.
+    return MOJO_RESULT_OUT_OF_RANGE;
   }
 
   // Don't go into a two-phase write if there's no room.
@@ -154,7 +127,7 @@ MojoResult LocalDataPipeImpl::ProducerEndWriteData(uint32_t num_bytes_written) {
 HandleSignalsState LocalDataPipeImpl::ProducerGetHandleSignalsState() const {
   HandleSignalsState rv;
   if (consumer_open()) {
-    if ((may_discard() || current_num_bytes_ < capacity_num_bytes()) &&
+    if (current_num_bytes_ < capacity_num_bytes() &&
         !producer_in_two_phase_write())
       rv.satisfied_signals |= MOJO_HANDLE_SIGNAL_WRITABLE;
     rv.satisfiable_signals |= MOJO_HANDLE_SIGNAL_WRITABLE;

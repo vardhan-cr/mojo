@@ -86,7 +86,6 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
 
   DataPipe* owner() const { return owner_; }
 
-  bool may_discard() const { return owner_->may_discard(); }
   size_t element_num_bytes() const { return owner_->element_num_bytes(); }
   size_t capacity_num_bytes() const { return owner_->capacity_num_bytes(); }
   bool producer_open() const { return owner_->producer_open_no_lock(); }
