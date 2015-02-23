@@ -534,19 +534,26 @@ void LayerTreeImpl::ClearViewportLayers() {
   outer_viewport_scroll_layer_ = NULL;
 }
 
-bool LayerTreeImpl::UpdateDrawProperties() {
+bool LayerTreeImpl::UpdateDrawProperties(bool update_lcd_text) {
   if (!needs_update_draw_properties_)
     return true;
 
-  // For max_texture_size.
+  // Calling UpdateDrawProperties must clear this flag, so there can be no
+  // early outs before this.
+  needs_update_draw_properties_ = false;
+
+  // For max_texture_size.  When the renderer is re-created in
+  // CreateAndSetRenderer, the needs update draw properties flag is set
+  // again.
   if (!layer_tree_host_impl_->renderer())
     return false;
 
+  // Clear this after the renderer early out, as it should still be
+  // possible to hit test even without a renderer.
+  render_surface_layer_list_.clear();
+
   if (!root_layer())
     return false;
-
-  needs_update_draw_properties_ = false;
-  render_surface_layer_list_.clear();
 
   {
     TRACE_EVENT2(
@@ -645,6 +652,25 @@ bool LayerTreeImpl::UpdateDrawProperties() {
 
     unoccluded_screen_space_region_ =
         occlusion_tracker.ComputeVisibleRegionInScreen();
+  }
+
+  // It'd be ideal if this could be done earlier, but when the raster source
+  // is updated from the main thread during push properties, update draw
+  // properties has not occurred yet and so it's not clear whether or not the
+  // layer can or cannot use lcd text.  So, this is the cleanup pass to
+  // determine if the raster source needs to be replaced with a non-lcd
+  // raster source due to draw properties.
+  if (update_lcd_text) {
+    // TODO(enne): Make LTHI::sync_tree return this value.
+    LayerTreeImpl* sync_tree =
+        layer_tree_host_impl_->proxy()->CommitToActiveTree()
+            ? layer_tree_host_impl_->active_tree()
+            : layer_tree_host_impl_->pending_tree();
+    // If this is not the sync tree, then it is not safe to update lcd text
+    // as it causes invalidations and the tiles may be in use.
+    DCHECK_EQ(this, sync_tree);
+    for (const auto& layer : picture_layers_)
+      layer->UpdateCanUseLCDTextAfterCommit();
   }
 
   {
@@ -859,6 +885,10 @@ bool LayerTreeImpl::IsRecycleTree() const {
   return layer_tree_host_impl_->recycle_tree() == this;
 }
 
+bool LayerTreeImpl::IsSyncTree() const {
+  return layer_tree_host_impl_->sync_tree() == this;
+}
+
 LayerImpl* LayerTreeImpl::FindActiveTreeLayerById(int id) {
   LayerTreeImpl* tree = layer_tree_host_impl_->active_tree();
   if (!tree)
@@ -912,7 +942,7 @@ LayerTreeImpl::CreateScrollbarAnimationController(LayerImpl* scrolling_layer) {
   base::TimeDelta duration =
       base::TimeDelta::FromMilliseconds(settings().scrollbar_fade_duration_ms);
   switch (settings().scrollbar_animator) {
-    case LayerTreeSettings::LinearFade: {
+    case LayerTreeSettings::LINEAR_FADE: {
       return ScrollbarAnimationControllerLinearFade::Create(
           scrolling_layer,
           layer_tree_host_impl_,
@@ -920,14 +950,14 @@ LayerTreeImpl::CreateScrollbarAnimationController(LayerImpl* scrolling_layer) {
           resize_delay,
           duration);
     }
-    case LayerTreeSettings::Thinning: {
+    case LayerTreeSettings::THINNING: {
       return ScrollbarAnimationControllerThinning::Create(scrolling_layer,
                                                           layer_tree_host_impl_,
                                                           delay,
                                                           resize_delay,
                                                           duration);
     }
-    case LayerTreeSettings::NoAnimator:
+    case LayerTreeSettings::NO_ANIMATOR:
       NOTREACHED();
       break;
   }
@@ -1161,13 +1191,13 @@ bool LayerTreeImpl::IsUIResourceOpaque(UIResourceId uid) const {
 void LayerTreeImpl::ProcessUIResourceRequestQueue() {
   for (const auto& req : ui_resource_request_queue_) {
     switch (req.GetType()) {
-      case UIResourceRequest::UIResourceCreate:
+      case UIResourceRequest::UI_RESOURCE_CREATE:
         layer_tree_host_impl_->CreateUIResource(req.GetId(), req.GetBitmap());
         break;
-      case UIResourceRequest::UIResourceDelete:
+      case UIResourceRequest::UI_RESOURCE_DELETE:
         layer_tree_host_impl_->DeleteUIResource(req.GetId());
         break;
-      case UIResourceRequest::UIResourceInvalidRequest:
+      case UIResourceRequest::UI_RESOURCE_INVALID_REQUEST:
         NOTREACHED();
         break;
     }
@@ -1461,7 +1491,8 @@ LayerImpl* LayerTreeImpl::FindLayerThatIsHitByPoint(
     const gfx::PointF& screen_space_point) {
   if (!root_layer())
     return NULL;
-  if (!UpdateDrawProperties())
+  bool update_lcd_text = false;
+  if (!UpdateDrawProperties(update_lcd_text))
     return NULL;
   FindClosestMatchingLayerDataForRecursion data_for_recursion;
   FindClosestMatchingLayer(screen_space_point,
@@ -1503,7 +1534,8 @@ LayerImpl* LayerTreeImpl::FindLayerWithWheelHandlerThatIsHitByPoint(
     const gfx::PointF& screen_space_point) {
   if (!root_layer())
     return NULL;
-  if (!UpdateDrawProperties())
+  bool update_lcd_text = false;
+  if (!UpdateDrawProperties(update_lcd_text))
     return NULL;
   FindWheelEventLayerFunctor func;
   FindClosestMatchingLayerDataForRecursion data_for_recursion;
@@ -1523,7 +1555,8 @@ LayerImpl* LayerTreeImpl::FindLayerThatIsHitByPointInTouchHandlerRegion(
     const gfx::PointF& screen_space_point) {
   if (!root_layer())
     return NULL;
-  if (!UpdateDrawProperties())
+  bool update_lcd_text = false;
+  if (!UpdateDrawProperties(update_lcd_text))
     return NULL;
   FindTouchEventLayerFunctor func = {screen_space_point};
   FindClosestMatchingLayerDataForRecursion data_for_recursion;

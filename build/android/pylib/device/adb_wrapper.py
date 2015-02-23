@@ -299,14 +299,14 @@ class AdbWrapper(object):
           cmd, 'path does not specify an accessible directory in the device',
           device_serial=self._device_serial)
 
-  def Logcat(self, clear=False, dump=False, filter_spec=None,
+  def Logcat(self, clear=False, dump=False, filter_specs=None,
              logcat_format=None, timeout=None, retries=_DEFAULT_RETRIES):
     """Get an iterable over the logcat output.
 
     Args:
       clear: If true, clear the logcat.
       dump: If true, dump the current logcat contents.
-      filter_spec: If set, spec to filter the logcat.
+      filter_specs: If set, a list of specs to filter the logcat.
       logcat_format: If set, the format in which the logcat should be output.
         Options include "brief", "process", "tag", "thread", "raw", "time",
         "threadtime", and "long"
@@ -328,14 +328,14 @@ class AdbWrapper(object):
       use_iter = False
     if logcat_format:
       cmd.extend(['-v', logcat_format])
-    if filter_spec is not None:
-      cmd.append(filter_spec)
+    if filter_specs:
+      cmd.extend(filter_specs)
 
     if use_iter:
       return self._IterRunDeviceAdbCmd(cmd, timeout)
     else:
       timeout = timeout if timeout is not None else _DEFAULT_TIMEOUT
-      return self._RunDeviceAdbCmd(cmd, timeout, retries)
+      return self._RunDeviceAdbCmd(cmd, timeout, retries).splitlines()
 
   def Forward(self, local, remote, timeout=_DEFAULT_TIMEOUT,
               retries=_DEFAULT_RETRIES):

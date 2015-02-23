@@ -1223,6 +1223,15 @@ void GL_BINDING_CALL MockGLInterface::Mock_glGetProgramInfoLog(GLuint program,
   interface_->GetProgramInfoLog(program, bufsize, length, infolog);
 }
 
+GLint GL_BINDING_CALL
+MockGLInterface::Mock_glGetProgramResourceLocation(GLuint program,
+                                                   GLenum programInterface,
+                                                   const char* name) {
+  MakeFunctionUnique("glGetProgramResourceLocation");
+  return interface_->GetProgramResourceLocation(program, programInterface,
+                                                name);
+}
+
 void GL_BINDING_CALL MockGLInterface::Mock_glGetProgramiv(GLuint program,
                                                           GLenum pname,
                                                           GLint* params) {
@@ -1396,6 +1405,12 @@ void GL_BINDING_CALL MockGLInterface::Mock_glGetShaderiv(GLuint shader,
 const GLubyte* GL_BINDING_CALL MockGLInterface::Mock_glGetString(GLenum name) {
   MakeFunctionUnique("glGetString");
   return interface_->GetString(name);
+}
+
+const GLubyte* GL_BINDING_CALL
+MockGLInterface::Mock_glGetStringi(GLenum name, GLuint index) {
+  MakeFunctionUnique("glGetStringi");
+  return interface_->GetStringi(name, index);
 }
 
 void GL_BINDING_CALL MockGLInterface::Mock_glGetSynciv(GLsync sync,
@@ -2860,6 +2875,8 @@ void* GL_BINDING_CALL MockGLInterface::GetGLProcAddress(const char* name) {
     return reinterpret_cast<void*>(Mock_glGetProgramBinaryOES);
   if (strcmp(name, "glGetProgramInfoLog") == 0)
     return reinterpret_cast<void*>(Mock_glGetProgramInfoLog);
+  if (strcmp(name, "glGetProgramResourceLocation") == 0)
+    return reinterpret_cast<void*>(Mock_glGetProgramResourceLocation);
   if (strcmp(name, "glGetProgramiv") == 0)
     return reinterpret_cast<void*>(Mock_glGetProgramiv);
   if (strcmp(name, "glGetQueryObjecti64v") == 0)
@@ -2906,6 +2923,8 @@ void* GL_BINDING_CALL MockGLInterface::GetGLProcAddress(const char* name) {
     return reinterpret_cast<void*>(Mock_glGetShaderiv);
   if (strcmp(name, "glGetString") == 0)
     return reinterpret_cast<void*>(Mock_glGetString);
+  if (strcmp(name, "glGetStringi") == 0)
+    return reinterpret_cast<void*>(Mock_glGetStringi);
   if (strcmp(name, "glGetSynciv") == 0)
     return reinterpret_cast<void*>(Mock_glGetSynciv);
   if (strcmp(name, "glGetTexLevelParameterfv") == 0)

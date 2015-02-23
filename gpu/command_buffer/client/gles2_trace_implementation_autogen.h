@@ -69,6 +69,7 @@ void ClearColor(GLclampf red,
                 GLclampf alpha) override;
 void ClearDepthf(GLclampf depth) override;
 void ClearStencil(GLint s) override;
+GLenum ClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) override;
 void ColorMask(GLboolean red,
                GLboolean green,
                GLboolean blue,
@@ -501,6 +502,7 @@ void VertexAttribPointer(GLuint indx,
                          GLsizei stride,
                          const void* ptr) override;
 void Viewport(GLint x, GLint y, GLsizei width, GLsizei height) override;
+void WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) override;
 void BlitFramebufferCHROMIUM(GLint srcX0,
                              GLint srcY0,
                              GLint srcX1,

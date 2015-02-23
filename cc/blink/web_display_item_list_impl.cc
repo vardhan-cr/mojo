@@ -35,14 +35,7 @@ scoped_refptr<cc::DisplayItemList> WebDisplayItemListImpl::ToDisplayItemList() {
 
 void WebDisplayItemListImpl::appendDrawingItem(const SkPicture* picture) {
   display_item_list_->AppendItem(cc::DrawingDisplayItem::Create(
-      skia::SharePtr(const_cast<SkPicture*>(picture)), gfx::PointF(0, 0)));
-}
-
-void WebDisplayItemListImpl::appendDrawingItem(
-    SkPicture* picture,
-    const blink::WebFloatPoint& location) {
-  display_item_list_->AppendItem(
-      cc::DrawingDisplayItem::Create(skia::SharePtr(picture), location));
+      skia::SharePtr(const_cast<SkPicture*>(picture))));
 }
 
 void WebDisplayItemListImpl::appendClipItem(
@@ -101,7 +94,6 @@ void WebDisplayItemListImpl::appendEndTransparencyItem() {
   display_item_list_->AppendItem(cc::EndTransparencyDisplayItem::Create());
 }
 
-#if FILTER_DISPLAY_ITEM_USES_FILTER_OPERATIONS
 void WebDisplayItemListImpl::appendFilterItem(
     const blink::WebFilterOperations& filters,
     const blink::WebFloatRect& bounds) {
@@ -110,20 +102,21 @@ void WebDisplayItemListImpl::appendFilterItem(
   display_item_list_->AppendItem(
       cc::FilterDisplayItem::Create(filters_impl.AsFilterOperations(), bounds));
 }
-#else
-void WebDisplayItemListImpl::appendFilterItem(
-    SkImageFilter* filter,
-    const blink::WebFloatRect& bounds) {
-  cc::FilterOperations filter_operations;
-  filter_operations.Append(
-      cc::FilterOperation::CreateReferenceFilter(skia::SharePtr(filter)));
-  display_item_list_->AppendItem(
-      cc::FilterDisplayItem::Create(filter_operations, bounds));
-}
-#endif
 
 void WebDisplayItemListImpl::appendEndFilterItem() {
   display_item_list_->AppendItem(cc::EndFilterDisplayItem::Create());
+}
+
+void WebDisplayItemListImpl::appendScrollItem(
+    const blink::WebSize& scrollOffset,
+    ScrollContainerId) {
+  SkMatrix44 matrix;
+  matrix.setTranslate(-scrollOffset.width, -scrollOffset.height, 0);
+  appendTransformItem(matrix);
+}
+
+void WebDisplayItemListImpl::appendEndScrollItem() {
+  appendEndTransformItem();
 }
 
 WebDisplayItemListImpl::~WebDisplayItemListImpl() {

@@ -161,8 +161,8 @@ static gfx::Vector2dF ComputeChangeOfBasisTranslation(
 }
 
 enum TranslateRectDirection {
-  TranslateRectDirectionToAncestor,
-  TranslateRectDirectionToDescendant
+  TRANSLATE_RECT_DIRECTION_TO_ANCESTOR,
+  TRANSLATE_RECT_DIRECTION_TO_DESCENDANT
 };
 
 template <typename LayerType>
@@ -172,7 +172,7 @@ static gfx::Rect TranslateRectToTargetSpace(const LayerType& ancestor_layer,
                                             TranslateRectDirection direction) {
   gfx::Vector2dF translation = ComputeChangeOfBasisTranslation<LayerType>(
       ancestor_layer, descendant_layer);
-  if (direction == TranslateRectDirectionToDescendant)
+  if (direction == TRANSLATE_RECT_DIRECTION_TO_DESCENDANT)
     translation.Scale(-1.f);
   return gfx::ToEnclosingRect(
       gfx::RectF(rect.origin() + translation, rect.size()));
@@ -211,20 +211,16 @@ static void UpdateClipRectsForClipChild(
   // clip rects will want to be in its target space, not ours.
   if (clip_parent == layer->clip_parent()) {
     *clip_rect_in_parent_target_space = TranslateRectToTargetSpace<LayerType>(
-        *clip_parent,
-        *layer->parent(),
-        *clip_rect_in_parent_target_space,
-        TranslateRectDirectionToDescendant);
+        *clip_parent, *layer->parent(), *clip_rect_in_parent_target_space,
+        TRANSLATE_RECT_DIRECTION_TO_DESCENDANT);
   } else {
     // If we're being clipped by our scroll parent, we must translate through
     // our common ancestor. This happens to be our parent, so it is sufficent to
     // translate from our clip parent's space to the space of its ancestor (our
     // parent).
-    *clip_rect_in_parent_target_space =
-        TranslateRectToTargetSpace<LayerType>(*layer->parent(),
-                                              *clip_parent,
-                                              *clip_rect_in_parent_target_space,
-                                              TranslateRectDirectionToAncestor);
+    *clip_rect_in_parent_target_space = TranslateRectToTargetSpace<LayerType>(
+        *layer->parent(), *clip_parent, *clip_rect_in_parent_target_space,
+        TRANSLATE_RECT_DIRECTION_TO_ANCESTOR);
   }
 }
 
@@ -286,10 +282,8 @@ void UpdateAccumulatedSurfaceState(
     // so we'll need to transform it before it is applied.
     if (layer->clip_parent()) {
       clip_rect = TranslateRectToTargetSpace<LayerType>(
-          *layer->clip_parent(),
-          *layer,
-          clip_rect,
-          TranslateRectDirectionToDescendant);
+          *layer->clip_parent(), *layer, clip_rect,
+          TRANSLATE_RECT_DIRECTION_TO_DESCENDANT);
     }
     target_rect.Intersect(clip_rect);
   }
@@ -1203,12 +1197,30 @@ struct PreCalculateMetaInformationRecursiveData {
   }
 };
 
+static bool ValidateRenderSurface(LayerImpl* layer) {
+  // This test verifies that there are no cases where a LayerImpl needs
+  // a render surface, but doesn't have one.
+  if (layer->render_surface())
+    return true;
+
+  return layer->filters().IsEmpty() && layer->background_filters().IsEmpty() &&
+         !layer->mask_layer() && !layer->replica_layer() &&
+         !IsRootLayer(layer) && !layer->is_root_for_isolated_group() &&
+         !layer->HasCopyRequest();
+}
+
+static bool ValidateRenderSurface(Layer* layer) {
+  return true;
+}
+
 // Recursively walks the layer tree to compute any information that is needed
 // before doing the main recursion.
 template <typename LayerType>
 static void PreCalculateMetaInformation(
     LayerType* layer,
     PreCalculateMetaInformationRecursiveData* recursive_data) {
+  DCHECK(ValidateRenderSurface(layer));
+
   layer->draw_properties().sorted_for_recursion = false;
   layer->draw_properties().has_child_with_a_scroll_parent = false;
 

@@ -154,9 +154,9 @@ bool ThreadProxy::IsStarted() const {
 }
 
 bool ThreadProxy::CommitToActiveTree() const {
-  // With ThreadProxy we use a pending tree and activate it once it's ready to
-  // draw.
-  return false;
+  // With ThreadProxy and impl-side painting, we use a pending tree and activate
+  // it once it's ready to draw.
+  return !impl().layer_tree_host_impl->settings().impl_side_painting;
 }
 
 void ThreadProxy::SetLayerTreeHostClientReady() {
@@ -701,6 +701,12 @@ void ThreadProxy::ScheduledActionSendBeginMainFrame() {
   impl().timing_history.DidBeginMainFrame();
 }
 
+void ThreadProxy::SendBeginMainFrameNotExpectedSoon() {
+  Proxy::MainThreadTaskRunner()->PostTask(
+      FROM_HERE, base::Bind(&ThreadProxy::BeginMainFrameNotExpectedSoon,
+                            main_thread_weak_ptr_));
+}
+
 void ThreadProxy::BeginMainFrame(
     scoped_ptr<BeginMainFrameAndCommitState> begin_main_frame_state) {
   benchmark_instrumentation::ScopedBeginFrameTask begin_frame_task(
@@ -859,6 +865,12 @@ void ThreadProxy::BeginMainFrame(
 
   layer_tree_host()->CommitComplete();
   layer_tree_host()->DidBeginMainFrame();
+}
+
+void ThreadProxy::BeginMainFrameNotExpectedSoon() {
+  TRACE_EVENT0("cc", "ThreadProxy::BeginMainFrameNotExpectedSoon");
+  DCHECK(IsMainThread());
+  layer_tree_host()->BeginMainFrameNotExpectedSoon();
 }
 
 void ThreadProxy::StartCommitOnImplThread(CompletionEvent* completion,
@@ -1021,8 +1033,11 @@ DrawResult ThreadProxy::DrawSwapInternal(bool forced_draw) {
   impl().timing_history.DidStartDrawing();
   base::AutoReset<bool> mark_inside(&impl().inside_draw, true);
 
-  if (impl().layer_tree_host_impl->pending_tree())
-    impl().layer_tree_host_impl->pending_tree()->UpdateDrawProperties();
+  if (impl().layer_tree_host_impl->pending_tree()) {
+    bool update_lcd_text = false;
+    impl().layer_tree_host_impl->pending_tree()->UpdateDrawProperties(
+        update_lcd_text);
+  }
 
   // This method is called on a forced draw, regardless of whether we are able
   // to produce a frame, as the calling site on main thread is blocked until its

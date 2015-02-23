@@ -9,7 +9,6 @@
 #include "base/basictypes.h"
 #include "base/bind.h"
 #include "base/callback.h"
-#include "base/strings/stringprintf.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace {
@@ -686,8 +685,11 @@ TEST(ScopedPtrTest, SelfResetWithCustomDeleterOptOut) {
 // value first.
 TEST(ScopedPtrTest, LoggingDoesntConvertToBoolean) {
   scoped_ptr<int> x(new int);
-  std::stringstream s;
-  s << x;
-  std::string expected = base::StringPrintf("%p", x.get());
-  EXPECT_EQ(expected, s.str());
+  std::stringstream s1;
+  s1 << x;
+
+  std::stringstream s2;
+  s2 << x.get();
+
+  EXPECT_EQ(s2.str(), s1.str());
 }

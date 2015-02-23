@@ -133,7 +133,6 @@ LayerTreeHost::LayerTreeHost(
       partial_texture_update_requests_(0),
       did_complete_scale_animation_(false),
       in_paint_layer_contents_(false),
-      total_frames_used_for_lcd_text_metrics_(0),
       id_(s_layer_tree_host_sequence_number.GetNext() + 1),
       next_commit_forces_redraw_(false),
       shared_bitmap_manager_(shared_bitmap_manager),
@@ -231,6 +230,10 @@ void LayerTreeHost::WillBeginMainFrame() {
 
 void LayerTreeHost::DidBeginMainFrame() {
   client_->DidBeginMainFrame();
+}
+
+void LayerTreeHost::BeginMainFrameNotExpectedSoon() {
+  client_->BeginMainFrameNotExpectedSoon();
 }
 
 void LayerTreeHost::BeginMainFrame(const BeginFrameArgs& args) {
@@ -559,19 +562,19 @@ void LayerTreeHost::SetAnimationEvents(
         animation_controllers.find(event_layer_id);
     if (iter != animation_controllers.end()) {
       switch ((*events)[event_index].type) {
-        case AnimationEvent::Started:
+        case AnimationEvent::STARTED:
           (*iter).second->NotifyAnimationStarted((*events)[event_index]);
           break;
 
-        case AnimationEvent::Finished:
+        case AnimationEvent::FINISHED:
           (*iter).second->NotifyAnimationFinished((*events)[event_index]);
           break;
 
-        case AnimationEvent::Aborted:
+        case AnimationEvent::ABORTED:
           (*iter).second->NotifyAnimationAborted((*events)[event_index]);
           break;
 
-        case AnimationEvent::PropertyUpdate:
+        case AnimationEvent::PROPERTY_UPDATE:
           (*iter).second->NotifyAnimationPropertyUpdate((*events)[event_index]);
           break;
       }
@@ -809,18 +812,6 @@ void LayerTreeHost::RecordGpuRasterizationHistogram() {
   gpu_rasterization_histogram_recorded_ = true;
 }
 
-void LayerTreeHost::CalculateLCDTextMetricsCallback(Layer* layer) {
-  if (!layer->SupportsLCDText())
-    return;
-
-  lcd_text_metrics_.total_num_cc_layers++;
-  if (layer->draw_properties().can_use_lcd_text) {
-    lcd_text_metrics_.total_num_cc_layers_can_use_lcd_text++;
-    if (layer->contents_opaque())
-      lcd_text_metrics_.total_num_cc_layers_will_use_lcd_text++;
-  }
-}
-
 bool LayerTreeHost::UsingSharedMemoryResources() {
   return GetRendererCapabilities().using_shared_memory_resources;
 }
@@ -861,29 +852,6 @@ bool LayerTreeHost::UpdateLayers(Layer* root_layer,
         settings_.verify_property_trees, &update_list,
         render_surface_layer_list_id);
     LayerTreeHostCommon::CalculateDrawProperties(&inputs);
-
-    if (total_frames_used_for_lcd_text_metrics_ <=
-        kTotalFramesToUseForLCDTextMetrics) {
-      LayerTreeHostCommon::CallFunctionForSubtree(
-          root_layer,
-          base::Bind(&LayerTreeHost::CalculateLCDTextMetricsCallback,
-                     base::Unretained(this)));
-      total_frames_used_for_lcd_text_metrics_++;
-    }
-
-    if (total_frames_used_for_lcd_text_metrics_ ==
-        kTotalFramesToUseForLCDTextMetrics) {
-      total_frames_used_for_lcd_text_metrics_++;
-
-      UMA_HISTOGRAM_PERCENTAGE(
-          "Renderer4.LCDText.PercentageOfCandidateLayers",
-          lcd_text_metrics_.total_num_cc_layers_can_use_lcd_text * 100.0 /
-          lcd_text_metrics_.total_num_cc_layers);
-      UMA_HISTOGRAM_PERCENTAGE(
-          "Renderer4.LCDText.PercentageOfAALayers",
-          lcd_text_metrics_.total_num_cc_layers_will_use_lcd_text * 100.0 /
-          lcd_text_metrics_.total_num_cc_layers_can_use_lcd_text);
-    }
   }
 
   // Reset partial texture update requests.
@@ -1251,8 +1219,7 @@ UIResourceId LayerTreeHost::CreateUIResource(UIResourceClient* client) {
          ui_resource_client_map_.end());
 
   bool resource_lost = false;
-  UIResourceRequest request(UIResourceRequest::UIResourceCreate,
-                            next_id,
+  UIResourceRequest request(UIResourceRequest::UI_RESOURCE_CREATE, next_id,
                             client->GetBitmap(next_id, resource_lost));
   ui_resource_request_queue_.push_back(request);
 
@@ -1270,7 +1237,7 @@ void LayerTreeHost::DeleteUIResource(UIResourceId uid) {
   if (iter == ui_resource_client_map_.end())
     return;
 
-  UIResourceRequest request(UIResourceRequest::UIResourceDelete, uid);
+  UIResourceRequest request(UIResourceRequest::UI_RESOURCE_DELETE, uid);
   ui_resource_request_queue_.push_back(request);
   ui_resource_client_map_.erase(iter);
 }
@@ -1282,8 +1249,7 @@ void LayerTreeHost::RecreateUIResources() {
     UIResourceId uid = iter->first;
     const UIResourceClientData& data = iter->second;
     bool resource_lost = true;
-    UIResourceRequest request(UIResourceRequest::UIResourceCreate,
-                              uid,
+    UIResourceRequest request(UIResourceRequest::UI_RESOURCE_CREATE, uid,
                               data.client->GetBitmap(uid, resource_lost));
     ui_resource_request_queue_.push_back(request);
   }
