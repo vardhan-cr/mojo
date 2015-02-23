@@ -40,8 +40,6 @@ public class JavaHandler {
     private static final String DEX_OUTPUT_DIRECTORY = "dex_output";
     private static final String APP_DIRECTORY = "applications";
 
-    private static final int BUFFER_SIZE = 1024;
-
     /**
      * Deletes directories holding the temporary files.
      */
@@ -76,10 +74,8 @@ public class JavaHandler {
      *
      * @param context the application context
      * @param archivePath the path of the archive containing the application to be run
-     * @param handle handle to the shell to be passed to the native application. On the Java side
-     *        this is opaque payload.
-     * @param runApplicationPtr pointer to the function that will set the native thunks and call
-     *        into the application MojoMain. On the Java side this is opaque payload.
+     * @param applicationRequestHandle handle to the shell to be passed to the native application.
+     *            On the Java side this is opaque payload.
      */
     @CalledByNative
     private static boolean bootstrap(Context context, String archivePath,
@@ -98,8 +94,7 @@ public class JavaHandler {
         // the starting point of a standalone java application.
         String mojoClass;
         try {
-            try {
-                JarFile jar = new JarFile(application_java_library);
+            try (JarFile jar = new JarFile(application_java_library)) {
                 Manifest manifest = jar.getManifest();
                 mojoClass = manifest.getMainAttributes().getValue("Mojo-Class");
             } catch (IOException e) {
@@ -113,9 +108,8 @@ public class JavaHandler {
             }
 
             Core core = CoreImpl.getInstance();
-            MessagePipeHandle handle =
-                    core.acquireNativeHandle(applicationRequestHandle).toMessagePipeHandle();
-            try {
+            try (MessagePipeHandle handle = core.acquireNativeHandle(
+                         applicationRequestHandle).toMessagePipeHandle()) {
                 Class<?> loadedClass = bootstrapLoader.loadClass(mojoClass);
                 Method mojoMain =
                         loadedClass.getMethod("mojoMain", Context.class, Core.class,

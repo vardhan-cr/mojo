@@ -45,23 +45,20 @@ class App {
         public void acceptConnection(String requestorUrl,
                 InterfaceRequest<ServiceProvider> services, ServiceProvider exposedServices) {
             ServiceProviderImpl serviceProvider = new ServiceProviderImpl();
-            serviceProvider.addService(
-                    new ServiceFactoryBinder<ExampleService>() {
-                        @Override
-                        public void bindNewInstanceToMessagePipe(
-                                MessagePipeHandle pipe) {
-                            ExampleService.MANAGER.bind(new ExampleServiceImpl(), pipe);
-                        }
+            serviceProvider.addService(new ServiceFactoryBinder<ExampleService>() {
+                @Override
+                public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
+                    ExampleService.MANAGER.bind(new ExampleServiceImpl(), pipe);
+                }
 
-                        @Override
-                        public String getInterfaceName() {
-                            return ExampleService.MANAGER.getName();
-                        }
-                    }
-            );
+                @Override
+                public String getInterfaceName() {
+                    return ExampleService.MANAGER.getName();
+                }
+            });
             ServiceProvider.MANAGER.bind(serviceProvider, services);
             exposedServices.close();
-        };
+        }
 
         @Override
         public void requestQuit() {
@@ -80,11 +77,12 @@ class App {
     }
 
     /**
-     * ServiceFactoryBinder holds the necessary information to bind a service interface to a
-     * message pipe.
+     * ServiceFactoryBinder holds the necessary information to bind a service interface to a message
+     * pipe.
      */
     private static interface ServiceFactoryBinder<T extends Interface> {
         public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe);
+
         public String getInterfaceName();
     }
 
@@ -132,17 +130,18 @@ class App {
         public void onConnectionError(MojoException e) {}
     }
 
-    public static void mojoMain(Context context, Core core,
+    public static void mojoMain(@SuppressWarnings("unused") Context context, Core core,
             MessagePipeHandle applicationRequestHandle) {
         Log.i(TAG, "App.MojoMain called");
         try (RunLoop runLoop = core.createDefaultRunLoop()) {
             Log.i(TAG, "Run loop created");
 
-            Application application = new ApplicationImpl(core, applicationRequestHandle);
-
-            Log.i(TAG, "Setup done, starting run loop");
-            runLoop.run();
-            Log.i(TAG, "Run loop exited");
+            try (ApplicationImpl application =
+                         new ApplicationImpl(core, applicationRequestHandle)) {
+                Log.i(TAG, "Setup done, starting run loop");
+                runLoop.run();
+                Log.i(TAG, "Run loop exited");
+            }
         }
     }
 }

@@ -58,10 +58,6 @@ bool JavaHandler::ConfigureIncomingConnection(
   return true;
 }
 
-bool RegisterJavaHandlerJni(JNIEnv* env) {
-  return RegisterNativesImpl(env);
-}
-
 }  // namespace android
 }  // namespace services
 
@@ -74,7 +70,7 @@ JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
   base::android::InitVM(vm);
   JNIEnv* env = base::android::AttachCurrentThread();
 
-  if (!services::android::RegisterJavaHandlerJni(env))
+  if (!services::android::RegisterNativesImpl(env))
     return -1;
 
   if (!mojo::android::RegisterCoreImpl(env))

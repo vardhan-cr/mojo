@@ -40,8 +40,6 @@ class JavaHandler : public mojo::ApplicationDelegate,
   MOJO_DISALLOW_COPY_AND_ASSIGN(JavaHandler);
 };
 
-bool RegisterJavaHandlerJni(JNIEnv* env);
-
 }  // namespace android
 }  // namespace services
 
