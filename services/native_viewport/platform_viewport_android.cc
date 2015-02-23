@@ -170,11 +170,9 @@ void PlatformViewportAndroid::SetBounds(const gfx::Rect& bounds) {
 }
 
 void PlatformViewportAndroid::SetCapture() {
-  NOTIMPLEMENTED();
 }
 
 void PlatformViewportAndroid::ReleaseCapture() {
-  NOTIMPLEMENTED();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
