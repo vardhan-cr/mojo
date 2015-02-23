@@ -8,11 +8,18 @@ import("//testing/test.gni")
 component("application_manager") {
   output_name = "mojo_application_manager"
   sources = [
-    "application_loader.cc",
     "application_loader.h",
     "application_manager.cc",
     "application_manager.h",
     "application_manager_export.h",
+    "data_pipe_peek.cc",
+    "data_pipe_peek.h",
+    "local_fetcher.cc",
+    "local_fetcher.h",
+    "network_fetcher.cc",
+    "network_fetcher.h",
+    "fetcher.cc",
+    "fetcher.h",
     "shell_impl.cc",
     "shell_impl.h",
   ]
@@ -28,11 +35,10 @@ component("application_manager") {
   ]
   deps = [
     "//base/third_party/dynamic_annotations",
+    "//crypto:crypto",
     "//url",
     "//mojo/edk/system",
     "//mojo/environment:chromium",
-    "//mojo/public/cpp/application",
-    "//mojo/public/cpp/bindings",
     "//mojo/services/content_handler/public/interfaces",
   ]
 }
@@ -50,6 +56,7 @@ test("mojo_application_manager_unittests") {
     "//mojo/common",
     "//mojo/edk/test:run_all_unittests",
     "//mojo/environment:chromium",
+    "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings",
     "//testing/gtest",
     "//url",

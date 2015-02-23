@@ -10,6 +10,7 @@
 #include "base/macros.h"
 #include "base/scoped_native_library.h"
 #include "base/threading/simple_thread.h"
+#include "shell/application_manager/application_manager.h"
 #include "shell/dynamic_service_runner.h"
 
 namespace mojo {
@@ -18,7 +19,7 @@ namespace shell {
 // An implementation of |DynamicServiceRunner| that loads/runs the given app
 // (from the file system) on a separate thread (in the current process).
 class InProcessDynamicServiceRunner
-    : public DynamicServiceRunner,
+    : public mojo::NativeRunner,
       public base::DelegateSimpleThread::Delegate {
  public:
   explicit InProcessDynamicServiceRunner(Context* context);
@@ -26,7 +27,7 @@ class InProcessDynamicServiceRunner
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
-             DynamicServiceRunner::CleanupBehavior cleanup_behavior,
+             mojo::NativeRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
@@ -35,7 +36,7 @@ class InProcessDynamicServiceRunner
   void Run() override;
 
   base::FilePath app_path_;
-  DynamicServiceRunner::CleanupBehavior cleanup_behavior_;
+  mojo::NativeRunner::CleanupBehavior cleanup_behavior_;
   InterfaceRequest<Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 
