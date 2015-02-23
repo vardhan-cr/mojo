@@ -76,11 +76,6 @@ if config.target_os != config.OS_ANDROID:
     {
       "test": "mojo:reaper_apptests",
     },
-  ]
-
-# TODO: get dart unittests working with asan.
-if not config.sanitizer:
-  tests += [
     {
       "test": "mojo:dart_apptests",
     },

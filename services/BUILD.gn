@@ -9,6 +9,7 @@ group("services") {
   deps = [
     "//services/clipboard",
     "//services/console",
+    "//services/dart",
     "//services/fake_surfaces",
     "//services/gles2:lib",
     "//services/http_server",
@@ -27,10 +28,6 @@ group("services") {
 
   if (is_android) {
     deps += [ "//services/android:java_handler" ]
-  }
-
-  if (!is_asan) {
-    deps += [ "//services/dart" ]
   }
 
   if (is_linux) {
