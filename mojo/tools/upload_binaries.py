@@ -57,9 +57,12 @@ def upload(config, source, dest, dry_run):
 def upload_shell(config, dry_run, verbose):
   paths = Paths(config)
   zipfile_name = target(config)
+  version = Version().version
+
+  # Upload the binary.
   # TODO(blundell): Change this to be in the same structure as the LATEST files,
   # e.g., gs://mojo/shell/linux-x64/<version>/shell.zip.
-  dest = "gs://mojo/shell/" + Version().version + "/" + zipfile_name + ".zip"
+  dest = "gs://mojo/shell/" + version + "/" + zipfile_name + ".zip"
   with tempfile.NamedTemporaryFile() as zip_file:
     with zipfile.ZipFile(zip_file, 'w') as z:
       shell_path = paths.target_mojo_shell_path
@@ -78,19 +81,31 @@ def upload_shell(config, dry_run, verbose):
         z.writestr(zipinfo, shell_binary.read())
     upload(config, zip_file.name, dest, dry_run)
 
+  # Update the LATEST file to contain the version of the new binary.
+  latest_file = "gs://mojo/shell/%s/LATEST" % target(config)
+  write_file_to_gs(version, latest_file, config, dry_run)
+
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
+  app_name, _ = os.path.splitext(app_binary_name)
   version = Version().version
-  dest = ("gs://mojo/services/" + target(config) + "/" + version + "/" +
-          app_binary_name)
-  upload(config, app_binary_path, dest, dry_run)
+  app_location_in_gs = ("mojo/services/" + target(config) + "/" + version +
+                        "/" + app_binary_name)
+  gsutil_app_location = "gs://" + app_location_in_gs
+  https_app_location = "https://storage.googleapis.com/" + app_location_in_gs
 
-def update_version(config, subdir, dry_run):
+  # Upload the new binary.
+  upload(config, app_binary_path, gsutil_app_location, dry_run)
+
+  # Update the app's location file to point to the new binary.
+  app_location_file = ("gs://mojo/services/" + target(config) + "/" +
+                       app_name + "_location")
+  write_file_to_gs(https_app_location, app_location_file, config, dry_run)
+
+def write_file_to_gs(file_contents, dest, config, dry_run):
   with tempfile.NamedTemporaryFile() as temp_version_file:
-    version = Version().version
-    temp_version_file.write(version)
+    temp_version_file.write(file_contents)
     temp_version_file.flush()
-    dest = "gs://mojo/%s/%s/LATEST" % (subdir, target(config))
     upload(config, temp_version_file.name, dest, dry_run)
 
 def main():
@@ -111,13 +126,11 @@ def main():
     target_os = Config.OS_ANDROID
   config = Config(target_os=target_os, is_debug=False)
   upload_shell(config, args.dry_run, args.verbose)
-  update_version(config, "shell", args.dry_run)
 
   apps_to_upload = find_apps_to_upload(
       gn.BuildDirectoryForConfig(config, Paths(config).src_root))
   for app in apps_to_upload:
     upload_app(app, config, args.dry_run)
-  update_version(config, "services", args.dry_run)
 
   return 0
 
