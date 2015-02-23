@@ -403,9 +403,6 @@ public class CoreImplTest extends MojoTestCase {
         // Create datapipe with element size set.
         options.setElementNumBytes(24);
         createAndCloseDataPipe(options);
-        // Create datapipe with a flag set.
-        options.getFlags().setMayDiscard(true);
-        createAndCloseDataPipe(options);
         // Create datapipe with capacity set.
         options.setCapacityNumBytes(1024 * options.getElementNumBytes());
         createAndCloseDataPipe(options);

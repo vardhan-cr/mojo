@@ -36,7 +36,7 @@ MojoResult DataPipe::ValidateCreateOptions(
     UserPointer<const MojoCreateDataPipeOptions> in_options,
     MojoCreateDataPipeOptions* out_options) {
   const MojoCreateDataPipeOptionsFlags kKnownFlags =
-      MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_MAY_DISCARD;
+      MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE;
 
   *out_options = GetDefaultCreateOptions();
   if (in_options.IsNull())

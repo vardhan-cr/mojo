@@ -227,11 +227,6 @@ class CoreTest(mojo_unittest.MojoTestCase):
     self._TestDataHandleCreation(
         system.DataPipe(system.CreateDataPipeOptions()))
 
-  def testCreateDataPipeWithDiscardFlag(self):
-    options = system.CreateDataPipeOptions()
-    options.flags = system.CreateDataPipeOptions.FLAG_MAY_DISCARD
-    self._TestDataHandleCreation(system.DataPipe(options))
-
   def testCreateDataPipeWithElementSize(self):
     options = system.CreateDataPipeOptions()
     options.element_num_bytes = 5
