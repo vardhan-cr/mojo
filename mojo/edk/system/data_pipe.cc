@@ -116,7 +116,7 @@ MojoResult DataPipe::ProducerWriteData(UserPointer<const void> elements,
 
   // Returning "busy" takes priority over "invalid argument".
   uint32_t max_num_bytes_to_write = num_bytes.Get();
-  if (max_num_bytes_to_write % element_num_bytes_ != 0)
+  if (max_num_bytes_to_write % element_num_bytes() != 0)
     return MOJO_RESULT_INVALID_ARGUMENT;
 
   if (max_num_bytes_to_write == 0)
@@ -150,7 +150,7 @@ MojoResult DataPipe::ProducerBeginWriteData(
   uint32_t min_num_bytes_to_write = 0;
   if (all_or_none) {
     min_num_bytes_to_write = buffer_num_bytes.Get();
-    if (min_num_bytes_to_write % element_num_bytes_ != 0)
+    if (min_num_bytes_to_write % element_num_bytes() != 0)
       return MOJO_RESULT_INVALID_ARGUMENT;
   }
 
@@ -179,7 +179,7 @@ MojoResult DataPipe::ProducerEndWriteData(uint32_t num_bytes_written) {
       impl_->ConsumerGetHandleSignalsState();
   MojoResult rv;
   if (num_bytes_written > producer_two_phase_max_num_bytes_written_ ||
-      num_bytes_written % element_num_bytes_ != 0) {
+      num_bytes_written % element_num_bytes() != 0) {
     rv = MOJO_RESULT_INVALID_ARGUMENT;
     producer_two_phase_max_num_bytes_written_ = 0;
   } else {
@@ -284,7 +284,7 @@ MojoResult DataPipe::ConsumerReadData(UserPointer<void> elements,
     return MOJO_RESULT_BUSY;
 
   uint32_t max_num_bytes_to_read = num_bytes.Get();
-  if (max_num_bytes_to_read % element_num_bytes_ != 0)
+  if (max_num_bytes_to_read % element_num_bytes() != 0)
     return MOJO_RESULT_INVALID_ARGUMENT;
 
   if (max_num_bytes_to_read == 0)
@@ -312,7 +312,7 @@ MojoResult DataPipe::ConsumerDiscardData(UserPointer<uint32_t> num_bytes,
     return MOJO_RESULT_BUSY;
 
   uint32_t max_num_bytes_to_discard = num_bytes.Get();
-  if (max_num_bytes_to_discard % element_num_bytes_ != 0)
+  if (max_num_bytes_to_discard % element_num_bytes() != 0)
     return MOJO_RESULT_INVALID_ARGUMENT;
 
   if (max_num_bytes_to_discard == 0)
@@ -356,7 +356,7 @@ MojoResult DataPipe::ConsumerBeginReadData(
   uint32_t min_num_bytes_to_read = 0;
   if (all_or_none) {
     min_num_bytes_to_read = buffer_num_bytes.Get();
-    if (min_num_bytes_to_read % element_num_bytes_ != 0)
+    if (min_num_bytes_to_read % element_num_bytes() != 0)
       return MOJO_RESULT_INVALID_ARGUMENT;
   }
 
@@ -379,7 +379,7 @@ MojoResult DataPipe::ConsumerEndReadData(uint32_t num_bytes_read) {
       impl_->ProducerGetHandleSignalsState();
   MojoResult rv;
   if (num_bytes_read > consumer_two_phase_max_num_bytes_read_ ||
-      num_bytes_read % element_num_bytes_ != 0) {
+      num_bytes_read % element_num_bytes() != 0) {
     rv = MOJO_RESULT_INVALID_ARGUMENT;
     consumer_two_phase_max_num_bytes_read_ = 0;
   } else {
@@ -466,10 +466,7 @@ DataPipe::DataPipe(bool has_local_producer,
                    bool has_local_consumer,
                    const MojoCreateDataPipeOptions& validated_options,
                    scoped_ptr<DataPipeImpl> impl)
-    : may_discard_((validated_options.flags &
-                    MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_MAY_DISCARD)),
-      element_num_bytes_(validated_options.element_num_bytes),
-      capacity_num_bytes_(validated_options.capacity_num_bytes),
+    : validated_options_(validated_options),
       producer_open_(true),
       consumer_open_(true),
       producer_awakable_list_(has_local_producer ? new AwakableList()

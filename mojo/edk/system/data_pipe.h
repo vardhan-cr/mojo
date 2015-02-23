@@ -123,9 +123,19 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   void ConsumerCloseNoLock();
 
   // Thread-safe and fast (they don't take the lock):
-  bool may_discard() const { return may_discard_; }
-  size_t element_num_bytes() const { return element_num_bytes_; }
-  size_t capacity_num_bytes() const { return capacity_num_bytes_; }
+  const MojoCreateDataPipeOptions& validated_options() const {
+    return validated_options_;
+  }
+  bool may_discard() const {
+    return (validated_options_.flags &
+            MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_MAY_DISCARD);
+  }
+  size_t element_num_bytes() const {
+    return validated_options_.element_num_bytes;
+  }
+  size_t capacity_num_bytes() const {
+    return validated_options_.capacity_num_bytes;
+  }
 
   // Must be called under lock.
   bool producer_open_no_lock() const {
@@ -193,9 +203,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
     return !!consumer_awakable_list_;
   }
 
-  const bool may_discard_;
-  const size_t element_num_bytes_;
-  const size_t capacity_num_bytes_;
+  const MojoCreateDataPipeOptions validated_options_;
 
   mutable base::Lock lock_;  // Protects the following members.
   // *Known* state of producer or consumer.
