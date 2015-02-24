@@ -4,6 +4,7 @@
 
 #include "mojo/icu/icu.h"
 
+#include "mojo/icu/constants.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/icu_data/icu_data.mojom.h"
 #include "third_party/icu/source/common/unicode/putil.h"
@@ -17,10 +18,6 @@ namespace mojo {
 namespace icu {
 namespace {
 
-// These values are for Android arm32.
-const char kDataHash[] = "3ef55e413a9d429e404e10fe8ec566009d3889f3";
-const int64_t kDataSize = 6037440;
-
 class Callback {
  public:
   void Run(mojo::ScopedSharedBufferHandle handle) const {
@@ -33,7 +30,8 @@ class Callback {
     (void)handle.release();
   };
 };
-}
+
+}  // namespace
 
 void Initialize(ApplicationImpl* app) {
 #if !defined(OS_ANDROID)

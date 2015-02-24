@@ -2,8 +2,28 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+action("generate_icu_constants") {
+  script = "generate_icu_constants.py"
+
+  inputs = [
+    "$root_build_dir/icudtl.dat",
+  ]
+
+  outputs = [
+    "$root_gen_dir/mojo/icu/constants.cc",
+  ]
+
+  args = rebase_path(inputs + outputs, root_build_dir)
+
+  deps = [
+    "//third_party/icu:icudata",
+  ]
+}
+
 source_set("icu") {
   sources = [
+    "$root_gen_dir/mojo/icu/constants.cc",
+    "constants.h",
     "icu.cc",
     "icu.h",
   ]
@@ -15,5 +35,6 @@ source_set("icu") {
     "//mojo/public/cpp/system",
     "//services/icu_data:interfaces",
     "//third_party/icu",
+    ":generate_icu_constants",
   ]
 }
