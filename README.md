@@ -192,6 +192,12 @@ $ ninja -C out/Debug -j 1000
     ```
     mojo/tools/android_mojo_shell.py mojo:sample_app
     ```
+If this fails and prints:
+    ```
+    error: closed
+    error: closed
+    ```
+... then you may not have a new enough build of Android on your device. You need L (Lollipop) or later.
 
 4. If you get a crash you won't see symbols. Use tools/android_stack_parser/stack to map back to symbols, e.g.:
     ```
