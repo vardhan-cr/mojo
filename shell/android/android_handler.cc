@@ -64,9 +64,8 @@ void RunAndroidApplication(JNIEnv* env,
 
   // Run the application.
   base::ScopedNativeLibrary app_library_from_runner(
-      shell::DynamicServiceRunner::LoadAndRunService(
-          app_path, shell::DynamicServiceRunner::DeleteAppPath,
-          application_request.Pass()));
+      shell::LoadAndRunNativeApplication(app_path, NativeRunner::DeleteAppPath,
+                                         application_request.Pass()));
 }
 }  // namespace
 

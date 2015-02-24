@@ -34,26 +34,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
   ApplicationLoader() {}
 };
 
-// TODO(aa): Remove this temporary interface. This is just here as a stepping
-// stone, until I can tear apart NativeApplicationLoader into smaller pieces.
-// See comments at top of shell/native_application_loader.h.
-
-typedef base::Callback<void(const GURL& content_handler_url,
-                            InterfaceRequest<Application> application_request,
-                            URLResponsePtr url_request)> LoadCallback;
-
-class NativeApplicationLoader {
- public:
-  // Returns a callback that should never be called.
-  static LoadCallback SimpleLoadCallback();
-
-  virtual ~NativeApplicationLoader() {}
-
-  virtual void Load(const GURL& url,
-                    InterfaceRequest<Application> application_request,
-                    LoadCallback callback) {}
-};
-
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_

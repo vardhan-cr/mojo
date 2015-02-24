@@ -39,15 +39,15 @@ bool SetThunks(Thunks (*make_thunks)(),
 
 }  // namespace
 
-base::NativeLibrary DynamicServiceRunner::LoadAndRunService(
+base::NativeLibrary LoadAndRunNativeApplication(
     const base::FilePath& app_path,
-    DynamicServiceRunner::CleanupBehavior cleanup_behavior,
+    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request) {
   DVLOG(2) << "Loading/running Mojo app in process from library: "
            << app_path.value();
   base::NativeLibraryLoadError error;
   base::NativeLibrary app_library = base::LoadNativeLibrary(app_path, &error);
-  if (cleanup_behavior == DeleteAppPath)
+  if (cleanup_behavior == NativeRunner::DeleteAppPath)
     DeleteFile(app_path, false);
   do {
     if (!app_library) {
