@@ -47,6 +47,7 @@ source_set("test_support") {
   ]
   deps = [
     "//base",
+    "//base/test:test_support",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/system",

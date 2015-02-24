@@ -149,6 +149,7 @@ mojo_native_application("mojo_view_manager_client_apptests") {
 
   deps = [
     "//base",
+    "//base/test:test_support",
     "//mojo/application",
     "//mojo/application:test_support",
     "//mojo/services/geometry/public/cpp:cpp",

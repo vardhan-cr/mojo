@@ -4,9 +4,13 @@
 
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 
+#include "base/bind.h"
+#include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
+#include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/test/test_timeouts.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -28,21 +32,39 @@ const char kViewManagerClientTestAppURL[] =
 
 base::RunLoop* current_run_loop = nullptr;
 
-void DoRunLoop() {
+void TimeoutRunLoop(const base::Closure& timeout_task, bool* timeout) {
+  CHECK(current_run_loop);
+  *timeout = true;
+  timeout_task.Run();
+}
+
+bool DoRunLoopWithTimeout() {
+  if (current_run_loop != nullptr)
+    return false;
+
+  bool timeout = false;
   base::RunLoop run_loop;
+  base::MessageLoop::current()->PostDelayedTask(
+      FROM_HERE, base::Bind(&TimeoutRunLoop, run_loop.QuitClosure(), &timeout),
+      TestTimeouts::action_timeout());
+
   current_run_loop = &run_loop;
   current_run_loop->Run();
   current_run_loop = nullptr;
+  return !timeout;
 }
 
 void QuitRunLoop() {
   current_run_loop->Quit();
+  current_run_loop = nullptr;
 }
 
 class BoundsChangeObserver : public ViewObserver {
  public:
-  explicit BoundsChangeObserver(View* view) : view_(view) {}
-  ~BoundsChangeObserver() override {}
+  explicit BoundsChangeObserver(View* view) : view_(view) {
+    view_->AddObserver(this);
+  }
+  ~BoundsChangeObserver() override { view_->RemoveObserver(this); }
 
  private:
   // Overridden from ViewObserver:
@@ -58,21 +80,21 @@ class BoundsChangeObserver : public ViewObserver {
   MOJO_DISALLOW_COPY_AND_ASSIGN(BoundsChangeObserver);
 };
 
-// Wait until the bounds of the supplied view change.
-void WaitForBoundsToChange(View* view) {
+// Wait until the bounds of the supplied view change; returns false on timeout.
+bool WaitForBoundsToChange(View* view) {
   BoundsChangeObserver observer(view);
-  view->AddObserver(&observer);
-  DoRunLoop();
-  view->RemoveObserver(&observer);
+  return DoRunLoopWithTimeout();
 }
 
-// Spins a runloop until the tree beginning at |root| has |tree_size| views
+// Spins a run loop until the tree beginning at |root| has |tree_size| views
 // (including |root|).
 class TreeSizeMatchesObserver : public ViewObserver {
  public:
   TreeSizeMatchesObserver(View* tree, size_t tree_size)
-      : tree_(tree), tree_size_(tree_size) {}
-  ~TreeSizeMatchesObserver() override {}
+      : tree_(tree), tree_size_(tree_size) {
+    tree_->AddObserver(this);
+  }
+  ~TreeSizeMatchesObserver() override { tree_->RemoveObserver(this); }
 
   bool IsTreeCorrectSize() { return CountViews(tree_) == tree_size_; }
 
@@ -97,13 +119,10 @@ class TreeSizeMatchesObserver : public ViewObserver {
   MOJO_DISALLOW_COPY_AND_ASSIGN(TreeSizeMatchesObserver);
 };
 
-void WaitForTreeSizeToMatch(View* view, size_t tree_size) {
+// Wait until |view|'s tree size matches |tree_size|; returns false on timeout.
+bool WaitForTreeSizeToMatch(View* view, size_t tree_size) {
   TreeSizeMatchesObserver observer(view, tree_size);
-  if (observer.IsTreeCorrectSize())
-    return;
-  view->AddObserver(&observer);
-  DoRunLoop();
-  view->RemoveObserver(&observer);
+  return observer.IsTreeCorrectSize() || DoRunLoopWithTimeout();
 }
 
 class OrderChangeObserver : public ViewObserver {
@@ -125,9 +144,10 @@ class OrderChangeObserver : public ViewObserver {
   MOJO_DISALLOW_COPY_AND_ASSIGN(OrderChangeObserver);
 };
 
-void WaitForOrderChange(ViewManager* view_manager, View* view) {
+// Wait until |view|'s tree size matches |tree_size|; returns false on timeout.
+bool WaitForOrderChange(ViewManager* view_manager, View* view) {
   OrderChangeObserver observer(view);
-  DoRunLoop();
+  return DoRunLoopWithTimeout();
 }
 
 // Tracks a view's destruction. Query is_valid() for current state.
@@ -182,11 +202,13 @@ class ViewManagerTest : public test::ApplicationTestBase,
 
   ViewManager* window_manager() { return window_manager_; }
 
-  // Embeds another version of the test app @ view.
+  // Embeds another version of the test app @ view; returns nullptr on timeout.
   ViewManager* Embed(ViewManager* view_manager, View* view) {
     DCHECK_EQ(view_manager, view->view_manager());
+    most_recent_view_manager_ = nullptr;
     view->Embed(kViewManagerClientTestAppURL);
-    DoRunLoop();
+    if (!DoRunLoopWithTimeout())
+      return nullptr;
     ViewManager* vm = nullptr;
     std::swap(vm, most_recent_view_manager_);
     return vm;
@@ -210,7 +232,7 @@ class ViewManagerTest : public test::ApplicationTestBase,
 
     view_manager_context_.reset(new ViewManagerContext(application_impl()));
     view_manager_context_->Embed(kViewManagerClientTestAppURL);
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
     std::swap(window_manager_, most_recent_view_manager_);
   }
 
@@ -290,6 +312,7 @@ TEST_F(ViewManagerTest, SetBounds) {
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
+  ASSERT_NE(nullptr, embedded);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
   EXPECT_EQ(view->bounds(), view_in_embedded->bounds());
@@ -297,7 +320,7 @@ TEST_F(ViewManagerTest, SetBounds) {
   Rect rect;
   rect.width = rect.height = 100;
   view->SetBounds(rect);
-  WaitForBoundsToChange(view_in_embedded);
+  ASSERT_TRUE(WaitForBoundsToChange(view_in_embedded));
   EXPECT_EQ(view->bounds(), view_in_embedded->bounds());
 }
 
@@ -308,13 +331,14 @@ TEST_F(ViewManagerTest, SetBoundsSecurity) {
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
+  ASSERT_NE(nullptr, embedded);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
   Rect rect;
   rect.width = 800;
   rect.height = 600;
   view->SetBounds(rect);
-  WaitForBoundsToChange(view_in_embedded);
+  ASSERT_TRUE(WaitForBoundsToChange(view_in_embedded));
 
   rect.width = 1024;
   rect.height = 768;
@@ -329,6 +353,7 @@ TEST_F(ViewManagerTest, DestroySecurity) {
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
+  ASSERT_NE(nullptr, embedded);
 
   View* view_in_embedded = embedded->GetViewById(view->id());
 
@@ -350,7 +375,9 @@ TEST_F(ViewManagerTest, MultiRoots) {
   view2->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view2);
   ViewManager* embedded1 = Embed(window_manager(), view1);
+  ASSERT_NE(nullptr, embedded1);
   ViewManager* embedded2 = Embed(window_manager(), view2);
+  ASSERT_NE(nullptr, embedded2);
   EXPECT_NE(embedded1, embedded2);
 }
 
@@ -359,6 +386,7 @@ TEST_F(ViewManagerTest, EmbeddingIdentity) {
   view->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
+  ASSERT_NE(nullptr, embedded);
   EXPECT_EQ(kViewManagerClientTestAppURL, embedded->GetEmbedderURL());
 }
 
@@ -370,6 +398,7 @@ TEST_F(ViewManagerTest, DISABLED_Reorder) {
   window_manager()->GetRoot()->AddChild(view1);
 
   ViewManager* embedded = Embed(window_manager(), view1);
+  ASSERT_NE(nullptr, embedded);
 
   View* view11 = embedded->CreateView();
   view11->SetVisible(true);
@@ -381,9 +410,9 @@ TEST_F(ViewManagerTest, DISABLED_Reorder) {
   View* root_in_embedded = embedded->GetRoot();
 
   {
-    WaitForTreeSizeToMatch(root_in_embedded, 3u);
+    ASSERT_TRUE(WaitForTreeSizeToMatch(root_in_embedded, 3u));
     view11->MoveToFront();
-    WaitForOrderChange(embedded, root_in_embedded);
+    ASSERT_TRUE(WaitForOrderChange(embedded, root_in_embedded));
 
     EXPECT_EQ(root_in_embedded->children().front(),
               embedded->GetViewById(view12->id()));
@@ -393,7 +422,8 @@ TEST_F(ViewManagerTest, DISABLED_Reorder) {
 
   {
     view11->MoveToBack();
-    WaitForOrderChange(embedded, embedded->GetViewById(view11->id()));
+    ASSERT_TRUE(WaitForOrderChange(embedded,
+                                   embedded->GetViewById(view11->id())));
 
     EXPECT_EQ(root_in_embedded->children().front(),
               embedded->GetViewById(view11->id()));
@@ -432,6 +462,7 @@ TEST_F(ViewManagerTest, Visible) {
 
   // Embed another app and verify initial state.
   ViewManager* embedded = Embed(window_manager(), view1);
+  ASSERT_NE(nullptr, embedded);
   ASSERT_NE(nullptr, embedded->GetRoot());
   View* embedded_root = embedded->GetRoot();
   EXPECT_TRUE(embedded_root->visible());
@@ -442,7 +473,7 @@ TEST_F(ViewManagerTest, Visible) {
   {
     VisibilityChangeObserver observer(embedded_root);
     view1->SetVisible(false);
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
   }
 
   EXPECT_FALSE(view1->visible());
@@ -455,7 +486,7 @@ TEST_F(ViewManagerTest, Visible) {
   {
     VisibilityChangeObserver observer(embedded_root);
     view1->SetVisible(true);
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
   }
 
   EXPECT_TRUE(view1->visible());
@@ -495,6 +526,7 @@ TEST_F(ViewManagerTest, Drawn) {
 
   // Embed another app and verify initial state.
   ViewManager* embedded = Embed(window_manager(), view1);
+  ASSERT_NE(nullptr, embedded);
   ASSERT_NE(nullptr, embedded->GetRoot());
   View* embedded_root = embedded->GetRoot();
   EXPECT_TRUE(embedded_root->visible());
@@ -505,7 +537,7 @@ TEST_F(ViewManagerTest, Drawn) {
   {
     DrawnChangeObserver observer(embedded_root);
     window_manager()->GetRoot()->SetVisible(false);
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
   }
 
   EXPECT_TRUE(view1->visible());
@@ -555,6 +587,7 @@ TEST_F(ViewManagerTest, Focus) {
   window_manager()->GetRoot()->AddChild(view1);
 
   ViewManager* embedded = Embed(window_manager(), view1);
+  ASSERT_NE(nullptr, embedded);
   View* view11 = embedded->CreateView();
   view11->SetVisible(true);
   embedded->GetRoot()->AddChild(view11);
@@ -565,14 +598,14 @@ TEST_F(ViewManagerTest, Focus) {
     View* embedded_root = embedded->GetRoot();
     FocusChangeObserver observer(embedded_root);
     embedded_root->SetFocus();
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
     ASSERT_NE(nullptr, observer.last_gained_focus());
     EXPECT_EQ(embedded_root->id(), observer.last_gained_focus()->id());
   }
   {
     FocusChangeObserver observer(view11);
     view11->SetFocus();
-    DoRunLoop();
+    ASSERT_TRUE(DoRunLoopWithTimeout());
     ASSERT_NE(nullptr, observer.last_gained_focus());
     ASSERT_NE(nullptr, observer.last_lost_focus());
     EXPECT_EQ(view11->id(), observer.last_gained_focus()->id());
