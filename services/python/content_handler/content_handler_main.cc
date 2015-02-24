@@ -9,6 +9,7 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/i18n/icu_util.h"
 #include "base/strings/string_util.h"
+#include "base/strings/stringprintf.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/common/common_type_converters.h"
@@ -85,16 +86,22 @@ class PythonContentHandler : public ApplicationDelegate,
     return temp_dir;
   }
 
-  bool RunPythonCommand(std::string command, PyObject* globals) {
-    ScopedPyRef result(
-        PyRun_String(command.c_str(), Py_file_input, globals, NULL));
+  ScopedPyRef RunString(std::string command, PyObject* globals, int mode) {
+    ScopedPyRef result(PyRun_String(command.c_str(), mode, globals, nullptr));
 
-    if (result == nullptr) {
+    if (!result) {
       LOG(ERROR) << "Error while running command: '" << command << "'";
       PyErr_Print();
-      return false;
     }
-    return true;
+    return result;
+  }
+
+  bool Exec(std::string command, PyObject* globals) {
+    return RunString(command, globals, Py_file_input);
+  }
+
+  ScopedPyRef Eval(std::string command, PyObject* globals) {
+    return RunString(command, globals, Py_eval_input);
   }
 
   // Sets up the Python interpreter and loads mojo system modules. This method
@@ -113,8 +120,8 @@ class PythonContentHandler : public ApplicationDelegate,
 
     PyObject *m, *d;
     m = PyImport_AddModule("__main__");
-    if (m == NULL)
-        return NULL;
+    if (!m)
+      return nullptr;
     d = PyModule_GetDict(m);
 
     // Enable debug information if requested.
@@ -123,16 +130,16 @@ class PythonContentHandler : public ApplicationDelegate,
           "import logging;"
           "logging.basicConfig();"
           "logging.getLogger().setLevel(logging.DEBUG)";
-      if (!RunPythonCommand(enable_logging, d))
-        return NULL;
+      if (!Exec(enable_logging, d))
+        return nullptr;
     }
 
     // Inject the application path into the python search path so that imports
     // from the application work as expected.
     std::string search_path_py_command =
         "import sys; sys.path.append('" + application_path + "');";
-    if (!RunPythonCommand(search_path_py_command, d))
-      return NULL;
+    if (!Exec(search_path_py_command, d))
+      return nullptr;
 
     return d;
   }
@@ -158,7 +165,7 @@ class PythonContentHandler : public ApplicationDelegate,
       // yet.
       ScopedPyRef result(PyRun_File(entry_file, entry_path.value().c_str(),
                                     Py_file_input, d, d));
-      if (result == nullptr) {
+      if (!result) {
         LOG(ERROR) << "Error while loading script";
         PyErr_Print();
         return;
@@ -167,7 +174,7 @@ class PythonContentHandler : public ApplicationDelegate,
       // Find MojoMain.
       ScopedPyRef py_function(PyMapping_GetItemString(d, kMojoMain));
 
-      if (py_function == NULL) {
+      if (!py_function) {
         LOG(ERROR) << "Locals size: " << PyMapping_Size(d);
         LOG(ERROR) << "MojoMain not found";
         PyErr_Print();
@@ -177,7 +184,13 @@ class PythonContentHandler : public ApplicationDelegate,
       if (PyCallable_Check(py_function)) {
         MojoHandle application_request_handle =
             application_request.PassMessagePipe().release().value();
-        ScopedPyRef py_input(PyInt_FromLong(application_request_handle));
+        std::string handle_command = base::StringPrintf(
+            "mojo_system.Handle(%u)", application_request_handle);
+        ScopedPyRef py_input(Eval(handle_command, d));
+        if (!py_input) {
+          MojoClose(application_request_handle);
+          return;
+        }
         ScopedPyRef py_arguments(PyTuple_New(1));
         // py_input reference is stolen by py_arguments
         PyTuple_SetItem(py_arguments, 0, py_input.Release());
