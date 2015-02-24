@@ -33,11 +33,14 @@ class Builtin {
 
   static uint8_t snapshot_magic_number[4];
 
-  static void SetNativeResolver(BuiltinLibraryId id);
+  // Return the library specified in 'id'.
+  static Dart_Handle GetLibrary(BuiltinLibraryId id);
 
-  // Check if built in library specified in 'id' is already loaded, if not
-  // load it.
-  static Dart_Handle LoadAndCheckLibrary(BuiltinLibraryId id);
+  // Prepare the library specified in 'id'. Preparation includes:
+  // 1) Setting the native resolver (if any).
+  // 2) Applying patch files (if any).
+  // NOTE: This should only be called once for a library per isolate.
+  static void PrepareLibrary(BuiltinLibraryId id);
 
   static int64_t GetIntegerValue(Dart_Handle value_obj) {
     int64_t value = 0;
@@ -56,15 +59,21 @@ class Builtin {
                                           bool* auto_setup_scope);
 
   static const uint8_t* NativeSymbol(Dart_NativeFunction nf);
-
+  static Dart_Handle GetStringResource(const char* resource_name);
+  static void LoadPatchFiles(Dart_Handle library,
+                             const char* patch_uri,
+                             const char** patch_files);
   typedef struct {
     const char* url_;
     bool has_natives_;
     Dart_NativeEntrySymbol native_symbol_;
     Dart_NativeEntryResolver native_resolver_;
+    const char* patch_url_;
+    const char** patch_resources_;
   } builtin_lib_props;
   static builtin_lib_props builtin_libraries_[];
 
+  static const char* mojo_core_patch_resource_names_[];
   DISALLOW_IMPLICIT_CONSTRUCTORS(Builtin);
 };
 

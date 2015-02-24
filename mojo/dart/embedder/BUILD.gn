@@ -12,9 +12,11 @@ source_set("dart_controller_no_snapshot") {
     "isolate_data.h",
     "mojo_natives.cc",
     "mojo_natives.h",
+    "$target_gen_dir/dart_embedder_patch_resources.cc",
   ]
 
   deps = [
+    ":generate_dart_embedder_patch_resources_cc",
     "//base",
     "//base:i18n",
     "//crypto",
@@ -32,4 +34,50 @@ source_set("dart_controller_no_snapshot") {
   }
 
   include_dirs = [ "//dart/runtime" ]
+}
+
+action("generate_dart_embedder_patch_resources_cc") {
+  inputs = [
+    "//dart/runtime/tools/create_resources.py",
+    "//mojo/dart/embedder/core/buffer_patch.dart",
+    "//mojo/dart/embedder/core/data_pipe_patch.dart",
+    "//mojo/dart/embedder/core/handle_patch.dart",
+    "//mojo/dart/embedder/core/handle_watcher_patch.dart",
+    "//mojo/dart/embedder/core/message_pipe_patch.dart",
+  ]
+  output = "$target_gen_dir/dart_embedder_patch_resources.cc"
+  outputs = [
+    output,
+  ]
+
+  # Patch files
+  buffer_patch_path = rebase_path("//mojo/dart/embedder/core/buffer_patch.dart")
+  data_pipe_patch_path =
+      rebase_path("//mojo/dart/embedder/core/data_pipe_patch.dart")
+  handle_patch_path = rebase_path("//mojo/dart/embedder/core/handle_patch.dart")
+  handle_watcher_patch_path =
+      rebase_path("//mojo/dart/embedder/core/handle_watcher_patch.dart")
+  message_pipe_patch_path =
+      rebase_path("//mojo/dart/embedder/core/message_pipe_patch.dart")
+
+  root_path = rebase_path("//mojo/dart/embedder/")
+  script = "//dart/runtime/tools/create_resources.py"
+
+  args = [
+    "--output",
+    rebase_path(output),
+    "--outer_namespace",
+    "mojo",
+    "--inner_namespace",
+    "dart",
+    "--table_name",
+    "dart_embedder_patch",
+    "--root_prefix",
+    root_path,
+    buffer_patch_path,
+    data_pipe_patch_path,
+    handle_patch_path,
+    handle_watcher_patch_path,
+    message_pipe_patch_path,
+  ]
 }

@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 
-#include "base/files/file_util.h"
 #include "base/i18n/icu_util.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
@@ -13,11 +12,47 @@
 namespace mojo {
 namespace dart {
 
+struct ResourcesEntry {
+  const char* path_;
+  const char* resource_;
+  int length_;
+};
+
+extern ResourcesEntry __dart_embedder_patch_resources_[];
+
+// Returns -1 if resource could not be found.
+static int FindResource(const char* path, const uint8_t** resource) {
+  ResourcesEntry* table = &__dart_embedder_patch_resources_[0];
+  for (int i = 0; table[i].path_ != NULL; i++) {
+    const ResourcesEntry& entry = table[i];
+    if (strcmp(path, entry.path_) == 0) {
+      *resource = reinterpret_cast<const uint8_t*>(entry.resource_);
+      DCHECK(entry.length_ > 0);
+      return entry.length_;
+    }
+  }
+  *resource = NULL;
+  return -1;
+}
+
+const char* Builtin::mojo_core_patch_resource_names_[] = {
+  "/core/buffer_patch.dart",
+  "/core/data_pipe_patch.dart",
+  "/core/handle_patch.dart",
+  "/core/handle_watcher_patch.dart",
+  "/core/message_pipe_patch.dart",
+  NULL,
+};
+
 Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
-    /* { url_, has_natives_, native_symbol_, native_resolver_ } */
-    {"dart:mojo_builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup},
-    {"dart:mojo_bindings", false, nullptr, nullptr},
-    {"dart:mojo_core", true, MojoNativeSymbol, MojoNativeLookup},
+  /* { url_, has_natives_, native_symbol_, native_resolver_,
+       patch_url_, patch_paths_ } */
+  {"dart:mojo_builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup,
+    nullptr, nullptr },
+  {"dart:mojo_bindings", false, nullptr, nullptr,
+    nullptr, nullptr },
+  {"dart:mojo_core", true, MojoNativeSymbol, MojoNativeLookup,
+   "dart:mojo_core-patch", mojo_core_patch_resource_names_ },
 };
 
 uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};
@@ -25,7 +60,7 @@ uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};
 Dart_Handle Builtin::NewError(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  intptr_t len = vsnprintf(NULL, 0, format, args);
+  intptr_t len = vsnprintf(nullptr, 0, format, args);
   va_end(args);
 
   char* buffer = reinterpret_cast<char*>(Dart_ScopeAllocate(len + 1));
@@ -37,24 +72,35 @@ Dart_Handle Builtin::NewError(const char* format, ...) {
   return Dart_NewApiError(buffer);
 }
 
-void Builtin::SetNativeResolver(BuiltinLibraryId id) {
-  static_assert((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
-                kInvalidLibrary, "Unexpected number of builtin libraries");
-  DCHECK_GE(id, kBuiltinLibrary);
-  DCHECK_LT(id, kInvalidLibrary);
-  if (builtin_libraries_[id].has_natives_) {
-    Dart_Handle url = Dart_NewStringFromCString(builtin_libraries_[id].url_);
-    Dart_Handle library = Dart_LookupLibrary(url);
-    DCHECK(!Dart_IsError(library));
-    // Setup the native resolver for built in library functions.
-    DART_CHECK_VALID(
-        Dart_SetNativeResolver(library,
-                               builtin_libraries_[id].native_resolver_,
-                               builtin_libraries_[id].native_symbol_));
+Dart_Handle Builtin::GetStringResource(const char* resource_name) {
+  const uint8_t* resource_string;
+  int resource_length = FindResource(resource_name, &resource_string);
+  if (resource_length > 0) {
+    return Dart_NewStringFromUTF8(resource_string, resource_length);
+  }
+  return NewError("Could not find resource %s", resource_name);
+}
+
+// Patch all the specified patch files in the array 'patch_resources' into the
+// library specified in 'library'.
+void Builtin::LoadPatchFiles(Dart_Handle library,
+                             const char* patch_uri,
+                             const char** patch_resources) {
+  for (intptr_t j = 0; patch_resources[j] != NULL; j++) {
+    Dart_Handle patch_src = GetStringResource(patch_resources[j]);
+    DART_CHECK_VALID(patch_src);
+    // Prepend the patch library URI to form a unique script URI for the patch.
+    intptr_t len = snprintf(NULL, 0, "%s%s", patch_uri, patch_resources[j]);
+    char* patch_filename = reinterpret_cast<char*>(malloc(len + 1));
+    snprintf(patch_filename, len + 1, "%s%s", patch_uri, patch_resources[j]);
+    Dart_Handle patch_file_uri = Dart_NewStringFromCString(patch_filename);
+    DART_CHECK_VALID(patch_file_uri);
+    free(patch_filename);
+    DART_CHECK_VALID(Dart_LibraryLoadPatch(library, patch_file_uri, patch_src));
   }
 }
 
-Dart_Handle Builtin::LoadAndCheckLibrary(BuiltinLibraryId id) {
+Dart_Handle Builtin::GetLibrary(BuiltinLibraryId id) {
   static_assert((sizeof(builtin_libraries_) / sizeof(builtin_lib_props)) ==
                 kInvalidLibrary, "Unexpected number of builtin libraries");
   DCHECK_GE(id, kBuiltinLibrary);
@@ -63,6 +109,24 @@ Dart_Handle Builtin::LoadAndCheckLibrary(BuiltinLibraryId id) {
   Dart_Handle library = Dart_LookupLibrary(url);
   DART_CHECK_VALID(library);
   return library;
+}
+
+void Builtin::PrepareLibrary(BuiltinLibraryId id) {
+  Dart_Handle library = GetLibrary(id);
+  DCHECK(!Dart_IsError(library));
+  if (builtin_libraries_[id].has_natives_) {
+    // Setup the native resolver for built in library functions.
+    DART_CHECK_VALID(
+        Dart_SetNativeResolver(library,
+                               builtin_libraries_[id].native_resolver_,
+                               builtin_libraries_[id].native_symbol_));
+  }
+  if (builtin_libraries_[id].patch_url_ != nullptr) {
+    DCHECK(builtin_libraries_[id].patch_resources_ != nullptr);
+    LoadPatchFiles(library,
+                   builtin_libraries_[id].patch_url_,
+                   builtin_libraries_[id].patch_resources_);
+  }
 }
 
 }  // namespace dart
