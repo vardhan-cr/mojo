@@ -79,9 +79,12 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
   });
 }
 
+// TODO(zra, yzshen): Some struct versioning tests (with "mthd11" in their
+// names) are skipped.
 Iterable<String> getTestFiles(String path, String prefix) =>
     builtin.enumerateFiles(path)
-           .where((s) => s.startsWith(prefix) && s.endsWith(".data"))
+           .where((s) => s.startsWith(prefix) && s.endsWith(".data") &&
+                         !s.contains("mthd11"))
            .map((s) => s.replaceFirst('.data', ''));
 
 main(List args) {
