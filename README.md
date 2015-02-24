@@ -217,5 +217,5 @@ If this fails and prints:
     ```
     cd out/Debug
     python -m SimpleHTTPServer 4444 &
-    ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:mojo_sample_app
+    ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:sample_app
     ```
