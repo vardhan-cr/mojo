@@ -33,6 +33,7 @@
 #include "shell/external_application_listener.h"
 #include "shell/filename_util.h"
 #include "shell/in_process_dynamic_service_runner.h"
+#include "shell/native_application_loader.h"
 #include "shell/out_of_process_dynamic_service_runner.h"
 #include "shell/switches.h"
 #include "url/gurl.h"
@@ -55,12 +56,12 @@ class Setup {
   DISALLOW_COPY_AND_ASSIGN(Setup);
 };
 
-void InitContentHandlers(ApplicationManager* manager,
+void InitContentHandlers(NativeApplicationLoader* loader,
                          base::CommandLine* command_line) {
   // Default content handlers.
-  manager->RegisterContentHandler("application/pdf", GURL("mojo:pdf_viewer"));
-  manager->RegisterContentHandler("image/png", GURL("mojo:png_viewer"));
-  manager->RegisterContentHandler("text/html", GURL("mojo:html_viewer"));
+  loader->RegisterContentHandler("application/pdf", GURL("mojo:pdf_viewer"));
+  loader->RegisterContentHandler("image/png", GURL("mojo:png_viewer"));
+  loader->RegisterContentHandler("text/html", GURL("mojo:html_viewer"));
 
   // Command-line-specified content handlers.
   std::string handlers_spec =
@@ -98,7 +99,7 @@ void InitContentHandlers(ApplicationManager* manager,
     }
     // TODO(eseidel): We should also validate that the mimetype is valid
     // net/base/mime_util.h could do this, but we don't want to depend on net.
-    manager->RegisterContentHandler(parts[i], url);
+    loader->RegisterContentHandler(parts[i], url);
   }
 }
 
@@ -251,18 +252,17 @@ bool Context::Init() {
                    base::Unretained(&application_manager_)));
   }
 
-  scoped_ptr<NativeRunnerFactory> runner_factory;
+  scoped_ptr<DynamicServiceRunnerFactory> runner_factory;
   if (command_line->HasSwitch(switches::kEnableMultiprocess))
-    runner_factory.reset(new OutOfProcessDynamicServiceRunnerFactory(this));
+    runner_factory.reset(new OutOfProcessDynamicServiceRunnerFactory());
   else
-    runner_factory.reset(new InProcessDynamicServiceRunnerFactory(this));
-  application_manager_.set_blocking_pool(task_runners_->blocking_pool());
-  application_manager_.set_native_runner_factory(runner_factory.Pass());
-  application_manager_.set_disable_cache(
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kDisableCache));
+    runner_factory.reset(new InProcessDynamicServiceRunnerFactory());
 
-  InitContentHandlers(&application_manager_, command_line);
+  scoped_ptr<NativeApplicationLoader> native_application_loader(
+      new NativeApplicationLoader(this, runner_factory.Pass()));
+  InitContentHandlers(native_application_loader.get(), command_line);
+  application_manager_.set_native_application_loader(
+      scoped_ptr<NativeApplicationLoader>(native_application_loader.Pass()));
 
   ServiceProviderPtr tracing_service_provider_ptr;
   new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));

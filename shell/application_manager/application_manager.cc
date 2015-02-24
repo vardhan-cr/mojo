@@ -11,13 +11,11 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/stl_util.h"
+#include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
-#include "shell/application_manager/fetcher.h"
-#include "shell/application_manager/local_fetcher.h"
-#include "shell/application_manager/network_fetcher.h"
 
 namespace mojo {
 
@@ -49,9 +47,7 @@ class ApplicationManager::ContentHandlerConnection : public ErrorHandler {
     ServiceProviderPtr services;
     manager->ConnectToApplication(content_handler_url, GURL(),
                                   GetProxy(&services), nullptr);
-    MessagePipe pipe;
-    content_handler_.Bind(pipe.handle0.Pass());
-    services->ConnectToService(ContentHandler::Name_, pipe.handle1.Pass());
+    mojo::ConnectToService(services.get(), &content_handler_);
     content_handler_.set_error_handler(this);
   }
 
@@ -142,25 +138,19 @@ void ApplicationManager::ConnectToApplication(
     return;
   }
 
-  InterfaceRequest<Application> application_request =
-      RegisterShell(requested_url, resolved_url, requestor_url, services.Pass(),
-                    exposed_services.Pass());
-
-  auto callback = base::Bind(&ApplicationManager::HandleFetchCallback,
-                             weak_ptr_factory_.GetWeakPtr(),
-                             base::Passed(application_request.Pass()));
-
-  if (resolved_url.SchemeIsFile()) {
-    new LocalFetcher(resolved_url,
-                     base::Bind(callback, NativeRunner::DontDeleteAppPath));
+  // TODO(aa): This case should go away, see comments in
+  // NativeApplicationLoader.
+  if (native_application_loader_.get()) {
+    native_application_loader_->Load(
+        resolved_url, RegisterShell(requested_url, resolved_url, requestor_url,
+                                    services.Pass(), exposed_services.Pass()),
+        base::Bind(&ApplicationManager::LoadWithContentHandler,
+                   weak_ptr_factory_.GetWeakPtr()));
     return;
   }
 
-  if (!network_service_)
-    ConnectToService(GURL("mojo:network_service"), &network_service_);
-
-  new NetworkFetcher(disable_cache_, resolved_url, network_service_.get(),
-                     base::Bind(callback, NativeRunner::DeleteAppPath));
+  LOG(WARNING) << "Could not find loader to load application: "
+               << requested_url.spec();
 }
 
 bool ApplicationManager::ConnectToRunningApplication(
@@ -227,65 +217,6 @@ void ApplicationManager::ConnectToClient(
                               exposed_services.Pass());
 }
 
-void ApplicationManager::HandleFetchCallback(
-    InterfaceRequest<Application> application_request,
-    NativeRunner::CleanupBehavior cleanup_behavior,
-    scoped_ptr<Fetcher> fetcher) {
-  if (!fetcher) {
-    // Network error. Drop |application_request| to tell requestor.
-    return;
-  }
-
-  // If the response begins with a #!mojo <content-handler-url>, use it.
-  GURL url;
-  std::string shebang;
-  if (fetcher->PeekContentHandler(&shebang, &url)) {
-    LoadWithContentHandler(
-        url, application_request.Pass(),
-        fetcher->AsURLResponse(blocking_pool_,
-                               static_cast<int>(shebang.size())));
-    return;
-  }
-
-  MimeTypeToURLMap::iterator iter = mime_type_to_url_.find(fetcher->MimeType());
-  if (iter != mime_type_to_url_.end()) {
-    LoadWithContentHandler(iter->second, application_request.Pass(),
-                           fetcher->AsURLResponse(blocking_pool_, 0));
-    return;
-  }
-
-  // TODO(aa): Sanity check that the thing we got looks vaguely like a mojo
-  // application. That could either mean looking for the platform-specific dll
-  // header, or looking for some specific mojo signature prepended to the
-  // library.
-
-  fetcher->AsPath(
-      blocking_pool_,
-      base::Bind(&ApplicationManager::RunNativeApplication,
-                 weak_ptr_factory_.GetWeakPtr(),
-                 base::Passed(application_request.Pass()), cleanup_behavior));
-}
-
-void ApplicationManager::RunNativeApplication(
-    InterfaceRequest<Application> application_request,
-    NativeRunner::CleanupBehavior cleanup_behavior,
-    const base::FilePath& path,
-    bool path_exists) {
-  DCHECK(application_request.is_pending());
-
-  if (!path_exists) {
-    LOG(ERROR) << "Library not started because library path '" << path.value()
-               << "' does not exist.";
-    return;
-  }
-
-  NativeRunner* runner = native_runner_factory_->Create().release();
-  native_runners_.push_back(runner);
-  runner->Start(path, cleanup_behavior, application_request.Pass(),
-                base::Bind(&ApplicationManager::CleanupRunner,
-                           weak_ptr_factory_.GetWeakPtr(), runner));
-}
-
 void ApplicationManager::RegisterExternalApplication(
     const GURL& url,
     const std::vector<std::string>& args,
@@ -298,14 +229,6 @@ void ApplicationManager::RegisterExternalApplication(
   ShellImpl* shell_impl = new ShellImpl(application.Pass(), this, url, url);
   url_to_shell_impl_[url] = shell_impl;
   shell_impl->InitializeApplication(Array<String>::From(args));
-}
-
-void ApplicationManager::RegisterContentHandler(
-    const std::string& mime_type,
-    const GURL& content_handler_url) {
-  DCHECK(content_handler_url.is_valid())
-      << "Content handler URL is invalid for mime type " << mime_type;
-  mime_type_to_url_[mime_type] = content_handler_url;
 }
 
 void ApplicationManager::LoadWithContentHandler(
@@ -396,10 +319,4 @@ Array<String> ApplicationManager::GetArgsForURL(const GURL& url) {
     return Array<String>::From(args_it->second);
   return Array<String>();
 }
-
-void ApplicationManager::CleanupRunner(NativeRunner* runner) {
-  native_runners_.erase(
-      std::find(native_runners_.begin(), native_runners_.end(), runner));
-}
-
 }  // namespace mojo

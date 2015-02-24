@@ -10,7 +10,6 @@
 #include "base/native_library.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/system/core.h"
-#include "shell/application_manager/application_manager.h"
 
 namespace base {
 class FilePath;
@@ -23,29 +22,51 @@ namespace shell {
 
 class Context;
 
-// Loads the service in the DSO specificed by |app_path| and prepares it for
-// execution. Runs the DSO's exported function MojoMain().
-// The NativeLibrary is returned and ownership transferred to the caller.
-// This is so if it is unloaded at all, this can be done safely after this
-// thread is destroyed and any thread-local destructors have been executed.
-base::NativeLibrary LoadAndRunNativeApplication(
-    const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
-    InterfaceRequest<Application> application_request);
+// Abstraction for loading a service (from the file system) and running it (on
+// another thread or in a separate process).
+class DynamicServiceRunner {
+ public:
+  virtual ~DynamicServiceRunner() {}
+
+  // Parameter for |Start| to specify its cleanup behavior.
+  enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
+
+  // Loads the app in the file at |app_path| and runs it on some other
+  // thread/process. If |cleanup_behavior| is |true|, takes ownership of the
+  // file. |app_completed_callback| is posted (to the thread on which |Start()|
+  // was called) after |MojoMain()| completes.
+  virtual void Start(const base::FilePath& app_path,
+                     DynamicServiceRunner::CleanupBehavior cleanup_behavior,
+                     InterfaceRequest<Application> application_request,
+                     const base::Closure& app_completed_callback) = 0;
+
+  // Loads the service in the DSO specificed by |app_path| and prepares it for
+  // execution. Runs the DSO's exported function MojoMain().
+  // The NativeLibrary is returned and ownership transferred to the caller.
+  // This is so if it is unloaded at all, this can be done safely after this
+  // thread is destroyed and any thread-local destructors have been executed.
+  static base::NativeLibrary LoadAndRunService(
+      const base::FilePath& app_path,
+      DynamicServiceRunner::CleanupBehavior cleanup_behavior,
+      InterfaceRequest<Application> application_request);
+};
+
+class DynamicServiceRunnerFactory {
+ public:
+  virtual ~DynamicServiceRunnerFactory() {}
+  virtual scoped_ptr<DynamicServiceRunner> Create(Context* context) = 0;
+};
 
 // A generic factory.
 template <class DynamicServiceRunnerImpl>
-class DynamicServiceRunnerFactoryImpl : public mojo::NativeRunnerFactory {
+class DynamicServiceRunnerFactoryImpl : public DynamicServiceRunnerFactory {
  public:
-  DynamicServiceRunnerFactoryImpl(shell::Context* context)
-      : context_(context) {}
+  DynamicServiceRunnerFactoryImpl() {}
   virtual ~DynamicServiceRunnerFactoryImpl() {}
-  scoped_ptr<NativeRunner> Create() override {
-    return scoped_ptr<NativeRunner>(new DynamicServiceRunnerImpl(context_));
+  scoped_ptr<DynamicServiceRunner> Create(Context* context) override {
+    return scoped_ptr<DynamicServiceRunner>(
+        new DynamicServiceRunnerImpl(context));
   }
-
- private:
-  shell::Context* context_;
 };
 
 }  // namespace shell

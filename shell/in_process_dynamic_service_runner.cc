@@ -14,7 +14,7 @@ namespace mojo {
 namespace shell {
 
 InProcessDynamicServiceRunner::InProcessDynamicServiceRunner(Context* context)
-    : cleanup_behavior_(NativeRunner::DontDeleteAppPath),
+    : cleanup_behavior_(DynamicServiceRunner::DontDeleteAppPath),
       app_library_(nullptr) {
 }
 
@@ -31,7 +31,7 @@ InProcessDynamicServiceRunner::~InProcessDynamicServiceRunner() {
 
 void InProcessDynamicServiceRunner::Start(
     const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+    DynamicServiceRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
@@ -55,8 +55,8 @@ void InProcessDynamicServiceRunner::Run() {
            << app_path_.value()
            << " thread id=" << base::PlatformThread::CurrentId();
 
-  app_library_.Reset(LoadAndRunNativeApplication(app_path_, cleanup_behavior_,
-                                                 application_request_.Pass()));
+  app_library_.Reset(LoadAndRunService(app_path_, cleanup_behavior_,
+                                       application_request_.Pass()));
   app_completed_callback_runner_.Run();
   app_completed_callback_runner_.Reset();
 }
