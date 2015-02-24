@@ -17,6 +17,7 @@ The instructions below only need to be done once. Note that a simple "git clone"
 ```
 $ fetch mojo # append --target_os=android to include Android build support.
 $ cd src
+# Or install-build-deps-android.sh if you plan to build for Android.
 $ ./build/install-build-deps.sh
 $ mojo/tools/mojob.py gn
 ```
