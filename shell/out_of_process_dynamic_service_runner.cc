@@ -30,7 +30,7 @@ OutOfProcessDynamicServiceRunner::~OutOfProcessDynamicServiceRunner() {
 
 void OutOfProcessDynamicServiceRunner::Start(
     const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+    DynamicServiceRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;

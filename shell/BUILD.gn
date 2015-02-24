@@ -119,10 +119,6 @@ source_set("in_process_dynamic_service_runner") {
     "in_process_dynamic_service_runner.h",
   ]
 
-  public_deps = [
-    "//shell/application_manager:application_manager",
-  ]
-
   deps = [
     "//base",
     "//mojo/gles2",
@@ -152,12 +148,16 @@ source_set("lib") {
     "command_line_util.h",
     "context.cc",
     "context.h",
+    "data_pipe_peek.cc",
+    "data_pipe_peek.h",
     "external_application_listener.h",
     "external_application_listener.cc",
     "filename_util.cc",
     "filename_util.h",
     "incoming_connection_listener.cc",
     "incoming_connection_listener.h",
+    "native_application_loader.cc",
+    "native_application_loader.h",
     "out_of_process_dynamic_service_runner.cc",
     "out_of_process_dynamic_service_runner.h",
     "url_resolver.cc",
@@ -405,7 +405,7 @@ test("mojo_shell_tests") {
     "command_line_util_unittest.cc",
     "data_pipe_peek_unittest.cc",
     "in_process_dynamic_service_runner_unittest.cc",
-    "native_runner_unittest.cc",
+    "native_application_loader_unittest.cc",
     "shell_test_base.cc",
     "shell_test_base_android.cc",
     "shell_test_base.h",

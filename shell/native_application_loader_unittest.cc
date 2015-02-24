@@ -3,12 +3,14 @@
 // found in the LICENSE file.
 
 #include "base/files/scoped_temp_dir.h"
-#include "shell/application_manager/application_manager.h"
 #include "shell/context.h"
+#include "shell/dynamic_service_runner.h"
 #include "shell/filename_util.h"
+#include "shell/native_application_loader.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
+namespace shell {
 
 namespace {
 
@@ -23,17 +25,17 @@ struct TestState {
   bool runner_was_destroyed;
 };
 
-class TestNativeRunner : public NativeRunner {
+class TestDynamicServiceRunner : public DynamicServiceRunner {
  public:
-  explicit TestNativeRunner(TestState* state) : state_(state) {
+  explicit TestDynamicServiceRunner(TestState* state) : state_(state) {
     state_->runner_was_created = true;
   }
-  ~TestNativeRunner() override {
+  ~TestDynamicServiceRunner() override {
     state_->runner_was_destroyed = true;
     base::MessageLoop::current()->Quit();
   }
   void Start(const base::FilePath& app_path,
-             NativeRunner::CleanupBehavior cleanup_behavior,
+             DynamicServiceRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;
@@ -43,12 +45,13 @@ class TestNativeRunner : public NativeRunner {
   TestState* state_;
 };
 
-class TestNativeRunnerFactory : public NativeRunnerFactory {
+class TestDynamicServiceRunnerFactory : public DynamicServiceRunnerFactory {
  public:
-  explicit TestNativeRunnerFactory(TestState* state) : state_(state) {}
-  ~TestNativeRunnerFactory() override {}
-  scoped_ptr<NativeRunner> Create() override {
-    return scoped_ptr<NativeRunner>(new TestNativeRunner(state_));
+  explicit TestDynamicServiceRunnerFactory(TestState* state) : state_(state) {}
+  ~TestDynamicServiceRunnerFactory() override {}
+  scoped_ptr<DynamicServiceRunner> Create(Context* context) override {
+    return scoped_ptr<DynamicServiceRunner>(
+        new TestDynamicServiceRunner(state_));
   }
 
  private:
@@ -57,34 +60,23 @@ class TestNativeRunnerFactory : public NativeRunnerFactory {
 
 }  // namespace
 
-class NativeApplicationLoaderTest : public testing::Test,
-                                    public ApplicationManager::Delegate {
+class NativeApplicationLoaderTest : public testing::Test {
  public:
-  NativeApplicationLoaderTest() : application_manager_(this) {}
+  NativeApplicationLoaderTest() {}
   ~NativeApplicationLoaderTest() override {}
   void SetUp() override {
     context_.Init();
-    scoped_ptr<NativeRunnerFactory> factory(
-        new TestNativeRunnerFactory(&state_));
-    application_manager_.set_native_runner_factory(factory.Pass());
-    application_manager_.set_blocking_pool(
-        context_.task_runners()->blocking_pool());
+    scoped_ptr<DynamicServiceRunnerFactory> factory(
+        new TestDynamicServiceRunnerFactory(&state_));
+    loader_.reset(new NativeApplicationLoader(&context_, factory.Pass()));
   }
   void TearDown() override { context_.Shutdown(); }
 
  protected:
-  shell::Context context_;
+  Context context_;
   base::MessageLoop loop_;
-  ApplicationManager application_manager_;
+  scoped_ptr<NativeApplicationLoader> loader_;
   TestState state_;
-
- private:
-  // ApplicationManager::Delegate
-  void OnApplicationError(const GURL& url) override { NOTREACHED(); }
-
-  GURL ResolveURL(const GURL& url) override { return url; }
-
-  GURL ResolveMappings(const GURL& url) override { return url; }
 };
 
 TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
@@ -92,13 +84,13 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
   base::FilePath nonexistent_file(FILE_PATH_LITERAL("nonexistent.txt"));
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
-  InterfaceRequest<ServiceProvider> services;
-  ServiceProviderPtr service_provider;
-  application_manager_.ConnectToApplication(url, GURL(), services.Pass(),
-                                            service_provider.Pass());
+  ApplicationPtr application;
+  loader_->Load(url, GetProxy(&application),
+                NativeApplicationLoader::SimpleLoadCallback());
   EXPECT_FALSE(state_.runner_was_created);
   EXPECT_FALSE(state_.runner_was_started);
   EXPECT_FALSE(state_.runner_was_destroyed);
 }
 
+}  // namespace shell
 }  // namespace mojo

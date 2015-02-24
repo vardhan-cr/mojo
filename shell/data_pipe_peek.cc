@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/application_manager/data_pipe_peek.h"
+#include "shell/data_pipe_peek.h"
 
 #include "base/bind.h"
 
