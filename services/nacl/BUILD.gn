@@ -1,0 +1,26 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+# Trusted code
+if (!is_nacl) {
+  mojo_native_application("nacl_content_handler") {
+    sources = [
+      "content_handler_main.cc",
+    ]
+
+    deps = [
+      "//base",
+      "//mojo/application:application",
+      "//mojo/application:content_handler",
+      "//mojo/common",
+      "//mojo/nacl:monacl_sel",
+      "//mojo/services/network/public/interfaces",
+      "//url",
+    ]
+
+    data_deps = [ "//mojo/nacl:irt_mojo(//native_client/build/toolchain/nacl:irt_${cpu_arch})" ]
+  }
+}
