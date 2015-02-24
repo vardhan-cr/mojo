@@ -22,8 +22,8 @@ def BuildDirectoryForConfig(config, src_root):
   subdir = ""
   if config.target_os == Config.OS_ANDROID:
     subdir += "android_"
-    if config.target_arch != Config.ARCH_ARM:
-      subdir += config.target_arch + "_"
+    if config.target_cpu != Config.ARCH_ARM:
+      subdir += config.target_cpu + "_"
   elif config.target_os == Config.OS_CHROMEOS:
     subdir += "chromeos_"
   subdir += "Debug" if config.is_debug else "Release"
@@ -72,7 +72,7 @@ def GNArgsForConfig(config):
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False
 
-  gn_args["target_arch"] = config.target_arch
+  gn_args["target_cpu"] = config.target_cpu
 
   return gn_args
 
@@ -103,7 +103,7 @@ def ConfigForGNArgs(args):
     config_args["goma_dir"] = args.get("goma_dir")
   config_args["use_nacl"] = args.get("mojo_use_nacl", False)
   config_args["target_os"] = args.get("os")
-  config_args["target_arch"] = args.get("target_arch")
+  config_args["target_cpu"] = args.get("target_cpu")
   config_args["dcheck_always_on"] = args.get("dcheck_always_on")
   return Config(**config_args)
 

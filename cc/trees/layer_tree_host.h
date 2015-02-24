@@ -113,6 +113,7 @@ class CC_EXPORT LayerTreeHost {
   void WillBeginMainFrame();
   void DidBeginMainFrame();
   void BeginMainFrame(const BeginFrameArgs& args);
+  void BeginMainFrameNotExpectedSoon();
   void AnimateLayers(base::TimeTicks monotonic_frame_begin_time);
   void DidStopFlinging();
   void Layout();
@@ -447,20 +448,6 @@ class CC_EXPORT LayerTreeHost {
 
   bool in_paint_layer_contents_;
 
-  static const int kTotalFramesToUseForLCDTextMetrics = 50;
-  int total_frames_used_for_lcd_text_metrics_;
-
-  struct LCDTextMetrics {
-    LCDTextMetrics()
-        : total_num_cc_layers(0),
-          total_num_cc_layers_can_use_lcd_text(0),
-          total_num_cc_layers_will_use_lcd_text(0) {}
-
-    int64 total_num_cc_layers;
-    int64 total_num_cc_layers_can_use_lcd_text;
-    int64 total_num_cc_layers_will_use_lcd_text;
-  };
-  LCDTextMetrics lcd_text_metrics_;
   int id_;
   bool next_commit_forces_redraw_;
 

@@ -5,6 +5,7 @@
 #include "gpu/command_buffer/service/gpu_timing.h"
 
 #include "base/time/time.h"
+#include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_version_info.h"
 
@@ -23,11 +24,11 @@ GPUTimer::~GPUTimer() {
 void GPUTimer::Start() {
   // GL_TIMESTAMP and GL_TIMESTAMP_EXT both have the same value.
   glQueryCounter(queries_[0], GL_TIMESTAMP);
-  offset_ = gpu_timing_->CalculateTimerOffset();
 }
 
 void GPUTimer::End() {
   end_requested_ = true;
+  offset_ = gpu_timing_->CalculateTimerOffset();
   glQueryCounter(queries_[1], GL_TIMESTAMP);
 }
 

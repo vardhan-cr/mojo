@@ -194,14 +194,17 @@ template("mac_clang_toolchain") {
     }
 
     toolchain_args() {
-      os = invoker.toolchain_os
+      current_os = invoker.toolchain_os
+
+      # TODO(dpranke): os is here for backwards compatibility.
+      os = current_os
     }
   }
 }
 
 # Toolchain representing the target build (either mac or iOS).
 mac_clang_toolchain("clang") {
-  toolchain_os = os
+  toolchain_os = current_os
 }
 
 # This toolchain provides a way for iOS target compiles to reference targets

@@ -180,9 +180,9 @@ def GetTestList(config):
   if ShouldRunTest("nacl"):
     AddEntry("NaCl tests",
              [os.path.join(build_dir, "monacl_shell"),
-              os.path.join(build_dir, "irt_" + config.target_arch,
+              os.path.join(build_dir, "irt_" + config.target_cpu,
                            "irt_mojo.nexe"),
-              os.path.join(build_dir, "clang_newlib_" + config.target_arch,
+              os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
                            "monacl_test.nexe")])
 
   # ----------------------------------------------------------------------------

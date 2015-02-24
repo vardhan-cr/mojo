@@ -9,6 +9,8 @@ The script expects arguments that specify zips file in the google storage
 bucket named: <dir in SDK extras>_<package name>_<version>.zip. The file will
 be extracted in the android_tools/sdk/extras directory on the test bots. This
 script will not do anything for developers.
+
+TODO(navabi): Move this script (crbug.com/459819).
 """
 
 import json
@@ -54,8 +56,13 @@ def main():
     local_zip = '%s/%s' % (SDK_EXTRAS_PATH, package['zip'])
     if not os.path.exists(local_zip):
       package_zip = '%s/%s' % (SDK_EXTRAS_BUCKET, package['zip'])
-      subprocess.check_call(['python', GSUTIL_PATH, '--force-version', '4.7',
-                             'cp', package_zip, local_zip])
+      try:
+        subprocess.check_call(['python', GSUTIL_PATH, '--force-version', '4.7',
+                               'cp', package_zip, local_zip])
+      except AccessDeniedException:
+        print ('WARNING: Bot does not have permission to download SDK packages.'
+               ' If this bot compiles for Android, it may have errors.')
+        return 0
     # Always clean dir and extract zip to ensure correct contents.
     clean_and_extract(package['dir_name'], package['package'], package['zip'])
 

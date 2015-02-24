@@ -240,6 +240,19 @@ void ClearStencil(GLint s) {
   }
 }
 
+void ClientWaitSync(GLuint sync,
+                    GLbitfield flags,
+                    GLuint timeout_0,
+                    GLuint timeout_1,
+                    uint32_t result_shm_id,
+                    uint32_t result_shm_offset) {
+  gles2::cmds::ClientWaitSync* c = GetCmdSpace<gles2::cmds::ClientWaitSync>();
+  if (c) {
+    c->Init(sync, flags, timeout_0, timeout_1, result_shm_id,
+            result_shm_offset);
+  }
+}
+
 void ColorMask(GLboolean red,
                GLboolean green,
                GLboolean blue,
@@ -1979,6 +1992,16 @@ void Viewport(GLint x, GLint y, GLsizei width, GLsizei height) {
   gles2::cmds::Viewport* c = GetCmdSpace<gles2::cmds::Viewport>();
   if (c) {
     c->Init(x, y, width, height);
+  }
+}
+
+void WaitSync(GLuint sync,
+              GLbitfield flags,
+              GLuint timeout_0,
+              GLuint timeout_1) {
+  gles2::cmds::WaitSync* c = GetCmdSpace<gles2::cmds::WaitSync>();
+  if (c) {
+    c->Init(sync, flags, timeout_0, timeout_1);
   }
 }
 

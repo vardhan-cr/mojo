@@ -24,7 +24,7 @@ class Config(object):
   OS_MAC = "mac"
   OS_WINDOWS = "windows"
 
-  # Valid values for target_arch (None is also valid):
+  # Valid values for target_cpu (None is also valid):
   ARCH_X86 = "x86"
   ARCH_X64 = "x64"
   ARCH_ARM = "arm"
@@ -39,7 +39,7 @@ class Config(object):
   TEST_TYPE_PERF = "perf"
   TEST_TYPE_INTEGRATION = "integration"
 
-  def __init__(self, target_os=None, target_arch=None, is_debug=True,
+  def __init__(self, target_os=None, target_cpu=None, is_debug=True,
                is_clang=None, sanitizer=None, dcheck_always_on=False,
                **kwargs):
     """Constructs a Config with key-value pairs specified via keyword arguments.
@@ -47,7 +47,7 @@ class Config(object):
 
     assert target_os in (None, Config.OS_ANDROID, Config.OS_CHROMEOS,
                          Config.OS_LINUX, Config.OS_MAC, Config.OS_WINDOWS)
-    assert target_arch in (None, Config.ARCH_X86, Config.ARCH_X64,
+    assert target_cpu in (None, Config.ARCH_X86, Config.ARCH_X64,
                            Config.ARCH_ARM)
     assert isinstance(is_debug, bool)
     assert is_clang is None or isinstance(is_clang, bool)
@@ -59,12 +59,12 @@ class Config(object):
     self.values["target_os"] = (self.GetHostOS() if target_os is None else
                                 target_os)
 
-    if target_arch is None:
+    if target_cpu is None:
       if target_os == Config.OS_ANDROID:
-        target_arch = Config.ARCH_ARM
+        target_cpu = Config.ARCH_ARM
       else:
-        target_arch = self.GetHostCPUArch()
-    self.values["target_arch"] = target_arch
+        target_cpu = self.GetHostCPUArch()
+    self.values["target_cpu"] = target_cpu
 
     self.values["is_debug"] = is_debug
     self.values["is_clang"] = is_clang
@@ -104,9 +104,9 @@ class Config(object):
     return self.values["target_os"]
 
   @property
-  def target_arch(self):
+  def target_cpu(self):
     """CPU arch of the build/test target."""
-    return self.values["target_arch"]
+    return self.values["target_cpu"]
 
   @property
   def is_debug(self):

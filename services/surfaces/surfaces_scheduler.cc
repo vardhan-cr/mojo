@@ -92,4 +92,7 @@ void SurfacesScheduler::SendBeginFramesToChildren(
     const cc::BeginFrameArgs& args) {
 }
 
+void SurfacesScheduler::SendBeginMainFrameNotExpectedSoon() {
+}
+
 }  // namespace mojo

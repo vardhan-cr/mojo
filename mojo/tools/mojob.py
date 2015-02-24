@@ -25,7 +25,7 @@ def _args_to_config(args):
   elif args.chromeos:
     target_os = Config.OS_CHROMEOS
 
-  target_arch = args.target_arch
+  target_cpu = args.target_cpu
 
   additional_args = {}
 
@@ -64,7 +64,7 @@ def _args_to_config(args):
   if 'test_results_server' in args:
     additional_args['test_results_server'] = args.test_results_server
 
-  return Config(target_os=target_os, target_arch=target_arch,
+  return Config(target_os=target_os, target_cpu=target_cpu,
                 is_debug=args.debug, dcheck_always_on=args.dcheck_always_on,
                 **additional_args)
 
@@ -191,7 +191,7 @@ def main():
   os_group.add_argument('--chromeos', help='Build for ChromeOS',
                         action='store_true')
 
-  parent_parser.add_argument('--target-arch',
+  parent_parser.add_argument('--target-cpu',
                              help='CPU architecture to build for.',
                              choices=['x64', 'x86', 'arm'])
 

@@ -67,16 +67,16 @@ class CC_EXPORT ResourceProvider {
   typedef std::set<ResourceId> ResourceIdSet;
   typedef base::hash_map<ResourceId, ResourceId> ResourceIdMap;
   enum TextureHint {
-    TextureHintDefault = 0x0,
-    TextureHintImmutable = 0x1,
-    TextureHintFramebuffer = 0x2,
-    TextureHintImmutableFramebuffer =
-        TextureHintImmutable | TextureHintFramebuffer
+    TEXTURE_HINT_DEFAULT = 0x0,
+    TEXTURE_HINT_IMMUTABLE = 0x1,
+    TEXTURE_HINT_FRAMEBUFFER = 0x2,
+    TEXTURE_HINT_IMMUTABLE_FRAMEBUFFER =
+        TEXTURE_HINT_IMMUTABLE | TEXTURE_HINT_FRAMEBUFFER
   };
   enum ResourceType {
-    InvalidType = 0,
-    GLTexture = 1,
-    Bitmap,
+    RESOURCE_TYPE_INVALID = 0,
+    RESOURCE_TYPE_GL_TEXTURE = 1,
+    RESOURCE_TYPE_BITMAP,
   };
 
   static scoped_ptr<ResourceProvider> Create(
@@ -150,11 +150,15 @@ class CC_EXPORT ResourceProvider {
 
   // Update pixels from image, copying source_rect (in image) to dest_offset (in
   // the resource).
+  // NOTE: DEPRECATED. Use CopyToResource() instead.
   void SetPixels(ResourceId id,
                  const uint8_t* image,
                  const gfx::Rect& image_rect,
                  const gfx::Rect& source_rect,
                  const gfx::Vector2d& dest_offset);
+  void CopyToResource(ResourceId id,
+                      const uint8_t* image,
+                      const gfx::Size& image_size);
 
   // Check upload status.
   size_t NumBlockingUploads();
@@ -434,7 +438,7 @@ class CC_EXPORT ResourceProvider {
 
  private:
   struct Resource {
-    enum Origin { Internal, External, Delegated };
+    enum Origin { INTERNAL, EXTERNAL, DELEGATED };
 
     Resource();
     ~Resource();
@@ -547,8 +551,8 @@ class CC_EXPORT ResourceProvider {
                         ResourceId id,
                         TransferableResource* resource);
   enum DeleteStyle {
-    Normal,
-    ForShutdown,
+    NORMAL,
+    FOR_SHUTDOWN,
   };
   void DeleteResourceInternal(ResourceMap::iterator it, DeleteStyle style);
   void DeleteAndReturnUnusedResourcesToChild(ChildMap::iterator child_it,

@@ -25,7 +25,7 @@ BLACKLISTED_APPS = [
 ]
 
 def target(config):
-  return config.target_os + "-" + config.target_arch
+  return config.target_os + "-" + config.target_cpu
 
 def find_apps_to_upload(build_dir):
   apps = []

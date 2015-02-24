@@ -21,19 +21,19 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'd1371a6019189820653aaf20f72ee8f5d0ee3fef',
+  'skia_revision': '792c80f5a7b66e75d42664ccb298f31962c6654c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '055b865a326cdf6a28d2bbb0f197b36e09069fc1',
+  'v8_revision': '3dfd929ea07487f2295553df397720d8d75d227c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '73edef0a2a162e943d5be7715f53bee5d9452b2e',
+  'angle_revision': '6df9b37d8e3aed3aea12058900b7932f911a152a',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '5c5e924788fe40f7d6e0a3841ac572de2475e689',
+  'buildtools_revision': '93b3d0af1b30db55ee42bd2e983f7753153217db',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Dart
   # and whatever else without interference from each other.
@@ -45,7 +45,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': 'd306f165a462f47c2c0e8f3a0f2b4ae6950f70ed',
+  'boringssl_revision': 'b180ee98a60149dd3fd07cce4e834494c9d5b31c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -82,7 +82,7 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '4e3266f32c62d30a3f9e2232a753c60129d1e670',
+   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '2081ee6abfa118003fd559cb72393f5df561dba7',
 
   'src/tools/grit':
     Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'a5890a8118c0c80cc0560e6d8d5cf65e5d725509', # from svn revision 185
@@ -104,9 +104,6 @@ deps = {
 
   'src/third_party/skia':
    Var('chromium_git') + '/skia.git' + '@' +  Var('skia_revision'),
-
-  'src/third_party/ots':
-    Var('chromium_git') + '/external/ots.git' + '@' + '98897009f3ea8a5fa3e20a4a74977da7aaa8e61a',
 
   'src/third_party/brotli/src':
    Var('chromium_git') + '/external/font-compression-reference.git' + '@' + '8c9c83426beb4a58da34be76ea1fccb4054c4703',
@@ -133,7 +130,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + '4d7c139b1820c5fcb993868c61f170a02cda8a40', # from svn revision 2028
+    Var('chromium_git') + '/external/gyp.git' + '@' + '34640080d08ab2a37665512e52142947def3056d', # from svn revision 2028
 }
 
 
