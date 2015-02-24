@@ -111,12 +111,30 @@ class HttpServerApplicationTest : public mojo::test::ApplicationTestBase {
                                          &network_service_);
   }
 
+  http_server::HttpServerPtr CreateHttpServer();
+
   http_server::HttpServerFactoryPtr http_server_factory_;
   mojo::NetworkServicePtr network_service_;
 
  private:
   MOJO_DISALLOW_COPY_AND_ASSIGN(HttpServerApplicationTest);
 };
+
+http_server::HttpServerPtr HttpServerApplicationTest::CreateHttpServer() {
+  http_server::HttpServerPtr http_server;
+  mojo::NetAddressPtr local_address(mojo::NetAddress::New());
+  local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+  local_address->ipv4 = mojo::NetAddressIPv4::New();
+  local_address->ipv4->addr.resize(4);
+  local_address->ipv4->addr[0] = 127;
+  local_address->ipv4->addr[1] = 0;
+  local_address->ipv4->addr[2] = 0;
+  local_address->ipv4->addr[3] = 1;
+  local_address->ipv4->port = 0;
+  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(),
+                                         local_address.Pass());
+  return http_server.Pass();
+}
 
 void CheckServerResponse(mojo::URLResponsePtr response) {
   EXPECT_EQ(200u, response->status_code);
@@ -129,10 +147,7 @@ void CheckServerResponse(mojo::URLResponsePtr response) {
 // Verifies that the server responds to http GET requests using example
 // GetHandler.
 TEST_F(HttpServerApplicationTest, ServerResponse) {
-  http_server::HttpServerPtr http_server;
-  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(),
-                                         nullptr);
-
+  http_server::HttpServerPtr http_server(CreateHttpServer());
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });
   http_server.WaitForIncomingMethodCall();
@@ -150,7 +165,7 @@ TEST_F(HttpServerApplicationTest, ServerResponse) {
 
   mojo::URLRequestPtr url_request = mojo::URLRequest::New();
   url_request->url =
-      base::StringPrintf("http://0.0.0.0:%u/test", assigned_port);
+      base::StringPrintf("http://127.0.0.1:%u/test", assigned_port);
   url_loader->Start(url_request.Pass(), base::Bind(&CheckServerResponse));
   base::RunLoop run_loop;
   run_loop.Run();
@@ -159,10 +174,7 @@ TEST_F(HttpServerApplicationTest, ServerResponse) {
 // Verifies that the server correctly passes the POST request payload using
 // example PostHandler.
 TEST_F(HttpServerApplicationTest, PostData) {
-  http_server::HttpServerPtr http_server;
-  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(),
-                                         nullptr);
-
+  http_server::HttpServerPtr http_server(CreateHttpServer());
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });
   http_server.WaitForIncomingMethodCall();
@@ -180,7 +192,7 @@ TEST_F(HttpServerApplicationTest, PostData) {
 
   mojo::URLRequestPtr url_request = mojo::URLRequest::New();
   url_request->url =
-      base::StringPrintf("http://0.0.0.0:%u/post", assigned_port);
+      base::StringPrintf("http://127.0.0.1:%u/post", assigned_port);
   url_request->method = "POST";
   url_request->body.resize(1);
   WriteMessageToDataPipe(kExampleMessage, &url_request->body[0]);
