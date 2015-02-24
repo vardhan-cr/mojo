@@ -55,6 +55,7 @@ dirs_to_snapshot = [
     "third_party/re2",
     "third_party/sfntly",
     "third_party/smhasher",
+    "third_party/sqlite",
     "third_party/tcmalloc",
     "third_party/yasm",
     "third_party/zlib",
