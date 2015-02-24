@@ -5,11 +5,14 @@
 #ifndef SERVICES_HTTP_SERVER_HTTP_SERVER_FACTORY_IMPL_H_
 #define SERVICES_HTTP_SERVER_HTTP_SERVER_FACTORY_IMPL_H_
 
+#include <algorithm>
 #include <map>
 #include <set>
+#include <vector>
 
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
+#include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "services/http_server/public/http_server_factory.mojom.h"
 
 namespace mojo {
@@ -28,18 +31,24 @@ class HttpServerFactoryImpl : public HttpServerFactory {
   void AddBinding(mojo::InterfaceRequest<HttpServerFactory> request);
 
   // The server impl calls back here when the last of its clients disconnects.
-  void DeleteServer(HttpServerImpl* server, uint16_t port);
+  void DeleteServer(HttpServerImpl* server,
+                    mojo::NetAddress* requested_address);
 
  private:
+  // Servers that were requested with non-zero port are stored in a map and we
+  // allow multiple clients to connect to them. We use a pair of the IP address
+  // and the port as a lookup key.
+  typedef std::pair<std::vector<uint8_t>, uint16_t> ServerKey;
+
+  ServerKey GetServerKey(mojo::NetAddress* local_address);
+
   // HttpServerFactory:
   void CreateHttpServer(mojo::InterfaceRequest<HttpServer> server_request,
-                        uint16_t port) override;
+                        mojo::NetAddressPtr local_address) override;
 
   mojo::WeakBindingSet<HttpServerFactory> bindings_;
 
-  // Servers that were requested with non-zero port are stored in a map and we
-  // allow multiple clients to connect to them.
-  std::map<uint16_t, HttpServerImpl*> port_indicated_servers_;
+  std::map<ServerKey, HttpServerImpl*> port_indicated_servers_;
 
   // Servers that were requested with port = 0 (pick any) are not available to
   // other clients.

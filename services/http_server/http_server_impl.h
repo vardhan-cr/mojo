@@ -8,6 +8,7 @@
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
+#include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "services/http_server/public/http_request.mojom.h"
 #include "services/http_server/public/http_response.mojom.h"
@@ -27,7 +28,7 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
  public:
   HttpServerImpl(mojo::ApplicationImpl* app,
                  HttpServerFactoryImpl* factory,
-                 uint16_t port);
+                 mojo::NetAddressPtr requested_local_address);
   ~HttpServerImpl() override;
 
   void AddBinding(mojo::InterfaceRequest<HttpServer> request);
@@ -71,7 +72,7 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
 
   HttpServerFactoryImpl* factory_;
 
-  uint16_t requested_port_;
+  mojo::NetAddressPtr requested_local_address_;
   uint16_t assigned_port_;
   std::vector<GetPortCallback> pending_get_port_callbacks_;
 

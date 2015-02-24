@@ -9,6 +9,7 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/system/macros.h"
+#include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "services/http_server/public/http_server.mojom.h"
@@ -129,7 +130,8 @@ void CheckServerResponse(mojo::URLResponsePtr response) {
 // GetHandler.
 TEST_F(HttpServerApplicationTest, ServerResponse) {
   http_server::HttpServerPtr http_server;
-  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(), 0u);
+  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(),
+                                         nullptr);
 
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });
@@ -158,7 +160,8 @@ TEST_F(HttpServerApplicationTest, ServerResponse) {
 // example PostHandler.
 TEST_F(HttpServerApplicationTest, PostData) {
   http_server::HttpServerPtr http_server;
-  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(), 0u);
+  http_server_factory_->CreateHttpServer(GetProxy(&http_server).Pass(),
+                                         nullptr);
 
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });

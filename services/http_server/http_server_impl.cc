@@ -17,9 +17,9 @@ namespace http_server {
 
 HttpServerImpl::HttpServerImpl(mojo::ApplicationImpl* app,
                                HttpServerFactoryImpl* factory,
-                               uint16_t port)
+                               mojo::NetAddressPtr requested_local_address)
     : factory_(factory),
-      requested_port_(port),
+      requested_local_address_(requested_local_address.Pass()),
       assigned_port_(0),
       weak_ptr_factory_(this) {
   app->ConnectToService("mojo:network_service", &network_service_);
@@ -63,7 +63,7 @@ void HttpServerImpl::OnConnectionError() {
 
   if (handlers_.empty()) {
     // The call deregisters the server from the factory and deletes |this|.
-    factory_->DeleteServer(this, requested_port_);
+    factory_->DeleteServer(this, requested_local_address_.get());
   }
 }
 
@@ -75,7 +75,6 @@ void HttpServerImpl::OnSocketBound(mojo::NetworkErrorPtr err,
   }
 
   assigned_port_ = bound_address->ipv4->port;
-  DCHECK(requested_port_ == 0u || requested_port_ == assigned_port_);
 
   for (GetPortCallback& port_callback : pending_get_port_callbacks_) {
     port_callback.Run(assigned_port_);
@@ -129,21 +128,11 @@ void HttpServerImpl::WaitForNextConnection() {
 }
 
 void HttpServerImpl::Start() {
-  mojo::NetAddressPtr net_address(mojo::NetAddress::New());
-  net_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
-  net_address->ipv4 = mojo::NetAddressIPv4::New();
-  net_address->ipv4->addr.resize(4);
-  net_address->ipv4->addr[0] = 0;
-  net_address->ipv4->addr[1] = 0;
-  net_address->ipv4->addr[2] = 0;
-  net_address->ipv4->addr[3] = 0;
-  net_address->ipv4->port = requested_port_;
-
   // Note that we can start using the proxies right away even thought the
   // callbacks have not been called yet. If a previous step fails, they'll
   // all fail.
   network_service_->CreateTCPBoundSocket(
-      net_address.Pass(), GetProxy(&bound_socket_),
+      requested_local_address_.Clone(), GetProxy(&bound_socket_),
       base::Bind(&HttpServerImpl::OnSocketBound, base::Unretained(this)));
   bound_socket_->StartListening(
       GetProxy(&server_socket_),

@@ -28,13 +28,15 @@ void HttpServerFactoryImpl::AddBinding(
 }
 
 void HttpServerFactoryImpl::DeleteServer(HttpServerImpl* server,
-                                         uint16_t requested_port) {
-  if (requested_port) {
-    DCHECK(port_indicated_servers_.count(requested_port));
-    DCHECK_EQ(server, port_indicated_servers_[requested_port]);
+                                         mojo::NetAddress* requested_address) {
+  ServerKey key = GetServerKey(requested_address);
+
+  if (key.second) {  // If the port is non-zero.
+    DCHECK(port_indicated_servers_.count(key));
+    DCHECK_EQ(server, port_indicated_servers_[key]);
 
     delete server;
-    port_indicated_servers_.erase(requested_port);
+    port_indicated_servers_.erase(key);
   } else {
     DCHECK(port_any_servers_.count(server));
 
@@ -43,16 +45,44 @@ void HttpServerFactoryImpl::DeleteServer(HttpServerImpl* server,
   }
 }
 
+HttpServerFactoryImpl::ServerKey HttpServerFactoryImpl::GetServerKey(
+    mojo::NetAddress* local_address) {
+  DCHECK(local_address);
+
+  if (local_address->family == mojo::NET_ADDRESS_FAMILY_IPV6) {
+    return ServerKey(local_address->ipv6->addr, local_address->ipv6->port);
+  } else if (local_address->family == mojo::NET_ADDRESS_FAMILY_IPV4) {
+    return ServerKey(local_address->ipv4->addr, local_address->ipv4->port);
+  } else {
+    return ServerKey();
+  }
+}
+
 void HttpServerFactoryImpl::CreateHttpServer(
     mojo::InterfaceRequest<HttpServer> server_request,
-    uint16_t port) {
-  if (port) {
-    if (!port_indicated_servers_.count(port)) {
-      port_indicated_servers_[port] = new HttpServerImpl(app_, this, port);
+    mojo::NetAddressPtr local_address) {
+  if (!local_address) {
+    local_address = mojo::NetAddress::New();
+    local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    local_address->ipv4 = mojo::NetAddressIPv4::New();
+    local_address->ipv4->addr.resize(4);
+    local_address->ipv4->addr[0] = 0;
+    local_address->ipv4->addr[1] = 0;
+    local_address->ipv4->addr[2] = 0;
+    local_address->ipv4->addr[3] = 0;
+    local_address->ipv4->port = 0;
+  }
+  ServerKey key = GetServerKey(local_address.get());
+
+  if (key.second) {  // If the port is non-zero.
+    if (!port_indicated_servers_.count(key)) {
+      port_indicated_servers_[key] =
+          new HttpServerImpl(app_, this, local_address.Pass());
     }
-    port_indicated_servers_[port]->AddBinding(server_request.Pass());
+    port_indicated_servers_[key]->AddBinding(server_request.Pass());
   } else {
-    HttpServerImpl* server = new HttpServerImpl(app_, this, port);
+    HttpServerImpl* server =
+        new HttpServerImpl(app_, this, local_address.Pass());
     server->AddBinding(server_request.Pass());
     port_any_servers_.insert(server);
   }

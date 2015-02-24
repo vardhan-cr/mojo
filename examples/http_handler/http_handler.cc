@@ -9,6 +9,7 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
 #include "mojo/public/cpp/system/message_pipe.h"
+#include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "services/http_server/public/http_server.mojom.h"
 #include "services/http_server/public/http_server_factory.mojom.h"
 #include "services/http_server/public/http_server_util.h"
@@ -33,7 +34,19 @@ class HttpHandler : public ApplicationDelegate,
 
     http_server::HttpServerFactoryPtr http_server_factory;
     app->ConnectToService("mojo:http_server", &http_server_factory);
-    http_server_factory->CreateHttpServer(GetProxy(&http_server_).Pass(), 80);
+
+    mojo::NetAddressPtr local_address(mojo::NetAddress::New());
+    local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    local_address->ipv4 = mojo::NetAddressIPv4::New();
+    local_address->ipv4->addr.resize(4);
+    local_address->ipv4->addr[0] = 0;
+    local_address->ipv4->addr[1] = 0;
+    local_address->ipv4->addr[2] = 0;
+    local_address->ipv4->addr[3] = 0;
+    local_address->ipv4->port = 80;
+    http_server_factory->CreateHttpServer(GetProxy(&http_server_).Pass(),
+                                          local_address.Pass());
+
     http_server_->SetHandler(
         "/test",
         http_handler_ptr.Pass(),

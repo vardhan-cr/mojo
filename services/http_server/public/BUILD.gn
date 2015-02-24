@@ -11,6 +11,10 @@ mojom("public") {
     "http_server.mojom",
     "http_server_factory.mojom",
   ]
+
+  deps = [
+    "//mojo/services/network/public/interfaces",
+  ]
 }
 
 source_set("util") {
