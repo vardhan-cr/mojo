@@ -87,8 +87,8 @@ func readAnswer(testName string) string {
 	return strings.TrimSpace(string(content))
 }
 
-func pipeToRequest(h system.MessagePipeHandle) bindings.InterfaceRequest {
-	return bindings.InterfaceRequest{bindings.NewMessagePipeHandleOwner(h)}
+func pipeOwner(h system.MessagePipeHandle) bindings.MessagePipeHandleOwner {
+	return bindings.NewMessagePipeHandleOwner(h)
 }
 
 type rawMessage struct {
@@ -301,12 +301,12 @@ func TestConformanceValidation(t *testing.T) {
 
 	h := NewMockMessagePipeHandle()
 	proxyIn, proxyOut := h, h
-	interfacePointer := test.ConformanceTestInterfacePointer(pipeToRequest(proxyIn))
+	interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(proxyIn)}
 	impl := &conformanceValidator{false, test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)}
 
 	h = NewMockMessagePipeHandle()
 	stubIn, stubOut := h, h
-	interfaceRequest := test.ConformanceTestInterfaceRequest(pipeToRequest(stubOut))
+	interfaceRequest := test.ConformanceTestInterfaceRequest{pipeOwner(stubOut)}
 	stub := test.NewConformanceTestInterfaceStub(interfaceRequest, impl, waiter)
 	for _, test := range tests {
 		bytes, handles := readTest(test)
@@ -343,10 +343,10 @@ func (s *integrationStubImpl) Method0(inParam0 test.BasicStruct) ([]uint8, error
 func runIntegrationTest(t *testing.T, tests []string, testRequest, testResponse bool) {
 	waiter := bindings.GetAsyncWaiter()
 	_, stubIn, stubOut := core.CreateMessagePipe(nil)
-	interfaceRequest := test.IntegrationTestInterfaceRequest(pipeToRequest(stubOut))
+	interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(stubOut)}
 	stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
 	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
-	interfacePointer := test.IntegrationTestInterfacePointer(pipeToRequest(proxyIn))
+	interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(proxyIn)}
 	proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
 
 	inArg := test.BasicStruct{}
