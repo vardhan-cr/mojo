@@ -25,11 +25,19 @@ def mojo_filter(path):
     return 'apptests' not in os.path.basename(path)
 
 
-def sky_filter(path):
+def gen_filter(path):
     if os.path.isdir(path):
         return True
     _, ext = os.path.splitext(path)
-    return ext == '.sky'
+    # Don't include all .dart, just .mojom.dart.
+    return ext == '.sky' or path.endswith('.mojom.dart')
+
+def sky_or_dart_filter(path):
+    if os.path.isdir(path):
+        return True
+    _, ext = os.path.splitext(path)
+    # .dart includes '.mojom.dart'
+    return ext == '.sky' or ext == '.dart'
 
 
 def copy(from_root, to_root, filter_func=None):
@@ -72,13 +80,16 @@ def main():
         return os.path.join(paths.src_root, rel_path)
 
     copy(paths.build_dir, deploy_path('mojo'), mojo_filter)
-    copy(src_path('sky/examples'), deploy_path('sky/examples'), sky_filter)
-    copy(src_path('sky/framework'), deploy_path('sky/framework'), sky_filter)
-    copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), sky_filter)
+    copy(src_path('sky/examples'), deploy_path('sky/examples'),
+        sky_or_dart_filter)
+    copy(src_path('sky/framework'), deploy_path('sky/framework'),
+        sky_or_dart_filter)
+    copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), gen_filter)
 
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
         args.deploy_root)
-
+    shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShortcuts.apk'),
+        args.deploy_root)
     subprocess.check_call(['git', 'add', '.'], cwd=args.deploy_root)
     subprocess.check_call([
         'git', 'commit',
