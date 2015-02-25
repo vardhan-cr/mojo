@@ -37,6 +37,20 @@ NetworkFetcher::NetworkFetcher(bool disable_cache,
 NetworkFetcher::~NetworkFetcher() {
 }
 
+const GURL& NetworkFetcher::GetURL() const {
+  return url_;
+}
+
+GURL NetworkFetcher::GetRedirectURL() const {
+  if (!response_)
+    return GURL::EmptyGURL();
+
+  if (response_->redirect_url.is_null())
+    return GURL::EmptyGURL();
+
+  return GURL(response_->redirect_url);
+}
+
 URLResponsePtr NetworkFetcher::AsURLResponse(base::TaskRunner* task_runner,
                                              uint32_t skip) {
   if (skip != 0) {
@@ -167,7 +181,7 @@ void NetworkFetcher::StartNetworkRequest(const GURL& url,
                                          NetworkService* network_service) {
   URLRequestPtr request(URLRequest::New());
   request->url = String::From(url);
-  request->auto_follow_redirects = true;
+  request->auto_follow_redirects = false;
   request->bypass_cache = disable_cache_;
 
   network_service->CreateURLLoader(GetProxy(&url_loader_));

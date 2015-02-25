@@ -142,13 +142,10 @@ void ApplicationManager::ConnectToApplication(
     return;
   }
 
-  InterfaceRequest<Application> application_request =
-      RegisterShell(requested_url, resolved_url, requestor_url, services.Pass(),
-                    exposed_services.Pass());
-
   auto callback = base::Bind(&ApplicationManager::HandleFetchCallback,
-                             weak_ptr_factory_.GetWeakPtr(),
-                             base::Passed(application_request.Pass()));
+                             weak_ptr_factory_.GetWeakPtr(), requested_url,
+                             requestor_url, base::Passed(services.Pass()),
+                             base::Passed(exposed_services.Pass()));
 
   if (resolved_url.SchemeIsFile()) {
     new LocalFetcher(resolved_url,
@@ -228,7 +225,10 @@ void ApplicationManager::ConnectToClient(
 }
 
 void ApplicationManager::HandleFetchCallback(
-    InterfaceRequest<Application> application_request,
+    const GURL& requested_url,
+    const GURL& requestor_url,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     NativeRunner::CleanupBehavior cleanup_behavior,
     scoped_ptr<Fetcher> fetcher) {
   if (!fetcher) {
@@ -236,12 +236,35 @@ void ApplicationManager::HandleFetchCallback(
     return;
   }
 
+  GURL redirect_url = fetcher->GetRedirectURL();
+  if (!redirect_url.is_empty()) {
+    // And around we go again... Whee!
+    ConnectToApplication(redirect_url, requestor_url, services.Pass(),
+                         exposed_services.Pass());
+    return;
+  }
+
+  // We already checked if the application was running before we fetched it, but
+  // it might have started while the fetch was outstanding. We don't want to
+  // have two copies of the app running, so check again.
+  //
+  // Also, it's possible the original URL was redirected to an app that is
+  // already running.
+  if (ConnectToRunningApplication(fetcher->GetURL(), requestor_url, &services,
+                                  &exposed_services)) {
+    return;
+  }
+
+  InterfaceRequest<Application> application_request(
+      RegisterShell(requested_url, fetcher->GetURL(), requestor_url,
+                    services.Pass(), exposed_services.Pass()));
+
   // If the response begins with a #!mojo <content-handler-url>, use it.
-  GURL url;
+  GURL content_handler_url;
   std::string shebang;
-  if (fetcher->PeekContentHandler(&shebang, &url)) {
+  if (fetcher->PeekContentHandler(&shebang, &content_handler_url)) {
     LoadWithContentHandler(
-        url, application_request.Pass(),
+        content_handler_url, application_request.Pass(),
         fetcher->AsURLResponse(blocking_pool_,
                                static_cast<int>(shebang.size())));
     return;

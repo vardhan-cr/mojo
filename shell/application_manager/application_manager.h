@@ -178,7 +178,10 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);
 
-  void HandleFetchCallback(InterfaceRequest<Application> application_request,
+  void HandleFetchCallback(const GURL& requested_url,
+                           const GURL& requestor_url,
+                           InterfaceRequest<ServiceProvider> services,
+                           ServiceProviderPtr exposed_services,
                            NativeRunner::CleanupBehavior cleanup_behavior,
                            scoped_ptr<Fetcher> fetcher);
 

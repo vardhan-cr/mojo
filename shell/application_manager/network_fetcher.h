@@ -30,6 +30,9 @@ class NetworkFetcher : public Fetcher {
   // TODO(hansmuller): Revisit this when a real peek operation is available.
   static const MojoDeadline kPeekTimeout = MOJO_DEADLINE_INDEFINITE;
 
+  const GURL& GetURL() const override;
+  GURL GetRedirectURL() const override;
+
   URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
                                uint32_t skip) override;
 

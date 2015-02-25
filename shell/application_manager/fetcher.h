@@ -40,6 +40,13 @@ class Fetcher {
   Fetcher(const FetchCallback& fetch_callback);
   virtual ~Fetcher();
 
+  // Returns the original URL that was fetched.
+  virtual const GURL& GetURL() const = 0;
+
+  // If the fetch resulted in a redirect, this returns the final URL after all
+  // redirects. Otherwise, it returns an empty URL.
+  virtual GURL GetRedirectURL() const = 0;
+
   virtual URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
                                        uint32_t skip) = 0;
 

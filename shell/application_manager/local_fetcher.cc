@@ -45,6 +45,14 @@ base::FilePath LocalFetcher::UrlToFile(const GURL& url) {
   return path;
 }
 
+const GURL& LocalFetcher::GetURL() const {
+  return url_;
+}
+
+GURL LocalFetcher::GetRedirectURL() const {
+  return GURL::EmptyGURL();
+}
+
 URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
                                            uint32_t skip) {
   URLResponsePtr response(URLResponse::New());

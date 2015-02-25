@@ -20,6 +20,9 @@ class LocalFetcher : public Fetcher {
  private:
   static base::FilePath UrlToFile(const GURL& url);
 
+  const GURL& GetURL() const override;
+  GURL GetRedirectURL() const override;
+
   URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
                                uint32_t skip) override;
 
