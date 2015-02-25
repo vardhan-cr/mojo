@@ -32,12 +32,22 @@ def gen_filter(path):
     # Don't include all .dart, just .mojom.dart.
     return ext == '.sky' or path.endswith('.mojom.dart')
 
+
 def sky_or_dart_filter(path):
     if os.path.isdir(path):
         return True
     _, ext = os.path.splitext(path)
     # .dart includes '.mojom.dart'
     return ext == '.sky' or ext == '.dart'
+
+
+def assets_filter(path):
+    if os.path.isdir(path):
+        return True
+    if os.path.basename(os.path.dirname(path)) != '2x_web':
+        return False
+    # We only use the 18 and 24s for now.
+    return '18dp' in path or '24dp' in path
 
 
 def copy(from_root, to_root, filter_func=None):
@@ -85,6 +95,8 @@ def main():
     copy(src_path('sky/framework'), deploy_path('sky/framework'),
         sky_or_dart_filter)
     copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), gen_filter)
+    copy(src_path('sky/assets'), deploy_path('sky/assets'), assets_filter)
+
 
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
         args.deploy_root)
