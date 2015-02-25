@@ -19,8 +19,6 @@ import SocketServer
 from mopy.config import Config
 from mopy.paths import Paths
 
-sys.path.insert(0, os.path.join(Paths().src_root, 'build', 'android'))
-
 
 # Tags used by the mojo shell application logs.
 LOGCAT_TAGS = [
