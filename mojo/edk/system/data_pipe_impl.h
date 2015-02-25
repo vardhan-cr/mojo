@@ -7,18 +7,21 @@
 
 #include <stdint.h>
 
+#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/data_pipe.h"
 #include "mojo/edk/system/handle_signals_state.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/c/system/data_pipe.h"
 #include "mojo/public/c/system/types.h"
 
 namespace mojo {
 namespace system {
 
 class Channel;
+class MessageInTransit;
 
 // Base class/interface for classes that "implement" |DataPipe| for various
 // situations (local versus remote). The methods, other than the constructor,
@@ -81,11 +84,17 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
       size_t* actual_size,
       embedder::PlatformHandleVector* platform_handles) = 0;
 
+  virtual bool OnReadMessage(unsigned port, MessageInTransit* message) = 0;
+  virtual void OnDetachFromChannel(unsigned port) = 0;
+
  protected:
   DataPipeImpl() : owner_() {}
 
   DataPipe* owner() const { return owner_; }
 
+  const MojoCreateDataPipeOptions& validated_options() const {
+    return owner_->validated_options();
+  }
   size_t element_num_bytes() const { return owner_->element_num_bytes(); }
   size_t capacity_num_bytes() const { return owner_->capacity_num_bytes(); }
   bool producer_open() const { return owner_->producer_open_no_lock(); }
@@ -113,6 +122,15 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
   DataPipe* owner_;
 
   DISALLOW_COPY_AND_ASSIGN(DataPipeImpl);
+};
+
+// TODO(vtl): This is not the ideal place for this; find somewhere better.
+// Serialized form of a consumer dispatcher. This will actually be followed by a
+// serialized |ChannelEndpoint|; we want to preserve alignment guarantees.
+struct ALIGNAS(8) SerializedDataPipeConsumerDispatcher {
+  // Only validated (and thus canonicalized) options should be serialized.
+  // However, the deserializer must revalidate (as with everything received).
+  MojoCreateDataPipeOptions validated_options;
 };
 
 }  // namespace system

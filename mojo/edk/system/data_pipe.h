@@ -8,10 +8,10 @@
 #include <stdint.h>
 
 #include "base/macros.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
+#include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/handle_signals_state.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/system_impl_export.h"
@@ -24,7 +24,9 @@ namespace system {
 class Awakable;
 class AwakableList;
 class Channel;
+class ChannelEndpoint;
 class DataPipeImpl;
+class MessageInTransitQueue;
 
 // |DataPipe| is a base class for secondary objects implementing data pipes,
 // similar to |MessagePipe| (see the explanatory comment in core.cc). It is
@@ -32,8 +34,7 @@ class DataPipeImpl;
 // Its subclasses implement the three cases: local producer and consumer, local
 // producer and remote consumer, and remote producer and local consumer. This
 // class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT DataPipe
-    : public base::RefCountedThreadSafe<DataPipe> {
+class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
  public:
   // The default options for |MojoCreateDataPipe()|. (Real uses should obtain
   // this via |ValidateCreateOptions()| with a null |in_options|; this is
@@ -56,6 +57,25 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   // |capacity_num_bytes| must be nonzero.
   static DataPipe* CreateLocal(
       const MojoCreateDataPipeOptions& validated_options);
+
+  // Creates a data pipe with a remote producer and a local consumer, using an
+  // existing |ChannelEndpoint| (whose |ReplaceClient()| it'll call) and take
+  // |message_queue|'s contents as already-received incoming messages. If
+  // |channel_endpoint| is null, this will create a "half-open" data pipe (with
+  // only the consumer open). Note that this may fail, in which case it returns
+  // null.
+  static DataPipe* CreateRemoteProducerFromExisting(
+      const MojoCreateDataPipeOptions& validated_options,
+      MessageInTransitQueue* message_queue,
+      ChannelEndpoint* channel_endpoint);
+
+  // Used by |DataPipeConsumerDispatcher::Deserialize()|. Returns true on
+  // success (in which case, |*data_pipe| is set appropriately) and false on
+  // failure (in which case |*data_pipe| may or may not be set to null).
+  static bool ConsumerDeserialize(Channel* channel,
+                                  const void* source,
+                                  size_t size,
+                                  scoped_refptr<DataPipe>* data_pipe);
 
   // These are called by the producer dispatcher to implement its methods of
   // corresponding names.
@@ -119,6 +139,14 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
 
   // The following are only to be used by |DataPipeImpl| (and its subclasses):
 
+  // Replaces |impl_| with |new_impl| (which must not be null). For use when
+  // serializing data pipe dispatchers (i.e., in |ProducerEndSerialize()| and
+  // |ConsumerEndSerialize()|). Returns the old value of |impl_| (in case the
+  // caller needs to manage its lifetime).
+  scoped_ptr<DataPipeImpl> ReplaceImplNoLock(scoped_ptr<DataPipeImpl> new_impl);
+  void SetProducerClosedNoLock();
+  void SetConsumerClosedNoLock();
+
   void ProducerCloseNoLock();
   void ConsumerCloseNoLock();
 
@@ -169,8 +197,6 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
   }
 
  private:
-  friend class base::RefCountedThreadSafe<DataPipe>;
-
   // |validated_options| should be the output of |ValidateOptions()|. In
   // particular: |struct_size| is ignored (so |validated_options| must be the
   // current version of the struct) and |capacity_num_bytes| must be nonzero.
@@ -185,10 +211,17 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe
            scoped_ptr<DataPipeImpl> impl);
   virtual ~DataPipe();
 
+  // |ChannelEndpointClient| implementation:
+  bool OnReadMessage(unsigned port, MessageInTransit* message) override;
+  void OnDetachFromChannel(unsigned port) override;
+
   void AwakeProducerAwakablesForStateChangeNoLock(
       const HandleSignalsState& new_producer_state);
   void AwakeConsumerAwakablesForStateChangeNoLock(
       const HandleSignalsState& new_consumer_state);
+
+  void SetProducerClosed();
+  void SetConsumerClosed();
 
   bool has_local_producer_no_lock() const {
     lock_.AssertAcquired();

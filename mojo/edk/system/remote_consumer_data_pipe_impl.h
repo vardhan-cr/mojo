@@ -1,31 +1,34 @@
-// Copyright 2013 The Chromium Authors. All rights reserved.
+// Copyright 2015 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
-#define MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
+#ifndef MOJO_EDK_SYSTEM_REMOTE_CONSUMER_DATA_PIPE_IMPL_H_
+#define MOJO_EDK_SYSTEM_REMOTE_CONSUMER_DATA_PIPE_IMPL_H_
 
 #include "base/macros.h"
 #include "base/memory/aligned_memory.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
 #include "mojo/edk/system/system_impl_export.h"
 
 namespace mojo {
 namespace system {
 
-class MessageInTransitQueue;
-
-// |LocalDataPipeImpl| is a subclass that "implements" |DataPipe| for data pipes
-// whose producer and consumer are both local. See |DataPipeImpl| for more
-// details.
-class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
+// |RemoteConsumerDataPipeImpl| is a subclass that "implements" |DataPipe| for
+// data pipes whose producer is local and whose consumer is remote. See
+// |DataPipeImpl| for more details.
+class MOJO_SYSTEM_IMPL_EXPORT RemoteConsumerDataPipeImpl : public DataPipeImpl {
  public:
-  LocalDataPipeImpl();
-  ~LocalDataPipeImpl() override;
+  RemoteConsumerDataPipeImpl(ChannelEndpoint* channel_endpoint,
+                             size_t consumer_num_bytes);
+  ~RemoteConsumerDataPipeImpl() override;
 
  private:
   // |DataPipeImpl| implementation:
+  // Note: None of the |Consumer...()| methods should be called, except
+  // |ConsumerGetHandleSignalsState()|.
   void ProducerClose() override;
   MojoResult ProducerWriteData(UserPointer<const void> elements,
                                UserPointer<uint32_t> num_bytes,
@@ -73,27 +76,22 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
   void EnsureBuffer();
   void DestroyBuffer();
 
-  // Get the maximum (single) write/read size right now (in number of elements);
-  // result fits in a |uint32_t|.
-  size_t GetMaxNumBytesToWrite();
-  size_t GetMaxNumBytesToRead();
+  void Disconnect();
 
-  // Marks the given number of bytes as consumed/discarded. |num_bytes| must be
-  // no greater than |current_num_bytes_|.
-  void MarkDataAsConsumed(size_t num_bytes);
+  // Should be valid if and only if |consumer_open()| returns true.
+  scoped_refptr<ChannelEndpoint> channel_endpoint_;
 
-  // Converts queued data to messages (leaves |buffer_| empty).
-  void ConvertDataToMessages(MessageInTransitQueue* message_queue);
+  // The number of bytes we've sent the consumer, but don't *know* have been
+  // consumed.
+  size_t consumer_num_bytes_;
 
+  // Used for two-phase writes.
   scoped_ptr<char, base::AlignedFreeDeleter> buffer_;
-  // Circular buffer.
-  size_t start_index_;
-  size_t current_num_bytes_;
 
-  DISALLOW_COPY_AND_ASSIGN(LocalDataPipeImpl);
+  DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImpl);
 };
 
 }  // namespace system
 }  // namespace mojo
 
-#endif  // MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
+#endif  // MOJO_EDK_SYSTEM_REMOTE_CONSUMER_DATA_PIPE_IMPL_H_

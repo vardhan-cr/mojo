@@ -6,6 +6,7 @@
 
 #include "base/logging.h"
 #include "mojo/edk/system/configuration.h"
+#include "mojo/edk/system/data_pipe_consumer_dispatcher.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/platform_handle_dispatcher.h"
 #include "mojo/edk/system/shared_buffer_dispatcher.h"
@@ -77,11 +78,13 @@ scoped_refptr<Dispatcher> Dispatcher::TransportDataAccess::Deserialize(
       return scoped_refptr<Dispatcher>(
           MessagePipeDispatcher::Deserialize(channel, source, size));
     case kTypeDataPipeProducer:
-    case kTypeDataPipeConsumer:
       // TODO(vtl): Implement.
       LOG(WARNING) << "Deserialization of dispatcher type " << type
                    << " not supported";
       return nullptr;
+    case kTypeDataPipeConsumer:
+      return scoped_refptr<Dispatcher>(
+          DataPipeConsumerDispatcher::Deserialize(channel, source, size));
     case kTypeSharedBuffer:
       return scoped_refptr<Dispatcher>(SharedBufferDispatcher::Deserialize(
           channel, source, size, platform_handles));

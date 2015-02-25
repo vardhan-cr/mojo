@@ -14,12 +14,28 @@
 
 #include <algorithm>
 
+#include "base/compiler_specific.h"
 #include "base/logging.h"
+#include "base/memory/scoped_ptr.h"
+#include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/configuration.h"
 #include "mojo/edk/system/data_pipe.h"
+#include "mojo/edk/system/message_in_transit.h"
+#include "mojo/edk/system/message_in_transit_queue.h"
+#include "mojo/edk/system/remote_consumer_data_pipe_impl.h"
 
 namespace mojo {
 namespace system {
+
+// Assert some things about some things defined in data_pipe_impl.h (don't make
+// the assertions there, to avoid including message_in_transit.h).
+static_assert(ALIGNOF(SerializedDataPipeConsumerDispatcher) ==
+                  MessageInTransit::kMessageAlignment,
+              "Wrong alignment");
+static_assert(sizeof(SerializedDataPipeConsumerDispatcher) %
+                      MessageInTransit::kMessageAlignment ==
+                  0,
+              "Wrong size");
 
 LocalDataPipeImpl::LocalDataPipeImpl()
     : start_index_(0), current_num_bytes_(0) {
@@ -51,6 +67,7 @@ MojoResult LocalDataPipeImpl::ProducerWriteData(
   DCHECK_EQ(max_num_bytes_to_write % element_num_bytes(), 0u);
   DCHECK_EQ(min_num_bytes_to_write % element_num_bytes(), 0u);
   DCHECK_GT(max_num_bytes_to_write, 0u);
+  DCHECK_GE(max_num_bytes_to_write, min_num_bytes_to_write);
   DCHECK(consumer_open());
 
   if (min_num_bytes_to_write > capacity_num_bytes() - current_num_bytes_) {
@@ -65,10 +82,10 @@ MojoResult LocalDataPipeImpl::ProducerWriteData(
   if (num_bytes_to_write == 0)
     return MOJO_RESULT_SHOULD_WAIT;
 
-  // The amount we can write in our first |memcpy()|.
+  // The amount we can write in our first copy.
   size_t num_bytes_to_write_first =
       std::min(num_bytes_to_write, GetMaxNumBytesToWrite());
-  // Do the first (and possibly only) |memcpy()|.
+  // Do the first (and possibly only) copy.
   size_t first_write_index =
       (start_index_ + current_num_bytes_) % capacity_num_bytes();
   EnsureBuffer();
@@ -118,6 +135,7 @@ MojoResult LocalDataPipeImpl::ProducerBeginWriteData(
 
 MojoResult LocalDataPipeImpl::ProducerEndWriteData(uint32_t num_bytes_written) {
   DCHECK_LE(num_bytes_written, producer_two_phase_max_num_bytes_written());
+  DCHECK_EQ(num_bytes_written % element_num_bytes(), 0u);
   current_num_bytes_ += num_bytes_written;
   DCHECK_LE(current_num_bytes_, capacity_num_bytes());
   set_producer_two_phase_max_num_bytes_written(0);
@@ -188,7 +206,7 @@ MojoResult LocalDataPipeImpl::ConsumerReadData(UserPointer<void> elements,
                            : MOJO_RESULT_FAILED_PRECONDITION;
   }
 
-  // The amount we can read in our first |memcpy()|.
+  // The amount we can read in our first copy.
   size_t num_bytes_to_read_first =
       std::min(num_bytes_to_read, GetMaxNumBytesToRead());
   elements.PutArray(buffer_.get() + start_index_, num_bytes_to_read_first);
@@ -267,6 +285,7 @@ MojoResult LocalDataPipeImpl::ConsumerBeginReadData(
 
 MojoResult LocalDataPipeImpl::ConsumerEndReadData(uint32_t num_bytes_read) {
   DCHECK_LE(num_bytes_read, consumer_two_phase_max_num_bytes_read());
+  DCHECK_EQ(num_bytes_read % element_num_bytes(), 0u);
   DCHECK_LE(start_index_ + num_bytes_read, capacity_num_bytes());
   MarkDataAsConsumed(num_bytes_read);
   set_consumer_two_phase_max_num_bytes_read(0);
@@ -291,8 +310,8 @@ HandleSignalsState LocalDataPipeImpl::ConsumerGetHandleSignalsState() const {
 void LocalDataPipeImpl::ConsumerStartSerialize(Channel* channel,
                                                size_t* max_size,
                                                size_t* max_platform_handles) {
-  // TODO(vtl): Support serializing consumer data pipe handles.
-  *max_size = 0;
+  *max_size = sizeof(SerializedDataPipeConsumerDispatcher) +
+              channel->GetSerializedEndpointSize();
   *max_platform_handles = 0;
 }
 
@@ -301,9 +320,51 @@ bool LocalDataPipeImpl::ConsumerEndSerialize(
     void* destination,
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
-  // TODO(vtl): Support serializing consumer data pipe handles.
-  owner()->ConsumerCloseNoLock();
+  SerializedDataPipeConsumerDispatcher* s =
+      static_cast<SerializedDataPipeConsumerDispatcher*>(destination);
+  s->validated_options = validated_options();
+  void* destination_for_endpoint = static_cast<char*>(destination) +
+                                   sizeof(SerializedDataPipeConsumerDispatcher);
+
+  size_t old_num_bytes = current_num_bytes_;
+  MessageInTransitQueue message_queue;
+  ConvertDataToMessages(&message_queue);
+
+  if (!producer_open()) {
+    // Case 1: The producer is closed.
+    channel->SerializeEndpointWithClosedPeer(destination_for_endpoint,
+                                             &message_queue);
+    owner()->ConsumerCloseNoLock();
+    *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
+                   channel->GetSerializedEndpointSize();
+    return true;
+  }
+
+  // Case 2: The producer isn't closed. We'll replace ourselves with a
+  // |RemoteConsumerDataPipeImpl|.
+
+  // Note: We don't use |port|.
+  scoped_refptr<ChannelEndpoint> channel_endpoint =
+      channel->SerializeEndpointWithLocalPeer(destination_for_endpoint,
+                                              &message_queue, owner(), 0);
+  // Note: Keep |*this| alive until the end of this method, to make things
+  // slightly easier on ourselves.
+  scoped_ptr<DataPipeImpl> self(owner()->ReplaceImplNoLock(make_scoped_ptr(
+      new RemoteConsumerDataPipeImpl(channel_endpoint.get(), old_num_bytes))));
+
+  *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
+                 channel->GetSerializedEndpointSize();
+  return true;
+}
+
+bool LocalDataPipeImpl::OnReadMessage(unsigned /*port*/,
+                                      MessageInTransit* /*message*/) {
+  NOTREACHED();
   return false;
+}
+
+void LocalDataPipeImpl::OnDetachFromChannel(unsigned /*port*/) {
+  NOTREACHED();
 }
 
 void LocalDataPipeImpl::EnsureBuffer() {
@@ -348,6 +409,29 @@ void LocalDataPipeImpl::MarkDataAsConsumed(size_t num_bytes) {
   start_index_ += num_bytes;
   start_index_ %= capacity_num_bytes();
   current_num_bytes_ -= num_bytes;
+}
+
+void LocalDataPipeImpl::ConvertDataToMessages(
+    MessageInTransitQueue* message_queue) {
+  // The maximum amount of data to send per message (make it a multiple of the
+  // element size.
+  size_t max_message_num_bytes = GetConfiguration().max_message_num_bytes;
+  max_message_num_bytes -= max_message_num_bytes % element_num_bytes();
+  DCHECK_GT(max_message_num_bytes, 0u);
+
+  while (current_num_bytes_ > 0) {
+    size_t message_num_bytes =
+        std::min(max_message_num_bytes, GetMaxNumBytesToRead());
+
+    // Note: |message_num_bytes| fits in a |uint32_t| since the capacity does.
+    scoped_ptr<MessageInTransit> message(new MessageInTransit(
+        MessageInTransit::kTypeEndpoint, MessageInTransit::kSubtypeEndpointData,
+        static_cast<uint32_t>(message_num_bytes),
+        buffer_.get() + start_index_));
+    message_queue->AddMessage(message.Pass());
+
+    MarkDataAsConsumed(message_num_bytes);
+  }
 }
 
 }  // namespace system

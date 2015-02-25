@@ -1,13 +1,15 @@
-// Copyright 2013 The Chromium Authors. All rights reserved.
+// Copyright 2015 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
-#define MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
+#ifndef MOJO_EDK_SYSTEM_REMOTE_PRODUCER_DATA_PIPE_IMPL_H_
+#define MOJO_EDK_SYSTEM_REMOTE_PRODUCER_DATA_PIPE_IMPL_H_
 
 #include "base/macros.h"
 #include "base/memory/aligned_memory.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
 #include "mojo/edk/system/system_impl_export.h"
 
@@ -16,16 +18,31 @@ namespace system {
 
 class MessageInTransitQueue;
 
-// |LocalDataPipeImpl| is a subclass that "implements" |DataPipe| for data pipes
-// whose producer and consumer are both local. See |DataPipeImpl| for more
-// details.
-class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
+// |RemoteProducerDataPipeImpl| is a subclass that "implements" |DataPipe| for
+// data pipes whose producer is remote and whose consumer is local. See
+// |DataPipeImpl| for more details.
+class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl : public DataPipeImpl {
  public:
-  LocalDataPipeImpl();
-  ~LocalDataPipeImpl() override;
+  explicit RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint);
+  RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint,
+                             scoped_ptr<char, base::AlignedFreeDeleter> buffer,
+                             size_t current_num_bytes);
+  ~RemoteProducerDataPipeImpl() override;
+
+  // Converts the incoming queue of messages into a buffer (for the given
+  // options). On failure, returns null (|messages| may be modified). On
+  // success, returns the buffer, which will be of size
+  // |validated_options.capacity_num_bytes| and contain |*buffer_num_bytes| of
+  // data.
+  static scoped_ptr<char, base::AlignedFreeDeleter> IncomingMessagesToBuffer(
+      const MojoCreateDataPipeOptions& validated_options,
+      MessageInTransitQueue* messages,
+      size_t* buffer_num_bytes);
 
  private:
   // |DataPipeImpl| implementation:
+  // Note: None of the |Producer...()| methods should be called, except
+  // |ProducerGetHandleSignalsState()|.
   void ProducerClose() override;
   MojoResult ProducerWriteData(UserPointer<const void> elements,
                                UserPointer<uint32_t> num_bytes,
@@ -78,22 +95,25 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
   size_t GetMaxNumBytesToWrite();
   size_t GetMaxNumBytesToRead();
 
-  // Marks the given number of bytes as consumed/discarded. |num_bytes| must be
-  // no greater than |current_num_bytes_|.
+  // Marks the given number of bytes as consumed/discarded. This will send a
+  // message to the remote producer. |num_bytes| must be no greater than
+  // |current_num_bytes_|.
   void MarkDataAsConsumed(size_t num_bytes);
 
-  // Converts queued data to messages (leaves |buffer_| empty).
-  void ConvertDataToMessages(MessageInTransitQueue* message_queue);
+  void Disconnect();
+
+  // Should be valid if and only if |producer_open()| returns true.
+  scoped_refptr<ChannelEndpoint> channel_endpoint_;
 
   scoped_ptr<char, base::AlignedFreeDeleter> buffer_;
   // Circular buffer.
   size_t start_index_;
   size_t current_num_bytes_;
 
-  DISALLOW_COPY_AND_ASSIGN(LocalDataPipeImpl);
+  DISALLOW_COPY_AND_ASSIGN(RemoteProducerDataPipeImpl);
 };
 
 }  // namespace system
 }  // namespace mojo
 
-#endif  // MOJO_EDK_SYSTEM_LOCAL_DATA_PIPE_IMPL_H_
+#endif  // MOJO_EDK_SYSTEM_REMOTE_PRODUCER_DATA_PIPE_IMPL_H_

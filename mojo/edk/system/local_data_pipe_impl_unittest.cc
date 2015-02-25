@@ -183,6 +183,7 @@ TEST(LocalDataPipeImplTest, SimpleReadWrite) {
   EXPECT_EQ(MOJO_RESULT_OK,
             dp->ConsumerReadData(UserPointer<void>(elements),
                                  MakeUserPointer(&num_bytes), false, false));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
   EXPECT_EQ(456, elements[0]);
   EXPECT_EQ(-1, elements[1]);
 
