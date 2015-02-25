@@ -54,7 +54,8 @@ def main():
 
   if get_sdk:
     # Completely remove all traces of the previous SDK.
-    shutil.rmtree(DART_SDK_DIR)
+    if os.path.exists(DART_SDK_DIR):
+      shutil.rmtree(DART_SDK_DIR)
     os.mkdir(DART_SDK_DIR)
 
     wget_command = ['wget', '-N', '-c', LINUX_64_SDK, '-P', DART_SDK_DIR]
