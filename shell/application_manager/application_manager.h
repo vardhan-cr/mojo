@@ -6,19 +6,52 @@
 #define SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_
 
 #include <map>
-#include <set>
 
 #include "base/basictypes.h"
+#include "base/callback.h"
 #include "base/gtest_prod_util.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager_export.h"
+#include "shell/application_manager/fetcher.h"
 #include "shell/application_manager/shell_impl.h"
 #include "url/gurl.h"
 
+namespace base {
+class FilePath;
+class SequencedWorkerPool;
+}
+
 namespace mojo {
+
+// ApplicationManager requires implementations of NativeRunner and
+// NativeRunnerFactory to run native applications.
+class MOJO_APPLICATION_MANAGER_EXPORT NativeRunner {
+ public:
+  // Parameter for |Start| to specify its cleanup behavior.
+  enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
+  virtual ~NativeRunner() {}
+
+  // Loads the app in the file at |app_path| and runs it on some other
+  // thread/process. If |cleanup_behavior| is |true|, takes ownership of the
+  // file. |app_completed_callback| is posted (to the thread on which |Start()|
+  // was called) after |MojoMain()| completes.
+  virtual void Start(const base::FilePath& app_path,
+                     CleanupBehavior cleanup_behavior,
+                     InterfaceRequest<Application> application_request,
+                     const base::Closure& app_completed_callback) = 0;
+};
+
+class MOJO_APPLICATION_MANAGER_EXPORT NativeRunnerFactory {
+ public:
+  virtual ~NativeRunnerFactory() {}
+  virtual scoped_ptr<NativeRunner> Create() = 0;
+};
 
 class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
  public:
@@ -70,6 +103,9 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
       const GURL& application_url,
       const std::string& interface_name);
 
+  void RegisterContentHandler(const std::string& mime_type,
+                              const GURL& content_handler_url);
+
   void RegisterExternalApplication(const GURL& application_url,
                                    const std::vector<std::string>& args,
                                    ApplicationPtr application);
@@ -79,10 +115,14 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   void set_default_loader(scoped_ptr<ApplicationLoader> loader) {
     default_loader_ = loader.Pass();
   }
-  void set_native_application_loader(
-      scoped_ptr<NativeApplicationLoader> loader) {
-    native_application_loader_ = loader.Pass();
+  void set_native_runner_factory(
+      scoped_ptr<NativeRunnerFactory> runner_factory) {
+    native_runner_factory_ = runner_factory.Pass();
   }
+  void set_blocking_pool(base::SequencedWorkerPool* blocking_pool) {
+    blocking_pool_ = blocking_pool;
+  }
+  void set_disable_cache(bool disable_cache) { disable_cache_ = disable_cache; }
   // Sets a Loader to be used for a specific url.
   void SetLoaderForURL(scoped_ptr<ApplicationLoader> loader, const GURL& url);
   // Sets a Loader to be used for a specific url scheme.
@@ -108,6 +148,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   typedef std::map<GURL, ShellImpl*> URLToShellImplMap;
   typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
+  typedef std::map<std::string, GURL> MimeTypeToURLMap;
 
   bool ConnectToRunningApplication(const GURL& application_url,
                                    const GURL& requestor_url,
@@ -137,6 +178,16 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);
 
+  void HandleFetchCallback(InterfaceRequest<Application> application_request,
+                           NativeRunner::CleanupBehavior cleanup_behavior,
+                           scoped_ptr<Fetcher> fetcher);
+
+  void RunNativeApplication(InterfaceRequest<Application> application_request,
+                            NativeRunner::CleanupBehavior cleanup_behavior,
+                            scoped_ptr<Fetcher> fetcher,
+                            const base::FilePath& file_path,
+                            bool path_exists);
+
   void LoadWithContentHandler(const GURL& content_handler_url,
                               InterfaceRequest<Application> application_request,
                               URLResponsePtr url_response);
@@ -151,19 +202,27 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   // Returns the arguments for the given url.
   Array<String> GetArgsForURL(const GURL& url);
 
+  void CleanupRunner(NativeRunner* runner);
+
   Delegate* delegate_;
   // Loader management.
   // Loaders are chosen in the order they are listed here.
   URLToLoaderMap url_to_loader_;
   SchemeToLoaderMap scheme_to_loader_;
   scoped_ptr<ApplicationLoader> default_loader_;
-  scoped_ptr<NativeApplicationLoader> native_application_loader_;
+  scoped_ptr<NativeRunnerFactory> native_runner_factory_;
 
   URLToShellImplMap url_to_shell_impl_;
   URLToContentHandlerMap url_to_content_handler_;
   URLToArgsMap url_to_args_;
 
   base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
+
+  base::SequencedWorkerPool* blocking_pool_;
+  NetworkServicePtr network_service_;
+  MimeTypeToURLMap mime_type_to_url_;
+  ScopedVector<NativeRunner> native_runners_;
+  bool disable_cache_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationManager);
 };

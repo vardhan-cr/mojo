@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_DATA_PIPE_SEEK_H_
-#define SHELL_DATA_PIPE_SEEK_H_
+#ifndef SHELL_APPLICATION_MANAGER_DATA_PIPE_SEEK_H_
+#define SHELL_APPLICATION_MANAGER_DATA_PIPE_SEEK_H_
 
 #include <string>
 
@@ -35,4 +35,4 @@ bool BlockingPeekNBytes(DataPipeConsumerHandle source,
 }  // namespace shell
 }  // namespace mojo
 
-#endif  // SHELL_DATA_PIPE_SEEK_H_
+#endif  // SHELL_APPLICATION_MANAGER_DATA_PIPE_SEEK_H_

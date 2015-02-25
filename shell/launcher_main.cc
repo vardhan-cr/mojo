@@ -73,8 +73,7 @@ class Launcher : public embedder::ProcessDelegate {
     DCHECK(application_request_.is_pending());
     shell::InProcessDynamicServiceRunner service_runner(nullptr);
     base::RunLoop run_loop;
-    service_runner.Start(app_path_,
-                         shell::DynamicServiceRunner::DontDeleteAppPath,
+    service_runner.Start(app_path_, NativeRunner::DontDeleteAppPath,
                          application_request_.Pass(), run_loop.QuitClosure());
     run_loop.Run();
   }
