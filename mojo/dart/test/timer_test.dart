@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:mojo_core' as core;
 
 main() {
   (new Timer(new Duration(seconds: 1), () {

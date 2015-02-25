@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:mojo_core' as core;
+import 'mojo:core' as core;
 
 main() async {
   var x = await (new Future.value(42));

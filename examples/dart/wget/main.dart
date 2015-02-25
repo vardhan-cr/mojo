@@ -6,10 +6,10 @@
 // mojo_shell "mojo:dart_wget http://www.google.com"
 
 import 'dart:async';
-import 'dart:mojo_application';
-import 'dart:mojo_bindings';
-import 'dart:mojo_core';
 import 'dart:typed_data';
+import 'mojo:application';
+import 'mojo:bindings';
+import 'mojo:core';
 
 import 'package:mojo/services/network/public/interfaces/network_service.mojom.dart';
 import 'package:mojo/services/network/public/interfaces/url_loader.mojom.dart';

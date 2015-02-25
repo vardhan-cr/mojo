@@ -4,9 +4,9 @@
 
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:mojo_bindings' as bindings;
-import 'dart:mojo_core' as core;
 import 'dart:typed_data';
+import 'mojo:bindings' as bindings;
+import 'mojo:core' as core;
 
 import 'package:mojo/dart/testing/expect.dart';
 import 'package:mojo/public/interfaces/bindings/tests/sample_interfaces.mojom.dart' as sample;

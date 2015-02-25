@@ -4,8 +4,9 @@
 
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:mojo_core';
 import 'dart:typed_data';
+import 'mojo:core';
+
 
 import 'package:mojo/dart/testing/expect.dart';
 

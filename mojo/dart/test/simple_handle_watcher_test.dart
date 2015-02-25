@@ -4,7 +4,7 @@
 
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:mojo_core' as core;
+import 'mojo:core' as core;
 
 main() {
   var pipe = new core.MojoMessagePipe();

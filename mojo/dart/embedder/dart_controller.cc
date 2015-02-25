@@ -20,6 +20,7 @@ namespace dart {
 extern const uint8_t* snapshot_buffer;
 
 const char* kDartScheme = "dart:";
+const char* kMojoScheme = "mojo:";
 const char* kAsyncLibURL = "dart:async";
 const char* kInternalLibURL = "dart:_internal";
 const char* kIsolateLibURL = "dart:isolate";
@@ -30,6 +31,13 @@ static bool IsDartSchemeURL(const char* url_name) {
   // If the URL starts with "dart:" then it is considered as a special
   // library URL which is handled differently from other URLs.
   return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
+}
+
+static bool IsMojoSchemeURL(const char* url_name) {
+  static const intptr_t kMojoSchemeLen = strlen(kMojoScheme);
+  // If the URL starts with "mojo:" then it is considered as a special
+  // library URL which is handled differently from other URLs.
+  return (strncmp(url_name, kMojoScheme, kMojoSchemeLen) == 0);
 }
 
 static bool IsServiceIsolateURL(const char* url_name) {
@@ -111,22 +119,31 @@ static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
   }
 
   // Handle URI canonicalization requests.
+  const char* url_string = nullptr;
+  result = Dart_StringToCString(url, &url_string);
   if (tag == Dart_kCanonicalizeUrl) {
-    const char* url_string = nullptr;
-    result = Dart_StringToCString(url, &url_string);
     if (Dart_IsError(result)) {
       return result;
     }
-    bool is_dart_scheme_url = IsDartSchemeURL(url_string);
-    // If this is a Dart Scheme URL then it is not modified as it will be
-    // handled internally.
-    if (is_dart_scheme_url) {
+    const bool is_internal_scheme_url =
+        IsDartSchemeURL(url_string) || IsMojoSchemeURL(url_string);
+    // If this is a Dart Scheme URL, or a Mojo Scheme URL, then it is not
+    // modified as it will be handled internally.
+    if (is_internal_scheme_url) {
       return url;
     }
     // Resolve the url within the context of the library's URL.
     Dart_Handle builtin_lib =
         Builtin::GetLibrary(Builtin::kBuiltinLibrary);
     return ResolveUri(library_url, url, builtin_lib);
+  }
+
+  if (tag == Dart_kImportTag) {
+    if (IsMojoSchemeURL(url_string)) {
+      Dart_Handle library = Dart_LookupLibrary(url);
+      DART_CHECK_VALID(library);
+      return library;
+    }
   }
 
   Dart_Handle builtin_lib =
@@ -156,7 +173,11 @@ static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
 static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
                                            Dart_Handle builtin_lib) {
   // First ensure all required libraries are available.
-  Dart_Handle url = Dart_NewStringFromCString(kAsyncLibURL);
+  Dart_Handle url = Dart_NewStringFromCString(kInternalLibURL);
+  DART_CHECK_VALID(url);
+  Dart_Handle internal_lib = Dart_LookupLibrary(url);
+  DART_CHECK_VALID(internal_lib);
+  url = Dart_NewStringFromCString(kAsyncLibURL);
   DART_CHECK_VALID(url);
   Dart_Handle async_lib = Dart_LookupLibrary(url);
   DART_CHECK_VALID(async_lib);
@@ -173,16 +194,16 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   Dart_Handle result = Dart_FinalizeLoading(false);
   DART_CHECK_VALID(result);
 
+  // Import dart:_internal into mojo:builtin for setting up hooks.
+  result = Dart_LibraryImportLibrary(builtin_lib, internal_lib, Dart_Null());
+  DART_CHECK_VALID(result);
+
   // Setup the internal library's 'internalPrint' function.
   Dart_Handle print = Dart_Invoke(builtin_lib,
                                   Dart_NewStringFromCString("_getPrintClosure"),
                                   0,
                                   nullptr);
   DART_CHECK_VALID(print);
-  url = Dart_NewStringFromCString(kInternalLibURL);
-  DART_CHECK_VALID(url);
-  Dart_Handle internal_lib = Dart_LookupLibrary(url);
-  DART_CHECK_VALID(internal_lib);
   result = Dart_SetField(internal_lib,
                          Dart_NewStringFromCString("_printClosure"),
                          print);

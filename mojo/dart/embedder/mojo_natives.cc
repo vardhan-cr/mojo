@@ -90,7 +90,7 @@ static void SetInvalidArgumentReturn(Dart_NativeArguments arguments) {
 }
 
 static Dart_Handle MojoLib() {
-  Dart_Handle core_lib_name = Dart_NewStringFromCString("dart:mojo_core");
+  Dart_Handle core_lib_name = Dart_NewStringFromCString("mojo:core");
   return Dart_LookupLibrary(core_lib_name);
 }
 

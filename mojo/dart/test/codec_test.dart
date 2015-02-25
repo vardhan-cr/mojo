@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:mojo_bindings' as bindings;
-import 'dart:mojo_core' as core;
 import 'dart:typed_data';
+import 'mojo:bindings' as bindings;
+import 'mojo:core' as core;
 
 import 'package:mojo/dart/testing/expect.dart';
 

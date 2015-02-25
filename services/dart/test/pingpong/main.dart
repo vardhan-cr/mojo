@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:mojo_application';
-import 'dart:mojo_bindings';
-import 'dart:mojo_core';
+import 'mojo:application';
+import 'mojo:bindings';
+import 'mojo:core';
 
 import 'package:services/dart/test/pingpong_service.mojom.dart';
 
