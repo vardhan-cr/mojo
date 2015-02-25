@@ -359,6 +359,125 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerBasic) {
   dp->ProducerClose();
 }
 
+// TODO(vtl): This test doesn't have an obvious analogue in
+// |LocalDataPipeImplTest|.
+TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
+  char read_buffer[100] = {};
+  uint32_t read_buffer_size = static_cast<uint32_t>(sizeof(read_buffer));
+  DispatcherVector read_dispatchers;
+  uint32_t read_num_dispatchers = 10;  // Maximum to get.
+  Waiter waiter;
+  HandleSignalsState hss;
+  uint32_t context = 0;
+
+  scoped_refptr<DataPipe> dp(CreateLocal(sizeof(int32_t), 1000));
+  // This is the consumer dispatcher we'll send.
+  scoped_refptr<DataPipeConsumerDispatcher> consumer =
+      new DataPipeConsumerDispatcher();
+  consumer->Init(dp);
+
+  // Write to the producer and close it, before sending the consumer.
+  int32_t elements[10] = {123};
+  uint32_t num_bytes = static_cast<uint32_t>(1u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            dp->ProducerWriteData(UserPointer<const void>(elements),
+                                  MakeUserPointer(&num_bytes), false));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
+  dp->ProducerClose();
+
+  // Write the consumer to MP 0 (port 0). Wait and receive on MP 1 (port 0).
+  // (Add the waiter first, to avoid any handling the case where it's already
+  // readable.)
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            message_pipe(1)->AddAwakable(
+                0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+  {
+    DispatcherTransport transport(
+        test::DispatcherTryStartTransport(consumer.get()));
+    EXPECT_TRUE(transport.is_valid());
+
+    std::vector<DispatcherTransport> transports;
+    transports.push_back(transport);
+    EXPECT_EQ(MOJO_RESULT_OK, message_pipe(0)->WriteMessage(
+                                  0, NullUserPointer(), 0, &transports,
+                                  MOJO_WRITE_MESSAGE_FLAG_NONE));
+    transport.End();
+
+    // |consumer| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(consumer->HasOneRef());
+    consumer = nullptr;
+  }
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(123u, context);
+  hss = HandleSignalsState();
+  message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
+            hss.satisfied_signals);
+  EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            message_pipe(1)->ReadMessage(
+                0, UserPointer<void>(read_buffer),
+                MakeUserPointer(&read_buffer_size), &read_dispatchers,
+                &read_num_dispatchers, MOJO_READ_MESSAGE_FLAG_NONE));
+  EXPECT_EQ(0u, static_cast<size_t>(read_buffer_size));
+  EXPECT_EQ(1u, read_dispatchers.size());
+  EXPECT_EQ(1u, read_num_dispatchers);
+  ASSERT_TRUE(read_dispatchers[0]);
+  EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
+
+  EXPECT_EQ(Dispatcher::kTypeDataPipeConsumer, read_dispatchers[0]->GetType());
+  consumer =
+      static_cast<DataPipeConsumerDispatcher*>(read_dispatchers[0].get());
+  read_dispatchers.clear();
+
+  waiter.Init();
+  hss = HandleSignalsState();
+  MojoResult result =
+      consumer->AddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, &hss);
+  if (result == MOJO_RESULT_OK) {
+    context = 0;
+    EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+    EXPECT_EQ(456u, context);
+    consumer->RemoveAwakable(&waiter, &hss);
+  } else {
+    ASSERT_EQ(MOJO_RESULT_ALREADY_EXISTS, result);
+  }
+  // We don't know if the fact that the producer has been closed is known yet.
+  EXPECT_TRUE((hss.satisfied_signals & MOJO_HANDLE_SIGNAL_READABLE));
+  EXPECT_TRUE((hss.satisfiable_signals & MOJO_HANDLE_SIGNAL_READABLE));
+
+  // Read one element.
+  elements[0] = -1;
+  elements[1] = -1;
+  num_bytes = static_cast<uint32_t>(1u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK, consumer->ReadData(UserPointer<void>(elements),
+                                               MakeUserPointer(&num_bytes),
+                                               MOJO_READ_DATA_FLAG_NONE));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
+  EXPECT_EQ(123, elements[0]);
+  EXPECT_EQ(-1, elements[1]);
+
+  waiter.Init();
+  hss = HandleSignalsState();
+  result =
+      consumer->AddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 789, &hss);
+  if (result == MOJO_RESULT_OK) {
+    context = 0;
+    EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
+              waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+    EXPECT_EQ(789u, context);
+    consumer->RemoveAwakable(&waiter, &hss);
+  } else {
+    ASSERT_EQ(MOJO_RESULT_FAILED_PRECONDITION, result);
+  }
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
+
+  consumer->Close();
+}
+
 }  // namespace
 }  // namespace system
 }  // namespace mojo
