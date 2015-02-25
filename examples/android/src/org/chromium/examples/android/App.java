@@ -57,7 +57,9 @@ class App {
                 }
             });
             ServiceProvider.MANAGER.bind(serviceProvider, services);
-            exposedServices.close();
+            if (exposedServices != null) {
+                exposedServices.close();
+            }
         }
 
         @Override

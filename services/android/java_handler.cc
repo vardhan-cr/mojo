@@ -4,8 +4,11 @@
 
 #include "services/android/java_handler.h"
 
+#include "base/android/base_jni_onload.h"
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
+#include "base/android/library_loader/library_loader_hooks.h"
+#include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/scoped_native_library.h"
@@ -61,23 +64,40 @@ bool JavaHandler::ConfigureIncomingConnection(
 }  // namespace android
 }  // namespace services
 
+namespace {
+
+bool RegisterJNI(JNIEnv* env) {
+  if (!services::android::RegisterNativesImpl(env))
+    return false;
+
+  if (!mojo::android::RegisterCoreImpl(env))
+    return false;
+
+  if (!mojo::android::RegisterBaseRunLoop(env))
+    return false;
+
+  return true;
+}
+
+}  // namespace
+
 MojoResult MojoMain(MojoHandle shell_handle) {
   mojo::ApplicationRunnerChromium runner(new services::android::JavaHandler());
   return runner.Run(shell_handle);
 }
 
 JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-  base::android::InitVM(vm);
-  JNIEnv* env = base::android::AttachCurrentThread();
-
-  if (!services::android::RegisterNativesImpl(env))
+  std::vector<base::android::RegisterCallback> register_callbacks;
+  register_callbacks.push_back(base::Bind(&RegisterJNI));
+  if (!base::android::OnJNIOnLoadRegisterJNI(vm, register_callbacks) ||
+      !base::android::OnJNIOnLoadInit(
+          std::vector<base::android::InitCallback>())) {
     return -1;
+  }
 
-  if (!mojo::android::RegisterCoreImpl(env))
-    return -1;
-
-  if (!mojo::android::RegisterBaseRunLoop(env))
-    return -1;
+  // There cannot be two AtExit objects triggering at the same time. Remove the
+  // one from LibraryLoader as ApplicationRunnerChromium also uses one.
+  base::android::LibraryLoaderExitHook();
 
   return JNI_VERSION_1_4;
 }
