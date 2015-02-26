@@ -145,7 +145,7 @@ void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
 }
 
 
-Future<bool> runTest() async {
+Future<int> runTest() async {
   var testCompleter = new Completer();
 
   var pipe = new core.MojoMessagePipe();
@@ -183,7 +183,30 @@ Future runAwaitTest() async {
 }
 
 
+void closingProviderIsolate(core.MojoMessagePipeEndpoint endpoint) {
+  var provider = new EchoStub(endpoint);
+  provider.close();
+}
+
+
+Future<bool> runOnClosedTest() async {
+  var testCompleter = new Completer();
+
+  var pipe = new core.MojoMessagePipe();
+  var proxy = new EchoProxy(pipe.endpoints[0]);
+  await Isolate.spawn(closingProviderIsolate, pipe.endpoints[1]);
+  proxy.listen(onClosed: () {
+    testCompleter.complete(true);
+  });
+
+  return testCompleter.future.timeout(
+      new Duration(seconds: 1),
+      onTimeout: () => false);
+}
+
+
 main() async {
   Expect.equals(kEchoesCount, await runTest());
   await runAwaitTest();
+  Expect.isTrue(await runOnClosedTest());
 }
