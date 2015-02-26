@@ -23,4 +23,4 @@ void InjectMojo(struct NaClApp* nap);
 // more straightforward in the case where Mojo is not enabled for NaCl plugins.
 void InjectDisabledMojo(struct NaClApp* nap);
 
-#endif // MOJO_NACL_MOJO_SYSCALL_H_
+#endif  // MOJO_NACL_MOJO_SYSCALL_H_

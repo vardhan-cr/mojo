@@ -15,18 +15,16 @@ class ScopedCopyLock {
   explicit ScopedCopyLock(struct NaClApp* nap) : nap_(nap) {
     NaClCopyTakeLock(nap_);
   }
-  ~ScopedCopyLock() {
-    NaClCopyDropLock(nap_);
-  }
+  ~ScopedCopyLock() { NaClCopyDropLock(nap_); }
+
  private:
   struct NaClApp* nap_;
 };
 
-static inline uintptr_t NaClUserToSysAddrArray(
-    struct NaClApp* nap,
-    uint32_t uaddr,
-    size_t count,
-    size_t size) {
+static inline uintptr_t NaClUserToSysAddrArray(struct NaClApp* nap,
+                                               uint32_t uaddr,
+                                               size_t count,
+                                               size_t size) {
   // TODO(ncbray): overflow checking
   size_t range = count * size;
   return NaClUserToSysAddrRange(nap, uaddr, range);
@@ -42,10 +40,9 @@ static inline uintptr_t NaClUserToSysAddrArray(
 // time of check vs. time of use problems, or worse.  For this binding code in
 // particular, where memcpy is being called with a constant size, it is entirely
 // conceivable the function will be inlined, unrolled, and optimized.
-static inline void memcpy_volatile_out(
-    void volatile* dst,
-    const void* src,
-    size_t n) {
+static inline void memcpy_volatile_out(void volatile* dst,
+                                       const void* src,
+                                       size_t n) {
   char volatile* c_dst = static_cast<char volatile*>(dst);
   const char* c_src = static_cast<const char*>(src);
   for (size_t i = 0; i < n; i++) {
@@ -53,10 +50,8 @@ static inline void memcpy_volatile_out(
   }
 }
 
-template <typename T> bool ConvertScalarInput(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    T* value) {
+template <typename T>
+bool ConvertScalarInput(struct NaClApp* nap, uint32_t user_ptr, T* value) {
   if (user_ptr) {
     uintptr_t temp = NaClUserToSysAddrRange(nap, user_ptr, sizeof(T));
     if (temp != kNaClBadAddress) {
@@ -67,11 +62,11 @@ template <typename T> bool ConvertScalarInput(
   return false;
 }
 
-template <typename T> bool ConvertScalarOutput(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    bool optional,
-    T volatile** sys_ptr) {
+template <typename T>
+bool ConvertScalarOutput(struct NaClApp* nap,
+                         uint32_t user_ptr,
+                         bool optional,
+                         T volatile** sys_ptr) {
   if (user_ptr) {
     uintptr_t temp = NaClUserToSysAddrRange(nap, user_ptr, sizeof(T));
     if (temp != kNaClBadAddress) {
@@ -82,16 +77,16 @@ template <typename T> bool ConvertScalarOutput(
     *sys_ptr = 0;
     return true;
   }
-  *sys_ptr = 0; // Paranoia.
+  *sys_ptr = 0;  // Paranoia.
   return false;
 }
 
-template <typename T> bool ConvertScalarInOut(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    bool optional,
-    T* value,
-    T volatile** sys_ptr) {
+template <typename T>
+bool ConvertScalarInOut(struct NaClApp* nap,
+                        uint32_t user_ptr,
+                        bool optional,
+                        T* value,
+                        T volatile** sys_ptr) {
   if (user_ptr) {
     uintptr_t temp = NaClUserToSysAddrRange(nap, user_ptr, sizeof(T));
     if (temp != kNaClBadAddress) {
@@ -102,24 +97,24 @@ template <typename T> bool ConvertScalarInOut(
     }
   } else if (optional) {
     *sys_ptr = 0;
-    *value = static_cast<T>(0); // Paranoia.
+    *value = static_cast<T>(0);  // Paranoia.
     return true;
   }
-  *sys_ptr = 0; // Paranoia.
-  *value = static_cast<T>(0); // Paranoia.
+  *sys_ptr = 0;                // Paranoia.
+  *value = static_cast<T>(0);  // Paranoia.
   return false;
 }
 
-template <typename T> bool ConvertArray(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    uint32_t length,
-    size_t element_size,
-    bool optional,
-    T** sys_ptr) {
+template <typename T>
+bool ConvertArray(struct NaClApp* nap,
+                  uint32_t user_ptr,
+                  uint32_t length,
+                  size_t element_size,
+                  bool optional,
+                  T** sys_ptr) {
   if (user_ptr) {
-    uintptr_t temp = NaClUserToSysAddrArray(nap, user_ptr, length,
-                                            element_size);
+    uintptr_t temp =
+        NaClUserToSysAddrArray(nap, user_ptr, length, element_size);
     if (temp != kNaClBadAddress) {
       *sys_ptr = reinterpret_cast<T*>(temp);
       return true;
@@ -131,12 +126,12 @@ template <typename T> bool ConvertArray(
   return false;
 }
 
-template <typename T> bool ConvertBytes(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    uint32_t length,
-    bool optional,
-    T** sys_ptr) {
+template <typename T>
+bool ConvertBytes(struct NaClApp* nap,
+                  uint32_t user_ptr,
+                  uint32_t length,
+                  bool optional,
+                  T** sys_ptr) {
   if (user_ptr) {
     uintptr_t temp = NaClUserToSysAddrRange(nap, user_ptr, length);
     if (temp != kNaClBadAddress) {
@@ -152,11 +147,11 @@ template <typename T> bool ConvertBytes(
 
 // TODO(ncbray): size validation and complete copy.
 // TODO(ncbray): ensure non-null / missized structs are covered by a test case.
-template <typename T> bool ConvertExtensibleStructInput(
-    struct NaClApp* nap,
-    uint32_t user_ptr,
-    bool optional,
-    T** sys_ptr) {
+template <typename T>
+bool ConvertExtensibleStructInput(struct NaClApp* nap,
+                                  uint32_t user_ptr,
+                                  bool optional,
+                                  T** sys_ptr) {
   if (user_ptr) {
     uintptr_t temp = NaClUserToSysAddrRange(nap, user_ptr, sizeof(T));
     if (temp != kNaClBadAddress) {
@@ -170,6 +165,6 @@ template <typename T> bool ConvertExtensibleStructInput(
   return false;
 }
 
-} // namespace
+}  // namespace
 
-#endif // MOJO_NACL_MOJO_SYSCALL_INTERNAL_H_
+#endif  // MOJO_NACL_MOJO_SYSCALL_INTERNAL_H_

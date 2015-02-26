@@ -6,36 +6,28 @@
 # pylint: disable=W0104,W0106,F0401,R0201
 
 import errno
-import optparse
 import os.path
 import sys
 
 import interface
 
 
-def _ScriptDir():
+def ScriptDir():
   return os.path.dirname(os.path.abspath(__file__))
 
 
-def _GetDirAbove(dirname):
-  """Returns the directory "above" this file containing |dirname| (which must
-  also be "above" this file)."""
-  path = _ScriptDir()
-  while True:
-    path, tail = os.path.split(path)
-    assert tail
-    if tail == dirname:
-      return path
+def RepoRoot():
+  return os.path.dirname(ScriptDir())
 
 
 def _AddThirdPartyImportPath():
-  sys.path.append(os.path.join(_GetDirAbove('mojo'), 'third_party'))
+  sys.path.append(os.path.join(RepoRoot(), 'third_party'))
 
 
 _AddThirdPartyImportPath()
 import jinja2
 
-loader = jinja2.FileSystemLoader(_ScriptDir())
+loader = jinja2.FileSystemLoader(ScriptDir())
 jinja_env = jinja2.Environment(loader=loader, keep_trailing_newline=True)
 
 
@@ -103,7 +95,7 @@ def GeneratorWarning():
 
 # Untrusted library which thunks from the public Mojo API to the IRT interface
 # implementing the public Mojo API.
-def GenerateLibMojo(functions, out):
+def GenerateLibMojo(functions, common_vars, out):
   template = jinja_env.get_template('libmojo.cc.tmpl')
 
   code = CodeWriter()
@@ -125,8 +117,8 @@ def GenerateLibMojo(functions, out):
 
   body = code.GetValue()
   text = template.render(
-    generator_warning=GeneratorWarning(),
-    body=body)
+    body=body,
+    **common_vars)
   out.write(text)
 
 
@@ -308,7 +300,7 @@ def CBool(value):
 
 # A trusted wrapper that validates the arguments passed from untrusted code
 # before passing them to the underlying public Mojo API.
-def GenerateMojoSyscall(functions, out):
+def GenerateMojoSyscall(functions, common_vars, out):
   template = jinja_env.get_template('mojo_syscall.cc.tmpl')
 
   code = CodeWriter()
@@ -377,13 +369,13 @@ def GenerateMojoSyscall(functions, out):
 
   body = code.GetValue()
   text = template.render(
-    generator_warning=GeneratorWarning(),
-    body=body)
+    body=body,
+    **common_vars)
   out.write(text)
 
 
 # A header declaring the IRT interface for accessing Mojo functions.
-def GenerateMojoIrtHeader(functions, out):
+def GenerateMojoIrtHeader(functions, common_vars, out):
   template = jinja_env.get_template('mojo_irt.h.tmpl')
   code = CodeWriter()
 
@@ -400,12 +392,12 @@ def GenerateMojoIrtHeader(functions, out):
   body = code.GetValue()
 
   text = template.render(
-    generator_warning=GeneratorWarning(),
-    body=body)
+    body=body,
+    **common_vars)
   out.write(text)
 
 # IRT interface which implements the Mojo public API.
-def GenerateMojoIrtImplementation(functions, out):
+def GenerateMojoIrtImplementation(functions, common_vars, out):
   template = jinja_env.get_template('mojo_irt.c.tmpl')
   code = CodeWriter()
 
@@ -459,8 +451,8 @@ def GenerateMojoIrtImplementation(functions, out):
   body = code.GetValue()
 
   text = template.render(
-    generator_warning=GeneratorWarning(),
-    body=body)
+    body=body,
+    **common_vars)
   out.write(text)
 
 
@@ -472,36 +464,40 @@ def OutFile(dir_path, name):
       # There may have been a race to create this directory.
       if e.errno != errno.EEXIST:
         raise
-  return open(os.path.join(dir_path, name), 'w')
+  full_path = os.path.join(dir_path, name)
+  print full_path
+  return open(full_path, 'w')
 
 
-def main(args):
-  usage = 'usage: %prog [options]'
-  parser = optparse.OptionParser(usage=usage)
-  parser.add_option(
-      '-d',
-      dest='out_dir',
-      metavar='DIR',
-      help='output generated code into directory DIR')
-  options, args = parser.parse_args(args=args)
-  if not options.out_dir:
-    parser.error('-d is required')
-  if args:
-    parser.error('unexpected positional arguments: %s' % ' '.join(args))
+def main():
+  root_dir = RepoRoot()
+
+  platform_dir = 'mojo/public/platform/nacl'
+  bindings_dir = 'nacl_bindings'
+
+  full_platform_dir = os.path.join(root_dir, platform_dir)
+  full_bindings_dir = os.path.join(root_dir, bindings_dir)
+
+  common_vars = dict(
+    generator_warning=GeneratorWarning(),
+    platform_dir=platform_dir,
+    platform_dir_header_path=platform_dir.replace("/", "_").upper(),
+    bindings_dir=bindings_dir,
+  )
 
   mojo = interface.MakeInterface()
 
-  out = OutFile(options.out_dir, 'libmojo.cc')
-  GenerateLibMojo(mojo.functions, out)
+  out = OutFile(full_platform_dir, 'libmojo.cc')
+  GenerateLibMojo(mojo.functions, common_vars, out)
 
-  out = OutFile(options.out_dir, 'mojo_syscall.cc')
-  GenerateMojoSyscall(mojo.functions, out)
+  out = OutFile(full_bindings_dir, 'mojo_syscall.cc')
+  GenerateMojoSyscall(mojo.functions, common_vars, out)
 
-  out = OutFile(options.out_dir, 'mojo_irt.h')
-  GenerateMojoIrtHeader(mojo.functions, out)
+  out = OutFile(full_platform_dir, 'mojo_irt.h')
+  GenerateMojoIrtHeader(mojo.functions, common_vars, out)
 
-  out = OutFile(options.out_dir, 'mojo_irt.c')
-  GenerateMojoIrtImplementation(mojo.functions, out)
+  out = OutFile(full_bindings_dir, 'mojo_irt.c')
+  GenerateMojoIrtImplementation(mojo.functions, common_vars, out)
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main()

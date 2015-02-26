@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/nacl/mojo_irt.h"
+#include "mojo/public/platform/nacl/mojo_irt.h"
 #include "native_client/src/public/irt_core.h"
 
 static size_t irt_query(const char* interface_ident,

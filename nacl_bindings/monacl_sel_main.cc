@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/nacl/monacl_sel_main.h"
+#include "nacl_bindings/monacl_sel_main.h"
 
-#include "mojo/nacl/mojo_syscall.h"
+#include "nacl_bindings/mojo_syscall.h"
 #include "native_client/src/public/chrome_main.h"
 #include "native_client/src/public/nacl_app.h"
 
@@ -36,4 +36,4 @@ void NaClExit(int code) {
   ::NaClExit(code);
 }
 
-} // namespace mojo
+}  // namespace mojo

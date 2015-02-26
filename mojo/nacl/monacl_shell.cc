@@ -9,7 +9,7 @@
 #include "base/logging.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
-#include "mojo/nacl/monacl_sel_main.h"
+#include "nacl_bindings/monacl_sel_main.h"
 #include "native_client/src/public/nacl_desc.h"
 
 NaClDesc* OpenFile(const char* filename) {

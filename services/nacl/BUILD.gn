@@ -16,11 +16,11 @@ if (!is_nacl) {
       "//mojo/application:application",
       "//mojo/application:content_handler",
       "//mojo/common",
-      "//mojo/nacl:monacl_sel",
       "//mojo/services/network/public/interfaces",
+      "//nacl_bindings:monacl_sel",
       "//url",
     ]
 
-    data_deps = [ "//mojo/nacl:irt_mojo(//native_client/build/toolchain/nacl:irt_${cpu_arch})" ]
+    data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${cpu_arch})" ]
   }
 }

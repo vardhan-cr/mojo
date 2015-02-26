@@ -20,6 +20,6 @@ int LaunchNaCl(NaClDesc* nexe_desc,
 
 void NaClExit(int code);
 
-} // namespace mojo
+}  // namespace mojo
 
-#endif // MOJO_NACL_MONACL_SEL_MAIN_H_
+#endif  // MOJO_NACL_MONACL_SEL_MAIN_H_

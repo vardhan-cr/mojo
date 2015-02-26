@@ -13,6 +13,7 @@ sdk_prefix_in_chromium = "third_party/mojo/src"
 sdk_dirs_to_clone = [
   "mojo/edk",
   "mojo/public",
+  "nacl_bindings",
 ]
 
 
