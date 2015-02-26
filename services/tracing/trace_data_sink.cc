@@ -5,6 +5,7 @@
 #include "services/tracing/trace_data_sink.h"
 
 #include "base/logging.h"
+#include "mojo/common/data_pipe_utils.h"
 
 namespace tracing {
 namespace {
@@ -12,18 +13,11 @@ namespace {
 const char kStart[] = "{\"traceEvents\":[";
 const char kEnd[] = "]}";
 
-void Write(const mojo::ScopedDataPipeProducerHandle& pipe,
-           const char* string,
-           uint32_t num_bytes) {
-  CHECK_EQ(MOJO_RESULT_OK,
-           mojo::WriteDataRaw(pipe.get(), string, &num_bytes,
-                              MOJO_WRITE_DATA_FLAG_ALL_OR_NONE));
-}
-}
+}  // namespace
 
 TraceDataSink::TraceDataSink(mojo::ScopedDataPipeProducerHandle pipe)
     : pipe_(pipe.Pass()), empty_(true) {
-  Write(pipe_, kStart, strlen(kStart));
+  mojo::common::BlockingCopyFromString(kStart, pipe_);
 }
 
 TraceDataSink::~TraceDataSink() {
@@ -34,13 +28,13 @@ TraceDataSink::~TraceDataSink() {
 
 void TraceDataSink::AddChunk(const std::string& json) {
   if (!empty_)
-    Write(pipe_, ",", 1);
+    mojo::common::BlockingCopyFromString(",", pipe_);
   empty_ = false;
-  Write(pipe_, json.data(), json.length());
+  mojo::common::BlockingCopyFromString(json, pipe_);
 }
 
 void TraceDataSink::Flush() {
-  Write(pipe_, kEnd, strlen(kEnd));
+  mojo::common::BlockingCopyFromString(kEnd, pipe_);
   pipe_.reset();
 }
 
