@@ -24,6 +24,24 @@ group("default") {
   }
 }
 
+# A group which invokes the dart checker on each dart package. This can take
+# multiple seconds per target, so we separate it out from the main building.
+# Eventually, we'd like this to be part of the default dart building, but for
+# now, to participate in checking, please add "{package_name}_analyze" to the
+# list of dependencies below.
+group("dartcheck") {
+  testonly = true
+  deps = [
+    "//examples/dart/console_example:console_example_analyze",
+    "//examples/dart/hello_world/hello:hello_analyze",
+    "//examples/dart/hello_world/world:world_analyze",
+    "//examples/dart/wget:wget_analyze",
+    "//services/dart/test/echo:echo_analyze",
+    "//services/dart/test/pingpong:pingpong_analyze",
+    "//services/dart/test/pingpong_target:pingpong_target_analyze",
+  ]
+}
+
 # Deprecated name for the default build target.
 group("root") {
   testonly = true

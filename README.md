@@ -150,6 +150,14 @@ $ mojo/tools/mojob.py build --android
 If you see javac compile errors, make sure you have an up-to-date JDK:
 https://code.google.com/p/chromium/wiki/AndroidBuildInstructions#Install_Java_JDK
 
+## Dart Code
+
+Because the dart analyzer is a bit slow, we don't run it unless the user specifically asks for it. To run the dart analyzer against the list of dart targets in the toplevel BUILD.gn file, run:
+
+```
+$ mojo/tools/mojob.py dartcheck
+```
+
 ## Googlers
 
 If you're a Googler, you can use Goma, a distributed compiler service for open-source projects such as Chrome and Android. The instructions below assume that Goma is installed in the default location (~/goma).
