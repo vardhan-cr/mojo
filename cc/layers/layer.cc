@@ -1204,6 +1204,12 @@ void Layer::RemoveAnimation(int animation_id) {
   SetNeedsCommit();
 }
 
+void Layer::RemoveAnimation(int animation_id,
+                            Animation::TargetProperty property) {
+  layer_animation_controller_->RemoveAnimation(animation_id, property);
+  SetNeedsCommit();
+}
+
 void Layer::SetLayerAnimationControllerForTest(
     scoped_refptr<LayerAnimationController> controller) {
   layer_animation_controller_->RemoveValueObserver(this);
@@ -1316,6 +1322,24 @@ gfx::Transform Layer::draw_transform_from_property_trees(
   }
   xform.Scale(1.0 / contents_scale_x(), 1.0 / contents_scale_y());
   return xform;
+}
+
+float Layer::DrawOpacityFromPropertyTrees(const OpacityTree& tree) const {
+  if (!render_target())
+    return 0.f;
+
+  const OpacityNode* target_node =
+      tree.Node(render_target()->opacity_tree_index());
+  const OpacityNode* node = tree.Node(opacity_tree_index());
+  if (node == target_node)
+    return 1.f;
+
+  float draw_opacity = 1.f;
+  while (node != target_node) {
+    draw_opacity *= node->data;
+    node = tree.parent(node);
+  }
+  return draw_opacity;
 }
 
 void Layer::SetFrameTimingRequests(

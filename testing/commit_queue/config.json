@@ -1,15 +1,15 @@
 {
     "experimental_tryjobs": {
         "10 percent experiment": {
-            "percentage": 0.1,
+            "percentage": 0.10,
             "trybots": {
                 "launched": {
                     "tryserver.chromium.linux": {
                         "cast_shell": ["defaulttests"],
                         "cast_shell_apk": ["defaulttests"],
                         "linux_android_rel_ng": ["defaulttests"],
-                        "linux_chromium_asan_rel_ng": ["defaulttests"],
-                        "linux_chromium_clobber_rel_ng": ["defaulttests"]
+                        "linux_arm_compile": ["defaulttests"],
+                        "linux_chromium_asan_rel_ng": ["defaulttests"]
                     },
                     "tryserver.chromium.mac": {
                         "mac_chromium_gn_rel": ["defaulttests"]
@@ -44,6 +44,8 @@
             "trybots": {
                 "launched": {
                     "tryserver.chromium.linux": {
+                    },
+                    "tryserver.chromium.mac": {
                     }
                 }
             }
@@ -59,6 +61,7 @@
               "linux_chromium_asan_rel": ["defaulttests"],
               "linux_chromium_chromeos_compile_dbg_ng": ["defaulttests"],
               "linux_chromium_chromeos_rel_ng": ["defaulttests"],
+              "linux_chromium_clobber_rel_ng": ["defaulttests"],
               "linux_chromium_gn_chromeos_rel": ["defaulttests"],
               "linux_chromium_gn_dbg": ["defaulttests"],
               "linux_chromium_gn_rel": ["defaulttests"],
@@ -70,23 +73,10 @@
               "linux_chromium_compile_dbg_32_ng": ["compile"]
             },
             "tryserver.chromium.mac": {
+              "ios_dbg_simulator_ninja": ["defaulttests"],
+              "ios_rel_device_ninja": ["defaulttests"],
               "mac_chromium_compile_dbg_ng": ["defaulttests"],
-              "mac_chromium_rel_ng": ["defaulttests"],
-              "ios_dbg_simulator": [
-                  "compile",
-                  "base_unittests",
-                  "components_unittests",
-                  "content_unittests",
-                  "crypto_unittests",
-                  "url_unittests",
-                  "net_unittests",
-                  "sql_unittests",
-                  "ui_unittests",
-                  "sync_unit_tests",
-                  "gfx_unittests"
-              ],
-              "ios_rel_device_ng": ["defaulttests"],
-              "ios_rel_device_ninja_ng": ["defaulttests"]
+              "mac_chromium_rel_ng": ["defaulttests"]
             },
             "tryserver.chromium.win": {
               "win8_chromium_rel": ["defaulttests"],

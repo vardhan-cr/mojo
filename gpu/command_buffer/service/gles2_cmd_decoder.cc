@@ -1191,8 +1191,7 @@ class GLES2DecoderImpl : public GLES2Decoder,
   void ClearUnclearedAttachments(GLenum target, Framebuffer* framebuffer);
 
   // overridden from GLES2Decoder
-  bool ClearLevel(unsigned service_id,
-                  unsigned bind_target,
+  bool ClearLevel(Texture* texture,
                   unsigned target,
                   int level,
                   unsigned internal_format,
@@ -2445,7 +2444,6 @@ bool GLES2DecoderImpl::Initialize(
   surfaceless_ = surface->IsSurfaceless() && !offscreen;
 
   set_initialized();
-  gpu_tracer_.reset(new GPUTracer(this));
   gpu_state_tracer_ = GPUStateTracer::Create(&state_);
 
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -2475,6 +2473,9 @@ bool GLES2DecoderImpl::Initialize(
   ContextCreationAttribHelper attrib_parser;
   if (!attrib_parser.Parse(attribs))
     return false;
+
+  // Create GPU Tracer for timing values.
+  gpu_tracer_.reset(new GPUTracer(this));
 
   // Save the loseContextWhenOutOfMemory context creation attribute.
   lose_context_when_out_of_memory_ =
@@ -2858,8 +2859,14 @@ Capabilities GLES2DecoderImpl::GetCapabilities() {
 
   caps.egl_image_external =
       feature_info_->feature_flags().oes_egl_image_external;
+  caps.texture_format_atc =
+      feature_info_->feature_flags().ext_texture_format_atc;
   caps.texture_format_bgra8888 =
       feature_info_->feature_flags().ext_texture_format_bgra8888;
+  caps.texture_format_dxt1 =
+      feature_info_->feature_flags().ext_texture_format_dxt1;
+  caps.texture_format_dxt5 =
+      feature_info_->feature_flags().ext_texture_format_dxt5;
   caps.texture_format_etc1 =
       feature_info_->feature_flags().oes_compressed_etc1_rgb8_texture;
   caps.texture_format_etc1_npot =
@@ -5133,8 +5140,7 @@ error::Error GLES2DecoderImpl::HandleDeleteShader(uint32 immediate_data_size,
     Shader* shader = GetShader(client_id);
     if (shader) {
       if (!shader->IsDeleted()) {
-        glDeleteShader(shader->service_id());
-        shader_manager()->MarkAsDeleted(shader);
+        shader_manager()->Delete(shader);
       }
     } else {
       LOCAL_SET_GL_ERROR(GL_INVALID_VALUE, "glDeleteShader", "unknown shader");
@@ -8405,8 +8411,7 @@ void GLES2DecoderImpl::DoBufferSubData(
 }
 
 bool GLES2DecoderImpl::ClearLevel(
-    unsigned service_id,
-    unsigned bind_target,
+    Texture* texture,
     unsigned target,
     int level,
     unsigned internal_format,
@@ -8428,8 +8433,8 @@ bool GLES2DecoderImpl::ClearLevel(
     GLenum attachment = have_stencil ? GL_DEPTH_STENCIL_ATTACHMENT :
                                        GL_DEPTH_ATTACHMENT;
 
-    glFramebufferTexture2DEXT(
-        GL_DRAW_FRAMEBUFFER_EXT, attachment, target, service_id, level);
+    glFramebufferTexture2DEXT(GL_DRAW_FRAMEBUFFER_EXT, attachment, target,
+                              texture->service_id(), level);
     // ANGLE promises a depth only attachment ok.
     if (glCheckFramebufferStatusEXT(GL_DRAW_FRAMEBUFFER_EXT) !=
         GL_FRAMEBUFFER_COMPLETE) {
@@ -8488,12 +8493,13 @@ bool GLES2DecoderImpl::ClearLevel(
   // Assumes the size has already been checked.
   scoped_ptr<char[]> zero(new char[size]);
   memset(zero.get(), 0, size);
-  glBindTexture(bind_target, service_id);
+  glBindTexture(texture->target(), texture->service_id());
 
+  bool has_images = texture->HasImages();
   GLint y = 0;
   while (y < height) {
     GLint h = y + tile_height > height ? height - y : tile_height;
-    if (is_texture_immutable || h != height) {
+    if (is_texture_immutable || h != height || has_images) {
       glTexSubImage2D(target, level, 0, y, width, h, format, type, zero.get());
     } else {
       glTexImage2D(
@@ -8502,9 +8508,10 @@ bool GLES2DecoderImpl::ClearLevel(
     }
     y += tile_height;
   }
-  TextureRef* texture = texture_manager()->GetTextureInfoForTarget(
-      &state_, bind_target);
-  glBindTexture(bind_target, texture ? texture->service_id() : 0);
+  TextureRef* bound_texture =
+      texture_manager()->GetTextureInfoForTarget(&state_, texture->target());
+  glBindTexture(texture->target(),
+                bound_texture ? bound_texture->service_id() : 0);
   return true;
 }
 
@@ -9165,10 +9172,8 @@ void GLES2DecoderImpl::DoCopyTexImage2D(
       copyWidth != width ||
       copyHeight != height) {
     // some part was clipped so clear the texture.
-    if (!ClearLevel(
-        texture->service_id(), texture->target(),
-        target, level, internal_format, internal_format, GL_UNSIGNED_BYTE,
-        width, height, texture->IsImmutable())) {
+    if (!ClearLevel(texture, target, level, internal_format, internal_format,
+                    GL_UNSIGNED_BYTE, width, height, texture->IsImmutable())) {
       LOCAL_SET_GL_ERROR(
           GL_OUT_OF_MEMORY, "glCopyTexImage2D", "dimensions too big");
       return;
@@ -9441,7 +9446,8 @@ error::Error GLES2DecoderImpl::DoTexSubImage2D(
   }
 
   if (!texture_state_.texsubimage2d_faster_than_teximage2d &&
-      !texture->IsImmutable()) {
+      !texture->IsImmutable() &&
+      !texture->HasImages()) {
     ScopedTextureUploadTimer timer(&texture_state_);
     GLenum internal_format;
     GLenum tex_type;

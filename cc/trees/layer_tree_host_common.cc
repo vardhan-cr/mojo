@@ -31,7 +31,7 @@ ScrollAndScaleSet::ScrollAndScaleSet()
 
 ScrollAndScaleSet::~ScrollAndScaleSet() {}
 
-static void SortLayers(LayerList::iterator forst,
+static void SortLayers(LayerList::iterator first,
                        LayerList::iterator end,
                        void* layer_sorter) {
   NOTREACHED();
@@ -337,7 +337,8 @@ template <typename LayerType> static inline bool IsRootLayer(LayerType* layer) {
 template <typename LayerType>
 static inline bool LayerIsInExisting3DRenderingContext(LayerType* layer) {
   return layer->Is3dSorted() && layer->parent() &&
-         layer->parent()->Is3dSorted();
+         layer->parent()->Is3dSorted() &&
+         (layer->parent()->sorting_context_id() == layer->sorting_context_id());
 }
 
 template <typename LayerType>
@@ -586,6 +587,13 @@ static bool SubtreeShouldRenderToSeparateSurface(
 
   // If the layer uses a CSS filter.
   if (!layer->filters().IsEmpty() || !layer->background_filters().IsEmpty()) {
+    DCHECK(!is_root);
+    return true;
+  }
+
+  // If the layer will use a CSS filter.  In this case, the animation
+  // will start and add a filter to this layer, so it needs a surface.
+  if (layer->FilterIsAnimating()) {
     DCHECK(!is_root);
     return true;
   }
@@ -1197,20 +1205,22 @@ struct PreCalculateMetaInformationRecursiveData {
   }
 };
 
-static bool ValidateRenderSurface(LayerImpl* layer) {
+static void ValidateRenderSurface(LayerImpl* layer) {
   // This test verifies that there are no cases where a LayerImpl needs
   // a render surface, but doesn't have one.
   if (layer->render_surface())
-    return true;
+    return;
 
-  return layer->filters().IsEmpty() && layer->background_filters().IsEmpty() &&
-         !layer->mask_layer() && !layer->replica_layer() &&
-         !IsRootLayer(layer) && !layer->is_root_for_isolated_group() &&
-         !layer->HasCopyRequest();
+  DCHECK(layer->filters().IsEmpty()) << "layer: " << layer->id();
+  DCHECK(layer->background_filters().IsEmpty()) << "layer: " << layer->id();
+  DCHECK(!layer->mask_layer()) << "layer: " << layer->id();
+  DCHECK(!layer->replica_layer()) << "layer: " << layer->id();
+  DCHECK(!IsRootLayer(layer)) << "layer: " << layer->id();
+  DCHECK(!layer->is_root_for_isolated_group()) << "layer: " << layer->id();
+  DCHECK(!layer->HasCopyRequest()) << "layer: " << layer->id();
 }
 
-static bool ValidateRenderSurface(Layer* layer) {
-  return true;
+static void ValidateRenderSurface(Layer* layer) {
 }
 
 // Recursively walks the layer tree to compute any information that is needed
@@ -1219,10 +1229,11 @@ template <typename LayerType>
 static void PreCalculateMetaInformation(
     LayerType* layer,
     PreCalculateMetaInformationRecursiveData* recursive_data) {
-  DCHECK(ValidateRenderSurface(layer));
+  ValidateRenderSurface(layer);
 
   layer->draw_properties().sorted_for_recursion = false;
   layer->draw_properties().has_child_with_a_scroll_parent = false;
+  layer->draw_properties().visited = false;
 
   if (!HasInvertibleOrAnimatedTransform(layer)) {
     // Layers with singular transforms should not be drawn, the whole subtree
@@ -1589,6 +1600,9 @@ static void CalculateDrawPropertiesInternal(
   // which layer roots the subtree the scale is applied to.
   DCHECK(globals.page_scale_application_layer ||
          (globals.page_scale_factor == 1.f));
+
+  CHECK(!layer->draw_properties().visited);
+  layer->draw_properties().visited = true;
 
   DataForRecursion<LayerType> data_for_children;
   typename LayerType::RenderSurfaceType*
@@ -2501,13 +2515,9 @@ void LayerTreeHostCommon::CalculateDrawProperties(
   PreCalculateMetaInformation(inputs->root_layer, &recursive_data);
   std::vector<AccumulatedSurfaceState<Layer>> accumulated_surface_state;
   CalculateDrawPropertiesInternal<Layer>(
-      inputs->root_layer,
-      globals,
-      data_for_recursion,
-      inputs->render_surface_layer_list,
-      &dummy_layer_list,
-      &accumulated_surface_state,
-      inputs->current_render_surface_layer_list_id);
+      inputs->root_layer, globals, data_for_recursion,
+      inputs->render_surface_layer_list, &dummy_layer_list,
+      &accumulated_surface_state, inputs->current_render_surface_layer_list_id);
 
   // The dummy layer list should not have been used.
   DCHECK_EQ(0u, dummy_layer_list.size());
@@ -2520,11 +2530,12 @@ void LayerTreeHostCommon::CalculateDrawProperties(
     // will eventually get these data passed directly to the compositor.
     TransformTree transform_tree;
     ClipTree clip_tree;
+    OpacityTree opacity_tree;
     ComputeVisibleRectsUsingPropertyTrees(
         inputs->root_layer, inputs->page_scale_application_layer,
         inputs->page_scale_factor, inputs->device_scale_factor,
         gfx::Rect(inputs->device_viewport_size), inputs->device_transform,
-        &transform_tree, &clip_tree);
+        &transform_tree, &clip_tree, &opacity_tree);
 
     LayerIterator<Layer> it, end;
     for (it = LayerIterator<Layer>::Begin(inputs->render_surface_layer_list),
@@ -2543,6 +2554,11 @@ void LayerTreeHostCommon::CalculateDrawProperties(
           current_layer->draw_transform(),
           current_layer->draw_transform_from_property_trees(transform_tree));
       CHECK(draw_transforms_match);
+
+      const bool draw_opacities_match =
+          current_layer->draw_opacity() ==
+          current_layer->DrawOpacityFromPropertyTrees(opacity_tree);
+      CHECK(draw_opacities_match);
     }
   }
 }

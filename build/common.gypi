@@ -512,6 +512,9 @@
       # Webrtc compilation is enabled by default. Set to 0 to disable.
       'enable_webrtc%': 1,
 
+      # Media router support is enabled by default. Set to 0 to disable.
+      'enable_media_router%': 1,
+
       # Enables use of the session service, which is enabled by default.
       # Support for disabling depends on the platform.
       'enable_session_service%': 1,
@@ -870,8 +873,10 @@
 
         ['OS=="android" or OS=="ios"', {
           'enable_captive_portal_detection%': 0,
+          'enable_media_router%': 0,
         }, {
           'enable_captive_portal_detection%': 1,
+          'enable_media_router%': 1,
         }],
 
         # Enable Skia UI text drawing incrementally on different platforms.
@@ -1111,6 +1116,7 @@
     'remoting%': '<(remoting)',
     'enable_one_click_signin%': '<(enable_one_click_signin)',
     'enable_pre_sync_backup%': '<(enable_pre_sync_backup)',
+    'enable_media_router%': '<(enable_media_router)',
     'enable_webrtc%': '<(enable_webrtc)',
     'chromium_win_pch%': '<(chromium_win_pch)',
     'configuration_policy%': '<(configuration_policy)',
@@ -1929,7 +1935,7 @@
             # Turn on multiple dll by default on Windows when in static_library.
             'chrome_multiple_dll%': 1,
           }],
-          ['asan==1', {
+          ['asan==1 or syzyasan==1', {
             'win_use_allocator_shim%': 0,
           }],
           ['component=="shared_library" and "<(GENERATOR)"=="ninja"', {
@@ -2076,10 +2082,13 @@
             'host_os%': "mac",
           }],
 
+          # Use the version of clang shipped with Xcode when building official
+          # version of Chrome for iOS.
+          #
           # TODO(eugenebut): Remove enable_coverage check once
           # libclang_rt.profile_ios.a is bundled with Chromium's clang.
           # http://crbug.com/450379
-          ['enable_coverage or "<(GENERATOR)"=="xcode"', {
+          ['buildtype=="Official" or enable_coverage', {
             'clang_xcode%': 1,
           }],
         ],
@@ -2110,6 +2119,9 @@
       }],
       ['use_concatenated_impulse_responses==1', {
         'grit_defines': ['-D', 'use_concatenated_impulse_responses'],
+      }],
+      ['enable_media_router==1', {
+        'grit_defines': ['-D', 'enable_media_router'],
       }],
       ['enable_webrtc==1', {
         'grit_defines': ['-D', 'enable_webrtc'],
@@ -2361,6 +2373,10 @@
     # contains the destination location for each of the files.  When a crx
     # is added or removed from the list, the chrome/browser/resources/
     # default_apps/external_extensions.json file must also be updated.
+    #
+    # README: GN version of these is in the target //chrome:default_apps
+    # (there's no global variable like in GYP). Be sure to update that target
+    # if you change these lists!
     'default_apps_list': [
       'browser/resources/default_apps/external_extensions.json',
       'browser/resources/default_apps/gmail.crx',
@@ -3590,7 +3606,9 @@
               '-gdwarf-4',
             ],
             'conditions' : [
-              ['OS=="android"', {
+              ['OS=="android" and target_arch!="mipsel" and target_arch!="mips64el"', {
+                # TODO(jdduke) Re-enable on mips after resolving linking
+                # issues with libc++ (crbug.com/456380).
                 'ldflags': [
                   # Warn in case of text relocations.
                   '-Wl,--warn-shared-textrel',
@@ -3683,14 +3701,18 @@
                   '-fomit-frame-pointer',
                 ]
               }],
-              ['OS=="android"', {
-                'variables': {
-                  'release_optimize%': 's',
-                },
+              ['OS=="android" and target_arch!="mipsel" and target_arch!="mips64el"', {
+                # TODO(jdduke) Re-enable on mips after resolving linking
+                # issues with libc++ (crbug.com/456380).
                 'ldflags': [
                   # Warn in case of text relocations.
                   '-Wl,--warn-shared-textrel',
                 ],
+              }],
+              ['OS=="android"', {
+                'variables': {
+                  'release_optimize%': 's',
+                },
               }],
               ['profiling==1', {
                 'cflags': [

@@ -14,8 +14,10 @@
 #include "third_party/WebKit/public/platform/WebFloatPoint.h"
 #include "third_party/WebKit/public/platform/WebVector.h"
 #include "third_party/skia/include/core/SkRegion.h"
+#include "third_party/skia/include/core/SkXfermode.h"
 #include "ui/gfx/geometry/point_f.h"
 
+class SkColorFilter;
 class SkImageFilter;
 class SkMatrix44;
 class SkPath;
@@ -45,9 +47,15 @@ class WebDisplayItemListImpl : public blink::WebDisplayItemList {
   virtual void appendEndFloatClipItem();
   virtual void appendTransformItem(const SkMatrix44& matrix);
   virtual void appendEndTransformItem();
-  virtual void appendTransparencyItem(float opacity,
-                                      blink::WebBlendMode blend_mode);
-  virtual void appendEndTransparencyItem();
+  // TODO(pdr): Remove this once the blink-side callers have been removed.
+  virtual void appendCompositingItem(float opacity,
+                                     SkXfermode::Mode,
+                                     SkColorFilter*);
+  virtual void appendCompositingItem(float opacity,
+                                     SkXfermode::Mode,
+                                     SkRect* bounds,
+                                     SkColorFilter*);
+  virtual void appendEndCompositingItem();
   virtual void appendFilterItem(const blink::WebFilterOperations& filters,
                                 const blink::WebFloatRect& bounds);
   virtual void appendEndFilterItem();

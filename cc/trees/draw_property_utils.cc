@@ -157,11 +157,14 @@ void FindLayersThatNeedVisibleRects(Layer* layer,
                                     const TransformTree& tree,
                                     bool subtree_is_visible_from_ancestor,
                                     std::vector<Layer*>* layers_to_update) {
-  const bool subtree_is_invisble =
-      layer->opacity() == 0.0f ||
+  const bool layer_is_invisible =
+      (!layer->opacity() && !layer->OpacityIsAnimating() &&
+       !layer->OpacityCanAnimateOnImplThread());
+  const bool layer_is_backfacing =
       (layer->has_render_surface() && !layer->double_sided() &&
        IsSurfaceBackFaceExposed(layer, tree));
 
+  const bool subtree_is_invisble = layer_is_invisible || layer_is_backfacing;
   if (subtree_is_invisble)
     return;
 
@@ -262,10 +265,11 @@ void ComputeVisibleRectsUsingPropertyTrees(
     const gfx::Rect& viewport,
     const gfx::Transform& device_transform,
     TransformTree* transform_tree,
-    ClipTree* clip_tree) {
+    ClipTree* clip_tree,
+    OpacityTree* opacity_tree) {
   PropertyTreeBuilder::BuildPropertyTrees(
       root_layer, page_scale_layer, page_scale_factor, device_scale_factor,
-      viewport, device_transform, transform_tree, clip_tree);
+      viewport, device_transform, transform_tree, clip_tree, opacity_tree);
   ComputeTransforms(transform_tree);
   ComputeClips(clip_tree, *transform_tree);
 

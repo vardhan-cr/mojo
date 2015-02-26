@@ -33,6 +33,7 @@ int PropertyTree<T>::Insert(const T& tree_node, int parent_id) {
 
 template class PropertyTree<TransformNode>;
 template class PropertyTree<ClipNode>;
+template class PropertyTree<OpacityNode>;
 
 TransformNodeData::TransformNodeData()
     : target_id(-1),
@@ -91,7 +92,6 @@ void TransformTree::UpdateTransforms(int id) {
   TransformNode* target_node = Node(node->data.target_id);
   if (node->data.needs_local_transform_update)
     UpdateLocalTransform(node);
-  UpdateLocalTransform(node);
   UpdateScreenSpaceTransform(node, parent_node, target_node);
   UpdateSublayerScale(node);
   UpdateTargetSpaceTransform(node, target_node);

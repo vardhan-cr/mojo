@@ -70,6 +70,8 @@ double HeadsUpDisplayLayerImpl::Graph::UpdateUpperBound() {
 HeadsUpDisplayLayerImpl::HeadsUpDisplayLayerImpl(LayerTreeImpl* tree_impl,
                                                  int id)
     : LayerImpl(tree_impl, id),
+      typeface_(skia::AdoptRef(
+          SkTypeface::CreateFromName("monospace", SkTypeface::kBold))),
       internal_contents_scale_(1.f),
       fps_graph_(60.0, 80.0),
       paint_time_graph_(16.0, 48.0),
@@ -303,7 +305,7 @@ void HeadsUpDisplayLayerImpl::DrawText(SkCanvas* canvas,
 
   paint->setTextSize(size);
   paint->setTextAlign(align);
-  paint->setTypeface(layer_tree_impl()->settings().hud_typeface.get());
+  paint->setTypeface(typeface_.get());
   canvas->drawText(text.c_str(), text.length(), x, y, *paint);
 
   paint->setAntiAlias(anti_alias);
@@ -710,7 +712,7 @@ void HeadsUpDisplayLayerImpl::DrawDebugRect(
 
     SkPaint label_paint = CreatePaint();
     label_paint.setTextSize(kFontHeight);
-    label_paint.setTypeface(layer_tree_impl()->settings().hud_typeface.get());
+    label_paint.setTypeface(typeface_.get());
     label_paint.setColor(stroke_color);
 
     const SkScalar label_text_width =

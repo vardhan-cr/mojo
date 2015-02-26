@@ -22,8 +22,11 @@
 #include "base/process/launch.h"
 #include "base/template_util.h"
 #include "base/third_party/valgrind/valgrind.h"
+#include "build/build_config.h"
 #include "sandbox/linux/services/namespace_utils.h"
+#include "sandbox/linux/services/proc_util.h"
 #include "sandbox/linux/services/syscall_wrappers.h"
+#include "sandbox/linux/services/thread_helpers.h"
 
 namespace sandbox {
 
@@ -129,13 +132,25 @@ void CheckCloneNewUserErrno(int error) {
 
 }  // namespace.
 
-bool Credentials::DropAllCapabilities() {
+bool Credentials::DropAllCapabilities(int proc_fd) {
+  DCHECK_LE(0, proc_fd);
+#if !defined(THREAD_SANITIZER)
+  // With TSAN, accept to break the security model as it is a testing
+  // configuration.
+  CHECK(ThreadHelpers::IsSingleThreaded(proc_fd));
+#endif
+
   ScopedCap cap(cap_init());
   CHECK(cap);
   PCHECK(0 == cap_set_proc(cap.get()));
   CHECK(!HasAnyCapability());
   // We never let this function fail.
   return true;
+}
+
+bool Credentials::DropAllCapabilities() {
+  base::ScopedFD proc_fd(ProcUtil::OpenProc());
+  return Credentials::DropAllCapabilities(proc_fd.get());
 }
 
 bool Credentials::HasAnyCapability() {
@@ -161,6 +176,12 @@ bool Credentials::CanCreateProcessInNewUserNS() {
   if (IsRunningOnValgrind()) {
     return false;
   }
+
+#if defined(THREAD_SANITIZER)
+  // With TSAN, processes will always have threads running and can never
+  // enter a new user namespace with MoveToNewUserNS().
+  return false;
+#endif
 
   // This is roughly a fork().
   const pid_t pid = sys_clone(CLONE_NEWUSER | SIGCHLD, 0, 0, 0, 0);
@@ -220,9 +241,12 @@ bool Credentials::MoveToNewUserNS() {
   return true;
 }
 
-bool Credentials::DropFileSystemAccess() {
+bool Credentials::DropFileSystemAccess(int proc_fd) {
+  CHECK_LE(0, proc_fd);
+
   CHECK(ChrootToSafeEmptyDir());
   CHECK(!base::DirectoryExists(base::FilePath("/proc")));
+  CHECK(!ProcUtil::HasOpenDirectory(proc_fd));
   // We never let this function fail.
   return true;
 }

@@ -67,18 +67,13 @@ template("generate_jni") {
       rebase_path(jni_output_dir, root_build_dir),
       "--includes",
       rebase_path(jni_generator_include, "//"),
+      "--native_exports_optional",
     ]
     if (defined(invoker.jni_generator_jarjar_file)) {
       args += [
         "--jarjar",
         rebase_path(jni_generator_jarjar_file, root_build_dir),
       ]
-    }
-    if (!is_clang) {
-      # Clang builds currently fail with --native_exports_optional due to
-      # http://llvm.org/bugs/show_bug.cgi?id=22602 - only enable for gcc.
-      # http://crbug.com/442327
-      args += [ "--native_exports_optional" ]
     }
   }
 
@@ -189,13 +184,8 @@ template("generate_jar_jni") {
         rebase_path(jni_output_dir, root_build_dir),
         "--includes",
         rebase_path(jni_generator_include, root_build_dir),
+        "--native_exports_optional",
       ]
-      if (!is_clang) {
-        # Clang builds currently fail with --native_exports_optional due to
-        # http://llvm.org/bugs/show_bug.cgi?id=22602 - only enable for gcc.
-        # http://crbug.com/442327
-        args += [ "--native_exports_optional" ]
-      }
     }
   }
 
@@ -335,8 +325,8 @@ template("java_cpp_template") {
 #
 #   outputs: list of outputs, relative to the output_dir. These paths are
 #     verified at build time by the script. To get the list programatically run:
-#       python build/android/gyp/java_cpp_enum.py --output_dir=. \
-#         --print_output_only path/to/header/file.h
+#       python build/android/gyp/java_cpp_enum.py \
+#         --print_output_only . path/to/header/file.h
 #
 # Example
 #   java_cpp_enum("foo_generated_enum") {
@@ -366,16 +356,14 @@ template("java_cpp_enum") {
     outputs =
         get_path_info(rebase_path(invoker.outputs, ".", gen_dir), "abspath")
 
-    args = [
-      "--output_dir",
-      rebase_path(gen_dir, root_build_dir),
-    ]
+    args = []
     foreach(output, rebase_path(outputs, root_build_dir)) {
       args += [
         "--assert_file",
         output,
       ]
     }
+    args += [ rebase_path(gen_dir, root_build_dir) ]
     args += rebase_path(invoker.sources, root_build_dir)
   }
 
@@ -1044,6 +1032,9 @@ template("android_standalone_library") {
   deps_dex(target_name) {
     deps = invoker.deps
     dex_path = invoker.dex_path
+    if (defined(invoker.excluded_jars)) {
+      excluded_jars = invoker.excluded_jars
+    }
   }
 }
 

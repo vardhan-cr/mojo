@@ -9,6 +9,7 @@
 import sys
 sys.path.append('../../')
 
+import argparse
 import logging
 import time
 import xmlrpclib
@@ -25,10 +26,13 @@ class ExampleTestController(test_controller.TestController):
 
   def SetUp(self):
     """Creates the task machine and waits until it connects."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--task-hash')
+    args, _ = parser.parse_known_args()
+
     self.task = self.CreateNewTask(
-        isolate_file='task.isolate',
-        config_vars={'multi_machine': '1'},
-        dimensions={'os': 'legion-linux'},
+        isolated_hash=args.task_hash,
+        dimensions={'os': 'Ubuntu-14.04', 'pool': 'Legion'},
         idle_timeout_secs=90, connection_timeout_secs=90,
         verbosity=logging.DEBUG)
     self.task.Create()

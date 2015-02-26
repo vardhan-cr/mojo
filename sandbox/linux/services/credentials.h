@@ -29,7 +29,12 @@ class SANDBOX_EXPORT Credentials {
   // the current process. For security reasons, since capabilities are
   // per-thread, the caller is responsible for ensuring it is single-threaded
   // when calling this API.
+  // |proc_fd| must be a file descriptor to /proc/ and remains owned by
+  // the caller.
+  static bool DropAllCapabilities(int proc_fd) WARN_UNUSED_RESULT;
+  // A similar API which assumes that it can open /proc/self/ by itself.
   static bool DropAllCapabilities() WARN_UNUSED_RESULT;
+
   // Return true iff there is any capability in any of the capabilities sets
   // of the current process.
   static bool HasAnyCapability();
@@ -51,6 +56,7 @@ class SANDBOX_EXPORT Credentials {
   // change.
   // If this call succeeds, the current process will be granted a full set of
   // capabilities in the new namespace.
+  // This will fail if the process is not mono-threaded.
   static bool MoveToNewUserNS() WARN_UNUSED_RESULT;
 
   // Remove the ability of the process to access the file system. File
@@ -58,13 +64,14 @@ class SANDBOX_EXPORT Credentials {
   // available.
   // The implementation currently uses chroot(2) and requires CAP_SYS_CHROOT.
   // CAP_SYS_CHROOT can be acquired by using the MoveToNewUserNS() API.
-  // Make sure to call DropAllCapabilities() after this call to prevent
-  // escapes.
-  // To be secure, the caller must ensure that any directory file descriptors
-  // are closed (for example, by checking the result of
-  // ProcUtil::HasOpenDirectory with a file descriptor for /proc, then closing
-  // that file descriptor). Otherwise it may be possible to escape the chroot.
-  static bool DropFileSystemAccess() WARN_UNUSED_RESULT;
+  // |proc_fd| must be a file descriptor to /proc/ and must be the only open
+  // directory file descriptor of the process.
+  //
+  // CRITICAL:
+  //   - the caller must close |proc_fd| eventually or access to the file
+  // system can be recovered.
+  //   - DropAllCapabilities() must be called to prevent escapes.
+  static bool DropFileSystemAccess(int proc_fd) WARN_UNUSED_RESULT;
 
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(Credentials);

@@ -188,6 +188,14 @@
               },
             },
           },
+          'copies': [
+            {
+              'destination': '<(PRODUCT_DIR)/',
+              'files': [
+                '../build/win/dbghelp_xp/dbghelp.dll',
+              ],
+            },
+          ],
         }],
         ['OS == "mac" or (OS == "ios" and _toolset == "host")', {
           'link_settings': {
@@ -645,6 +653,7 @@
         'timer/timer_unittest.cc',
         'tools_sanity_unittest.cc',
         'trace_event/memory_dump_manager_unittest.cc',
+        'trace_event/process_memory_maps_dump_provider_unittest.cc',
         'trace_event/process_memory_totals_dump_provider_unittest.cc',
         'trace_event/trace_event_argument_unittest.cc',
         'trace_event/trace_event_memory_unittest.cc',
@@ -769,6 +778,9 @@
             'message_loop/message_pump_libevent_unittest.cc',
             'threading/worker_pool_posix_unittest.cc',
           ],
+          'dependencies': [
+            'pe_image_test',
+          ],
           # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
           'msvs_disabled_warnings': [
             4267,
@@ -876,6 +888,7 @@
         'base_i18n',
         '../testing/gmock.gyp:gmock',
         '../testing/gtest.gyp:gtest',
+        '../third_party/icu/icu.gyp:icuuc',
         '../third_party/libxml/libxml.gyp:libxml',
         'third_party/dynamic_annotations/dynamic_annotations.gyp:dynamic_annotations',
       ],
@@ -1534,6 +1547,26 @@
           'msvs_settings': {
             'VCLinkerTool': {
               'SubSystem': '2',         # Set /SUBSYSTEM:WINDOWS
+            },
+          },
+        },
+        {
+          'target_name': 'pe_image_test',
+          'type': 'shared_library',
+          'sources': [
+            'win/pe_image_test.cc',
+          ],
+          'msvs_settings': {
+            'VCLinkerTool': {
+              'SubSystem': '2',         # Set /SUBSYSTEM:WINDOWS
+              'DelayLoadDLLs': [
+                'cfgmgr32.dll',
+                'shell32.dll',
+              ],
+              'AdditionalDependencies': [
+                'cfgmgr32.lib',
+                'shell32.lib',
+              ],
             },
           },
         },

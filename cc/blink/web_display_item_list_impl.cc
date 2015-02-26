@@ -10,14 +10,15 @@
 #include "cc/blink/web_filter_operations_impl.h"
 #include "cc/resources/clip_display_item.h"
 #include "cc/resources/clip_path_display_item.h"
+#include "cc/resources/compositing_display_item.h"
 #include "cc/resources/drawing_display_item.h"
 #include "cc/resources/filter_display_item.h"
 #include "cc/resources/float_clip_display_item.h"
 #include "cc/resources/transform_display_item.h"
-#include "cc/resources/transparency_display_item.h"
 #include "skia/ext/refptr.h"
 #include "third_party/WebKit/public/platform/WebFloatRect.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
+#include "third_party/skia/include/core/SkColorFilter.h"
 #include "third_party/skia/include/core/SkImageFilter.h"
 #include "third_party/skia/include/core/SkPicture.h"
 #include "third_party/skia/include/utils/SkMatrix44.h"
@@ -79,19 +80,29 @@ void WebDisplayItemListImpl::appendTransformItem(const SkMatrix44& matrix) {
   display_item_list_->AppendItem(cc::TransformDisplayItem::Create(transform));
 }
 
-void WebDisplayItemListImpl::appendTransparencyItem(
-    float opacity,
-    blink::WebBlendMode blend_mode) {
-  display_item_list_->AppendItem(cc::TransparencyDisplayItem::Create(
-      opacity, BlendModeToSkia(blend_mode)));
-}
-
 void WebDisplayItemListImpl::appendEndTransformItem() {
   display_item_list_->AppendItem(cc::EndTransformDisplayItem::Create());
 }
 
-void WebDisplayItemListImpl::appendEndTransparencyItem() {
-  display_item_list_->AppendItem(cc::EndTransparencyDisplayItem::Create());
+// TODO(pdr): Remove this once the blink-side callers have been removed.
+void WebDisplayItemListImpl::appendCompositingItem(
+    float opacity,
+    SkXfermode::Mode xfermode,
+    SkColorFilter* color_filter) {
+  appendCompositingItem(opacity, xfermode, nullptr, color_filter);
+}
+
+void WebDisplayItemListImpl::appendCompositingItem(
+    float opacity,
+    SkXfermode::Mode xfermode,
+    SkRect* bounds,
+    SkColorFilter* color_filter) {
+  display_item_list_->AppendItem(cc::CompositingDisplayItem::Create(
+      opacity, xfermode, bounds, skia::SharePtr(color_filter)));
+}
+
+void WebDisplayItemListImpl::appendEndCompositingItem() {
+  display_item_list_->AppendItem(cc::EndCompositingDisplayItem::Create());
 }
 
 void WebDisplayItemListImpl::appendFilterItem(

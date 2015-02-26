@@ -916,6 +916,8 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
 }
 
 void LayerTreeHostImpl::MainThreadHasStoppedFlinging() {
+  if (top_controls_manager_)
+    top_controls_manager_->MainThreadHasStoppedFlinging();
   if (input_handler_client_)
     input_handler_client_->MainThreadHasStoppedFlinging();
 }
@@ -3112,6 +3114,19 @@ void LayerTreeHostImpl::AnimateTopControls(base::TimeTicks time) {
   client_->RenewTreePriority();
 }
 
+void LayerTreeHostImpl::AnimateScrollbars(base::TimeTicks monotonic_time) {
+  if (scrollbar_animation_controllers_.empty())
+    return;
+
+  TRACE_EVENT0("cc", "LayerTreeHostImpl::AnimateScrollbars");
+  std::set<ScrollbarAnimationController*> controllers_copy =
+      scrollbar_animation_controllers_;
+  for (auto& it : controllers_copy)
+    it->Animate(monotonic_time);
+
+  SetNeedsAnimate();
+}
+
 void LayerTreeHostImpl::AnimateLayers(base::TimeTicks monotonic_time) {
   if (!settings_.accelerated_animation_enabled ||
       !needs_animate_layers() ||
@@ -3119,31 +3134,26 @@ void LayerTreeHostImpl::AnimateLayers(base::TimeTicks monotonic_time) {
     return;
 
   TRACE_EVENT0("cc", "LayerTreeHostImpl::AnimateLayers");
-  AnimationRegistrar::AnimationControllerMap copy =
+  AnimationRegistrar::AnimationControllerMap controllers_copy =
       animation_registrar_->active_animation_controllers();
-  for (AnimationRegistrar::AnimationControllerMap::iterator iter = copy.begin();
-       iter != copy.end();
-       ++iter)
-    (*iter).second->Animate(monotonic_time);
+  for (auto& it : controllers_copy)
+    it.second->Animate(monotonic_time);
 
   SetNeedsAnimate();
 }
 
 void LayerTreeHostImpl::UpdateAnimationState(bool start_ready_animations) {
-  if (!settings_.accelerated_animation_enabled ||
-      !needs_animate_layers() ||
+  if (!settings_.accelerated_animation_enabled || !needs_animate_layers() ||
       !active_tree_->root_layer())
     return;
 
   TRACE_EVENT0("cc", "LayerTreeHostImpl::UpdateAnimationState");
   scoped_ptr<AnimationEventsVector> events =
       make_scoped_ptr(new AnimationEventsVector);
-  AnimationRegistrar::AnimationControllerMap copy =
+  AnimationRegistrar::AnimationControllerMap active_controllers_copy =
       animation_registrar_->active_animation_controllers();
-  for (AnimationRegistrar::AnimationControllerMap::iterator iter = copy.begin();
-       iter != copy.end();
-       ++iter)
-    (*iter).second->UpdateState(start_ready_animations, events.get());
+  for (auto& it : active_controllers_copy)
+    it.second->UpdateState(start_ready_animations, events.get());
 
   if (!events->empty()) {
     client_->PostAnimationEventsToMainThreadOnImplThread(events.Pass());
@@ -3158,12 +3168,10 @@ void LayerTreeHostImpl::ActivateAnimations() {
     return;
 
   TRACE_EVENT0("cc", "LayerTreeHostImpl::ActivateAnimations");
-  AnimationRegistrar::AnimationControllerMap copy =
+  AnimationRegistrar::AnimationControllerMap active_controllers_copy =
       animation_registrar_->active_animation_controllers();
-  for (AnimationRegistrar::AnimationControllerMap::iterator iter = copy.begin();
-       iter != copy.end();
-       ++iter)
-    (*iter).second->ActivateAnimations();
+  for (auto& it : active_controllers_copy)
+    it.second->ActivateAnimations();
 
   SetNeedsAnimate();
 }
@@ -3182,36 +3190,25 @@ int LayerTreeHostImpl::SourceAnimationFrameNumber() const {
   return fps_counter_->current_frame_number();
 }
 
-void LayerTreeHostImpl::AnimateScrollbars(base::TimeTicks time) {
-  AnimateScrollbarsRecursive(active_tree_->root_layer(), time);
-}
-
-void LayerTreeHostImpl::AnimateScrollbarsRecursive(LayerImpl* layer,
-                                                   base::TimeTicks time) {
-  if (!layer)
-    return;
-
-  ScrollbarAnimationController* scrollbar_controller =
-      layer->scrollbar_animation_controller();
-  if (scrollbar_controller)
-    scrollbar_controller->Animate(time);
-
-  for (size_t i = 0; i < layer->children().size(); ++i)
-    AnimateScrollbarsRecursive(layer->children()[i], time);
-}
-
-void LayerTreeHostImpl::PostDelayedScrollbarFade(
-    const base::Closure& start_fade,
-    base::TimeDelta delay) {
-  client_->PostDelayedScrollbarFadeOnImplThread(start_fade, delay);
-}
-
-void LayerTreeHostImpl::SetNeedsScrollbarAnimationFrame() {
-  TRACE_EVENT_INSTANT0(
-      "cc",
-      "LayerTreeHostImpl::SetNeedsRedraw due to scrollbar fade",
-      TRACE_EVENT_SCOPE_THREAD);
+void LayerTreeHostImpl::StartAnimatingScrollbarAnimationController(
+    ScrollbarAnimationController* controller) {
+  scrollbar_animation_controllers_.insert(controller);
   SetNeedsAnimate();
+}
+
+void LayerTreeHostImpl::StopAnimatingScrollbarAnimationController(
+    ScrollbarAnimationController* controller) {
+  scrollbar_animation_controllers_.erase(controller);
+}
+
+void LayerTreeHostImpl::PostDelayedScrollbarAnimationTask(
+    const base::Closure& task,
+    base::TimeDelta delay) {
+  client_->PostDelayedAnimationTaskOnImplThread(task, delay);
+}
+
+void LayerTreeHostImpl::SetNeedsRedrawForScrollbarAnimation() {
+  SetNeedsRedraw();
 }
 
 void LayerTreeHostImpl::SetTreePriority(TreePriority priority) {

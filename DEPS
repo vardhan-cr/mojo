@@ -21,15 +21,15 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '792c80f5a7b66e75d42664ccb298f31962c6654c',
+  'skia_revision': 'f47e70712b964b5360a3fec9e5e84bb594fc1f02',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '3dfd929ea07487f2295553df397720d8d75d227c',
+  'v8_revision': 'f63eb3696b36b47be841f52711176985e93b655c',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '6df9b37d8e3aed3aea12058900b7932f911a152a',
+  'angle_revision': '7825f6199ce25dffe5fec5addb2fafe37f187034',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
@@ -41,11 +41,11 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling PDFium
   # and whatever else without interference from each other.
-  'pdfium_revision': '58985096a7852263df68e87d9bfc335a3e2759bf',
+  'pdfium_revision': '28ddd48bfd84c55cc51d0b16fa533c51affdeb5b',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling BoringSSL
   # and whatever else without interference from each other.
-  'boringssl_revision': 'b180ee98a60149dd3fd07cce4e834494c9d5b31c',
+  'boringssl_revision': '09bdb2a2c3d40646ac4b20f5e73421307a80185f',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
@@ -104,9 +104,6 @@ deps = {
 
   'src/third_party/skia':
    Var('chromium_git') + '/skia.git' + '@' +  Var('skia_revision'),
-
-  'src/third_party/brotli/src':
-   Var('chromium_git') + '/external/font-compression-reference.git' + '@' + '8c9c83426beb4a58da34be76ea1fccb4054c4703',
 
   'src/third_party/yasm/source/patched-yasm':
    Var('chromium_git') + '/chromium/deps/yasm/patched-yasm.git' + '@' + '4671120cd8558ce62ee8672ebf3eb6f5216f909b',

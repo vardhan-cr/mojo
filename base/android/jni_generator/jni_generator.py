@@ -922,7 +922,8 @@ ${KMETHODS}
     """Returns the code for RegisterNatives."""
     template = Template("""\
 ${REGISTER_NATIVES_SIGNATURE} {
-${EARLY_EXIT}${CLASSES}
+${EARLY_EXIT}
+${CLASSES}
 ${NATIVES}
 ${CALLED_BY_NATIVES}
   return true;
@@ -1073,8 +1074,10 @@ static ${RETURN} ${NAME}(JNIEnv* env, ${PARAMS});
 """
     if self.options.native_exports:
       template_str += """
-__attribute__((visibility("default"), alias("${NAME}")))
-${RETURN} ${STUB_NAME}(JNIEnv* env, ${PARAMS});
+__attribute__((visibility("default")))
+${RETURN} ${STUB_NAME}(JNIEnv* env, ${PARAMS}) {
+  return ${NAME}(${PARAMS_IN_CALL});
+}
 """
     template = Template(template_str)
     params_in_call = []
@@ -1312,7 +1315,7 @@ jclass g_${JAVA_CLASS}_clazz = NULL;
     if self.init_native:
       if self.options.native_exports:
         template = Template("""\
-    base::subtle::Release_Store(&g_${JAVA_CLASS}_clazz,
+  base::subtle::Release_Store(&g_${JAVA_CLASS}_clazz,
       static_cast<base::subtle::AtomicWord>(env->NewWeakGlobalRef(clazz));""")
       else:
         template = Template("""\

@@ -145,10 +145,10 @@ class LayerTreeHostImplTest : public testing::Test,
   }
   bool IsInsideDraw() override { return false; }
   void RenewTreePriority() override {}
-  void PostDelayedScrollbarFadeOnImplThread(const base::Closure& start_fade,
+  void PostDelayedAnimationTaskOnImplThread(const base::Closure& task,
                                             base::TimeDelta delay) override {
-    scrollbar_fade_start_ = start_fade;
-    requested_scrollbar_animation_delay_ = delay;
+    animation_task_ = task;
+    requested_animation_delay_ = delay;
   }
   void DidActivateSyncTree() override {}
   void DidPrepareTiles() override {}
@@ -401,8 +401,8 @@ class LayerTreeHostImplTest : public testing::Test,
   bool did_request_prepare_tiles_;
   bool did_complete_page_scale_animation_;
   bool reduce_memory_result_;
-  base::Closure scrollbar_fade_start_;
-  base::TimeDelta requested_scrollbar_animation_delay_;
+  base::Closure animation_task_;
+  base::TimeDelta requested_animation_delay_;
   size_t current_limit_bytes_;
   int current_priority_cutoff_value_;
 };
@@ -1616,52 +1616,77 @@ TEST_F(LayerTreeHostImplTest, ScrollbarLinearFadeScheduling) {
 
   base::TimeTicks fake_now = gfx::FrameTime::Now();
 
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_FALSE(did_request_animate_);
   EXPECT_FALSE(did_request_redraw_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
 
   // If no scroll happened during a scroll gesture, it should have no effect.
   host_impl_->ScrollBegin(gfx::Point(), InputHandler::WHEEL);
   host_impl_->ScrollEnd();
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_FALSE(did_request_animate_);
   EXPECT_FALSE(did_request_redraw_);
-  EXPECT_TRUE(scrollbar_fade_start_.Equals(base::Closure()));
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
 
   // After a scroll, a fade animation should be scheduled about 20ms from now.
   host_impl_->ScrollBegin(gfx::Point(), InputHandler::WHEEL);
   host_impl_->ScrollBy(gfx::Point(), gfx::Vector2dF(0, 5));
-  host_impl_->ScrollEnd();
-  did_request_redraw_ = false;
-  did_request_animate_ = false;
-  EXPECT_LT(base::TimeDelta::FromMilliseconds(19),
-            requested_scrollbar_animation_delay_);
-  EXPECT_FALSE(did_request_redraw_);
   EXPECT_FALSE(did_request_animate_);
-  requested_scrollbar_animation_delay_ = base::TimeDelta();
-  scrollbar_fade_start_.Run();
-  host_impl_->Animate(fake_now);
+  EXPECT_TRUE(did_request_redraw_);
+  did_request_redraw_ = false;
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
+
+  host_impl_->ScrollEnd();
+  EXPECT_FALSE(did_request_animate_);
+  EXPECT_FALSE(did_request_redraw_);
+  EXPECT_EQ(base::TimeDelta::FromMilliseconds(20), requested_animation_delay_);
+  EXPECT_FALSE(animation_task_.Equals(base::Closure()));
+
+  fake_now += requested_animation_delay_;
+  requested_animation_delay_ = base::TimeDelta();
+  animation_task_.Run();
+  animation_task_ = base::Closure();
+  EXPECT_TRUE(did_request_animate_);
+  did_request_animate_ = false;
+  EXPECT_FALSE(did_request_redraw_);
 
   // After the fade begins, we should start getting redraws instead of a
   // scheduled animation.
-  fake_now += base::TimeDelta::FromMilliseconds(25);
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  host_impl_->Animate(fake_now);
   EXPECT_TRUE(did_request_animate_);
   did_request_animate_ = false;
+  EXPECT_TRUE(did_request_redraw_);
+  did_request_redraw_ = false;
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
 
   // Setting the scroll offset outside a scroll should also cause the scrollbar
   // to appear and to schedule a fade.
   host_impl_->InnerViewportScrollLayer()->PushScrollOffsetFromMainThread(
       gfx::ScrollOffset(5, 5));
-  EXPECT_LT(base::TimeDelta::FromMilliseconds(19),
-            requested_scrollbar_animation_delay_);
-  EXPECT_FALSE(did_request_redraw_);
   EXPECT_FALSE(did_request_animate_);
-  requested_scrollbar_animation_delay_ = base::TimeDelta();
+  EXPECT_FALSE(did_request_redraw_);
+  EXPECT_EQ(base::TimeDelta::FromMilliseconds(20), requested_animation_delay_);
+  EXPECT_FALSE(animation_task_.Equals(base::Closure()));
+  requested_animation_delay_ = base::TimeDelta();
+  animation_task_ = base::Closure();
 
   // Unnecessarily Fade animation of solid color scrollbar is not triggered.
   host_impl_->ScrollBegin(gfx::Point(), InputHandler::WHEEL);
   host_impl_->ScrollBy(gfx::Point(), gfx::Vector2dF(5, 0));
+  EXPECT_FALSE(did_request_animate_);
+  EXPECT_TRUE(did_request_redraw_);
+  did_request_redraw_ = false;
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
+
   host_impl_->ScrollEnd();
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_FALSE(did_request_animate_);
+  EXPECT_FALSE(did_request_redraw_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
 }
 
 TEST_F(LayerTreeHostImplTest, ScrollbarFadePinchZoomScrollbars) {
@@ -1677,28 +1702,28 @@ TEST_F(LayerTreeHostImplTest, ScrollbarFadePinchZoomScrollbars) {
 
   host_impl_->active_tree()->PushPageScaleFromMainThread(1.f, 1.f, 4.f);
 
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
   EXPECT_FALSE(did_request_animate_);
 
   // If no scroll happened during a scroll gesture, it should have no effect.
   host_impl_->ScrollBegin(gfx::Point(), InputHandler::WHEEL);
   host_impl_->ScrollEnd();
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
   EXPECT_FALSE(did_request_animate_);
-  EXPECT_TRUE(scrollbar_fade_start_.Equals(base::Closure()));
+  EXPECT_TRUE(animation_task_.Equals(base::Closure()));
 
   // After a scroll, no fade animation should be scheduled.
   host_impl_->ScrollBegin(gfx::Point(), InputHandler::WHEEL);
   host_impl_->ScrollBy(gfx::Point(), gfx::Vector2dF(5, 0));
   host_impl_->ScrollEnd();
   did_request_redraw_ = false;
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
   EXPECT_FALSE(did_request_animate_);
-  requested_scrollbar_animation_delay_ = base::TimeDelta();
+  requested_animation_delay_ = base::TimeDelta();
 
   // We should not see any draw requests.
   fake_now += base::TimeDelta::FromMilliseconds(25);
-  EXPECT_EQ(base::TimeDelta(), requested_scrollbar_animation_delay_);
+  EXPECT_EQ(base::TimeDelta(), requested_animation_delay_);
   EXPECT_FALSE(did_request_animate_);
 
   // Make page scale > min so that subsequent scrolls will trigger fades.
@@ -1709,11 +1734,10 @@ TEST_F(LayerTreeHostImplTest, ScrollbarFadePinchZoomScrollbars) {
   host_impl_->ScrollBy(gfx::Point(), gfx::Vector2dF(5, 0));
   host_impl_->ScrollEnd();
   did_request_redraw_ = false;
-  EXPECT_LT(base::TimeDelta::FromMilliseconds(19),
-            requested_scrollbar_animation_delay_);
+  EXPECT_LT(base::TimeDelta::FromMilliseconds(19), requested_animation_delay_);
   EXPECT_FALSE(did_request_animate_);
-  requested_scrollbar_animation_delay_ = base::TimeDelta();
-  scrollbar_fade_start_.Run();
+  requested_animation_delay_ = base::TimeDelta();
+  animation_task_.Run();
 
   // After the fade begins, we should start getting redraws instead of a
   // scheduled animation.
@@ -7639,6 +7663,69 @@ TEST_F(LayerTreeHostImplWithTopControlsTest, TopControlsAnimationAfterScroll) {
     }
   }
   EXPECT_FALSE(host_impl_->top_controls_manager()->animation());
+  EXPECT_EQ(-top_controls_height_,
+            host_impl_->top_controls_manager()->ControlsTopOffset());
+}
+
+TEST_F(LayerTreeHostImplWithTopControlsTest,
+       TopControlsAnimationAfterMainThreadFlingStopped) {
+  LayerImpl* scroll_layer = SetupScrollAndContentsLayers(gfx::Size(100, 200));
+  host_impl_->SetViewportSize(gfx::Size(100, 100));
+  host_impl_->top_controls_manager()->UpdateTopControlsState(BOTH, SHOWN,
+                                                             false);
+  float initial_scroll_offset = 50;
+  scroll_layer->PushScrollOffsetFromMainThread(
+      gfx::ScrollOffset(0, initial_scroll_offset));
+  DrawFrame();
+
+  EXPECT_EQ(InputHandler::SCROLL_STARTED,
+            host_impl_->ScrollBegin(gfx::Point(), InputHandler::GESTURE));
+  EXPECT_EQ(0, host_impl_->top_controls_manager()->ControlsTopOffset());
+  EXPECT_EQ(gfx::Vector2dF(0, initial_scroll_offset).ToString(),
+            scroll_layer->CurrentScrollOffset().ToString());
+
+  // Scroll the top controls partially.
+  const float residue = 15;
+  float offset = top_controls_height_ - residue;
+  EXPECT_TRUE(
+      host_impl_->ScrollBy(gfx::Point(), gfx::Vector2d(0, offset)).did_scroll);
+  EXPECT_EQ(-offset, host_impl_->top_controls_manager()->ControlsTopOffset());
+  EXPECT_EQ(gfx::Vector2dF(0, initial_scroll_offset).ToString(),
+            scroll_layer->CurrentScrollOffset().ToString());
+
+  did_request_redraw_ = false;
+  did_request_animate_ = false;
+  did_request_commit_ = false;
+
+  // End the fling while the controls are still offset from the limit.
+  host_impl_->MainThreadHasStoppedFlinging();
+  ASSERT_TRUE(host_impl_->top_controls_manager()->animation());
+  EXPECT_TRUE(did_request_animate_);
+  EXPECT_TRUE(did_request_redraw_);
+  EXPECT_FALSE(did_request_commit_);
+
+  // Animate the top controls to the limit.
+  base::TimeTicks animation_time = gfx::FrameTime::Now();
+  while (did_request_animate_) {
+    did_request_redraw_ = false;
+    did_request_animate_ = false;
+    did_request_commit_ = false;
+
+    float old_offset = host_impl_->top_controls_manager()->ControlsTopOffset();
+
+    animation_time += base::TimeDelta::FromMilliseconds(5);
+    host_impl_->Animate(animation_time);
+
+    float new_offset = host_impl_->top_controls_manager()->ControlsTopOffset();
+
+    if (new_offset != old_offset) {
+      EXPECT_TRUE(did_request_redraw_);
+      EXPECT_TRUE(did_request_commit_);
+    }
+  }
+  EXPECT_FALSE(host_impl_->top_controls_manager()->animation());
+  EXPECT_EQ(-top_controls_height_,
+            host_impl_->top_controls_manager()->ControlsTopOffset());
 }
 
 TEST_F(LayerTreeHostImplWithTopControlsTest,

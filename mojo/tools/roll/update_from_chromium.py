@@ -69,7 +69,6 @@ dirs_to_snapshot = [
     "tools/idl_parser",
     "tools/json_comment_eater",
     "tools/linux",
-    "tools/lsan",
     "tools/msan",
     "tools/protoc_wrapper",
     "tools/relocation_packer",
