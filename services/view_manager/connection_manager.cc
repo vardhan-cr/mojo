@@ -242,6 +242,12 @@ void ConnectionManager::SetWindowManagerClientConnection(
       window_manager_client_connection_->client(), nullptr, nullptr, nullptr);
 }
 
+mojo::ViewManagerClient*
+ConnectionManager::GetWindowManagerViewManagerClient() {
+  CHECK(window_manager_client_connection_);
+  return window_manager_client_connection_->client();
+}
+
 bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {
   ServerView* view = GetView(view_id);
   if (!view || !view->IsDrawn(root_.get()) || view == root_.get())

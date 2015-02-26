@@ -339,6 +339,9 @@ class ViewManagerClientImpl : public mojo::ViewManagerClient,
                                    Array<uint8_t> new_data) override {
     tracker_.OnViewSharedPropertyChanged(view, name, new_data.Pass());
   }
+  void OnPerformAction(uint32_t view,
+                       const String& name,
+                       const Callback<void(bool)>& callback) override {}
 
   TestChangeTracker tracker_;
 

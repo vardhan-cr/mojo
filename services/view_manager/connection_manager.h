@@ -124,6 +124,8 @@ class ConnectionManager : public ServerViewDelegate,
     return window_manager_client_connection_ != nullptr;
   }
 
+  mojo::ViewManagerClient* GetWindowManagerViewManagerClient();
+
   // WindowManagerInternalClient implementation helper; see mojom for details.
   bool CloneAndAnimate(const ViewId& view_id);
 

@@ -210,6 +210,9 @@ class ViewManagerServiceImpl : public mojo::ViewManagerService,
   void Embed(mojo::Id transport_view_id,
              mojo::ViewManagerClientPtr client,
              const mojo::Callback<void(bool)>& callback) override;
+  void PerformAction(mojo::Id transport_view_id,
+                     const mojo::String& action,
+                     const mojo::Callback<void(bool)>& callback) override;
 
   // AccessPolicyDelegate:
   bool IsRootForAccessPolicy(const ViewId& id) const override;

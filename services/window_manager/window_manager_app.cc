@@ -87,26 +87,17 @@ void WindowManagerApp::RemoveConnection(WindowManagerImpl* connection) {
 
 bool WindowManagerApp::SetCapture(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  if (!view)
-    return false;
-  capture_controller_->SetCapture(view);
-  return capture_controller_->GetCapture() == view;
+  return view && SetCaptureImpl(view);
 }
 
 bool WindowManagerApp::FocusWindow(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  if (!view)
-    return false;
-  focus_controller_->FocusView(view);
-  return focus_controller_->GetFocusedView() == view;
+  return view && FocusWindowImpl(view);
 }
 
 bool WindowManagerApp::ActivateWindow(Id view_id) {
   View* view = view_manager()->GetViewById(view_id);
-  if (!view)
-    return false;
-  focus_controller_->ActivateView(view);
-  return focus_controller_->GetActiveView() == view;
+  return view && ActivateWindowImpl(view);
 }
 
 bool WindowManagerApp::IsReady() const {
@@ -189,6 +180,19 @@ void WindowManagerApp::OnViewManagerDisconnected(
   base::MessageLoop* message_loop = base::MessageLoop::current();
   if (message_loop && message_loop->is_running())
     message_loop->Quit();
+}
+
+bool WindowManagerApp::OnPerformAction(mojo::View* view,
+                                       const std::string& action) {
+  if (!view)
+    return false;
+  if (action == "capture")
+    return SetCaptureImpl(view);
+  if (action == "focus")
+    return FocusWindowImpl(view);
+  else if (action == "activate")
+    return ActivateWindowImpl(view);
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -277,6 +281,24 @@ void WindowManagerApp::OnCaptureChanged(View* gained_capture) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // WindowManagerApp, private:
+
+bool WindowManagerApp::SetCaptureImpl(View* view) {
+  CHECK(view);
+  capture_controller_->SetCapture(view);
+  return capture_controller_->GetCapture() == view;
+}
+
+bool WindowManagerApp::FocusWindowImpl(View* view) {
+  CHECK(view);
+  focus_controller_->FocusView(view);
+  return focus_controller_->GetFocusedView() == view;
+}
+
+bool WindowManagerApp::ActivateWindowImpl(View* view) {
+  CHECK(view);
+  focus_controller_->ActivateView(view);
+  return focus_controller_->GetActiveView() == view;
+}
 
 void WindowManagerApp::RegisterSubtree(View* view) {
   view->AddObserver(this);

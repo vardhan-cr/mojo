@@ -109,6 +109,10 @@ class WindowManagerApp
     return root_ ? root_->view_manager() : nullptr;
   }
 
+  bool SetCaptureImpl(mojo::View* view);
+  bool FocusWindowImpl(mojo::View* view);
+  bool ActivateWindowImpl(mojo::View* view);
+
   // Creates an ViewTarget for every view in the hierarchy beneath |view|,
   // and adds to the registry so that it can be retrieved later via
   // GetViewTargetForViewId().
@@ -127,6 +131,7 @@ class WindowManagerApp
                mojo::InterfaceRequest<mojo::ServiceProvider> services,
                mojo::ServiceProviderPtr exposed_services) override;
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override;
+  bool OnPerformAction(mojo::View* view, const std::string& action) override;
 
   // Overridden from ViewObserver:
   void OnTreeChanged(const ViewObserver::TreeChangeParams& params) override;

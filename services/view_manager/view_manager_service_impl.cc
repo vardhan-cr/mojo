@@ -627,6 +627,14 @@ void ViewManagerServiceImpl::Embed(mojo::Id transport_view_id,
   callback.Run(Embed(ViewIdFromTransportId(transport_view_id), client.Pass()));
 }
 
+void ViewManagerServiceImpl::PerformAction(
+    mojo::Id transport_view_id,
+    const mojo::String& action,
+    const mojo::Callback<void(bool)>& callback) {
+  connection_manager_->GetWindowManagerViewManagerClient()->OnPerformAction(
+      transport_view_id, action, callback);
+}
+
 bool ViewManagerServiceImpl::IsRootForAccessPolicy(const ViewId& id) const {
   return IsRoot(id);
 }

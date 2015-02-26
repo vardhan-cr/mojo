@@ -581,9 +581,7 @@ class FocusChangeObserver : public ViewObserver {
 
 }  // namespace
 
-
-// TODO(msw|alhaad|sky): Fix underlying flakiness here. http://crbug.com/460621
-TEST_F(ViewManagerTest, DISABLED_Focus) {
+TEST_F(ViewManagerTest, Focus) {
   View* view1 = window_manager()->CreateView();
   view1->SetVisible(true);
   window_manager()->GetRoot()->AddChild(view1);

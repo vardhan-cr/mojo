@@ -99,6 +99,9 @@ class TestViewManagerClient : public mojo::ViewManagerClient {
                         const mojo::Callback<void()>& callback) override {
     tracker_.OnViewInputEvent(view, event.Pass());
   }
+  void OnPerformAction(uint32_t view_id,
+                       const String& name,
+                       const mojo::Callback<void(bool)>& callback) override {}
 
   TestChangeTracker tracker_;
 
