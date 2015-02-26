@@ -124,6 +124,11 @@ To build for Android, first make sure you've downloaded build support for Androi
 target_os = [u'android']
 ```
 
+Bring in android specific build dependencies:
+```
+$ build/install-build-deps-android.sh 
+```
+
 Pull down all of the packages with this command:
 
 ```
