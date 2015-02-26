@@ -6,7 +6,8 @@
 #define SERVICES_KIOSK_WM_NAVIGATOR_HOST_IMPL_H_
 
 #include "base/memory/weak_ptr.h"
-#include "mojo/public/cpp/bindings/strong_binding.h"
+#include "mojo/common/weak_binding_set.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/services/navigation/public/interfaces/navigation.mojom.h"
 
 namespace kiosk_wm {
@@ -14,17 +15,25 @@ class KioskWM;
 
 class NavigatorHostImpl : public mojo::NavigatorHost {
  public:
-  NavigatorHostImpl(KioskWM* kiosk_wm,
-                    mojo::InterfaceRequest<mojo::NavigatorHost> request);
+  NavigatorHostImpl(KioskWM* kiosk_wm);
   ~NavigatorHostImpl();
 
- private:
+  void Bind(mojo::InterfaceRequest<mojo::NavigatorHost> request);
+
+  void RecordNavigation(const std::string& url);
+
+  // mojo::NavigatorHost implementation:
   void DidNavigateLocally(const mojo::String& url) override;
   void RequestNavigate(mojo::Target target,
                        mojo::URLRequestPtr request) override;
+  void RequestNavigateHistory(int32_t delta) override;
 
-  base::WeakPtr<KioskWM> kiosk_wm_;
-  mojo::StrongBinding<NavigatorHost> binding_;
+ private:
+  std::vector<std::string> history_;
+  int32_t current_index_;
+
+  KioskWM* kiosk_wm_;
+  mojo::WeakBindingSet<NavigatorHost> bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);
 };

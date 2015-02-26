@@ -12,6 +12,7 @@ KioskWM::KioskWM()
     : window_manager_app_(new window_manager::WindowManagerApp(this, this)),
       root_(nullptr),
       content_(nullptr),
+      navigator_host_(this),
       weak_factory_(this) {
   exposed_services_impl_.AddService(this);
 }
@@ -63,6 +64,9 @@ void KioskWM::OnEmbed(
 
   window_manager_app_->InitFocus(
       make_scoped_ptr(new window_manager::BasicFocusRules(root_)));
+  window_manager_app_->accelerator_manager()->Register(
+      ui::Accelerator(ui::VKEY_BROWSER_BACK, 0),
+      ui::AcceleratorManager::kNormalPriority, this);
 
   // Now that we're ready, either load a pending url or the default url.
   if (!pending_url_.empty())
@@ -86,11 +90,12 @@ void KioskWM::Embed(
   mojo::ServiceProviderPtr exposed_services;
   exposed_services_impl_.Bind(GetProxy(&exposed_services));
   content_->Embed(url, nullptr, exposed_services.Pass());
+  navigator_host_.RecordNavigation(url);
 }
 
 void KioskWM::Create(mojo::ApplicationConnection* connection,
                      mojo::InterfaceRequest<mojo::NavigatorHost> request) {
-  new NavigatorHostImpl(this, request.Pass());
+  navigator_host_.Bind(request.Pass());
 }
 
 void KioskWM::OnViewManagerDisconnected(
@@ -111,6 +116,18 @@ void KioskWM::OnViewBoundsChanged(mojo::View* view,
 // Convenience method:
 void KioskWM::ReplaceContentWithURL(const mojo::String& url) {
   Embed(url, nullptr, nullptr);
+}
+
+bool KioskWM::AcceleratorPressed(const ui::Accelerator& accelerator,
+                                 ui::EventTarget* target) {
+  if (accelerator.key_code() != ui::VKEY_BROWSER_BACK)
+    return false;
+  navigator_host_.RequestNavigateHistory(-1);
+  return true;
+}
+
+bool KioskWM::CanHandleAccelerators() const {
+  return true;
 }
 
 }  // namespace kiosk_wm

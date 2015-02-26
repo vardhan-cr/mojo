@@ -12,15 +12,13 @@ if (is_android) {
 component("base") {
   output_name = "ui_base"
   sources = [
-    "android/system_ui_resource_manager.h",
-    "android/ui_base_jni_registrar.cc",
-    "android/ui_base_jni_registrar.h",
-    "android/view_android.cc",
-    "android/view_android.h",
-    "android/window_android.cc",
-    "android/window_android.h",
-    "android/window_android_compositor.h",
-    "android/window_android_observer.h",
+    "accelerators/accelerator.cc",
+    "accelerators/accelerator.h",
+    "accelerators/accelerator_history.cc",
+    "accelerators/accelerator_history.h",
+    "accelerators/accelerator_manager.cc",
+    "accelerators/accelerator_manager.h",
+    "accelerators/platform_accelerator.h",
     "ui_base_export.h",
   ]
 

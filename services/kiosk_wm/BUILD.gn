@@ -17,6 +17,7 @@ mojo_native_application("kiosk_wm") {
   deps = [
     "//base",
     "//mojo/application",
+    "//mojo/common:common",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/public/cpp/bindings",
@@ -25,5 +26,6 @@ mojo_native_application("kiosk_wm") {
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
     "//services/window_manager:lib",
+    "//ui/base",
   ]
 }

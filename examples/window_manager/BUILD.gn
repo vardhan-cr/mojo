@@ -17,6 +17,7 @@ mojo_native_application("window_manager") {
     ":bindings",
     "//base",
     "//mojo/application",
+    "//mojo/common:common",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/public/cpp/bindings",

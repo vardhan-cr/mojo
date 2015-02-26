@@ -23,6 +23,7 @@
 #include "services/window_manager/native_viewport_event_dispatcher_impl.h"
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/window_manager_impl.h"
+#include "ui/base/accelerators/accelerator_manager.h"
 #include "ui/events/event_handler.h"
 
 namespace gfx {
@@ -85,6 +86,10 @@ class WindowManagerApp
 
   void InitFocus(scoped_ptr<FocusRules> rules);
 
+  ui::AcceleratorManager* accelerator_manager() {
+    return &accelerator_manager_;
+  }
+
   // WindowManagerImpl::Embed() forwards to this. If connected to ViewManager
   // then forwards to delegate, otherwise waits for connection to establish then
   // forwards.
@@ -112,6 +117,8 @@ class WindowManagerApp
   bool SetCaptureImpl(mojo::View* view);
   bool FocusWindowImpl(mojo::View* view);
   bool ActivateWindowImpl(mojo::View* view);
+
+  ui::Accelerator ConvertEventToAccelerator(const ui::KeyEvent* event);
 
   // Creates an ViewTarget for every view in the hierarchy beneath |view|,
   // and adds to the registry so that it can be retrieved later via
@@ -182,6 +189,8 @@ class WindowManagerApp
 
   scoped_ptr<FocusController> focus_controller_;
   scoped_ptr<CaptureController> capture_controller_;
+
+  ui::AcceleratorManager accelerator_manager_;
 
   Connections connections_;
   RegisteredViewIdSet registered_view_id_set_;

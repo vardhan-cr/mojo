@@ -18,6 +18,7 @@
 #include "services/kiosk_wm/navigator_host_impl.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
+#include "ui/base/accelerators/accelerator.h"
 
 namespace kiosk_wm {
 
@@ -25,7 +26,8 @@ class KioskWM : public mojo::ApplicationDelegate,
                 public mojo::ViewManagerDelegate,
                 public mojo::ViewObserver,
                 public window_manager::WindowManagerDelegate,
-                public mojo::InterfaceFactory<mojo::NavigatorHost> {
+                public mojo::InterfaceFactory<mojo::NavigatorHost>,
+                public ui::AcceleratorTarget {
  public:
   KioskWM();
   virtual ~KioskWM();
@@ -60,9 +62,13 @@ class KioskWM : public mojo::ApplicationDelegate,
              mojo::ServiceProviderPtr exposed_services) override;
 
   // Overridden from mojo::InterfaceFactory<mojo::NavigatorHost>:
-
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::NavigatorHost> request) override;
+
+  // Overriden from ui::AcceleratorTarget:
+  bool AcceleratorPressed(const ui::Accelerator& accelerator,
+                          ui::EventTarget* target) override;
+  bool CanHandleAccelerators() const override;
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
 
@@ -74,6 +80,8 @@ class KioskWM : public mojo::ApplicationDelegate,
   std::string pending_url_;
 
   mojo::ServiceProviderImpl exposed_services_impl_;
+
+  NavigatorHostImpl navigator_host_;
 
   base::WeakPtrFactory<KioskWM> weak_factory_;
 

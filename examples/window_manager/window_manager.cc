@@ -7,6 +7,7 @@
 #include "examples/window_manager/debug_panel_host.mojom.h"
 #include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/weak_binding_set.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/public/c/system/main.h"
@@ -65,21 +66,29 @@ class WindowManagerConnection : public IWindowManager {
 
 class NavigatorHostImpl : public NavigatorHost {
  public:
-  NavigatorHostImpl(WindowManager* window_manager,
-                    Id view_id,
-                    InterfaceRequest<NavigatorHost> request)
+  NavigatorHostImpl(WindowManager* window_manager, Id view_id)
       : window_manager_(window_manager),
         view_id_(view_id),
-        binding_(this, request.Pass()) {}
+        current_index_(-1) {}
   ~NavigatorHostImpl() override {}
+
+  void Bind(InterfaceRequest<NavigatorHost> request) {
+    bindings_.AddBinding(this, request.Pass());
+  }
+
+  void RecordNavigation(const std::string& url);
 
  private:
   void DidNavigateLocally(const mojo::String& url) override;
   void RequestNavigate(Target target, URLRequestPtr request) override;
+  void RequestNavigateHistory(int32_t delta) override;
 
   WindowManager* window_manager_;
   Id view_id_;
-  StrongBinding<NavigatorHost> binding_;
+  std::vector<std::string> history_;
+  int32_t current_index_;
+
+  WeakBindingSet<NavigatorHost> bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);
 };
@@ -96,16 +105,16 @@ class RootLayoutManager : public ViewObserver {
         content_view_id_(content_view_id),
         launcher_ui_view_id_(launcher_ui_view_id),
         control_panel_view_id_(control_panel_view_id) {}
-  virtual ~RootLayoutManager() {
+  ~RootLayoutManager() override {
     if (root_)
       root_->RemoveObserver(this);
   }
 
  private:
   // Overridden from ViewObserver:
-  virtual void OnViewBoundsChanged(View* view,
-                                   const Rect& old_bounds,
-                                   const Rect& new_bounds) override {
+  void OnViewBoundsChanged(View* view,
+                           const Rect& old_bounds,
+                           const Rect& new_bounds) override {
     DCHECK_EQ(view, root_);
 
     View* content_view = view_manager_->GetViewById(content_view_id_);
@@ -139,7 +148,7 @@ class RootLayoutManager : public ViewObserver {
       view->SetBounds(view_bounds);
     }
   }
-  virtual void OnViewDestroyed(View* view) override {
+  void OnViewDestroyed(View* view) override {
     DCHECK_EQ(view, root_);
     root_->RemoveObserver(this);
     root_ = NULL;
@@ -157,40 +166,48 @@ class RootLayoutManager : public ViewObserver {
 class Window : public InterfaceFactory<NavigatorHost> {
  public:
   Window(WindowManager* window_manager, View* view)
-      : window_manager_(window_manager), view_(view) {
+      : window_manager_(window_manager),
+        view_(view),
+        navigator_host_(window_manager_, view_->id()) {
     exposed_services_impl_.AddService<NavigatorHost>(this);
   }
 
-  virtual ~Window() {}
+  ~Window() override {}
 
   View* view() const { return view_; }
+
+  NavigatorHost* navigator_host() { return &navigator_host_; }
 
   void Embed(const std::string& url) {
     // TODO: Support embedding multiple times?
     ServiceProviderPtr exposed_services;
     exposed_services_impl_.Bind(GetProxy(&exposed_services));
     view_->Embed(url, nullptr, exposed_services.Pass());
+    navigator_host_.RecordNavigation(url);
   }
 
  private:
   // InterfaceFactory<NavigatorHost>
-  virtual void Create(ApplicationConnection* connection,
-                      InterfaceRequest<NavigatorHost> request) override {
-    new NavigatorHostImpl(window_manager_, view_->id(), request.Pass());
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<NavigatorHost> request) override {
+    navigator_host_.Bind(request.Pass());
   }
 
   WindowManager* window_manager_;
   View* view_;
   ServiceProviderImpl exposed_services_impl_;
+  NavigatorHostImpl navigator_host_;
 };
 
-class WindowManager : public ApplicationDelegate,
-                      public examples::DebugPanelHost,
-                      public ViewManagerDelegate,
-                      public window_manager::WindowManagerDelegate,
-                      public ui::EventHandler,
-                      public mojo::InterfaceFactory<examples::DebugPanelHost>,
-                      public InterfaceFactory<IWindowManager> {
+class WindowManager
+    : public ApplicationDelegate,
+      public examples::DebugPanelHost,
+      public ViewManagerDelegate,
+      public window_manager::WindowManagerDelegate,
+      public ui::EventHandler,
+      public ui::AcceleratorTarget,
+      public mojo::InterfaceFactory<examples::DebugPanelHost>,
+      public InterfaceFactory<IWindowManager> {
  public:
   WindowManager()
       : shell_(nullptr),
@@ -201,7 +218,7 @@ class WindowManager : public ApplicationDelegate,
         app_(NULL),
         binding_(this) {}
 
-  virtual ~WindowManager() {
+  ~WindowManager() override {
     // host() may be destroyed by the time we get here.
     // TODO: figure out a way to always cleanly remove handler.
 
@@ -226,8 +243,8 @@ class WindowManager : public ApplicationDelegate,
 
   void RequestNavigate(uint32 source_view_id,
                        Target target,
-                       URLRequestPtr request) {
-    OnLaunch(source_view_id, target, request->url);
+                       const mojo::String& url) {
+    OnLaunch(source_view_id, target, url);
   }
 
   // Overridden from mojo::DebugPanelHost:
@@ -261,7 +278,7 @@ class WindowManager : public ApplicationDelegate,
   typedef std::vector<Window*> WindowVector;
 
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     shell_ = app->shell();
     app_ = app;
     // FIXME: Mojo applications don't know their URLs yet:
@@ -278,9 +295,9 @@ class WindowManager : public ApplicationDelegate,
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(View* root,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services) override {
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     DCHECK(!view_manager_);
     view_manager_ = root->view_manager();
 
@@ -307,8 +324,11 @@ class WindowManager : public ApplicationDelegate,
 
     window_manager_app_->InitFocus(
         make_scoped_ptr(new window_manager::BasicFocusRules(root)));
+    window_manager_app_->accelerator_manager()->Register(
+        ui::Accelerator(ui::VKEY_BROWSER_BACK, 0),
+        ui::AcceleratorManager::kNormalPriority, this);
   }
-  virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {
     DCHECK_EQ(view_manager_, view_manager);
     view_manager_ = NULL;
     base::MessageLoop::current()->Quit();
@@ -323,11 +343,30 @@ class WindowManager : public ApplicationDelegate,
   }
 
   // Overridden from ui::EventHandler:
-  virtual void OnEvent(ui::Event* event) override {
+  void OnEvent(ui::Event* event) override {
     View* view =
         static_cast<window_manager::ViewTarget*>(event->target())->view();
     if (event->type() == ui::ET_MOUSE_PRESSED)
       view->SetFocus();
+  }
+
+  // Overriden from ui::AcceleratorTarget:
+  bool AcceleratorPressed(const ui::Accelerator& accelerator,
+                          ui::EventTarget* target) override {
+    if (accelerator.key_code() != ui::VKEY_BROWSER_BACK)
+      return false;
+
+    View* view = static_cast<window_manager::ViewTarget*>(target)->view();
+    WindowVector::iterator iter = GetWindowByViewId(view->id());
+    DCHECK(iter != windows_.end());
+    Window* window = *iter;
+    window->navigator_host()->RequestNavigateHistory(-1);
+    return true;
+  }
+
+  // Overriden from ui::AcceleratorTarget:
+  bool CanHandleAccelerators() const override {
+    return true;
   }
 
   void OnLaunch(uint32 source_view_id,
@@ -466,10 +505,31 @@ void WindowManagerConnection::CloseWindow(Id view_id) {
 
 void NavigatorHostImpl::DidNavigateLocally(const mojo::String& url) {
   window_manager_->DidNavigateLocally(view_id_, url);
+  RecordNavigation(url);
 }
 
 void NavigatorHostImpl::RequestNavigate(Target target, URLRequestPtr request) {
-  window_manager_->RequestNavigate(view_id_, target, request.Pass());
+  window_manager_->RequestNavigate(view_id_, target, request->url);
+}
+
+void NavigatorHostImpl::RequestNavigateHistory(int32_t delta) {
+  if (history_.empty())
+    return;
+  current_index_ =
+      std::max(0, std::min(current_index_ + delta,
+                           static_cast<int32_t>(history_.size()) - 1));
+  window_manager_->RequestNavigate(view_id_, TARGET_SOURCE_NODE,
+                                   history_[current_index_]);
+}
+
+void NavigatorHostImpl::RecordNavigation(const std::string& url) {
+  if (current_index_ >= 0 && history_[current_index_] == url) {
+    // This is a navigation to the current entry, ignore.
+    return;
+  }
+  history_.erase(history_.begin() + (current_index_ + 1), history_.end());
+  history_.push_back(url);
+  ++current_index_;
 }
 
 }  // namespace examples
