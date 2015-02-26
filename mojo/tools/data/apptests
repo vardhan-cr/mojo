@@ -44,18 +44,17 @@ if config.target_os == config.OS_LINUX:
     },
   ]
 
-# TODO(msw|etiennej|qsr): Fix and re-enable this test. http://crbug.com/461503
-# if config.target_os == config.OS_ANDROID:
-#   tests += [
-#     {
-#       "test": "mojo:example_apptests",
-#       # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
-#       "test-args": ["--example_apptest_arg"],
-#       "shell-args": [
-#         "--url-mappings=mojo:example_service=mojo:android_example_service"
-#       ],
-#     },
-#   ]
+if config.target_os == config.OS_ANDROID:
+  tests += [
+    {
+      "test": "mojo:example_apptests",
+      # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+      "test-args": ["--example_apptest_arg"],
+      "shell-args": [
+        "--url-mappings=mojo:example_service=mojo:android_example_service"
+      ],
+    },
+  ]
 
 if config.target_os != config.OS_ANDROID:
   tests += [

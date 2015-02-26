@@ -14,8 +14,8 @@ template("mojo_android_java_application") {
   android_standalone_name = "__${target_name}_standalone"
 
   all_deps = [
-    "//mojo/public/java:system",
     "//mojo/public/java:bindings",
+    "//mojo/public/java:system",
   ]
   if (defined(invoker.deps)) {
     all_deps += invoker.deps
@@ -33,6 +33,9 @@ template("mojo_android_java_application") {
     deps = [ ":${android_lib_name}" ] + all_deps
 
     dex_path = dex_output_path
+
+    system_gen_dir = get_path_info("//mojo/public/java/BUILD.gn", "gen_dir")
+    excluded_jars = [ "${system_gen_dir}/system.dex.jar" ]
   }
 
   if (defined(invoker.output_name)) {
