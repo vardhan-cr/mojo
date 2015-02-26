@@ -13,12 +13,15 @@ import 'mojo:core';
 import 'package:mojo/dart/testing/validation_test_input_parser.dart' as parser;
 import 'package:mojo/public/interfaces/bindings/tests/validation_test_interfaces.mojom.dart';
 
-class ConfrmanceTestInterfaceImpl extends ConformanceTestInterface {
+class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
+  ConformanceTestInterfaceStub _stub;
   Completer _completer;
 
-  ConfrmanceTestInterfaceImpl(this._completer, MojoMessagePipeEndpoint endpoint)
-      : super(endpoint) {
-    super.delegate = this;
+  ConformanceTestInterfaceImpl(this._completer,
+                              MojoMessagePipeEndpoint endpoint) {
+    _stub = new ConformanceTestInterfaceStub.fromEndpoint(endpoint)
+            ..delegate = this
+            ..listen();
   }
 
   void _complete() => _completer.complete(null);
@@ -34,6 +37,8 @@ class ConfrmanceTestInterfaceImpl extends ConformanceTestInterface {
   method8(List<List<String>> param0) => _complete();
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
+
+  void close({bool nodefer : false}) => _stub.close(nodefer: nodefer);
 }
 
 parser.ValidationParseResult readAndParseTest(String test) {
@@ -52,11 +57,11 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
       (_) => new MojoSharedBuffer.create(10).handle);
   var pipe = new MojoMessagePipe();
   var completer = new Completer();
-  var conformanceImpl = new ConfrmanceTestInterfaceImpl(
-      completer, pipe.endpoints[0]);
+  var conformanceImpl;
 
   runZoned(() {
-    conformanceImpl.listen();
+    conformanceImpl = new ConformanceTestInterfaceImpl(
+        completer, pipe.endpoints[0]);
   },
   onError: (e, stackTrace) {
     assert(e is MojoCodecError);

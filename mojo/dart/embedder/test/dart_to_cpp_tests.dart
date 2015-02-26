@@ -9,19 +9,22 @@ import 'mojo:core' as core;
 
 import 'package:mojo/dart/embedder/test/dart_to_cpp.mojom.dart';
 
-class DartSideImpl extends DartSide {
+class DartSideImpl implements DartSide {
   static const int BAD_VALUE = 13;
   static const int ELEMENT_BYTES = 1;
   static const int CAPACITY_BYTES = 64;
 
+  DartSideStub _stub;
   CppSideProxy cppSide;
 
   Uint8List _sampleData;
   Uint8List _sampleMessage;
   Completer _completer;
 
-  DartSideImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
-    super.delegate = this;
+  DartSideImpl(core.MojoMessagePipeEndpoint endpoint) {
+    _stub = new DartSideStub.fromEndpoint(endpoint)
+            ..delegate = this
+            ..listen();
     _sampleData = new Uint8List(CAPACITY_BYTES);
     for (int i = 0; i < _sampleData.length; ++i) {
       _sampleData[i] = i;
@@ -42,14 +45,14 @@ class DartSideImpl extends DartSide {
     });
   }
 
-  void setClient(CppSideProxy proxy) {
+  void setClient(bindings.ProxyBase proxy) {
     assert(cppSide == null);
     cppSide = proxy;
-    cppSide.startTest();
+    cppSide.ptr.startTest();
   }
 
   void ping() {
-    cppSide.pingResponse();
+    cppSide.ptr.pingResponse();
     _completer.complete(null);
     cppSide.close();
   }
@@ -91,14 +94,14 @@ class DartSideImpl extends DartSide {
       messagePipe1.endpoints[1].write(_sampleMessage.buffer.asByteData());
       messagePipe2.endpoints[1].write(_sampleMessage.buffer.asByteData());
 
-      cppSide.echoResponse(createEchoArgsList([arg, specialArg]));
+      cppSide.ptr.echoResponse(createEchoArgsList([arg, specialArg]));
 
       dataPipe1.producer.handle.close();
       dataPipe2.producer.handle.close();
       messagePipe1.endpoints[1].handle.close();
       messagePipe2.endpoints[1].handle.close();
     }
-    cppSide.testFinished();
+    cppSide.ptr.testFinished();
     _completer.complete(null);
     cppSide.close();
   }
@@ -113,7 +116,6 @@ main(List args) {
   var rawHandle = new core.MojoHandle(mojoHandle);
   var endpoint = new core.MojoMessagePipeEndpoint(rawHandle);
   var dartSide = new DartSideImpl(endpoint);
-  dartSide.listen();
   dartSide.future.then((_) {
     print('Success');
   });

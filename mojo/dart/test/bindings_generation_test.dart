@@ -13,9 +13,13 @@ import 'package:mojo/public/interfaces/bindings/tests/sample_interfaces.mojom.da
 import 'package:mojo/public/interfaces/bindings/tests/test_structs.mojom.dart' as structs;
 import 'package:mojo/public/interfaces/bindings/tests/rect.mojom.dart' as rect;
 
-class ProviderImpl extends sample.Provider {
-  ProviderImpl(core.MojoMessagePipeEndpoint endpoint) : super(endpoint) {
-    super.delegate = this;
+class ProviderImpl implements sample.Provider {
+  sample.ProviderStub _stub;
+
+  ProviderImpl(core.MojoMessagePipeEndpoint endpoint) {
+    _stub = new sample.ProviderStub.fromEndpoint(endpoint)
+            ..delegate = this
+            ..listen();
   }
 
   echoString(String a, Function responseFactory) =>
@@ -33,20 +37,19 @@ class ProviderImpl extends sample.Provider {
 
 
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
-  var provider = new ProviderImpl(endpoint);
-  provider.listen();
+  new ProviderImpl(endpoint);
 }
 
 
 Future<bool> testCallResponse() {
   var pipe = new core.MojoMessagePipe();
-  var client = new sample.ProviderProxy(pipe.endpoints[0]);
+  var client = new sample.ProviderProxy.fromEndpoint(pipe.endpoints[0]);
   var c = new Completer();
   Isolate.spawn(providerIsolate, pipe.endpoints[1]).then((_) {
-    client.echoString("hello!").then((echoStringResponse) {
+    client.ptr.echoString("hello!").then((echoStringResponse) {
       Expect.equals("hello!", echoStringResponse.a);
     }).then((_) {
-      client.echoStrings("hello", "mojo!").then((echoStringsResponse) {
+      client.ptr.echoStrings("hello", "mojo!").then((echoStringsResponse) {
         Expect.equals("hello", echoStringsResponse.a);
         Expect.equals("mojo!", echoStringsResponse.b);
         client.close();
@@ -60,13 +63,14 @@ Future<bool> testCallResponse() {
 
 Future testAwaitCallResponse() async {
   var pipe = new core.MojoMessagePipe();
-  var client = new sample.ProviderProxy(pipe.endpoints[0]);
+  var client = new sample.ProviderProxy.fromEndpoint(pipe.endpoints[0]);
   var isolate = await Isolate.spawn(providerIsolate, pipe.endpoints[1]);
 
-  var echoStringResponse = await client.echoString("hello!");
+  var echoStringResponse = await client.ptr.echoString("hello!");
   Expect.equals("hello!", echoStringResponse.a);
 
-  var echoStringsResponse = await client.echoStrings("hello", "mojo!");
+  var echoStringsResponse =
+      await client.ptr.echoStrings("hello", "mojo!");
   Expect.equals("hello", echoStringsResponse.a);
   Expect.equals("mojo!", echoStringsResponse.b);
 

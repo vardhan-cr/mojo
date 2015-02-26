@@ -19,6 +19,5 @@ class World extends Application {
 
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
-  var world = new World.fromHandle(appHandle);
-  world.listen();
+  new World.fromHandle(appHandle);
 }

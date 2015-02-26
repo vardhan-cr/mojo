@@ -16,7 +16,7 @@ import 'package:mojo/services/network/public/interfaces/url_loader.mojom.dart';
 
 class WGet extends Application {
   NetworkServiceProxy _networkService;
-  UrlLoaderProxy _urlLoaderProxy;
+  UrlLoaderProxy _urlLoader;
 
   WGet.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
@@ -45,7 +45,7 @@ class WGet extends Application {
         ..url = url
         ..autoFollowRedirects = true;
 
-    var urlResponse = await _urlLoaderProxy.start(urlRequest);
+    var urlResponse = await _urlLoader.ptr.start(urlRequest);
     print(">>> Headers <<<");
     print(urlResponse.response.headers.join('\n'));
 
@@ -57,22 +57,21 @@ class WGet extends Application {
       _networkService = new NetworkServiceProxy.unbound();
       connectToService("mojo:network_service", _networkService);
     }
-    if (_urlLoaderProxy == null) {
-      _urlLoaderProxy = new UrlLoaderProxy.unbound();
-      _networkService.createUrlLoader(_urlLoaderProxy);
+    if (_urlLoader == null) {
+      _urlLoader = new UrlLoaderProxy.unbound();
+      _networkService.ptr.createUrlLoader(_urlLoader);
     }
   }
 
   void _closeProxies() {
-    _urlLoaderProxy.close();
+    _urlLoader.close();
+    _urlLoader = null;
     _networkService.close();
-    _urlLoaderProxy = null;
     _networkService = null;
   }
 }
 
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
-  var wget = new WGet.fromHandle(appHandle);
-  wget.listen();
+  new WGet.fromHandle(appHandle);
 }

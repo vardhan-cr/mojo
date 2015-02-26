@@ -9,17 +9,20 @@ import 'mojo:core';
 
 import 'package:services/dart/test/echo_service.mojom.dart';
 
-class EchoServiceImpl extends EchoService {
+class EchoServiceImpl implements EchoService {
+  EchoServiceStub _stub;
   Application _application;
 
   EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
-    : _application = application, super(endpoint) {
-    super.delegate = this;
+    : _application = application {
+    _stub = new EchoServiceStub.fromEndpoint(endpoint)
+            ..delegate = this
+            ..listen();
   }
 
   echoString(String value, Function responseFactory) {
     if (value == "quit") {
-      close();
+      _stub.close();
       _application.close();
     }
     return new Future.value(responseFactory(value));
@@ -30,7 +33,7 @@ class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
   void acceptConnection(String requestorUrl, ApplicationConnection connection) {
-    connection.provideService(EchoService.name, (endpoint) =>
+    connection.provideService(EchoServiceName, (endpoint) =>
         new EchoServiceImpl(this, endpoint));
     connection.listen();
   }
@@ -39,6 +42,5 @@ class EchoApplication extends Application {
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  var echoApplication = new EchoApplication.fromHandle(appHandle);
-  echoApplication.listen();
+  new EchoApplication.fromHandle(appHandle);
 }

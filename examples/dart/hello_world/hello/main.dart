@@ -23,6 +23,5 @@ class Hello extends Application {
 
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
-  var hello = new Hello.fromHandle(appHandle);
-  hello.listen();
+  new Hello.fromHandle(appHandle);
 }

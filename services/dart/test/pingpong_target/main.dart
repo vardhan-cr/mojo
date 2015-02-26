@@ -9,27 +9,31 @@ import 'mojo:core';
 
 import 'package:services/dart/test/pingpong_service.mojom.dart';
 
-class PingPongServiceImpl extends PingPongService {
+class PingPongServiceImpl implements PingPongService {
+  PingPongServiceStub _stub;
   Application _application;
-  PingPongClientProxy _proxy;
+  PingPongClientProxy _pingPongClient;
 
   PingPongServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
-      : _application = application, super(endpoint) {
-    super.delegate = this;
+      : _application = application {
+    _stub = new PingPongServiceStub.fromEndpoint(endpoint)
+            ..delegate = this
+            ..listen();
   }
 
-  void setClient(PingPongClientProxy proxy) {
-    assert(_proxy == null);
-    _proxy = proxy;
+  void setClient(ProxyBase proxyBase) {
+    assert(_pingPongClient == null);
+    _pingPongClient = proxyBase;
   }
 
-  void ping(int pingValue) => _proxy.pong(pingValue + 1);
+  void ping(int pingValue) => _pingPongClient.ptr.pong(pingValue + 1);
 
   void quit() {
-    if (_proxy != null) {
-      _proxy.close();
+    if (_pingPongClient != null) {
+      _pingPongClient.close();
+      _pingPongClient = null;
     }
-    super.close();
+    _stub.close();
     if (_application != null) {
       _application.close();
     }
@@ -40,7 +44,7 @@ class PingPongApplication extends Application {
   PingPongApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
   void acceptConnection(String requestorUrl, ApplicationConnection connection) {
-    connection.provideService(PingPongService.name,
+    connection.provideService(PingPongServiceName,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
     connection.listen();
   }
@@ -49,6 +53,5 @@ class PingPongApplication extends Application {
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  var pingPongApplication = new PingPongApplication.fromHandle(appHandle);
-  pingPongApplication.listen();
+  new PingPongApplication.fromHandle(appHandle);
 }
