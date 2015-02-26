@@ -7,6 +7,8 @@
 #include "base/logging.h"
 #include "mojo/common/data_pipe_utils.h"
 
+using mojo::common::BlockingCopyFromString;
+
 namespace tracing {
 namespace {
 
@@ -17,7 +19,7 @@ const char kEnd[] = "]}";
 
 TraceDataSink::TraceDataSink(mojo::ScopedDataPipeProducerHandle pipe)
     : pipe_(pipe.Pass()), empty_(true) {
-  mojo::common::BlockingCopyFromString(kStart, pipe_);
+  BlockingCopyFromString(kStart, pipe_);
 }
 
 TraceDataSink::~TraceDataSink() {
@@ -28,13 +30,13 @@ TraceDataSink::~TraceDataSink() {
 
 void TraceDataSink::AddChunk(const std::string& json) {
   if (!empty_)
-    mojo::common::BlockingCopyFromString(",", pipe_);
+    BlockingCopyFromString(",", pipe_);
   empty_ = false;
-  mojo::common::BlockingCopyFromString(json, pipe_);
+  BlockingCopyFromString(json, pipe_);
 }
 
 void TraceDataSink::Flush() {
-  mojo::common::BlockingCopyFromString(kEnd, pipe_);
+  BlockingCopyFromString(kEnd, pipe_);
   pipe_.reset();
 }
 
