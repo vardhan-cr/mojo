@@ -121,7 +121,6 @@ declare_args() {
 }
 
 # TODO(dpranke): Remove these asserts when os and cpu_arch are removed.
-assert(current_cpu == cpu_arch)
 assert(current_os == os)
 
 # =============================================================================
