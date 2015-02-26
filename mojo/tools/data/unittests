@@ -27,9 +27,6 @@ tests = [
 
   # Non-system, non-public tests:
   {
-    "test": "crypto_unittests",
-  },
-  {
     "test": "mojo_application_manager_unittests",
   },
   {
