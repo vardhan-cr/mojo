@@ -22,9 +22,10 @@ def _BuildProxy(impl):
 
 def _ExtractValue(p):
   container = []
+  @promise.async
   def GetValue(value):
     container.append(value)
-  p.Then(GetValue)
+  GetValue(p)
   assert len(container)
   return container[0]
 
