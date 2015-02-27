@@ -48,8 +48,11 @@ group("mojo_nacl") {
 
 group("mojo_nacl_tests") {
   testonly = true
+  nacl_toolchain =
+      "//native_client/build/toolchain/nacl:clang_newlib_${cpu_arch}"
   deps = [
     ":monacl_shell",
-    ":monacl_test(//native_client/build/toolchain/nacl:clang_newlib_${cpu_arch})",
+    ":monacl_test($nacl_toolchain)",
+    "//examples/wget($nacl_toolchain)",
   ]
 }
