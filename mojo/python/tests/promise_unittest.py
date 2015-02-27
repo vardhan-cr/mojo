@@ -167,6 +167,41 @@ class PromiseTest(unittest.TestCase):
     self.assertEquals(res[0], 'error')
     self.assertEquals(race_promise.state, promise.Promise.STATE_REJECTED)
 
+  def testAsync(self):
+    @promise.async
+    def ComputeAdd(*values):
+      return sum(values)
+    res = []
+    def AddToRes(values):
+      res.append(values)
+
+    # Simple test.
+    ComputeAdd(1, 2).Then(AddToRes)
+    self.assertEquals(res, [3])
+
+    # Resolve promises
+    res = []
+    promises_and_functions = [_GetPromiseAndFunctions() for x in xrange(10)]
+    promises = [x[0] for x in promises_and_functions]
+    add_promise = ComputeAdd(*promises).Then(AddToRes)
+    self.assertEquals(len(res), 0)
+    self.assertEquals(add_promise.state, promise.Promise.STATE_PENDING)
+    for _, r, _ in promises_and_functions:
+      r(1)
+    self.assertEquals(res, [10])
+    self.assertEquals(add_promise.state, promise.Promise.STATE_FULLFILLED)
+
+    # Fail promise
+    res = []
+    promises_and_functions = [_GetPromiseAndFunctions() for x in xrange(10)]
+    promises = [x[0] for x in promises_and_functions]
+    add_promise = ComputeAdd(*promises).Then(AddToRes).Catch(AddToRes)
+    self.assertEquals(len(res), 0)
+    self.assertEquals(add_promise.state, promise.Promise.STATE_PENDING)
+    promises_and_functions[7][2]('error')
+    self.assertEquals(res, ['error'])
+    self.assertEquals(add_promise.state, promise.Promise.STATE_REJECTED)
+
 
 def _GetPromiseAndFunctions():
   functions = {}
