@@ -19,6 +19,7 @@ group("services") {
     "//services/kiosk_wm",
     "//services/native_viewport",
     "//services/reaper",
+    "//services/service_registry",
     "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",
