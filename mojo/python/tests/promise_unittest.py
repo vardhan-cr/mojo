@@ -169,26 +169,27 @@ class PromiseTest(unittest.TestCase):
 
   def testAsync(self):
     @promise.async
-    def ComputeAdd(*values):
-      return sum(values)
+    def ComputeAdd(*values, **kwvalues):
+      return sum(values) + sum(kwvalues.values())
     res = []
     def AddToRes(values):
       res.append(values)
 
     # Simple test.
-    ComputeAdd(1, 2).Then(AddToRes)
-    self.assertEquals(res, [3])
+    ComputeAdd(1, 2, foo=3).Then(AddToRes)
+    self.assertEquals(res, [6])
 
     # Resolve promises
     res = []
     promises_and_functions = [_GetPromiseAndFunctions() for x in xrange(10)]
     promises = [x[0] for x in promises_and_functions]
-    add_promise = ComputeAdd(*promises).Then(AddToRes)
+    dict_promises = dict(zip(map(str, xrange(10)), promises))
+    add_promise = ComputeAdd(*promises, **dict_promises).Then(AddToRes)
     self.assertEquals(len(res), 0)
     self.assertEquals(add_promise.state, promise.Promise.STATE_PENDING)
     for _, r, _ in promises_and_functions:
       r(1)
-    self.assertEquals(res, [10])
+    self.assertEquals(res, [20])
     self.assertEquals(add_promise.state, promise.Promise.STATE_FULLFILLED)
 
     # Fail promise
@@ -201,6 +202,26 @@ class PromiseTest(unittest.TestCase):
     promises_and_functions[7][2]('error')
     self.assertEquals(res, ['error'])
     self.assertEquals(add_promise.state, promise.Promise.STATE_REJECTED)
+
+
+  def testAttributeGetter(self):
+    class MyObject(object):
+      def __init__(self):
+        self.value = 0
+      def GetValue(self, value=None):
+        return value
+    p = promise.Promise.Resolve(MyObject())
+    res = []
+    def AddToRes(values):
+      res.append(values)
+
+    p.value.Then(AddToRes)
+    p.GetValue(promise.Promise.Resolve(1)).Then(AddToRes)
+    self.assertEquals(res, [0, 1])
+
+    res = []
+    p.GetTwo().Catch(AddToRes)
+    self.assertEquals(len(res), 1)
 
 
 def _GetPromiseAndFunctions():
