@@ -26,17 +26,18 @@ class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl : public DataPipeImpl {
   explicit RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint);
   RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint,
                              scoped_ptr<char, base::AlignedFreeDeleter> buffer,
+                             size_t start_index,
                              size_t current_num_bytes);
   ~RemoteProducerDataPipeImpl() override;
 
-  // Converts the incoming queue of messages into a buffer (for the given
-  // options). On failure, returns null (|messages| may be modified). On
-  // success, returns the buffer, which will be of size
-  // |validated_options.capacity_num_bytes| and contain |*buffer_num_bytes| of
-  // data.
-  static scoped_ptr<char, base::AlignedFreeDeleter> IncomingMessagesToBuffer(
+  // Processes messages that were received and queued by an |IncomingEndpoint|.
+  // On success, returns true and sets |*buffer| (to a buffer of size
+  // |validated_options.capacity_num_bytes|) and |*buffer_num_bytes|. On
+  // failure, returns false. Always clears |*messages|.
+  static bool ProcessMessagesFromIncomingEndpoint(
       const MojoCreateDataPipeOptions& validated_options,
       MessageInTransitQueue* messages,
+      scoped_ptr<char, base::AlignedFreeDeleter>* buffer,
       size_t* buffer_num_bytes);
 
  private:

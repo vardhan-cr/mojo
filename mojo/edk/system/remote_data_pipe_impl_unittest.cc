@@ -19,6 +19,7 @@
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe.h"
 #include "mojo/edk/system/data_pipe_consumer_dispatcher.h"
+#include "mojo/edk/system/data_pipe_producer_dispatcher.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_pipe.h"
 #include "mojo/edk/system/raw_channel.h"
@@ -476,6 +477,197 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
 
   consumer->Close();
+}
+
+TEST_F(RemoteDataPipeImplTest, SendProducerBasic) {
+  char read_buffer[100] = {};
+  uint32_t read_buffer_size = static_cast<uint32_t>(sizeof(read_buffer));
+  DispatcherVector read_dispatchers;
+  uint32_t read_num_dispatchers = 10;  // Maximum to get.
+  Waiter waiter;
+  HandleSignalsState hss;
+  uint32_t context = 0;
+
+  scoped_refptr<DataPipe> dp(CreateLocal(sizeof(int32_t), 1000));
+  // This is the producer dispatcher we'll send.
+  scoped_refptr<DataPipeProducerDispatcher> producer =
+      new DataPipeProducerDispatcher();
+  producer->Init(dp);
+
+  // Write the producer to MP 0 (port 0). Wait and receive on MP 1 (port 0).
+  // (Add the waiter first, to avoid any handling the case where it's already
+  // readable.)
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            message_pipe(1)->AddAwakable(
+                0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 123, nullptr));
+  {
+    DispatcherTransport transport(
+        test::DispatcherTryStartTransport(producer.get()));
+    EXPECT_TRUE(transport.is_valid());
+
+    std::vector<DispatcherTransport> transports;
+    transports.push_back(transport);
+    EXPECT_EQ(MOJO_RESULT_OK, message_pipe(0)->WriteMessage(
+                                  0, NullUserPointer(), 0, &transports,
+                                  MOJO_WRITE_MESSAGE_FLAG_NONE));
+    transport.End();
+
+    // |producer| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(producer->HasOneRef());
+    producer = nullptr;
+  }
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(123u, context);
+  hss = HandleSignalsState();
+  message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
+            hss.satisfied_signals);
+  EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            message_pipe(1)->ReadMessage(
+                0, UserPointer<void>(read_buffer),
+                MakeUserPointer(&read_buffer_size), &read_dispatchers,
+                &read_num_dispatchers, MOJO_READ_MESSAGE_FLAG_NONE));
+  EXPECT_EQ(0u, static_cast<size_t>(read_buffer_size));
+  EXPECT_EQ(1u, read_dispatchers.size());
+  EXPECT_EQ(1u, read_num_dispatchers);
+  ASSERT_TRUE(read_dispatchers[0]);
+  EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
+
+  EXPECT_EQ(Dispatcher::kTypeDataPipeProducer, read_dispatchers[0]->GetType());
+  producer =
+      static_cast<DataPipeProducerDispatcher*>(read_dispatchers[0].get());
+  read_dispatchers.clear();
+
+  // TODO(vtl): The following is essentially copied from
+  // |LocalDataPipeImplTest.SimpleReadWrite| (except operating on the producer
+  // via a dispatcher, and a few differences -- noted below in TODOs).
+
+  int32_t elements[10] = {};
+  uint32_t num_bytes = 0;
+
+  // Try reading; nothing there yet.
+  num_bytes = static_cast<uint32_t>(arraysize(elements) * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_SHOULD_WAIT,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), false, false));
+
+  // Query; nothing there yet.
+  num_bytes = 0;
+  EXPECT_EQ(MOJO_RESULT_OK, dp->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(0u, num_bytes);
+
+  // Discard; nothing there yet.
+  num_bytes = static_cast<uint32_t>(5u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_SHOULD_WAIT,
+            dp->ConsumerDiscardData(MakeUserPointer(&num_bytes), false));
+
+  // Read with invalid |num_bytes|.
+  num_bytes = sizeof(elements[0]) + 1;
+  EXPECT_EQ(MOJO_RESULT_INVALID_ARGUMENT,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), false, false));
+
+  // TODO(vtl): For remote data pipes, we have to wait; add the waiter before
+  // writing.
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            dp->ConsumerAddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 456,
+                                    nullptr));
+
+  // Write two elements.
+  elements[0] = 123;
+  elements[1] = 456;
+  num_bytes = static_cast<uint32_t>(2u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            producer->WriteData(UserPointer<const void>(elements),
+                                MakeUserPointer(&num_bytes),
+                                MOJO_WRITE_DATA_FLAG_NONE));
+  // It should have written everything (even without "all or none").
+  EXPECT_EQ(2u * sizeof(elements[0]), num_bytes);
+
+  // TODO(vtl): Now wait.
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(456u, context);
+  hss = HandleSignalsState();
+  dp->ConsumerRemoveAwakable(&waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // Query.
+  num_bytes = 0;
+  EXPECT_EQ(MOJO_RESULT_OK, dp->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  // TODO(vtl): It's theoretically possible (though not with the current
+  // implementation/configured limits) that not all the data has arrived yet.
+  // (The theoretically-correct assertion here is that |num_bytes| is |1 * ...|
+  // or |2 * ...|.)
+  EXPECT_EQ(2 * sizeof(elements[0]), num_bytes);
+
+  // Read one element.
+  elements[0] = -1;
+  elements[1] = -1;
+  num_bytes = static_cast<uint32_t>(1u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), false, false));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
+  EXPECT_EQ(123, elements[0]);
+  EXPECT_EQ(-1, elements[1]);
+
+  // Query.
+  num_bytes = 0;
+  EXPECT_EQ(MOJO_RESULT_OK, dp->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  // TODO(vtl): See previous TODO. (If we got 2 elements there, however, we
+  // should get 1 here.)
+  EXPECT_EQ(1 * sizeof(elements[0]), num_bytes);
+
+  // Peek one element.
+  elements[0] = -1;
+  elements[1] = -1;
+  num_bytes = static_cast<uint32_t>(1u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), false, true));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
+  EXPECT_EQ(456, elements[0]);
+  EXPECT_EQ(-1, elements[1]);
+
+  // Query. Still has 1 element remaining.
+  num_bytes = 0;
+  EXPECT_EQ(MOJO_RESULT_OK, dp->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(1 * sizeof(elements[0]), num_bytes);
+
+  // Try to read two elements, with "all or none".
+  elements[0] = -1;
+  elements[1] = -1;
+  num_bytes = static_cast<uint32_t>(2u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), true, false));
+  EXPECT_EQ(-1, elements[0]);
+  EXPECT_EQ(-1, elements[1]);
+
+  // Try to read two elements, without "all or none".
+  elements[0] = -1;
+  elements[1] = -1;
+  num_bytes = static_cast<uint32_t>(2u * sizeof(elements[0]));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            dp->ConsumerReadData(UserPointer<void>(elements),
+                                 MakeUserPointer(&num_bytes), false, false));
+  EXPECT_EQ(1u * sizeof(elements[0]), num_bytes);
+  EXPECT_EQ(456, elements[0]);
+  EXPECT_EQ(-1, elements[1]);
+
+  // Query.
+  num_bytes = 0;
+  EXPECT_EQ(MOJO_RESULT_OK, dp->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(0u, num_bytes);
+
+  producer->Close();
+  dp->ConsumerClose();
 }
 
 }  // namespace

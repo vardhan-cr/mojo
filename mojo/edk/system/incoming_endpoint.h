@@ -5,6 +5,8 @@
 #ifndef MOJO_EDK_SYSTEM_INCOMING_ENDPOINT_H_
 #define MOJO_EDK_SYSTEM_INCOMING_ENDPOINT_H_
 
+#include <stddef.h>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
@@ -32,6 +34,9 @@ class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint : public ChannelEndpointClient {
   scoped_refptr<ChannelEndpoint> Init();
 
   scoped_refptr<MessagePipe> ConvertToMessagePipe();
+  scoped_refptr<DataPipe> ConvertToDataPipeProducer(
+      const MojoCreateDataPipeOptions& validated_options,
+      size_t consumer_num_bytes);
   scoped_refptr<DataPipe> ConvertToDataPipeConsumer(
       const MojoCreateDataPipeOptions& validated_options);
 

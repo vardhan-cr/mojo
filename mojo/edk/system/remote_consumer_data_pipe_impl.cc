@@ -19,6 +19,51 @@
 namespace mojo {
 namespace system {
 
+namespace {
+
+bool ValidateIncomingMessage(size_t element_num_bytes,
+                             size_t capacity_num_bytes,
+                             size_t consumer_num_bytes,
+                             const MessageInTransit* message) {
+  // We should only receive endpoint messages.
+  DCHECK_EQ(message->type(), MessageInTransit::kTypeEndpoint);
+
+  // But we should check the subtype; only take data pipe acks.
+  if (message->subtype() != MessageInTransit::kSubtypeEndpointDataPipeAck) {
+    LOG(WARNING) << "Received message of unexpected subtype: "
+                 << message->subtype();
+    return false;
+  }
+
+  if (message->num_bytes() != sizeof(RemoteDataPipeAck)) {
+    LOG(WARNING) << "Incorrect message size: " << message->num_bytes()
+                 << " bytes (expected: " << sizeof(RemoteDataPipeAck)
+                 << " bytes)";
+    return false;
+  }
+
+  const RemoteDataPipeAck* ack =
+      static_cast<const RemoteDataPipeAck*>(message->bytes());
+  size_t num_bytes_consumed = ack->num_bytes_consumed;
+
+  if (num_bytes_consumed > consumer_num_bytes) {
+    LOG(WARNING) << "Number of bytes consumed too large: " << num_bytes_consumed
+                 << " bytes (outstanding: " << consumer_num_bytes << " bytes)";
+    return false;
+  }
+
+  if (num_bytes_consumed % element_num_bytes != 0) {
+    LOG(WARNING) << "Number of bytes consumed not a multiple of element size: "
+                 << num_bytes_consumed
+                 << " bytes (element size: " << element_num_bytes << " bytes)";
+    return false;
+  }
+
+  return true;
+}
+
+}  // namespace
+
 RemoteConsumerDataPipeImpl::RemoteConsumerDataPipeImpl(
     ChannelEndpoint* channel_endpoint,
     size_t consumer_num_bytes)
@@ -37,6 +82,33 @@ void RemoteConsumerDataPipeImpl::ProducerClose() {
   }
 
   Disconnect();
+}
+
+// static
+bool RemoteConsumerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
+    const MojoCreateDataPipeOptions& validated_options,
+    size_t* consumer_num_bytes,
+    MessageInTransitQueue* messages) {
+  const size_t element_num_bytes = validated_options.element_num_bytes;
+  const size_t capacity_num_bytes = validated_options.capacity_num_bytes;
+
+  if (messages) {
+    while (!messages->IsEmpty()) {
+      scoped_ptr<MessageInTransit> message(messages->GetMessage());
+      if (!ValidateIncomingMessage(element_num_bytes, capacity_num_bytes,
+                                   *consumer_num_bytes, message.get())) {
+        messages->Clear();
+        return false;
+      }
+
+      const RemoteDataPipeAck* ack =
+          static_cast<const RemoteDataPipeAck*>(message->bytes());
+      size_t num_bytes_consumed = ack->num_bytes_consumed;
+      *consumer_num_bytes -= num_bytes_consumed;
+    }
+  }
+
+  return true;
 }
 
 MojoResult RemoteConsumerDataPipeImpl::ProducerWriteData(
@@ -269,23 +341,8 @@ bool RemoteConsumerDataPipeImpl::OnReadMessage(unsigned /*port*/,
   // return true.)
   scoped_ptr<MessageInTransit> msg(message);
 
-  // First, validate the message.
-
-  // We should only receive endpoint messages.
-  DCHECK_EQ(msg->type(), MessageInTransit::kTypeEndpoint);
-
-  // But we should check the subtype; only take data pipe acks.
-  if (msg->subtype() != MessageInTransit::kSubtypeEndpointDataPipeAck) {
-    LOG(WARNING) << "Received message of unexpected subtype: "
-                 << msg->subtype();
-    Disconnect();
-    return true;
-  }
-
-  if (msg->num_bytes() != sizeof(RemoteDataPipeAck)) {
-    LOG(WARNING) << "Incorrect message size: " << msg->num_bytes()
-                 << " bytes (expected: " << sizeof(RemoteDataPipeAck)
-                 << " bytes)";
+  if (!ValidateIncomingMessage(element_num_bytes(), capacity_num_bytes(),
+                               consumer_num_bytes_, msg.get())) {
     Disconnect();
     return true;
   }
@@ -293,23 +350,6 @@ bool RemoteConsumerDataPipeImpl::OnReadMessage(unsigned /*port*/,
   const RemoteDataPipeAck* ack =
       static_cast<const RemoteDataPipeAck*>(msg->bytes());
   size_t num_bytes_consumed = ack->num_bytes_consumed;
-
-  if (num_bytes_consumed > consumer_num_bytes_) {
-    LOG(WARNING) << "Number of bytes consumed too large: " << num_bytes_consumed
-                 << " bytes (outstanding: " << consumer_num_bytes_ << " bytes)";
-    Disconnect();
-    return true;
-  }
-
-  if (num_bytes_consumed % element_num_bytes() != 0) {
-    LOG(WARNING) << "Number of bytes consumed not a multiple of element size: "
-                 << num_bytes_consumed
-                 << " bytes (element size: " << element_num_bytes()
-                 << " bytes)";
-    Disconnect();
-    return true;
-  }
-
   consumer_num_bytes_ -= num_bytes_consumed;
   return true;
 }

@@ -32,6 +32,17 @@ scoped_refptr<MessagePipe> IncomingEndpoint::ConvertToMessagePipe() {
   return message_pipe;
 }
 
+scoped_refptr<DataPipe> IncomingEndpoint::ConvertToDataPipeProducer(
+    const MojoCreateDataPipeOptions& validated_options,
+    size_t consumer_num_bytes) {
+  base::AutoLock locker(lock_);
+  scoped_refptr<DataPipe> data_pipe(DataPipe::CreateRemoteConsumerFromExisting(
+      validated_options, consumer_num_bytes, &message_queue_, endpoint_.get()));
+  DCHECK(message_queue_.IsEmpty());
+  endpoint_ = nullptr;
+  return data_pipe;
+}
+
 scoped_refptr<DataPipe> IncomingEndpoint::ConvertToDataPipeConsumer(
     const MojoCreateDataPipeOptions& validated_options) {
   base::AutoLock locker(lock_);

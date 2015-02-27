@@ -23,6 +23,7 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/remote_consumer_data_pipe_impl.h"
+#include "mojo/edk/system/remote_producer_data_pipe_impl.h"
 
 namespace mojo {
 namespace system {
@@ -159,8 +160,8 @@ HandleSignalsState LocalDataPipeImpl::ProducerGetHandleSignalsState() const {
 void LocalDataPipeImpl::ProducerStartSerialize(Channel* channel,
                                                size_t* max_size,
                                                size_t* max_platform_handles) {
-  // TODO(vtl): Support serializing producer data pipe handles.
-  *max_size = 0;
+  *max_size = sizeof(SerializedDataPipeProducerDispatcher) +
+              channel->GetSerializedEndpointSize();
   *max_platform_handles = 0;
 }
 
@@ -169,9 +170,36 @@ bool LocalDataPipeImpl::ProducerEndSerialize(
     void* destination,
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
-  // TODO(vtl): Support serializing producer data pipe handles.
-  owner()->ProducerCloseNoLock();
-  return false;
+  SerializedDataPipeProducerDispatcher* s =
+      static_cast<SerializedDataPipeProducerDispatcher*>(destination);
+  s->validated_options = validated_options();
+  void* destination_for_endpoint = static_cast<char*>(destination) +
+                                   sizeof(SerializedDataPipeProducerDispatcher);
+
+  if (!consumer_open()) {
+    // Case 1: The consumer is closed.
+    s->consumer_num_bytes = static_cast<size_t>(-1);
+    owner()->ProducerCloseNoLock();
+    *actual_size = sizeof(SerializedDataPipeProducerDispatcher);
+    return true;
+  }
+
+  // Case 2: The consumer isn't closed. We'll replace ourselves with a
+  // |RemoteProducerDataPipeImpl|.
+
+  // Note: We don't use |port|.
+  scoped_refptr<ChannelEndpoint> channel_endpoint =
+      channel->SerializeEndpointWithLocalPeer(destination_for_endpoint, nullptr,
+                                              owner(), 0);
+  // Note: Keep |*this| alive until the end of this method, to make things
+  // slightly easier on ourselves.
+  scoped_ptr<DataPipeImpl> self(owner()->ReplaceImplNoLock(make_scoped_ptr(
+      new RemoteProducerDataPipeImpl(channel_endpoint.get(), buffer_.Pass(),
+                                     start_index_, current_num_bytes_))));
+
+  *actual_size = sizeof(SerializedDataPipeProducerDispatcher) +
+                 channel->GetSerializedEndpointSize();
+  return true;
 }
 
 void LocalDataPipeImpl::ConsumerClose() {

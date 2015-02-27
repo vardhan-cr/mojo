@@ -59,7 +59,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
       const MojoCreateDataPipeOptions& validated_options);
 
   // Creates a data pipe with a remote producer and a local consumer, using an
-  // existing |ChannelEndpoint| (whose |ReplaceClient()| it'll call) and take
+  // existing |ChannelEndpoint| (whose |ReplaceClient()| it'll call) and taking
   // |message_queue|'s contents as already-received incoming messages. If
   // |channel_endpoint| is null, this will create a "half-open" data pipe (with
   // only the consumer open). Note that this may fail, in which case it returns
@@ -68,6 +68,26 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
       const MojoCreateDataPipeOptions& validated_options,
       MessageInTransitQueue* message_queue,
       ChannelEndpoint* channel_endpoint);
+
+  // Creates a data pipe with a local producer and a remote consumer, using an
+  // existing |ChannelEndpoint| (whose |ReplaceClient()| it'll call) and taking
+  // |message_queue|'s contents as already-received incoming messages
+  // (|message_queue| may be null). If |channel_endpoint| is null, this will
+  // create a "half-open" data pipe (with only the producer open). Note that
+  // this may fail, in which case it returns null.
+  static DataPipe* CreateRemoteConsumerFromExisting(
+      const MojoCreateDataPipeOptions& validated_options,
+      size_t consumer_num_bytes,
+      MessageInTransitQueue* message_queue,
+      ChannelEndpoint* channel_endpoint);
+
+  // Used by |DataPipeProducerDispatcher::Deserialize()|. Returns true on
+  // success (in which case, |*data_pipe| is set appropriately) and false on
+  // failure (in which case |*data_pipe| may or may not be set to null).
+  static bool ProducerDeserialize(Channel* channel,
+                                  const void* source,
+                                  size_t size,
+                                  scoped_refptr<DataPipe>* data_pipe);
 
   // Used by |DataPipeConsumerDispatcher::Deserialize()|. Returns true on
   // success (in which case, |*data_pipe| is set appropriately) and false on

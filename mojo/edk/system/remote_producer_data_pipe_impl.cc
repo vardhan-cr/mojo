@@ -68,41 +68,49 @@ RemoteProducerDataPipeImpl::RemoteProducerDataPipeImpl(
 RemoteProducerDataPipeImpl::RemoteProducerDataPipeImpl(
     ChannelEndpoint* channel_endpoint,
     scoped_ptr<char, base::AlignedFreeDeleter> buffer,
+    size_t start_index,
     size_t current_num_bytes)
     : channel_endpoint_(channel_endpoint),
       buffer_(buffer.Pass()),
-      start_index_(0),
+      start_index_(start_index),
       current_num_bytes_(current_num_bytes) {
-  DCHECK(buffer_);
+  DCHECK(buffer_ || !current_num_bytes);
 }
 
 // static
-scoped_ptr<char, base::AlignedFreeDeleter>
-RemoteProducerDataPipeImpl::IncomingMessagesToBuffer(
+bool RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
     const MojoCreateDataPipeOptions& validated_options,
     MessageInTransitQueue* messages,
+    scoped_ptr<char, base::AlignedFreeDeleter>* buffer,
     size_t* buffer_num_bytes) {
+  DCHECK(!*buffer);  // Not wrong, but unlikely.
+
   const size_t element_num_bytes = validated_options.element_num_bytes;
   const size_t capacity_num_bytes = validated_options.capacity_num_bytes;
 
-  scoped_ptr<char, base::AlignedFreeDeleter> buffer(static_cast<char*>(
+  scoped_ptr<char, base::AlignedFreeDeleter> new_buffer(static_cast<char*>(
       base::AlignedAlloc(capacity_num_bytes,
                          GetConfiguration().data_pipe_buffer_alignment_bytes)));
 
   size_t current_num_bytes = 0;
-  while (!messages->IsEmpty()) {
-    scoped_ptr<MessageInTransit> message(messages->GetMessage());
-    if (!ValidateIncomingMessage(element_num_bytes, capacity_num_bytes,
-                                 current_num_bytes, message.get()))
-      return nullptr;
+  if (messages) {
+    while (!messages->IsEmpty()) {
+      scoped_ptr<MessageInTransit> message(messages->GetMessage());
+      if (!ValidateIncomingMessage(element_num_bytes, capacity_num_bytes,
+                                   current_num_bytes, message.get())) {
+        messages->Clear();
+        return false;
+      }
 
-    memcpy(buffer.get() + current_num_bytes, message->bytes(),
-           message->num_bytes());
-    current_num_bytes += message->num_bytes();
+      memcpy(new_buffer.get() + current_num_bytes, message->bytes(),
+             message->num_bytes());
+      current_num_bytes += message->num_bytes();
+    }
   }
 
+  *buffer = new_buffer.Pass();
   *buffer_num_bytes = current_num_bytes;
-  return buffer.Pass();
+  return true;
 }
 
 RemoteProducerDataPipeImpl::~RemoteProducerDataPipeImpl() {

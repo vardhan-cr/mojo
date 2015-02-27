@@ -25,6 +25,16 @@ class MOJO_SYSTEM_IMPL_EXPORT RemoteConsumerDataPipeImpl : public DataPipeImpl {
                              size_t consumer_num_bytes);
   ~RemoteConsumerDataPipeImpl() override;
 
+  // Processes messages that were received and queued by an |IncomingEndpoint|.
+  // |*consumer_num_bytes| should be set to the value from the
+  // |SerializedDataPipeProducerDispatcher|. On success, returns true and
+  // updates |*consumer_num_bytes|. On failure, returns false (it may or may not
+  // modify |*consumer_num_bytes|). Always clears |*messages|.
+  static bool ProcessMessagesFromIncomingEndpoint(
+      const MojoCreateDataPipeOptions& validated_options,
+      size_t* consumer_num_bytes,
+      MessageInTransitQueue* messages);
+
  private:
   // |DataPipeImpl| implementation:
   // Note: None of the |Consumer...()| methods should be called, except

@@ -124,7 +124,21 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
   DISALLOW_COPY_AND_ASSIGN(DataPipeImpl);
 };
 
-// TODO(vtl): This is not the ideal place for this; find somewhere better.
+// TODO(vtl): This is not the ideal place for the following structs; find
+// somewhere better.
+
+// Serialized form of a producer dispatcher. This will actually be followed by a
+// serialized |ChannelEndpoint|; we want to preserve alignment guarantees.
+struct ALIGNAS(8) SerializedDataPipeProducerDispatcher {
+  // Only validated (and thus canonicalized) options should be serialized.
+  // However, the deserializer must revalidate (as with everything received).
+  MojoCreateDataPipeOptions validated_options;
+  // Number of bytes already enqueued to the consumer. Set to
+  // |static_cast<size_t>(-1)| if the consumer is already closed, in which case
+  // this will *not* be followed by a serialized |ChannelEndpoint|.
+  size_t consumer_num_bytes;
+};
+
 // Serialized form of a consumer dispatcher. This will actually be followed by a
 // serialized |ChannelEndpoint|; we want to preserve alignment guarantees.
 struct ALIGNAS(8) SerializedDataPipeConsumerDispatcher {

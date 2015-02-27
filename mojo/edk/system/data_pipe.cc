@@ -19,6 +19,7 @@
 #include "mojo/edk/system/local_data_pipe_impl.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/options_validation.h"
+#include "mojo/edk/system/remote_consumer_data_pipe_impl.h"
 #include "mojo/edk/system/remote_producer_data_pipe_impl.h"
 
 namespace mojo {
@@ -101,14 +102,11 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
     const MojoCreateDataPipeOptions& validated_options,
     MessageInTransitQueue* message_queue,
     ChannelEndpoint* channel_endpoint) {
+  scoped_ptr<char, base::AlignedFreeDeleter> buffer;
   size_t buffer_num_bytes = 0;
-  scoped_ptr<char, base::AlignedFreeDeleter> buffer(
-      RemoteProducerDataPipeImpl::IncomingMessagesToBuffer(
-          validated_options, message_queue, &buffer_num_bytes));
-  if (!buffer) {
-    message_queue->Clear();
+  if (!RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
+          validated_options, message_queue, &buffer, &buffer_num_bytes))
     return nullptr;
-  }
 
   // Important: This is called under |IncomingEndpoint|'s (which is a
   // |ChannelEndpointClient|) lock, in particular from
@@ -120,7 +118,7 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
   DataPipe* data_pipe =
       new DataPipe(false, true, validated_options,
                    make_scoped_ptr(new RemoteProducerDataPipeImpl(
-                       channel_endpoint, buffer.Pass(), buffer_num_bytes)));
+                       channel_endpoint, buffer.Pass(), 0, buffer_num_bytes)));
   if (channel_endpoint) {
     if (!channel_endpoint->ReplaceClient(data_pipe, 0))
       data_pipe->OnDetachFromChannel(0);
@@ -128,6 +126,101 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
     data_pipe->SetProducerClosed();
   }
   return data_pipe;
+}
+
+// static
+DataPipe* DataPipe::CreateRemoteConsumerFromExisting(
+    const MojoCreateDataPipeOptions& validated_options,
+    size_t consumer_num_bytes,
+    MessageInTransitQueue* message_queue,
+    ChannelEndpoint* channel_endpoint) {
+  if (!RemoteConsumerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
+          validated_options, &consumer_num_bytes, message_queue))
+    return nullptr;
+
+  // Important: This is called under |IncomingEndpoint|'s (which is a
+  // |ChannelEndpointClient|) lock, in particular from
+  // |IncomingEndpoint::ConvertToDataPipeProducer()|. Before releasing that
+  // lock, it will reset its |endpoint_| member, which makes any later or
+  // ongoing call to |IncomingEndpoint::OnReadMessage()| return false. This will
+  // make |ChannelEndpoint::OnReadMessage()| retry, until its |ReplaceClient()|
+  // is called.
+  DataPipe* data_pipe =
+      new DataPipe(true, false, validated_options,
+                   make_scoped_ptr(new RemoteConsumerDataPipeImpl(
+                       channel_endpoint, consumer_num_bytes)));
+  if (channel_endpoint) {
+    if (!channel_endpoint->ReplaceClient(data_pipe, 0))
+      data_pipe->OnDetachFromChannel(0);
+  } else {
+    data_pipe->SetConsumerClosed();
+  }
+  return data_pipe;
+}
+
+// static
+bool DataPipe::ProducerDeserialize(Channel* channel,
+                                   const void* source,
+                                   size_t size,
+                                   scoped_refptr<DataPipe>* data_pipe) {
+  DCHECK(!*data_pipe);  // Not technically wrong, but unlikely.
+
+  bool consumer_open = false;
+  if (size == sizeof(SerializedDataPipeProducerDispatcher)) {
+    consumer_open = false;
+  } else if (size ==
+             sizeof(SerializedDataPipeProducerDispatcher) +
+                 channel->GetSerializedEndpointSize()) {
+    consumer_open = true;
+  } else {
+    LOG(ERROR) << "Invalid serialized data pipe producer";
+    return false;
+  }
+
+  const SerializedDataPipeProducerDispatcher* s =
+      static_cast<const SerializedDataPipeProducerDispatcher*>(source);
+  MojoCreateDataPipeOptions revalidated_options = {};
+  if (ValidateCreateOptions(MakeUserPointer(&s->validated_options),
+                            &revalidated_options) != MOJO_RESULT_OK) {
+    LOG(ERROR) << "Invalid serialized data pipe producer (bad options)";
+    return false;
+  }
+
+  if (!consumer_open) {
+    if (s->consumer_num_bytes != static_cast<size_t>(-1)) {
+      LOG(ERROR)
+          << "Invalid serialized data pipe producer (bad consumer_num_bytes)";
+      return false;
+    }
+
+    *data_pipe = new DataPipe(
+        true, false, revalidated_options,
+        make_scoped_ptr(new RemoteConsumerDataPipeImpl(nullptr, 0)));
+    (*data_pipe)->SetConsumerClosed();
+
+    return true;
+  }
+
+  if (s->consumer_num_bytes > revalidated_options.capacity_num_bytes ||
+      s->consumer_num_bytes % revalidated_options.element_num_bytes != 0) {
+    LOG(ERROR)
+        << "Invalid serialized data pipe producer (bad consumer_num_bytes)";
+    return false;
+  }
+
+  const void* endpoint_source = static_cast<const char*>(source) +
+                                sizeof(SerializedDataPipeProducerDispatcher);
+  scoped_refptr<IncomingEndpoint> incoming_endpoint =
+      channel->DeserializeEndpoint(endpoint_source);
+  if (!incoming_endpoint)
+    return false;
+
+  *data_pipe = incoming_endpoint->ConvertToDataPipeProducer(
+      revalidated_options, s->consumer_num_bytes);
+  if (!*data_pipe)
+    return false;
+
+  return true;
 }
 
 // static
