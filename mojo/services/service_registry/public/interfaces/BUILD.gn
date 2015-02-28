@@ -9,4 +9,8 @@ mojom("interfaces") {
   sources = [
     "service_registry.mojom",
   ]
+
+  import_dirs = [ get_path_info("../../../", "abspath") ]
+
+  mojo_sdk_deps = [ "mojo/public/interfaces/application" ]
 }
