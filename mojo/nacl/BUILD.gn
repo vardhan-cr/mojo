@@ -53,6 +53,7 @@ group("mojo_nacl_tests") {
   deps = [
     ":monacl_shell",
     ":monacl_test($nacl_toolchain)",
+    "//examples/apptest($nacl_toolchain)",
     "//examples/wget($nacl_toolchain)",
   ]
 }

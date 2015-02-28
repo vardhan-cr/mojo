@@ -1,0 +1,12 @@
+# This file contains a list of NaCl Mojo gtest unit tests.
+# This must be a valid python dictionary.
+# TODO(vtl|msw): Add a way of specifying data dependencies.
+tests = [
+  # TODO(ncbray): support other architectures.
+  {
+    "test": "mojo:example_apptests_x64.nexe",
+    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+    "test-args": ["--example_apptest_arg"],
+  },
+  # TODO(ncbray): support NaCl in mojo_launcher
+]

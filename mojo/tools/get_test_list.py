@@ -185,6 +185,11 @@ def GetTestList(config):
               os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
                            "monacl_test.nexe")])
 
+    AddXvfbEntry("NaCl app tests",
+                 [os.path.join("mojo", "tools", "apptest_runner.py"),
+                  os.path.join("mojo", "tools", "data", "nacl_apptests"),
+                  build_dir])
+
   # ----------------------------------------------------------------------------
 
   return test_list
