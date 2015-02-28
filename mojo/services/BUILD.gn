@@ -16,6 +16,7 @@ group("services") {
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/network/public/interfaces",
     "//mojo/services/public/sky",
+    "//mojo/services/service_registry/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
