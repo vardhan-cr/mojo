@@ -88,6 +88,7 @@ void KioskWM::Embed(
   }
 
   mojo::ServiceProviderPtr exposed_services;
+  exposed_services_impl_.Close();
   exposed_services_impl_.Bind(GetProxy(&exposed_services));
   content_->Embed(url, nullptr, exposed_services.Pass());
   navigator_host_.RecordNavigation(url);
