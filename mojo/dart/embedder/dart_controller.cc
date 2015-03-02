@@ -25,6 +25,7 @@ const char* kAsyncLibURL = "dart:async";
 const char* kInternalLibURL = "dart:_internal";
 const char* kIsolateLibURL = "dart:isolate";
 const char* kIOLibURL = "dart:io";
+const char* kCoreLibURL = "dart:core";
 
 static bool IsDartSchemeURL(const char* url_name) {
   static const intptr_t kDartSchemeLen = strlen(kDartScheme);
@@ -177,6 +178,10 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   DART_CHECK_VALID(url);
   Dart_Handle internal_lib = Dart_LookupLibrary(url);
   DART_CHECK_VALID(internal_lib);
+  url = Dart_NewStringFromCString(kCoreLibURL);
+  DART_CHECK_VALID(url);
+  Dart_Handle core_lib = Dart_LookupLibrary(url);
+  DART_CHECK_VALID(internal_lib);
   url = Dart_NewStringFromCString(kAsyncLibURL);
   DART_CHECK_VALID(url);
   Dart_Handle async_lib = Dart_LookupLibrary(url);
@@ -229,8 +234,6 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
       schedule_args);
   DART_CHECK_VALID(result);
 
-  // TODO(zra): Setup the uriBase with the base uri of the mojo app.
-
   // Set current working directory.
   result = SetWorkingDirectory(builtin_lib);
   if (Dart_IsError(result)) {
@@ -251,6 +254,19 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
                      kNumArgs,
                      dart_args);
   DART_CHECK_VALID(result);
+
+  // Setup the uriBase with the base uri of the mojo app.
+  Dart_Handle uri_base = Dart_Invoke(
+      builtin_lib,
+      Dart_NewStringFromCString("_getUriBaseClosure"),
+      0,
+      NULL);
+  DART_CHECK_VALID(uri_base);
+  result = Dart_SetField(core_lib,
+                         Dart_NewStringFromCString("_uriBaseClosure"),
+                         uri_base);
+  DART_CHECK_VALID(result);
+
   return result;
 }
 

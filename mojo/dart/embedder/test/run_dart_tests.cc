@@ -133,6 +133,10 @@ TEST(DartTest, compile_all_interfaces_test) {
   RunTest("compile_all_interfaces_test.dart", true, nullptr, 0);
 }
 
+TEST(DartTest, uri_base_test) {
+  RunTest("uri_base_test.dart", true, nullptr, 0);
+}
+
 TEST(DartTest, handle_finalizer_test) {
   const int kNumArgs = 2;
   const char* args[kNumArgs];

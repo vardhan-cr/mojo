@@ -31,12 +31,11 @@ _getPrintClosure() => _print;
 
 const _logBuiltin = false;
 
-// TODO(zra): The base Uri should be based on the uri of the mojo app.
-// Corelib 'Uri.base' implementation.
-// Uri _uriBase() {
-//   return new Uri.file(Directory.current.path + "/");
-// }
-// _getUriBaseClosure() => _uriBase;
+
+Uri _uriBase() {
+  return _entryPointScript.resolve('.');
+}
+_getUriBaseClosure() => _uriBase;
 
 // The current working directory
 var _workingDirectoryUri;
