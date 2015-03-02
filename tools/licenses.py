@@ -439,7 +439,7 @@ def GenerateCredits():
 
     file_template = open(os.path.join(templates_dir,
                                       'about_credits.tmpl'), 'rb').read()
-    template_contents += EvaluateTemplate(file_template,
+    template_contents = EvaluateTemplate(file_template,
                                           {'entries': '\n'.join(entries)},
                                           escape=False)
 
