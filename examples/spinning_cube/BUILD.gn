@@ -4,15 +4,15 @@
 
 import("//mojo/public/mojo_application.gni")
 
-mojo_native_application("sample_app") {
+mojo_native_application("spinning_cube") {
   sources = [
     "gles2_client_impl.cc",
     "gles2_client_impl.h",
-    "sample_app.cc",
+    "spinning_cube_app.cc",
   ]
 
   deps = [
-    ":spinning_cube",
+    ":lib",
     "//base",
     "//gpu/command_buffer/client:gles2_interface",
     "//mojo/public/c/gles2",
@@ -26,7 +26,7 @@ mojo_native_application("sample_app") {
   ]
 }
 
-source_set("spinning_cube") {
+source_set("lib") {
   sources = [
     "spinning_cube.cc",
     "spinning_cube.h",

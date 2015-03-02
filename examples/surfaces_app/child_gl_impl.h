@@ -10,7 +10,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
 #include "cc/surfaces/surface_id.h"
-#include "examples/sample_app/spinning_cube.h"
+#include "examples/spinning_cube/spinning_cube.h"
 #include "examples/surfaces_app/child.mojom.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/bindings/string.h"

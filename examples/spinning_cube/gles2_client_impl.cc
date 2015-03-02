@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "examples/sample_app/gles2_client_impl.h"
+#include "examples/spinning_cube/gles2_client_impl.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

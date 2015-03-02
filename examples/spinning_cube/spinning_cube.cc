@@ -14,7 +14,7 @@
 //            http://www.opengles-book.com
 //
 
-#include "examples/sample_app/spinning_cube.h"
+#include "examples/spinning_cube/spinning_cube.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

@@ -7,7 +7,7 @@ JavaScript Mojo Example Applications
 
 - wget.js - Uses the network service to load a URL.
 
-- cube.js - A JS version of examples/sample_app.
+- cube.js - A JS version of examples/spinning_cube.
 
 - share_echo.js, share_echo_target.js - Peer to peer service sharing.
 

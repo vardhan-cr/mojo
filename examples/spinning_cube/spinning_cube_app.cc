@@ -7,7 +7,7 @@
 
 #include "base/bind.h"
 #include "base/memory/scoped_ptr.h"
-#include "examples/sample_app/gles2_client_impl.h"
+#include "examples/spinning_cube/gles2_client_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -21,13 +21,13 @@
 
 namespace examples {
 
-class SampleApp : public mojo::ApplicationDelegate,
-                  public mojo::NativeViewportEventDispatcher,
-                  public mojo::ErrorHandler {
+class SpinningCubeApp : public mojo::ApplicationDelegate,
+                        public mojo::NativeViewportEventDispatcher,
+                        public mojo::ErrorHandler {
  public:
-  SampleApp() : dispatcher_binding_(this) {}
+  SpinningCubeApp() : dispatcher_binding_(this) {}
 
-  ~SampleApp() override {
+  ~SpinningCubeApp() override {
     // TODO(darin): Fix shutdown so we don't need to leak this.
     mojo_ignore_result(gles2_client_.release());
   }
@@ -45,7 +45,7 @@ class SampleApp : public mojo::ApplicationDelegate,
     size->width = 800;
     size->height = 600;
     viewport_->Create(size.Pass(),
-                      base::Bind(&SampleApp::OnCreatedNativeViewport,
+                      base::Bind(&SpinningCubeApp::OnCreatedNativeViewport,
                                  base::Unretained(this)));
     viewport_->Show();
   }
@@ -55,7 +55,7 @@ class SampleApp : public mojo::ApplicationDelegate,
     if (gles2_client_)
       gles2_client_->SetSize(*metrics->size);
     viewport_->RequestMetrics(
-        base::Bind(&SampleApp::OnMetricsChanged, base::Unretained(this)));
+        base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
   }
 
   void OnEvent(mojo::EventPtr event,
@@ -84,7 +84,7 @@ class SampleApp : public mojo::ApplicationDelegate,
     gles2_client_.reset(new GLES2ClientImpl(command_buffer.Pass()));
     gles2_client_->SetSize(*metrics->size);
     viewport_->RequestMetrics(
-        base::Bind(&SampleApp::OnMetricsChanged, base::Unretained(this)));
+        base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
   }
 
   // ErrorHandler implementation.
@@ -95,12 +95,12 @@ class SampleApp : public mojo::ApplicationDelegate,
   mojo::GpuPtr gpu_service_;
   mojo::Binding<NativeViewportEventDispatcher> dispatcher_binding_;
 
-  DISALLOW_COPY_AND_ASSIGN(SampleApp);
+  DISALLOW_COPY_AND_ASSIGN(SpinningCubeApp);
 };
 
 }  // namespace examples
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunner runner(new examples::SampleApp);
+  mojo::ApplicationRunner runner(new examples::SpinningCubeApp);
   return runner.Run(shell_handle);
 }

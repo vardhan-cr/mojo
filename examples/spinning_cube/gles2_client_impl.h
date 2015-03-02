@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef EXAMPLES_SAMPLE_APP_GLES2_CLIENT_IMPL_H_
-#define EXAMPLES_SAMPLE_APP_GLES2_CLIENT_IMPL_H_
+#ifndef EXAMPLES_SPINNING_CUBE_GLES2_CLIENT_IMPL_H_
+#define EXAMPLES_SPINNING_CUBE_GLES2_CLIENT_IMPL_H_
 
-#include "examples/sample_app/spinning_cube.h"
+#include "examples/spinning_cube/spinning_cube.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
@@ -41,4 +41,4 @@ class GLES2ClientImpl {
 
 }  // namespace examples
 
-#endif  // EXAMPLES_SAMPLE_APP_GLES2_CLIENT_IMPL_H_
+#endif  // EXAMPLES_SPINNING_CUBE_GLES2_CLIENT_IMPL_H_

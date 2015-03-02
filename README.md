@@ -203,7 +203,7 @@ $ ninja -C out/Debug -j 1000
 
 3. Run Mojo Shell on the device:
     ```
-    mojo/tools/android_mojo_shell.py mojo:sample_app
+    mojo/tools/android_mojo_shell.py mojo:spinning_cube
     ```
 If this fails and prints:
     ```
@@ -223,12 +223,12 @@ If this fails and prints:
 
 2. Run Mojo Shell:
     ```
-    ./out/Debug/mojo_shell mojo:sample_app
+    ./out/Debug/mojo_shell mojo:spinning_cube
     ```
 
 3. Optional: Run Mojo Shell with an HTTP server
     ```
     cd out/Debug
     python -m SimpleHTTPServer 4444 &
-    ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:sample_app
+    ./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:spinning_cube
     ```

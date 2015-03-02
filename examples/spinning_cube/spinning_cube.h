@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef EXAMPLES_SAMPLE_APP_SPINNING_CUBE_H_
-#define EXAMPLES_SAMPLE_APP_SPINNING_CUBE_H_
+#ifndef EXAMPLES_SPINNING_CUBE_SPINNING_CUBE_H_
+#define EXAMPLES_SPINNING_CUBE_SPINNING_CUBE_H_
 
 #include <stdint.h>
 
@@ -46,4 +46,4 @@ class SpinningCube {
 
 }  // namespace examples
 
-#endif  // EXAMPLES_SAMPLE_APP_SPINNING_CUBE_H_
+#endif  // EXAMPLES_SPINNING_CUBE_SPINNING_CUBE_H_

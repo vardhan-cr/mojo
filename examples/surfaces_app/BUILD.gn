@@ -86,7 +86,7 @@ mojo_native_application("child_gl_app") {
     "//cc",
     "//cc/surfaces",
     "//cc/surfaces:surface_id",
-    "//examples/sample_app:spinning_cube",
+    "//examples/spinning_cube:lib",
     "//gpu/command_buffer/common",
     "//mojo/application",
     "//mojo/common",
