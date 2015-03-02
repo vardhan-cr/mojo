@@ -108,6 +108,9 @@ def main():
         '-m', '%s from %s' % (rel_build_dir, git_revision())
         ], cwd=args.deploy_root)
 
+    with open(deploy_path('LICENSES.sky'), 'w') as license_file:
+        subprocess.check_call([src_path('tools/licenses.py'), 'credits'],
+            stdout=license_file)
 
 
 if __name__ == '__main__':
