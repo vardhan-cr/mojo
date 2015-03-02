@@ -30,9 +30,12 @@ class PrintBodyApplication : public Application {
 
   virtual void AcceptConnection(const String& requestor_url,
                                 InterfaceRequest<ServiceProvider> services,
-                                ServiceProviderPtr exported_services) override {
-    printf("ContentHandler::OnConnect - requestor_url:%s - body follows\n\n",
-           requestor_url.To<std::string>().c_str());
+                                ServiceProviderPtr exported_services,
+                                const String& url) override {
+    printf(
+        "ContentHandler::OnConnect - url:%s - requestor_url:%s - body "
+        "follows\n\n",
+        url.To<std::string>().c_str(), requestor_url.To<std::string>().c_str());
     PrintResponse(body_.Pass());
     delete this;
   }

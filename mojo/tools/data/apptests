@@ -30,6 +30,9 @@ tests = [
   {
     "test": "mojo:window_manager_apptests",
   },
+  {
+    "test": "mojo:shell_apptests",
+  },
 ]
 
 if config.target_os == config.OS_LINUX:

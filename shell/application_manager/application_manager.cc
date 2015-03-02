@@ -11,6 +11,7 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/stl_util.h"
+#include "base/strings/string_util.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
@@ -24,6 +25,17 @@ namespace mojo {
 namespace {
 // Used by TestAPI.
 bool has_created_instance = false;
+
+GURL StripQueryFromURL(const GURL& url) {
+  GURL::Replacements repl;
+  repl.SetQueryStr("");
+  std::string result = url.ReplaceComponents(repl).spec();
+
+  // Remove the dangling '?' because it's ugly.
+  base::ReplaceChars(result, "?", "", &result);
+  return GURL(result);
+}
+
 }  // namespace
 
 ApplicationManager::Delegate::~Delegate() {
@@ -148,7 +160,7 @@ void ApplicationManager::ConnectToApplication(
                              base::Passed(exposed_services.Pass()));
 
   if (resolved_url.SchemeIsFile()) {
-    new LocalFetcher(resolved_url,
+    new LocalFetcher(resolved_url, StripQueryFromURL(resolved_url),
                      base::Bind(callback, NativeRunner::DontDeleteAppPath));
     return;
   }
@@ -161,15 +173,16 @@ void ApplicationManager::ConnectToApplication(
 }
 
 bool ApplicationManager::ConnectToRunningApplication(
-    const GURL& application_url,
+    const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider>* services,
     ServiceProviderPtr* exposed_services) {
+  GURL application_url = StripQueryFromURL(resolved_url);
   ShellImpl* shell_impl = GetShellImpl(application_url);
   if (!shell_impl)
     return false;
 
-  ConnectToClient(shell_impl, application_url, requestor_url, services->Pass(),
+  ConnectToClient(shell_impl, resolved_url, requestor_url, services->Pass(),
                   exposed_services->Pass());
   return true;
 }
@@ -191,17 +204,19 @@ bool ApplicationManager::ConnectToApplicationWithLoader(
 }
 
 InterfaceRequest<Application> ApplicationManager::RegisterShell(
-    const GURL& requested_url,
+    const GURL& original_url,
     const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
+  GURL app_url = StripQueryFromURL(resolved_url);
+
   ApplicationPtr application;
   InterfaceRequest<Application> application_request = GetProxy(&application);
   ShellImpl* shell =
-      new ShellImpl(application.Pass(), this, requested_url, resolved_url);
-  url_to_shell_impl_[resolved_url] = shell;
-  shell->InitializeApplication(GetArgsForURL(requested_url));
+      new ShellImpl(application.Pass(), this, original_url, app_url);
+  url_to_shell_impl_[app_url] = shell;
+  shell->InitializeApplication(GetArgsForURL(original_url));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
   return application_request.Pass();
@@ -216,11 +231,11 @@ ShellImpl* ApplicationManager::GetShellImpl(const GURL& url) {
 
 void ApplicationManager::ConnectToClient(
     ShellImpl* shell_impl,
-    const GURL& url,
+    const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
-  shell_impl->ConnectToClient(requestor_url, services.Pass(),
+  shell_impl->ConnectToClient(resolved_url, requestor_url, services.Pass(),
                               exposed_services.Pass());
 }
 
@@ -255,7 +270,7 @@ void ApplicationManager::HandleFetchCallback(
     return;
   }
 
-  InterfaceRequest<Application> application_request(
+  InterfaceRequest<Application> request(
       RegisterShell(requested_url, fetcher->GetURL(), requestor_url,
                     services.Pass(), exposed_services.Pass()));
 
@@ -264,7 +279,7 @@ void ApplicationManager::HandleFetchCallback(
   std::string shebang;
   if (fetcher->PeekContentHandler(&shebang, &content_handler_url)) {
     LoadWithContentHandler(
-        content_handler_url, application_request.Pass(),
+        content_handler_url, request.Pass(),
         fetcher->AsURLResponse(blocking_pool_,
                                static_cast<int>(shebang.size())));
     return;
@@ -272,7 +287,7 @@ void ApplicationManager::HandleFetchCallback(
 
   MimeTypeToURLMap::iterator iter = mime_type_to_url_.find(fetcher->MimeType());
   if (iter != mime_type_to_url_.end()) {
-    LoadWithContentHandler(iter->second, application_request.Pass(),
+    LoadWithContentHandler(iter->second, request.Pass(),
                            fetcher->AsURLResponse(blocking_pool_, 0));
     return;
   }
@@ -282,11 +297,11 @@ void ApplicationManager::HandleFetchCallback(
   // header, or looking for some specific mojo signature prepended to the
   // library.
 
-  fetcher->AsPath(blocking_pool_,
-                  base::Bind(&ApplicationManager::RunNativeApplication,
-                             weak_ptr_factory_.GetWeakPtr(),
-                             base::Passed(application_request.Pass()),
-                             cleanup_behavior, base::Passed(fetcher.Pass())));
+  fetcher->AsPath(
+      blocking_pool_,
+      base::Bind(&ApplicationManager::RunNativeApplication,
+                 weak_ptr_factory_.GetWeakPtr(), base::Passed(request.Pass()),
+                 cleanup_behavior, base::Passed(fetcher.Pass())));
 }
 
 void ApplicationManager::RunNativeApplication(

@@ -150,7 +150,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
   typedef std::map<std::string, GURL> MimeTypeToURLMap;
 
-  bool ConnectToRunningApplication(const GURL& application_url,
+  bool ConnectToRunningApplication(const GURL& resolved_url,
                                    const GURL& requestor_url,
                                    InterfaceRequest<ServiceProvider>* services,
                                    ServiceProviderPtr* exposed_services);
@@ -164,7 +164,11 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
       ApplicationLoader* loader);
 
   InterfaceRequest<Application> RegisterShell(
-      const GURL& requested_url,
+      // The original URL requested by client, before any resolution or
+      // redirects.
+      // This is mostly useless and should be removed.
+      const GURL& original_url,
+      // The URL after resolution and redirects, including the querystring.
       const GURL& resolved_url,
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider> services,
@@ -173,7 +177,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   ShellImpl* GetShellImpl(const GURL& url);
 
   void ConnectToClient(ShellImpl* shell_impl,
-                       const GURL& url,
+                       const GURL& resolved_url,
                        const GURL& requestor_url,
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);

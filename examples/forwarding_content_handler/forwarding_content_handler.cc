@@ -36,7 +36,8 @@ class ForwardingApplicationImpl : public Application {
   }
   void AcceptConnection(const String& requestor_url,
                         InterfaceRequest<ServiceProvider> services,
-                        ServiceProviderPtr exposed_services) override {
+                        ServiceProviderPtr exposed_services,
+                        const String& requested_url) override {
     shell_->ConnectToApplication(target_url_, services.Pass(),
                                   exposed_services.Pass());
   }

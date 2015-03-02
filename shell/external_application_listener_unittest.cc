@@ -99,11 +99,11 @@ class StubShellImpl : public Shell {
   ~StubShellImpl() override {}
 
  private:
-  void ConnectToApplication(const String& requestor_url,
+  void ConnectToApplication(const String& app_url,
                             InterfaceRequest<ServiceProvider> services,
                             ServiceProviderPtr exposed_services) override {
-    application_->AcceptConnection(requestor_url, services.Pass(),
-                                   exposed_services.Pass());
+    application_->AcceptConnection("", services.Pass(), exposed_services.Pass(),
+                                   app_url);
   }
 
   ApplicationPtr application_;

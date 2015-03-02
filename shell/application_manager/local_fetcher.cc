@@ -25,8 +25,9 @@ void IgnoreResult(bool result) {
 
 // A loader for local files.
 LocalFetcher::LocalFetcher(const GURL& url,
+                           const GURL& url_without_query,
                            const FetchCallback& loader_callback)
-    : Fetcher(loader_callback), url_(url), path_(UrlToFile(url)) {
+    : Fetcher(loader_callback), url_(url), path_(UrlToFile(url_without_query)) {
   loader_callback_.Run(make_scoped_ptr(this));
 }
 

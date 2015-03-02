@@ -4,6 +4,7 @@
 
 import("//build/config/ui.gni")
 import("//mojo/public/mojo.gni")
+import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/test.gni")
 
@@ -508,4 +509,33 @@ test("external_application_unittests") {
       "//shell/domain_socket:tests",
     ]
   }
+}
+
+mojo_native_application("apptests") {
+  output_name = "shell_apptests"
+
+  testonly = true
+
+  sources = [
+    "shell_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/common:common",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/public/cpp/environment",
+    "//mojo/public/cpp/system:system",
+    "//mojo/services/network/public/interfaces",
+    "//services/http_server/public",
+    "//services/http_server/public:util",
+    "//shell/test:bindings",
+  ]
+
+  data_deps = [
+    "//services/http_server:http_server",
+    "//shell/test:pingable_app",
+  ]
 }

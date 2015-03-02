@@ -15,7 +15,9 @@ namespace mojo {
 // Implements Fetcher for file:// URLs.
 class LocalFetcher : public Fetcher {
  public:
-  LocalFetcher(const GURL& url, const FetchCallback& loader_callback);
+  LocalFetcher(const GURL& url,
+               const GURL& url_without_query,
+               const FetchCallback& loader_callback);
 
  private:
   static base::FilePath UrlToFile(const GURL& url);

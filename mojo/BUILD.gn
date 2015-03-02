@@ -70,6 +70,7 @@ group("tests") {
     "//services/view_manager:view_manager_service_unittests",
     "//services/window_manager:window_manager_apptests",
     "//services/window_manager:window_manager_unittests",
+    "//shell:apptests",
   ]
 
   if (use_prebuilt_network_service) {

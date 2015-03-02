@@ -31,11 +31,12 @@ void ShellImpl::InitializeApplication(Array<String> args) {
   application_->Initialize(shell.Pass(), args.Pass(), url_.spec());
 }
 
-void ShellImpl::ConnectToClient(const GURL& requestor_url,
+void ShellImpl::ConnectToClient(const GURL& requested_url,
+                                const GURL& requestor_url,
                                 InterfaceRequest<ServiceProvider> services,
                                 ServiceProviderPtr exposed_services) {
   application_->AcceptConnection(String::From(requestor_url), services.Pass(),
-                                 exposed_services.Pass());
+                                 exposed_services.Pass(), requested_url.spec());
 }
 
 // Shell implementation:

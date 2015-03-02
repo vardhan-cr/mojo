@@ -18,14 +18,16 @@ class ShellImpl : public Shell, public ErrorHandler {
  public:
   ShellImpl(ApplicationPtr application,
             ApplicationManager* manager,
-            const GURL& requested_url,
-            const GURL& url);
+            // The original URL that was first requested, before any resolution.
+            const GURL& original_url,
+            const GURL& resolved_url);
 
   ~ShellImpl() override;
 
   void InitializeApplication(Array<String> args);
 
-  void ConnectToClient(const GURL& requestor_url,
+  void ConnectToClient(const GURL& requested_url,
+                       const GURL& requestor_url,
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);
 

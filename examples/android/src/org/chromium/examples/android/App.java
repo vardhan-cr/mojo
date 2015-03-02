@@ -43,7 +43,8 @@ class App {
 
         @Override
         public void acceptConnection(String requestorUrl,
-                InterfaceRequest<ServiceProvider> services, ServiceProvider exposedServices) {
+                InterfaceRequest<ServiceProvider> services, ServiceProvider exposedServices,
+                String url) {
             ServiceProviderImpl serviceProvider = new ServiceProviderImpl();
             serviceProvider.addService(new ServiceFactoryBinder<ExampleService>() {
                 @Override
