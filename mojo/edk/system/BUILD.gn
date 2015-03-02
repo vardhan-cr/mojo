@@ -147,6 +147,7 @@ mojo_edk_source_set("test_utils") {
   deps = [
     "//base",
     "//base/test:test_support",
+    "../../public/c/system",
   ]
 }
 

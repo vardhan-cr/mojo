@@ -25,6 +25,7 @@
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_pipe.h"
 #include "mojo/edk/system/raw_channel.h"
+#include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -248,7 +249,7 @@ class RemoteProducerDataPipeImplTestHelper
       EXPECT_TRUE(to_send->HasOneRef());
     }
     uint32_t context = 0;
-    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
     EXPECT_EQ(987u, context);
     HandleSignalsState hss = HandleSignalsState();
     message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
@@ -336,7 +337,7 @@ class RemoteConsumerDataPipeImplTestHelper
       EXPECT_TRUE(to_send->HasOneRef());
     }
     uint32_t context = 0;
-    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
     EXPECT_EQ(987u, context);
     HandleSignalsState hss = HandleSignalsState();
     message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
@@ -455,7 +456,7 @@ TYPED_TEST(DataPipeImplTest, SimpleReadWrite) {
 
   // Wait.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -609,7 +610,7 @@ TYPED_TEST(DataPipeImplTest, BasicProducerWaiting) {
 
   // Wait for data to become available to the consumer.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, cwaiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, cwaiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(1234u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&cwaiter, &hss);
@@ -660,7 +661,7 @@ TYPED_TEST(DataPipeImplTest, BasicProducerWaiting) {
 
   // Waiting should now succeed.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, pwaiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, pwaiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(78u, context);
   hss = HandleSignalsState();
   this->dpp()->ProducerRemoveAwakable(&pwaiter, &hss);
@@ -706,7 +707,7 @@ TYPED_TEST(DataPipeImplTest, BasicProducerWaiting) {
 
   // Waiting should succeed.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, pwaiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, pwaiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(90u, context);
   hss = HandleSignalsState();
   this->dpp()->ProducerRemoveAwakable(&pwaiter, &hss);
@@ -733,7 +734,8 @@ TYPED_TEST(DataPipeImplTest, BasicProducerWaiting) {
 
   // It should now be never-writable.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION, pwaiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
+            pwaiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(12u, context);
   hss = HandleSignalsState();
   this->dpp()->ProducerRemoveAwakable(&pwaiter, &hss);
@@ -768,7 +770,7 @@ TYPED_TEST(DataPipeImplTest, PeerClosedProducerWaiting) {
 
   // It should be signaled.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(12u, context);
   hss = HandleSignalsState();
   this->dpp()->ProducerRemoveAwakable(&waiter, &hss);
@@ -803,7 +805,7 @@ TYPED_TEST(DataPipeImplTest, PeerClosedConsumerWaiting) {
 
   // It should be signaled.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(12u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -853,7 +855,7 @@ TYPED_TEST(DataPipeImplTest, BasicConsumerWaiting) {
 
   // Wait for readability (needed for remote cases).
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(34u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -925,7 +927,7 @@ TYPED_TEST(DataPipeImplTest, BasicConsumerWaiting) {
 
   // Waiting should now succeed.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(90u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -957,7 +959,7 @@ TYPED_TEST(DataPipeImplTest, BasicConsumerWaiting) {
 
   // Wait for the peer closed signal.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(12u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -1030,7 +1032,7 @@ TYPED_TEST(DataPipeImplTest, ConsumerWaitingTwoPhase) {
 
   // Wait for readability (needed for remote cases).
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(12u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
@@ -1089,7 +1091,8 @@ TYPED_TEST(DataPipeImplTest, ConsumerWaitingTwoPhase) {
 
   // Should be never-readable.
   context = 0;
-  EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION, waiter.Wait(1000, &context));
+  EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
+            waiter.Wait(test::TinyDeadline(), &context));
   EXPECT_EQ(56u, context);
   hss = HandleSignalsState();
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);

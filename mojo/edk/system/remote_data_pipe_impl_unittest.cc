@@ -13,6 +13,7 @@
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/test/test_io_thread.h"
+#include "base/test/test_timeouts.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
@@ -23,6 +24,7 @@
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_pipe.h"
 #include "mojo/edk/system/raw_channel.h"
+#include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -141,7 +143,7 @@ TEST_F(RemoteDataPipeImplTest, Sanity) {
             message_pipe(0)->WriteMessage(0, UserPointer<const void>(kHello),
                                           sizeof(kHello), nullptr,
                                           MOJO_WRITE_MESSAGE_FLAG_NONE));
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
   message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
@@ -206,7 +208,7 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
     EXPECT_TRUE(consumer->HasOneRef());
     consumer = nullptr;
   }
-  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
   EXPECT_EQ(123u, context);
   hss = HandleSignalsState();
   message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
@@ -235,7 +237,7 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
       consumer->AddAwakable(&waiter, MOJO_HANDLE_SIGNAL_READABLE, 456, &hss);
   if (result == MOJO_RESULT_OK) {
     context = 0;
-    EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+    EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
     EXPECT_EQ(456u, context);
     consumer->RemoveAwakable(&waiter, &hss);
   } else {
@@ -263,7 +265,7 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
   if (result == MOJO_RESULT_OK) {
     context = 0;
     EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
-              waiter.Wait(MOJO_DEADLINE_INDEFINITE, &context));
+              waiter.Wait(test::ActionDeadline(), &context));
     EXPECT_EQ(789u, context);
     consumer->RemoveAwakable(&waiter, &hss);
   } else {
