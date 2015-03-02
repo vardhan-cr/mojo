@@ -49,16 +49,6 @@ void BackgroundApplicationLoader::Load(
                  base::Passed(&application_request)));
 }
 
-void BackgroundApplicationLoader::OnApplicationError(
-    ApplicationManager* manager,
-    const GURL& url) {
-  task_runner_->PostTask(
-      FROM_HERE,
-      base::Bind(
-          &BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread,
-          base::Unretained(this), manager, url));
-}
-
 void BackgroundApplicationLoader::Run() {
   base::MessageLoop message_loop(message_loop_type_);
   base::RunLoop loop;
@@ -76,13 +66,6 @@ void BackgroundApplicationLoader::LoadOnBackgroundThread(
     InterfaceRequest<Application> application_request) {
   DCHECK(task_runner_->RunsTasksOnCurrentThread());
   loader_->Load(url, application_request.Pass());
-}
-
-void BackgroundApplicationLoader::OnApplicationErrorOnBackgroundThread(
-    ApplicationManager* manager,
-    const GURL& url) {
-  DCHECK(task_runner_->RunsTasksOnCurrentThread());
-  loader_->OnApplicationError(manager, url);
 }
 
 }  // namespace mojo

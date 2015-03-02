@@ -26,8 +26,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
   // ApplicationLoader overrides:
   void Load(const GURL& url,
             InterfaceRequest<Application> application_request) override;
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override;
 
  private:
   // |base::DelegateSimpleThread::Delegate| method:
@@ -38,8 +36,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
   void LoadOnBackgroundThread(
       const GURL& url,
       InterfaceRequest<Application> application_request);
-  void OnApplicationErrorOnBackgroundThread(ApplicationManager* manager,
-                                            const GURL& url);
   bool quit_on_shutdown_;
   scoped_ptr<ApplicationLoader> loader_;
 

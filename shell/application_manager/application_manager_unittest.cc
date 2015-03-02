@@ -118,9 +118,6 @@ class TestApplicationLoader : public ApplicationLoader,
     test_app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
 
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override {}
-
   // ApplicationDelegate implementation.
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(this);
@@ -336,9 +333,6 @@ class Tester : public ApplicationDelegate,
             InterfaceRequest<Application> application_request) override {
     app_.reset(new ApplicationImpl(this, application_request.Pass()));
   }
-
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override {}
 
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     if (!requestor_url_.empty() &&

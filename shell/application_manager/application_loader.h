@@ -26,10 +26,6 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
   virtual void Load(const GURL& url,
                     InterfaceRequest<Application> application_request) = 0;
 
-  // Called when the Application exits.
-  virtual void OnApplicationError(ApplicationManager* manager,
-                                  const GURL& url) = 0;
-
  protected:
   ApplicationLoader() {}
 };

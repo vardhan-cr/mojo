@@ -87,8 +87,6 @@ class TestApplicationLoader : public mojo::ApplicationLoader,
         new ApplicationImpl(this, application_request.Pass()));
     apps_.push_back(app.release());
   }
-  void OnApplicationError(mojo::ApplicationManager* application_manager,
-                          const GURL& url) override {}
 
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(ApplicationImpl* app) override {

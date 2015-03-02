@@ -33,9 +33,6 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
   void Load(const GURL& url,
             InterfaceRequest<Application> application_request) override;
 
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override;
-
   // ApplicationDelegate implementation.
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;

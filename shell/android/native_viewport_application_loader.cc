@@ -24,11 +24,6 @@ void NativeViewportApplicationLoader::Load(
   app_.reset(new ApplicationImpl(this, application_request.Pass()));
 }
 
-void NativeViewportApplicationLoader::OnApplicationError(
-    ApplicationManager* manager,
-    const GURL& url) {
-}
-
 bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
   connection->AddService<NativeViewport>(this);

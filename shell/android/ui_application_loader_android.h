@@ -29,8 +29,6 @@ class UIApplicationLoader : public ApplicationLoader {
   // ApplicationLoader overrides:
   void Load(const GURL& url,
             InterfaceRequest<Application> application_request) override;
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override;
 
  private:
   class UILoader;
@@ -41,8 +39,6 @@ class UIApplicationLoader : public ApplicationLoader {
   // isn't thread safe).
   void LoadOnUIThread(const GURL& url,
                       InterfaceRequest<Application> application_request);
-  void OnApplicationErrorOnUIThread(ApplicationManager* manager,
-                                    const GURL& url);
   void ShutdownOnUIThread();
 
   scoped_ptr<ApplicationLoader> loader_;

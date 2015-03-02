@@ -39,11 +39,6 @@ class NotAnApplicationLoader : public ApplicationLoader {
             InterfaceRequest<Application> application_request) override {
     NOTREACHED();
   }
-
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override {
-    NOTREACHED();
-  }
 };
 
 class ExternalApplicationListenerTest : public testing::Test {

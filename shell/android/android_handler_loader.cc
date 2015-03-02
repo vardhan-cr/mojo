@@ -21,9 +21,5 @@ void AndroidHandlerLoader::Load(
       new ApplicationImpl(&android_handler_, application_request.Pass()));
 }
 
-void AndroidHandlerLoader::OnApplicationError(ApplicationManager* manager,
-                                              const GURL& url) {
-}
-
 }  // namespace shell
 }  // namespace mojo

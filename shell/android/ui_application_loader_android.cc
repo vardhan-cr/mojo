@@ -32,23 +32,10 @@ void UIApplicationLoader::Load(
                  url, base::Passed(&application_request)));
 }
 
-void UIApplicationLoader::OnApplicationError(ApplicationManager* manager,
-                                             const GURL& url) {
-  ui_message_loop_->PostTask(
-      FROM_HERE, base::Bind(&UIApplicationLoader::OnApplicationErrorOnUIThread,
-                            base::Unretained(this), manager, url));
-}
-
 void UIApplicationLoader::LoadOnUIThread(
     const GURL& url,
     InterfaceRequest<Application> application_request) {
   loader_->Load(url, application_request.Pass());
-}
-
-void UIApplicationLoader::OnApplicationErrorOnUIThread(
-    ApplicationManager* manager,
-    const GURL& url) {
-  loader_->OnApplicationError(manager, url);
 }
 
 void UIApplicationLoader::ShutdownOnUIThread() {

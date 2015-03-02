@@ -23,9 +23,6 @@ class DummyLoader : public ApplicationLoader {
       base::MessageLoop::current()->Quit();
   }
 
-  void OnApplicationError(ApplicationManager* manager,
-                          const GURL& url) override {}
-
   void DontSimulateAppQuit() { simulate_app_quit_ = false; }
 
  private:
