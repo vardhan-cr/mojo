@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
@@ -252,6 +253,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
     return !!consumer_awakable_list_;
   }
 
+  MSVC_SUPPRESS_WARNING(4324)
   const MojoCreateDataPipeOptions validated_options_;
 
   mutable base::Lock lock_;  // Protects the following members.

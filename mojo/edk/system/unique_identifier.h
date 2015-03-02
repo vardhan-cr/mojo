@@ -65,7 +65,9 @@ class MOJO_SYSTEM_IMPL_EXPORT UniqueIdentifier {
 
  private:
   friend BASE_HASH_NAMESPACE::hash<mojo::system::UniqueIdentifier>;
-  friend std::ostream& operator<<(std::ostream&, const UniqueIdentifier&);
+  friend MOJO_SYSTEM_IMPL_EXPORT std::ostream& operator<<(
+      std::ostream&,
+      const UniqueIdentifier&);
 
   explicit UniqueIdentifier() {}
 

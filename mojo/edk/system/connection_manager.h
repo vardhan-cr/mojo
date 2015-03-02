@@ -6,6 +6,7 @@
 #define MOJO_EDK_SYSTEM_CONNECTION_MANAGER_H_
 
 #include "base/macros.h"
+#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/edk/system/unique_identifier.h"
 
 namespace mojo {
@@ -62,7 +63,7 @@ const ProcessIdentifier kInvalidProcessIdentifier = 0;
 // connected to the master by a special dedicated |RawChannel|, on which it does
 // synchronous IPC (note, however, that the master should never block on any
 // slave).
-class ConnectionManager {
+class MOJO_SYSTEM_IMPL_EXPORT ConnectionManager {
  public:
   virtual ~ConnectionManager() {}
 
