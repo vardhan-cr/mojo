@@ -33,6 +33,9 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeProducerDispatcher : public Dispatcher {
   static scoped_refptr<DataPipeProducerDispatcher>
   Deserialize(Channel* channel, const void* source, size_t size);
 
+  // Get access to the |DataPipe| for testing.
+  DataPipe* GetDataPipeForTest() { return data_pipe_.get(); }
+
  private:
   ~DataPipeProducerDispatcher() override;
 
