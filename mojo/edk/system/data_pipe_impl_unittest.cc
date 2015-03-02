@@ -15,6 +15,7 @@
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/test/test_io_thread.h"
+#include "base/threading/platform_thread.h"  // For |Sleep()|.
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
@@ -1098,6 +1099,544 @@ TYPED_TEST(DataPipeImplTest, ConsumerWaitingTwoPhase) {
   this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfied_signals);
   EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, hss.satisfiable_signals);
+
+  this->ConsumerClose();
+}
+
+// Tests that data pipes aren't writable/readable during two-phase writes/reads.
+TYPED_TEST(DataPipeImplTest, BasicTwoPhaseWaiting) {
+  const MojoCreateDataPipeOptions options = {
+      kSizeOfOptions,                           // |struct_size|.
+      MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+      static_cast<uint32_t>(sizeof(int32_t)),   // |element_num_bytes|.
+      1000 * sizeof(int32_t)                    // |capacity_num_bytes|.
+  };
+  this->Create(options);
+  this->DoTransfer();
+
+  Waiter pwaiter;  // For producer.
+  Waiter cwaiter;  // For consumer.
+  HandleSignalsState hss;
+
+  // It should be writable.
+  pwaiter.Init();
+  hss = HandleSignalsState();
+  EXPECT_EQ(MOJO_RESULT_ALREADY_EXISTS,
+            this->dpp()->ProducerAddAwakable(
+                &pwaiter, MOJO_HANDLE_SIGNAL_WRITABLE, 0, &hss));
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  uint32_t num_bytes = static_cast<uint32_t>(1u * sizeof(int32_t));
+  void* write_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpp()->ProducerBeginWriteData(
+                                MakeUserPointer(&write_ptr),
+                                MakeUserPointer(&num_bytes), false));
+  EXPECT_TRUE(write_ptr);
+  EXPECT_GE(num_bytes, static_cast<uint32_t>(1u * sizeof(int32_t)));
+
+  // At this point, it shouldn't be writable.
+  pwaiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpp()->ProducerAddAwakable(
+                &pwaiter, MOJO_HANDLE_SIGNAL_WRITABLE, 1, nullptr));
+  EXPECT_EQ(MOJO_RESULT_DEADLINE_EXCEEDED, pwaiter.Wait(0, nullptr));
+  hss = HandleSignalsState();
+  this->dpp()->ProducerRemoveAwakable(&pwaiter, &hss);
+  EXPECT_EQ(0u, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // It shouldn't be readable yet either (we'll wait later).
+  cwaiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &cwaiter, MOJO_HANDLE_SIGNAL_READABLE, 2, nullptr));
+
+  static_cast<int32_t*>(write_ptr)[0] = 123;
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpp()->ProducerEndWriteData(
+                                static_cast<uint32_t>(1u * sizeof(int32_t))));
+
+  // It should immediately be writable again.
+  pwaiter.Init();
+  hss = HandleSignalsState();
+  EXPECT_EQ(MOJO_RESULT_ALREADY_EXISTS,
+            this->dpp()->ProducerAddAwakable(
+                &pwaiter, MOJO_HANDLE_SIGNAL_WRITABLE, 3, &hss));
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // It should become readable.
+  EXPECT_EQ(MOJO_RESULT_OK, cwaiter.Wait(test::TinyDeadline(), nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&cwaiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // Start another two-phase write and check that it's readable even in the
+  // middle of it.
+  num_bytes = static_cast<uint32_t>(1u * sizeof(int32_t));
+  write_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpp()->ProducerBeginWriteData(
+                                MakeUserPointer(&write_ptr),
+                                MakeUserPointer(&num_bytes), false));
+  EXPECT_TRUE(write_ptr);
+  EXPECT_GE(num_bytes, static_cast<uint32_t>(1u * sizeof(int32_t)));
+
+  // It should be readable.
+  cwaiter.Init();
+  hss = HandleSignalsState();
+  EXPECT_EQ(MOJO_RESULT_ALREADY_EXISTS,
+            this->dpc()->ConsumerAddAwakable(
+                &cwaiter, MOJO_HANDLE_SIGNAL_READABLE, 5, &hss));
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // End the two-phase write without writing anything.
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpp()->ProducerEndWriteData(0u));
+
+  // Start a two-phase read.
+  num_bytes = static_cast<uint32_t>(1u * sizeof(int32_t));
+  const void* read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerBeginReadData(
+                                MakeUserPointer(&read_ptr),
+                                MakeUserPointer(&num_bytes), false));
+  EXPECT_TRUE(read_ptr);
+  EXPECT_EQ(static_cast<uint32_t>(1u * sizeof(int32_t)), num_bytes);
+
+  // At this point, it should still be writable.
+  pwaiter.Init();
+  hss = HandleSignalsState();
+  EXPECT_EQ(MOJO_RESULT_ALREADY_EXISTS,
+            this->dpp()->ProducerAddAwakable(
+                &pwaiter, MOJO_HANDLE_SIGNAL_WRITABLE, 6, &hss));
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_WRITABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // But not readable.
+  cwaiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &cwaiter, MOJO_HANDLE_SIGNAL_READABLE, 7, nullptr));
+  EXPECT_EQ(MOJO_RESULT_DEADLINE_EXCEEDED, cwaiter.Wait(0, nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&cwaiter, &hss);
+  EXPECT_EQ(0u, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // End the two-phase read without reading anything.
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerEndReadData(0u));
+
+  // It should be readable again.
+  cwaiter.Init();
+  hss = HandleSignalsState();
+  EXPECT_EQ(MOJO_RESULT_ALREADY_EXISTS,
+            this->dpc()->ConsumerAddAwakable(
+                &cwaiter, MOJO_HANDLE_SIGNAL_READABLE, 8, &hss));
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  this->ProducerClose();
+  this->ConsumerClose();
+}
+
+void Seq(int32_t start, size_t count, int32_t* out) {
+  for (size_t i = 0; i < count; i++)
+    out[i] = start + static_cast<int32_t>(i);
+}
+
+TYPED_TEST(DataPipeImplTest, AllOrNone) {
+  const MojoCreateDataPipeOptions options = {
+      kSizeOfOptions,                           // |struct_size|.
+      MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+      static_cast<uint32_t>(sizeof(int32_t)),   // |element_num_bytes|.
+      10 * sizeof(int32_t)                      // |capacity_num_bytes|.
+  };
+  this->Create(options);
+  this->DoTransfer();
+
+  Waiter waiter;
+  HandleSignalsState hss;
+
+  // Try writing way too much.
+  uint32_t num_bytes = 20u * sizeof(int32_t);
+  int32_t buffer[100];
+  Seq(0, arraysize(buffer), buffer);
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE,
+            this->dpp()->ProducerWriteData(UserPointer<const void>(buffer),
+                                           MakeUserPointer(&num_bytes), true));
+
+  // Should still be empty.
+  num_bytes = ~0u;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(0u, num_bytes);
+
+  // Add waiter.
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &waiter, MOJO_HANDLE_SIGNAL_READABLE, 1, nullptr));
+
+  // Write some data.
+  num_bytes = 5u * sizeof(int32_t);
+  Seq(100, arraysize(buffer), buffer);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpp()->ProducerWriteData(UserPointer<const void>(buffer),
+                                           MakeUserPointer(&num_bytes), true));
+  EXPECT_EQ(5u * sizeof(int32_t), num_bytes);
+
+  // Wait for data.
+  // TODO(vtl): There's no real guarantee that all the data will become
+  // available at once (except that in current implementations, with reasonable
+  // limits, it will). Eventually, we'll be able to wait for a specified amount
+  // of data to become available.
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // Half full.
+  num_bytes = 0u;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(5u * sizeof(int32_t), num_bytes);
+
+  // Too much.
+  num_bytes = 6u * sizeof(int32_t);
+  Seq(200, arraysize(buffer), buffer);
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE,
+            this->dpp()->ProducerWriteData(UserPointer<const void>(buffer),
+                                           MakeUserPointer(&num_bytes), true));
+
+  // Try reading too much.
+  num_bytes = 11u * sizeof(int32_t);
+  memset(buffer, 0xab, sizeof(buffer));
+  EXPECT_EQ(
+      MOJO_RESULT_OUT_OF_RANGE,
+      this->dpc()->ConsumerReadData(UserPointer<void>(buffer),
+                                    MakeUserPointer(&num_bytes), true, false));
+  int32_t expected_buffer[100];
+  memset(expected_buffer, 0xab, sizeof(expected_buffer));
+  EXPECT_EQ(0, memcmp(buffer, expected_buffer, sizeof(buffer)));
+
+  // Try discarding too much.
+  num_bytes = 11u * sizeof(int32_t);
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE, this->dpc()->ConsumerDiscardData(
+                                          MakeUserPointer(&num_bytes), true));
+
+  // Just a little.
+  num_bytes = 2u * sizeof(int32_t);
+  Seq(300, arraysize(buffer), buffer);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpp()->ProducerWriteData(UserPointer<const void>(buffer),
+                                           MakeUserPointer(&num_bytes), true));
+  EXPECT_EQ(2u * sizeof(int32_t), num_bytes);
+
+  // Just right.
+  num_bytes = 3u * sizeof(int32_t);
+  Seq(400, arraysize(buffer), buffer);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpp()->ProducerWriteData(UserPointer<const void>(buffer),
+                                           MakeUserPointer(&num_bytes), true));
+  EXPECT_EQ(3u * sizeof(int32_t), num_bytes);
+
+  // TODO(vtl): Hack (see also the TODO above): We can't currently wait for a
+  // specified amount of data to be available, so poll.
+  const size_t kMaxPoll = 100;
+  for (size_t i = 0; i < kMaxPoll; i++) {
+    num_bytes = 0u;
+    EXPECT_EQ(MOJO_RESULT_OK,
+              this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+    if (num_bytes >= 10u * sizeof(int32_t))
+      break;
+
+    base::PlatformThread::Sleep(test::EpsilonTimeout());
+  }
+  EXPECT_EQ(10u * sizeof(int32_t), num_bytes);
+
+  // Read half.
+  num_bytes = 5u * sizeof(int32_t);
+  memset(buffer, 0xab, sizeof(buffer));
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerReadData(
+                                UserPointer<void>(buffer),
+                                MakeUserPointer(&num_bytes), true, false));
+  EXPECT_EQ(5u * sizeof(int32_t), num_bytes);
+  memset(expected_buffer, 0xab, sizeof(expected_buffer));
+  Seq(100, 5, expected_buffer);
+  EXPECT_EQ(0, memcmp(buffer, expected_buffer, sizeof(buffer)));
+
+  // Try reading too much again.
+  num_bytes = 6u * sizeof(int32_t);
+  memset(buffer, 0xab, sizeof(buffer));
+  EXPECT_EQ(
+      MOJO_RESULT_OUT_OF_RANGE,
+      this->dpc()->ConsumerReadData(UserPointer<void>(buffer),
+                                    MakeUserPointer(&num_bytes), true, false));
+  memset(expected_buffer, 0xab, sizeof(expected_buffer));
+  EXPECT_EQ(0, memcmp(buffer, expected_buffer, sizeof(buffer)));
+
+  // Try discarding too much again.
+  num_bytes = 6u * sizeof(int32_t);
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE, this->dpc()->ConsumerDiscardData(
+                                          MakeUserPointer(&num_bytes), true));
+
+  // Discard a little.
+  num_bytes = 2u * sizeof(int32_t);
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerDiscardData(
+                                MakeUserPointer(&num_bytes), true));
+  EXPECT_EQ(2u * sizeof(int32_t), num_bytes);
+
+  // Three left.
+  num_bytes = 0u;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(3u * sizeof(int32_t), num_bytes);
+
+  // We'll need to wait for the peer closed to propagate.
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &waiter, MOJO_HANDLE_SIGNAL_PEER_CLOSED, 2, nullptr));
+
+  // Close the producer, then test producer-closed cases.
+  this->ProducerClose();
+
+  // Wait.
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // Try reading too much; "failed precondition" since the producer is closed.
+  num_bytes = 4u * sizeof(int32_t);
+  memset(buffer, 0xab, sizeof(buffer));
+  EXPECT_EQ(
+      MOJO_RESULT_FAILED_PRECONDITION,
+      this->dpc()->ConsumerReadData(UserPointer<void>(buffer),
+                                    MakeUserPointer(&num_bytes), true, false));
+  memset(expected_buffer, 0xab, sizeof(expected_buffer));
+  EXPECT_EQ(0, memcmp(buffer, expected_buffer, sizeof(buffer)));
+
+  // Try discarding too much; "failed precondition" again.
+  num_bytes = 4u * sizeof(int32_t);
+  EXPECT_EQ(
+      MOJO_RESULT_FAILED_PRECONDITION,
+      this->dpc()->ConsumerDiscardData(MakeUserPointer(&num_bytes), true));
+
+  // Read a little.
+  num_bytes = 2u * sizeof(int32_t);
+  memset(buffer, 0xab, sizeof(buffer));
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerReadData(
+                                UserPointer<void>(buffer),
+                                MakeUserPointer(&num_bytes), true, false));
+  EXPECT_EQ(2u * sizeof(int32_t), num_bytes);
+  memset(expected_buffer, 0xab, sizeof(expected_buffer));
+  Seq(400, 2, expected_buffer);
+  EXPECT_EQ(0, memcmp(buffer, expected_buffer, sizeof(buffer)));
+
+  // Discard the remaining element.
+  num_bytes = 1u * sizeof(int32_t);
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpc()->ConsumerDiscardData(
+                                MakeUserPointer(&num_bytes), true));
+  EXPECT_EQ(1u * sizeof(int32_t), num_bytes);
+
+  // Empty again.
+  num_bytes = ~0u;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(0u, num_bytes);
+
+  this->ConsumerClose();
+}
+
+TYPED_TEST(DataPipeImplTest, TwoPhaseAllOrNone) {
+  const MojoCreateDataPipeOptions options = {
+      kSizeOfOptions,                           // |struct_size|.
+      MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+      static_cast<uint32_t>(sizeof(int32_t)),   // |element_num_bytes|.
+      10 * sizeof(int32_t)                      // |capacity_num_bytes|.
+  };
+  this->Create(options);
+  this->DoTransfer();
+
+  Waiter waiter;
+  HandleSignalsState hss;
+
+  // Try writing way too much (two-phase).
+  uint32_t num_bytes = 20u * sizeof(int32_t);
+  void* write_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE, this->dpp()->ProducerBeginWriteData(
+                                          MakeUserPointer(&write_ptr),
+                                          MakeUserPointer(&num_bytes), true));
+
+  // Try writing an amount which isn't a multiple of the element size
+  // (two-phase).
+  static_assert(sizeof(int32_t) > 1u, "Wow! int32_t's have size 1");
+  num_bytes = 1u;
+  write_ptr = nullptr;
+  EXPECT_EQ(
+      MOJO_RESULT_INVALID_ARGUMENT,
+      this->dpp()->ProducerBeginWriteData(MakeUserPointer(&write_ptr),
+                                          MakeUserPointer(&num_bytes), true));
+
+  // Try reading way too much (two-phase).
+  num_bytes = 20u * sizeof(int32_t);
+  const void* read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE,
+            this->dpc()->ConsumerBeginReadData(
+                MakeUserPointer(&read_ptr), MakeUserPointer(&num_bytes), true));
+
+  // Add waiter.
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &waiter, MOJO_HANDLE_SIGNAL_READABLE, 1, nullptr));
+
+  // Write half (two-phase).
+  num_bytes = 5u * sizeof(int32_t);
+  write_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK, this->dpp()->ProducerBeginWriteData(
+                                MakeUserPointer(&write_ptr),
+                                MakeUserPointer(&num_bytes), true));
+  // May provide more space than requested.
+  EXPECT_GE(num_bytes, 5u * sizeof(int32_t));
+  EXPECT_TRUE(write_ptr);
+  Seq(0, 5, static_cast<int32_t*>(write_ptr));
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpp()->ProducerEndWriteData(5u * sizeof(int32_t)));
+
+  // Wait for data.
+  // TODO(vtl): (See corresponding TODO in AllOrNone.)
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE, hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // Try reading an amount which isn't a multiple of the element size
+  // (two-phase).
+  num_bytes = 1u;
+  read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_INVALID_ARGUMENT,
+            this->dpc()->ConsumerBeginReadData(
+                MakeUserPointer(&read_ptr), MakeUserPointer(&num_bytes), true));
+
+  // Read one (two-phase).
+  num_bytes = 1u * sizeof(int32_t);
+  read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerBeginReadData(
+                MakeUserPointer(&read_ptr), MakeUserPointer(&num_bytes), true));
+  EXPECT_GE(num_bytes, 1u * sizeof(int32_t));
+  EXPECT_EQ(0, static_cast<const int32_t*>(read_ptr)[0]);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerEndReadData(1u * sizeof(int32_t)));
+
+  // We should have four left, leaving room for six.
+  num_bytes = 0u;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+  EXPECT_EQ(4u * sizeof(int32_t), num_bytes);
+
+  // Assuming a tight circular buffer of the specified capacity, we can't do a
+  // two-phase write of six now.
+  num_bytes = 6u * sizeof(int32_t);
+  write_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE, this->dpp()->ProducerBeginWriteData(
+                                          MakeUserPointer(&write_ptr),
+                                          MakeUserPointer(&num_bytes), true));
+
+  // TODO(vtl): Hack (see also the TODO above): We can't currently wait for a
+  // specified amount of space to be available, so poll.
+  const size_t kMaxPoll = 100;
+  for (size_t i = 0; i < kMaxPoll; i++) {
+    // Write six elements (simple), filling the buffer.
+    num_bytes = 6u * sizeof(int32_t);
+    int32_t buffer[100];
+    Seq(100, 6, buffer);
+    MojoResult result = this->dpp()->ProducerWriteData(
+        UserPointer<const void>(buffer), MakeUserPointer(&num_bytes), true);
+    if (result == MOJO_RESULT_OK)
+      break;
+    EXPECT_EQ(MOJO_RESULT_OUT_OF_RANGE, result);
+
+    base::PlatformThread::Sleep(test::EpsilonTimeout());
+  }
+  EXPECT_EQ(6u * sizeof(int32_t), num_bytes);
+
+  // TODO(vtl): Hack: poll again.
+  for (size_t i = 0; i < kMaxPoll; i++) {
+    // We have ten.
+    num_bytes = 0u;
+    EXPECT_EQ(MOJO_RESULT_OK,
+              this->dpc()->ConsumerQueryData(MakeUserPointer(&num_bytes)));
+    if (num_bytes >= 10u * sizeof(int32_t))
+      break;
+
+    base::PlatformThread::Sleep(test::EpsilonTimeout());
+  }
+  EXPECT_EQ(10u * sizeof(int32_t), num_bytes);
+
+  // Note: Whether a two-phase read of ten would fail here or not is
+  // implementation-dependent.
+
+  // Add waiter.
+  waiter.Init();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerAddAwakable(
+                &waiter, MOJO_HANDLE_SIGNAL_PEER_CLOSED, 2, nullptr));
+
+  // Close the producer.
+  this->ProducerClose();
+
+  // A two-phase read of nine should work.
+  num_bytes = 9u * sizeof(int32_t);
+  read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerBeginReadData(
+                MakeUserPointer(&read_ptr), MakeUserPointer(&num_bytes), true));
+  EXPECT_GE(num_bytes, 9u * sizeof(int32_t));
+  EXPECT_EQ(1, static_cast<const int32_t*>(read_ptr)[0]);
+  EXPECT_EQ(2, static_cast<const int32_t*>(read_ptr)[1]);
+  EXPECT_EQ(3, static_cast<const int32_t*>(read_ptr)[2]);
+  EXPECT_EQ(4, static_cast<const int32_t*>(read_ptr)[3]);
+  EXPECT_EQ(100, static_cast<const int32_t*>(read_ptr)[4]);
+  EXPECT_EQ(101, static_cast<const int32_t*>(read_ptr)[5]);
+  EXPECT_EQ(102, static_cast<const int32_t*>(read_ptr)[6]);
+  EXPECT_EQ(103, static_cast<const int32_t*>(read_ptr)[7]);
+  EXPECT_EQ(104, static_cast<const int32_t*>(read_ptr)[8]);
+  EXPECT_EQ(MOJO_RESULT_OK,
+            this->dpc()->ConsumerEndReadData(9u * sizeof(int32_t)));
+
+  // Wait for peer closed.
+  EXPECT_EQ(MOJO_RESULT_OK, waiter.Wait(test::TinyDeadline(), nullptr));
+  hss = HandleSignalsState();
+  this->dpc()->ConsumerRemoveAwakable(&waiter, &hss);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfied_signals);
+  EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_PEER_CLOSED,
+            hss.satisfiable_signals);
+
+  // A two-phase read of two should fail, with "failed precondition".
+  num_bytes = 2u * sizeof(int32_t);
+  read_ptr = nullptr;
+  EXPECT_EQ(MOJO_RESULT_FAILED_PRECONDITION,
+            this->dpc()->ConsumerBeginReadData(
+                MakeUserPointer(&read_ptr), MakeUserPointer(&num_bytes), true));
 
   this->ConsumerClose();
 }
