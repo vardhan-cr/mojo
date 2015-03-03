@@ -39,9 +39,8 @@ def main():
                            default=True, action='store_true')
   debug_group.add_argument('--release', help='Release build', default=False,
                            dest='debug', action='store_false')
-  debug_group.add_argument('--target-cpu',
-                           help='CPU architecture to run for.',
-                           choices=['x64', 'x86', 'arm'])
+  parser.add_argument('--target-cpu', help='CPU architecture to run for.',
+                      choices=['x64', 'x86', 'arm'])
   launcher_args, args = parser.parse_known_args()
 
   config = Config(target_os=Config.OS_ANDROID,
