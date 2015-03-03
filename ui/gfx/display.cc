@@ -14,7 +14,6 @@
 #include "ui/gfx/point_conversions.h"
 #include "ui/gfx/point_f.h"
 #include "ui/gfx/size_conversions.h"
-#include "ui/gfx/switches.h"
 
 namespace gfx {
 namespace {

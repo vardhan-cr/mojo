@@ -18,11 +18,6 @@
 
 namespace {
 
-#if defined(OS_LINUX)
-// Copied from ui/gfx/switches.cc to avoid a dependency on //ui/gfx
-const char kEnableHarfBuzzRenderText[] = "enable-harfbuzz-rendertext";
-#endif
-
 void Usage() {
   std::cerr << "Launch Mojo applications.\n";
   std::cerr
@@ -80,14 +75,6 @@ int main(int argc, char** argv) {
       Usage();
       return 0;
     }
-
-#if defined(OS_LINUX)
-    // We use gfx::RenderText from multiple threads concurrently and the pango
-    // backend (currently the default on linux) is not close to threadsafe.
-    // Force use of the harfbuzz backend for now.
-    base::CommandLine::ForCurrentProcess()->AppendSwitch(
-        kEnableHarfBuzzRenderText);
-#endif
 
     // We want the shell::Context to outlive the MessageLoop so that pipes are
     // all gracefully closed / error-out before we try to shut the Context down.
