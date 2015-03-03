@@ -35,9 +35,8 @@ def main():
   cmd.append('--v=1')
 
   HTTP_PORT = 9999
-  sky_paths = skypy.paths.Paths(paths.build_dir)
   configuration = 'Debug' if config.is_debug else 'Release'
-  server = SkyServer(sky_paths, HTTP_PORT, configuration, paths.src_root)
+  server = SkyServer(HTTP_PORT, configuration, paths.src_root)
 
   if args.demo == 'browser':
     base_url = server.path_as_url(paths.build_dir)
