@@ -13,5 +13,4 @@ dart_packaged_application("echo") {
     "//services/dart/test:echo_service_interface",
     "//mojo/public/interfaces/application",
   ]
-  strict = is_debug
 }

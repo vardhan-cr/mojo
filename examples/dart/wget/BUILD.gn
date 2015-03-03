@@ -13,5 +13,4 @@ dart_packaged_application("wget") {
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
   ]
-  strict = is_debug
 }

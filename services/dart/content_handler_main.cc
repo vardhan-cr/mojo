@@ -18,7 +18,9 @@ namespace dart {
 class DartContentHandler : public mojo::ApplicationDelegate,
                            public mojo::ContentHandlerFactory::ManagedDelegate {
  public:
-  DartContentHandler() : content_handler_factory_(this) {}
+  DartContentHandler() :
+      first_connection_configured_(false),
+      content_handler_factory_(this) {}
   ~DartContentHandler() {
     mojo::dart::DartController::Shutdown();
   }
@@ -27,9 +29,11 @@ class DartContentHandler : public mojo::ApplicationDelegate,
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
+  }
 
+  bool HasStrictQueryParam(const std::string& requestedUrl) {
     bool strict_compilation = false;
-    GURL url(app->url());
+    GURL url(requestedUrl);
     if (url.has_query()) {
       std::vector<std::string> query_parameters;
       Tokenize(url.query(), "&", &query_parameters);
@@ -38,16 +42,21 @@ class DartContentHandler : public mojo::ApplicationDelegate,
                                      "strict=true")
                            != query_parameters.end();
     }
-
-    bool success = mojo::dart::DartController::Initialize(strict_compilation);
-    if (!success) {
-      LOG(ERROR) << "Dart VM Initialization failed";
-    }
+    return strict_compilation;
   }
 
   // Overridden from ApplicationDelegate:
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
+    if (!first_connection_configured_) {
+      bool strict = HasStrictQueryParam(connection->GetConnectionURL());
+      bool success = mojo::dart::DartController::Initialize(strict);
+      if (!success) {
+        LOG(ERROR) << "Dart VM Initialization failed";
+        return false;
+      }
+      first_connection_configured_ = true;
+    }
     connection->AddService(&content_handler_factory_);
     return true;
   }
@@ -61,6 +70,7 @@ class DartContentHandler : public mojo::ApplicationDelegate,
         new DartApp(application_request.Pass(), response.Pass()));
   }
 
+  bool first_connection_configured_;
   mojo::ContentHandlerFactory content_handler_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(DartContentHandler);
