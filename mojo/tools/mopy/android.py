@@ -12,6 +12,7 @@ import subprocess
 import sys
 import threading
 import time
+import urlparse
 
 import SimpleHTTPServer
 import SocketServer
@@ -136,6 +137,20 @@ def _MapPort(device_port, host_port):
   return device_port
 
 
+def StartHttpServerForDirectory(path):
+  """Starts an http server serving files from |path|. Returns the local url."""
+  print 'starting http for', path
+  httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(path))
+  atexit.register(httpd.shutdown)
+
+  http_thread = threading.Thread(target=httpd.serve_forever)
+  http_thread.daemon = True
+  http_thread.start()
+
+  print 'local port=', httpd.server_address[1]
+  return 'http://127.0.0.1:%d/' % _MapPort(0, httpd.server_address[1])
+
+
 def PrepareShellRun(config):
   """
   Prepares for StartShell. Returns an origin arg with the forwarded device port.
@@ -144,20 +159,42 @@ def PrepareShellRun(config):
   on the device to this http server, and install the latest mojo shell version.
   """
   build_dir = Paths(config).build_dir
-  httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(build_dir))
-  atexit.register(httpd.shutdown)
-
-  http_thread = threading.Thread(target=httpd.serve_forever)
-  http_thread.daemon = True
-  http_thread.start()
-
   subprocess.check_call([ADB_PATH, 'root'])
   apk_path = os.path.join(build_dir, 'apks', 'MojoShell.apk')
   subprocess.check_call(
       [ADB_PATH, 'install', '-r', apk_path, '-i', MOJO_SHELL_PACKAGE_NAME])
 
   atexit.register(StopShell)
-  return '--origin=http://127.0.0.1:%d/' % _MapPort(0, httpd.server_address[1])
+
+  return '--origin=' + StartHttpServerForDirectory(build_dir)
+
+
+def _StartHttpServerForOriginMapping(mapping):
+  """If |mapping| points at a local file starts an http server to serve files
+  from the directory and returns the new mapping.
+
+  This is intended to be called for every --map-origin value."""
+  parts = mapping.split('=')
+  if len(parts) != 2:
+    return mapping
+  dest = parts[1]
+  # If the destination is a url, don't map it.
+  if urlparse.urlparse(dest)[0]:
+    return mapping
+  # Assume the destination is a local file. Start a local server that redirects
+  # to it.
+  localUrl = StartHttpServerForDirectory(dest)
+  print 'started server at %s for %s' % (dest, localUrl)
+  return parts[0] + '=' + localUrl
+
+
+def _StartHttpServerForOriginMappings(arg):
+  """Calls _StartHttpServerForOriginMapping for every --map-origin argument."""
+  mapping_prefix = '--map-origin='
+  if not arg.startswith(mapping_prefix):
+    return arg
+  return mapping_prefix + ','.join([_StartHttpServerForOriginMapping(value)
+      for value in arg[len(mapping_prefix):].split(',')])
 
 
 def StartShell(arguments, stdout=None, on_application_stop=None):
@@ -184,7 +221,7 @@ def StartShell(arguments, stdout=None, on_application_stop=None):
     parameters.append('--fifo-path=%s' % STDOUT_PIPE)
     _ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
   assert any("--origin=http://127.0.0.1:" in arg for arg in arguments)
-  parameters += arguments
+  parameters += [_StartHttpServerForOriginMappings(arg) for arg in arguments]
 
   if parameters:
     encodedParameters = json.dumps(parameters)
