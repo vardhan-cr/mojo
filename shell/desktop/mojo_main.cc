@@ -51,34 +51,6 @@ int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   base::CommandLine::Init(argc, argv);
 
-  const base::CommandLine& command_line =
-      *base::CommandLine::ForCurrentProcess();
-
-  const std::set<std::string> all_switches = switches::GetAllSwitches();
-  const base::CommandLine::SwitchMap switches = command_line.GetSwitches();
-  bool found_unknown_switch = false;
-  for (const auto& s : switches) {
-    if (all_switches.find(s.first) == all_switches.end()) {
-      std::cerr << "unknown switch: " << s.first << std::endl;
-      found_unknown_switch = true;
-    }
-  }
-
-  if (found_unknown_switch ||
-      (!command_line.HasSwitch(switches::kEnableExternalApplications) &&
-       (command_line.HasSwitch(switches::kHelp) ||
-        command_line.GetArgs().empty()))) {
-    Usage();
-    return 0;
-  }
-
-#if defined(OS_LINUX)
-  // We use gfx::RenderText from multiple threads concurrently and the pango
-  // backend (currently the default on linux) is not close to threadsafe. Force
-  // use of the harfbuzz backend for now.
-  base::CommandLine::ForCurrentProcess()->AppendSwitch(
-      kEnableHarfBuzzRenderText);
-#endif
   mojo::shell::InitializeLogging();
 
   // TODO(vtl): Unify parent and child process cases to the extent possible.
@@ -87,6 +59,36 @@ int main(int argc, char** argv) {
               *base::CommandLine::ForCurrentProcess())) {
     child_process->Main();
   } else {
+    // Only check the command line for the main process.
+    const base::CommandLine& command_line =
+        *base::CommandLine::ForCurrentProcess();
+
+    const std::set<std::string> all_switches = switches::GetAllSwitches();
+    const base::CommandLine::SwitchMap switches = command_line.GetSwitches();
+    bool found_unknown_switch = false;
+    for (const auto& s : switches) {
+      if (all_switches.find(s.first) == all_switches.end()) {
+        std::cerr << "unknown switch: " << s.first << std::endl;
+        found_unknown_switch = true;
+      }
+    }
+
+    if (found_unknown_switch ||
+        (!command_line.HasSwitch(switches::kEnableExternalApplications) &&
+         (command_line.HasSwitch(switches::kHelp) ||
+          command_line.GetArgs().empty()))) {
+      Usage();
+      return 0;
+    }
+
+#if defined(OS_LINUX)
+    // We use gfx::RenderText from multiple threads concurrently and the pango
+    // backend (currently the default on linux) is not close to threadsafe.
+    // Force use of the harfbuzz backend for now.
+    base::CommandLine::ForCurrentProcess()->AppendSwitch(
+        kEnableHarfBuzzRenderText);
+#endif
+
     // We want the shell::Context to outlive the MessageLoop so that pipes are
     // all gracefully closed / error-out before we try to shut the Context down.
     mojo::shell::Context shell_context;

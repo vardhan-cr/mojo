@@ -4,6 +4,8 @@
 
 #include "shell/app_child_process.h"
 
+#include <unistd.h>
+
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/files/file_path.h"
@@ -19,6 +21,7 @@
 #include "base/threading/thread_checker.h"
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/edk/embedder/embedder.h"
+#include "mojo/edk/embedder/process_delegate.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/app_child_process.mojom.h"
@@ -37,6 +40,7 @@ class Blocker {
  public:
   class Unblocker {
    public:
+    explicit Unblocker(Blocker* blocker = nullptr) : blocker_(blocker) {}
     ~Unblocker() {}
 
     void Unblock(base::Closure run_after) {
@@ -44,13 +48,10 @@ class Blocker {
       DCHECK(blocker_->run_after_.is_null());
       blocker_->run_after_ = run_after;
       blocker_->event_.Signal();
-      blocker_ = NULL;
+      blocker_ = nullptr;
     }
 
    private:
-    friend class Blocker;
-    Unblocker(Blocker* blocker) : blocker_(blocker) { DCHECK(blocker_); }
-
     Blocker* blocker_;
 
     // Copy and assign allowed.
@@ -78,11 +79,8 @@ class Blocker {
 
 class AppChildControllerImpl;
 
-static void DestroyController(scoped_ptr<AppChildControllerImpl> controller) {
-}
-
 // Should be created and initialized on the main thread.
-class AppContext {
+class AppContext : public embedder::ProcessDelegate {
  public:
   AppContext()
       : io_thread_("io_thread"), controller_thread_("controller_thread") {}
@@ -108,11 +106,20 @@ class AppContext {
     CHECK(controller_thread_.StartWithOptions(controller_thread_options));
     controller_runner_ = controller_thread_.message_loop_proxy().get();
     CHECK(controller_runner_.get());
+
+    // TODO(vtl): This should be SLAVE, not NONE.
+    embedder::InitIPCSupport(embedder::ProcessType::NONE, controller_runner_,
+                             this, io_runner_,
+                             embedder::ScopedPlatformHandle());
   }
 
   void Shutdown() {
+    Blocker blocker;
+    shutdown_unblocker_ = blocker.GetUnblocker();
     controller_runner_->PostTask(
-        FROM_HERE, base::Bind(&DestroyController, base::Passed(&controller_)));
+        FROM_HERE, base::Bind(&AppContext::ShutdownOnControllerThread,
+                              base::Unretained(this)));
+    blocker.Block();
   }
 
   base::SingleThreadTaskRunner* io_runner() const { return io_runner_.get(); }
@@ -128,17 +135,30 @@ class AppContext {
   }
 
  private:
-  // Accessed only on the controller thread.
-  // IMPORTANT: This must be BEFORE |controller_thread_|, so that the controller
-  // thread gets joined (and thus |controller_| reset) before |controller_| is
-  // destroyed.
-  scoped_ptr<AppChildControllerImpl> controller_;
+  void ShutdownOnControllerThread() {
+    // First, destroy the controller.
+    controller_.reset();
+
+    // Next shutdown IPC. We'll unblock the main thread in OnShutdownComplete().
+    embedder::ShutdownIPCSupport();
+  }
+
+  // ProcessDelegate implementation.
+  void OnShutdownComplete() override {
+    shutdown_unblocker_.Unblock(base::Closure());
+  }
 
   base::Thread io_thread_;
   scoped_refptr<base::SingleThreadTaskRunner> io_runner_;
 
   base::Thread controller_thread_;
   scoped_refptr<base::SingleThreadTaskRunner> controller_runner_;
+
+  // Accessed only on the controller thread.
+  scoped_ptr<AppChildControllerImpl> controller_;
+
+  // Used to unblock the main thread on shutdown.
+  Blocker::Unblocker shutdown_unblocker_;
 
   DISALLOW_COPY_AND_ASSIGN(AppContext);
 };
@@ -184,7 +204,8 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
   void OnConnectionError() override {
     // A connection error means the connection to the shell is lost. This is not
     // recoverable.
-    CHECK(false) << "Connection error to the shell.";
+    LOG(ERROR) << "Connection error to the shell.";
+    _exit(1);
   }
 
   // |AppChildController| methods:

@@ -21,7 +21,8 @@ class ExternalApplicationListener;
 class NativeApplicationLoader;
 
 // The "global" context for the shell's main process.
-class Context : ApplicationManager::Delegate, embedder::ProcessDelegate {
+class Context : public ApplicationManager::Delegate,
+                public embedder::ProcessDelegate {
  public:
   Context();
   ~Context() override;
