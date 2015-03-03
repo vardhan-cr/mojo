@@ -9,7 +9,6 @@
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
-#include "shell/application_manager/application_manager_export.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -19,7 +18,7 @@ class ApplicationManager;
 
 // Interface to implement special application loading behavior for a particular
 // URL or scheme.
-class MOJO_APPLICATION_MANAGER_EXPORT ApplicationLoader {
+class ApplicationLoader {
  public:
   virtual ~ApplicationLoader() {}
 

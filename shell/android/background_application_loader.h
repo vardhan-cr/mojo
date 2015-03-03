@@ -14,7 +14,7 @@
 
 namespace mojo {
 
-class MOJO_APPLICATION_MANAGER_EXPORT BackgroundApplicationLoader
+class BackgroundApplicationLoader
     : public ApplicationLoader,
       public base::DelegateSimpleThread::Delegate {
  public:

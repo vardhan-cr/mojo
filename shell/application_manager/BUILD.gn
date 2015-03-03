@@ -11,7 +11,6 @@ component("application_manager") {
     "application_loader.h",
     "application_manager.cc",
     "application_manager.h",
-    "application_manager_export.h",
     "data_pipe_peek.cc",
     "data_pipe_peek.h",
     "local_fetcher.cc",

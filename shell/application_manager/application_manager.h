@@ -17,7 +17,6 @@
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/application_loader.h"
-#include "shell/application_manager/application_manager_export.h"
 #include "shell/application_manager/fetcher.h"
 #include "shell/application_manager/shell_impl.h"
 #include "url/gurl.h"
@@ -31,9 +30,9 @@ namespace mojo {
 
 // ApplicationManager requires implementations of NativeRunner and
 // NativeRunnerFactory to run native applications.
-class MOJO_APPLICATION_MANAGER_EXPORT NativeRunner {
+class NativeRunner {
  public:
-  // Parameter for |Start| to specify its cleanup behavior.
+  // Parameter for |Start()| to specify its cleanup behavior.
   enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
   virtual ~NativeRunner() {}
 
@@ -47,15 +46,15 @@ class MOJO_APPLICATION_MANAGER_EXPORT NativeRunner {
                      const base::Closure& app_completed_callback) = 0;
 };
 
-class MOJO_APPLICATION_MANAGER_EXPORT NativeRunnerFactory {
+class NativeRunnerFactory {
  public:
   virtual ~NativeRunnerFactory() {}
   virtual scoped_ptr<NativeRunner> Create() = 0;
 };
 
-class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
+class ApplicationManager {
  public:
-  class MOJO_APPLICATION_MANAGER_EXPORT Delegate {
+  class Delegate {
    public:
     virtual ~Delegate();
     // Send when the Application holding the handle on the other end of the
@@ -66,7 +65,7 @@ class MOJO_APPLICATION_MANAGER_EXPORT ApplicationManager {
   };
 
   // API for testing.
-  class MOJO_APPLICATION_MANAGER_EXPORT TestAPI {
+  class TestAPI {
    public:
     explicit TestAPI(ApplicationManager* manager);
     ~TestAPI();
