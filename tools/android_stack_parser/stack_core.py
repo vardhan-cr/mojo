@@ -107,7 +107,7 @@ def ConvertTrace(lines, more_info, symbol_file_mappings):
   # <symbol_name> so that it can interoperate with the |trace_line| regex.
   debug_trace_line = re.compile(
       '(.*)(?P<frame>\#[0-9]+ 0x[0-9a-f]' + width + ') '
-      '(?P<lib>[^+]+)\+0x(?P<address>[0-9a-f]' + width + ')'
+      '(?P<lib>[^+]+)( \(deleted\))+\+0x(?P<address>[0-9a-f]' + width + ')'
       '(?P<symbol_present>)(?P<symbol_name>)')
 
   # Examples of matched value lines include:
