@@ -43,7 +43,9 @@ class PingPongServiceImpl implements PingPongService {
 class PingPongApplication extends Application {
   PingPongApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void acceptConnection(String requestorUrl, ApplicationConnection connection) {
+  @override
+  void acceptConnection(String requestorUrl, String resolvedUrl,
+                        ApplicationConnection connection) {
     connection.provideService(PingPongServiceName,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
     connection.listen();

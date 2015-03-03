@@ -32,7 +32,9 @@ class EchoServiceImpl implements EchoService {
 class EchoApplication extends Application {
   EchoApplication.fromHandle(MojoHandle handle) : super.fromHandle(handle);
 
-  void acceptConnection(String requestorUrl, ApplicationConnection connection) {
+  @override
+  void acceptConnection(String requestorUrl, String resolvedUrl,
+                        ApplicationConnection connection) {
     connection.provideService(EchoServiceName, (endpoint) =>
         new EchoServiceImpl(this, endpoint));
     connection.listen();
