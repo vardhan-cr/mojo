@@ -8,13 +8,14 @@ group("android") {
 
 mojo_android_java_application("android_example_service") {
   sources = [
-    "src/org/chromium/examples/android/App.java",
+    "src/org/chromium/examples/android/ExampleServiceApp.java",
   ]
 
-  mojo_main = "org.chromium.examples.android.App"
+  mojo_main = "org.chromium.examples.android.ExampleServiceApp"
 
   deps = [
     "//examples/apptest:bindings_java",
     "//mojo/public/interfaces/application:application_java",
+    "//mojo/public/java:application",
   ]
 }
