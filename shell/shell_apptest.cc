@@ -123,7 +123,7 @@ class ShellHTTPAppTest : public test::ApplicationTestBase {
 #if defined(OS_ANDROID)
 // These tests rely on data that needs to be bundled into the apptest binary in
 // order to work on Android.
-#else
+#else  // !OS_ANDROID
 // Test that we can load apps over http.
 TEST_F(ShellHTTPAppTest, Http) {
   InterfacePtr<Pingable> pingable;
@@ -156,7 +156,13 @@ TEST_F(ShellHTTPAppTest, Redirect) {
 }
 
 // Test that querystring is not considered when resolving http applications.
-TEST_F(ShellHTTPAppTest, QueryHandling) {
+// TODO(aa|qsr): Fix this test on Linux ASAN http://crbug.com/463662
+#if defined(ADDRESS_SANITIZER)
+#define MAYBE_QueryHandling DISABLED_QueryHandling
+#else
+#define MAYBE_QueryHandling QueryHandling
+#endif  // ADDRESS_SANITIZER
+TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
   InterfacePtr<Pingable> pingable1;
   InterfacePtr<Pingable> pingable2;
   application_impl()->ConnectToService(GetURL("app?foo"), &pingable1);
@@ -182,7 +188,7 @@ TEST_F(ShellHTTPAppTest, QueryHandling) {
   pingable2->Ping("hello", callback);
   base::RunLoop().Run();
 }
-#endif
+#endif  // OS_ANDROID
 
 // mojo: URLs can have querystrings too
 TEST_F(ShellAppTest, MojoURLQueryHandling) {
