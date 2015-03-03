@@ -164,10 +164,64 @@ class RemoteDataPipeImplTestHelper : public DataPipeImplTestHelper {
   }
 
  protected:
+  void SendDispatcher(size_t source_i,
+                      scoped_refptr<Dispatcher> to_send,
+                      scoped_refptr<Dispatcher>* to_receive) {
+    DCHECK(source_i == 0 || source_i == 1);
+    size_t dest_i = source_i ^ 1;
+
+    // Write the dispatcher to MP |source_i| (port 0). Wait and receive on MP
+    // |dest_i| (port 0). (Add the waiter first, to avoid any handling the case
+    // where it's already readable.)
+    Waiter waiter;
+    waiter.Init();
+    ASSERT_EQ(MOJO_RESULT_OK,
+              message_pipe(dest_i)->AddAwakable(
+                  0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 987, nullptr));
+    {
+      DispatcherTransport transport(
+          test::DispatcherTryStartTransport(to_send.get()));
+      ASSERT_TRUE(transport.is_valid());
+
+      std::vector<DispatcherTransport> transports;
+      transports.push_back(transport);
+      ASSERT_EQ(MOJO_RESULT_OK, message_pipe(source_i)->WriteMessage(
+                                    0, NullUserPointer(), 0, &transports,
+                                    MOJO_WRITE_MESSAGE_FLAG_NONE));
+      transport.End();
+    }
+    uint32_t context = 0;
+    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
+    EXPECT_EQ(987u, context);
+    HandleSignalsState hss = HandleSignalsState();
+    message_pipe(dest_i)->RemoveAwakable(0, &waiter, &hss);
+    EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
+              hss.satisfied_signals);
+    EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
+    char read_buffer[100] = {};
+    uint32_t read_buffer_size = static_cast<uint32_t>(sizeof(read_buffer));
+    DispatcherVector read_dispatchers;
+    uint32_t read_num_dispatchers = 10;  // Maximum to get.
+    ASSERT_EQ(MOJO_RESULT_OK,
+              message_pipe(dest_i)->ReadMessage(
+                  0, UserPointer<void>(read_buffer),
+                  MakeUserPointer(&read_buffer_size), &read_dispatchers,
+                  &read_num_dispatchers, MOJO_READ_MESSAGE_FLAG_NONE));
+    EXPECT_EQ(0u, static_cast<size_t>(read_buffer_size));
+    ASSERT_EQ(1u, read_dispatchers.size());
+    ASSERT_EQ(1u, read_num_dispatchers);
+    ASSERT_TRUE(read_dispatchers[0]);
+    EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
+
+    *to_receive = read_dispatchers[0];
+  }
+
   scoped_refptr<MessagePipe> message_pipe(size_t i) {
     return message_pipes_[i];
   }
+  scoped_refptr<DataPipe> dp() { return dp_; }
 
+ private:
   void EnsureMessagePipeClosed(size_t i) {
     if (!message_pipes_[i])
       return;
@@ -213,6 +267,9 @@ class RemoteDataPipeImplTestHelper : public DataPipeImplTestHelper {
 
 // RemoteProducerDataPipeImplTestHelper ----------------------------------------
 
+// Note about naming confusion: This class is named after the "local" class,
+// i.e., |dp_| will have a |RemoteProducerDataPipeImpl|. The remote side, of
+// course, will have a |RemoteConsumerDataPipeImpl|.
 class RemoteProducerDataPipeImplTestHelper
     : public RemoteDataPipeImplTestHelper {
  public:
@@ -220,87 +277,49 @@ class RemoteProducerDataPipeImplTestHelper
   ~RemoteProducerDataPipeImplTestHelper() override {}
 
   void DoTransfer() override {
-    // Write the producer to MP 0 (port 0). Wait and receive on MP 1 (port 0).
-    // (Add the waiter first, to avoid any handling the case where it's already
-    // readable.)
-    Waiter waiter;
-    waiter.Init();
-    ASSERT_EQ(MOJO_RESULT_OK,
-              message_pipe(1)->AddAwakable(
-                  0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 987, nullptr));
-    {
-      // This is the producer dispatcher we'll send.
-      scoped_refptr<DataPipeProducerDispatcher> to_send =
-          new DataPipeProducerDispatcher();
-      to_send->Init(dp_);
+    // This is the producer dispatcher we'll send.
+    scoped_refptr<DataPipeProducerDispatcher> to_send =
+        new DataPipeProducerDispatcher();
+    to_send->Init(dp());
+    scoped_refptr<Dispatcher> to_receive;
+    SendDispatcher(0, to_send, &to_receive);
+    // |to_send| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
 
-      DispatcherTransport transport(
-          test::DispatcherTryStartTransport(to_send.get()));
-      ASSERT_TRUE(transport.is_valid());
-
-      std::vector<DispatcherTransport> transports;
-      transports.push_back(transport);
-      ASSERT_EQ(MOJO_RESULT_OK, message_pipe(0)->WriteMessage(
-                                    0, NullUserPointer(), 0, &transports,
-                                    MOJO_WRITE_MESSAGE_FLAG_NONE));
-      transport.End();
-
-      // |to_send| should have been closed. This is |DCHECK()|ed when it is
-      // destroyed.
-      EXPECT_TRUE(to_send->HasOneRef());
-    }
-    uint32_t context = 0;
-    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
-    EXPECT_EQ(987u, context);
-    HandleSignalsState hss = HandleSignalsState();
-    message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
-    EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
-              hss.satisfied_signals);
-    EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
-    char read_buffer[100] = {};
-    uint32_t read_buffer_size = static_cast<uint32_t>(sizeof(read_buffer));
-    DispatcherVector read_dispatchers;
-    uint32_t read_num_dispatchers = 10;  // Maximum to get.
-    ASSERT_EQ(MOJO_RESULT_OK,
-              message_pipe(1)->ReadMessage(
-                  0, UserPointer<void>(read_buffer),
-                  MakeUserPointer(&read_buffer_size), &read_dispatchers,
-                  &read_num_dispatchers, MOJO_READ_MESSAGE_FLAG_NONE));
-    EXPECT_EQ(0u, static_cast<size_t>(read_buffer_size));
-    ASSERT_EQ(1u, read_dispatchers.size());
-    ASSERT_EQ(1u, read_num_dispatchers);
-    ASSERT_TRUE(read_dispatchers[0]);
-    EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
-
-    ASSERT_EQ(Dispatcher::kTypeDataPipeProducer,
-              read_dispatchers[0]->GetType());
+    ASSERT_EQ(Dispatcher::kTypeDataPipeProducer, to_receive->GetType());
     producer_dispatcher_ =
-        static_cast<DataPipeProducerDispatcher*>(read_dispatchers[0].get());
+        static_cast<DataPipeProducerDispatcher*>(to_receive.get());
   }
 
   DataPipe* dpp() override {
     if (producer_dispatcher_)
       return producer_dispatcher_->GetDataPipeForTest();
-    return dp_.get();
+    return dp().get();
   }
-  DataPipe* dpc() override { return dp_.get(); }
+  DataPipe* dpc() override { return dp().get(); }
 
   void ProducerClose() override {
     if (producer_dispatcher_)
       ASSERT_EQ(MOJO_RESULT_OK, producer_dispatcher_->Close());
     else
-      dp_->ProducerClose();
+      dp()->ProducerClose();
   }
-  void ConsumerClose() override { dp_->ConsumerClose(); }
+  void ConsumerClose() override { dp()->ConsumerClose(); }
 
- private:
+ protected:
   scoped_refptr<DataPipeProducerDispatcher> producer_dispatcher_;
 
+ private:
   DISALLOW_COPY_AND_ASSIGN(RemoteProducerDataPipeImplTestHelper);
 };
 
 // RemoteConsumerDataPipeImplTestHelper ----------------------------------------
 
+// Note about naming confusion: This class is named after the "local" class,
+// i.e., |dp_| will have a |RemoteConsumerDataPipeImpl|. The remote side, of
+// course, will have a |RemoteProducerDataPipeImpl|.
 class RemoteConsumerDataPipeImplTestHelper
     : public RemoteDataPipeImplTestHelper {
  public:
@@ -308,90 +327,145 @@ class RemoteConsumerDataPipeImplTestHelper
   ~RemoteConsumerDataPipeImplTestHelper() override {}
 
   void DoTransfer() override {
-    // Write the consumer to MP 0 (port 0). Wait and receive on MP 1 (port 0).
-    // (Add the waiter first, to avoid any handling the case where it's already
-    // readable.)
-    Waiter waiter;
-    waiter.Init();
-    ASSERT_EQ(MOJO_RESULT_OK,
-              message_pipe(1)->AddAwakable(
-                  0, &waiter, MOJO_HANDLE_SIGNAL_READABLE, 987, nullptr));
-    {
-      // This is the consumer dispatcher we'll send.
-      scoped_refptr<DataPipeConsumerDispatcher> to_send =
-          new DataPipeConsumerDispatcher();
-      to_send->Init(dp_);
+    // This is the consumer dispatcher we'll send.
+    scoped_refptr<DataPipeConsumerDispatcher> to_send =
+        new DataPipeConsumerDispatcher();
+    to_send->Init(dp());
+    scoped_refptr<Dispatcher> to_receive;
+    SendDispatcher(0, to_send, &to_receive);
+    // |to_send| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
 
-      DispatcherTransport transport(
-          test::DispatcherTryStartTransport(to_send.get()));
-      ASSERT_TRUE(transport.is_valid());
-
-      std::vector<DispatcherTransport> transports;
-      transports.push_back(transport);
-      ASSERT_EQ(MOJO_RESULT_OK, message_pipe(0)->WriteMessage(
-                                    0, NullUserPointer(), 0, &transports,
-                                    MOJO_WRITE_MESSAGE_FLAG_NONE));
-      transport.End();
-
-      // |to_send| should have been closed. This is |DCHECK()|ed when it is
-      // destroyed.
-      EXPECT_TRUE(to_send->HasOneRef());
-    }
-    uint32_t context = 0;
-    ASSERT_EQ(MOJO_RESULT_OK, waiter.Wait(test::ActionDeadline(), &context));
-    EXPECT_EQ(987u, context);
-    HandleSignalsState hss = HandleSignalsState();
-    message_pipe(1)->RemoveAwakable(0, &waiter, &hss);
-    EXPECT_EQ(MOJO_HANDLE_SIGNAL_READABLE | MOJO_HANDLE_SIGNAL_WRITABLE,
-              hss.satisfied_signals);
-    EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
-    char read_buffer[100] = {};
-    uint32_t read_buffer_size = static_cast<uint32_t>(sizeof(read_buffer));
-    DispatcherVector read_dispatchers;
-    uint32_t read_num_dispatchers = 10;  // Maximum to get.
-    ASSERT_EQ(MOJO_RESULT_OK,
-              message_pipe(1)->ReadMessage(
-                  0, UserPointer<void>(read_buffer),
-                  MakeUserPointer(&read_buffer_size), &read_dispatchers,
-                  &read_num_dispatchers, MOJO_READ_MESSAGE_FLAG_NONE));
-    EXPECT_EQ(0u, static_cast<size_t>(read_buffer_size));
-    ASSERT_EQ(1u, read_dispatchers.size());
-    ASSERT_EQ(1u, read_num_dispatchers);
-    ASSERT_TRUE(read_dispatchers[0]);
-    EXPECT_TRUE(read_dispatchers[0]->HasOneRef());
-
-    ASSERT_EQ(Dispatcher::kTypeDataPipeConsumer,
-              read_dispatchers[0]->GetType());
+    ASSERT_EQ(Dispatcher::kTypeDataPipeConsumer, to_receive->GetType());
     consumer_dispatcher_ =
-        static_cast<DataPipeConsumerDispatcher*>(read_dispatchers[0].get());
+        static_cast<DataPipeConsumerDispatcher*>(to_receive.get());
   }
 
-  DataPipe* dpp() override { return dp_.get(); }
+  DataPipe* dpp() override { return dp().get(); }
   DataPipe* dpc() override {
     if (consumer_dispatcher_)
       return consumer_dispatcher_->GetDataPipeForTest();
-    return dp_.get();
+    return dp().get();
   }
 
-  void ProducerClose() override { dp_->ProducerClose(); }
+  void ProducerClose() override { dp()->ProducerClose(); }
   void ConsumerClose() override {
     if (consumer_dispatcher_)
       ASSERT_EQ(MOJO_RESULT_OK, consumer_dispatcher_->Close());
     else
-      dp_->ConsumerClose();
+      dp()->ConsumerClose();
+  }
+
+ protected:
+  scoped_refptr<DataPipeConsumerDispatcher> consumer_dispatcher_;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImplTestHelper);
+};
+
+// RemoteProducerDataPipeImplTestHelper2 ---------------------------------------
+
+// This is like |RemoteProducerDataPipeImplTestHelper|, but |DoTransfer()| does
+// a second transfer. This thus tests passing a producer handle twice, and in
+// particular tests (some of) |RemoteConsumerDataPipeImpl|'s
+// |ProducerEndSerialize()| (instead of |LocalDataPipeImpl|'s).
+//
+// Note about naming confusion: This class is named after the "local" class,
+// i.e., |dp_| will have a |RemoteProducerDataPipeImpl|. The remote side, of
+// course, will have a |RemoteConsumerDataPipeImpl|.
+class RemoteProducerDataPipeImplTestHelper2
+    : public RemoteProducerDataPipeImplTestHelper {
+ public:
+  RemoteProducerDataPipeImplTestHelper2() {}
+  ~RemoteProducerDataPipeImplTestHelper2() override {}
+
+  void DoTransfer() override {
+    // This is the producer dispatcher we'll send.
+    scoped_refptr<DataPipeProducerDispatcher> to_send =
+        new DataPipeProducerDispatcher();
+    to_send->Init(dp());
+    scoped_refptr<Dispatcher> to_receive;
+    SendDispatcher(0, to_send, &to_receive);
+    // |to_send| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
+    ASSERT_EQ(Dispatcher::kTypeDataPipeProducer, to_receive->GetType());
+    to_send = static_cast<DataPipeProducerDispatcher*>(to_receive.get());
+    to_receive = nullptr;
+
+    // Now send it back the other way.
+    SendDispatcher(1, to_send, &to_receive);
+    // |producer_dispatcher_| should have been closed. This is |DCHECK()|ed when
+    // it is destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
+
+    ASSERT_EQ(Dispatcher::kTypeDataPipeProducer, to_receive->GetType());
+    producer_dispatcher_ =
+        static_cast<DataPipeProducerDispatcher*>(to_receive.get());
   }
 
  private:
-  scoped_refptr<DataPipeConsumerDispatcher> consumer_dispatcher_;
+  DISALLOW_COPY_AND_ASSIGN(RemoteProducerDataPipeImplTestHelper2);
+};
 
-  DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImplTestHelper);
+// RemoteConsumerDataPipeImplTestHelper2 ---------------------------------------
+
+// This is like |RemoteConsumerDataPipeImplTestHelper|, but |DoTransfer()| does
+// a second transfer. This thus tests passing a consumer handle twice, and in
+// particular tests (some of) |RemoteProducerDataPipeImpl|'s
+// |ConsumerEndSerialize()| (instead of |LocalDataPipeImpl|'s).
+//
+// Note about naming confusion: This class is named after the "local" class,
+// i.e., |dp_| will have a |RemoteConsumerDataPipeImpl|. The remote side, of
+// course, will have a |RemoteProducerDataPipeImpl|.
+class RemoteConsumerDataPipeImplTestHelper2
+    : public RemoteConsumerDataPipeImplTestHelper {
+ public:
+  RemoteConsumerDataPipeImplTestHelper2() {}
+  ~RemoteConsumerDataPipeImplTestHelper2() override {}
+
+  void DoTransfer() override {
+    // This is the consumer dispatcher we'll send.
+    scoped_refptr<DataPipeConsumerDispatcher> to_send =
+        new DataPipeConsumerDispatcher();
+    to_send->Init(dp());
+    scoped_refptr<Dispatcher> to_receive;
+    SendDispatcher(0, to_send, &to_receive);
+    // |to_send| should have been closed. This is |DCHECK()|ed when it is
+    // destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
+    ASSERT_EQ(Dispatcher::kTypeDataPipeConsumer, to_receive->GetType());
+    to_send = static_cast<DataPipeConsumerDispatcher*>(to_receive.get());
+    to_receive = nullptr;
+
+    // Now send it back the other way.
+    SendDispatcher(1, to_send, &to_receive);
+    // |consumer_dispatcher_| should have been closed. This is |DCHECK()|ed when
+    // it is destroyed.
+    EXPECT_TRUE(to_send->HasOneRef());
+    to_send = nullptr;
+
+    ASSERT_EQ(Dispatcher::kTypeDataPipeConsumer, to_receive->GetType());
+    consumer_dispatcher_ =
+        static_cast<DataPipeConsumerDispatcher*>(to_receive.get());
+  }
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImplTestHelper2);
 };
 
 // Test case instantiation -----------------------------------------------------
 
 typedef testing::Types<LocalDataPipeImplTestHelper,
                        RemoteProducerDataPipeImplTestHelper,
-                       RemoteConsumerDataPipeImplTestHelper> HelperTypes;
+                       RemoteConsumerDataPipeImplTestHelper,
+                       RemoteProducerDataPipeImplTestHelper2,
+                       RemoteConsumerDataPipeImplTestHelper2> HelperTypes;
 
 TYPED_TEST_CASE(DataPipeImplTest, HelperTypes);
 

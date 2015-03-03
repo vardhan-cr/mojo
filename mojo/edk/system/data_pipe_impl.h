@@ -90,6 +90,15 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
  protected:
   DataPipeImpl() : owner_() {}
 
+  // Helper to convert the given circular buffer into messages. The input is a
+  // circular buffer |buffer| (with appropriate element size and capacity), with
+  // current contents starting at |start_index| of length |current_num_bytes|.
+  // This will convert all of the contents.
+  void ConvertDataToMessages(const char* buffer,
+                             size_t* start_index,
+                             size_t* current_num_bytes,
+                             MessageInTransitQueue* message_queue);
+
   DataPipe* owner() const { return owner_; }
 
   const MojoCreateDataPipeOptions& validated_options() const {

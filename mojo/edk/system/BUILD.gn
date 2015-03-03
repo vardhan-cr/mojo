@@ -44,6 +44,7 @@ component("system") {
     "core.h",
     "data_pipe.cc",
     "data_pipe.h",
+    "data_pipe_impl.cc",
     "data_pipe_impl.h",
     "data_pipe_consumer_dispatcher.cc",
     "data_pipe_consumer_dispatcher.h",

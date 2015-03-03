@@ -82,9 +82,6 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
   // no greater than |current_num_bytes_|.
   void MarkDataAsConsumed(size_t num_bytes);
 
-  // Converts queued data to messages (leaves |buffer_| empty).
-  void ConvertDataToMessages(MessageInTransitQueue* message_queue);
-
   scoped_ptr<char, base::AlignedFreeDeleter> buffer_;
   // Circular buffer.
   size_t start_index_;

@@ -430,11 +430,14 @@ bool DataPipe::ProducerEndSerialize(
   // TODO(vtl): The code below is similar to, but not quite the same as,
   // |ProducerCloseNoLock()|.
   DCHECK(has_local_producer_no_lock());
+  producer_awakable_list_->CancelAll();
   producer_awakable_list_.reset();
   // Not a bug, except possibly in "user" code.
   DVLOG_IF(2, producer_in_two_phase_write_no_lock())
       << "Producer transferred with active two-phase write";
   producer_two_phase_max_num_bytes_written_ = 0;
+  if (!has_local_consumer_no_lock())
+    producer_open_ = false;
 
   return rv;
 }
@@ -642,11 +645,14 @@ bool DataPipe::ConsumerEndSerialize(
 
   // TODO(vtl): The code below is similar to, but not quite the same as,
   // |ConsumerCloseNoLock()|.
+  consumer_awakable_list_->CancelAll();
   consumer_awakable_list_.reset();
   // Not a bug, except possibly in "user" code.
   DVLOG_IF(2, consumer_in_two_phase_read_no_lock())
       << "Consumer transferred with active two-phase read";
   consumer_two_phase_max_num_bytes_read_ = 0;
+  if (!has_local_producer_no_lock())
+    consumer_open_ = false;
 
   return rv;
 }

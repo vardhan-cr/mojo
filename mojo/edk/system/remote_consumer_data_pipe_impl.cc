@@ -10,6 +10,7 @@
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
+#include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/configuration.h"
 #include "mojo/edk/system/data_pipe.h"
@@ -255,9 +256,8 @@ void RemoteConsumerDataPipeImpl::ProducerStartSerialize(
     Channel* channel,
     size_t* max_size,
     size_t* max_platform_handles) {
-  // TODO(vtl): Support serializing producer data pipe handles.
-  NOTIMPLEMENTED();  // FIXME
-  *max_size = 0;
+  *max_size = sizeof(SerializedDataPipeProducerDispatcher) +
+              channel->GetSerializedEndpointSize();
   *max_platform_handles = 0;
 }
 
@@ -266,10 +266,33 @@ bool RemoteConsumerDataPipeImpl::ProducerEndSerialize(
     void* destination,
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
-  // TODO(vtl): Support serializing producer data pipe handles.
-  NOTIMPLEMENTED();  // FIXME
-  owner()->ProducerCloseNoLock();
-  return false;
+  SerializedDataPipeProducerDispatcher* s =
+      static_cast<SerializedDataPipeProducerDispatcher*>(destination);
+  s->validated_options = validated_options();
+  void* destination_for_endpoint = static_cast<char*>(destination) +
+                                   sizeof(SerializedDataPipeProducerDispatcher);
+
+  if (!consumer_open()) {
+    // Case 1: The consumer is closed.
+    s->consumer_num_bytes = static_cast<size_t>(-1);
+    *actual_size = sizeof(SerializedDataPipeProducerDispatcher);
+    return true;
+  }
+
+  // Case 2: The consumer isn't closed. We pass |channel_endpoint| back to the
+  // |Channel|. There's no reason for us to continue to exist afterwards.
+
+  s->consumer_num_bytes = consumer_num_bytes_;
+  // Note: We don't use |port|.
+  scoped_refptr<ChannelEndpoint> channel_endpoint;
+  channel_endpoint.swap(channel_endpoint_);
+  channel->SerializeEndpointWithRemotePeer(destination_for_endpoint, nullptr,
+                                           channel_endpoint);
+  owner()->SetConsumerClosedNoLock();
+
+  *actual_size = sizeof(SerializedDataPipeProducerDispatcher) +
+                 channel->GetSerializedEndpointSize();
+  return true;
 }
 
 void RemoteConsumerDataPipeImpl::ConsumerClose() {
