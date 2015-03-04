@@ -15,6 +15,8 @@ import (
 	"mojo/public/go/system"
 )
 
+var core system.Core
+
 func init() {
 	embedder.InitializeMojoEmbedder()
 	core = system.GetCore()

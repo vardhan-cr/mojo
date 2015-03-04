@@ -8,9 +8,11 @@ import (
 	"reflect"
 	"testing"
 
-	"gen/mojom/mojo/test"
 	"mojo/public/go/bindings"
 	"mojo/public/go/system"
+	"mojo/public/interfaces/bindings/tests/rect"
+	test "mojo/public/interfaces/bindings/tests/serialization_test_structs"
+	"mojo/public/interfaces/bindings/tests/test_structs"
 )
 
 func check(t *testing.T, value, zeroValue bindings.Payload) {
@@ -55,51 +57,51 @@ func TestStructs(t *testing.T) {
 	consumerHandle := system.ConsumerHandle(&mockHandle{handle: 3})
 	producerHandle := system.ProducerHandle(&mockHandle{handle: 4})
 	sharedBufferHandle := system.SharedBufferHandle(&mockHandle{handle: 5})
-	value := bindings.Payload(&test.NoDefaultFieldValues{
-		F0:  true,                 // bool
-		F1:  -2,                   // int8
-		F2:  3,                    // uint8
-		F3:  -4000,                // int16
-		F4:  5000,                 // uint16
-		F5:  -6000000,             // int32
-		F6:  7000000,              // uint32
-		F7:  -8000000000000,       // int64
-		F8:  9000000000000,        // uint64
-		F9:  1e-45,                // float
-		F10: -1e45,                // double
-		F11: s1,                   // string
-		F12: &s2,                  // string?
-		F13: messagePipeHandle,    // handle<message_pipe>
-		F14: consumerHandle,       // handle<data_pipe_consumer>
-		F15: producerHandle,       // handle<data_pipe_producer>
-		F16: &messagePipeHandle,   // handle<message_pipe>?
-		F17: &consumerHandle,      // handle<data_pipe_consumer>?
-		F18: &producerHandle,      // handle<data_pipe_producer>?
-		F19: handle,               // handle
-		F20: &handle,              // handle?
-		F21: sharedBufferHandle,   // handle<shared_buffer>
-		F22: &sharedBufferHandle,  // handle<shared_buffer>?
-		F23: []string{s1, s2},     // array<string>
-		F24: []*string{&s1, &s2},  // array<string?>
-		F25: &[]string{s1, s2},    // array<string>?
-		F26: &[]*string{&s1, &s2}, // array<string?>?
-		F27: test.EmptyStruct{},   // EmptyStruct
-		F28: &test.EmptyStruct{},  // EmptyStruct?
+	value := bindings.Payload(&test_structs.NoDefaultFieldValues{
+		F0:  true,                        // bool
+		F1:  -2,                          // int8
+		F2:  3,                           // uint8
+		F3:  -4000,                       // int16
+		F4:  5000,                        // uint16
+		F5:  -6000000,                    // int32
+		F6:  7000000,                     // uint32
+		F7:  -8000000000000,              // int64
+		F8:  9000000000000,               // uint64
+		F9:  1e-45,                       // float
+		F10: -1e45,                       // double
+		F11: s1,                          // string
+		F12: &s2,                         // string?
+		F13: messagePipeHandle,           // handle<message_pipe>
+		F14: consumerHandle,              // handle<data_pipe_consumer>
+		F15: producerHandle,              // handle<data_pipe_producer>
+		F16: &messagePipeHandle,          // handle<message_pipe>?
+		F17: &consumerHandle,             // handle<data_pipe_consumer>?
+		F18: &producerHandle,             // handle<data_pipe_producer>?
+		F19: handle,                      // handle
+		F20: &handle,                     // handle?
+		F21: sharedBufferHandle,          // handle<shared_buffer>
+		F22: &sharedBufferHandle,         // handle<shared_buffer>?
+		F23: []string{s1, s2},            // array<string>
+		F24: []*string{&s1, &s2},         // array<string?>
+		F25: &[]string{s1, s2},           // array<string>?
+		F26: &[]*string{&s1, &s2},        // array<string?>?
+		F27: test_structs.EmptyStruct{},  // EmptyStruct
+		F28: &test_structs.EmptyStruct{}, // EmptyStruct?
 	})
-	check(t, value, &test.NoDefaultFieldValues{})
+	check(t, value, &test_structs.NoDefaultFieldValues{})
 
-	value = &test.ScopedConstants{
-		test.ScopedConstants_EType_E0,
-		test.ScopedConstants_EType_E1,
-		test.ScopedConstants_EType_E2,
-		test.ScopedConstants_EType_E3,
-		test.ScopedConstants_EType_E4,
+	value = &test_structs.ScopedConstants{
+		test_structs.ScopedConstants_EType_E0,
+		test_structs.ScopedConstants_EType_E1,
+		test_structs.ScopedConstants_EType_E2,
+		test_structs.ScopedConstants_EType_E3,
+		test_structs.ScopedConstants_EType_E4,
 		10,
 		25,
 	}
-	check(t, value, &test.ScopedConstants{})
+	check(t, value, &test_structs.ScopedConstants{})
 
-	value = &test.MapKeyTypes{
+	value = &test_structs.MapKeyTypes{
 		F0:  map[bool]bool{false: true, true: false},
 		F1:  map[int8]int8{15: -45, -42: 50},
 		F2:  map[uint8]uint8{15: 45, 42: 50},
@@ -113,9 +115,9 @@ func TestStructs(t *testing.T) {
 		F10: map[float64]float64{1.5: 2.5, 3.5: 1e-9},
 		F11: map[string]string{s1: s2, s2: s1},
 	}
-	check(t, value, &test.MapKeyTypes{})
+	check(t, value, &test_structs.MapKeyTypes{})
 
-	value = &test.MapValueTypes{
+	value = &test_structs.MapValueTypes{
 		F0: map[string][]string{
 			s1: []string{s1, s2},
 			s2: []string{s2, s1},
@@ -140,9 +142,9 @@ func TestStructs(t *testing.T) {
 			s1: [1][2]string{[2]string{s1, s2}},
 			s2: [1][2]string{[2]string{s1, s2}},
 		},
-		F6: map[string]*test.Rect{
-			s1: &test.Rect{},
-			s2: &test.Rect{3, 4, 5, 6},
+		F6: map[string]*rect.Rect{
+			s1: &rect.Rect{},
+			s2: &rect.Rect{3, 4, 5, 6},
 		},
 		F7: map[string]map[string]string{
 			s1: map[string]string{s1: s1, s2: s2},
@@ -159,9 +161,9 @@ func TestStructs(t *testing.T) {
 			},
 		},
 	}
-	check(t, value, &test.MapValueTypes{})
+	check(t, value, &test_structs.MapValueTypes{})
 
-	value = &test.BitArrayValues{
+	value = &test_structs.BitArrayValues{
 		F0: [1]bool{true},
 		F1: [7]bool{true, false, true, false, true, false, true},
 		F2: [9]bool{true, true, true, false, false, false, true, true, true},
@@ -178,5 +180,5 @@ func TestStructs(t *testing.T) {
 			&[2]bool{true, true},
 		},
 	}
-	check(t, value, &test.BitArrayValues{})
+	check(t, value, &test_structs.BitArrayValues{})
 }

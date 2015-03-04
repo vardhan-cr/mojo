@@ -13,9 +13,9 @@ import (
 	"strings"
 	"testing"
 
-	"gen/mojom/mojo/test"
 	"mojo/public/go/bindings"
 	"mojo/public/go/system"
+	test "mojo/public/interfaces/bindings/tests/validation_test_interfaces"
 )
 
 func getTestPath(name string) string {

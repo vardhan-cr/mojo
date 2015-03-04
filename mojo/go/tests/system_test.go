@@ -11,8 +11,6 @@ import (
 	"mojo/public/go/system"
 )
 
-var core system.Core
-
 const (
 	MOJO_HANDLE_SIGNAL_READWRITABLE = system.MojoHandleSignals(system.MOJO_HANDLE_SIGNAL_READABLE |
 		system.MOJO_HANDLE_SIGNAL_WRITABLE)
