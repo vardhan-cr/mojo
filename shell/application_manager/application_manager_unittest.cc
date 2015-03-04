@@ -733,4 +733,26 @@ TEST_F(ApplicationManagerTest, ExternalApp) {
   EXPECT_TRUE(external.configure_incoming_connection_called());
 };
 
+TEST_F(ApplicationManagerTest, TestQueryWithLoaders) {
+  TestApplicationLoader* url_loader = new TestApplicationLoader;
+  TestApplicationLoader* scheme_loader = new TestApplicationLoader;
+  application_manager_->SetLoaderForURL(
+      scoped_ptr<ApplicationLoader>(url_loader), GURL("test:test1"));
+  application_manager_->SetLoaderForScheme(
+      scoped_ptr<ApplicationLoader>(scheme_loader), "test");
+
+  // test::test1 should go to url_loader.
+  TestServicePtr test_service;
+  application_manager_->ConnectToService(GURL("test:test1?foo=bar"),
+                                         &test_service);
+  EXPECT_EQ(1, url_loader->num_loads());
+  EXPECT_EQ(0, scheme_loader->num_loads());
+
+  // test::test2 should go to scheme loader.
+  application_manager_->ConnectToService(GURL("test:test2?foo=bar"),
+                                         &test_service);
+  EXPECT_EQ(1, url_loader->num_loads());
+  EXPECT_EQ(1, scheme_loader->num_loads());
+}
+
 }  // namespace mojo

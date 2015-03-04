@@ -391,7 +391,7 @@ void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
 }
 
 ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
-  auto url_it = url_to_loader_.find(url);
+  auto url_it = url_to_loader_.find(StripQueryFromURL(url));
   if (url_it != url_to_loader_.end())
     return url_it->second;
   auto scheme_it = scheme_to_loader_.find(url.scheme());
