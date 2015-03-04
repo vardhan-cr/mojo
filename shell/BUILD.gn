@@ -79,10 +79,6 @@ if (!use_prebuilt_mojo_shell) {
         "//ui/gl",
       ]
     }
-
-    if (is_linux) {
-      public_configs = [ "//third_party/nss:system_nss_no_ssl_config" ]
-    }
   }
 }  # !use_prebuilt_mojo_shell
 
