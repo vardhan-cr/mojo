@@ -55,8 +55,61 @@ class Setup {
   DISALLOW_COPY_AND_ASSIGN(Setup);
 };
 
+bool ConfigureURLMappings(const base::CommandLine& command_line,
+                          Context* context) {
+  URLResolver* resolver = context->url_resolver();
+
+  // Configure the resolution of unknown mojo: URLs.
+  GURL base_url;
+  if (command_line.HasSwitch(switches::kOrigin))
+    base_url = GURL(command_line.GetSwitchValueASCII(switches::kOrigin));
+  else
+    // Use the shell's file root if the base was not specified.
+    base_url = context->ResolveShellFileURL("");
+
+  if (!base_url.is_valid())
+    return false;
+
+  resolver->SetMojoBaseURL(base_url);
+
+  // The network service must be loaded from the filesystem.
+  // This mapping is done before the command line URL mapping are processed, so
+  // that it can be overridden.
+  resolver->AddURLMapping(
+      GURL("mojo:network_service"),
+      context->ResolveShellFileURL("file:network_service.mojo"));
+
+  // Temporary mapping to avoid workflow breakages after app rename.
+  resolver->AddURLMapping(GURL("mojo:sample_app"), GURL("mojo:spinning_cube"));
+
+  // Command line URL mapping.
+  std::vector<URLResolver::OriginMapping> origin_mappings =
+      URLResolver::GetOriginMappings(command_line.argv());
+  for (const auto& origin_mapping : origin_mappings)
+    resolver->AddOriginMapping(GURL(origin_mapping.origin),
+                               GURL(origin_mapping.base_url));
+
+  if (command_line.HasSwitch(switches::kURLMappings)) {
+    const std::string mappings =
+        command_line.GetSwitchValueASCII(switches::kURLMappings);
+
+    base::StringPairs pairs;
+    if (!base::SplitStringIntoKeyValuePairs(mappings, '=', ',', &pairs))
+      return false;
+    using StringPair = std::pair<std::string, std::string>;
+    for (const StringPair& pair : pairs) {
+      const GURL from(pair.first);
+      const GURL to = context->ResolveCommandLineURL(pair.second);
+      if (!from.is_valid() || !to.is_valid())
+        return false;
+      resolver->AddURLMapping(from, to);
+    }
+  }
+  return true;
+}
+
 void InitContentHandlers(ApplicationManager* manager,
-                         base::CommandLine* command_line) {
+                         const base::CommandLine& command_line) {
   // Default content handlers.
   manager->RegisterContentHandler("application/pdf", GURL("mojo:pdf_viewer"));
   manager->RegisterContentHandler("image/png", GURL("mojo:png_viewer"));
@@ -64,7 +117,7 @@ void InitContentHandlers(ApplicationManager* manager,
 
   // Command-line-specified content handlers.
   std::string handlers_spec =
-      command_line->GetSwitchValueASCII(switches::kContentHandlers);
+      command_line.GetSwitchValueASCII(switches::kContentHandlers);
   if (handlers_spec.empty())
     return;
 
@@ -102,56 +155,23 @@ void InitContentHandlers(ApplicationManager* manager,
   }
 }
 
-bool ConfigureURLMappings(base::CommandLine* command_line, Context* context) {
-  URLResolver* resolver = context->url_resolver();
-
-  // Configure the resolution of unknown mojo: URLs.
-  GURL base_url;
-  if (command_line->HasSwitch(switches::kOrigin))
-    base_url = GURL(command_line->GetSwitchValueASCII(switches::kOrigin));
-  else
-    // Use the shell's file root if the base was not specified.
-    base_url = context->ResolveShellFileURL("");
-
-  if (!base_url.is_valid())
-    return false;
-
-  resolver->SetMojoBaseURL(base_url);
-
-  // The network service must be loaded from the filesystem.
-  // This mapping is done before the command line URL mapping are processed, so
-  // that it can be overridden.
-  resolver->AddURLMapping(
-      GURL("mojo:network_service"),
-      context->ResolveShellFileURL("file:network_service.mojo"));
-
-  // Temporary mapping to avoid workflow breakages after app rename.
-  resolver->AddURLMapping(GURL("mojo:sample_app"), GURL("mojo:spinning_cube"));
-
-  // Command line URL mapping.
-  std::vector<URLResolver::OriginMapping> origin_mappings =
-      URLResolver::GetOriginMappings(command_line->argv());
-  for (const auto& origin_mapping : origin_mappings)
-    resolver->AddOriginMapping(GURL(origin_mapping.origin),
-                               GURL(origin_mapping.base_url));
-
-  if (command_line->HasSwitch(switches::kURLMappings)) {
-    const std::string mappings =
-        command_line->GetSwitchValueASCII(switches::kURLMappings);
-
-    base::StringPairs pairs;
-    if (!base::SplitStringIntoKeyValuePairs(mappings, '=', ',', &pairs))
-      return false;
-    using StringPair = std::pair<std::string, std::string>;
-    for (const StringPair& pair : pairs) {
-      const GURL from(pair.first);
-      const GURL to = context->ResolveCommandLineURL(pair.second);
-      if (!from.is_valid() || !to.is_valid())
-        return false;
-      resolver->AddURLMapping(from, to);
+void InitNativeOptions(ApplicationManager* manager,
+                       const base::CommandLine& command_line) {
+  std::vector<std::string> force_in_process_url_list;
+  base::SplitString(command_line.GetSwitchValueASCII(switches::kForceInProcess),
+                    ',', &force_in_process_url_list);
+  for (const auto& force_in_process_url : force_in_process_url_list) {
+    GURL gurl(force_in_process_url);
+    if (!gurl.is_valid()) {
+      LOG(ERROR) << "Invalid value for switch " << switches::kForceInProcess
+                 << ": '" << force_in_process_url << "'is not a valid URL.";
+      return;
     }
+
+    NativeRunnerFactory::Options options;
+    options.force_in_process = true;
+    manager->SetNativeOptionsForURL(options, gurl);
   }
-  return true;
 }
 
 class TracingServiceProvider : public ServiceProvider {
@@ -218,9 +238,10 @@ GURL Context::ResolveCommandLineURL(const std::string& path) {
 }
 
 bool Context::Init() {
-  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
 
-  if (command_line->HasSwitch(switches::kWaitForDebugger))
+  if (command_line.HasSwitch(switches::kWaitForDebugger))
     base::debug::WaitForDebugger(60, true);
 
   EnsureEmbedderIsInitialized();
@@ -239,12 +260,12 @@ bool Context::Init() {
       embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
       task_runners_->io_runner(), embedder::ScopedPlatformHandle());
 
-  if (command_line->HasSwitch(switches::kEnableExternalApplications)) {
+  if (command_line.HasSwitch(switches::kEnableExternalApplications)) {
     listener_.reset(new ExternalApplicationListener(
         task_runners_->shell_runner(), task_runners_->io_runner()));
 
     base::FilePath socket_path =
-        command_line->GetSwitchValuePath(switches::kEnableExternalApplications);
+        command_line.GetSwitchValuePath(switches::kEnableExternalApplications);
     if (socket_path.empty())
       socket_path = ExternalApplicationListener::ConstructDefaultSocketPath();
 
@@ -255,7 +276,7 @@ bool Context::Init() {
   }
 
   scoped_ptr<NativeRunnerFactory> runner_factory;
-  if (command_line->HasSwitch(switches::kEnableMultiprocess))
+  if (command_line.HasSwitch(switches::kEnableMultiprocess))
     runner_factory.reset(new OutOfProcessDynamicServiceRunnerFactory(this));
   else
     runner_factory.reset(new InProcessDynamicServiceRunnerFactory(this));
@@ -266,6 +287,7 @@ bool Context::Init() {
           switches::kDisableCache));
 
   InitContentHandlers(&application_manager_, command_line);
+  InitNativeOptions(&application_manager_, command_line);
 
   ServiceProviderPtr tracing_service_provider_ptr;
   new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));

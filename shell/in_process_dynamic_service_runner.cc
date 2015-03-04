@@ -61,5 +61,10 @@ void InProcessDynamicServiceRunner::Run() {
   app_completed_callback_runner_.Reset();
 }
 
+scoped_ptr<NativeRunner> InProcessDynamicServiceRunnerFactory::Create(
+    const Options& options) {
+  return make_scoped_ptr(new InProcessDynamicServiceRunner(context_));
+}
+
 }  // namespace shell
 }  // namespace mojo

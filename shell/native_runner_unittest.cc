@@ -47,7 +47,7 @@ class TestNativeRunnerFactory : public NativeRunnerFactory {
  public:
   explicit TestNativeRunnerFactory(TestState* state) : state_(state) {}
   ~TestNativeRunnerFactory() override {}
-  scoped_ptr<NativeRunner> Create() override {
+  scoped_ptr<NativeRunner> Create(const Options& options) override {
     return scoped_ptr<NativeRunner>(new TestNativeRunner(state_));
   }
 

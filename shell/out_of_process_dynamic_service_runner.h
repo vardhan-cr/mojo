@@ -8,6 +8,7 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/app_child_process.mojom.h"
 #include "shell/app_child_process_host.h"
@@ -17,16 +18,18 @@
 namespace mojo {
 namespace shell {
 
+class Context;
+
 // An implementation of |DynamicServiceRunner| that loads/runs the given app
 // (from the file system) in a separate process (of its own).
-class OutOfProcessDynamicServiceRunner : public mojo::NativeRunner {
+class OutOfProcessDynamicServiceRunner : public NativeRunner {
  public:
   explicit OutOfProcessDynamicServiceRunner(Context* context);
   ~OutOfProcessDynamicServiceRunner() override;
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
-             mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+             NativeRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
@@ -44,8 +47,19 @@ class OutOfProcessDynamicServiceRunner : public mojo::NativeRunner {
   DISALLOW_COPY_AND_ASSIGN(OutOfProcessDynamicServiceRunner);
 };
 
-typedef DynamicServiceRunnerFactoryImpl<OutOfProcessDynamicServiceRunner>
-    OutOfProcessDynamicServiceRunnerFactory;
+class OutOfProcessDynamicServiceRunnerFactory : public NativeRunnerFactory {
+ public:
+  explicit OutOfProcessDynamicServiceRunnerFactory(Context* context)
+      : context_(context) {}
+  ~OutOfProcessDynamicServiceRunnerFactory() override {}
+
+  scoped_ptr<NativeRunner> Create(const Options& options) override;
+
+ private:
+  Context* const context_;
+
+  DISALLOW_COPY_AND_ASSIGN(OutOfProcessDynamicServiceRunnerFactory);
+};
 
 }  // namespace shell
 }  // namespace mojo

@@ -9,6 +9,7 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/scoped_native_library.h"
+#include "shell/in_process_dynamic_service_runner.h"
 
 namespace mojo {
 namespace shell {
@@ -58,6 +59,14 @@ void OutOfProcessDynamicServiceRunner::AppCompleted(int32_t result) {
   base::Closure app_completed_callback = app_completed_callback_;
   app_completed_callback_.Reset();
   app_completed_callback.Run();
+}
+
+scoped_ptr<NativeRunner> OutOfProcessDynamicServiceRunnerFactory::Create(
+    const Options& options) {
+  if (options.force_in_process)
+    return make_scoped_ptr(new InProcessDynamicServiceRunner(context_));
+
+  return make_scoped_ptr(new OutOfProcessDynamicServiceRunner(context_));
 }
 
 }  // namespace shell

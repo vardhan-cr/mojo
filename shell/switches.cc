@@ -42,6 +42,11 @@ const char kEnableExternalApplications[] = "enable-external-applications";
 // change it to "single-process") when it works.
 const char kEnableMultiprocess[] = "enable-multiprocess";
 
+// In multiprocess mode, force these apps to be loaded in the main process.
+// Comma-separate list of URLs. Example:
+// --force-in-process=mojo:native_viewport_service,mojo:network_service
+const char kForceInProcess[] = "force-in-process";
+
 // Print the usage message and exit.
 const char kHelp[] = "help";
 
@@ -67,6 +72,7 @@ const char* kSwitchArray[] = {kV,
                               kDisableCache,
                               kEnableExternalApplications,
                               kEnableMultiprocess,
+                              kForceInProcess,
                               kHelp,
                               kMapOrigin,
                               kOrigin,

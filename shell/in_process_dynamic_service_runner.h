@@ -8,6 +8,7 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/scoped_native_library.h"
 #include "base/threading/simple_thread.h"
 #include "shell/application_manager/application_manager.h"
@@ -16,10 +17,13 @@
 namespace mojo {
 namespace shell {
 
+class Context;
+
+// TODO(vtl): Rename this to "InProcessNativeRunner".
 // An implementation of |DynamicServiceRunner| that loads/runs the given app
 // (from the file system) on a separate thread (in the current process).
 class InProcessDynamicServiceRunner
-    : public mojo::NativeRunner,
+    : public NativeRunner,
       public base::DelegateSimpleThread::Delegate {
  public:
   explicit InProcessDynamicServiceRunner(Context* context);
@@ -27,7 +31,7 @@ class InProcessDynamicServiceRunner
 
   // |DynamicServiceRunner| method:
   void Start(const base::FilePath& app_path,
-             mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+             NativeRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
@@ -36,7 +40,7 @@ class InProcessDynamicServiceRunner
   void Run() override;
 
   base::FilePath app_path_;
-  mojo::NativeRunner::CleanupBehavior cleanup_behavior_;
+  NativeRunner::CleanupBehavior cleanup_behavior_;
   InterfaceRequest<Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 
@@ -46,8 +50,19 @@ class InProcessDynamicServiceRunner
   DISALLOW_COPY_AND_ASSIGN(InProcessDynamicServiceRunner);
 };
 
-typedef DynamicServiceRunnerFactoryImpl<InProcessDynamicServiceRunner>
-    InProcessDynamicServiceRunnerFactory;
+class InProcessDynamicServiceRunnerFactory : public NativeRunnerFactory {
+ public:
+  explicit InProcessDynamicServiceRunnerFactory(Context* context)
+      : context_(context) {}
+  ~InProcessDynamicServiceRunnerFactory() override {}
+
+  scoped_ptr<NativeRunner> Create(const Options& options) override;
+
+ private:
+  Context* const context_;
+
+  DISALLOW_COPY_AND_ASSIGN(InProcessDynamicServiceRunnerFactory);
+};
 
 }  // namespace shell
 }  // namespace mojo

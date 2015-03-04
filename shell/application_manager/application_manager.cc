@@ -23,6 +23,7 @@
 namespace mojo {
 
 namespace {
+
 // Used by TestAPI.
 bool has_created_instance = false;
 
@@ -296,16 +297,26 @@ void ApplicationManager::HandleFetchCallback(
   // application. That could either mean looking for the platform-specific dll
   // header, or looking for some specific mojo signature prepended to the
   // library.
+  // TODO(vtl): (Maybe this should be done by the factory/runner?)
+
+  NativeRunnerFactory::Options options;
+  if (url_to_native_options_.find(fetcher->GetURL()) !=
+      url_to_native_options_.end()) {
+    DVLOG(2) << "Applying stored native options to resolved URL "
+             << fetcher->GetURL() << " (requested URL " << requested_url << ")";
+    options = url_to_native_options_[fetcher->GetURL()];
+  }
 
   fetcher->AsPath(
       blocking_pool_,
       base::Bind(&ApplicationManager::RunNativeApplication,
                  weak_ptr_factory_.GetWeakPtr(), base::Passed(request.Pass()),
-                 cleanup_behavior, base::Passed(fetcher.Pass())));
+                 options, cleanup_behavior, base::Passed(fetcher.Pass())));
 }
 
 void ApplicationManager::RunNativeApplication(
     InterfaceRequest<Application> application_request,
+    const NativeRunnerFactory::Options& options,
     NativeRunner::CleanupBehavior cleanup_behavior,
     scoped_ptr<Fetcher> fetcher,
     const base::FilePath& path,
@@ -321,7 +332,7 @@ void ApplicationManager::RunNativeApplication(
     return;
   }
 
-  NativeRunner* runner = native_runner_factory_->Create().release();
+  NativeRunner* runner = native_runner_factory_->Create(options).release();
   native_runners_.push_back(runner);
   runner->Start(path, cleanup_behavior, application_request.Pass(),
                 base::Bind(&ApplicationManager::CleanupRunner,
@@ -388,6 +399,18 @@ void ApplicationManager::SetLoaderForScheme(
 void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
                                        const GURL& url) {
   url_to_args_[url] = args;
+}
+
+void ApplicationManager::SetNativeOptionsForURL(
+    const NativeRunnerFactory::Options& options,
+    const GURL& url) {
+  // Apply mappings and resolution to get the resolved URL.
+  GURL resolved_url = delegate_->ResolveURL(delegate_->ResolveMappings(url));
+  // TODO(vtl): We should probably also remove/disregard the query string (and
+  // maybe canonicalize in other ways).
+  DVLOG(2) << "Storing native options for resolved URL " << resolved_url
+           << " (original URL " << url << ")";
+  url_to_native_options_[resolved_url] = options;
 }
 
 ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {

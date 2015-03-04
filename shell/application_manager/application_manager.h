@@ -34,12 +34,16 @@ class NativeRunner {
  public:
   // Parameter for |Start()| to specify its cleanup behavior.
   enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
+
   virtual ~NativeRunner() {}
 
   // Loads the app in the file at |app_path| and runs it on some other
   // thread/process. If |cleanup_behavior| is |true|, takes ownership of the
   // file. |app_completed_callback| is posted (to the thread on which |Start()|
   // was called) after |MojoMain()| completes.
+  // TODO(vtl): |app_path| and |cleanup_behavior| should probably be moved to
+  // the factory's Create(). Rationale: The factory may need information from
+  // the file to decide what kind of NativeRunner to make.
   virtual void Start(const base::FilePath& app_path,
                      CleanupBehavior cleanup_behavior,
                      InterfaceRequest<Application> application_request,
@@ -48,8 +52,17 @@ class NativeRunner {
 
 class NativeRunnerFactory {
  public:
+  // Options for running the native app. (This will contain, e.g., information
+  // about the sandbox profile, etc.)
+  struct Options {
+    // Constructs with default options.
+    Options() : force_in_process(false) {}
+
+    bool force_in_process;
+  };
+
   virtual ~NativeRunnerFactory() {}
-  virtual scoped_ptr<NativeRunner> Create() = 0;
+  virtual scoped_ptr<NativeRunner> Create(const Options& options) = 0;
 };
 
 class ApplicationManager {
@@ -127,9 +140,19 @@ class ApplicationManager {
   // Sets a Loader to be used for a specific url scheme.
   void SetLoaderForScheme(scoped_ptr<ApplicationLoader> loader,
                           const std::string& scheme);
-  // These strings will be passed to the Initialize() method when an
-  // Application is instantiated.
+  // These strings will be passed to the Initialize() method when an Application
+  // is instantiated.
+  // TODO(vtl): Maybe we should store/compare resolved URLs, like
+  // SetNativeOptionsForURL() below?
   void SetArgsForURL(const std::vector<std::string>& args, const GURL& url);
+  // These options will be used in running any native application at |url|.
+  // (|url| will be mapped and resolved, and any application whose resolved URL
+  // matches it will have |options| applied.)
+  // TODO(vtl): This may not do what's desired if the resolved URL results in an
+  // HTTP redirect. Really, we want options to be identified with a particular
+  // implementation, maybe via a signed manifest or something like that.
+  void SetNativeOptionsForURL(const NativeRunnerFactory::Options& options,
+                              const GURL& url);
 
   // Destroys all Shell-ends of connections established with Applications.
   // Applications connected by this ApplicationManager will observe pipe errors
@@ -148,6 +171,7 @@ class ApplicationManager {
   typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
   typedef std::map<std::string, GURL> MimeTypeToURLMap;
+  typedef std::map<GURL, NativeRunnerFactory::Options> URLToNativeOptionsMap;
 
   bool ConnectToRunningApplication(const GURL& resolved_url,
                                    const GURL& requestor_url,
@@ -189,6 +213,7 @@ class ApplicationManager {
                            scoped_ptr<Fetcher> fetcher);
 
   void RunNativeApplication(InterfaceRequest<Application> application_request,
+                            const NativeRunnerFactory::Options& options,
                             NativeRunner::CleanupBehavior cleanup_behavior,
                             scoped_ptr<Fetcher> fetcher,
                             const base::FilePath& file_path,
@@ -210,7 +235,7 @@ class ApplicationManager {
 
   void CleanupRunner(NativeRunner* runner);
 
-  Delegate* delegate_;
+  Delegate* const delegate_;
   // Loader management.
   // Loaders are chosen in the order they are listed here.
   URLToLoaderMap url_to_loader_;
@@ -221,6 +246,8 @@ class ApplicationManager {
   URLToShellImplMap url_to_shell_impl_;
   URLToContentHandlerMap url_to_content_handler_;
   URLToArgsMap url_to_args_;
+  // Note: The keys are URLs after mapping and resolving.
+  URLToNativeOptionsMap url_to_native_options_;
 
   base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
 
