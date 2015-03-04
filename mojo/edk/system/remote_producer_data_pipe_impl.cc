@@ -444,7 +444,7 @@ void RemoteProducerDataPipeImpl::MarkDataAsConsumed(size_t num_bytes) {
   }
 
   RemoteDataPipeAck ack_data = {};
-  ack_data.num_bytes_consumed = num_bytes;
+  ack_data.num_bytes_consumed = static_cast<uint32_t>(num_bytes);
   scoped_ptr<MessageInTransit> message(
       new MessageInTransit(MessageInTransit::kTypeEndpoint,
                            MessageInTransit::kSubtypeEndpointDataPipeAck,
