@@ -70,9 +70,10 @@ class PromiseTest(unittest.TestCase):
 
   def testRecoverAfterException(self):
     (p, resolve, _) = _GetPromiseAndFunctions()
-    p.Then(_ThrowException).Catch(self._AddToAccumulated)
+    q = p.Then(_ThrowException).Catch(self._AddToAccumulated)
     self.assertEquals(self.accumulated, [])
     resolve(0)
+    self.assertEquals(q.state, promise.Promise.STATE_FULLFILLED)
     self.assertEquals(len(self.accumulated), 1)
     self.assertIsInstance(self.accumulated[0], RuntimeError)
     self.assertEquals(self.accumulated[0].message, 0)
@@ -201,7 +202,7 @@ class PromiseTest(unittest.TestCase):
     self.assertEquals(add_promise.state, promise.Promise.STATE_PENDING)
     promises_and_functions[7][2]('error')
     self.assertEquals(res, ['error'])
-    self.assertEquals(add_promise.state, promise.Promise.STATE_REJECTED)
+    self.assertEquals(add_promise.state, promise.Promise.STATE_FULLFILLED)
 
 
   def testAttributeGetter(self):
