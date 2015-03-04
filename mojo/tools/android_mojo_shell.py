@@ -8,7 +8,6 @@ import logging
 import sys
 
 from mopy.config import Config
-from mopy.paths import Paths
 from mopy import android
 
 USAGE = ("android_mojo_shell.py "
@@ -41,17 +40,19 @@ def main():
                            dest='debug', action='store_false')
   parser.add_argument('--target-cpu', help='CPU architecture to run for.',
                       choices=['x64', 'x86', 'arm'])
+  parser.add_argument('--origin', help='Origin for mojo: URLs.')
   launcher_args, args = parser.parse_known_args()
 
   config = Config(target_os=Config.OS_ANDROID,
                   target_cpu=launcher_args.target_cpu,
                   is_debug=launcher_args.debug)
 
-  args.append(android.PrepareShellRun(config))
+  extra_shell_args = android.PrepareShellRun(config, launcher_args.origin)
+  args.extend(extra_shell_args)
+
   android.CleanLogs()
   p = android.ShowLogs()
   android.StartShell(args, sys.stdout, p.terminate)
-
   return 0
 
 

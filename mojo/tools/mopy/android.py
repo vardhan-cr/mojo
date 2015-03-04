@@ -151,22 +151,24 @@ def StartHttpServerForDirectory(path):
   return 'http://127.0.0.1:%d/' % _MapPort(0, httpd.server_address[1])
 
 
-def PrepareShellRun(config):
-  """
-  Prepares for StartShell. Returns an origin arg with the forwarded device port.
+def PrepareShellRun(config, origin=None):
+  """ Prepares for StartShell: runs adb as root and installs the apk.  If no
+  --origin is specified, local http server will be set up to serve files from
+  the build directory along with port forwarding.
 
-  Start an internal http server to serve mojo applications, forward a local port
-  on the device to this http server, and install the latest mojo shell version.
-  """
+  Returns arguments that should be appended to shell argument list."""
   build_dir = Paths(config).build_dir
+
   subprocess.check_call([ADB_PATH, 'root'])
   apk_path = os.path.join(build_dir, 'apks', 'MojoShell.apk')
   subprocess.check_call(
       [ADB_PATH, 'install', '-r', apk_path, '-i', MOJO_SHELL_PACKAGE_NAME])
 
-  atexit.register(StopShell)
+  extra_shell_args = []
+  origin_url = origin if origin else StartHttpServerForDirectory(build_dir)
+  extra_shell_args.append("--origin=" + origin_url)
 
-  return '--origin=' + StartHttpServerForDirectory(build_dir)
+  return extra_shell_args
 
 
 def _StartHttpServerForOriginMapping(mapping):
@@ -220,13 +222,15 @@ def StartShell(arguments, stdout=None, on_application_stop=None):
     subprocess.check_call([ADB_PATH, 'shell', 'rm', STDOUT_PIPE])
     parameters.append('--fifo-path=%s' % STDOUT_PIPE)
     _ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
-  assert any("--origin=http://127.0.0.1:" in arg for arg in arguments)
+  # The origin has to be specified whether it's local or external.
+  assert any("--origin=" in arg for arg in arguments)
   parameters += [_StartHttpServerForOriginMappings(arg) for arg in arguments]
 
   if parameters:
     encodedParameters = json.dumps(parameters)
     cmd += [ '--es', 'encodedParameters', encodedParameters]
 
+  atexit.register(StopShell)
   with open(os.devnull, 'w') as devnull:
     subprocess.Popen(cmd, stdout=devnull).wait()
 

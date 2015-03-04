@@ -43,9 +43,9 @@ def main():
   apptest_list = execution_globals["tests"]
   _logging.debug("Test list: %s" % apptest_list)
 
-  android_origin_argument = None
+  extra_args = []
   if config.target_os == Config.OS_ANDROID:
-    android_origin_argument = android.PrepareShellRun(config)
+    extra_args.extend(android.PrepareShellRun(config))
 
   gtest.set_color()
   mojo_paths = Paths(config)
@@ -54,9 +54,7 @@ def main():
   for apptest_dict in apptest_list:
     apptest = apptest_dict["test"]
     test_args = apptest_dict.get("test-args", [])
-    shell_args = apptest_dict.get("shell-args", [])
-    if android_origin_argument:
-      shell_args.append(android_origin_argument)
+    shell_args = apptest_dict.get("shell-args", []) + extra_args
     launched_services = apptest_dict.get("launched-services", [])
 
     print "Running " + apptest + "...",
