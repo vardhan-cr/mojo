@@ -1,0 +1,22 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module mojo.files;
+
+import "services/files/directory.mojom";
+import "services/files/types.mojom";
+
+enum FileSystem {
+  // A per-instance (i.e., one for each call to |OpenFileSystem()|) temporary
+  // file system.
+  TEMPORARY,
+
+  // A persistent, shared file system (rooted at ~/MojoDebug, which must already
+  // exist) only available in Debug builds.
+  DEBUG,
+};
+
+interface Files {
+  OpenFileSystem(FileSystem file_system, Directory& directory) => (Error error);
+};

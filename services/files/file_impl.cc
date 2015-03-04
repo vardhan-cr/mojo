@@ -1,0 +1,364 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#include "services/files/file_impl.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <limits>
+
+#include "base/files/scoped_file.h"
+#include "base/logging.h"
+#include "base/posix/eintr_wrapper.h"
+#include "services/files/futimens.h"
+#include "services/files/util.h"
+
+static_assert(sizeof(off_t) <= sizeof(int64_t), "off_t too big");
+static_assert(sizeof(size_t) >= sizeof(uint32_t), "size_t too small");
+
+namespace mojo {
+namespace files {
+
+const size_t kMaxReadSize = 1 * 1024 * 1024;  // 1 MB.
+
+FileImpl::FileImpl(InterfaceRequest<File> request, base::ScopedFD file_fd)
+    : binding_(this, request.Pass()), file_fd_(file_fd.Pass()) {
+  DCHECK(file_fd_.is_valid());
+}
+
+FileImpl::~FileImpl() {
+}
+
+void FileImpl::Close(const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+  int fd_to_try_to_close = file_fd_.release();
+  // POSIX.1 (2013) leaves the validity of the FD undefined on EINTR and EIO. On
+  // Linux, the FD is always invalidated, so we'll pretend that the close
+  // succeeded. (On other Unixes, the situation may be different and possibly
+  // totally broken; see crbug.com/269623.)
+  if (IGNORE_EINTR(close(fd_to_try_to_close)) != 0) {
+    // Save errno, since we do a few things and we don't want it trampled.
+    int error = errno;
+    CHECK_NE(error, EBADF);   // This should never happen.
+    DCHECK_NE(error, EINTR);  // We already ignored EINTR.
+    // I don't know what Linux does on EIO (or any other errors) -- POSIX leaves
+    // it undefined -- so report the error and hope that the FD was invalidated.
+    callback.Run(ErrnoToError(error));
+    return;
+  }
+
+  callback.Run(ERROR_OK);
+}
+
+// TODO(vtl): Move the implementation to a thread pool.
+void FileImpl::Read(uint32_t num_bytes_to_read,
+                    int64_t offset,
+                    Whence whence,
+                    const Callback<void(Error, Array<uint8_t>)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, Array<uint8_t>());
+    return;
+  }
+  if (num_bytes_to_read > kMaxReadSize) {
+    callback.Run(ERROR_OUT_OF_RANGE, Array<uint8_t>());
+    return;
+  }
+  if (Error error = IsOffsetValid(offset)) {
+    callback.Run(error, Array<uint8_t>());
+    return;
+  }
+  if (Error error = IsWhenceValid(whence)) {
+    callback.Run(error, Array<uint8_t>());
+    return;
+  }
+
+  if (offset != 0 || whence != WHENCE_FROM_CURRENT) {
+    // TODO(vtl): Use |pread()| below in the |WHENCE_FROM_START| case. This
+    // implementation is obviously not atomic. (If someone seeks simultaneously,
+    // we'll end up writing somewhere else. Or, well, we would if we were
+    // multithreaded.) Maybe we should do an |ftell()| and always use |pread()|.
+    // TODO(vtl): Possibly, at least sometimes we should not change the file
+    // position. See TODO in file.mojom.
+    if (lseek(file_fd_.get(), static_cast<off_t>(offset),
+              WhenceToStandardWhence(whence)) < 0) {
+      callback.Run(ErrnoToError(errno), Array<uint8_t>());
+      return;
+    }
+  }
+
+  Array<uint8_t> bytes_read(num_bytes_to_read);
+  ssize_t num_bytes_read = HANDLE_EINTR(
+      read(file_fd_.get(), &bytes_read.front(), num_bytes_to_read));
+  if (num_bytes_read < 0) {
+    callback.Run(ErrnoToError(errno), Array<uint8_t>());
+    return;
+  }
+
+  DCHECK_LE(static_cast<size_t>(num_bytes_read), num_bytes_to_read);
+  bytes_read.resize(static_cast<size_t>(num_bytes_read));
+  callback.Run(ERROR_OK, bytes_read.Pass());
+}
+
+// TODO(vtl): Move the implementation to a thread pool.
+void FileImpl::Write(Array<uint8_t> bytes_to_write,
+                     int64_t offset,
+                     Whence whence,
+                     const Callback<void(Error, uint32_t)>& callback) {
+  DCHECK(!bytes_to_write.is_null());
+
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, 0);
+    return;
+  }
+  // Who knows what |write()| would return if the size is that big (and it
+  // actually wrote that much).
+  if (bytes_to_write.size() >
+      static_cast<size_t>(std::numeric_limits<ssize_t>::max())) {
+    callback.Run(ERROR_OUT_OF_RANGE, 0);
+    return;
+  }
+  if (Error error = IsOffsetValid(offset)) {
+    callback.Run(error, 0);
+    return;
+  }
+  if (Error error = IsWhenceValid(whence)) {
+    callback.Run(error, 0);
+    return;
+  }
+
+  if (offset != 0 || whence != WHENCE_FROM_CURRENT) {
+    // TODO(vtl): Use |pwrite()| below in the |WHENCE_FROM_START| case. This
+    // implementation is obviously not atomic. (If someone seeks simultaneously,
+    // we'll end up writing somewhere else. Or, well, we would if we were
+    // multithreaded.) Maybe we should do an |ftell()| and always use
+    // |pwrite()|.
+    // TODO(vtl): Possibly, at least sometimes we should not change the file
+    // position. See TODO in file.mojom.
+    if (lseek(file_fd_.get(), static_cast<off_t>(offset),
+              WhenceToStandardWhence(whence)) < 0) {
+      callback.Run(ErrnoToError(errno), 0);
+      return;
+    }
+  }
+
+  const void* buf =
+      (bytes_to_write.size() > 0) ? &bytes_to_write.front() : nullptr;
+  ssize_t num_bytes_written =
+      HANDLE_EINTR(write(file_fd_.get(), buf, bytes_to_write.size()));
+  if (num_bytes_written < 0) {
+    callback.Run(ErrnoToError(errno), 0);
+    return;
+  }
+
+  DCHECK_LE(static_cast<size_t>(num_bytes_written),
+            std::numeric_limits<uint32_t>::max());
+  callback.Run(ERROR_OK, static_cast<uint32_t>(num_bytes_written));
+}
+
+void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
+                            int64_t offset,
+                            Whence whence,
+                            int64_t num_bytes_to_read,
+                            const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+  if (Error error = IsOffsetValid(offset)) {
+    callback.Run(error);
+    return;
+  }
+  if (Error error = IsWhenceValid(whence)) {
+    callback.Run(error);
+    return;
+  }
+
+  // TODO(vtl): FIXME soon
+  NOTIMPLEMENTED();
+  callback.Run(ERROR_UNIMPLEMENTED);
+}
+
+void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
+                               int64_t offset,
+                               Whence whence,
+                               const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+  if (Error error = IsOffsetValid(offset)) {
+    callback.Run(error);
+    return;
+  }
+  if (Error error = IsWhenceValid(whence)) {
+    callback.Run(error);
+    return;
+  }
+
+  // TODO(vtl): FIXME soon
+  NOTIMPLEMENTED();
+  callback.Run(ERROR_UNIMPLEMENTED);
+}
+
+void FileImpl::Tell(const Callback<void(Error, int64_t)>& callback) {
+  Seek(0, WHENCE_FROM_CURRENT, callback);
+}
+
+void FileImpl::Seek(int64_t offset,
+                    Whence whence,
+                    const Callback<void(Error, int64_t)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, 0);
+    return;
+  }
+  if (Error error = IsOffsetValid(offset)) {
+    callback.Run(error, 0);
+    return;
+  }
+  if (Error error = IsWhenceValid(whence)) {
+    callback.Run(error, 0);
+    return;
+  }
+
+  off_t position = lseek(file_fd_.get(), static_cast<off_t>(offset),
+                         WhenceToStandardWhence(whence));
+  if (position < 0) {
+    callback.Run(ErrnoToError(errno), 0);
+    return;
+  }
+
+  callback.Run(ERROR_OK, static_cast<int64>(position));
+}
+
+void FileImpl::Stat(const Callback<void(Error, FileInformationPtr)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, nullptr);
+    return;
+  }
+
+  struct stat buf;
+  if (fstat(file_fd_.get(), &buf) != 0) {
+    callback.Run(ErrnoToError(errno), nullptr);
+    return;
+  }
+
+  FileInformationPtr file_info(FileInformation::New());
+  file_info->size = static_cast<int64_t>(buf.st_size);
+  file_info->atime = Timespec::New();
+  file_info->mtime = Timespec::New();
+#if defined(OS_ANDROID)
+  file_info->atime->seconds = static_cast<int64_t>(buf.st_atime);
+  file_info->atime->nanoseconds = static_cast<int32_t>(buf.st_atime_nsec);
+  file_info->mtime->seconds = static_cast<int64_t>(buf.st_mtime);
+  file_info->mtime->nanoseconds = static_cast<int32_t>(buf.st_mtime_nsec);
+#else
+  file_info->atime->seconds = static_cast<int64_t>(buf.st_atim.tv_sec);
+  file_info->atime->nanoseconds = static_cast<int32_t>(buf.st_atim.tv_nsec);
+  file_info->mtime->seconds = static_cast<int64_t>(buf.st_mtim.tv_sec);
+  file_info->mtime->nanoseconds = static_cast<int32_t>(buf.st_mtim.tv_nsec);
+#endif
+
+  callback.Run(ERROR_OK, file_info.Pass());
+}
+
+void FileImpl::Truncate(int64_t size, const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+  if (size < 0) {
+    callback.Run(ERROR_INVALID_ARGUMENT);
+    return;
+  }
+  if (Error error = IsOffsetValid(size)) {
+    callback.Run(error);
+    return;
+  }
+
+  if (ftruncate(file_fd_.get(), static_cast<off_t>(size)) != 0) {
+    callback.Run(ErrnoToError(errno));
+    return;
+  }
+
+  callback.Run(ERROR_OK);
+}
+
+void FileImpl::Touch(TimespecOrNowPtr atime,
+                     TimespecOrNowPtr mtime,
+                     const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+
+  struct timespec times[2];
+  if (Error error = TimespecOrNowToStandardTimespec(atime.get(), &times[0])) {
+    callback.Run(error);
+    return;
+  }
+  if (Error error = TimespecOrNowToStandardTimespec(mtime.get(), &times[1])) {
+    callback.Run(error);
+    return;
+  }
+
+  if (futimens(file_fd_.get(), times) != 0) {
+    callback.Run(ErrnoToError(errno));
+    return;
+  }
+
+  callback.Run(ERROR_OK);
+}
+
+void FileImpl::Dup(InterfaceRequest<File> file,
+                   const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+
+  base::ScopedFD file_fd(dup(file_fd_.get()));
+  if (!file_fd.is_valid()) {
+    callback.Run(ErrnoToError(errno));
+    return;
+  }
+
+  new FileImpl(file.Pass(), file_fd.Pass());
+  callback.Run(ERROR_OK);
+}
+
+void FileImpl::Reopen(InterfaceRequest<File> file,
+                      uint32_t open_flags,
+                      const Callback<void(Error)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED);
+    return;
+  }
+
+  // TODO(vtl): FIXME soon
+  NOTIMPLEMENTED();
+  callback.Run(ERROR_UNIMPLEMENTED);
+}
+
+void FileImpl::AsBuffer(
+    const Callback<void(Error, ScopedSharedBufferHandle)>& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, ScopedSharedBufferHandle());
+    return;
+  }
+
+  // TODO(vtl): FIXME soon
+  NOTIMPLEMENTED();
+  callback.Run(ERROR_UNIMPLEMENTED, ScopedSharedBufferHandle());
+}
+
+}  // namespace files
+}  // namespace mojo

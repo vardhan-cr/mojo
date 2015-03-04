@@ -61,6 +61,7 @@ group("tests") {
     "//mojo/tools:message_generator",
     "//services/clipboard:apptests",
     "//services/dart:dart_apptests",
+    "//services/files:apptests",
     "//services/http_server:apptests",
     "//services/js:js_apptests",
     "//services/js:js_services_unittests",
