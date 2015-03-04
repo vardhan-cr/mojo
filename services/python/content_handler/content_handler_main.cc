@@ -44,29 +44,11 @@ using mojo::ScopedDataPipeConsumerHandle;
 using mojo::URLResponsePtr;
 using mojo::python::ScopedPyRef;
 
-class PythonContentHandler : public ApplicationDelegate,
-                             public ContentHandlerFactory::Delegate {
+class PythonContentHandler : public ContentHandlerFactory::Delegate {
  public:
-  PythonContentHandler() : content_handler_factory_(this), debug_(false) {}
+  PythonContentHandler(bool debug) : debug_(debug) {}
 
  private:
-  // Overridden from ApplicationDelegate:
-  void Initialize(mojo::ApplicationImpl* app) override {
-    GURL url(app->url());
-    if (url.has_query()) {
-      std::vector<std::string> query_parameters;
-      Tokenize(url.query(), "&", &query_parameters);
-      debug_ = std::find(query_parameters.begin(), query_parameters.end(),
-                         "debug=true") != query_parameters.end();
-    }
-  }
-
-  // Overridden from ApplicationDelegate:
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    connection->AddService(&content_handler_factory_);
-    return true;
-  }
-
   // Extracts the target application into a temporary directory. This directory
   // is deleted at the end of the life of the PythonContentHandler object.
   std::unique_ptr<base::ScopedTempDir> ExtractApplication(
@@ -217,10 +199,46 @@ class PythonContentHandler : public ApplicationDelegate,
     return body_str;
   }
 
-  ContentHandlerFactory content_handler_factory_;
   bool debug_;
 
   DISALLOW_COPY_AND_ASSIGN(PythonContentHandler);
+};
+
+class PythonContentHandlerApp : public ApplicationDelegate {
+ public:
+  PythonContentHandlerApp()
+      : content_handler_(false),
+        debug_content_handler_(true),
+        content_handler_factory_(&content_handler_),
+        debug_content_handler_factory_(&debug_content_handler_) {}
+
+ private:
+  // Overridden from ApplicationDelegate:
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    if (IsDebug(connection->GetConnectionURL()))
+      connection->AddService(&debug_content_handler_factory_);
+    else
+      connection->AddService(&content_handler_factory_);
+    return true;
+  }
+
+  bool IsDebug(const std::string& requestedUrl) {
+    GURL url(requestedUrl);
+    if (url.has_query()) {
+      std::vector<std::string> query_parameters;
+      Tokenize(url.query(), "&", &query_parameters);
+      return std::find(query_parameters.begin(), query_parameters.end(),
+                       "debug=true") != query_parameters.end();
+    }
+    return false;
+  }
+
+  PythonContentHandler content_handler_;
+  PythonContentHandler debug_content_handler_;
+  ContentHandlerFactory content_handler_factory_;
+  ContentHandlerFactory debug_content_handler_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(PythonContentHandlerApp);
 };
 
 }  // namespace content_handler
@@ -229,6 +247,6 @@ class PythonContentHandler : public ApplicationDelegate,
 
 MojoResult MojoMain(MojoHandle shell_handle) {
   mojo::ApplicationRunnerChromium runner(
-      new services::python::content_handler::PythonContentHandler());
+      new services::python::content_handler::PythonContentHandlerApp());
   return runner.Run(shell_handle);
 }
