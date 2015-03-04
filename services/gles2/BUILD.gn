@@ -5,11 +5,18 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 
 source_set("gles2") {
+  visibility = [
+    "//shell:lib",  # For android
+    "//services/native_viewport:*",
+  ]
+
   sources = [
     "command_buffer_driver.cc",
     "command_buffer_driver.h",
     "command_buffer_impl.cc",
     "command_buffer_impl.h",
+    "gpu_state.cc",
+    "gpu_state.h",
     "gpu_impl.cc",
     "gpu_impl.h",
   ]

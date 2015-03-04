@@ -7,12 +7,10 @@
 #include "base/trace_event/trace_event.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/resources/returned_resource.h"
-#include "cc/surfaces/display.h"
 #include "cc/surfaces/surface_id_allocator.h"
-#include "mojo/cc/context_provider_mojo.h"
-#include "mojo/cc/direct_output_surface.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
+#include "services/surfaces/surfaces_scheduler.h"
 
 using mojo::SurfaceIdPtr;
 
@@ -26,22 +24,16 @@ void CallCallback(const mojo::Closure& callback, cc::SurfaceDrawStatus status) {
 
 SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
                            uint32_t id_namespace,
-                           Client* client,
+                           SurfacesScheduler* scheduler,
                            mojo::InterfaceRequest<mojo::Surface> request)
-    : SurfacesImpl(manager, id_namespace, client) {
-  binding_.Bind(request.Pass());
-}
-
-SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
-                           uint32_t id_namespace,
-                           Client* client,
-                           mojo::SurfacePtr* surface)
-    : SurfacesImpl(manager, id_namespace, client) {
-  binding_.Bind(surface);
+    : manager_(manager),
+      factory_(manager, this),
+      id_namespace_(id_namespace),
+      scheduler_(scheduler),
+      binding_(this, request.Pass()) {
 }
 
 SurfacesImpl::~SurfacesImpl() {
-  client_->OnDisplayBeingDestroyed(display_.get());
   factory_.DestroyAll();
 }
 
@@ -65,38 +57,11 @@ void SurfacesImpl::SubmitFrame(uint32_t local_id,
   factory_.SubmitFrame(QualifyIdentifier(local_id),
                        frame.To<scoped_ptr<cc::CompositorFrame>>(),
                        base::Bind(&CallCallback, callback));
-  client_->FrameSubmitted();
+  scheduler_->SetNeedsDraw();
 }
 
 void SurfacesImpl::DestroySurface(uint32_t local_id) {
   factory_.Destroy(QualifyIdentifier(local_id));
-  if (local_id == displayed_surface_) {
-    displayed_surface_ = 0;
-    client_->OnDisplayBeingDestroyed(display_.get());
-    display_.reset();
-  }
-}
-
-void SurfacesImpl::CreateGLES2BoundSurface(
-    mojo::CommandBufferPtr gles2_client,
-    uint32_t local_id,
-    mojo::SizePtr size,
-    mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request) {
-  command_buffer_handle_ = gles2_client.PassMessagePipe();
-
-  if (!display_) {
-    cc::RendererSettings settings;
-    display_.reset(new cc::Display(this, manager_, nullptr, nullptr, settings));
-    client_->SetDisplay(display_.get());
-    display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
-        new mojo::ContextProviderMojo(command_buffer_handle_.Pass()))));
-  }
-  displayed_surface_ = local_id;
-  cc::SurfaceId cc_id = QualifyIdentifier(local_id);
-  factory_.Create(cc_id);
-  display_->SetSurfaceId(cc_id, 1.f);
-  display_->Resize(size.To<gfx::Size>());
-  parameter_listeners_.AddBinding(this, listener_request.Pass());
 }
 
 void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
@@ -107,43 +72,6 @@ void SurfacesImpl::ReturnResources(const cc::ReturnedResourceArray& resources) {
     ret[i] = mojo::ReturnedResource::From(resources[i]);
   }
   returner_->ReturnResources(ret.Pass());
-}
-
-void SurfacesImpl::DisplayDamaged() {
-}
-
-void SurfacesImpl::DidSwapBuffers() {
-}
-
-void SurfacesImpl::DidSwapBuffersComplete() {
-}
-
-void SurfacesImpl::CommitVSyncParameters(base::TimeTicks timebase,
-                                         base::TimeDelta interval) {
-}
-
-void SurfacesImpl::OutputSurfaceLost() {
-}
-
-void SurfacesImpl::SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) {
-}
-
-void SurfacesImpl::OnVSyncParametersUpdated(int64_t timebase,
-                                            int64_t interval) {
-  client_->OnVSyncParametersUpdated(
-      base::TimeTicks::FromInternalValue(timebase),
-      base::TimeDelta::FromInternalValue(interval));
-}
-
-SurfacesImpl::SurfacesImpl(cc::SurfaceManager* manager,
-                           uint32_t id_namespace,
-                           Client* client)
-    : manager_(manager),
-      factory_(manager, this),
-      id_namespace_(id_namespace),
-      client_(client),
-      displayed_surface_(0),
-      binding_(this) {
 }
 
 cc::SurfaceId SurfacesImpl::QualifyIdentifier(uint32_t local_id) {

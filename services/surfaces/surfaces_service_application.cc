@@ -4,15 +4,16 @@
 
 #include "services/surfaces/surfaces_service_application.h"
 
-#include "cc/surfaces/display.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
+#include "services/surfaces/display_factory_impl.h"
 #include "services/surfaces/surfaces_impl.h"
+#include "services/surfaces/surfaces_scheduler.h"
 
 namespace surfaces {
 
 SurfacesServiceApplication::SurfacesServiceApplication()
-    : next_id_namespace_(1u), display_(nullptr) {
+    : next_id_namespace_(1u) {
 }
 
 SurfacesServiceApplication::~SurfacesServiceApplication() {
@@ -20,43 +21,28 @@ SurfacesServiceApplication::~SurfacesServiceApplication() {
 
 void SurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
   tracing_.Initialize(app);
-  scheduler_.reset(new SurfacesScheduler(this));
+  scheduler_.reset(new SurfacesScheduler);
 }
 
 bool SurfacesServiceApplication::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
-  connection->AddService(this);
+  connection->AddService<mojo::DisplayFactory>(this);
+  connection->AddService<mojo::Surface>(this);
   return true;
 }
 
 void SurfacesServiceApplication::Create(
     mojo::ApplicationConnection* connection,
+    mojo::InterfaceRequest<mojo::DisplayFactory> request) {
+  new DisplayFactoryImpl(&manager_, next_id_namespace_++, scheduler_.get(),
+                         request.Pass());
+}
+
+void SurfacesServiceApplication::Create(
+    mojo::ApplicationConnection* connection,
     mojo::InterfaceRequest<mojo::Surface> request) {
-  new SurfacesImpl(&manager_, next_id_namespace_++, this, request.Pass());
-}
-
-void SurfacesServiceApplication::OnVSyncParametersUpdated(
-    base::TimeTicks timebase,
-    base::TimeDelta interval) {
-  scheduler_->OnVSyncParametersUpdated(timebase, interval);
-}
-
-void SurfacesServiceApplication::FrameSubmitted() {
-  scheduler_->SetNeedsDraw();
-}
-
-void SurfacesServiceApplication::SetDisplay(cc::Display* display) {
-  display_ = display;
-}
-
-void SurfacesServiceApplication::OnDisplayBeingDestroyed(cc::Display* display) {
-  if (display_ == display)
-    SetDisplay(nullptr);
-}
-
-void SurfacesServiceApplication::Draw() {
-  if (display_)
-    display_->Draw();
+  new SurfacesImpl(&manager_, next_id_namespace_++, scheduler_.get(),
+                   request.Pass());
 }
 
 }  // namespace surfaces

@@ -78,7 +78,8 @@ void ChildGLImpl::ProduceFrame(ColorPtr color,
                                const ProduceCallback& callback) {
   color_ = color.To<SkColor>();
   size_ = size.To<gfx::Size>();
-  cube_.Init(size_.width(), size_.height());
+  cube_.Init();
+  cube_.set_size(size_.width(), size_.height());
   cube_.set_color(
       SkColorGetR(color_), SkColorGetG(color_), SkColorGetB(color_));
   surface_->CreateSurface(local_id_);

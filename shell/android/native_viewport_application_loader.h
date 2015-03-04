@@ -13,6 +13,10 @@
 #include "services/gles2/gpu_impl.h"
 #include "shell/application_manager/application_loader.h"
 
+namespace gles2 {
+class GpuState;
+}
+
 namespace mojo {
 
 class ApplicationImpl;
@@ -49,7 +53,7 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
   void Create(ApplicationConnection* connection,
               InterfaceRequest<Keyboard> request) override;
 
-  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
+  scoped_refptr<gles2::GpuState> gpu_state_;
   scoped_ptr<ApplicationImpl> app_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewportApplicationLoader);

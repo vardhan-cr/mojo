@@ -5,7 +5,6 @@
 #include "services/view_manager/display_manager.h"
 
 #include "base/numerics/safe_conversions.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -13,6 +12,7 @@
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/cpp/surfaces_utils.h"
 #include "mojo/services/surfaces/public/interfaces/quads.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "services/view_manager/connection_manager.h"
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/view_coordinate_conversions.h"
@@ -22,8 +22,6 @@ using mojo::Size;
 
 namespace view_manager {
 namespace {
-
-static uint32_t kLocalSurfaceID = 1u;
 
 void DrawViewTree(mojo::Pass* pass,
                   const ServerView* view,
@@ -81,8 +79,6 @@ DefaultDisplayManager::DefaultDisplayManager(
       app_connection_(app_connection),
       connection_manager_(nullptr),
       draw_timer_(false, false),
-      id_namespace_(0u),
-      surface_allocated_(false),
       native_viewport_closed_callback_(native_viewport_closed_callback),
       weak_factory_(this) {
   metrics_.size = mojo::Size::New();
@@ -95,15 +91,18 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
   app_impl_->ConnectToService("mojo:native_viewport_service",
                               &native_viewport_);
   native_viewport_.set_error_handler(this);
-  native_viewport_->Create(
-      metrics_.size->Clone(),
-      base::Bind(&DefaultDisplayManager::OnCreatedNativeViewport,
-                 weak_factory_.GetWeakPtr()));
+  native_viewport_->Create(metrics_.size->Clone(),
+                           base::Bind(&DefaultDisplayManager::OnMetricsChanged,
+                                      weak_factory_.GetWeakPtr()));
   native_viewport_->Show();
 
-  app_impl_->ConnectToService("mojo:surfaces_service", &surface_);
-  surface_->GetIdNamespace(base::Bind(&DefaultDisplayManager::SetIdNamespace,
-                                      base::Unretained(this)));
+  mojo::ContextProviderPtr context_provider;
+  native_viewport_->GetContextProvider(GetProxy(&context_provider));
+  mojo::DisplayFactoryPtr display_factory;
+  app_impl_->ConnectToService("mojo:surfaces_service", &display_factory);
+  display_factory->Create(context_provider.Pass(),
+                          nullptr,  // returner - we never submit resources.
+                          GetProxy(&display_));
 
   mojo::NativeViewportEventDispatcherPtr event_dispatcher;
   app_connection_->ConnectToService(&event_dispatcher);
@@ -122,11 +121,7 @@ void DefaultDisplayManager::SchedulePaint(const ServerView* view,
   if (root_relative_rect.IsEmpty())
     return;
   dirty_rect_.Union(root_relative_rect);
-  if (!draw_timer_.IsRunning()) {
-    draw_timer_.Start(
-        FROM_HERE, base::TimeDelta(),
-        base::Bind(&DefaultDisplayManager::Draw, base::Unretained(this)));
-  }
+  WantToDraw();
 }
 
 void DefaultDisplayManager::SetViewportSize(const gfx::Size& size) {
@@ -137,18 +132,7 @@ const mojo::ViewportMetrics& DefaultDisplayManager::GetViewportMetrics() {
   return metrics_;
 }
 
-void DefaultDisplayManager::OnCreatedNativeViewport(
-    uint64_t native_viewport_id,
-    mojo::ViewportMetricsPtr metrics) {
-  OnMetricsChanged(metrics.Pass());
-}
-
 void DefaultDisplayManager::Draw() {
-  if (!surface_allocated_) {
-    surface_->CreateSurface(kLocalSurfaceID);
-    surface_allocated_ = true;
-  }
-
   Rect rect;
   rect.width = metrics_.size->width;
   rect.height = metrics_.size->height;
@@ -160,16 +144,26 @@ void DefaultDisplayManager::Draw() {
   auto frame = mojo::Frame::New();
   frame->passes.push_back(pass.Pass());
   frame->resources.resize(0u);
-  surface_->SubmitFrame(kLocalSurfaceID, frame.Pass(), mojo::Closure());
+  frame_pending_ = true;
+  display_->SubmitFrame(
+      frame.Pass(),
+      base::Bind(&DefaultDisplayManager::DidDraw, base::Unretained(this)));
   dirty_rect_ = gfx::Rect();
+}
 
-  if (id_namespace_ == 0u)
+void DefaultDisplayManager::DidDraw() {
+  frame_pending_ = false;
+  if (!dirty_rect_.IsEmpty())
+    WantToDraw();
+}
+
+void DefaultDisplayManager::WantToDraw() {
+  if (draw_timer_.IsRunning() || frame_pending_)
     return;
 
-  auto qualified_id = mojo::SurfaceId::New();
-  qualified_id->id_namespace = id_namespace_;
-  qualified_id->local = kLocalSurfaceID;
-  native_viewport_->SubmittedFrame(qualified_id.Pass());
+  draw_timer_.Start(
+      FROM_HERE, base::TimeDelta(),
+      base::Bind(&DefaultDisplayManager::Draw, base::Unretained(this)));
 }
 
 void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
@@ -178,23 +172,8 @@ void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
   gfx::Rect bounds(metrics_.size.To<gfx::Size>());
   connection_manager_->root()->SetBounds(bounds);
   connection_manager_->ProcessViewportMetricsChanged(metrics_, *metrics);
-  if (!surface_allocated_)
-    return;
-  surface_->DestroySurface(kLocalSurfaceID);
-  surface_allocated_ = false;
-  SchedulePaint(connection_manager_->root(), bounds);
   native_viewport_->RequestMetrics(base::Bind(
       &DefaultDisplayManager::OnMetricsChanged, weak_factory_.GetWeakPtr()));
-}
-
-void DefaultDisplayManager::SetIdNamespace(uint32_t id_namespace) {
-  id_namespace_ = id_namespace;
-  if (surface_allocated_) {
-    auto qualified_id = mojo::SurfaceId::New();
-    qualified_id->id_namespace = id_namespace_;
-    qualified_id->local = kLocalSurfaceID;
-    native_viewport_->SubmittedFrame(qualified_id.Pass());
-  }
 }
 
 void DefaultDisplayManager::OnConnectionError() {

@@ -16,12 +16,16 @@ class SpinningCube {
   SpinningCube();
   ~SpinningCube();
 
-  void Init(uint32_t width, uint32_t height);
+  void Init();
   void set_direction(int direction) { direction_ = direction; }
   void set_color(float r, float g, float b) {
     color_[0] = r;
     color_[1] = g;
     color_[2] = b;
+  }
+  void set_size(uint32_t width, uint32_t height) {
+    width_ = width;
+    height_ = height;
   }
   void SetFlingMultiplier(float drag_distance, float drag_time);
   void UpdateForTimeDelta(float delta_time);

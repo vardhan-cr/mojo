@@ -439,10 +439,7 @@ SpinningCube::~SpinningCube() {
     glDeleteProgram(state_->program_object_);
 }
 
-void SpinningCube::Init(uint32_t width, uint32_t height) {
-  width_ = width;
-  height_ = height;
-
+void SpinningCube::Init() {
   const char vertex_shader_source[] =
       "uniform mat4 u_mvpMatrix;                                       \n"
       "attribute vec4 a_position;                                      \n"
@@ -486,8 +483,6 @@ void SpinningCube::Init(uint32_t width, uint32_t height) {
 
 void SpinningCube::OnGLContextLost() {
   initialized_ = false;
-  height_ = 0;
-  width_ = 0;
   state_->OnGLContextLost();
 }
 

@@ -11,12 +11,9 @@
 #include "base/time/time.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
-#include "mojo/converters/surfaces/surfaces_type_converters.h"
-#include "mojo/public/cpp/application/application_delegate.h"
-#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
+#include "services/gles2/gpu_state.h"
 #include "services/native_viewport/platform_viewport_headless.h"
-#include "services/native_viewport/viewport_surface.h"
 #include "ui/events/event.h"
 
 namespace native_viewport {
@@ -31,20 +28,17 @@ bool IsRateLimitedEventType(ui::Event* event) {
 }  // namespace
 
 NativeViewportImpl::NativeViewportImpl(
-    mojo::ApplicationImpl* app,
     bool is_headless,
+    const scoped_refptr<gles2::GpuState>& gpu_state,
     mojo::InterfaceRequest<mojo::NativeViewport> request)
     : is_headless_(is_headless),
-      widget_id_(0u),
+      context_provider_(gpu_state),
       sent_metrics_(false),
       metrics_(mojo::ViewportMetrics::New()),
       waiting_for_event_ack_(false),
       binding_(this, request.Pass()),
       weak_factory_(this) {
   binding_.set_error_handler(this);
-  app->ConnectToService("mojo:surfaces_service", &surface_);
-  // TODO(jamesr): Should be mojo_gpu_service
-  app->ConnectToService("mojo:native_viewport_service", &gpu_service_);
 }
 
 NativeViewportImpl::~NativeViewportImpl() {
@@ -53,10 +47,8 @@ NativeViewportImpl::~NativeViewportImpl() {
   platform_viewport_.reset();
 }
 
-void NativeViewportImpl::Create(
-    mojo::SizePtr size,
-    const mojo::Callback<void(uint64_t, mojo::ViewportMetricsPtr metrics)>&
-        callback) {
+void NativeViewportImpl::Create(mojo::SizePtr size,
+                                const CreateCallback& callback) {
   create_callback_ = callback;
   metrics_->size = size.Clone();
   if (is_headless_)
@@ -66,7 +58,8 @@ void NativeViewportImpl::Create(
   platform_viewport_->Init(gfx::Rect(size.To<gfx::Size>()));
 }
 
-void NativeViewportImpl::RequestMetrics(const MetricsCallback& callback) {
+void NativeViewportImpl::RequestMetrics(
+    const RequestMetricsCallback& callback) {
   if (!sent_metrics_) {
     callback.Run(metrics_.Clone());
     sent_metrics_ = true;
@@ -92,21 +85,9 @@ void NativeViewportImpl::SetSize(mojo::SizePtr size) {
   platform_viewport_->SetBounds(gfx::Rect(size.To<gfx::Size>()));
 }
 
-void NativeViewportImpl::SubmittedFrame(mojo::SurfaceIdPtr child_surface_id) {
-  if (child_surface_id_.is_null()) {
-    // If this is the first indication that the client will use surfaces,
-    // initialize that system.
-    // TODO(jamesr): When everything is converted to surfaces initialize this
-    // eagerly.
-    viewport_surface_.reset(new ViewportSurface(
-        surface_.Pass(), gpu_service_.get(), metrics_->size.To<gfx::Size>(),
-        child_surface_id.To<cc::SurfaceId>()));
-    if (widget_id_)
-      viewport_surface_->SetWidgetId(widget_id_);
-  }
-  child_surface_id_ = child_surface_id.To<cc::SurfaceId>();
-  if (viewport_surface_)
-    viewport_surface_->SetChildId(child_surface_id_);
+void NativeViewportImpl::GetContextProvider(
+    mojo::InterfaceRequest<mojo::ContextProvider> request) {
+  context_provider_.Bind(request.Pass());
 }
 
 void NativeViewportImpl::SetEventDispatcher(
@@ -126,19 +107,16 @@ void NativeViewportImpl::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
     metrics_callback_.reset();
     sent_metrics_ = true;
   }
-  if (viewport_surface_)
-    viewport_surface_->SetSize(metrics_->size.To<gfx::Size>());
 }
 
 void NativeViewportImpl::OnAcceleratedWidgetAvailable(
     gfx::AcceleratedWidget widget) {
-  widget_id_ = static_cast<uint64_t>(bit_cast<uintptr_t>(widget));
-  // TODO(jamesr): Remove once everything is converted to surfaces.
-  create_callback_.Run(widget_id_, metrics_.Clone());
+  context_provider_.SetAcceleratedWidget(widget);
+  // TODO: The metrics here might not match the actual window size on android
+  // where we don't know the actual size until the first OnMetricsChanged call.
+  create_callback_.Run(metrics_.Clone());
   sent_metrics_ = true;
   create_callback_.reset();
-  if (viewport_surface_)
-    viewport_surface_->SetWidgetId(widget_id_);
 }
 
 bool NativeViewportImpl::OnEvent(ui::Event* ui_event) {

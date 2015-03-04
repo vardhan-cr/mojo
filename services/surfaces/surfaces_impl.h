@@ -24,30 +24,14 @@ class ApplicationManager;
 }
 
 namespace surfaces {
+class SurfacesScheduler;
 
-class SurfacesImpl : public mojo::Surface,
-                     public mojo::ViewportParameterListener,
-                     public cc::SurfaceFactoryClient,
-                     public cc::DisplayClient {
+class SurfacesImpl : public mojo::Surface, public cc::SurfaceFactoryClient {
  public:
-  class Client {
-   public:
-    virtual void OnVSyncParametersUpdated(base::TimeTicks timebase,
-                                          base::TimeDelta interval) = 0;
-    virtual void FrameSubmitted() = 0;
-    virtual void SetDisplay(cc::Display* display) = 0;
-    virtual void OnDisplayBeingDestroyed(cc::Display* display) = 0;
-  };
-
   SurfacesImpl(cc::SurfaceManager* manager,
                uint32_t id_namespace,
-               Client* client,
+               SurfacesScheduler* scheduler,
                mojo::InterfaceRequest<mojo::Surface> request);
-
-  SurfacesImpl(cc::SurfaceManager* manager,
-               uint32_t id_namespace,
-               Client* client,
-               mojo::SurfacePtr* surface);
 
   ~SurfacesImpl() override;
 
@@ -59,45 +43,20 @@ class SurfacesImpl : public mojo::Surface,
                    mojo::FramePtr frame,
                    const mojo::Closure& callback) override;
   void DestroySurface(uint32_t local_id) override;
-  void CreateGLES2BoundSurface(
-      mojo::CommandBufferPtr gles2_client,
-      uint32_t local_id,
-      mojo::SizePtr size,
-      mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request)
-      override;
 
   // SurfaceFactoryClient implementation.
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
 
-  // DisplayClient implementation.
-  void DisplayDamaged() override;
-  void DidSwapBuffers() override;
-  void DidSwapBuffersComplete() override;
-  void CommitVSyncParameters(base::TimeTicks timebase,
-                             base::TimeDelta interval) override;
-  void OutputSurfaceLost() override;
-  void SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) override;
-
-  // ViewportParameterListener
-  void OnVSyncParametersUpdated(int64_t timebase, int64_t interval) override;
-
   cc::SurfaceFactory* factory() { return &factory_; }
 
  private:
-  SurfacesImpl(cc::SurfaceManager* manager,
-               uint32_t id_namespace,
-               Client* client);
-
   cc::SurfaceId QualifyIdentifier(uint32_t local_id);
 
   cc::SurfaceManager* manager_;
   cc::SurfaceFactory factory_;
   const uint32_t id_namespace_;
-  Client* client_;
-  uint32_t displayed_surface_;
-  scoped_ptr<cc::Display> display_;
+  SurfacesScheduler* scheduler_;
   mojo::ScopedMessagePipeHandle command_buffer_handle_;
-  mojo::WeakBindingSet<ViewportParameterListener> parameter_listeners_;
   mojo::ResourceReturnerPtr returner_;
   mojo::StrongBinding<Surface> binding_;
 

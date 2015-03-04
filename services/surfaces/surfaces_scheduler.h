@@ -5,27 +5,28 @@
 #ifndef MOJO_SERVICES_SURFACES_SURFACES_SCHEDULER_H_
 #define MOJO_SERVICES_SURFACES_SURFACES_SCHEDULER_H_
 
+#include <set>
+
 #include "cc/scheduler/scheduler.h"
+
+namespace cc {
+class Display;
+}
 
 namespace surfaces {
 
 class SurfacesScheduler : public cc::SchedulerClient {
  public:
-  class Client {
-   public:
-    virtual void Draw() = 0;
-
-   protected:
-    virtual ~Client();
-  };
-
-  explicit SurfacesScheduler(Client* client);
+  SurfacesScheduler();
   ~SurfacesScheduler();
 
   void SetNeedsDraw();
 
   void OnVSyncParametersUpdated(base::TimeTicks timebase,
                                 base::TimeDelta interval);
+
+  void AddDisplay(cc::Display* display);
+  void RemoveDisplay(cc::Display* display);
 
  private:
   void WillBeginImplFrame(const cc::BeginFrameArgs& args) override;
@@ -45,7 +46,7 @@ class SurfacesScheduler : public cc::SchedulerClient {
   void SendBeginFramesToChildren(const cc::BeginFrameArgs& args) override;
   void SendBeginMainFrameNotExpectedSoon() override;
 
-  Client* client_;
+  std::set<cc::Display*> displays_;
   scoped_ptr<cc::Scheduler> scheduler_;
   base::TimeDelta draw_estimate_;
 

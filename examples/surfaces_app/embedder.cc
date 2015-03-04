@@ -27,8 +27,8 @@ using cc::SolidColorDrawQuad;
 using cc::DelegatedFrameData;
 using cc::CompositorFrame;
 
-Embedder::Embedder(uint32_t local_id, Surface* surface)
-    : local_id_(local_id), surface_(surface) {
+Embedder::Embedder(Display* display)
+    : display_(display), frame_pending_(false) {
 }
 
 Embedder::~Embedder() {
@@ -39,6 +39,8 @@ void Embedder::ProduceFrame(cc::SurfaceId child_one,
                             const gfx::Size& child_size,
                             const gfx::Size& size,
                             int offset) {
+  DCHECK(!frame_pending_);
+
   gfx::Rect rect(size);
   RenderPassId pass_id(1, 1);
   scoped_ptr<RenderPass> pass = RenderPass::Create();
@@ -90,7 +92,9 @@ void Embedder::ProduceFrame(cc::SurfaceId child_one,
   scoped_ptr<CompositorFrame> frame(new CompositorFrame);
   frame->delegated_frame_data = delegated_frame_data.Pass();
 
-  surface_->SubmitFrame(local_id_, mojo::Frame::From(*frame), mojo::Closure());
+  frame_pending_ = true;
+  display_->SubmitFrame(mojo::Frame::From(*frame),
+                        [this]() { frame_pending_ = false; });
 }
 
 }  // namespace examples

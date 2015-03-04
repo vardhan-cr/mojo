@@ -7,6 +7,10 @@ import("//mojo/public/mojo_application.gni")
 mojo_native_application("surfaces") {
   output_name = "surfaces_service"
   sources = [
+    "display_factory_impl.cc",
+    "display_factory_impl.h",
+    "display_impl.cc",
+    "display_impl.h",
     "surfaces_impl.cc",
     "surfaces_impl.h",
     "surfaces_scheduler.cc",
@@ -19,6 +23,7 @@ mojo_native_application("surfaces") {
     "//base",
     "//cc",
     "//cc/surfaces",
+    "//cc/surfaces:surface_id",
     "//ui/gfx/geometry",
     "//mojo/application",
     "//mojo/cc",

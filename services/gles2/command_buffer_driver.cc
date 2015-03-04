@@ -55,7 +55,6 @@ CommandBufferDriver::CommandBufferDriver(
     gpu::gles2::MailboxManager* mailbox_manager,
     gpu::SyncPointManager* sync_point_manager)
     : CommandBufferDriver(gfx::kNullAcceleratedWidget,
-                          gfx::Size(1, 1),
                           share_group,
                           mailbox_manager,
                           sync_point_manager) {
@@ -63,13 +62,11 @@ CommandBufferDriver::CommandBufferDriver(
 
 CommandBufferDriver::CommandBufferDriver(
     gfx::AcceleratedWidget widget,
-    const gfx::Size& size,
     gfx::GLShareGroup* share_group,
     gpu::gles2::MailboxManager* mailbox_manager,
     gpu::SyncPointManager* sync_point_manager)
     : client_(nullptr),
       widget_(widget),
-      size_(size),
       share_group_(share_group),
       mailbox_manager_(mailbox_manager),
       sync_point_manager_(sync_point_manager),
@@ -99,7 +96,7 @@ void CommandBufferDriver::Initialize(
 bool CommandBufferDriver::DoInitialize(
     mojo::ScopedSharedBufferHandle shared_state) {
   if (widget_ == gfx::kNullAcceleratedWidget)
-    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(size_);
+    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(gfx::Size(1, 1));
   else {
     surface_ = gfx::GLSurface::CreateViewGLSurface(widget_);
     if (auto vsync_provider = surface_->GetVSyncProvider()) {
@@ -148,8 +145,9 @@ bool CommandBufferDriver::DoInitialize(
 
   // TODO(piman): attributes.
   std::vector<int32> attrib_vector;
-  if (!decoder_->Initialize(surface_, context_, false /* offscreen */, size_,
-                            disallowed_features, attrib_vector))
+  if (!decoder_->Initialize(surface_, context_, false /* offscreen */,
+                            gfx::Size(1, 1), disallowed_features,
+                            attrib_vector))
     return false;
 
   command_buffer_->SetPutOffsetChangeCallback(base::Bind(

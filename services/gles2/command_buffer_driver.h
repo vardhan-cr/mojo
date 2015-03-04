@@ -48,7 +48,6 @@ class CommandBufferDriver {
                       gpu::SyncPointManager* sync_point_manager);
   // Onscreen.
   CommandBufferDriver(gfx::AcceleratedWidget widget,
-                      const gfx::Size& size,
                       gfx::GLShareGroup* share_group,
                       gpu::gles2::MailboxManager* mailbox_manager,
                       gpu::SyncPointManager* sync_point_manager);
@@ -82,7 +81,6 @@ class CommandBufferDriver {
   mojo::CommandBufferSyncClientPtr sync_client_;
   mojo::CommandBufferLostContextObserverPtr loss_observer_;
   gfx::AcceleratedWidget widget_;
-  gfx::Size size_;
   scoped_ptr<gpu::CommandBufferService> command_buffer_;
   scoped_ptr<gpu::gles2::GLES2Decoder> decoder_;
   scoped_ptr<gpu::GpuScheduler> scheduler_;

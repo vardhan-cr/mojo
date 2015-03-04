@@ -15,38 +15,12 @@
 
 namespace gles2 {
 
-GpuImpl::State::State()
-    : control_thread_("gpu_command_buffer_control"),
-      sync_point_manager_(gpu::SyncPointManager::Create(true)),
-      share_group_(new gfx::GLShareGroup),
-      mailbox_manager_(new gpu::gles2::MailboxManagerImpl) {
-  control_thread_.Start();
-}
-
-GpuImpl::State::~State() {
-}
-
 GpuImpl::GpuImpl(mojo::InterfaceRequest<Gpu> request,
-                 const scoped_refptr<State>& state)
+                 const scoped_refptr<GpuState>& state)
     : binding_(this, request.Pass()), state_(state) {
 }
 
 GpuImpl::~GpuImpl() {
-}
-
-void GpuImpl::CreateOnscreenGLES2Context(
-    uint64_t native_viewport_id,
-    mojo::SizePtr size,
-    mojo::InterfaceRequest<mojo::CommandBuffer> request,
-    mojo::ViewportParameterListenerPtr listener) {
-  gfx::AcceleratedWidget widget = bit_cast<gfx::AcceleratedWidget>(
-      static_cast<uintptr_t>(native_viewport_id));
-  new CommandBufferImpl(
-      request.Pass(), listener.Pass(), state_->control_task_runner(),
-      state_->sync_point_manager(),
-      make_scoped_ptr(new CommandBufferDriver(
-          widget, size.To<gfx::Size>(), state_->share_group(),
-          state_->mailbox_manager(), state_->sync_point_manager())));
 }
 
 void GpuImpl::CreateOffscreenGLES2Context(

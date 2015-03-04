@@ -28,14 +28,15 @@ float GetRandomColor() {
 
 }
 
-GLES2ClientImpl::GLES2ClientImpl(mojo::CommandBufferPtr command_buffer)
-    : last_time_(mojo::GetTimeTicksNow()), waiting_to_draw_(false) {
-  context_ =
-      MojoGLES2CreateContext(command_buffer.PassMessagePipe().release().value(),
-                             &ContextLostThunk,
-                             this,
-                             mojo::Environment::GetDefaultAsyncWaiter());
-  MojoGLES2MakeCurrent(context_);
+GLES2ClientImpl::GLES2ClientImpl(mojo::ContextProviderPtr context_provider)
+    : last_time_(mojo::GetTimeTicksNow()),
+      waiting_to_draw_(false),
+      context_provider_(context_provider.Pass()),
+      context_(nullptr) {
+  context_provider_->Create(nullptr,
+                            [this](mojo::CommandBufferPtr command_buffer) {
+                              ContextCreated(command_buffer.Pass());
+                            });
 }
 
 GLES2ClientImpl::~GLES2ClientImpl() {
@@ -44,13 +45,13 @@ GLES2ClientImpl::~GLES2ClientImpl() {
 
 void GLES2ClientImpl::SetSize(const mojo::Size& size) {
   size_ = size;
-  if (size_.width == 0 || size_.height == 0)
+  cube_.set_size(size_.width, size_.height);
+  if (size_.width == 0 || size_.height == 0 || !context_)
     return;
   static_cast<gpu::gles2::GLES2Interface*>(
       MojoGLES2GetGLES2Interface(context_))->ResizeCHROMIUM(size_.width,
                                                             size_.height,
                                                             1);
-  cube_.Init(size_.width, size_.height);
   WantToDraw();
 }
 
@@ -100,32 +101,41 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
   }
 }
 
+void GLES2ClientImpl::ContextCreated(mojo::CommandBufferPtr command_buffer) {
+  context_ = MojoGLES2CreateContext(
+      command_buffer.PassMessagePipe().release().value(), &ContextLostThunk,
+      this, mojo::Environment::GetDefaultAsyncWaiter());
+  MojoGLES2MakeCurrent(context_);
+  cube_.Init();
+  WantToDraw();
+}
+
 void GLES2ClientImpl::ContextLost() {
+  cube_.OnGLContextLost();
+  MojoGLES2DestroyContext(context_);
+  context_ = nullptr;
+  context_provider_->Create(nullptr,
+                            [this](mojo::CommandBufferPtr command_buffer) {
+                              ContextCreated(command_buffer.Pass());
+                            });
 }
 
 void GLES2ClientImpl::ContextLostThunk(void* closure) {
   static_cast<GLES2ClientImpl*>(closure)->ContextLost();
 }
 
-struct DrawRunnable {
-  explicit DrawRunnable(GLES2ClientImpl* impl) : impl(impl) {}
-  virtual ~DrawRunnable() {}
-
-  void Run() const { impl->Draw(); }
-
-  GLES2ClientImpl* impl;
-};
-
 void GLES2ClientImpl::WantToDraw() {
-  if (waiting_to_draw_)
+  if (waiting_to_draw_ || !context_)
     return;
   waiting_to_draw_ = true;
-  mojo::RunLoop::current()->PostDelayedTask(mojo::Closure(DrawRunnable(this)),
+  mojo::RunLoop::current()->PostDelayedTask([this]() { Draw(); },
                                             MojoTimeTicks(16667));
 }
 
 void GLES2ClientImpl::Draw() {
   waiting_to_draw_ = false;
+  if (!context_)
+    return;
   MojoTimeTicks now = mojo::GetTimeTicksNow();
   MojoTimeTicks offset = now - last_time_;
   float delta = static_cast<float>(offset) / 1000000.;

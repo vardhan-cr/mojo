@@ -7,24 +7,22 @@
 
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
-#include "cc/surfaces/surface_id.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "services/native_viewport/onscreen_context_provider.h"
 #include "services/native_viewport/platform_viewport.h"
 #include "ui/gfx/geometry/rect.h"
+
+namespace gles2 {
+class GpuState;
+}
 
 namespace ui {
 class Event;
 }
 
-namespace mojo {
-class ApplicationImpl;
-}
-
 namespace native_viewport {
-class ViewportSurface;
 
 // A NativeViewportImpl is bound to a message pipe and to a PlatformViewport.
 // The NativeViewportImpl's lifetime ends when either the message pipe is closed
@@ -33,25 +31,21 @@ class ViewportSurface;
 class NativeViewportImpl : public mojo::NativeViewport,
                            public PlatformViewport::Delegate,
                            public mojo::ErrorHandler {
-  using CreateCallback = mojo::Callback<void(uint64_t native_viewport_id,
-                                             mojo::ViewportMetricsPtr metrics)>;
-  using MetricsCallback =
-      mojo::Callback<void(mojo::ViewportMetricsPtr metrics)>;
-
  public:
-  NativeViewportImpl(mojo::ApplicationImpl* app,
-                     bool is_headless,
+  NativeViewportImpl(bool is_headless,
+                     const scoped_refptr<gles2::GpuState>& gpu_state,
                      mojo::InterfaceRequest<mojo::NativeViewport> request);
   ~NativeViewportImpl() override;
 
   // NativeViewport implementation.
   void Create(mojo::SizePtr size, const CreateCallback& callback) override;
-  void RequestMetrics(const MetricsCallback& callback) override;
+  void RequestMetrics(const RequestMetricsCallback& callback) override;
   void Show() override;
   void Hide() override;
   void Close() override;
   void SetSize(mojo::SizePtr size) override;
-  void SubmittedFrame(mojo::SurfaceIdPtr surface_id) override;
+  void GetContextProvider(
+      mojo::InterfaceRequest<mojo::ContextProvider> request) override;
   void SetEventDispatcher(
       mojo::NativeViewportEventDispatcherPtr dispatcher) override;
 
@@ -69,16 +63,12 @@ class NativeViewportImpl : public mojo::NativeViewport,
  private:
   bool is_headless_;
   scoped_ptr<PlatformViewport> platform_viewport_;
-  scoped_ptr<ViewportSurface> viewport_surface_;
-  uint64_t widget_id_;
+  OnscreenContextProvider context_provider_;
   bool sent_metrics_;
   mojo::ViewportMetricsPtr metrics_;
-  mojo::GpuPtr gpu_service_;
-  mojo::SurfacePtr surface_;
-  cc::SurfaceId child_surface_id_;
   bool waiting_for_event_ack_;
   CreateCallback create_callback_;
-  MetricsCallback metrics_callback_;
+  RequestMetricsCallback metrics_callback_;
   mojo::NativeViewportEventDispatcherPtr event_dispatcher_;
   mojo::Binding<mojo::NativeViewport> binding_;
   base::WeakPtrFactory<NativeViewportImpl> weak_factory_;

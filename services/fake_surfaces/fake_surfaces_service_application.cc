@@ -10,24 +10,85 @@
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 
+using mojo::ApplicationConnection;
+using mojo::Display;
+using mojo::DisplayFactory;
 using mojo::InterfaceRequest;
+using mojo::ResourceReturnerPtr;
+using mojo::StrongBinding;
+using mojo::Surface;
 
 namespace fake_surfaces {
 
-class FakeSurfaceImpl : public mojo::Surface {
+namespace {
+void ReturnAll(const mojo::Array<mojo::TransferableResourcePtr>& resources,
+               mojo::ResourceReturner* returner) {
+  mojo::Array<mojo::ReturnedResourcePtr> returned;
+  returned.resize(resources.size());
+  for (size_t i = 0; i < resources.size(); ++i) {
+    auto ret = mojo::ReturnedResource::New();
+    ret->id = resources[i]->id;
+    ret->sync_point = 0u;
+    ret->count = 1;
+    ret->lost = false;
+    returned[i] = ret.Pass();
+  }
+  returner->ReturnResources(returned.Pass());
+}
+
+}  // namespace
+
+class FakeDisplayImpl : public Display {
  public:
-  FakeSurfaceImpl(uint32_t id_namespace,
-                  mojo::InterfaceRequest<mojo::Surface> request)
+  FakeDisplayImpl(ResourceReturnerPtr returner,
+                  InterfaceRequest<Display> request)
+      : returner_(returner.Pass()), binding_(this, request.Pass()) {}
+  ~FakeDisplayImpl() override {}
+
+ private:
+  // Display implementation
+  void SubmitFrame(mojo::FramePtr frame,
+                   const SubmitFrameCallback& callback) override {
+    callback.Run();
+    if (frame->resources.size() == 0u || !returner_)
+      return;
+    ReturnAll(frame->resources, returner_.get());
+  }
+
+  ResourceReturnerPtr returner_;
+  StrongBinding<Display> binding_;
+};
+
+class FakeDisplayFactoryImpl : public DisplayFactory {
+ public:
+  explicit FakeDisplayFactoryImpl(InterfaceRequest<DisplayFactory> request)
+      : binding_(this, request.Pass()) {}
+  ~FakeDisplayFactoryImpl() override {}
+
+ private:
+  // DisplayFactory implementation.
+  void Create(mojo::ContextProviderPtr context_provider,
+              ResourceReturnerPtr returner,
+              InterfaceRequest<Display> request) override {
+    new FakeDisplayImpl(returner.Pass(), request.Pass());
+  }
+
+  StrongBinding<DisplayFactory> binding_;
+};
+
+class FakeSurfaceImpl : public Surface {
+ public:
+  FakeSurfaceImpl(uint32_t id_namespace, InterfaceRequest<Surface> request)
       : id_namespace_(id_namespace), binding_(this, request.Pass()) {}
   ~FakeSurfaceImpl() override {}
 
-  // mojo::Surface implementation.
+  // Surface implementation.
   void GetIdNamespace(
       const Surface::GetIdNamespaceCallback& callback) override {
     callback.Run(id_namespace_);
   }
 
-  void SetResourceReturner(mojo::ResourceReturnerPtr returner) override {
+  void SetResourceReturner(ResourceReturnerPtr returner) override {
     returner_ = returner.Pass();
   }
 
@@ -35,36 +96,19 @@ class FakeSurfaceImpl : public mojo::Surface {
 
   void SubmitFrame(uint32_t local_id,
                    mojo::FramePtr frame,
-                   const mojo::Closure& callback) override {
+                   const SubmitFrameCallback& callback) override {
     callback.Run();
     if (frame->resources.size() == 0u || !returner_)
       return;
-    mojo::Array<mojo::ReturnedResourcePtr> returned;
-    returned.resize(frame->resources.size());
-    for (size_t i = 0; i < frame->resources.size(); ++i) {
-      auto ret = mojo::ReturnedResource::New();
-      ret->id = frame->resources[i]->id;
-      ret->sync_point = 0u;
-      ret->count = 1;
-      ret->lost = false;
-      returned[i] = ret.Pass();
-    }
-    returner_->ReturnResources(returned.Pass());
+    ReturnAll(frame->resources, returner_.get());
   }
 
   void DestroySurface(uint32_t local_id) override {}
 
-  void CreateGLES2BoundSurface(
-      mojo::CommandBufferPtr gles2_client,
-      uint32_t local_id,
-      mojo::SizePtr size,
-      mojo::InterfaceRequest<mojo::ViewportParameterListener> listener_request)
-      override {}
-
  private:
   const uint32_t id_namespace_;
-  mojo::ResourceReturnerPtr returner_;
-  mojo::StrongBinding<mojo::Surface> binding_;
+  ResourceReturnerPtr returner_;
+  StrongBinding<Surface> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(FakeSurfaceImpl);
 };
@@ -81,14 +125,20 @@ void FakeSurfacesServiceApplication::Initialize(mojo::ApplicationImpl* app) {
 }
 
 bool FakeSurfacesServiceApplication::ConfigureIncomingConnection(
-    mojo::ApplicationConnection* connection) {
-  connection->AddService(this);
+    ApplicationConnection* connection) {
+  connection->AddService<DisplayFactory>(this);
+  connection->AddService<Surface>(this);
   return true;
 }
 
 void FakeSurfacesServiceApplication::Create(
-    mojo::ApplicationConnection* connection,
-    InterfaceRequest<mojo::Surface> request) {
+    ApplicationConnection* connection,
+    InterfaceRequest<DisplayFactory> request) {
+  new FakeDisplayFactoryImpl(request.Pass());
+}
+
+void FakeSurfacesServiceApplication::Create(ApplicationConnection* connection,
+                                            InterfaceRequest<Surface> request) {
   new FakeSurfaceImpl(next_id_namespace_++, request.Pass());
 }
 

@@ -5,6 +5,7 @@
 #include "shell/android/native_viewport_application_loader.h"
 
 #include "mojo/public/cpp/application/application_impl.h"
+#include "services/gles2/gpu_state.h"
 #include "services/native_viewport/native_viewport_impl.h"
 #include "shell/android/keyboard_impl.h"
 
@@ -35,7 +36,9 @@ bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
 void NativeViewportApplicationLoader::Create(
     ApplicationConnection* connection,
     InterfaceRequest<NativeViewport> request) {
-  new native_viewport::NativeViewportImpl(app_.get(), false, request.Pass());
+  if (!gpu_state_)
+    gpu_state_ = new gles2::GpuState;
+  new native_viewport::NativeViewportImpl(false, gpu_state_, request.Pass());
 }
 
 void NativeViewportApplicationLoader::Create(
@@ -47,7 +50,7 @@ void NativeViewportApplicationLoader::Create(
 void NativeViewportApplicationLoader::Create(ApplicationConnection* connection,
                                              InterfaceRequest<Gpu> request) {
   if (!gpu_state_)
-    gpu_state_ = new gles2::GpuImpl::State;
+    gpu_state_ = new gles2::GpuState;
   new gles2::GpuImpl(request.Pass(), gpu_state_);
 }
 

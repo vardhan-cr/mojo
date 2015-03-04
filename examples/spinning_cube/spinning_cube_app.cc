@@ -38,22 +38,23 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
 
     SetEventDispatcher();
 
-    // TODO(jamesr): Should be mojo:gpu_service
-    app->ConnectToService("mojo:native_viewport_service", &gpu_service_);
-
     mojo::SizePtr size(mojo::Size::New());
     size->width = 800;
     size->height = 600;
-    viewport_->Create(size.Pass(),
-                      base::Bind(&SpinningCubeApp::OnCreatedNativeViewport,
-                                 base::Unretained(this)));
+    viewport_->Create(
+        size.Clone(),
+        base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
     viewport_->Show();
+    mojo::ContextProviderPtr onscreen_context_provider;
+    viewport_->GetContextProvider(GetProxy(&onscreen_context_provider));
+
+    gles2_client_.reset(new GLES2ClientImpl(onscreen_context_provider.Pass()));
+    gles2_client_->SetSize(*size);
   }
 
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
     assert(metrics);
-    if (gles2_client_)
-      gles2_client_->SetSize(*metrics->size);
+    gles2_client_->SetSize(*metrics->size);
     viewport_->RequestMetrics(
         base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
   }
@@ -73,26 +74,12 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
     viewport_->SetEventDispatcher(ptr.Pass());
   }
 
-  void OnCreatedNativeViewport(uint64_t native_viewport_id,
-                               mojo::ViewportMetricsPtr metrics) {
-    mojo::ViewportParameterListenerPtr listener;
-    mojo::CommandBufferPtr command_buffer;
-    // TODO(jamesr): Output to a surface instead.
-    gpu_service_->CreateOnscreenGLES2Context(
-        native_viewport_id, metrics->size.Clone(), GetProxy(&command_buffer),
-        listener.Pass());
-    gles2_client_.reset(new GLES2ClientImpl(command_buffer.Pass()));
-    gles2_client_->SetSize(*metrics->size);
-    viewport_->RequestMetrics(
-        base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
-  }
-
   // ErrorHandler implementation.
   void OnConnectionError() override { mojo::RunLoop::current()->Quit(); }
 
   scoped_ptr<GLES2ClientImpl> gles2_client_;
   mojo::NativeViewportPtr viewport_;
-  mojo::GpuPtr gpu_service_;
+  mojo::ContextProviderPtr onscreen_context_provider_;
   mojo::Binding<NativeViewportEventDispatcher> dispatcher_binding_;
 
   DISALLOW_COPY_AND_ASSIGN(SpinningCubeApp);

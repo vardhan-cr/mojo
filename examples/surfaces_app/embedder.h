@@ -7,23 +7,16 @@
 
 #include "base/memory/scoped_ptr.h"
 #include "cc/surfaces/surface_id.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/display.mojom.h"
 #include "ui/gfx/size.h"
 
-namespace cc {
-class CompositorFrame;
-}
-
 namespace mojo {
-
-class ApplicationConnection;
-
 namespace examples {
 
 // Simple example of a surface embedder that embeds two other surfaces.
 class Embedder {
  public:
-  Embedder(uint32_t local_id, Surface* surface);
+  explicit Embedder(Display* display);
   ~Embedder();
 
   void ProduceFrame(cc::SurfaceId child_one,
@@ -32,9 +25,11 @@ class Embedder {
                     const gfx::Size& size,
                     int offset);
 
+  bool frame_pending() const { return frame_pending_; }
+
  private:
-  uint32_t local_id_;
-  Surface* surface_;
+  Display* display_;
+  bool frame_pending_;
 
   DISALLOW_COPY_AND_ASSIGN(Embedder);
 };

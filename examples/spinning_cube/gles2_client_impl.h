@@ -14,7 +14,7 @@ namespace examples {
 
 class GLES2ClientImpl {
  public:
-  explicit GLES2ClientImpl(mojo::CommandBufferPtr command_buffer);
+  explicit GLES2ClientImpl(mojo::ContextProviderPtr context_provider);
   virtual ~GLES2ClientImpl();
 
   void SetSize(const mojo::Size& size);
@@ -22,6 +22,7 @@ class GLES2ClientImpl {
   void Draw();
 
  private:
+  void ContextCreated(mojo::CommandBufferPtr command_buffer);
   void ContextLost();
   static void ContextLostThunk(void* closure);
   void WantToDraw();
@@ -34,6 +35,7 @@ class GLES2ClientImpl {
   MojoTimeTicks drag_start_time_;
   bool waiting_to_draw_;
 
+  mojo::ContextProviderPtr context_provider_;
   MojoGLES2Context context_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(GLES2ClientImpl);

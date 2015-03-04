@@ -11,10 +11,9 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/timer/timer.h"
-#include "cc/surfaces/surface_id.h"
 #include "mojo/public/cpp/bindings/callback.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
-#include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/display.mojom.h"
 #include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
 #include "ui/gfx/rect.h"
 
@@ -66,13 +65,11 @@ class DefaultDisplayManager : public DisplayManager,
   const mojo::ViewportMetrics& GetViewportMetrics() override;
 
  private:
-  void OnCreatedNativeViewport(uint64_t native_viewport_id,
-                               mojo::ViewportMetricsPtr metrics);
+  void WantToDraw();
   void Draw();
+  void DidDraw();
 
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics);
-
-  void SetIdNamespace(uint32_t id_namespace);
 
   // ErrorHandler:
   void OnConnectionError() override;
@@ -84,10 +81,9 @@ class DefaultDisplayManager : public DisplayManager,
   mojo::ViewportMetrics metrics_;
   gfx::Rect dirty_rect_;
   base::Timer draw_timer_;
+  bool frame_pending_;
 
-  mojo::SurfacePtr surface_;
-  uint32_t id_namespace_;
-  bool surface_allocated_;
+  mojo::DisplayPtr display_;
   mojo::NativeViewportPtr native_viewport_;
   mojo::Callback<void()> native_viewport_closed_callback_;
   base::WeakPtrFactory<DefaultDisplayManager> weak_factory_;

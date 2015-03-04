@@ -20,36 +20,42 @@
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
+#include "mojo/services/surfaces/public/interfaces/display.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "ui/gfx/rect.h"
 
 namespace mojo {
 namespace examples {
 
-static const uint32_t kLocalId = 1u;
-
 class SurfacesApp : public ApplicationDelegate {
  public:
   SurfacesApp() : app_impl_(nullptr), id_namespace_(0u), weak_factory_(this) {}
   ~SurfacesApp() override {}
 
-  void Initialize(ApplicationImpl* app) override { app_impl_ = app; }
-
   // ApplicationDelegate implementation
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    app_impl_->ConnectToService("mojo:native_viewport_service", &viewport_);
-
-    app_impl_->ConnectToService("mojo:surfaces_service", &surface_);
-    surface_->GetIdNamespace(
-        base::Bind(&SurfacesApp::SetIdNamespace, base::Unretained(this)));
-    embedder_.reset(new Embedder(kLocalId, surface_.get()));
-
+  void Initialize(ApplicationImpl* app) override {
+    app_impl_ = app;
     size_ = gfx::Size(800, 600);
 
-    viewport_->Create(Size::From(size_),
-                      base::Bind(&SurfacesApp::OnCreatedNativeViewport,
-                                 weak_factory_.GetWeakPtr()));
+    // Connect to the native viewport service and create a viewport.
+    app_impl_->ConnectToService("mojo:native_viewport_service", &viewport_);
+    viewport_->Create(Size::From(size_), [](ViewportMetricsPtr metrics) {});
     viewport_->Show();
+
+    // Grab a ContextProvider associated with the viewport.
+    ContextProviderPtr onscreen_context_provider;
+    viewport_->GetContextProvider(GetProxy(&onscreen_context_provider));
+
+    // Create a surfaces Display bound to the viewport's context provider.
+    DisplayFactoryPtr display_factory;
+    app_impl_->ConnectToService("mojo:surfaces_service", &display_factory);
+    display_factory->Create(onscreen_context_provider.Pass(),
+                            nullptr,  // resource_returner
+                            GetProxy(&display_));
+
+    // Construct a mojo::examples::Embedder object that will draw to our
+    // display.
+    embedder_.reset(new Embedder(display_.get()));
 
     child_size_ = gfx::Size(size_.width() / 3, size_.height() / 2);
     app_impl_->ConnectToService("mojo:surfaces_child_app", &child_one_);
@@ -62,9 +68,11 @@ class SurfacesApp : public ApplicationDelegate {
                              Size::From(child_size_),
                              base::Bind(&SurfacesApp::ChildTwoProducedFrame,
                                         base::Unretained(this)));
-    surface_->CreateSurface(kLocalId);
     Draw(10);
-    return true;
+  }
+
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    return false;
   }
 
   void ChildOneProducedFrame(SurfaceIdPtr id) {
@@ -79,8 +87,10 @@ class SurfacesApp : public ApplicationDelegate {
     int bounced_offset = offset;
     if (offset > 200)
       bounced_offset = 400 - offset;
-    embedder_->ProduceFrame(child_one_id_, child_two_id_, child_size_, size_,
-                            bounced_offset);
+    if (!embedder_->frame_pending()) {
+      embedder_->ProduceFrame(child_one_id_, child_two_id_, child_size_, size_,
+                              bounced_offset);
+    }
     base::MessageLoop::current()->PostDelayedTask(
         FROM_HERE,
         base::Bind(
@@ -89,19 +99,10 @@ class SurfacesApp : public ApplicationDelegate {
   }
 
  private:
-  void SetIdNamespace(uint32_t id_namespace) {
-    auto qualified_id = mojo::SurfaceId::New();
-    qualified_id->id_namespace = id_namespace;
-    qualified_id->local = kLocalId;
-    viewport_->SubmittedFrame(qualified_id.Pass());
-  }
-  void OnCreatedNativeViewport(uint64_t native_viewport_id,
-                               mojo::ViewportMetricsPtr metrics) {}
 
   ApplicationImpl* app_impl_;
-  SurfacePtr surface_;
+  DisplayPtr display_;
   uint32_t id_namespace_;
-  SurfaceIdPtr onscreen_id_;
   scoped_ptr<Embedder> embedder_;
   ChildPtr child_one_;
   cc::SurfaceId child_one_id_;

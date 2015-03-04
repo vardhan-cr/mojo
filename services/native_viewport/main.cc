@@ -32,18 +32,16 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
  private:
   // mojo::ApplicationDelegate implementation.
   void Initialize(mojo::ApplicationImpl* application) override {
-    app_ = application;
+    tracing_.Initialize(application);
 
-    tracing_.Initialize(app_);
-
-    if (app_->HasArg(mojo::kUseTestConfig))
+    if (application->HasArg(mojo::kUseTestConfig))
       gfx::GLSurface::InitializeOneOffForTests();
-    else if (app_->HasArg(mojo::kUseOSMesa))
+    else if (application->HasArg(mojo::kUseOSMesa))
       gfx::GLSurface::InitializeOneOff(gfx::kGLImplementationOSMesaGL);
     else
       gfx::GLSurface::InitializeOneOff();
 
-    is_headless_ = app_->HasArg(mojo::kUseHeadlessConfig);
+    is_headless_ = application->HasArg(mojo::kUseHeadlessConfig);
   }
 
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
@@ -55,19 +53,20 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
   // mojo::InterfaceFactory<NativeViewport> implementation.
   void Create(ApplicationConnection* connection,
               mojo::InterfaceRequest<NativeViewport> request) override {
-    new NativeViewportImpl(app_, is_headless_, request.Pass());
+    if (!gpu_state_.get())
+      gpu_state_ = new gles2::GpuState;
+    new NativeViewportImpl(is_headless_, gpu_state_, request.Pass());
   }
 
   // mojo::InterfaceFactory<Gpu> implementation.
   void Create(ApplicationConnection* connection,
               mojo::InterfaceRequest<Gpu> request) override {
     if (!gpu_state_.get())
-      gpu_state_ = new gles2::GpuImpl::State;
+      gpu_state_ = new gles2::GpuState;
     new gles2::GpuImpl(request.Pass(), gpu_state_);
   }
 
-  mojo::ApplicationImpl* app_;
-  scoped_refptr<gles2::GpuImpl::State> gpu_state_;
+  scoped_refptr<gles2::GpuState> gpu_state_;
   bool is_headless_;
   mojo::TracingImpl tracing_;
 
