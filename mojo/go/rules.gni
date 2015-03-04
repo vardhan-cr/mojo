@@ -29,16 +29,19 @@ template("go_test_binary") {
   static_library_name = target_name + "_static_library"
 
   static_library(static_library_name) {
+    testonly = true
     sources = invoker.static_library_sources
     deps = invoker.deps
     complete_static_lib = true
   }
 
   action(target_name) {
+    testonly = true
     deps = [
       ":$static_library_name",
     ]
     script = "//mojo/go/go.py"
+    inputs = invoker.sources
     outputs = [
       "${target_out_dir}/${target_name}",
     ]
@@ -82,6 +85,7 @@ template("go_shared_library") {
       ":$static_library_name",
     ]
     script = "//mojo/go/go.py"
+    inputs = invoker.sources
     outputs = [
       "${target_out_dir}/${target_name}",
     ]
