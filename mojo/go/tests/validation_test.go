@@ -295,6 +295,10 @@ func (v *conformanceValidator) Method10(inParam0 map[string]uint8) error {
 	return v.Proxy.Method10(inParam0)
 }
 
+func (v *conformanceValidator) Method11(inParam0 test.StructG) error {
+	return nil
+}
+
 func TestConformanceValidation(t *testing.T) {
 	tests := getMatchingTests(listTestFiles(), "conformance_")
 	waiter := bindings.GetAsyncWaiter()
