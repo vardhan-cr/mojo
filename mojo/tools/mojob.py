@@ -112,14 +112,6 @@ def build(config):
     return subprocess.call(['ninja', '-C', out_dir])
 
 
-def dartcheck(config):
-  """Runs the dart analyzer on code for the given config."""
-
-  out_dir = _get_out_dir(config)
-  print 'Checking dart code in %s ...' % out_dir
-  return subprocess.call(['ninja', '-C', out_dir, 'dartcheck'])
-
-
 def _run_tests(config, test_types):
   """Runs the tests of the given type(s) for the given config."""
 
@@ -251,10 +243,6 @@ def main():
   nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
       help='Run NaCl unit tests (does not build).')
   nacltest_parser.set_defaults(func=nacltest)
-
-  dartcheck_parser = subparsers.add_parser('dartcheck', parents=[parent_parser],
-      help='Run the dart source code analyzer to check for warnings.')
-  dartcheck_parser.set_defaults(func=dartcheck)
 
   args = parser.parse_args()
   config = _args_to_config(args)
