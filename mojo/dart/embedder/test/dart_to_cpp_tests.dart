@@ -22,9 +22,7 @@ class DartSideImpl implements DartSide {
   Completer _completer;
 
   DartSideImpl(core.MojoMessagePipeEndpoint endpoint) {
-    _stub = new DartSideStub.fromEndpoint(endpoint)
-            ..delegate = this
-            ..listen();
+    _stub = new DartSideStub.fromEndpoint(endpoint, impl: this);
     _sampleData = new Uint8List(CAPACITY_BYTES);
     for (int i = 0; i < _sampleData.length; ++i) {
       _sampleData[i] = i;

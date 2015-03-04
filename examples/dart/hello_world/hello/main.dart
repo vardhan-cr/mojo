@@ -14,10 +14,16 @@ class Hello extends Application {
 
   void initialize(List<String> args, String url) {
     print("$url Hello");
+
     // We expect to find the world mojo application at the same
     // path as this application.
-    connectToApplication(url.replaceAll("hello", "world"));
-    close();
+    var c = connectToApplication(url.replaceAll("hello", "world"));
+
+    // A call to close() here would cause this app to go down before the "world"
+    // app has a chance to come up. Instead, we wait to close this app until
+    // the "world" app comes up, does its print, and closes its end of the
+    // connection.
+    c.listen(onClosed: close);
   }
 }
 

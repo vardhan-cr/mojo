@@ -78,7 +78,8 @@ const int kEchoString_name = 0;
 const int kEchoStringResponse_name = 1;
 
 class EchoStub extends bindings.Stub {
-  EchoStub(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
+  EchoStub(core.MojoMessagePipeEndpoint endpoint)
+      : super.fromEndpoint(endpoint);
 
   Future<EchoStringResponse> echoString(EchoString es) {
     var response = new EchoStringResponse();
@@ -110,7 +111,9 @@ class EchoStub extends bindings.Stub {
 
 
 class EchoProxy extends bindings.Proxy {
-  EchoProxy(core.MojoMessagePipeEndpoint endpoint) : super(endpoint);
+  EchoProxy(core.MojoMessagePipeEndpoint endpoint, {bool doListen: true,
+      Function onClosed})
+      : super.fromEndpoint(endpoint, doListen: doListen, onClosed: onClosed);
 
   Future<EchoStringResponse> echoString(String a) {
     // compose message.
@@ -140,8 +143,7 @@ class EchoProxy extends bindings.Proxy {
 
 
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
-  var provider = new EchoStub(endpoint);
-  provider.listen();
+  new EchoStub(endpoint);
 }
 
 
@@ -193,12 +195,10 @@ Future<bool> runOnClosedTest() async {
   var testCompleter = new Completer();
 
   var pipe = new core.MojoMessagePipe();
-  var proxy = new EchoProxy(pipe.endpoints[0]);
-  await Isolate.spawn(closingProviderIsolate, pipe.endpoints[1]);
-  proxy.listen(onClosed: () {
+  var proxy = new EchoProxy(pipe.endpoints[0], onClosed: () {
     testCompleter.complete(true);
   });
-
+  await Isolate.spawn(closingProviderIsolate, pipe.endpoints[1]);
   return testCompleter.future.timeout(
       new Duration(seconds: 1),
       onTimeout: () => false);

@@ -14,16 +14,13 @@ class EchoServiceImpl implements EchoService {
   Application _application;
 
   EchoServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
-    : _application = application {
-    _stub = new EchoServiceStub.fromEndpoint(endpoint)
-            ..delegate = this
-            ..listen();
+      : _application = application {
+    _stub = new EchoServiceStub.fromEndpoint(endpoint, impl: this);
   }
 
   echoString(String value, Function responseFactory) {
     if (value == "quit") {
       _stub.close();
-      _application.close();
     }
     return new Future.value(responseFactory(value));
   }
@@ -34,9 +31,10 @@ class EchoApplication extends Application {
 
   @override
   void acceptConnection(String requestorUrl, String resolvedUrl,
-                        ApplicationConnection connection) {
-    connection.provideService(EchoServiceName, (endpoint) =>
-        new EchoServiceImpl(this, endpoint));
+      ApplicationConnection connection) {
+    connection.provideService(
+        EchoServiceName,
+        (endpoint) => new EchoServiceImpl(this, endpoint));
     connection.listen();
   }
 }

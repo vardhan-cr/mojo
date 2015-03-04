@@ -18,10 +18,8 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   Completer _completer;
 
   ConformanceTestInterfaceImpl(this._completer,
-                              MojoMessagePipeEndpoint endpoint) {
-    _stub = new ConformanceTestInterfaceStub.fromEndpoint(endpoint)
-            ..delegate = this
-            ..listen();
+      MojoMessagePipeEndpoint endpoint) {
+    _stub = new ConformanceTestInterfaceStub.fromEndpoint(endpoint, impl: this);
   }
 
   void _complete() => _completer.complete(null);
@@ -38,7 +36,7 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
 
-  void close({bool nodefer : false}) => _stub.close(nodefer: nodefer);
+  void close({bool nodefer: false}) => _stub.close(nodefer: nodefer);
 }
 
 parser.ValidationParseResult readAndParseTest(String test) {
@@ -53,17 +51,17 @@ String expectedResult(String test) {
 }
 
 runTest(String name, parser.ValidationParseResult test, String expected) {
-  var handles = new List.generate(test.numHandles,
+  var handles = new List.generate(
+      test.numHandles,
       (_) => new MojoSharedBuffer.create(10).handle);
   var pipe = new MojoMessagePipe();
   var completer = new Completer();
   var conformanceImpl;
 
   runZoned(() {
-    conformanceImpl = new ConformanceTestInterfaceImpl(
-        completer, pipe.endpoints[0]);
-  },
-  onError: (e, stackTrace) {
+    conformanceImpl =
+        new ConformanceTestInterfaceImpl(completer, pipe.endpoints[0]);
+  }, onError: (e, stackTrace) {
     assert(e is MojoCodecError);
     // TODO(zra): Make the error messages conform?
     // assert(e == expected);
@@ -87,10 +85,12 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
 // TODO(zra, yzshen): Some struct versioning tests (with "mthd11" in their
 // names) are skipped.
 Iterable<String> getTestFiles(String path, String prefix) =>
-    builtin.enumerateFiles(path)
-           .where((s) => s.startsWith(prefix) && s.endsWith(".data") &&
-                         !s.contains("mthd11"))
-           .map((s) => s.replaceFirst('.data', ''));
+    builtin.enumerateFiles(
+        path).where(
+            (s) =>
+                s.startsWith(prefix) &&
+                    s.endsWith(".data") &&
+                    !s.contains("mthd11")).map((s) => s.replaceFirst('.data', ''));
 
 main(List args) {
   int handle = args[0];
