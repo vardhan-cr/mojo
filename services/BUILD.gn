@@ -31,6 +31,6 @@ group("services") {
   }
 
   if (is_linux) {
-    deps += [ "//services/python/content_handler" ]
+    deps += [ "//services/python" ]
   }
 }
