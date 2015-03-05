@@ -7,12 +7,16 @@ import("//mojo/public/mojo_application.gni")
 mojo_native_application("surfaces") {
   output_name = "surfaces_service"
   sources = [
+    "context_provider_mojo.cc",
+    "context_provider_mojo.h",
     "display_factory_impl.cc",
     "display_factory_impl.h",
     "display_impl.cc",
     "display_impl.h",
     "surfaces_impl.cc",
     "surfaces_impl.h",
+    "surfaces_output_surface.cc",
+    "surfaces_output_surface.h",
     "surfaces_scheduler.cc",
     "surfaces_scheduler.h",
     "surfaces_service_application.cc",
@@ -24,9 +28,8 @@ mojo_native_application("surfaces") {
     "//cc",
     "//cc/surfaces",
     "//cc/surfaces:surface_id",
-    "//ui/gfx/geometry",
+    "//gpu/command_buffer/client:gles2_interface",
     "//mojo/application",
-    "//mojo/cc",
     "//mojo/common",
     "//mojo/common:tracing_impl",
     "//mojo/converters/geometry",
@@ -34,8 +37,11 @@ mojo_native_application("surfaces") {
     "//mojo/environment:chromium",
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/environment",
+    "//mojo/public/cpp/system",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
+    "//ui/gfx/geometry",
   ]
 }

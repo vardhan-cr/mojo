@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/cc/direct_output_surface.h"
+#include "services/surfaces/surfaces_output_surface.h"
 
 #include "base/bind.h"
 #include "cc/output/compositor_frame.h"
@@ -18,7 +18,8 @@ DirectOutputSurface::DirectOutputSurface(
     : cc::OutputSurface(context_provider), weak_ptr_factory_(this) {
 }
 
-DirectOutputSurface::~DirectOutputSurface() {}
+DirectOutputSurface::~DirectOutputSurface() {
+}
 
 void DirectOutputSurface::SwapBuffers(cc::CompositorFrame* frame) {
   DCHECK(context_provider_.get());
@@ -33,9 +34,8 @@ void DirectOutputSurface::SwapBuffers(cc::CompositorFrame* frame) {
   uint32_t sync_point =
       context_provider_->ContextGL()->InsertSyncPointCHROMIUM();
   context_provider_->ContextSupport()->SignalSyncPoint(
-      sync_point,
-      base::Bind(&OutputSurface::OnSwapBuffersComplete,
-                 weak_ptr_factory_.GetWeakPtr()));
+      sync_point, base::Bind(&OutputSurface::OnSwapBuffersComplete,
+                             weak_ptr_factory_.GetWeakPtr()));
   client_->DidSwapBuffers();
 }
 

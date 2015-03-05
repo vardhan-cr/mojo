@@ -6,10 +6,10 @@
 
 #include "cc/output/compositor_frame.h"
 #include "cc/surfaces/display.h"
-#include "mojo/cc/context_provider_mojo.h"
-#include "mojo/cc/direct_output_surface.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
+#include "services/surfaces/context_provider_mojo.h"
+#include "services/surfaces/surfaces_output_surface.h"
 #include "services/surfaces/surfaces_scheduler.h"
 
 namespace surfaces {
@@ -46,8 +46,6 @@ void DisplayImpl::OnContextCreated(mojo::CommandBufferPtr gles2_client) {
   cc::RendererSettings settings;
   display_.reset(new cc::Display(this, manager_, nullptr, nullptr, settings));
   scheduler_->AddDisplay(display_.get());
-  // TODO: Listen to lost context events and request a new one from
-  // |context_provider_|.
   display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
       new mojo::ContextProviderMojo(gles2_client.PassMessagePipe()))));
 
@@ -98,6 +96,21 @@ void DisplayImpl::CommitVSyncParameters(base::TimeTicks timebase,
 }
 
 void DisplayImpl::OutputSurfaceLost() {
+  // If our OutputSurface is lost we can't draw until we get a new one. For now,
+  // destroy the display and create a new one when our ContextProvider provides
+  // a new one.
+  // TODO: This is more violent than necessary - we could simply remove this
+  // display from the scheduler's set and pass a new context in to the
+  // OutputSurface. It should be able to reinitialize properly.
+  scheduler_->RemoveDisplay(display_.get());
+  display_.reset();
+  factory_.Destroy(cc_id_);
+  viewport_param_binding_.Close();
+  mojo::ViewportParameterListenerPtr viewport_parameter_listener;
+  viewport_param_binding_.Bind(GetProxy(&viewport_parameter_listener));
+  context_provider_->Create(
+      viewport_parameter_listener.Pass(),
+      base::Bind(&DisplayImpl::OnContextCreated, base::Unretained(this)));
 }
 
 void DisplayImpl::SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) {

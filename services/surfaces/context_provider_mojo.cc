@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/cc/context_provider_mojo.h"
+#include "services/surfaces/context_provider_mojo.h"
 
 #include "base/logging.h"
 #include "mojo/public/cpp/environment/environment.h"
@@ -19,8 +19,7 @@ ContextProviderMojo::ContextProviderMojo(
 bool ContextProviderMojo::BindToCurrentThread() {
   DCHECK(command_buffer_handle_.is_valid());
   context_ = MojoGLES2CreateContext(command_buffer_handle_.release().value(),
-                                    &ContextLostThunk,
-                                    this,
+                                    &ContextLostThunk, this,
                                     Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
   return !!context_;
@@ -40,7 +39,9 @@ gpu::ContextSupport* ContextProviderMojo::ContextSupport() {
       MojoGLES2GetContextSupport(context_));
 }
 
-class GrContext* ContextProviderMojo::GrContext() { return NULL; }
+class GrContext* ContextProviderMojo::GrContext() {
+  return NULL;
+}
 
 cc::ContextProvider::Capabilities ContextProviderMojo::ContextCapabilities() {
   return capabilities_;
@@ -56,7 +57,14 @@ base::Lock* ContextProviderMojo::GetLock() {
 bool ContextProviderMojo::IsContextLost() {
   return context_lost_;
 }
-bool ContextProviderMojo::DestroyedOnMainThread() { return !context_; }
+bool ContextProviderMojo::DestroyedOnMainThread() {
+  return !context_;
+}
+
+void ContextProviderMojo::SetLostContextCallback(
+    const LostContextCallback& lost_context_callback) {
+  lost_context_callback_ = lost_context_callback;
+}
 
 ContextProviderMojo::~ContextProviderMojo() {
   if (context_)
@@ -65,6 +73,8 @@ ContextProviderMojo::~ContextProviderMojo() {
 
 void ContextProviderMojo::ContextLost() {
   context_lost_ = true;
+  if (!lost_context_callback_.is_null())
+    lost_context_callback_.Run();
 }
 
 }  // namespace mojo

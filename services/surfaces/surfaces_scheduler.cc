@@ -23,7 +23,11 @@ SurfacesScheduler::~SurfacesScheduler() {
 }
 
 void SurfacesScheduler::SetNeedsDraw() {
-  scheduler_->SetNeedsRedraw();
+  // Don't tell the scheduler we need to draw if we have no active displays
+  // which can happen if we haven't initialized displays yet or if all active
+  // displays have lost their context.
+  if (!displays_.empty())
+    scheduler_->SetNeedsRedraw();
 }
 
 void SurfacesScheduler::OnVSyncParametersUpdated(base::TimeTicks timebase,

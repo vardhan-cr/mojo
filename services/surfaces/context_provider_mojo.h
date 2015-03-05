@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_CC_CONTEXT_PROVIDER_MOJO_H_
-#define MOJO_CC_CONTEXT_PROVIDER_MOJO_H_
+#ifndef SERVICES_SURFACES_CONTEXT_PROVIDER_MOJO_H_
+#define SERVICES_SURFACES_CONTEXT_PROVIDER_MOJO_H_
 
 #include "base/macros.h"
 #include "base/synchronization/lock.h"
@@ -28,7 +28,7 @@ class ContextProviderMojo : public cc::ContextProvider {
   void DeleteCachedResources() override {}
   bool DestroyedOnMainThread() override;
   void SetLostContextCallback(
-      const LostContextCallback& lost_context_callback) override {}
+      const LostContextCallback& lost_context_callback) override;
   void SetMemoryPolicyChangedCallback(
       const MemoryPolicyChangedCallback& memory_policy_changed_callback)
       override {}
@@ -49,6 +49,7 @@ class ContextProviderMojo : public cc::ContextProvider {
   ScopedMessagePipeHandle command_buffer_handle_;
   MojoGLES2Context context_;
   bool context_lost_;
+  LostContextCallback lost_context_callback_;
 
   base::Lock context_lock_;
 
@@ -57,4 +58,4 @@ class ContextProviderMojo : public cc::ContextProvider {
 
 }  // namespace mojo
 
-#endif  // MOJO_CC_CONTEXT_PROVIDER_MOJO_H_
+#endif  // SERVICES_SURFACES_CONTEXT_PROVIDER_MOJO_H_
