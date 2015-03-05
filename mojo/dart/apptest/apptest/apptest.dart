@@ -37,6 +37,8 @@ class _CleanShutdownConfiguration extends SimpleConfiguration {
 
   _CleanShutdownConfiguration(this._application) : super() {}
 
+  Duration timeout = const Duration(seconds: 10);
+
   void onTestResult(TestCase externalTestCase) {
     super.onTestResult(externalTestCase);
     _application.resetConnections();
