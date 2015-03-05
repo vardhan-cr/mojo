@@ -13,12 +13,14 @@ component("application_manager") {
     "application_manager.h",
     "data_pipe_peek.cc",
     "data_pipe_peek.h",
+    "fetcher.cc",
+    "fetcher.h",
     "local_fetcher.cc",
     "local_fetcher.h",
     "network_fetcher.cc",
     "network_fetcher.h",
-    "fetcher.cc",
-    "fetcher.h",
+    "query_util.cc",
+    "query_util.h",
     "shell_impl.cc",
     "shell_impl.h",
   ]
@@ -45,6 +47,7 @@ component("application_manager") {
 test("mojo_application_manager_unittests") {
   sources = [
     "application_manager_unittest.cc",
+    "query_util_unittest.cc",
   ]
 
   deps = [

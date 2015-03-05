@@ -121,6 +121,24 @@ TEST_F(URLResolverTest, GetOriginMappings) {
   EXPECT_EQ("https://c.org/b", mappings[1].base_url);
 }
 
+TEST_F(URLResolverTest, TestQueryForURLMapping) {
+  URLResolver resolver;
+  resolver.SetMojoBaseURL(GURL("file:/base"));
+  resolver.AddURLMapping(GURL("https://a.org/foo"),
+                         GURL("https://b.org/a/foo"));
+  resolver.AddURLMapping(GURL("https://b.org/a/foo"),
+                         GURL("https://c.org/b/a/foo"));
+  GURL mapped_url = resolver.ApplyMappings(GURL("https://a.org/foo?a=b"));
+  EXPECT_EQ("https://c.org/b/a/foo?a=b", mapped_url.spec());
+}
+
+TEST_F(URLResolverTest, TestQueryForBaseURL) {
+  URLResolver resolver;
+  resolver.SetMojoBaseURL(GURL("file:///base"));
+  GURL mapped_url = resolver.ResolveMojoURL(GURL("mojo:foo?a=b"));
+  EXPECT_EQ("file:///base/foo.mojo?a=b", mapped_url.spec());
+}
+
 }  // namespace
 }  // namespace test
 }  // namespace shell

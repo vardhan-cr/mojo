@@ -7,6 +7,7 @@
 #include "base/base_paths.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "shell/application_manager/query_util.h"
 #include "shell/filename_util.h"
 #include "shell/switches.h"
 #include "url/url_util.h"
@@ -64,7 +65,8 @@ void URLResolver::AddOriginMapping(const GURL& origin, const GURL& base_url) {
 }
 
 GURL URLResolver::ApplyMappings(const GURL& url) const {
-  GURL mapped_url(url);
+  std::string query;
+  GURL mapped_url = GetBaseURLAndQuery(url, &query);
   for (;;) {
     const auto& url_it = url_map_.find(mapped_url);
     if (url_it != url_map_.end()) {
@@ -80,6 +82,8 @@ GURL URLResolver::ApplyMappings(const GURL& url) const {
                       mapped_url.spec().substr(origin.spec().length()));
   }
 
+  if (query.length())
+    mapped_url = GURL(mapped_url.spec() + query);
   return mapped_url;
 }
 
@@ -96,11 +100,9 @@ GURL URLResolver::ResolveMojoURL(const GURL& mojo_url) const {
     return mojo_url;
   } else {
     // It's still a mojo: URL, use the default mapping scheme.
-    std::string suffix = "";
-    if (mojo_url.has_query()) {
-      suffix = "?" + mojo_url.query();
-    }
-    std::string lib = mojo_url.host() + ".mojo" + suffix;
+    std::string query;
+    GURL base_url = GetBaseURLAndQuery(mojo_url, &query);
+    std::string lib = base_url.host() + ".mojo" + query;
     return mojo_base_url_.Resolve(lib);
   }
 }

@@ -17,6 +17,7 @@
 #include "shell/application_manager/fetcher.h"
 #include "shell/application_manager/local_fetcher.h"
 #include "shell/application_manager/network_fetcher.h"
+#include "shell/application_manager/query_util.h"
 
 namespace mojo {
 namespace shell {
@@ -25,16 +26,6 @@ namespace {
 
 // Used by TestAPI.
 bool has_created_instance = false;
-
-GURL StripQueryFromURL(const GURL& url) {
-  GURL::Replacements repl;
-  repl.SetQueryStr("");
-  std::string result = url.ReplaceComponents(repl).spec();
-
-  // Remove the dangling '?' because it's ugly.
-  base::ReplaceChars(result, "?", "", &result);
-  return GURL(result);
-}
 
 }  // namespace
 
@@ -160,7 +151,7 @@ void ApplicationManager::ConnectToApplication(
                              base::Passed(exposed_services.Pass()));
 
   if (resolved_url.SchemeIsFile()) {
-    new LocalFetcher(resolved_url, StripQueryFromURL(resolved_url),
+    new LocalFetcher(resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
                      base::Bind(callback, NativeRunner::DontDeleteAppPath));
     return;
   }
@@ -177,7 +168,7 @@ bool ApplicationManager::ConnectToRunningApplication(
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider>* services,
     ServiceProviderPtr* exposed_services) {
-  GURL application_url = StripQueryFromURL(resolved_url);
+  GURL application_url = GetBaseURLAndQuery(resolved_url, nullptr);
   ShellImpl* shell_impl = GetShellImpl(application_url);
   if (!shell_impl)
     return false;
@@ -209,7 +200,7 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
-  GURL app_url = StripQueryFromURL(resolved_url);
+  GURL app_url = GetBaseURLAndQuery(resolved_url, nullptr);
 
   ApplicationPtr application;
   InterfaceRequest<Application> application_request = GetProxy(&application);
@@ -413,7 +404,7 @@ void ApplicationManager::SetNativeOptionsForURL(
 }
 
 ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
-  auto url_it = url_to_loader_.find(StripQueryFromURL(url));
+  auto url_it = url_to_loader_.find(GetBaseURLAndQuery(url, nullptr));
   if (url_it != url_to_loader_.end())
     return url_it->second;
   auto scheme_it = scheme_to_loader_.find(url.scheme());
