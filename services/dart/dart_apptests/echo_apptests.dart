@@ -12,7 +12,7 @@ import 'package:services/dart/test/echo_service.mojom.dart';
 
 echoApptests(Application application) {
   group('Echo Service Apptests', () {
-    test('String', () { (() async {
+    test('String', () async {
       var echoProxy = new EchoServiceProxy.unbound();
       application.connectToService("mojo:dart_echo", echoProxy);
 
@@ -21,9 +21,11 @@ echoApptests(Application application) {
 
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
-    })().then(expectAsync((_) => null));});
 
-    test('Empty String', () { (() async {
+      echoProxy.close();
+    });
+
+    test('Empty String', () async {
       var echoProxy = new EchoServiceProxy.unbound();
       application.connectToService("mojo:dart_echo", echoProxy);
 
@@ -32,9 +34,11 @@ echoApptests(Application application) {
 
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
-    })().then(expectAsync((_) => null));});
 
-    test('Null String', () { (() async {
+      echoProxy.close();
+    });
+
+    test('Null String', () async {
       var echoProxy = new EchoServiceProxy.unbound();
       application.connectToService("mojo:dart_echo", echoProxy);
 
@@ -43,6 +47,8 @@ echoApptests(Application application) {
 
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
-    })().then(expectAsync((_) => null));});
+
+      echoProxy.close();
+    });
   });
 }

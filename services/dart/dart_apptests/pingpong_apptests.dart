@@ -33,7 +33,7 @@ pingpongApptests(Application application) {
   group('Ping-Pong Service Apptests', () {
     // Verify that "pingpong.dart" implements the PingPongService interface
     // and sends responses to our client.
-    test('Ping Service To Pong Client', () { (() async {
+    test('Ping Service To Pong Client', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
       application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
 
@@ -51,12 +51,12 @@ pingpongApptests(Application application) {
 
       pingPongClient.stub.close();
       pingPongServiceProxy.close();
-    })().then(expectAsync((_) => null));});
+    });
 
     // Verify that "pingpong.dart" can connect to "pingpong_target.dart", act as
     // its client, and return a Future that only resolves after the
     // target.ping() => client.pong() methods have executed 9 times.
-    test('Ping Target URL', () { (() async {
+    test('Ping Target URL', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
       application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
 
@@ -65,11 +65,11 @@ pingpongApptests(Application application) {
       expect(r.ok, equals(true));
 
       pingPongServiceProxy.close();
-    })().then(expectAsync((_) => null));});
+    });
 
     // Same as the previous test except that instead of providing the
     // pingpong_target.dart URL, we provide a connection to its PingPongService.
-    test('Ping Target Service', () { (() async {
+    test('Ping Target Service', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
       application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
 
@@ -88,10 +88,10 @@ pingpongApptests(Application application) {
 
       targetServiceProxy.close();
       pingPongServiceProxy.close();
-    })().then(expectAsync((_) => null));});
+    });
 
     // Verify that Dart can implement an interface "request" parameter.
-    test('Get Target Service', () { (() async {
+    test('Get Target Service', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
       application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
 
@@ -113,6 +113,6 @@ pingpongApptests(Application application) {
       pingPongClient.stub.close();
       targetServiceProxy.close();
       pingPongServiceProxy.close();
-    })().then(expectAsync((_) => null));});
+    });
   });
 }
