@@ -82,6 +82,7 @@ void PlatformViewportAndroid::SurfaceCreated(JNIEnv* env,
 
 void PlatformViewportAndroid::SurfaceDestroyed(JNIEnv* env, jobject obj) {
   DCHECK(window_);
+  delegate_->OnAcceleratedWidgetDestroyed();
   ReleaseWindow();
 }
 

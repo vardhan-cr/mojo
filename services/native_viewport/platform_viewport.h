@@ -30,6 +30,7 @@ class PlatformViewport {
     virtual void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) = 0;
     virtual void OnAcceleratedWidgetAvailable(
         gfx::AcceleratedWidget widget) = 0;
+    virtual void OnAcceleratedWidgetDestroyed() = 0;
     virtual bool OnEvent(ui::Event* ui_event) = 0;
     virtual void OnDestroyed() = 0;
   };

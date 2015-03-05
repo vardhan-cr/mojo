@@ -119,6 +119,10 @@ void NativeViewportImpl::OnAcceleratedWidgetAvailable(
   create_callback_.reset();
 }
 
+void NativeViewportImpl::OnAcceleratedWidgetDestroyed() {
+  context_provider_.SetAcceleratedWidget(gfx::kNullAcceleratedWidget);
+}
+
 bool NativeViewportImpl::OnEvent(ui::Event* ui_event) {
   if (!event_dispatcher_.get())
     return false;
