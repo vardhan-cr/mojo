@@ -11,8 +11,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/scoped_native_library.h"
 #include "base/threading/simple_thread.h"
-#include "shell/application_manager/application_manager.h"
-#include "shell/dynamic_service_runner.h"
+#include "shell/application_manager/native_runner.h"
 
 namespace mojo {
 namespace shell {

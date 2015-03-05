@@ -42,6 +42,6 @@ TEST(QueryUtil, ForFileURL) {
   EXPECT_EQ(query, "?a=b&c=d");
 }
 
+}  // namespace
 }  // namespace shell
 }  // namespace mojo
-}  // namespace

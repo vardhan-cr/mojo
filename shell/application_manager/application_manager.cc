@@ -5,19 +5,18 @@
 #include "shell/application_manager/application_manager.h"
 
 #include "base/bind.h"
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/stl_util.h"
 #include "base/strings/string_util.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/fetcher.h"
 #include "shell/application_manager/local_fetcher.h"
 #include "shell/application_manager/network_fetcher.h"
 #include "shell/application_manager/query_util.h"
+#include "shell/application_manager/shell_impl.h"
 
 namespace mojo {
 namespace shell {

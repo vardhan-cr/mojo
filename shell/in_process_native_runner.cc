@@ -9,6 +9,7 @@
 #include "base/location.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/threading/platform_thread.h"
+#include "shell/dynamic_service_runner.h"
 
 namespace mojo {
 namespace shell {

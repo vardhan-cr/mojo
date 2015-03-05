@@ -8,7 +8,6 @@
 #include "base/callback_helpers.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
-#include "base/scoped_native_library.h"
 #include "shell/app_child_process.mojom.h"
 #include "shell/app_child_process_host.h"
 #include "shell/in_process_native_runner.h"

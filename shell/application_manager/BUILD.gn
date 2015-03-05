@@ -5,7 +5,7 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/test.gni")
 
-component("application_manager") {
+source_set("application_manager") {
   output_name = "mojo_application_manager"
   sources = [
     "application_loader.h",
@@ -17,6 +17,7 @@ component("application_manager") {
     "fetcher.h",
     "local_fetcher.cc",
     "local_fetcher.h",
+    "native_runner.h",
     "network_fetcher.cc",
     "network_fetcher.h",
     "query_util.cc",
@@ -24,8 +25,6 @@ component("application_manager") {
     "shell_impl.cc",
     "shell_impl.h",
   ]
-
-  defines = [ "MOJO_APPLICATION_MANAGER_IMPLEMENTATION" ]
 
   public_deps = [
     "//base",

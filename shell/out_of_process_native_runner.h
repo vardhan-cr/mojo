@@ -10,7 +10,7 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "shell/application_manager/application_manager.h"
+#include "shell/application_manager/native_runner.h"
 
 namespace mojo {
 namespace shell {
