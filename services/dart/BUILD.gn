@@ -135,27 +135,3 @@ mojo_native_application("dart_content_handler") {
     "//url:url",
   ]
 }
-
-mojo_native_application("dart_apptests") {
-  testonly = true
-
-  sources = [
-    "echo_apptest.cc",
-    "pingpong_apptest.cc",
-  ]
-
-  deps = [
-    "//base",
-    "//mojo/application",
-    "//mojo/application:test_support",
-    "//mojo/public/cpp/bindings",
-    "//mojo/public/cpp/system",
-    "//services/dart/test:echo_service_interface",
-    "//services/dart/test:pingpong_service_interface",
-  ]
-  data_deps = [
-    "//services/dart/test/echo",
-    "//services/dart/test/pingpong",
-    "//services/dart/test/pingpong_target",
-  ]
-}

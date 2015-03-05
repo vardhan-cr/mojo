@@ -13,11 +13,10 @@ import sys
 _logging = logging.getLogger()
 
 from mopy import android
+from mopy import dart_apptest
 from mopy import gtest
-from mopy.background_app_group import BackgroundAppGroup
 from mopy.config import Config
 from mopy.gn import ConfigForGNArgs, ParseGNConfig
-from mopy.paths import Paths
 
 
 def main():
@@ -48,7 +47,6 @@ def main():
     extra_args.extend(android.PrepareShellRun(config))
 
   gtest.set_color()
-  mojo_paths = Paths(config)
 
   exit_code = 0
   for apptest_dict in apptest_list:
@@ -60,54 +58,19 @@ def main():
     print "Running " + apptest + "...",
     sys.stdout.flush()
 
-    # List the apptest fixtures so they can be run independently for isolation.
-    # TODO(msw): Run some apptests without fixture isolation?
-    fixtures = gtest.get_fixtures(config, shell_args, apptest)
+    if apptest_dict.get("type", "gtest") == "dart":
+      apptest_result = dart_apptest.run_test(config, apptest_dict, shell_args,
+                                             {apptest: test_args})
+    else:
+      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest,
+                                          test_args, shell_args,
+                                          launched_services)
 
-    if not fixtures:
-      print "Failed with no tests found."
+    if apptest_result != "Succeeded":
       exit_code = 1
-      continue
-
-    if any(not mojo_paths.IsValidAppUrl(url) for url in launched_services):
-      print "Failed with malformed launched-services: %r" % launched_services
-      exit_code = 1
-      continue
-
-    apptest_result = "Succeeded"
-    for fixture in fixtures:
-      apptest_args = test_args + ["--gtest_filter=%s" % fixture]
-      if launched_services:
-        success = RunApptestInLauncher(config, mojo_paths, apptest,
-                                       apptest_args, shell_args,
-                                       launched_services)
-      else:
-        success = RunApptestInShell(config, apptest, apptest_args, shell_args)
-
-      if not success:
-        apptest_result = "Failed test(s) in %r" % apptest_dict
-        exit_code = 1
-
     print apptest_result
 
   return exit_code
-
-
-def RunApptestInShell(config, application, application_args, shell_args):
-  return gtest.run_test(config, shell_args, {application: application_args})
-
-
-def RunApptestInLauncher(config, mojo_paths, application, application_args,
-                         shell_args, launched_services):
-  with BackgroundAppGroup(
-      mojo_paths, launched_services,
-      gtest.build_shell_arguments(shell_args)) as apps:
-    launcher_args = [
-        '--shell-path=' + apps.socket_path,
-        '--app-url=' + application,
-        '--app-path=' + mojo_paths.FileFromUrl(application),
-        '--app-args=' + " ".join(application_args)]
-    return gtest.run_test(config, launcher_args, run_launcher=True)
 
 
 if __name__ == '__main__':

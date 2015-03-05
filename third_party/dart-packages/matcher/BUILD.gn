@@ -1,0 +1,28 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/dart/rules.gni")
+
+dart_package("matcher") {
+  sources = [
+    "matcher/matcher.dart",
+    "matcher/mirror_matchers.dart",
+    "matcher/src/core_matchers.dart",
+    "matcher/src/description.dart",
+    "matcher/src/error_matchers.dart",
+    "matcher/src/expect.dart",
+    "matcher/src/future_matchers.dart",
+    "matcher/src/interfaces.dart",
+    "matcher/src/iterable_matchers.dart",
+    "matcher/src/map_matchers.dart",
+    "matcher/src/numeric_matchers.dart",
+    "matcher/src/operator_matchers.dart",
+    "matcher/src/pretty_print.dart",
+    "matcher/src/prints_matcher.dart",
+    "matcher/src/string_matchers.dart",
+    "matcher/src/throws_matcher.dart",
+    "matcher/src/throws_matchers.dart",
+    "matcher/src/util.dart",
+  ]
+}

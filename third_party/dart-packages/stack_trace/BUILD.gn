@@ -1,0 +1,18 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/dart/rules.gni")
+
+dart_package("stack_trace") {
+  sources = [
+    "stack_trace/stack_trace.dart",
+    "stack_trace/src/chain.dart",
+    "stack_trace/src/frame.dart",
+    "stack_trace/src/lazy_trace.dart",
+    "stack_trace/src/stack_zone_specification.dart",
+    "stack_trace/src/trace.dart",
+    "stack_trace/src/utils.dart",
+    "stack_trace/src/vm_trace.dart",
+  ]
+}

@@ -5,12 +5,12 @@
 import logging
 import os
 import re
-import subprocess
 import sys
 
 _logging = logging.getLogger()
 
-from mopy import android
+from mopy import test_util
+from mopy.background_app_group import BackgroundAppGroup
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
@@ -22,6 +22,36 @@ def set_color():
   if sys.stdout.isatty() and "GTEST_COLOR" not in os.environ:
     _logging.debug("Setting GTEST_COLOR=yes")
     os.environ["GTEST_COLOR"] = "yes"
+
+def run_fixtures(config, apptest_dict, apptest, test_args, shell_args,
+                 launched_services):
+  """Run the gtest fixtures in isolation."""
+
+  mojo_paths = Paths(config)
+
+  # List the apptest fixtures so they can be run independently for isolation.
+  # TODO(msw): Run some apptests without fixture isolation?
+  fixtures = get_fixtures(config, shell_args, apptest)
+
+  if not fixtures:
+    return "Failed with no tests found."
+
+  if any(not mojo_paths.IsValidAppUrl(url) for url in launched_services):
+    return ("Failed with malformed launched-services: %r" % launched_services)
+
+  apptest_result = "Succeeded"
+  for fixture in fixtures:
+    apptest_args = test_args + ["--gtest_filter=%s" % fixture]
+    if launched_services:
+      success = RunApptestInLauncher(config, mojo_paths, apptest, apptest_args,
+                                     shell_args, launched_services)
+    else:
+      success = RunApptestInShell(config, apptest, apptest_args, shell_args)
+
+    if not success:
+      apptest_result = "Failed test(s) in %r" % apptest_dict
+
+  return apptest_result
 
 
 def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
@@ -35,7 +65,8 @@ def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
     run_launcher: |True| is mojo_launcher must be used instead of mojo_shell.
   """
   apps_and_args = apps_and_args or {}
-  output = _try_run_test(config, shell_args, apps_and_args, run_launcher)
+  output = test_util.try_run_test(config, shell_args, apps_and_args,
+                                  run_launcher)
   # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
@@ -43,7 +74,8 @@ def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
       (output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1)):
     print "Failed test:"
     print_process_error(
-        _build_command_line(config, shell_args, apps_and_args, run_launcher),
+        test_util.build_command_line(config, shell_args, apps_and_args,
+                                     run_launcher),
         output)
     return False
   _logging.debug("Succeeded with output:\n%s" % output)
@@ -64,77 +96,14 @@ def get_fixtures(config, shell_args, apptest):
   """
   try:
     apps_and_args = {apptest: ["--gtest_list_tests"]}
-    list_output = _run_test(config, shell_args, apps_and_args)
+    list_output = test_util.run_test(config, shell_args, apps_and_args)
     _logging.debug("Tests listed:\n%s" % list_output)
     return _gtest_list_tests(list_output)
   except Exception as e:
     print "Failed to get test fixtures:"
     print_process_error(
-        _build_command_line(config, shell_args, apps_and_args), e)
+        test_util.build_command_line(config, shell_args, apps_and_args), e)
   return []
-
-
-def build_shell_arguments(shell_args, apps_and_args=None):
-  """Build the list of arguments for the shell. |shell_args| are the base
-  arguments, |apps_and_args| is a dictionary that associates each application to
-  its specific arguments|. Each app included will be run by the shell.
-  """
-  result = shell_args[:]
-  if apps_and_args:
-    for (application, args) in apps_and_args.items():
-      result += ["--args-for=%s %s" % (application, " ".join(args))]
-    result += apps_and_args.keys()
-  return result
-
-
-def _get_shell_executable(config, run_launcher):
-  paths = Paths(config=config)
-  if config.target_os == Config.OS_ANDROID:
-    return os.path.join(paths.src_root, "mojo", "tools",
-                        "android_mojo_shell.py")
-  elif run_launcher:
-    return paths.mojo_launcher_path
-  else:
-    return paths.mojo_shell_path
-
-
-def _build_command_line(config, shell_args, apps_and_args, run_launcher=False):
-  executable = _get_shell_executable(config, run_launcher)
-  return "%s %s" % (executable, " ".join(["%r" % x for x in
-                                          build_shell_arguments(
-                                              shell_args, apps_and_args)]))
-
-
-def _run_test_android(shell_args, apps_and_args):
-  """Run the given test on the single/default android device."""
-  (r, w) = os.pipe()
-  with os.fdopen(r, "r") as rf:
-    with os.fdopen(w, "w") as wf:
-      arguments = build_shell_arguments(shell_args, apps_and_args)
-      android.StartShell(arguments, wf, wf.close)
-      return rf.read()
-
-
-def _run_test(config, shell_args, apps_and_args, run_launcher=False):
-  """Run the given test, using mojo_launcher if |run_launcher| is True."""
-  if (config.target_os == Config.OS_ANDROID):
-    return _run_test_android(shell_args, apps_and_args)
-  else:
-    executable = _get_shell_executable(config, run_launcher)
-    command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
-    return subprocess.check_output(command, stderr=subprocess.STDOUT)
-
-
-def _try_run_test(config, shell_args, apps_and_args, run_launcher):
-  """Returns the output of a command line or an empty string on error."""
-  command_line = _build_command_line(config, shell_args, apps_and_args,
-                                     run_launcher=run_launcher)
-  _logging.debug("Running command line: %s" % command_line)
-  try:
-    return _run_test(config, shell_args, apps_and_args, run_launcher)
-  except Exception as e:
-    print_process_error(command_line, e)
-  return None
 
 
 def _gtest_list_tests(gtest_list_tests_output):
@@ -161,3 +130,20 @@ def _gtest_list_tests(gtest_list_tests_output):
     test_list.append(suite + line.strip())
 
   return test_list
+
+
+def RunApptestInShell(config, application, application_args, shell_args):
+  return run_test(config, shell_args, {application: application_args})
+
+
+def RunApptestInLauncher(config, mojo_paths, application, application_args,
+                         shell_args, launched_services):
+  with BackgroundAppGroup(
+      mojo_paths, launched_services,
+      test_util.build_shell_arguments(shell_args)) as apps:
+    launcher_args = [
+        '--shell-path=' + apps.socket_path,
+        '--app-url=' + application,
+        '--app-path=' + mojo_paths.FileFromUrl(application),
+        '--app-args=' + " ".join(application_args)]
+    return run_test(config, launcher_args, run_launcher=True)

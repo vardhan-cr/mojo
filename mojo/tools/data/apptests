@@ -84,5 +84,6 @@ if config.target_os != config.OS_ANDROID:
     },
     {
       "test": "mojo:dart_apptests",
+      "type": "dart",
     },
   ]

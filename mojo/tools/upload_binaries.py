@@ -18,14 +18,22 @@ from mopy.paths import Paths
 from mopy.version import Version
 
 BLACKLISTED_APPS = [
-    # The network service apps are not produced out of the Mojo repo, but may
-    # be present in the build dir.
-    "network_service.mojo",
-    "network_service_apptests.mojo",
+  # The network service apps are not produced out of the Mojo repo, but may
+  # be present in the build dir.
+  "network_service.mojo",
+  "network_service_apptests.mojo",
 ]
+
+WHILTELISTED_FILES = [
+  # These are files other than *.mojo files which are part of our binary
+  # artifact scheme.
+  "obj/mojo/dart/apptest/apptest.dartzip",
+]
+
 
 def target(config):
   return config.target_os + "-" + config.target_cpu
+
 
 def find_apps_to_upload(build_dir):
   apps = []
@@ -40,6 +48,16 @@ def find_apps_to_upload(build_dir):
     apps.append(path)
   return apps
 
+
+def find_whitelisted_files(build_dir):
+  existing_files = []
+  for path in WHILTELISTED_FILES:
+    joined_path = os.path.join(build_dir, path)
+    if os.path.isfile(joined_path):
+      existing_files.append(joined_path)
+  return existing_files
+
+
 def upload(config, source, dest, dry_run):
   paths = Paths(config)
   sys.path.insert(0, os.path.join(paths.src_root, "tools"))
@@ -53,6 +71,7 @@ def upload(config, source, dest, dry_run):
     print str([gsutil_exe, "cp", source, dest])
   else:
     subprocess.check_call([gsutil_exe, "cp", source, dest])
+
 
 def upload_shell(config, dry_run, verbose):
   paths = Paths(config)
@@ -85,6 +104,7 @@ def upload_shell(config, dry_run, verbose):
   latest_file = "gs://mojo/shell/%s/LATEST" % target(config)
   write_file_to_gs(version, latest_file, config, dry_run)
 
+
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
   app_name, _ = os.path.splitext(app_binary_name)
@@ -102,11 +122,24 @@ def upload_app(app_binary_path, config, dry_run):
                        app_name + "_location")
   write_file_to_gs(https_app_location, app_location_file, config, dry_run)
 
+
+def upload_file(file_path, config, dry_run):
+  file_binary_name = os.path.basename(file_path)
+  version = Version().version
+  file_location_in_gs = ("mojo/services/" + target(config) + "/" + version +
+                         "/" + file_binary_name)
+  gsutil_file_location = "gs://" + file_location_in_gs
+
+  # Upload the new binary.
+  upload(config, file_path, gsutil_file_location, dry_run)
+
+
 def write_file_to_gs(file_contents, dest, config, dry_run):
   with tempfile.NamedTemporaryFile() as temp_version_file:
     temp_version_file.write(file_contents)
     temp_version_file.flush()
     upload(config, temp_version_file.name, dest, dry_run)
+
 
 def main():
   parser = argparse.ArgumentParser(description="Upload binaries for apps and "
@@ -127,10 +160,14 @@ def main():
   config = Config(target_os=target_os, is_debug=False)
   upload_shell(config, args.dry_run, args.verbose)
 
-  apps_to_upload = find_apps_to_upload(
-      gn.BuildDirectoryForConfig(config, Paths(config).src_root))
+  build_directory = gn.BuildDirectoryForConfig(config, Paths(config).src_root)
+  apps_to_upload = find_apps_to_upload(build_directory)
   for app in apps_to_upload:
     upload_app(app, config, args.dry_run)
+
+  files_to_upload = find_whitelisted_files(build_directory)
+  for file_to_upload in files_to_upload:
+    upload_file(file_to_upload, config, args.dry_run)
 
   return 0
 

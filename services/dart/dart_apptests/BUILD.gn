@@ -1,0 +1,23 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/dart/rules.gni")
+
+dart_packaged_application("dart_apptests") {
+  sources = [
+    "main.dart",
+    "echo_apptests.dart",
+    "pingpong_apptests.dart",
+  ]
+  deps = [
+    "//mojo/dart/apptest",
+    "//services/dart/test:echo_service_interface",
+    "//services/dart/test:pingpong_service_interface",
+  ]
+  datadeps = [
+    "//services/dart/test/echo",
+    "//services/dart/test/pingpong",
+    "//services/dart/test/pingpong_target",
+  ]
+}
