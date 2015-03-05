@@ -7,6 +7,7 @@ group("default") {
   testonly = true
 
   deps = [
+    "//crypto:crypto_unittests",
     "//examples",
     "//mojo",
     "//services",
