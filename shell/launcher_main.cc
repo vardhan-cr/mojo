@@ -17,7 +17,7 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "shell/dynamic_service_runner.h"
 #include "shell/external_application_registrar_connection.h"
-#include "shell/in_process_dynamic_service_runner.h"
+#include "shell/in_process_native_runner.h"
 #include "shell/init.h"
 #include "url/gurl.h"
 
@@ -71,7 +71,7 @@ class Launcher : public embedder::ProcessDelegate {
 
   void Run() {
     DCHECK(application_request_.is_pending());
-    shell::InProcessDynamicServiceRunner service_runner(nullptr);
+    shell::InProcessNativeRunner service_runner(nullptr);
     base::RunLoop run_loop;
     service_runner.Start(app_path_, NativeRunner::DontDeleteAppPath,
                          application_request_.Pass(), run_loop.QuitClosure());

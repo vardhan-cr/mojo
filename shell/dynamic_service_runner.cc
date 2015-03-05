@@ -41,7 +41,7 @@ bool SetThunks(Thunks (*make_thunks)(),
 
 base::NativeLibrary LoadAndRunNativeApplication(
     const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request) {
   DVLOG(2) << "Loading/running Mojo app in process from library: "
            << app_path.value();

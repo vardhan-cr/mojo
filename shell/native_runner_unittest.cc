@@ -9,7 +9,6 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
-
 namespace {
 
 struct TestState {
@@ -55,8 +54,6 @@ class TestNativeRunnerFactory : public NativeRunnerFactory {
   TestState* state_;
 };
 
-}  // namespace
-
 class NativeApplicationLoaderTest : public testing::Test,
                                     public ApplicationManager::Delegate {
  public:
@@ -80,7 +77,7 @@ class NativeApplicationLoaderTest : public testing::Test,
 
  private:
   // ApplicationManager::Delegate
-  void OnApplicationError(const GURL& url) override { NOTREACHED(); }
+  void OnApplicationError(const GURL& url) override {}
 
   GURL ResolveURL(const GURL& url) override { return url; }
 
@@ -101,4 +98,5 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
   EXPECT_FALSE(state_.runner_was_destroyed);
 }
 
+}  // namespace
 }  // namespace mojo

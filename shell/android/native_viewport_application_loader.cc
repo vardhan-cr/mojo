@@ -26,7 +26,7 @@ void NativeViewportApplicationLoader::Load(
 }
 
 bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
-    mojo::ApplicationConnection* connection) {
+    ApplicationConnection* connection) {
   connection->AddService<NativeViewport>(this);
   connection->AddService<Gpu>(this);
   connection->AddService<Keyboard>(this);

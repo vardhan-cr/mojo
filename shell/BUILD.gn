@@ -91,7 +91,7 @@ executable("mojo_launcher") {
     ":external_application_registrar_bindings",
     ":external_application_registrar_connection",
     ":init",
-    ":in_process_dynamic_service_runner",
+    ":in_process_native_runner",
     "//base",
     "//build/config/sanitizers:deps",
     "//mojo/common",
@@ -112,12 +112,12 @@ source_set("init") {
   ]
 }
 
-source_set("in_process_dynamic_service_runner") {
+source_set("in_process_native_runner") {
   sources = [
     "dynamic_service_runner.cc",
     "dynamic_service_runner.h",
-    "in_process_dynamic_service_runner.cc",
-    "in_process_dynamic_service_runner.h",
+    "in_process_native_runner.cc",
+    "in_process_native_runner.h",
   ]
 
   public_deps = [
@@ -159,8 +159,8 @@ source_set("lib") {
     "filename_util.h",
     "incoming_connection_listener.cc",
     "incoming_connection_listener.h",
-    "out_of_process_dynamic_service_runner.cc",
-    "out_of_process_dynamic_service_runner.h",
+    "out_of_process_native_runner.cc",
+    "out_of_process_native_runner.h",
     "url_resolver.cc",
     "url_resolver.h",
     "switches.cc",
@@ -175,7 +175,7 @@ source_set("lib") {
     ":app_child_process_bindings",
     ":external_application_registrar_bindings",
     ":init",
-    ":in_process_dynamic_service_runner",
+    ":in_process_native_runner",
     "//base",
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
@@ -405,7 +405,7 @@ test("mojo_shell_tests") {
     "child_process_host_unittest.cc",
     "command_line_util_unittest.cc",
     "data_pipe_peek_unittest.cc",
-    "in_process_dynamic_service_runner_unittest.cc",
+    "in_process_native_runner_unittest.cc",
     "native_runner_unittest.cc",
     "shell_test_base.cc",
     "shell_test_base_android.cc",
@@ -416,7 +416,7 @@ test("mojo_shell_tests") {
   ]
 
   deps = [
-    ":in_process_dynamic_service_runner",
+    ":in_process_native_runner",
     ":lib",
     "//base",
     "//base:i18n",

@@ -2,39 +2,37 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_OUT_OF_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
-#define SHELL_OUT_OF_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
+#ifndef SHELL_OUT_OF_PROCESS_NATIVE_RUNNER_H_
+#define SHELL_OUT_OF_PROCESS_NATIVE_RUNNER_H_
 
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "shell/app_child_process.mojom.h"
-#include "shell/app_child_process_host.h"
 #include "shell/application_manager/application_manager.h"
-#include "shell/dynamic_service_runner.h"
 
 namespace mojo {
 namespace shell {
 
+class AppChildProcessHost;
 class Context;
 
-// An implementation of |DynamicServiceRunner| that loads/runs the given app
-// (from the file system) in a separate process (of its own).
-class OutOfProcessDynamicServiceRunner : public NativeRunner {
+// An implementation of |NativeRunner| that loads/runs the given app (from the
+// file system) in a separate process (of its own).
+class OutOfProcessNativeRunner : public NativeRunner {
  public:
-  explicit OutOfProcessDynamicServiceRunner(Context* context);
-  ~OutOfProcessDynamicServiceRunner() override;
+  explicit OutOfProcessNativeRunner(Context* context);
+  ~OutOfProcessNativeRunner() override;
 
-  // |DynamicServiceRunner| method:
+  // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
              NativeRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override;
 
  private:
-  // |AppChildController::StartApp| callback:
+  // |AppChildController::StartApp()| callback:
   void AppCompleted(int32_t result);
 
   Context* const context_;
@@ -44,24 +42,24 @@ class OutOfProcessDynamicServiceRunner : public NativeRunner {
 
   scoped_ptr<AppChildProcessHost> app_child_process_host_;
 
-  DISALLOW_COPY_AND_ASSIGN(OutOfProcessDynamicServiceRunner);
+  DISALLOW_COPY_AND_ASSIGN(OutOfProcessNativeRunner);
 };
 
-class OutOfProcessDynamicServiceRunnerFactory : public NativeRunnerFactory {
+class OutOfProcessNativeRunnerFactory : public NativeRunnerFactory {
  public:
-  explicit OutOfProcessDynamicServiceRunnerFactory(Context* context)
+  explicit OutOfProcessNativeRunnerFactory(Context* context)
       : context_(context) {}
-  ~OutOfProcessDynamicServiceRunnerFactory() override {}
+  ~OutOfProcessNativeRunnerFactory() override {}
 
   scoped_ptr<NativeRunner> Create(const Options& options) override;
 
  private:
   Context* const context_;
 
-  DISALLOW_COPY_AND_ASSIGN(OutOfProcessDynamicServiceRunnerFactory);
+  DISALLOW_COPY_AND_ASSIGN(OutOfProcessNativeRunnerFactory);
 };
 
 }  // namespace shell
 }  // namespace mojo
 
-#endif  // SHELL_OUT_OF_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
+#endif  // SHELL_OUT_OF_PROCESS_NATIVE_RUNNER_H_

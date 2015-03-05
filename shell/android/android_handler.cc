@@ -25,6 +25,7 @@ using base::android::GetApplicationContext;
 namespace mojo {
 
 namespace {
+
 // This function loads the application library, sets the application context and
 // thunks and calls into the application MojoMain. To ensure that the thunks are
 // set correctly we keep it in the Mojo shell .so and pass the function pointer
@@ -33,8 +34,8 @@ void RunAndroidApplication(JNIEnv* env,
                            jobject j_context,
                            const base::FilePath& app_path,
                            jint j_handle) {
-  InterfaceRequest<Application> application_request = MakeRequest<Application>(
-      MakeScopedHandle(mojo::MessagePipeHandle(j_handle)));
+  InterfaceRequest<Application> application_request =
+      MakeRequest<Application>(MakeScopedHandle(MessagePipeHandle(j_handle)));
 
   // Load the library, so that we can set the application context there if
   // needed.
@@ -67,6 +68,7 @@ void RunAndroidApplication(JNIEnv* env,
       shell::LoadAndRunNativeApplication(app_path, NativeRunner::DeleteAppPath,
                                          application_request.Pass()));
 }
+
 }  // namespace
 
 AndroidHandler::AndroidHandler() : content_handler_factory_(this) {

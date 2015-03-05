@@ -88,8 +88,7 @@ class AppContext : public embedder::ProcessDelegate {
 
   void Init() {
     // Initialize Mojo before starting any threads.
-    embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
-        new mojo::embedder::SimplePlatformSupport()));
+    embedder::Init(make_scoped_ptr(new embedder::SimplePlatformSupport()));
 
     // Create and start our I/O thread.
     base::Thread::Options io_thread_options(base::MessageLoop::TYPE_IO, 0);
@@ -246,7 +245,7 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
       const base::FilePath& app_path,
       NativeRunner::CleanupBehavior cleanup_behavior,
       InterfaceRequest<Application> application_request) {
-    // TODO(vtl): This is copied from in_process_dynamic_service_runner.cc.
+    // TODO(vtl): This is copied from in_process_native_runner.cc.
     DVLOG(2) << "Loading/running Mojo app from " << app_path.value()
              << " out of process";
 

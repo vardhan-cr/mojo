@@ -39,7 +39,7 @@ void AppChildProcessHost::StartApp(
 void AppChildProcessHost::WillStart() {
   DCHECK(platform_channel()->is_valid());
 
-  mojo::ScopedMessagePipeHandle handle(embedder::CreateChannel(
+  ScopedMessagePipeHandle handle(embedder::CreateChannel(
       platform_channel()->Pass(), context()->task_runners()->io_runner(),
       base::Bind(&AppChildProcessHost::DidCreateChannel,
                  base::Unretained(this)),

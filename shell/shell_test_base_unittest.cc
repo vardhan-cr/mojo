@@ -33,7 +33,7 @@ namespace {
 
 void GetReportCallback(base::MessageLoop* loop,
                        std::vector<ServiceReport>* reports_out,
-                       mojo::Array<ServiceReportPtr> report) {
+                       Array<ServiceReportPtr> report) {
   for (size_t i = 0; i < report.size(); i++)
     reports_out->push_back(*report[i]);
   loop->QuitWhenIdle();
@@ -244,11 +244,11 @@ TEST_F(ShellTestBaseTest, ConnectServiceAsClientOfSeparateApp) {
   TestServicePtr service;
   ConnectToService(test_app_url(), &service);
   service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
-  service->Ping(mojo::Callback<void()>());
+  service->Ping(Callback<void()>());
   message_loop()->Run();
 
   for (int i = 0; i < 8; i++)
-    service->Ping(mojo::Callback<void()>());
+    service->Ping(Callback<void()>());
   service->Ping(message_loop()->QuitWhenIdleClosure());
   message_loop()->Run();
 
@@ -274,7 +274,7 @@ TEST_F(ShellTestBaseTest, ConnectManyClientsAndServices) {
   service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
   message_loop()->Run();
   for (int i = 0; i < 5; i++)
-    service->Ping(mojo::Callback<void()>());
+    service->Ping(Callback<void()>());
   int64 time_result;
   service->ConnectToAppAndGetTime("mojo:test_request_tracker_app",
                                   SetAndQuit<int64>(&time_result));
@@ -283,10 +283,10 @@ TEST_F(ShellTestBaseTest, ConnectManyClientsAndServices) {
   // Also make a few requests to the TimeService in the test_app.
   ConnectToService(test_app_url(), &time_service);
   time_service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
-  time_service->GetPartyTime(mojo::Callback<void(uint64_t)>());
+  time_service->GetPartyTime(Callback<void(uint64_t)>());
   message_loop()->Run();
   for (int i = 0; i < 18; i++)
-    time_service->GetPartyTime(mojo::Callback<void(uint64_t)>());
+    time_service->GetPartyTime(Callback<void(uint64_t)>());
   // Flush the tasks with one more to quit.
   int64 party_time = 0;
   time_service->GetPartyTime(SetAndQuit<int64>(&party_time));

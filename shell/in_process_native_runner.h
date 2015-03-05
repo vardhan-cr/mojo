@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_IN_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
-#define SHELL_IN_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
+#ifndef SHELL_IN_PROCESS_NATIVE_RUNNER_H_
+#define SHELL_IN_PROCESS_NATIVE_RUNNER_H_
 
 #include "base/callback.h"
 #include "base/files/file_path.h"
@@ -19,17 +19,15 @@ namespace shell {
 
 class Context;
 
-// TODO(vtl): Rename this to "InProcessNativeRunner".
-// An implementation of |DynamicServiceRunner| that loads/runs the given app
-// (from the file system) on a separate thread (in the current process).
-class InProcessDynamicServiceRunner
-    : public NativeRunner,
-      public base::DelegateSimpleThread::Delegate {
+// An implementation of |NativeRunner| that loads/runs the given app (from the
+// file system) on a separate thread (in the current process).
+class InProcessNativeRunner : public NativeRunner,
+                              public base::DelegateSimpleThread::Delegate {
  public:
-  explicit InProcessDynamicServiceRunner(Context* context);
-  ~InProcessDynamicServiceRunner() override;
+  explicit InProcessNativeRunner(Context* context);
+  ~InProcessNativeRunner() override;
 
-  // |DynamicServiceRunner| method:
+  // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
              NativeRunner::CleanupBehavior cleanup_behavior,
              InterfaceRequest<Application> application_request,
@@ -47,24 +45,23 @@ class InProcessDynamicServiceRunner
   base::ScopedNativeLibrary app_library_;
   scoped_ptr<base::DelegateSimpleThread> thread_;
 
-  DISALLOW_COPY_AND_ASSIGN(InProcessDynamicServiceRunner);
+  DISALLOW_COPY_AND_ASSIGN(InProcessNativeRunner);
 };
 
-class InProcessDynamicServiceRunnerFactory : public NativeRunnerFactory {
+class InProcessNativeRunnerFactory : public NativeRunnerFactory {
  public:
-  explicit InProcessDynamicServiceRunnerFactory(Context* context)
-      : context_(context) {}
-  ~InProcessDynamicServiceRunnerFactory() override {}
+  explicit InProcessNativeRunnerFactory(Context* context) : context_(context) {}
+  ~InProcessNativeRunnerFactory() override {}
 
   scoped_ptr<NativeRunner> Create(const Options& options) override;
 
  private:
   Context* const context_;
 
-  DISALLOW_COPY_AND_ASSIGN(InProcessDynamicServiceRunnerFactory);
+  DISALLOW_COPY_AND_ASSIGN(InProcessNativeRunnerFactory);
 };
 
 }  // namespace shell
 }  // namespace mojo
 
-#endif  // SHELL_IN_PROCESS_DYNAMIC_SERVICE_RUNNER_H_
+#endif  // SHELL_IN_PROCESS_NATIVE_RUNNER_H_

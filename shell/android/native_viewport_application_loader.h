@@ -38,8 +38,7 @@ class NativeViewportApplicationLoader : public ApplicationLoader,
             InterfaceRequest<Application> application_request) override;
 
   // ApplicationDelegate implementation.
-  bool ConfigureIncomingConnection(
-      mojo::ApplicationConnection* connection) override;
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
   // InterfaceFactory<NativeViewport> implementation.
   void Create(ApplicationConnection* connection,

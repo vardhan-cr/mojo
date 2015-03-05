@@ -32,8 +32,8 @@
 #include "shell/command_line_util.h"
 #include "shell/external_application_listener.h"
 #include "shell/filename_util.h"
-#include "shell/in_process_dynamic_service_runner.h"
-#include "shell/out_of_process_dynamic_service_runner.h"
+#include "shell/in_process_native_runner.h"
+#include "shell/out_of_process_native_runner.h"
 #include "shell/switches.h"
 #include "url/gurl.h"
 
@@ -45,8 +45,7 @@ namespace {
 class Setup {
  public:
   Setup() {
-    embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
-        new mojo::embedder::SimplePlatformSupport()));
+    embedder::Init(make_scoped_ptr(new embedder::SimplePlatformSupport()));
   }
 
   ~Setup() {}
@@ -180,7 +179,7 @@ class TracingServiceProvider : public ServiceProvider {
       : binding_(this, request.Pass()) {}
   ~TracingServiceProvider() override {}
 
-  void ConnectToService(const mojo::String& service_name,
+  void ConnectToService(const String& service_name,
                         ScopedMessagePipeHandle client_handle) override {
     if (service_name == tracing::TraceController::Name_) {
       new TraceControllerImpl(
@@ -277,9 +276,9 @@ bool Context::Init() {
 
   scoped_ptr<NativeRunnerFactory> runner_factory;
   if (command_line.HasSwitch(switches::kEnableMultiprocess))
-    runner_factory.reset(new OutOfProcessDynamicServiceRunnerFactory(this));
+    runner_factory.reset(new OutOfProcessNativeRunnerFactory(this));
   else
-    runner_factory.reset(new InProcessDynamicServiceRunnerFactory(this));
+    runner_factory.reset(new InProcessNativeRunnerFactory(this));
   application_manager_.set_blocking_pool(task_runners_->blocking_pool());
   application_manager_.set_native_runner_factory(runner_factory.Pass());
   application_manager_.set_disable_cache(

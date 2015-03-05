@@ -2,18 +2,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "shell/in_process_native_runner.h"
+
 #include "shell/context.h"
-#include "shell/in_process_dynamic_service_runner.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
 namespace shell {
 
-TEST(InProcessDynamicServiceRunnerTest, NotStarted) {
+TEST(InProcessNativeRunnerTest, NotStarted) {
   Context context;
   base::MessageLoop loop;
   context.Init();
-  InProcessDynamicServiceRunner runner(&context);
+  InProcessNativeRunner runner(&context);
   context.Shutdown();
   // Shouldn't crash or DCHECK on destruction.
 }

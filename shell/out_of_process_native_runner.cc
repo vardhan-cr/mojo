@@ -2,24 +2,25 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/out_of_process_dynamic_service_runner.h"
+#include "shell/out_of_process_native_runner.h"
 
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/scoped_native_library.h"
-#include "shell/in_process_dynamic_service_runner.h"
+#include "shell/app_child_process.mojom.h"
+#include "shell/app_child_process_host.h"
+#include "shell/in_process_native_runner.h"
 
 namespace mojo {
 namespace shell {
 
-OutOfProcessDynamicServiceRunner::OutOfProcessDynamicServiceRunner(
-    Context* context)
+OutOfProcessNativeRunner::OutOfProcessNativeRunner(Context* context)
     : context_(context) {
 }
 
-OutOfProcessDynamicServiceRunner::~OutOfProcessDynamicServiceRunner() {
+OutOfProcessNativeRunner::~OutOfProcessNativeRunner() {
   if (app_child_process_host_) {
     // TODO(vtl): Race condition: If |AppChildProcessHost::DidStart()| hasn't
     // been called yet, we shouldn't call |Join()| here. (Until |DidStart()|, we
@@ -29,9 +30,9 @@ OutOfProcessDynamicServiceRunner::~OutOfProcessDynamicServiceRunner() {
   }
 }
 
-void OutOfProcessDynamicServiceRunner::Start(
+void OutOfProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
@@ -46,13 +47,12 @@ void OutOfProcessDynamicServiceRunner::Start(
   app_child_process_host_->StartApp(
       app_path.AsUTF8Unsafe(), cleanup_behavior == DeleteAppPath,
       application_request.Pass(),
-      base::Bind(&OutOfProcessDynamicServiceRunner::AppCompleted,
+      base::Bind(&OutOfProcessNativeRunner::AppCompleted,
                  base::Unretained(this)));
 }
 
-void OutOfProcessDynamicServiceRunner::AppCompleted(int32_t result) {
-  DVLOG(2) << "OutOfProcessDynamicServiceRunner::AppCompleted(" << result
-           << ")";
+void OutOfProcessNativeRunner::AppCompleted(int32_t result) {
+  DVLOG(2) << "OutOfProcessNativeRunner::AppCompleted(" << result << ")";
 
   app_child_process_host_.reset();
   // This object may be deleted by this callback.
@@ -61,12 +61,12 @@ void OutOfProcessDynamicServiceRunner::AppCompleted(int32_t result) {
   app_completed_callback.Run();
 }
 
-scoped_ptr<NativeRunner> OutOfProcessDynamicServiceRunnerFactory::Create(
+scoped_ptr<NativeRunner> OutOfProcessNativeRunnerFactory::Create(
     const Options& options) {
   if (options.force_in_process)
-    return make_scoped_ptr(new InProcessDynamicServiceRunner(context_));
+    return make_scoped_ptr(new InProcessNativeRunner(context_));
 
-  return make_scoped_ptr(new OutOfProcessDynamicServiceRunner(context_));
+  return make_scoped_ptr(new OutOfProcessNativeRunner(context_));
 }
 
 }  // namespace shell

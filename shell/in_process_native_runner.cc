@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/in_process_dynamic_service_runner.h"
+#include "shell/in_process_native_runner.h"
 
 #include "base/bind.h"
 #include "base/callback_helpers.h"
@@ -13,12 +13,12 @@
 namespace mojo {
 namespace shell {
 
-InProcessDynamicServiceRunner::InProcessDynamicServiceRunner(Context* context)
+InProcessNativeRunner::InProcessNativeRunner(Context* context)
     : cleanup_behavior_(NativeRunner::DontDeleteAppPath),
       app_library_(nullptr) {
 }
 
-InProcessDynamicServiceRunner::~InProcessDynamicServiceRunner() {
+InProcessNativeRunner::~InProcessNativeRunner() {
   // It is important to let the thread exit before unloading the DSO (when
   // app_library_ is destructed), because the library may have registered
   // thread-local data and destructors to run on thread termination.
@@ -29,9 +29,9 @@ InProcessDynamicServiceRunner::~InProcessDynamicServiceRunner() {
   }
 }
 
-void InProcessDynamicServiceRunner::Start(
+void InProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    mojo::NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeRunner::CleanupBehavior cleanup_behavior,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
@@ -50,7 +50,7 @@ void InProcessDynamicServiceRunner::Start(
   thread_->Start();
 }
 
-void InProcessDynamicServiceRunner::Run() {
+void InProcessNativeRunner::Run() {
   DVLOG(2) << "Loading/running Mojo app in process from library: "
            << app_path_.value()
            << " thread id=" << base::PlatformThread::CurrentId();
@@ -61,9 +61,9 @@ void InProcessDynamicServiceRunner::Run() {
   app_completed_callback_runner_.Reset();
 }
 
-scoped_ptr<NativeRunner> InProcessDynamicServiceRunnerFactory::Create(
+scoped_ptr<NativeRunner> InProcessNativeRunnerFactory::Create(
     const Options& options) {
-  return make_scoped_ptr(new InProcessDynamicServiceRunner(context_));
+  return make_scoped_ptr(new InProcessNativeRunner(context_));
 }
 
 }  // namespace shell
