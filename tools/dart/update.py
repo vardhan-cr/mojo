@@ -18,7 +18,7 @@ import sys
 # How to roll the dart sdk: Just change this url! We write this to the stamp
 # file after we download, and then check the stamp file for differences.
 LINUX_64_SDK = ('http://gsdview.appspot.com/dart-archive/channels/dev/' +
-                'raw/43903/sdk/dartsdk-linux-x64-release.zip')
+                'raw/44260/sdk/dartsdk-linux-x64-release.zip')
 
 # Path constants. (All of these should be absolute paths.)
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
