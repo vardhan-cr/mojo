@@ -7,7 +7,7 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/message_loop/message_loop_proxy.h"
-#include "base/threading/worker_pool.h"
+#include "base/threading/thread.h"
 #include "gin/per_isolate_data.h"
 
 namespace gin {
@@ -28,10 +28,13 @@ V8Platform::~V8Platform() {}
 void V8Platform::CallOnBackgroundThread(
     v8::Task* task,
     v8::Platform::ExpectedRuntime expected_runtime) {
-  base::WorkerPool::PostTask(
+  if (!background_thread_) {
+    background_thread_.reset(new base::Thread("gin_background"));
+    background_thread_->Start();
+  }
+  background_thread_->message_loop_proxy()->PostTask(
       FROM_HERE,
-      base::Bind(&v8::Task::Run, base::Owned(task)),
-      expected_runtime == v8::Platform::kLongRunningTask);
+      base::Bind(&v8::Task::Run, base::Owned(task)));
 }
 
 void V8Platform::CallOnForegroundThread(v8::Isolate* isolate, v8::Task* task) {

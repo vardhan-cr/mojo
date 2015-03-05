@@ -8,8 +8,13 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/lazy_instance.h"
+#include "base/memory/scoped_ptr.h"
 #include "gin/gin_export.h"
 #include "v8/include/v8-platform.h"
+
+namespace base {
+class Thread;
+}
 
 namespace gin {
 
@@ -30,6 +35,7 @@ class GIN_EXPORT V8Platform : public NON_EXPORTED_BASE(v8::Platform) {
 
   V8Platform();
   ~V8Platform() override;
+  scoped_ptr<base::Thread> background_thread_;
 
   DISALLOW_COPY_AND_ASSIGN(V8Platform);
 };

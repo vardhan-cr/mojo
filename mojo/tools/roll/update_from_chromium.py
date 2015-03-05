@@ -20,7 +20,6 @@ dirs_to_snapshot = [
     "base",
     "build",
     "cc",
-    "gin",
     "gpu",
     "sandbox/linux",
     "sdch",
