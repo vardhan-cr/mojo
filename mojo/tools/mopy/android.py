@@ -163,6 +163,7 @@ def PrepareShellRun(config, origin=None):
   apk_path = os.path.join(build_dir, 'apks', 'MojoShell.apk')
   subprocess.check_call(
       [ADB_PATH, 'install', '-r', apk_path, '-i', MOJO_SHELL_PACKAGE_NAME])
+  atexit.register(StopShell)
 
   extra_shell_args = []
   origin_url = origin if origin else StartHttpServerForDirectory(build_dir)
@@ -230,7 +231,6 @@ def StartShell(arguments, stdout=None, on_application_stop=None):
     encodedParameters = json.dumps(parameters)
     cmd += [ '--es', 'encodedParameters', encodedParameters]
 
-  atexit.register(StopShell)
   with open(os.devnull, 'w') as devnull:
     subprocess.Popen(cmd, stdout=devnull).wait()
 
