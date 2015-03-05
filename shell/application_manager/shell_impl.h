@@ -12,6 +12,8 @@
 #include "url/gurl.h"
 
 namespace mojo {
+namespace shell {
+
 class ApplicationManager;
 
 class ShellImpl : public Shell, public ErrorHandler {
@@ -53,6 +55,7 @@ class ShellImpl : public Shell, public ErrorHandler {
   DISALLOW_COPY_AND_ASSIGN(ShellImpl);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_

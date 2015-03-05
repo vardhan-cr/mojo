@@ -23,6 +23,7 @@ using base::android::ConvertUTF8ToJavaString;
 using base::android::GetApplicationContext;
 
 namespace mojo {
+namespace shell {
 
 namespace {
 
@@ -64,9 +65,8 @@ void RunAndroidApplication(JNIEnv* env,
   }
 
   // Run the application.
-  base::ScopedNativeLibrary app_library_from_runner(
-      shell::LoadAndRunNativeApplication(app_path, NativeRunner::DeleteAppPath,
-                                         application_request.Pass()));
+  base::ScopedNativeLibrary app_library_from_runner(LoadAndRunNativeApplication(
+      app_path, NativeRunner::DeleteAppPath, application_request.Pass()));
 }
 
 }  // namespace
@@ -107,4 +107,5 @@ bool RegisterAndroidHandlerJni(JNIEnv* env) {
   return RegisterNativesImpl(env);
 }
 
+}  // namespace shell
 }  // namespace mojo

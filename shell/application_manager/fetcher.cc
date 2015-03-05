@@ -7,6 +7,7 @@
 #include "url/gurl.h"
 
 namespace mojo {
+namespace shell {
 
 const char Fetcher::kMojoMagic[] = "#!mojo ";
 const size_t Fetcher::kMaxShebangLength = 2048;
@@ -33,4 +34,5 @@ bool Fetcher::PeekContentHandler(std::string* mojo_shebang,
   return false;
 }
 
+}  // namespace shell
 }  // namespace mojo

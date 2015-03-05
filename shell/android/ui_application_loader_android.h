@@ -14,6 +14,7 @@ class MessageLoop;
 }
 
 namespace mojo {
+namespace shell {
 
 class ApplicationManager;
 
@@ -47,6 +48,7 @@ class UIApplicationLoader : public ApplicationLoader {
   DISALLOW_COPY_AND_ASSIGN(UIApplicationLoader);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_ANDROID_UI_APPLICATION_LOADER_ANDROID_H_

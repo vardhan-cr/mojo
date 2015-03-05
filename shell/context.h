@@ -14,7 +14,6 @@
 #include "shell/url_resolver.h"
 
 namespace mojo {
-
 namespace shell {
 
 class ExternalApplicationListener;

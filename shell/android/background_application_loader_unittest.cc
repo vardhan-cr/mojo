@@ -8,7 +8,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
-
+namespace shell {
 namespace {
 
 class DummyLoader : public ApplicationLoader {
@@ -29,8 +29,6 @@ class DummyLoader : public ApplicationLoader {
   bool simulate_app_quit_;
 };
 
-}  // namespace
-
 // Tests that the loader can start and stop gracefully.
 TEST(BackgroundApplicationLoaderTest, StartStop) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
@@ -48,4 +46,6 @@ TEST(BackgroundApplicationLoaderTest, Load) {
   loader.Load(GURL(), GetProxy(&application));
 }
 
+}  // namespace
+}  // namespace shell
 }  // namespace mojo

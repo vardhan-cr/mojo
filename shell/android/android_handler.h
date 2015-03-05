@@ -17,6 +17,7 @@ class FilePath;
 }
 
 namespace mojo {
+namespace shell {
 
 class AndroidHandler : public ApplicationDelegate,
                        public ContentHandlerFactory::Delegate {
@@ -39,6 +40,7 @@ class AndroidHandler : public ApplicationDelegate,
 
 bool RegisterAndroidHandlerJni(JNIEnv* env);
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // MOJO_SHELL_ANDROID_CONTENT_HANDLER_H_

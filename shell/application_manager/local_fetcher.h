@@ -11,6 +11,7 @@
 #include "url/gurl.h"
 
 namespace mojo {
+namespace shell {
 
 // Implements Fetcher for file:// URLs.
 class LocalFetcher : public Fetcher {
@@ -44,6 +45,7 @@ class LocalFetcher : public Fetcher {
   DISALLOW_COPY_AND_ASSIGN(LocalFetcher);
 };
 
-#endif  // SHELL_APPLICATION_MANAGER_LOCAL_FETCHER_H_
-
+}  // namespace shell
 }  // namespace mojo
+
+#endif  // SHELL_APPLICATION_MANAGER_LOCAL_FETCHER_H_

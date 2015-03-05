@@ -12,6 +12,7 @@ class FilePath;
 }
 
 namespace mojo {
+namespace shell {
 
 // Given the full path to a file name, creates a file: URL. The returned URL
 // may not be valid if the input is malformed.
@@ -21,6 +22,7 @@ GURL FilePathToFileURL(const base::FilePath& path);
 // slash so that GURL.Resolve(...) works correctly.
 GURL AddTrailingSlashIfNeeded(const GURL& url);
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_FILENAME_UTIL_H_

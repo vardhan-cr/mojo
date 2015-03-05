@@ -19,6 +19,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
+namespace shell {
 namespace {
 
 const char kTestURLString[] = "test:testService";
@@ -62,7 +63,7 @@ class TestServiceImpl : public TestService {
 
   // TestService implementation:
   void Test(const String& test_string,
-            const mojo::Callback<void()>& callback) override {
+            const Callback<void()>& callback) override {
     context_->last_test_string = test_string;
     callback.Run();
   }
@@ -284,12 +285,12 @@ class TestBImpl : public TestB {
   }
 
  private:
-  void B(const mojo::Callback<void()>& callback) override {
+  void B(const Callback<void()>& callback) override {
     test_context_->IncrementNumBCalls();
     callback.Run();
   }
 
-  void CallC(const mojo::Callback<void()>& callback) override {
+  void CallC(const Callback<void()>& callback) override {
     test_context_->IncrementNumBCalls();
     c_->C(callback);
   }
@@ -309,7 +310,7 @@ class TestCImpl : public TestC {
   ~TestCImpl() override { test_context_->IncrementNumCDeletes(); }
 
  private:
-  void C(const mojo::Callback<void()>& callback) override {
+  void C(const Callback<void()>& callback) override {
     test_context_->IncrementNumCCalls();
     callback.Run();
   }
@@ -435,8 +436,6 @@ class TestExternal : public ApplicationDelegate {
   std::vector<std::string> initialize_args_;
   bool configure_incoming_connection_called_;
 };
-
-}  // namespace
 
 class ApplicationManagerTest : public testing::Test {
  public:
@@ -755,4 +754,6 @@ TEST_F(ApplicationManagerTest, TestQueryWithLoaders) {
   EXPECT_EQ(1, scheme_loader->num_loads());
 }
 
+}  // namespace
+}  // namespace shell
 }  // namespace mojo

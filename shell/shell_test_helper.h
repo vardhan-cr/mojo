@@ -14,7 +14,6 @@
 class GURL;
 
 namespace mojo {
-
 namespace shell {
 
 // ShellTestHelper is useful for tests to establish a connection to the

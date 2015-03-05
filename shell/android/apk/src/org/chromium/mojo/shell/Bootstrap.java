@@ -15,9 +15,8 @@ import java.io.File;
  * Java class with the application classloader in the call stack. We load this class in the
  * application classloader and call into native from it to achieve that.
  */
-@JNINamespace("mojo")
+@JNINamespace("mojo::shell")
 public class Bootstrap implements Runnable {
-
     private final Context mContext;
     private final File mBootstrapNativeLibrary;
     private final File mApplicationNativeLibrary;

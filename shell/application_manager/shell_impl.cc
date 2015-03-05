@@ -9,6 +9,7 @@
 #include "shell/application_manager/application_manager.h"
 
 namespace mojo {
+namespace shell {
 
 ShellImpl::ShellImpl(ApplicationPtr application,
                      ApplicationManager* manager,
@@ -56,4 +57,5 @@ void ShellImpl::OnConnectionError() {
   manager_->OnShellImplError(this);
 }
 
+}  // namespace shell
 }  // namespace mojo

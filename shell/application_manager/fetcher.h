@@ -13,12 +13,12 @@
 class GURL;
 
 namespace base {
-
 class FilePath;
 class TaskRunner;
 }
 
 namespace mojo {
+namespace shell {
 
 // Fetcher abstracts getting an application by either file or http[s] URL.
 //
@@ -70,6 +70,7 @@ class Fetcher {
   FetchCallback loader_callback_;
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_FETCHER_H_

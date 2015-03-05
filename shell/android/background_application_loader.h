@@ -13,6 +13,7 @@
 #include "shell/application_manager/application_loader.h"
 
 namespace mojo {
+namespace shell {
 
 class BackgroundApplicationLoader
     : public ApplicationLoader,
@@ -57,6 +58,7 @@ class BackgroundApplicationLoader
   DISALLOW_COPY_AND_ASSIGN(BackgroundApplicationLoader);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_

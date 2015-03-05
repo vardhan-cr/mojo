@@ -16,6 +16,8 @@ namespace mojo {
 
 class NetworkService;
 
+namespace shell {
+
 // Implements Fetcher for http[s] files.
 class NetworkFetcher : public Fetcher {
  public:
@@ -74,6 +76,7 @@ class NetworkFetcher : public Fetcher {
   DISALLOW_COPY_AND_ASSIGN(NetworkFetcher);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_NETWORK_FETCHER_H_

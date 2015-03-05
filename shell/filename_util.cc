@@ -12,6 +12,7 @@
 #include "url/url_util.h"
 
 namespace mojo {
+namespace shell {
 
 // Prefix to prepend to get a file URL.
 static const base::FilePath::CharType kFileURLPrefix[] =
@@ -67,4 +68,5 @@ GURL AddTrailingSlashIfNeeded(const GURL& url) {
   return url.ReplaceComponents(replacements);
 }
 
+}  // namespace shell
 }  // namespace mojo

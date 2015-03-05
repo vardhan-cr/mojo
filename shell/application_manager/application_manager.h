@@ -27,6 +27,7 @@ class SequencedWorkerPool;
 }
 
 namespace mojo {
+namespace shell {
 
 // ApplicationManager requires implementations of NativeRunner and
 // NativeRunnerFactory to run native applications.
@@ -260,6 +261,7 @@ class ApplicationManager {
   DISALLOW_COPY_AND_ASSIGN(ApplicationManager);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_

@@ -15,6 +15,7 @@
 #include "url/url_util.h"
 
 namespace mojo {
+namespace shell {
 
 namespace {
 
@@ -99,4 +100,5 @@ bool LocalFetcher::PeekFirstLine(std::string* line) {
   return true;
 }
 
+}  // namespace shell
 }  // namespace mojo

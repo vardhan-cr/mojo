@@ -9,6 +9,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
+namespace shell {
 namespace {
 
 struct TestState {
@@ -99,4 +100,5 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
 }
 
 }  // namespace
+}  // namespace shell
 }  // namespace mojo

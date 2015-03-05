@@ -14,6 +14,9 @@
 namespace mojo {
 
 class Application;
+
+namespace shell {
+
 class ApplicationManager;
 
 // Interface to implement special application loading behavior for a particular
@@ -29,6 +32,7 @@ class ApplicationLoader {
   ApplicationLoader() {}
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_

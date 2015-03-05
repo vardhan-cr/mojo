@@ -22,6 +22,7 @@
 #include "url/gurl.h"
 
 namespace mojo {
+namespace shell {
 
 const char kAppArgs[] = "app-args";
 const char kAppPath[] = "app-path";
@@ -34,7 +35,7 @@ class Launcher : public embedder::ProcessDelegate {
       : app_path_(command_line.GetSwitchValuePath(kAppPath)),
         app_url_(command_line.GetSwitchValueASCII(kAppURL)),
         loop_(base::MessageLoop::TYPE_IO),
-        connection_(new shell::ExternalApplicationRegistrarConnection(
+        connection_(new ExternalApplicationRegistrarConnection(
             base::FilePath(command_line.GetSwitchValuePath(kShellPath)))) {
     // TODO(vtl): I guess this should be SLAVE, not NONE?
     embedder::InitIPCSupport(embedder::ProcessType::NONE, loop_.task_runner(),
@@ -71,7 +72,7 @@ class Launcher : public embedder::ProcessDelegate {
 
   void Run() {
     DCHECK(application_request_.is_pending());
-    shell::InProcessNativeRunner service_runner(nullptr);
+    InProcessNativeRunner service_runner(nullptr);
     base::RunLoop run_loop;
     service_runner.Start(app_path_, NativeRunner::DontDeleteAppPath,
                          application_request_.Pass(), run_loop.QuitClosure());
@@ -94,12 +95,13 @@ class Launcher : public embedder::ProcessDelegate {
   const GURL app_url_;
   std::vector<std::string> app_args_;
   base::MessageLoop loop_;
-  scoped_ptr<shell::ExternalApplicationRegistrarConnection> connection_;
+  scoped_ptr<ExternalApplicationRegistrarConnection> connection_;
   InterfaceRequest<Application> application_request_;
 
   DISALLOW_COPY_AND_ASSIGN(Launcher);
 };
 
+}  // namespace shell
 }  // namespace mojo
 
 int main(int argc, char** argv) {
@@ -112,16 +114,16 @@ int main(int argc, char** argv) {
       base::CommandLine::ForCurrentProcess();
   mojo::shell::InitializeLogging();
 
-  mojo::Launcher launcher(*command_line);
+  mojo::shell::Launcher launcher(*command_line);
   if (!launcher.Connect()) {
     LOG(ERROR) << "Failed to connect on socket "
-               << command_line->GetSwitchValueASCII(mojo::kShellPath);
+               << command_line->GetSwitchValueASCII(mojo::shell::kShellPath);
     return 1;
   }
 
   if (!launcher.Register()) {
     LOG(ERROR) << "Error registering "
-               << command_line->GetSwitchValueASCII(mojo::kAppURL);
+               << command_line->GetSwitchValueASCII(mojo::shell::kAppURL);
     return 1;
   }
 

@@ -4,8 +4,6 @@
 
 #include "shell/application_manager/application_manager.h"
 
-#include <stdio.h>
-
 #include "base/bind.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
@@ -21,6 +19,7 @@
 #include "shell/application_manager/network_fetcher.h"
 
 namespace mojo {
+namespace shell {
 
 namespace {
 
@@ -365,7 +364,7 @@ void ApplicationManager::LoadWithContentHandler(
     const GURL& content_handler_url,
     InterfaceRequest<Application> application_request,
     URLResponsePtr url_response) {
-  ContentHandlerConnection* connection = NULL;
+  ContentHandlerConnection* connection = nullptr;
   URLToContentHandlerMap::iterator iter =
       url_to_content_handler_.find(content_handler_url);
   if (iter != url_to_content_handler_.end()) {
@@ -420,7 +419,7 @@ ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
   auto scheme_it = scheme_to_loader_.find(url.scheme());
   if (scheme_it != scheme_to_loader_.end())
     return scheme_it->second;
-  return NULL;
+  return nullptr;
 }
 
 void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
@@ -467,4 +466,5 @@ void ApplicationManager::CleanupRunner(NativeRunner* runner) {
       std::find(native_runners_.begin(), native_runners_.end(), runner));
 }
 
+}  // namespace shell
 }  // namespace mojo

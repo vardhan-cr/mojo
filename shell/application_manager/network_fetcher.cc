@@ -22,6 +22,7 @@
 #include "shell/application_manager/data_pipe_peek.h"
 
 namespace mojo {
+namespace shell {
 
 NetworkFetcher::NetworkFetcher(bool disable_cache,
                                const GURL& url,
@@ -167,14 +168,14 @@ std::string NetworkFetcher::MimeType() {
 
 bool NetworkFetcher::HasMojoMagic() {
   std::string magic;
-  return shell::BlockingPeekNBytes(response_->body.get(), &magic,
-                                   strlen(kMojoMagic), kPeekTimeout) &&
+  return BlockingPeekNBytes(response_->body.get(), &magic, strlen(kMojoMagic),
+                            kPeekTimeout) &&
          magic == kMojoMagic;
 }
 
 bool NetworkFetcher::PeekFirstLine(std::string* line) {
-  return shell::BlockingPeekLine(response_->body.get(), line, kMaxShebangLength,
-                                 kPeekTimeout);
+  return BlockingPeekLine(response_->body.get(), line, kMaxShebangLength,
+                          kPeekTimeout);
 }
 
 void NetworkFetcher::StartNetworkRequest(const GURL& url,
@@ -211,4 +212,5 @@ void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
   loader_callback_.Run(make_scoped_ptr(this));
 }
 
+}  // namespace shell
 }  // namespace mojo
