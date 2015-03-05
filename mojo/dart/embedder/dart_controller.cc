@@ -633,13 +633,10 @@ bool DartController::Initialize(bool strict_compilation) {
 
 bool DartController::RunDartScript(const DartControllerConfig& config) {
   CHECK(root_isolate_ != nullptr);
-  Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
-                                             strict_compilation_,
-                                             config.callbacks,
-                                             config.script,
-                                             config.script_uri,
-                                             config.package_root,
-                                             config.error);
+  const bool strict = strict_compilation_ || config.strict_compilation;
+  Dart_Isolate isolate = CreateIsolateHelper(
+      config.application_data, strict, config.callbacks, config.script,
+      config.script_uri, config.package_root, config.error);
   if (isolate == nullptr) {
     return false;
   }

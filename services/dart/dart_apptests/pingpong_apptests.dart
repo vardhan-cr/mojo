@@ -15,7 +15,7 @@ class _TestingPingPongClient extends PingPongClient {
   Completer _completer;
 
   _TestingPingPongClient.unbound() : stub = new PingPongClientStub.unbound() {
-    stub.delegate = this;
+    stub.impl = this;
   }
 
   waitForPong() async {

@@ -11,4 +11,12 @@ dart_packaged_application("world") {
   deps = [
     "//mojo/public/interfaces/application",
   ]
+
+  # This exercises the ability of the Dart content handler to run isolates in
+  # either strict or non-strict mode at the same time. In a Debug build, the
+  # content handler always runs code in strict mode, so we run in different
+  # modes only in a Release build.
+  if (!is_debug) {
+    strict = true
+  }
 }

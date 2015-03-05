@@ -21,7 +21,8 @@ using mojo::Application;
 namespace dart {
 
 DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
-                 mojo::URLResponsePtr response)
+                 mojo::URLResponsePtr response,
+                 bool strict)
     : application_request_(application_request.Pass()) {
   DCHECK(!response.is_null());
   std::string url(response->url);
@@ -38,6 +39,7 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
   }
 
   config_.application_data = reinterpret_cast<void*>(this);
+  config_.strict_compilation = strict;
   config_.script = source;
   config_.script_uri = entry_path.AsUTF8Unsafe();
   config_.package_root = package_root.AsUTF8Unsafe();

@@ -15,20 +15,42 @@
 
 namespace dart {
 
-class DartContentHandler : public mojo::ApplicationDelegate,
-                           public mojo::ContentHandlerFactory::ManagedDelegate {
+class DartContentHandler : public mojo::ContentHandlerFactory::ManagedDelegate {
  public:
-  DartContentHandler() :
-      first_connection_configured_(false),
-      content_handler_factory_(this) {}
-  ~DartContentHandler() {
-    mojo::dart::DartController::Shutdown();
+  DartContentHandler(bool strict) : strict_(strict) {}
+
+ private:
+  // Overridden from ContentHandlerFactory::ManagedDelegate:
+  scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
+  CreateApplication(
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      mojo::URLResponsePtr response) override {
+    return make_scoped_ptr(
+        new DartApp(application_request.Pass(), response.Pass(), strict_));
   }
+
+  bool strict_;
+
+  DISALLOW_COPY_AND_ASSIGN(DartContentHandler);
+};
+
+class DartContentHandlerApp : public mojo::ApplicationDelegate {
+ public:
+  DartContentHandlerApp()
+      : content_handler_(false),
+        strict_content_handler_(true),
+        content_handler_factory_(&content_handler_),
+        strict_content_handler_factory_(&strict_content_handler_) {}
+  ~DartContentHandlerApp() { mojo::dart::DartController::Shutdown(); }
 
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
+    bool success = mojo::dart::DartController::Initialize(false);
+    if (!success) {
+      LOG(ERROR) << "Dart VM Initialization failed";
+    }
   }
 
   bool HasStrictQueryParam(const std::string& requestedUrl) {
@@ -48,37 +70,26 @@ class DartContentHandler : public mojo::ApplicationDelegate,
   // Overridden from ApplicationDelegate:
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
-    if (!first_connection_configured_) {
-      bool strict = HasStrictQueryParam(connection->GetConnectionURL());
-      bool success = mojo::dart::DartController::Initialize(strict);
-      if (!success) {
-        LOG(ERROR) << "Dart VM Initialization failed";
-        return false;
-      }
-      first_connection_configured_ = true;
+    bool strict = HasStrictQueryParam(connection->GetConnectionURL());
+    if (strict) {
+      connection->AddService(&strict_content_handler_factory_);
+    } else {
+      connection->AddService(&content_handler_factory_);
     }
-    connection->AddService(&content_handler_factory_);
     return true;
   }
 
-  // Overridden from ContentHandlerFactory::ManagedDelegate:
-  scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
-  CreateApplication(
-      mojo::InterfaceRequest<mojo::Application> application_request,
-      mojo::URLResponsePtr response) override {
-    return make_scoped_ptr(
-        new DartApp(application_request.Pass(), response.Pass()));
-  }
-
-  bool first_connection_configured_;
+  DartContentHandler content_handler_;
+  DartContentHandler strict_content_handler_;
   mojo::ContentHandlerFactory content_handler_factory_;
+  mojo::ContentHandlerFactory strict_content_handler_factory_;
 
-  DISALLOW_COPY_AND_ASSIGN(DartContentHandler);
+  DISALLOW_COPY_AND_ASSIGN(DartContentHandlerApp);
 };
 
 }  // namespace dart
 
 MojoResult MojoMain(MojoHandle shell_handle) {
-  mojo::ApplicationRunnerChromium runner(new dart::DartContentHandler);
+  mojo::ApplicationRunnerChromium runner(new dart::DartContentHandlerApp);
   return runner.Run(shell_handle);
 }

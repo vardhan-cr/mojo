@@ -23,7 +23,8 @@ class ApplicationDelegateImpl;
 class DartApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
   DartApp(mojo::InterfaceRequest<mojo::Application> application_request,
-          mojo::URLResponsePtr response);
+          mojo::URLResponsePtr response,
+          bool strict);
   virtual ~DartApp();
 
  private:
