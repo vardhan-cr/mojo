@@ -67,6 +67,8 @@ void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,
                                              const GURL& url) {
   // This is used to extract symbols on android.
   // TODO(eseidel): All users of this log should move to using the map file.
+  LOG(INFO) << "Caching mojo app " << url << " at " << path.value();
+
   base::FilePath temp_dir;
   base::GetTempDir(&temp_dir);
   base::ProcessId pid = base::Process::Current().Pid();
