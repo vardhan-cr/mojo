@@ -7,17 +7,18 @@
 
 define("main", [
   "console",
-  "examples/js/maps/geocoder.mojom",
   "mojo/public/js/core",
   "mojo/public/js/unicode",
+  "mojo/services/location/public/interfaces/geocoder.mojom",
+  "mojo/services/location/public/interfaces/location.mojom",
   "mojo/services/public/js/application",
   "third_party/js/url",
-], function(console, geocoder, core, unicode, application, url) {
+], function(console, core, unicode, geocoder, location, application, url) {
 
   const Application = application.Application;
   const Geocoder = geocoder.Geocoder;
   const Result = geocoder.Result;
-  const Location = geocoder.Location;
+  const Location = location.Location;
   const Status = geocoder.Status;
   const Options = geocoder.Options;
   const URL = url.URL;
@@ -68,7 +69,9 @@ define("main", [
 
   class Demo extends Application {
     initialize() {
-      var geocoderURL = new URL(this.url).resolve("geocoder_service.js");
+      // TODO(alhaad): See if there is a better way to do this.
+      var geocoderURL = new URL(this.url).resolve(
+          "../../services/location/geocoder_service.js");
       geocoderService = this.shell.connectToService(geocoderURL, Geocoder);
       demoAddressToLocation();
     }

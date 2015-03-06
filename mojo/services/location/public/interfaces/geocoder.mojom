@@ -6,12 +6,9 @@
 // "Google Maps JavaScript API v3" defined here:
 // https://developers.google.com/maps/documentation/javascript/geocoding
 
-module geocoder;
+module mojo;
 
-struct Location {
-  float latitude;
-  float longitude;
-};
+import "location/public/interfaces/location.mojom";
 
 struct LocationType {
   const string ROOFTOP = "ROOFTOP";
@@ -26,7 +23,7 @@ struct Bounds {
 };
 
 struct ComponentRestrictions {
-  string? administrative_area; 
+  string? administrative_area;
   string? country;
   string? locality;
   string? postal_code;

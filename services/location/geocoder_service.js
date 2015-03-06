@@ -2,20 +2,22 @@
 
 define("main", [
   "console",
-  "examples/js/maps/geocoder.mojom",
   "mojo/public/js/core",
   "mojo/public/js/unicode",
+  "mojo/services/location/public/interfaces/geocoder.mojom",
+  "mojo/services/location/public/interfaces/location.mojom",
   "mojo/services/public/js/application",
   "mojo/services/network/public/interfaces/network_service.mojom",
   "mojo/services/network/public/interfaces/url_loader.mojom",
   "third_party/js/url",
-], function(console, geocoder, core, unicode, application, network, loader, url) {
+], function(console, core, unicode, geocoder, location, application, network,
+  loader, url) {
 
   const Application = application.Application;
   const Bounds = geocoder.Bounds;
   const Geocoder = geocoder.Geocoder;
   const Geometry = geocoder.Geometry;
-  const Location = geocoder.Location;
+  const Location = location.Location;
   const NetworkService = network.NetworkService;
   const Result = geocoder.Result;
   const Status = geocoder.Status;
