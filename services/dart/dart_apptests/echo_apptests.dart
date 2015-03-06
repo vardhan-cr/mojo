@@ -10,7 +10,7 @@ import 'mojo:core';
 import 'package:apptest/apptest.dart';
 import 'package:services/dart/test/echo_service.mojom.dart';
 
-echoApptests(Application application) {
+echoApptests(Application application, String url) {
   group('Echo Service Apptests', () {
     test('String', () async {
       var echoProxy = new EchoServiceProxy.unbound();

@@ -27,7 +27,7 @@ class _ConnectionToShellApplication extends Application {
   // call from the shell. We need to first have a valid connection to the shell
   // so that apptests can connect to other applications.
   void initialize(List<String> args, String url) {
-    _testFunctions.forEach((f) => f(this));
+    _testFunctions.forEach((f) => f(this, url));
   }
 }
 

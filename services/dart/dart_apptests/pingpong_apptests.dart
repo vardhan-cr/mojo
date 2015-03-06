@@ -29,7 +29,7 @@ class _TestingPingPongClient extends PingPongClient {
   }
 }
 
-pingpongApptests(Application application) {
+pingpongApptests(Application application, String url) {
   group('Ping-Pong Service Apptests', () {
     // Verify that "pingpong.dart" implements the PingPongService interface
     // and sends responses to our client.
