@@ -32,16 +32,13 @@ class PingPongServiceImpl implements PingPongService {
   Application _application;
   PingPongClientProxy _pingPongClient;
 
-  PingPongServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
-      : _application = application {
-    _stub = new PingPongServiceStub.fromEndpoint(endpoint, impl: this);
+  PingPongServiceImpl(this._application, MojoMessagePipeEndpoint endpoint) {
+    _stub = new PingPongServiceStub.fromEndpoint(endpoint, this);
   }
 
   PingPongServiceImpl.fromStub(this._stub) {
     _stub.impl = this;
   }
-
-  listen() => _stub.listen();
 
   void setClient(ProxyBase proxyBase) {
     assert(_pingPongClient == null);
@@ -64,7 +61,6 @@ class PingPongServiceImpl implements PingPongService {
 
     var pingPongClient = new PingPongClientImpl.unbound(count, completer);
     pingPongService.ptr.setClient(pingPongClient.stub);
-    pingPongClient.stub.listen();
 
     for (var i = 0; i < count; i++) {
       pingPongService.ptr.ping(i);
@@ -76,13 +72,12 @@ class PingPongServiceImpl implements PingPongService {
     return responseFactory(true);
   }
 
-  Future pingTargetService(ProxyBase proxyBase, int count,
-      Function responseFactory) async {
+  Future pingTargetService(
+      ProxyBase proxyBase, int count, Function responseFactory) async {
     var pingPongService = proxyBase;
     var completer = new Completer();
     var client = new PingPongClientImpl.unbound(count, completer);
     pingPongService.ptr.setClient(client.stub);
-    client.stub.listen();
 
     for (var i = 0; i < count; i++) {
       pingPongService.ptr.ping(i);
@@ -95,7 +90,7 @@ class PingPongServiceImpl implements PingPongService {
   }
 
   getPingPongService(PingPongServiceStub serviceStub) {
-    new PingPongServiceImpl.fromStub(serviceStub)..listen();
+    new PingPongServiceImpl.fromStub(serviceStub);
   }
 
   void quit() {
@@ -114,10 +109,8 @@ class PingPongApplication extends Application {
   @override
   void acceptConnection(String requestorUrl, String resolvedUrl,
       ApplicationConnection connection) {
-    connection.provideService(
-        PingPongServiceName,
+    connection.provideService(PingPongServiceName,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
-    connection.listen();
   }
 }
 

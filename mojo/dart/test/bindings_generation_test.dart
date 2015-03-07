@@ -19,7 +19,7 @@ class ProviderImpl implements sample.Provider {
   sample.ProviderStub _stub;
 
   ProviderImpl(core.MojoMessagePipeEndpoint endpoint) {
-    _stub = new sample.ProviderStub.fromEndpoint(endpoint, impl: this);
+    _stub = new sample.ProviderStub.fromEndpoint(endpoint, this);
   }
 
   echoString(String a, Function responseFactory) =>
@@ -35,11 +35,9 @@ class ProviderImpl implements sample.Provider {
       new Future.value(responseFactory(a));
 }
 
-
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
   new ProviderImpl(endpoint);
 }
-
 
 Future<bool> testCallResponse() {
   var pipe = new core.MojoMessagePipe();
@@ -60,7 +58,6 @@ Future<bool> testCallResponse() {
   return c.future;
 }
 
-
 Future testAwaitCallResponse() async {
   var pipe = new core.MojoMessagePipe();
   var client = new sample.ProviderProxy.fromEndpoint(pipe.endpoints[0]);
@@ -76,34 +73,31 @@ Future testAwaitCallResponse() async {
   client.close();
 }
 
-
 bindings.ServiceMessage messageOfStruct(bindings.Struct s) =>
     s.serializeWithHeader(new bindings.MessageHeader(0));
 
-
 testSerializeNamedRegion() {
   var r = new rect.Rect()
-      ..x = 1
-      ..y = 2
-      ..width = 3
-      ..height = 4;
+    ..x = 1
+    ..y = 2
+    ..width = 3
+    ..height = 4;
   var namedRegion = new structs.NamedRegion()
-      ..name = "name"
-      ..rects = [r];
+    ..name = "name"
+    ..rects = [r];
   var message = messageOfStruct(namedRegion);
   var namedRegion2 = structs.NamedRegion.deserialize(message.payload);
   Expect.equals(namedRegion.name, namedRegion2.name);
 }
 
-
 testSerializeArrayValueTypes() {
   var arrayValues = new structs.ArrayValueTypes()
-      ..f0 = [0, 1, -1, 0x7f, -0x10]
-      ..f1 = [0, 1, -1, 0x7fff, -0x1000]
-      ..f2 = [0, 1, -1, 0x7fffffff, -0x10000000]
-      ..f3 = [0, 1, -1, 0x7fffffffffffffff, -0x1000000000000000]
-      ..f4 = [0.0, 1.0, -1.0, 4.0e9, -4.0e9]
-      ..f5 = [0.0, 1.0, -1.0, 4.0e9, -4.0e9];
+    ..f0 = [0, 1, -1, 0x7f, -0x10]
+    ..f1 = [0, 1, -1, 0x7fff, -0x1000]
+    ..f2 = [0, 1, -1, 0x7fffffff, -0x10000000]
+    ..f3 = [0, 1, -1, 0x7fffffffffffffff, -0x1000000000000000]
+    ..f4 = [0.0, 1.0, -1.0, 4.0e9, -4.0e9]
+    ..f5 = [0.0, 1.0, -1.0, 4.0e9, -4.0e9];
   var message = messageOfStruct(arrayValues);
   var arrayValues2 = structs.ArrayValueTypes.deserialize(message.payload);
   Expect.listEquals(arrayValues.f0, arrayValues2.f0);
@@ -114,12 +108,10 @@ testSerializeArrayValueTypes() {
   Expect.listEquals(arrayValues.f5, arrayValues2.f5);
 }
 
-
 testSerializeStructs() {
   testSerializeNamedRegion();
   testSerializeArrayValueTypes();
 }
-
 
 main() async {
   testSerializeStructs();

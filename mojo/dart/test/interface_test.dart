@@ -42,7 +42,6 @@ class EchoString extends bindings.Struct {
   }
 }
 
-
 class EchoStringResponse extends bindings.Struct {
   static const int kStructSize = 16;
   static const bindings.StructDataHeader kDefaultStructInfo =
@@ -73,7 +72,6 @@ class EchoStringResponse extends bindings.Struct {
   }
 }
 
-
 const int kEchoString_name = 0;
 const int kEchoStringResponse_name = 1;
 
@@ -93,9 +91,7 @@ class EchoStub extends bindings.Stub {
         var es = EchoString.deserialize(message.payload);
         return echoString(es).then((response) {
           if (response != null) {
-            return buildResponseWithId(
-                response,
-                kEchoStringResponse_name,
+            return buildResponseWithId(response, kEchoStringResponse_name,
                 message.header.requestId,
                 bindings.MessageHeader.kMessageIsResponse);
           }
@@ -109,20 +105,15 @@ class EchoStub extends bindings.Stub {
   }
 }
 
-
 class EchoProxy extends bindings.Proxy {
-  EchoProxy(core.MojoMessagePipeEndpoint endpoint, {bool doListen: true,
-      Function onClosed})
-      : super.fromEndpoint(endpoint, doListen: doListen, onClosed: onClosed);
+  EchoProxy(core.MojoMessagePipeEndpoint endpoint)
+      : super.fromEndpoint(endpoint);
 
   Future<EchoStringResponse> echoString(String a) {
     // compose message.
     var es = new EchoString();
     es.a = a;
-    return sendMessageWithRequestId(
-        es,
-        kEchoString_name,
-        -1,
+    return sendMessageWithRequestId(es, kEchoString_name, -1,
         bindings.MessageHeader.kMessageExpectsResponse);
   }
 
@@ -141,11 +132,9 @@ class EchoProxy extends bindings.Proxy {
   }
 }
 
-
 void providerIsolate(core.MojoMessagePipeEndpoint endpoint) {
   new EchoStub(endpoint);
 }
-
 
 Future<int> runTest() async {
   var testCompleter = new Completer();
@@ -170,7 +159,6 @@ Future<int> runTest() async {
   return testCompleter.future;
 }
 
-
 Future runAwaitTest() async {
   var pipe = new core.MojoMessagePipe();
   var proxy = new EchoProxy(pipe.endpoints[0]);
@@ -184,26 +172,21 @@ Future runAwaitTest() async {
   proxy.close();
 }
 
-
 void closingProviderIsolate(core.MojoMessagePipeEndpoint endpoint) {
   var provider = new EchoStub(endpoint);
   provider.close();
 }
 
-
 Future<bool> runOnClosedTest() async {
   var testCompleter = new Completer();
 
   var pipe = new core.MojoMessagePipe();
-  var proxy = new EchoProxy(pipe.endpoints[0], onClosed: () {
-    testCompleter.complete(true);
-  });
+  var proxy = new EchoProxy(pipe.endpoints[0]);
+  proxy.onError = () => testCompleter.complete(true);
   await Isolate.spawn(closingProviderIsolate, pipe.endpoints[1]);
-  return testCompleter.future.timeout(
-      new Duration(seconds: 1),
+  return testCompleter.future.timeout(new Duration(seconds: 1),
       onTimeout: () => false);
 }
-
 
 main() async {
   Expect.equals(kEchoesCount, await runTest());

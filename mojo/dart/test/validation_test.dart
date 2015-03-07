@@ -17,9 +17,9 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   ConformanceTestInterfaceStub _stub;
   Completer _completer;
 
-  ConformanceTestInterfaceImpl(this._completer,
-      MojoMessagePipeEndpoint endpoint) {
-    _stub = new ConformanceTestInterfaceStub.fromEndpoint(endpoint, impl: this);
+  ConformanceTestInterfaceImpl(
+      this._completer, MojoMessagePipeEndpoint endpoint) {
+    _stub = new ConformanceTestInterfaceStub.fromEndpoint(endpoint, this);
   }
 
   void _complete() => _completer.complete(null);
@@ -52,8 +52,7 @@ String expectedResult(String test) {
 
 runTest(String name, parser.ValidationParseResult test, String expected) {
   var handles = new List.generate(
-      test.numHandles,
-      (_) => new MojoSharedBuffer.create(10).handle);
+      test.numHandles, (_) => new MojoSharedBuffer.create(10).handle);
   var pipe = new MojoMessagePipe();
   var completer = new Completer();
   var conformanceImpl;
@@ -84,13 +83,11 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
 
 // TODO(zra, yzshen): Some struct versioning tests (with "mthd11" in their
 // names) are skipped.
-Iterable<String> getTestFiles(String path, String prefix) =>
-    builtin.enumerateFiles(
-        path).where(
-            (s) =>
-                s.startsWith(prefix) &&
-                    s.endsWith(".data") &&
-                    !s.contains("mthd11")).map((s) => s.replaceFirst('.data', ''));
+Iterable<String> getTestFiles(String path, String prefix) => builtin
+    .enumerateFiles(path)
+    .where((s) =>
+        s.startsWith(prefix) && s.endsWith(".data") && !s.contains("mthd11"))
+    .map((s) => s.replaceFirst('.data', ''));
 
 main(List args) {
   int handle = args[0];

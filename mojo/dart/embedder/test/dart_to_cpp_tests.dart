@@ -22,7 +22,7 @@ class DartSideImpl implements DartSide {
   Completer _completer;
 
   DartSideImpl(core.MojoMessagePipeEndpoint endpoint) {
-    _stub = new DartSideStub.fromEndpoint(endpoint, impl: this);
+    _stub = new DartSideStub.fromEndpoint(endpoint, this);
     _sampleData = new Uint8List(CAPACITY_BYTES);
     for (int i = 0; i < _sampleData.length; ++i) {
       _sampleData[i] = i;
@@ -106,7 +106,6 @@ class DartSideImpl implements DartSide {
 
   Future<bool> get future => _completer.future;
 }
-
 
 main(List args) {
   assert(args.length == 2);

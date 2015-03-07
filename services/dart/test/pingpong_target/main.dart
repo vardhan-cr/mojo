@@ -14,9 +14,8 @@ class PingPongServiceImpl implements PingPongService {
   Application _application;
   PingPongClientProxy _pingPongClient;
 
-  PingPongServiceImpl(Application application, MojoMessagePipeEndpoint endpoint)
-      : _application = application {
-    _stub = new PingPongServiceStub.fromEndpoint(endpoint, impl: this);
+  PingPongServiceImpl(this._application, MojoMessagePipeEndpoint endpoint) {
+    _stub = new PingPongServiceStub.fromEndpoint(endpoint, this);
   }
 
   void setClient(ProxyBase proxyBase) {
@@ -41,11 +40,10 @@ class PingPongApplication extends Application {
   @override
   void acceptConnection(String requestorUrl, String resolvedUrl,
       ApplicationConnection connection) {
-    connection.provideService(
-        PingPongServiceName,
+    connection.provideService(PingPongServiceName,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
     // Close the application when the first connection goes down.
-    connection.listen(onClosed: close);
+    connection.onError = close;
   }
 }
 

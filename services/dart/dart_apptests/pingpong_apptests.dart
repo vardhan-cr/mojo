@@ -39,7 +39,6 @@ pingpongApptests(Application application, String url) {
 
       var pingPongClient = new _TestingPingPongClient.unbound();
       pingPongServiceProxy.ptr.setClient(pingPongClient.stub);
-      pingPongClient.stub.listen();
 
       pingPongServiceProxy.ptr.ping(1);
       var pongValue = await pingPongClient.waitForPong();
@@ -97,7 +96,6 @@ pingpongApptests(Application application, String url) {
 
       var pingPongClient = new _TestingPingPongClient.unbound();
       targetServiceProxy.ptr.setClient(pingPongClient.stub);
-      pingPongClient.stub.listen();
 
       targetServiceProxy.ptr.ping(1);
       var pongValue = await pingPongClient.waitForPong();
