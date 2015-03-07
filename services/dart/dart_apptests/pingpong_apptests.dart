@@ -74,19 +74,16 @@ pingpongApptests(Application application, String url) {
       application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
 
       var targetServiceProxy = new PingPongServiceProxy.unbound();
-      application.connectToService(
-          "mojo:dart_pingpong_target",
-          targetServiceProxy);
+      application
+          .connectToService("mojo:dart_pingpong_target", targetServiceProxy);
 
-      // TODO(erg): The dart bindings can't currently pass a proxy that we've
-      // received from another service and pass it it as a parameter to a call
-      // to another service. Uncomment this once this works.
-      //
-      // var r = await pingPongServiceProxy.ptr.pingTargetService(
-      //    targetServiceProxy.impl, 9);
-      // expect(r.ok, equals(true));
+      var r = await pingPongServiceProxy.ptr.pingTargetService(
+          targetServiceProxy.impl, 9);
+      expect(r.ok, equals(true));
+      // This side no longer has access to the pipe.
+      expect(targetServiceProxy.impl.isOpen, equals(false));
+      expect(targetServiceProxy.impl.isBound, equals(false));
 
-      targetServiceProxy.close();
       pingPongServiceProxy.close();
     });
 
