@@ -45,6 +45,9 @@ bool ViewManagerApp::ConfigureIncomingConnection(
   connection->AddService<ViewManagerService>(this);
   connection->AddService<WindowManagerInternalClient>(this);
   connection->ConnectToService(&wm_internal_);
+  // If no ServiceProvider has been sent, refuse the connection.
+  if (!wm_internal_)
+    return false;
   wm_internal_.set_error_handler(this);
 
   scoped_ptr<DefaultDisplayManager> display_manager(new DefaultDisplayManager(
