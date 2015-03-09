@@ -288,12 +288,13 @@ void ApplicationManager::HandleFetchCallback(
   // library.
   // TODO(vtl): (Maybe this should be done by the factory/runner?)
 
+  GURL base_resolved_url = GetBaseURLAndQuery(fetcher->GetURL(), nullptr);
   NativeRunnerFactory::Options options;
-  if (url_to_native_options_.find(fetcher->GetURL()) !=
+  if (url_to_native_options_.find(base_resolved_url) !=
       url_to_native_options_.end()) {
     DVLOG(2) << "Applying stored native options to resolved URL "
              << fetcher->GetURL() << " (requested URL " << requested_url << ")";
-    options = url_to_native_options_[fetcher->GetURL()];
+    options = url_to_native_options_[base_resolved_url];
   }
 
   fetcher->AsPath(
@@ -393,8 +394,10 @@ void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
 void ApplicationManager::SetNativeOptionsForURL(
     const NativeRunnerFactory::Options& options,
     const GURL& url) {
+  DCHECK(!url.has_query());  // Precondition.
   // Apply mappings and resolution to get the resolved URL.
   GURL resolved_url = delegate_->ResolveURL(delegate_->ResolveMappings(url));
+  DCHECK(!resolved_url.has_query());  // Still shouldn't have query.
   // TODO(vtl): We should probably also remove/disregard the query string (and
   // maybe canonicalize in other ways).
   DVLOG(2) << "Storing native options for resolved URL " << resolved_url

@@ -110,9 +110,10 @@ class ApplicationManager {
   // TODO(vtl): Maybe we should store/compare resolved URLs, like
   // SetNativeOptionsForURL() below?
   void SetArgsForURL(const std::vector<std::string>& args, const GURL& url);
-  // These options will be used in running any native application at |url|.
-  // (|url| will be mapped and resolved, and any application whose resolved URL
-  // matches it will have |options| applied.)
+  // These options will be used in running any native application at |url|
+  // (which shouldn't contain a query string). (|url| will be mapped and
+  // resolved, and any application whose base resolved URL matches it will have
+  // |options| applied.)
   // TODO(vtl): This may not do what's desired if the resolved URL results in an
   // HTTP redirect. Really, we want options to be identified with a particular
   // implementation, maybe via a signed manifest or something like that.
