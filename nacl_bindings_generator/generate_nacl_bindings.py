@@ -307,10 +307,26 @@ def GenerateMojoSyscall(functions, common_vars, out):
   code.PushMargin()
 
   for f in functions:
+    is_implemented = True
+
+    # Mojo API calls that take or return pointers are currently not supported.
+    # The underlying Mojo implementation is unaware of NaCl's address space. In
+    # addition, if we pass blindly pass the parameters through to the underlying
+    # Mojo API, memory corruption can result from pointer-size mistmatches.
+    for p in f.params:
+      if p.base_type.endswith("*"):
+        is_implemented = False
+
     impls = [ImplForParam(p) for p in f.params]
     impls.append(ImplForParam(f.result_param))
 
     code << 'case %d:' % f.uid
+
+    if not is_implemented:
+      with code.Indent():
+        code << 'fprintf(stderr, "%s not implemented\\n");' % f.name
+        code << 'return -1;'
+      continue
 
     code.PushMargin()
 
