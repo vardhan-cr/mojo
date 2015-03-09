@@ -16,6 +16,8 @@ mojo_native_application("files") {
     "futimens.h",
     "futimens_android.cc",
     "main.cc",
+    "shared_impl.cc",
+    "shared_impl.h",
     "util.cc",
     "util.h",
   ]
@@ -26,6 +28,7 @@ mojo_native_application("files") {
     "//mojo/application",
     "//mojo/common",
     "//mojo/public/cpp/application",
+    "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/system",
   ]
 }

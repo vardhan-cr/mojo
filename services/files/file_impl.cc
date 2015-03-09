@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <limits>
@@ -16,7 +15,7 @@
 #include "base/files/scoped_file.h"
 #include "base/logging.h"
 #include "base/posix/eintr_wrapper.h"
-#include "services/files/futimens.h"
+#include "services/files/shared_impl.h"
 #include "services/files/util.h"
 
 static_assert(sizeof(off_t) <= sizeof(int64_t), "off_t too big");
@@ -244,30 +243,7 @@ void FileImpl::Stat(const Callback<void(Error, FileInformationPtr)>& callback) {
     callback.Run(ERROR_CLOSED, nullptr);
     return;
   }
-
-  struct stat buf;
-  if (fstat(file_fd_.get(), &buf) != 0) {
-    callback.Run(ErrnoToError(errno), nullptr);
-    return;
-  }
-
-  FileInformationPtr file_info(FileInformation::New());
-  file_info->size = static_cast<int64_t>(buf.st_size);
-  file_info->atime = Timespec::New();
-  file_info->mtime = Timespec::New();
-#if defined(OS_ANDROID)
-  file_info->atime->seconds = static_cast<int64_t>(buf.st_atime);
-  file_info->atime->nanoseconds = static_cast<int32_t>(buf.st_atime_nsec);
-  file_info->mtime->seconds = static_cast<int64_t>(buf.st_mtime);
-  file_info->mtime->nanoseconds = static_cast<int32_t>(buf.st_mtime_nsec);
-#else
-  file_info->atime->seconds = static_cast<int64_t>(buf.st_atim.tv_sec);
-  file_info->atime->nanoseconds = static_cast<int32_t>(buf.st_atim.tv_nsec);
-  file_info->mtime->seconds = static_cast<int64_t>(buf.st_mtim.tv_sec);
-  file_info->mtime->nanoseconds = static_cast<int32_t>(buf.st_mtim.tv_nsec);
-#endif
-
-  callback.Run(ERROR_OK, file_info.Pass());
+  StatFD(file_fd_.get(), callback);
 }
 
 void FileImpl::Truncate(int64_t size, const Callback<void(Error)>& callback) {
@@ -299,23 +275,7 @@ void FileImpl::Touch(TimespecOrNowPtr atime,
     callback.Run(ERROR_CLOSED);
     return;
   }
-
-  struct timespec times[2];
-  if (Error error = TimespecOrNowToStandardTimespec(atime.get(), &times[0])) {
-    callback.Run(error);
-    return;
-  }
-  if (Error error = TimespecOrNowToStandardTimespec(mtime.get(), &times[1])) {
-    callback.Run(error);
-    return;
-  }
-
-  if (futimens(file_fd_.get(), times) != 0) {
-    callback.Run(ErrnoToError(errno));
-    return;
-  }
-
-  callback.Run(ERROR_OK);
+  TouchFD(file_fd_.get(), atime.Pass(), mtime.Pass(), callback);
 }
 
 void FileImpl::Dup(InterfaceRequest<File> file,
