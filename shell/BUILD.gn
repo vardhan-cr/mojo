@@ -6,6 +6,7 @@ import("//build/config/ui.gni")
 import("//mojo/public/mojo.gni")
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//mojo/tools/embed/rules.gni")
 import("//testing/test.gni")
 
 # We don't support building in the component build since mojo apps are
@@ -507,6 +508,17 @@ test("external_application_unittests") {
   }
 }
 
+embed_file("embed_pingable") {
+  source = "$root_build_dir/pingable_app.mojo"
+  namespace = "mojo"
+  variable = "kPingable"
+  testonly = true
+
+  deps = [
+    "//shell/test:pingable_app",
+  ]
+}
+
 mojo_native_application("apptests") {
   output_name = "shell_apptests"
 
@@ -528,10 +540,8 @@ mojo_native_application("apptests") {
     "//services/http_server/public",
     "//services/http_server/public:util",
     "//shell/test:bindings",
+    ":embed_pingable",
   ]
 
-  data_deps = [
-    "//services/http_server:http_server",
-    "//shell/test:pingable_app",
-  ]
+  data_deps = [ "//services/http_server:http_server" ]
 }

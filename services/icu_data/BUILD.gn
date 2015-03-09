@@ -4,19 +4,12 @@
 
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
+import("//mojo/tools/embed/rules.gni")
 
-action("embed_icu_data") {
-  script = "embed_icu_data.py"
-
-  inputs = [
-    "$root_build_dir/icudtl.dat",
-  ]
-
-  outputs = [
-    "$root_gen_dir/mojo/icu_data/data.cc",
-  ]
-
-  args = rebase_path(inputs + outputs, root_build_dir)
+embed_file("embed_icu_data") {
+  source = "$root_build_dir/icudtl.dat"
+  namespace = "icu_data"
+  variable = "kICUData"
 
   deps = [
     "//third_party/icu:icudata",
@@ -26,8 +19,6 @@ action("embed_icu_data") {
 mojo_native_application("icu_data") {
   sources = [
     "icu_data_impl.cc",
-    "data.h",
-    "$root_gen_dir/mojo/icu_data/data.cc",
   ]
 
   deps = [

@@ -18,8 +18,8 @@
 #include "services/http_server/public/http_server.mojom.h"
 #include "services/http_server/public/http_server_factory.mojom.h"
 #include "services/http_server/public/http_server_util.h"
+#include "shell/kPingable.h"
 #include "shell/test/pingable.mojom.h"
-
 namespace mojo {
 
 namespace {
@@ -34,9 +34,6 @@ class GetHandler : public http_server::HttpHandler {
  public:
   GetHandler(InterfaceRequest<http_server::HttpHandler> request, uint16_t port)
       : binding_(this, request.Pass()), port_(port) {
-    CHECK(PathService::Get(base::FILE_MODULE, &app_path_));
-    app_path_ = app_path_.DirName().Append("pingable_app.mojo");
-    CHECK(base::PathExists(app_path_));
   }
   ~GetHandler() override {}
 
@@ -47,10 +44,8 @@ class GetHandler : public http_server::HttpHandler {
       const Callback<void(http_server::HttpResponsePtr)>& callback) override {
     http_server::HttpResponsePtr response;
     if (StartsWithASCII(request->relative_url, "/app", true)) {
-      // Super inefficient, but meh.
-      std::string data;
-      base::ReadFileToString(app_path_, &data);
-      response = http_server::CreateHttpResponse(200, data);
+      response = http_server::CreateHttpResponse(
+          200, std::string(kPingable.data, kPingable.size));
       response->content_type = "application/octet-stream";
     } else if (request->relative_url == "/redirect") {
       response = http_server::HttpResponse::New();
@@ -64,7 +59,6 @@ class GetHandler : public http_server::HttpHandler {
   }
 
   Binding<http_server::HttpHandler> binding_;
-  base::FilePath app_path_;
   uint16_t port_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(GetHandler);
@@ -120,10 +114,6 @@ class ShellHTTPAppTest : public test::ApplicationTestBase {
   MOJO_DISALLOW_COPY_AND_ASSIGN(ShellHTTPAppTest);
 };
 
-#if defined(OS_ANDROID)
-// These tests rely on data that needs to be bundled into the apptest binary in
-// order to work on Android.
-#else  // !OS_ANDROID
 // Test that we can load apps over http.
 TEST_F(ShellHTTPAppTest, Http) {
   InterfacePtr<Pingable> pingable;
@@ -188,7 +178,6 @@ TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
   pingable2->Ping("hello", callback);
   base::RunLoop().Run();
 }
-#endif  // OS_ANDROID
 
 // mojo: URLs can have querystrings too
 TEST_F(ShellAppTest, MojoURLQueryHandling) {

@@ -9,8 +9,8 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
-#include "services/icu_data/data.h"
 #include "services/icu_data/icu_data.mojom.h"
+#include "services/icu_data/kICUData.h"
 
 namespace icu_data {
 
@@ -37,8 +37,8 @@ class ICUDataImpl : public mojo::ApplicationDelegate,
   void Map(const mojo::String& sha1hash,
            const mojo::Callback<void(mojo::ScopedSharedBufferHandle)>& callback)
       override {
-    if (std::string(sha1hash) != std::string(kICUDataTableHash)) {
-      LOG(WARNING) << "Failed to match sha1sum. Expected " << kICUDataTableHash;
+    if (std::string(sha1hash) != std::string(kICUData.hash)) {
+      LOG(WARNING) << "Failed to match sha1sum. Expected " << kICUData.hash;
       callback.Run(mojo::ScopedSharedBufferHandle());
       return;
     }
@@ -53,12 +53,12 @@ class ICUDataImpl : public mojo::ApplicationDelegate,
   void EnsureBuffer() {
     if (buffer_)
       return;
-    buffer_.reset(new mojo::SharedBuffer(kICUDataTableSize));
+    buffer_.reset(new mojo::SharedBuffer(kICUData.size));
     void* ptr = nullptr;
-    MojoResult rv = mojo::MapBuffer(buffer_->handle.get(), 0, kICUDataTableSize,
+    MojoResult rv = mojo::MapBuffer(buffer_->handle.get(), 0, kICUData.size,
                                     &ptr, MOJO_MAP_BUFFER_FLAG_NONE);
     CHECK_EQ(rv, MOJO_RESULT_OK);
-    memcpy(ptr, kICUDataTable, kICUDataTableSize);
+    memcpy(ptr, kICUData.data, kICUData.size);
     rv = mojo::UnmapBuffer(ptr);
     CHECK_EQ(rv, MOJO_RESULT_OK);
   }
