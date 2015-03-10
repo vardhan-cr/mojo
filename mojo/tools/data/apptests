@@ -33,9 +33,6 @@ tests = [
   {
     "test": "mojo:window_manager_apptests",
   },
-  {
-    "test": "mojo:shell_apptests",
-  },
 ]
 
 if config.target_os == config.OS_LINUX:
@@ -85,5 +82,11 @@ if config.target_os != config.OS_ANDROID:
     {
       "test": "mojo:dart_apptests",
       "type": "dart",
+    },
+    {
+      # https://github.com/domokit/mojo/issues/61
+      # Sometime the shell get a trucated application when exposed through the
+      # http server.
+      "test": "mojo:shell_apptests",
     },
   ]
