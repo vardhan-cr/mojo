@@ -50,43 +50,42 @@ class EmbeddedApp
       public ViewObserver {
  public:
   EmbeddedApp() : shell_(nullptr) { url::AddStandardScheme("mojo"); }
-  virtual ~EmbeddedApp() {}
+  ~EmbeddedApp() override {}
 
  private:
 
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new ViewManagerClientFactory(app->shell(), this));
   }
 
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(View* root,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services) override {
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
     Window* window = new Window(root, exposed_services.Pass(), shell_);
     windows_[root->id()] = window;
     window->bitmap_uploader.SetColor(
         kColors[next_color_++ % arraysize(kColors)]);
   }
-  virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {
     base::MessageLoop::current()->Quit();
   }
 
   // Overridden from ViewObserver:
-  virtual void OnViewDestroyed(View* view) override {
+  void OnViewDestroyed(View* view) override {
     DCHECK(windows_.find(view->id()) != windows_.end());
     windows_.erase(view->id());
   }
-  virtual void OnViewInputEvent(View* view, const EventPtr& event) override {
+  void OnViewInputEvent(View* view, const EventPtr& event) override {
     if (event->action == EVENT_TYPE_MOUSE_RELEASED) {
       if (event->flags & EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
         URLRequestPtr request(URLRequest::New());

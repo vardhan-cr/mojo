@@ -23,14 +23,14 @@ class RecursiveContentHandler : public ApplicationDelegate,
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual bool ConfigureIncomingConnection(
+  bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
     return true;
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
+  scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(InterfaceRequest<Application> application_request,
                     URLResponsePtr response) override {
     LOG(INFO) << "RecursiveContentHandler called with url: " << response->url;

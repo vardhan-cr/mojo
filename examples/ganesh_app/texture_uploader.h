@@ -34,7 +34,7 @@ class TextureUploader : public mojo::ResourceReturner,
   TextureUploader(Client* client,
                   mojo::Shell* shell,
                   base::WeakPtr<mojo::GLContext> context);
-  ~TextureUploader();
+  ~TextureUploader() override;
 
   void Upload(scoped_ptr<mojo::GLTexture> texture);
 

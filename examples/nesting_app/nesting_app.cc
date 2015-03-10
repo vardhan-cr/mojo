@@ -39,28 +39,27 @@ class NestingApp
       public ViewObserver {
  public:
   NestingApp() : nested_(nullptr), shell_(nullptr) {}
-  virtual ~NestingApp() {}
+  ~NestingApp() override {}
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new ViewManagerClientFactory(app->shell(), this));
   }
 
   // Overridden from ApplicationImpl:
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->ConnectToService(&window_manager_);
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(View* root,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services) override {
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
     bitmap_uploader_.reset(new BitmapUploader(root));
     bitmap_uploader_->Init(shell_);
@@ -75,16 +74,16 @@ class NestingApp
     nested_->SetVisible(true);
     nested_->Embed(kEmbeddedAppURL);
   }
-  virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
-    base::MessageLoop::current()->Quit();
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {
+   base::MessageLoop::current()->Quit();
   }
 
   // Overridden from ViewObserver:
-  virtual void OnViewDestroyed(View* view) override {
+  void OnViewDestroyed(View* view) override {
     // TODO(beng): reap views & child Views.
     nested_ = NULL;
   }
-  virtual void OnViewInputEvent(View* view, const EventPtr& event) override {
+  void OnViewInputEvent(View* view, const EventPtr& event) override {
     if (event->action == EVENT_TYPE_MOUSE_RELEASED)
       window_manager_->CloseWindow(view->id());
   }

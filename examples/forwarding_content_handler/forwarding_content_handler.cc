@@ -57,14 +57,13 @@ class ForwardingContentHandler : public ApplicationDelegate,
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
     return true;
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
+  scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(InterfaceRequest<Application> application_request,
                     URLResponsePtr response) override {
     CHECK(!response.is_null());

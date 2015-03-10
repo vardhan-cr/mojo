@@ -23,7 +23,7 @@ class PackageManagerApplication
       public PackageFetcherDelegate {
  public:
   PackageManagerApplication();
-  virtual ~PackageManagerApplication();
+  ~PackageManagerApplication() override;
 
  private:
   struct PendingLoad {
@@ -43,12 +43,12 @@ class PackageManagerApplication
   void PendingLoadComplete(const GURL& url);
 
   // ApplicationDelegate implementation.
-  virtual void Initialize(ApplicationImpl* app) override;
+  void Initialize(ApplicationImpl* app) override;
 
   // PackageFetcher.
-  virtual void FetchSucceeded(const GURL& url,
-                              const base::FilePath& name) override;
-  virtual void FetchFailed(const GURL& url) override;
+  void FetchSucceeded(const GURL& url,
+                      const base::FilePath& name) override;
+  void FetchFailed(const GURL& url) override;
 
   mojo::NetworkServicePtr network_service_;
 

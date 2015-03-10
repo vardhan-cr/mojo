@@ -18,7 +18,7 @@ namespace surfaces {
 class SurfacesScheduler : public cc::SchedulerClient {
  public:
   SurfacesScheduler();
-  ~SurfacesScheduler();
+  ~SurfacesScheduler() override;
 
   void SetNeedsDraw();
 

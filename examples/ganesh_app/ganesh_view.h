@@ -20,7 +20,7 @@ namespace examples {
 class GaneshView : public TextureUploader::Client, public mojo::ViewObserver {
  public:
   GaneshView(mojo::Shell* shell, mojo::View* view);
-  ~GaneshView();
+  ~GaneshView() override;
 
  private:
   void OnViewDestroyed(mojo::View* view) override;

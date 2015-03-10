@@ -1071,7 +1071,7 @@ class FocusControllerRemovalTest : public FocusControllerImplicitTestBase {
     disposition_view->parent()->RemoveChild(disposition_view);
     window_to_destroy_ = disposition_view;
   }
-  virtual void TearDown() override {
+  void TearDown() override {
     if (window_to_destroy_)
       window_to_destroy_->Destroy();
 

@@ -60,12 +60,6 @@ class SurfaceTexturePlatformWrapper {
     }
 
     @CalledByNative
-    private static void setDefaultBufferSize(SurfaceTexture surfaceTexture, int width,
-            int height) {
-        surfaceTexture.setDefaultBufferSize(width, height);
-    }
-
-    @CalledByNative
     private static void getTransformMatrix(SurfaceTexture surfaceTexture, float[] matrix) {
         surfaceTexture.getTransformMatrix(matrix);
     }

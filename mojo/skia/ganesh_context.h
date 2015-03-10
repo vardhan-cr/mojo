@@ -31,7 +31,7 @@ class GaneshContext : public GLContext::Observer {
   };
 
   explicit GaneshContext(base::WeakPtr<GLContext> gl_context);
-  ~GaneshContext();
+  ~GaneshContext() override;
 
   // Note: You must be in a GaneshContext::Scope to use GrContext.
   GrContext* gr() const {

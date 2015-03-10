@@ -29,26 +29,26 @@ class SimpleWM : public mojo::ApplicationDelegate,
         root_(NULL),
         window_container_(NULL),
         next_window_origin_(10, 10) {}
-  virtual ~SimpleWM() {}
+  ~SimpleWM() override {}
 
  private:
   // Overridden from mojo::ApplicationDelegate:
-  virtual void Initialize(mojo::ApplicationImpl* impl) override {
+  void Initialize(mojo::ApplicationImpl* impl) override {
     // FIXME: Mojo applications don't know their URLs yet:
     // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
     url_ = GURL(impl->args()[1]);
     window_manager_app_->Initialize(impl);
   }
-  virtual bool ConfigureIncomingConnection(
+  bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
     window_manager_app_->ConfigureIncomingConnection(connection);
     return true;
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  virtual void OnEmbed(mojo::View* root,
-                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
-                       mojo::ServiceProviderPtr exposed_services) override {
+  void OnEmbed(mojo::View* root,
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     root_ = root;
 
     window_container_ = root->view_manager()->CreateView();
@@ -59,15 +59,14 @@ class SimpleWM : public mojo::ApplicationDelegate,
     window_manager_app_->InitFocus(make_scoped_ptr(
         new window_manager::BasicFocusRules(window_container_)));
   }
-  virtual void OnViewManagerDisconnected(
-      mojo::ViewManager* view_manager) override {
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
     root_ = NULL;
   }
 
   // Overridden from mojo::WindowManagerDelegate:
-  virtual void Embed(const mojo::String& url,
-                     mojo::InterfaceRequest<mojo::ServiceProvider> services,
-                     mojo::ServiceProviderPtr exposed_services) override {
+  void Embed(const mojo::String& url,
+             mojo::InterfaceRequest<mojo::ServiceProvider> services,
+             mojo::ServiceProviderPtr exposed_services) override {
     DCHECK(root_);
     mojo::View* app_view = NULL;
     CreateTopLevelWindow(&app_view);
@@ -75,15 +74,15 @@ class SimpleWM : public mojo::ApplicationDelegate,
   }
 
   // Overridden from mojo::ViewObserver:
-  virtual void OnViewInputEvent(mojo::View* view,
-                                const mojo::EventPtr& event) override {
+  void OnViewInputEvent(mojo::View* view,
+                        const mojo::EventPtr& event) override {
     if (event->action == mojo::EVENT_TYPE_MOUSE_RELEASED &&
         event->flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON &&
         view->parent() == window_container_) {
       CloseWindow(view);
     }
   }
-  virtual void OnViewDestroyed(mojo::View* view) override {
+  void OnViewDestroyed(mojo::View* view) override {
     view->RemoveObserver(this);
   }
 

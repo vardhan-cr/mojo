@@ -30,7 +30,7 @@ class KioskWM : public mojo::ApplicationDelegate,
                 public ui::AcceleratorTarget {
  public:
   KioskWM();
-  virtual ~KioskWM();
+  ~KioskWM() override;
 
   base::WeakPtr<KioskWM> GetWeakPtr();
 

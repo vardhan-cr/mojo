@@ -1,5 +1,5 @@
 diff --git a/cc/BUILD.gn b/cc/BUILD.gn
-index 6fe0694..803b0f9 100644
+index 9c4752d..e217b12 100644
 --- a/cc/BUILD.gn
 +++ b/cc/BUILD.gn
 @@ -222,13 +222,6 @@ component("cc") {
@@ -34,30 +34,22 @@ index 6fe0694..803b0f9 100644
      "test/geometry_test_utils.cc",
      "test/geometry_test_utils.h",
      "test/impl_side_painting_settings.h",
-@@ -783,7 +772,6 @@ if (!is_win || link_chrome_on_windows) {
-       "layers/tiled_layer_unittest.cc",
-       "layers/ui_resource_layer_impl_unittest.cc",
-       "layers/ui_resource_layer_unittest.cc",
--      "layers/video_layer_impl_unittest.cc",
-       "output/begin_frame_args_unittest.cc",
-       "output/delegating_renderer_unittest.cc",
-       "output/filter_operations_unittest.cc",
-@@ -816,7 +804,6 @@ if (!is_win || link_chrome_on_windows) {
-       "resources/tile_manager_unittest.cc",
-       "resources/tile_priority_unittest.cc",
-       "resources/tile_task_worker_pool_unittest.cc",
--      "resources/video_resource_updater_unittest.cc",
-       "scheduler/begin_frame_source_unittest.cc",
-       "scheduler/delay_based_time_source_unittest.cc",
-       "scheduler/scheduler_state_machine_unittest.cc",
-@@ -844,7 +831,6 @@ if (!is_win || link_chrome_on_windows) {
-       "trees/layer_tree_host_unittest_picture.cc",
-       "trees/layer_tree_host_unittest_proxy.cc",
-       "trees/layer_tree_host_unittest_scroll.cc",
--      "trees/layer_tree_host_unittest_video.cc",
-       "trees/layer_tree_impl_unittest.cc",
-       "trees/occlusion_tracker_unittest.cc",
-       "trees/occlusion_unittest.cc",
+@@ -782,7 +771,6 @@ test("cc_unittests") {
+     "layers/tiled_layer_unittest.cc",
+     "layers/ui_resource_layer_impl_unittest.cc",
+     "layers/ui_resource_layer_unittest.cc",
+-    "layers/video_layer_impl_unittest.cc",
+     "output/begin_frame_args_unittest.cc",
+     "output/delegating_renderer_unittest.cc",
+     "output/filter_operations_unittest.cc",
+@@ -843,7 +831,6 @@ test("cc_unittests") {
+     "trees/layer_tree_host_unittest_picture.cc",
+     "trees/layer_tree_host_unittest_proxy.cc",
+     "trees/layer_tree_host_unittest_scroll.cc",
+-    "trees/layer_tree_host_unittest_video.cc",
+     "trees/layer_tree_impl_unittest.cc",
+     "trees/occlusion_tracker_unittest.cc",
+     "trees/occlusion_unittest.cc",
 diff --git a/cc/layers/video_frame_provider.h b/cc/layers/video_frame_provider.h
 deleted file mode 100644
 index 784d951..0000000
@@ -250,7 +242,7 @@ index 4bbd92f..0000000
 -
 -}  // namespace cc
 diff --git a/cc/output/gl_renderer.cc b/cc/output/gl_renderer.cc
-index 6142d96..5c560dc 100644
+index 2016447..578faa9 100644
 --- a/cc/output/gl_renderer.cc
 +++ b/cc/output/gl_renderer.cc
 @@ -13,7 +13,6 @@
@@ -262,7 +254,7 @@ index 6142d96..5c560dc 100644
  #include "cc/output/compositor_frame_metadata.h"
  #include "cc/output/context_provider.h"
 diff --git a/cc/output/renderer_pixeltest.cc b/cc/output/renderer_pixeltest.cc
-index 743e1cf..9e9175e 100644
+index b30b0a5..81ad842 100644
 --- a/cc/output/renderer_pixeltest.cc
 +++ b/cc/output/renderer_pixeltest.cc
 @@ -12,7 +12,6 @@
@@ -276,7 +268,7 @@ index 743e1cf..9e9175e 100644
 @@ -388,453 +387,6 @@ TEST_F(GLRendererPixelTest, NonPremultipliedTextureWithBackground) {
        FuzzyPixelOffByOneComparator(true)));
  }
- 
+
 -class VideoGLRendererPixelTest : public GLRendererPixelTest {
 - protected:
 -  void CreateTestYUVVideoDrawQuad_Striped(const SharedQuadState* shared_state,
@@ -726,7 +718,7 @@ index 743e1cf..9e9175e 100644
 -
  TYPED_TEST(RendererPixelTest, FastPassColorFilterAlpha) {
    gfx::Rect viewport_rect(this->device_viewport_size_);
- 
+
 diff --git a/cc/quads/yuv_video_draw_quad.h b/cc/quads/yuv_video_draw_quad.h
 index 358929e..15bce98 100644
 --- a/cc/quads/yuv_video_draw_quad.h
@@ -737,22 +729,22 @@ index 358929e..15bce98 100644
  #include "cc/base/cc_export.h"
 -#include "cc/layers/video_layer_impl.h"
  #include "cc/quads/draw_quad.h"
- 
+
  namespace cc {
 diff --git a/cc/resources/drawing_display_item.cc b/cc/resources/drawing_display_item.cc
 index 648f9de..6dffad9 100644
 --- a/cc/resources/drawing_display_item.cc
 +++ b/cc/resources/drawing_display_item.cc
 @@ -6,6 +6,7 @@
- 
+
  #include <string>
- 
+
 +#include "base/logging.h"
  #include "base/strings/stringprintf.h"
  #include "base/trace_event/trace_event_argument.h"
  #include "cc/debug/picture_debug_util.h"
 diff --git a/cc/trees/layer_tree_host_impl_unittest.cc b/cc/trees/layer_tree_host_impl_unittest.cc
-index 70fa92b..38b2d66 100644
+index 4b2bc75..7ffa683 100644
 --- a/cc/trees/layer_tree_host_impl_unittest.cc
 +++ b/cc/trees/layer_tree_host_impl_unittest.cc
 @@ -27,7 +27,6 @@
@@ -784,7 +776,7 @@ index 70fa92b..38b2d66 100644
  using ::testing::AtLeast;
  using ::testing::_;
 -using media::VideoFrame;
- 
+
  namespace cc {
  namespace {
 @@ -96,7 +92,6 @@ class LayerTreeHostImplTest : public testing::Test,
@@ -793,12 +785,12 @@ index 70fa92b..38b2d66 100644
          current_priority_cutoff_value_(0) {
 -    media::InitializeMediaLibraryForTesting();
    }
- 
+
    LayerTreeSettings DefaultSettings() {
-@@ -5463,18 +5458,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
+@@ -5486,18 +5481,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
    root_layer->SetBounds(gfx::Size(10, 10));
    root_layer->SetHasRenderSurface(true);
- 
+
 -  scoped_refptr<VideoFrame> softwareFrame =
 -      media::VideoFrame::CreateColorFrame(
 -          gfx::Size(4, 4), 0x80, 0x80, 0x80, base::TimeDelta());
@@ -814,10 +806,10 @@ index 70fa92b..38b2d66 100644
    scoped_ptr<IOSurfaceLayerImpl> io_surface_layer =
        IOSurfaceLayerImpl::Create(host_impl_->active_tree(), 5);
    io_surface_layer->SetBounds(gfx::Size(10, 10));
-@@ -6555,16 +6538,6 @@ TEST_F(LayerTreeHostImplTest,
+@@ -6578,16 +6561,6 @@ TEST_F(LayerTreeHostImplTest,
    scoped_ptr<SolidColorLayerImpl> root_layer =
        SolidColorLayerImpl::Create(host_impl_->active_tree(), 1);
- 
+
 -  // VideoLayerImpl will not be drawn.
 -  FakeVideoFrameProvider provider;
 -  scoped_ptr<VideoLayerImpl> video_layer = VideoLayerImpl::Create(
@@ -832,7 +824,7 @@ index 70fa92b..38b2d66 100644
    EXPECT_EQ(DRAW_SUCCESS, host_impl_->PrepareToDraw(&frame));
    host_impl_->DrawLayers(&frame, gfx::FrameTime::Now());
 diff --git a/cc/trees/layer_tree_host_unittest.cc b/cc/trees/layer_tree_host_unittest.cc
-index 48be5b8..f9b690d 100644
+index c52132e..1be61a5 100644
 --- a/cc/trees/layer_tree_host_unittest.cc
 +++ b/cc/trees/layer_tree_host_unittest.cc
 @@ -18,7 +18,6 @@
@@ -851,10 +843,10 @@ index 48be5b8..f9b690d 100644
  #include "cc/test/geometry_test_utils.h"
  #include "cc/test/impl_side_painting_settings.h"
  #include "cc/test/layer_tree_test.h"
-@@ -4167,28 +4165,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
+@@ -4163,28 +4161,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
    int num_draws_;
  };
- 
+
 -// VideoLayer must support being invalidated and then passing that along
 -// to the compositor thread, even though no resources are updated in
 -// response to that invalidation.
@@ -908,7 +900,7 @@ index c99180d..cc536f4 100644
 -#include "media/base/media.h"
 -
 -using media::VideoFrame;
- 
+
  namespace cc {
  namespace {
 @@ -66,7 +60,6 @@ class LayerTreeHostContextTest : public LayerTreeTest {
@@ -917,12 +909,12 @@ index c99180d..cc536f4 100644
          async_output_surface_creation_(false) {
 -    media::InitializeMediaLibraryForTesting();
    }
- 
+
    void LoseContext() {
 @@ -1055,41 +1048,6 @@ class LayerTreeHostContextTestDontUseLostResources
      layer_with_mask->SetMaskLayer(mask.get());
      root->AddChild(layer_with_mask);
- 
+
 -    scoped_refptr<VideoLayer> video_color =
 -        VideoLayer::Create(&color_frame_provider_, media::VIDEO_ROTATION_0);
 -    video_color->SetBounds(gfx::Size(10, 10));
@@ -962,7 +954,7 @@ index c99180d..cc536f4 100644
        // TODO(danakj): IOSurface layer can not be transported. crbug.com/239335
        scoped_refptr<IOSurfaceLayer> io_surface = IOSurfaceLayer::Create();
 @@ -1119,14 +1077,6 @@ class LayerTreeHostContextTestDontUseLostResources
- 
+
    void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
      LayerTreeHostContextTest::CommitCompleteOnThread(host_impl);
 -
@@ -974,7 +966,7 @@ index c99180d..cc536f4 100644
 -      scaled_hw_frame_provider_.set_frame(NULL);
 -    }
    }
- 
+
    DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
 @@ -1175,14 +1125,6 @@ class LayerTreeHostContextTestDontUseLostResources
    scoped_refptr<DelegatedFrameResourceCollection>
@@ -989,5 +981,5 @@ index c99180d..cc536f4 100644
 -  FakeVideoFrameProvider hw_frame_provider_;
 -  FakeVideoFrameProvider scaled_hw_frame_provider_;
  };
- 
+
  SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostContextTestDontUseLostResources);

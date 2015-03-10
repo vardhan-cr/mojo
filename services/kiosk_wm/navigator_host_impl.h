@@ -16,7 +16,7 @@ class KioskWM;
 class NavigatorHostImpl : public mojo::NavigatorHost {
  public:
   NavigatorHostImpl(KioskWM* kiosk_wm);
-  ~NavigatorHostImpl();
+  ~NavigatorHostImpl() override;
 
   void Bind(mojo::InterfaceRequest<mojo::NavigatorHost> request);
 

@@ -46,7 +46,7 @@ class Launcher : public embedder::ProcessDelegate {
                                      &app_args_);
   }
 
-  ~Launcher() {
+  ~Launcher() override {
     // TODO(vtl): We need to destroy this before calling
     // ShutdownIPCSupportOnIOThread(). This is all quite sketchy, and we really
     // should convert all of this to running the application on the main thread,

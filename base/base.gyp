@@ -338,6 +338,8 @@
       ],
       'sources': [
         'prefs/base_prefs_export.h',
+        'prefs/base_prefs_switches.cc',
+        'prefs/base_prefs_switches.h',
         'prefs/default_pref_store.cc',
         'prefs/default_pref_store.h',
         'prefs/json_pref_store.cc',
@@ -382,12 +384,18 @@
       # TODO(pasko): Remove this target when crbug.com/424562 is fixed.
       # GN: //base:protect_file_posix
       'target_name': 'protect_file_posix',
-      'type': 'static_library',
-      'dependencies': [
-        'base',
-      ],
-      'sources': [
-        'files/protect_file_posix.cc',
+      'conditions': [
+        ['os_posix == 1', {
+          'type': 'static_library',
+          'dependencies': [
+            'base',
+          ],
+          'sources': [
+            'files/protect_file_posix.cc',
+          ],
+        }, {
+          'type': 'none',
+        }],
       ],
     },
     {
@@ -778,9 +786,6 @@
             'message_loop/message_pump_libevent_unittest.cc',
             'threading/worker_pool_posix_unittest.cc',
           ],
-          'dependencies': [
-            'pe_image_test',
-          ],
           # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
           'msvs_disabled_warnings': [
             4267,
@@ -941,6 +946,8 @@
         'test/mock_chrome_application_mac.mm',
         'test/mock_devices_changed_observer.cc',
         'test/mock_devices_changed_observer.h',
+        'test/mock_log.cc',
+        'test/mock_log.h',
         'test/multiprocess_test.cc',
         'test/multiprocess_test.h',
         'test/multiprocess_test_android.cc',
@@ -1336,6 +1343,7 @@
           'type': 'none',
           'sources': [
             'android/java/src/org/chromium/base/ApplicationStatus.java',
+            'android/java/src/org/chromium/base/AnimationFrameTimeHistogram.java',
             'android/java/src/org/chromium/base/BuildInfo.java',
             'android/java/src/org/chromium/base/CommandLine.java',
             'android/java/src/org/chromium/base/ContentUriUtils.java',
@@ -1551,6 +1559,8 @@
           },
         },
         {
+          # Target to manually rebuild pe_image_test.dll which is checked into
+          # base/test/data/pe_image.
           'target_name': 'pe_image_test',
           'type': 'shared_library',
           'sources': [

@@ -21,17 +21,17 @@ class PrintBodyApplication : public Application {
                        ScopedDataPipeConsumerHandle body)
       : binding_(this, request.Pass()), body_(body.Pass()) {}
 
-  virtual void Initialize(ShellPtr shell,
-                          Array<String> args,
-                          const mojo::String& url) override {
+  void Initialize(ShellPtr shell,
+                  Array<String> args,
+                  const mojo::String& url) override {
     shell_ = shell.Pass();
   }
-  virtual void RequestQuit() override {}
+  void RequestQuit() override {}
 
-  virtual void AcceptConnection(const String& requestor_url,
-                                InterfaceRequest<ServiceProvider> services,
-                                ServiceProviderPtr exported_services,
-                                const String& url) override {
+  void AcceptConnection(const String& requestor_url,
+                        InterfaceRequest<ServiceProvider> services,
+                        ServiceProviderPtr exported_services,
+                        const String& url) override {
     printf(
         "ContentHandler::OnConnect - url:%s - requestor_url:%s - body "
         "follows\n\n",

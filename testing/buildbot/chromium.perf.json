@@ -1,2 +1,60 @@
 {
+  "Android Nexus4 Perf": {
+    "scripts": [
+      {
+        "name": "host_info",
+        "script": "host_info.py"
+      }
+    ]
+  },
+  "Android Nexus5 Perf": {
+    "scripts": [
+      {
+        "name": "host_info",
+        "script": "host_info.py"
+      }
+    ]
+  },
+  "Android Nexus7v2 Perf": {
+    "scripts": [
+      {
+        "name": "host_info",
+        "script": "host_info.py"
+      }
+    ]
+  },
+  "Android Nexus10 Perf": {
+    "scripts": [
+      {
+        "name": "host_info",
+        "script": "host_info.py"
+      }
+    ]
+  },
+  "Android MotoE Perf": {
+    "scripts": [
+      {
+        "name": "host_info",
+        "script": "host_info.py"
+      }
+    ]
+  },
+  "Mac 10.8 Perf (1)": {
+    "scripts": [
+      {
+	"name": "gpu_perftests",
+	"script": "gtest_perf_test.py",
+	"args": ["gpu_perftests", "--test-launcher-print-test-stdio=always"]
+      }
+    ]
+  },
+  "Mac 10.9 Perf (1)": {
+    "scripts": [
+      {
+	"name": "gpu_perftests",
+	"script": "gtest_perf_test.py",
+	"args": ["gpu_perftests", "--test-launcher-print-test-stdio=always"]
+      }
+    ]
+  }
 }

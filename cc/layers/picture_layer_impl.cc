@@ -331,8 +331,8 @@ void PictureLayerImpl::AppendQuads(RenderPass* render_pass,
         CheckerboardDrawQuad* quad =
             render_pass->CreateAndAppendDrawQuad<CheckerboardDrawQuad>();
         SkColor color = DebugColors::DefaultCheckerboardColor();
-        quad->SetNew(
-            shared_quad_state, geometry_rect, visible_geometry_rect, color);
+        quad->SetNew(shared_quad_state, geometry_rect, visible_geometry_rect,
+                     color, draw_properties().device_scale_factor);
       } else {
         SkColor color = SafeOpaqueBackgroundColor();
         SolidColorDrawQuad* quad =
@@ -603,6 +603,15 @@ void PictureLayerImpl::RecreateResources() {
 
 skia::RefPtr<SkPicture> PictureLayerImpl::GetPicture() {
   return raster_source_->GetFlattenedPicture();
+}
+
+Region PictureLayerImpl::GetInvalidationRegion() {
+  // |invalidation_| gives the invalidation contained in the source frame, but
+  // is not cleared after drawing from the layer. However, update_rect() is
+  // cleared once the invalidation is drawn, which is useful for debugging
+  // visualizations. This method intersects the two to give a more exact
+  // representation of what was invalidated that is cleared after drawing.
+  return IntersectRegions(invalidation_, update_rect());
 }
 
 scoped_refptr<Tile> PictureLayerImpl::CreateTile(

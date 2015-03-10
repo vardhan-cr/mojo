@@ -15,15 +15,15 @@ class GestureProviderImplTest : public testing::Test,
  public:
   GestureProviderImplTest() {}
 
-  virtual ~GestureProviderImplTest() {}
+  ~GestureProviderImplTest() override {}
 
-  virtual void OnGestureEvent(GestureEvent* event) override {}
+  void OnGestureEvent(GestureEvent* event) override {}
 
-  virtual void SetUp() override {
+  void SetUp() override {
     provider_.reset(new GestureProviderImpl(this));
   }
 
-  virtual void TearDown() override { provider_.reset(); }
+  void TearDown() override { provider_.reset(); }
 
   GestureProviderImpl* provider() { return provider_.get(); }
 

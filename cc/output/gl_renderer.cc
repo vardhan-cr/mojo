@@ -558,14 +558,16 @@ void GLRenderer::DrawCheckerboardQuad(const DrawingFrame* frame,
                      SkColorGetB(color) * (1.0f / 255.0f),
                      1));
 
-  const int checkerboard_width = 16;
-  float frequency = 1.0f / checkerboard_width;
+  const int kCheckerboardWidth = 16;
+  float frequency = 1.0f / kCheckerboardWidth;
 
   gfx::Rect tile_rect = quad->rect;
-  float tex_offset_x = tile_rect.x() % checkerboard_width;
-  float tex_offset_y = tile_rect.y() % checkerboard_width;
-  float tex_scale_x = tile_rect.width();
-  float tex_scale_y = tile_rect.height();
+  float tex_offset_x =
+      static_cast<int>(tile_rect.x() / quad->scale) % kCheckerboardWidth;
+  float tex_offset_y =
+      static_cast<int>(tile_rect.y() / quad->scale) % kCheckerboardWidth;
+  float tex_scale_x = tile_rect.width() / quad->scale;
+  float tex_scale_y = tile_rect.height() / quad->scale;
   GLC(gl_,
       gl_->Uniform4f(program->fragment_shader().tex_transform_location(),
                      tex_offset_x,
@@ -937,7 +939,9 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       DCHECK(!background_image);
       use_shaders_for_blending = false;
     } else if (background_image) {
-      background_texture.reset();
+      // Reset original background texture if there is not any mask
+      if (!quad->mask_resource_id)
+        background_texture.reset();
     } else if (CanApplyBlendModeUsingBlendFunc(blend_mode) &&
                ShouldApplyBackgroundFilters(frame, quad)) {
       // Something went wrong with applying background filters to the backdrop.
@@ -945,7 +949,11 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       background_texture.reset();
     }
   }
-
+  // Need original background texture for mask?
+  bool mask_for_background =
+      background_texture &&    // Have original background texture
+      background_image &&      // Have filtered background texture
+      quad->mask_resource_id;  // Have mask texture
   SetBlendEnabled(
       !use_shaders_for_blending &&
       (quad->ShouldDrawWithBlending() || !IsDefaultBlendMode(blend_mode)));
@@ -1015,19 +1023,7 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       highp_threshold_min_,
       quad->shared_quad_state->visible_content_rect.bottom_right());
 
-  int shader_quad_location = -1;
-  int shader_edge_location = -1;
-  int shader_viewport_location = -1;
-  int shader_mask_sampler_location = -1;
-  int shader_mask_tex_coord_scale_location = -1;
-  int shader_mask_tex_coord_offset_location = -1;
-  int shader_matrix_location = -1;
-  int shader_alpha_location = -1;
-  int shader_color_matrix_location = -1;
-  int shader_color_offset_location = -1;
-  int shader_tex_transform_location = -1;
-  int shader_backdrop_location = -1;
-  int shader_backdrop_rect_location = -1;
+  ShaderLocations locations;
 
   DCHECK_EQ(background_texture || background_image, use_shaders_for_blending);
   BlendMode shader_blend_mode = use_shaders_for_blending
@@ -1036,163 +1032,67 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
 
   if (use_aa && mask_texture_id && !use_color_matrix) {
     const RenderPassMaskProgramAA* program = GetRenderPassMaskProgramAA(
-        tex_coord_precision, mask_sampler, shader_blend_mode);
+        tex_coord_precision, mask_sampler,
+        shader_blend_mode, mask_for_background);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_quad_location = program->vertex_shader().quad_location();
-    shader_edge_location = program->vertex_shader().edge_location();
-    shader_viewport_location = program->vertex_shader().viewport_location();
-    shader_mask_sampler_location =
-        program->fragment_shader().mask_sampler_location();
-    shader_mask_tex_coord_scale_location =
-        program->fragment_shader().mask_tex_coord_scale_location();
-    shader_mask_tex_coord_offset_location =
-        program->fragment_shader().mask_tex_coord_offset_location();
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (!use_aa && mask_texture_id && !use_color_matrix) {
     const RenderPassMaskProgram* program = GetRenderPassMaskProgram(
-        tex_coord_precision, mask_sampler, shader_blend_mode);
+        tex_coord_precision, mask_sampler,
+        shader_blend_mode, mask_for_background);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_mask_sampler_location =
-        program->fragment_shader().mask_sampler_location();
-    shader_mask_tex_coord_scale_location =
-        program->fragment_shader().mask_tex_coord_scale_location();
-    shader_mask_tex_coord_offset_location =
-        program->fragment_shader().mask_tex_coord_offset_location();
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (use_aa && !mask_texture_id && !use_color_matrix) {
     const RenderPassProgramAA* program =
         GetRenderPassProgramAA(tex_coord_precision, shader_blend_mode);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_quad_location = program->vertex_shader().quad_location();
-    shader_edge_location = program->vertex_shader().edge_location();
-    shader_viewport_location = program->vertex_shader().viewport_location();
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (use_aa && mask_texture_id && use_color_matrix) {
     const RenderPassMaskColorMatrixProgramAA* program =
         GetRenderPassMaskColorMatrixProgramAA(
-            tex_coord_precision, mask_sampler, shader_blend_mode);
+            tex_coord_precision, mask_sampler,
+            shader_blend_mode, mask_for_background);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_quad_location = program->vertex_shader().quad_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_edge_location = program->vertex_shader().edge_location();
-    shader_viewport_location = program->vertex_shader().viewport_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_mask_sampler_location =
-        program->fragment_shader().mask_sampler_location();
-    shader_mask_tex_coord_scale_location =
-        program->fragment_shader().mask_tex_coord_scale_location();
-    shader_mask_tex_coord_offset_location =
-        program->fragment_shader().mask_tex_coord_offset_location();
-    shader_color_matrix_location =
-        program->fragment_shader().color_matrix_location();
-    shader_color_offset_location =
-        program->fragment_shader().color_offset_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (use_aa && !mask_texture_id && use_color_matrix) {
     const RenderPassColorMatrixProgramAA* program =
         GetRenderPassColorMatrixProgramAA(tex_coord_precision,
                                           shader_blend_mode);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_quad_location = program->vertex_shader().quad_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_edge_location = program->vertex_shader().edge_location();
-    shader_viewport_location = program->vertex_shader().viewport_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_color_matrix_location =
-        program->fragment_shader().color_matrix_location();
-    shader_color_offset_location =
-        program->fragment_shader().color_offset_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (!use_aa && mask_texture_id && use_color_matrix) {
     const RenderPassMaskColorMatrixProgram* program =
         GetRenderPassMaskColorMatrixProgram(
-            tex_coord_precision, mask_sampler, shader_blend_mode);
+            tex_coord_precision, mask_sampler,
+            shader_blend_mode, mask_for_background);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_mask_sampler_location =
-        program->fragment_shader().mask_sampler_location();
-    shader_mask_tex_coord_scale_location =
-        program->fragment_shader().mask_tex_coord_scale_location();
-    shader_mask_tex_coord_offset_location =
-        program->fragment_shader().mask_tex_coord_offset_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_color_matrix_location =
-        program->fragment_shader().color_matrix_location();
-    shader_color_offset_location =
-        program->fragment_shader().color_offset_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else if (!use_aa && !mask_texture_id && use_color_matrix) {
     const RenderPassColorMatrixProgram* program =
         GetRenderPassColorMatrixProgram(tex_coord_precision, shader_blend_mode);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_color_matrix_location =
-        program->fragment_shader().color_matrix_location();
-    shader_color_offset_location =
-        program->fragment_shader().color_offset_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   } else {
     const RenderPassProgram* program =
         GetRenderPassProgram(tex_coord_precision, shader_blend_mode);
     SetUseProgram(program->program());
-    GLC(gl_, gl_->Uniform1i(program->fragment_shader().sampler_location(), 0));
-
-    shader_matrix_location = program->vertex_shader().matrix_location();
-    shader_alpha_location = program->fragment_shader().alpha_location();
-    shader_tex_transform_location =
-        program->vertex_shader().tex_transform_location();
-    shader_backdrop_location = program->fragment_shader().backdrop_location();
-    shader_backdrop_rect_location =
-        program->fragment_shader().backdrop_rect_location();
+    program->vertex_shader().FillLocations(&locations);
+    program->fragment_shader().FillLocations(&locations);
+    GLC(gl_, gl_->Uniform1i(locations.sampler, 0));
   }
   float tex_scale_x =
       quad->rect.width() / static_cast<float>(contents_texture->size().width());
@@ -1201,22 +1101,22 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
   DCHECK_LE(tex_scale_x, 1.0f);
   DCHECK_LE(tex_scale_y, 1.0f);
 
-  DCHECK(shader_tex_transform_location != -1 || IsContextLost());
+  DCHECK(locations.tex_transform != -1 || IsContextLost());
   // Flip the content vertically in the shader, as the RenderPass input
   // texture is already oriented the same way as the framebuffer, but the
   // projection transform does a flip.
   GLC(gl_,
-      gl_->Uniform4f(shader_tex_transform_location,
+      gl_->Uniform4f(locations.tex_transform,
                      0.0f,
                      tex_scale_y,
                      tex_scale_x,
                      -tex_scale_y));
 
   GLint last_texture_unit = 0;
-  if (shader_mask_sampler_location != -1) {
-    DCHECK_NE(shader_mask_tex_coord_scale_location, 1);
-    DCHECK_NE(shader_mask_tex_coord_offset_location, 1);
-    GLC(gl_, gl_->Uniform1i(shader_mask_sampler_location, 1));
+  if (locations.mask_sampler != -1) {
+    DCHECK_NE(locations.mask_tex_coord_scale, 1);
+    DCHECK_NE(locations.mask_tex_coord_offset, 1);
+    GLC(gl_, gl_->Uniform1i(locations.mask_sampler, 1));
 
     gfx::RectF mask_uv_rect = quad->MaskUVRect();
     if (mask_sampler != SAMPLER_TYPE_2D) {
@@ -1228,56 +1128,56 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
     // and the RenderPass contents texture, so we flip the tex coords from the
     // RenderPass texture to find the mask texture coords.
     GLC(gl_,
-        gl_->Uniform2f(shader_mask_tex_coord_offset_location,
+        gl_->Uniform2f(locations.mask_tex_coord_offset,
                        mask_uv_rect.x(),
                        mask_uv_rect.bottom()));
     GLC(gl_,
-        gl_->Uniform2f(shader_mask_tex_coord_scale_location,
+        gl_->Uniform2f(locations.mask_tex_coord_scale,
                        mask_uv_rect.width() / tex_scale_x,
                        -mask_uv_rect.height() / tex_scale_y));
 
     last_texture_unit = 1;
   }
 
-  if (shader_edge_location != -1)
-    GLC(gl_, gl_->Uniform3fv(shader_edge_location, 8, edge));
+  if (locations.edge != -1)
+    GLC(gl_, gl_->Uniform3fv(locations.edge, 8, edge));
 
-  if (shader_viewport_location != -1) {
+  if (locations.viewport != -1) {
     float viewport[4] = {static_cast<float>(viewport_.x()),
                          static_cast<float>(viewport_.y()),
                          static_cast<float>(viewport_.width()),
                          static_cast<float>(viewport_.height()), };
-    GLC(gl_, gl_->Uniform4fv(shader_viewport_location, 1, viewport));
+    GLC(gl_, gl_->Uniform4fv(locations.viewport, 1, viewport));
   }
 
-  if (shader_color_matrix_location != -1) {
+  if (locations.color_matrix != -1) {
     float matrix[16];
     for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 4; ++j)
         matrix[i * 4 + j] = SkScalarToFloat(color_matrix[j * 5 + i]);
     }
     GLC(gl_,
-        gl_->UniformMatrix4fv(shader_color_matrix_location, 1, false, matrix));
+        gl_->UniformMatrix4fv(locations.color_matrix, 1, false, matrix));
   }
   static const float kScale = 1.0f / 255.0f;
-  if (shader_color_offset_location != -1) {
+  if (locations.color_offset != -1) {
     float offset[4];
     for (int i = 0; i < 4; ++i)
       offset[i] = SkScalarToFloat(color_matrix[i * 5 + 4]) * kScale;
 
-    GLC(gl_, gl_->Uniform4fv(shader_color_offset_location, 1, offset));
+    GLC(gl_, gl_->Uniform4fv(locations.color_offset, 1, offset));
   }
 
   scoped_ptr<ResourceProvider::ScopedSamplerGL> shader_background_sampler_lock;
-  if (shader_backdrop_location != -1) {
+  if (locations.backdrop != -1) {
     DCHECK(background_texture || background_image);
-    DCHECK_NE(shader_backdrop_location, 0);
-    DCHECK_NE(shader_backdrop_rect_location, 0);
+    DCHECK_NE(locations.backdrop, 0);
+    DCHECK_NE(locations.backdrop_rect, 0);
 
-    GLC(gl_, gl_->Uniform1i(shader_backdrop_location, ++last_texture_unit));
+    GLC(gl_, gl_->Uniform1i(locations.backdrop, ++last_texture_unit));
 
     GLC(gl_,
-        gl_->Uniform4f(shader_backdrop_rect_location,
+        gl_->Uniform4f(locations.backdrop_rect,
                        background_rect.x(),
                        background_rect.y(),
                        background_rect.width(),
@@ -1288,7 +1188,11 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       GLC(gl_, gl_->ActiveTexture(GL_TEXTURE0 + last_texture_unit));
       gl_->BindTexture(GL_TEXTURE_2D, texture->getTextureHandle());
       GLC(gl_, gl_->ActiveTexture(GL_TEXTURE0));
-    } else {
+      if (mask_for_background)
+        GLC(gl_, gl_->Uniform1i(locations.original_backdrop,
+                                ++last_texture_unit));
+    }
+    if (background_texture) {
       shader_background_sampler_lock = make_scoped_ptr(
           new ResourceProvider::ScopedSamplerGL(resource_provider_,
                                                 background_texture->id(),
@@ -1299,10 +1203,10 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
     }
   }
 
-  SetShaderOpacity(quad->opacity(), shader_alpha_location);
-  SetShaderQuadF(surface_quad, shader_quad_location);
+  SetShaderOpacity(quad->opacity(), locations.alpha);
+  SetShaderQuadF(surface_quad, locations.quad);
   DrawQuadGeometry(
-      frame, quad->quadTransform(), quad->rect, shader_matrix_location);
+      frame, quad->quadTransform(), quad->rect, locations.matrix);
 
   // Flush the compositor context before the filter bitmap goes out of
   // scope, so the draw gets processed before the filter texture gets deleted.
@@ -2804,7 +2708,8 @@ const GLRenderer::RenderPassProgramAA* GLRenderer::GetRenderPassProgramAA(
 const GLRenderer::RenderPassMaskProgram* GLRenderer::GetRenderPassMaskProgram(
     TexCoordPrecision precision,
     SamplerType sampler,
-    BlendMode blend_mode) {
+    BlendMode blend_mode,
+    bool mask_for_background) {
   DCHECK_GE(precision, 0);
   DCHECK_LE(precision, LAST_TEX_COORD_PRECISION);
   DCHECK_GE(sampler, 0);
@@ -2812,11 +2717,13 @@ const GLRenderer::RenderPassMaskProgram* GLRenderer::GetRenderPassMaskProgram(
   DCHECK_GE(blend_mode, 0);
   DCHECK_LE(blend_mode, LAST_BLEND_MODE);
   RenderPassMaskProgram* program =
-      &render_pass_mask_program_[precision][sampler][blend_mode];
+      &render_pass_mask_program_[precision][sampler][blend_mode]
+                                [mask_for_background ? HAS_MASK : NO_MASK];
   if (!program->initialized()) {
     TRACE_EVENT0("cc", "GLRenderer::renderPassMaskProgram::initialize");
     program->Initialize(
-        output_surface_->context_provider(), precision, sampler, blend_mode);
+        output_surface_->context_provider(), precision,
+        sampler, blend_mode, mask_for_background);
   }
   return program;
 }
@@ -2824,7 +2731,8 @@ const GLRenderer::RenderPassMaskProgram* GLRenderer::GetRenderPassMaskProgram(
 const GLRenderer::RenderPassMaskProgramAA*
 GLRenderer::GetRenderPassMaskProgramAA(TexCoordPrecision precision,
                                        SamplerType sampler,
-                                       BlendMode blend_mode) {
+                                       BlendMode blend_mode,
+                                       bool mask_for_background) {
   DCHECK_GE(precision, 0);
   DCHECK_LE(precision, LAST_TEX_COORD_PRECISION);
   DCHECK_GE(sampler, 0);
@@ -2832,11 +2740,13 @@ GLRenderer::GetRenderPassMaskProgramAA(TexCoordPrecision precision,
   DCHECK_GE(blend_mode, 0);
   DCHECK_LE(blend_mode, LAST_BLEND_MODE);
   RenderPassMaskProgramAA* program =
-      &render_pass_mask_program_aa_[precision][sampler][blend_mode];
+      &render_pass_mask_program_aa_[precision][sampler][blend_mode]
+                                   [mask_for_background ? HAS_MASK : NO_MASK];
   if (!program->initialized()) {
     TRACE_EVENT0("cc", "GLRenderer::renderPassMaskProgramAA::initialize");
     program->Initialize(
-        output_surface_->context_provider(), precision, sampler, blend_mode);
+        output_surface_->context_provider(), precision,
+        sampler, blend_mode, mask_for_background);
   }
   return program;
 }
@@ -2877,9 +2787,11 @@ GLRenderer::GetRenderPassColorMatrixProgramAA(TexCoordPrecision precision,
 }
 
 const GLRenderer::RenderPassMaskColorMatrixProgram*
-GLRenderer::GetRenderPassMaskColorMatrixProgram(TexCoordPrecision precision,
-                                                SamplerType sampler,
-                                                BlendMode blend_mode) {
+GLRenderer::GetRenderPassMaskColorMatrixProgram(
+    TexCoordPrecision precision,
+    SamplerType sampler,
+    BlendMode blend_mode,
+    bool mask_for_background) {
   DCHECK_GE(precision, 0);
   DCHECK_LE(precision, LAST_TEX_COORD_PRECISION);
   DCHECK_GE(sampler, 0);
@@ -2887,20 +2799,24 @@ GLRenderer::GetRenderPassMaskColorMatrixProgram(TexCoordPrecision precision,
   DCHECK_GE(blend_mode, 0);
   DCHECK_LE(blend_mode, LAST_BLEND_MODE);
   RenderPassMaskColorMatrixProgram* program =
-      &render_pass_mask_color_matrix_program_[precision][sampler][blend_mode];
+      &render_pass_mask_color_matrix_program_[precision][sampler][blend_mode]
+          [mask_for_background ? HAS_MASK : NO_MASK];
   if (!program->initialized()) {
     TRACE_EVENT0("cc",
                  "GLRenderer::renderPassMaskColorMatrixProgram::initialize");
     program->Initialize(
-        output_surface_->context_provider(), precision, sampler, blend_mode);
+        output_surface_->context_provider(), precision,
+        sampler, blend_mode, mask_for_background);
   }
   return program;
 }
 
 const GLRenderer::RenderPassMaskColorMatrixProgramAA*
-GLRenderer::GetRenderPassMaskColorMatrixProgramAA(TexCoordPrecision precision,
-                                                  SamplerType sampler,
-                                                  BlendMode blend_mode) {
+GLRenderer::GetRenderPassMaskColorMatrixProgramAA(
+    TexCoordPrecision precision,
+    SamplerType sampler,
+    BlendMode blend_mode,
+    bool mask_for_background) {
   DCHECK_GE(precision, 0);
   DCHECK_LE(precision, LAST_TEX_COORD_PRECISION);
   DCHECK_GE(sampler, 0);
@@ -2908,13 +2824,14 @@ GLRenderer::GetRenderPassMaskColorMatrixProgramAA(TexCoordPrecision precision,
   DCHECK_GE(blend_mode, 0);
   DCHECK_LE(blend_mode, LAST_BLEND_MODE);
   RenderPassMaskColorMatrixProgramAA* program =
-      &render_pass_mask_color_matrix_program_aa_[precision][sampler]
-                                                [blend_mode];
+      &render_pass_mask_color_matrix_program_aa_[precision][sampler][blend_mode]
+          [mask_for_background ? HAS_MASK : NO_MASK];
   if (!program->initialized()) {
     TRACE_EVENT0("cc",
                  "GLRenderer::renderPassMaskColorMatrixProgramAA::initialize");
     program->Initialize(
-        output_surface_->context_provider(), precision, sampler, blend_mode);
+        output_surface_->context_provider(), precision,
+        sampler, blend_mode, mask_for_background);
   }
   return program;
 }
@@ -3141,10 +3058,12 @@ void GLRenderer::CleanupSharedObjects() {
       tile_program_swizzle_aa_[i][j].Cleanup(gl_);
 
       for (int k = 0; k <= LAST_BLEND_MODE; k++) {
-        render_pass_mask_program_[i][j][k].Cleanup(gl_);
-        render_pass_mask_program_aa_[i][j][k].Cleanup(gl_);
-        render_pass_mask_color_matrix_program_aa_[i][j][k].Cleanup(gl_);
-        render_pass_mask_color_matrix_program_[i][j][k].Cleanup(gl_);
+        for (int l = 0; l <= LAST_MASK_VALUE; ++l) {
+          render_pass_mask_program_[i][j][k][l].Cleanup(gl_);
+          render_pass_mask_program_aa_[i][j][k][l].Cleanup(gl_);
+          render_pass_mask_color_matrix_program_aa_[i][j][k][l].Cleanup(gl_);
+          render_pass_mask_color_matrix_program_[i][j][k][l].Cleanup(gl_);
+        }
       }
     }
     for (int j = 0; j <= LAST_BLEND_MODE; j++) {

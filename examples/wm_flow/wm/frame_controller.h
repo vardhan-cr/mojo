@@ -36,7 +36,7 @@ class FrameController
                   mojo::View* view,
                   mojo::View** app_view,
                   window_manager::WindowManagerApp* window_manager_app);
-  virtual ~FrameController();
+  ~FrameController() override;
 
   // mojo::InterfaceFactory<examples::WindowFrameHost> implementation.
   void Create(

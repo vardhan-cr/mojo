@@ -58,7 +58,7 @@ class PDFView : public ApplicationDelegate,
     FetchPDF(response.Pass());
   }
 
-  virtual ~PDFView() {
+  ~PDFView() override {
     if (doc_)
       FPDF_CloseDocument(doc_);
     for (auto& roots : embedder_for_roots_) {
@@ -69,22 +69,21 @@ class PDFView : public ApplicationDelegate,
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     app_ = app;
     view_manager_client_factory_.reset(
         new ViewManagerClientFactory(app->shell(), this));
   }
 
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(View* root,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services) override {
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     DCHECK(embedder_for_roots_.find(root) == embedder_for_roots_.end());
     root->AddObserver(this);
     EmbedderData* embedder_data = new EmbedderData(app_->shell(), root);
@@ -92,17 +91,17 @@ class PDFView : public ApplicationDelegate,
     DrawBitmap(embedder_data);
   }
 
-  virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {}
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {}
 
   // Overridden from ViewObserver:
-  virtual void OnViewBoundsChanged(View* view,
-                                   const Rect& old_bounds,
-                                   const Rect& new_bounds) override {
+  void OnViewBoundsChanged(View* view,
+                           const Rect& old_bounds,
+                           const Rect& new_bounds) override {
     DCHECK(embedder_for_roots_.find(view) != embedder_for_roots_.end());
     DrawBitmap(embedder_for_roots_[view]);
   }
 
-  virtual void OnViewInputEvent(View* view, const EventPtr& event) override {
+  void OnViewInputEvent(View* view, const EventPtr& event) override {
     DCHECK(embedder_for_roots_.find(view) != embedder_for_roots_.end());
     if (event->key_data &&
         (event->action != EVENT_TYPE_KEY_PRESSED || event->key_data->is_char)) {
@@ -125,7 +124,7 @@ class PDFView : public ApplicationDelegate,
     }
   }
 
-  virtual void OnViewDestroyed(View* view) override {
+  void OnViewDestroyed(View* view) override {
     DCHECK(embedder_for_roots_.find(view) != embedder_for_roots_.end());
     const auto& it = embedder_for_roots_.find(view);
     DCHECK(it != embedder_for_roots_.end());
@@ -218,18 +217,17 @@ class PDFViewer : public ApplicationDelegate,
     FPDF_InitLibrary();
   }
 
-  virtual ~PDFViewer() { FPDF_DestroyLibrary(); }
+  ~PDFViewer() override { FPDF_DestroyLibrary(); }
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
     return true;
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
+  scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(InterfaceRequest<Application> application_request,
                     URLResponsePtr response) override {
     return make_handled_factory_holder(new mojo::ApplicationImpl(

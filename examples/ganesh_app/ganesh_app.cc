@@ -19,7 +19,7 @@ class GaneshApp : public mojo::ApplicationDelegate,
                   public mojo::ViewManagerDelegate {
  public:
   GaneshApp() {}
-  virtual ~GaneshApp() {}
+  ~GaneshApp() override {}
 
   void Initialize(mojo::ApplicationImpl* app) override {
     shell_ = app->shell();

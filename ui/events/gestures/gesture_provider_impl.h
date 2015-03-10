@@ -27,7 +27,7 @@ class EVENTS_EXPORT GestureProviderImplClient {
 class EVENTS_EXPORT GestureProviderImpl : public GestureProviderClient {
  public:
   GestureProviderImpl(GestureProviderImplClient* client);
-  virtual ~GestureProviderImpl();
+  ~GestureProviderImpl() override;
 
   bool OnTouchEvent(const TouchEvent& event);
   void OnTouchEventAck(bool event_consumed);
@@ -35,7 +35,7 @@ class EVENTS_EXPORT GestureProviderImpl : public GestureProviderClient {
   ScopedVector<GestureEvent>* GetAndResetPendingGestures();
 
   // GestureProviderClient implementation
-  virtual void OnGestureEvent(const GestureEventData& gesture) override;
+  void OnGestureEvent(const GestureEventData& gesture) override;
 
  private:
   bool IsConsideredDoubleTap(const GestureEventData& previous_tap,

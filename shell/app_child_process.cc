@@ -84,7 +84,7 @@ class AppContext : public embedder::ProcessDelegate {
  public:
   AppContext()
       : io_thread_("io_thread"), controller_thread_("controller_thread") {}
-  ~AppContext() {}
+  ~AppContext() override {}
 
   void Init() {
     // Initialize Mojo before starting any threads.

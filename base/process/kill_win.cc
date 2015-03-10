@@ -12,7 +12,6 @@
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/process/process_iterator.h"
-#include "base/profiler/scoped_tracker.h"
 #include "base/win/object_watcher.h"
 
 namespace base {
@@ -71,11 +70,6 @@ void TimerExpiredTask::TimedOut() {
 }
 
 void TimerExpiredTask::OnObjectSignaled(HANDLE object) {
-  // TODO(vadimt): Remove ScopedTracker below once crbug.com/418183 is fixed.
-  tracked_objects::ScopedTracker tracking_profile(
-      FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "418183 TimerExpiredTask::OnObjectSignaled"));
-
   process_.Close();
 }
 
@@ -105,22 +99,6 @@ bool KillProcess(ProcessHandle process, int exit_code, bool wait) {
     DPLOG(ERROR) << "Unable to terminate process";
   }
   return result;
-}
-
-// Attempts to kill the process identified by the given process
-// entry structure, giving it the specified exit code.
-// Returns true if this is successful, false otherwise.
-bool KillProcessById(ProcessId process_id, int exit_code, bool wait) {
-  HANDLE process = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE,
-                               FALSE,  // Don't inherit handle
-                               process_id);
-  if (!process) {
-    DPLOG(ERROR) << "Unable to open process " << process_id;
-    return false;
-  }
-  bool ret = KillProcess(process, exit_code, wait);
-  CloseHandle(process);
-  return ret;
 }
 
 TerminationStatus GetTerminationStatus(ProcessHandle handle, int* exit_code) {
@@ -179,26 +157,6 @@ TerminationStatus GetTerminationStatus(ProcessHandle handle, int* exit_code) {
       // All other exit codes indicate crashes.
       return TERMINATION_STATUS_PROCESS_CRASHED;
   }
-}
-
-bool WaitForExitCode(ProcessHandle handle, int* exit_code) {
-  // TODO(rvargas) crbug.com/417532: Remove this function.
-  Process process(handle);
-  return process.WaitForExit(exit_code);
-}
-
-bool WaitForExitCodeWithTimeout(ProcessHandle handle,
-                                int* exit_code,
-                                TimeDelta timeout) {
-  if (::WaitForSingleObject(
-      handle, static_cast<DWORD>(timeout.InMilliseconds())) != WAIT_OBJECT_0)
-    return false;
-  DWORD temp_code;  // Don't clobber out-parameters in case of failure.
-  if (!::GetExitCodeProcess(handle, &temp_code))
-    return false;
-
-  *exit_code = temp_code;
-  return true;
 }
 
 bool WaitForProcessesToExit(const FilePath::StringType& executable_name,

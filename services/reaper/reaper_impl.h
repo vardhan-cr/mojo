@@ -33,7 +33,7 @@ class ReaperImpl : public Diagnostics,
   typedef uint64 AppSecret;
 
   ReaperImpl();
-  ~ReaperImpl();
+  ~ReaperImpl() override;
 
   void GetApplicationSecret(const GURL& caller_app,
                             const mojo::Callback<void(AppSecret)>&);

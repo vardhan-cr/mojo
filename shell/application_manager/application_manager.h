@@ -215,13 +215,12 @@ class ApplicationManager {
   // Note: The keys are URLs after mapping and resolving.
   URLToNativeOptionsMap url_to_native_options_;
 
-  base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
-
   base::SequencedWorkerPool* blocking_pool_;
   NetworkServicePtr network_service_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
   bool disable_cache_;
+  base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationManager);
 };

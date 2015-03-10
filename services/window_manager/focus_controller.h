@@ -25,7 +25,7 @@ class FocusController : public ui::EventHandler, public mojo::ViewObserver {
  public:
   // |rules| cannot be null.
   explicit FocusController(scoped_ptr<FocusRules> rules);
-  virtual ~FocusController();
+  ~FocusController() override;
 
   void AddObserver(FocusControllerObserver* observer);
   void RemoveObserver(FocusControllerObserver* observer);

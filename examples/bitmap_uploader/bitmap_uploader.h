@@ -22,7 +22,7 @@ class View;
 class BitmapUploader : public ResourceReturner {
  public:
   explicit BitmapUploader(View* view);
-  virtual ~BitmapUploader();
+  ~BitmapUploader() override;
 
   void Init(Shell* shell);
 

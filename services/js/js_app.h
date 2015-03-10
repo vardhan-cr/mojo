@@ -27,7 +27,7 @@ class JSApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
   JSApp(mojo::InterfaceRequest<mojo::Application> application_request,
         mojo::URLResponsePtr response);
-  virtual ~JSApp();
+  ~JSApp() override;
 
  private:
   static const char kMainModuleName[];

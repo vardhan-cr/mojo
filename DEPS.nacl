@@ -7,7 +7,7 @@ execfile(os.path.join(path, 'src', 'DEPS'))  # Include proper Mojo DEPS.
 # Now we need to add in NaCl.
 
 vars.update({
-  'nacl_revision': '62b6f76d587ef1f7e9231815fd31fef0a1dca6ff',
+  'nacl_revision': '19f11aa481261f38f2a1e9a04e41a7e12aa70e32',
 })
 
 deps.update({

@@ -31,7 +31,7 @@ class TestApplication : public ApplicationDelegate, public ViewManagerDelegate {
 
  private:
   // ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     view_manager_client_factory_.reset(
         new ViewManagerClientFactory(app->shell(), this));
   }

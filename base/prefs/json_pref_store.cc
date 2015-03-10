@@ -8,12 +8,14 @@
 
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/json/json_file_value_serializer.h"
 #include "base/json/json_string_value_serializer.h"
 #include "base/memory/ref_counted.h"
 #include "base/metrics/histogram.h"
+#include "base/prefs/base_prefs_switches.h"
 #include "base/prefs/pref_filter.h"
 #include "base/sequenced_task_runner.h"
 #include "base/strings/string_util.h"
@@ -56,16 +58,16 @@ PersistentPrefStore::PrefReadError HandleReadErrors(
     DVLOG(1) << "Error while loading JSON file: " << error_msg
              << ", file: " << path.value();
     switch (error_code) {
-      case JSONFileValueSerializer::JSON_ACCESS_DENIED:
+      case JSONFileValueDeserializer::JSON_ACCESS_DENIED:
         return PersistentPrefStore::PREF_READ_ERROR_ACCESS_DENIED;
         break;
-      case JSONFileValueSerializer::JSON_CANNOT_READ_FILE:
+      case JSONFileValueDeserializer::JSON_CANNOT_READ_FILE:
         return PersistentPrefStore::PREF_READ_ERROR_FILE_OTHER;
         break;
-      case JSONFileValueSerializer::JSON_FILE_LOCKED:
+      case JSONFileValueDeserializer::JSON_FILE_LOCKED:
         return PersistentPrefStore::PREF_READ_ERROR_FILE_LOCKED;
         break;
-      case JSONFileValueSerializer::JSON_NO_SUCH_FILE:
+      case JSONFileValueDeserializer::JSON_NO_SUCH_FILE:
         return PersistentPrefStore::PREF_READ_ERROR_NO_FILE;
         break;
       default:
@@ -119,14 +121,14 @@ scoped_ptr<JsonPrefStore::ReadResult> ReadPrefsFromDisk(
   std::string error_msg;
   scoped_ptr<JsonPrefStore::ReadResult> read_result(
       new JsonPrefStore::ReadResult);
-  JSONFileValueSerializer serializer(path);
-  read_result->value.reset(serializer.Deserialize(&error_code, &error_msg));
+  JSONFileValueDeserializer deserializer(path);
+  read_result->value.reset(deserializer.Deserialize(&error_code, &error_msg));
   read_result->error =
       HandleReadErrors(read_result->value.get(), path, error_code, error_msg);
   read_result->no_dir = !base::PathExists(path.DirName());
 
   if (read_result->error == PersistentPrefStore::PREF_READ_ERROR_NONE)
-    RecordJsonDataSizeHistogram(path, serializer.get_last_read_size());
+    RecordJsonDataSizeHistogram(path, deserializer.get_last_read_size());
 
   return read_result.Pass();
 }
@@ -398,7 +400,10 @@ bool JsonPrefStore::SerializeData(std::string* output) {
     pref_filter_->FilterSerializeData(prefs_.get());
 
   JSONStringValueSerializer serializer(output);
-  serializer.set_pretty_print(true);
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kPrettyPrintPrefs)) {
+    serializer.set_pretty_print(true);
+  }
   return serializer.Serialize(*prefs_);
 }
 

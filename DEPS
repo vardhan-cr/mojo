@@ -21,19 +21,19 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'f47e70712b964b5360a3fec9e5e84bb594fc1f02',
+  'skia_revision': 'a9baa652bb329b5a286e1638938f63433701efca',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': 'f63eb3696b36b47be841f52711176985e93b655c',
+  'v8_revision': 'a1d36b4b6b1a3bb35d3bc5b64fbd5de9f55fed26',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
-  'angle_revision': '7825f6199ce25dffe5fec5addb2fafe37f187034',
+  'angle_revision': '019304886ad8b985d67202edec431407bb1b5c53',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling build tools
   # and whatever else without interference from each other.
-  'buildtools_revision': '93b3d0af1b30db55ee42bd2e983f7753153217db',
+  'buildtools_revision': 'd4dd4f79f60bf019625b3a1436979b0a42c892df',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Dart
   # and whatever else without interference from each other.
@@ -79,10 +79,10 @@ deps = {
    Var('chromium_git') + '/angle/angle.git' + '@' +  Var('angle_revision'),
 
   'src/third_party/icu':
-   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '2081ee6abfa118003fd559cb72393f5df561dba7',
+   Var('chromium_git') + '/chromium/deps/icu.git' + '@' + 'eda9e75b1fa17f57ffa369ee3543a2301b68d0a9',
 
   'src/tools/grit':
-    Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'a5890a8118c0c80cc0560e6d8d5cf65e5d725509', # from svn revision 185
+    Var('chromium_git') + '/external/grit-i18n.git' + '@' + '0287c187b11ed53590254e4d817e836a44a7a1a7', # from svn revision 186
 
   'src/v8':
     Var('chromium_git') + '/v8/v8.git' + '@' +  Var('v8_revision'),
@@ -124,7 +124,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + '34640080d08ab2a37665512e52142947def3056d', # from svn revision 2028
+    Var('chromium_git') + '/external/gyp.git' + '@' + '4a9b712d5cb4a5ba7a9950128a7219569caf7263',
 }
 
 

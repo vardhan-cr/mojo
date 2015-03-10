@@ -287,8 +287,7 @@ class WindowManager
     window_manager_app_->Initialize(app);
   }
 
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService<IWindowManager>(this);
     window_manager_app_->ConfigureIncomingConnection(connection);
     return true;

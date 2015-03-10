@@ -17,23 +17,22 @@ namespace examples {
 class ChildApp : public ApplicationDelegate, public InterfaceFactory<Child> {
  public:
   ChildApp() {}
-  virtual ~ChildApp() {}
+  ~ChildApp() override {}
 
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     surfaces_service_connection_ =
         app->ConnectToApplication("mojo:surfaces_service");
   }
 
   // ApplicationDelegate implementation.
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(this);
     return true;
   }
 
   // InterfaceFactory<Child> implementation.
-  virtual void Create(ApplicationConnection* connection,
-                      InterfaceRequest<Child> request) override {
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<Child> request) override {
     new ChildImpl(surfaces_service_connection_, request.Pass());
   }
 

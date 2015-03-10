@@ -41,14 +41,14 @@ class MotionEventBufferTest : public testing::Test,
                               public MotionEventBufferClient {
  public:
   MotionEventBufferTest() : needs_flush_(false) {}
-  virtual ~MotionEventBufferTest() {}
+  ~MotionEventBufferTest() override {}
 
   // MotionEventBufferClient implementation.
-  virtual void ForwardMotionEvent(const MotionEvent& event) override {
+  void ForwardMotionEvent(const MotionEvent& event) override {
     forwarded_events_.push_back(event.Clone().release());
   }
 
-  virtual void SetNeedsFlush() override { needs_flush_ = true; }
+  void SetNeedsFlush() override { needs_flush_ = true; }
 
   bool GetAndResetNeedsFlush() {
     bool needs_flush = needs_flush_;

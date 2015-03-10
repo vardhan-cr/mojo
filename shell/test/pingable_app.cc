@@ -40,7 +40,7 @@ class PingableApp : public mojo::ApplicationDelegate,
                     public mojo::InterfaceFactory<Pingable> {
  public:
   PingableApp() {}
-  ~PingableApp() {}
+  ~PingableApp() override {}
 
  private:
   // ApplicationDelegate:

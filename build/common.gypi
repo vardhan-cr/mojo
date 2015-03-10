@@ -184,6 +184,12 @@
         # below for MIPS targets.
         'mips_arch_variant%': '',
 
+        # MIPS DSP ASE revision. Possible values are:
+        #   0: unavailable
+        #   1: revision 1
+        #   2: revision 2
+        'mips_dsp_rev%': 0,
+
         'conditions': [
           # Ash needs Aura.
           ['use_aura==0', {
@@ -276,6 +282,7 @@
       'target_arch%': '<(target_arch)',
       'target_subarch%': '<(target_subarch)',
       'mips_arch_variant%': '<(mips_arch_variant)',
+      'mips_dsp_rev%': '<(mips_dsp_rev)',
       'toolkit_views%': '<(toolkit_views)',
       'desktop_linux%': '<(desktop_linux)',
       'use_aura%': '<(use_aura)',
@@ -1067,6 +1074,7 @@
     'target_arch%': '<(target_arch)',
     'target_subarch%': '<(target_subarch)',
     'mips_arch_variant%': '<(mips_arch_variant)',
+    'mips_dsp_rev%': '<(mips_dsp_rev)',
     'host_arch%': '<(host_arch)',
     'toolkit_views%': '<(toolkit_views)',
     'ui_compositor_image_transport%': '<(ui_compositor_image_transport)',
@@ -1663,11 +1671,16 @@
         # Location of Android NDK.
         'variables': {
           'variables': {
-            # Unfortunately we have to use absolute paths to the SDK/NDK because
-            # they're passed to ant which uses a different relative path from
-            # gyp.
-            'android_ndk_root%': '<!(cd <(DEPTH) && pwd -P)/third_party/android_tools/ndk/',
+            # Standard libraries can use the relative path to the NDK.
+            'android_ndk_root%': '../../third_party/android_tools/ndk/',
+            # Unfortunately, it is required to use the absolute path to the SDK
+            # because it us passed to ant which uses a different relative path
+            # from GYP.
             'android_sdk_root%': '<!(cd <(DEPTH) && pwd -P)/third_party/android_tools/sdk/',
+            # Similarly, gdbserver and the Android toolchain need to use the
+            # absolute path to the NDK because they are used at different levels
+            # in the GYP files.
+            'android_ndk_absolute_root%': '<!(cd <(DEPTH) && pwd -P)/third_party/android_tools/ndk/',
             'android_host_arch%': '<!(uname -m)',
             # Android API-level of the SDK used for compilation.
             'android_sdk_version%': '21',
@@ -1676,6 +1689,7 @@
           },
           # Copy conditionally-set variables out one scope.
           'android_ndk_root%': '<(android_ndk_root)',
+          'android_ndk_absolute_root%': '<(android_ndk_absolute_root)',
           'android_sdk_root%': '<(android_sdk_root)',
           'android_sdk_version%': '<(android_sdk_version)',
           'android_stlport_root': '<(android_ndk_root)/sources/cxx-stl/stlport',
@@ -1691,17 +1705,17 @@
           'conditions': [
             ['target_arch == "ia32"', {
               'android_app_abi%': 'x86',
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-x86/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-x86/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-14/arch-x86',
               'android_ndk_lib_dir%': 'usr/lib',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/x86-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/x86-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
             ['target_arch == "x64"', {
               'android_app_abi%': 'x86_64',
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-x86_64/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-x86_64/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-21/arch-x86_64',
               'android_ndk_lib_dir%': 'usr/lib64',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/x86_64-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/x86_64-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
             ['target_arch=="arm"', {
               'conditions': [
@@ -1711,32 +1725,31 @@
                   'android_app_abi%': 'armeabi-v7a',
                 }],
               ],
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-arm/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-arm/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-14/arch-arm',
               'android_ndk_lib_dir%': 'usr/lib',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/arm-linux-androideabi-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
             ['target_arch == "arm64"', {
               'android_app_abi%': 'arm64-v8a',
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-arm64/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-arm64/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-21/arch-arm64',
               'android_ndk_lib_dir%': 'usr/lib',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/aarch64-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/aarch64-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
             ['target_arch == "mipsel"', {
               'android_app_abi%': 'mips',
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-mips/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-mips/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-14/arch-mips',
               'android_ndk_lib_dir%': 'usr/lib',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/mipsel-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/mipsel-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
             ['target_arch == "mips64el"', {
               'android_app_abi%': 'mips64',
-              'android_gdbserver%': '<(android_ndk_root)/prebuilt/android-mips64/gdbserver/gdbserver',
+              'android_gdbserver%': '<(android_ndk_absolute_root)/prebuilt/android-mips64/gdbserver/gdbserver',
               'android_ndk_sysroot%': '<(android_ndk_root)/platforms/android-21/arch-mips64',
               'android_ndk_lib_dir%': 'usr/lib64',
-              'android_toolchain%': '<(android_ndk_root)/toolchains/mips64el-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
-              'gcc_version%': 49,
+              'android_toolchain%': '<(android_ndk_absolute_root)/toolchains/mips64el-linux-android-4.9/prebuilt/<(host_os)-<(android_host_arch)/bin',
             }],
           ],
         },
@@ -2149,9 +2162,8 @@
         'enable_service_discovery%': 1
       }],
       ['clang_use_chrome_plugins==1 and OS!="win"', {
-        'clang_chrome_plugins_flags': [
-          '<!@(<(DEPTH)/tools/clang/scripts/plugin_flags.sh)'
-        ],
+        'clang_chrome_plugins_flags%':
+          '<!(python <(DEPTH)/tools/clang/scripts/plugin_flags.py)',
       }],
       ['asan==1 or msan==1 or lsan==1 or tsan==1', {
         'clang%': 1,
@@ -2290,7 +2302,10 @@
         'arm_thumb%': 1,
       }],
 
-      # Set default compiler flags depending on MIPS architecture variant.
+      # Set default compiler flags for MIPS floating-point support.
+      ['target_arch=="mipsel" and android_webview_build==0', {
+        'mips_float_abi%': 'hard',
+      }],
       ['target_arch=="mipsel" and mips_arch_variant=="r2" and android_webview_build==0', {
         'mips_fpu_mode%': 'fp32',
       }],
@@ -2302,6 +2317,7 @@
         'arm_fpu%': '',
         'arm_float_abi%': '',
         'arm_thumb%': 0,
+        'mips_float_abi%': '',
         'mips_fpu_mode%': '',
       }],
 
@@ -2591,7 +2607,7 @@
           ],
         },
       }],
-      ['clang==1 and OS!="win"', {
+      ['(clang==1 or host_clang==1) and OS!="win"', {
         # This is here so that all files get recompiled after a clang roll and
         # when turning clang on or off.
         # (defines are passed via the command line, and build systems rebuild
@@ -4052,19 +4068,37 @@
             'target_conditions': [
               ['_toolset=="target"', {
                 'conditions': [
-                  ['android_webview_build==0 and mips_arch_variant=="r6"', {
-                    'cflags': ['-mips32r6', '-Wa,-mips32r6'],
+                  ['android_webview_build==0', {
                     'conditions': [
-                      ['OS=="android"', {
-                        'ldflags': ['-mips32r6', '-Wl,-melf32ltsmip',],
+                      ['mips_arch_variant=="r6"', {
+                        'cflags': ['-mips32r6', '-Wa,-mips32r6'],
+                        'conditions': [
+                          ['OS=="android"', {
+                            'ldflags': ['-mips32r6', '-Wl,-melf32ltsmip',],
+                          }],
+                        ],
+                      }],
+                      ['mips_arch_variant=="r2"', {
+                        'cflags': ['-mips32r2', '-Wa,-mips32r2'],
+                        'conditions': [
+                          ['mips_float_abi=="hard" and mips_fpu_mode!=""', {
+                            'cflags': ['-m<(mips_fpu_mode)'],
+                          }],
+                        ],
+                      }],
+                      ['mips_arch_variant=="r1"', {
+                        'cflags': ['-mips32', '-Wa,-mips32'],
+                      }],
+                      ['mips_dsp_rev==1', {
+                        'cflags': ['-mdsp'],
+                      }],
+                      ['mips_dsp_rev==2', {
+                        'cflags': ['-mdspr2'],
                       }],
                     ],
-                  }],
-                  ['android_webview_build==0 and mips_arch_variant=="r2"', {
-                    'cflags': ['-mips32r2', '-Wa,-mips32r2'],
-                  }],
-                  ['android_webview_build==0 and mips_arch_variant=="r1"', {
-                    'cflags': ['-mips32', '-Wa,-mips32'],
+                    'cflags': [
+                      '-m<(mips_float_abi)-float'
+                    ],
                   }],
                 ],
                 'ldflags': [
@@ -4080,13 +4114,17 @@
             'target_conditions': [
               ['_toolset=="target"', {
                 'conditions': [
-                  ['android_webview_build==0 and mips_arch_variant=="r6"', {
-                    'cflags': ['-mips64r6', '-Wa,-mips64r6'],
-                    'ldflags': [ '-mips64r6' ],
-                  }],
-                  ['android_webview_build==0 and mips_arch_variant=="r2"', {
-                    'cflags': ['-mips64r2', '-Wa,-mips64r2'],
-                    'ldflags': [ '-mips64r2' ],
+                  ['android_webview_build==0', {
+                    'conditions': [
+                      ['mips_arch_variant=="r6"', {
+                        'cflags': ['-mips64r6', '-Wa,-mips64r6'],
+                        'ldflags': ['-mips64r6'],
+                      }],
+                      ['mips_arch_variant=="r2"', {
+                        'cflags': ['-mips64r2', '-Wa,-mips64r2'],
+                        'ldflags': ['-mips64r2'],
+                      }],
+                    ],
                   }],
                 ],
                 'cflags_cc': [
@@ -5851,6 +5889,17 @@
           ['_toolset=="target"', {
             'cflags': [
               '-ffat-lto-objects',
+            ],
+          }],
+        ],
+      },
+    }],
+    ['use_lto==1 and clang==1', {
+      'target_defaults': {
+        'target_conditions': [
+          ['_toolset=="target"', {
+            'arflags': [
+              '--plugin', '../../<(make_clang_dir)/lib/LLVMgold.so',
             ],
           }],
         ],

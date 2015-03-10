@@ -57,12 +57,6 @@ BASE_EXPORT bool KillProcess(ProcessHandle process, int exit_code, bool wait);
 BASE_EXPORT bool KillProcessGroup(ProcessHandle process_group_id);
 #endif  // defined(OS_POSIX)
 
-#if defined(OS_WIN)
-BASE_EXPORT bool KillProcessById(ProcessId process_id,
-                                 int exit_code,
-                                 bool wait);
-#endif  // defined(OS_WIN)
-
 // Get the termination status of the process by interpreting the
 // circumstances of the child process' death. |exit_code| is set to
 // the status returned by waitpid() on POSIX, and from
@@ -93,22 +87,6 @@ BASE_EXPORT TerminationStatus GetTerminationStatus(ProcessHandle handle,
 BASE_EXPORT TerminationStatus GetKnownDeadTerminationStatus(
     ProcessHandle handle, int* exit_code);
 #endif  // defined(OS_POSIX)
-
-// Waits for process to exit. On POSIX systems, if the process hasn't been
-// signaled then puts the exit code in |exit_code|; otherwise it's considered
-// a failure. On Windows |exit_code| is always filled. Returns true on success,
-// and closes |handle| in any case.
-BASE_EXPORT bool WaitForExitCode(ProcessHandle handle, int* exit_code);
-
-// Waits for process to exit. If it did exit within |timeout_milliseconds|,
-// then puts the exit code in |exit_code|, and returns true.
-// In POSIX systems, if the process has been signaled then |exit_code| is set
-// to -1. Returns false on failure (the caller is then responsible for closing
-// |handle|).
-// The caller is always responsible for closing the |handle|.
-BASE_EXPORT bool WaitForExitCodeWithTimeout(ProcessHandle handle,
-                                            int* exit_code,
-                                            base::TimeDelta timeout);
 
 // Wait for all the processes based on the named executable to exit.  If filter
 // is non-null, then only processes selected by the filter are waited on.

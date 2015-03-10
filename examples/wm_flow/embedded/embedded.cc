@@ -50,7 +50,7 @@ class WMFlowEmbedded : public mojo::ApplicationDelegate,
   WMFlowEmbedded() : shell_(nullptr) {
     embeddee_provider_impl_.AddService(this);
   }
-  virtual ~WMFlowEmbedded() {}
+  ~WMFlowEmbedded() override {}
 
  private:
   // Overridden from Application:

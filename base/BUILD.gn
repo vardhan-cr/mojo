@@ -15,6 +15,8 @@ component("base") {
     "allocator/allocator_extension.h",
     "allocator/type_profiler_control.cc",
     "allocator/type_profiler_control.h",
+    "android/animation_frame_time_histogram.cc",
+    "android/animation_frame_time_histogram.h",
     "android/application_status_listener.cc",
     "android/application_status_listener.h",
     "android/base_jni_onload.cc",
@@ -386,18 +388,18 @@ component("base") {
     "metrics/histogram.h",
     "metrics/histogram_base.cc",
     "metrics/histogram_base.h",
-    "metrics/histogram_delta_serialization.cc",
-    "metrics/sample_map.cc",
-    "metrics/sample_map.h",
-    "metrics/sample_vector.cc",
-    "metrics/sample_vector.h",
     "metrics/histogram_delta_serialization.",
+    "metrics/histogram_delta_serialization.cc",
     "metrics/histogram_flattener.h",
     "metrics/histogram_macros.h",
     "metrics/histogram_samples.cc",
     "metrics/histogram_samples.h",
     "metrics/histogram_snapshot_manager.cc",
     "metrics/histogram_snapshot_manager.h",
+    "metrics/sample_map.cc",
+    "metrics/sample_map.h",
+    "metrics/sample_vector.cc",
+    "metrics/sample_vector.h",
     "metrics/sparse_histogram.cc",
     "metrics/sparse_histogram.h",
     "metrics/statistics_recorder.cc",
@@ -783,9 +785,9 @@ component("base") {
       "files/file_proxy.cc",
       "files/file_util.cc",
       "files/file_util_proxy.cc",
+      "files/scoped_temp_dir.cc",
       "path_service.cc",
       "scoped_native_library.cc",
-      "files/scoped_temp_dir.cc",
     ]
   }
 
@@ -1066,6 +1068,8 @@ component("i18n") {
 source_set("prefs") {
   sources = [
     "prefs/base_prefs_export.h",
+    "prefs/base_prefs_switches.cc",
+    "prefs/base_prefs_switches.h",
     "prefs/default_pref_store.cc",
     "prefs/default_pref_store.h",
     "prefs/json_pref_store.cc",
@@ -1163,6 +1167,8 @@ source_set("protect_file_posix") {
 }
 
 if (is_win) {
+  # Target to manually rebuild pe_image_test.dll which is checked into
+  # base/test/data/pe_image.
   shared_library("pe_image_test") {
     sources = [
       "win/pe_image_test.cc",
@@ -1487,10 +1493,6 @@ test("base_unittests") {
     set_sources_assignment_filter(sources_assignment_filter)
   }
 
-  if (is_win) {
-    deps += [ ":pe_image_test" ]
-  }
-
   # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
   configs += [ "//build/config/compiler:no_size_t_to_int_warning" ]
 }
@@ -1500,6 +1502,7 @@ if (is_android) {
   generate_jni("base_jni_headers") {
     sources = [
       "android/java/src/org/chromium/base/ApplicationStatus.java",
+      "android/java/src/org/chromium/base/AnimationFrameTimeHistogram.java",
       "android/java/src/org/chromium/base/BuildInfo.java",
       "android/java/src/org/chromium/base/CommandLine.java",
       "android/java/src/org/chromium/base/ContentUriUtils.java",

@@ -71,7 +71,7 @@ class ResponsePrinter {
 
 class WGetApp : public ApplicationDelegate {
  public:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     app->ConnectToService("mojo:network_service", &network_service_);
     Start(app->args());
   }

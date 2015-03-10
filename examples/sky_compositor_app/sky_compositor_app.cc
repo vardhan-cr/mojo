@@ -35,7 +35,7 @@ class SkyCompositorApp : public mojo::ApplicationDelegate,
                          public sky::LayerHostClient {
  public:
   SkyCompositorApp() : shell_(nullptr), view_(nullptr) {}
-  virtual ~SkyCompositorApp() {}
+  ~SkyCompositorApp() override {}
 
   void Initialize(mojo::ApplicationImpl* app) override {
     shell_ = app->shell();

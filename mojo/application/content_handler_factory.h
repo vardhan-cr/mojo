@@ -32,7 +32,7 @@ class ContentHandlerFactory : public InterfaceFactory<ContentHandler> {
 
   class ManagedDelegate : public Delegate {
    public:
-    virtual ~ManagedDelegate() {}
+    ~ManagedDelegate() override {}
     // Implement this method to create the Application for the given content.
     // This method will be called on a new thread. The application will be run
     // on this new thread, and the returned value will be kept alive until the
@@ -47,7 +47,7 @@ class ContentHandlerFactory : public InterfaceFactory<ContentHandler> {
   };
 
   explicit ContentHandlerFactory(Delegate* delegate);
-  virtual ~ContentHandlerFactory();
+  ~ContentHandlerFactory() override;
 
  private:
   // From InterfaceFactory:

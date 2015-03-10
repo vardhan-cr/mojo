@@ -18,9 +18,9 @@ class HttpServerApp : public mojo::ApplicationDelegate,
                       public mojo::InterfaceFactory<HttpServerFactory> {
  public:
   HttpServerApp() {}
-  ~HttpServerApp() {}
+  ~HttpServerApp() override {}
 
-  virtual void Initialize(mojo::ApplicationImpl* app) override { app_ = app; }
+  void Initialize(mojo::ApplicationImpl* app) override { app_ = app; }
 
  private:
   // ApplicationDelegate:

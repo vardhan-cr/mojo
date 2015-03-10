@@ -39,7 +39,7 @@ class Browser : public ApplicationDelegate,
     browser_host_services_impl_.AddService(this);
   }
 
-  virtual ~Browser() {
+  ~Browser() override {
     if (root_)
       root_->RemoveObserver(this);
   }

@@ -16,7 +16,7 @@ namespace ui {
 class PlatformEventBuilderXTest : public testing::Test {
  public:
   PlatformEventBuilderXTest() {}
-  virtual ~PlatformEventBuilderXTest() {}
+  ~PlatformEventBuilderXTest() override {}
 
   void SetUp() override {
     DeviceDataManagerX11::CreateInstance();

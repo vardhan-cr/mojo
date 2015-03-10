@@ -62,7 +62,7 @@ class PNGView : public ApplicationDelegate,
     DecodePNG(response.Pass());
   }
 
-  virtual ~PNGView() {
+  ~PNGView() override {
     for (auto& roots : embedder_for_roots_) {
       roots.first->RemoveObserver(this);
       delete roots.second;
@@ -76,23 +76,23 @@ class PNGView : public ApplicationDelegate,
   static const uint16_t kZoomStep = 20;
 
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     app_ = app;
     view_manager_client_factory_.reset(
         new ViewManagerClientFactory(app->shell(), this));
   }
 
   // Overridden from ApplicationDelegate:
-  virtual bool ConfigureIncomingConnection(
+  bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
   // Overridden from ViewManagerDelegate:
-  virtual void OnEmbed(View* root,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services) override {
+  void OnEmbed(View* root,
+               InterfaceRequest<ServiceProvider> services,
+               ServiceProviderPtr exposed_services) override {
     // TODO(qsr): The same view should be embeddable on multiple views.
     DCHECK(embedder_for_roots_.find(root) == embedder_for_roots_.end());
     root->AddObserver(this);
@@ -104,17 +104,17 @@ class PNGView : public ApplicationDelegate,
         BitmapUploader::BGRA);
   }
 
-  virtual void OnViewManagerDisconnected(ViewManager* view_manager) override {
+  void OnViewManagerDisconnected(ViewManager* view_manager) override {
   }
 
   // Overridden from ViewObserver:
-  virtual void OnViewBoundsChanged(View* view,
-                                   const Rect& old_bounds,
-                                   const Rect& new_bounds) override {
+  void OnViewBoundsChanged(View* view,
+                           const Rect& old_bounds,
+                           const Rect& new_bounds) override {
     DCHECK(embedder_for_roots_.find(view) != embedder_for_roots_.end());
   }
 
-  virtual void OnViewDestroyed(View* view) override {
+  void OnViewDestroyed(View* view) override {
     // TODO(aa): Need to figure out how shutdown works.
     const auto& it = embedder_for_roots_.find(view);
     DCHECK(it != embedder_for_roots_.end());
@@ -202,14 +202,13 @@ class PNGViewer : public ApplicationDelegate,
 
  private:
   // Overridden from ApplicationDelegate:
-  virtual bool ConfigureIncomingConnection(
-      ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
     connection->AddService(&content_handler_factory_);
     return true;
   }
 
   // Overridden from ContentHandlerFactory::ManagedDelegate:
-  virtual scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
+  scoped_ptr<ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(InterfaceRequest<Application> application_request,
                     URLResponsePtr response) override {
     return make_handled_factory_holder(new mojo::ApplicationImpl(

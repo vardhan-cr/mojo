@@ -31,22 +31,22 @@ class EVENTS_EXPORT GestureRecognizerImpl : public GestureRecognizer,
   typedef std::map<int, GestureConsumer*> TouchIdToConsumerMap;
 
   GestureRecognizerImpl();
-  virtual ~GestureRecognizerImpl();
+  ~GestureRecognizerImpl() override;
 
   std::vector<GestureEventHelper*>& helpers() { return helpers_; }
 
   // Overridden from GestureRecognizer
-  virtual GestureConsumer* GetTouchLockedTarget(
+  GestureConsumer* GetTouchLockedTarget(
       const TouchEvent& event) override;
-  virtual GestureConsumer* GetTargetForGestureEvent(
+  GestureConsumer* GetTargetForGestureEvent(
       const GestureEvent& event) override;
-  virtual GestureConsumer* GetTargetForLocation(
+  GestureConsumer* GetTargetForLocation(
       const gfx::PointF& location, int source_device_id) override;
-  virtual void TransferEventsTo(GestureConsumer* current_consumer,
-                                GestureConsumer* new_consumer) override;
-  virtual bool GetLastTouchPointForTarget(GestureConsumer* consumer,
-                                          gfx::PointF* point) override;
-  virtual bool CancelActiveTouches(GestureConsumer* consumer) override;
+  void TransferEventsTo(GestureConsumer* current_consumer,
+                        GestureConsumer* new_consumer) override;
+  bool GetLastTouchPointForTarget(GestureConsumer* consumer,
+                                  gfx::PointF* point) override;
+  bool CancelActiveTouches(GestureConsumer* consumer) override;
 
  protected:
   virtual GestureProviderImpl* GetGestureProviderForConsumer(
@@ -59,26 +59,25 @@ class EVENTS_EXPORT GestureRecognizerImpl : public GestureRecognizer,
   void DispatchGestureEvent(GestureEvent* event);
 
   // Overridden from GestureRecognizer
-  virtual bool ProcessTouchEventPreDispatch(const TouchEvent& event,
-                                            GestureConsumer* consumer) override;
+  bool ProcessTouchEventPreDispatch(const TouchEvent& event,
+                                    GestureConsumer* consumer) override;
 
-  virtual Gestures* ProcessTouchEventPostDispatch(
+  Gestures* ProcessTouchEventPostDispatch(
       const TouchEvent& event,
       ui::EventResult result,
       GestureConsumer* consumer) override;
 
-  virtual Gestures* ProcessTouchEventOnAsyncAck(
+  Gestures* ProcessTouchEventOnAsyncAck(
       const TouchEvent& event,
       ui::EventResult result,
       GestureConsumer* consumer) override;
 
-  virtual bool CleanupStateForConsumer(GestureConsumer* consumer)
-      override;
-  virtual void AddGestureEventHelper(GestureEventHelper* helper) override;
-  virtual void RemoveGestureEventHelper(GestureEventHelper* helper) override;
+  bool CleanupStateForConsumer(GestureConsumer* consumer) override;
+  void AddGestureEventHelper(GestureEventHelper* helper) override;
+  void RemoveGestureEventHelper(GestureEventHelper* helper) override;
 
   // Overridden from GestureProviderImplClient
-  virtual void OnGestureEvent(GestureEvent* event) override;
+  void OnGestureEvent(GestureEvent* event) override;
 
   // Convenience method to find the GestureEventHelper that can dispatch events
   // to a specific |consumer|.

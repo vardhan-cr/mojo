@@ -211,10 +211,6 @@ void LayerTreeHost::SetLayerTreeHostClientReady() {
   proxy_->SetLayerTreeHostClientReady();
 }
 
-static void LayerTreeHostOnOutputSurfaceCreatedCallback(Layer* layer) {
-  layer->OnOutputSurfaceCreated();
-}
-
 void LayerTreeHost::DeleteContentsTexturesOnImplThread(
     ResourceProvider* resource_provider) {
   DCHECK(proxy_->IsImplThread());
@@ -427,7 +423,7 @@ void LayerTreeHost::DidInitializeOutputSurface() {
 
   if (root_layer()) {
     LayerTreeHostCommon::CallFunctionForSubtree(
-        root_layer(), base::Bind(&LayerTreeHostOnOutputSurfaceCreatedCallback));
+        root_layer(), [](Layer* layer) { layer->OnOutputSurfaceCreated(); });
   }
 
   client_->DidInitializeOutputSurface();
@@ -452,11 +448,8 @@ scoped_ptr<LayerTreeHostImpl> LayerTreeHost::CreateLayerTreeHostImpl(
   host_impl->SetUseGpuRasterization(UseGpuRasterization());
   shared_bitmap_manager_ = NULL;
   gpu_memory_buffer_manager_ = NULL;
-  if (settings_.calculate_top_controls_position &&
-      host_impl->top_controls_manager()) {
-    top_controls_manager_weak_ptr_ =
-        host_impl->top_controls_manager()->AsWeakPtr();
-  }
+  top_controls_manager_weak_ptr_ =
+      host_impl->top_controls_manager()->AsWeakPtr();
   input_handler_weak_ptr_ = host_impl->AsWeakPtr();
   return host_impl.Pass();
 }
@@ -873,17 +866,12 @@ void LayerTreeHost::TriggerPrepaint() {
   SetNeedsCommit();
 }
 
-static void LayerTreeHostReduceMemoryCallback(Layer* layer) {
-  layer->ReduceMemoryUsage();
-}
-
 void LayerTreeHost::ReduceMemoryUsage() {
   if (!root_layer())
     return;
 
   LayerTreeHostCommon::CallFunctionForSubtree(
-      root_layer(),
-      base::Bind(&LayerTreeHostReduceMemoryCallback));
+      root_layer(), [](Layer* layer) { layer->ReduceMemoryUsage(); });
 }
 
 void LayerTreeHost::SetPrioritiesForSurfaces(size_t surface_memory_bytes) {
@@ -1167,9 +1155,6 @@ void LayerTreeHost::SetDeviceScaleFactor(float device_scale_factor) {
 void LayerTreeHost::UpdateTopControlsState(TopControlsState constraints,
                                            TopControlsState current,
                                            bool animate) {
-  if (!settings_.calculate_top_controls_position)
-    return;
-
   // Top controls are only used in threaded mode.
   proxy_->ImplThreadTaskRunner()->PostTask(
       FROM_HERE,

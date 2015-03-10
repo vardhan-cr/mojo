@@ -19,9 +19,9 @@ namespace examples {
 class ChildGLApp : public ApplicationDelegate, public InterfaceFactory<Child> {
  public:
   ChildGLApp() {}
-  virtual ~ChildGLApp() {}
+  ~ChildGLApp() override {}
 
-  virtual void Initialize(ApplicationImpl* app) override {
+  void Initialize(ApplicationImpl* app) override {
     surfaces_service_connection_ =
         app->ConnectToApplication("mojo:surfaces_service");
     // TODO(jamesr): Should be mojo:gpu_service
@@ -29,15 +29,15 @@ class ChildGLApp : public ApplicationDelegate, public InterfaceFactory<Child> {
   }
 
   // ApplicationDelegate implementation.
-  virtual bool ConfigureIncomingConnection(
+  bool ConfigureIncomingConnection(
       ApplicationConnection* connection) override {
     connection->AddService(this);
     return true;
   }
 
   // InterfaceFactory<Child> implementation.
-  virtual void Create(ApplicationConnection* connection,
-                      InterfaceRequest<Child> request) override {
+  void Create(ApplicationConnection* connection,
+              InterfaceRequest<Child> request) override {
     CommandBufferPtr command_buffer;
     gpu_service_->CreateOffscreenGLES2Context(GetProxy(&command_buffer));
     new ChildGLImpl(surfaces_service_connection_, command_buffer.Pass(),

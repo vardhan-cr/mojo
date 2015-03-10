@@ -17,7 +17,7 @@ if (!is_nacl) {
       "//nacl_bindings:monacl_sel",
     ]
 
-    data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${cpu_arch})" ]
+    data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
   }
 }
 
@@ -49,7 +49,7 @@ group("mojo_nacl") {
 group("mojo_nacl_tests") {
   testonly = true
   nacl_toolchain =
-      "//native_client/build/toolchain/nacl:clang_newlib_${cpu_arch}"
+      "//native_client/build/toolchain/nacl:clang_newlib_${target_cpu}"
   deps = [
     ":monacl_shell",
     ":monacl_test($nacl_toolchain)",

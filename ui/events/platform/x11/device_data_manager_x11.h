@@ -238,7 +238,7 @@ class EVENTS_BASE_EXPORT DeviceDataManagerX11 : public DeviceDataManager {
 
  private:
   DeviceDataManagerX11();
-  virtual ~DeviceDataManagerX11();
+  ~DeviceDataManagerX11() override;
 
   // Initialize the XInput related system information.
   bool InitializeXInputInternal();

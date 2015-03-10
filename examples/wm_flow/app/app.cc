@@ -85,13 +85,13 @@ class WMFlowApp : public mojo::ApplicationDelegate,
                   public mojo::ViewObserver {
  public:
   WMFlowApp() : shell_(nullptr), embed_count_(0) {}
-  virtual ~WMFlowApp() { STLDeleteValues(&uploaders_); }
+  ~WMFlowApp() override { STLDeleteValues(&uploaders_); }
 
  private:
   typedef std::map<mojo::View*, mojo::BitmapUploader*> ViewToUploader;
 
   // Overridden from ApplicationDelegate:
-  virtual void Initialize(mojo::ApplicationImpl* app) override {
+  void Initialize(mojo::ApplicationImpl* app) override {
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new mojo::ViewManagerClientFactory(app->shell(), this));
@@ -103,16 +103,16 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     OpenNewWindow();
     OpenNewWindow();
   }
-  virtual bool ConfigureIncomingConnection(
+  bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
 
   // Overridden from mojo::ViewManagerDelegate:
-  virtual void OnEmbed(mojo::View* root,
-                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
-                       mojo::ServiceProviderPtr exposed_services) override {
+  void OnEmbed(mojo::View* root,
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
     root->AddObserver(this);
     mojo::BitmapUploader* uploader = new mojo::BitmapUploader(root);
     uploaders_[root] = uploader;
@@ -148,20 +148,19 @@ class WMFlowApp : public mojo::ApplicationDelegate,
     embeddee_->HelloBack(base::Bind(&WMFlowApp::HelloBackAck,
                                     base::Unretained(this)));
   }
-  virtual void OnViewManagerDisconnected(
-      mojo::ViewManager* view_manager) override {
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
     STLDeleteValues(&uploaders_);
   }
 
   // Overridden from mojo::ViewObserver:
-  virtual void OnViewInputEvent(mojo::View* view,
-                                const mojo::EventPtr& event) override {
+  void OnViewInputEvent(mojo::View* view,
+                        const mojo::EventPtr& event) override {
     if (event->action == mojo::EVENT_TYPE_MOUSE_RELEASED &&
         event->flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
       OpenNewWindow();
     }
   }
-  virtual void OnViewDestroyed(mojo::View* view) override {
+  void OnViewDestroyed(mojo::View* view) override {
     if (uploaders_.find(view) != uploaders_.end()) {
       delete uploaders_[view];
       uploaders_.erase(view);
