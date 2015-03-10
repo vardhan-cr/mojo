@@ -28,5 +28,7 @@ interface LocationService {
   // Returns a location when it changes, based on |priority|. If this is the
   // initial call, the last known location is returned immediately, if
   // available.
-  GetNextLocation(UpdatePriority priority) => (Location location);
+  // Returns NULL if the client requests a new location while a request is
+  // already in flight.
+  GetNextLocation(UpdatePriority priority) => (Location? location);
 };
