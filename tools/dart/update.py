@@ -22,10 +22,13 @@ LINUX_64_SDK = ('http://gsdview.appspot.com/dart-archive/channels/dev/' +
 
 # Path constants. (All of these should be absolute paths.)
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-CHROMIUM_DIR = os.path.abspath(os.path.join(THIS_DIR, '..', '..'))
-DART_SDK_DIR = os.path.join(CHROMIUM_DIR, 'third_party', 'dart-sdk')
+MOJO_DIR = os.path.abspath(os.path.join(THIS_DIR, '..', '..'))
+DART_SDK_DIR = os.path.join(MOJO_DIR, 'third_party', 'dart-sdk')
 OUTPUT_FILE = os.path.join(DART_SDK_DIR, 'dartsdk-linux-x64-release.zip')
 STAMP_FILE = os.path.join(DART_SDK_DIR, 'STAMP_FILE')
+LIBRARIES_FILE = os.path.join(DART_SDK_DIR,'dart-sdk',
+                              'lib', '_internal', 'libraries.dart')
+PATCH_FILE = os.path.join(MOJO_DIR, 'tools', 'dart', 'patch_sdk.diff')
 
 def RunCommand(command, fail_hard=True):
   """Run command and return success (True) or failure; or if fail_hard is
@@ -58,14 +61,30 @@ def main():
       shutil.rmtree(DART_SDK_DIR)
     os.mkdir(DART_SDK_DIR)
 
-    wget_command = ['wget', '-N', '-c', LINUX_64_SDK, '-P', DART_SDK_DIR]
-    if not RunCommand(wget_command, fail_hard=False):
+    # Download the Linux x64 based Dart SDK.
+    # '-C -': Resume transfer if possible.
+    # '--location': Follow Location: redirects.
+    # '-o': Output file.
+    curl_command = ['curl',
+                    '-C', '-',
+                    '--location',
+                    '-o', OUTPUT_FILE,
+                    LINUX_64_SDK]
+    if not RunCommand(curl_command, fail_hard=False):
       print "Failed to get dart sdk from server."
       return
 
     unzip_command = ['unzip', '-o', '-q', OUTPUT_FILE, '-d', DART_SDK_DIR]
     if not RunCommand(unzip_command, fail_hard=False):
       print "Failed to unzip the dart sdk."
+      return
+
+    # Patch the the dart-sdk/lib/_internal/libraries.dart file
+    # so that it understands dart:sky imports.
+    patch_command = ['patch', LIBRARIES_FILE, PATCH_FILE]
+    if not RunCommand(patch_command, fail_hard=False):
+      print "Failed to apply the patch to the Dart libraries file."
+      return
 
     # Write our stamp file so we don't redownload the sdk.
     with open(STAMP_FILE, "w") as stamp_file:

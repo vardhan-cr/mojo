@@ -1,0 +1,15 @@
+Index: sdk/lib/_internal/libraries.dart
+===================================================================
+--- sdk/lib/_internal/libraries.dart	(revision 44347)
++++ sdk/lib/_internal/libraries.dart	(working copy)
+@@ -117,6 +117,10 @@
+       maturity: Maturity.STABLE,
+       dart2jsPatchPath: "_internal/compiler/js_lib/typed_data_patch.dart"),
+ 
++  "sky": const LibraryInfo(
++      "../../../../out/Debug/gen/sky/bindings/dart_sky.dart",
++      maturity: Maturity.STABLE),
++
+   "_native_typed_data": const LibraryInfo(
+       "_internal/compiler/js_lib/native_typed_data.dart",
+       category: "Internal",
