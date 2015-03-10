@@ -80,12 +80,12 @@ bool CreateView(ViewManagerService* vm, Id view_id) {
   return result == ERROR_CODE_NONE;
 }
 
-bool EmbedUrl(ViewManagerService* vm, Id root_id) {
+bool EmbedUrl(ViewManagerService* vm, const String& url, Id root_id) {
   bool result = false;
   base::RunLoop run_loop;
   {
-    vm->EmbedUrl("mojo:view_manager_service_apptests", root_id, nullptr,
-                 nullptr, base::Bind(&BoolResultCallback, &run_loop, &result));
+    vm->EmbedUrl(url, root_id, nullptr, nullptr,
+                 base::Bind(&BoolResultCallback, &run_loop, &result));
   }
   run_loop.Run();
   return result;
@@ -442,7 +442,7 @@ class ViewManagerServiceAppTest
   scoped_ptr<ViewManagerClientImpl> EstablishConnectionViaEmbed(
       ViewManagerService* owner,
       Id root_id) {
-    if (!EmbedUrl(owner, root_id)) {
+    if (!EmbedUrl(owner, application_impl()->url(), root_id)) {
       ADD_FAILURE() << "Embed() failed";
       return nullptr;
     }
@@ -455,8 +455,7 @@ class ViewManagerServiceAppTest
     client->WaitForOnEmbed();
 
     const std::string expected_creator =
-        owner == vm1() ? "mojo:window_manager"
-                       : "mojo:view_manager_service_apptests";
+        owner == vm1() ? "mojo:window_manager" : application_impl()->url();
     EXPECT_EQ("OnEmbed creator=" + expected_creator,
               SingleChangeToDescription(*client->tracker()->changes()));
     return client.Pass();

@@ -27,9 +27,6 @@ namespace mojo {
 
 namespace {
 
-const char kViewManagerClientTestAppURL[] =
-    "mojo:mojo_view_manager_client_apptests";
-
 base::RunLoop* current_run_loop = nullptr;
 
 void TimeoutRunLoop(const base::Closure& timeout_task, bool* timeout) {
@@ -206,7 +203,7 @@ class ViewManagerTest : public test::ApplicationTestBase,
   ViewManager* Embed(ViewManager* view_manager, View* view) {
     DCHECK_EQ(view_manager, view->view_manager());
     most_recent_view_manager_ = nullptr;
-    view->Embed(kViewManagerClientTestAppURL);
+    view->Embed(application_impl()->url());
     if (!DoRunLoopWithTimeout())
       return nullptr;
     ViewManager* vm = nullptr;
@@ -231,7 +228,7 @@ class ViewManagerTest : public test::ApplicationTestBase,
     ApplicationTestBase::SetUp();
 
     view_manager_context_.reset(new ViewManagerContext(application_impl()));
-    view_manager_context_->Embed(kViewManagerClientTestAppURL);
+    view_manager_context_->Embed(application_impl()->url());
     ASSERT_TRUE(DoRunLoopWithTimeout());
     std::swap(window_manager_, most_recent_view_manager_);
   }
@@ -387,7 +384,7 @@ TEST_F(ViewManagerTest, EmbeddingIdentity) {
   window_manager()->GetRoot()->AddChild(view);
   ViewManager* embedded = Embed(window_manager(), view);
   ASSERT_NE(nullptr, embedded);
-  EXPECT_EQ(kViewManagerClientTestAppURL, embedded->GetEmbedderURL());
+  EXPECT_EQ(application_impl()->url(), embedded->GetEmbedderURL());
 }
 
 // TODO(alhaad): Currently, the RunLoop gets stuck waiting for order change.

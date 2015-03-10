@@ -108,7 +108,7 @@ class WindowManagerApplicationTest : public test::ApplicationTestBase {
 
 TEST_F(WindowManagerApplicationTest, Embed) {
   EXPECT_EQ(nullptr, test_application_.root());
-  EmbedApplicationWithURL("mojo:window_manager_apptests");
+  EmbedApplicationWithURL(application_impl()->url());
   EXPECT_NE(nullptr, test_application_.root());
 }
 
@@ -126,7 +126,7 @@ struct BoolCallback {
 };
 
 TEST_F(WindowManagerApplicationTest, SetCaptureFailsFromNonVM) {
-  EmbedApplicationWithURL("mojo:window_manager_apptests");
+  EmbedApplicationWithURL(application_impl()->url());
   bool callback_value = true;
   base::RunLoop run_loop;
   window_manager_->SetCapture(test_application_.root()->id(),
@@ -137,7 +137,7 @@ TEST_F(WindowManagerApplicationTest, SetCaptureFailsFromNonVM) {
 }
 
 TEST_F(WindowManagerApplicationTest, FocusWindowFailsFromNonVM) {
-  EmbedApplicationWithURL("mojo:window_manager_apptests");
+  EmbedApplicationWithURL(application_impl()->url());
   bool callback_value = true;
   base::RunLoop run_loop;
   window_manager_->FocusWindow(test_application_.root()->id(),
@@ -148,7 +148,7 @@ TEST_F(WindowManagerApplicationTest, FocusWindowFailsFromNonVM) {
 }
 
 TEST_F(WindowManagerApplicationTest, ActivateWindowFailsFromNonVM) {
-  EmbedApplicationWithURL("mojo:window_manager_apptests");
+  EmbedApplicationWithURL(application_impl()->url());
   bool callback_value = true;
   base::RunLoop run_loop;
   window_manager_->ActivateWindow(test_application_.root()->id(),
@@ -183,7 +183,7 @@ struct FocusedAndActiveViewsCallback {
 };
 
 TEST_F(WindowManagerApplicationTest, GetFocusedAndActiveViewsFailsWithoutFC) {
-  EmbedApplicationWithURL("mojo:window_manager_apptests");
+  EmbedApplicationWithURL(application_impl()->url());
   uint32 capture_view_id = -1;
   uint32 focused_view_id = -1;
   uint32 active_view_id = -1;
