@@ -21,6 +21,7 @@ if (is_android) {
   }
 } else if (is_linux) {
   group("go") {
+    testonly = true
     deps = [
       ":system_test",
     ]
