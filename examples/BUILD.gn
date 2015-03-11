@@ -16,6 +16,7 @@ group("examples") {
     "//examples/dart/hello_world/world",
     "//examples/dart/wget",
     "//examples/echo",
+    "//examples/echo_terminal",
     "//examples/embedded_app",
     "//examples/forwarding_content_handler",
     "//examples/ganesh_app",

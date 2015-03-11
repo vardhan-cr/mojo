@@ -1,0 +1,31 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+import("//mojo/public/tools/bindings/mojom.gni")
+
+mojo_native_application("echo_terminal") {
+  deps = [
+    ":bindings",
+    "//base",
+    "//mojo/application",
+    "//mojo/common",
+    "//mojo/public/cpp/application",
+    "//mojo/public/cpp/system",
+  ]
+
+  sources = [
+    "main.cc",
+  ]
+}
+
+mojom("bindings") {
+  public_deps = [
+    "//services/files:bindings",
+  ]
+
+  sources = [
+    "terminal_client.mojom",
+  ]
+}
