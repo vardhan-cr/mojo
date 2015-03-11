@@ -7,6 +7,30 @@ declare_args() {
   go_build_tool = ""
 }
 
+# Declare a go library.
+#
+# The target only writes a time stamp for input sources as the build is manages
+# by the go tool.
+#
+# Variables:
+#   sources(required): list of .go files
+#   deps: dependencies for the go library
+
+template("go_library") {
+  action(target_name) {
+    sources = invoker.sources
+    script = "//mojo/go/stamp.py"
+    outputs = [
+      "${target_out_dir}/${target_name}.script.stamp",
+    ]
+    if (defined(invoker.deps)) {
+      deps = invoker.deps
+    }
+    args = [ rebase_path(target_out_dir, root_build_dir) +
+             "/${target_name}.script.stamp" ]
+  }
+}
+
 # Declare a go test binary target.
 #
 # The target generates a go test executable, linking against other C code,
@@ -59,7 +83,7 @@ template("go_test_binary") {
              rebase_path("//", root_build_dir),
              rebase_path(root_out_dir, root_build_dir),
              "-I" + rebase_path("//"),
-             " -L" + rebase_path(target_out_dir) + " -l" + static_library_name +
+             "-L" + rebase_path(target_out_dir) + " -l" + static_library_name +
                  " -lstdc++ -lpthread -lm -lglib-2.0",
              "test",
              "-c",
@@ -95,17 +119,17 @@ template("go_shared_library") {
     # script will later identify the output, copy it to the target location,
     # and clean up the temporary build directory.
     build_dir = "${target_out_dir}/${target_name}_build"
-    args = [
-             "--",
-             "CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 ${go_build_tool}",
-             rebase_path(build_dir, root_build_dir),
-             rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
-             rebase_path("//", root_build_dir),
-             rebase_path(root_out_dir, root_build_dir),
-             "-I" + rebase_path("//"),
-             " -L" + rebase_path(target_out_dir) + " -l" + static_library_name +
-                 "",
-             "build -ldflags=-shared",
-           ] + rebase_path(invoker.sources, build_dir)
+    args =
+        [
+          "--",
+          "CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 ${go_build_tool}",
+          rebase_path(build_dir, root_build_dir),
+          rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
+          rebase_path("//", root_build_dir),
+          rebase_path(root_out_dir, root_build_dir),
+          "-I" + rebase_path("//"),
+          "-L" + rebase_path(target_out_dir) + " -l" + static_library_name + "",
+          "build -ldflags=-shared",
+        ] + rebase_path(invoker.sources, build_dir)
   }
 }

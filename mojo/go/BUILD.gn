@@ -4,6 +4,45 @@
 
 import("rules.gni")
 
+go_library("bindings") {
+  sources = [
+    "//mojo/public/go/bindings/async_waiter.go",
+    "//mojo/public/go/bindings/connector.go",
+    "//mojo/public/go/bindings/decoder.go",
+    "//mojo/public/go/bindings/encoder.go",
+    "//mojo/public/go/bindings/interface.go",
+    "//mojo/public/go/bindings/invalid_handle.go",
+    "//mojo/public/go/bindings/message.go",
+    "//mojo/public/go/bindings/router.go",
+    "//mojo/public/go/bindings/stub.go",
+    "//mojo/public/go/bindings/util.go",
+  ]
+  deps = [
+    ":system",
+  ]
+}
+
+go_library("system") {
+  sources = [
+    "//mojo/public/go/system/core.go",
+    "//mojo/public/go/system/data_pipe.go",
+    "//mojo/public/go/system/handle.go",
+    "//mojo/public/go/system/message_pipe.go",
+    "//mojo/public/go/system/mojo_types.go",
+    "//mojo/public/go/system/shared_buffer.go",
+    "//mojo/public/go/system/system.go",
+    "//mojo/public/go/system/system_android.go",
+    "//mojo/public/go/system/system_linux.go",
+    "//mojo/public/go/system/system_nacl.go",
+  ]
+}
+
+go_library("platform_cgo") {
+  sources = [
+    "//mojo/public/platform/native_cgo/system_cgo.go",
+  ]
+}
+
 if (is_android) {
   group("go") {
     deps = [
@@ -15,6 +54,8 @@ if (is_android) {
       "sample_app/app.go",
     ]
     deps = [
+      ":bindings",
+      ":platform_cgo",
       "//mojo/public/c/system",
       "//mojo/public/platform/native:system",
     ]
@@ -43,7 +84,10 @@ if (is_android) {
       "c_embedder/c_embedder.h",
     ]
     deps = [
+      ":bindings",
+      ":platform_cgo",
       "//mojo/edk/system",
+      "//mojo/public/interfaces/bindings/tests:test_interfaces",
     ]
   }
 }
