@@ -90,6 +90,9 @@ def main():
         return os.path.join(paths.src_root, rel_path)
 
     copy(paths.build_dir, deploy_path('mojo'), mojo_filter)
+    copy(src_path('mojo/public'), deploy_path('mojo/public'),
+        sky_or_dart_filter)
+
     copy(src_path('sky/examples'), deploy_path('sky/examples'),
         sky_or_dart_filter)
     copy(src_path('sky/framework'), deploy_path('sky/framework'),
