@@ -29,14 +29,15 @@ bool BlockingCopyHelper(ScopedDataPipeConsumerHandle source,
       if (bytes_written < num_bytes) {
         LOG(ERROR) << "write_bytes callback wrote fewer bytes ("
                    << bytes_written << ") written than expected (" << num_bytes
-                   << ") in BlockingCopyHelper "
-                   << "(pipe closed? out of disk space?)" << std::endl;
+                   << ") in BlockingCopyHelper (pipe closed? out of disk "
+                      "space?)";
+        // No need to call EndReadDataRaw(), since |source| will be closed.
         return false;
       }
       result = EndReadDataRaw(source.get(), num_bytes);
       if (result != MOJO_RESULT_OK) {
         LOG(ERROR) << "EndReadDataRaw error (" << result
-                   << ") in BlockingCopyHelper" << std::endl;
+                   << ") in BlockingCopyHelper";
         return false;
       }
     } else if (result == MOJO_RESULT_SHOULD_WAIT) {
@@ -52,14 +53,11 @@ bool BlockingCopyHelper(ScopedDataPipeConsumerHandle source,
       // If the producer handle was closed, then treat as EOF.
       return true;
     } else {
-      LOG(ERROR) << "Unhandled error " << result << " in BlockingCopyHelper"
-                 << std::endl;
+      LOG(ERROR) << "Unhandled error " << result << " in BlockingCopyHelper";
       // Some other error occurred.
-      break;
+      return false;
     }
   }
-
-  return false;
 }
 
 size_t CopyToStringHelper(
@@ -79,6 +77,7 @@ bool BlockingCopyFromFile(const base::FilePath& source,
   if (!file.IsValid())
     return false;
   if (file.Seek(base::File::FROM_BEGIN, skip) != skip) {
+    LOG(ERROR) << "Seek of " << skip << " in " << source.value() << " failed";
     return false;
   }
   for (;;) {
@@ -166,7 +165,7 @@ bool BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
   base::ScopedFILE fp(base::OpenFile(destination, "wb"));
   if (!fp) {
     LOG(ERROR) << "OpenFile('" << destination.value()
-               << "'failed in BlockingCopyToFile" << std::endl;
+               << "'failed in BlockingCopyToFile";
     return false;
   }
   return BlockingCopyHelper(

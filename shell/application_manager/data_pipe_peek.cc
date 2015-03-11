@@ -4,7 +4,10 @@
 
 #include "shell/application_manager/data_pipe_peek.h"
 
+#include <stdint.h>
+
 #include "base/bind.h"
+#include "base/macros.h"
 
 namespace mojo {
 namespace shell {
@@ -25,10 +28,9 @@ class PeekSleeper {
  public:
   explicit PeekSleeper(MojoTimeTicks deadline)
       : deadline_(deadline),
-        kMaxSleepMicros_(1000 * 10),  // 10ms
         last_number_bytes_read_(0) {}
 
-  bool MaybeSleep(uint32 num_bytes_read) {
+  bool MaybeSleep(uint32_t num_bytes_read) {
     if (num_bytes_read > 0 && last_number_bytes_read_ >= num_bytes_read)
       return false;
     last_number_bytes_read_ = num_bytes_read;
@@ -38,20 +40,22 @@ class PeekSleeper {
       return false;
 
     MojoTimeTicks sleep_time =
-        (deadline_ == 0)
-            ? kMaxSleepMicros_
-            : std::min<int64>(deadline_ - now, PeekSleeper::kMaxSleepMicros_);
+        (deadline_ == 0) ? kMaxSleepMicros
+                         : std::min<int64>(deadline_ - now, kMaxSleepMicros);
     base::PlatformThread::Sleep(base::TimeDelta::FromMicroseconds(sleep_time));
     return true;
   }
 
  private:
-  const MojoTimeTicks deadline_;  // 0 => MOJO_DEADLINE_INDEFINITE
-  const MojoTimeTicks kMaxSleepMicros_;
-  uint32 last_number_bytes_read_;
+  static const MojoTimeTicks kMaxSleepMicros = 1000 * 10;  // 10 ms
 
-  MOJO_DISALLOW_COPY_AND_ASSIGN(PeekSleeper);
+  const MojoTimeTicks deadline_;  // 0 => MOJO_DEADLINE_INDEFINITE
+  uint32_t last_number_bytes_read_;
+
+  DISALLOW_COPY_AND_ASSIGN(PeekSleeper);
 };
+
+const MojoTimeTicks PeekSleeper::kMaxSleepMicros;
 
 enum PeekStatus { kSuccess, kFail, kKeepReading };
 typedef const base::Callback<PeekStatus(const void*, uint32_t, std::string*)>&
@@ -108,7 +112,7 @@ bool BlockingPeekHelper(DataPipeConsumerHandle source,
 
 PeekStatus PeekLine(size_t max_line_length,
                     const void* buffer,
-                    uint32 buffer_num_bytes,
+                    uint32_t buffer_num_bytes,
                     std::string* line) {
   const char* p = static_cast<const char*>(buffer);
   size_t max_p_index = std::min<size_t>(buffer_num_bytes, max_line_length);
@@ -124,7 +128,7 @@ PeekStatus PeekLine(size_t max_line_length,
 
 PeekStatus PeekNBytes(size_t bytes_length,
                       const void* buffer,
-                      uint32 buffer_num_bytes,
+                      uint32_t buffer_num_bytes,
                       std::string* bytes) {
   if (buffer_num_bytes >= bytes_length) {
     const char* p = static_cast<const char*>(buffer);

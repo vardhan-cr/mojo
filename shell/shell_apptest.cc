@@ -20,15 +20,14 @@
 #include "services/http_server/public/http_server_util.h"
 #include "shell/kPingable.h"
 #include "shell/test/pingable.mojom.h"
-namespace mojo {
 
+namespace mojo {
 namespace {
 
 std::string GetURL(uint16_t port, const std::string& path) {
-  return base::StringPrintf("http://127.0.0.1:%u/%s", port, path.c_str());
+  return base::StringPrintf("http://127.0.0.1:%u/%s",
+                            static_cast<unsigned>(port), path.c_str());
 }
-
-}  // namespace
 
 class GetHandler : public http_server::HttpHandler {
  public:
@@ -194,4 +193,5 @@ TEST_F(ShellAppTest, MojoURLQueryHandling) {
   base::RunLoop().Run();
 }
 
+}  // namespace
 }  // namespace mojo
