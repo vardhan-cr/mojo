@@ -47,11 +47,11 @@ const char* Builtin::mojo_core_patch_resource_names_[] = {
 Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
   /* { url_, has_natives_, native_symbol_, native_resolver_,
        patch_url_, patch_paths_ } */
-  {"mojo:builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup,
+  {"dart:mojo.builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup,
     nullptr, nullptr },
-  {"mojo:bindings", false, nullptr, nullptr,
+  {"dart:mojo.bindings", false, nullptr, nullptr,
     nullptr, nullptr },
-  {"mojo:core", true, MojoNativeSymbol, MojoNativeLookup,
+  {"dart:mojo.core", true, MojoNativeSymbol, MojoNativeLookup,
    "mojo:core-patch", mojo_core_patch_resource_names_ },
 };
 

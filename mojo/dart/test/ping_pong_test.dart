@@ -5,7 +5,7 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'mojo:core' as core;
+import 'dart:mojo.core' as core;
 
 ByteData byteDataOfString(String s) {
   return new ByteData.view((new Uint8List.fromList(s.codeUnits)).buffer);

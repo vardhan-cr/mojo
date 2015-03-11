@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:typed_data';
-import 'mojo:core';
+import 'dart:mojo.core';
 
 import 'package:mojo/dart/testing/expect.dart';
 

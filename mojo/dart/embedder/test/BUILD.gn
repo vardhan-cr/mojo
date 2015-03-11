@@ -53,9 +53,9 @@ action("generate_test_snapshot_bin") {
     rebase_path(output, root_build_dir),
     "--target_os",
     os,
-    "--url_mapping=mojo:bindings,$bindings_path",
-    "--url_mapping=mojo:builtin,$builtin_path",
-    "--url_mapping=mojo:core,$core_path",
+    "--url_mapping=dart:mojo.bindings,$bindings_path",
+    "--url_mapping=dart:mojo.builtin,$builtin_path",
+    "--url_mapping=dart:mojo.core,$core_path",
   ]
 }
 

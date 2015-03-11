@@ -199,7 +199,7 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   Dart_Handle result = Dart_FinalizeLoading(false);
   DART_CHECK_VALID(result);
 
-  // Import dart:_internal into mojo:builtin for setting up hooks.
+  // Import dart:_internal into dart:mojo.builtin for setting up hooks.
   result = Dart_LibraryImportLibrary(builtin_lib, internal_lib, Dart_Null());
   DART_CHECK_VALID(result);
 

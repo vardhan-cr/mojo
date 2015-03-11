@@ -4,9 +4,9 @@
 
 // This app is run by examples/dart/hello_world/hello.
 
-import 'mojo:application';
-import 'mojo:bindings';
-import 'mojo:core';
+import 'dart:mojo.application';
+import 'dart:mojo.bindings';
+import 'dart:mojo.core';
 
 class World extends Application {
   World.fromHandle(MojoHandle handle) : super.fromHandle(handle);

@@ -5,9 +5,9 @@
 // To run this app:
 // mojo_shell mojo:hello
 
-import 'mojo:application';
-import 'mojo:bindings';
-import 'mojo:core';
+import 'dart:mojo.application';
+import 'dart:mojo.bindings';
+import 'dart:mojo.core';
 
 class Hello extends Application {
   Hello.fromHandle(MojoHandle handle) : super.fromHandle(handle);

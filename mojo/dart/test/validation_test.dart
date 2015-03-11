@@ -6,9 +6,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'mojo:bindings';
-import 'mojo:builtin' as builtin;
-import 'mojo:core';
+import 'dart:mojo.bindings';
+import 'dart:mojo.builtin' as builtin;
+import 'dart:mojo.core';
 
 import 'package:mojo/dart/testing/validation_test_input_parser.dart' as parser;
 import 'package:mojo/public/interfaces/bindings/tests/validation_test_interfaces.mojom.dart';

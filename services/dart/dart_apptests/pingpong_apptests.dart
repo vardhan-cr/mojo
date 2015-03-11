@@ -5,9 +5,9 @@
 library pingpong_apptests;
 
 import 'dart:async';
-import 'mojo:application';
-import 'mojo:bindings';
-import 'mojo:core';
+import 'dart:mojo.application';
+import 'dart:mojo.bindings';
+import 'dart:mojo.core';
 
 import 'package:apptest/apptest.dart';
 import 'package:services/dart/test/pingpong_service.mojom.dart';

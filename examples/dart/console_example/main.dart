@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'mojo:application';
-import 'mojo:bindings';
-import 'mojo:core';
+import 'dart:mojo.application';
+import 'dart:mojo.bindings';
+import 'dart:mojo.core';
 
 import 'package:mojo/services/console/public/interfaces/console.mojom.dart';
 
