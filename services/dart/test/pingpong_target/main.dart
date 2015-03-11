@@ -25,6 +25,15 @@ class PingPongServiceImpl implements PingPongService {
 
   void ping(int pingValue) => _pingPongClient.ptr.pong(pingValue + 1);
 
+  // These methods are unimplemented; they merely throw on invocation.
+  Future<PingPongServicePingTargetUrlResponseParams> pingTargetUrl(
+          String url, int count, [Function responseFactory]) =>
+      throw "Unimplemented";
+  Future<PingPongServicePingTargetServiceResponseParams> pingTargetService(
+          Object service, int count, [Function responseFactory]) =>
+      throw "Unimplemented";
+  void getPingPongService(Object service) => throw "Unimplemented";
+
   void quit() {
     if (_pingPongClient != null) {
       _pingPongClient.close();

@@ -51,7 +51,8 @@ class PingPongServiceImpl implements PingPongService {
     }
   }
 
-  Future pingTargetUrl(String url, int count, Function responseFactory) async {
+  Future pingTargetUrl(String url, int count,
+      [Function responseFactory]) async {
     if (_application == null) {
       return responseFactory(false);
     }
@@ -72,8 +73,8 @@ class PingPongServiceImpl implements PingPongService {
     return responseFactory(true);
   }
 
-  Future pingTargetService(
-      ProxyBase proxyBase, int count, Function responseFactory) async {
+  Future pingTargetService(ProxyBase proxyBase, int count,
+      [Function responseFactory]) async {
     var pingPongService = proxyBase;
     var completer = new Completer();
     var client = new PingPongClientImpl.unbound(count, completer);

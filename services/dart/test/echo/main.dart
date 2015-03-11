@@ -17,7 +17,7 @@ class EchoServiceImpl implements EchoService {
     _stub = new EchoServiceStub.fromEndpoint(endpoint, this);
   }
 
-  echoString(String value, Function responseFactory) {
+  echoString(String value, [Function responseFactory = null]) {
     if (value == "quit") {
       _stub.close();
     }
