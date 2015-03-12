@@ -45,7 +45,7 @@ MojoResult ApplicationRunnerChromium::Run(
   base::CommandLine::Init(0, NULL);
   base::AtExitManager at_exit;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(OS_NACL)
   base::debug::EnableInProcessStackDumping();
 #endif
 

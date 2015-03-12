@@ -12,10 +12,12 @@ component("common") {
   sources = [
     "common_type_converters.cc",
     "common_type_converters.h",
+    "data_pipe_drainer.cc",
+    "data_pipe_drainer.h",
+    "data_pipe_file_utils.cc",
     "data_pipe_utils.cc",
     "data_pipe_utils.h",
-    "data_pipe_drainer.h",
-    "data_pipe_drainer.cc",
+    "data_pipe_utils_internal.h",
     "handle_watcher.cc",
     "handle_watcher.h",
     "message_pump_mojo.cc",
@@ -25,6 +27,10 @@ component("common") {
     "time_helper.h",
     "weak_binding_set.h",
   ]
+
+  if (is_nacl) {
+    sources -= [ "data_pipe_file_utils.cc" ]
+  }
 
   defines = [ "MOJO_COMMON_IMPLEMENTATION" ]
 

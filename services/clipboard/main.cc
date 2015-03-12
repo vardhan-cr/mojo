@@ -2,18 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/at_exit.h"
-#include "base/base_paths.h"
-#include "base/command_line.h"
-#include "base/files/file_path.h"
-#include "base/message_loop/message_loop.h"
-#include "base/path_service.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/public/cpp/bindings/interface_ptr.h"
 #include "services/clipboard/clipboard_standalone_impl.h"
 
 class Delegate : public mojo::ApplicationDelegate,

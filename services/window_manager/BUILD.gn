@@ -36,6 +36,12 @@ source_set("lib") {
     "focus_rules.h",
     "native_viewport_event_dispatcher_impl.cc",
     "native_viewport_event_dispatcher_impl.h",
+    "view_event_dispatcher.cc",
+    "view_event_dispatcher.h",
+    "view_target.cc",
+    "view_target.h",
+    "view_targeter.cc",
+    "view_targeter.h",
     "window_manager_app.cc",
     "window_manager_app.h",
     "window_manager_app_android.cc",
@@ -43,12 +49,6 @@ source_set("lib") {
     "window_manager_delegate.h",
     "window_manager_impl.cc",
     "window_manager_impl.h",
-    "view_event_dispatcher.cc",
-    "view_event_dispatcher.h",
-    "view_target.cc",
-    "view_target.h",
-    "view_targeter.cc",
-    "view_targeter.h",
   ]
 
   deps = [
@@ -119,7 +119,6 @@ mojo_native_application("window_manager_apptests") {
     "//mojo/application",
     "//mojo/application:test_support",
     "//mojo/environment:chromium",
-    "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/system:system",
     "//mojo/services/view_manager/public/cpp",
     "//mojo/services/window_manager/public/interfaces",
