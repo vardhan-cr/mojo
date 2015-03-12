@@ -1,5 +1,5 @@
 diff --git a/cc/BUILD.gn b/cc/BUILD.gn
-index 9c4752d..e217b12 100644
+index 0411b45..4ee07db 100644
 --- a/cc/BUILD.gn
 +++ b/cc/BUILD.gn
 @@ -222,13 +222,6 @@ component("cc") {
@@ -16,7 +16,7 @@ index 9c4752d..e217b12 100644
      "output/begin_frame_args.cc",
      "output/begin_frame_args.h",
      "output/bsp_tree.cc",
-@@ -480,8 +473,6 @@ component("cc") {
+@@ -486,8 +479,6 @@ component("cc") {
      "resources/ui_resource_client.h",
      "resources/ui_resource_request.cc",
      "resources/ui_resource_request.h",
@@ -25,7 +25,7 @@ index 9c4752d..e217b12 100644
      "resources/zero_copy_tile_task_worker_pool.cc",
      "resources/zero_copy_tile_task_worker_pool.h",
      "scheduler/begin_frame_source.cc",
-@@ -623,8 +614,6 @@ source_set("test_support") {
+@@ -628,8 +619,6 @@ source_set("test_support") {
      "test/fake_tile_manager_client.h",
      "test/fake_ui_resource_layer_tree_host_impl.cc",
      "test/fake_ui_resource_layer_tree_host_impl.h",
@@ -34,7 +34,7 @@ index 9c4752d..e217b12 100644
      "test/geometry_test_utils.cc",
      "test/geometry_test_utils.h",
      "test/impl_side_painting_settings.h",
-@@ -782,7 +771,6 @@ test("cc_unittests") {
+@@ -787,7 +776,6 @@ test("cc_unittests") {
      "layers/tiled_layer_unittest.cc",
      "layers/ui_resource_layer_impl_unittest.cc",
      "layers/ui_resource_layer_unittest.cc",
@@ -42,7 +42,7 @@ index 9c4752d..e217b12 100644
      "output/begin_frame_args_unittest.cc",
      "output/delegating_renderer_unittest.cc",
      "output/filter_operations_unittest.cc",
-@@ -843,7 +831,6 @@ test("cc_unittests") {
+@@ -848,7 +836,6 @@ test("cc_unittests") {
      "trees/layer_tree_host_unittest_picture.cc",
      "trees/layer_tree_host_unittest_proxy.cc",
      "trees/layer_tree_host_unittest_scroll.cc",
@@ -242,11 +242,11 @@ index 4bbd92f..0000000
 -
 -}  // namespace cc
 diff --git a/cc/output/gl_renderer.cc b/cc/output/gl_renderer.cc
-index 2016447..578faa9 100644
+index 613ea4b..3813e1d 100644
 --- a/cc/output/gl_renderer.cc
 +++ b/cc/output/gl_renderer.cc
-@@ -13,7 +13,6 @@
- #include "base/logging.h"
+@@ -18,7 +18,6 @@
+ #include "build/build_config.h"
  #include "base/trace_event/trace_event.h"
  #include "cc/base/math_util.h"
 -#include "cc/layers/video_layer_impl.h"
@@ -254,7 +254,7 @@ index 2016447..578faa9 100644
  #include "cc/output/compositor_frame_metadata.h"
  #include "cc/output/context_provider.h"
 diff --git a/cc/output/renderer_pixeltest.cc b/cc/output/renderer_pixeltest.cc
-index b30b0a5..81ad842 100644
+index 295fc84..ebda8d6 100644
 --- a/cc/output/renderer_pixeltest.cc
 +++ b/cc/output/renderer_pixeltest.cc
 @@ -12,7 +12,6 @@
@@ -265,86 +265,12 @@ index b30b0a5..81ad842 100644
  #include "third_party/skia/include/core/SkColorPriv.h"
  #include "third_party/skia/include/core/SkImageFilter.h"
  #include "third_party/skia/include/core/SkMatrix.h"
-@@ -388,453 +387,6 @@ TEST_F(GLRendererPixelTest, NonPremultipliedTextureWithBackground) {
+@@ -902,243 +901,6 @@ TEST_F(GLRendererPixelTest, NonPremultipliedTextureWithBackground) {
        FuzzyPixelOffByOneComparator(true)));
  }
-
+ 
 -class VideoGLRendererPixelTest : public GLRendererPixelTest {
 - protected:
--  void CreateTestYUVVideoDrawQuad_Striped(const SharedQuadState* shared_state,
--                                          media::VideoFrame::Format format,
--                                          bool is_transparent,
--                                          const gfx::RectF& tex_coord_rect,
--                                          RenderPass* render_pass) {
--    const gfx::Rect rect(this->device_viewport_size_);
--
--    scoped_refptr<media::VideoFrame> video_frame =
--        media::VideoFrame::CreateFrame(
--            format, rect.size(), rect, rect.size(), base::TimeDelta());
--
--    // YUV values representing a striped pattern, for validating texture
--    // coordinates for sampling.
--    uint8_t y_value = 0;
--    uint8_t u_value = 0;
--    uint8_t v_value = 0;
--    for (int i = 0; i < video_frame->rows(media::VideoFrame::kYPlane); ++i) {
--      uint8_t* y_row = video_frame->data(media::VideoFrame::kYPlane) +
--                       video_frame->stride(media::VideoFrame::kYPlane) * i;
--      for (int j = 0; j < video_frame->row_bytes(media::VideoFrame::kYPlane);
--           ++j) {
--        y_row[j] = (y_value += 1);
--      }
--    }
--    for (int i = 0; i < video_frame->rows(media::VideoFrame::kUPlane); ++i) {
--      uint8_t* u_row = video_frame->data(media::VideoFrame::kUPlane) +
--                       video_frame->stride(media::VideoFrame::kUPlane) * i;
--      uint8_t* v_row = video_frame->data(media::VideoFrame::kVPlane) +
--                       video_frame->stride(media::VideoFrame::kVPlane) * i;
--      for (int j = 0; j < video_frame->row_bytes(media::VideoFrame::kUPlane);
--           ++j) {
--        u_row[j] = (u_value += 3);
--        v_row[j] = (v_value += 5);
--      }
--    }
--    uint8 alpha_value = is_transparent ? 0 : 128;
--    CreateTestYUVVideoDrawQuad_FromVideoFrame(
--        shared_state, video_frame, alpha_value, tex_coord_rect, render_pass);
--  }
--
--  void CreateTestYUVVideoDrawQuad_Solid(const SharedQuadState* shared_state,
--                                        media::VideoFrame::Format format,
--                                        bool is_transparent,
--                                        const gfx::RectF& tex_coord_rect,
--                                        uint8 y,
--                                        uint8 u,
--                                        uint8 v,
--                                        RenderPass* render_pass) {
--    const gfx::Rect rect(this->device_viewport_size_);
--
--    scoped_refptr<media::VideoFrame> video_frame =
--        media::VideoFrame::CreateFrame(
--            format, rect.size(), rect, rect.size(), base::TimeDelta());
--
--    // YUV values of a solid, constant, color. Useful for testing that color
--    // space/color range are being handled properly.
--    memset(video_frame->data(media::VideoFrame::kYPlane),
--           y,
--           video_frame->stride(media::VideoFrame::kYPlane) *
--               video_frame->rows(media::VideoFrame::kYPlane));
--    memset(video_frame->data(media::VideoFrame::kUPlane),
--           u,
--           video_frame->stride(media::VideoFrame::kUPlane) *
--               video_frame->rows(media::VideoFrame::kUPlane));
--    memset(video_frame->data(media::VideoFrame::kVPlane),
--           v,
--           video_frame->stride(media::VideoFrame::kVPlane) *
--               video_frame->rows(media::VideoFrame::kVPlane));
--
--    uint8 alpha_value = is_transparent ? 0 : 128;
--    CreateTestYUVVideoDrawQuad_FromVideoFrame(
--        shared_state, video_frame, alpha_value, tex_coord_rect, render_pass);
--  }
--
 -  void CreateEdgeBleedPass(media::VideoFrame::Format format,
 -                           RenderPassList* pass_list) {
 -    gfx::Rect rect(200, 200);
@@ -373,130 +299,11 @@ index b30b0a5..81ad842 100644
 -    // green sub-rectangle that should be the only thing displayed in
 -    // the final image.  Bleeding will appear on all four sides of the video
 -    // if the tex coords are not clamped.
--    CreateTestYUVVideoDrawQuad_TwoColor(shared_state, format, false,
--                                        tex_coord_rect, background_size, 0, 0,
--                                        0, green_rect, 149, 43, 21, pass.get());
+-    CreateTestYUVVideoDrawQuad_TwoColor(
+-        shared_state, format, false, tex_coord_rect, background_size, 0, 0, 0,
+-        green_rect, 149, 43, 21, pass.get(), video_resource_updater_.get(),
+-        resource_provider_.get());
 -    pass_list->push_back(pass.Pass());
--  }
--
--  // Creates a video frame of size background_size filled with yuv_background,
--  // and then draws a foreground rectangle in a different color on top of
--  // that. The foreground rectangle must have coordinates that are divisible
--  // by 2 because YUV is a block format.
--  void CreateTestYUVVideoDrawQuad_TwoColor(const SharedQuadState* shared_state,
--                                           media::VideoFrame::Format format,
--                                           bool is_transparent,
--                                           const gfx::RectF& tex_coord_rect,
--                                           const gfx::Size& background_size,
--                                           uint8 y_background,
--                                           uint8 u_background,
--                                           uint8 v_background,
--                                           const gfx::Rect& foreground_rect,
--                                           uint8 y_foreground,
--                                           uint8 u_foreground,
--                                           uint8 v_foreground,
--                                           RenderPass* render_pass) {
--    const gfx::Rect rect(background_size);
--
--    scoped_refptr<media::VideoFrame> video_frame =
--        media::VideoFrame::CreateFrame(format, background_size, foreground_rect,
--                                       foreground_rect.size(),
--                                       base::TimeDelta());
--
--    int planes[] = {media::VideoFrame::kYPlane,
--                    media::VideoFrame::kUPlane,
--                    media::VideoFrame::kVPlane};
--    uint8 yuv_background[] = {y_background, u_background, v_background};
--    uint8 yuv_foreground[] = {y_foreground, u_foreground, v_foreground};
--    int sample_size[] = {1, 2, 2};
--
--    for (int i = 0; i < 3; ++i) {
--      memset(video_frame->data(planes[i]), yuv_background[i],
--             video_frame->stride(planes[i]) * video_frame->rows(planes[i]));
--    }
--
--    for (int i = 0; i < 3; ++i) {
--      // Since yuv encoding uses block encoding, widths have to be divisible
--      // by the sample size in order for this function to behave properly.
--      DCHECK_EQ(foreground_rect.x() % sample_size[i], 0);
--      DCHECK_EQ(foreground_rect.y() % sample_size[i], 0);
--      DCHECK_EQ(foreground_rect.width() % sample_size[i], 0);
--      DCHECK_EQ(foreground_rect.height() % sample_size[i], 0);
--
--      gfx::Rect sample_rect(foreground_rect.x() / sample_size[i],
--                            foreground_rect.y() / sample_size[i],
--                            foreground_rect.width() / sample_size[i],
--                            foreground_rect.height() / sample_size[i]);
--      for (int y = sample_rect.y(); y < sample_rect.bottom(); ++y) {
--        for (int x = sample_rect.x(); x < sample_rect.right(); ++x) {
--          size_t offset = y * video_frame->stride(planes[i]) + x;
--          video_frame->data(planes[i])[offset] = yuv_foreground[i];
--        }
--      }
--    }
--
--    uint8 alpha_value = 255;
--    CreateTestYUVVideoDrawQuad_FromVideoFrame(
--        shared_state, video_frame, alpha_value, tex_coord_rect, render_pass);
--  }
--
--  void CreateTestYUVVideoDrawQuad_FromVideoFrame(
--      const SharedQuadState* shared_state,
--      scoped_refptr<media::VideoFrame> video_frame,
--      uint8 alpha_value,
--      const gfx::RectF& tex_coord_rect,
--      RenderPass* render_pass) {
--    const bool with_alpha = (video_frame->format() == media::VideoFrame::YV12A);
--    const YUVVideoDrawQuad::ColorSpace color_space =
--        (video_frame->format() == media::VideoFrame::YV12J
--             ? YUVVideoDrawQuad::JPEG
--             : YUVVideoDrawQuad::REC_601);
--    const gfx::Rect rect(shared_state->content_bounds);
--    const gfx::Rect opaque_rect(0, 0, 0, 0);
--
--    if (with_alpha)
--      memset(video_frame->data(media::VideoFrame::kAPlane), alpha_value,
--             video_frame->stride(media::VideoFrame::kAPlane) *
--                 video_frame->rows(media::VideoFrame::kAPlane));
--
--    VideoFrameExternalResources resources =
--        video_resource_updater_->CreateExternalResourcesFromVideoFrame(
--            video_frame);
--
--    EXPECT_EQ(VideoFrameExternalResources::YUV_RESOURCE, resources.type);
--    EXPECT_EQ(media::VideoFrame::NumPlanes(video_frame->format()),
--              resources.mailboxes.size());
--    EXPECT_EQ(media::VideoFrame::NumPlanes(video_frame->format()),
--              resources.release_callbacks.size());
--
--    ResourceProvider::ResourceId y_resource =
--        resource_provider_->CreateResourceFromTextureMailbox(
--            resources.mailboxes[media::VideoFrame::kYPlane],
--            SingleReleaseCallbackImpl::Create(
--                resources.release_callbacks[media::VideoFrame::kYPlane]));
--    ResourceProvider::ResourceId u_resource =
--        resource_provider_->CreateResourceFromTextureMailbox(
--            resources.mailboxes[media::VideoFrame::kUPlane],
--            SingleReleaseCallbackImpl::Create(
--                resources.release_callbacks[media::VideoFrame::kUPlane]));
--    ResourceProvider::ResourceId v_resource =
--        resource_provider_->CreateResourceFromTextureMailbox(
--            resources.mailboxes[media::VideoFrame::kVPlane],
--            SingleReleaseCallbackImpl::Create(
--                resources.release_callbacks[media::VideoFrame::kVPlane]));
--    ResourceProvider::ResourceId a_resource = 0;
--    if (with_alpha) {
--      a_resource = resource_provider_->CreateResourceFromTextureMailbox(
--          resources.mailboxes[media::VideoFrame::kAPlane],
--          SingleReleaseCallbackImpl::Create(
--              resources.release_callbacks[media::VideoFrame::kAPlane]));
--    }
--
--    YUVVideoDrawQuad* yuv_quad =
--        render_pass->CreateAndAppendDrawQuad<YUVVideoDrawQuad>();
--    yuv_quad->SetNew(shared_state, rect, opaque_rect, rect, tex_coord_rect,
--                     video_frame->coded_size(), y_resource, u_resource,
--                     v_resource, a_resource, color_space);
 -  }
 -
 -  void SetUp() override {
@@ -505,7 +312,6 @@ index b30b0a5..81ad842 100644
 -        output_surface_->context_provider(), resource_provider_.get()));
 -  }
 -
-- private:
 -  scoped_ptr<VideoResourceUpdater> video_resource_updater_;
 -};
 -
@@ -518,11 +324,10 @@ index b30b0a5..81ad842 100644
 -  SharedQuadState* shared_state =
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
--  CreateTestYUVVideoDrawQuad_Striped(shared_state,
--                                     media::VideoFrame::YV12,
--                                     false,
--                                     gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                     pass.get());
+-  CreateTestYUVVideoDrawQuad_Striped(shared_state, media::VideoFrame::YV12,
+-                                     false, gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
+-                                     pass.get(), video_resource_updater_.get(),
+-                                     rect, resource_provider_.get());
 -
 -  RenderPassList pass_list;
 -  pass_list.push_back(pass.Pass());
@@ -543,11 +348,10 @@ index b30b0a5..81ad842 100644
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
 -  // Intentionally sets frame format to I420 for testing coverage.
--  CreateTestYUVVideoDrawQuad_Striped(shared_state,
--                                     media::VideoFrame::I420,
--                                     false,
--                                     gfx::RectF(0.125f, 0.25f, 0.75f, 0.5f),
--                                     pass.get());
+-  CreateTestYUVVideoDrawQuad_Striped(
+-      shared_state, media::VideoFrame::I420, false,
+-      gfx::RectF(0.125f, 0.25f, 0.75f, 0.5f), pass.get(),
+-      video_resource_updater_.get(), rect, resource_provider_.get());
 -
 -  RenderPassList pass_list;
 -  pass_list.push_back(pass.Pass());
@@ -568,14 +372,10 @@ index b30b0a5..81ad842 100644
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
 -  // In MPEG color range YUV values of (15,128,128) should produce black.
--  CreateTestYUVVideoDrawQuad_Solid(shared_state,
--                                   media::VideoFrame::YV12,
--                                   false,
--                                   gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                   15,
--                                   128,
--                                   128,
--                                   pass.get());
+-  CreateTestYUVVideoDrawQuad_Solid(
+-      shared_state, media::VideoFrame::YV12, false,
+-      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), 15, 128, 128, pass.get(),
+-      video_resource_updater_.get(), rect, resource_provider_.get());
 -
 -  RenderPassList pass_list;
 -  pass_list.push_back(pass.Pass());
@@ -597,14 +397,10 @@ index b30b0a5..81ad842 100644
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
 -  // YUV of (149,43,21) should be green (0,255,0) in RGB.
--  CreateTestYUVVideoDrawQuad_Solid(shared_state,
--                                   media::VideoFrame::YV12J,
--                                   false,
--                                   gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                   149,
--                                   43,
--                                   21,
--                                   pass.get());
+-  CreateTestYUVVideoDrawQuad_Solid(
+-      shared_state, media::VideoFrame::YV12J, false,
+-      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), 149, 43, 21, pass.get(),
+-      video_resource_updater_.get(), rect, resource_provider_.get());
 -
 -  RenderPassList pass_list;
 -  pass_list.push_back(pass.Pass());
@@ -642,14 +438,10 @@ index b30b0a5..81ad842 100644
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
 -  // Dark grey in JPEG color range (in MPEG, this is black).
--  CreateTestYUVVideoDrawQuad_Solid(shared_state,
--                                   media::VideoFrame::YV12J,
--                                   false,
--                                   gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                   15,
--                                   128,
--                                   128,
--                                   pass.get());
+-  CreateTestYUVVideoDrawQuad_Solid(
+-      shared_state, media::VideoFrame::YV12J, false,
+-      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), 15, 128, 128, pass.get(),
+-      video_resource_updater_.get(), rect, resource_provider_.get());
 -
 -  RenderPassList pass_list;
 -  pass_list.push_back(pass.Pass());
@@ -669,11 +461,10 @@ index b30b0a5..81ad842 100644
 -  SharedQuadState* shared_state =
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
--  CreateTestYUVVideoDrawQuad_Striped(shared_state,
--                                     media::VideoFrame::YV12A,
--                                     false,
--                                     gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                     pass.get());
+-  CreateTestYUVVideoDrawQuad_Striped(shared_state, media::VideoFrame::YV12A,
+-                                     false, gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
+-                                     pass.get(), video_resource_updater_.get(),
+-                                     rect, resource_provider_.get());
 -
 -  SolidColorDrawQuad* color_quad =
 -      pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
@@ -697,11 +488,10 @@ index b30b0a5..81ad842 100644
 -  SharedQuadState* shared_state =
 -      CreateTestSharedQuadState(gfx::Transform(), rect, pass.get());
 -
--  CreateTestYUVVideoDrawQuad_Striped(shared_state,
--                                     media::VideoFrame::YV12A,
--                                     true,
--                                     gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
--                                     pass.get());
+-  CreateTestYUVVideoDrawQuad_Striped(shared_state, media::VideoFrame::YV12A,
+-                                     true, gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f),
+-                                     pass.get(), video_resource_updater_.get(),
+-                                     rect, resource_provider_.get());
 -
 -  SolidColorDrawQuad* color_quad =
 -      pass->CreateAndAppendDrawQuad<SolidColorDrawQuad>();
@@ -718,7 +508,7 @@ index b30b0a5..81ad842 100644
 -
  TYPED_TEST(RendererPixelTest, FastPassColorFilterAlpha) {
    gfx::Rect viewport_rect(this->device_viewport_size_);
-
+ 
 diff --git a/cc/quads/yuv_video_draw_quad.h b/cc/quads/yuv_video_draw_quad.h
 index 358929e..15bce98 100644
 --- a/cc/quads/yuv_video_draw_quad.h
@@ -729,22 +519,22 @@ index 358929e..15bce98 100644
  #include "cc/base/cc_export.h"
 -#include "cc/layers/video_layer_impl.h"
  #include "cc/quads/draw_quad.h"
-
+ 
  namespace cc {
 diff --git a/cc/resources/drawing_display_item.cc b/cc/resources/drawing_display_item.cc
 index 648f9de..6dffad9 100644
 --- a/cc/resources/drawing_display_item.cc
 +++ b/cc/resources/drawing_display_item.cc
 @@ -6,6 +6,7 @@
-
+ 
  #include <string>
-
+ 
 +#include "base/logging.h"
  #include "base/strings/stringprintf.h"
  #include "base/trace_event/trace_event_argument.h"
  #include "cc/debug/picture_debug_util.h"
 diff --git a/cc/trees/layer_tree_host_impl_unittest.cc b/cc/trees/layer_tree_host_impl_unittest.cc
-index 4b2bc75..7ffa683 100644
+index 4289a99..4e3230b 100644
 --- a/cc/trees/layer_tree_host_impl_unittest.cc
 +++ b/cc/trees/layer_tree_host_impl_unittest.cc
 @@ -27,7 +27,6 @@
@@ -776,7 +566,7 @@ index 4b2bc75..7ffa683 100644
  using ::testing::AtLeast;
  using ::testing::_;
 -using media::VideoFrame;
-
+ 
  namespace cc {
  namespace {
 @@ -96,7 +92,6 @@ class LayerTreeHostImplTest : public testing::Test,
@@ -785,12 +575,12 @@ index 4b2bc75..7ffa683 100644
          current_priority_cutoff_value_(0) {
 -    media::InitializeMediaLibraryForTesting();
    }
-
+ 
    LayerTreeSettings DefaultSettings() {
-@@ -5486,18 +5481,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
+@@ -5473,18 +5468,6 @@ TEST_F(LayerTreeHostImplTest, LayersFreeTextures) {
    root_layer->SetBounds(gfx::Size(10, 10));
    root_layer->SetHasRenderSurface(true);
-
+ 
 -  scoped_refptr<VideoFrame> softwareFrame =
 -      media::VideoFrame::CreateColorFrame(
 -          gfx::Size(4, 4), 0x80, 0x80, 0x80, base::TimeDelta());
@@ -806,10 +596,10 @@ index 4b2bc75..7ffa683 100644
    scoped_ptr<IOSurfaceLayerImpl> io_surface_layer =
        IOSurfaceLayerImpl::Create(host_impl_->active_tree(), 5);
    io_surface_layer->SetBounds(gfx::Size(10, 10));
-@@ -6578,16 +6561,6 @@ TEST_F(LayerTreeHostImplTest,
+@@ -6566,16 +6549,6 @@ TEST_F(LayerTreeHostImplTest,
    scoped_ptr<SolidColorLayerImpl> root_layer =
        SolidColorLayerImpl::Create(host_impl_->active_tree(), 1);
-
+ 
 -  // VideoLayerImpl will not be drawn.
 -  FakeVideoFrameProvider provider;
 -  scoped_ptr<VideoLayerImpl> video_layer = VideoLayerImpl::Create(
@@ -824,7 +614,7 @@ index 4b2bc75..7ffa683 100644
    EXPECT_EQ(DRAW_SUCCESS, host_impl_->PrepareToDraw(&frame));
    host_impl_->DrawLayers(&frame, gfx::FrameTime::Now());
 diff --git a/cc/trees/layer_tree_host_unittest.cc b/cc/trees/layer_tree_host_unittest.cc
-index c52132e..1be61a5 100644
+index 68a1f58..2ec6e66 100644
 --- a/cc/trees/layer_tree_host_unittest.cc
 +++ b/cc/trees/layer_tree_host_unittest.cc
 @@ -18,7 +18,6 @@
@@ -843,10 +633,10 @@ index c52132e..1be61a5 100644
  #include "cc/test/geometry_test_utils.h"
  #include "cc/test/impl_side_painting_settings.h"
  #include "cc/test/layer_tree_test.h"
-@@ -4163,28 +4161,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
+@@ -4170,28 +4168,6 @@ class LayerInvalidateCausesDraw : public LayerTreeHostTest {
    int num_draws_;
  };
-
+ 
 -// VideoLayer must support being invalidated and then passing that along
 -// to the compositor thread, even though no resources are updated in
 -// response to that invalidation.
@@ -900,7 +690,7 @@ index c99180d..cc536f4 100644
 -#include "media/base/media.h"
 -
 -using media::VideoFrame;
-
+ 
  namespace cc {
  namespace {
 @@ -66,7 +60,6 @@ class LayerTreeHostContextTest : public LayerTreeTest {
@@ -909,12 +699,12 @@ index c99180d..cc536f4 100644
          async_output_surface_creation_(false) {
 -    media::InitializeMediaLibraryForTesting();
    }
-
+ 
    void LoseContext() {
 @@ -1055,41 +1048,6 @@ class LayerTreeHostContextTestDontUseLostResources
      layer_with_mask->SetMaskLayer(mask.get());
      root->AddChild(layer_with_mask);
-
+ 
 -    scoped_refptr<VideoLayer> video_color =
 -        VideoLayer::Create(&color_frame_provider_, media::VIDEO_ROTATION_0);
 -    video_color->SetBounds(gfx::Size(10, 10));
@@ -954,7 +744,7 @@ index c99180d..cc536f4 100644
        // TODO(danakj): IOSurface layer can not be transported. crbug.com/239335
        scoped_refptr<IOSurfaceLayer> io_surface = IOSurfaceLayer::Create();
 @@ -1119,14 +1077,6 @@ class LayerTreeHostContextTestDontUseLostResources
-
+ 
    void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
      LayerTreeHostContextTest::CommitCompleteOnThread(host_impl);
 -
@@ -966,7 +756,7 @@ index c99180d..cc536f4 100644
 -      scaled_hw_frame_provider_.set_frame(NULL);
 -    }
    }
-
+ 
    DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
 @@ -1175,14 +1125,6 @@ class LayerTreeHostContextTestDontUseLostResources
    scoped_refptr<DelegatedFrameResourceCollection>
@@ -981,5 +771,5 @@ index c99180d..cc536f4 100644
 -  FakeVideoFrameProvider hw_frame_provider_;
 -  FakeVideoFrameProvider scaled_hw_frame_provider_;
  };
-
+ 
  SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostContextTestDontUseLostResources);

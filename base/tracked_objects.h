@@ -240,13 +240,6 @@ class BASE_EXPORT Births: public BirthOnThread {
   // When we have a birth we update the count for this birthplace.
   void RecordBirth();
 
-  // When a birthplace is changed (updated), we need to decrement the counter
-  // for the old instance.
-  void ForgetBirth();
-
-  // Hack to quickly reset all counts to zero.
-  void Clear();
-
  private:
   // The number of births on this thread for our location_.
   int birth_count_;
@@ -283,9 +276,6 @@ class BASE_EXPORT DeathData {
   int32 queue_duration_sum() const;
   int32 queue_duration_max() const;
   int32 queue_duration_sample() const;
-
-  // Reset the max values to zero.
-  void ResetMax();
 
   // Reset all tallies to zero. This is used as a hack on realtime data.
   void Clear();
@@ -386,9 +376,7 @@ class BASE_EXPORT ThreadData {
   static ThreadData* Get();
 
   // Fills |process_data| with all the recursive results in our process.
-  // During the scavenging, if |reset_max| is true, then the DeathData instances
-  // max-values are reset to zero during this scan.
-  static void Snapshot(bool reset_max, ProcessDataSnapshot* process_data);
+  static void Snapshot(ProcessDataSnapshot* process_data);
 
   // Finds (or creates) a place to count births from the given location in this
   // thread, and increment that tally.
@@ -426,12 +414,6 @@ class BASE_EXPORT ThreadData {
       const TaskStopwatch& stopwatch);
 
   const std::string& thread_name() const { return thread_name_; }
-
-  // Hack: asynchronously clear all birth counts and death tallies data values
-  // in all ThreadData instances.  The numerical (zeroing) part is done without
-  // use of a locks or atomics exchanges, and may (for int64 values) produce
-  // bogus counts VERY rarely.
-  static void ResetAllThreadData();
 
   // Initializes all statics if needed (this initialization call should be made
   // while we are single threaded). Returns false if unable to initialize.
@@ -530,11 +512,8 @@ class BASE_EXPORT ThreadData {
 
   // Snapshot (under a lock) the profiled data for the tasks in each ThreadData
   // instance.  Also updates the |birth_counts| tally for each task to keep
-  // track of the number of living instances of the task.  If |reset_max| is
-  // true, then the max values in each DeathData instance are reset during the
-  // scan.
-  static void SnapshotAllExecutedTasks(bool reset_max,
-                                       ProcessDataSnapshot* process_data,
+  // track of the number of living instances of the task.
+  static void SnapshotAllExecutedTasks(ProcessDataSnapshot* process_data,
                                        BirthCountMap* birth_counts);
 
   // Snapshots (under a lock) the profiled data for the tasks for this thread
@@ -542,25 +521,16 @@ class BASE_EXPORT ThreadData {
   // with with entries in the death_map_ -- into |process_data|.  Also updates
   // the |birth_counts| tally for each task to keep track of the number of
   // living instances of the task -- that is, each task maps to the number of
-  // births for the task that have not yet been balanced by a death.  If
-  // |reset_max| is true, then the max values in each DeathData instance are
-  // reset during the scan.
-  void SnapshotExecutedTasks(bool reset_max,
-                             ProcessDataSnapshot* process_data,
+  // births for the task that have not yet been balanced by a death.
+  void SnapshotExecutedTasks(ProcessDataSnapshot* process_data,
                              BirthCountMap* birth_counts);
 
   // Using our lock, make a copy of the specified maps.  This call may be made
   // on  non-local threads, which necessitate the use of the lock to prevent
-  // the map(s) from being reallocated while they are copied. If |reset_max| is
-  // true, then, just after we copy the DeathMap, we will set the max values to
-  // zero in the active DeathMap (not the snapshot).
-  void SnapshotMaps(bool reset_max,
-                    BirthMap* birth_map,
+  // the map(s) from being reallocated while they are copied.
+  void SnapshotMaps(BirthMap* birth_map,
                     DeathMap* death_map,
                     ParentChildSet* parent_child_set);
-
-  // Using our lock to protect the iteration, Clear all birth and death data.
-  void Reset();
 
   // This method is called by the TLS system when a thread terminates.
   // The argument may be NULL if this thread has never tracked a birth or death.

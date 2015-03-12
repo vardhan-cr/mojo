@@ -380,10 +380,6 @@ class CC_EXPORT LayerTreeHostImpl
 
   scoped_ptr<ScrollAndScaleSet> ProcessScrollDeltas();
 
-  bool needs_animate_layers() const {
-    return !animation_registrar_->active_animation_controllers().empty();
-  }
-
   void set_max_memory_needed_bytes(size_t bytes) {
     max_memory_needed_bytes_ = bytes;
   }
@@ -454,14 +450,10 @@ class CC_EXPORT LayerTreeHostImpl
     return begin_impl_frame_interval_;
   }
 
-  void AsValueInto(base::trace_event::TracedValue* value) const;
   void AsValueWithFrameInto(FrameData* frame,
                             base::trace_event::TracedValue* value) const;
-  scoped_refptr<base::trace_event::ConvertableToTraceFormat> AsValue() const;
   scoped_refptr<base::trace_event::ConvertableToTraceFormat> AsValueWithFrame(
       FrameData* frame) const;
-  scoped_refptr<base::trace_event::ConvertableToTraceFormat>
-  ActivationStateAsValue() const;
   void ActivationStateAsValueInto(base::trace_event::TracedValue* value) const;
 
   bool page_scale_animation_active() const { return !!page_scale_animation_; }
@@ -614,6 +606,7 @@ class CC_EXPORT LayerTreeHostImpl
 
   // |resource_provider_| and |tile_manager_| can be NULL, e.g. when using tile-
   // free rendering - see OutputSurface::ForcedDrawToSoftwareDevice().
+  // |tile_manager_| can also be NULL when raster_enabled is false.
   scoped_ptr<ResourceProvider> resource_provider_;
   scoped_ptr<TileManager> tile_manager_;
   bool use_gpu_rasterization_;

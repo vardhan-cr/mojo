@@ -390,6 +390,16 @@ void GLES2TraceImplementation::DrawElements(GLenum mode,
   gl_->DrawElements(mode, count, type, indices);
 }
 
+void GLES2TraceImplementation::DrawRangeElements(GLenum mode,
+                                                 GLuint start,
+                                                 GLuint end,
+                                                 GLsizei count,
+                                                 GLenum type,
+                                                 const void* indices) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::DrawRangeElements");
+  gl_->DrawRangeElements(mode, start, end, count, type, indices);
+}
+
 void GLES2TraceImplementation::Enable(GLenum cap) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::Enable");
   gl_->Enable(cap);
@@ -1681,6 +1691,19 @@ void GLES2TraceImplementation::UnmapBufferSubDataCHROMIUM(const void* mem) {
   TRACE_EVENT_BINARY_EFFICIENT0("gpu",
                                 "GLES2Trace::UnmapBufferSubDataCHROMIUM");
   gl_->UnmapBufferSubDataCHROMIUM(mem);
+}
+
+void* GLES2TraceImplementation::MapBufferRange(GLenum target,
+                                               GLintptr offset,
+                                               GLsizeiptr size,
+                                               GLbitfield access) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::MapBufferRange");
+  return gl_->MapBufferRange(target, offset, size, access);
+}
+
+GLboolean GLES2TraceImplementation::UnmapBuffer(GLenum target) {
+  TRACE_EVENT_BINARY_EFFICIENT0("gpu", "GLES2Trace::UnmapBuffer");
+  return gl_->UnmapBuffer(target);
 }
 
 void* GLES2TraceImplementation::MapTexSubImage2DCHROMIUM(GLenum target,

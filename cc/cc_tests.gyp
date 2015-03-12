@@ -83,6 +83,7 @@
       'resources/picture_pile_impl_unittest.cc',
       'resources/picture_pile_unittest.cc',
       'resources/picture_unittest.cc',
+      'resources/pixel_ref_map_unittest.cc',
       'resources/platform_color_unittest.cc',
       'resources/prioritized_resource_unittest.cc',
       'resources/resource_provider_unittest.cc',
@@ -105,7 +106,6 @@
       'test/test_web_graphics_context_3d_unittest.cc',
       'trees/blocking_task_runner_unittest.cc',
       'trees/damage_tracker_unittest.cc',
-      'trees/layer_sorter_unittest.cc',
       'trees/layer_tree_host_common_unittest.cc',
       'trees/layer_tree_host_impl_unittest.cc',
       'trees/layer_tree_host_pixeltest_blending.cc',
@@ -459,6 +459,17 @@
           ],
           'sources': [
             'cc_unittests.isolate',
+          ],
+          'conditions': [
+            # crbug.com/464062 xdisplaycheck is used to run cc_unittests_run on
+            # the linux try bots when using X11.
+            ['OS=="linux" and use_ozone==0',
+              {
+                'dependencies': [
+                  '../tools/xdisplaycheck/xdisplaycheck.gyp:xdisplaycheck',
+                ],
+              }
+            ],
           ],
         },
       ],

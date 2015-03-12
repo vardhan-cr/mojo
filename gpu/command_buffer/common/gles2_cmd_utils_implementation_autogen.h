@@ -4496,6 +4496,12 @@ std::string GLES2Util::GetStringBufferTarget(uint32_t value) {
   static const EnumToString string_table[] = {
       {GL_ARRAY_BUFFER, "GL_ARRAY_BUFFER"},
       {GL_ELEMENT_ARRAY_BUFFER, "GL_ELEMENT_ARRAY_BUFFER"},
+      {GL_COPY_READ_BUFFER, "GL_COPY_READ_BUFFER"},
+      {GL_COPY_WRITE_BUFFER, "GL_COPY_WRITE_BUFFER"},
+      {GL_PIXEL_PACK_BUFFER, "GL_PIXEL_PACK_BUFFER"},
+      {GL_PIXEL_UNPACK_BUFFER, "GL_PIXEL_UNPACK_BUFFER"},
+      {GL_TRANSFORM_FEEDBACK_BUFFER, "GL_TRANSFORM_FEEDBACK_BUFFER"},
+      {GL_UNIFORM_BUFFER, "GL_UNIFORM_BUFFER"},
   };
   return GLES2Util::GetQualifiedEnumString(string_table,
                                            arraysize(string_table), value);
@@ -4834,6 +4840,19 @@ std::string GLES2Util::GetStringIndexedBufferTarget(uint32_t value) {
   static const EnumToString string_table[] = {
       {GL_TRANSFORM_FEEDBACK_BUFFER, "GL_TRANSFORM_FEEDBACK_BUFFER"},
       {GL_UNIFORM_BUFFER, "GL_UNIFORM_BUFFER"},
+  };
+  return GLES2Util::GetQualifiedEnumString(string_table,
+                                           arraysize(string_table), value);
+}
+
+std::string GLES2Util::GetStringMapBufferAccess(uint32_t value) {
+  static const EnumToString string_table[] = {
+      {GL_MAP_READ_BIT, "GL_MAP_READ_BIT"},
+      {GL_MAP_WRITE_BIT, "GL_MAP_WRITE_BIT"},
+      {GL_MAP_INVALIDATE_RANGE_BIT, "GL_MAP_INVALIDATE_RANGE_BIT"},
+      {GL_MAP_INVALIDATE_BUFFER_BIT, "GL_MAP_INVALIDATE_BUFFER_BIT"},
+      {GL_MAP_FLUSH_EXPLICIT_BIT, "GL_MAP_FLUSH_EXPLICIT_BIT"},
+      {GL_MAP_UNSYNCHRONIZED_BIT, "GL_MAP_UNSYNCHRONIZED_BIT"},
   };
   return GLES2Util::GetQualifiedEnumString(string_table,
                                            arraysize(string_table), value);

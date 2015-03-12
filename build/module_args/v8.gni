@@ -6,6 +6,9 @@ if (is_android) {
   import("//build/config/android/config.gni")
 }
 
+# TODO(sky): nuke this. Temporary while sorting out http://crbug.com/465456.
+enable_correct_v8_arch = false
+
 # Many V8 users in mojo do not support external startup data for V8, so
 # we disable it. If enabled, special care should be taken to ensure the
 # appropriate startup data is correctly bundled for apps.

@@ -1,8 +1,8 @@
 diff --git a/skia/BUILD.gn b/skia/BUILD.gn
-index c793e0b..85ccce7 100644
+index 248bc1c..2357a7f 100644
 --- a/skia/BUILD.gn
 +++ b/skia/BUILD.gn
-@@ -12,18 +12,6 @@ if (cpu_arch == "arm") {
+@@ -12,18 +12,6 @@ if (current_cpu == "arm") {
  skia_support_gpu = !is_ios
  skia_support_pdf = !is_ios && (enable_basic_printing || enable_print_preview)
  
@@ -21,8 +21,8 @@ index c793e0b..85ccce7 100644
  # The list of Skia defines that are to be set for chromium.
  gypi_skia_defines =
      exec_script("//build/gypi_to_gn.py",
-@@ -133,8 +121,7 @@ config("skia_config") {
-     "//third_party/skia/src/core",
+@@ -130,8 +118,7 @@ config("skia_config") {
+     "//third_party/skia/include/utils",
    ]
  
 -  defines = gypi_blink_skia_defines.blink_skia_defines

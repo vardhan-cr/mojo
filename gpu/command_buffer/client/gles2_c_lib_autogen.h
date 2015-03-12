@@ -259,6 +259,15 @@ void GLES2DrawElements(GLenum mode,
                        const void* indices) {
   gles2::GetGLContext()->DrawElements(mode, count, type, indices);
 }
+void GLES2DrawRangeElements(GLenum mode,
+                            GLuint start,
+                            GLuint end,
+                            GLsizei count,
+                            GLenum type,
+                            const void* indices) {
+  gles2::GetGLContext()->DrawRangeElements(mode, start, end, count, type,
+                                           indices);
+}
 void GLES2Enable(GLenum cap) {
   gles2::GetGLContext()->Enable(cap);
 }
@@ -1065,6 +1074,15 @@ void* GLES2MapBufferSubDataCHROMIUM(GLuint target,
 void GLES2UnmapBufferSubDataCHROMIUM(const void* mem) {
   gles2::GetGLContext()->UnmapBufferSubDataCHROMIUM(mem);
 }
+void* GLES2MapBufferRange(GLenum target,
+                          GLintptr offset,
+                          GLsizeiptr size,
+                          GLbitfield access) {
+  return gles2::GetGLContext()->MapBufferRange(target, offset, size, access);
+}
+GLboolean GLES2UnmapBuffer(GLenum target) {
+  return gles2::GetGLContext()->UnmapBuffer(target);
+}
 void* GLES2MapTexSubImage2DCHROMIUM(GLenum target,
                                     GLint level,
                                     GLint xoffset,
@@ -1555,6 +1573,10 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glDrawElements",
      reinterpret_cast<GLES2FunctionPointer>(glDrawElements),
+    },
+    {
+     "glDrawRangeElements",
+     reinterpret_cast<GLES2FunctionPointer>(glDrawRangeElements),
     },
     {
      "glEnable",
@@ -2291,6 +2313,14 @@ extern const NameToFunc g_gles2_function_table[] = {
     {
      "glUnmapBufferSubDataCHROMIUM",
      reinterpret_cast<GLES2FunctionPointer>(glUnmapBufferSubDataCHROMIUM),
+    },
+    {
+     "glMapBufferRange",
+     reinterpret_cast<GLES2FunctionPointer>(glMapBufferRange),
+    },
+    {
+     "glUnmapBuffer",
+     reinterpret_cast<GLES2FunctionPointer>(glUnmapBuffer),
     },
     {
      "glMapTexSubImage2DCHROMIUM",

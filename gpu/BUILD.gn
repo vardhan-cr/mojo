@@ -33,6 +33,7 @@
 # gpu/skia_bindings/skia_bindings.gyp:gpu_skia_bindings => //gpu/skia_bindings
 
 import("//testing/test.gni")
+import("//build/config/ui.gni")
 
 component("gpu") {
   public_deps = [
@@ -183,6 +184,7 @@ test("gpu_unittests") {
     "command_buffer/service/gles2_cmd_decoder_unittest_attribs.cc",
     "command_buffer/service/gles2_cmd_decoder_unittest_base.cc",
     "command_buffer/service/gles2_cmd_decoder_unittest_base.h",
+    "command_buffer/service/gles2_cmd_decoder_unittest_buffers.cc",
     "command_buffer/service/gles2_cmd_decoder_unittest_context_state.cc",
     "command_buffer/service/gles2_cmd_decoder_unittest_drawing.cc",
     "command_buffer/service/gles2_cmd_decoder_unittest_extensions.cc",
@@ -259,6 +261,7 @@ test("gpu_perftests") {
     "//base",
     "//base/test:test_support",
     "//gpu/command_buffer/service",
+    "//testing/gmock",
     "//testing/gtest",
     "//testing/perf",
     "//ui/gfx/geometry",
@@ -279,4 +282,26 @@ test("angle_unittests") {
     "//testing/gtest",
     "//third_party/angle:translator_static",
   ]
+}
+
+if (is_linux && !is_chromeos && target_cpu != "arm" && use_x11) {
+  executable("compositor_model_bench") {
+    sources = [
+      "tools/compositor_model_bench/compositor_model_bench.cc",
+      "tools/compositor_model_bench/forward_render_model.cc",
+      "tools/compositor_model_bench/render_model_utils.cc",
+      "tools/compositor_model_bench/render_models.cc",
+      "tools/compositor_model_bench/render_tree.cc",
+      "tools/compositor_model_bench/shaders.cc",
+    ]
+
+    libs = [ "GL" ]
+
+    configs += [ "//build/config/linux:x11" ]
+
+    deps = [
+      "//base",
+      "//ui/gl",
+    ]
+  }
 }

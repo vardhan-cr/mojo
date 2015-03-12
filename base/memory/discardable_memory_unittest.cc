@@ -38,8 +38,12 @@ TEST_P(DiscardableMemoryTest, IsNamed) {
 }
 
 bool IsNativeType(DiscardableMemoryType type) {
-  return type == DISCARDABLE_MEMORY_TYPE_ASHMEM ||
-         type == DISCARDABLE_MEMORY_TYPE_MACH;
+#if defined(OS_ANDROID)
+    // SHMEM is backed by native discardable memory on Android.
+  return type == DISCARDABLE_MEMORY_TYPE_SHMEM;
+#else
+  return false;
+#endif
 }
 
 TEST_P(DiscardableMemoryTest, SupportedNatively) {
@@ -65,14 +69,7 @@ TEST_P(DiscardableMemoryTest, LockAndUnLock) {
   const scoped_ptr<DiscardableMemory> memory(CreateLockedMemory(kSize));
   ASSERT_TRUE(memory);
   void* addr = memory->Memory();
-  ASSERT_NE(nullptr, addr);
-
-  memory->Unlock();
-
-  EXPECT_NE(DISCARDABLE_MEMORY_LOCK_STATUS_FAILED, memory->Lock());
-  addr = memory->Memory();
-  ASSERT_NE(nullptr, addr);
-
+  EXPECT_NE(nullptr, addr);
   memory->Unlock();
 }
 
@@ -107,7 +104,7 @@ TEST_P(DiscardableMemoryTest, AddressSpace) {
     memory = CreateLockedMemory(kLargeSize);
     ASSERT_TRUE(memory);
     void* addr = memory->Memory();
-    ASSERT_NE(nullptr, addr);
+    EXPECT_NE(nullptr, addr);
     memory->Unlock();
   }
 }

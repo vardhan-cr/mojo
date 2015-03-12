@@ -2474,14 +2474,6 @@ bool GLES2DecoderImpl::Initialize(
     set_log_commands(true);
   }
 
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kEnableUnsafeES3APIs) &&
-      attrib_parser.es3_context_required) {
-    // TODO(zmo): We need to implement capabilities check to ensure we can
-    // actually create ES3 contexts.
-    set_unsafe_es3_apis_enabled(true);
-  }
-
   compile_shader_always_succeeds_ =
       base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kCompileShaderAlwaysSucceeds);
@@ -2515,6 +2507,14 @@ bool GLES2DecoderImpl::Initialize(
     return false;
   }
   CHECK_GL_ERROR();
+
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kEnableUnsafeES3APIs) &&
+      attrib_parser.es3_context_required &&
+      feature_info_->IsES3Capable()) {
+    feature_info_->EnableES3Validators();
+    set_unsafe_es3_apis_enabled(true);
+  }
 
   disallowed_features_ = disallowed_features;
 
@@ -3113,6 +3113,7 @@ void GLES2DecoderImpl::DeleteBuffersHelper(
   for (GLsizei ii = 0; ii < n; ++ii) {
     Buffer* buffer = GetBuffer(client_ids[ii]);
     if (buffer && !buffer->IsDeleted()) {
+      buffer->RemoveMappedRange();
       state_.vertex_attrib_manager->Unbind(buffer);
       if (state_.bound_array_buffer.get() == buffer) {
         state_.bound_array_buffer = NULL;
@@ -12285,6 +12286,118 @@ error::Error GLES2DecoderImpl::HandleWaitSync(
     return error::kNoError;
   }
   glWaitSync(service_sync, flags, timeout);
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleMapBufferRange(
+    uint32_t immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled()) {
+    return error::kUnknownCommand;
+  }
+  const gles2::cmds::MapBufferRange& c =
+      *static_cast<const gles2::cmds::MapBufferRange*>(cmd_data);
+  GLenum target = static_cast<GLenum>(c.target);
+  GLbitfield access = static_cast<GLbitfield>(c.access);
+  GLintptr offset = static_cast<GLintptr>(c.offset);
+  GLsizeiptr size = static_cast<GLsizeiptr>(c.size);
+
+  typedef cmds::MapBufferRange::Result Result;
+  Result* result = GetSharedMemoryAs<Result*>(
+      c.result_shm_id, c.result_shm_offset, sizeof(*result));
+  if (!result) {
+    return error::kOutOfBounds;
+  }
+  if (*result != 0) {
+    *result = 0;
+    return error::kInvalidArguments;
+  }
+  int8_t* mem =
+      GetSharedMemoryAs<int8_t*>(c.data_shm_id, c.data_shm_offset, size);
+  if (!mem) {
+    return error::kOutOfBounds;
+  }
+
+  GLbitfield mask = GL_MAP_INVALIDATE_BUFFER_BIT;
+  if ((access & mask) == mask) {
+    // TODO(zmo): To be on the safe side, always map
+    // GL_MAP_INVALIDATE_BUFFER_BIT to GL_MAP_INVALIDATE_RANGE_BIT.
+    access = (access & ~GL_MAP_INVALIDATE_BUFFER_BIT);
+    access = (access | GL_MAP_INVALIDATE_RANGE_BIT);
+  }
+  // TODO(zmo): Always filter out GL_MAP_UNSYNCHRONIZED_BIT to get rid of
+  // undefined behaviors.
+  mask = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+  if ((access & mask) == mask) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION, "MapBufferRange",
+                       "incompatible access bits");
+    return error::kNoError;
+  }
+  access = (access & ~GL_MAP_UNSYNCHRONIZED_BIT);
+  if ((access & GL_MAP_WRITE_BIT) == GL_MAP_WRITE_BIT &&
+      (access & GL_MAP_INVALIDATE_RANGE_BIT) == 0) {
+    access = (access | GL_MAP_READ_BIT);
+  }
+  void* ptr = glMapBufferRange(target, offset, size, access);
+  if (ptr == nullptr) {
+    return error::kNoError;
+  }
+  Buffer* buffer = buffer_manager()->GetBufferInfoForTarget(&state_, target);
+  DCHECK(buffer);
+  buffer->SetMappedRange(offset, size, access, ptr,
+                         GetSharedMemoryBuffer(c.data_shm_id));
+  if ((access & GL_MAP_INVALIDATE_RANGE_BIT) == 0) {
+    memcpy(mem, ptr, size);
+  }
+  *result = 1;
+  return error::kNoError;
+}
+
+error::Error GLES2DecoderImpl::HandleUnmapBuffer(
+    uint32_t immediate_data_size, const void* cmd_data) {
+  if (!unsafe_es3_apis_enabled()) {
+    return error::kUnknownCommand;
+  }
+  const gles2::cmds::UnmapBuffer& c =
+      *static_cast<const gles2::cmds::UnmapBuffer*>(cmd_data);
+  GLenum target = static_cast<GLenum>(c.target);
+
+  Buffer* buffer = buffer_manager()->GetBufferInfoForTarget(&state_, target);
+  if (!buffer) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION, "UnmapBuffer", "no buffer bound");
+    return error::kNoError;
+  }
+  const Buffer::MappedRange* mapped_range = buffer->GetMappedRange();
+  if (!mapped_range) {
+    LOCAL_SET_GL_ERROR(GL_INVALID_OPERATION, "UnmapBuffer",
+                       "buffer is unmapped");
+    return error::kNoError;
+  }
+  if ((mapped_range->access & GL_MAP_WRITE_BIT) == 0 ||
+      (mapped_range->access & GL_MAP_FLUSH_EXPLICIT_BIT) ==
+           GL_MAP_FLUSH_EXPLICIT_BIT) {
+    // If we don't need to write back, or explict flush is required, no copying
+    // back is needed.
+  } else {
+    void* mem = mapped_range->GetShmPointer();
+    if (!mem) {
+      return error::kOutOfBounds;
+    }
+    DCHECK(mapped_range->pointer);
+    memcpy(mapped_range->pointer, mem, mapped_range->size);
+  }
+  buffer->RemoveMappedRange();
+  GLboolean rt = glUnmapBuffer(target);
+  if (rt == GL_FALSE) {
+    // At this point, we have already done the necessary validation, so
+    // GL_FALSE indicates data corruption.
+    // TODO(zmo): We could redo the map / copy data / unmap to recover, but
+    // the second unmap could still return GL_FALSE. For now, we simply lose
+    // the contexts in the share group.
+    LOG(ERROR) << "glUnmapBuffer unexpectedly returned GL_FALSE";
+    group_->LoseContexts(GL_INNOCENT_CONTEXT_RESET_ARB);
+    reset_status_ = GL_GUILTY_CONTEXT_RESET_ARB;
+    return error::kLostContext;
+  }
   return error::kNoError;
 }
 

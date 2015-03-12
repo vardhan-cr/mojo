@@ -62,6 +62,8 @@ component("gfx") {
     "frame_time.h",
     "gpu_memory_buffer.cc",
     "gpu_memory_buffer.h",
+    "hud_font.cc",
+    "hud_font.h",
     "native_widget_types.h",
     "sequential_id_generator.cc",
     "sequential_id_generator.h",

@@ -319,12 +319,8 @@
           'memory/discardable_memory.cc',
           'memory/discardable_memory.h',
           'memory/discardable_memory_android.cc',
-          'memory/discardable_memory_emulated.cc',
-          'memory/discardable_memory_emulated.h',
           'memory/discardable_memory_linux.cc',
           'memory/discardable_memory_mac.cc',
-          'memory/discardable_memory_manager.cc',
-          'memory/discardable_memory_manager.h',
           'memory/discardable_memory_shmem.cc',
           'memory/discardable_memory_shmem.h',
           'memory/discardable_memory_shmem_allocator.cc',
@@ -829,14 +825,6 @@
               ['include', '^threading/platform_thread_linux\\.cc$'],
             ],
           }],
-          ['OS == "android" and _toolset == "target" and >(nacl_untrusted_build)==0', {
-           'sources': [
-             'memory/discardable_memory_ashmem.cc',
-             'memory/discardable_memory_ashmem.h',
-             'memory/discardable_memory_ashmem_allocator.cc',
-             'memory/discardable_memory_ashmem_allocator.h',
-           ],
-          }],
           ['OS == "android" and >(nacl_untrusted_build)==0', {
             'sources!': [
               'base_paths_posix.cc',
@@ -979,10 +967,6 @@
             ],
           }],
           ['(OS == "mac" or OS == "ios") and >(nacl_untrusted_build)==0', {
-            'sources': [
-              'memory/discardable_memory_mach.cc',
-              'memory/discardable_memory_mach.h',
-            ],
             'sources/': [
               ['exclude', '^files/file_path_watcher_stub\\.cc$'],
               ['exclude', '^base_paths_posix\\.cc$'],

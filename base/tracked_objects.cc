@@ -163,11 +163,6 @@ int32 DeathData::queue_duration_sample() const {
   return queue_duration_sample_;
 }
 
-void DeathData::ResetMax() {
-  run_duration_max_ = 0;
-  queue_duration_max_ = 0;
-}
-
 void DeathData::Clear() {
   count_ = 0;
   run_duration_sum_ = 0;
@@ -231,10 +226,6 @@ Births::Births(const Location& location, const ThreadData& current)
 int Births::birth_count() const { return birth_count_; }
 
 void Births::RecordBirth() { ++birth_count_; }
-
-void Births::ForgetBirth() { --birth_count_; }
-
-void Births::Clear() { birth_count_ = 0; }
 
 //------------------------------------------------------------------------------
 // ThreadData maintains the central data for all births and deaths on a single
@@ -399,12 +390,12 @@ void ThreadData::OnThreadTerminationCleanup() {
 }
 
 // static
-void ThreadData::Snapshot(bool reset_max, ProcessDataSnapshot* process_data) {
+void ThreadData::Snapshot(ProcessDataSnapshot* process_data) {
   // Add births that have run to completion to |collected_data|.
   // |birth_counts| tracks the total number of births recorded at each location
   // for which we have not seen a death count.
   BirthCountMap birth_counts;
-  ThreadData::SnapshotAllExecutedTasks(reset_max, process_data, &birth_counts);
+  ThreadData::SnapshotAllExecutedTasks(process_data, &birth_counts);
 
   // Add births that are still active -- i.e. objects that have tallied a birth,
   // but have not yet tallied a matching death, and hence must be either
@@ -587,8 +578,7 @@ void ThreadData::TallyRunInAScopedRegionIfTracking(
 }
 
 // static
-void ThreadData::SnapshotAllExecutedTasks(bool reset_max,
-                                          ProcessDataSnapshot* process_data,
+void ThreadData::SnapshotAllExecutedTasks(ProcessDataSnapshot* process_data,
                                           BirthCountMap* birth_counts) {
   if (!kTrackAllTaskObjects)
     return;  // Not compiled in.
@@ -605,19 +595,18 @@ void ThreadData::SnapshotAllExecutedTasks(bool reset_max,
   for (ThreadData* thread_data = my_list;
        thread_data;
        thread_data = thread_data->next()) {
-    thread_data->SnapshotExecutedTasks(reset_max, process_data, birth_counts);
+    thread_data->SnapshotExecutedTasks(process_data, birth_counts);
   }
 }
 
-void ThreadData::SnapshotExecutedTasks(bool reset_max,
-                                       ProcessDataSnapshot* process_data,
+void ThreadData::SnapshotExecutedTasks(ProcessDataSnapshot* process_data,
                                        BirthCountMap* birth_counts) {
   // Get copy of data, so that the data will not change during the iterations
   // and processing.
   ThreadData::BirthMap birth_map;
   ThreadData::DeathMap death_map;
   ThreadData::ParentChildSet parent_child_set;
-  SnapshotMaps(reset_max, &birth_map, &death_map, &parent_child_set);
+  SnapshotMaps(&birth_map, &death_map, &parent_child_set);
 
   for (ThreadData::DeathMap::const_iterator it = death_map.begin();
        it != death_map.end(); ++it) {
@@ -641,8 +630,7 @@ void ThreadData::SnapshotExecutedTasks(bool reset_max,
 }
 
 // This may be called from another thread.
-void ThreadData::SnapshotMaps(bool reset_max,
-                              BirthMap* birth_map,
+void ThreadData::SnapshotMaps(BirthMap* birth_map,
                               DeathMap* death_map,
                               ParentChildSet* parent_child_set) {
   base::AutoLock lock(map_lock_);
@@ -652,8 +640,6 @@ void ThreadData::SnapshotMaps(bool reset_max,
   for (DeathMap::iterator it = death_map_.begin();
        it != death_map_.end(); ++it) {
     (*death_map)[it->first] = it->second;
-    if (reset_max)
-      it->second.ResetMax();
   }
 
   if (!kTrackParentChildLinks)
@@ -662,26 +648,6 @@ void ThreadData::SnapshotMaps(bool reset_max,
   for (ParentChildSet::iterator it = parent_child_set_.begin();
        it != parent_child_set_.end(); ++it)
     parent_child_set->insert(*it);
-}
-
-// static
-void ThreadData::ResetAllThreadData() {
-  ThreadData* my_list = first();
-
-  for (ThreadData* thread_data = my_list;
-       thread_data;
-       thread_data = thread_data->next())
-    thread_data->Reset();
-}
-
-void ThreadData::Reset() {
-  base::AutoLock lock(map_lock_);
-  for (DeathMap::iterator it = death_map_.begin();
-       it != death_map_.end(); ++it)
-    it->second.Clear();
-  for (BirthMap::iterator it = birth_map_.begin();
-       it != birth_map_.end(); ++it)
-    it->second->Clear();
 }
 
 static void OptionallyInitializeAlternateTimer() {

@@ -416,6 +416,9 @@
       # See https://code.google.com/p/sawbuck/wiki/SyzyASanHowTo
       'syzyasan%': 0,
 
+      # Enable crash reporting via Kasko.
+      'kasko%': 0,
+
       # Enable building with LSan (Clang's -fsanitize=leak option).
       # -fsanitize=leak only works with clang, but lsan=1 implies clang=1
       # See https://sites.google.com/a/chromium.org/dev/developers/testing/leaksanitizer
@@ -643,6 +646,10 @@
       # Libxkbcommon usage.
       'use_xkbcommon%': 0,
 
+      # Control Flow Integrity for virtual calls.
+      # See http://clang.llvm.org/docs/ControlFlowIntegrity.html
+      'cfi_vptr%': 0,
+
       'conditions': [
         # A flag for POSIX platforms
         ['OS=="win"', {
@@ -771,7 +778,6 @@
         }],
 
         ['OS=="mac" or OS=="ios"', {
-          'native_discardable_memory%': 1,
           'native_memory_pressure_signals%': 1,
         }],
 
@@ -808,7 +814,6 @@
           'enable_supervised_users%': 0,
           'enable_task_manager%': 0,
           'use_system_libcxx%': 1,
-          'support_pre_M6_history_database%': 0,
         }],
 
         # Use GPU accelerated cross process image transport by default
@@ -1063,9 +1068,6 @@
       'google_default_client_secret%': '',
       # Native Client is enabled by default.
       'disable_nacl%': '0',
-
-      # Set to 1 to support old history files
-      'support_pre_M6_history_database%': '1',
     },
 
     # Copy conditionally-set variables out one scope.
@@ -1140,6 +1142,7 @@
     'asan_field_padding%': '<(asan_field_padding)',
     'use_sanitizer_options%': '<(use_sanitizer_options)',
     'syzyasan%': '<(syzyasan)',
+    'kasko%': '<(kasko)',
     'syzygy_optimize%': '<(syzygy_optimize)',
     'lsan%': '<(lsan)',
     'msan%': '<(msan)',
@@ -1214,8 +1217,8 @@
     'use_lto_o2%': '<(use_lto_o2)',
     'gold_icf_level%': '<(gold_icf_level)',
     'video_hole%': '<(video_hole)',
-    'support_pre_M6_history_database%': '<(support_pre_M6_history_database)',
     'v8_use_external_startup_data%': '<(v8_use_external_startup_data)',
+    'cfi_vptr%': '<(cfi_vptr)',
 
     # Use system protobuf instead of bundled one.
     'use_system_protobuf%': 0,
@@ -1951,6 +1954,9 @@
           ['asan==1 or syzyasan==1', {
             'win_use_allocator_shim%': 0,
           }],
+          ['syzyasan==1', {
+            'kasko%': 1,
+          }],
           ['component=="shared_library" and "<(GENERATOR)"=="ninja"', {
             # Only enabled by default for ninja because it's buggy in VS.
             # Not enabled for component=static_library because some targets
@@ -2162,8 +2168,19 @@
         'enable_service_discovery%': 1
       }],
       ['clang_use_chrome_plugins==1 and OS!="win"', {
+        'variables': {
+          'conditions': [
+            ['OS=="mac" or OS=="ios"', {
+              'clang_lib_path%': '<!(cd <(DEPTH) && pwd -P)/third_party/llvm-build/Release+Asserts/lib/libFindBadConstructs.dylib',
+            }, { # OS != "mac" or OS != "ios"
+              'clang_lib_path%': '<!(cd <(DEPTH) && pwd -P)/third_party/llvm-build/Release+Asserts/lib/libFindBadConstructs.so',
+            }],
+          ],
+        },
+        # If you change these, also change build/config/clang/BUILD.gn.
         'clang_chrome_plugins_flags%':
-          '<!(python <(DEPTH)/tools/clang/scripts/plugin_flags.py)',
+          '-Xclang -load -Xclang <(clang_lib_path)'
+          ' -Xclang -add-plugin -Xclang find-bad-constructs',
       }],
       ['asan==1 or msan==1 or lsan==1 or tsan==1', {
         'clang%': 1,
@@ -2376,10 +2393,11 @@
       }, {
          'use_seccomp_bpf%': 0,
       }],
-    ],
 
-    # older history files use fts2 instead of fts3
-    'sqlite_enable_fts2%': '<(support_pre_M6_history_database)',
+      ['cfi_vptr==1', {
+        'use_lto%': 1,
+      }],
+    ],
 
     # The path to the ANGLE library.
     'angle_path': '<(DEPTH)/third_party/angle',
@@ -2796,6 +2814,11 @@
             'MEMORY_TOOL_REPLACES_ALLOCATOR',
             'MEMORY_SANITIZER_INITIAL_SIZE',
         ],
+      }],
+      ['kasko==1', {
+        'defines': [
+            'KASKO',
+        ],
         'include_dirs': [
           '<(DEPTH)/third_party/kasko/include',
         ],
@@ -2952,9 +2975,6 @@
       }],
       ['disable_ftp_support==1', {
         'defines': ['DISABLE_FTP_SUPPORT=1'],
-      }],
-      ['use_icu_alternatives_on_android==1', {
-        'defines': ['USE_ICU_ALTERNATIVES_ON_ANDROID=1'],
       }],
       ['enable_supervised_users==1', {
         'defines': ['ENABLE_SUPERVISED_USERS=1'],
@@ -3990,6 +4010,7 @@
                       ['clang==1', {
                         'cflags!': [
                           # Clang does not support the following options.
+                          '-mapcs-frame',
                           '-mthumb-interwork',
                           '-finline-limit=64',
                           '-fno-tree-sra',
@@ -4460,6 +4481,14 @@
                   # crashing on the bots: crbug.com/161942.
                   # '-Wl,--threads',
                   # '-Wl,--thread-count=4',
+                ],
+                'conditions': [
+                  # TODO(thestig): Enable this for disabled cases.
+                  [ 'buildtype!="Official" and chromeos==0 and release_valgrind_build==0 and asan==0 and lsan==0 and tsan==0 and msan==0 and ubsan==0 and ubsan_vptr==0', {
+                    'ldflags': [
+                      '-Wl,--detect-odr-violations',
+                    ],
+                  }],
                 ],
               }],
             ],
@@ -5922,6 +5951,20 @@
           ['_toolset=="target"', {
             'ldflags': [
               '-flto',
+            ],
+          }],
+        ],
+      },
+    }],
+    ['cfi_vptr==1', {
+      'target_defaults': {
+        'target_conditions': [
+          ['_toolset=="target"', {
+            'cflags': [
+              '-fsanitize=cfi-vptr',
+            ],
+            'ldflags': [
+              '-fsanitize=cfi-vptr',
             ],
           }],
         ],

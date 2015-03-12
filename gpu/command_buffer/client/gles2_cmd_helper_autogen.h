@@ -2226,6 +2226,28 @@ void EnableFeatureCHROMIUM(GLuint bucket_id,
   }
 }
 
+void MapBufferRange(GLenum target,
+                    GLintptr offset,
+                    GLsizeiptr size,
+                    GLbitfield access,
+                    uint32_t data_shm_id,
+                    uint32_t data_shm_offset,
+                    uint32_t result_shm_id,
+                    uint32_t result_shm_offset) {
+  gles2::cmds::MapBufferRange* c = GetCmdSpace<gles2::cmds::MapBufferRange>();
+  if (c) {
+    c->Init(target, offset, size, access, data_shm_id, data_shm_offset,
+            result_shm_id, result_shm_offset);
+  }
+}
+
+void UnmapBuffer(GLenum target) {
+  gles2::cmds::UnmapBuffer* c = GetCmdSpace<gles2::cmds::UnmapBuffer>();
+  if (c) {
+    c->Init(target);
+  }
+}
+
 void ResizeCHROMIUM(GLuint width, GLuint height, GLfloat scale_factor) {
   gles2::cmds::ResizeCHROMIUM* c = GetCmdSpace<gles2::cmds::ResizeCHROMIUM>();
   if (c) {

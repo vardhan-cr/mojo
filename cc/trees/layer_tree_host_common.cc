@@ -15,7 +15,6 @@
 #include "cc/layers/render_surface.h"
 #include "cc/layers/render_surface_impl.h"
 #include "cc/trees/draw_property_utils.h"
-#include "cc/trees/layer_sorter.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_impl.h"
 #include "ui/gfx/geometry/rect_conversions.h"
@@ -30,20 +29,6 @@ ScrollAndScaleSet::ScrollAndScaleSet()
 }
 
 ScrollAndScaleSet::~ScrollAndScaleSet() {}
-
-static void SortLayers(LayerList::iterator first,
-                       LayerList::iterator end,
-                       void* layer_sorter) {
-  NOTREACHED();
-}
-
-static void SortLayers(LayerImplList::iterator first,
-                       LayerImplList::iterator end,
-                       LayerSorter* layer_sorter) {
-  DCHECK(layer_sorter);
-  TRACE_EVENT0("cc", "LayerTreeHostCommon::SortLayers");
-  layer_sorter->Sort(first, end);
-}
 
 template <typename LayerType>
 static gfx::Vector2dF GetEffectiveScrollDelta(LayerType* layer) {
@@ -1128,6 +1113,8 @@ static inline void MarkLayerWithRenderSurfaceLayerListId(
     int current_render_surface_layer_list_id) {
   layer->draw_properties().last_drawn_render_surface_layer_list_id =
       current_render_surface_layer_list_id;
+  layer->draw_properties().layer_or_descendant_is_drawn =
+      !!current_render_surface_layer_list_id;
 }
 
 template <typename LayerTypePtr>
@@ -1200,8 +1187,7 @@ struct PreCalculateMetaInformationRecursiveData {
         data.layer_or_descendant_has_copy_request;
     layer_or_descendant_has_input_handler |=
         data.layer_or_descendant_has_input_handler;
-    num_unclipped_descendants +=
-        data.num_unclipped_descendants;
+    num_unclipped_descendants += data.num_unclipped_descendants;
   }
 };
 
@@ -1233,6 +1219,7 @@ static void PreCalculateMetaInformation(
 
   layer->draw_properties().sorted_for_recursion = false;
   layer->draw_properties().has_child_with_a_scroll_parent = false;
+  layer->draw_properties().layer_or_descendant_is_drawn = false;
   layer->draw_properties().visited = false;
 
   if (!HasInvertibleOrAnimatedTransform(layer)) {
@@ -1279,7 +1266,6 @@ static void PreCalculateMetaInformation(
 
 template <typename LayerType>
 struct SubtreeGlobals {
-  LayerSorter* layer_sorter;
   int max_texture_size;
   float device_scale_factor;
   float page_scale_factor;
@@ -1814,8 +1800,6 @@ static void CalculateDrawPropertiesInternal(
   // layer's "screen space" and local content space.
   layer_draw_properties.screen_space_transform =
       data_from_ancestor.full_hierarchy_matrix;
-  if (layer->should_flatten_transform())
-    layer_draw_properties.screen_space_transform.FlattenTo2d();
   layer_draw_properties.screen_space_transform.PreconcatTransform
       (layer_draw_properties.target_space_transform);
 
@@ -1933,6 +1917,10 @@ static void CalculateDrawPropertiesInternal(
     // newly created RenderSurfaceImpl.
     data_for_children.full_hierarchy_matrix.PreconcatTransform(
         render_surface->draw_transform());
+
+    // A render surface inherently acts as a flattening point for the content of
+    // its descendants.
+    data_for_children.full_hierarchy_matrix.FlattenTo2d();
 
     if (layer->mask_layer()) {
       DrawProperties<LayerType>& mask_layer_draw_properties =
@@ -2212,6 +2200,8 @@ static void CalculateDrawPropertiesInternal(
         render_surface_layer_list->size() -
         child->draw_properties()
             .index_of_first_render_surface_layer_list_addition;
+    layer_draw_properties.layer_or_descendant_is_drawn |=
+        child->draw_properties().layer_or_descendant_is_drawn;
   }
 
   // Add the unsorted layer list contributions, if necessary.
@@ -2365,17 +2355,6 @@ static void CalculateDrawPropertiesInternal(
     return;
   }
 
-  // If preserves-3d then sort all the descendants in 3D so that they can be
-  // drawn from back to front. If the preserves-3d property is also set on the
-  // parent then skip the sorting as the parent will sort all the descendants
-  // anyway.
-  if (globals.layer_sorter && descendants.size() && layer->Is3dSorted() &&
-      !LayerIsInExisting3DRenderingContext(layer)) {
-    SortLayers(descendants.begin() + sorting_start_index,
-               descendants.end(),
-               globals.layer_sorter);
-  }
-
   UpdateAccumulatedSurfaceState<LayerType>(
       layer, local_drawable_content_rect_of_subtree, accumulated_surface_state);
 
@@ -2413,7 +2392,6 @@ static void ProcessCalcDrawPropsInputs(
   scaled_device_transform.Scale(inputs.device_scale_factor,
                                 inputs.device_scale_factor);
 
-  globals->layer_sorter = NULL;
   globals->max_texture_size = inputs.max_texture_size;
   globals->device_scale_factor =
       inputs.device_scale_factor * device_transform_scale;
@@ -2576,9 +2554,6 @@ void LayerTreeHostCommon::CalculateDrawProperties(
   SubtreeGlobals<LayerImpl> globals;
   DataForRecursion<LayerImpl> data_for_recursion;
   ProcessCalcDrawPropsInputs(*inputs, &globals, &data_for_recursion);
-
-  LayerSorter layer_sorter;
-  globals.layer_sorter = &layer_sorter;
 
   PreCalculateMetaInformationRecursiveData recursive_data;
   PreCalculateMetaInformation(inputs->root_layer, &recursive_data);

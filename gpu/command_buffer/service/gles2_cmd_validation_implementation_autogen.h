@@ -43,6 +43,15 @@ static const GLenum valid_buffer_target_table[] = {
     GL_ELEMENT_ARRAY_BUFFER,
 };
 
+static const GLenum valid_buffer_target_table_es3[] = {
+    GL_COPY_READ_BUFFER,
+    GL_COPY_WRITE_BUFFER,
+    GL_PIXEL_PACK_BUFFER,
+    GL_PIXEL_UNPACK_BUFFER,
+    GL_TRANSFORM_FEEDBACK_BUFFER,
+    GL_UNIFORM_BUFFER,
+};
+
 static const GLenum valid_buffer_usage_table[] = {
     GL_STREAM_DRAW,
     GL_STATIC_DRAW,
@@ -278,6 +287,15 @@ static const GLenum valid_index_type_table[] = {
 static const GLenum valid_indexed_buffer_target_table[] = {
     GL_TRANSFORM_FEEDBACK_BUFFER,
     GL_UNIFORM_BUFFER,
+};
+
+static const GLenum valid_map_buffer_access_table[] = {
+    GL_MAP_READ_BIT,
+    GL_MAP_WRITE_BIT,
+    GL_MAP_INVALIDATE_RANGE_BIT,
+    GL_MAP_INVALIDATE_BUFFER_BIT,
+    GL_MAP_FLUSH_EXPLICIT_BIT,
+    GL_MAP_UNSYNCHRONIZED_BIT,
 };
 
 static const GLenum valid_matrix_mode_table[] = {
@@ -661,6 +679,8 @@ Validators::Validators()
       index_type(valid_index_type_table, arraysize(valid_index_type_table)),
       indexed_buffer_target(valid_indexed_buffer_target_table,
                             arraysize(valid_indexed_buffer_target_table)),
+      map_buffer_access(valid_map_buffer_access_table,
+                        arraysize(valid_map_buffer_access_table)),
       matrix_mode(valid_matrix_mode_table, arraysize(valid_matrix_mode_table)),
       pixel_store(valid_pixel_store_table, arraysize(valid_pixel_store_table)),
       pixel_store_alignment(valid_pixel_store_alignment_table,
@@ -749,6 +769,11 @@ Validators::Validators()
                        arraysize(valid_vertex_attribute_table)),
       vertex_pointer(valid_vertex_pointer_table,
                      arraysize(valid_vertex_pointer_table)) {
+}
+
+void Validators::AddES3Values() {
+  buffer_target.AddValues(valid_buffer_target_table_es3,
+                          arraysize(valid_buffer_target_table_es3));
 }
 
 #endif  // GPU_COMMAND_BUFFER_SERVICE_GLES2_CMD_VALIDATION_IMPLEMENTATION_AUTOGEN_H_

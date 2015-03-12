@@ -60,6 +60,7 @@ GL_APICALL void         GL_APIENTRY glDisable (GLenumCapability cap);
 GL_APICALL void         GL_APIENTRY glDisableVertexAttribArray (GLuint index);
 GL_APICALL void         GL_APIENTRY glDrawArrays (GLenumDrawMode mode, GLint first, GLsizei count);
 GL_APICALL void         GL_APIENTRY glDrawElements (GLenumDrawMode mode, GLsizei count, GLenumIndexType type, const void* indices);
+GL_APICALL void         GL_APIENTRY glDrawRangeElements (GLenumDrawMode mode, GLuint start, GLuint end, GLsizei count, GLenumIndexType type, const void* indices);
 GL_APICALL void         GL_APIENTRY glEnable (GLenumCapability cap);
 GL_APICALL void         GL_APIENTRY glEnableVertexAttribArray (GLuint index);
 GL_APICALL GLsync       GL_APIENTRY glFenceSync (GLenumSyncCondition condition, GLbitfieldSyncFlags flags);
@@ -246,6 +247,8 @@ GL_APICALL void*        GL_APIENTRY glMapBufferCHROMIUM (GLuint target, GLenum a
 GL_APICALL GLboolean    GL_APIENTRY glUnmapBufferCHROMIUM (GLuint target);
 GL_APICALL void*        GL_APIENTRY glMapBufferSubDataCHROMIUM (GLuint target, GLintptrNotNegative offset, GLsizeiptr size, GLenum access);
 GL_APICALL void         GL_APIENTRY glUnmapBufferSubDataCHROMIUM (const void* mem);
+GL_APICALL void*        GL_APIENTRY glMapBufferRange (GLenumBufferTarget target, GLintptrNotNegative offset, GLsizeiptr size, GLbitfieldMapBufferAccess access);
+GL_APICALL GLboolean    GL_APIENTRY glUnmapBuffer (GLenumBufferTarget target);
 GL_APICALL void*        GL_APIENTRY glMapTexSubImage2DCHROMIUM (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLenum access);
 GL_APICALL void         GL_APIENTRY glUnmapTexSubImage2DCHROMIUM (const void* mem);
 GL_APICALL void         GL_APIENTRY glResizeCHROMIUM (GLuint width, GLuint height, GLfloat scale_factor);

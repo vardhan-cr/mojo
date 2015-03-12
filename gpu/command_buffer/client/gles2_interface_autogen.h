@@ -148,6 +148,12 @@ virtual void DrawElements(GLenum mode,
                           GLsizei count,
                           GLenum type,
                           const void* indices) = 0;
+virtual void DrawRangeElements(GLenum mode,
+                               GLuint start,
+                               GLuint end,
+                               GLsizei count,
+                               GLenum type,
+                               const void* indices) = 0;
 virtual void Enable(GLenum cap) = 0;
 virtual void EnableVertexAttribArray(GLuint index) = 0;
 virtual GLsync FenceSync(GLenum condition, GLbitfield flags) = 0;
@@ -583,6 +589,11 @@ virtual void* MapBufferSubDataCHROMIUM(GLuint target,
                                        GLsizeiptr size,
                                        GLenum access) = 0;
 virtual void UnmapBufferSubDataCHROMIUM(const void* mem) = 0;
+virtual void* MapBufferRange(GLenum target,
+                             GLintptr offset,
+                             GLsizeiptr size,
+                             GLbitfield access) = 0;
+virtual GLboolean UnmapBuffer(GLenum target) = 0;
 virtual void* MapTexSubImage2DCHROMIUM(GLenum target,
                                        GLint level,
                                        GLint xoffset,

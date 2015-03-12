@@ -145,6 +145,12 @@ void DrawElements(GLenum mode,
                   GLsizei count,
                   GLenum type,
                   const void* indices) override;
+void DrawRangeElements(GLenum mode,
+                       GLuint start,
+                       GLuint end,
+                       GLsizei count,
+                       GLenum type,
+                       const void* indices) override;
 void Enable(GLenum cap) override;
 void EnableVertexAttribArray(GLuint index) override;
 GLsync FenceSync(GLenum condition, GLbitfield flags) override;
@@ -568,6 +574,11 @@ void* MapBufferSubDataCHROMIUM(GLuint target,
                                GLsizeiptr size,
                                GLenum access) override;
 void UnmapBufferSubDataCHROMIUM(const void* mem) override;
+void* MapBufferRange(GLenum target,
+                     GLintptr offset,
+                     GLsizeiptr size,
+                     GLbitfield access) override;
+GLboolean UnmapBuffer(GLenum target) override;
 void* MapTexSubImage2DCHROMIUM(GLenum target,
                                GLint level,
                                GLint xoffset,

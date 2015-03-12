@@ -708,10 +708,11 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
     return DRAW_SUCCESS;
   }
 
-  TRACE_EVENT1("cc",
-               "LayerTreeHostImpl::CalculateRenderPasses",
-               "render_surface_layer_list.size()",
-               static_cast<uint64>(frame->render_surface_layer_list->size()));
+  TRACE_EVENT_BEGIN2(
+      "cc", "LayerTreeHostImpl::CalculateRenderPasses",
+      "render_surface_layer_list.size()",
+      static_cast<uint64>(frame->render_surface_layer_list->size()),
+      "RequiresHighResToDraw", RequiresHighResToDraw());
 
   // Create the render passes in dependency order.
   for (int surface_index = frame->render_surface_layer_list->size() - 1;
@@ -754,9 +755,6 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
   // due to an impl-animation, we drop the frame to avoid flashing due to the
   // texture suddenly appearing in the future.
   DrawResult draw_result = DRAW_SUCCESS;
-  // When we have a copy request for a layer, we need to draw no matter
-  // what, as the layer may disappear after this frame.
-  bool have_copy_request = false;
 
   int layers_drawn = 0;
 
@@ -764,6 +762,8 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
 
   int num_missing_tiles = 0;
   int num_incomplete_tiles = 0;
+  bool have_copy_request = false;
+  bool have_missing_animated_tiles = false;
 
   auto end = LayerIterator<LayerImpl>::End(frame->render_surface_layer_list);
   for (auto it =
@@ -848,18 +848,34 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
           it->screen_space_transform_is_animating() ||
           it->draw_transform_is_animating();
       if (layer_has_animating_transform)
-        draw_result = DRAW_ABORTED_CHECKERBOARD_ANIMATIONS;
-    }
-
-    if (append_quads_data.num_incomplete_tiles ||
-        append_quads_data.num_missing_tiles) {
-      if (RequiresHighResToDraw())
-        draw_result = DRAW_ABORTED_MISSING_HIGH_RES_CONTENT;
+        have_missing_animated_tiles = true;
     }
   }
 
-  if (have_copy_request ||
-      output_surface_->capabilities().draw_and_swap_full_viewport_every_frame)
+  if (have_missing_animated_tiles)
+    draw_result = DRAW_ABORTED_CHECKERBOARD_ANIMATIONS;
+
+  // When we have a copy request for a layer, we need to draw even if there
+  // would be animating checkerboards, because failing under those conditions
+  // triggers a new main frame, which may cause the copy request layer to be
+  // destroyed.
+  // TODO(danakj): Leaking scheduler internals into LayerTreeHostImpl here.
+  if (have_copy_request)
+    draw_result = DRAW_SUCCESS;
+
+  // When we require high res to draw, abort the draw (almost) always. This does
+  // not cause the scheduler to do a main frame, instead it will continue to try
+  // drawing until we finally complete, so the copy request will not be lost.
+  if (num_incomplete_tiles || num_missing_tiles) {
+    if (RequiresHighResToDraw())
+      draw_result = DRAW_ABORTED_MISSING_HIGH_RES_CONTENT;
+  }
+
+  // When this capability is set we don't have control over the surface the
+  // compositor draws to, so even though the frame may not be complete, the
+  // previous frame has already been potentially lost, so an incomplete frame is
+  // better than nothing, so this takes highest precidence.
+  if (output_surface_->capabilities().draw_and_swap_full_viewport_every_frame)
     draw_result = DRAW_SUCCESS;
 
 #if DCHECK_IS_ON()
@@ -909,6 +925,10 @@ DrawResult LayerTreeHostImpl::CalculateRenderPasses(
   DCHECK(draw_mode != DRAW_MODE_RESOURCELESS_SOFTWARE ||
          frame->render_passes.size() == 1u)
       << frame->render_passes.size();
+
+  TRACE_EVENT_END2("cc", "LayerTreeHostImpl::CalculateRenderPasses",
+                   "draw_result", draw_result, "missing tiles",
+                   num_missing_tiles);
 
   return draw_result;
 }
@@ -1055,7 +1075,7 @@ DrawResult LayerTreeHostImpl::PrepareToDraw(FrameData* frame) {
   // This will cause NotifyTileStateChanged() to be called for any visible tiles
   // that completed, which will add damage to the frame for them so they appear
   // as part of the current frame being drawn.
-  if (settings().impl_side_painting)
+  if (tile_manager_)
     tile_manager_->UpdateVisibleTiles(global_tile_state_);
 
   frame->render_surface_layer_list = &active_tree_->RenderSurfaceLayerList();
@@ -1528,7 +1548,7 @@ void LayerTreeHostImpl::DrawLayers(FrameData* frame,
 
   if (draw_mode == DRAW_MODE_RESOURCELESS_SOFTWARE) {
     bool disable_picture_quad_image_filtering =
-        IsActivelyScrolling() || needs_animate_layers();
+        IsActivelyScrolling() || animation_registrar_->needs_animate_layers();
 
     scoped_ptr<SoftwareRenderer> temp_software_renderer =
         SoftwareRenderer::Create(this, &settings_.renderer_settings,
@@ -1656,6 +1676,18 @@ void LayerTreeHostImpl::UpdateViewportContainerSizes() {
   if (!inner_container)
     return;
 
+  // TODO(bokan): This code is currently specific to top controls. It should be
+  // made general. crbug.com/464814.
+  if (!TopControlsHeight()) {
+    if (outer_container)
+      outer_container->SetBoundsDelta(gfx::Vector2dF());
+
+    inner_container->SetBoundsDelta(gfx::Vector2dF());
+    active_tree_->InnerViewportScrollLayer()->SetBoundsDelta(gfx::Vector2dF());
+
+    return;
+  }
+
   ViewportAnchor anchor(InnerViewportScrollLayer(),
                         OuterViewportScrollLayer());
 
@@ -1693,7 +1725,8 @@ void LayerTreeHostImpl::UpdateViewportContainerSizes() {
 void LayerTreeHostImpl::SynchronouslyInitializeAllTiles() {
   // Only valid for the single-threaded non-scheduled/synchronous case
   // using the zero copy raster worker pool.
-  single_thread_synchronous_task_graph_runner_->RunUntilIdle();
+  if (tile_manager_)
+    single_thread_synchronous_task_graph_runner_->RunUntilIdle();
 }
 
 void LayerTreeHostImpl::DidLoseOutputSurface() {
@@ -2057,6 +2090,11 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
     }
   }
 
+  // Synchronous single-threaded mode depends on tiles being ready to
+  // draw when raster is complete.  Therefore, it must use one of zero
+  // copy, software raster, or GPU raster (in the branches above).
+  DCHECK(!IsSynchronousSingleThreaded());
+
   *resource_pool = ResourcePool::Create(
       resource_provider_.get(), GL_TEXTURE_2D);
 
@@ -2119,7 +2157,7 @@ bool LayerTreeHostImpl::InitializeRenderer(
 
   CreateAndSetRenderer();
 
-  if (settings_.impl_side_painting)
+  if (settings_.impl_side_painting && settings_.raster_enabled)
     CreateAndSetTileManager();
   RecreateTreeResources();
 
@@ -3112,52 +3150,35 @@ void LayerTreeHostImpl::AnimateScrollbars(base::TimeTicks monotonic_time) {
 }
 
 void LayerTreeHostImpl::AnimateLayers(base::TimeTicks monotonic_time) {
-  if (!settings_.accelerated_animation_enabled ||
-      !needs_animate_layers() ||
-      !active_tree_->root_layer())
+  if (!settings_.accelerated_animation_enabled || !active_tree_->root_layer())
     return;
 
-  TRACE_EVENT0("cc", "LayerTreeHostImpl::AnimateLayers");
-  AnimationRegistrar::AnimationControllerMap controllers_copy =
-      animation_registrar_->active_animation_controllers();
-  for (auto& it : controllers_copy)
-    it.second->Animate(monotonic_time);
-
-  SetNeedsAnimate();
+  if (animation_registrar_->AnimateLayers(monotonic_time))
+    SetNeedsAnimate();
 }
 
 void LayerTreeHostImpl::UpdateAnimationState(bool start_ready_animations) {
-  if (!settings_.accelerated_animation_enabled || !needs_animate_layers() ||
-      !active_tree_->root_layer())
+  if (!settings_.accelerated_animation_enabled || !active_tree_->root_layer())
     return;
 
-  TRACE_EVENT0("cc", "LayerTreeHostImpl::UpdateAnimationState");
   scoped_ptr<AnimationEventsVector> events =
-      make_scoped_ptr(new AnimationEventsVector);
-  AnimationRegistrar::AnimationControllerMap active_controllers_copy =
-      animation_registrar_->active_animation_controllers();
-  for (auto& it : active_controllers_copy)
-    it.second->UpdateState(start_ready_animations, events.get());
+      animation_registrar_->CreateEvents();
+  const bool has_active_animations = animation_registrar_->UpdateAnimationState(
+      start_ready_animations, events.get());
 
-  if (!events->empty()) {
+  if (!events->empty())
     client_->PostAnimationEventsToMainThreadOnImplThread(events.Pass());
-  }
 
-  SetNeedsAnimate();
+  if (has_active_animations)
+    SetNeedsAnimate();
 }
 
 void LayerTreeHostImpl::ActivateAnimations() {
-  if (!settings_.accelerated_animation_enabled || !needs_animate_layers() ||
-      !active_tree_->root_layer())
+  if (!settings_.accelerated_animation_enabled || !active_tree_->root_layer())
     return;
 
-  TRACE_EVENT0("cc", "LayerTreeHostImpl::ActivateAnimations");
-  AnimationRegistrar::AnimationControllerMap active_controllers_copy =
-      animation_registrar_->active_animation_controllers();
-  for (auto& it : active_controllers_copy)
-    it.second->ActivateAnimations();
-
-  SetNeedsAnimate();
+  if (animation_registrar_->ActivateAnimations())
+    SetNeedsAnimate();
 }
 
 std::string LayerTreeHostImpl::LayerTreeAsJson() const {
@@ -3234,21 +3255,11 @@ BeginFrameArgs LayerTreeHostImpl::CurrentBeginFrameArgs() const {
 }
 
 scoped_refptr<base::trace_event::ConvertableToTraceFormat>
-LayerTreeHostImpl::AsValue() const {
-  return AsValueWithFrame(NULL);
-}
-
-scoped_refptr<base::trace_event::ConvertableToTraceFormat>
 LayerTreeHostImpl::AsValueWithFrame(FrameData* frame) const {
   scoped_refptr<base::trace_event::TracedValue> state =
       new base::trace_event::TracedValue();
   AsValueWithFrameInto(frame, state.get());
   return state;
-}
-
-void LayerTreeHostImpl::AsValueInto(
-    base::trace_event::TracedValue* value) const {
-  return AsValueWithFrameInto(NULL, value);
 }
 
 void LayerTreeHostImpl::AsValueWithFrameInto(
@@ -3297,14 +3308,6 @@ void LayerTreeHostImpl::AsValueWithFrameInto(
     frame->AsValueInto(state);
     state->EndDictionary();
   }
-}
-
-scoped_refptr<base::trace_event::ConvertableToTraceFormat>
-LayerTreeHostImpl::ActivationStateAsValue() const {
-  scoped_refptr<base::trace_event::TracedValue> state =
-      new base::trace_event::TracedValue();
-  ActivationStateAsValueInto(state.get());
-  return state;
 }
 
 void LayerTreeHostImpl::ActivationStateAsValueInto(

@@ -430,25 +430,22 @@ scoped_ptr<TraceBufferChunk> TraceBufferChunk::Clone() const {
 // and unlocks at the end of scope if locked.
 class TraceLog::OptionalAutoLock {
  public:
-  explicit OptionalAutoLock(Lock& lock)
-      : lock_(lock),
-        locked_(false) {
-  }
+  explicit OptionalAutoLock(Lock* lock) : lock_(lock), locked_(false) {}
 
   ~OptionalAutoLock() {
     if (locked_)
-      lock_.Release();
+      lock_->Release();
   }
 
   void EnsureAcquired() {
     if (!locked_) {
-      lock_.Acquire();
+      lock_->Acquire();
       locked_ = true;
     }
   }
 
  private:
-  Lock& lock_;
+  Lock* lock_;
   bool locked_;
   DISALLOW_COPY_AND_ASSIGN(OptionalAutoLock);
 };
@@ -624,7 +621,7 @@ void TraceEvent::Reset() {
 
 void TraceEvent::UpdateDuration(const TimeTicks& now,
                                 const TimeTicks& thread_now) {
-  DCHECK(duration_.ToInternalValue() == -1);
+  DCHECK_EQ(duration_.ToInternalValue(), -1);
   duration_ = now - timestamp_;
   thread_duration_ = thread_now - thread_timestamp_;
 }
@@ -1977,7 +1974,7 @@ TraceEventHandle TraceLog::AddTraceEventWithThreadIdAndTimestamp(
   std::string console_message;
   if (*category_group_enabled &
       (ENABLED_FOR_RECORDING | ENABLED_FOR_MONITORING)) {
-    OptionalAutoLock lock(lock_);
+    OptionalAutoLock lock(&lock_);
 
     TraceEvent* trace_event = NULL;
     if (thread_local_event_buffer) {
@@ -2130,7 +2127,7 @@ void TraceLog::UpdateTraceEventDuration(
 
   std::string console_message;
   if (*category_group_enabled & ENABLED_FOR_RECORDING) {
-    OptionalAutoLock lock(lock_);
+    OptionalAutoLock lock(&lock_);
 
     TraceEvent* trace_event = GetEventByHandleInternal(handle, &lock);
     if (trace_event) {
@@ -2490,18 +2487,35 @@ bool CategoryFilter::IsCategoryGroupEnabled(
   // Do a second pass to check for explicitly disabled categories
   // (those explicitly enabled have priority due to first pass).
   category_group_tokens.Reset();
+  bool category_group_disabled = false;
   while (category_group_tokens.GetNext()) {
     std::string category_group_token = category_group_tokens.token();
     for (StringList::const_iterator ci = excluded_.begin();
          ci != excluded_.end(); ++ci) {
-      if (MatchPattern(category_group_token.c_str(), ci->c_str()))
-        return false;
+      if (MatchPattern(category_group_token.c_str(), ci->c_str())) {
+        // Current token of category_group_name is present in excluded_list.
+        // Flag the exclusion and proceed further to check if any of the
+        // remaining categories of category_group_name is not present in the
+        // excluded_ list.
+        category_group_disabled = true;
+        break;
+      }
+      // One of the category of category_group_name is not present in
+      // excluded_ list. So, it has to be included_ list. Enable the
+      // category_group_name for recording.
+      category_group_disabled = false;
     }
+    // One of the categories present in category_group_name is not present in
+    // excluded_ list. Implies this category_group_name group can be enabled
+    // for recording, since one of its groups is enabled for recording.
+    if (!category_group_disabled)
+      break;
   }
   // If the category group is not excluded, and there are no included patterns
   // we consider this category group enabled, as long as it had categories
   // other than disabled-by-default.
-  return included_.empty() && had_enabled_by_default;
+  return !category_group_disabled &&
+         included_.empty() && had_enabled_by_default;
 }
 
 bool CategoryFilter::IsCategoryEnabled(const char* category_name) const {
@@ -2571,7 +2585,7 @@ namespace trace_event_internal {
 ScopedTraceBinaryEfficient::ScopedTraceBinaryEfficient(
     const char* category_group, const char* name) {
   // The single atom works because for now the category_group can only be "gpu".
-  DCHECK(strcmp(category_group, "gpu") == 0);
+  DCHECK_EQ(strcmp(category_group, "gpu"), 0);
   static TRACE_EVENT_API_ATOMIC_WORD atomic = 0;
   INTERNAL_TRACE_EVENT_GET_CATEGORY_INFO_CUSTOM_VARIABLES(
       category_group, atomic, category_group_enabled_);

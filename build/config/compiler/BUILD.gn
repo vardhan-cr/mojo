@@ -78,7 +78,7 @@ if (!is_win) {
 #
 # Base compiler configuration.
 #
-# See also "runtime_library" below for related stuff and a discusison about
+# See also "runtime_library" below for related stuff and a discussion about
 # where stuff should go. Put warning related stuff in the "warnings" config.
 
 config("compiler") {
@@ -100,10 +100,6 @@ config("compiler") {
       "/GS",  # Enable buffer security checking.
       "/FS",  # Preserve previous PDB behavior.
     ]
-    if (is_component_build) {
-      cflags += [ "/EHsc" ]  # Assume C functions can't throw exceptions and don't catch
-                             # structured exceptions (only C++ ones).
-    }
   } else {
     # Common GCC compiler flags setup.
     # --------------------------------
@@ -161,7 +157,7 @@ config("compiler") {
     ]
   }
 
-  if (is_clang && !is_win) {
+  if (is_clang && !is_win && !is_nacl) {
     # This is here so that all files get recompiled after a clang roll and
     # when turning clang on or off. (defines are passed via the command line,
     # and build system rebuild things when their commandline changes). Nothing
@@ -403,6 +399,13 @@ config("compiler") {
       #"-Wl,--threads",
       #"-Wl,--thread-count=4",
     ]
+
+    # TODO(thestig): Make this flag work with GN.
+    #if (!is_official_build && !is_chromeos && !(is_asan || is_lsan || is_tsan || is_msan)) {
+    #  ldflags += [
+    #    "-Wl,--detect-odr-violations",
+    #  ]
+    #}
   }
 
   if (linux_use_bundled_binutils) {
@@ -534,9 +537,6 @@ config("runtime_library") {
   } else {
     # Static CRT.
     if (is_win) {
-      # We don't use exceptions, and when we link statically we can just get
-      # rid of them entirely.
-      defines += [ "_HAS_EXCEPTIONS=0" ]
       if (is_debug) {
         cflags += [ "/MTd" ]
       } else {
@@ -548,10 +548,9 @@ config("runtime_library") {
   if (is_win) {
     defines += [
       "__STD_C",
-      "__STDC_CONSTANT_MACROS",
-      "__STDC_FORMAT_MACROS",
       "_CRT_RAND_S",
       "_CRT_SECURE_NO_DEPRECATE",
+      "_HAS_EXCEPTIONS=0",
       "_SCL_SECURE_NO_DEPRECATE",
     ]
   }
@@ -727,7 +726,6 @@ config("default_warnings") {
   if (is_win) {
     cflags = [
       "/WX",  # Treat warnings as errors.
-
       # Warnings permanently disabled:
 
       # TODO(GYP) The GYP build doesn't have this globally enabled but disabled
@@ -782,7 +780,6 @@ config("default_warnings") {
       # have to turn off this warning (and be careful about how object
       # destruction happens in such cases).
       "/wd4611",
-
       # Warnings to evaluate and possibly fix/reenable later:
 
       "/wd4100",  # Unreferenced formal function parameter.

@@ -12,6 +12,9 @@
 
 #if !defined(OS_ANDROID)
 
+// TODO(enne): these time out on Windows.  http://crbug.com/435632
+#if !defined(OS_WIN)
+
 namespace cc {
 namespace {
 
@@ -56,9 +59,6 @@ class MaskContentLayerClient : public ContentLayerClient {
  private:
   gfx::Size bounds_;
 };
-
-// TODO(enne): these time out on Windows.  http://crbug.com/435632
-#if !defined(OS_WIN)
 
 TEST_P(LayerTreeHostMasksPixelTest, MaskOfLayer) {
   scoped_refptr<SolidColorLayer> background = CreateSolidColorLayer(
@@ -280,8 +280,6 @@ TEST_P(LayerTreeHostMasksPixelTest, MaskOfReplicaOfClippedLayer) {
                            "mask_of_replica_of_clipped_layer.png")));
 }
 
-#endif  // !defined(OS_WIN)
-
 class CheckerContentLayerClient : public ContentLayerClient {
  public:
   CheckerContentLayerClient(const gfx::Size& bounds,
@@ -397,8 +395,8 @@ TEST_P(LayerTreeHostMasksForBackgroundFiltersPixelTest,
 
   float percentage_pixels_large_error = 2.5f;  // 2.5%, ~1600px / (256*256)
   float percentage_pixels_small_error = 0.0f;
-  float average_error_allowed_in_bad_pixels = 60.0f;
-  int large_error_allowed = 100;
+  float average_error_allowed_in_bad_pixels = 100.0f;
+  int large_error_allowed = 256;
   int small_error_allowed = 0;
   pixel_comparator_.reset(new FuzzyPixelComparator(
       true,  // discard_alpha
@@ -467,4 +465,5 @@ TEST_P(LayerTreeHostMasksForBackgroundFiltersPixelTest,
 }  // namespace
 }  // namespace cc
 
-#endif  // OS_ANDROID
+#endif  // !defined(OS_WIN)
+#endif  // !defined(OS_ANDROID)

@@ -2,25 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SANDBOX_LINUX_SECCOMP_BPF_VERIFIER_H__
-#define SANDBOX_LINUX_SECCOMP_BPF_VERIFIER_H__
+#ifndef SANDBOX_LINUX_BPF_DSL_VERIFIER_H__
+#define SANDBOX_LINUX_BPF_DSL_VERIFIER_H__
 
 #include <stdint.h>
 
 #include <vector>
 
 #include "base/macros.h"
+#include "sandbox/sandbox_export.h"
 
 struct sock_filter;
 
 namespace sandbox {
 struct arch_seccomp_data;
+
 namespace bpf_dsl {
 class Policy;
 class PolicyCompiler;
-}
 
-class Verifier {
+class SANDBOX_EXPORT Verifier {
  public:
   // Evaluate the BPF program for all possible inputs and verify that it
   // computes the correct result. We use the "evaluators" to determine
@@ -50,6 +51,7 @@ class Verifier {
   DISALLOW_IMPLICIT_CONSTRUCTORS(Verifier);
 };
 
+}  // namespace bpf_dsl
 }  // namespace sandbox
 
-#endif  // SANDBOX_LINUX_SECCOMP_BPF_VERIFIER_H__
+#endif  // SANDBOX_LINUX_BPF_DSL_VERIFIER_H__

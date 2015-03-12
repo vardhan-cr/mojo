@@ -338,8 +338,6 @@
       ],
       'sources': [
         'prefs/base_prefs_export.h',
-        'prefs/base_prefs_switches.cc',
-        'prefs/base_prefs_switches.h',
         'prefs/default_pref_store.cc',
         'prefs/default_pref_store.h',
         'prefs/json_pref_store.cc',
@@ -543,7 +541,6 @@
         'mac/scoped_sending_event_unittest.mm',
         'md5_unittest.cc',
         'memory/aligned_memory_unittest.cc',
-        'memory/discardable_memory_manager_unittest.cc',
         'memory/discardable_memory_unittest.cc',
         'memory/discardable_shared_memory_unittest.cc',
         'memory/linked_ptr_unittest.cc',
@@ -835,19 +832,20 @@
             ['include', '^sys_string_conversions_mac_unittest\\.mm$'],
           ],
         }],
-        ['OS == "android" and _toolset == "target"', {
-          'sources': [
-            'memory/discardable_memory_ashmem_allocator_unittest.cc',
-          ],
-        }],
         ['OS == "android"', {
           'sources/': [
             ['include', '^debug/proc_maps_linux_unittest\\.cc$'],
           ],
         }],
+        # Enable more direct string conversions on platforms with native utf8
+        # strings
+        ['OS=="mac" or OS=="ios" or <(chromeos)==1 or <(chromecast)==1', {
+          'defines': ['SYSTEM_NATIVE_UTF8'],
+        }],
       ],  # target_conditions
     },
     {
+      # GN: //base:base_perftests
       'target_name': 'base_perftests',
       'type': '<(gtest_target_type)',
       'dependencies': [
@@ -870,6 +868,7 @@
       ],
     },
     {
+      # GN: //base:base_i18n_perftests
       'target_name': 'base_i18n_perftests',
       'type': '<(gtest_target_type)',
       'dependencies': [
@@ -1077,6 +1076,7 @@
     ['OS!="ios"', {
       'targets': [
         {
+          # GN: //base:check_example
           'target_name': 'check_example',
           'type': 'executable',
           'sources': [

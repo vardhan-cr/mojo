@@ -1478,6 +1478,74 @@ TEST_F(LayerTreeHostCommonTest, ForceRenderSurface) {
   }
 }
 
+TEST_F(LayerTreeHostCommonTest, RenderSurfacesFlattenScreenSpaceTransform) {
+  // Render surfaces act as a flattening point for their subtree, so should
+  // always flatten the target-to-screen space transform seen by descendants.
+
+  scoped_refptr<Layer> root = Layer::Create();
+  scoped_refptr<Layer> parent = Layer::Create();
+  scoped_refptr<LayerWithForcedDrawsContent> child =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  scoped_refptr<LayerWithForcedDrawsContent> grand_child =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+
+  gfx::Transform rotation_about_y_axis;
+  rotation_about_y_axis.RotateAboutYAxis(30.0);
+  // Make |parent| have a render surface.
+  parent->SetOpacity(0.9f);
+
+  const gfx::Transform identity_matrix;
+  SetLayerPropertiesForTesting(root.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(100, 100), true, false);
+  SetLayerPropertiesForTesting(parent.get(), rotation_about_y_axis,
+                               gfx::Point3F(), gfx::PointF(), gfx::Size(10, 10),
+                               true, false);
+  SetLayerPropertiesForTesting(child.get(), identity_matrix, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(10, 10), true, false);
+  SetLayerPropertiesForTesting(grand_child.get(), identity_matrix,
+                               gfx::Point3F(), gfx::PointF(), gfx::Size(10, 10),
+                               true, false);
+
+  root->AddChild(parent);
+  parent->AddChild(child);
+  child->AddChild(grand_child);
+
+  grand_child->SetShouldFlattenTransform(false);
+
+  scoped_ptr<FakeLayerTreeHost> host(CreateFakeLayerTreeHost());
+  host->SetRootLayer(root);
+
+  // Only grand_child should preserve 3d.
+  EXPECT_TRUE(root->should_flatten_transform());
+  EXPECT_TRUE(parent->should_flatten_transform());
+  EXPECT_TRUE(child->should_flatten_transform());
+  EXPECT_FALSE(grand_child->should_flatten_transform());
+
+  gfx::Transform expected_child_draw_transform = identity_matrix;
+  gfx::Transform expected_grand_child_draw_transform = identity_matrix;
+
+  gfx::Transform flattened_rotation_about_y = rotation_about_y_axis;
+  flattened_rotation_about_y.FlattenTo2d();
+
+  ExecuteCalculateDrawProperties(root.get());
+
+  EXPECT_TRUE(parent->render_surface());
+  EXPECT_FALSE(child->render_surface());
+  EXPECT_FALSE(grand_child->render_surface());
+
+  EXPECT_TRANSFORMATION_MATRIX_EQ(identity_matrix, child->draw_transform());
+  EXPECT_TRANSFORMATION_MATRIX_EQ(identity_matrix,
+                                  grand_child->draw_transform());
+
+  // The screen-space transform inherited by |child| and |grand_child| should
+  // have been flattened at their render target. In particular, the fact that
+  // |grand_child| happens to preserve 3d shouldn't affect this flattening.
+  EXPECT_TRANSFORMATION_MATRIX_EQ(flattened_rotation_about_y,
+                                  child->screen_space_transform());
+  EXPECT_TRANSFORMATION_MATRIX_EQ(flattened_rotation_about_y,
+                                  grand_child->screen_space_transform());
+}
+
 TEST_F(LayerTreeHostCommonTest, ClipRectCullsRenderSurfaces) {
   // The entire subtree of layers that are outside the clip rect should be
   // culled away, and should not affect the render_surface_layer_list.
@@ -2973,78 +3041,6 @@ TEST_F(LayerTreeHostCommonTest,
   ExecuteCalculateDrawProperties(root.get());
 
   EXPECT_FALSE(child->draw_properties().sorted_for_recursion);
-}
-
-TEST_F(LayerTreeHostCommonTest, WillSortAtContextBoundary) {
-  // Creates a layer tree that looks as follows:
-  // * root (sorting-context-id1)
-  //   * parent (sorting-context-id2)
-  //     * child1 (sorting-context-id2)
-  //     * child2 (sorting-context-id2)
-  //
-  // This test ensures that we sort at |parent| even though both it and root are
-  // set to be 3d sorted.
-  FakeImplProxy proxy;
-  TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
-
-  scoped_ptr<LayerImpl> root_ptr(LayerImpl::Create(host_impl.active_tree(), 1));
-  LayerImpl* root = root_ptr.get();
-  scoped_ptr<LayerImpl> parent_ptr(
-      LayerImpl::Create(host_impl.active_tree(), 2));
-  LayerImpl* parent = parent_ptr.get();
-  scoped_ptr<LayerImpl> child1_ptr(
-      LayerImpl::Create(host_impl.active_tree(), 3));
-  LayerImpl* child1 = child1_ptr.get();
-  scoped_ptr<LayerImpl> child2_ptr(
-      LayerImpl::Create(host_impl.active_tree(), 4));
-  LayerImpl* child2 = child2_ptr.get();
-
-  gfx::Transform identity_matrix;
-  gfx::Transform below_matrix;
-  below_matrix.Translate3d(0.f, 0.f, -10.f);
-  gfx::Transform above_matrix;
-  above_matrix.Translate3d(0.f, 0.f, 10.f);
-
-  SetLayerPropertiesForTesting(root, identity_matrix, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(100, 100), true, true,
-                               true);
-  SetLayerPropertiesForTesting(parent, identity_matrix, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(50, 50), true, true,
-                               true);
-  SetLayerPropertiesForTesting(child1, above_matrix, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(50, 50), true, true,
-                               false);
-  SetLayerPropertiesForTesting(child2, below_matrix, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(50, 50), true, true,
-                               false);
-
-  root->Set3dSortingContextId(3);
-  root->SetDrawsContent(true);
-  parent->Set3dSortingContextId(7);
-  parent->SetDrawsContent(true);
-  child1->Set3dSortingContextId(7);
-  child1->SetDrawsContent(true);
-  child2->Set3dSortingContextId(7);
-  child2->SetDrawsContent(true);
-
-  parent->AddChild(child1_ptr.Pass());
-  parent->AddChild(child2_ptr.Pass());
-  root->AddChild(parent_ptr.Pass());
-
-  LayerImplList render_surface_layer_list;
-  LayerTreeHostCommon::CalcDrawPropsImplInputsForTesting inputs(
-      root_ptr.get(), root->bounds(), &render_surface_layer_list);
-  inputs.can_adjust_raster_scales = true;
-  LayerTreeHostCommon::CalculateDrawProperties(&inputs);
-
-  EXPECT_TRUE(root->render_surface());
-  EXPECT_EQ(2u, render_surface_layer_list.size());
-
-  EXPECT_EQ(3u, parent->render_surface()->layer_list().size());
-  EXPECT_EQ(child2->id(), parent->render_surface()->layer_list().at(0)->id());
-  EXPECT_EQ(parent->id(), parent->render_surface()->layer_list().at(1)->id());
-  EXPECT_EQ(child1->id(), parent->render_surface()->layer_list().at(2)->id());
 }
 
 TEST_F(LayerTreeHostCommonTest,
@@ -7592,110 +7588,6 @@ TEST_F(LayerTreeHostCommonTest, OutOfOrderClippingRequiresRSLLSorting) {
   EXPECT_TRUE(render_surface_layer_list.at(2)->render_surface());
 }
 
-TEST_F(LayerTreeHostCommonTest, DoNotClobberSorting) {
-  // We rearrange layer list contributions if we have to visit children out of
-  // order, but it should be a 'stable' rearrangement. That is, the layer list
-  // additions for a single layer should not be reordered, though their position
-  // wrt to the contributions due to a sibling may vary.
-  //
-  // + root
-  //   + scroll_child
-  //     + top_content
-  //     + bottom_content
-  //   + scroll_parent_border
-  //     + scroll_parent_clip
-  //       + scroll_parent
-  //
-  FakeImplProxy proxy;
-  TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
-  host_impl.CreatePendingTree();
-  scoped_ptr<LayerImpl> root = LayerImpl::Create(host_impl.active_tree(), 1);
-  scoped_ptr<LayerImpl> scroll_parent_border =
-      LayerImpl::Create(host_impl.active_tree(), 2);
-  scoped_ptr<LayerImpl> scroll_parent_clip =
-      LayerImpl::Create(host_impl.active_tree(), 3);
-  scoped_ptr<LayerImpl> scroll_parent =
-      LayerImpl::Create(host_impl.active_tree(), 4);
-  scoped_ptr<LayerImpl> scroll_child =
-      LayerImpl::Create(host_impl.active_tree(), 5);
-  scoped_ptr<LayerImpl> bottom_content =
-      LayerImpl::Create(host_impl.active_tree(), 6);
-  scoped_ptr<LayerImpl> top_content =
-      LayerImpl::Create(host_impl.active_tree(), 7);
-
-  scroll_parent_clip->SetMasksToBounds(true);
-
-  scroll_child->SetScrollParent(scroll_parent.get());
-  scoped_ptr<std::set<LayerImpl*>> scroll_children(new std::set<LayerImpl*>);
-  scroll_children->insert(scroll_child.get());
-  scroll_parent->SetScrollChildren(scroll_children.release());
-
-  scroll_child->SetDrawsContent(true);
-  scroll_parent->SetDrawsContent(true);
-  top_content->SetDrawsContent(true);
-  bottom_content->SetDrawsContent(true);
-
-  gfx::Transform identity_transform;
-  gfx::Transform top_transform;
-  top_transform.Translate3d(0.0, 0.0, 5.0);
-  gfx::Transform bottom_transform;
-  bottom_transform.Translate3d(0.0, 0.0, 3.0);
-
-  SetLayerPropertiesForTesting(root.get(), identity_transform, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(50, 50), true, false,
-                               true);
-  SetLayerPropertiesForTesting(scroll_parent_border.get(), identity_transform,
-                               gfx::Point3F(), gfx::PointF(), gfx::Size(40, 40),
-                               true, false, false);
-  SetLayerPropertiesForTesting(scroll_parent_clip.get(), identity_transform,
-                               gfx::Point3F(), gfx::PointF(), gfx::Size(30, 30),
-                               true, false, false);
-  SetLayerPropertiesForTesting(scroll_parent.get(), identity_transform,
-                               gfx::Point3F(), gfx::PointF(), gfx::Size(50, 50),
-                               true, false, false);
-  SetLayerPropertiesForTesting(scroll_child.get(), identity_transform,
-                               gfx::Point3F(), gfx::PointF(), gfx::Size(50, 50),
-                               true, false, false);
-  SetLayerPropertiesForTesting(top_content.get(), top_transform, gfx::Point3F(),
-                               gfx::PointF(), gfx::Size(50, 50), false, true,
-                               true);
-  SetLayerPropertiesForTesting(bottom_content.get(), bottom_transform,
-                               gfx::Point3F(), gfx::PointF(), gfx::Size(50, 50),
-                               false, true, true);
-
-  scroll_child->SetShouldFlattenTransform(false);
-  scroll_child->Set3dSortingContextId(1);
-
-  scroll_child->AddChild(top_content.Pass());
-  scroll_child->AddChild(bottom_content.Pass());
-  root->AddChild(scroll_child.Pass());
-
-  scroll_parent_clip->AddChild(scroll_parent.Pass());
-  scroll_parent_border->AddChild(scroll_parent_clip.Pass());
-  root->AddChild(scroll_parent_border.Pass());
-
-  LayerImplList render_surface_layer_list;
-  LayerTreeHostCommon::CalcDrawPropsImplInputsForTesting inputs(
-      root.get(), root->bounds(), &render_surface_layer_list);
-
-  LayerTreeHostCommon::CalculateDrawProperties(&inputs);
-
-  EXPECT_TRUE(root->render_surface());
-
-  // If we don't sort by depth and let the layers get added in the order they
-  // would normally be visited in, then layers 6 and 7 will be out of order. In
-  // other words, although we've had to shift 5, 6, and 7 to appear before 4
-  // in the list (because of the scroll parent relationship), this should not
-  // have an effect on the the order of 5, 6, and 7 (which had been reordered
-  // due to layer sorting).
-  EXPECT_EQ(4u, root->render_surface()->layer_list().size());
-  EXPECT_EQ(5, root->render_surface()->layer_list().at(0)->id());
-  EXPECT_EQ(6, root->render_surface()->layer_list().at(1)->id());
-  EXPECT_EQ(7, root->render_surface()->layer_list().at(2)->id());
-  EXPECT_EQ(4, root->render_surface()->layer_list().at(3)->id());
-}
-
 TEST_F(LayerTreeHostCommonTest, ScrollCompensationWithRounding) {
   // This test verifies that a scrolling layer that gets snapped to
   // integer coordinates doesn't move a fixed position child.
@@ -8848,6 +8740,60 @@ TEST_F(LayerTreeHostCommonTest, PropertyTreesAccountForFixedParentOffset) {
 
   EXPECT_EQ(gfx::Rect(0, 0, 50, 50),
             grandchild->visible_rect_from_property_trees());
+}
+
+TEST_F(LayerTreeHostCommonTest, CombineClipsUsingContentTarget) {
+  // In the following layer tree, the layer |box|'s render target is |surface|.
+  // |surface| also creates a transform node. We want to combine clips for |box|
+  // in the space of its target (i.e., |surface|), not its target's target. This
+  // test ensures that happens.
+
+  gfx::Transform rotate;
+  rotate.Rotate(5);
+  gfx::Transform identity;
+
+  scoped_refptr<Layer> root = Layer::Create();
+  SetLayerPropertiesForTesting(root.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(2500, 1500), true,
+                               false);
+
+  scoped_refptr<Layer> frame_clip = Layer::Create();
+  SetLayerPropertiesForTesting(frame_clip.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(2500, 1500), true,
+                               false);
+  frame_clip->SetMasksToBounds(true);
+
+  scoped_refptr<Layer> rotated = Layer::Create();
+  SetLayerPropertiesForTesting(rotated.get(), rotate,
+                               gfx::Point3F(1250, 250, 0), gfx::PointF(),
+                               gfx::Size(2500, 500), true, false);
+
+  scoped_refptr<Layer> surface = Layer::Create();
+  SetLayerPropertiesForTesting(surface.get(), rotate, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(2500, 500), true,
+                               false);
+  surface->SetOpacity(0.5);
+
+  scoped_refptr<LayerWithForcedDrawsContent> container =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  SetLayerPropertiesForTesting(container.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(300, 300), true, false);
+
+  scoped_refptr<LayerWithForcedDrawsContent> box =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  SetLayerPropertiesForTesting(box.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(100, 100), true, false);
+
+  root->AddChild(frame_clip);
+  frame_clip->AddChild(rotated);
+  rotated->AddChild(surface);
+  surface->AddChild(container);
+  surface->AddChild(box);
+
+  scoped_ptr<FakeLayerTreeHost> host(CreateFakeLayerTreeHost());
+  host->SetRootLayer(root);
+
+  ExecuteCalculateDrawProperties(root.get());
 }
 
 }  // namespace

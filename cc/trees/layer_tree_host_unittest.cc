@@ -2099,6 +2099,7 @@ TEST(LayerTreeHostTest, LimitPartialUpdates) {
     proxy->SetMaxPartialTextureUpdates(5);
 
     LayerTreeSettings settings;
+    settings.impl_side_painting = false;
     settings.max_partial_texture_updates = 10;
 
     LayerTreeHostWithProxy host(&client, settings, proxy.Pass());
@@ -2116,6 +2117,7 @@ TEST(LayerTreeHostTest, LimitPartialUpdates) {
     proxy->SetMaxPartialTextureUpdates(5);
 
     LayerTreeSettings settings;
+    settings.impl_side_painting = false;
     settings.max_partial_texture_updates = 10;
 
     LayerTreeHostWithProxy host(&client, settings, proxy.Pass());
@@ -2133,6 +2135,7 @@ TEST(LayerTreeHostTest, LimitPartialUpdates) {
     proxy->SetMaxPartialTextureUpdates(20);
 
     LayerTreeSettings settings;
+    settings.impl_side_painting = false;
     settings.max_partial_texture_updates = 10;
 
     LayerTreeHostWithProxy host(&client, settings, proxy.Pass());
@@ -2147,6 +2150,7 @@ TEST(LayerTreeHostTest, PartialUpdatesWithGLRenderer) {
   LayerTreeSettings settings;
   settings.max_partial_texture_updates = 4;
   settings.single_thread_proxy_scheduler = false;
+  settings.impl_side_painting = false;
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
@@ -2170,6 +2174,7 @@ TEST(LayerTreeHostTest, PartialUpdatesWithSoftwareRenderer) {
   LayerTreeSettings settings;
   settings.max_partial_texture_updates = 4;
   settings.single_thread_proxy_scheduler = false;
+  settings.impl_side_painting = false;
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
@@ -2193,6 +2198,7 @@ TEST(LayerTreeHostTest, PartialUpdatesWithDelegatingRendererAndGLContent) {
   LayerTreeSettings settings;
   settings.max_partial_texture_updates = 4;
   settings.single_thread_proxy_scheduler = false;
+  settings.impl_side_painting = false;
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
@@ -2217,6 +2223,7 @@ TEST(LayerTreeHostTest,
   LayerTreeSettings settings;
   settings.max_partial_texture_updates = 4;
   settings.single_thread_proxy_scheduler = false;
+  settings.impl_side_painting = false;
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());

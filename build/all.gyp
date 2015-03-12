@@ -66,7 +66,6 @@
             '../third_party/mojo/mojo_public.gyp:mojo_public_test_utils',
             '../third_party/mojo/mojo_public.gyp:mojo_system',
             '../ui/base/ui_base_tests.gyp:ui_base_unittests',
-            '../ui/ios/ui_ios_tests.gyp:ui_ios_unittests',
             '../ui/gfx/gfx_tests.gyp:gfx_unittests',
           ],
         }],
@@ -642,13 +641,6 @@
           ],
         }, # target_name: chromium_gpu_debug_builder
         {
-          'target_name': 'chromium_builder_perf_av',
-          'type': 'none',
-          'dependencies': [
-            'blink_tests', # to run layout tests
-          ],
-        },  # target_name: chromium_builder_perf_av
-        {
           # This target contains everything we need to run tests on the special
           # device-equipped WebRTC bots. We have device-requiring tests in
           # browser_tests and content_browsertests.
@@ -789,6 +781,7 @@
             '../content/content_shell_and_tests.gyp:content_shell_test_apk',
             '../content/content_shell_and_tests.gyp:content_unittests',
             '../gpu/gpu.gyp:gl_tests',
+            '../gpu/gpu.gyp:gpu_perftests_apk',
             '../gpu/gpu.gyp:gpu_unittests',
             '../ipc/ipc.gyp:ipc_tests',
             '../media/media.gyp:media_perftests_apk',

@@ -123,17 +123,10 @@ void Process::Close() {
   process_.Close();
 }
 
-void Process::Terminate(int result_code) {
+bool Process::Terminate(int result_code, bool wait) const {
   DCHECK(IsValid());
-
-  // Call NtTerminateProcess directly, without going through the import table,
-  // which might have been hooked with a buggy replacement by third party
-  // software. http://crbug.com/81449.
-  HMODULE module = GetModuleHandle(L"ntdll.dll");
-  typedef UINT (WINAPI *TerminateProcessPtr)(HANDLE handle, UINT code);
-  TerminateProcessPtr terminate_process = reinterpret_cast<TerminateProcessPtr>(
-      GetProcAddress(module, "NtTerminateProcess"));
-  terminate_process(Handle(), result_code);
+  // TODO(rvargas) crbug/417532: Move the implementation here.
+  return KillProcess(Handle(), result_code, wait);
 }
 
 bool Process::WaitForExit(int* exit_code) {

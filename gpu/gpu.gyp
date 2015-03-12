@@ -103,6 +103,7 @@
       'msvs_disabled_warnings': [4267, ],
     },
     {
+      # GN version: //gpu/command_buffer/client:gles2_c_lib_nocheck
       # Same as gles2_c_lib except with no parameter checking. Required for
       # OpenGL ES 2.0 conformance tests.
       'target_name': 'gles2_c_lib_nocheck',
@@ -220,6 +221,7 @@
         'command_buffer/service/gles2_cmd_decoder_unittest_attribs.cc',
         'command_buffer/service/gles2_cmd_decoder_unittest_base.cc',
         'command_buffer/service/gles2_cmd_decoder_unittest_base.h',
+        'command_buffer/service/gles2_cmd_decoder_unittest_buffers.cc',
         'command_buffer/service/gles2_cmd_decoder_unittest_context_state.cc',
         'command_buffer/service/gles2_cmd_decoder_unittest_drawing.cc',
         'command_buffer/service/gles2_cmd_decoder_unittest_extensions.cc',
@@ -287,6 +289,7 @@
       'dependencies': [
         '../base/base.gyp:base',
         '../base/base.gyp:test_support_base',
+        '../testing/gmock.gyp:gmock',
         '../testing/gtest.gyp:gtest',
         '../testing/perf/perf_test.gyp:perf_test',
         '../ui/gfx/gfx.gyp:gfx_geometry',
