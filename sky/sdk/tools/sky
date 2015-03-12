@@ -7,10 +7,11 @@ import argparse
 import json
 import logging
 import os
+import signal
+import socket
 import subprocess
 import sys
 import urlparse
-import socket
 
 SDK_TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 SDK_ROOT = os.path.dirname(SDK_TOOLS_DIR)
@@ -118,6 +119,7 @@ class StartSky(object):
         start_parser.set_defaults(func=self.run)
 
     def run(self, args, pids):
+        StopSky().run(args, pids)
         if args.install:
             apk_path = os.path.join(SDK_ROOT, 'apks', APK_NAME)
             if not os.path.exists(apk_path):

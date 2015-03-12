@@ -126,11 +126,12 @@ def main():
     copy(src_path('sky/framework'), sdk_path('packages/sky/lib/framework'),
         sky_or_dart_filter)
     copy(src_path('sky/assets'), sdk_path('packages/sky/lib/assets'))
+    copy(src_path('sky/sdk/tools/sky'), sdk_path('packages/sky/bin/sky'))
     copy(os.path.join(build_dir, 'gen/sky'), sdk_path('packages/sky/lib'),
         gen_filter)
 
     # Mojo package
-    copy(src_path('mojo'), sdk_path('packages/mojo'), dart_filter)
+    copy(src_path('mojo/public'), sdk_path('packages/mojo/lib/public'), dart_filter)
     copy(os.path.join(build_dir, 'gen/mojo'), sdk_path('packages/mojo/lib'),
         gen_filter)
 
