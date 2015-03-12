@@ -85,8 +85,8 @@ bool ApplicationManager::TestAPI::HasCreatedInstance() {
 }
 
 bool ApplicationManager::TestAPI::HasFactoryForURL(const GURL& url) const {
-  return manager_->url_to_shell_impl_.find(url) !=
-         manager_->url_to_shell_impl_.end();
+  return manager_->identity_to_shell_impl_.find(Identity(url)) !=
+         manager_->identity_to_shell_impl_.end();
 }
 
 ApplicationManager::ApplicationManager(Delegate* delegate)
@@ -101,7 +101,7 @@ ApplicationManager::~ApplicationManager() {
 }
 
 void ApplicationManager::TerminateShellConnections() {
-  STLDeleteValues(&url_to_shell_impl_);
+  STLDeleteValues(&identity_to_shell_impl_);
 }
 
 void ApplicationManager::ConnectToApplication(
@@ -199,13 +199,13 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
-  GURL app_url = GetBaseURLAndQuery(resolved_url, nullptr);
+  Identity app_identity(resolved_url);
 
   ApplicationPtr application;
   InterfaceRequest<Application> application_request = GetProxy(&application);
   ShellImpl* shell =
-      new ShellImpl(application.Pass(), this, original_url, app_url);
-  url_to_shell_impl_[app_url] = shell;
+      new ShellImpl(application.Pass(), this, original_url, app_identity);
+  identity_to_shell_impl_[app_identity] = shell;
   shell->InitializeApplication(GetArgsForURL(original_url));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
@@ -213,8 +213,8 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
 }
 
 ShellImpl* ApplicationManager::GetShellImpl(const GURL& url) {
-  const auto& shell_it = url_to_shell_impl_.find(url);
-  if (shell_it != url_to_shell_impl_.end())
+  const auto& shell_it = identity_to_shell_impl_.find(Identity(url));
+  if (shell_it != identity_to_shell_impl_.end())
     return shell_it->second;
   return nullptr;
 }
@@ -338,8 +338,10 @@ void ApplicationManager::RegisterExternalApplication(
     LOG(WARNING) << "--args-for provided for external application " << url
                  << " <ignored>";
   }
-  ShellImpl* shell_impl = new ShellImpl(application.Pass(), this, url, url);
-  url_to_shell_impl_[url] = shell_impl;
+  Identity identity(url);
+  ShellImpl* shell_impl =
+      new ShellImpl(application.Pass(), this, url, identity);
+  identity_to_shell_impl_[identity] = shell_impl;
   shell_impl->InitializeApplication(Array<String>::From(args));
 }
 
@@ -417,13 +419,13 @@ ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
 
 void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
   // Called from ~ShellImpl, so we do not need to call Destroy here.
-  const GURL url = shell_impl->url();
+  const Identity identity = shell_impl->identity();
   const GURL requested_url = shell_impl->requested_url();
   // Remove the shell.
-  URLToShellImplMap::iterator it = url_to_shell_impl_.find(url);
-  DCHECK(it != url_to_shell_impl_.end());
+  auto it = identity_to_shell_impl_.find(identity);
+  DCHECK(it != identity_to_shell_impl_.end());
   delete it->second;
-  url_to_shell_impl_.erase(it);
+  identity_to_shell_impl_.erase(it);
   delegate_->OnApplicationError(requested_url);
 }
 

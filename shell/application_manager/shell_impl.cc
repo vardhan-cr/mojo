@@ -14,10 +14,10 @@ namespace shell {
 ShellImpl::ShellImpl(ApplicationPtr application,
                      ApplicationManager* manager,
                      const GURL& requested_url,
-                     const GURL& url)
+                     const Identity& identity)
     : manager_(manager),
       requested_url_(requested_url),
-      url_(url),
+      identity_(identity),
       application_(application.Pass()),
       binding_(this) {
   binding_.set_error_handler(this);
@@ -29,7 +29,7 @@ ShellImpl::~ShellImpl() {
 void ShellImpl::InitializeApplication(Array<String> args) {
   ShellPtr shell;
   binding_.Bind(GetProxy(&shell));
-  application_->Initialize(shell.Pass(), args.Pass(), url_.spec());
+  application_->Initialize(shell.Pass(), args.Pass(), identity_.url.spec());
 }
 
 void ShellImpl::ConnectToClient(const GURL& requested_url,
@@ -49,7 +49,7 @@ void ShellImpl::ConnectToApplication(const String& app_url,
     LOG(ERROR) << "Error: invalid URL: " << app_url;
     return;
   }
-  manager_->ConnectToApplication(app_gurl, url_, services.Pass(),
+  manager_->ConnectToApplication(app_gurl, identity_.url, services.Pass(),
                                  exposed_services.Pass());
 }
 

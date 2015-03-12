@@ -16,6 +16,7 @@
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/application_loader.h"
+#include "shell/application_manager/identity.h"
 #include "shell/application_manager/native_runner.h"
 #include "url/gurl.h"
 
@@ -133,7 +134,7 @@ class ApplicationManager {
 
   typedef std::map<std::string, ApplicationLoader*> SchemeToLoaderMap;
   typedef std::map<GURL, ApplicationLoader*> URLToLoaderMap;
-  typedef std::map<GURL, ShellImpl*> URLToShellImplMap;
+  typedef std::map<Identity, ShellImpl*> IdentityToShellImplMap;
   typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
   typedef std::map<std::string, GURL> MimeTypeToURLMap;
@@ -209,7 +210,7 @@ class ApplicationManager {
   scoped_ptr<ApplicationLoader> default_loader_;
   scoped_ptr<NativeRunnerFactory> native_runner_factory_;
 
-  URLToShellImplMap url_to_shell_impl_;
+  IdentityToShellImplMap identity_to_shell_impl_;
   URLToContentHandlerMap url_to_content_handler_;
   URLToArgsMap url_to_args_;
   // Note: The keys are URLs after mapping and resolving.

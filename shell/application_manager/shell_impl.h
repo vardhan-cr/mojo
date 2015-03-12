@@ -9,6 +9,7 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
+#include "shell/application_manager/identity.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -22,7 +23,7 @@ class ShellImpl : public Shell, public ErrorHandler {
             ApplicationManager* manager,
             // The original URL that was first requested, before any resolution.
             const GURL& original_url,
-            const GURL& resolved_url);
+            const Identity& resolved_identity);
 
   ~ShellImpl() override;
 
@@ -34,7 +35,7 @@ class ShellImpl : public Shell, public ErrorHandler {
                        ServiceProviderPtr exposed_services);
 
   Application* application() { return application_.get(); }
-  const GURL& url() const { return url_; }
+  const Identity& identity() const { return identity_; }
   const GURL& requested_url() const { return requested_url_; }
 
  private:
@@ -48,7 +49,7 @@ class ShellImpl : public Shell, public ErrorHandler {
 
   ApplicationManager* const manager_;
   const GURL requested_url_;
-  const GURL url_;
+  const Identity identity_;
   ApplicationPtr application_;
   Binding<Shell> binding_;
 
