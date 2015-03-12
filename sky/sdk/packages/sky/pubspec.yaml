@@ -1,0 +1,4 @@
+name: sky
+dependencies:
+  mojo:
+    path: ../mojo

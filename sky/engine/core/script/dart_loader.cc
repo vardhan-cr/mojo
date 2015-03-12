@@ -26,11 +26,12 @@ Dart_Handle CanonicalizeURL(DartState* state,
                             Dart_Handle library,
                             Dart_Handle url) {
   String string = StringFromDart(url);
+  String original = string;
   if (string.startsWith("dart:") || string.startsWith("mojo:"))
     return url;
   // TODO(dart): Figure out how 'package:' should work in sky.
   if (string.startsWith("package:")) {
-    string.replace("package:", "/gen/");
+    string.replace("package:", "/packages/");
   }
   String library_url_string = StringFromDart(Dart_LibraryUrl(library));
   KURL library_url = KURL(ParsedURLString, library_url_string);
