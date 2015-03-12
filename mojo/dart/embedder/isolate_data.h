@@ -5,12 +5,13 @@
 #ifndef MOJO_DART_EMBEDDER_ISOLATE_DATA_H_
 #define MOJO_DART_EMBEDDER_ISOLATE_DATA_H_
 
-#include <stdlib.h>
-#include <string.h>
+#include <set>
+#include <string>
 
 #include "base/callback.h"
 #include "base/macros.h"
 #include "dart/runtime/include/dart_api.h"
+#include "mojo/public/c/system/types.h"
 
 namespace mojo {
 namespace dart {
@@ -43,6 +44,7 @@ class IsolateData {
   std::string script;
   std::string script_uri;
   std::string package_root;
+  std::set<MojoHandle> unclosed_handles;
 
   DISALLOW_COPY_AND_ASSIGN(IsolateData);
 };

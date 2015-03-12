@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <set>
 #include <vector>
 
 #include "base/logging.h"
@@ -11,6 +12,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
+#include "mojo/dart/embedder/isolate_data.h"
 #include "mojo/public/c/system/core.h"
 #include "mojo/public/cpp/system/core.h"
 
@@ -122,7 +124,13 @@ static void MojoHandleCloserCallback(void* isolate_data,
   CloserCallbackPeer* callback_peer =
       reinterpret_cast<CloserCallbackPeer*>(peer);
   if (callback_peer->handle != MOJO_HANDLE_INVALID) {
-    MojoClose(callback_peer->handle);
+    MojoResult res = MojoClose(callback_peer->handle);
+    if (res == MOJO_RESULT_OK) {
+      // If this finalizer callback successfully closes a handle, it means that
+      // the handle has leaked from the Dart code, which is an error.
+      LOG(ERROR) << "Handle Finalizer closing handle:\n\tisolate: "
+                 << "\n\thandle: " << callback_peer->handle;
+    }
   }
   delete callback_peer;
 }
@@ -167,8 +175,16 @@ void MojoHandle_Register(Dart_NativeArguments arguments) {
     return;
   }
 
+  // Add the handle to this isolate's set.
+  MojoHandle handle = static_cast<MojoHandle>(raw_handle);
+  Dart_Isolate isolate = Dart_CurrentIsolate();
+  void* data = Dart_IsolateData(isolate);
+  IsolateData* isolate_data = reinterpret_cast<IsolateData*>(data);
+  isolate_data->unclosed_handles.insert(handle);
+
+  // Set up a finalizer.
   CloserCallbackPeer* callback_peer = new CloserCallbackPeer();
-  callback_peer->handle = static_cast<MojoHandle>(raw_handle);
+  callback_peer->handle = handle;
   Dart_NewWeakPersistentHandle(mojo_handle_instance,
                                reinterpret_cast<void*>(callback_peer),
                                sizeof(CloserCallbackPeer),
@@ -177,10 +193,17 @@ void MojoHandle_Register(Dart_NativeArguments arguments) {
 }
 
 void MojoHandle_Close(Dart_NativeArguments arguments) {
-  int64_t handle;
-  CHECK_INTEGER_ARGUMENT(arguments, 0, &handle, InvalidArgument);
+  int64_t raw_handle;
+  CHECK_INTEGER_ARGUMENT(arguments, 0, &raw_handle, InvalidArgument);
 
-  MojoResult res = MojoClose(static_cast<MojoHandle>(handle));
+  // Remove the handle from this isolate's set.
+  MojoHandle handle = static_cast<MojoHandle>(raw_handle);
+  Dart_Isolate isolate = Dart_CurrentIsolate();
+  void* data = Dart_IsolateData(isolate);
+  IsolateData* isolate_data = reinterpret_cast<IsolateData*>(data);
+  isolate_data->unclosed_handles.erase(handle);
+
+  MojoResult res = MojoClose(handle);
 
   Dart_SetIntegerReturnValue(arguments, static_cast<int64_t>(res));
 }

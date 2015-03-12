@@ -17,7 +17,7 @@ class EchoServiceImpl implements EchoService {
     _stub = new EchoServiceStub.fromEndpoint(endpoint, this);
   }
 
-  echoString(String value, [Function responseFactory = null]) {
+  echoString(String value, [Function responseFactory]) {
     if (value == "quit") {
       _stub.close();
     }
@@ -39,5 +39,8 @@ class EchoApplication extends Application {
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  new EchoApplication.fromHandle(appHandle);
+  new EchoApplication.fromHandle(appHandle)
+    ..onError = (() {
+      assert(MojoHandle.reportLeakedHandles());
+    });
 }

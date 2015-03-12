@@ -51,7 +51,11 @@ static void RunTest(const std::string& test,
   char* error = NULL;
   bool unhandled_exception = false;
   DartControllerConfig config;
+#if defined(DEBUG)
   config.strict_compilation = true;
+#else
+  config.strict_compilation = false;
+#endif
   config.script = source;
   config.script_uri = path.AsUTF8Unsafe();
   config.package_root = package_root.AsUTF8Unsafe();
@@ -119,10 +123,6 @@ TEST(DartTest, codec_test) {
 
 TEST(DartTest, handle_watcher_test) {
   RunTest("handle_watcher_test.dart", false, nullptr, 0);
-}
-
-TEST(DartTest, interface_test) {
-  RunTest("interface_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, bindings_generation_test) {

@@ -4,6 +4,7 @@
 
 // This app is run by examples/dart/hello_world/hello.
 
+import 'dart:async';
 import 'dart:mojo.application';
 import 'dart:mojo.bindings';
 import 'dart:mojo.core';
@@ -13,7 +14,12 @@ class World extends Application {
 
   void initialize(List<String> args, String url) {
     print("$url World");
-    close();
+    closeApplication();
+  }
+
+  Future closeApplication() async {
+    await close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 }
 

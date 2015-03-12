@@ -5,6 +5,7 @@
 // To run this app:
 // mojo_shell mojo:hello
 
+import 'dart:async';
 import 'dart:mojo.application';
 import 'dart:mojo.bindings';
 import 'dart:mojo.core';
@@ -23,7 +24,12 @@ class Hello extends Application {
     // app has a chance to come up. Instead, we wait to close this app until
     // the "world" app comes up, does its print, and closes its end of the
     // connection.
-    c.onError = close;
+    c.onError = closeApplication;
+  }
+
+  Future closeApplication() async {
+    await close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 }
 

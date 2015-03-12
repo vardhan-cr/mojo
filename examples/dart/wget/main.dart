@@ -35,15 +35,16 @@ class WGet extends Application {
     print(">>> EOF <<<");
 
     _closeProxies();
-    close();
+    await close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 
   Future<ByteData> _getUrl(String url) async {
     _initProxiesIfNeeded();
 
     var urlRequest = new UrlRequest()
-        ..url = url
-        ..autoFollowRedirects = true;
+      ..url = url
+      ..autoFollowRedirects = true;
 
     var urlResponse = await _urlLoader.ptr.start(urlRequest);
     print(">>> Headers <<<");

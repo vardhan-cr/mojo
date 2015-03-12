@@ -118,5 +118,8 @@ class PingPongApplication extends Application {
 main(List args) {
   MojoHandle appHandle = new MojoHandle(args[0]);
   String url = args[1];
-  new PingPongApplication.fromHandle(appHandle);
+  new PingPongApplication.fromHandle(appHandle)
+    ..onError = (() {
+      assert(MojoHandle.reportLeakedHandles());
+    });
 }

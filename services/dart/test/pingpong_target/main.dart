@@ -52,7 +52,12 @@ class PingPongApplication extends Application {
     connection.provideService(PingPongServiceName,
         (endpoint) => new PingPongServiceImpl(this, endpoint));
     // Close the application when the first connection goes down.
-    connection.onError = close;
+    connection.onError = closeApplication;
+  }
+
+  Future closeApplication() async {
+    await close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 }
 

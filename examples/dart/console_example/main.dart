@@ -25,7 +25,8 @@ class ConsoleApplication extends Application {
     await _console.ptr.printLines([result.line]);
 
     _console.close();
-    close();
+    await close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 }
 

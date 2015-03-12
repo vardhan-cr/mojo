@@ -113,8 +113,25 @@ testSerializeStructs() {
   testSerializeArrayValueTypes();
 }
 
+void closingProviderIsolate(core.MojoMessagePipeEndpoint endpoint) {
+  var provider = new ProviderImpl(endpoint);
+  provider._stub.close();
+}
+
+Future<bool> runOnClosedTest() {
+  var testCompleter = new Completer();
+  var pipe = new core.MojoMessagePipe();
+  var proxy = new sample.ProviderProxy.fromEndpoint(pipe.endpoints[0]);
+  proxy.impl.onError = () => testCompleter.complete(true);
+  Isolate.spawn(closingProviderIsolate, pipe.endpoints[1]);
+  return testCompleter.future.then((b) {
+    Expect.isTrue(b);
+  });
+}
+
 main() async {
   testSerializeStructs();
   await testCallResponse();
   await testAwaitCallResponse();
+  await runOnClosedTest();
 }

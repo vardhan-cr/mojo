@@ -19,8 +19,8 @@ export 'package:unittest/unittest.dart';
 class _ConnectionToShellApplication extends Application {
   final List<Function> _testFunctions;
 
-  _ConnectionToShellApplication.fromHandle(MojoHandle handle,
-      this._testFunctions)
+  _ConnectionToShellApplication.fromHandle(
+      MojoHandle handle, this._testFunctions)
       : super.fromHandle(handle);
 
   // Only run the test suite passed in once we have received an initialize()
@@ -45,8 +45,13 @@ class _CleanShutdownConfiguration extends SimpleConfiguration {
   }
 
   void onDone(bool success) {
-    _application.close();
+    closeApplication();
     super.onDone(success);
+  }
+
+  Future closeApplication() async {
+    await _application.close();
+    assert(MojoHandle.reportLeakedHandles());
   }
 }
 

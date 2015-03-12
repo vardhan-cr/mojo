@@ -36,7 +36,7 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
 
-  void close({bool nodefer: false}) => _stub.close(nodefer: nodefer);
+  Future close({bool nodefer: false}) => _stub.close(nodefer: nodefer);
 }
 
 parser.ValidationParseResult readAndParseTest(String test) {
