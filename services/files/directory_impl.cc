@@ -174,7 +174,7 @@ void DirectoryImpl::Read(
 void DirectoryImpl::Stat(
     const Callback<void(Error, FileInformationPtr)>& callback) {
   DCHECK(dir_fd_.is_valid());
-  StatFD(dir_fd_.get(), callback);
+  StatFD(dir_fd_.get(), FILE_TYPE_DIRECTORY, callback);
 }
 
 void DirectoryImpl::Touch(TimespecOrNowPtr atime,

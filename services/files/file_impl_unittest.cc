@@ -103,6 +103,7 @@ TEST_F(FileImplTest, StatTouch) {
   ASSERT_TRUE(file.WaitForIncomingMethodCall());
   EXPECT_EQ(ERROR_OK, error);
   ASSERT_FALSE(file_info.is_null());
+  EXPECT_EQ(FILE_TYPE_REGULAR_FILE, file_info->type);
   EXPECT_EQ(0, file_info->size);
   ASSERT_FALSE(file_info->atime.is_null());
   EXPECT_GT(file_info->atime->seconds, 0);  // Expect that it's not 1970-01-01.

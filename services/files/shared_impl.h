@@ -15,7 +15,11 @@ namespace mojo {
 namespace files {
 
 // Stats the given FD (which must be valid), calling |callback| appropriately.
-void StatFD(int fd, const Callback<void(Error, FileInformationPtr)>& callback);
+// The type in the |FileInformation| given to the callback will be assigned from
+// |type|.
+void StatFD(int fd,
+            FileType type,
+            const Callback<void(Error, FileInformationPtr)>& callback);
 
 // Touches the given FD (which must be valid), calling |callback| appropriately.
 void TouchFD(int fd,

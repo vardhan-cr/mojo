@@ -49,6 +49,8 @@ struct TimespecOrNow {
 // that access/modification times may be set arbitrarily (by those with
 // appropriate capabilities) and may not reflect reality.
 struct FileInformation {
+  // Type of the file.
+  FileType type;
   // Size of the file, in bytes. Zero for directories.
   int64 size;
   // Last access time, if available/supported.

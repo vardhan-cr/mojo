@@ -17,7 +17,9 @@
 namespace mojo {
 namespace files {
 
-void StatFD(int fd, const Callback<void(Error, FileInformationPtr)>& callback) {
+void StatFD(int fd,
+            FileType type,
+            const Callback<void(Error, FileInformationPtr)>& callback) {
   DCHECK_NE(fd, -1);
 
   struct stat buf;
@@ -27,6 +29,7 @@ void StatFD(int fd, const Callback<void(Error, FileInformationPtr)>& callback) {
   }
 
   FileInformationPtr file_info(FileInformation::New());
+  file_info->type = type;
   // Only fill in |size| for files.
   if (S_ISREG(buf.st_mode)) {
     file_info->size = static_cast<int64_t>(buf.st_size);

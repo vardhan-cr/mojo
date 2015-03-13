@@ -243,7 +243,7 @@ void FileImpl::Stat(const Callback<void(Error, FileInformationPtr)>& callback) {
     callback.Run(ERROR_CLOSED, nullptr);
     return;
   }
-  StatFD(file_fd_.get(), callback);
+  StatFD(file_fd_.get(), FILE_TYPE_REGULAR_FILE, callback);
 }
 
 void FileImpl::Truncate(int64_t size, const Callback<void(Error)>& callback) {
