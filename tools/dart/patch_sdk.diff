@@ -1,11 +1,27 @@
 Index: sdk/lib/_internal/libraries.dart
 ===================================================================
---- sdk/lib/_internal/libraries.dart	(revision 44347)
-+++ sdk/lib/_internal/libraries.dart	(working copy)
-@@ -117,6 +117,10 @@
+--- sdk/lib/_internal/libraries.dart  (revision 44413)
++++ sdk/lib/_internal/libraries.dart  (working copy)
+@@ -117,6 +117,26 @@
        maturity: Maturity.STABLE,
        dart2jsPatchPath: "_internal/compiler/js_lib/typed_data_patch.dart"),
- 
+
++  "mojo.application": const LibraryInfo(
++      "../../../../mojo/public/dart/application.dart",
++      maturity: Maturity.STABLE),
++
++  "mojo.bindings": const LibraryInfo(
++      "../../../../mojo/public/dart/bindings.dart",
++      maturity: Maturity.STABLE),
++
++  "mojo.builtin": const LibraryInfo(
++      "../../../../mojo/public/dart/builtin.dart",
++      maturity: Maturity.STABLE),
++
++  "mojo.core": const LibraryInfo(
++      "../../../../mojo/public/dart/core.dart",
++      maturity: Maturity.STABLE),
++
 +  "sky": const LibraryInfo(
 +      "../../../../out/Debug/gen/sky/bindings/dart_sky.dart",
 +      maturity: Maturity.STABLE),

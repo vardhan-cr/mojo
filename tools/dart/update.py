@@ -74,21 +74,21 @@ def main():
       print "Failed to get dart sdk from server."
       return
 
-    unzip_command = ['unzip', '-o', '-q', OUTPUT_FILE, '-d', DART_SDK_DIR]
-    if not RunCommand(unzip_command, fail_hard=False):
-      print "Failed to unzip the dart sdk."
-      return
-
-    # Patch the the dart-sdk/lib/_internal/libraries.dart file
-    # so that it understands dart:sky imports.
-    patch_command = ['patch', LIBRARIES_FILE, PATCH_FILE]
-    if not RunCommand(patch_command, fail_hard=False):
-      print "Failed to apply the patch to the Dart libraries file."
-      return
-
     # Write our stamp file so we don't redownload the sdk.
     with open(STAMP_FILE, "w") as stamp_file:
       stamp_file.write(LINUX_64_SDK)
+
+  unzip_command = ['unzip', '-o', '-q', OUTPUT_FILE, '-d', DART_SDK_DIR]
+  if not RunCommand(unzip_command, fail_hard=False):
+    print "Failed to unzip the dart sdk."
+    return
+
+  # Patch the the dart-sdk/lib/_internal/libraries.dart file
+  # so that it understands dart:sky imports.
+  patch_command = ['patch', LIBRARIES_FILE, PATCH_FILE]
+  if not RunCommand(patch_command, fail_hard=False):
+    print "Failed to apply the patch to the Dart libraries file."
+    return
 
 if __name__ == '__main__':
   sys.exit(main())

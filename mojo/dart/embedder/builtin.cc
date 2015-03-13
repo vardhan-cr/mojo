@@ -52,7 +52,7 @@ Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
   {"dart:mojo.bindings", false, nullptr, nullptr,
     nullptr, nullptr },
   {"dart:mojo.core", true, MojoNativeSymbol, MojoNativeLookup,
-   "mojo:core-patch", mojo_core_patch_resource_names_ },
+   "dart:mojo.core-patch", mojo_core_patch_resource_names_ },
 };
 
 uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};
