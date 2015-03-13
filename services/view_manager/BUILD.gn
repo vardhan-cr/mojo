@@ -117,7 +117,7 @@ test("view_manager_service_unittests") {
     ":test_support",
     ":view_manager_lib",
     "//base",
-    "//base/test:test_support",
+    "//base/test:test_config",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/edk/test:run_all_unittests",
@@ -149,7 +149,7 @@ mojo_native_application("mojo_view_manager_client_apptests") {
 
   deps = [
     "//base",
-    "//base/test:test_support",
+    "//base/test:test_config",
     "//mojo/application",
     "//mojo/application:test_support",
     "//mojo/services/geometry/public/cpp:cpp",

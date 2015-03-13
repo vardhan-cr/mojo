@@ -62,5 +62,5 @@ mojo_native_application("apptests") {
     "//services/http_server/public:util",
   ]
 
-  data_deps = [ ":http_server" ]
+  data_deps = [ ":http_server($default_toolchain)" ]
 }

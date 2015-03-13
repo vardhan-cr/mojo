@@ -124,5 +124,5 @@ mojo_native_application("window_manager_apptests") {
     "//mojo/services/window_manager/public/interfaces",
   ]
 
-  data_deps = [ ":window_manager" ]
+  data_deps = [ ":window_manager($default_toolchain)" ]
 }
