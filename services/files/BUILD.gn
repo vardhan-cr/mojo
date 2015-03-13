@@ -48,7 +48,9 @@ mojo_native_application("apptests") {
   testonly = true
 
   sources = [
-    "files_apptest.cc",
+    "directory_impl_unittest.cc",
+    "file_impl_unittest.cc",
+    "files_test_base.h",
   ]
 
   deps = [
