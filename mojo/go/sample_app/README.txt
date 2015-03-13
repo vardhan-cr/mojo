@@ -23,12 +23,23 @@ $ ls $GOROOT/bin/go
 3) Now, we switch to the Mojo workspace and build the sample application.
 
 $ cd mojo/src
-$ gn args <output_directory>
-
-Set the following arguments
+$ build/install-build-deps-android.sh
+$ mojo/tools/mojob.py gn --android
+This should show an error 'assert(go_build_tool != "")', now run
+$ gn args out/android_Debug
+And append two lines:
 mojo_use_go=true
 go_build_tool="<path_to_go_binary>"
-os="android"
 
-$ gn gen <output_directory>
-$ ninja -C <output_directory> go_sample_app
+$ ninja -C out/android_Debug go_sample_app
+
+To run the app:
+1) configure port forwarding 4444 -> localhost:4444 on android device or
+   use 10.0.2.2 instead of 127.0.0.1 if you are running an android emulator
+2) open new terminal and run
+$ cd out/android_Debug
+$ python -m SimpleHTTPServer 4444
+3) in the previous terminal run
+$ mojo/tools/android_mojo_shell.py --url-mappings="mojo:go_sample_app"="http://127.0.0.1:4444/obj/mojo/go/go_sample_app" "mojo:go_sample_app"
+
+More inforamtion about building mojo: https://github.com/domokit/mojo/blob/master/README.md
