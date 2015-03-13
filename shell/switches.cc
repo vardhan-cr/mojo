@@ -64,12 +64,16 @@ const char kOrigin[] = "origin";
 // the first maps 'a' to 'b' and the second 'c' to 'd'.
 const char kURLMappings[] = "url-mappings";
 
+// If set apps downloaded are not deleted.
+const char kDontDeleteOnDownload[] = "dont-delete-on-download";
+
 // Switches valid for the main process (i.e., that the user may pass in).
 const char* kSwitchArray[] = {kV,
                               kArgsFor,
                               // |kChildProcessType| not for user use.
                               kContentHandlers,
                               kDisableCache,
+                              kDontDeleteOnDownload,
                               kEnableExternalApplications,
                               kEnableMultiprocess,
                               kForceInProcess,

@@ -162,8 +162,6 @@ source_set("lib") {
     "incoming_connection_listener.h",
     "out_of_process_native_runner.cc",
     "out_of_process_native_runner.h",
-    "switches.cc",
-    "switches.h",
     "task_runners.cc",
     "task_runners.h",
     "test_child_process.cc",
@@ -191,6 +189,10 @@ source_set("lib") {
     "//shell/domain_socket",
     "//services/tracing:bindings",
     "//url",
+  ]
+
+  public_deps = [
+    ":switches",
   ]
 
   if (is_win) {
@@ -230,6 +232,17 @@ source_set("lib") {
   # TODO: Might be better to split the files with OS-specific includes out to a
   # separate source_set so we can leave checking on for the rest of the target.
   check_includes = false
+}
+
+source_set("switches") {
+  sources = [
+    "switches.cc",
+    "switches.h",
+  ]
+
+  deps = [
+    "//base",
+  ]
 }
 
 if (is_android) {

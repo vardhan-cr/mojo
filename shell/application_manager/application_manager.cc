@@ -5,6 +5,7 @@
 #include "shell/application_manager/application_manager.h"
 
 #include "base/bind.h"
+#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/stl_util.h"
@@ -17,6 +18,7 @@
 #include "shell/application_manager/network_fetcher.h"
 #include "shell/application_manager/query_util.h"
 #include "shell/application_manager/shell_impl.h"
+#include "shell/switches.h"
 
 namespace mojo {
 namespace shell {
@@ -158,8 +160,14 @@ void ApplicationManager::ConnectToApplication(
   if (!network_service_)
     ConnectToService(GURL("mojo:network_service"), &network_service_);
 
+  const NativeRunner::CleanupBehavior cleanup_behavior =
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDontDeleteOnDownload)
+          ? NativeRunner::DontDeleteAppPath
+          : NativeRunner::DeleteAppPath;
+
   new NetworkFetcher(disable_cache_, resolved_url, network_service_.get(),
-                     base::Bind(callback, NativeRunner::DeleteAppPath));
+                     base::Bind(callback, cleanup_behavior));
 }
 
 bool ApplicationManager::ConnectToRunningApplication(

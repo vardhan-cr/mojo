@@ -17,6 +17,7 @@ extern const char kArgsFor[];
 extern const char kChildProcessType[];
 extern const char kContentHandlers[];
 extern const char kDisableCache[];
+extern const char kDontDeleteOnDownload[];
 extern const char kEnableExternalApplications[];
 extern const char kEnableMultiprocess[];
 extern const char kForceInProcess[];

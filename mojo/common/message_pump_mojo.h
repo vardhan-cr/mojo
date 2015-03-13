@@ -57,8 +57,8 @@ class MOJO_COMMON_EXPORT MessagePumpMojo : public base::MessagePump {
 
   void RemoveHandler(const Handle& handle);
 
-  void AddObserver(Observer*);
-  void RemoveObserver(Observer*);
+  void AddObserver(Observer* observer);
+  void RemoveObserver(Observer* observer);
 
   // MessagePump:
   void Run(Delegate* delegate) override;
