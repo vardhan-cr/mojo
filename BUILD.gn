@@ -14,6 +14,7 @@ group("default") {
     "//shell",
     "//ui/gfx:gfx_unittests",
     "//ui/events:events_unittests",
+    "//third_party/dart-packages/crypto",
   ]
 
   if (!is_android && !is_win) {

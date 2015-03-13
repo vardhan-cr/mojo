@@ -1,0 +1,17 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/dart/rules.gni")
+
+dart_package("crypto") {
+  sources = [
+    "crypto/crypto.dart",
+    "crypto/src/crypto_utils.dart",
+    "crypto/src/hash_utils.dart",
+    "crypto/src/hmac.dart",
+    "crypto/src/md5.dart",
+    "crypto/src/sha1.dart",
+    "crypto/src/sha256.dart",
+  ]
+}
