@@ -46,6 +46,10 @@ group("examples") {
     ]
   }
 
+  if (is_android && go_build_tool != "") {
+    deps += [ "//examples/go" ]
+  }
+
   if (is_linux) {
     deps += [ "//examples/python" ]
   }
