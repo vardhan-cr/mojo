@@ -11,7 +11,7 @@ namespace mojo {
 namespace files {
 namespace {
 
-typedef FilesTestBase DirectoryImplTest;
+using DirectoryImplTest = FilesTestBase;
 
 TEST_F(DirectoryImplTest, Read) {
   DirectoryPtr directory;

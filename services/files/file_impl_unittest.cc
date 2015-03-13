@@ -12,7 +12,7 @@ namespace mojo {
 namespace files {
 namespace {
 
-typedef FilesTestBase FileImplTest;
+using FileImplTest = FilesTestBase;
 
 TEST_F(FileImplTest, CreateWriteCloseRenameOpenRead) {
   DirectoryPtr directory;

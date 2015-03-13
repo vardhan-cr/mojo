@@ -30,7 +30,7 @@ namespace {
 struct DIRDeleter {
   void operator()(DIR* dir) const { PCHECK(closedir(dir) == 0); }
 };
-typedef scoped_ptr<DIR, DIRDeleter> ScopedDIR;
+using ScopedDIR = scoped_ptr<DIR, DIRDeleter>;
 
 Error ValidateOpenFlags(uint32_t open_flags, bool is_directory) {
   // Treat unknown flags as "unimplemented".
