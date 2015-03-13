@@ -9,7 +9,7 @@
 import 'dart:async';
 import 'dart:sky';
 
-import '/sky/framework/embedder.dart';
+import 'package:sky/framework/embedder.dart';
 
 import 'package:mojo/services/location/public/interfaces/location_service.mojom.dart';
 

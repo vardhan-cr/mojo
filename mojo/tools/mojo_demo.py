@@ -36,7 +36,20 @@ def main():
 
   HTTP_PORT = 9999
   configuration = 'Debug' if config.is_debug else 'Release'
-  server = SkyServer(HTTP_PORT, configuration, paths.src_root)
+
+  # package: urls in Sky's Dart code expect sky and mojo dart packages
+  # vended from /packages.  Make sure we build mojo/sky packages before serving:
+  sdk_root = os.path.join(paths.build_dir, 'gen', 'sky_sdk')
+  packages_root = os.path.join(sdk_root, 'packages_root')
+  subprocess.check_call([
+      os.path.join(paths.src_root, 'sky', 'tools', 'deploy_sdk.py'),
+      '--build-dir', paths.build_dir,
+      '--non-interactive',
+      '--dev-environment',
+      '--fake-pub-get-into', packages_root,
+      sdk_root,
+  ])
+  server = SkyServer(HTTP_PORT, configuration, paths.src_root, packages_root)
 
   if args.demo == 'browser':
     base_url = server.path_as_url(paths.build_dir)
