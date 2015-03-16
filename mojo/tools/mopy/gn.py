@@ -74,6 +74,12 @@ def GNArgsForConfig(config):
 
   gn_args["target_cpu"] = config.target_cpu
 
+  extra_args = config.values.get("gn_args")
+  if extra_args:
+    for arg in extra_args.split():
+      (name, val) = arg.split('=')
+      gn_args[name] = val
+
   return gn_args
 
 

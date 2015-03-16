@@ -64,6 +64,9 @@ def _args_to_config(args):
   if 'test_results_server' in args:
     additional_args['test_results_server'] = args.test_results_server
 
+  if 'gn_args' in args:
+    additional_args['gn_args'] = args.gn_args
+
   return Config(target_os=target_os, target_cpu=target_cpu,
                 is_debug=args.debug, dcheck_always_on=args.dcheck_always_on,
                 **additional_args)
@@ -207,6 +210,8 @@ def main():
   gn_parser = subparsers.add_parser('gn', parents=[parent_parser],
                                     help='Run gn for mojo (does not sync).')
   gn_parser.set_defaults(func=gn)
+  gn_parser.add_argument('--args', help='Specify extra args',
+                         default=None, dest='gn_args')
   clang_group = gn_parser.add_mutually_exclusive_group()
   clang_group.add_argument('--clang', help='Use Clang (default)', default=None,
                            action='store_true')
