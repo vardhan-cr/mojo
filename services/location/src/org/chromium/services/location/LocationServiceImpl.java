@@ -6,7 +6,6 @@ package org.chromium.services.location;
 
 import android.location.Location;
 import android.os.Looper;
-import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -36,8 +35,8 @@ class LocationServiceImpl implements LocationService, LocationListener {
     }
 
     /**
-     * Ful-fills a pending callback if available on a location change update. This must be
-     * called on the mojo message loop thread.
+     * Ful-fills a pending callback if available on a location change update. This must be called on
+     * the mojo message loop thread.
      *
      * @param location New location update.
      */
@@ -49,10 +48,10 @@ class LocationServiceImpl implements LocationService, LocationListener {
     }
 
     /**
-     * Called when a new location update is available.
-     * This is the only method called back on the looper thread.
+     * Called when a new location update is available. This is the only method called back on the
+     * looper thread.
      *
-     * @see com.google.android.gms.location.LocationListener#onLocationChanges(Location)
+     * @see com.google.android.gms.location.LocationListener#onLocationChanged(Location)
      */
     @Override
     public void onLocationChanged(final Location location) {
@@ -65,11 +64,11 @@ class LocationServiceImpl implements LocationService, LocationListener {
     }
 
     /**
-     * When |getNextLocation| is called for the first time, we return the last location.
-     * For subsequent calls, we register for updates at the requested priority.
+     * When |getNextLocation| is called for the first time, we return the last location. For
+     * subsequent calls, we register for updates at the requested priority.
      *
      * @see org.chromium.mojom.mojo.LocationService#getNextLocation(int,
-     * LocationService.GetNextLocationResponse)
+     *      LocationService.GetNextLocationResponse)
      */
     @Override
     public void getNextLocation(int priority, LocationService.GetNextLocationResponse callback) {

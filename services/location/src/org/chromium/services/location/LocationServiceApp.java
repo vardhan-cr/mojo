@@ -5,7 +5,6 @@
 package org.chromium.services.location;
 
 import android.content.Context;
-import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
@@ -27,7 +26,7 @@ import org.chromium.mojom.mojo.Shell;
  * services API.
  */
 class LocationServiceApp implements ApplicationDelegate {
-    private static String TAG = "LocationServiceApp";
+    private static final String TAG = "LocationServiceApp";
 
     private final GoogleApiClient mGoogleApiClient;
     private final Core mCore;
@@ -36,14 +35,12 @@ class LocationServiceApp implements ApplicationDelegate {
      * Android looper thread class to get callbacks from google play services api.
      */
     private static class LooperThread extends Thread {
-        private Handler mHandler;
         private Looper mLooper;
 
         @Override
         public void run() {
             synchronized (this) {
                 Looper.prepare();
-                mHandler = new Handler();
                 mLooper = Looper.myLooper();
                 this.notify();
             }
