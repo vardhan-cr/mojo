@@ -79,6 +79,7 @@ DefaultDisplayManager::DefaultDisplayManager(
       app_connection_(app_connection),
       connection_manager_(nullptr),
       draw_timer_(false, false),
+      frame_pending_(false),
       native_viewport_closed_callback_(native_viewport_closed_callback),
       weak_factory_(this) {
   metrics_.size = mojo::Size::New();
