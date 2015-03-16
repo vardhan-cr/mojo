@@ -161,12 +161,20 @@ void Connection::WriteMore() {
 }
 
 void Connection::OnResponseDataReady(MojoResult result) {
-  DCHECK_EQ(result, MOJO_RESULT_OK);
+  if (result != MOJO_RESULT_OK) {
+    LOG(ERROR) << "Error waiting to read data " << result;
+    delete this;
+    return;
+  }
   WriteMore();
 }
 
 void Connection::OnSenderReady(MojoResult result) {
-  DCHECK_EQ(result, MOJO_RESULT_OK);
+  if (result != MOJO_RESULT_OK) {
+    LOG(ERROR) << "Error waiting to write data " << result;
+    delete this;
+    return;
+  }
   WriteMore();
 }
 
