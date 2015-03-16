@@ -78,9 +78,6 @@ bool ConfigureURLMappings(const base::CommandLine& command_line,
       GURL("mojo:network_service"),
       context->ResolveShellFileURL("file:network_service.mojo"));
 
-  // Temporary mapping to avoid workflow breakages after app rename.
-  resolver->AddURLMapping(GURL("mojo:sample_app"), GURL("mojo:spinning_cube"));
-
   // Command line URL mapping.
   std::vector<URLResolver::OriginMapping> origin_mappings =
       URLResolver::GetOriginMappings(command_line.argv());
