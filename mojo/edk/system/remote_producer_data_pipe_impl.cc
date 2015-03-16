@@ -168,7 +168,6 @@ bool RemoteProducerDataPipeImpl::ProducerEndSerialize(
 void RemoteProducerDataPipeImpl::ConsumerClose() {
   if (producer_open())
     Disconnect();
-  DestroyBuffer();
   current_num_bytes_ = 0;
 }
 

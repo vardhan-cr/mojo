@@ -203,13 +203,20 @@ MojoResult RemoteConsumerDataPipeImpl::ProducerEndWriteData(
   DCHECK_EQ(num_bytes_written % element_num_bytes(), 0u);
   DCHECK_LE(num_bytes_written, capacity_num_bytes() - consumer_num_bytes_);
 
+  if (!consumer_open()) {
+    DCHECK(buffer_);
+    set_producer_two_phase_max_num_bytes_written(0);
+    DestroyBuffer();
+    return MOJO_RESULT_OK;
+  }
+
   // TODO(vtl): The following code is copied almost verbatim from
   // |ProducerWriteData()| (it's touchy to factor it out since it uses a
   // |UserPointer| while we have a plain pointer.
 
   // The maximum amount of data to send per message (make it a multiple of the
   // element size.
-  // TODO(vtl): Copied from |LocalDataPipeImpl::ConvertDataToMessages()|.
+  // TODO(vtl): Mostly copied from |LocalDataPipeImpl::ConvertDataToMessages()|.
   size_t max_message_num_bytes = GetConfiguration().max_message_num_bytes;
   max_message_num_bytes -= max_message_num_bytes % element_num_bytes();
   DCHECK_GT(max_message_num_bytes, 0u);
@@ -222,8 +229,9 @@ MojoResult RemoteConsumerDataPipeImpl::ProducerEndWriteData(
         MessageInTransit::kTypeEndpoint, MessageInTransit::kSubtypeEndpointData,
         static_cast<uint32_t>(message_num_bytes), buffer_.get() + offset));
     if (!channel_endpoint_->EnqueueMessage(message.Pass())) {
+      set_producer_two_phase_max_num_bytes_written(0);
       Disconnect();
-      break;
+      return MOJO_RESULT_OK;
     }
 
     offset += message_num_bytes;
@@ -231,7 +239,7 @@ MojoResult RemoteConsumerDataPipeImpl::ProducerEndWriteData(
   }
 
   DCHECK_LE(consumer_num_bytes_, capacity_num_bytes());
-  // TODO(vtl): (End of copied code.)
+  // TODO(vtl): (End of mostly copied code.)
 
   set_producer_two_phase_max_num_bytes_written(0);
   return MOJO_RESULT_OK;
@@ -411,7 +419,8 @@ void RemoteConsumerDataPipeImpl::Disconnect() {
   owner()->SetConsumerClosedNoLock();
   channel_endpoint_->DetachFromClient();
   channel_endpoint_ = nullptr;
-  DestroyBuffer();
+  if (!producer_in_two_phase_write())
+    DestroyBuffer();
 }
 
 }  // namespace system
