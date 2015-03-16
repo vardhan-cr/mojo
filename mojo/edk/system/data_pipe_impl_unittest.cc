@@ -13,6 +13,7 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/test/test_io_thread.h"
 #include "base/threading/platform_thread.h"  // For |Sleep()|.
@@ -90,8 +91,8 @@ class DataPipeImplTest : public testing::Test {
   DataPipeImplTest() {}
   ~DataPipeImplTest() override {}
 
-  void SetUp() override { helper_.SetUp(); }
-  void TearDown() override { helper_.TearDown(); }
+  void SetUp() override { Reset(); }
+  void TearDown() override { helper_->TearDown(); }
 
  protected:
   void Create(const MojoCreateDataPipeOptions& options) {
@@ -99,16 +100,24 @@ class DataPipeImplTest : public testing::Test {
     ASSERT_EQ(MOJO_RESULT_OK,
               DataPipe::ValidateCreateOptions(MakeUserPointer(&options),
                                               &validated_options));
-    helper_.Create(validated_options);
+    helper_->Create(validated_options);
   }
 
   bool IsStrictCircularBuffer() const {
-    return helper_.IsStrictCircularBuffer();
+    return helper_->IsStrictCircularBuffer();
   }
 
-  void DoTransfer() { return helper_.DoTransfer(); }
+  void DoTransfer() { return helper_->DoTransfer(); }
 
-  void ProducerClose() { helper_.ProducerClose(); }
+  void Reset() {
+    if (helper_)
+      helper_->TearDown();
+
+    helper_.reset(new Helper());
+    helper_->SetUp();
+  }
+
+  void ProducerClose() { helper_->ProducerClose(); }
   MojoResult ProducerWriteData(UserPointer<const void> elements,
                                UserPointer<uint32_t> num_bytes,
                                bool all_or_none) {
@@ -134,7 +143,7 @@ class DataPipeImplTest : public testing::Test {
     return dpp()->ProducerRemoveAwakable(awakable, signals_state);
   }
 
-  void ConsumerClose() { helper_.ConsumerClose(); }
+  void ConsumerClose() { helper_->ConsumerClose(); }
   MojoResult ConsumerReadData(UserPointer<void> elements,
                               UserPointer<uint32_t> num_bytes,
                               bool all_or_none,
@@ -169,10 +178,10 @@ class DataPipeImplTest : public testing::Test {
   }
 
  private:
-  DataPipe* dpp() { return helper_.DataPipeForProducer(); }
-  DataPipe* dpc() { return helper_.DataPipeForConsumer(); }
+  DataPipe* dpp() { return helper_->DataPipeForProducer(); }
+  DataPipe* dpc() { return helper_->DataPipeForConsumer(); }
 
-  Helper helper_;
+  scoped_ptr<Helper> helper_;
 
   DISALLOW_COPY_AND_ASSIGN(DataPipeImplTest);
 };
@@ -549,6 +558,42 @@ typedef testing::Types<LocalDataPipeImplTestHelper,
 TYPED_TEST_CASE(DataPipeImplTest, HelperTypes);
 
 // Tests -----------------------------------------------------------------------
+
+// Tests creation (and possibly also transferring) of data pipes with various
+// (valid) options.
+TYPED_TEST(DataPipeImplTest, CreateAndMaybeTransfer) {
+  MojoCreateDataPipeOptions test_options[] = {
+      // Default options -- we'll initialize this below.
+      {},
+      // Trivial element size, non-default capacity.
+      {kSizeOfOptions,                           // |struct_size|.
+       MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+       1,                                        // |element_num_bytes|.
+       1000},                                    // |capacity_num_bytes|.
+      // Nontrivial element size, non-default capacity.
+      {kSizeOfOptions,                           // |struct_size|.
+       MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+       4,                                        // |element_num_bytes|.
+       4000},                                    // |capacity_num_bytes|.
+      // Nontrivial element size, default capacity.
+      {kSizeOfOptions,                           // |struct_size|.
+       MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,  // |flags|.
+       100,                                      // |element_num_bytes|.
+       0}                                        // |capacity_num_bytes|.
+  };
+
+  // Initialize the first element of |test_options| to the default options.
+  EXPECT_EQ(MOJO_RESULT_OK, DataPipe::ValidateCreateOptions(NullUserPointer(),
+                                                            &test_options[0]));
+
+  for (size_t i = 0; i < arraysize(test_options); i++) {
+    this->Create(test_options[i]);
+    this->DoTransfer();
+    this->ProducerClose();
+    this->ConsumerClose();
+    this->Reset();
+  }
+}
 
 TYPED_TEST(DataPipeImplTest, SimpleReadWrite) {
   const MojoCreateDataPipeOptions options = {
