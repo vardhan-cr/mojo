@@ -51,11 +51,9 @@ static void RunTest(const std::string& test,
   char* error = NULL;
   bool unhandled_exception = false;
   DartControllerConfig config;
-#if defined(DEBUG)
+  // Run with strict compilation even in Release mode so that ASAN testing gets
+  // coverage of Dart asserts, type-checking, etc.
   config.strict_compilation = true;
-#else
-  config.strict_compilation = false;
-#endif
   config.script = source;
   config.script_uri = path.AsUTF8Unsafe();
   config.package_root = package_root.AsUTF8Unsafe();
@@ -134,7 +132,11 @@ TEST(DartTest, compile_all_interfaces_test) {
 }
 
 TEST(DartTest, uri_base_test) {
-  RunTest("uri_base_test.dart", true, nullptr, 0);
+  RunTest("uri_base_test.dart", false, nullptr, 0);
+}
+
+TEST(DartTest, exception_test) {
+  RunTest("exception_test.dart", false, nullptr, 0);
 }
 
 TEST(DartTest, handle_finalizer_test) {
