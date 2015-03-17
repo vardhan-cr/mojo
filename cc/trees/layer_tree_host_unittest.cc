@@ -9,7 +9,6 @@
 #include "base/auto_reset.h"
 #include "base/synchronization/lock.h"
 #include "cc/animation/timing_function.h"
-#include "cc/base/swap_promise.h"
 #include "cc/debug/frame_rate_counter.h"
 #include "cc/layers/content_layer.h"
 #include "cc/layers/content_layer_client.h"
@@ -23,6 +22,7 @@
 #include "cc/output/copy_output_request.h"
 #include "cc/output/copy_output_result.h"
 #include "cc/output/output_surface.h"
+#include "cc/output/swap_promise.h"
 #include "cc/quads/draw_quad.h"
 #include "cc/quads/io_surface_draw_quad.h"
 #include "cc/quads/tile_draw_quad.h"
@@ -2958,6 +2958,92 @@ class LayerTreeHostTestDeferredInitialize : public LayerTreeHostTest {
 
 MULTI_THREAD_TEST_F(LayerTreeHostTestDeferredInitialize);
 
+class LayerTreeHostTestResourcelessSoftwareDraw : public LayerTreeHostTest {
+ public:
+  void SetupTree() override {
+    root_layer_ = FakePictureLayer::Create(&client_);
+    root_layer_->SetIsDrawable(true);
+    root_layer_->SetBounds(gfx::Size(50, 50));
+
+    parent_layer_ = FakePictureLayer::Create(&client_);
+    parent_layer_->SetIsDrawable(true);
+    parent_layer_->SetBounds(gfx::Size(50, 50));
+    parent_layer_->SetForceRenderSurface(true);
+
+    child_layer_ = FakePictureLayer::Create(&client_);
+    child_layer_->SetIsDrawable(true);
+    child_layer_->SetBounds(gfx::Size(50, 50));
+
+    root_layer_->AddChild(parent_layer_);
+    parent_layer_->AddChild(child_layer_);
+    layer_tree_host()->SetRootLayer(root_layer_);
+
+    LayerTreeHostTest::SetupTree();
+  }
+
+  scoped_ptr<FakeOutputSurface> CreateFakeOutputSurface() override {
+    return FakeOutputSurface::CreateDeferredGL(
+        make_scoped_ptr(new SoftwareOutputDevice), delegating_renderer());
+  }
+
+  void BeginTest() override {
+    PostSetNeedsCommitToMainThread();
+    swap_count_ = 0;
+  }
+
+  DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
+                                   LayerTreeHostImpl::FrameData* frame_data,
+                                   DrawResult draw_result) override {
+    if (host_impl->GetDrawMode() == DRAW_MODE_RESOURCELESS_SOFTWARE) {
+      EXPECT_EQ(1u, frame_data->render_passes.size());
+      // Has at least 3 quads for each layer.
+      RenderPass* render_pass = frame_data->render_passes[0];
+      EXPECT_GE(render_pass->quad_list.size(), 3u);
+    } else {
+      EXPECT_EQ(2u, frame_data->render_passes.size());
+
+      // At least root layer quad in root render pass.
+      EXPECT_GE(frame_data->render_passes[0]->quad_list.size(), 1u);
+      // At least parent and child layer quads in parent render pass.
+      EXPECT_GE(frame_data->render_passes[1]->quad_list.size(), 2u);
+    }
+    return draw_result;
+  }
+
+  void SwapBuffersCompleteOnThread(LayerTreeHostImpl* host_impl) override {
+    swap_count_++;
+    switch (swap_count_) {
+      case 1: {
+        gfx::Transform identity;
+        gfx::Rect empty_rect;
+        bool resourceless_software_draw = true;
+        host_impl->SetExternalDrawConstraints(identity, empty_rect, empty_rect,
+                                              empty_rect, identity,
+                                              resourceless_software_draw);
+        host_impl->SetFullRootLayerDamage();
+        host_impl->SetNeedsRedraw();
+        break;
+      }
+      case 2:
+        EndTest();
+        break;
+      default:
+        NOTREACHED();
+    }
+  }
+
+  void AfterTest() override {}
+
+ private:
+  FakeContentLayerClient client_;
+  scoped_refptr<Layer> root_layer_;
+  scoped_refptr<Layer> parent_layer_;
+  scoped_refptr<Layer> child_layer_;
+  int swap_count_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestResourcelessSoftwareDraw);
+
 class LayerTreeHostTestDeferredInitializeWithGpuRasterization
     : public LayerTreeHostTestDeferredInitialize {
   void InitializeSettings(LayerTreeSettings* settings) override {
@@ -5262,10 +5348,6 @@ class LayerTreeHostTestSendBeginFramesToChildren : public LayerTreeHostTest {
       : begin_frame_sent_to_children_(false) {
   }
 
-  void InitializeSettings(LayerTreeSettings* settings) override {
-    settings->forward_begin_frames_to_children = true;
-  }
-
   void BeginTest() override {
     // Kick off the test with a commit.
     PostSetNeedsCommitToMainThread();
@@ -5302,7 +5384,6 @@ class LayerTreeHostTestSendBeginFramesToChildrenWithExternalBFS
 
   void InitializeSettings(LayerTreeSettings* settings) override {
     settings->use_external_begin_frame_source = true;
-    settings->forward_begin_frames_to_children = true;
   }
 
   void BeginTest() override {

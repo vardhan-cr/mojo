@@ -21,8 +21,6 @@
 #include "cc/animation/animation_events.h"
 #include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_vector.h"
-#include "cc/base/swap_promise.h"
-#include "cc/base/swap_promise_monitor.h"
 #include "cc/debug/micro_benchmark.h"
 #include "cc/debug/micro_benchmark_controller.h"
 #include "cc/input/input_handler.h"
@@ -31,6 +29,8 @@
 #include "cc/input/top_controls_state.h"
 #include "cc/layers/layer_lists.h"
 #include "cc/output/output_surface.h"
+#include "cc/output/renderer_capabilities.h"
+#include "cc/output/swap_promise.h"
 #include "cc/resources/resource_format.h"
 #include "cc/resources/scoped_ui_resource.h"
 #include "cc/surfaces/surface_sequence.h"
@@ -38,6 +38,7 @@
 #include "cc/trees/layer_tree_host_common.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "cc/trees/proxy.h"
+#include "cc/trees/swap_promise_monitor.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -66,24 +67,6 @@ struct PendingPageScaleAnimation;
 struct RenderingStats;
 struct ScrollAndScaleSet;
 enum class GpuRasterizationStatus;
-
-// Provides information on an Impl's rendering capabilities back to the
-// LayerTreeHost.
-struct CC_EXPORT RendererCapabilities {
-  RendererCapabilities(ResourceFormat best_texture_format,
-                       bool allow_partial_texture_updates,
-                       int max_texture_size,
-                       bool using_shared_memory_resources);
-
-  RendererCapabilities();
-  ~RendererCapabilities();
-
-  // Duplicate any modification to this list to RendererCapabilitiesImpl.
-  ResourceFormat best_texture_format;
-  bool allow_partial_texture_updates;
-  int max_texture_size;
-  bool using_shared_memory_resources;
-};
 
 class CC_EXPORT LayerTreeHost {
  public:

@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 #include "base/message_loop/message_loop.h"
-#include "cc/layers/append_quads_data.h"
 #include "cc/output/gl_renderer.h"
 #include "cc/quads/draw_quad.h"
 #include "cc/quads/picture_draw_quad.h"
@@ -199,6 +198,7 @@ void CreateTestYUVVideoDrawQuad_FromVideoFrame(
     RenderPass* render_pass,
     VideoResourceUpdater* video_resource_updater,
     const gfx::Rect& rect,
+    const gfx::Rect& visible_rect,
     ResourceProvider* resource_provider) {
   const bool with_alpha = (video_frame->format() == media::VideoFrame::YV12A);
   const YUVVideoDrawQuad::ColorSpace color_space =
@@ -248,9 +248,9 @@ void CreateTestYUVVideoDrawQuad_FromVideoFrame(
 
   YUVVideoDrawQuad* yuv_quad =
       render_pass->CreateAndAppendDrawQuad<YUVVideoDrawQuad>();
-  yuv_quad->SetNew(shared_state, rect, opaque_rect, rect, tex_coord_rect,
-                   video_frame->coded_size(), y_resource, u_resource,
-                   v_resource, a_resource, color_space);
+  yuv_quad->SetNew(shared_state, rect, opaque_rect, visible_rect,
+                   tex_coord_rect, video_frame->coded_size(), y_resource,
+                   u_resource, v_resource, a_resource, color_space);
 }
 
 void CreateTestYUVVideoDrawQuad_Striped(
@@ -261,6 +261,7 @@ void CreateTestYUVVideoDrawQuad_Striped(
     RenderPass* render_pass,
     VideoResourceUpdater* video_resource_updater,
     const gfx::Rect& rect,
+    const gfx::Rect& visible_rect,
     ResourceProvider* resource_provider) {
   scoped_refptr<media::VideoFrame> video_frame = media::VideoFrame::CreateFrame(
       format, rect.size(), rect, rect.size(), base::TimeDelta());
@@ -292,7 +293,7 @@ void CreateTestYUVVideoDrawQuad_Striped(
   uint8 alpha_value = is_transparent ? 0 : 128;
   CreateTestYUVVideoDrawQuad_FromVideoFrame(
       shared_state, video_frame, alpha_value, tex_coord_rect, render_pass,
-      video_resource_updater, rect, resource_provider);
+      video_resource_updater, rect, visible_rect, resource_provider);
 }
 
 // Creates a video frame of size background_size filled with yuv_background,
@@ -305,6 +306,7 @@ void CreateTestYUVVideoDrawQuad_TwoColor(
     bool is_transparent,
     const gfx::RectF& tex_coord_rect,
     const gfx::Size& background_size,
+    const gfx::Rect& visible_rect,
     uint8 y_background,
     uint8 u_background,
     uint8 v_background,
@@ -356,7 +358,7 @@ void CreateTestYUVVideoDrawQuad_TwoColor(
   uint8 alpha_value = 255;
   CreateTestYUVVideoDrawQuad_FromVideoFrame(
       shared_state, video_frame, alpha_value, tex_coord_rect, render_pass,
-      video_resource_updater, rect, resource_provider);
+      video_resource_updater, rect, visible_rect, resource_provider);
 }
 
 void CreateTestYUVVideoDrawQuad_Solid(
@@ -370,6 +372,7 @@ void CreateTestYUVVideoDrawQuad_Solid(
     RenderPass* render_pass,
     VideoResourceUpdater* video_resource_updater,
     const gfx::Rect& rect,
+    const gfx::Rect& visible_rect,
     ResourceProvider* resource_provider) {
   scoped_refptr<media::VideoFrame> video_frame = media::VideoFrame::CreateFrame(
       format, rect.size(), rect, rect.size(), base::TimeDelta());
@@ -389,7 +392,7 @@ void CreateTestYUVVideoDrawQuad_Solid(
   uint8 alpha_value = is_transparent ? 0 : 128;
   CreateTestYUVVideoDrawQuad_FromVideoFrame(
       shared_state, video_frame, alpha_value, tex_coord_rect, render_pass,
-      video_resource_updater, rect, resource_provider);
+      video_resource_updater, rect, visible_rect, resource_provider);
 }
 
 typedef ::testing::Types<GLRenderer,
@@ -821,15 +824,17 @@ TYPED_TEST(IntersectingQuadGLPixelTest, YUVVideoQuads) {
 
   CreateTestYUVVideoDrawQuad_TwoColor(
       this->front_quad_state_, media::VideoFrame::YV12J, false,
-      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), this->quad_rect_.size(), 0, 128, 128,
-      inner_rect, 29, 255, 107, this->render_pass_.get(),
-      this->video_resource_updater_.get(), this->resource_provider_.get());
+      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), this->quad_rect_.size(),
+      this->quad_rect_, 0, 128, 128, inner_rect, 29, 255, 107,
+      this->render_pass_.get(), this->video_resource_updater_.get(),
+      this->resource_provider_.get());
 
   CreateTestYUVVideoDrawQuad_TwoColor(
       this->back_quad_state_, media::VideoFrame::YV12J, false,
-      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), this->quad_rect_.size(), 149, 43, 21,
-      inner_rect, 0, 128, 128, this->render_pass_.get(),
-      this->video_resource_updater2_.get(), this->resource_provider_.get());
+      gfx::RectF(0.0f, 0.0f, 1.0f, 1.0f), this->quad_rect_.size(),
+      this->quad_rect_, 149, 43, 21, inner_rect, 0, 128, 128,
+      this->render_pass_.get(), this->video_resource_updater2_.get(),
+      this->resource_provider_.get());
 
   SCOPED_TRACE("IntersectingVideoQuads");
   this->template AppendBackgroundAndRunTest<YUVVideoDrawQuad>(
@@ -2077,7 +2082,7 @@ TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadDisableImageFiltering) {
   scoped_ptr<FakePicturePile> recording =
       FakePicturePile::CreateFilledPile(pile_tile_size, viewport.size());
   SkPaint paint;
-  paint.setFilterLevel(SkPaint::kLow_FilterLevel);
+  paint.setFilterQuality(kLow_SkFilterQuality);
   recording->add_draw_bitmap_with_paint(bitmap, gfx::Point(), paint);
   recording->RerecordPile();
   scoped_refptr<FakePicturePileImpl> pile =
@@ -2129,7 +2134,7 @@ TYPED_TEST(SoftwareRendererPixelTest, PictureDrawQuadNearestNeighbor) {
   scoped_ptr<FakePicturePile> recording =
       FakePicturePile::CreateFilledPile(pile_tile_size, viewport.size());
   SkPaint paint;
-  paint.setFilterLevel(SkPaint::kLow_FilterLevel);
+  paint.setFilterQuality(kLow_SkFilterQuality);
   recording->add_draw_bitmap_with_paint(bitmap, gfx::Point(), paint);
   recording->RerecordPile();
   scoped_refptr<FakePicturePileImpl> pile =

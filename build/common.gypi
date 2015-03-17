@@ -581,7 +581,7 @@
       # Use experimental lld linker instead of the platform's default linker.
       'use_lld%': 0,
 
-      # Enable plug-in installation by default.
+      # Enable plugin installation by default.
       'enable_plugin_installation%': 1,
 
       # Specifies whether to use canvas_skia.cc in place of platform
@@ -602,9 +602,6 @@
 
       # Supervised users are enabled by default.
       'enable_supervised_users%': 1,
-
-      # Platform natively supports discardable memory.
-      'native_discardable_memory%': 0,
 
       # Platform sends memory pressure signals natively.
       'native_memory_pressure_signals%': 0,
@@ -760,7 +757,6 @@
           'remoting%': 0,
           'arm_neon%': 0,
           'arm_neon_optional%': 1,
-          'native_discardable_memory%': 1,
           'native_memory_pressure_signals%': 1,
           'enable_basic_printing%': 1,
           'enable_print_preview%': 0,
@@ -1201,7 +1197,6 @@
     'google_default_client_id%': '<(google_default_client_id)',
     'google_default_client_secret%': '<(google_default_client_secret)',
     'enable_supervised_users%': '<(enable_supervised_users)',
-    'native_discardable_memory%': '<(native_discardable_memory)',
     'native_memory_pressure_signals%': '<(native_memory_pressure_signals)',
     'spdy_proxy_auth_property%': '<(spdy_proxy_auth_property)',
     'spdy_proxy_auth_value%': '<(spdy_proxy_auth_value)',
@@ -1502,6 +1497,7 @@
     # Ozone platforms to include in the build.
     'ozone_platform_caca%': 0,
     'ozone_platform_dri%': 0,
+    'ozone_platform_drm%': 0,
     'ozone_platform_egltest%': 0,
     'ozone_platform_gbm%': 0,
     'ozone_platform_ozonex%': 0,
@@ -1523,7 +1519,7 @@
         'dont_embed_build_metadata%': 0,
       }],
       # Enable the Syzygy optimization step for the official builds.
-      ['OS=="win" and buildtype=="Official" and syzyasan!=1', {
+      ['OS=="win" and buildtype=="Official" and syzyasan!=1 and clang!=1', {
         'syzygy_optimize%': 1,
       }, {
         'syzygy_optimize%': 0,
@@ -1686,8 +1682,8 @@
             'android_ndk_absolute_root%': '<!(cd <(DEPTH) && pwd -P)/third_party/android_tools/ndk/',
             'android_host_arch%': '<!(uname -m)',
             # Android API-level of the SDK used for compilation.
-            'android_sdk_version%': '21',
-            'android_sdk_build_tools_version%': '21.0.1',
+            'android_sdk_version%': '22',
+            'android_sdk_build_tools_version%': '22.0.0',
             'host_os%': "<!(uname -s | sed -e 's/Linux/linux/;s/Darwin/mac/')",
           },
           # Copy conditionally-set variables out one scope.
@@ -1955,7 +1951,9 @@
             'win_use_allocator_shim%': 0,
           }],
           ['syzyasan==1', {
-            'kasko%': 1,
+            # Uncomment the following line to enable Kasko for
+            # SyzyASAN-instrumented releases.
+            # 'kasko%': 1,
           }],
           ['component=="shared_library" and "<(GENERATOR)"=="ninja"', {
             # Only enabled by default for ninja because it's buggy in VS.
@@ -2350,6 +2348,7 @@
         # Build all platforms whose deps are in install-build-deps.sh.
         # Only these platforms will be compile tested by buildbots.
         'ozone_platform_dri%': 1,
+        'ozone_platform_drm%': 1,
         'ozone_platform_test%': 1,
         'ozone_platform_egltest%': 1,
       }],
@@ -2718,9 +2717,6 @@
       }],
       ['enable_hidpi==1', {
         'defines': ['ENABLE_HIDPI=1'],
-      }],
-      ['native_discardable_memory==1', {
-        'defines': ['DISCARDABLE_MEMORY_ALWAYS_SUPPORTED_NATIVELY'],
       }],
       ['native_memory_pressure_signals==1', {
         'defines': ['SYSTEM_NATIVELY_SIGNALS_MEMORY_PRESSURE'],

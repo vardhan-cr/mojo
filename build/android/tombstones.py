@@ -18,8 +18,11 @@ import sys
 import optparse
 
 from pylib import android_commands
+from pylib.device import device_errors
 from pylib.device import device_utils
 
+
+_TZ_UTC = {'TZ': 'UTC'}
 
 def _ListTombstones(device):
   """List the tombstone files on the device.
@@ -30,7 +33,9 @@ def _ListTombstones(device):
   Yields:
     Tuples of (tombstone filename, date time of file on device).
   """
-  lines = device.RunShellCommand('TZ=UTC su -c ls -a -l /data/tombstones')
+  lines = device.RunShellCommand(
+      ['ls', '-a', '-l', '/data/tombstones'],
+      as_root=True, check_return=True, env=_TZ_UTC, timeout=60)
   for line in lines:
     if 'tombstone' in line and not 'No such file or directory' in line:
       details = line.split()
@@ -48,7 +53,8 @@ def _GetDeviceDateTime(device):
   Returns:
     A datetime instance.
   """
-  device_now_string = device.RunShellCommand('TZ=UTC date')
+  device_now_string = device.RunShellCommand(
+      ['date'], check_return=True, env=_TZ_UTC)
   return datetime.datetime.strptime(
       device_now_string[0], '%a %b %d %H:%M:%S %Z %Y')
 
@@ -75,7 +81,8 @@ def _EraseTombstone(device, tombstone_file):
     tombstone_file: the tombstone to delete.
   """
   return device.RunShellCommand(
-      'rm /data/tombstones/' + tombstone_file, as_root=True)
+      ['rm', '/data/tombstones/' + tombstone_file],
+      as_root=True, check_return=True)
 
 
 def _DeviceAbiToArch(device_abi):
@@ -172,14 +179,21 @@ def _GetTombstonesForDevice(device, options):
   tombstones = all_tombstones if options.all_tombstones else [all_tombstones[0]]
 
   device_now = _GetDeviceDateTime(device)
-  for tombstone_file, tombstone_time in tombstones:
-    ret += [{'serial': str(device),
-             'device_abi': device.product_cpu_abi,
-             'device_now': device_now,
-             'time': tombstone_time,
-             'file': tombstone_file,
-             'stack': options.stack,
-             'data': _GetTombstoneData(device, tombstone_file)}]
+  try:
+    for tombstone_file, tombstone_time in tombstones:
+      ret += [{'serial': str(device),
+               'device_abi': device.product_cpu_abi,
+               'device_now': device_now,
+               'time': tombstone_time,
+               'file': tombstone_file,
+               'stack': options.stack,
+               'data': _GetTombstoneData(device, tombstone_file)}]
+  except device_errors.CommandFailedError:
+    for line in device.RunShellCommand(
+        ['ls', '-a', '-l', '/data/tombstones'],
+        as_root=True, check_return=True, env=_TZ_UTC, timeout=60):
+      print '%s: %s' % (str(device), line)
+    raise
 
   # Erase all the tombstones if desired.
   if options.wipe_tombstones:

@@ -25,10 +25,8 @@ class CC_EXPORT LayerTreeSettings {
   bool throttle_frame_production;
   bool single_thread_proxy_scheduler;
   bool use_external_begin_frame_source;
-  bool forward_begin_frames_to_children;
   bool main_frame_before_activation_enabled;
   bool using_synchronous_renderer_compositor;
-  bool disable_hi_res_timer_tasks_on_battery;
   bool report_overscroll_only_for_scrollable_axes;
   bool per_tile_painting_enabled;
   bool accelerated_animation_enabled;

@@ -33,11 +33,18 @@
 #include "cc/resources/rasterizer.h"
 #include "cc/resources/resource_provider.h"
 #include "cc/resources/tile_manager.h"
+#include "cc/resources/ui_resource_client.h"
 #include "cc/scheduler/commit_earlyout_reason.h"
 #include "cc/scheduler/draw_result.h"
+#include "cc/trees/layer_tree_settings.h"
+#include "cc/trees/proxy.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/geometry/rect.h"
+
+namespace gfx {
+class ScrollOffset;
+}
 
 namespace cc {
 
@@ -59,11 +66,13 @@ class RenderingStatsInstrumentation;
 class ResourcePool;
 class ScrollElasticityHelper;
 class ScrollbarLayerImplBase;
+class SwapPromise;
+class SwapPromiseMonitor;
 class TextureMailboxDeleter;
 class TopControlsManager;
 class UIResourceBitmap;
 class UIResourceRequest;
-struct RendererCapabilitiesImpl;
+struct ScrollAndScaleSet;
 
 enum class GpuRasterizationStatus {
   ON,
@@ -592,6 +601,12 @@ class CC_EXPORT LayerTreeHostImpl
 
   void NotifySwapPromiseMonitorsOfSetNeedsRedraw();
   void NotifySwapPromiseMonitorsOfForwardingToMainThread();
+
+  void ScrollAnimationCreate(LayerImpl* layer_impl,
+                             const gfx::ScrollOffset& target_offset,
+                             const gfx::ScrollOffset& current_offset);
+  bool ScrollAnimationUpdateTarget(LayerImpl* layer_impl,
+                                   const gfx::Vector2dF& scroll_delta);
 
   typedef base::hash_map<UIResourceId, UIResourceData>
       UIResourceMap;

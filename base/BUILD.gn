@@ -9,6 +9,10 @@ if (is_android) {
   import("//build/config/android/rules.gni")
 }
 
+config("base_implementation") {
+  defines = [ "BASE_IMPLEMENTATION" ]
+}
+
 source_set("base_paths") {
   sources = [
     "base_paths.cc",
@@ -34,7 +38,7 @@ source_set("base_paths") {
     ]
   }
 
-  defines = [ "BASE_IMPLEMENTATION" ]
+  configs += [ ":base_implementation" ]
 
   deps = [
     "//base/memory",
@@ -607,7 +611,7 @@ component("base") {
     "sys_info_openbsd.cc",
   ]
 
-  defines = [ "BASE_IMPLEMENTATION" ]
+  configs += [ ":base_implementation" ]
 
   deps = [
     ":base_static",
@@ -630,7 +634,7 @@ component("base") {
   # Allow more direct string conversions on platforms with native utf8
   # strings
   if (is_mac || is_ios || is_chromeos) {
-    defines += [ "SYSTEM_NATIVE_UTF8" ]
+    defines = [ "SYSTEM_NATIVE_UTF8" ]
   }
 
   if (is_android) {
@@ -758,12 +762,9 @@ component("base") {
     configs += linux_configs
     all_dependent_configs = linux_configs
 
-    defines += [ "USE_SYMBOLIZE" ]
-
     # These dependencies are not required on Android, and in the case
     # of xdg_mime must be excluded due to licensing restrictions.
     deps += [
-      "//base/third_party/symbolize",
       "//base/third_party/xdg_mime",
       "//base/third_party/xdg_user_dirs",
     ]
@@ -1135,7 +1136,6 @@ test("base_unittests") {
     "mac/scoped_sending_event_unittest.mm",
     "md5_unittest.cc",
     "memory/aligned_memory_unittest.cc",
-    "memory/discardable_memory_unittest.cc",
     "memory/discardable_shared_memory_unittest.cc",
     "memory/linked_ptr_unittest.cc",
     "memory/ref_counted_memory_unittest.cc",
@@ -1283,8 +1283,6 @@ test("base_unittests") {
     "win/wrapped_window_proc_unittest.cc",
   ]
 
-  defines = []
-
   deps = [
     ":base",
     ":i18n",
@@ -1304,7 +1302,7 @@ test("base_unittests") {
   # Allow more direct string conversions on platforms with native utf8
   # strings
   if (is_mac || is_ios || is_chromeos) {
-    defines += [ "SYSTEM_NATIVE_UTF8" ]
+    defines = [ "SYSTEM_NATIVE_UTF8" ]
   }
 
   if (is_android) {
@@ -1341,7 +1339,6 @@ test("base_unittests") {
   if (is_linux) {
     sources -= [ "file_version_info_unittest.cc" ]
     sources += [ "nix/xdg_util_unittest.cc" ]
-    defines += [ "USE_SYMBOLIZE" ]
     if (use_glib) {
       configs += [ "//build/config/linux:glib" ]
     }

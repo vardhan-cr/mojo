@@ -21,11 +21,11 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': 'd1783aefcc0da86c5ff1d124c54704252d817621',
+  'skia_revision': 'cdeca446197329de91d87d12ad689d03d7e4d261',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling Skia
   # and V8 without interference from each other.
-  'v8_revision': '8f7dfb46871191fa9c96f9030d88be6757d46eab',
+  'v8_revision': '2a8ff45e5c7fce5037cf975c4997718c324744dd',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling ANGLE
   # and whatever else without interference from each other.
@@ -49,7 +49,7 @@ vars = {
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling lss
   # and whatever else without interference from each other.
-  'lss_revision': '952107fa7cea0daaabead28c0e92d579bee517eb',
+  'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
   # Three lines of non-changing comments so that
   # the commit queue can handle CLs rolling nss
   # and whatever else without interference from each other.
@@ -124,7 +124,7 @@ deps = {
    'https://boringssl.googlesource.com/boringssl.git' + '@' +  Var('boringssl_revision'),
 
   'src/tools/gyp':
-    Var('chromium_git') + '/external/gyp.git' + '@' + '4a9b712d5cb4a5ba7a9950128a7219569caf7263',
+    Var('chromium_git') + '/external/gyp.git' + '@' + 'd174d75bf69c682cb62af9187879e01513b35e52',
 }
 
 
@@ -150,7 +150,7 @@ deps_os = {
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + 'fd5a8ec0c75d487635f7e6bd3bdc90eb23eba941',
+     Var('chromium_git') + '/android_tools.git' + '@' + '98a434576d8d9a65f9bdb8ea161e158142c0c5e5',
 
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',
