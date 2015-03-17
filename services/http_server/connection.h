@@ -9,10 +9,10 @@
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/environment/async_waiter.h"
 #include "mojo/public/cpp/system/data_pipe.h"
+#include "mojo/services/http_server/public/interfaces/http_request.mojom.h"
+#include "mojo/services/http_server/public/interfaces/http_response.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "services/http_server/http_request_parser.h"
-#include "services/http_server/public/http_request.mojom.h"
-#include "services/http_server/public/http_response.mojom.h"
 
 namespace http_server {
 

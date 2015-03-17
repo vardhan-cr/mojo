@@ -8,11 +8,11 @@
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
+#include "mojo/services/http_server/public/interfaces/http_request.mojom.h"
+#include "mojo/services/http_server/public/interfaces/http_response.mojom.h"
+#include "mojo/services/http_server/public/interfaces/http_server.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
-#include "services/http_server/public/http_request.mojom.h"
-#include "services/http_server/public/http_response.mojom.h"
-#include "services/http_server/public/http_server.mojom.h"
 #include "third_party/re2/re2/re2.h"
 
 namespace mojo {

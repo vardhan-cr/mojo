@@ -2,9 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//mojo/public/tools/bindings/mojom.gni")
+import("../../../mojo_sdk_root.gni")
+import("$mojo_sdk_root/mojo/public/tools/bindings/mojom.gni")
 
-mojom("public") {
+mojom("interfaces") {
   sources = [
     "http_request.mojom",
     "http_response.mojom",
@@ -12,20 +13,9 @@ mojom("public") {
     "http_server_factory.mojom",
   ]
 
-  deps = [
-    "//mojo/services/network/public/interfaces",
-  ]
-}
-
-source_set("util") {
-  sources = [
-    "http_server_util.cc",
-    "http_server_util.h",
-  ]
+  import_dirs = [ get_path_info("../../../", "abspath") ]
 
   deps = [
-    ":public",
-    "//base",
-    "//mojo/public/cpp/system",
+    "../../../network/public/interfaces",
   ]
 }

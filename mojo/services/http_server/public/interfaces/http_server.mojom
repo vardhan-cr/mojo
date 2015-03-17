@@ -4,8 +4,8 @@
 
 module http_server;
 
-import "services/http_server/public/http_request.mojom";
-import "services/http_server/public/http_response.mojom";
+import "mojo/services/http_server/public/interfaces/http_request.mojom";
+import "mojo/services/http_server/public/interfaces/http_response.mojom";
 
 interface HttpServer {
   // Sets a handler for URLs matching a regex pattern. Handlers are considered

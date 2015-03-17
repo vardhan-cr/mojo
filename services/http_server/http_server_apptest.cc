@@ -9,12 +9,12 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/system/macros.h"
+#include "mojo/services/http_server/public/cpp/http_server_util.h"
+#include "mojo/services/http_server/public/interfaces/http_server.mojom.h"
+#include "mojo/services/http_server/public/interfaces/http_server_factory.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
-#include "services/http_server/public/http_server.mojom.h"
-#include "services/http_server/public/http_server_factory.mojom.h"
-#include "services/http_server/public/http_server_util.h"
 
 namespace http_server {
 

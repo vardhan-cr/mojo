@@ -10,7 +10,7 @@
 
 #include "base/basictypes.h"
 #include "base/strings/string_piece.h"
-#include "services/http_server/public/http_request.mojom.h"
+#include "mojo/services/http_server/public/interfaces/http_request.mojom.h"
 
 namespace http_server {
 

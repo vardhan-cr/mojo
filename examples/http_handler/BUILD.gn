@@ -14,9 +14,9 @@ mojo_native_application("http_handler") {
     "//mojo/application",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
+    "//mojo/services/http_server/public/cpp",
+    "//mojo/services/http_server/public/interfaces",
     "//mojo/services/network/public/interfaces",
     "//services/http_server",
-    "//services/http_server/public",
-    "//services/http_server/public:util",
   ]
 }

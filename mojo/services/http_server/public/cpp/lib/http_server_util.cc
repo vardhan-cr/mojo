@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "services/http_server/public/http_server_util.h"
+#include "mojo/services/http_server/public/cpp/http_server_util.h"
 
-#include "base/logging.h"
+#include "mojo/public/cpp/environment/logging.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 
 namespace http_server {
@@ -19,13 +19,12 @@ HttpResponsePtr CreateHttpResponse(uint32_t status_code,
                                        MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,
                                        1,
                                        num_bytes};
-  MojoResult result = CreateDataPipe(
-      &options, &producer_handle, &response->body);
-  DCHECK_EQ(MOJO_RESULT_OK, result);
-  result = WriteDataRaw(
-      producer_handle.get(), body.c_str(), &num_bytes,
-      MOJO_WRITE_DATA_FLAG_ALL_OR_NONE);
-  DCHECK_EQ(MOJO_RESULT_OK, result);
+  MojoResult result =
+      CreateDataPipe(&options, &producer_handle, &response->body);
+  MOJO_DCHECK(MOJO_RESULT_OK == result);
+  result = WriteDataRaw(producer_handle.get(), body.c_str(), &num_bytes,
+                        MOJO_WRITE_DATA_FLAG_ALL_OR_NONE);
+  MOJO_DCHECK(MOJO_RESULT_OK == result);
   response->status_code = status_code;
   response->content_length = num_bytes;
   return response.Pass();

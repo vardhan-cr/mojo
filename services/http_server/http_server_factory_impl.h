@@ -12,8 +12,8 @@
 
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
+#include "mojo/services/http_server/public/interfaces/http_server_factory.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
-#include "services/http_server/public/http_server_factory.mojom.h"
 
 namespace mojo {
 class ApplicationImpl;

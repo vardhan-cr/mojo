@@ -29,6 +29,7 @@ services_dirs_to_clone = [
   "mojo/services/content_handler/public",
   "mojo/services/geometry/public",
   "mojo/services/gpu/public",
+  "mojo/services/http_server/public",
   "mojo/services/input_events/public",
   "mojo/services/native_viewport/public",
   "mojo/services/navigation/public",

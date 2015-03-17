@@ -11,6 +11,7 @@ group("services") {
     "//mojo/services/console/public/interfaces",
     "//mojo/services/content_handler/public/interfaces",
     "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/http_server/public/interfaces",
     "//mojo/services/input_events/public/interfaces",
     "//mojo/services/location/public/interfaces",
     "//mojo/services/native_viewport/public/interfaces",

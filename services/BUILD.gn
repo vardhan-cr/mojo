@@ -14,7 +14,6 @@ group("services") {
     "//services/files",
     "//services/gles2:lib",
     "//services/http_server",
-    "//services/http_server/public",
     "//services/icu_data",
     "//services/js",
     "//services/kiosk_wm",

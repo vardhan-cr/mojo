@@ -550,9 +550,9 @@ mojo_native_application("apptests") {
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system:system",
+    "//mojo/services/http_server/public/cpp",
+    "//mojo/services/http_server/public/interfaces",
     "//mojo/services/network/public/interfaces",
-    "//services/http_server/public",
-    "//services/http_server/public:util",
     "//shell/test:bindings",
     ":embed_pingable",
   ]
