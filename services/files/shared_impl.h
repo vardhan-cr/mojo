@@ -9,7 +9,7 @@
 #define SERVICES_FILES_SHARED_IMPL_H_
 
 #include "mojo/public/cpp/bindings/callback.h"
-#include "services/files/types.mojom.h"
+#include "mojo/services/files/public/interfaces/types.mojom.h"
 
 namespace mojo {
 namespace files {

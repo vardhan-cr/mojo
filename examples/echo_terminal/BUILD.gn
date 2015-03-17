@@ -3,29 +3,18 @@
 # found in the LICENSE file.
 
 import("//mojo/public/mojo_application.gni")
-import("//mojo/public/tools/bindings/mojom.gni")
 
 mojo_native_application("echo_terminal") {
   deps = [
-    ":bindings",
     "//base",
     "//mojo/application",
     "//mojo/common",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/system",
+    "//mojo/services/terminal/public/interfaces",
   ]
 
   sources = [
     "main.cc",
-  ]
-}
-
-mojom("bindings") {
-  public_deps = [
-    "//services/files:bindings",
-  ]
-
-  sources = [
-    "terminal_client.mojom",
   ]
 }

@@ -5,7 +5,7 @@
 #ifndef SERVICES_FILES_UTIL_H_
 #define SERVICES_FILES_UTIL_H_
 
-#include "services/files/types.mojom.h"
+#include "mojo/services/files/public/interfaces/types.mojom.h"
 
 namespace mojo {
 

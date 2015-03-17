@@ -9,7 +9,7 @@
 
 module mojo.files;
 
-import "services/files/types.mojom";
+import "files/public/interfaces/types.mojom";
 
 // TODO(vtl): Write comments.
 interface File {

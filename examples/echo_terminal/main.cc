@@ -6,15 +6,15 @@
 #include "base/bind_helpers.h"
 #include "base/logging.h"
 #include "base/macros.h"
-#include "examples/echo_terminal/terminal_client.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/weak_binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "services/files/file.mojom.h"
-#include "services/files/types.mojom.h"
+#include "mojo/services/files/public/interfaces/file.mojom.h"
+#include "mojo/services/files/public/interfaces/types.mojom.h"
+#include "mojo/services/terminal/public/interfaces/terminal_client.mojom.h"
 
 const uint32_t kMaxBytesToRead = 1000;
 

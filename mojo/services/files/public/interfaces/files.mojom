@@ -4,8 +4,8 @@
 
 module mojo.files;
 
-import "services/files/directory.mojom";
-import "services/files/types.mojom";
+import "files/public/interfaces/directory.mojom";
+import "files/public/interfaces/types.mojom";
 
 enum FileSystem {
   // A per-instance (i.e., one for each call to |OpenFileSystem()|) temporary

@@ -9,7 +9,7 @@
 #include "base/macros.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
-#include "services/files/directory.mojom.h"
+#include "mojo/services/files/public/interfaces/directory.mojom.h"
 
 namespace mojo {
 namespace files {

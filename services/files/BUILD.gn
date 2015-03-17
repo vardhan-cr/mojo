@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import("//mojo/public/mojo_application.gni")
-import("//mojo/public/tools/bindings/mojom.gni")
 
 mojo_native_application("files") {
   sources = [
@@ -23,22 +22,13 @@ mojo_native_application("files") {
   ]
 
   deps = [
-    ":bindings",
     "//base",
     "//mojo/application",
     "//mojo/common",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/system",
-  ]
-}
-
-mojom("bindings") {
-  sources = [
-    "directory.mojom",
-    "file.mojom",
-    "files.mojom",
-    "types.mojom",
+    "//mojo/services/files/public/interfaces",
   ]
 }
 
@@ -54,11 +44,11 @@ mojo_native_application("apptests") {
   ]
 
   deps = [
-    ":bindings",
     "//base",
     "//mojo/application",
     "//mojo/application:test_support",
     "//mojo/public/cpp/bindings",
+    "//mojo/services/files/public/interfaces",
   ]
 
   data_deps = [ ":files($default_toolchain)" ]

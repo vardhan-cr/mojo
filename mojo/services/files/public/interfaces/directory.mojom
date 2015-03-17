@@ -4,8 +4,8 @@
 
 module mojo.files;
 
-import "services/files/file.mojom";
-import "services/files/types.mojom";
+import "files/public/interfaces/file.mojom";
+import "files/public/interfaces/types.mojom";
 
 // This interface provides access to a directory in a "file system", providing
 // operations such as creating/opening/removing/renaming files/directories

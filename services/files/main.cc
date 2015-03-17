@@ -8,7 +8,7 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "services/files/files.mojom.h"
+#include "mojo/services/files/public/interfaces/files.mojom.h"
 #include "services/files/files_impl.h"
 
 namespace mojo {

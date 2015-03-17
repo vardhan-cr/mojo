@@ -5,10 +5,10 @@
 #include "base/macros.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
-#include "services/files/directory.mojom.h"
-#include "services/files/file.mojom.h"
-#include "services/files/files.mojom.h"
-#include "services/files/types.mojom.h"
+#include "mojo/services/files/public/interfaces/directory.mojom.h"
+#include "mojo/services/files/public/interfaces/file.mojom.h"
+#include "mojo/services/files/public/interfaces/files.mojom.h"
+#include "mojo/services/files/public/interfaces/types.mojom.h"
 
 namespace mojo {
 namespace files {
