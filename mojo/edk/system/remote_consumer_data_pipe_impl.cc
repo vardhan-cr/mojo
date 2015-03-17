@@ -26,11 +26,12 @@ bool ValidateIncomingMessage(size_t element_num_bytes,
                              size_t capacity_num_bytes,
                              size_t consumer_num_bytes,
                              const MessageInTransit* message) {
-  // We should only receive endpoint messages.
-  DCHECK_EQ(message->type(), MessageInTransit::kTypeEndpoint);
+  // We should only receive endpoint client messages.
+  DCHECK_EQ(message->type(), MessageInTransit::kTypeEndpointClient);
 
   // But we should check the subtype; only take data pipe acks.
-  if (message->subtype() != MessageInTransit::kSubtypeEndpointDataPipeAck) {
+  if (message->subtype() !=
+      MessageInTransit::kSubtypeEndpointClientDataPipeAck) {
     LOG(WARNING) << "Received message of unexpected subtype: "
                  << message->subtype();
     return false;
@@ -148,7 +149,8 @@ MojoResult RemoteConsumerDataPipeImpl::ProducerWriteData(
     size_t message_num_bytes =
         std::min(max_message_num_bytes, num_bytes_to_write - offset);
     scoped_ptr<MessageInTransit> message(new MessageInTransit(
-        MessageInTransit::kTypeEndpoint, MessageInTransit::kSubtypeEndpointData,
+        MessageInTransit::kTypeEndpointClient,
+        MessageInTransit::kSubtypeEndpointClientData,
         static_cast<uint32_t>(message_num_bytes), elements.At(offset)));
     if (!channel_endpoint_->EnqueueMessage(message.Pass())) {
       Disconnect();
@@ -226,7 +228,8 @@ MojoResult RemoteConsumerDataPipeImpl::ProducerEndWriteData(
     size_t message_num_bytes =
         std::min(max_message_num_bytes, num_bytes_written - offset);
     scoped_ptr<MessageInTransit> message(new MessageInTransit(
-        MessageInTransit::kTypeEndpoint, MessageInTransit::kSubtypeEndpointData,
+        MessageInTransit::kTypeEndpointClient,
+        MessageInTransit::kSubtypeEndpointClientData,
         static_cast<uint32_t>(message_num_bytes), buffer_.get() + offset));
     if (!channel_endpoint_->EnqueueMessage(message.Pass())) {
       set_producer_two_phase_max_num_bytes_written(0);
