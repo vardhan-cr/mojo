@@ -39,6 +39,7 @@ component("system") {
     "channel_manager.h",
     "configuration.cc",
     "configuration.h",
+    "connection_manager.cc",
     "connection_manager.h",
     "core.cc",
     "core.h",
