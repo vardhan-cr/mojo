@@ -93,6 +93,8 @@ def main():
     copy(src_path('mojo/public'), deploy_path('mojo/public'),
         sky_or_dart_filter)
 
+    # TODO(eseidel): All of these should be removed and package: sky includes
+    # used instead.
     copy(src_path('sky/examples'), deploy_path('sky/examples'),
         sky_or_dart_filter)
     copy(src_path('sky/framework'), deploy_path('sky/framework'),
@@ -100,12 +102,21 @@ def main():
     copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), gen_filter)
     copy(src_path('sky/assets'), deploy_path('sky/assets'), assets_filter)
 
-
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
         args.deploy_root)
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShortcuts.apk'),
         args.deploy_root)
 
+    packages_root = deploy_path('packages')
+    if os.path.exists(packages_root):
+        shutil.rmtree(packages_root)
+    subprocess.check_call([
+        src_path('sky/tools/deploy_sdk.py'),
+        '--non-interactive',
+        deploy_path('sky_sdk'),
+        '--fake-pub-get-into',
+        packages_root
+    ])
 
     with open(deploy_path('LICENSES.sky'), 'w') as license_file:
         subprocess.check_call([src_path('tools/licenses.py'), 'credits'],
