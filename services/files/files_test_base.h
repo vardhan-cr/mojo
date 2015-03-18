@@ -91,6 +91,8 @@ class FilesTestBase : public test::ApplicationTestBase {
   }
 
  protected:
+  // Note: This has an out parameter rather than returning the |DirectoryPtr|,
+  // since |ASSERT_...()| doesn't work with return values.
   void GetTemporaryRoot(DirectoryPtr* directory) {
     Error error = ERROR_INTERNAL;
     files()->OpenFileSystem(FILE_SYSTEM_TEMPORARY, GetProxy(directory),
