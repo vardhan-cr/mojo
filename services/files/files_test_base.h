@@ -2,11 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifndef SERVICES_FILES_FILES_TEST_BASE_H_
+#define SERVICES_FILES_FILES_TEST_BASE_H_
+
 #include "base/macros.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/services/files/public/interfaces/directory.mojom.h"
-#include "mojo/services/files/public/interfaces/file.mojom.h"
 #include "mojo/services/files/public/interfaces/files.mojom.h"
 #include "mojo/services/files/public/interfaces/types.mojom.h"
 
@@ -111,3 +113,5 @@ class FilesTestBase : public test::ApplicationTestBase {
 
 }  // namespace files
 }  // namespace mojo
+
+#endif  // SERVICES_FILES_FILES_TEST_BASE_H_
