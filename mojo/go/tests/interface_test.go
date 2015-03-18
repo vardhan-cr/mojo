@@ -13,9 +13,13 @@ import (
 func TestPassMessagePipe(t *testing.T) {
 	r, p := bindings.CreateMessagePipeForMojoInterface()
 	r1, p1 := r, p
-	r1.PassMessagePipe()
+	handle := r1.PassMessagePipe()
+	defer handle.Close()
 	p1.Close()
-	if r.PassMessagePipe().IsValid() || p.PassMessagePipe().IsValid() {
+	rhandle, phandle := r.PassMessagePipe(), p.PassMessagePipe()
+	if rhandle.IsValid() || phandle.IsValid() {
 		t.Fatal("message pipes should be invalid after PassMessagePipe() or Close()")
 	}
+	rhandle.Close()
+	phandle.Close()
 }

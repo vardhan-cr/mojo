@@ -43,6 +43,8 @@ func checkCancel(handle system.Handle, wg *sync.WaitGroup) {
 
 func TestAsyncWait(t *testing.T) {
 	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h0.Close()
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("error creating a message pipe %v", r)
 	}
@@ -54,6 +56,7 @@ func TestAsyncWait(t *testing.T) {
 	if r, h0, h1 = core.CreateMessagePipe(nil); r != system.MOJO_RESULT_OK {
 		t.Fatalf("error creating a message pipe %v", r)
 	}
+	defer h1.Close()
 	h0.Close()
 	checkWait(h0, system.MOJO_HANDLE_SIGNAL_PEER_CLOSED, system.MOJO_RESULT_INVALID_ARGUMENT, &wg)
 	checkWait(h1, system.MOJO_HANDLE_SIGNAL_PEER_CLOSED, system.MOJO_RESULT_OK, &wg)
@@ -61,6 +64,7 @@ func TestAsyncWait(t *testing.T) {
 	if r, h0, h1 = core.CreateMessagePipe(nil); r != system.MOJO_RESULT_OK {
 		t.Fatalf("error creating a message pipe %v", r)
 	}
+	defer h1.Close()
 	h0.Close()
 	checkWait(h0, system.MOJO_HANDLE_SIGNAL_PEER_CLOSED, system.MOJO_RESULT_INVALID_ARGUMENT, &wg)
 	checkWait(h1, system.MOJO_HANDLE_SIGNAL_READABLE, system.MOJO_RESULT_FAILED_PRECONDITION, &wg)
@@ -69,6 +73,8 @@ func TestAsyncWait(t *testing.T) {
 
 func TestAsyncWaitCancel(t *testing.T) {
 	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h0.Close()
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("error creating a message pipe %v", r)
 	}
@@ -79,6 +85,8 @@ func TestAsyncWaitCancel(t *testing.T) {
 	if r, h0, h1 = core.CreateMessagePipe(nil); r != system.MOJO_RESULT_OK {
 		t.Fatalf("error creating a message pipe %v", r)
 	}
+	defer h0.Close()
+	defer h1.Close()
 	checkCancel(h0, &wg)
 	checkCancel(h1, &wg)
 	wg.Wait()

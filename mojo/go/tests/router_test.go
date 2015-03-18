@@ -31,7 +31,8 @@ func encodeMessage(header bindings.MessageHeader, payload bindings.Payload) *bin
 }
 
 func TestAccept(t *testing.T) {
-	r, h0, _ := core.CreateMessagePipe(nil)
+	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("can't create a message pipe: %v", r)
 	}
@@ -48,6 +49,7 @@ func TestAccept(t *testing.T) {
 
 func TestAcceptWithResponse(t *testing.T) {
 	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("can't create a message pipe: %v", r)
 	}
@@ -68,6 +70,7 @@ const numberOfRequests = 50
 
 func TestAcceptWithResponseMultiple(t *testing.T) {
 	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("can't create a message pipe: %v", r)
 	}
@@ -106,7 +109,8 @@ func TestAcceptWithResponseMultiple(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	r, h0, _ := core.CreateMessagePipe(nil)
+	r, h0, h1 := core.CreateMessagePipe(nil)
+	defer h1.Close()
 	if r != system.MOJO_RESULT_OK {
 		t.Fatalf("can't create a message pipe: %v", r)
 	}

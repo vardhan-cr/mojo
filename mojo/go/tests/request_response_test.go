@@ -41,6 +41,7 @@ func TestProxyClosesPipe(t *testing.T) {
 	if waitResponse.Result != system.MOJO_RESULT_OK {
 		t.Fatalf("Error waiting on pipe to be closed: %v", waitResponse.Result)
 	}
+	requestPipe.Close()
 }
 
 type echoImpl struct{}
@@ -77,4 +78,5 @@ func TestStubClosesPipe(t *testing.T) {
 	if waitResponse.Result != system.MOJO_RESULT_OK {
 		t.Fatalf("Error waiting on pipe to be closed: %v", waitResponse.Result)
 	}
+	pointerPipe.Close()
 }
