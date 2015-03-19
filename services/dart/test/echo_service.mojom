@@ -6,4 +6,5 @@ module mojo;
 
 interface EchoService {
   EchoString(string? value) => (string? value);
+  DelayedEchoString(string? value, int32 millis) => (string? value);
 };

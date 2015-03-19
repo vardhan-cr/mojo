@@ -24,7 +24,7 @@ echoApptests(Application application, String url) {
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
 
-      echoProxy.close();
+      await echoProxy.close();
     });
 
     test('Empty String', () async {
@@ -37,7 +37,7 @@ echoApptests(Application application, String url) {
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
 
-      echoProxy.close();
+      await echoProxy.close();
     });
 
     test('Null String', () async {
@@ -50,7 +50,39 @@ echoApptests(Application application, String url) {
       var q = await echoProxy.ptr.echoString("quit");
       expect(q.value, equals("quit"));
 
-      echoProxy.close();
+      await echoProxy.close();
+    });
+
+    test('Delayed Success', () async {
+      var echoProxy = new EchoServiceProxy.unbound();
+      application.connectToService("mojo:dart_echo", echoProxy);
+
+      var milliseconds = 100;
+      var watch = new Stopwatch()..start();
+      var v = await echoProxy.ptr.delayedEchoString("foo", milliseconds);
+      var elapsed = watch.elapsedMilliseconds;
+      expect(v.value, equals("foo"));
+      expect(elapsed, greaterThanOrEqualTo(milliseconds));
+
+      var q = await echoProxy.ptr.echoString("quit");
+      expect(q.value, equals("quit"));
+
+      await echoProxy.close();
+    });
+
+    test('Delayed Close', () {
+      var echoProxy = new EchoServiceProxy.unbound();
+      application.connectToService("mojo:dart_echo", echoProxy);
+
+      var milliseconds = 100;
+      echoProxy.ptr.delayedEchoString("quit", milliseconds).then((_) {
+        throw 'unreachable';
+      }, onError: (e) {
+        expect(e is ProxyCloseException, isTrue);
+      });
+
+      return new Future.delayed(
+          new Duration(milliseconds: 10), () => echoProxy.close());
     });
   });
 }

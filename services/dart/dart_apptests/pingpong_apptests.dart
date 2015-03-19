@@ -50,8 +50,8 @@ pingpongApptests(Application application, String url) {
       pongValue = await pingPongClient.waitForPong();
       expect(pongValue, equals(101));
 
-      pingPongClient.stub.close();
-      pingPongServiceProxy.close();
+      await pingPongClient.stub.close();
+      await pingPongServiceProxy.close();
     });
 
     // Verify that "pingpong.dart" can connect to "pingpong_target.dart", act as
@@ -65,7 +65,7 @@ pingpongApptests(Application application, String url) {
           "mojo:dart_pingpong_target", 9);
       expect(r.ok, equals(true));
 
-      pingPongServiceProxy.close();
+      await pingPongServiceProxy.close();
     });
 
     // Same as the previous test except that instead of providing the
@@ -85,7 +85,7 @@ pingpongApptests(Application application, String url) {
       expect(targetServiceProxy.impl.isOpen, equals(false));
       expect(targetServiceProxy.impl.isBound, equals(false));
 
-      pingPongServiceProxy.close();
+      await pingPongServiceProxy.close();
     });
 
     // Verify that Dart can implement an interface "request" parameter.
@@ -107,9 +107,9 @@ pingpongApptests(Application application, String url) {
       pongValue = await pingPongClient.waitForPong();
       expect(pongValue, equals(101));
 
-      pingPongClient.stub.close();
-      targetServiceProxy.close();
-      pingPongServiceProxy.close();
+      await pingPongClient.stub.close();
+      await targetServiceProxy.close();
+      await pingPongServiceProxy.close();
     });
   });
 }

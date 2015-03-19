@@ -17,11 +17,20 @@ class EchoServiceImpl implements EchoService {
     _stub = new EchoServiceStub.fromEndpoint(endpoint, this);
   }
 
-  echoString(String value, [Function responseFactory]) {
+  Future echoString(String value, [Function responseFactory]) {
     if (value == "quit") {
       _stub.close();
     }
     return new Future.value(responseFactory(value));
+  }
+
+  Future delayedEchoString(String value, int millis,
+      [Function responseFactory]) {
+    if (value == "quit") {
+      _stub.close();
+    }
+    return new Future.delayed(
+        new Duration(milliseconds: millis), () => responseFactory(value));
   }
 }
 
