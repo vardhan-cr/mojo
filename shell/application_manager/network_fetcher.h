@@ -46,7 +46,8 @@ class NetworkFetcher : public Fetcher {
   static bool ComputeAppId(const base::FilePath& path,
                            std::string* digest_string);
 
-  static bool RenameToAppId(const base::FilePath& old_path,
+  static bool RenameToAppId(const GURL& url,
+                            const base::FilePath& old_path,
                             base::FilePath* new_path);
 
   void CopyCompleted(base::Callback<void(const base::FilePath&, bool)> callback,

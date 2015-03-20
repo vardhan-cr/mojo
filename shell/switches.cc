@@ -32,6 +32,9 @@ const char kContentHandlers[] = "content-handlers";
 // instructions.
 const char kDisableCache[] = "disable-cache";
 
+// If set apps downloaded are not deleted.
+const char kDontDeleteOnDownload[] = "dont-delete-on-download";
+
 // Allow externally-running applications to discover, connect to, and register
 // themselves with the shell.
 // TODO(cmasone): Work in progress. Once we're sure this works, remove.
@@ -58,14 +61,18 @@ const char kMapOrigin[] = "map-origin";
 // url_resolver.cc for details.
 const char kOrigin[] = "origin";
 
+// If set apps downloaded are saved in with a predictable filename, to help
+// remote debugging: when gdb is used through gdbserver, it needs to be able to
+// find locally any loaded library. For this, gdb use the filename of the
+// library. When using this flag, the application are named with the sha256 of
+// their content.
+const char kPredictableAppFilenames[] = "predictable-app-filenames";
+
 // Specifies a set of mappings to apply when resolving urls. The value is a set
 // of ',' separated mappings, where each mapping consists of a pair of urls
 // giving the to/from url to map. For example, 'a=b,c=d' contains two mappings,
 // the first maps 'a' to 'b' and the second 'c' to 'd'.
 const char kURLMappings[] = "url-mappings";
-
-// If set apps downloaded are not deleted.
-const char kDontDeleteOnDownload[] = "dont-delete-on-download";
 
 // Switches valid for the main process (i.e., that the user may pass in).
 const char* kSwitchArray[] = {kV,
@@ -80,6 +87,7 @@ const char* kSwitchArray[] = {kV,
                               kHelp,
                               kMapOrigin,
                               kOrigin,
+                              kPredictableAppFilenames,
                               kURLMappings};
 
 const std::set<std::string> GetAllSwitches() {

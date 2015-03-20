@@ -5,6 +5,7 @@
 #include "shell/application_manager/network_fetcher.h"
 
 #include "base/bind.h"
+#include "base/command_line.h"
 #include "base/files/file.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
@@ -20,6 +21,7 @@
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/data_pipe_peek.h"
+#include "shell/switches.h"
 
 namespace mojo {
 namespace shell {
@@ -85,8 +87,9 @@ void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,
     base::AppendToFile(map_path, map_entry.data(), map_entry.length());
 }
 
-// AppIds should be be both predictable and unique, but any hash would work.
-// Currently we use sha256 from crypto/secure_hash.h
+// For remote debugging, GDB needs to be, a apriori, aware of the filename a
+// library will be loaded from. AppIds should be be both predictable and unique,
+// but any hash would work. Currently we use sha256 from crypto/secure_hash.h
 bool NetworkFetcher::ComputeAppId(const base::FilePath& path,
                                   std::string* digest_string) {
   scoped_ptr<crypto::SecureHash> ctx(
@@ -116,34 +119,54 @@ bool NetworkFetcher::ComputeAppId(const base::FilePath& path,
   return true;
 }
 
-bool NetworkFetcher::RenameToAppId(const base::FilePath& old_path,
+bool NetworkFetcher::RenameToAppId(const GURL& url,
+                                   const base::FilePath& old_path,
                                    base::FilePath* new_path) {
   std::string app_id;
   if (!ComputeAppId(old_path, &app_id))
     return false;
 
+  // Using a hash of the url as a directory to prevent a race when the same
+  // bytes are downloaded from 2 different urls. In particular, if the same
+  // application is connected to twice concurrently with different query
+  // parameters, the directory will be different, which will prevent the
+  // collision.
+  std::string dirname = base::HexEncode(
+      crypto::SHA256HashString(url.spec()).data(), crypto::kSHA256Length);
+
   base::FilePath temp_dir;
   base::GetTempDir(&temp_dir);
+  base::FilePath app_dir = temp_dir.Append(dirname);
+  // The directory is leaked, because it can be reused at any time if the same
+  // application is downloaded. Deleting it would be racy. This is only
+  // happening when --predictable-app-filenames is used.
+  bool result = base::CreateDirectoryAndGetError(app_dir, nullptr);
+  DCHECK(result);
   std::string unique_name = base::StringPrintf("%s.mojo", app_id.c_str());
-  *new_path = temp_dir.Append(unique_name);
+  *new_path = app_dir.Append(unique_name);
   return base::Move(old_path, *new_path);
 }
 
 void NetworkFetcher::CopyCompleted(
     base::Callback<void(const base::FilePath&, bool)> callback,
     bool success) {
-  // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
   if (success) {
-    success = false;
-    base::FilePath new_path;
-    if (RenameToAppId(path_, &new_path)) {
-      if (base::PathExists(new_path)) {
-        path_ = new_path;
-        success = true;
-        RecordCacheToURLMapping(path_, url_);
+    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kPredictableAppFilenames)) {
+      // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
+      success = false;
+      base::FilePath new_path;
+      if (RenameToAppId(url_, path_, &new_path)) {
+        if (base::PathExists(new_path)) {
+          path_ = new_path;
+          success = true;
+        }
       }
     }
   }
+
+  if (success)
+    RecordCacheToURLMapping(path_, url_);
 
   base::MessageLoop::current()->PostTask(FROM_HERE,
                                          base::Bind(callback, path_, success));
