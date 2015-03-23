@@ -5,11 +5,11 @@
 library echo_apptests;
 
 import 'dart:async';
-import 'dart:mojo.application';
-import 'dart:mojo.bindings';
-import 'dart:mojo.core';
 
 import 'package:apptest/apptest.dart';
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 import 'package:services/dart/test/echo_service.mojom.dart';
 
 echoApptests(Application application, String url) {

@@ -26,8 +26,7 @@ class Builtin {
   // the builtin_libraries_ array in builtin.cc.
   enum BuiltinLibraryId {
     kBuiltinLibrary = 0,
-    kMojoBindingsLibrary = 1,
-    kMojoCoreLibrary = 2,
+    kMojoInternalLibrary = 1,
     kInvalidLibrary,
   };
 

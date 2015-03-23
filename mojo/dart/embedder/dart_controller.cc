@@ -21,7 +21,6 @@ namespace dart {
 extern const uint8_t* snapshot_buffer;
 
 const char* kDartScheme = "dart:";
-const char* kMojoScheme = "mojo:";
 const char* kAsyncLibURL = "dart:async";
 const char* kInternalLibURL = "dart:_internal";
 const char* kIsolateLibURL = "dart:isolate";
@@ -33,13 +32,6 @@ static bool IsDartSchemeURL(const char* url_name) {
   // If the URL starts with "dart:" then it is considered as a special
   // library URL which is handled differently from other URLs.
   return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
-}
-
-static bool IsMojoSchemeURL(const char* url_name) {
-  static const intptr_t kMojoSchemeLen = strlen(kMojoScheme);
-  // If the URL starts with "mojo:" then it is considered as a special
-  // library URL which is handled differently from other URLs.
-  return (strncmp(url_name, kMojoScheme, kMojoSchemeLen) == 0);
 }
 
 static bool IsServiceIsolateURL(const char* url_name) {
@@ -127,8 +119,7 @@ static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
     if (Dart_IsError(result)) {
       return result;
     }
-    const bool is_internal_scheme_url =
-        IsDartSchemeURL(url_string) || IsMojoSchemeURL(url_string);
+    const bool is_internal_scheme_url = IsDartSchemeURL(url_string);
     // If this is a Dart Scheme URL, or a Mojo Scheme URL, then it is not
     // modified as it will be handled internally.
     if (is_internal_scheme_url) {
@@ -138,14 +129,6 @@ static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
     Dart_Handle builtin_lib =
         Builtin::GetLibrary(Builtin::kBuiltinLibrary);
     return ResolveUri(library_url, url, builtin_lib);
-  }
-
-  if (tag == Dart_kImportTag) {
-    if (IsMojoSchemeURL(url_string)) {
-      Dart_Handle library = Dart_LookupLibrary(url);
-      DART_CHECK_VALID(library);
-      return library;
-    }
   }
 
   Dart_Handle builtin_lib =
@@ -191,9 +174,9 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   DART_CHECK_VALID(url);
   Dart_Handle isolate_lib = Dart_LookupLibrary(url);
   DART_CHECK_VALID(isolate_lib);
-  Dart_Handle mojo_core_lib =
-      Builtin::GetLibrary(Builtin::kMojoCoreLibrary);
-  DART_CHECK_VALID(mojo_core_lib);
+  Dart_Handle mojo_internal_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_internal_lib);
 
   // We need to ensure that all the scripts loaded so far are finalized
   // as we are about to invoke some Dart code below to setup closures.
@@ -320,7 +303,7 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
   // up when the snapshot is read.
   CHECK(snapshot_buffer != nullptr);
   Builtin::PrepareLibrary(Builtin::kBuiltinLibrary);
-  Builtin::PrepareLibrary(Builtin::kMojoCoreLibrary);
+  Builtin::PrepareLibrary(Builtin::kMojoInternalLibrary);
 
   if (!callbacks.create.is_null()) {
     callbacks.create.Run(script_uri.c_str(),
@@ -503,14 +486,12 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   Dart_EnterScope();
 
   // Start the MojoHandleWatcher.
-  Dart_Handle mojo_core_lib =
-      Builtin::GetLibrary(Builtin::kMojoCoreLibrary);
-  DART_CHECK_VALID(mojo_core_lib);
-  Dart_Handle handle_watcher_type = Dart_GetType(
-      mojo_core_lib,
-      Dart_NewStringFromCString("MojoHandleWatcher"),
-      0,
-      nullptr);
+  Dart_Handle mojo_internal_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_internal_lib);
+  Dart_Handle handle_watcher_type =
+      Dart_GetType(mojo_internal_lib,
+                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,
@@ -614,14 +595,12 @@ bool DartController::Initialize(bool strict_compilation) {
   Dart_EnterScope();
 
   // Start the MojoHandleWatcher.
-  Dart_Handle mojo_core_lib =
-      Builtin::GetLibrary(Builtin::kMojoCoreLibrary);
-  DART_CHECK_VALID(mojo_core_lib);
-  Dart_Handle handle_watcher_type = Dart_GetType(
-      mojo_core_lib,
-      Dart_NewStringFromCString("MojoHandleWatcher"),
-      0,
-      nullptr);
+  Dart_Handle mojo_internal_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_internal_lib);
+  Dart_Handle handle_watcher_type =
+      Dart_GetType(mojo_internal_lib,
+                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,
@@ -714,14 +693,12 @@ void DartController::Shutdown() {
   Dart_EnterScope();
 
   // Stop the MojoHandleWatcher.
-  Dart_Handle mojo_core_lib =
-      Builtin::GetLibrary(Builtin::kMojoCoreLibrary);
-  DART_CHECK_VALID(mojo_core_lib);
-  Dart_Handle handle_watcher_type = Dart_GetType(
-      mojo_core_lib,
-      Dart_NewStringFromCString("MojoHandleWatcher"),
-      0,
-      nullptr);
+  Dart_Handle mojo_internal_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_internal_lib);
+  Dart_Handle handle_watcher_type =
+      Dart_GetType(mojo_internal_lib,
+                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
   DART_CHECK_VALID(handle_watcher_type);
   result = Dart_Invoke(
       handle_watcher_type,

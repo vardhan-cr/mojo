@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:mojo.application';
-import 'dart:mojo.bindings';
-import 'dart:mojo.core';
 
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 import 'package:mojo/services/console/public/interfaces/console.mojom.dart';
 
 class ConsoleApplication extends Application {

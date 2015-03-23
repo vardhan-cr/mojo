@@ -9,6 +9,6 @@ dart_packaged_application("hello") {
     "main.dart",
   ]
   deps = [
-    "//mojo/public/interfaces/application",
+    "//mojo/public/dart",
   ]
 }

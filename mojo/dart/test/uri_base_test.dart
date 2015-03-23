@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:mojo.core';
+import 'package:mojo/public/dart/core.dart' as core;
 
 main() {
   print("${Uri.base}");

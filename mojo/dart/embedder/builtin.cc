@@ -36,23 +36,25 @@ static int FindResource(const char* path, const uint8_t** resource) {
 }
 
 const char* Builtin::mojo_core_patch_resource_names_[] = {
-  "/core/buffer_patch.dart",
-  "/core/data_pipe_patch.dart",
-  "/core/handle_patch.dart",
-  "/core/handle_watcher_patch.dart",
-  "/core/message_pipe_patch.dart",
-  NULL,
+    "/core/natives_patch.dart",
+    NULL,
 };
 
 Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
-  /* { url_, has_natives_, native_symbol_, native_resolver_,
-       patch_url_, patch_paths_ } */
-  {"dart:mojo.builtin", true, Builtin::NativeSymbol, Builtin::NativeLookup,
-    nullptr, nullptr },
-  {"dart:mojo.bindings", false, nullptr, nullptr,
-    nullptr, nullptr },
-  {"dart:mojo.core", true, MojoNativeSymbol, MojoNativeLookup,
-   "dart:mojo.core-patch", mojo_core_patch_resource_names_ },
+    /* { url_, has_natives_, native_symbol_, native_resolver_,
+         patch_url_, patch_paths_ } */
+    {"dart:mojo.builtin",
+     true,
+     Builtin::NativeSymbol,
+     Builtin::NativeLookup,
+     nullptr,
+     nullptr},
+    {"dart:mojo.internal",
+     true,
+     MojoNativeSymbol,
+     MojoNativeLookup,
+     "dart:mojo.internal-patch",
+     mojo_core_patch_resource_names_},
 };
 
 uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};

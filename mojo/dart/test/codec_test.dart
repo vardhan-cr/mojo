@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 import 'dart:typed_data';
-import 'dart:mojo.bindings' as bindings;
-import 'dart:mojo.core' as core;
 
 import 'package:mojo/dart/testing/expect.dart';
+import 'package:mojo/public/dart/bindings.dart' as bindings;
+import 'package:mojo/public/dart/core.dart' as core;
 
 class Bar extends bindings.Struct {
   static const int kStructSize = 16;
@@ -61,7 +61,6 @@ class Bar extends bindings.Struct {
   }
 }
 
-
 void testBar() {
   var bar = new Bar();
   bar.alpha = 1;
@@ -74,16 +73,38 @@ void testBar() {
   var message = bar.serializeWithHeader(header);
 
   var expectedMemory = new Uint8List.fromList([
-    16, 0, 0, 0,
-     2, 0, 0, 0,
-    42, 0, 0, 0,
-     0, 0, 0, 0,
-
-    16, 0, 0, 0,
-     4, 0, 0, 0,
-
-     1, 2, 3, 0,
-     5, 6, 7, 8,
+    16,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    42,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    16,
+    0,
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    1,
+    2,
+    3,
+    0,
+    5,
+    6,
+    7,
+    8,
   ]);
 
   var actualMemory = message.buffer.buffer.asUint8List();
@@ -101,7 +122,6 @@ void testBar() {
   Expect.equals(bar.gamma, bar2.gamma);
   Expect.equals(bar.type, bar2.type);
 }
-
 
 class Foo extends bindings.Struct {
   static const int kStructSize = 96;
@@ -167,8 +187,8 @@ class Foo extends bindings.Struct {
       if (decoder1 == null) {
         result.extraBars = null;
       } else {
-        var si1 = decoder1.decodeDataHeaderForPointerArray(
-            bindings.kUnspecifiedArrayLength);
+        var si1 = decoder1
+            .decodeDataHeaderForPointerArray(bindings.kUnspecifiedArrayLength);
         result.extraBars = new List<Bar>(si1.numElements);
         for (int i1 = 0; i1 < si1.numElements; ++i1) {
           var decoder2 = decoder1.decodePointer(
@@ -194,14 +214,13 @@ class Foo extends bindings.Struct {
       if (decoder1 == null) {
         result.arrayOfArrayOfBools = null;
       } else {
-        var si1 = decoder1.decodeDataHeaderForPointerArray(
-            bindings.kUnspecifiedArrayLength);
+        var si1 = decoder1
+            .decodeDataHeaderForPointerArray(bindings.kUnspecifiedArrayLength);
         result.arrayOfArrayOfBools = new List<List<bool>>(si1.numElements);
         for (int i1 = 0; i1 < si1.numElements; ++i1) {
           result.arrayOfArrayOfBools[i1] = decoder1.decodeBoolArray(
               bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i1,
-              bindings.kNothingNullable,
-              bindings.kUnspecifiedArrayLength);
+              bindings.kNothingNullable, bindings.kUnspecifiedArrayLength);
         }
       }
     }
@@ -210,8 +229,8 @@ class Foo extends bindings.Struct {
       if (decoder1 == null) {
         result.multiArrayOfStrings = null;
       } else {
-        var si1 = decoder1.decodeDataHeaderForPointerArray(
-            bindings.kUnspecifiedArrayLength);
+        var si1 = decoder1
+            .decodeDataHeaderForPointerArray(bindings.kUnspecifiedArrayLength);
         result.multiArrayOfStrings =
             new List<List<List<String>>>(si1.numElements);
         for (int i1 = 0; i1 < si1.numElements; ++i1) {
@@ -226,8 +245,7 @@ class Foo extends bindings.Struct {
             for (int i2 = 0; i2 < si2.numElements; ++i2) {
               var decoder3 = decoder2.decodePointer(
                   bindings.ArrayDataHeader.kHeaderSize +
-                      bindings.kPointerSize * i2,
-                  false);
+                      bindings.kPointerSize * i2, false);
               {
                 var si3 = decoder3.decodeDataHeaderForPointerArray(
                     bindings.kUnspecifiedArrayLength);
@@ -235,7 +253,7 @@ class Foo extends bindings.Struct {
                     new List<String>(si3.numElements);
                 for (int i3 = 0; i3 < si3.numElements; ++i3) {
                   var length = bindings.ArrayDataHeader.kHeaderSize +
-                               bindings.kPointerSize * i3;
+                      bindings.kPointerSize * i3;
                   result.multiArrayOfStrings[i1][i2][i3] =
                       decoder3.decodeString(length, false);
                 }
@@ -270,22 +288,17 @@ class Foo extends bindings.Struct {
       var encoder1 = encoder0.encodePointerArray(
           extraBars.length, 40, bindings.kUnspecifiedArrayLength);
       for (int i0 = 0; i0 < extraBars.length; ++i0) {
-        encoder1.encodeStruct(
-            extraBars[i0],
+        encoder1.encodeStruct(extraBars[i0],
             bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
             false);
       }
     }
 
     encoder0.encodeString(name, 48, false);
-    encoder0.encodeHandleArray(inputStreams,
-                               56,
-                               bindings.kArrayNullable,
-                               bindings.kUnspecifiedArrayLength);
-    encoder0.encodeHandleArray(outputStreams,
-                               64,
-                               bindings.kArrayNullable,
-                               bindings.kUnspecifiedArrayLength);
+    encoder0.encodeHandleArray(inputStreams, 56,
+        bindings.kArrayNullable, bindings.kUnspecifiedArrayLength);
+    encoder0.encodeHandleArray(outputStreams, 64, bindings.kArrayNullable,
+        bindings.kUnspecifiedArrayLength);
 
     if (arrayOfArrayOfBools == null) {
       encoder0.encodeNullPointer(72, true);
@@ -293,11 +306,9 @@ class Foo extends bindings.Struct {
       var encoder1 = encoder0.encodePointerArray(
           arrayOfArrayOfBools.length, 72, bindings.kUnspecifiedArrayLength);
       for (int i0 = 0; i0 < arrayOfArrayOfBools.length; ++i0) {
-        encoder1.encodeBoolArray(
-            arrayOfArrayOfBools[i0],
+        encoder1.encodeBoolArray(arrayOfArrayOfBools[i0],
             bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
-            bindings.kNothingNullable,
-            bindings.kUnspecifiedArrayLength);
+            bindings.kNothingNullable, bindings.kUnspecifiedArrayLength);
       }
     }
 
@@ -318,10 +329,8 @@ class Foo extends bindings.Struct {
               bindings.kUnspecifiedArrayLength);
           for (int i1 = 0; i1 < multiArrayOfStrings[i0].length; ++i1) {
             if (multiArrayOfStrings[i0][i1] == null) {
-              encoder2.encodeNullPointer(
-                  bindings.ArrayDataHeader.kHeaderSize +
-                      bindings.kPointerSize * i1,
-                  false);
+              encoder2.encodeNullPointer(bindings.ArrayDataHeader.kHeaderSize +
+                  bindings.kPointerSize * i1, false);
             } else {
               var encoder3 = encoder2.encodePointerArray(
                   multiArrayOfStrings[i0][i1].length,
@@ -330,11 +339,9 @@ class Foo extends bindings.Struct {
                   bindings.kUnspecifiedArrayLength);
               for (int i2 = 0; i2 < multiArrayOfStrings[i0][i1].length; ++i2) {
                 var length = bindings.ArrayDataHeader.kHeaderSize +
-                             bindings.kPointerSize * i2;
+                    bindings.kPointerSize * i2;
                 encoder3.encodeString(
-                    multiArrayOfStrings[i0][i1][i2],
-                    length,
-                    false);
+                    multiArrayOfStrings[i0][i1][i2], length, false);
               }
             }
           }
@@ -342,13 +349,10 @@ class Foo extends bindings.Struct {
       }
     }
 
-    encoder0.encodeBoolArray(arrayOfBools,
-                             88,
-                             bindings.kArrayNullable,
-                             bindings.kUnspecifiedArrayLength);
+    encoder0.encodeBoolArray(arrayOfBools, 88, bindings.kArrayNullable,
+        bindings.kUnspecifiedArrayLength);
   }
 }
-
 
 void testFoo() {
   var foo = new Foo();
@@ -361,12 +365,8 @@ void testFoo() {
   foo.bar.alpha = 91;
   foo.bar.beta = 82;
   foo.bar.gamma = 73;
-  foo.data = [
-    4, 5, 6, 7, 8,
-  ];
-  foo.extraBars = [
-    new Bar(), new Bar(), new Bar(),
-  ];
+  foo.data = [4, 5, 6, 7, 8,];
+  foo.extraBars = [new Bar(), new Bar(), new Bar(),];
   for (int i = 0; i < foo.extraBars.length; ++i) {
     foo.extraBars[i].alpha = 1 * i;
     foo.extraBars[i].beta = 2 * i;
@@ -375,33 +375,69 @@ void testFoo() {
   foo.name = "I am a banana";
   // This is supposed to be a handle, but we fake it with an integer.
   foo.source = new core.MojoHandle(23423782);
-  foo.arrayOfArrayOfBools = [
-    [true], [false, true]
-  ];
-  foo.arrayOfBools = [
-    true, false, true, false, true, false, true, true
-  ];
+  foo.arrayOfArrayOfBools = [[true], [false, true]];
+  foo.arrayOfBools = [true, false, true, false, true, false, true, true];
 
   int name = 31;
   var header = new bindings.MessageHeader(name);
   var message = foo.serializeWithHeader(header);
 
   var expectedMemory = new Uint8List.fromList([
-    /*  0: */   16,    0,    0,    0,    2,    0,    0,    0,
-    /*  8: */   31,    0,    0,    0,    0,    0,    0,    0,
-    /* 16: */   96,    0,    0,    0,   15,    0,    0,    0,
-    /* 24: */ 0xD5, 0xB4, 0x12, 0x02, 0x93, 0x6E, 0x01,    0,
-    /* 32: */    5,    0,    0,    0,    0,    0,    0,    0,
-    /* 40: */   72,    0,    0,    0,    0,    0,    0,    0,
+    /*  0: */ 16,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    /*  8: */ 31,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    /* 16: */ 96,
+    0,
+    0,
+    0,
+    15,
+    0,
+    0,
+    0,
+    /* 24: */ 0xD5,
+    0xB4,
+    0x12,
+    0x02,
+    0x93,
+    0x6E,
+    0x01,
+    0,
+    /* 32: */ 5,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    /* 40: */ 72,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
   ]);
 
   var allActualMemory = message.buffer.buffer.asUint8List();
   var actualMemory = allActualMemory.sublist(0, expectedMemory.length);
   Expect.listEquals(expectedMemory, actualMemory);
 
-  var expectedHandles = <core.MojoHandle>[
-    new core.MojoHandle(23423782),
-  ];
+  var expectedHandles = <core.MojoHandle>[new core.MojoHandle(23423782),];
 
   Expect.listEquals(expectedHandles, message.handles);
 
@@ -437,11 +473,9 @@ void testFoo() {
 
   Expect.listEquals(foo.arrayOfBools, foo2.arrayOfBools);
   for (int i = 0; i < foo2.arrayOfArrayOfBools.length; i++) {
-    Expect.listEquals(foo.arrayOfArrayOfBools[i],
-                      foo2.arrayOfArrayOfBools[i]);
+    Expect.listEquals(foo.arrayOfArrayOfBools[i], foo2.arrayOfArrayOfBools[i]);
   }
 }
-
 
 class Rect extends bindings.Struct {
   static const int kStructSize = 24;
@@ -487,13 +521,11 @@ class Rect extends bindings.Struct {
     encoder0.encodeInt32(height, 20);
   }
 
-  bool operator==(Rect other) =>
-      (this.x == other.x) &&
+  bool operator ==(Rect other) => (this.x == other.x) &&
       (this.y == other.y) &&
       (this.width == other.width) &&
       (this.height == other.height);
 }
-
 
 Rect createRect(int x, int y, int width, int height) {
   var r = new Rect();
@@ -503,7 +535,6 @@ Rect createRect(int x, int y, int width, int height) {
   r.height = height;
   return r;
 }
-
 
 class NamedRegion extends bindings.Struct {
   static const int kStructSize = 24;
@@ -532,8 +563,8 @@ class NamedRegion extends bindings.Struct {
       if (decoder1 == null) {
         result.rects = null;
       } else {
-        var si1 = decoder1.decodeDataHeaderForPointerArray(
-            bindings.kUnspecifiedArrayLength);
+        var si1 = decoder1
+            .decodeDataHeaderForPointerArray(bindings.kUnspecifiedArrayLength);
         result.rects = new List<Rect>(si1.numElements);
         for (int i1 = 0; i1 < si1.numElements; ++i1) {
           var decoder2 = decoder1.decodePointer(
@@ -555,15 +586,13 @@ class NamedRegion extends bindings.Struct {
       var encoder1 = encoder0.encodePointerArray(
           rects.length, 16, bindings.kUnspecifiedArrayLength);
       for (int i0 = 0; i0 < rects.length; ++i0) {
-        encoder1.encodeStruct(
-            rects[i0],
+        encoder1.encodeStruct(rects[i0],
             bindings.ArrayDataHeader.kHeaderSize + bindings.kPointerSize * i0,
             false);
       }
     }
   }
 }
-
 
 testNamedRegion() {
   var r = new NamedRegion();
@@ -580,7 +609,6 @@ testNamedRegion() {
   Expect.equals(createRect(1, 2, 3, 4), result.rects[0]);
   Expect.equals(createRect(10, 20, 30, 40), result.rects[1]);
 }
-
 
 void testAlign() {
   List aligned = [
@@ -611,7 +639,6 @@ void testAlign() {
   }
 }
 
-
 class MojoString extends bindings.Struct {
   static const int kStructSize = 16;
   static const bindings.StructDataHeader kDefaultStructInfo =
@@ -639,9 +666,8 @@ class MojoString extends bindings.Struct {
   }
 }
 
-
 testUtf8() {
-  var str = "B\u03ba\u1f79";  // some UCS-2 codepoints.
+  var str = "B\u03ba\u1f79"; // some UCS-2 codepoints.
   var name = 42;
   var payloadSize = 24;
 
@@ -654,12 +680,54 @@ testUtf8() {
   var result = MojoString.deserialize(resultMessage.payload);
 
   var expectedMemory = new Uint8List.fromList([
-    /*  0: */   16,    0,    0,    0,    2,    0,    0,    0,
-    /*  8: */   42,    0,    0,    0,    0,    0,    0,    0,
-    /* 16: */   16,    0,    0,    0,    1,    0,    0,    0,
-    /* 24: */   8,     0,    0,    0,    0,    0,    0,    0,
-    /* 32: */   14,    0,    0,    0,    6,    0,    0,    0,
-    /* 40: */ 0x42, 0xCE, 0xBA, 0xE1, 0xBD, 0xB9,    0,    0,
+    /*  0: */ 16,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    /*  8: */ 42,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    /* 16: */ 16,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    /* 24: */ 8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    /* 32: */ 14,
+    0,
+    0,
+    0,
+    6,
+    0,
+    0,
+    0,
+    /* 40: */ 0x42,
+    0xCE,
+    0xBA,
+    0xE1,
+    0xBD,
+    0xB9,
+    0,
+    0,
   ]);
   var allActualMemory = message.buffer.buffer.asUint8List();
   var actualMemory = allActualMemory.sublist(0, expectedMemory.length);
@@ -668,7 +736,6 @@ testUtf8() {
 
   Expect.equals(str, result.string);
 }
-
 
 main() {
   testAlign();

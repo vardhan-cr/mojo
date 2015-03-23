@@ -7,10 +7,10 @@
 
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:mojo.application';
-import 'dart:mojo.bindings';
-import 'dart:mojo.core';
 
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 import 'package:mojo/services/network/public/interfaces/network_service.mojom.dart';
 import 'package:mojo/services/network/public/interfaces/url_loader.mojom.dart';
 

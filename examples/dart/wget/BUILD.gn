@@ -10,7 +10,7 @@ dart_packaged_application("wget") {
     "main.dart",
   ]
   deps = [
-    "//mojo/public/interfaces/application",
+    "//mojo/public/dart",
     "//mojo/services/network/public/interfaces",
   ]
 }

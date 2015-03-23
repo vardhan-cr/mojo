@@ -6,9 +6,10 @@
 // mojo_shell mojo:hello
 
 import 'dart:async';
-import 'dart:mojo.application';
-import 'dart:mojo.bindings';
-import 'dart:mojo.core';
+
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 
 class Hello extends Application {
   Hello.fromHandle(MojoHandle handle) : super.fromHandle(handle);

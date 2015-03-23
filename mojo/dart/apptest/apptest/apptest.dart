@@ -5,9 +5,10 @@
 library apptest;
 
 import 'dart:async';
-import 'dart:mojo.application';
-import 'dart:mojo.bindings';
-import 'dart:mojo.core';
+
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 
 // Import and reexport the unittest package. We are a *.dartzip file designed to
 // be linked into your_apptest.mojo file and are your main entrypoint.

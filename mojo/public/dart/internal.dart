@@ -2,14 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+library internal;
+
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
-import 'dart:core';
 import 'dart:isolate';
-import 'dart:math';
-import 'dart:mojo.internal';
-import 'dart:mirrors';
-import 'dart:sky';
-import 'dart:sky_builtin';
 import 'dart:typed_data';
+
+part 'src/handle_watcher.dart';
+part 'src/natives.dart';
+part 'src/timer_queue.dart';

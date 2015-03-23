@@ -4,7 +4,8 @@
 
 import 'dart:async';
 import 'dart:isolate';
-import 'dart:mojo.core' as core;
+
+import 'package:mojo/public/dart/core.dart' as core;
 
 main() {
   var pipe = new core.MojoMessagePipe();
@@ -26,6 +27,6 @@ main() {
   eventStream.enableWriteEvents();
 
   completer.future.then((int numEvents) {
-    assert(numEvents ==1);
+    assert(numEvents == 1);
   });
 }

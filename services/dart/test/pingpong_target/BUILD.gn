@@ -10,7 +10,7 @@ dart_packaged_application("pingpong_target") {
     "main.dart",
   ]
   deps = [
+    "//mojo/public/dart",
     "//services/dart/test:pingpong_service_interface",
-    "//mojo/public/interfaces/application",
   ]
 }

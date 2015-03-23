@@ -9,7 +9,7 @@ dart_packaged_application("world") {
     "main.dart",
   ]
   deps = [
-    "//mojo/public/interfaces/application",
+    "//mojo/public/dart",
   ]
 
   # This exercises the ability of the Dart content handler to run isolates in

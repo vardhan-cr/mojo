@@ -10,7 +10,7 @@ dart_packaged_application("echo") {
     "main.dart",
   ]
   deps = [
+    "//mojo/public/dart",
     "//services/dart/test:echo_service_interface",
-    "//mojo/public/interfaces/application",
   ]
 }

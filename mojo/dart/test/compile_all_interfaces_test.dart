@@ -9,11 +9,11 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:mojo.bindings' as bindings;
-import 'dart:mojo.core' as core;
 
 import 'package:mojo/dart/testing/expect.dart';
-
+import 'package:mojo/public/dart/application.dart';
+import 'package:mojo/public/dart/bindings.dart';
+import 'package:mojo/public/dart/core.dart';
 import 'package:mojo/public/interfaces/application/application.mojom.dart';
 import 'package:mojo/public/interfaces/application/service_provider.mojom.dart';
 import 'package:mojo/public/interfaces/application/shell.mojom.dart';

@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:typed_data';
-import 'dart:mojo.core';
 
 import 'package:mojo/dart/testing/expect.dart';
+import 'package:mojo/public/dart/core.dart';
 
 invalidHandleTest() {
   MojoHandle invalidHandle = new MojoHandle(MojoHandle.INVALID);
@@ -15,12 +15,13 @@ invalidHandleTest() {
   Expect.isTrue(result.isInvalidArgument);
 
   // Wait.
-  MojoWaitResult mwr = invalidHandle.wait(MojoHandleSignals.kReadWrite, 1000000);
+  MojoWaitResult mwr =
+      invalidHandle.wait(MojoHandleSignals.kReadWrite, 1000000);
   Expect.isTrue(mwr.result.isInvalidArgument);
 
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([invalidHandle.h],
-                                                [MojoHandleSignals.kReadWrite],
-                                                MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([invalidHandle.h], [
+    MojoHandleSignals.kReadWrite
+  ], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isInvalidArgument);
 
   // Message pipe.
@@ -73,7 +74,6 @@ invalidHandleTest() {
   Expect.isTrue(result.isInvalidArgument);
 }
 
-
 basicMessagePipeTest() {
   MojoMessagePipe pipe = new MojoMessagePipe();
   Expect.isNotNull(pipe);
@@ -106,9 +106,9 @@ basicMessagePipeTest() {
   Expect.isTrue(result.isOk);
 
   // end0 should now be readable.
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([end0.handle.h],
-                                                [MojoHandleSignals.kReadable],
-                                                MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([end0.handle.h], [
+    MojoHandleSignals.kReadable
+  ], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isOk);
 
   // Read from end0.
@@ -137,7 +137,6 @@ basicMessagePipeTest() {
   result = end1.handle.close();
   Expect.isTrue(result.isOk);
 }
-
 
 basicDataPipeTest() {
   MojoDataPipe pipe = new MojoDataPipe();
@@ -179,14 +178,14 @@ basicDataPipeTest() {
   Expect.equals(written, helloData.lengthInBytes);
 
   // Now that we have written, the consumer should be readable.
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([consumer.handle.h],
-                                                [MojoHandleSignals.kReadable],
-                                                MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([consumer.handle.h], [
+    MojoHandleSignals.kReadable
+  ], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwr.result.isOk);
 
   // Do a two-phase write to the producer.
-  ByteData twoPhaseWrite = producer.beginWrite(
-      20, MojoDataPipeProducer.FLAG_NONE);
+  ByteData twoPhaseWrite =
+      producer.beginWrite(20, MojoDataPipeProducer.FLAG_NONE);
   Expect.isTrue(producer.status.isOk);
   Expect.isNotNull(twoPhaseWrite);
   Expect.isTrue(twoPhaseWrite.lengthInBytes >= 20);
@@ -210,14 +209,13 @@ basicDataPipeTest() {
   Expect.isTrue(mwr.result.isOk);
 
   // Get the number of remaining bytes.
-  int remaining = consumer.read(
-      null, 0, MojoDataPipeConsumer.FLAG_QUERY);
+  int remaining = consumer.read(null, 0, MojoDataPipeConsumer.FLAG_QUERY);
   Expect.isTrue(consumer.status.isOk);
   Expect.equals(remaining, "hello world".length - 1);
 
   // Do a two-phase read.
-  ByteData twoPhaseRead = consumer.beginRead(
-      remaining, MojoDataPipeConsumer.FLAG_NONE);
+  ByteData twoPhaseRead =
+      consumer.beginRead(remaining, MojoDataPipeConsumer.FLAG_NONE);
   Expect.isTrue(consumer.status.isOk);
   Expect.isNotNull(twoPhaseRead);
   Expect.isTrue(twoPhaseRead.lengthInBytes <= remaining);
@@ -229,18 +227,16 @@ basicDataPipeTest() {
   consumer.endRead(twoPhaseRead.lengthInBytes);
   Expect.isTrue(consumer.status.isOk);
 
-  String helloWorld = new String.fromCharCodes(
-      uint8_list.toList());
+  String helloWorld = new String.fromCharCodes(uint8_list.toList());
   Expect.equals("hello world", helloWorld);
 
   result = consumer.handle.close();
   Expect.isTrue(result.isOk);
 }
 
-
 basicSharedBufferTest() {
-  MojoSharedBuffer mojoBuffer = new MojoSharedBuffer.create(
-      100, MojoSharedBuffer.CREATE_FLAG_NONE);
+  MojoSharedBuffer mojoBuffer =
+      new MojoSharedBuffer.create(100, MojoSharedBuffer.CREATE_FLAG_NONE);
   Expect.isNotNull(mojoBuffer);
   Expect.isNotNull(mojoBuffer.status);
   Expect.isTrue(mojoBuffer.status.isOk);
@@ -296,7 +292,6 @@ basicSharedBufferTest() {
   duplicate.close();
   duplicate = null;
 }
-
 
 main() {
   invalidHandleTest();

@@ -7,7 +7,7 @@ library mojo_builtin;
 import 'dart:async';
 import 'dart:convert';
 //import 'dart:_internal';
-import 'dart:mojo.core';
+import 'dart:mojo.internal';
 // import 'root_library'; happens here from C Code
 
 // The root library (aka the script) is imported into this library. The
@@ -15,22 +15,18 @@ import 'dart:mojo.core';
 // namespace.
 Function _getMainClosure() => main;
 
-
 // Corelib 'print' implementation.
 void _print(arg) {
   _Logger._printString(arg.toString());
 }
 
-
 class _Logger {
   static void _printString(String s) native "Logger_PrintString";
 }
 
-
 _getPrintClosure() => _print;
 
 const _logBuiltin = false;
-
 
 Uri _uriBase() {
   return _entryPointScript.resolve('.');
@@ -49,7 +45,6 @@ _setupHooks() {
   VMLibraryHooks.eventHandlerSendData = MojoHandleWatcher.timer;
 }
 
-
 _enforceTrailingSlash(uri) {
   // Ensure we have a trailing slash character.
   if (!uri.endsWith('/')) {
@@ -58,7 +53,6 @@ _enforceTrailingSlash(uri) {
   return uri;
 }
 
-
 void _setWorkingDirectory(cwd) {
   cwd = _enforceTrailingSlash(cwd);
   _workingDirectoryUri = new Uri(scheme: 'file', path: cwd);
@@ -66,7 +60,6 @@ void _setWorkingDirectory(cwd) {
     _print('# Working Directory: $cwd');
   }
 }
-
 
 _setPackageRoot(String packageRoot) {
   packageRoot = _enforceTrailingSlash(packageRoot);
@@ -81,7 +74,6 @@ _setPackageRoot(String packageRoot) {
     _print('# Package root: $packageRoot -> $_packageRoot');
   }
 }
-
 
 String _resolveScriptUri(String scriptName) {
   if (_workingDirectoryUri == null) {
@@ -118,7 +110,6 @@ String _resolveUri(String base, String userString) {
   }
 }
 
-
 Uri _resolvePackageUri(Uri uri) {
   if (!uri.host.isEmpty) {
     var path = '${uri.host}${uri.path}';
@@ -126,15 +117,14 @@ Uri _resolvePackageUri(Uri uri) {
     var wrong = 'package://$path';
 
     throw "URIs using the 'package:' scheme should look like "
-          "'$right', not '$wrong'.";
+        "'$right', not '$wrong'.";
   }
 
-  var packageRoot = _packageRoot == null ?
-                    _entryPointScript.resolve('packages/') :
-                    _packageRoot;
+  var packageRoot = _packageRoot == null
+      ? _entryPointScript.resolve('packages/')
+      : _packageRoot;
   return packageRoot.resolve(uri.path);
 }
-
 
 int _numOutstandingLoadRequests = 0;
 
@@ -142,13 +132,10 @@ int _numOutstandingLoadRequests = 0;
 // void _httpGet(Uri uri, String libraryUri, loadCallback(List<int> data)) {
 // }
 
-
 void _signalDoneLoading() native "Builtin_DoneLoading";
 
-
-void _loadScriptCallback(int tag, String uri, String libraryUri, List<int> data)
-    native "Builtin_LoadScript";
-
+void _loadScriptCallback(int tag, String uri, String libraryUri,
+    List<int> data) native "Builtin_LoadScript";
 
 void _loadScript(int tag, String uri, String libraryUri, List<int> data) {
   _loadScriptCallback(tag, uri, libraryUri, data);
@@ -156,16 +143,15 @@ void _loadScript(int tag, String uri, String libraryUri, List<int> data) {
   _numOutstandingLoadRequests--;
   if (_logBuiltin) {
     _print("native Builtin_LoadScript($uri) completed, "
-           "${_numOutstandingLoadRequests} requests remaining");
+        "${_numOutstandingLoadRequests} requests remaining");
   }
   if (_numOutstandingLoadRequests == 0) {
     _signalDoneLoading();
   }
 }
 
-
-void _asyncLoadErrorCallback(uri, libraryUri, error)
-    native "Builtin_AsyncLoadError";
+void _asyncLoadErrorCallback(
+    uri, libraryUri, error) native "Builtin_AsyncLoadError";
 
 void _asyncLoadError(uri, libraryUri, error) {
   assert(_numOutstandingLoadRequests > 0);
@@ -178,7 +164,6 @@ void _asyncLoadError(uri, libraryUri, error) {
     _signalDoneLoading();
   }
 }
-
 
 // Create a Uri of 'userUri'. If the input uri is a package uri, then the
 // package uri is resolved.
@@ -208,7 +193,6 @@ Uri _createUri(String userUri) {
   }
 }
 
-
 // TODO(zra): readSync and enumerateFiles are exposed for testing purposes only.
 // Eventually, there will be different builtin libraries for testing and
 // production(i.e. the content handler). In the content handler's builtin
@@ -228,7 +212,7 @@ _loadDataAsync(int tag, String uri, String libraryUri, List<int> source) {
   _numOutstandingLoadRequests++;
   if (_logBuiltin) {
     _print("_loadDataAsync($uri), "
-           "${_numOutstandingLoadRequests} requests outstanding");
+        "${_numOutstandingLoadRequests} requests outstanding");
   }
   if (source != null) {
     _loadScript(tag, uri, libraryUri, source);

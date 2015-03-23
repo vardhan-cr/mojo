@@ -5,9 +5,9 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:mojo.core';
 
 import 'package:mojo/dart/testing/expect.dart';
+import 'package:mojo/public/dart/core.dart';
 
 void simpleTest() {
   var pipe = new MojoMessagePipe();
@@ -33,7 +33,6 @@ void simpleTest() {
   });
 }
 
-
 Future simpleAsyncAwaitTest() async {
   var pipe = new MojoMessagePipe();
   Expect.isNotNull(pipe);
@@ -52,19 +51,16 @@ Future simpleAsyncAwaitTest() async {
   Expect.equals(1, numEvents);
 }
 
-
 ByteData byteDataOfString(String s) {
   return new ByteData.view((new Uint8List.fromList(s.codeUnits)).buffer);
 }
-
 
 String stringOfByteData(ByteData bytes) {
   return new String.fromCharCodes(bytes.buffer.asUint8List().toList());
 }
 
-
-void expectStringFromEndpoint(String expected,
-                              MojoMessagePipeEndpoint endpoint) {
+void expectStringFromEndpoint(
+    String expected, MojoMessagePipeEndpoint endpoint) {
   // Query how many bytes are available.
   var result = endpoint.query();
   Expect.isNotNull(result);
@@ -81,7 +77,6 @@ void expectStringFromEndpoint(String expected,
   String msg = stringOfByteData(bytes);
   Expect.equals(expected, msg);
 }
-
 
 Future pingPongIsolate(MojoMessagePipeEndpoint endpoint) async {
   int pings = 0;
@@ -107,13 +102,12 @@ Future pingPongIsolate(MojoMessagePipeEndpoint endpoint) async {
   Expect.equals(10, pongs);
 }
 
-
 Future pingPongTest() async {
   var pipe = new MojoMessagePipe();
   var isolate = await Isolate.spawn(pingPongIsolate, pipe.endpoints[0]);
   var endpoint = pipe.endpoints[1];
   var eventStream =
-      new MojoEventStream(endpoint.handle,  MojoHandleSignals.READWRITE);
+      new MojoEventStream(endpoint.handle, MojoHandleSignals.READWRITE);
 
   int pings = 0;
   int pongs = 0;
@@ -128,19 +122,18 @@ Future pingPongTest() async {
       if (pongs == 10) {
         eventStream.close();
       }
-      eventStream.enableWriteEvents();  // Now it is our turn to send.
+      eventStream.enableWriteEvents(); // Now it is our turn to send.
     } else if (mojoSignals.isWritable) {
       if (pings < 10) {
         endpoint.write(byteDataOfString("Ping"));
         pings++;
       }
-      eventStream.enableReadEvents();  // Don't send while waiting for reply.
+      eventStream.enableReadEvents(); // Don't send while waiting for reply.
     }
   }
   Expect.equals(10, pings);
   Expect.equals(10, pongs);
 }
-
 
 main() async {
   simpleTest();

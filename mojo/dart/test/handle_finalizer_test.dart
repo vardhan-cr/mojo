@@ -5,10 +5,9 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:mojo.core';
-
 
 import 'package:mojo/dart/testing/expect.dart';
+import 'package:mojo/public/dart/core.dart';
 
 MojoHandle leakMojoHandle() {
   var pipe = new MojoMessagePipe();

@@ -9,6 +9,7 @@ dart_packaged_application("console_example") {
     "main.dart",
   ]
   deps = [
+    "//mojo/public/dart",
     "//mojo/services/console/public/interfaces",
   ]
 }
