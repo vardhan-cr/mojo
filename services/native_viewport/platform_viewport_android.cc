@@ -10,6 +10,7 @@
 #include "base/android/jni_android.h"
 #include "jni/PlatformViewportAndroid_jni.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
+#include "mojo/converters/input_events/input_events_type_converters.h"
 #include "ui/events/event.h"
 #include "ui/events/keycodes/keyboard_code_conversion_android.h"
 #include "ui/gfx/point.h"
@@ -109,8 +110,8 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
   ui::TouchEvent event(MotionEventActionToEventType(action), location,
                        id_generator_.GetGeneratedID(pointer_id),
                        base::TimeDelta::FromMilliseconds(time_ms));
-  // TODO(beng): handle multiple touch-points.
-  delegate_->OnEvent(&event);
+  // TODO(sky): handle multiple touch-points.
+  delegate_->OnEvent(mojo::Event::From(static_cast<ui::Event&>(event)));
   if (event.type() == ui::ET_TOUCH_RELEASED ||
       event.type() == ui::ET_TOUCH_CANCELLED)
     id_generator_.ReleaseNumber(pointer_id);
@@ -126,12 +127,12 @@ bool PlatformViewportAndroid::KeyEvent(JNIEnv* env,
   ui::KeyEvent event(pressed ? ui::ET_KEY_PRESSED : ui::ET_KEY_RELEASED,
                      ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
   event.set_platform_keycode(key_code);
-  delegate_->OnEvent(&event);
+  delegate_->OnEvent(mojo::Event::From(event));
   if (pressed && unicode_character) {
     ui::KeyEvent char_event(unicode_character,
                             ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
     char_event.set_platform_keycode(key_code);
-    delegate_->OnEvent(&char_event);
+    delegate_->OnEvent(mojo::Event::From(char_event));
   }
   return true;
 }
@@ -168,12 +169,6 @@ gfx::Size PlatformViewportAndroid::GetSize() {
 
 void PlatformViewportAndroid::SetBounds(const gfx::Rect& bounds) {
   NOTIMPLEMENTED();
-}
-
-void PlatformViewportAndroid::SetCapture() {
-}
-
-void PlatformViewportAndroid::ReleaseCapture() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////

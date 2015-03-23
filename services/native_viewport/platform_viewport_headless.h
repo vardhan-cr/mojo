@@ -27,8 +27,6 @@ class PlatformViewportHeadless : public PlatformViewport {
   void Close() override;
   gfx::Size GetSize() override;
   void SetBounds(const gfx::Rect& bounds) override;
-  void SetCapture() override;
-  void ReleaseCapture() override;
 
   Delegate* delegate_;
   mojo::ViewportMetricsPtr metrics_;

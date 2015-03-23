@@ -53,7 +53,7 @@ class NativeViewportImpl : public mojo::NativeViewport,
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) override;
   void OnAcceleratedWidgetAvailable(gfx::AcceleratedWidget widget) override;
   void OnAcceleratedWidgetDestroyed() override;
-  bool OnEvent(ui::Event* ui_event) override;
+  bool OnEvent(mojo::EventPtr event) override;
   void OnDestroyed() override;
 
   // mojo::ErrorHandler implementation.

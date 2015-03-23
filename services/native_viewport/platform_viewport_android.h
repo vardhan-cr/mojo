@@ -54,8 +54,6 @@ class PlatformViewportAndroid : public PlatformViewport {
   virtual void Close() override;
   virtual gfx::Size GetSize() override;
   virtual void SetBounds(const gfx::Rect& bounds) override;
-  virtual void SetCapture() override;
-  virtual void ReleaseCapture() override;
 
   void ReleaseWindow();
 

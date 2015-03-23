@@ -7,6 +7,7 @@
 #include "base/command_line.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
+#include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/converters/input_events/mojo_extended_key_event_data.h"
 #include "ui/events/event.h"
 #include "ui/events/event_utils.h"
@@ -18,6 +19,17 @@
 #include "ui/platform_window/x11/x11_window.h"
 
 namespace native_viewport {
+namespace {
+
+float ConvertUIWheelValueToMojoValue(int offset) {
+  // Mojo's event type takes a value between -1 and 1. Normalize by allowing
+  // up to 20 of ui's offset. This is a bit arbitrary.
+  return std::max(
+      -1.0f, std::min(1.0f, static_cast<float>(offset) /
+                                (20 * static_cast<float>(
+                                          ui::MouseWheelEvent::kWheelDelta))));
+}
+}  // namespace
 
 class PlatformViewportX11 : public PlatformViewport,
                             public ui::PlatformWindowDelegate {
@@ -57,10 +69,6 @@ class PlatformViewportX11 : public PlatformViewport,
     platform_window_->SetBounds(bounds);
   }
 
-  void SetCapture() override { platform_window_->SetCapture(); }
-
-  void ReleaseCapture() override { platform_window_->ReleaseCapture(); }
-
   // ui::PlatformWindowDelegate:
   void OnBoundsChanged(const gfx::Rect& new_bounds) override {
     metrics_->size = mojo::Size::From(new_bounds.size());
@@ -70,7 +78,32 @@ class PlatformViewportX11 : public PlatformViewport,
   void OnDamageRect(const gfx::Rect& damaged_region) override {}
 
   void DispatchEvent(ui::Event* event) override {
-    delegate_->OnEvent(event);
+    mojo::EventPtr mojo_event(mojo::Event::From(*event));
+    if (event->IsMouseWheelEvent()) {
+      // Mojo's event type has a different meaning for wheel events. Convert
+      // between the two.
+      ui::MouseWheelEvent* wheel_event =
+          static_cast<ui::MouseWheelEvent*>(event);
+      DCHECK(mojo_event->pointer_data);
+      mojo_event->pointer_data->horizontal_wheel =
+          ConvertUIWheelValueToMojoValue(wheel_event->x_offset());
+      mojo_event->pointer_data->horizontal_wheel =
+          ConvertUIWheelValueToMojoValue(wheel_event->y_offset());
+    }
+    delegate_->OnEvent(mojo_event.Pass());
+
+    switch (event->type()) {
+      case ui::ET_MOUSE_PRESSED:
+      case ui::ET_TOUCH_PRESSED:
+        platform_window_->SetCapture();
+        break;
+      case ui::ET_MOUSE_RELEASED:
+      case ui::ET_TOUCH_RELEASED:
+        platform_window_->ReleaseCapture();
+        break;
+      default:
+        break;
+    }
 
     // We want to emulate the WM_CHAR generation behaviour of Windows.
     //
@@ -100,7 +133,7 @@ class PlatformViewportX11 : public PlatformViewport,
               key_press_event->GetUnmodifiedText())));
       char_event.set_platform_keycode(key_press_event->platform_keycode());
 
-      delegate_->OnEvent(&char_event);
+      delegate_->OnEvent(mojo::Event::From(char_event));
     }
   }
 

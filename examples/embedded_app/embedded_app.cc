@@ -86,15 +86,14 @@ class EmbeddedApp
     windows_.erase(view->id());
   }
   void OnViewInputEvent(View* view, const EventPtr& event) override {
-    if (event->action == EVENT_TYPE_MOUSE_RELEASED) {
-      if (event->flags & EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
-        URLRequestPtr request(URLRequest::New());
-        request->url = "http://www.aaronboodman.com/z_dropbox/test.html";
-        NavigatorHostPtr navigator_host;
-        ConnectToService(windows_[view->id()]->embedder_service_provider.get(),
-                         &navigator_host);
-        navigator_host->RequestNavigate(TARGET_SOURCE_NODE, request.Pass());
-      }
+    if (event->action == EVENT_TYPE_POINTER_UP &&
+        event->flags & EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
+      URLRequestPtr request(URLRequest::New());
+      request->url = "http://www.aaronboodman.com/z_dropbox/test.html";
+      NavigatorHostPtr navigator_host;
+      ConnectToService(windows_[view->id()]->embedder_service_provider.get(),
+                       &navigator_host);
+      navigator_host->RequestNavigate(TARGET_SOURCE_NODE, request.Pass());
     }
   }
 

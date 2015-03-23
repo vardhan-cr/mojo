@@ -17,16 +17,16 @@
 namespace examples {
 namespace {
 
-float CalculateDragDistance(const mojo::Point& start, const mojo::Point& end) {
-  return hypot(static_cast<float>(start.x - end.x),
-               static_cast<float>(start.y - end.y));
+float CalculateDragDistance(const mojo::PointF& start,
+                            const mojo::PointF& end) {
+  return hypot(start.x - end.x, start.y - end.y);
 }
 
 float GetRandomColor() {
   return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
-}
+}  // namespace
 
 GLES2ClientImpl::GLES2ClientImpl(mojo::ContextProviderPtr context_provider)
     : last_time_(mojo::GetTimeTicksNow()),
@@ -57,42 +57,46 @@ void GLES2ClientImpl::SetSize(const mojo::Size& size) {
 
 void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
   switch (event.action) {
-  case mojo::EVENT_TYPE_MOUSE_PRESSED:
-  case mojo::EVENT_TYPE_TOUCH_PRESSED:
-    if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON)
+    case mojo::EVENT_TYPE_POINTER_DOWN:
+      if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON)
+        break;
+      capture_point_.x = event.pointer_data->x;
+      capture_point_.y = event.pointer_data->y;
+      last_drag_point_ = capture_point_;
+      drag_start_time_ = mojo::GetTimeTicksNow();
       break;
-    capture_point_ = *event.location_data->in_view_location;
-    last_drag_point_ = capture_point_;
-    drag_start_time_ = mojo::GetTimeTicksNow();
-    break;
-  case mojo::EVENT_TYPE_MOUSE_DRAGGED:
-  case mojo::EVENT_TYPE_TOUCH_MOVED: {
-    if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON)
-      break;
-    int direction =
-        (event.location_data->in_view_location->y < last_drag_point_.y ||
-         event.location_data->in_view_location->x > last_drag_point_.x)
-        ? 1 : -1;
-    cube_.set_direction(direction);
-    cube_.UpdateForDragDistance(CalculateDragDistance(
-        last_drag_point_, *event.location_data->in_view_location));
-    WantToDraw();
+    case mojo::EVENT_TYPE_POINTER_MOVE: {
+      if (event.flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON)
+        break;
+      mojo::PointF event_location;
+      event_location.x = event.pointer_data->x;
+      event_location.y = event.pointer_data->y;
+      int direction = (event_location.y < last_drag_point_.y ||
+                       event_location.x > last_drag_point_.x)
+                          ? 1
+                          : -1;
+      cube_.set_direction(direction);
+      cube_.UpdateForDragDistance(
+          CalculateDragDistance(last_drag_point_, event_location));
+      WantToDraw();
 
-    last_drag_point_ = *event.location_data->in_view_location;
-    break;
+      last_drag_point_ = event_location;
+      break;
   }
-  case mojo::EVENT_TYPE_MOUSE_RELEASED:
-  case mojo::EVENT_TYPE_TOUCH_RELEASED: {
+  case mojo::EVENT_TYPE_POINTER_UP: {
     if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON) {
       cube_.set_color(GetRandomColor(), GetRandomColor(), GetRandomColor());
       break;
     }
+    mojo::PointF event_location;
+    event_location.x = event.pointer_data->x;
+    event_location.y = event.pointer_data->y;
     MojoTimeTicks offset = mojo::GetTimeTicksNow() - drag_start_time_;
     float delta = static_cast<float>(offset) / 1000000.;
-    cube_.SetFlingMultiplier(CalculateDragDistance(
-        capture_point_, *event.location_data->in_view_location), delta);
+    cube_.SetFlingMultiplier(
+        CalculateDragDistance(capture_point_, event_location), delta);
 
-    capture_point_ = last_drag_point_ = mojo::Point();
+    capture_point_ = last_drag_point_ = mojo::PointF();
     WantToDraw();
     break;
   }

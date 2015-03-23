@@ -19,10 +19,8 @@
 namespace native_viewport {
 namespace {
 
-bool IsRateLimitedEventType(ui::Event* event) {
-  return event->type() == ui::ET_MOUSE_MOVED ||
-         event->type() == ui::ET_MOUSE_DRAGGED ||
-         event->type() == ui::ET_TOUCH_MOVED;
+bool IsRateLimitedEventType(const mojo::EventPtr& event) {
+  return event->action == mojo::EVENT_TYPE_POINTER_MOVE;
 }
 
 }  // namespace
@@ -123,29 +121,14 @@ void NativeViewportImpl::OnAcceleratedWidgetDestroyed() {
   context_provider_.SetAcceleratedWidget(gfx::kNullAcceleratedWidget);
 }
 
-bool NativeViewportImpl::OnEvent(ui::Event* ui_event) {
-  if (!event_dispatcher_.get())
+bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {
+  if (event.is_null() || !event_dispatcher_.get() ||
+      (waiting_for_event_ack_ && IsRateLimitedEventType(event))) {
     return false;
-
-  // Must not return early before updating capture.
-  switch (ui_event->type()) {
-    case ui::ET_MOUSE_PRESSED:
-    case ui::ET_TOUCH_PRESSED:
-      platform_viewport_->SetCapture();
-      break;
-    case ui::ET_MOUSE_RELEASED:
-    case ui::ET_TOUCH_RELEASED:
-      platform_viewport_->ReleaseCapture();
-      break;
-    default:
-      break;
   }
 
-  if (waiting_for_event_ack_ && IsRateLimitedEventType(ui_event))
-    return false;
-
   event_dispatcher_->OnEvent(
-      mojo::Event::From(*ui_event),
+      event.Pass(),
       base::Bind(&NativeViewportImpl::AckEvent, weak_factory_.GetWeakPtr()));
   waiting_for_event_ack_ = true;
   return false;

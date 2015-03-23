@@ -39,12 +39,6 @@ void PlatformViewportHeadless::SetBounds(const gfx::Rect& bounds) {
   delegate_->OnMetricsChanged(metrics_->Clone());
 }
 
-void PlatformViewportHeadless::SetCapture() {
-}
-
-void PlatformViewportHeadless::ReleaseCapture() {
-}
-
 // static
 scoped_ptr<PlatformViewport> PlatformViewportHeadless::Create(
     Delegate* delegate) {

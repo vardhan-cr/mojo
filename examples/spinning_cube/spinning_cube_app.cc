@@ -62,7 +62,7 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
   void OnEvent(mojo::EventPtr event,
                const mojo::Callback<void()>& callback) override {
     assert(event);
-    if (event->location_data && event->location_data->in_view_location)
+    if (event->pointer_data.get())
       gles2_client_->HandleInputEvent(*event);
     callback.Run();
   }

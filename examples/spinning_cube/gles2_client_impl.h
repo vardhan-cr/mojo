@@ -30,8 +30,8 @@ class GLES2ClientImpl {
   MojoTimeTicks last_time_;
   mojo::Size size_;
   SpinningCube cube_;
-  mojo::Point capture_point_;
-  mojo::Point last_drag_point_;
+  mojo::PointF capture_point_;
+  mojo::PointF last_drag_point_;
   MojoTimeTicks drag_start_time_;
   bool waiting_to_draw_;
 

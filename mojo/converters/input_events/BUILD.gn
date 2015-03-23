@@ -6,6 +6,7 @@
 component("input_events") {
   sources = [
     "input_events_type_converters.cc",
+    "input_events_type_converters.h",
     "mojo_extended_key_event_data.cc",
     "mojo_extended_key_event_data.h",
     "mojo_input_events_export.h",

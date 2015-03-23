@@ -109,14 +109,15 @@ class PDFView : public ApplicationDelegate,
     }
     if ((event->key_data &&
          event->key_data->windows_key_code == KEYBOARD_CODE_DOWN) ||
-        (event->wheel_data && event->wheel_data->y_offset < 0)) {
+        (event->pointer_data && event->pointer_data->vertical_wheel < 0)) {
       if (current_page_ < (page_count_ - 1)) {
         current_page_++;
         DrawBitmap(embedder_for_roots_[view]);
       }
     } else if ((event->key_data &&
                 event->key_data->windows_key_code == KEYBOARD_CODE_UP) ||
-               (event->wheel_data && event->wheel_data->y_offset > 0)) {
+               (event->pointer_data &&
+                event->pointer_data->vertical_wheel > 0)) {
       if (current_page_ > 0) {
         current_page_--;
         DrawBitmap(embedder_for_roots_[view]);
