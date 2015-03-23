@@ -25,6 +25,7 @@ extern const char kHelp[];
 extern const char kMapOrigin[];
 extern const char kOrigin[];
 extern const char kPredictableAppFilenames[];
+extern const char kTraceStartup[];
 extern const char kURLMappings[];
 
 extern const std::set<std::string> GetAllSwitches();

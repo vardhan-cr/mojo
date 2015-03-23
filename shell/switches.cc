@@ -68,6 +68,10 @@ const char kOrigin[] = "origin";
 // their content.
 const char kPredictableAppFilenames[] = "predictable-app-filenames";
 
+// Starts tracing when the shell starts up, saving a trace file on disk after 5
+// seconds or when the shell exits.
+const char kTraceStartup[] = "trace-startup";
+
 // Specifies a set of mappings to apply when resolving urls. The value is a set
 // of ',' separated mappings, where each mapping consists of a pair of urls
 // giving the to/from url to map. For example, 'a=b,c=d' contains two mappings,
@@ -88,6 +92,7 @@ const char* kSwitchArray[] = {kV,
                               kMapOrigin,
                               kOrigin,
                               kPredictableAppFilenames,
+                              kTraceStartup,
                               kURLMappings};
 
 const std::set<std::string> GetAllSwitches() {
