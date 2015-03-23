@@ -140,13 +140,6 @@ class ApplicationManager {
   typedef std::map<std::string, GURL> MimeTypeToURLMap;
   typedef std::map<GURL, NativeRunnerFactory::Options> URLToNativeOptionsMap;
 
-  void ConnectToApplicationWithParameters(
-      const GURL& application_url,
-      const GURL& requestor_url,
-      InterfaceRequest<ServiceProvider> services,
-      ServiceProviderPtr exposed_services,
-      const std::vector<std::string>& parameters);
-
   bool ConnectToRunningApplication(const GURL& resolved_url,
                                    const GURL& requestor_url,
                                    InterfaceRequest<ServiceProvider>* services,
@@ -158,7 +151,6 @@ class ApplicationManager {
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider>* services,
       ServiceProviderPtr* exposed_services,
-      const std::vector<std::string>& parameters,
       ApplicationLoader* loader);
 
   InterfaceRequest<Application> RegisterShell(
@@ -170,8 +162,7 @@ class ApplicationManager {
       const GURL& resolved_url,
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider> services,
-      ServiceProviderPtr exposed_services,
-      const std::vector<std::string>& parameters);
+      ServiceProviderPtr exposed_services);
 
   ShellImpl* GetShellImpl(const GURL& url);
 
@@ -185,7 +176,6 @@ class ApplicationManager {
                            const GURL& requestor_url,
                            InterfaceRequest<ServiceProvider> services,
                            ServiceProviderPtr exposed_services,
-                           const std::vector<std::string>& parameters,
                            NativeRunner::CleanupBehavior cleanup_behavior,
                            scoped_ptr<Fetcher> fetcher);
 
@@ -208,7 +198,7 @@ class ApplicationManager {
   void OnContentHandlerError(ContentHandlerConnection* content_handler);
 
   // Returns the arguments for the given url.
-  std::vector<std::string> GetArgsForURL(const GURL& url);
+  Array<String> GetArgsForURL(const GURL& url);
 
   void CleanupRunner(NativeRunner* runner);
 
