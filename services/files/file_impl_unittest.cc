@@ -159,12 +159,6 @@ TEST_F(FileImplTest, StatTouch) {
   // TODO(vtl): Also test non-zero file size.
   // TODO(vtl): Also test Touch() "now" options.
   // TODO(vtl): Also test touching both atime and mtime.
-
-  // Close it.
-  error = ERROR_INTERNAL;
-  file->Close(Capture(&error));
-  ASSERT_TRUE(file.WaitForIncomingMethodCall());
-  EXPECT_EQ(ERROR_OK, error);
 }
 
 TEST_F(FileImplTest, TellSeek) {
@@ -250,12 +244,6 @@ TEST_F(FileImplTest, TellSeek) {
 
   // TODO(vtl): Check that seeking actually affects reading/writing.
   // TODO(vtl): Check that seeking can extend the file?
-
-  // Close it.
-  error = ERROR_INTERNAL;
-  file->Close(Capture(&error));
-  ASSERT_TRUE(file.WaitForIncomingMethodCall());
-  EXPECT_EQ(ERROR_OK, error);
 }
 
 TEST_F(FileImplTest, Dup) {
@@ -344,13 +332,58 @@ TEST_F(FileImplTest, Dup) {
   EXPECT_EQ(static_cast<uint8_t>('h'), bytes_read[0]);
   EXPECT_EQ(static_cast<uint8_t>('d'), bytes_read[end_world_pos - 1]);
 
-  // Close |file2|.
+  // TODO(vtl): Test that |file2| has the same open options as |file1|.
+}
+
+TEST_F(FileImplTest, Truncate) {
+  const uint32_t kInitialSize = 1000;
+  const uint32_t kTruncatedSize = 654;
+
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  // Create my_file.
+  FilePtr file;
   error = ERROR_INTERNAL;
-  file2->Close(Capture(&error));
-  ASSERT_TRUE(file2.WaitForIncomingMethodCall());
+  directory->OpenFile("my_file", GetProxy(&file),
+                      kOpenFlagWrite | kOpenFlagCreate, Capture(&error));
+  ASSERT_TRUE(directory.WaitForIncomingMethodCall());
   EXPECT_EQ(ERROR_OK, error);
 
-  // TODO(vtl): Test that |file2| has the same open options as |file1|.
+  // Write to it.
+  std::vector<uint8_t> bytes_to_write(kInitialSize, '!');
+  error = ERROR_INTERNAL;
+  uint32_t num_bytes_written = 0;
+  file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+              Capture(&error, &num_bytes_written));
+  ASSERT_TRUE(file.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(kInitialSize, num_bytes_written);
+
+  // Stat it.
+  error = ERROR_INTERNAL;
+  FileInformationPtr file_info;
+  file->Stat(Capture(&error, &file_info));
+  ASSERT_TRUE(file.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_OK, error);
+  ASSERT_FALSE(file_info.is_null());
+  EXPECT_EQ(kInitialSize, file_info->size);
+
+  // Truncate it.
+  error = ERROR_INTERNAL;
+  file->Truncate(kTruncatedSize, Capture(&error));
+  ASSERT_TRUE(file.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_OK, error);
+
+  // Stat again.
+  error = ERROR_INTERNAL;
+  file_info.reset();
+  file->Stat(Capture(&error, &file_info));
+  ASSERT_TRUE(file.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_OK, error);
+  ASSERT_FALSE(file_info.is_null());
+  EXPECT_EQ(kTruncatedSize, file_info->size);
 }
 
 }  // namespace
