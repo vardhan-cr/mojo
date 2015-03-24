@@ -46,11 +46,14 @@ const char kFifoPath[] = "fifo-path";
 
 class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
  public:
-  MojoShellRunner() {}
+  MojoShellRunner(const std::vector<std::string>& parameters)
+      : parameters_(parameters) {}
   ~MojoShellRunner() override {}
 
  private:
   void Run() override;
+
+  std::vector<std::string> parameters_;
 
   DISALLOW_COPY_AND_ASSIGN(MojoShellRunner);
 };
@@ -60,7 +63,8 @@ LazyInstance<scoped_ptr<base::MessageLoop>> g_java_message_loop =
 
 LazyInstance<scoped_ptr<Context>> g_context = LAZY_INSTANCE_INITIALIZER;
 
-LazyInstance<MojoShellRunner> g_shell_runner = LAZY_INSTANCE_INITIALIZER;
+LazyInstance<scoped_ptr<MojoShellRunner>> g_shell_runner =
+    LAZY_INSTANCE_INITIALIZER;
 
 LazyInstance<scoped_ptr<base::DelegateSimpleThread>> g_shell_thread =
     LAZY_INSTANCE_INITIALIZER;
@@ -102,6 +106,9 @@ void MojoShellRunner::Run() {
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
   context->Init();
+
+  for (auto& args : parameters_)
+    ApplyApplicationArgs(context, args);
 
   RunCommandLineApps(context);
   loop.Run();
@@ -157,6 +164,7 @@ static void Init(JNIEnv* env,
                                                      &parameters);
   base::CommandLine::Init(0, nullptr);
   base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
+  g_shell_runner.Get().reset(new MojoShellRunner(parameters));
 
   InitializeLogging();
 
@@ -168,9 +176,6 @@ static void Init(JNIEnv* env,
   Context* shell_context = new Context();
   shell_context->SetShellFileRoot(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
-  for (auto& args : parameters)
-    ApplyApplicationArgs(shell_context, args);
-
   g_context.Get().reset(shell_context);
 
   g_java_message_loop.Get().reset(new base::MessageLoopForUI);
@@ -192,8 +197,8 @@ static jboolean Start(JNIEnv* env, jclass clazz) {
   sleep(5);
 #endif
 
-  g_shell_thread.Get().reset(
-      new base::DelegateSimpleThread(g_shell_runner.Pointer(), "ShellThread"));
+  g_shell_thread.Get().reset(new base::DelegateSimpleThread(
+      g_shell_runner.Get().get(), "ShellThread"));
   g_shell_thread.Get()->Start();
   return true;
 }
