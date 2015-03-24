@@ -4,6 +4,7 @@
 
 #include "shell/shell_test_base.h"
 
+#include "base/bind.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
@@ -16,6 +17,17 @@
 namespace mojo {
 namespace shell {
 namespace test {
+
+namespace {
+
+void QuitIfRunning() {
+  if (base::MessageLoop::current() &&
+      base::MessageLoop::current()->is_running()) {
+    base::MessageLoop::current()->QuitWhenIdle();
+  }
+}
+
+}  // namespace
 
 ShellTestBase::ShellTestBase() {
 }
@@ -35,8 +47,13 @@ void ShellTestBase::TearDown() {
 ScopedMessagePipeHandle ShellTestBase::ConnectToService(
     const GURL& application_url,
     const std::string& service_name) {
-  return shell_context_.ConnectToServiceByName(application_url, service_name)
-      .Pass();
+  ServiceProviderPtr services;
+  shell_context_.application_manager()->ConnectToApplication(
+      application_url, GURL(), GetProxy(&services), nullptr,
+      base::Bind(&QuitIfRunning));
+  MessagePipe pipe;
+  services->ConnectToService(service_name, pipe.handle1.Pass());
+  return pipe.handle0.Pass();
 }
 
 #if !defined(OS_ANDROID)

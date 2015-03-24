@@ -55,9 +55,6 @@ class Context : public ApplicationManager::Delegate,
   void Shutdown();
 
   void Run(const GURL& url);
-  ScopedMessagePipeHandle ConnectToServiceByName(
-      const GURL& application_url,
-      const std::string& service_name);
 
   TaskRunners* task_runners() { return task_runners_.get(); }
   ApplicationManager* application_manager() { return &application_manager_; }
@@ -67,12 +64,13 @@ class Context : public ApplicationManager::Delegate,
   class NativeViewportApplicationLoader;
 
   // ApplicationManager::Delegate overrides.
-  void OnApplicationError(const GURL& url) override;
   GURL ResolveURL(const GURL& url) override;
   GURL ResolveMappings(const GURL& url) override;
 
   // ProcessDelegate implementation.
   void OnShutdownComplete() override;
+
+  void OnApplicationEnd(const GURL& url);
 
   std::set<GURL> app_urls_;
   scoped_ptr<TaskRunners> task_runners_;

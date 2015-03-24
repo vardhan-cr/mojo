@@ -33,6 +33,11 @@ struct TestContext {
   int num_loader_deletes;
 };
 
+void QuitClosure(bool* value) {
+  *value = true;
+  base::MessageLoop::current()->QuitWhenIdle();
+}
+
 class QuitMessageLoopErrorHandler : public ErrorHandler {
  public:
   QuitMessageLoopErrorHandler() {}
@@ -135,6 +140,13 @@ class TestApplicationLoader : public ApplicationLoader,
   TestContext* context_;
   int num_loads_;
   DISALLOW_COPY_AND_ASSIGN(TestApplicationLoader);
+};
+
+class ClosingApplicationLoader : public ApplicationLoader {
+ private:
+  // ApplicationLoader implementation.
+  void Load(const GURL& url,
+            InterfaceRequest<Application> application_request) override {}
 };
 
 class TesterContext {
@@ -402,8 +414,6 @@ class TestDelegate : public ApplicationManager::Delegate {
     }
     return mapped_url;
   }
-
-  void OnApplicationError(const GURL& url) override {}
 
  private:
   std::map<GURL, GURL> mappings_;
@@ -799,6 +809,19 @@ TEST_F(ApplicationManagerTest, TestQueryWithLoaders) {
                                          &test_service);
   EXPECT_EQ(1, url_loader->num_loads());
   EXPECT_EQ(1, scheme_loader->num_loads());
+}
+
+TEST_F(ApplicationManagerTest, TestEndApplicationClosure) {
+  ClosingApplicationLoader* loader = new ClosingApplicationLoader();
+  application_manager_->SetLoaderForScheme(
+      scoped_ptr<ApplicationLoader>(loader), "test");
+
+  bool called = false;
+  application_manager_->ConnectToApplication(
+      GURL("test:test"), GURL(), nullptr, nullptr,
+      base::Bind(&QuitClosure, base::Unretained(&called)));
+  loop_.Run();
+  EXPECT_TRUE(called);
 }
 
 }  // namespace

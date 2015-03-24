@@ -13,11 +13,11 @@ namespace shell {
 
 ShellImpl::ShellImpl(ApplicationPtr application,
                      ApplicationManager* manager,
-                     const GURL& requested_url,
-                     const Identity& identity)
+                     const Identity& identity,
+                     const base::Closure& on_application_end)
     : manager_(manager),
-      requested_url_(requested_url),
       identity_(identity),
+      on_application_end_(on_application_end),
       application_(application.Pass()),
       binding_(this) {
   binding_.set_error_handler(this);
@@ -50,7 +50,7 @@ void ShellImpl::ConnectToApplication(const String& app_url,
     return;
   }
   manager_->ConnectToApplication(app_gurl, identity_.url, services.Pass(),
-                                 exposed_services.Pass());
+                                 exposed_services.Pass(), base::Closure());
 }
 
 void ShellImpl::OnConnectionError() {

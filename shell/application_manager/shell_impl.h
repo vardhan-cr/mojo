@@ -5,6 +5,7 @@
 #ifndef SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_
 #define SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_
 
+#include "base/callback.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
@@ -21,9 +22,8 @@ class ShellImpl : public Shell, public ErrorHandler {
  public:
   ShellImpl(ApplicationPtr application,
             ApplicationManager* manager,
-            // The original URL that was first requested, before any resolution.
-            const GURL& original_url,
-            const Identity& resolved_identity);
+            const Identity& resolved_identity,
+            const base::Closure& on_application_end);
 
   ~ShellImpl() override;
 
@@ -36,7 +36,7 @@ class ShellImpl : public Shell, public ErrorHandler {
 
   Application* application() { return application_.get(); }
   const Identity& identity() const { return identity_; }
-  const GURL& requested_url() const { return requested_url_; }
+  base::Closure on_application_end() const { return on_application_end_; }
 
  private:
   // Shell implementation:
@@ -48,8 +48,8 @@ class ShellImpl : public Shell, public ErrorHandler {
   void OnConnectionError() override;
 
   ApplicationManager* const manager_;
-  const GURL requested_url_;
   const Identity identity_;
+  base::Closure on_application_end_;
   ApplicationPtr application_;
   Binding<Shell> binding_;
 

@@ -44,10 +44,6 @@ std::vector<std::string> Concatenate(const std::vector<std::string>& v1,
 ApplicationManager::Delegate::~Delegate() {
 }
 
-void ApplicationManager::Delegate::OnApplicationError(const GURL& url) {
-  LOG(ERROR) << "Communication error with application: " << url.spec();
-}
-
 GURL ApplicationManager::Delegate::ResolveURL(const GURL& url) {
   return url;
 }
@@ -63,7 +59,8 @@ class ApplicationManager::ContentHandlerConnection : public ErrorHandler {
       : manager_(manager), content_handler_url_(content_handler_url) {
     ServiceProviderPtr services;
     manager->ConnectToApplication(content_handler_url, GURL(),
-                                  GetProxy(&services), nullptr);
+                                  GetProxy(&services), nullptr,
+                                  base::Closure());
     MessagePipe pipe;
     content_handler_.Bind(pipe.handle0.Pass());
     services->ConnectToService(ContentHandler::Name_, pipe.handle1.Pass());
@@ -121,10 +118,11 @@ void ApplicationManager::ConnectToApplication(
     const GURL& requested_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
-    ServiceProviderPtr exposed_services) {
-  ConnectToApplicationWithParameters(requested_url, requestor_url,
-                                     services.Pass(), exposed_services.Pass(),
-                                     std::vector<std::string>());
+    ServiceProviderPtr exposed_services,
+    const base::Closure& on_application_end) {
+  ConnectToApplicationWithParameters(
+      requested_url, requestor_url, services.Pass(), exposed_services.Pass(),
+      on_application_end, std::vector<std::string>());
 }
 
 void ApplicationManager::ConnectToApplicationWithParameters(
@@ -132,6 +130,7 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
+    const base::Closure& on_application_end,
     const std::vector<std::string>& pre_redirect_parameters) {
   DCHECK(requested_url.is_valid());
 
@@ -154,28 +153,29 @@ void ApplicationManager::ConnectToApplicationWithParameters(
   std::vector<std::string> parameters =
       Concatenate(pre_redirect_parameters, GetArgsForURL(resolved_url));
 
-  if (ConnectToApplicationWithLoader(requested_url, mapped_url, requestor_url,
-                                     &services, &exposed_services, parameters,
-                                     GetLoaderForURL(mapped_url))) {
+  if (ConnectToApplicationWithLoader(mapped_url, requestor_url, &services,
+                                     &exposed_services, on_application_end,
+                                     parameters, GetLoaderForURL(mapped_url))) {
     return;
   }
 
-  if (ConnectToApplicationWithLoader(requested_url, resolved_url, requestor_url,
-                                     &services, &exposed_services, parameters,
-                                     GetLoaderForURL(resolved_url))) {
+  if (ConnectToApplicationWithLoader(
+          resolved_url, requestor_url, &services, &exposed_services,
+          on_application_end, parameters, GetLoaderForURL(resolved_url))) {
     return;
   }
 
-  if (ConnectToApplicationWithLoader(requested_url, resolved_url, requestor_url,
-                                     &services, &exposed_services, parameters,
-                                     default_loader_.get())) {
+  if (ConnectToApplicationWithLoader(resolved_url, requestor_url, &services,
+                                     &exposed_services, on_application_end,
+                                     parameters, default_loader_.get())) {
     return;
   }
 
-  auto callback = base::Bind(&ApplicationManager::HandleFetchCallback,
-                             weak_ptr_factory_.GetWeakPtr(), requested_url,
-                             requestor_url, base::Passed(services.Pass()),
-                             base::Passed(exposed_services.Pass()), parameters);
+  auto callback = base::Bind(
+      &ApplicationManager::HandleFetchCallback, weak_ptr_factory_.GetWeakPtr(),
+      requestor_url, base::Passed(services.Pass()),
+      base::Passed(exposed_services.Pass()), on_application_end,
+      parameters);
 
   if (resolved_url.SchemeIsFile()) {
     new LocalFetcher(resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
@@ -212,11 +212,11 @@ bool ApplicationManager::ConnectToRunningApplication(
 }
 
 bool ApplicationManager::ConnectToApplicationWithLoader(
-    const GURL& requested_url,
     const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider>* services,
     ServiceProviderPtr* exposed_services,
+    const base::Closure& on_application_end,
     const std::vector<std::string>& parameters,
     ApplicationLoader* loader) {
   if (!loader)
@@ -224,24 +224,24 @@ bool ApplicationManager::ConnectToApplicationWithLoader(
 
   loader->Load(
       resolved_url,
-      RegisterShell(requested_url, resolved_url, requestor_url,
-                    services->Pass(), exposed_services->Pass(), parameters));
+      RegisterShell(resolved_url, requestor_url, services->Pass(),
+                    exposed_services->Pass(), on_application_end, parameters));
   return true;
 }
 
 InterfaceRequest<Application> ApplicationManager::RegisterShell(
-    const GURL& original_url,
     const GURL& resolved_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
+    const base::Closure& on_application_end,
     const std::vector<std::string>& parameters) {
   Identity app_identity(resolved_url);
 
   ApplicationPtr application;
   InterfaceRequest<Application> application_request = GetProxy(&application);
   ShellImpl* shell =
-      new ShellImpl(application.Pass(), this, original_url, app_identity);
+      new ShellImpl(application.Pass(), this, app_identity, on_application_end);
   identity_to_shell_impl_[app_identity] = shell;
   shell->InitializeApplication(Array<String>::From(parameters));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
@@ -267,10 +267,10 @@ void ApplicationManager::ConnectToClient(
 }
 
 void ApplicationManager::HandleFetchCallback(
-    const GURL& requested_url,
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
+    const base::Closure& on_application_end,
     const std::vector<std::string>& parameters,
     NativeRunner::CleanupBehavior cleanup_behavior,
     scoped_ptr<Fetcher> fetcher) {
@@ -284,7 +284,7 @@ void ApplicationManager::HandleFetchCallback(
     // And around we go again... Whee!
     ConnectToApplicationWithParameters(redirect_url, requestor_url,
                                        services.Pass(), exposed_services.Pass(),
-                                       parameters);
+                                       on_application_end, parameters);
     return;
   }
 
@@ -300,8 +300,8 @@ void ApplicationManager::HandleFetchCallback(
   }
 
   InterfaceRequest<Application> request(
-      RegisterShell(requested_url, fetcher->GetURL(), requestor_url,
-                    services.Pass(), exposed_services.Pass(), parameters));
+      RegisterShell(fetcher->GetURL(), requestor_url, services.Pass(),
+                    exposed_services.Pass(), on_application_end, parameters));
 
   // If the response begins with a #!mojo <content-handler-url>, use it.
   GURL content_handler_url;
@@ -332,7 +332,7 @@ void ApplicationManager::HandleFetchCallback(
   if (url_to_native_options_.find(base_resolved_url) !=
       url_to_native_options_.end()) {
     DVLOG(2) << "Applying stored native options to resolved URL "
-             << fetcher->GetURL() << " (requested URL " << requested_url << ")";
+             << fetcher->GetURL();
     options = url_to_native_options_[base_resolved_url];
   }
 
@@ -379,7 +379,7 @@ void ApplicationManager::RegisterExternalApplication(
   }
   Identity identity(url);
   ShellImpl* shell_impl =
-      new ShellImpl(application.Pass(), this, url, identity);
+      new ShellImpl(application.Pass(), this, identity, base::Closure());
   identity_to_shell_impl_[identity] = shell_impl;
   shell_impl->InitializeApplication(Array<String>::From(args));
 }
@@ -469,13 +469,14 @@ ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
 void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
   // Called from ~ShellImpl, so we do not need to call Destroy here.
   const Identity identity = shell_impl->identity();
-  const GURL requested_url = shell_impl->requested_url();
+  base::Closure on_application_end = shell_impl->on_application_end();
   // Remove the shell.
   auto it = identity_to_shell_impl_.find(identity);
   DCHECK(it != identity_to_shell_impl_.end());
   delete it->second;
   identity_to_shell_impl_.erase(it);
-  delegate_->OnApplicationError(requested_url);
+  if (!on_application_end.is_null())
+    on_application_end.Run();
 }
 
 void ApplicationManager::OnContentHandlerError(
@@ -492,7 +493,8 @@ ScopedMessagePipeHandle ApplicationManager::ConnectToServiceByName(
     const GURL& application_url,
     const std::string& interface_name) {
   ServiceProviderPtr services;
-  ConnectToApplication(application_url, GURL(), GetProxy(&services), nullptr);
+  ConnectToApplication(application_url, GURL(), GetProxy(&services), nullptr,
+                       base::Closure());
   MessagePipe pipe;
   services->ConnectToService(interface_name, pipe.handle1.Pass());
   return pipe.handle0.Pass();

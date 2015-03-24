@@ -78,8 +78,6 @@ class NativeApplicationLoaderTest : public testing::Test,
 
  private:
   // ApplicationManager::Delegate
-  void OnApplicationError(const GURL& url) override {}
-
   GURL ResolveURL(const GURL& url) override { return url; }
 
   GURL ResolveMappings(const GURL& url) override { return url; }
@@ -92,8 +90,8 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
   InterfaceRequest<ServiceProvider> services;
   ServiceProviderPtr service_provider;
-  application_manager_.ConnectToApplication(url, GURL(), services.Pass(),
-                                            service_provider.Pass());
+  application_manager_.ConnectToApplication(
+      url, GURL(), services.Pass(), service_provider.Pass(), base::Closure());
   EXPECT_FALSE(state_.runner_was_created);
   EXPECT_FALSE(state_.runner_was_started);
   EXPECT_FALSE(state_.runner_was_destroyed);

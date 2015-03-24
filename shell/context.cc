@@ -289,7 +289,7 @@ bool Context::Init() {
   new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));
   application_manager_.ConnectToApplication(
       GURL("mojo:tracing"), GURL(""), nullptr,
-      tracing_service_provider_ptr.Pass());
+      tracing_service_provider_ptr.Pass(), base::Closure());
 
   if (listener_)
     listener_->WaitForListening();
@@ -303,17 +303,6 @@ void Context::Shutdown() {
   embedder::ShutdownIPCSupport();
   // We'll quit when we get OnShutdownComplete().
   base::MessageLoop::current()->Run();
-}
-
-void Context::OnApplicationError(const GURL& url) {
-  if (app_urls_.find(url) != app_urls_.end()) {
-    app_urls_.erase(url);
-    if (app_urls_.empty() && base::MessageLoop::current()->is_running()) {
-      DCHECK_EQ(base::MessageLoop::current()->task_runner(),
-                task_runners_->shell_runner());
-      base::MessageLoop::current()->Quit();
-    }
-  }
 }
 
 GURL Context::ResolveURL(const GURL& url) {
@@ -335,16 +324,20 @@ void Context::Run(const GURL& url) {
   ServiceProviderPtr exposed_services;
 
   app_urls_.insert(url);
-  application_manager_.ConnectToApplication(url, GURL(), GetProxy(&services),
-                                            exposed_services.Pass());
+  application_manager_.ConnectToApplication(
+      url, GURL(), GetProxy(&services), exposed_services.Pass(),
+      base::Bind(&Context::OnApplicationEnd, base::Unretained(this), url));
 }
 
-ScopedMessagePipeHandle Context::ConnectToServiceByName(
-    const GURL& application_url,
-    const std::string& service_name) {
-  app_urls_.insert(application_url);
-  return application_manager_.ConnectToServiceByName(application_url,
-                                                     service_name).Pass();
+void Context::OnApplicationEnd(const GURL& url) {
+  if (app_urls_.find(url) != app_urls_.end()) {
+    app_urls_.erase(url);
+    if (app_urls_.empty() && base::MessageLoop::current()->is_running()) {
+      DCHECK_EQ(base::MessageLoop::current()->task_runner(),
+                task_runners_->shell_runner());
+      base::MessageLoop::current()->Quit();
+    }
+  }
 }
 
 }  // namespace shell

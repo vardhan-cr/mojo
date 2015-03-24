@@ -36,9 +36,6 @@ class ApplicationManager {
   class Delegate {
    public:
     virtual ~Delegate();
-    // Send when the Application holding the handle on the other end of the
-    // Shell pipe goes away.
-    virtual void OnApplicationError(const GURL& url);
     virtual GURL ResolveURL(const GURL& url);
     virtual GURL ResolveMappings(const GURL& url);
   };
@@ -67,7 +64,8 @@ class ApplicationManager {
   void ConnectToApplication(const GURL& application_url,
                             const GURL& requestor_url,
                             InterfaceRequest<ServiceProvider> services,
-                            ServiceProviderPtr exposed_services);
+                            ServiceProviderPtr exposed_services,
+                            const base::Closure& on_application_end);
 
   template <typename Interface>
   inline void ConnectToService(const GURL& application_url,
@@ -145,6 +143,7 @@ class ApplicationManager {
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider> services,
       ServiceProviderPtr exposed_services,
+      const base::Closure& on_application_end,
       const std::vector<std::string>& pre_redirect_parameters);
 
   bool ConnectToRunningApplication(const GURL& resolved_url,
@@ -153,24 +152,21 @@ class ApplicationManager {
                                    ServiceProviderPtr* exposed_services);
 
   bool ConnectToApplicationWithLoader(
-      const GURL& requested_url,
       const GURL& resolved_url,
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider>* services,
       ServiceProviderPtr* exposed_services,
+      const base::Closure& on_application_end,
       const std::vector<std::string>& parameters,
       ApplicationLoader* loader);
 
   InterfaceRequest<Application> RegisterShell(
-      // The original URL requested by client, before any resolution or
-      // redirects.
-      // This is mostly useless and should be removed.
-      const GURL& original_url,
       // The URL after resolution and redirects, including the querystring.
       const GURL& resolved_url,
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider> services,
       ServiceProviderPtr exposed_services,
+      const base::Closure& on_application_end,
       const std::vector<std::string>& parameters);
 
   ShellImpl* GetShellImpl(const GURL& url);
@@ -181,10 +177,10 @@ class ApplicationManager {
                        InterfaceRequest<ServiceProvider> services,
                        ServiceProviderPtr exposed_services);
 
-  void HandleFetchCallback(const GURL& requested_url,
-                           const GURL& requestor_url,
+  void HandleFetchCallback(const GURL& requestor_url,
                            InterfaceRequest<ServiceProvider> services,
                            ServiceProviderPtr exposed_services,
+                           const base::Closure& on_application_end,
                            const std::vector<std::string>& parameters,
                            NativeRunner::CleanupBehavior cleanup_behavior,
                            scoped_ptr<Fetcher> fetcher);
