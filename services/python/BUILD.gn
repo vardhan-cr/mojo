@@ -9,3 +9,11 @@ group("python") {
     "//services/python/mojo_url_redirector",
   ]
 }
+
+group("python_apptests") {
+  assert(is_linux)
+  testonly = true
+  deps = [
+    "//services/python/mojo_url_redirector:apptests",
+  ]
+}

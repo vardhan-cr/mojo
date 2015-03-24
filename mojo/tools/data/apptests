@@ -45,6 +45,11 @@ if config.target_os == config.OS_LINUX:
         "--url-mappings=mojo:example_service=mojo:python_example_service"
       ],
     },
+    {
+      "test": "mojo:mojo_url_redirector_apptests",
+      "test-args": ["--address=0.0.0.0:49152"],
+      "shell-args": ["--args-for=mojo:mojo_url_redirector 0.0.0.0:49152"],
+    }
   ]
 
 if config.target_os == config.OS_ANDROID:

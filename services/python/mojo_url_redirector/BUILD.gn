@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/python/rules.gni")
+import("//mojo/public/mojo_application.gni")
 
 python_packaged_application("mojo_url_redirector") {
   sources = [
@@ -20,4 +21,27 @@ python_packaged_application("mojo_url_redirector") {
     "//services/python/content_handler",
   ]
   debug = true
+}
+
+mojo_native_application("apptests") {
+  output_name = "mojo_url_redirector_apptests"
+
+  testonly = true
+
+  sources = [
+    "mojo_url_redirector_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/common",
+    "//mojo/services/network/public/interfaces",
+  ]
+
+  data_deps = [
+    ":mojo_url_redirector",
+    "//services/python/content_handler",
+  ]
 }

@@ -75,6 +75,10 @@ group("tests") {
     "//shell:apptests",
   ]
 
+  if (is_linux) {
+    deps += [ "//services/python:python_apptests" ]
+  }
+
   if (use_prebuilt_network_service) {
     deps += [ "//mojo/public/tools:copy_network_service_apptests" ]
   }
