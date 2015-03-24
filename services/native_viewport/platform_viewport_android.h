@@ -38,8 +38,19 @@ class PlatformViewportAndroid : public PlatformViewport {
                       jint width,
                       jint height,
                       jfloat density);
-  bool TouchEvent(JNIEnv* env, jobject obj, jint pointer_id, jint action,
-                  jfloat x, jfloat y, jlong time_ms);
+  bool TouchEvent(JNIEnv* env,
+                  jobject obj,
+                  jlong time_ms,
+                  jint masked_action,
+                  jint pointer_id,
+                  jfloat x,
+                  jfloat y,
+                  jfloat pressure,
+                  jfloat touch_major,
+                  jfloat touch_minor,
+                  jfloat orientation,
+                  jfloat h_wheel,
+                  jfloat v_wheel);
   bool KeyEvent(JNIEnv* env,
                 jobject obj,
                 bool pressed,

@@ -10,20 +10,12 @@
 #include "base/message_loop/message_loop.h"
 #include "base/time/time.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
-#include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "services/gles2/gpu_state.h"
 #include "services/native_viewport/platform_viewport_headless.h"
 #include "ui/events/event.h"
 
 namespace native_viewport {
-namespace {
-
-bool IsRateLimitedEventType(const mojo::EventPtr& event) {
-  return event->action == mojo::EVENT_TYPE_POINTER_MOVE;
-}
-
-}  // namespace
 
 NativeViewportImpl::NativeViewportImpl(
     bool is_headless,
@@ -33,7 +25,6 @@ NativeViewportImpl::NativeViewportImpl(
       context_provider_(gpu_state),
       sent_metrics_(false),
       metrics_(mojo::ViewportMetrics::New()),
-      waiting_for_event_ack_(false),
       binding_(this, request.Pass()),
       weak_factory_(this) {
   binding_.set_error_handler(this);
@@ -122,15 +113,37 @@ void NativeViewportImpl::OnAcceleratedWidgetDestroyed() {
 }
 
 bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {
-  if (event.is_null() || !event_dispatcher_.get() ||
-      (waiting_for_event_ack_ && IsRateLimitedEventType(event))) {
+  if (event.is_null() || !event_dispatcher_.get())
     return false;
+
+  mojo::NativeViewportEventDispatcher::OnEventCallback callback;
+  switch (event->action) {
+    case mojo::EVENT_TYPE_POINTER_MOVE: {
+      // TODO(sky): add logic to remember last event location and not send if
+      // the same.
+      if (pointers_waiting_on_ack_.count(event->pointer_data->pointer_id))
+        return false;
+
+      pointers_waiting_on_ack_.insert(event->pointer_data->pointer_id);
+      callback =
+          base::Bind(&NativeViewportImpl::AckEvent, weak_factory_.GetWeakPtr(),
+                     event->pointer_data->pointer_id);
+      break;
+    }
+
+    case mojo::EVENT_TYPE_POINTER_CANCEL:
+      pointers_waiting_on_ack_.clear();
+      break;
+
+    case mojo::EVENT_TYPE_POINTER_UP:
+      pointers_waiting_on_ack_.erase(event->pointer_data->pointer_id);
+      break;
+
+    default:
+      break;
   }
 
-  event_dispatcher_->OnEvent(
-      event.Pass(),
-      base::Bind(&NativeViewportImpl::AckEvent, weak_factory_.GetWeakPtr()));
-  waiting_for_event_ack_ = true;
+  event_dispatcher_->OnEvent(event.Pass(), callback);
   return false;
 }
 
@@ -144,8 +157,8 @@ void NativeViewportImpl::OnConnectionError() {
   delete this;
 }
 
-void NativeViewportImpl::AckEvent() {
-  waiting_for_event_ack_ = false;
+void NativeViewportImpl::AckEvent(int32 pointer_id) {
+  pointers_waiting_on_ack_.erase(pointer_id);
 }
 
 }  // namespace native_viewport

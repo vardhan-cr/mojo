@@ -183,11 +183,10 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
     pointer_data->kind = POINTER_KIND_TOUCH;
     pointer_data->x = static_cast<float>(touch_event->location().x());
     pointer_data->y = static_cast<float>(touch_event->location().y());
-    pointer_data->radius_major =
-        std::max(touch_event->radius_x(), touch_event->radius_y());
-    pointer_data->radius_minor =
-        std::max(touch_event->radius_x(), touch_event->radius_y());
+    pointer_data->radius_major = touch_event->radius_x();
+    pointer_data->radius_minor = touch_event->radius_y();
     pointer_data->pressure = touch_event->force();
+    pointer_data->orientation = touch_event->rotation_angle();
     event->pointer_data = pointer_data.Pass();
   } else if (input.IsKeyEvent()) {
     const ui::KeyEvent* key_event = static_cast<const ui::KeyEvent*>(&input);
@@ -280,8 +279,9 @@ scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
       return make_scoped_ptr(new ui::TouchEvent(
           MojoTouchEventTypeToUIEvent(input), location,
           ui::EventFlags(input->flags), input->pointer_data->pointer_id,
-          base::TimeDelta::FromInternalValue(input->time_stamp), 0.f, 0.f, 0.f,
-          0.f));
+          base::TimeDelta::FromInternalValue(input->time_stamp),
+          input->pointer_data->radius_major, input->pointer_data->radius_minor,
+          input->pointer_data->orientation, input->pointer_data->pressure));
     default:
       NOTIMPLEMENTED();
   }

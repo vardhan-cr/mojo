@@ -5,6 +5,8 @@
 #ifndef SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_
 #define SERVICES_NATIVE_VIEWPORT_NATIVE_VIEWPORT_IMPL_H_
 
+#include <set>
+
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
@@ -59,20 +61,25 @@ class NativeViewportImpl : public mojo::NativeViewport,
   // mojo::ErrorHandler implementation.
   void OnConnectionError() override;
 
-  void AckEvent();
-
  private:
+  // Callback when the dispatcher has processed a message we're waiting on
+  // an ack from. |pointer_id| identifies the pointer the message was associated
+  // with.
+  void AckEvent(int32 pointer_id);
+
   bool is_headless_;
   scoped_ptr<PlatformViewport> platform_viewport_;
   OnscreenContextProvider context_provider_;
   bool sent_metrics_;
   mojo::ViewportMetricsPtr metrics_;
-  bool waiting_for_event_ack_;
   CreateCallback create_callback_;
   RequestMetricsCallback metrics_callback_;
   mojo::NativeViewportEventDispatcherPtr event_dispatcher_;
   mojo::Binding<mojo::NativeViewport> binding_;
   base::WeakPtrFactory<NativeViewportImpl> weak_factory_;
+
+  // Set of pointer_ids we've sent a move to and are waiting on an ack.
+  std::set<int32> pointers_waiting_on_ack_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewportImpl);
 };

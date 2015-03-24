@@ -18,30 +18,30 @@
 namespace native_viewport {
 namespace {
 
-ui::EventType MotionEventActionToEventType(jint action) {
+mojo::EventType MotionEventActionToEventType(jint action) {
   switch (action) {
     case AMOTION_EVENT_ACTION_DOWN:
-      return ui::ET_TOUCH_PRESSED;
+    case AMOTION_EVENT_ACTION_POINTER_DOWN:
+      return mojo::EVENT_TYPE_POINTER_DOWN;
     case AMOTION_EVENT_ACTION_UP:
-      return ui::ET_TOUCH_RELEASED;
+    case AMOTION_EVENT_ACTION_POINTER_UP:
+      return mojo::EVENT_TYPE_POINTER_UP;
     case AMOTION_EVENT_ACTION_MOVE:
-      return ui::ET_TOUCH_MOVED;
+      return mojo::EVENT_TYPE_POINTER_MOVE;
     case AMOTION_EVENT_ACTION_CANCEL:
-      return ui::ET_TOUCH_CANCELLED;
-    // case AMOTION_EVENT_ACTION_OUTSIDE:
-    // case AMOTION_EVENT_ACTION_POINTER_DOWN:
-    // case AMOTION_EVENT_ACTION_POINTER_UP:
-    // case AMOTION_EVENT_ACTION_HOVER_MOVE:
-    // case AMOTION_EVENT_ACTION_SCROLL:
-    // case AMOTION_EVENT_ACTION_HOVER_ENTER:
-    // case AMOTION_EVENT_ACTION_HOVER_EXIT:
+      return mojo::EVENT_TYPE_POINTER_CANCEL;
+    case AMOTION_EVENT_ACTION_OUTSIDE:
+    case AMOTION_EVENT_ACTION_HOVER_MOVE:
+    case AMOTION_EVENT_ACTION_SCROLL:
+    case AMOTION_EVENT_ACTION_HOVER_ENTER:
+    case AMOTION_EVENT_ACTION_HOVER_EXIT:
     default:
       NOTIMPLEMENTED() << "Unimplemented motion action: " << action;
   }
-  return ui::ET_UNKNOWN;
+  return mojo::EVENT_TYPE_UNKNOWN;
 }
 
-}
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 // PlatformViewportAndroid, public:
@@ -100,21 +100,35 @@ void PlatformViewportAndroid::SurfaceSetSize(JNIEnv* env,
   delegate_->OnMetricsChanged(metrics_.Clone());
 }
 
-bool PlatformViewportAndroid::TouchEvent(JNIEnv* env, jobject obj,
+bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
+                                         jobject obj,
+                                         jlong time_ms,
+                                         jint masked_action,
                                          jint pointer_id,
-                                         jint action_and_index,
-                                         jfloat x, jfloat y,
-                                         jlong time_ms) {
-  gfx::Point location(static_cast<int>(x), static_cast<int>(y));
-  jint action = action_and_index & AMOTION_EVENT_ACTION_MASK;
-  ui::TouchEvent event(MotionEventActionToEventType(action), location,
-                       id_generator_.GetGeneratedID(pointer_id),
-                       base::TimeDelta::FromMilliseconds(time_ms));
-  // TODO(sky): handle multiple touch-points.
-  delegate_->OnEvent(mojo::Event::From(static_cast<ui::Event&>(event)));
-  if (event.type() == ui::ET_TOUCH_RELEASED ||
-      event.type() == ui::ET_TOUCH_CANCELLED)
-    id_generator_.ReleaseNumber(pointer_id);
+                                         jfloat x,
+                                         jfloat y,
+                                         jfloat pressure,
+                                         jfloat touch_major,
+                                         jfloat touch_minor,
+                                         jfloat orientation,
+                                         jfloat h_wheel,
+                                         jfloat v_wheel) {
+  mojo::EventPtr event(mojo::Event::New());
+  event->action = MotionEventActionToEventType(masked_action);
+  if (event->action == mojo::EVENT_TYPE_UNKNOWN)
+    return false;
+
+  event->pointer_data = mojo::PointerData::New();
+  event->pointer_data->pointer_id = pointer_id;
+  event->pointer_data->x = x;
+  event->pointer_data->y = y;
+  event->pointer_data->pressure = pressure;
+  event->pointer_data->radius_major = touch_major;
+  event->pointer_data->radius_minor = touch_minor;
+  event->pointer_data->orientation = orientation;
+  event->pointer_data->horizontal_wheel = h_wheel;
+  event->pointer_data->vertical_wheel = v_wheel;
+  delegate_->OnEvent(event.Pass());
 
   return true;
 }

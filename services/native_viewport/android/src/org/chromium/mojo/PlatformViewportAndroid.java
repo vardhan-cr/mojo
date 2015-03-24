@@ -83,8 +83,20 @@ public class PlatformViewportAndroid extends SurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return nativeTouchEvent(mNativeMojoViewport, event.getPointerId(0), event.getAction(),
-                event.getX(), event.getY(), event.getEventTime());
+        final int actionMasked = event.getActionMasked();
+        if (actionMasked == MotionEvent.ACTION_POINTER_DOWN
+                || actionMasked == MotionEvent.ACTION_POINTER_UP) {
+            // Up/down events identify a single point.
+            return notifyTouchEventAtIndex(event, event.getActionIndex());
+        }
+        assert event.getPointerCount() != 0;
+        // All other types can have more than one point.
+        boolean result = false;
+        for (int i = 0, count = event.getPointerCount(); i < count; i++) {
+            final boolean sub_result = notifyTouchEventAtIndex(event, i);
+            result |= sub_result;
+        }
+        return result;
     }
 
     @Override
@@ -109,6 +121,14 @@ public class PlatformViewportAndroid extends SurfaceView {
             return true;
         }
         return super.dispatchKeyShortcutEvent(event);
+    }
+
+    private boolean notifyTouchEventAtIndex(MotionEvent event, int index) {
+        return nativeTouchEvent(mNativeMojoViewport, event.getEventTime(), event.getActionMasked(),
+                event.getPointerId(index), event.getX(index), event.getY(index),
+                event.getPressure(index), event.getTouchMajor(index), event.getTouchMinor(index),
+                event.getOrientation(index), event.getAxisValue(MotionEvent.AXIS_HSCROLL, index),
+                event.getAxisValue(MotionEvent.AXIS_VSCROLL, index));
     }
 
     private boolean privateDispatchKeyEvent(KeyEvent event) {
@@ -154,12 +174,9 @@ public class PlatformViewportAndroid extends SurfaceView {
     private static native void nativeSurfaceSetSize(
             long nativePlatformViewportAndroid, int width, int height, float density);
 
-    private static native boolean nativeTouchEvent(
-            long nativePlatformViewportAndroid,
-            int pointerId,
-            int action,
-            float x, float y,
-            long timeMs);
+    private static native boolean nativeTouchEvent(long nativePlatformViewportAndroid, long timeMs,
+            int maskedAction, int pointerId, float x, float y, float pressure, float touchMajor,
+            float touchMinor, float orientation, float hWheel, float vWheel);
 
     private static native boolean nativeKeyEvent(
             long nativePlatformViewportAndroid, boolean pressed, int keyCode, int unicodeCharacter);

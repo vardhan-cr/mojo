@@ -55,6 +55,7 @@ struct PointerData {
   float pressure;
   float radius_major;
   float radius_minor;
+  float orientation;
   // Used for devices that support wheels. Ranges from -1 to 1.
   float horizontal_wheel;
   float vertical_wheel;
