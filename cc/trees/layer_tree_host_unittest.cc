@@ -68,7 +68,17 @@ using testing::Mock;
 namespace cc {
 namespace {
 
-class LayerTreeHostTest : public LayerTreeTest {};
+class LayerTreeHostTest : public LayerTreeTest {
+ public:
+  LayerTreeHostTest() : contents_texture_manager_(nullptr) {}
+
+  void DidInitializeOutputSurface() override {
+    contents_texture_manager_ = layer_tree_host()->contents_texture_manager();
+  }
+
+ protected:
+  PrioritizedResourceManager* contents_texture_manager_;
+};
 
 // Test if the LTHI receives ReadyToActivate notifications from the TileManager
 // when no raster tasks get scheduled.
@@ -473,6 +483,86 @@ class LayerTreeHostTestSetNeedsRedrawRect : public LayerTreeHostTest {
 
 SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostTestSetNeedsRedrawRect);
 
+// Ensure the texture size of the pending and active trees are identical when a
+// layer is not in the viewport and a resize happens on the viewport
+class LayerTreeHostTestGpuRasterDeviceSizeChanged : public LayerTreeHostTest {
+ public:
+  LayerTreeHostTestGpuRasterDeviceSizeChanged()
+      : num_draws_(0), bounds_(500, 64), invalid_rect_(10, 10, 20, 20) {}
+
+  void BeginTest() override {
+    client_.set_fill_with_nonsolid_color(true);
+    root_layer_ = FakePictureLayer::Create(&client_);
+    root_layer_->SetIsDrawable(true);
+    gfx::Transform transform;
+    // Translate the layer out of the viewport to force it to not update its
+    // tile size via PushProperties.
+    transform.Translate(10000.0, 10000.0);
+    root_layer_->SetTransform(transform);
+    root_layer_->SetBounds(bounds_);
+    layer_tree_host()->SetRootLayer(root_layer_);
+    layer_tree_host()->SetViewportSize(bounds_);
+
+    PostSetNeedsCommitToMainThread();
+  }
+
+  void InitializeSettings(LayerTreeSettings* settings) override {
+    settings->gpu_rasterization_enabled = true;
+    settings->gpu_rasterization_forced = true;
+  }
+
+  void DrawLayersOnThread(LayerTreeHostImpl* impl) override {
+    // Perform 2 commits.
+    if (!num_draws_) {
+      PostSetNeedsRedrawRectToMainThread(invalid_rect_);
+    } else {
+      EndTest();
+    }
+    num_draws_++;
+  }
+
+  void CommitCompleteOnThread(LayerTreeHostImpl* host_impl) override {
+    if (num_draws_ == 2) {
+      auto pending_tree = host_impl->pending_tree();
+      auto pending_layer_impl =
+          static_cast<FakePictureLayerImpl*>(pending_tree->root_layer());
+      EXPECT_NE(pending_layer_impl, nullptr);
+
+      auto active_tree = host_impl->pending_tree();
+      auto active_layer_impl =
+          static_cast<FakePictureLayerImpl*>(active_tree->root_layer());
+      EXPECT_NE(pending_layer_impl, nullptr);
+
+      auto active_tiling_set = active_layer_impl->picture_layer_tiling_set();
+      auto active_tiling = active_tiling_set->tiling_at(0);
+      auto pending_tiling_set = pending_layer_impl->picture_layer_tiling_set();
+      auto pending_tiling = pending_tiling_set->tiling_at(0);
+      EXPECT_EQ(
+          pending_tiling->TilingDataForTesting().max_texture_size().width(),
+          active_tiling->TilingDataForTesting().max_texture_size().width());
+    }
+  }
+
+  void DidCommitAndDrawFrame() override {
+    // On the second commit, resize the viewport.
+    if (num_draws_ == 1) {
+      layer_tree_host()->SetViewportSize(gfx::Size(400, 64));
+    }
+  }
+
+  void AfterTest() override {}
+
+ private:
+  int num_draws_;
+  const gfx::Size bounds_;
+  const gfx::Rect invalid_rect_;
+  FakeContentLayerClient client_;
+  scoped_refptr<FakePictureLayer> root_layer_;
+};
+
+SINGLE_AND_MULTI_THREAD_IMPL_TEST_F(
+    LayerTreeHostTestGpuRasterDeviceSizeChanged);
+
 class LayerTreeHostTestNoExtraCommitFromInvalidate : public LayerTreeHostTest {
  public:
   void InitializeSettings(LayerTreeSettings* settings) override {
@@ -692,6 +782,13 @@ class LayerTreeHostTestUndrawnLayersDamageLater : public LayerTreeHostTest {
  public:
   LayerTreeHostTestUndrawnLayersDamageLater() {}
 
+  void InitializeSettings(LayerTreeSettings* settings) override {
+    // If we don't set the minimum contents scale, it's harder to verify whether
+    // the damage we get is correct. For other scale amounts, please see
+    // LayerTreeHostTestDamageWithScale.
+    settings->minimum_contents_scale = 1.f;
+  }
+
   void SetupTree() override {
     if (layer_tree_host()->settings().impl_side_painting)
       root_layer_ = FakePictureLayer::Create(&client_);
@@ -785,6 +882,114 @@ class LayerTreeHostTestUndrawnLayersDamageLater : public LayerTreeHostTest {
 };
 
 SINGLE_AND_MULTI_THREAD_TEST_F(LayerTreeHostTestUndrawnLayersDamageLater);
+
+// Tests that if a layer is not drawn because of some reason in the parent then
+// its damage is preserved until the next time it is drawn.
+class LayerTreeHostTestDamageWithScale : public LayerTreeHostTest {
+ public:
+  LayerTreeHostTestDamageWithScale() {}
+
+  void SetupTree() override {
+    client_.set_fill_with_nonsolid_color(true);
+
+    scoped_ptr<FakePicturePile> pile(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
+    root_layer_ =
+        FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
+    root_layer_->SetBounds(gfx::Size(50, 50));
+
+    pile.reset(
+        new FakePicturePile(ImplSidePaintingSettings().minimum_contents_scale,
+                            ImplSidePaintingSettings().default_tile_grid_size));
+    child_layer_ =
+        FakePictureLayer::CreateWithRecordingSource(&client_, pile.Pass());
+    child_layer_->SetBounds(gfx::Size(25, 25));
+    child_layer_->SetIsDrawable(true);
+    child_layer_->SetContentsOpaque(true);
+    root_layer_->AddChild(child_layer_);
+
+    layer_tree_host()->SetRootLayer(root_layer_);
+    LayerTreeHostTest::SetupTree();
+  }
+
+  void DidActivateTreeOnThread(LayerTreeHostImpl* host_impl) override {
+    // Force the layer to have a tiling at 1.3f scale. Note that if we simply
+    // add tiling, it will be gone by the time we draw because of aggressive
+    // cleanup. AddTilingUntilNextDraw ensures that it remains there during
+    // damage calculation.
+    FakePictureLayerImpl* child_layer_impl = static_cast<FakePictureLayerImpl*>(
+        host_impl->active_tree()->LayerById(child_layer_->id()));
+    child_layer_impl->AddTilingUntilNextDraw(1.3f);
+  }
+
+  void BeginTest() override { PostSetNeedsCommitToMainThread(); }
+
+  DrawResult PrepareToDrawOnThread(LayerTreeHostImpl* host_impl,
+                                   LayerTreeHostImpl::FrameData* frame_data,
+                                   DrawResult draw_result) override {
+    EXPECT_EQ(DRAW_SUCCESS, draw_result);
+
+    gfx::RectF root_damage_rect;
+    if (!frame_data->render_passes.empty())
+      root_damage_rect = frame_data->render_passes.back()->damage_rect;
+
+    // The first time, the whole view needs be drawn.
+    // Afterwards, just the opacity of surface_layer1 is changed a few times,
+    // and each damage should be the bounding box of it and its child. If this
+    // was working improperly, the damage might not include its childs bounding
+    // box.
+    switch (host_impl->active_tree()->source_frame_number()) {
+      case 0:
+        EXPECT_EQ(gfx::Rect(root_layer_->bounds()), root_damage_rect);
+        break;
+      case 1: {
+        FakePictureLayerImpl* child_layer_impl =
+            static_cast<FakePictureLayerImpl*>(
+                host_impl->active_tree()->LayerById(child_layer_->id()));
+        // We remove tilings pretty aggressively if they are not ideal. Add this
+        // back in so that we can compare
+        // child_layer_impl->GetEnclosingRectInTargetSpace to the damage.
+        child_layer_impl->AddTilingUntilNextDraw(1.3f);
+
+        EXPECT_EQ(gfx::Rect(26, 26), root_damage_rect);
+        EXPECT_EQ(child_layer_impl->GetEnclosingRectInTargetSpace(),
+                  root_damage_rect);
+        EXPECT_TRUE(child_layer_impl->GetEnclosingRectInTargetSpace().Contains(
+            gfx::Rect(child_layer_->bounds())));
+        break;
+      }
+      default:
+        NOTREACHED();
+    }
+
+    return draw_result;
+  }
+
+  void DidCommitAndDrawFrame() override {
+    switch (layer_tree_host()->source_frame_number()) {
+      case 1: {
+        // Test not owning the surface.
+        child_layer_->SetOpacity(0.5f);
+        break;
+      }
+      case 2:
+        EndTest();
+        break;
+      default:
+        NOTREACHED();
+    }
+  }
+
+  void AfterTest() override {}
+
+ private:
+  FakeContentLayerClient client_;
+  scoped_refptr<Layer> root_layer_;
+  scoped_refptr<Layer> child_layer_;
+};
+
+MULTI_THREAD_IMPL_TEST_F(LayerTreeHostTestDamageWithScale);
 
 // Tests that if a layer is not drawn because of some reason in the parent,
 // causing its content bounds to not be computed, then when it is later drawn,
@@ -1346,7 +1551,7 @@ class LayerTreeHostTestDirectRendererAtomicCommit : public LayerTreeHostTest {
   }
 
   void DidActivateTreeOnThread(LayerTreeHostImpl* impl) override {
-    ASSERT_EQ(0u, layer_tree_host()->settings().max_partial_texture_updates);
+    ASSERT_EQ(0u, impl->settings().max_partial_texture_updates);
 
     TestWebGraphicsContext3D* context = TestContext();
 
@@ -1425,7 +1630,7 @@ class LayerTreeHostTestDelegatingRendererAtomicCommit
     : public LayerTreeHostTestDirectRendererAtomicCommit {
  public:
   void DidActivateTreeOnThread(LayerTreeHostImpl* impl) override {
-    ASSERT_EQ(0u, layer_tree_host()->settings().max_partial_texture_updates);
+    ASSERT_EQ(0u, impl->settings().max_partial_texture_updates);
 
     TestWebGraphicsContext3D* context = TestContext();
 
@@ -1542,7 +1747,7 @@ class LayerTreeHostTestAtomicCommitWithPartialUpdate
   }
 
   void CommitCompleteOnThread(LayerTreeHostImpl* impl) override {
-    ASSERT_EQ(1u, layer_tree_host()->settings().max_partial_texture_updates);
+    ASSERT_EQ(1u, impl->settings().max_partial_texture_updates);
 
     TestWebGraphicsContext3D* context = TestContext();
 
@@ -2082,7 +2287,7 @@ class LayerTreeHostWithProxy : public LayerTreeHost {
   LayerTreeHostWithProxy(FakeLayerTreeHostClient* client,
                          const LayerTreeSettings& settings,
                          scoped_ptr<FakeProxy> proxy)
-      : LayerTreeHost(client, NULL, NULL, settings) {
+      : LayerTreeHost(client, NULL, NULL, NULL, settings) {
     proxy->SetLayerTreeHost(this);
     client->SetLayerTreeHost(this);
     InitializeForTesting(proxy.Pass());
@@ -2154,14 +2359,9 @@ TEST(LayerTreeHostTest, PartialUpdatesWithGLRenderer) {
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
-  scoped_ptr<LayerTreeHost> host =
-      LayerTreeHost::CreateSingleThreaded(&client,
-                                          &client,
-                                          shared_bitmap_manager.get(),
-                                          NULL,
-                                          settings,
-                                          base::MessageLoopProxy::current(),
-                                          nullptr);
+  scoped_ptr<LayerTreeHost> host = LayerTreeHost::CreateSingleThreaded(
+      &client, &client, shared_bitmap_manager.get(), NULL, NULL, settings,
+      base::MessageLoopProxy::current(), nullptr);
   client.SetLayerTreeHost(host.get());
   host->Composite(base::TimeTicks::Now());
 
@@ -2178,14 +2378,9 @@ TEST(LayerTreeHostTest, PartialUpdatesWithSoftwareRenderer) {
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
-  scoped_ptr<LayerTreeHost> host =
-      LayerTreeHost::CreateSingleThreaded(&client,
-                                          &client,
-                                          shared_bitmap_manager.get(),
-                                          NULL,
-                                          settings,
-                                          base::MessageLoopProxy::current(),
-                                          nullptr);
+  scoped_ptr<LayerTreeHost> host = LayerTreeHost::CreateSingleThreaded(
+      &client, &client, shared_bitmap_manager.get(), NULL, NULL, settings,
+      base::MessageLoopProxy::current(), nullptr);
   client.SetLayerTreeHost(host.get());
   host->Composite(base::TimeTicks::Now());
 
@@ -2202,14 +2397,9 @@ TEST(LayerTreeHostTest, PartialUpdatesWithDelegatingRendererAndGLContent) {
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
-  scoped_ptr<LayerTreeHost> host =
-      LayerTreeHost::CreateSingleThreaded(&client,
-                                          &client,
-                                          shared_bitmap_manager.get(),
-                                          NULL,
-                                          settings,
-                                          base::MessageLoopProxy::current(),
-                                          nullptr);
+  scoped_ptr<LayerTreeHost> host = LayerTreeHost::CreateSingleThreaded(
+      &client, &client, shared_bitmap_manager.get(), NULL, NULL, settings,
+      base::MessageLoopProxy::current(), nullptr);
   client.SetLayerTreeHost(host.get());
   host->Composite(base::TimeTicks::Now());
 
@@ -2227,14 +2417,9 @@ TEST(LayerTreeHostTest,
 
   scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
       new TestSharedBitmapManager());
-  scoped_ptr<LayerTreeHost> host =
-      LayerTreeHost::CreateSingleThreaded(&client,
-                                          &client,
-                                          shared_bitmap_manager.get(),
-                                          NULL,
-                                          settings,
-                                          base::MessageLoopProxy::current(),
-                                          nullptr);
+  scoped_ptr<LayerTreeHost> host = LayerTreeHost::CreateSingleThreaded(
+      &client, &client, shared_bitmap_manager.get(), NULL, NULL, settings,
+      base::MessageLoopProxy::current(), nullptr);
   client.SetLayerTreeHost(host.get());
   host->Composite(base::TimeTicks::Now());
 
@@ -2266,12 +2451,10 @@ class LayerTreeHostTestShutdownWithOnlySomeResourcesEvicted
                                bool visible) override {
     if (visible) {
       // One backing should remain unevicted.
-      EXPECT_EQ(
-          100u * 100u * 4u * 1u,
-          layer_tree_host()->contents_texture_manager()->MemoryUseBytes());
+      EXPECT_EQ(100u * 100u * 4u * 1u,
+                contents_texture_manager_->MemoryUseBytes());
     } else {
-      EXPECT_EQ(
-          0u, layer_tree_host()->contents_texture_manager()->MemoryUseBytes());
+      EXPECT_EQ(0u, contents_texture_manager_->MemoryUseBytes());
     }
 
     // Make sure that contents textures are marked as having been
@@ -2286,9 +2469,9 @@ class LayerTreeHostTestShutdownWithOnlySomeResourcesEvicted
     switch (num_commits_) {
       case 1:
         // All three backings should have memory.
-        EXPECT_EQ(
-            100u * 100u * 4u * 3u,
-            layer_tree_host()->contents_texture_manager()->MemoryUseBytes());
+        EXPECT_EQ(100u * 100u * 4u * 3u,
+                  contents_texture_manager_->MemoryUseBytes());
+
         // Set a new policy that will kick out 1 of the 3 resources.
         // Because a resource was evicted, a commit will be kicked off.
         host_impl->SetMemoryPolicy(
@@ -2298,9 +2481,8 @@ class LayerTreeHostTestShutdownWithOnlySomeResourcesEvicted
         break;
       case 2:
         // Only two backings should have memory.
-        EXPECT_EQ(
-            100u * 100u * 4u * 2u,
-            layer_tree_host()->contents_texture_manager()->MemoryUseBytes());
+        EXPECT_EQ(100u * 100u * 4u * 2u,
+                  contents_texture_manager_->MemoryUseBytes());
         // Become backgrounded, which will cause 1 more resource to be
         // evicted.
         PostSetVisibleToMainThread(false);
@@ -3129,12 +3311,12 @@ class LayerTreeHostTestUIResource : public LayerTreeHostTest {
   }
 
   void CommitCompleteOnThread(LayerTreeHostImpl* impl) override {
-    if (!layer_tree_host()->settings().impl_side_painting)
+    if (!impl->settings().impl_side_painting)
       PerformTest(impl);
   }
 
   void DidActivateTreeOnThread(LayerTreeHostImpl* impl) override {
-    if (layer_tree_host()->settings().impl_side_painting)
+    if (impl->settings().impl_side_painting)
       PerformTest(impl);
   }
 

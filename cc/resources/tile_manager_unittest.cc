@@ -18,6 +18,7 @@
 #include "cc/test/fake_tile_manager.h"
 #include "cc/test/impl_side_painting_settings.h"
 #include "cc/test/test_shared_bitmap_manager.h"
+#include "cc/test/test_task_graph_runner.h"
 #include "cc/test/test_tile_priorities.h"
 #include "cc/trees/layer_tree_impl.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -38,7 +39,10 @@ class TileManagerTilePriorityQueueTest : public testing::Test {
         ready_to_activate_(false),
         id_(7),
         proxy_(base::MessageLoopProxy::current()),
-        host_impl_(LowResTilingsSettings(), &proxy_, &shared_bitmap_manager_) {}
+        host_impl_(LowResTilingsSettings(),
+                   &proxy_,
+                   &shared_bitmap_manager_,
+                   &task_graph_runner_) {}
 
   void SetTreePriority(TreePriority tree_priority) {
     GlobalStateThatImpactsTilePriority state;
@@ -137,6 +141,7 @@ class TileManagerTilePriorityQueueTest : public testing::Test {
   GlobalStateThatImpactsTilePriority global_state_;
 
   TestSharedBitmapManager shared_bitmap_manager_;
+  TestTaskGraphRunner task_graph_runner_;
   TileMemoryLimitPolicy memory_limit_policy_;
   int max_tiles_;
   bool ready_to_activate_;
@@ -1275,6 +1280,43 @@ TEST_F(TileManagerTilePriorityQueueTest,
   EXPECT_TRUE(have_tiles[TilePriority::NOW]);
   EXPECT_TRUE(have_tiles[TilePriority::SOON]);
   EXPECT_TRUE(have_tiles[TilePriority::EVENTUALLY]);
+}
+
+TEST_F(TileManagerTilePriorityQueueTest, SetIsLikelyToRequireADraw) {
+  const gfx::Size layer_bounds(1000, 1000);
+  host_impl_.SetViewportSize(layer_bounds);
+  SetupDefaultTrees(layer_bounds);
+
+  // Verify that the queue has a required for draw tile at Top.
+  scoped_ptr<RasterTilePriorityQueue> queue(host_impl_.BuildRasterQueue(
+      SAME_PRIORITY_FOR_BOTH_TREES, RasterTilePriorityQueue::Type::ALL));
+  EXPECT_FALSE(queue->IsEmpty());
+  EXPECT_TRUE(queue->Top()->required_for_draw());
+
+  EXPECT_FALSE(host_impl_.is_likely_to_require_a_draw());
+  host_impl_.tile_manager()->PrepareTiles(host_impl_.global_tile_state());
+  EXPECT_TRUE(host_impl_.is_likely_to_require_a_draw());
+}
+
+TEST_F(TileManagerTilePriorityQueueTest,
+       NoSetIsLikelyToRequireADrawOnZeroMemoryBudget) {
+  const gfx::Size layer_bounds(1000, 1000);
+  host_impl_.SetViewportSize(layer_bounds);
+  SetupDefaultTrees(layer_bounds);
+
+  // Verify that the queue has a required for draw tile at Top.
+  scoped_ptr<RasterTilePriorityQueue> queue(host_impl_.BuildRasterQueue(
+      SAME_PRIORITY_FOR_BOTH_TREES, RasterTilePriorityQueue::Type::ALL));
+  EXPECT_FALSE(queue->IsEmpty());
+  EXPECT_TRUE(queue->Top()->required_for_draw());
+
+  ManagedMemoryPolicy policy = host_impl_.ActualManagedMemoryPolicy();
+  policy.bytes_limit_when_visible = 0;
+  host_impl_.SetMemoryPolicy(policy);
+
+  EXPECT_FALSE(host_impl_.is_likely_to_require_a_draw());
+  host_impl_.tile_manager()->PrepareTiles(host_impl_.global_tile_state());
+  EXPECT_FALSE(host_impl_.is_likely_to_require_a_draw());
 }
 
 }  // namespace

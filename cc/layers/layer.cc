@@ -18,6 +18,7 @@
 #include "cc/animation/keyframed_animation_curve.h"
 #include "cc/animation/layer_animation_controller.h"
 #include "cc/base/simple_enclosed_region.h"
+#include "cc/debug/frame_viewer_instrumentation.h"
 #include "cc/layers/layer_client.h"
 #include "cc/layers/layer_impl.h"
 #include "cc/layers/scrollbar_layer_interface.h"
@@ -897,12 +898,7 @@ void Layer::PushPropertiesTo(LayerImpl* layer) {
   layer->SetContentBounds(content_bounds());
   layer->SetContentsScale(contents_scale_x(), contents_scale_y());
 
-  bool is_tracing;
-  TRACE_EVENT_CATEGORY_GROUP_ENABLED(
-      TRACE_DISABLED_BY_DEFAULT("cc.debug") "," TRACE_DISABLED_BY_DEFAULT(
-          "devtools.timeline.layers"),
-      &is_tracing);
-  if (is_tracing)
+  if (frame_viewer_instrumentation::IsTracingLayerTreeSnapshots())
     layer->SetDebugInfo(TakeDebugInfo());
 
   layer->SetDoubleSided(double_sided_);
@@ -1320,6 +1316,22 @@ gfx::Transform Layer::draw_transform_from_property_trees(
       xform.FlattenTo2d();
     xform.Translate(offset_to_transform_parent().x(),
                     offset_to_transform_parent().y());
+    // A fixed-position layer does not necessarily have the same render target
+    // as its transform node. In particular, its transform node may be an
+    // ancestor of its render target's transform node. For example, given layer
+    // tree R->S->F, suppose F is fixed and S owns a render surface (e.g., say S
+    // has opacity 0.9 and both S and F draw content). Then F's transform node
+    // is the root node, so the target space transform from that node is defined
+    // with respect to the root render surface. But F will render to S's
+    // surface, so must apply a change of basis transform to the target space
+    // transform from its transform node.
+    if (position_constraint_.is_fixed_position()) {
+      gfx::Transform tree_target_to_render_target;
+      tree.ComputeTransform(node->data.content_target_id,
+                            render_target()->transform_tree_index(),
+                            &tree_target_to_render_target);
+      xform.ConcatTransform(tree_target_to_render_target);
+    }
   } else {
     // Surfaces need to apply their sublayer scale.
     xform.Scale(target_node->data.sublayer_scale.x(),
@@ -1352,6 +1364,14 @@ void Layer::SetFrameTimingRequests(
   frame_timing_requests_ = requests;
   frame_timing_requests_dirty_ = true;
   SetNeedsCommit();
+}
+
+void Layer::DidBeginTracing() {
+  // We'll be dumping layer trees as part of trace, so make sure
+  // PushPropertiesTo() propagates layer debug info to the impl
+  // side -- otherwise this won't happen for the the layers that
+  // remain unchanged since tracing started.
+  SetNeedsPushProperties();
 }
 
 }  // namespace cc

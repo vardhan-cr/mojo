@@ -249,7 +249,7 @@ scoped_ptr<base::Value> AsValue(const SkPaint& paint) {
         "None", "Low", "Medium", "High"};
     DCHECK_LT(static_cast<size_t>(paint.getFilterQuality()),
               SK_ARRAY_COUNT(gFilterQualityStrings));
-    val->SetString("FilterQuality",
+    val->SetString("FilterLevel",
                    gFilterQualityStrings[paint.getFilterQuality()]);
   }
 

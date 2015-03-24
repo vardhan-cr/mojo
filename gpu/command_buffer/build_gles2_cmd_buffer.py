@@ -82,6 +82,7 @@ _CAPABILITY_FLAGS = [
   {'name': 'scissor_test'},
   {'name': 'stencil_test',
    'state_flag': 'framebuffer_state_.clear_state_dirty'},
+  {'name': 'rasterizer_discard', 'es3': True},
 ]
 
 _STATES = {
@@ -898,7 +899,10 @@ _NAMED_TYPE_INFO = {
   },
   'Capability': {
     'type': 'GLenum',
-    'valid': ["GL_%s" % cap['name'].upper() for cap in _CAPABILITY_FLAGS],
+    'valid': ["GL_%s" % cap['name'].upper() for cap in _CAPABILITY_FLAGS
+        if 'es3' not in cap or cap['es3'] != True],
+    'valid_es3': ["GL_%s" % cap['name'].upper() for cap in _CAPABILITY_FLAGS
+        if 'es3' in cap and cap['es3'] == True],
     'invalid': [
       'GL_CLIP_PLANE0',
       'GL_POINT_SPRITE',
@@ -2676,7 +2680,7 @@ _FUNCTION_INFO = {
   },
   'MapTexSubImage2DCHROMIUM': {
     'gen_cmd': False,
-    'extension': True,
+    'extension': "CHROMIUM_sub_image",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
@@ -3082,7 +3086,7 @@ _FUNCTION_INFO = {
   },
   'UnmapTexSubImage2DCHROMIUM': {
     'gen_cmd': False,
-    'extension': True,
+    'extension': "CHROMIUM_sub_image",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
@@ -3265,6 +3269,7 @@ _FUNCTION_INFO = {
     'unit_test': False,
     'pepper_interface': 'Query',
     'not_shared': 'True',
+    'extension': "occlusion_query_EXT",
   },
   'DeleteQueriesEXT': {
     'type': 'DELn',
@@ -3273,11 +3278,13 @@ _FUNCTION_INFO = {
     'resource_types': 'Queries',
     'unit_test': False,
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'IsQueryEXT': {
     'gen_cmd': False,
     'client_test': False,
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'BeginQueryEXT': {
     'type': 'Manual',
@@ -3285,6 +3292,7 @@ _FUNCTION_INFO = {
     'data_transfer_methods': ['shm'],
     'gl_test_func': 'glBeginQuery',
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'BeginTransformFeedback': {
     'unsafe': True,
@@ -3295,6 +3303,7 @@ _FUNCTION_INFO = {
     'gl_test_func': 'glEndnQuery',
     'client_test': False,
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'EndTransformFeedback': {
     'unsafe': True,
@@ -3304,12 +3313,14 @@ _FUNCTION_INFO = {
     'client_test': False,
     'gl_test_func': 'glGetQueryiv',
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'GetQueryObjectuivEXT': {
     'gen_cmd': False,
     'client_test': False,
     'gl_test_func': 'glGetQueryObjectuiv',
     'pepper_interface': 'Query',
+    'extension': "occlusion_query_EXT",
   },
   'BindUniformLocationCHROMIUM': {
     'type': 'GLchar',
@@ -3396,7 +3407,7 @@ _FUNCTION_INFO = {
   'ShallowFlushCHROMIUM': {
     'impl_func': False,
     'gen_cmd': False,
-    'extension': True,
+    'extension': "CHROMIUM_miscellaneous",
     'chromium': True,
     'client_test': False,
   },
@@ -4197,6 +4208,46 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
     file.Write("virtual %s %s(%s) = 0;\n" %
                (func.return_type, func.original_name,
                 func.MakeTypedOriginalArgString("")))
+
+  def WriteMojoGLES2ImplHeader(self, func, file):
+    """Writes the Mojo GLES2 implementation header."""
+    file.Write("%s %s(%s) override;\n" %
+               (func.return_type, func.original_name,
+                func.MakeTypedOriginalArgString("")))
+
+  def WriteMojoGLES2Impl(self, func, file):
+    """Writes the Mojo GLES2 implementation."""
+    file.Write("%s MojoGLES2Impl::%s(%s) {\n" %
+               (func.return_type, func.original_name,
+                func.MakeTypedOriginalArgString("")))
+    # TODO(alhaad): Add Mojo C thunk for each of the following methods and
+    # remove this.
+    func_list = ["GenQueriesEXT", "BeginQueryEXT", "MapTexSubImage2DCHROMIUM",
+                 "UnmapTexSubImage2DCHROMIUM", "DeleteQueriesEXT",
+                 "EndQueryEXT", "GetQueryObjectuivEXT", "ShallowFlushCHROMIUM"]
+    if func.original_name in func_list:
+      file.Write("return static_cast<gpu::gles2::GLES2Interface*>"
+                 "(MojoGLES2GetGLES2Interface(context_))->" +
+                 func.original_name + "(" + func.MakeOriginalArgString("") +
+                 ");")
+      file.Write("}")
+      return
+
+    extensions = ["CHROMIUM_sync_point", "CHROMIUM_texture_mailbox"]
+    if func.IsCoreGLFunction() or func.GetInfo("extension") in extensions:
+      file.Write("MojoGLES2MakeCurrent(context_);");
+      func_return = "gl" + func.original_name + "(" + \
+          func.MakeOriginalArgString("") + ");"
+      if func.return_type == "void":
+        file.Write(func_return);
+      else:
+        file.Write("return " + func_return);
+    else:
+      file.Write("NOTREACHED() << \"Unimplemented %s.\";\n" %
+                 func.original_name);
+      if func.return_type != "void":
+        file.Write("return 0;")
+    file.Write("}")
 
   def WriteGLES2InterfaceStub(self, func, file):
     """Writes the GLES2 Interface stub declaration."""
@@ -8907,6 +8958,14 @@ class Function(object):
     """Writes the GLES2 Interface declaration."""
     self.type_handler.WriteGLES2InterfaceHeader(self, file)
 
+  def WriteMojoGLES2ImplHeader(self, file):
+    """Writes the Mojo GLES2 implementation header declaration."""
+    self.type_handler.WriteMojoGLES2ImplHeader(self, file)
+
+  def WriteMojoGLES2Impl(self, file):
+    """Writes the Mojo GLES2 implementation declaration."""
+    self.type_handler.WriteMojoGLES2Impl(self, file)
+
   def WriteGLES2InterfaceStub(self, file):
     """Writes the GLES2 Interface Stub declaration."""
     self.type_handler.WriteGLES2InterfaceStub(self, file)
@@ -9534,20 +9593,31 @@ bool %s::GetStateAs%s(
     file.Write("""
 void ContextState::InitCapabilities(const ContextState* prev_state) const {
 """)
-    def WriteCapabilities(test_prev):
+    def WriteCapabilities(test_prev, es3_caps):
       for capability in _CAPABILITY_FLAGS:
         capability_name = capability['name']
+        capability_es3 = 'es3' in capability and capability['es3'] == True
+        if capability_es3 and not es3_caps or not capability_es3 and es3_caps:
+          continue
         if test_prev:
           file.Write("""  if (prev_state->enable_flags.cached_%s !=
-                              enable_flags.cached_%s)\n""" %
+                              enable_flags.cached_%s) {\n""" %
                      (capability_name, capability_name))
         file.Write("    EnableDisable(GL_%s, enable_flags.cached_%s);\n" %
                    (capability_name.upper(), capability_name))
+        if test_prev:
+          file.Write("  }")
 
     file.Write("  if (prev_state) {")
-    WriteCapabilities(True)
+    WriteCapabilities(True, False)
+    file.Write("    if (feature_info_->IsES3Capable()) {\n")
+    WriteCapabilities(True, True)
+    file.Write("    }\n")
     file.Write("  } else {")
-    WriteCapabilities(False)
+    WriteCapabilities(False, False)
+    file.Write("    if (feature_info_->IsES3Capable()) {\n")
+    WriteCapabilities(False, True)
+    file.Write("    }\n")
     file.Write("  }")
 
     file.Write("""}
@@ -9783,13 +9853,24 @@ bool GLES2DecoderImpl::SetCapabilityState(GLenum cap, bool enabled) {
         filename % 0,
         "// It is included by gles2_cmd_decoder_unittest_base.cc\n")
     file.Write(
-"""void GLES2DecoderTestBase::SetupInitCapabilitiesExpectations() {
-""")
+"""void GLES2DecoderTestBase::SetupInitCapabilitiesExpectations(
+      bool es3_capable) {""")
     for capability in _CAPABILITY_FLAGS:
-      file.Write("  ExpectEnableDisable(GL_%s, %s);\n" %
-                 (capability['name'].upper(),
-                  ('false', 'true')['default' in capability]))
-    file.Write("""}
+      capability_es3 = 'es3' in capability and capability['es3'] == True
+      if not capability_es3:
+        file.Write("  ExpectEnableDisable(GL_%s, %s);\n" %
+                   (capability['name'].upper(),
+                    ('false', 'true')['default' in capability]))
+
+    file.Write("  if (es3_capable) {")
+    for capability in _CAPABILITY_FLAGS:
+      capability_es3 = 'es3' in capability and capability['es3'] == True
+      if capability_es3:
+        file.Write("    ExpectEnableDisable(GL_%s, %s);\n" %
+                   (capability['name'].upper(),
+                    ('false', 'true')['default' in capability]))
+    file.Write("""  }
+}
 
 void GLES2DecoderTestBase::SetupInitStateExpectations() {
 """)
@@ -9927,6 +10008,68 @@ extern const NameToFunc g_gles2_function_table[] = {
         "// GL api functions.\n")
     for func in self.original_functions:
       func.WriteGLES2InterfaceHeader(file)
+    file.Close()
+    self.generated_cpp_filenames.append(file.filename)
+
+  def WriteMojoGLES2ImplHeader(self, filename):
+    """Writes the Mojo GLES2 implementation header."""
+    file = CHeaderWriter(
+        filename,
+        "// This file is included by gles2_interface.h to declare the\n"
+        "// GL api functions.\n")
+
+    code = """
+#include "gpu/command_buffer/client/gles2_interface.h"
+#include "third_party/mojo/src/mojo/public/c/gles2/gles2.h"
+
+namespace mojo {
+
+class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
+ public:
+  explicit MojoGLES2Impl(MojoGLES2Context context) {
+    context_ = context;
+  }
+  ~MojoGLES2Impl() override {}
+    """
+    file.Write(code);
+    for func in self.original_functions:
+      func.WriteMojoGLES2ImplHeader(file)
+    code = """
+ private:
+  MojoGLES2Context context_;
+};
+
+}  // namespace mojo
+    """
+    file.Write(code);
+    file.Close()
+    self.generated_cpp_filenames.append(file.filename)
+
+  def WriteMojoGLES2Impl(self, filename):
+    """Writes the Mojo GLES2 implementation."""
+    file = CWriter(filename)
+    file.Write(_LICENSE)
+    file.Write(_DO_NOT_EDIT_WARNING)
+
+    code = """
+#include "mojo/gpu/mojo_gles2_impl_autogen.h"
+
+#include "base/logging.h"
+#include "third_party/mojo/src/mojo/public/c/gles2/chromium_sync_point.h"
+#include "third_party/mojo/src/mojo/public/c/gles2/chromium_texture_mailbox.h"
+#include "third_party/mojo/src/mojo/public/c/gles2/gles2.h"
+
+namespace mojo {
+
+    """
+    file.Write(code);
+    for func in self.original_functions:
+      func.WriteMojoGLES2Impl(file)
+    code = """
+
+}  // namespace mojo
+    """
+    file.Write(code);
     file.Close()
     self.generated_cpp_filenames.append(file.filename)
 
@@ -10448,6 +10591,10 @@ def main(argv):
     "gpu/command_buffer/common/gles2_cmd_format_test_autogen.h")
   gen.WriteGLES2InterfaceHeader(
     "gpu/command_buffer/client/gles2_interface_autogen.h")
+  gen.WriteMojoGLES2ImplHeader(
+    "mojo/gpu/mojo_gles2_impl_autogen.h")
+  gen.WriteMojoGLES2Impl(
+    "mojo/gpu/mojo_gles2_impl_autogen.cc")
   gen.WriteGLES2InterfaceStub(
     "gpu/command_buffer/client/gles2_interface_stub_autogen.h")
   gen.WriteGLES2InterfaceStubImpl(
@@ -10500,6 +10647,15 @@ def main(argv):
   gen.WriteMojoGLCallVisitorForExtension(
       mojo_gles2_prefix + "_chromium_sync_point_autogen.h",
       "CHROMIUM_sync_point")
+  gen.WriteMojoGLCallVisitorForExtension(
+      mojo_gles2_prefix + "_chromium_sub_image_autogen.h",
+      "CHROMIUM_sub_image")
+  gen.WriteMojoGLCallVisitorForExtension(
+      mojo_gles2_prefix + "_chromium_miscellaneous_autogen.h",
+      "CHROMIUM_miscellaneous")
+  gen.WriteMojoGLCallVisitorForExtension(
+      mojo_gles2_prefix + "_occlusion_query_ext_autogen.h",
+      "occlusion_query_EXT")
 
   Format(gen.generated_cpp_filenames)
 

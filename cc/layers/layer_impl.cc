@@ -1137,7 +1137,20 @@ void LayerImpl::PushScrollOffsetFromMainThreadAndClobberActiveValue(
 
 gfx::ScrollOffset LayerImpl::PullDeltaForMainThread() {
   RefreshFromScrollDelegate();
-  return scroll_offset_->PullDeltaForMainThread();
+
+  // TODO(miletus): Remove all this temporary flooring machinery when
+  // Blink fully supports fractional scrolls.
+  gfx::ScrollOffset current_offset = CurrentScrollOffset();
+  gfx::Vector2dF current_delta = ScrollDelta();
+  gfx::Vector2dF floored_delta(floor(current_delta.x()),
+                               floor(current_delta.y()));
+  gfx::Vector2dF diff_delta = floored_delta - current_delta;
+  gfx::ScrollOffset tmp_offset = ScrollOffsetWithDelta(current_offset,
+                                                       diff_delta);
+  scroll_offset_->SetCurrent(tmp_offset);
+  gfx::ScrollOffset delta = scroll_offset_->PullDeltaForMainThread();
+  scroll_offset_->SetCurrent(current_offset);
+  return delta;
 }
 
 void LayerImpl::RefreshFromScrollDelegate() {
@@ -1426,7 +1439,8 @@ void LayerImpl::RemoveDependentNeedsPushProperties() {
       parent_->RemoveDependentNeedsPushProperties();
 }
 
-void LayerImpl::GetAllTilesForTracing(std::set<const Tile*>* tiles) const {
+void LayerImpl::GetAllTilesAndPrioritiesForTracing(
+    std::map<const Tile*, TilePriority>* tile_map) const {
 }
 
 void LayerImpl::AsValueInto(base::trace_event::TracedValue* state) const {
@@ -1592,6 +1606,22 @@ void LayerImpl::SetHasRenderSurface(bool should_have_render_surface) {
 
 Region LayerImpl::GetInvalidationRegion() {
   return Region(update_rect_);
+}
+
+gfx::Rect LayerImpl::GetEnclosingRectInTargetSpace() const {
+  return MathUtil::MapEnclosingClippedRect(
+      draw_properties_.target_space_transform,
+      gfx::Rect(draw_properties_.content_bounds));
+}
+
+gfx::Rect LayerImpl::GetScaledEnclosingRectInTargetSpace(float scale) const {
+  gfx::Transform scaled_draw_transform =
+      draw_properties_.target_space_transform;
+  scaled_draw_transform.Scale(SK_MScalar1 / scale, SK_MScalar1 / scale);
+  gfx::Size scaled_content_bounds =
+      gfx::ToCeiledSize(gfx::ScaleSize(content_bounds(), scale));
+  return MathUtil::MapEnclosingClippedRect(scaled_draw_transform,
+                                           gfx::Rect(scaled_content_bounds));
 }
 
 }  // namespace cc

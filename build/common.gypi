@@ -197,7 +197,7 @@
           }],
 
           # Set default value of toolkit_views based on OS.
-          ['OS=="win" or chromeos==1 or use_aura==1', {
+          ['OS=="mac" or OS=="win" or chromeos==1 or use_aura==1', {
             'toolkit_views%': 1,
           }, {
             'toolkit_views%': 0,
@@ -210,8 +210,8 @@
             'toolkit_views%': 0,
           }],
 
-          # Enable HiDPI on Mac OS, Chrome OS and Windows.
-          ['OS=="mac" or chromeos==1 or OS=="win"', {
+          # Enable HiDPI on Mac OS, Chrome OS, Windows and Linux.
+          ['OS=="mac" or chromeos==1 or OS=="win" or OS=="linux"', {
             'enable_hidpi%': 1,
           }],
 
@@ -438,7 +438,7 @@
       # Track where uninitialized memory originates from. From fastest to
       # slowest: 0 - no tracking, 1 - track only the initial allocation site, 2
       # - track the chain of stores leading from allocation site to use site.
-      'msan_track_origins%': 1,
+      'msan_track_origins%': 2,
 
       # Enable building with UBSan (Clang's -fsanitize=undefined option).
       # -fsanitize=undefined only works with clang, but ubsan=1 implies clang=1
@@ -450,9 +450,15 @@
       # -fsanitize=vptr only works with clang, but ubsan_vptr=1 implies clang=1
       'ubsan_vptr%': 0,
 
-      # Use the dynamic libraries instrumented by one of the sanitizers
-      # instead of the standard system libraries.
+      # Use dynamic libraries instrumented by one of the sanitizers
+      # instead of the standard system libraries. Set this flag to build the
+      # libraries from source.
       'use_instrumented_libraries%': 0,
+
+      # Use dynamic libraries instrumented by one of the sanitizers
+      # instead of the standard system libraries. Set this flag to download
+      # prebuilt binaries from GCS.
+      'use_prebuilt_instrumented_libraries%': 0,
 
       # Use libc++ (third_party/libc++ and third_party/libc++abi) instead of
       # stdlibc++ as standard library. This is intended to use for instrumented
@@ -646,6 +652,9 @@
       # Control Flow Integrity for virtual calls.
       # See http://clang.llvm.org/docs/ControlFlowIntegrity.html
       'cfi_vptr%': 0,
+
+      # Whether the entire browser uses toolkit-views on Mac instead of Cocoa.
+      'mac_views_browser%': 0,
 
       'conditions': [
         # A flag for POSIX platforms
@@ -1150,6 +1159,7 @@
     'ubsan_blacklist%': '<(ubsan_blacklist)',
     'ubsan_vptr%': '<(ubsan_vptr)',
     'use_instrumented_libraries%': '<(use_instrumented_libraries)',
+    'use_prebuilt_instrumented_libraries%': '<(use_prebuilt_instrumented_libraries)',
     'use_custom_libcxx%': '<(use_custom_libcxx)',
     'use_system_libcxx%': '<(use_system_libcxx)',
     'clang_type_profiler%': '<(clang_type_profiler)',
@@ -1214,6 +1224,7 @@
     'video_hole%': '<(video_hole)',
     'v8_use_external_startup_data%': '<(v8_use_external_startup_data)',
     'cfi_vptr%': '<(cfi_vptr)',
+    'mac_views_browser%': '<(mac_views_browser)',
 
     # Use system protobuf instead of bundled one.
     'use_system_protobuf%': 0,
@@ -1469,10 +1480,6 @@
     # Compile d8 for the host toolset.
     'v8_toolset_for_d8': 'host',
 
-    # Enable the V8 heap verification code. The verification itself is enabled
-    # via a command line option.
-    'v8_enable_verify_heap%': 1,
-
     # Use brlapi from brltty for braille display support.
     'use_brlapi%': 0,
 
@@ -1502,9 +1509,6 @@
     'ozone_platform_gbm%': 0,
     'ozone_platform_ozonex%': 0,
     'ozone_platform_test%': 0,
-
-    # Whether the browser is non-native (using Views Toolkit) on Mac.
-    'mac_views_browser%': 0,
 
     # Experiment: http://crbug.com/426914
     'envoy%': 0,
@@ -1951,9 +1955,7 @@
             'win_use_allocator_shim%': 0,
           }],
           ['syzyasan==1', {
-            # Uncomment the following line to enable Kasko for
-            # SyzyASAN-instrumented releases.
-            # 'kasko%': 1,
+            'kasko%': 1,
           }],
           ['component=="shared_library" and "<(GENERATOR)"=="ninja"', {
             # Only enabled by default for ninja because it's buggy in VS.
@@ -2078,6 +2080,11 @@
           '-E', 'ANDROID_JAVA_TAGGED_ONLY=true',
           '--no-output-all-resource-defines',
         ],
+        'conditions': [
+          ['<(android_webview_build)==1', {
+            'grit_defines': ['-D', 'is_android_webview_build'],
+          }],
+        ],
       }],
       ['OS=="mac" or OS=="ios"', {
         'grit_defines': ['-D', 'scale_factors=2x'],
@@ -2154,6 +2161,9 @@
       }],
       ['enable_wifi_bootstrapping==1', {
         'grit_defines': ['-D', 'enable_wifi_bootstrapping'],
+      }],
+      ['mac_views_browser==1', {
+        'grit_defines': ['-D', 'mac_views_browser'],
       }],
       ['enable_resource_whitelist_generation==1 and OS!="win"', {
         'grit_rc_header_format': ['-h', '#define {textual_id} _Pragma("whitelisted_resource_{numeric_id}") {numeric_id}'],
@@ -2451,7 +2461,7 @@
       'chromecast%': '<(chromecast)',
 
       # See http://msdn.microsoft.com/en-us/library/aa652360(VS.71).aspx
-      'win_release_Optimization%': '2', # 2 = /Os
+      'win_release_Optimization%': '2', # 2 = /O2
       'win_debug_Optimization%': '0',   # 0 = /Od
 
       # See http://msdn.microsoft.com/en-us/library/2kxx5t2c(v=vs.80).aspx
@@ -3002,12 +3012,6 @@
       ['v8_use_external_startup_data==1', {
        'defines': ['V8_USE_EXTERNAL_STARTUP_DATA'],
       }],
-      ['use_lto==1 and (target_arch=="ia32" or target_arch=="x64")', {
-        # Required for third_party/zlib/crc_folding.c and various other code
-        # that uses SSE. TODO(pcc): Remove this once we properly support
-        # subtarget specific code generation in LLVM.
-        'ldflags': ['-Wl,-plugin-opt,mcpu=corei7-avx'],
-      }],
     ],  # conditions for 'target_defaults'
     'target_conditions': [
       ['<(use_libpci)==1', {
@@ -3083,7 +3087,14 @@
               '_CRT_NONSTDC_NO_DEPRECATE',
               '_SCL_SECURE_NO_DEPRECATE',
             ],
-            'msvs_disabled_warnings': [4800],
+            'msvs_disabled_warnings': [
+              # These are variable shadowing warnings that are new in VS2015.
+              # We should probably work through these at some point for
+              # non-chromium code, but for now, focus on chromium_code==1 code.
+              4456, 4457, 4458, 4459,
+
+              4800,
+            ],
             'msvs_settings': {
               'VCCLCompilerTool': {
                 'WarningLevel': '3',
@@ -3093,11 +3104,6 @@
             },
             'conditions': [
               ['buildtype=="Official"', {
-                'msvs_settings': {
-                  'VCCLCompilerTool': { 'WarnAsError': 'false' },
-                }
-              }],
-              ['clang==1', {
                 'msvs_settings': {
                   'VCCLCompilerTool': { 'WarnAsError': 'false' },
                 }
@@ -3205,7 +3211,8 @@
               # Suggested by Microsoft Devrel to avoid
               #   LINK : fatal error LNK1248: image size (80000000) exceeds maximum allowable size (80000000)
               # which started happening more regularly after VS2013 Update 4.
-              '/maxilksize:2147483647',
+              # Needs to be a bit lower for VS2015, or else errors out.
+              '/maxilksize:0x7ff00000',
             ],
           },
         },
@@ -4413,6 +4420,11 @@
               '<(DEPTH)/third_party/instrumented_libraries/instrumented_libraries.gyp:instrumented_libraries',
             ],
           }],
+          ['use_prebuilt_instrumented_libraries==1', {
+            'dependencies': [
+              '<(DEPTH)/third_party/instrumented_libraries/instrumented_libraries.gyp:prebuilt_instrumented_libraries',
+            ],
+          }],
           ['use_custom_libcxx==1', {
             'dependencies': [
               '<(DEPTH)/buildtools/third_party/libc++/libc++.gyp:libcxx_proxy',
@@ -5475,6 +5487,11 @@
         ],
         'msvs_cygwin_shell': 0,
         'msvs_disabled_warnings': [
+          # C4091: 'typedef ': ignored on left of 'X' when no variable is
+          #                    declared.
+          # This happens in a number of Windows headers. Dumb.
+          4091,
+
           # C4127: conditional expression is constant
           # This warning can in theory catch dead code and other problems, but
           # triggers in far too many desirable cases where the conditional
@@ -5930,6 +5947,41 @@
         ],
       },
     }],
+    ['use_lto==1 and clang==1 and (target_arch=="ia32" or target_arch=="x64")', {
+      'target_defaults': {
+        'target_conditions': [
+          # Required for third_party/zlib/crc_folding.c and various other code
+          # that uses SSE. TODO(pcc): Remove this once we properly support
+          # subtarget specific code generation in LLVM.
+          ['_toolset=="target"', {
+            'ldflags': [
+              '-Wl,-plugin-opt,mcpu=corei7-avx',
+            ],
+          }],
+          ['_toolset=="target" and _type!="static_library"', {
+            'xcode_settings':  {
+              'OTHER_LDFLAGS': [
+                '-Wl,-mcpu,corei7-avx',
+              ],
+            },
+          }],
+        ],
+      },
+    }],
+    ['use_lto==1 and clang==1 and target_arch=="arm"', {
+      'target_defaults': {
+        'target_conditions': [
+          ['_toolset=="target"', {
+            # Without this flag, LTO produces a .text section that is larger
+            # than the maximum call displacement, preventing the linker from
+            # relocating calls (http://llvm.org/PR22999).
+            'ldflags': [
+              '-Wl,-plugin-opt,-function-sections',
+            ],
+          }],
+        ],
+      },
+    }],
     ['(use_lto==1 or use_lto_o2==1) and clang==0', {
       'target_defaults': {
         'target_conditions': [
@@ -5962,6 +6014,18 @@
             'ldflags': [
               '-fsanitize=cfi-vptr',
             ],
+            'xcode_settings': {
+              'OTHER_CFLAGS': [
+                '-fsanitize=cfi-vptr',
+              ],
+            },
+          }],
+          ['_toolset=="target" and _type!="static_library"', {
+            'xcode_settings':  {
+              'OTHER_LDFLAGS': [
+                '-fsanitize=cfi-vptr',
+              ],
+            },
           }],
         ],
       },

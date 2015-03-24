@@ -17,12 +17,10 @@ class ConvertableToTraceFormat;
 }
 
 namespace cc {
-class LayerTreeSettings;
 
 class CC_EXPORT SchedulerSettings {
  public:
   SchedulerSettings();
-  explicit SchedulerSettings(const LayerTreeSettings& settings);
   ~SchedulerSettings();
 
   bool use_external_begin_frame_source;

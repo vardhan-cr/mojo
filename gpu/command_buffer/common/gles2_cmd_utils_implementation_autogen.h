@@ -4560,6 +4560,7 @@ std::string GLES2Util::GetStringCapability(uint32_t value) {
       {GL_SAMPLE_COVERAGE, "GL_SAMPLE_COVERAGE"},
       {GL_SCISSOR_TEST, "GL_SCISSOR_TEST"},
       {GL_STENCIL_TEST, "GL_STENCIL_TEST"},
+      {GL_RASTERIZER_DISCARD, "GL_RASTERIZER_DISCARD"},
   };
   return GLES2Util::GetQualifiedEnumString(string_table,
                                            arraysize(string_table), value);
@@ -4768,6 +4769,7 @@ std::string GLES2Util::GetStringGLState(uint32_t value) {
       {GL_SAMPLE_COVERAGE, "GL_SAMPLE_COVERAGE"},
       {GL_SCISSOR_TEST, "GL_SCISSOR_TEST"},
       {GL_STENCIL_TEST, "GL_STENCIL_TEST"},
+      {GL_RASTERIZER_DISCARD, "GL_RASTERIZER_DISCARD"},
   };
   return GLES2Util::GetQualifiedEnumString(string_table,
                                            arraysize(string_table), value);

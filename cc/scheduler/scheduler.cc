@@ -304,24 +304,21 @@ base::TimeTicks Scheduler::LastBeginImplFrameTime() {
 }
 
 void Scheduler::SetupNextBeginFrameIfNeeded() {
-  if (!task_runner_.get())
-    return;
-
-  if (state_machine_.ShouldSetNeedsBeginFrames(
-          frame_source_->NeedsBeginFrames())) {
-    frame_source_->SetNeedsBeginFrames(state_machine_.BeginFrameNeeded());
-    if (!frame_source_->NeedsBeginFrames()) {
+  // Never call SetNeedsBeginFrames if the frame source already has the right
+  // value.
+  if (frame_source_->NeedsBeginFrames() != state_machine_.BeginFrameNeeded()) {
+    if (state_machine_.BeginFrameNeeded()) {
+      // Call SetNeedsBeginFrames(true) as soon as possible.
+      frame_source_->SetNeedsBeginFrames(true);
+    } else if (state_machine_.begin_impl_frame_state() ==
+               SchedulerStateMachine::BEGIN_IMPL_FRAME_STATE_IDLE) {
+      // Call SetNeedsBeginFrames(false) in between frames only.
+      frame_source_->SetNeedsBeginFrames(false);
       client_->SendBeginMainFrameNotExpectedSoon();
     }
   }
 
-  if (state_machine_.begin_impl_frame_state() ==
-      SchedulerStateMachine::BEGIN_IMPL_FRAME_STATE_INSIDE_DEADLINE) {
-    frame_source_->DidFinishFrame(begin_retro_frame_args_.size());
-  }
-
   PostBeginRetroFrameIfNeeded();
-  SetupPollingMechanisms();
 }
 
 // We may need to poll when we can't rely on BeginFrame to advance certain
@@ -537,7 +534,7 @@ void Scheduler::BeginImplFrame(const BeginFrameArgs& args) {
     state_machine_.SetSkipNextBeginMainFrameToReduceLatency();
   }
 
-  state_machine_.OnBeginImplFrame(begin_impl_frame_args_);
+  state_machine_.OnBeginImplFrame();
   devtools_instrumentation::DidBeginFrame(layer_tree_host_id_);
   client_->WillBeginImplFrame(begin_impl_frame_args_);
 
@@ -627,19 +624,11 @@ void Scheduler::OnBeginImplFrameDeadline() {
           "461509 Scheduler::OnBeginImplFrameDeadline1"));
   state_machine_.OnBeginImplFrameDeadline();
   ProcessScheduledActions();
-
-  // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is fixed.
-  tracked_objects::ScopedTracker tracking_profile2(
-      FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "461509 Scheduler::OnBeginImplFrameDeadline2"));
   state_machine_.OnBeginImplFrameIdle();
   ProcessScheduledActions();
 
-  // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is fixed.
-  tracked_objects::ScopedTracker tracking_profile3(
-      FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "461509 Scheduler::OnBeginImplFrameDeadline3"));
   client_->DidBeginImplFrameDeadline();
+  frame_source_->DidFinishFrame(begin_retro_frame_args_.size());
 }
 
 void Scheduler::PollForAnticipatedDrawTriggers() {
@@ -679,10 +668,6 @@ void Scheduler::ProcessScheduledActions() {
 
   SchedulerStateMachine::Action action;
   do {
-    // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is fixed.
-    tracked_objects::ScopedTracker tracking_profile1(
-        FROM_HERE_WITH_EXPLICIT_FUNCTION(
-            "461509 Scheduler::ProcessScheduledActions1"));
     action = state_machine_.NextAction();
     TRACE_EVENT1(TRACE_DISABLED_BY_DEFAULT("cc.debug.scheduler"),
                  "SchedulerStateMachine",
@@ -697,24 +682,12 @@ void Scheduler::ProcessScheduledActions() {
     switch (action) {
       case SchedulerStateMachine::ACTION_NONE:
         break;
-      case SchedulerStateMachine::ACTION_ANIMATE: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile2(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions2"));
+      case SchedulerStateMachine::ACTION_ANIMATE:
         client_->ScheduledActionAnimate();
         break;
-      }
-      case SchedulerStateMachine::ACTION_SEND_BEGIN_MAIN_FRAME: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile3(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions3"));
+      case SchedulerStateMachine::ACTION_SEND_BEGIN_MAIN_FRAME:
         client_->ScheduledActionSendBeginMainFrame();
         break;
-      }
       case SchedulerStateMachine::ACTION_COMMIT: {
         // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
         // fixed.
@@ -724,15 +697,9 @@ void Scheduler::ProcessScheduledActions() {
         client_->ScheduledActionCommit();
         break;
       }
-      case SchedulerStateMachine::ACTION_ACTIVATE_SYNC_TREE: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile5(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions5"));
+      case SchedulerStateMachine::ACTION_ACTIVATE_SYNC_TREE:
         client_->ScheduledActionActivateSyncTree();
         break;
-      }
       case SchedulerStateMachine::ACTION_DRAW_AND_SWAP_IF_POSSIBLE: {
         // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
         // fixed.
@@ -742,52 +709,29 @@ void Scheduler::ProcessScheduledActions() {
         DrawAndSwapIfPossible();
         break;
       }
-      case SchedulerStateMachine::ACTION_DRAW_AND_SWAP_FORCED: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile7(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions7"));
+      case SchedulerStateMachine::ACTION_DRAW_AND_SWAP_FORCED:
         client_->ScheduledActionDrawAndSwapForced();
         break;
-      }
       case SchedulerStateMachine::ACTION_DRAW_AND_SWAP_ABORT:
         // No action is actually performed, but this allows the state machine to
         // advance out of its waiting to draw state without actually drawing.
         break;
-      case SchedulerStateMachine::ACTION_BEGIN_OUTPUT_SURFACE_CREATION: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile8(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions8"));
+      case SchedulerStateMachine::ACTION_BEGIN_OUTPUT_SURFACE_CREATION:
         client_->ScheduledActionBeginOutputSurfaceCreation();
         break;
-      }
-      case SchedulerStateMachine::ACTION_PREPARE_TILES: {
-        // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is
-        // fixed.
-        tracked_objects::ScopedTracker tracking_profile9(
-            FROM_HERE_WITH_EXPLICIT_FUNCTION(
-                "461509 Scheduler::ProcessScheduledActions9"));
+      case SchedulerStateMachine::ACTION_PREPARE_TILES:
         client_->ScheduledActionPrepareTiles();
         break;
-      }
     }
   } while (action != SchedulerStateMachine::ACTION_NONE);
 
-  // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is fixed.
-  tracked_objects::ScopedTracker tracking_profile10(
-      FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "461509 Scheduler::ProcessScheduledActions10"));
-  SetupNextBeginFrameIfNeeded();
+  SetupPollingMechanisms();
+
   client_->DidAnticipatedDrawTimeChange(AnticipatedDrawTime());
 
-  // TODO(robliao): Remove ScopedTracker below once crbug.com/461509 is fixed.
-  tracked_objects::ScopedTracker tracking_profile11(
-      FROM_HERE_WITH_EXPLICIT_FUNCTION(
-          "461509 Scheduler::ProcessScheduledActions11"));
   RescheduleBeginImplFrameDeadlineIfNeeded();
+
+  SetupNextBeginFrameIfNeeded();
 }
 
 scoped_refptr<base::trace_event::ConvertableToTraceFormat> Scheduler::AsValue()
@@ -800,7 +744,7 @@ scoped_refptr<base::trace_event::ConvertableToTraceFormat> Scheduler::AsValue()
 
 void Scheduler::AsValueInto(base::trace_event::TracedValue* state) const {
   state->BeginDictionary("state_machine");
-  state_machine_.AsValueInto(state, Now());
+  state_machine_.AsValueInto(state);
   state->EndDictionary();
 
   // Only trace frame sources when explicitly enabled - http://crbug.com/420607
@@ -832,6 +776,23 @@ void Scheduler::AsValueInto(base::trace_event::TracedValue* state) const {
                     !advance_commit_state_task_.IsCancelled());
   state->BeginDictionary("begin_impl_frame_args");
   begin_impl_frame_args_.AsValueInto(state);
+  state->EndDictionary();
+
+  base::TimeTicks now = Now();
+  base::TimeTicks frame_time = begin_impl_frame_args_.frame_time;
+  base::TimeTicks deadline = begin_impl_frame_args_.deadline;
+  base::TimeDelta interval = begin_impl_frame_args_.interval;
+  state->BeginDictionary("major_timestamps_in_ms");
+  state->SetDouble("0_interval", interval.InMillisecondsF());
+  state->SetDouble("1_now_to_deadline", (deadline - now).InMillisecondsF());
+  state->SetDouble("2_frame_time_to_now", (now - frame_time).InMillisecondsF());
+  state->SetDouble("3_frame_time_to_deadline",
+                   (deadline - frame_time).InMillisecondsF());
+  state->SetDouble("4_now", (now - base::TimeTicks()).InMillisecondsF());
+  state->SetDouble("5_frame_time",
+                   (frame_time - base::TimeTicks()).InMillisecondsF());
+  state->SetDouble("6_deadline",
+                   (deadline - base::TimeTicks()).InMillisecondsF());
   state->EndDictionary();
 
   state->EndDictionary();

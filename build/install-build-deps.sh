@@ -73,11 +73,11 @@ if ! which lsb_release > /dev/null; then
 fi
 
 lsb_release=$(lsb_release --codename --short)
-ubuntu_codenames="(precise|quantal|raring|saucy|trusty|utopic)"
+ubuntu_codenames="(precise|trusty|utopic)"
 if [ 0 -eq "${do_unsupported-0}" ] && [ 0 -eq "${do_quick_check-0}" ] ; then
   if [[ ! $lsb_release =~ $ubuntu_codenames ]]; then
-    echo "ERROR: Only Ubuntu 12.04 (precise) through 14.10 (utopic) are"\
-        "currently supported" >&2
+    echo "ERROR: Only Ubuntu 12.04 (precise), 14.04 (trusty) and " \
+        "14.10 (utopic) are currently supported" >&2
     exit 1
   fi
 
@@ -136,8 +136,16 @@ dbg_list="libatk1.0-dbg libc6-dbg libcairo2-dbg libfontconfig1-dbg
           libpixman-1-0-dbg libsqlite3-0-dbg libx11-6-dbg libxau6-dbg
           libxcb1-dbg libxcomposite1-dbg libxcursor1-dbg libxdamage1-dbg
           libxdmcp6-dbg libxext6-dbg libxfixes3-dbg libxi6-dbg libxinerama1-dbg
-          libxrandr2-dbg libxrender1-dbg libxtst6-dbg zlib1g-dbg
-          libstdc++6-4.6-dbg"
+          libxrandr2-dbg libxrender1-dbg libxtst6-dbg zlib1g-dbg"
+
+# Find the proper version of libstdc++6-4.x-dbg.
+if [ "x$lsb_release" = "xprecise" ]; then
+  dbg_list="${dbg_list} libstdc++6-4.6-dbg"
+elif [ "x$lsb_release" = "xtrusty" ]; then
+  dbg_list="${dbg_list} libstdc++6-4.8-dbg"
+else
+  dbg_list="${dbg_list} libstdc++6-4.9-dbg"
+fi
 
 # 32-bit libraries needed e.g. to compile V8 snapshot for Android or armhf
 lib32_list="linux-libc-dev:i386"
@@ -163,8 +171,7 @@ nacl_list="g++-mingw-w64-i686 lib32z1-dev
 # it depends on mesa, and only one version of mesa can exists on the system.
 # Hence we must match the same version or this entire script will fail.
 mesa_variant=""
-for variant in "-lts-quantal" "-lts-raring" "-lts-saucy" "-lts-trusty" \
-               "-lts-utopic"; do
+for variant in "-lts-trusty" "-lts-utopic"; do
   if $(dpkg-query -Wf'${Status}' libgl1-mesa-glx${variant} 2>/dev/null | \
        grep -q " ok installed"); then
     mesa_variant="${variant}"
@@ -349,7 +356,7 @@ if [ 1 -eq "${do_quick_check-0}" ] ; then
 fi
 
 if test "$do_inst_lib32" = "1" || test "$do_inst_nacl" = "1"; then
-  if [[ ! $lsb_release =~ (precise|quantal|raring) ]]; then
+  if [[ ! $lsb_release =~ (precise) ]]; then
     sudo dpkg --add-architecture i386
   fi
 fi

@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# TODO: Factor out all of the common items across the test targets into a
+# single .gypi file that can be included by each test target.
+
 {
   'conditions': [
     ['archive_chromoting_tests==1', {
@@ -24,10 +27,34 @@
             ['OS=="linux"', {
               'dependencies': [
                 '../../remoting/remoting.gyp:remoting_me2me_host_archive',
+                '../../remoting/webapp/app_remoting/internal/app_remoting_all.gyp:app_remoting_all_apps',
               ],
             }],  # OS=="linux"
           ],
-        },
+        },  # target_name: 'chromoting_integration_tests_run'
+        {
+          'target_name': 'chromoting_multi_machine_example_test',
+          'type': 'none',
+          'dependencies': [
+            '../../chrome/chrome.gyp:browser_tests',
+            '../../remoting/remoting.gyp:remoting_webapp_v1',
+            '../../remoting/remoting.gyp:remoting_webapp_v2',
+          ],
+          'includes': [
+            '../../build/isolate.gypi',
+          ],
+          'sources': [
+            'multi_machine_example/example_test_controller.isolate',
+            'multi_machine_example/example_task.isolate',
+          ],
+          'conditions': [
+            ['OS=="linux"', {
+              'dependencies': [
+                '../../remoting/remoting.gyp:remoting_me2me_host_archive',
+              ],
+            }],  # OS=="linux"
+          ],
+        },  # target_name: 'chromoting_multi_machine_example_test'
       ],
     }],
   ],

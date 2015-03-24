@@ -52,6 +52,7 @@
 #include "cc/test/render_pass_test_common.h"
 #include "cc/test/test_gpu_memory_buffer_manager.h"
 #include "cc/test/test_shared_bitmap_manager.h"
+#include "cc/test/test_task_graph_runner.h"
 #include "cc/test/test_web_graphics_context_3d.h"
 #include "cc/trees/layer_tree_impl.h"
 #include "cc/trees/single_thread_proxy.h"
@@ -82,6 +83,7 @@ class LayerTreeHostImplTest : public testing::Test,
         always_main_thread_blocked_(&proxy_),
         shared_bitmap_manager_(new TestSharedBitmapManager),
         gpu_memory_buffer_manager_(new TestGpuMemoryBufferManager),
+        task_graph_runner_(new TestTaskGraphRunner),
         on_can_draw_state_changed_called_(false),
         did_notify_ready_to_activate_(false),
         did_request_commit_(false),
@@ -162,13 +164,10 @@ class LayerTreeHostImplTest : public testing::Test,
 
   virtual bool CreateHostImpl(const LayerTreeSettings& settings,
                               scoped_ptr<OutputSurface> output_surface) {
-    host_impl_ = LayerTreeHostImpl::Create(settings,
-                                           this,
-                                           &proxy_,
-                                           &stats_instrumentation_,
-                                           shared_bitmap_manager_.get(),
-                                           gpu_memory_buffer_manager_.get(),
-                                           0);
+    host_impl_ = LayerTreeHostImpl::Create(
+        settings, this, &proxy_, &stats_instrumentation_,
+        shared_bitmap_manager_.get(), gpu_memory_buffer_manager_.get(),
+        task_graph_runner_.get(), 0);
     bool init = host_impl_->InitializeRenderer(output_surface.Pass());
     host_impl_->SetViewportSize(gfx::Size(10, 10));
     return init;
@@ -192,14 +191,13 @@ class LayerTreeHostImplTest : public testing::Test,
 
   static void ExpectContains(const ScrollAndScaleSet& scroll_info,
                              int id,
-                             const gfx::Vector2dF& scroll_delta) {
+                             const gfx::Vector2d& scroll_delta) {
     int times_encountered = 0;
 
     for (size_t i = 0; i < scroll_info.scrolls.size(); ++i) {
       if (scroll_info.scrolls[i].layer_id != id)
         continue;
-      EXPECT_VECTOR2DF_NEAR(scroll_delta, scroll_info.scrolls[i].scroll_delta,
-                            1.0e-10);
+      EXPECT_VECTOR_EQ(scroll_delta, scroll_info.scrolls[i].scroll_delta);
       times_encountered++;
     }
 
@@ -391,6 +389,7 @@ class LayerTreeHostImplTest : public testing::Test,
 
   scoped_ptr<TestSharedBitmapManager> shared_bitmap_manager_;
   scoped_ptr<TestGpuMemoryBufferManager> gpu_memory_buffer_manager_;
+  scoped_ptr<TestTaskGraphRunner> task_graph_runner_;
   scoped_ptr<LayerTreeHostImpl> host_impl_;
   FakeRenderingStatsInstrumentation stats_instrumentation_;
   bool on_can_draw_state_changed_called_;
@@ -1542,6 +1541,7 @@ class LayerTreeHostImplOverridePhysicalTime : public LayerTreeHostImpl {
                           proxy,
                           rendering_stats_instrumentation,
                           manager,
+                          NULL,
                           NULL,
                           0) {}
 
@@ -3714,7 +3714,7 @@ TEST_F(LayerTreeHostImplTest, ScrollAxisAlignedRotatedLayer) {
   // The layer should have scrolled down in its local coordinates.
   scoped_ptr<ScrollAndScaleSet> scroll_info = host_impl_->ProcessScrollDeltas();
   ExpectContains(*scroll_info.get(), scroll_layer->id(),
-                 gfx::Vector2dF(0, gesture_scroll_delta.x()));
+                 gfx::Vector2d(0, gesture_scroll_delta.x()));
 
   // Reset and scroll down with the wheel.
   scroll_layer->SetScrollDelta(gfx::Vector2dF());
@@ -3773,7 +3773,7 @@ TEST_F(LayerTreeHostImplTest, ScrollNonAxisAlignedRotatedLayer) {
 
     // The child layer should have scrolled down in its local coordinates an
     // amount proportional to the angle between it and the input scroll delta.
-    gfx::Vector2dF expected_scroll_delta(
+    gfx::Vector2d expected_scroll_delta(
         0, gesture_scroll_delta.y() *
                std::cos(MathUtil::Deg2Rad(child_layer_angle)));
     scoped_ptr<ScrollAndScaleSet> scroll_info =
@@ -3795,7 +3795,7 @@ TEST_F(LayerTreeHostImplTest, ScrollNonAxisAlignedRotatedLayer) {
 
     // The child layer should have scrolled down in its local coordinates an
     // amount proportional to the angle between it and the input scroll delta.
-    gfx::Vector2dF expected_scroll_delta(
+    gfx::Vector2d expected_scroll_delta(
         0, -gesture_scroll_delta.x() *
                std::sin(MathUtil::Deg2Rad(child_layer_angle)));
     scoped_ptr<ScrollAndScaleSet> scroll_info =
@@ -3804,7 +3804,7 @@ TEST_F(LayerTreeHostImplTest, ScrollNonAxisAlignedRotatedLayer) {
 
     // The root scroll layer should have scrolled more, since the input scroll
     // delta was mostly orthogonal to the child layer's vertical scroll axis.
-    gfx::Vector2dF expected_root_scroll_delta(
+    gfx::Vector2d expected_root_scroll_delta(
         gesture_scroll_delta.x() *
             std::pow(std::cos(MathUtil::Deg2Rad(child_layer_angle)), 2),
         0);
@@ -5042,16 +5042,10 @@ TEST_F(LayerTreeHostImplTest, PartialSwapReceivesDamageRect) {
   // that we can force partial swap enabled.
   LayerTreeSettings settings;
   settings.renderer_settings.partial_swap_enabled = true;
-  scoped_ptr<SharedBitmapManager> shared_bitmap_manager(
-      new TestSharedBitmapManager());
   scoped_ptr<LayerTreeHostImpl> layer_tree_host_impl =
-      LayerTreeHostImpl::Create(settings,
-                                this,
-                                &proxy_,
-                                &stats_instrumentation_,
-                                shared_bitmap_manager.get(),
-                                NULL,
-                                0);
+      LayerTreeHostImpl::Create(
+          settings, this, &proxy_, &stats_instrumentation_,
+          shared_bitmap_manager_.get(), NULL, task_graph_runner_.get(), 0);
   layer_tree_host_impl->InitializeRenderer(output_surface.Pass());
   layer_tree_host_impl->SetViewportSize(gfx::Size(500, 500));
 
@@ -5297,8 +5291,8 @@ TEST_F(LayerTreeHostImplTest, PartialSwap) {
   CreateHostImpl(settings, FakeOutputSurface::Create3d(context_owned.Pass()));
   SetupRootLayerImpl(FakeLayerWithQuads::Create(host_impl_->active_tree(), 1));
 
-  // The first frame is not a partially-swapped one.
-  harness.MustSetScissor(0, 0, 10, 10);
+  // The first frame is not a partially-swapped one. No scissor should be set.
+  harness.MustSetNoScissor();
   harness.MustDrawSolidQuad();
   {
     LayerTreeHostImpl::FrameData frame;
@@ -5339,7 +5333,7 @@ static scoped_ptr<LayerTreeHostImpl> SetupLayersForOpacity(
   LayerTreeSettings settings;
   settings.renderer_settings.partial_swap_enabled = partial_swap;
   scoped_ptr<LayerTreeHostImpl> my_host_impl = LayerTreeHostImpl::Create(
-      settings, client, proxy, stats_instrumentation, manager, NULL, 0);
+      settings, client, proxy, stats_instrumentation, manager, NULL, NULL, 0);
   my_host_impl->InitializeRenderer(output_surface.Pass());
   my_host_impl->SetViewportSize(gfx::Size(100, 100));
 
@@ -6643,13 +6637,10 @@ TEST_F(LayerTreeHostImplTestDeferredInitialize, Fails) {
 // doesn't support memory management extensions.
 TEST_F(LayerTreeHostImplTest, DefaultMemoryAllocation) {
   LayerTreeSettings settings;
-  host_impl_ = LayerTreeHostImpl::Create(settings,
-                                         this,
-                                         &proxy_,
-                                         &stats_instrumentation_,
-                                         shared_bitmap_manager_.get(),
-                                         gpu_memory_buffer_manager_.get(),
-                                         0);
+  host_impl_ = LayerTreeHostImpl::Create(
+      settings, this, &proxy_, &stats_instrumentation_,
+      shared_bitmap_manager_.get(), gpu_memory_buffer_manager_.get(),
+      task_graph_runner_.get(), 0);
 
   scoped_ptr<OutputSurface> output_surface(
       FakeOutputSurface::Create3d(TestWebGraphicsContext3D::Create()));
@@ -6690,7 +6681,7 @@ TEST_F(LayerTreeHostImplTest, MemoryPolicy) {
   LayerTreeSettings settings;
   settings.gpu_rasterization_enabled = true;
   host_impl_ = LayerTreeHostImpl::Create(
-      settings, this, &proxy_, &stats_instrumentation_, NULL, NULL, 0);
+      settings, this, &proxy_, &stats_instrumentation_, NULL, NULL, NULL, 0);
   host_impl_->SetUseGpuRasterization(true);
   host_impl_->SetVisible(true);
   host_impl_->SetMemoryPolicy(policy1);
@@ -6753,8 +6744,9 @@ class LayerTreeHostImplTestPrepareTiles : public LayerTreeHostImplTest {
     LayerTreeSettings settings;
     settings.impl_side_painting = true;
 
-    fake_host_impl_ = new FakeLayerTreeHostImpl(
-        settings, &proxy_, shared_bitmap_manager_.get());
+    fake_host_impl_ = new FakeLayerTreeHostImpl(settings, &proxy_,
+                                                shared_bitmap_manager_.get(),
+                                                task_graph_runner_.get());
     host_impl_.reset(fake_host_impl_);
     host_impl_->InitializeRenderer(CreateOutputSurface());
     host_impl_->SetViewportSize(gfx::Size(10, 10));
@@ -8128,7 +8120,10 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairs) {
       gfx::Size(10, 10), gfx::Size(10, 10)));
   Region empty_invalidation;
   const PictureLayerTilingSet* null_tiling_set = nullptr;
+  layer->set_gpu_raster_max_texture_size(host_impl_->device_viewport_size());
   layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+  nondraw_layer->set_gpu_raster_max_texture_size(
+      host_impl_->device_viewport_size());
   nondraw_layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
 
   layer->AddChild(nondraw_layer.Pass());
@@ -8246,7 +8241,10 @@ TEST_F(LayerTreeHostImplTest, GetPictureLayerImplPairsWithNonRSLLMembers) {
       gfx::Size(10, 10), gfx::Size(10, 10)));
   Region empty_invalidation;
   const PictureLayerTilingSet* null_tiling_set = nullptr;
+  layer->set_gpu_raster_max_texture_size(host_impl_->device_viewport_size());
   layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
+  nondraw_layer->set_gpu_raster_max_texture_size(
+      host_impl_->device_viewport_size());
   nondraw_layer->UpdateRasterSource(pile, &empty_invalidation, null_tiling_set);
 
   layer->AddChild(nondraw_layer.Pass());

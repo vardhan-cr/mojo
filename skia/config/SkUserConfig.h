@@ -261,8 +261,16 @@ SK_API void SkDebugf_FileLine(const char* file, int line, bool fatal,
 #   define SK_IGNORE_ETC1_SUPPORT
 #endif
 
+#ifndef    SK_SUPPORT_LEGACY_BOOL_ONGETINFO
+#   define SK_SUPPORT_LEGACY_BOOL_ONGETINFO
+#endif
+
 #ifndef    SK_IGNORE_GPU_DITHER
 #   define SK_IGNORE_GPU_DITHER
+#endif
+
+#ifndef    SK_SUPPORT_LEGACY_INT_COLORMATRIX
+#   define SK_SUPPORT_LEGACY_INT_COLORMATRIX
 #endif
 
 #ifndef    SK_LEGACY_STROKE_CURVES

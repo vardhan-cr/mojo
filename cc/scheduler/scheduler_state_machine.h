@@ -9,7 +9,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/time/time.h"
 #include "cc/base/cc_export.h"
 #include "cc/output/begin_frame_args.h"
 #include "cc/scheduler/commit_earlyout_reason.h"
@@ -115,8 +114,7 @@ class CC_EXPORT SchedulerStateMachine {
   static const char* ActionToString(Action action);
 
   scoped_refptr<base::trace_event::ConvertableToTraceFormat> AsValue() const;
-  void AsValueInto(base::trace_event::TracedValue* dict,
-                   base::TimeTicks now) const;
+  void AsValueInto(base::trace_event::TracedValue* dict) const;
 
   Action NextAction() const;
   void UpdateState(Action action);
@@ -124,10 +122,6 @@ class CC_EXPORT SchedulerStateMachine {
   // Indicates whether the impl thread needs a BeginImplFrame callback in order
   // to make progress.
   bool BeginFrameNeeded() const;
-
-  // Indicates whether the scheduler should call
-  // SetNeedsBeginFrames(BeginFrameNeeded()) on the frame source.
-  bool ShouldSetNeedsBeginFrames(bool frame_source_needs_begin_frames) const;
 
   // Indicates that we need to independently poll for new state and actions
   // because we can't expect a BeginImplFrame. This is mostly used to avoid
@@ -138,7 +132,7 @@ class CC_EXPORT SchedulerStateMachine {
   // Indicates that the system has entered and left a BeginImplFrame callback.
   // The scheduler will not draw more than once in a given BeginImplFrame
   // callback nor send more than one BeginMainFrame message.
-  void OnBeginImplFrame(const BeginFrameArgs& args);
+  void OnBeginImplFrame();
   void OnBeginImplFrameDeadlinePending();
   void OnBeginImplFrameDeadline();
   void OnBeginImplFrameIdle();
@@ -284,10 +278,6 @@ class CC_EXPORT SchedulerStateMachine {
   bool ShouldPrepareTiles() const;
 
   void AdvanceCurrentFrameNumber();
-  bool HasAnimatedThisFrame() const;
-  bool HasSentBeginMainFrameThisFrame() const;
-  bool HasRequestedSwapThisFrame() const;
-  bool HasSwappedThisFrame() const;
 
   void UpdateStateOnCommit(bool commit_had_no_updates);
   void UpdateStateOnActivation();
@@ -301,8 +291,7 @@ class CC_EXPORT SchedulerStateMachine {
   CommitState commit_state_;
   ForcedRedrawOnTimeoutState forced_redraw_state_;
 
-  BeginFrameArgs begin_impl_frame_args_;
-
+  // These are used for tracing only.
   int commit_count_;
   int current_frame_number_;
   int last_frame_number_animate_performed_;
@@ -310,11 +299,18 @@ class CC_EXPORT SchedulerStateMachine {
   int last_frame_number_swap_requested_;
   int last_frame_number_begin_main_frame_sent_;
 
+  // These are used to ensure that an action only happens once per frame,
+  // deadline, etc.
+  bool animate_funnel_;
+  bool perform_swap_funnel_;
+  bool request_swap_funnel_;
+  bool send_begin_main_frame_funnel_;
   // prepare_tiles_funnel_ is "filled" each time PrepareTiles is called
   // and "drained" on each BeginImplFrame. If the funnel gets too full,
   // we start throttling ACTION_PREPARE_TILES such that we average one
   // PrepareTiles per BeginImplFrame.
   int prepare_tiles_funnel_;
+
   int consecutive_checkerboard_animations_;
   int max_pending_swaps_;
   int pending_swaps_;
@@ -329,7 +325,6 @@ class CC_EXPORT SchedulerStateMachine {
   bool has_pending_tree_;
   bool pending_tree_is_ready_for_activation_;
   bool active_tree_needs_first_draw_;
-  bool did_commit_after_animating_;
   bool did_create_and_initialize_first_output_surface_;
   bool impl_latency_takes_priority_;
   bool skip_next_begin_main_frame_to_reduce_latency_;
@@ -337,6 +332,7 @@ class CC_EXPORT SchedulerStateMachine {
   bool continuous_painting_;
   bool children_need_begin_frames_;
   bool defer_commits_;
+  bool last_commit_had_no_updates_;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(SchedulerStateMachine);

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
 
 #include "base/basictypes.h"
 #include "base/containers/hash_tables.h"
@@ -24,6 +25,7 @@
 #include "cc/debug/debug_rect_history.h"
 #include "cc/debug/devtools_instrumentation.h"
 #include "cc/debug/frame_rate_counter.h"
+#include "cc/debug/frame_viewer_instrumentation.h"
 #include "cc/debug/paint_time_counter.h"
 #include "cc/debug/rendering_stats_instrumentation.h"
 #include "cc/debug/traced_value.h"
@@ -168,14 +170,11 @@ scoped_ptr<LayerTreeHostImpl> LayerTreeHostImpl::Create(
     RenderingStatsInstrumentation* rendering_stats_instrumentation,
     SharedBitmapManager* shared_bitmap_manager,
     gpu::GpuMemoryBufferManager* gpu_memory_buffer_manager,
+    TaskGraphRunner* task_graph_runner,
     int id) {
-  return make_scoped_ptr(new LayerTreeHostImpl(settings,
-                                               client,
-                                               proxy,
-                                               rendering_stats_instrumentation,
-                                               shared_bitmap_manager,
-                                               gpu_memory_buffer_manager,
-                                               id));
+  return make_scoped_ptr(new LayerTreeHostImpl(
+      settings, client, proxy, rendering_stats_instrumentation,
+      shared_bitmap_manager, gpu_memory_buffer_manager, task_graph_runner, id));
 }
 
 LayerTreeHostImpl::LayerTreeHostImpl(
@@ -185,6 +184,7 @@ LayerTreeHostImpl::LayerTreeHostImpl(
     RenderingStatsInstrumentation* rendering_stats_instrumentation,
     SharedBitmapManager* shared_bitmap_manager,
     gpu::GpuMemoryBufferManager* gpu_memory_buffer_manager,
+    TaskGraphRunner* task_graph_runner,
     int id)
     : client_(client),
       proxy_(proxy),
@@ -223,6 +223,7 @@ LayerTreeHostImpl::LayerTreeHostImpl(
       micro_benchmark_controller_(this),
       shared_bitmap_manager_(shared_bitmap_manager),
       gpu_memory_buffer_manager_(gpu_memory_buffer_manager),
+      task_graph_runner_(task_graph_runner),
       id_(id),
       requires_high_res_to_draw_(false),
       is_likely_to_require_a_draw_(false),
@@ -1528,12 +1529,8 @@ void LayerTreeHostImpl::DrawLayers(FrameData* frame,
   {
     TRACE_EVENT0("cc", "DrawLayers.FrameViewerTracing");
     TRACE_EVENT_OBJECT_SNAPSHOT_WITH_ID(
-       TRACE_DISABLED_BY_DEFAULT("cc.debug") ","
-       TRACE_DISABLED_BY_DEFAULT("cc.debug.quads") ","
-       TRACE_DISABLED_BY_DEFAULT("devtools.timeline.layers"),
-       "cc::LayerTreeHostImpl",
-       id_,
-       AsValueWithFrame(frame));
+        frame_viewer_instrumentation::kCategoryLayerTree,
+        "cc::LayerTreeHostImpl", id_, AsValueWithFrame(frame));
   }
 
   const DrawMode draw_mode = GetDrawMode();
@@ -2034,8 +2031,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
         ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
     *tile_task_worker_pool = BitmapTileTaskWorkerPool::Create(
-        task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
-        resource_provider_.get());
+        task_runner, task_graph_runner_, resource_provider_.get());
     return;
   }
 
@@ -2044,7 +2040,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
         ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
     *tile_task_worker_pool = GpuTileTaskWorkerPool::Create(
-        task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
+        task_runner, task_graph_runner_,
         static_cast<GpuRasterizer*>(rasterizer_.get()));
     return;
   }
@@ -2068,7 +2064,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
         single_thread_synchronous_task_graph_runner_.reset(new TaskGraphRunner);
         task_graph_runner = single_thread_synchronous_task_graph_runner_.get();
       } else {
-        task_graph_runner = TileTaskWorkerPool::GetTaskGraphRunner();
+        task_graph_runner = task_graph_runner_;
       }
 
       *tile_task_worker_pool = ZeroCopyTileTaskWorkerPool::Create(
@@ -2084,9 +2080,8 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
           ResourcePool::Create(resource_provider_.get(), GL_TEXTURE_2D);
 
       *tile_task_worker_pool = OneCopyTileTaskWorkerPool::Create(
-          task_runner, TileTaskWorkerPool::GetTaskGraphRunner(),
-          context_provider, resource_provider_.get(),
-          staging_resource_pool_.get());
+          task_runner, task_graph_runner_, context_provider,
+          resource_provider_.get(), staging_resource_pool_.get());
       return;
     }
   }
@@ -2100,7 +2095,7 @@ void LayerTreeHostImpl::CreateResourceAndTileTaskWorkerPool(
       resource_provider_.get(), GL_TEXTURE_2D);
 
   *tile_task_worker_pool = PixelBufferTileTaskWorkerPool::Create(
-      task_runner, TileTaskWorkerPool::GetTaskGraphRunner(), context_provider,
+      task_runner, task_graph_runner_, context_provider,
       resource_provider_.get(),
       GetMaxTransferBufferUsageBytes(context_provider->ContextCapabilities(),
                                      settings_.renderer_settings.refresh_rate));
@@ -3013,7 +3008,7 @@ static void CollectScrollDeltas(ScrollAndScaleSet* scroll_info,
   if (!scroll_delta.IsZero()) {
     LayerTreeHostCommon::ScrollUpdateInfo scroll;
     scroll.layer_id = layer_impl->id();
-    scroll.scroll_delta = gfx::Vector2dF(scroll_delta.x(), scroll_delta.y());
+    scroll.scroll_delta = gfx::Vector2d(scroll_delta.x(), scroll_delta.y());
     scroll_info->scrolls.push_back(scroll);
   }
 
@@ -3247,19 +3242,18 @@ void LayerTreeHostImpl::AsValueWithFrameInto(
   MathUtil::AddToTracedValue("device_viewport_size", device_viewport_size_,
                              state);
 
-  std::set<const Tile*> tiles;
-  active_tree_->GetAllTilesForTracing(&tiles);
+  std::map<const Tile*, TilePriority> tile_map;
+  active_tree_->GetAllTilesAndPrioritiesForTracing(&tile_map);
   if (pending_tree_)
-    pending_tree_->GetAllTilesForTracing(&tiles);
+    pending_tree_->GetAllTilesAndPrioritiesForTracing(&tile_map);
 
   state->BeginArray("active_tiles");
-  for (std::set<const Tile*>::const_iterator it = tiles.begin();
-       it != tiles.end();
-       ++it) {
-    const Tile* tile = *it;
+  for (const auto& pair : tile_map) {
+    const Tile* tile = pair.first;
+    const TilePriority& priority = pair.second;
 
     state->BeginDictionary();
-    tile->AsValueInto(state);
+    tile->AsValueWithPriorityInto(priority, state);
     state->EndDictionary();
   }
   state->EndArray();

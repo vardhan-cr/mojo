@@ -28,6 +28,7 @@
 #include "cc/test/fake_picture_layer_impl.h"
 #include "cc/test/geometry_test_utils.h"
 #include "cc/test/layer_tree_host_common_test.h"
+#include "cc/test/test_task_graph_runner.h"
 #include "cc/trees/layer_tree_impl.h"
 #include "cc/trees/proxy.h"
 #include "cc/trees/single_thread_proxy.h"
@@ -315,7 +316,7 @@ TEST_F(LayerTreeHostCommonTest, TransformsAboutScrollOffset) {
 
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
 
   gfx::Transform identity_matrix;
   scoped_ptr<LayerImpl> sublayer_scoped_ptr(
@@ -5721,7 +5722,7 @@ TEST_F(LayerTreeHostCommonTest, TransparentChildRenderSurfaceCreation) {
 TEST_F(LayerTreeHostCommonTest, OpacityAnimatingOnPendingTree) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   scoped_ptr<LayerImpl> root = LayerImpl::Create(host_impl.pending_tree(), 1);
 
@@ -5763,7 +5764,7 @@ class LCDTextTest
       public testing::TestWithParam<LCDTextTestParam> {
  public:
   LCDTextTest()
-      : host_impl_(&proxy_, &shared_bitmap_manager_),
+      : host_impl_(&proxy_, &shared_bitmap_manager_, &task_graph_runner_),
         root_(nullptr),
         child_(nullptr),
         grand_child_(nullptr) {}
@@ -5810,6 +5811,7 @@ class LCDTextTest
 
   FakeImplProxy proxy_;
   TestSharedBitmapManager shared_bitmap_manager_;
+  TestTaskGraphRunner task_graph_runner_;
   FakeLayerTreeHostImpl host_impl_;
 
   LayerImpl* root_;
@@ -5947,7 +5949,7 @@ INSTANTIATE_TEST_CASE_P(LayerTreeHostCommonTest,
 TEST_F(LayerTreeHostCommonTest, SubtreeHidden_SingleLayer) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6005,7 +6007,7 @@ TEST_F(LayerTreeHostCommonTest, SubtreeHidden_SingleLayer) {
 TEST_F(LayerTreeHostCommonTest, SubtreeHidden_SingleLayerImpl) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6050,7 +6052,7 @@ TEST_F(LayerTreeHostCommonTest, SubtreeHidden_SingleLayerImpl) {
 TEST_F(LayerTreeHostCommonTest, SubtreeHidden_TwoLayers) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6107,7 +6109,7 @@ TEST_F(LayerTreeHostCommonTest, SubtreeHidden_TwoLayers) {
 TEST_F(LayerTreeHostCommonTest, SubtreeHidden_TwoLayersImpl) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6152,7 +6154,7 @@ void EmptyCopyOutputCallback(scoped_ptr<CopyOutputResult> result) {}
 TEST_F(LayerTreeHostCommonTest, SubtreeHiddenWithCopyRequest) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6299,7 +6301,7 @@ TEST_F(LayerTreeHostCommonTest, SubtreeHiddenWithCopyRequest) {
 TEST_F(LayerTreeHostCommonTest, ClippedOutCopyRequest) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6374,7 +6376,7 @@ TEST_F(LayerTreeHostCommonTest, ClippedOutCopyRequest) {
 TEST_F(LayerTreeHostCommonTest, VisibleContentRectInsideSurface) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   const gfx::Transform identity_matrix;
 
@@ -6985,7 +6987,7 @@ TEST_F(LayerTreeHostCommonTest,
 TEST_F(LayerTreeHostCommonTest, CanRenderToSeparateSurface) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   scoped_ptr<LayerImpl> root =
       LayerImpl::Create(host_impl.active_tree(), 12345);
   scoped_ptr<LayerImpl> child1 =
@@ -7646,6 +7648,55 @@ TEST_F(LayerTreeHostCommonTest, OutOfOrderClippingRequiresRSLLSorting) {
   EXPECT_TRUE(render_surface_layer_list.at(2)->render_surface());
 }
 
+TEST_F(LayerTreeHostCommonTest, FixedPositionWithInterveningRenderSurface) {
+  // Ensures that when we have a render surface between a fixed position layer
+  // and its container, we compute the fixed position layer's draw transform
+  // with respect to that intervening render surface, not with respect to its
+  // container's render target.
+  //
+  // + root
+  //   + render_surface
+  //     + fixed
+  //
+  scoped_refptr<Layer> root = Layer::Create();
+  scoped_refptr<LayerWithForcedDrawsContent> render_surface =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  scoped_refptr<LayerWithForcedDrawsContent> fixed =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+
+  root->AddChild(render_surface);
+  render_surface->AddChild(fixed);
+
+  root->SetIsContainerForFixedPositionLayers(true);
+  render_surface->SetForceRenderSurface(true);
+
+  LayerPositionConstraint constraint;
+  constraint.set_is_fixed_position(true);
+  fixed->SetPositionConstraint(constraint);
+
+  SetLayerPropertiesForTesting(root.get(), gfx::Transform(), gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(50, 50), true, false);
+  SetLayerPropertiesForTesting(render_surface.get(), gfx::Transform(),
+                               gfx::Point3F(), gfx::PointF(7.f, 9.f),
+                               gfx::Size(50, 50), true, false);
+  SetLayerPropertiesForTesting(fixed.get(), gfx::Transform(), gfx::Point3F(),
+                               gfx::PointF(10.f, 15.f), gfx::Size(50, 50), true,
+                               false);
+
+  scoped_ptr<FakeLayerTreeHost> host(CreateFakeLayerTreeHost());
+  host->SetRootLayer(root);
+
+  ExecuteCalculateDrawProperties(root.get());
+
+  gfx::Transform expected_draw_transform;
+  expected_draw_transform.Translate(10.f, 15.f);
+  EXPECT_EQ(expected_draw_transform, fixed->draw_transform());
+
+  gfx::Transform expected_screen_space_transform;
+  expected_screen_space_transform.Translate(17.f, 24.f);
+  EXPECT_EQ(expected_screen_space_transform, fixed->screen_space_transform());
+}
+
 TEST_F(LayerTreeHostCommonTest, ScrollCompensationWithRounding) {
   // This test verifies that a scrolling layer that gets snapped to
   // integer coordinates doesn't move a fixed position child.
@@ -7657,7 +7708,7 @@ TEST_F(LayerTreeHostCommonTest, ScrollCompensationWithRounding) {
   //
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   scoped_ptr<LayerImpl> root = LayerImpl::Create(host_impl.active_tree(), 1);
   scoped_ptr<LayerImpl> container =
@@ -7801,7 +7852,7 @@ TEST_F(LayerTreeHostCommonTest,
   //
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   host_impl.CreatePendingTree();
   scoped_ptr<LayerImpl> root = LayerImpl::Create(host_impl.active_tree(), 1);
   scoped_ptr<LayerImpl> container =
@@ -7895,7 +7946,7 @@ class AnimationScaleFactorTrackingLayerImpl : public LayerImpl {
 TEST_F(LayerTreeHostCommonTest, MaximumAnimationScaleFactor) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   gfx::Transform identity_matrix;
   scoped_ptr<AnimationScaleFactorTrackingLayerImpl> grand_parent =
       AnimationScaleFactorTrackingLayerImpl::Create(host_impl.active_tree(), 1);
@@ -8112,7 +8163,7 @@ static void GatherDrawnLayers(LayerImplList* rsll,
 TEST_F(LayerTreeHostCommonTest, RenderSurfaceLayerListMembership) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
   gfx::Transform identity_matrix;
 
   scoped_ptr<LayerImpl> grand_parent =
@@ -8355,7 +8406,7 @@ TEST_F(LayerTreeHostCommonTest, RenderSurfaceLayerListMembership) {
 TEST_F(LayerTreeHostCommonTest, DrawPropertyScales) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
 
   scoped_ptr<LayerImpl> root = LayerImpl::Create(host_impl.active_tree(), 1);
   LayerImpl* root_layer = root.get();
@@ -8635,7 +8686,7 @@ TEST_F(LayerTreeHostCommonTest, VisibleContentRectInChildRenderSurface) {
 TEST_F(LayerTreeHostCommonTest, BoundsDeltaAffectVisibleContentRect) {
   FakeImplProxy proxy;
   TestSharedBitmapManager shared_bitmap_manager;
-  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager);
+  FakeLayerTreeHostImpl host_impl(&proxy, &shared_bitmap_manager, nullptr);
 
   // Set two layers: the root layer clips it's child,
   // the child draws its content.
@@ -8852,6 +8903,44 @@ TEST_F(LayerTreeHostCommonTest, CombineClipsUsingContentTarget) {
   host->SetRootLayer(root);
 
   ExecuteCalculateDrawProperties(root.get());
+}
+
+TEST_F(LayerTreeHostCommonTest, OnlyApplyFixedPositioningOnce) {
+  gfx::Transform identity;
+  gfx::Transform translate_z;
+  translate_z.Translate3d(0, 0, 10);
+
+  scoped_refptr<Layer> root = Layer::Create();
+  SetLayerPropertiesForTesting(root.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(800, 800), true, false);
+  root->SetIsContainerForFixedPositionLayers(true);
+
+  scoped_refptr<Layer> frame_clip = Layer::Create();
+  SetLayerPropertiesForTesting(frame_clip.get(), translate_z, gfx::Point3F(),
+                               gfx::PointF(500, 100), gfx::Size(100, 100), true,
+                               false);
+  frame_clip->SetMasksToBounds(true);
+
+  scoped_refptr<LayerWithForcedDrawsContent> fixed =
+      make_scoped_refptr(new LayerWithForcedDrawsContent());
+  SetLayerPropertiesForTesting(fixed.get(), identity, gfx::Point3F(),
+                               gfx::PointF(), gfx::Size(1000, 1000), true,
+                               false);
+
+  LayerPositionConstraint constraint;
+  constraint.set_is_fixed_position(true);
+  fixed->SetPositionConstraint(constraint);
+
+  root->AddChild(frame_clip);
+  frame_clip->AddChild(fixed);
+
+  scoped_ptr<FakeLayerTreeHost> host(CreateFakeLayerTreeHost());
+  host->SetRootLayer(root);
+
+  ExecuteCalculateDrawProperties(root.get());
+
+  gfx::Rect expected(0, 0, 100, 100);
+  EXPECT_EQ(expected, fixed->visible_rect_from_property_trees());
 }
 
 }  // namespace

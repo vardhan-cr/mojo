@@ -130,6 +130,7 @@ void PictureLayerImpl::PushPropertiesTo(LayerImpl* base_layer) {
   DCHECK_LE(tilings_->num_tilings(),
             layer_tree_impl()->create_low_res_tiling() ? 2u : 1u);
 
+  layer_impl->set_gpu_raster_max_texture_size(gpu_raster_max_texture_size_);
   layer_impl->UpdateRasterSource(raster_source_, &invalidation_,
                                  tilings_.get());
   DCHECK(invalidation_.IsEmpty());
@@ -666,6 +667,10 @@ bool PictureLayerImpl::RequiresHighResToDraw() const {
   return layer_tree_impl()->RequiresHighResToDraw();
 }
 
+gfx::Rect PictureLayerImpl::GetEnclosingRectInTargetSpace() const {
+  return GetScaledEnclosingRectInTargetSpace(MaximumTilingContentsScale());
+}
+
 gfx::Size PictureLayerImpl::CalculateTileSize(
     const gfx::Size& content_bounds) const {
   int max_texture_size =
@@ -685,8 +690,8 @@ gfx::Size PictureLayerImpl::CalculateTileSize(
     // For GPU rasterization, we pick an ideal tile size using the viewport
     // so we don't need any settings. The current approach uses 4 tiles
     // to cover the viewport vertically.
-    int viewport_width = layer_tree_impl()->device_viewport_size().width();
-    int viewport_height = layer_tree_impl()->device_viewport_size().height();
+    int viewport_width = gpu_raster_max_texture_size_.width();
+    int viewport_height = gpu_raster_max_texture_size_.height();
     default_tile_width = viewport_width;
     // Also, increase the height proportionally as the width decreases, and
     // pad by our border texels to make the tiles exactly match the viewport.
@@ -1168,11 +1173,11 @@ void PictureLayerImpl::GetDebugBorderProperties(
   *width = DebugColors::TiledContentLayerBorderWidth(layer_tree_impl());
 }
 
-void PictureLayerImpl::GetAllTilesForTracing(
-    std::set<const Tile*>* tiles) const {
+void PictureLayerImpl::GetAllTilesAndPrioritiesForTracing(
+    std::map<const Tile*, TilePriority>* tile_map) const {
   if (!tilings_)
     return;
-  tilings_->GetAllTilesForTracing(tiles);
+  tilings_->GetAllTilesAndPrioritiesForTracing(tile_map);
 }
 
 void PictureLayerImpl::AsValueInto(
