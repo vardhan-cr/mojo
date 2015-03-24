@@ -132,7 +132,7 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     const GURL& requestor_url,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services,
-    const std::vector<std::string>& parameters) {
+    const std::vector<std::string>& pre_redirect_parameters) {
   DCHECK(requested_url.is_valid());
 
   // We check both the mapped and resolved urls for existing shell_impls because
@@ -149,6 +149,10 @@ void ApplicationManager::ConnectToApplicationWithParameters(
                                   &exposed_services)) {
     return;
   }
+
+  // The application is not running, let's compute the parameters.
+  std::vector<std::string> parameters =
+      Concatenate(pre_redirect_parameters, GetArgsForURL(resolved_url));
 
   if (ConnectToApplicationWithLoader(requested_url, mapped_url, requestor_url,
                                      &services, &exposed_services, parameters,
@@ -168,11 +172,10 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     return;
   }
 
-  auto callback = base::Bind(
-      &ApplicationManager::HandleFetchCallback, weak_ptr_factory_.GetWeakPtr(),
-      requested_url, requestor_url, base::Passed(services.Pass()),
-      base::Passed(exposed_services.Pass()),
-      Concatenate(parameters, GetArgsForURL(resolved_url)));
+  auto callback = base::Bind(&ApplicationManager::HandleFetchCallback,
+                             weak_ptr_factory_.GetWeakPtr(), requested_url,
+                             requestor_url, base::Passed(services.Pass()),
+                             base::Passed(exposed_services.Pass()), parameters);
 
   if (resolved_url.SchemeIsFile()) {
     new LocalFetcher(resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
@@ -240,8 +243,7 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
   ShellImpl* shell =
       new ShellImpl(application.Pass(), this, original_url, app_identity);
   identity_to_shell_impl_[app_identity] = shell;
-  shell->InitializeApplication(Array<String>::From(
-      Concatenate(parameters, GetArgsForURL(app_identity.url))));
+  shell->InitializeApplication(Array<String>::From(parameters));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
   return application_request.Pass();

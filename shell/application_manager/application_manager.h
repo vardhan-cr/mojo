@@ -145,7 +145,7 @@ class ApplicationManager {
       const GURL& requestor_url,
       InterfaceRequest<ServiceProvider> services,
       ServiceProviderPtr exposed_services,
-      const std::vector<std::string>& parameters);
+      const std::vector<std::string>& pre_redirect_parameters);
 
   bool ConnectToRunningApplication(const GURL& resolved_url,
                                    const GURL& requestor_url,
