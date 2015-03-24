@@ -72,6 +72,14 @@ ui::EventType MojoTouchEventTypeToUIEvent(const EventPtr& event) {
   return ui::ET_TOUCH_CANCELLED;
 }
 
+void SetPointerDataLocationFromEvent(const ui::LocatedEvent& located_event,
+                                     PointerData* pointer_data) {
+  pointer_data->x = located_event.location_f().x();
+  pointer_data->y = located_event.location_f().y();
+  pointer_data->screen_x = located_event.root_location_f().x();
+  pointer_data->screen_y = located_event.root_location_f().y();
+}
+
 }  // namespace
 
 COMPILE_ASSERT(static_cast<int32>(EVENT_FLAGS_NONE) ==
@@ -162,8 +170,7 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
     // TODO(sky): come up with a better way to handle this.
     pointer_data->pointer_id = std::numeric_limits<int32>::max();
     pointer_data->kind = POINTER_KIND_MOUSE;
-    pointer_data->x = static_cast<float>(located_event->location().x());
-    pointer_data->y = static_cast<float>(located_event->location().y());
+    SetPointerDataLocationFromEvent(*located_event, pointer_data.get());
     if (input.IsMouseWheelEvent()) {
       const ui::MouseWheelEvent* wheel_event =
           static_cast<const ui::MouseWheelEvent*>(&input);
@@ -181,8 +188,7 @@ EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
     PointerDataPtr pointer_data(PointerData::New());
     pointer_data->pointer_id = touch_event->touch_id();
     pointer_data->kind = POINTER_KIND_TOUCH;
-    pointer_data->x = static_cast<float>(touch_event->location().x());
-    pointer_data->y = static_cast<float>(touch_event->location().y());
+    SetPointerDataLocationFromEvent(*touch_event, pointer_data.get());
     pointer_data->radius_major = touch_event->radius_x();
     pointer_data->radius_minor = touch_event->radius_y();
     pointer_data->pressure = touch_event->force();
@@ -224,10 +230,12 @@ EventPtr TypeConverter<EventPtr, ui::KeyEvent>::Convert(
 // static
 scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
     const EventPtr& input) {
-  gfx::Point location;
+  gfx::PointF location;
+  gfx::PointF screen_location;
   if (!input->pointer_data.is_null()) {
-    location.SetPoint(static_cast<int>(input->pointer_data->x),
-                      static_cast<int>(input->pointer_data->y));
+    location.SetPoint(input->pointer_data->x, input->pointer_data->y);
+    screen_location.SetPoint(input->pointer_data->screen_x,
+                             input->pointer_data->screen_y);
   }
 
   switch (input->action) {
@@ -259,11 +267,11 @@ scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
     case EVENT_TYPE_POINTER_DOWN:
     case EVENT_TYPE_POINTER_UP:
     case EVENT_TYPE_POINTER_MOVE:
-    case EVENT_TYPE_POINTER_CANCEL:
+    case EVENT_TYPE_POINTER_CANCEL: {
       if (input->pointer_data->kind == POINTER_KIND_MOUSE) {
         // TODO: last flags isn't right. Need to send changed_flags.
         scoped_ptr<ui::MouseEvent> event(new ui::MouseEvent(
-            MojoMouseEventTypeToUIEvent(input), location, location,
+            MojoMouseEventTypeToUIEvent(input), location, screen_location,
             ui::EventFlags(input->flags), ui::EventFlags(input->flags)));
         if (event->IsMouseWheelEvent()) {
           // This conversion assumes we're using the mojo meaning of these
@@ -276,12 +284,15 @@ scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
         }
         return event.Pass();
       }
-      return make_scoped_ptr(new ui::TouchEvent(
+      scoped_ptr<ui::TouchEvent> touch_event(new ui::TouchEvent(
           MojoTouchEventTypeToUIEvent(input), location,
           ui::EventFlags(input->flags), input->pointer_data->pointer_id,
           base::TimeDelta::FromInternalValue(input->time_stamp),
           input->pointer_data->radius_major, input->pointer_data->radius_minor,
           input->pointer_data->orientation, input->pointer_data->pressure));
+      touch_event->set_root_location(screen_location);
+      return touch_event.Pass();
+    }
     default:
       NOTIMPLEMENTED();
   }

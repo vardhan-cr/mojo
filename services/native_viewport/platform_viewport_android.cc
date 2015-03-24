@@ -122,6 +122,8 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
   event->pointer_data->pointer_id = pointer_id;
   event->pointer_data->x = x;
   event->pointer_data->y = y;
+  event->pointer_data->screen_x = x;
+  event->pointer_data->screen_y = y;
   event->pointer_data->pressure = pressure;
   event->pointer_data->radius_major = touch_major;
   event->pointer_data->radius_minor = touch_minor;

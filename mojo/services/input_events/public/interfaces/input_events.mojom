@@ -50,8 +50,12 @@ struct KeyData {
 struct PointerData {
   int32 pointer_id;
   PointerKind kind;
+  // |x| and |y| are in the coordinate system of the View.
   float x;
   float y;
+  // |screen_x| and |screen_y| are in screen coordinates.
+  float screen_x;
+  float screen_y;
   float pressure;
   float radius_major;
   float radius_minor;
