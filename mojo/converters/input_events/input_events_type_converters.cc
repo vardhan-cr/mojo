@@ -145,6 +145,12 @@ EventType TypeConverter<EventType, ui::EventType>::Convert(ui::EventType type) {
     case ui::ET_TOUCH_CANCELLED:
       return EVENT_TYPE_POINTER_CANCEL;
 
+    case ui::ET_KEY_PRESSED:
+      return EVENT_TYPE_KEY_PRESSED;
+
+    case ui::ET_KEY_RELEASED:
+      return EVENT_TYPE_KEY_RELEASED;
+
     default:
       break;
   }
@@ -152,12 +158,11 @@ EventType TypeConverter<EventType, ui::EventType>::Convert(ui::EventType type) {
 }
 
 EventPtr TypeConverter<EventPtr, ui::Event>::Convert(const ui::Event& input) {
-  EventPtr event;
   const EventType type = ConvertTo<EventType>(input.type());
   if (type == EVENT_TYPE_UNKNOWN)
-    return event.Pass();
+    return nullptr;
 
-  event = Event::New();
+  EventPtr event = Event::New();
   event->action = type;
   event->flags = EventFlags(input.flags());
   event->time_stamp = input.time_stamp().ToInternalValue();
