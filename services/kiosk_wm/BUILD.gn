@@ -10,6 +10,8 @@ mojo_native_application("kiosk_wm") {
     "kiosk_wm.cc",
     "kiosk_wm.h",
     "main.cc",
+    "merged_service_provider.cc",
+    "merged_service_provider.h",
     "navigator_host_impl.cc",
     "navigator_host_impl.h",
   ]
@@ -22,6 +24,7 @@ mojo_native_application("kiosk_wm") {
     "//mojo/converters/input_events",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/utility",
+    "//mojo/public/interfaces/application",
     "//mojo/services/input_events/public/interfaces",
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",

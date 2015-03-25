@@ -22,6 +22,8 @@
 
 namespace kiosk_wm {
 
+class MergedServiceProvider;
+
 class KioskWM : public mojo::ApplicationDelegate,
                 public mojo::ViewManagerDelegate,
                 public mojo::ViewObserver,
@@ -80,6 +82,7 @@ class KioskWM : public mojo::ApplicationDelegate,
   std::string pending_url_;
 
   mojo::ServiceProviderImpl exposed_services_impl_;
+  scoped_ptr<MergedServiceProvider> merged_service_provider_;
 
   NavigatorHostImpl navigator_host_;
 

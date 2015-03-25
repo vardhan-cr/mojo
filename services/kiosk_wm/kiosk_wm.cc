@@ -4,6 +4,7 @@
 
 #include "services/kiosk_wm/kiosk_wm.h"
 
+#include "services/kiosk_wm/merged_service_provider.h"
 #include "services/window_manager/basic_focus_rules.h"
 
 namespace kiosk_wm {
@@ -70,15 +71,14 @@ void KioskWM::OnEmbed(
 
   // Now that we're ready, either load a pending url or the default url.
   if (!pending_url_.empty())
-    ReplaceContentWithURL(pending_url_);
+    Embed(pending_url_, services.Pass(), exposed_services.Pass());
   else if (!default_url_.empty())
-    ReplaceContentWithURL(default_url_);
+    Embed(default_url_, services.Pass(), exposed_services.Pass());
 }
 
-void KioskWM::Embed(
-    const mojo::String& url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> ignored_incoming_services,
-    mojo::ServiceProviderPtr ignored_exposed_services) {
+void KioskWM::Embed(const mojo::String& url,
+                    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                    mojo::ServiceProviderPtr exposed_services) {
   // We can get Embed calls before we've actually been
   // embedded into the root view and content_ is created.
   // Just save the last url, we'll embed it when we're ready.
@@ -87,10 +87,11 @@ void KioskWM::Embed(
     return;
   }
 
-  mojo::ServiceProviderPtr exposed_services;
-  exposed_services_impl_.Close();
-  exposed_services_impl_.Bind(GetProxy(&exposed_services));
-  content_->Embed(url, nullptr, exposed_services.Pass());
+  merged_service_provider_.reset(
+      new MergedServiceProvider(exposed_services.Pass(), this));
+  content_->Embed(url, services.Pass(),
+                  merged_service_provider_->GetServiceProviderPtr().Pass());
+
   navigator_host_.RecordNavigation(url);
 }
 
