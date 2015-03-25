@@ -134,3 +134,10 @@ test("mojo_public_utility_unittests") {
     "../../public/cpp/utility/tests",
   ]
 }
+
+test("mojo_public_mojom_unittests") {
+  deps = [
+    ":run_all_unittests",
+    "../../mojom:tests",
+  ]
+}
