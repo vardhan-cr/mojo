@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
+
+#include "base/command_line.h"
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/application/application_runner_chromium.h"
@@ -14,6 +17,7 @@
 #include "mojo/services/native_viewport/public/cpp/args.h"
 #include "services/gles2/gpu_impl.h"
 #include "services/native_viewport/native_viewport_impl.h"
+#include "ui/events/event_switches.h"
 #include "ui/gl/gl_surface.h"
 
 using mojo::ApplicationConnection;
@@ -33,6 +37,19 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
   // mojo::ApplicationDelegate implementation.
   void Initialize(mojo::ApplicationImpl* application) override {
     tracing_.Initialize(application);
+
+    // Apply the switch for kTouchEvents to CommandLine (if set). This allows
+    // redirecting the mouse to a touch device on X for testing.
+    base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+    const std::string touch_event_string("--" +
+                                         std::string(switches::kTouchDevices));
+    auto touch_iter = std::find(application->args().begin(),
+                                application->args().end(),
+                                touch_event_string);
+    if (touch_iter != application->args().end() &&
+        ++touch_iter != application->args().end()) {
+      command_line->AppendSwitchASCII(touch_event_string, *touch_iter);
+    }
 
     if (application->HasArg(mojo::kUseTestConfig))
       gfx::GLSurface::InitializeOneOffForTests();

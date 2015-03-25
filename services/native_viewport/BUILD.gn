@@ -48,6 +48,8 @@ if (is_android) {
       "//mojo/services/native_viewport/public/interfaces",
       "//mojo/services/native_viewport/public/cpp:args",
       "//services/gles2",
+      "//ui/events",
+      "//ui/events/platform",
       "//ui/gl",
     ]
   }
