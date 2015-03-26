@@ -47,7 +47,7 @@ if (is_android) {
   import("//build/config/android/rules.gni")
 }
 
-if (!use_prebuilt_mojo_shell) {
+if (!mojo_use_prebuilt_mojo_shell) {
   executable("mojo_shell") {
     sources = [
       "desktop/mojo_main.cc",
@@ -81,7 +81,7 @@ if (!use_prebuilt_mojo_shell) {
       ]
     }
   }
-}  # !use_prebuilt_mojo_shell
+}  # !mojo_use_prebuilt_mojo_shell
 
 executable("mojo_launcher") {
   sources = [
