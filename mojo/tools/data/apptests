@@ -45,6 +45,10 @@ if config.target_os == config.OS_LINUX:
         "--url-mappings=mojo:example_service=mojo:python_example_service"
       ],
     },
+    # TODO(vtl): See TODO in //services/files/c/BUILD.gn.
+    {
+      "test": "mojo:mojio_apptests",
+    },
     {
       "test": "mojo:mojo_url_redirector_apptests",
       "test-args": ["--address=0.0.0.0:49152"],

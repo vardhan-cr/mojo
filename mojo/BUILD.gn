@@ -76,7 +76,11 @@ group("tests") {
   ]
 
   if (is_linux) {
-    deps += [ "//services/python:python_apptests" ]
+    deps += [
+      # TODO(vtl): See TODO in //services/files/c/BUILD.gn.
+      "//services/files/c:apptests",
+      "//services/python:python_apptests",
+    ]
   }
 
   if (mojo_use_prebuilt_network_service) {
