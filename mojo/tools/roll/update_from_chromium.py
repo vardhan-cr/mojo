@@ -123,7 +123,13 @@ def main():
       ["git", "rev-parse", "HEAD"], cwd=mojo_root_dir).strip()
 
   rev(args.chromium_dir)
-  patch.patch()
+
+  try:
+    patch.patch()
+  except subprocess.CalledProcessError:
+    print "ERROR: Roll failed due to a patch not applying"
+    print "Fix the patch to apply, commit the result, and re-run this script"
+    return 1
 
   print "Restoring files whose contents don't track Chromium"
   for f in files_not_to_roll:

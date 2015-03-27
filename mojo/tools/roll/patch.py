@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 import os
+import subprocess
 import utils
 
 def patch():
@@ -21,5 +22,9 @@ def patch():
 
   for p in utils.find(["*.patch"], os.path.dirname(os.path.realpath(__file__))):
     print "applying patch %s" % os.path.basename(p)
-    utils.system(["git", "apply", p])
-    utils.commit("applied patch %s" % os.path.basename(p))
+    try:
+      utils.system(["git", "apply", p])
+      utils.commit("applied patch %s" % os.path.basename(p))
+    except subprocess.CalledProcessError:
+      print "ERROR: patch %s failed to apply" % os.path.basename(p)
+      raise
