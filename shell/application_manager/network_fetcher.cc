@@ -15,6 +15,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event.h"
 #include "crypto/secure_hash.h"
 #include "crypto/sha2.h"
 #include "mojo/common/common_type_converters.h"
@@ -205,6 +206,8 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
 
 void NetworkFetcher::StartNetworkRequest(const GURL& url,
                                          NetworkService* network_service) {
+  TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
+                           "url", url.spec());
   URLRequestPtr request(URLRequest::New());
   request->url = String::From(url);
   request->auto_follow_redirects = false;
@@ -217,6 +220,7 @@ void NetworkFetcher::StartNetworkRequest(const GURL& url,
 }
 
 void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
+  TRACE_EVENT_ASYNC_END0("mojo_shell", "NetworkFetcher::NetworkRequest", this);
   if (response->error) {
     LOG(ERROR) << "Error (" << response->error->code << ": "
                << response->error->description << ") while fetching "

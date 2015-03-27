@@ -10,6 +10,7 @@
 #include "base/macros.h"
 #include "base/stl_util.h"
 #include "base/strings/string_util.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
@@ -132,6 +133,9 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& pre_redirect_parameters) {
+  TRACE_EVENT_INSTANT1(
+      "mojo_shell", "ApplicationManager::ConnectToApplicationWithParameters",
+      TRACE_EVENT_SCOPE_THREAD, "requested_url", requested_url.spec());
   DCHECK(requested_url.is_valid());
 
   // We check both the mapped and resolved urls for existing shell_impls because
@@ -361,6 +365,8 @@ void ApplicationManager::RunNativeApplication(
     return;
   }
 
+  TRACE_EVENT1("mojo_shell", "ApplicationManager::RunNativeApplication", "path",
+               path.AsUTF8Unsafe());
   NativeRunner* runner = native_runner_factory_->Create(options).release();
   native_runners_.push_back(runner);
   runner->Start(path, cleanup_behavior, application_request.Pass(),

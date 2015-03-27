@@ -18,6 +18,7 @@
 #include "base/run_loop.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
+#include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
 #include "mojo/common/trace_controller_impl.h"
 #include "mojo/common/tracing_impl.h"
@@ -234,6 +235,7 @@ GURL Context::ResolveCommandLineURL(const std::string& path) {
 }
 
 bool Context::Init() {
+  TRACE_EVENT0("mojo_shell", "Context::Init");
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
 
@@ -298,6 +300,7 @@ bool Context::Init() {
 }
 
 void Context::Shutdown() {
+  TRACE_EVENT0("mojo_shell", "Context::Shutdown");
   DCHECK_EQ(base::MessageLoop::current()->task_runner(),
             task_runners_->shell_runner());
   embedder::ShutdownIPCSupport();

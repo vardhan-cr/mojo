@@ -10,6 +10,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "url/url_util.h"
@@ -29,6 +30,7 @@ LocalFetcher::LocalFetcher(const GURL& url,
                            const GURL& url_without_query,
                            const FetchCallback& loader_callback)
     : Fetcher(loader_callback), url_(url), path_(UrlToFile(url_without_query)) {
+  TRACE_EVENT1("mojo_shell", "LocalFetcher::LocalFetcher", "url", url.spec());
   loader_callback_.Run(make_scoped_ptr(this));
 }
 
