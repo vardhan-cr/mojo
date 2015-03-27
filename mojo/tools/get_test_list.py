@@ -126,6 +126,12 @@ def GetTestList(config):
                       config.values["test_results_server"]]
     AddXvfbEntry("Sky tests", sky_command)
 
+  # mojo tools unit tests:
+  if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "tools"):
+    AddEntry("Mojo tools unit tests",
+             ["python", os.path.join("mojo", "tools", "testing",
+                                     "mojom_fetcher",
+                                     "mojom_fetcher_tests.py")])
   # Perf tests -----------------------------------------------------------------
 
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_PERF):
