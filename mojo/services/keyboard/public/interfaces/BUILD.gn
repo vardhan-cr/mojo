@@ -9,4 +9,6 @@ mojom("interfaces") {
   sources = [
     "keyboard.mojom",
   ]
+
+  import_from = mojo_root
 }

@@ -15,4 +15,6 @@ mojom("interfaces") {
   public_deps = [
     "../../../files/public/interfaces",
   ]
+
+  import_from = mojo_root
 }
