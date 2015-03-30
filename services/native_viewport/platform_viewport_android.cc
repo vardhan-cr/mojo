@@ -114,6 +114,7 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
                                          jfloat h_wheel,
                                          jfloat v_wheel) {
   mojo::EventPtr event(mojo::Event::New());
+  event->time_stamp = time_ms;
   event->action = MotionEventActionToEventType(masked_action);
   if (event->action == mojo::EVENT_TYPE_UNKNOWN)
     return false;
