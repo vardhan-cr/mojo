@@ -10,7 +10,7 @@
 #include "services/native_viewport/platform_viewport_android.h"
 #include "shell/android/android_handler.h"
 #include "shell/android/keyboard_impl.h"
-#include "shell/android/mojo_main.h"
+#include "shell/android/main.h"
 
 namespace {
 

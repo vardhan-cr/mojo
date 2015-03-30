@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/android/mojo_main.h"
+#include "shell/android/main.h"
 
 #include "base/android/fifo_utils.h"
 #include "base/android/jni_android.h"

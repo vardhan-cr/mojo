@@ -50,7 +50,7 @@ if (is_android) {
 if (!mojo_use_prebuilt_mojo_shell) {
   executable("mojo_shell") {
     sources = [
-      "desktop/mojo_main.cc",
+      "desktop/main.cc",
     ]
 
     deps = [
@@ -65,8 +65,8 @@ if (!mojo_use_prebuilt_mojo_shell) {
     if (is_android) {
       sources += [
         "android/library_loader.cc",
-        "android/mojo_main.cc",
-        "android/mojo_main.h",
+        "android/main.cc",
+        "android/main.h",
       ]
 
       # On android, the executable is also the native library used by the apk.
