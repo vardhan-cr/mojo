@@ -106,8 +106,8 @@ def main():
       "version",
       help="Version to roll to. If --custom-build is not specified, this "
            "should be a Chromium origin/master commit; otherwise, this should "
-           "be in the format of custom_build_<base_commit>_"
-           "issue<rietveld_issue>_patchset<rietveld_patchset>.")
+           "be in the format of custom_build_base_<base_commit>_"
+           "issue_<rietveld_issue>_patchset_<rietveld_patchset>.")
   args = parser.parse_args()
   roll(args.version, args.custom_build)
   return 0
