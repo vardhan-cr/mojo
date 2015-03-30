@@ -67,7 +67,6 @@ def GNArgsForConfig(config):
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False
   elif config.target_os == Config.OS_LINUX:
-    gn_args["is_desktop_linux"] = False
     gn_args["use_aura"] = False
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False

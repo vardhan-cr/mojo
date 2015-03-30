@@ -51,7 +51,6 @@ class GTestListTestsTest(unittest.TestCase):
         args['use_glib'] = False
         args['use_system_harfbuzz'] = False
       if args.get('os', None) is None and sys.platform[:5] == 'linux':
-        args["is_desktop_linux"] = False
         args["use_aura"] = False
         args["use_glib"] = False
         args["use_system_harfbuzz"] = False
