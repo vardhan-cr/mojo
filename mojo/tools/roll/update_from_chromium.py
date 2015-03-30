@@ -22,7 +22,6 @@ dirs_to_snapshot = [
     "cc",
     "gpu",
     "sandbox/linux",
-    "sdch",
     "skia",
     "testing",
     "third_party/android_testrunner",
