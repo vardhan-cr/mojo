@@ -17,4 +17,5 @@ check_targets = [
   "//services/*",
   "//shell/*",
   "//sky/*",
+  "//ui/*",
 ]

@@ -52,7 +52,10 @@ component("platform") {
       "x11/x11_event_source_libevent.cc",
     ]
 
-    deps += [ "//ui/gfx/x" ]
+    deps += [
+      "//ui/events:dom4_keycode_converter",
+      "//ui/gfx/x",
+    ]
   } else {
     sources += [
       "platform_event_source_stub.cc",

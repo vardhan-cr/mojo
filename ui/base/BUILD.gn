@@ -19,7 +19,6 @@ component("base") {
     "accelerators/accelerator_manager.cc",
     "accelerators/accelerator_manager.h",
     "accelerators/platform_accelerator.h",
-    "ui_base_export.h",
   ]
 
   defines = [ "UI_BASE_IMPLEMENTATION" ]
@@ -88,7 +87,10 @@ component("base") {
   }
 
   if (is_android) {
-    deps += [ ":ui_base_jni_headers" ]
+    deps += [
+      ":ui_base_jni_headers",
+      "//cc",
+    ]
 
     libs += [ "jnigraphics" ]
   }

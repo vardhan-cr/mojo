@@ -88,9 +88,9 @@ component("gfx") {
 
   deps = [
     ":gfx_export",
-    "//base:i18n",
-    "//base:base_static",
     "//base/third_party/dynamic_annotations",
+    "//base:base_static",
+    "//base:i18n",
     "//skia",
     "//third_party/harfbuzz-ng",
     "//third_party/libpng",
@@ -151,6 +151,10 @@ component("gfx") {
   if (is_linux) {
     configs += [ "//build/config/linux:fontconfig" ]
   }
+
+  if (use_x11) {
+    deps += [ "//ui/gfx/x" ]
+  }
 }
 
 # Looking for gfx_geometry? It's //ui/gfx/geometry:geometry
@@ -210,8 +214,8 @@ test("gfx_unittests") {
       "geometry/cubic_bezier_unittest.cc",
       "geometry/insets_unittest.cc",
       "geometry/matrix3_unittest.cc",
-      "geometry/point_unittest.cc",
       "geometry/point3_unittest.cc",
+      "geometry/point_unittest.cc",
       "geometry/quad_unittest.cc",
       "geometry/r_tree_unittest.cc",
       "geometry/rect_unittest.cc",
