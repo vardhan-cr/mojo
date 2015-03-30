@@ -333,6 +333,7 @@ class ViewManagerClientImpl : public mojo::ViewManagerClient,
                         EventPtr event,
                         const Callback<void()>& callback) override {
     tracker()->OnViewInputEvent(view_id, event.Pass());
+    callback.Run();
   }
   void OnViewSharedPropertyChanged(uint32_t view,
                                    const String& name,
