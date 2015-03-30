@@ -5,6 +5,7 @@
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -20,19 +21,32 @@ sys.path.insert(0, os.path.join(mojo_root_dir, "mojo/public/tools/pylib"))
 # pylint: disable=F0401
 import gs
 
-def roll(target_version):
+def roll(target_version, custom_build):
   find_depot_tools_path = os.path.join(mojo_root_dir, "tools")
   sys.path.insert(0, find_depot_tools_path)
   # pylint: disable=F0401
   import find_depot_tools
   depot_tools_path = find_depot_tools.add_depot_tools_to_path()
 
+  if custom_build:
+    match = re.search(
+        "^custom_build_base_([^_]+)_issue_([0-9]+)_patchset_([0-9]+)$",
+        target_version)
+    if not match:
+      print "Failed to parse the version name."
+      return 1
+    chromium_commit_hash = match.group(1)
+    rietveld_issue = match.group(2)
+    rietveld_patchset = match.group(3)
+  else:
+    chromium_commit_hash = target_version
+
   try:
-    chromium_rev = chromium_rev_number(target_version)
+    chromium_rev = chromium_rev_number(chromium_commit_hash)
   except urllib2.HTTPError:
     print ("Failed to identify a Chromium revision associated with %s. "
-           "Ensure that target_version is a Chromium origin/master "
-           "commit.") % (target_version)
+           "Ensure that it is a Chromium origin/master "
+           "commit.") % (chromium_commit_hash)
     return 1
 
   mojoms_gs_path = "gs://mojo/network_service/%s/mojoms.zip" % (target_version,)
@@ -69,18 +83,33 @@ def roll(target_version):
 
   system(["git", "add", "public"], cwd=network_service_path)
   system(["git", "add", "NETWORK_SERVICE_VERSION"], cwd=mojo_public_tools_path)
-  commit("Roll the network service to https://crrev.com/" + chromium_rev,
-         cwd=mojo_root_dir)
+
+  if custom_build:
+    commit_message = ("Roll the network service to a custom build created from "
+                      "https://crrev.com/%s/#ps%s") % (rietveld_issue,
+                                                       rietveld_patchset)
+  else:
+    commit_message = ("Roll the network service to "
+                      "https://crrev.com/%s") % chromium_rev
+  commit(commit_message, cwd=mojo_root_dir)
   return 0
 
 def main():
   parser = argparse.ArgumentParser(
       description="Update the pinned version of the network service " +
                   "and the corresponding checked out mojoms.")
-  parser.add_argument("version", help="version to roll to (a Chromium "
-                                      "origin/master commit)")
+  parser.add_argument(
+      "--custom-build", action="store_true",
+      help="Indicates that this is a build with change that is not committed. "
+           "The change must be uploaded to Rietveld.")
+  parser.add_argument(
+      "version",
+      help="Version to roll to. If --custom-build is not specified, this "
+           "should be a Chromium origin/master commit; otherwise, this should "
+           "be in the format of custom_build_<base_commit>_"
+           "issue<rietveld_issue>_patchset<rietveld_patchset>.")
   args = parser.parse_args()
-  roll(args.version)
+  roll(args.version, args.custom_build)
   return 0
 
 if __name__ == "__main__":
