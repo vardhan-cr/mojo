@@ -251,7 +251,7 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo/shell/Bootstrap.java",
       "android/apk/src/org/chromium/mojo/shell/Keyboard.java",
-      "android/apk/src/org/chromium/mojo/shell/MojoMain.java",
+      "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
       "android/tests/src/org/chromium/mojo/shell/ShellTestBase.java",
     ]
     jni_package = "mojo/shell"
@@ -295,9 +295,9 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo/shell/FileHelper.java",
       "android/apk/src/org/chromium/mojo/shell/Keyboard.java",
-      "android/apk/src/org/chromium/mojo/shell/MojoMain.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellApplication.java",
+      "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
     ]
 
     deps = [

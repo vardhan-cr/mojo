@@ -32,10 +32,10 @@ public class MojoShellActivity extends Activity {
         // TODO(qsr): We should be passing application context here as required by
         // InitApplicationContext on the native side. Currently we can't, as PlatformViewportAndroid
         // relies on this being the activity context.
-        MojoMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
+        ShellMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
 
-        // TODO(eseidel): MojoMain can fail, but we're ignoring the return.
-        MojoMain.start();
+        // TODO(eseidel): ShellMain can fail, but we're ignoring the return.
+        ShellMain.start();
     }
 
     private static String[] getParametersFromIntent(Intent intent) {

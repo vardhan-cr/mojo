@@ -19,7 +19,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
 #include "base/threading/simple_thread.h"
-#include "jni/MojoMain_jni.h"
+#include "jni/ShellMain_jni.h"
 #include "mojo/common/message_pump_mojo.h"
 #include "shell/android/android_handler_loader.h"
 #include "shell/android/background_application_loader.h"
@@ -96,8 +96,8 @@ void ConfigureAndroidServices(Context* context) {
 void QuitShellThread() {
   g_shell_thread.Get()->Join();
   g_shell_thread.Pointer()->reset();
-  Java_MojoMain_finishActivity(base::android::AttachCurrentThread(),
-                               g_main_activiy.Get().obj());
+  Java_ShellMain_finishActivity(base::android::AttachCurrentThread(),
+                                g_main_activiy.Get().obj());
   exit(0);
 }
 
@@ -208,7 +208,7 @@ static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
       base::android::ConvertJavaStringToUTF8(env, jurl));
 }
 
-bool RegisterMojoMain(JNIEnv* env) {
+bool RegisterShellMain(JNIEnv* env) {
   return RegisterNativesImpl(env);
 }
 

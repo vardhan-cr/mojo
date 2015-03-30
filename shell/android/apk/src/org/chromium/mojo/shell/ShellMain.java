@@ -20,8 +20,8 @@ import java.util.List;
  * A placeholder class to call native functions.
  **/
 @JNINamespace("mojo::shell")
-public class MojoMain {
-    private static final String TAG = "MojoMain";
+public class ShellMain {
+    private static final String TAG = "ShellMain";
 
     // Directory where applications bundled with the shell will be extracted.
     private static final String LOCAL_APP_DIRECTORY = "local_apps";
@@ -40,8 +40,7 @@ public class MojoMain {
      * Initializes the native system.
      **/
     static void ensureInitialized(Context applicationContext, String[] parameters) {
-        if (sInitialized)
-            return;
+        if (sInitialized) return;
         try {
             FileHelper.extractFromAssets(applicationContext, NETWORK_LIBRARY_APP,
                     getLocalAppsDir(applicationContext), false);
@@ -60,7 +59,7 @@ public class MojoMain {
                     getTmpDir(applicationContext).getAbsolutePath());
             sInitialized = true;
         } catch (Exception e) {
-            Log.e(TAG, "MojoMain initialization failed.", e);
+            Log.e(TAG, "ShellMain initialization failed.", e);
             throw new RuntimeException(e);
         }
     }
