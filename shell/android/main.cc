@@ -214,3 +214,9 @@ bool RegisterShellMain(JNIEnv* env) {
 
 }  // namespace shell
 }  // namespace mojo
+
+// TODO(vtl): Even though main() should never be called, mojo_shell fails to
+// link without it. Figure out if we can avoid this.
+int main(int argc, char** argv) {
+  NOTREACHED();
+}
