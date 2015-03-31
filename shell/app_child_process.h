@@ -11,8 +11,8 @@
 namespace mojo {
 namespace shell {
 
-// An implementation of |ChildProcess| for a |TYPE_APP| child process, which
-// runs a single app (loaded from the file system) on its main thread.
+// An implementation of |ChildProcess| for an app child process, which runs a
+// single app (loaded from the file system) on its main thread.
 class AppChildProcess : public ChildProcess {
  public:
   AppChildProcess();

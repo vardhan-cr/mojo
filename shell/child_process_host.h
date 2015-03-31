@@ -33,9 +33,7 @@ class ChildProcessHost {
     virtual void DidStart(bool success) = 0;
   };
 
-  ChildProcessHost(Context* context,
-                   Delegate* delegate,
-                   ChildProcess::Type type);
+  ChildProcessHost(Context* context, Delegate* delegate);
   virtual ~ChildProcessHost();
 
   // |Start()|s the child process; calls the delegate's |DidStart()| (on the
@@ -63,7 +61,6 @@ class ChildProcessHost {
 
   Context* const context_;
   Delegate* const delegate_;
-  const ChildProcess::Type type_;
 
   base::Process child_process_;
 

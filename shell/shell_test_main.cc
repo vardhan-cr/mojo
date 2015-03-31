@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
 
-  if (command_line.HasSwitch(switches::kChildProcessType)) {
+  if (command_line.HasSwitch(switches::kChildProcess)) {
     base::AtExitManager at_exit;
     scoped_ptr<mojo::shell::ChildProcess> child_process =
         mojo::shell::ChildProcess::Create(command_line);

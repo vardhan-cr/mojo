@@ -12,7 +12,6 @@
 #include "base/macros.h"
 #include "base/process/kill.h"
 #include "base/process/launch.h"
-#include "base/strings/string_number_conversions.h"
 #include "base/task_runner.h"
 #include "base/task_runner_util.h"
 #include "shell/context.h"
@@ -21,10 +20,8 @@
 namespace mojo {
 namespace shell {
 
-ChildProcessHost::ChildProcessHost(Context* context,
-                                   Delegate* delegate,
-                                   ChildProcess::Type type)
-    : context_(context), delegate_(delegate), type_(type) {
+ChildProcessHost::ChildProcessHost(Context* context, Delegate* delegate)
+    : context_(context), delegate_(delegate) {
   DCHECK(delegate);
   platform_channel_ = platform_channel_pair_.PassServerHandle();
   CHECK(platform_channel_.is_valid());
@@ -67,8 +64,7 @@ bool ChildProcessHost::DoLaunch() {
   base::CommandLine child_command_line(parent_command_line->GetProgram());
   child_command_line.CopySwitchesFrom(*parent_command_line, kForwardSwitches,
                                       arraysize(kForwardSwitches));
-  child_command_line.AppendSwitchASCII(
-      switches::kChildProcessType, base::IntToString(static_cast<int>(type_)));
+  child_command_line.AppendSwitch(switches::kChildProcess);
 
   embedder::HandlePassingInformation handle_passing_info;
   platform_channel_pair_.PrepareToPassClientHandleToChildProcess(

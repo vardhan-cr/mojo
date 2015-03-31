@@ -15,8 +15,8 @@
 namespace mojo {
 namespace shell {
 
-// A subclass of |ChildProcessHost| to host a |TYPE_APP| child process, which
-// runs a single app (loaded from the file system).
+// A subclass of |ChildProcessHost| to host an app child process, which runs a
+// single app (loaded from the file system).
 //
 // Note: After |Start()|, |StartApp| must be called and this object must
 // remained alive until the |on_app_complete| callback is called.

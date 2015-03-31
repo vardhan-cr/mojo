@@ -20,11 +20,6 @@ namespace shell {
 // the child process. (Instances are manufactured by |Create()|.)
 class ChildProcess {
  public:
-  enum Type {
-    // Hosts a single app (see app_child_process(_host).*).
-    TYPE_APP
-  };
-
   virtual ~ChildProcess();
 
   // Returns null if the command line doesn't indicate that this is a child

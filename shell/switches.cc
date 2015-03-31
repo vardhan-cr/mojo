@@ -20,9 +20,9 @@ const char kV[] = "v";
 // --args-for='mojo:wget http://www.google.com'
 const char kArgsFor[] = "args-for";
 
-// Used internally by the main process to specify to a child process its type
-// (switch values from |ChildProcess::Type|). Not for user use.
-const char kChildProcessType[] = "child-process-type";
+// Used internally by the main process to indicate that a new process should be
+// a child process. Not for user use.
+const char kChildProcess[] = "child-process";
 
 // Comma separated list like:
 // text/html,mojo:html_viewer,application/bravo,https://abarth.com/bravo
@@ -81,7 +81,7 @@ const char kURLMappings[] = "url-mappings";
 // Switches valid for the main process (i.e., that the user may pass in).
 const char* kSwitchArray[] = {kV,
                               kArgsFor,
-                              // |kChildProcessType| not for user use.
+                              // |kChildProcess| not for user use.
                               kContentHandlers,
                               kDisableCache,
                               kDontDeleteOnDownload,

@@ -6,7 +6,6 @@
 
 #include "base/command_line.h"
 #include "base/logging.h"
-#include "base/strings/string_number_conversions.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "shell/app_child_process.h"
 #include "shell/switches.h"
@@ -20,32 +19,18 @@ ChildProcess::~ChildProcess() {
 // static
 scoped_ptr<ChildProcess> ChildProcess::Create(
     const base::CommandLine& command_line) {
-  if (!command_line.HasSwitch(switches::kChildProcessType))
+  if (!command_line.HasSwitch(switches::kChildProcess))
     return scoped_ptr<ChildProcess>();
 
-  int type_as_int;
-  CHECK(base::StringToInt(
-      command_line.GetSwitchValueASCII(switches::kChildProcessType),
-      &type_as_int));
+  scoped_ptr<ChildProcess> rv(new AppChildProcess());
+  if (!rv)
+    return nullptr;
 
-  scoped_ptr<ChildProcess> rv;
-  switch (type_as_int) {
-    case TYPE_APP:
-      rv.reset(new AppChildProcess());
-      break;
-    default:
-      CHECK(false) << "Invalid child process type";
-      break;
-  }
-
-  if (rv) {
-    rv->platform_channel_ =
-        embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
-            command_line);
-    CHECK(rv->platform_channel_.is_valid());
-  }
-
-  return rv.Pass();
+  rv->platform_channel_ =
+      embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
+          command_line);
+  CHECK(rv->platform_channel_.is_valid());
+  return rv;
 }
 
 ChildProcess::ChildProcess() {
