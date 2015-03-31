@@ -35,6 +35,7 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method8(List<List<String>> param0) => _complete();
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
+  method11(StructG param0) => _complete();
 
   Future close({bool nodefer: false}) => _stub.close(nodefer: nodefer);
 }
@@ -81,12 +82,9 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
   });
 }
 
-// TODO(zra, yzshen): Some struct versioning tests (with "mthd11" in their
-// names) are skipped.
 Iterable<String> getTestFiles(String path, String prefix) => builtin
     .enumerateFiles(path)
-    .where((s) =>
-        s.startsWith(prefix) && s.endsWith(".data") && !s.contains("mthd11"))
+    .where((s) => s.startsWith(prefix) && s.endsWith(".data"))
     .map((s) => s.replaceFirst('.data', ''));
 
 main(List args) {

@@ -182,7 +182,7 @@ class _ValidationTestParser {
   static final RegExp unsignedRegExp =
     new RegExp(r'^\[u([1248])\](0$|[1-9][0-9]*$|0[xX][0-9a-fA-F]+$)');
   static final RegExp signedRegExp = new RegExp(
-      r'^\[s([1248])\]([-+]?0$|[-+][1-9][0-9]*$|[-+]0[xX][0-9a-fA-F]+$)');
+      r'^\[s([1248])\]([-+]?0$|[-+]?[1-9][0-9]*$|[-+]?0[xX][0-9a-fA-F]+$)');
   static final RegExp binaryRegExp =
     new RegExp(r'^\[(b)\]([01]{8}$)');
   static final RegExp floatRegExp =
