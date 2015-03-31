@@ -25,7 +25,7 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/app_child_process.mojom.h"
-#include "shell/dynamic_service_runner.h"
+#include "shell/native_application_support.h"
 
 namespace mojo {
 namespace shell {
@@ -219,8 +219,8 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
     unblocker_.Unblock(base::Bind(&AppChildControllerImpl::StartAppOnMainThread,
                                   base::FilePath::FromUTF8Unsafe(app_path),
                                   clean_app_path
-                                      ? NativeRunner::DeleteAppPath
-                                      : NativeRunner::DontDeleteAppPath,
+                                      ? NativeApplicationCleanup::DELETE
+                                      : NativeApplicationCleanup::DONT_DELETE,
                                   base::Passed(&application_request)));
   }
 
@@ -243,7 +243,7 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
 
   static void StartAppOnMainThread(
       const base::FilePath& app_path,
-      NativeRunner::CleanupBehavior cleanup_behavior,
+      NativeApplicationCleanup cleanup,
       InterfaceRequest<Application> application_request) {
     // TODO(vtl): This is copied from in_process_native_runner.cc.
     DVLOG(2) << "Loading/running Mojo app from " << app_path.value()
@@ -251,8 +251,8 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
 
     // We intentionally don't unload the native library as its lifetime is the
     // same as that of the process.
-    LoadAndRunNativeApplication(app_path, cleanup_behavior,
-                                application_request.Pass());
+    base::NativeLibrary app_library = LoadNativeApplication(app_path, cleanup);
+    RunNativeApplication(app_library, application_request.Pass());
   }
 
   base::ThreadChecker thread_checker_;

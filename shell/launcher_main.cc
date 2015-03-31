@@ -15,10 +15,10 @@
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/process_delegate.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
-#include "shell/dynamic_service_runner.h"
 #include "shell/external_application_registrar_connection.h"
 #include "shell/in_process_native_runner.h"
 #include "shell/init.h"
+#include "shell/native_application_support.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -74,7 +74,7 @@ class Launcher : public embedder::ProcessDelegate {
     DCHECK(application_request_.is_pending());
     InProcessNativeRunner service_runner(nullptr);
     base::RunLoop run_loop;
-    service_runner.Start(app_path_, NativeRunner::DontDeleteAppPath,
+    service_runner.Start(app_path_, NativeApplicationCleanup::DONT_DELETE,
                          application_request_.Pass(), run_loop.QuitClosure());
     run_loop.Run();
   }

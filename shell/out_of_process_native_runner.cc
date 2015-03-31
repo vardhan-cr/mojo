@@ -31,7 +31,7 @@ OutOfProcessNativeRunner::~OutOfProcessNativeRunner() {
 
 void OutOfProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeApplicationCleanup cleanup,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
@@ -44,7 +44,7 @@ void OutOfProcessNativeRunner::Start(
 
   // TODO(vtl): |app_path.AsUTF8Unsafe()| is unsafe.
   app_child_process_host_->StartApp(
-      app_path.AsUTF8Unsafe(), cleanup_behavior == DeleteAppPath,
+      app_path.AsUTF8Unsafe(), cleanup == NativeApplicationCleanup::DELETE,
       application_request.Pass(),
       base::Bind(&OutOfProcessNativeRunner::AppCompleted,
                  base::Unretained(this)));

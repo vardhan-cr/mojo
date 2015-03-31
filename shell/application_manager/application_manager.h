@@ -18,6 +18,7 @@
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/identity.h"
 #include "shell/application_manager/native_runner.h"
+#include "shell/native_application_support.h"
 #include "url/gurl.h"
 
 namespace base {
@@ -182,12 +183,12 @@ class ApplicationManager {
                            ServiceProviderPtr exposed_services,
                            const base::Closure& on_application_end,
                            const std::vector<std::string>& parameters,
-                           NativeRunner::CleanupBehavior cleanup_behavior,
+                           NativeApplicationCleanup cleanup,
                            scoped_ptr<Fetcher> fetcher);
 
   void RunNativeApplication(InterfaceRequest<Application> application_request,
                             const NativeRunnerFactory::Options& options,
-                            NativeRunner::CleanupBehavior cleanup_behavior,
+                            NativeApplicationCleanup cleanup,
                             scoped_ptr<Fetcher> fetcher,
                             const base::FilePath& file_path,
                             bool path_exists);

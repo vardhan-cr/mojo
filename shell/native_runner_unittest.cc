@@ -33,7 +33,7 @@ class TestNativeRunner : public NativeRunner {
     base::MessageLoop::current()->Quit();
   }
   void Start(const base::FilePath& app_path,
-             NativeRunner::CleanupBehavior cleanup_behavior,
+             NativeApplicationCleanup cleanup,
              InterfaceRequest<Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;

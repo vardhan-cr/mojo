@@ -115,29 +115,18 @@ source_set("init") {
 
 source_set("in_process_native_runner") {
   sources = [
-    "dynamic_service_runner.cc",
-    "dynamic_service_runner.h",
     "in_process_native_runner.cc",
     "in_process_native_runner.h",
   ]
 
   public_deps = [
-    "//shell/application_manager:application_manager",
+    ":native_application_support",
+    "//shell/application_manager",
   ]
 
   deps = [
     "//base",
-    "//mojo/gles2",
-    "//mojo/public/cpp/system",
   ]
-
-  # This target has to include the public thunk headers, which generally
-  # shouldn't be included without picking an implementation. We are providing
-  # the implementation but the thunk header target cannot declare that we are
-  # permitted to include it since it's in the public SDK and we are not.
-  # Suppress include checking so we can still check the rest of the targets in
-  # this file.
-  check_includes = false
 }
 
 source_set("lib") {
@@ -175,6 +164,7 @@ source_set("lib") {
     ":external_application_registrar_bindings",
     ":init",
     ":in_process_native_runner",
+    ":native_application_support",
     "//base",
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
@@ -231,6 +221,30 @@ source_set("lib") {
   # so we can enable checking for the rest of the targets in this file.
   # TODO: Might be better to split the files with OS-specific includes out to a
   # separate source_set so we can leave checking on for the rest of the target.
+  check_includes = false
+}
+
+source_set("native_application_support") {
+  sources = [
+    "native_application_support.cc",
+    "native_application_support.h",
+  ]
+
+  public_deps = [
+    "//mojo/public/cpp/bindings",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/gles2",
+  ]
+
+  # This target has to include the public thunk headers, which generally
+  # shouldn't be included without picking an implementation. We are providing
+  # the implementation but the thunk header target cannot declare that we are
+  # permitted to include it since it's in the public SDK and we are not.
+  # Suppress include checking so we can still check the rest of the targets in
+  # this file.
   check_includes = false
 }
 

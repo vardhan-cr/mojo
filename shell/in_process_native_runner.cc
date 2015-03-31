@@ -9,14 +9,13 @@
 #include "base/location.h"
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/threading/platform_thread.h"
-#include "shell/dynamic_service_runner.h"
+#include "shell/native_application_support.h"
 
 namespace mojo {
 namespace shell {
 
 InProcessNativeRunner::InProcessNativeRunner(Context* context)
-    : cleanup_behavior_(NativeRunner::DontDeleteAppPath),
-      app_library_(nullptr) {
+    : cleanup_(NativeApplicationCleanup::DONT_DELETE), app_library_(nullptr) {
 }
 
 InProcessNativeRunner::~InProcessNativeRunner() {
@@ -32,11 +31,11 @@ InProcessNativeRunner::~InProcessNativeRunner() {
 
 void InProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeApplicationCleanup cleanup,
     InterfaceRequest<Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
-  cleanup_behavior_ = cleanup_behavior;
+  cleanup_ = cleanup;
 
   DCHECK(!application_request_.is_pending());
   application_request_ = application_request.Pass();
@@ -56,8 +55,10 @@ void InProcessNativeRunner::Run() {
            << app_path_.value()
            << " thread id=" << base::PlatformThread::CurrentId();
 
-  app_library_.Reset(LoadAndRunNativeApplication(app_path_, cleanup_behavior_,
-                                                 application_request_.Pass()));
+  // TODO(vtl): ScopedNativeLibrary doesn't have a .get() method!
+  base::NativeLibrary app_library = LoadNativeApplication(app_path_, cleanup_);
+  app_library_.Reset(app_library);
+  RunNativeApplication(app_library, application_request_.Pass());
   app_completed_callback_runner_.Run();
   app_completed_callback_runner_.Reset();
 }

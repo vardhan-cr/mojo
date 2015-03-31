@@ -14,7 +14,7 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "shell/android/run_android_application_function.h"
-#include "shell/dynamic_service_runner.h"
+#include "shell/native_application_support.h"
 
 using base::android::AttachCurrentThread;
 using base::android::ScopedJavaLocalRef;
@@ -40,14 +40,11 @@ void RunAndroidApplication(JNIEnv* env,
 
   // Load the library, so that we can set the application context there if
   // needed.
-  base::NativeLibraryLoadError error;
-  base::ScopedNativeLibrary app_library(
-      base::LoadNativeLibrary(app_path, &error));
-  if (!app_library.is_valid()) {
-    LOG(ERROR) << "Failed to load app library (error: " << error.ToString()
-               << ")";
+  // TODO(vtl): We'd use a ScopedNativeLibrary, but it doesn't have .get()!
+  base::NativeLibrary app_library =
+      LoadNativeApplication(app_path, NativeApplicationCleanup::DELETE);
+  if (!app_library)
     return;
-  }
 
   // Set the application context if needed. Most applications will need to
   // access the Android ApplicationContext in which they are run. If the
@@ -58,15 +55,18 @@ void RunAndroidApplication(JNIEnv* env,
       const base::android::JavaRef<jobject>&);
   InitApplicationContextFn init_application_context =
       reinterpret_cast<InitApplicationContextFn>(
-          app_library.GetFunctionPointer(init_application_context_name));
+          base::GetFunctionPointerFromNativeLibrary(
+              app_library, init_application_context_name));
   if (init_application_context) {
     base::android::ScopedJavaLocalRef<jobject> scoped_context(env, j_context);
     init_application_context(scoped_context);
   }
 
   // Run the application.
-  base::ScopedNativeLibrary app_library_from_runner(LoadAndRunNativeApplication(
-      app_path, NativeRunner::DeleteAppPath, application_request.Pass()));
+  RunNativeApplication(app_library, application_request.Pass());
+  // TODO(vtl): See note about unloading and thread-local destructors above
+  // declaration of |LoadNativeApplication()|.
+  base::UnloadNativeLibrary(app_library);
 }
 
 }  // namespace

@@ -9,6 +9,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
+#include "shell/native_application_support.h"
 
 namespace base {
 class FilePath;
@@ -21,20 +22,17 @@ namespace shell {
 // NativeRunnerFactory to run native applications.
 class NativeRunner {
  public:
-  // Parameter for |Start()| to specify its cleanup behavior.
-  enum CleanupBehavior { DeleteAppPath, DontDeleteAppPath };
-
   virtual ~NativeRunner() {}
 
   // Loads the app in the file at |app_path| and runs it on some other
-  // thread/process. If |cleanup_behavior| is |true|, takes ownership of the
-  // file. |app_completed_callback| is posted (to the thread on which |Start()|
-  // was called) after |MojoMain()| completes.
-  // TODO(vtl): |app_path| and |cleanup_behavior| should probably be moved to
-  // the factory's Create(). Rationale: The factory may need information from
-  // the file to decide what kind of NativeRunner to make.
+  // thread/process. If |cleanup| is |DELETE|, this takes ownership of the file.
+  // |app_completed_callback| is posted (to the thread on which |Start()| was
+  // called) after |MojoMain()| completes.
+  // TODO(vtl): |app_path| and |cleanup| should probably be moved to the
+  // factory's Create(). Rationale: The factory may need information from the
+  // file to decide what kind of NativeRunner to make.
   virtual void Start(const base::FilePath& app_path,
-                     CleanupBehavior cleanup_behavior,
+                     NativeApplicationCleanup cleanup,
                      InterfaceRequest<Application> application_request,
                      const base::Closure& app_completed_callback) = 0;
 };

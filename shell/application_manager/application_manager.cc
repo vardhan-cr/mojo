@@ -182,22 +182,23 @@ void ApplicationManager::ConnectToApplicationWithParameters(
       parameters);
 
   if (resolved_url.SchemeIsFile()) {
-    new LocalFetcher(resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
-                     base::Bind(callback, NativeRunner::DontDeleteAppPath));
+    new LocalFetcher(
+        resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
+        base::Bind(callback, NativeApplicationCleanup::DONT_DELETE));
     return;
   }
 
   if (!network_service_)
     ConnectToService(GURL("mojo:network_service"), &network_service_);
 
-  const NativeRunner::CleanupBehavior cleanup_behavior =
+  const NativeApplicationCleanup cleanup =
       base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kDontDeleteOnDownload)
-          ? NativeRunner::DontDeleteAppPath
-          : NativeRunner::DeleteAppPath;
+          ? NativeApplicationCleanup::DONT_DELETE
+          : NativeApplicationCleanup::DELETE;
 
   new NetworkFetcher(disable_cache_, resolved_url, network_service_.get(),
-                     base::Bind(callback, cleanup_behavior));
+                     base::Bind(callback, cleanup));
 }
 
 bool ApplicationManager::ConnectToRunningApplication(
@@ -276,7 +277,7 @@ void ApplicationManager::HandleFetchCallback(
     ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& parameters,
-    NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeApplicationCleanup cleanup,
     scoped_ptr<Fetcher> fetcher) {
   if (!fetcher) {
     // Network error. Drop |application_request| to tell requestor.
@@ -344,13 +345,13 @@ void ApplicationManager::HandleFetchCallback(
       blocking_pool_,
       base::Bind(&ApplicationManager::RunNativeApplication,
                  weak_ptr_factory_.GetWeakPtr(), base::Passed(request.Pass()),
-                 options, cleanup_behavior, base::Passed(fetcher.Pass())));
+                 options, cleanup, base::Passed(fetcher.Pass())));
 }
 
 void ApplicationManager::RunNativeApplication(
     InterfaceRequest<Application> application_request,
     const NativeRunnerFactory::Options& options,
-    NativeRunner::CleanupBehavior cleanup_behavior,
+    NativeApplicationCleanup cleanup,
     scoped_ptr<Fetcher> fetcher,
     const base::FilePath& path,
     bool path_exists) {
@@ -369,7 +370,7 @@ void ApplicationManager::RunNativeApplication(
                path.AsUTF8Unsafe());
   NativeRunner* runner = native_runner_factory_->Create(options).release();
   native_runners_.push_back(runner);
-  runner->Start(path, cleanup_behavior, application_request.Pass(),
+  runner->Start(path, cleanup, application_request.Pass(),
                 base::Bind(&ApplicationManager::CleanupRunner,
                            weak_ptr_factory_.GetWeakPtr(), runner));
 }
