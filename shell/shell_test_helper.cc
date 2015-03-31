@@ -17,7 +17,7 @@ namespace mojo {
 namespace shell {
 
 ShellTestHelper::ShellTestHelper() {
-  base::CommandLine::Init(0, NULL);
+  base::CommandLine::Init(0, nullptr);
   InitializeLogging();
 }
 

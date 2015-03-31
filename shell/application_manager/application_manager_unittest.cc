@@ -104,12 +104,12 @@ class TestApplicationLoader : public ApplicationLoader,
                               public ApplicationDelegate,
                               public InterfaceFactory<TestService> {
  public:
-  TestApplicationLoader() : context_(NULL), num_loads_(0) {}
+  TestApplicationLoader() : context_(nullptr), num_loads_(0) {}
 
   ~TestApplicationLoader() override {
     if (context_)
       ++context_->num_loader_deletes;
-    test_app_.reset(NULL);
+    test_app_.reset();
   }
 
   void set_context(TestContext* context) { context_ = context; }
@@ -467,8 +467,8 @@ class ApplicationManagerTest : public testing::Test {
   }
 
   void TearDown() override {
-    test_client_.reset(NULL);
-    application_manager_.reset(NULL);
+    test_client_.reset();
+    application_manager_.reset();
   }
 
   void AddLoaderForURL(const GURL& url, const std::string& requestor_url) {
@@ -589,7 +589,7 @@ TEST_F(ApplicationManagerTest, ClientError) {
   EXPECT_TRUE(HasFactoryForTestURL());
   loop_.Run();
   EXPECT_EQ(1, context_.num_impls);
-  test_client_.reset(NULL);
+  test_client_.reset();
   loop_.Run();
   EXPECT_EQ(0, context_.num_impls);
   EXPECT_TRUE(HasFactoryForTestURL());

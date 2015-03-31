@@ -197,8 +197,8 @@ class ApplicationManager {
                               InterfaceRequest<Application> application_request,
                               URLResponsePtr url_response);
 
-  // Return the appropriate loader for |url|. This can return NULL if there is
-  // no loader configured for the URL.
+  // Returns the appropriate loader for |url|, or null if there is no loader
+  // configured for the URL.
   ApplicationLoader* GetLoaderForURL(const GURL& url);
 
   // Removes a ContentHandler when it encounters an error.

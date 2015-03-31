@@ -31,7 +31,7 @@ namespace shell {
 // performance isn't completely absymal.
 class Fetcher {
  public:
-  // The param will be NULL in the case where the content could not be fetched.
+  // The param will be null in the case where the content could not be fetched.
   // Reasons include:
   // - network error
   // - 4x or 5x HTTP errors

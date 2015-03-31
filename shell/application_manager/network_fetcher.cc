@@ -225,7 +225,7 @@ void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
     LOG(ERROR) << "Error (" << response->error->code << ": "
                << response->error->description << ") while fetching "
                << response->url;
-    loader_callback_.Run(make_scoped_ptr<Fetcher>(NULL));
+    loader_callback_.Run(nullptr);
     return;
   }
 
@@ -233,7 +233,7 @@ void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
     LOG(ERROR) << "Error (" << response->status_code << ": "
                << response->status_line << "): "
                << "while fetching " << response->url;
-    loader_callback_.Run(make_scoped_ptr<Fetcher>(NULL));
+    loader_callback_.Run(nullptr);
     return;
   }
 
