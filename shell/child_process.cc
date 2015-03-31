@@ -10,7 +10,6 @@
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "shell/app_child_process.h"
 #include "shell/switches.h"
-#include "shell/test_child_process.h"
 
 namespace mojo {
 namespace shell {
@@ -31,9 +30,6 @@ scoped_ptr<ChildProcess> ChildProcess::Create(
 
   scoped_ptr<ChildProcess> rv;
   switch (type_as_int) {
-    case TYPE_TEST:
-      rv.reset(new TestChildProcess());
-      break;
     case TYPE_APP:
       rv.reset(new AppChildProcess());
       break;

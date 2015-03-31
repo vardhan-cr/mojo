@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/at_exit.h"
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/logging.h"
@@ -17,6 +18,7 @@ int main(int argc, char** argv) {
       *base::CommandLine::ForCurrentProcess();
 
   if (command_line.HasSwitch(switches::kChildProcessType)) {
+    base::AtExitManager at_exit;
     scoped_ptr<mojo::shell::ChildProcess> child_process =
         mojo::shell::ChildProcess::Create(command_line);
     CHECK(child_process);

@@ -5,6 +5,8 @@
 #ifndef SHELL_APP_CHILD_PROCESS_HOST_H_
 #define SHELL_APP_CHILD_PROCESS_HOST_H_
 
+#include <stdint.h>
+
 #include "base/macros.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
 #include "shell/app_child_process.mojom.h"
@@ -24,17 +26,18 @@ class AppChildProcessHost : public ChildProcessHost,
   explicit AppChildProcessHost(Context* context);
   ~AppChildProcessHost() override;
 
-  // See |AppChildController::StartApp|.
+  // See |AppChildController|:
   void StartApp(const String& app_path,
                 bool clean_app_path,
                 InterfaceRequest<Application> application_request,
                 const AppChildController::StartAppCallback& on_app_complete);
+  void ExitNow(int32_t exit_code);
 
- private:
   // |ChildProcessHost::Delegate| methods:
   void WillStart() override;
   void DidStart(bool success) override;
 
+ private:
   // Callback for |embedder::CreateChannel()|.
   void DidCreateChannel(embedder::ChannelInfo* channel_info);
 

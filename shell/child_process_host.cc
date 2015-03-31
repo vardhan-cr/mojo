@@ -81,6 +81,8 @@ bool ChildProcessHost::DoLaunch() {
 #elif defined(OS_POSIX)
   options.fds_to_remap = &handle_passing_info;
 #endif
+  DVLOG(2) << "Launching child with command line: "
+           << child_command_line.GetCommandLineString();
   child_process_ = base::LaunchProcess(child_command_line, options);
   if (!child_process_.IsValid())
     return false;

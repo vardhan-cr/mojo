@@ -224,6 +224,11 @@ class AppChildControllerImpl : public AppChildController, public ErrorHandler {
                                   base::Passed(&application_request)));
   }
 
+  void ExitNow(int32_t exit_code) override {
+    DVLOG(2) << "AppChildControllerImpl::ExitNow(" << exit_code << ")";
+    _exit(exit_code);
+  }
+
  private:
   AppChildControllerImpl(AppContext* app_context,
                          const Blocker::Unblocker& unblocker)
@@ -278,6 +283,8 @@ AppChildProcess::~AppChildProcess() {
 
 void AppChildProcess::Main() {
   DVLOG(2) << "AppChildProcess::Main()";
+
+  DCHECK(!base::MessageLoop::current());
 
   AppContext app_context;
   app_context.Init();

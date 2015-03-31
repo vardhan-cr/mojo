@@ -36,6 +36,12 @@ void AppChildProcessHost::StartApp(
       base::Bind(&AppChildProcessHost::AppCompleted, base::Unretained(this)));
 }
 
+void AppChildProcessHost::ExitNow(int32_t exit_code) {
+  DCHECK(controller_);
+
+  controller_->ExitNow(exit_code);
+}
+
 void AppChildProcessHost::WillStart() {
   DCHECK(platform_channel()->is_valid());
 
