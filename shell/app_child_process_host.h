@@ -20,8 +20,7 @@ namespace shell {
 //
 // Note: After |Start()|, |StartApp| must be called and this object must
 // remained alive until the |on_app_complete| callback is called.
-class AppChildProcessHost : public ChildProcessHost,
-                            public ChildProcessHost::Delegate {
+class AppChildProcessHost : public ChildProcessHost {
  public:
   explicit AppChildProcessHost(Context* context);
   ~AppChildProcessHost() override;
@@ -33,7 +32,7 @@ class AppChildProcessHost : public ChildProcessHost,
                 const AppChildController::StartAppCallback& on_app_complete);
   void ExitNow(int32_t exit_code);
 
-  // |ChildProcessHost::Delegate| methods:
+  // |ChildProcessHost| methods:
   void WillStart() override;
   void DidStart(bool success) override;
 

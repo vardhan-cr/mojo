@@ -16,7 +16,7 @@ namespace mojo {
 namespace shell {
 
 AppChildProcessHost::AppChildProcessHost(Context* context)
-    : ChildProcessHost(context, this), channel_info_(nullptr) {
+    : ChildProcessHost(context), channel_info_(nullptr) {
 }
 
 AppChildProcessHost::~AppChildProcessHost() {

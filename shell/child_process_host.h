@@ -18,8 +18,7 @@ class Context;
 
 // (Base) class for a "child process host". Handles launching and connecting a
 // platform-specific "pipe" to the child, and supports joining the child
-// process. Intended for use as a base class, but may be used on its own in
-// simple cases.
+// process.
 //
 // This class is not thread-safe. It should be created/used/destroyed on a
 // single thread.
@@ -27,19 +26,13 @@ class Context;
 // Note: Does not currently work on Windows before Vista.
 class ChildProcessHost {
  public:
-  class Delegate {
-   public:
-    virtual void WillStart() = 0;
-    virtual void DidStart(bool success) = 0;
-  };
-
-  ChildProcessHost(Context* context, Delegate* delegate);
+  explicit ChildProcessHost(Context* context);
   virtual ~ChildProcessHost();
 
-  // |Start()|s the child process; calls the delegate's |DidStart()| (on the
-  // thread on which |Start()| was called) when the child has been started (or
-  // failed to start). After calling |Start()|, this object must not be
-  // destroyed until |DidStart()| has been called.
+  // |Start()|s the child process; calls |DidStart()| (on the thread on which
+  // |Start()| was called) when the child has been started (or failed to start).
+  // After calling |Start()|, this object must not be destroyed until
+  // |DidStart()| has been called.
   // TODO(vtl): Consider using weak pointers and removing this requirement.
   void Start();
 
@@ -52,15 +45,16 @@ class ChildProcessHost {
     return &platform_channel_;
   }
 
+  virtual void WillStart() = 0;
+  virtual void DidStart(bool success) = 0;
+
  protected:
   Context* context() const { return context_; }
 
  private:
   bool DoLaunch();
-  void DidLaunch(bool success);
 
   Context* const context_;
-  Delegate* const delegate_;
 
   base::Process child_process_;
 

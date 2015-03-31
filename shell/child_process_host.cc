@@ -20,9 +20,7 @@
 namespace mojo {
 namespace shell {
 
-ChildProcessHost::ChildProcessHost(Context* context, Delegate* delegate)
-    : context_(context), delegate_(delegate) {
-  DCHECK(delegate);
+ChildProcessHost::ChildProcessHost(Context* context) : context_(context) {
   platform_channel_ = platform_channel_pair_.PassServerHandle();
   CHECK(platform_channel_.is_valid());
 }
@@ -37,12 +35,12 @@ ChildProcessHost::~ChildProcessHost() {
 void ChildProcessHost::Start() {
   DCHECK(!child_process_.IsValid());
 
-  delegate_->WillStart();
+  WillStart();
 
   CHECK(base::PostTaskAndReplyWithResult(
       context_->task_runners()->blocking_pool(), FROM_HERE,
       base::Bind(&ChildProcessHost::DoLaunch, base::Unretained(this)),
-      base::Bind(&ChildProcessHost::DidLaunch, base::Unretained(this))));
+      base::Bind(&ChildProcessHost::DidStart, base::Unretained(this))));
 }
 
 int ChildProcessHost::Join() {
@@ -85,10 +83,6 @@ bool ChildProcessHost::DoLaunch() {
 
   platform_channel_pair_.ChildProcessLaunched();
   return true;
-}
-
-void ChildProcessHost::DidLaunch(bool success) {
-  delegate_->DidStart(success);
 }
 
 }  // namespace shell
