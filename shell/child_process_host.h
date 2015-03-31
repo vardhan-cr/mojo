@@ -9,7 +9,6 @@
 #include "base/process/process.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "shell/child_process.h"  // For |ChildProcess::Type|.
 
 namespace mojo {
 namespace shell {

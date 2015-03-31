@@ -27,7 +27,8 @@ class NativeRunner {
   // Loads the app in the file at |app_path| and runs it on some other
   // thread/process. If |cleanup| is |DELETE|, this takes ownership of the file.
   // |app_completed_callback| is posted (to the thread on which |Start()| was
-  // called) after |MojoMain()| completes.
+  // called) after |MojoMain()| completes, or on any error (including if it
+  // fails to start).
   // TODO(vtl): |app_path| and |cleanup| should probably be moved to the
   // factory's Create(). Rationale: The factory may need information from the
   // file to decide what kind of NativeRunner to make.

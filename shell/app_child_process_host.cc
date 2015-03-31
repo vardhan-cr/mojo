@@ -51,6 +51,7 @@ void AppChildProcessHost::WillStart() {
       base::MessageLoop::current()->message_loop_proxy()));
 
   controller_.Bind(handle.Pass());
+  controller_.set_error_handler(this);
 }
 
 void AppChildProcessHost::DidStart(bool success) {
@@ -61,6 +62,10 @@ void AppChildProcessHost::DidStart(bool success) {
     AppCompleted(MOJO_RESULT_UNKNOWN);
     return;
   }
+}
+
+void AppChildProcessHost::OnConnectionError() {
+  AppCompleted(MOJO_RESULT_UNKNOWN);
 }
 
 // Callback for |embedder::CreateChannel()|.

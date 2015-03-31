@@ -10,6 +10,8 @@
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/common/message_pump_mojo.h"
+#include "mojo/public/c/system/types.h"
+#include "mojo/public/cpp/system/message_pipe.h"
 #include "shell/context.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -49,8 +51,47 @@ TEST(AppChildProcessHostTest, MAYBE_StartJoin) {
   context.Init();
   TestAppChildProcessHost app_child_process_host(&context);
   app_child_process_host.Start();
-  message_loop.Run();
+  message_loop.Run();  // This should run until |DidStart()|.
   app_child_process_host.ExitNow(123);
+  int exit_code = app_child_process_host.Join();
+  VLOG(2) << "Joined child: exit_code = " << exit_code;
+  EXPECT_EQ(123, exit_code);
+
+  context.Shutdown();
+}
+
+#if defined(OS_ANDROID)
+// TODO(qsr): Multiprocess shell tests are not supported on android.
+#define MAYBE_ConnectionError DISABLED_ConnectionError
+#else
+#define MAYBE_ConnectionError ConnectionError
+#endif  // defined(OS_ANDROID)
+// Tests that even on connection error, the callback to |StartApp()| will get
+// called.
+TEST(AppChildProcessHostTest, MAYBE_ConnectionError) {
+  Context context;
+  base::MessageLoop message_loop(
+      scoped_ptr<base::MessagePump>(new common::MessagePumpMojo()));
+  context.Init();
+  TestAppChildProcessHost app_child_process_host(&context);
+  app_child_process_host.Start();
+  message_loop.Run();  // This should run until |DidStart()|.
+  // Send |ExitNow()| first, so that the |StartApp()| below won't actually be
+  // processed, and we'll just get a connection error.
+  app_child_process_host.ExitNow(123);
+  MessagePipe mp;
+  InterfaceRequest<Application> application_request;
+  application_request.Bind(mp.handle0.Pass());
+  // This won't actually be called, but the callback should be run.
+  MojoResult result = MOJO_RESULT_INTERNAL;
+  app_child_process_host.StartApp(
+      "/does_not_exist/cbvgyuio", false, application_request.Pass(),
+      [&result](int32_t r) {
+        result = r;
+        base::MessageLoop::current()->QuitWhenIdle();
+      });
+  message_loop.Run();
+  EXPECT_EQ(MOJO_RESULT_UNKNOWN, result);
   int exit_code = app_child_process_host.Join();
   VLOG(2) << "Joined child: exit_code = " << exit_code;
   EXPECT_EQ(123, exit_code);

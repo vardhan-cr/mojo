@@ -9,6 +9,7 @@
 
 #include "base/macros.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
+#include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/app_child_process.mojom.h"
 #include "shell/child_process_host.h"
 
@@ -20,21 +21,28 @@ namespace shell {
 //
 // Note: After |Start()|, |StartApp| must be called and this object must
 // remained alive until the |on_app_complete| callback is called.
-class AppChildProcessHost : public ChildProcessHost {
+class AppChildProcessHost : public ChildProcessHost, public ErrorHandler {
  public:
   explicit AppChildProcessHost(Context* context);
   ~AppChildProcessHost() override;
 
-  // See |AppChildController|:
+  // See |AppChildController::StartApp()| (this may only be called after
+  // |Start()|). Note, however, one difference: |on_app_complete| will *always*
+  // get called, even on connection error (or even if the child process failed
+  // to start at all).
   void StartApp(const String& app_path,
                 bool clean_app_path,
                 InterfaceRequest<Application> application_request,
                 const AppChildController::StartAppCallback& on_app_complete);
+  // See |AppChildController::ExitNow()|.
   void ExitNow(int32_t exit_code);
 
   // |ChildProcessHost| methods:
   void WillStart() override;
   void DidStart(bool success) override;
+
+  // |ErrorHandler| methods:
+  void OnConnectionError() override;
 
  private:
   // Callback for |embedder::CreateChannel()|.
