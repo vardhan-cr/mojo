@@ -63,7 +63,7 @@ void ChildProcessHost::StartApp(
     const String& app_path,
     bool clean_app_path,
     InterfaceRequest<Application> application_request,
-    const AppChildController::StartAppCallback& on_app_complete) {
+    const ChildController::StartAppCallback& on_app_complete) {
   DCHECK(controller_);
 
   on_app_complete_ = on_app_complete;

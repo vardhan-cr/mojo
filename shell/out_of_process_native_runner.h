@@ -32,7 +32,7 @@ class OutOfProcessNativeRunner : public NativeRunner {
              const base::Closure& app_completed_callback) override;
 
  private:
-  // |AppChildController::StartApp()| callback:
+  // |ChildProcessHost::StartApp()| callback:
   void AppCompleted(int32_t result);
 
   Context* const context_;

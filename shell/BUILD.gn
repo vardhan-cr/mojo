@@ -156,7 +156,7 @@ source_set("lib") {
   ]
 
   deps = [
-    ":app_child_process_bindings",
+    ":child_controller_bindings",
     ":external_application_registrar_bindings",
     ":init",
     ":in_process_native_runner",
@@ -382,9 +382,9 @@ if (is_android) {
   }
 }
 
-mojom("app_child_process_bindings") {
+mojom("child_controller_bindings") {
   sources = [
-    "app_child_process.mojom",
+    "child_controller.mojom",
   ]
 
   deps = [

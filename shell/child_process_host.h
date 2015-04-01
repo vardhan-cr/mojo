@@ -13,7 +13,7 @@
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "shell/app_child_process.mojom.h"
+#include "shell/child_controller.mojom.h"
 
 namespace mojo {
 namespace shell {
@@ -45,17 +45,17 @@ class ChildProcessHost : public ErrorHandler {
   // callback has been called.
   int Join();
 
-  // Methods relayed to the |AppChildController|. These methods may be only be
+  // Methods relayed to the |ChildController|. These methods may be only be
   // called after |Start()|, but may be called immediately (without waiting for
   // |DidStart()|).
 
-  // Like |AppChildController::StartApp()|, but with one difference:
+  // Like |ChildController::StartApp()|, but with one difference:
   // |on_app_complete| will *always* get called, even on connection error (or
   // even if the child process failed to start at all).
   void StartApp(const String& app_path,
                 bool clean_app_path,
                 InterfaceRequest<Application> application_request,
-                const AppChildController::StartAppCallback& on_app_complete);
+                const ChildController::StartAppCallback& on_app_complete);
   void ExitNow(int32_t exit_code);
 
   // TODO(vtl): This is virtual, so tests can override it, but really |Start()|
@@ -76,9 +76,9 @@ class ChildProcessHost : public ErrorHandler {
   Context* const context_;
   embedder::PlatformChannelPair platform_channel_pair_;
 
-  AppChildControllerPtr controller_;
+  ChildControllerPtr controller_;
   embedder::ChannelInfo* channel_info_;
-  AppChildController::StartAppCallback on_app_complete_;
+  ChildController::StartAppCallback on_app_complete_;
 
   base::Process child_process_;
 
