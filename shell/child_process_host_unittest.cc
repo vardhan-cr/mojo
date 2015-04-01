@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Note: This file also tests app_child_process.*.
+// Note: This file also partly tests child_main.*.
 
 #include "shell/child_process_host.h"
 

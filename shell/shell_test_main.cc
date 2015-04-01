@@ -8,7 +8,7 @@
 #include "base/logging.h"
 #include "base/test/launcher/unit_test_launcher.h"
 #include "base/test/test_suite.h"
-#include "shell/child_process.h"
+#include "shell/child_main.h"
 #include "shell/switches.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -19,11 +19,7 @@ int main(int argc, char** argv) {
 
   if (command_line.HasSwitch(switches::kChildProcess)) {
     base::AtExitManager at_exit;
-    scoped_ptr<mojo::shell::ChildProcess> child_process =
-        mojo::shell::ChildProcess::Create(command_line);
-    CHECK(child_process);
-    child_process->Main();
-    return 0;
+    return mojo::shell::ChildMain();
   }
 
   base::TestSuite test_suite(argc, argv);

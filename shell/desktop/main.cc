@@ -16,7 +16,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/trace_event/trace_event.h"
-#include "shell/child_process.h"
+#include "shell/child_main.h"
 #include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
@@ -109,16 +109,15 @@ int main(int argc, char** argv) {
 
   mojo::shell::InitializeLogging();
 
+  const base::CommandLine& command_line =
+      *base::CommandLine::ForCurrentProcess();
+
   // TODO(vtl): Unify parent and child process cases to the extent possible.
-  if (scoped_ptr<mojo::shell::ChildProcess> child_process =
-          mojo::shell::ChildProcess::Create(
-              *base::CommandLine::ForCurrentProcess())) {
-    child_process->Main();
+  int exit_code = 0;
+  if (command_line.HasSwitch(switches::kChildProcess)) {
+    exit_code = mojo::shell::ChildMain();
   } else {
     // Only check the command line for the main process.
-    const base::CommandLine& command_line =
-        *base::CommandLine::ForCurrentProcess();
-
     const std::set<std::string> all_switches = switches::GetAllSwitches();
     const base::CommandLine::SwitchMap switches = command_line.GetSwitches();
     bool found_unknown_switch = false;
@@ -181,5 +180,5 @@ int main(int argc, char** argv) {
 
   if (g_tracing)
     StopTracingAndFlushToDisk();
-  return 0;
+  return exit_code;
 }

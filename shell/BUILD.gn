@@ -131,10 +131,8 @@ source_set("in_process_native_runner") {
 
 source_set("lib") {
   sources = [
-    "app_child_process.cc",
-    "app_child_process.h",
-    "child_process.cc",
-    "child_process.h",
+    "child_main.cc",
+    "child_main.h",
     "child_process_host.cc",
     "child_process_host.h",
     "command_line_util.cc",

@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/app_child_process.h"
+#include "shell/child_main.h"
 
 #include <unistd.h>
 
 #include "base/bind.h"
 #include "base/callback_helpers.h"
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -21,7 +22,9 @@
 #include "base/threading/thread_checker.h"
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/edk/embedder/embedder.h"
+#include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/process_delegate.h"
+#include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/child_controller.mojom.h"
@@ -273,18 +276,17 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
 
 }  // namespace
 
-// AppChildProcess -------------------------------------------------------------
+// ChildMain -------------------------------------------------------------------
 
-AppChildProcess::AppChildProcess() {
-}
-
-AppChildProcess::~AppChildProcess() {
-}
-
-void AppChildProcess::Main() {
-  DVLOG(2) << "AppChildProcess::Main()";
+int ChildMain() {
+  DVLOG(2) << "ChildMain()";
 
   DCHECK(!base::MessageLoop::current());
+
+  embedder::ScopedPlatformHandle platform_channel =
+      embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
+          *base::CommandLine::ForCurrentProcess());
+  CHECK(platform_channel.is_valid());
 
   AppContext app_context;
   app_context.Init();
@@ -293,11 +295,13 @@ void AppChildProcess::Main() {
   app_context.controller_runner()->PostTask(
       FROM_HERE,
       base::Bind(&ChildControllerImpl::Init, base::Unretained(&app_context),
-                 base::Passed(platform_channel()), blocker.GetUnblocker()));
+                 base::Passed(&platform_channel), blocker.GetUnblocker()));
   // This will block, then run whatever the controller wants.
   blocker.Block();
 
   app_context.Shutdown();
+
+  return 0;
 }
 
 }  // namespace shell
