@@ -10,6 +10,7 @@ group("default") {
     "//crypto:crypto_unittests",
     "//examples",
     "//mojo",
+    "//mojom",
     "//services",
     "//shell",
     "//ui/gfx:gfx_unittests",
