@@ -62,8 +62,9 @@ def _LogMessageForRequest(request_identifier, message, log=logging.info,
 
 
 class MojoUrlRedirector(http_server_mojom.HttpHandler):
-  def __init__(self, network_service):
+  def __init__(self, network_service, app_location_files_url):
     self.network_service = network_service
+    self.app_location_files_url = app_location_files_url
 
   def HandleRequest(self, request):
     # Parse the components of the request.
@@ -91,11 +92,9 @@ class MojoUrlRedirector(http_server_mojom.HttpHandler):
   def RedirectToCurrentAppLocation(self, requested_platform, requested_app):
     # Construct a URLRequest to fetch the app location file...
     app_location_request = url_loader_mojom.UrlRequest()
-    mojo_services_url = "https://storage.googleapis.com/mojo/services"
     app_name, _ = os.path.splitext(requested_app)
-    app_location_request.url = "%s/%s/%s_location" % (mojo_services_url,
-                                                      requested_platform,
-                                                      app_name)
+    app_location_request.url = "%s/%s/%s_location" % (
+        self.app_location_files_url, requested_platform, app_name)
     app_location_request.auto_follow_redirects = True
 
     # ...and start a URLLoader to fetch it.
@@ -113,7 +112,7 @@ class MojoUrlRedirector(http_server_mojom.HttpHandler):
     error_message = None
     if app_location_response.error:
       error_message = "Network error from app location fetch: %d" % (
-          app_location_response.error)
+          app_location_response.error.code)
     elif app_location_response.status_code != 200:
       error_message = "Unexpected http status from app location fetch: %s" % (
           app_location_response.status_code)
@@ -144,14 +143,18 @@ class MojoUrlRedirectorApp(application_delegate.ApplicationDelegate):
     server_address.ipv4 = net_address_mojom.NetAddressIPv4()
     server_address.ipv4.addr = [0, 0, 0, 0]
     server_address.ipv4.port = 80
+    app_location_files_url = "https://storage.googleapis.com/mojo/services"
 
     # Parse args if given.
     if application.args:
-      assert len(application.args) == 2
+      assert len(application.args) >= 2
       server_address_arg = application.args[1]
       server_address_str, server_port_str = server_address_arg.split(":")
       server_address.ipv4.addr = [int(n) for n in server_address_str.split(".")]
       server_address.ipv4.port = int(server_port_str)
+
+      if len(application.args) == 3:
+        app_location_files_url = application.args[2]
 
     # Connect to HttpServer.
     http_server_factory = application.ConnectToService("mojo:http_server",
@@ -165,7 +168,8 @@ class MojoUrlRedirectorApp(application_delegate.ApplicationDelegate):
         network_service_mojom.NetworkService)
 
     # Construct a MojoUrlRedirector and add that as a handler to the server.
-    self.app_request_handler = MojoUrlRedirector(self.network_service)
+    self.app_request_handler = MojoUrlRedirector(self.network_service,
+                                                 app_location_files_url)
     self.http_server.SetHandler("/.*", self.app_request_handler)
 
 

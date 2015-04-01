@@ -51,8 +51,9 @@ if config.target_os == config.OS_LINUX:
     },
     {
       "test": "mojo:mojo_url_redirector_apptests",
-      "test-args": ["--address=0.0.0.0:49152"],
-      "shell-args": ["--args-for=mojo:mojo_url_redirector 0.0.0.0:49152"],
+      "test-args": ["--redirector_port=49152",
+                    "--app_location_files_port=49153"],
+      "shell-args": ["--args-for=mojo:mojo_url_redirector 0.0.0.0:49152 http://localhost:49153"],
     }
   ]
 
