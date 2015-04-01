@@ -25,7 +25,6 @@ group("examples") {
     "//examples/indirect_service",
     "//examples/nesting_app",
     "//examples/png_viewer",
-    "//examples/recipes",
     "//examples/recursive_content_handler",
     "//examples/sky_compositor_app",
     "//examples/spinning_cube",
