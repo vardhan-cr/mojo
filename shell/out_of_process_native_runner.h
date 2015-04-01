@@ -15,8 +15,8 @@
 namespace mojo {
 namespace shell {
 
-class AppChildProcessHost;
 class Context;
+class ChildProcessHost;
 
 // An implementation of |NativeRunner| that loads/runs the given app (from the
 // file system) in a separate process (of its own).
@@ -40,7 +40,7 @@ class OutOfProcessNativeRunner : public NativeRunner {
   base::FilePath app_path_;
   base::Closure app_completed_callback_;
 
-  scoped_ptr<AppChildProcessHost> app_child_process_host_;
+  scoped_ptr<ChildProcessHost> child_process_host_;
 
   DISALLOW_COPY_AND_ASSIGN(OutOfProcessNativeRunner);
 };
