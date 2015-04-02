@@ -31,6 +31,7 @@ void Usage() {
       << "Usage: mojo_shell"
       << " [--" << switches::kArgsFor << "=<mojo-app>]"
       << " [--" << switches::kContentHandlers << "=<handlers>]"
+      << " [--" << switches::kCPUProfile << "]"
       << " [--" << switches::kEnableExternalApplications << "]"
       << " [--" << switches::kDisableCache << "]"
       << " [--" << switches::kEnableMultiprocess << "]"
