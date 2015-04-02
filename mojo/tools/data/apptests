@@ -14,6 +14,12 @@ tests = [
     "test-args": ["--example_apptest_arg"],
   },
   {
+    "test": "mojo:example_apptests",
+    # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
+    "test-args": ["--example_apptest_arg"],
+    "shell-args": ["--enable-multiprocess"],
+  },
+  {
     "test": "mojo:files_apptests",
   },
   {

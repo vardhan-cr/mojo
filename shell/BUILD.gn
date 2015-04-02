@@ -49,7 +49,9 @@ if (is_android) {
 
 if (!mojo_use_prebuilt_mojo_shell) {
   executable("mojo_shell") {
-    sources = []
+    sources = [
+      "desktop/main.cc",
+    ]
 
     deps = [
       ":init",
@@ -60,9 +62,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
       "//mojo/environment:chromium",
     ]
 
-    if (!is_android) {
-      sources += [ "desktop/main.cc" ]
-    } else {
+    if (is_android) {
       sources += [
         "android/library_loader.cc",
         "android/main.cc",

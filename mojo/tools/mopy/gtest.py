@@ -111,8 +111,10 @@ def _gtest_list_tests(gtest_list_tests_output):
   output of running --gtest_list_tests on a GTEST application."""
 
   # Remove log lines.
-  gtest_list_tests_output = (
-      re.sub("^\[.*\n", "", gtest_list_tests_output, flags=re.MULTILINE))
+  gtest_list_tests_output = re.sub("^(\[|WARNING: linker:).*\n",
+                                   "",
+                                   gtest_list_tests_output,
+                                   flags=re.MULTILINE)
 
   if not re.match("^(\w*\.\r?\n(  \w*\r?\n)+)+", gtest_list_tests_output):
     raise Exception("Unrecognized --gtest_list_tests output:\n%s" %
