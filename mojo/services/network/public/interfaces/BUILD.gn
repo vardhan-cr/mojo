@@ -20,6 +20,4 @@ mojom("interfaces") {
   ]
 
   import_dirs = [ get_path_info("../../../", "abspath") ]
-
-  import_from = mojo_root
 }
