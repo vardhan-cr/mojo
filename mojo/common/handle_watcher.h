@@ -9,7 +9,6 @@
 #include "base/callback_forward.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/run_loop.h"
-#include "mojo/common/mojo_common_export.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace base {
@@ -24,7 +23,7 @@ class HandleWatcherTest;
 
 // HandleWatcher is used to asynchronously wait on a handle and notify a Closure
 // when the handle is ready, or the deadline has expired.
-class MOJO_COMMON_EXPORT HandleWatcher {
+class HandleWatcher {
  public:
   HandleWatcher();
 

@@ -32,8 +32,6 @@ component("common") {
     sources -= [ "data_pipe_file_utils.cc" ]
   }
 
-  defines = [ "MOJO_COMMON_IMPLEMENTATION" ]
-
   deps = [
     "//base",
     "//base/third_party/dynamic_annotations",

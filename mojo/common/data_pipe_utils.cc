@@ -76,9 +76,8 @@ bool BlockingCopyToString(ScopedDataPipeConsumerHandle source,
       source.Pass(), base::Bind(&CopyToStringHelper, result));
 }
 
-bool MOJO_COMMON_EXPORT BlockingCopyFromString(
-    const std::string& source,
-    const ScopedDataPipeProducerHandle& destination) {
+bool BlockingCopyFromString(const std::string& source,
+                            const ScopedDataPipeProducerHandle& destination) {
   auto it = source.begin();
   for (;;) {
     void* buffer = nullptr;

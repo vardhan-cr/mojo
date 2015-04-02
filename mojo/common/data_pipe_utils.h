@@ -9,7 +9,6 @@
 
 #include "base/callback_forward.h"
 #include "base/threading/platform_thread.h"
-#include "mojo/common/mojo_common_export.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace base {
@@ -23,35 +22,31 @@ namespace common {
 // Asynchronously copies data from source to the destination file. The given
 // |callback| is run upon completion. File writes will be scheduled to the
 // given |task_runner|.
-void MOJO_COMMON_EXPORT CopyToFile(
-    ScopedDataPipeConsumerHandle source,
-    const base::FilePath& destination,
-    base::TaskRunner* task_runner,
-    const base::Callback<void(bool /*success*/)>& callback);
+void CopyToFile(ScopedDataPipeConsumerHandle source,
+                const base::FilePath& destination,
+                base::TaskRunner* task_runner,
+                const base::Callback<void(bool /*success*/)>& callback);
 
-void MOJO_COMMON_EXPORT
-CopyFromFile(const base::FilePath& source,
-             ScopedDataPipeProducerHandle destination,
-             uint32_t skip,
-             base::TaskRunner* task_runner,
-             const base::Callback<void(bool /*success*/)>& callback);
+void CopyFromFile(const base::FilePath& source,
+                  ScopedDataPipeProducerHandle destination,
+                  uint32_t skip,
+                  base::TaskRunner* task_runner,
+                  const base::Callback<void(bool /*success*/)>& callback);
 
 // Copies the data from |source| into |contents| and returns true on success and
 // false on error.  In case of I/O error, |contents| holds the data that could
 // be read from source before the error occurred.
-bool MOJO_COMMON_EXPORT BlockingCopyToString(
-    ScopedDataPipeConsumerHandle source,
-    std::string* contents);
+bool BlockingCopyToString(ScopedDataPipeConsumerHandle source,
+                          std::string* contents);
 
-bool MOJO_COMMON_EXPORT BlockingCopyFromString(
-    const std::string& source,
-    const ScopedDataPipeProducerHandle& destination);
+bool BlockingCopyFromString(const std::string& source,
+                            const ScopedDataPipeProducerHandle& destination);
 
 // Synchronously copies data from source to the destination file returning true
 // on success and false on error.  In case of an error, |destination| holds the
 // data that could be read from the source before the error occured.
-bool MOJO_COMMON_EXPORT BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
-                                           const base::FilePath& destination);
+bool BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
+                        const base::FilePath& destination);
 
 }  // namespace common
 }  // namespace mojo
