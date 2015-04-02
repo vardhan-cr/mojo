@@ -23,9 +23,11 @@ action("generate_snapshot_bin") {
     "//mojo/public/dart/src/natives.dart",
     "//mojo/public/dart/src/timer_queue.dart",
   ]
-  output = "$target_gen_dir/snapshot_gen.bin"
+  vm_isolate_snapshot = "$target_gen_dir/vm_isolate_snapshot.bin"
+  isolate_snapshot = "$target_gen_dir/isolate_snapshot.bin"
   outputs = [
-    output,
+    vm_isolate_snapshot,
+    isolate_snapshot,
   ]
 
   gen_snapshot_dir =
@@ -41,8 +43,10 @@ action("generate_snapshot_bin") {
     rebase_path("$root_gen_dir"),
     "--script",
     rebase_path("snapshot.dart"),
+    "--vm_output_bin",
+    rebase_path(vm_isolate_snapshot, root_build_dir),
     "--output_bin",
-    rebase_path(output, root_build_dir),
+    rebase_path(isolate_snapshot, root_build_dir),
     "--target_os",
     os,
     "--url_mapping=dart:mojo.builtin,$builtin_path",
@@ -57,7 +61,8 @@ action("generate_snapshot_file") {
   inputs = [
     "//dart/runtime/tools/create_snapshot_file.py",
     "//mojo/dart/embedder/snapshot.cc.tmpl",
-    "$target_gen_dir/snapshot_gen.bin",
+    "$target_gen_dir/vm_isolate_snapshot.bin",
+    "$target_gen_dir/isolate_snapshot.bin",
   ]
   output = "$target_gen_dir/snapshot.cc"
   outputs = [
@@ -66,8 +71,10 @@ action("generate_snapshot_file") {
 
   script = "//dart/runtime/tools/create_snapshot_file.py"
   args = [
+    "--vm_input_bin",
+    rebase_path("$target_gen_dir/vm_isolate_snapshot.bin"),
     "--input_bin",
-    rebase_path("$target_gen_dir/snapshot_gen.bin"),
+    rebase_path("$target_gen_dir/isolate_snapshot.bin"),
     "--input_cc",
     rebase_path("//mojo/dart/embedder/snapshot.cc.tmpl"),
     "--output",

@@ -18,7 +18,8 @@
 namespace mojo {
 namespace dart {
 
-extern const uint8_t* snapshot_buffer;
+extern const uint8_t* vm_isolate_snapshot_buffer;
+extern const uint8_t* isolate_snapshot_buffer;
 
 const char* kDartScheme = "dart:";
 const char* kAsyncLibURL = "dart:async";
@@ -199,9 +200,9 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   DART_CHECK_VALID(result);
 
   DART_CHECK_VALID(Dart_Invoke(
-      builtin_lib, Dart_NewStringFromCString("_setupHooks"), 0, NULL));
+      builtin_lib, Dart_NewStringFromCString("_setupHooks"), 0, nullptr));
   DART_CHECK_VALID(Dart_Invoke(
-      isolate_lib, Dart_NewStringFromCString("_setupHooks"), 0, NULL));
+      isolate_lib, Dart_NewStringFromCString("_setupHooks"), 0, nullptr));
 
   // Setup the 'scheduleImmediate' closure.
   Dart_Handle schedule_immediate_closure = Dart_Invoke(
@@ -244,7 +245,7 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
       builtin_lib,
       Dart_NewStringFromCString("_getUriBaseClosure"),
       0,
-      NULL);
+      nullptr);
   DART_CHECK_VALID(uri_base);
   result = Dart_SetField(core_lib,
                          Dart_NewStringFromCString("_uriBaseClosure"),
@@ -260,10 +261,10 @@ static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
   // No callbacks for service isolate.
   IsolateCallbacks callbacks;
   IsolateData* isolate_data =
-      new IsolateData(NULL, false, callbacks, "", "", "");
+      new IsolateData(nullptr, false, callbacks, "", "", "");
   Dart_Isolate isolate = Dart_CreateIsolate(script_uri,
                                             "main",
-                                            snapshot_buffer,
+                                            isolate_snapshot_buffer,
                                             isolate_data,
                                             error);
   if (isolate == nullptr) {
@@ -288,7 +289,7 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
       script_uri,
       package_root);
   Dart_Isolate isolate = Dart_CreateIsolate(
-      script_uri.c_str(), "main", snapshot_buffer, isolate_data, error);
+      script_uri.c_str(), "main", isolate_snapshot_buffer, isolate_data, error);
   if (isolate == nullptr) {
     delete isolate_data;
     return nullptr;
@@ -301,7 +302,7 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
 
   // Setup the native resolvers for the builtin libraries as they are not set
   // up when the snapshot is read.
-  CHECK(snapshot_buffer != nullptr);
+  CHECK(isolate_snapshot_buffer != nullptr);
   Builtin::PrepareLibrary(Builtin::kBuiltinLibrary);
   Builtin::PrepareLibrary(Builtin::kMojoInternalLibrary);
 
@@ -455,7 +456,8 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   bool result = Dart_SetVMFlags(kNumArgs, args);
   CHECK(result);
 
-  result = Dart_Initialize(IsolateCreateCallback,
+  result = Dart_Initialize(vm_isolate_snapshot_buffer,
+                           IsolateCreateCallback,
                            nullptr,  // Isolate interrupt callback.
                            UnhandledExceptionCallback,
                            IsolateShutdownCallback,
