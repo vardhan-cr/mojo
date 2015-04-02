@@ -52,7 +52,10 @@ void OutOfProcessNativeRunner::Start(
 void OutOfProcessNativeRunner::AppCompleted(int32_t result) {
   DVLOG(2) << "OutOfProcessNativeRunner::AppCompleted(" << result << ")";
 
-  child_process_host_.reset();
+  if (child_process_host_) {
+    child_process_host_->Join();
+    child_process_host_.reset();
+  }
   // This object may be deleted by this callback.
   base::Closure app_completed_callback = app_completed_callback_;
   app_completed_callback_.Reset();
