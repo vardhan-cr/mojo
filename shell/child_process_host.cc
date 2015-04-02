@@ -113,12 +113,7 @@ bool ChildProcessHost::DoLaunch() {
       &child_command_line, &handle_passing_info);
 
   base::LaunchOptions options;
-#if defined(OS_WIN)
-  options.start_hidden = true;
-  options.handles_to_inherit = &handle_passing_info;
-#elif defined(OS_POSIX)
   options.fds_to_remap = &handle_passing_info;
-#endif
   DVLOG(2) << "Launching child with command line: "
            << child_command_line.GetCommandLineString();
   child_process_ = base::LaunchProcess(child_command_line, options);

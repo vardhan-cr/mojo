@@ -73,13 +73,7 @@ void ApplyApplicationArgs(Context* context, const std::string& args) {
 void RunCommandLineApps(Context* context) {
   const auto& command_line = *base::CommandLine::ForCurrentProcess();
   for (const auto& arg : command_line.GetArgs()) {
-    std::string arg2;
-#if defined(OS_WIN)
-    arg2 = base::UTF16ToUTF8(arg);
-#else
-    arg2 = arg;
-#endif
-    GURL url = GetAppURLAndSetArgs(arg2, context);
+    GURL url = GetAppURLAndSetArgs(arg, context);
     if (!url.is_valid())
       return;
     context->Run(url);

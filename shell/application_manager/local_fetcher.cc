@@ -40,13 +40,7 @@ base::FilePath LocalFetcher::UrlToFile(const GURL& url) {
   url::DecodeURLEscapeSequences(url.path().data(),
                                 static_cast<int>(url.path().length()), &output);
   base::string16 decoded_path = base::string16(output.data(), output.length());
-#if defined(OS_WIN)
-  base::TrimString(decoded_path, L"/", &decoded_path);
-  base::FilePath path(decoded_path);
-#else
-  base::FilePath path(base::UTF16ToUTF8(decoded_path));
-#endif
-  return path;
+  return base::FilePath(base::UTF16ToUTF8(decoded_path));
 }
 
 const GURL& LocalFetcher::GetURL() const {

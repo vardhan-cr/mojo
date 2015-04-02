@@ -17,13 +17,10 @@ group("shell") {
   testonly = true
 
   deps = [
+    ":mojo_launcher",
     ":mojo_shell",
     ":tests",
   ]
-
-  if (!is_win) {
-    deps += [ ":mojo_launcher" ]
-  }
 
   if (is_android) {
     deps += [
@@ -178,10 +175,6 @@ source_set("lib") {
   public_deps = [
     ":switches",
   ]
-
-  if (is_win) {
-    deps -= [ "//shell/domain_socket" ]
-  }
 
   if (is_android) {
     sources += [
@@ -416,10 +409,6 @@ source_set("external_application_registrar_connection") {
     "//shell/domain_socket",
     "//url",
   ]
-
-  if (is_win) {
-    deps -= [ "//shell/domain_socket" ]
-  }
 }
 
 # GYP version: mojo/mojo.gyp:mojo_shell_tests
@@ -513,21 +502,6 @@ test("external_application_unittests") {
     "//shell/domain_socket",
     "//shell/domain_socket:tests",
   ]
-
-  if (is_win) {
-    sources -= [
-      "external_application_listener_unittest.cc",
-      "incoming_connection_listener_unittest.cc",
-    ]
-
-    deps -= [
-      ":lib",
-      ":external_application_registrar_connection",
-      ":external_application_registrar_bindings",
-      "//shell/domain_socket",
-      "//shell/domain_socket:tests",
-    ]
-  }
 }
 
 embed_file("embed_pingable") {
