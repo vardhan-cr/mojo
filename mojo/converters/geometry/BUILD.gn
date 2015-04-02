@@ -17,11 +17,8 @@ component("geometry") {
     "//mojo/services/geometry/public/interfaces",
   ]
 
-  defines = [ "MOJO_GEOMETRY_IMPLEMENTATION" ]
-
   sources = [
     "geometry_type_converters.cc",
     "geometry_type_converters.h",
-    "mojo_geometry_export.h",
   ]
 }

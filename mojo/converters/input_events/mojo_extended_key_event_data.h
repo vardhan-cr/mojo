@@ -5,14 +5,12 @@
 #ifndef MOJO_CONVERTERS_INPUT_EVENTS_MOJO_EXTENDED_KEY_EVENT_DATA_H_
 #define MOJO_CONVERTERS_INPUT_EVENTS_MOJO_EXTENDED_KEY_EVENT_DATA_H_
 
-#include "mojo/converters/input_events/mojo_input_events_export.h"
 #include "ui/events/event.h"
 
 namespace mojo {
 
 // A structure to store all mojo specific data on a KeyEvent.
-class MOJO_INPUT_EVENTS_EXPORT MojoExtendedKeyEventData
-    : public ui::ExtendedKeyEventData {
+class MojoExtendedKeyEventData : public ui::ExtendedKeyEventData {
  public:
   MojoExtendedKeyEventData(int32_t windows_key_code,
                            uint16_t text,

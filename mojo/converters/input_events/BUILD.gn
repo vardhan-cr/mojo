@@ -9,10 +9,7 @@ component("input_events") {
     "input_events_type_converters.h",
     "mojo_extended_key_event_data.cc",
     "mojo_extended_key_event_data.h",
-    "mojo_input_events_export.h",
   ]
-
-  defines = [ "MOJO_INPUT_EVENTS_IMPLEMENTATION" ]
 
   deps = [
     "//base",
