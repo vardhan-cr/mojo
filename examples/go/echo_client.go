@@ -10,78 +10,43 @@ import (
 
 	"code.google.com/p/go.mobile/app"
 
+	"mojo/public/go/application"
 	"mojo/public/go/bindings"
 	"mojo/public/go/system"
 
 	"examples/echo/echo"
-	"mojo/public/interfaces/application/application"
-	"mojo/public/interfaces/application/service_provider"
-	"mojo/public/interfaces/application/shell"
 )
 
 //#include "mojo/public/c/system/types.h"
 import "C"
 
-// AppImpl implements mojo interface application.
-type AppImpl struct {
-	shell           *shell.ShellProxy
-	serviceProvider *service_provider.ServiceProviderProxy
-	echo            *echo.EchoProxy
+type EchoClientDelegate struct {
+	echo *echo.EchoProxy
 }
 
-func (impl *AppImpl) Initialize(inShell shell.ShellPointer, inArgs *[]string, inUrl string) error {
-	impl.shell = shell.NewShellProxy(inShell, bindings.GetAsyncWaiter())
-	// Connect to another mojo application.
-	request, pointer := service_provider.CreateMessagePipeForServiceProvider()
-	if err := impl.shell.ConnectToApplication("mojo:echo_server", &request, nil); err != nil {
-		return err
-	}
-	impl.serviceProvider = service_provider.NewServiceProviderProxy(pointer, bindings.GetAsyncWaiter())
-	// Connect to service.
+func (delegate *EchoClientDelegate) Initialize(ctx application.Context) {
 	echoRequest, echoPointer := echo.CreateMessagePipeForEcho()
-	if err := impl.serviceProvider.ConnectToService("mojo::examples::Echo", echoRequest.PassMessagePipe()); err != nil {
-		return err
-	}
-	impl.echo = echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
-	// Send and receive echo request.
-	response, err := impl.echo.EchoString(bindings.StringPointer("Hello Go world!"))
+	ctx.ConnectToApplication("mojo:echo_server").ConnectToService(&echoRequest)
+	delegate.echo = echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
+	response, err := delegate.echo.EchoString(bindings.StringPointer("Hello, Go world!"))
 	if response != nil {
 		fmt.Println(*response)
 	} else {
-		return fmt.Errorf("nil echo response")
+		log.Println(err)
 	}
-	return err
 }
 
-func (impl *AppImpl) AcceptConnection(inRequestorUrl string, inServices *service_provider.ServiceProviderRequest, inExposedServices *service_provider.ServiceProviderPointer, inResolvedUrl string) error {
-	if inServices != nil {
-		inServices.Close()
-	}
-	if inExposedServices != nil {
-		inExposedServices.Close()
-	}
-	return nil
+func (delegate *EchoClientDelegate) AcceptConnection(connection *application.Connection) {
+	connection.Close()
 }
 
-func (impl *AppImpl) RequestQuit() error {
-	impl.echo.Close_proxy()
-	impl.serviceProvider.Close_proxy()
-	impl.shell.Close_proxy()
-	return fmt.Errorf("closed")
+func (delegate *EchoClientDelegate) Quit() {
+	delegate.echo.Close_proxy()
 }
 
 //export MojoMain
 func MojoMain(handle C.MojoHandle) C.MojoResult {
-	appHandle := system.GetCore().AcquireNativeHandle(system.MojoHandle(handle)).ToMessagePipeHandle()
-	appRequest := application.ApplicationRequest{bindings.NewMessagePipeHandleOwner(appHandle)}
-	stub := application.NewApplicationStub(appRequest, &AppImpl{}, bindings.GetAsyncWaiter())
-	for {
-		if err := stub.ServeRequest(); err != nil {
-			log.Println(err)
-			stub.Close()
-			break
-		}
-	}
+	application.Run(&EchoClientDelegate{}, system.MojoHandle(handle))
 	return C.MOJO_RESULT_OK
 }
 

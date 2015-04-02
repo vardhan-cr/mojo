@@ -4,6 +4,17 @@
 
 import("rules.gni")
 
+go_library("application") {
+  sources = [
+    "//mojo/public/go/application/application_impl.go",
+    "//mojo/public/go/application/connection.go",
+  ]
+  deps = [
+    ":bindings",
+    ":system",
+  ]
+}
+
 go_library("bindings") {
   sources = [
     "//mojo/public/go/bindings/async_waiter.go",
@@ -69,6 +80,7 @@ if (is_android) {
   }
   go_test_binary("system_test") {
     sources = [
+      "tests/application_impl_test.go",
       "tests/async_waiter_test.go",
       "tests/encoding_test.go",
       "tests/interface_test.go",
@@ -85,6 +97,7 @@ if (is_android) {
       "c_embedder/c_embedder.h",
     ]
     deps = [
+      ":application",
       ":bindings",
       ":platform_cgo",
       "//mojo/edk/system",

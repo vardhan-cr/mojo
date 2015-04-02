@@ -18,10 +18,9 @@ if (is_android) {
     ]
     deps = [
       "//examples/echo:bindings",
-      "//mojo/go:bindings",
+      "//mojo/go:application",
       "//mojo/go:platform_cgo",
       "//mojo/public/c/system",
-      "//mojo/public/interfaces/application",
       "//mojo/public/platform/native:system",
     ]
   }
@@ -32,10 +31,9 @@ if (is_android) {
     ]
     deps = [
       "//examples/echo:bindings",
-      "//mojo/go:bindings",
+      "//mojo/go:application",
       "//mojo/go:platform_cgo",
       "//mojo/public/c/system",
-      "//mojo/public/interfaces/application",
       "//mojo/public/platform/native:system",
     ]
   }

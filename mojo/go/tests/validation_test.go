@@ -299,6 +299,10 @@ func (v *conformanceValidator) Method11(inParam0 test.StructG) error {
 	return nil
 }
 
+func (v *conformanceValidator) Method12(inParam0 float32) (float32, error) {
+	return 0, nil
+}
+
 func TestConformanceValidation(t *testing.T) {
 	tests := getMatchingTests(listTestFiles(), "conformance_")
 	waiter := bindings.GetAsyncWaiter()
