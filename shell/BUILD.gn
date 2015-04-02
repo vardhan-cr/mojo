@@ -54,6 +54,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
       ":init",
       ":lib",
       "//base",
+      "//base/allocator",
       "//build/config/sanitizers:deps",
       "//mojo/common",
       "//mojo/environment:chromium",

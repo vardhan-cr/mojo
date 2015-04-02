@@ -16,6 +16,7 @@ namespace switches {
 extern const char kArgsFor[];
 extern const char kChildProcess[];
 extern const char kContentHandlers[];
+extern const char kCPUProfile[];
 extern const char kDisableCache[];
 extern const char kDontDeleteOnDownload[];
 extern const char kEnableExternalApplications[];

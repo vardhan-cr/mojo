@@ -12,6 +12,7 @@
 #include "base/base_switches.h"
 #include "base/bind.h"
 #include "base/command_line.h"
+#include "base/debug/profiler.h"
 #include "base/files/file_util.h"
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
@@ -146,6 +147,15 @@ int main(int argc, char** argv) {
               base::trace_event::RECORD_UNTIL_FULL));
     }
 
+    if (command_line.HasSwitch(switches::kCPUProfile)) {
+#if !defined(NDEBUG) || !defined(ENABLE_PROFILING)
+      LOG(ERROR) << "Profiling requires is_debug=false and "
+                 << "enable_profiling=true. Continuing without profiling.";
+// StartProfiling() and StopProfiling() are a no-op.
+#endif
+      base::debug::StartProfiling("mojo_shell.pprof");
+    }
+
     // We want the shell::Context to outlive the MessageLoop so that pipes are
     // all gracefully closed / error-out before we try to shut the Context down.
     mojo::shell::Context shell_context;
@@ -175,6 +185,10 @@ int main(int argc, char** argv) {
 
       // Must be called before |message_loop| is destroyed.
       shell_context.Shutdown();
+    }
+
+    if (command_line.HasSwitch(switches::kCPUProfile)) {
+      base::debug::StopProfiling();
     }
   }
 

@@ -28,6 +28,10 @@ const char kChildProcess[] = "child-process";
 // text/html,mojo:html_viewer,application/bravo,https://abarth.com/bravo
 const char kContentHandlers[] = "content-handlers";
 
+// Starts sampling based CPU profiling when the shell starts up. The profile is
+// written to disk when the shell exits.
+const char kCPUProfile[] = "cpu-profile";
+
 // Force dynamically loaded apps / services to be loaded irrespective of cache
 // instructions.
 const char kDisableCache[] = "disable-cache";
@@ -83,6 +87,7 @@ const char* kSwitchArray[] = {kV,
                               kArgsFor,
                               // |kChildProcess| not for user use.
                               kContentHandlers,
+                              kCPUProfile,
                               kDisableCache,
                               kDontDeleteOnDownload,
                               kEnableExternalApplications,
