@@ -15,69 +15,45 @@ from utils import system
 
 import patch
 
-# These directories are snapshotted from chromium without modifications.
-dirs_to_snapshot = [
+# //base and its dependencies
+base_deps = [
     "base",
-    "build",
-    "cc",
-    "gpu",
-    "sandbox/linux",
-    "skia",
     "testing",
-    "third_party/android_testrunner",
     "third_party/ashmem",
-    "third_party/binutils",
-    "third_party/boringssl",
-    "third_party/brotli",
-    "third_party/checkstyle",
-    "third_party/cython",
-    "third_party/fontconfig",
-    "third_party/freetype2",
-    "third_party/harfbuzz-ng",
-    "third_party/iccjpeg",
-    "third_party/jinja2",
-    "third_party/jstemplate",
-    "third_party/khronos",
-    "third_party/libXNVCtrl",
     "third_party/libevent",
-    "third_party/libjpeg",
-    "third_party/libpng",
-    "third_party/libxml",
-    "third_party/markupsafe",
-    "third_party/mesa",
+    "third_party/libxml", # via //base/test
     "third_party/modp_b64",
-    "third_party/ots",
-    "third_party/ply",
-    "third_party/protobuf",
-    "third_party/pymock",
-    "third_party/qcms",
-    "third_party/re2",
-    "third_party/sfntly",
-    "third_party/smhasher",
     "third_party/tcmalloc",
-    "third_party/yasm",
-    "third_party/zlib",
+]
+
+# //build and its dependencies
+build_deps = [
+    "build",
+    "third_party/android_testrunner",
+    "third_party/binutils",
+    "third_party/pymock",
     "tools/android",
     "tools/clang",
-    "tools/gdb",
     "tools/generate_library_loader",
-    "tools/git",
     "tools/gritsettings",
-    "tools/idl_parser",
-    "tools/json_comment_eater",
-    "tools/linux",
-    "tools/msan",
-    "tools/protoc_wrapper",
     "tools/relocation_packer",
     "tools/valgrind",
-    "tools/vim",
-    "tools/xdisplaycheck",
-    "url",
-    "ui/gl",
-    ]
+]
 
-files_to_copy = ["sandbox/sandbox_export.h",
-    ".clang-format"]
+# //sandbox/linux and its dependencies
+sandbox_deps = [
+    "sandbox/linux",
+]
+
+# things used from //mojo/public
+mojo_sdk_deps = [
+    "third_party/cython",
+]
+
+# These directories are snapshotted from chromium without modifications.
+dirs_to_snapshot = base_deps + build_deps + sandbox_deps + mojo_sdk_deps
+
+files_to_copy = [ "sandbox/sandbox_export.h" ]
 
 # The contents of these files before the roll will be preserved after the roll,
 # even though they live in directories rolled in from Chromium.
