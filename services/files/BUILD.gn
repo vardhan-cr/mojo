@@ -40,6 +40,7 @@ mojo_native_application("apptests") {
   sources = [
     "directory_impl_unittest.cc",
     "file_impl_unittest.cc",
+    "files_test_base.cc",
     "files_test_base.h",
   ]
 

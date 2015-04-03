@@ -6,11 +6,8 @@
 #define SERVICES_FILES_FILES_TEST_BASE_H_
 
 #include "base/macros.h"
-#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
-#include "mojo/services/files/public/interfaces/directory.mojom.h"
 #include "mojo/services/files/public/interfaces/files.mojom.h"
-#include "mojo/services/files/public/interfaces/types.mojom.h"
 
 namespace mojo {
 namespace files {
@@ -84,24 +81,15 @@ Callback<void(T1, T2)> Capture(T1* t1, T2* t2) {
 
 class FilesTestBase : public test::ApplicationTestBase {
  public:
-  FilesTestBase() {}
-  ~FilesTestBase() override {}
+  FilesTestBase();
+  ~FilesTestBase() override;
 
-  void SetUp() override {
-    test::ApplicationTestBase::SetUp();
-    application_impl()->ConnectToService("mojo:files", &files_);
-  }
+  void SetUp() override;
 
  protected:
   // Note: This has an out parameter rather than returning the |DirectoryPtr|,
   // since |ASSERT_...()| doesn't work with return values.
-  void GetTemporaryRoot(DirectoryPtr* directory) {
-    Error error = ERROR_INTERNAL;
-    files()->OpenFileSystem(FILE_SYSTEM_TEMPORARY, GetProxy(directory),
-                            Capture(&error));
-    ASSERT_TRUE(files().WaitForIncomingMethodCall());
-    ASSERT_EQ(ERROR_OK, error);
-  }
+  void GetTemporaryRoot(DirectoryPtr* directory);
 
   FilesPtr& files() { return files_; }
 

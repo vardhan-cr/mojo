@@ -5,8 +5,6 @@
 #ifndef SERVICES_FILES_C_LIB_REAL_ERRNO_IMPL_H_
 #define SERVICES_FILES_C_LIB_REAL_ERRNO_IMPL_H_
 
-#include <errno.h>
-
 #include "mojo/public/cpp/system/macros.h"
 #include "services/files/c/lib/errno_impl.h"
 
@@ -20,8 +18,8 @@ class RealErrnoImpl : public ErrnoImpl {
   RealErrnoImpl() {}
   ~RealErrnoImpl() override {}
 
-  int Get() const override { return errno; }
-  void Set(int error) override { errno = error; }
+  int Get() const override;
+  void Set(int error) override;
 
  private:
   MOJO_DISALLOW_COPY_AND_ASSIGN(RealErrnoImpl);

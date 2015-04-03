@@ -14,6 +14,8 @@ ReaperBinding::ReaperBinding(const GURL& caller_url,
     : caller_url_(caller_url), impl_(impl), binding_(this, request.Pass()) {
 }
 
+ReaperBinding::~ReaperBinding() = default;
+
 void ReaperBinding::GetApplicationSecret(
     const mojo::Callback<void(uint64)>& callback) {
   impl_->GetApplicationSecret(caller_url_, callback);

@@ -17,11 +17,8 @@ class MockErrnoImpl : public ErrnoImpl {
   ~MockErrnoImpl() override {}
 
   // |ErrnoImpl| implementation:
-  int Get() const override { return last_error_; }
-  void Set(int error) override {
-    last_error_ = error;
-    was_set_ = true;
-  }
+  int Get() const override;
+  void Set(int error) override;
 
   // Reset to initial state (with specified value for |last_error_|).
   void Reset(int error) {

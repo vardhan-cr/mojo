@@ -55,7 +55,7 @@ class FileImpl : public File {
   void AsBuffer(const AsBufferCallback& callback) override;
   void Ioctl(uint32_t request,
              Array<uint32_t> in_values,
-             const IoctlCallback& callback);
+             const IoctlCallback& callback) override;
 
  private:
   StrongBinding<File> binding_;

@@ -18,7 +18,7 @@ namespace {
 class TestFDImpl : public FDImpl {
  public:
   TestFDImpl() : FDImpl(nullptr) {}
-  virtual ~TestFDImpl() {}
+  ~TestFDImpl() override {}
 
   // |FDImpl| implementation:
   bool Close() override { return false; }

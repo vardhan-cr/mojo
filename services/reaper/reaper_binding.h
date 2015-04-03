@@ -24,7 +24,7 @@ class ReaperBinding : public Reaper {
                 mojo::InterfaceRequest<Reaper> request);
 
  protected:
-  ~ReaperBinding() override = default;
+  ~ReaperBinding() override;
 
  private:
   // Reaper

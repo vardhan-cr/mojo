@@ -14,6 +14,8 @@ TransferBinding::TransferBinding(uint32 node_id,
     : node_id_(node_id), impl_(impl), binding_(this, request.Pass()) {
 }
 
+TransferBinding::~TransferBinding() = default;
+
 void TransferBinding::Complete(uint64 dest_app_secret, uint32 dest_node_id) {
   impl_->CompleteTransfer(node_id_, dest_app_secret, dest_node_id);
 }

@@ -22,7 +22,7 @@ class TransferBinding : public Transfer {
                   mojo::InterfaceRequest<Transfer> request);
 
  protected:
-  ~TransferBinding() override = default;
+  ~TransferBinding() override;
 
  private:
   // Transfer

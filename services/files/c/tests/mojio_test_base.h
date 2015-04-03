@@ -5,8 +5,6 @@
 #ifndef SERVICES_FILES_C_TESTS_MOJIO_TEST_BASE_H_
 #define SERVICES_FILES_C_TESTS_MOJIO_TEST_BASE_H_
 
-#include "mojo/public/cpp/environment/logging.h"
-#include "services/files/c/lib/singletons.h"
 #include "services/files/c/tests/mojio_impl_test_base.h"
 
 namespace mojio {
@@ -19,24 +17,8 @@ class MojioTestBase : public MojioImplTestBase {
   MojioTestBase() {}
   ~MojioTestBase() override {}
 
-  void SetUp() override {
-    MojioImplTestBase::SetUp();
-
-    // Explicitly set up the singletons.
-    MOJO_CHECK(singletons::GetErrnoImpl());
-    MOJO_CHECK(singletons::GetFDTable());
-    singletons::SetCurrentWorkingDirectory(directory().Pass());
-    MOJO_CHECK(singletons::GetCurrentWorkingDirectory());
-  }
-
-  void TearDown() override {
-    // Explicitly tear down the singletons.
-    singletons::ResetCurrentWorkingDirectory();
-    singletons::ResetFDTable();
-    singletons::ResetErrnoImpl();
-
-    MojioImplTestBase::TearDown();
-  }
+  void SetUp() override;
+  void TearDown() override;
 
  private:
   MOJO_DISALLOW_COPY_AND_ASSIGN(MojioTestBase);

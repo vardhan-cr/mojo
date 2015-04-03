@@ -76,10 +76,11 @@ class NativeViewportImpl : public mojo::NativeViewport,
   RequestMetricsCallback metrics_callback_;
   mojo::NativeViewportEventDispatcherPtr event_dispatcher_;
   mojo::Binding<mojo::NativeViewport> binding_;
-  base::WeakPtrFactory<NativeViewportImpl> weak_factory_;
 
   // Set of pointer_ids we've sent a move to and are waiting on an ack.
   std::set<int32> pointers_waiting_on_ack_;
+
+  base::WeakPtrFactory<NativeViewportImpl> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewportImpl);
 };

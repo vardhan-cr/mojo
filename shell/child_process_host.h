@@ -29,7 +29,7 @@ class Context;
 class ChildProcessHost : public ErrorHandler {
  public:
   explicit ChildProcessHost(Context* context);
-  virtual ~ChildProcessHost();
+  ~ChildProcessHost() override;
 
   // |Start()|s the child process; calls |DidStart()| (on the thread on which
   // |Start()| was called) when the child has been started (or failed to start).
