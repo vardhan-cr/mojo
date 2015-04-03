@@ -62,7 +62,7 @@ FilesImpl::~FilesImpl() {
 
 void FilesImpl::OpenFileSystem(FileSystem file_system,
                                InterfaceRequest<Directory> directory,
-                               const Callback<void(Error)>& callback) {
+                               const OpenFileSystemCallback& callback) {
   base::ScopedFD dir_fd;
   // Set only if the |DirectoryImpl| will own a temporary directory.
   scoped_ptr<base::ScopedTempDir> temp_dir;

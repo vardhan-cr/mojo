@@ -106,8 +106,7 @@ DirectoryImpl::DirectoryImpl(InterfaceRequest<Directory> request,
 DirectoryImpl::~DirectoryImpl() {
 }
 
-void DirectoryImpl::Read(
-    const Callback<void(Error, Array<DirectoryEntryPtr>)>& callback) {
+void DirectoryImpl::Read(const ReadCallback& callback) {
   static const size_t kMaxReadCount = 1000;
 
   DCHECK(dir_fd_.is_valid());
@@ -171,15 +170,14 @@ void DirectoryImpl::Read(
   callback.Run(ERROR_OK, result.Pass());
 }
 
-void DirectoryImpl::Stat(
-    const Callback<void(Error, FileInformationPtr)>& callback) {
+void DirectoryImpl::Stat(const StatCallback& callback) {
   DCHECK(dir_fd_.is_valid());
   StatFD(dir_fd_.get(), FILE_TYPE_DIRECTORY, callback);
 }
 
 void DirectoryImpl::Touch(TimespecOrNowPtr atime,
                           TimespecOrNowPtr mtime,
-                          const Callback<void(Error)>& callback) {
+                          const TouchCallback& callback) {
   DCHECK(dir_fd_.is_valid());
   TouchFD(dir_fd_.get(), atime.Pass(), mtime.Pass(), callback);
 }
@@ -188,7 +186,7 @@ void DirectoryImpl::Touch(TimespecOrNowPtr atime,
 void DirectoryImpl::OpenFile(const String& path,
                              InterfaceRequest<File> file,
                              uint32_t open_flags,
-                             const Callback<void(Error)>& callback) {
+                             const OpenFileCallback& callback) {
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 
@@ -233,7 +231,7 @@ void DirectoryImpl::OpenFile(const String& path,
 void DirectoryImpl::OpenDirectory(const String& path,
                                   InterfaceRequest<Directory> directory,
                                   uint32_t open_flags,
-                                  const Callback<void(Error)>& callback) {
+                                  const OpenDirectoryCallback& callback) {
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 
@@ -281,7 +279,7 @@ void DirectoryImpl::OpenDirectory(const String& path,
 
 void DirectoryImpl::Rename(const String& path,
                            const String& new_path,
-                           const Callback<void(Error)>& callback) {
+                           const RenameCallback& callback) {
   DCHECK(!path.is_null());
   DCHECK(!new_path.is_null());
   DCHECK(dir_fd_.is_valid());
@@ -307,7 +305,7 @@ void DirectoryImpl::Rename(const String& path,
 
 void DirectoryImpl::Delete(const String& path,
                            uint32_t delete_flags,
-                           const Callback<void(Error)>& callback) {
+                           const DeleteCallback& callback) {
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 

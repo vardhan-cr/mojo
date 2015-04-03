@@ -34,7 +34,7 @@ FileImpl::FileImpl(InterfaceRequest<File> request, base::ScopedFD file_fd)
 FileImpl::~FileImpl() {
 }
 
-void FileImpl::Close(const Callback<void(Error)>& callback) {
+void FileImpl::Close(const CloseCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -62,7 +62,7 @@ void FileImpl::Close(const Callback<void(Error)>& callback) {
 void FileImpl::Read(uint32_t num_bytes_to_read,
                     int64_t offset,
                     Whence whence,
-                    const Callback<void(Error, Array<uint8_t>)>& callback) {
+                    const ReadCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED, Array<uint8_t>());
     return;
@@ -111,7 +111,7 @@ void FileImpl::Read(uint32_t num_bytes_to_read,
 void FileImpl::Write(Array<uint8_t> bytes_to_write,
                      int64_t offset,
                      Whence whence,
-                     const Callback<void(Error, uint32_t)>& callback) {
+                     const WriteCallback& callback) {
   DCHECK(!bytes_to_write.is_null());
 
   if (!file_fd_.is_valid()) {
@@ -167,7 +167,7 @@ void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
                             int64_t offset,
                             Whence whence,
                             int64_t num_bytes_to_read,
-                            const Callback<void(Error)>& callback) {
+                            const ReadToStreamCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -189,7 +189,7 @@ void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
 void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
                                int64_t offset,
                                Whence whence,
-                               const Callback<void(Error)>& callback) {
+                               const WriteFromStreamCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -208,13 +208,13 @@ void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
   callback.Run(ERROR_UNIMPLEMENTED);
 }
 
-void FileImpl::Tell(const Callback<void(Error, int64_t)>& callback) {
+void FileImpl::Tell(const TellCallback& callback) {
   Seek(0, WHENCE_FROM_CURRENT, callback);
 }
 
 void FileImpl::Seek(int64_t offset,
                     Whence whence,
-                    const Callback<void(Error, int64_t)>& callback) {
+                    const SeekCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED, 0);
     return;
@@ -238,7 +238,7 @@ void FileImpl::Seek(int64_t offset,
   callback.Run(ERROR_OK, static_cast<int64>(position));
 }
 
-void FileImpl::Stat(const Callback<void(Error, FileInformationPtr)>& callback) {
+void FileImpl::Stat(const StatCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED, nullptr);
     return;
@@ -246,7 +246,7 @@ void FileImpl::Stat(const Callback<void(Error, FileInformationPtr)>& callback) {
   StatFD(file_fd_.get(), FILE_TYPE_REGULAR_FILE, callback);
 }
 
-void FileImpl::Truncate(int64_t size, const Callback<void(Error)>& callback) {
+void FileImpl::Truncate(int64_t size, const TruncateCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -270,7 +270,7 @@ void FileImpl::Truncate(int64_t size, const Callback<void(Error)>& callback) {
 
 void FileImpl::Touch(TimespecOrNowPtr atime,
                      TimespecOrNowPtr mtime,
-                     const Callback<void(Error)>& callback) {
+                     const TouchCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -278,8 +278,7 @@ void FileImpl::Touch(TimespecOrNowPtr atime,
   TouchFD(file_fd_.get(), atime.Pass(), mtime.Pass(), callback);
 }
 
-void FileImpl::Dup(InterfaceRequest<File> file,
-                   const Callback<void(Error)>& callback) {
+void FileImpl::Dup(InterfaceRequest<File> file, const DupCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -297,7 +296,7 @@ void FileImpl::Dup(InterfaceRequest<File> file,
 
 void FileImpl::Reopen(InterfaceRequest<File> file,
                       uint32_t open_flags,
-                      const Callback<void(Error)>& callback) {
+                      const ReopenCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED);
     return;
@@ -308,8 +307,7 @@ void FileImpl::Reopen(InterfaceRequest<File> file,
   callback.Run(ERROR_UNIMPLEMENTED);
 }
 
-void FileImpl::AsBuffer(
-    const Callback<void(Error, ScopedSharedBufferHandle)>& callback) {
+void FileImpl::AsBuffer(const AsBufferCallback& callback) {
   if (!file_fd_.is_valid()) {
     callback.Run(ERROR_CLOSED, ScopedSharedBufferHandle());
     return;

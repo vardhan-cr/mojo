@@ -24,7 +24,7 @@ class FilesImpl : public Files {
   // |Files| implementation:
   void OpenFileSystem(FileSystem file_system,
                       InterfaceRequest<Directory> directory,
-                      const Callback<void(Error)>& callback) override;
+                      const OpenFileSystemCallback& callback) override;
 
  private:
   StrongBinding<Files> binding_;

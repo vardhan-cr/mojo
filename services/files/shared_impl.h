@@ -17,15 +17,15 @@ namespace files {
 // Stats the given FD (which must be valid), calling |callback| appropriately.
 // The type in the |FileInformation| given to the callback will be assigned from
 // |type|.
-void StatFD(int fd,
-            FileType type,
-            const Callback<void(Error, FileInformationPtr)>& callback);
+using StatFDCallback = Callback<void(Error, FileInformationPtr)>;
+void StatFD(int fd, FileType type, const StatFDCallback& callback);
 
 // Touches the given FD (which must be valid), calling |callback| appropriately.
+using TouchFDCallback = Callback<void(Error)>;
 void TouchFD(int fd,
              TimespecOrNowPtr atime,
              TimespecOrNowPtr mtime,
-             const Callback<void(Error)>& callback);
+             const TouchFDCallback& callback);
 
 }  // namespace files
 }  // namespace mojo

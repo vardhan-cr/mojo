@@ -21,40 +21,38 @@ class FileImpl : public File {
   ~FileImpl() override;
 
   // |File| implementation:
-  void Close(const Callback<void(Error)>& callback) override;
+  void Close(const CloseCallback& callback) override;
   void Read(uint32_t num_bytes_to_read,
             int64_t offset,
             Whence whence,
-            const Callback<void(Error, Array<uint8_t>)>& callback) override;
+            const ReadCallback& callback) override;
   void Write(Array<uint8_t> bytes_to_write,
              int64_t offset,
              Whence whence,
-             const Callback<void(Error, uint32_t)>& callback) override;
+             const WriteCallback& callback) override;
   void ReadToStream(ScopedDataPipeProducerHandle source,
                     int64_t offset,
                     Whence whence,
                     int64_t num_bytes_to_read,
-                    const Callback<void(Error)>& callback) override;
+                    const ReadToStreamCallback& callback) override;
   void WriteFromStream(ScopedDataPipeConsumerHandle sink,
                        int64_t offset,
                        Whence whence,
-                       const Callback<void(Error)>& callback) override;
-  void Tell(const Callback<void(Error, int64_t)>& callback) override;
+                       const WriteFromStreamCallback& callback) override;
+  void Tell(const TellCallback& callback) override;
   void Seek(int64_t offset,
             Whence whence,
-            const Callback<void(Error, int64_t)>& callback) override;
-  void Stat(const Callback<void(Error, FileInformationPtr)>& callback) override;
-  void Truncate(int64_t size, const Callback<void(Error)>& callback) override;
+            const SeekCallback& callback) override;
+  void Stat(const StatCallback& callback) override;
+  void Truncate(int64_t size, const TruncateCallback& callback) override;
   void Touch(TimespecOrNowPtr atime,
              TimespecOrNowPtr mtime,
-             const Callback<void(Error)>& callback) override;
-  void Dup(InterfaceRequest<File> file,
-           const Callback<void(Error)>& callback) override;
+             const TouchCallback& callback) override;
+  void Dup(InterfaceRequest<File> file, const DupCallback& callback) override;
   void Reopen(InterfaceRequest<File> file,
               uint32_t open_flags,
-              const Callback<void(Error)>& callback) override;
-  void AsBuffer(
-      const Callback<void(Error, ScopedSharedBufferHandle)>& callback) override;
+              const ReopenCallback& callback) override;
+  void AsBuffer(const AsBufferCallback& callback) override;
 
  private:
   StrongBinding<File> binding_;

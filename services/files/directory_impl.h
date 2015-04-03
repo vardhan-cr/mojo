@@ -29,26 +29,25 @@ class DirectoryImpl : public Directory {
   ~DirectoryImpl() override;
 
   // |Directory| implementation:
-  void Read(
-      const Callback<void(Error, Array<DirectoryEntryPtr>)>& callback) override;
-  void Stat(const Callback<void(Error, FileInformationPtr)>& callback) override;
+  void Read(const ReadCallback& callback) override;
+  void Stat(const StatCallback& callback) override;
   void Touch(TimespecOrNowPtr atime,
              TimespecOrNowPtr mtime,
-             const Callback<void(Error)>& callback) override;
+             const TouchCallback& callback) override;
   void OpenFile(const String& path,
                 InterfaceRequest<File> file,
                 uint32_t open_flags,
-                const Callback<void(Error)>& callback) override;
+                const OpenFileCallback& callback) override;
   void OpenDirectory(const String& path,
                      InterfaceRequest<Directory> directory,
                      uint32_t open_flags,
-                     const Callback<void(Error)>& callback) override;
+                     const OpenDirectoryCallback& callback) override;
   void Rename(const String& path,
               const String& new_path,
-              const Callback<void(Error)>& callback) override;
+              const RenameCallback& callback) override;
   void Delete(const String& path,
               uint32_t delete_flags,
-              const Callback<void(Error)>& callback) override;
+              const DeleteCallback& callback) override;
 
  private:
   StrongBinding<Directory> binding_;

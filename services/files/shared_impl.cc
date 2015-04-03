@@ -17,9 +17,7 @@
 namespace mojo {
 namespace files {
 
-void StatFD(int fd,
-            FileType type,
-            const Callback<void(Error, FileInformationPtr)>& callback) {
+void StatFD(int fd, FileType type, const StatFDCallback& callback) {
   DCHECK_NE(fd, -1);
 
   struct stat buf;
@@ -58,7 +56,7 @@ void StatFD(int fd,
 void TouchFD(int fd,
              TimespecOrNowPtr atime,
              TimespecOrNowPtr mtime,
-             const Callback<void(Error)>& callback) {
+             const TouchFDCallback& callback) {
   DCHECK_NE(fd, -1);
 
   struct timespec times[2];
