@@ -6,31 +6,15 @@ source_set("base") {
   visibility = [ "//cc" ]
 
   sources = [
+    "blocking_task_runner.cc",
+    "blocking_task_runner.h",
     "completion_event.h",
-    "delayed_unique_notifier.cc",
-    "delayed_unique_notifier.h",
-    "invalidation_region.cc",
-    "invalidation_region.h",
     "math_util.cc",
     "math_util.h",
-    "ref_counted_managed.h",
-    "region.cc",
-    "region.h",
-    "rolling_time_delta_history.cc",
-    "rolling_time_delta_history.h",
-    "scoped_ptr_algorithm.h",
     "scoped_ptr_deque.h",
     "scoped_ptr_vector.h",
-    "simple_enclosed_region.cc",
-    "simple_enclosed_region.h",
     "switches.cc",
     "switches.h",
-    "synced_property.h",
-    "tiling_data.cc",
-    "tiling_data.h",
-    "time_util.h",
-    "unique_notifier.cc",
-    "unique_notifier.h",
     "util.h",
   ]
 

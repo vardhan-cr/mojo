@@ -11,14 +11,13 @@
 #include "base/time/time.h"
 #include "base/trace_event/trace_event_argument.h"
 #include "base/values.h"
-#include "cc/base/cc_export.h"
 #include "cc/debug/traced_value.h"
 
 namespace cc {
 
-struct CC_EXPORT RenderingStats {
+struct RenderingStats {
   // Stores a sequence of TimeDelta objects.
-  class CC_EXPORT TimeDeltaList {
+  class TimeDeltaList {
    public:
     TimeDeltaList();
     ~TimeDeltaList();

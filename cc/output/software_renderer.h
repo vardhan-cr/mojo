@@ -6,7 +6,6 @@
 #define CC_OUTPUT_SOFTWARE_RENDERER_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/direct_renderer.h"
 
@@ -25,7 +24,7 @@ class SolidColorDrawQuad;
 class TextureDrawQuad;
 class TileDrawQuad;
 
-class CC_EXPORT SoftwareRenderer : public DirectRenderer {
+class SoftwareRenderer : public DirectRenderer {
  public:
   static scoped_ptr<SoftwareRenderer> Create(
       RendererClient* client,

@@ -7,8 +7,6 @@
 #ifndef CC_BASE_SWITCHES_H_
 #define CC_BASE_SWITCHES_H_
 
-#include "cc/base/cc_export.h"
-
 // Since cc is used from the render process, anything that goes here also needs
 // to be added to render_process_host_impl.cc.
 
@@ -16,45 +14,45 @@ namespace cc {
 namespace switches {
 
 // Switches for the renderer compositor only.
-CC_EXPORT extern const char kDisableThreadedAnimation[];
-CC_EXPORT extern const char kDisableCompositedAntialiasing[];
-CC_EXPORT extern const char kDisableMainFrameBeforeActivation[];
-CC_EXPORT extern const char kEnableMainFrameBeforeActivation[];
-CC_EXPORT extern const char kJankInsteadOfCheckerboard[];
-CC_EXPORT extern const char kTopControlsHideThreshold[];
-CC_EXPORT extern const char kTopControlsShowThreshold[];
-CC_EXPORT extern const char kSlowDownRasterScaleFactor[];
-CC_EXPORT extern const char kCompositeToMailbox[];
-CC_EXPORT extern const char kMaxTilesForInterestArea[];
-CC_EXPORT extern const char kMaxUnusedResourceMemoryUsagePercentage[];
-CC_EXPORT extern const char kEnablePinchVirtualViewport[];
-CC_EXPORT extern const char kDisablePinchVirtualViewport[];
-CC_EXPORT extern const char kStrictLayerPropertyChangeChecking[];
-CC_EXPORT extern const char kEnablePropertyTreeVerification[];
+extern const char kDisableThreadedAnimation[];
+extern const char kDisableCompositedAntialiasing[];
+extern const char kDisableMainFrameBeforeActivation[];
+extern const char kEnableMainFrameBeforeActivation[];
+extern const char kJankInsteadOfCheckerboard[];
+extern const char kTopControlsHideThreshold[];
+extern const char kTopControlsShowThreshold[];
+extern const char kSlowDownRasterScaleFactor[];
+extern const char kCompositeToMailbox[];
+extern const char kMaxTilesForInterestArea[];
+extern const char kMaxUnusedResourceMemoryUsagePercentage[];
+extern const char kEnablePinchVirtualViewport[];
+extern const char kDisablePinchVirtualViewport[];
+extern const char kStrictLayerPropertyChangeChecking[];
+extern const char kEnablePropertyTreeVerification[];
 
 // Switches for both the renderer and ui compositors.
-CC_EXPORT extern const char kUIDisablePartialSwap[];
-CC_EXPORT extern const char kEnableGpuBenchmarking[];
+extern const char kUIDisablePartialSwap[];
+extern const char kEnableGpuBenchmarking[];
 
 // Debug visualizations.
-CC_EXPORT extern const char kShowCompositedLayerBorders[];
-CC_EXPORT extern const char kUIShowCompositedLayerBorders[];
-CC_EXPORT extern const char kShowFPSCounter[];
-CC_EXPORT extern const char kUIShowFPSCounter[];
-CC_EXPORT extern const char kShowLayerAnimationBounds[];
-CC_EXPORT extern const char kUIShowLayerAnimationBounds[];
-CC_EXPORT extern const char kShowPropertyChangedRects[];
-CC_EXPORT extern const char kUIShowPropertyChangedRects[];
-CC_EXPORT extern const char kShowSurfaceDamageRects[];
-CC_EXPORT extern const char kUIShowSurfaceDamageRects[];
-CC_EXPORT extern const char kShowScreenSpaceRects[];
-CC_EXPORT extern const char kUIShowScreenSpaceRects[];
-CC_EXPORT extern const char kShowReplicaScreenSpaceRects[];
-CC_EXPORT extern const char kUIShowReplicaScreenSpaceRects[];
+extern const char kShowCompositedLayerBorders[];
+extern const char kUIShowCompositedLayerBorders[];
+extern const char kShowFPSCounter[];
+extern const char kUIShowFPSCounter[];
+extern const char kShowLayerAnimationBounds[];
+extern const char kUIShowLayerAnimationBounds[];
+extern const char kShowPropertyChangedRects[];
+extern const char kUIShowPropertyChangedRects[];
+extern const char kShowSurfaceDamageRects[];
+extern const char kUIShowSurfaceDamageRects[];
+extern const char kShowScreenSpaceRects[];
+extern const char kUIShowScreenSpaceRects[];
+extern const char kShowReplicaScreenSpaceRects[];
+extern const char kUIShowReplicaScreenSpaceRects[];
 
 // Unit test related.
-CC_EXPORT extern const char kCCLayerTreeTestNoTimeout[];
-CC_EXPORT extern const char kCCRebaselinePixeltests[];
+extern const char kCCLayerTreeTestNoTimeout[];
+extern const char kCCRebaselinePixeltests[];
 
 }  // namespace switches
 }  // namespace cc

@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/resource_format.h"
 #include "gpu/command_buffer/common/mailbox_holder.h"
 #include "ui/gfx/geometry/size.h"
@@ -20,7 +19,7 @@ typedef std::vector<ReturnedResource> ReturnedResourceArray;
 struct TransferableResource;
 typedef std::vector<TransferableResource> TransferableResourceArray;
 
-struct CC_EXPORT TransferableResource {
+struct TransferableResource {
   TransferableResource();
   ~TransferableResource();
 

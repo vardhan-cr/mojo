@@ -12,7 +12,6 @@
 #include "base/single_thread_task_runner.h"
 #include "base/trace_event/trace_event.h"
 #include "base/trace_event/trace_event_argument.h"
-#include "cc/debug/devtools_instrumentation.h"
 #include "cc/debug/traced_value.h"
 #include "cc/scheduler/delay_based_time_source.h"
 #include "ui/gfx/frame_time.h"
@@ -535,7 +534,6 @@ void Scheduler::BeginImplFrame(const BeginFrameArgs& args) {
   }
 
   state_machine_.OnBeginImplFrame();
-  devtools_instrumentation::DidBeginFrame(layer_tree_host_id_);
   client_->WillBeginImplFrame(begin_impl_frame_args_);
 
   ProcessScheduledActions();

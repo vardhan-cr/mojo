@@ -27,7 +27,6 @@ class Size;
 
 namespace cc {
 
-class BlockingTaskRunner;
 class DirectRenderer;
 class DisplayClient;
 class OutputSurface;
@@ -82,7 +81,6 @@ class CC_SURFACES_EXPORT Display : public OutputSurfaceClient,
       const gfx::Rect& viewport_rect_for_tile_priority,
       const gfx::Transform& transform_for_tile_priority,
       bool resourceless_software_draw) override {}
-  void SetMemoryPolicy(const ManagedMemoryPolicy& policy) override;
   void SetTreeActivationCallback(const base::Closure& callback) override {}
 
   // RendererClient implementation.
@@ -106,7 +104,6 @@ class CC_SURFACES_EXPORT Display : public OutputSurfaceClient,
   scoped_ptr<ResourceProvider> resource_provider_;
   scoped_ptr<SurfaceAggregator> aggregator_;
   scoped_ptr<DirectRenderer> renderer_;
-  scoped_ptr<BlockingTaskRunner> blocking_main_thread_task_runner_;
   scoped_ptr<TextureMailboxDeleter> texture_mailbox_deleter_;
   std::vector<ui::LatencyInfo> stored_latency_info_;
 

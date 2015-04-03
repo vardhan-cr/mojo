@@ -6,11 +6,10 @@
 #define CC_QUADS_LARGEST_DRAW_QUAD_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
-CC_EXPORT size_t LargestDrawQuadSize();
+size_t LargestDrawQuadSize();
 
 }  // namespace cc
 

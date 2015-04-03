@@ -8,7 +8,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/time/time.h"
 #include "base/values.h"
-#include "cc/base/cc_export.h"
 
 namespace base {
 namespace trace_event {
@@ -18,7 +17,7 @@ class ConvertableToTraceFormat;
 
 namespace cc {
 
-class CC_EXPORT SchedulerSettings {
+class SchedulerSettings {
  public:
   SchedulerSettings();
   ~SchedulerSettings();

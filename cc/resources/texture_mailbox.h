@@ -8,7 +8,6 @@
 #include <string>
 
 #include "base/memory/shared_memory.h"
-#include "cc/base/cc_export.h"
 #include "gpu/command_buffer/common/mailbox_holder.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -17,7 +16,7 @@ class SharedBitmap;
 
 // TODO(skaslev, danakj) Rename this class more apropriately since now it
 // can hold a shared memory resource as well as a texture mailbox.
-class CC_EXPORT TextureMailbox {
+class TextureMailbox {
  public:
   TextureMailbox();
   explicit TextureMailbox(const gpu::MailboxHolder& mailbox_holder);

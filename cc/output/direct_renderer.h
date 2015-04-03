@@ -8,13 +8,11 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/containers/scoped_ptr_hash_map.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_deque.h"
 #include "cc/output/overlay_processor.h"
 #include "cc/output/renderer.h"
 #include "cc/resources/resource_provider.h"
 #include "cc/resources/scoped_resource.h"
-#include "cc/resources/task_graph_runner.h"
 #include "ui/gfx/geometry/quad_f.h"
 
 namespace cc {
@@ -25,7 +23,7 @@ class ResourceProvider;
 // This is the base class for code shared between the GL and software
 // renderer implementations.  "Direct" refers to the fact that it does not
 // delegate rendering to another compositor.
-class CC_EXPORT DirectRenderer : public Renderer {
+class DirectRenderer : public Renderer {
  public:
   ~DirectRenderer() override;
 
@@ -38,7 +36,7 @@ class CC_EXPORT DirectRenderer : public Renderer {
                  const gfx::Rect& device_clip_rect,
                  bool disable_picture_quad_image_filtering) override;
 
-  struct CC_EXPORT DrawingFrame {
+  struct DrawingFrame {
     DrawingFrame();
     ~DrawingFrame();
 

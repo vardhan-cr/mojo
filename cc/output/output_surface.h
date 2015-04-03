@@ -11,7 +11,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/overlay_candidate_validator.h"
 #include "cc/output/software_output_device.h"
@@ -30,7 +29,6 @@ namespace cc {
 
 class CompositorFrame;
 class CompositorFrameAck;
-struct ManagedMemoryPolicy;
 class OutputSurfaceClient;
 
 // Represents the output surface for a compositor. The compositor owns
@@ -40,7 +38,7 @@ class OutputSurfaceClient;
 //      From here on, it will only be used on the compositor thread.
 //   3. If the 3D context is lost, then the compositor will delete the output
 //      surface (on the compositor thread) and go back to step 1.
-class CC_EXPORT OutputSurface {
+class OutputSurface {
  public:
   enum {
     DEFAULT_MAX_FRAMES_PENDING = 2
@@ -149,7 +147,6 @@ class CC_EXPORT OutputSurface {
   }
 
   void DidLoseOutputSurface();
-  void SetMemoryPolicy(const ManagedMemoryPolicy& policy);
 
  protected:
   OutputSurfaceClient* client_;

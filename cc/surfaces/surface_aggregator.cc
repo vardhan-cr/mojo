@@ -20,7 +20,6 @@
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_manager.h"
-#include "cc/trees/blocking_task_runner.h"
 
 namespace cc {
 namespace {

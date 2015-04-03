@@ -7,7 +7,6 @@
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "third_party/skia/include/core/SkImageFilter.h"
@@ -24,7 +23,7 @@ class Value;
 
 namespace cc {
 
-class CC_EXPORT FilterOperation {
+class FilterOperation {
  public:
   enum FilterType {
     GRAYSCALE,

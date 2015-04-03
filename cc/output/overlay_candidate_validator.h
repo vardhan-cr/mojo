@@ -7,14 +7,13 @@
 
 #include <vector>
 
-#include "cc/base/cc_export.h"
 #include "cc/output/overlay_candidate.h"
 
 namespace cc {
 
 // This class that can be used to answer questions about possible overlay
 // configurations for a particular output device.
-class CC_EXPORT OverlayCandidateValidator {
+class OverlayCandidateValidator {
  public:
   // A list of possible overlay candidates is presented to this function.
   // The expected result is that those candidates that can be in a separate

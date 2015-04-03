@@ -13,7 +13,7 @@ namespace cc {
 
 // RenderingStatsInstrumentation is shared among threads and manages conditional
 // recording of rendering stats into a private RenderingStats instance.
-class CC_EXPORT RenderingStatsInstrumentation {
+class RenderingStatsInstrumentation {
  public:
   static scoped_ptr<RenderingStatsInstrumentation> Create();
   virtual ~RenderingStatsInstrumentation();

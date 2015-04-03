@@ -18,7 +18,7 @@ namespace cc {
 
 // (Pure) Interface for observing BeginFrame messages from BeginFrameSource
 // objects.
-class CC_EXPORT BeginFrameObserver {
+class BeginFrameObserver {
  public:
   virtual ~BeginFrameObserver() {}
 
@@ -62,7 +62,7 @@ class CC_EXPORT BeginFrameObserver {
 //  - Recommended (but not required) to call
 //    BeginFrameObserverMixIn::OnValueInto in their overridden OnValueInto
 //    function.
-class CC_EXPORT BeginFrameObserverMixIn : public BeginFrameObserver {
+class BeginFrameObserverMixIn : public BeginFrameObserver {
  public:
   BeginFrameObserverMixIn();
 
@@ -95,7 +95,7 @@ class CC_EXPORT BeginFrameObserverMixIn : public BeginFrameObserver {
 // plain made up (when no vsync signal is available or vsync throttling is
 // turned off). See the BeginFrameObserver for information about the guarantees
 // all BeginFrameSources *must* provide.
-class CC_EXPORT BeginFrameSource {
+class BeginFrameSource {
  public:
   virtual ~BeginFrameSource() {}
 
@@ -132,7 +132,7 @@ class CC_EXPORT BeginFrameSource {
 //  - Use the CallOnBeginFrame method to call to the observer(s).
 //  - Recommended (but not required) to call BeginFrameSourceMixIn::AsValueInto
 //    in their own AsValueInto implementation.
-class CC_EXPORT BeginFrameSourceMixIn : public BeginFrameSource {
+class BeginFrameSourceMixIn : public BeginFrameSource {
  public:
   ~BeginFrameSourceMixIn() override {}
 
@@ -168,7 +168,7 @@ class CC_EXPORT BeginFrameSourceMixIn : public BeginFrameSource {
 
 // A frame source which calls BeginFrame (at the next possible time) as soon as
 // remaining frames reaches zero.
-class CC_EXPORT BackToBackBeginFrameSource : public BeginFrameSourceMixIn {
+class BackToBackBeginFrameSource : public BeginFrameSourceMixIn {
  public:
   static scoped_ptr<BackToBackBeginFrameSource> Create(
       base::SingleThreadTaskRunner* task_runner);
@@ -200,9 +200,9 @@ class CC_EXPORT BackToBackBeginFrameSource : public BeginFrameSourceMixIn {
 
 // A frame source which is locked to an external parameters provides from a
 // vsync source and generates BeginFrameArgs for it.
-class CC_EXPORT SyntheticBeginFrameSource : public BeginFrameSourceMixIn,
-                                            public VSyncParameterObserver,
-                                            public TimeSourceClient {
+class SyntheticBeginFrameSource : public BeginFrameSourceMixIn,
+                                  public VSyncParameterObserver,
+                                  public TimeSourceClient {
  public:
   static scoped_ptr<SyntheticBeginFrameSource> Create(
       base::SingleThreadTaskRunner* task_runner,
@@ -236,8 +236,8 @@ class CC_EXPORT SyntheticBeginFrameSource : public BeginFrameSourceMixIn,
 // A "virtual" frame source which lets you switch between multiple other frame
 // sources while making sure the BeginFrameArgs stays increasing (possibly
 // enforcing minimum boundry between BeginFrameArgs messages).
-class CC_EXPORT BeginFrameSourceMultiplexer : public BeginFrameSourceMixIn,
-                                              public BeginFrameObserver {
+class BeginFrameSourceMultiplexer : public BeginFrameSourceMixIn,
+                                    public BeginFrameObserver {
  public:
   static scoped_ptr<BeginFrameSourceMultiplexer> Create();
   ~BeginFrameSourceMultiplexer() override;

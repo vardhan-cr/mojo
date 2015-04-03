@@ -6,13 +6,12 @@
 #define CC_OUTPUT_COMPOSITOR_FRAME_ACK_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/gl_frame_data.h"
 #include "cc/resources/returned_resource.h"
 
 namespace cc {
 
-class CC_EXPORT CompositorFrameAck {
+class CompositorFrameAck {
  public:
   CompositorFrameAck();
   ~CompositorFrameAck();

@@ -11,7 +11,6 @@
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "ui/gfx/geometry/box_f.h"
 #include "ui/gfx/geometry/point3_f.h"
 #include "ui/gfx/geometry/point_f.h"
@@ -77,7 +76,7 @@ struct HomogeneousCoordinate {
   SkMScalar vec[4];
 };
 
-class CC_EXPORT MathUtil {
+class MathUtil {
  public:
   static const double kPiDouble;
   static const float kPiFloat;

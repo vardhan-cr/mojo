@@ -16,7 +16,6 @@
 #include "cc/quads/draw_quad.h"
 #include "cc/quads/io_surface_draw_quad.h"
 #include "cc/quads/largest_draw_quad.h"
-#include "cc/quads/picture_draw_quad.h"
 #include "cc/quads/render_pass_draw_quad.h"
 #include "cc/quads/shared_quad_state.h"
 #include "cc/quads/solid_color_draw_quad.h"
@@ -238,9 +237,6 @@ DrawQuad* RenderPass::CopyFromAndAppendDrawQuad(
     case DrawQuad::IO_SURFACE_CONTENT:
       CopyFromAndAppendTypedDrawQuad<IOSurfaceDrawQuad>(quad);
       break;
-    case DrawQuad::PICTURE_CONTENT:
-      CopyFromAndAppendTypedDrawQuad<PictureDrawQuad>(quad);
-      break;
     case DrawQuad::TEXTURE_CONTENT:
       CopyFromAndAppendTypedDrawQuad<TextureDrawQuad>(quad);
       break;
@@ -262,6 +258,7 @@ DrawQuad* RenderPass::CopyFromAndAppendDrawQuad(
     // RenderPass quads need to use specific CopyFrom function.
     case DrawQuad::RENDER_PASS:
     case DrawQuad::INVALID:
+    case DrawQuad::UNUSED_SPACE_FOR_PICTURE_CONTENT:
       LOG(FATAL) << "Invalid DrawQuad material " << quad->material;
       break;
   }

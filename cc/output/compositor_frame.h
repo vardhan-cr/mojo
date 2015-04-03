@@ -6,7 +6,6 @@
 #define CC_OUTPUT_COMPOSITOR_FRAME_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/output/gl_frame_data.h"
@@ -14,7 +13,7 @@
 
 namespace cc {
 
-class CC_EXPORT CompositorFrame {
+class CompositorFrame {
  public:
   CompositorFrame();
   ~CompositorFrame();

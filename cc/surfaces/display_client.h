@@ -20,7 +20,6 @@ class DisplayClient {
   virtual void CommitVSyncParameters(base::TimeTicks timebase,
                                      base::TimeDelta interval) = 0;
   virtual void OutputSurfaceLost() = 0;
-  virtual void SetMemoryPolicy(const ManagedMemoryPolicy& policy) = 0;
 
  protected:
   virtual ~DisplayClient() {}

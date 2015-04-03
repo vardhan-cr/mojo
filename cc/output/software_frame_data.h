@@ -5,14 +5,13 @@
 #ifndef CC_OUTPUT_SOFTWARE_FRAME_DATA_H_
 #define CC_OUTPUT_SOFTWARE_FRAME_DATA_H_
 
-#include "cc/base/cc_export.h"
 #include "cc/resources/shared_bitmap.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
 
-class CC_EXPORT SoftwareFrameData {
+class SoftwareFrameData {
  public:
   SoftwareFrameData();
   ~SoftwareFrameData();

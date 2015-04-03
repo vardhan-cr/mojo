@@ -6,7 +6,6 @@
 #define CC_OUTPUT_GL_RENDERER_H_
 
 #include "base/cancelable_callback.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_deque.h"
 #include "cc/base/scoped_ptr_vector.h"
 #include "cc/output/direct_renderer.h"
@@ -44,7 +43,7 @@ class DynamicGeometryBinding;
 class ScopedEnsureFramebufferAllocation;
 
 // Class that handles drawing of composited render layers using GL.
-class CC_EXPORT GLRenderer : public DirectRenderer {
+class GLRenderer : public DirectRenderer {
  public:
   class ScopedUseGrContext;
 
@@ -171,13 +170,6 @@ class CC_EXPORT GLRenderer : public DirectRenderer {
       const gfx::QuadF* clip_region,
       bool use_aa);
   scoped_ptr<ScopedResource> GetBackdropTexture(const gfx::Rect& bounding_rect);
-
-  static bool ShouldApplyBackgroundFilters(DrawingFrame* frame,
-                                           const RenderPassDrawQuad* quad);
-  skia::RefPtr<SkImage> ApplyBackgroundFilters(
-      DrawingFrame* frame,
-      const RenderPassDrawQuad* quad,
-      ScopedResource* background_texture);
 
   void DrawRenderPassQuad(DrawingFrame* frame,
                           const RenderPassDrawQuad* quadi,

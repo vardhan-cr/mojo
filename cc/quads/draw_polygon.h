@@ -19,7 +19,7 @@ namespace cc {
 
 class DrawQuad;
 
-class CC_EXPORT DrawPolygon {
+class DrawPolygon {
  public:
   DrawPolygon();
   ~DrawPolygon();

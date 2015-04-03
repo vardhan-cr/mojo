@@ -7,11 +7,10 @@
 
 #include "base/basictypes.h"
 #include "base/containers/hash_tables.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
-class CC_EXPORT RenderPassId {
+class RenderPassId {
  public:
   int layer_id;
   int index;

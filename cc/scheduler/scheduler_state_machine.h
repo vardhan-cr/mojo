@@ -9,7 +9,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/begin_frame_args.h"
 #include "cc/scheduler/commit_earlyout_reason.h"
 #include "cc/scheduler/draw_result.h"
@@ -36,7 +35,7 @@ namespace cc {
 //
 // The scheduler seperates "what to do next" from the updating of its internal
 // state to make testing cleaner.
-class CC_EXPORT SchedulerStateMachine {
+class SchedulerStateMachine {
  public:
   // settings must be valid for the lifetime of this class.
   explicit SchedulerStateMachine(const SchedulerSettings& settings);

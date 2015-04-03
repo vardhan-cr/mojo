@@ -89,8 +89,4 @@ void OnscreenDisplayClient::DidSwapBuffersComplete() {
   }
 }
 
-void OnscreenDisplayClient::SetMemoryPolicy(const ManagedMemoryPolicy& policy) {
-  surface_display_output_surface_->SetMemoryPolicy(policy);
-}
-
 }  // namespace cc

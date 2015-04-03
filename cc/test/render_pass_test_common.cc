@@ -5,6 +5,7 @@
 #include "cc/test/render_pass_test_common.h"
 
 #include "base/bind.h"
+#include "cc/base/blocking_task_runner.h"
 #include "cc/quads/checkerboard_draw_quad.h"
 #include "cc/quads/debug_border_draw_quad.h"
 #include "cc/quads/io_surface_draw_quad.h"
@@ -16,7 +17,6 @@
 #include "cc/quads/tile_draw_quad.h"
 #include "cc/quads/yuv_video_draw_quad.h"
 #include "cc/resources/resource_provider.h"
-#include "cc/trees/blocking_task_runner.h"
 #include "ui/gfx/transform.h"
 
 namespace cc {

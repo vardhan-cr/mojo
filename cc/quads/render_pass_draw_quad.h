@@ -7,7 +7,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/filter_operations.h"
 #include "cc/quads/draw_quad.h"
 #include "cc/quads/render_pass_id.h"
@@ -15,7 +14,7 @@
 
 namespace cc {
 
-class CC_EXPORT RenderPassDrawQuad : public DrawQuad {
+class RenderPassDrawQuad : public DrawQuad {
  public:
   RenderPassDrawQuad();
   ~RenderPassDrawQuad() override;

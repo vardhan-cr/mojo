@@ -8,6 +8,7 @@
 #include "base/message_loop/message_loop_proxy.h"
 #include "base/path_service.h"
 #include "base/run_loop.h"
+#include "cc/base/blocking_task_runner.h"
 #include "cc/base/switches.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/output/copy_output_request.h"
@@ -26,7 +27,6 @@
 #include "cc/test/test_gpu_memory_buffer_manager.h"
 #include "cc/test/test_in_process_context_provider.h"
 #include "cc/test/test_shared_bitmap_manager.h"
-#include "cc/trees/blocking_task_runner.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "testing/gtest/include/gtest/gtest.h"
 

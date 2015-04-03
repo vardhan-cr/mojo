@@ -113,9 +113,6 @@ void DisplayImpl::OutputSurfaceLost() {
       base::Bind(&DisplayImpl::OnContextCreated, base::Unretained(this)));
 }
 
-void DisplayImpl::SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) {
-}
-
 void DisplayImpl::OnVSyncParametersUpdated(int64_t timebase, int64_t interval) {
   scheduler_->OnVSyncParametersUpdated(
       base::TimeTicks::FromInternalValue(timebase),

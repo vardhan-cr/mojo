@@ -6,7 +6,6 @@
 #define CC_OUTPUT_DELEGATING_RENDERER_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/renderer.h"
 
@@ -15,7 +14,7 @@ namespace cc {
 class OutputSurface;
 class ResourceProvider;
 
-class CC_EXPORT DelegatingRenderer : public Renderer {
+class DelegatingRenderer : public Renderer {
  public:
   static scoped_ptr<DelegatingRenderer> Create(
       RendererClient* client,

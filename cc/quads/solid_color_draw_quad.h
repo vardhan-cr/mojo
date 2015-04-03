@@ -6,13 +6,12 @@
 #define CC_QUADS_SOLID_COLOR_DRAW_QUAD_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/quads/draw_quad.h"
 #include "third_party/skia/include/core/SkColor.h"
 
 namespace cc {
 
-class CC_EXPORT SolidColorDrawQuad : public DrawQuad {
+class SolidColorDrawQuad : public DrawQuad {
  public:
   SolidColorDrawQuad();
 

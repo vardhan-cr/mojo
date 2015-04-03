@@ -6,11 +6,10 @@
 #define CC_OUTPUT_RENDERER_SETTINGS_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
-class CC_EXPORT RendererSettings {
+class RendererSettings {
  public:
   RendererSettings();
   ~RendererSettings();

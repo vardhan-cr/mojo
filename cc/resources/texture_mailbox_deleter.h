@@ -6,7 +6,6 @@
 #define CC_RESOURCES_TEXTURE_MAILBOX_DELETER_H_
 
 #include "base/memory/weak_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_vector.h"
 
 namespace base {
@@ -17,7 +16,7 @@ namespace cc {
 class ContextProvider;
 class SingleReleaseCallback;
 
-class CC_EXPORT TextureMailboxDeleter {
+class TextureMailboxDeleter {
  public:
   explicit TextureMailboxDeleter(
       const scoped_refptr<base::SingleThreadTaskRunner>& task_runner);

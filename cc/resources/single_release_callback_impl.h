@@ -6,12 +6,11 @@
 #define CC_RESOURCES_SINGLE_RELEASE_CALLBACK_IMPL_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/release_callback_impl.h"
 
 namespace cc {
 
-class CC_EXPORT SingleReleaseCallbackImpl {
+class SingleReleaseCallbackImpl {
  public:
   static scoped_ptr<SingleReleaseCallbackImpl> Create(
       const ReleaseCallbackImpl& cb) {

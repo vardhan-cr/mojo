@@ -326,10 +326,3 @@ def CheckChangeOnUpload(input_api, output_api):
   results += FindUselessIfdefs(input_api, output_api)
   results += input_api.canned_checks.CheckPatchFormatted(input_api, output_api)
   return results
-
-def GetPreferredTryMasters(project, change):
-  return {
-    'tryserver.blink': {
-      'linux_blink_rel': set(['defaulttests']),
-    },
-  }

@@ -9,7 +9,6 @@
 
 #include "base/memory/weak_ptr.h"
 #include "base/values.h"
-#include "cc/base/cc_export.h"
 
 namespace base {
 namespace trace_event {
@@ -20,7 +19,7 @@ class SingleThreadTaskRunner;
 
 namespace cc {
 
-class CC_EXPORT TimeSourceClient {
+class TimeSourceClient {
  public:
   virtual void OnTimerTick() = 0;
 
@@ -31,8 +30,7 @@ class CC_EXPORT TimeSourceClient {
 // This timer implements a time source that achieves the specified interval
 // in face of millisecond-precision delayed callbacks and random queueing
 // delays. DelayBasedTimeSource uses base::TimeTicks::Now as its timebase.
-class CC_EXPORT DelayBasedTimeSource
-    : public base::RefCounted<DelayBasedTimeSource> {
+class DelayBasedTimeSource : public base::RefCounted<DelayBasedTimeSource> {
  public:
   static scoped_refptr<DelayBasedTimeSource> Create(
       base::TimeDelta interval, base::SingleThreadTaskRunner* task_runner);

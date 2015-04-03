@@ -13,14 +13,14 @@
 
 namespace cc {
 
-class CC_EXPORT BspWalkAction {
+class BspWalkAction {
  public:
   virtual void operator()(DrawPolygon* item) = 0;
 };
 
 // The BspTree class takes ownership of all the DrawPolygons returned in list_
 // so the BspTree must be preserved while elements in that vector are in use.
-class CC_EXPORT BspWalkActionDrawPolygon : public BspWalkAction {
+class BspWalkActionDrawPolygon : public BspWalkAction {
  public:
   void operator()(DrawPolygon* item) override;
 
@@ -36,7 +36,7 @@ class CC_EXPORT BspWalkActionDrawPolygon : public BspWalkAction {
   bool using_scissor_as_optimization_;
 };
 
-class CC_EXPORT BspWalkActionToVector : public BspWalkAction {
+class BspWalkActionToVector : public BspWalkAction {
  public:
   explicit BspWalkActionToVector(std::vector<DrawPolygon*>* in_list);
   void operator()(DrawPolygon* item) override;

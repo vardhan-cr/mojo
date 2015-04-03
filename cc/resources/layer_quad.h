@@ -7,7 +7,6 @@
 #define CC_RESOURCES_LAYER_QUAD_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 #include "ui/gfx/geometry/point_f.h"
 
 namespace gfx {
@@ -18,9 +17,9 @@ static const float kAntiAliasingInflateDistance = 0.5f;
 
 namespace cc {
 
-class CC_EXPORT LayerQuad {
+class LayerQuad {
  public:
-  class CC_EXPORT Edge {
+  class Edge {
    public:
     Edge() : x_(0), y_(0), z_(0), degenerate_(false) {}
     Edge(const gfx::PointF& p, const gfx::PointF& q);

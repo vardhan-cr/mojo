@@ -7,7 +7,6 @@
 
 #include <vector>
 
-#include "cc/base/cc_export.h"
 #include "cc/resources/resource_format.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/overlay_transform.h"
@@ -15,7 +14,7 @@
 
 namespace cc {
 
-class CC_EXPORT OverlayCandidate {
+class OverlayCandidate {
  public:
   static gfx::OverlayTransform GetOverlayTransform(
       const gfx::Transform& quad_transform,

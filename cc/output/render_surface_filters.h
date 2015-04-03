@@ -7,7 +7,6 @@
 #define CC_OUTPUT_RENDER_SURFACE_FILTERS_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 #include "skia/ext/refptr.h"
 
 class GrContext;
@@ -22,7 +21,7 @@ namespace cc {
 
 class FilterOperations;
 
-class CC_EXPORT RenderSurfaceFilters {
+class RenderSurfaceFilters {
  public:
   static SkBitmap Apply(const FilterOperations& filters,
                         unsigned texture_id,

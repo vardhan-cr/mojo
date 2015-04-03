@@ -7,7 +7,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/overlay_candidate.h"
 #include "cc/quads/render_pass.h"
 
@@ -15,9 +14,9 @@ namespace cc {
 class OutputSurface;
 class ResourceProvider;
 
-class CC_EXPORT OverlayProcessor {
+class OverlayProcessor {
  public:
-  class CC_EXPORT Strategy {
+  class Strategy {
    public:
     virtual ~Strategy() {}
     // Returns false if the strategy cannot be made to work with the

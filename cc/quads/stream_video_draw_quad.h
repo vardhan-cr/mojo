@@ -6,13 +6,12 @@
 #define CC_QUADS_STREAM_VIDEO_DRAW_QUAD_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/quads/draw_quad.h"
 #include "ui/gfx/transform.h"
 
 namespace cc {
 
-class CC_EXPORT StreamVideoDrawQuad : public DrawQuad {
+class StreamVideoDrawQuad : public DrawQuad {
  public:
   StreamVideoDrawQuad();
 

@@ -12,16 +12,15 @@
 #include "base/containers/hash_tables.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
 // This class maintains a history of timestamps and rect IDs to communicate
 // frame events back to Blink
 // TODO(mpb): Start using this. crbug.com/442554
-class CC_EXPORT FrameTimingTracker {
+class FrameTimingTracker {
  public:
-  struct CC_EXPORT CompositeTimingEvent {
+  struct CompositeTimingEvent {
     CompositeTimingEvent(int, base::TimeTicks);
     ~CompositeTimingEvent();
 

@@ -8,7 +8,6 @@
 #include "base/basictypes.h"
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/resource.h"
 
 #if DCHECK_IS_ON()
@@ -17,7 +16,7 @@
 
 namespace cc {
 
-class CC_EXPORT ScopedResource : public Resource {
+class ScopedResource : public Resource {
  public:
   static scoped_ptr<ScopedResource> Create(
       ResourceProvider* resource_provider) {

@@ -7,7 +7,6 @@
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
 #include "base/trace_event/trace_event.h"
-#include "cc/output/managed_memory_policy.h"
 #include "cc/output/output_surface_client.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
@@ -179,9 +178,6 @@ void OutputSurface::SetUpContext3d() {
   context_provider_->SetLostContextCallback(
       base::Bind(&OutputSurface::DidLoseOutputSurface,
                  base::Unretained(this)));
-  context_provider_->SetMemoryPolicyChangedCallback(
-      base::Bind(&OutputSurface::SetMemoryPolicy,
-                 base::Unretained(this)));
 }
 
 void OutputSurface::ReleaseContextProvider() {
@@ -194,8 +190,6 @@ void OutputSurface::ResetContext3d() {
   if (context_provider_.get()) {
     context_provider_->SetLostContextCallback(
         ContextProvider::LostContextCallback());
-    context_provider_->SetMemoryPolicyChangedCallback(
-        ContextProvider::MemoryPolicyChangedCallback());
   }
   if (worker_context_provider_.get()) {
     worker_context_provider_->SetLostContextCallback(
@@ -251,16 +245,6 @@ void OutputSurface::PostSwapBuffersComplete() {
 // after the OutputSurface has been destroyed.
 void OutputSurface::OnSwapBuffersComplete() {
   client_->DidSwapBuffersComplete();
-}
-
-void OutputSurface::SetMemoryPolicy(const ManagedMemoryPolicy& policy) {
-  TRACE_EVENT1("cc", "OutputSurface::SetMemoryPolicy",
-               "bytes_limit_when_visible", policy.bytes_limit_when_visible);
-  // Just ignore the memory manager when it says to set the limit to zero
-  // bytes. This will happen when the memory manager thinks that the renderer
-  // is not visible (which the renderer knows better).
-  if (policy.bytes_limit_when_visible)
-    client_->SetMemoryPolicy(policy);
 }
 
 }  // namespace cc

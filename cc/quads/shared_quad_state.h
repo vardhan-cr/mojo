@@ -6,7 +6,6 @@
 #define CC_QUADS_SHARED_QUAD_STATE_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "third_party/skia/include/core/SkXfermode.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/transform.h"
@@ -25,7 +24,7 @@ namespace cc {
 // same way as if they were replicated on each DrawQuad. A given SharedQuadState
 // can only be shared by DrawQuads that are adjacent in their RenderPass'
 // QuadList.
-class CC_EXPORT SharedQuadState {
+class SharedQuadState {
  public:
   SharedQuadState();
   ~SharedQuadState();

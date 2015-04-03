@@ -7,12 +7,11 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/quads/draw_quad.h"
 
 namespace cc {
 
-class CC_EXPORT YUVVideoDrawQuad : public DrawQuad {
+class YUVVideoDrawQuad : public DrawQuad {
  public:
   enum ColorSpace {
     REC_601,  // SDTV standard with restricted "studio swing" color range.

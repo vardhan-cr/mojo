@@ -17,7 +17,6 @@
 #include "base/memory/linked_ptr.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/threading/thread_checker.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/output_surface.h"
 #include "cc/resources/release_callback_impl.h"
@@ -57,7 +56,7 @@ class TextureUploader;
 
 // This class is not thread-safe and can only be called from the thread it was
 // created on (in practice, the impl thread).
-class CC_EXPORT ResourceProvider {
+class ResourceProvider {
  private:
   struct Resource;
 
@@ -218,7 +217,7 @@ class CC_EXPORT ResourceProvider {
   // needed to read and write the resource contents. The user must ensure
   // that they only use GL locks on GL resources, etc, and this is enforced
   // by assertions.
-  class CC_EXPORT ScopedReadLockGL {
+  class ScopedReadLockGL {
    public:
     ScopedReadLockGL(ResourceProvider* resource_provider,
                      ResourceProvider::ResourceId resource_id);
@@ -236,7 +235,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedReadLockGL);
   };
 
-  class CC_EXPORT ScopedSamplerGL : public ScopedReadLockGL {
+  class ScopedSamplerGL : public ScopedReadLockGL {
    public:
     ScopedSamplerGL(ResourceProvider* resource_provider,
                     ResourceProvider::ResourceId resource_id,
@@ -256,7 +255,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedSamplerGL);
   };
 
-  class CC_EXPORT ScopedWriteLockGL {
+  class ScopedWriteLockGL {
    public:
     ScopedWriteLockGL(ResourceProvider* resource_provider,
                       ResourceProvider::ResourceId resource_id);
@@ -272,7 +271,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedWriteLockGL);
   };
 
-  class CC_EXPORT ScopedReadLockSoftware {
+  class ScopedReadLockSoftware {
    public:
     ScopedReadLockSoftware(ResourceProvider* resource_provider,
                            ResourceProvider::ResourceId resource_id);
@@ -295,7 +294,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedReadLockSoftware);
   };
 
-  class CC_EXPORT ScopedWriteLockSoftware {
+  class ScopedWriteLockSoftware {
    public:
     ScopedWriteLockSoftware(ResourceProvider* resource_provider,
                             ResourceProvider::ResourceId resource_id);
@@ -313,7 +312,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedWriteLockSoftware);
   };
 
-  class CC_EXPORT ScopedWriteLockGpuMemoryBuffer {
+  class ScopedWriteLockGpuMemoryBuffer {
    public:
     ScopedWriteLockGpuMemoryBuffer(ResourceProvider* resource_provider,
                                    ResourceProvider::ResourceId resource_id);
@@ -333,7 +332,7 @@ class CC_EXPORT ResourceProvider {
     DISALLOW_COPY_AND_ASSIGN(ScopedWriteLockGpuMemoryBuffer);
   };
 
-  class CC_EXPORT ScopedWriteLockGr {
+  class ScopedWriteLockGr {
    public:
     ScopedWriteLockGr(ResourceProvider* resource_provider,
                       ResourceProvider::ResourceId resource_id);

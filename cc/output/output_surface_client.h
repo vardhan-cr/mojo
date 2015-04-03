@@ -8,7 +8,6 @@
 #include "base/callback.h"
 #include "base/memory/ref_counted.h"
 #include "base/time/time.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/context_provider.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -19,9 +18,8 @@ class Transform;
 namespace cc {
 
 class CompositorFrameAck;
-struct ManagedMemoryPolicy;
 
-class CC_EXPORT OutputSurfaceClient {
+class OutputSurfaceClient {
  public:
   // Called to synchronously re-initialize using the Context3D. Upon returning
   // the compositor should be able to draw using GL what was previously
@@ -43,7 +41,6 @@ class CC_EXPORT OutputSurfaceClient {
       const gfx::Rect& viewport_rect_for_tile_priority,
       const gfx::Transform& transform_for_tile_priority,
       bool resourceless_software_draw) = 0;
-  virtual void SetMemoryPolicy(const ManagedMemoryPolicy& policy) = 0;
   // If set, |callback| will be called subsequent to each new tree activation,
   // regardless of the compositor visibility or damage. |callback| must remain
   // valid for the lifetime of the OutputSurfaceClient or until unregisted --

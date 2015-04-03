@@ -9,11 +9,10 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
-class CC_EXPORT TextureCompressor {
+class TextureCompressor {
  public:
   enum Format {
     kFormatETC1,

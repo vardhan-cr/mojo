@@ -7,13 +7,12 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/shared_bitmap.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
 
-class CC_EXPORT SharedBitmapManager {
+class SharedBitmapManager {
  public:
   SharedBitmapManager() {}
   virtual ~SharedBitmapManager() {}

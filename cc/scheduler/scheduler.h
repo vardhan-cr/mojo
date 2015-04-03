@@ -12,7 +12,6 @@
 #include "base/cancelable_callback.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/begin_frame_args.h"
 #include "cc/output/vsync_parameter_observer.h"
 #include "cc/scheduler/begin_frame_source.h"
@@ -58,7 +57,7 @@ class Scheduler;
 // A virtual method can't be used as this needs to happen in the constructor
 // (see C++ FAQ / Section 23 - http://goo.gl/fnrwom for why).
 // This class exists solely long enough to construct the frame sources.
-class CC_EXPORT SchedulerFrameSourcesConstructor {
+class SchedulerFrameSourcesConstructor {
  public:
   virtual ~SchedulerFrameSourcesConstructor() {}
   virtual BeginFrameSource* ConstructPrimaryFrameSource(Scheduler* scheduler);
@@ -73,7 +72,7 @@ class CC_EXPORT SchedulerFrameSourcesConstructor {
   friend class Scheduler;
 };
 
-class CC_EXPORT Scheduler : public BeginFrameObserverMixIn {
+class Scheduler : public BeginFrameObserverMixIn {
  public:
   static scoped_ptr<Scheduler> Create(
       SchedulerClient* client,

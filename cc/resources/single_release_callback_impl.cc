@@ -6,7 +6,7 @@
 
 #include "base/callback_helpers.h"
 #include "base/logging.h"
-#include "cc/trees/blocking_task_runner.h"
+#include "cc/base/blocking_task_runner.h"
 
 namespace cc {
 

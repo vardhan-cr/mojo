@@ -28,12 +28,10 @@
 #include "cc/output/render_surface_filters.h"
 #include "cc/output/static_geometry_binding.h"
 #include "cc/quads/draw_polygon.h"
-#include "cc/quads/picture_draw_quad.h"
 #include "cc/quads/render_pass.h"
 #include "cc/quads/stream_video_draw_quad.h"
 #include "cc/quads/texture_draw_quad.h"
 #include "cc/resources/layer_quad.h"
-#include "cc/resources/scoped_gpu_raster.h"
 #include "cc/resources/scoped_resource.h"
 #include "cc/resources/texture_mailbox_deleter.h"
 #include "gpu/GLES2/gl2extchromium.h"
@@ -157,40 +155,6 @@ static GLint GetActiveTextureUnit(GLES2Interface* gl) {
   gl->GetIntegerv(GL_ACTIVE_TEXTURE, &active_unit);
   return active_unit;
 }
-
-class GLRenderer::ScopedUseGrContext {
- public:
-  static scoped_ptr<ScopedUseGrContext> Create(GLRenderer* renderer,
-                                               DrawingFrame* frame) {
-    return make_scoped_ptr(new ScopedUseGrContext(renderer, frame));
-  }
-
-  ~ScopedUseGrContext() {
-    // Pass context control back to GLrenderer.
-    scoped_gpu_raster_ = nullptr;
-    renderer_->RestoreGLState();
-    renderer_->RestoreFramebuffer(frame_);
-  }
-
-  GrContext* context() const {
-    return renderer_->output_surface_->context_provider()->GrContext();
-  }
-
- private:
-  ScopedUseGrContext(GLRenderer* renderer, DrawingFrame* frame)
-      : scoped_gpu_raster_(
-            new ScopedGpuRaster(renderer->output_surface_->context_provider())),
-        renderer_(renderer),
-        frame_(frame) {
-    // scoped_gpu_raster_ passes context control to Skia.
-  }
-
-  scoped_ptr<ScopedGpuRaster> scoped_gpu_raster_;
-  GLRenderer* renderer_;
-  DrawingFrame* frame_;
-
-  DISALLOW_COPY_AND_ASSIGN(ScopedUseGrContext);
-};
 
 struct GLRenderer::PendingAsyncReadPixels {
   PendingAsyncReadPixels() : buffer(0) {}
@@ -521,6 +485,7 @@ void GLRenderer::DoDrawQuad(DrawingFrame* frame,
 
   switch (quad->material) {
     case DrawQuad::INVALID:
+    case DrawQuad::UNUSED_SPACE_FOR_PICTURE_CONTENT:
       NOTREACHED();
       break;
     case DrawQuad::CHECKERBOARD:
@@ -533,10 +498,6 @@ void GLRenderer::DoDrawQuad(DrawingFrame* frame,
     case DrawQuad::IO_SURFACE_CONTENT:
       DrawIOSurfaceQuad(frame, IOSurfaceDrawQuad::MaterialCast(quad),
                         clip_region);
-      break;
-    case DrawQuad::PICTURE_CONTENT:
-      // PictureDrawQuad should only be used for resourceless software draws.
-      NOTREACHED();
       break;
     case DrawQuad::RENDER_PASS:
       DrawRenderPassQuad(frame, RenderPassDrawQuad::MaterialCast(quad),
@@ -661,100 +622,6 @@ void GLRenderer::DrawDebugBorderQuad(const DrawingFrame* frame,
   GLC(gl_, gl_->DrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_SHORT, 0));
 }
 
-static skia::RefPtr<SkImage> ApplyImageFilter(
-    scoped_ptr<GLRenderer::ScopedUseGrContext> use_gr_context,
-    ResourceProvider* resource_provider,
-    const gfx::Rect& rect,
-    const gfx::Vector2dF& scale,
-    SkImageFilter* filter,
-    ScopedResource* source_texture_resource) {
-  if (!filter)
-    return skia::RefPtr<SkImage>();
-
-  if (!use_gr_context)
-    return skia::RefPtr<SkImage>();
-
-  ResourceProvider::ScopedReadLockGL lock(resource_provider,
-                                          source_texture_resource->id());
-
-  // Wrap the source texture in a Ganesh platform texture.
-  GrBackendTextureDesc backend_texture_description;
-  backend_texture_description.fWidth = source_texture_resource->size().width();
-  backend_texture_description.fHeight =
-      source_texture_resource->size().height();
-  backend_texture_description.fConfig = kSkia8888_GrPixelConfig;
-  backend_texture_description.fTextureHandle = lock.texture_id();
-  backend_texture_description.fOrigin = kBottomLeft_GrSurfaceOrigin;
-  skia::RefPtr<GrTexture> texture =
-      skia::AdoptRef(use_gr_context->context()->wrapBackendTexture(
-          backend_texture_description));
-  if (!texture) {
-    TRACE_EVENT_INSTANT0("cc",
-                         "ApplyImageFilter wrap background texture failed",
-                         TRACE_EVENT_SCOPE_THREAD);
-    return skia::RefPtr<SkImage>();
-  }
-
-  SkImageInfo info =
-      SkImageInfo::MakeN32Premul(source_texture_resource->size().width(),
-                                 source_texture_resource->size().height());
-  // Place the platform texture inside an SkBitmap.
-  SkBitmap source;
-  source.setInfo(info);
-  skia::RefPtr<SkGrPixelRef> pixel_ref =
-      skia::AdoptRef(new SkGrPixelRef(info, texture.get()));
-  source.setPixelRef(pixel_ref.get());
-
-  // Create a scratch texture for backing store.
-  GrTextureDesc desc;
-  desc.fFlags = kRenderTarget_GrTextureFlagBit | kNoStencil_GrTextureFlagBit;
-  desc.fSampleCnt = 0;
-  desc.fWidth = source.width();
-  desc.fHeight = source.height();
-  desc.fConfig = kSkia8888_GrPixelConfig;
-  desc.fOrigin = kBottomLeft_GrSurfaceOrigin;
-  skia::RefPtr<GrTexture> backing_store =
-      skia::AdoptRef(use_gr_context->context()->refScratchTexture(
-          desc, GrContext::kExact_ScratchTexMatch));
-  if (!backing_store) {
-    TRACE_EVENT_INSTANT0("cc",
-                         "ApplyImageFilter scratch texture allocation failed",
-                         TRACE_EVENT_SCOPE_THREAD);
-    return skia::RefPtr<SkImage>();
-  }
-
-  // Create surface to draw into.
-  skia::RefPtr<SkSurface> surface = skia::AdoptRef(
-      SkSurface::NewRenderTargetDirect(backing_store->asRenderTarget()));
-  skia::RefPtr<SkCanvas> canvas = skia::SharePtr(surface->getCanvas());
-
-  // Draw the source bitmap through the filter to the canvas.
-  SkPaint paint;
-  paint.setImageFilter(filter);
-  canvas->clear(SK_ColorTRANSPARENT);
-
-  // The origin of the filter is top-left and the origin of the source is
-  // bottom-left, but the orientation is the same, so we must translate the
-  // filter so that it renders at the bottom of the texture to avoid
-  // misregistration.
-  int y_translate = source.height() - rect.height() - rect.origin().y();
-  canvas->translate(-rect.origin().x(), y_translate);
-  canvas->scale(scale.x(), scale.y());
-  canvas->drawSprite(source, 0, 0, &paint);
-
-  skia::RefPtr<SkImage> image = skia::AdoptRef(surface->newImageSnapshot());
-  if (!image || !image->getTexture()) {
-    return skia::RefPtr<SkImage>();
-  }
-
-  // Flush the GrContext to ensure all buffered GL calls are drawn to the
-  // backing store before we access and return it, and have cc begin using the
-  // GL context again.
-  canvas->flush();
-
-  return image;
-}
-
 bool GLRenderer::CanApplyBlendModeUsingBlendFunc(SkXfermode::Mode blend_mode) {
   return use_blend_equation_advanced_ ||
          blend_mode == SkXfermode::kScreen_Mode ||
@@ -837,24 +704,6 @@ void GLRenderer::RestoreBlendFuncToDefault(SkXfermode::Mode blend_mode) {
   }
 }
 
-bool GLRenderer::ShouldApplyBackgroundFilters(DrawingFrame* frame,
-                                              const RenderPassDrawQuad* quad) {
-  if (quad->background_filters.IsEmpty())
-    return false;
-
-  // TODO(danakj): We only allow background filters on an opaque render surface
-  // because other surfaces may contain translucent pixels, and the contents
-  // behind those translucent pixels wouldn't have the filter applied.
-  if (frame->current_render_pass->has_transparent_background)
-    return false;
-
-  // TODO(ajuma): Add support for reference filters once
-  // FilterOperations::GetOutsets supports reference filters.
-  if (quad->background_filters.HasReferenceFilter())
-    return false;
-  return true;
-}
-
 // This takes a gfx::Rect and a clip region quad in the same space,
 // and returns a quad with the same proportions in the space -0.5->0.5.
 bool GetScaledRegion(const gfx::Rect& rect,
@@ -906,12 +755,6 @@ gfx::Rect GLRenderer::GetBackdropBoundingBoxForRenderPassQuad(
   gfx::Rect backdrop_rect = gfx::ToEnclosingRect(MathUtil::MapClippedRect(
       contents_device_transform, scaled_region.BoundingBox()));
 
-  if (ShouldApplyBackgroundFilters(frame, quad)) {
-    int top, right, bottom, left;
-    quad->background_filters.GetOutsets(&top, &right, &bottom, &left);
-    backdrop_rect.Inset(-left, -top, -right, -bottom);
-  }
-
   if (!backdrop_rect.IsEmpty() && use_aa) {
     const int kOutsetForAntialiasing = 1;
     backdrop_rect.Inset(-kOutsetForAntialiasing, -kOutsetForAntialiasing);
@@ -936,20 +779,6 @@ scoped_ptr<ScopedResource> GLRenderer::GetBackdropTexture(
         lock.texture_id(), device_background_texture->format(), bounding_rect);
   }
   return device_background_texture.Pass();
-}
-
-skia::RefPtr<SkImage> GLRenderer::ApplyBackgroundFilters(
-    DrawingFrame* frame,
-    const RenderPassDrawQuad* quad,
-    ScopedResource* background_texture) {
-  DCHECK(ShouldApplyBackgroundFilters(frame, quad));
-  skia::RefPtr<SkImageFilter> filter = RenderSurfaceFilters::BuildImageFilter(
-      quad->background_filters, background_texture->size());
-
-  skia::RefPtr<SkImage> background_with_filters = ApplyImageFilter(
-      ScopedUseGrContext::Create(this, frame), resource_provider_, quad->rect,
-      quad->filters_scale, filter.get(), background_texture);
-  return background_with_filters;
 }
 
 void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
@@ -981,7 +810,6 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
   SkXfermode::Mode blend_mode = quad->shared_quad_state->blend_mode;
   bool use_shaders_for_blending =
       !CanApplyBlendModeUsingBlendFunc(blend_mode) ||
-      ShouldApplyBackgroundFilters(frame, quad) ||
       settings_->force_blending_with_shaders;
 
   scoped_ptr<ScopedResource> background_texture;
@@ -1004,13 +832,6 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       // amount of memory used by render surfaces:
       // LayerTreeHost::CalculateMemoryForRenderSurfaces.
       background_texture = GetBackdropTexture(background_rect);
-
-      if (ShouldApplyBackgroundFilters(frame, quad) && background_texture) {
-        // Apply the background filters to R, so that it is applied in the
-        // pixels' coordinate space.
-        background_image =
-            ApplyBackgroundFilters(frame, quad, background_texture.get());
-      }
     }
 
     if (!background_texture) {
@@ -1021,11 +842,6 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
       // Reset original background texture if there is not any mask
       if (!quad->mask_resource_id)
         background_texture.reset();
-    } else if (CanApplyBlendModeUsingBlendFunc(blend_mode) &&
-               ShouldApplyBackgroundFilters(frame, quad)) {
-      // Something went wrong with applying background filters to the backdrop.
-      use_shaders_for_blending = false;
-      background_texture.reset();
     }
   }
   // Need original background texture for mask?
@@ -1042,29 +858,7 @@ void GLRenderer::DrawRenderPassQuad(DrawingFrame* frame,
   skia::RefPtr<SkImage> filter_image;
   SkScalar color_matrix[20];
   bool use_color_matrix = false;
-  if (!quad->filters.IsEmpty()) {
-    skia::RefPtr<SkImageFilter> filter = RenderSurfaceFilters::BuildImageFilter(
-        quad->filters, contents_texture->size());
-    if (filter) {
-      skia::RefPtr<SkColorFilter> cf;
-
-      {
-        SkColorFilter* colorfilter_rawptr = NULL;
-        filter->asColorFilter(&colorfilter_rawptr);
-        cf = skia::AdoptRef(colorfilter_rawptr);
-      }
-
-      if (cf && cf->asColorMatrix(color_matrix) && !filter->getInput(0)) {
-        // We have a single color matrix as a filter; apply it locally
-        // in the compositor.
-        use_color_matrix = true;
-      } else {
-        filter_image = ApplyImageFilter(
-            ScopedUseGrContext::Create(this, frame), resource_provider_,
-            quad->rect, quad->filters_scale, filter.get(), contents_texture);
-      }
-    }
-  }
+  DCHECK(quad->filters.IsEmpty());
 
   scoped_ptr<ResourceProvider::ScopedSamplerGL> mask_resource_lock;
   unsigned mask_texture_id = 0;

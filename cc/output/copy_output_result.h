@@ -6,7 +6,6 @@
 #define CC_OUTPUT_COPY_OUTPUT_RESULT_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/single_release_callback.h"
 #include "cc/resources/texture_mailbox.h"
 #include "ui/gfx/geometry/size.h"
@@ -16,7 +15,7 @@ class SkBitmap;
 namespace cc {
 class TextureMailbox;
 
-class CC_EXPORT CopyOutputResult {
+class CopyOutputResult {
  public:
   static scoped_ptr<CopyOutputResult> CreateEmptyResult() {
     return make_scoped_ptr(new CopyOutputResult);

@@ -11,7 +11,6 @@
 #include "base/callback_helpers.h"
 #include "base/logging.h"
 #include "cc/test/test_gles2_interface.h"
-#include "cc/test/test_web_graphics_context_3d.h"
 #include "third_party/skia/include/gpu/GrContext.h"
 #include "third_party/skia/include/gpu/gl/SkNullGLContext.h"
 

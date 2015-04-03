@@ -10,7 +10,6 @@
 #include "base/time/time.h"
 #include "cc/output/begin_frame_args.h"
 #include "cc/output/compositor_frame.h"
-#include "cc/output/managed_memory_policy.h"
 #include "cc/output/output_surface.h"
 #include "cc/output/software_output_device.h"
 #include "cc/test/test_context_provider.h"
@@ -123,9 +122,6 @@ class FakeOutputSurface : public OutputSurface {
     has_external_stencil_test_ = has_test;
   }
 
-  void SetMemoryPolicyToSetAtBind(
-      scoped_ptr<ManagedMemoryPolicy> memory_policy_to_set_at_bind);
-
   gfx::Rect last_swap_rect() const {
     return last_swap_rect_;
   }
@@ -153,7 +149,6 @@ class FakeOutputSurface : public OutputSurface {
   bool has_external_stencil_test_;
   unsigned framebuffer_;
   TransferableResourceArray resources_held_by_parent_;
-  scoped_ptr<ManagedMemoryPolicy> memory_policy_to_set_at_bind_;
   gfx::Rect last_swap_rect_;
 };
 

@@ -9,7 +9,6 @@
 #include "cc/quads/checkerboard_draw_quad.h"
 #include "cc/quads/debug_border_draw_quad.h"
 #include "cc/quads/io_surface_draw_quad.h"
-#include "cc/quads/picture_draw_quad.h"
 #include "cc/quads/render_pass_draw_quad.h"
 #include "cc/quads/solid_color_draw_quad.h"
 #include "cc/quads/stream_video_draw_quad.h"
@@ -41,9 +40,6 @@ size_t LargestDrawQuadSize() {
                 "currently largest.");
   static_assert(sizeof(IOSurfaceDrawQuad) <= kLargestDrawQuadSize,
                 "Largest Draw Quad size needs update. IOSurfaceDrawQuad is "
-                "currently largest.");
-  static_assert(sizeof(PictureDrawQuad) <= kLargestDrawQuadSize,
-                "Largest Draw Quad size needs update. PictureDrawQuad is "
                 "currently largest.");
   static_assert(sizeof(TextureDrawQuad) <= kLargestDrawQuadSize,
                 "Largest Draw Quad size needs update. TextureDrawQuad is "

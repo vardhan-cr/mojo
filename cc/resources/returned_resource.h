@@ -8,11 +8,10 @@
 #include <vector>
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
-struct CC_EXPORT ReturnedResource {
+struct ReturnedResource {
   ReturnedResource() : id(0), sync_point(0), count(0), lost(false) {}
   unsigned id;
   unsigned sync_point;

@@ -15,7 +15,6 @@
 #include "cc/output/software_output_device.h"
 #include "cc/quads/checkerboard_draw_quad.h"
 #include "cc/quads/debug_border_draw_quad.h"
-#include "cc/quads/picture_draw_quad.h"
 #include "cc/quads/render_pass_draw_quad.h"
 #include "cc/quads/solid_color_draw_quad.h"
 #include "cc/quads/texture_draw_quad.h"
@@ -317,9 +316,6 @@ void SoftwareRenderer::DoDrawQuad(DrawingFrame* frame,
     case DrawQuad::DEBUG_BORDER:
       DrawDebugBorderQuad(frame, DebugBorderDrawQuad::MaterialCast(quad));
       break;
-    case DrawQuad::PICTURE_CONTENT:
-      DrawPictureQuad(frame, PictureDrawQuad::MaterialCast(quad));
-      break;
     case DrawQuad::RENDER_PASS:
       DrawRenderPassQuad(frame, RenderPassDrawQuad::MaterialCast(quad));
       break;
@@ -341,6 +337,7 @@ void SoftwareRenderer::DoDrawQuad(DrawingFrame* frame,
     case DrawQuad::IO_SURFACE_CONTENT:
     case DrawQuad::YUV_VIDEO_CONTENT:
     case DrawQuad::STREAM_VIDEO_CONTENT:
+    case DrawQuad::UNUSED_SPACE_FOR_PICTURE_CONTENT:
       DrawUnsupportedQuad(frame, quad);
       NOTREACHED();
       break;
@@ -379,34 +376,6 @@ void SoftwareRenderer::DrawDebugBorderQuad(const DrawingFrame* frame,
   current_paint_.setStrokeWidth(quad->width);
   current_canvas_->drawPoints(SkCanvas::kPolygon_PointMode,
                               4, transformed_vertices, current_paint_);
-}
-
-void SoftwareRenderer::DrawPictureQuad(const DrawingFrame* frame,
-                                       const PictureDrawQuad* quad) {
-  SkMatrix content_matrix;
-  content_matrix.setRectToRect(
-      gfx::RectFToSkRect(quad->tex_coord_rect),
-      gfx::RectFToSkRect(QuadVertexRect()),
-      SkMatrix::kFill_ScaleToFit);
-  current_canvas_->concat(content_matrix);
-
-  // TODO(aelias): This isn't correct in all cases. We should detect these
-  // cases and fall back to a persistent bitmap backing
-  // (http://crbug.com/280374).
-  skia::RefPtr<SkDrawFilter> opacity_filter =
-      skia::AdoptRef(new skia::OpacityDrawFilter(
-          quad->opacity(), frame->disable_picture_quad_image_filtering ||
-                               quad->nearest_neighbor));
-  DCHECK(!current_canvas_->getDrawFilter());
-  current_canvas_->setDrawFilter(opacity_filter.get());
-
-  TRACE_EVENT0("cc",
-               "SoftwareRenderer::DrawPictureQuad");
-
-  quad->raster_source->PlaybackToSharedCanvas(
-      current_canvas_, quad->content_rect, quad->contents_scale);
-
-  current_canvas_->setDrawFilter(NULL);
 }
 
 void SoftwareRenderer::DrawSolidColorQuad(const DrawingFrame* frame,

@@ -9,7 +9,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_deque.h"
 #include "cc/resources/resource_provider.h"
 
@@ -27,7 +26,7 @@ class GLES2Interface;
 
 namespace cc {
 
-class CC_EXPORT TextureUploader {
+class TextureUploader {
  public:
   static scoped_ptr<TextureUploader> Create(gpu::gles2::GLES2Interface* gl) {
     return make_scoped_ptr(new TextureUploader(gl));

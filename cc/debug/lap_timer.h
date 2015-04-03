@@ -6,7 +6,6 @@
 #define CC_DEBUG_LAP_TIMER_H_
 
 #include "base/time/time.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 
@@ -20,7 +19,7 @@ namespace cc {
 // If you set the time_limit then you can use HasTimeLimitExpired() to see if
 // the current accumulated time has crossed that threshold, with an optimization
 // that it only tests this every check_interval laps.
-class CC_EXPORT LapTimer {
+class LapTimer {
  public:
   LapTimer(int warmup_laps, base::TimeDelta time_limit, int check_interval);
   // Resets the timer back to it's starting state.

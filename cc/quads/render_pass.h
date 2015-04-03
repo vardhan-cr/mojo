@@ -10,7 +10,6 @@
 #include "base/basictypes.h"
 #include "base/callback.h"
 #include "base/containers/hash_tables.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_vector.h"
 #include "cc/quads/list_container.h"
 #include "cc/quads/render_pass_id.h"
@@ -49,7 +48,7 @@ class QuadList : public ListContainer<DrawQuad> {
 
 typedef ListContainer<SharedQuadState> SharedQuadStateList;
 
-class CC_EXPORT RenderPass {
+class RenderPass {
  public:
   ~RenderPass();
 

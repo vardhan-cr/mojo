@@ -9,7 +9,7 @@
 
 namespace cc {
 
-class CC_EXPORT TextureCompressorETC1 : public TextureCompressor {
+class TextureCompressorETC1 : public TextureCompressor {
  public:
   TextureCompressorETC1() {}
 

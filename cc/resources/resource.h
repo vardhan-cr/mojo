@@ -5,13 +5,12 @@
 #ifndef CC_RESOURCES_RESOURCE_H_
 #define CC_RESOURCES_RESOURCE_H_
 
-#include "cc/base/cc_export.h"
 #include "cc/resources/resource_provider.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
 
-class CC_EXPORT Resource {
+class Resource {
  public:
   Resource() : id_(0) {}
   Resource(unsigned id, const gfx::Size& size, ResourceFormat format)

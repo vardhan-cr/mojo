@@ -21,7 +21,7 @@ class Value;
 namespace cc {
 
 // An ordered list of filter operations.
-class CC_EXPORT FilterOperations {
+class FilterOperations {
  public:
   FilterOperations();
 

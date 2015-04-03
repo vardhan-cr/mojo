@@ -6,7 +6,6 @@
 #define CC_QUADS_DRAW_QUAD_H_
 
 #include "base/callback.h"
-#include "cc/base/cc_export.h"
 #include "cc/quads/shared_quad_state.h"
 #include "cc/resources/resource_provider.h"
 
@@ -31,14 +30,14 @@ namespace cc {
 // PictureLayerImpls). There is also the "target space", which is the space, in
 // "physical" pixels, of the render target where the quads is drawn. The quad's
 // transform maps the content space to the target space.
-class CC_EXPORT DrawQuad {
+class DrawQuad {
  public:
   enum Material {
     INVALID,
     CHECKERBOARD,
     DEBUG_BORDER,
     IO_SURFACE_CONTENT,
-    PICTURE_CONTENT,
+    UNUSED_SPACE_FOR_PICTURE_CONTENT,
     RENDER_PASS,
     SOLID_COLOR,
     STREAM_VIDEO_CONTENT,

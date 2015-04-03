@@ -7,7 +7,6 @@
 
 #include "base/callback.h"
 #include "base/memory/ref_counted.h"
-#include "cc/base/cc_export.h"
 #include "gpu/command_buffer/common/capabilities.h"
 
 class GrContext;
@@ -41,7 +40,7 @@ class ContextProvider : public base::RefCountedThreadSafe<ContextProvider> {
     gpu::Capabilities gpu;
     size_t max_transfer_buffer_usage_bytes;
 
-    CC_EXPORT Capabilities();
+    Capabilities();
   };
 
   // Sets up a lock so this context can be used from multiple threads.

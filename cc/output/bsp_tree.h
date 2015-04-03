@@ -29,7 +29,7 @@ struct BspNode {
   ~BspNode();
 };
 
-class CC_EXPORT BspTree {
+class BspTree {
  public:
   explicit BspTree(ScopedPtrDeque<DrawPolygon>* list);
   scoped_ptr<BspNode>& root() { return root_; }

@@ -6,7 +6,6 @@
 
 #include "base/message_loop/message_loop.h"
 #include "base/trace_event/trace_event.h"
-#include "cc/debug/benchmark_instrumentation.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/direct_renderer.h"
@@ -18,7 +17,6 @@
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_aggregator.h"
 #include "cc/surfaces/surface_manager.h"
-#include "cc/trees/blocking_task_runner.h"
 
 namespace cc {
 
@@ -33,8 +31,6 @@ Display::Display(DisplayClient* client,
       gpu_memory_buffer_manager_(gpu_memory_buffer_manager),
       settings_(settings),
       device_scale_factor_(1.f),
-      blocking_main_thread_task_runner_(
-          BlockingTaskRunner::Create(base::MessageLoopProxy::current())),
       texture_mailbox_deleter_(
           new TextureMailboxDeleter(base::MessageLoopProxy::current())) {
   manager_->AddObserver(this);
@@ -79,8 +75,7 @@ void Display::InitializeRenderer() {
 
   scoped_ptr<ResourceProvider> resource_provider = ResourceProvider::Create(
       output_surface_.get(), bitmap_manager_, gpu_memory_buffer_manager_,
-      blocking_main_thread_task_runner_.get(), settings_.highp_threshold_min,
-      settings_.use_rgba_4444_textures,
+      nullptr, settings_.highp_threshold_min, settings_.use_rgba_4444_textures,
       settings_.texture_id_allocation_chunk_size);
   if (!resource_provider)
     return;
@@ -124,7 +119,6 @@ bool Display::Draw() {
     return false;
 
   TRACE_EVENT0("cc", "Display::Draw");
-  benchmark_instrumentation::IssueDisplayRenderingStatsEvent();
 
   // Run callbacks early to allow pipelining.
   for (const auto& id_entry : aggregator_->previous_contained_surfaces()) {
@@ -190,10 +184,6 @@ void Display::DidSwapBuffersComplete() {
 void Display::CommitVSyncParameters(base::TimeTicks timebase,
                                     base::TimeDelta interval) {
   client_->CommitVSyncParameters(timebase, interval);
-}
-
-void Display::SetMemoryPolicy(const ManagedMemoryPolicy& policy) {
-  client_->SetMemoryPolicy(policy);
 }
 
 void Display::OnSurfaceDamaged(SurfaceId surface_id, bool* changed) {

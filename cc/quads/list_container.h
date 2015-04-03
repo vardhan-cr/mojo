@@ -7,7 +7,6 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 
 namespace cc {
 class SharedQuadState;
@@ -22,7 +21,7 @@ class DrawQuad;
 // DrawQuads, the allocations size of each element in this class is
 // LargestDrawQuadSize while BaseElementType is DrawQuad.
 template <class BaseElementType>
-class CC_EXPORT ListContainer {
+class ListContainer {
  public:
   // BaseElementType is the type of raw pointers this class hands out; however,
   // its derived classes might require different memory sizes.
@@ -43,11 +42,11 @@ class CC_EXPORT ListContainer {
 
   // This class deals only with char* and void*. It does allocation and passing
   // out raw pointers, as well as memory deallocation when being destroyed.
-  class CC_EXPORT ListContainerCharAllocator;
+  class ListContainerCharAllocator;
 
   // This class points to a certain position inside memory of
   // ListContainerCharAllocator. It is a base class for ListContainer iterators.
-  struct CC_EXPORT PositionInListContainerCharAllocator {
+  struct PositionInListContainerCharAllocator {
     ListContainerCharAllocator* ptr_to_container;
     size_t vector_index;
     char* item_iterator;
@@ -68,7 +67,7 @@ class CC_EXPORT ListContainer {
 
   // Iterator classes that can be used to access data.
   /////////////////////////////////////////////////////////////////
-  class CC_EXPORT Iterator : public PositionInListContainerCharAllocator {
+  class Iterator : public PositionInListContainerCharAllocator {
     // This class is only defined to forward iterate through
     // ListContainerCharAllocator.
    public:
@@ -92,7 +91,7 @@ class CC_EXPORT ListContainer {
     size_t index_;
   };
 
-  class CC_EXPORT ConstIterator : public PositionInListContainerCharAllocator {
+  class ConstIterator : public PositionInListContainerCharAllocator {
     // This class is only defined to forward iterate through
     // ListContainerCharAllocator.
    public:
@@ -117,8 +116,7 @@ class CC_EXPORT ListContainer {
     size_t index_;
   };
 
-  class CC_EXPORT ReverseIterator
-      : public PositionInListContainerCharAllocator {
+  class ReverseIterator : public PositionInListContainerCharAllocator {
     // This class is only defined to reverse iterate through
     // ListContainerCharAllocator.
    public:
@@ -142,8 +140,7 @@ class CC_EXPORT ListContainer {
     size_t index_;
   };
 
-  class CC_EXPORT ConstReverseIterator
-      : public PositionInListContainerCharAllocator {
+  class ConstReverseIterator : public PositionInListContainerCharAllocator {
     // This class is only defined to reverse iterate through
     // ListContainerCharAllocator.
    public:

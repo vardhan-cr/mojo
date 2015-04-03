@@ -46,7 +46,6 @@ class CC_SURFACES_EXPORT OnscreenDisplayClient
   void CommitVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval) override;
   void OutputSurfaceLost() override;
-  void SetMemoryPolicy(const ManagedMemoryPolicy& policy) override;
 
   bool output_surface_lost() { return output_surface_lost_; }
 

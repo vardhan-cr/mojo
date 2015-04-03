@@ -9,7 +9,7 @@
 
 namespace cc {
 
-class CC_EXPORT TileDrawQuad : public ContentDrawQuadBase {
+class TileDrawQuad : public ContentDrawQuadBase {
  public:
   TileDrawQuad();
   ~TileDrawQuad() override;

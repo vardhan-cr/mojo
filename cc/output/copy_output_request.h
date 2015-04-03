@@ -7,7 +7,6 @@
 
 #include "base/callback.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/resources/single_release_callback.h"
 #include "cc/resources/texture_mailbox.h"
 #include "ui/gfx/geometry/rect.h"
@@ -17,7 +16,7 @@ class SkBitmap;
 namespace cc {
 class CopyOutputResult;
 
-class CC_EXPORT CopyOutputRequest {
+class CopyOutputRequest {
  public:
   typedef base::Callback<void(scoped_ptr<CopyOutputResult> result)>
       CopyOutputRequestCallback;

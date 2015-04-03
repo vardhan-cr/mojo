@@ -47,7 +47,6 @@ class DisplayImpl : public mojo::Display,
   void CommitVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval) override;
   void OutputSurfaceLost() override;
-  void SetMemoryPolicy(const cc::ManagedMemoryPolicy& policy) override;
 
   // ViewportParameterListener
   void OnVSyncParametersUpdated(int64_t timebase, int64_t interval) override;

@@ -8,7 +8,6 @@
 #include <list>
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/output/renderer.h"
 #include "cc/resources/resource.h"
 #include "cc/resources/resource_format.h"
@@ -16,7 +15,7 @@
 namespace cc {
 class ScopedResource;
 
-class CC_EXPORT ResourcePool {
+class ResourcePool {
  public:
   static scoped_ptr<ResourcePool> Create(ResourceProvider* resource_provider,
                                          GLenum target) {

@@ -6,7 +6,6 @@
 #define CC_OUTPUT_RENDERER_H_
 
 #include "base/basictypes.h"
-#include "cc/base/cc_export.h"
 #include "cc/base/scoped_ptr_vector.h"
 #include "cc/output/renderer_capabilities.h"
 #include "cc/output/renderer_settings.h"
@@ -43,12 +42,12 @@ struct RendererCapabilitiesImpl {
   RendererCapabilities MainThreadCapabilities() const;
 };
 
-class CC_EXPORT RendererClient {
+class RendererClient {
  public:
   virtual void SetFullRootLayerDamage() = 0;
 };
 
-class CC_EXPORT Renderer {
+class Renderer {
  public:
   virtual ~Renderer() {}
 

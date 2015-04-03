@@ -7,7 +7,6 @@
 
 #include "base/basictypes.h"
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkSurface.h"
 #include "ui/gfx/geometry/rect.h"
@@ -27,7 +26,7 @@ class SoftwareFrameData;
 
 // This is a "tear-off" class providing software drawing support to
 // OutputSurface, such as to a platform-provided window framebuffer.
-class CC_EXPORT SoftwareOutputDevice {
+class SoftwareOutputDevice {
  public:
   SoftwareOutputDevice();
   virtual ~SoftwareOutputDevice();

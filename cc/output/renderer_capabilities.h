@@ -5,13 +5,12 @@
 #ifndef CC_OUTPUT_RENDERER_CAPABILITIES_H_
 #define CC_OUTPUT_RENDERER_CAPABILITIES_H_
 
-#include "cc/base/cc_export.h"
 #include "cc/resources/resource_format.h"
 
 namespace cc {
 
 // Represents the set of capabilities that a particular Renderer has.
-struct CC_EXPORT RendererCapabilities {
+struct RendererCapabilities {
   RendererCapabilities(ResourceFormat best_texture_format,
                        bool allow_partial_texture_updates,
                        int max_texture_size,

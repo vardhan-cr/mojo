@@ -6,14 +6,13 @@
 #define CC_QUADS_CONTENT_DRAW_QUAD_BASE_H_
 
 #include "base/memory/scoped_ptr.h"
-#include "cc/base/cc_export.h"
 #include "cc/quads/draw_quad.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
 
-class CC_EXPORT ContentDrawQuadBase : public DrawQuad {
+class ContentDrawQuadBase : public DrawQuad {
  public:
   void SetNew(const SharedQuadState* shared_quad_state,
               DrawQuad::Material material,
