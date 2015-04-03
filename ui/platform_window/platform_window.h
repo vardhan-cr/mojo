@@ -11,17 +11,9 @@ namespace gfx {
 class Rect;
 }
 
-#if defined(OS_WIN)
-typedef struct HINSTANCE__* HINSTANCE;
-typedef struct HICON__* HICON;
-typedef HICON HCURSOR;
-#endif
-
 namespace ui {
 
-#if defined(OS_WIN)
-typedef ::HCURSOR PlatformCursor;
-#elif defined(USE_X11)
+#if defined(USE_X11)
 typedef unsigned long PlatformCursor;
 #else
 typedef void* PlatformCursor;

@@ -6,10 +6,6 @@
 
 #include <math.h>
 
-#if defined(OS_WIN)
-#include <float.h>
-#endif
-
 #include <algorithm>
 
 #include "base/basictypes.h"
@@ -140,11 +136,7 @@ int Tween::IntValueBetween(double value, int start, int target) {
     delta--;
   else
     delta++;
-#if defined(OS_WIN)
-  return start + static_cast<int>(value * _nextafter(delta, 0));
-#else
   return start + static_cast<int>(value * nextafter(delta, 0));
-#endif
 }
 
 //static

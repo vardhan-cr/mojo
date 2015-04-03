@@ -6,41 +6,11 @@
 
 #include <algorithm>
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "ui/gfx/geometry/insets.h"
 
 namespace gfx {
-
-#if defined(OS_WIN)
-Rect::Rect(const RECT& r)
-    : origin_(r.left, r.top),
-      size_(std::abs(r.right - r.left), std::abs(r.bottom - r.top)) {
-}
-#elif defined(OS_MACOSX)
-Rect::Rect(const CGRect& r)
-    : origin_(r.origin.x, r.origin.y), size_(r.size.width, r.size.height) {
-}
-#endif
-
-#if defined(OS_WIN)
-RECT Rect::ToRECT() const {
-  RECT r;
-  r.left = x();
-  r.right = right();
-  r.top = y();
-  r.bottom = bottom();
-  return r;
-}
-#elif defined(OS_MACOSX)
-CGRect Rect::ToCGRect() const {
-  return CGRectMake(x(), y(), width(), height());
-}
-#endif
 
 void AdjustAlongAxis(int dst_origin, int dst_size, int* origin, int* size) {
   *size = std::min(dst_size, *size);

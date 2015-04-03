@@ -45,37 +45,6 @@ component("base") {
   }
 
   libs = []
-  if (is_win) {
-    cflags = [
-      "/wd4267",  # TODO(jschuh): C4267: http://crbug.com/167187 size_t -> int.
-      "/wd4324",  # Structure was padded due to __declspec(align()), which is
-                  # uninteresting.
-    ]
-    ldflags = [
-      "/DELAYLOAD:d2d1.dll",
-      "/DELAYLOAD:d3d10_1.dll",
-      "/DELAYLOAD:dwmapi.dll",
-    ]
-    libs += [
-      "d2d1.lib",
-      "d3d10_1.lib",
-      "dwmapi.lib",
-      "imm32.lib",
-      "d2d1.lib",
-      "dwmapi.lib",
-      "oleacc.lib",
-    ]
-  }
-
-  if (is_mac) {
-    deps += [ "//third_party/mozilla" ]
-
-    libs += [
-      "Accelerate.framework",
-      "AudioUnit.framework",
-      "CoreVideo.framework",
-    ]
-  }
 
   if (use_x11) {
     #'all_dependent_settings': {
@@ -147,22 +116,6 @@ if (false) {
         "//url",
       ]
 
-      if (is_win) {
-        ldflags = [
-          "/DELAYLOAD:d2d1.dll",
-          "/DELAYLOAD:d3d10_1.dll",
-        ]
-        libs = [
-          "d2d1.lib",
-          "d3d10_1.lib",
-          "imm32.lib",
-          "oleacc.lib",
-        ]
-
-        # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-        cflags = [ "/wd4267" ]
-      }
-
       if (is_android) {
         deps += [
           #"testing/android/native_test.gyp:native_test_native_code"  TODO(GYP)
@@ -179,16 +132,7 @@ if (false) {
         ]
       }
 
-      if (!is_win) {
-        sources -= [ "view_prop_unittest.cc" ]
-      }
-
-      if (is_mac) {
-        deps += [
-          "//third_party/mozilla",
-          #'ui_unittests_bundle',  TODO(GYP)
-        ]
-      }
+      sources -= [ "view_prop_unittest.cc" ]
 
       if (is_chromeos) {
         sources += [ "../chromeos/touch_exploration_controller_unittest.cc" ]

@@ -13,12 +13,8 @@ using ui::KeycodeConverter;
 
 namespace {
 
-#if defined(OS_WIN)
-const size_t kExpectedMappedKeyCount = 138;
-#elif defined(OS_LINUX)
+#if defined(OS_LINUX)
 const size_t kExpectedMappedKeyCount = 145;
-#elif defined(OS_MACOSX)
-const size_t kExpectedMappedKeyCount = 118;
 #else
 const size_t kExpectedMappedKeyCount = 0;
 #endif

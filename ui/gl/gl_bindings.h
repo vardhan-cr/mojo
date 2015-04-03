@@ -23,11 +23,7 @@
 #include "ui/gl/gl_export.h"
 
 // The standard OpenGL native extension headers are also included.
-#if defined(OS_WIN)
-#include <GL/wglext.h>
-#elif defined(OS_MACOSX)
-#include <OpenGL/OpenGL.h>
-#elif defined(USE_X11)
+#if defined(USE_X11)
 #include <GL/glx.h>
 #include <GL/glxext.h>
 
@@ -288,11 +284,7 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 
-#if defined(OS_WIN)
-#define GL_BINDING_CALL WINAPI
-#else
 #define GL_BINDING_CALL
-#endif
 
 #define GL_SERVICE_LOG(args) DLOG(INFO) << args;
 #if defined(NDEBUG)
@@ -311,10 +303,7 @@ typedef uint64 EGLuint64CHROMIUM;
 #include "gl_bindings_autogen_gl.h"
 #include "gl_bindings_autogen_osmesa.h"
 
-#if defined(OS_WIN)
-#include "gl_bindings_autogen_egl.h"
-#include "gl_bindings_autogen_wgl.h"
-#elif defined(USE_X11)
+#if defined(USE_X11)
 #include "gl_bindings_autogen_egl.h"
 #include "gl_bindings_autogen_glx.h"
 #elif defined(USE_OZONE)
@@ -358,22 +347,6 @@ struct GL_EXPORT DriverOSMESA {
   static std::string GetPlatformExtensions();
 };
 
-#if defined(OS_WIN)
-struct GL_EXPORT DriverWGL {
-  void InitializeStaticBindings();
-  void InitializeDebugBindings();
-  void ClearBindings();
-
-  ProcsWGL fn;
-  ProcsWGL debug_fn;
-  ExtensionsWGL ext;
-
- private:
-  static std::string GetPlatformExtensions();
-};
-#endif
-
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
 struct GL_EXPORT DriverEGL {
   void InitializeStaticBindings();
   void InitializeDebugBindings();
@@ -386,7 +359,6 @@ struct GL_EXPORT DriverEGL {
  private:
   static std::string GetPlatformExtensions();
 };
-#endif
 
 #if defined(USE_X11)
 struct GL_EXPORT DriverGLX {
@@ -411,14 +383,7 @@ GL_EXPORT extern OSMESAApi* g_current_osmesa_context;
 GL_EXPORT extern DriverGL g_driver_gl;
 GL_EXPORT extern DriverOSMESA g_driver_osmesa;
 
-#if defined(OS_WIN)
-
-GL_EXPORT extern EGLApi* g_current_egl_context;
-GL_EXPORT extern WGLApi* g_current_wgl_context;
-GL_EXPORT extern DriverEGL g_driver_egl;
-GL_EXPORT extern DriverWGL g_driver_wgl;
-
-#elif defined(USE_X11)
+#if defined(USE_X11)
 
 GL_EXPORT extern EGLApi* g_current_egl_context;
 GL_EXPORT extern GLXApi* g_current_glx_context;

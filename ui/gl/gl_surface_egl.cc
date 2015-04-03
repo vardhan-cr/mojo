@@ -41,41 +41,9 @@ extern "C" {
 #define EGL_OPENGL_ES3_BIT 0x00000040
 #endif
 
-#if defined(OS_WIN)
-// From ANGLE's egl/eglext.h.
-
-#ifndef EGL_ANGLE_platform_angle
-#define EGL_ANGLE_platform_angle 1
-#define EGL_PLATFORM_ANGLE_ANGLE 0x3202
-#define EGL_PLATFORM_ANGLE_TYPE_ANGLE 0x3203
-#define EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE 0x3204
-#define EGL_PLATFORM_ANGLE_MAX_VERSION_MINOR_ANGLE 0x3205
-#define EGL_PLATFORM_ANGLE_TYPE_DEFAULT_ANGLE 0x3206
-#endif /* EGL_ANGLE_platform_angle */
-
-#ifndef EGL_ANGLE_platform_angle_d3d
-#define EGL_ANGLE_platform_angle_d3d 1
-#define EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE 0x3207
-#define EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE 0x3208
-#define EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE 0x3209
-#define EGL_PLATFORM_ANGLE_DEVICE_TYPE_HARDWARE_ANGLE 0x320A
-#define EGL_PLATFORM_ANGLE_DEVICE_TYPE_WARP_ANGLE 0x320B
-#define EGL_PLATFORM_ANGLE_DEVICE_TYPE_REFERENCE_ANGLE 0x320C
-#endif /* EGL_ANGLE_platform_angle_d3d */
-
-#endif  // defined(OS_WIN)
-
 using ui::GetLastEGLErrorString;
 
 namespace gfx {
-
-#if defined(OS_WIN)
-unsigned int NativeViewGLSurfaceEGL::current_swap_generation_ = 0;
-unsigned int NativeViewGLSurfaceEGL::swaps_this_generation_ = 0;
-unsigned int NativeViewGLSurfaceEGL::last_multiswap_generation_ = 0;
-
-const unsigned int MULTISWAP_FRAME_VSYNC_THRESHOLD = 60;
-#endif
 
 namespace {
 
@@ -158,11 +126,7 @@ bool GLSurfaceEGL::InitializeOneOff() {
 
   g_native_display_type = GetPlatformDefaultEGLNativeDisplay();
 
-#if defined(OS_WIN)
-  g_display = GetPlatformDisplay(g_native_display_type);
-#else
   g_display = eglGetDisplay(g_native_display_type);
-#endif
 
   if (!g_display) {
     LOG(ERROR) << "eglGetDisplay failed with error " << GetLastEGLErrorString();
@@ -328,43 +292,6 @@ GLSurfaceEGL::~GLSurfaceEGL() {
   }
 }
 
-#if defined(OS_WIN)
-static const EGLint kDisplayAttribsWarp[] {
-  EGL_PLATFORM_ANGLE_TYPE_ANGLE,
-  EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
-
-  EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE,
-  EGL_PLATFORM_ANGLE_DEVICE_TYPE_WARP_ANGLE,
-
-  EGL_NONE
-};
-
-// static
-EGLDisplay GLSurfaceEGL::GetPlatformDisplay(
-    EGLNativeDisplayType native_display) {
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(switches::kUseWarp)) {
-    // Check for availability of WARP via ANGLE extension.
-    bool supports_warp = false;
-    const char* no_display_extensions = eglQueryString(EGL_NO_DISPLAY,
-        EGL_EXTENSIONS);
-    // If EGL_EXT_client_extensions not supported this call to eglQueryString
-    // will return NULL.
-    if (no_display_extensions)
-      supports_warp =
-          ExtensionsContain(no_display_extensions, "ANGLE_platform_angle") &&
-          ExtensionsContain(no_display_extensions, "ANGLE_platform_angle_d3d");
-
-    if (!supports_warp)
-      return NULL;
-
-    return eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, native_display,
-        kDisplayAttribsWarp);
-  }
-
-  return eglGetDisplay(native_display);
-}
-#endif
-
 NativeViewGLSurfaceEGL::NativeViewGLSurfaceEGL(EGLNativeWindowType window)
     : window_(window),
       surface_(NULL),
@@ -375,14 +302,6 @@ NativeViewGLSurfaceEGL::NativeViewGLSurfaceEGL(EGLNativeWindowType window)
 #if defined(OS_ANDROID)
   if (window)
     ANativeWindow_acquire(window);
-#endif
-
-#if defined(OS_WIN)
-  vsync_override_ = false;
-  swap_generation_ = 0;
-  RECT windowRect;
-  if (GetClientRect(window_, &windowRect))
-    size_ = gfx::Rect(windowRect).size();
 #endif
 }
 
@@ -536,41 +455,6 @@ bool NativeViewGLSurfaceEGL::SwapBuffers() {
   TRACE_EVENT2("gpu", "NativeViewGLSurfaceEGL:RealSwapBuffers",
       "width", GetSize().width(),
       "height", GetSize().height());
-
-#if defined(OS_WIN)
-  if (swap_interval_ != 0) {
-    // This code is a simple way of enforcing that we only vsync if one surface
-    // is swapping per frame. This provides single window cases a stable refresh
-    // while allowing multi-window cases to not slow down due to multiple syncs
-    // on a single thread. A better way to fix this problem would be to have
-    // each surface present on its own thread.
-
-    if (current_swap_generation_ == swap_generation_) {
-      if (swaps_this_generation_ > 1)
-        last_multiswap_generation_ = current_swap_generation_;
-      swaps_this_generation_ = 0;
-      current_swap_generation_++;
-    }
-
-    swap_generation_ = current_swap_generation_;
-
-    if (swaps_this_generation_ != 0 ||
-        (current_swap_generation_ - last_multiswap_generation_ <
-            MULTISWAP_FRAME_VSYNC_THRESHOLD)) {
-      // Override vsync settings and switch it off
-      if (!vsync_override_) {
-        eglSwapInterval(GetDisplay(), 0);
-        vsync_override_ = true;
-      }
-    } else if (vsync_override_) {
-      // Only one window swapping, so let the normal vsync setting take over
-      eglSwapInterval(GetDisplay(), swap_interval_);
-      vsync_override_ = false;
-    }
-
-    swaps_this_generation_++;
-  }
-#endif
 
   if (!eglSwapBuffers(GetDisplay(), surface_)) {
     DVLOG(1) << "eglSwapBuffers failed with error "

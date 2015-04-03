@@ -4,30 +4,9 @@
 
 #include "ui/gfx/geometry/size.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 #include "base/strings/stringprintf.h"
 
 namespace gfx {
-
-#if defined(OS_WIN)
-SIZE Size::ToSIZE() const {
-  SIZE s;
-  s.cx = width();
-  s.cy = height();
-  return s;
-}
-#endif
-
-#if defined(OS_MACOSX)
-Size& Size::operator=(const CGSize& s) {
-  set_width(s.width);
-  set_height(s.height);
-  return *this;
-}
-#endif
 
 int Size::GetArea() const {
   return width() * height();

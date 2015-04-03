@@ -41,9 +41,6 @@ struct GFX_EXPORT GpuMemoryBufferHandle {
   GpuMemoryBufferType type;
   base::SharedMemoryHandle handle;
   GpuMemoryBufferId global_id;
-#if defined(OS_MACOSX)
-  uint32 io_surface_id;
-#endif
 #if defined(USE_X11)
   XID pixmap;
 #endif

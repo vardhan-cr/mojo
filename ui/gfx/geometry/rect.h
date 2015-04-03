@@ -21,14 +21,6 @@
 #include "ui/gfx/geometry/size.h"
 #include "ui/gfx/geometry/vector2d.h"
 
-#if defined(OS_WIN)
-typedef struct tagRECT RECT;
-#elif defined(OS_IOS)
-#include <CoreGraphics/CoreGraphics.h>
-#elif defined(OS_MACOSX)
-#include <ApplicationServices/ApplicationServices.h>
-#endif
-
 namespace gfx {
 
 class Insets;
@@ -42,21 +34,7 @@ class GFX_EXPORT Rect {
   explicit Rect(const Size& size) : size_(size) {}
   Rect(const Point& origin, const Size& size) : origin_(origin), size_(size) {}
 
-#if defined(OS_WIN)
-  explicit Rect(const RECT& r);
-#elif defined(OS_MACOSX)
-  explicit Rect(const CGRect& r);
-#endif
-
   ~Rect() {}
-
-#if defined(OS_WIN)
-  // Construct an equivalent Win32 RECT object.
-  RECT ToRECT() const;
-#elif defined(OS_MACOSX)
-  // Construct an equivalent CoreGraphics object.
-  CGRect ToCGRect() const;
-#endif
 
   operator RectF() const {
     return RectF(origin().x(), origin().y(), size().width(), size().height());

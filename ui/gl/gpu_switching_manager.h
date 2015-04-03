@@ -54,10 +54,6 @@ class GL_EXPORT GpuSwitchingManager {
   GpuSwitchingManager();
   virtual ~GpuSwitchingManager();
 
-#if defined(OS_MACOSX)
-  void SwitchToDiscreteGpuMac();
-#endif  // OS_MACOSX
-
   gfx::GpuPreference gpu_switching_option_;
   bool gpu_switching_option_set_;
 
@@ -67,7 +63,6 @@ class GL_EXPORT GpuSwitchingManager {
   size_t gpu_count_;
 
   struct PlatformSpecific;
-  scoped_ptr<PlatformSpecific> platform_specific_;
 
   ObserverList<GpuSwitchingObserver> observer_list_;
 

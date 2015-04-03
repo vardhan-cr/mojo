@@ -18,13 +18,6 @@ class FrameTime {
     return base::TimeTicks::Now();
   }
 
-#if defined(OS_WIN)
-  static base::TimeTicks FromQPCValue(LONGLONG qpc_value) {
-    DCHECK(TimestampsAreHighRes());
-    return base::TimeTicks::FromQPCValue(qpc_value);
-  }
-#endif
-
   static bool TimestampsAreHighRes() {
     // This should really return base::TimeTicks::IsHighResNowFastAndReliable();
     // Returning false makes sure we are only using low-res timestamps until we

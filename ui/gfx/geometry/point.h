@@ -12,15 +12,6 @@
 #include "ui/gfx/geometry/vector2d.h"
 #include "ui/gfx/gfx_export.h"
 
-#if defined(OS_WIN)
-typedef unsigned long DWORD;
-typedef struct tagPOINT POINT;
-#elif defined(OS_IOS)
-#include <CoreGraphics/CoreGraphics.h>
-#elif defined(OS_MACOSX)
-#include <ApplicationServices/ApplicationServices.h>
-#endif
-
 namespace gfx {
 
 // A point has an x and y coordinate.
@@ -28,24 +19,8 @@ class GFX_EXPORT Point {
  public:
   Point() : x_(0), y_(0) {}
   Point(int x, int y) : x_(x), y_(y) {}
-#if defined(OS_WIN)
-  // |point| is a DWORD value that contains a coordinate.  The x-coordinate is
-  // the low-order short and the y-coordinate is the high-order short.  This
-  // value is commonly acquired from GetMessagePos/GetCursorPos.
-  explicit Point(DWORD point);
-  explicit Point(const POINT& point);
-  Point& operator=(const POINT& point);
-#elif defined(OS_MACOSX)
-  explicit Point(const CGPoint& point) : x_(point.x), y_(point.y) {}
-#endif
 
   ~Point() {}
-
-#if defined(OS_WIN)
-  POINT ToPOINT() const;
-#elif defined(OS_MACOSX)
-  CGPoint ToCGPoint() const { return CGPointMake(x(), y()); }
-#endif
 
   int x() const { return x_; }
   int y() const { return y_; }

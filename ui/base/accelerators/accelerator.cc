@@ -4,16 +4,12 @@
 
 #include "ui/base/accelerators/accelerator.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 #include "base/i18n/rtl.h"
 #include "base/logging.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 
-#if !defined(OS_WIN) && (defined(USE_AURA) || defined(OS_MACOSX))
+#if defined(USE_AURA)
 #include "ui/events/keycodes/keyboard_code_conversion.h"
 #endif
 

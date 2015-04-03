@@ -104,12 +104,6 @@ TEST_F(PlatformEventBuilderXTest, AutoRepeat) {
   // IBUS-GTK uses the mask (1 << 25) to detect reposted event.
   static_cast<XEvent*>(native_event_a_pressed_nonstandard_state)->xkey.state |=
       1 << 25;
-#elif defined(OS_WIN)
-  const LPARAM lParam_a = GetLParamFromScanCode(kNativeCodeA);
-  const LPARAM lParam_b = GetLParamFromScanCode(kNativeCodeB);
-  MSG native_event_a_pressed = {NULL, WM_KEYDOWN, VKEY_A, lParam_a};
-  MSG native_event_a_released = {NULL, WM_KEYUP, VKEY_A, lParam_a};
-  MSG native_event_b_pressed = {NULL, WM_KEYUP, VKEY_B, lParam_b};
 #endif
   KeyEvent key_a1 = PlatformEventBuilder::BuildKeyEvent(native_event_a_pressed);
   EXPECT_FALSE(key_a1.IsRepeat());

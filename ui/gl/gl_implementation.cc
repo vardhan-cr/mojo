@@ -23,9 +23,6 @@ const struct {
 } kGLImplementationNamePairs[] = {
   { kGLImplementationDesktopName, kGLImplementationDesktopGL },
   { kGLImplementationOSMesaName, kGLImplementationOSMesaGL },
-#if defined(OS_MACOSX)
-  { kGLImplementationAppleName, kGLImplementationAppleGL },
-#endif
   { kGLImplementationEGLName, kGLImplementationEGLGLES2 },
   { kGLImplementationMockName, kGLImplementationMockGL }
 };
@@ -51,12 +48,7 @@ void CleanupNativeLibraries(void* unused) {
 base::ThreadLocalPointer<GLApi>* g_current_gl_context_tls = NULL;
 OSMESAApi* g_current_osmesa_context;
 
-#if defined(OS_WIN)
-
-EGLApi* g_current_egl_context;
-WGLApi* g_current_wgl_context;
-
-#elif defined(USE_X11)
+#if defined(USE_X11)
 
 EGLApi* g_current_egl_context;
 GLXApi* g_current_glx_context;

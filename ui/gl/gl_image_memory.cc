@@ -7,12 +7,8 @@
 #include "base/logging.h"
 #include "base/trace_event/trace_event.h"
 #include "ui/gl/gl_bindings.h"
-#include "ui/gl/scoped_binders.h"
-
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
-    defined(USE_OZONE)
 #include "ui/gl/gl_surface_egl.h"
-#endif
+#include "ui/gl/scoped_binders.h"
 
 namespace gfx {
 namespace {
@@ -128,22 +124,14 @@ GLImageMemory::GLImageMemory(const gfx::Size& size, unsigned internalformat)
       format_(gfx::GpuMemoryBuffer::RGBA_8888),
       in_use_(false),
       target_(0),
-      need_do_bind_tex_image_(false)
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
-    defined(USE_OZONE)
-      ,
+      need_do_bind_tex_image_(false),
       egl_texture_id_(0u),
-      egl_image_(EGL_NO_IMAGE_KHR)
-#endif
-{
+      egl_image_(EGL_NO_IMAGE_KHR) {
 }
 
 GLImageMemory::~GLImageMemory() {
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
-    defined(USE_OZONE)
   DCHECK_EQ(EGL_NO_IMAGE_KHR, egl_image_);
   DCHECK_EQ(0u, egl_texture_id_);
-#endif
 }
 
 // static
@@ -205,8 +193,6 @@ bool GLImageMemory::Initialize(const unsigned char* memory,
 }
 
 void GLImageMemory::Destroy(bool have_context) {
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
-    defined(USE_OZONE)
   if (egl_image_ != EGL_NO_IMAGE_KHR) {
     eglDestroyImageKHR(GLSurfaceEGL::GetHardwareDisplay(), egl_image_);
     egl_image_ = EGL_NO_IMAGE_KHR;
@@ -217,7 +203,6 @@ void GLImageMemory::Destroy(bool have_context) {
       glDeleteTextures(1, &egl_texture_id_);
     egl_texture_id_ = 0u;
   }
-#endif
   memory_ = NULL;
 }
 
@@ -300,8 +285,6 @@ void GLImageMemory::DoBindTexImage(unsigned target) {
   need_do_bind_tex_image_ = false;
 
   DCHECK(memory_);
-#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
-    defined(USE_OZONE)
   if (target == GL_TEXTURE_EXTERNAL_OES) {
     if (egl_image_ == EGL_NO_IMAGE_KHR) {
       DCHECK_EQ(0u, egl_texture_id_);
@@ -373,7 +356,6 @@ void GLImageMemory::DoBindTexImage(unsigned target) {
     DCHECK_EQ(static_cast<GLenum>(GL_NO_ERROR), glGetError());
     return;
   }
-#endif
 
   DCHECK_NE(static_cast<GLenum>(GL_TEXTURE_EXTERNAL_OES), target);
   if (IsCompressedFormat(format_)) {

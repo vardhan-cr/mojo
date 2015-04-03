@@ -8,12 +8,8 @@ namespace ui {
 
 namespace {
 
-#if defined(OS_WIN)
-#define USB_KEYMAP(usb, xkb, win, mac, code) {usb, win, code}
-#elif defined(OS_LINUX)
+#if defined(OS_LINUX)
 #define USB_KEYMAP(usb, xkb, win, mac, code) {usb, xkb, code}
-#elif defined(OS_MACOSX)
-#define USB_KEYMAP(usb, xkb, win, mac, code) {usb, mac, code}
 #else
 #define USB_KEYMAP(usb, xkb, win, mac, code) {usb, 0, code}
 #endif
@@ -85,10 +81,6 @@ uint16_t KeycodeConverter::UsbKeycodeToNativeKeycode(uint32_t usb_keycode) {
   // Deal with some special-cases that don't fit the 1:1 mapping.
   if (usb_keycode == 0x070032) // non-US hash.
     usb_keycode = 0x070031; // US backslash.
-#if defined(OS_MACOSX)
-  if (usb_keycode == 0x070046) // PrintScreen.
-    usb_keycode = 0x070068; // F13.
-#endif
 
   for (size_t i = 0; i < kKeycodeMapEntries; ++i) {
     if (usb_keycode_map[i].usb_keycode == usb_keycode)

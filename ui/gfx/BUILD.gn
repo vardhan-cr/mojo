@@ -95,6 +95,7 @@ component("gfx") {
     "//third_party/harfbuzz-ng",
     "//third_party/libpng",
     "//third_party/zlib",
+    "//third_party:jpeg",
     "//ui/gfx/geometry",
   ]
   public_deps = [
@@ -102,16 +103,6 @@ component("gfx") {
     "//skia",
     "//third_party/icu",
   ]
-
-  # iOS.
-  if (is_ios) {
-    sources -= [
-      "codec/jpeg_codec.cc",
-      "codec/jpeg_codec.h",
-    ]
-  } else {
-    deps += [ "//third_party:jpeg" ]
-  }
 
   # Android.
   if (is_android) {
@@ -138,15 +129,6 @@ component("gfx") {
     ]
   }
 
-  # Windows.
-  if (is_win) {
-    cflags = [
-      "/wd4267",  # TODO(jschuh): C4267: http://crbug.com/167187 size_t -> int.
-      "/wd4324",  # Structure was padded due to __declspec(align()), which is
-                  # uninteresting.
-    ]
-  }
-
   # Linux.
   if (is_linux) {
     configs += [ "//build/config/linux:fontconfig" ]
@@ -166,8 +148,6 @@ source_set("test_support") {
     "test/fontconfig_util_linux.h",
     "test/gfx_util.cc",
     "test/gfx_util.h",
-    "test/ui_cocoa_test_helper.h",
-    "test/ui_cocoa_test_helper.mm",
   ]
 
   public_deps = [
@@ -182,13 +162,6 @@ source_set("test_support") {
     "//ui/gfx/geometry",
   ]
 
-  if (is_ios) {
-    # The cocoa files don't apply to iOS.
-    sources -= [
-      "test/ui_cocoa_test_helper.h",
-      "test/ui_cocoa_test_helper.mm",
-    ]
-  }
   if (is_linux) {
     configs += [ "//build/config/linux:fontconfig" ]
   }
@@ -196,39 +169,35 @@ source_set("test_support") {
 
 test("gfx_unittests") {
   sources = [
+    "animation/animation_container_unittest.cc",
+    "animation/animation_unittest.cc",
+    "animation/multi_animation_unittest.cc",
+    "animation/slide_animation_unittest.cc",
+    "animation/tween_unittest.cc",
+    "codec/jpeg_codec_unittest.cc",
+    "codec/png_codec_unittest.cc",
+    "display_change_notifier_unittest.cc",
+    "display_unittest.cc",
+    "geometry/box_unittest.cc",
+    "geometry/cubic_bezier_unittest.cc",
+    "geometry/insets_unittest.cc",
+    "geometry/matrix3_unittest.cc",
+    "geometry/point3_unittest.cc",
+    "geometry/point_unittest.cc",
+    "geometry/quad_unittest.cc",
+    "geometry/r_tree_unittest.cc",
+    "geometry/rect_unittest.cc",
+    "geometry/safe_integer_conversions_unittest.cc",
+    "geometry/scroll_offset_unittest.cc",
+    "geometry/size_unittest.cc",
+    "geometry/vector2d_unittest.cc",
+    "geometry/vector3d_unittest.cc",
+    "sequential_id_generator_unittest.cc",
+    "skrect_conversion_unittest.cc",
     "test/run_all_unittests.cc",
+    "transform_unittest.cc",
+    "transform_util_unittest.cc",
   ]
-
-  if (!is_ios) {
-    sources += [
-      "animation/animation_container_unittest.cc",
-      "animation/animation_unittest.cc",
-      "animation/multi_animation_unittest.cc",
-      "animation/slide_animation_unittest.cc",
-      "animation/tween_unittest.cc",
-      "codec/jpeg_codec_unittest.cc",
-      "codec/png_codec_unittest.cc",
-      "display_change_notifier_unittest.cc",
-      "display_unittest.cc",
-      "geometry/box_unittest.cc",
-      "geometry/cubic_bezier_unittest.cc",
-      "geometry/insets_unittest.cc",
-      "geometry/matrix3_unittest.cc",
-      "geometry/point3_unittest.cc",
-      "geometry/point_unittest.cc",
-      "geometry/quad_unittest.cc",
-      "geometry/r_tree_unittest.cc",
-      "geometry/rect_unittest.cc",
-      "geometry/safe_integer_conversions_unittest.cc",
-      "geometry/scroll_offset_unittest.cc",
-      "geometry/size_unittest.cc",
-      "geometry/vector2d_unittest.cc",
-      "geometry/vector3d_unittest.cc",
-      "sequential_id_generator_unittest.cc",
-      "skrect_conversion_unittest.cc",
-      "transform_util_unittest.cc",
-    ]
-  }
 
   deps = [
     ":gfx",
@@ -244,10 +213,6 @@ test("gfx_unittests") {
     "//ui/gfx/geometry",
   ]
 
-  if (!is_mac && !is_ios) {
-    sources += [ "transform_unittest.cc" ]
-  }
-
   if (is_android) {
     sources -= [
       # Do not run display_change_notifier_unittest.cc on Android because it
@@ -258,25 +223,6 @@ test("gfx_unittests") {
     deps += [
       #'../../testing/android/native_test.gyp:native_test_native_code', TODO(GYP)
     ]
-  }
-
-  if (is_win) {
-    sources += [ "font_fallback_win_unittest.cc" ]
-
-    ldflags = [
-      "/DELAYLOAD:d2d1.dll",
-      "/DELAYLOAD:d3d10_1.dll",
-    ]
-
-    libs = [
-      "d2d1.lib",
-      "d3d10_1.lib",
-      "imm32.lib",
-      "oleacc.lib",
-    ]
-
-    # TODO(jschuh): crbug.com/167187 fix size_t to int truncations.
-    cflags = [ "/wd4267" ]
   }
 }
 

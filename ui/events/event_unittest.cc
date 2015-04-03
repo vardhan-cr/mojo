@@ -224,33 +224,6 @@ TEST(EventTest, KeyEventCode) {
     KeyEvent key(ET_KEY_PRESSED, VKEY_SPACE, EF_NONE);
     EXPECT_TRUE(key.code().empty());
   }
-#if defined(OS_WIN)
-  {
-    // Test a non extended key.
-    ASSERT_EQ((kNativeCodeSpace & 0xFF), kNativeCodeSpace);
-
-    const LPARAM lParam = GetLParamFromScanCode(kNativeCodeSpace);
-    MSG native_event = { NULL, WM_KEYUP, VKEY_SPACE, lParam };
-    KeyEvent key(native_event);
-
-    // KeyEvent converts from the native keycode (scan code) to the code.
-    EXPECT_EQ(kCodeForSpace, key.code());
-  }
-  {
-    const char kCodeForHome[]  = "Home";
-    const uint16 kNativeCodeHome  = 0xe047;
-
-    // 'Home' is an extended key with 0xe000 bits.
-    ASSERT_NE((kNativeCodeHome & 0xFF), kNativeCodeHome);
-    const LPARAM lParam = GetLParamFromScanCode(kNativeCodeHome);
-
-    MSG native_event = { NULL, WM_KEYUP, VKEY_HOME, lParam };
-    KeyEvent key(native_event);
-
-    // KeyEvent converts from the native keycode (scan code) to the code.
-    EXPECT_EQ(kCodeForHome, key.code());
-  }
-#endif  // OS_WIN
 }
 
 }  // namespace ui

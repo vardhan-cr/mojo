@@ -12,14 +12,6 @@
 #include "ui/gfx/geometry/size_f.h"
 #include "ui/gfx/gfx_export.h"
 
-#if defined(OS_WIN)
-typedef struct tagSIZE SIZE;
-#elif defined(OS_IOS)
-#include <CoreGraphics/CoreGraphics.h>
-#elif defined(OS_MACOSX)
-#include <ApplicationServices/ApplicationServices.h>
-#endif
-
 namespace gfx {
 
 // A size has width and height values.
@@ -28,23 +20,7 @@ class GFX_EXPORT Size {
   Size() : width_(0), height_(0) {}
   Size(int width, int height)
       : width_(width < 0 ? 0 : width), height_(height < 0 ? 0 : height) {}
-#if defined(OS_MACOSX)
-  explicit Size(const CGSize& s)
-      : width_(s.width < 0 ? 0 : s.width),
-        height_(s.height < 0 ? 0 : s.height) {}
-#endif
-
   ~Size() {}
-
-#if defined(OS_MACOSX)
-  Size& operator=(const CGSize& s);
-#endif
-
-#if defined(OS_WIN)
-  SIZE ToSIZE() const;
-#elif defined(OS_MACOSX)
-  CGSize ToCGSize() const { return CGSizeMake(width(), height()); }
-#endif
 
   int width() const { return width_; }
   int height() const { return height_; }

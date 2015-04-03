@@ -107,14 +107,8 @@ void Display::SetScaleAndBounds(
     float device_scale_factor,
     const gfx::Rect& bounds_in_pixel) {
   Insets insets = bounds_.InsetsFrom(work_area_);
-  if (!HasForceDeviceScaleFactor()) {
-#if defined(OS_MACOSX)
-    // Unless an explicit scale factor was provided for testing, ensure the
-    // scale is integral.
-    device_scale_factor = static_cast<int>(device_scale_factor);
-#endif
+  if (!HasForceDeviceScaleFactor())
     device_scale_factor_ = device_scale_factor;
-  }
   device_scale_factor_ = std::max(1.0f, device_scale_factor_);
   bounds_ = gfx::Rect(
       gfx::ToFlooredPoint(gfx::ScalePoint(bounds_in_pixel.origin(),

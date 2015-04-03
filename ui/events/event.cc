@@ -289,14 +289,8 @@ MouseWheelEvent::MouseWheelEvent(const gfx::Vector2d& offset,
       offset_(offset) {
 }
 
-#if defined(OS_WIN)
-// This value matches windows WHEEL_DELTA.
-// static
-const int MouseWheelEvent::kWheelDelta = 120;
-#else
 // This value matches GTK+ wheel scroll amount.
 const int MouseWheelEvent::kWheelDelta = 53;
-#endif
 
 void MouseWheelEvent::UpdateForRootTransform(
     const gfx::Transform& inverted_root_transform) {
@@ -453,12 +447,7 @@ base::char16 KeyEvent::GetCharacter() const {
 
   // TODO(kpschoedel): streamline these cases after settling Ozone
   // positional coding.
-#if defined(OS_WIN)
-  // Native Windows character events always have is_char_ == true,
-  // so this is a synthetic or native keystroke event.
-  character_ = GetCharacterFromKeyCode(key_code_, flags());
-  return character_;
-#elif defined(USE_X11)
+#if defined(USE_X11)
   character_ = GetCharacterFromKeyCode(key_code_, flags());
   return character_;
 #else
@@ -481,23 +470,7 @@ base::char16 KeyEvent::GetUnmodifiedText() const {
 }
 
 bool KeyEvent::IsUnicodeKeyCode() const {
-#if defined(OS_WIN)
-  if (!IsAltDown())
-    return false;
-  const int key = key_code();
-  if (key >= VKEY_NUMPAD0 && key <= VKEY_NUMPAD9)
-    return true;
-  // Check whether the user is using the numeric keypad with num-lock off.
-  // In that case, EF_EXTENDED will not be set; if it is set, the key event
-  // originated from the relevant non-numpad dedicated key, e.g. [Insert].
-  return (!(flags() & EF_EXTENDED) &&
-          (key == VKEY_INSERT || key == VKEY_END  || key == VKEY_DOWN ||
-           key == VKEY_NEXT   || key == VKEY_LEFT || key == VKEY_CLEAR ||
-           key == VKEY_RIGHT  || key == VKEY_HOME || key == VKEY_UP ||
-           key == VKEY_PRIOR));
-#else
   return false;
-#endif
 }
 
 void KeyEvent::NormalizeFlags() {

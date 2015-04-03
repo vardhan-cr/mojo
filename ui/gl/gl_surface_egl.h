@@ -5,10 +5,6 @@
 #ifndef UI_GL_GL_SURFACE_EGL_H_
 #define UI_GL_GL_SURFACE_EGL_H_
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 #include <string>
 
 #include "base/compiler_specific.h"
@@ -48,11 +44,6 @@ class GL_EXPORT GLSurfaceEGL : public GLSurface {
   ~GLSurfaceEGL() override;
 
  private:
-#if defined(OS_WIN)
-  friend struct DriverEGL;
-  static EGLDisplay GetPlatformDisplay(EGLNativeDisplayType native_display);
-#endif
-
   DISALLOW_COPY_AND_ASSIGN(GLSurfaceEGL);
 };
 
@@ -95,15 +86,6 @@ class GL_EXPORT NativeViewGLSurfaceEGL : public GLSurfaceEGL {
   scoped_ptr<VSyncProvider> vsync_provider_;
 
   int swap_interval_;
-
-#if defined(OS_WIN)
-  bool vsync_override_;
-
-  unsigned int swap_generation_;
-  static unsigned int current_swap_generation_;
-  static unsigned int swaps_this_generation_;
-  static unsigned int last_multiswap_generation_;
-#endif
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewGLSurfaceEGL);
 };

@@ -8,19 +8,7 @@
 #include "base/logging.h"
 #include "ui/gl/gl_switches.h"
 
-#if defined(OS_MACOSX)
-#include <OpenGL/OpenGL.h>
-#include "base/mac/mac_util.h"
-#include "ui/gl/gl_context_cgl.h"
-#endif  // OS_MACOSX
-
 namespace ui {
-
-struct GpuSwitchingManager::PlatformSpecific {
-#if defined(OS_MACOSX)
-  CGLPixelFormatObj discrete_pixel_format;
-#endif  // OS_MACOSX
-};
 
 // static
 GpuSwitchingManager* GpuSwitchingManager::GetInstance() {
@@ -32,18 +20,10 @@ GpuSwitchingManager::GpuSwitchingManager()
       gpu_switching_option_set_(false),
       supports_dual_gpus_(false),
       supports_dual_gpus_set_(false),
-      gpu_count_(0),
-      platform_specific_(new PlatformSpecific) {
-#if defined(OS_MACOSX)
-  platform_specific_->discrete_pixel_format = nullptr;
-#endif  // OS_MACOSX
+      gpu_count_(0) {
 }
 
 GpuSwitchingManager::~GpuSwitchingManager() {
-#if defined(OS_MACOSX)
-  if (platform_specific_->discrete_pixel_format)
-    CGLReleasePixelFormat(platform_specific_->discrete_pixel_format);
-#endif  // OS_MACOSX
 }
 
 void GpuSwitchingManager::ForceUseOfIntegratedGpu() {
@@ -63,11 +43,6 @@ void GpuSwitchingManager::ForceUseOfDiscreteGpu() {
   } else {
     gpu_switching_option_ = gfx::PreferDiscreteGpu;
     gpu_switching_option_set_ = true;
-#if defined(OS_MACOSX)
-    // Create a pixel format that lasts the lifespan of Chrome, so Chrome
-    // stays on the discrete GPU.
-    SwitchToDiscreteGpuMac();
-#endif  // OS_MACOSX
   }
 }
 
@@ -87,19 +62,6 @@ bool GpuSwitchingManager::SupportsDualGpus() {
       } else {
         NOTIMPLEMENTED();
       }
-    } else {
-      // Browser process.
-      // We only compute this flag in the browser process.
-#if defined(OS_MACOSX)
-      flag = (gpu_count_ == 2);
-      if (flag && command_line.HasSwitch(switches::kUseGL) &&
-          command_line.GetSwitchValueASCII(switches::kUseGL) !=
-            gfx::kGLImplementationDesktopName)
-        flag = false;
-
-      if (flag && !base::mac::IsOSLionOrLater())
-        flag = false;
-#endif  // OS_MACOSX
     }
     supports_dual_gpus_ = flag;
     supports_dual_gpus_set_ = true;
@@ -129,17 +91,5 @@ gfx::GpuPreference GpuSwitchingManager::AdjustGpuPreference(
     return gpu_preference;
   return gpu_switching_option_;
 }
-
-#if defined(OS_MACOSX)
-void GpuSwitchingManager::SwitchToDiscreteGpuMac() {
-  if (platform_specific_->discrete_pixel_format)
-    return;
-  CGLPixelFormatAttribute attribs[1];
-  attribs[0] = static_cast<CGLPixelFormatAttribute>(0);
-  GLint num_pixel_formats = 0;
-  CGLChoosePixelFormat(attribs, &platform_specific_->discrete_pixel_format,
-                       &num_pixel_formats);
-}
-#endif  // OS_MACOSX
 
 }  // namespace ui

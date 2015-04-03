@@ -244,11 +244,6 @@ void PlatformEventBuilder::FillKeyEventFrom(
 #if defined(USE_X11)
   key_event->NormalizeFlags();
 #endif
-#if defined(OS_WIN)
-  // Only Windows has native character events.
-  if (key_event->is_char())
-    key_event->set_character(native_event.wParam);
-#endif
 }
 
 // static

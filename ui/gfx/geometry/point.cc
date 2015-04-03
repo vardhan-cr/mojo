@@ -4,37 +4,9 @@
 
 #include "ui/gfx/geometry/point.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 #include "base/strings/stringprintf.h"
 
 namespace gfx {
-
-#if defined(OS_WIN)
-Point::Point(DWORD point) {
-  POINTS points = MAKEPOINTS(point);
-  x_ = points.x;
-  y_ = points.y;
-}
-
-Point::Point(const POINT& point) : x_(point.x), y_(point.y) {
-}
-
-Point& Point::operator=(const POINT& point) {
-  x_ = point.x;
-  y_ = point.y;
-  return *this;
-}
-
-POINT Point::ToPOINT() const {
-  POINT p;
-  p.x = x();
-  p.y = y();
-  return p;
-}
-#endif
 
 void Point::SetToMin(const Point& other) {
   x_ = x_ <= other.x_ ? x_ : other.x_;

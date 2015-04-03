@@ -37,11 +37,7 @@ struct GL_EXPORT GLWindowSystemBindingInfo {
 
 void GetAllowedGLImplementations(std::vector<GLImplementation>* impls);
 
-#if defined(OS_WIN)
-typedef void* (WINAPI *GLGetProcAddressProc)(const char* name);
-#else
 typedef void* (*GLGetProcAddressProc)(const char* name);
-#endif
 
 // Initialize a particular GL implementation.
 GL_EXPORT bool InitializeStaticGLBindings(GLImplementation implementation);

@@ -15,10 +15,6 @@
 #include "ui/gfx/display.h"
 #include "ui/gfx/native_widget_types.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 namespace gfx {
 class Point;
 class Vector2d;
@@ -131,18 +127,6 @@ EVENTS_EXPORT bool GetScrollOffsets(const base::NativeEvent& native_event,
                                     float* x_offset_ordinal,
                                     float* y_offset_ordinal,
                                     int* finger_count);
-
-#if defined(OS_WIN)
-// Returns true if |message| identifies a mouse event that was generated as the
-// result of a touch event.
-EVENTS_EXPORT bool IsMouseEventFromTouch(UINT message);
-
-// Converts scan code and lParam each other.  The scan code
-// representing an extended key contains 0xE000 bits.
-EVENTS_EXPORT uint16 GetScanCodeFromLParam(LPARAM lParam);
-EVENTS_EXPORT LPARAM GetLParamFromScanCode(uint16 scan_code);
-
-#endif
 
 }  // namespace ui
 

@@ -10,10 +10,6 @@
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/test/gfx_util.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
-
 namespace gfx {
 
 TEST(RectTest, Contains) {
@@ -699,15 +695,6 @@ TEST(RectTest, ScaleToEnclosingRect) {
     EXPECT_EQ(tests[i].expected_rect, result);
   }
 }
-
-#if defined(OS_WIN)
-TEST(RectTest, ConstructAndAssign) {
-  const RECT rect_1 = { 0, 0, 10, 10 };
-  const RECT rect_2 = { 0, 0, -10, -10 };
-  Rect test1(rect_1);
-  Rect test2(rect_2);
-}
-#endif
 
 TEST(RectTest, ToRectF) {
   // Check that implicit conversion from integer to float compiles.
