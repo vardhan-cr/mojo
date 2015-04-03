@@ -6,7 +6,7 @@
 
 #include "mojo/public/c/system/main.h"
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   // Terminate the process as soon as we reach the application entrypoint. The
   // testing script will instruct the shell to load this application and
   // measure the execution time, which reflects the startup performance.

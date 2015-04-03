@@ -85,8 +85,8 @@ class DefaultWindowManager : public mojo::ApplicationDelegate,
 
 }  // namespace window_manager
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(
       new window_manager::DefaultWindowManager);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

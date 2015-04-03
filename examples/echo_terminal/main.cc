@@ -127,7 +127,7 @@ class EchoTerminalApp
   DISALLOW_COPY_AND_ASSIGN(EchoTerminalApp);
 };
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new EchoTerminalApp());
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

@@ -81,9 +81,9 @@ bool RegisterJNI(JNIEnv* env) {
 
 }  // namespace
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new services::android::JavaHandler());
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }
 
 JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {

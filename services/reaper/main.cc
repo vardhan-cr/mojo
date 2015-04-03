@@ -6,7 +6,7 @@
 #include "mojo/public/c/system/main.h"
 #include "services/reaper/reaper_impl.h"
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new reaper::ReaperImpl());
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

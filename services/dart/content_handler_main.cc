@@ -89,7 +89,7 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
 
 }  // namespace dart
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new dart::DartContentHandlerApp);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

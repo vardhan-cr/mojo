@@ -91,9 +91,9 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
 };
 }
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(
       new native_viewport::NativeViewportAppDelegate);
   runner.set_message_loop_type(base::MessageLoop::TYPE_UI);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

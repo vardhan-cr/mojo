@@ -46,8 +46,8 @@ class RecursiveContentHandler : public ApplicationDelegate,
 }  // namespace examples
 }  // namespace mojo
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(
       new mojo::examples::RecursiveContentHandler());
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

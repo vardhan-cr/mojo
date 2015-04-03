@@ -55,7 +55,7 @@ std::string GetApplicationClassName() {
 }  // namespace examples
 }  // namespace mojo
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   // Call a Java function to demonstrate that the JNI was correctly set up.
   LOG(INFO) << "Device name: " << mojo::examples::GetDeviceName();
 

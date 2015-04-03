@@ -7,7 +7,7 @@
 
 #include "services/kiosk_wm/kiosk_wm.h"
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new kiosk_wm::KioskWM);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

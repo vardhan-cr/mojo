@@ -31,7 +31,7 @@ class Delegate : public mojo::ApplicationDelegate,
   }
 };
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new Delegate);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

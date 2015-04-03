@@ -16,9 +16,9 @@ class ApplicationDelegate;
 // A utility for running a chromium based mojo Application. The typical use
 // case is to use when writing your MojoMain:
 //
-//  MojoResult MojoMain(MojoHandle shell_handle) {
+//  MojoResult MojoMain(MojoHandle application_request) {
 //    mojo::ApplicationRunnerChromium runner(new MyDelegate());
-//    return runner.Run(shell_handle);
+//    return runner.Run(application_request);
 //  }
 //
 // ApplicationRunnerChromium takes care of chromium environment initialization
@@ -35,7 +35,7 @@ class ApplicationRunnerChromium {
   // Once the various parameters have been set above, use Run to initialize an
   // ApplicationImpl wired to the provided delegate, and run a MessageLoop until
   // the application exits.
-  MojoResult Run(MojoHandle shell_handle);
+  MojoResult Run(MojoHandle application_request);
 
  private:
   scoped_ptr<ApplicationDelegate> delegate_;

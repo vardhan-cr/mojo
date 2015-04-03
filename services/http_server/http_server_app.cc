@@ -46,7 +46,7 @@ class HttpServerApp : public mojo::ApplicationDelegate,
 
 }  // namespace http_server
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunner runner(new http_server::HttpServerApp);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

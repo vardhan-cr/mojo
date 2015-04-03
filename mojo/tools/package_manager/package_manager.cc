@@ -6,7 +6,7 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/tools/package_manager/package_manager_application.h"
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new mojo::PackageManagerApplication);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

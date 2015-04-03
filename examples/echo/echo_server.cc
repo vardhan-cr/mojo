@@ -131,11 +131,11 @@ class OneAtATimeServer : public mojo::ApplicationDelegate,
 }  // namespace examples
 }  // namespace mojo
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   // Uncomment one of the three servers at a time to see it work:
   mojo::ApplicationRunner runner(new mojo::examples::MultiServer());
   // mojo::ApplicationRunner runner(new mojo::examples::SingletonServer());
   // mojo::ApplicationRunner runner(new mojo::examples::OneAtATimeServer());
 
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

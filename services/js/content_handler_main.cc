@@ -52,7 +52,7 @@ class JsContentHandler : public mojo::ApplicationDelegate,
 
 }  // namespace js
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new js::JsContentHandler);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

@@ -144,8 +144,8 @@ void FakeSurfacesServiceApplication::Create(ApplicationConnection* connection,
 
 }  // namespace fake_surfaces
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(
       new fake_surfaces::FakeSurfacesServiceApplication);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

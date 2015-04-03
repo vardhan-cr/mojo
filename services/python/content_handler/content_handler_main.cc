@@ -245,8 +245,8 @@ class PythonContentHandlerApp : public ApplicationDelegate {
 }  // namespace python
 }  // namespace services
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(
       new services::python::content_handler::PythonContentHandlerApp());
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }

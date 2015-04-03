@@ -87,7 +87,7 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
 
 }  // namespace examples
 
-MojoResult MojoMain(MojoHandle shell_handle) {
+MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunner runner(new examples::SpinningCubeApp);
-  return runner.Run(shell_handle);
+  return runner.Run(application_request);
 }
