@@ -124,7 +124,7 @@ def main():
   rev(args.chromium_dir)
 
   try:
-    patch.patch()
+    patch.patch_and_filter()
   except subprocess.CalledProcessError:
     print "ERROR: Roll failed due to a patch not applying"
     print "Fix the patch to apply, commit the result, and re-run this script"

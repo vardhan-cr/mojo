@@ -17,6 +17,8 @@ from utils import commit
 from utils import mojo_root_dir
 from utils import system
 
+import patch
+
 sys.path.insert(0, os.path.join(mojo_root_dir, "mojo/public/tools/pylib"))
 # pylint: disable=F0401
 import gs
@@ -109,7 +111,16 @@ def main():
            "be in the format of custom_build_base_<base_commit>_"
            "issue_<rietveld_issue>_patchset_<rietveld_patchset>.")
   args = parser.parse_args()
+
   roll(args.version, args.custom_build)
+
+  try:
+    patch.patch("network_service_patches")
+  except subprocess.CalledProcessError:
+    print "ERROR: Roll failed due to a patch not applying"
+    print "Fix the patch to apply, commit the result, and re-run this script"
+    return 1
+
   return 0
 
 if __name__ == "__main__":
