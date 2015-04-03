@@ -53,6 +53,9 @@ class FileImpl : public File {
               uint32_t open_flags,
               const ReopenCallback& callback) override;
   void AsBuffer(const AsBufferCallback& callback) override;
+  void Ioctl(uint32_t request,
+             Array<uint32_t> in_values,
+             const IoctlCallback& callback);
 
  private:
   StrongBinding<File> binding_;

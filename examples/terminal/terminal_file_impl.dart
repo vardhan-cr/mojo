@@ -6,7 +6,8 @@ import 'dart:async';
 import 'dart:core';
 import 'package:mojo/public/dart/core.dart';
 import 'package:mojo/services/files/public/interfaces/file.mojom.dart' as files;
-import 'package:mojo/services/files/public/interfaces/types.mojom.dart' as files;
+import 'package:mojo/services/files/public/interfaces/types.mojom.dart'
+    as files;
 
 import 'terminal_display.dart';
 
@@ -118,6 +119,13 @@ class TerminalFileImpl implements files.File {
 
   @override
   Future asBuffer(Function responseFactory) async {
+    // TODO(vtl)
+    return responseFactory(files.Error_UNIMPLEMENTED, null);
+  }
+
+  @override
+  Future ioctl(
+      int request, List<int> in_values, Function responseFactory) async {
     // TODO(vtl)
     return responseFactory(files.Error_UNIMPLEMENTED, null);
   }

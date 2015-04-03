@@ -80,6 +80,12 @@ interface File {
   // relate to access mode?
   AsBuffer() => (Error error, handle<shared_buffer>? buffer);
 
+  // Special-file-specific control function, for device "files". |in| and |out|
+  // are dependent on |request|.
+  // TODO(vtl): Make a master list of request values somewhere.
+  Ioctl(uint32 request, array<uint32>? in_values)
+      => (Error error, array<uint32>? out_values);
+
   // TODO(vtl): Add a "watch"?
   // TODO(vtl): Add something analogous to fsync(2)?
 };

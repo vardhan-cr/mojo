@@ -318,5 +318,18 @@ void FileImpl::AsBuffer(const AsBufferCallback& callback) {
   callback.Run(ERROR_UNIMPLEMENTED, ScopedSharedBufferHandle());
 }
 
+void FileImpl::Ioctl(uint32_t request,
+                     Array<uint32_t> in_values,
+                     const IoctlCallback& callback) {
+  if (!file_fd_.is_valid()) {
+    callback.Run(ERROR_CLOSED, Array<uint32_t>());
+    return;
+  }
+
+  // TODO(vtl): The "correct" error code should be one that can be translated to
+  // ENOTTY!
+  callback.Run(ERROR_UNAVAILABLE, Array<uint32_t>());
+}
+
 }  // namespace files
 }  // namespace mojo

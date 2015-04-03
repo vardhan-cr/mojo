@@ -386,6 +386,28 @@ TEST_F(FileImplTest, Truncate) {
   EXPECT_EQ(kTruncatedSize, file_info->size);
 }
 
+TEST_F(FileImplTest, Ioctl) {
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  // Create my_file.
+  FilePtr file;
+  error = ERROR_INTERNAL;
+  directory->OpenFile("my_file", GetProxy(&file),
+                      kOpenFlagRead | kOpenFlagWrite | kOpenFlagCreate,
+                      Capture(&error));
+  ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_OK, error);
+
+  // Normal files don't support any ioctls.
+  Array<uint32_t> out_values;
+  file->Ioctl(0, Array<uint32_t>(), Capture(&error, &out_values));
+  ASSERT_TRUE(file.WaitForIncomingMethodCall());
+  EXPECT_EQ(ERROR_UNAVAILABLE, error);
+  EXPECT_TRUE(out_values.is_null());
+}
+
 }  // namespace
 }  // namespace files
 }  // namespace mojo
