@@ -124,7 +124,6 @@ source_set("cc") {
     "quads/tile_draw_quad.h",
     "quads/yuv_video_draw_quad.cc",
     "quads/yuv_video_draw_quad.h",
-    "resources/layer_painter.h",
     "resources/layer_quad.cc",
     "resources/layer_quad.h",
     "resources/platform_color.h",
@@ -362,12 +361,7 @@ test("cc_unittests") {
 
 test("cc_perftests") {
   sources = [
-    "resources/picture_layer_tiling_perftest.cc",
-    "resources/picture_pile_impl_perftest.cc",
-    "resources/task_graph_runner_perftest.cc",
     "resources/texture_compressor_perftest.cc",
-    "resources/tile_manager_perftest.cc",
-    "resources/tile_task_worker_pool_perftest.cc",
     "test/cc_test_suite.cc",
     "test/run_all_perftests.cc",
   ]

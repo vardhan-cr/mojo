@@ -12,10 +12,17 @@ secondary_source = "//build/secondary/"
 # The set of targets known to pass 'gn check'. When all targets pass, remove
 # this.
 check_targets = [
+  "//cc/*",
+  "//crypto/*",
+  "//dart/*",
   "//examples/*",
+  "//gin/*",
   "//mojo/*",
+  "//mojom/*",
   "//services/*",
   "//shell/*",
+  "//skia/*",
   "//sky/*",
   "//ui/*",
+  "//url/*",
 ]
