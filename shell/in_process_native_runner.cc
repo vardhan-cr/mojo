@@ -46,7 +46,8 @@ void InProcessNativeRunner::Start(
                  FROM_HERE, app_completed_callback);
 
   DCHECK(!thread_);
-  thread_.reset(new base::DelegateSimpleThread(this, "app_thread"));
+  std::string thread_name = "app_thread_" + app_path_.BaseName().AsUTF8Unsafe();
+  thread_.reset(new base::DelegateSimpleThread(this, thread_name));
   thread_->Start();
 }
 
