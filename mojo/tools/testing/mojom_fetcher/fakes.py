@@ -5,6 +5,8 @@
 import io
 import os.path
 
+from fetcher.dependency import Dependency
+from fetcher.mojom_file import MojomFile
 from fetcher.repository import Repository
 
 class FakeRepository(Repository):
@@ -87,3 +89,25 @@ interface SomeInterface {};"""
     else:
       return iter(self.get_walk_external(directory))
 
+
+class FakeDependency(Dependency):
+  IN_FILESYSTEM = [
+      "/base/repo/third_party/external/example.com/dir/example.mojom",
+      "/base/repo/third_party/external/example.com/dir/dir.mojom",
+      "/base/repo/third_party/external/domokit.org/bar/baz/buzz.mojom",
+      "/base/repo/third_party/external/domokit.org/bar/foo/bar.mojom",
+      ]
+
+  def _os_path_exists(self, path):
+    if path in self.IN_FILESYSTEM:
+      return True
+    elif os.path.join("/base/repo", path) in self.IN_FILESYSTEM:
+      return True
+    else:
+      return False
+
+
+class FakeMojomFile(MojomFile):
+  def add_dependency(self, dependency):
+    """Declare a new dependency of this mojom."""
+    self.deps.append(FakeDependency(self._repository, self.name, dependency))
