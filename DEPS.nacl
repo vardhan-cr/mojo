@@ -1,29 +1,8 @@
+# Native Client dependencies are now included in DEPS. This execs DEPS without
+# adding anything to ease the transition.
+
 import gclient_utils
 import os
 
 path = gclient_utils.FindGclientRoot(os.getcwd())
 execfile(os.path.join(path, 'src', 'DEPS'))  # Include proper Mojo DEPS.
-
-# Now we need to add in NaCl.
-
-vars.update({
-  'nacl_revision': '19f11aa481261f38f2a1e9a04e41a7e12aa70e32',
-})
-
-deps.update({
-  'src/native_client':
-    Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
-})
-
-hooks.append({
-  # This downloads binaries for Native Client's newlib toolchain.
-  # Done in lieu of building the toolchain from scratch as it can take
-  # anywhere from 30 minutes to 4 hours depending on platform to build.
-  'name': 'nacltools',
-  'pattern': '.',
-  'action': [
-      'python', 'src/build/download_nacl_toolchains.py',
-      '--packages', 'pnacl_newlib',
-      'sync', '--extract',
-  ],
-})

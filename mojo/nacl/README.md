@@ -10,10 +10,8 @@ return pointers (for example, `MojoMapBuffer`).
 Using
 =====
 
-To use this prototype, point your `.gclient` file to `DEPS.nacl` instead
-of `DEPS` and then run `gclient sync`.
-
-When you run `mojo/tools/mojob.py gn`, add `--nacl` to the command line.
+To use this prototype run `mojo/tools/mojob.py gn --nacl` and then build
+and test as usual.
 
 Run `mojo/tools/mojob.py nacltest` for additional nacl-specific tests.
 

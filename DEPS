@@ -22,38 +22,15 @@ vars = {
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
   'skia_revision': '92d04da38f03dfabd8cd9a7244588a49be9a2f41',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling Skia
-  # and V8 without interference from each other.
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling ANGLE
-  # and whatever else without interference from each other.
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling build tools
-  # and whatever else without interference from each other.
   'buildtools_revision': '3b302fef93f7cc58d9b8168466905237484b2772',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling Dart
-  # and whatever else without interference from each other.
   'dart_revision': '44854',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling PDFium
-  # and whatever else without interference from each other.
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling BoringSSL
-  # and whatever else without interference from each other.
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling lss
-  # and whatever else without interference from each other.
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
-  # Three lines of non-changing comments so that
-  # the commit queue can handle CLs rolling nss
-  # and whatever else without interference from each other.
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
+  'nacl_revision': '19f11aa481261f38f2a1e9a04e41a7e12aa70e32',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -128,6 +105,9 @@ deps = {
 
   'src/third_party/requests/src':
     Var('chromium_git') + '/external/github.com/kennethreitz/requests.git' + '@' + 'f172b30356d821d180fa4ecfa3e71c7274a32de4',
+
+  'src/native_client':
+    Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
 }
 
 
@@ -331,4 +311,16 @@ hooks = [
         'src/tools',
     ],
   },
+  {
+    # This downloads binaries for Native Client's newlib toolchain.
+    # Done in lieu of building the toolchain from scratch as it can take
+    # anywhere from 30 minutes to 4 hours depending on platform to build.
+    'name': 'nacltools',
+    'pattern': '.',
+    'action': [
+        'python', 'src/build/download_nacl_toolchains.py',
+        '--packages', 'pnacl_newlib',
+        'sync', '--extract',
+    ],
+  }
 ]
