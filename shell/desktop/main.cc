@@ -17,7 +17,6 @@
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/trace_event/trace_event.h"
-#include "shell/child_main.h"
 #include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
@@ -112,85 +111,73 @@ int main(int argc, char** argv) {
 
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
+  if (command_line.HasSwitch(switches::kHelp) ||
+      command_line.GetArgs().empty()) {
+    Usage();
+    return 0;
+  }
 
-  // TODO(vtl): Unify parent and child process cases to the extent possible.
-  int exit_code = 0;
-  if (command_line.HasSwitch(switches::kChildProcess)) {
-    exit_code = mojo::shell::ChildMain();
-  } else {
-    // Only check the command line for the main process.
-    const std::set<std::string> all_switches = switches::GetAllSwitches();
-    const base::CommandLine::SwitchMap switches = command_line.GetSwitches();
-    bool found_unknown_switch = false;
-    for (const auto& s : switches) {
-      if (all_switches.find(s.first) == all_switches.end()) {
-        std::cerr << "unknown switch: " << s.first << std::endl;
-        found_unknown_switch = true;
-      }
-    }
-
-    if (found_unknown_switch || command_line.HasSwitch(switches::kHelp) ||
-        command_line.GetArgs().empty()) {
+  const std::set<std::string> all_switches = switches::GetAllSwitches();
+  const base::CommandLine::SwitchMap switches = command_line.GetSwitches();
+  for (const auto& s : switches) {
+    if (all_switches.find(s.first) == all_switches.end()) {
+      std::cerr << "Unknown switch: " << s.first << std::endl;
       Usage();
-      return 0;
-    }
-
-    if (command_line.HasSwitch(switches::kTraceStartup)) {
-      g_tracing = true;
-      base::trace_event::CategoryFilter category_filter(
-          command_line.GetSwitchValueASCII(switches::kTraceStartup));
-      base::trace_event::TraceLog::GetInstance()->SetEnabled(
-          category_filter, base::trace_event::TraceLog::RECORDING_MODE,
-          base::trace_event::TraceOptions(
-              base::trace_event::RECORD_UNTIL_FULL));
-    }
-
-    if (command_line.HasSwitch(switches::kCPUProfile)) {
-#if !defined(NDEBUG) || !defined(ENABLE_PROFILING)
-      LOG(ERROR) << "Profiling requires is_debug=false and "
-                 << "enable_profiling=true. Continuing without profiling.";
-// StartProfiling() and StopProfiling() are a no-op.
-#endif
-      base::debug::StartProfiling("mojo_shell.pprof");
-    }
-
-    // We want the shell::Context to outlive the MessageLoop so that pipes are
-    // all gracefully closed / error-out before we try to shut the Context down.
-    mojo::shell::Context shell_context;
-    {
-      base::MessageLoop message_loop;
-      if (!shell_context.Init()) {
-        Usage();
-        return 0;
-      }
-      if (g_tracing) {
-        message_loop.PostDelayedTask(FROM_HERE,
-                                     base::Bind(StopTracingAndFlushToDisk),
-                                     base::TimeDelta::FromSeconds(5));
-      }
-
-      // The mojo_shell --args-for command-line switch is handled specially
-      // because it can appear more than once. The base::CommandLine class
-      // collapses multiple occurrences of the same switch.
-      for (int i = 1; i < argc; i++) {
-        ApplyApplicationArgs(&shell_context, argv[i]);
-      }
-
-      message_loop.PostTask(
-          FROM_HERE,
-          base::Bind(&mojo::shell::RunCommandLineApps, &shell_context));
-      message_loop.Run();
-
-      // Must be called before |message_loop| is destroyed.
-      shell_context.Shutdown();
-    }
-
-    if (command_line.HasSwitch(switches::kCPUProfile)) {
-      base::debug::StopProfiling();
+      return 1;
     }
   }
 
+  if (command_line.HasSwitch(switches::kTraceStartup)) {
+    g_tracing = true;
+    base::trace_event::CategoryFilter category_filter(
+        command_line.GetSwitchValueASCII(switches::kTraceStartup));
+    base::trace_event::TraceLog::GetInstance()->SetEnabled(
+        category_filter, base::trace_event::TraceLog::RECORDING_MODE,
+        base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
+  }
+
+  if (command_line.HasSwitch(switches::kCPUProfile)) {
+#if !defined(NDEBUG) || !defined(ENABLE_PROFILING)
+    LOG(ERROR) << "Profiling requires is_debug=false and "
+               << "enable_profiling=true. Continuing without profiling.";
+// StartProfiling() and StopProfiling() are a no-op.
+#endif
+    base::debug::StartProfiling("mojo_shell.pprof");
+  }
+
+  // We want the shell::Context to outlive the MessageLoop so that pipes are all
+  // gracefully closed / error-out before we try to shut the Context down.
+  mojo::shell::Context shell_context;
+  {
+    base::MessageLoop message_loop;
+    if (!shell_context.Init()) {
+      Usage();
+      return 1;
+    }
+    if (g_tracing) {
+      message_loop.PostDelayedTask(FROM_HERE,
+                                   base::Bind(StopTracingAndFlushToDisk),
+                                   base::TimeDelta::FromSeconds(5));
+    }
+
+    // The mojo_shell --args-for command-line switch is handled specially
+    // because it can appear more than once. The base::CommandLine class
+    // collapses multiple occurrences of the same switch.
+    for (int i = 1; i < argc; i++)
+      ApplyApplicationArgs(&shell_context, argv[i]);
+
+    message_loop.PostTask(
+        FROM_HERE,
+        base::Bind(&mojo::shell::RunCommandLineApps, &shell_context));
+    message_loop.Run();
+
+    // Must be called before |message_loop| is destroyed.
+    shell_context.Shutdown();
+  }
+
+  if (command_line.HasSwitch(switches::kCPUProfile))
+    base::debug::StopProfiling();
   if (g_tracing)
     StopTracingAndFlushToDisk();
-  return exit_code;
+  return 0;
 }

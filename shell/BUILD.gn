@@ -44,9 +44,7 @@ if (is_android) {
 
 if (!mojo_use_prebuilt_mojo_shell) {
   executable("mojo_shell") {
-    sources = [
-      "desktop/main.cc",
-    ]
+    sources = []
 
     deps = [
       ":init",
@@ -58,7 +56,11 @@ if (!mojo_use_prebuilt_mojo_shell) {
       "//mojo/environment:chromium",
     ]
 
-    if (is_android) {
+    data_deps = [ ":mojo_shell_child" ]
+
+    if (!is_android) {
+      sources += [ "desktop/main.cc" ]
+    } else {
       sources += [
         "android/library_loader.cc",
         "android/main.cc",
@@ -76,6 +78,26 @@ if (!mojo_use_prebuilt_mojo_shell) {
         "//ui/gl",
       ]
     }
+  }
+
+  executable("mojo_shell_child") {
+    sources = [
+      "child_main.cc",
+    ]
+
+    deps = [
+      # TODO(vtl): Reduce these dependencies (probably mostly in :lib).
+      ":child_controller_bindings",
+      ":init",
+      ":lib",
+      ":native_application_support",
+      "//base",
+      "//base/allocator",
+      "//build/config/sanitizers:deps",
+      "//mojo/common",
+      "//mojo/edk/system",
+      "//mojo/environment:chromium",
+    ]
   }
 }  # !mojo_use_prebuilt_mojo_shell
 
@@ -108,8 +130,6 @@ source_set("in_process_native_runner") {
 
 source_set("lib") {
   sources = [
-    "child_main.cc",
-    "child_main.h",
     "child_process_host.cc",
     "child_process_host.h",
     "command_line_util.cc",
@@ -292,6 +312,7 @@ if (is_android) {
     clear_dir = true
     dest = mojo_shell_assets_dir
     sources = [
+      "$root_out_dir/exe.stripped/mojo_shell_child",
       "$root_out_dir/lib.stripped/libbootstrap.so",
       "$root_out_dir/network_service.mojo",
       "$root_out_dir/obj/shell/bootstrap_java.dex.jar",
@@ -389,7 +410,8 @@ test("mojo_shell_tests") {
     "//shell/application_manager",
   ]
 
-  datadeps = [
+  data_deps = [
+    ":mojo_shell_child",
     "//services/test_service:test_app",
     "//services/test_service:test_request_tracker_app",
   ]

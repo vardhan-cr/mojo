@@ -46,14 +46,20 @@ const char kFifoPath[] = "fifo-path";
 
 class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
  public:
-  MojoShellRunner(const std::vector<std::string>& parameters)
-      : parameters_(parameters) {}
+  MojoShellRunner(const base::FilePath& mojo_shell_path,
+                  const base::FilePath& mojo_shell_child_path,
+                  const std::vector<std::string>& parameters)
+      : mojo_shell_path_(mojo_shell_path),
+        mojo_shell_child_path_(mojo_shell_child_path),
+        parameters_(parameters) {}
   ~MojoShellRunner() override {}
 
  private:
   void Run() override;
 
-  std::vector<std::string> parameters_;
+  const base::FilePath mojo_shell_path_;
+  const base::FilePath mojo_shell_child_path_;
+  const std::vector<std::string> parameters_;
 
   DISALLOW_COPY_AND_ASSIGN(MojoShellRunner);
 };
@@ -105,9 +111,9 @@ void MojoShellRunner::Run() {
   base::MessageLoop loop(common::MessagePumpMojo::Create());
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
-  context->Init();
+  context->InitWithPaths(mojo_shell_path_, mojo_shell_child_path_);
 
-  for (auto& args : parameters_)
+  for (const auto& args : parameters_)
     ApplyApplicationArgs(context, args);
 
   RunCommandLineApps(context);
@@ -142,6 +148,7 @@ static void Init(JNIEnv* env,
                  jclass clazz,
                  jobject activity,
                  jstring mojo_shell_path,
+                 jstring mojo_shell_child_path,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory,
                  jstring j_tmp_dir) {
@@ -164,7 +171,12 @@ static void Init(JNIEnv* env,
                                                      &parameters);
   base::CommandLine::Init(0, nullptr);
   base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
-  g_shell_runner.Get().reset(new MojoShellRunner(parameters));
+  g_shell_runner.Get().reset(new MojoShellRunner(
+      base::FilePath(
+          base::android::ConvertJavaStringToUTF8(env, mojo_shell_path)),
+      base::FilePath(
+          base::android::ConvertJavaStringToUTF8(env, mojo_shell_child_path)),
+      parameters));
 
   InitializeLogging();
 
@@ -214,3 +226,9 @@ bool RegisterShellMain(JNIEnv* env) {
 
 }  // namespace shell
 }  // namespace mojo
+
+// TODO(vtl): We need a main(), even though it should never be called.
+int main(int argc, char** argv) {
+  NOTREACHED();
+  return 1;
+}

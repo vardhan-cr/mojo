@@ -27,9 +27,12 @@ public class ShellMain {
     private static final String LOCAL_APP_DIRECTORY = "local_apps";
     // Individual applications bundled with the shell as assets.
     private static final String NETWORK_LIBRARY_APP = "network_service.mojo";
-    // The mojo_shell library is also an executable run in forked processes when running
-    // multi-process.
+    // Not really an executable, but what we'll use for "argv[0]" (along with the path).
     private static final String MOJO_SHELL_EXECUTABLE = "libmojo_shell.so";
+    // Directory where the child executable will be extracted.
+    private static final String CHILD_DIRECTORY = "child";
+    // Name of the child executable.
+    private static final String MOJO_SHELL_CHILD_EXECUTABLE = "mojo_shell_child";
 
     /**
      * A guard flag for calling nativeInit() only once.
@@ -46,6 +49,12 @@ public class ShellMain {
                     getLocalAppsDir(applicationContext), false);
             File mojoShell = new File(applicationContext.getApplicationInfo().nativeLibraryDir,
                     MOJO_SHELL_EXECUTABLE);
+            FileHelper.extractFromAssets(applicationContext, MOJO_SHELL_CHILD_EXECUTABLE,
+                    getChildDir(applicationContext), false);
+            File mojoShellChild =
+                    new File(getChildDir(applicationContext), MOJO_SHELL_CHILD_EXECUTABLE);
+            // The shell child executable needs to be ... executable.
+            mojoShellChild.setExecutable(true, true);
 
             List<String> parametersList = new ArrayList<String>();
             // Program name.
@@ -54,6 +63,7 @@ public class ShellMain {
             }
 
             nativeInit(applicationContext, mojoShell.getAbsolutePath(),
+                    mojoShellChild.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
                     getTmpDir(applicationContext).getAbsolutePath());
@@ -84,6 +94,10 @@ public class ShellMain {
         return context.getDir(LOCAL_APP_DIRECTORY, Context.MODE_PRIVATE);
     }
 
+    private static File getChildDir(Context context) {
+        return context.getDir(CHILD_DIRECTORY, Context.MODE_PRIVATE);
+    }
+
     private static File getTmpDir(Context context) {
         return new File(context.getCacheDir(), "tmp");
     }
@@ -97,7 +111,8 @@ public class ShellMain {
      * Initializes the native system. This API should be called only once per process.
      **/
     private static native void nativeInit(Context context, String mojoShellPath,
-            String[] parameters, String bundledAppsDirectory, String tmpDir);
+            String mojoShellChildPath, String[] parameters, String bundledAppsDirectory,
+            String tmpDir);
 
     private static native boolean nativeStart();
 

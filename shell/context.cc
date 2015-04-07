@@ -235,16 +235,24 @@ GURL Context::ResolveCommandLineURL(const std::string& path) {
 }
 
 bool Context::Init() {
-  TRACE_EVENT0("mojo_shell", "Context::Init");
+  base::FilePath shell_path = base::MakeAbsoluteFilePath(
+      base::CommandLine::ForCurrentProcess()->GetProgram());
+  base::FilePath shell_child_path =
+      shell_path.DirName().AppendASCII("mojo_shell_child");
+  return InitWithPaths(shell_path, shell_child_path);
+}
+
+bool Context::InitWithPaths(const base::FilePath& shell_path,
+                            const base::FilePath& shell_child_path) {
+  TRACE_EVENT0("mojo_shell", "Context::InitWithPaths");
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
 
   if (command_line.HasSwitch(switches::kWaitForDebugger))
     base::debug::WaitForDebugger(60, true);
 
-  mojo_shell_path_ = base::MakeAbsoluteFilePath(command_line.GetProgram());
-  // TODO(vtl): For the moment, the child is the same as the parent.
-  mojo_shell_child_path_ = mojo_shell_path_;
+  mojo_shell_path_ = shell_path;
+  mojo_shell_child_path_ = shell_child_path;
 
   EnsureEmbedderIsInitialized();
   task_runners_.reset(

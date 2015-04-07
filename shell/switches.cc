@@ -20,8 +20,7 @@ const char kV[] = "v";
 // --args-for='mojo:wget http://www.google.com'
 const char kArgsFor[] = "args-for";
 
-// Used internally by the main process to indicate that a new process should be
-// a child process. Not for user use.
+// Used only by the child process. Not for user use.
 const char kChildProcess[] = "child-process";
 
 // Comma separated list like:

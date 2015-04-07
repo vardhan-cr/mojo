@@ -2,10 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "shell/child_main.h"
-
 #include <unistd.h>
 
+#include "base/at_exit.h"
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/command_line.h"
@@ -28,7 +27,9 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/child_controller.mojom.h"
+#include "shell/init.h"
 #include "shell/native_application_support.h"
+#include "shell/switches.h"
 
 namespace mojo {
 namespace shell {
@@ -276,25 +277,32 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
 
 }  // namespace
 
-// ChildMain -------------------------------------------------------------------
+}  // namespace shell
+}  // namespace mojo
 
-int ChildMain() {
-  DVLOG(2) << "ChildMain()";
+int main(int argc, char** argv) {
+  base::AtExitManager at_exit;
+  base::CommandLine::Init(argc, argv);
 
-  DCHECK(!base::MessageLoop::current());
+  mojo::shell::InitializeLogging();
 
-  embedder::ScopedPlatformHandle platform_channel =
-      embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
+  // Make sure that we're really meant to be invoked as the child process.
+  CHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kChildProcess));
+
+  mojo::embedder::ScopedPlatformHandle platform_channel =
+      mojo::embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
           *base::CommandLine::ForCurrentProcess());
   CHECK(platform_channel.is_valid());
 
-  AppContext app_context;
+  mojo::shell::AppContext app_context;
   app_context.Init();
 
-  Blocker blocker;
+  mojo::shell::Blocker blocker;
   app_context.controller_runner()->PostTask(
       FROM_HERE,
-      base::Bind(&ChildControllerImpl::Init, base::Unretained(&app_context),
+      base::Bind(&mojo::shell::ChildControllerImpl::Init,
+                 base::Unretained(&app_context),
                  base::Passed(&platform_channel), blocker.GetUnblocker()));
   // This will block, then run whatever the controller wants.
   blocker.Block();
@@ -303,6 +311,3 @@ int ChildMain() {
 
   return 0;
 }
-
-}  // namespace shell
-}  // namespace mojo

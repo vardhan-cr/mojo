@@ -8,19 +8,14 @@
 #include "base/logging.h"
 #include "base/test/launcher/unit_test_launcher.h"
 #include "base/test/test_suite.h"
-#include "shell/child_main.h"
 #include "shell/switches.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 int main(int argc, char** argv) {
   base::CommandLine::Init(argc, argv);
-  const base::CommandLine& command_line =
-      *base::CommandLine::ForCurrentProcess();
 
-  if (command_line.HasSwitch(switches::kChildProcess)) {
-    base::AtExitManager at_exit;
-    return mojo::shell::ChildMain();
-  }
+  CHECK(!base::CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kChildProcess));
 
   base::TestSuite test_suite(argc, argv);
   return base::LaunchUnitTests(

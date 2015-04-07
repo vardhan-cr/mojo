@@ -50,6 +50,11 @@ class Context : public ApplicationManager::Delegate,
   // success.
   bool Init();
 
+  // Like Init(), but specifies values for |mojo_shell_path()| and
+  // |mojo_shell_child_path()| explicitly.
+  bool InitWithPaths(const base::FilePath& shell_path,
+                     const base::FilePath& shell_child_path);
+
   // If Init() was called and succeeded, this must be called before destruction.
   void Shutdown();
 
