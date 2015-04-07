@@ -10,6 +10,7 @@
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
@@ -241,6 +242,10 @@ bool Context::Init() {
 
   if (command_line.HasSwitch(switches::kWaitForDebugger))
     base::debug::WaitForDebugger(60, true);
+
+  mojo_shell_path_ = base::MakeAbsoluteFilePath(command_line.GetProgram());
+  // TODO(vtl): For the moment, the child is the same as the parent.
+  mojo_shell_child_path_ = mojo_shell_path_;
 
   EnsureEmbedderIsInitialized();
   task_runners_.reset(

@@ -101,10 +101,9 @@ bool ChildProcessHost::DoLaunch() {
       switches::kTraceToConsole, switches::kV, switches::kVModule,
   };
 
-  const base::CommandLine* parent_command_line =
-      base::CommandLine::ForCurrentProcess();
-  base::CommandLine child_command_line(parent_command_line->GetProgram());
-  child_command_line.CopySwitchesFrom(*parent_command_line, kForwardSwitches,
+  base::CommandLine child_command_line(context_->mojo_shell_child_path());
+  child_command_line.CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
+                                      kForwardSwitches,
                                       arraysize(kForwardSwitches));
   child_command_line.AppendSwitch(switches::kChildProcess);
 

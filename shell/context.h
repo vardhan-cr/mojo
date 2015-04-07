@@ -56,9 +56,17 @@ class Context : public ApplicationManager::Delegate,
 
   void Run(const GURL& url);
 
-  TaskRunners* task_runners() { return task_runners_.get(); }
   ApplicationManager* application_manager() { return &application_manager_; }
   URLResolver* url_resolver() { return &url_resolver_; }
+
+  // Available after Init():
+  // These are absolute paths. |mojo_shell_path()| is really the path of the
+  // parent, which may be that of the test binary.
+  const base::FilePath& mojo_shell_path() const { return mojo_shell_path_; }
+  const base::FilePath& mojo_shell_child_path() const {
+    return mojo_shell_child_path_;
+  }
+  TaskRunners* task_runners() { return task_runners_.get(); }
 
  private:
   class NativeViewportApplicationLoader;
@@ -72,11 +80,15 @@ class Context : public ApplicationManager::Delegate,
 
   void OnApplicationEnd(const GURL& url);
 
-  std::set<GURL> app_urls_;
-  scoped_ptr<TaskRunners> task_runners_;
-  scoped_ptr<ExternalApplicationListener> listener_;
   ApplicationManager application_manager_;
   URLResolver url_resolver_;
+
+  base::FilePath mojo_shell_path_;
+  base::FilePath mojo_shell_child_path_;
+  scoped_ptr<TaskRunners> task_runners_;
+
+  scoped_ptr<ExternalApplicationListener> listener_;
+  std::set<GURL> app_urls_;
   GURL shell_file_root_;
   GURL command_line_cwd_;
 

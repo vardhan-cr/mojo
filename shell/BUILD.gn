@@ -417,6 +417,7 @@ test("mojo_shell_tests") {
   sources = [
     "child_process_host_unittest.cc",
     "command_line_util_unittest.cc",
+    "context_unittest.cc",
     "data_pipe_peek_unittest.cc",
     "in_process_native_runner_unittest.cc",
     "native_runner_unittest.cc",
