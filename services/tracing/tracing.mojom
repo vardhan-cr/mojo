@@ -23,6 +23,7 @@ interface TraceCoordinator {
   // |stream|.
   Start(handle<data_pipe_producer> stream, string categories);
 
-  // Stop tracing and flush results to file.
+  // Stop tracing and flush results to the |stream| passed in to Start().
+  // Closes |stream| when all data is collected.
   StopAndFlush();
 };

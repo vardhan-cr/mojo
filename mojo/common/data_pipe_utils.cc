@@ -92,6 +92,8 @@ bool BlockingCopyFromString(const std::string& source,
         char_buffer[byte_index++] = *it++;
       }
       EndWriteDataRaw(destination.get(), byte_index);
+      if (it == source.end())
+        return true;
     } else if (result == MOJO_RESULT_SHOULD_WAIT) {
       result = Wait(destination.get(), MOJO_HANDLE_SIGNAL_WRITABLE,
                     MOJO_DEADLINE_INDEFINITE, nullptr);

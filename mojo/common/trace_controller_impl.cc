@@ -4,6 +4,7 @@
 
 #include "mojo/common/trace_controller_impl.h"
 
+#include "base/logging.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -31,6 +32,7 @@ void TraceControllerImpl::StartTracing(
 }
 
 void TraceControllerImpl::StopTracing() {
+  DCHECK(collector_);
   base::trace_event::TraceLog::GetInstance()->SetDisabled();
 
   base::trace_event::TraceLog::GetInstance()->Flush(
@@ -40,6 +42,7 @@ void TraceControllerImpl::StopTracing() {
 void TraceControllerImpl::SendChunk(
     const scoped_refptr<base::RefCountedString>& events_str,
     bool has_more_events) {
+  DCHECK(collector_);
   collector_->DataCollected(mojo::String(events_str->data()));
   if (!has_more_events) {
     collector_.reset();
