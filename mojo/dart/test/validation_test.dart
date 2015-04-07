@@ -37,7 +37,7 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method10(Map<String, int> param0) => _complete();
   method11(StructG param0) => _complete();
 
-  Future close({bool nodefer: false}) => _stub.close(nodefer: nodefer);
+  Future close({bool immediate: false}) => _stub.close(immediate: immediate);
 }
 
 parser.ValidationParseResult readAndParseTest(String test) {
@@ -65,7 +65,7 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
     assert(e is MojoCodecError);
     // TODO(zra): Make the error messages conform?
     // assert(e == expected);
-    conformanceImpl.close(nodefer: true);
+    conformanceImpl.close(immediate: true);
     pipe.endpoints[0].handle.close();
     handles.forEach((h) => h.close());
   });
