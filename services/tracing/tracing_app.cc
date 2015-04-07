@@ -10,7 +10,7 @@
 
 namespace tracing {
 
-TracingApp::TracingApp() : coordinator_binding_(this) {
+TracingApp::TracingApp() : coordinator_binding_(this), tracing_active_(false) {
 }
 
 TracingApp::~TracingApp() {
