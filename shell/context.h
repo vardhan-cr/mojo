@@ -16,7 +16,6 @@
 namespace mojo {
 namespace shell {
 
-class ExternalApplicationListener;
 class NativeApplicationLoader;
 
 // The "global" context for the shell's main process.
@@ -87,7 +86,6 @@ class Context : public ApplicationManager::Delegate,
   base::FilePath mojo_shell_child_path_;
   scoped_ptr<TaskRunners> task_runners_;
 
-  scoped_ptr<ExternalApplicationListener> listener_;
   std::set<GURL> app_urls_;
   GURL shell_file_root_;
   GURL command_line_cwd_;

@@ -10,7 +10,6 @@ import sys
 _logging = logging.getLogger()
 
 from mopy import test_util
-from mopy.background_app_group import BackgroundAppGroup
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
@@ -23,11 +22,8 @@ def set_color():
     _logging.debug("Setting GTEST_COLOR=yes")
     os.environ["GTEST_COLOR"] = "yes"
 
-def run_fixtures(config, apptest_dict, apptest, test_args, shell_args,
-                 launched_services):
+def run_fixtures(config, apptest_dict, apptest, test_args, shell_args):
   """Run the gtest fixtures in isolation."""
-
-  mojo_paths = Paths(config)
 
   # List the apptest fixtures so they can be run independently for isolation.
   # TODO(msw): Run some apptests without fixture isolation?
@@ -36,17 +32,10 @@ def run_fixtures(config, apptest_dict, apptest, test_args, shell_args,
   if not fixtures:
     return "Failed with no tests found."
 
-  if any(not mojo_paths.IsValidAppUrl(url) for url in launched_services):
-    return ("Failed with malformed launched-services: %r" % launched_services)
-
   apptest_result = "Succeeded"
   for fixture in fixtures:
     apptest_args = test_args + ["--gtest_filter=%s" % fixture]
-    if launched_services:
-      success = RunApptestInLauncher(config, mojo_paths, apptest, apptest_args,
-                                     shell_args, launched_services)
-    else:
-      success = RunApptestInShell(config, apptest, apptest_args, shell_args)
+    success = RunApptestInShell(config, apptest, apptest_args, shell_args)
 
     if not success:
       apptest_result = "Failed test(s) in %r" % apptest_dict
@@ -54,7 +43,7 @@ def run_fixtures(config, apptest_dict, apptest, test_args, shell_args,
   return apptest_result
 
 
-def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
+def run_test(config, shell_args, apps_and_args=None):
   """Runs a command line and checks the output for signs of gtest failure.
 
   Args:
@@ -62,11 +51,9 @@ def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
     shell_args: The arguments for mojo_shell.
     apps_and_args: A Dict keyed by application URL associated to the
         application's specific arguments.
-    run_launcher: |True| is mojo_launcher must be used instead of mojo_shell.
   """
   apps_and_args = apps_and_args or {}
-  output = test_util.try_run_test(config, shell_args, apps_and_args,
-                                  run_launcher)
+  output = test_util.try_run_test(config, shell_args, apps_and_args)
   # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
@@ -74,8 +61,7 @@ def run_test(config, shell_args, apps_and_args=None, run_launcher=False):
       (output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1)):
     print "Failed test:"
     print_process_error(
-        test_util.build_command_line(config, shell_args, apps_and_args,
-                                     run_launcher),
+        test_util.build_command_line(config, shell_args, apps_and_args),
         output)
     return False
   _logging.debug("Succeeded with output:\n%s" % output)
@@ -136,16 +122,3 @@ def _gtest_list_tests(gtest_list_tests_output):
 
 def RunApptestInShell(config, application, application_args, shell_args):
   return run_test(config, shell_args, {application: application_args})
-
-
-def RunApptestInLauncher(config, mojo_paths, application, application_args,
-                         shell_args, launched_services):
-  with BackgroundAppGroup(
-      mojo_paths, launched_services,
-      test_util.build_shell_arguments(shell_args)) as apps:
-    launcher_args = [
-        '--shell-path=' + apps.socket_path,
-        '--app-url=' + application,
-        '--app-path=' + mojo_paths.FileFromUrl(application),
-        '--app-args=' + " ".join(application_args)]
-    return run_test(config, launcher_args, run_launcher=True)

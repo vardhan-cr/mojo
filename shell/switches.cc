@@ -39,11 +39,6 @@ const char kDisableCache[] = "disable-cache";
 // If set apps downloaded are not deleted.
 const char kDontDeleteOnDownload[] = "dont-delete-on-download";
 
-// Allow externally-running applications to discover, connect to, and register
-// themselves with the shell.
-// TODO(cmasone): Work in progress. Once we're sure this works, remove.
-const char kEnableExternalApplications[] = "enable-external-applications";
-
 // Load apps in separate processes.
 // TODO(vtl): Work in progress; doesn't work. Flip this to "disable" (or maybe
 // change it to "single-process") when it works.
@@ -90,7 +85,6 @@ const char* kSwitchArray[] = {kV,
                               kCPUProfile,
                               kDisableCache,
                               kDontDeleteOnDownload,
-                              kEnableExternalApplications,
                               kEnableMultiprocess,
                               kForceInProcess,
                               kHelp,

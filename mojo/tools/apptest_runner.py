@@ -53,7 +53,6 @@ def main():
     apptest = apptest_dict["test"]
     test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", []) + extra_args
-    launched_services = apptest_dict.get("launched-services", [])
 
     print "Running " + apptest + "...",
     sys.stdout.flush()
@@ -63,8 +62,7 @@ def main():
                                              {apptest: test_args})
     else:
       apptest_result = gtest.run_fixtures(config, apptest_dict, apptest,
-                                          test_args, shell_args,
-                                          launched_services)
+                                          test_args, shell_args)
 
     if apptest_result != "Succeeded":
       exit_code = 1

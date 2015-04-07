@@ -27,19 +27,17 @@ def build_shell_arguments(shell_args, apps_and_args=None):
   return result
 
 
-def get_shell_executable(config, run_launcher):
+def get_shell_executable(config):
   paths = Paths(config=config)
   if config.target_os == Config.OS_ANDROID:
     return os.path.join(paths.src_root, "mojo", "tools",
                         "android_mojo_shell.py")
-  elif run_launcher:
-    return paths.mojo_launcher_path
   else:
     return paths.mojo_shell_path
 
 
-def build_command_line(config, shell_args, apps_and_args, run_launcher=False):
-  executable = get_shell_executable(config, run_launcher)
+def build_command_line(config, shell_args, apps_and_args):
+  executable = get_shell_executable(config)
   return "%s %s" % (executable, " ".join(["%r" % x for x in
                                           build_shell_arguments(
                                               shell_args, apps_and_args)]))
@@ -55,23 +53,22 @@ def run_test_android(shell_args, apps_and_args):
       return rf.read()
 
 
-def run_test(config, shell_args, apps_and_args, run_launcher=False):
-  """Run the given test, using mojo_launcher if |run_launcher| is True."""
+def run_test(config, shell_args, apps_and_args):
+  """Run the given test."""
   if (config.target_os == Config.OS_ANDROID):
     return run_test_android(shell_args, apps_and_args)
   else:
-    executable = get_shell_executable(config, run_launcher)
+    executable = get_shell_executable(config)
     command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
     return subprocess.check_output(command, stderr=subprocess.STDOUT)
 
 
-def try_run_test(config, shell_args, apps_and_args, run_launcher):
+def try_run_test(config, shell_args, apps_and_args):
   """Returns the output of a command line or an empty string on error."""
-  command_line = build_command_line(config, shell_args, apps_and_args,
-                                    run_launcher=run_launcher)
+  command_line = build_command_line(config, shell_args, apps_and_args)
   _logging.debug("Running command line: %s" % command_line)
   try:
-    return run_test(config, shell_args, apps_and_args, run_launcher)
+    return run_test(config, shell_args, apps_and_args)
   except Exception as e:
     print_process_error(command_line, e)
   return None

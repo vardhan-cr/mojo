@@ -32,7 +32,6 @@ void Usage() {
       << " [--" << switches::kArgsFor << "=<mojo-app>]"
       << " [--" << switches::kContentHandlers << "=<handlers>]"
       << " [--" << switches::kCPUProfile << "]"
-      << " [--" << switches::kEnableExternalApplications << "]"
       << " [--" << switches::kDisableCache << "]"
       << " [--" << switches::kEnableMultiprocess << "]"
       << " [--" << switches::kOrigin << "=<url-lib-path>]"
@@ -130,10 +129,8 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (found_unknown_switch ||
-        (!command_line.HasSwitch(switches::kEnableExternalApplications) &&
-         (command_line.HasSwitch(switches::kHelp) ||
-          command_line.GetArgs().empty()))) {
+    if (found_unknown_switch || command_line.HasSwitch(switches::kHelp) ||
+        command_line.GetArgs().empty()) {
       Usage();
       return 0;
     }

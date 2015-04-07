@@ -32,7 +32,6 @@
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
 #include "shell/command_line_util.h"
-#include "shell/external_application_listener.h"
 #include "shell/filename_util.h"
 #include "shell/in_process_native_runner.h"
 #include "shell/out_of_process_native_runner.h"
@@ -263,21 +262,6 @@ bool Context::Init() {
       embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
       task_runners_->io_runner(), embedder::ScopedPlatformHandle());
 
-  if (command_line.HasSwitch(switches::kEnableExternalApplications)) {
-    listener_.reset(new ExternalApplicationListener(
-        task_runners_->shell_runner(), task_runners_->io_runner()));
-
-    base::FilePath socket_path =
-        command_line.GetSwitchValuePath(switches::kEnableExternalApplications);
-    if (socket_path.empty())
-      socket_path = ExternalApplicationListener::ConstructDefaultSocketPath();
-
-    listener_->ListenInBackground(
-        socket_path,
-        base::Bind(&ApplicationManager::RegisterExternalApplication,
-                   base::Unretained(&application_manager_)));
-  }
-
   scoped_ptr<NativeRunnerFactory> runner_factory;
   if (command_line.HasSwitch(switches::kEnableMultiprocess))
     runner_factory.reset(new OutOfProcessNativeRunnerFactory(this));
@@ -297,9 +281,6 @@ bool Context::Init() {
   application_manager_.ConnectToApplication(
       GURL("mojo:tracing"), GURL(""), nullptr,
       tracing_service_provider_ptr.Pass(), base::Closure());
-
-  if (listener_)
-    listener_->WaitForListening();
 
   return true;
 }

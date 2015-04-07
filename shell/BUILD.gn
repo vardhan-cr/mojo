@@ -17,7 +17,6 @@ group("shell") {
   testonly = true
 
   deps = [
-    ":mojo_launcher",
     ":mojo_shell",
     ":tests",
   ]
@@ -33,7 +32,6 @@ group("shell") {
 group("tests") {
   testonly = true
   deps = [
-    ":external_application_unittests",
     ":mojo_shell_tests",
     "//shell/application_manager:mojo_application_manager_unittests",
   ]
@@ -81,25 +79,6 @@ if (!mojo_use_prebuilt_mojo_shell) {
   }
 }  # !mojo_use_prebuilt_mojo_shell
 
-executable("mojo_launcher") {
-  sources = [
-    "launcher_main.cc",
-  ]
-
-  deps = [
-    ":external_application_registrar_bindings",
-    ":external_application_registrar_connection",
-    ":init",
-    ":in_process_native_runner",
-    "//base",
-    "//build/config/sanitizers:deps",
-    "//mojo/common",
-    "//mojo/edk/system",
-    "//mojo/environment:chromium",
-    "//url",
-  ]
-}
-
 source_set("init") {
   sources = [
     "init.cc",
@@ -137,12 +116,8 @@ source_set("lib") {
     "command_line_util.h",
     "context.cc",
     "context.h",
-    "external_application_listener.cc",
-    "external_application_listener.h",
     "filename_util.cc",
     "filename_util.h",
-    "incoming_connection_listener.cc",
-    "incoming_connection_listener.h",
     "out_of_process_native_runner.cc",
     "out_of_process_native_runner.h",
     "task_runners.cc",
@@ -153,7 +128,6 @@ source_set("lib") {
 
   deps = [
     ":child_controller_bindings",
-    ":external_application_registrar_bindings",
     ":init",
     ":in_process_native_runner",
     ":native_application_support",
@@ -168,7 +142,6 @@ source_set("lib") {
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
     "//shell/application_manager",
-    "//shell/domain_socket",
     "//services/tracing:bindings",
     "//url",
   ]
@@ -384,35 +357,6 @@ mojom("child_controller_bindings") {
   ]
 }
 
-mojom("external_application_registrar_bindings") {
-  sources = [
-    "external_application_registrar.mojom",
-  ]
-
-  deps = [
-    "//mojo/public/interfaces/application",
-  ]
-}
-
-source_set("external_application_registrar_connection") {
-  sources = [
-    "external_application_registrar_connection.cc",
-    "external_application_registrar_connection.h",
-  ]
-
-  deps = [
-    ":external_application_registrar_bindings",
-    "//base",
-    "//mojo/common",
-    "//mojo/edk/system",
-    "//mojo/public/cpp/bindings",
-    "//mojo/public/interfaces/application",
-    "//shell/domain_socket",
-    "//url",
-  ]
-}
-
-# GYP version: mojo/mojo.gyp:mojo_shell_tests
 test("mojo_shell_tests") {
   sources = [
     "child_process_host_unittest.cc",
@@ -464,7 +408,6 @@ test("mojo_shell_tests") {
   }
 }
 
-# GYP version: mojo/mojo.gyp:mojo_shell_test_support
 source_set("test_support") {
   sources = [
     "shell_test_helper.cc",
@@ -477,32 +420,6 @@ source_set("test_support") {
     "//base",
     "//mojo/edk/system",
     "//shell/application_manager",
-  ]
-}
-
-test("external_application_unittests") {
-  sources = [
-    "external_application_listener_unittest.cc",
-    "incoming_connection_listener_unittest.cc",
-  ]
-
-  deps = [
-    ":lib",
-    ":external_application_registrar_connection",
-    ":external_application_registrar_bindings",
-    "//base",
-    "//base/test:test_support",
-    "//testing/gtest",
-    "//url",
-    "//mojo/application",
-    "//mojo/common",
-    "//mojo/edk/system",
-    "//mojo/edk/test:run_all_unittests",
-    "//mojo/edk/test:test_support",
-    "//mojo/environment:chromium",
-    "//shell/application_manager",
-    "//shell/domain_socket",
-    "//shell/domain_socket:tests",
   ]
 }
 

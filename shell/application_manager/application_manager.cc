@@ -375,22 +375,6 @@ void ApplicationManager::RunNativeApplication(
                            weak_ptr_factory_.GetWeakPtr(), runner));
 }
 
-void ApplicationManager::RegisterExternalApplication(
-    const GURL& url,
-    const std::vector<std::string>& args,
-    ApplicationPtr application) {
-  const auto& args_it = url_to_args_.find(url);
-  if (args_it != url_to_args_.end()) {
-    LOG(WARNING) << "--args-for provided for external application " << url
-                 << " <ignored>";
-  }
-  Identity identity(url);
-  ShellImpl* shell_impl =
-      new ShellImpl(application.Pass(), this, identity, base::Closure());
-  identity_to_shell_impl_[identity] = shell_impl;
-  shell_impl->InitializeApplication(Array<String>::From(args));
-}
-
 void ApplicationManager::RegisterContentHandler(
     const std::string& mime_type,
     const GURL& content_handler_url) {

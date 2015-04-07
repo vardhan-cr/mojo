@@ -83,10 +83,6 @@ class ApplicationManager {
   void RegisterContentHandler(const std::string& mime_type,
                               const GURL& content_handler_url);
 
-  void RegisterExternalApplication(const GURL& application_url,
-                                   const std::vector<std::string>& args,
-                                   ApplicationPtr application);
-
   // Sets the default Loader to be used if not overridden by SetLoaderForURL()
   // or SetLoaderForScheme().
   void set_default_loader(scoped_ptr<ApplicationLoader> loader) {

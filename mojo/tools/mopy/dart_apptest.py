@@ -11,8 +11,7 @@ from mopy.print_process_error import print_process_error
 
 
 # TODO(erg): Support android, launched services and fixture isolation.
-def run_test(config, apptest_dict, shell_args, apps_and_args=None,
-             run_launcher=False):
+def run_test(config, apptest_dict, shell_args, apps_and_args=None):
   """Runs a command line and checks the output for signs of gtest failure.
 
   Args:
@@ -20,11 +19,9 @@ def run_test(config, apptest_dict, shell_args, apps_and_args=None,
     shell_args: The arguments for mojo_shell.
     apps_and_args: A Dict keyed by application URL associated to the
         application's specific arguments.
-    run_launcher: |True| is mojo_launcher must be used instead of mojo_shell.
   """
   apps_and_args = apps_and_args or {}
-  output = test_util.try_run_test(config, shell_args, apps_and_args,
-                                  run_launcher)
+  output = test_util.try_run_test(config, shell_args, apps_and_args)
   # Fail on output with dart unittests' "FAIL:" or a lack of "PASS:".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
@@ -33,8 +30,7 @@ def run_test(config, apptest_dict, shell_args, apps_and_args=None,
       output.find("PASS:") == -1):
     print "Failed test:"
     print_process_error(
-        test_util.build_command_line(config, shell_args, apps_and_args,
-                                     run_launcher),
+        test_util.build_command_line(config, shell_args, apps_and_args),
         output)
     return "Failed test(s) in %r" % apptest_dict
   _logging.debug("Succeeded with output:\n%s" % output)

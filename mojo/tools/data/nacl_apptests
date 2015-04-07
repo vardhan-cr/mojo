@@ -29,5 +29,4 @@ tests = [
     "test": "mojo:shell_apptests_x64.nexe",
   },
   # TODO(ncbray): http_server_apptests (uses two-stage data pipe reads)
-  # TODO(ncbray): support NaCl in mojo_launcher
 ]

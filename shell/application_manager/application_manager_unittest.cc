@@ -773,22 +773,6 @@ TEST_F(ApplicationManagerTest, MappedURLsShouldWorkWithLoaders) {
   custom_loader->set_context(nullptr);
 }
 
-TEST_F(ApplicationManagerTest, ExternalApp) {
-  ApplicationPtr application;
-  TestExternal external;
-  std::vector<std::string> args;
-  args.push_back("test");
-  ApplicationImpl app(&external, GetProxy(&application));
-  application_manager_->RegisterExternalApplication(GURL("mojo:test"), args,
-                                                    application.Pass());
-  loop_.Run();
-  EXPECT_EQ(args, external.initialize_args());
-  application_manager_->ConnectToServiceByName(GURL("mojo:test"),
-                                               std::string());
-  loop_.Run();
-  EXPECT_TRUE(external.configure_incoming_connection_called());
-};
-
 TEST_F(ApplicationManagerTest, TestQueryWithLoaders) {
   TestApplicationLoader* url_loader = new TestApplicationLoader;
   TestApplicationLoader* scheme_loader = new TestApplicationLoader;
