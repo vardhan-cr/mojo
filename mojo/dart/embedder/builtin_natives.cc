@@ -80,9 +80,15 @@ void Logger_PrintString(Dart_NativeArguments args) {
   if (Dart_IsError(result)) {
     Dart_PropagateError(result);
   } else {
+  // TODO(dart): Hook up to developer console (if/when that's a thing).
+#if defined(OS_ANDROID)
+    std::string message(reinterpret_cast<char*>(chars), length);
+    LOG(INFO) << "CONSOLE: " << message;
+#else
     // Uses fwrite to support printing NUL bytes.
     fwrite(chars, 1, length, stdout);
     fputs("\n", stdout);
+#endif
   }
   fflush(stdout);
 }
