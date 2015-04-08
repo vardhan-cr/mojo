@@ -9,6 +9,7 @@
 #include "base/bind.h"
 #include "services/native_viewport/platform_viewport_android.h"
 #include "shell/android/android_handler.h"
+#include "shell/android/intent_receiver_manager_impl.h"
 #include "shell/android/keyboard_impl.h"
 #include "shell/android/main.h"
 
@@ -16,6 +17,7 @@ namespace {
 
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
     {"AndroidHandler", mojo::shell::RegisterAndroidHandlerJni},
+    {"IntentReceiverRegistry", mojo::shell::RegisterIntentReceiverRegistry},
     {"Keyboard", mojo::shell::RegisterKeyboardJni},
     {"PlatformViewportAndroid",
      native_viewport::PlatformViewportAndroid::Register},

@@ -11,6 +11,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
+#include "shell/android/intent_receiver_manager_factory.h"
 
 namespace base {
 class FilePath;
@@ -35,6 +36,8 @@ class AndroidHandler : public ApplicationDelegate,
                       URLResponsePtr response) override;
 
   ContentHandlerFactory content_handler_factory_;
+  IntentReceiverManagerFactory intent_receiver_manager_factory_;
+
   MOJO_DISALLOW_COPY_AND_ASSIGN(AndroidHandler);
 };
 

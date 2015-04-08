@@ -27,6 +27,7 @@
                 <action android:name="android.intent.action.VIEW"/>
             </intent-filter>
         </activity>
+        <service android:name=".IntentReceiverService"/>
     </application>
 
 </manifest>

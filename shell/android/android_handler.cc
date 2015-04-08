@@ -100,6 +100,7 @@ void AndroidHandler::Initialize(ApplicationImpl* app) {
 bool AndroidHandler::ConfigureIncomingConnection(
     ApplicationConnection* connection) {
   connection->AddService(&content_handler_factory_);
+  connection->AddService(&intent_receiver_manager_factory_);
   return true;
 }
 
