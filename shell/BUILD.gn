@@ -90,7 +90,6 @@ if (!mojo_use_prebuilt_mojo_shell) {
       ":child_controller_bindings",
       ":init",
       ":lib",
-      ":native_application_support",
       "//base",
       "//base/allocator",
       "//build/config/sanitizers:deps",
@@ -112,22 +111,7 @@ source_set("init") {
   ]
 }
 
-source_set("in_process_native_runner") {
-  sources = [
-    "in_process_native_runner.cc",
-    "in_process_native_runner.h",
-  ]
-
-  public_deps = [
-    ":native_application_support",
-    "//shell/application_manager",
-  ]
-
-  deps = [
-    "//base",
-  ]
-}
-
+# TODO(vtl): Split this target into parent/child/common libs.
 source_set("lib") {
   sources = [
     "child_process_host.cc",
@@ -138,6 +122,8 @@ source_set("lib") {
     "context.h",
     "filename_util.cc",
     "filename_util.h",
+    "in_process_native_runner.cc",
+    "in_process_native_runner.h",
     "out_of_process_native_runner.cc",
     "out_of_process_native_runner.h",
     "task_runners.cc",
@@ -149,8 +135,6 @@ source_set("lib") {
   deps = [
     ":child_controller_bindings",
     ":init",
-    ":in_process_native_runner",
-    ":native_application_support",
     "//base",
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
@@ -167,6 +151,7 @@ source_set("lib") {
   ]
 
   public_deps = [
+    ":native_application_support",
     ":switches",
   ]
 
@@ -205,6 +190,8 @@ source_set("lib") {
   }
 }
 
+# This is a separate target mainly since it suppresses check_includes.
+# TODO(vtl): Make it so that the suppression isn't needed.
 source_set("native_application_support") {
   sources = [
     "native_application_support.cc",
@@ -397,7 +384,6 @@ test("mojo_shell_tests") {
   ]
 
   deps = [
-    ":in_process_native_runner",
     ":lib",
     "//base",
     "//base:i18n",
