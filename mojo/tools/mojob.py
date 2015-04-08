@@ -3,10 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# This a simple script to make building/testing Mojo components easier.
+"""A simple script to make building/testing Mojo components easier."""
 
 import argparse
 from copy import deepcopy
+import logging
 import os
 import subprocess
 import sys
@@ -15,6 +16,11 @@ from get_test_list import GetTestList
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.gn import GNArgsForConfig, ParseGNConfig, CommandLineForGNArgs
+from mopy.log import InitLogging
+
+
+_logger = logging.getLogger()
+_verbose_count = 0
 
 
 def _args_to_config(args):
@@ -74,16 +80,25 @@ def _args_to_config(args):
 
 
 def _get_out_dir(config):
+  """Gets the build output directory (e.g., out/Debug), relative to src, for the
+  given config."""
+
   paths = Paths(config)
   return paths.SrcRelPath(paths.build_dir)
 
 
-def sync(config):
-  # pylint: disable=W0613
+def _sync(config):  # pylint: disable=W0613
+  """Runs gclient sync for the given config."""
+
+  _logger.debug('_sync()')
   return subprocess.call(['gclient', 'sync'])
 
 
-def gn(config):
+def _gn(config):
+  """Runs gn gen for the given config."""
+
+  _logger.debug('_gn()')
+
   command = ['gn', 'gen', '--check']
 
   gn_args = CommandLineForGNArgs(GNArgsForConfig(config))
@@ -96,7 +111,11 @@ def gn(config):
   return subprocess.call(command)
 
 
-def build(config):
+def _build(config):
+  """Builds for the given config."""
+
+  _logger.debug('_build()')
+
   out_dir = _get_out_dir(config)
   gn_args = ParseGNConfig(out_dir)
   print 'Building in %s ...' % out_dir
@@ -123,7 +142,7 @@ def _run_tests(config, test_types):
   config = deepcopy(config)
   config.values['test_types'] = test_types
 
-  test_list = GetTestList(config)
+  test_list = GetTestList(config, verbose_count=_verbose_count)
   dry_run = config.values.get('dry_run')
   final_exit_code = 0
   failure_list = []
@@ -133,7 +152,9 @@ def _run_tests(config, test_types):
     if dry_run:
       continue
 
+    _logger.info('Starting: %s' % entry['command'])
     exit_code = subprocess.call(entry['command'])
+    _logger.info('Completed: %s' % entry['command'])
     if exit_code:
       if not final_exit_code:
         final_exit_code = exit_code
@@ -153,19 +174,23 @@ def _run_tests(config, test_types):
   return final_exit_code
 
 
-def test(config):
+def _test(config):
+  _logger.debug('_test()')
   return _run_tests(config, [Config.TEST_TYPE_DEFAULT])
 
 
-def perftest(config):
+def _perftest(config):
+  _logger.debug('_perftest()')
   return _run_tests(config, [Config.TEST_TYPE_PERF])
 
 
-def pytest(config):
+def _pytest(config):
+  _logger.debug('_pytest()')
   return _run_tests(config, ['python'])
 
 
-def nacltest(config):
+def _nacltest(config):
+  _logger.debug('_nacltest()')
   return _run_tests(config, ['nacl'])
 
 
@@ -176,6 +201,11 @@ def main():
       '/testing Mojo components easier.')
 
   parent_parser = argparse.ArgumentParser(add_help=False)
+
+  parent_parser.add_argument('--verbose',
+                             help='Be verbose (multiple times for more)',
+                             default=0, dest='verbose_count', action='count')
+
   parent_parser.add_argument('--asan', help='Use Address Sanitizer',
                              action='store_true')
   parent_parser.add_argument('--dcheck_always_on',
@@ -203,11 +233,11 @@ def main():
 
   sync_parser = subparsers.add_parser('sync', parents=[parent_parser],
       help='Sync using gclient (does not run gn).')
-  sync_parser.set_defaults(func=sync)
+  sync_parser.set_defaults(func=_sync)
 
   gn_parser = subparsers.add_parser('gn', parents=[parent_parser],
                                     help='Run gn for mojo (does not sync).')
-  gn_parser.set_defaults(func=gn)
+  gn_parser.set_defaults(func=_gn)
   gn_parser.add_argument('--args', help='Specify extra args',
                          default=None, dest='gn_args')
   gn_parser.add_argument('--nacl', help='Add in NaCl', default=False,
@@ -229,30 +259,33 @@ def main():
 
   build_parser = subparsers.add_parser('build', parents=[parent_parser],
                                        help='Build')
-  build_parser.set_defaults(func=build)
+  build_parser.set_defaults(func=_build)
 
   test_parser = subparsers.add_parser('test', parents=[parent_parser],
                                       help='Run unit tests (does not build).')
-  test_parser.set_defaults(func=test)
+  test_parser.set_defaults(func=_test)
   test_parser.add_argument('--dry-run',
                            help='Print instead of executing commands',
                            default=False, action='store_true')
 
   perftest_parser = subparsers.add_parser('perftest', parents=[parent_parser],
       help='Run perf tests (does not build).')
-  perftest_parser.set_defaults(func=perftest)
+  perftest_parser.set_defaults(func=_perftest)
 
   pytest_parser = subparsers.add_parser('pytest', parents=[parent_parser],
       help='Run Python unit tests (does not build).')
-  pytest_parser.set_defaults(func=pytest)
+  pytest_parser.set_defaults(func=_pytest)
 
   nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
       help='Run NaCl unit tests (does not build).')
-  nacltest_parser.set_defaults(func=nacltest)
+  nacltest_parser.set_defaults(func=_nacltest)
 
   args = parser.parse_args()
-  config = _args_to_config(args)
-  return args.func(config)
+  global _verbose_count
+  _verbose_count = args.verbose_count
+  InitLogging(_verbose_count)
+
+  return args.func(_args_to_config(args))
 
 
 if __name__ == '__main__':

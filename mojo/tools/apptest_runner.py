@@ -10,37 +10,36 @@ import ast
 import logging
 import sys
 
-_logging = logging.getLogger()
-
 from mopy import android
 from mopy import dart_apptest
 from mopy import gtest
 from mopy.config import Config
 from mopy.gn import ConfigForGNArgs, ParseGNConfig
+from mopy.log import InitLogging
+
+
+_logger = logging.getLogger()
 
 
 def main():
-  logging.basicConfig()
-  # Uncomment to debug:
-  #_logging.setLevel(logging.DEBUG)
+  parser = argparse.ArgumentParser(description="A test runner for gtest "
+                                   "application tests.")
 
-  parser = argparse.ArgumentParser(description='A test runner for gtest '
-                                   'application tests.')
-
-  parser.add_argument('apptest_list_file', type=file,
-                      help='A file listing apptests to run.')
-  parser.add_argument('build_dir', type=str,
-                      help='The build output directory.')
+  parser.add_argument("--verbose", help="Be verbose (multiple times for more)",
+                      default=0, dest="verbose_count", action="count")
+  parser.add_argument("apptest_list_file", type=file,
+                      help="A file listing apptests to run.")
+  parser.add_argument("build_dir", type=str,
+                      help="The build output directory.")
   args = parser.parse_args()
 
+  InitLogging(args.verbose_count)
   config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
 
-  execution_globals = {
-      "config": config,
-  }
+  execution_globals = {"config": config}
   exec args.apptest_list_file in execution_globals
   apptest_list = execution_globals["tests"]
-  _logging.debug("Test list: %s" % apptest_list)
+  _logger.debug("Test list: %s" % apptest_list)
 
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
@@ -54,9 +53,11 @@ def main():
     test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", []) + extra_args
 
-    print "Running " + apptest + "...",
+    _logger.info("Will start: %s" % apptest)
+    print "Running %s...." % apptest,
     sys.stdout.flush()
 
+    # TODO(vtl): Plumb verbosity down to lower layers.
     if apptest_dict.get("type", "gtest") == "dart":
       apptest_result = dart_apptest.run_test(config, apptest_dict, shell_args,
                                              {apptest: test_args})
@@ -67,6 +68,7 @@ def main():
     if apptest_result != "Succeeded":
       exit_code = 1
     print apptest_result
+    _logger.info("Completed: %s" % apptest)
 
   return exit_code
 

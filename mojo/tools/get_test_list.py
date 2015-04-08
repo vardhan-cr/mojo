@@ -19,7 +19,7 @@ from mopy.config import Config
 from mopy.paths import Paths
 
 
-def GetTestList(config):
+def GetTestList(config, verbose_count=0):
   """Gets the list of tests to run for the given config. The test list (which is
   returned) is just a list of dictionaries, each dictionary having two required
   fields:
@@ -38,6 +38,8 @@ def GetTestList(config):
   build_dir = paths.SrcRelPath(paths.build_dir)
   target_os = config.target_os
 
+  verbose_flags = verbose_count * ["--verbose"]
+
   # Utility functions ----------------------------------------------------------
 
   # Call this to determine if a test matching classes this_tests_types should
@@ -49,7 +51,7 @@ def GetTestList(config):
   # Call this to add the given command to the test list.
   def AddEntry(name, command):
     if config.sanitizer == Config.SANITIZER_ASAN:
-      command = (['python', os.path.join("mojo", "tools",
+      command = (["python", os.path.join("mojo", "tools",
                                          "run_command_through_symbolizer.py")] +
                  command)
     test_list.append({"name": name, "command": command})
@@ -74,18 +76,17 @@ def GetTestList(config):
 
   # C++ unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT):
-    unit_test_command = [os.path.join("mojo", "tools", "test_runner.py")]
-    unit_test_command.extend(
-        [os.path.join("mojo", "tools", "data", "unittests"), build_dir,
-        "mojob_test_successes"])
-    AddXvfbEntry("Unit tests", unit_test_command)
+    AddXvfbEntry("Unit tests",
+                 [os.path.join("mojo", "tools", "test_runner.py"),
+                  os.path.join("mojo", "tools", "data", "unittests"), build_dir,
+                  "mojob_test_successes"] + verbose_flags)
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
     AddXvfbEntry("App tests",
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "apptests"),
-                  build_dir])
+                  build_dir] + verbose_flags)
 
   # Python unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "python"):
@@ -167,7 +168,7 @@ def GetTestList(config):
               "--test-apk=MojoTest",
               "--output-directory=%s" % build_dir,
               "--test_data=bindings:mojo/public/interfaces/bindings/tests/data"]
-             )
+             + verbose_flags)
 
   # Other (non-default) tests --------------------------------------------------
 
@@ -176,11 +177,11 @@ def GetTestList(config):
     AddXvfbEntry("Dart unit tests",
                  [os.path.join("mojo", "tools", "test_runner.py"),
                   os.path.join("mojo", "tools", "data", "dart_unittests"),
-                  build_dir, "mojob_test_successes"])
+                  build_dir, "mojob_test_successes"] + verbose_flags)
     AddXvfbEntry("Dart App tests",
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "dart_apptests"),
-                  build_dir])
+                  build_dir] + verbose_flags)
 
   # NaCl tests:
   if ShouldRunTest("nacl"):
@@ -194,7 +195,7 @@ def GetTestList(config):
     AddXvfbEntry("NaCl app tests",
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "nacl_apptests"),
-                  build_dir])
+                  build_dir] + verbose_flags)
 
   # ----------------------------------------------------------------------------
 
