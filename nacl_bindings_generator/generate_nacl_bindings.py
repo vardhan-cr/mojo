@@ -366,7 +366,12 @@ def GenerateMojoSyscall(functions, common_vars, out):
 
       # Call
       getParams = [impl.CallParam() for impl in impls[:-1]]
-      code << 'result_value = %s(%s);' % (f.name, ', '.join(getParams))
+      callTarget = f.name
+      # Redirect to namespaced functions.
+      if callTarget.startswith("Mojo"):
+        callTarget = callTarget[:4] + 'SystemImpl' + callTarget[4:]
+        getParams = ['g_mojo_system'] + getParams
+      code << 'result_value = %s(%s);' % (callTarget, ', '.join(getParams))
       code << ''
 
       # Write outputs

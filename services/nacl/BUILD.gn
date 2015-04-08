@@ -16,6 +16,7 @@ if (!is_nacl) {
       "//mojo/application:application",
       "//mojo/application:content_handler",
       "//mojo/common",
+      "//mojo/public/platform/native:system_impl_private",
       "//mojo/services/network/public/interfaces",
       "//nacl_bindings:monacl_sel",
       "//url",

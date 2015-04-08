@@ -14,6 +14,7 @@
 #include "mojo/public/platform/native/gles2_impl_occlusion_query_ext_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_thunks.h"
 #include "mojo/public/platform/native/gles2_thunks.h"
+#include "mojo/public/platform/native/system_impl_private_thunks.h"
 #include "mojo/public/platform/native/system_thunks.h"
 
 namespace mojo {
@@ -65,6 +66,12 @@ bool RunNativeApplication(base::NativeLibrary app_library,
     LOG(ERROR) << "MojoSetSystemThunks not found";
     return false;
   }
+
+  // TODO(ncbray): enforce the private nature of this API, somehow?
+  SetThunks(&MojoMakeSystemImplControlThunksPrivate,
+            "MojoSetSystemImplControlThunksPrivate", app_library);
+  SetThunks(&MojoMakeSystemImplThunksPrivate, "MojoSetSystemImplThunksPrivate",
+            app_library);
 
   if (SetThunks(&MojoMakeGLES2ControlThunks, "MojoSetGLES2ControlThunks",
                 app_library)) {

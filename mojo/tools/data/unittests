@@ -24,6 +24,9 @@ tests = [
   {
     "test": "mojo_public_utility_unittests",
   },
+  {
+    "test": "mojo_system_impl_private_unittests",
+  },
 
   # Non-system, non-public tests:
   {
