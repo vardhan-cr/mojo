@@ -3,6 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tool to update the version of the (binary) network service used (prebuilt
+from the Chromium tree). See:
+https://github.com/domokit/mojo/wiki/Rolling-code-between-chromium-and-mojo#rolling-the-network-service
+"""
+
 import argparse
 import os
 import re

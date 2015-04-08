@@ -3,6 +3,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tool to roll Mojo into Chromium. See:
+https://github.com/domokit/mojo/wiki/Rolling-code-between-chromium-and-mojo#mojo---chromium-updates-sdk--edk
+"""
+
 import os
 import sys
 from utils import commit

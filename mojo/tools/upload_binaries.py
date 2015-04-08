@@ -3,6 +3,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tool to roll Chromium into Mojo. See:
+https://github.com/domokit/mojo/wiki/Rolling-code-between-chromium-and-mojo#chromium---mojo-updates
+"""
+
 import argparse
 import glob
 import os
