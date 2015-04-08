@@ -5,6 +5,7 @@
 source_set("dart_controller_no_snapshot") {
   sources = [
     "$target_gen_dir/dart_embedder_patch_resources.cc",
+    "$target_gen_dir/dart_embedder_service_isolate_resources.cc",
     "builtin.cc",
     "builtin.h",
     "builtin_natives.cc",
@@ -17,6 +18,7 @@ source_set("dart_controller_no_snapshot") {
 
   deps = [
     ":generate_dart_embedder_patch_resources_cc",
+    ":generate_dart_embedder_service_isolate_resources_cc",
     "//base",
     "//base:i18n",
     "//crypto",
@@ -65,5 +67,185 @@ action("generate_dart_embedder_patch_resources_cc") {
     "--root_prefix",
     root_path,
     natives_patch_path,
+  ]
+}
+
+action("generate_dart_embedder_service_isolate_resources_cc") {
+  deps = [
+    ":deploy_observatory",
+  ]
+  inputs = [
+    "//dart/runtime/tools/create_resources.py",
+    "//mojo/dart/embedder/vmservice/loader.dart",
+    "//mojo/dart/embedder/vmservice/main.dart",
+    "//mojo/dart/embedder/vmservice/resources.dart",
+    "//mojo/dart/embedder/vmservice/server.dart",
+  ]
+  output = "$target_gen_dir/dart_embedder_service_isolate_resources.cc"
+  outputs = [
+    output,
+  ]
+
+  root_path = rebase_path("//mojo/dart/embedder/")
+  script = "//dart/runtime/tools/create_resources.py"
+
+  # Source files
+  loader_path = rebase_path("//mojo/dart/embedder/vmservice/loader.dart")
+  main_path = rebase_path("//mojo/dart/embedder/vmservice/main.dart")
+  resources_path = rebase_path("//mojo/dart/embedder/vmservice/resources.dart")
+  server_path = rebase_path("//mojo/dart/embedder/vmservice/server.dart")
+
+  args = [
+    "--output",
+    rebase_path(output),
+    "--outer_namespace",
+    "mojo",
+    "--inner_namespace",
+    "dart",
+    "--table_name",
+    "dart_embedder_service_isolate",
+    "--root_prefix",
+    root_path,
+    "--client_root",
+    rebase_path("$root_out_dir/observatory/deployed/web/"),
+
+    # Source files
+    loader_path,
+    main_path,
+    resources_path,
+    server_path,
+  ]
+}
+
+observatory_sources_gypi =
+    exec_script("../../../dart/tools/gypi_to_gn.py",
+                [ rebase_path(
+                    "//dart/runtime/observatory/observatory_sources.gypi") ],
+                "scope",
+                [ "observatory_sources.gypi" ])
+
+copy("copy_observatory") {
+  sources = rebase_path(observatory_sources_gypi.sources,
+                        "",
+                        "../../../dart/runtime/observatory")
+  outputs = [
+    "$root_gen_dir/observatory_copy/{{source_root_relative_dir}}/{{source_file_part}}",
+  ]
+}
+
+action("write_observatory_pubspec_yaml") {
+  deps = [
+    ":copy_observatory",
+  ]
+
+  script = "//dart/tools/observatory_tool.py"
+
+  inputs = [
+    rebase_path("//dart/runtime/observatory/pubspec.yaml"),
+  ]
+
+  args = [
+    "--pub-executable",
+    rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
+    "--directory",
+    rebase_path("$root_gen_dir/observatory_copy/dart/runtime/observatory/"),
+    "--command",
+    "rewrite",
+    rebase_path("//dart/runtime/observatory/pubspec.yaml"),
+    rebase_path(
+        "$root_gen_dir/observatory_copy/dart/runtime/observatory/pubspec.yaml"),
+    "../../third_party/",
+    rebase_path("../../../dart/third_party/"),
+  ]
+
+  outputs = [
+    "$root_gen_dir/observatory_copy/dart/runtime/observatory/pubspec.yaml",
+  ]
+}
+
+action("copy_observatory_deps") {
+  deps = [
+    ":write_observatory_pubspec_yaml",
+  ]
+
+  script = "//dart/tools/observatory_tool.py"
+
+  inputs = [
+    script,
+    "$root_gen_dir/observatory_copy/dart/runtime/observatory/pubspec.yaml",
+  ]
+
+  args = [
+    "--pub-executable",
+    rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
+    "--directory",
+    rebase_path("$root_gen_dir/observatory_copy/dart/runtime/observatory/"),
+    "--command",
+    "get",
+  ]
+
+  outputs = [
+    "$root_gen_dir/observatory_copy/dart/runtime/observatory/pubspec.lock",
+  ]
+}
+
+action("pub_build_observatory") {
+  sources =
+      rebase_path(observatory_sources_gypi.sources,
+                  "",
+                  "$root_gen_dir/observatory_copy/dart/runtime/observatory")
+
+  deps = [
+    ":copy_observatory_deps",
+  ]
+
+  script = "//dart/tools/observatory_tool.py"
+
+  inputs = [
+    script,
+  ]
+  inputs += sources
+
+  args = [
+    "--pub-executable",
+    rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
+    "--directory",
+    rebase_path("$root_gen_dir/observatory_copy/dart/runtime/observatory/"),
+    "--command",
+    "build",
+    rebase_path("$root_out_dir/observatory/build"),
+  ]
+
+  outputs = [
+    "$root_out_dir/observatory/build/web/index.html",
+    "$root_out_dir/observatory/build/web/index.html_bootstrap.dart.js",
+  ]
+}
+
+action("deploy_observatory") {
+  deps = [
+    ":pub_build_observatory",
+  ]
+
+  script = "//dart/tools/observatory_tool.py"
+
+  inputs = [
+    script,
+    "$root_out_dir/observatory/build/web/index.html",
+    "$root_out_dir/observatory/build/web/index.html_bootstrap.dart.js",
+  ]
+
+  args = [
+    "--pub-executable",
+    rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
+    "--directory",
+    rebase_path("$root_out_dir/observatory"),
+    "--command",
+    "deploy",
+  ]
+
+  outputs = [
+    "$root_out_dir/observatory/deployed/web/index.html",
+    "$root_out_dir/observatory/deployed/web/index.html_bootstrap.dart.js",
   ]
 }

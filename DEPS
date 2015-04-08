@@ -26,6 +26,7 @@ vars = {
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': '3b302fef93f7cc58d9b8168466905237484b2772',
   'dart_revision': '44944',
+  'dart_observatory_packages_revision': '43830',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
@@ -72,6 +73,10 @@ deps = {
 
   'src/dart/tools':
     Var('dart_svn') + '/svn/branches/bleeding_edge/dart/tools' + '@' + Var('dart_revision'),
+
+  'src/dart/third_party/observatory_pub_packages':
+    Var('dart_svn') + '/svn/third_party/observatory_pub_packages' + '@' +
+    Var('dart_observatory_packages_revision'),
 
   'src/third_party/sfntly/cpp/src':
     Var('chromium_git') + '/external/sfntly/cpp/src.git' + '@' +  Var('sfntly_revision'),
