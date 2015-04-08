@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
 from mojom_fetcher import UrlRewriter, UrlRewriterException, MojomFetcher
 
 # Fake repository for testing
-from fake_repository import FakeRepository
+from fakes import FakeRepository
 
 class TestUrlRewriter(unittest.TestCase):
   def test_no_transitive(self):

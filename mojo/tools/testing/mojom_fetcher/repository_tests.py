@@ -9,7 +9,7 @@ import unittest
 from fetcher.dependency import Dependency
 
 # Fake repository for testing
-from fake_repository import FakeRepository
+from fakes import FakeRepository
 
 
 class TestRepository(unittest.TestCase):
