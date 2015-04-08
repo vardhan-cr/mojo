@@ -269,7 +269,6 @@ if (is_android) {
     ]
     deps = [
       ":jni_headers",
-      ":lib",
       ":run_android_application_function",
       "//base",
     ]

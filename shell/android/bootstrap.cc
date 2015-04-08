@@ -5,7 +5,6 @@
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/files/file_path.h"
-#include "base/logging.h"
 #include "jni/Bootstrap_jni.h"
 #include "shell/android/run_android_application_function.h"
 
