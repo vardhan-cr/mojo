@@ -47,7 +47,6 @@ if (!mojo_use_prebuilt_mojo_shell) {
     sources = []
 
     deps = [
-      ":init",
       ":lib",
       "//base",
       "//base/allocator",
@@ -88,8 +87,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
     deps = [
       # TODO(vtl): Reduce these dependencies (probably mostly in :lib).
       ":child_controller_bindings",
-      ":init",
-      ":lib",
+      ":common_lib",
       "//base",
       "//base/allocator",
       "//build/config/sanitizers:deps",
@@ -100,7 +98,8 @@ if (!mojo_use_prebuilt_mojo_shell) {
   }
 }  # !mojo_use_prebuilt_mojo_shell
 
-source_set("init") {
+# Files used both by mojo_shell and mojo_shell_child (and tests).
+source_set("common_lib") {
   sources = [
     "init.cc",
     "init.h",
@@ -108,6 +107,11 @@ source_set("init") {
 
   deps = [
     "//base",
+  ]
+
+  public_deps = [
+    ":native_application_support",
+    ":switches",
   ]
 }
 
@@ -134,7 +138,6 @@ source_set("lib") {
 
   deps = [
     ":child_controller_bindings",
-    ":init",
     "//base",
     "//base/third_party/dynamic_annotations",
     "//base:base_static",
@@ -151,8 +154,7 @@ source_set("lib") {
   ]
 
   public_deps = [
-    ":native_application_support",
-    ":switches",
+    ":common_lib",
   ]
 
   if (is_android) {
@@ -216,6 +218,8 @@ source_set("native_application_support") {
   check_includes = false
 }
 
+# TODO(vtl): This should just be a part of :common_lib, but stuff in
+# application_manager uses it. We should fix that.
 source_set("switches") {
   sources = [
     "switches.cc",
@@ -425,7 +429,6 @@ source_set("test_support") {
   ]
 
   deps = [
-    ":init",
     ":lib",
     "//base",
     "//mojo/edk/system",
