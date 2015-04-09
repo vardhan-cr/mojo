@@ -18,7 +18,6 @@ class TraceDataSink {
   ~TraceDataSink();
 
   void AddChunk(const std::string& json);
-  void Flush();
 
  private:
   mojo::ScopedDataPipeProducerHandle pipe_;

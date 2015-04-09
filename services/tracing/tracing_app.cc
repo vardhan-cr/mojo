@@ -110,7 +110,7 @@ void TracingApp::StopAndFlush() {
 
 void TracingApp::AllDataCollected() {
   collector_impls_.clear();
-  sink_->Flush();
+  sink_.reset();
 }
 
 }  // namespace tracing
