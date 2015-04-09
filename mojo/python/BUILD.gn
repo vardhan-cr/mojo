@@ -5,7 +5,6 @@
 import("//mojo/public/python/rules.gni")
 import("//third_party/cython/rules.gni")
 
-# GYP version: mojo/mojo.gyp:mojo_python
 group("python") {
   deps = [
     ":mojo_embedder",
@@ -36,7 +35,6 @@ python_package("packaged_utils") {
   ]
 }
 
-# GYP version: mojo/mojo.gyp:mojo_python_embedder
 python_binary_module("mojo_embedder") {
   cython_sources = [ "system/mojo_embedder.pyx" ]
   deps = [

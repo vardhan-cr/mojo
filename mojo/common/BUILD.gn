@@ -5,7 +5,6 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/test.gni")
 
-# GYP version: mojo/mojo_base.gyp:mojo_common_lib
 component("common") {
   output_name = "mojo_common_lib"
 
@@ -42,7 +41,6 @@ component("common") {
   ]
 }
 
-# GYP version: mojo/mojo_base.gyp:mojo_common_unittests
 test("mojo_common_unittests") {
   sources = [
     "common_type_converters_unittest.cc",

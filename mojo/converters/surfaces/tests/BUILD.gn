@@ -4,7 +4,6 @@
 
 import("//testing/test.gni")
 
-# GYP version: mojo/mojo_converters.gypi:mojo_surfaces_lib_unittests
 test("mojo_surfaces_lib_unittests") {
   deps = [
     "//base",
