@@ -5,13 +5,15 @@
 import logging
 import os
 import subprocess
-
-_logging = logging.getLogger()
+import time
 
 from mopy import android
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
+
+
+_logger = logging.getLogger()
 
 
 def build_shell_arguments(shell_args, apps_and_args=None):
@@ -49,24 +51,42 @@ def run_test_android(shell_args, apps_and_args):
   with os.fdopen(r, "r") as rf:
     with os.fdopen(w, "w") as wf:
       arguments = build_shell_arguments(shell_args, apps_and_args)
+      _logger.debug("Starting shell with arguments: %s" % arguments)
+      start_time = time.time()
+      # TODO(vtl): Do more logging in lower layers.
       android.StartShell(arguments, wf, wf.close, False)
-      return rf.read()
+      rv = rf.read()
+      run_time = time.time() - start_time
+      _logger.debug("Shell completed")
+      # Only log if it took more than 3 seconds.
+      if run_time >= 3:
+        _logger.info("Shell test took %.3f seconds; arguments: %s" %
+                     (run_time, arguments))
+      return rv
 
 
 def run_test(config, shell_args, apps_and_args):
   """Run the given test."""
   if (config.target_os == Config.OS_ANDROID):
     return run_test_android(shell_args, apps_and_args)
-  else:
-    executable = get_shell_executable(config)
-    command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
-    return subprocess.check_output(command, stderr=subprocess.STDOUT)
+
+  executable = get_shell_executable(config)
+  command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
+  _logger.debug("Starting: %s" % " ".join(command))
+  start_time = time.time()
+  rv = subprocess.check_output(command, stderr=subprocess.STDOUT)
+  run_time = time.time() - start_time
+  _logger.debug("Completed: %s" % " ".join(command))
+  # Only log if it took more than 1 second.
+  if run_time >= 1:
+    _logger.info("Test took %.3f seconds: %s" % (run_time, " ".join(command)))
+  return rv
 
 
 def try_run_test(config, shell_args, apps_and_args):
   """Returns the output of a command line or an empty string on error."""
   command_line = build_command_line(config, shell_args, apps_and_args)
-  _logging.debug("Running command line: %s" % command_line)
+  _logger.debug("Running command line: %s" % command_line)
   try:
     return run_test(config, shell_args, apps_and_args)
   except Exception as e:

@@ -7,19 +7,20 @@ import os
 import re
 import sys
 
-_logging = logging.getLogger()
-
 from mopy import test_util
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
 
 
+_logger = logging.getLogger()
+
+
 def set_color():
   """Run gtests with color if we're on a TTY (and we're not being told
   explicitly what to do)."""
   if sys.stdout.isatty() and "GTEST_COLOR" not in os.environ:
-    _logging.debug("Setting GTEST_COLOR=yes")
+    _logger.debug("Setting GTEST_COLOR=yes")
     os.environ["GTEST_COLOR"] = "yes"
 
 def run_fixtures(config, apptest_dict, apptest, test_args, shell_args):
@@ -64,7 +65,7 @@ def run_test(config, shell_args, apps_and_args=None):
         test_util.build_command_line(config, shell_args, apps_and_args),
         output)
     return False
-  _logging.debug("Succeeded with output:\n%s" % output)
+  _logger.debug("Succeeded with output:\n%s" % output)
   return True
 
 
@@ -83,7 +84,7 @@ def get_fixtures(config, shell_args, apptest):
   try:
     apps_and_args = {apptest: ["--gtest_list_tests"]}
     list_output = test_util.run_test(config, shell_args, apps_and_args)
-    _logging.debug("Tests listed:\n%s" % list_output)
+    _logger.debug("Tests listed:\n%s" % list_output)
     return _gtest_list_tests(list_output)
   except Exception as e:
     print "Failed to get test fixtures:"

@@ -42,6 +42,9 @@ MAPPING_PREFIX = '--map-origin='
 DEFAULT_BASE_PORT = 31337
 
 
+_logger = logging.getLogger()
+
+
 class _SilentTCPServer(SocketServer.TCPServer):
   """
   A TCPServer that won't display any error, unless debugging is enabled. This is

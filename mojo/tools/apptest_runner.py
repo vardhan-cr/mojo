@@ -57,7 +57,6 @@ def main():
     print "Running %s...." % apptest,
     sys.stdout.flush()
 
-    # TODO(vtl): Plumb verbosity down to lower layers.
     if apptest_dict.get("type", "gtest") == "dart":
       apptest_result = dart_apptest.run_test(config, apptest_dict, shell_args,
                                              {apptest: test_args})

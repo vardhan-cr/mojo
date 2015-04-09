@@ -148,13 +148,13 @@ def _run_tests(config, test_types):
   failure_list = []
   for entry in test_list:
     print 'Running: %s' % entry['name']
-    print 'Command: %s' % entry['command']
+    print 'Command: %s' % ' '.join(entry['command'])
     if dry_run:
       continue
 
-    _logger.info('Starting: %s' % entry['command'])
+    _logger.info('Starting: %s' % ' '.join(entry['command']))
     exit_code = subprocess.call(entry['command'])
-    _logger.info('Completed: %s' % entry['command'])
+    _logger.info('Completed: %s' % ' '.join(entry['command']))
     if exit_code:
       if not final_exit_code:
         final_exit_code = exit_code
