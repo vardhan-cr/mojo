@@ -37,7 +37,6 @@ _TEST_CODE_EXCLUDED_PATHS = (
     r'.+_test_(base|support|util)%s' % _IMPLEMENTATION_EXTENSIONS,
     r'.+_(app|browser|perf|pixel|unit)?test(_[a-z]+)?%s' %
         _IMPLEMENTATION_EXTENSIONS,
-    r'.+profile_sync_service_harness%s' % _IMPLEMENTATION_EXTENSIONS,
     r'.*/(test|tool(s)?)/.*',
     # Non-production example code.
     r'mojo/examples/.*',
@@ -407,26 +406,6 @@ def _CheckFilePermissions(input_api, output_api):
   return []
 
 
-def _CheckNoAuraWindowPropertyHInHeaders(input_api, output_api):
-  """Makes sure we don't include ui/aura/window_property.h
-  in header files.
-  """
-  pattern = input_api.re.compile(r'^#include\s*"ui/aura/window_property.h"')
-  errors = []
-  for f in input_api.AffectedFiles():
-    if not f.LocalPath().endswith('.h'):
-      continue
-    for line_num, line in f.ChangedContents():
-      if pattern.match(line):
-        errors.append('    %s:%d' % (f.LocalPath(), line_num))
-
-  results = []
-  if errors:
-    results.append(output_api.PresubmitError(
-      'Header files should not include ui/aura/window_property.h', errors))
-  return results
-
-
 def _CheckIncludeOrderForScope(scope, input_api, file_path, changed_linenums):
   """Checks that the lines in scope occur in the right order.
 
@@ -749,56 +728,6 @@ def _CheckForAnonymousVariables(input_api, output_api):
   return []
 
 
-def _CheckCygwinShell(input_api, output_api):
-  source_file_filter = lambda x: input_api.FilterSourceFile(
-      x, white_list=(r'.+\.(gyp|gypi)$',))
-  cygwin_shell = []
-
-  for f in input_api.AffectedSourceFiles(source_file_filter):
-    for linenum, line in f.ChangedContents():
-      if 'msvs_cygwin_shell' in line:
-        cygwin_shell.append(f.LocalPath())
-        break
-
-  if cygwin_shell:
-    return [output_api.PresubmitError(
-      'These files should not use msvs_cygwin_shell (the default is 0):',
-      items=cygwin_shell)]
-  return []
-
-
-def _CheckUserActionUpdate(input_api, output_api):
-  """Checks if any new user action has been added."""
-  if any('actions.xml' == input_api.os_path.basename(f) for f in
-         input_api.LocalPaths()):
-    # If actions.xml is already included in the changelist, the PRESUBMIT
-    # for actions.xml will do a more complete presubmit check.
-    return []
-
-  file_filter = lambda f: f.LocalPath().endswith(('.cc', '.mm'))
-  action_re = r'[^a-zA-Z]UserMetricsAction\("([^"]*)'
-  current_actions = None
-  for f in input_api.AffectedFiles(file_filter=file_filter):
-    for line_num, line in f.ChangedContents():
-      match = input_api.re.search(action_re, line)
-      if match:
-        # Loads contents in tools/metrics/actions/actions.xml to memory. It's
-        # loaded only once.
-        if not current_actions:
-          with open('tools/metrics/actions/actions.xml') as actions_f:
-            current_actions = actions_f.read()
-        # Search for the matched user action name in |current_actions|.
-        for action_name in match.groups():
-          action = 'name="{0}"'.format(action_name)
-          if action not in current_actions:
-            return [output_api.PresubmitPromptWarning(
-              'File %s line %d: %s is missing in '
-              'tools/metrics/actions/actions.xml. Please run '
-              'tools/metrics/actions/extract_actions.py to update.'
-              % (f.LocalPath(), line_num, action_name))]
-  return []
-
-
 def _GetJSONParseError(input_api, filename):
   try:
     contents = input_api.ReadFile(filename)
@@ -950,7 +879,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckNoPragmaOnce(input_api, output_api))
   results.extend(_CheckNoTrinaryTrueFalse(input_api, output_api))
   results.extend(_CheckFilePermissions(input_api, output_api))
-  results.extend(_CheckNoAuraWindowPropertyHInHeaders(input_api, output_api))
   results.extend(_CheckIncludeOrder(input_api, output_api))
   results.extend(_CheckForVersionControlConflicts(input_api, output_api))
   results.extend(_CheckPatchFiles(input_api, output_api))
@@ -967,8 +895,6 @@ def _CommonChecks(input_api, output_api):
           source_file_filter=lambda x: x.LocalPath().endswith('.grd')))
   results.extend(_CheckSpamLogging(input_api, output_api))
   results.extend(_CheckForAnonymousVariables(input_api, output_api))
-  results.extend(_CheckCygwinShell(input_api, output_api))
-  results.extend(_CheckUserActionUpdate(input_api, output_api))
   results.extend(_CheckNoDeprecatedCSS(input_api, output_api))
   results.extend(_CheckParseErrors(input_api, output_api))
   results.extend(_CheckForOverrideAndFinalRules(input_api, output_api))
