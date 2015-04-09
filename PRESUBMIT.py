@@ -10,29 +10,20 @@ for more details about the presubmit API built into gcl.
 
 
 _EXCLUDED_PATHS = (
-    r"^breakpad[\\\/].*",
-    r"^native_client_sdk[\\\/]src[\\\/]build_tools[\\\/]make_rules.py",
-    r"^native_client_sdk[\\\/]src[\\\/]build_tools[\\\/]make_simple.py",
-    r"^native_client_sdk[\\\/]src[\\\/]tools[\\\/].*.mk",
-    r"^net[\\\/]tools[\\\/]spdyshark[\\\/].*",
-    r"^skia[\\\/].*",
-    r"^v8[\\\/].*",
+    r"^native_client_sdk/src/build_tools/make_rules.py",
+    r"^native_client_sdk/src/build_tools/make_simple.py",
+    r"^native_client_sdk/src/tools/.*.mk",
+    r"^skia/.*",
+    r"^v8/.*",
     r".*MakeFile$",
     r".+_autogen\.h$",
-    r".+[\\\/]pnacl_shim\.c$",
-    r"^gpu[\\\/]config[\\\/].*_list_json\.cc$",
-    r"^tools[\\\/]android_stack_parser[\\\/].*"
-)
-
-# The NetscapePlugIn library is excluded from pan-project as it will soon
-# be deleted together with the rest of the NPAPI and it's not worthwhile to
-# update the coding style until then.
-_TESTRUNNER_PATHS = (
-    r"^content[\\\/]shell[\\\/]tools[\\\/]plugin[\\\/].*",
+    r".+/pnacl_shim\.c$",
+    r"^gpu/config/.*_list_json\.cc$",
+    r"^tools/android_stack_parser/.*"
 )
 
 _SKY_PATHS = (
-    r"^sky[\\\/].*",
+    r"^sky/.*",
 )
 
 # Fragment of a regular expression that matches C++ and Objective-C++
@@ -42,20 +33,16 @@ _IMPLEMENTATION_EXTENSIONS = r'\.(cc|cpp|cxx|mm)$'
 # Regular expression that matches code only used for test binaries
 # (best effort).
 _TEST_CODE_EXCLUDED_PATHS = (
-    r'.*[\\\/](fake_|test_|mock_).+%s' % _IMPLEMENTATION_EXTENSIONS,
+    r'.*/(fake_|test_|mock_).+%s' % _IMPLEMENTATION_EXTENSIONS,
     r'.+_test_(base|support|util)%s' % _IMPLEMENTATION_EXTENSIONS,
     r'.+_(app|browser|perf|pixel|unit)?test(_[a-z]+)?%s' %
         _IMPLEMENTATION_EXTENSIONS,
     r'.+profile_sync_service_harness%s' % _IMPLEMENTATION_EXTENSIONS,
-    r'.*[\\\/](test|tool(s)?)[\\\/].*',
-    # content_shell is used for running layout tests.
-    r'content[\\\/]shell[\\\/].*',
-    # At request of folks maintaining this folder.
-    r'chrome[\\\/]browser[\\\/]automation[\\\/].*',
+    r'.*/(test|tool(s)?)/.*',
     # Non-production example code.
-    r'mojo[\\\/]examples[\\\/].*',
+    r'mojo/examples/.*',
     # Launcher for running iOS tests on the simulator.
-    r'testing[\\\/]iossim[\\\/]iossim\.mm$',
+    r'testing/iossim/iossim\.mm$',
 )
 
 _TEST_ONLY_WARNING = (
@@ -68,82 +55,6 @@ _TEST_ONLY_WARNING = (
 _INCLUDE_ORDER_WARNING = (
     'Your #include order seems to be broken. Send mail to\n'
     'marja@chromium.org if this is not the case.')
-
-
-_BANNED_OBJC_FUNCTIONS = (
-    (
-      'addTrackingRect:',
-      (
-       'The use of -[NSView addTrackingRect:owner:userData:assumeInside:] is'
-       'prohibited. Please use CrTrackingArea instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      False,
-    ),
-    (
-      r'/NSTrackingArea\W',
-      (
-       'The use of NSTrackingAreas is prohibited. Please use CrTrackingArea',
-       'instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      False,
-    ),
-    (
-      'convertPointFromBase:',
-      (
-       'The use of -[NSView convertPointFromBase:] is almost certainly wrong.',
-       'Please use |convertPoint:(point) fromView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-    (
-      'convertPointToBase:',
-      (
-       'The use of -[NSView convertPointToBase:] is almost certainly wrong.',
-       'Please use |convertPoint:(point) toView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-    (
-      'convertRectFromBase:',
-      (
-       'The use of -[NSView convertRectFromBase:] is almost certainly wrong.',
-       'Please use |convertRect:(point) fromView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-    (
-      'convertRectToBase:',
-      (
-       'The use of -[NSView convertRectToBase:] is almost certainly wrong.',
-       'Please use |convertRect:(point) toView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-    (
-      'convertSizeFromBase:',
-      (
-       'The use of -[NSView convertSizeFromBase:] is almost certainly wrong.',
-       'Please use |convertSize:(point) fromView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-    (
-      'convertSizeToBase:',
-      (
-       'The use of -[NSView convertSizeToBase:] is almost certainly wrong.',
-       'Please use |convertSize:(point) toView:nil| instead.',
-       'http://dev.chromium.org/developers/coding-style/cocoa-dos-and-donts',
-      ),
-      True,
-    ),
-)
 
 
 _BANNED_CPP_FUNCTIONS = (
@@ -167,15 +78,8 @@ _BANNED_CPP_FUNCTIONS = (
       ),
       True,
       (
-        r"^base[\\\/]process[\\\/]process_metrics_linux\.cc$",
-        r"^chrome[\\\/]browser[\\\/]chromeos[\\\/]boot_times_loader\.cc$",
-        r"^components[\\\/]crash[\\\/]app[\\\/]breakpad_mac\.mm$",
-        r"^content[\\\/]shell[\\\/]browser[\\\/]shell_browser_main\.cc$",
-        r"^content[\\\/]shell[\\\/]browser[\\\/]shell_message_filter\.cc$",
-        r"^mojo[\\\/]edk[\\\/]embedder[\\\/]" +
-            r"simple_platform_shared_buffer_posix\.cc$",
-        r"^net[\\\/]disk_cache[\\\/]cache_util\.cc$",
-        r"^net[\\\/]url_request[\\\/]test_url_fetcher_factory\.cc$",
+        r"^base/process/process_metrics_linux\.cc$",
+        r"^mojo/edk/embedder/simple_platform_shared_buffer_posix\.cc$",
       ),
     ),
     (
@@ -235,8 +139,7 @@ _BANNED_CPP_FUNCTIONS = (
       True,
       (
         # Files that #define IGNORE_EINTR.
-        r'^base[\\\/]posix[\\\/]eintr_wrapper\.h$',
-        r'^ppapi[\\\/]tests[\\\/]test_broker\.cc$',
+        r'^base/posix/eintr_wrapper\.h$',
       ),
     ),
     (
@@ -246,15 +149,9 @@ _BANNED_CPP_FUNCTIONS = (
         'gin::Wrappable instead. See http://crbug.com/334679',
       ),
       True,
-      (
-        r'extensions[\\\/]renderer[\\\/]safe_builtins\.*',
-      ),
+      (),
     ),
 )
-
-_IPC_ENUM_TRAITS_DEPRECATED = (
-    'You are using IPC_ENUM_TRAITS() in your code. It has been deprecated.\n'
-    'See http://www.chromium.org/Home/chromium-security/education/security-tips-for-ipc')
 
 
 _VALID_OS_MACROS = (
@@ -416,25 +313,6 @@ def _CheckNoBannedFunctions(input_api, output_api):
   """Make sure that banned functions are not used."""
   warnings = []
   errors = []
-
-  file_filter = lambda f: f.LocalPath().endswith(('.mm', '.m', '.h'))
-  for f in input_api.AffectedFiles(file_filter=file_filter):
-    for line_num, line in f.ChangedContents():
-      for func_name, message, error in _BANNED_OBJC_FUNCTIONS:
-        matched = False
-        if func_name[0:1] == '/':
-          regex = func_name[1:]
-          if input_api.re.search(regex, line):
-            matched = True
-        elif func_name in line:
-            matched = True
-        if matched:
-          problems = warnings;
-          if error:
-            problems = errors;
-          problems.append('    %s:%d:' % (f.LocalPath(), line_num))
-          for message_line in message:
-            problems.append('      %s' % message_line)
 
   file_filter = lambda f: f.LocalPath().endswith(('.cc', '.mm', '.h'))
   for f in input_api.AffectedFiles(file_filter=file_filter):
@@ -734,7 +612,7 @@ def _CheckHardcodedGoogleHostsInLowerLayers(input_api, output_api):
     """
     return input_api.FilterSourceFile(
       affected_file,
-      white_list=(r'^(android_webview|base|content|net)[\\\/].*', ),
+      white_list=(r'^base/.*', ),
       black_list=(_EXCLUDED_PATHS +
                   _TEST_CODE_EXCLUDED_PATHS +
                   input_api.DEFAULT_BLACK_LIST))
@@ -776,120 +654,16 @@ def _CheckNoAbbreviationInPngFileName(input_api, output_api):
   return results
 
 
-def _FilesToCheckForIncomingDeps(re, changed_lines):
-  """Helper method for _CheckAddedDepsHaveTargetApprovals. Returns
-  a set of DEPS entries that we should look up.
-
-  For a directory (rather than a specific filename) we fake a path to
-  a specific filename by adding /DEPS. This is chosen as a file that
-  will seldom or never be subject to per-file include_rules.
-  """
-  # We ignore deps entries on auto-generated directories.
-  AUTO_GENERATED_DIRS = ['grit', 'jni']
-
-  # This pattern grabs the path without basename in the first
-  # parentheses, and the basename (if present) in the second. It
-  # relies on the simple heuristic that if there is a basename it will
-  # be a header file ending in ".h".
-  pattern = re.compile(
-      r"""['"]\+([^'"]+?)(/[a-zA-Z0-9_]+\.h)?['"].*""")
-  results = set()
-  for changed_line in changed_lines:
-    m = pattern.match(changed_line)
-    if m:
-      path = m.group(1)
-      if path.split('/')[0] not in AUTO_GENERATED_DIRS:
-        if m.group(2):
-          results.add('%s%s' % (path, m.group(2)))
-        else:
-          results.add('%s/DEPS' % path)
-  return results
-
-
-def _CheckAddedDepsHaveTargetApprovals(input_api, output_api):
-  """When a dependency prefixed with + is added to a DEPS file, we
-  want to make sure that the change is reviewed by an OWNER of the
-  target file or directory, to avoid layering violations from being
-  introduced. This check verifies that this happens.
-  """
-  changed_lines = set()
-  for f in input_api.AffectedFiles():
-    filename = input_api.os_path.basename(f.LocalPath())
-    if filename == 'DEPS':
-      changed_lines |= set(line.strip()
-                           for line_num, line
-                           in f.ChangedContents())
-  if not changed_lines:
-    return []
-
-  virtual_depended_on_files = _FilesToCheckForIncomingDeps(input_api.re,
-                                                           changed_lines)
-  if not virtual_depended_on_files:
-    return []
-
-  if input_api.is_committing:
-    if input_api.tbr:
-      return [output_api.PresubmitNotifyResult(
-          '--tbr was specified, skipping OWNERS check for DEPS additions')]
-    if not input_api.change.issue:
-      return [output_api.PresubmitError(
-          "DEPS approval by OWNERS check failed: this change has "
-          "no Rietveld issue number, so we can't check it for approvals.")]
-    output = output_api.PresubmitError
-  else:
-    output = output_api.PresubmitNotifyResult
-
-  owners_db = input_api.owners_db
-  owner_email, reviewers = input_api.canned_checks._RietveldOwnerAndReviewers(
-      input_api,
-      owners_db.email_regexp,
-      approval_needed=input_api.is_committing)
-
-  owner_email = owner_email or input_api.change.author_email
-
-  reviewers_plus_owner = set(reviewers)
-  if owner_email:
-    reviewers_plus_owner.add(owner_email)
-  missing_files = owners_db.files_not_covered_by(virtual_depended_on_files,
-                                                 reviewers_plus_owner)
-
-  # We strip the /DEPS part that was added by
-  # _FilesToCheckForIncomingDeps to fake a path to a file in a
-  # directory.
-  def StripDeps(path):
-    start_deps = path.rfind('/DEPS')
-    if start_deps != -1:
-      return path[:start_deps]
-    else:
-      return path
-  unapproved_dependencies = ["'+%s'," % StripDeps(path)
-                             for path in missing_files]
-
-  if unapproved_dependencies:
-    output_list = [
-      output('Missing LGTM from OWNERS of dependencies added to DEPS:\n    %s' %
-             '\n    '.join(sorted(unapproved_dependencies)))]
-    if not input_api.is_committing:
-      suggested_owners = owners_db.reviewers_for(missing_files, owner_email)
-      output_list.append(output(
-          'Suggested missing target path OWNERS:\n    %s' %
-          '\n    '.join(suggested_owners or [])))
-    return output_list
-
-  return []
-
-
 def _CheckSpamLogging(input_api, output_api):
   file_inclusion_pattern = r'.+%s' % _IMPLEMENTATION_EXTENSIONS
   black_list = (_EXCLUDED_PATHS +
                 _TEST_CODE_EXCLUDED_PATHS +
                 input_api.DEFAULT_BLACK_LIST +
-                (r"^base[\\\/]logging\.h$",
-                 r"^base[\\\/]logging\.cc$",
-                 r"^shell[\\\/]native_application_loader\.cc$",
-                 r"^sandbox[\\\/]linux[\\\/].*",
-                 r"^tools[\\\/]",
-                 r"^ui[\\\/]aura[\\\/]bench[\\\/]bench_main\.cc$",))
+                (r"^base/logging\.h$",
+                 r"^base/logging\.cc$",
+                 r"^shell/native_application_loader\.cc$",
+                 r"^sandbox/linux/.*",
+                 r"^tools/",))
   source_file_filter = lambda x: input_api.FilterSourceFile(
       x, white_list=(file_inclusion_pattern,), black_list=black_list)
 
@@ -1025,20 +799,9 @@ def _CheckUserActionUpdate(input_api, output_api):
   return []
 
 
-def _GetJSONParseError(input_api, filename, eat_comments=True):
+def _GetJSONParseError(input_api, filename):
   try:
     contents = input_api.ReadFile(filename)
-    if eat_comments:
-      json_comment_eater = input_api.os_path.join(
-          input_api.PresubmitLocalPath(),
-          'tools', 'json_comment_eater', 'json_comment_eater.py')
-      process = input_api.subprocess.Popen(
-          [input_api.python_executable, json_comment_eater],
-          stdin=input_api.subprocess.PIPE,
-          stdout=input_api.subprocess.PIPE,
-          universal_newlines=True)
-      (contents, _) = process.communicate(input=contents)
-
     input_api.json.loads(contents)
   except ValueError as e:
     return e
@@ -1052,12 +815,11 @@ def _CheckParseErrors(input_api, output_api):
   }
   # These paths contain test data and other known invalid JSON files.
   excluded_patterns = [
-    r'test[\\\/]data[\\\/]',
-    r'^components[\\\/]policy[\\\/]resources[\\\/]policy_templates\.json$',
+    r'test/data/',
   ]
   # Most JSON files are preprocessed and support comments, but these do not.
   json_no_comments_patterns = [
-    r'^testing[\\\/]',
+    r'^testing/',
   ]
 
   def get_action(affected_file):
@@ -1084,13 +846,7 @@ def _CheckParseErrors(input_api, output_api):
   for affected_file in input_api.AffectedFiles(
       file_filter=FilterFile, include_deletes=False):
     action = get_action(affected_file)
-    kwargs = {}
-    if (action == _GetJSONParseError and
-        MatchesFile(json_no_comments_patterns, affected_file.LocalPath())):
-      kwargs['eat_comments'] = False
-    parse_error = action(input_api,
-                         affected_file.AbsoluteLocalPath(),
-                         **kwargs)
+    parse_error = action(input_api, affected_file.AbsoluteLocalPath())
     if parse_error:
       results.append(output_api.PresubmitError('%s could not be parsed: %s' %
           (affected_file.LocalPath(), parse_error)))
@@ -1182,8 +938,7 @@ def _CommonChecks(input_api, output_api):
   """Checks common to both upload and commit."""
   results = []
   results.extend(input_api.canned_checks.PanProjectChecks(
-      input_api, output_api,
-      excluded_paths=_EXCLUDED_PATHS + _TESTRUNNER_PATHS + _SKY_PATHS))
+      input_api, output_api, excluded_paths=_EXCLUDED_PATHS + _SKY_PATHS))
   results.extend(_CheckAuthorizedAuthor(input_api, output_api))
   results.extend(
       _CheckNoProductionCodeUsingTestOnlyFunctions(input_api, output_api))
@@ -1205,7 +960,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckForInvalidIfDefinedMacros(input_api, output_api))
   # TODO(danakj): Remove this when base/move.h is removed.
   results.extend(_CheckForUsingSideEffectsOfPass(input_api, output_api))
-  results.extend(_CheckAddedDepsHaveTargetApprovals(input_api, output_api))
   results.extend(
       input_api.canned_checks.CheckChangeHasNoTabs(
           input_api,
@@ -1217,7 +971,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckUserActionUpdate(input_api, output_api))
   results.extend(_CheckNoDeprecatedCSS(input_api, output_api))
   results.extend(_CheckParseErrors(input_api, output_api))
-  results.extend(_CheckForIPCRules(input_api, output_api))
   results.extend(_CheckForOverrideAndFinalRules(input_api, output_api))
   results.extend(_CheckForMojoURL(input_api, output_api))
 
@@ -1380,31 +1133,6 @@ def _CheckForUsingSideEffectsOfPass(input_api, output_api):
   return errors
 
 
-def _CheckForIPCRules(input_api, output_api):
-  """Check for same IPC rules described in
-  http://www.chromium.org/Home/chromium-security/education/security-tips-for-ipc
-  """
-  base_pattern = r'IPC_ENUM_TRAITS\('
-  inclusion_pattern = input_api.re.compile(r'(%s)' % base_pattern)
-  comment_pattern = input_api.re.compile(r'//.*(%s)' % base_pattern)
-
-  problems = []
-  for f in input_api.AffectedSourceFiles(None):
-    local_path = f.LocalPath()
-    if not local_path.endswith('.h'):
-      continue
-    for line_number, line in f.ChangedContents():
-      if inclusion_pattern.search(line) and not comment_pattern.search(line):
-        problems.append(
-          '%s:%d\n    %s' % (local_path, line_number, line.strip()))
-
-  if problems:
-    return [output_api.PresubmitPromptWarning(
-        _IPC_ENUM_TRAITS_DEPRECATED, problems)]
-  else:
-    return []
-
-
 def _CheckForMojoURL(input_api, output_api):
   """Check that mojo url do not use mojo://."""
   errors = []
@@ -1476,7 +1204,7 @@ def GetPreferredTryMasters(project, change):
   import re
   files = change.LocalPaths()
 
-  if not files or all(re.search(r'[\\\/]OWNERS$', f) for f in files):
+  if not files:
     return {}
 
   builders = [

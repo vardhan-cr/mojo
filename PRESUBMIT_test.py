@@ -305,11 +305,8 @@ class BadExtensionsTest(unittest.TestCase):
     results = PRESUBMIT._CheckPatchFiles(mock_input_api, MockOutputApi())
     self.assertEqual(0, len(results))
 
-  def testOnlyOwnersFiles(self):
-    mock_change = MockChange([
-      'some/path/OWNERS',
-      'A\Windows\Path\OWNERS',
-    ])
+  def testNoFiles(self):
+    mock_change = MockChange([])
     results = PRESUBMIT.GetPreferredTryMasters(None, mock_change)
     self.assertEqual({}, results)
 
@@ -355,112 +352,6 @@ class InvalidIfDefinedMacroNamesTest(unittest.TestCase):
         MockInputApi(), MockFile('some/path/source.cc', lines))
     self.assertEqual(0, len(errors))
 
-
-class CheckAddedDepsHaveTetsApprovalsTest(unittest.TestCase):
-  def testFilesToCheckForIncomingDeps(self):
-    changed_lines = [
-      '"+breakpad",',
-      '"+chrome/installer",',
-      '"+chrome/plugin/chrome_content_plugin_client.h",',
-      '"+chrome/utility/chrome_content_utility_client.h",',
-      '"+chromeos/chromeos_paths.h",',
-      '"+components/crash",',
-      '"+components/nacl/common",',
-      '"+content/public/browser/render_process_host.h",',
-      '"+jni/fooblat.h",',
-      '"+grit",  # For generated headers',
-      '"+grit/generated_resources.h",',
-      '"+grit/",',
-      '"+policy",  # For generated headers and source',
-      '"+sandbox",',
-      '"+tools/memory_watcher",',
-      '"+third_party/lss/linux_syscall_support.h",',
-    ]
-    files_to_check = PRESUBMIT._FilesToCheckForIncomingDeps(re, changed_lines)
-    expected = set([
-      'breakpad/DEPS',
-      'chrome/installer/DEPS',
-      'chrome/plugin/chrome_content_plugin_client.h',
-      'chrome/utility/chrome_content_utility_client.h',
-      'chromeos/chromeos_paths.h',
-      'components/crash/DEPS',
-      'components/nacl/common/DEPS',
-      'content/public/browser/render_process_host.h',
-      'policy/DEPS',
-      'sandbox/DEPS',
-      'tools/memory_watcher/DEPS',
-      'third_party/lss/linux_syscall_support.h',
-    ])
-    self.assertEqual(expected, files_to_check);
-
-
-class JSONParsingTest(unittest.TestCase):
-  def testSuccess(self):
-    input_api = MockInputApi()
-    filename = 'valid_json.json'
-    contents = ['// This is a comment.',
-                '{',
-                '  "key1": ["value1", "value2"],',
-                '  "key2": 3  // This is an inline comment.',
-                '}'
-                ]
-    input_api.files = [MockFile(filename, contents)]
-    self.assertEqual(None,
-                     PRESUBMIT._GetJSONParseError(input_api, filename))
-
-  def testFailure(self):
-    input_api = MockInputApi()
-    test_data = [
-      ('invalid_json_1.json',
-       ['{ x }'],
-       'Expecting property name:'),
-      ('invalid_json_2.json',
-       ['// Hello world!',
-        '{ "hello": "world }'],
-       'Unterminated string starting at:'),
-      ('invalid_json_3.json',
-       ['{ "a": "b", "c": "d", }'],
-       'Expecting property name:'),
-      ('invalid_json_4.json',
-       ['{ "a": "b" "c": "d" }'],
-       'Expecting , delimiter:'),
-      ]
-
-    input_api.files = [MockFile(filename, contents)
-                       for (filename, contents, _) in test_data]
-
-    for (filename, _, expected_error) in test_data:
-      actual_error = PRESUBMIT._GetJSONParseError(input_api, filename)
-      self.assertTrue(expected_error in str(actual_error),
-                      "'%s' not found in '%s'" % (expected_error, actual_error))
-
-  def testNoEatComments(self):
-    input_api = MockInputApi()
-    file_with_comments = 'file_with_comments.json'
-    contents_with_comments = ['// This is a comment.',
-                              '{',
-                              '  "key1": ["value1", "value2"],',
-                              '  "key2": 3  // This is an inline comment.',
-                              '}'
-                              ]
-    file_without_comments = 'file_without_comments.json'
-    contents_without_comments = ['{',
-                                 '  "key1": ["value1", "value2"],',
-                                 '  "key2": 3',
-                                 '}'
-                                 ]
-    input_api.files = [MockFile(file_with_comments, contents_with_comments),
-                       MockFile(file_without_comments,
-                                contents_without_comments)]
-
-    self.assertEqual('No JSON object could be decoded',
-                     str(PRESUBMIT._GetJSONParseError(input_api,
-                                                      file_with_comments,
-                                                      eat_comments=False)))
-    self.assertEqual(None,
-                     PRESUBMIT._GetJSONParseError(input_api,
-                                                  file_without_comments,
-                                                  eat_comments=False))
 
 if __name__ == '__main__':
   unittest.main()
