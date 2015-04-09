@@ -43,7 +43,7 @@ def main():
 
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
-    extra_args.extend(android.PrepareShellRun(config))
+    extra_args.extend(android.PrepareShellRun(config, fixed_port=False))
 
   gtest.set_color()
 

@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import atexit
+import itertools
 import json
 import logging
 import os
@@ -35,6 +36,10 @@ ADB_PATH = os.path.join(Paths().src_root, 'third_party', 'android_tools', 'sdk',
                         'platform-tools', 'adb')
 
 MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
+
+MAPPING_PREFIX = '--map-origin='
+
+DEFAULT_BASE_PORT = 31337
 
 
 class _SilentTCPServer(SocketServer.TCPServer):
@@ -137,7 +142,18 @@ def _MapPort(device_port, host_port):
   return device_port
 
 
-def StartHttpServerForDirectory(path):
+def Split(l, pred):
+  positive = []
+  negative = []
+  for v in l:
+    if pred(v):
+      positive.append(v)
+    else:
+      negative.append(v)
+  return (positive, negative)
+
+
+def StartHttpServerForDirectory(path, port=0):
   """Starts an http server serving files from |path|. Returns the local url."""
   print 'starting http for', path
   httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(path))
@@ -148,10 +164,10 @@ def StartHttpServerForDirectory(path):
   http_thread.start()
 
   print 'local port=', httpd.server_address[1]
-  return 'http://127.0.0.1:%d/' % _MapPort(0, httpd.server_address[1])
+  return 'http://127.0.0.1:%d/' % _MapPort(port, httpd.server_address[1])
 
 
-def PrepareShellRun(config, origin=None):
+def PrepareShellRun(config, origin=None, fixed_port=True):
   """ Prepares for StartShell: runs adb as root and installs the apk.  If no
   --origin is specified, local http server will be set up to serve files from
   the build directory along with port forwarding.
@@ -166,13 +182,14 @@ def PrepareShellRun(config, origin=None):
   atexit.register(StopShell)
 
   extra_shell_args = []
-  origin_url = origin if origin else StartHttpServerForDirectory(build_dir)
+  origin_url = origin if origin else StartHttpServerForDirectory(
+      build_dir, DEFAULT_BASE_PORT if fixed_port else 0)
   extra_shell_args.append("--origin=" + origin_url)
 
   return extra_shell_args
 
 
-def _StartHttpServerForOriginMapping(mapping):
+def _StartHttpServerForOriginMapping(mapping, port):
   """If |mapping| points at a local file starts an http server to serve files
   from the directory and returns the new mapping.
 
@@ -186,21 +203,35 @@ def _StartHttpServerForOriginMapping(mapping):
     return mapping
   # Assume the destination is a local file. Start a local server that redirects
   # to it.
-  localUrl = StartHttpServerForDirectory(dest)
+  localUrl = StartHttpServerForDirectory(dest, port)
   print 'started server at %s for %s' % (dest, localUrl)
   return parts[0] + '=' + localUrl
 
 
-def _StartHttpServerForOriginMappings(arg):
+def _StartHttpServerForOriginMappings(map_parameters, fixed_port):
   """Calls _StartHttpServerForOriginMapping for every --map-origin argument."""
-  mapping_prefix = '--map-origin='
-  if not arg.startswith(mapping_prefix):
-    return arg
-  return mapping_prefix + ','.join([_StartHttpServerForOriginMapping(value)
-      for value in arg[len(mapping_prefix):].split(',')])
+  if not map_parameters:
+    return []
+
+  original_values = list(itertools.chain(
+      *map(lambda x: x[len(MAPPING_PREFIX):].split(','), map_parameters)))
+  sorted(original_values)
+  result = []
+  for i, value in enumerate(original_values):
+    result.append(_StartHttpServerForOriginMapping(
+        value, DEFAULT_BASE_PORT + 1 + i if fixed_port else 0))
+  return [MAPPING_PREFIX + ','.join(result)]
 
 
-def StartShell(arguments, stdout=None, on_application_stop=None):
+def _IsMapOrigin(arg):
+  """Returns whether arg is a --map-origin argument."""
+  return arg.startswith(MAPPING_PREFIX)
+
+
+def StartShell(arguments,
+               stdout=None,
+               on_application_stop=None,
+               fixed_port=True):
   """
   Starts the mojo shell, passing it the given arguments.
 
@@ -225,7 +256,11 @@ def StartShell(arguments, stdout=None, on_application_stop=None):
     _ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
   # The origin has to be specified whether it's local or external.
   assert any("--origin=" in arg for arg in arguments)
-  parameters += [_StartHttpServerForOriginMappings(arg) for arg in arguments]
+
+  # Extract map-origin arguments.
+  map_parameters, other_parameters = Split(arguments, _IsMapOrigin)
+  parameters += other_parameters
+  parameters += _StartHttpServerForOriginMappings(map_parameters, fixed_port)
 
   if parameters:
     encodedParameters = json.dumps(parameters)

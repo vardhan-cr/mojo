@@ -49,7 +49,7 @@ def run_test_android(shell_args, apps_and_args):
   with os.fdopen(r, "r") as rf:
     with os.fdopen(w, "w") as wf:
       arguments = build_shell_arguments(shell_args, apps_and_args)
-      android.StartShell(arguments, wf, wf.close)
+      android.StartShell(arguments, wf, wf.close, False)
       return rf.read()
 
 
