@@ -38,6 +38,9 @@
 #include "shell/switches.h"
 #include "url/gurl.h"
 
+using mojo::ServiceProvider;
+using mojo::ServiceProviderPtr;
+
 namespace shell {
 namespace {
 
@@ -171,10 +174,10 @@ void InitNativeOptions(ApplicationManager* manager,
   }
 }
 
-class TracingServiceProvider : public mojo::ServiceProvider {
+class TracingServiceProvider : public ServiceProvider {
  public:
   explicit TracingServiceProvider(
-      mojo::InterfaceRequest<mojo::ServiceProvider> request)
+      mojo::InterfaceRequest<ServiceProvider> request)
       : binding_(this, request.Pass()) {}
   ~TracingServiceProvider() override {}
 
@@ -285,7 +288,7 @@ bool Context::InitWithPaths(const base::FilePath& shell_path,
   InitContentHandlers(&application_manager_, command_line);
   InitNativeOptions(&application_manager_, command_line);
 
-  mojo::ServiceProviderPtr tracing_service_provider_ptr;
+  ServiceProviderPtr tracing_service_provider_ptr;
   new TracingServiceProvider(mojo::GetProxy(&tracing_service_provider_ptr));
   application_manager_.ConnectToApplication(
       GURL("mojo:tracing"), GURL(""), nullptr,
@@ -318,8 +321,8 @@ void Context::OnShutdownComplete() {
 }
 
 void Context::Run(const GURL& url) {
-  mojo::ServiceProviderPtr services;
-  mojo::ServiceProviderPtr exposed_services;
+  ServiceProviderPtr services;
+  ServiceProviderPtr exposed_services;
 
   app_urls_.insert(url);
   application_manager_.ConnectToApplication(

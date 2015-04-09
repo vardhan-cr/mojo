@@ -12,6 +12,8 @@
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "shell/test/pingable.mojom.h"
 
+using mojo::String;
+
 class PingableImpl : public Pingable {
  public:
   PingableImpl(mojo::InterfaceRequest<Pingable> request,
@@ -25,9 +27,8 @@ class PingableImpl : public Pingable {
 
  private:
   void Ping(
-      const mojo::String& message,
-      const mojo::Callback<void(mojo::String, mojo::String, mojo::String)>&
-          callback) override {
+      const String& message,
+      const mojo::Callback<void(String, String, String)>& callback) override {
     callback.Run(app_url_, connection_url_, message);
   }
 

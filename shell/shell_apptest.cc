@@ -21,6 +21,8 @@
 #include "shell/kPingable.h"
 #include "shell/test/pingable.mojom.h"
 
+using mojo::String;
+
 namespace {
 
 std::string GetURL(uint16_t port, const std::string& path) {
@@ -114,14 +116,14 @@ class ShellHTTPAppTest : public ShellAppTest {
 TEST_F(ShellHTTPAppTest, Http) {
   PingablePtr pingable;
   application_impl()->ConnectToService(GetURL("app"), &pingable);
-  pingable->Ping("hello", [this](const mojo::String& app_url,
-                                 const mojo::String& connection_url,
-                                 const mojo::String& message) {
-    EXPECT_EQ(GetURL("app"), app_url);
-    EXPECT_EQ(GetURL("app"), connection_url);
-    EXPECT_EQ("hello", message);
-    base::MessageLoop::current()->Quit();
-  });
+  pingable->Ping("hello",
+                 [this](const String& app_url, const String& connection_url,
+                        const String& message) {
+                   EXPECT_EQ(GetURL("app"), app_url);
+                   EXPECT_EQ(GetURL("app"), connection_url);
+                   EXPECT_EQ("hello", message);
+                   base::MessageLoop::current()->Quit();
+                 });
   base::RunLoop().Run();
 }
 
@@ -130,14 +132,14 @@ TEST_F(ShellHTTPAppTest, Http) {
 TEST_F(ShellHTTPAppTest, Redirect) {
   PingablePtr pingable;
   application_impl()->ConnectToService(GetURL("redirect"), &pingable);
-  pingable->Ping("hello", [this](const mojo::String& app_url,
-                                 const mojo::String& connection_url,
-                                 const mojo::String& message) {
-    EXPECT_EQ(GetURL("app"), app_url);
-    EXPECT_EQ(GetURL("app"), connection_url);
-    EXPECT_EQ("hello", message);
-    base::MessageLoop::current()->Quit();
-  });
+  pingable->Ping("hello",
+                 [this](const String& app_url, const String& connection_url,
+                        const String& message) {
+                   EXPECT_EQ(GetURL("app"), app_url);
+                   EXPECT_EQ(GetURL("app"), connection_url);
+                   EXPECT_EQ("hello", message);
+                   base::MessageLoop::current()->Quit();
+                 });
   base::RunLoop().Run();
 }
 
@@ -155,9 +157,9 @@ TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
   application_impl()->ConnectToService(GetURL("app?bar"), &pingable2);
 
   int num_responses = 0;
-  auto callback = [this, &num_responses](const mojo::String& app_url,
-                                         const mojo::String& connection_url,
-                                         const mojo::String& message) {
+  auto callback = [this, &num_responses](const String& app_url,
+                                         const String& connection_url,
+                                         const String& message) {
     EXPECT_EQ(GetURL("app"), app_url);
     EXPECT_EQ("hello", message);
     ++num_responses;
@@ -179,14 +181,13 @@ TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
 TEST_F(ShellAppTest, MojoURLQueryHandling) {
   PingablePtr pingable;
   application_impl()->ConnectToService("mojo:pingable_app?foo", &pingable);
-  auto callback =
-      [this](const mojo::String& app_url, const mojo::String& connection_url,
-             const mojo::String& message) {
-        EXPECT_TRUE(EndsWith(app_url, "/pingable_app.mojo", true));
-        EXPECT_EQ(app_url.To<std::string>() + "?foo", connection_url);
-        EXPECT_EQ("hello", message);
-        base::MessageLoop::current()->Quit();
-      };
+  auto callback = [this](const String& app_url, const String& connection_url,
+                         const String& message) {
+    EXPECT_TRUE(EndsWith(app_url, "/pingable_app.mojo", true));
+    EXPECT_EQ(app_url.To<std::string>() + "?foo", connection_url);
+    EXPECT_EQ("hello", message);
+    base::MessageLoop::current()->Quit();
+  };
   pingable->Ping("hello", callback);
   base::RunLoop().Run();
 }

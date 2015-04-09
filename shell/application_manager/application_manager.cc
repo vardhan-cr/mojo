@@ -21,6 +21,12 @@
 #include "shell/application_manager/shell_impl.h"
 #include "shell/switches.h"
 
+using mojo::Application;
+using mojo::ApplicationPtr;
+using mojo::InterfaceRequest;
+using mojo::ServiceProvider;
+using mojo::ServiceProviderPtr;
+
 namespace shell {
 
 namespace {
@@ -57,7 +63,7 @@ class ApplicationManager::ContentHandlerConnection : public mojo::ErrorHandler {
   ContentHandlerConnection(ApplicationManager* manager,
                            const GURL& content_handler_url)
       : manager_(manager), content_handler_url_(content_handler_url) {
-    mojo::ServiceProviderPtr services;
+    ServiceProviderPtr services;
     manager->ConnectToApplication(content_handler_url, GURL(),
                                   mojo::GetProxy(&services), nullptr,
                                   base::Closure());
@@ -118,8 +124,8 @@ void ApplicationManager::TerminateShellConnections() {
 void ApplicationManager::ConnectToApplication(
     const GURL& requested_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> services,
-    mojo::ServiceProviderPtr exposed_services,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end) {
   ConnectToApplicationWithParameters(
       requested_url, requestor_url, services.Pass(), exposed_services.Pass(),
@@ -129,8 +135,8 @@ void ApplicationManager::ConnectToApplication(
 void ApplicationManager::ConnectToApplicationWithParameters(
     const GURL& requested_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> services,
-    mojo::ServiceProviderPtr exposed_services,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& pre_redirect_parameters) {
   TRACE_EVENT_INSTANT1(
@@ -204,8 +210,8 @@ void ApplicationManager::ConnectToApplicationWithParameters(
 bool ApplicationManager::ConnectToRunningApplication(
     const GURL& resolved_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider>* services,
-    mojo::ServiceProviderPtr* exposed_services) {
+    InterfaceRequest<ServiceProvider>* services,
+    ServiceProviderPtr* exposed_services) {
   GURL application_url = GetBaseURLAndQuery(resolved_url, nullptr);
   ShellImpl* shell_impl = GetShellImpl(application_url);
   if (!shell_impl)
@@ -219,8 +225,8 @@ bool ApplicationManager::ConnectToRunningApplication(
 bool ApplicationManager::ConnectToApplicationWithLoader(
     const GURL& resolved_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider>* services,
-    mojo::ServiceProviderPtr* exposed_services,
+    InterfaceRequest<ServiceProvider>* services,
+    ServiceProviderPtr* exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& parameters,
     ApplicationLoader* loader) {
@@ -234,17 +240,17 @@ bool ApplicationManager::ConnectToApplicationWithLoader(
   return true;
 }
 
-mojo::InterfaceRequest<mojo::Application> ApplicationManager::RegisterShell(
+InterfaceRequest<Application> ApplicationManager::RegisterShell(
     const GURL& resolved_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> services,
-    mojo::ServiceProviderPtr exposed_services,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& parameters) {
   Identity app_identity(resolved_url);
 
   mojo::ApplicationPtr application;
-  mojo::InterfaceRequest<mojo::Application> application_request =
+  InterfaceRequest<Application> application_request =
       mojo::GetProxy(&application);
   ShellImpl* shell =
       new ShellImpl(application.Pass(), this, app_identity, on_application_end);
@@ -266,16 +272,16 @@ void ApplicationManager::ConnectToClient(
     ShellImpl* shell_impl,
     const GURL& resolved_url,
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> services,
-    mojo::ServiceProviderPtr exposed_services) {
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services) {
   shell_impl->ConnectToClient(resolved_url, requestor_url, services.Pass(),
                               exposed_services.Pass());
 }
 
 void ApplicationManager::HandleFetchCallback(
     const GURL& requestor_url,
-    mojo::InterfaceRequest<mojo::ServiceProvider> services,
-    mojo::ServiceProviderPtr exposed_services,
+    InterfaceRequest<ServiceProvider> services,
+    ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& parameters,
     NativeApplicationCleanup cleanup,
@@ -305,7 +311,7 @@ void ApplicationManager::HandleFetchCallback(
     return;
   }
 
-  mojo::InterfaceRequest<mojo::Application> request(
+  InterfaceRequest<Application> request(
       RegisterShell(fetcher->GetURL(), requestor_url, services.Pass(),
                     exposed_services.Pass(), on_application_end, parameters));
 
@@ -350,7 +356,7 @@ void ApplicationManager::HandleFetchCallback(
 }
 
 void ApplicationManager::RunNativeApplication(
-    mojo::InterfaceRequest<mojo::Application> application_request,
+    InterfaceRequest<Application> application_request,
     const NativeRunnerFactory::Options& options,
     NativeApplicationCleanup cleanup,
     scoped_ptr<Fetcher> fetcher,
@@ -386,7 +392,7 @@ void ApplicationManager::RegisterContentHandler(
 
 void ApplicationManager::LoadWithContentHandler(
     const GURL& content_handler_url,
-    mojo::InterfaceRequest<mojo::Application> application_request,
+    InterfaceRequest<Application> application_request,
     mojo::URLResponsePtr url_response) {
   ContentHandlerConnection* connection = nullptr;
   URLToContentHandlerMap::iterator iter =
@@ -484,7 +490,7 @@ void ApplicationManager::OnContentHandlerError(
 mojo::ScopedMessagePipeHandle ApplicationManager::ConnectToServiceByName(
     const GURL& application_url,
     const std::string& interface_name) {
-  mojo::ServiceProviderPtr services;
+  ServiceProviderPtr services;
   ConnectToApplication(application_url, GURL(), mojo::GetProxy(&services),
                        nullptr, base::Closure());
   mojo::MessagePipe pipe;
