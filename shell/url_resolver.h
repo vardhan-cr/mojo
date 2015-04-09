@@ -12,7 +12,6 @@
 #include "base/files/file_path.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 // This class supports the mapping of URLs to other URLs.
@@ -73,6 +72,5 @@ class URLResolver {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_URL_RESOLVER_H_

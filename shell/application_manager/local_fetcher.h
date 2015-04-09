@@ -10,7 +10,6 @@
 #include "shell/application_manager/fetcher.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 // Implements Fetcher for file:// URLs.
@@ -26,8 +25,8 @@ class LocalFetcher : public Fetcher {
   const GURL& GetURL() const override;
   GURL GetRedirectURL() const override;
 
-  URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
-                               uint32_t skip) override;
+  mojo::URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
+                                     uint32_t skip) override;
 
   void AsPath(
       base::TaskRunner* task_runner,
@@ -46,6 +45,5 @@ class LocalFetcher : public Fetcher {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_LOCAL_FETCHER_H_

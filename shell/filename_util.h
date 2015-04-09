@@ -11,7 +11,6 @@ namespace base {
 class FilePath;
 }
 
-namespace mojo {
 namespace shell {
 
 // Given the full path to a file name, creates a file: URL. The returned URL
@@ -23,6 +22,5 @@ GURL FilePathToFileURL(const base::FilePath& path);
 GURL AddTrailingSlashIfNeeded(const GURL& url);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_FILENAME_UTIL_H_

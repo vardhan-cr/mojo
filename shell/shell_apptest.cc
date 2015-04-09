@@ -21,7 +21,6 @@
 #include "shell/kPingable.h"
 #include "shell/test/pingable.mojom.h"
 
-namespace mojo {
 namespace {
 
 std::string GetURL(uint16_t port, const std::string& path) {
@@ -31,20 +30,21 @@ std::string GetURL(uint16_t port, const std::string& path) {
 
 class GetHandler : public http_server::HttpHandler {
  public:
-  GetHandler(InterfaceRequest<http_server::HttpHandler> request, uint16_t port)
-      : binding_(this, request.Pass()), port_(port) {
-  }
+  GetHandler(mojo::InterfaceRequest<http_server::HttpHandler> request,
+             uint16_t port)
+      : binding_(this, request.Pass()), port_(port) {}
   ~GetHandler() override {}
 
  private:
   // http_server::HttpHandler:
-  void HandleRequest(
-      http_server::HttpRequestPtr request,
-      const Callback<void(http_server::HttpResponsePtr)>& callback) override {
+  void HandleRequest(http_server::HttpRequestPtr request,
+                     const mojo::Callback<void(http_server::HttpResponsePtr)>&
+                         callback) override {
     http_server::HttpResponsePtr response;
     if (StartsWithASCII(request->relative_url, "/app", true)) {
       response = http_server::CreateHttpResponse(
-          200, std::string(kPingable.data, kPingable.size));
+          200, std::string(shell::test::kPingable.data,
+                           shell::test::kPingable.size));
       response->content_type = "application/octet-stream";
     } else if (request->relative_url == "/redirect") {
       response = http_server::HttpResponse::New();
@@ -57,52 +57,49 @@ class GetHandler : public http_server::HttpHandler {
     callback.Run(response.Pass());
   }
 
-  Binding<http_server::HttpHandler> binding_;
+  mojo::Binding<http_server::HttpHandler> binding_;
   uint16_t port_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(GetHandler);
 };
 
-typedef test::ApplicationTestBase ShellAppTest;
+typedef mojo::test::ApplicationTestBase ShellAppTest;
 
-class ShellHTTPAppTest : public test::ApplicationTestBase {
+class ShellHTTPAppTest : public ShellAppTest {
  public:
-  ShellHTTPAppTest() : ApplicationTestBase() {}
+  ShellHTTPAppTest() {}
   ~ShellHTTPAppTest() override {}
 
  protected:
-  // ApplicationTestBase:
   void SetUp() override {
-    ApplicationTestBase::SetUp();
+    ShellAppTest::SetUp();
 
     application_impl()->ConnectToService("mojo:http_server",
                                          &http_server_factory_);
 
-    NetAddressPtr local_address(NetAddress::New());
-    local_address->family = NET_ADDRESS_FAMILY_IPV4;
-    local_address->ipv4 = NetAddressIPv4::New();
+    mojo::NetAddressPtr local_address(mojo::NetAddress::New());
+    local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    local_address->ipv4 = mojo::NetAddressIPv4::New();
     local_address->ipv4->addr.resize(4);
     local_address->ipv4->addr[0] = 127;
     local_address->ipv4->addr[1] = 0;
     local_address->ipv4->addr[2] = 0;
     local_address->ipv4->addr[3] = 1;
     local_address->ipv4->port = 0;
-    http_server_factory_->CreateHttpServer(GetProxy(&http_server_),
+    http_server_factory_->CreateHttpServer(mojo::GetProxy(&http_server_),
                                            local_address.Pass());
 
     http_server_->GetPort([this](uint16_t p) { port_ = p; });
     EXPECT_TRUE(http_server_.WaitForIncomingMethodCall());
 
-    InterfacePtr<http_server::HttpHandler> http_handler;
-    handler_.reset(new GetHandler(GetProxy(&http_handler).Pass(), port_));
+    http_server::HttpHandlerPtr http_handler;
+    handler_.reset(new GetHandler(mojo::GetProxy(&http_handler).Pass(), port_));
     http_server_->SetHandler(".*", http_handler.Pass(),
                              [](bool result) { EXPECT_TRUE(result); });
     EXPECT_TRUE(http_server_.WaitForIncomingMethodCall());
   }
 
-  std::string GetURL(const std::string& path) {
-    return ::mojo::GetURL(port_, path);
-  }
+  std::string GetURL(const std::string& path) { return ::GetURL(port_, path); }
 
   http_server::HttpServerFactoryPtr http_server_factory_;
   http_server::HttpServerPtr http_server_;
@@ -115,32 +112,32 @@ class ShellHTTPAppTest : public test::ApplicationTestBase {
 
 // Test that we can load apps over http.
 TEST_F(ShellHTTPAppTest, Http) {
-  InterfacePtr<Pingable> pingable;
+  PingablePtr pingable;
   application_impl()->ConnectToService(GetURL("app"), &pingable);
-  pingable->Ping("hello",
-                 [this](const String& app_url, const String& connection_url,
-                        const String& message) {
-                   EXPECT_EQ(GetURL("app"), app_url);
-                   EXPECT_EQ(GetURL("app"), connection_url);
-                   EXPECT_EQ("hello", message);
-                   base::MessageLoop::current()->Quit();
-                 });
+  pingable->Ping("hello", [this](const mojo::String& app_url,
+                                 const mojo::String& connection_url,
+                                 const mojo::String& message) {
+    EXPECT_EQ(GetURL("app"), app_url);
+    EXPECT_EQ(GetURL("app"), connection_url);
+    EXPECT_EQ("hello", message);
+    base::MessageLoop::current()->Quit();
+  });
   base::RunLoop().Run();
 }
 
 // Test that redirects work.
 // TODO(aa): Test that apps receive the correct URL parameters.
 TEST_F(ShellHTTPAppTest, Redirect) {
-  InterfacePtr<Pingable> pingable;
+  PingablePtr pingable;
   application_impl()->ConnectToService(GetURL("redirect"), &pingable);
-  pingable->Ping("hello",
-                 [this](const String& app_url, const String& connection_url,
-                        const String& message) {
-                   EXPECT_EQ(GetURL("app"), app_url);
-                   EXPECT_EQ(GetURL("app"), connection_url);
-                   EXPECT_EQ("hello", message);
-                   base::MessageLoop::current()->Quit();
-                 });
+  pingable->Ping("hello", [this](const mojo::String& app_url,
+                                 const mojo::String& connection_url,
+                                 const mojo::String& message) {
+    EXPECT_EQ(GetURL("app"), app_url);
+    EXPECT_EQ(GetURL("app"), connection_url);
+    EXPECT_EQ("hello", message);
+    base::MessageLoop::current()->Quit();
+  });
   base::RunLoop().Run();
 }
 
@@ -152,15 +149,15 @@ TEST_F(ShellHTTPAppTest, Redirect) {
 #define MAYBE_QueryHandling QueryHandling
 #endif  // ADDRESS_SANITIZER
 TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
-  InterfacePtr<Pingable> pingable1;
-  InterfacePtr<Pingable> pingable2;
+  PingablePtr pingable1;
+  PingablePtr pingable2;
   application_impl()->ConnectToService(GetURL("app?foo"), &pingable1);
   application_impl()->ConnectToService(GetURL("app?bar"), &pingable2);
 
   int num_responses = 0;
-  auto callback = [this, &num_responses](const String& app_url,
-                                         const String& connection_url,
-                                         const String& message) {
+  auto callback = [this, &num_responses](const mojo::String& app_url,
+                                         const mojo::String& connection_url,
+                                         const mojo::String& message) {
     EXPECT_EQ(GetURL("app"), app_url);
     EXPECT_EQ("hello", message);
     ++num_responses;
@@ -180,18 +177,18 @@ TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
 
 // mojo: URLs can have querystrings too
 TEST_F(ShellAppTest, MojoURLQueryHandling) {
-  InterfacePtr<Pingable> pingable;
+  PingablePtr pingable;
   application_impl()->ConnectToService("mojo:pingable_app?foo", &pingable);
-  auto callback = [this](const String& app_url, const String& connection_url,
-                         const String& message) {
-    EXPECT_TRUE(EndsWith(app_url, "/pingable_app.mojo", true));
-    EXPECT_EQ(app_url.To<std::string>() + "?foo", connection_url);
-    EXPECT_EQ("hello", message);
-    base::MessageLoop::current()->Quit();
-  };
+  auto callback =
+      [this](const mojo::String& app_url, const mojo::String& connection_url,
+             const mojo::String& message) {
+        EXPECT_TRUE(EndsWith(app_url, "/pingable_app.mojo", true));
+        EXPECT_EQ(app_url.To<std::string>() + "?foo", connection_url);
+        EXPECT_EQ("hello", message);
+        base::MessageLoop::current()->Quit();
+      };
   pingable->Ping("hello", callback);
   base::RunLoop().Run();
 }
 
 }  // namespace
-}  // namespace mojo

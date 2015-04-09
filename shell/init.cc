@@ -6,7 +6,6 @@
 
 #include "base/logging.h"
 
-namespace mojo {
 namespace shell {
 
 void InitializeLogging() {
@@ -21,4 +20,3 @@ void InitializeLogging() {
 }
 
 }  // namespace shell
-}  // namespace mojo

@@ -8,7 +8,6 @@
 #include "jni/Bootstrap_jni.h"
 #include "shell/android/run_android_application_function.h"
 
-namespace mojo {
 namespace shell {
 
 void Bootstrap(JNIEnv* env,
@@ -29,13 +28,12 @@ bool RegisterBootstrapJni(JNIEnv* env) {
 }
 
 }  // namespace shell
-}  // namespace mojo
 
 JNI_EXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
   base::android::InitVM(vm);
   JNIEnv* env = base::android::AttachCurrentThread();
 
-  if (!mojo::shell::RegisterBootstrapJni(env))
+  if (!shell::RegisterBootstrapJni(env))
     return -1;
 
   return JNI_VERSION_1_4;

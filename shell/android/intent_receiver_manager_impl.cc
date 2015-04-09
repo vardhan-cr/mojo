@@ -8,19 +8,18 @@
 #include "jni/IntentReceiverRegistry_jni.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
 
-mojo::Array<uint8> BufferToArray(JNIEnv* env, jobject buffer) {
+mojo::Array<uint8_t> BufferToArray(JNIEnv* env, jobject buffer) {
   const size_t size = env->GetDirectBufferCapacity(buffer);
-  Array<uint8> result(size);
+  mojo::Array<uint8_t> result(size);
   memcpy(&result.front(), env->GetDirectBufferAddress(buffer), size);
   return result.Pass();
 }
 
-class IntentDispatcher : public ErrorHandler {
+class IntentDispatcher : public mojo::ErrorHandler {
  public:
   IntentDispatcher(intent_receiver::IntentReceiverPtr intent_receiver)
       : intent_receiver_(intent_receiver.Pass()) {
@@ -38,7 +37,7 @@ class IntentDispatcher : public ErrorHandler {
   }
 
  private:
-  // Overriden from ErrorHandler
+  // Overriden from mojo::ErrorHandler
   void OnConnectionError() {
     intent_receiver_.set_error_handler(nullptr);
     delete this;
@@ -50,7 +49,7 @@ class IntentDispatcher : public ErrorHandler {
 }  // namespace
 
 void IntentReceiverManagerImpl::Bind(
-    InterfaceRequest<intent_receiver::IntentReceiverManager> request) {
+    mojo::InterfaceRequest<intent_receiver::IntentReceiverManager> request) {
   bindings_.AddBinding(this, request.Pass());
 }
 
@@ -79,4 +78,3 @@ void OnIntentReceived(JNIEnv* env,
 }
 
 }  // namespace shell
-}  // namespace mojo

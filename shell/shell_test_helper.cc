@@ -13,7 +13,6 @@
 #include "shell/init.h"
 #include "shell/url_resolver.h"
 
-namespace mojo {
 namespace shell {
 
 ShellTestHelper::ShellTestHelper() {
@@ -43,4 +42,3 @@ void ShellTestHelper::AddURLMapping(const GURL& url, const GURL& resolved_url) {
 }
 
 }  // namespace shell
-}  // namespace mojo

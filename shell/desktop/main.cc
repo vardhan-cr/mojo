@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   base::CommandLine::Init(argc, argv);
 
-  mojo::shell::InitializeLogging();
+  shell::InitializeLogging();
 
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 
   // We want the shell::Context to outlive the MessageLoop so that pipes are all
   // gracefully closed / error-out before we try to shut the Context down.
-  mojo::shell::Context shell_context;
+  shell::Context shell_context;
   {
     base::MessageLoop message_loop;
     if (!shell_context.Init()) {
@@ -167,8 +167,7 @@ int main(int argc, char** argv) {
       ApplyApplicationArgs(&shell_context, argv[i]);
 
     message_loop.PostTask(
-        FROM_HERE,
-        base::Bind(&mojo::shell::RunCommandLineApps, &shell_context));
+        FROM_HERE, base::Bind(&shell::RunCommandLineApps, &shell_context));
     message_loop.Run();
 
     // Must be called before |message_loop| is destroyed.

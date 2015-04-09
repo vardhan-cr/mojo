@@ -13,7 +13,6 @@ namespace base {
 class MessageLoop;
 }
 
-namespace mojo {
 namespace shell {
 
 class ApplicationManager;
@@ -28,8 +27,9 @@ class UIApplicationLoader : public ApplicationLoader {
   ~UIApplicationLoader() override;
 
   // ApplicationLoader overrides:
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override;
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override;
 
  private:
   class UILoader;
@@ -38,8 +38,9 @@ class UIApplicationLoader : public ApplicationLoader {
   // to |background_loader_| to do the actual loading.
   // TODO: having this code take a |manager| is fragile (as ApplicationManager
   // isn't thread safe).
-  void LoadOnUIThread(const GURL& url,
-                      InterfaceRequest<Application> application_request);
+  void LoadOnUIThread(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request);
   void ShutdownOnUIThread();
 
   scoped_ptr<ApplicationLoader> loader_;
@@ -49,6 +50,5 @@ class UIApplicationLoader : public ApplicationLoader {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_UI_APPLICATION_LOADER_ANDROID_H_

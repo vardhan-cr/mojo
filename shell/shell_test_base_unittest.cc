@@ -26,14 +26,13 @@ using mojo::test::TestTimeServicePtr;
 using mojo::test::TestTrackedRequestService;
 using mojo::test::TestTrackedRequestServicePtr;
 
-namespace mojo {
 namespace shell {
 namespace test {
 namespace {
 
 void GetReportCallback(base::MessageLoop* loop,
                        std::vector<ServiceReport>* reports_out,
-                       Array<ServiceReportPtr> report) {
+                       mojo::Array<ServiceReportPtr> report) {
   for (size_t i = 0; i < report.size(); i++)
     reports_out->push_back(*report[i]);
   loop->QuitWhenIdle();
@@ -71,12 +70,12 @@ class ShellTestBaseTest : public ShellTestBase {
   TestTrackedRequestServicePtr request_tracking_;
 };
 
-class QuitMessageLoopErrorHandler : public ErrorHandler {
+class QuitMessageLoopErrorHandler : public mojo::ErrorHandler {
  public:
   QuitMessageLoopErrorHandler() {}
   ~QuitMessageLoopErrorHandler() override {}
 
-  // |ErrorHandler| implementation:
+  // |mojo::ErrorHandler| implementation:
   void OnConnectionError() override {
     base::MessageLoop::current()->QuitWhenIdle();
   }
@@ -87,7 +86,7 @@ class QuitMessageLoopErrorHandler : public ErrorHandler {
 
 // Tests that we can connect to a single service within a single app.
 TEST_F(ShellTestBaseTest, ConnectBasic) {
-  InterfacePtr<TestService> service;
+  TestServicePtr service;
   ConnectToService(test_app_url(), &service);
 
   bool was_run = false;
@@ -107,7 +106,7 @@ TEST_F(ShellTestBaseTest, ConnectBasic) {
 // doesn't exist. Implicit in this test is verification that the shell
 // terminates if no services are running.
 TEST_F(ShellTestBaseTest, ConnectInvalidService) {
-  InterfacePtr<TestService> test_service;
+  TestServicePtr test_service;
   ConnectToService(GURL("mojo:non_existent_service"), &test_service);
 
   bool was_run = false;
@@ -133,7 +132,7 @@ TEST_F(ShellTestBaseTest, ConnectInvalidService) {
 // TODO(tim): Disabled because network service leaks NSS at exit, meaning
 // subsequent tests can't init properly.
 TEST_F(ShellTestBaseTest, DISABLED_ConnectBasicNetwork) {
-  InterfacePtr<TestService> service;
+  TestServicePtr service;
   ConnectToService(test_app_url(), &service);
 
   bool was_run = false;
@@ -159,7 +158,7 @@ TEST_F(ShellTestBaseTest, DISABLED_ConnectBasicNetwork) {
 // TODO(tim): Disabled because network service leaks NSS at exit, meaning
 // subsequent tests can't init properly.
 TEST_F(ShellTestBaseTest, DISABLED_ConnectInvalidServiceNetwork) {
-  InterfacePtr<TestService> test_service;
+  TestServicePtr test_service;
   ConnectToService(GURL("http://example.com/non_existent_service"),
                    &test_service);
   QuitMessageLoopErrorHandler quitter;
@@ -244,11 +243,11 @@ TEST_F(ShellTestBaseTest, ConnectServiceAsClientOfSeparateApp) {
   TestServicePtr service;
   ConnectToService(test_app_url(), &service);
   service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
-  service->Ping(Callback<void()>());
+  service->Ping(mojo::Callback<void()>());
   message_loop()->Run();
 
   for (int i = 0; i < 8; i++)
-    service->Ping(Callback<void()>());
+    service->Ping(mojo::Callback<void()>());
   service->Ping(message_loop()->QuitWhenIdleClosure());
   message_loop()->Run();
 
@@ -274,7 +273,7 @@ TEST_F(ShellTestBaseTest, ConnectManyClientsAndServices) {
   service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
   message_loop()->Run();
   for (int i = 0; i < 5; i++)
-    service->Ping(Callback<void()>());
+    service->Ping(mojo::Callback<void()>());
   int64 time_result;
   service->ConnectToAppAndGetTime("mojo:test_request_tracker_app",
                                   SetAndQuit<int64>(&time_result));
@@ -283,10 +282,10 @@ TEST_F(ShellTestBaseTest, ConnectManyClientsAndServices) {
   // Also make a few requests to the TimeService in the test_app.
   ConnectToService(test_app_url(), &time_service);
   time_service->StartTrackingRequests(message_loop()->QuitWhenIdleClosure());
-  time_service->GetPartyTime(Callback<void(uint64_t)>());
+  time_service->GetPartyTime(mojo::Callback<void(uint64_t)>());
   message_loop()->Run();
   for (int i = 0; i < 18; i++)
-    time_service->GetPartyTime(Callback<void(uint64_t)>());
+    time_service->GetPartyTime(mojo::Callback<void(uint64_t)>());
   // Flush the tasks with one more to quit.
   int64 party_time = 0;
   time_service->GetPartyTime(SetAndQuit<int64>(&party_time));
@@ -306,4 +305,3 @@ TEST_F(ShellTestBaseTest, ConnectManyClientsAndServices) {
 }  // namespace
 }  // namespace test
 }  // namespace shell
-}  // namespace mojo

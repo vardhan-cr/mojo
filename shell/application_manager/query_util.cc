@@ -6,7 +6,6 @@
 
 #include "base/strings/string_util.h"
 
-namespace mojo {
 namespace shell {
 
 GURL GetBaseURLAndQuery(const GURL& url, std::string* query) {
@@ -28,4 +27,3 @@ GURL GetBaseURLAndQuery(const GURL& url, std::string* query) {
 }
 
 }  // namespace shell
-}  // namespace mojo

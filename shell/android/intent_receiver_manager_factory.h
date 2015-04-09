@@ -9,19 +9,19 @@
 #include "services/android/intent_receiver.mojom.h"
 #include "shell/android/intent_receiver_manager_impl.h"
 
-namespace mojo {
 namespace shell {
+
 class IntentReceiverManagerFactory
-    : public InterfaceFactory<intent_receiver::IntentReceiverManager> {
+    : public mojo::InterfaceFactory<intent_receiver::IntentReceiverManager> {
  private:
   // From InterfaceFactory:
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<intent_receiver::IntentReceiverManager> request)
-      override;
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<intent_receiver::IntentReceiverManager>
+                  request) override;
 
   IntentReceiverManagerImpl intent_manager_;
 };
+
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_INTENT_RECEIVER_MANAGER_FACTORY_H_

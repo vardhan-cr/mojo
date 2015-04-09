@@ -7,7 +7,6 @@
 #include "base/logging.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -80,4 +79,3 @@ TEST(CommandLineUtil, GetAppURLAndArgs) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

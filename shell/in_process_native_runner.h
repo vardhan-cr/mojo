@@ -14,7 +14,6 @@
 #include "shell/application_manager/native_runner.h"
 #include "shell/native_application_support.h"
 
-namespace mojo {
 namespace shell {
 
 class Context;
@@ -30,7 +29,7 @@ class InProcessNativeRunner : public NativeRunner,
   // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
              NativeApplicationCleanup cleanup,
-             InterfaceRequest<Application> application_request,
+             mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override;
 
  private:
@@ -39,7 +38,7 @@ class InProcessNativeRunner : public NativeRunner,
 
   base::FilePath app_path_;
   NativeApplicationCleanup cleanup_;
-  InterfaceRequest<Application> application_request_;
+  mojo::InterfaceRequest<mojo::Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 
   base::ScopedNativeLibrary app_library_;
@@ -62,6 +61,5 @@ class InProcessNativeRunnerFactory : public NativeRunnerFactory {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_IN_PROCESS_NATIVE_RUNNER_H_

@@ -6,7 +6,6 @@
 
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 const char Fetcher::kMojoMagic[] = "#!mojo ";
@@ -35,4 +34,3 @@ bool Fetcher::PeekContentHandler(std::string* mojo_shebang,
 }
 
 }  // namespace shell
-}  // namespace mojo

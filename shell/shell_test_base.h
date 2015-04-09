@@ -15,7 +15,6 @@
 
 class GURL;
 
-namespace mojo {
 namespace shell {
 namespace test {
 
@@ -29,13 +28,14 @@ class ShellTestBase : public testing::Test {
 
   // |application_url| should typically be a mojo: URL (the origin will be set
   // to an "appropriate" file: URL).
-  // TODO(tim): Should the test base be a ServiceProvider?
-  ScopedMessagePipeHandle ConnectToService(const GURL& application_url,
-                                           const std::string& service_name);
+  // TODO(tim): Should the test base be a mojo::ServiceProvider?
+  mojo::ScopedMessagePipeHandle ConnectToService(
+      const GURL& application_url,
+      const std::string& service_name);
 
   template <typename Interface>
   void ConnectToService(const GURL& application_url,
-                        InterfacePtr<Interface>* ptr) {
+                        mojo::InterfacePtr<Interface>* ptr) {
     ptr->Bind(ConnectToService(application_url, Interface::Name_).Pass());
   }
 
@@ -54,6 +54,5 @@ class ShellTestBase : public testing::Test {
 
 }  // namespace test
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_SHELL_TEST_BASE_H_

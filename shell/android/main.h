@@ -7,12 +7,10 @@
 
 #include <jni.h>
 
-namespace mojo {
 namespace shell {
 
 bool RegisterShellMain(JNIEnv* env);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_MAIN_H_

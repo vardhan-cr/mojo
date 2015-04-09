@@ -12,7 +12,6 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/application_manager/native_runner.h"
 
-namespace mojo {
 namespace shell {
 
 class Context;
@@ -28,7 +27,7 @@ class OutOfProcessNativeRunner : public NativeRunner {
   // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
              NativeApplicationCleanup cleanup,
-             InterfaceRequest<Application> application_request,
+             mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override;
 
  private:
@@ -60,6 +59,5 @@ class OutOfProcessNativeRunnerFactory : public NativeRunnerFactory {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_OUT_OF_PROCESS_NATIVE_RUNNER_H_

@@ -6,7 +6,6 @@
 
 #include "base/threading/sequenced_worker_pool.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -36,4 +35,3 @@ TaskRunners::~TaskRunners() {
 }
 
 }  // namespace shell
-}  // namespace mojo

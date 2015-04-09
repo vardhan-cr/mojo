@@ -13,50 +13,49 @@
 #include "shell/application_manager/identity.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 class ApplicationManager;
 
-class ShellImpl : public Shell, public ErrorHandler {
+class ShellImpl : public mojo::Shell, public mojo::ErrorHandler {
  public:
-  ShellImpl(ApplicationPtr application,
+  ShellImpl(mojo::ApplicationPtr application,
             ApplicationManager* manager,
             const Identity& resolved_identity,
             const base::Closure& on_application_end);
 
   ~ShellImpl() override;
 
-  void InitializeApplication(Array<String> args);
+  void InitializeApplication(mojo::Array<mojo::String> args);
 
   void ConnectToClient(const GURL& requested_url,
                        const GURL& requestor_url,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services);
+                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                       mojo::ServiceProviderPtr exposed_services);
 
-  Application* application() { return application_.get(); }
+  mojo::Application* application() { return application_.get(); }
   const Identity& identity() const { return identity_; }
   base::Closure on_application_end() const { return on_application_end_; }
 
  private:
-  // Shell implementation:
-  void ConnectToApplication(const String& app_url,
-                            InterfaceRequest<ServiceProvider> services,
-                            ServiceProviderPtr exposed_services) override;
+  // mojo::Shell implementation:
+  void ConnectToApplication(
+      const mojo::String& app_url,
+      mojo::InterfaceRequest<mojo::ServiceProvider> services,
+      mojo::ServiceProviderPtr exposed_services) override;
 
-  // ErrorHandler implementation:
+  // mojo::ErrorHandler implementation:
   void OnConnectionError() override;
 
   ApplicationManager* const manager_;
   const Identity identity_;
   base::Closure on_application_end_;
-  ApplicationPtr application_;
-  Binding<Shell> binding_;
+  mojo::ApplicationPtr application_;
+  mojo::Binding<mojo::Shell> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ShellImpl);
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_SHELL_IMPL_H_

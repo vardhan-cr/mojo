@@ -10,7 +10,6 @@
 #include "mojo/common/message_pump_mojo.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -25,7 +24,7 @@ namespace {
 TEST(ContextTest, MAYBE_Paths) {
   Context context;
   base::MessageLoop message_loop(
-      scoped_ptr<base::MessagePump>(new common::MessagePumpMojo()));
+      scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
 
   EXPECT_FALSE(context.mojo_shell_path().empty());
@@ -38,4 +37,3 @@ TEST(ContextTest, MAYBE_Paths) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

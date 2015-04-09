@@ -7,7 +7,6 @@
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -17,8 +16,9 @@ class DummyLoader : public ApplicationLoader {
   ~DummyLoader() override {}
 
   // ApplicationLoader overrides:
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override {
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override {
     if (simulate_app_quit_)
       base::MessageLoop::current()->Quit();
   }
@@ -42,10 +42,9 @@ TEST(BackgroundApplicationLoaderTest, Load) {
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
-  ApplicationPtr application;
-  loader.Load(GURL(), GetProxy(&application));
+  mojo::ApplicationPtr application;
+  loader.Load(GURL(), mojo::GetProxy(&application));
 }
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

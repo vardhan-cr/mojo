@@ -31,9 +31,7 @@
 #include "shell/native_application_support.h"
 #include "shell/switches.h"
 
-namespace mojo {
 namespace shell {
-
 namespace {
 
 // Blocker ---------------------------------------------------------------------
@@ -84,7 +82,7 @@ class Blocker {
 class ChildControllerImpl;
 
 // Should be created and initialized on the main thread.
-class AppContext : public embedder::ProcessDelegate {
+class AppContext : public mojo::embedder::ProcessDelegate {
  public:
   AppContext()
       : io_thread_("io_thread"), controller_thread_("controller_thread") {}
@@ -92,7 +90,8 @@ class AppContext : public embedder::ProcessDelegate {
 
   void Init() {
     // Initialize Mojo before starting any threads.
-    embedder::Init(make_scoped_ptr(new embedder::SimplePlatformSupport()));
+    mojo::embedder::Init(
+        make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
 
     // Create and start our I/O thread.
     base::Thread::Options io_thread_options(base::MessageLoop::TYPE_IO, 0);
@@ -105,15 +104,15 @@ class AppContext : public embedder::ProcessDelegate {
     controller_thread_options.message_loop_type =
         base::MessageLoop::TYPE_CUSTOM;
     controller_thread_options.message_pump_factory =
-        base::Bind(&common::MessagePumpMojo::Create);
+        base::Bind(&mojo::common::MessagePumpMojo::Create);
     CHECK(controller_thread_.StartWithOptions(controller_thread_options));
     controller_runner_ = controller_thread_.message_loop_proxy().get();
     CHECK(controller_runner_.get());
 
     // TODO(vtl): This should be SLAVE, not NONE.
-    embedder::InitIPCSupport(embedder::ProcessType::NONE, controller_runner_,
-                             this, io_runner_,
-                             embedder::ScopedPlatformHandle());
+    mojo::embedder::InitIPCSupport(mojo::embedder::ProcessType::NONE,
+                                   controller_runner_, this, io_runner_,
+                                   mojo::embedder::ScopedPlatformHandle());
   }
 
   void Shutdown() {
@@ -143,7 +142,7 @@ class AppContext : public embedder::ProcessDelegate {
     controller_.reset();
 
     // Next shutdown IPC. We'll unblock the main thread in OnShutdownComplete().
-    embedder::ShutdownIPCSupport();
+    mojo::embedder::ShutdownIPCSupport();
   }
 
   // ProcessDelegate implementation.
@@ -168,7 +167,7 @@ class AppContext : public embedder::ProcessDelegate {
 
 // ChildControllerImpl ---------------------------------------------------------
 
-class ChildControllerImpl : public ChildController, public ErrorHandler {
+class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
  public:
   ~ChildControllerImpl() override {
     DCHECK(thread_checker_.CalledOnValidThread());
@@ -180,7 +179,7 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
   // To be executed on the controller thread. Creates the |ChildController|,
   // etc.
   static void Init(AppContext* app_context,
-                   embedder::ScopedPlatformHandle platform_channel,
+                   mojo::embedder::ScopedPlatformHandle platform_channel,
                    const Blocker::Unblocker& unblocker) {
     DCHECK(app_context);
     DCHECK(platform_channel.is_valid());
@@ -190,20 +189,23 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
     scoped_ptr<ChildControllerImpl> impl(
         new ChildControllerImpl(app_context, unblocker));
 
-    ScopedMessagePipeHandle host_message_pipe(embedder::CreateChannel(
-        platform_channel.Pass(), app_context->io_runner(),
-        base::Bind(&ChildControllerImpl::DidCreateChannel,
-                   base::Unretained(impl.get())),
-        base::MessageLoopProxy::current()));
+    mojo::ScopedMessagePipeHandle host_message_pipe(
+        mojo::embedder::CreateChannel(
+            platform_channel.Pass(), app_context->io_runner(),
+            base::Bind(&ChildControllerImpl::DidCreateChannel,
+                       base::Unretained(impl.get())),
+            base::MessageLoopProxy::current()));
 
     impl->Bind(host_message_pipe.Pass());
 
     app_context->set_controller(impl.Pass());
   }
 
-  void Bind(ScopedMessagePipeHandle handle) { binding_.Bind(handle.Pass()); }
+  void Bind(mojo::ScopedMessagePipeHandle handle) {
+    binding_.Bind(handle.Pass());
+  }
 
-  // |ErrorHandler| methods:
+  // |mojo::ErrorHandler| methods:
   void OnConnectionError() override {
     // A connection error means the connection to the shell is lost. This is not
     // recoverable.
@@ -212,9 +214,9 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
   }
 
   // |ChildController| methods:
-  void StartApp(const String& app_path,
+  void StartApp(const mojo::String& app_path,
                 bool clean_app_path,
-                InterfaceRequest<Application> application_request,
+                mojo::InterfaceRequest<mojo::Application> application_request,
                 const StartAppCallback& on_app_complete) override {
     DVLOG(2) << "ChildControllerImpl::StartApp(" << app_path << ", ...)";
     DCHECK(thread_checker_.CalledOnValidThread());
@@ -243,8 +245,8 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
     binding_.set_error_handler(this);
   }
 
-  // Callback for |embedder::CreateChannel()|.
-  void DidCreateChannel(embedder::ChannelInfo* channel_info) {
+  // Callback for |mojo::embedder::CreateChannel()|.
+  void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info) {
     DVLOG(2) << "ChildControllerImpl::DidCreateChannel()";
     DCHECK(thread_checker_.CalledOnValidThread());
     channel_info_ = channel_info;
@@ -253,7 +255,7 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
   static void StartAppOnMainThread(
       const base::FilePath& app_path,
       NativeApplicationCleanup cleanup,
-      InterfaceRequest<Application> application_request) {
+      mojo::InterfaceRequest<mojo::Application> application_request) {
     // TODO(vtl): This is copied from in_process_native_runner.cc.
     DVLOG(2) << "Loading/running Mojo app from " << app_path.value()
              << " out of process";
@@ -269,22 +271,20 @@ class ChildControllerImpl : public ChildController, public ErrorHandler {
   Blocker::Unblocker unblocker_;
   StartAppCallback on_app_complete_;
 
-  embedder::ChannelInfo* channel_info_;
-  Binding<ChildController> binding_;
+  mojo::embedder::ChannelInfo* channel_info_;
+  mojo::Binding<ChildController> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(ChildControllerImpl);
 };
 
 }  // namespace
-
 }  // namespace shell
-}  // namespace mojo
 
 int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   base::CommandLine::Init(argc, argv);
 
-  mojo::shell::InitializeLogging();
+  shell::InitializeLogging();
 
   // Make sure that we're really meant to be invoked as the child process.
   CHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -295,13 +295,13 @@ int main(int argc, char** argv) {
           *base::CommandLine::ForCurrentProcess());
   CHECK(platform_channel.is_valid());
 
-  mojo::shell::AppContext app_context;
+  shell::AppContext app_context;
   app_context.Init();
 
-  mojo::shell::Blocker blocker;
+  shell::Blocker blocker;
   app_context.controller_runner()->PostTask(
       FROM_HERE,
-      base::Bind(&mojo::shell::ChildControllerImpl::Init,
+      base::Bind(&shell::ChildControllerImpl::Init,
                  base::Unretained(&app_context),
                  base::Passed(&platform_channel), blocker.GetUnblocker()));
   // This will block, then run whatever the controller wants.

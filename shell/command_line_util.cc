@@ -13,7 +13,6 @@
 #include "shell/context.h"
 #include "shell/switches.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -81,4 +80,3 @@ void RunCommandLineApps(Context* context) {
 }
 
 }  // namespace shell
-}  // namespace mojo

@@ -12,7 +12,6 @@
 #include "shell/filename_util.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 namespace test {
 
@@ -44,4 +43,3 @@ void ShellTestBase::SetUpTestApplications() {
 
 }  // namespace test
 }  // namespace shell
-}  // namespace mojo

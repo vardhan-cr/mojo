@@ -15,7 +15,6 @@ namespace base {
 class FilePath;
 }
 
-namespace mojo {
 namespace shell {
 
 // ApplicationManager requires implementations of NativeRunner and
@@ -32,10 +31,11 @@ class NativeRunner {
   // TODO(vtl): |app_path| and |cleanup| should probably be moved to the
   // factory's Create(). Rationale: The factory may need information from the
   // file to decide what kind of NativeRunner to make.
-  virtual void Start(const base::FilePath& app_path,
-                     NativeApplicationCleanup cleanup,
-                     InterfaceRequest<Application> application_request,
-                     const base::Closure& app_completed_callback) = 0;
+  virtual void Start(
+      const base::FilePath& app_path,
+      NativeApplicationCleanup cleanup,
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      const base::Closure& app_completed_callback) = 0;
 };
 
 class NativeRunnerFactory {
@@ -54,6 +54,5 @@ class NativeRunnerFactory {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_NATIVE_RUNNER_H_

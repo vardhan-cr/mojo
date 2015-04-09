@@ -12,8 +12,8 @@
 #include "url/gurl.h"
 
 namespace mojo {
-
 class Application;
+}  // namespace mojo
 
 namespace shell {
 
@@ -25,14 +25,14 @@ class ApplicationLoader {
  public:
   virtual ~ApplicationLoader() {}
 
-  virtual void Load(const GURL& url,
-                    InterfaceRequest<Application> application_request) = 0;
+  virtual void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) = 0;
 
  protected:
   ApplicationLoader() {}
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_APPLICATION_LOADER_H_

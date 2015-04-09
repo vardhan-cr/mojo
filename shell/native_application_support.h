@@ -13,8 +13,8 @@ class FilePath;
 }
 
 namespace mojo {
-
 class Application;
+}  // namespace mojo
 
 namespace shell {
 
@@ -38,10 +38,10 @@ base::NativeLibrary LoadNativeApplication(const base::FilePath& app_path,
 // true if |MojoMain()| was called (even if it returns an error), and false
 // otherwise.
 // TODO(vtl): Maybe this should also have a |MojoResult| as an out parameter?
-bool RunNativeApplication(base::NativeLibrary app_library,
-                          InterfaceRequest<Application> application_request);
+bool RunNativeApplication(
+    base::NativeLibrary app_library,
+    mojo::InterfaceRequest<mojo::Application> application_request);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_NATIVE_APPLICATION_SUPPORT_H_

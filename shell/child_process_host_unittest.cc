@@ -16,7 +16,6 @@
 #include "shell/context.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -47,7 +46,7 @@ class TestChildProcessHost : public ChildProcessHost {
 TEST(ChildProcessHostTest, MAYBE_StartJoin) {
   Context context;
   base::MessageLoop message_loop(
-      scoped_ptr<base::MessagePump>(new common::MessagePumpMojo()));
+      scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
   TestChildProcessHost child_process_host(&context);
   child_process_host.Start();
@@ -71,7 +70,7 @@ TEST(ChildProcessHostTest, MAYBE_StartJoin) {
 TEST(ChildProcessHostTest, MAYBE_ConnectionError) {
   Context context;
   base::MessageLoop message_loop(
-      scoped_ptr<base::MessagePump>(new common::MessagePumpMojo()));
+      scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
   TestChildProcessHost child_process_host(&context);
   child_process_host.Start();
@@ -79,8 +78,8 @@ TEST(ChildProcessHostTest, MAYBE_ConnectionError) {
   // Send |ExitNow()| first, so that the |StartApp()| below won't actually be
   // processed, and we'll just get a connection error.
   child_process_host.ExitNow(123);
-  MessagePipe mp;
-  InterfaceRequest<Application> application_request;
+  mojo::MessagePipe mp;
+  mojo::InterfaceRequest<mojo::Application> application_request;
   application_request.Bind(mp.handle0.Pass());
   // This won't actually be called, but the callback should be run.
   MojoResult result = MOJO_RESULT_INTERNAL;
@@ -100,4 +99,3 @@ TEST(ChildProcessHostTest, MAYBE_ConnectionError) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

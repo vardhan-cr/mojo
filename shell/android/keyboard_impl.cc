@@ -8,10 +8,9 @@
 #include "base/logging.h"
 #include "jni/Keyboard_jni.h"
 
-namespace mojo {
 namespace shell {
 
-KeyboardImpl::KeyboardImpl(InterfaceRequest<Keyboard> request)
+KeyboardImpl::KeyboardImpl(mojo::InterfaceRequest<Keyboard> request)
     : binding_(this, request.Pass()) {
 }
 
@@ -33,4 +32,3 @@ bool RegisterKeyboardJni(JNIEnv* env) {
 }
 
 }  // namespace shell
-}  // namespace mojo

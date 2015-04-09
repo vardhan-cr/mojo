@@ -8,10 +8,9 @@
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/application_manager.h"
 
-namespace mojo {
 namespace shell {
 
-ShellImpl::ShellImpl(ApplicationPtr application,
+ShellImpl::ShellImpl(mojo::ApplicationPtr application,
                      ApplicationManager* manager,
                      const Identity& identity,
                      const base::Closure& on_application_end)
@@ -26,24 +25,27 @@ ShellImpl::ShellImpl(ApplicationPtr application,
 ShellImpl::~ShellImpl() {
 }
 
-void ShellImpl::InitializeApplication(Array<String> args) {
-  ShellPtr shell;
-  binding_.Bind(GetProxy(&shell));
+void ShellImpl::InitializeApplication(mojo::Array<mojo::String> args) {
+  mojo::ShellPtr shell;
+  binding_.Bind(mojo::GetProxy(&shell));
   application_->Initialize(shell.Pass(), args.Pass(), identity_.url.spec());
 }
 
-void ShellImpl::ConnectToClient(const GURL& requested_url,
-                                const GURL& requestor_url,
-                                InterfaceRequest<ServiceProvider> services,
-                                ServiceProviderPtr exposed_services) {
-  application_->AcceptConnection(String::From(requestor_url), services.Pass(),
-                                 exposed_services.Pass(), requested_url.spec());
+void ShellImpl::ConnectToClient(
+    const GURL& requested_url,
+    const GURL& requestor_url,
+    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+    mojo::ServiceProviderPtr exposed_services) {
+  application_->AcceptConnection(mojo::String::From(requestor_url),
+                                 services.Pass(), exposed_services.Pass(),
+                                 requested_url.spec());
 }
 
 // Shell implementation:
-void ShellImpl::ConnectToApplication(const String& app_url,
-                                     InterfaceRequest<ServiceProvider> services,
-                                     ServiceProviderPtr exposed_services) {
+void ShellImpl::ConnectToApplication(
+    const mojo::String& app_url,
+    mojo::InterfaceRequest<mojo::ServiceProvider> services,
+    mojo::ServiceProviderPtr exposed_services) {
   GURL app_gurl(app_url);
   if (!app_gurl.is_valid()) {
     LOG(ERROR) << "Error: invalid URL: " << app_url;
@@ -58,4 +60,3 @@ void ShellImpl::OnConnectionError() {
 }
 
 }  // namespace shell
-}  // namespace mojo

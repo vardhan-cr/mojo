@@ -16,7 +16,7 @@ import java.io.IOException;
 /**
  * Helper method for ShellTestBase.
  */
-@JNINamespace("mojo::shell::test")
+@JNINamespace("shell::test")
 public class ShellTestBase {
     // Directory where applications bundled with the tests will be extracted.
     private static final String TEST_APP_DIRECTORY = "test_apps";

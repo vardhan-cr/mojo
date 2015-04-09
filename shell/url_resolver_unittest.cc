@@ -7,7 +7,6 @@
 #include "base/logging.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace test {
 namespace {
@@ -142,4 +141,3 @@ TEST_F(URLResolverTest, TestQueryForBaseURL) {
 }  // namespace
 }  // namespace test
 }  // namespace shell
-}  // namespace mojo

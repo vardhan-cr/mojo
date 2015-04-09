@@ -11,25 +11,23 @@
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/keyboard/public/interfaces/keyboard.mojom.h"
 
-namespace mojo {
 namespace shell {
 
-class KeyboardImpl : public Keyboard {
+class KeyboardImpl : public mojo::Keyboard {
  public:
-  KeyboardImpl(InterfaceRequest<Keyboard> request);
+  explicit KeyboardImpl(mojo::InterfaceRequest<mojo::Keyboard> request);
   ~KeyboardImpl();
 
-  // Keyboard implementation
+  // mojo::Keyboard implementation
   void Show() override;
   void Hide() override;
 
  private:
-  StrongBinding<Keyboard> binding_;
+  mojo::StrongBinding<mojo::Keyboard> binding_;
 };
 
 bool RegisterKeyboardJni(JNIEnv* env);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_KEYBOARD_IMPL_H_

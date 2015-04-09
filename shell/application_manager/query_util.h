@@ -9,7 +9,6 @@
 
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 // Returns the base URL (without the query string). If |query| is not nullptr,
@@ -18,6 +17,5 @@ namespace shell {
 GURL GetBaseURLAndQuery(const GURL& url, std::string* query);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_QUERY_UTIL_H_

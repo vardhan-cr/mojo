@@ -11,7 +11,6 @@
 #include "url/url_canon_internal.h"
 #include "url/url_util.h"
 
-namespace mojo {
 namespace shell {
 
 // Prefix to prepend to get a file URL.
@@ -67,4 +66,3 @@ GURL AddTrailingSlashIfNeeded(const GURL& url) {
 }
 
 }  // namespace shell
-}  // namespace mojo

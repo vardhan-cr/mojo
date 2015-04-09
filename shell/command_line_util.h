@@ -7,7 +7,6 @@
 
 #include "shell/context.h"
 
-namespace mojo {
 namespace shell {
 
 // Parse the given arg, looking for an --args-for switch. If this is not the
@@ -33,6 +32,5 @@ void ApplyApplicationArgs(Context* context, const std::string& args);
 void RunCommandLineApps(Context* context);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_COMMAND_LINE_UTIL_H_

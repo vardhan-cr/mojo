@@ -13,8 +13,8 @@
 #include "url/gurl.h"
 
 namespace mojo {
-
 class NetworkService;
+}  // namespace mojo
 
 namespace shell {
 
@@ -23,7 +23,7 @@ class NetworkFetcher : public Fetcher {
  public:
   NetworkFetcher(bool disable_cache,
                  const GURL& url,
-                 NetworkService* network_service,
+                 mojo::NetworkService* network_service,
                  const FetchCallback& loader_callback);
 
   ~NetworkFetcher() override;
@@ -35,8 +35,8 @@ class NetworkFetcher : public Fetcher {
   const GURL& GetURL() const override;
   GURL GetRedirectURL() const override;
 
-  URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
-                               uint32_t skip) override;
+  mojo::URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
+                                     uint32_t skip) override;
 
   static void RecordCacheToURLMapping(const base::FilePath& path,
                                       const GURL& url);
@@ -63,14 +63,15 @@ class NetworkFetcher : public Fetcher {
 
   bool PeekFirstLine(std::string* line) override;
 
-  void StartNetworkRequest(const GURL& url, NetworkService* network_service);
+  void StartNetworkRequest(const GURL& url,
+                           mojo::NetworkService* network_service);
 
-  void OnLoadComplete(URLResponsePtr response);
+  void OnLoadComplete(mojo::URLResponsePtr response);
 
   bool disable_cache_;
   const GURL url_;
-  URLLoaderPtr url_loader_;
-  URLResponsePtr response_;
+  mojo::URLLoaderPtr url_loader_;
+  mojo::URLResponsePtr response_;
   base::FilePath path_;
   base::WeakPtrFactory<NetworkFetcher> weak_ptr_factory_;
 
@@ -78,6 +79,5 @@ class NetworkFetcher : public Fetcher {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_NETWORK_FETCHER_H_

@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-module mojo;
-
 interface Pingable {
   Ping(string message) => (string app_url, string connection_url, string message);
 };

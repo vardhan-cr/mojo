@@ -5,7 +5,6 @@
 #ifndef SHELL_INIT_H_
 #define SHELL_INIT_H_
 
-namespace mojo {
 namespace shell {
 
 // Initialization routines shared by desktop and Android main functions.
@@ -13,6 +12,5 @@ namespace shell {
 void InitializeLogging();
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_INIT_H_

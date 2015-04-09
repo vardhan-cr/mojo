@@ -17,25 +17,26 @@ namespace base {
 class FilePath;
 }
 
-namespace mojo {
 namespace shell {
 
-class AndroidHandler : public ApplicationDelegate,
-                       public ContentHandlerFactory::Delegate {
+class AndroidHandler : public mojo::ApplicationDelegate,
+                       public mojo::ContentHandlerFactory::Delegate {
  public:
   AndroidHandler();
   ~AndroidHandler();
 
  private:
-  // ApplicationDelegate:
-  void Initialize(ApplicationImpl* app) override;
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
+  // mojo::ApplicationDelegate:
+  void Initialize(mojo::ApplicationImpl* app) override;
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override;
 
-  // ContentHandlerFactory::Delegate:
-  void RunApplication(InterfaceRequest<Application> application_request,
-                      URLResponsePtr response) override;
+  // mojo::ContentHandlerFactory::Delegate:
+  void RunApplication(
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      mojo::URLResponsePtr response) override;
 
-  ContentHandlerFactory content_handler_factory_;
+  mojo::ContentHandlerFactory content_handler_factory_;
   IntentReceiverManagerFactory intent_receiver_manager_factory_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(AndroidHandler);
@@ -44,6 +45,5 @@ class AndroidHandler : public ApplicationDelegate,
 bool RegisterAndroidHandlerJni(JNIEnv* env);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // MOJO_SHELL_ANDROID_CONTENT_HANDLER_H_

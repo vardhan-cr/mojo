@@ -12,7 +12,6 @@
 #include "shell/switches.h"
 #include "url/url_util.h"
 
-namespace mojo {
 namespace shell {
 
 URLResolver::URLResolver() {
@@ -108,4 +107,3 @@ GURL URLResolver::ResolveMojoURL(const GURL& mojo_url) const {
 }
 
 }  // namespace shell
-}  // namespace mojo

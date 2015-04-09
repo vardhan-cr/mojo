@@ -22,7 +22,6 @@
 #include "shell/switches.h"
 #include "shell/task_runners.h"
 
-namespace mojo {
 namespace shell {
 
 ChildProcessHost::ChildProcessHost(Context* context)
@@ -36,7 +35,7 @@ ChildProcessHost::~ChildProcessHost() {
 void ChildProcessHost::Start() {
   DCHECK(!child_process_.IsValid());
 
-  ScopedMessagePipeHandle handle(embedder::CreateChannel(
+  mojo::ScopedMessagePipeHandle handle(mojo::embedder::CreateChannel(
       platform_channel_pair_.PassServerHandle(),
       context_->task_runners()->io_runner(),
       base::Bind(&ChildProcessHost::DidCreateChannel, base::Unretained(this)),
@@ -61,9 +60,9 @@ int ChildProcessHost::Join() {
 }
 
 void ChildProcessHost::StartApp(
-    const String& app_path,
+    const mojo::String& app_path,
     bool clean_app_path,
-    InterfaceRequest<Application> application_request,
+    mojo::InterfaceRequest<mojo::Application> application_request,
     const ChildController::StartAppCallback& on_app_complete) {
   DCHECK(controller_);
 
@@ -89,8 +88,9 @@ void ChildProcessHost::DidStart(bool success) {
   }
 }
 
-// Callback for |embedder::CreateChannel()|.
-void ChildProcessHost::DidCreateChannel(embedder::ChannelInfo* channel_info) {
+// Callback for |mojo::embedder::CreateChannel()|.
+void ChildProcessHost::DidCreateChannel(
+    mojo::embedder::ChannelInfo* channel_info) {
   DVLOG(2) << "ChildProcessHost::DidCreateChannel()";
 
   CHECK(channel_info);
@@ -108,7 +108,7 @@ bool ChildProcessHost::DoLaunch() {
                                       arraysize(kForwardSwitches));
   child_command_line.AppendSwitch(switches::kChildProcess);
 
-  embedder::HandlePassingInformation handle_passing_info;
+  mojo::embedder::HandlePassingInformation handle_passing_info;
   platform_channel_pair_.PrepareToPassClientHandleToChildProcess(
       &child_command_line, &handle_passing_info);
 
@@ -137,4 +137,3 @@ void ChildProcessHost::OnConnectionError() {
 }
 
 }  // namespace shell
-}  // namespace mojo

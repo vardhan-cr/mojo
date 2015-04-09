@@ -9,7 +9,6 @@
 #include "base/bind.h"
 #include "base/macros.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -35,7 +34,7 @@ class PeekSleeper {
       return false;
     last_number_bytes_read_ = num_bytes_read;
 
-    MojoTimeTicks now(GetTimeTicksNow());
+    MojoTimeTicks now(mojo::GetTimeTicksNow());
     if (now > deadline_)
       return false;
 
@@ -66,7 +65,7 @@ typedef const base::Callback<PeekStatus(const void*, uint32_t, std::string*)>&
 // and return false. Fail if the timeout is exceeded.
 // This function is not guaranteed to work correctly if applied to a data pipe
 // that's already been read from.
-bool BlockingPeekHelper(DataPipeConsumerHandle source,
+bool BlockingPeekHelper(mojo::DataPipeConsumerHandle source,
                         std::string* value,
                         MojoDeadline timeout,
                         PeekFunc peek_func) {
@@ -76,7 +75,7 @@ bool BlockingPeekHelper(DataPipeConsumerHandle source,
   MojoTimeTicks deadline =
       (timeout == MOJO_DEADLINE_INDEFINITE)
           ? 0
-          : 1 + GetTimeTicksNow() + static_cast<MojoTimeTicks>(timeout);
+          : 1 + mojo::GetTimeTicksNow() + static_cast<MojoTimeTicks>(timeout);
   PeekSleeper sleeper(deadline);
 
   MojoResult result;
@@ -100,7 +99,7 @@ bool BlockingPeekHelper(DataPipeConsumerHandle source,
       if (!sleeper.MaybeSleep(num_bytes))
         return false;
     } else if (result == MOJO_RESULT_SHOULD_WAIT) {
-      MojoTimeTicks now(GetTimeTicksNow());
+      MojoTimeTicks now(mojo::GetTimeTicksNow());
       if (timeout == MOJO_DEADLINE_INDEFINITE || now < deadline)
         result =
             Wait(source, MOJO_HANDLE_SIGNAL_READABLE, deadline - now, nullptr);
@@ -140,7 +139,7 @@ PeekStatus PeekNBytes(size_t bytes_length,
 
 }  // namespace
 
-bool BlockingPeekNBytes(DataPipeConsumerHandle source,
+bool BlockingPeekNBytes(mojo::DataPipeConsumerHandle source,
                         std::string* bytes,
                         size_t bytes_length,
                         MojoDeadline timeout) {
@@ -148,7 +147,7 @@ bool BlockingPeekNBytes(DataPipeConsumerHandle source,
   return BlockingPeekHelper(source, bytes, timeout, peek_nbytes);
 }
 
-bool BlockingPeekLine(DataPipeConsumerHandle source,
+bool BlockingPeekLine(mojo::DataPipeConsumerHandle source,
                       std::string* line,
                       size_t max_line_length,
                       MojoDeadline timeout) {
@@ -157,4 +156,3 @@ bool BlockingPeekLine(DataPipeConsumerHandle source,
 }
 
 }  // namespace shell
-}  // namespace mojo

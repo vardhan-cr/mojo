@@ -17,7 +17,6 @@
 #include "mojo/public/platform/native/system_impl_private_thunks.h"
 #include "mojo/public/platform/native/system_thunks.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -56,8 +55,9 @@ base::NativeLibrary LoadNativeApplication(const base::FilePath& app_path,
   return app_library;
 }
 
-bool RunNativeApplication(base::NativeLibrary app_library,
-                          InterfaceRequest<Application> application_request) {
+bool RunNativeApplication(
+    base::NativeLibrary app_library,
+    mojo::InterfaceRequest<mojo::Application> application_request) {
   // Tolerate |app_library| being null, to make life easier for callers.
   if (!app_library)
     return false;
@@ -127,4 +127,3 @@ bool RunNativeApplication(base::NativeLibrary app_library,
 }
 
 }  // namespace shell
-}  // namespace mojo

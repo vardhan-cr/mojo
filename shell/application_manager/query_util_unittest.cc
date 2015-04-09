@@ -6,7 +6,6 @@
 
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -44,4 +43,3 @@ TEST(QueryUtil, ForFileURL) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

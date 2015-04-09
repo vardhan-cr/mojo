@@ -8,7 +8,6 @@
 #include "base/android/jni_android.h"
 #include "base/files/file_path.h"
 
-namespace mojo {
 namespace shell {
 
 // Type of the function that we inject from the main .so of the Mojo shell to
@@ -22,6 +21,5 @@ typedef void (*RunAndroidApplicationFn)(JNIEnv* env,
                                         jint j_handle);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_RUN_ANDROID_APPLICATION_FUNCTION_H_

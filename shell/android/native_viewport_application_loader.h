@@ -18,47 +18,49 @@ class GpuState;
 }
 
 namespace mojo {
-
 class ApplicationImpl;
+}  // namespace mojo
 
 namespace shell {
 
-class NativeViewportApplicationLoader : public ApplicationLoader,
-                                        public ApplicationDelegate,
-                                        public InterfaceFactory<Keyboard>,
-                                        public InterfaceFactory<NativeViewport>,
-                                        public InterfaceFactory<Gpu> {
+class NativeViewportApplicationLoader
+    : public ApplicationLoader,
+      public mojo::ApplicationDelegate,
+      public mojo::InterfaceFactory<mojo::Keyboard>,
+      public mojo::InterfaceFactory<mojo::NativeViewport>,
+      public mojo::InterfaceFactory<mojo::Gpu> {
  public:
   NativeViewportApplicationLoader();
   ~NativeViewportApplicationLoader();
 
  private:
   // ApplicationLoader implementation.
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override;
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override;
 
-  // ApplicationDelegate implementation.
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
+  // mojo::ApplicationDelegate implementation.
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override;
 
-  // InterfaceFactory<NativeViewport> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<NativeViewport> request) override;
+  // mojo::InterfaceFactory<mojo::NativeViewport> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::NativeViewport> request) override;
 
-  // InterfaceFactory<Gpu> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<Gpu> request) override;
+  // mojo::InterfaceFactory<mojo::Gpu> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::Gpu> request) override;
 
-  // InterfaceFactory<Keyboard> implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<Keyboard> request) override;
+  // mojo::InterfaceFactory<mojo::Keyboard> implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<mojo::Keyboard> request) override;
 
   scoped_refptr<gles2::GpuState> gpu_state_;
-  scoped_ptr<ApplicationImpl> app_;
+  scoped_ptr<mojo::ApplicationImpl> app_;
 
   DISALLOW_COPY_AND_ASSIGN(NativeViewportApplicationLoader);
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // MOJO_SHELL_ANDROID_NATIVE_VIEWPORT_APPLICATION_LOADER_H_

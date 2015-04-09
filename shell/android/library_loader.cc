@@ -16,12 +16,12 @@
 namespace {
 
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
-    {"AndroidHandler", mojo::shell::RegisterAndroidHandlerJni},
-    {"IntentReceiverRegistry", mojo::shell::RegisterIntentReceiverRegistry},
-    {"Keyboard", mojo::shell::RegisterKeyboardJni},
+    {"AndroidHandler", shell::RegisterAndroidHandlerJni},
+    {"IntentReceiverRegistry", shell::RegisterIntentReceiverRegistry},
+    {"Keyboard", shell::RegisterKeyboardJni},
     {"PlatformViewportAndroid",
      native_viewport::PlatformViewportAndroid::Register},
-    {"ShellMain", mojo::shell::RegisterShellMain},
+    {"ShellMain", shell::RegisterShellMain},
 };
 
 bool RegisterJNI(JNIEnv* env) {

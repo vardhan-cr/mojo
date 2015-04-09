@@ -6,14 +6,12 @@
 
 #include "shell/application_manager/query_util.h"
 
-namespace mojo {
 namespace shell {
 
 Identity::Identity(const GURL& url, const std::string& qualifier)
     : url(GetBaseURLAndQuery(url, nullptr)), qualifier(qualifier) {
 }
 
-// explicit
 Identity::Identity(const GURL& base_url)
     : url(GetBaseURLAndQuery(base_url, nullptr)), qualifier(url.spec()) {
 }
@@ -25,4 +23,3 @@ bool Identity::operator<(const Identity& other) const {
 }
 
 }  // namespace shell
-}  // namespace mojo

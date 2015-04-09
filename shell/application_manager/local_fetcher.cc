@@ -15,7 +15,6 @@
 #include "mojo/common/data_pipe_utils.h"
 #include "url/url_util.h"
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -51,20 +50,20 @@ GURL LocalFetcher::GetRedirectURL() const {
   return GURL::EmptyGURL();
 }
 
-URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
-                                           uint32_t skip) {
-  URLResponsePtr response(URLResponse::New());
-  response->url = String::From(url_);
-  DataPipe data_pipe;
+mojo::URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
+                                                 uint32_t skip) {
+  mojo::URLResponsePtr response(mojo::URLResponse::New());
+  response->url = mojo::String::From(url_);
+  mojo::DataPipe data_pipe;
   response->body = data_pipe.consumer_handle.Pass();
   int64 file_size;
   if (base::GetFileSize(path_, &file_size)) {
-    response->headers = Array<String>(1);
+    response->headers = mojo::Array<mojo::String>(1);
     response->headers[0] =
         base::StringPrintf("Content-Length: %" PRId64, file_size);
   }
-  common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,
-                       task_runner, base::Bind(&IgnoreResult));
+  mojo::common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,
+                             task_runner, base::Bind(&IgnoreResult));
   return response.Pass();
 }
 
@@ -97,4 +96,3 @@ bool LocalFetcher::PeekFirstLine(std::string* line) {
 }
 
 }  // namespace shell
-}  // namespace mojo

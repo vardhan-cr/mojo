@@ -17,7 +17,6 @@ class FilePath;
 class TaskRunner;
 }
 
-namespace mojo {
 namespace shell {
 
 // Fetcher abstracts getting an application by either file or http[s] URL.
@@ -47,8 +46,8 @@ class Fetcher {
   // redirects. Otherwise, it returns an empty URL.
   virtual GURL GetRedirectURL() const = 0;
 
-  virtual URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
-                                       uint32_t skip) = 0;
+  virtual mojo::URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
+                                             uint32_t skip) = 0;
 
   virtual void AsPath(
       base::TaskRunner* task_runner,
@@ -71,6 +70,5 @@ class Fetcher {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_FETCHER_H_

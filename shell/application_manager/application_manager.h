@@ -26,7 +26,6 @@ class FilePath;
 class SequencedWorkerPool;
 }
 
-namespace mojo {
 namespace shell {
 
 class Fetcher;
@@ -62,21 +61,22 @@ class ApplicationManager {
   ~ApplicationManager();
 
   // Loads a service if necessary and establishes a new client connection.
-  void ConnectToApplication(const GURL& application_url,
-                            const GURL& requestor_url,
-                            InterfaceRequest<ServiceProvider> services,
-                            ServiceProviderPtr exposed_services,
-                            const base::Closure& on_application_end);
+  void ConnectToApplication(
+      const GURL& application_url,
+      const GURL& requestor_url,
+      mojo::InterfaceRequest<mojo::ServiceProvider> services,
+      mojo::ServiceProviderPtr exposed_services,
+      const base::Closure& on_application_end);
 
   template <typename Interface>
   inline void ConnectToService(const GURL& application_url,
-                               InterfacePtr<Interface>* ptr) {
-    ScopedMessagePipeHandle service_handle =
+                               mojo::InterfacePtr<Interface>* ptr) {
+    mojo::ScopedMessagePipeHandle service_handle =
         ConnectToServiceByName(application_url, Interface::Name_);
     ptr->Bind(service_handle.Pass());
   }
 
-  ScopedMessagePipeHandle ConnectToServiceByName(
+  mojo::ScopedMessagePipeHandle ConnectToServiceByName(
       const GURL& application_url,
       const std::string& interface_name);
 
@@ -138,31 +138,32 @@ class ApplicationManager {
   void ConnectToApplicationWithParameters(
       const GURL& application_url,
       const GURL& requestor_url,
-      InterfaceRequest<ServiceProvider> services,
-      ServiceProviderPtr exposed_services,
+      mojo::InterfaceRequest<mojo::ServiceProvider> services,
+      mojo::ServiceProviderPtr exposed_services,
       const base::Closure& on_application_end,
       const std::vector<std::string>& pre_redirect_parameters);
 
-  bool ConnectToRunningApplication(const GURL& resolved_url,
-                                   const GURL& requestor_url,
-                                   InterfaceRequest<ServiceProvider>* services,
-                                   ServiceProviderPtr* exposed_services);
+  bool ConnectToRunningApplication(
+      const GURL& resolved_url,
+      const GURL& requestor_url,
+      mojo::InterfaceRequest<mojo::ServiceProvider>* services,
+      mojo::ServiceProviderPtr* exposed_services);
 
   bool ConnectToApplicationWithLoader(
       const GURL& resolved_url,
       const GURL& requestor_url,
-      InterfaceRequest<ServiceProvider>* services,
-      ServiceProviderPtr* exposed_services,
+      mojo::InterfaceRequest<mojo::ServiceProvider>* services,
+      mojo::ServiceProviderPtr* exposed_services,
       const base::Closure& on_application_end,
       const std::vector<std::string>& parameters,
       ApplicationLoader* loader);
 
-  InterfaceRequest<Application> RegisterShell(
+  mojo::InterfaceRequest<mojo::Application> RegisterShell(
       // The URL after resolution and redirects, including the querystring.
       const GURL& resolved_url,
       const GURL& requestor_url,
-      InterfaceRequest<ServiceProvider> services,
-      ServiceProviderPtr exposed_services,
+      mojo::InterfaceRequest<mojo::ServiceProvider> services,
+      mojo::ServiceProviderPtr exposed_services,
       const base::Closure& on_application_end,
       const std::vector<std::string>& parameters);
 
@@ -171,33 +172,36 @@ class ApplicationManager {
   void ConnectToClient(ShellImpl* shell_impl,
                        const GURL& resolved_url,
                        const GURL& requestor_url,
-                       InterfaceRequest<ServiceProvider> services,
-                       ServiceProviderPtr exposed_services);
+                       mojo::InterfaceRequest<mojo::ServiceProvider> services,
+                       mojo::ServiceProviderPtr exposed_services);
 
-  void HandleFetchCallback(const GURL& requestor_url,
-                           InterfaceRequest<ServiceProvider> services,
-                           ServiceProviderPtr exposed_services,
-                           const base::Closure& on_application_end,
-                           const std::vector<std::string>& parameters,
-                           NativeApplicationCleanup cleanup,
-                           scoped_ptr<Fetcher> fetcher);
+  void HandleFetchCallback(
+      const GURL& requestor_url,
+      mojo::InterfaceRequest<mojo::ServiceProvider> services,
+      mojo::ServiceProviderPtr exposed_services,
+      const base::Closure& on_application_end,
+      const std::vector<std::string>& parameters,
+      NativeApplicationCleanup cleanup,
+      scoped_ptr<Fetcher> fetcher);
 
-  void RunNativeApplication(InterfaceRequest<Application> application_request,
-                            const NativeRunnerFactory::Options& options,
-                            NativeApplicationCleanup cleanup,
-                            scoped_ptr<Fetcher> fetcher,
-                            const base::FilePath& file_path,
-                            bool path_exists);
+  void RunNativeApplication(
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      const NativeRunnerFactory::Options& options,
+      NativeApplicationCleanup cleanup,
+      scoped_ptr<Fetcher> fetcher,
+      const base::FilePath& file_path,
+      bool path_exists);
 
-  void LoadWithContentHandler(const GURL& content_handler_url,
-                              InterfaceRequest<Application> application_request,
-                              URLResponsePtr url_response);
+  void LoadWithContentHandler(
+      const GURL& content_handler_url,
+      mojo::InterfaceRequest<mojo::Application> application_request,
+      mojo::URLResponsePtr url_response);
 
   // Returns the appropriate loader for |url|, or null if there is no loader
   // configured for the URL.
   ApplicationLoader* GetLoaderForURL(const GURL& url);
 
-  // Removes a ContentHandler when it encounters an error.
+  // Removes a mojo::ContentHandler when it encounters an error.
   void OnContentHandlerError(ContentHandlerConnection* content_handler);
 
   // Returns the arguments for the given url.
@@ -220,7 +224,7 @@ class ApplicationManager {
   URLToNativeOptionsMap url_to_native_options_;
 
   base::SequencedWorkerPool* blocking_pool_;
-  NetworkServicePtr network_service_;
+  mojo::NetworkServicePtr network_service_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
   bool disable_cache_;
@@ -230,6 +234,5 @@ class ApplicationManager {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_APPLICATION_MANAGER_H_

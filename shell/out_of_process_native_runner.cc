@@ -12,7 +12,6 @@
 #include "shell/child_process_host.h"
 #include "shell/in_process_native_runner.h"
 
-namespace mojo {
 namespace shell {
 
 OutOfProcessNativeRunner::OutOfProcessNativeRunner(Context* context)
@@ -31,7 +30,7 @@ OutOfProcessNativeRunner::~OutOfProcessNativeRunner() {
 void OutOfProcessNativeRunner::Start(
     const base::FilePath& app_path,
     NativeApplicationCleanup cleanup,
-    InterfaceRequest<Application> application_request,
+    mojo::InterfaceRequest<mojo::Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
 
@@ -71,4 +70,3 @@ scoped_ptr<NativeRunner> OutOfProcessNativeRunnerFactory::Create(
 }
 
 }  // namespace shell
-}  // namespace mojo

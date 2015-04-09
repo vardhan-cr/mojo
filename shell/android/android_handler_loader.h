@@ -12,7 +12,6 @@
 #include "shell/android/android_handler.h"
 #include "shell/application_manager/application_loader.h"
 
-namespace mojo {
 namespace shell {
 
 class AndroidHandlerLoader : public ApplicationLoader {
@@ -22,16 +21,16 @@ class AndroidHandlerLoader : public ApplicationLoader {
 
  private:
   // ApplicationLoader overrides:
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override;
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override;
 
   AndroidHandler android_handler_;
-  scoped_ptr<ApplicationImpl> application_;
+  scoped_ptr<mojo::ApplicationImpl> application_;
 
   DISALLOW_COPY_AND_ASSIGN(AndroidHandlerLoader);
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_ANDROID_HANDLER_LOADER_H_

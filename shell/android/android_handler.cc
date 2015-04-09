@@ -22,7 +22,6 @@ using base::android::ConvertJavaStringToUTF8;
 using base::android::ConvertUTF8ToJavaString;
 using base::android::GetApplicationContext;
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -35,8 +34,9 @@ void RunAndroidApplication(JNIEnv* env,
                            jobject j_context,
                            const base::FilePath& app_path,
                            jint j_handle) {
-  InterfaceRequest<Application> application_request =
-      MakeRequest<Application>(MakeScopedHandle(MessagePipeHandle(j_handle)));
+  mojo::InterfaceRequest<mojo::Application> application_request =
+      mojo::MakeRequest<mojo::Application>(
+          mojo::MakeScopedHandle(mojo::MessagePipeHandle(j_handle)));
 
   // Load the library, so that we can set the application context there if
   // needed.
@@ -78,15 +78,15 @@ AndroidHandler::~AndroidHandler() {
 }
 
 void AndroidHandler::RunApplication(
-    InterfaceRequest<Application> application_request,
-    URLResponsePtr response) {
+    mojo::InterfaceRequest<mojo::Application> application_request,
+    mojo::URLResponsePtr response) {
   JNIEnv* env = AttachCurrentThread();
   ScopedJavaLocalRef<jstring> j_archive_path =
       Java_AndroidHandler_getNewTempArchivePath(env, GetApplicationContext());
   base::FilePath archive_path(
       ConvertJavaStringToUTF8(env, j_archive_path.obj()));
 
-  common::BlockingCopyToFile(response->body.Pass(), archive_path);
+  mojo::common::BlockingCopyToFile(response->body.Pass(), archive_path);
   RunAndroidApplicationFn run_android_application_fn = &RunAndroidApplication;
   Java_AndroidHandler_bootstrap(
       env, GetApplicationContext(), j_archive_path.obj(),
@@ -94,11 +94,11 @@ void AndroidHandler::RunApplication(
       reinterpret_cast<jlong>(run_android_application_fn));
 }
 
-void AndroidHandler::Initialize(ApplicationImpl* app) {
+void AndroidHandler::Initialize(mojo::ApplicationImpl* app) {
 }
 
 bool AndroidHandler::ConfigureIncomingConnection(
-    ApplicationConnection* connection) {
+    mojo::ApplicationConnection* connection) {
   connection->AddService(&content_handler_factory_);
   connection->AddService(&intent_receiver_manager_factory_);
   return true;
@@ -109,4 +109,3 @@ bool RegisterAndroidHandlerJni(JNIEnv* env) {
 }
 
 }  // namespace shell
-}  // namespace mojo

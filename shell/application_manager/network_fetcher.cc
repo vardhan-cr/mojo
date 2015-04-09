@@ -24,12 +24,11 @@
 #include "shell/application_manager/data_pipe_peek.h"
 #include "shell/switches.h"
 
-namespace mojo {
 namespace shell {
 
 NetworkFetcher::NetworkFetcher(bool disable_cache,
                                const GURL& url,
-                               NetworkService* network_service,
+                               mojo::NetworkService* network_service,
                                const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(false),
@@ -55,8 +54,9 @@ GURL NetworkFetcher::GetRedirectURL() const {
   return GURL(response_->redirect_url);
 }
 
-URLResponsePtr NetworkFetcher::AsURLResponse(base::TaskRunner* task_runner,
-                                             uint32_t skip) {
+mojo::URLResponsePtr NetworkFetcher::AsURLResponse(
+    base::TaskRunner* task_runner,
+    uint32_t skip) {
   if (skip != 0) {
     MojoResult result = ReadDataRaw(
         response_->body.get(), nullptr, &skip,
@@ -183,9 +183,10 @@ void NetworkFetcher::AsPath(
   }
 
   base::CreateTemporaryFile(&path_);
-  common::CopyToFile(response_->body.Pass(), path_, task_runner,
-                     base::Bind(&NetworkFetcher::CopyCompleted,
-                                weak_ptr_factory_.GetWeakPtr(), callback));
+  mojo::common::CopyToFile(
+      response_->body.Pass(), path_, task_runner,
+      base::Bind(&NetworkFetcher::CopyCompleted, weak_ptr_factory_.GetWeakPtr(),
+                 callback));
 }
 
 std::string NetworkFetcher::MimeType() {
@@ -204,22 +205,23 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
                           kPeekTimeout);
 }
 
-void NetworkFetcher::StartNetworkRequest(const GURL& url,
-                                         NetworkService* network_service) {
+void NetworkFetcher::StartNetworkRequest(
+    const GURL& url,
+    mojo::NetworkService* network_service) {
   TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
                            "url", url.spec());
-  URLRequestPtr request(URLRequest::New());
-  request->url = String::From(url);
+  mojo::URLRequestPtr request(mojo::URLRequest::New());
+  request->url = mojo::String::From(url);
   request->auto_follow_redirects = false;
   request->bypass_cache = disable_cache_;
 
-  network_service->CreateURLLoader(GetProxy(&url_loader_));
+  network_service->CreateURLLoader(mojo::GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
                      base::Bind(&NetworkFetcher::OnLoadComplete,
                                 weak_ptr_factory_.GetWeakPtr()));
 }
 
-void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
+void NetworkFetcher::OnLoadComplete(mojo::URLResponsePtr response) {
   TRACE_EVENT_ASYNC_END0("mojo_shell", "NetworkFetcher::NetworkRequest", this);
   if (response->error) {
     LOG(ERROR) << "Error (" << response->error->code << ": "
@@ -242,4 +244,3 @@ void NetworkFetcher::OnLoadComplete(URLResponsePtr response) {
 }
 
 }  // namespace shell
-}  // namespace mojo

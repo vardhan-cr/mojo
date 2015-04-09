@@ -8,7 +8,6 @@
 #include "shell/filename_util.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -34,7 +33,7 @@ class TestNativeRunner : public NativeRunner {
   }
   void Start(const base::FilePath& app_path,
              NativeApplicationCleanup cleanup,
-             InterfaceRequest<Application> application_request,
+             mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;
   }
@@ -88,8 +87,8 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
   base::FilePath nonexistent_file(FILE_PATH_LITERAL("nonexistent.txt"));
   GURL url(FilePathToFileURL(temp_dir.path().Append(nonexistent_file)));
-  InterfaceRequest<ServiceProvider> services;
-  ServiceProviderPtr service_provider;
+  mojo::InterfaceRequest<mojo::ServiceProvider> services;
+  mojo::ServiceProviderPtr service_provider;
   application_manager_.ConnectToApplication(
       url, GURL(), services.Pass(), service_provider.Pass(), base::Closure());
   EXPECT_FALSE(state_.runner_was_created);
@@ -99,4 +98,3 @@ TEST_F(NativeApplicationLoaderTest, DoesNotExist) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

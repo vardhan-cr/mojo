@@ -13,7 +13,6 @@
 
 class GURL;
 
-namespace mojo {
 namespace shell {
 
 // ShellTestHelper is useful for tests to establish a connection to the
@@ -47,6 +46,5 @@ class ShellTestHelper {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_SHELL_TEST_HELPER_H_

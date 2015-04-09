@@ -14,7 +14,6 @@
 #include "shell/filename_util.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 namespace test {
 
@@ -44,14 +43,14 @@ void ShellTestBase::TearDown() {
   shell_context_.Shutdown();
 }
 
-ScopedMessagePipeHandle ShellTestBase::ConnectToService(
+mojo::ScopedMessagePipeHandle ShellTestBase::ConnectToService(
     const GURL& application_url,
     const std::string& service_name) {
-  ServiceProviderPtr services;
+  mojo::ServiceProviderPtr services;
   shell_context_.application_manager()->ConnectToApplication(
-      application_url, GURL(), GetProxy(&services), nullptr,
+      application_url, GURL(), mojo::GetProxy(&services), nullptr,
       base::Bind(&QuitIfRunning));
-  MessagePipe pipe;
+  mojo::MessagePipe pipe;
   services->ConnectToService(service_name, pipe.handle1.Pass());
   return pipe.handle0.Pass();
 }
@@ -70,4 +69,3 @@ void ShellTestBase::SetUpTestApplications() {
 
 }  // namespace test
 }  // namespace shell
-}  // namespace mojo

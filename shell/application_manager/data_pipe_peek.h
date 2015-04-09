@@ -9,7 +9,6 @@
 
 #include "mojo/public/cpp/system/core.h"
 
-namespace mojo {
 namespace shell {
 
 // The Peek functions are only intended to be used by the
@@ -20,19 +19,18 @@ namespace shell {
 // Return true and the first newline terminated line from source. Return false
 // if more than max_line_length bytes are scanned without seeing a newline, or
 // if the timeout is exceeded.
-bool BlockingPeekLine(DataPipeConsumerHandle source,
+bool BlockingPeekLine(mojo::DataPipeConsumerHandle source,
                       std::string* line,
                       size_t max_line_length,
                       MojoDeadline timeout);
 
 // Return true and the first bytes_length bytes from source. Return false
 // if the timeout is exceeded.
-bool BlockingPeekNBytes(DataPipeConsumerHandle source,
+bool BlockingPeekNBytes(mojo::DataPipeConsumerHandle source,
                         std::string* bytes,
                         size_t bytes_length,
                         MojoDeadline timeout);
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_DATA_PIPE_SEEK_H_

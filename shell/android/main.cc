@@ -33,7 +33,6 @@
 
 using base::LazyInstance;
 
-namespace mojo {
 namespace shell {
 
 namespace {
@@ -108,7 +107,7 @@ void QuitShellThread() {
 }
 
 void MojoShellRunner::Run() {
-  base::MessageLoop loop(common::MessagePumpMojo::Create());
+  base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
   context->InitWithPaths(mojo_shell_path_, mojo_shell_child_path_);
@@ -225,7 +224,6 @@ bool RegisterShellMain(JNIEnv* env) {
 }
 
 }  // namespace shell
-}  // namespace mojo
 
 // TODO(vtl): We need a main(), even though it should never be called.
 int main(int argc, char** argv) {

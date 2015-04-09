@@ -22,7 +22,7 @@ import java.util.UUID;
  * implementation of the IntentReceiverManager service is in C++, but calls back to this class to
  * access the android framework.
  */
-@JNINamespace("mojo::shell")
+@JNINamespace("shell")
 public class IntentReceiverRegistry {
     private static class LazyHolder {
         private static final IntentReceiverRegistry INSTANCE = new IntentReceiverRegistry();

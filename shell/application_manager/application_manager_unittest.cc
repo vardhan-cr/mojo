@@ -18,7 +18,6 @@
 #include "shell/application_manager/test.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -38,12 +37,12 @@ void QuitClosure(bool* value) {
   base::MessageLoop::current()->QuitWhenIdle();
 }
 
-class QuitMessageLoopErrorHandler : public ErrorHandler {
+class QuitMessageLoopErrorHandler : public mojo::ErrorHandler {
  public:
   QuitMessageLoopErrorHandler() {}
   ~QuitMessageLoopErrorHandler() override {}
 
-  // |ErrorHandler| implementation:
+  // |mojo::ErrorHandler| implementation:
   void OnConnectionError() override {
     base::MessageLoop::current()->QuitWhenIdle();
   }
@@ -54,7 +53,8 @@ class QuitMessageLoopErrorHandler : public ErrorHandler {
 
 class TestServiceImpl : public TestService {
  public:
-  TestServiceImpl(TestContext* context, InterfaceRequest<TestService> request)
+  TestServiceImpl(TestContext* context,
+                  mojo::InterfaceRequest<TestService> request)
       : context_(context), binding_(this, request.Pass()) {
     ++context_->num_impls;
   }
@@ -67,15 +67,15 @@ class TestServiceImpl : public TestService {
   }
 
   // TestService implementation:
-  void Test(const String& test_string,
-            const Callback<void()>& callback) override {
+  void Test(const mojo::String& test_string,
+            const mojo::Callback<void()>& callback) override {
     context_->last_test_string = test_string;
     callback.Run();
   }
 
  private:
   TestContext* context_;
-  StrongBinding<TestService> binding_;
+  mojo::StrongBinding<TestService> binding_;
 };
 
 class TestClient {
@@ -101,8 +101,8 @@ class TestClient {
 };
 
 class TestApplicationLoader : public ApplicationLoader,
-                              public ApplicationDelegate,
-                              public InterfaceFactory<TestService> {
+                              public mojo::ApplicationDelegate,
+                              public mojo::InterfaceFactory<TestService> {
  public:
   TestApplicationLoader() : context_(nullptr), num_loads_(0) {}
 
@@ -118,25 +118,28 @@ class TestApplicationLoader : public ApplicationLoader,
 
  private:
   // ApplicationLoader implementation.
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override {
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override {
     ++num_loads_;
-    test_app_.reset(new ApplicationImpl(this, application_request.Pass()));
+    test_app_.reset(
+        new mojo::ApplicationImpl(this, application_request.Pass()));
   }
 
-  // ApplicationDelegate implementation.
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  // mojo::ApplicationDelegate implementation.
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     connection->AddService(this);
     return true;
   }
 
-  // InterfaceFactory implementation.
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<TestService> request) override {
+  // mojo::InterfaceFactory implementation.
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<TestService> request) override {
     new TestServiceImpl(context_, request.Pass());
   }
 
-  scoped_ptr<ApplicationImpl> test_app_;
+  scoped_ptr<mojo::ApplicationImpl> test_app_;
   TestContext* context_;
   int num_loads_;
   DISALLOW_COPY_AND_ASSIGN(TestApplicationLoader);
@@ -145,8 +148,9 @@ class TestApplicationLoader : public ApplicationLoader,
 class ClosingApplicationLoader : public ApplicationLoader {
  private:
   // ApplicationLoader implementation.
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override {}
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override {}
 };
 
 class TesterContext {
@@ -247,9 +251,9 @@ class TesterContext {
 // Used to test that the requestor url will be correctly passed.
 class TestAImpl : public TestA {
  public:
-  TestAImpl(ApplicationImpl* app_impl,
+  TestAImpl(mojo::ApplicationImpl* app_impl,
             TesterContext* test_context,
-            InterfaceRequest<TestA> request)
+            mojo::InterfaceRequest<TestA> request)
       : test_context_(test_context), binding_(this, request.Pass()) {
     app_impl->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
   }
@@ -277,14 +281,14 @@ class TestAImpl : public TestA {
 
   TesterContext* test_context_;
   TestBPtr b_;
-  StrongBinding<TestA> binding_;
+  mojo::StrongBinding<TestA> binding_;
 };
 
 class TestBImpl : public TestB {
  public:
-  TestBImpl(ApplicationConnection* connection,
+  TestBImpl(mojo::ApplicationConnection* connection,
             TesterContext* test_context,
-            InterfaceRequest<TestB> request)
+            mojo::InterfaceRequest<TestB> request)
       : test_context_(test_context), binding_(this, request.Pass()) {
     connection->ConnectToService(&c_);
   }
@@ -297,57 +301,59 @@ class TestBImpl : public TestB {
   }
 
  private:
-  void B(const Callback<void()>& callback) override {
+  void B(const mojo::Callback<void()>& callback) override {
     test_context_->IncrementNumBCalls();
     callback.Run();
   }
 
-  void CallC(const Callback<void()>& callback) override {
+  void CallC(const mojo::Callback<void()>& callback) override {
     test_context_->IncrementNumBCalls();
     c_->C(callback);
   }
 
   TesterContext* test_context_;
   TestCPtr c_;
-  StrongBinding<TestB> binding_;
+  mojo::StrongBinding<TestB> binding_;
 };
 
 class TestCImpl : public TestC {
  public:
-  TestCImpl(ApplicationConnection* connection,
+  TestCImpl(mojo::ApplicationConnection* connection,
             TesterContext* test_context,
-            InterfaceRequest<TestC> request)
+            mojo::InterfaceRequest<TestC> request)
       : test_context_(test_context), binding_(this, request.Pass()) {}
 
   ~TestCImpl() override { test_context_->IncrementNumCDeletes(); }
 
  private:
-  void C(const Callback<void()>& callback) override {
+  void C(const mojo::Callback<void()>& callback) override {
     test_context_->IncrementNumCCalls();
     callback.Run();
   }
 
   TesterContext* test_context_;
-  StrongBinding<TestC> binding_;
+  mojo::StrongBinding<TestC> binding_;
 };
 
-class Tester : public ApplicationDelegate,
+class Tester : public mojo::ApplicationDelegate,
                public ApplicationLoader,
-               public InterfaceFactory<TestA>,
-               public InterfaceFactory<TestB>,
-               public InterfaceFactory<TestC> {
+               public mojo::InterfaceFactory<TestA>,
+               public mojo::InterfaceFactory<TestB>,
+               public mojo::InterfaceFactory<TestC> {
  public:
   Tester(TesterContext* context, const std::string& requestor_url)
       : context_(context), requestor_url_(requestor_url) {}
   ~Tester() override {}
 
  private:
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override {
-    app_.reset(new ApplicationImpl(this, application_request.Pass()));
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override {
+    app_.reset(new mojo::ApplicationImpl(this, application_request.Pass()));
   }
 
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     if (!requestor_url_.empty() &&
         requestor_url_ != connection->GetRemoteApplicationURL()) {
       context_->set_tester_called_quit();
@@ -363,30 +369,31 @@ class Tester : public ApplicationDelegate,
     return true;
   }
 
-  bool ConfigureOutgoingConnection(ApplicationConnection* connection) override {
+  bool ConfigureOutgoingConnection(
+      mojo::ApplicationConnection* connection) override {
     // If we're connecting to B, then add C.
     if (connection->GetRemoteApplicationURL() == kTestBURLString)
       connection->AddService<TestC>(this);
     return true;
   }
 
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<TestA> request) override {
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<TestA> request) override {
     a_bindings_.push_back(new TestAImpl(app_.get(), context_, request.Pass()));
   }
 
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<TestB> request) override {
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<TestB> request) override {
     new TestBImpl(connection, context_, request.Pass());
   }
 
-  void Create(ApplicationConnection* connection,
-              InterfaceRequest<TestC> request) override {
+  void Create(mojo::ApplicationConnection* connection,
+              mojo::InterfaceRequest<TestC> request) override {
     new TestCImpl(connection, context_, request.Pass());
   }
 
   TesterContext* context_;
-  scoped_ptr<ApplicationImpl> app_;
+  scoped_ptr<mojo::ApplicationImpl> app_;
   std::string requestor_url_;
   ScopedVector<TestAImpl> a_bindings_;
 };
@@ -419,16 +426,17 @@ class TestDelegate : public ApplicationManager::Delegate {
   std::map<GURL, GURL> mappings_;
 };
 
-class TestExternal : public ApplicationDelegate {
+class TestExternal : public mojo::ApplicationDelegate {
  public:
   TestExternal() : configure_incoming_connection_called_(false) {}
 
-  void Initialize(ApplicationImpl* app) override {
+  void Initialize(mojo::ApplicationImpl* app) override {
     initialize_args_ = app->args();
     base::MessageLoop::current()->Quit();
   }
 
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
     configure_incoming_connection_called_ = true;
     base::MessageLoop::current()->Quit();
     return true;
@@ -810,4 +818,3 @@ TEST_F(ApplicationManagerTest, TestEndApplicationClosure) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

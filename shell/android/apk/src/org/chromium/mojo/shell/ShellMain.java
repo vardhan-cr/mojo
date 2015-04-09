@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * A placeholder class to call native functions.
  **/
-@JNINamespace("mojo::shell")
+@JNINamespace("shell")
 public class ShellMain {
     private static final String TAG = "ShellMain";
 

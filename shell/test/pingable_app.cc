@@ -12,11 +12,9 @@
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "shell/test/pingable.mojom.h"
 
-namespace mojo {
-
 class PingableImpl : public Pingable {
  public:
-  PingableImpl(InterfaceRequest<Pingable> request,
+  PingableImpl(mojo::InterfaceRequest<Pingable> request,
                const std::string& app_url,
                const std::string& connection_url)
       : binding_(this, request.Pass()),
@@ -26,12 +24,14 @@ class PingableImpl : public Pingable {
   ~PingableImpl() override {}
 
  private:
-  void Ping(const String& message,
-            const Callback<void(String, String, String)>& callback) override {
+  void Ping(
+      const mojo::String& message,
+      const mojo::Callback<void(mojo::String, mojo::String, mojo::String)>&
+          callback) override {
     callback.Run(app_url_, connection_url_, message);
   }
 
-  StrongBinding<Pingable> binding_;
+  mojo::StrongBinding<Pingable> binding_;
   std::string app_url_;
   std::string connection_url_;
 };
@@ -44,7 +44,9 @@ class PingableApp : public mojo::ApplicationDelegate,
 
  private:
   // ApplicationDelegate:
-  void Initialize(ApplicationImpl* impl) override { app_url_ = impl->url(); }
+  void Initialize(mojo::ApplicationImpl* impl) override {
+    app_url_ = impl->url();
+  }
 
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
@@ -61,9 +63,7 @@ class PingableApp : public mojo::ApplicationDelegate,
   std::string app_url_;
 };
 
-}  // namespace mojo
-
 MojoResult MojoMain(MojoHandle application_request) {
-  mojo::ApplicationRunner runner(new mojo::PingableApp);
+  mojo::ApplicationRunner runner(new PingableApp);
   return runner.Run(application_request);
 }

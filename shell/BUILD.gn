@@ -438,7 +438,7 @@ source_set("test_support") {
 
 embed_file("embed_pingable") {
   source = "$root_build_dir/pingable_app.mojo"
-  namespace = "mojo"
+  namespace = "shell::test"
   variable = "kPingable"
   testonly = true
 

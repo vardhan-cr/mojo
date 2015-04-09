@@ -12,7 +12,6 @@
 #include "base/threading/simple_thread.h"
 #include "shell/application_manager/application_loader.h"
 
-namespace mojo {
 namespace shell {
 
 class BackgroundApplicationLoader
@@ -25,8 +24,9 @@ class BackgroundApplicationLoader
   ~BackgroundApplicationLoader() override;
 
   // ApplicationLoader overrides:
-  void Load(const GURL& url,
-            InterfaceRequest<Application> application_request) override;
+  void Load(
+      const GURL& url,
+      mojo::InterfaceRequest<mojo::Application> application_request) override;
 
  private:
   // |base::DelegateSimpleThread::Delegate| method:
@@ -36,7 +36,7 @@ class BackgroundApplicationLoader
   // to |background_loader_| to do the actual loading.
   void LoadOnBackgroundThread(
       const GURL& url,
-      InterfaceRequest<Application> application_request);
+      mojo::InterfaceRequest<mojo::Application> application_request);
   bool quit_on_shutdown_;
   scoped_ptr<ApplicationLoader> loader_;
 
@@ -59,6 +59,5 @@ class BackgroundApplicationLoader
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_

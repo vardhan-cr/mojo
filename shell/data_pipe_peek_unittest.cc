@@ -7,16 +7,15 @@
 #include "shell/context.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
 TEST(DataPipePeek, PeekNBytes) {
   Context::EnsureEmbedderIsInitialized();
 
-  DataPipe data_pipe;
-  DataPipeConsumerHandle consumer(data_pipe.consumer_handle.get());
-  DataPipeProducerHandle producer(data_pipe.producer_handle.get());
+  mojo::DataPipe data_pipe;
+  mojo::DataPipeConsumerHandle consumer(data_pipe.consumer_handle.get());
+  mojo::DataPipeProducerHandle producer(data_pipe.producer_handle.get());
 
   // Inialize the pipe with 4 bytes.
 
@@ -71,9 +70,9 @@ TEST(DataPipePeek, PeekNBytes) {
 TEST(DataPipePeek, PeekLine) {
   Context::EnsureEmbedderIsInitialized();
 
-  DataPipe data_pipe;
-  DataPipeConsumerHandle consumer(data_pipe.consumer_handle.get());
-  DataPipeProducerHandle producer(data_pipe.producer_handle.get());
+  mojo::DataPipe data_pipe;
+  mojo::DataPipeConsumerHandle consumer(data_pipe.consumer_handle.get());
+  mojo::DataPipeProducerHandle producer(data_pipe.producer_handle.get());
 
   // Inialize the pipe with 4 bytes and no newline.
 
@@ -110,4 +109,3 @@ TEST(DataPipePeek, PeekLine) {
 
 }  // namespace
 }  // namespace shell
-}  // namespace mojo

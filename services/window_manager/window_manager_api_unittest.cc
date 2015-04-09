@@ -67,7 +67,7 @@ class TestWindowManagerObserver : public mojo::WindowManagerObserver {
   DISALLOW_COPY_AND_ASSIGN(TestWindowManagerObserver);
 };
 
-class TestApplicationLoader : public mojo::shell::ApplicationLoader,
+class TestApplicationLoader : public shell::ApplicationLoader,
                               public mojo::ApplicationDelegate,
                               public mojo::ViewManagerDelegate {
  public:
@@ -78,7 +78,7 @@ class TestApplicationLoader : public mojo::shell::ApplicationLoader,
   ~TestApplicationLoader() override {}
 
  private:
-  // Overridden from mojo::shell::ApplicationLoader:
+  // Overridden from shell::ApplicationLoader:
   void Load(
       const GURL& url,
       mojo::InterfaceRequest<mojo::Application> application_request) override {
@@ -173,12 +173,12 @@ class WindowManagerApiTest : public testing::Test {
  private:
   // Overridden from testing::Test:
   void SetUp() override {
-    test_helper_.reset(new mojo::shell::ShellTestHelper);
+    test_helper_.reset(new shell::ShellTestHelper);
     test_helper_->Init();
     test_helper_->AddURLMapping(GURL("mojo:window_manager"),
                                 GURL("mojo:core_window_manager"));
     test_helper_->SetLoaderForURL(
-        scoped_ptr<mojo::shell::ApplicationLoader>(
+        scoped_ptr<shell::ApplicationLoader>(
             new TestApplicationLoader(base::Bind(
                 &WindowManagerApiTest::OnRootAdded, base::Unretained(this)))),
         GURL(kTestServiceURL));
@@ -234,7 +234,7 @@ class WindowManagerApiTest : public testing::Test {
     run_loop->Quit();
   }
 
-  scoped_ptr<mojo::shell::ShellTestHelper> test_helper_;
+  scoped_ptr<shell::ShellTestHelper> test_helper_;
   scoped_ptr<TestWindowManagerObserver> window_manager_observer_;
   TestApplicationLoader::RootAddedCallback root_added_callback_;
 

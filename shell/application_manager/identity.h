@@ -7,7 +7,6 @@
 
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 
 /**
@@ -26,6 +25,5 @@ struct Identity {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_APPLICATION_MANAGER_IDENTITY_H_

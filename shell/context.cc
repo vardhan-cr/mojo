@@ -38,7 +38,6 @@
 #include "shell/switches.h"
 #include "url/gurl.h"
 
-namespace mojo {
 namespace shell {
 namespace {
 
@@ -46,7 +45,8 @@ namespace {
 class Setup {
  public:
   Setup() {
-    embedder::Init(make_scoped_ptr(new embedder::SimplePlatformSupport()));
+    mojo::embedder::Init(
+        make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
   }
 
   ~Setup() {}
@@ -171,22 +171,23 @@ void InitNativeOptions(ApplicationManager* manager,
   }
 }
 
-class TracingServiceProvider : public ServiceProvider {
+class TracingServiceProvider : public mojo::ServiceProvider {
  public:
-  explicit TracingServiceProvider(InterfaceRequest<ServiceProvider> request)
+  explicit TracingServiceProvider(
+      mojo::InterfaceRequest<mojo::ServiceProvider> request)
       : binding_(this, request.Pass()) {}
   ~TracingServiceProvider() override {}
 
-  void ConnectToService(const String& service_name,
-                        ScopedMessagePipeHandle client_handle) override {
+  void ConnectToService(const mojo::String& service_name,
+                        mojo::ScopedMessagePipeHandle client_handle) override {
     if (service_name == tracing::TraceController::Name_) {
-      new TraceControllerImpl(
-          MakeRequest<tracing::TraceController>(client_handle.Pass()));
+      new mojo::TraceControllerImpl(
+          mojo::MakeRequest<tracing::TraceController>(client_handle.Pass()));
     }
   }
 
  private:
-  StrongBinding<ServiceProvider> binding_;
+  mojo::StrongBinding<mojo::ServiceProvider> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(TracingServiceProvider);
 };
@@ -266,9 +267,9 @@ bool Context::InitWithPaths(const base::FilePath& shell_path,
     return false;
 
   // TODO(vtl): This should be MASTER, not NONE.
-  embedder::InitIPCSupport(
-      embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
-      task_runners_->io_runner(), embedder::ScopedPlatformHandle());
+  mojo::embedder::InitIPCSupport(
+      mojo::embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
+      task_runners_->io_runner(), mojo::embedder::ScopedPlatformHandle());
 
   scoped_ptr<NativeRunnerFactory> runner_factory;
   if (command_line.HasSwitch(switches::kEnableMultiprocess))
@@ -284,8 +285,8 @@ bool Context::InitWithPaths(const base::FilePath& shell_path,
   InitContentHandlers(&application_manager_, command_line);
   InitNativeOptions(&application_manager_, command_line);
 
-  ServiceProviderPtr tracing_service_provider_ptr;
-  new TracingServiceProvider(GetProxy(&tracing_service_provider_ptr));
+  mojo::ServiceProviderPtr tracing_service_provider_ptr;
+  new TracingServiceProvider(mojo::GetProxy(&tracing_service_provider_ptr));
   application_manager_.ConnectToApplication(
       GURL("mojo:tracing"), GURL(""), nullptr,
       tracing_service_provider_ptr.Pass(), base::Closure());
@@ -297,7 +298,7 @@ void Context::Shutdown() {
   TRACE_EVENT0("mojo_shell", "Context::Shutdown");
   DCHECK_EQ(base::MessageLoop::current()->task_runner(),
             task_runners_->shell_runner());
-  embedder::ShutdownIPCSupport();
+  mojo::embedder::ShutdownIPCSupport();
   // We'll quit when we get OnShutdownComplete().
   base::MessageLoop::current()->Run();
 }
@@ -317,12 +318,12 @@ void Context::OnShutdownComplete() {
 }
 
 void Context::Run(const GURL& url) {
-  ServiceProviderPtr services;
-  ServiceProviderPtr exposed_services;
+  mojo::ServiceProviderPtr services;
+  mojo::ServiceProviderPtr exposed_services;
 
   app_urls_.insert(url);
   application_manager_.ConnectToApplication(
-      url, GURL(), GetProxy(&services), exposed_services.Pass(),
+      url, GURL(), mojo::GetProxy(&services), exposed_services.Pass(),
       base::Bind(&Context::OnApplicationEnd, base::Unretained(this), url));
 }
 
@@ -338,4 +339,3 @@ void Context::OnApplicationEnd(const GURL& url) {
 }
 
 }  // namespace shell
-}  // namespace mojo

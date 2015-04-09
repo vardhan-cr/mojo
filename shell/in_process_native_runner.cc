@@ -11,7 +11,6 @@
 #include "base/threading/platform_thread.h"
 #include "shell/native_application_support.h"
 
-namespace mojo {
 namespace shell {
 
 InProcessNativeRunner::InProcessNativeRunner(Context* context)
@@ -32,7 +31,7 @@ InProcessNativeRunner::~InProcessNativeRunner() {
 void InProcessNativeRunner::Start(
     const base::FilePath& app_path,
     NativeApplicationCleanup cleanup,
-    InterfaceRequest<Application> application_request,
+    mojo::InterfaceRequest<mojo::Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
   cleanup_ = cleanup;
@@ -70,4 +69,3 @@ scoped_ptr<NativeRunner> InProcessNativeRunnerFactory::Create(
 }
 
 }  // namespace shell
-}  // namespace mojo

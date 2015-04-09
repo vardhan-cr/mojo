@@ -15,7 +15,7 @@ import org.chromium.base.JNINamespace;
 /**
  * Interaction with the keyboard.
  */
-@JNINamespace("mojo::shell")
+@JNINamespace("shell")
 public class Keyboard {
     @CalledByNative
     private static void showSoftKeyboard(Activity activity) {

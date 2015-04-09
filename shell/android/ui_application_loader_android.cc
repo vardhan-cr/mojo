@@ -8,7 +8,6 @@
 #include "base/message_loop/message_loop.h"
 #include "shell/application_manager/application_manager.h"
 
-namespace mojo {
 namespace shell {
 
 UIApplicationLoader::UIApplicationLoader(
@@ -25,7 +24,7 @@ UIApplicationLoader::~UIApplicationLoader() {
 
 void UIApplicationLoader::Load(
     const GURL& url,
-    InterfaceRequest<Application> application_request) {
+    mojo::InterfaceRequest<mojo::Application> application_request) {
   DCHECK(application_request.is_pending());
   ui_message_loop_->PostTask(
       FROM_HERE,
@@ -35,7 +34,7 @@ void UIApplicationLoader::Load(
 
 void UIApplicationLoader::LoadOnUIThread(
     const GURL& url,
-    InterfaceRequest<Application> application_request) {
+    mojo::InterfaceRequest<mojo::Application> application_request) {
   loader_->Load(url, application_request.Pass());
 }
 
@@ -45,4 +44,3 @@ void UIApplicationLoader::ShutdownOnUIThread() {
 }
 
 }  // namespace shell
-}  // namespace mojo

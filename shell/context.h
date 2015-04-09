@@ -13,14 +13,13 @@
 #include "shell/task_runners.h"
 #include "shell/url_resolver.h"
 
-namespace mojo {
 namespace shell {
 
 class NativeApplicationLoader;
 
 // The "global" context for the shell's main process.
 class Context : public ApplicationManager::Delegate,
-                public embedder::ProcessDelegate {
+                public mojo::embedder::ProcessDelegate {
  public:
   Context();
   ~Context() override;
@@ -99,6 +98,5 @@ class Context : public ApplicationManager::Delegate,
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_CONTEXT_H_

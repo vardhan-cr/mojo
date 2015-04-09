@@ -8,7 +8,6 @@
 #include "base/run_loop.h"
 #include "shell/application_manager/application_manager.h"
 
-namespace mojo {
 namespace shell {
 
 BackgroundApplicationLoader::BackgroundApplicationLoader(
@@ -28,7 +27,7 @@ BackgroundApplicationLoader::~BackgroundApplicationLoader() {
 
 void BackgroundApplicationLoader::Load(
     const GURL& url,
-    InterfaceRequest<Application> application_request) {
+    mojo::InterfaceRequest<mojo::Application> application_request) {
   DCHECK(application_request.is_pending());
   if (!thread_) {
     // TODO(tim): It'd be nice if we could just have each Load call
@@ -64,10 +63,9 @@ void BackgroundApplicationLoader::Run() {
 
 void BackgroundApplicationLoader::LoadOnBackgroundThread(
     const GURL& url,
-    InterfaceRequest<Application> application_request) {
+    mojo::InterfaceRequest<mojo::Application> application_request) {
   DCHECK(task_runner_->RunsTasksOnCurrentThread());
   loader_->Load(url, application_request.Pass());
 }
 
 }  // namespace shell
-}  // namespace mojo

@@ -15,7 +15,6 @@
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/child_controller.mojom.h"
 
-namespace mojo {
 namespace shell {
 
 class Context;
@@ -26,7 +25,7 @@ class Context;
 //
 // This class is not thread-safe. It should be created/used/destroyed on a
 // single thread.
-class ChildProcessHost : public ErrorHandler {
+class ChildProcessHost : public mojo::ErrorHandler {
  public:
   explicit ChildProcessHost(Context* context);
   ~ChildProcessHost() override;
@@ -52,9 +51,9 @@ class ChildProcessHost : public ErrorHandler {
   // Like |ChildController::StartApp()|, but with one difference:
   // |on_app_complete| will *always* get called, even on connection error (or
   // even if the child process failed to start at all).
-  void StartApp(const String& app_path,
+  void StartApp(const mojo::String& app_path,
                 bool clean_app_path,
-                InterfaceRequest<Application> application_request,
+                mojo::InterfaceRequest<mojo::Application> application_request,
                 const ChildController::StartAppCallback& on_app_complete);
   void ExitNow(int32_t exit_code);
 
@@ -63,21 +62,21 @@ class ChildProcessHost : public ErrorHandler {
   virtual void DidStart(bool success);
 
  private:
-  // Callback for |embedder::CreateChannel()|.
-  void DidCreateChannel(embedder::ChannelInfo* channel_info);
+  // Callback for |mojo::embedder::CreateChannel()|.
+  void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info);
 
   bool DoLaunch();
 
   void AppCompleted(int32_t result);
 
-  // |ErrorHandler| methods:
+  // |mojo::ErrorHandler| methods:
   void OnConnectionError() override;
 
   Context* const context_;
-  embedder::PlatformChannelPair platform_channel_pair_;
+  mojo::embedder::PlatformChannelPair platform_channel_pair_;
 
   ChildControllerPtr controller_;
-  embedder::ChannelInfo* channel_info_;
+  mojo::embedder::ChannelInfo* channel_info_;
   ChildController::StartAppCallback on_app_complete_;
 
   base::Process child_process_;
@@ -86,6 +85,5 @@ class ChildProcessHost : public ErrorHandler {
 };
 
 }  // namespace shell
-}  // namespace mojo
 
 #endif  // SHELL_CHILD_PROCESS_HOST_H_
