@@ -66,17 +66,18 @@ public class AndroidHandler {
 
     /**
      * Extracts and runs the application libraries contained by the indicated archive.
+     *
      * @param context the application context
+     * @param tracingId opaque id, used for tracing.
      * @param archivePath the path of the archive containing the application to be run
      * @param handle handle to the shell to be passed to the native application. On the Java side
-     *               this is opaque payload.
+     *            this is opaque payload.
      * @param runApplicationPtr pointer to the function that will set the native thunks and call
-     *                          into the application MojoMain. On the Java side this is opaque
-     *                          payload.
+     *            into the application MojoMain. On the Java side this is opaque payload.
      */
     @CalledByNative
-    private static boolean bootstrap(Context context, String archivePath, int handle,
-            long runApplicationPtr) {
+    private static boolean bootstrap(Context context, long tracingId, String archivePath,
+            int handle, long runApplicationPtr) {
         File bootstrap_java_library;
         File bootstrap_native_library;
         try {
@@ -98,7 +99,7 @@ public class AndroidHandler {
             application_native_library = FileHelper.extractFromArchive(archive,
                     NATIVE_LIBRARY_SUFFIX, getAppDir(context));
         } catch (Exception e) {
-            Log.e(TAG, "Extraction of application files from the archive failed.",  e);
+            Log.e(TAG, "Extraction of application files from the archive failed.", e);
             return false;
         }
 
@@ -112,9 +113,9 @@ public class AndroidHandler {
             Class<?> loadedClass = bootstrapLoader.loadClass(BOOTSTRAP_CLASS);
             Class<? extends Runnable> bootstrapClass = loadedClass.asSubclass(Runnable.class);
             Constructor<? extends Runnable> constructor = bootstrapClass.getConstructor(
-                    Context.class, File.class, File.class, Integer.class, Long.class);
-            Runnable bootstrapRunnable = constructor.newInstance(context, bootstrap_native_library,
-                    application_native_library, Integer.valueOf(handle),
+                    Context.class, long.class, File.class, File.class, int.class, long.class);
+            Runnable bootstrapRunnable = constructor.newInstance(context, tracingId,
+                    bootstrap_native_library, application_native_library, Integer.valueOf(handle),
                     Long.valueOf(runApplicationPtr));
             bootstrapRunnable.run();
         } catch (Throwable t) {

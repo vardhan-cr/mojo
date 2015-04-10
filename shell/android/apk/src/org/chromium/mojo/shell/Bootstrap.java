@@ -21,11 +21,13 @@ public class Bootstrap implements Runnable {
     private final File mBootstrapNativeLibrary;
     private final File mApplicationNativeLibrary;
     private final int mHandle;
+    private final long mTracingId;
     private final long mRunApplicationPtr;
 
-    public Bootstrap(Context context, File bootstrapNativeLibrary, File applicationNativeLibrary,
-            Integer handle, Long runApplicationPtr) {
+    public Bootstrap(Context context, long tracingId, File bootstrapNativeLibrary,
+            File applicationNativeLibrary, int handle, long runApplicationPtr) {
         mContext = context;
+        mTracingId = tracingId;
         mBootstrapNativeLibrary = bootstrapNativeLibrary;
         mApplicationNativeLibrary = applicationNativeLibrary;
         mHandle = handle;
@@ -36,10 +38,10 @@ public class Bootstrap implements Runnable {
     public void run() {
         System.load(mBootstrapNativeLibrary.getAbsolutePath());
         System.load(mApplicationNativeLibrary.getAbsolutePath());
-        nativeBootstrap(mContext, mApplicationNativeLibrary.getAbsolutePath(), mHandle,
+        nativeBootstrap(mContext, mTracingId, mApplicationNativeLibrary.getAbsolutePath(), mHandle,
                 mRunApplicationPtr);
     }
 
-    native void nativeBootstrap(Context context, String libraryPath, int handle,
-            long runApplicationPtr);
+    native void nativeBootstrap(
+            Context context, long id, String libraryPath, int handle, long runApplicationPtr);
 }

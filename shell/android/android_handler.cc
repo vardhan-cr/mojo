@@ -9,6 +9,7 @@
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/scoped_native_library.h"
+#include "base/trace_event/trace_event.h"
 #include "jni/AndroidHandler_jni.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/c/system/main.h"
@@ -32,6 +33,7 @@ namespace {
 // to the helper libbootstrap.so.
 void RunAndroidApplication(JNIEnv* env,
                            jobject j_context,
+                           uintptr_t tracing_id,
                            const base::FilePath& app_path,
                            jint j_handle) {
   mojo::InterfaceRequest<mojo::Application> application_request =
@@ -62,6 +64,10 @@ void RunAndroidApplication(JNIEnv* env,
     init_application_context(scoped_context);
   }
 
+  // The application is ready to be run.
+  TRACE_EVENT_ASYNC_END0("android_handler", "AndroidHandler::RunApplication",
+                         tracing_id);
+
   // Run the application.
   RunNativeApplication(app_library, application_request.Pass());
   // TODO(vtl): See note about unloading and thread-local destructors above
@@ -81,6 +87,9 @@ void AndroidHandler::RunApplication(
     mojo::InterfaceRequest<mojo::Application> application_request,
     mojo::URLResponsePtr response) {
   JNIEnv* env = AttachCurrentThread();
+  uintptr_t tracing_id = reinterpret_cast<uintptr_t>(this);
+  TRACE_EVENT_ASYNC_BEGIN1("android_handler", "AndroidHandler::RunApplication",
+                           tracing_id, "url", std::string(response->url));
   ScopedJavaLocalRef<jstring> j_archive_path =
       Java_AndroidHandler_getNewTempArchivePath(env, GetApplicationContext());
   base::FilePath archive_path(
@@ -89,7 +98,7 @@ void AndroidHandler::RunApplication(
   mojo::common::BlockingCopyToFile(response->body.Pass(), archive_path);
   RunAndroidApplicationFn run_android_application_fn = &RunAndroidApplication;
   Java_AndroidHandler_bootstrap(
-      env, GetApplicationContext(), j_archive_path.obj(),
+      env, GetApplicationContext(), tracing_id, j_archive_path.obj(),
       application_request.PassMessagePipe().release().value(),
       reinterpret_cast<jlong>(run_android_application_fn));
 }

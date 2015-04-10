@@ -13,6 +13,7 @@ namespace shell {
 void Bootstrap(JNIEnv* env,
                jobject,
                jobject j_context,
+               jlong j_id,
                jstring j_native_library_path,
                jint j_handle,
                jlong j_run_application_ptr) {
@@ -20,7 +21,7 @@ void Bootstrap(JNIEnv* env,
       base::android::ConvertJavaStringToUTF8(env, j_native_library_path));
   RunAndroidApplicationFn run_android_application_fn =
       reinterpret_cast<RunAndroidApplicationFn>(j_run_application_ptr);
-  run_android_application_fn(env, j_context, app_path, j_handle);
+  run_android_application_fn(env, j_context, j_id, app_path, j_handle);
 }
 
 bool RegisterBootstrapJni(JNIEnv* env) {

@@ -17,6 +17,7 @@ namespace shell {
 
 typedef void (*RunAndroidApplicationFn)(JNIEnv* env,
                                         jobject j_context,
+                                        uintptr_t id,
                                         const base::FilePath& app_path,
                                         jint j_handle);
 
