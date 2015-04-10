@@ -122,7 +122,7 @@ observatory_sources_gypi =
                 [ rebase_path(
                     "//dart/runtime/observatory/observatory_sources.gypi") ],
                 "scope",
-                [ "observatory_sources.gypi" ])
+                [ "//dart/runtime/observatory/observatory_sources.gypi" ])
 
 copy("copy_observatory") {
   sources = rebase_path(observatory_sources_gypi.sources,
