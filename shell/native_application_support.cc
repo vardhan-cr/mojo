@@ -118,7 +118,7 @@ bool RunNativeApplication(
     LOG(ERROR) << "MojoMain not found";
     return false;
   }
-  // |MojoMain()| takes ownership of the service handle.
+  // |MojoMain()| takes ownership of the Application request handle.
   MojoHandle handle = application_request.PassMessagePipe().release().value();
   MojoResult result = main_function(handle);
   LOG_IF(ERROR, result != MOJO_RESULT_OK)
