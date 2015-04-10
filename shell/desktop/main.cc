@@ -21,6 +21,7 @@
 #include "shell/context.h"
 #include "shell/init.h"
 #include "shell/switches.h"
+#include "shell/tracer.h"
 
 namespace {
 
@@ -48,65 +49,13 @@ void Usage() {
       << "application/javascript,mojo:js_content_handler\n";
 }
 
-// Whether we're currently tracing.
-bool g_tracing = false;
-
-// Number of tracing blocks written.
-uint32_t g_blocks = 0;
-
-// Trace file, if open.
-FILE* g_trace_file = nullptr;
-
-void WriteTraceDataCollected(
-    base::WaitableEvent* event,
-    const scoped_refptr<base::RefCountedString>& events_str,
-    bool has_more_events) {
-  if (g_blocks) {
-    fwrite(",", 1, 1, g_trace_file);
-  }
-
-  ++g_blocks;
-  fwrite(events_str->data().c_str(), 1, events_str->data().length(),
-         g_trace_file);
-  if (!has_more_events) {
-    static const char kEnd[] = "]}";
-    fwrite(kEnd, 1, strlen(kEnd), g_trace_file);
-    PCHECK(fclose(g_trace_file) == 0);
-    g_trace_file = nullptr;
-    event->Signal();
-  }
-}
-
-void EndTraceAndFlush(base::WaitableEvent* event) {
-  g_trace_file = fopen("mojo_shell.trace", "w+");
-  PCHECK(g_trace_file);
-  static const char kStart[] = "{\"traceEvents\":[";
-  fwrite(kStart, 1, strlen(kStart), g_trace_file);
-  base::trace_event::TraceLog::GetInstance()->SetDisabled();
-  base::trace_event::TraceLog::GetInstance()->Flush(
-      base::Bind(&WriteTraceDataCollected, base::Unretained(event)));
-}
-
-void StopTracingAndFlushToDisk() {
-  g_tracing = false;
-  base::trace_event::TraceLog::GetInstance()->SetDisabled();
-  base::WaitableEvent flush_complete_event(false, false);
-  // TraceLog::Flush requires a message loop but we've already shut ours down.
-  // Spin up a new thread to flush things out.
-  base::Thread flush_thread("mojo_shell_trace_event_flush");
-  flush_thread.Start();
-  flush_thread.message_loop()->PostTask(
-      FROM_HERE,
-      base::Bind(EndTraceAndFlush, base::Unretained(&flush_complete_event)));
-  flush_complete_event.Wait();
-}
-
 }  // namespace
 
 int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   base::CommandLine::Init(argc, argv);
 
+  shell::Tracer tracer;
   shell::InitializeLogging();
 
   const base::CommandLine& command_line =
@@ -127,14 +76,9 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (command_line.HasSwitch(switches::kTraceStartup)) {
-    g_tracing = true;
-    base::trace_event::CategoryFilter category_filter(
-        command_line.GetSwitchValueASCII(switches::kTraceStartup));
-    base::trace_event::TraceLog::GetInstance()->SetEnabled(
-        category_filter, base::trace_event::TraceLog::RECORDING_MODE,
-        base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
-  }
+  bool trace_startup = command_line.HasSwitch(switches::kTraceStartup);
+  if (trace_startup)
+    tracer.Start(command_line.GetSwitchValueASCII(switches::kTraceStartup));
 
   if (command_line.HasSwitch(switches::kCPUProfile)) {
 #if !defined(NDEBUG) || !defined(ENABLE_PROFILING)
@@ -154,10 +98,12 @@ int main(int argc, char** argv) {
       Usage();
       return 1;
     }
-    if (g_tracing) {
-      message_loop.PostDelayedTask(FROM_HERE,
-                                   base::Bind(StopTracingAndFlushToDisk),
-                                   base::TimeDelta::FromSeconds(5));
+
+    if (trace_startup) {
+      message_loop.PostDelayedTask(
+          FROM_HERE, base::Bind(&shell::Tracer::StopAndFlushToFile,
+                                base::Unretained(&tracer), "mojo_shell.trace"),
+          base::TimeDelta::FromSeconds(5));
     }
 
     // The mojo_shell --args-for command-line switch is handled specially
@@ -176,7 +122,7 @@ int main(int argc, char** argv) {
 
   if (command_line.HasSwitch(switches::kCPUProfile))
     base::debug::StopProfiling();
-  if (g_tracing)
-    StopTracingAndFlushToDisk();
+  if (trace_startup)
+    tracer.StopAndFlushToFile("mojo_shell.trace");
   return 0;
 }

@@ -29,6 +29,8 @@
 #include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
+#include "shell/switches.h"
+#include "shell/tracer.h"
 #include "ui/gl/gl_surface_egl.h"
 
 using base::LazyInstance;
@@ -66,6 +68,7 @@ class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
 LazyInstance<scoped_ptr<base::MessageLoop>> g_java_message_loop =
     LAZY_INSTANCE_INITIALIZER;
 
+LazyInstance<scoped_ptr<Tracer>> g_tracer = LAZY_INSTANCE_INITIALIZER;
 LazyInstance<scoped_ptr<Context>> g_context = LAZY_INSTANCE_INITIALIZER;
 
 LazyInstance<scoped_ptr<MojoShellRunner>> g_shell_runner =
@@ -74,7 +77,7 @@ LazyInstance<scoped_ptr<MojoShellRunner>> g_shell_runner =
 LazyInstance<scoped_ptr<base::DelegateSimpleThread>> g_shell_thread =
     LAZY_INSTANCE_INITIALIZER;
 
-LazyInstance<base::android::ScopedJavaGlobalRef<jobject>> g_main_activiy =
+LazyInstance<base::android::ScopedJavaGlobalRef<jobject>> g_main_activity =
     LAZY_INSTANCE_INITIALIZER;
 
 void ConfigureAndroidServices(Context* context) {
@@ -102,7 +105,7 @@ void QuitShellThread() {
   g_shell_thread.Get()->Join();
   g_shell_thread.Pointer()->reset();
   Java_ShellMain_finishActivity(base::android::AttachCurrentThread(),
-                                g_main_activiy.Get().obj());
+                                g_main_activity.Get().obj());
   exit(0);
 }
 
@@ -151,13 +154,12 @@ static void Init(JNIEnv* env,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory,
                  jstring j_tmp_dir) {
-  g_main_activiy.Get().Reset(env, activity);
+  g_main_activity.Get().Reset(env, activity);
 
+  std::string tmp_dir = base::android::ConvertJavaStringToUTF8(env, j_tmp_dir);
   // Setting the TMPDIR environment variable so that applications can use it.
   // TODO(qsr) We will need our subprocesses to inherit this.
-  int return_value =
-      setenv("TMPDIR",
-             base::android::ConvertJavaStringToUTF8(env, j_tmp_dir).c_str(), 1);
+  int return_value = setenv("TMPDIR", tmp_dir.c_str(), 1);
   DCHECK_EQ(return_value, 0);
 
   base::android::ScopedJavaLocalRef<jobject> scoped_activity(env, activity);
@@ -169,7 +171,14 @@ static void Init(JNIEnv* env,
   base::android::AppendJavaStringArrayToStringVector(env, jparameters,
                                                      &parameters);
   base::CommandLine::Init(0, nullptr);
-  base::CommandLine::ForCurrentProcess()->InitFromArgv(parameters);
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  command_line->InitFromArgv(parameters);
+  Tracer* tracer = new Tracer;
+  g_tracer.Get().reset(tracer);
+  bool trace_startup = command_line->HasSwitch(switches::kTraceStartup);
+  if (trace_startup)
+    tracer->Start(command_line->GetSwitchValueASCII(switches::kTraceStartup));
+
   g_shell_runner.Get().reset(new MojoShellRunner(
       base::FilePath(
           base::android::ConvertJavaStringToUTF8(env, mojo_shell_path)),
@@ -191,6 +200,14 @@ static void Init(JNIEnv* env,
 
   g_java_message_loop.Get().reset(new base::MessageLoopForUI);
   base::MessageLoopForUI::current()->Start();
+
+  if (trace_startup) {
+    g_java_message_loop.Get()->PostDelayedTask(
+        FROM_HERE,
+        base::Bind(&Tracer::StopAndFlushToFile, base::Unretained(tracer),
+                   tmp_dir + "/mojo_shell.trace"),
+        base::TimeDelta::FromSeconds(5));
+  }
 
   // TODO(abarth): At which point should we switch to cross-platform
   // initialization?

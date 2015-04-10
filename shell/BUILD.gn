@@ -132,6 +132,8 @@ source_set("lib") {
     "out_of_process_native_runner.h",
     "task_runners.cc",
     "task_runners.h",
+    "tracer.cc",
+    "tracer.h",
     "url_resolver.cc",
     "url_resolver.h",
   ]
