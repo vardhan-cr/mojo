@@ -145,6 +145,7 @@ action("write_observatory_pubspec_yaml") {
   ]
 
   args = [
+    "--silent=True",
     "--pub-executable",
     rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
     "--directory",
@@ -176,6 +177,7 @@ action("copy_observatory_deps") {
   ]
 
   args = [
+    "--silent=True",
     "--pub-executable",
     rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
     "--directory",
@@ -207,6 +209,7 @@ action("pub_build_observatory") {
   inputs += sources
 
   args = [
+    "--silent=True",
     "--pub-executable",
     rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
     "--directory",
@@ -236,6 +239,7 @@ action("deploy_observatory") {
   ]
 
   args = [
+    "--silent=True",
     "--pub-executable",
     rebase_path("//third_party/dart-sdk/dart-sdk/bin/pub"),
     "--directory",
