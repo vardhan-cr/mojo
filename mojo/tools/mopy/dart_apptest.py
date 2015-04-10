@@ -22,12 +22,13 @@ def run_test(config, apptest_dict, shell_args, apps_and_args=None):
   """
   apps_and_args = apps_and_args or {}
   output = test_util.try_run_test(config, shell_args, apps_and_args)
-  # Fail on output with dart unittests' "FAIL:" or a lack of "PASS:".
+  # Fail on output with dart unittests' "FAIL:"/"ERROR:" or a lack of "PASS:".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
-  if (output is None or
-      output.find("FAIL:") != -1 or
-      output.find("PASS:") == -1):
+  if (not output or
+      '\nFAIL: ' in output or
+      '\nERROR: ' in output or
+      '\nPASS: ' not in output):
     print "Failed test:"
     print_process_error(
         test_util.build_command_line(config, shell_args, apps_and_args),
@@ -35,4 +36,3 @@ def run_test(config, apptest_dict, shell_args, apps_and_args=None):
     return "Failed test(s) in %r" % apptest_dict
   _logging.debug("Succeeded with output:\n%s" % output)
   return "Succeeded"
-
