@@ -11,6 +11,7 @@ import dalvik.system.DexClassLoader;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
+import org.chromium.base.TraceEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,10 +82,14 @@ public class AndroidHandler {
         File bootstrap_java_library;
         File bootstrap_native_library;
         try {
+            TraceEvent.begin("ExtractBootstrapJavaLibrary");
             bootstrap_java_library = FileHelper.extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY,
                     getAssetDir(context), true);
+            TraceEvent.end("ExtractBootstrapJavaLibrary");
+            TraceEvent.begin("ExtractBootstrapNativeLibrary");
             bootstrap_native_library = FileHelper.extractFromAssets(context,
                     BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context), true);
+            TraceEvent.end("ExtractBootstrapNativeLibrary");
         } catch (Exception e) {
             Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
             return false;
@@ -94,10 +99,14 @@ public class AndroidHandler {
         File application_native_library;
         try {
             File archive = new File(archivePath);
+            TraceEvent.begin("ExtractApplicationJavaLibrary");
             application_java_library = FileHelper.extractFromArchive(archive, JAVA_LIBRARY_SUFFIX,
                     getAppDir(context));
+            TraceEvent.end("ExtractApplicationJavaLibrary");
+            TraceEvent.begin("ExtractApplicationNativeLibrary");
             application_native_library = FileHelper.extractFromArchive(archive,
                     NATIVE_LIBRARY_SUFFIX, getAppDir(context));
+            TraceEvent.end("ExtractApplicationNativeLibrary");
         } catch (Exception e) {
             Log.e(TAG, "Extraction of application files from the archive failed.", e);
             return false;
@@ -105,9 +114,11 @@ public class AndroidHandler {
 
         String dexPath = bootstrap_java_library.getAbsolutePath() + File.pathSeparator
                 + application_java_library.getAbsolutePath();
+        TraceEvent.begin("CreateDexClassLoader");
         DexClassLoader bootstrapLoader = new DexClassLoader(dexPath,
                 getDexOutputDir(context).getAbsolutePath(), null,
                 ClassLoader.getSystemClassLoader());
+        TraceEvent.end("CreateDexClassLoader");
 
         try {
             Class<?> loadedClass = bootstrapLoader.loadClass(BOOTSTRAP_CLASS);

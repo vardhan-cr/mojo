@@ -11,6 +11,7 @@
 #include "base/files/scoped_file.h"
 #include "base/location.h"
 #include "base/task_runner_util.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/common/data_pipe_utils_internal.h"
 
 namespace mojo {
@@ -24,6 +25,8 @@ size_t CopyToFileHelper(FILE* fp, const void* buffer, uint32_t num_bytes) {
 bool BlockingCopyFromFile(const base::FilePath& source,
                           ScopedDataPipeProducerHandle destination,
                           uint32_t skip) {
+  TRACE_EVENT1("data_pipe_utils", "BlockingCopyFromFile", "source",
+               source.MaybeAsASCII());
   base::File file(source, base::File::FLAG_OPEN | base::File::FLAG_READ);
   if (!file.IsValid())
     return false;
@@ -73,6 +76,8 @@ bool BlockingCopyFromFile(const base::FilePath& source,
 
 bool BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
                         const base::FilePath& destination) {
+  TRACE_EVENT1("data_pipe_utils", "BlockingCopyToFile", "dest",
+               destination.MaybeAsASCII());
   base::ScopedFILE fp(base::OpenFile(destination, "wb"));
   if (!fp) {
     LOG(ERROR) << "OpenFile('" << destination.value()

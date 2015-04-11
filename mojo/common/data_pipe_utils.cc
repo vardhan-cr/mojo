@@ -9,6 +9,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/task_runner_util.h"
 #include "base/threading/platform_thread.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/common/data_pipe_utils_internal.h"
 
 namespace mojo {
@@ -70,6 +71,7 @@ size_t CopyToStringHelper(
 // TODO(hansmuller): Add a max_size parameter.
 bool BlockingCopyToString(ScopedDataPipeConsumerHandle source,
                           std::string* result) {
+  TRACE_EVENT0("data_pipe_utils", "BlockingCopyToString");
   CHECK(result);
   result->clear();
   return BlockingCopyHelper(
@@ -78,6 +80,7 @@ bool BlockingCopyToString(ScopedDataPipeConsumerHandle source,
 
 bool BlockingCopyFromString(const std::string& source,
                             const ScopedDataPipeProducerHandle& destination) {
+  TRACE_EVENT0("data_pipe_utils", "BlockingCopyFromString");
   auto it = source.begin();
   for (;;) {
     void* buffer = nullptr;
