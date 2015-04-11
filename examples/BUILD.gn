@@ -29,6 +29,7 @@ group("examples") {
     "//examples/sky_compositor_app",
     "//examples/spinning_cube",
     "//examples/surfaces_app",
+    "//examples/tiny",
     "//examples/versioning",
     "//examples/wget",
     "//examples/window_manager",
