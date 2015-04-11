@@ -92,7 +92,11 @@ TEST_F(JSPingPongTest, PingTargetURL) {
 // pingpong-target.js URL, we provide a connection to its PingPongService.
 TEST_F(JSPingPongTest, PingTargetService) {
   PingPongServicePtr target;
+  PingPongClientImpl client;
   application_impl()->ConnectToService(JSAppURL("pingpong_target.js"), &target);
+  PingPongClientPtr client_ptr;
+  client.Bind(GetProxy(&client_ptr));
+  target->SetClient(client_ptr.Pass());
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
   pingpong_service_->PingTargetService(target.Pass(), 9, callback);

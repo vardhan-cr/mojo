@@ -36,8 +36,6 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
   method11(StructG param0) => _complete();
-  // TODO(yzshen): Why method12 is not here?
-  method13(Object param0, int param1, Object param2) => _complete();
 
   Future close({bool immediate: false}) => _stub.close(immediate: immediate);
 }

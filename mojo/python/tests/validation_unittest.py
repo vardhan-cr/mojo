@@ -68,12 +68,8 @@ class ValidationTest(mojo_unittest.MojoTestCase):
     data_dir = os.path.join(paths.src_root, 'mojo', 'public', 'interfaces',
                             'bindings', 'tests', 'data', 'validation')
 
-    # TODO(yzshen): Skip some interface versioning tests.
-    skipped_tests = ["conformance_mthd13_good_2.data"]
-
     return [ValidationTest.ParseData(data_dir, x) for x in os.listdir(data_dir)
-            if x.startswith(prefix) and x.endswith('.data') and
-               x not in skipped_tests]
+            if x.startswith(prefix) and x.endswith('.data')]
 
   def runTest(self, prefix, message_receiver):
     for (filename, data, expected) in ValidationTest.GetData(prefix):
