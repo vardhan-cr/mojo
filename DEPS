@@ -305,6 +305,20 @@ hooks = [
                 '--tools-directory', '../../../tools',
     ],
   },
+  # Run "pub get" on any directories with checked-in pubspec.yaml files 
+  # (excluding sky/, whose pubspec.yaml files are not intended for supporting
+  # building in-place in the repo).
+  {
+    'name': 'run_dart_pub_get',
+    'pattern': '',
+    'action': [ 'python',
+                'src/mojo/public/tools/git/dart_pub_get.py',
+                '--repository-root', '../../../..',
+                '--dart-sdk-directory',
+                '../../../../third_party/dart-sdk/dart-sdk',
+                '--dirs-to-ignore', 'sky/',
+    ],
+  },
   {
     # Ensure that we don't accidentally reference any .pyc files whose
     # corresponding .py files have already been deleted.

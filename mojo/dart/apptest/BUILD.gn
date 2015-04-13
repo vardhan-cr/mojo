@@ -5,11 +5,11 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_package("apptest") {
+  uses_pub = true
   sources = [
     "apptest/apptest.dart",
   ]
   deps = [
     "//mojo/public/dart",
-    "//third_party/dart-packages/unittest",
   ]
 }

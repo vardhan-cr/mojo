@@ -11,6 +11,7 @@
 .pydevproject
 .checkstyle
 cscope.*
+packages/
 Session.vim
 tags
 Thumbs.db
@@ -23,6 +24,7 @@ v8.log
 # TODO(vtl): Check if this is still true.
 /c
 /dart/
+/dart-pub-cache/
 /native_client/
 /out/
 /out_*/
