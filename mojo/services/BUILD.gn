@@ -10,6 +10,7 @@ group("services") {
     "//mojo/services/clipboard/public/interfaces",
     "//mojo/services/console/public/interfaces",
     "//mojo/services/content_handler/public/interfaces",
+    "//mojo/services/device_info/public/interfaces",
     "//mojo/services/files/public/interfaces",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/http_server/public/interfaces",

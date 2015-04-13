@@ -12,6 +12,7 @@ group("examples") {
     "//examples/browser",
     "//examples/content_handler_demo",
     "//examples/dart/console_example",
+    "//examples/dart/device_info",
     "//examples/dart/hello_world/hello",
     "//examples/dart/hello_world/world",
     "//examples/dart/netcat",

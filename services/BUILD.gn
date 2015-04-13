@@ -10,6 +10,7 @@ group("services") {
     "//services/clipboard",
     "//services/console",
     "//services/dart",
+    "//services/device_info",
     "//services/fake_surfaces",
     "//services/files",
     "//services/gles2:lib",
