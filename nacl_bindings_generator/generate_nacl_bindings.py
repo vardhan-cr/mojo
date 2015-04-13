@@ -234,6 +234,47 @@ class ScalarInOutImpl(ParamImpl):
       code << '*%s_ptr = %s_value;' % (name, name)
 
 
+class PointerInputImpl(ParamImpl):
+  def DeclareVars(self, code):
+    code << '%s %s_value;' % (self.param.base_type, self.param.name)
+
+  def ConvertParam(self):
+    p = self.param
+    return ('ConvertPointerInput(nap, params[%d], &%s_value)' %
+            (p.uid + 1, p.name))
+
+  def CallParam(self):
+    return '%s_value' % self.param.name
+
+
+class PointerInOutImpl(ParamImpl):
+  def DeclareVars(self, code):
+    code << 'uint32_t volatile* %s_ptr;' % (self.param.name,)
+    code << '%s %s_value;' % (self.param.base_type, self.param.name)
+
+  def ConvertParam(self):
+    p = self.param
+    return ('ConvertPointerInOut(nap, params[%d], %s, &%s_value, &%s_ptr)' %
+            (p.uid + 1, CBool(p.is_optional), p.name, p.name))
+
+  def CallParam(self):
+    name = self.param.name
+    expr = '&%s_value' % name
+    if self.param.is_optional:
+      expr = '%s_ptr ? %s : NULL' % (name, expr)
+    return expr
+
+  def CopyOut(self, code):
+    assert not self.param.is_optional
+    name = self.param.name
+    if self.param.is_optional:
+      code << 'if (%s_ptr != NULL) {' % (name)
+      with code.Indent():
+        code << 'CopyOutPointer(nap, %s_value, %s_ptr);' % (name, name)
+      code << '}'
+    else:
+      code << 'CopyOutPointer(nap, %s_value, %s_ptr);' % (name, name)
+
 class ArrayImpl(ParamImpl):
   def DeclareVars(self, code):
     code << '%s %s;' % (self.param.param_type, self.param.name)
@@ -268,10 +309,13 @@ class ExtensibleStructInputImpl(ParamImpl):
   def CallParam(self):
     return self.param.name
 
+
 def ImplForParam(p):
   if p.IsScalar():
     if p.is_output:
-      if p.is_input:
+      if p.is_pointer:
+        return PointerInOutImpl(p)
+      elif p.is_input:
         return ScalarInOutImpl(p)
       else:
         if p.is_always_written:
@@ -283,7 +327,10 @@ def ImplForParam(p):
           # back to untrusted memory afterwards.
           return ScalarInOutImpl(p)
     else:
-      return ScalarInputImpl(p)
+      if p.is_pointer:
+        return PointerInputImpl(p)
+      else:
+        return ScalarInputImpl(p)
   elif p.is_array:
     return ArrayImpl(p)
   elif p.is_struct:
@@ -307,15 +354,7 @@ def GenerateMojoSyscall(functions, common_vars, out):
   code.PushMargin()
 
   for f in functions:
-    is_implemented = True
-
-    # Mojo API calls that take or return pointers are currently not supported.
-    # The underlying Mojo implementation is unaware of NaCl's address space. In
-    # addition, if we pass blindly pass the parameters through to the underlying
-    # Mojo API, memory corruption can result from pointer-size mistmatches.
-    for p in f.params:
-      if p.base_type.endswith("*"):
-        is_implemented = False
+    is_implemented = not f.broken_in_nacl
 
     impls = [ImplForParam(p) for p in f.params]
     impls.append(ImplForParam(f.result_param))

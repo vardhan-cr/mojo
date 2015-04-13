@@ -24,6 +24,7 @@ class Function(object):
     self.params = []
     self.param_by_name = {}
     self.result_param = None
+    self.broken_in_nacl = False
 
   def Param(self, name, param_type=None):
     p = Param(self, len(self.params), name, param_type)
@@ -39,6 +40,9 @@ class Function(object):
       return ', '.join(self.ParamList())
     else:
       return 'void'
+
+  def IsBrokenInNaCl(self):
+    self.broken_in_nacl = True
 
   def Finalize(self):
     self.result_param = Param(self, len(self.params), 'result')
@@ -59,6 +63,7 @@ class Param(object):
     self.is_extensible = False
     self.is_optional = False
     self.is_always_written = False
+    self.is_pointer = False
 
   def GetSizeParam(self):
     assert self.size
@@ -68,6 +73,7 @@ class Param(object):
     self.base_type = ty
     self.param_type = ty
     self.is_input = True
+    self.is_pointer = ty.endswith('*')
     return self
 
   def InArray(self, ty, size):
@@ -95,12 +101,14 @@ class Param(object):
     self.param_type = ty + '*'
     self.is_input = True
     self.is_output = True
+    self.is_pointer = ty.endswith('*')
     return self
 
   def Out(self, ty):
     self.base_type = ty
     self.param_type = ty + '*'
     self.is_output = True
+    self.is_pointer = ty.endswith('*')
     return self
 
   def OutArray(self, ty, size):

@@ -27,9 +27,15 @@ def MakeInterface():
   f.Param('num_bytes').In('uint64_t')
   f.Param('buffer').Out('void*')
   f.Param('flags').In('MojoMapBufferFlags')
+  # TODO(ncbray): support mmaping.
+  # https://code.google.com/p/chromium/issues/detail?id=401761
+  f.IsBrokenInNaCl()
 
   f = mojo.Func('MojoUnmapBuffer', 'MojoResult')
   f.Param('buffer').In('void*')
+  # TODO(ncbray): support mmaping.
+  # https://code.google.com/p/chromium/issues/detail?id=401761
+  f.IsBrokenInNaCl()
 
   f = mojo.Func('MojoCreateDataPipe', 'MojoResult')
   p = f.Param('options')
@@ -48,6 +54,9 @@ def MakeInterface():
   f.Param('buffer').Out('void*')
   f.Param('buffer_num_bytes').InOut('uint32_t')
   f.Param('flags').In('MojoWriteDataFlags')
+  # TODO(ncbray): support two-stage reads and writes.
+  # https://code.google.com/p/chromium/issues/detail?id=401761
+  f.IsBrokenInNaCl()
 
   f = mojo.Func('MojoEndWriteData', 'MojoResult')
   f.Param('data_pipe_producer_handle').In('MojoHandle')
@@ -64,6 +73,9 @@ def MakeInterface():
   f.Param('buffer').Out('const void*')
   f.Param('buffer_num_bytes').InOut('uint32_t')
   f.Param('flags').In('MojoReadDataFlags')
+  # TODO(ncbray): support two-stage reads and writes.
+  # https://code.google.com/p/chromium/issues/detail?id=401761
+  f.IsBrokenInNaCl()
 
   f = mojo.Func('MojoEndReadData', 'MojoResult')
   f.Param('data_pipe_consumer_handle').In('MojoHandle')
