@@ -6,8 +6,9 @@ import("//mojo/public/dart/rules.gni")
 
 dart_packaged_application("dart_apptests") {
   sources = [
-    "main.dart",
     "echo_apptests.dart",
+    "io_apptests.dart",
+    "main.dart",
     "pingpong_apptests.dart",
   ]
   deps = [

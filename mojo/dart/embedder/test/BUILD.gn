@@ -5,78 +5,6 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/test.gni")
 
-action("generate_test_snapshot_bin") {
-  deps = [
-    "//dart/runtime/bin:gen_snapshot($host_toolchain)",
-  ]
-  inputs = [
-    "test_snapshot.dart",
-    "//dart/runtime/tools/create_snapshot_bin.py",
-    "//mojo/dart/embedder/builtin.dart",
-    "//mojo/public/dart/internal.dart",
-    "//mojo/public/dart/src/handle_watcher.dart",
-    "//mojo/public/dart/src/natives.dart",
-    "//mojo/public/dart/src/timer_queue.dart",
-  ]
-  test_vm_isolate_snapshot = "$target_gen_dir/test_vm_isolate_snapshot.bin"
-  test_isolate_snapshot = "$target_gen_dir/test_isolate_snapshot.bin"
-  outputs = [
-    test_vm_isolate_snapshot,
-    test_isolate_snapshot,
-  ]
-
-  gen_snapshot_dir =
-      get_label_info("//dart/runtime/bin:gen_snapshot($host_toolchain)",
-                     "root_out_dir")
-  script = "//dart/runtime/tools/create_snapshot_bin.py"
-  builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
-  internal_path = rebase_path("//mojo/public/dart/internal.dart")
-  args = [
-    "--executable",
-    rebase_path("$gen_snapshot_dir/gen_snapshot"),
-    "--package_root",
-    rebase_path("$root_gen_dir"),
-    "--script",
-    rebase_path("test_snapshot.dart"),
-    "--vm_output_bin",
-    rebase_path(test_vm_isolate_snapshot, root_build_dir),
-    "--output_bin",
-    rebase_path(test_isolate_snapshot, root_build_dir),
-    "--target_os",
-    os,
-    "--url_mapping=dart:mojo.builtin,$builtin_path",
-    "--url_mapping=dart:mojo.internal,$internal_path",
-  ]
-}
-
-action("generate_test_snapshot_file") {
-  deps = [
-    ":generate_test_snapshot_bin",
-  ]
-  inputs = [
-    "//dart/runtime/tools/create_snapshot_file.py",
-    "//mojo/dart/embedder/snapshot.cc.tmpl",
-    "$target_gen_dir/test_vm_isolate_snapshot.bin",
-    "$target_gen_dir/test_isolate_snapshot.bin",
-  ]
-  output = "$target_gen_dir/test_snapshot.cc"
-  outputs = [
-    output,
-  ]
-
-  script = "//dart/runtime/tools/create_snapshot_file.py"
-  args = [
-    "--vm_input_bin",
-    rebase_path("$target_gen_dir/test_vm_isolate_snapshot.bin"),
-    "--input_bin",
-    rebase_path("$target_gen_dir/test_isolate_snapshot.bin"),
-    "--input_cc",
-    rebase_path("//mojo/dart/embedder/snapshot.cc.tmpl"),
-    "--output",
-    rebase_path(output),
-  ]
-}
-
 # These go into the generated source directory for embedder tests.
 copy("copy_dart_mojo_sdk") {
   sources = [
@@ -110,12 +38,12 @@ copy("copy_dart_mojo_sdk") {
 source_set("dart_controller_for_test") {
   testonly = true
   sources = [
-    "$target_gen_dir/test_snapshot.cc",
+    "$root_gen_dir/dart_snapshot.cc",
   ]
 
   deps = [
-    ":generate_test_snapshot_file",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
+    "//mojo/dart/embedder:generate_snapshot_file",
   ]
 }
 

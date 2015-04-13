@@ -108,9 +108,7 @@ static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
 
   // Handle IO library.
   if (is_io_library) {
-    return Builtin::NewError(
-        "The built-in io library is not available in this embedding: %s.\n",
-        library_url_string);
+    return Builtin::NewError("Use 'dart:mojo.io' instead of 'dart:io'");
   }
 
   // Handle URI canonicalization requests.
@@ -300,11 +298,16 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
 
   Dart_IsolateSetStrictCompilation(strict_compilation);
 
+  // Set up the library tag handler for this isolate.
+  Dart_Handle result = Dart_SetLibraryTagHandler(LibraryTagHandler);
+  DART_CHECK_VALID(result);
+
   // Setup the native resolvers for the builtin libraries as they are not set
   // up when the snapshot is read.
   CHECK(isolate_snapshot_buffer != nullptr);
   Builtin::PrepareLibrary(Builtin::kBuiltinLibrary);
   Builtin::PrepareLibrary(Builtin::kMojoInternalLibrary);
+  Builtin::PrepareLibrary(Builtin::kDartMojoIoLibrary);
 
   if (!callbacks.create.is_null()) {
     callbacks.create.Run(script_uri.c_str(),
@@ -313,10 +316,6 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
                          isolate_data,
                          error);
   }
-
-  // Set up the library tag handler for this isolate.
-  Dart_Handle result = Dart_SetLibraryTagHandler(LibraryTagHandler);
-  DART_CHECK_VALID(result);
 
   // Prepare builtin and its dependent libraries for use to resolve URIs.
   // The builtin library is part of the snapshot and is already available.

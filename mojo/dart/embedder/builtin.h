@@ -27,6 +27,7 @@ class Builtin {
   enum BuiltinLibraryId {
     kBuiltinLibrary = 0,
     kMojoInternalLibrary = 1,
+    kDartMojoIoLibrary = 2,
     kInvalidLibrary,
   };
 
@@ -73,6 +74,8 @@ class Builtin {
   static builtin_lib_props builtin_libraries_[];
 
   static const char* mojo_core_patch_resource_names_[];
+  static const char* mojo_io_patch_resource_names_[];
+
   DISALLOW_IMPLICIT_CONSTRUCTORS(Builtin);
 };
 

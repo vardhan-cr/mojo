@@ -7,6 +7,7 @@
 #include "base/i18n/icu_util.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
+#include "mojo/dart/embedder/mojo_io_natives.h"
 #include "mojo/dart/embedder/mojo_natives.h"
 
 namespace mojo {
@@ -40,9 +41,19 @@ const char* Builtin::mojo_core_patch_resource_names_[] = {
     NULL,
 };
 
+const char* Builtin::mojo_io_patch_resource_names_[] = {
+  "/io/internet_address_patch.dart",
+  "/io/mojo_patch.dart",
+  NULL,
+};
+
 Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
-    /* { url_, has_natives_, native_symbol_, native_resolver_,
-         patch_url_, patch_paths_ } */
+    /* { url_,
+         has_natives_,
+         native_symbol_,
+         native_resolver_,
+         patch_library_url_,
+         patch_paths_} */
     {"dart:mojo.builtin",
      true,
      Builtin::NativeSymbol,
@@ -55,6 +66,12 @@ Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
      MojoNativeLookup,
      "dart:mojo.internal-patch",
      mojo_core_patch_resource_names_},
+    {"dart:mojo.io",
+     true,
+     MojoIoNativeSymbol,
+     MojoIoNativeLookup,
+     "dart:mojo.io-patch",
+     mojo_io_patch_resource_names_},
 };
 
 uint8_t Builtin::snapshot_magic_number[] = {0xf5, 0xf5, 0xdc, 0xdc};
@@ -100,6 +117,7 @@ void Builtin::LoadPatchFiles(Dart_Handle library,
     free(patch_filename);
     DART_CHECK_VALID(Dart_LibraryLoadPatch(library, patch_file_uri, patch_src));
   }
+  DART_CHECK_VALID(Dart_FinalizeLoading(false));
 }
 
 Dart_Handle Builtin::GetLibrary(BuiltinLibraryId id) {

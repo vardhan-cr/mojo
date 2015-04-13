@@ -12,3 +12,35 @@ Dart VM. I.e.:
 ```
 $ gn gen --check out/Debug --args='... dart_debug=true'
 ```
+
+## Embedder packages
+
+In order to implement the 'dart:io' library (and run a service isolate hosting
+Observatory), the Mojo Dart embedder needs to use some package: imports. Mojo
+applications should be able to use a different version of these packages than
+the embedder. In other words, the embedder snapshot cannot include any
+'package:' imports because they will prohibit an application from using a newer
+version of the package. In order to allow the embedder to use packages
+without interfering with an application's intended version, we clone the
+packages used by the embedder and rewrite the url to be 'embedder-package:'
+(not 'package:'). Each embedder-package: import must have a mapping provided
+to gen_snapshot which maps from the import uri to a real file system path.
+
+The complete list of packages used by the embedder is located at
+//mojo/dart/embedder/packages.dart.
+
+Adding an embedder-package can be done in three steps:
+
+1) Add embedder-package import to packages.dart, for example:
+
+import 'embedder-package:mojo/public/dart/application.dart';
+
+2) Add dart_embedder_package to //mojo/dart/embedder/BUILD.gn, for example:
+
+dart_embedder_package("dart_embedder_package_application") {
+  package = "mojo/public/interfaces/application"
+}
+
+3) Add the package directory to the list in :generate_snapshot_bin, for example:
+
+rebase_path("//mojo/public/interfaces/application"),

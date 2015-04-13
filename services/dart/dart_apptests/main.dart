@@ -7,7 +7,10 @@ import 'package:services/dart/test/echo_service.mojom.dart';
 
 import 'echo_apptests.dart' as echo;
 import 'pingpong_apptests.dart' as pingpong;
+import 'io_apptests.dart' as io;
 
 main(List args) {
-  runAppTests(args[0], [echo.echoApptests, pingpong.pingpongApptests]);
+  runAppTests(args[0], [echo.echoApptests,
+                        io.ioApptests,
+                        pingpong.pingpongApptests]);
 }

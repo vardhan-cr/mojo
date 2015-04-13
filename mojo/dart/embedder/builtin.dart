@@ -6,8 +6,8 @@ library mojo_builtin;
 
 import 'dart:async';
 import 'dart:convert';
-//import 'dart:_internal';
 import 'dart:mojo.internal';
+
 // import 'root_library'; happens here from C Code
 
 // The root library (aka the script) is imported into this library. The
