@@ -69,7 +69,7 @@ class KioskWM : public mojo::ApplicationDelegate,
 
   // Overriden from ui::AcceleratorTarget:
   bool AcceleratorPressed(const ui::Accelerator& accelerator,
-                          ui::EventTarget* target) override;
+                          mojo::View* target) override;
   bool CanHandleAccelerators() const override;
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;

@@ -14,6 +14,10 @@
 #include "ui/events/event_constants.h"
 #include "ui/events/event_target.h"
 
+namespace mojo {
+class View;
+}
+
 namespace ui {
 
 // The AcceleratorManger is used to handle keyboard accelerators.
@@ -60,8 +64,7 @@ class AcceleratorManager {
   // this method immediately returns. If not, we do the same thing on the next
   // target, and so on.
   // Returns true if an accelerator was activated.
-  bool Process(const Accelerator& accelerator,
-               ui::EventTarget* target);
+  bool Process(const Accelerator& accelerator, mojo::View* target);
 
   // Returns the AcceleratorTarget that should be activated for the specified
   // keyboard accelerator, or NULL if no view is registered for that keyboard

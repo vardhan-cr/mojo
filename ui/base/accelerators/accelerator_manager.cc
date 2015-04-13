@@ -76,7 +76,7 @@ void AcceleratorManager::UnregisterAll(AcceleratorTarget* target) {
 }
 
 bool AcceleratorManager::Process(const Accelerator& accelerator,
-                                 ui::EventTarget* target) {
+                                 mojo::View* target) {
   bool result = false;
   AcceleratorMap::iterator map_iter = accelerators_.find(accelerator);
   if (map_iter != accelerators_.end()) {

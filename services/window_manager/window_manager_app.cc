@@ -245,7 +245,7 @@ void WindowManagerApp::OnEvent(ui::Event* event) {
     const ui::KeyEvent* key_event = static_cast<const ui::KeyEvent*>(event);
     if (key_event->type() == ui::ET_KEY_PRESSED) {
       ui::Accelerator accelerator = ConvertEventToAccelerator(key_event);
-      if (accelerator_manager_.Process(accelerator, event->target()))
+      if (accelerator_manager_.Process(accelerator, view))
         return;
     }
   }

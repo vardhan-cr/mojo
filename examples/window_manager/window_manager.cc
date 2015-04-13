@@ -351,11 +351,10 @@ class WindowManager
 
   // Overriden from ui::AcceleratorTarget:
   bool AcceleratorPressed(const ui::Accelerator& accelerator,
-                          ui::EventTarget* target) override {
+                          mojo::View* view) override {
     if (accelerator.key_code() != ui::VKEY_BROWSER_BACK)
       return false;
 
-    View* view = static_cast<window_manager::ViewTarget*>(target)->view();
     WindowVector::iterator iter = GetWindowByViewId(view->id());
     DCHECK(iter != windows_.end());
     Window* window = *iter;

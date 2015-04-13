@@ -18,6 +18,10 @@
 #include "ui/events/event_target.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 
+namespace mojo {
+class View;
+}
+
 namespace ui {
 
 class PlatformAccelerator;
@@ -90,7 +94,7 @@ class AcceleratorTarget {
  public:
   // Should return true if the accelerator was processed.
   virtual bool AcceleratorPressed(const Accelerator& accelerator,
-                                  ui::EventTarget* target) = 0;
+                                  mojo::View* target) = 0;
 
   // Should return true if the target can handle the accelerator events. The
   // AcceleratorPressed method is invoked only for targets for which

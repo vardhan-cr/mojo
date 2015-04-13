@@ -121,7 +121,7 @@ void KioskWM::ReplaceContentWithURL(const mojo::String& url) {
 }
 
 bool KioskWM::AcceleratorPressed(const ui::Accelerator& accelerator,
-                                 ui::EventTarget* target) {
+                                 mojo::View* target) {
   if (accelerator.key_code() != ui::VKEY_BROWSER_BACK)
     return false;
   navigator_host_.RequestNavigateHistory(-1);
