@@ -75,7 +75,6 @@ test("window_manager_unittests") {
     "run_all_unittests.cc",
     "view_target_unittest.cc",
     "view_targeter_unittest.cc",
-    "window_manager_api_unittest.cc",
     "window_manager_test_util.cc",
     "window_manager_test_util.h",
   ]
@@ -94,7 +93,6 @@ test("window_manager_unittests") {
     "//mojo/services/view_manager/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
     "//shell/application_manager",
-    "//shell:test_support",
     "//testing/gtest",
     "//ui/events:test_support",
     "//ui/gfx",

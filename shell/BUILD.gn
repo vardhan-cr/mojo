@@ -424,20 +424,6 @@ test("mojo_shell_tests") {
   }
 }
 
-source_set("test_support") {
-  sources = [
-    "shell_test_helper.cc",
-    "shell_test_helper.h",
-  ]
-
-  deps = [
-    ":lib",
-    "//base",
-    "//mojo/edk/system",
-    "//shell/application_manager",
-  ]
-}
-
 embed_file("embed_pingable") {
   source = "$root_build_dir/pingable_app.mojo"
   namespace = "shell::test"
