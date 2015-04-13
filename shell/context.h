@@ -49,10 +49,8 @@ class Context : public ApplicationManager::Delegate,
   // success.
   bool Init();
 
-  // Like Init(), but specifies values for |mojo_shell_path()| and
-  // |mojo_shell_child_path()| explicitly.
-  bool InitWithPaths(const base::FilePath& shell_path,
-                     const base::FilePath& shell_child_path);
+  // Like Init(), but specifies |mojo_shell_child_path()| explicitly.
+  bool InitWithPaths(const base::FilePath& shell_child_path);
 
   // If Init() was called and succeeded, this must be called before destruction.
   void Shutdown();
@@ -63,9 +61,7 @@ class Context : public ApplicationManager::Delegate,
   URLResolver* url_resolver() { return &url_resolver_; }
 
   // Available after Init():
-  // These are absolute paths. |mojo_shell_path()| is really the path of the
-  // parent, which may be that of the test binary.
-  const base::FilePath& mojo_shell_path() const { return mojo_shell_path_; }
+  // This is an absolute path.
   const base::FilePath& mojo_shell_child_path() const {
     return mojo_shell_child_path_;
   }
@@ -86,7 +82,6 @@ class Context : public ApplicationManager::Delegate,
   ApplicationManager application_manager_;
   URLResolver url_resolver_;
 
-  base::FilePath mojo_shell_path_;
   base::FilePath mojo_shell_child_path_;
   scoped_ptr<TaskRunners> task_runners_;
 

@@ -47,18 +47,15 @@ const char kFifoPath[] = "fifo-path";
 
 class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
  public:
-  MojoShellRunner(const base::FilePath& mojo_shell_path,
-                  const base::FilePath& mojo_shell_child_path,
+  MojoShellRunner(const base::FilePath& mojo_shell_child_path,
                   const std::vector<std::string>& parameters)
-      : mojo_shell_path_(mojo_shell_path),
-        mojo_shell_child_path_(mojo_shell_child_path),
+      : mojo_shell_child_path_(mojo_shell_child_path),
         parameters_(parameters) {}
   ~MojoShellRunner() override {}
 
  private:
   void Run() override;
 
-  const base::FilePath mojo_shell_path_;
   const base::FilePath mojo_shell_child_path_;
   const std::vector<std::string> parameters_;
 
@@ -113,7 +110,7 @@ void MojoShellRunner::Run() {
   base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
   Context* context = g_context.Pointer()->get();
   ConfigureAndroidServices(context);
-  context->InitWithPaths(mojo_shell_path_, mojo_shell_child_path_);
+  context->InitWithPaths(mojo_shell_child_path_);
 
   for (const auto& args : parameters_)
     ApplyApplicationArgs(context, args);
@@ -149,7 +146,6 @@ void InitializeRedirection() {
 static void Init(JNIEnv* env,
                  jclass clazz,
                  jobject activity,
-                 jstring mojo_shell_path,
                  jstring mojo_shell_child_path,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory,
@@ -166,8 +162,7 @@ static void Init(JNIEnv* env,
   base::android::InitApplicationContext(env, scoped_activity);
 
   std::vector<std::string> parameters;
-  parameters.push_back(
-      base::android::ConvertJavaStringToUTF8(env, mojo_shell_path));
+  parameters.push_back("mojo_shell");
   base::android::AppendJavaStringArrayToStringVector(env, jparameters,
                                                      &parameters);
   base::CommandLine::Init(0, nullptr);
@@ -180,8 +175,6 @@ static void Init(JNIEnv* env,
     tracer->Start(command_line->GetSwitchValueASCII(switches::kTraceStartup));
 
   g_shell_runner.Get().reset(new MojoShellRunner(
-      base::FilePath(
-          base::android::ConvertJavaStringToUTF8(env, mojo_shell_path)),
       base::FilePath(
           base::android::ConvertJavaStringToUTF8(env, mojo_shell_child_path)),
       parameters));
@@ -241,9 +234,3 @@ bool RegisterShellMain(JNIEnv* env) {
 }
 
 }  // namespace shell
-
-// TODO(vtl): We need a main(), even though it should never be called.
-int main(int argc, char** argv) {
-  NOTREACHED();
-  return 1;
-}

@@ -27,9 +27,7 @@ TEST(ContextTest, MAYBE_Paths) {
       scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
 
-  EXPECT_FALSE(context.mojo_shell_path().empty());
   EXPECT_FALSE(context.mojo_shell_child_path().empty());
-  EXPECT_TRUE(context.mojo_shell_path().IsAbsolute());
   EXPECT_TRUE(context.mojo_shell_child_path().IsAbsolute());
 
   context.Shutdown();

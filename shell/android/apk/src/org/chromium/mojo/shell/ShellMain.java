@@ -27,8 +27,6 @@ public class ShellMain {
     private static final String LOCAL_APP_DIRECTORY = "local_apps";
     // Individual applications bundled with the shell as assets.
     private static final String NETWORK_LIBRARY_APP = "network_service.mojo";
-    // Not really an executable, but what we'll use for "argv[0]" (along with the path).
-    private static final String MOJO_SHELL_EXECUTABLE = "libmojo_shell.so";
     // Directory where the child executable will be extracted.
     private static final String CHILD_DIRECTORY = "child";
     // Name of the child executable.
@@ -47,8 +45,6 @@ public class ShellMain {
         try {
             FileHelper.extractFromAssets(applicationContext, NETWORK_LIBRARY_APP,
                     getLocalAppsDir(applicationContext), false);
-            File mojoShell = new File(applicationContext.getApplicationInfo().nativeLibraryDir,
-                    MOJO_SHELL_EXECUTABLE);
             FileHelper.extractFromAssets(applicationContext, MOJO_SHELL_CHILD_EXECUTABLE,
                     getChildDir(applicationContext), false);
             File mojoShellChild =
@@ -62,8 +58,7 @@ public class ShellMain {
                 parametersList.addAll(Arrays.asList(parameters));
             }
 
-            nativeInit(applicationContext, mojoShell.getAbsolutePath(),
-                    mojoShellChild.getAbsolutePath(),
+            nativeInit(applicationContext, mojoShellChild.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
                     getTmpDir(applicationContext).getAbsolutePath());
@@ -110,9 +105,8 @@ public class ShellMain {
     /**
      * Initializes the native system. This API should be called only once per process.
      **/
-    private static native void nativeInit(Context context, String mojoShellPath,
-            String mojoShellChildPath, String[] parameters, String bundledAppsDirectory,
-            String tmpDir);
+    private static native void nativeInit(Context context, String mojoShellChildPath,
+            String[] parameters, String bundledAppsDirectory, String tmpDir);
 
     private static native boolean nativeStart();
 
