@@ -247,7 +247,6 @@ def StartShell(arguments,
          'shell',
          'am',
          'start',
-         '-W',
          '-S',
          '-a', 'android.intent.action.VIEW',
          '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME]
