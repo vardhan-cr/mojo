@@ -36,6 +36,8 @@ class ConformanceTestInterfaceImpl implements ConformanceTestInterface {
   method9(List<List<MojoHandle>> param0) => _complete();
   method10(Map<String, int> param0) => _complete();
   method11(StructG param0) => _complete();
+  // TODO(yzshen): Why method12 is not here?
+  //method13(Object param0, int param1, Object param2) => _complete();
 
   Future close({bool immediate: false}) => _stub.close(immediate: immediate);
 }
@@ -82,9 +84,12 @@ runTest(String name, parser.ValidationParseResult test, String expected) {
   });
 }
 
+// TODO(yzshen): Skip method12/13 tests for now.
 Iterable<String> getTestFiles(String path, String prefix) => builtin
     .enumerateFiles(path)
-    .where((s) => s.startsWith(prefix) && s.endsWith(".data"))
+    .where((s) => s.startsWith(prefix) && s.endsWith(".data") &&
+                  !s.contains("mthd12") &&
+                  !s.contains("mthd13"))
     .map((s) => s.replaceFirst('.data', ''));
 
 main(List args) {

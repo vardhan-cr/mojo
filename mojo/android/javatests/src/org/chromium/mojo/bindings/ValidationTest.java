@@ -55,6 +55,10 @@ public class ValidationTest extends MojoTestCase {
 
         @Override
         public boolean accept(File pathname) {
+            // TODO(yzshen, qsr): skip some interface versioning tests.
+            if (pathname.getName().startsWith("conformance_mthd13_good_2")) {
+                return false;
+            }
             return pathname.isFile() && pathname.getName().startsWith(mPrefix)
                     && pathname.getName().endsWith(".data");
         }
