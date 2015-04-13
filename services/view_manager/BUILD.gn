@@ -47,6 +47,7 @@ source_set("view_manager_lib") {
     "server_view.cc",
     "server_view.h",
     "server_view_delegate.h",
+    "server_view_observer.h",
     "view_coordinate_conversions.cc",
     "view_coordinate_conversions.h",
     "view_manager_service_impl.cc",

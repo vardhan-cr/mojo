@@ -17,6 +17,7 @@
 #include "services/view_manager/animation_runner.h"
 #include "services/view_manager/ids.h"
 #include "services/view_manager/server_view_delegate.h"
+#include "services/view_manager/server_view_observer.h"
 
 namespace view_manager {
 
@@ -29,6 +30,7 @@ class ViewManagerServiceImpl;
 // ConnectionManager manages the set of connections to the ViewManager (all the
 // ViewManagerServiceImpls) as well as providing the root of the hierarchy.
 class ConnectionManager : public ServerViewDelegate,
+                          public ServerViewObserver,
                           public mojo::WindowManagerInternalClient {
  public:
   // Create when a ViewManagerServiceImpl is about to make a change. Ensures
@@ -68,6 +70,10 @@ class ConnectionManager : public ServerViewDelegate,
                     scoped_ptr<DisplayManager> display_manager,
                     mojo::WindowManagerInternal* wm_internal);
   ~ConnectionManager() override;
+
+  // Creates a new ServerView. The return value is owned by the caller, but must
+  // be destroyed before ConnectionManager.
+  ServerView* CreateServerView(const ViewId& id);
 
   // Returns the id for the next ViewManagerServiceImpl.
   mojo::ConnectionSpecificId GetAndAdvanceNextConnectionId();
@@ -175,27 +181,32 @@ class ConnectionManager : public ServerViewDelegate,
   void DoAnimation();
 
   // Overridden from ServerViewDelegate:
-  void OnWillDestroyView(ServerView* view) override;
+  void PrepareToDestroyView(ServerView* view) override;
+  void PrepareToChangeViewHierarchy(ServerView* view,
+                                    ServerView* new_parent,
+                                    ServerView* old_parent) override;
+  void PrepareToChangeViewVisibility(ServerView* view) override;
+  void OnScheduleViewPaint(const ServerView* view) override;
+
+  // Overridden from ServerViewObserver:
   void OnViewDestroyed(const ServerView* view) override;
-  void OnWillChangeViewHierarchy(ServerView* view,
-                                 ServerView* new_parent,
-                                 ServerView* old_parent) override;
+  void OnWillChangeViewHierarchy(const ServerView* view,
+                                 const ServerView* new_parent,
+                                 const ServerView* old_parent) override;
   void OnViewHierarchyChanged(const ServerView* view,
                               const ServerView* new_parent,
                               const ServerView* old_parent) override;
   void OnViewBoundsChanged(const ServerView* view,
                            const gfx::Rect& old_bounds,
                            const gfx::Rect& new_bounds) override;
-  void OnViewSurfaceIdChanged(const ServerView* view) override;
   void OnViewReordered(const ServerView* view,
                        const ServerView* relative,
                        mojo::OrderDirection direction) override;
-  void OnWillChangeViewVisibility(ServerView* view) override;
+  void OnWillChangeViewVisibility(const ServerView* view) override;
   void OnViewSharedPropertyChanged(
       const ServerView* view,
       const std::string& name,
       const std::vector<uint8_t>* new_data) override;
-  void OnScheduleViewPaint(const ServerView* view) override;
 
   // WindowManagerInternalClient:
   void DispatchInputEventToView(mojo::Id transport_view_id,
