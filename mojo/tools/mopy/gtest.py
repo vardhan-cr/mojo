@@ -23,11 +23,18 @@ def set_color():
     _logger.debug("Setting GTEST_COLOR=yes")
     os.environ["GTEST_COLOR"] = "yes"
 
-def run_fixtures(config, apptest_dict, apptest, test_args, shell_args):
+# TODO(vtl): The return value is bizarre. Should just make it either return
+# True/False, or a list of failing fixtures. But the dart_apptest runner would
+# also need to be updated in the same way.
+def run_fixtures(config, apptest_dict, apptest, isolate, test_args, shell_args):
   """Run the gtest fixtures in isolation."""
 
+  if not isolate:
+    if not RunApptestInShell(config, apptest, test_args, shell_args):
+      return "Failed test(s) in %r" % apptest_dict
+    return "Succeeded"
+
   # List the apptest fixtures so they can be run independently for isolation.
-  # TODO(msw): Run some apptests without fixture isolation?
   fixtures = get_fixtures(config, shell_args, apptest)
 
   if not fixtures:

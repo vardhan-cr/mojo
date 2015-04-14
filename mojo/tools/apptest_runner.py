@@ -51,6 +51,7 @@ def main():
   for apptest_dict in apptest_list:
     apptest = apptest_dict["test"]
     apptest_name = apptest_dict.get("name", apptest)
+    isolate = apptest_dict.get("isolate", True)
     test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", []) + extra_args
 
@@ -63,7 +64,7 @@ def main():
                                              {apptest: test_args})
     else:
       apptest_result = gtest.run_fixtures(config, apptest_dict, apptest,
-                                          test_args, shell_args)
+                                          isolate, test_args, shell_args)
 
     if apptest_result != "Succeeded":
       exit_code = 1

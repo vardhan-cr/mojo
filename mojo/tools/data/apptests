@@ -10,6 +10,9 @@
 #     "test": "mojo:test_app_url",
 #     # Optional display name (otherwise the entry for "test" above is used).
 #     "name": "mojo:test_app_url (more details)",
+#     # Optional boolean indicating whether to run with fixture isolation (i.e.,
+#     # run each test by itself, with a fresh mojo_shell. Default: True.
+#     "isolate": False,
 #     # Optional arguments for the apptest.
 #     "test-args": ["--an_arg", "another_arg"],
 #     # Optional arguments for the shell.
@@ -17,6 +20,8 @@
 #   }
 #
 # TODO(vtl|msw): Add a way of specifying data dependencies.
+# TODO(vtl): Figure out which tests can be run without isolation. Change the
+# default to non-isolation.
 
 tests = [
   {
@@ -36,6 +41,7 @@ tests = [
   },
   {
     "test": "mojo:files_apptests",
+    "isolate": False,
   },
   {
     "test": "mojo:http_server_apptests",
@@ -70,6 +76,7 @@ if config.target_os == config.OS_LINUX:
     # TODO(vtl): See TODO in //services/files/c/BUILD.gn.
     {
       "test": "mojo:mojio_apptests",
+      "isolate": False,
     },
     {
       "test": "mojo:mojo_url_redirector_apptests",
