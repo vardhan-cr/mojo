@@ -1,7 +1,21 @@
 # This file contains a list of Mojo gtest unit tests.
-# This must be valid python. It can use the |config| global that will be a
-# mopy.config.Config object and must set a |tests| global that will contain the
-# tests to run.
+#
+# This must be valid Python. It may use the |config| global that will be a
+# mopy.config.Config object, and must set a |tests| global that will contain the
+# list of tests to run.
+#
+# The entries in |tests| are dictionaries of the following form:
+#   {
+#     # Required URL for apptest.
+#     "test": "mojo:test_app_url",
+#     # Optional display name (otherwise the entry for "test" above is used).
+#     "name": "mojo:test_app_url (more details)",
+#     # Optional arguments for the apptest.
+#     "test-args": ["--an_arg", "another_arg"],
+#     # Optional arguments for the shell.
+#     "shell-args": ["--some-flag-for-the-shell", "--another-flag"],
+#   }
+#
 # TODO(vtl|msw): Add a way of specifying data dependencies.
 
 tests = [
@@ -15,6 +29,7 @@ tests = [
   },
   {
     "test": "mojo:example_apptests",
+    "name": "mojo:example_apptests (multiprocess)",
     # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
     "test-args": ["--example_apptest_arg"],
     "shell-args": ["--enable-multiprocess"],
@@ -45,6 +60,7 @@ if config.target_os == config.OS_LINUX:
   tests += [
     {
       "test": "mojo:example_apptests",
+      "name": "mojo:example_apptests (python_example_service)",
       # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
       "test-args": ["--example_apptest_arg"],
       "shell-args": [
@@ -67,6 +83,7 @@ if config.target_os == config.OS_ANDROID:
   tests += [
     {
       "test": "mojo:example_apptests",
+      "name": "mojo:example_apptests (android_example_service)",
       # ExampleApplicationTest.CheckCommandLineArg checks --example_apptest_arg.
       "test-args": ["--example_apptest_arg"],
       "shell-args": [

@@ -50,11 +50,12 @@ def main():
   exit_code = 0
   for apptest_dict in apptest_list:
     apptest = apptest_dict["test"]
+    apptest_name = apptest_dict.get("name", apptest)
     test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", []) + extra_args
 
-    _logger.info("Will start: %s" % apptest)
-    print "Running %s...." % apptest,
+    _logger.info("Will start: %s" % apptest_name)
+    print "Running %s...." % apptest_name,
     sys.stdout.flush()
 
     if apptest_dict.get("type", "gtest") == "dart":
@@ -67,7 +68,7 @@ def main():
     if apptest_result != "Succeeded":
       exit_code = 1
     print apptest_result
-    _logger.info("Completed: %s" % apptest)
+    _logger.info("Completed: %s" % apptest_name)
 
   return exit_code
 
