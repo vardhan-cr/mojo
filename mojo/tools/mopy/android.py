@@ -178,7 +178,8 @@ def PrepareShellRun(config, origin=None, fixed_port=True):
   Returns arguments that should be appended to shell argument list."""
   build_dir = Paths(config).build_dir
 
-  subprocess.check_call([ADB_PATH, 'root'])
+  if 'cannot run as root' in subprocess.check_output([ADB_PATH, 'root']):
+    raise Exception("Unable to run adb as root.")
   apk_path = os.path.join(build_dir, 'apks', 'MojoShell.apk')
   subprocess.check_call(
       [ADB_PATH, 'install', '-r', apk_path, '-i', MOJO_SHELL_PACKAGE_NAME])
