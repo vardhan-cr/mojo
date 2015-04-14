@@ -91,6 +91,7 @@ group("public_tests") {
     ":mojo_public_system_unittests",
     ":mojo_public_utility_unittests",
     ":mojo_system_impl_private_unittests",
+    ":mojo_task_tracker_perftests",
   ]
 }
 
@@ -140,5 +141,26 @@ test("mojo_system_impl_private_unittests") {
   deps = [
     ":run_all_unittests",
     "../../public/platform/native:system_impl_private_tests",
+  ]
+}
+
+test("mojo_task_tracker_perftests") {
+  deps = [
+    ":run_all_perftests",
+    "../../common",
+    "../../environment:chromium",
+    "../../public/cpp/bindings",
+    "../../public/cpp/bindings:callback",
+    "../../public/cpp/environment",
+    "../../public/cpp/system",
+    "../../public/cpp/test_support:test_utils",
+    "../../public/cpp/utility",
+    "../../public/interfaces/bindings/tests:test_interfaces",
+    "//base",
+    "//testing/gtest",
+  ]
+
+  sources = [
+    "task_tracker_perftests.cc",
   ]
 }
