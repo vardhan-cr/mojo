@@ -20,6 +20,7 @@ tests = [
   },
   {
     "test": "mojo:view_manager_service_apptests_x64.nexe",
+    "type": "gtest_isolated",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
   {

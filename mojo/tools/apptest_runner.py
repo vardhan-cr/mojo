@@ -51,7 +51,7 @@ def main():
   for apptest_dict in apptest_list:
     apptest = apptest_dict["test"]
     apptest_name = apptest_dict.get("name", apptest)
-    isolate = apptest_dict.get("isolate", True)
+    apptest_type = apptest_dict.get("type", "gtest")
     test_args = apptest_dict.get("test-args", [])
     shell_args = apptest_dict.get("shell-args", []) + extra_args
 
@@ -59,12 +59,17 @@ def main():
     print "Running %s...." % apptest_name,
     sys.stdout.flush()
 
-    if apptest_dict.get("type", "gtest") == "dart":
+    if apptest_type == "dart":
       apptest_result = dart_apptest.run_test(config, apptest_dict, shell_args,
                                              {apptest: test_args})
+    elif apptest_type == "gtest":
+      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest, False,
+                                          test_args, shell_args)
+    elif apptest_type == "gtest_isolated":
+      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest, True,
+                                          test_args, shell_args)
     else:
-      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest,
-                                          isolate, test_args, shell_args)
+      apptest_result = "Invalid test type in %r" % apptest_dict
 
     if apptest_result != "Succeeded":
       exit_code = 1
