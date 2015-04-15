@@ -131,16 +131,8 @@ def GetSymboledNameForMojoApp(path):
 def GetSymbolMapping(lines):
   """Returns a mapping (dictionary) from download file to .so."""
   regex = re.compile('Caching mojo app (\S+) at (\S+)')
-  # lib_mojo_shell.so moved to mojo_shell as part of building the APK
-  # currently this is the only library for which we do this.
-  # The install path of the apk can change every install, hence the regexp.
-  lib_mojo_regexp = re.compile(r'(/data/app/.*/libmojo_shell\.so)')
   mappings = {}
   for line in lines:
-    lib_mojo_result = lib_mojo_regexp.search(line)
-    if lib_mojo_result:
-      mappings[lib_mojo_result.group(1)] = 'mojo_shell'
-
     result = regex.search(line)
     if result:
       url = GetBasenameFromMojoApp(result.group(1))
@@ -197,7 +189,7 @@ def main():
     rootdir, symbol.SYMBOLS_DIR = UnzipSymbols(zip_arg)
 
   print "Reading Android symbols from", symbol.SYMBOLS_DIR
-  print "Reading Chrome symbols from", symbol.CHROME_SYMBOLS_DIR
+  print "Reading Mojo symbols from", symbol.CHROME_SYMBOLS_DIR
   stack_core.ConvertTrace(lines, more_info, GetSymbolMapping(lines))
 
   if rootdir:
