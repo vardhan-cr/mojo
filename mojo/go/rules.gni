@@ -121,15 +121,17 @@ template("go_shared_library") {
     build_dir = "${target_out_dir}/${target_name}_build"
     args =
         [
+          "--android",
           "--",
-          "CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 ${go_build_tool}",
+          "${go_build_tool}",
           rebase_path(build_dir, root_build_dir),
           rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
           rebase_path("//", root_build_dir),
           rebase_path(root_out_dir, root_build_dir),
           "-I" + rebase_path("//"),
           "-L" + rebase_path(target_out_dir) + " -l" + static_library_name + "",
-          "build -ldflags=-shared",
+          "build",
+          "-ldflags=-shared",
         ] + rebase_path(invoker.sources, build_dir)
   }
 }

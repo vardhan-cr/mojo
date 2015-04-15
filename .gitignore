@@ -42,6 +42,7 @@ v8.log
 /third_party/fontconfig/src/
 /third_party/freetype/
 /third_party/freetype2/src/
+/third_party/go/tool/
 /third_party/gperf/
 /third_party/icu/
 /third_party/jsr-305/src/
