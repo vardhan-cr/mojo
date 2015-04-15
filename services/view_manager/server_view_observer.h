@@ -23,32 +23,32 @@ class ServerViewObserver {
  public:
   // Invoked when a view is about to be destroyed; before any of the children
   // have been removed and before the view has been removed from its parent.
-  virtual void OnWillDestroyView(const ServerView* view) {}
+  virtual void OnWillDestroyView(ServerView* view) {}
 
   // Invoked at the end of the View's destructor (after it has been removed from
   // the hierarchy).
-  virtual void OnViewDestroyed(const ServerView* view) {}
+  virtual void OnViewDestroyed(ServerView* view) {}
 
-  virtual void OnWillChangeViewHierarchy(const ServerView* view,
-                                         const ServerView* new_parent,
-                                         const ServerView* old_parent) {}
+  virtual void OnWillChangeViewHierarchy(ServerView* view,
+                                         ServerView* new_parent,
+                                         ServerView* old_parent) {}
 
-  virtual void OnViewHierarchyChanged(const ServerView* view,
-                                      const ServerView* new_parent,
-                                      const ServerView* old_parent) {}
+  virtual void OnViewHierarchyChanged(ServerView* view,
+                                      ServerView* new_parent,
+                                      ServerView* old_parent) {}
 
-  virtual void OnViewBoundsChanged(const ServerView* view,
+  virtual void OnViewBoundsChanged(ServerView* view,
                                    const gfx::Rect& old_bounds,
                                    const gfx::Rect& new_bounds) {}
 
-  virtual void OnViewReordered(const ServerView* view,
-                               const ServerView* relative,
+  virtual void OnViewReordered(ServerView* view,
+                               ServerView* relative,
                                mojo::OrderDirection direction) {}
 
-  virtual void OnWillChangeViewVisibility(const ServerView* view) {}
+  virtual void OnWillChangeViewVisibility(ServerView* view) {}
 
   virtual void OnViewSharedPropertyChanged(
-      const ServerView* view,
+      ServerView* view,
       const std::string& name,
       const std::vector<uint8_t>* new_data) {}
 

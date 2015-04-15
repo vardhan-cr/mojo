@@ -400,24 +400,23 @@ void ConnectionManager::OnScheduleViewPaint(const ServerView* view) {
     display_manager_->SchedulePaint(view, gfx::Rect(view->bounds().size()));
 }
 
-void ConnectionManager::OnViewDestroyed(const ServerView* view) {
+void ConnectionManager::OnViewDestroyed(ServerView* view) {
   if (!in_destructor_)
     ProcessViewDeleted(view->id());
 }
 
-void ConnectionManager::OnWillChangeViewHierarchy(
-    const ServerView* view,
-    const ServerView* new_parent,
-    const ServerView* old_parent) {
+void ConnectionManager::OnWillChangeViewHierarchy(ServerView* view,
+                                                  ServerView* new_parent,
+                                                  ServerView* old_parent) {
   if (view->id() == ClonedViewId() || in_destructor_)
     return;
 
   ProcessWillChangeViewHierarchy(view, new_parent, old_parent);
 }
 
-void ConnectionManager::OnViewHierarchyChanged(const ServerView* view,
-                                               const ServerView* new_parent,
-                                               const ServerView* old_parent) {
+void ConnectionManager::OnViewHierarchyChanged(ServerView* view,
+                                               ServerView* new_parent,
+                                               ServerView* old_parent) {
   if (in_destructor_)
     return;
 
@@ -434,7 +433,7 @@ void ConnectionManager::OnViewHierarchyChanged(const ServerView* view,
   }
 }
 
-void ConnectionManager::OnViewBoundsChanged(const ServerView* view,
+void ConnectionManager::OnViewBoundsChanged(ServerView* view,
                                             const gfx::Rect& old_bounds,
                                             const gfx::Rect& new_bounds) {
   if (in_destructor_)
@@ -449,14 +448,14 @@ void ConnectionManager::OnViewBoundsChanged(const ServerView* view,
   display_manager_->SchedulePaint(view->parent(), new_bounds);
 }
 
-void ConnectionManager::OnViewReordered(const ServerView* view,
-                                        const ServerView* relative,
+void ConnectionManager::OnViewReordered(ServerView* view,
+                                        ServerView* relative,
                                         mojo::OrderDirection direction) {
   if (!in_destructor_)
     display_manager_->SchedulePaint(view, gfx::Rect(view->bounds().size()));
 }
 
-void ConnectionManager::OnWillChangeViewVisibility(const ServerView* view) {
+void ConnectionManager::OnWillChangeViewVisibility(ServerView* view) {
   if (in_destructor_)
     return;
 
@@ -474,7 +473,7 @@ void ConnectionManager::OnWillChangeViewVisibility(const ServerView* view) {
 }
 
 void ConnectionManager::OnViewSharedPropertyChanged(
-    const ServerView* view,
+    ServerView* view,
     const std::string& name,
     const std::vector<uint8_t>* new_data) {
   for (auto& pair : connection_map_) {

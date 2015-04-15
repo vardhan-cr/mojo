@@ -189,22 +189,22 @@ class ConnectionManager : public ServerViewDelegate,
   void OnScheduleViewPaint(const ServerView* view) override;
 
   // Overridden from ServerViewObserver:
-  void OnViewDestroyed(const ServerView* view) override;
-  void OnWillChangeViewHierarchy(const ServerView* view,
-                                 const ServerView* new_parent,
-                                 const ServerView* old_parent) override;
-  void OnViewHierarchyChanged(const ServerView* view,
-                              const ServerView* new_parent,
-                              const ServerView* old_parent) override;
-  void OnViewBoundsChanged(const ServerView* view,
+  void OnViewDestroyed(ServerView* view) override;
+  void OnWillChangeViewHierarchy(ServerView* view,
+                                 ServerView* new_parent,
+                                 ServerView* old_parent) override;
+  void OnViewHierarchyChanged(ServerView* view,
+                              ServerView* new_parent,
+                              ServerView* old_parent) override;
+  void OnViewBoundsChanged(ServerView* view,
                            const gfx::Rect& old_bounds,
                            const gfx::Rect& new_bounds) override;
-  void OnViewReordered(const ServerView* view,
-                       const ServerView* relative,
+  void OnViewReordered(ServerView* view,
+                       ServerView* relative,
                        mojo::OrderDirection direction) override;
-  void OnWillChangeViewVisibility(const ServerView* view) override;
+  void OnWillChangeViewVisibility(ServerView* view) override;
   void OnViewSharedPropertyChanged(
-      const ServerView* view,
+      ServerView* view,
       const std::string& name,
       const std::vector<uint8_t>* new_data) override;
 
