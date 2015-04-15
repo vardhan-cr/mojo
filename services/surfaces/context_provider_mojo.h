@@ -8,6 +8,8 @@
 #include "base/macros.h"
 #include "base/synchronization/lock.h"
 #include "cc/output/context_provider.h"
+#include "gpu/command_buffer/client/gles2_interface.h"
+#include "mojo/gpu/mojo_context_support.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/system/core.h"
 
@@ -48,6 +50,7 @@ class ContextProviderMojo : public cc::ContextProvider {
   cc::ContextProvider::Capabilities capabilities_;
   ScopedMessagePipeHandle command_buffer_handle_;
   MojoGLES2Context context_;
+  scoped_ptr<MojoContextSupport> context_support_;
   bool context_lost_;
   LostContextCallback lost_context_callback_;
 

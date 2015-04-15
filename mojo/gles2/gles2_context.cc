@@ -59,6 +59,20 @@ bool GLES2Context::Initialize() {
                                      gpu::gles2::GLES2Implementation::kNoLimit);
 }
 
+namespace {
+void RunSignalSyncCallback(MojoGLES2SignalSyncPointCallback callback,
+                           void* closure) {
+  callback(closure);
+}
+}
+
+void GLES2Context::SignalSyncPoint(uint32_t sync_point,
+                                   MojoGLES2SignalSyncPointCallback callback,
+                                   void* closure) {
+  implementation_->SignalSyncPoint(
+      sync_point, base::Bind(&RunSignalSyncCallback, callback, closure));
+}
+
 void GLES2Context::ContextLost() { lost_callback_(closure_); }
 
 }  // namespace gles2

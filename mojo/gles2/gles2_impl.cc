@@ -60,6 +60,15 @@ void* MojoGLES2GetContextSupport(MojoGLES2Context context) {
   return static_cast<GLES2Context*>(context)->context_support();
 }
 
+void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
+                              uint32_t sync_point,
+                              MojoGLES2SignalSyncPointCallback callback,
+                              void* closure) {
+  DCHECK(context);
+  GLES2Context* client = static_cast<GLES2Context*>(context);
+  client->SignalSyncPoint(sync_point, callback, closure);
+}
+
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType gl##Function PARAMETERS {                             \
     DCHECK(g_gpu_interface.Get().Get());                           \

@@ -22,6 +22,7 @@ bool ContextProviderMojo::BindToCurrentThread() {
                                     &ContextLostThunk, this,
                                     Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
+  context_support_.reset(new MojoContextSupport(context_));
   return !!context_;
 }
 
@@ -33,10 +34,7 @@ gpu::gles2::GLES2Interface* ContextProviderMojo::ContextGL() {
 }
 
 gpu::ContextSupport* ContextProviderMojo::ContextSupport() {
-  if (!context_)
-    return nullptr;
-  return static_cast<gpu::ContextSupport*>(
-      MojoGLES2GetContextSupport(context_));
+  return context_support_.get();
 }
 
 class GrContext* ContextProviderMojo::GrContext() {

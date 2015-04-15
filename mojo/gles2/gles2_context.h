@@ -38,6 +38,10 @@ class GLES2Context : public CommandBufferDelegate,
   }
   gpu::ContextSupport* context_support() const { return implementation_.get(); }
 
+  void SignalSyncPoint(uint32_t sync_point,
+                       MojoGLES2SignalSyncPointCallback callback,
+                       void* closure);
+
  private:
   void ContextLost() override;
 
