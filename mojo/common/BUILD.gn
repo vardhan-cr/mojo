@@ -22,8 +22,6 @@ component("common") {
     "message_pump_mojo.cc",
     "message_pump_mojo.h",
     "message_pump_mojo_handler.h",
-    "task_tracker.cc",
-    "task_tracker.h",
     "time_helper.cc",
     "time_helper.h",
     "weak_binding_set.h",
@@ -49,7 +47,6 @@ test("mojo_common_unittests") {
     "data_pipe_utils_unittest.cc",
     "handle_watcher_unittest.cc",
     "message_pump_mojo_unittest.cc",
-    "task_tracker_unittest.cc",
   ]
 
   deps = [
