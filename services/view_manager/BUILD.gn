@@ -53,6 +53,8 @@ source_set("view_manager_lib") {
     "server_view_observer.h",
     "view_coordinate_conversions.cc",
     "view_coordinate_conversions.h",
+    "view_locator.cc",
+    "view_locator.h",
     "view_manager_service_impl.cc",
     "view_manager_service_impl.h",
     "window_manager_access_policy.cc",

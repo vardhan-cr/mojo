@@ -11,6 +11,7 @@
 #include "services/view_manager/gesture_manager_delegate.h"
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/view_coordinate_conversions.h"
+#include "services/view_manager/view_locator.h"
 #include "ui/gfx/geometry/point_f.h"
 
 namespace view_manager {
@@ -26,28 +27,6 @@ GestureManager::GestureAndConnectionId MakeGestureAndConnectionId(
               view->id().connection_id)
           << 32) |
          gesture_id;
-}
-
-// Finds the deepest visible view that contains the specified location. On exit
-// |location| is in the coordinates of the returned View.
-// This never returns null, |parent| is returned if none of the children contain
-// |location|.
-const ServerView* FindDeepestVisibleView(const ServerView* parent,
-                                         const gfx::Point& location) {
-  for (const ServerView* child : parent->GetChildren()) {
-    if (!child->visible())
-      continue;
-
-    // TODO(sky): support transform.
-    const gfx::Point child_location(location.x() - child->bounds().x(),
-                                    location.y() - child->bounds().y());
-    if (child_location.x() >= 0 && child_location.y() >= 0 &&
-        child_location.x() < child->bounds().width() &&
-        child_location.y() < child->bounds().height()) {
-      return FindDeepestVisibleView(child, child_location);
-    }
-  }
-  return parent;
 }
 
 // Returns the views (deepest first) that should receive touch events. This only
