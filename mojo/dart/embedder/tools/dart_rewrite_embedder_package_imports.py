@@ -39,7 +39,7 @@ def main(args):
   # Rewrite source.
   source_contents = source_contents.replace(
       "import 'package:",
-      "import 'embedder-package:")
+      "import 'dart:_")
   # Open destination
   destination_file = open(destination, 'w')
   # Write destination

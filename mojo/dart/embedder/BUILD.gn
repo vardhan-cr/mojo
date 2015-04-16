@@ -358,10 +358,10 @@ action("generate_snapshot_bin") {
            "--url_mapping=dart:mojo.io,$io_path",
 
            # Embedder packages
-           "--url_mapping=embedder-package:packages.dart,$embedder_packages_path",
-           "--url_mapping=embedder-package:mojo/public/dart/application.dart,$embedder_package_application_path",
-           "--url_mapping=embedder-package:mojo/public/dart/bindings.dart,$embedder_package_bindings_path",
-           "--url_mapping=embedder-package:mojo/public/dart/core.dart,$embedder_package_core_path",
+           "--url_mapping=dart:embedder_private_packages,$embedder_packages_path",
+           "--url_mapping=dart:_mojo/public/dart/application.dart,$embedder_package_application_path",
+           "--url_mapping=dart:_mojo/public/dart/bindings.dart,$embedder_package_bindings_path",
+           "--url_mapping=dart:_mojo/public/dart/core.dart,$embedder_package_core_path",
          ] + embedder_mojom_url_mappings
 }
 

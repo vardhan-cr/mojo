@@ -26,7 +26,7 @@ def scan(package_root, directory, mapped_to):
       path = os.path.join(mapped_to, f)
       # Append .dart.
       path += '.dart'
-      print('--url_mapping=embedder-package:' + path + ',' +
+      print('--url_mapping=dart:_' + path + ',' +
             os.path.join(package_root, path))
 
 def main(args):

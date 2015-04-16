@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'embedder-package:mojo/public/dart/application.dart';
-import 'embedder-package:mojo/public/dart/bindings.dart';
-import 'embedder-package:mojo/public/dart/core.dart';
-import 'embedder-package:mojo/net_address.mojom.dart';
-import 'embedder-package:mojo/network_error.mojom.dart';
-import 'embedder-package:mojo/network_service.mojom.dart';
-import 'embedder-package:mojo/tcp_bound_socket.mojom.dart';
-import 'embedder-package:mojo/tcp_connected_socket.mojom.dart';
-import 'embedder-package:mojo/tcp_server_socket.mojom.dart';
+import 'dart:_mojo/public/dart/application.dart';
+import 'dart:_mojo/public/dart/bindings.dart';
+import 'dart:_mojo/public/dart/core.dart';
+import 'dart:_mojo/net_address.mojom.dart';
+import 'dart:_mojo/network_error.mojom.dart';
+import 'dart:_mojo/network_service.mojom.dart';
+import 'dart:_mojo/tcp_bound_socket.mojom.dart';
+import 'dart:_mojo/tcp_connected_socket.mojom.dart';
+import 'dart:_mojo/tcp_server_socket.mojom.dart';
 
 //
 // Mojo objects and helper functions used by the 'dart:io' library.

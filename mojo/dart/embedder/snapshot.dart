@@ -14,5 +14,5 @@ import 'dart:mojo.internal';
 import 'dart:mojo.io';
 import 'dart:typed_data';
 
-// Import packages.dart which contains all embedder-package imports.
-import 'embedder-package:packages.dart';
+// Import packages.dart which contains all embedder package imports.
+import 'dart:embedder_private_packages';

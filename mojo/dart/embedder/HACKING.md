@@ -22,18 +22,18 @@ the embedder. In other words, the embedder snapshot cannot include any
 'package:' imports because they will prohibit an application from using a newer
 version of the package. In order to allow the embedder to use packages
 without interfering with an application's intended version, we clone the
-packages used by the embedder and rewrite the url to be 'embedder-package:'
-(not 'package:'). Each embedder-package: import must have a mapping provided
+packages used by the embedder and rewrite the url to start with 'dart:_'
+(not 'package:'). Each dart:_ import must have a mapping provided
 to gen_snapshot which maps from the import uri to a real file system path.
 
 The complete list of packages used by the embedder is located at
 //mojo/dart/embedder/packages.dart.
 
-Adding an embedder-package can be done in three steps:
+Adding an embedder package can be done in three steps:
 
-1) Add embedder-package import to packages.dart, for example:
+1) Add 'dart:_' import to packages.dart, for example:
 
-import 'embedder-package:mojo/public/dart/application.dart';
+import 'dart:_mojo/public/dart/application.dart';
 
 2) Add dart_embedder_package to //mojo/dart/embedder/BUILD.gn, for example:
 
