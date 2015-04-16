@@ -16,10 +16,12 @@ import (
 )
 
 var core system.Core
+var waiter bindings.AsyncWaiter
 
 func init() {
 	embedder.InitializeMojoEmbedder()
 	core = system.GetCore()
+	waiter = bindings.GetAsyncWaiter()
 }
 
 type mockHandle struct {

@@ -295,17 +295,20 @@ func (v *conformanceValidator) Method10(inParam0 map[string]uint8) error {
 	return v.Proxy.Method10(inParam0)
 }
 
-func (v *conformanceValidator) Method11(inParam0 test.StructG) error {
+func (v *conformanceValidator) Method11(test.StructG) error {
 	return nil
 }
 
-func (v *conformanceValidator) Method12(inParam0 float32) (float32, error) {
+func (v *conformanceValidator) Method12(float32) (float32, error) {
 	return 0, nil
+}
+
+func (v *conformanceValidator) Method13(*test.InterfaceAPointer, uint32, *test.InterfaceAPointer) error {
+	return nil
 }
 
 func TestConformanceValidation(t *testing.T) {
 	tests := getMatchingTests(listTestFiles(), "conformance_")
-	waiter := bindings.GetAsyncWaiter()
 
 	h := NewMockMessagePipeHandle()
 	proxyIn, proxyOut := h, h
@@ -341,61 +344,92 @@ func TestConformanceValidation(t *testing.T) {
 	}
 }
 
-type integrationStubImpl struct {
-}
-
-func (s *integrationStubImpl) Method0(inParam0 test.BasicStruct) ([]uint8, error) {
-	return nil, nil
-}
-
-func runIntegrationTest(t *testing.T, tests []string, testRequest, testResponse bool) {
-	waiter := bindings.GetAsyncWaiter()
-	_, stubIn, stubOut := core.CreateMessagePipe(nil)
-	interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(stubOut)}
-	stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
-	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
-	interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(proxyIn)}
-	proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
-
-	inArg := test.BasicStruct{}
+func runTests(t *testing.T, prefix string, in system.MessagePipeHandle, check func() error) {
+	tests := getMatchingTests(listTestFiles(), prefix)
 	for i, test := range tests {
 		bytes, handles := readTest(test)
 		answer := readAnswer(test)
 		// Replace request ID to match proxy numbers.
-		bytes[16] = byte(i + 1)
-
-		if testRequest {
-			stubIn.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
-			err := stub.ServeRequest()
-			if (err == nil) != (answer == "PASS") {
-				t.Fatalf("unexpected result for test %v: %v", test, err)
-			}
+		if bytes[0] == 24 {
+			bytes[16] = byte(i + 1)
 		}
-		if testResponse {
-			proxyOut.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
-			_, err := proxy.Method0(inArg)
-			if (err == nil) != (answer == "PASS") {
-				t.Fatalf("unexpected result for test %v: %v", test, err)
-			}
+		in.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
+		err := check()
+		if (err == nil) != (answer == "PASS") {
+			t.Fatalf("unexpected result for test %v: %v", test, err)
 		}
 	}
+}
+
+type integrationStubImpl struct{}
+
+func (s *integrationStubImpl) Method0(test.BasicStruct) ([]uint8, error) {
+	return nil, nil
+}
+
+func TestIntegrationTests(t *testing.T) {
+	_, stubIn, stubOut := core.CreateMessagePipe(nil)
+	interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(stubOut)}
+	stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
+	checkStub := func() error { return stub.ServeRequest() }
+	runTests(t, "integration_intf_rqst_", stubIn, checkStub)
+	runTests(t, "integration_msghdr_", stubIn, checkStub)
 	stubIn.Close()
-	stubOut.Close()
-	proxyIn.Close()
+	stub.Close()
+
+	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
+	interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(proxyIn)}
+	proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
+	checkProxy := func() error {
+		_, err := proxy.Method0(test.BasicStruct{})
+		return err
+	}
+	runTests(t, "integration_intf_resp_", proxyOut, checkProxy)
+	runTests(t, "integration_msghdr_", proxyOut, checkProxy)
+	proxy.Close_proxy()
 	proxyOut.Close()
 }
 
-func TestIntegrationRequestValidation(t *testing.T) {
-	tests := getMatchingTests(listTestFiles(), "integration_intf_rqst")
-	runIntegrationTest(t, tests, true, false)
+type boundsCheckStubImpl struct{}
+
+func (s *boundsCheckStubImpl) Method0(uint8) (uint8, error) {
+	return 0, nil
 }
 
-func TestIntegrationResponseValidation(t *testing.T) {
-	tests := getMatchingTests(listTestFiles(), "integration_intf_resp")
-	runIntegrationTest(t, tests, false, true)
+func (s *boundsCheckStubImpl) Method1(uint8) error {
+	return nil
 }
 
-func TestIntegrationHeaderValidation(t *testing.T) {
-	tests := getMatchingTests(listTestFiles(), "integration_msghdr")
-	runIntegrationTest(t, tests, true, true)
+func TestBoundsCheck(t *testing.T) {
+	_, stubIn, stubOut := core.CreateMessagePipe(nil)
+	interfaceRequest := test.BoundsCheckTestInterfaceRequest{pipeOwner(stubOut)}
+	stub := test.NewBoundsCheckTestInterfaceStub(interfaceRequest, &boundsCheckStubImpl{}, waiter)
+	checkStub := func() error { return stub.ServeRequest() }
+	runTests(t, "boundscheck_", stubIn, checkStub)
+	stubIn.Close()
+	stub.Close()
+
+	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
+	interfacePointer := test.BoundsCheckTestInterfacePointer{pipeOwner(proxyIn)}
+	proxy := test.NewBoundsCheckTestInterfaceProxy(interfacePointer, waiter)
+	checkProxy := func() error {
+		_, err := proxy.Method0(0)
+		return err
+	}
+	runTests(t, "resp_boundscheck_", proxyOut, checkProxy)
+	proxy.Close_proxy()
+	proxyOut.Close()
+}
+
+func TestConformanceResponse(t *testing.T) {
+	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
+	interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(proxyIn)}
+	proxy := test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)
+	checkProxy := func() error {
+		_, err := proxy.Method12(0)
+		return err
+	}
+	runTests(t, "resp_conformance_", proxyOut, checkProxy)
+	proxy.Close_proxy()
+	proxyOut.Close()
 }

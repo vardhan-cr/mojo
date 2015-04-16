@@ -28,7 +28,6 @@ func checkWait(handle system.Handle, signals system.MojoHandleSignals, expected 
 
 func checkCancel(handle system.Handle, wg *sync.WaitGroup) {
 	wg.Add(1)
-	waiter := bindings.GetAsyncWaiter()
 	responseChan := make(chan bindings.WaitResponse)
 	id := waiter.AsyncWait(handle, system.MOJO_HANDLE_SIGNAL_READABLE, responseChan)
 	go func() {

@@ -13,9 +13,7 @@ import (
 )
 
 func TestProxyClosesPipe(t *testing.T) {
-	waiter := bindings.GetAsyncWaiter()
 	request, pointer := echo.CreateMessagePipeForEcho()
-
 	// Create a message with valid header and invalid payload and send it.
 	header := bindings.MessageHeader{0, bindings.MessageIsResponseFlag, 1}
 	message, err := bindings.EncodeMessage(header, &header)
@@ -51,9 +49,7 @@ func (impl *echoImpl) EchoString(in *string) (*string, error) {
 }
 
 func TestStubClosesPipe(t *testing.T) {
-	waiter := bindings.GetAsyncWaiter()
 	request, pointer := echo.CreateMessagePipeForEcho()
-
 	// Create a message with valid header and invalid payload and send it.
 	header := bindings.MessageHeader{0, bindings.MessageIsResponseFlag, 1}
 	message, err := bindings.EncodeMessage(header, &header)
