@@ -31,7 +31,7 @@ copy("copy_dart_mojo_sdk") {
     "//mojo/public/dart/src/types.dart",
   ]
   outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}",
+    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
   ]
 }
 
@@ -77,7 +77,7 @@ copy("expect") {
     "//mojo/dart/testing/expect.dart",
   ]
   outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}",
+    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
   ]
 }
 
@@ -86,7 +86,7 @@ copy("validation_test_input_parser") {
     "//mojo/dart/testing/validation_test_input_parser.dart",
   ]
   outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}",
+    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
   ]
 }
 
@@ -95,7 +95,7 @@ copy("async_helper") {
     "//mojo/dart/testing/async_helper.dart",
   ]
   outputs = [
-    "{{source_gen_dir}}/{{source_file_part}}",
+    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
   ]
 }
 

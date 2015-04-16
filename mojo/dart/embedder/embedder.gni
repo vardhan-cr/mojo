@@ -9,6 +9,11 @@ template("dart_embedder_package") {
   package = invoker.package
   package_path = "//$package"
 
+  destination = package
+  if (defined(invoker.destination)) {
+    destination = invoker.destination
+  }
+
   action_foreach(target_name) {
     deps = [
       package_path,
@@ -26,14 +31,14 @@ template("dart_embedder_package") {
                                      "list lines")
     sources = rebase_path(generated_bindings, ".", root_gen_dir)
     outputs = [
-      "$root_gen_dir/dart_embedder_packages/$package/{{source_file_part}}",
+      "$root_gen_dir/dart_embedder_packages/$destination/{{source_file_part}}",
     ]
     script = rebase_path(
             "//mojo/dart/embedder/tools/dart_rewrite_embedder_package_imports.py")
     args = [
       rebase_path("{{source}}", "", root_build_dir),
       rebase_path(
-          "$root_gen_dir/dart_embedder_packages/$package/{{source_file_part}}"),
+          "$root_gen_dir/dart_embedder_packages/$destination/{{source_file_part}}"),
     ]
   }
 }

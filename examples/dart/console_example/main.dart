@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
-import 'package:mojo/services/console/public/interfaces/console.mojom.dart';
+import 'package:mojo/console.mojom.dart';
 
 class ConsoleApplication extends Application {
   ConsoleProxy _console;

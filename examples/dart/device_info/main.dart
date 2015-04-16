@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
-import 'package:mojo/services/device_info/public/interfaces/device_info.mojom.dart';
+import 'package:mojo/device_info.mojom.dart';
 
 class DeviceInfoApp extends Application {
   final DeviceInfoProxy _deviceInfo = new DeviceInfoProxy.unbound();

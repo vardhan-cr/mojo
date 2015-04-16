@@ -5,7 +5,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:mojo/dart/embedder/test/dart_to_cpp.mojom.dart';
+import 'package:dart_to_cpp/dart_to_cpp.mojom.dart';
 import 'package:mojo/public/dart/bindings.dart' as bindings;
 import 'package:mojo/public/dart/core.dart' as core;
 

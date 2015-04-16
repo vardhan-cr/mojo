@@ -8,7 +8,7 @@ import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
 
-import 'package:services/dart/test/pingpong_service.mojom.dart';
+import 'package:dart/test/pingpong_service.mojom.dart';
 
 class PingPongClientImpl implements PingPongClient {
   final PingPongClientStub stub;

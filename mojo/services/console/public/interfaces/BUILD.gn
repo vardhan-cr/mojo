@@ -9,6 +9,4 @@ mojom("interfaces") {
   sources = [
     "console.mojom",
   ]
-
-  import_from = mojo_root
 }

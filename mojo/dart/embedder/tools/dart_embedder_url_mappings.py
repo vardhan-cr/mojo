@@ -15,16 +15,15 @@ import argparse
 import os
 import sys
 
-def scan(root, package_root, directory):
+def scan(package_root, directory, mapped_to):
   for dirname, _, filenames in os.walk(directory):
-    # filter for .mojom.dart files.
+    # Ignore tests.
+    if dirname.endswith('tests'):
+      continue;
+    # filter for .mojom files.
     filenames = [f for f in filenames if f.endswith('.mojom')]
     for f in filenames:
-      # Ignore tests.
-      if dirname.endswith('tests'):
-        continue;
-      path = os.path.abspath(os.path.join(dirname, f))
-      path = os.path.relpath(path, root)
+      path = os.path.join(mapped_to, f)
       # Append .dart.
       path += '.dart'
       print('--url_mapping=embedder-package:' + path + ',' +
@@ -33,10 +32,6 @@ def scan(root, package_root, directory):
 def main(args):
   parser = argparse.ArgumentParser(
       description='Generates --url_mapping arguments suitable for gen_snapshot')
-  parser.add_argument('import_directory_root',
-                      metavar='import_directory_root',
-                      help='Path to directory which all package import paths'
-                           ' are relative to.')
   parser.add_argument('package_directory_root',
                       metavar='package_directory_root',
                       help='Path to directory containing target .dart '
@@ -46,12 +41,13 @@ def main(args):
                       nargs='+',
                       help='Paths to package(s) directories.')
   args = parser.parse_args()
-  import_root = os.path.abspath(args.import_directory_root)
   package_root = os.path.abspath(args.package_directory_root)
   packages = args.packages
   for package in packages:
-    directory = os.path.abspath(package)
-    scan(import_root, package_root, directory)
+    mapping = package.split(',', 1)
+    directory = os.path.abspath(mapping[0])
+    mapped_to = mapping[1]
+    scan(package_root, directory, mapped_to)
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))

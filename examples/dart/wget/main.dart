@@ -11,8 +11,8 @@ import 'dart:typed_data';
 import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
-import 'package:mojo/services/network/public/interfaces/network_service.mojom.dart';
-import 'package:mojo/services/network/public/interfaces/url_loader.mojom.dart';
+import 'package:mojo/network_service.mojom.dart';
+import 'package:mojo/url_loader.mojom.dart';
 
 class WGet extends Application {
   NetworkServiceProxy _networkService;
