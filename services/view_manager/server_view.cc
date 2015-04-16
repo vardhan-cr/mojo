@@ -17,7 +17,11 @@ ServerView::ServerView(ServerViewDelegate* delegate, const ViewId& id)
       id_(id),
       parent_(nullptr),
       visible_(false),
-      opacity_(1) {
+      opacity_(1),
+      // Don't notify newly added observers during notification. This causes
+      // problems for code that adds an observer as part of an observer
+      // notification (such as ServerViewDrawTracker).
+      observers_(ObserverList<ServerViewObserver>::NOTIFY_EXISTING_ONLY) {
   DCHECK(delegate);  // Must provide a delegate.
 }
 
@@ -148,6 +152,8 @@ void ServerView::SetVisible(bool value) {
   FOR_EACH_OBSERVER(ServerViewObserver, observers_,
                     OnWillChangeViewVisibility(this));
   visible_ = value;
+  FOR_EACH_OBSERVER(ServerViewObserver, observers_,
+                    OnViewVisibilityChanged(this));
 }
 
 void ServerView::SetOpacity(float value) {

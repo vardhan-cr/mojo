@@ -19,6 +19,7 @@ namespace view_manager {
 
 class ServerView;
 
+// TODO(sky): rename to OnDid and OnWill everywhere.
 class ServerViewObserver {
  public:
   // Invoked when a view is about to be destroyed; before any of the children
@@ -46,6 +47,7 @@ class ServerViewObserver {
                                mojo::OrderDirection direction) {}
 
   virtual void OnWillChangeViewVisibility(ServerView* view) {}
+  virtual void OnViewVisibilityChanged(ServerView* view) {}
 
   virtual void OnViewSharedPropertyChanged(
       ServerView* view,

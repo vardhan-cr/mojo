@@ -26,6 +26,10 @@ class ServerViewObserver;
 // It is assumed that all functions that mutate the tree have validated the
 // mutation is possible before hand. For example, Reorder() assumes the supplied
 // view is a child and not already in position.
+//
+// ServerViews do not own their children. If you delete a view that has children
+// the children are implicitly removed. Similarly if a view has a parent and the
+// view is deleted the deleted view is implicitly removed from the parent.
 class ServerView {
  public:
   ServerView(ServerViewDelegate* delegate, const ViewId& id);
