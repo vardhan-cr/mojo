@@ -78,8 +78,8 @@ def GetTestList(config, verbose_count=0):
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT):
     AddXvfbEntry("Unit tests",
                  [os.path.join("mojo", "tools", "test_runner.py"),
-                  os.path.join("mojo", "tools", "data", "unittests"), build_dir,
-                  "mojob_test_successes"] + verbose_flags)
+                  os.path.join("mojo", "tools", "data", "unittests"),
+                  build_dir] + verbose_flags)
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):

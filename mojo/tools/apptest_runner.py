@@ -22,24 +22,25 @@ _logger = logging.getLogger()
 
 
 def main():
-  parser = argparse.ArgumentParser(description="A test runner for gtest "
-                                   "application tests.")
+  parser = argparse.ArgumentParser(description="A test runner for application "
+                                               "tests.")
 
-  parser.add_argument("--verbose", help="Be verbose (multiple times for more)",
+  parser.add_argument("--verbose", help="be verbose (multiple times for more)",
                       default=0, dest="verbose_count", action="count")
-  parser.add_argument("apptest_list_file", type=file,
-                      help="A file listing apptests to run.")
+  parser.add_argument("test_list_file", type=file,
+                      help="a file listing apptests to run")
   parser.add_argument("build_dir", type=str,
-                      help="The build output directory.")
+                      help="the build output directory")
   args = parser.parse_args()
 
   InitLogging(args.verbose_count)
   config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
 
+  _logger.debug("Test list file: %s", args.test_list_file)
   execution_globals = {"config": config}
-  exec args.apptest_list_file in execution_globals
-  apptest_list = execution_globals["tests"]
-  _logger.debug("Test list: %s" % apptest_list)
+  exec args.test_list_file in execution_globals
+  test_list = execution_globals["tests"]
+  _logger.debug("Test list: %s" % test_list)
 
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
@@ -48,33 +49,33 @@ def main():
   gtest.set_color()
 
   exit_code = 0
-  for apptest_dict in apptest_list:
-    apptest = apptest_dict["test"]
-    apptest_name = apptest_dict.get("name", apptest)
-    apptest_type = apptest_dict.get("type", "gtest")
-    test_args = apptest_dict.get("test-args", [])
-    shell_args = apptest_dict.get("shell-args", []) + extra_args
+  for test_dict in test_list:
+    test = test_dict["test"]
+    test_name = test_dict.get("name", test)
+    test_type = test_dict.get("type", "gtest")
+    test_args = test_dict.get("test-args", [])
+    shell_args = test_dict.get("shell-args", []) + extra_args
 
-    _logger.info("Will start: %s" % apptest_name)
-    print "Running %s...." % apptest_name,
+    _logger.info("Will start: %s" % test_name)
+    print "Running %s...." % test_name,
     sys.stdout.flush()
 
-    if apptest_type == "dart":
-      apptest_result = dart_apptest.run_test(config, apptest_dict, shell_args,
-                                             {apptest: test_args})
-    elif apptest_type == "gtest":
-      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest, False,
+    if test_type == "dart":
+      apptest_result = dart_apptest.run_test(config, test_dict, shell_args,
+                                             {test: test_args})
+    elif test_type == "gtest":
+      apptest_result = gtest.run_fixtures(config, test_dict, test, False,
                                           test_args, shell_args)
-    elif apptest_type == "gtest_isolated":
-      apptest_result = gtest.run_fixtures(config, apptest_dict, apptest, True,
+    elif test_type == "gtest_isolated":
+      apptest_result = gtest.run_fixtures(config, test_dict, test, True,
                                           test_args, shell_args)
     else:
-      apptest_result = "Invalid test type in %r" % apptest_dict
+      apptest_result = "Invalid test type in %r" % test_dict
 
     if apptest_result != "Succeeded":
       exit_code = 1
     print apptest_result
-    _logger.info("Completed: %s" % apptest_name)
+    _logger.info("Completed: %s" % test_name)
 
   return exit_code
 
