@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.domokit.keyboard;
+package org.chromium.mojo.keyboard;
 
 import android.content.Context;
 import android.view.View;
@@ -25,6 +25,11 @@ public class KeyboardServiceImpl implements KeyboardService {
 
     private Context mContext;
 
+    public KeyboardServiceImpl(Context context, MessagePipeHandle pipe) {
+        mContext = context;
+        KeyboardService.MANAGER.bind(this, pipe);
+    }
+
     public KeyboardServiceImpl(Context context, Core core, MessagePipeHandle pipe) {
         mContext = context;
 
@@ -36,13 +41,17 @@ public class KeyboardServiceImpl implements KeyboardService {
     }
 
     public static InputConnection createInputConnection(EditorInfo outAttrs) {
-        if (sActiveClient == null)
-            return null;
+        if (sActiveClient == null) return null;
         return new InputConnectionAdaptor(sActiveView, sActiveClient, outAttrs);
     }
 
     @Override
-    public void close() {}
+    public void close() {
+        if (sActiveClient != null) {
+            sActiveClient.close();
+            sActiveClient = null;
+        }
+    }
 
     @Override
     public void onConnectionError(MojoException e) {}
@@ -60,5 +69,7 @@ public class KeyboardServiceImpl implements KeyboardService {
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(sActiveView.getApplicationWindowToken(), 0);
+        sActiveClient.close();
+        sActiveClient = null;
     }
 }

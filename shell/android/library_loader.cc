@@ -7,6 +7,7 @@
 #include "base/android/jni_android.h"
 #include "base/android/jni_registrar.h"
 #include "base/bind.h"
+#include "mojo/android/system/core_impl.h"
 #include "services/native_viewport/platform_viewport_android.h"
 #include "shell/android/android_handler.h"
 #include "shell/android/intent_receiver_manager_impl.h"
@@ -26,6 +27,9 @@ base::android::RegistrationMethod kMojoRegisteredMethods[] = {
 
 bool RegisterJNI(JNIEnv* env) {
   if (!base::android::RegisterJni(env))
+    return false;
+
+  if (!mojo::android::RegisterCoreImpl(env))
     return false;
 
   return RegisterNativeMethods(env, kMojoRegisteredMethods,

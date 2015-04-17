@@ -31,7 +31,7 @@ bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
     ApplicationConnection* connection) {
   connection->AddService<mojo::NativeViewport>(this);
   connection->AddService<mojo::Gpu>(this);
-  connection->AddService<mojo::Keyboard>(this);
+  connection->AddService<keyboard::KeyboardService>(this);
   return true;
 }
 
@@ -45,8 +45,8 @@ void NativeViewportApplicationLoader::Create(
 
 void NativeViewportApplicationLoader::Create(
     ApplicationConnection* connection,
-    InterfaceRequest<mojo::Keyboard> request) {
-  new KeyboardImpl(request.Pass());
+    InterfaceRequest<keyboard::KeyboardService> request) {
+  KeyboardImpl::CreateKeyboardImpl(request.Pass());
 }
 
 void NativeViewportApplicationLoader::Create(

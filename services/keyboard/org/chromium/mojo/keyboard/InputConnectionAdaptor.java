@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.domokit.keyboard;
+package org.chromium.mojo.keyboard;
 
 import android.text.InputType;
 import android.view.View;

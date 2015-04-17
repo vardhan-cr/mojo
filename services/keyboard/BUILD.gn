@@ -4,23 +4,16 @@
 
 import("//build/config/android/config.gni")
 import("//build/config/android/rules.gni")
-import("//mojo/public/tools/bindings/mojom.gni")
 
 android_library("keyboard") {
   java_files = [
-    "org/domokit/keyboard/InputConnectionAdaptor.java",
-    "org/domokit/keyboard/KeyboardServiceImpl.java",
+    "org/chromium/mojo/keyboard/InputConnectionAdaptor.java",
+    "org/chromium/mojo/keyboard/KeyboardServiceImpl.java",
   ]
 
   deps = [
     "//mojo/public/java:bindings",
     "//mojo/public/java:system",
-    ":interfaces_java",
-  ]
-}
-
-mojom("interfaces") {
-  sources = [
-    "keyboard.mojom",
+    "//mojo/services/keyboard/public/interfaces:interfaces_java",
   ]
 }

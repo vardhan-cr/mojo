@@ -63,6 +63,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
 
       deps = shell_common_deps + [
                ":jni_headers",
+               "//mojo/android:libsystem_java",
                "//services/native_viewport:lib",
                "//shell/application_manager",
                "//ui/gl",
@@ -295,6 +296,10 @@ if (is_android) {
 
     deps = [
       "//base:base_java",
+      "//mojo/android:system_java",
+      "//mojo/public/java:system",
+      "//mojo/services/keyboard/public/interfaces:interfaces_java",
+      "//services/keyboard",
     ]
   }
 

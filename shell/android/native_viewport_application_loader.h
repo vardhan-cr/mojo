@@ -26,7 +26,7 @@ namespace shell {
 class NativeViewportApplicationLoader
     : public ApplicationLoader,
       public mojo::ApplicationDelegate,
-      public mojo::InterfaceFactory<mojo::Keyboard>,
+      public mojo::InterfaceFactory<keyboard::KeyboardService>,
       public mojo::InterfaceFactory<mojo::NativeViewport>,
       public mojo::InterfaceFactory<mojo::Gpu> {
  public:
@@ -51,9 +51,10 @@ class NativeViewportApplicationLoader
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::Gpu> request) override;
 
-  // mojo::InterfaceFactory<mojo::Keyboard> implementation.
-  void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<mojo::Keyboard> request) override;
+  // mojo::InterfaceFactory<keyboard::KeyboardService> implementation.
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<keyboard::KeyboardService> request) override;
 
   scoped_refptr<gles2::GpuState> gpu_state_;
   scoped_ptr<mojo::ApplicationImpl> app_;

@@ -6,15 +6,18 @@ package org.chromium.mojo;
 
 import android.app.Activity;
 import android.content.Context;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
+
+import org.chromium.mojo.keyboard.KeyboardServiceImpl;
 
 /**
  * Exposes SurfaceView to native code.
@@ -101,27 +104,8 @@ public class PlatformViewportAndroid extends SurfaceView {
     }
 
     @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        if (privateDispatchKeyEvent(event)) {
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    public boolean dispatchKeyEventPreIme(KeyEvent event) {
-        if (privateDispatchKeyEvent(event)) {
-            return true;
-        }
-        return super.dispatchKeyEventPreIme(event);
-    }
-
-    @Override
-    public boolean dispatchKeyShortcutEvent(KeyEvent event) {
-        if (privateDispatchKeyEvent(event)) {
-            return true;
-        }
-        return super.dispatchKeyShortcutEvent(event);
+    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+        return KeyboardServiceImpl.createInputConnection(outAttrs);
     }
 
     private boolean notifyTouchEventAtIndex(MotionEvent event, int index) {
@@ -130,38 +114,6 @@ public class PlatformViewportAndroid extends SurfaceView {
                 event.getPressure(index), event.getTouchMajor(index), event.getTouchMinor(index),
                 event.getOrientation(index), event.getAxisValue(MotionEvent.AXIS_HSCROLL, index),
                 event.getAxisValue(MotionEvent.AXIS_VSCROLL, index));
-    }
-
-    private boolean privateDispatchKeyEvent(KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_MULTIPLE) {
-            boolean result = false;
-            if (event.getKeyCode() == KeyEvent.KEYCODE_UNKNOWN && event.getCharacters() != null) {
-                String characters = event.getCharacters();
-                for (int i = 0; i < characters.length(); ++i) {
-                    char c = characters.charAt(i);
-                    int codepoint = c;
-                    if (codepoint >= Character.MIN_SURROGATE
-                            && codepoint < (Character.MAX_SURROGATE + 1)) {
-                        i++;
-                        char c2 = characters.charAt(i);
-                        codepoint = Character.toCodePoint(c, c2);
-                    }
-                    result |= nativeKeyEvent(mNativeMojoViewport, true, 0, codepoint);
-                    result |= nativeKeyEvent(mNativeMojoViewport, false, 0, codepoint);
-                }
-            } else {
-                for (int i = 0; i < event.getRepeatCount(); ++i) {
-                    result |= nativeKeyEvent(
-                            mNativeMojoViewport, true, event.getKeyCode(), event.getUnicodeChar());
-                    result |= nativeKeyEvent(
-                            mNativeMojoViewport, false, event.getKeyCode(), event.getUnicodeChar());
-                }
-            }
-            return result;
-        } else {
-            return nativeKeyEvent(mNativeMojoViewport, event.getAction() == KeyEvent.ACTION_DOWN,
-                    event.getKeyCode(), event.getUnicodeChar());
-        }
     }
 
     private static native void nativeDestroy(long nativePlatformViewportAndroid);
@@ -178,7 +130,4 @@ public class PlatformViewportAndroid extends SurfaceView {
     private static native boolean nativeTouchEvent(long nativePlatformViewportAndroid, long timeMs,
             int maskedAction, int pointerId, float x, float y, float pressure, float touchMajor,
             float touchMinor, float orientation, float hWheel, float vWheel);
-
-    private static native boolean nativeKeyEvent(
-            long nativePlatformViewportAndroid, boolean pressed, int keyCode, int unicodeCharacter);
 }

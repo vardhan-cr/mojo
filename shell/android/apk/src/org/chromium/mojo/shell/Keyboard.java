@@ -5,12 +5,17 @@
 package org.chromium.mojo.shell;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 
+import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
+
+import org.chromium.mojo.keyboard.KeyboardServiceImpl;
+import org.chromium.mojo.system.Core;
+import org.chromium.mojo.system.MessagePipeHandle;
+import org.chromium.mojo.system.UntypedHandle;
+import org.chromium.mojo.system.impl.CoreImpl;
 
 /**
  * Interaction with the keyboard.
@@ -18,18 +23,12 @@ import org.chromium.base.JNINamespace;
 @JNINamespace("shell")
 public class Keyboard {
     @CalledByNative
-    private static void showSoftKeyboard(Activity activity) {
+    public static void createKeyboardImpl(Activity activity, int keyboardRequestHandleValue) {
+        Core core = CoreImpl.getInstance();
+        UntypedHandle keyboardRequestHandle = core.acquireNativeHandle(keyboardRequestHandleValue);
+        MessagePipeHandle keyboardRequest = keyboardRequestHandle.toMessagePipeHandle();
         View v = activity.getCurrentFocus();
-        InputMethodManager imm =
-                (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
-    }
-
-    @CalledByNative
-    private static void hideSoftKeyboard(Activity activity) {
-        View v = activity.getCurrentFocus();
-        InputMethodManager imm =
-                (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(v.getApplicationWindowToken(), 0);
+        new KeyboardServiceImpl(ApplicationStatus.getApplicationContext(), keyboardRequest);
+        KeyboardServiceImpl.setActiveView(v);
     }
 }

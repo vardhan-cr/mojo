@@ -143,24 +143,6 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
   return true;
 }
 
-bool PlatformViewportAndroid::KeyEvent(JNIEnv* env,
-                                       jobject obj,
-                                       bool pressed,
-                                       jint key_code,
-                                       jint unicode_character) {
-  ui::KeyEvent event(pressed ? ui::ET_KEY_PRESSED : ui::ET_KEY_RELEASED,
-                     ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
-  event.set_platform_keycode(key_code);
-  delegate_->OnEvent(mojo::Event::From(event));
-  if (pressed && unicode_character) {
-    ui::KeyEvent char_event(unicode_character,
-                            ui::KeyboardCodeFromAndroidKeyCode(key_code), 0);
-    char_event.set_platform_keycode(key_code);
-    delegate_->OnEvent(mojo::Event::From(char_event));
-  }
-  return true;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // PlatformViewportAndroid, PlatformViewport implementation:
 

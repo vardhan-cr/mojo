@@ -50,11 +50,6 @@ class PlatformViewportAndroid : public PlatformViewport {
                   jfloat orientation,
                   jfloat h_wheel,
                   jfloat v_wheel);
-  bool KeyEvent(JNIEnv* env,
-                jobject obj,
-                bool pressed,
-                jint key_code,
-                jint unicode_character);
 
  private:
   // Overridden from PlatformViewport:

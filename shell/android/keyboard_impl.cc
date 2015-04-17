@@ -10,21 +10,13 @@
 
 namespace shell {
 
-KeyboardImpl::KeyboardImpl(mojo::InterfaceRequest<Keyboard> request)
-    : binding_(this, request.Pass()) {
-}
-
-KeyboardImpl::~KeyboardImpl() {
-}
-
-void KeyboardImpl::Show() {
-  Java_Keyboard_showSoftKeyboard(base::android::AttachCurrentThread(),
-                                 base::android::GetApplicationContext());
-}
-
-void KeyboardImpl::Hide() {
-  Java_Keyboard_hideSoftKeyboard(base::android::AttachCurrentThread(),
-                                 base::android::GetApplicationContext());
+// static
+void KeyboardImpl::CreateKeyboardImpl(
+    mojo::InterfaceRequest<keyboard::KeyboardService> request) {
+  MojoHandle handle_val = request.PassMessagePipe().release().value();
+  Java_Keyboard_createKeyboardImpl(base::android::AttachCurrentThread(),
+                                   base::android::GetApplicationContext(),
+                                   handle_val);
 }
 
 bool RegisterKeyboardJni(JNIEnv* env) {

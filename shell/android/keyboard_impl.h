@@ -8,22 +8,14 @@
 #include <jni.h>
 
 #include "mojo/public/cpp/bindings/interface_request.h"
-#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/keyboard/public/interfaces/keyboard.mojom.h"
 
 namespace shell {
 
-class KeyboardImpl : public mojo::Keyboard {
+class KeyboardImpl {
  public:
-  explicit KeyboardImpl(mojo::InterfaceRequest<mojo::Keyboard> request);
-  ~KeyboardImpl();
-
-  // mojo::Keyboard implementation
-  void Show() override;
-  void Hide() override;
-
- private:
-  mojo::StrongBinding<mojo::Keyboard> binding_;
+  static void CreateKeyboardImpl(
+      mojo::InterfaceRequest<keyboard::KeyboardService> request);
 };
 
 bool RegisterKeyboardJni(JNIEnv* env);

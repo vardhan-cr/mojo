@@ -23,6 +23,7 @@ if (is_android) {
 
     deps = [
       "//base:base_java",
+      "//services/keyboard",
     ]
   }
 
