@@ -102,6 +102,7 @@ if (is_android) {
       ":platform_cgo",
       "//mojo/edk/system",
       "//mojo/public/interfaces/bindings/tests:test_interfaces",
+      "//examples/echo",
     ]
   }
 }
