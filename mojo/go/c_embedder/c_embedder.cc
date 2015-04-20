@@ -4,17 +4,14 @@
 
 #include "mojo/go/c_embedder/c_embedder.h"
 
-#include "base/memory/scoped_ptr.h"
-#include "mojo/edk/embedder/embedder.h"
-#include "mojo/edk/embedder/simple_platform_support.h"
+#include "mojo/edk/embedder/test_embedder.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void InitializeMojoEmbedder() {
-  mojo::embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
-      new mojo::embedder::SimplePlatformSupport()));
+  mojo::embedder::test::InitWithSimplePlatformSupport();
 }
 
 #ifdef __cplusplus
