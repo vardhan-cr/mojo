@@ -65,6 +65,13 @@ public class KeyboardServiceImpl implements KeyboardService {
         imm.showSoftInput(sActiveView, InputMethodManager.SHOW_IMPLICIT);
     }
 
+    @Override
+    public void showByRequest() {
+        InputMethodManager imm =
+                (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(sActiveView, 0);
+    }
+
     public void hide() {
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

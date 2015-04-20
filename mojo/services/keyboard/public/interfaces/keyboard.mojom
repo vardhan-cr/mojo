@@ -29,5 +29,6 @@ interface KeyboardClient {
 
 interface KeyboardService {
   Show(KeyboardClient client);
+  ShowByRequest();
   Hide();
 };
