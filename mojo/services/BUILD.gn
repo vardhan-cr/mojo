@@ -19,6 +19,7 @@ group("services") {
     "//mojo/services/native_viewport/public/interfaces",
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/network/public/interfaces",
+    "//mojo/services/sensors/public/interfaces",
     "//mojo/services/service_registry/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/terminal/public/interfaces",

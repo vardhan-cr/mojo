@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.domokit.sensors;
+package org.chromium.mojo.sensors;
 
 import android.content.Context;
 
-import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.sensors.SensorListener;
@@ -18,7 +17,7 @@ import org.chromium.mojom.sensors.SensorService;
 public class SensorServiceImpl implements SensorService {
     private Context mContext;
 
-    public SensorServiceImpl(Context context, Core core, MessagePipeHandle pipe) {
+    public SensorServiceImpl(Context context, MessagePipeHandle pipe) {
         mContext = context;
 
         SensorService.MANAGER.bind(this, pipe);

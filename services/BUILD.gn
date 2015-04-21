@@ -31,6 +31,7 @@ group("services") {
     deps += [
       "//services/android:java_handler",
       "//services/location",
+      "//services/sensors",
     ]
   }
 
