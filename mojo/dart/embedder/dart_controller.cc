@@ -13,6 +13,7 @@
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/dart/embedder/isolate_data.h"
+#include "mojo/dart/embedder/vmservice.h"
 #include "mojo/public/c/system/core.h"
 
 namespace mojo {
@@ -33,17 +34,6 @@ static bool IsDartSchemeURL(const char* url_name) {
   // If the URL starts with "dart:" then it is considered as a special
   // library URL which is handled differently from other URLs.
   return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
-}
-
-static bool IsServiceIsolateURL(const char* url_name) {
-  if (url_name == nullptr) {
-    return false;
-  }
-  static const intptr_t kServiceIsolateNameLen =
-      strlen(DART_VM_SERVICE_ISOLATE_NAME);
-  return (strncmp(url_name,
-                  DART_VM_SERVICE_ISOLATE_NAME,
-                  kServiceIsolateNameLen) == 0);
 }
 
 static bool IsDartIOLibURL(const char* url_name) {
@@ -88,9 +78,9 @@ static Dart_Handle LoadDataAsync_Invoke(Dart_Handle tag,
                      dart_args);
 }
 
-static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
-                                     Dart_Handle library,
-                                     Dart_Handle url) {
+Dart_Handle DartController::LibraryTagHandler(Dart_LibraryTag tag,
+                                              Dart_Handle library,
+                                              Dart_Handle url) {
   if (!Dart_IsLibrary(library)) {
     return Dart_NewApiError("not a library");
   }
@@ -253,24 +243,6 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
   return result;
 }
 
-static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
-                                               char** error) {
-  // TODO(johnmccutchan): Add support the service isolate.
-  // No callbacks for service isolate.
-  IsolateCallbacks callbacks;
-  IsolateData* isolate_data =
-      new IsolateData(nullptr, false, callbacks, "", "", "");
-  Dart_Isolate isolate = Dart_CreateIsolate(script_uri,
-                                            "main",
-                                            isolate_snapshot_buffer,
-                                            isolate_data,
-                                            error);
-  if (isolate == nullptr) {
-    delete isolate_data;
-    return nullptr;
-  }
-  return isolate;
-}
 
 Dart_Isolate DartController::CreateIsolateHelper(
     void* dart_app,
@@ -294,7 +266,6 @@ Dart_Isolate DartController::CreateIsolateHelper(
     return nullptr;
   }
 
-  DPCHECK(!Dart_IsServiceIsolate(isolate));
   Dart_EnterScope();
 
   Dart_IsolateSetStrictCompilation(strict_compilation);
@@ -324,6 +295,20 @@ Dart_Isolate DartController::CreateIsolateHelper(
       Builtin::GetLibrary(Builtin::kBuiltinLibrary);
   DART_CHECK_VALID(builtin_lib);
 
+  if (Dart_IsServiceIsolate(isolate)) {
+    result = PrepareScriptForLoading(package_root, builtin_lib);
+    DART_CHECK_VALID(result);
+    const intptr_t port = SupportDartMojoIo() ? 0 : -1;
+    InitializeDartMojoIo();
+    StartHandleWatcherIsolate();
+    if (!VmService::Setup("127.0.0.1", port)) {
+      *error = strdup(VmService::GetErrorMessage());
+      return nullptr;
+    }
+    Dart_ExitScope();
+    Dart_ExitIsolate();
+    return isolate;
+  }
   result = PrepareScriptForLoading(package_root, builtin_lib);
   DART_CHECK_VALID(result);
 
@@ -373,9 +358,6 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
   std::string script_uri_string;
   std::string package_root_string;
 
-  if (IsServiceIsolateURL(script_uri)) {
-    return CreateServiceIsolateHelper(script_uri, error);
-  }
   if (script_uri == nullptr) {
     if (callback_data == nullptr) {
       *error = strdup("Invalid 'callback_data' - Unable to spawn new isolate");
@@ -386,14 +368,27 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
     script_uri_string = std::string(script_uri);
   }
   if (package_root == nullptr) {
-    package_root_string = parent_isolate_data->package_root;
+    if (parent_isolate_data != nullptr) {
+      package_root_string = parent_isolate_data->package_root;
+    }
   } else {
     package_root_string = std::string(package_root);
   }
-  return CreateIsolateHelper(parent_isolate_data->app,
-                             parent_isolate_data->strict_compilation,
-                             parent_isolate_data->callbacks,
-                             parent_isolate_data->script,
+  // Inherit parameters from parent isolate (if any).
+  void* dart_app = nullptr;
+  bool strict_compilation = true;
+  IsolateCallbacks callbacks;
+  std::string script;
+  if (parent_isolate_data != nullptr) {
+    dart_app = parent_isolate_data->app;
+    strict_compilation = parent_isolate_data->strict_compilation;
+    callbacks = parent_isolate_data->callbacks;
+    script = parent_isolate_data->script;
+  }
+  return CreateIsolateHelper(dart_app,
+                             strict_compilation,
+                             callbacks,
+                             script,
                              script_uri_string,
                              package_root_string,
                              error);
@@ -431,8 +426,7 @@ void DartController::UnhandledExceptionCallback(Dart_Handle error) {
 
 
 bool DartController::initialized_ = false;
-Dart_Isolate DartController::root_isolate_ = nullptr;
-bool DartController::handle_watcher_running_ = false;
+bool DartController::service_isolate_running_ = false;
 bool DartController::strict_compilation_ = false;
 DartControllerServiceConnector* DartController::service_connector_ = nullptr;
 
@@ -443,11 +437,6 @@ bool DartController::SupportDartMojoIo() {
 void DartController::InitializeDartMojoIo() {
   Dart_Isolate current_isolate = Dart_CurrentIsolate();
   CHECK(current_isolate != nullptr);
-  if (!handle_watcher_running_) {
-    // We are starting the root isolate or the handle watcher isolate.
-    // Do not initialize 'dart:mojo.io'.
-    return;
-  }
   if (!SupportDartMojoIo()) {
     return;
   }
@@ -479,10 +468,6 @@ void DartController::InitializeDartMojoIo() {
 void DartController::ShutdownDartMojoIo() {
   Dart_Isolate current_isolate = Dart_CurrentIsolate();
   CHECK(current_isolate != nullptr);
-  if (root_isolate_ == current_isolate) {
-    // Handle watcher isolate.
-    return;
-  }
   if (!SupportDartMojoIo()) {
     return;
   }
@@ -500,6 +485,65 @@ void DartController::ShutdownDartMojoIo() {
   }
 }
 
+void DartController::StartHandleWatcherIsolate() {
+  Dart_Handle result;
+
+  // Start the Mojo handle watcher isolate.
+  Dart_Handle mojo_core_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
+  Dart_Handle handle_watcher_type = Dart_GetType(
+      mojo_core_lib,
+      Dart_NewStringFromCString("MojoHandleWatcher"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(handle_watcher_type);
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("_start"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(result);
+}
+
+// TODO(johnmccutchan): Move handle watcher shutdown into the service isolate
+// once the VM can shutdown cleanly.
+void DartController::StopHandleWatcherIsolate() {
+  // Spin up an isolate to initiate the handle watcher shutdown.
+  IsolateCallbacks callbacks;
+  char* error;
+  Dart_Isolate shutdown_isolate = CreateIsolateHelper(
+      nullptr, false, callbacks, "", "", "", &error);
+  CHECK(shutdown_isolate);
+
+  Dart_EnterIsolate(shutdown_isolate);
+  Dart_EnterScope();
+  Dart_Handle result;
+
+  // Stop the Mojo handle watcher isolate.
+  Dart_Handle mojo_core_lib =
+      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
+  DART_CHECK_VALID(mojo_core_lib);
+  Dart_Handle handle_watcher_type = Dart_GetType(
+      mojo_core_lib,
+      Dart_NewStringFromCString("MojoHandleWatcher"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(handle_watcher_type);
+  result = Dart_Invoke(
+      handle_watcher_type,
+      Dart_NewStringFromCString("_stop"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(result);
+
+  // Run until the handle watcher isolate has exited.
+  result = Dart_RunLoop();
+  DART_CHECK_VALID(result);
+
+  Dart_ExitScope();
+  Dart_ShutdownIsolate();
+}
 
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** arguments,
@@ -538,7 +582,11 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                            nullptr, nullptr, nullptr, nullptr,
                            entropy);
   CHECK(result);
+  // By waiting for the load port, we ensure that the service isolate is fully
+  // running before returning.
+  Dart_ServiceWaitForLoadPort();
   initialized_ = true;
+  service_isolate_running_ = true;
 }
 
 bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
@@ -559,25 +607,6 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   Dart_EnterIsolate(isolate);
   Dart_Handle result;
   Dart_EnterScope();
-
-  // Start the MojoHandleWatcher.
-  Dart_Handle mojo_internal_lib =
-      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
-  DART_CHECK_VALID(mojo_internal_lib);
-  Dart_Handle handle_watcher_type =
-      Dart_GetType(mojo_internal_lib,
-                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
-  DART_CHECK_VALID(handle_watcher_type);
-  result = Dart_Invoke(
-      handle_watcher_type,
-      Dart_NewStringFromCString("_start"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(result);
-
-  // RunLoop until the handle watcher isolate is spun-up.
-  result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
 
   // Load the root library into the builtin library so that main can be found.
   Dart_Handle builtin_lib =
@@ -627,17 +656,6 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   result = Dart_RunLoop();
   DART_CHECK_VALID(result);
 
-  // Stop the MojoHandleWatcher.
-  result = Dart_Invoke(
-      handle_watcher_type,
-      Dart_NewStringFromCString("_stop"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(result);
-
-  result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
-
   Dart_ExitScope();
   Dart_ShutdownIsolate();
   Dart_Cleanup();
@@ -654,52 +672,12 @@ bool DartController::Initialize(
     bool strict_compilation) {
   service_connector_ = service_connector;
   strict_compilation_ = strict_compilation;
-  char* error;
-
-  // No callbacks for root isolate.
-  IsolateCallbacks callbacks;
   InitVmIfNeeded(generateEntropy, nullptr, 0);
-  root_isolate_ = CreateIsolateHelper(
-      nullptr, false, callbacks, "", "", "", &error);
-  if (root_isolate_ == nullptr) {
-    LOG(ERROR) << error;
-    Dart_Cleanup();
-    initialized_ = false;
-    return false;
-  }
-
-  Dart_EnterIsolate(root_isolate_);
-  Dart_Handle result;
-  Dart_EnterScope();
-
-  // Start the MojoHandleWatcher.
-  Dart_Handle mojo_internal_lib =
-      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
-  DART_CHECK_VALID(mojo_internal_lib);
-  Dart_Handle handle_watcher_type =
-      Dart_GetType(mojo_internal_lib,
-                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
-  DART_CHECK_VALID(handle_watcher_type);
-  result = Dart_Invoke(
-      handle_watcher_type,
-      Dart_NewStringFromCString("_start"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(result);
-
-  // RunLoop until the handle watcher isolate is spun-up.
-  result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
-
-  handle_watcher_running_ = true;
-
-  Dart_ExitScope();
-  Dart_ExitIsolate();
   return true;
 }
 
 bool DartController::RunDartScript(const DartControllerConfig& config) {
-  CHECK(root_isolate_ != nullptr);
+  CHECK(service_isolate_running_);
   const bool strict = strict_compilation_ || config.strict_compilation;
   Dart_Isolate isolate = CreateIsolateHelper(
       config.application_data, strict, config.callbacks, config.script,
@@ -767,33 +745,9 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
 }
 
 void DartController::Shutdown() {
-  CHECK(root_isolate_ != nullptr);
-  Dart_EnterIsolate(root_isolate_);
-  Dart_Handle result;
-  Dart_EnterScope();
-
-  // Stop the MojoHandleWatcher.
-  Dart_Handle mojo_internal_lib =
-      Builtin::GetLibrary(Builtin::kMojoInternalLibrary);
-  DART_CHECK_VALID(mojo_internal_lib);
-  Dart_Handle handle_watcher_type =
-      Dart_GetType(mojo_internal_lib,
-                   Dart_NewStringFromCString("MojoHandleWatcher"), 0, nullptr);
-  DART_CHECK_VALID(handle_watcher_type);
-  result = Dart_Invoke(
-      handle_watcher_type,
-      Dart_NewStringFromCString("_stop"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(result);
-
-  result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
-
-  Dart_ExitScope();
-  Dart_ShutdownIsolate();
+  StopHandleWatcherIsolate();
   Dart_Cleanup();
-  root_isolate_ = nullptr;
+  service_isolate_running_ = false;
   initialized_ = false;
 }
 

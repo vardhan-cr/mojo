@@ -25,12 +25,11 @@ Server server;
 
 _onShutdown() {
   if (server != null) {
-    print('server.close(true)');
     server.close(true).catchError((e, st) {
       print(e);
-    }).whenComplete(_shutdownHandleWatcher);
+    }).whenComplete(_shutdown);
   } else {
-    _shutdownHandleWatcher();
+    _shutdown();
   }
 }
 
@@ -58,4 +57,4 @@ main() {
   return scriptLoadPort;
 }
 
-_shutdownHandleWatcher() native "ServiceIsolate_ShutdownHandleWatcher";
+_shutdown() native "ServiceIsolate_Shutdown";

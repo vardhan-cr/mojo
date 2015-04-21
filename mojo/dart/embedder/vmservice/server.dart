@@ -10,11 +10,9 @@ class WebSocketClient extends Client {
   static const int NOT_MAP_ERROR_CODE = 4002;
   final WebSocket socket;
 
-  WebSocketClient(this.socket, service) : super(service) {
+  WebSocketClient(this.socket, VMService service) : super(service) {
     socket.listen((message) => onWebSocketMessage(message));
     socket.done.then((_) => close());
-    service.subscribe('debug', this);
-    service.subscribe('gc', this);
   }
 
   onWebSocketMessage(message) {
@@ -37,15 +35,15 @@ class WebSocketClient extends Client {
     }
   }
 
-  post(var serial, dynamic response) {
+  post(var serial, dynamic result) {
     try {
-      Map map = {
-        'id': serial,
-        'response': response
-      };
-      if (serial == null && response is! String) {
-        socket.add(response);
+      if (serial == null && result is! String) {
+        socket.add(result);
       } else {
+        Map map = {
+          'id': serial,
+          'result': result
+        };
         socket.add(JSON.encode(map));
       }
     } catch (_) {
@@ -67,11 +65,11 @@ class HttpRequestClient extends Client {
       new ContentType("application", "json", charset: "utf-8");
   final HttpRequest request;
 
-  HttpRequestClient(this.request, service) : super(service);
+  HttpRequestClient(this.request, VMService service) : super(service);
 
-  post(var serial, String response) {
+  post(var serial, String result) {
     request.response..headers.contentType = jsonContentType
-                    ..write(response)
+                    ..write(result)
                     ..close();
     close();
   }
@@ -116,7 +114,6 @@ class Server {
   }
 
   _onServerShutdown() {
-    print('server was shutdown.');
   }
 
   _serverError(error, stackTrace) {

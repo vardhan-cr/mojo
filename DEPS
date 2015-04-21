@@ -25,7 +25,7 @@ vars = {
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': '3b302fef93f7cc58d9b8168466905237484b2772',
-  'dart_revision': '45060',
+  'dart_revision': '45304',
   'dart_observatory_packages_revision': '43830',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
@@ -302,7 +302,7 @@ hooks = [
                 '--tools-directory', '../../../tools',
     ],
   },
-  # Run "pub get" on any directories with checked-in pubspec.yaml files 
+  # Run "pub get" on any directories with checked-in pubspec.yaml files
   # (excluding sky/, whose pubspec.yaml files are not intended for supporting
   # building in-place in the repo).
   {

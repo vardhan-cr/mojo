@@ -22,6 +22,8 @@ source_set("dart_controller_no_snapshot") {
     "mojo_io_natives.h",
     "mojo_natives.cc",
     "mojo_natives.h",
+    "vmservice.cc",
+    "vmservice.h",
   ]
 
   if (is_linux) {

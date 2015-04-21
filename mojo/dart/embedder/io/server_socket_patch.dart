@@ -202,15 +202,7 @@ class _MojoRawServerSocket extends Stream<RawSocket>
   }
 
   Future _destroy() async {
-    _closed = true;
-    _scheduledAccept = null;
-    await _tcpServerSocket.close(immediate: true);
-    await _tcpBoundSocket.close(immediate: true);
-    if (_controller != null) {
-      await _controller.close();
-    }
-    _controller = null;
-    return this;
+    return close();
   }
 
   _shutdown() {

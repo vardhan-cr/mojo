@@ -72,13 +72,23 @@ class DartController {
   // Waits for the handle watcher isolate to finish and shuts down the VM.
   static void Shutdown();
 
- private:
   // Does this controller support the 'dart:mojo.io' library?
   static bool SupportDartMojoIo();
   // Initialize 'dart:mojo.io' for the current isolate.
   static void InitializeDartMojoIo();
   // Shutdown 'dart:mojo.io' for the current isolate.
   static void ShutdownDartMojoIo();
+
+  static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,
+                                       Dart_Handle library,
+                                       Dart_Handle url);
+
+ private:
+
+  // Start the handle watcher isolate.
+  static void StartHandleWatcherIsolate();
+  // Stop the handle watcher isolate.
+  static void StopHandleWatcherIsolate();
 
   // Dart API callback(s).
   static Dart_Isolate IsolateCreateCallback(const char* script_uri,
@@ -103,8 +113,7 @@ class DartController {
                              int arguments_count);
   static bool initialized_;
   static bool strict_compilation_;
-  static Dart_Isolate root_isolate_;
-  static bool handle_watcher_running_;
+  static bool service_isolate_running_;
   static DartControllerServiceConnector* service_connector_;
 };
 
