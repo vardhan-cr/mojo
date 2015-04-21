@@ -21,7 +21,7 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
   'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
-  'skia_revision': '92d04da38f03dfabd8cd9a7244588a49be9a2f41',
+  'skia_revision': '409fd66a5afcef5f165f7ccec7c3473add231752',
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': '3b302fef93f7cc58d9b8168466905237484b2772',
