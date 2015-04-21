@@ -44,3 +44,18 @@ dart_embedder_package("dart_embedder_package_application") {
 3) Add the package directory to the list in :generate_snapshot_bin, for example:
 
 rebase_path("//mojo/public/interfaces/application"),
+
+## Dart IO
+
+Under Mojo, the 'dart:io' library is the 'dart:mojo.io' library. 'dart:mojo.io'
+exports the same API as 'dart:io' but the implementation is not complete and
+likely suffers from subtle differences. Implementation status:
+
+| 'dart:io' feature  | Mojo Service         | Implemented |
+| ------------------ | -------------------- | ----------- |
+| Socket             | mojo:network_service | Yes         |
+| ServerSocket       | mojo:network_service | Yes         |
+| SecureSocket       | N/A                  | No          |
+| SecureServerSocket | N/A                  | No          |
+| Datagram           | mojo:network_service | No          |
+| File system        | mojo:files           | No          |

@@ -2,7 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/bind.h"
+#include "base/message_loop/message_loop.h"
 #include "base/strings/string_util.h"
+#include "base/synchronization/waitable_event.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/dart/embedder/dart_controller.h"
@@ -10,6 +13,7 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
+#include "services/dart/content_handler_app_service_connector.h"
 #include "services/dart/dart_app.h"
 #include "url/gurl.h"
 
@@ -40,14 +44,20 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
       : content_handler_(false),
         strict_content_handler_(true),
         content_handler_factory_(&content_handler_),
-        strict_content_handler_factory_(&strict_content_handler_) {}
-  ~DartContentHandlerApp() { mojo::dart::DartController::Shutdown(); }
+        strict_content_handler_factory_(&strict_content_handler_),
+        service_connector_(nullptr) {
+  }
+
+  ~DartContentHandlerApp() override {
+  }
 
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
-    bool success = mojo::dart::DartController::Initialize(false);
+    service_connector_ = new ContentHandlerAppServiceConnector(app);
+    bool success = mojo::dart::DartController::Initialize(service_connector_,
+                                                          false);
     if (!success) {
       LOG(ERROR) << "Dart VM Initialization failed";
     }
@@ -79,10 +89,18 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
     return true;
   }
 
+  // Overridden from ApplicationDelegate:
+  void Quit() override {
+    // Shutdown the controller.
+    mojo::dart::DartController::Shutdown();
+    delete service_connector_;
+  }
+
   DartContentHandler content_handler_;
   DartContentHandler strict_content_handler_;
   mojo::ContentHandlerFactory content_handler_factory_;
   mojo::ContentHandlerFactory strict_content_handler_factory_;
+  ContentHandlerAppServiceConnector* service_connector_;
 
   DISALLOW_COPY_AND_ASSIGN(DartContentHandlerApp);
 };

@@ -28,6 +28,29 @@ struct DartControllerConfig {
   char** error;
 };
 
+// The DartController may need to request for services to be connected
+// to for an isolate that isn't associated with a Mojo application. An
+// implementation of this class can be passed to the DartController during
+// initialization. ConnectToService requests can come from any thread.
+//
+// An implementation of this interface is available from the Dart content
+// handler, where connections are made via the content handler application.
+class DartControllerServiceConnector {
+ public:
+  // List of services that are supported.
+  enum ServiceId {
+    kNetworkServiceId,
+    kNumServiceIds,
+  };
+
+  DartControllerServiceConnector() {}
+  virtual ~DartControllerServiceConnector() {}
+
+  // Connects to service_id and returns a bare MojoHandle. Calls to this
+  // can be made from any thread.
+  virtual MojoHandle ConnectToService(ServiceId service_id) = 0;
+};
+
 class DartController {
  public:
   // Initializes the VM, starts up Dart's handle watcher, and runs the script
@@ -39,7 +62,8 @@ class DartController {
   // Initializes the Dart VM, and starts up Dart's handle watcher.
   // If strict_compilation is true, the VM runs scripts with assertions and
   // type checking enabled.
-  static bool Initialize(bool strict_compilation);
+  static bool Initialize(DartControllerServiceConnector* service_connector,
+                         bool strict_compilation);
 
   // Assumes Initialize has been called. Runs the main function using the
   // script, arguments, and package_root given by 'config'.
@@ -49,12 +73,39 @@ class DartController {
   static void Shutdown();
 
  private:
+  // Does this controller support the 'dart:mojo.io' library?
+  static bool SupportDartMojoIo();
+  // Initialize 'dart:mojo.io' for the current isolate.
+  static void InitializeDartMojoIo();
+  // Shutdown 'dart:mojo.io' for the current isolate.
+  static void ShutdownDartMojoIo();
+
+  // Dart API callback(s).
+  static Dart_Isolate IsolateCreateCallback(const char* script_uri,
+                                            const char* main,
+                                            const char* package_root,
+                                            void* callback_data,
+                                            char** error);
+  static void IsolateShutdownCallback(void* callback_data);
+  static void UnhandledExceptionCallback(Dart_Handle error);
+
+  // Dart API callback helper(s).
+  static Dart_Isolate CreateIsolateHelper(void* dart_app,
+                                          bool strict_compilation,
+                                          IsolateCallbacks callbacks,
+                                          const std::string& script,
+                                          const std::string& script_uri,
+                                          const std::string& package_root,
+                                          char** error);
+
   static void InitVmIfNeeded(Dart_EntropySource entropy,
                              const char** arguments,
                              int arguments_count);
   static bool initialized_;
   static bool strict_compilation_;
   static Dart_Isolate root_isolate_;
+  static bool handle_watcher_running_;
+  static DartControllerServiceConnector* service_connector_;
 };
 
 }  // namespace dart

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-library io_apptests;
+library io_internet_address_apptests;
 
 import 'dart:async';
 import 'dart:mojo.io';
@@ -12,7 +12,7 @@ import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
 
-ioApptests(Application application, String url) {
+tests(Application application, String url) {
   group('InternetAddress Apptests', () {
     test('Parse IPv4', () async {
       var localhost = new InternetAddress('127.0.0.1');

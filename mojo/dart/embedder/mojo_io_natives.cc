@@ -11,12 +11,22 @@
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/common.h"
 #include "mojo/dart/embedder/io/internet_address.h"
+#include "mojo/dart/embedder/isolate_data.h"
 
 namespace mojo {
 namespace dart {
 
 #define MOJO_IO_NATIVE_LIST(V)                                                 \
   V(InternetAddress_Parse, 1)                                                  \
+  V(Platform_NumberOfProcessors, 0)                                            \
+  V(Platform_OperatingSystem, 0)                                               \
+  V(Platform_PathSeparator, 0)                                                 \
+  V(Platform_LocalHostname, 0)                                                 \
+  V(Platform_ExecutableName, 0)                                                \
+  V(Platform_Environment, 0)                                                   \
+  V(Platform_ExecutableArguments, 0)                                           \
+  V(Platform_PackageRoot, 0)                                                   \
+  V(Platform_GetVersion, 0)                                                    \
 
 MOJO_IO_NATIVE_LIST(DECLARE_FUNCTION);
 
@@ -72,6 +82,59 @@ void InternetAddress_Parse(Dart_NativeArguments arguments) {
   } else {
     DartEmbedder::SetNullReturn(arguments);
   }
+}
+
+void Platform_NumberOfProcessors(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_OperatingSystem(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_PathSeparator(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_LocalHostname(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_ExecutableName(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_Environment(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  Dart_SetReturnValue(arguments, Dart_NewList(0));
+}
+
+void Platform_ExecutableArguments(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Is an implementation needed?
+  DartEmbedder::SetNullReturn(arguments);
+}
+
+void Platform_PackageRoot(Dart_NativeArguments arguments) {
+  const char* package_root = "";
+  Dart_Isolate isolate = Dart_CurrentIsolate();
+  DCHECK(isolate != nullptr);
+  void* data = Dart_IsolateData(isolate);
+  IsolateData* isolate_data = reinterpret_cast<IsolateData*>(data);
+  if (isolate_data != nullptr) {
+    package_root = isolate_data->package_root.c_str();
+  }
+  Dart_SetReturnValue(arguments, Dart_NewStringFromCString(package_root));
+}
+
+void Platform_GetVersion(Dart_NativeArguments arguments) {
+  // TODO(johnmccutchan): Consider incorporating Mojo version.
+  Dart_SetReturnValue(arguments,
+                      Dart_NewStringFromCString(Dart_VersionString()));
 }
 
 }  // namespace dart

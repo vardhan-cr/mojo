@@ -60,6 +60,9 @@ dart_embedder_resources("generate_dart_embedder_patch_resources_cc") {
     "//mojo/dart/embedder/core/natives_patch.dart",
     "//mojo/dart/embedder/io/internet_address_patch.dart",
     "//mojo/dart/embedder/io/mojo_patch.dart",
+    "//mojo/dart/embedder/io/platform_patch.dart",
+    "//mojo/dart/embedder/io/socket_patch.dart",
+    "//mojo/dart/embedder/io/server_socket_patch.dart",
   ]
   output = "$target_gen_dir/dart_embedder_patch_resources.cc"
   table_name = "dart_embedder_patch"

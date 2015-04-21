@@ -100,7 +100,9 @@ class _InternetAddress implements InternetAddress {
   }
 
   Future<InternetAddress> reverse() {
-    throw new UnimplementedError("TODO(johnmccutchan)");
+    // TODO(johnmccutchan): Implement once a host resolver is available
+    // in the network service. For now, return LOOPBACK_IP_V4.
+    return InternetAddress.LOOPBACK_IP_V4;
   }
 
   _InternetAddress(String this.address,
@@ -187,6 +189,8 @@ int _internetAddressTypeToAddressFamily(InternetAddressType type) {
 
 class _MojoInternetAddress {
   static Future _lookup(String host, InternetAddressType type) async {
-    throw "TODO(johnmccutchan)";
+    // TODO(johnmccutchan): Implement once a host resolver is available
+    // in the network service. For now, return LOOPBACK_IP_V4.
+    return [InternetAddress.LOOPBACK_IP_V4];
   }
 }

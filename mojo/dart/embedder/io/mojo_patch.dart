@@ -27,6 +27,7 @@ void _shutdown() {
     // Network service proxies were never initialized. Create a handle
     // and close it.
     var handle = new MojoHandle(_networkServiceHandle);
+    _networkServiceHandle = null;
     handle.close();
     return;
   }
@@ -36,8 +37,7 @@ void _shutdown() {
 /// Close any active proxies.
 _closeProxies() {
   if (_networkService != null) {
-    print('_networkService.destroy()');
-    _networkService.impl.destroy();
+    _networkService.close(immediate: true);
     _networkService = null;
   }
 }

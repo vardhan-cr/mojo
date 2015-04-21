@@ -272,13 +272,14 @@ static Dart_Isolate CreateServiceIsolateHelper(const char* script_uri,
   return isolate;
 }
 
-static Dart_Isolate CreateIsolateHelper(void* dart_app,
-                                        bool strict_compilation,
-                                        IsolateCallbacks callbacks,
-                                        const std::string& script,
-                                        const std::string& script_uri,
-                                        const std::string& package_root,
-                                        char** error) {
+Dart_Isolate DartController::CreateIsolateHelper(
+    void* dart_app,
+    bool strict_compilation,
+    IsolateCallbacks callbacks,
+    const std::string& script,
+    const std::string& script_uri,
+    const std::string& package_root,
+    char** error) {
   IsolateData* isolate_data = new IsolateData(
       dart_app,
       strict_compilation,
@@ -346,6 +347,8 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
   result = Dart_RunLoop();
   ReportScriptError(result);
 
+  DartController::InitializeDartMojoIo();
+
   // Make the isolate runnable so that it is ready to handle messages.
   Dart_ExitScope();
   Dart_ExitIsolate();
@@ -360,11 +363,11 @@ static Dart_Isolate CreateIsolateHelper(void* dart_app,
   return isolate;
 }
 
-static Dart_Isolate IsolateCreateCallback(const char* script_uri,
-                                          const char* main,
-                                          const char* package_root,
-                                          void* callback_data,
-                                          char** error) {
+Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
+                                                   const char* main,
+                                                   const char* package_root,
+                                                   void* callback_data,
+                                                   char** error) {
   IsolateData* parent_isolate_data =
       reinterpret_cast<IsolateData*>(callback_data);
   std::string script_uri_string;
@@ -396,7 +399,11 @@ static Dart_Isolate IsolateCreateCallback(const char* script_uri,
                              error);
 }
 
-static void IsolateShutdownCallback(void* callback_data) {
+void DartController::IsolateShutdownCallback(void* callback_data) {
+  Dart_EnterScope();
+  ShutdownDartMojoIo();
+  Dart_ExitScope();
+
   IsolateData* isolate_data = reinterpret_cast<IsolateData*>(callback_data);
   if (!isolate_data->callbacks.shutdown.is_null()) {
     isolate_data->callbacks.shutdown.Run(callback_data);
@@ -404,7 +411,7 @@ static void IsolateShutdownCallback(void* callback_data) {
   delete isolate_data;
 }
 
-static void UnhandledExceptionCallback(Dart_Handle error) {
+void DartController::UnhandledExceptionCallback(Dart_Handle error) {
   Dart_Isolate isolate = Dart_CurrentIsolate();
   void* data = Dart_IsolateData(isolate);
   IsolateData* isolate_data = reinterpret_cast<IsolateData*>(data);
@@ -425,7 +432,74 @@ static void UnhandledExceptionCallback(Dart_Handle error) {
 
 bool DartController::initialized_ = false;
 Dart_Isolate DartController::root_isolate_ = nullptr;
+bool DartController::handle_watcher_running_ = false;
 bool DartController::strict_compilation_ = false;
+DartControllerServiceConnector* DartController::service_connector_ = nullptr;
+
+bool DartController::SupportDartMojoIo() {
+  return service_connector_ != nullptr;
+}
+
+void DartController::InitializeDartMojoIo() {
+  Dart_Isolate current_isolate = Dart_CurrentIsolate();
+  CHECK(current_isolate != nullptr);
+  if (!handle_watcher_running_) {
+    // We are starting the root isolate or the handle watcher isolate.
+    // Do not initialize 'dart:mojo.io'.
+    return;
+  }
+  if (!SupportDartMojoIo()) {
+    return;
+  }
+  CHECK(service_connector_ != nullptr);
+  MojoHandle network_service_mojo_handle = MOJO_HANDLE_INVALID;
+  network_service_mojo_handle =
+        service_connector_->ConnectToService(
+            DartControllerServiceConnector::kNetworkServiceId);
+  if (network_service_mojo_handle == MOJO_HANDLE_INVALID) {
+    // Not supported.
+    return;
+  }
+  // Pass handle into 'dart:mojo.io' library.
+  Dart_Handle mojo_io_library =
+      Builtin::GetLibrary(Builtin::kDartMojoIoLibrary);
+  CHECK(!Dart_IsError(mojo_io_library));
+  Dart_Handle method_name = Dart_NewStringFromCString("_initialize");
+  CHECK(!Dart_IsError(method_name));
+  Dart_Handle network_service_handle =
+      Dart_NewInteger(network_service_mojo_handle);
+  CHECK(!Dart_IsError(network_service_handle));
+  Dart_Handle result = Dart_Invoke(mojo_io_library,
+                                   method_name,
+                                   1,
+                                   &network_service_handle);
+  CHECK(!Dart_IsError(result));
+}
+
+void DartController::ShutdownDartMojoIo() {
+  Dart_Isolate current_isolate = Dart_CurrentIsolate();
+  CHECK(current_isolate != nullptr);
+  if (root_isolate_ == current_isolate) {
+    // Handle watcher isolate.
+    return;
+  }
+  if (!SupportDartMojoIo()) {
+    return;
+  }
+  Dart_Handle mojo_io_library =
+      Builtin::GetLibrary(Builtin::kDartMojoIoLibrary);
+  CHECK(!Dart_IsError(mojo_io_library));
+  Dart_Handle method_name = Dart_NewStringFromCString("_shutdown");
+  CHECK(!Dart_IsError(method_name));
+  Dart_Handle result = Dart_Invoke(mojo_io_library,
+                                   method_name,
+                                   0,
+                                   nullptr);
+  if (Dart_IsError(result)) {
+    Dart_PropagateError(result);
+  }
+}
+
 
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** arguments,
@@ -575,9 +649,12 @@ static bool generateEntropy(uint8_t* buffer, intptr_t length) {
   return true;
 }
 
-bool DartController::Initialize(bool strict_compilation) {
-  char* error;
+bool DartController::Initialize(
+    DartControllerServiceConnector* service_connector,
+    bool strict_compilation) {
+  service_connector_ = service_connector;
   strict_compilation_ = strict_compilation;
+  char* error;
 
   // No callbacks for root isolate.
   IsolateCallbacks callbacks;
@@ -613,6 +690,8 @@ bool DartController::Initialize(bool strict_compilation) {
   // RunLoop until the handle watcher isolate is spun-up.
   result = Dart_RunLoop();
   DART_CHECK_VALID(result);
+
+  handle_watcher_running_ = true;
 
   Dart_ExitScope();
   Dart_ExitIsolate();

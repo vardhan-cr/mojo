@@ -7,10 +7,12 @@ import 'package:dart/test/echo_service.mojom.dart';
 
 import 'echo_apptests.dart' as echo;
 import 'pingpong_apptests.dart' as pingpong;
-import 'io_apptests.dart' as io;
+import 'io_http_apptests.dart' as io_http;
+import 'io_internet_address_apptests.dart' as io_internet_address;
 
 main(List args) {
   runAppTests(args[0], [echo.echoApptests,
-                        io.ioApptests,
+                        io_internet_address.tests,
+                        io_http.tests,
                         pingpong.pingpongApptests]);
 }
