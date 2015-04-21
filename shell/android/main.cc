@@ -18,9 +18,11 @@
 #include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/synchronization/waitable_event.h"
 #include "base/threading/simple_thread.h"
 #include "jni/ShellMain_jni.h"
 #include "mojo/common/message_pump_mojo.h"
+#include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"
 #include "shell/android/background_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
@@ -62,26 +64,43 @@ class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
   DISALLOW_COPY_AND_ASSIGN(MojoShellRunner);
 };
 
-LazyInstance<scoped_ptr<base::MessageLoop>> g_java_message_loop =
-    LAZY_INSTANCE_INITIALIZER;
+// Structure to hold internal data used to setup the Mojo shell.
+struct InternalShellData {
+  // java_message_loop is the main thread/UI thread message loop.
+  scoped_ptr<base::MessageLoop> java_message_loop;
 
-LazyInstance<scoped_ptr<Tracer>> g_tracer = LAZY_INSTANCE_INITIALIZER;
-LazyInstance<scoped_ptr<Context>> g_context = LAZY_INSTANCE_INITIALIZER;
+  // tracer, accessible on the main thread
+  scoped_ptr<Tracer> tracer;
 
-LazyInstance<scoped_ptr<MojoShellRunner>> g_shell_runner =
-    LAZY_INSTANCE_INITIALIZER;
+  // Shell context, accessible on the shell thread
+  scoped_ptr<Context> context;
 
-LazyInstance<scoped_ptr<base::DelegateSimpleThread>> g_shell_thread =
-    LAZY_INSTANCE_INITIALIZER;
+  // Shell runner (thread delegate), to be uesd by the shell thread.
+  scoped_ptr<MojoShellRunner> shell_runner;
 
-LazyInstance<base::android::ScopedJavaGlobalRef<jobject>> g_main_activity =
-    LAZY_INSTANCE_INITIALIZER;
+  // Thread to run the shell on.
+  scoped_ptr<base::DelegateSimpleThread> shell_thread;
+
+  // Main android app activity, to be used on the main thread.
+  base::android::ScopedJavaGlobalRef<jobject> main_activity;
+
+  // Proxy to a Window Manager, initialized on the shell thread.
+  mojo::WindowManagerPtr window_manager;
+
+  // TaskRunner used to execute tasks on the shell thread.
+  scoped_refptr<base::SingleThreadTaskRunner> shell_task_runner;
+
+  // Event signalling when the shell task runner has been initialized.
+  scoped_ptr<base::WaitableEvent> shell_runner_ready;
+};
+
+LazyInstance<InternalShellData> g_internal_data = LAZY_INSTANCE_INITIALIZER;
 
 void ConfigureAndroidServices(Context* context) {
   context->application_manager()->SetLoaderForURL(
       make_scoped_ptr(new UIApplicationLoader(
           make_scoped_ptr(new NativeViewportApplicationLoader()),
-          g_java_message_loop.Get().get())),
+          g_internal_data.Get().java_message_loop.get())),
       GURL("mojo:native_viewport_service"));
 
   // Android handler is bundled with the Mojo shell, because it uses the
@@ -99,16 +118,19 @@ void ConfigureAndroidServices(Context* context) {
 }
 
 void QuitShellThread() {
-  g_shell_thread.Get()->Join();
-  g_shell_thread.Pointer()->reset();
+  g_internal_data.Get().shell_thread->Join();
+  g_internal_data.Get().shell_thread.reset();
   Java_ShellMain_finishActivity(base::android::AttachCurrentThread(),
-                                g_main_activity.Get().obj());
+                                g_internal_data.Get().main_activity.obj());
   exit(0);
 }
 
 void MojoShellRunner::Run() {
   base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
-  Context* context = g_context.Pointer()->get();
+  g_internal_data.Get().shell_task_runner = loop.task_runner();
+  g_internal_data.Get().shell_runner_ready->Signal();
+
+  Context* context = g_internal_data.Get().context.get();
   ConfigureAndroidServices(context);
   context->InitWithPaths(mojo_shell_child_path_);
 
@@ -116,10 +138,12 @@ void MojoShellRunner::Run() {
     ApplyApplicationArgs(context, args);
 
   RunCommandLineApps(context);
+
+  // Signal that the shell is ready to receive requests.
   loop.Run();
 
-  g_java_message_loop.Pointer()->get()->PostTask(FROM_HERE,
-                                                 base::Bind(&QuitShellThread));
+  g_internal_data.Get().java_message_loop.get()->PostTask(
+      FROM_HERE, base::Bind(&QuitShellThread));
 }
 
 // Initialize stdout redirection if the command line switch is present.
@@ -141,6 +165,14 @@ void InitializeRedirection() {
       << "Unable to redirect stderr to stdout.";
 }
 
+void EmbedApplicationByURL(Context* context, std::string url) {
+  if (!g_internal_data.Get().window_manager.get()) {
+    context->application_manager()->ConnectToService(
+        GURL("mojo:window_manager"), &g_internal_data.Get().window_manager);
+  }
+  g_internal_data.Get().window_manager->Embed(url, nullptr, nullptr);
+}
+
 }  // namespace
 
 static void Init(JNIEnv* env,
@@ -150,7 +182,10 @@ static void Init(JNIEnv* env,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory,
                  jstring j_tmp_dir) {
-  g_main_activity.Get().Reset(env, activity);
+  g_internal_data.Get().main_activity.Reset(env, activity);
+  // Initially, the shell runner is not ready.
+  g_internal_data.Get().shell_runner_ready.reset(
+      new base::WaitableEvent(true, false));
 
   std::string tmp_dir = base::android::ConvertJavaStringToUTF8(env, j_tmp_dir);
   // Setting the TMPDIR environment variable so that applications can use it.
@@ -169,15 +204,15 @@ static void Init(JNIEnv* env,
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   command_line->InitFromArgv(parameters);
   Tracer* tracer = new Tracer;
-  g_tracer.Get().reset(tracer);
+  g_internal_data.Get().tracer.reset(tracer);
   bool trace_startup = command_line->HasSwitch(switches::kTraceStartup);
   if (trace_startup)
     tracer->Start(command_line->GetSwitchValueASCII(switches::kTraceStartup));
 
-  g_shell_runner.Get().reset(new MojoShellRunner(
-      base::FilePath(
-          base::android::ConvertJavaStringToUTF8(env, mojo_shell_child_path)),
-      parameters));
+  g_internal_data.Get().shell_runner.reset(
+      new MojoShellRunner(base::FilePath(base::android::ConvertJavaStringToUTF8(
+                              env, mojo_shell_child_path)),
+                          parameters));
 
   InitializeLogging();
 
@@ -189,13 +224,13 @@ static void Init(JNIEnv* env,
   Context* shell_context = new Context();
   shell_context->SetShellFileRoot(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
-  g_context.Get().reset(shell_context);
+  g_internal_data.Get().context.reset(shell_context);
 
-  g_java_message_loop.Get().reset(new base::MessageLoopForUI);
+  g_internal_data.Get().java_message_loop.reset(new base::MessageLoopForUI);
   base::MessageLoopForUI::current()->Start();
 
   if (trace_startup) {
-    g_java_message_loop.Get()->PostDelayedTask(
+    g_internal_data.Get().java_message_loop->PostDelayedTask(
         FROM_HERE,
         base::Bind(&Tracer::StopAndFlushToFile, base::Unretained(tracer),
                    tmp_dir + "/mojo_shell.trace"),
@@ -209,8 +244,8 @@ static void Init(JNIEnv* env,
 }
 
 static jboolean Start(JNIEnv* env, jclass clazz) {
-  if (!base::CommandLine::ForCurrentProcess()->GetArgs().size())
-    return false;
+// We always start the shell. We can then listen for intents requesting apps
+// to be started.
 
 #if defined(MOJO_SHELL_DEBUG_URL)
   base::CommandLine::ForCurrentProcess()->AppendArg(MOJO_SHELL_DEBUG_URL);
@@ -218,15 +253,23 @@ static jboolean Start(JNIEnv* env, jclass clazz) {
   sleep(5);
 #endif
 
-  g_shell_thread.Get().reset(new base::DelegateSimpleThread(
-      g_shell_runner.Get().get(), "ShellThread"));
-  g_shell_thread.Get()->Start();
+  g_internal_data.Get().shell_thread.reset(new base::DelegateSimpleThread(
+      g_internal_data.Get().shell_runner.get(), "ShellThread"));
+  g_internal_data.Get().shell_thread->Start();
+  g_internal_data.Get().shell_runner_ready->Wait();
   return true;
 }
 
 static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
   base::CommandLine::ForCurrentProcess()->AppendArg(
       base::android::ConvertJavaStringToUTF8(env, jurl));
+}
+
+static void StartApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
+  Context* context = g_internal_data.Get().context.get();
+  std::string url = base::android::ConvertJavaStringToUTF8(env, jurl);
+  g_internal_data.Get().shell_task_runner->PostTask(
+      FROM_HERE, base::Bind(&EmbedApplicationByURL, context, url));
 }
 
 bool RegisterShellMain(JNIEnv* env) {

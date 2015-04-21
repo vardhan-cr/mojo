@@ -64,6 +64,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
       deps = shell_common_deps + [
                ":jni_headers",
                "//mojo/android:libsystem_java",
+               "//mojo/services/window_manager/public/interfaces:interfaces",
                "//services/native_viewport:lib",
                "//shell/application_manager",
                "//ui/gl",

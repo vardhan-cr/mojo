@@ -31,6 +31,10 @@ public class ShellMain {
     private static final String CHILD_DIRECTORY = "child";
     // Name of the child executable.
     private static final String MOJO_SHELL_CHILD_EXECUTABLE = "mojo_shell_child";
+    // Path to the default origin of mojo: apps.
+    private static final String DEFAULT_ORIGIN = "https://apps.domokit.org/android-arm";
+    // Name of the default window manager.
+    private static final String DEFAULT_WM = "mojo:kiosk_wm";
 
     /**
      * A guard flag for calling nativeInit() only once.
@@ -56,6 +60,10 @@ public class ShellMain {
             // Program name.
             if (parameters != null) {
                 parametersList.addAll(Arrays.asList(parameters));
+            } else {
+                // Apply default parameters.
+                parametersList.add("--origin=" + DEFAULT_ORIGIN);
+                parametersList.add("--url-mappings=mojo:window_manager=" + DEFAULT_WM);
             }
 
             nativeInit(applicationContext, mojoShellChild.getAbsolutePath(),
@@ -85,6 +93,13 @@ public class ShellMain {
         nativeAddApplicationURL(url);
     }
 
+    /**
+     * Starts this application in an already-initialized shell.
+     */
+    static void startApplicationURL(String url) {
+        nativeStartApplicationURL(url);
+    }
+
     private static File getLocalAppsDir(Context context) {
         return context.getDir(LOCAL_APP_DIRECTORY, Context.MODE_PRIVATE);
     }
@@ -111,4 +126,6 @@ public class ShellMain {
     private static native boolean nativeStart();
 
     private static native void nativeAddApplicationURL(String url);
+
+    private static native void nativeStartApplicationURL(String url);
 }

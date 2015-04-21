@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.UiModeManager;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
@@ -40,6 +41,8 @@ public class MojoShellActivity extends Activity {
         // TODO(eseidel): ShellMain can fail, but we're ignoring the return.
         ShellMain.start();
 
+        onNewIntent(getIntent());
+
         // TODO(tonyg): Watch activities go back to the home screen within a
         // couple of seconds of detaching from adb. So for demonstration purposes,
         // we just keep the screen on. Eventually we'll want a solution for
@@ -47,6 +50,17 @@ public class MojoShellActivity extends Activity {
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_WATCH) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        Uri data = intent.getData();
+        if (data != null) {
+            String url = data.buildUpon().scheme("https").build().toString();
+            ShellMain.startApplicationURL(url);
         }
     }
 

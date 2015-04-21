@@ -899,7 +899,6 @@ def _CommonChecks(input_api, output_api):
   results.extend(_CheckNoDeprecatedCSS(input_api, output_api))
   results.extend(_CheckParseErrors(input_api, output_api))
   results.extend(_CheckForOverrideAndFinalRules(input_api, output_api))
-  results.extend(_CheckForMojoURL(input_api, output_api))
 
   if any('PRESUBMIT.py' == f.LocalPath() for f in input_api.AffectedFiles()):
     results.extend(input_api.canned_checks.RunUnitTestsInDirectory(
@@ -1057,20 +1056,6 @@ def _CheckForUsingSideEffectsOfPass(input_api, output_api):
           errors.append(output_api.PresubmitError(
             ('%s:%d uses *foo.Pass() to delete the contents of scoped_ptr. ' +
              'See crbug.com/418297.') % (f.LocalPath(), lnum)))
-  return errors
-
-
-def _CheckForMojoURL(input_api, output_api):
-  """Check that mojo url do not use mojo://."""
-  errors = []
-  for f in input_api.AffectedFiles():
-    if f.LocalPath() != 'PRESUBMIT.py':
-      for lnum, line in f.ChangedContents():
-        # Disallow mojo://
-        if input_api.re.search(r'mojo://', line):
-          errors.append(output_api.PresubmitError(
-            ('%s:%d uses mojo:// url format. Please use mojo: instead.')
-             % (f.LocalPath(), lnum)))
   return errors
 
 

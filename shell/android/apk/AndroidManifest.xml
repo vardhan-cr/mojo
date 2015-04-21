@@ -24,7 +24,13 @@
                   android:configChanges="orientation|keyboardHidden|keyboard|screenSize"
                   android:hardwareAccelerated="true">
             <intent-filter>
+                <!-- A mojo://host/path url will load the app at the
+                     https://host/path URL.
+                 -->
+                <data android:scheme="mojo"/>
                 <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
             </intent-filter>
         </activity>
         <service android:name=".IntentReceiverService"/>
