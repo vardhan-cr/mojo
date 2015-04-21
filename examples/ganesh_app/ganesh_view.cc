@@ -4,10 +4,13 @@
 
 #include "examples/ganesh_app/ganesh_view.h"
 
+#include "base/logging.h"
 #include "mojo/skia/ganesh_surface.h"
 #include "third_party/skia/include/core/SkCanvas.h"
+#include "third_party/skia/include/core/SkColor.h"
 
 namespace examples {
+
 namespace {
 
 mojo::Size ToSize(const mojo::Rect& rect) {
@@ -16,13 +19,15 @@ mojo::Size ToSize(const mojo::Rect& rect) {
   size.height = rect.height;
   return size;
 }
-}
+
+}  // namespace
 
 GaneshView::GaneshView(mojo::Shell* shell, mojo::View* view)
     : view_(view),
       gl_context_(mojo::GLContext::Create(shell)),
       gr_context_(gl_context_),
       texture_uploader_(this, shell, gl_context_) {
+  view_->AddObserver(this);
   Draw(ToSize(view_->bounds()));
 }
 
@@ -36,6 +41,8 @@ void GaneshView::OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) {
 }
 
 void GaneshView::OnViewDestroyed(mojo::View* view) {
+  DCHECK(view == view_);
+  view_->RemoveObserver(this);
   delete this;
 }
 
@@ -51,11 +58,18 @@ void GaneshView::Draw(const mojo::Size& size) {
       &gr_context_, make_scoped_ptr(new mojo::GLTexture(gl_context_, size)));
 
   SkCanvas* canvas = surface.canvas();
+  canvas->clear(SK_ColorCYAN);
 
   SkPaint paint;
+  paint.setColor(SK_ColorGREEN);
+  SkRect rect = SkRect::MakeWH(size.width, size.height);
+  rect.inset(10, 10);
+  canvas->drawRect(rect, paint);
+
   paint.setColor(SK_ColorRED);
   paint.setFlags(SkPaint::kAntiAlias_Flag);
   canvas->drawCircle(50, 100, 100, paint);
+
   canvas->flush();
 
   texture_uploader_.Upload(surface.TakeTexture());

@@ -110,8 +110,8 @@ void KioskWM::OnViewDestroyed(mojo::View* view) {
 }
 
 void KioskWM::OnViewBoundsChanged(mojo::View* view,
-                                              const mojo::Rect& old_bounds,
-                                              const mojo::Rect& new_bounds) {
+                                  const mojo::Rect& old_bounds,
+                                  const mojo::Rect& new_bounds) {
   content_->SetBounds(new_bounds);
 }
 
