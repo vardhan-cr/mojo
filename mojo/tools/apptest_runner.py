@@ -10,12 +10,13 @@ import ast
 import logging
 import sys
 
-from mopy import android
 from mopy import dart_apptest
 from mopy import gtest
+from mopy.android import AndroidShell
 from mopy.config import Config
 from mopy.gn import ConfigForGNArgs, ParseGNConfig
 from mopy.log import InitLogging
+from mopy.paths import Paths
 
 
 _logger = logging.getLogger()
@@ -44,7 +45,12 @@ def main():
 
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
-    extra_args.extend(android.PrepareShellRun(config, fixed_port=False))
+    paths = Paths(config)
+    shell = AndroidShell(paths.target_mojo_shell_path, paths.build_dir,
+                         paths.adb_path)
+    extra_args.extend(shell.PrepareShellRun(fixed_port=False))
+  else:
+    shell = None
 
   gtest.set_color()
 
@@ -61,14 +67,15 @@ def main():
     sys.stdout.flush()
 
     if test_type == "dart":
-      apptest_result = dart_apptest.run_test(config, test_dict, shell_args,
-                                             {test: test_args})
+      apptest_result = dart_apptest.run_test(config, shell, test_dict,
+                                             shell_args, {test: test_args})
     elif test_type == "gtest":
-      apptest_result = gtest.run_fixtures(config, test_dict, test, False,
+      apptest_result = gtest.run_fixtures(config, shell, test_dict,
+                                          test, False,
                                           test_args, shell_args)
     elif test_type == "gtest_isolated":
-      apptest_result = gtest.run_fixtures(config, test_dict, test, True,
-                                          test_args, shell_args)
+      apptest_result = gtest.run_fixtures(config, shell, test_dict,
+                                          test, True, test_args, shell_args)
     else:
       apptest_result = "Invalid test type in %r" % test_dict
 

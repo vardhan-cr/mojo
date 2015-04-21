@@ -7,7 +7,6 @@ import os
 import subprocess
 import time
 
-from mopy import android
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
@@ -45,8 +44,9 @@ def build_command_line(config, shell_args, apps_and_args):
                                               shell_args, apps_and_args)]))
 
 
-def run_test_android(shell_args, apps_and_args):
+def run_test_android(shell, shell_args, apps_and_args):
   """Run the given test on the single/default android device."""
+  assert shell
   (r, w) = os.pipe()
   with os.fdopen(r, "r") as rf:
     with os.fdopen(w, "w") as wf:
@@ -54,7 +54,7 @@ def run_test_android(shell_args, apps_and_args):
       _logger.debug("Starting shell with arguments: %s" % arguments)
       start_time = time.time()
       # TODO(vtl): Do more logging in lower layers.
-      android.StartShell(arguments, wf, wf.close, False)
+      shell.StartShell(arguments, wf, wf.close, False)
       rv = rf.read()
       run_time = time.time() - start_time
       _logger.debug("Shell completed")
@@ -65,10 +65,10 @@ def run_test_android(shell_args, apps_and_args):
       return rv
 
 
-def run_test(config, shell_args, apps_and_args):
+def run_test(config, shell, shell_args, apps_and_args):
   """Run the given test."""
   if (config.target_os == Config.OS_ANDROID):
-    return run_test_android(shell_args, apps_and_args)
+    return run_test_android(shell, shell_args, apps_and_args)
 
   executable = get_shell_executable(config)
   command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
@@ -83,12 +83,12 @@ def run_test(config, shell_args, apps_and_args):
   return rv
 
 
-def try_run_test(config, shell_args, apps_and_args):
+def try_run_test(config, shell, shell_args, apps_and_args):
   """Returns the output of a command line or an empty string on error."""
   command_line = build_command_line(config, shell_args, apps_and_args)
   _logger.debug("Running command line: %s" % command_line)
   try:
-    return run_test(config, shell_args, apps_and_args)
+    return run_test(config, shell, shell_args, apps_and_args)
   except Exception as e:
     print_process_error(command_line, e)
   return None

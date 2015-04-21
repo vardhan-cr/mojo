@@ -11,7 +11,7 @@ from mopy.print_process_error import print_process_error
 
 
 # TODO(erg): Support android, launched services and fixture isolation.
-def run_test(config, apptest_dict, shell_args, apps_and_args=None):
+def run_test(config, shell, apptest_dict, shell_args, apps_and_args=None):
   """Runs a command line and checks the output for signs of gtest failure.
 
   Args:
@@ -21,7 +21,7 @@ def run_test(config, apptest_dict, shell_args, apps_and_args=None):
         application's specific arguments.
   """
   apps_and_args = apps_and_args or {}
-  output = test_util.try_run_test(config, shell_args, apps_and_args)
+  output = test_util.try_run_test(config, shell, shell_args, apps_and_args)
   # Fail on output with dart unittests' "FAIL:"/"ERROR:" or a lack of "PASS:".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
