@@ -196,12 +196,7 @@ $ ninja -C out/Debug -j 1000
     mojo/tools/mojob.py build --android
     ```
 
-2. Push mojo_shell to to your device:
-    ```
-    adb install -r out/android_Debug/apks/MojoShell.apk
-    ```
-
-3. Run Mojo Shell on the device:
+2. Run Mojo Shell on the device (this will also push the built apk to the device):
     ```
     mojo/tools/android_mojo_shell.py mojo:spinning_cube
     ```
@@ -212,7 +207,7 @@ If this fails and prints:
     ```
 ... then you may not have a new enough build of Android on your device. You need L (Lollipop) or later.
 
-4. If you get a crash you won't see symbols. Use tools/android_stack_parser/stack to map back to symbols, e.g.:
+3. If you get a crash you won't see symbols. Use tools/android_stack_parser/stack to map back to symbols, e.g.:
     ```
     adb logcat | ./tools/android_stack_parser/stack
     ```
