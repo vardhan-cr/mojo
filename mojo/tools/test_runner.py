@@ -6,7 +6,6 @@
 """A "smart" test runner for gtest unit tests (that caches successes)."""
 
 import argparse
-import ast
 import logging
 import os
 import subprocess

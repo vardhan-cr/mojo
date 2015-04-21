@@ -6,7 +6,6 @@
 """A test runner for gtest application tests."""
 
 import argparse
-import ast
 import logging
 import sys
 

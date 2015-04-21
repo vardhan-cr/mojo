@@ -8,8 +8,6 @@ import re
 import sys
 
 from mopy import test_util
-from mopy.config import Config
-from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
 
 
