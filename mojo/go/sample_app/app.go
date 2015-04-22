@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"code.google.com/p/go.mobile/app"
+	"golang.org/x/mobile/app"
 	"mojo/public/go/system"
 )
 
