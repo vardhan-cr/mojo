@@ -338,5 +338,14 @@ hooks = [
         '--packages', 'pnacl_newlib',
         'sync', '--extract',
     ],
-  }
+  },
+  {
+    # This downloads linux and android Go binaries according to
+    # tools/go/VERSION.
+    'name': 'gotools',
+    'pattern': '.',
+    'action': [
+        'python', 'src/tools/go/download.py',
+    ],
+  },
 ]
