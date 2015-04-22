@@ -87,7 +87,7 @@ public class SensorForwarder implements ConnectionErrorHandler, SensorEventListe
         // TODO(abarth): We should expose a way for clients to request different
         // update rates.
         mManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        mListener.setErrorHandler(this);
+        mListener.getProxyHandler().setErrorHandler(this);
     }
 
     @Override
