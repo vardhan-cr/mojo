@@ -24,6 +24,7 @@ class GTestListTestsTest(unittest.TestCase):
       "sanitizer": [None, Config.SANITIZER_ASAN],
       "use_goma": [False],
       "use_nacl": [False, True],
+      "mojo_use_go": [False],
       "dcheck_always_on": [False, True],
     }
 
@@ -43,6 +44,7 @@ class GTestListTestsTest(unittest.TestCase):
       "is_asan": [False, True],
       "use_goma": [False],
       "mojo_use_nacl": [False, True],
+      "mojo_use_go": [False],
       "dcheck_always_on": [False, True],
     }
 

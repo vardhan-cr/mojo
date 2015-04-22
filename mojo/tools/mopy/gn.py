@@ -60,6 +60,10 @@ def GNArgsForConfig(config):
 
   gn_args["mojo_use_nacl"] = config.values.get("use_nacl", False)
 
+  gn_args["mojo_use_go"] = config.values.get("mojo_use_go", False)
+  if gn_args["mojo_use_go"]:
+    gn_args["go_build_tool"] = config.values.get("go_build_tool")
+
   if config.target_os == Config.OS_ANDROID:
     gn_args["os"] = "android"
   elif config.target_os == Config.OS_CHROMEOS:
@@ -107,6 +111,9 @@ def ConfigForGNArgs(args):
   if config_args["use_goma"]:
     config_args["goma_dir"] = args.get("goma_dir")
   config_args["use_nacl"] = args.get("mojo_use_nacl", False)
+  config_args["mojo_use_go"] = args.get("mojo_use_go", False)
+  if config_args["mojo_use_go"]:
+    config_args["go_build_tool"] = args.get("go_build_tool")
   config_args["target_os"] = args.get("os")
   config_args["target_cpu"] = args.get("target_cpu")
   config_args["dcheck_always_on"] = args.get("dcheck_always_on")

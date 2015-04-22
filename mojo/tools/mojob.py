@@ -59,6 +59,17 @@ def _args_to_config(args):
   if 'nacl' in args:
     additional_args['use_nacl'] = args.nacl
 
+  if not ('asan' in args and args.asan):
+    go_dir = os.path.join(Paths().src_root, 'third_party', 'go', 'tool')
+    if args.android:
+      additional_args['mojo_use_go'] = True
+      additional_args['go_build_tool'] = os.path.join(
+          go_dir, 'android_arm', 'bin', 'go')
+    elif target_os is None and Config.GetHostOS() == Config.OS_LINUX:
+      additional_args['mojo_use_go'] = True
+      additional_args['go_build_tool'] = os.path.join(
+          go_dir, 'linux_amd64', 'bin', 'go')
+
   if 'dry_run' in args:
     additional_args['dry_run'] = args.dry_run
 

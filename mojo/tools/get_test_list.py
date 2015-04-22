@@ -88,6 +88,12 @@ def GetTestList(config, verbose_count=0):
                   os.path.join("mojo", "tools", "data", "apptests"),
                   build_dir] + verbose_flags)
 
+  # Go unit tests (Linux-only):
+  if (target_os == Config.OS_LINUX and config.values.get("mojo_use_go") and
+      ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "go")):
+    AddEntry("Go unit tests",
+             [os.path.join(build_dir, "obj", "mojo", "go", "system_test")])
+
   # Python unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "python"):
     AddEntry("Python unit tests",
