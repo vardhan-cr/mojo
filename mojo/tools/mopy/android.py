@@ -3,9 +3,13 @@
 # found in the LICENSE file.
 
 import atexit
+import datetime
+import email.utils
+import hashlib
 import itertools
 import json
 import logging
+import math
 import os
 import os.path
 import random
@@ -35,6 +39,21 @@ MAPPING_PREFIX = '--map-origin='
 
 DEFAULT_BASE_PORT = 31337
 
+ZERO = datetime.timedelta(0)
+
+class UTC_TZINFO(datetime.tzinfo):
+  """UTC time zone representation."""
+
+  def utcoffset(self, _):
+    return ZERO
+
+  def tzname(self, _):
+    return "UTC"
+
+  def dst(self, _):
+     return ZERO
+
+UTC = UTC_TZINFO()
 
 _logger = logging.getLogger()
 
@@ -60,6 +79,69 @@ def _GetHandlerClassForPath(base_path):
     |base_path| directory over http.
     """
 
+    def __init__(self, *args, **kwargs):
+      self.etag = None
+      SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
+
+    def get_etag(self):
+      if self.etag:
+        return self.etag
+
+      path = self.translate_path(self.path)
+      if not os.path.isfile(path):
+        return None
+
+      sha256 = hashlib.sha256()
+      BLOCKSIZE = 65536
+      with open(path, 'rb') as hashed:
+        buf = hashed.read(BLOCKSIZE)
+        while len(buf) > 0:
+          sha256.update(buf)
+          buf = hashed.read(BLOCKSIZE)
+      self.etag = '"%s"' % sha256.hexdigest()
+      return self.etag
+
+    def send_head(self):
+      # Always close the connection after each request, as the keep alive
+      # support from SimpleHTTPServer doesn't like when the client requests to
+      # close the connection before downloading the full response content.
+      # pylint: disable=W0201
+      self.close_connection = 1
+
+      path = self.translate_path(self.path)
+      if os.path.isfile(path):
+        # Handle If-None-Match
+        etag = self.get_etag()
+        if ('If-None-Match' in self.headers and
+            etag == self.headers['If-None-Match']):
+          self.send_response(304)
+          return None
+
+        # Handle If-Modified-Since
+        if ('If-None-Match' not in self.headers and
+            'If-Modified-Since' in self.headers):
+          last_modified = datetime.datetime.fromtimestamp(
+              math.floor(os.stat(path).st_mtime), tz=UTC)
+          ims = datetime.datetime(
+              *email.utils.parsedate(self.headers['If-Modified-Since'])[:6],
+              tzinfo=UTC)
+          if last_modified <= ims:
+            self.send_response(304)
+            return None
+
+      return SimpleHTTPServer.SimpleHTTPRequestHandler.send_head(self)
+
+    def end_headers(self):
+      path = self.translate_path(self.path)
+
+      if os.path.isfile(path):
+        etag = self.get_etag()
+        if etag:
+          self.send_header('ETag', etag)
+          self.send_header('Cache-Control', 'must-revalidate')
+
+      return SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
+
     def translate_path(self, path):
       path_from_current = (
           SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path))
@@ -71,6 +153,7 @@ def _GetHandlerClassForPath(base_path):
       """
       pass
 
+  RequestHandler.protocol_version = 'HTTP/1.1'
   return RequestHandler
 
 
@@ -183,7 +266,7 @@ class AndroidShell(object):
     http_thread.daemon = True
     http_thread.start()
 
-    print 'local port=', httpd.server_address[1]
+    print 'local port=%d' % httpd.server_address[1]
     return 'http://127.0.0.1:%d/' % self._MapPort(port, httpd.server_address[1])
 
   def _StartHttpServerForOriginMapping(self, mapping, port):
