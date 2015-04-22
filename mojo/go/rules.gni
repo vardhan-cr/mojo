@@ -91,22 +91,22 @@ template("go_test_binary") {
   }
 }
 
-template("go_shared_library") {
+template("go_mojo_application") {
   # Only available on android for now.
   assert(is_android)
   assert(defined(invoker.sources))
   assert(go_build_tool != "")
 
   static_library_name = target_name + "_static_library"
-
   static_library(static_library_name) {
     complete_static_lib = true
     deps = invoker.deps
   }
 
-  action(target_name) {
+  go_library_name = target_name + "_go"
+  action(go_library_name) {
     deps = [
-      ":$static_library_name",
+      ":${static_library_name}",
     ]
     script = "//mojo/go/go.py"
     inputs = invoker.sources
@@ -133,5 +133,17 @@ template("go_shared_library") {
           "build",
           "-ldflags=-shared",
         ] + rebase_path(invoker.sources, build_dir)
+  }
+
+  copy(target_name) {
+    deps = [
+      ":${go_library_name}",
+    ]
+    sources = [
+      "${target_out_dir}/${go_library_name}",
+    ]
+    outputs = [
+      "${root_out_dir}/${target_name}.mojo",
+    ]
   }
 }

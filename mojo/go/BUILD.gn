@@ -60,7 +60,7 @@ if (is_android) {
       ":go_sample_app",
     ]
   }
-  go_shared_library("go_sample_app") {
+  go_mojo_application("go_sample_app") {
     sources = [
       "sample_app/app.go",
     ]
@@ -98,11 +98,10 @@ if (is_android) {
     ]
     deps = [
       ":application",
-      ":bindings",
       ":platform_cgo",
+      "//examples/echo",
       "//mojo/edk/system",
       "//mojo/public/interfaces/bindings/tests:test_interfaces",
-      "//examples/echo",
     ]
   }
 }

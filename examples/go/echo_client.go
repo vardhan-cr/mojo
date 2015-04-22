@@ -26,11 +26,11 @@ type EchoClientDelegate struct {
 
 func (delegate *EchoClientDelegate) Initialize(ctx application.Context) {
 	echoRequest, echoPointer := echo.CreateMessagePipeForEcho()
-	ctx.ConnectToApplication("mojo:echo_server").ConnectToService(&echoRequest)
+	ctx.ConnectToApplication("mojo:go_echo_server").ConnectToService(&echoRequest)
 	delegate.echo = echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
 	response, err := delegate.echo.EchoString(bindings.StringPointer("Hello, Go world!"))
 	if response != nil {
-		fmt.Println(*response)
+		fmt.Printf("client: %s\n", *response)
 	} else {
 		log.Println(err)
 	}

@@ -22,7 +22,7 @@ import "C"
 type EchoImpl struct{}
 
 func (echo *EchoImpl) EchoString(inValue *string) (outValue *string, err error) {
-	log.Println(*inValue)
+	log.Printf("server: %s\n", *inValue)
 	return inValue, nil
 }
 

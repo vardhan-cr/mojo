@@ -34,12 +34,6 @@ go_build_tool="<path_to_go_binary>"
 $ ninja -C out/android_Debug go_sample_app
 
 To run the app:
-1) configure port forwarding 4444 -> localhost:4444 on android device or
-   use 10.0.2.2 instead of 127.0.0.1 if you are running an android emulator
-2) open new terminal and run
-$ cd out/android_Debug
-$ python -m SimpleHTTPServer 4444
-3) in the previous terminal run
-$ mojo/tools/android_mojo_shell.py --url-mappings="mojo:go_sample_app"="http://127.0.0.1:4444/obj/mojo/go/go_sample_app" "mojo:go_sample_app"
+$ mojo/tools/android_mojo_shell.py --enable-multiprocess mojo:go_sample_app
 
 More inforamtion about building mojo: https://github.com/domokit/mojo/blob/master/README.md
