@@ -9,6 +9,8 @@ if (is_android) {
     deps = [
       ":go_echo_client",
       ":go_echo_server",
+      ":go_http_handler",
+      ":go_http_server",
     ]
   }
 
@@ -35,6 +37,32 @@ if (is_android) {
       "//mojo/go:platform_cgo",
       "//mojo/public/c/system",
       "//mojo/public/platform/native:system",
+    ]
+  }
+
+  go_mojo_application("go_http_handler") {
+    sources = [
+      "http_handler.go",
+    ]
+    deps = [
+      "//mojo/go:application",
+      "//mojo/go:platform_cgo",
+      "//mojo/public/c/system",
+      "//mojo/public/platform/native:system",
+      "//mojo/services/network/public/interfaces",
+    ]
+  }
+
+  go_mojo_application("go_http_server") {
+    sources = [
+      "http_server.go",
+    ]
+    deps = [
+      "//mojo/go:application",
+      "//mojo/go:platform_cgo",
+      "//mojo/public/c/system",
+      "//mojo/public/platform/native:system",
+      "//mojo/services/network/public/interfaces",
     ]
   }
 }
