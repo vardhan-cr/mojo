@@ -84,7 +84,7 @@ template("go_test_binary") {
              rebase_path(root_out_dir, root_build_dir),
              "-I" + rebase_path("//"),
              "-L" + rebase_path(target_out_dir) + " -l" + static_library_name +
-                 " -lstdc++ -lpthread -lm -lglib-2.0",
+                 " -lstdc++ -lpthread -lm -lglib-2.0 -lrt",
              "test",
              "-c",
            ] + rebase_path(invoker.sources, build_dir)

@@ -71,7 +71,10 @@ def main():
           'prebuilt', 'linux-x86_64', 'bin', 'arm-linux-androideabi-gcc')
       sysroot = os.path.join(ndk_path, 'platforms', NDK_PLATFORM, 'arch-arm')
       env['CC'] = '%s --sysroot %s' % (ndk_cc, sysroot)
-  subprocess.call([go_tool] + go_options, env=env)
+
+  call_result = subprocess.call([go_tool] + go_options, env=env)
+  if call_result != 0:
+    return call_result
   out_files = [ f for f in os.listdir('.') if os.path.isfile(f)]
   if (len(out_files) > 0):
     shutil.move(out_files[0], out_file)
