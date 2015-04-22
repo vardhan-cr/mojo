@@ -6,7 +6,6 @@ package org.chromium.mojo.sensors;
 
 import android.content.Context;
 
-import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.sensors.SensorListener;
 import org.chromium.mojom.sensors.SensorService;
@@ -17,10 +16,8 @@ import org.chromium.mojom.sensors.SensorService;
 public class SensorServiceImpl implements SensorService {
     private Context mContext;
 
-    public SensorServiceImpl(Context context, MessagePipeHandle pipe) {
+    public SensorServiceImpl(Context context) {
         mContext = context;
-
-        SensorService.MANAGER.bind(this, pipe);
     }
 
     @Override

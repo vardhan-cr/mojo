@@ -40,7 +40,7 @@ public class Sensors implements ApplicationDelegate {
         connection.addService(new ServiceFactoryBinder<SensorService>() {
             @Override
             public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
-                new SensorServiceImpl(mContext, pipe);
+                SensorService.MANAGER.bind(new SensorServiceImpl(mContext), pipe);
             }
 
             @Override

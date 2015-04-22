@@ -7,8 +7,8 @@ import("//build/config/android/rules.gni")
 
 android_library("keyboard") {
   java_files = [
-    "org/chromium/mojo/keyboard/InputConnectionAdaptor.java",
-    "org/chromium/mojo/keyboard/KeyboardServiceImpl.java",
+    "src/org/chromium/mojo/keyboard/InputConnectionAdaptor.java",
+    "src/org/chromium/mojo/keyboard/KeyboardServiceImpl.java",
   ]
 
   deps = [

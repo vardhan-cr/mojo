@@ -298,6 +298,7 @@ if (is_android) {
     deps = [
       "//base:base_java",
       "//mojo/android:system_java",
+      "//mojo/public/java:bindings",
       "//mojo/public/java:system",
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
       "//services/keyboard",

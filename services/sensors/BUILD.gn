@@ -8,7 +8,7 @@ if (is_android) {
 
   mojo_android_java_application("sensors") {
     sources = [
-      "org/chromium/mojo/sensors/Sensors.java",
+      "src/org/chromium/mojo/sensors/Sensors.java",
     ]
 
     mojo_main = "org.chromium.mojo.sensors.Sensors"
@@ -23,8 +23,8 @@ if (is_android) {
 
   android_library("sensors_lib") {
     java_files = [
-      "org/chromium/mojo/sensors/SensorForwarder.java",
-      "org/chromium/mojo/sensors/SensorServiceImpl.java",
+      "src/org/chromium/mojo/sensors/SensorForwarder.java",
+      "src/org/chromium/mojo/sensors/SensorServiceImpl.java",
     ]
 
     deps = [

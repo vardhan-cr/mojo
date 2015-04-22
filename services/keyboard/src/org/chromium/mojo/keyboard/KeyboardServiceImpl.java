@@ -10,8 +10,6 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
-import org.chromium.mojo.system.Core;
-import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.keyboard.KeyboardClient;
 import org.chromium.mojom.keyboard.KeyboardService;
@@ -25,15 +23,8 @@ public class KeyboardServiceImpl implements KeyboardService {
 
     private Context mContext;
 
-    public KeyboardServiceImpl(Context context, MessagePipeHandle pipe) {
+    public KeyboardServiceImpl(Context context) {
         mContext = context;
-        KeyboardService.MANAGER.bind(this, pipe);
-    }
-
-    public KeyboardServiceImpl(Context context, Core core, MessagePipeHandle pipe) {
-        mContext = context;
-
-        KeyboardService.MANAGER.bind(this, pipe);
     }
 
     public static void setActiveView(View view) {
@@ -72,6 +63,7 @@ public class KeyboardServiceImpl implements KeyboardService {
         imm.showSoftInput(sActiveView, 0);
     }
 
+    @Override
     public void hide() {
         InputMethodManager imm =
                 (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);

@@ -16,6 +16,7 @@ import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.UntypedHandle;
 import org.chromium.mojo.system.impl.CoreImpl;
+import org.chromium.mojom.keyboard.KeyboardService;
 
 /**
  * Interaction with the keyboard.
@@ -28,7 +29,9 @@ public class Keyboard {
         UntypedHandle keyboardRequestHandle = core.acquireNativeHandle(keyboardRequestHandleValue);
         MessagePipeHandle keyboardRequest = keyboardRequestHandle.toMessagePipeHandle();
         View v = activity.getCurrentFocus();
-        new KeyboardServiceImpl(ApplicationStatus.getApplicationContext(), keyboardRequest);
+        KeyboardService.MANAGER.bind(
+                new KeyboardServiceImpl(ApplicationStatus.getApplicationContext()),
+                keyboardRequest);
         KeyboardServiceImpl.setActiveView(v);
     }
 }
