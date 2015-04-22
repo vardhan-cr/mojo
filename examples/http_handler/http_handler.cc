@@ -43,7 +43,7 @@ class HttpHandler : public ApplicationDelegate,
     local_address->ipv4->addr[1] = 0;
     local_address->ipv4->addr[2] = 0;
     local_address->ipv4->addr[3] = 0;
-    local_address->ipv4->port = 80;
+    local_address->ipv4->port = 8080;
     http_server_factory->CreateHttpServer(GetProxy(&http_server_).Pass(),
                                           local_address.Pass());
 
