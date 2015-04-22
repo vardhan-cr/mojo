@@ -7,7 +7,10 @@ import argparse
 import logging
 import sys
 
-from mopy.android import AndroidShell
+import devtools
+devtools.add_pylib_to_path()
+from pylib.android import AndroidShell
+
 from mopy.config import Config
 from mopy.paths import Paths
 

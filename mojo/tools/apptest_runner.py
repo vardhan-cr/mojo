@@ -9,9 +9,12 @@ import argparse
 import logging
 import sys
 
+import devtools
+devtools.add_pylib_to_path()
+from pylib.android import AndroidShell
+
 from mopy import dart_apptest
 from mopy import gtest
-from mopy.android import AndroidShell
 from mopy.config import Config
 from mopy.gn import ConfigForGNArgs, ParseGNConfig
 from mopy.log import InitLogging
