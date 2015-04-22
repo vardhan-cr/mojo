@@ -188,11 +188,21 @@ class AndroidShell(object):
     shell_apk_path: path to the shell Android binary
     local_dir: directory where locally build Mojo apps will be served, optional
     adb_path: path to adb, optional if adb is in PATH
+    target_device: device to run on, if multiple devices are connected
   """
-  def __init__(self, shell_apk_path, local_dir=None, adb_path="adb"):
+  def __init__(
+      self, shell_apk_path, local_dir=None, adb_path="adb", target_device=None):
     self.shell_apk_path = shell_apk_path
     self.adb_path = adb_path
     self.local_dir = local_dir
+    self.target_device = target_device
+
+  def _CreateADBCommand(self, args):
+    adb_command = [self.adb_path]
+    if self.target_device:
+      adb_command.extend(['-s', self.target_device])
+    adb_command.extend(args)
+    return adb_command
 
   def _ReadFifo(self, fifo_path, pipe, on_fifo_closed, max_attempts=5):
     """
@@ -201,7 +211,8 @@ class AndroidShell(object):
     path up to |max_attempts|, waiting 1 second between each attempt. If it
     cannot find |fifo_path|, a exception will be raised.
     """
-    fifo_command = [self.adb_path, 'shell', 'test -e "%s"; echo $?' % fifo_path]
+    fifo_command = self._CreateADBCommand(
+        ['shell', 'test -e "%s"; echo $?' % fifo_path])
 
     def Run():
       def _WaitForFifo():
@@ -213,10 +224,10 @@ class AndroidShell(object):
           on_fifo_closed()
         raise Exception("Unable to find fifo.")
       _WaitForFifo()
-      stdout_cat = subprocess.Popen([self.adb_path,
+      stdout_cat = subprocess.Popen(self._CreateADBCommand([
                                      'shell',
                                      'cat',
-                                     fifo_path],
+                                     fifo_path]),
                                     stdout=pipe)
       atexit.register(_ExitIfNeeded, stdout_cat)
       stdout_cat.wait()
@@ -232,7 +243,8 @@ class AndroidShell(object):
     available port is chosen. Returns the device port.
     """
     def _FindAvailablePortOnDevice():
-      opened = subprocess.check_output([self.adb_path, 'shell', 'netstat'])
+      opened = subprocess.check_output(
+          self._CreateADBCommand(['shell', 'netstat']))
       opened = [int(x.strip().split()[3].split(':')[1])
                 for x in opened if x.startswith(' tcp')]
       while True:
@@ -241,13 +253,13 @@ class AndroidShell(object):
           return port
     if device_port == 0:
       device_port = _FindAvailablePortOnDevice()
-    subprocess.Popen([self.adb_path,
+    subprocess.Popen(self._CreateADBCommand([
                       "reverse",
                       "tcp:%d" % device_port,
-                      "tcp:%d" % host_port]).wait()
+                      "tcp:%d" % host_port])).wait()
 
-    unmap_command = [self.adb_path, "reverse", "--remove",
-                     "tcp:%d" % device_port]
+    unmap_command = self._CreateADBCommand(["reverse", "--remove",
+                     "tcp:%d" % device_port])
 
     def _UnmapPort():
       subprocess.Popen(unmap_command)
@@ -308,11 +320,12 @@ class AndroidShell(object):
     the build directory along with port forwarding.
 
     Returns arguments that should be appended to shell argument list."""
-    if 'cannot run as root' in subprocess.check_output([self.adb_path, 'root']):
+    if 'cannot run as root' in subprocess.check_output(
+        self._CreateADBCommand(['root'])):
       raise Exception("Unable to run adb as root.")
     subprocess.check_call(
-        [self.adb_path, 'install', '-r', self.shell_apk_path, '-i',
-         MOJO_SHELL_PACKAGE_NAME])
+        self._CreateADBCommand(['install', '-r', self.shell_apk_path, '-i',
+         MOJO_SHELL_PACKAGE_NAME]))
     atexit.register(self.StopShell)
 
     extra_shell_args = []
@@ -335,17 +348,18 @@ class AndroidShell(object):
     """
     STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
 
-    cmd = [self.adb_path,
+    cmd = self._CreateADBCommand([
            'shell',
            'am',
            'start',
            '-S',
            '-a', 'android.intent.action.VIEW',
-           '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME]
+           '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME])
 
     parameters = []
     if stdout or on_application_stop:
-      subprocess.check_call([self.adb_path, 'shell', 'rm', STDOUT_PIPE])
+      subprocess.check_call(self._CreateADBCommand(
+          ['shell', 'rm', STDOUT_PIPE]))
       parameters.append('--fifo-path=%s' % STDOUT_PIPE)
       self._ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
     # The origin has to be specified whether it's local or external.
@@ -368,14 +382,16 @@ class AndroidShell(object):
     """
     Stops the mojo shell.
     """
-    subprocess.check_call(
-        [self.adb_path, 'shell', 'am', 'force-stop', MOJO_SHELL_PACKAGE_NAME])
+    subprocess.check_call(self._CreateADBCommand(['shell',
+                                                  'am',
+                                                  'force-stop',
+                                                  MOJO_SHELL_PACKAGE_NAME]))
 
   def CleanLogs(self):
     """
     Cleans the logs on the device.
     """
-    subprocess.check_call([self.adb_path, 'logcat', '-c'])
+    subprocess.check_call(self._CreateADBCommand(['logcat', '-c']))
 
   def ShowLogs(self):
     """
@@ -383,10 +399,10 @@ class AndroidShell(object):
 
     Returns the process responsible for reading the logs.
     """
-    logcat = subprocess.Popen([self.adb_path,
+    logcat = subprocess.Popen(self._CreateADBCommand([
                                'logcat',
                                '-s',
-                               ' '.join(LOGCAT_TAGS)],
+                               ' '.join(LOGCAT_TAGS)]),
                               stdout=sys.stdout)
     atexit.register(_ExitIfNeeded, logcat)
     return logcat

@@ -45,6 +45,7 @@ def main():
   parser.add_argument('--target-cpu', help='CPU architecture to run for.',
                       choices=['x64', 'x86', 'arm'])
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
+  parser.add_argument('--target-device', help='Device to run on.')
   launcher_args, args = parser.parse_known_args()
 
   config = Config(target_os=Config.OS_ANDROID,
@@ -52,7 +53,7 @@ def main():
                   is_debug=launcher_args.debug)
   paths = Paths(config)
   shell = AndroidShell(paths.target_mojo_shell_path, paths.build_dir,
-                       paths.adb_path)
+                       paths.adb_path, launcher_args.target_device)
 
   extra_shell_args = shell.PrepareShellRun(launcher_args.origin)
   args.extend(extra_shell_args)
