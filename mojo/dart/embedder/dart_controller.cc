@@ -12,6 +12,7 @@
 #include "dart/runtime/include/dart_native_api.h"
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/dart_controller.h"
+#include "mojo/dart/embedder/dart_debugger.h"
 #include "mojo/dart/embedder/isolate_data.h"
 #include "mojo/dart/embedder/vmservice.h"
 #include "mojo/public/c/system/core.h"
@@ -572,6 +573,9 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
 
   bool result = Dart_SetVMFlags(kNumArgs, args);
   CHECK(result);
+
+  // This should be called before calling Dart_Initialize.
+  DartDebugger::InitDebugger();
 
   result = Dart_Initialize(vm_isolate_snapshot_buffer,
                            IsolateCreateCallback,
