@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:apptest/apptest.dart';
-import 'package:dart/test/echo_service.mojom.dart';
+import 'package:mojom/dart/test/echo_service.mojom.dart';
 
 import 'echo_apptests.dart' as echo;
 import 'pingpong_apptests.dart' as pingpong;

@@ -8,7 +8,7 @@
 # These url_mapping arguments can be passed to gen_snapshot.
 
 # an example output line:
-# --url_mapping=embedder-package:mojo/service.mojom.dart, \
+# --url_mapping=dart:_mojom/mojo/service.mojom.dart, \
 # /.../src/out/Debug/gen/dart_embedder_packages/mojo/service.mojom.dart
 
 import argparse

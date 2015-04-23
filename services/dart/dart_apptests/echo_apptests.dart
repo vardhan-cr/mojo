@@ -7,7 +7,7 @@ library echo_apptests;
 import 'dart:async';
 
 import 'package:apptest/apptest.dart';
-import 'package:dart/test/echo_service.mojom.dart';
+import 'package:mojom/dart/test/echo_service.mojom.dart';
 import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';

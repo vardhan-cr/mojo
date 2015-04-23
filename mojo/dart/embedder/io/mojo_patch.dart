@@ -5,12 +5,12 @@
 import 'dart:_mojo/public/dart/application.dart';
 import 'dart:_mojo/public/dart/bindings.dart';
 import 'dart:_mojo/public/dart/core.dart';
-import 'dart:_mojo/net_address.mojom.dart';
-import 'dart:_mojo/network_error.mojom.dart';
-import 'dart:_mojo/network_service.mojom.dart';
-import 'dart:_mojo/tcp_bound_socket.mojom.dart';
-import 'dart:_mojo/tcp_connected_socket.mojom.dart';
-import 'dart:_mojo/tcp_server_socket.mojom.dart';
+import 'dart:_mojom/mojo/net_address.mojom.dart';
+import 'dart:_mojom/mojo/network_error.mojom.dart';
+import 'dart:_mojom/mojo/network_service.mojom.dart';
+import 'dart:_mojom/mojo/tcp_bound_socket.mojom.dart';
+import 'dart:_mojom/mojo/tcp_connected_socket.mojom.dart';
+import 'dart:_mojom/mojo/tcp_server_socket.mojom.dart';
 
 //
 // Mojo objects and helper functions used by the 'dart:io' library.

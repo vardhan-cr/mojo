@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:mojo/public/dart/application.dart';
 import 'package:mojo/public/dart/bindings.dart';
 import 'package:mojo/public/dart/core.dart';
-import 'package:dart/test/echo_service.mojom.dart';
+import 'package:mojom/dart/test/echo_service.mojom.dart';
 
 class EchoServiceImpl implements EchoService {
   EchoServiceStub _stub;

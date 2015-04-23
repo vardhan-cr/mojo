@@ -9,9 +9,9 @@ import 'dart:typed_data';
 import 'package:mojo/dart/testing/expect.dart';
 import 'package:mojo/public/dart/bindings.dart' as bindings;
 import 'package:mojo/public/dart/core.dart' as core;
-import 'package:sample/sample_interfaces.mojom.dart' as sample;
-import 'package:mojo/test/test_structs.mojom.dart' as structs;
-import 'package:mojo/test/rect.mojom.dart' as rect;
+import 'package:mojom/sample/sample_interfaces.mojom.dart' as sample;
+import 'package:mojom/mojo/test/test_structs.mojom.dart' as structs;
+import 'package:mojom/mojo/test/rect.mojom.dart' as rect;
 
 class ProviderImpl implements sample.Provider {
   sample.ProviderStub _stub;
