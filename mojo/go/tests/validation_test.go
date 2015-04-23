@@ -101,10 +101,14 @@ type mockMessagePipeHandle struct {
 	messages chan rawMessage
 }
 
-func NewMockMessagePipeHandle() system.MessagePipeHandle {
+func NewMockMessagePipeHandle() *mockMessagePipeHandle {
 	h := &mockMessagePipeHandle{}
 	h.messages = make(chan rawMessage, 10)
 	return h
+}
+
+func (h *mockMessagePipeHandle) reset() {
+	h.messages = make(chan rawMessage, 10)
 }
 
 func (h *mockMessagePipeHandle) IsValid() bool {
@@ -307,6 +311,22 @@ func (v *conformanceValidator) Method13(*test.InterfaceAPointer, uint32, *test.I
 	return nil
 }
 
+func verifyValidationError(t *testing.T, test string, err error, answer string) {
+	if (err == nil) != (answer == "PASS") {
+		t.Fatalf("unexpected result for test %v: %v", test, err)
+	}
+	if answer != "PASS" {
+		validationError, ok := err.(*bindings.ValidationError)
+		if !ok {
+			t.Fatalf("can't convert err '%v' to ValidationError in test %v", err, test)
+		}
+		code := validationError.ErrorCode
+		if code != answer {
+			t.Fatalf("unexpected error code in test %v: got %v(%v), want %v", test, code, err, answer)
+		}
+	}
+}
+
 func TestConformanceValidation(t *testing.T) {
 	tests := getMatchingTests(listTestFiles(), "conformance_")
 
@@ -325,9 +345,7 @@ func TestConformanceValidation(t *testing.T) {
 		impl.CheckArgs = strings.HasSuffix(test, "_good")
 		stubIn.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
 		err := stub.ServeRequest()
-		if (err == nil) != (answer == "PASS") {
-			t.Fatalf("unexpected result for test %v: %v", test, err)
-		}
+		verifyValidationError(t, test, err, answer)
 
 		if !impl.CheckArgs {
 			continue
@@ -344,20 +362,17 @@ func TestConformanceValidation(t *testing.T) {
 	}
 }
 
-func runTests(t *testing.T, prefix string, in system.MessagePipeHandle, check func() error) {
+func runTests(t *testing.T, prefix string, in *mockMessagePipeHandle, check func() error) {
 	tests := getMatchingTests(listTestFiles(), prefix)
-	for i, test := range tests {
+	for _, test := range tests {
 		bytes, handles := readTest(test)
 		answer := readAnswer(test)
 		// Replace request ID to match proxy numbers.
 		if bytes[0] == 24 {
-			bytes[16] = byte(i + 1)
+			bytes[16] = 1
 		}
 		in.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
-		err := check()
-		if (err == nil) != (answer == "PASS") {
-			t.Fatalf("unexpected result for test %v: %v", test, err)
-		}
+		verifyValidationError(t, test, check(), answer)
 	}
 }
 
@@ -368,26 +383,28 @@ func (s *integrationStubImpl) Method0(test.BasicStruct) ([]uint8, error) {
 }
 
 func TestIntegrationTests(t *testing.T) {
-	_, stubIn, stubOut := core.CreateMessagePipe(nil)
-	interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(stubOut)}
-	stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
-	checkStub := func() error { return stub.ServeRequest() }
-	runTests(t, "integration_intf_rqst_", stubIn, checkStub)
-	runTests(t, "integration_msghdr_", stubIn, checkStub)
-	stubIn.Close()
-	stub.Close()
-
-	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
-	interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(proxyIn)}
-	proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
-	checkProxy := func() error {
-		_, err := proxy.Method0(test.BasicStruct{})
+	h := NewMockMessagePipeHandle()
+	checkStub := func() error {
+		interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(h)}
+		stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
+		err := stub.ServeRequest()
+		stub.Close()
+		h.reset()
 		return err
 	}
-	runTests(t, "integration_intf_resp_", proxyOut, checkProxy)
-	runTests(t, "integration_msghdr_", proxyOut, checkProxy)
-	proxy.Close_proxy()
-	proxyOut.Close()
+	runTests(t, "integration_intf_rqst_", h, checkStub)
+	runTests(t, "integration_msghdr_", h, checkStub)
+
+	checkProxy := func() error {
+		interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(h)}
+		proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
+		_, err := proxy.Method0(test.BasicStruct{})
+		proxy.Close_proxy()
+		h.reset()
+		return err
+	}
+	runTests(t, "integration_intf_resp_", h, checkProxy)
+	runTests(t, "integration_msghdr_", h, checkProxy)
 }
 
 type boundsCheckStubImpl struct{}
@@ -401,35 +418,36 @@ func (s *boundsCheckStubImpl) Method1(uint8) error {
 }
 
 func TestBoundsCheck(t *testing.T) {
-	_, stubIn, stubOut := core.CreateMessagePipe(nil)
-	interfaceRequest := test.BoundsCheckTestInterfaceRequest{pipeOwner(stubOut)}
-	stub := test.NewBoundsCheckTestInterfaceStub(interfaceRequest, &boundsCheckStubImpl{}, waiter)
-	checkStub := func() error { return stub.ServeRequest() }
-	runTests(t, "boundscheck_", stubIn, checkStub)
-	stubIn.Close()
-	stub.Close()
-
-	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
-	interfacePointer := test.BoundsCheckTestInterfacePointer{pipeOwner(proxyIn)}
-	proxy := test.NewBoundsCheckTestInterfaceProxy(interfacePointer, waiter)
-	checkProxy := func() error {
-		_, err := proxy.Method0(0)
+	h := NewMockMessagePipeHandle()
+	checkStub := func() error {
+		interfaceRequest := test.BoundsCheckTestInterfaceRequest{pipeOwner(h)}
+		stub := test.NewBoundsCheckTestInterfaceStub(interfaceRequest, &boundsCheckStubImpl{}, waiter)
+		err := stub.ServeRequest()
+		stub.Close()
 		return err
 	}
-	runTests(t, "resp_boundscheck_", proxyOut, checkProxy)
-	proxy.Close_proxy()
-	proxyOut.Close()
+	runTests(t, "boundscheck_", h, checkStub)
+
+	checkProxy := func() error {
+		interfacePointer := test.BoundsCheckTestInterfacePointer{pipeOwner(h)}
+		proxy := test.NewBoundsCheckTestInterfaceProxy(interfacePointer, waiter)
+		_, err := proxy.Method0(0)
+		proxy.Close_proxy()
+		h.reset()
+		return err
+	}
+	runTests(t, "resp_boundscheck_", h, checkProxy)
 }
 
 func TestConformanceResponse(t *testing.T) {
-	_, proxyIn, proxyOut := core.CreateMessagePipe(nil)
-	interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(proxyIn)}
-	proxy := test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)
+	h := NewMockMessagePipeHandle()
 	checkProxy := func() error {
+		interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(h)}
+		proxy := test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)
 		_, err := proxy.Method12(0)
+		proxy.Close_proxy()
+		h.reset()
 		return err
 	}
-	runTests(t, "resp_conformance_", proxyOut, checkProxy)
-	proxy.Close_proxy()
-	proxyOut.Close()
+	runTests(t, "resp_conformance_", h, checkProxy)
 }
