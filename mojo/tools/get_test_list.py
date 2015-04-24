@@ -89,7 +89,8 @@ def GetTestList(config, verbose_count=0):
                   build_dir] + verbose_flags)
 
   # Go unit tests (Linux-only):
-  if (target_os == Config.OS_LINUX and config.values.get("mojo_use_go") and
+  if (target_os == Config.OS_LINUX and
+      config.sanitizer != Config.SANITIZER_ASAN and
       ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "go")):
     AddEntry("Go unit tests",
              [os.path.join(build_dir, "obj", "mojo", "go", "system_test")])
