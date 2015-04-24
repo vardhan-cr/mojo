@@ -54,24 +54,7 @@ go_library("platform_cgo") {
   ]
 }
 
-if (is_android) {
-  group("go") {
-    deps = [
-      ":go_sample_app",
-    ]
-  }
-  go_mojo_application("go_sample_app") {
-    sources = [
-      "sample_app/app.go",
-    ]
-    deps = [
-      ":bindings",
-      ":platform_cgo",
-      "//mojo/public/c/system",
-      "//mojo/public/platform/native:system",
-    ]
-  }
-} else if (is_linux) {
+if (is_linux) {
   group("go") {
     testonly = true
     deps = [

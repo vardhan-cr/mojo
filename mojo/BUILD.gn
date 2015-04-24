@@ -32,7 +32,7 @@ group("mojo") {
     ]
   }
 
-  if (mojo_use_go) {
+  if (is_linux && mojo_use_go) {
     deps += [ "//mojo/go" ]
   }
 

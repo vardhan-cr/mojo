@@ -9,8 +9,15 @@ for handling its registered urls.
 http_server - application that implements HTTP server; uses go net stack on top
 of the mojo network service.
 
-1) Follow steps from //mojo/go/sample_app/README.txt
+Setup instructions
 
+1) Follow Android Build instructions in src/README.md file
+
+2) Build
+$ mojo/tools/mojob.py gn --android
+$ mojo/tools/mojob.py build --android
+
+3) Run
 To run echo client:
 $ mojo/tools/android_mojo_shell.py --enable-multiprocess mojo:go_echo_client
 
