@@ -20,20 +20,20 @@ import (
 //#include "mojo/public/c/system/types.h"
 import "C"
 
-type EchoClientDelegate struct {
-	echo *echo.EchoProxy
-}
+type EchoClientDelegate struct{}
 
 func (delegate *EchoClientDelegate) Initialize(ctx application.Context) {
 	echoRequest, echoPointer := echo.CreateMessagePipeForEcho()
 	ctx.ConnectToApplication("mojo:go_echo_server").ConnectToService(&echoRequest)
-	delegate.echo = echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
-	response, err := delegate.echo.EchoString(bindings.StringPointer("Hello, Go world!"))
+	echoProxy := echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
+	response, err := echoProxy.EchoString(bindings.StringPointer("Hello, Go world!"))
 	if response != nil {
 		fmt.Printf("client: %s\n", *response)
 	} else {
 		log.Println(err)
 	}
+	echoProxy.Close_proxy()
+	ctx.Close()
 }
 
 func (delegate *EchoClientDelegate) AcceptConnection(connection *application.Connection) {
@@ -41,7 +41,6 @@ func (delegate *EchoClientDelegate) AcceptConnection(connection *application.Con
 }
 
 func (delegate *EchoClientDelegate) Quit() {
-	delegate.echo.Close_proxy()
 }
 
 //export MojoMain
