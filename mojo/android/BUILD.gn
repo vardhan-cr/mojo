@@ -27,8 +27,8 @@ generate_jni("jni_headers") {
 
 generate_jni("system_java_jni_headers") {
   sources = [
-    "system/src/org/chromium/mojo/system/impl/CoreImpl.java",
     "system/src/org/chromium/mojo/system/impl/BaseRunLoop.java",
+    "system/src/org/chromium/mojo/system/impl/CoreImpl.java",
   ]
 
   jni_package = "mojo"
@@ -36,10 +36,10 @@ generate_jni("system_java_jni_headers") {
 
 source_set("libsystem_java") {
   sources = [
-    "system/core_impl.cc",
-    "system/core_impl.h",
     "system/base_run_loop.cc",
     "system/base_run_loop.h",
+    "system/core_impl.cc",
+    "system/core_impl.h",
   ]
 
   deps = [
@@ -80,6 +80,7 @@ android_library("mojo_javatests") {
     "javatests/src/org/chromium/mojo/bindings/CallbacksTest.java",
     "javatests/src/org/chromium/mojo/bindings/ConnectorTest.java",
     "javatests/src/org/chromium/mojo/bindings/ExecutorFactoryTest.java",
+    "javatests/src/org/chromium/mojo/bindings/InterfaceControlMessageTest.java",
     "javatests/src/org/chromium/mojo/bindings/InterfacesTest.java",
     "javatests/src/org/chromium/mojo/bindings/MessageHeaderTest.java",
     "javatests/src/org/chromium/mojo/bindings/ReadAndDispatchMessageTest.java",
@@ -109,9 +110,9 @@ shared_library("mojo_java_unittests") {
   testonly = true
 
   sources = [
+    "javatests/init_library.cc",
     "javatests/mojo_test_case.cc",
     "javatests/mojo_test_case.h",
-    "javatests/init_library.cc",
     "javatests/validation_test_util.cc",
     "javatests/validation_test_util.h",
   ]
