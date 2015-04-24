@@ -1,22 +1,10 @@
-Setup instructions to run system_test
+Instructions to run system_test (Linux-only)
 
-1) Download/Install the Go compiler
+1) Follow instructions in src/README.md file
 
-$ unset GOBIN GOPATH GOROOT
-$ hg clone https://code.google.com/p/go
-$ export GOROOT=`pwd`/go
-$ cd go/src
-$ ./all.bash
-$ ls $GOROOT/bin/go
+2) Build
+$ mojo/tools/mojob.py gn
+$ mojo/tools/mojob.py build
 
-3) Now, we switch to the Mojo workspace and build system_test
-
-$ cd mojo/src
-$ gn args <output_directory>
-
-mojo_use_go=true
-go_build_tool="<path_to_go_binary>"
-
-$ gn gen <output_directory>
-$ ninja -C <output_directory> system_test
-$ <output_directory>/obj/mojo/go/system_test -test.v
+3) Run
+$ out/Debug/obj/mojo/go/system_test -test.v
