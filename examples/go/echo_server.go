@@ -38,8 +38,10 @@ func (delegate *EchoServerDelegate) Create(request echo.EchoRequest) {
 	go func() {
 		for {
 			if err := stub.ServeRequest(); err != nil {
-				// TODO(rogulenko): don't log in case message pipe was closed
-				log.Println(err)
+				connectionError, ok := err.(*bindings.ConnectionError)
+				if !ok || !connectionError.Closed() {
+					log.Println(err)
+				}
 				break
 			}
 		}
