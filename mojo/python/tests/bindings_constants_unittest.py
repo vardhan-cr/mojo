@@ -8,27 +8,26 @@ import unittest
 # Generated files
 # pylint: disable=F0401
 import sample_service_mojom
-
+import test_constants_mojom
 
 class ConstantBindingsTest(unittest.TestCase):
 
   def testConstantGeneration(self):
-    self.assertEquals(sample_service_mojom.TWELVE, 12)
-    self.assertEquals(sample_service_mojom.TOO_BIG_FOR_SIGNED_INT64,
-                      9999999999999999999)
-    self.assertEquals(sample_service_mojom.DOUBLE_INFINITY,
+    self.assertEquals(test_constants_mojom.INT8_VALUE, -2)
+    self.assertEquals(test_constants_mojom.UINT64_VALUE, 9999999999999999999)
+    self.assertEquals(test_constants_mojom.DOUBLE_INFINITY,
                       float('inf'))
-    self.assertEquals(sample_service_mojom.DOUBLE_NEGATIVE_INFINITY,
+    self.assertEquals(test_constants_mojom.DOUBLE_NEGATIVE_INFINITY,
                       float('-inf'))
-    self.assertTrue(math.isnan(sample_service_mojom.DOUBLE_NA_N))
-    self.assertEquals(sample_service_mojom.FLOAT_INFINITY,
+    self.assertTrue(math.isnan(test_constants_mojom.DOUBLE_NA_N))
+    self.assertEquals(test_constants_mojom.FLOAT_INFINITY,
                       float('inf'))
-    self.assertEquals(sample_service_mojom.FLOAT_NEGATIVE_INFINITY,
+    self.assertEquals(test_constants_mojom.FLOAT_NEGATIVE_INFINITY,
                       float('-inf'))
-    self.assertTrue(math.isnan(sample_service_mojom.FLOAT_NA_N))
+    self.assertTrue(math.isnan(test_constants_mojom.FLOAT_NA_N))
 
   def testConstantOnStructGeneration(self):
-    self.assertEquals(sample_service_mojom.Foo.FOOBY, "Fooby")
+    self.assertEquals(test_constants_mojom.StructWithConstants.INT8_VALUE, 5)
 
   def testStructImmutability(self):
     with self.assertRaises(AttributeError):
