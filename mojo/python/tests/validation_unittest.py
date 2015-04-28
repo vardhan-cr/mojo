@@ -85,6 +85,6 @@ class ValidationTest(mojo_unittest.MojoTestCase):
 
   def testConformance(self):
     manager = validation_test_interfaces_mojom.ConformanceTestInterface.manager
-    proxy = manager._InternalProxy(SinkMessageReceiver(), None)
+    proxy = manager._InternalProxy(SinkMessageReceiver(), None, 0)
     stub = manager._Stub(proxy)
     self.runTest('conformance_', stub)

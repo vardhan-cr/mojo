@@ -4,6 +4,7 @@
 
 import mojo_unittest
 from mojo_bindings import reflection
+from mojo_bindings import interface_reflection
 
 
 class GenerationTest(mojo_unittest.MojoTestCase):
@@ -25,7 +26,8 @@ class GenerationTest(mojo_unittest.MojoTestCase):
 
   @staticmethod
   def testGeneration():
-    buildable_types = (reflection.MojoStructType, reflection.MojoInterfaceType)
+    buildable_types = (reflection.MojoStructType,
+                       interface_reflection.MojoInterfaceType)
     for module_name in GenerationTest.TEST_PACKAGES:
       module = __import__(module_name)
       for element_name in dir(module):

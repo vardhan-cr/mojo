@@ -10,12 +10,12 @@ python_packaged_application("mojo_url_redirector") {
     "__mojo__.py",
   ]
   deps = [
-    "//mojo/public/interfaces/application",
+    "//mojo/public/interfaces/application:application_python",
     "//mojo/public/python:packaged_application",
     "//mojo/public/python:packaged_bindings",
     "//mojo/python:packaged_utils",
-    "//mojo/services/http_server/public/interfaces",
-    "//mojo/services/network/public/interfaces",
+    "//mojo/services/http_server/public/interfaces:interfaces_python",
+    "//mojo/services/network/public/interfaces:interfaces_python",
   ]
   datadeps = [
     "//services/python/content_handler",

@@ -196,6 +196,7 @@ class RouterTest(mojo_unittest.MojoTestCase):
     back_messages = []
     def OnBackMessage(message):
       back_messages.append(message)
+      return True
     self.router.AcceptWithResponder(message,
                                     messaging.ForwardingMessageReceiver(
                                         OnBackMessage))
