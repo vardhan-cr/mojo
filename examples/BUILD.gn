@@ -31,7 +31,6 @@ group("examples") {
     "//examples/spinning_cube",
     "//examples/surfaces_app",
     "//examples/tiny",
-    "//examples/versioning",
     "//examples/wget",
     "//examples/window_manager",
     "//examples/wm_flow",
