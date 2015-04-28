@@ -103,7 +103,7 @@ def ConfigForGNArgs(args):
   dictionary with boolean values as boolean.
   """
   config_args = {}
-  config_args["is_debug"] = args.get("is_debug", False)
+  config_args["is_debug"] = args.get("is_debug", True)
   config_args["sanitizer"] = (
       Config.SANITIZER_ASAN if args.get("is_asan") else None)
   config_args["is_clang"] = args.get("is_clang", False)
