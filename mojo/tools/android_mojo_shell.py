@@ -52,11 +52,10 @@ def main():
                   target_cpu=launcher_args.target_cpu,
                   is_debug=launcher_args.debug)
   paths = Paths(config)
-  shell = AndroidShell(paths.target_mojo_shell_path, paths.build_dir,
-                       paths.adb_path, launcher_args.target_device)
-
-  extra_shell_args = shell.PrepareShellRun(launcher_args.origin)
-  args.extend(extra_shell_args)
+  shell = AndroidShell(paths.adb_path, launcher_args.target_device)
+  shell.InstallApk(paths.target_mojo_shell_path)
+  args.append("--origin=" + launcher_args.origin if launcher_args.origin else
+              shell.SetUpLocalOrigin(paths.build_dir))
 
   shell.CleanLogs()
   p = shell.ShowLogs()

@@ -48,9 +48,9 @@ def main():
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
     paths = Paths(config)
-    shell = AndroidShell(paths.target_mojo_shell_path, paths.build_dir,
-                         paths.adb_path)
-    extra_args.extend(shell.PrepareShellRun(fixed_port=False))
+    shell = AndroidShell(paths.adb_path)
+    shell.InstallApk(paths.target_mojo_shell_path)
+    extra_args.append(shell.SetUpLocalOrigin(paths.build_dir, fixed_port=False))
   else:
     shell = None
 

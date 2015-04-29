@@ -65,17 +65,14 @@ class AndroidShell(object):
   """ Allows to set up and run a given mojo shell binary on an Android device.
 
   Args:
-    shell_apk_path: path to the shell Android binary
-    local_dir: directory where locally build Mojo apps will be served, optional
     adb_path: path to adb, optional if adb is in PATH
     target_device: device to run on, if multiple devices are connected
   """
-  def __init__(
-      self, shell_apk_path, local_dir=None, adb_path="adb", target_device=None):
-    self.shell_apk_path = shell_apk_path
+  def __init__(self, adb_path="adb", target_device=None):
     self.adb_path = adb_path
-    self.local_dir = local_dir
     self.target_device = target_device
+    self.stop_shell_registered = False
+    self.adb_running_as_root = False
 
   def _CreateADBCommand(self, args):
     adb_command = [self.adb_path]
@@ -189,26 +186,32 @@ class AndroidShell(object):
           value, DEFAULT_BASE_PORT + 1 + i if fixed_port else 0))
     return [MAPPING_PREFIX + ','.join(result)]
 
-  def PrepareShellRun(self, origin=None, fixed_port=True):
-    """ Prepares for StartShell: runs adb as root and installs the apk.  If no
-    --origin is specified, local http server will be set up to serve files from
-    the build directory along with port forwarding.
+  def _RunAdbAsRoot(self):
+    if self.adb_running_as_root:
+      return
 
-    Returns arguments that should be appended to shell argument list."""
     if 'cannot run as root' in subprocess.check_output(
         self._CreateADBCommand(['root'])):
       raise Exception("Unable to run adb as root.")
+    self.adb_running_as_root = True
+
+  def InstallApk(self, shell_apk_path):
+    """ Installs the apk on the device.
+
+    Args:
+      shell_apk_path: path to the shell Android binary"""
     subprocess.check_call(
-        self._CreateADBCommand(['install', '-r', self.shell_apk_path, '-i',
-         MOJO_SHELL_PACKAGE_NAME]))
-    atexit.register(self.StopShell)
+        self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
+                                MOJO_SHELL_PACKAGE_NAME]))
 
-    extra_shell_args = []
-    origin_url = origin if origin else self._StartHttpServerForDirectory(
-        self.local_dir, DEFAULT_BASE_PORT if fixed_port else 0)
-    extra_shell_args.append("--origin=" + origin_url)
+  def SetUpLocalOrigin(self, local_dir, fixed_port=True):
+    """ Sets up a local http server to serve files in |local_dir| along with
+    device port forwarding. Returns the origin flag to be set when running the
+    shell. """
 
-    return extra_shell_args
+    origin_url = self._StartHttpServerForDirectory(
+        local_dir, DEFAULT_BASE_PORT if fixed_port else 0)
+    return "--origin=" + origin_url
 
   def StartShell(self,
                  arguments,
@@ -218,9 +221,14 @@ class AndroidShell(object):
     """
     Starts the mojo shell, passing it the given arguments.
 
-    The |arguments| list must contain the "--origin=" arg from PrepareShellRun.
+    The |arguments| list must contain the "--origin=" arg. SetUpLocalOrigin()
+    can be used to set up a local directory on the host machine as origin.
     If |stdout| is not None, it should be a valid argument for subprocess.Popen.
     """
+    if not self.stop_shell_registered:
+      atexit.register(self.StopShell)
+      self.stop_shell_registered = True
+
     STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
 
     cmd = self._CreateADBCommand([
@@ -233,6 +241,10 @@ class AndroidShell(object):
 
     parameters = []
     if stdout or on_application_stop:
+      # We need to run as root to access the fifo file we use for stdout
+      # redirection.
+      self._RunAdbAsRoot()
+
       subprocess.check_call(self._CreateADBCommand(
           ['shell', 'rm', STDOUT_PIPE]))
       parameters.append('--fifo-path=%s' % STDOUT_PIPE)
