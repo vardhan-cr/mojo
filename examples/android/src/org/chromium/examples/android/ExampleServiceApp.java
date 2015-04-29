@@ -18,7 +18,7 @@ import org.chromium.mojom.mojo.ExampleService;
 import org.chromium.mojom.mojo.Shell;
 
 class ExampleServiceApp implements ApplicationDelegate {
-    private static String TAG = "ExampleServiceApp";
+    private static final String TAG = "ExampleServiceApp";
 
     public static class ExampleServiceImpl implements ExampleService {
         public ExampleServiceImpl() {}
@@ -41,8 +41,7 @@ class ExampleServiceApp implements ApplicationDelegate {
     }
 
     @Override
-    public boolean configureIncomingConnection(
-            String requestorUrl, ApplicationConnection connection) {
+    public boolean configureIncomingConnection(ApplicationConnection connection) {
         Log.i(TAG, "ExampleServiceApp.ConfigureIncomingConnection() called.");
         connection.addService(new ServiceFactoryBinder<ExampleService>() {
             @Override

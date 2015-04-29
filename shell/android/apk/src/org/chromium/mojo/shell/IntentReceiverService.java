@@ -7,10 +7,15 @@ package org.chromium.mojo.shell;
 import android.app.IntentService;
 import android.content.Intent;
 
+import org.chromium.base.ApplicationStatus;
+
 /**
  * IntentService that will forward received intents to the {@link IntentReceiverRegistry}.
  */
 public class IntentReceiverService extends IntentService {
+    public static final String CATEGORY_START_ACTIVITY_FOR_RESULT = "C_startActivityForResult";
+    public static final String EXTRA_START_ACTIVITY_FOR_RESULT_INTENT = "intent";
+
     public IntentReceiverService() {
         super("IntentReceiverService");
     }
@@ -20,6 +25,15 @@ public class IntentReceiverService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
+        if (intent.getCategories().contains(CATEGORY_START_ACTIVITY_FOR_RESULT)) {
+            if (!intent.hasExtra(EXTRA_START_ACTIVITY_FOR_RESULT_INTENT)) {
+                return;
+            }
+            ApplicationStatus.getLastTrackedFocusedActivity().startActivityForResult(
+                    intent.<Intent>getParcelableExtra(EXTRA_START_ACTIVITY_FOR_RESULT_INTENT),
+                    Integer.parseInt(intent.getAction()));
+            return;
+        }
         IntentReceiverRegistry.getInstance().onIntentReceived(intent);
     }
 }

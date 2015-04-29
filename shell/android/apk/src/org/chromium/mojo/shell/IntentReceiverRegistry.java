@@ -4,6 +4,7 @@
 
 package org.chromium.mojo.shell;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Parcel;
 
@@ -37,6 +38,7 @@ public class IntentReceiverRegistry {
 
     private final Map<String, Long> mReceiversByUuid = new HashMap<>();
     private final Map<Long, String> mUuidsByReceiver = new HashMap<>();
+    private int mLastRequestCode = 0;
 
     private IntentReceiverRegistry() {}
 
@@ -45,7 +47,19 @@ public class IntentReceiverRegistry {
         if (uuid == null) return;
         Long ptr = mReceiversByUuid.get(uuid);
         if (ptr == null) return;
-        nativeOnIntentReceived(ptr, intentToBuffer(intent));
+        nativeOnIntentReceived(ptr, true, intentToBuffer(intent));
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        String uuid = Integer.toString(requestCode);
+        if (uuid == null) return;
+        Long ptr = mReceiversByUuid.get(uuid);
+        if (ptr == null) return;
+        if (resultCode == Activity.RESULT_OK) {
+            nativeOnIntentReceived(ptr, true, intentToBuffer(data));
+        } else {
+            nativeOnIntentReceived(ptr, false, null);
+        }
     }
 
     private static ByteBuffer intentToBuffer(Intent intent) {
@@ -59,14 +73,50 @@ public class IntentReceiverRegistry {
         return result;
     }
 
+    private static Intent bufferToIntent(ByteBuffer buffer) {
+        Parcel p = Parcel.obtain();
+        byte[] bytes;
+        if (buffer.hasArray()) {
+            bytes = buffer.array();
+        } else {
+            bytes = new byte[buffer.limit()];
+            buffer.get(bytes, 0, buffer.limit());
+        }
+        p.unmarshall(bytes, 0, bytes.length);
+        p.setDataPosition(0);
+        Intent result = Intent.CREATOR.createFromParcel(p);
+        p.recycle();
+        return result;
+    }
+
     @CalledByNative
-    private static ByteBuffer registerReceiver(long intentDispatcher) {
+    private static ByteBuffer registerIntentReceiver(long intentDispatcher) {
         IntentReceiverRegistry registry = getInstance();
         String uuid = UUID.randomUUID().toString();
         Intent intent = new Intent(
                 uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
         registry.mReceiversByUuid.put(uuid, intentDispatcher);
         registry.mUuidsByReceiver.put(intentDispatcher, uuid);
+        return intentToBuffer(intent);
+    }
+
+    @CalledByNative
+    private static ByteBuffer registerActivityResultReceiver(long intentDispatcher) {
+        IntentReceiverRegistry registry = getInstance();
+        String uuid;
+        // Handle unlikely overflows.
+        do {
+            ++registry.mLastRequestCode;
+            if (registry.mLastRequestCode < 1) {
+                registry.mLastRequestCode = 1;
+            }
+            uuid = Integer.toString(registry.mLastRequestCode);
+        } while (registry.mReceiversByUuid.keySet().contains(uuid));
+        registry.mReceiversByUuid.put(uuid, intentDispatcher);
+        registry.mUuidsByReceiver.put(intentDispatcher, uuid);
+        Intent intent = new Intent(
+                uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
+        intent.addCategory(IntentReceiverService.CATEGORY_START_ACTIVITY_FOR_RESULT);
         return intentToBuffer(intent);
     }
 
@@ -80,5 +130,6 @@ public class IntentReceiverRegistry {
         }
     }
 
-    private static native void nativeOnIntentReceived(long intentDispatcher, ByteBuffer intent);
+    private static native void nativeOnIntentReceived(
+            long intentDispatcher, boolean accepted, ByteBuffer intent);
 }

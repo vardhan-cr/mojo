@@ -98,11 +98,10 @@ class LocationServiceApp implements ApplicationDelegate {
     }
 
     /**
-     * @see ApplicationDelegate#configureIncomingConnection(String, ApplicationConnection)
+     * @see ApplicationDelegate#configureIncomingConnection(ApplicationConnection)
      */
     @Override
-    public boolean configureIncomingConnection(
-            final String requestorUrl, ApplicationConnection connection) {
+    public boolean configureIncomingConnection(ApplicationConnection connection) {
         connection.addService(new ServiceFactoryBinder<LocationService>() {
             @Override
             public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {

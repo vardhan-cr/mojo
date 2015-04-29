@@ -77,8 +77,7 @@ class DeviceInfoService implements ApplicationDelegate, DeviceInfo {
      * @see ApplicationDelegate#configureIncomingConnection(String, ApplicationConnection)
      */
     @Override
-    public boolean configureIncomingConnection(
-            final String requestorUrl, ApplicationConnection connection) {
+    public boolean configureIncomingConnection(ApplicationConnection connection) {
         final DeviceInfo info = this;
         connection.addService(new ServiceFactoryBinder<DeviceInfo>() {
             @Override

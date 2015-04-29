@@ -35,8 +35,7 @@ public class Sensors implements ApplicationDelegate {
      * @see ApplicationDelegate#configureIncomingConnection(String, ApplicationConnection)
      */
     @Override
-    public boolean configureIncomingConnection(
-            final String requestorUrl, ApplicationConnection connection) {
+    public boolean configureIncomingConnection(ApplicationConnection connection) {
         connection.addService(new ServiceFactoryBinder<SensorService>() {
             @Override
             public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {

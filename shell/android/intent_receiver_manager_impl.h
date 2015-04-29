@@ -19,8 +19,12 @@ class IntentReceiverManagerImpl
 
  private:
   // Implementation of intent_receiver::IntentReceiverManager
-  void RegisterReceiver(intent_receiver::IntentReceiverPtr receiver,
-                        const RegisterReceiverCallback& callback) override;
+  void RegisterIntentReceiver(
+      intent_receiver::IntentReceiverPtr receiver,
+      const RegisterIntentReceiverCallback& callback) override;
+  void RegisterActivityResultReceiver(
+      intent_receiver::IntentReceiverPtr receiver,
+      const RegisterActivityResultReceiverCallback& callback) override;
 
   mojo::WeakBindingSet<intent_receiver::IntentReceiverManager> bindings_;
 };

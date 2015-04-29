@@ -90,4 +90,12 @@ public class MojoShellActivity extends Activity {
         }
         return null;
     }
+
+    /**
+     * @see Activity#onActivityResult(int, int, Intent)
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentReceiverRegistry.getInstance().onActivityResult(requestCode, resultCode, data);
+    }
 }
