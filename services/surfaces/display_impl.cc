@@ -38,6 +38,7 @@ DisplayImpl::DisplayImpl(cc::SurfaceManager* manager,
   context_provider_->Create(
       viewport_parameter_listener.Pass(),
       base::Bind(&DisplayImpl::OnContextCreated, base::Unretained(this)));
+  factory_.Create(cc_id_);
 }
 
 void DisplayImpl::OnContextCreated(mojo::CommandBufferPtr gles2_client) {
@@ -48,8 +49,8 @@ void DisplayImpl::OnContextCreated(mojo::CommandBufferPtr gles2_client) {
   scheduler_->AddDisplay(display_.get());
   display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
       new mojo::ContextProviderMojo(gles2_client.PassMessagePipe()))));
+  display_->Resize(last_submitted_frame_size_);
 
-  factory_.Create(cc_id_);
   display_->SetSurfaceId(cc_id_, 1.f);
   if (pending_frame_)
     Draw();
@@ -74,11 +75,13 @@ void DisplayImpl::SubmitFrame(mojo::FramePtr frame,
 void DisplayImpl::Draw() {
   gfx::Size frame_size =
       pending_frame_->passes[0]->output_rect.To<gfx::Rect>().size();
+  last_submitted_frame_size_ = frame_size;
   display_->Resize(frame_size);
   factory_.SubmitFrame(cc_id_,
                        pending_frame_.To<scoped_ptr<cc::CompositorFrame>>(),
                        base::Bind(&CallCallback, pending_callback_));
   scheduler_->SetNeedsDraw();
+  pending_frame_.reset();
   pending_callback_.reset();
 }
 
@@ -104,7 +107,6 @@ void DisplayImpl::OutputSurfaceLost() {
   // OutputSurface. It should be able to reinitialize properly.
   scheduler_->RemoveDisplay(display_.get());
   display_.reset();
-  factory_.Destroy(cc_id_);
   viewport_param_binding_.Close();
   mojo::ViewportParameterListenerPtr viewport_parameter_listener;
   viewport_param_binding_.Bind(GetProxy(&viewport_parameter_listener));

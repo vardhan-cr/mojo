@@ -23,11 +23,14 @@ class GaneshView : public TextureUploader::Client, public mojo::ViewObserver {
   ~GaneshView() override;
 
  private:
+  // mojo::ViewObserver implementation.
   void OnViewDestroyed(mojo::View* view) override;
   void OnViewBoundsChanged(mojo::View* view,
                            const mojo::Rect& old_bounds,
                            const mojo::Rect& new_bounds) override;
+  void OnViewInputEvent(mojo::View* view, const mojo::EventPtr& event) override;
 
+  // TextureUploader::Client implementation.
   void OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) override;
 
   void Draw(const mojo::Size& size);

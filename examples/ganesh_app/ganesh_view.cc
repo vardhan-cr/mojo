@@ -46,6 +46,11 @@ void GaneshView::OnViewDestroyed(mojo::View* view) {
   delete this;
 }
 
+void GaneshView::OnViewInputEvent(mojo::View* view,
+                                  const mojo::EventPtr& event) {
+  Draw(ToSize(view_->bounds()));
+}
+
 void GaneshView::OnViewBoundsChanged(mojo::View* view,
                                      const mojo::Rect& old_bounds,
                                      const mojo::Rect& new_bounds) {
