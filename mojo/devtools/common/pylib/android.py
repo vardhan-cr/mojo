@@ -131,10 +131,10 @@ class AndroidShell(object):
           return port
     if device_port == 0:
       device_port = _FindAvailablePortOnDevice()
-    subprocess.Popen(self._CreateADBCommand([
-                      "reverse",
-                      "tcp:%d" % device_port,
-                      "tcp:%d" % host_port])).wait()
+    subprocess.check_call(self._CreateADBCommand([
+        "reverse",
+        "tcp:%d" % device_port,
+        "tcp:%d" % host_port]))
 
     unmap_command = self._CreateADBCommand(["reverse", "--remove",
                      "tcp:%d" % device_port])
@@ -264,7 +264,7 @@ class AndroidShell(object):
       encodedParameters = json.dumps(parameters)
       cmd += ['--es', 'encodedParameters', encodedParameters]
 
-    subprocess.Popen(cmd, stdout=self.verbose_pipe).wait()
+    subprocess.check_call(cmd, stdout=self.verbose_pipe)
 
   def StopShell(self):
     """
