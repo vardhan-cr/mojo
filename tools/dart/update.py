@@ -17,14 +17,16 @@ import sys
 
 # How to roll the dart sdk: Just change this url! We write this to the stamp
 # file after we download, and then check the stamp file for differences.
-LINUX_64_SDK = ('http://gsdview.appspot.com/dart-archive/channels/dev/' +
-                'raw/45311/sdk/dartsdk-linux-x64-release.zip')
+SDK_URL_BASE = ('http://gsdview.appspot.com/dart-archive/channels/dev/'
+                'raw/45311/sdk/')
+
+LINUX_64_SDK = 'dartsdk-linux-x64-release.zip'
+MACOS_64_SDK = 'dartsdk-macos-x64-release.zip'
 
 # Path constants. (All of these should be absolute paths.)
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 MOJO_DIR = os.path.abspath(os.path.join(THIS_DIR, '..', '..'))
 DART_SDK_DIR = os.path.join(MOJO_DIR, 'third_party', 'dart-sdk')
-OUTPUT_FILE = os.path.join(DART_SDK_DIR, 'dartsdk-linux-x64-release.zip')
 STAMP_FILE = os.path.join(DART_SDK_DIR, 'STAMP_FILE')
 LIBRARIES_FILE = os.path.join(DART_SDK_DIR,'dart-sdk',
                               'lib', '_internal', 'libraries.dart')
@@ -46,13 +48,23 @@ def main():
   # Only get the SDK if we don't have a stamp for or have an out of date stamp
   # file.
   get_sdk = False
+  if sys.platform.startswith('linux'):
+    sdk_url = SDK_URL_BASE + LINUX_64_SDK
+    output_file = os.path.join(DART_SDK_DIR, LINUX_64_SDK)
+  elif sys.platform.startswith('darwin'):
+    sdk_url = SDK_URL_BASE + MACOS_64_SDK
+    output_file = os.path.join(DART_SDK_DIR, MACOS_64_SDK)
+  else:
+    print "Platform not supported"
+    return 1
+
   if not os.path.exists(STAMP_FILE):
     get_sdk = True
   else:
     # Get the contents of the stamp file.
     with open(STAMP_FILE, "r") as stamp_file:
       stamp_url = stamp_file.read().replace('\n', '')
-      if stamp_url != LINUX_64_SDK:
+      if stamp_url != sdk_url:
         get_sdk = True
 
   if get_sdk:
@@ -68,27 +80,28 @@ def main():
     curl_command = ['curl',
                     '-C', '-',
                     '--location',
-                    '-o', OUTPUT_FILE,
-                    LINUX_64_SDK]
+                    '-o', output_file,
+                    sdk_url]
     if not RunCommand(curl_command, fail_hard=False):
       print "Failed to get dart sdk from server."
-      return
+      return 1
 
     # Write our stamp file so we don't redownload the sdk.
     with open(STAMP_FILE, "w") as stamp_file:
-      stamp_file.write(LINUX_64_SDK)
+      stamp_file.write(sdk_url)
 
-  unzip_command = ['unzip', '-o', '-q', OUTPUT_FILE, '-d', DART_SDK_DIR]
+  unzip_command = ['unzip', '-o', '-q', output_file, '-d', DART_SDK_DIR]
   if not RunCommand(unzip_command, fail_hard=False):
     print "Failed to unzip the dart sdk."
-    return
+    return 1
 
   # Patch the the dart-sdk/lib/_internal/libraries.dart file
   # so that it understands dart:sky imports.
   patch_command = ['patch', LIBRARIES_FILE, PATCH_FILE]
   if not RunCommand(patch_command, fail_hard=False):
     print "Failed to apply the patch to the Dart libraries file."
-    return
+    return 1
+  return 0
 
 if __name__ == '__main__':
   sys.exit(main())
