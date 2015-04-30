@@ -46,13 +46,17 @@ def main():
                       choices=['x64', 'x86', 'arm'])
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
   parser.add_argument('--target-device', help='Device to run on.')
+  parser.add_argument('-v', '--verbose', action="store_true",
+                      help="Increase output verbosity")
   launcher_args, args = parser.parse_known_args()
 
   config = Config(target_os=Config.OS_ANDROID,
                   target_cpu=launcher_args.target_cpu,
                   is_debug=launcher_args.debug)
   paths = Paths(config)
-  shell = AndroidShell(paths.adb_path, launcher_args.target_device)
+  verbose_pipe = sys.stdout if launcher_args.verbose else None
+  shell = AndroidShell(paths.adb_path, launcher_args.target_device,
+                       verbose_pipe=verbose_pipe)
   shell.InstallApk(paths.target_mojo_shell_path)
   args.append("--origin=" + launcher_args.origin if launcher_args.origin else
               shell.SetUpLocalOrigin(paths.build_dir))

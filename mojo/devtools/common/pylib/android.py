@@ -68,11 +68,12 @@ class AndroidShell(object):
     adb_path: path to adb, optional if adb is in PATH
     target_device: device to run on, if multiple devices are connected
   """
-  def __init__(self, adb_path="adb", target_device=None):
+  def __init__(self, adb_path="adb", target_device=None, verbose_pipe=None):
     self.adb_path = adb_path
     self.target_device = target_device
     self.stop_shell_registered = False
     self.adb_running_as_root = False
+    self.verbose_pipe = verbose_pipe if verbose_pipe else open(os.devnull, 'w')
 
   def _CreateADBCommand(self, args):
     adb_command = [self.adb_path]
@@ -202,7 +203,8 @@ class AndroidShell(object):
       shell_apk_path: path to the shell Android binary"""
     subprocess.check_call(
         self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
-                                MOJO_SHELL_PACKAGE_NAME]))
+                                MOJO_SHELL_PACKAGE_NAME]),
+        stdout=self.verbose_pipe)
 
   def SetUpLocalOrigin(self, local_dir, fixed_port=True):
     """ Sets up a local http server to serve files in |local_dir| along with
@@ -262,8 +264,7 @@ class AndroidShell(object):
       encodedParameters = json.dumps(parameters)
       cmd += ['--es', 'encodedParameters', encodedParameters]
 
-    with open(os.devnull, 'w') as devnull:
-      subprocess.Popen(cmd, stdout=devnull).wait()
+    subprocess.Popen(cmd, stdout=self.verbose_pipe).wait()
 
   def StopShell(self):
     """
