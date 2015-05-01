@@ -67,12 +67,12 @@ mojo/tools/mojob.py test --release
 
 ## Update your repo
 
-You can update your repo like this:
-```
+You can update your repo like this. The order is important. You must do the `git pull` first because `gclient sync` is dependent on the current revision.
+```YOu
+# Fetch changes from upstream and rebase the current branch on top
 $ git pull --rebase
-(fetch changes from upstream and rebase the current branch on top)
+# Update all modules as directed by the DEPS file
 $ gclient sync
-(update all modules as directed by the DEPS file)
 ```
 
 You do not need to rerun `gn gen out/Debug` or `mojo/tools/mojob.py gn`. Ninja will do so automatically as needed.
