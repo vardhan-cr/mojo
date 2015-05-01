@@ -32,8 +32,7 @@ TextureUploader::TextureUploader(Client* client,
       next_resource_id_(0u),
       id_namespace_(0u),
       local_id_(0u),
-      returner_binding_(this),
-      weak_factory_(this) {
+      returner_binding_(this) {
   context_->AddObserver(this);
 
   mojo::ServiceProviderPtr surfaces_service_provider;
@@ -54,11 +53,6 @@ TextureUploader::~TextureUploader() {
 }
 
 void TextureUploader::Upload(scoped_ptr<mojo::GLTexture> texture) {
-  if (!surface_) {
-    pending_upload_ = texture.Pass();
-    return;
-  }
-
   mojo::Size size = texture->size();
   EnsureSurfaceForSize(size);
 

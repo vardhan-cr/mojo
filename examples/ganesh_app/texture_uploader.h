@@ -52,7 +52,6 @@ class TextureUploader : public mojo::ResourceReturner,
 
   Client* client_;
   base::WeakPtr<mojo::GLContext> context_;
-  scoped_ptr<mojo::GLTexture> pending_upload_;
   mojo::SurfacePtr surface_;
   mojo::Size surface_size_;
   uint32_t next_resource_id_;
@@ -60,8 +59,6 @@ class TextureUploader : public mojo::ResourceReturner,
   uint32_t local_id_;
   base::hash_map<uint32_t, mojo::GLTexture*> resource_to_texture_map_;
   mojo::Binding<mojo::ResourceReturner> returner_binding_;
-
-  base::WeakPtrFactory<TextureUploader> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(TextureUploader);
 };
