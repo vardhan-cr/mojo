@@ -12,6 +12,9 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted_memory.h"
+#include "mojo/common/data_pipe_drainer.h"
+#include "mojo/common/trace_controller_impl.h"
+#include "services/tracing/tracing.mojom.h"
 
 namespace shell {
 
@@ -21,18 +24,26 @@ namespace shell {
 // initialization that may be interesting to trace has occured and be shut down
 // as late as possible to capture as much initialization/shutdown code as
 // possible.
-class Tracer {
+class Tracer : public mojo::common::DataPipeDrainer::Client {
  public:
   Tracer();
-  ~Tracer();
+  ~Tracer() override;
 
   // Starts tracing the current process with the given set of categories.
   void Start(const std::string& categories);
+
+  // Starts collecting data from the tracing service with the given set of
+  // categories.
+  void StartCollectingFromTracingService(
+      tracing::TraceCoordinatorPtr coordinator);
 
   // Stops tracing and flushes all collected trace data to the given filename.
   // Blocks until the file write is complete. May be called after the message
   // loop is shut down.
   void StopAndFlushToFile(const std::string& filename);
+
+  void ConnectToController(
+      mojo::InterfaceRequest<tracing::TraceController> request);
 
  private:
   void StopTracingAndFlushToDisk(const std::string& filename);
@@ -48,14 +59,30 @@ class Tracer {
       const scoped_refptr<base::RefCountedString>& events_str,
       bool has_more_events);
 
-  // Whether we're currently tracing. Main thread only.
+  // mojo::common::DataPipeDrainer::Client implementation.
+  void OnDataAvailable(const void* data, size_t num_bytes) override;
+  void OnDataComplete() override;
+
+  // Emits a comma if needed.
+  void WriteCommaIfNeeded();
+
+  // Writes trace file footer and closes out the file.
+  void WriteFooterAndClose();
+
+  // Set when connected to the tracing service.
+  tracing::TraceCoordinatorPtr coordinator_;
+  scoped_ptr<mojo::common::DataPipeDrainer> drainer_;
+
+  // Whether we're currently tracing.
   bool tracing_;
 
-  // Whether we've written the first chunk. Flush thread only.
+  // Whether we've written the first chunk.
   bool first_chunk_written_;
+  std::string trace_service_data_;
 
-  // Trace file, if open. Flush thread only.
+  // Trace file, if open.
   FILE* trace_file_;
+  std::string trace_filename_;
 
   DISALLOW_COPY_AND_ASSIGN(Tracer);
 };

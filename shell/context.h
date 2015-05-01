@@ -14,14 +14,13 @@
 #include "shell/url_resolver.h"
 
 namespace shell {
-
-class NativeApplicationLoader;
+class Tracer;
 
 // The "global" context for the shell's main process.
 class Context : public ApplicationManager::Delegate,
                 public mojo::embedder::ProcessDelegate {
  public:
-  Context();
+  explicit Context(Tracer* tracer = nullptr);
   ~Context() override;
 
   static void EnsureEmbedderIsInitialized();
@@ -79,6 +78,7 @@ class Context : public ApplicationManager::Delegate,
 
   void OnApplicationEnd(const GURL& url);
 
+  Tracer* const tracer_;
   ApplicationManager application_manager_;
   URLResolver url_resolver_;
 

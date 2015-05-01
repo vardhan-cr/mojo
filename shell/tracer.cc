@@ -29,17 +29,75 @@ void Tracer::Start(const std::string& categories) {
       base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
 }
 
+void Tracer::StartCollectingFromTracingService(
+    tracing::TraceCoordinatorPtr coordinator) {
+  coordinator_ = coordinator.Pass();
+  mojo::DataPipe data_pipe;
+  coordinator_->Start(data_pipe.producer_handle.Pass(), "*");
+  drainer_.reset(new mojo::common::DataPipeDrainer(
+      this, data_pipe.consumer_handle.Pass()));
+}
+
 void Tracer::StopAndFlushToFile(const std::string& filename) {
   if (tracing_)
     StopTracingAndFlushToDisk(filename);
 }
 
-void Tracer::EndTraceAndFlush(const std::string& filename,
-                              const base::Closure& done_callback) {
+void Tracer::ConnectToController(
+    mojo::InterfaceRequest<tracing::TraceController> request) {
+  auto impl = new mojo::TraceControllerImpl(request.Pass());
+  impl->set_tracing_already_started(tracing_);
+}
+
+void Tracer::StopTracingAndFlushToDisk(const std::string& filename) {
+  tracing_ = false;
   trace_file_ = fopen(filename.c_str(), "w+");
   PCHECK(trace_file_);
+  trace_filename_ = filename;
   static const char kStart[] = "{\"traceEvents\":[";
-  fwrite(kStart, 1, strlen(kStart), trace_file_);
+  PCHECK(fwrite(kStart, 1, strlen(kStart), trace_file_) == strlen(kStart));
+
+  // At this point we might be connected to the tracing service, in which case
+  // we want to tell it to stop tracing and we will send the data we've
+  // collected in process to it.
+  if (coordinator_) {
+    coordinator_->StopAndFlush();
+  } else {
+    // Or we might not be connected. If we aren't connected to the tracing
+    // service we want to collect the tracing data gathered ourselves and flush
+    // it to disk. We do this in a blocking fashion (for this thread) so we can
+    // gather as much data as possible on shutdown.
+    base::trace_event::TraceLog::GetInstance()->SetDisabled();
+    {
+      base::WaitableEvent flush_complete_event(false, false);
+      // TraceLog::Flush requires a message loop but we've already shut ours
+      // down.
+      // Spin up a new thread to flush things out.
+      base::Thread flush_thread("mojo_shell_trace_event_flush");
+      flush_thread.Start();
+      flush_thread.message_loop()->PostTask(
+          FROM_HERE,
+          base::Bind(&Tracer::EndTraceAndFlush, base::Unretained(this),
+                     filename,
+                     base::Bind(&base::WaitableEvent::Signal,
+                                base::Unretained(&flush_complete_event))));
+      base::trace_event::TraceLog::GetInstance()
+          ->SetCurrentThreadBlocksMessageLoop();
+      flush_complete_event.Wait();
+    }
+  }
+}
+
+void Tracer::WriteFooterAndClose() {
+  static const char kEnd[] = "]}";
+  PCHECK(fwrite(kEnd, 1, strlen(kEnd), trace_file_) == strlen(kEnd));
+  PCHECK(fclose(trace_file_) == 0);
+  trace_file_ = nullptr;
+  LOG(INFO) << "Wrote trace data to " << trace_filename_;
+}
+
+void Tracer::EndTraceAndFlush(const std::string& filename,
+                              const base::Closure& done_callback) {
   base::trace_event::TraceLog::GetInstance()->SetDisabled();
   base::trace_event::TraceLog::GetInstance()->Flush(base::Bind(
       &Tracer::WriteTraceDataCollected, base::Unretained(this), done_callback));
@@ -50,38 +108,38 @@ void Tracer::WriteTraceDataCollected(
     const scoped_refptr<base::RefCountedString>& events_str,
     bool has_more_events) {
   if (events_str->size()) {
-    if (first_chunk_written_)
-      fwrite(",", 1, 1, trace_file_);
+    WriteCommaIfNeeded();
 
-    first_chunk_written_ = true;
-    fwrite(events_str->data().c_str(), 1, events_str->data().length(),
-           trace_file_);
+    PCHECK(fwrite(events_str->data().c_str(), 1, events_str->data().length(),
+                  trace_file_) == events_str->data().length());
   }
 
-  if (!has_more_events) {
-    static const char kEnd[] = "]}";
-    fwrite(kEnd, 1, strlen(kEnd), trace_file_);
-    PCHECK(fclose(trace_file_) == 0);
-    trace_file_ = nullptr;
+  if (!has_more_events && !done_callback.is_null())
     done_callback.Run();
-  }
 }
 
-void Tracer::StopTracingAndFlushToDisk(const std::string& filename) {
-  tracing_ = false;
-  base::trace_event::TraceLog::GetInstance()->SetDisabled();
-  base::WaitableEvent flush_complete_event(false, false);
-  // TraceLog::Flush requires a message loop but we've already shut ours down.
-  // Spin up a new thread to flush things out.
-  base::Thread flush_thread("mojo_shell_trace_event_flush");
-  flush_thread.Start();
-  flush_thread.message_loop()->PostTask(
-      FROM_HERE,
-      base::Bind(&Tracer::EndTraceAndFlush, base::Unretained(this), filename,
-                 base::Bind(&base::WaitableEvent::Signal,
-                            base::Unretained(&flush_complete_event))));
-  flush_complete_event.Wait();
-  LOG(INFO) << "Wrote trace data to " << filename;
+void Tracer::OnDataAvailable(const void* data, size_t num_bytes) {
+  const char* chars = static_cast<const char*>(data);
+  trace_service_data_.append(chars, num_bytes);
+}
+
+void Tracer::OnDataComplete() {
+  if (!trace_service_data_.empty()) {
+    WriteCommaIfNeeded();
+    const char* const chars = trace_service_data_.data();
+    size_t num_bytes = trace_service_data_.length();
+    PCHECK(fwrite(chars, 1, num_bytes, trace_file_) == num_bytes);
+    trace_service_data_ = std::string();
+  }
+  drainer_.reset();
+  coordinator_.reset();
+  WriteFooterAndClose();
+}
+
+void Tracer::WriteCommaIfNeeded() {
+  if (first_chunk_written_)
+    PCHECK(fwrite(",", 1, 1, trace_file_) == 1);
+  first_chunk_written_ = true;
 }
 
 }  // namespace shell

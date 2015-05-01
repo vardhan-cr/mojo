@@ -221,7 +221,7 @@ static void Init(JNIEnv* env,
   // We want ~MessageLoop to happen prior to ~Context. Initializing
   // LazyInstances is akin to stack-allocating objects; their destructors
   // will be invoked first-in-last-out.
-  Context* shell_context = new Context();
+  Context* shell_context = new Context(tracer);
   shell_context->SetShellFileRoot(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
   g_internal_data.Get().context.reset(shell_context);

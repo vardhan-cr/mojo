@@ -91,19 +91,19 @@ int main(int argc, char** argv) {
 
   // We want the shell::Context to outlive the MessageLoop so that pipes are all
   // gracefully closed / error-out before we try to shut the Context down.
-  shell::Context shell_context;
+  shell::Context shell_context(&tracer);
   {
     base::MessageLoop message_loop;
-    if (!shell_context.Init()) {
-      Usage();
-      return 1;
-    }
-
     if (trace_startup) {
       message_loop.PostDelayedTask(
           FROM_HERE, base::Bind(&shell::Tracer::StopAndFlushToFile,
                                 base::Unretained(&tracer), "mojo_shell.trace"),
           base::TimeDelta::FromSeconds(5));
+    }
+
+    if (!shell_context.Init()) {
+      Usage();
+      return 1;
     }
 
     // The mojo_shell --args-for command-line switch is handled specially

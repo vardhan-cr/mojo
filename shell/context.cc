@@ -36,6 +36,7 @@
 #include "shell/in_process_native_runner.h"
 #include "shell/out_of_process_native_runner.h"
 #include "shell/switches.h"
+#include "shell/tracer.h"
 #include "url/gurl.h"
 
 using mojo::ServiceProvider;
@@ -176,20 +177,21 @@ void InitNativeOptions(ApplicationManager* manager,
 
 class TracingServiceProvider : public ServiceProvider {
  public:
-  explicit TracingServiceProvider(
-      mojo::InterfaceRequest<ServiceProvider> request)
-      : binding_(this, request.Pass()) {}
+  TracingServiceProvider(Tracer* tracer,
+                         mojo::InterfaceRequest<ServiceProvider> request)
+      : tracer_(tracer), binding_(this, request.Pass()) {}
   ~TracingServiceProvider() override {}
 
   void ConnectToService(const mojo::String& service_name,
                         mojo::ScopedMessagePipeHandle client_handle) override {
-    if (service_name == tracing::TraceController::Name_) {
-      new mojo::TraceControllerImpl(
+    if (tracer_ && service_name == tracing::TraceController::Name_) {
+      tracer_->ConnectToController(
           mojo::MakeRequest<tracing::TraceController>(client_handle.Pass()));
     }
   }
 
  private:
+  Tracer* tracer_;
   mojo::StrongBinding<mojo::ServiceProvider> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(TracingServiceProvider);
@@ -197,7 +199,7 @@ class TracingServiceProvider : public ServiceProvider {
 
 }  // namespace
 
-Context::Context() : application_manager_(this) {
+Context::Context(Tracer* tracer) : tracer_(tracer), application_manager_(this) {
   DCHECK(!base::MessageLoop::current());
 
   // By default assume that the local apps reside alongside the shell.
@@ -286,11 +288,21 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
   InitContentHandlers(&application_manager_, command_line);
   InitNativeOptions(&application_manager_, command_line);
 
-  ServiceProviderPtr tracing_service_provider_ptr;
-  new TracingServiceProvider(mojo::GetProxy(&tracing_service_provider_ptr));
+  ServiceProviderPtr tracing_services;
+  ServiceProviderPtr tracing_exposed_services;
+  new TracingServiceProvider(tracer_, GetProxy(&tracing_exposed_services));
   application_manager_.ConnectToApplication(
-      GURL("mojo:tracing"), GURL(""), nullptr,
-      tracing_service_provider_ptr.Pass(), base::Closure());
+      GURL("mojo:tracing"), GURL(""), GetProxy(&tracing_services),
+      tracing_exposed_services.Pass(), base::Closure());
+
+  if (command_line.HasSwitch(switches::kTraceStartup)) {
+    DCHECK(tracer_);
+    tracing::TraceCoordinatorPtr coordinator;
+    auto coordinator_request = GetProxy(&coordinator);
+    tracing_services->ConnectToService(tracing::TraceCoordinator::Name_,
+                                       coordinator_request.PassMessagePipe());
+    tracer_->StartCollectingFromTracingService(coordinator.Pass());
+  }
 
   return true;
 }

@@ -13,7 +13,7 @@ namespace mojo {
 
 TraceControllerImpl::TraceControllerImpl(
     InterfaceRequest<tracing::TraceController> request)
-    : binding_(this, request.Pass()) {
+    : tracing_already_started_(false), binding_(this, request.Pass()) {
 }
 
 TraceControllerImpl::~TraceControllerImpl() {
@@ -24,11 +24,13 @@ void TraceControllerImpl::StartTracing(
     tracing::TraceDataCollectorPtr collector) {
   DCHECK(!collector_.get());
   collector_ = collector.Pass();
-  std::string categories_str = categories.To<std::string>();
-  base::trace_event::TraceLog::GetInstance()->SetEnabled(
-      base::trace_event::CategoryFilter(categories_str),
-      base::trace_event::TraceLog::RECORDING_MODE,
-      base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
+  if (!tracing_already_started_) {
+    std::string categories_str = categories.To<std::string>();
+    base::trace_event::TraceLog::GetInstance()->SetEnabled(
+        base::trace_event::CategoryFilter(categories_str),
+        base::trace_event::TraceLog::RECORDING_MODE,
+        base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
+  }
 }
 
 void TraceControllerImpl::StopTracing() {

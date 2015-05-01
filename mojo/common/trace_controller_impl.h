@@ -16,8 +16,15 @@ class TraceControllerImpl : public tracing::TraceController {
  public:
   explicit TraceControllerImpl(
       InterfaceRequest<tracing::TraceController> request);
-
   ~TraceControllerImpl() override;
+
+  // Set to true if base::trace_event::TraceLog is enabled externally to this
+  // class. If this is set to true this class will save the collector but not
+  // enable tracing when it receives a StartTracing message from the tracing
+  // service.
+  void set_tracing_already_started(bool tracing_already_started) {
+    tracing_already_started_ = tracing_already_started;
+  }
 
  private:
   // tracing::TraceController implementation:
@@ -28,6 +35,7 @@ class TraceControllerImpl : public tracing::TraceController {
   void SendChunk(const scoped_refptr<base::RefCountedString>& events_str,
                  bool has_more_events);
 
+  bool tracing_already_started_;
   tracing::TraceDataCollectorPtr collector_;
   StrongBinding<tracing::TraceController> binding_;
 

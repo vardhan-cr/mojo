@@ -4,7 +4,7 @@
 
 #include "mojo/common/tracing_impl.h"
 
-#include "base/trace_event/trace_event.h"
+#include "base/trace_event/trace_event_impl.h"
 #include "mojo/common/trace_controller_impl.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
