@@ -227,8 +227,10 @@ def _CheckChangePylintsClean(input_api, output_api):
   # For the roll tools scripts:
   mojo_roll_tools_path = os.path.join(
       input_api.PresubmitLocalPath(), "tools", "roll")
-  # For all mojo/tools scripts
+  # For all mojo/tools scripts:
   mopy_path = os.path.join(input_api.PresubmitLocalPath(), "tools")
+  # For all mojo/devtools scripts:
+  devtools_path = os.path.join(input_api.PresubmitLocalPath(), "devtools")
   # TODO(vtl): Don't lint these files until the (many) problems are fixed
   # (possibly by deleting/rewriting some files).
   temporary_black_list = input_api.DEFAULT_BLACK_LIST + \
@@ -244,6 +246,7 @@ def _CheckChangePylintsClean(input_api, output_api):
       mojo_python_bindings_tests_path,
       mojo_roll_tools_path,
       mopy_path,
+      devtools_path
   ]
   results.extend(input_api.canned_checks.RunPylint(
       input_api, output_api, extra_paths_list=pylint_extra_paths,
