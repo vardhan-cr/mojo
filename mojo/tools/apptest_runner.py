@@ -11,7 +11,8 @@ import sys
 
 import devtools
 devtools.add_pylib_to_path()
-from pylib.android import AndroidShell
+from pylib.android_shell import AndroidShell
+from pylib.linux_shell import LinuxShell
 
 from mopy import dart_apptest
 from mopy import gtest
@@ -45,14 +46,14 @@ def main():
   test_list = execution_globals["tests"]
   _logger.debug("Test list: %s" % test_list)
 
+  paths = Paths(config)
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
-    paths = Paths(config)
     shell = AndroidShell(paths.adb_path)
     shell.InstallApk(paths.target_mojo_shell_path)
     extra_args.append(shell.SetUpLocalOrigin(paths.build_dir, fixed_port=False))
   else:
-    shell = None
+    shell = LinuxShell(paths.mojo_shell_path)
 
   gtest.set_color()
 
@@ -69,15 +70,14 @@ def main():
     sys.stdout.flush()
 
     if test_type == "dart":
-      apptest_result = dart_apptest.run_test(config, shell, test_dict,
-                                             shell_args, {test: test_args})
+      apptest_result = dart_apptest.run_test(shell, test_dict, shell_args,
+                                             {test: test_args})
     elif test_type == "gtest":
-      apptest_result = gtest.run_fixtures(config, shell, test_dict,
-                                          test, False,
+      apptest_result = gtest.run_fixtures(shell, test_dict, test, False,
                                           test_args, shell_args)
     elif test_type == "gtest_isolated":
-      apptest_result = gtest.run_fixtures(config, shell, test_dict,
-                                          test, True, test_args, shell_args)
+      apptest_result = gtest.run_fixtures(shell, test_dict, test, True,
+                                          test_args, shell_args)
     else:
       apptest_result = "Invalid test type in %r" % test_dict
 

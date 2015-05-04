@@ -3,12 +3,9 @@
 # found in the LICENSE file.
 
 import logging
-import os
 import subprocess
 import time
 
-from mopy.config import Config
-from mopy.paths import Paths
 from mopy.print_process_error import print_process_error
 
 
@@ -28,67 +25,38 @@ def build_shell_arguments(shell_args, apps_and_args=None):
   return result
 
 
-def get_shell_executable(config):
-  paths = Paths(config=config)
-  if config.target_os == Config.OS_ANDROID:
-    return os.path.join(paths.src_root, "mojo", "tools",
-                        "android_mojo_shell.py")
-  else:
-    return paths.mojo_shell_path
+def build_command_line(shell_args, apps_and_args):
+  return "mojo_shell " + " ".join(["%r" % x for x in build_shell_arguments(
+      shell_args, apps_and_args)])
 
 
-def build_command_line(config, shell_args, apps_and_args):
-  executable = get_shell_executable(config)
-  return "%s %s" % (executable, " ".join(["%r" % x for x in
-                                          build_shell_arguments(
-                                              shell_args, apps_and_args)]))
+def run_test(shell, shell_args, apps_and_args):
+  """Runs the given test."""
 
-
-def run_test_android(shell, shell_args, apps_and_args):
-  """Run the given test on the single/default android device."""
-  assert shell
-  (r, w) = os.pipe()
-  with os.fdopen(r, "r") as rf:
-    with os.fdopen(w, "w") as wf:
-      arguments = build_shell_arguments(shell_args, apps_and_args)
-      _logger.debug("Starting shell with arguments: %s" % arguments)
-      start_time = time.time()
-      # TODO(vtl): Do more logging in lower layers.
-      shell.StartShell(arguments, wf, wf.close, False)
-      rv = rf.read()
-      run_time = time.time() - start_time
-      _logger.debug("Shell completed")
-      # Only log if it took more than 3 seconds.
-      if run_time >= 3:
-        _logger.info("Shell test took %.3f seconds; arguments: %s" %
-                     (run_time, arguments))
-      return rv
-
-
-def run_test(config, shell, shell_args, apps_and_args):
-  """Run the given test."""
-  if (config.target_os == Config.OS_ANDROID):
-    return run_test_android(shell, shell_args, apps_and_args)
-
-  executable = get_shell_executable(config)
-  command = ([executable] + build_shell_arguments(shell_args, apps_and_args))
-  _logger.debug("Starting: %s" % " ".join(command))
+  arguments = build_shell_arguments(shell_args, apps_and_args)
+  _logger.debug("Starting: mojo_shell %s" % " ".join(arguments))
   start_time = time.time()
-  rv = subprocess.check_output(command, stderr=subprocess.STDOUT)
+
+  (exit_code, output) = shell.RunUntilCompletion(arguments)
+  if exit_code:
+    command_line = build_command_line(shell_args, apps_and_args)
+    raise subprocess.CalledProcessError(exit_code, command_line, output)
+
   run_time = time.time() - start_time
-  _logger.debug("Completed: %s" % " ".join(command))
-  # Only log if it took more than 1 second.
-  if run_time >= 1:
-    _logger.info("Test took %.3f seconds: %s" % (run_time, " ".join(command)))
-  return rv
+  _logger.debug("Completed: mojo_shell %s" % " ".join(arguments))
+  # Only log if it took more than 3 second.
+  if run_time >= 3:
+    _logger.info("Test took %.3f seconds: mojo_shell %s" %
+                 (run_time, " ".join(arguments)))
+  return output
 
 
-def try_run_test(config, shell, shell_args, apps_and_args):
-  """Returns the output of a command line or an empty string on error."""
-  command_line = build_command_line(config, shell_args, apps_and_args)
-  _logger.debug("Running command line: %s" % command_line)
+def try_run_test(shell, shell_args, apps_and_args):
+  """Returns the output of a shell run or an empty string on error."""
+  command_line = build_command_line(shell_args, apps_and_args)
+  _logger.debug("Running " + command_line)
   try:
-    return run_test(config, shell, shell_args, apps_and_args)
+    return run_test(shell, shell_args, apps_and_args)
   except Exception as e:
     print_process_error(command_line, e)
   return None

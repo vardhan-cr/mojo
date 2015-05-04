@@ -16,6 +16,7 @@ import time
 import urlparse
 
 from pylib.http_server import StartHttpServer
+from pylib.shell import Shell
 
 
 # Tags used by the mojo shell application logs.
@@ -61,13 +62,14 @@ def _ExitIfNeeded(process):
     process.kill()
 
 
-class AndroidShell(object):
-  """ Allows to set up and run a given mojo shell binary on an Android device.
+class AndroidShell(Shell):
+  """Wrapper around Mojo shell running on an Android device.
 
   Args:
     adb_path: path to adb, optional if adb is in PATH
     target_device: device to run on, if multiple devices are connected
   """
+
   def __init__(self, adb_path="adb", target_device=None, verbose_pipe=None):
     self.adb_path = adb_path
     self.target_device = target_device
@@ -267,6 +269,24 @@ class AndroidShell(object):
       cmd += ['--es', 'encodedParameters', encodedParameters]
 
     subprocess.check_call(cmd, stdout=self.verbose_pipe)
+
+  def RunUntilCompletion(self, arguments):
+    """Runs the shell with given arguments until shell exits.
+
+    Args:
+      arguments: list of arguments for the shell
+
+    Returns:
+      A tuple of (return_code, output). |return_code| is the exit code returned
+      by the shell or None if the exit code cannot be retrieved. |output| is the
+      stdout mingled with the stderr produced by the shell.
+    """
+    (r, w) = os.pipe()
+    with os.fdopen(r, "r") as rf:
+      with os.fdopen(w, "w") as wf:
+        self.StartShell(arguments, wf, wf.close, False)
+        output = rf.read()
+        return None, output
 
   def StopShell(self):
     """

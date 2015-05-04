@@ -21,20 +21,20 @@ def set_color():
     _logger.debug("Setting GTEST_COLOR=yes")
     os.environ["GTEST_COLOR"] = "yes"
 
+
 # TODO(vtl): The return value is bizarre. Should just make it either return
 # True/False, or a list of failing fixtures. But the dart_apptest runner would
 # also need to be updated in the same way.
-def run_fixtures(config, shell, apptest_dict, apptest, isolate, test_args,
-                 shell_args):
+def run_fixtures(shell, apptest_dict, apptest, isolate, test_args, shell_args):
   """Run the gtest fixtures in isolation."""
 
   if not isolate:
-    if not RunApptestInShell(config, shell, apptest, test_args, shell_args):
+    if not RunApptestInShell(shell, apptest, test_args, shell_args):
       return "Failed test(s) in %r" % apptest_dict
     return "Succeeded"
 
   # List the apptest fixtures so they can be run independently for isolation.
-  fixtures = get_fixtures(config, shell, shell_args, apptest)
+  fixtures = get_fixtures(shell, shell_args, apptest)
 
   if not fixtures:
     return "Failed with no tests found."
@@ -42,8 +42,7 @@ def run_fixtures(config, shell, apptest_dict, apptest, isolate, test_args,
   apptest_result = "Succeeded"
   for fixture in fixtures:
     apptest_args = test_args + ["--gtest_filter=%s" % fixture]
-    success = RunApptestInShell(config, shell, apptest, apptest_args,
-                                shell_args)
+    success = RunApptestInShell(shell, apptest, apptest_args, shell_args)
 
     if not success:
       apptest_result = "Failed test(s) in %r" % apptest_dict
@@ -51,17 +50,18 @@ def run_fixtures(config, shell, apptest_dict, apptest, isolate, test_args,
   return apptest_result
 
 
-def run_test(config, shell, shell_args, apps_and_args=None):
+def run_test(shell, shell_args, apps_and_args=None):
   """Runs a command line and checks the output for signs of gtest failure.
 
   Args:
-    config: The mopy.config.Config object for the build.
+    shell: Wrapper around concrete Mojo shell, implementing devtools Shell
+        interface.
     shell_args: The arguments for mojo_shell.
     apps_and_args: A Dict keyed by application URL associated to the
         application's specific arguments.
   """
   apps_and_args = apps_and_args or {}
-  output = test_util.try_run_test(config, shell, shell_args, apps_and_args)
+  output = test_util.try_run_test(shell, shell_args, apps_and_args)
   # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
   # The latter condition ensures failure on broken command lines or output.
   # Check output instead of exit codes because mojo_shell always exits with 0.
@@ -69,14 +69,14 @@ def run_test(config, shell, shell_args, apps_and_args=None):
       (output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1)):
     print "Failed test:"
     print_process_error(
-        test_util.build_command_line(config, shell_args, apps_and_args),
+        test_util.build_command_line(shell_args, apps_and_args),
         output)
     return False
   _logger.debug("Succeeded with output:\n%s" % output)
   return True
 
 
-def get_fixtures(config, shell, shell_args, apptest):
+def get_fixtures(shell, shell_args, apptest):
   """Returns the "Test.Fixture" list from an apptest using mojo_shell.
 
   Tests are listed by running the given apptest in mojo_shell and passing
@@ -85,18 +85,17 @@ def get_fixtures(config, shell, shell_args, apptest):
   An empty list is returned on failure, with errors logged.
 
   Args:
-    config: The mopy.config.Config object for the build.
     apptest: The URL of the test application to run.
   """
   try:
     apps_and_args = {apptest: ["--gtest_list_tests"]}
-    list_output = test_util.run_test(config, shell, shell_args, apps_and_args)
+    list_output = test_util.run_test(shell, shell_args, apps_and_args)
     _logger.debug("Tests listed:\n%s" % list_output)
     return _gtest_list_tests(list_output)
   except Exception as e:
     print "Failed to get test fixtures:"
     print_process_error(
-        test_util.build_command_line(config, shell_args, apps_and_args), e)
+        test_util.build_command_line(shell_args, apps_and_args), e)
   return []
 
 
@@ -128,5 +127,5 @@ def _gtest_list_tests(gtest_list_tests_output):
   return test_list
 
 
-def RunApptestInShell(config, shell, application, application_args, shell_args):
-  return run_test(config, shell, shell_args, {application: application_args})
+def RunApptestInShell(shell, application, application_args, shell_args):
+  return run_test(shell, shell_args, {application: application_args})

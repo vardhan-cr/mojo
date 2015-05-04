@@ -9,7 +9,7 @@ import sys
 
 import devtools
 devtools.add_pylib_to_path()
-from pylib.android import AndroidShell
+from pylib.android_shell import AndroidShell
 
 from mopy.config import Config
 from mopy.paths import Paths
