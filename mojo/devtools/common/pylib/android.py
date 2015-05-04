@@ -247,8 +247,10 @@ class AndroidShell(object):
       # redirection.
       self._RunAdbAsRoot()
 
+      # Remove any leftover fifo file after the previous run.
       subprocess.check_call(self._CreateADBCommand(
-          ['shell', 'rm', STDOUT_PIPE]))
+          ['shell', 'rm', '-f', STDOUT_PIPE]))
+
       parameters.append('--fifo-path=%s' % STDOUT_PIPE)
       self._ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
     # The origin has to be specified whether it's local or external.
