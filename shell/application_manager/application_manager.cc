@@ -57,7 +57,8 @@ class ApplicationManager::ContentHandlerConnection : public mojo::ErrorHandler {
                                   mojo::GetProxy(&services), nullptr,
                                   base::Closure());
     mojo::MessagePipe pipe;
-    content_handler_.Bind(pipe.handle0.Pass());
+    content_handler_.Bind(
+        mojo::InterfacePtrInfo<mojo::ContentHandler>(pipe.handle0.Pass(), 0u));
     services->ConnectToService(mojo::ContentHandler::Name_,
                                pipe.handle1.Pass());
     content_handler_.set_error_handler(this);

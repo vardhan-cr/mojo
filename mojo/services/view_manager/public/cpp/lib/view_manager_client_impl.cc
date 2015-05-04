@@ -291,7 +291,8 @@ void ViewManagerClientImpl::OnEmbed(
   root_ = AddViewToViewManager(this, nullptr, root_data);
   root_->AddObserver(new RootObserver(root_));
 
-  window_manager_.Bind(window_manager_pipe.Pass());
+  window_manager_.Bind(
+      InterfacePtrInfo<WindowManager>(window_manager_pipe.Pass(), 0u));
   WindowManagerObserverPtr observer;
   wm_observer_binding_.Bind(GetProxy(&observer));
   // binding to |this| is safe here as |window_manager_| is bound to our

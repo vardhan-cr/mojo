@@ -108,7 +108,8 @@ TEST_F(JSEchoTest, ShareEchoService) {
 TEST_F(JSServiceProviderEchoTest, UseApplicationServiceProvider) {
   mojo::EchoServicePtr echo_service;
   mojo::MessagePipe pipe;
-  echo_service.Bind(pipe.handle0.Pass());
+  echo_service.Bind(
+      mojo::InterfacePtrInfo<mojo::EchoService>(pipe.handle0.Pass(), 0u));
   echo_service_provider_->ConnectToService(
       mojo::EchoService::Name_, pipe.handle1.Pass());
   String foo;

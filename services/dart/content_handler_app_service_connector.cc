@@ -53,7 +53,7 @@ MojoHandle ContentHandlerAppServiceConnector::ConnectToService(
           application_name,
           base::Passed(GetProxy(&interface_ptr))));
       // Return proxy end of pipe to caller.
-      return interface_ptr.PassMessagePipe().release().value();
+      return interface_ptr.PassInterface().PassHandle().release().value();
     }
     break;
     default:

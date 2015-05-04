@@ -59,11 +59,9 @@ ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
   ResourceReturnerPtr returner_ptr;
   returner_binding_.Bind(GetProxy(&returner_ptr));
   surface_->SetResourceReturner(returner_ptr.Pass());
-  context_ =
-      MojoGLES2CreateContext(command_buffer.PassMessagePipe().release().value(),
-                             &ContextLostThunk,
-                             this,
-                             Environment::GetDefaultAsyncWaiter());
+  context_ = MojoGLES2CreateContext(
+      command_buffer.PassInterface().PassHandle().release().value(),
+      &ContextLostThunk, this, Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
   MojoGLES2MakeCurrent(context_);
 }

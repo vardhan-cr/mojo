@@ -107,8 +107,8 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
 
 void GLES2ClientImpl::ContextCreated(mojo::CommandBufferPtr command_buffer) {
   context_ = MojoGLES2CreateContext(
-      command_buffer.PassMessagePipe().release().value(), &ContextLostThunk,
-      this, mojo::Environment::GetDefaultAsyncWaiter());
+      command_buffer.PassInterface().PassHandle().release().value(),
+      &ContextLostThunk, this, mojo::Environment::GetDefaultAsyncWaiter());
   MojoGLES2MakeCurrent(context_);
   cube_.Init();
   WantToDraw();

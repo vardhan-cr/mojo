@@ -46,7 +46,8 @@ class DemoTask {
   }
 
   void Run() {
-    integer_service_.Bind(proxy_handle_.Pass());
+    integer_service_.Bind(
+        InterfacePtrInfo<IntegerService>(proxy_handle_.Pass(), 0u));
     base::Callback<void(int32_t)> callback =
         base::Bind(&DemoTask::SaveResultAndFinish, base::Unretained(this));
     for(int unsigned i = 0; i < iteration_count_; i++) {
@@ -107,9 +108,9 @@ class IndirectServiceDemoAppDelegate : public ApplicationDelegate {
           base::Unretained(base::MessageLoop::current()));
       // We're passing the integer_service_ proxy to another thread, so
       // use its MessagePipe.
-      tasks_.push_back(new DemoTask(integer_service.PassMessagePipe(),
-                                    finished_callback,
-                                    kTaskIterationCount));
+      tasks_.push_back(
+          new DemoTask(integer_service.PassInterface().PassHandle(),
+                       finished_callback, kTaskIterationCount));
     }
   }
 

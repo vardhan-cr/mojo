@@ -41,7 +41,7 @@ void ChildProcessHost::Start() {
       base::Bind(&ChildProcessHost::DidCreateChannel, base::Unretained(this)),
       base::MessageLoop::current()->message_loop_proxy()));
 
-  controller_.Bind(handle.Pass());
+  controller_.Bind(mojo::InterfacePtrInfo<ChildController>(handle.Pass(), 0u));
   controller_.set_error_handler(this);
 
   CHECK(base::PostTaskAndReplyWithResult(

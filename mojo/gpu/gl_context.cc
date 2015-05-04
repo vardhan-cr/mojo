@@ -22,8 +22,8 @@ GLContext::GLContext(Shell* shell) : weak_factory_(this) {
   CommandBufferPtr command_buffer;
   gpu_service->CreateOffscreenGLES2Context(GetProxy(&command_buffer));
   context_ = MojoGLES2CreateContext(
-      command_buffer.PassMessagePipe().release().value(), &ContextLostThunk,
-      this, Environment::GetDefaultAsyncWaiter());
+      command_buffer.PassInterface().PassHandle().release().value(),
+      &ContextLostThunk, this, Environment::GetDefaultAsyncWaiter());
   gl_ = static_cast<gpu::gles2::GLES2Interface*>(
       MojoGLES2GetGLES2Interface(context_));
 }

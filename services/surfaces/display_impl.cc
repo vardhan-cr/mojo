@@ -48,7 +48,8 @@ void DisplayImpl::OnContextCreated(mojo::CommandBufferPtr gles2_client) {
   display_.reset(new cc::Display(this, manager_, nullptr, nullptr, settings));
   scheduler_->AddDisplay(display_.get());
   display_->Initialize(make_scoped_ptr(new mojo::DirectOutputSurface(
-      new mojo::ContextProviderMojo(gles2_client.PassMessagePipe()))));
+      new mojo::ContextProviderMojo(
+          gles2_client.PassInterface().PassHandle()))));
   display_->Resize(last_submitted_frame_size_);
 
   display_->SetSurfaceId(cc_id_, 1.f);
