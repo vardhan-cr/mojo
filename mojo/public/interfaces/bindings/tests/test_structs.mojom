@@ -352,3 +352,14 @@ struct MultiVersionStructV7 {
   [MinVersion=7]
   bool f_bool;
 };
+
+// Used to verify that interfaces that are struct members can be defined in the
+// same file.
+
+interface SomeInterface {
+  SomeMethod(RectPair pair) => (RectPair other_pair);
+};
+
+struct ContainsInterface {
+  SomeInterface some_interface;
+};
