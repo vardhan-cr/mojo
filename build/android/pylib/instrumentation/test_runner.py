@@ -48,8 +48,7 @@ class TestRunner(base_test_runner.BaseTestRunner):
       test_pkg: A TestPackage object.
       additional_flags: A list of additional flags to add to the command line.
     """
-    super(TestRunner, self).__init__(device, test_options.tool,
-                                     test_options.cleanup_test_files)
+    super(TestRunner, self).__init__(device, test_options.tool)
     self._lighttp_port = constants.LIGHTTPD_RANDOM_PORT_FIRST + shard_index
     self._logcat_monitor = None
 
@@ -229,7 +228,7 @@ class TestRunner(base_test_runner.BaseTestRunner):
     # just quits and does not do anything.  The java test harness will still
     # print the appropriate annotation for us, but will add --NORUN-- for
     # us so we know to ignore the results.
-    # The --NORUN-- tag is managed by MainActivityTestBase.java
+    # The --NORUN-- tag is managed by ChromeTabbedActivityTestBase.java
     if regex.group(1) != '--NORUN--':
 
       # Obtain the relevant perf data.  The data is dumped to a

@@ -13,7 +13,7 @@ if (current_cpu == "mipsel" || current_cpu == "mips64el") {
 }
 
 skia_support_gpu = !is_ios
-skia_support_pdf = !is_ios && (enable_basic_printing || enable_print_preview)
+skia_support_pdf = false
 
 # The list of Skia defines that are to be set for chromium.
 gypi_skia_defines =

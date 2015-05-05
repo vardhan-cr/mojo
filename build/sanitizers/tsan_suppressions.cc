@@ -63,6 +63,7 @@ char kTSanDefaultSuppressions[] =
 
 // http://crbug.com/158922
 "race:third_party/libvpx/source/libvpx/vp8/encoder/*\n"
+"race:third_party/libvpx/source/libvpx/vp9/encoder/*\n"
 
 // http://crbug.com/189177
 "race:thread_manager\n"
@@ -100,9 +101,6 @@ char kTSanDefaultSuppressions[] =
 // http://crbug.com/246968
 "race:webrtc::VideoCodingModuleImpl::RegisterPacketRequestCallback\n"
 
-// http://crbug.com/246970
-"race:webrtc::EventPosix::StartTimer\n"
-
 // http://crbug.com/246974
 "race:content::GpuWatchdogThread::CheckArmed\n"
 
@@ -124,11 +122,11 @@ char kTSanDefaultSuppressions[] =
 "race:base::PowerMonitor::RemoveObserver\n"
 "race:base::PowerMonitor::IsOnBatteryPower\n"
 
+// http://crbug.com/258935
+"race:base::Thread::StopSoon\n"
+
 // http://crbug.com/268941
 "race:tracked_objects::ThreadData::tls_index_\n"
-
-// http://crbug.com/270037
-"race:gLibCleanupFunctions\n"
 
 // http://crbug.com/272095
 "race:base::g_top_manager\n"
@@ -241,9 +239,6 @@ char kTSanDefaultSuppressions[] =
 // http://crbug.com/363999
 "race:v8::internal::EnterDebugger::*EnterDebugger\n"
 
-// http://crbug.com/364006
-"race:gfx::ImageFamily::~ImageFamily\n"
-
 // https://code.google.com/p/v8/issues/detail?id=3143
 "race:v8::internal::FLAG_track_double_fields\n"
 
@@ -290,9 +285,6 @@ char kTSanDefaultSuppressions[] =
 // http://crbug.com/425057
 "deadlock:webrtc::ViEChannelManagerScoped::ViEChannelManagerScoped\n"
 
-// https://crbug.com/433993
-"deadlock:content::WebRtcAudioDeviceImpl\n"
-
 // http://crbug.com/417193
 // Suppressing both AudioContext.{cpp,h}.
 "race:modules/webaudio/AudioContext\n"
@@ -302,6 +294,9 @@ char kTSanDefaultSuppressions[] =
 
 // https://crbug.com/430533
 "race:TileTaskGraphRunner::Run\n"
+
+// https://crbug.com/437044
+"race:SkEventTracer\n"
 
 // https://crbug.com/448203
 "race:blink::RemoteFrame::detach\n"

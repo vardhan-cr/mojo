@@ -28,9 +28,6 @@ class TimeDelta;
 namespace tracked_objects {
 
 namespace {
-// Flag to compile out almost all of the task tracking code.
-const bool kTrackAllTaskObjects = true;
-
 // TODO(jar): Evaluate the perf impact of enabling this.  If the perf impact is
 // negligible, enable by default.
 // Flag to compile out parent-child link recording.
@@ -366,8 +363,6 @@ void ThreadData::OnThreadTermination(void* thread_data) {
   DCHECK(thread_data);  // TLS should *never* call us with a NULL.
   // We must NOT do any allocations during this callback. There is a chance
   // that the allocator is no longer active on this thread.
-  if (!kTrackAllTaskObjects)
-    return;  // Not compiled in.
   reinterpret_cast<ThreadData*>(thread_data)->OnThreadTerminationCleanup();
 }
 
@@ -390,23 +385,9 @@ void ThreadData::OnThreadTerminationCleanup() {
 }
 
 // static
-void ThreadData::Snapshot(ProcessDataSnapshot* process_data) {
-  // Add births that have run to completion to |collected_data|.
-  // |birth_counts| tracks the total number of births recorded at each location
-  // for which we have not seen a death count.
-  BirthCountMap birth_counts;
-  ThreadData::SnapshotAllExecutedTasks(process_data, &birth_counts);
-
-  // Add births that are still active -- i.e. objects that have tallied a birth,
-  // but have not yet tallied a matching death, and hence must be either
-  // running, queued up, or being held in limbo for future posting.
-  for (BirthCountMap::const_iterator it = birth_counts.begin();
-       it != birth_counts.end(); ++it) {
-    if (it->second > 0) {
-      process_data->tasks.push_back(
-          TaskSnapshot(*it->first, DeathData(it->second), "Still_Alive"));
-    }
-  }
+void ThreadData::Snapshot(ProcessDataSnapshot* process_data_snapshot) {
+  ThreadData::SnapshotCurrentPhase(
+      &process_data_snapshot->phased_process_data_snapshots[0]);
 }
 
 Births* ThreadData::TallyABirth(const Location& location) {
@@ -479,9 +460,6 @@ void ThreadData::TallyADeath(const Births& birth,
 
 // static
 Births* ThreadData::TallyABirthIfActive(const Location& location) {
-  if (!kTrackAllTaskObjects)
-    return NULL;  // Not compiled in.
-
   if (!TrackingStatus())
     return NULL;
   ThreadData* current_thread_data = Get();
@@ -494,9 +472,6 @@ Births* ThreadData::TallyABirthIfActive(const Location& location) {
 void ThreadData::TallyRunOnNamedThreadIfTracking(
     const base::TrackingInfo& completed_task,
     const TaskStopwatch& stopwatch) {
-  if (!kTrackAllTaskObjects)
-    return;  // Not compiled in.
-
   // Even if we have been DEACTIVATED, we will process any pending births so
   // that our data structures (which counted the outstanding births) remain
   // consistent.
@@ -526,9 +501,6 @@ void ThreadData::TallyRunOnWorkerThreadIfTracking(
     const Births* birth,
     const TrackedTime& time_posted,
     const TaskStopwatch& stopwatch) {
-  if (!kTrackAllTaskObjects)
-    return;  // Not compiled in.
-
   // Even if we have been DEACTIVATED, we will process any pending births so
   // that our data structures (which counted the outstanding births) remain
   // consistent.
@@ -560,9 +532,6 @@ void ThreadData::TallyRunOnWorkerThreadIfTracking(
 void ThreadData::TallyRunInAScopedRegionIfTracking(
     const Births* birth,
     const TaskStopwatch& stopwatch) {
-  if (!kTrackAllTaskObjects)
-    return;  // Not compiled in.
-
   // Even if we have been DEACTIVATED, we will process any pending births so
   // that our data structures (which counted the outstanding births) remain
   // consistent.
@@ -578,11 +547,9 @@ void ThreadData::TallyRunInAScopedRegionIfTracking(
 }
 
 // static
-void ThreadData::SnapshotAllExecutedTasks(ProcessDataSnapshot* process_data,
-                                          BirthCountMap* birth_counts) {
-  if (!kTrackAllTaskObjects)
-    return;  // Not compiled in.
-
+void ThreadData::SnapshotAllExecutedTasks(
+    ProcessDataPhaseSnapshot* process_data_phase,
+    BirthCountMap* birth_counts) {
   // Get an unchanging copy of a ThreadData list.
   ThreadData* my_list = ThreadData::first();
 
@@ -595,12 +562,33 @@ void ThreadData::SnapshotAllExecutedTasks(ProcessDataSnapshot* process_data,
   for (ThreadData* thread_data = my_list;
        thread_data;
        thread_data = thread_data->next()) {
-    thread_data->SnapshotExecutedTasks(process_data, birth_counts);
+    thread_data->SnapshotExecutedTasks(process_data_phase, birth_counts);
   }
 }
 
-void ThreadData::SnapshotExecutedTasks(ProcessDataSnapshot* process_data,
-                                       BirthCountMap* birth_counts) {
+// static
+void ThreadData::SnapshotCurrentPhase(
+    ProcessDataPhaseSnapshot* process_data_phase) {
+  // Add births that have run to completion to |collected_data|.
+  // |birth_counts| tracks the total number of births recorded at each location
+  // for which we have not seen a death count.
+  BirthCountMap birth_counts;
+  ThreadData::SnapshotAllExecutedTasks(process_data_phase, &birth_counts);
+
+  // Add births that are still active -- i.e. objects that have tallied a birth,
+  // but have not yet tallied a matching death, and hence must be either
+  // running, queued up, or being held in limbo for future posting.
+  for (const auto& birth_count : birth_counts) {
+    if (birth_count.second > 0) {
+      process_data_phase->tasks.push_back(TaskSnapshot(
+          *birth_count.first, DeathData(birth_count.second), "Still_Alive"));
+    }
+  }
+}
+
+void ThreadData::SnapshotExecutedTasks(
+    ProcessDataPhaseSnapshot* process_data_phase,
+    BirthCountMap* birth_counts) {
   // Get copy of data, so that the data will not change during the iterations
   // and processing.
   ThreadData::BirthMap birth_map;
@@ -608,24 +596,22 @@ void ThreadData::SnapshotExecutedTasks(ProcessDataSnapshot* process_data,
   ThreadData::ParentChildSet parent_child_set;
   SnapshotMaps(&birth_map, &death_map, &parent_child_set);
 
-  for (ThreadData::DeathMap::const_iterator it = death_map.begin();
-       it != death_map.end(); ++it) {
-    process_data->tasks.push_back(
-        TaskSnapshot(*it->first, it->second, thread_name()));
-    (*birth_counts)[it->first] -= it->first->birth_count();
+  for (const auto& death : death_map) {
+    process_data_phase->tasks.push_back(
+        TaskSnapshot(*death.first, death.second, thread_name()));
+    (*birth_counts)[death.first] -= death.first->birth_count();
   }
 
-  for (ThreadData::BirthMap::const_iterator it = birth_map.begin();
-       it != birth_map.end(); ++it) {
-    (*birth_counts)[it->second] += it->second->birth_count();
+  for (const auto& birth : birth_map) {
+    (*birth_counts)[birth.second] += birth.second->birth_count();
   }
 
   if (!kTrackParentChildLinks)
     return;
 
-  for (ThreadData::ParentChildSet::const_iterator it = parent_child_set.begin();
-       it != parent_child_set.end(); ++it) {
-    process_data->descendants.push_back(ParentChildPairSnapshot(*it));
+  for (const auto& parent_child : parent_child_set) {
+    process_data_phase->descendants.push_back(
+        ParentChildPairSnapshot(parent_child));
   }
 }
 
@@ -634,20 +620,16 @@ void ThreadData::SnapshotMaps(BirthMap* birth_map,
                               DeathMap* death_map,
                               ParentChildSet* parent_child_set) {
   base::AutoLock lock(map_lock_);
-  for (BirthMap::const_iterator it = birth_map_.begin();
-       it != birth_map_.end(); ++it)
-    (*birth_map)[it->first] = it->second;
-  for (DeathMap::iterator it = death_map_.begin();
-       it != death_map_.end(); ++it) {
-    (*death_map)[it->first] = it->second;
-  }
+  for (const auto& birth : birth_map_)
+    (*birth_map)[birth.first] = birth.second;
+  for (const auto& death : death_map_)
+    (*death_map)[death.first] = death.second;
 
   if (!kTrackParentChildLinks)
     return;
 
-  for (ParentChildSet::iterator it = parent_child_set_.begin();
-       it != parent_child_set_.end(); ++it)
-    parent_child_set->insert(*it);
+  for (const auto& parent_child : parent_child_set_)
+    parent_child_set->insert(parent_child);
 }
 
 static void OptionallyInitializeAlternateTimer() {
@@ -657,8 +639,6 @@ static void OptionallyInitializeAlternateTimer() {
 }
 
 bool ThreadData::Initialize() {
-  if (!kTrackAllTaskObjects)
-    return false;  // Not compiled in.
   if (status_ >= DEACTIVATED)
     return true;  // Someone else did the initialization.
   // Due to racy lazy initialization in tests, we'll need to recheck status_
@@ -759,7 +739,7 @@ void ThreadData::EnableProfilerTiming() {
 TrackedTime ThreadData::Now() {
   if (kAllowAlternateTimeSourceHandling && now_function_)
     return TrackedTime::FromMilliseconds((*now_function_)());
-  if (kTrackAllTaskObjects && IsProfilerTimingEnabled() && TrackingStatus())
+  if (IsProfilerTimingEnabled() && TrackingStatus())
     return TrackedTime::Now();
   return TrackedTime();  // Super fast when disabled, or not compiled.
 }
@@ -959,13 +939,22 @@ ParentChildPairSnapshot::~ParentChildPairSnapshot() {
 }
 
 //------------------------------------------------------------------------------
-// ProcessDataSnapshot
+// ProcessDataPhaseSnapshot
+
+ProcessDataPhaseSnapshot::ProcessDataPhaseSnapshot() {
+}
+
+ProcessDataPhaseSnapshot::~ProcessDataPhaseSnapshot() {
+}
+
+//------------------------------------------------------------------------------
+// ProcessDataPhaseSnapshot
 
 ProcessDataSnapshot::ProcessDataSnapshot()
 #if !defined(OS_NACL)
     : process_id(base::GetCurrentProcId()) {
 #else
-    : process_id(0) {
+    : process_id(base::kNullProcessId) {
 #endif
 }
 

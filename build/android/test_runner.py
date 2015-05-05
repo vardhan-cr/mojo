@@ -152,6 +152,9 @@ def AddRemoteDeviceOptions(parser):
                            'Overrides all other flags.'))
   group.add_argument('--remote-device-timeout', type=int,
                      help='Times to retry finding remote device')
+  group.add_argument('--network-config', type=int,
+                     help='Integer that specifies the network environment '
+                          'that the tests will be run in.')
 
   device_os_group = group.add_mutually_exclusive_group()
   device_os_group.add_argument('--remote-device-minimum-os',
@@ -175,9 +178,6 @@ def AddRemoteDeviceOptions(parser):
 def AddDeviceOptions(parser):
   """Adds device options to |parser|."""
   group = parser.add_argument_group(title='Device Options')
-  group.add_argument('-c', dest='cleanup_test_files',
-                     help='Cleanup test files on the device after run',
-                     action='store_true')
   group.add_argument('--tool',
                      dest='tool',
                      help=('Run the test under a tool '
@@ -372,7 +372,6 @@ def ProcessInstrumentationOptions(args):
   # TODO(jbudorick): Get rid of InstrumentationOptions.
   return instrumentation_test_options.InstrumentationOptions(
       args.tool,
-      args.cleanup_test_files,
       args.annotations,
       args.exclude_annotations,
       args.test_filter,
@@ -437,7 +436,6 @@ def ProcessUIAutomatorOptions(args):
 
   return uiautomator_test_options.UIAutomatorOptions(
       args.tool,
-      args.cleanup_test_files,
       args.annotations,
       args.exclude_annotations,
       args.test_filter,
@@ -636,7 +634,6 @@ def _RunGTests(args, devices):
     # into the gtest code.
     gtest_options = gtest_test_options.GTestOptions(
         args.tool,
-        args.cleanup_test_files,
         args.test_filter,
         args.run_disabled,
         args.test_arguments,
@@ -768,7 +765,16 @@ def _RunUIAutomatorTests(args, devices):
 def _RunJUnitTests(args):
   """Subcommand of RunTestsCommand which runs junit tests."""
   runner_factory, tests = junit_setup.Setup(args)
-  _, exit_code = junit_dispatcher.RunTests(tests, runner_factory)
+  results, exit_code = junit_dispatcher.RunTests(tests, runner_factory)
+
+  report_results.LogFull(
+      results=results,
+      test_type='JUnit',
+      test_package=args.test_suite)
+
+  if args.json_results_file:
+    json_results.GenerateJsonResultsFile(results, args.json_results_file)
+
   return exit_code
 
 

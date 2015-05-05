@@ -5,12 +5,12 @@
 #include "base/trace_event/trace_event_impl.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "base/base_switches.h"
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/debug/leak_annotations.h"
-#include "base/float_util.h"
 #include "base/format_macros.h"
 #include "base/json/string_escape.h"
 #include "base/lazy_instance.h"
@@ -30,11 +30,13 @@
 #include "base/third_party/dynamic_annotations/dynamic_annotations.h"
 #include "base/threading/platform_thread.h"
 #include "base/threading/thread_id_name_manager.h"
+#include "base/threading/worker_pool.h"
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
 #include "base/trace_event/trace_event_synthetic_delay.h"
 
 #if defined(OS_WIN)
+#include "base/trace_event/trace_event_etw_export_win.h"
 #include "base/trace_event/trace_event_win.h"
 #endif
 
@@ -73,7 +75,7 @@ const size_t kTraceEventVectorBigBufferChunks =
     512000000 / kTraceBufferChunkSize;
 const size_t kTraceEventVectorBufferChunks = 256000 / kTraceBufferChunkSize;
 const size_t kTraceEventRingBufferChunks = kTraceEventVectorBufferChunks / 4;
-const size_t kTraceEventBatchChunks = 1000 / kTraceBufferChunkSize;
+const size_t kTraceEventBufferSizeInBytes = 100 * 1024;
 // Can store results for 30 seconds with 1 ms sampling interval.
 const size_t kMonitorTraceEventBufferChunks = 30000 / kTraceBufferChunkSize;
 // ECHO_TO_CONSOLE needs a small buffer to hold the unfinished COMPLETE events.
@@ -645,7 +647,7 @@ void TraceEvent::AppendValueAsJSON(unsigned char type,
       //        should be made into a common method.
       std::string real;
       double val = value.as_double;
-      if (IsFinite(val)) {
+      if (std::isfinite(val)) {
         real = DoubleToString(val);
         // Ensure that the number has a .0 if there's no decimal or 'e'.  This
         // makes sure that when we read the JSON back, it's interpreted as a
@@ -663,7 +665,7 @@ void TraceEvent::AppendValueAsJSON(unsigned char type,
           // "-.1" bad "-0.1" good
           real.insert(1, "0");
         }
-      } else if (IsNaN(val)){
+      } else if (std::isnan(val)){
         // The JSON spec doesn't allow NaN and Infinity (since these are
         // objects in EcmaScript).  Use strings instead.
         real = "\"NaN\"";
@@ -1208,7 +1210,8 @@ TraceLog::TraceLog()
       event_callback_category_filter_(
           CategoryFilter::kDefaultCategoryFilterString),
       thread_shared_chunk_index_(0),
-      generation_(0) {
+      generation_(0),
+      use_worker_thread_(false) {
   // Trace is enabled or disabled on one thread while other threads are
   // accessing the enabled flag. We don't care whether edge-case events are
   // traced or not, so we allow races on the enabled flag to keep the trace
@@ -1290,6 +1293,11 @@ void TraceLog::UpdateCategoryGroupEnabledFlag(size_t category_index) {
   if (event_callback_ &&
       event_callback_category_filter_.IsCategoryGroupEnabled(category_group))
     enabled_flag |= ENABLED_FOR_EVENT_CALLBACK;
+#if defined(OS_WIN)
+  if (base::trace_event::TraceEventETWExport::isETWExportEnabled())
+    enabled_flag |= ENABLED_FOR_ETW_EXPORT;
+#endif
+
   g_category_group_enabled[category_index] = enabled_flag;
 }
 
@@ -1681,7 +1689,9 @@ void TraceLog::SetEventCallbackDisabled() {
 //    - The message loop will be removed from thread_message_loops_;
 //    If this is the last message loop, finish the flush;
 // 4. If any thread hasn't finish its flush in time, finish the flush.
-void TraceLog::Flush(const TraceLog::OutputCallback& cb) {
+void TraceLog::Flush(const TraceLog::OutputCallback& cb,
+                     bool use_worker_thread) {
+  use_worker_thread_ = use_worker_thread;
   if (IsEnabled()) {
     // Can't flush when tracing is enabled because otherwise PostTask would
     // - generate more trace events;
@@ -1735,6 +1745,7 @@ void TraceLog::Flush(const TraceLog::OutputCallback& cb) {
   FinishFlush(generation);
 }
 
+// Usually it runs on a different thread.
 void TraceLog::ConvertTraceEventsToTraceFormat(
     scoped_ptr<TraceBuffer> logged_events,
     const TraceLog::OutputCallback& flush_output_callback) {
@@ -1749,19 +1760,17 @@ void TraceLog::ConvertTraceEventsToTraceFormat(
     scoped_refptr<RefCountedString> json_events_str_ptr =
         new RefCountedString();
 
-    for (size_t i = 0; i < kTraceEventBatchChunks; ++i) {
+    while (json_events_str_ptr->size() < kTraceEventBufferSizeInBytes) {
       const TraceBufferChunk* chunk = logged_events->NextChunk();
-      if (!chunk) {
-        has_more_events = false;
+      has_more_events = chunk != NULL;
+      if (!chunk)
         break;
-      }
       for (size_t j = 0; j < chunk->size(); ++j) {
-        if (i > 0 || j > 0)
+        if (json_events_str_ptr->size())
           json_events_str_ptr->data().append(",\n");
         chunk->GetEventAt(j)->AppendAsJSON(&(json_events_str_ptr->data()));
       }
     }
-
     flush_output_callback.Run(json_events_str_ptr, has_more_events);
   } while (has_more_events);
 }
@@ -1783,6 +1792,16 @@ void TraceLog::FinishFlush(int generation) {
     flush_message_loop_proxy_ = NULL;
     flush_output_callback = flush_output_callback_;
     flush_output_callback_.Reset();
+  }
+
+  if (use_worker_thread_ &&
+      WorkerPool::PostTask(
+          FROM_HERE,
+          Bind(&TraceLog::ConvertTraceEventsToTraceFormat,
+               Passed(&previous_logged_events),
+               flush_output_callback),
+          true)) {
+    return;
   }
 
   ConvertTraceEventsToTraceFormat(previous_logged_events.Pass(),
@@ -1908,7 +1927,7 @@ TraceEventHandle TraceLog::AddTraceEventWithThreadIdAndTimestamp(
   DCHECK(!timestamp.is_null());
 
   if (flags & TRACE_EVENT_FLAG_MANGLE_ID)
-    id ^= process_id_hash_;
+    id = MangleEventId(id);
 
   TimeTicks offset_event_timestamp = OffsetTimestamp(timestamp);
   TimeTicks now = flags & TRACE_EVENT_FLAG_EXPLICIT_TIMESTAMP ?
@@ -1970,6 +1989,15 @@ TraceEventHandle TraceLog::AddTraceEventWithThreadIdAndTimestamp(
       }
     }
   }
+
+#if defined(OS_WIN)
+  // This is done sooner rather than later, to avoid creating the event and
+  // acquiring the lock, which is not needed for ETW as it's already threadsafe.
+  if (*category_group_enabled & ENABLED_FOR_ETW_EXPORT)
+    TraceEventETWExport::AddEvent(phase, category_group_enabled, name, id,
+                                  num_args, arg_names, arg_types, arg_values,
+                                  convertable_values);
+#endif  // OS_WIN
 
   std::string console_message;
   if (*category_group_enabled &
@@ -2175,6 +2203,10 @@ void TraceLog::CancelWatchEvent() {
   subtle::NoBarrier_Store(&watch_category_, 0);
   watch_event_name_ = "";
   watch_event_callback_.Reset();
+}
+
+uint64 TraceLog::MangleEventId(uint64 id) {
+  return id ^ process_id_hash_;
 }
 
 void TraceLog::AddMetadataEventsWhileLocked() {

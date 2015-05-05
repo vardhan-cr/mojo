@@ -146,7 +146,7 @@ if (use_ash) {
 if (use_nss_certs) {
   grit_defines += [
     "-D",
-    "use_nss",
+    "use_nss_certs",
   ]
 }
 
@@ -202,6 +202,12 @@ if (enable_extensions) {
   grit_defines += [
     "-D",
     "enable_extensions",
+  ]
+}
+if (enable_media_router) {
+  grit_defines += [
+    "-D",
+    "enable_media_router",
   ]
 }
 if (enable_plugins) {
@@ -299,11 +305,14 @@ template("grit") {
   assert(defined(invoker.source),
          "\"source\" must be defined for the grit template $target_name")
 
+  grit_inputs = [ invoker.source ]
+
   if (defined(invoker.resource_ids)) {
     resource_ids = invoker.resource_ids
   } else {
     resource_ids = grit_resource_id_file
   }
+  grit_inputs += [ resource_ids ]  # Script depends on ID file.
 
   if (defined(invoker.output_dir)) {
     output_dir = invoker.output_dir
@@ -330,8 +339,6 @@ template("grit") {
   } else {
     grit_flags = []  # These are optional so default to empty list.
   }
-
-  grit_inputs = [ invoker.source ]
 
   assert_files_flags = []
 
@@ -371,20 +378,8 @@ template("grit") {
     script = "//tools/grit/grit.py"
     inputs = grit_inputs
 
-    # TODO(knn): Remove this once grit has rolled to recognize the flag.
-    depend_on_stamp =
-        defined(invoker.depend_on_stamp) && invoker.depend_on_stamp
-    if (depend_on_stamp) {
-      # Need this for migrating existing targets without clobbering.
-      depfile = "$output_dir/${grit_output_name}_stamp.d"
-      outputs = [
-        "${depfile}.stamp",
-      ]
-    } else {
-      depfile = "$output_dir/${grit_output_name}.d"
-      outputs = []
-    }
-    outputs += grit_outputs
+    depfile = "$output_dir/${grit_output_name}_stamp.d"
+    outputs = [ "${depfile}.stamp" ] + grit_outputs
 
     args = [
       "-i",
@@ -398,18 +393,15 @@ template("grit") {
       ]
     }
     args += [
-      "-o",
-      rebased_output_dir,
-      "--depdir",
-      ".",
-      "--depfile",
-      rebase_path(depfile, root_build_dir),
-      "--write-only-new=1",
-    ]
-    if (depend_on_stamp) {
-      args += [ "--depend-on-stamp" ]
-    }
-    args += grit_defines
+              "-o",
+              rebased_output_dir,
+              "--depdir",
+              ".",
+              "--depfile",
+              rebase_path(depfile, root_build_dir),
+              "--write-only-new=1",
+              "--depend-on-stamp",
+            ] + grit_defines
 
     # Add extra defines with -D flags.
     if (defined(invoker.defines)) {

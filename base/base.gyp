@@ -103,7 +103,9 @@
             }],
           ],
           'dependencies': [
+            'base_java',
             'base_jni_headers',
+            '../build/android/ndk.gyp:cpu_features',
             '../third_party/ashmem/ashmem.gyp:ashmem',
           ],
           'link_settings': {
@@ -113,14 +115,6 @@
           },
           'sources!': [
             'debug/stack_trace_posix.cc',
-          ],
-          'includes': [
-            '../build/android/cpufeatures.gypi',
-          ],
-        }],
-        ['OS == "android" and _toolset == "target" and android_webview_build == 0', {
-          'dependencies': [
-            'base_java',
           ],
         }],
         ['os_bsd==1', {
@@ -195,6 +189,9 @@
                 '../build/win/dbghelp_xp/dbghelp.dll',
               ],
             },
+          ],
+          'dependencies': [
+           'trace_event/etw_manifest/etw_manifest.gyp:etw_manifest',
           ],
         }],
         ['OS == "mac" or (OS == "ios" and _toolset == "host")', {
@@ -379,24 +376,6 @@
       ],
     },
     {
-      # TODO(pasko): Remove this target when crbug.com/424562 is fixed.
-      # GN: //base:protect_file_posix
-      'target_name': 'protect_file_posix',
-      'conditions': [
-        ['os_posix == 1', {
-          'type': 'static_library',
-          'dependencies': [
-            'base',
-          ],
-          'sources': [
-            'files/protect_file_posix.cc',
-          ],
-        }, {
-          'type': 'none',
-        }],
-      ],
-    },
-    {
       'target_name': 'base_prefs_test_support',
       'type': 'static_library',
       'dependencies': [
@@ -478,7 +457,7 @@
         'callback_unittest.cc',
         'callback_unittest.nc',
         'cancelable_callback_unittest.cc',
-        'chromeos/memory_pressure_observer_chromeos_unittest.cc',
+        'chromeos/memory_pressure_monitor_chromeos_unittest.cc',
         'command_line_unittest.cc',
         'containers/adapters_unittest.cc',
         'containers/hash_tables_unittest.cc',
@@ -498,6 +477,7 @@
         'file_version_info_unittest.cc',
         'files/dir_reader_posix_unittest.cc',
         'files/file_path_unittest.cc',
+        'files/file_path_watcher_unittest.cc',
         'files/file_proxy_unittest.cc',
         'files/file_unittest.cc',
         'files/file_util_proxy_unittest.cc',
@@ -569,6 +549,7 @@
         'metrics/sample_vector_unittest.cc',
         'metrics/sparse_histogram_unittest.cc',
         'metrics/statistics_recorder_unittest.cc',
+        'move_unittest.cc',
         'numerics/safe_numerics_unittest.cc',
         'observer_list_unittest.cc',
         'os_compat_android_unittest.cc',
@@ -637,6 +618,7 @@
         'test/test_pending_task_unittest.cc',
         'test/test_reg_util_win_unittest.cc',
         'test/trace_event_analyzer_unittest.cc',
+        'test/user_action_tester_unittest.cc',
         'threading/non_thread_safe_unittest.cc',
         'threading/platform_thread_unittest.cc',
         'threading/sequenced_worker_pool_unittest.cc',
@@ -762,11 +744,17 @@
             'message_loop/message_pump_glib_unittest.cc',
           ]
         }],
-        ['OS == "linux" and use_allocator!="none"', {
-            'dependencies': [
-              'allocator/allocator.gyp:allocator',
-            ],
-          },
+        ['OS == "linux"', {
+          'dependencies': [
+            'malloc_wrapper',
+          ],
+          'conditions': [
+            ['use_allocator!="none"', {
+              'dependencies': [
+                'allocator/allocator.gyp:allocator',
+              ],
+            }],
+          ]},
         ],
         ['OS == "win"', {
           'sources!': [
@@ -795,14 +783,6 @@
               # TODO(mark): This should not be necessary.
               'dependencies': [
                 '../third_party/icu/icu.gyp:icudata',
-              ],
-            }],
-            ['incremental_chrome_dll', {
-              'defines': [
-                # Used only to workaround a linker bug, do not use this
-                # otherwise, and don't make it broader scope. See
-                # http://crbug.com/251251.
-                'INCREMENTAL_LINKING',
               ],
             }],
           ],
@@ -924,6 +904,8 @@
         'test/gtest_xml_util.h',
         'test/histogram_tester.cc',
         'test/histogram_tester.h',
+        'test/ios/wait_util.h',
+        'test/ios/wait_util.mm',
         'test/launcher/test_launcher.cc',
         'test/launcher/test_launcher.h',
         'test/launcher/test_result.cc',
@@ -937,6 +919,8 @@
         'test/mock_chrome_application_mac.mm',
         'test/mock_devices_changed_observer.cc',
         'test/mock_devices_changed_observer.h',
+        'test/mock_entropy_provider.cc',
+        'test/mock_entropy_provider.h',
         'test/mock_log.cc',
         'test/mock_log.h',
         'test/multiprocess_test.cc',
@@ -1007,6 +991,8 @@
         'test/trace_event_analyzer.h',
         'test/trace_to_file.cc',
         'test/trace_to_file.h',
+        'test/user_action_tester.cc',
+        'test/user_action_tester.h',
         'test/values_test_util.cc',
         'test/values_test_util.h',
       ],
@@ -1109,6 +1095,7 @@
             'allocator/allocator.gyp:allocator_extension_thunks_win64',
             '../third_party/modp_b64/modp_b64.gyp:modp_b64_win64',
             'third_party/dynamic_annotations/dynamic_annotations.gyp:dynamic_annotations_win64',
+            'trace_event/etw_manifest/etw_manifest.gyp:etw_manifest',
           ],
           # TODO(gregoryd): direct_dependent_settings should be shared with the
           # 32-bit target, but it doesn't work due to a bug in gyp
@@ -1329,6 +1316,20 @@
         },
       ],
     }],
+    ['OS == "linux"', {
+      'targets': [
+        {
+          'target_name': 'malloc_wrapper',
+          'type': 'shared_library',
+          'dependencies': [
+            'base',
+          ],
+          'sources': [
+            'test/malloc_wrapper.cc',
+          ],
+        }
+      ],
+    }],
     ['OS == "android"', {
       'targets': [
         {
@@ -1358,11 +1359,25 @@
             'android/java/src/org/chromium/base/TraceEvent.java',
             'android/java/src/org/chromium/base/library_loader/LibraryLoader.java',
             'android/java/src/org/chromium/base/metrics/RecordHistogram.java',
+            'android/java/src/org/chromium/base/metrics/RecordUserAction.java',
           ],
           'variables': {
             'jni_gen_package': 'base',
           },
+          'dependencies': [
+            'android_runtime_jni_headers',
+          ],
           'includes': [ '../build/jni_generator.gypi' ],
+        },
+        {
+          # GN: //base:android_runtime_jni_headers
+          'target_name': 'android_runtime_jni_headers',
+          'type': 'none',
+          'variables': {
+            'jni_gen_package': 'base',
+            'input_java_class': 'java/lang/Runtime.class',
+          },
+          'includes': [ '../build/jar_file_jni_generator.gypi' ],
         },
         {
           # TODO(GN)
@@ -1412,15 +1427,9 @@
             'base_java_library_process_type',
             'base_java_memory_pressure_level',
             'base_native_libraries_gen',
+            '../third_party/jsr-305/jsr-305.gyp:jsr_305_javalib',
           ],
           'includes': [ '../build/java.gypi' ],
-          'conditions': [
-            ['android_webview_build==0', {
-              'dependencies': [
-                '../third_party/jsr-305/jsr-305.gyp:jsr_305_javalib',
-              ],
-            }]
-          ],
         },
         {
           # GN: //base:base_java_unittest_support
@@ -1474,6 +1483,23 @@
           'includes': [ '../build/java.gypi' ],
         },
         {
+          # GN: //base:base_junit_tests
+          'target_name': 'base_junit_tests',
+          'type': 'none',
+          'dependencies': [
+            'base_java',
+            'base_java_test_support',
+            '../testing/android/junit/junit_test.gyp:junit_test_support',
+          ],
+          'variables': {
+             'main_class': 'org.chromium.testing.local.JunitTestMain',
+             'src_paths': [
+               '../base/android/junit/',
+             ],
+           },
+          'includes': [ '../build/host_jar.gypi' ],
+        },
+        {
           # GN: //base:base_javatests
           'target_name': 'base_javatests',
           'type': 'none',
@@ -1490,25 +1516,18 @@
           # GN: //base/android/linker:chromium_android_linker
           'target_name': 'chromium_android_linker',
           'type': 'shared_library',
-          'conditions': [
-            # Avoid breaking the webview build because it
-            # does not have <(android_ndk_root)/crazy_linker.gyp.
-            # Note that webview never uses the linker anyway.
-            ['android_webview_build == 0', {
-              'sources': [
-                'android/linker/linker_jni.cc',
-              ],
-              # The crazy linker is never instrumented.
-              'cflags!': [
-                '-finstrument-functions',
-              ],
-              'dependencies': [
-                # The NDK contains the crazy_linker here:
-                #   '<(android_ndk_root)/crazy_linker.gyp:crazy_linker'
-                # However, we use our own fork.  See bug 384700.
-                '../third_party/android_crazy_linker/crazy_linker.gyp:crazy_linker',
-              ],
-            }],
+          'sources': [
+            'android/linker/linker_jni.cc',
+          ],
+          # The crazy linker is never instrumented.
+          'cflags!': [
+            '-finstrument-functions',
+          ],
+          'dependencies': [
+            # The NDK contains the crazy_linker here:
+            #   '<(android_ndk_root)/crazy_linker.gyp:crazy_linker'
+            # However, we use our own fork.  See bug 384700.
+            '../third_party/android_crazy_linker/crazy_linker.gyp:crazy_linker',
           ],
         },
         {

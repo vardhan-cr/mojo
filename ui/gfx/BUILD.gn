@@ -111,11 +111,6 @@ component("gfx") {
       "display_observer.cc",
     ]
 
-    # TODO(GYP) re-enable when base_java exists.
-    #if (!is_android_webview_build) {
-    #  deps += [ "//base:base_java" ]
-    #}
-
     # TODO(jdduke): Revisit optimization after gauging benefit, crbug/419051.
     if (!is_debug) {
       configs -= [ "//build/config/compiler:optimize" ]

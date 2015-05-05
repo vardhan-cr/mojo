@@ -71,7 +71,7 @@ class AddInObserve : public Foo {
         adder(1) {
   }
 
-  virtual void Observe(int x) override {
+  void Observe(int x) override {
     if (!added) {
       added = true;
       observer_list->AddObserver(&adder);
@@ -94,7 +94,7 @@ class AddRemoveThread : public PlatformThread::Delegate,
  public:
   AddRemoveThread(ObserverListThreadSafe<Foo>* list, bool notify)
       : list_(list),
-        loop_(NULL),
+        loop_(nullptr),
         in_list_(false),
         start_(Time::Now()),
         count_observes_(0),

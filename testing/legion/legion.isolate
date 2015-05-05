@@ -7,7 +7,9 @@
     'files': [
       '__init__.py',
       'common_lib.py',
+      'legion_test_case.py',
       'legion.isolate',
+      'process.py',
       'rpc_methods.py',
       'rpc_server.py',
       'run_task.py',

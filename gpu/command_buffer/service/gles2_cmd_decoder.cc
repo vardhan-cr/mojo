@@ -17,7 +17,6 @@
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/command_line.h"
-#include "base/float_util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/numerics/safe_math.h"
 #include "base/strings/string_number_conversions.h"

@@ -15,8 +15,6 @@ import android.widget.AbsListView.LayoutParams;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import org.chromium.base.ApiCompatibilityUtils;
-
 import java.util.List;
 import java.util.Set;
 
@@ -59,7 +57,7 @@ public class DropdownAdapter extends ArrayAdapter<DropdownItem> {
             LayoutInflater inflater =
                     (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             layout = inflater.inflate(R.layout.dropdown_item, null);
-            ApiCompatibilityUtils.setBackgroundForView(layout, new DropdownDividerDrawable());
+            layout.setBackground(new DropdownDividerDrawable());
         }
 
         DropdownItem item = getItem(position);

@@ -4,10 +4,9 @@
 
 #include "sandbox/linux/seccomp-bpf/syscall.h"
 
-#include <asm/unistd.h>
 #include <errno.h>
+#include <stdint.h>
 
-#include "base/basictypes.h"
 #include "base/logging.h"
 #include "sandbox/linux/bpf_dsl/seccomp_macros.h"
 

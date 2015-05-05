@@ -2961,9 +2961,8 @@
    fun:_Znw*
    fun:_ZN4base8internal20PostTaskAndReplyImpl16PostTaskAndReplyERKN15tracked_objects8LocationERKNS_8CallbackIFvvEEESA_
    fun:_ZN4base10WorkerPool16PostTaskAndReplyERKN15tracked_objects8LocationERKNS_8CallbackIFvvEEES9_b
-   fun:_ZN3net16HostResolverImpl16LoopbackProbeJobC1ERKN4base7WeakPtrIS0_EE
-   fun:_ZN3net16HostResolverImplC1ERKNS_12HostResolver7OptionsEPNS_6NetLogE
-   fun:_ZN8chromeos24HostResolverImplChromeOSC1E13*
+   fun:_ZN3net16HostResolverImpl16LoopbackProbeJob*
+   fun:_ZN3net16HostResolverImplC*
 }
 {
    bug_387993
@@ -3012,7 +3011,7 @@
    bug_388668
    Memcheck:Leak
    fun:_Znw*
-   fun:_ZN20data_reduction_proxy69DataReductionProxyUsageStatsTest_isDataReductionProxyUnreachable_Test8TestBodyEv
+   fun:_ZN20data_reduction_proxy69DataReductionProxyBypassStatsTest_isDataReductionProxyUnreachable_Test8TestBodyEv
 }
 {
    bug_392912
@@ -3023,18 +3022,6 @@
    fun:_ZNK6SkDraw8drawPathERK6SkPathRK7SkPaintPK8SkMatrixbbP9SkBlitter
    fun:_ZNK6SkDraw8drawPathERK6SkPathRK7SkPaintPK8SkMatrixb
    fun:_ZN14SkBitmapDevice8drawPathERK6SkDrawRK6SkPathRK7SkPaintPK8SkMatrixb
-}
-{
-   bug_392936
-   Memcheck:Leak
-   fun:_Znw*
-   fun:_ZN4base8internal20PostTaskAndReplyImpl16PostTaskAndReplyERKN15tracked_objects8LocationERKNS_8CallbackIFvvEEESA_
-   fun:_ZN4base10WorkerPool16PostTaskAndReplyERKN15tracked_objects8LocationERKNS_8CallbackIFvvEEES9_b
-   fun:_ZN3net16HostResolverImpl16LoopbackProbeJobC2ERKN4base7WeakPtrIS0_EE
-   fun:_ZN3net16HostResolverImplC1ERKNS_12HostResolver7OptionsEPNS_6NetLogE
-   fun:_ZN8chromeos24HostResolverImplChromeOSC1E13scoped_refptrIN4base16MessageLoopProxyEEPNS_19NetworkStateHandlerERKN3net12HostResolver7OptionsEPNS7_6NetLogE
-   fun:_ZN8chromeos24HostResolverImplChromeOS25CreateHostResolverForTestE13scoped_refptrIN4base16MessageLoopProxyEEPNS_19NetworkStateHandlerE
-   fun:_ZN28HostResolverImplChromeOSTest22InitializeHostResolverEv
 }
 {
    bug_394558
@@ -3629,9 +3616,6 @@
    Memcheck:Leak
    fun:_Znw*
    ...
-   fun:_ZN4mojo7BindingINS_15ServiceProviderEE4BindENS_16ScopedHandleBaseINS_17MessagePipeHandleEEEPK15MojoAsyncWaiter
-   fun:_ZN4mojo7BindingINS_15ServiceProviderEE4BindENS_16InterfaceRequestIS1_EEPK15MojoAsyncWaiter
-   fun:_ZN7content19ServiceRegistryImpl4BindEN4mojo16InterfaceRequestINS1_15ServiceProviderEEE
    fun:_ZN7content12_GLOBAL__N_120ApplicationSetupImpl24ExchangeServiceProvidersEN4mojo16InterfaceRequestINS2_15ServiceProviderEEENS2_12InterfacePtrIS4_EE
    fun:_ZN7content20ApplicationSetupStub6AcceptEPN4mojo7MessageE
    fun:_ZN4mojo8internal6Router21HandleIncomingMessageEPNS_7MessageE
@@ -3656,4 +3640,15 @@
    fun:_ZN4base12_GLOBAL__N_112WorkerThread10ThreadMainEv
    fun:_ZN4base12_GLOBAL__N_110ThreadFuncEPv
 }
-
+{
+   bug_476940
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN3WTF9BitVector13OutOfLineBits6createEm
+   fun:_ZN3WTF9BitVector15resizeOutOfLineEm
+   fun:_ZN3WTF9BitVector10ensureSizeEm
+   fun:_ZN3WTF9BitVectorC2Em
+   fun:_ZN5blink10UseCounter9CountBitsC2Ev
+   fun:_ZN5blink10UseCounterC1Ev
+   fun:_ZN5blink4PageC1ERNS0_11PageClientsE
+}

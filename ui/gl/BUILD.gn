@@ -208,7 +208,7 @@ component("gl") {
     ]
   }
 
-  if (is_android && !is_android_webview_build) {
+  if (is_android) {
     deps += [ "//ui/android:ui_java" ]
   }
 }

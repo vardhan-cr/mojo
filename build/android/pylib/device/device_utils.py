@@ -25,8 +25,10 @@ import zipfile
 import pylib.android_commands
 from pylib import cmd_helper
 from pylib import constants
+from pylib import device_signal
 from pylib.device import adb_wrapper
 from pylib.device import decorators
+from pylib.device import device_blacklist
 from pylib.device import device_errors
 from pylib.device import intent
 from pylib.device import logcat_monitor
@@ -71,6 +73,7 @@ _CONTROL_CHARGING_COMMANDS = [
         'echo 0 > /sys/class/power_supply/usb/online'),
   },
 ]
+
 
 @decorators.WithExplicitTimeoutAndRetries(
     _DEFAULT_TIMEOUT, _DEFAULT_RETRIES)
@@ -168,6 +171,7 @@ class DeviceUtils(object):
     self._default_timeout = default_timeout
     self._default_retries = default_retries
     self._cache = {}
+    self._client_caches = {}
     assert hasattr(self, decorators.DEFAULT_TIMEOUT_ATTR)
     assert hasattr(self, decorators.DEFAULT_RETRIES_ATTR)
 
@@ -406,7 +410,7 @@ class DeviceUtils(object):
       return not self.IsOnline()
 
     self.adb.Reboot()
-    self._cache = {}
+    self._ClearCache()
     timeout_retry.WaitFor(device_offline, wait_period=1)
     if block:
       self.WaitUntilFullyBooted(wifi=wifi)
@@ -446,8 +450,8 @@ class DeviceUtils(object):
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def RunShellCommand(self, cmd, check_return=False, cwd=None, env=None,
-                      as_root=False, single_line=False, timeout=None,
-                      retries=None):
+                      as_root=False, single_line=False, large_output=False,
+                      timeout=None, retries=None):
     """Run an ADB shell command.
 
     The command to run |cmd| should be a sequence of program arguments or else
@@ -480,6 +484,8 @@ class DeviceUtils(object):
         with root privileges.
       single_line: A boolean indicating if only a single line of output is
         expected.
+      large_output: Uses a work-around for large shell command output. Without
+        this large output will be truncated.
       timeout: timeout in seconds
       retries: number of retries
 
@@ -502,14 +508,48 @@ class DeviceUtils(object):
       # using double quotes here to allow interpolation of shell variables
       return '%s=%s' % (key, cmd_helper.DoubleQuote(value))
 
-    def do_run(cmd):
+    def run(cmd):
+      return self.adb.Shell(cmd)
+
+    def handle_check_return(cmd):
       try:
-        return self.adb.Shell(cmd)
+        return run(cmd)
       except device_errors.AdbCommandFailedError as exc:
         if check_return:
           raise
         else:
           return exc.output
+
+    def handle_large_command(cmd):
+      if len(cmd) < self._MAX_ADB_COMMAND_LENGTH:
+        return handle_check_return(cmd)
+      else:
+        with device_temp_file.DeviceTempFile(self.adb, suffix='.sh') as script:
+          self._WriteFileWithPush(script.name, cmd)
+          logging.info('Large shell command will be run from file: %s ...',
+                       cmd[:100])
+          return handle_check_return('sh %s' % script.name_quoted)
+
+    def handle_large_output(cmd, large_output_mode):
+      if large_output_mode:
+        with device_temp_file.DeviceTempFile(self.adb) as large_output_file:
+          cmd = '%s > %s' % (cmd, large_output_file.name)
+          logging.info('Large output mode enabled. Will write output to device '
+                       ' and read results from file.')
+          handle_large_command(cmd)
+          return self.ReadFile(large_output_file.name)
+      else:
+        try:
+          return handle_large_command(cmd)
+        except device_errors.AdbCommandFailedError as exc:
+          if exc.status is None:
+            logging.exception('No output found for %s', cmd)
+            logging.warning('Attempting to run in large_output mode.')
+            logging.warning('Use RunShellCommand(..., large_output=True) for '
+                            'shell commands that expect a lot of output.')
+            return handle_large_output(cmd, True)
+          else:
+            raise
 
     if not isinstance(cmd, basestring):
       cmd = ' '.join(cmd_helper.SingleQuote(s) for s in cmd)
@@ -521,19 +561,9 @@ class DeviceUtils(object):
     if as_root and self.NeedsSU():
       # "su -c sh -c" allows using shell features in |cmd|
       cmd = 'su -c sh -c %s' % cmd_helper.SingleQuote(cmd)
-    if timeout is None:
-      timeout = self._default_timeout
 
-    if len(cmd) < self._MAX_ADB_COMMAND_LENGTH:
-      output = do_run(cmd)
-    else:
-      with device_temp_file.DeviceTempFile(self.adb, suffix='.sh') as script:
-        self._WriteFileWithPush(script.name, cmd)
-        logging.info('Large shell command will be run from file: %s ...',
-                     cmd[:100])
-        output = do_run('sh %s' % script.name_quoted)
+    output = handle_large_output(cmd, large_output).splitlines()
 
-    output = output.splitlines()
     if single_line:
       if not output:
         return ''
@@ -545,38 +575,70 @@ class DeviceUtils(object):
     else:
       return output
 
+  def _RunPipedShellCommand(self, script, **kwargs):
+    PIPESTATUS_LEADER = 'PIPESTATUS: '
+
+    script += '; echo "%s${PIPESTATUS[@]}"' % PIPESTATUS_LEADER
+    kwargs['check_return'] = True
+    output = self.RunShellCommand(script, **kwargs)
+    pipestatus_line = output[-1]
+
+    if not pipestatus_line.startswith(PIPESTATUS_LEADER):
+      logging.error('Pipe exit statuses of shell script missing.')
+      raise device_errors.AdbShellCommandFailedError(
+          script, output, status=None,
+          device_serial=self.adb.GetDeviceSerial())
+
+    output = output[:-1]
+    statuses = [
+        int(s) for s in pipestatus_line[len(PIPESTATUS_LEADER):].split()]
+    if any(statuses):
+      raise device_errors.AdbShellCommandFailedError(
+          script, output, status=statuses,
+          device_serial=self.adb.GetDeviceSerial())
+    return output
+
   @decorators.WithTimeoutAndRetriesFromInstance()
-  def KillAll(self, process_name, signum=9, as_root=False, blocking=False,
-              timeout=None, retries=None):
+  def KillAll(self, process_name, signum=device_signal.SIGKILL, as_root=False,
+              blocking=False, quiet=False, timeout=None, retries=None):
     """Kill all processes with the given name on the device.
 
     Args:
       process_name: A string containing the name of the process to kill.
       signum: An integer containing the signal number to send to kill. Defaults
-              to 9 (SIGKILL).
+              to SIGKILL (9).
       as_root: A boolean indicating whether the kill should be executed with
                root privileges.
       blocking: A boolean indicating whether we should wait until all processes
                 with the given |process_name| are dead.
+      quiet: A boolean indicating whether to ignore the fact that no processes
+             to kill were found.
       timeout: timeout in seconds
       retries: number of retries
 
+    Returns:
+      The number of processes attempted to kill.
+
     Raises:
-      CommandFailedError if no process was killed.
+      CommandFailedError if no process was killed and |quiet| is False.
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    pids = self._GetPidsImpl(process_name)
+    pids = self.GetPids(process_name)
     if not pids:
-      raise device_errors.CommandFailedError(
-          'No process "%s"' % process_name, str(self))
+      if quiet:
+        return 0
+      else:
+        raise device_errors.CommandFailedError(
+            'No process "%s"' % process_name, str(self))
 
     cmd = ['kill', '-%d' % signum] + pids.values()
     self.RunShellCommand(cmd, as_root=as_root, check_return=True)
 
     if blocking:
+      # TODO(perezu): use timeout_retry.WaitFor
       wait_period = 0.1
-      while self._GetPidsImpl(process_name):
+      while self.GetPids(process_name):
         time.sleep(wait_period)
 
     return len(pids)
@@ -791,29 +853,27 @@ class DeviceUtils(object):
     if not real_device_path:
       return [(host_path, device_path)]
 
-    host_hash_tuples = md5sum.CalculateHostMd5Sums([real_host_path])
+    host_checksums = md5sum.CalculateHostMd5Sums([real_host_path])
     device_paths_to_md5 = (
         real_device_path if os.path.isfile(real_host_path)
         else ('%s/%s' % (real_device_path, os.path.relpath(p, real_host_path))
-              for _, p in host_hash_tuples))
-    device_hash_tuples = md5sum.CalculateDeviceMd5Sums(
+              for p in host_checksums.iterkeys()))
+    device_checksums = md5sum.CalculateDeviceMd5Sums(
         device_paths_to_md5, self)
 
     if os.path.isfile(host_path):
-      if (not device_hash_tuples
-          or device_hash_tuples[0].hash != host_hash_tuples[0].hash):
+      host_checksum = host_checksums.get(real_host_path)
+      device_checksum = device_checksums.get(real_device_path)
+      if host_checksum != device_checksum:
         return [(host_path, device_path)]
       else:
         return []
     else:
-      device_tuple_dict = dict((d.path, d.hash) for d in device_hash_tuples)
       to_push = []
-      for host_hash, host_abs_path in (
-          (h.hash, h.path) for h in host_hash_tuples):
+      for host_abs_path, host_checksum in host_checksums.iteritems():
         device_abs_path = '%s/%s' % (
             real_device_path, os.path.relpath(host_abs_path, real_host_path))
-        if (device_abs_path not in device_tuple_dict
-            or device_tuple_dict[device_abs_path] != host_hash):
+        if (device_checksums.get(device_abs_path) != host_checksum):
           to_push.append((host_abs_path, device_abs_path))
       return to_push
 
@@ -991,7 +1051,7 @@ class DeviceUtils(object):
     else:
       logging.warning('Could not determine size of %s.', device_path)
 
-    if size is None or size <= self._MAX_ADB_OUTPUT_LENGTH:
+    if 0 < size <= self._MAX_ADB_OUTPUT_LENGTH:
       return _JoinLines(self.RunShellCommand(
           ['cat', device_path], as_root=as_root, check_return=True))
     elif as_root and self.NeedsSU():
@@ -1326,11 +1386,19 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    return self._GetPidsImpl(process_name)
-
-  def _GetPidsImpl(self, process_name):
     procs_pids = {}
-    for line in self.RunShellCommand('ps', check_return=True):
+    try:
+      ps_output = self._RunPipedShellCommand(
+          'ps | grep -F %s' % cmd_helper.SingleQuote(process_name))
+    except device_errors.AdbShellCommandFailedError as e:
+      if e.status and isinstance(e.status, list) and not e.status[0]:
+        # If ps succeeded but grep failed, there were no processes with the
+        # given name.
+        return procs_pids
+      else:
+        raise
+
+    for line in ps_output:
       try:
         ps_data = line.split()
         if process_name in ps_data[-1]:
@@ -1402,10 +1470,8 @@ class DeviceUtils(object):
         'Size', 'Rss', 'Pss', 'Shared_Clean', 'Shared_Dirty', 'Private_Clean',
         'Private_Dirty')
 
-    showmap_out = self.RunShellCommand(
-        ['showmap', str(pid)], as_root=True, check_return=True)
-    if not showmap_out:
-      raise device_errors.CommandFailedError('No output from showmap')
+    showmap_out = self._RunPipedShellCommand(
+        'showmap %d | grep TOTAL' % int(pid), as_root=True)
 
     split_totals = showmap_out[-1].split()
     if (not split_totals
@@ -1437,155 +1503,6 @@ class DeviceUtils(object):
       retries: number of retries
     """
     return logcat_monitor.LogcatMonitor(self.adb, *args, **kwargs)
-
-  @decorators.WithTimeoutAndRetriesFromInstance()
-  def GetBatteryInfo(self, timeout=None, retries=None):
-    """Gets battery info for the device.
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-    Returns:
-      A dict containing various battery information as reported by dumpsys
-      battery.
-    """
-    result = {}
-    # Skip the first line, which is just a header.
-    for line in self.RunShellCommand(
-        ['dumpsys', 'battery'], check_return=True)[1:]:
-      # If usb charging has been disabled, an extra line of header exists.
-      if 'UPDATES STOPPED' in line:
-        logging.warning('Dumpsys battery not receiving updates. '
-                        'Run dumpsys battery reset if this is in error.')
-      elif ':' not in line:
-        logging.warning('Unknown line found in dumpsys battery.')
-        logging.warning(line)
-      else:
-        k, v = line.split(': ', 1)
-        result[k.strip()] = v.strip()
-    return result
-
-  @decorators.WithTimeoutAndRetriesFromInstance()
-  def GetCharging(self, timeout=None, retries=None):
-    """Gets the charging state of the device.
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-    Returns:
-      True if the device is charging, false otherwise.
-    """
-    battery_info = self.GetBatteryInfo()
-    for k in ('AC powered', 'USB powered', 'Wireless powered'):
-      if (k in battery_info and
-          battery_info[k].lower() in ('true', '1', 'yes')):
-        return True
-    return False
-
-  @decorators.WithTimeoutAndRetriesFromInstance()
-  def SetCharging(self, enabled, timeout=None, retries=None):
-    """Enables or disables charging on the device.
-
-    Args:
-      enabled: A boolean indicating whether charging should be enabled or
-        disabled.
-      timeout: timeout in seconds
-      retries: number of retries
-    """
-    if 'charging_config' not in self._cache:
-      for c in _CONTROL_CHARGING_COMMANDS:
-        if self.FileExists(c['witness_file']):
-          self._cache['charging_config'] = c
-          break
-      else:
-        raise device_errors.CommandFailedError(
-            'Unable to find charging commands.')
-
-    if enabled:
-      command = self._cache['charging_config']['enable_command']
-    else:
-      command = self._cache['charging_config']['disable_command']
-
-    def set_and_verify_charging():
-      self.RunShellCommand(command, check_return=True)
-      return self.GetCharging() == enabled
-
-    timeout_retry.WaitFor(set_and_verify_charging, wait_period=1)
-
-  # TODO(rnephew): Make private when all use cases can use the context manager.
-  @decorators.WithTimeoutAndRetriesFromInstance()
-  def DisableBatteryUpdates(self, timeout=None, retries=None):
-    """ Resets battery data and makes device appear like it is not
-    charging so that it will collect power data since last charge.
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-    """
-    def battery_updates_disabled():
-      return self.GetCharging() is False
-
-    self.RunShellCommand(
-        ['dumpsys', 'batterystats', '--reset'], check_return=True)
-    battery_data = self.RunShellCommand(
-        ['dumpsys', 'batterystats', '--charged', '--checkin'],
-        check_return=True)
-    ROW_TYPE_INDEX = 3
-    PWI_POWER_INDEX = 5
-    for line in battery_data:
-      l = line.split(',')
-      if (len(l) > PWI_POWER_INDEX and l[ROW_TYPE_INDEX] == 'pwi'
-          and l[PWI_POWER_INDEX] != 0):
-        raise device_errors.CommandFailedError(
-            'Non-zero pmi value found after reset.')
-    self.RunShellCommand(['dumpsys', 'battery', 'set', 'usb', '0'],
-                         check_return=True)
-    timeout_retry.WaitFor(battery_updates_disabled, wait_period=1)
-
-  # TODO(rnephew): Make private when all use cases can use the context manager.
-  @decorators.WithTimeoutAndRetriesFromInstance()
-  def EnableBatteryUpdates(self, timeout=None, retries=None):
-    """ Restarts device charging so that dumpsys no longer collects power data.
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-    """
-    def battery_updates_enabled():
-      return self.GetCharging() is True
-
-    self.RunShellCommand(['dumpsys', 'battery', 'set', 'usb', '1'],
-                         check_return=True)
-    self.RunShellCommand(['dumpsys', 'battery', 'reset'], check_return=True)
-    timeout_retry.WaitFor(battery_updates_enabled, wait_period=1)
-
-  @contextlib.contextmanager
-  def BatteryMeasurement(self, timeout=None, retries=None):
-    """Context manager that enables battery data collection. It makes
-    the device appear to stop charging so that dumpsys will start collecting
-    power data since last charge. Once the with block is exited, charging is
-    resumed and power data since last charge is no longer collected.
-
-    Only for devices L and higher.
-
-    Example usage:
-      with BatteryMeasurement():
-        browser_actions()
-        get_power_data() # report usage within this block
-      after_measurements() # Anything that runs after power
-                           # measurements are collected
-
-    Args:
-      timeout: timeout in seconds
-      retries: number of retries
-    """
-    if self.build_version_sdk < constants.ANDROID_SDK_VERSION_CODES.LOLLIPOP:
-      raise device_errors.CommandFailedError('Device must be L or higher.')
-    try:
-      self.DisableBatteryUpdates(timeout=timeout, retries=retries)
-      yield
-    finally:
-      self.EnableBatteryUpdates(timeout=timeout, retries=retries)
 
   @decorators.WithTimeoutAndRetriesFromInstance()
   def GetDevicePieWrapper(self, timeout=None, retries=None):
@@ -1622,12 +1539,24 @@ class DeviceUtils(object):
 
     return self._cache['run_pie']
 
+  def GetClientCache(self, client_name):
+    """Returns client cache."""
+    if client_name not in self._client_caches:
+      self._client_caches[client_name] = {}
+    return self._client_caches[client_name]
+
+  def _ClearCache(self):
+    """Clears all caches."""
+    for client in self._client_caches:
+      self._client_caches[client].clear()
+    self._cache.clear()
+
   @classmethod
   def parallel(cls, devices=None, async=False):
     """Creates a Parallelizer to operate over the provided list of devices.
 
     If |devices| is either |None| or an empty list, the Parallelizer will
-    operate over all attached devices.
+    operate over all attached devices that have not been blacklisted.
 
     Args:
       devices: A list of either DeviceUtils instances or objects from
@@ -1640,11 +1569,25 @@ class DeviceUtils(object):
       A Parallelizer operating over |devices|.
     """
     if not devices:
-      devices = adb_wrapper.AdbWrapper.GetDevices()
+      devices = cls.HealthyDevices()
       if not devices:
         raise device_errors.NoDevicesError()
+
     devices = [d if isinstance(d, cls) else cls(d) for d in devices]
     if async:
       return parallelizer.Parallelizer(devices)
     else:
       return parallelizer.SyncParallelizer(devices)
+
+  @classmethod
+  def HealthyDevices(cls):
+    blacklist = device_blacklist.ReadBlacklist()
+    def blacklisted(adb):
+      if adb.GetDeviceSerial() in blacklist:
+        logging.warning('Device %s is blacklisted.', adb.GetDeviceSerial())
+        return True
+      return False
+
+    return [cls(adb) for adb in adb_wrapper.AdbWrapper.Devices()
+            if not blacklisted(adb)]
+

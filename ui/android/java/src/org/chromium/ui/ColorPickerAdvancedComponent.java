@@ -13,8 +13,6 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
-import org.chromium.base.ApiCompatibilityUtils;
-
 /**
  * Encapsulates a single gradient view of the HSV color display, including its label, gradient
  * view and seek bar.
@@ -90,6 +88,6 @@ public class ColorPickerAdvancedComponent {
         } else {
             mGradientDrawable.setColors(mGradientColors);
         }
-        ApiCompatibilityUtils.setBackgroundForView(mGradientView, mGradientDrawable);
+        mGradientView.setBackground(mGradientDrawable);
     }
 }

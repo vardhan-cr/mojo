@@ -22,19 +22,15 @@ int64 SysInfo::AmountOfPhysicalMemory() {
   return static_cast<int64>(pages) * page_size;
 }
 
-bool SysInfo::HasSeekPenalty(const FilePath& path, bool* has_seek_penalty) {
-  return false;
-}
-
 // static
-size_t SysInfo::MaxSharedMemorySize() {
+uint64 SysInfo::MaxSharedMemorySize() {
   size_t limit;
   size_t size = sizeof(limit);
   if (sysctlbyname("kern.ipc.shmmax", &limit, &size, NULL, 0) < 0) {
     NOTREACHED();
     return 0;
   }
-  return limit;
+  return static_cast<uint64>(limit);
 }
 
 }  // namespace base

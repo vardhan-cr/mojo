@@ -5,6 +5,7 @@
 #ifndef SANDBOX_LINUX_SERVICES_SYSCALL_WRAPPERS_H_
 #define SANDBOX_LINUX_SERVICES_SYSCALL_WRAPPERS_H_
 
+#include <signal.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -55,6 +56,27 @@ SANDBOX_EXPORT int sys_prlimit64(pid_t pid,
 SANDBOX_EXPORT int sys_capget(struct cap_hdr* hdrp, struct cap_data* datap);
 SANDBOX_EXPORT int sys_capset(struct cap_hdr* hdrp,
                               const struct cap_data* datap);
+
+// Some libcs do not expose getresuid/getresgid wrappers.
+SANDBOX_EXPORT int sys_getresuid(uid_t* ruid, uid_t* euid, uid_t* suid);
+SANDBOX_EXPORT int sys_getresgid(gid_t* rgid, gid_t* egid, gid_t* sgid);
+
+// Some libcs do not expose a chroot wrapper.
+SANDBOX_EXPORT int sys_chroot(const char* path);
+
+// Some libcs do not expose a unshare wrapper.
+SANDBOX_EXPORT int sys_unshare(int flags);
+
+// Some libcs do not expose a sigprocmask. Note that oldset must be a nullptr,
+// because of some ABI gap between toolchain's and Linux's.
+SANDBOX_EXPORT int sys_sigprocmask(int how,
+                                   const sigset_t* set,
+                                   decltype(nullptr) oldset);
+
+// Some libcs do not expose a sigaction().
+SANDBOX_EXPORT int sys_sigaction(int signum,
+                                 const struct sigaction* act,
+                                 struct sigaction* oldact);
 
 }  // namespace sandbox
 

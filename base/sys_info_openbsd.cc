@@ -48,12 +48,8 @@ int64 SysInfo::AmountOfAvailablePhysicalMemory() {
   return AmountOfMemory(_SC_AVPHYS_PAGES);
 }
 
-bool SysInfo::HasSeekPenalty(const FilePath& path, bool* has_seek_penalty) {
-  return false;
-}
-
 // static
-size_t SysInfo::MaxSharedMemorySize() {
+uint64 SysInfo::MaxSharedMemorySize() {
   int mib[] = { CTL_KERN, KERN_SHMINFO, KERN_SHMINFO_SHMMAX };
   size_t limit;
   size_t size = sizeof(limit);
@@ -61,7 +57,7 @@ size_t SysInfo::MaxSharedMemorySize() {
     NOTREACHED();
     return 0;
   }
-  return limit;
+  return static_cast<uint64>(limit);
 }
 
 // static

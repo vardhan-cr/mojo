@@ -24,14 +24,14 @@ vars = {
   'skia_revision': '409fd66a5afcef5f165f7ccec7c3473add231752',
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
-  'buildtools_revision': '3b302fef93f7cc58d9b8168466905237484b2772',
+  'buildtools_revision': '15308f469a704c45d15567fa69cd94ce07ad0e1b',
   'dart_revision': '45304',
   'dart_observatory_packages_revision': '43830',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
-  'nacl_revision': '19f11aa481261f38f2a1e9a04e41a7e12aa70e32',
+  'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -60,7 +60,7 @@ deps = {
    Var('chromium_git') + '/chromium/deps/icu.git' + '@' + '7c81740601355556e630da515b74d889ba2f8d08',
 
   'src/tools/grit':
-    Var('chromium_git') + '/external/grit-i18n.git' + '@' + '0287c187b11ed53590254e4d817e836a44a7a1a7', # from svn revision 186
+    Var('chromium_git') + '/external/grit-i18n.git' + '@' + 'c1b1591a05209c1ad467e845ba8543c22f9072af', # from svn revision 189
 
   'src/v8':
     Var('chromium_git') + '/v8/v8.git' + '@' +  Var('v8_revision'),
@@ -133,6 +133,15 @@ deps_os = {
 
     'src/third_party/jsr-305/src':
         Var('chromium_git') + '/external/jsr-305.git' + '@' + '642c508235471f7220af6d5df2d3210e3bfc0919',
+
+    'src/third_party/junit/src':
+      Var('chromium_git') + '/external/junit.git' + '@' + '45a44647e7306262162e1346b750c3209019f2e1',
+
+    'src/third_party/mockito/src':
+      Var('chromium_git') + '/external/mockito/mockito.git' + '@' + 'ed99a52e94a84bd7c467f2443b475a22fcc6ba8e',
+
+    'src/third_party/robolectric/lib':
+      Var('chromium_git') + '/chromium/third_party/robolectric.git' + '@' + '6b63c99a8b6967acdb42cbed0adb067c80efc810',
 
     'src/third_party/android_tools':
      Var('chromium_git') + '/android_tools.git' + '@' + 'a1ffd63322c438627d78ea56eb73fb8779e06950',

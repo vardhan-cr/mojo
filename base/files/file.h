@@ -150,13 +150,13 @@ class BASE_EXPORT File {
     bool is_symbolic_link;
 
     // The last modified time of a file.
-    base::Time last_modified;
+    Time last_modified;
 
     // The last accessed time of a file.
-    base::Time last_accessed;
+    Time last_accessed;
 
     // The creation time of a file.
-    base::Time creation_time;
+    Time creation_time;
   };
 
   File();
@@ -181,10 +181,6 @@ class BASE_EXPORT File {
 
   // Creates or opens the given file.
   void Initialize(const FilePath& name, uint32 flags);
-
-  // Creates or opens the given file, allowing paths with traversal ('..')
-  // components. Use only with extreme care.
-  void InitializeUnsafe(const FilePath& name, uint32 flags);
 
   bool IsValid() const;
 
@@ -353,6 +349,14 @@ class BASE_EXPORT File {
     unsigned int file_memory_checksum_;
   };
 #endif
+
+  // Creates or opens the given file. Only called if |name| has no traversal
+  // ('..') components.
+  void DoInitialize(const FilePath& name, uint32 flags);
+
+  // TODO(tnagel): Reintegrate into Flush() once histogram isn't needed anymore,
+  // cf. issue 473337.
+  bool DoFlush();
 
   void SetPlatformFile(PlatformFile file);
 

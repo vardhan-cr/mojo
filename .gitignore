@@ -53,11 +53,14 @@ v8.log
 /third_party/llvm/
 /third_party/llvm-build/
 /third_party/lss/
+/third_party/junit/src/
 /third_party/mesa/src/
+/third_party/mockito/src/
 /third_party/nss/
 /third_party/pdfium/
 /third_party/pywebsocket/src/
 /third_party/requests/src/
+/third_party/robolectric/src/
 /third_party/sfntly/cpp/
 /third_party/skia/
 /third_party/smhasher/src/

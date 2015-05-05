@@ -12,12 +12,11 @@ import shutil
 import sys
 import time
 
-from pylib import android_commands
 from pylib.device import device_utils
 
 def _SaveAppData(device, package_name, from_apk=None, data_dir=None):
   def _BackupAppData(data_dir=None):
-    device.old_interface.Adb().SendCommand('backup %s' % package_name)
+    device.adb.Backup(package_name)
     backup_file = os.path.join(os.getcwd(), 'backup.ab')
     assert os.path.exists(backup_file), 'Backup failed.'
     if data_dir:
@@ -29,8 +28,7 @@ def _SaveAppData(device, package_name, from_apk=None, data_dir=None):
 
   if from_apk:
     logging.info('Installing %s...', from_apk)
-    # TODO(jbudorick) Switch to AdbWrapper.Install on the impl switch.
-    output = device.old_interface.Install(from_apk, reinstall=True)
+    output = device.Install(from_apk, reinstall=True)
     if 'Success' not in output:
       raise Exception('Unable to install %s. output: %s' % (from_apk, output))
 
@@ -42,14 +40,13 @@ def _SaveAppData(device, package_name, from_apk=None, data_dir=None):
 def _VerifyAppUpdate(device, to_apk, app_data, from_apk=None):
   def _RestoreAppData():
     assert os.path.exists(app_data), 'Backup file does not exist!'
-    device.old_interface.Adb().SendCommand('restore %s' % app_data)
+    device.adb.Restore(app_data)
     # It seems restore command is not synchronous.
     time.sleep(15)
 
   if from_apk:
     logging.info('Installing %s...', from_apk)
-    # TODO(jbudorick) Switch to AdbWrapper.Install on the impl switch.
-    output = device.old_interface.Install(from_apk, reinstall=True)
+    output = device.Install(from_apk, reinstall=True)
     if 'Success' not in output:
       raise Exception('Unable to install %s. output: %s' % (from_apk, output))
 
@@ -59,8 +56,7 @@ def _VerifyAppUpdate(device, to_apk, app_data, from_apk=None):
 
   logging.info('Verifying that %s cannot be installed side-by-side...',
                to_apk)
-  # TODO(jbudorick) Switch to AdbWrapper.Install on the impl switch.
-  output = device.old_interface.Install(to_apk)
+  output = device.Install(to_apk)
   if 'INSTALL_FAILED_ALREADY_EXISTS' not in output:
     if 'Success' in output:
       raise Exception('Package name has changed! output: %s' % output)
@@ -68,8 +64,7 @@ def _VerifyAppUpdate(device, to_apk, app_data, from_apk=None):
       raise Exception(output)
 
   logging.info('Verifying that %s can be overinstalled...', to_apk)
-  # TODO(jbudorick) Switch to AdbWrapper.Install on the impl switch.
-  output = device.old_interface.Install(to_apk, reinstall=True)
+  output = device.adb.Install(to_apk, reinstall=True)
   if 'Success' not in output:
     raise Exception('Unable to install %s.\n output: %s' % (to_apk, output))
   logging.info('Successfully updated to the new apk. Please verify that the '
@@ -112,10 +107,10 @@ def main():
     parser.print_help(sys.stderr)
     parser.error('Unknown arguments: %s.' % args)
 
-  devices = android_commands.GetAttachedDevices()
+  devices = device_utils.DeviceUtils.HealthyDevices()
   if len(devices) != 1:
     parser.error('Exactly 1 device must be attached.')
-  device = device_utils.DeviceUtils(devices[0])
+  device = devices[0]
 
   if options.from_apk:
     assert os.path.isfile(options.from_apk)

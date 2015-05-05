@@ -360,7 +360,7 @@ action("generate_snapshot_bin") {
            "--output_bin",
            rebase_path(isolate_snapshot, root_build_dir),
            "--target_os",
-           os,
+           current_os,
            "--url_mapping=dart:mojo.builtin,$builtin_path",
            "--url_mapping=dart:mojo.internal,$internal_path",
            "--url_mapping=dart:mojo.io,$io_path",

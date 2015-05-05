@@ -10,6 +10,7 @@
 
 #include <string>
 
+#include "base/debug/alias.h"
 #include "base/files/file_path.h"
 #include "base/files/memory_mapped_file.h"
 #include "base/logging.h"
@@ -48,7 +49,9 @@ namespace {
 // Assert that we are not called more than once.  Even though calling this
 // function isn't harmful (ICU can handle it), being called twice probably
 // indicates a programming error.
+#if !defined(OS_NACL)
 bool g_called_once = false;
+#endif
 bool g_check_called_once = true;
 #endif
 }
@@ -81,6 +84,7 @@ bool InitializeICUWithFileDescriptor(
 #endif
 
 
+#if !defined(OS_NACL)
 bool InitializeICU() {
 #if !defined(NDEBUG)
   DCHECK(!g_check_called_once || !g_called_once);
@@ -127,6 +131,10 @@ bool InitializeICU() {
 #if defined(OS_WIN)
     // The data file will be in the same directory as the current module.
     bool path_ok = PathService::Get(base::DIR_MODULE, &data_path);
+    wchar_t tmp_buffer[_MAX_PATH] = {0};
+    wcscpy_s(tmp_buffer, data_path.value().c_str());
+    base::debug::Alias(tmp_buffer);
+    CHECK(path_ok);  // TODO(scottmg): http://crbug.com/445616
 #elif defined(OS_ANDROID)
     bool path_ok = PathService::Get(base::DIR_ANDROID_APP_DATA, &data_path);
 #else
@@ -137,6 +145,14 @@ bool InitializeICU() {
 #endif
     DCHECK(path_ok);
     data_path = data_path.AppendASCII(kIcuDataFileName);
+
+#if defined(OS_WIN)
+    // TODO(scottmg): http://crbug.com/445616
+    wchar_t tmp_buffer2[_MAX_PATH] = {0};
+    wcscpy_s(tmp_buffer2, data_path.value().c_str());
+    base::debug::Alias(tmp_buffer2);
+#endif
+
 #else
     // Assume it is in the framework bundle's Resources directory.
     base::ScopedCFTypeRef<CFStringRef> data_file_name(
@@ -149,15 +165,22 @@ bool InitializeICU() {
     }
 #endif  // OS check
     if (!mapped_file.Initialize(data_path)) {
+#if defined(OS_WIN)
+      CHECK(false);  // TODO(scottmg): http://crbug.com/445616
+#endif
       LOG(ERROR) << "Couldn't mmap " << data_path.AsUTF8Unsafe();
       return false;
     }
   }
   UErrorCode err = U_ZERO_ERROR;
   udata_setCommonData(const_cast<uint8*>(mapped_file.data()), &err);
+#if defined(OS_WIN)
+  CHECK(err == U_ZERO_ERROR);  // TODO(scottmg): http://crbug.com/445616
+#endif
   return err == U_ZERO_ERROR;
 #endif
 }
+#endif
 
 void AllowMultipleInitializeCallsForTesting() {
 #if !defined(NDEBUG)

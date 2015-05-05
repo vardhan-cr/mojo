@@ -12,6 +12,7 @@ import collections
 import errno
 import logging
 import os
+import re
 
 from pylib import cmd_helper
 from pylib import constants
@@ -22,6 +23,10 @@ from pylib.utils import timeout_retry
 
 _DEFAULT_TIMEOUT = 30
 _DEFAULT_RETRIES = 2
+
+_EMULATOR_RE = re.compile(r'^emulator-[0-9]+$')
+
+_READY_STATE = 'device'
 
 
 def _VerifyLocalFileExists(path):
@@ -158,9 +163,15 @@ class AdbWrapper(object):
     cls._RunAdbCmd(['start-server'], timeout=timeout, retries=retries,
                    cpu_affinity=0)
 
-  # TODO(craigdh): Determine the filter criteria that should be supported.
   @classmethod
   def GetDevices(cls, timeout=_DEFAULT_TIMEOUT, retries=_DEFAULT_RETRIES):
+    """DEPRECATED. Refer to Devices(...) below."""
+    # TODO(jbudorick): Remove this function once no more clients are using it.
+    return cls.Devices(timeout=timeout, retries=retries)
+
+  @classmethod
+  def Devices(cls, is_ready=True, timeout=_DEFAULT_TIMEOUT,
+              retries=_DEFAULT_RETRIES):
     """Get the list of active attached devices.
 
     Args:
@@ -171,9 +182,9 @@ class AdbWrapper(object):
       AdbWrapper instances.
     """
     output = cls._RunAdbCmd(['devices'], timeout=timeout, retries=retries)
-    lines = [line.split() for line in output.splitlines()]
+    lines = (line.split() for line in output.splitlines())
     return [AdbWrapper(line[0]) for line in lines
-            if len(line) == 2 and line[1] == 'device']
+            if len(line) == 2 and (not is_ready or line[1] == _READY_STATE)]
 
   def GetDeviceSerial(self):
     """Gets the device serial number associated with this object.
@@ -530,3 +541,15 @@ class AdbWrapper(object):
     if 'cannot' in output:
       raise device_errors.AdbCommandFailedError(
           ['root'], output, device_serial=self._device_serial)
+
+  @property
+  def is_emulator(self):
+    return _EMULATOR_RE.match(self._device_serial)
+
+  @property
+  def is_ready(self):
+    try:
+      return self.GetState() == _READY_STATE
+    except device_errors.CommandFailedError:
+      return False
+

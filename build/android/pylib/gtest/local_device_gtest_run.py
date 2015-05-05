@@ -30,7 +30,8 @@ _MAX_SHARD_SIZE = 256
 # TODO(jbudorick): Move this up to the test instance if the net test server is
 # handled outside of the APK for the remote_device environment.
 _SUITE_REQUIRES_TEST_SERVER_SPAWNER = [
-  'content_unittests', 'content_browsertests', 'net_unittests', 'unit_tests'
+  'components_browsertests', 'content_unittests', 'content_browsertests',
+  'net_unittests', 'unit_tests'
 ]
 
 class _ApkDelegate(object):
@@ -112,12 +113,7 @@ class _ExeDelegate(object):
     return output
 
   def Clear(self, device):
-    try:
-      device.KillAll(self._exe_file_name, blocking=True, timeout=30, retries=0)
-    except device_errors.CommandFailedError:
-      # Raised if there is no process with the given name, which in this case
-      # is all we care about.
-      pass
+    device.KillAll(self._exe_file_name, blocking=True, timeout=30, quiet=True)
 
 
 class LocalDeviceGtestRun(local_device_test_run.LocalDeviceTestRun):

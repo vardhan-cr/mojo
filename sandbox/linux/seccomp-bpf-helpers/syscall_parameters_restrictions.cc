@@ -7,10 +7,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fcntl.h>
-#include <linux/futex.h>
 #include <linux/net.h>
 #include <sched.h>
 #include <signal.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
@@ -21,7 +21,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "base/basictypes.h"
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/time/time.h"
@@ -30,11 +29,10 @@
 #include "sandbox/linux/bpf_dsl/seccomp_macros.h"
 #include "sandbox/linux/seccomp-bpf-helpers/sigsys_handlers.h"
 #include "sandbox/linux/seccomp-bpf/sandbox_bpf.h"
+#include "sandbox/linux/system_headers/linux_futex.h"
 #include "sandbox/linux/system_headers/linux_syscalls.h"
 
 #if defined(OS_ANDROID)
-
-#include "sandbox/linux/system_headers/android_futex.h"
 
 #if !defined(F_DUPFD_CLOEXEC)
 #define F_DUPFD_CLOEXEC (F_LINUX_SPECIFIC_BASE + 6)

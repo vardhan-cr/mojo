@@ -65,9 +65,9 @@ def GNArgsForConfig(config):
     gn_args["go_build_tool"] = config.values.get("go_build_tool")
 
   if config.target_os == Config.OS_ANDROID:
-    gn_args["os"] = "android"
+    gn_args["target_os"] = "android"
   elif config.target_os == Config.OS_CHROMEOS:
-    gn_args["os"] = "chromeos"
+    gn_args["target_os"] = "chromeos"
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False
   elif config.target_os == Config.OS_LINUX:
@@ -114,7 +114,7 @@ def ConfigForGNArgs(args):
   config_args["mojo_use_go"] = args.get("mojo_use_go", False)
   if config_args["mojo_use_go"]:
     config_args["go_build_tool"] = args.get("go_build_tool")
-  config_args["target_os"] = args.get("os")
+  config_args["target_os"] = args.get("target_os")
   config_args["target_cpu"] = args.get("target_cpu")
   config_args["dcheck_always_on"] = args.get("dcheck_always_on")
   return Config(**config_args)

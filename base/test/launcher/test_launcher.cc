@@ -150,7 +150,7 @@ class SignalFDWatcher : public MessageLoopForIO::Watcher {
     KillSpawnedTestProcesses();
 
     // The signal would normally kill the process, so exit now.
-    exit(1);
+    _exit(1);
   }
 
   void OnFileCanWriteWithoutBlocking(int fd) override { NOTREACHED(); }
@@ -310,7 +310,7 @@ int LaunchChildTestProcessWithOptions(const CommandLine& command_line,
     exit_code = -1;  // Set a non-zero exit code to signal a failure.
 
     // Ensure that the process terminates.
-    KillProcess(process.Handle(), -1, true);
+    process.Terminate(-1, true);
   }
 
   {
@@ -570,7 +570,7 @@ void TestLauncher::OnTestFinished(const TestResult& result) {
   }
   if (print_snippet) {
     std::vector<std::string> snippet_lines;
-    SplitString(result.output_snippet, '\n', &snippet_lines);
+    SplitStringDontTrim(result.output_snippet, '\n', &snippet_lines);
     if (snippet_lines.size() > kOutputSnippetLinesLimit) {
       size_t truncated_size = snippet_lines.size() - kOutputSnippetLinesLimit;
       snippet_lines.erase(

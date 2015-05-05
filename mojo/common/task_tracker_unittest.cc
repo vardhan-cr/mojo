@@ -34,7 +34,7 @@ TEST_F(TaskTrackerTest, Nesting) {
   tracked_objects::ThreadData::Snapshot(&snapshot);
 
   // Nested one is ignored.
-  EXPECT_EQ(1U, snapshot.tasks.size());
+  EXPECT_EQ(1U, snapshot.phased_process_data_snapshots[0].tasks.size());
 }
 
 TEST_F(TaskTrackerTest, Twice) {
@@ -46,7 +46,7 @@ TEST_F(TaskTrackerTest, Twice) {
   tracked_objects::ProcessDataSnapshot snapshot;
   tracked_objects::ThreadData::Snapshot(&snapshot);
 
-  EXPECT_EQ(2U, snapshot.tasks.size());
+  EXPECT_EQ(2U, snapshot.phased_process_data_snapshots[0].tasks.size());
 }
 
 }  // namespace test

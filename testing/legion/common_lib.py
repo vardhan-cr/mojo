@@ -26,7 +26,7 @@ def InitLogging():
     argparse.ArgumentError if the --verbosity arg is incorrect.
   """
   parser = argparse.ArgumentParser()
-  logging_action = parser.add_argument('--verbosity', default='ERROR')
+  logging_action = parser.add_argument('--verbosity', default='INFO')
   args, _ = parser.parse_known_args()
   if args.verbosity not in LOGGING_LEVELS:
     raise argparse.ArgumentError(
@@ -40,4 +40,4 @@ def ConnectToServer(server):
   """Connect to an RPC server."""
   addr = 'http://%s:%d' % (server, SERVER_PORT)
   logging.debug('Connecting to RPC server at %s', addr)
-  return xmlrpclib.Server(addr)
+  return xmlrpclib.Server(addr, allow_none=True)

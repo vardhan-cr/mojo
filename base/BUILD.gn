@@ -13,6 +13,18 @@ config("base_implementation") {
   defines = [ "BASE_IMPLEMENTATION" ]
 }
 
+if (is_win) {
+  # This is in a separate config so the flags can be applied to dependents.
+  # ldflags in GN aren't automatically inherited.
+  config("base_win_linker_flags") {
+    ldflags = [
+      "/DELAYLOAD:cfgmgr32.dll",
+      "/DELAYLOAD:powrprof.dll",
+      "/DELAYLOAD:setupapi.dll",
+    ]
+  }
+}
+
 source_set("base_paths") {
   sources = [
     "base_paths.cc",
@@ -79,6 +91,8 @@ component("base") {
     "android/important_file_writer_android.h",
     "android/java_handler_thread.cc",
     "android/java_handler_thread.h",
+    "android/java_runtime.cc",
+    "android/java_runtime.h",
     "android/jni_android.cc",
     "android/jni_android.h",
     "android/jni_array.cc",
@@ -104,6 +118,8 @@ component("base") {
     "android/path_utils.h",
     "android/record_histogram.cc",
     "android/record_histogram.h",
+    "android/record_user_action.cc",
+    "android/record_user_action.h",
     "android/scoped_java_ref.cc",
     "android/scoped_java_ref.h",
     "android/sys_utils.cc",
@@ -149,8 +165,8 @@ component("base") {
     "callback_internal.cc",
     "callback_internal.h",
     "cancelable_callback.h",
-    "chromeos/memory_pressure_observer_chromeos.cc",
-    "chromeos/memory_pressure_observer_chromeos.h",
+    "chromeos/memory_pressure_monitor_chromeos.cc",
+    "chromeos/memory_pressure_monitor_chromeos.h",
     "command_line.cc",
     "command_line.h",
     "compiler_specific.h",
@@ -217,7 +233,6 @@ component("base") {
     "files/scoped_file.h",
     "files/scoped_temp_dir.cc",
     "files/scoped_temp_dir.h",
-    "float_util.h",
     "format_macros.h",
     "gtest_prod_util.h",
     "guid.cc",
@@ -320,6 +335,7 @@ component("base") {
     "message_loop/message_pump_win.h",
     "move.h",
     "native_library.h",
+    "native_library_ios.mm",
     "native_library_mac.mm",
     "native_library_posix.cc",
     "native_library_win.cc",
@@ -366,6 +382,8 @@ component("base") {
     "power_monitor/power_observer.h",
     "profiler/alternate_timer.cc",
     "profiler/alternate_timer.h",
+    "profiler/native_stack_sampler.cc",
+    "profiler/native_stack_sampler.h",
     "profiler/scoped_profile.cc",
     "profiler/scoped_profile.h",
     "profiler/scoped_tracker.cc",
@@ -480,6 +498,8 @@ component("base") {
     "third_party/dmg_fp/g_fmt.cc",
     "third_party/icu/icu_utf.cc",
     "third_party/icu/icu_utf.h",
+    "third_party/nspr/prtime.cc",
+    "third_party/nspr/prtime.h",
     "third_party/superfasthash/superfasthash.c",
     "thread_task_runner_handle.cc",
     "thread_task_runner_handle.h",
@@ -623,7 +643,6 @@ component("base") {
     ":base_static",
     "//base/allocator:allocator_extension_thunks",
     "//base/third_party/dynamic_annotations",
-    "//base/third_party/nspr",
     "//third_party/modp_b64",
   ]
 
@@ -731,11 +750,7 @@ component("base") {
       "powrprof.lib",
       "setupapi.lib",
     ]
-    ldflags = [
-      "/DELAYLOAD:cfgmgr32.dll",
-      "/DELAYLOAD:powrprof.dll",
-      "/DELAYLOAD:setupapi.dll",
-    ]
+    all_dependent_configs = [ ":base_win_linker_flags" ]
   } else if (!is_nacl) {
     # Non-Windows.
     deps += [ "//third_party/libevent" ]
@@ -881,7 +896,7 @@ component("i18n") {
   configs += [ "//build/config/compiler:no_size_t_to_int_warning" ]
 }
 
-if (is_linux && !is_chromeos) {
+if (is_win || (is_linux && !is_chromeos)) {
   # TODO(GYP): Figure out which of these work and are needed on other platforms.
   test("base_perftests") {
     sources = [
@@ -899,7 +914,7 @@ if (is_linux && !is_chromeos) {
     ]
 
     if (is_android) {
-      deps += [ "//testing/android:native_test_native_code" ]
+      deps += [ "//testing/android/native_test:native_test_native_code" ]
     }
   }
 
@@ -938,7 +953,7 @@ if (is_linux && !is_chromeos) {
   }
 }
 
-source_set("prefs") {
+component("prefs") {
   sources = [
     "prefs/base_prefs_export.h",
     "prefs/default_pref_store.cc",
@@ -1026,17 +1041,6 @@ source_set("message_loop_tests") {
   ]
 }
 
-# TODO(pasko): Remove this target when crbug.com/424562 is fixed.
-source_set("protect_file_posix") {
-  sources = [
-    "files/protect_file_posix.cc",
-  ]
-
-  deps = [
-    "//base",
-  ]
-}
-
 if (is_win) {
   # Target to manually rebuild pe_image_test.dll which is checked into
   # base/test/data/pe_image.
@@ -1082,7 +1086,7 @@ test("base_unittests") {
     "callback_unittest.cc",
     "callback_unittest.nc",
     "cancelable_callback_unittest.cc",
-    "chromeos/memory_pressure_observer_chromeos_unittest.cc",
+    "chromeos/memory_pressure_monitor_chromeos_unittest.cc",
     "command_line_unittest.cc",
     "containers/adapters_unittest.cc",
     "containers/hash_tables_unittest.cc",
@@ -1102,6 +1106,7 @@ test("base_unittests") {
     "file_version_info_unittest.cc",
     "files/dir_reader_posix_unittest.cc",
     "files/file_path_unittest.cc",
+    "files/file_path_watcher_unittest.cc",
     "files/file_proxy_unittest.cc",
     "files/file_unittest.cc",
     "files/file_util_proxy_unittest.cc",
@@ -1169,6 +1174,7 @@ test("base_unittests") {
     "metrics/sample_vector_unittest.cc",
     "metrics/sparse_histogram_unittest.cc",
     "metrics/statistics_recorder_unittest.cc",
+    "move_unittest.cc",
     "numerics/safe_numerics_unittest.cc",
     "observer_list_unittest.cc",
     "os_compat_android_unittest.cc",
@@ -1236,6 +1242,7 @@ test("base_unittests") {
     "test/histogram_tester_unittest.cc",
     "test/test_reg_util_win_unittest.cc",
     "test/trace_event_analyzer_unittest.cc",
+    "test/user_action_tester_unittest.cc",
     "threading/non_thread_safe_unittest.cc",
     "threading/platform_thread_unittest.cc",
     "threading/sequenced_worker_pool_unittest.cc",
@@ -1292,7 +1299,6 @@ test("base_unittests") {
     "//base/test:run_all_unittests",
     "//base/test:test_support",
     "//base/third_party/dynamic_annotations",
-    "//base/third_party/nspr",
     "//base/trace_event:trace_event_unittests",
     "//testing/gmock",
     "//testing/gtest",
@@ -1339,6 +1345,8 @@ test("base_unittests") {
   if (is_linux) {
     sources -= [ "file_version_info_unittest.cc" ]
     sources += [ "nix/xdg_util_unittest.cc" ]
+    deps += [ "//base/test:malloc_wrapper" ]
+
     if (use_glib) {
       configs += [ "//build/config/linux:glib" ]
     }
@@ -1354,7 +1362,7 @@ test("base_unittests") {
   }
 
   if (is_android) {
-    deps += [ "//testing/android:native_test_native_code" ]
+    deps += [ "//testing/android/native_test:native_test_native_code" ]
     set_sources_assignment_filter([])
     sources += [ "debug/proc_maps_linux_unittest.cc" ]
     set_sources_assignment_filter(sources_assignment_filter)
@@ -1390,8 +1398,20 @@ if (is_android) {
       "android/java/src/org/chromium/base/TraceEvent.java",
       "android/java/src/org/chromium/base/library_loader/LibraryLoader.java",
       "android/java/src/org/chromium/base/metrics/RecordHistogram.java",
+      "android/java/src/org/chromium/base/metrics/RecordUserAction.java",
     ]
+
+    deps = [
+      ":android_runtime_jni_headers",
+    ]
+
     jni_package = "base"
+  }
+
+  # GYP: //base.gyp:android_runtime_jni_headers
+  generate_jar_jni("android_runtime_jni_headers") {
+    jni_package = "base"
+    classes = [ "java/lang/Runtime.class" ]
   }
 
   # GYP: //base.gyp:base_java
@@ -1430,6 +1450,15 @@ if (is_android) {
       ":base_java",
     ]
     DEPRECATED_java_in_dir = "test/android/javatests/src"
+  }
+
+  # GYP: //base.gyp:base_junit_tests
+  junit_binary("base_junit_tests") {
+    java_files = [ "android/junit/src/org/chromium/base/LogTest.java" ]
+    deps = [
+      ":base_java",
+      ":base_java_test_support",
+    ]
   }
 
   # GYP: //base.gyp:base_java_application_state
