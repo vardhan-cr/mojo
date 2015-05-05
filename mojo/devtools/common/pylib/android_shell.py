@@ -195,6 +195,11 @@ class AndroidShell(Shell):
     if 'cannot run as root' in subprocess.check_output(
         self._CreateADBCommand(['root'])):
       raise Exception("Unable to run adb as root.")
+
+    # Wait for adbd to restart.
+    subprocess.check_call(
+        self._CreateADBCommand(['wait-for-device']),
+        stdout=self.verbose_pipe)
     self.adb_running_as_root = True
 
   def InstallApk(self, shell_apk_path):
