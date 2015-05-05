@@ -160,7 +160,19 @@ func TestStructs(t *testing.T) {
 				map[string]string{s1: s2, s2: s1},
 			},
 		},
-	}
+		F9: map[string]system.Handle{
+			s1: handle,
+			s2: handle,
+		},
+		F10: map[string][]system.Handle{
+			s1: []system.Handle{handle},
+			s2: []system.Handle{},
+		},
+		F11: map[string]map[string]system.Handle{
+			s1: map[string]system.Handle{s1: handle},
+			s2: map[string]system.Handle{s2: handle},
+		},
+  }
 	check(t, value, &test_structs.MapValueTypes{})
 
 	value = &test_structs.BitArrayValues{
