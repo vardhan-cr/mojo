@@ -34,23 +34,19 @@ UTC = UTC_TZINFO()
 
 
 class _SilentTCPServer(SocketServer.TCPServer):
-  """
-  A TCPServer that won't display any error, unless debugging is enabled. This is
-  useful because the client might stop while it is fetching an URL, which causes
-  spurious error messages.
+  """A TCPServer that won't display any error, unless debugging is enabled. This
+  is useful because the client might stop while it is fetching an URL, which
+  causes spurious error messages.
   """
   def handle_error(self, request, client_address):
-    """
-    Override the base class method to have conditional logging.
-    """
+    """Override the base class method to have conditional logging."""
     if logging.getLogger().isEnabledFor(logging.DEBUG):
       SocketServer.TCPServer.handle_error(self, request, client_address)
 
 
 def _GetHandlerClassForPath(base_path):
   class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
-    """
-    Handler for SocketServer.TCPServer that will serve the files from
+    """Handler for SocketServer.TCPServer that will serve the files from
     |base_path| directory over http.
     """
 
@@ -123,9 +119,7 @@ def _GetHandlerClassForPath(base_path):
       return os.path.join(base_path, os.path.relpath(path_from_current))
 
     def log_message(self, *_):
-      """
-      Override the base class method to disable logging.
-      """
+      """Override the base class method to disable logging."""
       pass
 
   RequestHandler.protocol_version = 'HTTP/1.1'
@@ -134,7 +128,8 @@ def _GetHandlerClassForPath(base_path):
 
 def StartHttpServer(path):
   """Starts an http server serving files from |path| on random
-  (system-allocated) port. Returns the server address."""
+  (system-allocated) port. Returns the server address.
+  """
   assert path
   httpd = _SilentTCPServer(('127.0.0.1', 0), _GetHandlerClassForPath(path))
   atexit.register(httpd.shutdown)

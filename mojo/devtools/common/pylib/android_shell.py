@@ -55,9 +55,7 @@ def _Split(l, pred):
 
 
 def _ExitIfNeeded(process):
-  """
-  Exits |process| if it is still alive.
-  """
+  """Exits |process| if it is still alive."""
   if process.poll() is None:
     process.kill()
 
@@ -66,8 +64,8 @@ class AndroidShell(Shell):
   """Wrapper around Mojo shell running on an Android device.
 
   Args:
-    adb_path: path to adb, optional if adb is in PATH
-    target_device: device to run on, if multiple devices are connected
+    adb_path: Path to adb, optional if adb is in PATH.
+    target_device: Device to run on, if multiple devices are connected.
   """
 
   def __init__(self, adb_path="adb", target_device=None, verbose_pipe=None):
@@ -85,8 +83,7 @@ class AndroidShell(Shell):
     return adb_command
 
   def _ReadFifo(self, fifo_path, pipe, on_fifo_closed, max_attempts=5):
-    """
-    Reads |fifo_path| on the device and write the contents to |pipe|. Calls
+    """Reads |fifo_path| on the device and write the contents to |pipe|. Calls
     |on_fifo_closed| when the fifo is closed. This method will try to find the
     path up to |max_attempts|, waiting 1 second between each attempt. If it
     cannot find |fifo_path|, a exception will be raised.
@@ -118,8 +115,7 @@ class AndroidShell(Shell):
     thread.start()
 
   def _MapPort(self, device_port, host_port):
-    """
-    Maps the device port to the host port. If |device_port| is 0, a random
+    """Maps the device port to the host port. If |device_port| is 0, a random
     available port is chosen. Returns the device port.
     """
     def _FindAvailablePortOnDevice():
@@ -148,7 +144,8 @@ class AndroidShell(Shell):
 
   def _StartHttpServerForDirectory(self, path, port=0):
     """Starts an http server serving files from |path|. Returns the local
-    url."""
+    url.
+    """
     assert path
     print 'starting http for', path
     server_address = StartHttpServer(path)
@@ -160,7 +157,8 @@ class AndroidShell(Shell):
     """If |mapping| points at a local file starts an http server to serve files
     from the directory and returns the new mapping.
 
-    This is intended to be called for every --map-origin value."""
+    This is intended to be called for every --map-origin value.
+    """
     parts = mapping.split('=')
     if len(parts) != 2:
       return mapping
@@ -176,7 +174,8 @@ class AndroidShell(Shell):
 
   def _StartHttpServerForOriginMappings(self, map_parameters, fixed_port):
     """Calls _StartHttpServerForOriginMapping for every --map-origin
-    argument."""
+    argument.
+    """
     if not map_parameters:
       return []
 
@@ -199,19 +198,21 @@ class AndroidShell(Shell):
     self.adb_running_as_root = True
 
   def InstallApk(self, shell_apk_path):
-    """ Installs the apk on the device.
+    """Installs the apk on the device.
 
     Args:
-      shell_apk_path: path to the shell Android binary"""
+      shell_apk_path: Path to the shell Android binary.
+    """
     subprocess.check_call(
         self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
                                 MOJO_SHELL_PACKAGE_NAME]),
         stdout=self.verbose_pipe)
 
   def SetUpLocalOrigin(self, local_dir, fixed_port=True):
-    """ Sets up a local http server to serve files in |local_dir| along with
+    """Sets up a local http server to serve files in |local_dir| along with
     device port forwarding. Returns the origin flag to be set when running the
-    shell. """
+    shell.
+    """
 
     origin_url = self._StartHttpServerForDirectory(
         local_dir, DEFAULT_BASE_PORT if fixed_port else 0)
@@ -222,8 +223,7 @@ class AndroidShell(Shell):
                  stdout=None,
                  on_application_stop=None,
                  fixed_port=True):
-    """
-    Starts the mojo shell, passing it the given arguments.
+    """Starts the mojo shell, passing it the given arguments.
 
     The |arguments| list must contain the "--origin=" arg. SetUpLocalOrigin()
     can be used to set up a local directory on the host machine as origin.
@@ -289,25 +289,21 @@ class AndroidShell(Shell):
         return None, output
 
   def StopShell(self):
-    """
-    Stops the mojo shell.
-    """
+    """Stops the mojo shell."""
     subprocess.check_call(self._CreateADBCommand(['shell',
                                                   'am',
                                                   'force-stop',
                                                   MOJO_SHELL_PACKAGE_NAME]))
 
   def CleanLogs(self):
-    """
-    Cleans the logs on the device.
-    """
+    """Cleans the logs on the device."""
     subprocess.check_call(self._CreateADBCommand(['logcat', '-c']))
 
   def ShowLogs(self):
-    """
-    Displays the log for the mojo shell.
+    """Displays the log for the mojo shell.
 
-    Returns the process responsible for reading the logs.
+    Returns:
+      The process responsible for reading the logs.
     """
     logcat = subprocess.Popen(self._CreateADBCommand([
                                'logcat',
