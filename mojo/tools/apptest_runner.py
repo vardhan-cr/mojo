@@ -70,14 +70,14 @@ def main():
     sys.stdout.flush()
 
     if test_type == "dart":
-      apptest_result = dart_apptest.run_test(shell, test_dict, shell_args,
-                                             {test: test_args})
+      apptest_result = dart_apptest.run_dart_apptest(
+          shell, test_dict, shell_args, {test: test_args})
     elif test_type == "gtest":
-      apptest_result = gtest.run_fixtures(shell, test_dict, test, False,
-                                          test_args, shell_args)
+      apptest_result = gtest.run_gtest_apptest(shell, test_dict, test, False,
+                                               test_args, shell_args)
     elif test_type == "gtest_isolated":
-      apptest_result = gtest.run_fixtures(shell, test_dict, test, True,
-                                          test_args, shell_args)
+      apptest_result = gtest.run_gtest_apptest(shell, test_dict, test, True,
+                                               test_args, shell_args)
     else:
       apptest_result = "Invalid test type in %r" % test_dict
 

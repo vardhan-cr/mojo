@@ -2,16 +2,30 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Apptest runner specific to the particular gtest-based apptest framework in
+/mojo/public/cpp/application/tests/, built on top of the general apptest
+runner."""
+
 import logging
 import os
 import re
 import sys
 
-from mopy import test_util
+from mopy.apptest import run_apptest
 from mopy.print_process_error import print_process_error
 
 
 _logger = logging.getLogger()
+
+
+def _gtest_apptest_output_test(output):
+  # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
+  # The latter condition ensures failure on broken command lines or output.
+  # Check output instead of exit codes because mojo_shell always exits with 0.
+  if (output is None or
+      (output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1)):
+    return False
+  return True
 
 
 def set_color():
@@ -25,11 +39,23 @@ def set_color():
 # TODO(vtl): The return value is bizarre. Should just make it either return
 # True/False, or a list of failing fixtures. But the dart_apptest runner would
 # also need to be updated in the same way.
-def run_fixtures(shell, apptest_dict, apptest, isolate, test_args, shell_args):
-  """Run the gtest fixtures in isolation."""
+def run_gtest_apptest(shell, apptest_dict, apptest, isolate, test_args,
+                      shell_args):
+  """Runs the gtest-based tests in the |apptest| app either altogether or in
+  isolation.
+
+  Args:
+    shell: Wrapper around concrete Mojo shell, implementing devtools Shell
+        interface.
+    apptest: Url of the test app.
+    isolate: Iff True, each test in the app will be run in a separate shell run.
+    test_args: Arguments for the test app.
+    shell_args: The arguments for mojo_shell.
+  """
 
   if not isolate:
-    if not RunApptestInShell(shell, apptest, test_args, shell_args):
+    if not run_apptest(shell, shell_args, {apptest: test_args},
+                       _gtest_apptest_output_test):
       return "Failed test(s) in %r" % apptest_dict
     return "Succeeded"
 
@@ -41,39 +67,14 @@ def run_fixtures(shell, apptest_dict, apptest, isolate, test_args, shell_args):
 
   apptest_result = "Succeeded"
   for fixture in fixtures:
-    apptest_args = test_args + ["--gtest_filter=%s" % fixture]
-    success = RunApptestInShell(shell, apptest, apptest_args, shell_args)
+    isolated_test_args = test_args + ["--gtest_filter=%s" % fixture]
+    success = run_apptest(shell, shell_args, {apptest: isolated_test_args},
+                          _gtest_apptest_output_test)
 
     if not success:
       apptest_result = "Failed test(s) in %r" % apptest_dict
 
   return apptest_result
-
-
-def run_test(shell, shell_args, apps_and_args=None):
-  """Runs a command line and checks the output for signs of gtest failure.
-
-  Args:
-    shell: Wrapper around concrete Mojo shell, implementing devtools Shell
-        interface.
-    shell_args: The arguments for mojo_shell.
-    apps_and_args: A Dict keyed by application URL associated to the
-        application's specific arguments.
-  """
-  apps_and_args = apps_and_args or {}
-  output = test_util.try_run_test(shell, shell_args, apps_and_args)
-  # Fail on output with gtest's "[  FAILED  ]" or a lack of "[  PASSED  ]".
-  # The latter condition ensures failure on broken command lines or output.
-  # Check output instead of exit codes because mojo_shell always exits with 0.
-  if (output is None or
-      (output.find("[  FAILED  ]") != -1 or output.find("[  PASSED  ]") == -1)):
-    print "Failed test:"
-    print_process_error(
-        test_util.build_command_line(shell_args, apps_and_args),
-        output)
-    return False
-  _logger.debug("Succeeded with output:\n%s" % output)
-  return True
 
 
 def get_fixtures(shell, shell_args, apptest):
@@ -87,16 +88,20 @@ def get_fixtures(shell, shell_args, apptest):
   Args:
     apptest: The URL of the test application to run.
   """
-  try:
-    apps_and_args = {apptest: ["--gtest_list_tests"]}
-    list_output = test_util.run_test(shell, shell_args, apps_and_args)
-    _logger.debug("Tests listed:\n%s" % list_output)
-    return _gtest_list_tests(list_output)
-  except Exception as e:
+  arguments = []
+  arguments.extend(shell_args)
+  arguments.append("--args-for=%s %s" % (apptest, "--gtest_list_tests"))
+  arguments.append(apptest)
+
+  (exit_code, output) = shell.RunUntilCompletion(arguments)
+  if exit_code:
     print "Failed to get test fixtures:"
-    print_process_error(
-        test_util.build_command_line(shell_args, apps_and_args), e)
-  return []
+    command_line = "mojo_shell " + " ".join(["%r" % x for x in arguments])
+    print_process_error(command_line, output)
+    return []
+
+  _logger.debug("Tests listed:\n%s" % output)
+  return _gtest_list_tests(output)
 
 
 def _gtest_list_tests(gtest_list_tests_output):
@@ -125,7 +130,3 @@ def _gtest_list_tests(gtest_list_tests_output):
     test_list.append(suite + line.strip())
 
   return test_list
-
-
-def RunApptestInShell(shell, application, application_args, shell_args):
-  return run_test(shell, shell_args, {application: application_args})
