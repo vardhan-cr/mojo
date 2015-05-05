@@ -348,4 +348,15 @@ hooks = [
         'python', 'src/tools/go/download.py',
     ],
   },
+  # Pull DejaVu fonts using checked-in hashes.
+  {
+    'name': 'dejavu-fonts',
+    'pattern': '',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--no_auth',
+                '--bucket', 'mojo/dejavu-fonts',
+                '-s', 'src/third_party/dejavu-fonts-ttf-2.34/ttf/DejaVuSansMono.ttf.sha1',
+    ],
+  },
 ]
