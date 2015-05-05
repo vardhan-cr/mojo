@@ -50,7 +50,7 @@ mojo/tools/mojob.py build
 
 Run a demo:
 ```
-mojo/tools/mojo_demo.py --browser
+out/Debug//mojo_shell mojo:spinning_cube
 ```
 
 Run the tests:
