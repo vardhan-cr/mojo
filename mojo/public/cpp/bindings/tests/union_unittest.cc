@@ -79,6 +79,11 @@ TEST(UnionTest, PlainOldDataGetterSetter) {
   EXPECT_FALSE(pod->get_f_bool());
   EXPECT_TRUE(pod->is_f_bool());
   EXPECT_EQ(pod->which(), PodUnion::Tag::F_BOOL);
+
+  pod->set_f_enum(AN_ENUM_SECOND);
+  EXPECT_EQ(AN_ENUM_SECOND, pod->get_f_enum());
+  EXPECT_TRUE(pod->is_f_enum());
+  EXPECT_EQ(pod->which(), PodUnion::Tag::F_ENUM);
 }
 
 TEST(UnionTest, PodEquals) {
@@ -106,7 +111,7 @@ TEST(UnionTest, PodClone) {
   EXPECT_EQ(pod_clone->which(), PodUnion::Tag::F_INT8);
 }
 
-TEST(UnionTest, SerializationPod) {
+TEST(UnionTest, PodSerialization) {
   PodUnionPtr pod1(PodUnion::New());
   pod1->set_f_int8(10);
 
@@ -123,6 +128,25 @@ TEST(UnionTest, SerializationPod) {
   EXPECT_EQ(10, pod2->get_f_int8());
   EXPECT_TRUE(pod2->is_f_int8());
   EXPECT_EQ(pod2->which(), PodUnion::Tag::F_INT8);
+}
+
+TEST(UnionTest, EnumSerialization) {
+  PodUnionPtr pod1(PodUnion::New());
+  pod1->set_f_enum(AN_ENUM_SECOND);
+
+  size_t size = GetSerializedSize_(pod1, false);
+  EXPECT_EQ(16U, size);
+
+  mojo::internal::FixedBuffer buf(size);
+  internal::PodUnion_Data* data = nullptr;
+  SerializeUnion_(pod1.Pass(), &buf, &data, false);
+
+  PodUnionPtr pod2;
+  Deserialize_(data, &pod2);
+
+  EXPECT_EQ(AN_ENUM_SECOND, pod2->get_f_enum());
+  EXPECT_TRUE(pod2->is_f_enum());
+  EXPECT_EQ(pod2->which(), PodUnion::Tag::F_ENUM);
 }
 
 TEST(UnionTest, PodValidation) {
