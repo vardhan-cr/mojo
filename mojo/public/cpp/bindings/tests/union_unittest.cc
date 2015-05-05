@@ -10,6 +10,7 @@
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/public/cpp/environment/environment.h"
+#include "mojo/public/cpp/test_support/test_utils.h"
 #include "mojo/public/interfaces/bindings/tests/test_structs.mojom.h"
 #include "mojo/public/interfaces/bindings/tests/test_unions.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -912,6 +913,109 @@ TEST(UnionTest, UnionInUnionValidationNonNullable) {
                                                static_cast<uint32_t>(size), 0);
   EXPECT_FALSE(
       internal::ObjectUnion_Data::Validate(raw_buf, &bounds_checker, false));
+  free(raw_buf);
+}
+
+TEST(UnionTest, HandleInUnionGetterSetter) {
+  ScopedMessagePipeHandle pipe0;
+  ScopedMessagePipeHandle pipe1;
+
+  CreateMessagePipe(nullptr, &pipe0, &pipe1);
+
+  HandleUnionPtr handle(HandleUnion::New());
+  handle->set_f_message_pipe(pipe1.Pass());
+
+  std::string golden("hello world");
+  WriteTextMessage(pipe0.get(), golden);
+
+  std::string actual;
+  ReadTextMessage(handle->get_f_message_pipe().get(), &actual);
+
+  EXPECT_EQ(golden, actual);
+}
+
+TEST(UnionTest, HandleInUnionSerialization) {
+  ScopedMessagePipeHandle pipe0;
+  ScopedMessagePipeHandle pipe1;
+
+  CreateMessagePipe(nullptr, &pipe0, &pipe1);
+
+  HandleUnionPtr handle(HandleUnion::New());
+  handle->set_f_message_pipe(pipe1.Pass());
+
+  size_t size = GetSerializedSize_(handle, false);
+  EXPECT_EQ(16U, size);
+
+  mojo::internal::FixedBuffer buf(size);
+  internal::HandleUnion_Data* data = nullptr;
+  SerializeUnion_(handle.Pass(), &buf, &data, false);
+
+  std::vector<Handle> handles;
+  data->EncodePointersAndHandles(&handles);
+  EXPECT_EQ(1U, handles.size());
+  data->DecodePointersAndHandles(&handles);
+
+  HandleUnionPtr handle2(HandleUnion::New());
+  Deserialize_(data, &handle2);
+
+  std::string golden("hello world");
+  WriteTextMessage(pipe0.get(), golden);
+
+  std::string actual;
+  ReadTextMessage(handle2->get_f_message_pipe().get(), &actual);
+
+  EXPECT_EQ(golden, actual);
+}
+
+TEST(UnionTest, HandleInUnionValidation) {
+  Environment environment;
+  ScopedMessagePipeHandle pipe0;
+  ScopedMessagePipeHandle pipe1;
+
+  CreateMessagePipe(nullptr, &pipe0, &pipe1);
+
+  HandleUnionPtr handle(HandleUnion::New());
+  handle->set_f_message_pipe(pipe1.Pass());
+
+  size_t size = GetSerializedSize_(handle, false);
+  EXPECT_EQ(16U, size);
+
+  mojo::internal::FixedBuffer buf(size);
+  internal::HandleUnion_Data* data = nullptr;
+  SerializeUnion_(handle.Pass(), &buf, &data, false);
+
+  std::vector<Handle> handles;
+  data->EncodePointersAndHandles(&handles);
+
+  void* raw_buf = buf.Leak();
+  mojo::internal::BoundsChecker bounds_checker(data,
+                                               static_cast<uint32_t>(size), 1);
+  EXPECT_TRUE(
+      internal::HandleUnion_Data::Validate(raw_buf, &bounds_checker, false));
+  free(raw_buf);
+}
+
+TEST(UnionTest, HandleInUnionValidationNull) {
+  Environment environment;
+  ScopedMessagePipeHandle pipe;
+  HandleUnionPtr handle(HandleUnion::New());
+  handle->set_f_message_pipe(pipe.Pass());
+
+  size_t size = GetSerializedSize_(handle, false);
+  EXPECT_EQ(16U, size);
+
+  mojo::internal::FixedBuffer buf(size);
+  internal::HandleUnion_Data* data = nullptr;
+  SerializeUnion_(handle.Pass(), &buf, &data, false);
+
+  std::vector<Handle> handles;
+  data->EncodePointersAndHandles(&handles);
+
+  void* raw_buf = buf.Leak();
+  mojo::internal::BoundsChecker bounds_checker(data,
+                                               static_cast<uint32_t>(size), 1);
+  EXPECT_FALSE(
+      internal::HandleUnion_Data::Validate(raw_buf, &bounds_checker, false));
   free(raw_buf);
 }
 
