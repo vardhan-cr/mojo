@@ -9,7 +9,7 @@ runner."""
 import logging
 import re
 
-from pylib.apptest import run_apptest
+from devtoolslib.apptest import run_apptest
 
 
 _logger = logging.getLogger()

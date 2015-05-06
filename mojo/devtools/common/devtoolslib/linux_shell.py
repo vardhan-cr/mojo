@@ -4,7 +4,7 @@
 
 import subprocess
 
-from pylib.shell import Shell
+from devtoolslib.shell import Shell
 
 
 class LinuxShell(Shell):

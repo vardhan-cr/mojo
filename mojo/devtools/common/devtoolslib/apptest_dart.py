@@ -9,7 +9,7 @@ import logging
 
 _logging = logging.getLogger()
 
-from pylib.apptest import run_apptest
+from devtoolslib.apptest import run_apptest
 
 
 def _dart_apptest_output_test(output):

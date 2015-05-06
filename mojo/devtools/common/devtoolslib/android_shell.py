@@ -15,8 +15,8 @@ import threading
 import time
 import urlparse
 
-from pylib.http_server import StartHttpServer
-from pylib.shell import Shell
+from devtoolslib.http_server import StartHttpServer
+from devtoolslib.shell import Shell
 
 
 # Tags used by the mojo shell application logs.

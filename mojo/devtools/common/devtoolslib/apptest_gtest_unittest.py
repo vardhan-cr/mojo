@@ -11,7 +11,7 @@ try:
   imp.find_module("pylib")
 except ImportError:
   sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pylib.apptest_gtest import _gtest_list_tests
+from devtoolslib.apptest_gtest import _gtest_list_tests
 
 
 class GTestListTestsTest(unittest.TestCase):

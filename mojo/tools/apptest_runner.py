@@ -10,11 +10,11 @@ import logging
 import sys
 
 import devtools
-devtools.add_pylib_to_path()
-from pylib.android_shell import AndroidShell
-from pylib.linux_shell import LinuxShell
-from pylib.apptest_dart import run_dart_apptest
-from pylib.apptest_gtest import run_gtest_apptest
+devtools.add_lib_to_path()
+from devtoolslib.android_shell import AndroidShell
+from devtoolslib.linux_shell import LinuxShell
+from devtoolslib.apptest_dart import run_dart_apptest
+from devtoolslib.apptest_gtest import run_gtest_apptest
 
 from mopy import gtest
 from mopy.config import Config

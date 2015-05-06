@@ -8,8 +8,8 @@ import logging
 import sys
 
 import devtools
-devtools.add_pylib_to_path()
-from pylib.android_shell import AndroidShell
+devtools.add_lib_to_path()
+from devtoolslib.android_shell import AndroidShell
 
 from mopy.config import Config
 from mopy.paths import Paths

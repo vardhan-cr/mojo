@@ -6,7 +6,7 @@ import os
 import sys
 
 
-def add_pylib_to_path():
+def add_lib_to_path():
   """ Adds the devtools pylib to path, allowing to use it in the internal
   /mojo/tools/ tooling. """
   sys.path.append(os.path.join(os.path.dirname(__file__),
