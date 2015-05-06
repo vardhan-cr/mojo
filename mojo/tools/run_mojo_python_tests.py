@@ -16,7 +16,7 @@ def main():
       # Tests of "mopy" python tools code.
       os.path.join('mojo', 'tools', 'mopy'),
       # Tests of python code in devtools.
-      os.path.join('mojo', 'devtools', 'common', 'pylib')
+      os.path.join('mojo', 'devtools', 'common', 'devtoolslib')
   ]
 
   for test_dir in test_dir_list:
