@@ -31,6 +31,7 @@
              'darin@chromium.org',
              'qsr+mojo@chromium.org',
              'viettrungluu+watch@chromium.org',
+             'gregsimon@chromium.org',
              'yzshen+watch@chromium.org'],
     'services': ['qsr+mojo@chromium.org',
                  'yzshen+watch@chromium.org'],
@@ -38,6 +39,7 @@
               'yzshen+watch@chromium.org'],
     'sky': ['abarth@chromium.org',
             'ojan@chromium.org',
+            'gregsimon@chromium.org',
             'qsr+mojo@chromium.org'],
   },
 }
