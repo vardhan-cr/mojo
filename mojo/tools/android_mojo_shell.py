@@ -61,9 +61,7 @@ def main():
   args.append("--origin=" + launcher_args.origin if launcher_args.origin else
               shell.SetUpLocalOrigin(paths.build_dir))
 
-  shell.CleanLogs()
-  p = shell.ShowLogs()
-  shell.StartShell(args, sys.stdout, p.terminate)
+  shell.Run(args)
   return 0
 
 

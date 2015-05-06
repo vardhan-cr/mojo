@@ -52,7 +52,7 @@ def run_apptest(shell, shell_args, apptest_url, apptest_args, output_test):
 
   _logger.debug("Starting: " + command_line)
   start_time = time.time()
-  (exit_code, output) = shell.RunUntilCompletion(arguments)
+  (exit_code, output) = shell.RunAndGetOutput(arguments)
   run_time = time.time() - start_time
   _logger.debug("Completed: " + command_line)
 

@@ -6,8 +6,19 @@
 class Shell(object):
   """Represents an abstract Mojo shell."""
 
-  def RunUntilCompletion(self, arguments):
-    """Runs the shell with given arguments until shell exits.
+  def Run(self, arguments):
+    """Runs the shell with given arguments until shell exits, passing the stdout
+    mingled with stderr produced by the shell onto the stdout.
+
+    Returns:
+      Exit code retured by the shell or None if the exit code cannot be
+      retrieved.
+    """
+    raise NotImplementedError()
+
+  def RunAndGetOutput(self, arguments):
+    """Runs the shell with given arguments until shell exits and returns the
+    output.
 
     Args:
       arguments: list of arguments for the shell

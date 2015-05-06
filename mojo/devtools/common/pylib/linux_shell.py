@@ -12,12 +12,26 @@ class LinuxShell(Shell):
 
   Args:
     executable_path: path to the shell binary
+    command_prefix: optional list of arguments to prepend to the shell command,
+        allowing e.g. to run the shell under debugger.
   """
 
-  def __init__(self, executable_path):
+  def __init__(self, executable_path, command_prefix=None):
     self.executable_path = executable_path
+    self.command_prefix = command_prefix if command_prefix else []
 
-  def RunUntilCompletion(self, arguments):
+  def Run(self, arguments):
+    """Runs the shell with given arguments until shell exits, passing the stdout
+    mingled with stderr produced by the shell onto the stdout.
+
+    Returns:
+      Exit code retured by the shell or None if the exit code cannot be
+      retrieved.
+    """
+    command = self.command_prefix + [self.executable_path] + arguments
+    return subprocess.call(command, stderr=subprocess.STDOUT)
+
+  def RunAndGetOutput(self, arguments):
     """Runs the shell with given arguments until shell exits.
 
     Args:
@@ -28,7 +42,8 @@ class LinuxShell(Shell):
       by the shell or None if the exit code cannot be retrieved. |output| is the
       stdout mingled with the stderr produced by the shell.
     """
-    p = subprocess.Popen([self.executable_path] + arguments,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    command = self.command_prefix + [self.executable_path] + arguments
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
     (output, _) = p.communicate()
     return p.returncode, output

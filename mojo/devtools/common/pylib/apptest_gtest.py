@@ -78,7 +78,7 @@ def get_fixtures(shell, shell_args, apptest):
   arguments.append("--args-for=%s %s" % (apptest, "--gtest_list_tests"))
   arguments.append(apptest)
 
-  (exit_code, output) = shell.RunUntilCompletion(arguments)
+  (exit_code, output) = shell.RunAndGetOutput(arguments)
   if exit_code:
     command_line = "mojo_shell " + " ".join(["%r" % x for x in arguments])
     print "Failed to get test fixtures: %r" % command_line

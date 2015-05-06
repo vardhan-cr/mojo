@@ -275,7 +275,21 @@ class AndroidShell(Shell):
 
     subprocess.check_call(cmd, stdout=self.verbose_pipe)
 
-  def RunUntilCompletion(self, arguments):
+  def Run(self, arguments):
+    """Runs the shell with given arguments until shell exits, passing the stdout
+    mingled with stderr produced by the shell onto the stdout.
+
+    Returns:
+      Exit code retured by the shell or None if the exit code cannot be
+      retrieved.
+    """
+    self.CleanLogs()
+    p = self.ShowLogs()
+    self.StartShell(arguments, sys.stdout, p.terminate)
+    p.wait()
+    return None
+
+  def RunAndGetOutput(self, arguments):
     """Runs the shell with given arguments until shell exits.
 
     Args:
