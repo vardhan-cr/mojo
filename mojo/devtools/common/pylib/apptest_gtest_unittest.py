@@ -2,9 +2,17 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import imp
+import os.path
+import sys
 import unittest
 
-from mopy.gtest import _gtest_list_tests
+try:
+  imp.find_module("pylib")
+except ImportError:
+  sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from pylib.apptest_gtest import _gtest_list_tests
+
 
 class GTestListTestsTest(unittest.TestCase):
   """Tests |_gtest_list_tests()| handling of --gtest_list_tests output."""

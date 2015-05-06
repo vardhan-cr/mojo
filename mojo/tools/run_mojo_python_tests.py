@@ -11,10 +11,12 @@ from mopy.mojo_python_tests_runner import MojoPythonTestRunner
 
 def main():
   test_dir_list = [
-    # Tests of pylib bindings.
-    os.path.join('mojo', 'public', 'tools', 'bindings', 'pylib'),
-    # Tests of "mopy" python tools code.
-    os.path.join('mojo', 'tools', 'mopy')
+      # Tests of pylib bindings.
+      os.path.join('mojo', 'public', 'tools', 'bindings', 'pylib'),
+      # Tests of "mopy" python tools code.
+      os.path.join('mojo', 'tools', 'mopy'),
+      # Tests of python code in devtools.
+      os.path.join('mojo', 'devtools', 'common', 'pylib')
   ]
 
   for test_dir in test_dir_list:

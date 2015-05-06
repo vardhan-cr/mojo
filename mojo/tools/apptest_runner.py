@@ -13,8 +13,9 @@ import devtools
 devtools.add_pylib_to_path()
 from pylib.android_shell import AndroidShell
 from pylib.linux_shell import LinuxShell
+from pylib.apptest_dart import run_dart_apptest
+from pylib.apptest_gtest import run_gtest_apptest
 
-from mopy import dart_apptest
 from mopy import gtest
 from mopy.config import Config
 from mopy.gn import ConfigForGNArgs, ParseGNConfig
@@ -70,14 +71,13 @@ def main():
     sys.stdout.flush()
 
     if test_type == "dart":
-      apptest_result = dart_apptest.run_dart_apptest(
-          shell, shell_args, test, test_args)
+      apptest_result = run_dart_apptest(shell, shell_args, test, test_args)
     elif test_type == "gtest":
-      apptest_result = gtest.run_gtest_apptest(
-          shell, shell_args, test, test_args, False)
+      apptest_result = run_gtest_apptest(shell, shell_args, test, test_args,
+                                         False)
     elif test_type == "gtest_isolated":
-      apptest_result = gtest.run_gtest_apptest(
-          shell, shell_args, test, test_args, True)
+      apptest_result = run_gtest_apptest(shell, shell_args, test, test_args,
+                                         True)
     else:
       apptest_result = False
       print "Unrecognized test type in %r" % test_dict
