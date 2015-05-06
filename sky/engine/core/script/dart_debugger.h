@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
-#define MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
+#ifndef SKY_ENGINE_CORE_SCRIPT_DART_DEBUGGER_H_
+#define SKY_ENGINE_CORE_SCRIPT_DART_DEBUGGER_H_
 
 #include <memory>
 #include <vector>
@@ -11,14 +11,13 @@
 #include "dart/runtime/include/dart_api.h"
 #include "dart/runtime/include/dart_debugger_api.h"
 #include "dart/runtime/include/dart_native_api.h"
-#include "mojo/dart/embedder/monitor.h"
+#include "sky/engine/core/script/monitor.h"
 
 namespace base {
   class Lock;
 }
 
-namespace mojo {
-namespace dart {
+namespace blink {
 
 class DartDebuggerIsolate {
  public:
@@ -77,7 +76,6 @@ class DartDebugger {
   friend class DartDebuggerIsolate;
 };
 
-}  // namespace dart
-}  // namespace mojo
+}  // namespace blink
 
-#endif  // MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
+#endif  // SKY_ENGINE_CORE_SCRIPT_DART_DEBUGGER_H_

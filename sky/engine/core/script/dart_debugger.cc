@@ -2,14 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/dart/embedder/dart_debugger.h"
+#include "sky/engine/core/script/dart_debugger.h"
+
 #include "dart/runtime/include/dart_api.h"
 #include "dart/runtime/include/dart_debugger_api.h"
 #include "dart/runtime/include/dart_native_api.h"
 
 
-namespace mojo {
-namespace dart {
+namespace blink {
 
 void DartDebuggerIsolate::MessageLoop() {
   MonitorLocker ml(&monitor_);
@@ -135,5 +135,4 @@ base::Lock* DartDebugger::lock_ = nullptr;
 std::vector<std::unique_ptr<DartDebuggerIsolate>>* DartDebugger::isolates_ =
     nullptr;
 
-}  // namespace dart
-}  // namespace mojo
+}  // namespace blink

@@ -69,6 +69,7 @@ dart_embedder_resources("generate_dart_embedder_patch_resources_cc") {
     "//mojo/dart/embedder/io/socket_patch.dart",
     "//mojo/dart/embedder/io/server_socket_patch.dart",
   ]
+  root_prefix = "//mojo/dart/embedder/"
   output = "$target_gen_dir/dart_embedder_patch_resources.cc"
   table_name = "dart_embedder_patch"
 }
@@ -143,6 +144,7 @@ dart_embedder_resources("generate_dart_embedder_service_isolate_resources_cc") {
     "//mojo/dart/embedder/vmservice/resources.dart",
     "//mojo/dart/embedder/vmservice/server.dart",
   ]
+  root_prefix = "//mojo/dart/embedder/"
   input_directory = "$root_out_dir/observatory/deployed/web/"
   output = "$target_gen_dir/dart_embedder_service_isolate_resources.cc"
   table_name = "dart_embedder_service_isolate"
@@ -252,7 +254,7 @@ action("pub_build_observatory") {
 
   outputs = [
     "$root_out_dir/observatory/build/web/index.html",
-    "$root_out_dir/observatory/build/web/index.html_bootstrap.dart.js",
+    "$root_out_dir/observatory/build/web/index.html.polymer.bootstrap.dart.js",
   ]
 }
 
@@ -266,7 +268,7 @@ action("deploy_observatory") {
   inputs = [
     script,
     "$root_out_dir/observatory/build/web/index.html",
-    "$root_out_dir/observatory/build/web/index.html_bootstrap.dart.js",
+    "$root_out_dir/observatory/build/web/index.html.polymer.bootstrap.dart.js",
   ]
 
   args = [
@@ -281,7 +283,7 @@ action("deploy_observatory") {
 
   outputs = [
     "$root_out_dir/observatory/deployed/web/index.html",
-    "$root_out_dir/observatory/deployed/web/index.html_bootstrap.dart.js",
+    "$root_out_dir/observatory/deployed/web/index.html.polymer.bootstrap.dart.js",
   ]
 }
 
