@@ -15,7 +15,7 @@ class TaskTrackerTest : public testing::Test {
  public:
   void SetUp() override {
     tracked_objects::ThreadData::InitializeAndSetTrackingStatus(
-        tracked_objects::ThreadData::PROFILING_CHILDREN_ACTIVE);
+        tracked_objects::ThreadData::PROFILING_ACTIVE);
   }
 
   void TearDown() override {
@@ -31,10 +31,10 @@ TEST_F(TaskTrackerTest, Nesting) {
   TaskTracker::EndTracking(id0);
 
   tracked_objects::ProcessDataSnapshot snapshot;
-  tracked_objects::ThreadData::Snapshot(&snapshot);
+  tracked_objects::ThreadData::Snapshot(0, &snapshot);
 
   // Nested one is ignored.
-  EXPECT_EQ(1U, snapshot.phased_process_data_snapshots[0].tasks.size());
+  EXPECT_EQ(1U, snapshot.phased_snapshots[0].tasks.size());
 }
 
 TEST_F(TaskTrackerTest, Twice) {
@@ -44,9 +44,9 @@ TEST_F(TaskTrackerTest, Twice) {
   TaskTracker::EndTracking(id1);
 
   tracked_objects::ProcessDataSnapshot snapshot;
-  tracked_objects::ThreadData::Snapshot(&snapshot);
+  tracked_objects::ThreadData::Snapshot(0, &snapshot);
 
-  EXPECT_EQ(2U, snapshot.phased_process_data_snapshots[0].tasks.size());
+  EXPECT_EQ(2U, snapshot.phased_snapshots[0].tasks.size());
 }
 
 }  // namespace test

@@ -173,6 +173,7 @@
 
         # The system root for cross-compiles. Default: none.
         'sysroot%': '',
+        'use_sysroot%': 0,
         'chroot_cmd%': '',
 
         # The system libdir used for this ABI.
@@ -415,9 +416,6 @@
       # Enable building with SyzyAsan.
       # See https://code.google.com/p/sawbuck/wiki/SyzyASanHowTo
       'syzyasan%': 0,
-
-      # Enable crash reporting via Kasko.
-      'kasko%': 0,
 
       # Enable building with LSan (Clang's -fsanitize=leak option).
       # -fsanitize=leak only works with clang, but lsan=1 implies clang=1
@@ -941,7 +939,7 @@
           'sysroot%': '<!(cd <(DEPTH) && pwd -P)/chrome/installer/linux/debian_wheezy_arm-sysroot',
         }], # OS=="linux" and target_arch=="arm" and chromeos==0
 
-        ['OS=="linux" and branding=="Chrome" and buildtype=="Official" and chromeos==0', {
+        ['OS=="linux" and ((branding=="Chrome" and buildtype=="Official" and chromeos==0) or use_sysroot==1)' , {
           'conditions': [
             ['target_arch=="x64"', {
               'sysroot%': '<!(cd <(DEPTH) && pwd -P)/chrome/installer/linux/debian_wheezy_amd64-sysroot',
@@ -1011,6 +1009,15 @@
         }, {
           'sas_dll_path%': '<(DEPTH)/third_party/platformsdk_win7/files/redist/x86',
         }],
+
+        # Enable crash reporting via Kasko.
+        ['OS=="win" and target_arch=="ia32"', {
+          # TODO(erikwright): This should be disabled after a single ship on Canary channel.
+          'kasko%': 1,
+        }, {
+          'kasko%': 0,
+        }],
+
       ],
 
       # Setting this to '0' will cause V8's startup snapshot to be
@@ -1688,7 +1695,7 @@
           'android_ndk_absolute_root%': '<(android_ndk_absolute_root)',
           'android_sdk_root%': '<(android_sdk_root)',
           'android_sdk_version%': '<(android_sdk_version)',
-          'android_stlport_root': '<(android_ndk_root)/sources/cxx-stl/stlport',
+          'android_libcpp_root': '<(android_ndk_root)/sources/cxx-stl/llvm-libc++',
           'host_os%': '<(host_os)',
 
           'android_sdk%': '<(android_sdk_root)/platforms/android-<(android_sdk_version)',
@@ -1764,9 +1771,9 @@
         'android_sdk%': '<(android_sdk)',
         'android_sdk_jar%': '<(android_sdk)/android.jar',
 
-        'android_stlport_root': '<(android_stlport_root)',
-        'android_stlport_include': '<(android_stlport_root)/stlport',
-        'android_stlport_libs_dir': '<(android_stlport_root)/libs/<(android_app_abi)',
+        'android_libcpp_root': '<(android_libcpp_root)',
+        'android_libcpp_include': '<(android_libcpp_root)/libcxx/include',
+        'android_libcpp_libs_dir': '<(android_libcpp_root)/libs/<(android_app_abi)',
         'host_os%': '<(host_os)',
 
         # Location of the "objcopy" binary, used by both gyp and scripts.
@@ -1929,9 +1936,14 @@
           },{
             'winsdk_arch%': '<(target_arch)',
           }],
-          ['component=="shared_library"', {
+          ['component=="shared_library" or MSVS_VERSION == "2015"', {
+            # TODO(scottmg): The allocator shimming doesn't work on the 2015 CRT
+            # and we are hoping to be able to remove it if an additional feature
+            # lands in the 2015 CRT API. For now, don't shim and revisit once
+            # VS2015 is RTM: http://crbug.com/481611.
             'win_use_allocator_shim%': 0,
-          },{
+          }],
+          ['component=="static_library"', {
             # Turn on multiple dll by default on Windows when in static_library.
             'chrome_multiple_dll%': 1,
           }],
@@ -2168,17 +2180,23 @@
                 ],
               },
               'clang_dynlib_flags%': '-Xclang -load -Xclang <(clang_lib_path) ',
+              'clang_plugin_args%': '',
             }, { # OS == "win"
               # On Windows, the plugin is built directly into clang, so there's
               # no need to load it dynamically.
               'clang_dynlib_flags%': '',
+
+              # Don't error on plugin warnings on Windows until pre-existing warnings
+              # are cleaned up.  https://crbug.com/467287
+              'clang_plugin_args%': '-Xclang -plugin-arg-find-bad-constructs -Xclang warn-only',
             }]
           ],
         },
         # If you change these, also change build/config/clang/BUILD.gn.
         'clang_chrome_plugins_flags%':
           '<(clang_dynlib_flags)'
-          '-Xclang -add-plugin -Xclang find-bad-constructs',
+          '-Xclang -add-plugin -Xclang find-bad-constructs '
+          '<(clang_plugin_args)',
       }],
       ['asan==1 or msan==1 or lsan==1 or tsan==1', {
         'clang%': 1,
@@ -4085,9 +4103,6 @@
                     'cflags!': [
                        '-fstack-protector',  # stack protector is always enabled on arm64.
                     ],
-                    'ldflags': [
-                      '-fuse-ld=gold',
-                    ],
                   }],
                 ],
               }],
@@ -4630,9 +4645,9 @@
           # Figure this out early since it needs symbols from libgcc.a, so it
           # has to be before that in the set of libraries.
           ['component=="shared_library"', {
-              'android_stlport_library': 'stlport_shared',
+              'android_libcpp_library': 'c++_shared',
           }, {
-              'android_stlport_library': 'stlport_static',
+              'android_libcpp_library': 'c++_static',
           }],
         ],
 
@@ -4712,17 +4727,17 @@
               '-finline-limit=64',
               '<@(release_extra_cflags)',
               '--sysroot=<(android_ndk_sysroot)',
-              # NOTE: The stlport header include paths below are specified in
+              # NOTE: The libc++ header include paths below are specified in
               # cflags rather than include_dirs because they need to come
               # after include_dirs.
               # The include ordering here is important; change with caution.
-              '-isystem<(android_stlport_include)',
+              '-isystem<(android_libcpp_include)',
+              '-isystem<(android_ndk_root)/sources/cxx-stl/llvm-libc++abi/libcxxabi/include',
+              '-isystem<(android_ndk_root)/sources/android/support/include',
             ],
             'defines': [
               'ANDROID',
               '__GNU_SOURCE=1',  # Necessary for clone()
-              'USE_STLPORT=1',
-              '_STLP_USE_PTR_SPECIALIZATIONS=1',
               'CHROME_BUILD_ID="<(chrome_build_id)"',
               # The NDK has these things, but doesn't define the constants
               # to say that it does. Define them here instead.
@@ -4735,11 +4750,11 @@
               '-Wl,--no-undefined',
               '--sysroot=<(android_ndk_sysroot)',
               '-nostdlib',
-              '-L<(android_stlport_libs_dir)',
-              # Don't allow visible symbols from libgcc or stlport to be
+              '-L<(android_libcpp_libs_dir)',
+              # Don't allow visible symbols from libgcc or libc++ to be
               # re-exported.
               '-Wl,--exclude-libs=libgcc.a',
-              '-Wl,--exclude-libs=libstlport_static.a',
+              '-Wl,--exclude-libs=libc++_static.a',
               # Don't allow visible symbols from libraries that contain
               # assembly code with symbols that aren't hidden properly.
               # http://crbug.com/448386
@@ -4752,7 +4767,8 @@
               '-Wl,--exclude-libs=libvpx.a',
             ],
             'libraries': [
-              '-l<(android_stlport_library)',
+              '-l<(android_libcpp_library)',
+              '-latomic',
               # Manually link the libgcc.a that the cross compiler uses.
               '<!(<(android_toolchain)/*-gcc -print-libgcc-file-name)',
               '-lc',
@@ -4772,6 +4788,11 @@
                 ],
               }],
               ['clang==1', {
+                'libraries!': [
+                  # Clang with libc++ does not require an explicit atomic
+                  # library reference.
+                  '-latomic',
+                ],
                 'cflags': [
                   # Work around incompatibilities between bionic and clang
                   # headers.
@@ -5119,6 +5140,22 @@
             }],
           ],
         },
+        'configurations': {
+          'Release_Base': {
+            'conditions': [
+              ['branding=="Chrome" and buildtype=="Official"', {
+                'xcode_settings': {
+                  'OTHER_CFLAGS': [
+                    # The Google Chrome Framework dSYM generated by dsymutil has
+                    # grown larger than 4GB, which dsymutil can't handle. Reduce
+                    # the amount of debug symbols.
+                    '-fno-standalone-debug',  # See http://crbug.com/479841
+                  ]
+                },
+              }],
+            ],
+          },  # configuration "Release"
+        },  # configurations
         'xcode_settings': {
           'GCC_DYNAMIC_NO_PIC': 'NO',               # No -mdynamic-no-pic
                                                     # (Equivalent to -fPIC)
@@ -5135,16 +5172,6 @@
             # behaves differently based on whether -fno-strict-aliasing is
             # specified or not.
             '-fno-strict-aliasing',  # See http://crbug.com/32204.
-          ],
-          'conditions': [
-            ['branding=="Chrome" and buildtype=="Official"', {
-              'OTHER_CFLAGS': [
-                # The Google Chrome Framework dSYM generated by dsymutil has
-                # grown larger than 4GB, which dsymutil can't handle. Reduce
-                # the amount of debug symbols.
-                '-gline-tables-only',  # See http://crbug.com/479841
-              ]
-            }],
           ],
         },
         'target_conditions': [
@@ -5769,13 +5796,20 @@
                     'AdditionalOptions': [
                       '-fsanitize-coverage=<(sanitizer_coverage)',
                     ],
-                    'defines': [
-                      'SANITIZER_COVERAGE',
-                    ],
                   },
                 }],
               ],
             },
+            'conditions': [
+              ['sanitizer_coverage!=0', {
+                # TODO(asan/win): Move this down into the general
+                # win-target_defaults section once the 64-bit asan runtime
+                # exists.  See crbug.com/345874.
+                'defines': [
+                  'SANITIZER_COVERAGE',
+                ],
+              }],
+            ],
           },
           'x64_Base': {
             'msvs_settings': {

@@ -12,13 +12,12 @@ namespace base {
 namespace trace_event {
 
 // Dump provider which collects process-wide memory stats.
-class JavaHeapDumpProvider : public MemoryDumpProvider {
+class BASE_EXPORT JavaHeapDumpProvider : public MemoryDumpProvider {
  public:
   static JavaHeapDumpProvider* GetInstance();
 
   // MemoryDumpProvider implementation.
-  bool DumpInto(ProcessMemoryDump* pmd) override;
-  const char* GetFriendlyName() const override;
+  bool OnMemoryDump(ProcessMemoryDump* pmd) override;
 
  private:
   friend struct DefaultSingletonTraits<JavaHeapDumpProvider>;

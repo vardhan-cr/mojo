@@ -30,15 +30,6 @@
                 "trybots": {
                     "launched": {
                         "tryserver.chromium.linux": {
-                            "android_amp_rel_tests_recipe": [
-                                "defaulttests"
-                            ],
-                            "linux_arm_compile": [
-                                "defaulttests"
-                            ],
-                            "linux_chromium_asan_rel_ng": [
-                                "defaulttests"
-                            ]
                         },
                         "tryserver.chromium.mac": {
                             "mac_chromium_gn_rel": [
@@ -60,7 +51,14 @@
                 "percentage": 1.0,
                 "trybots": {
                     "launched": {
-                        "tryserver.chromium.linux": {},
+                        "tryserver.chromium.linux": {
+                            "android_amp_rel_tests_recipe": [
+                                "defaulttests"
+                            ],
+                            "linux_arm_compile": [
+                                "defaulttests"
+                            ]
+                        },
                         "tryserver.chromium.mac": {}
                     }
                 }
@@ -118,7 +116,7 @@
                     "linux_android_rel_ng": [
                         "defaulttests"
                     ],
-                    "linux_chromium_asan_rel": [
+                    "linux_chromium_asan_rel_ng": [
                         "defaulttests"
                     ],
                     "linux_chromium_chromeos_compile_dbg_ng": [

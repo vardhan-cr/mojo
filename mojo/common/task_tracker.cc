@@ -54,7 +54,6 @@ bool TrackingActivation::Start(const char* function_name,
   if (!birth_)
     return false;
 
-  tracked_objects::ThreadData::PrepareForStartOfRun(birth_);
   (new (stopwatch()) tracked_objects::TaskStopwatch())->Start();
   return true;
 }

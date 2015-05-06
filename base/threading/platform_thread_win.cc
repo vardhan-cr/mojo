@@ -108,15 +108,16 @@ bool CreateThreadInternal(size_t stack_size,
   // have to work running on CreateThread() threads anyway, since we run code
   // on the Windows thread pool, etc.  For some background on the difference:
   //   http://www.microsoft.com/msj/1099/win32/win321099.aspx
+  PlatformThreadId thread_id;
   void* thread_handle = CreateThread(
-      NULL, stack_size, ThreadFunc, params, flags, NULL);
+      NULL, stack_size, ThreadFunc, params, flags, &thread_id);
   if (!thread_handle) {
     delete params;
     return false;
   }
 
   if (out_thread_handle)
-    *out_thread_handle = PlatformThreadHandle(thread_handle);
+    *out_thread_handle = PlatformThreadHandle(thread_handle, thread_id);
   else
     CloseHandle(thread_handle);
   return true;
@@ -154,7 +155,7 @@ void PlatformThread::Sleep(TimeDelta duration) {
 }
 
 // static
-void PlatformThread::SetName(const char* name) {
+void PlatformThread::SetName(const std::string& name) {
   ThreadIdNameManager::GetInstance()->SetName(CurrentId(), name);
 
   // On Windows only, we don't need to tell the profiler about the "BrokerEvent"
@@ -163,7 +164,7 @@ void PlatformThread::SetName(const char* name) {
   // which would also (as a side effect) initialize the profiler in this unused
   // context, including setting up thread local storage, etc.  The performance
   // impact is not terrible, but there is no reason to do initialize it.
-  if (0 != strcmp(name, "BrokerEvent"))
+  if (name != "BrokerEvent")
     tracked_objects::ThreadData::InitializeThreadContext(name);
 
   // The debugger needs to be around to catch the name in the exception.  If
@@ -173,7 +174,7 @@ void PlatformThread::SetName(const char* name) {
   if (!::IsDebuggerPresent() && !base::debug::IsBinaryInstrumented())
     return;
 
-  SetNameInternal(CurrentId(), name);
+  SetNameInternal(CurrentId(), name.c_str());
 }
 
 // static

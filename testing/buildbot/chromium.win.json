@@ -130,6 +130,12 @@
         "test": "media_unittests"
       },
       {
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        },
+        "test": "midi_unittests"
+      },
+      {
         "test": "mojo_common_unittests"
       },
       {
@@ -371,6 +377,12 @@
         "test": "message_center_unittests"
       },
       {
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        },
+        "test": "midi_unittests"
+      },
+      {
         "test": "mojo_common_unittests"
       },
       {
@@ -500,14 +512,9 @@
       "ipc_tests",
       "jingle_unittests",
       "keyboard_unittests",
+      "mandoline:all",
       "media_unittests",
       "message_center_unittests",
-      "mojo_common_unittests",
-      "mojo_public_bindings_unittests",
-      "mojo_public_environment_unittests",
-      "mojo_public_system_unittests",
-      "mojo_public_utility_unittests",
-      "mojo_system_unittests",
       "ppapi_unittests",
       "printing_unittests",
       "sbox_integration_tests",
@@ -562,14 +569,9 @@
       "ipc_tests",
       "jingle_unittests",
       "keyboard_unittests",
+      "mandoline:all",
       "media_unittests",
       "message_center_unittests",
-      "mojo_common_unittests",
-      "mojo_public_bindings_unittests",
-      "mojo_public_environment_unittests",
-      "mojo_public_system_unittests",
-      "mojo_public_utility_unittests",
-      "mojo_system_unittests",
       "ppapi_unittests",
       "printing_unittests",
       "sbox_integration_tests",
@@ -747,6 +749,12 @@
       },
       {
         "test": "message_center_unittests"
+      },
+      {
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        },
+        "test": "midi_unittests"
       },
       {
         "test": "mojo_common_unittests"
@@ -977,6 +985,12 @@
         "test": "media_unittests"
       },
       {
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        },
+        "test": "midi_unittests"
+      },
+      {
         "test": "mojo_common_unittests"
       },
       {
@@ -1131,14 +1145,9 @@
       "ipc_tests",
       "jingle_unittests",
       "keyboard_unittests",
+      "mandoline:all",
       "media_unittests",
       "message_center_unittests",
-      "mojo_common_unittests",
-      "mojo_public_bindings_unittests",
-      "mojo_public_environment_unittests",
-      "mojo_public_system_unittests",
-      "mojo_public_utility_unittests",
-      "mojo_system_unittests",
       "ppapi_unittests",
       "printing_unittests",
       "sbox_integration_tests",
@@ -1193,14 +1202,9 @@
       "ipc_tests",
       "jingle_unittests",
       "keyboard_unittests",
+      "mandoline:all",
       "media_unittests",
       "message_center_unittests",
-      "mojo_common_unittests",
-      "mojo_public_bindings_unittests",
-      "mojo_public_environment_unittests",
-      "mojo_public_system_unittests",
-      "mojo_public_utility_unittests",
-      "mojo_system_unittests",
       "ppapi_unittests",
       "printing_unittests",
       "sbox_integration_tests",
@@ -1360,6 +1364,12 @@
           "can_use_on_swarming_builders": true
         },
         "test": "media_unittests"
+      },
+      {
+        "swarming": {
+          "can_use_on_swarming_builders": true
+        },
+        "test": "midi_unittests"
       },
       {
         "test": "nacl_loader_unittests"

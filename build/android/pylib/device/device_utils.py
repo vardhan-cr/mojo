@@ -175,6 +175,29 @@ class DeviceUtils(object):
     assert hasattr(self, decorators.DEFAULT_TIMEOUT_ATTR)
     assert hasattr(self, decorators.DEFAULT_RETRIES_ATTR)
 
+  def __eq__(self, other):
+    """Checks whether |other| refers to the same device as |self|.
+
+    Args:
+      other: The object to compare to. This can be a basestring, an instance
+        of adb_wrapper.AdbWrapper, or an instance of DeviceUtils.
+    Returns:
+      Whether |other| refers to the same device as |self|.
+    """
+    return self.adb.GetDeviceSerial() == str(other)
+
+  def __lt__(self, other):
+    """Compares two instances of DeviceUtils.
+
+    This merely compares their serial numbers.
+
+    Args:
+      other: The instance of DeviceUtils to compare to.
+    Returns:
+      Whether |self| is less than |other|.
+    """
+    return self.adb.GetDeviceSerial() < other.adb.GetDeviceSerial()
+
   def __str__(self):
     """Returns the device serial."""
     return self.adb.GetDeviceSerial()
@@ -535,9 +558,9 @@ class DeviceUtils(object):
         with device_temp_file.DeviceTempFile(self.adb) as large_output_file:
           cmd = '%s > %s' % (cmd, large_output_file.name)
           logging.info('Large output mode enabled. Will write output to device '
-                       ' and read results from file.')
+                       'and read results from file.')
           handle_large_command(cmd)
-          return self.ReadFile(large_output_file.name)
+          return self.ReadFile(large_output_file.name, force_pull=True)
       else:
         try:
           return handle_large_command(cmd)
@@ -853,13 +876,17 @@ class DeviceUtils(object):
     if not real_device_path:
       return [(host_path, device_path)]
 
-    host_checksums = md5sum.CalculateHostMd5Sums([real_host_path])
-    device_paths_to_md5 = (
-        real_device_path if os.path.isfile(real_host_path)
-        else ('%s/%s' % (real_device_path, os.path.relpath(p, real_host_path))
-              for p in host_checksums.iterkeys()))
-    device_checksums = md5sum.CalculateDeviceMd5Sums(
-        device_paths_to_md5, self)
+    try:
+      host_checksums = md5sum.CalculateHostMd5Sums([real_host_path])
+      device_paths_to_md5 = (
+          real_device_path if os.path.isfile(real_host_path)
+          else ('%s/%s' % (real_device_path, os.path.relpath(p, real_host_path))
+                for p in host_checksums.iterkeys()))
+      device_checksums = md5sum.CalculateDeviceMd5Sums(
+          device_paths_to_md5, self)
+    except EnvironmentError as e:
+      logging.warning('Error calculating md5: %s', e)
+      return [(host_path, device_path)]
 
     if os.path.isfile(host_path):
       host_checksum = host_checksums.get(real_host_path)
@@ -1016,7 +1043,7 @@ class DeviceUtils(object):
       + r'(?P<date>\S+) +(?P<time>\S+) +(?P<name>.+)$')
 
   @decorators.WithTimeoutAndRetriesFromInstance()
-  def ReadFile(self, device_path, as_root=False,
+  def ReadFile(self, device_path, as_root=False, force_pull=False,
                timeout=None, retries=None):
     """Reads the contents of a file from the device.
 
@@ -1025,6 +1052,9 @@ class DeviceUtils(object):
                    from the device.
       as_root: A boolean indicating whether the read should be executed with
                root privileges.
+      force_pull: A boolean indicating whether to force the operation to be
+          performed by pulling a file from the device. The default is, when the
+          contents are short, to retrieve the contents using cat instead.
       timeout: timeout in seconds
       retries: number of retries
 
@@ -1038,20 +1068,20 @@ class DeviceUtils(object):
       CommandTimeoutError on timeout.
       DeviceUnreachableError on missing device.
     """
-    # TODO(jbudorick): Implement a generic version of Stat() that handles
-    # as_root=True, then switch this implementation to use that.
-    size = None
-    ls_out = self.RunShellCommand(['ls', '-l', device_path], as_root=as_root,
-                                  check_return=True)
-    for line in ls_out:
-      m = self._LS_RE.match(line)
-      if m and m.group('name') == posixpath.basename(device_path):
-        size = int(m.group('size'))
-        break
-    else:
+    def get_size(path):
+      # TODO(jbudorick): Implement a generic version of Stat() that handles
+      # as_root=True, then switch this implementation to use that.
+      ls_out = self.RunShellCommand(['ls', '-l', device_path], as_root=as_root,
+                                    check_return=True)
+      for line in ls_out:
+        m = self._LS_RE.match(line)
+        if m and m.group('name') == posixpath.basename(device_path):
+          return int(m.group('size'))
       logging.warning('Could not determine size of %s.', device_path)
+      return None
 
-    if 0 < size <= self._MAX_ADB_OUTPUT_LENGTH:
+    if (not force_pull
+        and 0 < get_size(device_path) <= self._MAX_ADB_OUTPUT_LENGTH):
       return _JoinLines(self.RunShellCommand(
           ['cat', device_path], as_root=as_root, check_return=True))
     elif as_root and self.NeedsSU():

@@ -10,5 +10,5 @@ int main(int argc, char** argv) {
   mojo::ViewManagerTestSuite test_suite(argc, argv);
 
   return base::LaunchUnitTests(
-      argc, argv, base::Bind(&TestSuite::Run, base::Unretained(&test_suite)));
+      argc, argv, base::Bind(&base::TestSuite::Run, base::Unretained(&test_suite)));
 }

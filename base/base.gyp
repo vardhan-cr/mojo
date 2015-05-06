@@ -438,6 +438,7 @@
         'android/jni_android_unittest.cc',
         'android/jni_array_unittest.cc',
         'android/jni_string_unittest.cc',
+        'android/library_loader/library_prefetcher_unittest.cc',
         'android/path_utils_unittest.cc',
         'android/scoped_java_ref_unittest.cc',
         'android/sys_utils_unittest.cc',
@@ -463,6 +464,7 @@
         'containers/hash_tables_unittest.cc',
         'containers/linked_list_unittest.cc',
         'containers/mru_cache_unittest.cc',
+        'containers/scoped_ptr_hash_map_unittest.cc',
         'containers/small_map_unittest.cc',
         'containers/stack_container_unittest.cc',
         'cpu_unittest.cc',
@@ -515,6 +517,7 @@
         'mac/foundation_util_unittest.mm',
         'mac/libdispatch_task_runner_unittest.cc',
         'mac/mac_util_unittest.mm',
+        'mac/memory_pressure_monitor_mac_unittest.cc',
         'mac/objc_property_releaser_unittest.mm',
         'mac/scoped_nsobject_unittest.mm',
         'mac/scoped_objc_class_swizzler_unittest.mm',
@@ -1476,6 +1479,7 @@
           'type': 'none',
           'dependencies': [
             'base_java',
+            '../testing/android/on_device_instrumentation.gyp:reporter_java',
           ],
           'variables': {
             'java_in_dir': '../base/test/android/javatests',

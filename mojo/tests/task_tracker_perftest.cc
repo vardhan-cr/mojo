@@ -66,7 +66,7 @@ class RequestResponsePerfTest : public testing::Test {
 
   void SetUp() override {
     tracked_objects::ThreadData::InitializeAndSetTrackingStatus(
-        tracked_objects::ThreadData::PROFILING_CHILDREN_ACTIVE);
+        tracked_objects::ThreadData::PROFILING_ACTIVE);
   }
 
   void TearDown() override {
