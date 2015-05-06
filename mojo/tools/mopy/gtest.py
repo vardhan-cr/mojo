@@ -36,43 +36,39 @@ def set_color():
     os.environ["GTEST_COLOR"] = "yes"
 
 
-# TODO(vtl): The return value is bizarre. Should just make it either return
-# True/False, or a list of failing fixtures. But the dart_apptest runner would
-# also need to be updated in the same way.
-def run_gtest_apptest(shell, apptest_dict, apptest, isolate, test_args,
-                      shell_args):
-  """Runs the gtest-based tests in the |apptest| app either altogether or in
-  isolation.
+def run_gtest_apptest(shell, shell_args, apptest_url, apptest_args, isolate):
+  """Runs a gtest apptest.
 
   Args:
     shell: Wrapper around concrete Mojo shell, implementing devtools Shell
         interface.
-    apptest: Url of the test app.
-    isolate: Iff True, each test in the app will be run in a separate shell run.
-    test_args: Arguments for the test app.
     shell_args: The arguments for mojo_shell.
+    apptest_url: Url of the apptest app to run.
+    apptest_args: Parameters to be passed to the apptest app.
+    isolate: Iff True, each test in the app will be run in a separate shell run.
+
+  Returns:
+    True iff the test succeeded, False otherwise.
   """
 
   if not isolate:
-    if not run_apptest(shell, shell_args, {apptest: test_args},
-                       _gtest_apptest_output_test):
-      return "Failed test(s) in %r" % apptest_dict
-    return "Succeeded"
+    return run_apptest(shell, shell_args, apptest_url, apptest_args,
+                       _gtest_apptest_output_test)
 
   # List the apptest fixtures so they can be run independently for isolation.
-  fixtures = get_fixtures(shell, shell_args, apptest)
-
+  fixtures = get_fixtures(shell, shell_args, apptest_url)
   if not fixtures:
-    return "Failed with no tests found."
+    print "No tests to run found in %s." % apptest_url
+    return False
 
-  apptest_result = "Succeeded"
+  apptest_result = True
   for fixture in fixtures:
-    isolated_test_args = test_args + ["--gtest_filter=%s" % fixture]
-    success = run_apptest(shell, shell_args, {apptest: isolated_test_args},
+    isolated_apptest_args = apptest_args + ["--gtest_filter=%s" % fixture]
+    success = run_apptest(shell, shell_args, apptest_url, isolated_apptest_args,
                           _gtest_apptest_output_test)
 
     if not success:
-      apptest_result = "Failed test(s) in %r" % apptest_dict
+      apptest_result = False
 
   return apptest_result
 

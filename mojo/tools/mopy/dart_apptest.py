@@ -25,16 +25,16 @@ def _dart_apptest_output_test(output):
 
 
 # TODO(erg): Support android, launched services and fixture isolation.
-def run_dart_apptest(shell, apptest_dict, shell_args, apps_and_args=None):
-  """Runs a command line and checks the output for signs of gtest failure.
+def run_dart_apptest(shell, shell_args, apptest_url, apptest_args):
+  """Runs a dart apptest.
 
   Args:
     shell_args: The arguments for mojo_shell.
-    apps_and_args: A Dict keyed by application URL associated to the
-        application's specific arguments.
+    apptest_url: Url of the apptest app to run.
+    apptest_args: Parameters to be passed to the apptest app.
+
+  Returns:
+    True iff the test succeeded, False otherwise.
   """
-  apps_and_args = apps_and_args or {}
-  if not run_apptest(shell, shell_args, apps_and_args,
-                     _dart_apptest_output_test):
-    return "Failed test(s) in %r" % apptest_dict
-  return "Succeeded"
+  return run_apptest(shell, shell_args, apptest_url, apptest_args,
+                     _dart_apptest_output_test)

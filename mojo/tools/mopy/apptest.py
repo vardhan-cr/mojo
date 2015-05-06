@@ -13,26 +13,25 @@ import time
 _logger = logging.getLogger()
 
 
-def _build_shell_arguments(shell_args, apps_and_args):
+def _build_shell_arguments(shell_args, apptest_url, apptest_args):
   """Builds the list of arguments for the shell.
 
   Args:
     shell_args: List of arguments for the shell run.
-    apps_and_args: Dictionary mapping application URLs to the application's
-        specific arguments.
+    apptest_url: Url of the apptest app to run.
+    apptest_args: Parameters to be passed to the apptest app.
 
   Returns:
     Single list of shell arguments.
   """
   result = list(shell_args)
-  if apps_and_args:
-    for (application, args) in apps_and_args.items():
-      result += ["--args-for=%s %s" % (application, " ".join(args))]
-    result += apps_and_args.keys()
+  if apptest_args:
+    result.append("--args-for=%s %s" % (apptest_url, " ".join(apptest_args)))
+  result.append(apptest_url)
   return result
 
 
-def run_apptest(shell, shell_args, apps_and_args, output_test):
+def run_apptest(shell, shell_args, apptest_url, apptest_args, output_test):
   """Runs shell with the given arguments, retrieves the output and applies
   |output_test| to determine if the run was successful.
 
@@ -40,15 +39,15 @@ def run_apptest(shell, shell_args, apps_and_args, output_test):
     shell: Wrapper around concrete Mojo shell, implementing devtools Shell
         interface.
     shell_args: List of arguments for the shell run.
-    apps_and_args: Dictionary mapping application URLs to the application's
-        specific arguments.
+    apptest_url: Url of the apptest app to run.
+    apptest_args: Parameters to be passed to the apptest app.
     output_test: Function accepting the shell output and returning True iff
         the output indicates a successful run.
 
   Returns:
     True iff the test succeeded, False otherwise.
   """
-  arguments = _build_shell_arguments(shell_args, apps_and_args)
+  arguments = _build_shell_arguments(shell_args, apptest_url, apptest_args)
   command_line = "mojo_shell " + " ".join(["%r" % x for x in arguments])
 
   _logger.debug("Starting: " + command_line)

@@ -71,19 +71,20 @@ def main():
 
     if test_type == "dart":
       apptest_result = dart_apptest.run_dart_apptest(
-          shell, test_dict, shell_args, {test: test_args})
+          shell, shell_args, test, test_args)
     elif test_type == "gtest":
-      apptest_result = gtest.run_gtest_apptest(shell, test_dict, test, False,
-                                               test_args, shell_args)
+      apptest_result = gtest.run_gtest_apptest(
+          shell, shell_args, test, test_args, False)
     elif test_type == "gtest_isolated":
-      apptest_result = gtest.run_gtest_apptest(shell, test_dict, test, True,
-                                               test_args, shell_args)
+      apptest_result = gtest.run_gtest_apptest(
+          shell, shell_args, test, test_args, True)
     else:
-      apptest_result = "Invalid test type in %r" % test_dict
+      apptest_result = False
+      print "Unrecognized test type in %r" % test_dict
 
-    if apptest_result != "Succeeded":
+    if not apptest_result:
       exit_code = 1
-    print apptest_result
+    print "Succeeded" if apptest_result else "Failed"
     _logger.info("Completed: %s" % test_name)
 
   return exit_code
