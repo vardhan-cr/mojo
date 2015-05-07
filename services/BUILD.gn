@@ -13,7 +13,6 @@ group("services") {
     "//services/gles2:lib",
     "//services/http_server",
     "//services/icu_data",
-    "//services/js",
     "//services/kiosk_wm",
     "//services/native_viewport",
     "//services/reaper",
@@ -36,5 +35,11 @@ group("services") {
 
   if (is_linux) {
     deps += [ "//services/python" ]
+  }
+
+  # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
+  # needs a 32 bit toolchain and we don't have one configured for mac hosts.
+  if (host_os == "linux") {
+    deps += [ "//services/js" ]
   }
 }

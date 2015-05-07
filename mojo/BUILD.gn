@@ -53,7 +53,6 @@ group("tests") {
   deps = [
     "//mojo/common:mojo_common_unittests",
     "//mojo/converters/surfaces/tests:mojo_surfaces_lib_unittests",
-    "//mojo/edk/js:tests",
     "//mojo/edk/system:tests",
     "//mojo/edk/test:public_tests",
     "//mojo/dart/embedder/test:dart_unittests",
@@ -65,8 +64,6 @@ group("tests") {
     "//services/dart/dart_apptests",
     "//services/files:apptests",
     "//services/http_server:apptests",
-    "//services/js:js_apptests",
-    "//services/js:js_services_unittests",
     "//services/reaper:tests",
     "//services/url_response_disk_cache:tests",
     "//services/view_manager:mojo_view_manager_client_apptests",
@@ -82,6 +79,16 @@ group("tests") {
       # TODO(vtl): See TODO in //services/files/c/BUILD.gn.
       "//services/files/c:apptests",
       "//services/python:python_apptests",
+    ]
+  }
+
+  # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
+  # needs a 32 bit toolchain and we don't have one configured for mac hosts.
+  if (host_os == "linux") {
+    deps += [
+      "//mojo/edk/js:tests",
+      "//services/js:js_apptests",
+      "//services/js:js_services_unittests",
     ]
   }
 
