@@ -207,10 +207,6 @@ component("gl") {
       "//ui/ozone:ozone_base",
     ]
   }
-
-  if (is_android) {
-    deps += [ "//ui/android:ui_java" ]
-  }
 }
 
 source_set("gl_unittest_utils") {
