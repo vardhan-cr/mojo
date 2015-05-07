@@ -32,7 +32,6 @@ class TestNativeRunner : public NativeRunner {
     base::MessageLoop::current()->Quit();
   }
   void Start(const base::FilePath& app_path,
-             NativeApplicationCleanup cleanup,
              mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override {
     state_->runner_was_started = true;

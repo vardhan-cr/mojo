@@ -31,12 +31,14 @@
 #include "services/tracing/tracing.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
+#include "shell/background_application_loader.h"
 #include "shell/command_line_util.h"
 #include "shell/filename_util.h"
 #include "shell/in_process_native_runner.h"
 #include "shell/out_of_process_native_runner.h"
 #include "shell/switches.h"
 #include "shell/tracer.h"
+#include "shell/url_response_disk_cache_loader.h"
 #include "url/gurl.h"
 
 using mojo::ServiceProvider;
@@ -257,6 +259,12 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
     base::debug::WaitForDebugger(60, true);
 
   mojo_shell_child_path_ = shell_child_path;
+
+  application_manager()->SetLoaderForURL(
+      make_scoped_ptr(new BackgroundApplicationLoader(
+          make_scoped_ptr(new URLResponseDiskCacheLoader()),
+          "url_response_disk_cache", base::MessageLoop::TYPE_DEFAULT)),
+      GURL("mojo:url_response_disk_cache"));
 
   EnsureEmbedderIsInitialized();
   task_runners_.reset(

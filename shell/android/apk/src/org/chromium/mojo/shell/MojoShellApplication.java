@@ -23,24 +23,16 @@ public class MojoShellApplication extends BaseChromiumApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        clearTemporaryFiles();
         initializeJavaUtils();
         initializeNative();
-    }
-
-    /**
-     * Deletes the temporary files and directories created in the previous run of the application.
-     * This is important regardless of cleanups on exit, as the previous run could have crashed.
-     */
-    private void clearTemporaryFiles() {
-        AndroidHandler.clearTemporaryFiles(this);
     }
 
     /**
      * Initializes Java-side utils.
      */
     private void initializeJavaUtils() {
-        PathUtils.setPrivateDataDirectorySuffix(PRIVATE_DATA_DIRECTORY_SUFFIX, getApplicationContext());
+        PathUtils.setPrivateDataDirectorySuffix(
+                PRIVATE_DATA_DIRECTORY_SUFFIX, getApplicationContext());
     }
 
     /**

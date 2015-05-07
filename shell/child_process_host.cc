@@ -61,14 +61,13 @@ int ChildProcessHost::Join() {
 
 void ChildProcessHost::StartApp(
     const mojo::String& app_path,
-    bool clean_app_path,
     mojo::InterfaceRequest<mojo::Application> application_request,
     const ChildController::StartAppCallback& on_app_complete) {
   DCHECK(controller_);
 
   on_app_complete_ = on_app_complete;
   controller_->StartApp(
-      app_path, clean_app_path, application_request.Pass(),
+      app_path, application_request.Pass(),
       base::Bind(&ChildProcessHost::AppCompleted, base::Unretained(this)));
 }
 

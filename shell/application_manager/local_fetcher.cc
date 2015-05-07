@@ -5,6 +5,7 @@
 #include "shell/application_manager/local_fetcher.h"
 
 #include "base/bind.h"
+#include "base/files/file_enumerator.h"
 #include "base/files/file_util.h"
 #include "base/format_macros.h"
 #include "base/message_loop/message_loop.h"
@@ -13,6 +14,7 @@
 #include "base/trace_event/trace_event.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/common/data_pipe_utils.h"
+#include <sys/stat.h>
 #include "url/url_util.h"
 
 namespace shell {
@@ -56,11 +58,14 @@ mojo::URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
   response->url = mojo::String::From(url_);
   mojo::DataPipe data_pipe;
   response->body = data_pipe.consumer_handle.Pass();
-  int64 file_size;
-  if (base::GetFileSize(path_, &file_size)) {
-    response->headers = mojo::Array<mojo::String>(1);
+  base::stat_wrapper_t stat_result;
+  if (stat64(path_.value().c_str(), &stat_result) == 0) {
+    response->headers = mojo::Array<mojo::String>(2);
     response->headers[0] =
-        base::StringPrintf("Content-Length: %" PRId64, file_size);
+        base::StringPrintf("Content-Length: %" PRId64, stat_result.st_size);
+    response->headers[1] = base::StringPrintf(
+        "ETag: \"%" PRId64 "-%" PRId64 "-%" PRId64 "\"", stat_result.st_dev,
+        stat_result.st_ino, static_cast<uint64_t>(stat_result.st_mtime));
   }
   mojo::common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,
                              task_runner, base::Bind(&IgnoreResult));

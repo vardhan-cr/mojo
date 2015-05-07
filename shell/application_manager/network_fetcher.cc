@@ -26,13 +26,16 @@
 
 namespace shell {
 
-NetworkFetcher::NetworkFetcher(bool disable_cache,
-                               const GURL& url,
-                               mojo::NetworkService* network_service,
-                               const FetchCallback& loader_callback)
+NetworkFetcher::NetworkFetcher(
+    bool disable_cache,
+    const GURL& url,
+    mojo::NetworkService* network_service,
+    mojo::URLResponseDiskCache* url_response_disk_cache,
+    const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(false),
       url_(url),
+      url_response_disk_cache_(url_response_disk_cache),
       weak_ptr_factory_(this) {
   StartNetworkRequest(url, network_service);
 }
@@ -148,14 +151,17 @@ bool NetworkFetcher::RenameToAppId(const GURL& url,
   return base::Move(old_path, *new_path);
 }
 
-void NetworkFetcher::CopyCompleted(
+void NetworkFetcher::OnFileRetrievedFromCache(
     base::Callback<void(const base::FilePath&, bool)> callback,
-    bool success) {
+    mojo::Array<uint8_t> path_as_array,
+    mojo::Array<uint8_t> cache_dir) {
+  bool success = !path_as_array.is_null();
   if (success) {
+    path_ = base::FilePath(std::string(
+        reinterpret_cast<char*>(&path_as_array.front()), path_as_array.size()));
     if (base::CommandLine::ForCurrentProcess()->HasSwitch(
             switches::kPredictableAppFilenames)) {
       // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
-      success = false;
       base::FilePath new_path;
       if (RenameToAppId(url_, path_, &new_path)) {
         if (base::PathExists(new_path)) {
@@ -176,17 +182,12 @@ void NetworkFetcher::CopyCompleted(
 void NetworkFetcher::AsPath(
     base::TaskRunner* task_runner,
     base::Callback<void(const base::FilePath&, bool)> callback) {
-  if (!path_.empty() || !response_) {
-    base::MessageLoop::current()->PostTask(
-        FROM_HERE, base::Bind(callback, path_, base::PathExists(path_)));
-    return;
-  }
+  // This should only called once, when we have a response.
+  DCHECK(response_.get());
 
-  base::CreateTemporaryFile(&path_);
-  mojo::common::CopyToFile(
-      response_->body.Pass(), path_, task_runner,
-      base::Bind(&NetworkFetcher::CopyCompleted, weak_ptr_factory_.GetWeakPtr(),
-                 callback));
+  url_response_disk_cache_->GetFile(
+      response_.Pass(), base::Bind(&NetworkFetcher::OnFileRetrievedFromCache,
+                                   weak_ptr_factory_.GetWeakPtr(), callback));
 }
 
 std::string NetworkFetcher::MimeType() {

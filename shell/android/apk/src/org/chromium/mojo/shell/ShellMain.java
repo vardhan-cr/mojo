@@ -29,6 +29,10 @@ public class ShellMain {
     private static final String NETWORK_LIBRARY_APP = "network_service.mojo";
     // Directory where the child executable will be extracted.
     private static final String CHILD_DIRECTORY = "child";
+    // Directory to set TMPDIR to.
+    private static final String TMP_DIRECTORY = "tmp";
+    // Directory to set HOME to.
+    private static final String HOME_DIRECTORY = "home";
     // Name of the child executable.
     private static final String MOJO_SHELL_CHILD_EXECUTABLE = "mojo_shell_child";
     // Path to the default origin of mojo: apps.
@@ -69,7 +73,8 @@ public class ShellMain {
             nativeInit(applicationContext, mojoShellChild.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
-                    getTmpDir(applicationContext).getAbsolutePath());
+                    getTmpDir(applicationContext).getAbsolutePath(),
+                    getHomeDir(applicationContext).getAbsolutePath());
             sInitialized = true;
         } catch (Exception e) {
             Log.e(TAG, "ShellMain initialization failed.", e);
@@ -109,7 +114,11 @@ public class ShellMain {
     }
 
     private static File getTmpDir(Context context) {
-        return new File(context.getCacheDir(), "tmp");
+        return new File(context.getCacheDir(), TMP_DIRECTORY);
+    }
+
+    private static File getHomeDir(Context context) {
+        return context.getDir(HOME_DIRECTORY, Context.MODE_PRIVATE);
     }
 
     @CalledByNative
@@ -121,7 +130,7 @@ public class ShellMain {
      * Initializes the native system. This API should be called only once per process.
      **/
     private static native void nativeInit(Context context, String mojoShellChildPath,
-            String[] parameters, String bundledAppsDirectory, String tmpDir);
+            String[] parameters, String bundledAppsDirectory, String tmpDir, String homeDir);
 
     private static native boolean nativeStart();
 

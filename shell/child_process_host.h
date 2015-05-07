@@ -52,7 +52,6 @@ class ChildProcessHost : public mojo::ErrorHandler {
   // |on_app_complete| will *always* get called, even on connection error (or
   // even if the child process failed to start at all).
   void StartApp(const mojo::String& app_path,
-                bool clean_app_path,
                 mojo::InterfaceRequest<mojo::Application> application_request,
                 const ChildController::StartAppCallback& on_app_complete);
   void ExitNow(int32_t exit_code);

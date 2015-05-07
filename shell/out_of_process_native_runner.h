@@ -26,7 +26,6 @@ class OutOfProcessNativeRunner : public NativeRunner {
 
   // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
-             NativeApplicationCleanup cleanup,
              mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override;
 

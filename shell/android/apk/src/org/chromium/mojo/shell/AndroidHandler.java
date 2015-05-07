@@ -14,7 +14,6 @@ import org.chromium.base.JNINamespace;
 import org.chromium.base.TraceEvent;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 /**
@@ -36,33 +35,19 @@ public class AndroidHandler {
     // File extensions used to identify application libraries in the provided archive.
     private static final String JAVA_LIBRARY_SUFFIX = ".dex.jar";
     private static final String NATIVE_LIBRARY_SUFFIX = ".so";
-    // Filename sections used for naming temporary files holding application files.
-    private static final String ARCHIVE_PREFIX = "archive";
-    private static final String ARCHIVE_SUFFIX = ".zip";
 
-    // Directories used to hold temporary files. These are cleared when clearTemporaryFiles() is
-    // called.
-    private static final String DEX_OUTPUT_DIRECTORY = "dex_output";
-    private static final String APP_DIRECTORY = "applications";
-    private static final String ASSET_DIRECTORY = "assets";
-
-    /**
-     * Deletes directories holding the temporary files. This should be called early on shell startup
-     * to clean up after the previous run.
-     */
-    static void clearTemporaryFiles(Context context) {
-        FileHelper.deleteRecursively(getDexOutputDir(context));
-        FileHelper.deleteRecursively(getAppDir(context));
-        FileHelper.deleteRecursively(getAssetDir(context));
-    }
-
-    /**
-     * Returns the path at which the native part should save the application archive.
-     */
-    @CalledByNative
-    private static String getNewTempArchivePath(Context context) throws IOException {
-        return File.createTempFile(ARCHIVE_PREFIX, ARCHIVE_SUFFIX,
-                getAppDir(context)).getAbsolutePath();
+    // Recursively finds the first file in |dir| whose name ends with |suffix|. Returns |null| if
+    // none is found.
+    static File find(File dir, String suffix) {
+        for (File child : dir.listFiles()) {
+            if (child.isDirectory()) {
+                File result = find(child, suffix);
+                if (result != null) return result;
+            } else {
+                if (child.getName().endsWith(suffix)) return child;
+            }
+        }
+        return null;
     }
 
     /**
@@ -70,56 +55,59 @@ public class AndroidHandler {
      *
      * @param context the application context
      * @param tracingId opaque id, used for tracing.
-     * @param archivePath the path of the archive containing the application to be run
+     * @param extractedPath the path of the directory containing the application to be run
+     * @param cachePath the path of a cache directory that can be used to extract assets
      * @param handle handle to the shell to be passed to the native application. On the Java side
      *            this is opaque payload.
      * @param runApplicationPtr pointer to the function that will set the native thunks and call
      *            into the application MojoMain. On the Java side this is opaque payload.
      */
     @CalledByNative
-    private static boolean bootstrap(Context context, long tracingId, String archivePath,
-            int handle, long runApplicationPtr) {
-        File bootstrap_java_library;
-        File bootstrap_native_library;
-        try {
-            TraceEvent.begin("ExtractBootstrapJavaLibrary");
-            bootstrap_java_library = FileHelper.extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY,
-                    getAssetDir(context), true);
-            TraceEvent.end("ExtractBootstrapJavaLibrary");
-            TraceEvent.begin("ExtractBootstrapNativeLibrary");
-            bootstrap_native_library = FileHelper.extractFromAssets(context,
-                    BOOTSTRAP_NATIVE_LIBRARY, getAssetDir(context), true);
-            TraceEvent.end("ExtractBootstrapNativeLibrary");
-        } catch (Exception e) {
-            Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
-            return false;
-        }
+    private static boolean bootstrap(Context context, long tracingId, String extractedPath,
+            String cachePath, int handle, long runApplicationPtr) {
+        File extractedDir = new File(extractedPath);
+        File cacheDir = new File(cachePath);
+        File compiledDexDir = new File(cacheDir, "dex");
+        File assetDir = new File(cacheDir, "asset");
+        assetDir.mkdirs();
+        File preparedSentinel = new File(cacheDir, "prepared");
 
-        File application_java_library;
-        File application_native_library;
-        try {
-            File archive = new File(archivePath);
-            TraceEvent.begin("ExtractApplicationJavaLibrary");
-            application_java_library = FileHelper.extractFromArchive(archive, JAVA_LIBRARY_SUFFIX,
-                    getAppDir(context));
-            TraceEvent.end("ExtractApplicationJavaLibrary");
-            TraceEvent.begin("ExtractApplicationNativeLibrary");
-            application_native_library = FileHelper.extractFromArchive(archive,
-                    NATIVE_LIBRARY_SUFFIX, getAppDir(context));
-            TraceEvent.end("ExtractApplicationNativeLibrary");
-        } catch (Exception e) {
-            Log.e(TAG, "Extraction of application files from the archive failed.", e);
-            return false;
+        // If the sentinel doesn't exist, extract the assets from the apk.
+        if (!preparedSentinel.exists()) {
+            compiledDexDir.mkdirs();
+            try {
+                TraceEvent.begin("ExtractBootstrapJavaLibrary");
+                FileHelper.extractFromAssets(context, BOOTSTRAP_JAVA_LIBRARY, assetDir, false);
+                TraceEvent.end("ExtractBootstrapJavaLibrary");
+                TraceEvent.begin("ExtractBootstrapNativeLibrary");
+                FileHelper.extractFromAssets(context, BOOTSTRAP_NATIVE_LIBRARY, assetDir, false);
+                TraceEvent.end("ExtractBootstrapNativeLibrary");
+                TraceEvent.begin("MoveBootstrapNativeLibrary");
+                // Rename the bootstrap library to prevent dlopen to think it is alread opened.
+                new File(assetDir, BOOTSTRAP_NATIVE_LIBRARY)
+                        .renameTo(File.createTempFile("bootstrap", ".so", assetDir));
+                TraceEvent.end("MoveBootstrapNativeLibrary");
+                new java.io.FileOutputStream(preparedSentinel).close();
+            } catch (Exception e) {
+                Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
+                return false;
+            }
         }
+        // Find the 4 files needed to execute the android application.
+        File bootstrap_java_library = new File(assetDir, BOOTSTRAP_JAVA_LIBRARY);
+        File bootstrap_native_library = find(assetDir, NATIVE_LIBRARY_SUFFIX);
+        File application_java_library = find(extractedDir, JAVA_LIBRARY_SUFFIX);
+        File application_native_library = find(extractedDir, NATIVE_LIBRARY_SUFFIX);
 
+        // Compile the java files.
         String dexPath = bootstrap_java_library.getAbsolutePath() + File.pathSeparator
                 + application_java_library.getAbsolutePath();
         TraceEvent.begin("CreateDexClassLoader");
         DexClassLoader bootstrapLoader = new DexClassLoader(dexPath,
-                getDexOutputDir(context).getAbsolutePath(), null,
-                ClassLoader.getSystemClassLoader());
+                compiledDexDir.getAbsolutePath(), null, ClassLoader.getSystemClassLoader());
         TraceEvent.end("CreateDexClassLoader");
 
+        // Create the instance of the Bootstrap class from the compiled java file and run it.
         try {
             Class<?> loadedClass = bootstrapLoader.loadClass(BOOTSTRAP_CLASS);
             Class<? extends Runnable> bootstrapClass = loadedClass.asSubclass(Runnable.class);
@@ -136,15 +124,4 @@ public class AndroidHandler {
         return true;
     }
 
-    private static File getDexOutputDir(Context context) {
-        return context.getDir(DEX_OUTPUT_DIRECTORY, Context.MODE_PRIVATE);
-    }
-
-    private static File getAppDir(Context context) {
-        return context.getDir(APP_DIRECTORY, Context.MODE_PRIVATE);
-    }
-
-    private static File getAssetDir(Context context) {
-        return context.getDir(ASSET_DIRECTORY, Context.MODE_PRIVATE);
-    }
 }

@@ -121,4 +121,7 @@ if config.target_os != config.OS_ANDROID:
       # http server.
       "test": "mojo:shell_apptests",
     },
+    {
+      "test": "mojo:url_response_disk_cache_apptests",
+    },
   ]

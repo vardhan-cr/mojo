@@ -14,7 +14,7 @@
 namespace shell {
 
 InProcessNativeRunner::InProcessNativeRunner(Context* context)
-    : cleanup_(NativeApplicationCleanup::DONT_DELETE), app_library_(nullptr) {
+    : app_library_(nullptr) {
 }
 
 InProcessNativeRunner::~InProcessNativeRunner() {
@@ -30,11 +30,9 @@ InProcessNativeRunner::~InProcessNativeRunner() {
 
 void InProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    NativeApplicationCleanup cleanup,
     mojo::InterfaceRequest<mojo::Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
-  cleanup_ = cleanup;
 
   DCHECK(!application_request_.is_pending());
   application_request_ = application_request.Pass();
@@ -56,7 +54,7 @@ void InProcessNativeRunner::Run() {
            << " thread id=" << base::PlatformThread::CurrentId();
 
   // TODO(vtl): ScopedNativeLibrary doesn't have a .get() method!
-  base::NativeLibrary app_library = LoadNativeApplication(app_path_, cleanup_);
+  base::NativeLibrary app_library = LoadNativeApplication(app_path_);
   app_library_.Reset(app_library);
   RunNativeApplication(app_library, application_request_.Pass());
   app_completed_callback_runner_.Run();

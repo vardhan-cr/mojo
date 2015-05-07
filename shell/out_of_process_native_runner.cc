@@ -29,7 +29,6 @@ OutOfProcessNativeRunner::~OutOfProcessNativeRunner() {
 
 void OutOfProcessNativeRunner::Start(
     const base::FilePath& app_path,
-    NativeApplicationCleanup cleanup,
     mojo::InterfaceRequest<mojo::Application> application_request,
     const base::Closure& app_completed_callback) {
   app_path_ = app_path;
@@ -42,8 +41,7 @@ void OutOfProcessNativeRunner::Start(
 
   // TODO(vtl): |app_path.AsUTF8Unsafe()| is unsafe.
   child_process_host_->StartApp(
-      app_path.AsUTF8Unsafe(), cleanup == NativeApplicationCleanup::DELETE,
-      application_request.Pass(),
+      app_path.AsUTF8Unsafe(), application_request.Pass(),
       base::Bind(&OutOfProcessNativeRunner::AppCompleted,
                  base::Unretained(this)));
 }

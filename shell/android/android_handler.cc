@@ -8,6 +8,8 @@
 #include "base/android/jni_string.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/message_loop/message_loop.h"
+#include "base/run_loop.h"
 #include "base/scoped_native_library.h"
 #include "base/trace_event/trace_event.h"
 #include "jni/AndroidHandler_jni.h"
@@ -43,8 +45,7 @@ void RunAndroidApplication(JNIEnv* env,
   // Load the library, so that we can set the application context there if
   // needed.
   // TODO(vtl): We'd use a ScopedNativeLibrary, but it doesn't have .get()!
-  base::NativeLibrary app_library =
-      LoadNativeApplication(app_path, NativeApplicationCleanup::DELETE);
+  base::NativeLibrary app_library = LoadNativeApplication(app_path);
   if (!app_library)
     return;
 
@@ -90,20 +91,38 @@ void AndroidHandler::RunApplication(
   uintptr_t tracing_id = reinterpret_cast<uintptr_t>(this);
   TRACE_EVENT_ASYNC_BEGIN1("android_handler", "AndroidHandler::RunApplication",
                            tracing_id, "url", std::string(response->url));
-  ScopedJavaLocalRef<jstring> j_archive_path =
-      Java_AndroidHandler_getNewTempArchivePath(env, GetApplicationContext());
-  base::FilePath archive_path(
-      ConvertJavaStringToUTF8(env, j_archive_path.obj()));
+  base::FilePath extracted_dir;
+  base::FilePath cache_dir;
+  {
+    base::MessageLoop loop;
+    handler_task_runner_->PostTask(
+        FROM_HERE,
+        base::Bind(&AndroidHandler::ExtractApplication, base::Unretained(this),
+                   base::Unretained(&extracted_dir),
+                   base::Unretained(&cache_dir), base::Passed(response.Pass()),
+                   base::Bind(base::IgnoreResult(
+                                  &base::SingleThreadTaskRunner::PostTask),
+                              loop.task_runner(), FROM_HERE,
+                              base::MessageLoop::QuitWhenIdleClosure())));
+    base::RunLoop().Run();
+  }
 
-  mojo::common::BlockingCopyToFile(response->body.Pass(), archive_path);
+  ScopedJavaLocalRef<jstring> j_extracted_dir =
+      ConvertUTF8ToJavaString(env, extracted_dir.value());
+  ScopedJavaLocalRef<jstring> j_cache_dir =
+      ConvertUTF8ToJavaString(env, cache_dir.value());
   RunAndroidApplicationFn run_android_application_fn = &RunAndroidApplication;
   Java_AndroidHandler_bootstrap(
-      env, GetApplicationContext(), tracing_id, j_archive_path.obj(),
+      env, GetApplicationContext(), tracing_id, j_extracted_dir.obj(),
+      j_cache_dir.obj(),
       application_request.PassMessagePipe().release().value(),
       reinterpret_cast<jlong>(run_android_application_fn));
 }
 
 void AndroidHandler::Initialize(mojo::ApplicationImpl* app) {
+  handler_task_runner_ = base::MessageLoop::current()->task_runner();
+  app->ConnectToService("mojo:url_response_disk_cache",
+                        &url_response_disk_cache_);
 }
 
 bool AndroidHandler::ConfigureIncomingConnection(
@@ -111,6 +130,28 @@ bool AndroidHandler::ConfigureIncomingConnection(
   connection->AddService(&content_handler_factory_);
   connection->AddService(&intent_receiver_manager_factory_);
   return true;
+}
+
+void AndroidHandler::ExtractApplication(base::FilePath* extracted_dir,
+                                        base::FilePath* cache_dir,
+                                        mojo::URLResponsePtr response,
+                                        const base::Closure& callback) {
+  url_response_disk_cache_->GetExtractedContent(
+      response.Pass(),
+      [extracted_dir, cache_dir, callback](mojo::Array<uint8_t> extracted_path,
+                                           mojo::Array<uint8_t> cache_path) {
+        if (extracted_path.is_null()) {
+          *extracted_dir = base::FilePath();
+          *cache_dir = base::FilePath();
+        } else {
+          *extracted_dir = base::FilePath(
+              std::string(reinterpret_cast<char*>(&extracted_path.front()),
+                          extracted_path.size()));
+          *cache_dir = base::FilePath(std::string(
+              reinterpret_cast<char*>(&cache_path.front()), cache_path.size()));
+        }
+        callback.Run();
+      });
 }
 
 bool RegisterAndroidHandlerJni(JNIEnv* env) {

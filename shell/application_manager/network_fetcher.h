@@ -10,6 +10,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
+#include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -24,6 +25,7 @@ class NetworkFetcher : public Fetcher {
   NetworkFetcher(bool disable_cache,
                  const GURL& url,
                  mojo::NetworkService* network_service,
+                 mojo::URLResponseDiskCache* url_response_disk_cache,
                  const FetchCallback& loader_callback);
 
   ~NetworkFetcher() override;
@@ -50,8 +52,10 @@ class NetworkFetcher : public Fetcher {
                             const base::FilePath& old_path,
                             base::FilePath* new_path);
 
-  void CopyCompleted(base::Callback<void(const base::FilePath&, bool)> callback,
-                     bool success);
+  void OnFileRetrievedFromCache(
+      base::Callback<void(const base::FilePath&, bool)> callback,
+      mojo::Array<uint8_t> path_as_array,
+      mojo::Array<uint8_t> cache_dir);
 
   void AsPath(
       base::TaskRunner* task_runner,
@@ -70,6 +74,7 @@ class NetworkFetcher : public Fetcher {
 
   bool disable_cache_;
   const GURL url_;
+  mojo::URLResponseDiskCache* url_response_disk_cache_;
   mojo::URLLoaderPtr url_loader_;
   mojo::URLResponsePtr response_;
   base::FilePath path_;

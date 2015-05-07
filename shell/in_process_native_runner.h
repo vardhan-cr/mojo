@@ -28,7 +28,6 @@ class InProcessNativeRunner : public NativeRunner,
 
   // |NativeRunner| method:
   void Start(const base::FilePath& app_path,
-             NativeApplicationCleanup cleanup,
              mojo::InterfaceRequest<mojo::Application> application_request,
              const base::Closure& app_completed_callback) override;
 
@@ -37,7 +36,6 @@ class InProcessNativeRunner : public NativeRunner,
   void Run() override;
 
   base::FilePath app_path_;
-  NativeApplicationCleanup cleanup_;
   mojo::InterfaceRequest<mojo::Application> application_request_;
   base::Callback<bool(void)> app_completed_callback_runner_;
 

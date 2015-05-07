@@ -123,6 +123,8 @@ source_set("common_lib") {
 # TODO(vtl): Split this target into parent/child/common libs.
 source_set("lib") {
   sources = [
+    "background_application_loader.cc",
+    "background_application_loader.h",
     "child_process_host.cc",
     "child_process_host.h",
     "command_line_util.cc",
@@ -141,6 +143,8 @@ source_set("lib") {
     "tracer.h",
     "url_resolver.cc",
     "url_resolver.h",
+    "url_response_disk_cache_loader.cc",
+    "url_response_disk_cache_loader.h",
   ]
 
   deps = [
@@ -156,6 +160,7 @@ source_set("lib") {
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
     "//shell/application_manager",
+    "//services/url_response_disk_cache",
     "//services/tracing:bindings",
     "//url",
   ]
@@ -170,8 +175,6 @@ source_set("lib") {
       "android/android_handler.h",
       "android/android_handler_loader.cc",
       "android/android_handler_loader.h",
-      "android/background_application_loader.cc",
-      "android/background_application_loader.h",
       "android/intent_receiver_manager_factory.cc",
       "android/intent_receiver_manager_factory.h",
       "android/intent_receiver_manager_impl.cc",
@@ -376,6 +379,7 @@ mojom("child_controller_bindings") {
 
 test("mojo_shell_tests") {
   sources = [
+    "background_application_loader_unittest.cc",
     "child_process_host_unittest.cc",
     "command_line_util_unittest.cc",
     "context_unittest.cc",
@@ -412,8 +416,6 @@ test("mojo_shell_tests") {
   ]
 
   if (is_android) {
-    sources += [ "android/background_application_loader_unittest.cc" ]
-
     deps += [ ":jni_headers" ]
 
     apk_deps = [

@@ -15,6 +15,7 @@
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
+#include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/identity.h"
 #include "shell/application_manager/native_runner.h"
@@ -188,13 +189,11 @@ class ApplicationManager {
       mojo::ServiceProviderPtr exposed_services,
       const base::Closure& on_application_end,
       const std::vector<std::string>& parameters,
-      NativeApplicationCleanup cleanup,
       scoped_ptr<Fetcher> fetcher);
 
   void RunNativeApplication(
       mojo::InterfaceRequest<mojo::Application> application_request,
       const NativeRunnerFactory::Options& options,
-      NativeApplicationCleanup cleanup,
       scoped_ptr<Fetcher> fetcher,
       const base::FilePath& file_path,
       bool path_exists);
@@ -232,6 +231,7 @@ class ApplicationManager {
 
   base::SequencedWorkerPool* blocking_pool_;
   mojo::NetworkServicePtr network_service_;
+  mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
   bool disable_cache_;

@@ -216,7 +216,6 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
 
   // |ChildController| methods:
   void StartApp(const mojo::String& app_path,
-                bool clean_app_path,
                 mojo::InterfaceRequest<mojo::Application> application_request,
                 const StartAppCallback& on_app_complete) override {
     DVLOG(2) << "ChildControllerImpl::StartApp(" << app_path << ", ...)";
@@ -225,9 +224,6 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
     on_app_complete_ = on_app_complete;
     unblocker_.Unblock(base::Bind(&ChildControllerImpl::StartAppOnMainThread,
                                   base::FilePath::FromUTF8Unsafe(app_path),
-                                  clean_app_path
-                                      ? NativeApplicationCleanup::DELETE
-                                      : NativeApplicationCleanup::DONT_DELETE,
                                   base::Passed(&application_request)));
   }
 
@@ -255,7 +251,6 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
 
   static void StartAppOnMainThread(
       const base::FilePath& app_path,
-      NativeApplicationCleanup cleanup,
       mojo::InterfaceRequest<mojo::Application> application_request) {
     // TODO(vtl): This is copied from in_process_native_runner.cc.
     DVLOG(2) << "Loading/running Mojo app from " << app_path.value()
@@ -263,7 +258,7 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
 
     // We intentionally don't unload the native library as its lifetime is the
     // same as that of the process.
-    base::NativeLibrary app_library = LoadNativeApplication(app_path, cleanup);
+    base::NativeLibrary app_library = LoadNativeApplication(app_path);
     RunNativeApplication(app_library, application_request.Pass());
   }
 

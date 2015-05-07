@@ -24,10 +24,10 @@
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"
-#include "shell/android/background_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
 #include "shell/application_manager/application_loader.h"
+#include "shell/background_application_loader.h"
 #include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/init.h"
@@ -181,16 +181,22 @@ static void Init(JNIEnv* env,
                  jstring mojo_shell_child_path,
                  jobjectArray jparameters,
                  jstring j_local_apps_directory,
-                 jstring j_tmp_dir) {
+                 jstring j_tmp_dir,
+                 jstring j_home_dir) {
   g_internal_data.Get().main_activity.Reset(env, activity);
   // Initially, the shell runner is not ready.
   g_internal_data.Get().shell_runner_ready.reset(
       new base::WaitableEvent(true, false));
 
   std::string tmp_dir = base::android::ConvertJavaStringToUTF8(env, j_tmp_dir);
-  // Setting the TMPDIR environment variable so that applications can use it.
+  // Setting the TMPDIR and HOME environment variables so that applications can
+  // use it.
   // TODO(qsr) We will need our subprocesses to inherit this.
   int return_value = setenv("TMPDIR", tmp_dir.c_str(), 1);
+  DCHECK_EQ(return_value, 0);
+  return_value = setenv(
+      "HOME", base::android::ConvertJavaStringToUTF8(env, j_home_dir).c_str(),
+      1);
   DCHECK_EQ(return_value, 0);
 
   base::android::ScopedJavaLocalRef<jobject> scoped_activity(env, activity);

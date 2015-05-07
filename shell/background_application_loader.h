@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_
-#define SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_
+#ifndef SHELL_BACKGROUND_APPLICATION_LOADER_H_
+#define SHELL_BACKGROUND_APPLICATION_LOADER_H_
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
@@ -60,4 +60,4 @@ class BackgroundApplicationLoader
 
 }  // namespace shell
 
-#endif  // SHELL_ANDROID_BACKGROUND_APPLICATION_LOADER_H_
+#endif  // SHELL_BACKGROUND_APPLICATION_LOADER_H_

@@ -33,6 +33,7 @@ source_set("application_manager") {
     "//mojo/common",
     "//mojo/public/interfaces/application:application",
     "//mojo/services/network/public/interfaces",
+    "//mojo/services/url_response_disk_cache/public/interfaces",
     "//url",
   ]
   deps = [

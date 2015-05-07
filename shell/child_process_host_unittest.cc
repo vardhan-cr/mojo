@@ -83,7 +83,7 @@ TEST(ChildProcessHostTest, MAYBE_ConnectionError) {
   application_request.Bind(mp.handle0.Pass());
   // This won't actually be called, but the callback should be run.
   MojoResult result = MOJO_RESULT_INTERNAL;
-  child_process_host.StartApp("/does_not_exist/cbvgyuio", false,
+  child_process_host.StartApp("/does_not_exist/cbvgyuio",
                               application_request.Pass(), [&result](int32_t r) {
                                 result = r;
                                 base::MessageLoop::current()->QuitWhenIdle();
