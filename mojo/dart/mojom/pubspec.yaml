@@ -1,5 +1,5 @@
 name: mojom
-version: 0.0.1
+version: 0.0.2
 author: Chromium Authors <mojo-dev@googlegroups.com>
 description: Placeholder for mojom bindings.
 homepage: https://github.com/domokit/mojo
