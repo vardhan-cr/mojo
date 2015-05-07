@@ -5,6 +5,7 @@
 #include "shell/background_application_loader.h"
 
 #include "mojo/public/interfaces/application/application.mojom.h"
+#include "shell/context.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace shell {
@@ -31,6 +32,7 @@ class DummyLoader : public ApplicationLoader {
 
 // Tests that the loader can start and stop gracefully.
 TEST(BackgroundApplicationLoaderTest, StartStop) {
+  Context::EnsureEmbedderIsInitialized();
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
@@ -39,6 +41,7 @@ TEST(BackgroundApplicationLoaderTest, StartStop) {
 // Tests that the loader can load a service that is well behaved (quits
 // itself).
 TEST(BackgroundApplicationLoaderTest, Load) {
+  Context::EnsureEmbedderIsInitialized();
   scoped_ptr<ApplicationLoader> real_loader(new DummyLoader());
   BackgroundApplicationLoader loader(real_loader.Pass(), "test",
                                      base::MessageLoop::TYPE_DEFAULT);
