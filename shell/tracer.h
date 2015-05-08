@@ -29,24 +29,32 @@ class Tracer : public mojo::common::DataPipeDrainer::Client {
   Tracer();
   ~Tracer() override;
 
-  // Starts tracing the current process with the given set of categories.
-  void Start(const std::string& categories);
+  // Starts tracing the current process with the given set of categories. The
+  // tracing results will be saved into the specified filename when
+  // StopAndFlushToFile() is called.
+  void Start(const std::string& categories,
+             const std::string& duration_seconds_str,
+             const std::string& filename);
+
+  // Notifies the tracer that a message loop has been created. If startup
+  // tracing is active the tracer can use this to schedule when to stop tracing.
+  void DidCreateMessageLoop();
 
   // Starts collecting data from the tracing service with the given set of
   // categories.
   void StartCollectingFromTracingService(
       tracing::TraceCoordinatorPtr coordinator);
 
-  // Stops tracing and flushes all collected trace data to the given filename.
-  // Blocks until the file write is complete. May be called after the message
-  // loop is shut down.
-  void StopAndFlushToFile(const std::string& filename);
+  // Stops tracing and flushes all collected trace data to the file specified in
+  // Start(). Blocks until the file write is complete. May be called after the
+  // message loop is shut down.
+  void StopAndFlushToFile();
 
   void ConnectToController(
       mojo::InterfaceRequest<tracing::TraceController> request);
 
  private:
-  void StopTracingAndFlushToDisk(const std::string& filename);
+  void StopTracingAndFlushToDisk();
 
   // Called from the flush thread. When all data is collected this runs
   // |done_callback| on the flush thread.
@@ -75,6 +83,10 @@ class Tracer : public mojo::common::DataPipeDrainer::Client {
 
   // Whether we're currently tracing.
   bool tracing_;
+  // How long to trace after message loop creation.
+  int trace_duration_secs_;
+  // Categories to trace.
+  std::string categories_;
 
   // Whether we've written the first chunk.
   bool first_chunk_written_;

@@ -35,7 +35,8 @@ void Usage() {
       << " [--" << switches::kDisableCache << "]"
       << " [--" << switches::kEnableMultiprocess << "]"
       << " [--" << switches::kOrigin << "=<url-lib-path>]"
-      << " [--" << switches::kTraceStartup << "]"
+      << " [--" << switches::kTraceStartup << "[=\"list,of,categories\"]]"
+      << " [--" << switches::kTraceStartupDuration << "=<seconds>]"
       << " [--" << switches::kURLMappings << "=from1=to1,from2=to2]"
       << " [--" << switches::kPredictableAppFilenames << "]"
       << " [--" << switches::kWaitForDebugger << "]"
@@ -77,8 +78,12 @@ int main(int argc, char** argv) {
   }
 
   bool trace_startup = command_line.HasSwitch(switches::kTraceStartup);
-  if (trace_startup)
-    tracer.Start(command_line.GetSwitchValueASCII(switches::kTraceStartup));
+  if (trace_startup) {
+    tracer.Start(
+        command_line.GetSwitchValueASCII(switches::kTraceStartup),
+        command_line.GetSwitchValueASCII(switches::kTraceStartupDuration),
+        "mojo_shell.trace");
+  }
 
   if (command_line.HasSwitch(switches::kCPUProfile)) {
 #if !defined(NDEBUG) || !defined(ENABLE_PROFILING)
@@ -94,13 +99,7 @@ int main(int argc, char** argv) {
   shell::Context shell_context(&tracer);
   {
     base::MessageLoop message_loop;
-    if (trace_startup) {
-      message_loop.PostDelayedTask(
-          FROM_HERE, base::Bind(&shell::Tracer::StopAndFlushToFile,
-                                base::Unretained(&tracer), "mojo_shell.trace"),
-          base::TimeDelta::FromSeconds(5));
-    }
-
+    tracer.DidCreateMessageLoop();
     if (!shell_context.Init()) {
       Usage();
       return 1;
@@ -123,6 +122,6 @@ int main(int argc, char** argv) {
   if (command_line.HasSwitch(switches::kCPUProfile))
     base::debug::StopProfiling();
   if (trace_startup)
-    tracer.StopAndFlushToFile("mojo_shell.trace");
+    tracer.StopAndFlushToFile();
   return 0;
 }

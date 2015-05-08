@@ -10,6 +10,8 @@ module tracing;
 // TraceDataCollector interface up until Stop() is called.
 
 interface TraceController {
+  // Categories can either be the empty string to mean the default set of
+  // categories or a comma-delimited list of categories to trace.
   StartTracing(string categories, TraceDataCollector collector);
   StopTracing();
 };

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "base/message_loop/message_loop.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
 #include "base/trace_event/trace_event.h"
@@ -21,26 +22,46 @@ Tracer::Tracer()
 Tracer::~Tracer() {
 }
 
-void Tracer::Start(const std::string& categories) {
+void Tracer::Start(const std::string& categories,
+                   const std::string& duration_seconds_str,
+                   const std::string& filename) {
+  trace_duration_secs_ = 5;
+  if (!duration_seconds_str.empty()) {
+    CHECK(base::StringToInt(duration_seconds_str, &trace_duration_secs_))
+        << "Could not parse --trace-startup-duration value "
+        << duration_seconds_str;
+  }
   tracing_ = true;
+  trace_filename_ = filename;
+  categories_ = categories;
   base::trace_event::CategoryFilter category_filter(categories);
   base::trace_event::TraceLog::GetInstance()->SetEnabled(
       category_filter, base::trace_event::TraceLog::RECORDING_MODE,
       base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
 }
 
+void Tracer::DidCreateMessageLoop() {
+  if (!tracing_)
+    return;
+
+  base::MessageLoop::current()->PostDelayedTask(
+      FROM_HERE,
+      base::Bind(&shell::Tracer::StopAndFlushToFile, base::Unretained(this)),
+      base::TimeDelta::FromSeconds(trace_duration_secs_));
+}
+
 void Tracer::StartCollectingFromTracingService(
     tracing::TraceCoordinatorPtr coordinator) {
   coordinator_ = coordinator.Pass();
   mojo::DataPipe data_pipe;
-  coordinator_->Start(data_pipe.producer_handle.Pass(), "*");
+  coordinator_->Start(data_pipe.producer_handle.Pass(), categories_);
   drainer_.reset(new mojo::common::DataPipeDrainer(
       this, data_pipe.consumer_handle.Pass()));
 }
 
-void Tracer::StopAndFlushToFile(const std::string& filename) {
+void Tracer::StopAndFlushToFile() {
   if (tracing_)
-    StopTracingAndFlushToDisk(filename);
+    StopTracingAndFlushToDisk();
 }
 
 void Tracer::ConnectToController(
@@ -49,11 +70,10 @@ void Tracer::ConnectToController(
   impl->set_tracing_already_started(tracing_);
 }
 
-void Tracer::StopTracingAndFlushToDisk(const std::string& filename) {
+void Tracer::StopTracingAndFlushToDisk() {
   tracing_ = false;
-  trace_file_ = fopen(filename.c_str(), "w+");
+  trace_file_ = fopen(trace_filename_.c_str(), "w+");
   PCHECK(trace_file_);
-  trace_filename_ = filename;
   static const char kStart[] = "{\"traceEvents\":[";
   PCHECK(fwrite(kStart, 1, strlen(kStart), trace_file_) == strlen(kStart));
 
@@ -78,7 +98,7 @@ void Tracer::StopTracingAndFlushToDisk(const std::string& filename) {
       flush_thread.message_loop()->PostTask(
           FROM_HERE,
           base::Bind(&Tracer::EndTraceAndFlush, base::Unretained(this),
-                     filename,
+                     trace_filename_,
                      base::Bind(&base::WaitableEvent::Signal,
                                 base::Unretained(&flush_complete_event))));
       base::trace_event::TraceLog::GetInstance()

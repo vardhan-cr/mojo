@@ -70,6 +70,10 @@ const char kPredictableAppFilenames[] = "predictable-app-filenames";
 // seconds or when the shell exits.
 const char kTraceStartup[] = "trace-startup";
 
+// Sets the time in seconds until startup tracing ends. If omitted a default of
+// 5 seconds is used.
+const char kTraceStartupDuration[] = "trace-startup-duration";
+
 // Specifies a set of mappings to apply when resolving urls. The value is a set
 // of ',' separated mappings, where each mapping consists of a pair of urls
 // giving the to/from url to map. For example, 'a=b,c=d' contains two mappings,
@@ -91,6 +95,7 @@ const char* kSwitchArray[] = {kV,
                               kOrigin,
                               kPredictableAppFilenames,
                               kTraceStartup,
+                              kTraceStartupDuration,
                               kURLMappings};
 
 const std::set<std::string> GetAllSwitches() {

@@ -212,8 +212,12 @@ static void Init(JNIEnv* env,
   Tracer* tracer = new Tracer;
   g_internal_data.Get().tracer.reset(tracer);
   bool trace_startup = command_line->HasSwitch(switches::kTraceStartup);
-  if (trace_startup)
-    tracer->Start(command_line->GetSwitchValueASCII(switches::kTraceStartup));
+  if (trace_startup) {
+    tracer->Start(
+        command_line->GetSwitchValueASCII(switches::kTraceStartup),
+        command_line->GetSwitchValueASCII(switches::kTraceStartupDuration),
+        tmp_dir + "/mojo_shell.trace");
+  }
 
   g_internal_data.Get().shell_runner.reset(
       new MojoShellRunner(base::FilePath(base::android::ConvertJavaStringToUTF8(
@@ -234,14 +238,7 @@ static void Init(JNIEnv* env,
 
   g_internal_data.Get().java_message_loop.reset(new base::MessageLoopForUI);
   base::MessageLoopForUI::current()->Start();
-
-  if (trace_startup) {
-    g_internal_data.Get().java_message_loop->PostDelayedTask(
-        FROM_HERE,
-        base::Bind(&Tracer::StopAndFlushToFile, base::Unretained(tracer),
-                   tmp_dir + "/mojo_shell.trace"),
-        base::TimeDelta::FromSeconds(5));
-  }
+  tracer->DidCreateMessageLoop();
 
   // TODO(abarth): At which point should we switch to cross-platform
   // initialization?
