@@ -63,6 +63,7 @@ group("tests") {
     "//services/clipboard:apptests",
     "//services/dart/dart_apptests",
     "//services/files:apptests",
+    "//services/files/c:apptests",
     "//services/http_server:apptests",
     "//services/reaper:tests",
     "//services/url_response_disk_cache:tests",
@@ -75,11 +76,7 @@ group("tests") {
   ]
 
   if (is_linux) {
-    deps += [
-      # TODO(vtl): See TODO in //services/files/c/BUILD.gn.
-      "//services/files/c:apptests",
-      "//services/python:python_apptests",
-    ]
+    deps += [ "//services/python:python_apptests" ]
   }
 
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it

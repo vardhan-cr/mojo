@@ -60,15 +60,19 @@
 #define MOJIO_S_ISREG(mode) (((mode)&MOJIO_S_IFMT) == MOJIO_S_IFREG)
 #define MOJIO_S_ISSOCK(mode) (((mode)&MOJIO_S_IFMT) == MOJIO_S_IFSOCK)
 
-// These are for backwards compatibility with older versions of POSIX. Since we
-// didn't prefix the names of the members in |struct mojio_stat| below, we don't
-// prefix these macro names either. This means that we'll collide with the
-// "real" <sys/stat.h>, but that should be fine as long as it follows
-// POSIX.1-2008 to the letter (since the macro definitions will be identical,
-// which is valid).
-#define st_atime st_atim.tv_sec
-#define st_mtime st_mtim.tv_sec
-#define st_ctime st_ctim.tv_sec
+// POSIX.1-2008 says we should define |st_atime| to |st_atim.tv_sec| (and
+// similarly for |st_mtime| and |st_ctime|). This is to provide (source)
+// backwards compatibility with older versions of POSIX.
+//
+// We could reasonably provide these macros on systems that are compliant with
+// POSIX.1-2008 (or later): even though they might collide with macro
+// definitions in the "real" <sys/stat.h>, it's okay since the macro definitions
+// will be identical. However, providing these macros on systems that aren't
+// POSIX.1-2008-compliant (like Android) leads to an intractable conflict. Thus
+// we provide prefixed macros instead.
+#define mojio_st_atime st_atim.tv_sec
+#define mojio_st_mtime st_mtim.tv_sec
+#define mojio_st_ctime st_ctim.tv_sec
 
 // Types -----------------------------------------------------------------------
 

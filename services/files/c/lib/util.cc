@@ -4,6 +4,7 @@
 
 #include "services/files/c/lib/util.h"
 
+#include <assert.h>
 #include <errno.h>
 
 namespace mojio {
@@ -36,6 +37,9 @@ int ErrorToErrno(mojo::files::Error error) {
       // TODO(vtl): Something better?
       return EIO;
   }
+  assert(false);
+  // TODO(vtl): Something better?
+  return EIO;
 }
 
 }  // namespace mojio
