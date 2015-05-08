@@ -108,6 +108,7 @@ action_foreach("dart_embedder_package_sdk") {
     "//mojo/public/dart/src/application_connection.dart",
     "//mojo/public/dart/src/buffer.dart",
     "//mojo/public/dart/src/codec.dart",
+    "//mojo/public/dart/src/control_message.dart",
     "//mojo/public/dart/src/data_pipe.dart",
     "//mojo/public/dart/src/drain_data.dart",
     "//mojo/public/dart/src/event_stream.dart",

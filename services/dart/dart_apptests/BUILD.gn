@@ -11,9 +11,12 @@ dart_packaged_application("dart_apptests") {
     "io_internet_address_apptests.dart",
     "main.dart",
     "pingpong_apptests.dart",
+    "versioning_apptests.dart",
   ]
   deps = [
     "//mojo/dart/apptest",
+    "//mojo/public/interfaces/bindings/tests:versioning_test_client_interfaces",
+    "//mojo/public/interfaces/bindings/tests:versioning_test_service_interfaces",
     "//services/dart/test:echo_service_interface",
     "//services/dart/test:pingpong_service_interface",
   ]

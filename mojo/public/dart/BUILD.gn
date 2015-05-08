@@ -9,6 +9,7 @@ dart_mojo_sdk_sources = [
   "src/application.dart",
   "src/buffer.dart",
   "src/codec.dart",
+  "src/control_message.dart",
   "src/data_pipe.dart",
   "src/drain_data.dart",
   "src/event_stream.dart",
@@ -29,5 +30,6 @@ dart_package("dart") {
   sources = dart_mojo_sdk_sources
   deps = [
     "../interfaces/application",
+    "../interfaces/bindings",
   ]
 }

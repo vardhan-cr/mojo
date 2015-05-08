@@ -140,6 +140,10 @@ TEST(DartTest, exception_test) {
   RunTest("exception_test.dart", false, nullptr, 0);
 }
 
+TEST(DartTest, control_messages_test) {
+  RunTest("control_messages_test.dart", false, nullptr, 0);
+}
+
 TEST(DartTest, handle_finalizer_test) {
   const int kNumArgs = 2;
   const char* args[kNumArgs];

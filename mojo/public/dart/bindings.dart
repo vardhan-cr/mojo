@@ -9,7 +9,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:mojo/public/dart/core.dart' as core;
+import 'package:mojom/mojo/interface_control_messages.mojom.dart' as icm;
 
+part 'src/control_message.dart';
 part 'src/codec.dart';
 part 'src/message.dart';
 part 'src/proxy.dart';

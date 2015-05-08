@@ -9,10 +9,12 @@ import 'echo_apptests.dart' as echo;
 import 'pingpong_apptests.dart' as pingpong;
 import 'io_http_apptests.dart' as io_http;
 import 'io_internet_address_apptests.dart' as io_internet_address;
+import 'versioning_apptests.dart' as versioning;
 
 main(List args) {
   runAppTests(args[0], [echo.echoApptests,
                         io_internet_address.tests,
                         io_http.tests,
-                        pingpong.pingpongApptests]);
+                        pingpong.pingpongApptests,
+                        versioning.tests]);
 }
