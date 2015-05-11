@@ -1,0 +1,39 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+source_set("model") {
+  sources = [
+    "moterm_model.cc",
+    "moterm_model.h",
+  ]
+
+  deps = [
+    "//third_party/libteken",
+  ]
+
+  forward_dependent_configs_from = [ "//third_party/libteken" ]
+
+  public_deps = [
+    "//base",
+  ]
+}
+
+mojo_native_application("apptests") {
+  output_name = "moterm_apptests"
+
+  testonly = true
+
+  sources = [
+    "moterm_model_unittest.cc",
+  ]
+
+  deps = [
+    ":model",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//testing/gtest",
+  ]
+}

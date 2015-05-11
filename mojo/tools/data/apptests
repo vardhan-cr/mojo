@@ -50,6 +50,9 @@ tests = [
     "test": "mojo:mojio_apptests",
   },
   {
+    "test": "mojo:moterm_apptests",
+  },
+  {
     "test": "mojo:mojo_view_manager_client_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
