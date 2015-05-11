@@ -4,6 +4,35 @@
 
 import("//mojo/public/mojo_application.gni")
 
+mojo_native_application("moterm") {
+  sources = [
+    "moterm_main.cc",
+    "moterm_view.cc",
+    "moterm_view.h",
+  ]
+
+  deps = [
+    ":driver",
+    ":gl_helper",
+    ":key_util",
+    ":model",
+    "//base",
+    "//mojo/application",
+    "//mojo/common",
+    "//mojo/public/c/system",
+    "//mojo/public/cpp/application",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/services/files/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
+    "//mojo/services/terminal/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
+    "//mojo/skia",
+    "//skia",
+    "//third_party/dejavu-fonts-ttf-2.34:DejaVuSansMonoRegular",
+  ]
+}
+
 mojo_native_application("gl_helper_test_app") {
   sources = [
     "gl_helper_test_app.cc",

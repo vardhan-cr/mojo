@@ -7,6 +7,7 @@ import("$mojo_sdk_root/mojo/public/tools/bindings/mojom.gni")
 
 mojom("interfaces") {
   sources = [
+    "terminal.mojom",
     "terminal_client.mojom",
   ]
 
