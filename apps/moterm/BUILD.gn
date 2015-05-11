@@ -4,6 +4,22 @@
 
 import("//mojo/public/mojo_application.gni")
 
+mojo_native_application("gl_helper_test_app") {
+  sources = [
+    "gl_helper_test_app.cc",
+  ]
+
+  deps = [
+    ":gl_helper",
+    "//base",
+    "//mojo/application",
+    "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/gpu/public/interfaces",
+    "//mojo/services/native_viewport/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces",
+  ]
+}
+
 source_set("driver") {
   sources = [
     "moterm_driver.cc",
@@ -14,6 +30,36 @@ source_set("driver") {
     "//base",
     "//mojo/public/cpp/bindings",
     "//mojo/services/files/public/interfaces",
+  ]
+}
+
+source_set("gl_helper") {
+  sources = [
+    "gl_helper.cc",
+    "gl_helper.h",
+  ]
+
+  deps = [
+    "//mojo/public/cpp/application",
+    "//mojo/public/c/gles2",
+    "//mojo/public/interfaces/application",
+    "//mojo/services/gpu/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces",
+  ]
+
+  forward_dependent_configs_from = [
+    "//mojo/public/c/gles2",
+    "//mojo/services/gpu/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces",
+  ]
+
+  public_deps = [
+    "//base",
+    "//mojo/public/c/gles2:headers",
+    "//mojo/services/geometry/public/cpp",
+    "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/surfaces/public/cpp",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
   ]
 }
 
@@ -40,12 +86,14 @@ mojo_native_application("apptests") {
   testonly = true
 
   sources = [
+    "gl_helper_unittest.cc",
     "moterm_driver_unittest.cc",
     "moterm_model_unittest.cc",
   ]
 
   deps = [
     ":driver",
+    ":gl_helper",
     ":model",
     "//mojo/application",
     "//mojo/application:test_support",

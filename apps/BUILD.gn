@@ -7,5 +7,6 @@ group("apps") {
 
   deps = [
     "//apps/moterm:apptests",
+    "//apps/moterm:gl_helper_test_app",
   ]
 }
