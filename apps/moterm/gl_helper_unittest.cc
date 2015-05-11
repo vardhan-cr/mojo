@@ -97,17 +97,15 @@ TEST_F(GlHelperTest, Basic) {
 
   uint32_t frame_id = gl_helper()->EndFrame();
 
-  // We should first get |OnSurfaceIdChanged()|.
-  base::MessageLoop::current()->Run();
+  // We should get |OnSurfaceIdChanged()| and then |OnFrameDisplayed()|.
+  while (surface_id_changed_call_count() < 1u ||
+         on_frame_displayed_call_count() < 1u)
+    base::MessageLoop::current()->Run();
+
   EXPECT_EQ(1u, surface_id_changed_call_count());
-  EXPECT_EQ(0u, on_frame_displayed_call_count());
   EXPECT_TRUE(last_surface_id());
   EXPECT_NE(last_surface_id()->local, 0u);
   EXPECT_NE(last_surface_id()->id_namespace, 0u);
-
-  // Then we should get |OnFrameDisplayed()|.
-  base::MessageLoop::current()->Run();
-  EXPECT_EQ(1u, surface_id_changed_call_count());
   EXPECT_EQ(1u, on_frame_displayed_call_count());
   EXPECT_EQ(frame_id, last_frame_id());
 }
@@ -116,8 +114,9 @@ TEST_F(GlHelperTest, SetSurfaceSizeAndMakeCurrent) {
   // It only creates surfaces lazily, so we have to start/end a frame.
   gl_helper()->StartFrame();
   GLuint frame_id = gl_helper()->EndFrame();
-  base::MessageLoop::current()->Run();
-  base::MessageLoop::current()->Run();
+  while (surface_id_changed_call_count() < 1u ||
+         on_frame_displayed_call_count() < 1u)
+    base::MessageLoop::current()->Run();
   EXPECT_EQ(1u, surface_id_changed_call_count());
   mojo::SurfaceId surface_id = *last_surface_id();
   EXPECT_EQ(1u, on_frame_displayed_call_count());
@@ -149,18 +148,16 @@ TEST_F(GlHelperTest, SetSurfaceSizeAndMakeCurrent) {
   frame_id = gl_helper()->EndFrame();
   EXPECT_NE(frame_id, last_frame_id());
 
-  // We should get another |OnSurfaceIdChanged()|.
-  base::MessageLoop::current()->Run();
+  // We should get another |OnSurfaceIdChanged()| and another
+  // |OnFrameDisplayed()|.
+  while (surface_id_changed_call_count() < 2u ||
+         on_frame_displayed_call_count() < 2u)
+    base::MessageLoop::current()->Run();
   EXPECT_EQ(2u, surface_id_changed_call_count());
-  EXPECT_EQ(1u, on_frame_displayed_call_count());
   EXPECT_TRUE(last_surface_id());
   // Only the local part of the surface ID should have changed.
   EXPECT_NE(last_surface_id()->local, surface_id.local);
   EXPECT_EQ(surface_id.id_namespace, last_surface_id()->id_namespace);
-
-  // Then we should get another |OnFrameDisplayed()|.
-  base::MessageLoop::current()->Run();
-  EXPECT_EQ(2u, surface_id_changed_call_count());
   EXPECT_EQ(2u, on_frame_displayed_call_count());
   EXPECT_EQ(frame_id, last_frame_id());
 
