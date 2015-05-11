@@ -25,6 +25,11 @@ class CommandBufferDriver;
 // same thread as the native viewport.
 class CommandBufferImpl : public mojo::CommandBuffer {
  public:
+  class Observer {
+   public:
+    virtual void OnCommandBufferImplDestroyed() = 0;
+  };
+
   CommandBufferImpl(
       mojo::InterfaceRequest<CommandBuffer> request,
       mojo::ViewportParameterListenerPtr listener,
@@ -52,6 +57,8 @@ class CommandBufferImpl : public mojo::CommandBuffer {
   void UpdateVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval);
 
+  void set_observer(Observer* observer) { observer_ = observer; }
+
  private:
   void BindToRequest(mojo::InterfaceRequest<CommandBuffer> request);
 
@@ -61,6 +68,7 @@ class CommandBufferImpl : public mojo::CommandBuffer {
   mojo::CommandBufferSyncPointClientPtr sync_point_client_;
   mojo::ViewportParameterListenerPtr viewport_parameter_listener_;
   mojo::StrongBinding<CommandBuffer> binding_;
+  Observer* observer_;
 
   base::WeakPtrFactory<CommandBufferImpl> weak_factory_;
   DISALLOW_COPY_AND_ASSIGN(CommandBufferImpl);

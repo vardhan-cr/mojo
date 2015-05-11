@@ -8,6 +8,7 @@
 #include "base/memory/ref_counted.h"
 #include "mojo/services/gpu/public/interfaces/context_provider.mojom.h"
 #include "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom.h"
+#include "services/gles2/command_buffer_impl.h"
 #include "ui/gfx/native_widget_types.h"
 
 namespace gles2 {
@@ -16,7 +17,8 @@ class GpuState;
 
 namespace native_viewport {
 
-class OnscreenContextProvider : public mojo::ContextProvider {
+class OnscreenContextProvider : public mojo::ContextProvider,
+                                public gles2::CommandBufferImpl::Observer {
  public:
   explicit OnscreenContextProvider(const scoped_refptr<gles2::GpuState>& state);
   ~OnscreenContextProvider() override;
@@ -30,8 +32,12 @@ class OnscreenContextProvider : public mojo::ContextProvider {
   void Create(mojo::ViewportParameterListenerPtr viewport_parameter_listener,
               const CreateCallback& callback) override;
 
+  // gles2::CommandBufferImpl::Observer implementation:
+  void OnCommandBufferImplDestroyed() override;
+
   void CreateAndReturnCommandBuffer();
 
+  gles2::CommandBufferImpl* command_buffer_impl_;
   scoped_refptr<gles2::GpuState> state_;
   gfx::AcceleratedWidget widget_;
   mojo::ViewportParameterListenerPtr pending_listener_;

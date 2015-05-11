@@ -57,6 +57,7 @@ CommandBufferImpl::CommandBufferImpl(
       driver_(driver.Pass()),
       viewport_parameter_listener_(listener.Pass()),
       binding_(this),
+      observer_(nullptr),
       weak_factory_(this) {
   driver_->set_client(make_scoped_ptr(new CommandBufferDriverClientImpl(
       weak_factory_.GetWeakPtr(), control_task_runner)));
@@ -67,6 +68,9 @@ CommandBufferImpl::CommandBufferImpl(
 }
 
 CommandBufferImpl::~CommandBufferImpl() {
+  if (observer_) {
+    observer_->OnCommandBufferImplDestroyed();
+  }
   driver_task_runner_->PostTask(
       FROM_HERE, base::Bind(&DestroyDriver, base::Passed(&driver_)));
 }
