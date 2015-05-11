@@ -31,6 +31,9 @@ _IGNORED_PATTERNS = [
   re.compile(r'.*is a part and can not|^Only libraries can be analyzed'),
   # TODO: Remove this once dev SDK includes Uri.directory constructor.
   re.compile(r'.*The class \'Uri\' does not have a constructor \'directory\''),
+  # TODO: Remove this once Sky no longer generates this warning.
+  # dartbug.com/22836
+  re.compile(r'.*cannot both be unnamed'),
 ]
 
 def _success(stamp_file):
