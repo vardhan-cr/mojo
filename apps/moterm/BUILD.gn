@@ -63,6 +63,21 @@ source_set("gl_helper") {
   ]
 }
 
+source_set("key_util") {
+  sources = [
+    "key_util.cc",
+    "key_util.h",
+  ]
+
+  deps = [
+    "//base",
+  ]
+
+  public_deps = [
+    "//mojo/services/input_events/public/interfaces",
+  ]
+}
+
 source_set("model") {
   sources = [
     "moterm_model.cc",
@@ -87,6 +102,7 @@ mojo_native_application("apptests") {
 
   sources = [
     "gl_helper_unittest.cc",
+    "key_util_unittest.cc",
     "moterm_driver_unittest.cc",
     "moterm_model_unittest.cc",
   ]
@@ -94,6 +110,7 @@ mojo_native_application("apptests") {
   deps = [
     ":driver",
     ":gl_helper",
+    ":key_util",
     ":model",
     "//mojo/application",
     "//mojo/application:test_support",
