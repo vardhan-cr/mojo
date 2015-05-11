@@ -70,6 +70,8 @@ std::string GLNonOwnedContext::GetExtensions() {
 
 }  // anonymous namespace
 
+#if !defined(USE_OZONE)
+
 // static
 scoped_refptr<GLContext> GLContext::CreateGLContext(
     GLShareGroup* share_group,
@@ -95,6 +97,8 @@ scoped_refptr<GLContext> GLContext::CreateGLContext(
 
   return context;
 }
+
+#endif // USE_OZONE
 
 bool GLContextEGL::GetTotalGpuMemory(size_t* bytes) {
   DCHECK(bytes);

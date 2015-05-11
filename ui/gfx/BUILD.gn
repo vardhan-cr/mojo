@@ -76,6 +76,7 @@ component("gfx") {
     "shadow_value.h",
     "skia_util.cc",
     "skia_util.h",
+    "swap_result.h",
     "transform.cc",
     "transform.h",
     "transform_util.cc",

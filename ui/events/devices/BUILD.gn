@@ -21,6 +21,12 @@ component("devices") {
     "touchscreen_device.h",
   ]
 
+  if (!is_linux) {
+    sources += [
+      "device_util_stub.cc",
+    ]
+  }
+
   defines = [ "EVENTS_DEVICES_IMPLEMENTATION" ]
 
   deps = [

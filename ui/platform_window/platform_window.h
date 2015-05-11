@@ -6,20 +6,14 @@
 #define UI_PLATFORM_WINDOW_PLATFORM_WINDOW_H_
 
 #include "base/memory/scoped_ptr.h"
+#include "ui/base/cursor/cursor.h"
 
 namespace gfx {
 class Rect;
 }
 
 namespace ui {
-
-#if defined(USE_X11)
-typedef unsigned long PlatformCursor;
-#else
-typedef void* PlatformCursor;
-#endif
   
-
 class PlatformWindowDelegate;
 
 // Platform window.

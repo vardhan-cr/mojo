@@ -58,10 +58,23 @@ component("base") {
   if (is_android) {
     deps += [
       ":ui_base_jni_headers",
-      "//cc",
+      #"//cc",
     ]
 
     libs += [ "jnigraphics" ]
+  }
+  if (use_ozone) {
+    sources += [
+      "cursor/cursor.cc",
+      "cursor/cursor.h",
+      "cursor/cursor_ozone.cc",
+      "cursor/ozone/bitmap_cursor_factory_ozone.cc",
+      "cursor/ozone/bitmap_cursor_factory_ozone.h",
+    ]
+    deps += [
+      "//ui/events/ozone:events_ozone_layout",
+      "//ui/ozone:ozone_base",
+    ]
   }
 }
 

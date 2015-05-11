@@ -96,6 +96,7 @@ typedef struct _cairo cairo_t;
 #if defined(OS_ANDROID)
 struct ANativeWindow;
 namespace ui {
+class Cursor;
 class WindowAndroid;
 class ViewAndroid;
 }
@@ -126,12 +127,18 @@ typedef UIEvent* NativeEvent;
 typedef NSCursor* NativeCursor;
 typedef NSView* NativeView;
 typedef NSWindow* NativeWindow;
+typedef void* NativeRegion;
 typedef NSEvent* NativeEvent;
 #elif defined(OS_ANDROID)
 typedef void* NativeRegion;
+#if defined(USE_OZONE)
+typedef ui::Cursor NativeCursor;
+#else
 typedef void* NativeCursor;
+#endif
 typedef ui::ViewAndroid* NativeView;
 typedef ui::WindowAndroid* NativeWindow;
+typedef void* NativeRegion;
 typedef jobject NativeEvent;
 #else
 #error Unknown build environment.
@@ -208,7 +215,7 @@ typedef intptr_t NativeViewId;
   typedef unsigned long PluginWindowHandle;
   const PluginWindowHandle kNullPluginWindow = 0;
 #elif defined(OS_ANDROID)
-  typedef uint64 PluginWindowHandle;
+  typedef ANativeWindow* PluginWindowHandle;
   const PluginWindowHandle kNullPluginWindow = 0;
 #elif defined(USE_OZONE)
   typedef intptr_t PluginWindowHandle;

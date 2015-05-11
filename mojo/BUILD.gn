@@ -29,6 +29,8 @@ group("mojo") {
     "//mojo/public",
     "//mojo/services",
     "//services",
+    "//ui/ozone",
+    "//ui/ozone/demo",
   ]
 
   if (is_android) {
