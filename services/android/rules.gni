@@ -5,13 +5,18 @@
 import("//build/config/android/rules.gni")
 import("//mojo/public/mojo_application.gni")
 
+servicess_android_path = get_path_info(".", "abspath")
+
 template("mojo_android_java_application") {
   assert(defined(invoker.mojo_main))
 
   dex_output_path = "$target_out_dir/${target_name}.dex.jar"
+  dex_with_manifest_output_path =
+      "$target_out_dir/${target_name}_with_manifest.dex.jar"
 
   android_lib_name = "__${target_name}_lib"
   android_standalone_name = "__${target_name}_standalone"
+  android_with_manifest_name = "__${target_name}_with_manifest"
 
   all_deps = [
     "//mojo/public/java:bindings",
@@ -23,8 +28,6 @@ template("mojo_android_java_application") {
 
   android_library(android_lib_name) {
     java_files = invoker.sources
-
-    manifest_entries = [ "Mojo-Class:" + invoker.mojo_main ]
 
     deps = all_deps
   }
@@ -38,6 +41,30 @@ template("mojo_android_java_application") {
     excluded_jars = [ "${system_gen_dir}/system.dex.jar" ]
   }
 
+  action(android_with_manifest_name) {
+    script = "${servicess_android_path}/add_manifest_entry.py"
+
+    input = dex_output_path
+    inputs = [
+      input,
+    ]
+
+    output = dex_with_manifest_output_path
+    outputs = [
+      output,
+    ]
+
+    rebase_input = rebase_path(input)
+    rebase_output = rebase_path(output)
+    mojo_main = invoker.mojo_main
+    args = [
+      "--input=$rebase_input",
+      "--output=$rebase_output",
+      "--key=Mojo-Class",
+      "--value=$mojo_main",
+    ]
+  }
+
   if (defined(invoker.output_name)) {
     mojo_output = "$root_out_dir/" + invoker.output_name + ".mojo"
   } else {
@@ -47,7 +74,7 @@ template("mojo_android_java_application") {
   action(target_name) {
     script = rebase_path("mojo/public/tools/prepend.py", ".", mojo_root)
 
-    input = dex_output_path
+    input = dex_with_manifest_output_path
     inputs = [
       input,
     ]
