@@ -14,6 +14,7 @@
 #include "base/strings/string_util.h"
 #include "gpu/command_buffer/service/gl_utils.h"
 #include "gpu/command_buffer/service/gpu_switches.h"
+#include "gpu/config/gpu_switches.h"
 #include "ui/gl/gl_fence.h"
 #include "ui/gl/gl_implementation.h"
 
@@ -153,7 +154,8 @@ FeatureInfo::FeatureFlags::FeatureFlags()
       blend_equation_advanced(false),
       blend_equation_advanced_coherent(false),
       ext_texture_rg(false),
-      enable_subscribe_uniform(false) {
+      enable_subscribe_uniform(false),
+      emulate_primitive_restart_fixed_index(false) {
 }
 
 FeatureInfo::Workarounds::Workarounds() :
@@ -962,7 +964,7 @@ void FeatureInfo::InitializeFeatures() {
 
   if ((gl_version_info_->is_es3 ||
        extensions.Contains("GL_EXT_discard_framebuffer")) &&
-      !workarounds_.disable_ext_discard_framebuffer) {
+      !workarounds_.disable_discard_framebuffer) {
     // DiscardFramebufferEXT is automatically bound to InvalidateFramebuffer.
     AddExtensionString("GL_EXT_discard_framebuffer");
     feature_flags_.ext_discard_framebuffer = true;
@@ -1050,6 +1052,13 @@ void FeatureInfo::InitializeFeatures() {
     gfx::GLFenceEGL::SetIgnoreFailures();
   }
 #endif
+
+  if (gl_version_info_->IsLowerThanGL(4, 3)) {
+    // crbug.com/481184.
+    // GL_PRIMITIVE_RESTART_FIXED_INDEX is only available on Desktop GL 4.3+,
+    // but we emulate ES 3.0 on top of Desktop GL 4.2+.
+    feature_flags_.emulate_primitive_restart_fixed_index = true;
+  }
 }
 
 bool FeatureInfo::IsES3Capable() const {
@@ -1071,6 +1080,60 @@ bool FeatureInfo::IsES3Capable() const {
 void FeatureInfo::EnableES3Validators() {
   DCHECK(IsES3Capable());
   validators_.UpdateValuesES3();
+
+  GLint max_color_attachments = 0;
+  glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &max_color_attachments);
+  const int kTotalColorAttachmentEnums = 16;
+  const GLenum kColorAttachments[] = {
+    GL_COLOR_ATTACHMENT0,
+    GL_COLOR_ATTACHMENT1,
+    GL_COLOR_ATTACHMENT2,
+    GL_COLOR_ATTACHMENT3,
+    GL_COLOR_ATTACHMENT4,
+    GL_COLOR_ATTACHMENT5,
+    GL_COLOR_ATTACHMENT6,
+    GL_COLOR_ATTACHMENT7,
+    GL_COLOR_ATTACHMENT8,
+    GL_COLOR_ATTACHMENT9,
+    GL_COLOR_ATTACHMENT10,
+    GL_COLOR_ATTACHMENT11,
+    GL_COLOR_ATTACHMENT12,
+    GL_COLOR_ATTACHMENT13,
+    GL_COLOR_ATTACHMENT14,
+    GL_COLOR_ATTACHMENT15,
+  };
+  if (max_color_attachments < kTotalColorAttachmentEnums) {
+    validators_.attachment.RemoveValues(
+        kColorAttachments + max_color_attachments,
+        kTotalColorAttachmentEnums - max_color_attachments);
+  }
+
+  GLint max_draw_buffers = 0;
+  glGetIntegerv(GL_MAX_DRAW_BUFFERS, &max_draw_buffers);
+  const int kTotalDrawBufferEnums = 16;
+  const GLenum kDrawBuffers[] = {
+    GL_DRAW_BUFFER0,
+    GL_DRAW_BUFFER1,
+    GL_DRAW_BUFFER2,
+    GL_DRAW_BUFFER3,
+    GL_DRAW_BUFFER4,
+    GL_DRAW_BUFFER5,
+    GL_DRAW_BUFFER6,
+    GL_DRAW_BUFFER7,
+    GL_DRAW_BUFFER8,
+    GL_DRAW_BUFFER9,
+    GL_DRAW_BUFFER10,
+    GL_DRAW_BUFFER11,
+    GL_DRAW_BUFFER12,
+    GL_DRAW_BUFFER13,
+    GL_DRAW_BUFFER14,
+    GL_DRAW_BUFFER15,
+  };
+  if (max_draw_buffers < kTotalDrawBufferEnums) {
+    validators_.g_l_state.RemoveValues(
+        kDrawBuffers + max_draw_buffers,
+        kTotalDrawBufferEnums - max_draw_buffers);
+  }
 }
 
 void FeatureInfo::AddExtensionString(const char* s) {

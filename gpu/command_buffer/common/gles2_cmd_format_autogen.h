@@ -4050,6 +4050,165 @@ static_assert(offsetof(GetFramebufferAttachmentParameteriv,
               "offset of GetFramebufferAttachmentParameteriv params_shm_offset "
               "should be 20");
 
+struct GetInteger64v {
+  typedef GetInteger64v ValueType;
+  static const CommandId kCmdId = kGetInteger64v;
+  static const cmd::ArgFlags kArgFlags = cmd::kFixed;
+  static const uint8 cmd_flags = CMD_FLAG_SET_TRACE_LEVEL(3);
+
+  typedef SizedResult<GLint64> Result;
+
+  static uint32_t ComputeSize() {
+    return static_cast<uint32_t>(sizeof(ValueType));  // NOLINT
+  }
+
+  void SetHeader() { header.SetCmd<ValueType>(); }
+
+  void Init(GLenum _pname,
+            uint32_t _params_shm_id,
+            uint32_t _params_shm_offset) {
+    SetHeader();
+    pname = _pname;
+    params_shm_id = _params_shm_id;
+    params_shm_offset = _params_shm_offset;
+  }
+
+  void* Set(void* cmd,
+            GLenum _pname,
+            uint32_t _params_shm_id,
+            uint32_t _params_shm_offset) {
+    static_cast<ValueType*>(cmd)
+        ->Init(_pname, _params_shm_id, _params_shm_offset);
+    return NextCmdAddress<ValueType>(cmd);
+  }
+
+  gpu::CommandHeader header;
+  uint32_t pname;
+  uint32_t params_shm_id;
+  uint32_t params_shm_offset;
+};
+
+static_assert(sizeof(GetInteger64v) == 16,
+              "size of GetInteger64v should be 16");
+static_assert(offsetof(GetInteger64v, header) == 0,
+              "offset of GetInteger64v header should be 0");
+static_assert(offsetof(GetInteger64v, pname) == 4,
+              "offset of GetInteger64v pname should be 4");
+static_assert(offsetof(GetInteger64v, params_shm_id) == 8,
+              "offset of GetInteger64v params_shm_id should be 8");
+static_assert(offsetof(GetInteger64v, params_shm_offset) == 12,
+              "offset of GetInteger64v params_shm_offset should be 12");
+
+struct GetIntegeri_v {
+  typedef GetIntegeri_v ValueType;
+  static const CommandId kCmdId = kGetIntegeri_v;
+  static const cmd::ArgFlags kArgFlags = cmd::kFixed;
+  static const uint8 cmd_flags = CMD_FLAG_SET_TRACE_LEVEL(3);
+
+  typedef SizedResult<GLint> Result;
+
+  static uint32_t ComputeSize() {
+    return static_cast<uint32_t>(sizeof(ValueType));  // NOLINT
+  }
+
+  void SetHeader() { header.SetCmd<ValueType>(); }
+
+  void Init(GLenum _pname,
+            GLuint _index,
+            uint32_t _data_shm_id,
+            uint32_t _data_shm_offset) {
+    SetHeader();
+    pname = _pname;
+    index = _index;
+    data_shm_id = _data_shm_id;
+    data_shm_offset = _data_shm_offset;
+  }
+
+  void* Set(void* cmd,
+            GLenum _pname,
+            GLuint _index,
+            uint32_t _data_shm_id,
+            uint32_t _data_shm_offset) {
+    static_cast<ValueType*>(cmd)
+        ->Init(_pname, _index, _data_shm_id, _data_shm_offset);
+    return NextCmdAddress<ValueType>(cmd);
+  }
+
+  gpu::CommandHeader header;
+  uint32_t pname;
+  uint32_t index;
+  uint32_t data_shm_id;
+  uint32_t data_shm_offset;
+};
+
+static_assert(sizeof(GetIntegeri_v) == 20,
+              "size of GetIntegeri_v should be 20");
+static_assert(offsetof(GetIntegeri_v, header) == 0,
+              "offset of GetIntegeri_v header should be 0");
+static_assert(offsetof(GetIntegeri_v, pname) == 4,
+              "offset of GetIntegeri_v pname should be 4");
+static_assert(offsetof(GetIntegeri_v, index) == 8,
+              "offset of GetIntegeri_v index should be 8");
+static_assert(offsetof(GetIntegeri_v, data_shm_id) == 12,
+              "offset of GetIntegeri_v data_shm_id should be 12");
+static_assert(offsetof(GetIntegeri_v, data_shm_offset) == 16,
+              "offset of GetIntegeri_v data_shm_offset should be 16");
+
+struct GetInteger64i_v {
+  typedef GetInteger64i_v ValueType;
+  static const CommandId kCmdId = kGetInteger64i_v;
+  static const cmd::ArgFlags kArgFlags = cmd::kFixed;
+  static const uint8 cmd_flags = CMD_FLAG_SET_TRACE_LEVEL(3);
+
+  typedef SizedResult<GLint64> Result;
+
+  static uint32_t ComputeSize() {
+    return static_cast<uint32_t>(sizeof(ValueType));  // NOLINT
+  }
+
+  void SetHeader() { header.SetCmd<ValueType>(); }
+
+  void Init(GLenum _pname,
+            GLuint _index,
+            uint32_t _data_shm_id,
+            uint32_t _data_shm_offset) {
+    SetHeader();
+    pname = _pname;
+    index = _index;
+    data_shm_id = _data_shm_id;
+    data_shm_offset = _data_shm_offset;
+  }
+
+  void* Set(void* cmd,
+            GLenum _pname,
+            GLuint _index,
+            uint32_t _data_shm_id,
+            uint32_t _data_shm_offset) {
+    static_cast<ValueType*>(cmd)
+        ->Init(_pname, _index, _data_shm_id, _data_shm_offset);
+    return NextCmdAddress<ValueType>(cmd);
+  }
+
+  gpu::CommandHeader header;
+  uint32_t pname;
+  uint32_t index;
+  uint32_t data_shm_id;
+  uint32_t data_shm_offset;
+};
+
+static_assert(sizeof(GetInteger64i_v) == 20,
+              "size of GetInteger64i_v should be 20");
+static_assert(offsetof(GetInteger64i_v, header) == 0,
+              "offset of GetInteger64i_v header should be 0");
+static_assert(offsetof(GetInteger64i_v, pname) == 4,
+              "offset of GetInteger64i_v pname should be 4");
+static_assert(offsetof(GetInteger64i_v, index) == 8,
+              "offset of GetInteger64i_v index should be 8");
+static_assert(offsetof(GetInteger64i_v, data_shm_id) == 12,
+              "offset of GetInteger64i_v data_shm_id should be 12");
+static_assert(offsetof(GetInteger64i_v, data_shm_offset) == 16,
+              "offset of GetInteger64i_v data_shm_offset should be 16");
+
 struct GetIntegerv {
   typedef GetIntegerv ValueType;
   static const CommandId kCmdId = kGetIntegerv;

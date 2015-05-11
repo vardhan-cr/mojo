@@ -996,6 +996,87 @@ void GLES2Implementation::GetFramebufferAttachmentParameteriv(GLenum target,
   });
   CheckGLError();
 }
+void GLES2Implementation::GetInteger64v(GLenum pname, GLint64* params) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glGetInteger64v("
+                     << GLES2Util::GetStringGLState(pname) << ", "
+                     << static_cast<const void*>(params) << ")");
+  TRACE_EVENT0("gpu", "GLES2Implementation::GetInteger64v");
+  if (GetInteger64vHelper(pname, params)) {
+    return;
+  }
+  typedef cmds::GetInteger64v::Result Result;
+  Result* result = GetResultAs<Result*>();
+  if (!result) {
+    return;
+  }
+  result->SetNumResults(0);
+  helper_->GetInteger64v(pname, GetResultShmId(), GetResultShmOffset());
+  WaitForCmd();
+  result->CopyResult(params);
+  GPU_CLIENT_LOG_CODE_BLOCK({
+    for (int32_t i = 0; i < result->GetNumResults(); ++i) {
+      GPU_CLIENT_LOG("  " << i << ": " << result->GetData()[i]);
+    }
+  });
+  CheckGLError();
+}
+void GLES2Implementation::GetIntegeri_v(GLenum pname,
+                                        GLuint index,
+                                        GLint* data) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_VALIDATE_DESTINATION_INITALIZATION(GLint, data);
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glGetIntegeri_v("
+                     << GLES2Util::GetStringIndexedGLState(pname) << ", "
+                     << index << ", " << static_cast<const void*>(data) << ")");
+  TRACE_EVENT0("gpu", "GLES2Implementation::GetIntegeri_v");
+  if (GetIntegeri_vHelper(pname, index, data)) {
+    return;
+  }
+  typedef cmds::GetIntegeri_v::Result Result;
+  Result* result = GetResultAs<Result*>();
+  if (!result) {
+    return;
+  }
+  result->SetNumResults(0);
+  helper_->GetIntegeri_v(pname, index, GetResultShmId(), GetResultShmOffset());
+  WaitForCmd();
+  result->CopyResult(data);
+  GPU_CLIENT_LOG_CODE_BLOCK({
+    for (int32_t i = 0; i < result->GetNumResults(); ++i) {
+      GPU_CLIENT_LOG("  " << i << ": " << result->GetData()[i]);
+    }
+  });
+  CheckGLError();
+}
+void GLES2Implementation::GetInteger64i_v(GLenum pname,
+                                          GLuint index,
+                                          GLint64* data) {
+  GPU_CLIENT_SINGLE_THREAD_CHECK();
+  GPU_CLIENT_LOG("[" << GetLogPrefix() << "] glGetInteger64i_v("
+                     << GLES2Util::GetStringIndexedGLState(pname) << ", "
+                     << index << ", " << static_cast<const void*>(data) << ")");
+  TRACE_EVENT0("gpu", "GLES2Implementation::GetInteger64i_v");
+  if (GetInteger64i_vHelper(pname, index, data)) {
+    return;
+  }
+  typedef cmds::GetInteger64i_v::Result Result;
+  Result* result = GetResultAs<Result*>();
+  if (!result) {
+    return;
+  }
+  result->SetNumResults(0);
+  helper_->GetInteger64i_v(pname, index, GetResultShmId(),
+                           GetResultShmOffset());
+  WaitForCmd();
+  result->CopyResult(data);
+  GPU_CLIENT_LOG_CODE_BLOCK({
+    for (int32_t i = 0; i < result->GetNumResults(); ++i) {
+      GPU_CLIENT_LOG("  " << i << ": " << result->GetData()[i]);
+    }
+  });
+  CheckGLError();
+}
 void GLES2Implementation::GetIntegerv(GLenum pname, GLint* params) {
   GPU_CLIENT_SINGLE_THREAD_CHECK();
   GPU_CLIENT_VALIDATE_DESTINATION_INITALIZATION(GLint, params);

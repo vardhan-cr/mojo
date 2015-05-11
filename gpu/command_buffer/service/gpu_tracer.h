@@ -56,6 +56,8 @@ class GPU_EXPORT GPUTracer
   explicit GPUTracer(gles2::GLES2Decoder* decoder);
   virtual ~GPUTracer();
 
+  void Destroy(bool have_context);
+
   // Scheduled processing in decoder begins.
   bool BeginDecoding();
 
@@ -83,13 +85,14 @@ class GPU_EXPORT GPUTracer
 
   void Process();
   void ProcessTraces();
+  void ClearFinishedTraces(bool have_context);
 
   void IssueProcessTask();
 
   scoped_refptr<gfx::GPUTimingClient> gpu_timing_client_;
   scoped_refptr<Outputter> outputter_;
   std::vector<TraceMarker> markers_[NUM_TRACER_SOURCES];
-  std::deque<scoped_refptr<GPUTrace> > traces_;
+  std::deque<scoped_refptr<GPUTrace> > finished_traces_;
 
   const unsigned char* gpu_trace_srv_category;
   const unsigned char* gpu_trace_dev_category;
@@ -153,12 +156,16 @@ class GPU_EXPORT GPUTrace
            gfx::GPUTimingClient* gpu_timing_client,
            const std::string& category,
            const std::string& name,
-           const bool enabled);
+           const bool tracing_service,
+           const bool tracing_device);
 
-  void Start(bool trace_service);
-  void End(bool tracing_service);
+  void Destroy(bool have_context);
+
+  void Start();
+  void End();
   bool IsAvailable();
-  bool IsEnabled() { return enabled_; }
+  bool IsServiceTraceEnabled() const { return service_enabled_; }
+  bool IsDeviceTraceEnabled() const { return device_enabled_; }
   void Process();
 
  private:
@@ -172,7 +179,8 @@ class GPU_EXPORT GPUTrace
   std::string name_;
   scoped_refptr<Outputter> outputter_;
   scoped_ptr<gfx::GPUTimer> gpu_timer_;
-  const bool enabled_ = false;
+  const bool service_enabled_ = false;
+  const bool device_enabled_ = false;
 
   DISALLOW_COPY_AND_ASSIGN(GPUTrace);
 };

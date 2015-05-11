@@ -90,6 +90,7 @@ static const GLenum valid_capability_table[] = {
 
 static const GLenum valid_capability_table_es3[] = {
     GL_RASTERIZER_DISCARD,
+    GL_PRIMITIVE_RESTART_FIXED_INDEX,
 };
 
 static const GLenum valid_cmp_function_table[] = {
@@ -251,6 +252,87 @@ static const GLenum valid_g_l_state_table[] = {
     GL_SCISSOR_TEST,
     GL_STENCIL_TEST,
     GL_RASTERIZER_DISCARD,
+    GL_PRIMITIVE_RESTART_FIXED_INDEX,
+};
+
+static const GLenum valid_g_l_state_table_es3[] = {
+    GL_COPY_READ_BUFFER_BINDING,
+    GL_COPY_WRITE_BUFFER_BINDING,
+    GL_DRAW_BUFFER0,
+    GL_DRAW_BUFFER1,
+    GL_DRAW_BUFFER2,
+    GL_DRAW_BUFFER3,
+    GL_DRAW_BUFFER4,
+    GL_DRAW_BUFFER5,
+    GL_DRAW_BUFFER6,
+    GL_DRAW_BUFFER7,
+    GL_DRAW_BUFFER8,
+    GL_DRAW_BUFFER9,
+    GL_DRAW_BUFFER10,
+    GL_DRAW_BUFFER11,
+    GL_DRAW_BUFFER12,
+    GL_DRAW_BUFFER13,
+    GL_DRAW_BUFFER14,
+    GL_DRAW_BUFFER15,
+    GL_DRAW_FRAMEBUFFER_BINDING,
+    GL_FRAGMENT_SHADER_DERIVATIVE_HINT,
+    GL_MAJOR_VERSION,
+    GL_MAX_3D_TEXTURE_SIZE,
+    GL_MAX_ARRAY_TEXTURE_LAYERS,
+    GL_MAX_COLOR_ATTACHMENTS,
+    GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
+    GL_MAX_COMBINED_UNIFORM_BLOCKS,
+    GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
+    GL_MAX_DRAW_BUFFERS,
+    GL_MAX_ELEMENT_INDEX,
+    GL_MAX_ELEMENTS_INDICES,
+    GL_MAX_ELEMENTS_VERTICES,
+    GL_MAX_FRAGMENT_INPUT_COMPONENTS,
+    GL_MAX_FRAGMENT_UNIFORM_BLOCKS,
+    GL_MAX_FRAGMENT_UNIFORM_COMPONENTS,
+    GL_MAX_PROGRAM_TEXEL_OFFSET,
+    GL_MAX_SAMPLES,
+    GL_MAX_SERVER_WAIT_TIMEOUT,
+    GL_MAX_TEXTURE_LOD_BIAS,
+    GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS,
+    GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS,
+    GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS,
+    GL_MAX_UNIFORM_BLOCK_SIZE,
+    GL_MAX_UNIFORM_BUFFER_BINDINGS,
+    GL_MAX_VARYING_COMPONENTS,
+    GL_MAX_VERTEX_OUTPUT_COMPONENTS,
+    GL_MAX_VERTEX_UNIFORM_BLOCKS,
+    GL_MAX_VERTEX_UNIFORM_COMPONENTS,
+    GL_MIN_PROGRAM_TEXEL_OFFSET,
+    GL_MINOR_VERSION,
+    GL_NUM_EXTENSIONS,
+    GL_NUM_PROGRAM_BINARY_FORMATS,
+    GL_PACK_ROW_LENGTH,
+    GL_PACK_SKIP_PIXELS,
+    GL_PACK_SKIP_ROWS,
+    GL_PIXEL_PACK_BUFFER_BINDING,
+    GL_PIXEL_UNPACK_BUFFER_BINDING,
+    GL_PROGRAM_BINARY_FORMATS,
+    GL_READ_BUFFER,
+    GL_READ_FRAMEBUFFER_BINDING,
+    GL_SAMPLER_BINDING,
+    GL_TEXTURE_BINDING_2D_ARRAY,
+    GL_TEXTURE_BINDING_3D,
+    GL_TRANSFORM_FEEDBACK_BINDING,
+    GL_TRANSFORM_FEEDBACK_ACTIVE,
+    GL_TRANSFORM_FEEDBACK_BUFFER_BINDING,
+    GL_TRANSFORM_FEEDBACK_PAUSED,
+    GL_TRANSFORM_FEEDBACK_BUFFER_SIZE,
+    GL_TRANSFORM_FEEDBACK_BUFFER_START,
+    GL_UNIFORM_BUFFER_BINDING,
+    GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,
+    GL_UNIFORM_BUFFER_SIZE,
+    GL_UNIFORM_BUFFER_START,
+    GL_UNPACK_IMAGE_HEIGHT,
+    GL_UNPACK_ROW_LENGTH,
+    GL_UNPACK_SKIP_IMAGES,
+    GL_UNPACK_SKIP_PIXELS,
+    GL_UNPACK_SKIP_ROWS,
 };
 
 static const GLenum valid_get_max_index_type_table[] = {
@@ -292,6 +374,15 @@ static const GLenum valid_index_type_table[] = {
 static const GLenum valid_indexed_buffer_target_table[] = {
     GL_TRANSFORM_FEEDBACK_BUFFER,
     GL_UNIFORM_BUFFER,
+};
+
+static const GLenum valid_indexed_g_l_state_table[] = {
+    GL_TRANSFORM_FEEDBACK_BUFFER_BINDING,
+    GL_TRANSFORM_FEEDBACK_BUFFER_SIZE,
+    GL_TRANSFORM_FEEDBACK_BUFFER_START,
+    GL_UNIFORM_BUFFER_BINDING,
+    GL_UNIFORM_BUFFER_SIZE,
+    GL_UNIFORM_BUFFER_START,
 };
 
 static const GLenum valid_map_buffer_access_table[] = {
@@ -774,6 +865,15 @@ static const GLenum valid_value_buffer_target_table[] = {
     GL_SUBSCRIBED_VALUES_BUFFER_CHROMIUM,
 };
 
+static const GLenum valid_vertex_attrib_i_type_table[] = {
+    GL_BYTE,
+    GL_UNSIGNED_BYTE,
+    GL_SHORT,
+    GL_UNSIGNED_SHORT,
+    GL_INT,
+    GL_UNSIGNED_INT,
+};
+
 static const GLint valid_vertex_attrib_size_table[] = {
     1,
     2,
@@ -846,6 +946,8 @@ Validators::Validators()
       index_type(valid_index_type_table, arraysize(valid_index_type_table)),
       indexed_buffer_target(valid_indexed_buffer_target_table,
                             arraysize(valid_indexed_buffer_target_table)),
+      indexed_g_l_state(valid_indexed_g_l_state_table,
+                        arraysize(valid_indexed_g_l_state_table)),
       map_buffer_access(valid_map_buffer_access_table,
                         arraysize(valid_map_buffer_access_table)),
       matrix_mode(valid_matrix_mode_table, arraysize(valid_matrix_mode_table)),
@@ -928,6 +1030,8 @@ Validators::Validators()
                         arraysize(valid_uniform_parameter_table)),
       value_buffer_target(valid_value_buffer_target_table,
                           arraysize(valid_value_buffer_target_table)),
+      vertex_attrib_i_type(valid_vertex_attrib_i_type_table,
+                           arraysize(valid_vertex_attrib_i_type_table)),
       vertex_attrib_size(valid_vertex_attrib_size_table,
                          arraysize(valid_vertex_attrib_size_table)),
       vertex_attrib_type(valid_vertex_attrib_type_table,
@@ -943,6 +1047,8 @@ void Validators::UpdateValuesES3() {
                           arraysize(valid_buffer_target_table_es3));
   capability.AddValues(valid_capability_table_es3,
                        arraysize(valid_capability_table_es3));
+  g_l_state.AddValues(valid_g_l_state_table_es3,
+                      arraysize(valid_g_l_state_table_es3));
   pixel_type.AddValues(valid_pixel_type_table_es3,
                        arraysize(valid_pixel_type_table_es3));
   texture_bind_target.AddValues(valid_texture_bind_target_table_es3,

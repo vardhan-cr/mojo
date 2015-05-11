@@ -90,6 +90,9 @@ GL_APICALL GLenum       GL_APIENTRY glGetError (void);
 GL_APICALL void         GL_APIENTRY glGetFloatv (GLenumGLState pname, GLfloat* params);
 GL_APICALL GLint        GL_APIENTRY glGetFragDataLocation (GLidProgram program, const char* name);
 GL_APICALL void         GL_APIENTRY glGetFramebufferAttachmentParameteriv (GLenumFrameBufferTarget target, GLenumAttachment attachment, GLenumFrameBufferParameter pname, GLint* params);
+GL_APICALL void         GL_APIENTRY glGetInteger64v (GLenumGLState pname, GLint64* params);
+GL_APICALL void         GL_APIENTRY glGetIntegeri_v (GLenumIndexedGLState pname, GLuint index, GLint* data);
+GL_APICALL void         GL_APIENTRY glGetInteger64i_v (GLenumIndexedGLState pname, GLuint index, GLint64* data);
 GL_APICALL void         GL_APIENTRY glGetIntegerv (GLenumGLState pname, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetInternalformativ (GLenumRenderBufferTarget target, GLenumRenderBufferFormat format, GLenumRenderBufferParameter pname, GLsizeiNotNegative bufSize, GLint* params);
 GL_APICALL void         GL_APIENTRY glGetProgramiv (GLidProgram program, GLenumProgramParameter pname, GLint* params);
@@ -212,7 +215,7 @@ GL_APICALL void         GL_APIENTRY glVertexAttribI4i (GLuint indx, GLint x, GLi
 GL_APICALL void         GL_APIENTRY glVertexAttribI4iv (GLuint indx, const GLint* values);
 GL_APICALL void         GL_APIENTRY glVertexAttribI4ui (GLuint indx, GLuint x, GLuint y, GLuint z, GLuint w);
 GL_APICALL void         GL_APIENTRY glVertexAttribI4uiv (GLuint indx, const GLuint* values);
-GL_APICALL void         GL_APIENTRY glVertexAttribIPointer (GLuint indx, GLintVertexAttribSize size, GLenumVertexAttribType type, GLsizei stride, const void* ptr);
+GL_APICALL void         GL_APIENTRY glVertexAttribIPointer (GLuint indx, GLintVertexAttribSize size, GLenumVertexAttribIType type, GLsizei stride, const void* ptr);
 GL_APICALL void         GL_APIENTRY glVertexAttribPointer (GLuint indx, GLintVertexAttribSize size, GLenumVertexAttribType type, GLboolean normalized, GLsizei stride, const void* ptr);
 GL_APICALL void         GL_APIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei height);
 GL_APICALL void         GL_APIENTRY glWaitSync (GLsync sync, GLbitfieldSyncFlushFlags flags, GLuint64 timeout);

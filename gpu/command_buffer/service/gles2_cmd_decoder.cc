@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <queue>
 #include <stack>
 #include <string>
 #include <vector>
@@ -98,7 +99,7 @@ static bool PrecisionMeetsSpecForHighpFloat(GLint rangeMin,
 
 static void GetShaderPrecisionFormatImpl(GLenum shader_type,
                                          GLenum precision_type,
-                                         GLint *range, GLint *precision) {
+                                         GLint* range, GLint* precision) {
   switch (precision_type) {
     case GL_LOW_INT:
     case GL_MEDIUM_INT:
@@ -502,7 +503,7 @@ class BackFramebuffer {
 };
 
 struct FenceCallback {
-  explicit FenceCallback()
+  FenceCallback()
       : fence(gfx::GLFence::Create()) {
     DCHECK(fence);
   }
@@ -758,6 +759,9 @@ class GLES2DecoderImpl : public GLES2Decoder,
   void OnFboChanged() const;
   void OnUseFramebuffer() const;
 
+  error::ContextLostReason GetContextLostReasonFromResetStatus(
+      GLenum reset_status) const;
+
   // TODO(gman): Cache these pointers?
   BufferManager* buffer_manager() {
     return group_->buffer_manager();
@@ -966,6 +970,7 @@ class GLES2DecoderImpl : public GLES2Decoder,
   void ProduceTextureRef(std::string func_name, TextureRef* texture_ref,
       GLenum target, const GLbyte* data);
 
+  void EnsureTextureForClientId(GLenum target, GLuint client_id);
   void DoConsumeTextureCHROMIUM(GLenum target, const GLbyte* key);
   void DoCreateAndConsumeTextureCHROMIUM(GLenum target, const GLbyte* key,
     GLuint client_id);
@@ -1409,6 +1414,9 @@ class GLES2DecoderImpl : public GLES2Decoder,
   void DoGetFramebufferAttachmentParameteriv(
       GLenum target, GLenum attachment, GLenum pname, GLint* params);
 
+  // Wrapper for glGetInteger64v.
+  void DoGetInteger64v(GLenum pname, GLint64* params);
+
   // Wrapper for glGetIntegerv.
   void DoGetIntegerv(GLenum pname, GLint* params);
 
@@ -1651,10 +1659,10 @@ class GLES2DecoderImpl : public GLES2Decoder,
                        GLenum* result_type,
                        GLsizei* result_size);
 
-  void MaybeExitOnContextLost();
-  bool WasContextLost() override;
-  bool WasContextLostByRobustnessExtension() override;
-  void LoseContext(uint32 reset_status) override;
+  bool WasContextLost() const override;
+  bool WasContextLostByRobustnessExtension() const override;
+  void MarkContextLost(error::ContextLostReason reason) override;
+  bool CheckResetStatus();
 
 #if defined(OS_MACOSX)
   void ReleaseIOSurfaceForTexture(GLuint texture_id);
@@ -1857,7 +1865,8 @@ class GLES2DecoderImpl : public GLES2Decoder,
   int commands_to_process_;
 
   bool has_robustness_extension_;
-  GLenum reset_status_;
+  error::ContextLostReason context_lost_reason_;
+  bool context_was_lost_;
   bool reset_by_robustness_extension_;
   bool supports_post_sub_buffer_;
 
@@ -2399,7 +2408,8 @@ GLES2DecoderImpl::GLES2DecoderImpl(ContextGroup* group)
       feature_info_(group_->feature_info()),
       frame_number_(0),
       has_robustness_extension_(false),
-      reset_status_(GL_NO_ERROR),
+      context_lost_reason_(error::kUnknown),
+      context_was_lost_(false),
       reset_by_robustness_extension_(false),
       supports_post_sub_buffer_(false),
       force_webgl_glsl_validation_(false),
@@ -2873,12 +2883,56 @@ Capabilities GLES2DecoderImpl::GetCapabilities() {
   DoGetIntegerv(GL_BIND_GENERATES_RESOURCE_CHROMIUM,
                 &caps.bind_generates_resource_chromium);
   if (unsafe_es3_apis_enabled()) {
+    // TODO(zmo): Note that some parameter values could be more than 32-bit,
+    // but for now we clamp them to 32-bit max.
+    DoGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &caps.max_3d_texture_size);
+    DoGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &caps.max_array_texture_layers);
+    DoGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &caps.max_color_attachments);
+    DoGetIntegerv(GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
+                  &caps.max_combined_fragment_uniform_components);
+    DoGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS,
+                  &caps.max_combined_uniform_blocks);
+    DoGetIntegerv(GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
+                  &caps.max_combined_vertex_uniform_components);
+    DoGetIntegerv(GL_MAX_DRAW_BUFFERS, &caps.max_draw_buffers);
+    DoGetIntegerv(GL_MAX_ELEMENT_INDEX, &caps.max_element_index);
+    DoGetIntegerv(GL_MAX_ELEMENTS_INDICES, &caps.max_elements_indices);
+    DoGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &caps.max_elements_vertices);
+    DoGetIntegerv(GL_MAX_FRAGMENT_INPUT_COMPONENTS,
+                  &caps.max_fragment_input_components);
+    DoGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,
+                  &caps.max_fragment_uniform_blocks);
+    DoGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS,
+                  &caps.max_fragment_uniform_components);
+    DoGetIntegerv(GL_MAX_PROGRAM_TEXEL_OFFSET,
+                  &caps.max_program_texel_offset);
+    DoGetIntegerv(GL_MAX_SAMPLES, &caps.max_samples);
+    DoGetIntegerv(GL_MAX_SERVER_WAIT_TIMEOUT, &caps.max_server_wait_timeout);
+    DoGetIntegerv(GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS,
+                  &caps.max_transform_feedback_interleaved_components);
     DoGetIntegerv(GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS,
                   &caps.max_transform_feedback_separate_attribs);
+    DoGetIntegerv(GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS,
+                  &caps.max_transform_feedback_separate_components);
+    DoGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &caps.max_uniform_block_size);
     DoGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS,
                   &caps.max_uniform_buffer_bindings);
+    DoGetIntegerv(GL_MAX_VARYING_COMPONENTS, &caps.max_varying_components);
+    DoGetIntegerv(GL_MAX_VERTEX_OUTPUT_COMPONENTS,
+                  &caps.max_vertex_output_components);
+    DoGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,
+                  &caps.max_vertex_uniform_blocks);
+    DoGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS,
+                  &caps.max_vertex_uniform_components);
+    DoGetIntegerv(GL_MIN_PROGRAM_TEXEL_OFFSET, &caps.min_program_texel_offset);
+    DoGetIntegerv(GL_NUM_EXTENSIONS, &caps.num_extensions);
+    DoGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS,
+                  &caps.num_program_binary_formats);
     DoGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT,
                   &caps.uniform_buffer_offset_alignment);
+    // TODO(zmo): once we switch to MANGLE, we should query version numbers.
+    caps.major_version = 3;
+    caps.minor_version = 0;
   }
 
   caps.egl_image_external =
@@ -3255,11 +3309,22 @@ bool GLES2DecoderImpl::MakeCurrent() {
   if (!context_.get())
     return false;
 
-  if (!context_->MakeCurrent(surface_.get()) || WasContextLost()) {
+  if (WasContextLost()) {
+    LOG(ERROR) << "  GLES2DecoderImpl: Trying to make lost context current.";
+    return false;
+  }
+
+  if (!context_->MakeCurrent(surface_.get())) {
     LOG(ERROR) << "  GLES2DecoderImpl: Context lost during MakeCurrent.";
+    MarkContextLost(error::kMakeCurrentFailed);
+    group_->LoseContexts(error::kUnknown);
+    return false;
+  }
 
-    MaybeExitOnContextLost();
-
+  if (CheckResetStatus()) {
+    LOG(ERROR)
+        << "  GLES2DecoderImpl: Context reset detected after MakeCurrent.";
+    group_->LoseContexts(error::kUnknown);
     return false;
   }
 
@@ -3753,6 +3818,12 @@ void GLES2DecoderImpl::Destroy(bool have_context) {
   // Should destroy the transfer manager before the texture manager held
   // by the context group.
   async_pixel_transfer_manager_.reset();
+
+  // Destroy the GPU Tracer which may own some in process GPU Timings.
+  if (gpu_tracer_) {
+    gpu_tracer_->Destroy(have_context);
+    gpu_tracer_.reset();
+  }
 
   if (group_.get()) {
     framebuffer_manager()->RemoveObserver(this);
@@ -4295,9 +4366,9 @@ void GLES2DecoderImpl::ClearAllAttributes() const {
     glBindVertexArrayOES(0);
 
   for (uint32 i = 0; i < group_->max_vertex_attribs(); ++i) {
-    if (i != 0) // Never disable attribute 0
+    if (i != 0)  // Never disable attribute 0
       glDisableVertexAttribArray(i);
-    if(features().angle_instanced_arrays)
+    if (features().angle_instanced_arrays)
       glVertexAttribDivisorANGLE(i, 0);
   }
 }
@@ -4312,7 +4383,7 @@ void GLES2DecoderImpl::SetIgnoreCachedStateForTest(bool ignore) {
 
 void GLES2DecoderImpl::OnFboChanged() const {
   if (workarounds().restore_scissor_on_fbo_change)
-    state_.fbo_binding_for_scissor_workaround_dirty_ = true;
+    state_.fbo_binding_for_scissor_workaround_dirty = true;
 
   if (workarounds().gl_begin_gl_end_on_fbo_change_to_backbuffer) {
     GLint bound_fbo_unsigned = -1;
@@ -4325,8 +4396,8 @@ void GLES2DecoderImpl::OnFboChanged() const {
 
 // Called after the FBO is checked for completeness.
 void GLES2DecoderImpl::OnUseFramebuffer() const {
-  if (state_.fbo_binding_for_scissor_workaround_dirty_) {
-    state_.fbo_binding_for_scissor_workaround_dirty_ = false;
+  if (state_.fbo_binding_for_scissor_workaround_dirty) {
+    state_.fbo_binding_for_scissor_workaround_dirty = false;
     // The driver forgets the correct scissor when modifying the FBO binding.
     glScissor(state_.scissor_x,
               state_.scissor_y,
@@ -4491,6 +4562,9 @@ void GLES2DecoderImpl::DoDisableVertexAttribArray(GLuint index) {
 void GLES2DecoderImpl::DoDiscardFramebufferEXT(GLenum target,
                                                GLsizei numAttachments,
                                                const GLenum* attachments) {
+  if (workarounds().disable_discard_framebuffer)
+    return;
+
   Framebuffer* framebuffer =
       GetFramebufferInfoForTarget(GL_FRAMEBUFFER);
 
@@ -5029,6 +5103,12 @@ void GLES2DecoderImpl::DoGetFloatv(GLenum pname, GLfloat* params) {
       glGetFloatv(pname, params);
     }
   }
+}
+
+void GLES2DecoderImpl::DoGetInteger64v(GLenum pname, GLint64* params) {
+  DCHECK(params);
+  pname = AdjustGetPname(pname);
+  glGetInteger64v(pname, params);
 }
 
 void GLES2DecoderImpl::DoGetIntegerv(GLenum pname, GLint* params) {
@@ -5665,7 +5745,6 @@ void GLES2DecoderImpl::DoRenderbufferStorageMultisampleCHROMIUM(
   GLenum error =
       LOCAL_PEEK_GL_ERROR("glRenderbufferStorageMultisampleCHROMIUM");
   if (error == GL_NO_ERROR) {
-
     if (workarounds().validate_multisample_buffer_allocation) {
       if (!VerifyMultisampleRenderbufferIntegrity(
           renderbuffer->service_id(), impl_format)) {
@@ -5733,7 +5812,7 @@ bool GLES2DecoderImpl::VerifyMultisampleRenderbufferIntegrity(
   // These formats have been selected because they are very common or are known
   // to be used by the WebGL backbuffer. If problems are observed with other
   // color formats they can be added here.
-  switch(format) {
+  switch (format) {
     case GL_RGB:
     case GL_RGB8:
     case GL_RGBA:
@@ -5899,7 +5978,7 @@ void GLES2DecoderImpl::DoLinkProgram(GLuint program_id) {
   // LinkProgram can be very slow.  Exit command processing to allow for
   // context preemption and GPU watchdog checks.
   ExitCommandProcessingEarly();
-};
+}
 
 void GLES2DecoderImpl::DoSamplerParameterfv(
     GLuint sampler, GLenum pname, const GLfloat* params) {
@@ -6900,6 +6979,9 @@ error::Error GLES2DecoderImpl::DoDrawArrays(
 
 error::Error GLES2DecoderImpl::HandleDrawArrays(uint32 immediate_data_size,
                                                 const void* cmd_data) {
+  // TODO(zmo): crbug.com/481184
+  // On Desktop GL with versions lower than 4.3, we need to emulate
+  // GL_PRIMITIVE_RESTART_FIXED_INDEX using glPrimitiveRestartIndex().
   const cmds::DrawArrays& c = *static_cast<const cmds::DrawArrays*>(cmd_data);
   return DoDrawArrays("glDrawArrays",
                       false,
@@ -7043,6 +7125,9 @@ error::Error GLES2DecoderImpl::DoDrawElements(
 
 error::Error GLES2DecoderImpl::HandleDrawElements(uint32 immediate_data_size,
                                                   const void* cmd_data) {
+  // TODO(zmo): crbug.com/481184
+  // On Desktop GL with versions lower than 4.3, we need to emulate
+  // GL_PRIMITIVE_RESTART_FIXED_INDEX using glPrimitiveRestartIndex().
   const gles2::cmds::DrawElements& c =
       *static_cast<const gles2::cmds::DrawElements*>(cmd_data);
   return DoDrawElements("glDrawElements",
@@ -7548,17 +7633,86 @@ void GLES2DecoderImpl::DoVertexAttrib4fv(GLuint index, const GLfloat* v) {
 error::Error GLES2DecoderImpl::HandleVertexAttribIPointer(
     uint32 immediate_data_size,
     const void* cmd_data) {
-  // TODO(zmo): Unsafe ES3 API, missing states update.
   if (!unsafe_es3_apis_enabled())
     return error::kUnknownCommand;
   const gles2::cmds::VertexAttribIPointer& c =
       *static_cast<const gles2::cmds::VertexAttribIPointer*>(cmd_data);
+
+  if (!state_.bound_array_buffer.get() ||
+      state_.bound_array_buffer->IsDeleted()) {
+    if (state_.vertex_attrib_manager.get() ==
+        state_.default_vertex_attrib_manager.get()) {
+      LOCAL_SET_GL_ERROR(
+          GL_INVALID_VALUE, "glVertexAttribIPointer", "no array buffer bound");
+      return error::kNoError;
+    } else if (c.offset != 0) {
+      LOCAL_SET_GL_ERROR(
+          GL_INVALID_VALUE,
+          "glVertexAttribIPointer", "client side arrays are not allowed");
+      return error::kNoError;
+    }
+  }
+
   GLuint indx = c.indx;
   GLint size = c.size;
   GLenum type = c.type;
   GLsizei stride = c.stride;
   GLsizei offset = c.offset;
   const void* ptr = reinterpret_cast<const void*>(offset);
+  if (!validators_->vertex_attrib_i_type.IsValid(type)) {
+    LOCAL_SET_GL_ERROR_INVALID_ENUM("glVertexAttribIPointer", type, "type");
+    return error::kNoError;
+  }
+  if (!validators_->vertex_attrib_size.IsValid(size)) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_VALUE, "glVertexAttribIPointer", "size GL_INVALID_VALUE");
+    return error::kNoError;
+  }
+  if (indx >= group_->max_vertex_attribs()) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_VALUE, "glVertexAttribIPointer", "index out of range");
+    return error::kNoError;
+  }
+  if (stride < 0) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_VALUE, "glVertexAttribIPointer", "stride < 0");
+    return error::kNoError;
+  }
+  if (stride > 255) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_VALUE, "glVertexAttribIPointer", "stride > 255");
+    return error::kNoError;
+  }
+  if (offset < 0) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_VALUE, "glVertexAttribIPointer", "offset < 0");
+    return error::kNoError;
+  }
+  GLsizei component_size =
+      GLES2Util::GetGLTypeSizeForTexturesAndBuffers(type);
+  // component_size must be a power of two to use & as optimized modulo.
+  DCHECK(GLES2Util::IsPOT(component_size));
+  if (offset & (component_size - 1)) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_OPERATION,
+        "glVertexAttribIPointer", "offset not valid for type");
+    return error::kNoError;
+  }
+  if (stride & (component_size - 1)) {
+    LOCAL_SET_GL_ERROR(
+        GL_INVALID_OPERATION,
+        "glVertexAttribIPointer", "stride not valid for type");
+    return error::kNoError;
+  }
+  state_.vertex_attrib_manager
+      ->SetAttribInfo(indx,
+                      state_.bound_array_buffer.get(),
+                      size,
+                      type,
+                      GL_FALSE,
+                      stride,
+                      stride != 0 ? stride : component_size * size,
+                      offset);
   glVertexAttribIPointer(indx, size, type, stride, ptr);
   return error::kNoError;
 }
@@ -7645,7 +7799,8 @@ error::Error GLES2DecoderImpl::HandleVertexAttribPointer(
                       stride,
                       stride != 0 ? stride : component_size * size,
                       offset);
-  if (type != GL_FIXED) {
+  // We support GL_FIXED natively on EGL/GLES2 implementations
+  if (type != GL_FIXED || feature_info_->gl_version_info().is_es) {
     glVertexAttribPointer(indx, size, type, normalized, stride, ptr);
   }
   return error::kNoError;
@@ -7689,7 +7844,7 @@ error::Error GLES2DecoderImpl::HandleVertexAttribDivisorANGLE(
 
 template <typename pixel_data_type>
 static void WriteAlphaData(
-    void *pixels, uint32 row_count, uint32 channel_count,
+    void* pixels, uint32 row_count, uint32 channel_count,
     uint32 alpha_channel_index, uint32 unpadded_row_size,
     uint32 padded_row_size, pixel_data_type alpha_value) {
   DCHECK_GT(channel_count, 0U);
@@ -10136,7 +10291,8 @@ void GLES2DecoderImpl::DoSwapBuffers() {
             GL_FRAMEBUFFER_COMPLETE) {
           LOG(ERROR) << "GLES2DecoderImpl::ResizeOffscreenFrameBuffer failed "
                      << "because offscreen saved FBO was incomplete.";
-          LoseContext(GL_UNKNOWN_CONTEXT_RESET_ARB);
+          MarkContextLost(error::kUnknown);
+          group_->LoseContexts(error::kUnknown);
           return;
         }
 
@@ -10193,7 +10349,10 @@ void GLES2DecoderImpl::DoSwapBuffers() {
   } else {
     if (!surface_->SwapBuffers()) {
       LOG(ERROR) << "Context lost because SwapBuffers failed.";
-      LoseContext(GL_UNKNOWN_CONTEXT_RESET_ARB);
+      if (!CheckResetStatus()) {
+        MarkContextLost(error::kUnknown);
+        group_->LoseContexts(error::kUnknown);
+      }
     }
   }
 
@@ -10202,8 +10361,7 @@ void GLES2DecoderImpl::DoSwapBuffers() {
   ExitCommandProcessingEarly();
 }
 
-void GLES2DecoderImpl::DoSwapInterval(int interval)
-{
+void GLES2DecoderImpl::DoSwapInterval(int interval) {
   context_->SetSwapInterval(interval);
 }
 
@@ -10454,7 +10612,12 @@ error::Error GLES2DecoderImpl::HandleGetTransformFeedbackVaryingsCHROMIUM(
 }
 
 error::ContextLostReason GLES2DecoderImpl::GetContextLostReason() {
-  switch (reset_status_) {
+  return context_lost_reason_;
+}
+
+error::ContextLostReason GLES2DecoderImpl::GetContextLostReasonFromResetStatus(
+    GLenum reset_status) const {
+  switch (reset_status) {
     case GL_NO_ERROR:
       // TODO(kbr): improve the precision of the error code in this case.
       // Consider delegating to context for error code if MakeCurrent fails.
@@ -10471,7 +10634,24 @@ error::ContextLostReason GLES2DecoderImpl::GetContextLostReason() {
   return error::kUnknown;
 }
 
-void GLES2DecoderImpl::MaybeExitOnContextLost() {
+bool GLES2DecoderImpl::WasContextLost() const {
+  return context_was_lost_;
+}
+
+bool GLES2DecoderImpl::WasContextLostByRobustnessExtension() const {
+  return WasContextLost() && reset_by_robustness_extension_;
+}
+
+void GLES2DecoderImpl::MarkContextLost(error::ContextLostReason reason) {
+  // Only lose the context once.
+  if (WasContextLost())
+    return;
+
+  // Don't make GL calls in here, the context might not be current.
+  context_lost_reason_ = reason;
+  current_decoder_error_ = error::kLostContext;
+  context_was_lost_ = true;
+
   // Some D3D drivers cannot recover from device lost in the GPU process
   // sandbox. Allow a new GPU process to launch.
   if (workarounds().exit_on_context_lost) {
@@ -10484,57 +10664,43 @@ void GLES2DecoderImpl::MaybeExitOnContextLost() {
   }
 }
 
-bool GLES2DecoderImpl::WasContextLost() {
-  if (reset_status_ != GL_NO_ERROR) {
-    MaybeExitOnContextLost();
-    return true;
-  }
+bool GLES2DecoderImpl::CheckResetStatus() {
+  DCHECK(!WasContextLost());
+  DCHECK(context_->IsCurrent(NULL));
+
   if (IsRobustnessSupported()) {
-    GLenum status = glGetGraphicsResetStatusARB();
-    if (status != GL_NO_ERROR) {
-      // The graphics card was reset. Signal a lost context to the application.
-      reset_status_ = status;
-      reset_by_robustness_extension_ = true;
-      LOG(ERROR) << (surface_->IsOffscreen() ? "Offscreen" : "Onscreen")
-                 << " context lost via ARB/EXT_robustness. Reset status = "
-                 << GLES2Util::GetStringEnum(status);
-      MaybeExitOnContextLost();
-      return true;
-    }
-  }
-  return false;
-}
-
-bool GLES2DecoderImpl::WasContextLostByRobustnessExtension() {
-  return WasContextLost() && reset_by_robustness_extension_;
-}
-
-void GLES2DecoderImpl::LoseContext(uint32 reset_status) {
-  // Only loses the context once.
-  if (reset_status_ != GL_NO_ERROR) {
-    return;
-  }
-
-  if (workarounds().use_virtualized_gl_contexts) {
-    // If the context is virtual, the real context being guilty does not ensure
-    // that the virtual context is guilty.
-    if (reset_status == GL_GUILTY_CONTEXT_RESET_ARB) {
-      reset_status = GL_UNKNOWN_CONTEXT_RESET_ARB;
-    }
-  } else if (reset_status == GL_UNKNOWN_CONTEXT_RESET_ARB &&
-             IsRobustnessSupported()) {
     // If the reason for the call was a GL error, we can try to determine the
     // reset status more accurately.
     GLenum driver_status = glGetGraphicsResetStatusARB();
-    if (driver_status == GL_GUILTY_CONTEXT_RESET_ARB ||
-        driver_status == GL_INNOCENT_CONTEXT_RESET_ARB) {
-      reset_status = driver_status;
-    }
-  }
+    if (driver_status == GL_NO_ERROR)
+      return false;
 
-  // Marks this context as lost.
-  reset_status_ = reset_status;
-  current_decoder_error_ = error::kLostContext;
+    LOG(ERROR) << (surface_->IsOffscreen() ? "Offscreen" : "Onscreen")
+               << " context lost via ARB/EXT_robustness. Reset status = "
+               << GLES2Util::GetStringEnum(driver_status);
+
+    // Don't pretend we know which client was responsible.
+    if (workarounds().use_virtualized_gl_contexts)
+      driver_status = GL_UNKNOWN_CONTEXT_RESET_ARB;
+
+    switch (driver_status) {
+      case GL_GUILTY_CONTEXT_RESET_ARB:
+        MarkContextLost(error::kGuilty);
+        break;
+      case GL_INNOCENT_CONTEXT_RESET_ARB:
+        MarkContextLost(error::kInnocent);
+        break;
+      case GL_UNKNOWN_CONTEXT_RESET_ARB:
+        MarkContextLost(error::kUnknown);
+        break;
+      default:
+        NOTREACHED();
+        return false;
+    }
+    reset_by_robustness_extension_ = true;
+    return true;
+  }
+  return false;
 }
 
 error::Error GLES2DecoderImpl::HandleInsertSyncPointCHROMIUM(
@@ -11566,6 +11732,24 @@ void GLES2DecoderImpl::DoConsumeTextureCHROMIUM(GLenum target,
   }
 }
 
+void GLES2DecoderImpl::EnsureTextureForClientId(
+    GLenum target,
+    GLuint client_id) {
+  TextureRef* texture_ref = GetTexture(client_id);
+  if (!texture_ref) {
+    GLuint service_id;
+    glGenTextures(1, &service_id);
+    DCHECK_NE(0u, service_id);
+    texture_ref = CreateTexture(client_id, service_id);
+    texture_manager()->SetTarget(texture_ref, target);
+    glBindTexture(target, service_id);
+    RestoreCurrentTextureBindings(&state_, target);
+  }
+}
+
+// If CreateAndConsumeTexture fails we still need to ensure that the client_id
+// provided is associated with a service_id/TextureRef for consistency, even if
+// the resulting texture is incomplete.
 error::Error GLES2DecoderImpl::HandleCreateAndConsumeTextureCHROMIUMImmediate(
     uint32_t immediate_data_size,
     const void* cmd_data) {
@@ -11608,6 +11792,8 @@ void GLES2DecoderImpl::DoCreateAndConsumeTextureCHROMIUM(GLenum target,
 
   TextureRef* texture_ref = GetTexture(client_id);
   if (texture_ref) {
+    // No need to call EnsureTextureForClientId here, the client_id already has
+    // an associated texture.
     LOCAL_SET_GL_ERROR(
         GL_INVALID_OPERATION,
         "glCreateAndConsumeTextureCHROMIUM", "client id already in use");
@@ -11615,12 +11801,15 @@ void GLES2DecoderImpl::DoCreateAndConsumeTextureCHROMIUM(GLenum target,
   }
   Texture* texture = group_->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
+    EnsureTextureForClientId(target, client_id);
     LOCAL_SET_GL_ERROR(
         GL_INVALID_OPERATION,
         "glCreateAndConsumeTextureCHROMIUM", "invalid mailbox name");
     return;
   }
+
   if (texture->target() != target) {
+    EnsureTextureForClientId(target, client_id);
     LOCAL_SET_GL_ERROR(
         GL_INVALID_OPERATION,
         "glCreateAndConsumeTextureCHROMIUM", "invalid target");
@@ -11887,9 +12076,9 @@ void GLES2DecoderImpl::DoDrawBuffersEXT(
 }
 
 void GLES2DecoderImpl::DoLoseContextCHROMIUM(GLenum current, GLenum other) {
-  group_->LoseContexts(other);
-  reset_status_ = current;
-  current_decoder_error_ = error::kLostContext;
+  MarkContextLost(GetContextLostReasonFromResetStatus(current));
+  group_->LoseContexts(GetContextLostReasonFromResetStatus(other));
+  reset_by_robustness_extension_ = true;
 }
 
 void GLES2DecoderImpl::DoMatrixLoadfCHROMIUM(GLenum matrix_mode,
@@ -12407,8 +12596,9 @@ error::Error GLES2DecoderImpl::HandleUnmapBuffer(
     // the second unmap could still return GL_FALSE. For now, we simply lose
     // the contexts in the share group.
     LOG(ERROR) << "glUnmapBuffer unexpectedly returned GL_FALSE";
-    group_->LoseContexts(GL_INNOCENT_CONTEXT_RESET_ARB);
-    reset_status_ = GL_GUILTY_CONTEXT_RESET_ARB;
+    // Need to lose current context before broadcasting!
+    MarkContextLost(error::kGuilty);
+    group_->LoseContexts(error::kInnocent);
     return error::kLostContext;
   }
   return error::kNoError;
@@ -12420,13 +12610,27 @@ void GLES2DecoderImpl::OnTextureRefDetachedFromFramebuffer(
   DoDidUseTexImageIfNeeded(texture, texture->target());
 }
 
+// Note that GL_LOST_CONTEXT is specific to GLES.
+// For desktop GL we have to query the reset status proactively.
 void GLES2DecoderImpl::OnContextLostError() {
-  group_->LoseContexts(GL_UNKNOWN_CONTEXT_RESET_ARB);
+  if (!WasContextLost()) {
+    // Need to lose current context before broadcasting!
+    CheckResetStatus();
+    group_->LoseContexts(error::kUnknown);
+    reset_by_robustness_extension_ = true;
+  }
 }
 
 void GLES2DecoderImpl::OnOutOfMemoryError() {
-  if (lose_context_when_out_of_memory_) {
-    group_->LoseContexts(GL_UNKNOWN_CONTEXT_RESET_ARB);
+  if (lose_context_when_out_of_memory_ && !WasContextLost()) {
+    error::ContextLostReason other = error::kOutOfMemory;
+    if (CheckResetStatus()) {
+      other = error::kUnknown;
+    } else {
+      // Need to lose current context before broadcasting!
+      MarkContextLost(error::kOutOfMemory);
+    }
+    group_->LoseContexts(other);
   }
 }
 

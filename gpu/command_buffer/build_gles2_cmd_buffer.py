@@ -83,6 +83,7 @@ _CAPABILITY_FLAGS = [
   {'name': 'stencil_test',
    'state_flag': 'framebuffer_state_.clear_state_dirty'},
   {'name': 'rasterizer_discard', 'es3': True},
+  {'name': 'primitive_restart_fixed_index', 'es3': True},
 ]
 
 _STATES = {
@@ -733,6 +734,101 @@ _NAMED_TYPE_INFO = {
       # we can add this because we emulate it if the driver does not support it.
       'GL_VERTEX_ARRAY_BINDING_OES',
       'GL_VIEWPORT',
+    ],
+    'valid_es3': [
+      'GL_COPY_READ_BUFFER_BINDING',
+      'GL_COPY_WRITE_BUFFER_BINDING',
+      'GL_DRAW_BUFFER0',
+      'GL_DRAW_BUFFER1',
+      'GL_DRAW_BUFFER2',
+      'GL_DRAW_BUFFER3',
+      'GL_DRAW_BUFFER4',
+      'GL_DRAW_BUFFER5',
+      'GL_DRAW_BUFFER6',
+      'GL_DRAW_BUFFER7',
+      'GL_DRAW_BUFFER8',
+      'GL_DRAW_BUFFER9',
+      'GL_DRAW_BUFFER10',
+      'GL_DRAW_BUFFER11',
+      'GL_DRAW_BUFFER12',
+      'GL_DRAW_BUFFER13',
+      'GL_DRAW_BUFFER14',
+      'GL_DRAW_BUFFER15',
+      'GL_DRAW_FRAMEBUFFER_BINDING',
+      'GL_FRAGMENT_SHADER_DERIVATIVE_HINT',
+      'GL_MAJOR_VERSION',
+      'GL_MAX_3D_TEXTURE_SIZE',
+      'GL_MAX_ARRAY_TEXTURE_LAYERS',
+      'GL_MAX_COLOR_ATTACHMENTS',
+      'GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS',
+      'GL_MAX_COMBINED_UNIFORM_BLOCKS',
+      'GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS',
+      'GL_MAX_DRAW_BUFFERS',
+      'GL_MAX_ELEMENT_INDEX',
+      'GL_MAX_ELEMENTS_INDICES',
+      'GL_MAX_ELEMENTS_VERTICES',
+      'GL_MAX_FRAGMENT_INPUT_COMPONENTS',
+      'GL_MAX_FRAGMENT_UNIFORM_BLOCKS',
+      'GL_MAX_FRAGMENT_UNIFORM_COMPONENTS',
+      'GL_MAX_PROGRAM_TEXEL_OFFSET',
+      'GL_MAX_SAMPLES',
+      'GL_MAX_SERVER_WAIT_TIMEOUT',
+      'GL_MAX_TEXTURE_LOD_BIAS',
+      'GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS',
+      'GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS',
+      'GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS',
+      'GL_MAX_UNIFORM_BLOCK_SIZE',
+      'GL_MAX_UNIFORM_BUFFER_BINDINGS',
+      'GL_MAX_VARYING_COMPONENTS',
+      'GL_MAX_VERTEX_OUTPUT_COMPONENTS',
+      'GL_MAX_VERTEX_UNIFORM_BLOCKS',
+      'GL_MAX_VERTEX_UNIFORM_COMPONENTS',
+      'GL_MIN_PROGRAM_TEXEL_OFFSET',
+      'GL_MINOR_VERSION',
+      'GL_NUM_EXTENSIONS',
+      'GL_NUM_PROGRAM_BINARY_FORMATS',
+      'GL_PACK_ROW_LENGTH',
+      'GL_PACK_SKIP_PIXELS',
+      'GL_PACK_SKIP_ROWS',
+      'GL_PIXEL_PACK_BUFFER_BINDING',
+      'GL_PIXEL_UNPACK_BUFFER_BINDING',
+      'GL_PROGRAM_BINARY_FORMATS',
+      'GL_READ_BUFFER',
+      'GL_READ_FRAMEBUFFER_BINDING',
+      'GL_SAMPLER_BINDING',
+      'GL_TEXTURE_BINDING_2D_ARRAY',
+      'GL_TEXTURE_BINDING_3D',
+      'GL_TRANSFORM_FEEDBACK_BINDING',
+      'GL_TRANSFORM_FEEDBACK_ACTIVE',
+      'GL_TRANSFORM_FEEDBACK_BUFFER_BINDING',
+      'GL_TRANSFORM_FEEDBACK_PAUSED',
+      'GL_TRANSFORM_FEEDBACK_BUFFER_SIZE',
+      'GL_TRANSFORM_FEEDBACK_BUFFER_START',
+      'GL_UNIFORM_BUFFER_BINDING',
+      'GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT',
+      'GL_UNIFORM_BUFFER_SIZE',
+      'GL_UNIFORM_BUFFER_START',
+      'GL_UNPACK_IMAGE_HEIGHT',
+      'GL_UNPACK_ROW_LENGTH',
+      'GL_UNPACK_SKIP_IMAGES',
+      'GL_UNPACK_SKIP_PIXELS',
+      'GL_UNPACK_SKIP_ROWS',
+      # GL_VERTEX_ARRAY_BINDING is the same as GL_VERTEX_ARRAY_BINDING_OES
+      # 'GL_VERTEX_ARRAY_BINDING',
+    ],
+    'invalid': [
+      'GL_FOG_HINT',
+    ],
+  },
+  'IndexedGLState': {
+    'type': 'GLenum',
+    'valid': [
+      'GL_TRANSFORM_FEEDBACK_BUFFER_BINDING',
+      'GL_TRANSFORM_FEEDBACK_BUFFER_SIZE',
+      'GL_TRANSFORM_FEEDBACK_BUFFER_START',
+      'GL_UNIFORM_BUFFER_BINDING',
+      'GL_UNIFORM_BUFFER_SIZE',
+      'GL_UNIFORM_BUFFER_START',
     ],
     'invalid': [
       'GL_FOG_HINT',
@@ -1541,6 +1637,21 @@ _NAMED_TYPE_INFO = {
       'GL_FLOAT',
     ],
     'invalid': [
+      'GL_DOUBLE',
+    ],
+  },
+  'VertexAttribIType': {
+    'type': 'GLenum',
+    'valid': [
+      'GL_BYTE',
+      'GL_UNSIGNED_BYTE',
+      'GL_SHORT',
+      'GL_UNSIGNED_SHORT',
+      'GL_INT',
+      'GL_UNSIGNED_INT',
+    ],
+    'invalid': [
+      'GL_FLOAT',
       'GL_DOUBLE',
     ],
   },
@@ -2365,11 +2476,30 @@ _FUNCTION_INFO = {
     'gl_test_func': 'glGetFramebufferAttachmentParameterivEXT',
     'result': ['SizedResult<GLint>'],
   },
+  'GetInteger64v': {
+    'type': 'GETn',
+    'result': ['SizedResult<GLint64>'],
+    'client_test': False,
+    'decoder_func': 'DoGetInteger64v',
+    'unsafe': True
+  },
   'GetIntegerv': {
     'type': 'GETn',
     'result': ['SizedResult<GLint>'],
     'decoder_func': 'DoGetIntegerv',
     'client_test': False,
+  },
+  'GetInteger64i_v': {
+    'type': 'GETn',
+    'result': ['SizedResult<GLint64>'],
+    'client_test': False,
+    'unsafe': True
+  },
+  'GetIntegeri_v': {
+    'type': 'GETn',
+    'result': ['SizedResult<GLint>'],
+    'client_test': False,
+    'unsafe': True
   },
   'GetInternalformativ': {
     'type': 'GETn',
@@ -3139,7 +3269,7 @@ _FUNCTION_INFO = {
   'VertexAttribIPointer': {
     'type': 'Manual',
     'cmd_args': 'GLuint indx, GLintVertexAttribSize size, '
-                'GLenumVertexAttribType type, GLsizei stride, '
+                'GLenumVertexAttribIType type, GLsizei stride, '
                 'GLuint offset',
     'client_test': False,
     'unsafe': True,
@@ -6063,17 +6193,18 @@ TEST_F(GLES2ImplementationTest, %(name)s) {
   struct Cmds {
     cmds::%(name)s cmd;
   };
-  typedef cmds::%(name)s::Result Result;
-  Result::Type result = 0;
+  typedef cmds::%(name)s::Result::Type ResultType;
+  ResultType result = 0;
   Cmds expected;
-  ExpectedMemoryInfo result1 = GetExpectedResultMemory(4);
+  ExpectedMemoryInfo result1 = GetExpectedResultMemory(
+      sizeof(uint32_t) + sizeof(ResultType));
   expected.cmd.Init(%(cmd_args)s, result1.id, result1.offset);
   EXPECT_CALL(*command_buffer(), OnFlush())
-      .WillOnce(SetMemory(result1.ptr, SizedResultHelper<Result::Type>(1)))
+      .WillOnce(SetMemory(result1.ptr, SizedResultHelper<ResultType>(1)))
       .RetiresOnSaturation();
   gl_->%(name)s(%(args)s, &result);
   EXPECT_EQ(0, memcmp(&expected, commands_, sizeof(expected)));
-  EXPECT_EQ(static_cast<Result::Type>(1), result);
+  EXPECT_EQ(static_cast<ResultType>(1), result);
 }
 """
     first_cmd_arg = func.GetCmdArgs()[0].GetValidNonCachedClientSideCmdArg(func)

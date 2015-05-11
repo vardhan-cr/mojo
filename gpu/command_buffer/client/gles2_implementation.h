@@ -566,7 +566,10 @@ class GLES2_IMPL_EXPORT GLES2Implementation
   bool GetFloatvHelper(GLenum pname, GLfloat* params);
   bool GetFramebufferAttachmentParameterivHelper(
       GLenum target, GLenum attachment, GLenum pname, GLint* params);
+  bool GetInteger64vHelper(GLenum pname, GLint64* params);
   bool GetIntegervHelper(GLenum pname, GLint* params);
+  bool GetIntegeri_vHelper(GLenum pname, GLuint index, GLint* data);
+  bool GetInteger64i_vHelper(GLenum pname, GLuint index, GLint64* data);
   bool GetInternalformativHelper(
       GLenum target, GLenum format, GLenum pname, GLsizei bufSize,
       GLint* params);
