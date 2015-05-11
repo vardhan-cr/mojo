@@ -4,6 +4,19 @@
 
 import("//mojo/public/mojo_application.gni")
 
+source_set("driver") {
+  sources = [
+    "moterm_driver.cc",
+    "moterm_driver.h",
+  ]
+
+  public_deps = [
+    "//base",
+    "//mojo/public/cpp/bindings",
+    "//mojo/services/files/public/interfaces",
+  ]
+}
+
 source_set("model") {
   sources = [
     "moterm_model.cc",
@@ -27,13 +40,16 @@ mojo_native_application("apptests") {
   testonly = true
 
   sources = [
+    "moterm_driver_unittest.cc",
     "moterm_model_unittest.cc",
   ]
 
   deps = [
+    ":driver",
     ":model",
     "//mojo/application",
     "//mojo/application:test_support",
+    "//mojo/public/cpp/bindings:callback",
     "//testing/gtest",
   ]
 }
