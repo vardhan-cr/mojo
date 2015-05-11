@@ -13,6 +13,7 @@ group("services") {
     "//services/gles2:lib",
     "//services/http_server",
     "//services/icu_data",
+    "//services/keyboard_native",
     "//services/kiosk_wm",
     "//services/native_viewport",
     "//services/reaper",

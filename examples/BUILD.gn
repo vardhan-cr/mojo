@@ -24,6 +24,7 @@ group("examples") {
     "//examples/ganesh_app",
     "//examples/http_handler",
     "//examples/indirect_service",
+    "//examples/keyboard_client",
     "//examples/nesting_app",
     "//examples/png_viewer",
     "//examples/recursive_content_handler",
