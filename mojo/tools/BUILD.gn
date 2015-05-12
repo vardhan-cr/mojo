@@ -20,3 +20,9 @@ executable("message_generator") {
     "//testing/gtest",
   ]
 }
+
+executable("remote_file_reader") {
+  sources = [
+    "remote_file_reader.cc",
+  ]
+}

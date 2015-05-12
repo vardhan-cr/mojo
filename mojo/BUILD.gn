@@ -32,6 +32,7 @@ group("mojo") {
     deps += [
       "//mojo/android",
       "//mojo/tools/android_shortcuts",
+      "//mojo/tools:remote_file_reader",
     ]
   }
 
