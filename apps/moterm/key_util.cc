@@ -120,15 +120,17 @@ std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event) {
     // Purposely produce no input sequence:
     case mojo::KEYBOARD_CODE_SHIFT:
     case mojo::KEYBOARD_CODE_CONTROL:
+    case mojo::KEYBOARD_CODE_MENU:
     case mojo::KEYBOARD_CODE_LSHIFT:
     case mojo::KEYBOARD_CODE_RSHIFT:
     case mojo::KEYBOARD_CODE_LCONTROL:
     case mojo::KEYBOARD_CODE_RCONTROL:
+    case mojo::KEYBOARD_CODE_LMENU:
+    case mojo::KEYBOARD_CODE_RMENU:
       break;
 
     // TODO(vtl): Figure these out.
     case mojo::KEYBOARD_CODE_CLEAR:
-    case mojo::KEYBOARD_CODE_MENU:
     case mojo::KEYBOARD_CODE_PAUSE:
     case mojo::KEYBOARD_CODE_CAPITAL:
     case mojo::KEYBOARD_CODE_KANA:  // A.k.a. |KEYBOARD_CODE_HANGUL|.
@@ -190,8 +192,6 @@ std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event) {
     case mojo::KEYBOARD_CODE_F24:
     case mojo::KEYBOARD_CODE_NUMLOCK:
     case mojo::KEYBOARD_CODE_SCROLL:
-    case mojo::KEYBOARD_CODE_LMENU:
-    case mojo::KEYBOARD_CODE_RMENU:
     case mojo::KEYBOARD_CODE_BROWSER_BACK:
     case mojo::KEYBOARD_CODE_BROWSER_FORWARD:
     case mojo::KEYBOARD_CODE_BROWSER_REFRESH:
