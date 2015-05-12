@@ -1134,3 +1134,8 @@ def GetPreferredTryMasters(project, change):
   ]
 
   return GetDefaultTryConfigs(builders)
+
+def PostUploadHook(cl, change, output_api):
+  import subprocess
+  subprocess.check_call(["git", "cl", "try"])
+  return []
