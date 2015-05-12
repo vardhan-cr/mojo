@@ -200,11 +200,6 @@ def _pytest(config):
   return _run_tests(config, ['python'])
 
 
-def _nacltest(config):
-  _logger.debug('_nacltest()')
-  return _run_tests(config, ['nacl'])
-
-
 def main():
   os.chdir(Paths().src_root)
 
@@ -292,7 +287,7 @@ def main():
 
   nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
       help='Run NaCl unit tests (does not build).')
-  nacltest_parser.set_defaults(func=_nacltest)
+  nacltest_parser.set_defaults(func=lambda config: 0)
 
   args = parser.parse_args()
   global _verbose_count

@@ -67,6 +67,7 @@ tests = [
   },
   {
     "test": "mojo:window_manager_apptests",
+    "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
   {
     "test": "mojo:versioning_apptests",
