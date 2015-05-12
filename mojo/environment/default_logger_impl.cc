@@ -33,7 +33,10 @@ MojoLogLevel ChromiumToMojoLogLevel(int chromium_log_level) {
   return static_cast<MojoLogLevel>(chromium_log_level);
 }
 
-void LogMessage(MojoLogLevel log_level, const char* message) {
+void LogMessage(MojoLogLevel log_level,
+                const char* source_file,
+                uint32_t source_line,
+                const char* message) {
   int chromium_log_level = MojoToChromiumLogLevel(log_level);
   int chromium_min_log_level = logging::GetMinLogLevel();
   // "Fatal" errors aren't suppressable.
@@ -41,10 +44,13 @@ void LogMessage(MojoLogLevel log_level, const char* message) {
   if (chromium_log_level < chromium_min_log_level)
     return;
 
-  // TODO(vtl): Possibly, we should try to pull out the file and line number
-  // from |message|.
-  logging::LogMessage(__FILE__, __LINE__, chromium_log_level).stream()
-      << message;
+  if (source_file) {
+    logging::LogMessage(source_file, static_cast<int>(source_line),
+                        chromium_log_level).stream()
+        << message;
+  } else {
+    logging::LogMessage("(no file)", 0, chromium_log_level).stream() << message;
+  }
 }
 
 MojoLogLevel GetMinimumLogLevel() {
