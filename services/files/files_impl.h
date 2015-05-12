@@ -22,7 +22,10 @@ class FilesImpl : public Files {
   ~FilesImpl() override;
 
   // |Files| implementation:
-  void OpenFileSystem(FileSystem file_system,
+  // We provide a "private" temporary file system as the default. In Debug
+  // builds, we also provide access to a common file system named "debug"
+  // (stored under ~/MojoDebug).
+  void OpenFileSystem(const mojo::String& file_system,
                       InterfaceRequest<Directory> directory,
                       const OpenFileSystemCallback& callback) override;
 

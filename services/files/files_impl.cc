@@ -60,35 +60,32 @@ FilesImpl::FilesImpl(ApplicationConnection* connection,
 FilesImpl::~FilesImpl() {
 }
 
-void FilesImpl::OpenFileSystem(FileSystem file_system,
+void FilesImpl::OpenFileSystem(const mojo::String& file_system,
                                InterfaceRequest<Directory> directory,
                                const OpenFileSystemCallback& callback) {
   base::ScopedFD dir_fd;
   // Set only if the |DirectoryImpl| will own a temporary directory.
   scoped_ptr<base::ScopedTempDir> temp_dir;
-  switch (file_system) {
-    case FILE_SYSTEM_TEMPORARY:
-      // TODO(vtl): ScopedGeneric (hence ScopedFD) doesn't have an operator=!
-      dir_fd.reset(CreateAndOpenTemporaryDirectory(&temp_dir).release());
-      DCHECK(temp_dir);
-      break;
-    case FILE_SYSTEM_DEBUG:
+  if (file_system.is_null()) {
+    // TODO(vtl): ScopedGeneric (hence ScopedFD) doesn't have an operator=!
+    dir_fd.reset(CreateAndOpenTemporaryDirectory(&temp_dir).release());
+    DCHECK(temp_dir);
+  } else if (file_system.get() == std::string("debug")) {
 #ifdef NDEBUG
-      LOG(WARNING) << "~/MojoDebug only available in Debug builds";
+    LOG(WARNING) << "~/MojoDebug only available in Debug builds";
 #else
-      // TODO(vtl): ScopedGeneric (hence ScopedFD) doesn't have an operator=!
-      dir_fd.reset(OpenMojoDebugDirectory().release());
+    // TODO(vtl): ScopedGeneric (hence ScopedFD) doesn't have an operator=!
+    dir_fd.reset(OpenMojoDebugDirectory().release());
 #endif
-      if (!dir_fd.is_valid()) {
-        LOG(ERROR) << "~/MojoDebug unavailable";
-        callback.Run(ERROR_UNAVAILABLE);
-        return;
-      }
-      break;
-    default:
-      LOG(ERROR) << "Unknown file system type: " << file_system;
-      callback.Run(ERROR_UNIMPLEMENTED);
+    if (!dir_fd.is_valid()) {
+      LOG(ERROR) << "~/MojoDebug unavailable";
+      callback.Run(ERROR_UNAVAILABLE);
       return;
+    }
+  } else {
+    LOG(ERROR) << "Unknown file system: " << file_system.get();
+    callback.Run(ERROR_UNIMPLEMENTED);
+    return;
   }
 
   new DirectoryImpl(directory.Pass(), dir_fd.Pass(), temp_dir.Pass());

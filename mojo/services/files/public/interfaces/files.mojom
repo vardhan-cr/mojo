@@ -7,16 +7,8 @@ module mojo.files;
 import "files/public/interfaces/directory.mojom";
 import "files/public/interfaces/types.mojom";
 
-enum FileSystem {
-  // A per-instance (i.e., one for each call to |OpenFileSystem()|) temporary
-  // file system.
-  TEMPORARY,
-
-  // A persistent, shared file system (rooted at ~/MojoDebug, which must already
-  // exist) only available in Debug builds.
-  DEBUG,
-};
-
 interface Files {
-  OpenFileSystem(FileSystem file_system, Directory& directory) => (Error error);
+  // Opens the root directory for the file system with the given name; null
+  // yields the default file system, if any.
+  OpenFileSystem(string? file_system, Directory& directory) => (Error error);
 };
