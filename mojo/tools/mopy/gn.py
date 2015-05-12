@@ -58,7 +58,8 @@ def GNArgsForConfig(config):
 
   gn_args["dcheck_always_on"] = config.dcheck_always_on
 
-  gn_args["mojo_use_nacl"] = config.values.get("use_nacl", False)
+  if "use_nacl" in config.values:
+    gn_args["mojo_use_nacl"] = config.values["use_nacl"]
 
   gn_args["mojo_use_go"] = config.values.get("mojo_use_go", False)
   if gn_args["mojo_use_go"]:

@@ -251,8 +251,11 @@ def main():
   gn_parser.set_defaults(func=_gn)
   gn_parser.add_argument('--args', help='Specify extra args',
                          default=None, dest='gn_args')
-  gn_parser.add_argument('--nacl', help='Add in NaCl', default=False,
-                         action='store_true')
+  # Note: no default, if nothing is specified on the command line GN decides.
+  gn_parser.add_argument('--nacl', help='Add in NaCl', action='store_true',
+                         default=argparse.SUPPRESS)
+  gn_parser.add_argument('--no-nacl', help='Remove NaCl', action='store_false',
+                         default=argparse.SUPPRESS, dest='nacl')
 
   clang_group = gn_parser.add_mutually_exclusive_group()
   clang_group.add_argument('--clang', help='Use Clang (default)', default=None,
