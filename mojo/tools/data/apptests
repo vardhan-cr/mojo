@@ -72,6 +72,9 @@ tests = [
   {
     "test": "mojo:versioning_apptests",
   },
+  {
+    "test": "mojo:url_response_disk_cache_apptests",
+  },
 ]
 
 if config.target_os == config.OS_LINUX:
@@ -124,8 +127,5 @@ if config.target_os != config.OS_ANDROID:
       # Sometime the shell get a trucated application when exposed through the
       # http server.
       "test": "mojo:shell_apptests",
-    },
-    {
-      "test": "mojo:url_response_disk_cache_apptests",
     },
   ]
