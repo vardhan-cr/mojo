@@ -233,7 +233,9 @@ void MojoUrlRedirectorApplicationTest::TestRedirectForKnownApp(
   run_loop.Run();
 }
 
-TEST_F(MojoUrlRedirectorApplicationTest, MalformedRequest) {
+// TODO(blundell): This test is flaky.
+// https://github.com/domokit/mojo/issues/115
+TEST_F(MojoUrlRedirectorApplicationTest, DISABLED_MalformedRequest) {
   mojo::URLLoaderPtr url_loader;
   network_service_->CreateURLLoader(GetProxy(&url_loader));
 
@@ -246,7 +248,9 @@ TEST_F(MojoUrlRedirectorApplicationTest, MalformedRequest) {
   run_loop.Run();
 }
 
-TEST_F(MojoUrlRedirectorApplicationTest, RequestForMissingApp) {
+// TODO(blundell): This test is flaky.
+// https://github.com/domokit/mojo/issues/115
+TEST_F(MojoUrlRedirectorApplicationTest, DISABLED_RequestForMissingApp) {
   mojo::URLLoaderPtr url_loader;
   network_service_->CreateURLLoader(GetProxy(&url_loader));
 
@@ -262,7 +266,9 @@ TEST_F(MojoUrlRedirectorApplicationTest, RequestForMissingApp) {
   run_loop.Run();
 }
 
-TEST_F(MojoUrlRedirectorApplicationTest, RequestForKnownApp) {
+// TODO(blundell): This test is flaky.
+// https://github.com/domokit/mojo/issues/115
+TEST_F(MojoUrlRedirectorApplicationTest, DISABLED_RequestForKnownApp) {
   TestRedirectForKnownApp(kPlatform1, kKnownAppName);
   TestRedirectForKnownApp(kPlatform2, kKnownAppName);
 }
