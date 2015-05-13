@@ -1079,12 +1079,8 @@ def GetDefaultTryConfigs(bots=None):
       'Mojo Android Builder (dbg) Try': ['defaulttests'],
       'Mojo Android Builder Try': ['defaulttests'],
       'Mojo Android Builder Tests (dbg) Try': ['defaulttests'],
-      'Mojo ChromeOS Builder (dbg) Try': ['defaulttests'],
-      'Mojo ChromeOS Builder Try': ['defaulttests'],
       'Mojo Linux (dbg) Try': ['defaulttests'],
       'Mojo Linux ASan Try': ['defaulttests'],
-      'Mojo Linux NaCl (dbg) Try': ['defaulttests'],
-      'Mojo Linux NaCl Try': ['defaulttests'],
       'Mojo Linux Try': ['defaulttests'],
   }
 
@@ -1124,12 +1120,8 @@ def GetPreferredTryMasters(project, change):
       'Mojo Android Builder (dbg) Try',
       'Mojo Android Builder Try',
       'Mojo Android Builder Tests (dbg) Try',
-      'Mojo ChromeOS Builder (dbg) Try',
-      'Mojo ChromeOS Builder Try',
       'Mojo Linux (dbg) Try',
       'Mojo Linux ASan Try',
-      'Mojo Linux NaCl (dbg) Try',
-      'Mojo Linux NaCl Try',
       'Mojo Linux Try',
   ]
 
