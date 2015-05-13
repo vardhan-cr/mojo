@@ -41,7 +41,7 @@ class FileHelper {
      * resources match the current APK. Otherwise returns a String that represents the filename of a
      * timestamp to create.
      */
-    private static String checkAssetTimestamp(Context context, File outputDir) {
+    public static String checkAssetTimestamp(Context context, File outputDir) {
         PackageManager pm = context.getPackageManager();
         PackageInfo pi = null;
 
@@ -152,7 +152,7 @@ class FileHelper {
     /**
      * Deletes a file or directory. Directory will be deleted even if not empty.
      */
-    static void deleteRecursively(File file) {
+    public static void deleteRecursively(File file) {
         if (file.isDirectory()) {
             for (File child : file.listFiles()) {
                 deleteRecursively(child);

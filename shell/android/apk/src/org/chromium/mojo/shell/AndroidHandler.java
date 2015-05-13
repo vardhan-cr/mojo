@@ -69,11 +69,15 @@ public class AndroidHandler {
         File cacheDir = new File(cachePath);
         File compiledDexDir = new File(cacheDir, "dex");
         File assetDir = new File(cacheDir, "asset");
-        assetDir.mkdirs();
-        File preparedSentinel = new File(cacheDir, "prepared");
 
-        // If the sentinel doesn't exist, extract the assets from the apk.
-        if (!preparedSentinel.exists()) {
+        // If the timestamp file doesn't exist, or the assets are obsolete, extract the assets from
+        // the apk.
+        String timestampToCreate = FileHelper.checkAssetTimestamp(context, cacheDir);
+        if (timestampToCreate != null) {
+            for (File file : cacheDir.listFiles()) {
+                FileHelper.deleteRecursively(file);
+            }
+            assetDir.mkdirs();
             compiledDexDir.mkdirs();
             try {
                 TraceEvent.begin("ExtractBootstrapJavaLibrary");
@@ -85,9 +89,10 @@ public class AndroidHandler {
                 TraceEvent.begin("MoveBootstrapNativeLibrary");
                 // Rename the bootstrap library to prevent dlopen to think it is alread opened.
                 new File(assetDir, BOOTSTRAP_NATIVE_LIBRARY)
-                        .renameTo(File.createTempFile("bootstrap", ".so", assetDir));
+                        .renameTo(new File(nativeCreateTemporaryFile(
+                                assetDir.getAbsolutePath(), "bootstrap", ".so")));
                 TraceEvent.end("MoveBootstrapNativeLibrary");
-                new java.io.FileOutputStream(preparedSentinel).close();
+                new File(cacheDir, timestampToCreate).createNewFile();
             } catch (Exception e) {
                 Log.e(TAG, "Extraction of bootstrap files from assets failed.", e);
                 return false;
@@ -124,4 +129,7 @@ public class AndroidHandler {
         return true;
     }
 
+    // Create a new temporary file. The android version has predictable names.
+    private static native String nativeCreateTemporaryFile(
+            String directory, String basename, String extension);
 }

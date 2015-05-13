@@ -38,13 +38,16 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
   // Internal implementation of |GetExtractedContent|. The parameters are:
   // |callback|: The callback to return values to the caller. It uses FilePath
   //             instead of mojo arrays.
-  // |cache_dir|: The cache dir to return to the consumer.
+  // |base_dir|: The base directory for caching data associated to the response.
+  // |extracted_dir|: The directory where the file content must be extracted. It
+  //                  will be  returned to the consumer.
   // |content|: The content of the body of the response.
-  // |dir|: The base directory under which all data for the response is stored.
+  // |cache_dir|: The directory the user can user to cache its own content.
   void GetExtractedContentInternal(const FilePathPairCallback& callback,
-                                   const base::FilePath& cache_dir,
+                                   const base::FilePath& base_dir,
+                                   const base::FilePath& extracted_dir,
                                    const base::FilePath& content,
-                                   const base::FilePath& dir);
+                                   const base::FilePath& cache_dir);
 
   scoped_refptr<base::SequencedWorkerPool> worker_pool_;
   base::FilePath base_directory_;

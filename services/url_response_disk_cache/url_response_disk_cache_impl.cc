@@ -4,6 +4,8 @@
 
 #include "services/url_response_disk_cache/url_response_disk_cache_impl.h"
 
+#include <type_traits>
+
 #include "base/bind.h"
 #include "base/files/file_util.h"
 #include "base/files/important_file_writer.h"
@@ -22,6 +24,10 @@ namespace mojo {
 
 namespace {
 
+// The current version of the cache. This should only be incremented. When this
+// is incremented, all current cache entries will be invalidated.
+const uint32_t kCurrentVersion = 1;
+
 const char kEtagHeader[] = "etag";
 
 template <typename T>
@@ -39,12 +45,18 @@ void Serialize(T input, std::string* output) {
 }
 
 template <typename T>
-void Deserialize(std::string input, T* output) {
+bool Deserialize(std::string input, T* output) {
   typedef typename mojo::internal::WrapperTraits<T>::DataType DataType;
+  mojo::internal::BoundsChecker bounds_checker(&input[0], input.size(), 0);
+  if (!std::remove_pointer<DataType>::type::Validate(&input[0],
+                                                     &bounds_checker)) {
+    return false;
+  }
   DataType data_type = reinterpret_cast<DataType>(&input[0]);
   std::vector<Handle> handles;
   data_type->DecodePointersAndHandles(&handles);
   Deserialize_(data_type, output);
+  return true;
 }
 
 Array<uint8_t> PathToArray(const base::FilePath& path) {
@@ -169,7 +181,12 @@ bool IsCacheEntryValid(const base::FilePath& dir,
   if (!ReadFileToString(entry_path, &serialized_entry))
     return false;
   CacheEntryPtr entry;
-  Deserialize(serialized_entry, &entry);
+  if (!Deserialize(serialized_entry, &entry))
+    return false;
+
+  // Obsolete entries are invalidated.
+  if (entry->version != kCurrentVersion)
+    return false;
 
   // If |entry| or |response| has not headers, it is not possible to check if
   // the entry is valid, so returns |false|.
@@ -228,7 +245,8 @@ void URLResponseDiskCacheImpl::GetExtractedContent(
   base::FilePath extracted_dir = dir.Append("extracted");
   if (IsCacheEntryValid(dir, response.get(), nullptr) &&
       PathExists(GetExtractedSentinel(dir))) {
-    callback.Run(PathToArray(extracted_dir), PathToArray(dir));
+    callback.Run(PathToArray(extracted_dir),
+                 PathToArray(GetConsumerCacheDirectory(dir)));
     return;
   }
 
@@ -236,7 +254,7 @@ void URLResponseDiskCacheImpl::GetExtractedContent(
       response.Pass(),
       base::Bind(&URLResponseDiskCacheImpl::GetExtractedContentInternal,
                  base::Unretained(this), base::Bind(&RunMojoCallback, callback),
-                 extracted_dir));
+                 dir, extracted_dir));
 }
 
 void URLResponseDiskCacheImpl::GetFileInternal(
@@ -280,6 +298,7 @@ void URLResponseDiskCacheImpl::GetFileInternal(
   base::FilePath content;
   CHECK(CreateTemporaryFileInDir(dir, &content));
   entry = CacheEntry::New();
+  entry->version = kCurrentVersion;
   entry->url = response->url;
   entry->content_path = content.value();
   entry->headers = response->headers.Pass();
@@ -294,9 +313,10 @@ void URLResponseDiskCacheImpl::GetFileInternal(
 
 void URLResponseDiskCacheImpl::GetExtractedContentInternal(
     const FilePathPairCallback& callback,
+    const base::FilePath& base_dir,
     const base::FilePath& extracted_dir,
     const base::FilePath& content,
-    const base::FilePath& dir) {
+    const base::FilePath& cache_dir) {
   // If it is not possible to get the cached file, returns an error.
   if (content.empty()) {
     callback.Run(base::FilePath(), base::FilePath());
@@ -321,8 +341,8 @@ void URLResponseDiskCacheImpl::GetExtractedContentInternal(
   }
   // We can ignore write error, as it will just force to clear the cache on the
   // next request.
-  WriteFile(GetExtractedSentinel(dir), nullptr, 0);
-  callback.Run(extracted_dir, GetConsumerCacheDirectory(dir));
+  WriteFile(GetExtractedSentinel(base_dir), nullptr, 0);
+  callback.Run(extracted_dir, cache_dir);
 }
 
 }  // namespace mojo

@@ -4,13 +4,17 @@
 
 #include "shell/android/android_handler.h"
 
+#include <fcntl.h>
+
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "base/rand_util.h"
 #include "base/run_loop.h"
 #include "base/scoped_native_library.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/trace_event/trace_event.h"
 #include "jni/AndroidHandler_jni.h"
 #include "mojo/common/data_pipe_utils.h"
@@ -152,6 +156,28 @@ void AndroidHandler::ExtractApplication(base::FilePath* extracted_dir,
         }
         callback.Run();
       });
+}
+
+jstring CreateTemporaryFile(JNIEnv* env,
+                            jclass jcaller,
+                            jstring j_directory,
+                            jstring j_basename,
+                            jstring j_extension) {
+  std::string basename(ConvertJavaStringToUTF8(env, j_basename));
+  std::string extension(ConvertJavaStringToUTF8(env, j_extension));
+  base::FilePath directory(ConvertJavaStringToUTF8(env, j_directory));
+
+  for (;;) {
+    std::string random = base::RandBytesAsString(16);
+    std::string filename =
+        basename + base::HexEncode(random.data(), random.size()) + extension;
+    base::FilePath temporary_file = directory.Append(filename);
+    int fd = open(temporary_file.value().c_str(), O_CREAT | O_EXCL, 0600);
+    if (fd != -1) {
+      close(fd);
+      return ConvertUTF8ToJavaString(env, temporary_file.value()).Release();
+    }
+  }
 }
 
 bool RegisterAndroidHandlerJni(JNIEnv* env) {
