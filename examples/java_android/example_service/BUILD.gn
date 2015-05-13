@@ -1,6 +1,6 @@
 import("//services/android/rules.gni")
 
-group("android") {
+group("example_service") {
   deps = [
     ":android_example_service",
   ]

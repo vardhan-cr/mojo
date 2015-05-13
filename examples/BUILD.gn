@@ -43,8 +43,9 @@ group("examples") {
 
   if (is_android) {
     deps += [
-      "//examples/android",
       "//examples/device_name",
+      "//examples/java_android/example_service",
+      "//examples/java_android/echo",
     ]
   }
 
