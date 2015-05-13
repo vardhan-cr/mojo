@@ -20,7 +20,6 @@
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'dart_svn': 'https://dart.googlecode.com',
-  'sfntly_revision': '1bdaae8fc788a5ac8936d68bf24f37d977a13dac',
   'skia_revision': '409fd66a5afcef5f165f7ccec7c3473add231752',
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
@@ -78,9 +77,6 @@ deps = {
     Var('dart_svn') + '/svn/third_party/observatory_pub_packages' + '@' +
     Var('dart_observatory_packages_revision'),
 
-  'src/third_party/sfntly/cpp/src':
-    Var('chromium_git') + '/external/sfntly/cpp/src.git' + '@' +  Var('sfntly_revision'),
-
   'src/third_party/skia':
    Var('chromium_git') + '/skia.git' + '@' +  Var('skia_revision'),
 
@@ -114,19 +110,6 @@ deps = {
 
 
 deps_os = {
-  'unix': {
-    # Linux, really.
-    'src/third_party/lss':
-      Var('chromium_git') + '/external/linux-syscall-support/lss.git' + '@' + Var('lss_revision'),
-
-    # Note that this is different from Android's freetype repo.
-    'src/third_party/freetype2/src':
-     Var('chromium_git') + '/chromium/src/third_party/freetype2.git' + '@' + '495a23fce9cd125f715dc20643d14fed226d76ac',
-
-    # Used for embedded builds. CrOS & Linux use the system version.
-    'src/third_party/fontconfig/src':
-     Var('chromium_git') + '/external/fontconfig.git' + '@' + 'f16c3118e25546c1b749f9823c51827a60aeb5c1',
-  },
   'android': {
     'src/third_party/colorama/src':
      Var('chromium_git') + '/external/colorama.git' + '@' + '799604a1041e9b3bc5d2789ecbd7e8db2e18e6b8',
@@ -155,39 +138,7 @@ deps_os = {
     'src/third_party/requests/src':
       Var('chromium_git') + '/external/github.com/kennethreitz/requests.git' + '@' + 'f172b30356d821d180fa4ecfa3e71c7274a32de4',
   },
-  'win': {
-    'src/third_party/nss':
-        Var('chromium_git') + '/chromium/deps/nss.git' + '@' + Var('nss_revision'),
-    'src/third_party/bison':
-        Var('chromium_git') + '/chromium/deps/bison.git' + '@' + '083c9a45e4affdd5464ee2b224c2df649c6e26c3',
-    'src/third_party/gperf':
-        Var('chromium_git') + '/chromium/deps/gperf.git' + '@' + 'd892d79f64f9449770443fb06da49b5a1e5d33c1',
-  }
 }
-
-
-include_rules = [
-  # Everybody can use some things.
-  '+base',
-  '+build',
-
-  '+testing',
-  '+third_party/icu/source/common/unicode',
-  '+third_party/icu/source/i18n/unicode',
-  '+url',
-]
-
-
-# checkdeps.py shouldn't check include paths for files in these dirs:
-skip_child_includes = [
-  'examples',
-  'services',
-  'shell',
-  'skia',
-  'sky',
-  'testing',
-  'third_party',
-]
 
 
 hooks = [
