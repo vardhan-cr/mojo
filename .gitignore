@@ -8,6 +8,7 @@
 .gdbinit
 .landmines
 .project
+.pub
 .pydevproject
 .checkstyle
 cscope.*
@@ -67,7 +68,13 @@ v8.log
 /third_party/yasm/source/patched-yasm/
 /tools/grit/
 /v8/
-# dart packages directories
+# dart packages directories and related.
 /mojo/dart/mojom/packages
 /mojo/dart/mojom/bin/packages
 /mojo/dart/apptest/packages
+/sky/examples/hello_world/packages
+/sky/examples/stocks/packages
+/sky/sdk/packages/mojo/packages
+/sky/sdk/packages/mojo/pubspec.lock
+/sky/sdk/packages/sky/packages
+/sky/sdk/packages/sky/pubspec.lock
