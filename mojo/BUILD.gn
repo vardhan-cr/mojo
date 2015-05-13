@@ -13,9 +13,8 @@ group("mojo") {
   declare_args() {
     mojo_use_go = false
 
-    # TODO(ncbray): fix NaCl-side build misconfig for current_os == "chromeos".
     # TODO(ncbray): support ASAN once NaCl's GN build is unforked.
-    mojo_use_nacl = is_linux && !is_chromeos && !is_asan
+    mojo_use_nacl = is_linux && !is_asan
   }
   deps = [
     ":tests",

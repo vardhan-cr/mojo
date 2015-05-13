@@ -24,8 +24,6 @@ def BuildDirectoryForConfig(config, src_root):
     subdir += "android_"
     if config.target_cpu != Config.ARCH_ARM:
       subdir += config.target_cpu + "_"
-  elif config.target_os == Config.OS_CHROMEOS:
-    subdir += "chromeos_"
   subdir += "Debug" if config.is_debug else "Release"
   if config.sanitizer == Config.SANITIZER_ASAN:
     subdir += "_asan"
@@ -67,10 +65,6 @@ def GNArgsForConfig(config):
 
   if config.target_os == Config.OS_ANDROID:
     gn_args["target_os"] = "android"
-  elif config.target_os == Config.OS_CHROMEOS:
-    gn_args["target_os"] = "chromeos"
-    gn_args["use_glib"] = False
-    gn_args["use_system_harfbuzz"] = False
   elif config.target_os == Config.OS_LINUX:
     gn_args["use_aura"] = False
     gn_args["use_glib"] = False

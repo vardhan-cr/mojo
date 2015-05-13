@@ -28,8 +28,6 @@ def _args_to_config(args):
   target_os = None
   if args.android:
     target_os = Config.OS_ANDROID
-  elif args.chromeos:
-    target_os = Config.OS_CHROMEOS
 
   target_cpu = args.target_cpu
 
@@ -227,8 +225,6 @@ def main():
 
   os_group = parent_parser.add_mutually_exclusive_group()
   os_group.add_argument('--android', help='Build for Android',
-                        action='store_true')
-  os_group.add_argument('--chromeos', help='Build for ChromeOS',
                         action='store_true')
 
   parent_parser.add_argument('--target-cpu',

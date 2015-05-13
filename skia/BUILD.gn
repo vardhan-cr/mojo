@@ -636,7 +636,7 @@ test("skia_unittests") {
   ]
 }
 
-if (is_linux && !is_chromeos) {
+if (is_linux) {
   # TODO(GYP): Figure out which of these work and are needed on other platforms.
   executable("image_operations_bench") {
     sources = [

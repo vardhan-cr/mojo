@@ -42,10 +42,6 @@ component("display") {
     ]
     deps += [ "//ui/events/platform" ]
   }
-
-  if (is_chromeos) {
-    deps += [ "//ui/display/types" ]
-  }
 }
 
 component("test_util") {
@@ -65,10 +61,6 @@ component("test_util") {
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
-
-  if (is_chromeos) {
-    deps += [ "//ui/display/types" ]
-  }
 }
 
 test("display_unittests") {
@@ -88,11 +80,4 @@ test("display_unittests") {
     "//ui/display/util",
     "//ui/gfx/geometry",
   ]
-
-  if (is_chromeos) {
-    deps += [
-      ":display",
-      "//ui/display/types",
-    ]
-  }
 }

@@ -17,7 +17,7 @@ class GTestListTestsTest(unittest.TestCase):
   def testConfigToGNToConfig(self):
     """Tests that config to gn to config is the identity"""
     configs_to_test = {
-      "target_os": [None, "android", "chromeos", "linux"],
+      "target_os": [None, "android", "linux"],
       "target_cpu": [None, "x86", "x64", "arm"],
       "is_debug": [False, True],
       "is_clang": [False, True],
@@ -37,7 +37,7 @@ class GTestListTestsTest(unittest.TestCase):
   def testGNToConfigToGN(self):
     """Tests that gn to config to gn is the identity"""
     configs_to_test = {
-      "target_os": [None, "android", "chromeos"],
+      "target_os": [None, "android"],
       "target_cpu": ["x86", "x64", "arm"],
       "is_debug": [False, True],
       "is_clang": [False, True],
@@ -49,9 +49,6 @@ class GTestListTestsTest(unittest.TestCase):
     }
 
     for args in _iterate_over_config(configs_to_test):
-      if args.get("target_os", None) == "chromeos":
-        args["use_glib"] = False
-        args["use_system_harfbuzz"] = False
       if args.get("target_os", None) is None and sys.platform[:5] == "linux":
         args["use_aura"] = False
         args["use_glib"] = False
