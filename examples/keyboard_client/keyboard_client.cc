@@ -3,15 +3,21 @@
 // found in the LICENSE file.
 
 #include "base/macros.h"
+#include "mojo/application/application_runner_chromium.h"
+#include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "mojo/public/cpp/application/application_runner.h"
 #include "mojo/services/keyboard/public/interfaces/keyboard.mojom.h"
+#include "mojo/services/view_manager/public/cpp/view.h"
+#include "mojo/services/view_manager/public/cpp/view_manager.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
+#include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
 
 namespace examples {
 
 class KeyboardDelegate : public mojo::ApplicationDelegate,
-                         public keyboard::KeyboardClient {
+                         public keyboard::KeyboardClient,
+                         public mojo::ViewManagerDelegate {
  public:
   KeyboardDelegate() : binding_(this) {}
 
@@ -19,7 +25,30 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
 
   // mojo::ApplicationDelegate implementation.
   void Initialize(mojo::ApplicationImpl* app) override {
-    app->ConnectToService("mojo:keyboard_native", &keyboard_);
+    view_manager_client_factory_.reset(
+        new mojo::ViewManagerClientFactory(app->shell(), this));
+  }
+
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
+    connection->AddService(view_manager_client_factory_.get());
+    return true;
+  }
+
+  // mojo::ViewManagerDelegate implementation.
+  void OnEmbed(mojo::View* root,
+               mojo::InterfaceRequest<mojo::ServiceProvider> services,
+               mojo::ServiceProviderPtr exposed_services) override {
+    mojo::View* content = root->view_manager()->CreateView();
+    content->SetBounds(root->bounds());
+    root->AddChild(content);
+    content->SetVisible(true);
+
+    mojo::ServiceProviderPtr keyboard_sp;
+    content->Embed("mojo:keyboard_native", GetProxy(&keyboard_sp), nullptr);
+    keyboard_sp->ConnectToService(keyboard::KeyboardService::Name_,
+                                  GetProxy(&keyboard_).PassMessagePipe());
+
     keyboard_->ShowByRequest();
     keyboard_->Hide();
 
@@ -27,6 +56,10 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
     auto request = mojo::GetProxy(&keyboard_client);
     binding_.Bind(request.Pass());
     keyboard_->Show(keyboard_client.Pass());
+  }
+
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
+    base::MessageLoop::current()->Quit();
   }
 
   // keyboard::KeyboardClient implementation.
@@ -50,6 +83,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
  private:
   mojo::Binding<keyboard::KeyboardClient> binding_;
   keyboard::KeyboardServicePtr keyboard_;
+  scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyboardDelegate);
 };
@@ -57,6 +91,6 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
 }  // namespace examples
 
 MojoResult MojoMain(MojoHandle application_request) {
-  mojo::ApplicationRunner runner(new examples::KeyboardDelegate);
+  mojo::ApplicationRunnerChromium runner(new examples::KeyboardDelegate);
   return runner.Run(application_request);
 }

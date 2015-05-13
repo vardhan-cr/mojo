@@ -12,6 +12,8 @@ source_set("gpu") {
     "gl_texture.h",
     "mojo_context_support.cc",
     "mojo_context_support.h",
+    "texture_uploader.cc",
+    "texture_uploader.h",
   ]
 
   deps = [
@@ -27,7 +29,11 @@ source_set("gpu") {
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",
+    "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/gpu/public/interfaces",
+    "//mojo/services/surfaces/public/cpp",
+    "//mojo/services/surfaces/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
   ]
 }

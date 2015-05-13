@@ -9,12 +9,25 @@ mojo_native_application("keyboard_native") {
     "keyboard_service_impl.cc",
     "keyboard_service_impl.h",
     "main.cc",
+    "view_observer_delegate.cc",
+    "view_observer_delegate.h",
   ]
 
   deps = [
     "//base",
-    "//mojo/public/cpp/application:standalone",
+    "//mojo/application",
     "//mojo/public/cpp/bindings",
+    "//mojo/gpu",
+    "//mojo/public/c/gles2",
+    "//mojo/public/interfaces/application",
+    "//mojo/services/geometry/public/cpp",
+    "//mojo/services/geometry/public/interfaces",
     "//mojo/services/keyboard/public/interfaces",
+    "//mojo/services/surfaces/public/cpp",
+    "//mojo/services/surfaces/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
+    "//mojo/services/view_manager/public/cpp",
+    "//mojo/skia",
+    "//skia",
   ]
 }

@@ -11,7 +11,8 @@ mojo_native_application("keyboard_client") {
 
   deps = [
     "//base",
-    "//mojo/public/cpp/application:standalone",
+    "//mojo/application",
     "//mojo/services/keyboard/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
   ]
 }

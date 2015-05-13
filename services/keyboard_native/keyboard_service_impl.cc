@@ -39,4 +39,9 @@ void KeyboardServiceImpl::ShowByRequest() {
 void KeyboardServiceImpl::Hide() {
 }
 
+// mojo::ViewObserver implementation.
+void KeyboardServiceImpl::OnViewInputEvent(mojo::View* view,
+                                           const mojo::EventPtr& event) {
+}
+
 }  // namespace keyboard
