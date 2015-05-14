@@ -4,11 +4,12 @@
 
 #include "shell/switches.h"
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 
 namespace switches {
 
 namespace {
+
 // This controls logging verbosity. It's not strictly a switch for mojo_shell,
 // and isn't included in the public switches, but is included here so that it
 // doesn't trigger an error at startup.

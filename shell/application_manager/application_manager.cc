@@ -19,7 +19,6 @@
 #include "shell/application_manager/network_fetcher.h"
 #include "shell/application_manager/query_util.h"
 #include "shell/application_manager/shell_impl.h"
-#include "shell/switches.h"
 
 using mojo::Application;
 using mojo::ApplicationPtr;
@@ -97,7 +96,10 @@ bool ApplicationManager::TestAPI::HasFactoryForURL(const GURL& url) const {
 }
 
 ApplicationManager::ApplicationManager(Delegate* delegate)
-    : delegate_(delegate), weak_ptr_factory_(this) {
+    : delegate_(delegate),
+      blocking_pool_(nullptr),
+      disable_cache_(false),
+      weak_ptr_factory_(this) {
 }
 
 ApplicationManager::~ApplicationManager() {
