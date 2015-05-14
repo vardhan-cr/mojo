@@ -132,10 +132,6 @@ void ActiveVerifier::InstallVerifier() {
   // This lock only protects against races in this module, which is fine.
   AutoNativeLock lock(g_lock.Get());
   g_active_verifier = verifier ? verifier : new ActiveVerifier(true);
-
-  // TODO(shrikant): Enable handle verifier after figuring out
-  // AppContainer/DuplicateHandle error.
-  g_active_verifier->Disable();
 #endif
 }
 
@@ -156,6 +152,12 @@ void ActiveVerifier::StartTracking(HANDLE handle, const void* owner,
   if (!enabled_)
     return;
 
+  // Idea here is to make our handles non-closable until we close it ourselves.
+  // Handles provided could be totally fabricated especially through our
+  // unittest, we are ignoring that for now by not checking return value.
+  ::SetHandleInformation(handle, HANDLE_FLAG_PROTECT_FROM_CLOSE,
+                         HANDLE_FLAG_PROTECT_FROM_CLOSE);
+
   // Grab the thread id before the lock.
   DWORD thread_id = GetCurrentThreadId();
 
@@ -175,6 +177,15 @@ void ActiveVerifier::StopTracking(HANDLE handle, const void* owner,
                                   const void* pc1, const void* pc2) {
   if (!enabled_)
     return;
+
+  // We expect handle to be protected till this point.
+  DWORD flags = 0;
+  if (::GetHandleInformation(handle, &flags)) {
+    CHECK_NE(0U, (flags & HANDLE_FLAG_PROTECT_FROM_CLOSE));
+
+    // Unprotect handle so that it could be closed.
+    ::SetHandleInformation(handle, HANDLE_FLAG_PROTECT_FROM_CLOSE, 0);
+  }
 
   AutoNativeLock lock(*lock_);
   HandleMap::iterator i = map_.find(handle);

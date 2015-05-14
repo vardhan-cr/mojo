@@ -330,14 +330,16 @@ class BASE_EXPORT DeathData {
 
   // Metrics and past snapshots accessors, used only for serialization and in
   // tests.
-  int count() const;
-  int32 run_duration_sum() const;
-  int32 run_duration_max() const;
-  int32 run_duration_sample() const;
-  int32 queue_duration_sum() const;
-  int32 queue_duration_max() const;
-  int32 queue_duration_sample() const;
-  const DeathDataPhaseSnapshot* last_phase_snapshot() const;
+  int count() const { return count_; }
+  int32 run_duration_sum() const { return run_duration_sum_; }
+  int32 run_duration_max() const { return run_duration_max_; }
+  int32 run_duration_sample() const { return run_duration_sample_; }
+  int32 queue_duration_sum() const { return queue_duration_sum_; }
+  int32 queue_duration_max() const { return queue_duration_max_; }
+  int32 queue_duration_sample() const { return queue_duration_sample_; }
+  const DeathDataPhaseSnapshot* last_phase_snapshot() const {
+    return last_phase_snapshot_;
+  }
 
   // Called when the current profiling phase, identified by |profiling_phase|,
   // ends.
@@ -497,14 +499,13 @@ class BASE_EXPORT ThreadData {
   const std::string& thread_name() const { return thread_name_; }
 
   // Initializes all statics if needed (this initialization call should be made
-  // while we are single threaded).  Returns false if unable to initialize.
-  static bool Initialize();
+  // while we are single threaded).
+  static void Initialize();
 
   // Sets internal status_.
   // If |status| is false, then status_ is set to DEACTIVATED.
   // If |status| is true, then status_ is set to PROFILING_ACTIVE.
-  // If it fails to initialize the TLS slot, this function will return false.
-  static bool InitializeAndSetTrackingStatus(Status status);
+  static void InitializeAndSetTrackingStatus(Status status);
 
   static Status status();
 

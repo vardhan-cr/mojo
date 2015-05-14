@@ -79,9 +79,32 @@ def DepsOfType(wanted_type, configs):
 
 
 def GetAllDepsConfigsInOrder(deps_config_paths):
-  def Deps(path):
+  def GetDeps(path):
     return set(GetDepConfig(path)['deps_configs'])
-  return build_utils.GetSortedTransitiveDependencies(deps_config_paths, Deps)
+  return build_utils.GetSortedTransitiveDependencies(deps_config_paths, GetDeps)
+
+
+class Deps(object):
+  def __init__(self, direct_deps_config_paths):
+    self.all_deps_config_paths = GetAllDepsConfigsInOrder(
+        direct_deps_config_paths)
+    self.direct_deps_configs = [
+        GetDepConfig(p) for p in direct_deps_config_paths]
+    self.all_deps_configs = [
+        GetDepConfig(p) for p in self.all_deps_config_paths]
+
+  def All(self, wanted_type=None):
+    if type is None:
+      return self.all_deps_configs
+    return DepsOfType(wanted_type, self.all_deps_configs)
+
+  def Direct(self, wanted_type=None):
+    if wanted_type is None:
+      return self.direct_deps_configs
+    return DepsOfType(wanted_type, self.direct_deps_configs)
+
+  def AllConfigPaths(self):
+    return self.all_deps_config_paths
 
 
 def main(argv):
@@ -100,6 +123,7 @@ def main(argv):
   # android_resources options
   parser.add_option('--srcjar', help='Path to target\'s resources srcjar.')
   parser.add_option('--resources-zip', help='Path to target\'s resources zip.')
+  parser.add_option('--r-text', help='Path to target\'s R.txt file.')
   parser.add_option('--package-name',
       help='Java package name for these resources.')
   parser.add_option('--android-manifest', help='Path to android manifest.')
@@ -165,19 +189,22 @@ def main(argv):
 
   direct_deps_config_paths = [
       c for c in possible_deps_config_paths if not c in unknown_deps]
-  all_deps_config_paths = GetAllDepsConfigsInOrder(direct_deps_config_paths)
 
-  direct_deps_configs = [GetDepConfig(p) for p in direct_deps_config_paths]
-  all_deps_configs = [GetDepConfig(p) for p in all_deps_config_paths]
+  deps = Deps(direct_deps_config_paths)
+  direct_library_deps = deps.Direct('java_library')
+  all_library_deps = deps.All('java_library')
 
-  direct_library_deps = DepsOfType('java_library', direct_deps_configs)
-  all_library_deps = DepsOfType('java_library', all_deps_configs)
-
-  direct_resources_deps = DepsOfType('android_resources', direct_deps_configs)
-  all_resources_deps = DepsOfType('android_resources', all_deps_configs)
+  direct_resources_deps = deps.Direct('android_resources')
+  all_resources_deps = deps.All('android_resources')
   # Resources should be ordered with the highest-level dependency first so that
   # overrides are done correctly.
   all_resources_deps.reverse()
+
+  if options.type == 'android_apk' and options.tested_apk_config:
+    tested_apk_deps = Deps([options.tested_apk_config])
+    tested_apk_resources_deps = tested_apk_deps.All('android_resources')
+    all_resources_deps = [
+        d for d in all_resources_deps if not d in tested_apk_resources_deps]
 
   # Initialize some common config.
   config = {
@@ -237,18 +264,26 @@ def main(argv):
     deps_info['resources_zip'] = options.resources_zip
     if options.srcjar:
       deps_info['srcjar'] = options.srcjar
+    if options.android_manifest:
+      manifest = AndroidManifest(options.android_manifest)
+      deps_info['package_name'] = manifest.GetPackageName()
     if options.package_name:
       deps_info['package_name'] = options.package_name
+    if options.r_text:
+      deps_info['r_text'] = options.r_text
 
   if options.type == 'android_resources' or options.type == 'android_apk':
     config['resources'] = {}
     config['resources']['dependency_zips'] = [
         c['resources_zip'] for c in all_resources_deps]
     config['resources']['extra_package_names'] = []
+    config['resources']['extra_r_text_files'] = []
 
   if options.type == 'android_apk':
     config['resources']['extra_package_names'] = [
         c['package_name'] for c in all_resources_deps if 'package_name' in c]
+    config['resources']['extra_r_text_files'] = [
+        c['r_text'] for c in all_resources_deps if 'r_text' in c]
 
   if options.type in ['android_apk', 'deps_dex']:
     deps_dex_files = [c['dex_path'] for c in all_library_deps]
@@ -256,10 +291,8 @@ def main(argv):
   # An instrumentation test apk should exclude the dex files that are in the apk
   # under test.
   if options.type == 'android_apk' and options.tested_apk_config:
-    tested_apk_config_paths = GetAllDepsConfigsInOrder(
-        [options.tested_apk_config])
-    tested_apk_configs = [GetDepConfig(p) for p in tested_apk_config_paths]
-    tested_apk_library_deps = DepsOfType('java_library', tested_apk_configs)
+    tested_apk_deps = Deps([options.tested_apk_config])
+    tested_apk_library_deps = tested_apk_deps.All('java_library')
     tested_apk_deps_dex_files = [c['dex_path'] for c in tested_apk_library_deps]
     deps_dex_files = [
         p for p in deps_dex_files if not p in tested_apk_deps_dex_files]
@@ -316,7 +349,7 @@ def main(argv):
   if options.depfile:
     build_utils.WriteDepfile(
         options.depfile,
-        all_deps_config_paths + build_utils.GetPythonDependencies())
+        deps.AllConfigPaths() + build_utils.GetPythonDependencies())
 
 
 if __name__ == '__main__':
