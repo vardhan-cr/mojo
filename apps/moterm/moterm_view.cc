@@ -97,7 +97,7 @@ MotermView::~MotermView() {
 }
 
 void MotermView::OnViewDestroyed(mojo::View* view) {
-  DCHECK(view == view_);
+  DCHECK_EQ(view, view_);
   view_->RemoveObserver(this);
   delete this;
 }

@@ -12,7 +12,6 @@
 #include "base/bind.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
-#include "base/message_loop/message_loop.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "examples/window_manager/window_manager.mojom.h"
@@ -193,7 +192,6 @@ class MotermExampleApp : public mojo::ApplicationDelegate,
   }
 
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
-    base::MessageLoop::current()->Quit();
   }
 
   mojo::ApplicationImpl* application_impl_;

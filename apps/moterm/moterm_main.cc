@@ -49,7 +49,6 @@ class Moterm : public mojo::ApplicationDelegate,
   }
 
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
-    base::MessageLoop::current()->Quit();
   }
 
   mojo::ApplicationImpl* application_impl_;
