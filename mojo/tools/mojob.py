@@ -281,10 +281,6 @@ def main():
       help='Run Python unit tests (does not build).')
   pytest_parser.set_defaults(func=_pytest)
 
-  nacltest_parser = subparsers.add_parser('nacltest', parents=[parent_parser],
-      help='Run NaCl unit tests (does not build).')
-  nacltest_parser.set_defaults(func=lambda config: 0)
-
   args = parser.parse_args()
   global _verbose_count
   _verbose_count = args.verbose_count

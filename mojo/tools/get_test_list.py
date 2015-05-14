@@ -80,6 +80,15 @@ def GetTestList(config, verbose_count=0):
                  [os.path.join("mojo", "tools", "test_runner.py"),
                   os.path.join("mojo", "tools", "data", "unittests"),
                   build_dir] + verbose_flags)
+    # NaCl tests (Linux only):
+    if (target_os == Config.OS_LINUX and
+        config.sanitizer != Config.SANITIZER_ASAN):
+      AddEntry("NaCl tests",
+               [os.path.join(build_dir, "monacl_shell"),
+                os.path.join(build_dir, "irt_" + config.target_cpu,
+                             "irt_mojo.nexe"),
+                os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
+                             "monacl_test.nexe")])
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
@@ -87,6 +96,13 @@ def GetTestList(config, verbose_count=0):
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "apptests"),
                   build_dir] + verbose_flags)
+    # NaCl app tests (Linux only):
+    if (target_os == Config.OS_LINUX and
+        config.sanitizer != Config.SANITIZER_ASAN):
+      AddXvfbEntry("NaCl app tests",
+                   [os.path.join("mojo", "tools", "apptest_runner.py"),
+                    os.path.join("mojo", "tools", "data", "nacl_apptests"),
+                    build_dir] + verbose_flags)
 
   # Go unit tests (Linux-only):
   if (target_os == Config.OS_LINUX and
@@ -112,20 +128,6 @@ def GetTestList(config, verbose_count=0):
               os.path.join("mojo", "tools",
                            "run_mojo_python_bindings_tests.py"),
               "--build-dir=" + build_dir])
-
-  # NaCl tests (Linux only):
-  if target_os == Config.OS_LINUX and config.sanitizer != Config.SANITIZER_ASAN:
-    AddEntry("NaCl tests",
-             [os.path.join(build_dir, "monacl_shell"),
-              os.path.join(build_dir, "irt_" + config.target_cpu,
-                           "irt_mojo.nexe"),
-              os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
-                           "monacl_test.nexe")])
-
-    AddXvfbEntry("NaCl app tests",
-                 [os.path.join("mojo", "tools", "apptest_runner.py"),
-                  os.path.join("mojo", "tools", "data", "nacl_apptests"),
-                  build_dir] + verbose_flags)
 
   # Sky tests (Linux-only):
   # TODO(abarth): Re-enabled in ASAN once the DartVM works in ASAN.
