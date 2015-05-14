@@ -135,10 +135,12 @@ class ApplicationManager {
  private:
   class ContentHandlerConnection;
 
-  typedef std::map<std::string, ApplicationLoader*> SchemeToLoaderMap;
-  typedef std::map<GURL, ApplicationLoader*> URLToLoaderMap;
-  typedef std::map<Identity, ShellImpl*> IdentityToShellImplMap;
-  typedef std::map<GURL, ContentHandlerConnection*> URLToContentHandlerMap;
+  typedef std::map<GURL, scoped_ptr<ApplicationLoader>> URLToLoaderMap;
+  typedef std::map<std::string, scoped_ptr<ApplicationLoader>>
+      SchemeToLoaderMap;
+  typedef std::map<Identity, scoped_ptr<ShellImpl>> IdentityToShellImplMap;
+  typedef std::map<GURL, scoped_ptr<ContentHandlerConnection>>
+      URLToContentHandlerMap;
   typedef std::map<GURL, std::vector<std::string>> URLToArgsMap;
   typedef std::map<std::string, GURL> MimeTypeToURLMap;
   typedef std::map<GURL, NativeRunnerFactory::Options> URLToNativeOptionsMap;

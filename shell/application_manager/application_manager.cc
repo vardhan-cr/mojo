@@ -8,7 +8,6 @@
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/stl_util.h"
 #include "base/strings/string_util.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
@@ -103,14 +102,10 @@ ApplicationManager::ApplicationManager(Delegate* delegate)
 }
 
 ApplicationManager::~ApplicationManager() {
-  STLDeleteValues(&url_to_content_handler_);
-  TerminateShellConnections();
-  STLDeleteValues(&url_to_loader_);
-  STLDeleteValues(&scheme_to_loader_);
 }
 
 void ApplicationManager::TerminateShellConnections() {
-  STLDeleteValues(&identity_to_shell_impl_);
+  identity_to_shell_impl_.clear();
 }
 
 void ApplicationManager::ConnectToApplication(
@@ -242,7 +237,7 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
       mojo::GetProxy(&application);
   ShellImpl* shell =
       new ShellImpl(application.Pass(), this, app_identity, on_application_end);
-  identity_to_shell_impl_[app_identity] = shell;
+  identity_to_shell_impl_[app_identity] = make_scoped_ptr(shell);
   shell->InitializeApplication(mojo::Array<mojo::String>::From(parameters));
   ConnectToClient(shell, resolved_url, requestor_url, services.Pass(),
                   exposed_services.Pass());
@@ -252,7 +247,7 @@ InterfaceRequest<Application> ApplicationManager::RegisterShell(
 ShellImpl* ApplicationManager::GetShellImpl(const GURL& url) {
   const auto& shell_it = identity_to_shell_impl_.find(Identity(url));
   if (shell_it != identity_to_shell_impl_.end())
-    return shell_it->second;
+    return shell_it->second.get();
   return nullptr;
 }
 
@@ -313,9 +308,9 @@ void ApplicationManager::HandleFetchCallback(
     return;
   }
 
-  MimeTypeToURLMap::iterator iter = mime_type_to_url_.find(fetcher->MimeType());
-  if (iter != mime_type_to_url_.end()) {
-    LoadWithContentHandler(iter->second, request.Pass(),
+  auto it = mime_type_to_url_.find(fetcher->MimeType());
+  if (it != mime_type_to_url_.end()) {
+    LoadWithContentHandler(it->second, request.Pass(),
                            fetcher->AsURLResponse(blocking_pool_, 0));
     return;
   }
@@ -381,13 +376,12 @@ void ApplicationManager::LoadWithContentHandler(
     InterfaceRequest<Application> application_request,
     mojo::URLResponsePtr url_response) {
   ContentHandlerConnection* connection = nullptr;
-  URLToContentHandlerMap::iterator iter =
-      url_to_content_handler_.find(content_handler_url);
-  if (iter != url_to_content_handler_.end()) {
-    connection = iter->second;
+  auto it = url_to_content_handler_.find(content_handler_url);
+  if (it != url_to_content_handler_.end()) {
+    connection = it->second.get();
   } else {
     connection = new ContentHandlerConnection(this, content_handler_url);
-    url_to_content_handler_[content_handler_url] = connection;
+    url_to_content_handler_[content_handler_url] = make_scoped_ptr(connection);
   }
 
   connection->content_handler()->StartApplication(application_request.Pass(),
@@ -396,19 +390,13 @@ void ApplicationManager::LoadWithContentHandler(
 
 void ApplicationManager::SetLoaderForURL(scoped_ptr<ApplicationLoader> loader,
                                          const GURL& url) {
-  URLToLoaderMap::iterator it = url_to_loader_.find(url);
-  if (it != url_to_loader_.end())
-    delete it->second;
-  url_to_loader_[url] = loader.release();
+  url_to_loader_[url] = loader.Pass();
 }
 
 void ApplicationManager::SetLoaderForScheme(
     scoped_ptr<ApplicationLoader> loader,
     const std::string& scheme) {
-  SchemeToLoaderMap::iterator it = scheme_to_loader_.find(scheme);
-  if (it != scheme_to_loader_.end())
-    delete it->second;
-  scheme_to_loader_[scheme] = loader.release();
+  scheme_to_loader_[scheme] = loader.Pass();
 }
 
 void ApplicationManager::SetArgsForURL(const std::vector<std::string>& args,
@@ -444,10 +432,10 @@ void ApplicationManager::SetNativeOptionsForURL(
 ApplicationLoader* ApplicationManager::GetLoaderForURL(const GURL& url) {
   auto url_it = url_to_loader_.find(GetBaseURLAndQuery(url, nullptr));
   if (url_it != url_to_loader_.end())
-    return url_it->second;
+    return url_it->second.get();
   auto scheme_it = scheme_to_loader_.find(url.scheme());
   if (scheme_it != scheme_to_loader_.end())
-    return scheme_it->second;
+    return scheme_it->second.get();
   return nullptr;
 }
 
@@ -458,7 +446,6 @@ void ApplicationManager::OnShellImplError(ShellImpl* shell_impl) {
   // Remove the shell.
   auto it = identity_to_shell_impl_.find(identity);
   DCHECK(it != identity_to_shell_impl_.end());
-  delete it->second;
   identity_to_shell_impl_.erase(it);
   if (!on_application_end.is_null())
     on_application_end.Run();
@@ -470,7 +457,6 @@ void ApplicationManager::OnContentHandlerError(
   auto it =
       url_to_content_handler_.find(content_handler->content_handler_url());
   DCHECK(it != url_to_content_handler_.end());
-  delete it->second;
   url_to_content_handler_.erase(it);
 }
 
