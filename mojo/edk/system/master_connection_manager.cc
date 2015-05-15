@@ -318,7 +318,7 @@ bool MasterConnectionManager::AllowConnectImpl(
         new PendingConnectionInfo(process_identifier);
     // TODO(vtl): Track process identifier -> pending connections also (so these
     // can be removed efficiently if that process disconnects).
-    DVLOG(1) << "New pending connection ID " << connection_id
+    DVLOG(1) << "New pending connection ID " << connection_id.ToString()
              << ": AllowConnect() from first process identifier "
              << process_identifier;
     return true;
@@ -328,7 +328,7 @@ bool MasterConnectionManager::AllowConnectImpl(
   if (info->state == PendingConnectionInfo::AWAITING_SECOND_ALLOW_CONNECT) {
     info->state = PendingConnectionInfo::AWAITING_CONNECTS_FROM_BOTH;
     info->second = process_identifier;
-    DVLOG(1) << "Pending connection ID " << connection_id
+    DVLOG(1) << "Pending connection ID " << connection_id.ToString()
              << ": AllowConnect() from second process identifier "
              << process_identifier;
     return true;
@@ -337,8 +337,8 @@ bool MasterConnectionManager::AllowConnectImpl(
   // Someone's behaving badly, but we don't know who (it might not be the
   // caller).
   LOG(ERROR) << "AllowConnect() from process " << process_identifier
-             << " for connection ID " << connection_id << " already in state "
-             << info->state;
+             << " for connection ID " << connection_id.ToString()
+             << " already in state " << info->state;
   pending_connections_.erase(it);
   delete info;
   return false;
@@ -355,7 +355,7 @@ bool MasterConnectionManager::CancelConnectImpl(
   if (it == pending_connections_.end()) {
     // Not necessarily the caller's fault, and not necessarily an error.
     DVLOG(1) << "CancelConnect() from process " << process_identifier
-             << " for connection ID " << connection_id
+             << " for connection ID " << connection_id.ToString()
              << " which is not (or no longer) pending";
     return true;
   }
@@ -363,7 +363,7 @@ bool MasterConnectionManager::CancelConnectImpl(
   PendingConnectionInfo* info = it->second;
   if (process_identifier != info->first && process_identifier != info->second) {
     LOG(ERROR) << "CancelConnect() from process " << process_identifier
-               << " for connection ID " << connection_id
+               << " for connection ID " << connection_id.ToString()
                << " which is neither connectee";
     return false;
   }
@@ -392,7 +392,7 @@ bool MasterConnectionManager::ConnectImpl(
   if (it == pending_connections_.end()) {
     // Not necessarily the caller's fault.
     LOG(ERROR) << "Connect() from process " << process_identifier
-               << " for connection ID " << connection_id
+               << " for connection ID " << connection_id.ToString()
                << " which is not pending";
     return false;
   }
@@ -409,7 +409,7 @@ bool MasterConnectionManager::ConnectImpl(
       *peer_process_identifier = info->first;
     } else {
       LOG(ERROR) << "Connect() from process " << process_identifier
-                 << " for connection ID " << connection_id
+                 << " for connection ID " << connection_id.ToString()
                  << " which is neither connectee";
       return false;
     }
@@ -424,7 +424,7 @@ bool MasterConnectionManager::ConnectImpl(
       info->remaining_handle = platform_channel_pair.PassClientHandle();
       DCHECK(info->remaining_handle.is_valid());
     }
-    DVLOG(1) << "Connection ID " << connection_id
+    DVLOG(1) << "Connection ID " << connection_id.ToString()
              << ": first Connect() from process identifier "
              << process_identifier;
     return true;
@@ -443,8 +443,8 @@ bool MasterConnectionManager::ConnectImpl(
     // Someone's behaving badly, but we don't know who (it might not be the
     // caller).
     LOG(ERROR) << "Connect() from process " << process_identifier
-               << " for connection ID " << connection_id << " in state "
-               << info->state;
+               << " for connection ID " << connection_id.ToString()
+               << " in state " << info->state;
     pending_connections_.erase(it);
     delete info;
     return false;
@@ -452,7 +452,7 @@ bool MasterConnectionManager::ConnectImpl(
 
   if (process_identifier != remaining_connectee) {
     LOG(ERROR) << "Connect() from process " << process_identifier
-               << " for connection ID " << connection_id
+               << " for connection ID " << connection_id.ToString()
                << " which is not the remaining connectee";
     pending_connections_.erase(it);
     delete info;
@@ -464,7 +464,7 @@ bool MasterConnectionManager::ConnectImpl(
   DCHECK((info->first == info->second) ^ platform_handle->is_valid());
   pending_connections_.erase(it);
   delete info;
-  DVLOG(1) << "Connection ID " << connection_id
+  DVLOG(1) << "Connection ID " << connection_id.ToString()
            << ": second Connect() from process identifier "
            << process_identifier;
   return true;
