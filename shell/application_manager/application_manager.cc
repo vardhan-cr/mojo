@@ -94,10 +94,11 @@ bool ApplicationManager::TestAPI::HasFactoryForURL(const GURL& url) const {
          manager_->identity_to_shell_impl_.end();
 }
 
-ApplicationManager::ApplicationManager(Delegate* delegate)
-    : delegate_(delegate),
+ApplicationManager::ApplicationManager(const Options& options,
+                                       Delegate* delegate)
+    : options_(options),
+      delegate_(delegate),
       blocking_pool_(nullptr),
-      disable_cache_(false),
       weak_ptr_factory_(this) {
 }
 
@@ -186,7 +187,8 @@ void ApplicationManager::ConnectToApplicationWithParameters(
                      &url_response_disk_cache_);
   }
 
-  new NetworkFetcher(disable_cache_, resolved_url, network_service_.get(),
+  new NetworkFetcher(options_.disable_cache, options_.predictable_app_filenames,
+                     resolved_url, network_service_.get(),
                      url_response_disk_cache_.get(), callback);
 }
 

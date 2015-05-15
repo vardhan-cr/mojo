@@ -22,18 +22,19 @@
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/data_pipe_peek.h"
-#include "shell/switches.h"
 
 namespace shell {
 
 NetworkFetcher::NetworkFetcher(
     bool disable_cache,
+    bool predictable_app_filenames,
     const GURL& url,
     mojo::NetworkService* network_service,
     mojo::URLResponseDiskCache* url_response_disk_cache,
     const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
-      disable_cache_(false),
+      disable_cache_(disable_cache),
+      predictable_app_filenames_(predictable_app_filenames),
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
       weak_ptr_factory_(this) {
@@ -159,8 +160,7 @@ void NetworkFetcher::OnFileRetrievedFromCache(
   if (success) {
     path_ = base::FilePath(std::string(
         reinterpret_cast<char*>(&path_as_array.front()), path_as_array.size()));
-    if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-            switches::kPredictableAppFilenames)) {
+    if (predictable_app_filenames_) {
       // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
       base::FilePath new_path;
       if (RenameToAppId(url_, path_, &new_path)) {

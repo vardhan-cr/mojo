@@ -21,9 +21,6 @@ const char kV[] = "v";
 // --args-for='mojo:wget http://www.google.com'
 const char kArgsFor[] = "args-for";
 
-// Used only by the child process. Not for user use.
-const char kChildProcess[] = "child-process";
-
 // Comma separated list like:
 // text/html,mojo:html_viewer,application/bravo,https://abarth.com/bravo
 const char kContentHandlers[] = "content-handlers";
@@ -84,7 +81,6 @@ const char kURLMappings[] = "url-mappings";
 // Switches valid for the main process (i.e., that the user may pass in).
 const char* kSwitchArray[] = {kV,
                               kArgsFor,
-                              // |kChildProcess| not for user use.
                               kContentHandlers,
                               kCPUProfile,
                               kDisableCache,

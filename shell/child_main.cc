@@ -27,9 +27,9 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/child_controller.mojom.h"
+#include "shell/child_switches.h"
 #include "shell/init.h"
 #include "shell/native_application_support.h"
-#include "shell/switches.h"
 
 namespace shell {
 namespace {

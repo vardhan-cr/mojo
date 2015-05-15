@@ -18,8 +18,8 @@
 #include "base/task_runner_util.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/public/cpp/system/message_pipe.h"
+#include "shell/child_switches.h"
 #include "shell/context.h"
-#include "shell/switches.h"
 #include "shell/task_runners.h"
 
 namespace shell {

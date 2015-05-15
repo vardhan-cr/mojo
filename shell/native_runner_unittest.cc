@@ -56,7 +56,8 @@ class TestNativeRunnerFactory : public NativeRunnerFactory {
 class NativeApplicationLoaderTest : public testing::Test,
                                     public ApplicationManager::Delegate {
  public:
-  NativeApplicationLoaderTest() : application_manager_(this) {}
+  NativeApplicationLoaderTest()
+      : application_manager_(ApplicationManager::Options(), this) {}
   ~NativeApplicationLoaderTest() override {}
   void SetUp() override {
     context_.Init();

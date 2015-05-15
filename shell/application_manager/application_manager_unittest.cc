@@ -460,7 +460,8 @@ class ApplicationManagerTest : public testing::Test {
   ~ApplicationManagerTest() override {}
 
   void SetUp() override {
-    application_manager_.reset(new ApplicationManager(&test_delegate_));
+    application_manager_.reset(
+        new ApplicationManager(ApplicationManager::Options(), &test_delegate_));
     test_loader_ = new TestApplicationLoader;
     test_loader_->set_context(&context_);
     application_manager_->set_default_loader(
@@ -507,7 +508,7 @@ TEST_F(ApplicationManagerTest, Basic) {
 
 // Confirm that no arguments are sent to an application by default.
 TEST_F(ApplicationManagerTest, NoArgs) {
-  ApplicationManager am(&test_delegate_);
+  ApplicationManager am(ApplicationManager::Options(), &test_delegate_);
   GURL test_url("test:test");
   TestApplicationLoader* loader = new TestApplicationLoader;
   loader->set_context(&context_);
@@ -523,7 +524,7 @@ TEST_F(ApplicationManagerTest, NoArgs) {
 
 // Confirm that arguments are sent to an application.
 TEST_F(ApplicationManagerTest, Args) {
-  ApplicationManager am(&test_delegate_);
+  ApplicationManager am(ApplicationManager::Options(), &test_delegate_);
   GURL test_url("test:test");
   std::vector<std::string> args;
   args.push_back("test_arg1");
@@ -545,7 +546,7 @@ TEST_F(ApplicationManagerTest, Args) {
 
 // Confirm that arguments are aggregated through mappings.
 TEST_F(ApplicationManagerTest, ArgsAndMapping) {
-  ApplicationManager am(&test_delegate_);
+  ApplicationManager am(ApplicationManager::Options(), &test_delegate_);
   GURL test_url("test:test");
   GURL test_url2("test:test2");
   test_delegate_.AddMapping(test_url, test_url2);
@@ -603,7 +604,7 @@ TEST_F(ApplicationManagerTest, ClientError) {
 
 TEST_F(ApplicationManagerTest, Deletes) {
   {
-    ApplicationManager am(&test_delegate_);
+    ApplicationManager am(ApplicationManager::Options(), &test_delegate_);
     TestApplicationLoader* default_loader = new TestApplicationLoader;
     default_loader->set_context(&context_);
     TestApplicationLoader* url_loader1 = new TestApplicationLoader;

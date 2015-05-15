@@ -44,7 +44,6 @@ source_set("application_manager") {
     "//mojo/environment:chromium",
     "//mojo/services/content_handler/public/interfaces",
     "//shell:native_application_support",
-    "//shell:switches",
   ]
 }
 

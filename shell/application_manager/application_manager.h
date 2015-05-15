@@ -34,6 +34,13 @@ class ShellImpl;
 
 class ApplicationManager {
  public:
+  struct Options {
+    Options() : disable_cache(false), predictable_app_filenames(false) {}
+
+    bool disable_cache;
+    bool predictable_app_filenames;
+  };
+
   class Delegate {
    public:
     // Gives the delegate a chance to apply any mappings for the specified url.
@@ -65,7 +72,7 @@ class ApplicationManager {
     DISALLOW_COPY_AND_ASSIGN(TestAPI);
   };
 
-  explicit ApplicationManager(Delegate* delegate);
+  ApplicationManager(const Options& options, Delegate* delegate);
   ~ApplicationManager();
 
   // Loads a service if necessary and establishes a new client connection.
@@ -103,7 +110,6 @@ class ApplicationManager {
   void set_blocking_pool(base::SequencedWorkerPool* blocking_pool) {
     blocking_pool_ = blocking_pool;
   }
-  void set_disable_cache(bool disable_cache) { disable_cache_ = disable_cache; }
   // Sets a Loader to be used for a specific url.
   void SetLoaderForURL(scoped_ptr<ApplicationLoader> loader, const GURL& url);
   // Sets a Loader to be used for a specific url scheme.
@@ -217,6 +223,7 @@ class ApplicationManager {
 
   void CleanupRunner(NativeRunner* runner);
 
+  const Options options_;
   Delegate* const delegate_;
   // Loader management.
   // Loaders are chosen in the order they are listed here.
@@ -236,7 +243,6 @@ class ApplicationManager {
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
-  bool disable_cache_;
   base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationManager);

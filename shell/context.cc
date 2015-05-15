@@ -61,6 +61,16 @@ class Setup {
   DISALLOW_COPY_AND_ASSIGN(Setup);
 };
 
+ApplicationManager::Options MakeApplicationManagerOptions() {
+  ApplicationManager::Options options;
+  options.disable_cache = base::CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kDisableCache);
+  options.predictable_app_filenames =
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kPredictableAppFilenames);
+  return options;
+}
+
 bool ConfigureURLMappings(const base::CommandLine& command_line,
                           Context* context) {
   URLResolver* resolver = context->url_resolver();
@@ -201,7 +211,9 @@ class TracingServiceProvider : public ServiceProvider {
 
 }  // namespace
 
-Context::Context(Tracer* tracer) : tracer_(tracer), application_manager_(this) {
+Context::Context(Tracer* tracer)
+    : tracer_(tracer),
+      application_manager_(MakeApplicationManagerOptions(), this) {
   DCHECK(!base::MessageLoop::current());
 
   // By default assume that the local apps reside alongside the shell.
@@ -289,9 +301,6 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
     runner_factory.reset(new InProcessNativeRunnerFactory(this));
   application_manager_.set_blocking_pool(task_runners_->blocking_pool());
   application_manager_.set_native_runner_factory(runner_factory.Pass());
-  application_manager_.set_disable_cache(
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kDisableCache));
 
   InitContentHandlers(&application_manager_, command_line);
   InitNativeOptions(&application_manager_, command_line);

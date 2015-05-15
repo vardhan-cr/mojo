@@ -44,7 +44,7 @@ if (is_android) {
 
 if (!mojo_use_prebuilt_mojo_shell) {
   shell_common_deps = [
-    ":lib",
+    ":parent_lib",
     "//base",
     "//base/allocator",
     "//build/config/sanitizers:deps",
@@ -90,7 +90,6 @@ if (!mojo_use_prebuilt_mojo_shell) {
     ]
 
     deps = [
-      # TODO(vtl): Reduce these dependencies (probably mostly in :lib).
       ":child_controller_bindings",
       ":common_lib",
       "//base",
@@ -106,6 +105,8 @@ if (!mojo_use_prebuilt_mojo_shell) {
 # Files used both by mojo_shell and mojo_shell_child (and tests).
 source_set("common_lib") {
   sources = [
+    "child_switches.cc",
+    "child_switches.h",
     "init.cc",
     "init.h",
   ]
@@ -116,12 +117,10 @@ source_set("common_lib") {
 
   public_deps = [
     ":native_application_support",
-    ":switches",
   ]
 }
 
-# TODO(vtl): Split this target into parent/child/common libs.
-source_set("lib") {
+source_set("parent_lib") {
   sources = [
     "background_application_loader.cc",
     "background_application_loader.h",
@@ -137,6 +136,8 @@ source_set("lib") {
     "in_process_native_runner.h",
     "out_of_process_native_runner.cc",
     "out_of_process_native_runner.h",
+    "switches.cc",
+    "switches.h",
     "task_runners.cc",
     "task_runners.h",
     "tracer.cc",
@@ -226,19 +227,6 @@ source_set("native_application_support") {
   # Suppress include checking so we can still check the rest of the targets in
   # this file.
   check_includes = false
-}
-
-# TODO(vtl): This should just be a part of :common_lib, but stuff in
-# application_manager uses it. We should fix that.
-source_set("switches") {
-  sources = [
-    "switches.cc",
-    "switches.h",
-  ]
-
-  deps = [
-    "//base",
-  ]
 }
 
 if (is_android) {
@@ -395,7 +383,7 @@ test("mojo_shell_tests") {
   ]
 
   deps = [
-    ":lib",
+    ":parent_lib",
     "//base",
     "//base:i18n",
     "//base/test:test_support",

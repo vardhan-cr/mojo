@@ -11,10 +11,9 @@
 namespace switches {
 
 // All switches in alphabetical order. The switches should be documented
-// alongside the definition of their values in the .cc file and, as needed,
-// in mojo_main's Usage() function.
+// alongside the definition of their values in the .cc file and, as needed, in
+// desktop/main.cc's Usage() function.
 extern const char kArgsFor[];
-extern const char kChildProcess[];
 extern const char kContentHandlers[];
 extern const char kCPUProfile[];
 extern const char kDisableCache[];

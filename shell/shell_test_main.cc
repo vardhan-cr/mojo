@@ -8,7 +8,7 @@
 #include "base/logging.h"
 #include "base/test/launcher/unit_test_launcher.h"
 #include "base/test/test_suite.h"
-#include "shell/switches.h"
+#include "shell/child_switches.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 int main(int argc, char** argv) {
