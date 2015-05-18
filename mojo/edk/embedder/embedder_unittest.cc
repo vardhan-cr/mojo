@@ -215,8 +215,7 @@ void CloseScopedHandle(ScopedMessagePipeHandle handle) {
 TEST_F(EmbedderTest, AsyncWait) {
   ScopedMessagePipeHandle client_mp;
   ScopedMessagePipeHandle server_mp;
-  EXPECT_EQ(MOJO_RESULT_OK,
-            mojo::CreateMessagePipe(nullptr, &client_mp, &server_mp));
+  EXPECT_EQ(MOJO_RESULT_OK, CreateMessagePipe(nullptr, &client_mp, &server_mp));
 
   TestAsyncWaiter waiter;
   EXPECT_EQ(MOJO_RESULT_OK,
@@ -635,6 +634,44 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessChannelsClient) {
     EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, state.satisfied_signals);
     EXPECT_EQ(MOJO_HANDLE_SIGNAL_PEER_CLOSED, state.satisfiable_signals);
     EXPECT_EQ(MOJO_RESULT_OK, MojoClose(mp1));
+  }
+
+  EXPECT_TRUE(test::Shutdown());
+}
+
+#if defined(OS_ANDROID)
+// Android multi-process tests are not executing the new process. This is flaky.
+// TODO(vtl): I'm guessing this is true of this test too?
+#define MAYBE_MultiprocessMasterSlave DISABLED_MultiprocessMasterSlave
+#else
+#define MAYBE_MultiprocessMasterSlave MultiprocessMasterSlave
+#endif  // defined(OS_ANDROID)
+TEST_F(EmbedderTest, MAYBE_MultiprocessMasterSlave) {
+  mojo::test::ScopedMasterIPCSupport ipc_support(test_io_task_runner());
+
+  mojo::test::MultiprocessTestHelper multiprocess_test_helper;
+  multiprocess_test_helper.StartChild("MultiprocessMasterSlave");
+
+  // TODO(vtl): Bootstrap a channel over the connection manager connection to
+  // the slave.
+
+  EXPECT_TRUE(multiprocess_test_helper.WaitForChildTestShutdown());
+}
+
+MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlave) {
+  ScopedPlatformHandle client_platform_handle =
+      mojo::test::MultiprocessTestHelper::client_platform_handle.Pass();
+  EXPECT_TRUE(client_platform_handle.is_valid());
+
+  base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
+  test::InitWithSimplePlatformSupport();
+
+  {
+    mojo::test::ScopedSlaveIPCSupport ipc_support(
+        test_io_thread.task_runner(), client_platform_handle.Pass());
+
+    // TODO(vtl): Bootstrap a channel over the connection manager connection to
+    // the slave.
   }
 
   EXPECT_TRUE(test::Shutdown());
