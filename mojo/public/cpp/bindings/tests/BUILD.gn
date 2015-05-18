@@ -29,6 +29,7 @@ mojo_sdk_source_set("tests") {
     "string_unittest.cc",
     "struct_unittest.cc",
     "type_conversion_unittest.cc",
+    "union_unittest.cc",
     "validation_unittest.cc",
   ]
 
@@ -45,6 +46,7 @@ mojo_sdk_source_set("tests") {
     "mojo/public/cpp/test_support:test_utils",
     "mojo/public/cpp/utility",
     "mojo/public/interfaces/bindings/tests:test_interfaces",
+    "mojo/public/interfaces/bindings/tests:test_interfaces_experimental",
   ]
 }
 
