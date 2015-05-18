@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:mojo/public/dart/bindings.dart' as bindings;
-import 'package:mojo/public/dart/core.dart' as core;
+import 'package:mojo/bindings.dart' as bindings;
+import 'package:mojo/core.dart' as core;
 
 main() {
   core.MojoMessagePipe pipe = new core.MojoMessagePipe();

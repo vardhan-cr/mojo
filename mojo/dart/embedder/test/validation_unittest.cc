@@ -60,7 +60,8 @@ static void RunTest(const std::string& test) {
   base::FilePath package_root;
   PathService::Get(base::DIR_EXE, &package_root);
   package_root = package_root.AppendASCII("gen")
-                             .AppendASCII("dart-gen");
+                             .AppendASCII("dart-pkg")
+                             .AppendASCII("packages");
 
   char* error = NULL;
   bool unhandled_exception = false;

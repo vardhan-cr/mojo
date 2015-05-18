@@ -8,9 +8,9 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:mojo/public/dart/application.dart';
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:mojo/application.dart';
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 import 'package:mojom/mojo/network_service.mojom.dart';
 import 'package:mojom/mojo/url_loader.mojom.dart';
 

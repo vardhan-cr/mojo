@@ -304,7 +304,9 @@ class DartToCppTest : public testing::Test {
     base::FilePath package_root;
     PathService::Get(base::DIR_EXE, &package_root);
     package_root = package_root.AppendASCII("gen")
-                               .AppendASCII("dart-gen");
+                               .AppendASCII("dart-pkg")
+                               .AppendASCII("packages");
+
 
     config->strict_compilation = true;
     config->script = source;

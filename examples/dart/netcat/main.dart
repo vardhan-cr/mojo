@@ -6,9 +6,9 @@ import 'dart:async';
 import 'dart:core';
 import 'dart:typed_data';
 
-import 'package:mojo/public/dart/application.dart';
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:mojo/application.dart';
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 import 'package:mojom/mojo/files/file.mojom.dart' as files;
 import 'package:mojom/mojo/files/types.mojom.dart' as files;
 import 'package:mojom/mojo/net_address.mojom.dart';

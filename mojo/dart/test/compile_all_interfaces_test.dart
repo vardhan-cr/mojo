@@ -10,10 +10,10 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/application.dart';
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:testing/expect.dart';
+import 'package:mojo/application.dart';
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 import 'package:mojom/mojo/application.mojom.dart';
 import 'package:mojom/mojo/service_provider.mojom.dart';
 import 'package:mojom/mojo/shell.mojom.dart';

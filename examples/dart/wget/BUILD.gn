@@ -4,7 +4,7 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_packaged_application("wget") {
+dartzip_packaged_application("wget") {
   output_name = "dart_wget"
   sources = [
     "main.dart",

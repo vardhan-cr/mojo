@@ -7,7 +7,7 @@ Index: sdk/lib/_internal/libraries.dart
        dart2jsPatchPath: "_internal/compiler/js_lib/typed_data_patch.dart"),
 
 +  "mojo.internal": const LibraryInfo(
-+      "../../../../mojo/public/dart/internal.dart",
++      "../../../../mojo/public/dart/lib/internal.dart",
 +      maturity: Maturity.STABLE),
 +
 +  "sky": const LibraryInfo(

@@ -69,7 +69,7 @@ def main(args):
 
     cmd.extend(dart_files)
     cmd.extend(args)
-    cmd.append("--package-root=%s" % temp_dir)
+    cmd.append("--package-root=%s/packages" % temp_dir)
     cmd.append("--fatal-warnings")
 
     errors = 0

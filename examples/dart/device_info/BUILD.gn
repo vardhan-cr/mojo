@@ -4,7 +4,7 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_packaged_application("device_info") {
+dartzip_packaged_application("device_info") {
   output_name = "dart_device_info_example"
   sources = [
     "main.dart",

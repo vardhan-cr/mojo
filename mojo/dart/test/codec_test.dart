@@ -4,9 +4,9 @@
 
 import 'dart:typed_data';
 
-import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/bindings.dart' as bindings;
-import 'package:mojo/public/dart/core.dart' as core;
+import 'package:testing/expect.dart';
+import 'package:mojo/bindings.dart' as bindings;
+import 'package:mojo/core.dart' as core;
 
 class Bar extends bindings.Struct {
   static const int kStructSize = 16;

@@ -4,8 +4,8 @@
 
 import 'dart:typed_data';
 
-import 'package:mojo/dart/testing/expect.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:testing/expect.dart';
+import 'package:mojo/core.dart';
 
 invalidHandleTest() {
   MojoHandle invalidHandle = new MojoHandle(MojoHandle.INVALID);

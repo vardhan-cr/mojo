@@ -100,28 +100,28 @@ dart_embedder_package("dart_embedder_package_network_service") {
 
 action_foreach("dart_embedder_package_sdk") {
   sources = [
-    "//mojo/public/dart/application.dart",
-    "//mojo/public/dart/bindings.dart",
-    "//mojo/public/dart/core.dart",
-    "//mojo/public/dart/internal.dart",
-    "//mojo/public/dart/src/application.dart",
-    "//mojo/public/dart/src/application_connection.dart",
-    "//mojo/public/dart/src/buffer.dart",
-    "//mojo/public/dart/src/codec.dart",
-    "//mojo/public/dart/src/control_message.dart",
-    "//mojo/public/dart/src/data_pipe.dart",
-    "//mojo/public/dart/src/drain_data.dart",
-    "//mojo/public/dart/src/event_stream.dart",
-    "//mojo/public/dart/src/handle.dart",
-    "//mojo/public/dart/src/handle_watcher.dart",
-    "//mojo/public/dart/src/message.dart",
-    "//mojo/public/dart/src/message_pipe.dart",
-    "//mojo/public/dart/src/natives.dart",
-    "//mojo/public/dart/src/proxy.dart",
-    "//mojo/public/dart/src/struct.dart",
-    "//mojo/public/dart/src/stub.dart",
-    "//mojo/public/dart/src/timer_queue.dart",
-    "//mojo/public/dart/src/types.dart",
+    "//mojo/public/dart/lib/application.dart",
+    "//mojo/public/dart/lib/bindings.dart",
+    "//mojo/public/dart/lib/core.dart",
+    "//mojo/public/dart/lib/internal.dart",
+    "//mojo/public/dart/lib/src/application.dart",
+    "//mojo/public/dart/lib/src/application_connection.dart",
+    "//mojo/public/dart/lib/src/buffer.dart",
+    "//mojo/public/dart/lib/src/codec.dart",
+    "//mojo/public/dart/lib/src/control_message.dart",
+    "//mojo/public/dart/lib/src/data_pipe.dart",
+    "//mojo/public/dart/lib/src/drain_data.dart",
+    "//mojo/public/dart/lib/src/event_stream.dart",
+    "//mojo/public/dart/lib/src/handle.dart",
+    "//mojo/public/dart/lib/src/handle_watcher.dart",
+    "//mojo/public/dart/lib/src/message.dart",
+    "//mojo/public/dart/lib/src/message_pipe.dart",
+    "//mojo/public/dart/lib/src/natives.dart",
+    "//mojo/public/dart/lib/src/proxy.dart",
+    "//mojo/public/dart/lib/src/struct.dart",
+    "//mojo/public/dart/lib/src/stub.dart",
+    "//mojo/public/dart/lib/src/timer_queue.dart",
+    "//mojo/public/dart/lib/src/types.dart",
   ]
   outputs = [
     "$root_gen_dir/dart_embedder_packages/{{source_root_relative_dir}}/{{source_file_part}}",
@@ -298,11 +298,11 @@ action("generate_snapshot_bin") {
     "//dart/runtime/tools/create_snapshot_bin.py",
     "//mojo/dart/embedder/builtin.dart",
     "//mojo/dart/embedder/packages.dart",
-    "//mojo/public/dart/internal.dart",
-    "//mojo/public/dart/io.dart",
-    "//mojo/public/dart/src/handle_watcher.dart",
-    "//mojo/public/dart/src/natives.dart",
-    "//mojo/public/dart/src/timer_queue.dart",
+    "//mojo/public/dart/lib/internal.dart",
+    "//mojo/public/dart/lib/io.dart",
+    "//mojo/public/dart/lib/src/handle_watcher.dart",
+    "//mojo/public/dart/lib/src/natives.dart",
+    "//mojo/public/dart/lib/src/timer_queue.dart",
   ]
   vm_isolate_snapshot = "$target_gen_dir/vm_isolate_snapshot.bin"
   isolate_snapshot = "$target_gen_dir/isolate_snapshot.bin"
@@ -316,18 +316,17 @@ action("generate_snapshot_bin") {
                      "root_out_dir")
   script = "//dart/runtime/tools/create_snapshot_bin.py"
   builtin_path = rebase_path("//mojo/dart/embedder/builtin.dart")
-  internal_path = rebase_path("//mojo/public/dart/internal.dart")
-  io_path = rebase_path("//mojo/public/dart/io.dart")
+  internal_path = rebase_path("//mojo/public/dart/lib/internal.dart")
+  io_path = rebase_path("//mojo/public/dart/lib/io.dart")
 
   embedder_packages_path = rebase_path("//mojo/dart/embedder/packages.dart")
   embedder_package_application_path = rebase_path(
-          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/application.dart")
-  embedder_package_bindings_path =
-      rebase_path(
-          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/bindings.dart")
+          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/lib/application.dart")
+  embedder_package_bindings_path = rebase_path(
+          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/lib/bindings.dart")
   embedder_package_core_path =
       rebase_path(
-          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/core.dart")
+          "$root_gen_dir/dart_embedder_packages/mojo/public/dart/lib/core.dart")
   url_mappings_script =
       rebase_path("//mojo/dart/embedder/tools/dart_embedder_url_mappings.py")
 
@@ -370,9 +369,9 @@ action("generate_snapshot_bin") {
 
            # Embedder packages
            "--url_mapping=dart:embedder_private_packages,$embedder_packages_path",
-           "--url_mapping=dart:_mojo/public/dart/application.dart,$embedder_package_application_path",
-           "--url_mapping=dart:_mojo/public/dart/bindings.dart,$embedder_package_bindings_path",
-           "--url_mapping=dart:_mojo/public/dart/core.dart,$embedder_package_core_path",
+           "--url_mapping=dart:_mojo/application.dart,$embedder_package_application_path",
+           "--url_mapping=dart:_mojo/bindings.dart,$embedder_package_bindings_path",
+           "--url_mapping=dart:_mojo/core.dart,$embedder_package_core_path",
          ] + embedder_mojom_url_mappings
 }
 

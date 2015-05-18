@@ -29,9 +29,11 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
 
   CHECK(unpacked_app_directory_.CreateUniqueTempDir());
   ExtractApplication(response.Pass());
-  base::FilePath package_root = unpacked_app_directory_.path();
+  base::FilePath package_root =
+      unpacked_app_directory_.path().AppendASCII("packages");
 
-  base::FilePath entry_path = package_root.Append("main.dart");
+  base::FilePath entry_path =
+      unpacked_app_directory_.path().Append("main.dart");
   std::string source;
   if (!base::ReadFileToString(entry_path, &source)) {
     NOTREACHED();

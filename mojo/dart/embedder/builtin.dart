@@ -63,6 +63,7 @@ void _setWorkingDirectory(cwd) {
 
 _setPackageRoot(String packageRoot) {
   packageRoot = _enforceTrailingSlash(packageRoot);
+
   if (packageRoot.startsWith('file:') ||
       packageRoot.startsWith('http:') ||
       packageRoot.startsWith('https:')) {

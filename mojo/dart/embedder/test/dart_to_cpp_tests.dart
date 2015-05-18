@@ -6,8 +6,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:mojom/dart_to_cpp/dart_to_cpp.mojom.dart';
-import 'package:mojo/public/dart/bindings.dart' as bindings;
-import 'package:mojo/public/dart/core.dart' as core;
+import 'package:mojo/bindings.dart' as bindings;
+import 'package:mojo/core.dart' as core;
 
 class DartSideImpl implements DartSide {
   static const int BAD_VALUE = 13;

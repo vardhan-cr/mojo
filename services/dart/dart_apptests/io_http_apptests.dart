@@ -9,9 +9,9 @@ import 'dart:convert';
 import 'dart:mojo.io';
 
 import 'package:apptest/apptest.dart';
-import 'package:mojo/public/dart/application.dart';
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:mojo/application.dart';
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 
 tests(Application application, String url) {
   group('Http Apptests', () {

@@ -4,7 +4,7 @@
 
 import 'dart:async';
 
-import 'package:mojo/public/dart/core.dart';
+import 'package:mojo/core.dart';
 
 main() async {
   var x = await (new Future.value(42));

@@ -4,10 +4,9 @@
 
 import 'dart:async';
 import 'dart:core';
-import 'package:mojo/public/dart/core.dart';
-import 'package:mojo/services/files/public/interfaces/file.mojom.dart' as files;
-import 'package:mojo/services/files/public/interfaces/types.mojom.dart'
-    as files;
+import 'package:mojo/core.dart';
+import 'package:mojom/mojo/file.mojom.dart' as files;
+import 'package:mojom/mojo/types.mojom.dart' as files;
 
 import 'terminal_display.dart';
 

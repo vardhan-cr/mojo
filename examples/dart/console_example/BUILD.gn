@@ -4,7 +4,7 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_packaged_application("console_example") {
+dartzip_packaged_application("console_example") {
   sources = [
     "main.dart",
   ]

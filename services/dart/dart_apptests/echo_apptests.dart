@@ -8,9 +8,9 @@ import 'dart:async';
 
 import 'package:apptest/apptest.dart';
 import 'package:mojom/dart/test/echo_service.mojom.dart';
-import 'package:mojo/public/dart/application.dart';
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:mojo/application.dart';
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 
 echoApptests(Application application, String url) {
   group('Echo Service Apptests', () {

@@ -4,12 +4,20 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_package("apptest") {
+dartzip_package("apptest") {
   uses_pub = true
   sources = [
-    "apptest/apptest.dart",
+    "lib/apptest.dart",
+    "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
+  ]
+}
+
+dart_pkg("apptest_pkg") {
+  sources = [
+    "lib/apptest.dart",
+    "pubspec.yaml",
   ]
 }

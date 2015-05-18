@@ -5,43 +5,11 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//testing/test.gni")
 
-# These go into the generated source directory for embedder tests.
-copy("copy_dart_mojo_sdk") {
-  sources = [
-    "//mojo/public/dart/application.dart",
-    "//mojo/public/dart/bindings.dart",
-    "//mojo/public/dart/core.dart",
-    "//mojo/public/dart/internal.dart",
-    "//mojo/public/dart/src/application.dart",
-    "//mojo/public/dart/src/application_connection.dart",
-    "//mojo/public/dart/src/buffer.dart",
-    "//mojo/public/dart/src/codec.dart",
-    "//mojo/public/dart/src/control_message.dart",
-    "//mojo/public/dart/src/data_pipe.dart",
-    "//mojo/public/dart/src/drain_data.dart",
-    "//mojo/public/dart/src/event_stream.dart",
-    "//mojo/public/dart/src/handle.dart",
-    "//mojo/public/dart/src/handle_watcher.dart",
-    "//mojo/public/dart/src/message.dart",
-    "//mojo/public/dart/src/message_pipe.dart",
-    "//mojo/public/dart/src/natives.dart",
-    "//mojo/public/dart/src/proxy.dart",
-    "//mojo/public/dart/src/struct.dart",
-    "//mojo/public/dart/src/stub.dart",
-    "//mojo/public/dart/src/timer_queue.dart",
-    "//mojo/public/dart/src/types.dart",
-  ]
-  outputs = [
-    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
-  ]
-}
-
 source_set("dart_controller_for_test") {
   testonly = true
   sources = [
     "$root_gen_dir/dart_snapshot.cc",
   ]
-
   deps = [
     "//mojo/dart/embedder:dart_controller_no_snapshot",
     "//mojo/dart/embedder:generate_snapshot_file",
@@ -54,12 +22,10 @@ test("dart_unittests") {
     "validation_unittest.cc",
   ]
   deps = [
-    ":async_helper",
-    ":copy_dart_mojo_sdk",
+    "//mojo/public/dart:mojo",
+    "//mojo/dart/testing",
     ":dart_controller_for_test",
     ":dart_to_cpp_unittests",
-    ":expect",
-    ":validation_test_input_parser",
     "//base",
     "//crypto:crypto",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
@@ -70,33 +36,6 @@ test("dart_unittests") {
     "//mojo/public/cpp/utility",
     "//mojo/environment:chromium",
     "//testing/gtest",
-  ]
-}
-
-copy("expect") {
-  sources = [
-    "//mojo/dart/testing/expect.dart",
-  ]
-  outputs = [
-    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
-  ]
-}
-
-copy("validation_test_input_parser") {
-  sources = [
-    "//mojo/dart/testing/validation_test_input_parser.dart",
-  ]
-  outputs = [
-    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
-  ]
-}
-
-copy("async_helper") {
-  sources = [
-    "//mojo/dart/testing/async_helper.dart",
-  ]
-  outputs = [
-    "$root_gen_dir/dart-gen/{{source_root_relative_dir}}/{{source_file_part}}",
   ]
 }
 

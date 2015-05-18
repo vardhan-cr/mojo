@@ -8,9 +8,9 @@ import 'dart:isolate';
 import 'dart:mojo.builtin' as builtin;
 import 'dart:typed_data';
 
-import 'package:mojo/dart/testing/validation_test_input_parser.dart' as parser;
-import 'package:mojo/public/dart/bindings.dart';
-import 'package:mojo/public/dart/core.dart';
+import 'package:testing/validation_test_input_parser.dart' as parser;
+import 'package:mojo/bindings.dart';
+import 'package:mojo/core.dart';
 import 'package:mojom/mojo/test/validation_test_interfaces.mojom.dart';
 
 class ConformanceTestInterfaceImpl implements ConformanceTestInterface {

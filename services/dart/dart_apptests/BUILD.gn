@@ -4,13 +4,14 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_packaged_application("dart_apptests") {
+dartzip_packaged_application("dart_apptests") {
   sources = [
     "echo_apptests.dart",
     "io_http_apptests.dart",
     "io_internet_address_apptests.dart",
     "main.dart",
     "pingpong_apptests.dart",
+    "pubspec.yaml",
     "versioning_apptests.dart",
   ]
   deps = [
