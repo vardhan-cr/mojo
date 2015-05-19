@@ -3,6 +3,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Deploy domokit.github.io"""
+
+# NOTE: Requires that download_material_design_icons to have been run from
+# $build_dir/gen/dart-dpkg/sky.
+
 import argparse
 import logging
 import os
@@ -33,6 +38,12 @@ def gen_filter(path):
     return ext == '.sky' or path.endswith('.mojom.dart')
 
 
+def examples_filter(path):
+    if os.path.isdir(path):
+        return True
+    return 'packages' != os.path.basename(path)
+
+
 def sky_or_dart_filter(path):
     if os.path.isdir(path):
         return True
@@ -50,12 +61,18 @@ def assets_filter(path):
     return '18dp' in path or '24dp' in path
 
 
-def copy(from_root, to_root, filter_func=None):
+def packages_filter(path):
+    if 'packages/sky/assets/material-design-icons/' in path:
+        return assets_filter(path)
+    return True
+
+
+def copy(from_root, to_root, filter_func=None, followlinks=False):
     if os.path.exists(to_root):
         shutil.rmtree(to_root)
     os.makedirs(to_root)
 
-    for root, dirs, files in os.walk(from_root):
+    for root, dirs, files in os.walk(from_root, followlinks=followlinks):
         # filter_func expects paths not names, so wrap it to make them absolute.
         wrapped_filter = None
         if filter_func:
@@ -72,6 +89,7 @@ def copy(from_root, to_root, filter_func=None):
 
         dirs[:] = filter(wrapped_filter, dirs)
 
+
 def main():
     logging.basicConfig(level=logging.WARN)
     parser = argparse.ArgumentParser(description='Deploy a new build of mojo.')
@@ -82,6 +100,10 @@ def main():
     rel_build_dir = os.path.join('out', 'android_Release')
     build_dir = os.path.join(Paths().src_root, rel_build_dir)
     paths = Paths(build_dir=build_dir)
+    dart_pkg_dir = os.path.join(paths.build_dir, 'gen', 'dart-pkg')
+    sky_pkg_dir = os.path.join(dart_pkg_dir, 'sky')
+    sky_pkg_lib_dir = os.path.join(sky_pkg_dir, 'lib')
+    dart_pkg_packages_dir = os.path.join(dart_pkg_dir, 'packages')
 
     def deploy_path(rel_path):
         return os.path.join(args.deploy_root, rel_path)
@@ -89,40 +111,37 @@ def main():
     def src_path(rel_path):
         return os.path.join(paths.src_root, rel_path)
 
+    # Verify that material-design-icons have been downloaded.
+    icons_dir = os.path.join(dart_pkg_packages_dir,
+                             'sky/assets/material-design-icons')
+    if not os.path.isdir(icons_dir):
+        print('NOTE: Running `download_material_design_icons` for you.');
+        subprocess.check_call([
+                os.path.join(sky_pkg_lib_dir, 'download_material_design_icons')
+            ])
+
+    # Copy all .mojo files into mojo/
     copy(paths.build_dir, deploy_path('mojo'), mojo_filter)
-    copy(src_path('mojo/public'), deploy_path('mojo/public'),
-        sky_or_dart_filter)
 
-    # TODO(eseidel): All of these should be removed and package: sky includes
-    # used instead.
-    copy(src_path('sky/examples'), deploy_path('sky/examples'),
-        sky_or_dart_filter)
-    copy(src_path('sky/framework'), deploy_path('sky/framework'),
-        sky_or_dart_filter)
-    copy(os.path.join(paths.build_dir, 'gen'), deploy_path('gen'), gen_filter)
-    copy(src_path('sky/assets'), deploy_path('sky/assets'), assets_filter)
+    # Copy sky/examples into examples/
+    copy(src_path('sky/examples'), deploy_path('examples'), examples_filter)
 
+    # Copy apks into /
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
         args.deploy_root)
     shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShortcuts.apk'),
         args.deploy_root)
 
+    # Deep copy packages/. This follows symlinks and flattens them.
     packages_root = deploy_path('packages')
-    if os.path.exists(packages_root):
-        shutil.rmtree(packages_root)
-    subprocess.check_call([
-        src_path('sky/tools/deploy_sdk.py'),
-        '--non-interactive',
-        deploy_path('sky_sdk'),
-        '--fake-pub-get-into',
-        packages_root
-    ])
+    copy(dart_pkg_packages_dir, packages_root, packages_filter, True)
 
+    # Write out license.
     with open(deploy_path('LICENSES.sky'), 'w') as license_file:
         subprocess.check_call([src_path('tools/licenses.py'), 'credits'],
             stdout=license_file)
 
-
+    # Run git commands.
     subprocess.check_call(['git', 'add', '.'], cwd=args.deploy_root)
     subprocess.check_call([
         'git', 'commit',
