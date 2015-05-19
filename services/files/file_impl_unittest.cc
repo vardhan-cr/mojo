@@ -77,8 +77,288 @@ TEST_F(FileImplTest, CreateWriteCloseRenameOpenRead) {
     EXPECT_EQ(static_cast<uint8_t>('l'), bytes_read[2]);
   }
 
-  // TODO(vtl): Test various open options.
   // TODO(vtl): Test read/write offset options.
+}
+
+TEST_F(FileImplTest, CantWriteInReadMode) {
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  std::vector<uint8_t> bytes_to_write;
+  bytes_to_write.push_back(static_cast<uint8_t>('h'));
+  bytes_to_write.push_back(static_cast<uint8_t>('e'));
+  bytes_to_write.push_back(static_cast<uint8_t>('l'));
+  bytes_to_write.push_back(static_cast<uint8_t>('l'));
+  bytes_to_write.push_back(static_cast<uint8_t>('o'));
+
+  {
+    // Create my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagCreate, Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Write to it.
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Open my_file again, this time with read only mode.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file), kOpenFlagRead,
+                        Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Try to write in read mode; it should fail.
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_UNKNOWN, error);
+    EXPECT_EQ(0u, num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+}
+
+TEST_F(FileImplTest, OpenExclusive) {
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  {
+    // Create my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("temp_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagCreate |kOpenFlagExclusive,
+                        Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Try to open my_file again in exclusive mode; it should fail.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("temp_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagCreate | kOpenFlagExclusive,
+                        Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_UNKNOWN, error);
+  }
+}
+
+TEST_F(FileImplTest, OpenInAppendMode) {
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  {
+    // Create my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagCreate, Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Write to it.
+    std::vector<uint8_t> bytes_to_write;
+    bytes_to_write.push_back(static_cast<uint8_t>('h'));
+    bytes_to_write.push_back(static_cast<uint8_t>('e'));
+    bytes_to_write.push_back(static_cast<uint8_t>('l'));
+    bytes_to_write.push_back(static_cast<uint8_t>('l'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Append to my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagAppend, Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Write to it.
+    std::vector<uint8_t> bytes_to_write;
+    bytes_to_write.push_back(static_cast<uint8_t>('g'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    bytes_to_write.push_back(static_cast<uint8_t>('d'));
+    bytes_to_write.push_back(static_cast<uint8_t>('b'));
+    bytes_to_write.push_back(static_cast<uint8_t>('y'));
+    bytes_to_write.push_back(static_cast<uint8_t>('e'));
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Open my_file again.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file), kOpenFlagRead,
+                        Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Read from it.
+    Array<uint8_t> bytes_read;
+    error = ERROR_INTERNAL;
+    file->Read(12, 0, WHENCE_FROM_START, Capture(&error, &bytes_read));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    ASSERT_EQ(12u, bytes_read.size());
+    EXPECT_EQ(static_cast<uint8_t>('l'), bytes_read[3]);
+    EXPECT_EQ(static_cast<uint8_t>('o'), bytes_read[4]);
+    EXPECT_EQ(static_cast<uint8_t>('g'), bytes_read[5]);
+    EXPECT_EQ(static_cast<uint8_t>('o'), bytes_read[6]);
+  }
+}
+
+TEST_F(FileImplTest, OpenInTruncateMode) {
+  DirectoryPtr directory;
+  GetTemporaryRoot(&directory);
+  Error error;
+
+  {
+    // Create my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagCreate, Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Write to it.
+    std::vector<uint8_t> bytes_to_write;
+    bytes_to_write.push_back(static_cast<uint8_t>('h'));
+    bytes_to_write.push_back(static_cast<uint8_t>('e'));
+    bytes_to_write.push_back(static_cast<uint8_t>('l'));
+    bytes_to_write.push_back(static_cast<uint8_t>('l'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Append to my_file.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file),
+                        kOpenFlagWrite | kOpenFlagTruncate, Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Write to it.
+    std::vector<uint8_t> bytes_to_write;
+    bytes_to_write.push_back(static_cast<uint8_t>('g'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    bytes_to_write.push_back(static_cast<uint8_t>('o'));
+    bytes_to_write.push_back(static_cast<uint8_t>('d'));
+    bytes_to_write.push_back(static_cast<uint8_t>('b'));
+    bytes_to_write.push_back(static_cast<uint8_t>('y'));
+    bytes_to_write.push_back(static_cast<uint8_t>('e'));
+    error = ERROR_INTERNAL;
+    uint32_t num_bytes_written = 0;
+    file->Write(Array<uint8_t>::From(bytes_to_write), 0, WHENCE_FROM_CURRENT,
+                Capture(&error, &num_bytes_written));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
+
+    // Close it.
+    error = ERROR_INTERNAL;
+    file->Close(Capture(&error));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+  }
+
+  {
+    // Open my_file again.
+    FilePtr file;
+    error = ERROR_INTERNAL;
+    directory->OpenFile("my_file", GetProxy(&file), kOpenFlagRead,
+                        Capture(&error));
+    ASSERT_TRUE(directory.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+
+    // Read from it.
+    Array<uint8_t> bytes_read;
+    error = ERROR_INTERNAL;
+    file->Read(7, 0, WHENCE_FROM_START, Capture(&error, &bytes_read));
+    ASSERT_TRUE(file.WaitForIncomingMethodCall());
+    EXPECT_EQ(ERROR_OK, error);
+    ASSERT_EQ(7u, bytes_read.size());
+    EXPECT_EQ(static_cast<uint8_t>('g'), bytes_read[0]);
+    EXPECT_EQ(static_cast<uint8_t>('o'), bytes_read[1]);
+    EXPECT_EQ(static_cast<uint8_t>('o'), bytes_read[2]);
+    EXPECT_EQ(static_cast<uint8_t>('d'), bytes_read[3]);
+  }
 }
 
 // Note: Ignore nanoseconds, since it may not always be supported. We expect at
