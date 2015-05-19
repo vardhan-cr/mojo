@@ -6,6 +6,22 @@
 class Shell(object):
   """Represents an abstract Mojo shell."""
 
+  def ServeLocalDirectory(self, local_dir_path, port=0):
+    """Serves the content of the local (host) directory, making it available to
+    the shell under the url returned by the function.
+
+    The server will run on a separate thread until the program terminates. The
+    call returns immediately.
+
+    Args:
+      local_dir_path: path to the directory to be served
+      port: port at which the server will be available to the shell
+
+    Returns:
+      The url that the shell can use to access the content of |local_dir_path|.
+    """
+    raise NotImplementedError()
+
   def Run(self, arguments):
     """Runs the shell with given arguments until shell exits, passing the stdout
     mingled with stderr produced by the shell onto the stdout.

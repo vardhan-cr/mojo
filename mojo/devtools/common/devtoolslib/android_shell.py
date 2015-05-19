@@ -142,17 +142,6 @@ class AndroidShell(Shell):
     atexit.register(_UnmapPort)
     return device_port
 
-  def _StartHttpServerForDirectory(self, path, port=0):
-    """Starts an http server serving files from |path|. Returns the local
-    url.
-    """
-    assert path
-    print 'starting http for', path
-    server_address = StartHttpServer(path)
-
-    print 'local port=%d' % server_address[1]
-    return 'http://127.0.0.1:%d/' % self._MapPort(port, server_address[1])
-
   def _StartHttpServerForOriginMapping(self, mapping, port):
     """If |mapping| points at a local file starts an http server to serve files
     from the directory and returns the new mapping.
@@ -168,7 +157,7 @@ class AndroidShell(Shell):
       return mapping
     # Assume the destination is a local file. Start a local server that
     # redirects to it.
-    localUrl = self._StartHttpServerForDirectory(dest, port)
+    localUrl = self.ServeLocalDirectory(dest, port)
     print 'started server at %s for %s' % (dest, localUrl)
     return parts[0] + '=' + localUrl
 
@@ -219,9 +208,31 @@ class AndroidShell(Shell):
     shell.
     """
 
-    origin_url = self._StartHttpServerForDirectory(
+    origin_url = self.ServeLocalDirectory(
         local_dir, DEFAULT_BASE_PORT if fixed_port else 0)
     return "--origin=" + origin_url
+
+  def ServeLocalDirectory(self, local_dir_path, port=0):
+    """Serves the content of the local (host) directory, making it available to
+    the shell under the url returned by the function.
+
+    The server will run on a separate thread until the program terminates. The
+    call returns immediately.
+
+    Args:
+      local_dir_path: path to the directory to be served
+      port: port at which the server will be available to the shell
+
+    Returns:
+      The url that the shell can use to access the content of |local_dir_path|.
+    """
+    assert local_dir_path
+    print 'starting http for', local_dir_path
+    server_address = StartHttpServer(local_dir_path)
+
+    print 'local port=%d' % server_address[1]
+    return 'http://127.0.0.1:%d/' % self._MapPort(port,
+                                                  server_address[1])
 
   def StartShell(self,
                  arguments,
