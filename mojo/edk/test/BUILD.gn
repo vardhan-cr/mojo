@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("../mojo_edk.gni")
+import("../../public/mojo.gni")
 import("//testing/test.gni")
 
 mojo_edk_source_set("test_support") {
@@ -84,7 +85,6 @@ mojo_edk_source_set("test_support_impl") {
 group("public_tests") {
   testonly = true
   deps = [
-    ":mojo_public_application_unittests",
     ":mojo_public_bindings_unittests",
     ":mojo_public_environment_unittests",
     ":mojo_public_system_perftests",
@@ -92,13 +92,19 @@ group("public_tests") {
     ":mojo_public_utility_unittests",
     ":mojo_system_impl_private_unittests",
   ]
+
+  if (mojo_use_application_in_sdk) {
+    deps += [ ":mojo_public_application_unittests" ]
+  }
 }
 
-test("mojo_public_application_unittests") {
-  deps = [
-    ":run_all_unittests",
-    "../../public/cpp/application/tests",
-  ]
+if (mojo_use_application_in_sdk) {
+  test("mojo_public_application_unittests") {
+    deps = [
+      ":run_all_unittests",
+      "../../public/cpp/application/tests",
+    ]
+  }
 }
 
 test("mojo_public_bindings_unittests") {
