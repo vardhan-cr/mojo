@@ -289,9 +289,8 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
   if (!ConfigureURLMappings(command_line, this))
     return false;
 
-  // TODO(vtl): This should be MASTER, not NONE.
   mojo::embedder::InitIPCSupport(
-      mojo::embedder::ProcessType::NONE, task_runners_->shell_runner(), this,
+      mojo::embedder::ProcessType::MASTER, task_runners_->shell_runner(), this,
       task_runners_->io_runner(), mojo::embedder::ScopedPlatformHandle());
 
   scoped_ptr<NativeRunnerFactory> runner_factory;
@@ -345,6 +344,12 @@ void Context::OnShutdownComplete() {
   DCHECK_EQ(base::MessageLoop::current()->task_runner(),
             task_runners_->shell_runner());
   base::MessageLoop::current()->Quit();
+}
+
+void Context::OnSlaveDisconnect(mojo::embedder::SlaveInfo slave_info) {
+  // TODO(vtl): We don't make any proper slave processes yet, so this shouldn't
+  // be called yet.
+  NOTREACHED();
 }
 
 void Context::Run(const GURL& url) {

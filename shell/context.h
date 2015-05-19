@@ -8,7 +8,7 @@
 #include <string>
 
 #include "base/macros.h"
-#include "mojo/edk/embedder/process_delegate.h"
+#include "mojo/edk/embedder/master_process_delegate.h"
 #include "shell/application_manager/application_manager.h"
 #include "shell/task_runners.h"
 #include "shell/url_resolver.h"
@@ -18,7 +18,7 @@ class Tracer;
 
 // The "global" context for the shell's main process.
 class Context : public ApplicationManager::Delegate,
-                public mojo::embedder::ProcessDelegate {
+                public mojo::embedder::MasterProcessDelegate {
  public:
   explicit Context(Tracer* tracer = nullptr);
   ~Context() override;
@@ -73,8 +73,9 @@ class Context : public ApplicationManager::Delegate,
   GURL ResolveMappings(const GURL& url) override;
   GURL ResolveMojoURL(const GURL& url) override;
 
-  // ProcessDelegate implementation.
+  // MasterProcessDelegate implementation.
   void OnShutdownComplete() override;
+  void OnSlaveDisconnect(mojo::embedder::SlaveInfo slave_info) override;
 
   void OnApplicationEnd(const GURL& url);
 
