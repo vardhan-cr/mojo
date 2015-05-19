@@ -38,6 +38,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
   KeyboardDelegate()
       : binding_(this),
         shell_(nullptr),
+        keyboard_view_(nullptr),
         text_view_(nullptr),
         text_view_height_(0) {}
 
@@ -65,21 +66,30 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
   void OnEmbed(mojo::View* root,
                mojo::InterfaceRequest<mojo::ServiceProvider> services,
                mojo::ServiceProviderPtr exposed_services) override {
-    const mojo::Rect& root_bounds = root->bounds();
-    text_view_height_ = root_bounds.height * 0.4f;
+    root->AddObserver(this);
 
-    mojo::View* keyboard_view = root->view_manager()->CreateView();
-    mojo::Rect keyboard_bounds;
-    keyboard_bounds.x = root_bounds.x;
-    keyboard_bounds.y = root_bounds.y + text_view_height_;
-    keyboard_bounds.width = root_bounds.width;
-    keyboard_bounds.height = root_bounds.height - text_view_height_;
-    keyboard_view->SetBounds(keyboard_bounds);
-    root->AddChild(keyboard_view);
-    keyboard_view->SetVisible(true);
+    keyboard_view_ = root->view_manager()->CreateView();
+
+    text_view_ = root->view_manager()->CreateView();
+
+    skia::RefPtr<SkTypeface> typeface = skia::AdoptRef(
+        SkTypeface::CreateFromName("Arial", SkTypeface::kNormal));
+    text_paint_.setTypeface(typeface.get());
+    text_paint_.setColor(SK_ColorBLACK);
+    text_paint_.setAntiAlias(true);
+    text_paint_.setTextAlign(SkPaint::kLeft_Align);
+
+    UpdateViewBounds(root->bounds());
+
+    root->AddChild(keyboard_view_);
+    keyboard_view_->SetVisible(true);
+
+    root->AddChild(text_view_);
+    text_view_->SetVisible(true);
+
     mojo::ServiceProviderPtr keyboard_sp;
-    keyboard_view->Embed("mojo:keyboard_native", GetProxy(&keyboard_sp),
-                         nullptr);
+    keyboard_view_->Embed("mojo:keyboard_native", GetProxy(&keyboard_sp),
+                          nullptr);
     keyboard_sp->ConnectToService(keyboard::KeyboardService::Name_,
                                   GetProxy(&keyboard_).PassMessagePipe());
 
@@ -90,26 +100,6 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
     auto request = mojo::GetProxy(&keyboard_client);
     binding_.Bind(request.Pass());
     keyboard_->Show(keyboard_client.Pass());
-
-    text_view_ = root->view_manager()->CreateView();
-    mojo::Rect text_view_bounds;
-    text_view_bounds.x = root_bounds.x;
-    text_view_bounds.y = root_bounds.y;
-    text_view_bounds.width = root_bounds.width;
-    text_view_bounds.height = text_view_height_;
-    text_view_->SetBounds(text_view_bounds);
-    root->AddChild(text_view_);
-    text_view_->SetVisible(true);
-    text_view_->AddObserver(this);
-
-    float row_height = text_view_height_ / 2.0f;
-    skia::RefPtr<SkTypeface> typeface = skia::AdoptRef(
-        SkTypeface::CreateFromName("Arial", SkTypeface::kNormal));
-    text_paint_.setTypeface(typeface.get());
-    text_paint_.setColor(SK_ColorBLACK);
-    text_paint_.setTextSize(row_height / 1.7f);
-    text_paint_.setAntiAlias(true);
-    text_paint_.setTextAlign(SkPaint::kLeft_Align);
 
     DrawText();
   }
@@ -168,6 +158,36 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
     }
   }
 
+  void OnViewBoundsChanged(mojo::View* view,
+                           const mojo::Rect& old_bounds,
+                           const mojo::Rect& new_bounds) override {
+    UpdateViewBounds(new_bounds);
+    DrawText();
+  }
+
+  void UpdateViewBounds(const mojo::Rect& root_bounds) {
+    float keyboard_height = (root_bounds.width > root_bounds.height)
+                                ? root_bounds.width * 0.3f
+                                : root_bounds.width * 0.6f;
+    text_view_height_ = root_bounds.height - keyboard_height;
+    float row_height = text_view_height_ / 2.0f;
+    text_paint_.setTextSize(row_height / 1.7f);
+
+    mojo::Rect keyboard_bounds;
+    keyboard_bounds.x = root_bounds.x;
+    keyboard_bounds.y = root_bounds.y + text_view_height_;
+    keyboard_bounds.width = root_bounds.width;
+    keyboard_bounds.height = root_bounds.height - text_view_height_;
+    keyboard_view_->SetBounds(keyboard_bounds);
+
+    mojo::Rect text_view_bounds;
+    text_view_bounds.x = root_bounds.x;
+    text_view_bounds.y = root_bounds.y;
+    text_view_bounds.width = root_bounds.width;
+    text_view_bounds.height = text_view_height_;
+    text_view_->SetBounds(text_view_bounds);
+  }
+
   void DrawText() {
     mojo::GaneshContext::Scope scope(gr_context_.get());
     mojo::GaneshSurface surface(
@@ -202,6 +222,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
   keyboard::KeyboardServicePtr keyboard_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
   mojo::Shell* shell_;
+  mojo::View* keyboard_view_;
   mojo::View* text_view_;
   base::WeakPtr<mojo::GLContext> gl_context_;
   scoped_ptr<mojo::GaneshContext> gr_context_;
