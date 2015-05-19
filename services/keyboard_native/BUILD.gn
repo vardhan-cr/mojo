@@ -6,6 +6,8 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("keyboard_native") {
   sources = [
+    "key_layout.cc",
+    "key_layout.h",
     "keyboard_service_impl.cc",
     "keyboard_service_impl.h",
     "main.cc",
@@ -19,6 +21,7 @@ mojo_native_application("keyboard_native") {
     "//mojo/public/cpp/bindings",
     "//mojo/gpu",
     "//mojo/public/c/gles2",
+    "//mojo/public/cpp/bindings:callback",
     "//mojo/public/interfaces/application",
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
@@ -29,5 +32,6 @@ mojo_native_application("keyboard_native") {
     "//mojo/services/view_manager/public/cpp",
     "//mojo/skia",
     "//skia",
+    "//ui/gfx/geometry",
   ]
 }

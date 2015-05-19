@@ -10,6 +10,8 @@
 #include "mojo/gpu/texture_uploader.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "mojo/skia/ganesh_context.h"
+#include "services/keyboard_native/key_layout.h"
+#include "ui/gfx/geometry/point.h"
 
 namespace keyboard {
 
@@ -24,7 +26,15 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   void OnViewCreated(mojo::View* view, mojo::Shell* shell);
 
  private:
-  void Draw(const mojo::Size& size);
+  void OnText(const std::string& text);
+  void DrawKeys(const mojo::Size& size);
+  void DrawKeysToCanvas(const mojo::Size& size, SkCanvas* canvas);
+  void DrawMovePointTrail(SkCanvas* canvas);
+  void DrawFloatingKey(SkCanvas* canvas,
+                       const mojo::Size& size,
+                       float current_touch_x,
+                       float current_touch_y);
+  void UpdateMovePoints(mojo::Size size, const mojo::EventPtr& event);
 
   // mojo::TextureUploader::Client implementation.
   void OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) override;
@@ -41,6 +51,11 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   base::WeakPtr<mojo::GLContext> gl_context_;
   std::unique_ptr<mojo::GaneshContext> gr_context_;
   std::unique_ptr<mojo::TextureUploader> texture_uploader_;
+  std::deque<gfx::Point> move_points_;
+  int last_action_;
+  KeyLayout key_layout_;
+  KeyLayout::Key* last_key_;
+  base::WeakPtrFactory<ViewObserverDelegate> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewObserverDelegate);
 };
