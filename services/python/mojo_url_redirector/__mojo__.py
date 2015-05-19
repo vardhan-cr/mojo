@@ -7,6 +7,7 @@ to the locations of the most recent versions of these apps."""
 
 import logging
 import os
+import urlparse
 
 import http_request_mojom
 import http_response_mojom
@@ -92,9 +93,8 @@ class MojoUrlRedirector(http_server_mojom.HttpHandler):
   def RedirectToCurrentAppLocation(self, requested_platform, requested_app):
     # Construct a URLRequest to fetch the app location file...
     app_location_request = url_loader_mojom.UrlRequest()
-    app_name, _ = os.path.splitext(requested_app)
     app_location_request.url = "%s/%s/%s_location" % (
-        self.app_location_files_url, requested_platform, app_name)
+        self.app_location_files_url, requested_platform, requested_app)
     app_location_request.auto_follow_redirects = True
 
     # ...and start a URLLoader to fetch it.
@@ -131,6 +131,9 @@ class MojoUrlRedirector(http_server_mojom.HttpHandler):
   def ProcessAppLocationResponseBody(self, app_location_body,
                                      request_identifier):
     app_location = app_location_body.decode("utf-8")
+    if not urlparse.urlparse(app_location).scheme:
+      # This is a Google storage path.
+      app_location = "https://storage.googleapis.com/" + app_location
     _LogMessageForRequest(request_identifier,
                           "Redirecting to %s" % app_location)
     return _HttpRedirectResponse(app_location)

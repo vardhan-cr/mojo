@@ -111,20 +111,18 @@ def upload_shell(config, dry_run, verbose):
 
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
-  app_name, _ = os.path.splitext(app_binary_name)
   version = Version().version
   app_location_in_gs = ("mojo/services/" + target(config) + "/" + version +
                         "/" + app_binary_name)
   gsutil_app_location = "gs://" + app_location_in_gs
-  https_app_location = "https://storage.googleapis.com/" + app_location_in_gs
 
   # Upload the new binary.
   upload(config, app_binary_path, gsutil_app_location, dry_run)
 
   # Update the app's location file to point to the new binary.
   app_location_file = ("gs://mojo/services/" + target(config) + "/" +
-                       app_name + "_location")
-  write_file_to_gs(https_app_location, app_location_file, config, dry_run)
+                       app_binary_name + "_location")
+  write_file_to_gs(app_location_in_gs, app_location_file, config, dry_run)
 
 
 def upload_file(file_path, config, dry_run):

@@ -22,8 +22,9 @@ namespace mojo_url_redirector {
 namespace {
 const std::string kPlatform1 = "platform1";
 const std::string kPlatform2 = "platform2";
-const std::string kKnownAppName = "spinning_cube";
-const std::string kMissingAppName = "missing_app";
+const std::string kKnownAppName = "spinning_cube.mojo";
+const std::string kMissingAppName = "missing_app.mojo";
+const std::string kGoogleStorageBaseURL = "https://storage.googleapis.com/";
 
 std::string LocationOfAppOnPlatform(const std::string& platform,
                                     const std::string& app) {
@@ -221,12 +222,13 @@ void MojoUrlRedirectorApplicationTest::TestRedirectForKnownApp(
 
   mojo::URLRequestPtr url_request = mojo::URLRequest::New();
   url_request->url =
-      base::StringPrintf("http://localhost:%u/%s/%s.mojo",
+      base::StringPrintf("http://localhost:%u/%s/%s",
                          redirector_port_,
                          platform.c_str(),
                          app.c_str());
 
-  std::string app_location = LocationOfAppOnPlatform(platform, app);
+  std::string app_location = kGoogleStorageBaseURL +
+      LocationOfAppOnPlatform(platform, app);
   url_loader->Start(url_request.Pass(), base::Bind(&CheckRedirectorResponse,
                                                    302, app_location));
   base::RunLoop run_loop;
@@ -256,7 +258,7 @@ TEST_F(MojoUrlRedirectorApplicationTest, DISABLED_RequestForMissingApp) {
 
   mojo::URLRequestPtr url_request = mojo::URLRequest::New();
   url_request->url =
-      base::StringPrintf("http://localhost:%u/%s/%s.mojo",
+      base::StringPrintf("http://localhost:%u/%s/%s",
                          redirector_port_,
                          kPlatform1.c_str(),
                          kMissingAppName.c_str());
