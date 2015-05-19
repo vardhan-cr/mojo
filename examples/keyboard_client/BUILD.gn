@@ -12,7 +12,17 @@ mojo_native_application("keyboard_client") {
   deps = [
     "//base",
     "//mojo/application",
+    "//mojo/gpu",
+    "//mojo/public/c/gles2:headers",
+    "//mojo/public/interfaces/application:application__generator",
+    "//mojo/services/geometry/public/cpp:cpp",
+    "//mojo/services/geometry/public/interfaces:interfaces__generator",
     "//mojo/services/keyboard/public/interfaces",
+    "//mojo/services/surfaces/public/cpp:cpp",
+    "//mojo/services/surfaces/public/interfaces:interfaces_cpp_sources",
+    "//mojo/services/surfaces/public/interfaces:surface_id_cpp_sources",
     "//mojo/services/view_manager/public/cpp",
+    "//mojo/skia:skia",
+    "//skia",
   ]
 }

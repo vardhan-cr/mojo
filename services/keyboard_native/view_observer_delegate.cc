@@ -56,7 +56,7 @@ void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
 }
 
 void ViewObserverDelegate::OnText(const std::string& text) {
-  // TODO: call keyboard service
+  keyboard_service_impl_->OnKey(text.c_str());
 }
 
 void ViewObserverDelegate::DrawKeysToCanvas(const mojo::Size& size,
@@ -230,9 +230,6 @@ void ViewObserverDelegate::OnViewBoundsChanged(mojo::View* view,
 
 void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
                                             const mojo::EventPtr& event) {
-  if (keyboard_service_impl_) {
-    keyboard_service_impl_->OnViewInputEvent(view, event);
-  }
   mojo::Size size = ToSize(view_->bounds());
   key_layout_.SetSize(size);
 

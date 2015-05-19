@@ -9,12 +9,11 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/keyboard/public/interfaces/keyboard.mojom.h"
-#include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "services/keyboard_native/view_observer_delegate.h"
 
 namespace keyboard {
 
-class KeyboardServiceImpl : public KeyboardService, public mojo::ViewObserver {
+class KeyboardServiceImpl : public KeyboardService {
  public:
   explicit KeyboardServiceImpl(mojo::InterfaceRequest<KeyboardService> request);
   ~KeyboardServiceImpl() override;
@@ -24,11 +23,11 @@ class KeyboardServiceImpl : public KeyboardService, public mojo::ViewObserver {
   void ShowByRequest() override;
   void Hide() override;
 
-  // mojo::ViewObserver implementation.
-  void OnViewInputEvent(mojo::View* view, const mojo::EventPtr& event) override;
+  void OnKey(const char* key);
 
  private:
   mojo::StrongBinding<KeyboardService> strong_binding_;
+  KeyboardClientPtr client_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyboardServiceImpl);
 };
