@@ -6,7 +6,6 @@
 
 """Utility for dart_pkg and dart_pkg_app rules"""
 
-import ast
 import argparse
 import errno
 import os
@@ -23,6 +22,7 @@ from mojom.parse.parser import Parse
 from mojom.parse.translate import Translate
 
 USE_LINKS = sys.platform != "win32"
+
 
 def mojom_dart_filter(path):
     if os.path.isdir(path):
@@ -59,7 +59,7 @@ def has_pubspec_yaml(paths):
     return False
 
 
-def link(from_root, to_root, filter_func=None):
+def link(from_root, to_root):
     ensure_dir_exists(os.path.dirname(to_root))
     if os.path.exists(to_root):
       os.unlink(to_root)
@@ -100,7 +100,7 @@ def copy(from_root, to_root, filter_func=None):
 
 def copy_or_link(from_root, to_root, filter_func=None):
     if USE_LINKS:
-        link(from_root, to_root, filter_func)
+        link(from_root, to_root)
     else:
         copy(from_root, to_root, filter_func)
 
@@ -183,7 +183,7 @@ def main():
     link(lib_path, package_path)
 
     # Write stamp file.
-    with open(args.stamp_file, 'w') as f:
+    with open(args.stamp_file, 'w'):
         pass
 
 if __name__ == '__main__':
