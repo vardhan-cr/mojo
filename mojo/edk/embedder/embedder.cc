@@ -254,8 +254,11 @@ void ConnectToSlave(SlaveInfo slave_info,
                     ScopedPlatformHandle platform_handle) {
   DCHECK(platform_handle.is_valid());
   DCHECK(internal::g_process_type == ProcessType::MASTER);
+  // TODO(vtl): Update this API. Probably, it'll be using
+  // |AddSlaveAndBootstrap()| instead of |AddSlave()|.
+  system::ProcessIdentifier ignored;
   static_cast<system::MasterConnectionManager*>(g_connection_manager)
-      ->AddSlave(slave_info, platform_handle.Pass());
+      ->AddSlave(slave_info, platform_handle.Pass(), &ignored);
 }
 
 // TODO(vtl): Write tests for this.
