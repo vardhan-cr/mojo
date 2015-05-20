@@ -17,12 +17,22 @@
 #include "base/task_runner.h"
 #include "base/task_runner_util.h"
 #include "mojo/edk/embedder/embedder.h"
+#include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/public/cpp/system/message_pipe.h"
 #include "shell/child_switches.h"
 #include "shell/context.h"
 #include "shell/task_runners.h"
 
 namespace shell {
+
+struct ChildProcessHost::LaunchData {
+  LaunchData() {}
+  ~LaunchData() {}
+
+  base::FilePath child_path;
+  mojo::embedder::PlatformChannelPair platform_channel_pair;
+  std::string child_connection_id;
+};
 
 ChildProcessHost::ChildProcessHost(Context* context)
     : context_(context), channel_info_(nullptr) {
@@ -35,12 +45,14 @@ ChildProcessHost::~ChildProcessHost() {
 void ChildProcessHost::Start() {
   DCHECK(!child_process_.IsValid());
 
+  scoped_ptr<LaunchData> launch_data(new LaunchData());
+  launch_data->child_path = context_->mojo_shell_child_path();
+
   // TODO(vtl): Add something for |slave_info|.
   mojo::embedder::ScopedPlatformHandle platform_handle_for_channel;
-  std::string child_connection_id;
   mojo::embedder::ConnectToSlave(
-      nullptr, platform_channel_pair_.PassServerHandle(),
-      &platform_handle_for_channel, &child_connection_id);
+      nullptr, launch_data->platform_channel_pair.PassServerHandle(),
+      &platform_handle_for_channel, &launch_data->child_connection_id);
 
   mojo::ScopedMessagePipeHandle handle(mojo::embedder::CreateChannel(
       platform_handle_for_channel.Pass(), context_->task_runners()->io_runner(),
@@ -53,7 +65,7 @@ void ChildProcessHost::Start() {
   CHECK(base::PostTaskAndReplyWithResult(
       context_->task_runners()->blocking_pool(), FROM_HERE,
       base::Bind(&ChildProcessHost::DoLaunch, base::Unretained(this),
-                 child_connection_id),
+                 base::Passed(&launch_data)),
       base::Bind(&ChildProcessHost::DidStart, base::Unretained(this))));
 }
 
@@ -84,14 +96,17 @@ void ChildProcessHost::ExitNow(int32_t exit_code) {
   controller_->ExitNow(exit_code);
 }
 
-void ChildProcessHost::DidStart(bool success) {
+void ChildProcessHost::DidStart(base::Process child_process) {
   DVLOG(2) << "ChildProcessHost::DidStart()";
+  DCHECK(!child_process_.IsValid());
 
-  if (!success) {
+  if (!child_process.IsValid()) {
     LOG(ERROR) << "Failed to start app child process";
     AppCompleted(MOJO_RESULT_UNKNOWN);
     return;
   }
+
+  child_process_ = child_process.Pass();
 }
 
 // Callback for |mojo::embedder::CreateChannel()|.
@@ -103,32 +118,31 @@ void ChildProcessHost::DidCreateChannel(
   channel_info_ = channel_info;
 }
 
-bool ChildProcessHost::DoLaunch(const std::string& child_connection_id) {
+base::Process ChildProcessHost::DoLaunch(scoped_ptr<LaunchData> launch_data) {
   static const char* kForwardSwitches[] = {
       switches::kTraceToConsole, switches::kV, switches::kVModule,
   };
 
-  base::CommandLine child_command_line(context_->mojo_shell_child_path());
+  base::CommandLine child_command_line(launch_data->child_path);
   child_command_line.CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                       kForwardSwitches,
                                       arraysize(kForwardSwitches));
   child_command_line.AppendSwitchASCII(switches::kChildConnectionId,
-                                       child_connection_id);
+                                       launch_data->child_connection_id);
 
   mojo::embedder::HandlePassingInformation handle_passing_info;
-  platform_channel_pair_.PrepareToPassClientHandleToChildProcess(
+  launch_data->platform_channel_pair.PrepareToPassClientHandleToChildProcess(
       &child_command_line, &handle_passing_info);
 
   base::LaunchOptions options;
   options.fds_to_remap = &handle_passing_info;
   DVLOG(2) << "Launching child with command line: "
            << child_command_line.GetCommandLineString();
-  child_process_ = base::LaunchProcess(child_command_line, options);
-  if (!child_process_.IsValid())
-    return false;
-
-  platform_channel_pair_.ChildProcessLaunched();
-  return true;
+  base::Process child_process =
+      base::LaunchProcess(child_command_line, options);
+  if (child_process.IsValid())
+    launch_data->platform_channel_pair.ChildProcessLaunched();
+  return child_process.Pass();
 }
 
 void ChildProcessHost::AppCompleted(int32_t result) {

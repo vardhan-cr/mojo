@@ -25,9 +25,9 @@ class TestChildProcessHost : public ChildProcessHost {
   explicit TestChildProcessHost(Context* context) : ChildProcessHost(context) {}
   ~TestChildProcessHost() override {}
 
-  void DidStart(bool success) override {
-    EXPECT_TRUE(success);
-    ChildProcessHost::DidStart(success);
+  void DidStart(base::Process child_process) override {
+    EXPECT_TRUE(child_process.IsValid());
+    ChildProcessHost::DidStart(child_process.Pass());
     base::MessageLoop::current()->QuitWhenIdle();
   }
 

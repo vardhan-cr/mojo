@@ -10,9 +10,9 @@
 #include <string>
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/process/process.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
-#include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/child_controller.mojom.h"
@@ -60,13 +60,17 @@ class ChildProcessHost : public mojo::ErrorHandler {
 
   // TODO(vtl): This is virtual, so tests can override it, but really |Start()|
   // should take a callback (see above) and this should be private.
-  virtual void DidStart(bool success);
+  virtual void DidStart(base::Process child_process);
 
  private:
+  struct LaunchData;
+
   // Callback for |mojo::embedder::CreateChannel()|.
   void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info);
 
-  bool DoLaunch(const std::string& child_connection_id);
+  // Note: This is probably executed on a different thread (namely, using the
+  // blocking pool).
+  base::Process DoLaunch(scoped_ptr<LaunchData> launch_data);
 
   void AppCompleted(int32_t result);
 
@@ -74,7 +78,6 @@ class ChildProcessHost : public mojo::ErrorHandler {
   void OnConnectionError() override;
 
   Context* const context_;
-  mojo::embedder::PlatformChannelPair platform_channel_pair_;
 
   ChildControllerPtr controller_;
   mojo::embedder::ChannelInfo* channel_info_;
