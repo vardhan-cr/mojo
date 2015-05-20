@@ -35,15 +35,9 @@ ChildProcessHost::~ChildProcessHost() {
 void ChildProcessHost::Start() {
   DCHECK(!child_process_.IsValid());
 
-  // TODO(vtl): Add something for |slave_info|.
-  mojo::embedder::ScopedPlatformHandle platform_handle_for_channel;
-  std::string child_connection_id;
-  mojo::embedder::ConnectToSlave(
-      nullptr, platform_channel_pair_.PassServerHandle(),
-      &platform_handle_for_channel, &child_connection_id);
-
   mojo::ScopedMessagePipeHandle handle(mojo::embedder::CreateChannel(
-      platform_handle_for_channel.Pass(), context_->task_runners()->io_runner(),
+      platform_channel_pair_.PassServerHandle(),
+      context_->task_runners()->io_runner(),
       base::Bind(&ChildProcessHost::DidCreateChannel, base::Unretained(this)),
       base::MessageLoop::current()->message_loop_proxy()));
 
@@ -52,8 +46,7 @@ void ChildProcessHost::Start() {
 
   CHECK(base::PostTaskAndReplyWithResult(
       context_->task_runners()->blocking_pool(), FROM_HERE,
-      base::Bind(&ChildProcessHost::DoLaunch, base::Unretained(this),
-                 child_connection_id),
+      base::Bind(&ChildProcessHost::DoLaunch, base::Unretained(this)),
       base::Bind(&ChildProcessHost::DidStart, base::Unretained(this))));
 }
 
@@ -103,7 +96,7 @@ void ChildProcessHost::DidCreateChannel(
   channel_info_ = channel_info;
 }
 
-bool ChildProcessHost::DoLaunch(const std::string& child_connection_id) {
+bool ChildProcessHost::DoLaunch() {
   static const char* kForwardSwitches[] = {
       switches::kTraceToConsole, switches::kV, switches::kVModule,
   };
@@ -112,8 +105,7 @@ bool ChildProcessHost::DoLaunch(const std::string& child_connection_id) {
   child_command_line.CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                       kForwardSwitches,
                                       arraysize(kForwardSwitches));
-  child_command_line.AppendSwitchASCII(switches::kChildConnectionId,
-                                       child_connection_id);
+  child_command_line.AppendSwitch(switches::kChildProcess);
 
   mojo::embedder::HandlePassingInformation handle_passing_info;
   platform_channel_pair_.PrepareToPassClientHandleToChildProcess(

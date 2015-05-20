@@ -7,8 +7,6 @@
 
 #include <stdint.h>
 
-#include <string>
-
 #include "base/macros.h"
 #include "base/process/process.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
@@ -66,7 +64,7 @@ class ChildProcessHost : public mojo::ErrorHandler {
   // Callback for |mojo::embedder::CreateChannel()|.
   void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info);
 
-  bool DoLaunch(const std::string& child_connection_id);
+  bool DoLaunch();
 
   void AppCompleted(int32_t result);
 

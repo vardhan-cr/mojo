@@ -22,9 +22,9 @@
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
+#include "mojo/edk/embedder/process_delegate.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
-#include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/public/cpp/system/core.h"
 #include "shell/child_controller.mojom.h"
 #include "shell/child_switches.h"
@@ -83,13 +83,13 @@ class Blocker {
 class ChildControllerImpl;
 
 // Should be created and initialized on the main thread.
-class AppContext : public mojo::embedder::SlaveProcessDelegate {
+class AppContext : public mojo::embedder::ProcessDelegate {
  public:
   AppContext()
       : io_thread_("io_thread"), controller_thread_("controller_thread") {}
   ~AppContext() override {}
 
-  void Init(mojo::embedder::ScopedPlatformHandle platform_handle) {
+  void Init() {
     // Initialize Mojo before starting any threads.
     mojo::embedder::Init(
         make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
@@ -110,9 +110,10 @@ class AppContext : public mojo::embedder::SlaveProcessDelegate {
     controller_runner_ = controller_thread_.message_loop_proxy().get();
     CHECK(controller_runner_.get());
 
-    mojo::embedder::InitIPCSupport(mojo::embedder::ProcessType::SLAVE,
+    // TODO(vtl): This should be SLAVE, not NONE.
+    mojo::embedder::InitIPCSupport(mojo::embedder::ProcessType::NONE,
                                    controller_runner_, this, io_runner_,
-                                   platform_handle.Pass());
+                                   mojo::embedder::ScopedPlatformHandle());
   }
 
   void Shutdown() {
@@ -145,15 +146,9 @@ class AppContext : public mojo::embedder::SlaveProcessDelegate {
     mojo::embedder::ShutdownIPCSupport();
   }
 
-  // SlaveProcessDelegate implementation.
+  // ProcessDelegate implementation.
   void OnShutdownComplete() override {
     shutdown_unblocker_.Unblock(base::Closure());
-  }
-
-  void OnMasterDisconnect() override {
-    // We've lost the connection to the master process. This is not recoverable.
-    LOG(ERROR) << "Disconnected from master";
-    _exit(1);
   }
 
   base::Thread io_thread_;
@@ -215,7 +210,7 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
   void OnConnectionError() override {
     // A connection error means the connection to the shell is lost. This is not
     // recoverable.
-    LOG(ERROR) << "Connection error to the shell";
+    LOG(ERROR) << "Connection error to the shell.";
     _exit(1);
   }
 
@@ -284,28 +279,20 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
 int main(int argc, char** argv) {
   base::AtExitManager at_exit;
   base::CommandLine::Init(argc, argv);
-  const base::CommandLine& command_line =
-      *base::CommandLine::ForCurrentProcess();
 
   shell::InitializeLogging();
 
   // Make sure that we're really meant to be invoked as the child process.
+  CHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
+      switches::kChildProcess));
 
-  CHECK(command_line.HasSwitch(switches::kChildConnectionId));
-  std::string child_connection_id =
-      command_line.GetSwitchValueASCII(switches::kChildConnectionId);
-  CHECK(!child_connection_id.empty());
-
-  mojo::embedder::ScopedPlatformHandle platform_handle =
+  mojo::embedder::ScopedPlatformHandle platform_channel =
       mojo::embedder::PlatformChannelPair::PassClientHandleFromParentProcess(
-          command_line);
-  CHECK(platform_handle.is_valid());
+          *base::CommandLine::ForCurrentProcess());
+  CHECK(platform_channel.is_valid());
 
   shell::AppContext app_context;
-  app_context.Init(platform_handle.Pass());
-
-  mojo::embedder::ScopedPlatformHandle platform_channel;
-  mojo::embedder::ConnectToMaster(child_connection_id, &platform_channel);
+  app_context.Init();
 
   shell::Blocker blocker;
   app_context.controller_runner()->PostTask(

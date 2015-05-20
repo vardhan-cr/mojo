@@ -6,8 +6,7 @@
 
 namespace switches {
 
-// The value of this switch is the string that should be given to
-// |ConnectToMaster()| for its |platform_connection_id| argument.
-const char kChildConnectionId[] = "child-connection-id";
+// Used only by the child process. Not for user use.
+const char kChildProcess[] = "child-process";
 
 }  // namespace switches

@@ -347,7 +347,9 @@ void Context::OnShutdownComplete() {
 }
 
 void Context::OnSlaveDisconnect(mojo::embedder::SlaveInfo slave_info) {
-  // TODO(vtl): Do something, once we actually have |slave_info|.
+  // TODO(vtl): We don't make any proper slave processes yet, so this shouldn't
+  // be called yet.
+  NOTREACHED();
 }
 
 void Context::Run(const GURL& url) {
