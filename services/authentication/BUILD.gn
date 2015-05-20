@@ -2,11 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//mojo/public/tools/bindings/mojom.gni")
-
 if (is_android) {
   import("//services/android/rules.gni")
-  import("//build/config/android/config.gni")
 
   mojo_android_java_application("authentication") {
     sources = [
@@ -17,17 +14,11 @@ if (is_android) {
     mojo_main = "org.chromium.mojo.authentication.AuthenticationApp"
 
     deps = [
-      ":bindings_java",
       "//mojo/public/interfaces/application:application_java",
       "//mojo/public/java:application",
+      "//mojo/services/authentication/public/interfaces:interfaces_java",
       "//services/android:bindings_java",
       "//third_party/android_tools:google_play_services_default_java",
     ]
   }
-}
-
-mojom("bindings") {
-  sources = [
-    "authentication.mojom",
-  ]
 }
