@@ -38,6 +38,8 @@ class _SilentTCPServer(SocketServer.TCPServer):
   is useful because the client might stop while it is fetching an URL, which
   causes spurious error messages.
   """
+  allow_reuse_address = True
+
   def handle_error(self, request, client_address):
     """Override the base class method to have conditional logging."""
     if logging.getLogger().isEnabledFor(logging.DEBUG):
