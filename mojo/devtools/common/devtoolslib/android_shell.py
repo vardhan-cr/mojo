@@ -19,13 +19,17 @@ from devtoolslib.http_server import StartHttpServer
 from devtoolslib.shell import Shell
 
 
-# Tags used by the mojo shell application logs.
-LOGCAT_TAGS = [
+# Tags used by mojo shell Java logging.
+LOGCAT_JAVA_TAGS = [
     'AndroidHandler',
     'MojoFileHelper',
     'MojoMain',
     'MojoShellActivity',
     'MojoShellApplication',
+]
+
+# Tags used by native logging reflected in the logcat.
+LOGCAT_NATIVE_TAGS = [
     'chromium',
 ]
 
@@ -295,7 +299,9 @@ class AndroidShell(Shell):
       retrieved.
     """
     self.CleanLogs()
-    p = self.ShowLogs()
+    # Don't carry over the native logs from logcat - we have these in the
+    # stdout.
+    p = self.ShowLogs(include_native_logs=False)
     self.StartShell(arguments, sys.stdout, p.terminate)
     p.wait()
     return None
@@ -329,16 +335,19 @@ class AndroidShell(Shell):
     """Cleans the logs on the device."""
     subprocess.check_call(self._CreateADBCommand(['logcat', '-c']))
 
-  def ShowLogs(self):
+  def ShowLogs(self, include_native_logs=True):
     """Displays the log for the mojo shell.
 
     Returns:
       The process responsible for reading the logs.
     """
-    logcat = subprocess.Popen(self._CreateADBCommand([
-                               'logcat',
-                               '-s',
-                               ' '.join(LOGCAT_TAGS)]),
-                              stdout=sys.stdout)
+    tags = LOGCAT_JAVA_TAGS
+    if include_native_logs:
+      tags.extend(LOGCAT_NATIVE_TAGS)
+    logcat = subprocess.Popen(
+        self._CreateADBCommand(['logcat',
+                                '-s',
+                                ' '.join(tags)]),
+        stdout=sys.stdout)
     atexit.register(_ExitIfNeeded, logcat)
     return logcat
