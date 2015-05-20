@@ -7,14 +7,13 @@
 
 #include <jni.h>
 
+#include "base/files/file_path.h"
+#include "base/single_thread_task_runner.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
-
-namespace base {
-class FilePath;
-}
+#include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 
 namespace services {
 namespace android {
@@ -36,7 +35,14 @@ class JavaHandler : public mojo::ApplicationDelegate,
       mojo::InterfaceRequest<mojo::Application> application_request,
       mojo::URLResponsePtr response) override;
 
+  void GetApplication(base::FilePath* archive_path,
+                      base::FilePath* cache_dir,
+                      mojo::URLResponsePtr response,
+                      const base::Closure& callback);
+
   mojo::ContentHandlerFactory content_handler_factory_;
+  mojo::URLResponseDiskCachePtr url_response_disk_cache_;
+  scoped_refptr<base::SingleThreadTaskRunner> handler_task_runner_;
   MOJO_DISALLOW_COPY_AND_ASSIGN(JavaHandler);
 };
 

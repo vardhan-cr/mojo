@@ -20,6 +20,7 @@ shared_library("libjava_handler") {
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//mojo/services/content_handler/public/interfaces",
+    "//mojo/services/url_response_disk_cache/public/interfaces",
   ]
 
   sources = [

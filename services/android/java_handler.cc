@@ -11,6 +11,7 @@
 #include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/run_loop.h"
 #include "base/scoped_native_library.h"
 #include "jni/JavaHandler_jni.h"
 #include "mojo/android/system/base_run_loop.h"
@@ -39,20 +40,59 @@ void JavaHandler::RunApplication(
     mojo::InterfaceRequest<mojo::Application> application_request,
     mojo::URLResponsePtr response) {
   JNIEnv* env = base::android::AttachCurrentThread();
-  ScopedJavaLocalRef<jstring> j_archive_path =
-      Java_JavaHandler_getNewTempLibraryPath(env, GetApplicationContext());
-  base::FilePath archive_path(
-      base::android::ConvertJavaStringToUTF8(env, j_archive_path.obj()));
+  base::FilePath archive_path;
+  base::FilePath cache_dir;
+  {
+    base::MessageLoop loop;
+    handler_task_runner_->PostTask(
+        FROM_HERE,
+        base::Bind(&JavaHandler::GetApplication, base::Unretained(this),
+                   base::Unretained(&archive_path),
+                   base::Unretained(&cache_dir), base::Passed(response.Pass()),
+                   base::Bind(base::IgnoreResult(
+                                  &base::SingleThreadTaskRunner::PostTask),
+                              loop.task_runner(), FROM_HERE,
+                              base::MessageLoop::QuitWhenIdleClosure())));
+    base::RunLoop().Run();
+  }
 
-  mojo::common::BlockingCopyToFile(response->body.Pass(), archive_path);
 
   jobject context = base::android::GetApplicationContext();
+  ScopedJavaLocalRef<jstring> j_archive_path =
+      ConvertUTF8ToJavaString(env, archive_path.value());
+  ScopedJavaLocalRef<jstring> j_cache_dir =
+      ConvertUTF8ToJavaString(env, cache_dir.value());
   Java_JavaHandler_bootstrap(
-      env, context, j_archive_path.obj(),
+      env, context, j_archive_path.obj(), j_cache_dir.obj(),
       application_request.PassMessagePipe().release().value());
 }
 
 void JavaHandler::Initialize(mojo::ApplicationImpl* app) {
+  handler_task_runner_ = base::MessageLoop::current()->task_runner();
+  app->ConnectToService("mojo:url_response_disk_cache",
+                        &url_response_disk_cache_);
+}
+
+void JavaHandler::GetApplication(base::FilePath* archive_path,
+                                 base::FilePath* cache_dir,
+                                 mojo::URLResponsePtr response,
+                                 const base::Closure& callback) {
+  url_response_disk_cache_->GetFile(
+      response.Pass(),
+      [archive_path, cache_dir, callback](mojo::Array<uint8_t> extracted_path,
+                                          mojo::Array<uint8_t> cache_path) {
+        if (extracted_path.is_null()) {
+          *archive_path = base::FilePath();
+          *cache_dir = base::FilePath();
+        } else {
+          *archive_path = base::FilePath(
+              std::string(reinterpret_cast<char*>(&extracted_path.front()),
+                          extracted_path.size()));
+          *cache_dir = base::FilePath(std::string(
+              reinterpret_cast<char*>(&cache_path.front()), cache_path.size()));
+        }
+        callback.Run();
+      });
 }
 
 bool JavaHandler::ConfigureIncomingConnection(
