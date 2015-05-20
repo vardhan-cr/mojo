@@ -73,6 +73,8 @@ if (is_linux) {
       "tests/system_test.go",
       "tests/testutil.go",
       "tests/testutil_test.go",
+
+      #TODO(azani): Add "tests/union_test.go",
       "tests/validation_test.go",
     ]
     static_library_sources = [
@@ -85,6 +87,8 @@ if (is_linux) {
       "//examples/echo",
       "//mojo/edk/system",
       "//mojo/public/interfaces/bindings/tests:test_interfaces",
+
+      #TODO(azani): Add "//mojo/public/interfaces/bindings/tests:test_interfaces_experimental",
     ]
   }
 }

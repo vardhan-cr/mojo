@@ -43,6 +43,10 @@ union HandleUnion {
   SmallCache f_small_cache;
 };
 
+struct HandleStruct {
+  SmallCache f_small_cache;
+};
+
 struct DummyStruct {
   int8 f_int8;
 };
