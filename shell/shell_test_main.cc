@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
   base::CommandLine::Init(argc, argv);
 
   CHECK(!base::CommandLine::ForCurrentProcess()->HasSwitch(
-      switches::kChildProcess));
+      switches::kChildConnectionId));
 
   base::TestSuite test_suite(argc, argv);
   return base::LaunchUnitTests(
