@@ -70,13 +70,16 @@ class AndroidShell(Shell):
   Args:
     adb_path: Path to adb, optional if adb is in PATH.
     target_device: Device to run on, if multiple devices are connected.
+    logcat_tags: Comma-separated list of additional logcat tags to use.
   """
 
-  def __init__(self, adb_path="adb", target_device=None, verbose_pipe=None):
+  def __init__(self, adb_path="adb", target_device=None, logcat_tags=None,
+               verbose_pipe=None):
     self.adb_path = adb_path
     self.target_device = target_device
     self.stop_shell_registered = False
     self.adb_running_as_root = False
+    self.additional_logcat_tags = logcat_tags
     self.verbose_pipe = verbose_pipe if verbose_pipe else open(os.devnull, 'w')
 
   def _CreateADBCommand(self, args):
@@ -344,6 +347,8 @@ class AndroidShell(Shell):
     tags = LOGCAT_JAVA_TAGS
     if include_native_logs:
       tags.extend(LOGCAT_NATIVE_TAGS)
+    if self.additional_logcat_tags is not None:
+      tags.extend(self.additional_logcat_tags.split(","))
     logcat = subprocess.Popen(
         self._CreateADBCommand(['logcat',
                                 '-s',
