@@ -74,7 +74,7 @@ std::unique_ptr<FDImpl> DirectoryWrapper::Open(const char* path,
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   directory_->OpenFile(path, mojo::GetProxy(&file), mojo_open_flags,
                        Capture(&error));
-  if (!directory_.WaitForIncomingMethodCall()) {
+  if (!directory_.WaitForIncomingResponse()) {
     // This may be somewhat surprising. The implication is that the CWD is
     // stale, which may be a little strange.
     errno_setter.Set(ESTALE);
@@ -98,7 +98,7 @@ bool DirectoryWrapper::Chdir(const char* path) {
       path, mojo::GetProxy(&new_directory),
       mojo::files::kOpenFlagRead | mojo::files::kOpenFlagWrite,
       Capture(&error));
-  if (!directory_.WaitForIncomingMethodCall()) {
+  if (!directory_.WaitForIncomingResponse()) {
     // This may be somewhat surprising. The implication is that the CWD is
     // stale, which may be a little strange.
     return errno_setter.Set(ESTALE);

@@ -37,7 +37,7 @@ TEST_F(ExampleApplicationTest, PingServiceToPong) {
   uint16_t pong_value = 0u;
   example_service_->Ping(1u,
                          [&pong_value](uint16_t value) { pong_value = value; });
-  EXPECT_TRUE(example_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(example_service_.WaitForIncomingResponse());
   // Test making a call and receiving the reply.
   EXPECT_EQ(1u, pong_value);
 }

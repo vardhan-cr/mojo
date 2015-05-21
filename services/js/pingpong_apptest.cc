@@ -83,7 +83,7 @@ TEST_F(JSPingPongTest, PingTargetURL) {
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
   pingpong_service_->PingTargetURL(JSAppURL("pingpong_target.js"), 9, callback);
-  EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(pingpong_service_.WaitForIncomingResponse());
   EXPECT_TRUE(returned_value);
   pingpong_service_->Quit();
 }
@@ -96,7 +96,7 @@ TEST_F(JSPingPongTest, PingTargetService) {
   bool returned_value = false;
   PingTargetCallback callback(&returned_value);
   pingpong_service_->PingTargetService(target.Pass(), 9, callback);
-  EXPECT_TRUE(pingpong_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(pingpong_service_.WaitForIncomingResponse());
   EXPECT_TRUE(returned_value);
   pingpong_service_->Quit();
 }

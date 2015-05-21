@@ -51,7 +51,7 @@ TEST_F(JSNetworkTest, GetFileSize) {
   uint64 file_size;
   GetFileSizeCallback callback(&file_size_ok, &file_size);
   network_test_service_->GetFileSize(JSAppURL(filename), callback);
-  EXPECT_TRUE(network_test_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(network_test_service_.WaitForIncomingResponse());
   EXPECT_TRUE(file_size_ok);
   EXPECT_EQ(file_size, static_cast<uint64>(expected_file_size));
   network_test_service_->Quit();

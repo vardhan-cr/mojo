@@ -33,7 +33,7 @@ bool FileFDImpl::Close() {
 
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   file_->Close(Capture(&error));
-  if (!file_.WaitForIncomingMethodCall())
+  if (!file_.WaitForIncomingResponse())
     return errno_setter.Set(ESTALE);
   return errno_setter.Set(ErrorToErrno(error));
 }
@@ -45,7 +45,7 @@ std::unique_ptr<FDImpl> FileFDImpl::Dup() {
   mojo::files::FilePtr new_file;
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   file_->Dup(mojo::GetProxy(&new_file), Capture(&error));
-  if (!file_.WaitForIncomingMethodCall()) {
+  if (!file_.WaitForIncomingResponse()) {
     errno_setter.Set(ESTALE);
     return nullptr;
   }
@@ -64,7 +64,7 @@ bool FileFDImpl::Ftruncate(mojio_off_t length) {
 
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   file_->Truncate(static_cast<int64_t>(length), Capture(&error));
-  if (!file_.WaitForIncomingMethodCall())
+  if (!file_.WaitForIncomingResponse())
     return errno_setter.Set(ESTALE);
   return errno_setter.Set(ErrorToErrno(error));
 }
@@ -93,7 +93,7 @@ mojio_off_t FileFDImpl::Lseek(mojio_off_t offset, int whence) {
   int64_t position = -1;
   file_->Seek(static_cast<int64_t>(offset), mojo_whence,
               Capture(&error, &position));
-  if (!file_.WaitForIncomingMethodCall()) {
+  if (!file_.WaitForIncomingResponse()) {
     errno_setter.Set(ESTALE);
     return -1;
   }
@@ -141,7 +141,7 @@ mojio_ssize_t FileFDImpl::Read(void* buf, size_t count) {
   mojo::Array<uint8_t> bytes_read;
   file_->Read(static_cast<uint32_t>(count), 0, mojo::files::WHENCE_FROM_CURRENT,
               Capture(&error, &bytes_read));
-  if (!file_.WaitForIncomingMethodCall()) {
+  if (!file_.WaitForIncomingResponse()) {
     errno_setter.Set(ESTALE);
     return -1;
   }
@@ -188,7 +188,7 @@ mojio_ssize_t FileFDImpl::Write(const void* buf, size_t count) {
   uint32_t num_bytes_written = 0;
   file_->Write(bytes_to_write.Pass(), 0, mojo::files::WHENCE_FROM_CURRENT,
                Capture(&error, &num_bytes_written));
-  if (!file_.WaitForIncomingMethodCall()) {
+  if (!file_.WaitForIncomingResponse()) {
     errno_setter.Set(ESTALE);
     return -1;
   }
@@ -218,7 +218,7 @@ bool FileFDImpl::Fstat(struct mojio_stat* buf) {
   mojo::files::FileInformationPtr file_info;
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   file_->Stat(Capture(&error, &file_info));
-  if (!file_.WaitForIncomingMethodCall()) {
+  if (!file_.WaitForIncomingResponse()) {
     errno_setter.Set(ESTALE);
     return false;
   }

@@ -69,7 +69,7 @@ TEST_F(JSEchoTest, EchoString) {
   String foo;
   EchoStringCallback callback(&foo);
   echo_service_->EchoString("foo", callback);
-  EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(echo_service_.WaitForIncomingResponse());
   EXPECT_EQ("foo", foo);
   echo_service_->Quit();
 }
@@ -78,7 +78,7 @@ TEST_F(JSEchoTest, EchoEmptyString) {
   String empty;
   EchoStringCallback callback(&empty);
   echo_service_->EchoString("", callback);
-  EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(echo_service_.WaitForIncomingResponse());
   EXPECT_EQ("", empty);
   echo_service_->Quit();
 }
@@ -87,7 +87,7 @@ TEST_F(JSEchoTest, EchoNullString) {
   String null;
   EchoStringCallback callback(&null);
   echo_service_->EchoString(nullptr, callback);
-  EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(echo_service_.WaitForIncomingResponse());
   EXPECT_TRUE(null.is_null());
   echo_service_->Quit();
 }
@@ -98,7 +98,7 @@ TEST_F(JSEchoTest, ShareEchoService) {
   bool returned_value;
   ShareEchoServiceCallback callback(&returned_value);
   echo_service_->ShareEchoService(callback);
-  EXPECT_TRUE(echo_service_.WaitForIncomingMethodCall());
+  EXPECT_TRUE(echo_service_.WaitForIncomingResponse());
   EXPECT_TRUE(returned_value);
   echo_service_->Quit();
 }
@@ -115,7 +115,7 @@ TEST_F(JSServiceProviderEchoTest, UseApplicationServiceProvider) {
   String foo;
   EchoStringCallback callback(&foo);
   echo_service->EchoString("foo", callback);
-  EXPECT_TRUE(echo_service.WaitForIncomingMethodCall());
+  EXPECT_TRUE(echo_service.WaitForIncomingResponse());
   EXPECT_EQ("foo", foo);
   echo_service->Quit();
 }

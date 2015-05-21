@@ -22,7 +22,7 @@ void MakeDirAt(mojo::files::DirectoryPtr* root, const char* path) {
                      mojo::files::kOpenFlagRead | mojo::files::kOpenFlagWrite |
                          mojo::files::kOpenFlagCreate,
                      Capture(&error));
-  MOJO_CHECK(dir.WaitForIncomingMethodCall());
+  MOJO_CHECK(dir.WaitForIncomingResponse());
   MOJO_CHECK(error == mojo::files::ERROR_OK);
 }
 
@@ -36,7 +36,7 @@ mojo::files::FilePtr OpenFileAt(mojo::files::DirectoryPtr* root,
   mojo::files::FilePtr file;
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   dir->OpenFile(path, mojo::GetProxy(&file), open_flags, Capture(&error));
-  MOJO_CHECK(dir.WaitForIncomingMethodCall());
+  MOJO_CHECK(dir.WaitForIncomingResponse());
   if (error != mojo::files::ERROR_OK)
     return nullptr;
 
@@ -62,7 +62,7 @@ void CreateTestFileAt(mojo::files::DirectoryPtr* root,
   file->Write(mojo::Array<uint8_t>::From(bytes_to_write), 0,
               mojo::files::WHENCE_FROM_CURRENT,
               Capture(&error, &num_bytes_written));
-  MOJO_CHECK(file.WaitForIncomingMethodCall());
+  MOJO_CHECK(file.WaitForIncomingResponse());
   MOJO_CHECK(error == mojo::files::ERROR_OK);
   MOJO_CHECK(num_bytes_written == bytes_to_write.size());
 }
@@ -77,7 +77,7 @@ int64_t GetFileSize(mojo::files::DirectoryPtr* root, const char* path) {
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   int64_t position = -1;
   file->Seek(0, mojo::files::WHENCE_FROM_END, Capture(&error, &position));
-  MOJO_CHECK(file.WaitForIncomingMethodCall());
+  MOJO_CHECK(file.WaitForIncomingResponse());
   MOJO_CHECK(error == mojo::files::ERROR_OK);
   MOJO_CHECK(position >= 0);
   return position;
@@ -92,7 +92,7 @@ std::string GetFileContents(mojo::files::DirectoryPtr* root, const char* path) {
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   file->Read(1024 * 1024, 0, mojo::files::WHENCE_FROM_START,
              Capture(&error, &bytes_read));
-  MOJO_CHECK(file.WaitForIncomingMethodCall());
+  MOJO_CHECK(file.WaitForIncomingResponse());
   if (!bytes_read.size())
     return std::string();
   return std::string(reinterpret_cast<const char*>(&bytes_read[0]),

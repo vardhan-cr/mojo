@@ -119,7 +119,7 @@ class MojoUrlRedirectorApplicationTest :
         location_files_handler.Pass(),
         base::Bind(&MojoUrlRedirectorApplicationTest::OnAddedHandler,
                    base::Unretained(this)));
-    location_files_server_.WaitForIncomingMethodCall();
+    location_files_server_.WaitForIncomingResponse();
 
     // Connect to the redirector and wait until it registers itself as a
     // handler with the server on |redirector_port_|.
@@ -196,7 +196,7 @@ void MojoUrlRedirectorApplicationTest::WaitForRedirectorRegistration() {
         base::Bind(
             &MojoUrlRedirectorApplicationTest::CheckRedirectorRegistered,
             base::Unretained(this)));
-    ASSERT_TRUE(url_loader.WaitForIncomingMethodCall());
+    ASSERT_TRUE(url_loader.WaitForIncomingResponse());
   }
 }
 

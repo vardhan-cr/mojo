@@ -52,7 +52,7 @@ bool TempFileForURL(mojo::URLLoaderPtr& url_loader,
   url_loader->Start(request.Pass(), [&response](mojo::URLResponsePtr r) {
     response = r.Pass();
   });
-  url_loader.WaitForIncomingMethodCall();
+  url_loader.WaitForIncomingResponse();
   if (response.is_null()) {
     LOG(FATAL) << "something went horribly wrong (missed a callback?)";
   }

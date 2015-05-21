@@ -36,7 +36,7 @@ ChildImpl::ChildImpl(ApplicationConnection* surfaces_service_connection,
   surfaces_service_connection->ConnectToService(&surface_);
   surface_->GetIdNamespace(
       base::Bind(&ChildImpl::SetIdNamespace, base::Unretained(this)));
-  surface_.WaitForIncomingMethodCall();  // Wait for ID namespace to arrive.
+  surface_.WaitForIncomingResponse();  // Wait for ID namespace to arrive.
   DCHECK_NE(0u, id_namespace_);
 }
 

@@ -27,7 +27,7 @@ void MojioImplTestBase::SetUp() {
 
   mojo::files::Error error = mojo::files::ERROR_INTERNAL;
   files->OpenFileSystem(nullptr, mojo::GetProxy(&directory_), Capture(&error));
-  MOJO_CHECK(files.WaitForIncomingMethodCall());
+  MOJO_CHECK(files.WaitForIncomingResponse());
   MOJO_CHECK(error == mojo::files::ERROR_OK);
 }
 

@@ -44,7 +44,7 @@ void Initialize(ApplicationImpl* app) {
   icu_data::ICUDataPtr icu_data;
   app->ConnectToService("mojo:icu_data", &icu_data);
   icu_data->Map(kDataHash, Callback());
-  icu_data.WaitForIncomingMethodCall();
+  icu_data.WaitForIncomingResponse();
 }
 
 }  // namespace icu

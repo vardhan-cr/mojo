@@ -50,10 +50,6 @@ class GetHandler : public http_server::HttpHandler {
       : binding_(this, request.Pass()) {}
   ~GetHandler() override {}
 
-  bool WaitForIncomingMethodCall() {
-    return binding_.WaitForIncomingMethodCall();
-  }
-
  private:
   // http_server::HttpHandler:
   void HandleRequest(http_server::HttpRequestPtr request,
@@ -74,10 +70,6 @@ class PostHandler : public http_server::HttpHandler {
   PostHandler(mojo::InterfaceRequest<HttpHandler> request)
       : binding_(this, request.Pass()) {}
   ~PostHandler() override {}
-
-  bool WaitForIncomingMethodCall() {
-    return binding_.WaitForIncomingMethodCall();
-  }
 
  private:
   // http_server::HttpHandler:
@@ -150,7 +142,7 @@ TEST_F(HttpServerApplicationTest, ServerResponse) {
   http_server::HttpServerPtr http_server(CreateHttpServer());
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });
-  http_server.WaitForIncomingMethodCall();
+  http_server.WaitForIncomingResponse();
 
   HttpHandlerPtr http_handler_ptr;
   GetHandler handler(GetProxy(&http_handler_ptr).Pass());
@@ -158,7 +150,7 @@ TEST_F(HttpServerApplicationTest, ServerResponse) {
   // Set the test handler and wait for confirmation.
   http_server->SetHandler("/test", http_handler_ptr.Pass(),
                           [](bool result) { EXPECT_TRUE(result); });
-  http_server.WaitForIncomingMethodCall();
+  http_server.WaitForIncomingResponse();
 
   mojo::URLLoaderPtr url_loader;
   network_service_->CreateURLLoader(GetProxy(&url_loader));
@@ -177,7 +169,7 @@ TEST_F(HttpServerApplicationTest, PostData) {
   http_server::HttpServerPtr http_server(CreateHttpServer());
   uint16_t assigned_port;
   http_server->GetPort([&assigned_port](uint16_t p) { assigned_port = p; });
-  http_server.WaitForIncomingMethodCall();
+  http_server.WaitForIncomingResponse();
 
   HttpHandlerPtr http_handler_ptr;
   PostHandler handler(GetProxy(&http_handler_ptr).Pass());
@@ -185,7 +177,7 @@ TEST_F(HttpServerApplicationTest, PostData) {
   // Set the test handler and wait for confirmation.
   http_server->SetHandler("/post", http_handler_ptr.Pass(),
                           [](bool result) { EXPECT_TRUE(result); });
-  http_server.WaitForIncomingMethodCall();
+  http_server.WaitForIncomingResponse();
 
   mojo::URLLoaderPtr url_loader;
   network_service_->CreateURLLoader(GetProxy(&url_loader));

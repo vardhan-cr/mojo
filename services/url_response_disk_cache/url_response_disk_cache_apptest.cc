@@ -67,7 +67,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetFile) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   std::string received_content;
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
@@ -97,7 +97,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetExtractedContent) {
         extracted_dir = toPath(received_extracted_dir.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(extracted_dir.empty());
   base::FilePath file1 = extracted_dir.Append("file1");
   std::string file_content;
@@ -132,7 +132,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   std::string received_content;
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
@@ -165,7 +165,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
   EXPECT_EQ(content, received_content);
@@ -197,7 +197,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
   EXPECT_EQ(new_content, received_content);
@@ -226,7 +226,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
   EXPECT_EQ(new_content, received_content);
@@ -256,7 +256,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
         file = toPath(received_file_path.Pass());
         cache_dir = toPath(received_cache_dir_path.Pass());
       });
-  url_response_disk_cache_.WaitForIncomingMethodCall();
+  url_response_disk_cache_.WaitForIncomingResponse();
   ASSERT_FALSE(file.empty());
   ASSERT_TRUE(base::ReadFileToString(file, &received_content));
   EXPECT_EQ(new_content, received_content);
