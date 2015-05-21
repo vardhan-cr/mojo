@@ -20,9 +20,6 @@ v8.log
 /build/linux/bin/eu-strip
 /build/win_toolchain.json
 /buildtools/
-# The Chrome OS build creates a /c symlink due to http://crbug.com/54866.
-# TODO(vtl): Check if this is still true.
-/c
 /dart/
 /dart-pub-cache/
 /native_client/
