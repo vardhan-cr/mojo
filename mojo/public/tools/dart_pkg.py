@@ -105,6 +105,25 @@ def copy_or_link(from_root, to_root, filter_func=None):
         copy(from_root, to_root, filter_func)
 
 
+def remove_broken_symlink(path):
+    try:
+        link_path = os.readlink(path)
+    except OSError as e:
+        # Path was not a symlink.
+        if e.errno == errno.EINVAL:
+            pass
+    else:
+        if not os.path.exists(link_path):
+            os.unlink(path)
+
+
+def remove_broken_symlinks(root_dir):
+    for current_dir, _, child_files in os.walk(root_dir):
+        for filename in child_files:
+            path = os.path.join(current_dir, filename)
+            remove_broken_symlink(path)
+
+
 def mojom_path(filename):
     with open(filename) as f:
         source = f.read()
@@ -181,6 +200,10 @@ def main():
     # Symlink packages/
     package_path = os.path.join(args.package_root, args.package_name)
     link(lib_path, package_path)
+
+    # Remove any broken symlinks in target_dir and package root.
+    remove_broken_symlinks(target_dir)
+    remove_broken_symlinks(args.package_root)
 
     # Write stamp file.
     with open(args.stamp_file, 'w'):

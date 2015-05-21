@@ -216,7 +216,7 @@ template("dartzip_packaged_application") {
 #       List of sources to include in the package.
 #
 #   deps (optional)
-#       Note: this can contain only other mojom targets.
+#       Note: this can only contain mojom targets.
 #
 #   datadeps (optional)
 #
@@ -249,9 +249,8 @@ template("dart_pkg") {
       datadeps += invoker.datadeps
     }
 
-    list_mojoms_script = rebase_path("mojo/public/tools/dart_list_mojoms.py",
-                                     ".",
-                                     mojo_sdk_root)
+    list_mojoms_script =
+        rebase_path("mojo/public/tools/dart_list_mojoms.py", ".", mojo_sdk_root)
     mojom_sources = []
     foreach(d, deps) {
       root_prefix = rebase_path(".", "", mojo_sdk_root)
@@ -270,9 +269,9 @@ template("dart_pkg") {
     ]
 
     inputs = [
-      list_mojoms_script,
-      script
-    ] + rebase_path(invoker.sources)
+               list_mojoms_script,
+               script,
+             ] + rebase_path(invoker.sources)
 
     args = [
              "--package-name",
