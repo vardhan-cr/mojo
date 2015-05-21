@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'package:apptest/apptest.dart';
 import 'package:mojom/dart/test/echo_service.mojom.dart';
 
@@ -11,10 +12,14 @@ import 'io_http_apptests.dart' as io_http;
 import 'io_internet_address_apptests.dart' as io_internet_address;
 import 'versioning_apptests.dart' as versioning;
 
-main(List args) {
-  runAppTests(args[0], [echo.echoApptests,
-                        io_internet_address.tests,
-                        io_http.tests,
-                        pingpong.pingpongApptests,
-                        versioning.tests]);
+Future<int> main(List args) async {
+  final tests = [
+    echo.echoApptests,
+    io_internet_address.tests,
+    io_http.tests,
+    pingpong.pingpongApptests,
+    versioning.tests
+  ];
+  var exitCode = await runAppTests(args[0], tests);
+  return exitCode;
 }

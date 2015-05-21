@@ -13,14 +13,7 @@ from devtoolslib.apptest import run_apptest
 
 
 def _dart_apptest_output_test(output):
-  # Fail on output with dart unittests' "FAIL:" or a lack of "PASS:".
-  # The latter condition ensures failure on broken command lines or output.
-  # Check output instead of exit codes because mojo_shell always exits with 0.
-  if (not output or
-      '\nFAIL: ' in output or
-      '\nPASS: ' not in output):
-    return False
-  return True
+  return '\nDART APPTESTS RESULT: PASSED' in output
 
 
 # TODO(erg): Support android, launched services and fixture isolation.

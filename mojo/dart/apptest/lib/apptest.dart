@@ -15,6 +15,8 @@ import 'package:mojo/core.dart';
 import 'package:unittest/unittest.dart';
 export 'package:unittest/unittest.dart';
 
+final Completer exitCodeCompleter = new Completer();
+
 // This class is an application that does nothing but tears down the connections
 // between each test.
 class _ConnectionToShellApplication extends Application {
@@ -46,6 +48,7 @@ class _CleanShutdownConfiguration extends SimpleConfiguration {
   }
 
   void onDone(bool success) {
+    exitCodeCompleter.complete(success ? 0 : 255);
     closeApplication();
     super.onDone(success);
   }
@@ -54,6 +57,13 @@ class _CleanShutdownConfiguration extends SimpleConfiguration {
     await _application.close();
     assert(MojoHandle.reportLeakedHandles());
   }
+
+  void onSummary(int passed, int failed, int errors,
+                 List<TestCase> results, String uncaughtError) {
+    String status = ((failed > 0) || (errors > 0)) ? "FAILED" : "PASSED";
+    print('DART APPTESTS RESULT: $status');
+    super.onSummary(passed, failed, errors, results, uncaughtError);
+  }
 }
 
 // The public interface to apptests.
@@ -61,9 +71,12 @@ class _CleanShutdownConfiguration extends SimpleConfiguration {
 // In a dart mojo application, |incoming_handle| is args[0]. |testFunction| is a
 // list of functions that actually contains your testing code, and will pass
 // back an application to each of them.
-runAppTests(var incomingHandle, List<Function> testFunction) {
+Future<int> runAppTests(var incomingHandle, List<Function> testFunction) async {
   var appHandle = new MojoHandle(incomingHandle);
   var application =
       new _ConnectionToShellApplication.fromHandle(appHandle, testFunction);
   unittestConfiguration = new _CleanShutdownConfiguration(application);
+
+  var exitCode = await exitCodeCompleter.future;
+  return exitCode;
 }
