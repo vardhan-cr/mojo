@@ -70,6 +70,7 @@ public class JavaHandler {
             Method mojoMain =
                     loadedClass.getMethod("mojoMain", Context.class, Core.class,
                             MessagePipeHandle.class);
+            nativePreInvokeEvent();
             mojoMain.invoke(null, context, core, handle);
         } catch (Throwable t) {
             Log.e(TAG, "Running MojoMain failed.", t);
@@ -77,4 +78,9 @@ public class JavaHandler {
         }
         return true;
     }
+
+    /**
+     * Notify the native side before starting the handled application for tracing.
+     */
+    private static native void nativePreInvokeEvent();
 }

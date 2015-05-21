@@ -5,6 +5,7 @@
 #include "services/android/java_handler.h"
 
 #include "base/android/base_jni_onload.h"
+#include "base/android/base_jni_registrar.h"
 #include "base/android/jni_android.h"
 #include "base/android/jni_string.h"
 #include "base/android/library_loader/library_loader_hooks.h"
@@ -13,12 +14,12 @@
 #include "base/logging.h"
 #include "base/run_loop.h"
 #include "base/scoped_native_library.h"
+#include "base/trace_event/trace_event.h"
 #include "jni/JavaHandler_jni.h"
 #include "mojo/android/system/base_run_loop.h"
 #include "mojo/android/system/core_impl.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
-#include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_impl.h"
 
@@ -28,8 +29,29 @@ using base::android::ConvertJavaStringToUTF8;
 using base::android::ConvertUTF8ToJavaString;
 using base::android::GetApplicationContext;
 
+namespace {
+
+bool RegisterJNI(JNIEnv* env) {
+  if (!base::android::RegisterJni(env))
+    return false;
+
+  if (!services::android::RegisterNativesImpl(env))
+    return false;
+
+  if (!mojo::android::RegisterCoreImpl(env))
+    return false;
+
+  if (!mojo::android::RegisterBaseRunLoop(env))
+    return false;
+
+  return true;
+}
+
+}  // namespace
+
 namespace services {
 namespace android {
+
 JavaHandler::JavaHandler() : content_handler_factory_(this) {
 }
 
@@ -39,6 +61,8 @@ JavaHandler::~JavaHandler() {
 void JavaHandler::RunApplication(
     mojo::InterfaceRequest<mojo::Application> application_request,
     mojo::URLResponsePtr response) {
+  TRACE_EVENT_BEGIN1("java_handler", "JavaHandler::RunApplication", "url",
+                     std::string(response->url));
   JNIEnv* env = base::android::AttachCurrentThread();
   base::FilePath archive_path;
   base::FilePath cache_dir;
@@ -68,6 +92,7 @@ void JavaHandler::RunApplication(
 }
 
 void JavaHandler::Initialize(mojo::ApplicationImpl* app) {
+  tracing_.Initialize(app);
   handler_task_runner_ = base::MessageLoop::current()->task_runner();
   app->ConnectToService("mojo:url_response_disk_cache",
                         &url_response_disk_cache_);
@@ -101,25 +126,12 @@ bool JavaHandler::ConfigureIncomingConnection(
   return true;
 }
 
-}  // namespace android
-}  // namespace services
-
-namespace {
-
-bool RegisterJNI(JNIEnv* env) {
-  if (!services::android::RegisterNativesImpl(env))
-    return false;
-
-  if (!mojo::android::RegisterCoreImpl(env))
-    return false;
-
-  if (!mojo::android::RegisterBaseRunLoop(env))
-    return false;
-
-  return true;
+void PreInvokeEvent(JNIEnv* env, jclass jcaller) {
+  TRACE_EVENT_END0("java_handler", "JavaHandler::RunApplication");
 }
 
-}  // namespace
+}  // namespace android
+}  // namespace services
 
 MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new services::android::JavaHandler());

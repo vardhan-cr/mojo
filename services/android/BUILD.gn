@@ -14,7 +14,7 @@ shared_library("libjava_handler") {
     "//mojo/android:system_java_jni_headers",
     "//mojo/application",
     "//mojo/application:content_handler",
-    "//mojo/common",
+    "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
     "//mojo/public/c/system:for_shared_library",
     "//mojo/public/cpp/bindings",

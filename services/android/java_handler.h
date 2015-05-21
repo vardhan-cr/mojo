@@ -10,6 +10,7 @@
 #include "base/files/file_path.h"
 #include "base/single_thread_task_runner.h"
 #include "mojo/application/content_handler_factory.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
@@ -40,6 +41,7 @@ class JavaHandler : public mojo::ApplicationDelegate,
                       mojo::URLResponsePtr response,
                       const base::Closure& callback);
 
+  mojo::TracingImpl tracing_;
   mojo::ContentHandlerFactory content_handler_factory_;
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   scoped_refptr<base::SingleThreadTaskRunner> handler_task_runner_;
