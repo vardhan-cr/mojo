@@ -8,7 +8,7 @@ import 'dart:isolate';
 import 'dart:mojo.builtin' as builtin;
 import 'dart:typed_data';
 
-import 'package:testing/validation_test_input_parser.dart' as parser;
+import 'package:_testing/validation_test_input_parser.dart' as parser;
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
 import 'package:mojom/mojo/test/validation_test_interfaces.mojom.dart';

@@ -4,7 +4,7 @@
 
 import 'dart:typed_data';
 
-import 'package:testing/expect.dart';
+import 'package:_testing/expect.dart';
 import 'package:mojo/bindings.dart' as bindings;
 import 'package:mojo/core.dart' as core;
 

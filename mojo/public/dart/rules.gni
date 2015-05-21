@@ -279,7 +279,7 @@ template("dart_pkg") {
     inputs = [
                list_mojoms_script,
                script,
-             ] + rebase_path(invoker.sources) + rebase_path(sdk_ext_directory)
+             ] + rebase_path(invoker.sources)
 
     args = [
              "--package-name",
