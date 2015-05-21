@@ -25,6 +25,16 @@
 
 namespace shell {
 
+namespace {
+#if defined(OS_LINUX)
+char kArchitecture[] = "linux-x64";
+#elif defined(OS_ANDROID)
+char kArchitecture[] = "android-arm";
+#else
+#error "Unsupported."
+#endif
+};
+
 NetworkFetcher::NetworkFetcher(
     bool disable_cache,
     bool predictable_app_filenames,
@@ -215,6 +225,9 @@ void NetworkFetcher::StartNetworkRequest(
   request->url = mojo::String::From(url);
   request->auto_follow_redirects = false;
   request->bypass_cache = disable_cache_;
+  mojo::Array<mojo::String> headers(1);
+  headers[0] = base::StringPrintf("X-Architecture: %s", kArchitecture);
+  request->headers = headers.Pass();
 
   network_service->CreateURLLoader(mojo::GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
