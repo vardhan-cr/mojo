@@ -39,6 +39,7 @@ class ApplicationThread : public base::PlatformThread::Delegate {
 
  private:
   void ThreadMain() override {
+    base::PlatformThread::SetName(response_->url);
     handler_delegate_->RunApplication(application_request_.Pass(),
                                       response_.Pass());
     handler_thread_->PostTask(FROM_HERE,
