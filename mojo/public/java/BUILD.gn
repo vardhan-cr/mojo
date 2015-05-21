@@ -31,6 +31,7 @@ android_library("bindings") {
     "bindings/src/org/chromium/mojo/bindings/Callbacks.java",
     "bindings/src/org/chromium/mojo/bindings/ConnectionErrorHandler.java",
     "bindings/src/org/chromium/mojo/bindings/Connector.java",
+    "bindings/src/org/chromium/mojo/bindings/DataHeader.java",
     "bindings/src/org/chromium/mojo/bindings/Decoder.java",
     "bindings/src/org/chromium/mojo/bindings/DelegatingConnectionErrorHandler.java",
     "bindings/src/org/chromium/mojo/bindings/DeserializationException.java",
@@ -50,6 +51,7 @@ android_library("bindings") {
     "bindings/src/org/chromium/mojo/bindings/ServiceMessage.java",
     "bindings/src/org/chromium/mojo/bindings/SideEffectFreeCloseable.java",
     "bindings/src/org/chromium/mojo/bindings/Struct.java",
+    "bindings/src/org/chromium/mojo/bindings/Union.java",
   ]
 
   deps = [
