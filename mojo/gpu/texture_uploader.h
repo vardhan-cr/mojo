@@ -22,6 +22,7 @@ class TextureUploader : public mojo::ResourceReturner,
   class Client {
    public:
     virtual void OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) = 0;
+    virtual void OnFrameComplete() = 0;
 
    protected:
     virtual ~Client();
@@ -42,6 +43,7 @@ class TextureUploader : public mojo::ResourceReturner,
   void ReturnResources(
       mojo::Array<mojo::ReturnedResourcePtr> resources) override;
 
+  void OnFrameComplete();
   void SetIdNamespace(uint32_t id_namespace);
   void EnsureSurfaceForSize(const mojo::Size& size);
   void SendFullyQualifiedID();
@@ -56,6 +58,7 @@ class TextureUploader : public mojo::ResourceReturner,
   uint32_t local_id_;
   base::hash_map<uint32_t, mojo::GLTexture*> resource_to_texture_map_;
   mojo::Binding<mojo::ResourceReturner> returner_binding_;
+  base::WeakPtrFactory<TextureUploader> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(TextureUploader);
 };

@@ -5,12 +5,13 @@
 #ifndef SERVICES_KEYBOARD_NATIVE_VIEW_OBSERVER_DELEGATE_H_
 #define SERVICES_KEYBOARD_NATIVE_VIEW_OBSERVER_DELEGATE_H_
 
-#include <memory>
-
+#include "base/time/time.h"
 #include "mojo/gpu/texture_uploader.h"
 #include "mojo/services/view_manager/public/cpp/view_observer.h"
 #include "mojo/skia/ganesh_context.h"
 #include "services/keyboard_native/key_layout.h"
+#include "services/keyboard_native/material_splash_animation.h"
+#include "services/keyboard_native/motion_decay_animation.h"
 #include "ui/gfx/geometry/point.h"
 
 namespace keyboard {
@@ -27,17 +28,15 @@ class ViewObserverDelegate : public mojo::ViewObserver,
 
  private:
   void OnText(const std::string& text);
-  void DrawKeys(const mojo::Size& size);
+  void DrawState();
   void DrawKeysToCanvas(const mojo::Size& size, SkCanvas* canvas);
-  void DrawMovePointTrail(SkCanvas* canvas);
-  void DrawFloatingKey(SkCanvas* canvas,
-                       const mojo::Size& size,
-                       float current_touch_x,
-                       float current_touch_y);
-  void UpdateMovePoints(mojo::Size size, const mojo::EventPtr& event);
+  void DrawAnimations(SkCanvas* canvas, const base::TimeTicks& current_ticks);
+  void DrawFloatingKey(SkCanvas* canvas, const mojo::Size& size);
+  void UpdateState(const gfx::Point& touch_point);
 
   // mojo::TextureUploader::Client implementation.
   void OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) override;
+  void OnFrameComplete() override;
 
   // mojo::ViewObserver implementation.
   void OnViewDestroyed(mojo::View* view) override;
@@ -49,12 +48,14 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   KeyboardServiceImpl* keyboard_service_impl_;
   mojo::View* view_;
   base::WeakPtr<mojo::GLContext> gl_context_;
-  std::unique_ptr<mojo::GaneshContext> gr_context_;
-  std::unique_ptr<mojo::TextureUploader> texture_uploader_;
-  std::deque<gfx::Point> move_points_;
+  scoped_ptr<mojo::GaneshContext> gr_context_;
+  scoped_ptr<mojo::TextureUploader> texture_uploader_;
   int last_action_;
   KeyLayout key_layout_;
   KeyLayout::Key* last_key_;
+  gfx::Point last_point_;
+  bool last_point_valid_;
+  std::deque<scoped_ptr<Animation>> animations_;
   base::WeakPtrFactory<ViewObserverDelegate> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewObserverDelegate);

@@ -32,7 +32,8 @@ TextureUploader::TextureUploader(Client* client,
       next_resource_id_(0u),
       id_namespace_(0u),
       local_id_(0u),
-      returner_binding_(this) {
+      returner_binding_(this),
+      weak_factory_(this) {
   context_->AddObserver(this);
 
   mojo::ServiceProviderPtr surfaces_service_provider;
@@ -124,7 +125,9 @@ void TextureUploader::Upload(scoped_ptr<mojo::GLTexture> texture) {
   pass->quads.push_back(quad.Pass());
 
   frame->passes.push_back(pass.Pass());
-  surface_->SubmitFrame(local_id_, frame.Pass(), mojo::Closure());
+  surface_->SubmitFrame(local_id_, frame.Pass(),
+                        base::Bind(&TextureUploader::OnFrameComplete,
+                                   weak_factory_.GetWeakPtr()));
 }
 
 void TextureUploader::OnContextLost() {
@@ -143,6 +146,10 @@ void TextureUploader::ReturnResources(
     resource_to_texture_map_.erase(resource->id);
     delete texture;
   }
+}
+
+void TextureUploader::OnFrameComplete() {
+  client_->OnFrameComplete();
 }
 
 void TextureUploader::EnsureSurfaceForSize(const mojo::Size& size) {

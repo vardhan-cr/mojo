@@ -150,6 +150,8 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
     text_view_->SetSurfaceId(surface_id.Pass());
   }
 
+  void OnFrameComplete() override {}
+
   // mojo::ViewObserver implementation.
   void OnViewDestroyed(mojo::View* view) override {
     if (view == text_view_) {
