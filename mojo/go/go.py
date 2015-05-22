@@ -75,7 +75,7 @@ def main():
   call_result = subprocess.call([go_tool] + go_options, env=env)
   if call_result != 0:
     return call_result
-  out_files = [ f for f in os.listdir('.') if os.path.isfile(f)]
+  out_files = sorted([ f for f in os.listdir('.') if os.path.isfile(f)])
   if (len(out_files) > 0):
     shutil.move(out_files[0], out_file)
   os.chdir(old_directory)

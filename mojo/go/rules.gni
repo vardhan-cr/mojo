@@ -100,14 +100,19 @@ template("go_mojo_application") {
   static_library_name = target_name + "_static_library"
   static_library(static_library_name) {
     complete_static_lib = true
-    deps = invoker.deps
+    deps = [
+      "//mojo/public/platform/native:system",
+    ]
   }
 
   go_library_name = target_name + "_go"
   action(go_library_name) {
-    deps = [
-      ":${static_library_name}",
-    ]
+    deps = invoker.deps + [
+             ":${static_library_name}",
+             "//mojo/go:application",
+             "//mojo/go:platform_cgo",
+             "//mojo/public/c/system",
+           ]
     script = "//mojo/go/go.py"
     inputs = invoker.sources
     outputs = [
@@ -119,20 +124,26 @@ template("go_mojo_application") {
     # script will later identify the output, copy it to the target location,
     # and clean up the temporary build directory.
     build_dir = "${target_out_dir}/${target_name}_build"
-    args =
-        [
-          "--android",
-          "--",
-          "${go_build_tool}",
-          rebase_path(build_dir, root_build_dir),
-          rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
-          rebase_path("//", root_build_dir),
-          rebase_path(root_out_dir, root_build_dir),
-          "-I" + rebase_path("//"),
-          "-L" + rebase_path(target_out_dir) + " -l" + static_library_name + "",
-          "build",
-          "-ldflags=-shared",
-        ] + rebase_path(invoker.sources, build_dir)
+    args = []
+    if (is_android) {
+      args += [ "--android" ]
+    }
+    args += [
+      "--",
+      "${go_build_tool}",
+      rebase_path(build_dir, root_build_dir),
+      rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
+      rebase_path("//", root_build_dir),
+      rebase_path(root_out_dir, root_build_dir),
+      "-I" + rebase_path("//"),
+      "-L" + rebase_path(target_out_dir) + " -l" + static_library_name + "",
+      "build",
+      "-ldflags=-shared",
+    ]
+    if (is_linux) {
+      args += [ "-buildmode=c-shared" ]
+    }
+    args += rebase_path(invoker.sources, build_dir)
   }
 
   copy(target_name) {
