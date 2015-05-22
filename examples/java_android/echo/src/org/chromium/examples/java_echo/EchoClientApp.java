@@ -17,6 +17,11 @@ import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.Shell;
 
+/**
+ * This is an example Java Mojo Application that sends a message to an echo server and then
+ * prints the response received from the echo server to the Android logcat output. See
+ * the README.md file for usage.
+ */
 class EchoClientApp implements ApplicationDelegate {
     private static final String TAG = "JavaEchoClient";
     private static final String DEFAULT_MESSAGE = "Hello Java!";
@@ -60,8 +65,7 @@ class EchoClientApp implements ApplicationDelegate {
      */
     @Override
     public void initialize(Shell shell, String[] args, String url) {
-        Echo echo =
-                ShellHelper.connectToService(mCore, shell, "mojo:java_echo_server", Echo.MANAGER);
+        Echo echo = ShellHelper.connectToService(mCore, shell, "mojo:echo_server", Echo.MANAGER);
         String messageToSend = DEFAULT_MESSAGE;
         if (args.length > 1) {
             messageToSend = join(args, 1, args.length - 1);

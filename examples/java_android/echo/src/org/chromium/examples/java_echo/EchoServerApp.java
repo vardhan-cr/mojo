@@ -5,6 +5,7 @@
 package org.chromium.examples.java_echo;
 
 import android.content.Context;
+import android.util.Log;
 
 import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
@@ -16,10 +17,20 @@ import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.mojo.Shell;
 
+/**
+ * This is an example Java Mojo Application that receives a message from an echo client and then
+ * responds with that same message, prefixed by the string "Java EchoServer: ". The user does not
+ * directly request that this application be loaded. Instead the Mojo shell will load this
+ * application when the echo client requests that an echo server be loaded. See the README.md
+ * file for usage.
+ */
 class EchoServerApp implements ApplicationDelegate {
+    private static final String TAG = "JavaEchoServer";
+
     public static class EchoImpl implements Echo {
         @Override
         public void echoString(String value, EchoStringResponse callback) {
+            Log.i(TAG, "Received: " + value);
             callback.call("Java EchoServer: " + value);
         }
 
