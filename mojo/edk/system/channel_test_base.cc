@@ -10,7 +10,6 @@
 #include "base/message_loop/message_loop.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/system/raw_channel.h"
-#include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
 namespace system {
