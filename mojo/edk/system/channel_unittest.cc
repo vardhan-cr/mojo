@@ -6,76 +6,18 @@
 
 #include "base/bind.h"
 #include "base/location.h"
-#include "base/message_loop/message_loop.h"
-#include "base/test/test_io_thread.h"
-#include "mojo/edk/embedder/platform_channel_pair.h"
-#include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
+#include "mojo/edk/system/channel_test_base.h"
 #include "mojo/edk/system/message_pipe.h"
-#include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
-#include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
 namespace system {
 namespace {
 
-class ChannelTest : public testing::Test {
- public:
-  ChannelTest() : io_thread_(base::TestIOThread::kAutoStart) {}
-  ~ChannelTest() override {}
-
-  void SetUp() override {
-    io_thread_.PostTaskAndWait(
-        FROM_HERE,
-        base::Bind(&ChannelTest::SetUpOnIOThread, base::Unretained(this)));
-  }
-
-  void CreateChannelOnIOThread() {
-    CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
-    channel_ = new Channel(&platform_support_);
-  }
-
-  void InitChannelOnIOThread() {
-    CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
-
-    CHECK(raw_channel_);
-    CHECK(channel_);
-    channel_->Init(raw_channel_.Pass());
-  }
-
-  void ShutdownChannelOnIOThread() {
-    CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
-
-    CHECK(channel_);
-    channel_->Shutdown();
-  }
-
-  base::TestIOThread* io_thread() { return &io_thread_; }
-  RawChannel* raw_channel() { return raw_channel_.get(); }
-  scoped_ptr<RawChannel>* mutable_raw_channel() { return &raw_channel_; }
-  Channel* channel() { return channel_.get(); }
-  scoped_refptr<Channel>* mutable_channel() { return &channel_; }
-
- private:
-  void SetUpOnIOThread() {
-    CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
-
-    embedder::PlatformChannelPair channel_pair;
-    raw_channel_ = RawChannel::Create(channel_pair.PassServerHandle()).Pass();
-    other_platform_handle_ = channel_pair.PassClientHandle();
-  }
-
-  embedder::SimplePlatformSupport platform_support_;
-  base::TestIOThread io_thread_;
-  scoped_ptr<RawChannel> raw_channel_;
-  embedder::ScopedPlatformHandle other_platform_handle_;
-  scoped_refptr<Channel> channel_;
-
-  DISALLOW_COPY_AND_ASSIGN(ChannelTest);
-};
+using ChannelTest = test::ChannelTestBase;
 
 // ChannelTest.InitShutdown ----------------------------------------------------
 

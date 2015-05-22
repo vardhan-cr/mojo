@@ -159,6 +159,8 @@ test("mojo_system_unittests") {
     "awakable_list_unittest.cc",
     "channel_endpoint_id_unittest.cc",
     "channel_manager_unittest.cc",
+    "channel_test_base.cc",
+    "channel_test_base.h",
     "channel_unittest.cc",
     "connection_manager_unittest.cc",
     "core_test_base.cc",
