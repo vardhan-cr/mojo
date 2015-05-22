@@ -43,7 +43,7 @@ class TransportData;
 // buffer.
 class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
  public:
-  typedef uint16_t Type;
+  using Type = uint16_t;
   // Messages that are forwarded to endpoint clients.
   static const Type kTypeEndpointClient = 0;
   // Messages that are consumed by the |ChannelEndpoint|.
@@ -58,7 +58,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
   // Messages sent by a |MasterConnectionManager| (all responses).
   static const Type kTypeConnectionManagerAck = 5;
 
-  typedef uint16_t Subtype;
+  using Subtype = uint16_t;
   // Subtypes for type |kTypeEndpointClient|:
   // Message pipe or data pipe data (etc.).
   static const Subtype kSubtypeEndpointClientData = 0;

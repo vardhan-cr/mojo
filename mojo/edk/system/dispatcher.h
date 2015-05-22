@@ -41,7 +41,7 @@ class ProxyMessagePipeEndpoint;
 class TransportData;
 class Awakable;
 
-typedef std::vector<scoped_refptr<Dispatcher>> DispatcherVector;
+using DispatcherVector = std::vector<scoped_refptr<Dispatcher>>;
 
 namespace test {
 

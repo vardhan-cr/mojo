@@ -45,7 +45,7 @@ class MOJO_SYSTEM_IMPL_EXPORT AwakableList {
     MojoHandleSignals signals;
     uint32_t context;
   };
-  typedef std::list<AwakeInfo> AwakeInfoList;
+  using AwakeInfoList = std::list<AwakeInfo>;
 
   AwakeInfoList awakables_;
 

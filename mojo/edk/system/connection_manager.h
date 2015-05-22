@@ -20,10 +20,10 @@ namespace system {
 
 // (Temporary, unique) identifiers for connections, used as they are being
 // brought up:
-typedef UniqueIdentifier ConnectionIdentifier;
+using ConnectionIdentifier = UniqueIdentifier;
 
 // Identifiers for processes (note that these are not OS process IDs):
-typedef uint64_t ProcessIdentifier;
+using ProcessIdentifier = uint64_t;
 const ProcessIdentifier kInvalidProcessIdentifier = 0;
 
 // |ConnectionManager| is an interface for the system that allows "connections"

@@ -549,11 +549,11 @@ class RemoteConsumerDataPipeImplTestHelper2
 
 // Test case instantiation -----------------------------------------------------
 
-typedef testing::Types<LocalDataPipeImplTestHelper,
-                       RemoteProducerDataPipeImplTestHelper,
-                       RemoteConsumerDataPipeImplTestHelper,
-                       RemoteProducerDataPipeImplTestHelper2,
-                       RemoteConsumerDataPipeImplTestHelper2> HelperTypes;
+using HelperTypes = testing::Types<LocalDataPipeImplTestHelper,
+                                   RemoteProducerDataPipeImplTestHelper,
+                                   RemoteConsumerDataPipeImplTestHelper,
+                                   RemoteProducerDataPipeImplTestHelper2,
+                                   RemoteConsumerDataPipeImplTestHelper2>;
 
 TYPED_TEST_CASE(DataPipeImplTest, HelperTypes);
 
