@@ -13,6 +13,7 @@
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/channel_test_base.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
+#include "mojo/edk/system/message_in_transit_test_utils.h"
 
 namespace mojo {
 namespace system {
@@ -102,21 +103,6 @@ class TestChannelEndpointClient : public ChannelEndpointClient {
   DISALLOW_COPY_AND_ASSIGN(TestChannelEndpointClient);
 };
 
-scoped_ptr<MessageInTransit> MakeTestMessage(unsigned id) {
-  return make_scoped_ptr(
-      new MessageInTransit(MessageInTransit::kTypeEndpointClient,
-                           MessageInTransit::kSubtypeEndpointClientData,
-                           static_cast<uint32_t>(sizeof(id)), &id));
-}
-
-void VerifyTestMessage(MessageInTransit* message, unsigned id) {
-  ASSERT_TRUE(message);
-  EXPECT_EQ(MessageInTransit::kTypeEndpointClient, message->type());
-  EXPECT_EQ(MessageInTransit::kSubtypeEndpointClientData, message->subtype());
-  EXPECT_EQ(sizeof(id), message->num_bytes());
-  EXPECT_EQ(id, *static_cast<const unsigned*>(message->bytes()));
-}
-
 class ChannelEndpointTest : public test::ChannelTestBase {
  public:
   ChannelEndpointTest() {}
@@ -165,9 +151,9 @@ TEST_F(ChannelEndpointTest, Basic) {
 
   // Make a test message.
   unsigned message_id = 0x12345678;
-  scoped_ptr<MessageInTransit> send_message = MakeTestMessage(message_id);
+  scoped_ptr<MessageInTransit> send_message = test::MakeTestMessage(message_id);
   // Check that our test utility works (at least in one direction).
-  VerifyTestMessage(send_message.get(), message_id);
+  test::VerifyTestMessage(send_message.get(), message_id);
 
   // Event shouldn't be signalled yet.
   EXPECT_FALSE(read_event.IsSignaled());
@@ -183,7 +169,7 @@ TEST_F(ChannelEndpointTest, Basic) {
   ASSERT_EQ(1u, client0->NumMessages());
   scoped_ptr<MessageInTransit> read_message = client0->PopMessage();
   ASSERT_TRUE(read_message);
-  VerifyTestMessage(read_message.get(), message_id);
+  test::VerifyTestMessage(read_message.get(), message_id);
 }
 
 // Checks that prequeued messages and messages sent at various stages later on
@@ -198,8 +184,8 @@ TEST_F(ChannelEndpointTest, Prequeued) {
 
   channel(0)->SetBootstrapEndpoint(endpoint0);
   MessageInTransitQueue prequeued_messages;
-  prequeued_messages.AddMessage(MakeTestMessage(1));
-  prequeued_messages.AddMessage(MakeTestMessage(2));
+  prequeued_messages.AddMessage(test::MakeTestMessage(1));
+  prequeued_messages.AddMessage(test::MakeTestMessage(2));
 
   scoped_refptr<TestChannelEndpointClient> client1(
       new TestChannelEndpointClient());
@@ -207,13 +193,13 @@ TEST_F(ChannelEndpointTest, Prequeued) {
       new ChannelEndpoint(client1.get(), 1, &prequeued_messages));
   client1->Init(1, endpoint1.get());
 
-  EXPECT_TRUE(endpoint1->EnqueueMessage(MakeTestMessage(3)));
-  EXPECT_TRUE(endpoint1->EnqueueMessage(MakeTestMessage(4)));
+  EXPECT_TRUE(endpoint1->EnqueueMessage(test::MakeTestMessage(3)));
+  EXPECT_TRUE(endpoint1->EnqueueMessage(test::MakeTestMessage(4)));
 
   channel(1)->SetBootstrapEndpoint(endpoint1);
 
-  EXPECT_TRUE(endpoint1->EnqueueMessage(MakeTestMessage(5)));
-  EXPECT_TRUE(endpoint1->EnqueueMessage(MakeTestMessage(6)));
+  EXPECT_TRUE(endpoint1->EnqueueMessage(test::MakeTestMessage(5)));
+  EXPECT_TRUE(endpoint1->EnqueueMessage(test::MakeTestMessage(6)));
 
   // Wait for the messages.
   base::WaitableEvent read_event(true, false);
@@ -229,7 +215,7 @@ TEST_F(ChannelEndpointTest, Prequeued) {
   for (unsigned message_id = 1; message_id <= 6; message_id++) {
     scoped_ptr<MessageInTransit> read_message = client0->PopMessage();
     ASSERT_TRUE(read_message);
-    VerifyTestMessage(read_message.get(), message_id);
+    test::VerifyTestMessage(read_message.get(), message_id);
   }
 }
 

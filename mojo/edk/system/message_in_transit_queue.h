@@ -17,7 +17,6 @@ namespace system {
 
 // A simple queue for |MessageInTransit|s (that owns its messages).
 // This class is not thread-safe.
-// TODO(vtl): Write tests.
 class MOJO_SYSTEM_IMPL_EXPORT MessageInTransitQueue {
  public:
   MessageInTransitQueue();
