@@ -20,7 +20,6 @@
 #include "crypto/sha2.h"
 #include "mojo/common/common_type_converters.h"
 #include "mojo/common/data_pipe_utils.h"
-#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "shell/application_manager/data_pipe_peek.h"
 
 namespace shell {
@@ -39,8 +38,8 @@ NetworkFetcher::NetworkFetcher(
     bool disable_cache,
     bool predictable_app_filenames,
     const GURL& url,
-    mojo::NetworkService* network_service,
     mojo::URLResponseDiskCache* url_response_disk_cache,
+    mojo::AuthenticatingURLLoaderFactory* url_loader_factory,
     const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(disable_cache),
@@ -48,7 +47,7 @@ NetworkFetcher::NetworkFetcher(
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
       weak_ptr_factory_(this) {
-  StartNetworkRequest(url, network_service);
+  StartNetworkRequest(url, url_loader_factory);
 }
 
 NetworkFetcher::~NetworkFetcher() {
@@ -218,7 +217,7 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
 
 void NetworkFetcher::StartNetworkRequest(
     const GURL& url,
-    mojo::NetworkService* network_service) {
+    mojo::AuthenticatingURLLoaderFactory* url_loader_factory) {
   TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
                            "url", url.spec());
   mojo::URLRequestPtr request(mojo::URLRequest::New());
@@ -229,7 +228,7 @@ void NetworkFetcher::StartNetworkRequest(
   headers[0] = base::StringPrintf("X-Architecture: %s", kArchitecture);
   request->headers = headers.Pass();
 
-  network_service->CreateURLLoader(mojo::GetProxy(&url_loader_));
+  url_loader_factory->CreateAuthenticatingURLLoader(GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
                      base::Bind(&NetworkFetcher::OnLoadComplete,
                                 weak_ptr_factory_.GetWeakPtr()));

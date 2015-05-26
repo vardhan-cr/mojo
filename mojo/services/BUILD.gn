@@ -8,6 +8,7 @@ group("services") {
   deps = [
     "//mojo/services/accessibility/public/interfaces",
     "//mojo/services/authentication/public/interfaces",
+    "//mojo/services/authenticating_url_loader/public/interfaces",
     "//mojo/services/clipboard/public/interfaces",
     "//mojo/services/console/public/interfaces",
     "//mojo/services/content_handler/public/interfaces",

@@ -122,6 +122,8 @@ source_set("common_lib") {
 
 source_set("parent_lib") {
   sources = [
+    "authenticating_url_loader_loader.cc",
+    "authenticating_url_loader_loader.h",
     "background_application_loader.cc",
     "background_application_loader.h",
     "child_process_host.cc",
@@ -161,6 +163,7 @@ source_set("parent_lib") {
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
     "//shell/application_manager",
+    "//services/authenticating_url_loader",
     "//services/url_response_disk_cache",
     "//services/tracing:bindings",
     "//url",

@@ -12,6 +12,7 @@
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
+#include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/fetcher.h"
 #include "shell/application_manager/local_fetcher.h"
@@ -99,6 +100,7 @@ ApplicationManager::ApplicationManager(const Options& options,
     : options_(options),
       delegate_(delegate),
       blocking_pool_(nullptr),
+      initialized_authentication_service_(false),
       weak_ptr_factory_(this) {
 }
 
@@ -181,15 +183,34 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     return;
   }
 
-  if (!network_service_) {
-    ConnectToService(GURL("mojo:network_service"), &network_service_);
+  if (!url_response_disk_cache_) {
     ConnectToService(GURL("mojo:url_response_disk_cache"),
                      &url_response_disk_cache_);
   }
 
+  if (!url_loader_factory_) {
+    ConnectToService(GURL("mojo:authenticating_url_loader"),
+                     &url_loader_factory_);
+  }
+
+  // NOTE: Attempting to initialize the AuthenticationService while connecting
+  // to the AuthenticationService would result in a recursive loop, so it has
+  // to be explicitly avoided here. AuthenticatingURLLoaders work fine without
+  // the AuthenticationService as long as authentication is not needed, so what
+  // this means in practice is that the AuthenticationService cannot itself
+  // require authentication to obtain.
+  if (!initialized_authentication_service_ &&
+      resolved_url.path() != "/authentication.mojo") {
+    authentication::AuthenticationServicePtr authentication_service;
+    ConnectToService(GURL("mojo:authentication"), &authentication_service);
+    url_loader_factory_->SetAuthenticationService(
+        authentication_service.Pass());
+    initialized_authentication_service_ = true;
+  }
+
   new NetworkFetcher(options_.disable_cache, options_.predictable_app_filenames,
-                     resolved_url, network_service_.get(),
-                     url_response_disk_cache_.get(), callback);
+                     resolved_url, url_response_disk_cache_.get(),
+                     url_loader_factory_.get(), callback);
 }
 
 bool ApplicationManager::ConnectToRunningApplication(

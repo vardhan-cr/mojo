@@ -32,6 +32,8 @@ source_set("application_manager") {
     "//base",
     "//mojo/common",
     "//mojo/public/interfaces/application:application",
+    "//mojo/services/authentication/public/interfaces",
+    "//mojo/services/authenticating_url_loader/public/interfaces",
     "//mojo/services/network/public/interfaces",
     "//mojo/services/url_response_disk_cache/public/interfaces",
     "//url",

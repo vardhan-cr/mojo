@@ -1,0 +1,21 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module mojo;
+
+import "authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom";
+import "authentication/public/interfaces/authentication.mojom";
+
+interface AuthenticatingURLLoaderFactory {
+  // Sets the AuthenticationService that any loaders created via
+  // |CreateAuthenticatingURLLoader()| will use to obtain tokens with which to
+  // authenticate the user.
+  SetAuthenticationService(
+      authentication.AuthenticationService authentication_service);
+
+  // Creates an AuthenticatingURLLoader that uses |authentication_service| for
+  // authentication. If the AuthenticationService has not been set on this
+  // factory, the loader will fail any requests that require authentication.
+  CreateAuthenticatingURLLoader(AuthenticatingURLLoader& loader_request);
+};

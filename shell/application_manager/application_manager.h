@@ -14,7 +14,7 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/interfaces/application/application.mojom.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
-#include "mojo/services/network/public/interfaces/network_service.mojom.h"
+#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader_factory.mojom.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/identity.h"
@@ -239,10 +239,11 @@ class ApplicationManager {
   URLToNativeOptionsMap url_to_native_options_;
 
   base::SequencedWorkerPool* blocking_pool_;
-  mojo::NetworkServicePtr network_service_;
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
+  mojo::AuthenticatingURLLoaderFactoryPtr url_loader_factory_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
+  bool initialized_authentication_service_;
   base::WeakPtrFactory<ApplicationManager> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationManager);
