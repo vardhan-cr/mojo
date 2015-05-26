@@ -29,4 +29,8 @@ void KeyboardServiceImpl::OnKey(const char* key) {
   client_->CommitText(key, 1);
 }
 
+void KeyboardServiceImpl::OnDelete() {
+  client_->DeleteSurroundingText(1, 0);
+}
+
 }  // namespace keyboard

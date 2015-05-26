@@ -32,7 +32,7 @@ class KeyLayout {
                       SkPaint paint,
                       const gfx::RectF& rect) = 0;
 
-    // Converts the Key to it's text representation.
+    // Converts the Key to its text representation.
     virtual const char* ToText() const = 0;
 
     // Indicate to the Key that a touch up has occurred on it.
@@ -45,6 +45,9 @@ class KeyLayout {
   // Sets the callback to call with the text of a key whenever it's pressed.
   void SetTextCallback(
       base::Callback<void(const std::string&)> on_text_callback);
+
+  // Sets the callback to call whenever delete is pressed.
+  void SetDeleteCallback(base::Callback<void()> on_delete_callback);
 
   // Sets the dimensions the keyboard will draw itself into.
   void SetSize(const mojo::Size& size);
@@ -90,6 +93,9 @@ class KeyLayout {
   // TextKey.
   void OnKeyEmitText(const TextKey& key);
 
+  // A TextKey callback that calls on_delete_callback_.
+  void OnKeyDelete(const TextKey& key);
+
   // A TextKey callback that switches the layout_ and key_map_ to upper case.
   void OnKeySwitchToUpperCase(const TextKey& key);
 
@@ -100,6 +106,7 @@ class KeyLayout {
   void OnKeySwitchToSymbols(const TextKey& key);
 
   base::Callback<void(const std::string&)> on_text_callback_;
+  base::Callback<void()> on_delete_callback_;
   mojo::Size size_;
   std::vector<std::vector<float>>* layout_;
   std::vector<std::vector<float>> letters_layout_;

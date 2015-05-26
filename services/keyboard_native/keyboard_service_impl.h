@@ -24,6 +24,7 @@ class KeyboardServiceImpl : public KeyboardService {
   void Hide() override;
 
   void OnKey(const char* key);
+  void OnDelete();
 
  private:
   mojo::StrongBinding<KeyboardService> strong_binding_;

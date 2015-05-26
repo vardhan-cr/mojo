@@ -34,6 +34,7 @@ class ViewObserverDelegate : public mojo::ViewObserver,
 
  private:
   void OnText(const std::string& text);
+  void OnDelete();
   void DrawState();
   void DrawKeysToCanvas(const mojo::Size& size, SkCanvas* canvas);
   void DrawAnimations(SkCanvas* canvas, const base::TimeTicks& current_ticks);

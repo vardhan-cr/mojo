@@ -68,6 +68,10 @@ void KeyLayout::SetTextCallback(
   on_text_callback_ = on_text_callback;
 }
 
+void KeyLayout::SetDeleteCallback(base::Callback<void()> on_delete_callback) {
+  on_delete_callback_ = on_delete_callback;
+}
+
 void KeyLayout::SetSize(const mojo::Size& size) {
   size_ = size;
 }
@@ -182,6 +186,10 @@ void KeyLayout::OnKeyEmitText(const TextKey& key) {
   on_text_callback_.Run(std::string(key.ToText()));
 }
 
+void KeyLayout::OnKeyDelete(const TextKey& key) {
+  on_delete_callback_.Run();
+}
+
 void KeyLayout::OnKeySwitchToUpperCase(const TextKey& key) {
   layout_ = &letters_layout_;
   key_map_ = &upper_case_key_map_;
@@ -202,6 +210,8 @@ void KeyLayout::InitKeyMaps() {
       base::Bind(&KeyLayout::OnKeyDoNothing, weak_factory_.GetWeakPtr());
   base::Callback<void(const TextKey&)> emit_text_callback =
       base::Bind(&KeyLayout::OnKeyEmitText, weak_factory_.GetWeakPtr());
+  base::Callback<void(const TextKey&)> delete_callback =
+      base::Bind(&KeyLayout::OnKeyDelete, weak_factory_.GetWeakPtr());
   base::Callback<void(const TextKey&)> switch_to_upper_case_callback =
       base::Bind(&KeyLayout::OnKeySwitchToUpperCase,
                  weak_factory_.GetWeakPtr());
@@ -243,7 +253,7 @@ void KeyLayout::InitKeyMaps() {
       new TextKey("b", emit_text_callback),
       new TextKey("n", emit_text_callback),
       new TextKey("m", emit_text_callback),
-      new TextKey("del", do_nothing_callback)};
+      new TextKey("del", delete_callback)};
 
   std::vector<Key*> lower_case_key_map_row_four = {
       new TextKey("sym", switch_to_symbols_callback),
@@ -289,7 +299,7 @@ void KeyLayout::InitKeyMaps() {
       new TextKey("B", emit_text_callback),
       new TextKey("N", emit_text_callback),
       new TextKey("M", emit_text_callback),
-      new TextKey("DEL", do_nothing_callback)};
+      new TextKey("DEL", delete_callback)};
 
   std::vector<Key*> upper_case_key_map_row_four = {
       new TextKey("SYM", switch_to_symbols_callback),
@@ -335,7 +345,7 @@ void KeyLayout::InitKeyMaps() {
       new TextKey(";", emit_text_callback),
       new TextKey("!", emit_text_callback),
       new TextKey("?", emit_text_callback),
-      new TextKey("del", do_nothing_callback)};
+      new TextKey("del", delete_callback)};
 
   std::vector<Key*> symbols_key_map_row_four = {
       new TextKey("ABC", switch_to_lower_case_callback),

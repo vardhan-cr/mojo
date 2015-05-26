@@ -36,6 +36,8 @@ ViewObserverDelegate::ViewObserverDelegate()
       weak_factory_(this) {
   key_layout_.SetTextCallback(
       base::Bind(&ViewObserverDelegate::OnText, weak_factory_.GetWeakPtr()));
+  key_layout_.SetDeleteCallback(
+      base::Bind(&ViewObserverDelegate::OnDelete, weak_factory_.GetWeakPtr()));
 }
 
 ViewObserverDelegate::~ViewObserverDelegate() {
@@ -61,6 +63,10 @@ void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
 
 void ViewObserverDelegate::OnText(const std::string& text) {
   keyboard_service_impl_->OnKey(text.c_str());
+}
+
+void ViewObserverDelegate::OnDelete() {
+  keyboard_service_impl_->OnDelete();
 }
 
 void ViewObserverDelegate::UpdateState(int32 pointer_id,
