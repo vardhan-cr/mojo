@@ -4,8 +4,6 @@
 
 #include "mojo/edk/system/channel_test_base.h"
 
-#include "base/bind.h"
-#include "base/location.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
@@ -23,37 +21,42 @@ ChannelTestBase::~ChannelTestBase() {
 }
 
 void ChannelTestBase::SetUp() {
-  io_thread_.PostTaskAndWait(
-      FROM_HERE,
-      base::Bind(&ChannelTestBase::SetUpOnIOThread, base::Unretained(this)));
+  PostMethodToIOThreadAndWait(FROM_HERE, &ChannelTestBase::SetUpOnIOThread);
 }
 
-void ChannelTestBase::CreateChannelOnIOThread() {
+void ChannelTestBase::CreateChannelOnIOThread(unsigned i) {
   CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
-  channel_ = new Channel(&platform_support_);
+
+  CHECK(!channels_[i]);
+  channels_[i] = new Channel(&platform_support_);
 }
 
-void ChannelTestBase::InitChannelOnIOThread() {
+void ChannelTestBase::InitChannelOnIOThread(unsigned i) {
   CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
 
-  CHECK(raw_channel_);
-  CHECK(channel_);
-  channel_->Init(raw_channel_.Pass());
+  CHECK(raw_channels_[i]);
+  CHECK(channels_[i]);
+  channels_[i]->Init(raw_channels_[i].Pass());
 }
 
-void ChannelTestBase::ShutdownChannelOnIOThread() {
+void ChannelTestBase::CreateAndInitChannelOnIOThread(unsigned i) {
+  CreateChannelOnIOThread(i);
+  InitChannelOnIOThread(i);
+}
+
+void ChannelTestBase::ShutdownChannelOnIOThread(unsigned i) {
   CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
 
-  CHECK(channel_);
-  channel_->Shutdown();
+  CHECK(channels_[i]);
+  channels_[i]->Shutdown();
 }
 
 void ChannelTestBase::SetUpOnIOThread() {
   CHECK_EQ(base::MessageLoop::current(), io_thread()->message_loop());
 
   embedder::PlatformChannelPair channel_pair;
-  raw_channel_ = RawChannel::Create(channel_pair.PassServerHandle()).Pass();
-  other_platform_handle_ = channel_pair.PassClientHandle();
+  raw_channels_[0] = RawChannel::Create(channel_pair.PassServerHandle());
+  raw_channels_[1] = RawChannel::Create(channel_pair.PassClientHandle());
 }
 
 }  // namespace test

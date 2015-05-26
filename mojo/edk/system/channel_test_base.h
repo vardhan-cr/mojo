@@ -5,11 +5,12 @@
 #ifndef MOJO_EDK_SYSTEM_CHANNEL_TEST_BASE_H_
 #define MOJO_EDK_SYSTEM_CHANNEL_TEST_BASE_H_
 
+#include "base/bind.h"
+#include "base/location.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/test/test_io_thread.h"
-#include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -29,22 +30,31 @@ class ChannelTestBase : public testing::Test {
 
   void SetUp() override;
 
-  void CreateChannelOnIOThread();
-  void InitChannelOnIOThread();
-  void ShutdownChannelOnIOThread();
+  template <typename Functor, typename... Args>
+  void PostMethodToIOThreadAndWait(const tracked_objects::Location& from_here,
+                                   Functor functor,
+                                   const Args&... args) {
+    io_thread_.PostTaskAndWait(
+        from_here, base::Bind(functor, base::Unretained(this), args...));
+  }
+
+  // These should only be called from |io_thread()|:
+  void CreateChannelOnIOThread(unsigned i);
+  void InitChannelOnIOThread(unsigned i);
+  void CreateAndInitChannelOnIOThread(unsigned i);
+  void ShutdownChannelOnIOThread(unsigned i);
 
   base::TestIOThread* io_thread() { return &io_thread_; }
-  Channel* channel() { return channel_.get(); }
-  scoped_refptr<Channel>* mutable_channel() { return &channel_; }
+  Channel* channel(unsigned i) { return channels_[i].get(); }
+  scoped_refptr<Channel>* mutable_channel(unsigned i) { return &channels_[i]; }
 
  private:
   void SetUpOnIOThread();
 
   embedder::SimplePlatformSupport platform_support_;
   base::TestIOThread io_thread_;
-  scoped_ptr<RawChannel> raw_channel_;
-  embedder::ScopedPlatformHandle other_platform_handle_;
-  scoped_refptr<Channel> channel_;
+  scoped_ptr<RawChannel> raw_channels_[2];
+  scoped_refptr<Channel> channels_[2];
 
   DISALLOW_COPY_AND_ASSIGN(ChannelTestBase);
 };
