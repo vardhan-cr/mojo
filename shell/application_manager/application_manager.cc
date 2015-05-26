@@ -200,7 +200,7 @@ void ApplicationManager::ConnectToApplicationWithParameters(
   // this means in practice is that the AuthenticationService cannot itself
   // require authentication to obtain.
   if (!initialized_authentication_service_ &&
-      resolved_url.path() != "/authentication.mojo") {
+      !EndsWith(resolved_url.path(), "/authentication.mojo", true)) {
     authentication::AuthenticationServicePtr authentication_service;
     ConnectToService(GURL("mojo:authentication"), &authentication_service);
     url_loader_factory_->SetAuthenticationService(
