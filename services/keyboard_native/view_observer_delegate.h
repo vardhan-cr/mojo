@@ -18,6 +18,12 @@ namespace keyboard {
 
 class KeyboardServiceImpl;
 
+struct PointerState {
+  KeyLayout::Key* last_key;
+  gfx::Point last_point;
+  bool last_point_valid;
+};
+
 class ViewObserverDelegate : public mojo::ViewObserver,
                              public mojo::TextureUploader::Client {
  public:
@@ -32,7 +38,8 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   void DrawKeysToCanvas(const mojo::Size& size, SkCanvas* canvas);
   void DrawAnimations(SkCanvas* canvas, const base::TimeTicks& current_ticks);
   void DrawFloatingKey(SkCanvas* canvas, const mojo::Size& size);
-  void UpdateState(const gfx::Point& touch_point);
+  void UpdateState(int32 pointer_id, int action, const gfx::Point& touch_point);
+  void IssueDraw();
 
   // mojo::TextureUploader::Client implementation.
   void OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) override;
@@ -50,12 +57,12 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   base::WeakPtr<mojo::GLContext> gl_context_;
   scoped_ptr<mojo::GaneshContext> gr_context_;
   scoped_ptr<mojo::TextureUploader> texture_uploader_;
-  int last_action_;
-  KeyLayout key_layout_;
-  KeyLayout::Key* last_key_;
-  gfx::Point last_point_;
-  bool last_point_valid_;
   std::deque<scoped_ptr<Animation>> animations_;
+  KeyLayout key_layout_;
+  std::vector<int32> active_pointer_ids_;
+  std::map<int32, scoped_ptr<PointerState>> active_pointer_state_;
+  bool needs_draw_;
+  bool frame_pending_;
   base::WeakPtrFactory<ViewObserverDelegate> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewObserverDelegate);

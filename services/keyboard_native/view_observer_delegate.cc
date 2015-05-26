@@ -7,7 +7,6 @@
 #include "services/keyboard_native/view_observer_delegate.h"
 
 #include "base/bind.h"
-#include "base/message_loop/message_loop.h"
 #include "base/sys_info.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/skia/ganesh_surface.h"
@@ -20,9 +19,6 @@ namespace keyboard {
 
 static const base::TimeDelta kAnimationDurationMs =
     base::TimeDelta::FromMilliseconds(1000);
-static const base::TimeDelta kMinFramePeriodMs =
-    base::TimeDelta::FromMillisecondsD(1000.0f / 120.0f);
-static const float kMinSegmentLength = 20;
 
 mojo::Size ToSize(const mojo::Rect& rect) {
   mojo::Size size;
@@ -34,11 +30,9 @@ mojo::Size ToSize(const mojo::Rect& rect) {
 ViewObserverDelegate::ViewObserverDelegate()
     : keyboard_service_impl_(nullptr),
       view_(nullptr),
-      last_action_(-1),
       key_layout_(),
-      last_key_(nullptr),
-      last_point_(),
-      last_point_valid_(false),
+      needs_draw_(false),
+      frame_pending_(false),
       weak_factory_(this) {
   key_layout_.SetTextCallback(
       base::Bind(&ViewObserverDelegate::OnText, weak_factory_.GetWeakPtr()));
@@ -62,32 +56,33 @@ void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
   gr_context_.reset(new mojo::GaneshContext(gl_context_));
   texture_uploader_.reset(new mojo::TextureUploader(this, shell, gl_context_));
 
-  DrawState();
+  IssueDraw();
 }
 
 void ViewObserverDelegate::OnText(const std::string& text) {
   keyboard_service_impl_->OnKey(text.c_str());
 }
 
-void ViewObserverDelegate::UpdateState(const gfx::Point& touch_point) {
+void ViewObserverDelegate::UpdateState(int32 pointer_id,
+                                       int action,
+                                       const gfx::Point& touch_point) {
   base::TimeTicks current_ticks = base::TimeTicks::Now();
 
-  if (last_point_valid_) {
-    float rise = touch_point.y() - last_point_.y();
-    float run = touch_point.x() - last_point_.x();
-    float magnitude = sqrt(rise * rise + run * run);
-    if (magnitude >= kMinSegmentLength) {
-      animations_.push_back(make_scoped_ptr(new MotionDecayAnimation(
-          current_ticks, kAnimationDurationMs, last_point_, touch_point)));
-      last_point_ = touch_point;
+  auto it2 = active_pointer_state_.find(pointer_id);
+  if (it2 != active_pointer_state_.end()) {
+    if (it2->second->last_point_valid) {
+      animations_.push_back(make_scoped_ptr(
+          new MotionDecayAnimation(current_ticks, kAnimationDurationMs,
+                                   it2->second->last_point, touch_point)));
+      it2->second->last_point = touch_point;
+    } else {
+      it2->second->last_point = touch_point;
     }
-  } else {
-    last_point_ = touch_point;
+    it2->second->last_point_valid = action != mojo::EVENT_TYPE_POINTER_UP;
   }
-  last_point_valid_ = last_action_ != mojo::EVENT_TYPE_POINTER_UP;
 
-  if (last_action_ == mojo::EVENT_TYPE_POINTER_UP ||
-      last_action_ == mojo::EVENT_TYPE_POINTER_DOWN) {
+  if (action == mojo::EVENT_TYPE_POINTER_UP ||
+      action == mojo::EVENT_TYPE_POINTER_DOWN) {
     animations_.push_back(make_scoped_ptr(new MaterialSplashAnimation(
         current_ticks, kAnimationDurationMs, touch_point)));
   }
@@ -143,44 +138,53 @@ void ViewObserverDelegate::DrawAnimations(
 
 void ViewObserverDelegate::DrawFloatingKey(SkCanvas* canvas,
                                            const mojo::Size& size) {
-  if (last_key_ && last_point_valid_) {
-    SkPaint paint;
-    paint.setColor(SK_ColorYELLOW);
-    float row_height = static_cast<float>(size.height) / 4.0f;
-    float floating_key_width = static_cast<float>(size.width) / 7.0f;
-    float left = last_point_.x() - (floating_key_width / 2);
-    float top = last_point_.y() - (1.5f * row_height);
-    SkRect rect = SkRect::MakeLTRB(left, top, left + floating_key_width,
-                                   top + row_height);
-    canvas->drawRect(rect, paint);
+  if (active_pointer_ids_.empty()) {
+    return;
+  }
 
-    skia::RefPtr<SkTypeface> typeface = skia::AdoptRef(
-        SkTypeface::CreateFromName("Arial", SkTypeface::kNormal));
-    SkPaint text_paint;
-    text_paint.setTypeface(typeface.get());
-    text_paint.setColor(SK_ColorBLACK);
-    text_paint.setTextSize(row_height / 1.7f);
-    text_paint.setAntiAlias(true);
-    text_paint.setTextAlign(SkPaint::kCenter_Align);
-    last_key_->Draw(canvas, text_paint,
-                    gfx::RectF(left, top, floating_key_width, row_height));
+  for (auto& pointer_state : active_pointer_state_) {
+    if (pointer_state.second->last_key != nullptr &&
+        pointer_state.second->last_point_valid) {
+      SkPaint paint;
+      paint.setColor(SK_ColorYELLOW);
+      float row_height = static_cast<float>(size.height) / 4.0f;
+      float floating_key_width = static_cast<float>(size.width) / 7.0f;
+      float left =
+          pointer_state.second->last_point.x() - (floating_key_width / 2);
+      float top = pointer_state.second->last_point.y() - (1.5f * row_height);
+      SkRect rect = SkRect::MakeLTRB(left, top, left + floating_key_width,
+                                     top + row_height);
+      canvas->drawRect(rect, paint);
+
+      skia::RefPtr<SkTypeface> typeface = skia::AdoptRef(
+          SkTypeface::CreateFromName("Arial", SkTypeface::kNormal));
+      SkPaint text_paint;
+      text_paint.setTypeface(typeface.get());
+      text_paint.setColor(SK_ColorBLACK);
+      text_paint.setTextSize(row_height / 1.7f);
+      text_paint.setAntiAlias(true);
+      text_paint.setTextAlign(SkPaint::kCenter_Align);
+      pointer_state.second->last_key->Draw(
+          canvas, text_paint,
+          gfx::RectF(left, top, floating_key_width, row_height));
+    }
+  }
+}
+
+void ViewObserverDelegate::IssueDraw() {
+  if (!frame_pending_) {
+    DrawState();
+    frame_pending_ = true;
+    needs_draw_ = !animations_.empty();
+  } else {
+    needs_draw_ = true;
   }
 }
 
 void ViewObserverDelegate::OnFrameComplete() {
-  static base::TimeTicks last_time_ticks = base::TimeTicks::Now();
-  base::TimeTicks current_ticks = base::TimeTicks::Now();
-  if (!animations_.empty()) {
-    base::TimeDelta delta = current_ticks - last_time_ticks;
-    if (delta > kMinFramePeriodMs) {
-      last_time_ticks = current_ticks;
-      DrawState();
-    } else {
-      base::MessageLoop::current()->PostDelayedTask(
-          FROM_HERE, base::Bind(&ViewObserverDelegate::OnFrameComplete,
-                                weak_factory_.GetWeakPtr()),
-          kMinFramePeriodMs - delta);
-    }
+  frame_pending_ = false;
+  if (needs_draw_) {
+    IssueDraw();
   }
 }
 
@@ -188,20 +192,50 @@ void ViewObserverDelegate::OnFrameComplete() {
 void ViewObserverDelegate::OnViewBoundsChanged(mojo::View* view,
                                                const mojo::Rect& old_bounds,
                                                const mojo::Rect& new_bounds) {
-  DrawState();
+  IssueDraw();
 }
 
 void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
                                             const mojo::EventPtr& event) {
   if (event->pointer_data) {
     gfx::Point point(event->pointer_data->x, event->pointer_data->y);
-    last_key_ = key_layout_.GetKeyAtPoint(point);
-    last_action_ = event->action;
-    if (last_action_ == mojo::EVENT_TYPE_POINTER_UP) {
+
+    if (event->action == mojo::EVENT_TYPE_POINTER_UP) {
       key_layout_.OnTouchUp(point);
     }
-    UpdateState(point);
-    DrawState();
+
+    if (event->action == mojo::EVENT_TYPE_POINTER_DOWN ||
+        event->action == mojo::EVENT_TYPE_POINTER_UP) {
+      auto it =
+          std::find(active_pointer_ids_.begin(), active_pointer_ids_.end(),
+                    event->pointer_data->pointer_id);
+      if (it != active_pointer_ids_.end()) {
+        active_pointer_ids_.erase(it);
+      }
+
+      auto it2 = active_pointer_state_.find(event->pointer_data->pointer_id);
+      if (it2 != active_pointer_state_.end()) {
+        active_pointer_state_.erase(it2);
+      }
+      if (event->action == mojo::EVENT_TYPE_POINTER_DOWN) {
+        active_pointer_ids_.push_back(event->pointer_data->pointer_id);
+        PointerState* pointer_state = new PointerState();
+        pointer_state->last_key = nullptr;
+        pointer_state->last_point = gfx::Point();
+        pointer_state->last_point_valid = false;
+        active_pointer_state_[event->pointer_data->pointer_id] =
+            make_scoped_ptr(pointer_state);
+      }
+    }
+
+    auto it2 = active_pointer_state_.find(event->pointer_data->pointer_id);
+    if (it2 != active_pointer_state_.end()) {
+      active_pointer_state_[event->pointer_data->pointer_id]->last_key =
+          key_layout_.GetKeyAtPoint(point);
+    }
+
+    UpdateState(event->pointer_data->pointer_id, event->action, point);
+    IssueDraw();
   }
 }
 

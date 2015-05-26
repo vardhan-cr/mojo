@@ -240,7 +240,7 @@ void KeyLayout::InitKeyMaps() {
       new TextKey("x", emit_text_callback),
       new TextKey("c", emit_text_callback),
       new TextKey("v", emit_text_callback),
-      new TextKey("r", emit_text_callback),
+      new TextKey("b", emit_text_callback),
       new TextKey("n", emit_text_callback),
       new TextKey("m", emit_text_callback),
       new TextKey("del", do_nothing_callback)};
@@ -286,7 +286,7 @@ void KeyLayout::InitKeyMaps() {
       new TextKey("X", emit_text_callback),
       new TextKey("C", emit_text_callback),
       new TextKey("V", emit_text_callback),
-      new TextKey("R", emit_text_callback),
+      new TextKey("B", emit_text_callback),
       new TextKey("N", emit_text_callback),
       new TextKey("M", emit_text_callback),
       new TextKey("DEL", do_nothing_callback)};
