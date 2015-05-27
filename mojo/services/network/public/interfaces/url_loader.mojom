@@ -4,6 +4,7 @@
 
 module mojo;
 
+import "network/public/interfaces/http_message.mojom";
 import "network/public/interfaces/network_error.mojom";
 
 struct URLRequest {
@@ -14,7 +15,7 @@ struct URLRequest {
   string method = "GET";
 
   // Additional HTTP request headers.
-  array<string>? headers;
+  array<HttpHeader>? headers;
 
   // The payload for the request body, represented as a concatenation of data
   // streams. For HTTP requests, the method must be set to "POST" or "PUT".
@@ -34,9 +35,6 @@ struct URLRequest {
   // servers to also not satisfy the request from their cache.  This has the
   // effect of forcing a full end-to-end fetch.
   bool bypass_cache = false;
-
-  // The referrer request header.
-  string? referrer;
 };
 
 struct URLResponse {
@@ -57,7 +55,7 @@ struct URLResponse {
   string? status_line;
 
   // The HTTP response headers.
-  array<string>? headers;
+  array<HttpHeader>? headers;
 
   // The MIME type of the response body.
   string? mime_type;

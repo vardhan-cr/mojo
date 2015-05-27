@@ -11,6 +11,7 @@ mojo_native_application("pdf_viewer") {
 
   deps = [
     "//examples/bitmap_uploader",
+    "//mojo/common",
     "//mojo/application",
     "//mojo/application:content_handler",
     "//mojo/public/cpp/bindings",

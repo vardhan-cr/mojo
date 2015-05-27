@@ -35,7 +35,9 @@ class ResponsePrinter {
     printf("  %s\n", response->status_line.get().c_str());
     if (response->headers) {
       for (size_t i = 0; i < response->headers.size(); ++i)
-        printf("  %s\n", response->headers[i].get().c_str());
+        printf("  %s=%s\n",
+               response->headers[i]->name.To<std::string>().c_str(),
+               response->headers[i]->value.To<std::string>().c_str());
     }
   }
 

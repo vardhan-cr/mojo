@@ -224,8 +224,11 @@ void NetworkFetcher::StartNetworkRequest(
   request->url = mojo::String::From(url);
   request->auto_follow_redirects = false;
   request->bypass_cache = disable_cache_;
-  mojo::Array<mojo::String> headers(1);
-  headers[0] = base::StringPrintf("X-Architecture: %s", kArchitecture);
+  auto header = mojo::HttpHeader::New();
+  header->name = "X-Architecture";
+  header->value = kArchitecture;
+  mojo::Array<mojo::HttpHeaderPtr> headers;
+  headers.push_back(header.Pass());
   request->headers = headers.Pass();
 
   url_loader_factory->CreateAuthenticatingURLLoader(GetProxy(&url_loader_));

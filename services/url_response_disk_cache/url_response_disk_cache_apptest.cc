@@ -42,13 +42,19 @@ base::FilePath toPath(Array<uint8_t> path) {
       std::string(reinterpret_cast<char*>(&path.front()), path.size()));
 }
 
+HttpHeaderPtr RandomEtagHeader() {
+  auto etag_header = HttpHeader::New();
+  etag_header->name = "ETag";
+  etag_header->value = base::StringPrintf("%f", base::RandDouble());
+  return etag_header;
+}
+
 }  // namespace
 
 TEST_F(URLResponseDiskCacheAppTest, GetFile) {
   URLResponsePtr url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/1";
-  url_response->headers = Array<String>(1);
-  url_response->headers[0] = base::StringPrintf("ETag: %f", base::RandDouble());
+  url_response->headers.push_back(RandomEtagHeader());
   DataPipe pipe;
   std::string content = base::RandBytesAsString(32);
   uint32_t num_bytes = content.size();
@@ -77,8 +83,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetFile) {
 TEST_F(URLResponseDiskCacheAppTest, GetExtractedContent) {
   URLResponsePtr url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/2";
-  url_response->headers = Array<String>(1);
-  url_response->headers[0] = base::StringPrintf("ETag: %f", base::RandDouble());
+  url_response->headers.push_back(RandomEtagHeader());
   DataPipe pipe;
   std::string content = base::RandBytesAsString(32);
   uint32_t num_bytes = kTestData.size;
@@ -111,9 +116,13 @@ TEST_F(URLResponseDiskCacheAppTest, GetExtractedContent) {
 TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   URLResponsePtr url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/3";
-  url_response->headers = Array<String>(1);
-  std::string etag = base::StringPrintf("ETag: %f", base::RandDouble());
-  url_response->headers[0] = etag;
+  std::string etag_value = base::StringPrintf("%f", base::RandDouble());
+  {
+    auto etag_header = HttpHeader::New();
+    etag_header->name = "ETag";
+    etag_header->value = etag_value;
+    url_response->headers.push_back(etag_header.Pass());
+  }
   DataPipe pipe1;
   std::string content = base::RandBytesAsString(32);
   uint32_t num_bytes = content.size();
@@ -147,8 +156,12 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   // different content. The cached value should be returned.
   url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/3";
-  url_response->headers = Array<String>(1);
-  url_response->headers[0] = etag;
+  {
+    auto etag_header = HttpHeader::New();
+    etag_header->name = "ETag";
+    etag_header->value = etag_value;
+    url_response->headers.push_back(etag_header.Pass());
+  }
   DataPipe pipe2;
   std::string new_content = base::RandBytesAsString(32);
   num_bytes = new_content.size();
@@ -179,8 +192,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   // that the new content is returned, and the cached files is deleted.
   url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/3";
-  url_response->headers = Array<String>(1);
-  url_response->headers[0] = base::StringPrintf("ETag: %f", base::RandDouble());
+  url_response->headers.push_back(RandomEtagHeader());
   DataPipe pipe3;
   new_content = base::RandBytesAsString(32);
   num_bytes = new_content.size();

@@ -66,7 +66,7 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   GURL url_;
   bool auto_follow_redirects_;
   bool bypass_cache_;
-  Array<String> headers_;
+  Array<HttpHeaderPtr> headers_;
   String username_;
   String token_;
   Callback<void(URLResponsePtr)> pending_request_callback_;

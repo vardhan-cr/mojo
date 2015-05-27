@@ -640,6 +640,7 @@ def _CheckSpamLogging(input_api, output_api):
                 input_api.DEFAULT_BLACK_LIST +
                 (r"^base/logging\.h$",
                  r"^base/logging\.cc$",
+                 r"^examples/wget/wget\.cc$",
                  r"^shell/application_manager/network_fetcher\.cc$",
                  r"^shell/tracer\.cc$",
                  r"^sandbox/linux/.*",

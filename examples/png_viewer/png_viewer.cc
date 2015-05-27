@@ -3,14 +3,15 @@
 // found in the LICENSE file.
 
 #include <algorithm>
+#include <string>
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
-#include "base/strings/string_tokenizer.h"
 #include "examples/bitmap_uploader/bitmap_uploader.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
+#include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -144,44 +145,12 @@ class PNGView : public ApplicationDelegate,
   }
 
   void DecodePNG(URLResponsePtr response) {
-    int content_length = GetContentLength(response->headers);
-    scoped_ptr<unsigned char[]> data(new unsigned char[content_length]);
-    unsigned char* buf = data.get();
-    uint32_t bytes_remaining = content_length;
-    uint32_t num_bytes = bytes_remaining;
-    while (bytes_remaining > 0) {
-      MojoResult result = ReadDataRaw(response->body.get(), buf, &num_bytes,
-                                      MOJO_READ_DATA_FLAG_NONE);
-      if (result == MOJO_RESULT_SHOULD_WAIT) {
-        Wait(response->body.get(), MOJO_HANDLE_SIGNAL_READABLE,
-             MOJO_DEADLINE_INDEFINITE, nullptr);
-      } else if (result == MOJO_RESULT_OK) {
-        buf += num_bytes;
-        num_bytes = bytes_remaining -= num_bytes;
-      } else {
-        break;
-      }
-    }
-
+    std::string data;
+    mojo::common::BlockingCopyToString(response->body.Pass(), &data);
     bitmap_.reset(new std::vector<unsigned char>);
-    gfx::PNGCodec::Decode(static_cast<const unsigned char*>(data.get()),
-                          content_length, gfx::PNGCodec::FORMAT_BGRA,
+    gfx::PNGCodec::Decode(reinterpret_cast<const unsigned char*>(data.data()),
+                          data.length(), gfx::PNGCodec::FORMAT_BGRA,
                           bitmap_.get(), &width_, &height_);
-  }
-
-  int GetContentLength(const Array<String>& headers) {
-    for (size_t i = 0; i < headers.size(); ++i) {
-      base::StringTokenizer t(headers[i], ": ;=");
-      while (t.GetNext()) {
-        if (!t.token_is_delim() && t.token() == "Content-Length") {
-          while (t.GetNext()) {
-            if (!t.token_is_delim())
-              return atoi(t.token().c_str());
-          }
-        }
-      }
-    }
-    return 0;
   }
 
   int width_;

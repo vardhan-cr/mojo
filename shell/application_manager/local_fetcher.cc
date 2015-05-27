@@ -60,12 +60,17 @@ mojo::URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
   response->body = data_pipe.consumer_handle.Pass();
   base::stat_wrapper_t stat_result;
   if (stat64(path_.value().c_str(), &stat_result) == 0) {
-    response->headers = mojo::Array<mojo::String>(2);
-    response->headers[0] =
-        base::StringPrintf("Content-Length: %" PRId64, stat_result.st_size);
-    response->headers[1] = base::StringPrintf(
-        "ETag: \"%" PRId64 "-%" PRId64 "-%" PRId64 "\"", stat_result.st_dev,
+    auto content_length_header = mojo::HttpHeader::New();
+    content_length_header->name = "Content-Length";
+    content_length_header->value =
+        base::StringPrintf("%" PRId64, stat_result.st_size);
+    response->headers.push_back(content_length_header.Pass());
+    auto etag_header = mojo::HttpHeader::New();
+    etag_header->name = "ETag";
+    etag_header->value = base::StringPrintf(
+        "\"%" PRId64 "-%" PRId64 "-%" PRId64 "\"", stat_result.st_dev,
         stat_result.st_ino, static_cast<uint64_t>(stat_result.st_mtime));
+    response->headers.push_back(etag_header.Pass());
   }
   mojo::common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,
                              task_runner, base::Bind(&IgnoreResult));

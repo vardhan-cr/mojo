@@ -49,12 +49,11 @@ void CheckRedirectorResponse(uint32 expected_http_status,
 
   // Check that the response contains a header redirecting to the expected
   // location.
-  std::string expected_redirect_header = "location: " + expected_redirect;
   bool found_redirect_header = false;
   EXPECT_FALSE(response->headers.is_null());
   for (size_t i = 0; i < response->headers.size(); i++) {
-    mojo::String header = response->headers[i];
-    if (header == expected_redirect_header) {
+    const auto& header = response->headers[i];
+    if (header->name == "location" && header->value == expected_redirect) {
       found_redirect_header = true;
       break;
     }

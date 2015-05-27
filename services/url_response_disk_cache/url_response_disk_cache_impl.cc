@@ -26,7 +26,7 @@ namespace {
 
 // The current version of the cache. This should only be incremented. When this
 // is incremented, all current cache entries will be invalidated.
-const uint32_t kCurrentVersion = 1;
+const uint32_t kCurrentVersion = 2;
 
 const char kEtagHeader[] = "etag";
 
@@ -140,29 +140,14 @@ void RunMojoCallback(
 
 // Returns the list of values for the given |header_name| in the given list of
 // headers.
+template <typename HeaderType>
 std::vector<std::string> GetHeaderValues(const std::string& header_name,
-                                         const Array<String>& headers) {
+                                         const Array<HeaderType>& headers) {
   std::vector<std::string> result;
-  for (std::string header : headers.storage()) {
-    if (StartsWithASCII(header, header_name, false)) {
-      auto begin = header.begin();
-      auto end = header.end();
-      begin += header_name.size();
-      // Extract the content of the header by finding the remaining string after
-      // the ':' and stripping all spaces.
-      while (begin < end && *begin != ':')
-        begin++;
-      if (begin < end) {
-        begin++;
-        while (begin < end && *begin == ' ')
-          begin++;
-        while (end > begin && *(end - 1) == ' ')
-          end--;
-        if (begin < end) {
-          result.push_back(std::string(begin, end));
-        }
-      }
-    }
+  for (size_t i = 0u; i < headers.size(); ++i) {
+    std::string name = headers[i]->name;
+    if (LowerCaseEqualsASCII(name, header_name.c_str()))
+      result.push_back(headers[i]->value);
   }
   return result;
 }
@@ -301,7 +286,12 @@ void URLResponseDiskCacheImpl::GetFileInternal(
   entry->version = kCurrentVersion;
   entry->url = response->url;
   entry->content_path = content.value();
-  entry->headers = response->headers.Pass();
+  for (size_t i = 0u; i < response->headers.size(); ++i) {
+    auto cache_header = CacheHeaders::New();
+    cache_header->name = response->headers[i]->name;
+    cache_header->value = response->headers[i]->value;
+    entry->headers.push_back(cache_header.Pass());
+  }
   // Asynchronously copy the response body to the cached file. The entry is send
   // to the callback so that it is saved on disk only if the copy of the body
   // succeded.

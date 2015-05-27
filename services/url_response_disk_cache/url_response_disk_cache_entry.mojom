@@ -4,10 +4,15 @@
 
 module mojo;
 
+struct CacheHeaders {
+  string name;
+  string value;
+};
+
 // One entry in the service cache.
 struct CacheEntry {
   uint32 version = 0;
   string url;
   string content_path;
-  array<string>? headers;
+  array<CacheHeaders>? headers;
 };

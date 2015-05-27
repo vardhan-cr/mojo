@@ -46,8 +46,10 @@ void AuthenticatingURLLoaderImpl::Start(
   headers_ = request->headers.Clone();
   pending_request_callback_ = callback;
   if (cached_tokens_->find(url_.GetOrigin()) != cached_tokens_->end()) {
-    request->headers.push_back("Authorization: Bearer " +
-                               (*cached_tokens_)[url_.GetOrigin()]);
+    auto auth_header = HttpHeader::New();
+    auth_header->name = "Authorization";
+    auth_header->value = "Bearer " + (*cached_tokens_)[url_.GetOrigin()];
+    request->headers.push_back(auth_header.Pass());
   }
   StartNetworkRequest(request.Pass());
 }
@@ -180,10 +182,13 @@ void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(String token,
   DCHECK(token);
   (*cached_tokens_)[url_.GetOrigin()] = token;
   token_ = token;
-  mojo::Array<mojo::String> headers(0);
+  auto auth_header = HttpHeader::New();
+  auth_header->name = "Authorization";
+  auth_header->value = "Bearer " + token.get();
+  Array<HttpHeaderPtr> headers;
   if (headers_)
     headers = headers_.Clone();
-  headers.push_back("Authorization: Bearer " + token.get());
+  headers.push_back(auth_header.Pass());
 
   URLRequestPtr request(mojo::URLRequest::New());
   request->url = url_.spec();
