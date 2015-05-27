@@ -17,34 +17,44 @@ TEST(MessageInTransitQueueTest, Basic) {
 
   queue.AddMessage(test::MakeTestMessage(1));
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(1u, queue.Size());
 
   test::VerifyTestMessage(queue.PeekMessage(), 1);
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(1u, queue.Size());
 
   queue.AddMessage(test::MakeTestMessage(2));
   queue.AddMessage(test::MakeTestMessage(3));
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(3u, queue.Size());
 
   test::VerifyTestMessage(queue.GetMessage().get(), 1);
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(2u, queue.Size());
 
   test::VerifyTestMessage(queue.PeekMessage(), 2);
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(2u, queue.Size());
 
   queue.DiscardMessage();
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(1u, queue.Size());
 
   test::VerifyTestMessage(queue.GetMessage().get(), 3);
   EXPECT_TRUE(queue.IsEmpty());
+  EXPECT_EQ(0u, queue.Size());
 
   queue.AddMessage(test::MakeTestMessage(4));
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(1u, queue.Size());
 
   test::VerifyTestMessage(queue.PeekMessage(), 4);
   ASSERT_FALSE(queue.IsEmpty());
+  EXPECT_EQ(1u, queue.Size());
 
   queue.Clear();
   EXPECT_TRUE(queue.IsEmpty());
+  EXPECT_EQ(0u, queue.Size());
 }
 
 TEST(MessageInTransitQueueTest, Swap) {
@@ -54,11 +64,15 @@ TEST(MessageInTransitQueueTest, Swap) {
   queue1.AddMessage(test::MakeTestMessage(1));
   queue1.AddMessage(test::MakeTestMessage(2));
   queue1.AddMessage(test::MakeTestMessage(3));
+  EXPECT_EQ(3u, queue1.Size());
 
   queue2.AddMessage(test::MakeTestMessage(4));
   queue2.AddMessage(test::MakeTestMessage(5));
+  EXPECT_EQ(2u, queue2.Size());
 
   queue1.Swap(&queue2);
+  EXPECT_EQ(2u, queue1.Size());
+  EXPECT_EQ(3u, queue2.Size());
   test::VerifyTestMessage(queue1.GetMessage().get(), 4);
   test::VerifyTestMessage(queue1.GetMessage().get(), 5);
   EXPECT_TRUE(queue1.IsEmpty());

@@ -31,16 +31,14 @@ bool TestChannelEndpointClient::IsDetached() const {
 
 size_t TestChannelEndpointClient::NumMessages() const {
   base::AutoLock locker(lock_);
-  return messages_.size();
+  return messages_.Size();
 }
 
 scoped_ptr<MessageInTransit> TestChannelEndpointClient::PopMessage() {
   base::AutoLock locker(lock_);
-  if (!messages_.size())
+  if (messages_.IsEmpty())
     return nullptr;
-  scoped_ptr<MessageInTransit> rv(messages_.front());
-  messages_.pop_front();
-  return rv;
+  return messages_.GetMessage();
 }
 
 void TestChannelEndpointClient::SetReadEvent(base::WaitableEvent* read_event) {
@@ -54,7 +52,7 @@ bool TestChannelEndpointClient::OnReadMessage(unsigned port,
 
   EXPECT_EQ(port_, port);
   EXPECT_TRUE(endpoint_);
-  messages_.push_back(message);
+  messages_.AddMessage(make_scoped_ptr(message));
 
   if (read_event_)
     read_event_->Signal();
@@ -73,8 +71,6 @@ void TestChannelEndpointClient::OnDetachFromChannel(unsigned port) {
 
 TestChannelEndpointClient::~TestChannelEndpointClient() {
   EXPECT_FALSE(endpoint_);
-  for (auto message : messages_)
-    delete message;
 }
 
 }  // namespace test

@@ -5,14 +5,13 @@
 #ifndef MOJO_EDK_SYSTEM_TEST_CHANNEL_ENDPOINT_CLIENT_H_
 #define MOJO_EDK_SYSTEM_TEST_CHANNEL_ENDPOINT_CLIENT_H_
 
-#include <deque>
-
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
+#include "mojo/edk/system/message_in_transit_queue.h"
 
 namespace base {
 class WaitableEvent;
@@ -20,9 +19,6 @@ class WaitableEvent;
 
 namespace mojo {
 namespace system {
-
-class MessageInTransit;
-
 namespace test {
 
 class TestChannelEndpointClient : public ChannelEndpointClient {
@@ -58,9 +54,7 @@ class TestChannelEndpointClient : public ChannelEndpointClient {
   unsigned port_;
   scoped_refptr<ChannelEndpoint> endpoint_;
 
-  // Owns the messages. TODO(vtl): Change them to scoped_ptr/unique_ptr when we
-  // can.
-  std::deque<MessageInTransit*> messages_;
+  MessageInTransitQueue messages_;
 
   // Event to trigger if we read a message (may be null).
   base::WaitableEvent* read_event_;
