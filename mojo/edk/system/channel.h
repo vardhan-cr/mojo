@@ -89,6 +89,16 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // first connection across a channel.)
   void SetBootstrapEndpoint(scoped_refptr<ChannelEndpoint> endpoint);
 
+  // Like |SetBootstrapEndpoint()|, but with explicitly-specified local and
+  // remote IDs.
+  //
+  // (Bootstrapping is still symmetric, though the sides should obviously
+  // interchange local and remote IDs. This can be used to allow multiple
+  // "bootstrap" endpoints, though this is really most useful for testing.)
+  void SetBootstrapEndpointWithIds(scoped_refptr<ChannelEndpoint> endpoint,
+                                   ChannelEndpointId local_id,
+                                   ChannelEndpointId remote_id);
+
   // This forwards |message| verbatim to |raw_channel_|.
   bool WriteMessage(scoped_ptr<MessageInTransit> message);
 

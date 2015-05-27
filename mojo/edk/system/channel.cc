@@ -98,10 +98,16 @@ void Channel::WillShutdownSoon() {
 }
 
 void Channel::SetBootstrapEndpoint(scoped_refptr<ChannelEndpoint> endpoint) {
-  DCHECK(endpoint);
-
   // Used for both local and remote IDs.
   ChannelEndpointId bootstrap_id = ChannelEndpointId::GetBootstrap();
+  SetBootstrapEndpointWithIds(endpoint.Pass(), bootstrap_id, bootstrap_id);
+}
+
+void Channel::SetBootstrapEndpointWithIds(
+    scoped_refptr<ChannelEndpoint> endpoint,
+    ChannelEndpointId local_id,
+    ChannelEndpointId remote_id) {
+  DCHECK(endpoint);
 
   {
     base::AutoLock locker(lock_);
@@ -109,13 +115,14 @@ void Channel::SetBootstrapEndpoint(scoped_refptr<ChannelEndpoint> endpoint) {
     DLOG_IF(WARNING, is_shutting_down_)
         << "SetBootstrapEndpoint() while shutting down";
 
-    // Bootstrap endpoint should be the first.
-    DCHECK(local_id_to_endpoint_map_.empty());
+    // There must not be an endpoint with that ID already.
+    DCHECK(local_id_to_endpoint_map_.find(local_id) ==
+           local_id_to_endpoint_map_.end());
 
-    local_id_to_endpoint_map_[bootstrap_id] = endpoint;
+    local_id_to_endpoint_map_[local_id] = endpoint;
   }
 
-  endpoint->AttachAndRun(this, bootstrap_id, bootstrap_id);
+  endpoint->AttachAndRun(this, local_id, remote_id);
 }
 
 bool Channel::WriteMessage(scoped_ptr<MessageInTransit> message) {
