@@ -6,7 +6,6 @@ group("services") {
   deps = [
     "//services/authenticating_url_loader",
     "//services/clipboard",
-    "//services/console",
     "//services/dart",
     "//services/device_info",
     "//services/fake_surfaces",
