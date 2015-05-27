@@ -36,7 +36,7 @@ public class ShellMain {
     // Name of the child executable.
     private static final String MOJO_SHELL_CHILD_EXECUTABLE = "mojo_shell_child";
     // Path to the default origin of mojo: apps.
-    private static final String DEFAULT_ORIGIN = "https://apps.domokit.org/android-arm";
+    private static final String DEFAULT_ORIGIN = "https://core.mojoapps.io/";
     // Name of the default window manager.
     private static final String DEFAULT_WM = "mojo:kiosk_wm";
 
