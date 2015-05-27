@@ -39,6 +39,7 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   // AuthenticatingURLLoader methods:
   void Start(URLRequestPtr request,
              const Callback<void(URLResponsePtr)>& callback) override;
+  void FollowRedirect(const Callback<void(URLResponsePtr)>& callback) override;
 
   // ErrorHandler methods:
   void OnConnectionError() override;
@@ -46,6 +47,8 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   void StartNetworkRequest(URLRequestPtr request);
 
   void OnLoadComplete(URLResponsePtr response);
+
+  void FollowRedirectInternal();
 
   void OnAccountSelected(String username, String error);
 
@@ -64,7 +67,7 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   Array<String> headers_;
   String username_;
   String token_;
-  Callback<void(URLResponsePtr)> pending_start_callback_;
+  Callback<void(URLResponsePtr)> pending_request_callback_;
 };
 
 }  // namespace mojo

@@ -42,8 +42,36 @@ void AuthenticatingURLLoaderImpl::Start(
   auto_follow_redirects_ = request->auto_follow_redirects;
   bypass_cache_ = request->bypass_cache;
   headers_ = request->headers.Clone();
-  pending_start_callback_ = callback;
+  pending_request_callback_ = callback;
   StartNetworkRequest(request.Pass());
+}
+
+void AuthenticatingURLLoaderImpl::FollowRedirect(
+    const Callback<void(URLResponsePtr)>& callback) {
+  mojo::String error;
+
+  if (!url_ || !url_loader_) {
+    error = "No redirect to follow";
+  }
+
+  if (auto_follow_redirects_) {
+    error =
+        "FollowRedirect() should not be "
+        "called when auto_follow_redirects has been set";
+  }
+
+  if (username_ || (request_authorization_state_ != REQUEST_NOT_AUTHORIZED)) {
+    error = "Not in the right state to follow a redirect";
+  }
+
+  if (!error.is_null()) {
+    LOG(ERROR) << "AuthenticatingURLLoader: " << error;
+    callback.Run(nullptr);
+    return;
+  }
+
+  pending_request_callback_ = callback;
+  FollowRedirectInternal();
 }
 
 void AuthenticatingURLLoaderImpl::StartNetworkRequest(URLRequestPtr request) {
@@ -59,10 +87,26 @@ void AuthenticatingURLLoaderImpl::OnConnectionError() {
 }
 
 void AuthenticatingURLLoaderImpl::OnLoadComplete(URLResponsePtr response) {
+  if (response->redirect_url) {
+    url_ = response->redirect_url;
+    username_ = nullptr;
+    request_authorization_state_ = REQUEST_NOT_AUTHORIZED;
+
+    if (auto_follow_redirects_) {
+      FollowRedirectInternal();
+    } else {
+      // NOTE: We do not reset |url_loader_| here as it will be needed if the
+      // client calls |FollowRedirect()|.
+      pending_request_callback_.Run(response.Pass());
+    }
+    return;
+  }
+
   url_loader_.reset();
+
   if (response->status_code != 401 || !authentication_service_ ||
       request_authorization_state_ == REQUEST_AUTHORIZED_WITH_FRESH_TOKEN) {
-    pending_start_callback_.Run(response.Pass());
+    pending_request_callback_.Run(response.Pass());
     return;
   }
 
@@ -88,11 +132,21 @@ void AuthenticatingURLLoaderImpl::OnLoadComplete(URLResponsePtr response) {
   OnAccountSelected(username_, String());
 }
 
+void AuthenticatingURLLoaderImpl::FollowRedirectInternal() {
+  DCHECK(url_);
+  DCHECK(url_loader_);
+  DCHECK(!username_);
+  DCHECK(request_authorization_state_ == REQUEST_NOT_AUTHORIZED);
+
+  url_loader_->FollowRedirect(base::Bind(
+      &AuthenticatingURLLoaderImpl::OnLoadComplete, base::Unretained(this)));
+}
+
 void AuthenticatingURLLoaderImpl::OnAccountSelected(String username,
                                                     String error) {
   if (error) {
     LOG(ERROR) << "Error (" << error << ") while selecting account";
-    pending_start_callback_.Run(pending_response_.Pass());
+    pending_request_callback_.Run(pending_response_.Pass());
     return;
   }
 
@@ -112,7 +166,7 @@ void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(String token,
                                                         String error) {
   if (error) {
     LOG(ERROR) << "Error (" << error << ") while getting token";
-    pending_start_callback_.Run(pending_response_.Pass());
+    pending_request_callback_.Run(pending_response_.Pass());
     return;
   }
 
@@ -125,7 +179,7 @@ void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(String token,
 
   URLRequestPtr request(mojo::URLRequest::New());
   request->url = url_;
-  request->auto_follow_redirects = auto_follow_redirects_;
+  request->auto_follow_redirects = false;
   request->bypass_cache = bypass_cache_;
   request->headers = headers.Pass();
 
@@ -139,8 +193,8 @@ void AuthenticatingURLLoaderImpl::SetAuthenticationService(
     return;
 
   // We need authentication but have no AuthenticationService.
-  DCHECK(!pending_start_callback_.is_null());
-  pending_start_callback_.Run(pending_response_.Pass());
+  DCHECK(!pending_request_callback_.is_null());
+  pending_request_callback_.Run(pending_response_.Pass());
 }
 
 }  // namespace mojo
