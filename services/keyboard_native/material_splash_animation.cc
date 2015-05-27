@@ -34,9 +34,8 @@ void MaterialSplashAnimation::Draw(SkCanvas* canvas,
       delta_from_start.InMillisecondsF() / duration_.InMillisecondsF();
 
   int alpha = 0xff * (1.0f - ratio_complete);
-  int color = (alpha << 24) + 0xCCCCCC;
   SkPaint paint;
-  paint.setColor(color);
+  paint.setColor(SkColorSetARGB(alpha, 0x88, 0x88, 0x88));
 
   float radius = (190.0f * ratio_complete) + 10.0f;
 

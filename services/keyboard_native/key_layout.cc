@@ -89,22 +89,9 @@ void KeyLayout::Draw(SkCanvas* canvas) {
   text_paint.setAntiAlias(true);
   text_paint.setTextAlign(SkPaint::kCenter_Align);
 
-  canvas->clear(SK_ColorRED);
+  canvas->clear(SK_ColorLTGRAY);
 
   SkPaint paint;
-
-  static const int kRowColors[] = {
-      SK_ColorGREEN, SK_ColorYELLOW, SK_ColorMAGENTA, SK_ColorCYAN,
-  };
-  for (size_t i = 0; i < layout_->size(); i++) {
-    paint.setColor(kRowColors[i % arraysize(kRowColors)]);
-    SkRect rect =
-        SkRect::MakeLTRB(0, i * row_height, size_.width, (i + 1) * row_height);
-    canvas->drawRect(rect, paint);
-  }
-
-  static const int kKeyColors[] = {SK_ColorLTGRAY, SK_ColorDKGRAY};
-  static const int kKeyInset = 2;
   for (size_t row_index = 0; row_index < layout_->size(); row_index++) {
     float current_top = row_index * row_height;
     float current_left = 0;
@@ -112,15 +99,6 @@ void KeyLayout::Draw(SkCanvas* canvas) {
          key_index++) {
       float key_width =
           static_cast<float>(size_.width) * (*layout_)[row_index][key_index];
-
-      int keyColor =
-          kKeyColors[(row_index + key_index) % arraysize(kKeyColors)];
-      paint.setColor(keyColor);
-      SkRect rect =
-          SkRect::MakeLTRB(current_left, current_top, current_left + key_width,
-                           current_top + row_height);
-      rect.inset(kKeyInset, kKeyInset);
-      canvas->drawRect(rect, paint);
 
       (*key_map_)[row_index][key_index]->Draw(
           canvas, text_paint,

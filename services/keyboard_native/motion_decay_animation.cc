@@ -44,7 +44,7 @@ void MotionDecayAnimation::Draw(SkCanvas* canvas,
   paint.setStrokeCap(SkPaint::kRound_Cap);
   paint.setStrokeJoin(SkPaint::kRound_Join);
   paint.setStrokeWidth(stroke_width);
-  paint.setColor(0xFF0000FF);
+  paint.setColor(SkColorSetRGB(0x00, 0x00, 0xff));
 
   canvas->drawPath(path, paint);
 }
