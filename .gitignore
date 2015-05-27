@@ -1,3 +1,4 @@
+# commonly generated files
 *.pyc
 *~
 .*.sw?
@@ -17,8 +18,9 @@ tags
 Thumbs.db
 v8.log
 /build/util/LASTCHANGE*
+
+# directories pulled in via deps or hooks
 /build/linux/bin/eu-strip
-/build/win_toolchain.json
 /buildtools/
 /dart/
 /dart-pub-cache/
@@ -58,6 +60,7 @@ v8.log
 /third_party/yasm/source/patched-yasm/
 /tools/grit/
 /v8/
+
 # dart packages directories and related.
 /mojo/dart/mojom/packages
 /mojo/dart/mojom/bin/packages
@@ -68,3 +71,7 @@ v8.log
 /sky/sdk/packages/mojo/pubspec.lock
 /sky/sdk/packages/sky/packages
 /sky/sdk/packages/sky/pubspec.lock
+
+# sky tools
+/sky/tools/skygo/linux64/sky_server
+/sky/tools/skygo/mac/sky_server
