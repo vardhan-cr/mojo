@@ -25,5 +25,6 @@ source_set("authenticating_url_loader") {
     "//mojo/services/authenticating_url_loader/public/interfaces",
     "//mojo/services/authentication/public/interfaces",
     "//mojo/services/network/public/interfaces",
+    "//url",
   ]
 }

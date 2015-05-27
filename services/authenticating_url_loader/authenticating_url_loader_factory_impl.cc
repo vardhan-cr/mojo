@@ -39,7 +39,7 @@ void AuthenticatingURLLoaderFactoryImpl::CreateAuthenticatingURLLoader(
   url_loaders_.push_back(std::unique_ptr<AuthenticatingURLLoaderImpl>(
       new AuthenticatingURLLoaderImpl(
           loader_request.Pass(), authentication_service_.get(),
-          network_service_.get(),
+          network_service_.get(), &cached_tokens_,
           base::Bind(&AuthenticatingURLLoaderFactoryImpl::DeleteURLLoader,
                      base::Unretained(this)))));
 }

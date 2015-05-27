@@ -10,15 +10,16 @@
 #include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
+#include "url/gurl.h"
 
 namespace mojo {
 
 class NetworkService;
 
 enum RequestAuthorizationState {
-  REQUEST_NOT_AUTHORIZED,
-  REQUEST_AUTHORIZED_WITH_CACHED_TOKEN,
-  REQUEST_AUTHORIZED_WITH_FRESH_TOKEN,
+  REQUEST_INITIAL,
+  REQUEST_USED_CURRENT_AUTH_SERVICE_TOKEN,
+  REQUEST_USED_FRESH_AUTH_SERVICE_TOKEN,
 };
 
 class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
@@ -28,6 +29,7 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
       InterfaceRequest<AuthenticatingURLLoader> request,
       authentication::AuthenticationService* authentication_service,
       NetworkService* network_service,
+      std::map<GURL, std::string>* cached_tokens,
       const Callback<void(AuthenticatingURLLoaderImpl*)>&
           connection_error_callback);
   ~AuthenticatingURLLoaderImpl() override;
@@ -61,13 +63,14 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   URLLoaderPtr url_loader_;
   URLResponsePtr pending_response_;
   RequestAuthorizationState request_authorization_state_;
-  String url_;
+  GURL url_;
   bool auto_follow_redirects_;
   bool bypass_cache_;
   Array<String> headers_;
   String username_;
   String token_;
   Callback<void(URLResponsePtr)> pending_request_callback_;
+  std::map<GURL, std::string>* cached_tokens_;
 };
 
 }  // namespace mojo

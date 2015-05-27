@@ -13,6 +13,7 @@
 #include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader_factory.mojom.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
+#include "url/gurl.h"
 
 namespace mojo {
 
@@ -46,6 +47,7 @@ class AuthenticatingURLLoaderFactoryImpl
   authentication::AuthenticationServicePtr authentication_service_;
   NetworkServicePtr network_service_;
   std::vector<std::unique_ptr<AuthenticatingURLLoaderImpl>> url_loaders_;
+  std::map<GURL, std::string> cached_tokens_;
 };
 
 }  // namespace mojo
