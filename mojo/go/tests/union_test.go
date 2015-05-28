@@ -32,6 +32,22 @@ func TestPodUnion(t *testing.T) {
 	}
 }
 
+func TestHandleUnion(t *testing.T) {
+	tests := []test_unions.HandleUnion{
+		&test_unions.HandleUnionFHandle{system.Handle(&mockHandle{handle: 1})},
+		&test_unions.HandleUnionFMessagePipe{system.MessagePipeHandle(&mockHandle{handle: 2})},
+		&test_unions.HandleUnionFDataPipeConsumer{system.ConsumerHandle(&mockHandle{handle: 3})},
+		&test_unions.HandleUnionFDataPipeProducer{system.ProducerHandle(&mockHandle{handle: 4})},
+		&test_unions.HandleUnionFSharedBuffer{system.SharedBufferHandle(&mockHandle{handle: 5})},
+	}
+
+	for _, union := range tests {
+		var wrapper, zeroWrapper test_unions.WrapperStruct
+		wrapper.HandleUnion = union
+		check(t, &wrapper, &zeroWrapper)
+	}
+}
+
 func TestObjectUnion(t *testing.T) {
 	tests := []test_unions.ObjectUnion{
 		&test_unions.ObjectUnionFDummy{test_unions.DummyStruct{10}},
