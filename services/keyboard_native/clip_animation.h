@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SERVICES_KEYBOARD_NATIVE_MATERIAL_SPLASH_ANIMATION_H_
-#define SERVICES_KEYBOARD_NATIVE_MATERIAL_SPLASH_ANIMATION_H_
+#ifndef SERVICES_KEYBOARD_NATIVE_CLIP_ANIMATION_H_
+#define SERVICES_KEYBOARD_NATIVE_CLIP_ANIMATION_H_
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
@@ -16,14 +16,15 @@ namespace keyboard {
 
 class TimeInterpolator;
 
-class MaterialSplashAnimation : public Animation {
+class ClipAnimation : public Animation {
  public:
-  // Creates a splash animation starting at |start_ticks| lasting |duration| at
-  // |origin|.  |duration| must be non-zero.
-  MaterialSplashAnimation(const base::TimeTicks& start_ticks,
-                          const base::TimeDelta& duration,
-                          const gfx::Point& origin);
-  ~MaterialSplashAnimation() override;
+  // Creates a clip animation starting at |start_ticks| lasting |duration| at
+  // |origin| and ending at |end_radius|.  |duration| must be non-zero.
+  ClipAnimation(const base::TimeTicks& start_ticks,
+                const base::TimeDelta& duration,
+                const gfx::Point& origin,
+                const float& end_radius);
+  ~ClipAnimation() override;
 
   // Animation implementation.
   void Draw(SkCanvas* canvas, const base::TimeTicks& current_ticks) override;
@@ -34,10 +35,11 @@ class MaterialSplashAnimation : public Animation {
   const base::TimeTicks start_ticks_;
   const base::TimeDelta duration_;
   const gfx::Point origin_;
+  const float end_radius_;
 
-  DISALLOW_COPY_AND_ASSIGN(MaterialSplashAnimation);
+  DISALLOW_COPY_AND_ASSIGN(ClipAnimation);
 };
 
 }  // namespace keyboard
 
-#endif  // SERVICES_KEYBOARD_NATIVE_MATERIAL_SPLASH_ANIMATION_H_
+#endif  // SERVICES_KEYBOARD_NATIVE_CLIP_ANIMATION_H_

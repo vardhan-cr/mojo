@@ -6,6 +6,11 @@ import("//mojo/public/mojo_application.gni")
 
 mojo_native_application("keyboard_native") {
   sources = [
+    "animation.h",
+    "clip_animation.cc",
+    "clip_animation.h",
+    "fast_out_slow_in_interpolator.cc",
+    "fast_out_slow_in_interpolator.h",
     "key_layout.cc",
     "key_layout.h",
     "keyboard_service_impl.cc",
@@ -15,6 +20,7 @@ mojo_native_application("keyboard_native") {
     "material_splash_animation.h",
     "motion_decay_animation.cc",
     "motion_decay_animation.h",
+    "time_interpolator.h",
     "view_observer_delegate.cc",
     "view_observer_delegate.h",
   ]

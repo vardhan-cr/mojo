@@ -10,6 +10,7 @@
 #include "base/sys_info.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/skia/ganesh_surface.h"
+#include "services/keyboard_native/clip_animation.h"
 #include "services/keyboard_native/keyboard_service_impl.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkCanvas.h"
@@ -116,6 +117,16 @@ void ViewObserverDelegate::DrawState() {
   gr_context_.get()->gr()->resetContext(kTextureBinding_GrGLBackendState);
 
   SkCanvas* canvas = surface.canvas();
+
+  // If we have a clip animation it must go first as only things drawn after the
+  // clip is set will be clipped.
+  if (clip_animation_) {
+    if (!clip_animation_->IsDone(current_ticks)) {
+      clip_animation_->Draw(canvas, current_ticks);
+    } else {
+      clip_animation_.reset();
+    }
+  }
   DrawKeysToCanvas(size, canvas);
   DrawAnimations(canvas, current_ticks);
   DrawFloatingKey(canvas, size);
@@ -181,7 +192,7 @@ void ViewObserverDelegate::IssueDraw() {
   if (!frame_pending_) {
     DrawState();
     frame_pending_ = true;
-    needs_draw_ = !animations_.empty();
+    needs_draw_ = !animations_.empty() || clip_animation_;
   } else {
     needs_draw_ = true;
   }
@@ -198,6 +209,16 @@ void ViewObserverDelegate::OnFrameComplete() {
 void ViewObserverDelegate::OnViewBoundsChanged(mojo::View* view,
                                                const mojo::Rect& old_bounds,
                                                const mojo::Rect& new_bounds) {
+  // Upon resize, kick off a clip animation centered on our new bounds with a
+  // radius equal to the length from a corner of to the center of the new
+  // bounds.
+  base::TimeTicks current_ticks = base::TimeTicks::Now();
+  gfx::Point center(new_bounds.width / 2.0f, new_bounds.height / 2.0f);
+  float radius = sqrt(new_bounds.width / 2.0f * new_bounds.width / 2.0f +
+                      new_bounds.height / 2.0f * new_bounds.height / 2.0f);
+  clip_animation_.reset(
+      new ClipAnimation(current_ticks, kAnimationDurationMs, center, radius));
+
   IssueDraw();
 }
 

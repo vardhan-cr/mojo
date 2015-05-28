@@ -3,28 +3,29 @@
 // found in the LICENSE file.
 
 #include "base/logging.h"
+#include "services/keyboard_native/clip_animation.h"
 #include "services/keyboard_native/fast_out_slow_in_interpolator.h"
-#include "services/keyboard_native/material_splash_animation.h"
 
 namespace keyboard {
 
-MaterialSplashAnimation::MaterialSplashAnimation(
-    const base::TimeTicks& start_ticks,
-    const base::TimeDelta& duration,
-    const gfx::Point& origin)
+ClipAnimation::ClipAnimation(const base::TimeTicks& start_ticks,
+                             const base::TimeDelta& duration,
+                             const gfx::Point& origin,
+                             const float& end_radius)
     : time_interpolator_(make_scoped_ptr(new FastOutSlowInInterpolator())),
       start_ticks_(start_ticks),
       duration_(duration),
-      origin_(origin) {
+      origin_(origin),
+      end_radius_(end_radius) {
   DCHECK(!duration.is_zero());
 }
 
-MaterialSplashAnimation::~MaterialSplashAnimation() {
+ClipAnimation::~ClipAnimation() {
 }
 
 // Animation implementation.
-void MaterialSplashAnimation::Draw(SkCanvas* canvas,
-                                   const base::TimeTicks& current_ticks) {
+void ClipAnimation::Draw(SkCanvas* canvas,
+                         const base::TimeTicks& current_ticks) {
   const base::TimeDelta delta_from_start = current_ticks - start_ticks_;
   if (delta_from_start < base::TimeDelta::FromMilliseconds(0)) {
     return;
@@ -37,16 +38,12 @@ void MaterialSplashAnimation::Draw(SkCanvas* canvas,
   float ratio_complete = time_interpolator_->GetInterpolation(
       delta_from_start.InMillisecondsF() / duration_.InMillisecondsF());
 
-  int alpha = 0xff * (1.0f - ratio_complete);
-  SkPaint paint;
-  paint.setColor(SkColorSetARGB(alpha, 0x88, 0x88, 0x88));
-
-  float radius = (190.0f * ratio_complete) + 10.0f;
-
-  canvas->drawCircle(origin_.x(), origin_.y(), radius, paint);
+  SkPath path;
+  path.addCircle(origin_.x(), origin_.y(), end_radius_ * ratio_complete);
+  canvas->clipPath(path);
 }
 
-bool MaterialSplashAnimation::IsDone(const base::TimeTicks& current_ticks) {
+bool ClipAnimation::IsDone(const base::TimeTicks& current_ticks) {
   const base::TimeDelta delta_from_start = current_ticks - start_ticks_;
   return delta_from_start >= duration_;
 }

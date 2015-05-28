@@ -58,6 +58,7 @@ class ViewObserverDelegate : public mojo::ViewObserver,
   base::WeakPtr<mojo::GLContext> gl_context_;
   scoped_ptr<mojo::GaneshContext> gr_context_;
   scoped_ptr<mojo::TextureUploader> texture_uploader_;
+  scoped_ptr<Animation> clip_animation_;
   std::deque<scoped_ptr<Animation>> animations_;
   KeyLayout key_layout_;
   std::vector<int32> active_pointer_ids_;
