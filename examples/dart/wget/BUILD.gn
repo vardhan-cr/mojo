@@ -11,6 +11,7 @@ dartzip_packaged_application("wget") {
   ]
   deps = [
     "//mojo/public/dart",
+    "//mojo/public/interfaces/network",
     "//mojo/services/network/public/interfaces",
   ]
 }

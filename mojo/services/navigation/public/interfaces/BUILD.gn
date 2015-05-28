@@ -12,13 +12,5 @@ mojom("interfaces") {
 
   import_dirs = [ get_path_info("../../../", "abspath") ]
 
-  if (defined(mojo_network_service_root)) {
-    import_dirs += [ mojo_network_service_root ]
-  } else {
-    mojo_network_service_root = "../../.."
-  }
-
-  deps = [
-    "$mojo_network_service_root/network/public/interfaces",
-  ]
+  mojo_sdk_deps = [ "mojo/public/interfaces/network" ]
 }

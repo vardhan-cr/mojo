@@ -79,6 +79,7 @@ group("dart_embedder_packages") {
     ":dart_embedder_package_sdk",
     ":dart_embedder_package_application",
     ":dart_embedder_package_bindings",
+    ":dart_embedder_package_network",
     ":dart_embedder_package_network_service",
   ]
 }
@@ -90,6 +91,11 @@ dart_embedder_package("dart_embedder_package_application") {
 
 dart_embedder_package("dart_embedder_package_bindings") {
   package = "mojo/public/interfaces/bindings"
+  destination = "mojom/mojo"
+}
+
+dart_embedder_package("dart_embedder_package_network") {
+  package = "mojo/public/interfaces/network"
   destination = "mojom/mojo"
 }
 
@@ -332,6 +338,7 @@ action("generate_snapshot_bin") {
 
   application_mojoms = rebase_path("//mojo/public/interfaces/application")
   bindings_mojoms = rebase_path("//mojo/public/interfaces/bindings")
+  network_mojoms = rebase_path("//mojo/public/interfaces/network")
   network_service_mojoms =
       rebase_path("//mojo/services/network/public/interfaces")
 
@@ -346,6 +353,7 @@ action("generate_snapshot_bin") {
                     # Embedder package directories.
                     "$application_mojoms,mojom/mojo",
                     "$bindings_mojoms,mojom/mojo",
+                    "$network_mojoms,mojom/mojo",
                     "$network_service_mojoms,mojom/mojo",
                   ],
                   "list lines")

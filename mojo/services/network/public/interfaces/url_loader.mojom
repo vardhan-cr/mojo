@@ -4,72 +4,9 @@
 
 module mojo;
 
-import "network/public/interfaces/http_message.mojom";
-import "network/public/interfaces/network_error.mojom";
-
-struct URLRequest {
-  // The URL to load.
-  string url;
-
-  // The HTTP method if applicable.
-  string method = "GET";
-
-  // Additional HTTP request headers.
-  array<HttpHeader>? headers;
-
-  // The payload for the request body, represented as a concatenation of data
-  // streams. For HTTP requests, the method must be set to "POST" or "PUT".
-  array<handle<data_pipe_consumer>>? body;
-
-  // The buffer size of the data pipe returned in URLResponse's |body| member.
-  // A value of 0 indicates that the default buffer size should be used.  This
-  // value is just a suggestion. The URLLoader may choose to ignore this value.
-  uint32 response_body_buffer_size = 0;
-
-  // If set to true, then redirects will be automatically followed. Otherwise,
-  // when a redirect is encounterd, FollowRedirect must be called to proceed.
-  bool auto_follow_redirects = false;
-
-  // If set to true, then the HTTP request will bypass the local cache and will
-  // have a 'Cache-Control: nocache' header added in that causes any proxy
-  // servers to also not satisfy the request from their cache.  This has the
-  // effect of forcing a full end-to-end fetch.
-  bool bypass_cache = false;
-};
-
-struct URLResponse {
-  // If the response resulted in a network level error, this field will be set.
-  NetworkError? error;
-
-  // The response body stream. Read from this data pipe to receive the bytes of
-  // response body.
-  handle<data_pipe_consumer>? body;
-
-  // The final URL of the response, after redirects have been followed.
-  string? url;
-
-  // The HTTP status code. 0 if not applicable.
-  uint32 status_code;
-
-  // The HTTP status line.
-  string? status_line;
-
-  // The HTTP response headers.
-  array<HttpHeader>? headers;
-
-  // The MIME type of the response body.
-  string? mime_type;
-
-  // The character set of the response body.
-  string? charset;
-
-  // These fields are set to non-NULL if this response corresponds to a
-  // redirect.  Call the |FollowRedirect| method on the URLLoader instance to
-  // follow this redirect.
-  string? redirect_method;
-  string? redirect_url;
-  string? redirect_referrer;
-};
+import "mojo/public/interfaces/network/network_error.mojom";
+import "mojo/public/interfaces/network/url_request.mojom";
+import "mojo/public/interfaces/network/url_response.mojom";
 
 struct URLLoaderStatus {
   // If the loader has failed due to a network level error, this field will be

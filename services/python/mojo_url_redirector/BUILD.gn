@@ -11,6 +11,7 @@ python_packaged_application("mojo_url_redirector") {
   ]
   deps = [
     "//mojo/public/interfaces/application:application_python",
+    "//mojo/public/interfaces/network:network_python",
     "//mojo/public/python:packaged_application",
     "//mojo/public/python:packaged_bindings",
     "//mojo/python:packaged_utils",

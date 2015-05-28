@@ -1,20 +1,20 @@
 #!mojo mojo:js_content_handler
 
 define("main", [
-  "mojo/services/public/js/application",
+  "mojo/public/interfaces/network/url_request.mojom",
   "mojo/public/js/core",
   "mojo/services/network/public/interfaces/network_service.mojom",
-  "mojo/services/network/public/interfaces/url_loader.mojom",
+  "mojo/services/public/js/application",
   "services/js/test/network_test_service.mojom",
-], function(application,
+], function(urlRequestMojom,
             core,
             networkServiceMojom,
-            urlLoaderMojom,
+            application,
             networkTestServiceMojom) {
 
   const Application = application.Application;
   const NetworkService = networkServiceMojom.NetworkService;
-  const URLRequest = urlLoaderMojom.URLRequest;
+  const URLRequest = urlRequestMojom.URLRequest;
   const NetworkTestService = networkTestServiceMojom.NetworkTestService;
 
   class NetworkTestServiceImpl {

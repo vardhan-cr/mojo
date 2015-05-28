@@ -12,7 +12,6 @@ mojom("interfaces") {
     "http_message.mojom",
     "http_server.mojom",
     "net_address.mojom",
-    "network_error.mojom",
     "network_service.mojom",
     "tcp_bound_socket.mojom",
     "tcp_connected_socket.mojom",
@@ -21,6 +20,8 @@ mojom("interfaces") {
     "url_loader.mojom",
     "web_socket.mojom",
   ]
+
+  mojo_sdk_deps = [ "mojo/public/interfaces/network" ]
 
   import_dirs = [ get_path_info("../../../", "abspath") ]
 }

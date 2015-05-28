@@ -4,8 +4,8 @@
 
 module mojo;
 
+import "mojo/public/interfaces/network/network_error.mojom";
 import "network/public/interfaces/http_message.mojom";
-import "network/public/interfaces/network_error.mojom";
 import "network/public/interfaces/web_socket.mojom";
 
 interface HttpConnection {

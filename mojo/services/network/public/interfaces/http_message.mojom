@@ -4,10 +4,7 @@
 
 module mojo;
 
-struct HttpHeader {
-  string name;
-  string value;
-};
+import "mojo/public/interfaces/network/http_header.mojom";
 
 struct HttpRequest {
   string method = "GET";

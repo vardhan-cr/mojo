@@ -4,7 +4,8 @@
 
 module mojo;
 
-import "network/public/interfaces/url_loader.mojom";
+import "mojo/public/interfaces/network/url_request.mojom";
+import "mojo/public/interfaces/network/url_response.mojom";
 
 interface AuthenticatingURLLoader {
   // Loads the given |request|, asynchronously producing |response|. If the

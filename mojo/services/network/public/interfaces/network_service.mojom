@@ -4,10 +4,10 @@
 
 module mojo;
 
+import "mojo/public/interfaces/network/network_error.mojom";
 import "network/public/interfaces/cookie_store.mojom";
 import "network/public/interfaces/http_server.mojom";
 import "network/public/interfaces/net_address.mojom";
-import "network/public/interfaces/network_error.mojom";
 import "network/public/interfaces/tcp_bound_socket.mojom";
 import "network/public/interfaces/tcp_connected_socket.mojom";
 import "network/public/interfaces/udp_socket.mojom";

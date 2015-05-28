@@ -16,6 +16,7 @@ import http_server_factory_mojom
 import net_address_mojom
 import network_service_mojom
 import service_provider_mojom
+import url_request_mojom
 import url_loader_mojom
 
 from mojo_application import application_delegate
@@ -92,7 +93,7 @@ class MojoUrlRedirector(http_server_mojom.HttpHandler):
 
   def RedirectToCurrentAppLocation(self, requested_platform, requested_app):
     # Construct a URLRequest to fetch the app location file...
-    app_location_request = url_loader_mojom.UrlRequest()
+    app_location_request = url_request_mojom.UrlRequest()
     app_location_request.url = "%s/%s/%s_location" % (
         self.app_location_files_url, requested_platform, requested_app)
     app_location_request.auto_follow_redirects = True

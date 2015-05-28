@@ -4,7 +4,7 @@
 
 module mojo;
 
-import "mojo/services/network/public/interfaces/url_loader.mojom";
+import "mojo/public/interfaces/network/url_response.mojom";
 
 // This service allows client to efficiently cache and retrieve url response
 // content on disk. In particular, it allows the shell and content handlers to
