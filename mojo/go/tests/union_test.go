@@ -84,7 +84,7 @@ func TestUnionInStruct(t *testing.T) {
 	check(t, &ss, &out)
 
 	bytes, _ := encode(t, &ss)
-	if int(bytes[8*3]) != 16 {
+	if int(bytes[8*2]) != 16 {
 		t.Fatalf("Union does not start at the correct location in struct.")
 	}
 }
