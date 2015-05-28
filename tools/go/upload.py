@@ -4,11 +4,10 @@
 # found in the LICENSE file.
 
 """
-This script downloads GO_VERSION linux binaries from golang.org, build android
-binaries with NDK tool chain configured with NDK_PLATFORM and NDK_TOOLCHAIN
-parameters, zips the stuff and uploads it to Google Cloud Storage at
-gs://mojo/go/tool. It also produces VERSION file with sha1 code of the uploaded
-archive.
+This script takes linux Go binaries, builds android binaries with NDK tool chain
+configured with NDK_PLATFORM and NDK_TOOLCHAIN parameters, zips the stuff and
+uploads it to Google Cloud Storage at gs://mojo/go/tool. It also produces
+the VERSION file with the sha1 code of the uploaded archive.
 
 This script operates in the INSTALL_DIR directory, so it automatically updates
 your current installation of the go binaries on success. On failure it
@@ -21,7 +20,7 @@ In order to use it, you need:
 
 To update go tool binaries you need to
 1) run 'gsutil.py config' to update initialize gsutil's credentials
-2) run this script
+2) run this script: python upload.py path/to/go/binaries.tar.gz
 3) push new version of file 'VERSION'
 
 This script doesn't check if current version is already up to date, as the
@@ -37,7 +36,6 @@ import sys
 import tarfile
 import tempfile
 
-GO_VERSION = 'go1.4.2'
 NDK_PLATFORM = 'android-14'
 NDK_TOOLCHAIN = 'arm-linux-androideabi-4.9'
 
@@ -62,30 +60,15 @@ def RunCommand(command, env=None):
   print 'Failed.'
   return False
 
-def DownloadGoLinux():
-  """Downloads linux_amd64 go binaries from golang.org and extracts them
-     to INSTALL_DIR."""
+def ExtractBinaries(archive_path):
+  """Extracts go binaries from the given tar file to INSTALL_DIR."""
 
   if os.path.exists(INSTALL_DIR):
     shutil.rmtree(INSTALL_DIR)
   os.mkdir(INSTALL_DIR)
-  archive_name = '%s.linux-amd64.tar.gz' % GO_VERSION
-  archive_path = os.path.join(INSTALL_DIR, archive_name)
-  # Download the Linux x64 Go binaries from golang.org.
-  # '-C -': Resume transfer if possible.
-  # '--location': Follow Location: redirects.
-  # '-o': Output file.
-  curl_command = ['curl',
-                  '-C', '-',
-                  '--location',
-                  '-o', archive_path,
-                  'http://golang.org/dl/%s' % archive_name]
-  if not RunCommand(curl_command):
-    print "Failed to linux go binaries from server."
-    sys.exit(1)
+  archive_path = os.path.abspath(archive_path)
   with tarfile.open(archive_path) as arch:
     arch.extractall(INSTALL_DIR)
-  os.remove(archive_path)
   os.rename(os.path.join(INSTALL_DIR, 'go'),
             os.path.join(INSTALL_DIR, 'linux_amd64'))
 
@@ -160,7 +143,7 @@ def Upload(sha1):
     stamp.write('%s\n' % sha1)
 
 def main():
-  DownloadGoLinux()
+  ExtractBinaries(sys.argv[1])
   BuildGoAndroid()
   sha1 = Compress()
   Upload(sha1)
