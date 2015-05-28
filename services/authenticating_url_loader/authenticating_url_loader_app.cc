@@ -28,7 +28,13 @@ bool AuthenticatingURLLoaderApp::ConfigureIncomingConnection(
 void AuthenticatingURLLoaderApp::Create(
     ApplicationConnection* connection,
     InterfaceRequest<AuthenticatingURLLoaderFactory> request) {
-  new AuthenticatingURLLoaderFactoryImpl(request.Pass(), app_);
+  GURL app_url(connection->GetRemoteApplicationURL());
+  GURL app_origin;
+  if (app_url.is_valid()) {
+    app_origin = app_url.GetOrigin();
+  }
+  new AuthenticatingURLLoaderFactoryImpl(request.Pass(), app_,
+                                         &tokens_[app_origin]);
 }
 
 }  // namespace mojo

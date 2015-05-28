@@ -15,8 +15,9 @@ namespace mojo {
 
 AuthenticatingURLLoaderFactoryImpl::AuthenticatingURLLoaderFactoryImpl(
     mojo::InterfaceRequest<AuthenticatingURLLoaderFactory> request,
-    mojo::ApplicationImpl* app)
-    : binding_(this, request.Pass()), app_(app) {
+    mojo::ApplicationImpl* app,
+    std::map<GURL, std::string>* cached_tokens)
+    : binding_(this, request.Pass()), app_(app), cached_tokens_(cached_tokens) {
   app_->ConnectToService("mojo:network_service", &network_service_);
 }
 
@@ -39,7 +40,7 @@ void AuthenticatingURLLoaderFactoryImpl::CreateAuthenticatingURLLoader(
   url_loaders_.push_back(std::unique_ptr<AuthenticatingURLLoaderImpl>(
       new AuthenticatingURLLoaderImpl(
           loader_request.Pass(), authentication_service_.get(),
-          network_service_.get(), &cached_tokens_,
+          network_service_.get(), cached_tokens_,
           base::Bind(&AuthenticatingURLLoaderFactoryImpl::DeleteURLLoader,
                      base::Unretained(this)))));
 }

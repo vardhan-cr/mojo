@@ -27,7 +27,8 @@ class AuthenticatingURLLoaderFactoryImpl
  public:
   AuthenticatingURLLoaderFactoryImpl(
       mojo::InterfaceRequest<AuthenticatingURLLoaderFactory> request,
-      mojo::ApplicationImpl* app);
+      mojo::ApplicationImpl* app,
+      std::map<GURL, std::string>* cached_tokens);
   ~AuthenticatingURLLoaderFactoryImpl() override;
 
  private:
@@ -44,10 +45,10 @@ class AuthenticatingURLLoaderFactoryImpl
 
   StrongBinding<AuthenticatingURLLoaderFactory> binding_;
   ApplicationImpl* app_;
+  std::map<GURL, std::string>* cached_tokens_;
   authentication::AuthenticationServicePtr authentication_service_;
   NetworkServicePtr network_service_;
   std::vector<std::unique_ptr<AuthenticatingURLLoaderImpl>> url_loaders_;
-  std::map<GURL, std::string> cached_tokens_;
 };
 
 }  // namespace mojo

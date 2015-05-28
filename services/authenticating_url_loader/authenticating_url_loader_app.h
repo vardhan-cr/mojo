@@ -32,6 +32,11 @@ class AuthenticatingURLLoaderApp
       InterfaceRequest<AuthenticatingURLLoaderFactory> request) override;
 
   ApplicationImpl* app_;
+  // Cache received tokens per origin of the connecting app and origin of the
+  // loaded URL so that once a token has been requested it is not necessary to
+  // do nultiple http connections to retrieve additional resources on the same
+  // host.
+  std::map<GURL, std::map<GURL, std::string>> tokens_;
 
   DISALLOW_COPY_AND_ASSIGN(AuthenticatingURLLoaderApp);
 };
