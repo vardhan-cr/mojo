@@ -22,6 +22,11 @@ scoped_ptr<MessageInTransit> MakeTestMessage(unsigned id);
 // it looks like a message created using |MakeTestMessage(id)| (see above).
 void VerifyTestMessage(MessageInTransit* message, unsigned id);
 
+// Checks if |message| looks like a test message created using
+// |MakeTestMessage()|, in which case it returns true and sets |*id|. (Otherwise
+// it returns false and leaves |*id| alone.)
+bool IsTestMessage(MessageInTransit* message, unsigned* id);
+
 }  // namespace test
 }  // namespace system
 }  // namespace mojo

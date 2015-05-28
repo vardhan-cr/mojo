@@ -4,11 +4,13 @@
 
 #include "mojo/edk/system/endpoint_relayer.h"
 
+#include "base/logging.h"
 #include "base/macros.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/test/test_timeouts.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/channel_test_base.h"
+#include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/message_in_transit_test_utils.h"
 #include "mojo/edk/system/test_channel_endpoint_client.h"
 
@@ -67,6 +69,7 @@ class EndpointRelayerTest : public test::ChannelTestBase {
   }
 
  protected:
+  EndpointRelayer* relayer() { return relayer_.get(); }
   test::TestChannelEndpointClient* client1a() { return client1a_.get(); }
   test::TestChannelEndpointClient* client1b() { return client1b_.get(); }
   ChannelEndpoint* endpoint1a() { return endpoint1a_.get(); }
@@ -136,6 +139,88 @@ TEST_F(EndpointRelayerTest, MultipleMessages) {
     scoped_ptr<MessageInTransit> read_message = client1b()->PopMessage();
     ASSERT_TRUE(read_message);
     test::VerifyTestMessage(read_message.get(), message_id);
+  }
+}
+
+// A simple test filter. It will filter test messages made with
+// |test::MakeTestMessage()| with |id >= 1000|, and not filter other messages.
+class TestFilter : public EndpointRelayer::Filter {
+ public:
+  // |filtered_messages| will receive (and own) filtered messages; it will be
+  // accessed under the owning |EndpointRelayer|'s lock, and must outlive this
+  // filter.
+  //
+  // (Outside this class, you should only access |filtered_messages| once this
+  // filter is no longer the |EndpointRelayer|'s filter.)
+  explicit TestFilter(MessageInTransitQueue* filtered_messages)
+      : filtered_messages_(filtered_messages) {
+    CHECK(filtered_messages_);
+  }
+
+  ~TestFilter() override {}
+
+  // Note: Recall that this is called under the |EndpointRelayer|'s lock.
+  bool OnReadMessage(ChannelEndpoint* endpoint,
+                     ChannelEndpoint* peer_endpoint,
+                     MessageInTransit* message) override {
+    CHECK(endpoint);
+    CHECK(peer_endpoint);
+    CHECK(message);
+
+    unsigned id = 0;
+    if (test::IsTestMessage(message, &id) && id >= 1000) {
+      filtered_messages_->AddMessage(make_scoped_ptr(message));
+      return true;
+    }
+
+    return false;
+  }
+
+ private:
+  MessageInTransitQueue* const filtered_messages_;
+
+  DISALLOW_COPY_AND_ASSIGN(TestFilter);
+};
+
+TEST_F(EndpointRelayerTest, Filter) {
+  MessageInTransitQueue filtered_messages;
+  relayer()->SetFilter(make_scoped_ptr(new TestFilter(&filtered_messages)));
+
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(1)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(2)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(1001)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(3)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(4)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(1002)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(1003)));
+  EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(5)));
+
+  base::WaitableEvent read_event(true, false);
+  client1b()->SetReadEvent(&read_event);
+  for (size_t i = 0; client1b()->NumMessages() < 5 && i < 5; i++) {
+    EXPECT_TRUE(read_event.TimedWait(TestTimeouts::tiny_timeout()));
+    read_event.Reset();
+  }
+  client1b()->SetReadEvent(nullptr);
+
+  // Check the received messages: We should get "1"-"5".
+  ASSERT_EQ(5u, client1b()->NumMessages());
+  for (unsigned message_id = 1; message_id <= 5; message_id++) {
+    scoped_ptr<MessageInTransit> read_message = client1b()->PopMessage();
+    ASSERT_TRUE(read_message);
+    test::VerifyTestMessage(read_message.get(), message_id);
+  }
+
+  // Reset the filter, so we can safely examine |filtered_messages|.
+  relayer()->SetFilter(nullptr);
+
+  // Note that since "5" was sent after "1003" and it the former was received,
+  // the latter must have also been "received"/filtered.
+  ASSERT_EQ(3u, filtered_messages.Size());
+  for (unsigned message_id = 1001; message_id <= 1003; message_id++) {
+    scoped_ptr<MessageInTransit> message = filtered_messages.GetMessage();
+    ASSERT_TRUE(message);
+    test::VerifyTestMessage(message.get(), message_id);
   }
 }
 

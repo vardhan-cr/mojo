@@ -25,6 +25,16 @@ void VerifyTestMessage(MessageInTransit* message, unsigned id) {
   EXPECT_EQ(id, *static_cast<const unsigned*>(message->bytes()));
 }
 
+bool IsTestMessage(MessageInTransit* message, unsigned* id) {
+  if (message->type() != MessageInTransit::kTypeEndpointClient ||
+      message->subtype() != MessageInTransit::kSubtypeEndpointClientData ||
+      message->num_bytes() != sizeof(*id))
+    return false;
+
+  *id = *static_cast<const unsigned*>(message->bytes());
+  return true;
+}
+
 }  // namespace test
 }  // namespace system
 }  // namespace mojo
