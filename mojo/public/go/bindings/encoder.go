@@ -163,16 +163,34 @@ func (e *Encoder) StartStruct(size, version uint32) {
 	e.pushState(header, 0)
 }
 
-// StartUnion starts encoding a union and writes its data header.
-func (e *Encoder) StartUnion(tag uint32) {
-	header := DataHeader{uint32(16), tag}
-	e.pushState(header, 0)
-}
-
 func (e *Encoder) writeDataHeader(header DataHeader) {
 	binary.LittleEndian.PutUint32(e.buf[e.state().offset:], header.Size)
 	binary.LittleEndian.PutUint32(e.buf[e.state().offset+4:], header.ElementsOrVersion)
 	e.state().offset += 8
+}
+
+// WriteUnionHeader writes a union header for a non-null union.
+// (See. WriteNullUnion)
+func (e *Encoder) WriteUnionHeader(tag uint32) error {
+	if err := ensureElementBitSizeAndCapacity(e.state(), 64); err != nil {
+		return err
+	}
+	e.state().alignOffsetToBytes()
+	e.state().offset = align(e.state().offset, 8)
+	binary.LittleEndian.PutUint32(e.buf[e.state().offset:], 16)
+	binary.LittleEndian.PutUint32(e.buf[e.state().offset+4:], tag)
+	e.state().offset += 8
+	if err := ensureElementBitSizeAndCapacity(e.state(), 64); err != nil {
+		return err
+	}
+	return nil
+}
+
+// FinishWritingUnionValue should call after the union value has been read in
+// order to indicate to move the encoder past the union value field.
+func (e *Encoder) FinishWritingUnionValue() {
+	e.state().offset = align(e.state().offset, 8)
+	e.state().alignOffsetToBytes()
 }
 
 // Finish indicates the encoder that you have finished writing elements of
@@ -293,18 +311,11 @@ func (e *Encoder) WriteFloat64(value float64) error {
 
 // WriteNullUnion writes a null union.
 func (e *Encoder) WriteNullUnion() error {
-	if err := ensureElementBitSizeAndCapacity(e.state(), 128); err != nil {
+	if err := e.WriteUint64(0); err != nil {
 		return err
 	}
-	e.state().alignOffsetToBytes()
-	e.state().offset = align(e.state().offset, 16)
-	binary.LittleEndian.PutUint64(e.buf[e.state().offset:], 0)
-	e.state().skipBytes(8)
-	binary.LittleEndian.PutUint64(e.buf[e.state().offset:], 0)
-	e.state().skipBytes(8)
-	e.state().elementsProcessed++
-
-	return nil
+	e.state().elementsProcessed--
+	return e.WriteUint64(0)
 }
 
 // WriteNullPointer writes a null pointer.

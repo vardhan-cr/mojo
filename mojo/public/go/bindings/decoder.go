@@ -149,19 +149,32 @@ func (d *Decoder) StartStruct() (DataHeader, error) {
 	return header, nil
 }
 
-// StartUnion starts decoding a union and reads its header.
-// Returns the read data header. The caller should check if it is valid.
-// Note: it doesn't read the data field.
-func (d *Decoder) StartUnion() (DataHeader, error) {
-	header, err := d.readDataHeader()
-	if err != nil {
-		return DataHeader{}, err
+// ReadUnionHeader reads the union header and returns the union's size and tag.
+func (d *Decoder) ReadUnionHeader() (uint32, uint32, error) {
+	if err := ensureElementBitSizeAndCapacity(d.state(), 64); err != nil {
+		return 0, 0, err
 	}
+	d.state().alignOffsetToBytes()
+	d.state().offset = align(d.state().offset, 8)
+	size := binary.LittleEndian.Uint32(d.buf[d.state().offset:])
+	tag := binary.LittleEndian.Uint32(d.buf[d.state().offset+4:])
+	d.state().offset += 8
+	if err := ensureElementBitSizeAndCapacity(d.state(), 64); err != nil {
+		return 0, 0, err
+	}
+	return size, tag, nil
+}
 
-	if err := d.pushState(header, 0); err != nil {
-		return DataHeader{}, err
-	}
-	return header, nil
+// FinishReadingUnionValue should be called after the union value has been read
+// in order to indicate to move the decoder past the union value field.
+func (d *Decoder) FinishReadingUnionValue() {
+	d.state().offset = align(d.state().offset, 8)
+	d.state().alignOffsetToBytes()
+}
+
+// SkipNullUnionValue skips the union's null value.
+func (d *Decoder) SkipNullUnionValue() {
+	d.state().offset += 8
 }
 
 func (d *Decoder) readDataHeader() (DataHeader, error) {
