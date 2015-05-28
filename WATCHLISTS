@@ -38,7 +38,6 @@
     'shell': ['qsr+mojo@chromium.org',
               'yzshen+watch@chromium.org'],
     'sky': ['abarth@chromium.org',
-            'ojan@chromium.org',
             'gregsimon@chromium.org',
             'qsr+mojo@chromium.org'],
   },
