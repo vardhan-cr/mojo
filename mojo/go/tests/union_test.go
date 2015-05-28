@@ -47,19 +47,19 @@ func TestObjectUnion(t *testing.T) {
 	}
 }
 
-func encode(t *testing.T, value Encodable) ([]byte, []system.UntypedHandle) {
+func encode(t *testing.T, value Encodable) ([]byte, []system.UntypedHandle, error) {
 	encoder := bindings.NewEncoder()
 	err := value.Encode(encoder)
 	if err != nil {
-		t.Fatalf("error encoding value %v: %v", value, err)
+		return nil, nil, err
 	}
 
 	bytes, handles, err := encoder.Data()
 	if err != nil {
-		t.Fatalf("error fetching encoded value %v: %v", value, err)
+		return nil, nil, err
 	}
 
-	return bytes, handles
+	return bytes, handles, nil
 }
 
 func TestNonNullableNullInUnion(t *testing.T) {
@@ -67,7 +67,7 @@ func TestNonNullableNullInUnion(t *testing.T) {
 	fdummy := test_unions.ObjectUnionFDummy{test_unions.DummyStruct{10}}
 	wrapper.ObjectUnion = &fdummy
 
-	bytes, handles := encode(t, &wrapper)
+	bytes, handles, _ := encode(t, &wrapper)
 	bytes[16] = 0
 
 	var decoded test_unions.WrapperStruct
@@ -83,8 +83,82 @@ func TestUnionInStruct(t *testing.T) {
 	ss.PodUnion = &test_unions.PodUnionFInt8{10}
 	check(t, &ss, &out)
 
-	bytes, _ := encode(t, &ss)
+	bytes, _, _ := encode(t, &ss)
 	if int(bytes[8*2]) != 16 {
 		t.Fatalf("Union does not start at the correct location in struct.")
 	}
+}
+
+func TestUnionInArray(t *testing.T) {
+	var ss, out test_unions.SmallStruct
+	ss.PodUnionArray = &[]test_unions.PodUnion{
+		&test_unions.PodUnionFInt8{8},
+		&test_unions.PodUnionFInt16{16},
+		&test_unions.PodUnionFUint64{64},
+		&test_unions.PodUnionFBool{true},
+		&test_unions.PodUnionFEnum{test_unions.AnEnum_Second},
+	}
+	check(t, &ss, &out)
+}
+
+func TestUnionInArrayNullNullable(t *testing.T) {
+	var ss, out test_unions.SmallStruct
+	ss.NullablePodUnionArray = &[]test_unions.PodUnion{
+		nil,
+		&test_unions.PodUnionFInt8{8},
+		&test_unions.PodUnionFInt16{16},
+		&test_unions.PodUnionFUint64{64},
+		&test_unions.PodUnionFBool{true},
+		&test_unions.PodUnionFEnum{test_unions.AnEnum_Second},
+	}
+	check(t, &ss, &out)
+}
+
+func TestUnionInArrayNonNullableNull(t *testing.T) {
+	// Encoding should fail
+	var ss test_unions.SmallStruct
+	ss.PodUnionArray = &[]test_unions.PodUnion{
+		nil,
+		&test_unions.PodUnionFInt8{8},
+		&test_unions.PodUnionFInt16{16},
+		&test_unions.PodUnionFUint64{64},
+		&test_unions.PodUnionFBool{true},
+		&test_unions.PodUnionFEnum{test_unions.AnEnum_Second},
+	}
+
+	_, _, err := encode(t, &ss)
+	if typedErr := err.(*bindings.ValidationError); typedErr.ErrorCode != bindings.UnexpectedNullUnion {
+		t.Fatalf("Non-nullable null should have failed to encode.")
+	}
+
+	// Decoding should also fail
+	ss.PodUnionArray = &[]test_unions.PodUnion{
+		&test_unions.PodUnionFInt8{8},
+		&test_unions.PodUnionFInt16{16},
+		&test_unions.PodUnionFUint64{64},
+		&test_unions.PodUnionFBool{true},
+		&test_unions.PodUnionFEnum{test_unions.AnEnum_Second},
+	}
+	bytes, handles, _ := encode(t, &ss)
+
+	// Set first union to null.
+	bytes[8*10] = 0
+	var decoded test_unions.SmallStruct
+	decoder := bindings.NewDecoder(bytes, handles)
+	err = decoded.Decode(decoder)
+	if typedErr := err.(*bindings.ValidationError); typedErr.ErrorCode != bindings.UnexpectedNullUnion {
+		t.Fatalf("Null non-nullable should have failed to decode.")
+	}
+}
+
+func TestUnionInMap(t *testing.T) {
+	var ss, out test_unions.SmallStruct
+	ss.PodUnionMap = &map[string]test_unions.PodUnion{
+		"eight":      &test_unions.PodUnionFInt8{8},
+		"sixteen":    &test_unions.PodUnionFInt16{16},
+		"sixty-four": &test_unions.PodUnionFUint64{64},
+		"bool":       &test_unions.PodUnionFBool{true},
+		"enum":       &test_unions.PodUnionFEnum{test_unions.AnEnum_Second},
+	}
+	check(t, &ss, &out)
 }
