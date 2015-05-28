@@ -79,27 +79,33 @@ def BuildGoAndroid():
   shutil.copytree(go_linux, go_android)
   shutil.rmtree(os.path.join(go_android, 'bin'))
   shutil.rmtree(os.path.join(go_android, 'pkg'))
-  # Paths required for compilers. These paths can be encoded as a part of the go
-  # binaries, so it's better to keep them relative.
-  os.chdir(os.path.join(go_android, 'src'))
-  third_party = os.path.relpath(os.path.join(MOJO_DIR, 'third_party'))
-  ndk_path = os.path.join(third_party, 'android_tools', 'ndk')
-  ndk_cc = os.path.join(ndk_path, 'toolchains', NDK_TOOLCHAIN,
-      'prebuilt', 'linux-x86_64', 'bin', 'arm-linux-androideabi-gcc')
-  sysroot = os.path.join(ndk_path, 'platforms', NDK_PLATFORM, 'arch-arm')
+  # Prepare the Android NDK tool chain.
+  os.chdir(os.path.join(MOJO_DIR, 'third_party', 'android_tools', 'ndk'))
+  ndk_out_dir = tempfile.mkdtemp(prefix='android_ndk')
+  script_path = os.path.join('build', 'tools', 'make-standalone-toolchain.sh')
+  make_toolchain_cmd = ['bash', script_path, '--platform=%s' % NDK_PLATFORM,
+                        '--toolchain=%s' % NDK_TOOLCHAIN,
+                        '--install-dir=%s' % ndk_out_dir]
+  if not RunCommand(make_toolchain_cmd):
+    print "Faild to build the Android NDK tool chain."
+    sys.exit(1)
   # Configure environment variables.
+  cc = os.path.join(ndk_out_dir, 'bin', 'arm-linux-androideabi-gcc')
   env = os.environ.copy()
-  env["GOPATH"] = go_linux
   env["GOROOT"] = go_linux
-  env["CC_FOR_TARGET"] = '%s --sysroot %s' % (ndk_cc, sysroot)
+  env["GOROOT_BOOTSTRAP"] = go_linux
+  env["CC_FOR_TARGET"] = '%s' % cc
+  env["CGO_ENABLED"] = '1'
   env["GOOS"] = 'android'
   env["GOARCH"] = 'arm'
   env["GOARM"] = '7'
   # Build go tool.
+  os.chdir(os.path.join(go_android, 'src'))
   make_command = ['bash', 'make.bash']
   if not RunCommand(make_command, env=env):
     print "Failed to make go tool for android."
     sys.exit(1)
+  shutil.rmtree(ndk_out_dir)
 
 def Compress():
   """Compresses the go tool into tar.gz and generates sha1 code, renames the
