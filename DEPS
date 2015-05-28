@@ -24,7 +24,7 @@ vars = {
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': '15308f469a704c45d15567fa69cd94ce07ad0e1b',
-  'dart_revision': '45606',
+  'dart_revision': '7c02eae5ec835c410682182bd380791f69b5eb8d',
   'dart_observatory_packages_revision': '45565',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
@@ -64,14 +64,8 @@ deps = {
   'src/v8':
     Var('chromium_git') + '/v8/v8.git' + '@' +  Var('v8_revision'),
 
-  'src/dart/runtime':
-    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/runtime' + '@' + Var('dart_revision'),
-
-  'src/dart/sdk/lib':
-    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/sdk/lib' + '@' + Var('dart_revision'),
-
-  'src/dart/tools':
-    Var('dart_svn') + '/svn/branches/bleeding_edge/dart/tools' + '@' + Var('dart_revision'),
+  'src/dart':
+    Var('chromium_git') + '/external/github.com/dart-lang/sdk.git' + '@' + Var('dart_revision'),
 
   'src/dart/third_party/observatory_pub_packages':
     Var('dart_svn') + '/svn/third_party/observatory_pub_packages' + '@' +
