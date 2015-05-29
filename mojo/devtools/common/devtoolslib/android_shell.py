@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import atexit
+import hashlib
 import itertools
 import json
 import logging
@@ -11,6 +12,7 @@ import os.path
 import random
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urlparse
@@ -198,16 +200,47 @@ class AndroidShell(Shell):
         stdout=self.verbose_pipe)
     self.adb_running_as_root = True
 
+  def _IsShellPackageInstalled(self):
+    # Adb should print one line if the package is installed and return empty
+    # string otherwise.
+    return len(subprocess.check_output(self._CreateADBCommand([
+        'shell', 'pm', 'list', 'packages', MOJO_SHELL_PACKAGE_NAME]))) > 0
+
   def InstallApk(self, shell_apk_path):
     """Installs the apk on the device.
+
+    This method computes checksum of the APK
+    and skips the installation if the fingerprint matches the one saved on the
+    device upon the previous installation.
 
     Args:
       shell_apk_path: Path to the shell Android binary.
     """
-    subprocess.check_call(
-        self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
-                                MOJO_SHELL_PACKAGE_NAME]),
-        stdout=self.verbose_pipe)
+    device_sha1_path = '/sdcard/%s/%s.sha1' % (MOJO_SHELL_PACKAGE_NAME,
+                                               'MojoShell')
+    apk_sha1 = hashlib.sha1(open(shell_apk_path, 'rb').read()).hexdigest()
+    device_apk_sha1 = subprocess.check_output(self._CreateADBCommand([
+        'shell', 'cat', device_sha1_path]))
+    do_install = (apk_sha1 != device_apk_sha1 or
+                  not self._IsShellPackageInstalled())
+
+    if do_install:
+      subprocess.check_call(
+          self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
+                                  MOJO_SHELL_PACKAGE_NAME]),
+          stdout=self.verbose_pipe)
+
+      # Update the stamp on the device.
+      with tempfile.NamedTemporaryFile() as fp:
+        fp.write(apk_sha1)
+        fp.flush()
+        subprocess.check_call(self._CreateADBCommand(['push', fp.name,
+                                                      device_sha1_path]),
+                              stdout=self.verbose_pipe)
+    else:
+      # To ensure predictable state after running InstallApk(), we need to stop
+      # the shell here, as this is what "adb install" implicitly does.
+      self.StopShell()
 
   def SetUpLocalOrigin(self, local_dir, fixed_port=True):
     """Sets up a local http server to serve files in |local_dir| along with
