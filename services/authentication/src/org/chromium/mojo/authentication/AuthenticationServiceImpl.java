@@ -141,7 +141,12 @@ behalf.
     @Override
     public void selectAccount(final SelectAccountResponse callback) {
         String[] accountTypes = new String[] {"com.google"};
-        String message = "Select an account to use with application: " + mConsumerURL;
+        String message = null;
+        if (mConsumerURL.equals("")) {
+            message = "Select an account to use with mojo shell";
+        } else {
+            message = "Select an account to use with application: " + mConsumerURL;
+        }
         Intent accountPickerIntent = AccountPicker.newChooseAccountIntent(
                 null, null, accountTypes, false, message, null, null, null);
 
