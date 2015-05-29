@@ -8,8 +8,8 @@
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom.h"
-#include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
+#include "services/authenticating_url_loader/authenticating_url_loader_factory_impl.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -25,17 +25,9 @@ enum RequestAuthorizationState {
 class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
                                     public ErrorHandler {
  public:
-  AuthenticatingURLLoaderImpl(
-      InterfaceRequest<AuthenticatingURLLoader> request,
-      authentication::AuthenticationService* authentication_service,
-      NetworkService* network_service,
-      std::map<GURL, std::string>* cached_tokens,
-      const Callback<void(AuthenticatingURLLoaderImpl*)>&
-          connection_error_callback);
+  AuthenticatingURLLoaderImpl(InterfaceRequest<AuthenticatingURLLoader> request,
+                              AuthenticatingURLLoaderFactoryImpl* factory);
   ~AuthenticatingURLLoaderImpl() override;
-
-  void SetAuthenticationService(
-      authentication::AuthenticationService* authentication_service);
 
  private:
   // AuthenticatingURLLoader methods:
@@ -52,14 +44,10 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
 
   void FollowRedirectInternal();
 
-  void OnAccountSelected(String username, String error);
-
-  void OnOAuth2TokenReceived(String token, String error);
+  void OnOAuth2TokenReceived(std::string token);
 
   Binding<AuthenticatingURLLoader> binding_;
-  authentication::AuthenticationService* authentication_service_;
-  NetworkService* network_service_;
-  Callback<void(AuthenticatingURLLoaderImpl*)> connection_error_callback_;
+  AuthenticatingURLLoaderFactoryImpl* factory_;
   URLLoaderPtr url_loader_;
   URLResponsePtr pending_response_;
   RequestAuthorizationState request_authorization_state_;
@@ -67,10 +55,7 @@ class AuthenticatingURLLoaderImpl : public AuthenticatingURLLoader,
   bool auto_follow_redirects_;
   bool bypass_cache_;
   Array<HttpHeaderPtr> headers_;
-  String username_;
-  String token_;
   Callback<void(URLResponsePtr)> pending_request_callback_;
-  std::map<GURL, std::string>* cached_tokens_;
 };
 
 }  // namespace mojo

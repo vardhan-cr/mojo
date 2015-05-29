@@ -12,17 +12,10 @@ namespace mojo {
 
 AuthenticatingURLLoaderImpl::AuthenticatingURLLoaderImpl(
     InterfaceRequest<AuthenticatingURLLoader> request,
-    authentication::AuthenticationService* authentication_service,
-    NetworkService* network_service,
-    std::map<GURL, std::string>* cached_tokens,
-    const Callback<void(AuthenticatingURLLoaderImpl*)>&
-        connection_error_callback)
+    AuthenticatingURLLoaderFactoryImpl* factory)
     : binding_(this, request.Pass()),
-      authentication_service_(authentication_service),
-      network_service_(network_service),
-      connection_error_callback_(connection_error_callback),
-      request_authorization_state_(REQUEST_INITIAL),
-      cached_tokens_(cached_tokens) {
+      factory_(factory),
+      request_authorization_state_(REQUEST_INITIAL) {
   binding_.set_error_handler(this);
 }
 
@@ -45,10 +38,11 @@ void AuthenticatingURLLoaderImpl::Start(
   bypass_cache_ = request->bypass_cache;
   headers_ = request->headers.Clone();
   pending_request_callback_ = callback;
-  if (cached_tokens_->find(url_.GetOrigin()) != cached_tokens_->end()) {
+  std::string token = factory_->GetCachedToken(url_);
+  if (token != "") {
     auto auth_header = HttpHeader::New();
     auth_header->name = "Authorization";
-    auth_header->value = "Bearer " + (*cached_tokens_)[url_.GetOrigin()];
+    auth_header->value = "Bearer " + token;
     request->headers.push_back(auth_header.Pass());
   }
   StartNetworkRequest(request.Pass());
@@ -68,7 +62,7 @@ void AuthenticatingURLLoaderImpl::FollowRedirect(
         "called when auto_follow_redirects has been set";
   }
 
-  if (username_ || (request_authorization_state_ != REQUEST_INITIAL)) {
+  if (request_authorization_state_ != REQUEST_INITIAL) {
     error = "Not in the right state to follow a redirect";
   }
 
@@ -83,21 +77,20 @@ void AuthenticatingURLLoaderImpl::FollowRedirect(
 }
 
 void AuthenticatingURLLoaderImpl::StartNetworkRequest(URLRequestPtr request) {
-  network_service_->CreateURLLoader(mojo::GetProxy(&url_loader_));
+  factory_->network_service()->CreateURLLoader(mojo::GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
                      base::Bind(&AuthenticatingURLLoaderImpl::OnLoadComplete,
                                 base::Unretained(this)));
 }
 
 void AuthenticatingURLLoaderImpl::OnConnectionError() {
-  connection_error_callback_.Run(this);
-  // The callback deleted this object.
+  factory_->OnURLLoaderError(this);
+  // The factory deleted this object.
 }
 
 void AuthenticatingURLLoaderImpl::OnLoadComplete(URLResponsePtr response) {
   if (response->redirect_url) {
     url_ = GURL(response->redirect_url);
-    username_ = nullptr;
     request_authorization_state_ = REQUEST_INITIAL;
 
     if (auto_follow_redirects_) {
@@ -112,7 +105,7 @@ void AuthenticatingURLLoaderImpl::OnLoadComplete(URLResponsePtr response) {
 
   url_loader_.reset();
 
-  if (response->status_code != 401 || !authentication_service_ ||
+  if (response->status_code != 401 ||
       request_authorization_state_ == REQUEST_USED_FRESH_AUTH_SERVICE_TOKEN) {
     pending_request_callback_.Run(response.Pass());
     return;
@@ -120,71 +113,39 @@ void AuthenticatingURLLoaderImpl::OnLoadComplete(URLResponsePtr response) {
 
   pending_response_ = response.Pass();
 
+  DCHECK(request_authorization_state_ == REQUEST_INITIAL ||
+         request_authorization_state_ ==
+             REQUEST_USED_CURRENT_AUTH_SERVICE_TOKEN);
   if (request_authorization_state_ == REQUEST_INITIAL) {
-    DCHECK(!username_);
     request_authorization_state_ = REQUEST_USED_CURRENT_AUTH_SERVICE_TOKEN;
-    authentication_service_->SelectAccount(
-        base::Bind(&AuthenticatingURLLoaderImpl::OnAccountSelected,
-                   base::Unretained(this)));
-    return;
+  } else {
+    request_authorization_state_ = REQUEST_USED_FRESH_AUTH_SERVICE_TOKEN;
   }
-
-  DCHECK(request_authorization_state_ ==
-         REQUEST_USED_CURRENT_AUTH_SERVICE_TOKEN);
-  // Clear the cached token in case the failure was due to that token being
-  // stale and try again. If a fresh token doesn't work, we'll have to give up.
-  DCHECK(authentication_service_);
-  DCHECK(username_);
-  authentication_service_->ClearOAuth2Token(token_);
-  token_ = String();
-  request_authorization_state_ = REQUEST_USED_FRESH_AUTH_SERVICE_TOKEN;
-  OnAccountSelected(username_, String());
+  factory_->RetrieveToken(
+      url_, base::Bind(&AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived,
+                       base::Unretained(this)));
+  return;
 }
 
 void AuthenticatingURLLoaderImpl::FollowRedirectInternal() {
   DCHECK(url_.is_valid());
   DCHECK(url_loader_);
-  DCHECK(!username_);
   DCHECK(request_authorization_state_ == REQUEST_INITIAL);
 
   url_loader_->FollowRedirect(base::Bind(
       &AuthenticatingURLLoaderImpl::OnLoadComplete, base::Unretained(this)));
 }
 
-void AuthenticatingURLLoaderImpl::OnAccountSelected(String username,
-                                                    String error) {
-  if (error) {
-    LOG(ERROR) << "Error (" << error << ") while selecting account";
+void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(std::string token) {
+  if (token.empty()) {
+    LOG(ERROR) << "Error while getting token";
     pending_request_callback_.Run(pending_response_.Pass());
     return;
   }
 
-  DCHECK(username);
-  username_ = username;
-
-  mojo::Array<mojo::String> scopes(1);
-  scopes[0] = "https://www.googleapis.com/auth/userinfo.email";
-
-  authentication_service_->GetOAuth2Token(
-      username, scopes.Pass(),
-      base::Bind(&AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived,
-                 base::Unretained(this)));
-}
-
-void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(String token,
-                                                        String error) {
-  if (error) {
-    LOG(ERROR) << "Error (" << error << ") while getting token";
-    pending_request_callback_.Run(pending_response_.Pass());
-    return;
-  }
-
-  DCHECK(token);
-  (*cached_tokens_)[url_.GetOrigin()] = token;
-  token_ = token;
   auto auth_header = HttpHeader::New();
   auth_header->name = "Authorization";
-  auth_header->value = "Bearer " + token.get();
+  auth_header->value = "Bearer " + token;
   Array<HttpHeaderPtr> headers;
   if (headers_)
     headers = headers_.Clone();
@@ -197,17 +158,6 @@ void AuthenticatingURLLoaderImpl::OnOAuth2TokenReceived(String token,
   request->headers = headers.Pass();
 
   StartNetworkRequest(request.Pass());
-}
-
-void AuthenticatingURLLoaderImpl::SetAuthenticationService(
-    authentication::AuthenticationService* authentication_service) {
-  authentication_service_ = authentication_service;
-  if (authentication_service || !pending_response_)
-    return;
-
-  // We need authentication but have no AuthenticationService.
-  DCHECK(!pending_request_callback_.is_null());
-  pending_request_callback_.Run(pending_response_.Pass());
 }
 
 }  // namespace mojo
