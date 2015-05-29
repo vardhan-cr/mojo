@@ -22,7 +22,7 @@ class ChannelEndpoint;
 class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
  public:
   // A class that can inspect and optionally handle messages of type
-  // |kTypeEndpointClient| received from either |ChannelEndpoint|.
+  // |Type::ENDPOINT_CLIENT| received from either |ChannelEndpoint|.
   //
   // Instances of implementations of this class will be owned by
   // |EndpointRelayer|s.
@@ -34,8 +34,8 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
     virtual ~Filter() {}
 
     // Called by |EndpointRelayer::OnReadMessage()| for messages of type
-    // |kTypeEndpointClient|. This is only called by the |EndpointRelayer| if it
-    // is still the client of the sending endpoint.
+    // |Type::ENDPOINT_CLIENT|. This is only called by the |EndpointRelayer| if
+    // it is still the client of the sending endpoint.
     //
     // |endpoint| (which will not be null) is the |ChannelEndpoint|
     // corresponding to |port| (i.e., the endpoint the message was received
@@ -70,7 +70,7 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
   void Init(ChannelEndpoint* endpoint0, ChannelEndpoint* endpoint1);
 
   // Sets (or resets) the filter, which can (optionally) handle/filter
-  // |kTypeEndpointClient| messages (see |Filter| above).
+  // |Type::ENDPOINT_CLIENT| messages (see |Filter| above).
   void SetFilter(scoped_ptr<Filter> filter);
 
   // |ChannelEndpointClient| methods:

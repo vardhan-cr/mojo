@@ -212,9 +212,10 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
 
   // Helper for |SerializeEndpoint...()|: Attaches the given (non-bootstrap)
   // endpoint to this channel and runs it. This assigns the endpoint both local
-  // and remote IDs. This will also send a |kSubtypeChannelAttachAndRunEndpoint|
-  // message to the remote side to tell it to create an endpoint as well. This
-  // returns the *remote* ID (one for which |is_remote()| returns true).
+  // and remote IDs. This will also send a
+  // |Subtype::CHANNEL_ATTACH_AND_RUN_ENDPOINT| message to the remote side to
+  // tell it to create an endpoint as well. This returns the *remote* ID (one
+  // for which |is_remote()| returns true).
   //
   // TODO(vtl): Maybe limit the number of attached message pipes.
   ChannelEndpointId AttachAndRunEndpoint(

@@ -13,9 +13,10 @@ namespace system {
 namespace test {
 
 // Makes a test message. It will be of type
-// |MessageInTransit::kTypeEndpointClient| and subtype
-// |MessageInTransit::kSubtypeEndpointClientData|, and contain data associated
-// with |id| (so that test messages with different |id|s are distinguishable).
+// |MessageInTransit::Type::ENDPOINT_CLIENT| and subtype
+// |MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA|, and contain data
+// associated with |id| (so that test messages with different |id|s are
+// distinguishable).
 scoped_ptr<MessageInTransit> MakeTestMessage(unsigned id);
 
 // Verifies a test message: ASSERTs that |message| is non-null, and EXPECTs that

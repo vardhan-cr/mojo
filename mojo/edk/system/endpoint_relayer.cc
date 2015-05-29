@@ -46,7 +46,7 @@ bool EndpointRelayer::OnReadMessage(unsigned port, MessageInTransit* message) {
 
   unsigned peer_port = GetPeerPort(port);
 
-  if (filter_ && message->type() == MessageInTransit::kTypeEndpointClient) {
+  if (filter_ && message->type() == MessageInTransit::Type::ENDPOINT_CLIENT) {
     if (filter_->OnReadMessage(endpoints_[port].get(),
                                endpoints_[peer_port].get(), message))
       return true;

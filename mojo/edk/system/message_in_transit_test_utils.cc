@@ -12,22 +12,23 @@ namespace test {
 
 scoped_ptr<MessageInTransit> MakeTestMessage(unsigned id) {
   return make_scoped_ptr(
-      new MessageInTransit(MessageInTransit::kTypeEndpointClient,
-                           MessageInTransit::kSubtypeEndpointClientData,
+      new MessageInTransit(MessageInTransit::Type::ENDPOINT_CLIENT,
+                           MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
                            static_cast<uint32_t>(sizeof(id)), &id));
 }
 
 void VerifyTestMessage(MessageInTransit* message, unsigned id) {
   ASSERT_TRUE(message);
-  EXPECT_EQ(MessageInTransit::kTypeEndpointClient, message->type());
-  EXPECT_EQ(MessageInTransit::kSubtypeEndpointClientData, message->subtype());
+  EXPECT_EQ(MessageInTransit::Type::ENDPOINT_CLIENT, message->type());
+  EXPECT_EQ(MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
+            message->subtype());
   EXPECT_EQ(sizeof(id), message->num_bytes());
   EXPECT_EQ(id, *static_cast<const unsigned*>(message->bytes()));
 }
 
 bool IsTestMessage(MessageInTransit* message, unsigned* id) {
-  if (message->type() != MessageInTransit::kTypeEndpointClient ||
-      message->subtype() != MessageInTransit::kSubtypeEndpointClientData ||
+  if (message->type() != MessageInTransit::Type::ENDPOINT_CLIENT ||
+      message->subtype() != MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA ||
       message->num_bytes() != sizeof(*id))
     return false;
 

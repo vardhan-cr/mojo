@@ -173,7 +173,7 @@ void Channel::DetachEndpoint(ChannelEndpoint* endpoint,
     // Send a remove message outside the lock.
   }
 
-  if (!SendControlMessage(MessageInTransit::kSubtypeChannelRemoveEndpoint,
+  if (!SendControlMessage(MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT,
                           local_id, remote_id)) {
     HandleLocalError(base::StringPrintf(
         "Failed to send message to remove remote endpoint (local ID %u, remote "
@@ -279,11 +279,11 @@ void Channel::OnReadMessage(
   DCHECK(creation_thread_checker_.CalledOnValidThread());
 
   switch (message_view.type()) {
-    case MessageInTransit::kTypeEndpointClient:
-    case MessageInTransit::kTypeEndpoint:
+    case MessageInTransit::Type::ENDPOINT_CLIENT:
+    case MessageInTransit::Type::ENDPOINT:
       OnReadMessageForEndpoint(message_view, platform_handles.Pass());
       break;
-    case MessageInTransit::kTypeChannel:
+    case MessageInTransit::Type::CHANNEL:
       OnReadMessageForChannel(message_view, platform_handles.Pass());
       break;
     default:
@@ -329,8 +329,8 @@ void Channel::OnReadMessageForEndpoint(
     const MessageInTransit::View& message_view,
     embedder::ScopedPlatformHandleVectorPtr platform_handles) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
-  DCHECK(message_view.type() == MessageInTransit::kTypeEndpointClient ||
-         message_view.type() == MessageInTransit::kTypeEndpoint);
+  DCHECK(message_view.type() == MessageInTransit::Type::ENDPOINT_CLIENT ||
+         message_view.type() == MessageInTransit::Type::ENDPOINT);
 
   ChannelEndpointId local_id = message_view.destination_id();
   if (!local_id.is_valid()) {
@@ -389,7 +389,7 @@ void Channel::OnReadMessageForChannel(
     const MessageInTransit::View& message_view,
     embedder::ScopedPlatformHandleVectorPtr platform_handles) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
-  DCHECK_EQ(message_view.type(), MessageInTransit::kTypeChannel);
+  DCHECK_EQ(message_view.type(), MessageInTransit::Type::CHANNEL);
 
   // Currently, no channel messages take platform handles.
   if (platform_handles) {
@@ -400,7 +400,7 @@ void Channel::OnReadMessageForChannel(
   }
 
   switch (message_view.subtype()) {
-    case MessageInTransit::kSubtypeChannelAttachAndRunEndpoint:
+    case MessageInTransit::Subtype::CHANNEL_ATTACH_AND_RUN_ENDPOINT:
       DVLOG(2) << "Handling channel message to attach and run endpoint (local "
                   "ID " << message_view.destination_id() << ", remote ID "
                << message_view.source_id() << ")";
@@ -410,7 +410,7 @@ void Channel::OnReadMessageForChannel(
             "Received invalid channel message to attach and run endpoint");
       }
       break;
-    case MessageInTransit::kSubtypeChannelRemoveEndpoint:
+    case MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT:
       DVLOG(2) << "Handling channel message to remove endpoint (local ID "
                << message_view.destination_id() << ", remote ID "
                << message_view.source_id() << ")";
@@ -420,7 +420,7 @@ void Channel::OnReadMessageForChannel(
             "Received invalid channel message to remove endpoint");
       }
       break;
-    case MessageInTransit::kSubtypeChannelRemoveEndpointAck:
+    case MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT_ACK:
       DVLOG(2) << "Handling channel message to ack remove endpoint (local ID "
                << message_view.destination_id() << ", remote ID "
                << message_view.source_id() << ")";
@@ -509,8 +509,9 @@ bool Channel::OnRemoveEndpoint(ChannelEndpointId local_id,
 
   endpoint->DetachFromChannel();
 
-  if (!SendControlMessage(MessageInTransit::kSubtypeChannelRemoveEndpointAck,
-                          local_id, remote_id)) {
+  if (!SendControlMessage(
+          MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT_ACK, local_id,
+          remote_id)) {
     HandleLocalError(base::StringPrintf(
         "Failed to send message to ack remove remote endpoint (local ID %u, "
         "remote ID %u)",
@@ -583,8 +584,9 @@ ChannelEndpointId Channel::AttachAndRunEndpoint(
     local_id_to_endpoint_map_[local_id] = endpoint;
   }
 
-  if (!SendControlMessage(MessageInTransit::kSubtypeChannelAttachAndRunEndpoint,
-                          local_id, remote_id)) {
+  if (!SendControlMessage(
+          MessageInTransit::Subtype::CHANNEL_ATTACH_AND_RUN_ENDPOINT, local_id,
+          remote_id)) {
     HandleLocalError(base::StringPrintf(
         "Failed to send message to run remote endpoint (local ID %u, remote ID "
         "%u)",
@@ -603,7 +605,7 @@ bool Channel::SendControlMessage(MessageInTransit::Subtype subtype,
   DVLOG(2) << "Sending channel control message: subtype " << subtype
            << ", local ID " << local_id << ", remote ID " << remote_id;
   scoped_ptr<MessageInTransit> message(new MessageInTransit(
-      MessageInTransit::kTypeChannel, subtype, 0, nullptr));
+      MessageInTransit::Type::CHANNEL, subtype, 0, nullptr));
   message->set_source_id(local_id);
   message->set_destination_id(remote_id);
   return WriteMessage(message.Pass());

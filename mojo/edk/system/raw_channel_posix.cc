@@ -134,9 +134,9 @@ void RawChannelPosix::EnqueueMessageNoLock(
                  embedder::kPlatformChannelMaxNumHandles;
            i += embedder::kPlatformChannelMaxNumHandles) {
         scoped_ptr<MessageInTransit> fd_message(new MessageInTransit(
-            MessageInTransit::kTypeRawChannel,
-            MessageInTransit::kSubtypeRawChannelPosixExtraPlatformHandles, 0,
-            nullptr));
+            MessageInTransit::Type::RAW_CHANNEL,
+            MessageInTransit::Subtype::RAW_CHANNEL_POSIX_EXTRA_PLATFORM_HANDLES,
+            0, nullptr));
         embedder::ScopedPlatformHandleVectorPtr fds(
             new embedder::PlatformHandleVector(
                 platform_handles->begin() + i,
@@ -158,10 +158,10 @@ void RawChannelPosix::EnqueueMessageNoLock(
 
 bool RawChannelPosix::OnReadMessageForRawChannel(
     const MessageInTransit::View& message_view) {
-  DCHECK_EQ(message_view.type(), MessageInTransit::kTypeRawChannel);
+  DCHECK_EQ(message_view.type(), MessageInTransit::Type::RAW_CHANNEL);
 
   if (message_view.subtype() ==
-      MessageInTransit::kSubtypeRawChannelPosixExtraPlatformHandles) {
+      MessageInTransit::Subtype::RAW_CHANNEL_POSIX_EXTRA_PLATFORM_HANDLES) {
     // We don't need to do anything. |RawChannel| won't extract the platform
     // handles, and they'll be accumulated in |Read()|.
     return true;
