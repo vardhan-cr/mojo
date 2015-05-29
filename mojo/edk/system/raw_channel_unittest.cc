@@ -840,8 +840,8 @@ TEST_F(RawChannelTest, MAYBE_ReadWritePlatformHandles) {
     scoped_ptr<MessageInTransit> message(new MessageInTransit(
         MessageInTransit::kTypeEndpointClient,
         MessageInTransit::kSubtypeEndpointClientData, sizeof(kHello), kHello));
-    message->SetTransportData(
-        make_scoped_ptr(new TransportData(platform_handles.Pass())));
+    message->SetTransportData(make_scoped_ptr(new TransportData(
+        platform_handles.Pass(), rc_write->GetSerializedPlatformHandleSize())));
     EXPECT_TRUE(rc_write->WriteMessage(message.Pass()));
   }
 

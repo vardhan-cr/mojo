@@ -96,7 +96,8 @@ class MOJO_SYSTEM_IMPL_EXPORT TransportData {
   // |Dispatcher|s. (|Header| will be present, and zero except for
   // |num_platform_handles|, and |platform_handle_table_offset| if necessary.)
   explicit TransportData(
-      embedder::ScopedPlatformHandleVectorPtr platform_handles);
+      embedder::ScopedPlatformHandleVectorPtr platform_handles,
+      size_t serialized_platform_handle_size);
 
   ~TransportData();
 

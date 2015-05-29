@@ -62,7 +62,8 @@ struct TransportData::PrivateStructForCompileAsserts {
 };
 
 TransportData::TransportData(scoped_ptr<DispatcherVector> dispatchers,
-                             Channel* channel) {
+                             Channel* channel)
+    : buffer_size_() {
   DCHECK(dispatchers);
   DCHECK(channel);
 
@@ -192,8 +193,11 @@ TransportData::TransportData(scoped_ptr<DispatcherVector> dispatchers,
 }
 
 TransportData::TransportData(
-    embedder::ScopedPlatformHandleVectorPtr platform_handles)
-    : buffer_size_(sizeof(Header)), platform_handles_(platform_handles.Pass()) {
+    embedder::ScopedPlatformHandleVectorPtr platform_handles,
+    size_t serialized_platform_handle_size)
+    : buffer_size_(), platform_handles_(platform_handles.Pass()) {
+  buffer_size_ = sizeof(Header) +
+                 platform_handles_->size() * serialized_platform_handle_size;
   buffer_.reset(static_cast<char*>(
       base::AlignedAlloc(buffer_size_, MessageInTransit::kMessageAlignment)));
   memset(buffer_.get(), 0, buffer_size_);

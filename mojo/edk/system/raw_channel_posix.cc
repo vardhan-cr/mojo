@@ -142,8 +142,8 @@ void RawChannelPosix::EnqueueMessageNoLock(
                 platform_handles->begin() + i,
                 platform_handles->begin() + i +
                     embedder::kPlatformChannelMaxNumHandles));
-        fd_message->SetTransportData(
-            make_scoped_ptr(new TransportData(fds.Pass())));
+        fd_message->SetTransportData(make_scoped_ptr(
+            new TransportData(fds.Pass(), GetSerializedPlatformHandleSize())));
         RawChannel::EnqueueMessageNoLock(fd_message.Pass());
       }
 

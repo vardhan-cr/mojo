@@ -157,8 +157,9 @@ void MasterConnectionManager::Helper::OnReadMessage(
     embedder::ScopedPlatformHandleVectorPtr platform_handles(
         new embedder::PlatformHandleVector());
     platform_handles->push_back(platform_handle.release());
-    response->SetTransportData(
-        make_scoped_ptr(new TransportData(platform_handles.Pass())));
+    response->SetTransportData(make_scoped_ptr(
+        new TransportData(platform_handles.Pass(),
+                          raw_channel_->GetSerializedPlatformHandleSize())));
   }
 
   if (!raw_channel_->WriteMessage(response.Pass())) {
