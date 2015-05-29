@@ -204,6 +204,7 @@ TransportData::TransportData(
   memset(buffer_.get(), 0, buffer_size_);
 
   Header* header = reinterpret_cast<Header*>(buffer_.get());
+  header->platform_handle_table_offset = static_cast<uint32_t>(sizeof(Header));
   header->num_platform_handles =
       static_cast<uint32_t>(platform_handles_->size());
 }
