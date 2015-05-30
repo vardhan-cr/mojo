@@ -119,7 +119,6 @@ func (e *Encoder) pushState(header DataHeader, checkElements bool) {
 		elements:      elements,
 		checkElements: checkElements,
 	})
-	e.writeDataHeader(header)
 }
 
 // state returns encoder state of the top-level value.
@@ -142,6 +141,7 @@ func (e *Encoder) StartArray(length, elementBitSize uint32) {
 	dataSize := dataHeaderSize + bytesForBits(uint64(length)*uint64(elementBitSize))
 	header := DataHeader{uint32(dataSize), length}
 	e.pushState(header, true)
+	e.writeDataHeader(header)
 }
 
 // StartMap starts encoding a map and writes its data header.
@@ -149,6 +149,7 @@ func (e *Encoder) StartArray(length, elementBitSize uint32) {
 // Call |Finish()| after writing keys array and values array.
 func (e *Encoder) StartMap() {
 	e.pushState(mapHeader, false)
+	e.writeDataHeader(mapHeader)
 }
 
 // StartStruct starts encoding a struct and writes its data header.
@@ -157,6 +158,15 @@ func (e *Encoder) StartMap() {
 func (e *Encoder) StartStruct(size, version uint32) {
 	dataSize := dataHeaderSize + int(size)
 	header := DataHeader{uint32(dataSize), version}
+	e.pushState(header, false)
+	e.writeDataHeader(header)
+}
+
+// StartNestedUnion starts encoding a nested union.
+// Note: it doesn't write a pointer or a union header.
+// Call |Finish()| after writing all fields.
+func (e *Encoder) StartNestedUnion() {
+	header := DataHeader{uint32(16), uint32(0)}
 	e.pushState(header, false)
 }
 

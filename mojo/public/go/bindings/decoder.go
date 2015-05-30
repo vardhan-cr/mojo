@@ -149,6 +149,18 @@ func (d *Decoder) StartStruct() (DataHeader, error) {
 	return header, nil
 }
 
+// StartNestedUnion starts decoding a union.
+// Note: it doesn't read a pointer to the encoded struct or the union header.
+// Call |Finish()| after reading the header and data.
+func (d *Decoder) StartNestedUnion() error {
+	// We have to trick pushState into claiming 16 bytes.
+	header := DataHeader{uint32(24), uint32(0)}
+	if err := d.pushState(header, false); err != nil {
+		return err
+	}
+	return nil
+}
+
 // ReadUnionHeader reads the union header and returns the union's size and tag.
 func (d *Decoder) ReadUnionHeader() (uint32, uint32, error) {
 	if err := ensureElementBitSizeAndCapacity(d.state(), 64); err != nil {

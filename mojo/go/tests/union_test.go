@@ -54,6 +54,10 @@ func TestObjectUnion(t *testing.T) {
 		&test_unions.ObjectUnionFArrayInt8{[]int8{1, 2, 3, 4}},
 		&test_unions.ObjectUnionFMapInt8{map[string]int8{"hello": 1, "world": 2}},
 		&test_unions.ObjectUnionFNullable{},
+		&test_unions.ObjectUnionFPodUnion{&test_unions.PodUnionFInt8{8}},
+		&test_unions.ObjectUnionFPodUnion{&test_unions.PodUnionFInt64{64}},
+		&test_unions.ObjectUnionFPodUnion{&test_unions.PodUnionFBool{true}},
+		&test_unions.ObjectUnionFPodUnion{&test_unions.PodUnionFEnum{test_unions.AnEnum_Second}},
 	}
 
 	for _, union := range tests {
