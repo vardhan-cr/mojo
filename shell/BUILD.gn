@@ -327,10 +327,32 @@ if (is_android) {
     ]
   }
 
+  if (!is_official_build) {
+    manifest_package = "org.chromium.mojo.shell"
+    apk_name = "Mojo Shell (dev)"
+  } else {
+    manifest_package = "io.mojoapps.shell"
+    apk_name = "Mojo Shell"
+  }
+
+  jinja_variables = [
+    "manifest_package=$manifest_package",
+    "apk_name=$apk_name",
+  ]
+
+  mojo_shell_manifest =
+      "$target_gen_dir/mojo_shell_manifest/AndroidManifest.xml"
+
+  jinja_template("mojo_shell_manifest") {
+    variables = jinja_variables
+    input = "android/apk/AndroidManifest.xml.jinja2"
+    output = mojo_shell_manifest
+  }
+
   android_apk("mojo_shell_apk") {
     apk_name = "MojoShell"
 
-    android_manifest = "android/apk/AndroidManifest.xml"
+    android_manifest = mojo_shell_manifest
 
     native_libs = [ "libmojo_shell.so" ]
 

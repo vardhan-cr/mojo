@@ -24,7 +24,12 @@ def BuildDirectoryForConfig(config, src_root):
     subdir += "android_"
     if config.target_cpu != Config.ARCH_ARM:
       subdir += config.target_cpu + "_"
-  subdir += "Debug" if config.is_debug else "Release"
+  if config.is_official_build:
+    subdir += "Official"
+  elif config.is_debug:
+    subdir += "Debug"
+  else:
+    subdir += "Release"
   if config.sanitizer == Config.SANITIZER_ASAN:
     subdir += "_asan"
   if not(config.is_debug) and config.dcheck_always_on:
@@ -40,6 +45,7 @@ def GNArgsForConfig(config):
   gn_args = {}
 
   gn_args["is_debug"] = bool(config.is_debug)
+  gn_args["is_official_build"] = bool(config.is_official_build)
   gn_args["is_asan"] = config.sanitizer == Config.SANITIZER_ASAN
 
   if config.is_clang is not None:
@@ -99,6 +105,7 @@ def ConfigForGNArgs(args):
   """
   config_args = {}
   config_args["is_debug"] = args.get("is_debug", True)
+  config_args["is_official_build"] = args.get("is_official_build", True)
   config_args["sanitizer"] = (
       Config.SANITIZER_ASAN if args.get("is_asan") else None)
   config_args["is_clang"] = args.get("is_clang", False)

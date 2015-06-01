@@ -83,8 +83,11 @@ def _args_to_config(args):
   if 'gn_args' in args:
     additional_args['gn_args'] = args.gn_args
 
+  is_debug = args.debug and not args.official
+
   return Config(target_os=target_os, target_cpu=target_cpu,
-                is_debug=args.debug, dcheck_always_on=args.dcheck_always_on,
+                is_debug=is_debug, is_official_build=args.official,
+                dcheck_always_on=args.dcheck_always_on,
                 **additional_args)
 
 
@@ -222,6 +225,10 @@ def main():
                            default=True, action='store_true')
   debug_group.add_argument('--release', help='Release build', default=False,
                            dest='debug', action='store_false')
+  # The official build is a release build suitable for distribution, with a
+  # different package name.
+  debug_group.add_argument('--official', help='Official build', default=False,
+                           dest='official', action='store_true')
 
   os_group = parent_parser.add_mutually_exclusive_group()
   os_group.add_argument('--android', help='Build for Android',
