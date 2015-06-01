@@ -15,7 +15,6 @@ import sys
 import tempfile
 import threading
 import time
-import urlparse
 
 from devtoolslib.http_server import StartHttpServer
 from devtoolslib.shell import Shell
@@ -37,27 +36,10 @@ LOGCAT_NATIVE_TAGS = [
 
 MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
 
-MAPPING_PREFIX = '--map-origin='
 
 DEFAULT_BASE_PORT = 31337
 
 _logger = logging.getLogger()
-
-
-def _IsMapOrigin(arg):
-  """Returns whether arg is a --map-origin argument."""
-  return arg.startswith(MAPPING_PREFIX)
-
-
-def _Split(l, pred):
-  positive = []
-  negative = []
-  for v in l:
-    if pred(v):
-      positive.append(v)
-    else:
-      negative.append(v)
-  return (positive, negative)
 
 
 def _ExitIfNeeded(process):
@@ -151,41 +133,6 @@ class AndroidShell(Shell):
     atexit.register(_UnmapPort)
     return device_port
 
-  def _StartHttpServerForOriginMapping(self, mapping, port):
-    """If |mapping| points at a local file starts an http server to serve files
-    from the directory and returns the new mapping.
-
-    This is intended to be called for every --map-origin value.
-    """
-    parts = mapping.split('=')
-    if len(parts) != 2:
-      return mapping
-    dest = parts[1]
-    # If the destination is a url, don't map it.
-    if urlparse.urlparse(dest)[0]:
-      return mapping
-    # Assume the destination is a local file. Start a local server that
-    # redirects to it.
-    localUrl = self.ServeLocalDirectory(dest, port)
-    print 'started server at %s for %s' % (dest, localUrl)
-    return parts[0] + '=' + localUrl
-
-  def _StartHttpServerForOriginMappings(self, map_parameters, fixed_port):
-    """Calls _StartHttpServerForOriginMapping for every --map-origin
-    argument.
-    """
-    if not map_parameters:
-      return []
-
-    original_values = list(itertools.chain(
-        *map(lambda x: x[len(MAPPING_PREFIX):].split(','), map_parameters)))
-    sorted(original_values)
-    result = []
-    for i, value in enumerate(original_values):
-      result.append(self._StartHttpServerForOriginMapping(
-          value, DEFAULT_BASE_PORT + 1 + i if fixed_port else 0))
-    return [MAPPING_PREFIX + ','.join(result)]
-
   def _RunAdbAsRoot(self):
     if self.adb_running_as_root:
       return
@@ -277,8 +224,7 @@ class AndroidShell(Shell):
   def StartShell(self,
                  arguments,
                  stdout=None,
-                 on_application_stop=None,
-                 fixed_port=True):
+                 on_application_stop=None):
     """Starts the mojo shell, passing it the given arguments.
 
     The |arguments| list must contain the "--origin=" arg. SetUpLocalOrigin()
@@ -313,12 +259,7 @@ class AndroidShell(Shell):
       self._ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
     # The origin has to be specified whether it's local or external.
     assert any("--origin=" in arg for arg in arguments)
-
-    # Extract map-origin arguments.
-    map_parameters, other_parameters = _Split(arguments, _IsMapOrigin)
-    parameters += other_parameters
-    parameters += self._StartHttpServerForOriginMappings(map_parameters,
-                                                         fixed_port)
+    parameters.extend(arguments)
 
     if parameters:
       encodedParameters = json.dumps(parameters)
@@ -356,7 +297,7 @@ class AndroidShell(Shell):
     (r, w) = os.pipe()
     with os.fdopen(r, "r") as rf:
       with os.fdopen(w, "w") as wf:
-        self.StartShell(arguments, wf, wf.close, False)
+        self.StartShell(arguments, wf, wf.close)
         output = rf.read()
         return None, output
 
