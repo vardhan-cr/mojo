@@ -335,9 +335,26 @@ if (is_android) {
     apk_name = "Mojo Shell"
   }
 
+  if (is_official_build) {
+    # Force GN to re-generate ninja files when a new commit is present.
+    read_file("//.git/index", "")
+    version_code =
+        exec_script("//mojo/public/tools/gn/last_commit_timestamp.py",
+                    [
+                      "--directory",
+                      rebase_path("//", root_build_dir),
+                    ],
+                    "trim string")
+  } else {
+    version_code = "1"
+  }
+  version_name = "0.0.1"
+
   jinja_variables = [
     "manifest_package=$manifest_package",
     "apk_name=$apk_name",
+    "version_code=$version_code",
+    "version_name=$version_name",
   ]
 
   mojo_shell_manifest =
