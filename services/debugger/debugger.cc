@@ -19,17 +19,21 @@
 #include "mojo/services/http_server/public/interfaces/http_server_factory.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
+#include "services/debugger/trace_collector.h"
 #include "services/tracing/tracing.mojom.h"
-#include "sky/tools/debugger/trace_collector.h"
 
-namespace sky {
+// Debugger is a Mojo application that exposes an http server and talks to other
+// mojo apps in response to url requests received by the server. Supported
+// actions include tracing and profiling, allowing to interactively inspect how
+// the shell is performing.
+
 namespace debugger {
 
-class SkyDebugger : public mojo::ApplicationDelegate,
+class Debugger : public mojo::ApplicationDelegate,
                     public http_server::HttpHandler {
  public:
-  SkyDebugger() : is_tracing_(false), app_(nullptr), handler_binding_(this) {}
-  ~SkyDebugger() override {}
+  Debugger() : is_tracing_(false), app_(nullptr), handler_binding_(this) {}
+  ~Debugger() override {}
 
  private:
   // mojo::ApplicationDelegate:
@@ -157,7 +161,7 @@ class SkyDebugger : public mojo::ApplicationDelegate,
 
     is_tracing_ = false;
     tracing_->StopAndFlush();
-    trace_collector_->GetTrace(base::Bind(&SkyDebugger::OnTraceAvailable,
+    trace_collector_->GetTrace(base::Bind(&Debugger::OnTraceAvailable,
                                           base::Unretained(this), callback));
   }
 
@@ -198,14 +202,13 @@ class SkyDebugger : public mojo::ApplicationDelegate,
 
   scoped_ptr<TraceCollector> trace_collector_;
 
-  DISALLOW_COPY_AND_ASSIGN(SkyDebugger);
+  DISALLOW_COPY_AND_ASSIGN(Debugger);
 };
 
 }  // namespace debugger
-}  // namespace sky
 
 MojoResult MojoMain(MojoHandle application_request) {
-  mojo::ApplicationRunnerChromium runner(new sky::debugger::SkyDebugger);
+  mojo::ApplicationRunnerChromium runner(new debugger::Debugger);
   runner.set_message_loop_type(base::MessageLoop::TYPE_IO);
   return runner.Run(application_request);
 }

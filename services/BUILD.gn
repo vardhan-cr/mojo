@@ -7,6 +7,7 @@ group("services") {
     "//services/authenticating_url_loader",
     "//services/clipboard",
     "//services/dart",
+    "//services/debugger",
     "//services/device_info",
     "//services/fake_surfaces",
     "//services/files",

@@ -4,16 +4,8 @@
 
 import("//mojo/public/mojo_application.gni")
 
-group("debugger") {
-  testonly = true
-
-  deps = [
-    ":sky_debugger",
-  ]
-}
-
-mojo_native_application("sky_debugger") {
-  output_name = "sky_debugger"
+mojo_native_application("debugger") {
+  output_name = "debugger"
 
   sources = [
     "debugger.cc",

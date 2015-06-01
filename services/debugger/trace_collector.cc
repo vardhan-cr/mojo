@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "sky/tools/debugger/trace_collector.h"
+#include "services/debugger/trace_collector.h"
 
-namespace sky {
 namespace debugger {
 
 TraceCollector::TraceCollector(mojo::ScopedDataPipeConsumerHandle source)
@@ -42,4 +41,3 @@ std::string TraceCollector::GetTraceAsString() {
 }
 
 }  // namespace debugger
-}  // namespace sky

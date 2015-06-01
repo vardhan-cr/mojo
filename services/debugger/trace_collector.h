@@ -2,15 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_TOOLS_DEBUGGER_TRACE_COLLECTOR_H_
-#define SKY_TOOLS_DEBUGGER_TRACE_COLLECTOR_H_
+#ifndef SERVICES_DEBUGGER_TRACE_COLLECTOR_H_
+#define SERVICES_DEBUGGER_TRACE_COLLECTOR_H_
 
 #include <vector>
 
 #include "base/callback.h"
 #include "mojo/common/data_pipe_drainer.h"
 
-namespace sky {
 namespace debugger {
 
 class TraceCollector : public mojo::common::DataPipeDrainer::Client {
@@ -35,6 +34,5 @@ class TraceCollector : public mojo::common::DataPipeDrainer::Client {
 };
 
 }  // namespace debugger
-}  // namespace sky
 
-#endif  // SKY_TOOLS_DEBUGGER_TRACE_COLLECTOR_H_
+#endif  // SERVICES_DEBUGGER_TRACE_COLLECTOR_H_
