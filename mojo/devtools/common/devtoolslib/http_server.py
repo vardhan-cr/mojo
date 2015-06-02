@@ -14,23 +14,22 @@ import threading
 import SimpleHTTPServer
 import SocketServer
 
-
-ZERO = datetime.timedelta(0)
+_ZERO = datetime.timedelta(0)
 
 
 class UTC_TZINFO(datetime.tzinfo):
   """UTC time zone representation."""
 
   def utcoffset(self, _):
-    return ZERO
+    return _ZERO
 
   def tzname(self, _):
     return "UTC"
 
   def dst(self, _):
-     return ZERO
+     return _ZERO
 
-UTC = UTC_TZINFO()
+_UTC = UTC_TZINFO()
 
 
 class _SilentTCPServer(SocketServer.TCPServer):
@@ -94,10 +93,10 @@ def _GetHandlerClassForPath(base_path):
         if ('If-None-Match' not in self.headers and
             'If-Modified-Since' in self.headers):
           last_modified = datetime.datetime.fromtimestamp(
-              math.floor(os.stat(path).st_mtime), tz=UTC)
+              math.floor(os.stat(path).st_mtime), tz=_UTC)
           ims = datetime.datetime(
               *email.utils.parsedate(self.headers['If-Modified-Since'])[:6],
-              tzinfo=UTC)
+              tzinfo=_UTC)
           if last_modified <= ims:
             self.send_response(304)
             return None

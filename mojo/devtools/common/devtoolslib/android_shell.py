@@ -4,7 +4,6 @@
 
 import atexit
 import hashlib
-import itertools
 import json
 import logging
 import os
@@ -21,7 +20,7 @@ from devtoolslib.shell import Shell
 
 
 # Tags used by mojo shell Java logging.
-LOGCAT_JAVA_TAGS = [
+_LOGCAT_JAVA_TAGS = [
     'AndroidHandler',
     'MojoFileHelper',
     'MojoMain',
@@ -30,14 +29,13 @@ LOGCAT_JAVA_TAGS = [
 ]
 
 # Tags used by native logging reflected in the logcat.
-LOGCAT_NATIVE_TAGS = [
+_LOGCAT_NATIVE_TAGS = [
     'chromium',
 ]
 
-MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
+_MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
 
-
-DEFAULT_BASE_PORT = 31337
+_DEFAULT_BASE_PORT = 31337
 
 _logger = logging.getLogger()
 
@@ -151,7 +149,7 @@ class AndroidShell(Shell):
     # Adb should print one line if the package is installed and return empty
     # string otherwise.
     return len(subprocess.check_output(self._CreateADBCommand([
-        'shell', 'pm', 'list', 'packages', MOJO_SHELL_PACKAGE_NAME]))) > 0
+        'shell', 'pm', 'list', 'packages', _MOJO_SHELL_PACKAGE_NAME]))) > 0
 
   def InstallApk(self, shell_apk_path):
     """Installs the apk on the device.
@@ -163,7 +161,7 @@ class AndroidShell(Shell):
     Args:
       shell_apk_path: Path to the shell Android binary.
     """
-    device_sha1_path = '/sdcard/%s/%s.sha1' % (MOJO_SHELL_PACKAGE_NAME,
+    device_sha1_path = '/sdcard/%s/%s.sha1' % (_MOJO_SHELL_PACKAGE_NAME,
                                                'MojoShell')
     apk_sha1 = hashlib.sha1(open(shell_apk_path, 'rb').read()).hexdigest()
     device_apk_sha1 = subprocess.check_output(self._CreateADBCommand([
@@ -174,7 +172,7 @@ class AndroidShell(Shell):
     if do_install:
       subprocess.check_call(
           self._CreateADBCommand(['install', '-r', shell_apk_path, '-i',
-                                  MOJO_SHELL_PACKAGE_NAME]),
+                                  _MOJO_SHELL_PACKAGE_NAME]),
           stdout=self.verbose_pipe)
 
       # Update the stamp on the device.
@@ -196,7 +194,7 @@ class AndroidShell(Shell):
     """
 
     origin_url = self.ServeLocalDirectory(
-        local_dir, DEFAULT_BASE_PORT if fixed_port else 0)
+        local_dir, _DEFAULT_BASE_PORT if fixed_port else 0)
     return "--origin=" + origin_url
 
   def ServeLocalDirectory(self, local_dir_path, port=0):
@@ -235,7 +233,7 @@ class AndroidShell(Shell):
       atexit.register(self.StopShell)
       self.stop_shell_registered = True
 
-    STDOUT_PIPE = "/data/data/%s/stdout.fifo" % MOJO_SHELL_PACKAGE_NAME
+    STDOUT_PIPE = "/data/data/%s/stdout.fifo" % _MOJO_SHELL_PACKAGE_NAME
 
     cmd = self._CreateADBCommand([
            'shell',
@@ -243,7 +241,7 @@ class AndroidShell(Shell):
            'start',
            '-S',
            '-a', 'android.intent.action.VIEW',
-           '-n', '%s/.MojoShellActivity' % MOJO_SHELL_PACKAGE_NAME])
+           '-n', '%s/.MojoShellActivity' % _MOJO_SHELL_PACKAGE_NAME])
 
     parameters = []
     if stdout or on_application_stop:
@@ -306,7 +304,7 @@ class AndroidShell(Shell):
     subprocess.check_call(self._CreateADBCommand(['shell',
                                                   'am',
                                                   'force-stop',
-                                                  MOJO_SHELL_PACKAGE_NAME]))
+                                                  _MOJO_SHELL_PACKAGE_NAME]))
 
   def CleanLogs(self):
     """Cleans the logs on the device."""
@@ -318,9 +316,9 @@ class AndroidShell(Shell):
     Returns:
       The process responsible for reading the logs.
     """
-    tags = LOGCAT_JAVA_TAGS
+    tags = _LOGCAT_JAVA_TAGS
     if include_native_logs:
-      tags.extend(LOGCAT_NATIVE_TAGS)
+      tags.extend(_LOGCAT_NATIVE_TAGS)
     if self.additional_logcat_tags is not None:
       tags.extend(self.additional_logcat_tags.split(","))
     logcat = subprocess.Popen(
