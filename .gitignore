@@ -37,6 +37,8 @@ v8.log
 /third_party/brotli/src/
 /third_party/colorama/src/
 /third_party/dart-sdk/
+/third_party/dart-pkg/vector_math
+/third_party/dart-pkg/box2d
 /third_party/dejavu-fonts-ttf-2.34/ttf/*.ttf
 /third_party/freetype/
 /third_party/go/tool/

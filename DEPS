@@ -31,6 +31,8 @@ vars = {
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
+  'vector_math_dart_revision': '65915583f7aa606cb47ed265f853c18c60102b81',
+  'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -100,6 +102,12 @@ deps = {
 
   'src/native_client':
     Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
+
+  'src/third_party/dart-pkg/vector_math':
+      Var('chromium_git') + '/external/github.com/google/vector_math.dart.git' + '@' + Var('vector_math_dart_revision'),
+
+  'src/third_party/dart-pkg/box2d':
+      Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
 }
 
 
