@@ -352,7 +352,7 @@ MojoResult MessagePipe::AttachTransportsNoLock(
   for (size_t i = 0; i < transports->size(); i++) {
     if (!(*transports)[i].is_valid())
       continue;
-    if ((*transports)[i].GetType() == Dispatcher::kTypeMessagePipe) {
+    if ((*transports)[i].GetType() == Dispatcher::Type::MESSAGE_PIPE) {
       MessagePipeDispatcherTransport mp_transport((*transports)[i]);
       if (mp_transport.GetMessagePipe() == this) {
         // The other case should have been disallowed by |Core|. (Note: |port|

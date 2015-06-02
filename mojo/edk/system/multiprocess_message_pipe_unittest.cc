@@ -240,7 +240,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
   CHECK_EQ(read_buffer, std::string("go 1"));
   CHECK_EQ(num_dispatchers, 1u);
 
-  CHECK_EQ(dispatchers[0]->GetType(), Dispatcher::kTypeSharedBuffer);
+  CHECK_EQ(dispatchers[0]->GetType(), Dispatcher::Type::SHARED_BUFFER);
 
   scoped_refptr<SharedBufferDispatcher> dispatcher(
       static_cast<SharedBufferDispatcher*>(dispatchers[0].get()));
@@ -424,7 +424,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckPlatformHandleFile) {
   CHECK_GT(num_handles, 0);
 
   for (int i = 0; i < num_handles; ++i) {
-    CHECK_EQ(dispatchers[i]->GetType(), Dispatcher::kTypePlatformHandle);
+    CHECK_EQ(dispatchers[i]->GetType(), Dispatcher::Type::PLATFORM_HANDLE);
 
     scoped_refptr<PlatformHandleDispatcher> dispatcher(
         static_cast<PlatformHandleDispatcher*>(dispatchers[i].get()));

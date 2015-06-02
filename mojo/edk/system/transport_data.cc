@@ -137,8 +137,8 @@ TransportData::TransportData(scoped_ptr<DispatcherVector> dispatchers,
   for (size_t i = 0; i < num_handles; i++) {
     Dispatcher* dispatcher = (*dispatchers)[i].get();
     if (!dispatcher) {
-      static_assert(Dispatcher::kTypeUnknown == 0,
-                    "Value of Dispatcher::kTypeUnknown must be 0");
+      static_assert(static_cast<int32_t>(Dispatcher::Type::UNKNOWN) == 0,
+                    "Value of Dispatcher::Type::UNKNOWN must be 0");
       continue;
     }
 
@@ -166,7 +166,7 @@ TransportData::TransportData(scoped_ptr<DispatcherVector> dispatchers,
 #endif
     } else {
       // Nothing to do on failure, since |buffer_| was cleared, and
-      // |kTypeUnknown| is zero. The handle was simply closed.
+      // |Type::UNKNOWN| is zero. The handle was simply closed.
       LOG(ERROR) << "Failed to serialize handle to remote message pipe";
     }
 

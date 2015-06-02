@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <iosfwd>
+#include <ostream>
 #include <vector>
 
 #include "base/macros.h"
@@ -284,10 +284,19 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
   DISALLOW_COPY_AND_ASSIGN(MessageInTransit);
 };
 
-// Stream operator for |MessageInTransit::Type| and |Subtype| so we can use
-// |CHECK_EQ()|, |EXPECT_EQ()|, etc.
-std::ostream& operator<<(std::ostream& out, MessageInTransit::Type type);
-std::ostream& operator<<(std::ostream& out, MessageInTransit::Subtype subtype);
+// So logging macros and |DCHECK_EQ()|, etc. work.
+MOJO_SYSTEM_IMPL_EXPORT inline std::ostream& operator<<(
+    std::ostream& out,
+    MessageInTransit::Type type) {
+  return out << static_cast<uint16_t>(type);
+}
+
+// So logging macros and |DCHECK_EQ()|, etc. work.
+MOJO_SYSTEM_IMPL_EXPORT inline std::ostream& operator<<(
+    std::ostream& out,
+    MessageInTransit::Subtype subtype) {
+  return out << static_cast<uint16_t>(subtype);
+}
 
 }  // namespace system
 }  // namespace mojo

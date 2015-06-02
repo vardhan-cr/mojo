@@ -205,13 +205,5 @@ void MessageInTransit::UpdateTotalSize() {
   }
 }
 
-std::ostream& operator<<(std::ostream& out, MessageInTransit::Type type) {
-  return out << static_cast<uint16_t>(type);
-}
-
-std::ostream& operator<<(std::ostream& out, MessageInTransit::Subtype subtype) {
-  return out << static_cast<uint16_t>(subtype);
-}
-
 }  // namespace system
 }  // namespace mojo
