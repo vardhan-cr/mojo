@@ -43,7 +43,6 @@ group("sdk") {
     "cpp/environment:standalone",
     "cpp/utility",
     "interfaces/bindings",
-    "interfaces/network",
     "js",
   ]
 
@@ -52,6 +51,10 @@ group("sdk") {
       "cpp/application:standalone",
       "interfaces/application",
     ]
+  }
+
+  if (mojo_use_network_in_sdk) {
+    deps += [ "interfaces/network" ]
   }
 }
 
