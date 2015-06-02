@@ -366,4 +366,15 @@ hooks = [
                 '-s', 'src/third_party/dejavu-fonts-ttf-2.34/ttf/DejaVuSansMono.ttf.sha1',
     ],
   },
+  # Pull keyboard_native resources using checked-in hashes.
+  {
+    'name': 'keyboard_native_resources',
+    'pattern': '',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--no_auth',
+                '--bucket', 'mojo/keyboard_native',
+                '-d', 'src/services/keyboard_native/res',
+    ],
+  },
 ]

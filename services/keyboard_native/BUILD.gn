@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import("//mojo/public/mojo_application.gni")
+import("//mojo/tools/embed/rules.gni")
 
 mojo_native_application("keyboard_native") {
   sources = [
@@ -26,6 +27,10 @@ mojo_native_application("keyboard_native") {
   ]
 
   deps = [
+    ":action_icon",
+    ":delete_icon",
+    ":lower_case_icon",
+    ":upper_case_icon",
     "//base",
     "//mojo/application",
     "//mojo/public/cpp/bindings",
@@ -43,6 +48,31 @@ mojo_native_application("keyboard_native") {
     "//mojo/services/view_manager/public/cpp",
     "//mojo/skia",
     "//skia",
+    "//ui/gfx",
     "//ui/gfx/geometry",
   ]
+}
+
+embed_file("action_icon") {
+  source = "res/Emoticon.png"
+  namespace = "keyboard_native"
+  variable = "kActionIcon"
+}
+
+embed_file("delete_icon") {
+  source = "res/Delete.png"
+  namespace = "keyboard_native"
+  variable = "kDeleteIcon"
+}
+
+embed_file("lower_case_icon") {
+  source = "res/ArrowDown.png"
+  namespace = "keyboard_native"
+  variable = "kLowerCaseIcon"
+}
+
+embed_file("upper_case_icon") {
+  source = "res/ArrowUp.png"
+  namespace = "keyboard_native"
+  variable = "kUpperCaseIcon"
 }

@@ -10,11 +10,15 @@
 
 #include "base/callback.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/public/cpp/bindings/callback.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
-#include "third_party/skia/include/core/SkCanvas.h"
-#include "ui/gfx/geometry/point.h"
-#include "ui/gfx/geometry/rect.h"
+
+class SkCanvas;
+class SkPaint;
+
+namespace gfx {
+class RectF;
+class Point;
+}
 
 namespace keyboard {
 
@@ -29,7 +33,7 @@ class KeyLayout {
 
     // Draws the Key to the SkCanvas with the given SkPaint to the given Rect.
     virtual void Draw(SkCanvas* canvas,
-                      SkPaint paint,
+                      const SkPaint& paint,
                       const gfx::RectF& rect) = 0;
 
     // Converts the Key to its text representation.
@@ -38,6 +42,8 @@ class KeyLayout {
     // Indicate to the Key that a touch up has occurred on it.
     virtual void OnTouchUp() = 0;
   };
+
+  class TextKey;
 
   KeyLayout();
   ~KeyLayout();
@@ -63,23 +69,6 @@ class KeyLayout {
   void OnTouchUp(const gfx::Point& touch_up);
 
  private:
-  // An implementation of Key that draws itself as ASCII text.
-  class TextKey : public Key {
-   public:
-    TextKey(const char* text,
-            base::Callback<void(const TextKey&)> touch_up_callback);
-    ~TextKey() override;
-    void Draw(SkCanvas* canvas, SkPaint paint, const gfx::RectF& rect) override;
-    const char* ToText() const override;
-    void OnTouchUp() override;
-
-   private:
-    const char* text_;
-    base::Callback<void(const TextKey&)> touch_up_callback_;
-
-    DISALLOW_COPY_AND_ASSIGN(TextKey);
-  };
-
   // initializes the *_layout_ vectors.
   void InitLayouts();
 

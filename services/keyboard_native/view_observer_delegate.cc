@@ -15,6 +15,7 @@
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkTypeface.h"
+#include "ui/gfx/geometry/rect_f.h"
 
 namespace keyboard {
 

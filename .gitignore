@@ -77,3 +77,6 @@ v8.log
 # sky tools
 /sky/tools/skygo/linux64/sky_server
 /sky/tools/skygo/mac/sky_server
+
+# downloaded keyboard_native resources.
+/services/keyboard_native/res/*.png
