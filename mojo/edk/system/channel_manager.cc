@@ -97,11 +97,8 @@ scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannelOnIOThread(
 scoped_refptr<MessagePipeDispatcher> ChannelManager::CreateChannel(
     ChannelId channel_id,
     embedder::ScopedPlatformHandle platform_handle,
-    scoped_refptr<base::TaskRunner> io_thread_task_runner,
     const base::Closure& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
-  // TODO(vtl): Remove |io_thread_task_runner| argument.
-  DCHECK_EQ(io_thread_task_runner, io_thread_task_runner_);
   DCHECK(!callback.is_null());
   // (|callback_thread_task_runner| may be null.)
 

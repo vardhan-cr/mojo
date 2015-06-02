@@ -55,7 +55,7 @@ void ChildProcessHost::Start() {
       &platform_handle_for_channel, &launch_data->child_connection_id);
 
   mojo::ScopedMessagePipeHandle handle(mojo::embedder::CreateChannel(
-      platform_handle_for_channel.Pass(), context_->task_runners()->io_runner(),
+      platform_handle_for_channel.Pass(),
       base::Bind(&ChildProcessHost::DidCreateChannel, base::Unretained(this)),
       base::MessageLoop::current()->message_loop_proxy()));
 

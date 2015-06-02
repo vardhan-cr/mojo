@@ -194,15 +194,13 @@ CreateChannelOnIOThread(ScopedPlatformHandle platform_handle,
 using DidCreateChannelCallback = base::Callback<void(ChannelInfo*)>;
 // Creates a channel asynchronously; may be called from any thread.
 // |platform_handle| should be a handle to a connected OS "pipe".
-// |io_thread_task_runner| should be the |TaskRunner| for the I/O thread.
 // |callback| should be the callback to call with the |ChannelInfo*|, which
 // should eventually be passed to |DestroyChannel()| to tear down the channel;
 // the callback will be called using |callback_thread_task_runner| if that is
-// non-null, or otherwise it will be called using |io_thread_task_runner|.
-// Returns a handle to the bootstrap message pipe.
+// non-null, or otherwise it will be posted to the I/O thread. Returns a handle
+// to the bootstrap message pipe.
 MOJO_SYSTEM_IMPL_EXPORT ScopedMessagePipeHandle
 CreateChannel(ScopedPlatformHandle platform_handle,
-              scoped_refptr<base::TaskRunner> io_thread_task_runner,
               const DidCreateChannelCallback& callback,
               scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 

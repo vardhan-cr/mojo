@@ -197,7 +197,7 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
 
     mojo::ScopedMessagePipeHandle host_message_pipe(
         mojo::embedder::CreateChannel(
-            platform_channel.Pass(), app_context->io_runner(),
+            platform_channel.Pass(),
             base::Bind(&ChildControllerImpl::DidCreateChannel,
                        base::Unretained(impl.get())),
             base::MessageLoopProxy::current()));

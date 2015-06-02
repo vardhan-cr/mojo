@@ -315,18 +315,16 @@ ScopedMessagePipeHandle CreateChannelOnIOThread(
 
 ScopedMessagePipeHandle CreateChannel(
     ScopedPlatformHandle platform_handle,
-    scoped_refptr<base::TaskRunner> io_thread_task_runner,
     const DidCreateChannelCallback& callback,
     scoped_refptr<base::TaskRunner> callback_thread_task_runner) {
   DCHECK(platform_handle.is_valid());
-  DCHECK(io_thread_task_runner);
   DCHECK(!callback.is_null());
 
   system::ChannelId channel_id = MakeChannelId();
   scoped_ptr<ChannelInfo> channel_info(new ChannelInfo(channel_id));
   scoped_refptr<system::MessagePipeDispatcher> dispatcher =
       g_channel_manager->CreateChannel(
-          channel_id, platform_handle.Pass(), io_thread_task_runner,
+          channel_id, platform_handle.Pass(),
           base::Bind(callback, base::Unretained(channel_info.release())),
           callback_thread_task_runner);
 

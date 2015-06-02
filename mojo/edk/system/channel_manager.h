@@ -79,17 +79,12 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
       embedder::ScopedPlatformHandle platform_handle);
 
   // Like |CreateChannelOnIOThread()|, but may be called from any thread. On
-  // completion, will call |callback| ("on" |io_thread_task_runner| if
-  // |callback_thread_task_runner| is null else by posted using
-  // |callback_thread_task_runner|). Note: This will always post a task to the
-  // I/O thread, even if |io_thread_task_runner| is the task runner for the
-  // current thread.
-  // TODO(vtl): The |io_thread_task_runner| argument is temporary (we should use
-  // the channel manager's I/O thread).
+  // completion, will call |callback| (using |callback_thread_task_runner| if it
+  // is non-null, else on the I/O thread). Note: This will always post a task to
+  // the I/O thread, even if called from that thread.
   scoped_refptr<MessagePipeDispatcher> CreateChannel(
       ChannelId channel_id,
       embedder::ScopedPlatformHandle platform_handle,
-      scoped_refptr<base::TaskRunner> io_thread_task_runner,
       const base::Closure& callback,
       scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 

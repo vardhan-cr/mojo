@@ -39,20 +39,18 @@ const char kConnectionIdFlag[] = "test-connection-id";
 
 class ScopedTestChannel {
  public:
-  // Creates a channel that lives on a given I/O thread (determined by the given
-  // |TaskRunner|) attached to the given |platform_handle|. After construction,
-  // |bootstrap_message_pipe()| gives the Mojo handle for the bootstrap message
-  // pipe on this channel; it is up to the caller to close this handle.
-  // Note: The I/O thread must outlive this object (and its message loop must
-  // continue pumping messages while this object is alive).
-  ScopedTestChannel(scoped_refptr<base::TaskRunner> io_thread_task_runner,
-                    ScopedPlatformHandle platform_handle)
-      : io_thread_task_runner_(io_thread_task_runner),
-        bootstrap_message_pipe_(MOJO_HANDLE_INVALID),
+  // Creates a channel, which lives on the I/O thread given to
+  // |InitIPCSupport()|. After construction, |bootstrap_message_pipe()| gives
+  // the Mojo handle for the bootstrap message pipe on this channel; it is up to
+  // the caller to close this handle. Note: The I/O thread must outlive this
+  // object (and its message loop must continue pumping messages while this
+  // object is alive).
+  explicit ScopedTestChannel(ScopedPlatformHandle platform_handle)
+      : bootstrap_message_pipe_(MOJO_HANDLE_INVALID),
         event_(true, false),  // Manual reset.
         channel_info_(nullptr) {
     bootstrap_message_pipe_ =
-        CreateChannel(platform_handle.Pass(), io_thread_task_runner_,
+        CreateChannel(platform_handle.Pass(),
                       base::Bind(&ScopedTestChannel::DidCreateChannel,
                                  base::Unretained(this)),
                       nullptr)
@@ -92,8 +90,6 @@ class ScopedTestChannel {
   }
 
   void DidDestroyChannel() { event_.Signal(); }
-
-  scoped_refptr<base::TaskRunner> io_thread_task_runner_;
 
   // Valid from creation until whenever it gets closed (by the "owner" of this
   // object).
@@ -136,12 +132,10 @@ TEST_F(EmbedderTest, ChannelsBasic) {
   mojo::test::ScopedIPCSupport ipc_support(test_io_task_runner());
 
   PlatformChannelPair channel_pair;
-  ScopedTestChannel server_channel(test_io_task_runner(),
-                                   channel_pair.PassServerHandle());
+  ScopedTestChannel server_channel(channel_pair.PassServerHandle());
   MojoHandle server_mp = server_channel.bootstrap_message_pipe();
   EXPECT_NE(server_mp, MOJO_HANDLE_INVALID);
-  ScopedTestChannel client_channel(test_io_task_runner(),
-                                   channel_pair.PassClientHandle());
+  ScopedTestChannel client_channel(channel_pair.PassClientHandle());
   MojoHandle client_mp = client_channel.bootstrap_message_pipe();
   EXPECT_NE(client_mp, MOJO_HANDLE_INVALID);
 
@@ -264,12 +258,10 @@ TEST_F(EmbedderTest, ChannelsHandlePassing) {
   mojo::test::ScopedIPCSupport ipc_support(test_io_task_runner());
 
   PlatformChannelPair channel_pair;
-  ScopedTestChannel server_channel(test_io_task_runner(),
-                                   channel_pair.PassServerHandle());
+  ScopedTestChannel server_channel(channel_pair.PassServerHandle());
   MojoHandle server_mp = server_channel.bootstrap_message_pipe();
   EXPECT_NE(server_mp, MOJO_HANDLE_INVALID);
-  ScopedTestChannel client_channel(test_io_task_runner(),
-                                   channel_pair.PassClientHandle());
+  ScopedTestChannel client_channel(channel_pair.PassClientHandle());
   MojoHandle client_mp = client_channel.bootstrap_message_pipe();
   EXPECT_NE(client_mp, MOJO_HANDLE_INVALID);
 
@@ -491,7 +483,6 @@ TEST_F(EmbedderTest, MAYBE_MultiprocessChannels) {
 
   {
     ScopedTestChannel server_channel(
-        test_io_task_runner(),
         multiprocess_test_helper.server_platform_handle.Pass());
     MojoHandle server_mp = server_channel.bootstrap_message_pipe();
     EXPECT_NE(server_mp, MOJO_HANDLE_INVALID);
@@ -613,8 +604,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessChannelsClient) {
     // probably.
     mojo::test::ScopedIPCSupport ipc_support(test_io_thread.task_runner());
 
-    ScopedTestChannel client_channel(test_io_thread.task_runner(),
-                                     client_platform_handle.Pass());
+    ScopedTestChannel client_channel(client_platform_handle.Pass());
     MojoHandle client_mp = client_channel.bootstrap_message_pipe();
     EXPECT_NE(client_mp, MOJO_HANDLE_INVALID);
     client_channel.WaitForChannelCreationCompletion();
