@@ -23,9 +23,10 @@ class ErrorHandler;
 //
 // This class is thread hostile, as is the local proxy it manages. All calls to
 // this class or the proxy should be from the same thread that created it. If
-// you need to move the proxy to a different thread, extract the message pipe
-// using PassMessagePipe(), pass it to a different thread, and create a new
-// InterfacePtr from that thread.
+// you need to move the proxy to a different thread, extract the
+// InterfacePtrInfo (containing just the message pipe and any version
+// information) using PassInterface(), pass it to a different thread, and
+// create and bind a new InterfacePtr from that thread.
 template <typename Interface>
 class InterfacePtr {
   MOJO_MOVE_ONLY_TYPE(InterfacePtr)
