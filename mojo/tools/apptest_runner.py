@@ -13,8 +13,7 @@ import devtools
 devtools.add_lib_to_path()
 from devtoolslib.android_shell import AndroidShell
 from devtoolslib.linux_shell import LinuxShell
-from devtoolslib.apptest_dart import run_dart_apptest
-from devtoolslib.apptest_gtest import run_gtest_apptest
+from devtoolslib.apptest_runner import run_apptests
 
 from mopy import gtest
 from mopy.config import Config
@@ -40,13 +39,6 @@ def main():
 
   InitLogging(args.verbose_count)
   config = ConfigForGNArgs(ParseGNConfig(args.build_dir))
-
-  _logger.debug("Test list file: %s", args.test_list_file)
-  execution_globals = {"config": config}
-  exec args.test_list_file in execution_globals
-  test_list = execution_globals["tests"]
-  _logger.debug("Test list: %s" % test_list)
-
   paths = Paths(config)
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
@@ -58,36 +50,10 @@ def main():
 
   gtest.set_color()
 
-  exit_code = 0
-  for test_dict in test_list:
-    test = test_dict["test"]
-    test_name = test_dict.get("name", test)
-    test_type = test_dict.get("type", "gtest")
-    test_args = test_dict.get("test-args", [])
-    shell_args = test_dict.get("shell-args", []) + extra_args
-
-    _logger.info("Will start: %s" % test_name)
-    print "Running %s...." % test_name,
-    sys.stdout.flush()
-
-    if test_type == "dart":
-      apptest_result = run_dart_apptest(shell, shell_args, test, test_args)
-    elif test_type == "gtest":
-      apptest_result = run_gtest_apptest(shell, shell_args, test, test_args,
-                                         False)
-    elif test_type == "gtest_isolated":
-      apptest_result = run_gtest_apptest(shell, shell_args, test, test_args,
-                                         True)
-    else:
-      apptest_result = False
-      print "Unrecognized test type in %r" % test_dict
-
-    if not apptest_result:
-      exit_code = 1
-    print "Succeeded" if apptest_result else "Failed"
-    _logger.info("Completed: %s" % test_name)
-
-  return exit_code
+  test_list_globals = {"config": config}
+  exec args.test_list_file in test_list_globals
+  apptests_result = run_apptests(shell, extra_args, test_list_globals["tests"])
+  return 0 if apptests_result else 1
 
 
 if __name__ == '__main__':
