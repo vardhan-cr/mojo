@@ -6,11 +6,11 @@
 import argparse
 import logging
 import sys
-import urlparse
 
 import devtools
 devtools.add_lib_to_path()
 from devtoolslib.android_shell import AndroidShell
+from devtoolslib import shell_arguments
 
 from mopy.config import Config
 from mopy.paths import Paths
@@ -31,41 +31,6 @@ Example: mojo_shell "mojo:js_standalone test.js".
 The value of <handlers> is a comma separated list like:
 text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
 """)
-
-_MAPPING_PREFIX = '--map-origin='
-# When spinning up servers for local origins, we want to use predictable ports
-# so that caching works between subsequent runs with the same command line.
-_MAP_ORIGIN_BASE_PORT = 31338
-
-
-def _IsMapOrigin(arg):
-  """Returns whether |arg| is a --map-origin argument."""
-  return arg.startswith(_MAPPING_PREFIX)
-
-
-def _Split(l, pred):
-  positive = []
-  negative = []
-  for v in l:
-    if pred(v):
-      positive.append(v)
-    else:
-      negative.append(v)
-  return (positive, negative)
-
-
-def _RewriteMapOriginParameter(shell, mapping, device_port):
-  parts = mapping[len(_MAPPING_PREFIX):].split('=')
-  if len(parts) != 2:
-    return mapping
-  dest = parts[1]
-  # If the destination is a url, don't map it.
-  if urlparse.urlparse(dest)[0]:
-    return mapping
-  # Assume the destination is a local directory and serve it.
-  localUrl = shell.ServeLocalDirectory(dest, device_port)
-  print 'started server at %s for %s' % (dest, localUrl)
-  return _MAPPING_PREFIX + parts[0] + '=' + localUrl
 
 
 def main():
@@ -99,16 +64,8 @@ def main():
   shell.InstallApk(paths.target_mojo_shell_path)
   args.append("--origin=" + launcher_args.origin if launcher_args.origin else
               shell.SetUpLocalOrigin(paths.build_dir))
-
-  # Serve the local destinations indicated in map-origin arguments and rewrite
-  # the arguments to point to server urls.
-  map_parameters, other_parameters = _Split(args, _IsMapOrigin)
-  parameters = other_parameters
-  next_port = _MAP_ORIGIN_BASE_PORT
-  for mapping in sorted(map_parameters):
-    parameters.append(_RewriteMapOriginParameter(shell, mapping, next_port))
-    next_port += 1
-  shell.Run(parameters)
+  args = shell_arguments.RewriteMapOriginParameters(shell, args)
+  shell.Run(args)
   return 0
 
 
