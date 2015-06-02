@@ -299,8 +299,17 @@ if (is_android) {
     ]
   }
 
+  if (is_official_build) {
+    icon_dir = "android/apk/res-official"
+  } else {
+    icon_dir = "android/apk/res-dev"
+  }
+
   android_resources("resources") {
-    resource_dirs = [ "android/apk/res" ]
+    resource_dirs = [
+      "android/apk/res",
+      icon_dir,
+    ]
     custom_package = "org.chromium.mojo.shell"
   }
 
