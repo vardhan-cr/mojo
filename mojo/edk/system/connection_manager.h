@@ -6,8 +6,8 @@
 #define MOJO_EDK_SYSTEM_CONNECTION_MANAGER_H_
 
 #include "base/macros.h"
+#include "mojo/edk/system/connection_identifier.h"
 #include "mojo/edk/system/system_impl_export.h"
-#include "mojo/edk/system/unique_identifier.h"
 
 namespace mojo {
 
@@ -17,10 +17,6 @@ class ScopedPlatformHandle;
 }  // namespace embedder
 
 namespace system {
-
-// (Temporary, unique) identifiers for connections, used as they are being
-// brought up:
-using ConnectionIdentifier = UniqueIdentifier;
 
 // Identifiers for processes (note that these are not OS process IDs):
 using ProcessIdentifier = uint64_t;
