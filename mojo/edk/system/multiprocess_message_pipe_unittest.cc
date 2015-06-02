@@ -512,7 +512,7 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
 #if defined(OS_POSIX) && !defined(OS_ANDROID)
 INSTANTIATE_TEST_CASE_P(PipeCount,
                         MultiprocessMessagePipeTestWithPipeCount,
-                        testing::Values(1u, 128u, 255u));
+                        testing::Values(1u, 128u, 140u));
 #endif
 
 }  // namespace
