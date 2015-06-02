@@ -39,13 +39,17 @@ class Debugger : public mojo::ApplicationDelegate,
   // mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     app_ = app;
-    app->ConnectToService("mojo:window_manager", &window_manager_);
 
     // Format: --args-for="app_url command_port"
     if (app->args().size() < 2) {
       LOG(ERROR) << "--args-for required to specify command_port";
       mojo::ApplicationImpl::Terminate();
       return;
+    }
+    if (app->args().size() == 3 && app->args()[2] == "--wm") {
+      // Connect to window manager only if requested, as the user might want to
+      // run the debugger without spawning one.
+      app_->ConnectToService("mojo:window_manager", &window_manager_);
     }
     base::StringToUint(app->args()[1], &command_port_);
     http_server::HttpServerFactoryPtr http_server_factory;
@@ -129,6 +133,9 @@ class Debugger : public mojo::ApplicationDelegate,
   }
 
   void Reload() {
+    if (!window_manager_)
+      return;
+
     // SimpleWindowManager will wire up necessary services on our behalf.
     window_manager_->Embed(url_, nullptr, nullptr);
   }
