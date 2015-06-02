@@ -105,7 +105,7 @@ def ConfigForGNArgs(args):
   """
   config_args = {}
   config_args["is_debug"] = args.get("is_debug", True)
-  config_args["is_official_build"] = args.get("is_official_build", True)
+  config_args["is_official_build"] = args.get("is_official_build", False)
   config_args["sanitizer"] = (
       Config.SANITIZER_ASAN if args.get("is_asan") else None)
   config_args["is_clang"] = args.get("is_clang", False)
