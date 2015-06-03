@@ -6,6 +6,8 @@
 #define MOJO_COMMON_MESSAGE_PUMP_MOJO_H_
 
 #include <map>
+#include <utility>
+#include <vector>
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
@@ -81,6 +83,7 @@ class MessagePumpMojo : public base::MessagePump {
   };
 
   typedef std::map<Handle, Handler> HandleToHandler;
+  typedef std::vector<std::pair<Handle, Handler>> HandleToHandlerList;
 
   // Implementation of Run().
   void DoRunLoop(RunState* run_state, Delegate* delegate);
@@ -98,7 +101,7 @@ class MessagePumpMojo : public base::MessagePump {
 
   void SignalControlPipe(const RunState& run_state);
 
-  WaitState GetWaitState(const RunState& run_state) const;
+  void GetWaitState(const RunState& run_state, WaitState* wait_state) const;
 
   // Returns the deadline for the call to MojoWaitMany().
   MojoDeadline GetDeadlineForWait(const RunState& run_state) const;

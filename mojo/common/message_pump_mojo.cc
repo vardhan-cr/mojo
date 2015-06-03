@@ -53,6 +53,10 @@ struct MessagePumpMojo::RunState {
   ScopedMessagePipeHandle read_handle;
   ScopedMessagePipeHandle write_handle;
 
+  // Cached structures to avoid the heap allocation cost of std::vector<>.
+  scoped_ptr<WaitState> wait_state;
+  scoped_ptr<HandleToHandlerList> cloned_handlers;
+
   bool should_quit;
 };
 
@@ -172,10 +176,13 @@ void MessagePumpMojo::DoRunLoop(RunState* run_state, Delegate* delegate) {
 
 bool MessagePumpMojo::DoInternalWork(const RunState& run_state, bool block) {
   const MojoDeadline deadline = block ? GetDeadlineForWait(run_state) : 0;
-  const WaitState wait_state = GetWaitState(run_state);
+  if (!run_state_->wait_state)
+    run_state_->wait_state.reset(new WaitState);
+  GetWaitState(run_state, run_state_->wait_state.get());
 
   const WaitManyResult wait_many_result =
-      WaitMany(wait_state.handles, wait_state.wait_signals, deadline, nullptr);
+      WaitMany(run_state_->wait_state->handles,
+               run_state_->wait_state->wait_signals, deadline, nullptr);
   const MojoResult result = wait_many_result.result;
   bool did_work = true;
   if (result == MOJO_RESULT_OK) {
@@ -184,18 +191,21 @@ bool MessagePumpMojo::DoInternalWork(const RunState& run_state, bool block) {
       ReadMessageRaw(run_state.read_handle.get(), NULL, NULL, NULL, NULL,
                      MOJO_READ_MESSAGE_FLAG_MAY_DISCARD);
     } else {
-      DCHECK(handlers_.find(wait_state.handles[wait_many_result.index]) !=
+      DCHECK(handlers_.find(
+                 run_state_->wait_state->handles[wait_many_result.index]) !=
              handlers_.end());
       WillSignalHandler();
-      handlers_[wait_state.handles[wait_many_result.index]]
-          .handler->OnHandleReady(wait_state.handles[wait_many_result.index]);
+      handlers_[run_state_->wait_state->handles[wait_many_result.index]]
+          .handler->OnHandleReady(
+              run_state_->wait_state->handles[wait_many_result.index]);
       DidSignalHandler();
     }
   } else {
     switch (result) {
       case MOJO_RESULT_CANCELLED:
       case MOJO_RESULT_FAILED_PRECONDITION:
-        RemoveInvalidHandle(wait_state, result, wait_many_result.index);
+        RemoveInvalidHandle(*run_state_->wait_state, result,
+                            wait_many_result.index);
         break;
       case MOJO_RESULT_DEADLINE_EXCEEDED:
         did_work = false;
@@ -206,13 +216,31 @@ bool MessagePumpMojo::DoInternalWork(const RunState& run_state, bool block) {
         CHECK(false);
     }
   }
+  // To keep memory usage under control, delete the WaitState object at the end
+  // if it's vectors are too big by a factor of 2. Pre-C++11 doesn't have a way
+  // to shrink vectors, so just get rid of them and re-create on the next round.
+  if (run_state_->wait_state->handles.capacity() >
+      2 * run_state_->wait_state->handles.size()) {
+    // NOTE: |handles| and |wait_signals| are always in sync, so it's reasonable
+    // to only check one of those.
+    run_state_->wait_state.reset();
+  }
 
   // Notify and remove any handlers whose time has expired. Make a copy in case
   // someone tries to add/remove new handlers from notification.
-  const HandleToHandler cloned_handlers(handlers_);
+  if (!run_state_->cloned_handlers) {
+    run_state_->cloned_handlers.reset(new HandleToHandlerList);
+  } else {
+    run_state_->cloned_handlers->clear();
+  }
+  run_state_->cloned_handlers->reserve(handlers_.size());
+  for (const auto& handler : handlers_) {
+    run_state_->cloned_handlers->push_back(handler);
+  }
   const base::TimeTicks now(internal::NowTicks());
-  for (HandleToHandler::const_iterator i = cloned_handlers.begin();
-       i != cloned_handlers.end(); ++i) {
+  for (HandleToHandlerList::const_iterator i =
+           run_state_->cloned_handlers->begin();
+       i != run_state_->cloned_handlers->end(); ++i) {
     // Since we're iterating over a clone of the handlers, verify the handler is
     // still valid before notifying.
     if (!i->second.deadline.is_null() && i->second.deadline < now &&
@@ -224,6 +252,10 @@ bool MessagePumpMojo::DoInternalWork(const RunState& run_state, bool block) {
       handlers_.erase(i->first);
       did_work = true;
     }
+  }
+  if (run_state_->cloned_handlers->capacity() >
+      2 * run_state_->cloned_handlers->size()) {
+    run_state_->cloned_handlers.reset();
   }
   return did_work;
 }
@@ -256,18 +288,22 @@ void MessagePumpMojo::SignalControlPipe(const RunState& run_state) {
   CHECK_EQ(MOJO_RESULT_OK, result);
 }
 
-MessagePumpMojo::WaitState MessagePumpMojo::GetWaitState(
-    const RunState& run_state) const {
-  WaitState wait_state;
-  wait_state.handles.push_back(run_state.read_handle.get());
-  wait_state.wait_signals.push_back(MOJO_HANDLE_SIGNAL_READABLE);
+void MessagePumpMojo::GetWaitState(
+    const RunState& run_state,
+    MessagePumpMojo::WaitState* wait_state) const {
+  const size_t num_handles = handlers_.size() + 1;
+  wait_state->handles.clear();
+  wait_state->handles.reserve(num_handles);
+  wait_state->wait_signals.clear();
+  wait_state->wait_signals.reserve(num_handles);
+  wait_state->handles.push_back(run_state.read_handle.get());
+  wait_state->wait_signals.push_back(MOJO_HANDLE_SIGNAL_READABLE);
 
   for (HandleToHandler::const_iterator i = handlers_.begin();
        i != handlers_.end(); ++i) {
-    wait_state.handles.push_back(i->first);
-    wait_state.wait_signals.push_back(i->second.wait_signals);
+    wait_state->handles.push_back(i->first);
+    wait_state->wait_signals.push_back(i->second.wait_signals);
   }
-  return wait_state;
 }
 
 MojoDeadline MessagePumpMojo::GetDeadlineForWait(
