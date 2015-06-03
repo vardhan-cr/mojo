@@ -13,7 +13,6 @@
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "mojo/edk/system/channel_info.h"
 
 namespace base {
 class TaskRunner;
@@ -101,15 +100,13 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   // Shuts down the channel specified by the given ID. This, or
   // |ShutdownChannel()|, should be called once per channel (created using
   // |CreateChannelOnIOThread()| or |CreateChannel()|). This must be called from
-  // the channel's "channel thread", and completes synchronously.
-  // TODO(vtl): "channel thread" will become "this object's I/O thread".
+  // the I/O thread.
   void ShutdownChannelOnIOThread(ChannelId channel_id);
 
   // Like |ShutdownChannelOnIOThread()|, but may be called from any thread. It
-  // will always post a task to the channel's "channel thread", and post
-  // |callback| to |callback_thread_task_runner| (or execute it directly on the
-  // "channel thread" if |callback_thread_task_runner| is null) on completion.
-  // TODO(vtl): "channel thread" will become "this object's I/O thread".
+  // will always post a task to the I/O thread, and post |callback| to
+  // |callback_thread_task_runner| (or execute it directly on the I/O thread if
+  // |callback_thread_task_runner| is null) on completion.
   void ShutdownChannel(
       ChannelId channel_id,
       const base::Closure& callback,
@@ -146,9 +143,9 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   // Note: |Channel| methods should not be called under |lock_|.
   mutable base::Lock lock_;  // Protects the members below.
 
-  // TODO(vtl): Once we give the |ChannelManager| one single I/O thread, we can
-  // get rid of |ChannelInfo| (and just have ref pointers to |Channel|s).
-  base::hash_map<ChannelId, ChannelInfo> channel_infos_;
+  using ChannelIdToChannelMap =
+      base::hash_map<ChannelId, scoped_refptr<Channel>>;
+  ChannelIdToChannelMap channels_;
 
   DISALLOW_COPY_AND_ASSIGN(ChannelManager);
 };
