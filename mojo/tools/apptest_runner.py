@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""A test runner for gtest application tests."""
+"""A test runner for application tests."""
 
 import argparse
 import logging
@@ -14,6 +14,7 @@ devtools.add_lib_to_path()
 from devtoolslib.android_shell import AndroidShell
 from devtoolslib.linux_shell import LinuxShell
 from devtoolslib.apptest_runner import run_apptests
+from devtoolslib import shell_arguments
 
 from mopy import gtest
 from mopy.config import Config
@@ -44,7 +45,8 @@ def main():
   if config.target_os == Config.OS_ANDROID:
     shell = AndroidShell(paths.adb_path)
     shell.InstallApk(paths.target_mojo_shell_path)
-    extra_args.append(shell.SetUpLocalOrigin(paths.build_dir, fixed_port=False))
+    extra_args.extend(shell_arguments.ConfigureLocalOrigin(
+        shell, paths.build_dir, fixed_port=False))
   else:
     shell = LinuxShell(paths.mojo_shell_path)
 

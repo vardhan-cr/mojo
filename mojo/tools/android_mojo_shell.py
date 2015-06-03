@@ -64,11 +64,15 @@ def main():
                        logcat_tags=launcher_args.logcat_tags,
                        verbose_pipe=verbose_pipe)
   shell.InstallApk(paths.target_mojo_shell_path)
-  args.append("--origin=" + launcher_args.origin if launcher_args.origin else
-              shell.SetUpLocalOrigin(paths.build_dir))
+
   args = shell_arguments.RewriteMapOriginParameters(shell, args)
+  if launcher_args.origin:
+    args.append("--origin=" + launcher_args.origin)
+  else:
+    args.extend(shell_arguments.ConfigureLocalOrigin(shell, paths.build_dir))
   if launcher_args.debugger:
     args.extend(shell_arguments.ConfigureDebugger(shell))
+
   shell.Run(args)
   return 0
 

@@ -35,7 +35,6 @@ _LOGCAT_NATIVE_TAGS = [
 
 _MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
 
-_DEFAULT_BASE_PORT = 31337
 
 _logger = logging.getLogger()
 
@@ -188,16 +187,6 @@ class AndroidShell(Shell):
       # the shell here, as this is what "adb install" implicitly does.
       self.StopShell()
 
-  def SetUpLocalOrigin(self, local_dir, fixed_port=True):
-    """Sets up a local http server to serve files in |local_dir| along with
-    device port forwarding. Returns the origin flag to be set when running the
-    shell.
-    """
-
-    origin_url = self.ServeLocalDirectory(
-        local_dir, _DEFAULT_BASE_PORT if fixed_port else 0)
-    return "--origin=" + origin_url
-
   def ServeLocalDirectory(self, local_dir_path, port=0):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
@@ -244,9 +233,11 @@ class AndroidShell(Shell):
                  on_application_stop=None):
     """Starts the mojo shell, passing it the given arguments.
 
-    The |arguments| list must contain the "--origin=" arg. SetUpLocalOrigin()
-    can be used to set up a local directory on the host machine as origin.
-    If |stdout| is not None, it should be a valid argument for subprocess.Popen.
+    Args:
+      arguments: List of arguments for the shell. It must contain the
+          "--origin=" arg.  shell_arguments.ConfigureLocalOrigin() can be used
+          to set up a local directory on the host machine as origin.
+      stdout: Valid argument for subprocess.Popen() or None.
     """
     if not self.stop_shell_registered:
       atexit.register(self.StopShell)
