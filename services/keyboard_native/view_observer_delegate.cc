@@ -16,6 +16,9 @@
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkTypeface.h"
 #include "ui/gfx/geometry/rect_f.h"
+#include "ui/gfx/shadow_value.h"
+#include "ui/gfx/skia_util.h"
+#include "ui/gfx/vector2d.h"
 
 namespace keyboard {
 
@@ -172,6 +175,23 @@ void ViewObserverDelegate::DrawFloatingKey(SkCanvas* canvas,
       float top = pointer_state.second->last_point.y() - (1.5f * row_height);
       SkRect rect = SkRect::MakeLTRB(left, top, left + floating_key_width,
                                      top + row_height);
+
+      // Add shadow beneath the floating key.
+      paint.setStrokeJoin(SkPaint::kRound_Join);
+      int blur = 20;
+      float ratio_x_from_center =
+          (left + (floating_key_width / 2) - (size.width / 2)) /
+          (size.width / 2);
+      float ratio_y_from_center =
+          (top + (row_height / 2) - (size.height / 2)) / (size.height / 2);
+      SkColor color = SkColorSetARGB(0x80, 0, 0, 0);
+      std::vector<gfx::ShadowValue> shadows;
+      shadows.push_back(gfx::ShadowValue(
+          gfx::Vector2d(ratio_x_from_center * 10, ratio_y_from_center * 10),
+          blur, color));
+      skia::RefPtr<SkDrawLooper> looper = gfx::CreateShadowDrawLooper(shadows);
+      paint.setLooper(looper.get());
+
       canvas->drawRect(rect, paint);
 
       skia::RefPtr<SkTypeface> typeface = skia::AdoptRef(

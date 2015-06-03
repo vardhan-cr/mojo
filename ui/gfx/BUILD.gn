@@ -67,6 +67,8 @@ component("gfx") {
     "native_widget_types.h",
     "sequential_id_generator.cc",
     "sequential_id_generator.h",
+    "shadow_value.cc",
+    "shadow_value.h",
     "skia_util.cc",
     "skia_util.h",
     "transform.cc",
