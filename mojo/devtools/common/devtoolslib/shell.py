@@ -22,6 +22,14 @@ class Shell(object):
     """
     raise NotImplementedError()
 
+  def ForwardHostPortToShell(self, host_port):
+    """Forwards a port on the host machine to the same port wherever the shell
+    is running.
+
+    This is a no-op if the shell is running locally.
+    """
+    raise NotImplementedError()
+
   def Run(self, arguments):
     """Runs the shell with given arguments until shell exits, passing the stdout
     mingled with stderr produced by the shell onto the stdout.

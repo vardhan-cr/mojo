@@ -49,6 +49,8 @@ def main():
   parser.add_argument('--target-device', help='Device to run on.')
   parser.add_argument('--logcat-tags', help='Comma-separated list of '
                       'additional logcat tags to display on the console.')
+  parser.add_argument('--debugger', action="store_true",
+                      help='Run with mojo:debugger.')
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
   launcher_args, args = parser.parse_known_args()
@@ -65,6 +67,8 @@ def main():
   args.append("--origin=" + launcher_args.origin if launcher_args.origin else
               shell.SetUpLocalOrigin(paths.build_dir))
   args = shell_arguments.RewriteMapOriginParameters(shell, args)
+  if launcher_args.debugger:
+    args.extend(shell_arguments.ConfigureDebugger(shell))
   shell.Run(args)
   return 0
 

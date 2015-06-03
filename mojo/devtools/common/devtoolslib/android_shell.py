@@ -103,9 +103,12 @@ class AndroidShell(Shell):
     thread = threading.Thread(target=Run, name="StdoutRedirector")
     thread.start()
 
-  def _MapPort(self, device_port, host_port):
+  def _ForwardDevicePortToHost(self, device_port, host_port):
     """Maps the device port to the host port. If |device_port| is 0, a random
-    available port is chosen. Returns the device port.
+    available port is chosen.
+
+    Returns:
+      The device port.
     """
     def _FindAvailablePortOnDevice():
       opened = subprocess.check_output(
@@ -119,12 +122,10 @@ class AndroidShell(Shell):
     if device_port == 0:
       device_port = _FindAvailablePortOnDevice()
     subprocess.check_call(self._CreateADBCommand([
-        "reverse",
-        "tcp:%d" % device_port,
-        "tcp:%d" % host_port]))
+        "reverse", "tcp:%d" % device_port, "tcp:%d" % host_port]))
 
-    unmap_command = self._CreateADBCommand(["reverse", "--remove",
-                     "tcp:%d" % device_port])
+    unmap_command = self._CreateADBCommand([
+        "reverse", "--remove", "tcp:%d" % device_port])
 
     def _UnmapPort():
       subprocess.Popen(unmap_command)
@@ -216,8 +217,26 @@ class AndroidShell(Shell):
     server_address = StartHttpServer(local_dir_path)
 
     print 'local port=%d' % server_address[1]
-    return 'http://127.0.0.1:%d/' % self._MapPort(port,
-                                                  server_address[1])
+    return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
+        port, server_address[1])
+
+  def ForwardHostPortToShell(self, host_port):
+    """Forwards a port on the host machine to the same port wherever the shell
+    is running.
+
+    This is a no-op if the shell is running locally.
+    """
+    assert host_port
+    device_port = host_port
+    subprocess.check_call(self._CreateADBCommand([
+        "forward", 'tcp:%d' % host_port, 'tcp:%d' % device_port]))
+
+    unmap_command = self._CreateADBCommand([
+        "forward", "--remove", "tcp:%d" % device_port])
+
+    def _UnmapPort():
+      subprocess.Popen(unmap_command)
+    atexit.register(_UnmapPort)
 
   def StartShell(self,
                  arguments,

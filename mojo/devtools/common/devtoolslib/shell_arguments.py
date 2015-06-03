@@ -12,6 +12,10 @@ _MAP_ORIGIN_PREFIX = '--map-origin='
 # so that caching works between subsequent runs with the same command line.
 _MAP_ORIGIN_BASE_PORT = 31338
 
+# Port on which the mojo:debugger http server will be available on the host
+# machine.
+_MOJO_DEBUGGER_PORT = 7777
+
 
 def _IsMapOrigin(arg):
   """Returns whether |arg| is a --map-origin argument."""
@@ -63,3 +67,15 @@ def RewriteMapOriginParameters(shell, original_arguments):
     arguments.append(_RewriteMapOriginParameter(shell, mapping, next_port))
     next_port += 1
   return arguments
+
+
+def ConfigureDebugger(shell):
+  """Configures mojo:debugger to run and sets up port forwarding for its http
+  server if the shell is running on a device.
+
+  Returns:
+    Arguments that need to be appended to the shell argument list in order to
+    run with the debugger.
+  """
+  shell.ForwardHostPortToShell(_MOJO_DEBUGGER_PORT)
+  return ['mojo:debugger %d' % _MOJO_DEBUGGER_PORT]
