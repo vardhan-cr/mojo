@@ -9,7 +9,7 @@
 #include "base/time/time.h"
 #include "services/keyboard_native/animation.h"
 #include "third_party/skia/include/core/SkCanvas.h"
-#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_f.h"
 
 namespace keyboard {
 
@@ -20,8 +20,8 @@ class MotionDecayAnimation : public Animation {
   // a line from |start| to |end|.  |duration| must be non-zero.
   MotionDecayAnimation(const base::TimeTicks& start_ticks,
                        const base::TimeDelta& duration,
-                       const gfx::Point& start,
-                       const gfx::Point& end);
+                       const gfx::PointF& start,
+                       const gfx::PointF& end);
   ~MotionDecayAnimation() override;
 
   // Animation implementation.
@@ -31,8 +31,8 @@ class MotionDecayAnimation : public Animation {
  private:
   const base::TimeTicks start_ticks_;
   const base::TimeDelta duration_;
-  const gfx::Point start_;
-  const gfx::Point end_;
+  const gfx::PointF start_;
+  const gfx::PointF end_;
 
   DISALLOW_COPY_AND_ASSIGN(MotionDecayAnimation);
 };

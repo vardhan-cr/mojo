@@ -10,7 +10,7 @@
 #include "base/time/time.h"
 #include "services/keyboard_native/animation.h"
 #include "third_party/skia/include/core/SkCanvas.h"
-#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_f.h"
 
 namespace keyboard {
 
@@ -22,7 +22,7 @@ class MaterialSplashAnimation : public Animation {
   // |origin|.  |duration| must be non-zero.
   MaterialSplashAnimation(const base::TimeTicks& start_ticks,
                           const base::TimeDelta& duration,
-                          const gfx::Point& origin);
+                          const gfx::PointF& origin);
   ~MaterialSplashAnimation() override;
 
   // Animation implementation.
@@ -33,7 +33,7 @@ class MaterialSplashAnimation : public Animation {
   scoped_ptr<TimeInterpolator> time_interpolator_;
   const base::TimeTicks start_ticks_;
   const base::TimeDelta duration_;
-  const gfx::Point origin_;
+  const gfx::PointF origin_;
 
   DISALLOW_COPY_AND_ASSIGN(MaterialSplashAnimation);
 };

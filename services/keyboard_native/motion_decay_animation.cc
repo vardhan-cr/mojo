@@ -9,8 +9,8 @@ namespace keyboard {
 
 MotionDecayAnimation::MotionDecayAnimation(const base::TimeTicks& start_ticks,
                                            const base::TimeDelta& duration,
-                                           const gfx::Point& start,
-                                           const gfx::Point& end)
+                                           const gfx::PointF& start,
+                                           const gfx::PointF& end)
     : start_ticks_(start_ticks), duration_(duration), start_(start), end_(end) {
   DCHECK(!duration.is_zero());
 }
@@ -34,8 +34,8 @@ void MotionDecayAnimation::Draw(SkCanvas* canvas,
       delta_from_start.InMillisecondsF() / duration_.InMillisecondsF();
 
   SkPath path;
-  path.moveTo(static_cast<float>(start_.x()), static_cast<float>(start_.y()));
-  path.lineTo(static_cast<float>(end_.x()), static_cast<float>(end_.y()));
+  path.moveTo(start_.x(), start_.y());
+  path.lineTo(end_.x(), end_.y());
 
   int stroke_width = 25.0f * (1.0f - ratio_complete);
 

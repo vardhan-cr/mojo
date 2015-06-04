@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//mojo/public/mojo_application.gni")
+
 source_set("gpu") {
   sources = [
     "gl_context.cc",
@@ -12,6 +14,8 @@ source_set("gpu") {
     "gl_texture.h",
     "mojo_context_support.cc",
     "mojo_context_support.h",
+    "texture_cache.cc",
+    "texture_cache.h",
     "texture_uploader.cc",
     "texture_uploader.h",
   ]
@@ -35,5 +39,27 @@ source_set("gpu") {
     "//mojo/services/surfaces/public/cpp",
     "//mojo/services/surfaces/public/interfaces",
     "//mojo/services/surfaces/public/interfaces:surface_id",
+  ]
+}
+
+mojo_native_application("apptests") {
+  output_name = "texture_apptests"
+
+  testonly = true
+
+  sources = [
+    "texture_cache_unittest.cc",
+    "texture_uploader_unittest.cc",
+  ]
+
+  deps = [
+    ":gpu",
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/surfaces/public/interfaces:surface_id",
+    "//testing/gtest",
   ]
 }

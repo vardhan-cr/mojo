@@ -18,8 +18,7 @@
 #include "third_party/skia/include/core/SkTypeface.h"
 #include "ui/gfx/codec/png_codec.h"
 #include "ui/gfx/geometry/point.h"
-#include "ui/gfx/geometry/rect.h"
-#include "ui/gfx/geometry/rect_f.h"
+#include "ui/gfx/skia_util.h"
 
 namespace keyboard {
 
@@ -136,13 +135,12 @@ void KeyLayout::SetDeleteCallback(base::Callback<void()> on_delete_callback) {
   on_delete_callback_ = on_delete_callback;
 }
 
-void KeyLayout::SetSize(const mojo::Size& size) {
-  size_ = size;
+void KeyLayout::SetKeyArea(const gfx::RectF& key_area) {
+  key_area_ = key_area;
 }
 
 void KeyLayout::Draw(SkCanvas* canvas) {
-  float row_height =
-      static_cast<float>(size_.height) / static_cast<float>(layout_->size());
+  float row_height = key_area_.height() / static_cast<float>(layout_->size());
 
   skia::RefPtr<SkTypeface> typeface =
       skia::AdoptRef(SkTypeface::CreateFromName("Arial", SkTypeface::kNormal));
@@ -153,16 +151,18 @@ void KeyLayout::Draw(SkCanvas* canvas) {
   text_paint.setAntiAlias(true);
   text_paint.setTextAlign(SkPaint::kCenter_Align);
 
-  canvas->clear(SK_ColorLTGRAY);
+  SkPaint background_paint;
+  background_paint.setColor(SK_ColorLTGRAY);
+  canvas->drawRect(RectFToSkRect(key_area_), background_paint);
 
   SkPaint paint;
   for (size_t row_index = 0; row_index < layout_->size(); row_index++) {
-    float current_top = row_index * row_height;
-    float current_left = 0;
+    float current_top = key_area_.y() + row_index * row_height;
+    float current_left = key_area_.x();
     for (size_t key_index = 0; key_index < (*layout_)[row_index].size();
          key_index++) {
-      float key_width =
-          static_cast<float>(size_.width) * (*layout_)[row_index][key_index];
+      float key_width = static_cast<float>(key_area_.width()) *
+                        (*layout_)[row_index][key_index];
 
       (*key_map_)[row_index][key_index]->Draw(
           canvas, text_paint,
@@ -172,15 +172,15 @@ void KeyLayout::Draw(SkCanvas* canvas) {
   }
 }
 
-KeyLayout::Key* KeyLayout::GetKeyAtPoint(const gfx::Point& point) {
-  if (point.x() < 0 || point.y() < 0 || point.x() >= size_.width ||
-      point.y() >= size_.height) {
+KeyLayout::Key* KeyLayout::GetKeyAtPoint(const gfx::PointF& point) {
+  if (!key_area_.Contains(point)) {
     return nullptr;
   }
 
-  int row_index = point.y() / (size_.height / layout_->size());
-  float width_percent =
-      static_cast<float>(point.x()) / static_cast<float>(size_.width);
+  int row_index =
+      (point.y() - key_area_.y()) / (key_area_.height() / layout_->size());
+  float width_percent = static_cast<float>(point.x() - key_area_.x()) /
+                        static_cast<float>(key_area_.width());
 
   int key_index = 0;
   while (width_percent >= (*layout_)[row_index][key_index]) {
@@ -190,7 +190,7 @@ KeyLayout::Key* KeyLayout::GetKeyAtPoint(const gfx::Point& point) {
   return (*key_map_)[row_index][key_index];
 }
 
-void KeyLayout::OnTouchUp(const gfx::Point& touch_up) {
+void KeyLayout::OnTouchUp(const gfx::PointF& touch_up) {
   Key* key = GetKeyAtPoint(touch_up);
   if (key != nullptr) {
     key->OnTouchUp();

@@ -10,7 +10,7 @@ namespace keyboard {
 
 ClipAnimation::ClipAnimation(const base::TimeTicks& start_ticks,
                              const base::TimeDelta& duration,
-                             const gfx::Point& origin,
+                             const gfx::PointF& origin,
                              const float& end_radius)
     : time_interpolator_(make_scoped_ptr(new FastOutSlowInInterpolator())),
       start_ticks_(start_ticks),

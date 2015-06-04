@@ -11,13 +11,13 @@
 #include "base/callback.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
+#include "ui/gfx/geometry/rect_f.h"
 
 class SkCanvas;
 class SkPaint;
 
 namespace gfx {
-class RectF;
-class Point;
+class PointF;
 }
 
 namespace keyboard {
@@ -56,17 +56,17 @@ class KeyLayout {
   void SetDeleteCallback(base::Callback<void()> on_delete_callback);
 
   // Sets the dimensions the keyboard will draw itself into.
-  void SetSize(const mojo::Size& size);
+  void SetKeyArea(const gfx::RectF& key_area);
 
   // Draws the keyboard to the SkCanvas.
   void Draw(SkCanvas* canvas);
 
   // Returns the Key at the given Point.  Returns nullptr if no key is at that
   // Point.
-  Key* GetKeyAtPoint(const gfx::Point& point);
+  Key* GetKeyAtPoint(const gfx::PointF& point);
 
   // Indicate to the keyboard that a touch up has occurred at the given Point.
-  void OnTouchUp(const gfx::Point& touch_up);
+  void OnTouchUp(const gfx::PointF& touch_up);
 
  private:
   // initializes the *_layout_ vectors.
@@ -96,7 +96,7 @@ class KeyLayout {
 
   base::Callback<void(const std::string&)> on_text_callback_;
   base::Callback<void()> on_delete_callback_;
-  mojo::Size size_;
+  gfx::RectF key_area_;
   std::vector<std::vector<float>>* layout_;
   std::vector<std::vector<float>> letters_layout_;
   std::vector<std::vector<float>> symbols_layout_;

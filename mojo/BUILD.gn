@@ -68,6 +68,7 @@ group("tests") {
     "//services/clipboard:apptests",
     "//services/dart/dart_apptests",
     "//services/files:apptests",
+    "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
     "//services/http_server:apptests",
     "//services/reaper:tests",

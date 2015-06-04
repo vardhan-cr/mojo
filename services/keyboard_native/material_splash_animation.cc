@@ -11,7 +11,7 @@ namespace keyboard {
 MaterialSplashAnimation::MaterialSplashAnimation(
     const base::TimeTicks& start_ticks,
     const base::TimeDelta& duration,
-    const gfx::Point& origin)
+    const gfx::PointF& origin)
     : time_interpolator_(make_scoped_ptr(new FastOutSlowInInterpolator())),
       start_ticks_(start_ticks),
       duration_(duration),

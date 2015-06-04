@@ -8,7 +8,9 @@
 
 #include "base/bind.h"
 #include "base/sys_info.h"
+#include "mojo/gpu/gl_texture.h"
 #include "mojo/public/cpp/application/application_impl.h"
+#include "mojo/public/cpp/application/connect.h"
 #include "mojo/skia/ganesh_surface.h"
 #include "services/keyboard_native/clip_animation.h"
 #include "services/keyboard_native/keyboard_service_impl.h"
@@ -35,14 +37,20 @@ mojo::Size ToSize(const mojo::Rect& rect) {
 ViewObserverDelegate::ViewObserverDelegate()
     : keyboard_service_impl_(nullptr),
       view_(nullptr),
+      id_namespace_(0u),
+      surface_id_(1u),
       key_layout_(),
       needs_draw_(false),
       frame_pending_(false),
+      floating_key_height_(0.0f),
+      floating_key_width_(0.0f),
       weak_factory_(this) {
   key_layout_.SetTextCallback(
       base::Bind(&ViewObserverDelegate::OnText, weak_factory_.GetWeakPtr()));
   key_layout_.SetDeleteCallback(
       base::Bind(&ViewObserverDelegate::OnDelete, weak_factory_.GetWeakPtr()));
+  submit_frame_callback_ = base::Bind(&ViewObserverDelegate::OnFrameComplete,
+                                      weak_factory_.GetWeakPtr());
 }
 
 ViewObserverDelegate::~ViewObserverDelegate() {
@@ -53,6 +61,18 @@ void ViewObserverDelegate::SetKeyboardServiceImpl(
   keyboard_service_impl_ = keyboard_service_impl;
 }
 
+void ViewObserverDelegate::SetIdNamespace(uint32_t id_namespace) {
+  id_namespace_ = id_namespace;
+  UpdateSurfaceIds();
+}
+
+void ViewObserverDelegate::UpdateSurfaceIds() {
+  auto surface_id = mojo::SurfaceId::New();
+  surface_id->id_namespace = id_namespace_;
+  surface_id->local = surface_id_;
+  view_->SetSurfaceId(surface_id.Pass());
+}
+
 void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
   if (view_ != nullptr) {
     view_->RemoveObserver(this);
@@ -60,9 +80,18 @@ void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
   view_ = view;
   view_->AddObserver(this);
   gl_context_ = mojo::GLContext::Create(shell);
+  mojo::ResourceReturnerPtr resource_returner;
+  texture_cache_.reset(new mojo::TextureCache(gl_context_, &resource_returner));
   gr_context_.reset(new mojo::GaneshContext(gl_context_));
-  texture_uploader_.reset(new mojo::TextureUploader(this, shell, gl_context_));
-
+  mojo::ServiceProviderPtr surfaces_service_provider;
+  shell->ConnectToApplication("mojo:surfaces_service",
+                              mojo::GetProxy(&surfaces_service_provider),
+                              nullptr);
+  mojo::ConnectToService(surfaces_service_provider.get(), &surface_);
+  surface_->SetResourceReturner(resource_returner.Pass());
+  surface_->CreateSurface(surface_id_);
+  surface_->GetIdNamespace(base::Bind(&ViewObserverDelegate::SetIdNamespace,
+                                      base::Unretained(this)));
   IssueDraw();
 }
 
@@ -76,7 +105,12 @@ void ViewObserverDelegate::OnDelete() {
 
 void ViewObserverDelegate::UpdateState(int32 pointer_id,
                                        int action,
-                                       const gfx::Point& touch_point) {
+                                       const gfx::PointF& touch_point) {
+  // Ignore touches outside of key area.
+  if (!key_area_.Contains(touch_point)) {
+    return;
+  }
+
   base::TimeTicks current_ticks = base::TimeTicks::Now();
 
   auto it2 = active_pointer_state_.find(pointer_id);
@@ -99,14 +133,9 @@ void ViewObserverDelegate::UpdateState(int32 pointer_id,
   }
 }
 
-// mojo::TextureUploader::Client implementation.
-void ViewObserverDelegate::OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) {
-  view_->SetSurfaceId(surface_id.Pass());
-}
-
-void ViewObserverDelegate::DrawKeysToCanvas(const mojo::Size& size,
+void ViewObserverDelegate::DrawKeysToCanvas(const gfx::RectF& key_area,
                                             SkCanvas* canvas) {
-  key_layout_.SetSize(size);
+  key_layout_.SetKeyArea(key_area);
   key_layout_.Draw(canvas);
 }
 
@@ -114,13 +143,16 @@ void ViewObserverDelegate::DrawState() {
   base::TimeTicks current_ticks = base::TimeTicks::Now();
   mojo::Size size = ToSize(view_->bounds());
   mojo::GaneshContext::Scope scope(gr_context_.get());
-  mojo::GaneshSurface surface(
-      gr_context_.get(),
-      make_scoped_ptr(new mojo::GLTexture(gl_context_, size)));
+  scoped_ptr<mojo::TextureCache::TextureInfo> texture_info(
+      texture_cache_->GetTexture(size).Pass());
+  mojo::GaneshSurface surface(gr_context_.get(),
+                              texture_info->Texture().Pass());
 
   gr_context_.get()->gr()->resetContext(kTextureBinding_GrGLBackendState);
 
   SkCanvas* canvas = surface.canvas();
+
+  canvas->clear(SK_ColorTRANSPARENT);
 
   // If we have a clip animation it must go first as only things drawn after the
   // clip is set will be clipped.
@@ -131,12 +163,33 @@ void ViewObserverDelegate::DrawState() {
       clip_animation_.reset();
     }
   }
-  DrawKeysToCanvas(size, canvas);
+
+  // clip keys and animations to the key area.
+  canvas->clipRect(SkRect::MakeXYWH(key_area_.x(), key_area_.y(),
+                                    key_area_.width(), key_area_.height()));
+  DrawKeysToCanvas(key_area_, canvas);
   DrawAnimations(canvas, current_ticks);
-  DrawFloatingKey(canvas, size);
+
+  // reset clip to whatever the clip animation sets.
+  canvas->clipRect(SkRect::MakeXYWH(0, 0, size.width, size.height),
+                   SkRegion::kReplace_Op);
+  if (clip_animation_) {
+    if (!clip_animation_->IsDone(current_ticks)) {
+      clip_animation_->Draw(canvas, current_ticks);
+    } else {
+      clip_animation_.reset();
+    }
+  }
+
+  DrawFloatingKey(canvas, floating_key_height_, floating_key_width_);
 
   canvas->flush();
-  texture_uploader_->Upload(surface.TakeTexture());
+  scoped_ptr<mojo::GLTexture> surface_texture(surface.TakeTexture().Pass());
+  mojo::FramePtr frame = mojo::TextureUploader::GetUploadFrame(
+      gl_context_, texture_info->ResourceId(), surface_texture);
+  texture_cache_->NotifyPendingResourceReturn(texture_info->ResourceId(),
+                                              surface_texture.Pass());
+  surface_->SubmitFrame(surface_id_, frame.Pass(), submit_frame_callback_);
 }
 
 void ViewObserverDelegate::DrawAnimations(
@@ -158,7 +211,8 @@ void ViewObserverDelegate::DrawAnimations(
 }
 
 void ViewObserverDelegate::DrawFloatingKey(SkCanvas* canvas,
-                                           const mojo::Size& size) {
+                                           float floating_key_height,
+                                           float floating_key_width) {
   if (active_pointer_ids_.empty()) {
     return;
   }
@@ -168,22 +222,22 @@ void ViewObserverDelegate::DrawFloatingKey(SkCanvas* canvas,
         pointer_state.second->last_point_valid) {
       SkPaint paint;
       paint.setColor(SK_ColorYELLOW);
-      float row_height = static_cast<float>(size.height) / 4.0f;
-      float floating_key_width = static_cast<float>(size.width) / 7.0f;
       float left =
           pointer_state.second->last_point.x() - (floating_key_width / 2);
-      float top = pointer_state.second->last_point.y() - (1.5f * row_height);
+      float top =
+          pointer_state.second->last_point.y() - (0.45f * key_area_.height());
       SkRect rect = SkRect::MakeLTRB(left, top, left + floating_key_width,
-                                     top + row_height);
+                                     top + floating_key_height);
 
       // Add shadow beneath the floating key.
       paint.setStrokeJoin(SkPaint::kRound_Join);
       int blur = 20;
       float ratio_x_from_center =
-          (left + (floating_key_width / 2) - (size.width / 2)) /
-          (size.width / 2);
+          (left + (floating_key_width / 2) - (key_area_.width() / 2)) /
+          (key_area_.width() / 2);
       float ratio_y_from_center =
-          (top + (row_height / 2) - (size.height / 2)) / (size.height / 2);
+          (top + (floating_key_height / 2) - (key_area_.height() / 2)) /
+          (key_area_.height() / 2);
       SkColor color = SkColorSetARGB(0x80, 0, 0, 0);
       std::vector<gfx::ShadowValue> shadows;
       shadows.push_back(gfx::ShadowValue(
@@ -199,12 +253,12 @@ void ViewObserverDelegate::DrawFloatingKey(SkCanvas* canvas,
       SkPaint text_paint;
       text_paint.setTypeface(typeface.get());
       text_paint.setColor(SK_ColorBLACK);
-      text_paint.setTextSize(row_height / 1.7f);
+      text_paint.setTextSize(floating_key_height / 1.7f);
       text_paint.setAntiAlias(true);
       text_paint.setTextAlign(SkPaint::kCenter_Align);
       pointer_state.second->last_key->Draw(
           canvas, text_paint,
-          gfx::RectF(left, top, floating_key_width, row_height));
+          gfx::RectF(left, top, floating_key_width, floating_key_height));
     }
   }
 }
@@ -230,11 +284,27 @@ void ViewObserverDelegate::OnFrameComplete() {
 void ViewObserverDelegate::OnViewBoundsChanged(mojo::View* view,
                                                const mojo::Rect& old_bounds,
                                                const mojo::Rect& new_bounds) {
-  // Upon resize, kick off a clip animation centered on our new bounds with a
-  // radius equal to the length from a corner of to the center of the new
-  // bounds.
+  surface_->DestroySurface(surface_id_);
+  surface_id_++;
+  surface_->CreateSurface(surface_id_);
+  UpdateSurfaceIds();
+
+  floating_key_height_ = static_cast<float>(new_bounds.height) / 5.0f;
+  floating_key_width_ = static_cast<float>(new_bounds.width) / 8.0f;
+
+  // One third of our height will be used for overlapping views behind us.  Only
+  // the floating key will be drawn into that area.  The remaining two thirds
+  // will be the key area.
+  float overlap = new_bounds.height / 3.0f;
+  key_area_ =
+      gfx::RectF(0, overlap, new_bounds.width, new_bounds.height - overlap);
+
+  // Upon resize, kick off a clip animation centered on our key area with a
+  // radius equal to the length from a corner of the new bounds to the center of
+  // the key area.
   base::TimeTicks current_ticks = base::TimeTicks::Now();
-  gfx::Point center(new_bounds.width / 2.0f, new_bounds.height / 2.0f);
+  gfx::PointF center(key_area_.width() / 2.0f,
+                     overlap + (key_area_.height() / 2.0f));
   float radius = sqrt(new_bounds.width / 2.0f * new_bounds.width / 2.0f +
                       new_bounds.height / 2.0f * new_bounds.height / 2.0f);
   clip_animation_.reset(
@@ -246,7 +316,7 @@ void ViewObserverDelegate::OnViewBoundsChanged(mojo::View* view,
 void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
                                             const mojo::EventPtr& event) {
   if (event->pointer_data) {
-    gfx::Point point(event->pointer_data->x, event->pointer_data->y);
+    gfx::PointF point(event->pointer_data->x, event->pointer_data->y);
 
     if (event->action == mojo::EVENT_TYPE_POINTER_UP) {
       key_layout_.OnTouchUp(point);
@@ -269,10 +339,10 @@ void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
         active_pointer_ids_.push_back(event->pointer_data->pointer_id);
         PointerState* pointer_state = new PointerState();
         pointer_state->last_key = nullptr;
-        pointer_state->last_point = gfx::Point();
+        pointer_state->last_point = gfx::PointF();
         pointer_state->last_point_valid = false;
-        active_pointer_state_[event->pointer_data->pointer_id] =
-            make_scoped_ptr(pointer_state);
+        active_pointer_state_[event->pointer_data->pointer_id].reset(
+            pointer_state);
       }
     }
 

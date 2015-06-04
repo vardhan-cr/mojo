@@ -37,6 +37,10 @@ tests = [
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
   {
+    "test": "mojo:texture_apptests",
+    "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
+  },
+  {
     "test": "mojo:mojo_view_manager_client_apptests",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
