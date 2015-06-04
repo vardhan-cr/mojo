@@ -30,4 +30,21 @@ if (is_android) {
       "authentication_impl_db.mojom",
     ]
   }
+} else {
+  import("//mojo/public/mojo_application.gni")
+
+  mojo_native_application("authentication") {
+    sources = [
+      "dummy_authentication_app.cc",
+    ]
+
+    deps = [
+      "//mojo/common",
+      "//mojo/public/cpp/application",
+      "//mojo/public/cpp/application:standalone",
+      "//mojo/public/cpp/bindings",
+      "//mojo/public/cpp/system",
+      "//mojo/services/authentication/public/interfaces",
+    ]
+  }
 }

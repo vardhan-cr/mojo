@@ -5,6 +5,7 @@
 group("services") {
   deps = [
     "//services/authenticating_url_loader",
+    "//services/authentication",
     "//services/clipboard",
     "//services/dart",
     "//services/debugger",
@@ -29,7 +30,6 @@ group("services") {
   if (is_android) {
     deps += [
       "//services/android:java_handler",
-      "//services/authentication",
       "//services/location",
       "//services/sensors",
     ]
