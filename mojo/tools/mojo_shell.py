@@ -10,12 +10,13 @@ import sys
 import devtools
 devtools.add_lib_to_path()
 from devtoolslib.android_shell import AndroidShell
+from devtoolslib.linux_shell import LinuxShell
 from devtoolslib import shell_arguments
 
 from mopy.config import Config
 from mopy.paths import Paths
 
-USAGE = ("android_mojo_shell.py "
+USAGE = ("mojo_shell.py "
          "[--args-for=<mojo-app>] "
          "[--content-handlers=<handlers>] "
          "[--enable-external-applications] "
@@ -37,7 +38,8 @@ def main():
   logging.basicConfig()
 
   parser = argparse.ArgumentParser(usage=USAGE)
-
+  parser.add_argument('--android', help='Run on Android',
+                      action='store_true')
   debug_group = parser.add_mutually_exclusive_group()
   debug_group.add_argument('--debug', help='Debug build (default)',
                            default=True, action='store_true')
@@ -46,30 +48,40 @@ def main():
   parser.add_argument('--target-cpu', help='CPU architecture to run for.',
                       choices=['x64', 'x86', 'arm'])
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
-  parser.add_argument('--target-device', help='Device to run on.')
-  parser.add_argument('--logcat-tags', help='Comma-separated list of '
-                      'additional logcat tags to display on the console.')
   parser.add_argument('--debugger', action="store_true",
                       help='Run with mojo:debugger.')
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
+
+  # Android-only arguments.
+  parser.add_argument('--target-device', help='Device to run on.')
+  parser.add_argument('--logcat-tags', help='Comma-separated list of '
+                      'additional logcat tags to display on the console.')
+
   launcher_args, args = parser.parse_known_args()
+  if launcher_args.android:
+    config = Config(target_os=Config.OS_ANDROID,
+                    target_cpu=launcher_args.target_cpu,
+                    is_debug=launcher_args.debug)
+    paths = Paths(config)
+    verbose_pipe = sys.stdout if launcher_args.verbose else None
+    shell = AndroidShell(paths.adb_path, launcher_args.target_device,
+                         logcat_tags=launcher_args.logcat_tags,
+                         verbose_pipe=verbose_pipe)
+    shell.InstallApk(paths.target_mojo_shell_path)
 
-  config = Config(target_os=Config.OS_ANDROID,
-                  target_cpu=launcher_args.target_cpu,
-                  is_debug=launcher_args.debug)
-  paths = Paths(config)
-  verbose_pipe = sys.stdout if launcher_args.verbose else None
-  shell = AndroidShell(paths.adb_path, launcher_args.target_device,
-                       logcat_tags=launcher_args.logcat_tags,
-                       verbose_pipe=verbose_pipe)
-  shell.InstallApk(paths.target_mojo_shell_path)
+    args = shell_arguments.RewriteMapOriginParameters(shell, args)
+    if not launcher_args.origin:
+      args.extend(shell_arguments.ConfigureLocalOrigin(shell, paths.build_dir))
+  else:
+    config = Config(target_os=Config.OS_LINUX,
+                    target_cpu=launcher_args.target_cpu,
+                    is_debug=launcher_args.debug)
+    paths = Paths(config)
+    shell = LinuxShell(paths.mojo_shell_path)
 
-  args = shell_arguments.RewriteMapOriginParameters(shell, args)
   if launcher_args.origin:
     args.append("--origin=" + launcher_args.origin)
-  else:
-    args.extend(shell_arguments.ConfigureLocalOrigin(shell, paths.build_dir))
   if launcher_args.debugger:
     args.extend(shell_arguments.ConfigureDebugger(shell))
 
