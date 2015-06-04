@@ -16,21 +16,41 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 
 import org.chromium.mojo.application.ShellHelper;
+import org.chromium.mojo.bindings.DeserializationException;
+import org.chromium.mojo.bindings.Message;
 import org.chromium.mojo.bindings.SideEffectFreeCloseable;
 import org.chromium.mojo.intent.IntentReceiver;
 import org.chromium.mojo.intent.IntentReceiverManager;
 import org.chromium.mojo.intent.IntentReceiverManager.RegisterActivityResultReceiverResponse;
 import org.chromium.mojo.system.Core;
+import org.chromium.mojo.system.Handle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.mojo.Shell;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implementation of AuthenticationService from services/authentication/authentication.mojom
  */
 public class AuthenticationServiceImpl
         extends SideEffectFreeCloseable implements AuthenticationService {
+    // The current version of the database. This must be incremented each time Db definition in
+    // authentication_impl_db.mojom is changed in a non backward-compatible way.
+    private static final int VERSION = 0;
+
+    // Type of google accounts.
+    private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
+
+    // Type of the accounts that this service allows the user to pick.
+    private static final String[] ACCOUNT_TYPES = new String[] {GOOGLE_ACCOUNT_TYPE};
+
     /**
      * An callback that takes a serialized intent, add the intent the shell needs to send and start
      * the container intent.
@@ -38,8 +58,7 @@ public class AuthenticationServiceImpl
     private final class RegisterActivityResultReceiverCallback
             implements RegisterActivityResultReceiverResponse {
         /**
-         * The intent that the requesting application needs to be run by shell on its
-behalf.
+         * The intent that the requesting application needs to be run by shell on its behalf.
          */
         private final Intent mIntent;
 
@@ -61,6 +80,8 @@ behalf.
     private final Activity mContext;
     private final String mConsumerURL;
     private final IntentReceiverManager mIntentReceiverManager;
+    private Db mDb = null;
+    private File mDbFile = null;
 
     public AuthenticationServiceImpl(Context context, Core core, String consumerURL, Shell shell) {
         mContext = (Activity) context;
@@ -136,11 +157,24 @@ behalf.
     }
 
     /**
-     * @see AuthenticationService#selectAccount(AuthenticationService.SelectAccountResponse)
+     * @see AuthenticationService#selectAccount(boolean,
+     *      AuthenticationService.SelectAccountResponse)
      */
     @Override
-    public void selectAccount(final SelectAccountResponse callback) {
-        String[] accountTypes = new String[] {"com.google"};
+    public void selectAccount(boolean returnLastSelected, final SelectAccountResponse callback) {
+        if (returnLastSelected) {
+            Db db = getDb();
+            String username = db.lastSelectedAccounts.get(mConsumerURL);
+            if (username != null) {
+                try {
+                    GoogleAuthUtil.getAccountId(mContext, username);
+                    callback.call(username, null);
+                    return;
+                } catch (final GoogleAuthException | IOException e) {
+                }
+            }
+        }
+
         String message = null;
         if (mConsumerURL.equals("")) {
             message = "Select an account to use with mojo shell";
@@ -148,7 +182,7 @@ behalf.
             message = "Select an account to use with application: " + mConsumerURL;
         }
         Intent accountPickerIntent = AccountPicker.newChooseAccountIntent(
-                null, null, accountTypes, false, message, null, null, null);
+                null, null, ACCOUNT_TYPES, false, message, null, null, null);
 
         mIntentReceiverManager.registerActivityResultReceiver(new IntentReceiver() {
             SelectAccountResponse mPendingCallback = callback;
@@ -175,6 +209,7 @@ behalf.
                 }
                 mPendingCallback.call(username, error);
                 mPendingCallback = null;
+                updateDb(username);
             }
         }, new RegisterActivityResultReceiverCallback(accountPickerIntent));
     }
@@ -196,5 +231,65 @@ behalf.
         p.unmarshall(bytes, 0, bytes.length);
         p.setDataPosition(0);
         return Intent.CREATOR.createFromParcel(p);
+    }
+
+    private File getDbFile() {
+        if (mDbFile != null) {
+            return mDbFile;
+        }
+        File home = new File(System.getenv("HOME"));
+        File configDir = new File(home, ".mojo_authentication");
+        configDir.mkdirs();
+        mDbFile = new File(configDir, "db");
+        return mDbFile;
+    }
+
+    private Db getDb() {
+        if (mDb != null) {
+            return mDb;
+        }
+        File dbFile = getDbFile();
+        if (dbFile.exists()) {
+            try {
+                int size = (int) dbFile.length();
+                try (FileInputStream stream = new FileInputStream(dbFile);
+                        FileChannel channel = stream.getChannel()) {
+                    // Use mojo serialization to read the database.
+                    Db db = Db.deserialize(new Message(
+                            channel.map(MapMode.READ_ONLY, 0, size), new ArrayList<Handle>()));
+                    if (db.version == VERSION) {
+                        mDb = db;
+                        return mDb;
+                    }
+                } catch (DeserializationException e) {
+                }
+                dbFile.delete();
+            } catch (IOException e) {
+            }
+        }
+        mDb = new Db();
+        mDb.version = VERSION;
+        mDb.lastSelectedAccounts = new HashMap<>();
+        return mDb;
+    }
+
+    private void updateDb(String username) {
+        try {
+            Db db = getDb();
+            if (username == null) {
+                db.lastSelectedAccounts.remove(mConsumerURL);
+            } else {
+                db.lastSelectedAccounts.put(mConsumerURL, username);
+            }
+            // Use mojo serialization to persist the database.
+            Message m = db.serialize(null);
+            File dbFile = getDbFile();
+            dbFile.delete();
+            try (FileOutputStream stream = new FileOutputStream(dbFile);
+                    FileChannel channel = stream.getChannel()) {
+                channel.write(m.getData());
+            }
+        } catch (IOException e) {
+        }
     }
 }

@@ -53,8 +53,8 @@ void AuthenticatingURLLoaderFactoryImpl::RetrieveToken(
       return;
     }
     authentication_service_->SelectAccount(
-        base::Bind(&AuthenticatingURLLoaderFactoryImpl::OnAccountSelected,
-                   base::Unretained(this), origin));
+        true, base::Bind(&AuthenticatingURLLoaderFactoryImpl::OnAccountSelected,
+                         base::Unretained(this), origin));
   }
   pendings_retrieve_token_[origin].push_back(callback);
 }

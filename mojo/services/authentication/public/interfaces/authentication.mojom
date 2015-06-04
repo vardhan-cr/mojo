@@ -11,8 +11,10 @@ module authentication;
 interface AuthenticationService {
   // Requests a Google account to use. In case of success, error will be null.
   // In case of error, username will be null and error will contain a
-  // description of the error.
-  SelectAccount() => (string? username, string? error);
+  // description of the error. If |return_last_selected| is true and the client
+  // application already selected an account, the same account will be returned
+  // without user intervention.
+  SelectAccount(bool return_last_selected) => (string? username, string? error);
 
   // Requests an oauth2 token for the given Google account with the given
   // scopes.  In case of error, username will be null and error will contain a
