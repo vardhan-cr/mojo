@@ -3,8 +3,8 @@
 // displays an image. To run this application set BUILD_DIR to the build
 // directory (like "src/out/Debug") and append a PNG image URL as the url
 // paramaeter for: absolute path for this directory, then:
-//   sky/tools/skydb start $BUILD_DIR examples/js/show_image.js?url=<PNG URL>
-// The skydb application starts an HTTP server that points at the build and
+//   sky/tools/mojodb start $BUILD_DIR examples/js/show_image.js?url=<PNG URL>
+// The mojodb application starts an HTTP server that points at the build and
 // and source directories. It starts a simple - just one view - window manager
 // and then embeds this application in its root view. This application just
 // asks the same window manager to embed the PNG viewer. Doing so effectively

@@ -7,7 +7,7 @@
 //
 // To run this, do something like:
 //
-//   $ sky/tools/skydb start out/Debug mojo:moterm_example_app
+//   $ sky/tools/mojodb start out/Debug mojo:moterm_example_app
 //
 // At the moterm_example_app prompt:
 //

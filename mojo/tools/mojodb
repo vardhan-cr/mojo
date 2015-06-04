@@ -3,11 +3,16 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import os
+import sys
+
+# We should remove the skypy dependencies from this script.
+sys.path.append(os.path.abspath(os.path.join(__file__, '../../../sky/tools')))
+
 from skypy.skyserver import SkyServer
 import argparse
 import json
 import logging
-import os
 import pipes
 import re
 import requests
@@ -15,7 +20,6 @@ import signal
 import skypy.paths
 import StringIO
 import subprocess
-import sys
 import time
 import urlparse
 import platform
@@ -35,7 +39,7 @@ ANDROID_PACKAGE = "org.chromium.mojo.shell"
 ANDROID_ACTIVITY = "%s/.MojoShellActivity" % ANDROID_PACKAGE
 ANDROID_APK_NAME = 'MojoShell.apk'
 
-PID_FILE_PATH = "/tmp/skydb.pids"
+PID_FILE_PATH = "/tmp/mojodb.pids"
 CACHE_LINKS_PATH = '/tmp/mojo_cache_links'
 
 SRC_ROOT = skypy.paths.Paths('ignored').src_root
@@ -209,7 +213,7 @@ class SkyDebugger(object):
 
         if not shell_found:
             print "Are you sure you sure that's a valid build_dir location?"
-            print "See skydb start --help for more info"
+            print "See mojodb start --help for more info"
             sys.exit(2)
 
         if is_android and args.gdb and not 'is_debug' in gn_args:
@@ -308,7 +312,7 @@ class SkyDebugger(object):
             # We could just run gdb_attach_command here, but when I do that
             # it auto-suspends in my zsh.  Unclear why.
             # self.gdb_attach_command(args)
-            print "Run 'skydb gdb_attach' to attach."
+            print "Run 'mojodb gdb_attach' to attach."
 
     def _kill_if_exists(self, key, name):
         pid = self.pids.pop(key, None)
@@ -601,7 +605,7 @@ class SkyDebugger(object):
         stop_parser.set_defaults(func=self.stop_command)
 
         pids_parser = subparsers.add_parser('pids',
-            help='dump the current skydb pids file')
+            help='dump the current mojodb pids file')
         pids_parser.set_defaults(func=self.pids_command)
 
         logcat_parser = subparsers.add_parser('logcat',
