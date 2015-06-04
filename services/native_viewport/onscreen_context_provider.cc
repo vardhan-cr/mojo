@@ -32,8 +32,9 @@ void OnscreenContextProvider::SetAcceleratedWidget(
   widget_ = widget;
 
   if (widget_ == gfx::kNullAcceleratedWidget) {
-    if (command_buffer_impl_)
+    if (command_buffer_impl_) {
       command_buffer_impl_->DidLoseContext();
+    }
     return;
   }
 

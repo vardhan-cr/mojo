@@ -8,7 +8,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/single_thread_task_runner.h"
-#include "mojo/public/cpp/bindings/strong_binding.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
 #include "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom.h"
 
@@ -23,7 +23,7 @@ class CommandBufferDriver;
 // so that we can insert sync points without blocking on the GL driver. It
 // forwards most method calls to the CommandBufferDriver, which runs on the
 // same thread as the native viewport.
-class CommandBufferImpl : public mojo::CommandBuffer {
+class CommandBufferImpl : public mojo::CommandBuffer, mojo::ErrorHandler {
  public:
   class Observer {
    public:
@@ -57,17 +57,26 @@ class CommandBufferImpl : public mojo::CommandBuffer {
   void UpdateVSyncParameters(base::TimeTicks timebase,
                              base::TimeDelta interval);
 
+  // Sets an observer for CommandBufferImpl destruction. An observer registered
+  // here will be notified of the destruction of this object on the thread used
+  // to create it, before the destruction happens.
   void set_observer(Observer* observer) { observer_ = observer; }
+
+  // mojo::ErrorHandler implementation
+  void OnConnectionError() override;
 
  private:
   void BindToRequest(mojo::InterfaceRequest<CommandBuffer> request);
+  void NotifyAndDestroy();
+  void Destroy();
 
   scoped_refptr<gpu::SyncPointManager> sync_point_manager_;
+  scoped_refptr<base::SingleThreadTaskRunner> control_task_runner_;
   scoped_refptr<base::SingleThreadTaskRunner> driver_task_runner_;
   scoped_ptr<CommandBufferDriver> driver_;
   mojo::CommandBufferSyncPointClientPtr sync_point_client_;
   mojo::ViewportParameterListenerPtr viewport_parameter_listener_;
-  mojo::StrongBinding<CommandBuffer> binding_;
+  mojo::Binding<CommandBuffer> binding_;
   Observer* observer_;
 
   base::WeakPtrFactory<CommandBufferImpl> weak_factory_;

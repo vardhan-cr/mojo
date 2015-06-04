@@ -36,9 +36,7 @@ class CommandBufferDriverClientImpl : public CommandBufferDriver::Client {
   }
 
   void DidLoseContext() override {
-    control_task_runner_->PostTask(
-        FROM_HERE, base::Bind(&CommandBufferImpl::DidLoseContext,
-           command_buffer_));
+    command_buffer_->DidLoseContext();
   }
 
   base::WeakPtr<CommandBufferImpl> command_buffer_;
@@ -53,6 +51,7 @@ CommandBufferImpl::CommandBufferImpl(
     gpu::SyncPointManager* sync_point_manager,
     scoped_ptr<CommandBufferDriver> driver)
     : sync_point_manager_(sync_point_manager),
+      control_task_runner_(control_task_runner),
       driver_task_runner_(base::MessageLoop::current()->task_runner()),
       driver_(driver.Pass()),
       viewport_parameter_listener_(listener.Pass()),
@@ -62,15 +61,12 @@ CommandBufferImpl::CommandBufferImpl(
   driver_->set_client(make_scoped_ptr(new CommandBufferDriverClientImpl(
       weak_factory_.GetWeakPtr(), control_task_runner)));
 
-  control_task_runner->PostTask(
+  control_task_runner_->PostTask(
       FROM_HERE, base::Bind(&CommandBufferImpl::BindToRequest,
                             base::Unretained(this), base::Passed(&request)));
 }
 
 CommandBufferImpl::~CommandBufferImpl() {
-  if (observer_) {
-    observer_->OnCommandBufferImplDestroyed();
-  }
   driver_task_runner_->PostTask(
       FROM_HERE, base::Bind(&DestroyDriver, base::Passed(&driver_)));
 }
@@ -147,10 +143,35 @@ void CommandBufferImpl::Echo(const mojo::Callback<void()>& callback) {
 void CommandBufferImpl::BindToRequest(
     mojo::InterfaceRequest<mojo::CommandBuffer> request) {
   binding_.Bind(request.Pass());
+  binding_.set_error_handler(this);
 }
 
 void CommandBufferImpl::DidLoseContext() {
-  binding_.OnConnectionError();
+  NotifyAndDestroy();
+}
+
+void CommandBufferImpl::OnConnectionError() {
+  // Called from the control_task_runner thread as we bound to the message pipe
+  // handle on that thread. However, the observer have to be notified on the
+  // thread that created this object, so we post on driver_task_runner.
+  driver_task_runner_->PostTask(
+      FROM_HERE,
+      base::Bind(&CommandBufferImpl::NotifyAndDestroy, base::Unretained(this)));
+}
+
+void CommandBufferImpl::NotifyAndDestroy() {
+  if (observer_) {
+    observer_->OnCommandBufferImplDestroyed();
+  }
+  // We have notified the observer on the right thread. However, destruction of
+  // this object must happen on control_task_runner_
+  control_task_runner_->PostTask(
+      FROM_HERE,
+      base::Bind(&CommandBufferImpl::Destroy, base::Unretained(this)));
+}
+
+void CommandBufferImpl::Destroy() {
+  delete this;
 }
 
 void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
