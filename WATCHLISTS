@@ -39,6 +39,7 @@
               'yzshen+watch@chromium.org'],
     'sky': ['abarth@chromium.org',
             'gregsimon@chromium.org',
+            'jackson@chromium.org',
             'qsr+mojo@chromium.org'],
   },
 }
