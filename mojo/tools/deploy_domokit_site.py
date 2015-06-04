@@ -120,17 +120,8 @@ def main():
                 os.path.join(sky_pkg_lib_dir, 'download_material_design_icons')
             ])
 
-    # Copy all .mojo files into mojo/
-    copy(paths.build_dir, deploy_path('mojo'), mojo_filter)
-
     # Copy sky/examples into examples/
     copy(src_path('sky/examples'), deploy_path('examples'), examples_filter)
-
-    # Copy apks into /
-    shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShell.apk'),
-        args.deploy_root)
-    shutil.copy(os.path.join(paths.build_dir, 'apks', 'MojoShortcuts.apk'),
-        args.deploy_root)
 
     # Deep copy packages/. This follows symlinks and flattens them.
     packages_root = deploy_path('packages')
