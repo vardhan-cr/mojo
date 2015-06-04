@@ -6,6 +6,7 @@ import("//mojo/public/dart/rules.gni")
 
 dartzip_packaged_application("dart_apptests") {
   sources = [
+    "connect_to_loader_apptests.dart",
     "echo_apptests.dart",
     "io_http_apptests.dart",
     "io_internet_address_apptests.dart",
@@ -18,6 +19,7 @@ dartzip_packaged_application("dart_apptests") {
     "//mojo/dart/apptest",
     "//mojo/public/interfaces/bindings/tests:versioning_test_client_interfaces",
     "//mojo/public/interfaces/bindings/tests:versioning_test_service_interfaces",
+    "//mojo/services/url_response_disk_cache/public/interfaces",
     "//services/dart/test:echo_service_interface",
     "//services/dart/test:pingpong_service_interface",
   ]
