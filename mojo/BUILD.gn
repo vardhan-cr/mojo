@@ -71,6 +71,7 @@ group("tests") {
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
     "//services/http_server:apptests",
+    "//services/prediction:apptests",
     "//services/reaper:tests",
     "//services/url_response_disk_cache:tests",
     "//services/view_manager:mojo_view_manager_client_apptests",

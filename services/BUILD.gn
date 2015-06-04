@@ -18,6 +18,7 @@ group("services") {
     "//services/keyboard_native",
     "//services/kiosk_wm",
     "//services/native_viewport",
+    "//services/prediction",
     "//services/reaper",
     "//services/url_response_disk_cache",
     "//services/surfaces",

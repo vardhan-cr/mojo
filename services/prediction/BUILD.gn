@@ -1,0 +1,38 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+mojo_native_application("prediction") {
+  output_name = "prediction_service"
+
+  sources = [
+    "prediction_service_impl.cc",
+    "prediction_service_impl.h",
+  ]
+
+  deps = [
+    "//mojo/application",
+    "//mojo/services/prediction/public/interfaces",
+  ]
+}
+
+mojo_native_application("apptests") {
+  output_name = "prediction_apptests"
+
+  testonly = true
+
+  sources = [
+    "prediction_apptests.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/services/prediction/public/interfaces",
+  ]
+
+  data_deps = [ ":prediction($default_toolchain)" ]
+}

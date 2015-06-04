@@ -45,6 +45,9 @@ tests = [
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
   },
   {
+    "test": "mojo:prediction_apptests",
+  },
+  {
     "test": "mojo:view_manager_service_apptests",
     "type": "gtest_isolated",
     "shell-args": ["--args-for=mojo:native_viewport_service --use-headless-config --use-osmesa"],
