@@ -32,7 +32,7 @@ public class Sensors implements ApplicationDelegate {
     public void initialize(Shell shell, String[] args, String url) {}
 
     /**
-     * @see ApplicationDelegate#configureIncomingConnection(String, ApplicationConnection)
+     * @see ApplicationDelegate#configureIncomingConnection(ApplicationConnection)
      */
     @Override
     public boolean configureIncomingConnection(ApplicationConnection connection) {
