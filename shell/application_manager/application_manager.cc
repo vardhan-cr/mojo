@@ -12,6 +12,7 @@
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
+#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader_factory.mojom.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/fetcher.h"
@@ -100,7 +101,7 @@ ApplicationManager::ApplicationManager(const Options& options,
     : options_(options),
       delegate_(delegate),
       blocking_pool_(nullptr),
-      initialized_authentication_service_(false),
+      initialized_authentication_interceptor_(false),
       weak_ptr_factory_(this) {
 }
 
@@ -188,29 +189,32 @@ void ApplicationManager::ConnectToApplicationWithParameters(
                      &url_response_disk_cache_);
   }
 
-  if (!url_loader_factory_) {
-    ConnectToService(GURL("mojo:authenticating_url_loader"),
-                     &url_loader_factory_);
+  if (!network_service_) {
+    ConnectToService(GURL("mojo:network_service"), &network_service_);
   }
 
-  // NOTE: Attempting to initialize the AuthenticationService while connecting
-  // to the AuthenticationService would result in a recursive loop, so it has
-  // to be explicitly avoided here. AuthenticatingURLLoaders work fine without
-  // the AuthenticationService as long as authentication is not needed, so what
-  // this means in practice is that the AuthenticationService cannot itself
-  // require authentication to obtain.
-  if (!initialized_authentication_service_ &&
-      !EndsWith(resolved_url.path(), "/authentication.mojo", true)) {
+  // NOTE: Attempting to initialize the apps used authentication for while
+  // connecting to those apps would result in a recursive loop, so it has to be
+  // explicitly avoided here. What this means in practice is that these apps
+  // cannot themselves require authentication to obtain.
+  if (!initialized_authentication_interceptor_ &&
+      !EndsWith(resolved_url.path(), "/authentication.mojo", true) &&
+      !EndsWith(resolved_url.path(), "/authenticating_url_loader.mojo", true)) {
     authentication::AuthenticationServicePtr authentication_service;
     ConnectToService(GURL("mojo:authentication"), &authentication_service);
-    url_loader_factory_->SetAuthenticationService(
-        authentication_service.Pass());
-    initialized_authentication_service_ = true;
+    mojo::AuthenticatingURLLoaderFactoryPtr url_loader_factory;
+    ConnectToService(GURL("mojo:authenticating_url_loader"),
+                     &url_loader_factory);
+    mojo::URLLoaderInterceptorFactoryPtr interceptor_factory;
+    url_loader_factory->CreateURLLoaderInterceptorFactory(
+        GetProxy(&interceptor_factory), authentication_service.Pass());
+    network_service_->RegisterURLLoaderInterceptor(interceptor_factory.Pass());
+    initialized_authentication_interceptor_ = true;
   }
 
   new NetworkFetcher(options_.disable_cache, options_.predictable_app_filenames,
                      resolved_url, url_response_disk_cache_.get(),
-                     url_loader_factory_.get(), callback);
+                     network_service_.get(), callback);
 }
 
 bool ApplicationManager::ConnectToRunningApplication(

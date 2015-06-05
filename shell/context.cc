@@ -31,7 +31,6 @@
 #include "services/tracing/tracing.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
-#include "shell/authenticating_url_loader_loader.h"
 #include "shell/background_application_loader.h"
 #include "shell/command_line_util.h"
 #include "shell/filename_util.h"
@@ -278,12 +277,6 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
           make_scoped_ptr(new URLResponseDiskCacheLoader()),
           "url_response_disk_cache", base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:url_response_disk_cache"));
-
-  application_manager()->SetLoaderForURL(
-      make_scoped_ptr(new BackgroundApplicationLoader(
-          make_scoped_ptr(new AuthenticatingURLLoaderLoader()),
-          "authenticating_url_loader", base::MessageLoop::TYPE_DEFAULT)),
-      GURL("mojo:authenticating_url_loader"));
 
   EnsureEmbedderIsInitialized();
   task_runners_.reset(

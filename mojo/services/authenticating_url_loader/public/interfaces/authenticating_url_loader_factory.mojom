@@ -4,18 +4,14 @@
 
 module mojo;
 
-import "authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom";
 import "authentication/public/interfaces/authentication.mojom";
+import "network/public/interfaces/url_loader_interceptor.mojom";
 
 interface AuthenticatingURLLoaderFactory {
-  // Sets the AuthenticationService that any loaders created via
-  // |CreateAuthenticatingURLLoader()| will use to obtain tokens with which to
-  // authenticate the user.
-  SetAuthenticationService(
+  // Creates a URLLoaderInterceptorFactory whose interceptors authenticate via
+  // |authentication_service|. If the connection to |authentication_service| is
+  // lost, the loaders will fail any requests that require authentication.
+  CreateURLLoaderInterceptorFactory(
+      URLLoaderInterceptorFactory& factory_request,
       authentication.AuthenticationService authentication_service);
-
-  // Creates an AuthenticatingURLLoader that uses |authentication_service| for
-  // authentication. If the AuthenticationService has not been set on this
-  // factory, the loader will fail any requests that require authentication.
-  CreateAuthenticatingURLLoader(AuthenticatingURLLoader& loader_request);
 };

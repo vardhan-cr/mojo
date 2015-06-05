@@ -6,20 +6,23 @@ import("//build/module_args/mojo.gni")
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 
-source_set("authenticating_url_loader") {
+mojo_native_application("authenticating_url_loader") {
   sources = [
     "authenticating_url_loader_app.cc",
     "authenticating_url_loader_app.h",
     "authenticating_url_loader_factory_impl.cc",
     "authenticating_url_loader_factory_impl.h",
-    "authenticating_url_loader_impl.cc",
-    "authenticating_url_loader_impl.h",
+    "authenticating_url_loader_interceptor.cc",
+    "authenticating_url_loader_interceptor.h",
+    "authenticating_url_loader_interceptor_factory.cc",
+    "authenticating_url_loader_interceptor_factory.h",
   ]
 
   deps = [
     "//base",
+    "//mojo/application",
     "//mojo/common",
-    "//mojo/environment:chromium",
+    "//mojo/public/c/system",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings",
     "//mojo/services/authenticating_url_loader/public/interfaces",

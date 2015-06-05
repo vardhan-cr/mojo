@@ -10,7 +10,7 @@
 #include "base/files/file_path.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom.h"
-#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader_factory.mojom.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "url/gurl.h"
@@ -24,7 +24,7 @@ class NetworkFetcher : public Fetcher {
                  bool predictable_app_filenames,
                  const GURL& url,
                  mojo::URLResponseDiskCache* url_response_disk_cache,
-                 mojo::AuthenticatingURLLoaderFactory* url_loader_factory,
+                 mojo::NetworkService* network_service,
                  const FetchCallback& loader_callback);
 
   ~NetworkFetcher() override;
@@ -66,9 +66,8 @@ class NetworkFetcher : public Fetcher {
 
   bool PeekFirstLine(std::string* line) override;
 
-  void StartNetworkRequest(
-      const GURL& url,
-      mojo::AuthenticatingURLLoaderFactory* url_loader_factory);
+  void StartNetworkRequest(const GURL& url,
+                           mojo::NetworkService* network_service);
 
   void OnLoadComplete(mojo::URLResponsePtr response);
 
@@ -76,7 +75,7 @@ class NetworkFetcher : public Fetcher {
   const bool predictable_app_filenames_;
   const GURL url_;
   mojo::URLResponseDiskCache* url_response_disk_cache_;
-  mojo::AuthenticatingURLLoaderPtr url_loader_;
+  mojo::URLLoaderPtr url_loader_;
   mojo::URLResponsePtr response_;
   base::FilePath path_;
   base::WeakPtrFactory<NetworkFetcher> weak_ptr_factory_;

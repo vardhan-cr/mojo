@@ -7,7 +7,6 @@ import("$mojo_sdk_root/mojo/public/tools/bindings/mojom.gni")
 
 mojom("interfaces") {
   sources = [
-    "authenticating_url_loader.mojom",
     "authenticating_url_loader_factory.mojom",
   ]
 

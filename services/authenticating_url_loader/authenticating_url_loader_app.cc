@@ -4,6 +4,8 @@
 
 #include "services/authenticating_url_loader/authenticating_url_loader_app.h"
 
+#include "mojo/application/application_runner_chromium.h"
+#include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/authenticating_url_loader/authenticating_url_loader_factory_impl.h"
 
@@ -38,3 +40,8 @@ void AuthenticatingURLLoaderApp::Create(
 }
 
 }  // namespace mojo
+
+MojoResult MojoMain(MojoHandle application_request) {
+  mojo::ApplicationRunnerChromium runner(new mojo::AuthenticatingURLLoaderApp);
+  return runner.Run(application_request);
+}

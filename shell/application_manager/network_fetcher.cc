@@ -39,7 +39,7 @@ NetworkFetcher::NetworkFetcher(
     bool predictable_app_filenames,
     const GURL& url,
     mojo::URLResponseDiskCache* url_response_disk_cache,
-    mojo::AuthenticatingURLLoaderFactory* url_loader_factory,
+    mojo::NetworkService* network_service,
     const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(disable_cache),
@@ -47,7 +47,7 @@ NetworkFetcher::NetworkFetcher(
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
       weak_ptr_factory_(this) {
-  StartNetworkRequest(url, url_loader_factory);
+  StartNetworkRequest(url, network_service);
 }
 
 NetworkFetcher::~NetworkFetcher() {
@@ -217,7 +217,7 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
 
 void NetworkFetcher::StartNetworkRequest(
     const GURL& url,
-    mojo::AuthenticatingURLLoaderFactory* url_loader_factory) {
+    mojo::NetworkService* network_service) {
   TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
                            "url", url.spec());
   mojo::URLRequestPtr request(mojo::URLRequest::New());
@@ -231,7 +231,7 @@ void NetworkFetcher::StartNetworkRequest(
   headers.push_back(header.Pass());
   request->headers = headers.Pass();
 
-  url_loader_factory->CreateAuthenticatingURLLoader(GetProxy(&url_loader_));
+  network_service->CreateURLLoader(GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
                      base::Bind(&NetworkFetcher::OnLoadComplete,
                                 weak_ptr_factory_.GetWeakPtr()));
