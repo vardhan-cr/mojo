@@ -189,10 +189,10 @@ void ConnectToSlave(SlaveInfo slave_info,
 
   system::ConnectionIdentifier connection_id =
       connection_manager->GenerateConnectionIdentifier();
-  system::ProcessIdentifier slave_id = system::kInvalidProcessIdentifier;
-  CHECK(static_cast<system::MasterConnectionManager*>(connection_manager)
-            ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
-                                   connection_id, &slave_id));
+  system::ProcessIdentifier slave_id =
+      static_cast<system::MasterConnectionManager*>(connection_manager)
+          ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
+                                 connection_id);
 
   system::ProcessIdentifier peer_id = system::kInvalidProcessIdentifier;
   CHECK(connection_manager->Connect(connection_id, &peer_id,
