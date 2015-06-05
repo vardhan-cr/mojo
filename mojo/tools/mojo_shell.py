@@ -48,8 +48,8 @@ def main():
   parser.add_argument('--target-cpu', help='CPU architecture to run for.',
                       choices=['x64', 'x86', 'arm'])
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
-  parser.add_argument('--debugger', action="store_true",
-                      help='Run with mojo:debugger.')
+  parser.add_argument('--no-debugger', action="store_true",
+                      help='Do not spawn mojo:debugger.')
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
 
@@ -82,7 +82,7 @@ def main():
 
   if launcher_args.origin:
     args.append("--origin=" + launcher_args.origin)
-  if launcher_args.debugger:
+  if not launcher_args.no_debugger:
     args.extend(shell_arguments.ConfigureDebugger(shell))
 
   shell.Run(args)
