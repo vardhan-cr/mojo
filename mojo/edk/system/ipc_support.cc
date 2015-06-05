@@ -81,5 +81,42 @@ void IPCSupport::ShutdownOnIOThread() {
   process_type_ = embedder::ProcessType::UNINITIALIZED;
 }
 
+ConnectionIdentifier IPCSupport::GenerateConnectionIdentifier() {
+  return connection_manager()->GenerateConnectionIdentifier();
+}
+
+embedder::ScopedPlatformHandle IPCSupport::ConnectToSlave(
+    const ConnectionIdentifier& connection_id,
+    embedder::SlaveInfo slave_info,
+    embedder::ScopedPlatformHandle platform_handle) {
+  DCHECK_EQ(process_type_, embedder::ProcessType::MASTER);
+
+  system::ProcessIdentifier slave_id =
+      static_cast<system::MasterConnectionManager*>(connection_manager())
+          ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
+                                 connection_id);
+
+  system::ProcessIdentifier peer_id = system::kInvalidProcessIdentifier;
+  embedder::ScopedPlatformHandle platform_connection_handle;
+  CHECK(connection_manager()->Connect(connection_id, &peer_id,
+                                      &platform_connection_handle));
+  DCHECK_EQ(peer_id, slave_id);
+  DCHECK(platform_connection_handle.is_valid());
+  return platform_connection_handle;
+}
+
+embedder::ScopedPlatformHandle IPCSupport::ConnectToMaster(
+    const ConnectionIdentifier& connection_id) {
+  DCHECK_EQ(process_type_, embedder::ProcessType::SLAVE);
+
+  system::ProcessIdentifier peer_id;
+  embedder::ScopedPlatformHandle platform_connection_handle;
+  CHECK(connection_manager()->Connect(connection_id, &peer_id,
+                                      &platform_connection_handle));
+  DCHECK_EQ(peer_id, system::kMasterProcessIdentifier);
+  DCHECK(platform_connection_handle.is_valid());
+  return platform_connection_handle;
+}
+
 }  // namespace system
 }  // namespace mojo

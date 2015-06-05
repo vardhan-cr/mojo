@@ -20,14 +20,11 @@
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_manager.h"
 #include "mojo/edk/system/configuration.h"
-#include "mojo/edk/system/connection_manager.h"
 #include "mojo/edk/system/core.h"
 #include "mojo/edk/system/ipc_support.h"
-#include "mojo/edk/system/master_connection_manager.h"
 #include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/platform_handle_dispatcher.h"
 #include "mojo/edk/system/raw_channel.h"
-#include "mojo/edk/system/slave_connection_manager.h"
 
 namespace mojo {
 namespace embedder {
@@ -178,49 +175,29 @@ void ConnectToSlave(SlaveInfo slave_info,
                     ScopedPlatformHandle platform_handle,
                     ScopedPlatformHandle* platform_connection_handle,
                     std::string* platform_connection_id) {
-  DCHECK(platform_handle.is_valid());
   DCHECK(platform_connection_handle);
   DCHECK(platform_connection_id);
   DCHECK(internal::g_ipc_support);
-  DCHECK_EQ(internal::g_ipc_support->process_type(), ProcessType::MASTER);
-
-  system::ConnectionManager* connection_manager =
-      internal::g_ipc_support->connection_manager();
 
   system::ConnectionIdentifier connection_id =
-      connection_manager->GenerateConnectionIdentifier();
-  system::ProcessIdentifier slave_id =
-      static_cast<system::MasterConnectionManager*>(connection_manager)
-          ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
-                                 connection_id);
-
-  system::ProcessIdentifier peer_id = system::kInvalidProcessIdentifier;
-  CHECK(connection_manager->Connect(connection_id, &peer_id,
-                                    platform_connection_handle));
-  DCHECK_EQ(peer_id, slave_id);
-  DCHECK(platform_connection_handle->is_valid());
-
+      internal::g_ipc_support->GenerateConnectionIdentifier();
   *platform_connection_id = connection_id.ToString();
+  *platform_connection_handle = internal::g_ipc_support->ConnectToSlave(
+      connection_id, slave_info, platform_handle.Pass());
 }
 
 void ConnectToMaster(const std::string& platform_connection_id,
                      ScopedPlatformHandle* platform_connection_handle) {
+  DCHECK(platform_connection_handle);
   DCHECK(internal::g_ipc_support);
-  DCHECK_EQ(internal::g_ipc_support->process_type(), ProcessType::SLAVE);
-
-  system::ConnectionManager* connection_manager =
-      internal::g_ipc_support->connection_manager();
 
   bool ok = false;
   system::ConnectionIdentifier connection_id =
       system::ConnectionIdentifier::FromString(platform_connection_id, &ok);
   CHECK(ok);
 
-  system::ProcessIdentifier peer_id;
-  CHECK(connection_manager->Connect(connection_id, &peer_id,
-                                    platform_connection_handle));
-  DCHECK_EQ(peer_id, system::kMasterProcessIdentifier);
-  DCHECK(platform_connection_handle->is_valid());
+  *platform_connection_handle =
+      internal::g_ipc_support->ConnectToMaster(connection_id);
 }
 
 // TODO(vtl): Write tests for this.

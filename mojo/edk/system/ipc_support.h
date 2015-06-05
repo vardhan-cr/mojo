@@ -11,6 +11,8 @@
 #include "base/task_runner.h"
 #include "mojo/edk/embedder/process_type.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
+#include "mojo/edk/embedder/slave_info.h"
+#include "mojo/edk/system/connection_identifier.h"
 #include "mojo/edk/system/system_impl_export.h"
 
 namespace mojo {
@@ -64,6 +66,33 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   // destroyed (which may happen on any thread).
   void ShutdownOnIOThread();
 
+  // Generates a new (unique) connection identifier, for use with
+  // |ConnectToSlave()| and |ConnectToMaster()|, below.
+  ConnectionIdentifier GenerateConnectionIdentifier();
+
+  // Called in the master process to connect a slave process to the IPC system.
+  //
+  // |connection_id| should be a unique connection identifier, which will also
+  // be given to the slave (in |ConnectToMaster()|, below). |platform_handle|
+  // should be the master's handle to an OS "pipe" between master and slave.
+  // This will create a second OS "pipe" between the master and slave and return
+  // the master's handle.
+  //
+  // TODO(vtl): This isn't the right API. It should set up a channel and an
+  // initial message pipe.
+  embedder::ScopedPlatformHandle ConnectToSlave(
+      const ConnectionIdentifier& connection_id,
+      embedder::SlaveInfo slave_info,
+      embedder::ScopedPlatformHandle platform_handle);
+
+  // Called in a slave process to connect it to the master process and thus the
+  // IPC system. See |ConnectToSlave()|, above.
+  //
+  // TODO(vtl): This isn't the right API. It should set up a channel and an
+  // initial message pipe.
+  embedder::ScopedPlatformHandle ConnectToMaster(
+      const ConnectionIdentifier& connection_id);
+
   embedder::ProcessType process_type() const { return process_type_; }
   embedder::ProcessDelegate* process_delegate() const {
     return process_delegate_;
@@ -76,12 +105,13 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   }
   // TODO(vtl): The things that use the following should probably be moved into
   // this class.
-  ConnectionManager* connection_manager() const {
-    return connection_manager_.get();
-  }
   ChannelManager* channel_manager() const { return channel_manager_.get(); }
 
  private:
+  ConnectionManager* connection_manager() const {
+    return connection_manager_.get();
+  }
+
   // These are all set on construction and reset by |ShutdownOnIOThread()|.
   embedder::ProcessType process_type_;
   scoped_refptr<base::TaskRunner> delegate_thread_task_runner_;

@@ -14,6 +14,7 @@
 #include "mojo/edk/embedder/channel_info_forward.h"
 #include "mojo/edk/embedder/process_type.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
+#include "mojo/edk/embedder/slave_info.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/message_pipe.h"
 
@@ -23,7 +24,6 @@ namespace embedder {
 struct Configuration;
 class PlatformSupport;
 class ProcessDelegate;
-using SlaveInfo = void*;
 
 // Basic configuration/initialization ------------------------------------------
 
@@ -129,6 +129,9 @@ MOJO_SYSTEM_IMPL_EXPORT void ShutdownIPCSupport();
 // |slave_info| is caller-dependent slave information, which should typically
 // remain alive until the master process delegate's |OnSlaveDisconnect()| is
 // called. (It may, however, be null.)
+//
+// TODO(vtl): This is not the right API. It should really establish a channel
+// and provide an initial message pipe.
 MOJO_SYSTEM_IMPL_EXPORT void ConnectToSlave(
     SlaveInfo slave_info,
     ScopedPlatformHandle platform_handle,
@@ -143,6 +146,9 @@ MOJO_SYSTEM_IMPL_EXPORT void ConnectToSlave(
 // See |ConnectToSlave()| for details. (Note that if this fails in any way,
 // e.g., if |platform_connection_id| is invalid, this will CHECK-fail and
 // terminate the process.)
+//
+// TODO(vtl): This is not the right API. It should really establish a channel
+// and provide an initial message pipe.
 MOJO_SYSTEM_IMPL_EXPORT void ConnectToMaster(
     const std::string& platform_connection_id,
     ScopedPlatformHandle* platform_connection_handle);
