@@ -59,6 +59,8 @@ component("system") {
     "handle_table.h",
     "incoming_endpoint.cc",
     "incoming_endpoint.h",
+    "ipc_support.cc",
+    "ipc_support.h",
     "local_data_pipe_impl.cc",
     "local_data_pipe_impl.h",
     "local_message_pipe_endpoint.cc",

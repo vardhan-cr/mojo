@@ -11,8 +11,6 @@
 
 #include <stdint.h>
 
-#include "mojo/edk/embedder/process_type.h"
-
 namespace base {
 class TaskRunner;
 }
@@ -23,6 +21,7 @@ namespace system {
 
 class ChannelManager;
 class Core;
+class IPCSupport;
 
 // Duplicate from mojo/edk/system/channel_manager.h, to avoid including it.
 using ChannelId = uint64_t;
@@ -52,11 +51,11 @@ extern PlatformSupport* g_platform_support;
 // Instance of |Core| used by the system functions (|Mojo...()|).
 extern system::Core* g_core;
 
-// Type of process initialized in |InitIPCSupport()| (set to |UNINITIALIZED| if
-// "outside" |InitIPCSupport()|/|ShutdownIPCSupport()|). This is declared here
-// so that |mojo::embedder::test::Shutdown()| can check that it's only called
-// after |ShutdownIPCSupport()|.
-extern ProcessType g_process_type;
+// Instance of |IPCSupport|, initialized by |InitIPCSupport()| and reset by
+// |ShutdownIPCSupport()|. This is declared here so that
+// |mojo::embedder::test::Shutdown()| can check that it's only called after
+// |ShutdownIPCSupport()|.
+extern system::IPCSupport* g_ipc_support;
 
 }  // namespace internal
 
