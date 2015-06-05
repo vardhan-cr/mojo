@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#include "mojo/edk/system/channel_id.h"
+
 namespace base {
 class TaskRunner;
 }
@@ -22,9 +24,6 @@ namespace system {
 class ChannelManager;
 class Core;
 class IPCSupport;
-
-// Duplicate from mojo/edk/system/channel_manager.h, to avoid including it.
-using ChannelId = uint64_t;
 
 }  // namespace system
 

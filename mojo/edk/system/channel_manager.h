@@ -13,6 +13,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
+#include "mojo/edk/system/channel_id.h"
 
 namespace base {
 class TaskRunner;
@@ -30,12 +31,6 @@ class Channel;
 class ChannelEndpoint;
 class ConnectionManager;
 class MessagePipeDispatcher;
-
-// IDs for |Channel|s managed by a |ChannelManager|. (IDs should be thought of
-// as specific to a given |ChannelManager|.) 0 is never a valid ID.
-using ChannelId = uint64_t;
-
-const ChannelId kInvalidChannelId = 0;
 
 // This class manages and "owns" |Channel|s (which typically connect to other
 // processes) for a given process. This class is thread-safe, except as

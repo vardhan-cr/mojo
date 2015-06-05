@@ -33,6 +33,7 @@ component("system") {
     "channel_endpoint_client.h",
     "channel_endpoint_id.cc",
     "channel_endpoint_id.h",
+    "channel_id.h",
     "channel_manager.cc",
     "channel_manager.h",
     "configuration.cc",
