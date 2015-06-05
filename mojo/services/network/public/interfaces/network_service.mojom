@@ -12,6 +12,7 @@ import "network/public/interfaces/tcp_bound_socket.mojom";
 import "network/public/interfaces/tcp_connected_socket.mojom";
 import "network/public/interfaces/udp_socket.mojom";
 import "network/public/interfaces/url_loader.mojom";
+import "network/public/interfaces/url_loader_interceptor.mojom";
 import "network/public/interfaces/web_socket.mojom";
 
 // TODO Darin suggests that this should probably be two classes. One for
@@ -72,4 +73,9 @@ interface NetworkService {
                    HttpServerDelegate delegate)
       => (NetworkError result,
           NetAddress? bound_to);
+
+  // Register a new url loader interceptor that will be used on any new
+  // URLLoader. Interceptor are chained. The last registed interceptor will
+  // received the requests first and the responses last.
+  RegisterURLLoaderInterceptor(URLLoaderInterceptorFactory factory);
 };
