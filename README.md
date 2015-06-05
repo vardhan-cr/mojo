@@ -198,7 +198,7 @@ $ ninja -C out/Debug -j 1000
 
 2. Run Mojo Shell on the device (this will also push the built apk to the device):
     ```
-    mojo/tools/android_mojo_shell.py mojo:spinning_cube
+    mojo/tools/mojo_shell.py --android mojo:spinning_cube
     ```
 If this fails and prints:
     ```
