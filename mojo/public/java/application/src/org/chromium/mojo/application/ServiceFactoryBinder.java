@@ -5,7 +5,7 @@
 package org.chromium.mojo.application;
 
 import org.chromium.mojo.bindings.Interface;
-import org.chromium.mojo.system.MessagePipeHandle;
+import org.chromium.mojo.bindings.InterfaceRequest;
 
 /**
  * ServiceFactoryBinder holds the necessary information to bind a service interface to a message
@@ -15,16 +15,14 @@ import org.chromium.mojo.system.MessagePipeHandle;
  */
 public interface ServiceFactoryBinder<T extends Interface> {
     /**
-     * An application implements to bind a service implementation to |pipe|.
+     * Binds an instance of the interface to the given request.
      *
-     * @param pipe A handle to the incoming connection pipe.
+     * @param request The request to bind to.
      */
-    public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe);
+    public void bind(InterfaceRequest<T> request);
 
     /**
-     * Name of the service interface being implemented.
-     *
-     * @return Service interface name.
+     * Returns the name of the service interface being implemented.
      */
     public String getInterfaceName();
 }

@@ -10,6 +10,7 @@ import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
 import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.Shell;
@@ -38,8 +39,8 @@ public class Sensors implements ApplicationDelegate {
     public boolean configureIncomingConnection(ApplicationConnection connection) {
         connection.addService(new ServiceFactoryBinder<SensorService>() {
             @Override
-            public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
-                SensorService.MANAGER.bind(new SensorServiceImpl(mContext), pipe);
+            public void bind(InterfaceRequest<SensorService> request) {
+                SensorService.MANAGER.bind(new SensorServiceImpl(mContext), request);
             }
 
             @Override

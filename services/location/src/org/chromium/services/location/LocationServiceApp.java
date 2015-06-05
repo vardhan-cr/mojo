@@ -16,6 +16,7 @@ import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
 import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.LocationService;
@@ -104,11 +105,11 @@ class LocationServiceApp implements ApplicationDelegate {
     public boolean configureIncomingConnection(ApplicationConnection connection) {
         connection.addService(new ServiceFactoryBinder<LocationService>() {
             @Override
-            public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
+            public void bind(InterfaceRequest<LocationService> request) {
                 LocationService.MANAGER.bind(
                         new LocationServiceImpl(mGoogleApiClient, mLooperThread.getLooper(),
                                 mCore.getCurrentRunLoop()),
-                        pipe);
+                        request);
             }
 
             @Override

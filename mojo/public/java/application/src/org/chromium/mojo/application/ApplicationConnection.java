@@ -5,6 +5,7 @@
 package org.chromium.mojo.application;
 
 import org.chromium.mojo.bindings.Interface;
+import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.mojo.ServiceProvider;
@@ -90,10 +91,12 @@ class ServiceProviderImpl implements ServiceProvider {
         mNameToServiceMap.put(binder.getInterfaceName(), binder);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void connectToService(String interfaceName, MessagePipeHandle pipe) {
         if (mNameToServiceMap.containsKey(interfaceName)) {
-            mNameToServiceMap.get(interfaceName).bindNewInstanceToMessagePipe(pipe);
+            mNameToServiceMap.get(interfaceName)
+                    .bind(InterfaceRequest.asInterfaceRequestUnsafe(pipe));
         } else {
             pipe.close();
         }

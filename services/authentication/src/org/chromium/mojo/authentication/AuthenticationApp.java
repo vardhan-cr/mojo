@@ -10,6 +10,7 @@ import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
 import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.Shell;
@@ -43,10 +44,10 @@ public class AuthenticationApp implements ApplicationDelegate {
         connection.addService(new ServiceFactoryBinder<AuthenticationService>() {
 
             @Override
-            public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
+            public void bind(InterfaceRequest<AuthenticationService> request) {
                 AuthenticationService.MANAGER.bind(new AuthenticationServiceImpl(mContext, mCore,
                                                            connection.getRequestorUrl(), mShell),
-                        pipe);
+                        request);
             }
 
             @Override

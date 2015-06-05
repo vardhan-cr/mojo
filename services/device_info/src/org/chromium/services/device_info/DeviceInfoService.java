@@ -12,6 +12,7 @@ import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
 import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.MojoException;
@@ -22,8 +23,6 @@ import org.chromium.mojom.mojo.Shell;
  * Android Mojo application which implements |DeviceInfo| interface.
  */
 class DeviceInfoService implements ApplicationDelegate, DeviceInfo {
-    private static final String TAG = "DeviceInfoService";
-
     private final Context mContext;
 
     public DeviceInfoService(Context context) {
@@ -74,15 +73,14 @@ class DeviceInfoService implements ApplicationDelegate, DeviceInfo {
     public void initialize(Shell shell, String[] args, String url) {}
 
     /**
-     * @see ApplicationDelegate#configureIncomingConnection(String, ApplicationConnection)
+     * @see ApplicationDelegate#configureIncomingConnection(ApplicationConnection)
      */
     @Override
     public boolean configureIncomingConnection(ApplicationConnection connection) {
-        final DeviceInfo info = this;
         connection.addService(new ServiceFactoryBinder<DeviceInfo>() {
             @Override
-            public void bindNewInstanceToMessagePipe(MessagePipeHandle pipe) {
-                DeviceInfo.MANAGER.bind(info, pipe);
+            public void bind(InterfaceRequest<DeviceInfo> request) {
+                DeviceInfo.MANAGER.bind(DeviceInfoService.this, request);
             }
 
             @Override

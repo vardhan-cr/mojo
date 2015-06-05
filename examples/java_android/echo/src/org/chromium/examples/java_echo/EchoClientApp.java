@@ -88,8 +88,8 @@ class EchoClientApp implements ApplicationDelegate {
     @Override
     public void quit() {}
 
-    public static void mojoMain(
-            Context context, Core core, MessagePipeHandle applicationRequestHandle) {
+    public static void mojoMain(@SuppressWarnings("unused") Context context, Core core,
+            MessagePipeHandle applicationRequestHandle) {
         ApplicationRunner.run(new EchoClientApp(core), core, applicationRequestHandle);
     }
 }
