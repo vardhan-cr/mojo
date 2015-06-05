@@ -7,7 +7,6 @@
 
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "services/authenticating_url_loader/authenticating_url_loader_interceptor_factory.h"
 #include "url/gurl.h"

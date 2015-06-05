@@ -9,7 +9,6 @@
 
 #include "base/files/file_path.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader.mojom.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
