@@ -164,10 +164,10 @@ void ViewObserverDelegate::DrawState() {
     }
   }
 
-  // clip keys and animations to the key area.
+  DrawKeysToCanvas(key_area_, canvas);
+  // clip animations to the key area.
   canvas->clipRect(SkRect::MakeXYWH(key_area_.x(), key_area_.y(),
                                     key_area_.width(), key_area_.height()));
-  DrawKeysToCanvas(key_area_, canvas);
   DrawAnimations(canvas, current_ticks);
 
   // reset clip to whatever the clip animation sets.

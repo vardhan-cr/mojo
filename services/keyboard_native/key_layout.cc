@@ -17,8 +17,10 @@
 #include "third_party/skia/include/core/SkStream.h"
 #include "third_party/skia/include/core/SkTypeface.h"
 #include "ui/gfx/codec/png_codec.h"
-#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_f.h"
+#include "ui/gfx/shadow_value.h"
 #include "ui/gfx/skia_util.h"
+#include "ui/gfx/vector2d.h"
 
 namespace keyboard {
 
@@ -140,6 +142,19 @@ void KeyLayout::SetKeyArea(const gfx::RectF& key_area) {
 }
 
 void KeyLayout::Draw(SkCanvas* canvas) {
+  // Add shadow beneath the key area.
+  int blur = 20;
+  SkColor color = SkColorSetARGB(0x80, 0, 0, 0);
+  std::vector<gfx::ShadowValue> shadows;
+  shadows.push_back(gfx::ShadowValue(gfx::Vector2d(0, 0), blur, color));
+  skia::RefPtr<SkDrawLooper> looper = gfx::CreateShadowDrawLooper(shadows);
+
+  SkPaint background_paint;
+  background_paint.setColor(SK_ColorLTGRAY);
+  background_paint.setStrokeJoin(SkPaint::kRound_Join);
+  background_paint.setLooper(looper.get());
+  canvas->drawRect(RectFToSkRect(key_area_), background_paint);
+
   float row_height = key_area_.height() / static_cast<float>(layout_->size());
 
   skia::RefPtr<SkTypeface> typeface =
@@ -150,10 +165,6 @@ void KeyLayout::Draw(SkCanvas* canvas) {
   text_paint.setTextSize(row_height / 2);
   text_paint.setAntiAlias(true);
   text_paint.setTextAlign(SkPaint::kCenter_Align);
-
-  SkPaint background_paint;
-  background_paint.setColor(SK_ColorLTGRAY);
-  canvas->drawRect(RectFToSkRect(key_area_), background_paint);
 
   SkPaint paint;
   for (size_t row_index = 0; row_index < layout_->size(); row_index++) {
