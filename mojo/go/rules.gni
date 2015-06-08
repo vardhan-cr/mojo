@@ -92,8 +92,7 @@ template("go_test_binary") {
 }
 
 template("go_mojo_application") {
-  # Only available on android for now.
-  assert(is_android)
+  assert(is_android || is_linux)
   assert(defined(invoker.sources))
   assert(go_build_tool != "")
 

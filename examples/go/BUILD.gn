@@ -4,51 +4,50 @@
 
 import("//mojo/go/rules.gni")
 
-if (is_android) {
-  group("go") {
-    deps = [
-      ":go_echo_client",
-      ":go_echo_server",
-      ":go_http_handler",
+group("go") {
+  assert(go_build_tool != "")
+  deps = [
+    ":go_echo_client",
+    ":go_echo_server",
+    ":go_http_handler",
 
-      # TODO(rogulenko): Re-enable when the go bindings generator supports it.
-      # ":go_http_server",
-    ]
-  }
+    # TODO(rogulenko): Re-enable when the go bindings generator supports it.
+    # ":go_http_server",
+  ]
+}
 
-  go_mojo_application("go_echo_client") {
-    sources = [
-      "echo_client.go",
-    ]
-    deps = [
-      "//examples/echo:bindings",
-    ]
-  }
+go_mojo_application("go_echo_client") {
+  sources = [
+    "echo_client.go",
+  ]
+  deps = [
+    "//examples/echo:bindings",
+  ]
+}
 
-  go_mojo_application("go_echo_server") {
-    sources = [
-      "echo_server.go",
-    ]
-    deps = [
-      "//examples/echo:bindings",
-    ]
-  }
+go_mojo_application("go_echo_server") {
+  sources = [
+    "echo_server.go",
+  ]
+  deps = [
+    "//examples/echo:bindings",
+  ]
+}
 
-  go_mojo_application("go_http_handler") {
-    sources = [
-      "http_handler.go",
-    ]
-    deps = [
-      "//mojo/services/network/public/interfaces",
-    ]
-  }
+go_mojo_application("go_http_handler") {
+  sources = [
+    "http_handler.go",
+  ]
+  deps = [
+    "//mojo/services/network/public/interfaces",
+  ]
+}
 
-  go_mojo_application("go_http_server") {
-    sources = [
-      "http_server.go",
-    ]
-    deps = [
-      "//mojo/services/network/public/interfaces",
-    ]
-  }
+go_mojo_application("go_http_server") {
+  sources = [
+    "http_server.go",
+  ]
+  deps = [
+    "//mojo/services/network/public/interfaces",
+  ]
 }

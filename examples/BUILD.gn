@@ -48,7 +48,7 @@ group("examples") {
     ]
   }
 
-  if (is_android && defined(go_build_tool) && go_build_tool != "") {
+  if (defined(go_build_tool) && go_build_tool != "") {
     deps += [ "//examples/go" ]
   }
 
