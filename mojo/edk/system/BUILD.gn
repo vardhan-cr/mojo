@@ -85,6 +85,7 @@ component("system") {
     "options_validation.h",
     "platform_handle_dispatcher.cc",
     "platform_handle_dispatcher.h",
+    "process_identifier.h",
     "proxy_message_pipe_endpoint.cc",
     "proxy_message_pipe_endpoint.h",
     "raw_channel.cc",
