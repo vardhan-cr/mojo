@@ -29,6 +29,7 @@ dart_mojo_sdk_sources = [
 dartzip_package("dart") {
   sources = dart_mojo_sdk_sources + [
               "pubspec.yaml",
+              "CHANGELOG.md",
               "README.md",
             ]
   uses_pub = true
@@ -42,6 +43,7 @@ dartzip_package("dart") {
 dart_pkg("mojo") {
   sources = dart_mojo_sdk_sources + [
               "pubspec.yaml",
+              "CHANGELOG.md",
               "README.md",
             ]
 
