@@ -10,9 +10,7 @@ group("go") {
     ":go_echo_client",
     ":go_echo_server",
     ":go_http_handler",
-
-    # TODO(rogulenko): Re-enable when the go bindings generator supports it.
-    # ":go_http_server",
+    ":go_http_server",
   ]
 }
 

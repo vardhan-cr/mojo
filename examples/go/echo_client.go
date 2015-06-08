@@ -32,7 +32,7 @@ func (delegate *EchoClientDelegate) Initialize(ctx application.Context) {
 	} else {
 		log.Println(err)
 	}
-	echoProxy.Close_proxy()
+	echoProxy.Close_Proxy()
 	ctx.Close()
 }
 

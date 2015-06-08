@@ -31,7 +31,7 @@ func pairedURL(url string) string {
 	}
 }
 
-func checkEcho(echoPointer echo.EchoPointer) {
+func checkEcho(echoPointer echo.Echo_Pointer) {
 	echo := echo.NewEchoProxy(echoPointer, bindings.GetAsyncWaiter())
 	str := fmt.Sprintf("Hello, world")
 	response, err := echo.EchoString(&str)
@@ -41,7 +41,7 @@ func checkEcho(echoPointer echo.EchoPointer) {
 	if *response != str {
 		panic(fmt.Sprintf("invalid response: want %v, got %v", str, *response))
 	}
-	echo.Close_proxy()
+	echo.Close_Proxy()
 }
 
 type EchoImpl struct{}
@@ -57,7 +57,7 @@ type EchoDelegate struct {
 	localURL string
 }
 
-func (delegate *EchoDelegate) Create(request echo.EchoRequest) {
+func (delegate *EchoDelegate) Create(request echo.Echo_Request) {
 	stub := echo.NewEchoStub(request, &EchoImpl{}, bindings.GetAsyncWaiter())
 	go func() {
 		if err := stub.ServeRequest(); err != nil {
@@ -78,7 +78,7 @@ func (delegate *EchoDelegate) Initialize(ctx application.Context) {
 	}
 	go func() {
 		echoRequest, echoPointer := echo.CreateMessagePipeForEcho()
-		conn := ctx.ConnectToApplication(pairedURL(delegate.localURL), &echo.EchoServiceFactory{delegate})
+		conn := ctx.ConnectToApplication(pairedURL(delegate.localURL), &echo.Echo_ServiceFactory{delegate})
 		if conn.RequestorURL() != delegate.localURL {
 			panic(fmt.Sprintf("invalid requestor URL: want %v, got %v", delegate.localURL, conn.RequestorURL()))
 		}
@@ -100,7 +100,7 @@ func (delegate *EchoDelegate) AcceptConnection(conn *application.Connection) {
 		panic(fmt.Sprintf("invalid connection URL: want %v, got %v", delegate.localURL, conn.ConnectionURL()))
 	}
 	echoRequest, echoPointer := echo.CreateMessagePipeForEcho()
-	conn.ProvideServices(&echo.EchoServiceFactory{delegate}).ConnectToService(&echoRequest)
+	conn.ProvideServices(&echo.Echo_ServiceFactory{delegate}).ConnectToService(&echoRequest)
 	checkEcho(echoPointer)
 }
 
@@ -108,11 +108,11 @@ func (delegate *EchoDelegate) Quit() {}
 
 // shellImpl forward connection from local EchoDelegate instance to remote.
 type shellImpl struct {
-	remoteApp *mojoApp.ApplicationProxy
+	remoteApp *mojoApp.Application_Proxy
 	localURL  string
 }
 
-func (s *shellImpl) ConnectToApplication(URL string, services *sp.ServiceProviderRequest, exposedServices *sp.ServiceProviderPointer) error {
+func (s *shellImpl) ConnectToApplication(URL string, services *sp.ServiceProvider_Request, exposedServices *sp.ServiceProvider_Pointer) error {
 	if URL != pairedURL(s.localURL) {
 		return fmt.Errorf("invalid URL: want %v, got %v", pairedURL(s.localURL), URL)
 	}
@@ -121,7 +121,7 @@ func (s *shellImpl) ConnectToApplication(URL string, services *sp.ServiceProvide
 }
 
 func TestApplication(t *testing.T) {
-	var apps []*mojoApp.ApplicationProxy
+	var apps []*mojoApp.Application_Proxy
 	var responsesSent, appsTerminated sync.WaitGroup
 	// Create and run applications.
 	for i := 0; i < 2; i++ {
@@ -156,6 +156,6 @@ func TestApplication(t *testing.T) {
 	}
 	appsTerminated.Wait()
 	for i := 0; i < 2; i++ {
-		apps[i].Close_proxy()
+		apps[i].Close_Proxy()
 	}
 }

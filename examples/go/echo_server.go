@@ -32,7 +32,7 @@ type EchoServerDelegate struct {
 
 func (delegate *EchoServerDelegate) Initialize(context application.Context) {}
 
-func (delegate *EchoServerDelegate) Create(request echo.EchoRequest) {
+func (delegate *EchoServerDelegate) Create(request echo.Echo_Request) {
 	stub := echo.NewEchoStub(request, &EchoImpl{}, bindings.GetAsyncWaiter())
 	delegate.stubs = append(delegate.stubs, stub)
 	go func() {
@@ -49,7 +49,7 @@ func (delegate *EchoServerDelegate) Create(request echo.EchoRequest) {
 }
 
 func (delegate *EchoServerDelegate) AcceptConnection(connection *application.Connection) {
-	connection.ProvideServices(&echo.EchoServiceFactory{delegate})
+	connection.ProvideServices(&echo.Echo_ServiceFactory{delegate})
 }
 
 func (delegate *EchoServerDelegate) Quit() {

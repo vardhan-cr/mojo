@@ -49,7 +49,7 @@ func (h *HttpHandler) HandleRequest(request http_request.HttpRequest) (http_resp
 }
 
 type HttpHandlerDelegate struct {
-	server      *http_server.HttpServerProxy
+	server      *http_server.HttpServer_Proxy
 	handlerStub *bindings.Stub
 }
 
@@ -85,7 +85,7 @@ func (d *HttpHandlerDelegate) Initialize(ctx application.Context) {
 			}
 		}
 	}()
-	factory.Close_proxy()
+	factory.Close_Proxy()
 }
 
 func (d *HttpHandlerDelegate) AcceptConnection(c *application.Connection) {
@@ -93,7 +93,7 @@ func (d *HttpHandlerDelegate) AcceptConnection(c *application.Connection) {
 }
 
 func (d *HttpHandlerDelegate) Quit() {
-	d.server.Close_proxy()
+	d.server.Close_Proxy()
 	d.handlerStub.Close()
 }
 

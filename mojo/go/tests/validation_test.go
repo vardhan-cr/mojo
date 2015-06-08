@@ -307,7 +307,7 @@ func (v *conformanceValidator) Method12(float32) (float32, error) {
 	return 0, nil
 }
 
-func (v *conformanceValidator) Method13(*test.InterfaceAPointer, uint32, *test.InterfaceAPointer) error {
+func (v *conformanceValidator) Method13(*test.InterfaceA_Pointer, uint32, *test.InterfaceA_Pointer) error {
 	return nil
 }
 
@@ -332,12 +332,12 @@ func TestConformanceValidation(t *testing.T) {
 
 	h := NewMockMessagePipeHandle()
 	proxyIn, proxyOut := h, h
-	interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(proxyIn)}
+	interfacePointer := test.ConformanceTestInterface_Pointer{pipeOwner(proxyIn)}
 	impl := &conformanceValidator{false, test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)}
 
 	h = NewMockMessagePipeHandle()
 	stubIn, stubOut := h, h
-	interfaceRequest := test.ConformanceTestInterfaceRequest{pipeOwner(stubOut)}
+	interfaceRequest := test.ConformanceTestInterface_Request{pipeOwner(stubOut)}
 	stub := test.NewConformanceTestInterfaceStub(interfaceRequest, impl, waiter)
 	for _, test := range tests {
 		bytes, handles := readTest(test)
@@ -385,7 +385,7 @@ func (s *integrationStubImpl) Method0(test.BasicStruct) ([]uint8, error) {
 func TestIntegrationTests(t *testing.T) {
 	h := NewMockMessagePipeHandle()
 	checkStub := func() error {
-		interfaceRequest := test.IntegrationTestInterfaceRequest{pipeOwner(h)}
+		interfaceRequest := test.IntegrationTestInterface_Request{pipeOwner(h)}
 		stub := test.NewIntegrationTestInterfaceStub(interfaceRequest, &integrationStubImpl{}, waiter)
 		err := stub.ServeRequest()
 		stub.Close()
@@ -396,10 +396,10 @@ func TestIntegrationTests(t *testing.T) {
 	runTests(t, "integration_msghdr_", h, checkStub)
 
 	checkProxy := func() error {
-		interfacePointer := test.IntegrationTestInterfacePointer{pipeOwner(h)}
+		interfacePointer := test.IntegrationTestInterface_Pointer{pipeOwner(h)}
 		proxy := test.NewIntegrationTestInterfaceProxy(interfacePointer, waiter)
 		_, err := proxy.Method0(test.BasicStruct{})
-		proxy.Close_proxy()
+		proxy.Close_Proxy()
 		h.reset()
 		return err
 	}
@@ -420,7 +420,7 @@ func (s *boundsCheckStubImpl) Method1(uint8) error {
 func TestBoundsCheck(t *testing.T) {
 	h := NewMockMessagePipeHandle()
 	checkStub := func() error {
-		interfaceRequest := test.BoundsCheckTestInterfaceRequest{pipeOwner(h)}
+		interfaceRequest := test.BoundsCheckTestInterface_Request{pipeOwner(h)}
 		stub := test.NewBoundsCheckTestInterfaceStub(interfaceRequest, &boundsCheckStubImpl{}, waiter)
 		err := stub.ServeRequest()
 		stub.Close()
@@ -429,10 +429,10 @@ func TestBoundsCheck(t *testing.T) {
 	runTests(t, "boundscheck_", h, checkStub)
 
 	checkProxy := func() error {
-		interfacePointer := test.BoundsCheckTestInterfacePointer{pipeOwner(h)}
+		interfacePointer := test.BoundsCheckTestInterface_Pointer{pipeOwner(h)}
 		proxy := test.NewBoundsCheckTestInterfaceProxy(interfacePointer, waiter)
 		_, err := proxy.Method0(0)
-		proxy.Close_proxy()
+		proxy.Close_Proxy()
 		h.reset()
 		return err
 	}
@@ -442,10 +442,10 @@ func TestBoundsCheck(t *testing.T) {
 func TestConformanceResponse(t *testing.T) {
 	h := NewMockMessagePipeHandle()
 	checkProxy := func() error {
-		interfacePointer := test.ConformanceTestInterfacePointer{pipeOwner(h)}
+		interfacePointer := test.ConformanceTestInterface_Pointer{pipeOwner(h)}
 		proxy := test.NewConformanceTestInterfaceProxy(interfacePointer, waiter)
 		_, err := proxy.Method12(0)
-		proxy.Close_proxy()
+		proxy.Close_Proxy()
 		h.reset()
 		return err
 	}

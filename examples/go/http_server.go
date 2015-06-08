@@ -105,7 +105,7 @@ func (c *MojoConnection) SetWriteDeadline(t time.Time) error {
 }
 
 type MojoListener struct {
-	serverSocket *tcp_server_socket.TcpServerSocketProxy
+	serverSocket *tcp_server_socket.TcpServerSocket_Proxy
 }
 
 // Implements net.Listener.
@@ -150,7 +150,7 @@ func (l *MojoListener) Accept() (net.Conn, error) {
 
 // Implements net.Listener.
 func (l *MojoListener) Close() error {
-	l.serverSocket.Close_proxy()
+	l.serverSocket.Close_Proxy()
 	return nil
 }
 
@@ -163,9 +163,9 @@ func (l *MojoListener) Addr() net.Addr {
 }
 
 type HttpServerDelegate struct {
-	networkService *network_service.NetworkServiceProxy
-	tcpBoundSocket *tcp_bound_socket.TcpBoundSocketProxy
-	serverSocket   *tcp_server_socket.TcpServerSocketProxy
+	networkService *network_service.NetworkService_Proxy
+	tcpBoundSocket *tcp_bound_socket.TcpBoundSocket_Proxy
+	serverSocket   *tcp_server_socket.TcpServerSocket_Proxy
 }
 
 func (d *HttpServerDelegate) InitTCPBoundSocket() error {
@@ -231,9 +231,9 @@ func (d *HttpServerDelegate) AcceptConnection(c *application.Connection) {
 }
 
 func (d *HttpServerDelegate) Quit() {
-	d.networkService.Close_proxy()
-	d.tcpBoundSocket.Close_proxy()
-	d.serverSocket.Close_proxy()
+	d.networkService.Close_Proxy()
+	d.tcpBoundSocket.Close_Proxy()
+	d.serverSocket.Close_Proxy()
 }
 
 //export MojoMain
