@@ -44,8 +44,11 @@ dart_pkg("mojo") {
               "pubspec.yaml",
               "README.md",
             ]
+
+  # List of mojom targets that the mojo pkg exports
   deps = [
     "../interfaces/application",
     "../interfaces/bindings",
+    "../../services",
   ]
 }
