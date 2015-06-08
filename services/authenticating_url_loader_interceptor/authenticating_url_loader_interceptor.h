@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SERVICES_AUTHENTICATING_URL_LOADER_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
-#define SERVICES_AUTHENTICATING_URL_LOADER_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
+#ifndef SERVICES_AUTHENTICATING_URL_LOADER_INTERCEPTOR_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
+#define SERVICES_AUTHENTICATING_URL_LOADER_INTERCEPTOR_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
 
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
-#include "services/authenticating_url_loader/authenticating_url_loader_interceptor_factory.h"
+#include "services/authenticating_url_loader_interceptor/authenticating_url_loader_interceptor_factory.h"
 #include "url/gurl.h"
 
 namespace mojo {
@@ -59,4 +59,4 @@ class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor,
 
 }  // namespace mojo
 
-#endif  // SERVICES_AUTHENTICATING_URL_LOADER_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
+#endif  // SERVICES_AUTHENTICATING_URL_LOADER_INTERCEPTOR_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_

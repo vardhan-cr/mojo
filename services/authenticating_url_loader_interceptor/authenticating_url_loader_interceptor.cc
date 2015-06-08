@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "services/authenticating_url_loader/authenticating_url_loader_interceptor.h"
+#include "services/authenticating_url_loader_interceptor/authenticating_url_loader_interceptor.h"
 
 #include "base/bind.h"
 #include "base/logging.h"

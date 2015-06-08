@@ -12,7 +12,7 @@
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
-#include "mojo/services/authenticating_url_loader/public/interfaces/authenticating_url_loader_factory.mojom.h"
+#include "mojo/services/authenticating_url_loader_interceptor/public/interfaces/authenticating_url_loader_interceptor_meta_factory.mojom.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/fetcher.h"
@@ -199,14 +199,16 @@ void ApplicationManager::ConnectToApplicationWithParameters(
   // cannot themselves require authentication to obtain.
   if (!initialized_authentication_interceptor_ &&
       !EndsWith(resolved_url.path(), "/authentication.mojo", true) &&
-      !EndsWith(resolved_url.path(), "/authenticating_url_loader.mojo", true)) {
+      !EndsWith(resolved_url.path(),
+                "/authenticating_url_loader_interceptor.mojo", true)) {
     authentication::AuthenticationServicePtr authentication_service;
     ConnectToService(GURL("mojo:authentication"), &authentication_service);
-    mojo::AuthenticatingURLLoaderFactoryPtr url_loader_factory;
-    ConnectToService(GURL("mojo:authenticating_url_loader"),
-                     &url_loader_factory);
+    mojo::AuthenticatingURLLoaderInterceptorMetaFactoryPtr
+        interceptor_meta_factory;
+    ConnectToService(GURL("mojo:authenticating_url_loader_interceptor"),
+                     &interceptor_meta_factory);
     mojo::URLLoaderInterceptorFactoryPtr interceptor_factory;
-    url_loader_factory->CreateURLLoaderInterceptorFactory(
+    interceptor_meta_factory->CreateURLLoaderInterceptorFactory(
         GetProxy(&interceptor_factory), authentication_service.Pass());
     network_service_->RegisterURLLoaderInterceptor(interceptor_factory.Pass());
     initialized_authentication_interceptor_ = true;
