@@ -5,7 +5,7 @@ Mojo is an effort to extract a common platform out of Chrome's renderer and
 plugin processes that can support multiple types of sandboxed content, such as
 HTML, Pepper, or NaCl.
 
-## Set up your environment
+## Set-up and code check-out
 
 The instructions below only need to be done once. Note that a simple "git clone"
 command is not sufficient to build the source code because this repo uses the
@@ -41,7 +41,29 @@ out/Debug.
 If the fetch command fails, you will need to delete the src directory and start
 over.
 
+### <a name="configure-android"></a>Adding Android bits in an existing checkout
+
+If you configured your set-up for Linux and now wish to build for Android, edit
+the `.gclient` file in your root Mojo directory (the parent directory to src.)
+and add this line at the end of the file:
+
+```
+target_os = [u'android',u'linux']
+```
+
+Bring in Android-specific build dependencies:
+```
+$ build/install-build-deps-android.sh 
+```
+
+Pull down all of the packages with this command:
+```
+$ gclient sync
+```
+
 ## <a name="buildmojo"></a>Build Mojo
+
+### Linux
 
 Build Mojo for Linux by running:
 
@@ -56,12 +78,13 @@ You can also use the mojob.py script for building. This script automatically
 calls ninja and sets -j to an appropriate value based on whether Goma is
 present. You cannot specify a target name with this script.
 ```
+mojo/tools/mojob.py gn
 mojo/tools/mojob.py build
 ```
 
 Run a demo:
 ```
-out/Debug//mojo_shell mojo:spinning_cube
+out/Debug/mojo_shell mojo:spinning_cube
 ```
 
 Run the tests:
@@ -76,10 +99,23 @@ mojo/tools/mojob.py build --release
 mojo/tools/mojob.py test --release
 ```
 
-## Update your repo
+### Android
 
-You can update your repo like this. The order is important. You must do the `git
-pull` first because `gclient sync` is dependent on the current revision.
+To build for Android, first make sure that your checkout is [configured](#configure-android) to build
+for Android. After that you can use the mojob script as follows:
+
+```
+$ mojo/tools/mojob.py gn --android
+$ mojo/tools/mojob.py build --android
+```
+
+The result will be in out/android_Debug. If you see javac compile errors,
+[make sure you have an up-to-date JDK](https://code.google.com/p/chromium/wiki/AndroidBuildInstructions#Install_Java_JDK)
+
+## Update your checkout
+
+You can update your checkout like this. The order is important. You must do the
+`git pull` first because `gclient sync` is dependent on the current revision.
 ```
 # Fetch changes from upstream and rebase the current branch on top
 $ git pull --rebase
@@ -135,44 +171,6 @@ $ git cl land
 
 Don't break the build! Waterfall is here:
 http://build.chromium.org/p/client.mojo/waterfall
-
-## Android Builds
-
-To build for Android, first make sure you've downloaded build support for
-Android, which you would have done by adding `--target_os=android` when you ran
-`fetch mojo`. If you didn't do that, there's an easy fix. Edit the file .gclient
-in your root Mojo directory (the parent directory to src.) Add this line at the
-end of the file:
-
-```
-target_os = [u'android']
-```
-
-Bring in android specific build dependencies:
-```
-$ build/install-build-deps-android.sh 
-```
-
-Pull down all of the packages with this command:
-
-```
-$ gclient sync
-```
-
-Prepare the build directory for Android:
-
-```
-$ mojo/tools/mojob.py gn --android
-```
-
-Finally, perform the build. The result will be in out/android_Debug:
-
-```
-$ mojo/tools/mojob.py build --android
-```
-
-If you see javac compile errors, make sure you have an up-to-date JDK:
-https://code.google.com/p/chromium/wiki/AndroidBuildInstructions#Install_Java_JDK
 
 ## Dart Code
 
