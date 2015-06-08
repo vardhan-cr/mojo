@@ -21,7 +21,8 @@ class LinuxShell(Shell):
     self.executable_path = executable_path
     self.command_prefix = command_prefix if command_prefix else []
 
-  def ServeLocalDirectory(self, local_dir_path, port=0):
+  def ServeLocalDirectory(self, local_dir_path, port=0,
+                          additional_mappings=None):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
 
@@ -31,11 +32,15 @@ class LinuxShell(Shell):
     Args:
       local_dir_path: path to the directory to be served
       port: port at which the server will be available to the shell
+      additional_mappings: List of tuples (prefix, local_base_path) mapping
+          URLs that start with |prefix| to local directory at |local_base_path|.
+          The prefixes should skip the leading slash.
 
     Returns:
       The url that the shell can use to access the content of |local_dir_path|.
     """
-    return 'http://%s:%d/' % http_server.StartHttpServer(local_dir_path, port)
+    return 'http://%s:%d/' % http_server.StartHttpServer(local_dir_path, port,
+                                                         additional_mappings)
 
   def ForwardHostPortToShell(self, host_port):
     """Forwards a port on the host machine to the same port wherever the shell

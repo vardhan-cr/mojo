@@ -6,7 +6,8 @@
 class Shell(object):
   """Represents an abstract Mojo shell."""
 
-  def ServeLocalDirectory(self, local_dir_path, port=0):
+  def ServeLocalDirectory(self, local_dir_path, port=0,
+                          additional_mappings=None):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
 
@@ -16,6 +17,9 @@ class Shell(object):
     Args:
       local_dir_path: path to the directory to be served
       port: port at which the server will be available to the shell
+      additional_mappings: List of tuples (prefix, local_base_path) mapping
+          URLs that start with |prefix| to local directory at |local_base_path|.
+          The prefixes should skip the leading slash.
 
     Returns:
       The url that the shell can use to access the content of |local_dir_path|.

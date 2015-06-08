@@ -45,10 +45,21 @@ class _SilentTCPServer(SocketServer.TCPServer):
       SocketServer.TCPServer.handle_error(self, request, client_address)
 
 
-def _GetHandlerClassForPath(base_path):
+def _GetHandlerClassForPath(mappings):
+  """Creates a handler override for SimpleHTTPServer.
+
+  Args:
+    mappings: List of tuples (prefix, local_base_path), mapping path prefixes
+        without the leading slash to local filesystem directory paths. The first
+        matching prefix will be used each time.
+  """
+  for prefix, _ in mappings:
+    assert not prefix.startswith('/'), ('Prefixes for the http server mappings '
+                                        'should skip the leading slash.')
+
   class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     """Handler for SocketServer.TCPServer that will serve the files from
-    |base_path| directory over http.
+    local directiories over http.
     """
 
     def __init__(self, *args, **kwargs):
@@ -115,9 +126,19 @@ def _GetHandlerClassForPath(base_path):
       return SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
 
     def translate_path(self, path):
-      path_from_current = (
+      # Parent translate_path() will strip away the query string and fragment
+      # identifier, but also will prepend the cwd to the path. relpath() gives
+      # us the relative path back.
+      normalized_path = os.path.relpath(
           SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path))
-      return os.path.join(base_path, os.path.relpath(path_from_current))
+
+      for prefix, local_base_path in mappings:
+        if normalized_path.startswith(prefix):
+          return os.path.join(local_base_path, normalized_path[len(prefix):])
+
+      # This class is only used internally, and we're adding a catch-all ''
+      # prefix at the end of |mappings|.
+      assert False
 
     def log_message(self, *_):
       """Override the base class method to disable logging."""
@@ -127,16 +148,27 @@ def _GetHandlerClassForPath(base_path):
   return RequestHandler
 
 
-def StartHttpServer(local_dir_path, host_port=0):
-  """Starts an http server serving files from |path| on |host_port|. Pass 0
-  as |host_port| to use a system-allocated port.
+def StartHttpServer(local_dir_path, host_port=0, additional_mappings=None):
+  """Starts an http server serving files from |local_dir_path| on |host_port|.
+
+  Args:
+    local_dir_path: Path to the local filesystem directory to be served over
+        http under.
+    host_port: Port on the host machine to run the server on. Pass 0 to use a
+        system-assigned port.
+    additional_mappings: List of tuples (prefix, local_base_path) mapping
+        URLs that start with |prefix| to local directory at |local_base_path|.
+        The prefixes should skip the leading slash.
 
   Returns:
     Tuple of the server address and the port on which it runs.
   """
   assert local_dir_path
-  httpd = _SilentTCPServer(('127.0.0.1', host_port),
-                           _GetHandlerClassForPath(local_dir_path))
+  mappings = additional_mappings if additional_mappings else []
+  mappings.append(('', local_dir_path))
+  handler_class = _GetHandlerClassForPath(mappings)
+
+  httpd = _SilentTCPServer(('127.0.0.1', host_port), handler_class)
   atexit.register(httpd.shutdown)
 
   http_thread = threading.Thread(target=httpd.serve_forever)
