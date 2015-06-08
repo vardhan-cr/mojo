@@ -132,18 +132,15 @@ class AndroidShell(Shell):
     return device_port
 
   def _RunAdbAsRoot(self):
-    if self.adb_running_as_root:
-      return
-
-    if 'cannot run as root' in subprocess.check_output(
-        self._CreateADBCommand(['root'])):
-      raise Exception("Unable to run adb as root.")
-
-    # Wait for adbd to restart.
-    subprocess.check_call(
-        self._CreateADBCommand(['wait-for-device']),
-        stdout=self.verbose_pipe)
-    self.adb_running_as_root = True
+    if (not self.adb_running_as_root and
+        not 'cannot run as root' in subprocess.check_output(
+            self._CreateADBCommand(['root']))):
+        # Wait for adbd to restart.
+        subprocess.check_call(
+            self._CreateADBCommand(['wait-for-device']),
+            stdout=self.verbose_pipe)
+        self.adb_running_as_root = True
+    return self.adb_running_as_root
 
   def _IsShellPackageInstalled(self):
     # Adb should print one line if the package is installed and return empty
@@ -257,14 +254,16 @@ class AndroidShell(Shell):
     if stdout or on_application_stop:
       # We need to run as root to access the fifo file we use for stdout
       # redirection.
-      self._RunAdbAsRoot()
+      if self._RunAdbAsRoot():
+        # Remove any leftover fifo file after the previous run.
+        subprocess.check_call(self._CreateADBCommand(
+            ['shell', 'rm', '-f', STDOUT_PIPE]))
 
-      # Remove any leftover fifo file after the previous run.
-      subprocess.check_call(self._CreateADBCommand(
-          ['shell', 'rm', '-f', STDOUT_PIPE]))
-
-      parameters.append('--fifo-path=%s' % STDOUT_PIPE)
-      self._ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
+        parameters.append('--fifo-path=%s' % STDOUT_PIPE)
+        self._ReadFifo(STDOUT_PIPE, stdout, on_application_stop)
+      else:
+        _logger.warning("Running without root access, full stdout of the "
+                        "shell won't be available.")
     # The origin has to be specified whether it's local or external.
     assert any("--origin=" in arg for arg in arguments)
     parameters.extend(arguments)
@@ -286,7 +285,7 @@ class AndroidShell(Shell):
     self.CleanLogs()
     # Don't carry over the native logs from logcat - we have these in the
     # stdout.
-    p = self.ShowLogs(include_native_logs=False)
+    p = self.ShowLogs(include_native_logs=(not self.adb_running_as_root))
     self.StartShell(arguments, sys.stdout, p.terminate)
     p.wait()
     return None
