@@ -20,6 +20,7 @@ if (is_android) {
       ":interfaces_java",
       "//mojo/public/interfaces/application:application_java",
       "//mojo/public/java:application",
+      "//mojo/services/authenticating_url_loader_interceptor/public/interfaces:interfaces_java",
       "//mojo/services/authentication/public/interfaces:interfaces_java",
       "//mojo/services/network/public/interfaces:interfaces_java",
       "//services/android:bindings_java",

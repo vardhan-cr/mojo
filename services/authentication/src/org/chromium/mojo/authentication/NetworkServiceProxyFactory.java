@@ -4,27 +4,35 @@
 
 package org.chromium.mojo.authentication;
 
+import android.content.Context;
+
+import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ServiceFactoryBinder;
 import org.chromium.mojo.application.ShellHelper;
 import org.chromium.mojo.bindings.Connector;
 import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
 import org.chromium.mojo.system.MessagePipeHandle;
+import org.chromium.mojo.system.Pair;
+import org.chromium.mojom.mojo.AuthenticatingUrlLoaderInterceptorMetaFactory;
 import org.chromium.mojom.mojo.NetworkService;
 import org.chromium.mojom.mojo.Shell;
+import org.chromium.mojom.mojo.UrlLoaderInterceptorFactory;
 
 /**
  * Service factory for the network service proxy that requests the real network service, configures
- * it for
- * authentication and then forwards the calls from the client to the real network service.
- * <p>
- * TODO(qsr): Handle authentication. At the moment, this class is only forwarding calls.
+ * it for authentication and then forwards the calls from the client to the real network service.
  */
 public class NetworkServiceProxyFactory implements ServiceFactoryBinder<NetworkService> {
+    private final ApplicationConnection mConnection;
+    private final Context mContext;
     private final Core mCore;
     private final Shell mShell;
 
-    public NetworkServiceProxyFactory(Core core, Shell shell) {
+    public NetworkServiceProxyFactory(
+            ApplicationConnection connection, Context context, Core core, Shell shell) {
+        mConnection = connection;
+        mContext = context;
         mCore = core;
         mShell = shell;
     }
@@ -34,9 +42,20 @@ public class NetworkServiceProxyFactory implements ServiceFactoryBinder<NetworkS
      */
     @Override
     public void bind(InterfaceRequest<NetworkService> request) {
-        NetworkService.Proxy ns = ShellHelper.connectToService(
+        NetworkService.Proxy network_service = ShellHelper.connectToService(
                 mCore, mShell, "mojo:network_service", NetworkService.MANAGER);
-        forwardHandles(ns.getProxyHandler().passHandle(), request.passHandle());
+        AuthenticationService authenticationService = new AuthenticationServiceImpl(
+                mContext, mCore, mConnection.getRequestorUrl(), mShell);
+        AuthenticatingUrlLoaderInterceptorMetaFactory metaFactory = ShellHelper.connectToService(
+                mCore, mShell, "mojo:authenticating_url_loader_interceptor",
+                AuthenticatingUrlLoaderInterceptorMetaFactory.MANAGER);
+        Pair<UrlLoaderInterceptorFactory.Proxy, InterfaceRequest<UrlLoaderInterceptorFactory>>
+                interceptor_factory_request =
+                        UrlLoaderInterceptorFactory.MANAGER.getInterfaceRequest(mCore);
+        metaFactory.createUrlLoaderInterceptorFactory(
+                interceptor_factory_request.second, authenticationService);
+        network_service.registerUrlLoaderInterceptor(interceptor_factory_request.first);
+        forwardHandles(network_service.getProxyHandler().passHandle(), request.passHandle());
     }
 
     /**

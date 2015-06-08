@@ -55,7 +55,7 @@ public class AuthenticationApp implements ApplicationDelegate {
                 return AuthenticationService.MANAGER.getName();
             }
         });
-        connection.addService(new NetworkServiceProxyFactory(mCore, mShell));
+        connection.addService(new NetworkServiceProxyFactory(connection, mContext, mCore, mShell));
         return true;
     }
 
