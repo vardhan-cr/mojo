@@ -14,6 +14,8 @@ import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import org.chromium.mojo.application.ShellHelper;
 import org.chromium.mojo.bindings.DeserializationException;
@@ -175,6 +177,11 @@ public class AuthenticationServiceImpl
             }
         }
 
+        if (!isGooglePlayServicesAvailable(mContext)) {
+            callback.call(null, "Google Play Services are not available.");
+            return;
+        }
+
         String message = null;
         if (mConsumerURL.equals("")) {
             message = "Select an account to use with mojo shell";
@@ -223,6 +230,17 @@ public class AuthenticationServiceImpl
             GoogleAuthUtil.clearToken(mContext, token);
         } catch (GoogleAuthException | IOException e) {
             // Nothing to do.
+        }
+    }
+
+    private static boolean isGooglePlayServicesAvailable(Context context) {
+        switch (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context)) {
+            case ConnectionResult.SERVICE_MISSING:
+            case ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED:
+            case ConnectionResult.SERVICE_DISABLED:
+                return false;
+            default:
+                return true;
         }
     }
 
