@@ -6,6 +6,7 @@
 import argparse
 import logging
 import sys
+import os.path
 
 import devtools
 devtools.add_lib_to_path()
@@ -34,6 +35,7 @@ text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
 """)
 
 _DEFAULT_WINDOW_MANAGER = "mojo:kiosk_wm"
+_SKY_SERVER_PORT = 9998
 
 
 def main():
@@ -60,6 +62,8 @@ def main():
                       _DEFAULT_WINDOW_MANAGER)
   parser.add_argument('--no-debugger', action="store_true",
                       help='Do not spawn mojo:debugger.')
+  parser.add_argument('--sky',
+                      help='Loads the given Sky file.')
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
 
@@ -97,6 +101,21 @@ def main():
                                           launcher_args.window_manager)
   if not launcher_args.no_debugger:
     args.extend(shell_arguments.ConfigureDebugger(shell))
+
+  if launcher_args.sky:
+    packages_local_path = os.path.join(paths.build_dir, 'gen', 'dart-pkg',
+                                       'packages')
+    additional_mappings = [
+        ('packages/', packages_local_path),
+    ]
+    server_url = shell.ServeLocalDirectory(paths.src_root,
+        port=_SKY_SERVER_PORT, additional_mappings=additional_mappings)
+    sky_url = server_url + launcher_args.sky
+
+    args.append('mojo:window_manager %s' % sky_url)
+
+  if launcher_args.verbose:
+    print "Shell arguments: " + str(args)
 
   shell.Run(args)
   return 0
