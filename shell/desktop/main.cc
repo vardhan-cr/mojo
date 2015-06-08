@@ -97,6 +97,9 @@ int main(int argc, char** argv) {
   // We want the shell::Context to outlive the MessageLoop so that pipes are all
   // gracefully closed / error-out before we try to shut the Context down.
   shell::Context shell_context(&tracer);
+  // There is no authentication service on desktop.
+  shell_context.url_resolver()->AddURLMapping(
+      GURL("mojo:authenticated_network_service"), GURL("mojo:network_service"));
   {
     base::MessageLoop message_loop;
     tracer.DidCreateMessageLoop();

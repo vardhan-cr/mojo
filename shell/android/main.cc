@@ -115,6 +115,10 @@ void ConfigureAndroidServices(Context* context) {
   // By default, the keyboard is handled by the native_viewport_service.
   context->url_resolver()->AddURLMapping(GURL("mojo:keyboard"),
                                          GURL("mojo:native_viewport_service"));
+  // By default, the authenticated_network_service is handled by the
+  // authentication service.
+  context->url_resolver()->AddURLMapping(
+      GURL("mojo:authenticated_network_service"), GURL("mojo:authentication"));
 }
 
 void QuitShellThread() {
