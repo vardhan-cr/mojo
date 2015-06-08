@@ -94,3 +94,43 @@ def ConfigureLocalOrigin(shell, local_dir, fixed_port=True):
   origin_url = shell.ServeLocalDirectory(
       local_dir, _LOCAL_ORIGIN_PORT if fixed_port else 0)
   return ["--origin=" + origin_url]
+
+
+def AppendToArgument(arguments, key, value, delimiter=","):
+  """Looks for an argument of the form "key=val1,val2" within |arguments| and
+  appends |value| to it.
+
+  If the argument is not present in |arguments| it is added.
+
+  Args:
+    arguments: List of arguments for the shel.
+    key: Identifier of the argument, including the equal sign, eg.
+        "--content-handlers=".
+    value: The value to be appended, after |delimeter|, to the argument.
+    delimiter: The string used to separate values within the argument.
+
+  Returns:
+    The updated argument list.
+
+  >>> AppendToArgument(arguments=[], key='--something=', value='val')
+  ['--something=val']
+
+  >>> AppendToArgument(arguments=['--something=old_val'], key='--something=',
+  ...                  value='val')
+  ['--something=old_val,val']
+
+  >>> AppendToArgument(arguments=['--other'], key='--something=', value='val')
+  ['--other', '--something=val']
+  """
+  assert key and key.endswith('=')
+  assert value
+
+  for i, argument in enumerate(arguments):
+    if not argument.startswith(key):
+      continue
+    arguments[i] = argument + delimiter + value
+    break
+  else:
+    arguments.append(key + value)
+
+  return arguments

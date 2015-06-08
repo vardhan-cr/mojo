@@ -33,11 +33,15 @@ The value of <handlers> is a comma separated list like:
 text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
 """)
 
+_DEFAULT_WINDOW_MANAGER = "mojo:kiosk_wm"
+
 
 def main():
   logging.basicConfig()
 
   parser = argparse.ArgumentParser(usage=USAGE)
+
+  # Arguments indicating the configuration we are targeting.
   parser.add_argument('--android', help='Run on Android',
                       action='store_true')
   debug_group = parser.add_mutually_exclusive_group()
@@ -47,7 +51,13 @@ def main():
                            dest='debug', action='store_false')
   parser.add_argument('--target-cpu', help='CPU architecture to run for.',
                       choices=['x64', 'x86', 'arm'])
+
+  # Arguments configuring the shell run.
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
+  parser.add_argument('--window-manager', default=_DEFAULT_WINDOW_MANAGER,
+                      help='Window manager app to be mapped as '
+                      'mojo:window_manager. By default it is ' +
+                      _DEFAULT_WINDOW_MANAGER)
   parser.add_argument('--no-debugger', action="store_true",
                       help='Do not spawn mojo:debugger.')
   parser.add_argument('-v', '--verbose', action="store_true",
@@ -81,7 +91,10 @@ def main():
     shell = LinuxShell(paths.mojo_shell_path)
 
   if launcher_args.origin:
-    args.append("--origin=" + launcher_args.origin)
+    args.append('--origin=' + launcher_args.origin)
+  args = shell_arguments.AppendToArgument(args, '--url-mappings=',
+                                          'mojo:window_manager=%s' %
+                                          launcher_args.window_manager)
   if not launcher_args.no_debugger:
     args.extend(shell_arguments.ConfigureDebugger(shell))
 
