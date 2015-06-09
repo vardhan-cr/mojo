@@ -17,14 +17,19 @@ namespace gfx {
 
 // static
 bool GLSurface::InitializeOneOffInternal() {
-  switch (GetGLImplementation()) {
+  auto implementation = GetGLImplementation();
+  switch (implementation) {
     case kGLImplementationEGLGLES2:
       if (!GLSurfaceEGL::InitializeOneOff()) {
         LOG(ERROR) << "GLSurfaceEGL::InitializeOneOff failed.";
         return false;
       }
-    default:
       break;
+    default:
+      LOG(ERROR)
+          << "Unknown GL implementation returned from GetGLImplementation: "
+          << implementation;
+      return false;
   }
   return true;
 }
