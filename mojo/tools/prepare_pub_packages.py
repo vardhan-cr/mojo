@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Prepare pub packages for upload"""
+"""Prepares pub packages for upload."""
 
 # NOTE: Requires the following build artifacts:
 # *) out/Config/gen/dart-pkg
@@ -15,6 +15,7 @@ import os
 import shutil
 import tempfile
 
+
 def remove_empty_dirs(root_dir):
     for root, dirs, _ in os.walk(root_dir):
          for name in dirs:
@@ -22,14 +23,17 @@ def remove_empty_dirs(root_dir):
              if not os.listdir(fname):
                  os.removedirs(fname)
 
+
 def copy_package(src_dir, dst_dir, ignore=None):
     # Remove existing destination directory.
     shutil.rmtree(dst_dir, True)
     shutil.copytree(src_dir, dst_dir, symlinks=False, ignore=ignore)
 
+
 def install_mojo_license_and_authors_files(sdk_root, dst_dir):
     shutil.copy(os.path.join(sdk_root, 'LICENSE'), dst_dir)
     shutil.copy(os.path.join(sdk_root, 'AUTHORS'), dst_dir)
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -67,7 +71,7 @@ def main():
     if temp_dir:
         try:
             shutil.rmtree(temp_dir)
-        except OSError as e:
+        except OSError:
             pass
         os.makedirs(temp_dir)
     else:
@@ -98,7 +102,6 @@ def main():
         os.makedirs(prepared_apks_dir)
         shutil.copyfile(sky_apk,
                         os.path.join(prepared_apks_dir, sky_apk_filename))
-
 
 
 if __name__ == '__main__':
