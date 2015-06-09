@@ -7,11 +7,9 @@
 #include <string.h>
 
 #include "base/bind.h"
-#include "base/command_line.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/test/test_io_thread.h"
 #include "base/test/test_timeouts.h"
@@ -20,7 +18,6 @@
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/test/multiprocess_test_helper.h"
 #include "mojo/edk/test/scoped_ipc_support.h"
-#include "mojo/edk/test/test_utils.h"
 #include "mojo/public/c/system/core.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -34,8 +31,6 @@ const MojoHandleSignals kSignalReadadableWritable =
 const MojoHandleSignals kSignalAll = MOJO_HANDLE_SIGNAL_READABLE |
                                      MOJO_HANDLE_SIGNAL_WRITABLE |
                                      MOJO_HANDLE_SIGNAL_PEER_CLOSED;
-
-const char kConnectionIdFlag[] = "test-connection-id";
 
 class ScopedTestChannel {
  public:
@@ -373,83 +368,6 @@ TEST_F(EmbedderTest, ChannelsHandlePassing) {
   client_channel.WaitForChannelCreationCompletion();
   EXPECT_TRUE(server_channel.channel_info());
   EXPECT_TRUE(client_channel.channel_info());
-}
-
-#if defined(OS_ANDROID)
-// Android multi-process tests are not executing the new process. This is flaky.
-// TODO(vtl): I'm guessing this is true of this test too?
-#define MAYBE_MultiprocessMasterSlave DISABLED_MultiprocessMasterSlave
-#else
-#define MAYBE_MultiprocessMasterSlave MultiprocessMasterSlave
-#endif  // defined(OS_ANDROID)
-TEST_F(EmbedderTest, MAYBE_MultiprocessMasterSlave) {
-  mojo::test::ScopedMasterIPCSupport ipc_support(test_io_task_runner());
-
-  mojo::test::MultiprocessTestHelper multiprocess_test_helper;
-  ScopedPlatformHandle second_platform_handle;
-  std::string connection_id;
-  ConnectToSlave(nullptr,
-                 multiprocess_test_helper.server_platform_handle.Pass(),
-                 &second_platform_handle, &connection_id);
-  ASSERT_TRUE(second_platform_handle.is_valid());
-  ASSERT_FALSE(connection_id.empty());
-
-  multiprocess_test_helper.StartChildWithExtraSwitch(
-      "MultiprocessMasterSlave", kConnectionIdFlag, connection_id);
-
-  // We write a '?'. The slave should write a '!' in response.
-  size_t n = 0;
-  EXPECT_TRUE(
-      mojo::test::BlockingWrite(second_platform_handle.get(), "?", 1, &n));
-  EXPECT_EQ(1u, n);
-
-  char c = '\0';
-  n = 0;
-  EXPECT_TRUE(
-      mojo::test::BlockingRead(second_platform_handle.get(), &c, 1, &n));
-  EXPECT_EQ(1u, n);
-  EXPECT_EQ('!', c);
-
-  EXPECT_TRUE(multiprocess_test_helper.WaitForChildTestShutdown());
-}
-
-MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlave) {
-  ScopedPlatformHandle client_platform_handle =
-      mojo::test::MultiprocessTestHelper::client_platform_handle.Pass();
-  EXPECT_TRUE(client_platform_handle.is_valid());
-
-  base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
-  test::InitWithSimplePlatformSupport();
-
-  {
-    mojo::test::ScopedSlaveIPCSupport ipc_support(
-        test_io_thread.task_runner(), client_platform_handle.Pass());
-
-    const base::CommandLine& command_line =
-        *base::CommandLine::ForCurrentProcess();
-    ASSERT_TRUE(command_line.HasSwitch(kConnectionIdFlag));
-    std::string connection_id =
-        command_line.GetSwitchValueASCII(kConnectionIdFlag);
-    ASSERT_FALSE(connection_id.empty());
-    ScopedPlatformHandle second_platform_handle;
-    ConnectToMaster(connection_id, &second_platform_handle);
-    ASSERT_TRUE(second_platform_handle.is_valid());
-
-    // The master should write a '?'. We'll write a '!' in response.
-    char c = '\0';
-    size_t n = 0;
-    EXPECT_TRUE(
-        mojo::test::BlockingRead(second_platform_handle.get(), &c, 1, &n));
-    EXPECT_EQ(1u, n);
-    EXPECT_EQ('?', c);
-
-    n = 0;
-    EXPECT_TRUE(
-        mojo::test::BlockingWrite(second_platform_handle.get(), "!", 1, &n));
-    EXPECT_EQ(1u, n);
-  }
-
-  EXPECT_TRUE(test::Shutdown());
 }
 
 // The sequence of messages sent is:

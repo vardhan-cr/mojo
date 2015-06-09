@@ -63,7 +63,8 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   ~IPCSupport();
 
   // This must be called (exactly once) on the I/O thread before this object is
-  // destroyed (which may happen on any thread).
+  // destroyed (which may happen on any thread). Note: This does *not* call the
+  // process delegate's |OnShutdownComplete()|.
   void ShutdownOnIOThread();
 
   // Generates a new (unique) connection identifier, for use with
