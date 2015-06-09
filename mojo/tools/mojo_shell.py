@@ -103,6 +103,10 @@ def main():
     args.extend(shell_arguments.ConfigureDebugger(shell))
 
   if launcher_args.sky:
+    # Configure a server to serve the checkout root at / (so that Sky examples
+    # are accessible using a root-relative path) and Sky packages at /packages.
+    # This is independent from the server that potentially serves the origin
+    # directory containing the mojo: apps.
     packages_local_path = os.path.join(paths.build_dir, 'gen', 'dart-pkg',
                                        'packages')
     additional_mappings = [
@@ -110,8 +114,20 @@ def main():
     ]
     server_url = shell.ServeLocalDirectory(paths.src_root,
         port=_SKY_SERVER_PORT, additional_mappings=additional_mappings)
-    sky_url = server_url + launcher_args.sky
 
+    # Configure the content type mappings for the sky_viewer. This is needed
+    # only for the Sky apps that do not declare mojo:sky_viewer in a shebang,
+    # and it is unfortunate as it configures the shell to map all items of the
+    # application/dart content-type as Sky apps.
+    # TODO(ppi): drop this part once we can rely on the Sky files declaring
+    # correct shebang.
+    args = shell_arguments.AppendToArgument(args, '--content-handlers=',
+                                            'text/sky,mojo:sky_viewer')
+    args = shell_arguments.AppendToArgument(args, '--content-handlers=',
+                                            'application/dart,mojo:sky_viewer')
+
+    # Configure the window manager to embed the sky_viewer.
+    sky_url = server_url + launcher_args.sky
     args.append('mojo:window_manager %s' % sky_url)
 
   if launcher_args.verbose:

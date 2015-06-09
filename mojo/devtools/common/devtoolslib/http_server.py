@@ -140,6 +140,17 @@ def _GetHandlerClassForPath(mappings):
       # prefix at the end of |mappings|.
       assert False
 
+    def guess_type(self, path):
+      # This is needed so that Sky files without shebang can still run thanks to
+      # content-type mappings.
+      # TODO(ppi): drop this part once we can rely on the Sky files declaring
+      # correct shebang.
+      if path.endswith('.dart'):
+        return 'application/dart'
+      elif path.endswith('.sky'):
+        return 'text/sky'
+      return SimpleHTTPServer.SimpleHTTPRequestHandler.guess_type(self, path)
+
     def log_message(self, *_):
       """Override the base class method to disable logging."""
       pass
