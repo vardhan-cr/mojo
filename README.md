@@ -71,12 +71,11 @@ Build Mojo for Linux by running:
 $ ninja -C out/Debug -j 10
 ```
 
-(If you are a Googler, see the section at the end of this document for faster
-builds.)
+You can also use the `mojob.py` script for building. This script automatically
+calls ninja and sets -j to an appropriate value based on whether Goma (see the
+section on Goma below) is present. You cannot specify a target name with this
+script.
 
-You can also use the mojob.py script for building. This script automatically
-calls ninja and sets -j to an appropriate value based on whether Goma is
-present. You cannot specify a target name with this script.
 ```
 mojo/tools/mojob.py gn
 mojo/tools/mojob.py build
@@ -103,7 +102,6 @@ mojo/tools/mojob.py test --release
 
 To build for Android, first make sure that your checkout is [configured](#configure-android) to build
 for Android. After that you can use the mojob script as follows:
-
 ```
 $ mojo/tools/mojob.py gn --android
 $ mojo/tools/mojob.py build --android
@@ -111,6 +109,29 @@ $ mojo/tools/mojob.py build --android
 
 The result will be in out/android_Debug. If you see javac compile errors,
 [make sure you have an up-to-date JDK](https://code.google.com/p/chromium/wiki/AndroidBuildInstructions#Install_Java_JDK)
+
+### Goma (Googlers only)
+
+If you're a Googler, you can use Goma, a distributed compiler service for
+open-source projects such as Chrome and Android. If Goma is installed in the
+default location (~/goma), it will work out-of-the-box with the `mojob.py gn`,
+`mojob.py build` workflow described above.
+
+You can also manually add:
+```
+use_goma = true
+```
+
+at the end of the file opened through:
+```
+$ gn args out/Debug
+```
+
+After you close the editor `gn gen out/Debug` will run automatically. Now you
+can dramatically increase the number of parallel tasks:
+```
+$ ninja -C out/Debug -j 1000
+```
 
 ## Update your checkout
 
@@ -180,31 +201,6 @@ targets in the toplevel BUILD.gn file, run:
 
 ```
 $ mojo/tools/mojob.py dartcheck
-```
-
-## Googlers
-
-If you're a Googler, you can use Goma, a distributed compiler service for
-open-source projects such as Chrome and Android. The instructions below assume
-that Goma is installed in the default location (~/goma).
-
-To enable Goma, update your "args.gn" file. Open the file in your editor with
-this command:
-```
-$ gn args out/Debug
-```
-
-Add this line to the end of the file:
-```
-use_goma = true
-```
-
-After you close the editor, the `gn args` command will automatically run `gn gen
-out/Debug`` again.
-
-Now you can dramatically increase the number of parallel tasks:
-```
-$ ninja -C out/Debug -j 1000
 ```
 
 ## Run Mojo Shell
