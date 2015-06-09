@@ -44,6 +44,8 @@ def main():
   # GOPATH also includes any third_party/go libraries that have been imported
   go_path += ':' +  os.path.join(src_root, 'third_party', 'go')
   go_path += ':' +  os.path.abspath(os.path.join(args.out_root, 'gen', 'go'))
+  if 'MOJO_GOPATH' in os.environ:
+    go_path += ':' + os.environ['MOJO_GOPATH']
   go_options = args.go_option
   try:
     shutil.rmtree(build_dir, True)
