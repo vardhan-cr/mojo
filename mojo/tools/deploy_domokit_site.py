@@ -64,6 +64,8 @@ def assets_filter(path):
 def packages_filter(path):
     if 'packages/sky/assets/material-design-icons/' in path:
         return assets_filter(path)
+    if '.gitignore' in path:
+        return False
     return True
 
 
