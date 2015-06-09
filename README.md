@@ -205,67 +205,69 @@ $ mojo/tools/mojob.py dartcheck
 
 ## Run Mojo Shell
 
-### On Android
+`mojo_shell.py` is a universal shell runner abstracting away the differences
+between running on Linux and Android. Having built Mojo as described above, a
+demo app can be run as follows:
 
-0. Prerequisites:
+```
+mojo/tools/mojo_shell.py mojo:spinning_cube  # Linux.
+mojo/tools/mojo_shell.py mojo:spinning_cube  --android # Android.
+```
 
-* Before you start, you'll need a device with an unlocked bootloader,
-  otherwise you won't be able to run adb root (or any of the commands that
-  require root). For Googlers, [follow this
-  link](http://go/mojo-internal-build-instructions) and follow the
-  instructions before returning to this page.
-* Ensure your device is running Lollipop and has an userdebug build.
-* Set up environment for building on Android. This sets up the adb path,
-  etc. You may need to remove /usr/bin/adb.
+Pass `--sky path_to_sky_file` to run a
+[Sky](https://github.com/domokit/mojo/tree/master/sky) app on either platform:
+```
+mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart
+mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --android
+```
 
+Passing the `-v` flag will increase the output verbosity. In particular, it will
+also print all arguments passed by `mojo_shell.py` to the shell binary.
+
+While the shell is running, the `debugger` script allows you to interactively
+start tracing and retrieve the result:
+```
+/devtools/common/debugger start_tracing
+/devtools/common/debugger stop_tracing result.json
+```
+
+### Android set-up
+
+#### Adb
+
+For the Android tooling to work, you will need to have `adb` in your PATH. For
+that, you can either run:
 ```
 source build/android/envsetup.sh
 ```
 
-1. Build changed files:
-
+each time you open a fresh terminal, or add something like:
 ```
-mojo/tools/mojob.py build --android
-```
-
-2. Run Mojo Shell on the device (this will also push the built apk to the
-   device):
-
-```
-mojo/tools/mojo_shell.py --android mojo:spinning_cube
+export PATH="$PATH":$MOJO_DIR/src/third_party/android_tools/sdk/platform-tools
 ```
 
-If this fails and prints:
+to your ~/.bashrc file, $MOJO_DIR being a path to your Mojo checkout.
 
-```
-error: closed
-error: closed
-```
+#### Device
 
-... then you may not have a new enough build of Android on your device. You need
-L (Lollipop) or later.
+**The device has to be running Android 5.0 (Lollipop) or newer.**
 
-3. If you get a crash you won't see symbols. Use
-   tools/android_stack_parser/stack to map back to symbols, e.g.:
+Many features useful for development (ie. streaming of the shell stdout when
+running shell on the device) will not work unless the device is rooted and
+running a userdebug build. For Googlers, [follow the instructions at this
+link](http://go/mojo-internal-build-instructions).
 
+#### Aw, snap!
+
+If the shell crashes on the device, you won't see symbols. Use
+`tools/android_stack_parser/stack` to map back to symbols, e.g.:
 ```
 adb logcat | ./tools/android_stack_parser/stack
 ```
 
-### On Linux
+### Running manually on Linux
 
-1. Build the mojo target as described under [link](#buildmojo).
-
-2. Run Mojo Shell:
-
+If you wish to, you can also run the Linux Mojo shell directly with no wrappers:
 ```
 ./out/Debug/mojo_shell mojo:spinning_cube
-```
-
-3. Optional: Run Mojo Shell with an HTTP server
-
-```
-cd out/Debug
-python -m SimpleHTTPServer 4444 &
-./mojo_shell --origin=http://127.0.0.1:4444 --disable-cache mojo:spinning_cube
 ```
