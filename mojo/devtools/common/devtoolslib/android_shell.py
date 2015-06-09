@@ -59,7 +59,7 @@ class AndroidShell(Shell):
     self.adb_path = adb_path
     self.target_device = target_device
     self.stop_shell_registered = False
-    self.adb_running_as_root = False
+    self.adb_running_as_root = None
     self.additional_logcat_tags = logcat_tags
     self.verbose_pipe = verbose_pipe if verbose_pipe else open(os.devnull, 'w')
 
@@ -132,14 +132,19 @@ class AndroidShell(Shell):
     return device_port
 
   def _RunAdbAsRoot(self):
-    if (not self.adb_running_as_root and
-        not 'cannot run as root' in subprocess.check_output(
-            self._CreateADBCommand(['root']))):
-        # Wait for adbd to restart.
-        subprocess.check_call(
-            self._CreateADBCommand(['wait-for-device']),
-            stdout=self.verbose_pipe)
-        self.adb_running_as_root = True
+    if self.adb_running_as_root is not None:
+      return self.adb_running_as_root
+
+    if ('cannot run as root' not in subprocess.check_output(
+        self._CreateADBCommand(['root']))):
+      # Wait for adbd to restart.
+      subprocess.check_call(
+          self._CreateADBCommand(['wait-for-device']),
+          stdout=self.verbose_pipe)
+      self.adb_running_as_root = True
+    else:
+      self.adb_running_as_root = False
+
     return self.adb_running_as_root
 
   def _IsShellPackageInstalled(self):
@@ -288,9 +293,10 @@ class AndroidShell(Shell):
       retrieved.
     """
     self.CleanLogs()
-    # Don't carry over the native logs from logcat - we have these in the
-    # stdout.
-    p = self.ShowLogs(include_native_logs=(not self.adb_running_as_root))
+
+    # If we are running as root, don't carry over the native logs from logcat -
+    # we will have these in the stdout.
+    p = self.ShowLogs(include_native_logs=(not self._RunAdbAsRoot()))
     self.StartShell(arguments, sys.stdout, p.terminate)
     p.wait()
     return None
