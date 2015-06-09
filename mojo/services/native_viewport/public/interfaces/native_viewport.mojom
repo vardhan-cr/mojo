@@ -13,10 +13,19 @@ struct ViewportMetrics {
   float device_pixel_ratio = 1.0;
 };
 
+struct SurfaceConfiguration {
+  uint8 red_bits = 8;
+  uint8 green_bits = 8;
+  uint8 blue_bits = 8;
+  uint8 alpha_bits = 8;
+  uint8 depth_bits;
+  uint8 stencil_bits;
+};
+
 interface NativeViewport {
   // TODO(sky): having a create function is awkward. Should there be a factory
   // to create the NativeViewport that takes the size?
-  Create(Size size) => (ViewportMetrics metrics);
+  Create(Size size, SurfaceConfiguration? requested_configuration) => (ViewportMetrics metrics);
 
   Show();
   Hide();

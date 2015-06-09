@@ -97,7 +97,8 @@ class TransferThread : public base::Thread {
 
   void Init() override {
     gfx::GLShareGroup* share_group = NULL;
-    surface_ = new gfx::PbufferGLSurfaceEGL(gfx::Size(1, 1));
+    surface_ = new gfx::PbufferGLSurfaceEGL(gfx::Size(1, 1),
+                                            gfx::SurfaceConfiguration());
     surface_->Initialize();
     context_ = gfx::GLContext::CreateGLContext(
         share_group, surface_.get(), gfx::PreferDiscreteGpu);

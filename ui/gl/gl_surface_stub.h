@@ -12,6 +12,9 @@ namespace gfx {
 // A GLSurface that does nothing for unit tests.
 class GL_EXPORT GLSurfaceStub : public GLSurface {
  public:
+  explicit GLSurfaceStub(
+    const gfx::SurfaceConfiguration requested_configuration);
+
   void SetSize(const gfx::Size& size) { size_ = size; }
 
   // Implement GLSurface.

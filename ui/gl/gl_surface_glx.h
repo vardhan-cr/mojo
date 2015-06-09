@@ -21,7 +21,8 @@ namespace gfx {
 // Base class for GLX surfaces.
 class GL_EXPORT GLSurfaceGLX : public GLSurface {
  public:
-  GLSurfaceGLX();
+  explicit GLSurfaceGLX(
+    const gfx::SurfaceConfiguration& requested_configuration);
 
   static bool InitializeOneOff();
 
@@ -52,7 +53,9 @@ class GL_EXPORT GLSurfaceGLX : public GLSurface {
 class GL_EXPORT NativeViewGLSurfaceGLX : public GLSurfaceGLX,
                                          public ui::PlatformEventDispatcher {
  public:
-  explicit NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window);
+  NativeViewGLSurfaceGLX(
+    gfx::AcceleratedWidget window,
+    const gfx::SurfaceConfiguration& requested_configuration);
 
   // Implement GLSurfaceGLX.
   bool Initialize() override;
@@ -95,7 +98,9 @@ class GL_EXPORT NativeViewGLSurfaceGLX : public GLSurfaceGLX,
 // A surface used to render to an offscreen pbuffer.
 class GL_EXPORT PbufferGLSurfaceGLX : public GLSurfaceGLX {
  public:
-  explicit PbufferGLSurfaceGLX(const gfx::Size& size);
+  PbufferGLSurfaceGLX(
+    const gfx::Size& size,
+    const gfx::SurfaceConfiguration& requested_configuration);
 
   // Implement GLSurfaceGLX.
   bool Initialize() override;

@@ -10,10 +10,12 @@
 #include "base/message_loop/message_loop.h"
 #include "base/time/time.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
+#include "mojo/converters/native_viewport/surface_configuration_type_converters.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "services/gles2/gpu_state.h"
 #include "services/native_viewport/platform_viewport_headless.h"
 #include "ui/events/event.h"
+#include "ui/gl/gl_surface.h"
 
 namespace native_viewport {
 
@@ -36,10 +38,17 @@ NativeViewportImpl::~NativeViewportImpl() {
   platform_viewport_.reset();
 }
 
-void NativeViewportImpl::Create(mojo::SizePtr size,
-                                const CreateCallback& callback) {
+void NativeViewportImpl::Create(
+    mojo::SizePtr size,
+    mojo::SurfaceConfigurationPtr requested_configuration,
+    const CreateCallback& callback) {
+  if (requested_configuration == nullptr)
+    requested_configuration = mojo::SurfaceConfiguration::New();
+
   create_callback_ = callback;
   metrics_->size = size.Clone();
+  context_provider_.set_surface_configuration(
+      requested_configuration.To<gfx::SurfaceConfiguration>());
   if (is_headless_)
     platform_viewport_ = PlatformViewportHeadless::Create(this);
   else

@@ -41,8 +41,13 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
     mojo::SizePtr size(mojo::Size::New());
     size->width = 800;
     size->height = 600;
+
+    auto requested_configuration = mojo::SurfaceConfiguration::New();
+    requested_configuration->depth_bits = 16;
+
     viewport_->Create(
         size.Clone(),
+        requested_configuration.Pass(),
         base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
     viewport_->Show();
     mojo::ContextProviderPtr onscreen_context_provider;

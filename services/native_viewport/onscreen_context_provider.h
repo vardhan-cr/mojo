@@ -10,6 +10,7 @@
 #include "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom.h"
 #include "services/gles2/command_buffer_impl.h"
 #include "ui/gfx/native_widget_types.h"
+#include "ui/gl/gl_surface.h"
 
 namespace gles2 {
 class GpuState;
@@ -26,7 +27,10 @@ class OnscreenContextProvider : public mojo::ContextProvider,
   void Bind(mojo::InterfaceRequest<mojo::ContextProvider> request);
 
   void SetAcceleratedWidget(gfx::AcceleratedWidget widget);
-
+  void set_surface_configuration(
+      const gfx::SurfaceConfiguration requested_configuration) {
+    requested_configuration_ = requested_configuration;
+  };
  private:
   // mojo::ContextProvider implementation:
   void Create(mojo::ViewportParameterListenerPtr viewport_parameter_listener,
@@ -37,6 +41,7 @@ class OnscreenContextProvider : public mojo::ContextProvider,
 
   void CreateAndReturnCommandBuffer();
 
+  gfx::SurfaceConfiguration requested_configuration_;
   gles2::CommandBufferImpl* command_buffer_impl_;
   scoped_refptr<gles2::GpuState> state_;
   gfx::AcceleratedWidget widget_;

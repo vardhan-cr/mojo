@@ -6,6 +6,11 @@
 
 namespace gfx {
 
+GLSurfaceStub::GLSurfaceStub(
+  const gfx::SurfaceConfiguration requested_configuration)
+    : GLSurface(requested_configuration) {
+}
+
 void GLSurfaceStub::Destroy() {
 }
 

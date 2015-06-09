@@ -84,7 +84,8 @@ class GPU_EXPORT InProcessCommandBuffer : public CommandBuffer,
                   const base::Closure& context_lost_callback,
                   InProcessCommandBuffer* share_group,
                   GpuMemoryBufferManager* gpu_memory_buffer_manager,
-                  ImageFactory* image_factory);
+                  ImageFactory* image_factory,
+                  const gfx::SurfaceConfiguration& requested_configuration);
   void Destroy();
 
   // CommandBuffer implementation:
@@ -168,23 +169,18 @@ class GPU_EXPORT InProcessCommandBuffer : public CommandBuffer,
     gpu::Capabilities* capabilities;  // Ouptut.
     InProcessCommandBuffer* context_group;
     ImageFactory* image_factory;
+    gfx::SurfaceConfiguration requested_configuration;
 
-    InitializeOnGpuThreadParams(bool is_offscreen,
-                                gfx::AcceleratedWidget window,
-                                const gfx::Size& size,
-                                const std::vector<int32>& attribs,
-                                gfx::GpuPreference gpu_preference,
-                                gpu::Capabilities* capabilities,
-                                InProcessCommandBuffer* share_group,
-                                ImageFactory* image_factory)
-        : is_offscreen(is_offscreen),
-          window(window),
-          size(size),
-          attribs(attribs),
-          gpu_preference(gpu_preference),
-          capabilities(capabilities),
-          context_group(share_group),
-          image_factory(image_factory) {}
+    InitializeOnGpuThreadParams(
+      bool is_offscreen,
+      gfx::AcceleratedWidget window,
+      const gfx::Size& size,
+      const std::vector<int32>& attribs,
+      gfx::GpuPreference gpu_preference,
+      gpu::Capabilities* capabilities,
+      InProcessCommandBuffer* share_group,
+      ImageFactory* image_factory,
+      const gfx::SurfaceConfiguration& requested_configuration);
   };
 
   bool InitializeOnGpuThread(const InitializeOnGpuThreadParams& params);

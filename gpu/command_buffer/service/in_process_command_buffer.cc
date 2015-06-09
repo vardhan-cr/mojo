@@ -240,6 +240,30 @@ gfx::GpuMemoryBufferHandle ShareGpuMemoryBufferToGpuThread(
 
 }  // anonyous namespace
 
+
+InProcessCommandBuffer::
+  InitializeOnGpuThreadParams::InitializeOnGpuThreadParams(
+      bool is_offscreen,
+      gfx::AcceleratedWidget window,
+      const gfx::Size& size,
+      const std::vector<int32>& attribs,
+      gfx::GpuPreference gpu_preference,
+      gpu::Capabilities* capabilities,
+      InProcessCommandBuffer* share_group,
+      ImageFactory* image_factory,
+      const gfx::SurfaceConfiguration& requested_configuration)
+        : is_offscreen(is_offscreen),
+          window(window),
+          size(size),
+          attribs(attribs),
+          gpu_preference(gpu_preference),
+          capabilities(capabilities),
+          context_group(share_group),
+          image_factory(image_factory),
+          requested_configuration(requested_configuration) {
+}
+
+
 InProcessCommandBuffer::Service::Service() {}
 
 InProcessCommandBuffer::Service::~Service() {}
@@ -343,7 +367,8 @@ bool InProcessCommandBuffer::Initialize(
     const base::Closure& context_lost_callback,
     InProcessCommandBuffer* share_group,
     GpuMemoryBufferManager* gpu_memory_buffer_manager,
-    ImageFactory* image_factory) {
+    ImageFactory* image_factory,
+    const gfx::SurfaceConfiguration& requested_configuration) {
   DCHECK(!share_group || service_.get() == share_group->service_.get());
   context_lost_callback_ = WrapCallback(context_lost_callback);
 
@@ -362,7 +387,8 @@ bool InProcessCommandBuffer::Initialize(
                                      gpu_preference,
                                      &capabilities,
                                      share_group,
-                                     image_factory);
+                                     image_factory,
+                                     requested_configuration);
 
   base::Callback<bool(void)> init_task =
       base::Bind(&InProcessCommandBuffer::InitializeOnGpuThread,
@@ -439,9 +465,11 @@ bool InProcessCommandBuffer::InitializeOnGpuThread(
 
   if (!surface_.get()) {
     if (params.is_offscreen)
-      surface_ = gfx::GLSurface::CreateOffscreenGLSurface(params.size);
+      surface_ = gfx::GLSurface::CreateOffscreenGLSurface(
+          params.size, params.requested_configuration);
     else
-      surface_ = gfx::GLSurface::CreateViewGLSurface(params.window);
+      surface_ = gfx::GLSurface::CreateViewGLSurface(
+          params.window, params.requested_configuration);
   }
 
   if (!surface_.get()) {

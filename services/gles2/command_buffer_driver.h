@@ -13,6 +13,7 @@
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/gfx/size.h"
+#include "ui/gl/gl_surface.h"
 
 namespace gpu {
 class CommandBufferService;
@@ -45,12 +46,14 @@ class CommandBufferDriver {
   // Offscreen.
   CommandBufferDriver(gfx::GLShareGroup* share_group,
                       gpu::gles2::MailboxManager* mailbox_manager,
-                      gpu::SyncPointManager* sync_point_manager);
+                      gpu::SyncPointManager* sync_point_manager,
+                      const gfx::SurfaceConfiguration& requested_configuration);
   // Onscreen.
   CommandBufferDriver(gfx::AcceleratedWidget widget,
                       gfx::GLShareGroup* share_group,
                       gpu::gles2::MailboxManager* mailbox_manager,
-                      gpu::SyncPointManager* sync_point_manager);
+                      gpu::SyncPointManager* sync_point_manager,
+                      const gfx::SurfaceConfiguration& requested_configuration);
   ~CommandBufferDriver();
 
   void set_client(scoped_ptr<Client> client) { client_ = client.Pass(); }
@@ -89,6 +92,7 @@ class CommandBufferDriver {
   scoped_refptr<gfx::GLShareGroup> share_group_;
   scoped_refptr<gpu::gles2::MailboxManager> mailbox_manager_;
   scoped_refptr<gpu::SyncPointManager> sync_point_manager_;
+  gfx::SurfaceConfiguration requested_configuration_;
 
   scoped_refptr<base::SingleThreadTaskRunner> context_lost_task_runner_;
   base::Callback<void(int32_t)> context_lost_callback_;

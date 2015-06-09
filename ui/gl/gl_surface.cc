@@ -161,7 +161,9 @@ void GLSurface::InitializeDynamicMockBindingsForTests(GLContext* context) {
   CHECK(InitializeDynamicGLBindings(kGLImplementationMockGL, context));
 }
 
-GLSurface::GLSurface() {}
+GLSurface::GLSurface(const SurfaceConfiguration requested_configuration)
+    : surface_configuration_(requested_configuration) {
+}
 
 bool GLSurface::Initialize() {
   return true;
@@ -294,7 +296,9 @@ bool GLSurface::ExtensionsContain(const char* c_extensions, const char* name) {
 void GLSurface::OnSetSwapInterval(int interval) {
 }
 
-GLSurfaceAdapter::GLSurfaceAdapter(GLSurface* surface) : surface_(surface) {}
+GLSurfaceAdapter::GLSurfaceAdapter(GLSurface* surface)
+    : GLSurface(surface->get_surface_configuration()), surface_(surface) {
+}
 
 bool GLSurfaceAdapter::Initialize() {
   return surface_->Initialize();

@@ -24,11 +24,20 @@ class GLContext;
 class GLImage;
 class VSyncProvider;
 
+struct SurfaceConfiguration {
+  uint8_t red_bits = 8;
+  uint8_t green_bits = 8;
+  uint8_t blue_bits = 8;
+  uint8_t alpha_bits = 8;
+  uint8_t depth_bits = 0;
+  uint8_t stencil_bits = 0;
+};
+
 // Encapsulates a surface that can be rendered to with GL, hiding platform
 // specific management.
 class GL_EXPORT GLSurface : public base::RefCounted<GLSurface> {
  public:
-  GLSurface();
+  explicit GLSurface(const gfx::SurfaceConfiguration requested_configuration);
 
   // (Re)create the surface. TODO(apatrick): This is an ugly hack to allow the
   // EGL surface associated to be recreated without destroying the associated
@@ -154,7 +163,8 @@ class GL_EXPORT GLSurface : public base::RefCounted<GLSurface> {
 
   // Create a GL surface that renders directly to a view.
   static scoped_refptr<GLSurface> CreateViewGLSurface(
-      gfx::AcceleratedWidget window);
+      gfx::AcceleratedWidget window,
+      const gfx::SurfaceConfiguration& requested_configuration);
 
 #if defined(USE_OZONE)
   // Create a GL surface that renders directly into a window with surfaceless
@@ -162,17 +172,23 @@ class GL_EXPORT GLSurface : public base::RefCounted<GLSurface> {
   // be presented as an overlay. If surfaceless mode is not supported or
   // enabled it will return a null pointer.
   static scoped_refptr<GLSurface> CreateSurfacelessViewGLSurface(
-      gfx::AcceleratedWidget window);
+      gfx::AcceleratedWidget window,
+      const gfx::SurfaceConfiguration& requested_configuration);
 #endif  // defined(USE_OZONE)
 
   // Create a GL surface used for offscreen rendering.
   static scoped_refptr<GLSurface> CreateOffscreenGLSurface(
-      const gfx::Size& size);
+      const gfx::Size& size,
+      const gfx::SurfaceConfiguration& requested_configuration);
 
   static GLSurface* GetCurrent();
 
   // Called when the swap interval for the associated context changes.
   virtual void OnSetSwapInterval(int interval);
+
+  const gfx::SurfaceConfiguration get_surface_configuration() {
+    return surface_configuration_;
+  }
 
  protected:
   virtual ~GLSurface();
@@ -188,6 +204,8 @@ class GL_EXPORT GLSurface : public base::RefCounted<GLSurface> {
  private:
   friend class base::RefCounted<GLSurface>;
   friend class GLContext;
+
+  gfx::SurfaceConfiguration surface_configuration_;
 
   DISALLOW_COPY_AND_ASSIGN(GLSurface);
 };

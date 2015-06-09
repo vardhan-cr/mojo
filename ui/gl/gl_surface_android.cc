@@ -36,21 +36,25 @@ bool GLSurface::InitializeOneOffInternal() {
 
 // static
 scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
-    gfx::AcceleratedWidget window) {
+    gfx::AcceleratedWidget window,
+    const gfx::SurfaceConfiguration& requested_configuration) {
   CHECK_NE(kGLImplementationNone, GetGLImplementation());
   if (GetGLImplementation() == kGLImplementationOSMesaGL) {
-    scoped_refptr<GLSurface> surface(new GLSurfaceOSMesaHeadless());
+    scoped_refptr<GLSurface> surface(
+        new GLSurfaceOSMesaHeadless(requested_configuration));
     if (!surface->Initialize())
       return NULL;
     return surface;
   }
   DCHECK(GetGLImplementation() == kGLImplementationEGLGLES2);
   if (window != kNullAcceleratedWidget) {
-    scoped_refptr<GLSurface> surface = new NativeViewGLSurfaceEGL(window);
+    scoped_refptr<GLSurface> surface =
+        new NativeViewGLSurfaceEGL(window, requested_configuration);
     if (surface->Initialize())
       return surface;
   } else {
-    scoped_refptr<GLSurface> surface = new GLSurfaceStub();
+    scoped_refptr<GLSurface> surface =
+        new GLSurfaceStub(requested_configuration);
     if (surface->Initialize())
       return surface;
   }
@@ -59,12 +63,13 @@ scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
 
 // static
 scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
-    const gfx::Size& size) {
+    const gfx::Size& size,
+    const gfx::SurfaceConfiguration& requested_configuration) {
   CHECK_NE(kGLImplementationNone, GetGLImplementation());
   switch (GetGLImplementation()) {
     case kGLImplementationOSMesaGL: {
-      scoped_refptr<GLSurface> surface(
-          new GLSurfaceOSMesa(OSMesaSurfaceFormatBGRA, size));
+      scoped_refptr<GLSurface> surface(new GLSurfaceOSMesa(
+          OSMesaSurfaceFormatBGRA, size, requested_configuration));
       if (!surface->Initialize())
         return NULL;
 
@@ -74,9 +79,9 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
       scoped_refptr<GLSurface> surface;
       if (GLSurfaceEGL::IsEGLSurfacelessContextSupported() &&
           (size.width() == 0 && size.height() == 0)) {
-        surface = new SurfacelessEGL(size);
+        surface = new SurfacelessEGL(size, requested_configuration);
       } else {
-        surface = new PbufferGLSurfaceEGL(size);
+        surface = new PbufferGLSurfaceEGL(size, requested_configuration);
       }
 
       if (!surface->Initialize())

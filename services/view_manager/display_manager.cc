@@ -93,6 +93,7 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
                               &native_viewport_);
   native_viewport_.set_error_handler(this);
   native_viewport_->Create(metrics_.size->Clone(),
+                           mojo::SurfaceConfiguration::New(),
                            base::Bind(&DefaultDisplayManager::OnMetricsChanged,
                                       weak_factory_.GetWeakPtr()));
   native_viewport_->Show();

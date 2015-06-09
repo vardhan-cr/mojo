@@ -11,7 +11,8 @@ namespace native_viewport {
 
 OnscreenContextProvider::OnscreenContextProvider(
     const scoped_refptr<gles2::GpuState>& state)
-    : command_buffer_impl_(nullptr),
+    : requested_configuration_(gfx::SurfaceConfiguration()),
+      command_buffer_impl_(nullptr),
       state_(state),
       widget_(gfx::kNullAcceleratedWidget),
       binding_(this) {
@@ -51,6 +52,7 @@ void OnscreenContextProvider::Create(
     DCHECK(!command_buffer_impl_);
     pending_create_callback_.Run(nullptr);
   }
+
   pending_listener_ = viewport_parameter_listener.Pass();
   pending_create_callback_ = callback;
 
@@ -70,7 +72,7 @@ void OnscreenContextProvider::CreateAndReturnCommandBuffer() {
       state_->sync_point_manager(),
       make_scoped_ptr(new gles2::CommandBufferDriver(
           widget_, state_->share_group(), state_->mailbox_manager(),
-          state_->sync_point_manager())));
+          state_->sync_point_manager(), requested_configuration_)));
   command_buffer_impl_->set_observer(this);
   pending_create_callback_.Run(cb.Pass());
   pending_create_callback_.reset();

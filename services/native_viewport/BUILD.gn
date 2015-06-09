@@ -83,6 +83,7 @@ source_set("lib") {
     "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
+    "//mojo/converters/native_viewport",
     "//mojo/environment:chromium",
     "//services/gles2",
     "//mojo/services/geometry/public/interfaces",

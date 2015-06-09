@@ -22,7 +22,8 @@ EGLNativeDisplayType GetPlatformDefaultEGLNativeDisplay();
 // Interface for EGL surface.
 class GL_EXPORT GLSurfaceEGL : public GLSurface {
  public:
-  GLSurfaceEGL();
+  explicit GLSurfaceEGL(
+    const gfx::SurfaceConfiguration requested_configuration);
 
   // Implement GLSurface.
   void DestroyAndTerminateDisplay() override;
@@ -50,7 +51,9 @@ class GL_EXPORT GLSurfaceEGL : public GLSurface {
 // Encapsulates an EGL surface bound to a view.
 class GL_EXPORT NativeViewGLSurfaceEGL : public GLSurfaceEGL {
  public:
-  explicit NativeViewGLSurfaceEGL(EGLNativeWindowType window);
+  NativeViewGLSurfaceEGL(
+    EGLNativeWindowType window,
+    const gfx::SurfaceConfiguration requested_configuration);
 
   // Implement GLSurface.
   EGLConfig GetConfig() override;
@@ -93,7 +96,8 @@ class GL_EXPORT NativeViewGLSurfaceEGL : public GLSurfaceEGL {
 // Encapsulates a pbuffer EGL surface.
 class GL_EXPORT PbufferGLSurfaceEGL : public GLSurfaceEGL {
  public:
-  explicit PbufferGLSurfaceEGL(const gfx::Size& size);
+  PbufferGLSurfaceEGL(const gfx::Size& size,
+                      const gfx::SurfaceConfiguration requested_configuration);
 
   // Implement GLSurface.
   EGLConfig GetConfig() override;
@@ -112,6 +116,7 @@ class GL_EXPORT PbufferGLSurfaceEGL : public GLSurfaceEGL {
  private:
   gfx::Size size_;
   EGLSurface surface_;
+  EGLConfig config_;
 
   DISALLOW_COPY_AND_ASSIGN(PbufferGLSurfaceEGL);
 };
@@ -121,7 +126,8 @@ class GL_EXPORT PbufferGLSurfaceEGL : public GLSurfaceEGL {
 // need to create a dummy EGLsurface in case we render to client API targets.
 class GL_EXPORT SurfacelessEGL : public GLSurfaceEGL {
  public:
-  explicit SurfacelessEGL(const gfx::Size& size);
+  SurfacelessEGL(const gfx::Size& size,
+                 SurfaceConfiguration requested_configuration);
 
   // Implement GLSurface.
   EGLConfig GetConfig() override;

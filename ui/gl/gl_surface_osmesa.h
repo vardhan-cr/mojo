@@ -18,7 +18,9 @@ enum OSMesaSurfaceFormat { OSMesaSurfaceFormatBGRA, OSMesaSurfaceFormatRGBA };
 // surfaces can be resized and resizing preserves the contents.
 class GL_EXPORT GLSurfaceOSMesa : public GLSurface {
  public:
-  GLSurfaceOSMesa(OSMesaSurfaceFormat format, const gfx::Size& size);
+  GLSurfaceOSMesa(OSMesaSurfaceFormat format,
+                  const gfx::Size& size,
+                  const gfx::SurfaceConfiguration requested_configuration);
 
   // Implement GLSurface.
   bool Initialize() override;
@@ -29,6 +31,7 @@ class GL_EXPORT GLSurfaceOSMesa : public GLSurface {
   gfx::Size GetSize() override;
   void* GetHandle() override;
   unsigned GetFormat() override;
+  void* GetConfig() override;
 
  protected:
   ~GLSurfaceOSMesa() override;
@@ -46,10 +49,12 @@ class GL_EXPORT GLSurfaceOSMesa : public GLSurface {
 // provider is not available.
 class GLSurfaceOSMesaHeadless : public GLSurfaceOSMesa {
  public:
-  explicit GLSurfaceOSMesaHeadless();
+  explicit GLSurfaceOSMesaHeadless(
+      const gfx::SurfaceConfiguration requested_configuration);
 
   bool IsOffscreen() override;
   bool SwapBuffers() override;
+  void* GetConfig() override;
 
  protected:
   ~GLSurfaceOSMesaHeadless() override;

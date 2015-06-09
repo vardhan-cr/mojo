@@ -92,7 +92,8 @@ class TransferThread : public base::Thread {
       return;
     }
 
-    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(gfx::Size(1, 1));
+    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(
+        gfx::Size(1, 1), gfx::SurfaceConfiguration());
     if (!surface_.get()) {
       LOG(ERROR) << "Unable to create GLSurface";
       caller_wait->Signal();

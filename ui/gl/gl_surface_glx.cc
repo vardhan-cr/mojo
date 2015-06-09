@@ -317,7 +317,10 @@ Display* SGIVideoSyncProviderThreadShim::display_ = NULL;
 
 }  // namespace
 
-GLSurfaceGLX::GLSurfaceGLX() {}
+GLSurfaceGLX::GLSurfaceGLX(
+  const gfx::SurfaceConfiguration& requested_configuration)
+    : GLSurface(requested_configuration) {
+}
 
 bool GLSurfaceGLX::InitializeOneOff() {
   static bool initialized = false;
@@ -404,8 +407,11 @@ void* GLSurfaceGLX::GetDisplay() {
 
 GLSurfaceGLX::~GLSurfaceGLX() {}
 
-NativeViewGLSurfaceGLX::NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window)
-  : parent_window_(window),
+NativeViewGLSurfaceGLX::NativeViewGLSurfaceGLX(
+  gfx::AcceleratedWidget window,
+  const gfx::SurfaceConfiguration& requested_configuration)
+  : GLSurfaceGLX(requested_configuration),
+    parent_window_(window),
     window_(0),
     config_(NULL) {
 }
@@ -529,6 +535,11 @@ void* NativeViewGLSurfaceGLX::GetConfig() {
     // use when creating the window in the first place. Then we can
     // pass that FBConfig down rather than attempting to reconstitute
     // it.
+    //
+    // TODO(iansf): Perhaps instead of kbr's suggestion above, we can
+    // now use GLSurface::GetSurfaceConfiguration to use the returned
+    // gfx::SurfaceConfiguration with glXChooseFBConfig in a manner
+    // similar to that used in NativeViewGLSurfaceEGL::GetConfig.
 
     XWindowAttributes attributes;
     if (!XGetWindowAttributes(
@@ -590,8 +601,11 @@ NativeViewGLSurfaceGLX::~NativeViewGLSurfaceGLX() {
   Destroy();
 }
 
-PbufferGLSurfaceGLX::PbufferGLSurfaceGLX(const gfx::Size& size)
-  : size_(size),
+PbufferGLSurfaceGLX::PbufferGLSurfaceGLX(
+  const gfx::Size& size,
+  const gfx::SurfaceConfiguration& requested_configuration)
+  : GLSurfaceGLX(requested_configuration),
+    size_(size),
     config_(NULL),
     pbuffer_(0) {
   // Some implementations of Pbuffer do not support having a 0 size. For such

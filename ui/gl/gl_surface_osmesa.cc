@@ -12,9 +12,11 @@
 
 namespace gfx {
 
-GLSurfaceOSMesa::GLSurfaceOSMesa(OSMesaSurfaceFormat format,
-                                 const gfx::Size& size)
-    : size_(size) {
+GLSurfaceOSMesa::GLSurfaceOSMesa(
+  OSMesaSurfaceFormat format,
+  const gfx::Size& size,
+  const gfx::SurfaceConfiguration requested_configuration)
+    : GLSurface(requested_configuration), size_(size) {
   switch (format) {
     case OSMesaSurfaceFormatBGRA:
       format_ = OSMESA_BGRA;
@@ -35,6 +37,14 @@ bool GLSurfaceOSMesa::Initialize() {
 
 void GLSurfaceOSMesa::Destroy() {
   buffer_.reset();
+}
+
+void* GLSurfaceOSMesa::GetConfig() {
+  // TODO(iansf): Possibly choose a configuration in a manner similar to
+  // NativeViewGLSurfaceEGL::GetConfig, using the gfx::SurfaceConfiguration
+  // returned by GLSurface::GetSurfaceConfiguration.
+  NOTIMPLEMENTED();
+  return NULL;
 }
 
 bool GLSurfaceOSMesa::Resize(const gfx::Size& new_size) {
@@ -109,8 +119,19 @@ bool GLSurfaceOSMesaHeadless::IsOffscreen() { return false; }
 
 bool GLSurfaceOSMesaHeadless::SwapBuffers() { return true; }
 
-GLSurfaceOSMesaHeadless::GLSurfaceOSMesaHeadless()
-    : GLSurfaceOSMesa(OSMesaSurfaceFormatBGRA, gfx::Size(1, 1)) {
+GLSurfaceOSMesaHeadless::GLSurfaceOSMesaHeadless(
+    const gfx::SurfaceConfiguration requested_configuration)
+    : GLSurfaceOSMesa(OSMesaSurfaceFormatBGRA,
+                      gfx::Size(1, 1),
+                      requested_configuration) {
+}
+
+void* GLSurfaceOSMesaHeadless::GetConfig() {
+  // TODO(iansf): Possibly choose a configuration in a manner similar to
+  // NativeViewGLSurfaceEGL::GetConfig, using the gfx::SurfaceConfiguration
+  // returned by GLSurface::GetSurfaceConfiguration.
+  NOTIMPLEMENTED();
+  return NULL;
 }
 
 GLSurfaceOSMesaHeadless::~GLSurfaceOSMesaHeadless() { Destroy(); }

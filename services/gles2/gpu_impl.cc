@@ -30,7 +30,8 @@ void GpuImpl::CreateOffscreenGLES2Context(
                         state_->sync_point_manager(),
                         make_scoped_ptr(new CommandBufferDriver(
                             state_->share_group(), state_->mailbox_manager(),
-                            state_->sync_point_manager())));
+                            state_->sync_point_manager(),
+                            gfx::SurfaceConfiguration())));
 }
 
 }  // namespace gles2

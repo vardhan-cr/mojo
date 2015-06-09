@@ -53,23 +53,27 @@ CommandBufferDriver::Client::~Client() {
 CommandBufferDriver::CommandBufferDriver(
     gfx::GLShareGroup* share_group,
     gpu::gles2::MailboxManager* mailbox_manager,
-    gpu::SyncPointManager* sync_point_manager)
+    gpu::SyncPointManager* sync_point_manager,
+    const gfx::SurfaceConfiguration& requested_configuration)
     : CommandBufferDriver(gfx::kNullAcceleratedWidget,
                           share_group,
                           mailbox_manager,
-                          sync_point_manager) {
+                          sync_point_manager,
+                          requested_configuration) {
 }
 
 CommandBufferDriver::CommandBufferDriver(
     gfx::AcceleratedWidget widget,
     gfx::GLShareGroup* share_group,
     gpu::gles2::MailboxManager* mailbox_manager,
-    gpu::SyncPointManager* sync_point_manager)
+    gpu::SyncPointManager* sync_point_manager,
+    const gfx::SurfaceConfiguration& requested_configuration)
     : client_(nullptr),
       widget_(widget),
       share_group_(share_group),
       mailbox_manager_(mailbox_manager),
       sync_point_manager_(sync_point_manager),
+      requested_configuration_(requested_configuration),
       weak_factory_(this) {
 }
 
@@ -96,9 +100,11 @@ void CommandBufferDriver::Initialize(
 bool CommandBufferDriver::DoInitialize(
     mojo::ScopedSharedBufferHandle shared_state) {
   if (widget_ == gfx::kNullAcceleratedWidget)
-    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(gfx::Size(1, 1));
+    surface_ = gfx::GLSurface::CreateOffscreenGLSurface(
+        gfx::Size(1, 1), requested_configuration_);
   else {
-    surface_ = gfx::GLSurface::CreateViewGLSurface(widget_);
+    surface_ =
+        gfx::GLSurface::CreateViewGLSurface(widget_, requested_configuration_);
     if (auto vsync_provider = surface_->GetVSyncProvider()) {
       vsync_provider->GetVSyncParameters(
           base::Bind(&CommandBufferDriver::OnUpdateVSyncParameters,

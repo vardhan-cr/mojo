@@ -218,7 +218,7 @@ class GlHelperExampleApp : public mojo::ApplicationDelegate,
     viewport_size_.width = 800;
     viewport_size_.height = 600;
     native_viewport_->Create(
-        viewport_size_.Clone(),
+        viewport_size_.Clone(), mojo::SurfaceConfiguration::New(),
         base::Bind(&GlHelperExampleApp::OnViewportMetricsReceived,
                    base::Unretained(this)));
     native_viewport_->Show();

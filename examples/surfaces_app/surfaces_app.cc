@@ -39,7 +39,8 @@ class SurfacesApp : public ApplicationDelegate {
 
     // Connect to the native viewport service and create a viewport.
     app_impl_->ConnectToService("mojo:native_viewport_service", &viewport_);
-    viewport_->Create(Size::From(size_), [](ViewportMetricsPtr metrics) {});
+    viewport_->Create(Size::From(size_), SurfaceConfiguration::New(),
+                      [](ViewportMetricsPtr metrics) {});
     viewport_->Show();
 
     // Grab a ContextProvider associated with the viewport.
