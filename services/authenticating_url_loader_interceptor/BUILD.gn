@@ -31,3 +31,24 @@ mojo_native_application("authenticating_url_loader_interceptor") {
     "//url",
   ]
 }
+
+mojo_native_application("apptests") {
+  testonly = true
+  output_name = "authenticating_url_loader_interceptor_apptests"
+
+  sources = [
+    "authenticating_url_loader_interceptor_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/public/cpp/application",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/system",
+    "//mojo/services/authenticating_url_loader_interceptor/public/interfaces",
+    "//mojo/services/network/public/interfaces",
+    "//testing/gtest",
+  ]
+}

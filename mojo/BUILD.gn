@@ -70,6 +70,7 @@ group("tests") {
     "//services/files:apptests",
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
+    "//services/authenticating_url_loader_interceptor:apptests",
     "//services/http_server:apptests",
     "//services/prediction:apptests",
     "//services/reaper:tests",
