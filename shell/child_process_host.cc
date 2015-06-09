@@ -49,15 +49,15 @@ void ChildProcessHost::Start() {
   launch_data->child_path = context_->mojo_shell_child_path();
 
   // TODO(vtl): Add something for |slave_info|.
-  mojo::embedder::ScopedPlatformHandle platform_handle_for_channel;
-  mojo::embedder::ConnectToSlave(
+  // TODO(vtl): The "unretained this" is wrong (see also below).
+  mojo::ScopedMessagePipeHandle handle(mojo::embedder::ConnectToSlave(
       nullptr, launch_data->platform_channel_pair.PassServerHandle(),
-      &platform_handle_for_channel, &launch_data->child_connection_id);
-
-  mojo::ScopedMessagePipeHandle handle(mojo::embedder::CreateChannel(
-      platform_handle_for_channel.Pass(),
-      base::Bind(&ChildProcessHost::DidCreateChannel, base::Unretained(this)),
-      base::MessageLoop::current()->message_loop_proxy()));
+      base::Bind(&ChildProcessHost::DidConnectToSlave, base::Unretained(this)),
+      base::MessageLoop::current()->message_loop_proxy(),
+      &launch_data->child_connection_id, &channel_info_));
+  // TODO(vtl): We should destroy the channel on destruction (using
+  // |channel_info_|, but only after the callback has been called.
+  CHECK(channel_info_);
 
   controller_.Bind(mojo::InterfacePtrInfo<ChildController>(handle.Pass(), 0u));
   controller_.set_error_handler(this);
@@ -109,13 +109,9 @@ void ChildProcessHost::DidStart(base::Process child_process) {
   child_process_ = child_process.Pass();
 }
 
-// Callback for |mojo::embedder::CreateChannel()|.
-void ChildProcessHost::DidCreateChannel(
-    mojo::embedder::ChannelInfo* channel_info) {
-  DVLOG(2) << "ChildProcessHost::DidCreateChannel()";
-
-  CHECK(channel_info);
-  channel_info_ = channel_info;
+// Callback for |mojo::embedder::ConnectToSlave()|.
+void ChildProcessHost::DidConnectToSlave() {
+  DVLOG(2) << "ChildProcessHost::DidConnectToSlave()";
 }
 
 base::Process ChildProcessHost::DoLaunch(scoped_ptr<LaunchData> launch_data) {

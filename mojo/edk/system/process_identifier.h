@@ -12,7 +12,12 @@ namespace system {
 
 // Identifiers for processes (note that these are not OS process IDs):
 using ProcessIdentifier = uint64_t;
+
+// Zero will never be a process identifier for any process.
 const ProcessIdentifier kInvalidProcessIdentifier = 0;
+
+// The master process will always have this process identifier.
+const ProcessIdentifier kMasterProcessIdentifier = 1;
 
 }  // namespace system
 }  // namespace mojo

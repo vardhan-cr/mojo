@@ -30,9 +30,6 @@ using SlaveInfo = void*;
 
 namespace system {
 
-// The master process will always have this "process identifier".
-const ProcessIdentifier kMasterProcessIdentifier = 1;
-
 // The |ConnectionManager| implementation for the master process.
 //
 // This class is thread-safe (except that no public methods may be called from

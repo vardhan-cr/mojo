@@ -16,6 +16,7 @@
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/edk/system/connection_identifier.h"
+#include "mojo/edk/system/process_identifier.h"
 #include "mojo/edk/test/multiprocess_test_helper.h"
 #include "mojo/edk/test/test_utils.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -63,14 +64,19 @@ class TestSlaveProcessDelegate : public embedder::SlaveProcessDelegate {
   DISALLOW_COPY_AND_ASSIGN(TestSlaveProcessDelegate);
 };
 
+}  // namespace
+
+// Note: This test isn't in an anonymous namespace, since it needs to be
+// friended by |IPCSupport|.
 #if defined(OS_ANDROID)
 // Android multi-process tests are not executing the new process. This is flaky.
 // TODO(vtl): I'm guessing this is true of this test too?
-#define MAYBE_MultiprocessMasterSlave DISABLED_MultiprocessMasterSlave
+#define MAYBE_MultiprocessMasterSlaveInternal \
+  DISABLED_MultiprocessMasterSlaveInternal
 #else
-#define MAYBE_MultiprocessMasterSlave MultiprocessMasterSlave
+#define MAYBE_MultiprocessMasterSlaveInternal MultiprocessMasterSlaveInternal
 #endif  // defined(OS_ANDROID)
-TEST(IPCSupportTest, MAYBE_MultiprocessMasterSlave) {
+TEST(IPCSupportTest, MAYBE_MultiprocessMasterSlaveInternal) {
   embedder::SimplePlatformSupport platform_support;
   base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
   TestMasterProcessDelegate master_process_delegate;
@@ -83,14 +89,18 @@ TEST(IPCSupportTest, MAYBE_MultiprocessMasterSlave) {
   ConnectionIdentifier connection_id =
       ipc_support.GenerateConnectionIdentifier();
   mojo::test::MultiprocessTestHelper multiprocess_test_helper;
+  ProcessIdentifier slave_id = kInvalidProcessIdentifier;
   embedder::ScopedPlatformHandle second_platform_handle =
-      ipc_support.ConnectToSlave(
+      ipc_support.ConnectToSlaveInternal(
           connection_id, nullptr,
-          multiprocess_test_helper.server_platform_handle.Pass());
+          multiprocess_test_helper.server_platform_handle.Pass(), &slave_id);
   ASSERT_TRUE(second_platform_handle.is_valid());
+  EXPECT_NE(slave_id, kInvalidProcessIdentifier);
+  EXPECT_NE(slave_id, kMasterProcessIdentifier);
 
   multiprocess_test_helper.StartChildWithExtraSwitch(
-      "MultiprocessMasterSlave", kConnectionIdFlag, connection_id.ToString());
+      "MultiprocessMasterSlaveInternal", kConnectionIdFlag,
+      connection_id.ToString());
 
   // We write a '?'. The slave should write a '!' in response.
   size_t n = 0;
@@ -113,7 +123,7 @@ TEST(IPCSupportTest, MAYBE_MultiprocessMasterSlave) {
                                             base::Unretained(&ipc_support)));
 }
 
-MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlave) {
+MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlaveInternal) {
   embedder::ScopedPlatformHandle client_platform_handle =
       mojo::test::MultiprocessTestHelper::client_platform_handle.Pass();
   ASSERT_TRUE(client_platform_handle.is_valid());
@@ -160,6 +170,5 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlave) {
 // TODO(vtl): Also test the case of the master "dying" before the slave. (The
 // slave should get OnMasterDisconnect(), which we currently don't test.)
 
-}  // namespace
 }  // namespace system
 }  // namespace mojo

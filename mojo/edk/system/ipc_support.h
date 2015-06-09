@@ -5,6 +5,8 @@
 #ifndef MOJO_EDK_SYSTEM_IPC_SUPPORT_H_
 #define MOJO_EDK_SYSTEM_IPC_SUPPORT_H_
 
+#include "base/callback_forward.h"
+#include "base/gtest_prod_util.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
@@ -12,7 +14,9 @@
 #include "mojo/edk/embedder/process_type.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/embedder/slave_info.h"
+#include "mojo/edk/system/channel_id.h"
 #include "mojo/edk/system/connection_identifier.h"
+#include "mojo/edk/system/process_identifier.h"
 #include "mojo/edk/system/system_impl_export.h"
 
 namespace mojo {
@@ -26,6 +30,9 @@ namespace system {
 
 class ChannelManager;
 class ConnectionManager;
+class MessagePipeDispatcher;
+
+FORWARD_DECLARE_TEST(IPCSupportTest, MultiprocessMasterSlaveInternal);
 
 // |IPCSupport| encapsulates all the objects that are needed to support IPC for
 // a single "process" (whether that be a master or a slave).
@@ -74,17 +81,28 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   // Called in the master process to connect a slave process to the IPC system.
   //
   // |connection_id| should be a unique connection identifier, which will also
-  // be given to the slave (in |ConnectToMaster()|, below). |platform_handle|
-  // should be the master's handle to an OS "pipe" between master and slave.
-  // This will create a second OS "pipe" between the master and slave and return
-  // the master's handle.
+  // be given to the slave (in |ConnectToMaster()|, below). |slave_info| is
+  // context for the caller (it is treated as an opaque value by this class).
+  // |platform_handle| should be the master's handle to an OS "pipe" between
+  // master and slave. This will then bootstrap a |Channel| between master and
+  // slave together with an initial message pipe (returning a dispatcher to the
+  // master's side).
   //
-  // TODO(vtl): This isn't the right API. It should set up a channel and an
-  // initial message pipe.
-  embedder::ScopedPlatformHandle ConnectToSlave(
+  // |callback| will be run after the |Channel| is created, either using
+  // |callback_thread_task_runner| (if it is non-null) or on the I/O thread.
+  // |*channel_id| will be set to the ID for the channel (immediately); the
+  // channel may be destroyed using this ID, but only after the callback has
+  // been run.
+  //
+  // TODO(vtl): Add some more channel management functionality to this class.
+  // Maybe make this callback interface more sane.
+  scoped_refptr<system::MessagePipeDispatcher> ConnectToSlave(
       const ConnectionIdentifier& connection_id,
       embedder::SlaveInfo slave_info,
-      embedder::ScopedPlatformHandle platform_handle);
+      embedder::ScopedPlatformHandle platform_handle,
+      const base::Closure& callback,
+      scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+      ChannelId* channel_id);
 
   // Called in a slave process to connect it to the master process and thus the
   // IPC system. See |ConnectToSlave()|, above.
@@ -109,6 +127,21 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   ChannelManager* channel_manager() const { return channel_manager_.get(); }
 
  private:
+  // This tests |ConnectToSlaveInternal()|.
+  // TODO(vtl): (... and |ConnectToMasterInternal()|.)
+  FRIEND_TEST_ALL_PREFIXES(IPCSupportTest, MultiprocessMasterSlaveInternal);
+
+  // Helper for |ConnectToSlave()|. Connects (using the connection manager) to
+  // the slave using |platform_handle| (a handle to an OS "pipe" between master
+  // and slave) and creates a second OS "pipe" between the master and slave
+  // (returning the master's handle). |*slave_process_identifier| will be set to
+  // the process identifier assigned to the slave.
+  embedder::ScopedPlatformHandle ConnectToSlaveInternal(
+      const ConnectionIdentifier& connection_id,
+      embedder::SlaveInfo slave_info,
+      embedder::ScopedPlatformHandle platform_handle,
+      ProcessIdentifier* slave_process_identifier);
+
   ConnectionManager* connection_manager() const {
     return connection_manager_.get();
   }

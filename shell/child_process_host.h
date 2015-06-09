@@ -65,8 +65,8 @@ class ChildProcessHost : public mojo::ErrorHandler {
  private:
   struct LaunchData;
 
-  // Callback for |mojo::embedder::CreateChannel()|.
-  void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info);
+  // Callback for |mojo::embedder::ConnectToSlave()|.
+  void DidConnectToSlave();
 
   // Note: This is probably executed on a different thread (namely, using the
   // blocking pool).

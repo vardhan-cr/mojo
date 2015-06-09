@@ -9,6 +9,7 @@
 #include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/edk/system/channel_manager.h"
 #include "mojo/edk/system/master_connection_manager.h"
+#include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/slave_connection_manager.h"
 
 namespace mojo {
@@ -85,24 +86,25 @@ ConnectionIdentifier IPCSupport::GenerateConnectionIdentifier() {
   return connection_manager()->GenerateConnectionIdentifier();
 }
 
-embedder::ScopedPlatformHandle IPCSupport::ConnectToSlave(
+scoped_refptr<system::MessagePipeDispatcher> IPCSupport::ConnectToSlave(
     const ConnectionIdentifier& connection_id,
     embedder::SlaveInfo slave_info,
-    embedder::ScopedPlatformHandle platform_handle) {
-  DCHECK_EQ(process_type_, embedder::ProcessType::MASTER);
+    embedder::ScopedPlatformHandle platform_handle,
+    const base::Closure& callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+    ChannelId* channel_id) {
+  DCHECK(channel_id);
 
-  system::ProcessIdentifier slave_id =
-      static_cast<system::MasterConnectionManager*>(connection_manager())
-          ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
-                                 connection_id);
+  // TODO(vtl): Use std::is_same instead when we are allowed to (C++11 library).
+  static_assert(sizeof(ChannelId) == sizeof(ProcessIdentifier),
+                "ChannelId and ProcessIdentifier types don't match");
 
-  system::ProcessIdentifier peer_id = system::kInvalidProcessIdentifier;
-  embedder::ScopedPlatformHandle platform_connection_handle;
-  CHECK(connection_manager()->Connect(connection_id, &peer_id,
-                                      &platform_connection_handle));
-  DCHECK_EQ(peer_id, slave_id);
-  DCHECK(platform_connection_handle.is_valid());
-  return platform_connection_handle;
+  embedder::ScopedPlatformHandle platform_connection_handle =
+      ConnectToSlaveInternal(connection_id, slave_info, platform_handle.Pass(),
+                             channel_id);
+  return channel_manager()->CreateChannel(
+      *channel_id, platform_connection_handle.Pass(), callback,
+      callback_thread_task_runner);
 }
 
 embedder::ScopedPlatformHandle IPCSupport::ConnectToMaster(
@@ -114,6 +116,28 @@ embedder::ScopedPlatformHandle IPCSupport::ConnectToMaster(
   CHECK(connection_manager()->Connect(connection_id, &peer_id,
                                       &platform_connection_handle));
   DCHECK_EQ(peer_id, system::kMasterProcessIdentifier);
+  DCHECK(platform_connection_handle.is_valid());
+  return platform_connection_handle;
+}
+
+embedder::ScopedPlatformHandle IPCSupport::ConnectToSlaveInternal(
+    const ConnectionIdentifier& connection_id,
+    embedder::SlaveInfo slave_info,
+    embedder::ScopedPlatformHandle platform_handle,
+    ProcessIdentifier* slave_process_identifier) {
+  DCHECK(slave_process_identifier);
+  DCHECK_EQ(process_type_, embedder::ProcessType::MASTER);
+
+  *slave_process_identifier =
+      static_cast<system::MasterConnectionManager*>(connection_manager())
+          ->AddSlaveAndBootstrap(slave_info, platform_handle.Pass(),
+                                 connection_id);
+
+  system::ProcessIdentifier peer_id = system::kInvalidProcessIdentifier;
+  embedder::ScopedPlatformHandle platform_connection_handle;
+  CHECK(connection_manager()->Connect(connection_id, &peer_id,
+                                      &platform_connection_handle));
+  DCHECK_EQ(peer_id, *slave_process_identifier);
   DCHECK(platform_connection_handle.is_valid());
   return platform_connection_handle;
 }

@@ -171,19 +171,33 @@ void ShutdownIPCSupport() {
   DCHECK(ok);
 }
 
-void ConnectToSlave(SlaveInfo slave_info,
-                    ScopedPlatformHandle platform_handle,
-                    ScopedPlatformHandle* platform_connection_handle,
-                    std::string* platform_connection_id) {
-  DCHECK(platform_connection_handle);
+ScopedMessagePipeHandle ConnectToSlave(
+    SlaveInfo slave_info,
+    ScopedPlatformHandle platform_handle,
+    const DidConnectToSlaveCallback& callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+    std::string* platform_connection_id,
+    ChannelInfo** channel_info) {
   DCHECK(platform_connection_id);
+  DCHECK(channel_info);
   DCHECK(internal::g_ipc_support);
 
   system::ConnectionIdentifier connection_id =
       internal::g_ipc_support->GenerateConnectionIdentifier();
   *platform_connection_id = connection_id.ToString();
-  *platform_connection_handle = internal::g_ipc_support->ConnectToSlave(
-      connection_id, slave_info, platform_handle.Pass());
+  system::ChannelId channel_id = system::kInvalidChannelId;
+  scoped_refptr<system::MessagePipeDispatcher> dispatcher =
+      internal::g_ipc_support->ConnectToSlave(
+          connection_id, slave_info, platform_handle.Pass(), callback,
+          callback_thread_task_runner.Pass(), &channel_id);
+  *channel_info = new ChannelInfo(channel_id);
+
+  ScopedMessagePipeHandle rv(
+      MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
+  CHECK(rv.is_valid());
+  // TODO(vtl): The |.Pass()| below is only needed due to an MSVS bug; remove it
+  // once that's fixed.
+  return rv.Pass();
 }
 
 void ConnectToMaster(const std::string& platform_connection_id,

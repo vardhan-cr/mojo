@@ -117,26 +117,27 @@ MOJO_SYSTEM_IMPL_EXPORT void ShutdownIPCSupport();
 // This should typically be called *before* the slave process is even created.
 // It requires an OS "pipe" to be established between the master and slave
 // processes, with |platform_handle| being a handle to the end that remains on
-// the master. This will create a second OS "pipe" (returned in
-// |*platform_connection_handle|), and an ID string (returned in
-// |*platform_connection_id|) that must be passed to the slave, e.g., on the
-// command line.
+// the master.
 //
-// The slave should call |InitIPCSupport()| with |ProcessType::SLAVE| and the
-// handle to the other end of the first "pipe" above. Then it should call
-// |ConnectToMaster()| with the ID string |*platform_connection_id|.
+// This will establish a channel and an initial message pipe (to which it
+// returns a handle), an ID string (returned in |*platform_connection_id|) that
+// must be passed to the slave (e.g., on the command line), and a
+// |ChannelInfo*| (in |*channel_info|) which should eventually be given to
+// |DestroyChannel()|/|DestroyChannelOnIOThread()|, but only after |callback|
+// has been run.
 //
-// |slave_info| is caller-dependent slave information, which should typically
-// remain alive until the master process delegate's |OnSlaveDisconnect()| is
-// called. (It may, however, be null.)
+// |callback| will be run either using |callback_thread_task_runner| (if
+// non-null) or on the I/O thread, once the |ChannelInfo*| is valid.
 //
-// TODO(vtl): This is not the right API. It should really establish a channel
-// and provide an initial message pipe.
-MOJO_SYSTEM_IMPL_EXPORT void ConnectToSlave(
-    SlaveInfo slave_info,
-    ScopedPlatformHandle platform_handle,
-    ScopedPlatformHandle* platform_connection_handle,
-    std::string* platform_connection_id);
+// TODO(vtl): The API is a little crazy with respect to the |ChannelInfo*|.
+using DidConnectToSlaveCallback = base::Closure;
+MOJO_SYSTEM_IMPL_EXPORT ScopedMessagePipeHandle
+ConnectToSlave(SlaveInfo slave_info,
+               ScopedPlatformHandle platform_handle,
+               const DidConnectToSlaveCallback& callback,
+               scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+               std::string* platform_connection_id,
+               ChannelInfo** channel_info);
 
 // Called in a slave process to connect it to the IPC system. (This should only
 // be called in a process initialized (using |InitIPCSupport()|) with process
