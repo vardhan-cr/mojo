@@ -647,6 +647,12 @@ Mock_glRenderbufferStorageMultisampleANGLE(GLenum target,
                                            GLsizei width,
                                            GLsizei height);
 static void GL_BINDING_CALL
+Mock_glRenderbufferStorageMultisampleAPPLE(GLenum target,
+                                           GLsizei samples,
+                                           GLenum internalformat,
+                                           GLsizei width,
+                                           GLsizei height);
+static void GL_BINDING_CALL
 Mock_glRenderbufferStorageMultisampleEXT(GLenum target,
                                          GLsizei samples,
                                          GLenum internalformat,
@@ -658,6 +664,7 @@ Mock_glRenderbufferStorageMultisampleIMG(GLenum target,
                                          GLenum internalformat,
                                          GLsizei width,
                                          GLsizei height);
+static void GL_BINDING_CALL Mock_glResolveMultisampleFramebufferAPPLE(void);
 static void GL_BINDING_CALL Mock_glResumeTransformFeedback(void);
 static void GL_BINDING_CALL
 Mock_glSampleCoverage(GLclampf value, GLboolean invert);

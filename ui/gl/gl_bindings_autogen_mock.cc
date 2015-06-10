@@ -1862,6 +1862,18 @@ MockGLInterface::Mock_glRenderbufferStorageMultisampleANGLE(
 }
 
 void GL_BINDING_CALL
+MockGLInterface::Mock_glRenderbufferStorageMultisampleAPPLE(
+    GLenum target,
+    GLsizei samples,
+    GLenum internalformat,
+    GLsizei width,
+    GLsizei height) {
+  MakeFunctionUnique("glRenderbufferStorageMultisampleAPPLE");
+  interface_->RenderbufferStorageMultisampleAPPLE(
+      target, samples, internalformat, width, height);
+}
+
+void GL_BINDING_CALL
 MockGLInterface::Mock_glRenderbufferStorageMultisampleEXT(GLenum target,
                                                           GLsizei samples,
                                                           GLenum internalformat,
@@ -1881,6 +1893,12 @@ MockGLInterface::Mock_glRenderbufferStorageMultisampleIMG(GLenum target,
   MakeFunctionUnique("glRenderbufferStorageMultisampleIMG");
   interface_->RenderbufferStorageMultisampleIMG(target, samples, internalformat,
                                                 width, height);
+}
+
+void GL_BINDING_CALL
+MockGLInterface::Mock_glResolveMultisampleFramebufferAPPLE(void) {
+  MakeFunctionUnique("glResolveMultisampleFramebufferAPPLE");
+  interface_->ResolveMultisampleFramebufferAPPLE();
 }
 
 void GL_BINDING_CALL MockGLInterface::Mock_glResumeTransformFeedback(void) {
@@ -3055,10 +3073,14 @@ void* GL_BINDING_CALL MockGLInterface::GetGLProcAddress(const char* name) {
     return reinterpret_cast<void*>(Mock_glRenderbufferStorageMultisample);
   if (strcmp(name, "glRenderbufferStorageMultisampleANGLE") == 0)
     return reinterpret_cast<void*>(Mock_glRenderbufferStorageMultisampleANGLE);
+  if (strcmp(name, "glRenderbufferStorageMultisampleAPPLE") == 0)
+    return reinterpret_cast<void*>(Mock_glRenderbufferStorageMultisampleAPPLE);
   if (strcmp(name, "glRenderbufferStorageMultisampleEXT") == 0)
     return reinterpret_cast<void*>(Mock_glRenderbufferStorageMultisampleEXT);
   if (strcmp(name, "glRenderbufferStorageMultisampleIMG") == 0)
     return reinterpret_cast<void*>(Mock_glRenderbufferStorageMultisampleIMG);
+  if (strcmp(name, "glResolveMultisampleFramebufferAPPLE") == 0)
+    return reinterpret_cast<void*>(Mock_glResolveMultisampleFramebufferAPPLE);
   if (strcmp(name, "glResumeTransformFeedback") == 0)
     return reinterpret_cast<void*>(Mock_glResumeTransformFeedback);
   if (strcmp(name, "glSampleCoverage") == 0)

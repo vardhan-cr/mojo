@@ -441,6 +441,18 @@ GLvoid StubGLRenderbufferStorageMultisample(GLenum target, GLsizei samples,
                                       height);
 }
 
+GLvoid StubGLRenderbufferStorageMultisampleAPPLE(GLenum target, GLsizei samples,
+                                                 GLenum internalformat,
+                                                 GLsizei width,
+                                                 GLsizei height) {
+  glRenderbufferStorageMultisampleAPPLE(target, samples, internalformat, width,
+                                        height);
+}
+
+GLvoid StubResolveMultisampleFramebufferAPPLE(void) {
+  glResolveMultisampleFramebufferAPPLE();
+}
+
 GLvoid StubGLScissor(GLint x, GLint y, GLsizei width, GLsizei height) {
   glScissor(x, y, width, height);
 }
@@ -637,7 +649,11 @@ GrGLInterface* CreateInProcessSkiaGLBinding() {
       return NULL;
     case gfx::kGLImplementationDesktopGL:
     case gfx::kGLImplementationAppleGL:
+#if TARGET_OS_IPHONE
+      standard = kGLES_GrGLStandard;
+#else
       standard = kGL_GrGLStandard;
+#endif
       break;
     case gfx::kGLImplementationOSMesaGL:
       standard = kGL_GrGLStandard;
@@ -796,6 +812,10 @@ GrGLInterface* CreateInProcessSkiaGLBinding() {
     StubGLRenderbufferStorageMultisample;
   functions->fRenderbufferStorageMultisampleES2EXT =
     StubGLRenderbufferStorageMultisample;
+  functions->fRenderbufferStorageMultisampleES2APPLE =
+    StubGLRenderbufferStorageMultisampleAPPLE;
+  functions->fResolveMultisampleFramebuffer =
+    StubResolveMultisampleFramebufferAPPLE;
   functions->fBlitFramebuffer = StubGLBlitFramebuffer;
   functions->fMapBuffer = StubGLMapBuffer;
   functions->fUnmapBuffer = StubGLUnmapBuffer;

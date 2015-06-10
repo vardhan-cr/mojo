@@ -490,6 +490,12 @@ MOCK_METHOD5(RenderbufferStorageMultisampleANGLE,
                   GLenum internalformat,
                   GLsizei width,
                   GLsizei height));
+MOCK_METHOD5(RenderbufferStorageMultisampleAPPLE,
+             void(GLenum target,
+                  GLsizei samples,
+                  GLenum internalformat,
+                  GLsizei width,
+                  GLsizei height));
 MOCK_METHOD5(RenderbufferStorageMultisampleEXT,
              void(GLenum target,
                   GLsizei samples,
@@ -502,6 +508,7 @@ MOCK_METHOD5(RenderbufferStorageMultisampleIMG,
                   GLenum internalformat,
                   GLsizei width,
                   GLsizei height));
+MOCK_METHOD0(ResolveMultisampleFramebufferAPPLE, void());
 MOCK_METHOD0(ResumeTransformFeedback, void());
 MOCK_METHOD2(SampleCoverage, void(GLclampf value, GLboolean invert));
 MOCK_METHOD3(SamplerParameterf,

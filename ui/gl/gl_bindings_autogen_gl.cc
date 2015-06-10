@@ -300,8 +300,10 @@ void DriverGL::InitializeStaticBindings() {
   fn.glRenderbufferStorageEXTFn = 0;
   fn.glRenderbufferStorageMultisampleFn = 0;
   fn.glRenderbufferStorageMultisampleANGLEFn = 0;
+  fn.glRenderbufferStorageMultisampleAPPLEFn = 0;
   fn.glRenderbufferStorageMultisampleEXTFn = 0;
   fn.glRenderbufferStorageMultisampleIMGFn = 0;
+  fn.glResolveMultisampleFramebufferAPPLEFn = 0;
   fn.glResumeTransformFeedbackFn = 0;
   fn.glSampleCoverageFn = reinterpret_cast<glSampleCoverageProc>(
       GetGLProcAddress("glSampleCoverage"));
@@ -451,6 +453,8 @@ void DriverGL::InitializeDynamicBindings(GLContext* context) {
       std::string::npos;
   ext.b_GL_APPLE_fence =
       extensions.find("GL_APPLE_fence ") != std::string::npos;
+  ext.b_GL_APPLE_framebuffer_multisample =
+      extensions.find("GL_APPLE_framebuffer_multisample ") != std::string::npos;
   ext.b_GL_APPLE_vertex_array_object =
       extensions.find("GL_APPLE_vertex_array_object ") != std::string::npos;
   ext.b_GL_ARB_draw_buffers =
@@ -1684,6 +1688,14 @@ void DriverGL::InitializeDynamicBindings(GLContext* context) {
     DCHECK(fn.glRenderbufferStorageMultisampleANGLEFn);
   }
 
+  debug_fn.glRenderbufferStorageMultisampleAPPLEFn = 0;
+  if (ext.b_GL_APPLE_framebuffer_multisample) {
+    fn.glRenderbufferStorageMultisampleAPPLEFn =
+        reinterpret_cast<glRenderbufferStorageMultisampleAPPLEProc>(
+            GetGLProcAddress("glRenderbufferStorageMultisampleAPPLE"));
+    DCHECK(fn.glRenderbufferStorageMultisampleAPPLEFn);
+  }
+
   debug_fn.glRenderbufferStorageMultisampleEXTFn = 0;
   if (ext.b_GL_EXT_multisampled_render_to_texture ||
       ext.b_GL_EXT_framebuffer_multisample) {
@@ -1699,6 +1711,14 @@ void DriverGL::InitializeDynamicBindings(GLContext* context) {
         reinterpret_cast<glRenderbufferStorageMultisampleIMGProc>(
             GetGLProcAddress("glRenderbufferStorageMultisampleIMG"));
     DCHECK(fn.glRenderbufferStorageMultisampleIMGFn);
+  }
+
+  debug_fn.glResolveMultisampleFramebufferAPPLEFn = 0;
+  if (ext.b_GL_APPLE_framebuffer_multisample) {
+    fn.glResolveMultisampleFramebufferAPPLEFn =
+        reinterpret_cast<glResolveMultisampleFramebufferAPPLEProc>(
+            GetGLProcAddress("glResolveMultisampleFramebufferAPPLE"));
+    DCHECK(fn.glResolveMultisampleFramebufferAPPLEFn);
   }
 
   debug_fn.glResumeTransformFeedbackFn = 0;
@@ -3846,6 +3866,20 @@ Debug_glRenderbufferStorageMultisampleANGLE(GLenum target,
 }
 
 static void GL_BINDING_CALL
+Debug_glRenderbufferStorageMultisampleAPPLE(GLenum target,
+                                            GLsizei samples,
+                                            GLenum internalformat,
+                                            GLsizei width,
+                                            GLsizei height) {
+  GL_SERVICE_LOG("glRenderbufferStorageMultisampleAPPLE"
+                 << "(" << GLEnums::GetStringEnum(target) << ", " << samples
+                 << ", " << GLEnums::GetStringEnum(internalformat) << ", "
+                 << width << ", " << height << ")");
+  g_driver_gl.debug_fn.glRenderbufferStorageMultisampleAPPLEFn(
+      target, samples, internalformat, width, height);
+}
+
+static void GL_BINDING_CALL
 Debug_glRenderbufferStorageMultisampleEXT(GLenum target,
                                           GLsizei samples,
                                           GLenum internalformat,
@@ -3871,6 +3905,13 @@ Debug_glRenderbufferStorageMultisampleIMG(GLenum target,
                  << width << ", " << height << ")");
   g_driver_gl.debug_fn.glRenderbufferStorageMultisampleIMGFn(
       target, samples, internalformat, width, height);
+}
+
+static void GL_BINDING_CALL Debug_glResolveMultisampleFramebufferAPPLE(void) {
+  GL_SERVICE_LOG("glResolveMultisampleFramebufferAPPLE"
+                 << "("
+                 << ")");
+  g_driver_gl.debug_fn.glResolveMultisampleFramebufferAPPLEFn();
 }
 
 static void GL_BINDING_CALL Debug_glResumeTransformFeedback(void) {
@@ -5463,6 +5504,12 @@ void DriverGL::InitializeDebugBindings() {
     fn.glRenderbufferStorageMultisampleANGLEFn =
         Debug_glRenderbufferStorageMultisampleANGLE;
   }
+  if (!debug_fn.glRenderbufferStorageMultisampleAPPLEFn) {
+    debug_fn.glRenderbufferStorageMultisampleAPPLEFn =
+        fn.glRenderbufferStorageMultisampleAPPLEFn;
+    fn.glRenderbufferStorageMultisampleAPPLEFn =
+        Debug_glRenderbufferStorageMultisampleAPPLE;
+  }
   if (!debug_fn.glRenderbufferStorageMultisampleEXTFn) {
     debug_fn.glRenderbufferStorageMultisampleEXTFn =
         fn.glRenderbufferStorageMultisampleEXTFn;
@@ -5474,6 +5521,12 @@ void DriverGL::InitializeDebugBindings() {
         fn.glRenderbufferStorageMultisampleIMGFn;
     fn.glRenderbufferStorageMultisampleIMGFn =
         Debug_glRenderbufferStorageMultisampleIMG;
+  }
+  if (!debug_fn.glResolveMultisampleFramebufferAPPLEFn) {
+    debug_fn.glResolveMultisampleFramebufferAPPLEFn =
+        fn.glResolveMultisampleFramebufferAPPLEFn;
+    fn.glResolveMultisampleFramebufferAPPLEFn =
+        Debug_glResolveMultisampleFramebufferAPPLE;
   }
   if (!debug_fn.glResumeTransformFeedbackFn) {
     debug_fn.glResumeTransformFeedbackFn = fn.glResumeTransformFeedbackFn;
@@ -6938,6 +6991,15 @@ void GLApiBase::glRenderbufferStorageMultisampleANGLEFn(GLenum target,
       target, samples, internalformat, width, height);
 }
 
+void GLApiBase::glRenderbufferStorageMultisampleAPPLEFn(GLenum target,
+                                                        GLsizei samples,
+                                                        GLenum internalformat,
+                                                        GLsizei width,
+                                                        GLsizei height) {
+  driver_->fn.glRenderbufferStorageMultisampleAPPLEFn(
+      target, samples, internalformat, width, height);
+}
+
 void GLApiBase::glRenderbufferStorageMultisampleEXTFn(GLenum target,
                                                       GLsizei samples,
                                                       GLenum internalformat,
@@ -6954,6 +7016,10 @@ void GLApiBase::glRenderbufferStorageMultisampleIMGFn(GLenum target,
                                                       GLsizei height) {
   driver_->fn.glRenderbufferStorageMultisampleIMGFn(
       target, samples, internalformat, width, height);
+}
+
+void GLApiBase::glResolveMultisampleFramebufferAPPLEFn(void) {
+  driver_->fn.glResolveMultisampleFramebufferAPPLEFn();
 }
 
 void GLApiBase::glResumeTransformFeedbackFn(void) {
@@ -8785,6 +8851,17 @@ void TraceGLApi::glRenderbufferStorageMultisampleANGLEFn(GLenum target,
       target, samples, internalformat, width, height);
 }
 
+void TraceGLApi::glRenderbufferStorageMultisampleAPPLEFn(GLenum target,
+                                                         GLsizei samples,
+                                                         GLenum internalformat,
+                                                         GLsizei width,
+                                                         GLsizei height) {
+  TRACE_EVENT_BINARY_EFFICIENT0(
+      "gpu", "TraceGLAPI::glRenderbufferStorageMultisampleAPPLE")
+  gl_api_->glRenderbufferStorageMultisampleAPPLEFn(
+      target, samples, internalformat, width, height);
+}
+
 void TraceGLApi::glRenderbufferStorageMultisampleEXTFn(GLenum target,
                                                        GLsizei samples,
                                                        GLenum internalformat,
@@ -8805,6 +8882,12 @@ void TraceGLApi::glRenderbufferStorageMultisampleIMGFn(GLenum target,
       "gpu", "TraceGLAPI::glRenderbufferStorageMultisampleIMG")
   gl_api_->glRenderbufferStorageMultisampleIMGFn(target, samples,
                                                  internalformat, width, height);
+}
+
+void TraceGLApi::glResolveMultisampleFramebufferAPPLEFn(void) {
+  TRACE_EVENT_BINARY_EFFICIENT0(
+      "gpu", "TraceGLAPI::glResolveMultisampleFramebufferAPPLE")
+  gl_api_->glResolveMultisampleFramebufferAPPLEFn();
 }
 
 void TraceGLApi::glResumeTransformFeedbackFn(void) {
@@ -10937,6 +11020,18 @@ void NoContextGLApi::glRenderbufferStorageMultisampleANGLEFn(
                 "without current GL context";
 }
 
+void NoContextGLApi::glRenderbufferStorageMultisampleAPPLEFn(
+    GLenum target,
+    GLsizei samples,
+    GLenum internalformat,
+    GLsizei width,
+    GLsizei height) {
+  NOTREACHED() << "Trying to call glRenderbufferStorageMultisampleAPPLE() "
+                  "without current GL context";
+  LOG(ERROR) << "Trying to call glRenderbufferStorageMultisampleAPPLE() "
+                "without current GL context";
+}
+
 void NoContextGLApi::glRenderbufferStorageMultisampleEXTFn(
     GLenum target,
     GLsizei samples,
@@ -10958,6 +11053,13 @@ void NoContextGLApi::glRenderbufferStorageMultisampleIMGFn(
   NOTREACHED() << "Trying to call glRenderbufferStorageMultisampleIMG() "
                   "without current GL context";
   LOG(ERROR) << "Trying to call glRenderbufferStorageMultisampleIMG() without "
+                "current GL context";
+}
+
+void NoContextGLApi::glResolveMultisampleFramebufferAPPLEFn(void) {
+  NOTREACHED() << "Trying to call glResolveMultisampleFramebufferAPPLE() "
+                  "without current GL context";
+  LOG(ERROR) << "Trying to call glResolveMultisampleFramebufferAPPLE() without "
                 "current GL context";
 }
 

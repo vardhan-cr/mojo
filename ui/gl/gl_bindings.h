@@ -347,6 +347,7 @@ struct GL_EXPORT DriverOSMESA {
   static std::string GetPlatformExtensions();
 };
 
+#if !defined(OS_MACOSX)
 struct GL_EXPORT DriverEGL {
   void InitializeStaticBindings();
   void InitializeDebugBindings();
@@ -359,6 +360,7 @@ struct GL_EXPORT DriverEGL {
  private:
   static std::string GetPlatformExtensions();
 };
+#endif
 
 #if defined(USE_X11)
 struct GL_EXPORT DriverGLX {

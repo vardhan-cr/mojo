@@ -487,6 +487,11 @@ void glRenderbufferStorageMultisampleANGLEFn(GLenum target,
                                              GLenum internalformat,
                                              GLsizei width,
                                              GLsizei height) override;
+void glRenderbufferStorageMultisampleAPPLEFn(GLenum target,
+                                             GLsizei samples,
+                                             GLenum internalformat,
+                                             GLsizei width,
+                                             GLsizei height) override;
 void glRenderbufferStorageMultisampleEXTFn(GLenum target,
                                            GLsizei samples,
                                            GLenum internalformat,
@@ -497,6 +502,7 @@ void glRenderbufferStorageMultisampleIMGFn(GLenum target,
                                            GLenum internalformat,
                                            GLsizei width,
                                            GLsizei height) override;
+void glResolveMultisampleFramebufferAPPLEFn(void) override;
 void glResumeTransformFeedbackFn(void) override;
 void glSampleCoverageFn(GLclampf value, GLboolean invert) override;
 void glSamplerParameterfFn(GLuint sampler,

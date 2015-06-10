@@ -588,6 +588,12 @@ typedef void(GL_BINDING_CALL* glRenderbufferStorageMultisampleANGLEProc)(
     GLenum internalformat,
     GLsizei width,
     GLsizei height);
+typedef void(GL_BINDING_CALL* glRenderbufferStorageMultisampleAPPLEProc)(
+    GLenum target,
+    GLsizei samples,
+    GLenum internalformat,
+    GLsizei width,
+    GLsizei height);
 typedef void(GL_BINDING_CALL* glRenderbufferStorageMultisampleEXTProc)(
     GLenum target,
     GLsizei samples,
@@ -600,6 +606,7 @@ typedef void(GL_BINDING_CALL* glRenderbufferStorageMultisampleIMGProc)(
     GLenum internalformat,
     GLsizei width,
     GLsizei height);
+typedef void(GL_BINDING_CALL* glResolveMultisampleFramebufferAPPLEProc)(void);
 typedef void(GL_BINDING_CALL* glResumeTransformFeedbackProc)(void);
 typedef void(GL_BINDING_CALL* glSampleCoverageProc)(GLclampf value,
                                                     GLboolean invert);
@@ -885,6 +892,7 @@ struct ExtensionsGL {
   bool b_GL_ANGLE_instanced_arrays;
   bool b_GL_ANGLE_translated_shader_source;
   bool b_GL_APPLE_fence;
+  bool b_GL_APPLE_framebuffer_multisample;
   bool b_GL_APPLE_vertex_array_object;
   bool b_GL_ARB_draw_buffers;
   bool b_GL_ARB_draw_instanced;
@@ -1129,8 +1137,12 @@ struct ProcsGL {
   glRenderbufferStorageMultisampleProc glRenderbufferStorageMultisampleFn;
   glRenderbufferStorageMultisampleANGLEProc
       glRenderbufferStorageMultisampleANGLEFn;
+  glRenderbufferStorageMultisampleAPPLEProc
+      glRenderbufferStorageMultisampleAPPLEFn;
   glRenderbufferStorageMultisampleEXTProc glRenderbufferStorageMultisampleEXTFn;
   glRenderbufferStorageMultisampleIMGProc glRenderbufferStorageMultisampleIMGFn;
+  glResolveMultisampleFramebufferAPPLEProc
+      glResolveMultisampleFramebufferAPPLEFn;
   glResumeTransformFeedbackProc glResumeTransformFeedbackFn;
   glSampleCoverageProc glSampleCoverageFn;
   glSamplerParameterfProc glSamplerParameterfFn;
@@ -1722,6 +1734,11 @@ class GL_EXPORT GLApi {
                                                        GLenum internalformat,
                                                        GLsizei width,
                                                        GLsizei height) = 0;
+  virtual void glRenderbufferStorageMultisampleAPPLEFn(GLenum target,
+                                                       GLsizei samples,
+                                                       GLenum internalformat,
+                                                       GLsizei width,
+                                                       GLsizei height) = 0;
   virtual void glRenderbufferStorageMultisampleEXTFn(GLenum target,
                                                      GLsizei samples,
                                                      GLenum internalformat,
@@ -1732,6 +1749,7 @@ class GL_EXPORT GLApi {
                                                      GLenum internalformat,
                                                      GLsizei width,
                                                      GLsizei height) = 0;
+  virtual void glResolveMultisampleFramebufferAPPLEFn(void) = 0;
   virtual void glResumeTransformFeedbackFn(void) = 0;
   virtual void glSampleCoverageFn(GLclampf value, GLboolean invert) = 0;
   virtual void glSamplerParameterfFn(GLuint sampler,
@@ -2243,10 +2261,14 @@ class GL_EXPORT GLApi {
   ::gfx::g_current_gl_context->glRenderbufferStorageMultisampleFn
 #define glRenderbufferStorageMultisampleANGLE \
   ::gfx::g_current_gl_context->glRenderbufferStorageMultisampleANGLEFn
+#define glRenderbufferStorageMultisampleAPPLE \
+  ::gfx::g_current_gl_context->glRenderbufferStorageMultisampleAPPLEFn
 #define glRenderbufferStorageMultisampleEXT \
   ::gfx::g_current_gl_context->glRenderbufferStorageMultisampleEXTFn
 #define glRenderbufferStorageMultisampleIMG \
   ::gfx::g_current_gl_context->glRenderbufferStorageMultisampleIMGFn
+#define glResolveMultisampleFramebufferAPPLE \
+  ::gfx::g_current_gl_context->glResolveMultisampleFramebufferAPPLEFn
 #define glResumeTransformFeedback \
   ::gfx::g_current_gl_context->glResumeTransformFeedbackFn
 #define glSampleCoverage ::gfx::g_current_gl_context->glSampleCoverageFn

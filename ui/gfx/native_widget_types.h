@@ -157,6 +157,9 @@ const AcceleratedWidget kNullAcceleratedWidget = 0;
 #elif defined(USE_OZONE)
 typedef intptr_t AcceleratedWidget;
 const AcceleratedWidget kNullAcceleratedWidget = 0;
+#elif defined(OS_IOS)
+typedef uintptr_t AcceleratedWidget;
+const AcceleratedWidget kNullAcceleratedWidget = 0;
 #else
 #error unknown platform
 #endif

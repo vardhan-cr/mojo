@@ -207,6 +207,45 @@ component("gl") {
       "//ui/ozone:ozone_base",
     ]
   }
+  if (is_ios) {
+    sources = []
+    sources = [
+      "gl_bindings_autogen_gl.cc",
+      "gl_bindings_autogen_gl.h",
+      "gl_bindings_skia_in_process.cc",
+      "gl_bindings_skia_in_process.h",
+      "gl_context.cc",
+      "gl_context.h",
+      "gl_context_ios.h",
+      "gl_context_ios.mm",
+      "gl_context_stub.cc",
+      "gl_context_stub.h",
+      "gl_context_stub_with_extensions.cc",
+      "gl_context_stub_with_extensions.h",
+      "gl_enums.cc",
+      "gl_enums.h",
+      "gl_enums_implementation_autogen.h",
+      "gl_gl_api_implementation.cc",
+      "gl_gl_api_implementation.h",
+      "gl_implementation.cc",
+      "gl_implementation.h",
+      "gl_implementation_ios.cc",
+      "gl_share_group.cc",
+      "gl_share_group.h",
+      "gl_surface.cc",
+      "gl_surface.h",
+      "gl_surface_ios.h",
+      "gl_surface_ios.mm",
+      "gl_surface_stub.cc",
+      "gl_surface_stub.h",
+      "gl_switches.cc",
+      "gl_switches.h",
+      "gl_version_info.cc",
+      "gl_version_info.h",
+      "gpu_timing.cc",
+      "gpu_timing.h",
+    ]
+  }
 }
 
 source_set("gl_unittest_utils") {

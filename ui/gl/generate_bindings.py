@@ -821,6 +821,10 @@ GL_FUNCTIONS = [
   'arguments': 'GLenum target, GLsizei samples, GLenum internalformat, '
                'GLsizei width, GLsizei height', },
 { 'return_type': 'void',
+  'names': ['glRenderbufferStorageMultisampleAPPLE'],
+  'arguments': 'GLenum target, GLsizei samples, GLenum internalformat, '
+               'GLsizei width, GLsizei height', },
+{ 'return_type': 'void',
   'names': ['glRenderbufferStorageMultisampleEXT'],
   'arguments': 'GLenum target, GLsizei samples, GLenum internalformat, '
                'GLsizei width, GLsizei height', },
@@ -828,6 +832,9 @@ GL_FUNCTIONS = [
   'names': ['glRenderbufferStorageMultisampleIMG'],
   'arguments': 'GLenum target, GLsizei samples, GLenum internalformat, '
                'GLsizei width, GLsizei height', },
+{ 'return_type': 'void',
+  'versions': [{ 'name': 'glResolveMultisampleFramebufferAPPLE' }],
+  'arguments': 'void', },
 { 'return_type': 'void',
   'versions': [{ 'name': 'glResumeTransformFeedback' }],
   'arguments': 'void', },
