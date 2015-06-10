@@ -17,6 +17,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/single_thread_task_runner.h"
 #include "base/synchronization/waitable_event.h"
+#include "base/thread_task_runner_handle.h"
 #include "base/threading/thread.h"
 #include "base/threading/thread_checker.h"
 #include "mojo/common/message_pump_mojo.h"
@@ -200,7 +201,7 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
             platform_channel.Pass(),
             base::Bind(&ChildControllerImpl::DidCreateChannel,
                        base::Unretained(impl.get())),
-            base::MessageLoopProxy::current()));
+            base::ThreadTaskRunnerHandle::Get()));
 
     impl->Bind(host_message_pipe.Pass());
 

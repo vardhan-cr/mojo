@@ -7,7 +7,7 @@
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/location.h"
-#include "base/message_loop/message_loop_proxy.h"
+#include "base/thread_task_runner_handle.h"
 #include "base/threading/platform_thread.h"
 #include "shell/native_application_support.h"
 
@@ -38,9 +38,9 @@ void InProcessNativeRunner::Start(
   application_request_ = application_request.Pass();
 
   DCHECK(app_completed_callback_runner_.is_null());
-  app_completed_callback_runner_ =
-      base::Bind(&base::TaskRunner::PostTask, base::MessageLoopProxy::current(),
-                 FROM_HERE, app_completed_callback);
+  app_completed_callback_runner_ = base::Bind(
+      &base::TaskRunner::PostTask, base::ThreadTaskRunnerHandle::Get(),
+      FROM_HERE, app_completed_callback);
 
   DCHECK(!thread_);
   std::string thread_name = "app_thread_" + app_path_.BaseName().AsUTF8Unsafe();
