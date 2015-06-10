@@ -143,6 +143,17 @@ source_set("service") {
     "//ui/gl",
   ]
 
+  if (is_ios) {
+    deps -= [ ":disk_cache_proto" ]
+
+    sources -= [
+      "gles2_cmd_decoder.cc",
+      "gles2_cmd_decoder.h",
+      "memory_program_cache.cc",
+      "memory_program_cache.h",
+    ]
+  }
+
   if (ui_compositor_image_transport) {
     include_dirs += [ "//third_party/khronos" ]
   }

@@ -10,7 +10,7 @@
 #include "gpu/config/gpu_info_collector.h"
 #include "gpu/config/gpu_test_expectations_parser.h"
 
-#if defined(OS_MACOSX)
+#if defined(OS_MACOSX) && !defined(OS_IOS)
 #include "base/mac/mac_util.h"
 #elif defined(OS_WIN)
 #include "base/win/windows_version.h"
@@ -40,6 +40,10 @@ GPUTestConfig::OS GetCurrentOS() {
   if (major_version == 6 && (minor_version == 2 || minor_version == 3))
     return GPUTestConfig::kOsWin8;
 #elif defined(OS_MACOSX)
+
+#if defined(OS_IOS)
+  return GPUTestConfig::kOsiOS;
+#else
   int32 major_version = 0;
   int32 minor_version = 0;
   int32 bugfix_version = 0;
@@ -59,6 +63,7 @@ GPUTestConfig::OS GetCurrentOS() {
         return GPUTestConfig::kOsMacMavericks;
     }
   }
+#endif /* OS_IOS */
 #elif defined(OS_ANDROID)
   return GPUTestConfig::kOsAndroid;
 #endif
@@ -281,7 +286,7 @@ bool GPUTestBotConfig::CurrentConfigMatches(
 
 // static
 bool GPUTestBotConfig::GpuBlacklistedOnBot() {
-#if defined(OS_MACOSX)
+#if defined(OS_MACOSX) && !defined(OS_IOS)
   // Blacklist rule #81 disables all Gpu acceleration on Mac < 10.8 bots.
   if (CurrentConfigMatches("MAC VMWARE") && base::mac::IsOSLionOrEarlier()) {
     return true;
