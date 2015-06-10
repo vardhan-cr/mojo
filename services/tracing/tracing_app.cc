@@ -57,6 +57,14 @@ void TracingApp::Start(mojo::ScopedDataPipeProducerHandle stream,
 }
 
 void TracingApp::StopAndFlush() {
+  // Remove any collectors that closed their message pipes before we called
+  // StopTracing(). See https://github.com/domokit/mojo/issues/225.
+  for (int i = collector_impls_.size() - 1; i >= 0; --i) {
+    if (!collector_impls_[i]->TraceDataCollectorHandle().is_valid()) {
+      collector_impls_.erase(collector_impls_.begin() + i);
+    }
+  }
+
   tracing_active_ = false;
   controller_ptrs_.ForAllPtrs(
       [](TraceController* controller) { controller->StopTracing(); });
