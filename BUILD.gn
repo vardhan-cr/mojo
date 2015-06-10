@@ -25,6 +25,13 @@ group("default") {
   if (!is_asan) {
     deps += [ "//sky" ]
   }
+
+  if (is_ios) {
+    deps = []
+    deps = [
+      "//sky/shell",
+    ]
+  }
 }
 
 # Deprecated name for the default build target.
