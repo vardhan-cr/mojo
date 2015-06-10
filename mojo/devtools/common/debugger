@@ -11,38 +11,52 @@ _MOJO_DEBUGGER_PORT = 7777
 
 
 def _send_request(request):
+  """Sends a request to mojo:debugger."""
   url = 'http://localhost:%s/%s' % (_MOJO_DEBUGGER_PORT, request)
   return requests.get(url)
 
 
-def start_tracing_command(args):
-    _send_request('start_tracing')
-    print "Started tracing."
+def add_tracing_command(subparsers):
+  """Sets up the command line parser to manage tracing."""
+  tracing_parser = subparsers.add_parser(
+      'tracing', help='Tracing commands for mojo:debugger')
+  tracing_subparser = tracing_parser.add_subparsers(
+      help='tracing sub-command help')
+
+  start_tracing_parser = tracing_subparser.add_parser('start',
+                                                      help='starts tracing')
+  start_tracing_parser.set_defaults(func=start_tracing_command)
+
+  stop_tracing_parser = tracing_subparser.add_parser('stop',
+                                                     help='stops tracing')
+  stop_tracing_parser.add_argument('file_name', type=str,
+                                   default='mojo.trace')
+  stop_tracing_parser.set_defaults(func=stop_tracing_command)
+
+
+def start_tracing_command(_):
+  """Starts tracing."""
+  _send_request('start_tracing')
+  print "Started tracing."
 
 
 def stop_tracing_command(args):
-    file_name = args.file_name
-    trace = _send_request('stop_tracing').content
-    with open(file_name, "wb") as trace_file:
-        trace_file.write('{"traceEvents":[')
-        trace_file.write(trace)
-        trace_file.write(']}')
-    print "Trace saved in %s" % file_name
+  """Stops tracing and writes trace to file."""
+  file_name = args.file_name
+  trace = _send_request('stop_tracing').content
+  with open(file_name, "wb") as trace_file:
+    trace_file.write('{"traceEvents":[')
+    trace_file.write(trace)
+    trace_file.write(']}')
+  print "Trace saved in %s" % file_name
 
 
 def main():
   parser = argparse.ArgumentParser(description='Command-line interface for '
                                                 'mojo:debugger')
   subparsers = parser.add_subparsers(help='sub-command help')
+  add_tracing_command(subparsers)
 
-  start_tracing_parser = subparsers.add_parser('start_tracing',
-                                               help='starts tracing')
-  start_tracing_parser.set_defaults(func=start_tracing_command)
-
-  stop_tracing_parser = subparsers.add_parser('stop_tracing',
-                                              help='stops tracing')
-  stop_tracing_parser.add_argument('file_name', type=str, default='mojo.trace')
-  stop_tracing_parser.set_defaults(func=stop_tracing_command)
 
   args = parser.parse_args()
   args.func(args)

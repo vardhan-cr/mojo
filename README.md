@@ -227,8 +227,8 @@ also print all arguments passed by `mojo_shell.py` to the shell binary.
 While the shell is running, the `debugger` script allows you to interactively
 start tracing and retrieve the result:
 ```
-/devtools/common/debugger start_tracing
-/devtools/common/debugger stop_tracing result.json
+/devtools/common/debugger tracing start
+/devtools/common/debugger tracing stop result.json
 ```
 
 ### Android set-up
