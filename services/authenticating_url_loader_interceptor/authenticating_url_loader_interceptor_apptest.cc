@@ -286,8 +286,7 @@ class AuthenticatingURLLoaderInterceptorAppTest
   void SetUp() override {
     ApplicationTestBase::SetUp();
 
-    application_impl()->ConnectToService("mojo:network_service",
-                                         &network_service_);
+    InitializeNetworkService();
     application_impl()->ConnectToService(
         "mojo:authenticating_url_loader_interceptor",
         &interceptor_meta_factory_);
@@ -301,9 +300,12 @@ class AuthenticatingURLLoaderInterceptorAppTest
     ApplicationTestBase::TearDown();
   }
 
-  URLResponsePtr GetResponse(const std::string& url) {
+  URLResponsePtr GetResponse(
+      const std::string& url,
+      Array<HttpHeaderPtr> request_headers = Array<HttpHeaderPtr>()) {
     URLRequestPtr request = URLRequest::New();
     request->url = url;
+    request->headers = request_headers.Pass();
     URLLoaderPtr loader;
     network_service_->CreateURLLoader(GetProxy(&loader));
     URLResponsePtr response;
@@ -327,7 +329,6 @@ class AuthenticatingURLLoaderInterceptorAppTest
   }
 
   void AddAuthenticatingURLLoaderInterceptor() {
-    DCHECK(!authentication_service_impl_);
     authentication::AuthenticationServicePtr authentication_service;
     authentication_service_impl_.reset(
         new MockAuthenticationService(GetProxy(&authentication_service)));
@@ -335,6 +336,12 @@ class AuthenticatingURLLoaderInterceptorAppTest
     interceptor_meta_factory_->CreateURLLoaderInterceptorFactory(
         GetProxy(&interceptor_factory), authentication_service.Pass());
     network_service_->RegisterURLLoaderInterceptor(interceptor_factory.Pass());
+  }
+
+  void InitializeNetworkService() {
+    network_service_.reset();
+    application_impl()->ConnectToService("mojo:network_service",
+                                         &network_service_);
   }
 
   void CloseAuthenticationService() { authentication_service_impl_.reset(); }
@@ -345,8 +352,10 @@ class AuthenticatingURLLoaderInterceptorAppTest
                               g_url_index_.GetNext());
   }
 
-  void GetAndParseHelloResponse(const std::string& url) {
-    URLResponsePtr response = GetResponse(url);
+  void GetAndParseHelloResponse(
+      const std::string& url,
+      Array<HttpHeaderPtr> request_headers = Array<HttpHeaderPtr>()) {
+    URLResponsePtr response = GetResponse(url, request_headers.Pass());
     EXPECT_TRUE(response);
     EXPECT_EQ(200u, response->status_code);
     EXPECT_EQ(url, response->url);
@@ -497,6 +506,39 @@ TEST_F(AuthenticatingURLLoaderInterceptorAppTest, FailOnAuthServiceClosing) {
   EXPECT_EQ(url, response->url);
   EXPECT_EQ(0u, response->headers.size());
   EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor does not add an auth header if the
+// request already has one or modify the one that the request has.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, RequestWithAuthHeader) {
+  std::string url = GetNextURL();
+
+  // Set up the interceptor to cache |kCachedToken| for |url|.
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+
+  GetAndParseHelloResponse(url);
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+
+  // Reset the network service, set things up so that a different token is
+  // required for authentication, and send off a request that has that token.
+  InitializeNetworkService();
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasFreshTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+
+  auto auth_header = HttpHeader::New();
+  auth_header->name = "Authorization";
+  auth_header->value = "Bearer " + std::string(kFreshToken);
+  Array<HttpHeaderPtr> request_headers;
+  request_headers.push_back(auth_header.Pass());
+  GetAndParseHelloResponse(url, request_headers.Pass());
+  EXPECT_EQ(0u, authentication_service_impl_->num_select_account_calls());
   EXPECT_EQ(0u, authentication_service_impl_->num_get_token_calls());
   EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
 }

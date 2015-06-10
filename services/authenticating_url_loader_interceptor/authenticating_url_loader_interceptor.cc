@@ -15,6 +15,7 @@ AuthenticatingURLLoaderInterceptor::AuthenticatingURLLoaderInterceptor(
     AuthenticatingURLLoaderInterceptorFactory* factory)
     : binding_(this, request.Pass()),
       factory_(factory),
+      add_authentication_(true),
       request_authorization_state_(REQUEST_INITIAL) {
   binding_.set_error_handler(this);
 }
@@ -33,13 +34,22 @@ void AuthenticatingURLLoaderInterceptor::InterceptRequest(
     callback.Run(nullptr);
     return;
   }
+
   pending_interception_callback_ = callback;
+
+  for (size_t i = 0; i < request->headers.size(); i++) {
+    if (request->headers[i]->name == "Authorization") {
+      add_authentication_ = false;
+      StartRequest(request.Pass());
+      return;
+    }
+  }
+
   url_ = GURL(request->url);
   auto_follow_redirects_ = request->auto_follow_redirects;
   request->auto_follow_redirects = false;
   bypass_cache_ = request->bypass_cache;
   headers_ = request->headers.Clone();
-
   std::string token = factory_->GetCachedToken(url_);
   if (token != "") {
     auto auth_header = HttpHeader::New();
@@ -53,6 +63,11 @@ void AuthenticatingURLLoaderInterceptor::InterceptRequest(
 
 void AuthenticatingURLLoaderInterceptor::InterceptFollowRedirect(
     const InterceptResponseCallback& callback) {
+  if (!add_authentication_) {
+    callback.Run(nullptr);
+    return;
+  }
+
   mojo::String error;
 
   if (!url_.is_valid()) {
@@ -90,6 +105,14 @@ void AuthenticatingURLLoaderInterceptor::InterceptFollowRedirect(
 void AuthenticatingURLLoaderInterceptor::InterceptResponse(
     mojo::URLResponsePtr response,
     const InterceptResponseCallback& callback) {
+  if (!add_authentication_) {
+    URLLoaderInterceptorResponsePtr interceptor_response =
+        URLLoaderInterceptorResponse::New();
+    interceptor_response->response = response.Pass();
+    callback.Run(interceptor_response.Pass());
+    return;
+  }
+
   pending_interception_callback_ = callback;
   pending_response_ = response.Pass();
 
@@ -106,6 +129,7 @@ void AuthenticatingURLLoaderInterceptor::InterceptResponse(
           pending_interception_callback_.Run(nullptr);
         else
           StartRequest(BuildRequest(token));
+        pending_interception_callback_.reset();
         return;
       }
     }
@@ -114,6 +138,7 @@ void AuthenticatingURLLoaderInterceptor::InterceptResponse(
         URLLoaderInterceptorResponse::New();
     interceptor_response->response = pending_response_.Pass();
     pending_interception_callback_.Run(interceptor_response.Pass());
+    pending_interception_callback_.reset();
     return;
   }
 
@@ -138,6 +163,9 @@ void AuthenticatingURLLoaderInterceptor::OnConnectionError() {
 
 URLRequestPtr AuthenticatingURLLoaderInterceptor::BuildRequest(
     std::string token) {
+  // We should only be sending out a request with a token if the initial
+  // request did not come in with an authorization header.
+  DCHECK(add_authentication_);
   Array<HttpHeaderPtr> headers;
   if (headers_)
     headers = headers_.Clone();
@@ -167,6 +195,7 @@ void AuthenticatingURLLoaderInterceptor::StartRequest(
       URLLoaderInterceptorResponse::New();
   interceptor_response->request = request.Pass();
   pending_interception_callback_.Run(interceptor_response.Pass());
+  pending_interception_callback_.reset();
 }
 
 void AuthenticatingURLLoaderInterceptor::OnOAuth2TokenReceived(
@@ -182,6 +211,7 @@ void AuthenticatingURLLoaderInterceptor::OnOAuth2TokenReceived(
   }
 
   pending_interception_callback_.Run(interceptor_response.Pass());
+  pending_interception_callback_.reset();
 }
 
 }  // namespace mojo

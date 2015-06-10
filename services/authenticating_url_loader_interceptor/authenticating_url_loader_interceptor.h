@@ -50,6 +50,7 @@ class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor,
   AuthenticatingURLLoaderInterceptorFactory* factory_;
   InterceptResponseCallback pending_interception_callback_;
   URLResponsePtr pending_response_;
+  bool add_authentication_;
   RequestAuthorizationState request_authorization_state_;
   GURL url_;
   bool auto_follow_redirects_;
