@@ -45,7 +45,7 @@ def main():
                         type=str,
                         default='.')
     parser.add_argument('--packages',
-                        default=['mojo', 'sky', 'mojom'])
+                        default=['mojo', 'mojom', 'mojo_services', 'sky'])
     parser.add_argument('--out-dir',
                         default=None)
     parser.add_argument('build_dir',

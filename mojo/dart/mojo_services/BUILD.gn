@@ -4,11 +4,14 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_pkg("mojom") {
+dart_pkg("mojo_services") {
   sources = [
     "CHANGELOG.md",
     "README.md",
-    "lib/generate.dart",
     "pubspec.yaml",
+  ]
+
+  deps = [
+    "//mojo/services",
   ]
 }
