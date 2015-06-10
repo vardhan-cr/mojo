@@ -225,12 +225,20 @@ mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --android
 Passing the `-v` flag will increase the output verbosity. In particular, it will
 also print all arguments passed by `mojo_shell.py` to the shell binary.
 
+### <a name="debugging"></a>Debugging, tracing, profiling
+
 While the shell is running, the `debugger` script allows you to interactively
-start tracing and retrieve the result:
+start
+[tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
+and retrieve the result:
+
 ```
 /devtools/common/debugger tracing start
 /devtools/common/debugger tracing stop result.json
 ```
+
+The trace file can be then loaded using the trace viewer in Chrome available at
+`about://tracing`.
 
 ### Android set-up
 
