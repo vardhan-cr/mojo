@@ -144,8 +144,9 @@ $ git pull --rebase
 $ gclient sync
 ```
 
-You do not need to rerun `gn gen out/Debug` or `mojo/tools/mojob.py gn`. Ninja
-will do so automatically as needed.
+You do not need to rerun `gn gen out/Debug` - ninja does so automatically each
+time you build. You might need to rerun `mojo/tools/mojob.py gn` if the GN
+flags have changed.
 
 ## Contribute
 
