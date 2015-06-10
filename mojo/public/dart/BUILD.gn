@@ -38,6 +38,7 @@ dartzip_package("dart") {
   deps = [
     "../interfaces/application",
     "../interfaces/bindings",
+    "../interfaces/network",
   ]
 }
 
@@ -50,8 +51,6 @@ dart_pkg("mojo") {
 
   # List of mojom targets that the mojo pkg exports
   deps = [
-    "../interfaces/application",
-    "../interfaces/bindings",
-    "../../services",
+    "../interfaces",
   ]
 }
