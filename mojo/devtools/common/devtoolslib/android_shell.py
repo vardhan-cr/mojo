@@ -153,6 +153,43 @@ class AndroidShell(Shell):
     return len(subprocess.check_output(self._CreateADBCommand([
         'shell', 'pm', 'list', 'packages', _MOJO_SHELL_PACKAGE_NAME]))) > 0
 
+  def CheckDevice(self):
+    """Verifies if the device configuration allows adb to run.
+
+    If a target device was indicated in the constructor, it checks that the
+    device is available. Otherwise, it checks that there is exactly one
+    available device.
+
+    Returns:
+      A tuple of (result, msg). |result| is True iff if the device is correctly
+      configured and False otherwise. |msg| is the reason for failure if
+      |result| is False and None otherwise.
+    """
+    adb_devices_output = subprocess.check_output(
+        self._CreateADBCommand(['devices']))
+    # Skip the header line, strip empty lines at the end.
+    device_list = [line.strip() for line in adb_devices_output.split('\n')[1:]
+                   if line.strip()]
+
+    if self.target_device:
+      if any([line.startswith(self.target_device) and
+              line.endswith('device') for line in device_list]):
+        return True, None
+      else:
+        return False, 'Cannot connect to the selected device.'
+
+    if len(device_list) > 1:
+      return False, ('More than one device connected and target device not '
+                     'specified.')
+
+    if not len(device_list):
+      return False, 'No devices connected.'
+
+    if not device_list[0].endswith('device'):
+      return False, 'Connected device is not available.'
+
+    return True, None
+
   def InstallApk(self, shell_apk_path):
     """Installs the apk on the device.
 

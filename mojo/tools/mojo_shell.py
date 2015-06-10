@@ -79,9 +79,14 @@ def main():
                     is_debug=launcher_args.debug)
     paths = Paths(config)
     verbose_pipe = sys.stdout if launcher_args.verbose else None
+
     shell = AndroidShell(paths.adb_path, launcher_args.target_device,
                          logcat_tags=launcher_args.logcat_tags,
                          verbose_pipe=verbose_pipe)
+    device_status, error = shell.CheckDevice()
+    if not device_status:
+      print 'Device check failed: ' + error
+      return 1
     shell.InstallApk(paths.target_mojo_shell_path)
 
     args = shell_arguments.RewriteMapOriginParameters(shell, args)

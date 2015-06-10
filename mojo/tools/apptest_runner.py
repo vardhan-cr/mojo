@@ -44,6 +44,10 @@ def main():
   extra_args = []
   if config.target_os == Config.OS_ANDROID:
     shell = AndroidShell(paths.adb_path)
+    device_status, error = shell.CheckDevice()
+    if not device_status:
+      print 'Device check failed: ' + error
+      return 1
     shell.InstallApk(paths.target_mojo_shell_path)
     extra_args.extend(shell_arguments.ConfigureLocalOrigin(
         shell, paths.build_dir, fixed_port=False))
