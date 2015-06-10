@@ -4,9 +4,11 @@
 
 #include <memory>
 
+#include "base/atomic_sequence_num.h"
 #include "base/macros.h"
 #include "base/run_loop.h"
 #include "base/strings/string_util.h"
+#include "base/strings/stringprintf.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
@@ -21,41 +23,89 @@ namespace mojo {
 
 namespace {
 
+base::StaticAtomicSequenceNumber g_url_index_;
+
 const char kMessage[] = "Hello World\n";
 const char kUser[] = "johnsmith@gmail.com";
-const char kToken[] = "this_is_a_token";
+const char kCachedToken[] = "this_is_a_cached_token";
+const char kFreshToken[] = "this_is_a_fresh_token";
 const char kAuthenticationScope[] =
     "https://www.googleapis.com/auth/userinfo.email";
 const char kAuthenticationHeaderName[] = "Authorization";
 const char kAuthenticationHeaderValuePrefix[] = "Bearer";
-const char KUrl[] = "http://www.example.com/url1";
 
 class MockAuthenticationService : public authentication::AuthenticationService,
                                   public ErrorHandler {
  public:
   MockAuthenticationService(
       mojo::InterfaceRequest<authentication::AuthenticationService> request)
-      : binding_(this, request.Pass()) {
+      : binding_(this, request.Pass()),
+        num_select_account_calls_(0),
+        num_get_token_calls_(0),
+        num_clear_token_calls_(0),
+        use_fresh_token_(false),
+        close_pipe_on_user_selection_(false),
+        return_error_on_user_selection_(false),
+        return_error_on_token_retrieval_(false) {
     binding_.set_error_handler(this);
   }
   ~MockAuthenticationService() override {}
+
+  void set_close_pipe_on_user_selection() {
+    close_pipe_on_user_selection_ = true;
+  }
+  void set_return_error_on_user_selection() {
+    return_error_on_user_selection_ = true;
+  }
+  void set_return_error_on_token_retrieval() {
+    return_error_on_token_retrieval_ = true;
+  }
+
+  uint32_t num_select_account_calls() { return num_select_account_calls_; }
+  uint32_t num_get_token_calls() { return num_get_token_calls_; }
+  uint32_t num_clear_token_calls() { return num_clear_token_calls_; }
 
  private:
   // AuthenticationService implementation
   void SelectAccount(bool return_last_selected,
                      const SelectAccountCallback& callback) override {
+    num_select_account_calls_++;
+    if (close_pipe_on_user_selection_) {
+      binding_.Close();
+      return;
+    }
+
+    if (return_error_on_user_selection_) {
+      callback.Run(nullptr, "error selecting user");
+      return;
+    }
+
     callback.Run(kUser, nullptr);
   }
   void GetOAuth2Token(const mojo::String& username,
                       mojo::Array<mojo::String> scopes,
                       const GetOAuth2TokenCallback& callback) override {
+    num_get_token_calls_++;
     EXPECT_EQ(kUser, username);
     EXPECT_EQ(1u, scopes.size());
     if (scopes.size())
       EXPECT_EQ(kAuthenticationScope, scopes[0]);
-    callback.Run(kToken, nullptr);
+
+    if (return_error_on_token_retrieval_) {
+      callback.Run(nullptr, "error selecting token");
+      return;
+    }
+
+    if (use_fresh_token_) {
+      callback.Run(kFreshToken, nullptr);
+      return;
+    }
+    callback.Run(kCachedToken, nullptr);
   }
-  void ClearOAuth2Token(const mojo::String& token) override {}
+  void ClearOAuth2Token(const mojo::String& token) override {
+    num_clear_token_calls_++;
+    use_fresh_token_ = true;
+  }
 
   // ErrorHandler implementation
   void OnConnectionError() override {
@@ -65,6 +115,13 @@ class MockAuthenticationService : public authentication::AuthenticationService,
   }
 
   Binding<authentication::AuthenticationService> binding_;
+  uint32_t num_select_account_calls_;
+  uint32_t num_get_token_calls_;
+  uint32_t num_clear_token_calls_;
+  bool use_fresh_token_;
+  bool close_pipe_on_user_selection_;
+  bool return_error_on_user_selection_;
+  bool return_error_on_token_retrieval_;
 };
 
 class BaseInterceptor : public URLLoaderInterceptor {
@@ -134,12 +191,13 @@ class SendHelloInterceptor : public BaseInterceptor {
   }
 };
 
-class PassThroughIfAuthenticatedInterceptor : public BaseInterceptor {
+class PassThroughIfHasTokenInterceptor : public BaseInterceptor {
  public:
-  PassThroughIfAuthenticatedInterceptor(
-      InterfaceRequest<URLLoaderInterceptor> request)
-      : BaseInterceptor(request.Pass()), initial_request_(true) {}
-  ~PassThroughIfAuthenticatedInterceptor() override {}
+  PassThroughIfHasTokenInterceptor(
+      InterfaceRequest<URLLoaderInterceptor> request,
+      const std::string& desired_token)
+      : BaseInterceptor(request.Pass()), desired_token_(desired_token) {}
+  ~PassThroughIfHasTokenInterceptor() override {}
 
  private:
   void InterceptRequest(URLRequestPtr request,
@@ -147,46 +205,59 @@ class PassThroughIfAuthenticatedInterceptor : public BaseInterceptor {
     URLLoaderInterceptorResponsePtr interceptor_response =
         URLLoaderInterceptorResponse::New();
 
-    if (initial_request_) {
-      // Send a response indicating that authentication is required.
-      URLResponsePtr response = URLResponse::New();
-      response->url = request->url;
-      response->status_code = 401;
-      response->status_line = "401 Authorization Required";
-      initial_request_ = false;
-      interceptor_response->response = response.Pass();
-    } else {
-      // Check that authentication is present, and if so, let the request
-      // through.
-      EXPECT_TRUE(request->headers.size() == 1u);
+    // Check that authentication is present, and if so, let the request
+    // through.
+    bool found_authentication = false;
+    if (request->headers.size()) {
+      EXPECT_EQ(1u, request->headers.size());
       HttpHeaderPtr header = request->headers[0].Pass();
       EXPECT_EQ(kAuthenticationHeaderName, header->name);
 
       std::vector<std::string> auth_value_components;
       Tokenize(header->value, " ", &auth_value_components);
-      bool found_authentication = false;
       EXPECT_EQ(2u, auth_value_components.size());
       if (auth_value_components.size() == 2) {
         EXPECT_EQ(kAuthenticationHeaderValuePrefix, auth_value_components[0]);
-        EXPECT_EQ(kToken, auth_value_components[1]);
-        found_authentication = true;
+        if (auth_value_components[1] == desired_token_) {
+          found_authentication = true;
+        }
       }
+    }
 
-      if (found_authentication) {
-        request->headers.reset();
-        interceptor_response->request = request.Pass();
-      } else {
-        URLResponsePtr response = URLResponse::New();
-        response->status_code = 404;
-        response->status_line = "404 Not Found";
-        interceptor_response->response = response.Pass();
-      }
+    if (found_authentication) {
+      request->headers.reset();
+      interceptor_response->request = request.Pass();
+    } else {
+      // Send a response indicating that authentication is required.
+      URLResponsePtr response = URLResponse::New();
+      response->url = request->url;
+      response->status_code = 401;
+      response->status_line = "401 Authorization Required";
+      interceptor_response->response = response.Pass();
     }
 
     callback.Run(interceptor_response.Pass());
   }
 
-  bool initial_request_;
+  std::string desired_token_;
+};
+
+class PassThroughIfHasCachedTokenInterceptor
+    : public PassThroughIfHasTokenInterceptor {
+ public:
+  PassThroughIfHasCachedTokenInterceptor(
+      InterfaceRequest<URLLoaderInterceptor> request)
+      : PassThroughIfHasTokenInterceptor(request.Pass(), kCachedToken) {}
+  ~PassThroughIfHasCachedTokenInterceptor() override {}
+};
+
+class PassThroughIfHasFreshTokenInterceptor
+    : public PassThroughIfHasTokenInterceptor {
+ public:
+  PassThroughIfHasFreshTokenInterceptor(
+      InterfaceRequest<URLLoaderInterceptor> request)
+      : PassThroughIfHasTokenInterceptor(request.Pass(), kFreshToken) {}
+  ~PassThroughIfHasFreshTokenInterceptor() override {}
 };
 
 template <class I>
@@ -269,10 +340,16 @@ class AuthenticatingURLLoaderInterceptorAppTest
   void CloseAuthenticationService() { authentication_service_impl_.reset(); }
 
  protected:
-  void ParseHelloResponse(URLResponsePtr response) {
+  std::string GetNextURL() {
+    return base::StringPrintf("http://www.example%d.com/path/to/url",
+                              g_url_index_.GetNext());
+  }
+
+  void GetAndParseHelloResponse(const std::string& url) {
+    URLResponsePtr response = GetResponse(url);
     EXPECT_TRUE(response);
     EXPECT_EQ(200u, response->status_code);
-    EXPECT_EQ(KUrl, response->url);
+    EXPECT_EQ(url, response->url);
     EXPECT_EQ(0u, response->headers.size());
     char received_message[arraysize(kMessage)];
     uint32_t num_bytes = arraysize(kMessage);
@@ -285,11 +362,9 @@ class AuthenticatingURLLoaderInterceptorAppTest
 
   NetworkServicePtr network_service_;
   AuthenticatingURLLoaderInterceptorMetaFactoryPtr interceptor_meta_factory_;
+  std::unique_ptr<MockAuthenticationService> authentication_service_impl_;
 
   DISALLOW_COPY_AND_ASSIGN(AuthenticatingURLLoaderInterceptorAppTest);
-
- private:
-  std::unique_ptr<MockAuthenticationService> authentication_service_impl_;
 };
 
 }  // namespace
@@ -302,7 +377,7 @@ TEST_F(AuthenticatingURLLoaderInterceptorAppTest, AuthenticationNotRequired) {
   AddAuthenticatingURLLoaderInterceptor();
   CloseAuthenticationService();
 
-  ParseHelloResponse(GetResponse(KUrl));
+  GetAndParseHelloResponse(GetNextURL());
 }
 
 // Test that the authenticating interceptor passes through a response that
@@ -310,14 +385,15 @@ TEST_F(AuthenticatingURLLoaderInterceptorAppTest, AuthenticationNotRequired) {
 // available.
 TEST_F(AuthenticatingURLLoaderInterceptorAppTest, AuthenticationNotAvailable) {
   AddInterceptor<SendHelloInterceptor>();
-  AddInterceptor<PassThroughIfAuthenticatedInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
   AddAuthenticatingURLLoaderInterceptor();
   CloseAuthenticationService();
 
-  URLResponsePtr response = GetResponse(KUrl);
+  std::string url = GetNextURL();
+  URLResponsePtr response = GetResponse(url);
   EXPECT_TRUE(response);
   EXPECT_EQ(401u, response->status_code);
-  EXPECT_EQ(KUrl, response->url);
+  EXPECT_EQ(url, response->url);
   EXPECT_EQ(0u, response->headers.size());
 }
 
@@ -326,10 +402,103 @@ TEST_F(AuthenticatingURLLoaderInterceptorAppTest, AuthenticationNotAvailable) {
 // available.
 TEST_F(AuthenticatingURLLoaderInterceptorAppTest, AuthenticationAvailable) {
   AddInterceptor<SendHelloInterceptor>();
-  AddInterceptor<PassThroughIfAuthenticatedInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
   AddAuthenticatingURLLoaderInterceptor();
 
-  ParseHelloResponse(GetResponse(KUrl));
+  GetAndParseHelloResponse(GetNextURL());
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor fails a request needing
+// authentication if user selection returns an error.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, FailSelectingUser) {
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+  authentication_service_impl_->set_return_error_on_user_selection();
+
+  std::string url = GetNextURL();
+  URLResponsePtr response = GetResponse(url);
+  EXPECT_TRUE(response);
+  EXPECT_EQ(401u, response->status_code);
+  EXPECT_EQ(url, response->url);
+  EXPECT_EQ(0u, response->headers.size());
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor fails a request needing
+// authentication if token retrieval returns an error.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, FailGettingToken) {
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+  authentication_service_impl_->set_return_error_on_token_retrieval();
+
+  std::string url = GetNextURL();
+  URLResponsePtr response = GetResponse(url);
+  EXPECT_TRUE(response);
+  EXPECT_EQ(401u, response->status_code);
+  EXPECT_EQ(url, response->url);
+  EXPECT_EQ(0u, response->headers.size());
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor caches tokens in memory so that a
+// second request for an authenticated resource does not result in the
+// AuthenticationService being contacted.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, CacheToken) {
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasCachedTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+
+  std::string url = GetNextURL();
+  GetAndParseHelloResponse(url);
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+
+  GetAndParseHelloResponse(url);
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor obtains a fresh token if a request
+// to an authenticated resource fails with a cached token.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, ClearCachedToken) {
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasFreshTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+
+  GetAndParseHelloResponse(GetNextURL());
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(2u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(1u, authentication_service_impl_->num_clear_token_calls());
+}
+
+// Test that the authenticating interceptor fails any outstanding requests if
+// the connection to the authentication service is lost.
+TEST_F(AuthenticatingURLLoaderInterceptorAppTest, FailOnAuthServiceClosing) {
+  AddInterceptor<SendHelloInterceptor>();
+  AddInterceptor<PassThroughIfHasFreshTokenInterceptor>();
+  AddAuthenticatingURLLoaderInterceptor();
+  authentication_service_impl_->set_close_pipe_on_user_selection();
+
+  std::string url = GetNextURL();
+  URLResponsePtr response = GetResponse(url);
+  EXPECT_TRUE(response);
+  EXPECT_EQ(401u, response->status_code);
+  EXPECT_EQ(url, response->url);
+  EXPECT_EQ(0u, response->headers.size());
+  EXPECT_EQ(1u, authentication_service_impl_->num_select_account_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_get_token_calls());
+  EXPECT_EQ(0u, authentication_service_impl_->num_clear_token_calls());
 }
 
 }  // namespace mojo

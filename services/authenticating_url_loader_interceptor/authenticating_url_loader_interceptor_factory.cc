@@ -47,23 +47,28 @@ void AuthenticatingURLLoaderInterceptorFactory::RetrieveToken(
     return;
   }
   GURL origin = url.GetOrigin();
-  if (pendings_retrieve_token_.find(origin) == pendings_retrieve_token_.end()) {
-    if (cached_tokens_->find(origin) != cached_tokens_->end()) {
-      // Clear the cached token in case the request is due to that token being
-      // stale.
-      authentication_service_->ClearOAuth2Token((*cached_tokens_)[origin]);
-      cached_tokens_->erase(origin);
-    }
-    if (cached_accounts_.find(origin) != cached_accounts_.end()) {
-      OnAccountSelected(origin, cached_accounts_[origin], mojo::String());
-      return;
-    }
+  bool request_in_flight =
+      (pendings_retrieve_token_.find(origin) != pendings_retrieve_token_.end());
+  pendings_retrieve_token_[origin].push_back(callback);
+
+  if (request_in_flight)
+    return;
+
+  // Initiate a request to retrieve the token.
+  if (cached_tokens_->find(origin) != cached_tokens_->end()) {
+    // Clear the cached token in case the request is due to that token being
+    // stale.
+    authentication_service_->ClearOAuth2Token((*cached_tokens_)[origin]);
+    cached_tokens_->erase(origin);
+  }
+  if (cached_accounts_.find(origin) != cached_accounts_.end()) {
+    OnAccountSelected(origin, cached_accounts_[origin], mojo::String());
+  } else {
     authentication_service_->SelectAccount(
         true, base::Bind(
                   &AuthenticatingURLLoaderInterceptorFactory::OnAccountSelected,
                   base::Unretained(this), origin));
   }
-  pendings_retrieve_token_[origin].push_back(callback);
 }
 
 void AuthenticatingURLLoaderInterceptorFactory::OnInterceptorError(
