@@ -12,8 +12,6 @@ if (current_cpu == "mipsel" || current_cpu == "mips64el") {
   import("//build/config/mips.gni")
 }
 
-skia_support_gpu = !is_ios
-
 # The list of Skia defines that are to be set for chromium.
 gypi_skia_defines =
     exec_script("//build/gypi_to_gn.py",
@@ -38,17 +36,15 @@ gypi_skia_core =
                 [ "//third_party/skia/gyp/core.gypi" ])
 
 # The list of Skia gpu sources that are to be set for chromium.
-if (skia_support_gpu) {
-  gypi_skia_gpu =
-      exec_script("//build/gypi_to_gn.py",
-                  [
-                    rebase_path("//third_party/skia/gyp/gpu.gypi"),
-                    "--replace=<(skia_include_path)=//third_party/skia/include",
-                    "--replace=<(skia_src_path)=//third_party/skia/src",
-                  ],
-                  "scope",
-                  [ "//third_party/skia/gyp/gpu.gypi" ])
-}
+gypi_skia_gpu =
+    exec_script("//build/gypi_to_gn.py",
+                [
+                  rebase_path("//third_party/skia/gyp/gpu.gypi"),
+                  "--replace=<(skia_include_path)=//third_party/skia/include",
+                  "--replace=<(skia_src_path)=//third_party/skia/src",
+                ],
+                "scope",
+                [ "//third_party/skia/gyp/gpu.gypi" ])
 
 # The list of Skia effects that are to be set for chromium.
 gypi_skia_effects =
@@ -122,15 +118,11 @@ config("skia_config") {
     ]
   }
 
-  if (skia_support_gpu) {
-    include_dirs += [
-      "//third_party/skia/include/gpu",
-      "//third_party/skia/src/gpu",
-    ]
-    defines += [ "SK_SUPPORT_GPU=1" ]
-  } else {
-    defines += [ "SK_SUPPORT_GPU=0" ]
-  }
+  include_dirs += [
+    "//third_party/skia/include/gpu",
+    "//third_party/skia/src/gpu",
+  ]
+  defines += [ "SK_SUPPORT_GPU=1" ]
 
   if (is_android) {
     defines += [
@@ -141,6 +133,10 @@ config("skia_config") {
 
   if (is_mac) {
     defines += [ "SK_BUILD_FOR_MAC" ]
+  }
+
+  if (is_ios) {
+    defines += [ "SK_BUILD_FOR_IOS" ]
   }
 }
 
@@ -245,6 +241,15 @@ config("skia_library_config") {
       "/wd4800",  # forcing value to bool 'true/false'(assigning int to bool).
     ]
   }
+
+  if (is_ios) {
+    cflags = [
+      # Skia uses routines deprecated in iOS 7 and above
+      "-Wno-deprecated-declarations",
+    ]
+
+    libs = [ "ImageIO.framework" ]
+  }
 }
 
 component("skia") {
@@ -309,10 +314,9 @@ component("skia") {
   }
 
   # GPU
-  if (skia_support_gpu) {
-    sources += gypi_skia_gpu.skgpu_sources
-    sources += gypi_skia_gpu.skgpu_null_gl_sources
-  }
+
+  sources += gypi_skia_gpu.skgpu_sources
+  sources += gypi_skia_gpu.skgpu_null_gl_sources
 
   # Remove unused util files include in utils.gypi
   sources -= [
@@ -392,6 +396,17 @@ component("skia") {
     ]
   }
 
+  if (is_ios) {
+    set_sources_assignment_filter([])
+
+    sources += [
+      "//third_party/skia/src/utils/mac/SkCreateCGImageRef.cpp",
+      "//third_party/skia/src/utils/mac/SkStream_mac.cpp",
+    ]
+
+    set_sources_assignment_filter(sources_assignment_filter)
+  }
+
   if (is_android && (!enable_basic_printing && !enable_print_preview)) {
     sources -= [ "ext/skia_utils_base.cc" ]
   }
@@ -422,7 +437,7 @@ component("skia") {
       "//third_party/skia/src/ports/SkFontMgr_android.cpp",
     ]
   }
-  if (!is_mac) {
+  if (!is_mac && !is_ios) {
     sources -= [ "//third_party/skia/src/ports/SkFontHost_mac.cpp" ]
   }
 
@@ -447,7 +462,7 @@ component("skia") {
       "ext/bitmap_platform_device_win.cc",
       "ext/bitmap_platform_device_win.h",
     ]
-  } else if (is_mac) {
+  } else if (is_mac || is_ios) {
     sources += [
       "ext/bitmap_platform_device_mac.cc",
       "ext/bitmap_platform_device_mac.h",
@@ -534,8 +549,7 @@ source_set("skia_opts") {
     # The assembly uses the frame pointer register (r7 in Thumb/r11 in
     # ARM), the compiler doesn't like that.
     cflags += [ "-fomit-frame-pointer" ]
-
-    if (arm_version >= 7) {
+    if (arm_version >= 7 && (arm_use_neon || arm_optionally_use_neon)) {
       sources = gypi_skia_opts.armv7_sources
       if (arm_use_neon || arm_optionally_use_neon) {
         sources += gypi_skia_opts.neon_sources
@@ -548,7 +562,7 @@ source_set("skia_opts") {
         }
       }
     } else {
-      sources = gypi_skia_opts.none_sourcees
+      sources = gypi_skia_opts.none_sources
     }
   } else if (current_cpu == "mipsel") {
     cflags += [ "-fomit-frame-pointer" ]
