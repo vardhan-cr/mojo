@@ -186,23 +186,20 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
   // To be executed on the controller thread. Creates the |ChildController|,
   // etc.
   static void Init(AppContext* app_context,
-                   mojo::embedder::ScopedPlatformHandle platform_channel,
+                   const std::string& child_connection_id,
                    const Blocker::Unblocker& unblocker) {
     DCHECK(app_context);
-    DCHECK(platform_channel.is_valid());
-
     DCHECK(!app_context->controller());
 
     scoped_ptr<ChildControllerImpl> impl(
         new ChildControllerImpl(app_context, unblocker));
-
     mojo::ScopedMessagePipeHandle host_message_pipe(
-        mojo::embedder::CreateChannel(
-            platform_channel.Pass(),
-            base::Bind(&ChildControllerImpl::DidCreateChannel,
+        mojo::embedder::ConnectToMaster(
+            child_connection_id,
+            base::Bind(&ChildControllerImpl::DidConnectToMaster,
                        base::Unretained(impl.get())),
-            base::ThreadTaskRunnerHandle::Get()));
-
+            base::ThreadTaskRunnerHandle::Get(), &impl->channel_info_));
+    DCHECK(impl->channel_info_);
     impl->Bind(host_message_pipe.Pass());
 
     app_context->set_controller(impl.Pass());
@@ -248,11 +245,10 @@ class ChildControllerImpl : public ChildController, public mojo::ErrorHandler {
     binding_.set_error_handler(this);
   }
 
-  // Callback for |mojo::embedder::CreateChannel()|.
-  void DidCreateChannel(mojo::embedder::ChannelInfo* channel_info) {
+  // Callback for |mojo::embedder::ConnectToMaster()|.
+  void DidConnectToMaster() {
     DVLOG(2) << "ChildControllerImpl::DidCreateChannel()";
     DCHECK(thread_checker_.CalledOnValidThread());
-    channel_info_ = channel_info;
   }
 
   static void StartAppOnMainThread(
@@ -305,15 +301,11 @@ int main(int argc, char** argv) {
   shell::AppContext app_context;
   app_context.Init(platform_handle.Pass());
 
-  mojo::embedder::ScopedPlatformHandle platform_channel;
-  mojo::embedder::ConnectToMaster(child_connection_id, &platform_channel);
-
   shell::Blocker blocker;
   app_context.controller_runner()->PostTask(
-      FROM_HERE,
-      base::Bind(&shell::ChildControllerImpl::Init,
-                 base::Unretained(&app_context),
-                 base::Passed(&platform_channel), blocker.GetUnblocker()));
+      FROM_HERE, base::Bind(&shell::ChildControllerImpl::Init,
+                            base::Unretained(&app_context), child_connection_id,
+                            blocker.GetUnblocker()));
   // This will block, then run whatever the controller wants.
   blocker.Block();
 

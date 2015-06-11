@@ -199,9 +199,12 @@ ScopedMessagePipeHandle ConnectToSlave(
   return rv.Pass();
 }
 
-void ConnectToMaster(const std::string& platform_connection_id,
-                     ScopedPlatformHandle* platform_connection_handle) {
-  DCHECK(platform_connection_handle);
+ScopedMessagePipeHandle ConnectToMaster(
+    const std::string& platform_connection_id,
+    const DidConnectToMasterCallback& callback,
+    scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+    ChannelInfo** channel_info) {
+  DCHECK(channel_info);
   DCHECK(internal::g_ipc_support);
 
   bool ok = false;
@@ -209,8 +212,19 @@ void ConnectToMaster(const std::string& platform_connection_id,
       system::ConnectionIdentifier::FromString(platform_connection_id, &ok);
   CHECK(ok);
 
-  *platform_connection_handle =
-      internal::g_ipc_support->ConnectToMaster(connection_id);
+  system::ChannelId channel_id = system::kInvalidChannelId;
+  scoped_refptr<system::MessagePipeDispatcher> dispatcher =
+      internal::g_ipc_support->ConnectToMaster(
+          connection_id, callback, callback_thread_task_runner.Pass(),
+          &channel_id);
+  *channel_info = new ChannelInfo(channel_id);
+
+  ScopedMessagePipeHandle rv(
+      MessagePipeHandle(internal::g_core->AddDispatcher(dispatcher)));
+  CHECK(rv.is_valid());
+  // TODO(vtl): The |.Pass()| below is only needed due to an MSVS bug; remove it
+  // once that's fixed.
+  return rv.Pass();
 }
 
 // TODO(vtl): Write tests for this.

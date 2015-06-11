@@ -146,7 +146,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlaveInternal) {
   ASSERT_TRUE(ok);
 
   embedder::ScopedPlatformHandle second_platform_handle =
-      ipc_support.ConnectToMaster(connection_id);
+      ipc_support.ConnectToMasterInternal(connection_id);
   ASSERT_TRUE(second_platform_handle.is_valid());
 
   // The master should write a '?'. We'll write a '!' in response.

@@ -32,7 +32,9 @@ class ChannelManager;
 class ConnectionManager;
 class MessagePipeDispatcher;
 
+// This test (and its helper function) need to be friended.
 FORWARD_DECLARE_TEST(IPCSupportTest, MultiprocessMasterSlaveInternal);
+void MultiprocessMasterSlaveInternalTestChildTest();
 
 // |IPCSupport| encapsulates all the objects that are needed to support IPC for
 // a single "process" (whether that be a master or a slave).
@@ -85,7 +87,7 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   // context for the caller (it is treated as an opaque value by this class).
   // |platform_handle| should be the master's handle to an OS "pipe" between
   // master and slave. This will then bootstrap a |Channel| between master and
-  // slave together with an initial message pipe (returning a dispatcher to the
+  // slave together with an initial message pipe (returning a dispatcher for the
   // master's side).
   //
   // |callback| will be run after the |Channel| is created, either using
@@ -105,12 +107,18 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
       ChannelId* channel_id);
 
   // Called in a slave process to connect it to the master process and thus the
-  // IPC system. See |ConnectToSlave()|, above.
+  // IPC system, creating a |Channel| and an initial message pipe (return a
+  // dispatcher for the slave's side). See |ConnectToSlave()|, above.
   //
-  // TODO(vtl): This isn't the right API. It should set up a channel and an
-  // initial message pipe.
-  embedder::ScopedPlatformHandle ConnectToMaster(
-      const ConnectionIdentifier& connection_id);
+  // |callback|, |callback_thread_task_runner|, and |channel_id| are as in
+  // |ConnectToSlave()|.
+  //
+  // TODO(vtl): |ConnectToSlave()|'s channel management TODO also applies here.
+  scoped_refptr<system::MessagePipeDispatcher> ConnectToMaster(
+      const ConnectionIdentifier& connection_id,
+      const base::Closure& callback,
+      scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+      ChannelId* channel_id);
 
   embedder::ProcessType process_type() const { return process_type_; }
   embedder::ProcessDelegate* process_delegate() const {
@@ -127,9 +135,9 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   ChannelManager* channel_manager() const { return channel_manager_.get(); }
 
  private:
-  // This tests |ConnectToSlaveInternal()|.
-  // TODO(vtl): (... and |ConnectToMasterInternal()|.)
+  // This tests |ConnectToSlaveInternal()| and |ConnectToMasterInternal()|.
   FRIEND_TEST_ALL_PREFIXES(IPCSupportTest, MultiprocessMasterSlaveInternal);
+  friend void MultiprocessMasterSlaveInternalTestChildTest();
 
   // Helper for |ConnectToSlave()|. Connects (using the connection manager) to
   // the slave using |platform_handle| (a handle to an OS "pipe" between master
@@ -141,6 +149,13 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
       embedder::SlaveInfo slave_info,
       embedder::ScopedPlatformHandle platform_handle,
       ProcessIdentifier* slave_process_identifier);
+
+  // Helper for |ConnectToMaster()|. Connects (using the connection manager) to
+  // the master (using the handle to the OS "pipe" that was given to
+  // |SlaveConnectionManager::Init()|) and creates a second OS "pipe" between
+  // the master and slave (returning the slave's handle).
+  embedder::ScopedPlatformHandle ConnectToMasterInternal(
+      const ConnectionIdentifier& connection_id);
 
   ConnectionManager* connection_manager() const {
     return connection_manager_.get();

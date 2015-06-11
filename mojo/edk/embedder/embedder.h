@@ -146,13 +146,16 @@ ConnectToSlave(SlaveInfo slave_info,
 //
 // See |ConnectToSlave()| for details. (Note that if this fails in any way,
 // e.g., if |platform_connection_id| is invalid, this will CHECK-fail and
-// terminate the process.)
+// terminate the process.) |channel_info|, |callback|, and
+// |callback_thread_task_runner| are as in |ConnectToSlave()|.
 //
-// TODO(vtl): This is not the right API. It should really establish a channel
-// and provide an initial message pipe.
-MOJO_SYSTEM_IMPL_EXPORT void ConnectToMaster(
-    const std::string& platform_connection_id,
-    ScopedPlatformHandle* platform_connection_handle);
+// TODO(vtl): The API is a little crazy with respect to the |ChannelInfo*|.
+using DidConnectToMasterCallback = base::Closure;
+MOJO_SYSTEM_IMPL_EXPORT ScopedMessagePipeHandle
+ConnectToMaster(const std::string& platform_connection_id,
+                const DidConnectToMasterCallback& callback,
+                scoped_refptr<base::TaskRunner> callback_thread_task_runner,
+                ChannelInfo** channel_info);
 
 // A "channel" is a connection on top of an OS "pipe", on top of which Mojo
 // message pipes (etc.) can be multiplexed. It must "live" on some I/O thread.
@@ -206,16 +209,18 @@ using DidCreateChannelCallback = base::Callback<void(ChannelInfo*)>;
 // the callback will be called using |callback_thread_task_runner| if that is
 // non-null, or otherwise it will be posted to the I/O thread. Returns a handle
 // to the bootstrap message pipe.
+//
+// Note: This should only be used to establish a channel with a process of type
+// |ProcessType::NONE|. This function may be removed in the future.
 MOJO_SYSTEM_IMPL_EXPORT ScopedMessagePipeHandle
 CreateChannel(ScopedPlatformHandle platform_handle,
               const DidCreateChannelCallback& callback,
               scoped_refptr<base::TaskRunner> callback_thread_task_runner);
 
-// Destroys a channel that was created using |CreateChannel()| (or
-// |CreateChannelOnIOThread()|); must be called from the channel's I'O thread.
-// |channel_info| should be the value provided to the callback to
-// |CreateChannel()| (or returned by |CreateChannelOnIOThread()|). Completes
-// synchronously (and posts no tasks).
+// Destroys a channel that was created using |ConnectToMaster()|,
+// |ConnectToSlave()|, |CreateChannel()|, or |CreateChannelOnIOThread()|; must
+// be called from the channel's I'O thread. Completes synchronously (and posts
+// no tasks).
 MOJO_SYSTEM_IMPL_EXPORT void DestroyChannelOnIOThread(
     ChannelInfo* channel_info);
 
