@@ -274,6 +274,9 @@ public class CoreImpl implements Core, AsyncWaiter {
      */
     void writeMessage(MessagePipeHandleImpl pipeHandle, ByteBuffer bytes,
             List<? extends Handle> handles, MessagePipeHandle.WriteFlags flags) {
+        if (bytes != null && !bytes.isDirect()) {
+            throw new IllegalArgumentException("ByteBuffer must be direct.");
+        }
         ByteBuffer handlesBuffer = null;
         if (handles != null && !handles.isEmpty()) {
             handlesBuffer = allocateDirectBuffer(handles.size() * HANDLE_SIZE);
@@ -302,6 +305,9 @@ public class CoreImpl implements Core, AsyncWaiter {
      */
     ResultAnd<MessagePipeHandle.ReadMessageResult> readMessage(MessagePipeHandleImpl handle,
             ByteBuffer bytes, int maxNumberOfHandles, MessagePipeHandle.ReadFlags flags) {
+        if (bytes != null && !bytes.isDirect()) {
+            throw new IllegalArgumentException("ByteBuffer must be direct.");
+        }
         ByteBuffer handlesBuffer = null;
         if (maxNumberOfHandles > 0) {
             handlesBuffer = allocateDirectBuffer(maxNumberOfHandles * HANDLE_SIZE);
@@ -349,6 +355,9 @@ public class CoreImpl implements Core, AsyncWaiter {
      */
     ResultAnd<Integer> readData(
             DataPipeConsumerHandleImpl handle, ByteBuffer elements, DataPipe.ReadFlags flags) {
+        if (elements != null && !elements.isDirect()) {
+            throw new IllegalArgumentException("ByteBuffer must be direct.");
+        }
         ResultAnd<Integer> result = nativeReadData(handle.getMojoHandle(), elements,
                 elements == null ? 0 : elements.capacity(), flags.getFlags());
         if (result.getMojoResult() != MojoResult.OK
@@ -391,6 +400,9 @@ public class CoreImpl implements Core, AsyncWaiter {
      */
     ResultAnd<Integer> writeData(
             DataPipeProducerHandleImpl handle, ByteBuffer elements, DataPipe.WriteFlags flags) {
+        if (!elements.isDirect()) {
+            throw new IllegalArgumentException("ByteBuffer must be direct.");
+        }
         return nativeWriteData(
                 handle.getMojoHandle(), elements, elements.limit(), flags.getFlags());
     }
