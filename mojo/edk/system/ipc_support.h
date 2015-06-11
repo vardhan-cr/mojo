@@ -33,6 +33,7 @@ class ConnectionManager;
 class MessagePipeDispatcher;
 
 // This test (and its helper function) need to be friended.
+FORWARD_DECLARE_TEST(IPCSupportTest, MasterSlaveInternal);
 FORWARD_DECLARE_TEST(IPCSupportTest, MultiprocessMasterSlaveInternal);
 void MultiprocessMasterSlaveInternalTestChildTest();
 
@@ -135,7 +136,8 @@ class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
   ChannelManager* channel_manager() const { return channel_manager_.get(); }
 
  private:
-  // This tests |ConnectToSlaveInternal()| and |ConnectToMasterInternal()|.
+  // These test |ConnectToSlaveInternal()| and |ConnectToMasterInternal()|.
+  FRIEND_TEST_ALL_PREFIXES(IPCSupportTest, MasterSlaveInternal);
   FRIEND_TEST_ALL_PREFIXES(IPCSupportTest, MultiprocessMasterSlaveInternal);
   friend void MultiprocessMasterSlaveInternalTestChildTest();
 

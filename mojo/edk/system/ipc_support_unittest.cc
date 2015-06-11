@@ -13,6 +13,7 @@
 #include "base/test/test_io_thread.h"
 #include "base/test/test_timeouts.h"
 #include "mojo/edk/embedder/master_process_delegate.h"
+#include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/edk/system/connection_identifier.h"
@@ -66,6 +67,67 @@ class TestSlaveProcessDelegate : public embedder::SlaveProcessDelegate {
 
 }  // namespace
 
+// Note: This test isn't in an anonymous namespace, since it needs to be
+// friended by |IPCSupport|.
+TEST(IPCSupportTest, MasterSlaveInternal) {
+  embedder::SimplePlatformSupport platform_support;
+  base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
+  TestMasterProcessDelegate master_process_delegate;
+  // Note: Run master process delegate methods on the I/O thread.
+  IPCSupport master_ipc_support(
+      &platform_support, embedder::ProcessType::MASTER,
+      test_io_thread.task_runner(), &master_process_delegate,
+      test_io_thread.task_runner(), embedder::ScopedPlatformHandle());
+
+  ConnectionIdentifier connection_id =
+      master_ipc_support.GenerateConnectionIdentifier();
+
+  embedder::PlatformChannelPair channel_pair;
+  ProcessIdentifier slave_id = kInvalidProcessIdentifier;
+  embedder::ScopedPlatformHandle master_second_platform_handle =
+      master_ipc_support.ConnectToSlaveInternal(
+          connection_id, nullptr, channel_pair.PassServerHandle(), &slave_id);
+  ASSERT_TRUE(master_second_platform_handle.is_valid());
+  EXPECT_NE(slave_id, kInvalidProcessIdentifier);
+  EXPECT_NE(slave_id, kMasterProcessIdentifier);
+
+  TestSlaveProcessDelegate slave_process_delegate;
+  // Note: Run process delegate methods on the I/O thread.
+  IPCSupport slave_ipc_support(
+      &platform_support, embedder::ProcessType::SLAVE,
+      test_io_thread.task_runner(), &slave_process_delegate,
+      test_io_thread.task_runner(), channel_pair.PassClientHandle());
+
+  embedder::ScopedPlatformHandle slave_second_platform_handle =
+      slave_ipc_support.ConnectToMasterInternal(connection_id);
+  ASSERT_TRUE(slave_second_platform_handle.is_valid());
+
+  // Write an 'x' through the master's end.
+  size_t n = 0;
+  EXPECT_TRUE(mojo::test::BlockingWrite(master_second_platform_handle.get(),
+                                        "x", 1, &n));
+  EXPECT_EQ(1u, n);
+
+  // Read it from the slave's end.
+  char c = '\0';
+  n = 0;
+  EXPECT_TRUE(
+      mojo::test::BlockingRead(slave_second_platform_handle.get(), &c, 1, &n));
+  EXPECT_EQ(1u, n);
+  EXPECT_EQ('x', c);
+
+  test_io_thread.PostTaskAndWait(
+      FROM_HERE, base::Bind(&IPCSupport::ShutdownOnIOThread,
+                            base::Unretained(&slave_ipc_support)));
+
+  EXPECT_TRUE(master_process_delegate.TryWaitForOnSlaveDisconnect());
+
+  test_io_thread.PostTaskAndWait(
+      FROM_HERE, base::Bind(&IPCSupport::ShutdownOnIOThread,
+                            base::Unretained(&master_ipc_support)));
+}
+
+// This is a true multiprocess version of IPCSupportTest.MasterSlaveInternal.
 // Note: This test isn't in an anonymous namespace, since it needs to be
 // friended by |IPCSupport|.
 #if defined(OS_ANDROID)
