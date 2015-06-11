@@ -139,8 +139,12 @@ class InterfacePtr {
   // NOTE: Deprecated. Please use the method above.
   // TODO(yzshen): Remove this method once all callsites are converted.
   void set_error_handler(ErrorHandler* error_handler) {
-    set_connection_error_handler(
-        [error_handler]() { error_handler->OnConnectionError(); });
+    if (error_handler) {
+      set_connection_error_handler(
+          [error_handler]() { error_handler->OnConnectionError(); });
+    } else {
+      set_connection_error_handler(Closure());
+    }
   }
 
   // Unbinds the InterfacePtr and returns the information which could be used
