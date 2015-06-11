@@ -8,7 +8,8 @@ namespace gfx {
 
 class GL_EXPORT GLSurfaceIOS : public GLSurface {
  public:
-  GLSurfaceIOS(gfx::AcceleratedWidget widget);
+  GLSurfaceIOS(gfx::AcceleratedWidget widget,
+               const gfx::SurfaceConfiguration requested_configuration);
 
   bool SwapBuffers() override;
   void Destroy() override;

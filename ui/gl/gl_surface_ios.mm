@@ -16,8 +16,10 @@ namespace gfx {
 #define WIDGET_AS_LAYER (reinterpret_cast<CAEAGLLayer*>(widget_))
 #define CAST_CONTEXT(c) (reinterpret_cast<EAGLContext*>((c)))
 
-GLSurfaceIOS::GLSurfaceIOS(gfx::AcceleratedWidget widget)
-    : widget_(widget),
+GLSurfaceIOS::GLSurfaceIOS(gfx::AcceleratedWidget widget,
+                     const gfx::SurfaceConfiguration requested_configuration)
+    : GLSurface(requested_configuration),
+      widget_(widget),
       framebuffer_(GL_NONE),
       colorbuffer_(GL_NONE),
       last_configured_size_(),
@@ -94,6 +96,8 @@ void GLSurfaceIOS::SetupFramebufferIfNecessary() {
                             GL_RENDERBUFFER, colorbuffer_);
   DCHECK(glGetError() == GL_NO_ERROR);
 
+  // TODO(csg): Make use of the surface configuration to select the properties
+  // and attachments
   WIDGET_AS_LAYER.drawableProperties = @{
     kEAGLDrawablePropertyColorFormat : kEAGLColorFormatRGBA8,
     kEAGLDrawablePropertyRetainedBacking : @(NO),
@@ -138,9 +142,11 @@ bool GLSurface::InitializeOneOffInternal() {
 
 // static
 scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
-    gfx::AcceleratedWidget window) {
+      gfx::AcceleratedWidget window,
+      const gfx::SurfaceConfiguration& requested_configuration) {
   DCHECK(window != kNullAcceleratedWidget);
-  scoped_refptr<GLSurfaceIOS> surface = new GLSurfaceIOS(window);
+  scoped_refptr<GLSurfaceIOS> surface =
+    new GLSurfaceIOS(window, requested_configuration);
 
   if (!surface->Initialize())
     return NULL;
