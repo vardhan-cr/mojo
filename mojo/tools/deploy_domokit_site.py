@@ -69,7 +69,18 @@ def packages_filter(path):
     return True
 
 
+def ensure_dir_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
 def copy(from_root, to_root, filter_func=None, followlinks=False):
+    assert os.path.exists(from_root), "%s does not exist!" % from_root
+    if os.path.isfile(from_root):
+        ensure_dir_exists(os.path.dirname(to_root))
+        shutil.copy(from_root, to_root)
+        return
+
     if os.path.exists(to_root):
         shutil.rmtree(to_root)
     os.makedirs(to_root)
@@ -124,6 +135,9 @@ def main():
 
     # Copy sky/examples into examples/
     copy(src_path('sky/examples'), deploy_path('examples'), examples_filter)
+
+    copy(src_path('sky/sky_home'), args.deploy_root)
+    copy(src_path('sky/sky_home.dart'), args.deploy_root)
 
     # Deep copy packages/. This follows symlinks and flattens them.
     packages_root = deploy_path('packages')
