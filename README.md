@@ -233,8 +233,8 @@ start
 and retrieve the result:
 
 ```
-/devtools/common/debugger tracing start
-/devtools/common/debugger tracing stop result.json
+devtools/common/debugger tracing start
+devtools/common/debugger tracing stop [result.json]
 ```
 
 The trace file can be then loaded using the trace viewer in Chrome available at

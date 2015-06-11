@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 import argparse
+import os.path
 import requests
 import sys
 
@@ -24,7 +25,18 @@ def _tracing_start(_):
 
 def _tracing_stop(args):
   """Stops tracing and writes trace to file."""
-  file_name = args.file_name
+  if args.file_name:
+    file_name = args.file_name
+  else:
+    for i in xrange(1000):
+      candidate_file_name = 'mojo_trace_%03d.json' % i
+      if not os.path.exists(candidate_file_name):
+        file_name = candidate_file_name
+        break
+    else:
+      print 'Failed to pick a name for the trace output file.'
+      return 1
+
   trace = _send_request('stop_tracing').content
   with open(file_name, "wb") as trace_file:
     trace_file.write('{"traceEvents":[')
@@ -46,8 +58,8 @@ def _add_tracing_command(subparsers):
 
   stop_tracing_parser = tracing_subparser.add_parser('stop',
       help='stop tracing and retrieve the result')
-  stop_tracing_parser.add_argument('file_name', type=str,
-                                   default='mojo.trace')
+  stop_tracing_parser.add_argument('file_name', type=str, nargs='?',
+      help='name of the output file (optional)')
   stop_tracing_parser.set_defaults(func=_tracing_stop)
 
 
