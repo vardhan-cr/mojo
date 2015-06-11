@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 
-NDK_PLATFORM = 'android-14'
+NDK_PLATFORM = 'android-16'
 NDK_TOOLCHAIN = 'arm-linux-androideabi-4.9'
 
 def main():

@@ -146,7 +146,7 @@ std::vector<std::string> GetHeaderValues(const std::string& header_name,
   std::vector<std::string> result;
   for (size_t i = 0u; i < headers.size(); ++i) {
     std::string name = headers[i]->name;
-    if (LowerCaseEqualsASCII(name, header_name.c_str()))
+    if (base::LowerCaseEqualsASCII(name, header_name.c_str()))
       result.push_back(headers[i]->value);
   }
   return result;

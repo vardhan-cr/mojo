@@ -86,7 +86,7 @@ class FocusController : public ui::EventHandler, public mojo::ViewObserver {
 
   scoped_ptr<FocusRules> rules_;
 
-  ObserverList<FocusControllerObserver> focus_controller_observers_;
+  base::ObserverList<FocusControllerObserver> focus_controller_observers_;
 
   ScopedObserver<mojo::View, ViewObserver> observer_manager_;
 

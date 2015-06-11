@@ -100,6 +100,18 @@ size_t SharedMemory::GetHandleLimit() {
   return static_cast<size_t>(1 << 23);
 }
 
+// static
+SharedMemoryHandle SharedMemory::DuplicateHandle(
+    const SharedMemoryHandle& handle) {
+  ProcessHandle process = GetCurrentProcess();
+  SharedMemoryHandle duped_handle;
+  BOOL success = ::DuplicateHandle(process, handle, process, &duped_handle, 0,
+                                   FALSE, DUPLICATE_SAME_ACCESS);
+  if (success)
+    return duped_handle;
+  return NULLHandle();
+}
+
 bool SharedMemory::CreateAndMapAnonymous(size_t size) {
   return CreateAnonymous(size) && Map(size);
 }
@@ -242,9 +254,10 @@ bool SharedMemory::ShareToProcessCommon(ProcessHandle process,
     return true;
   }
 
-  if (!DuplicateHandle(GetCurrentProcess(), mapped_file, process,
-      &result, access, FALSE, options))
+  if (!::DuplicateHandle(GetCurrentProcess(), mapped_file, process, &result,
+                         access, FALSE, options)) {
     return false;
+  }
   *new_handle = result;
   return true;
 }

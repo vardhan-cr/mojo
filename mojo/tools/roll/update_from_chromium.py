@@ -57,7 +57,11 @@ files_to_copy = [ "sandbox/sandbox_export.h" ]
 
 # The contents of these files before the roll will be preserved after the roll,
 # even though they live in directories rolled in from Chromium.
-files_not_to_roll = [ "build/module_args/mojo.gni" ]
+files_not_to_roll = [
+    "build/config/ui.gni",
+    "build/ls.py",
+    "build/module_args/mojo.gni",
+]
 
 dirs = dirs_to_snapshot
 

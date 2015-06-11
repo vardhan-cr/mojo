@@ -69,7 +69,7 @@
     'has_java_resources%': 0,
     'res_extra_dirs': [],
     'res_extra_files': [],
-    'res_v14_verify_only%': 0,
+    'res_v14_skip%': 0,
     'resource_input_paths': ['>@(res_extra_files)'],
     'intermediate_dir': '<(SHARED_INTERMEDIATE_DIR)/<(_target_name)',
     'compile_stamp': '<(intermediate_dir)/compile.stamp',
@@ -157,8 +157,8 @@
             'inputs_list_file': '>|(java_resources.<(_target_name).gypcmd >@(resource_input_paths))',
             'process_resources_options': [],
             'conditions': [
-              ['res_v14_verify_only == 1', {
-                'process_resources_options': ['--v14-verify-only']
+              ['res_v14_skip == 1', {
+                'process_resources_options': ['--v14-skip']
               }],
             ],
           },
@@ -176,7 +176,7 @@
           'action': [
             'python', '<(DEPTH)/build/android/gyp/process_resources.py',
             '--android-sdk', '<(android_sdk)',
-            '--android-sdk-tools', '<(android_sdk_tools)',
+            '--aapt-path', '<(android_aapt_path)',
             '--non-constant-id',
 
             '--android-manifest', '<(android_manifest)',

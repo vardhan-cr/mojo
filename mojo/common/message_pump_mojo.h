@@ -127,7 +127,7 @@ class MessagePumpMojo : public base::MessagePump {
   // notify it.
   int next_handler_id_;
 
-  ObserverList<Observer> observers_;
+  base::ObserverList<Observer> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePumpMojo);
 };

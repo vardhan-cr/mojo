@@ -108,7 +108,7 @@
         '../media/cast/cast.gyp:generate_barcode_video',
         '../media/cast/cast.gyp:generate_timecode_audio',
         '../mojo/mojo.gyp:mojo',
-        '../mojo/mojo_base.gyp:mojo_application_chromium',
+        '../mojo/mojo_base.gyp:mojo_application_base',
         '../mojo/mojo_base.gyp:mojo_common_unittests',
         '../net/net.gyp:crash_cache',
         '../net/net.gyp:crl_set_dump',
@@ -168,7 +168,6 @@
         '../skia/skia.gyp:image_operations_bench',
         '../sql/sql.gyp:sql_unittests',
         '../sync/sync.gyp:run_sync_testserver',
-        '../sync/sync.gyp:sync_endtoend_tests',
         '../sync/sync.gyp:sync_unit_tests',
         '../sync/tools/sync_tools.gyp:sync_client',
         '../sync/tools/sync_tools.gyp:sync_listen_notifications',
@@ -241,7 +240,7 @@
             '../remoting/remoting_all.gyp:remoting_all',
           ],
         }],
-        ['remoting==1 and chromeos==0', {
+        ['remoting==1 and chromeos==0 and use_x11==1', {
           'dependencies': [
             '../remoting/remoting.gyp:remoting_me2me_host',
             '../remoting/remoting.gyp:remoting_me2me_native_messaging_host',
@@ -296,6 +295,8 @@
             '../base/base.gyp:chromium_android_linker',
             '../breakpad/breakpad.gyp:dump_syms',
             '../build/android/rezip.gyp:rezip_apk_jar',
+            '../chrome/chrome.gyp:chrome_public_apk',
+            '../chrome/chrome.gyp:chrome_public_test_apk',
             '../chrome/chrome.gyp:chrome_shell_apk',
             '../chrome/chrome.gyp:chromedriver_webview_shell_apk',
             #"//clank" TODO(GYP) - conditional somehow?
@@ -616,8 +617,6 @@
           'dependencies': [
             # TODO(GYP): All of these targets still need to be converted.
             '../base/base.gyp:debug_message',
-            '../chrome/chrome.gyp:app_installer',
-            '../chrome/chrome.gyp:app_installer_unittests',
             '../chrome/chrome.gyp:app_shim',
             '../chrome/chrome.gyp:gcapi_dll',
             '../chrome/chrome.gyp:gcapi_test',
@@ -635,8 +634,8 @@
             '../cloud_print/service/service.gyp:cloud_print_service_setup',
             '../cloud_print/virtual_driver/win/install/virtual_driver_install.gyp:virtual_driver_setup',
             '../cloud_print/virtual_driver/win/virtual_driver.gyp:gcp_portmon',
+            '../components/test_runner/test_runner.gyp:layout_test_helper',
             '../content/content_shell_and_tests.gyp:content_shell_crash_service',
-            '../content/content_shell_and_tests.gyp:layout_test_helper',
             '../gpu/gpu.gyp:angle_end2end_tests',
             '../gpu/gpu.gyp:angle_perftests',
             '../net/net.gyp:net_docs',

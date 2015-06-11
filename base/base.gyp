@@ -458,7 +458,6 @@
         'callback_unittest.cc',
         'callback_unittest.nc',
         'cancelable_callback_unittest.cc',
-        'chromeos/memory_pressure_monitor_chromeos_unittest.cc',
         'command_line_unittest.cc',
         'containers/adapters_unittest.cc',
         'containers/hash_tables_unittest.cc',
@@ -518,7 +517,6 @@
         'mac/foundation_util_unittest.mm',
         'mac/libdispatch_task_runner_unittest.cc',
         'mac/mac_util_unittest.mm',
-        'mac/memory_pressure_monitor_mac_unittest.cc',
         'mac/objc_property_releaser_unittest.mm',
         'mac/scoped_nsobject_unittest.mm',
         'mac/scoped_objc_class_swizzler_unittest.mm',
@@ -527,6 +525,9 @@
         'memory/aligned_memory_unittest.cc',
         'memory/discardable_shared_memory_unittest.cc',
         'memory/linked_ptr_unittest.cc',
+        'memory/memory_pressure_monitor_chromeos_unittest.cc',
+        'memory/memory_pressure_monitor_mac_unittest.cc',
+        'memory/memory_pressure_monitor_win_unittest.cc',
         'memory/ref_counted_memory_unittest.cc',
         'memory/ref_counted_unittest.cc',
         'memory/scoped_ptr_unittest.cc',
@@ -655,7 +656,6 @@
         'win/event_trace_provider_unittest.cc',
         'win/i18n_unittest.cc',
         'win/iunknown_impl_unittest.cc',
-        'win/memory_pressure_monitor_unittest.cc',
         'win/message_window_unittest.cc',
         'win/object_watcher_unittest.cc',
         'win/pe_image_unittest.cc',
@@ -905,6 +905,8 @@
         'test/expectations/parser.h',
         'test/gtest_util.cc',
         'test/gtest_util.h',
+        'test/gtest_xml_unittest_result_printer.cc',
+        'test/gtest_xml_unittest_result_printer.h',
         'test/gtest_xml_util.cc',
         'test/gtest_xml_util.h',
         'test/histogram_tester.cc',
@@ -990,6 +992,8 @@
         'test/test_switches.h',
         'test/test_timeouts.cc',
         'test/test_timeouts.h',
+        'test/test_ui_thread_android.cc',
+        'test/test_ui_thread_android.h',
         'test/thread_test_helper.cc',
         'test/thread_test_helper.h',
         'test/trace_event_analyzer.cc',
@@ -1040,6 +1044,22 @@
           'PERF_TEST',
         ],
       },
+    },
+    {
+      'target_name': 'test_launcher_nacl_nonsfi',
+      'conditions': [
+        ['disable_nacl==0 and disable_nacl_untrusted==0 and enable_nacl_nonsfi_test==1', {
+          'type': 'static_library',
+          'sources': [
+            'test/launcher/test_launcher_nacl_nonsfi.cc',
+          ],
+          'dependencies': [
+            'test_support_base',
+          ],
+        }, {
+          'type': 'none',
+        }],
+      ],
     },
   ],
   'conditions': [
@@ -1342,6 +1362,7 @@
           'target_name': 'base_jni_headers',
           'type': 'none',
           'sources': [
+            'android/java/src/org/chromium/base/ApkAssets.java',
             'android/java/src/org/chromium/base/ApplicationStatus.java',
             'android/java/src/org/chromium/base/AnimationFrameTimeHistogram.java',
             'android/java/src/org/chromium/base/BuildInfo.java',
@@ -1390,6 +1411,7 @@
           'type': 'none',
           'sources': [
             'test/android/java/src/org/chromium/base/ContentUriTestUtils.java',
+            'test/android/java/src/org/chromium/base/TestUiThread.java',
           ],
           'variables': {
             'jni_gen_package': 'base',
@@ -1558,6 +1580,7 @@
           ],
           'variables': {
             'test_suite_name': 'base_unittests',
+            'isolate_file': 'base_unittests.isolate',
           },
           'includes': [ '../build/apk_test.gypi' ],
         },
@@ -1614,13 +1637,6 @@
           ],
           'sources': [
             'base_unittests.isolate',
-          ],
-          'conditions': [
-            ['use_x11 == 1', {
-              'dependencies': [
-                '../tools/xdisplaycheck/xdisplaycheck.gyp:xdisplaycheck',
-              ],
-            }],
           ],
         },
       ],

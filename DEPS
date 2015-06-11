@@ -23,7 +23,7 @@ vars = {
   'skia_revision': '409fd66a5afcef5f165f7ccec7c3473add231752',
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
-  'buildtools_revision': '15308f469a704c45d15567fa69cd94ce07ad0e1b',
+  'buildtools_revision': 'fa660d47fa1a6c649d5c29e001348447c55709e6',
   'dart_revision': '856248f1356d1e7564c8b27dcbe35c770cde2eb5',
   'dart_observatory_packages_revision': '45565',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
@@ -129,13 +129,13 @@ deps_os = {
       Var('chromium_git') + '/chromium/third_party/robolectric.git' + '@' + '6b63c99a8b6967acdb42cbed0adb067c80efc810',
 
     'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + 'a1ffd63322c438627d78ea56eb73fb8779e06950',
+     Var('chromium_git') + '/android_tools.git' + '@' + 'a3afc68f31ed9b32954954da95c855ee73820bd1',
 
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',
 
-    'src/third_party/freetype':
-       Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'fd6919ac23f74b876c209aba5eaa2be662086391',
+    'src/third_party/freetype-android/src':
+       Var('chromium_git') + '/chromium/src/third_party/freetype.git' + '@' + 'd1028db70bea988d1022e4d463de66581c696160',
 
     'src/third_party/requests/src':
       Var('chromium_git') + '/external/github.com/kennethreitz/requests.git' + '@' + 'f172b30356d821d180fa4ecfa3e71c7274a32de4',
@@ -186,17 +186,6 @@ hooks = [
                '-o', 'src/build/util/LASTCHANGE'],
   },
   # Pull GN binaries. This needs to be before running GYP below.
-  {
-    'name': 'gn_linux32',
-    'pattern': '.',
-    'action': [ 'download_from_google_storage',
-                '--no_resume',
-                '--platform=linux*',
-                '--no_auth',
-                '--bucket', 'chromium-gn',
-                '-s', 'src/buildtools/linux32/gn.sha1',
-    ],
-  },
   {
     'name': 'gn_linux64',
     'pattern': '.',

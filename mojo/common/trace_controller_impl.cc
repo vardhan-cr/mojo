@@ -5,6 +5,7 @@
 #include "mojo/common/trace_controller_impl.h"
 
 #include "base/logging.h"
+#include "base/trace_event/trace_config.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -27,9 +28,9 @@ void TraceControllerImpl::StartTracing(
   if (!tracing_already_started_) {
     std::string categories_str = categories.To<std::string>();
     base::trace_event::TraceLog::GetInstance()->SetEnabled(
-        base::trace_event::CategoryFilter(categories_str),
-        base::trace_event::TraceLog::RECORDING_MODE,
-        base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
+        base::trace_event::TraceConfig(categories_str,
+                                       base::trace_event::RECORD_UNTIL_FULL),
+        base::trace_event::TraceLog::RECORDING_MODE);
   }
 }
 

@@ -49,7 +49,7 @@ class GLContext {
   MojoGLES2Context context_;
   gpu::gles2::GLES2Interface* gl_;
 
-  ObserverList<Observer> observers_;
+  base::ObserverList<Observer> observers_;
   base::WeakPtrFactory<GLContext> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(GLContext);

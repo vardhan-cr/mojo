@@ -4,19 +4,22 @@
 
 package org.chromium.base.library_loader;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.CommandLine;
 import org.chromium.base.JNINamespace;
+import org.chromium.base.PackageUtils;
 import org.chromium.base.TraceEvent;
 import org.chromium.base.VisibleForTesting;
 import org.chromium.base.metrics.RecordHistogram;
-
-import java.util.Locale;
 
 import javax.annotation.Nullable;
 
@@ -65,17 +68,6 @@ public class LibraryLoader {
     // The flags are used to report UMA stats later.
     private boolean mIsUsingBrowserSharedRelros;
     private boolean mLoadAtFixedAddressFailed;
-
-    // One-way switch becomes true if the device supports memory mapping the
-    // APK file with executable permissions.
-    private boolean mMapApkWithExecPermission;
-
-    // One-way switch to indicate whether we probe for memory mapping the APK
-    // file with executable permissions. We suppress the probe under some
-    // conditions.
-    // For more, see:
-    //   https://code.google.com/p/chromium/issues/detail?id=448084
-    private boolean mProbeMapApkWithExecPermission = true;
 
     // One-way switch becomes true if the Chromium library was loaded from the
     // APK file directly.
@@ -233,34 +225,10 @@ public class LibraryLoader {
                 boolean fallbackWasUsed = false;
 
                 if (useChromiumLinker) {
+                    // Determine the APK file path.
                     String apkFilePath = null;
-                    boolean useMapExecSupportFallback = false;
-
-                    // If manufacturer is Samsung then skip the mmap exec check.
-                    //
-                    // For more, see:
-                    //   https://code.google.com/p/chromium/issues/detail?id=448084
-                    final String manufacturer = android.os.Build.MANUFACTURER;
-                    if (manufacturer != null
-                            && manufacturer.toLowerCase(Locale.ENGLISH).contains("samsung")) {
-                        Log.w(TAG, "Suppressed load from APK support check on this device");
-                        mProbeMapApkWithExecPermission = false;
-                    }
-
-                    // Check if the device supports memory mapping the APK file
-                    // with executable permissions.
                     if (context != null) {
-                        apkFilePath = context.getApplicationInfo().sourceDir;
-                        if (mProbeMapApkWithExecPermission) {
-                            mMapApkWithExecPermission = Linker.checkMapExecSupport(apkFilePath);
-                        }
-                        if (!mMapApkWithExecPermission && Linker.isInZipFile()) {
-                            Log.w(TAG, "the no map executable support fallback will be used because"
-                                    + " memory mapping the APK file with executable permissions is"
-                                    + " not supported");
-                            Linker.enableNoMapExecSupportFallback();
-                            useMapExecSupportFallback = true;
-                        }
+                        apkFilePath = getLibraryApkPath(context);
                     } else {
                         Log.w(TAG, "could not check load from APK support due to null context");
                     }
@@ -285,15 +253,11 @@ public class LibraryLoader {
                             if (!Linker.checkLibraryIsMappableInApk(apkFilePath, libFilePath)) {
                                 mLibraryIsMappableInApk = false;
                             }
-                            if (mLibraryIsMappableInApk || useMapExecSupportFallback) {
-                                // Load directly from the APK (or use the no map executable
-                                // support fallback, see crazy_linker_elf_loader.cpp).
+                            if (mLibraryIsMappableInApk) {
+                                // Load directly from the APK.
                                 zipFilePath = apkFilePath;
-                                Log.i(TAG, "Loading " + library + " "
-                                        + (useMapExecSupportFallback
-                                                ? "using no map executable support fallback"
-                                                : "directly")
-                                        + " from within " + apkFilePath);
+                                Log.i(TAG, "Loading " + library + " directly from within "
+                                        + apkFilePath);
                             } else {
                                 // Unpack library fallback.
                                 Log.i(TAG, "Loading " + library
@@ -362,6 +326,31 @@ public class LibraryLoader {
         if (!NativeLibraries.sVersionNumber.equals(nativeGetVersionNumber())) {
             throw new ProcessInitException(LoaderErrors.LOADER_ERROR_NATIVE_LIBRARY_WRONG_VERSION);
         }
+    }
+
+    // Returns whether the given split name is that of the ABI split.
+    private static boolean isAbiSplit(String splitName) {
+        // The split name for the ABI split is manually set in the build rules.
+        return splitName.startsWith("abi_");
+    }
+
+    // Returns the path to the .apk that holds the native libraries.
+    // This is either the main .apk, or the abi split apk.
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private static String getLibraryApkPath(Context context) {
+        ApplicationInfo appInfo = context.getApplicationInfo();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return appInfo.sourceDir;
+        }
+        PackageInfo packageInfo = PackageUtils.getOwnPackageInfo(context);
+        if (packageInfo.splitNames != null) {
+            for (int i = 0; i < packageInfo.splitNames.length; ++i) {
+                if (isAbiSplit(packageInfo.splitNames[i])) {
+                    return appInfo.splitSourceDirs[i];
+                }
+            }
+        }
+        return appInfo.sourceDir;
     }
 
     // Load a native shared library with the Chromium linker. If the zip file
@@ -450,27 +439,15 @@ public class LibraryLoader {
         assert Linker.isUsed();
 
         if (mLibraryWasLoadedFromApk) {
-            return mMapApkWithExecPermission
-                    ? LibraryLoadFromApkStatusCodes.SUCCESSFUL
-                    : LibraryLoadFromApkStatusCodes.USED_NO_MAP_EXEC_SUPPORT_FALLBACK;
+            return LibraryLoadFromApkStatusCodes.SUCCESSFUL;
         }
 
         if (!mLibraryIsMappableInApk) {
             return LibraryLoadFromApkStatusCodes.USED_UNPACK_LIBRARY_FALLBACK;
         }
 
-        if (context == null) {
-            Log.w(TAG, "Unknown APK filename due to null context");
-            return LibraryLoadFromApkStatusCodes.UNKNOWN;
-        }
-
-        if (!mProbeMapApkWithExecPermission) {
-            return LibraryLoadFromApkStatusCodes.UNKNOWN;
-        }
-
-        return mMapApkWithExecPermission
-                ? LibraryLoadFromApkStatusCodes.SUPPORTED
-                : LibraryLoadFromApkStatusCodes.NOT_SUPPORTED;
+        // There were no libraries to be loaded directly from the APK file.
+        return LibraryLoadFromApkStatusCodes.UNKNOWN;
     }
 
     // Register pending Chromium linker histogram state for renderer processes. This cannot be

@@ -46,7 +46,7 @@ class LapTimer {
   int NumLaps();
 
  private:
-  base::TimeTicks start_time_;
+  base::TimeDelta start_time_;
   base::TimeDelta accumulator_;
   int num_laps_;
   int warmup_laps_;

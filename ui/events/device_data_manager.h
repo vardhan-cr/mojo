@@ -72,7 +72,7 @@ class EVENTS_BASE_EXPORT DeviceDataManager : public DeviceHotplugEventObserver {
 
   std::vector<TouchscreenDevice> touchscreen_devices_;
 
-  ObserverList<InputDeviceEventObserver> observers_;
+  base::ObserverList<InputDeviceEventObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(DeviceDataManager);
 };

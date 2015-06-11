@@ -108,15 +108,16 @@ bool CreateThreadInternal(size_t stack_size,
   // have to work running on CreateThread() threads anyway, since we run code
   // on the Windows thread pool, etc.  For some background on the difference:
   //   http://www.microsoft.com/msj/1099/win32/win321099.aspx
+  PlatformThreadId thread_id;
   void* thread_handle = CreateThread(
-      NULL, stack_size, ThreadFunc, params, flags, NULL);
+      NULL, stack_size, ThreadFunc, params, flags, &thread_id);
   if (!thread_handle) {
     delete params;
     return false;
   }
 
   if (out_thread_handle)
-    *out_thread_handle = PlatformThreadHandle(thread_handle);
+    *out_thread_handle = PlatformThreadHandle(thread_handle, thread_id);
   else
     CloseHandle(thread_handle);
   return true;
@@ -205,7 +206,7 @@ bool PlatformThread::CreateNonJoinable(size_t stack_size, Delegate* delegate) {
 
 // static
 void PlatformThread::Join(PlatformThreadHandle thread_handle) {
-  DCHECK(thread_handle.handle_);
+  DCHECK(thread_handle.platform_handle());
   // TODO(willchan): Enable this check once I can get it to work for Windows
   // shutdown.
   // Joining another thread may block the current thread for a long time, since
@@ -217,17 +218,16 @@ void PlatformThread::Join(PlatformThreadHandle thread_handle) {
 
   // Wait for the thread to exit.  It should already have terminated but make
   // sure this assumption is valid.
-  DWORD result = WaitForSingleObject(thread_handle.handle_, INFINITE);
+  DWORD result = WaitForSingleObject(thread_handle.platform_handle(), INFINITE);
   if (result != WAIT_OBJECT_0) {
     // Debug info for bug 127931.
     DWORD error = GetLastError();
     debug::Alias(&error);
     debug::Alias(&result);
-    debug::Alias(&thread_handle.handle_);
     CHECK(false);
   }
 
-  CloseHandle(thread_handle.handle_);
+  CloseHandle(thread_handle.platform_handle());
 }
 
 // static
@@ -258,7 +258,7 @@ void PlatformThread::SetThreadPriority(PlatformThreadHandle handle,
 #ifndef NDEBUG
   const BOOL success =
 #endif
-      ::SetThreadPriority(handle.handle_, desired_priority);
+      ::SetThreadPriority(handle.platform_handle(), desired_priority);
   DPLOG_IF(ERROR, !success) << "Failed to set thread priority to "
                             << desired_priority;
 }
@@ -267,7 +267,7 @@ void PlatformThread::SetThreadPriority(PlatformThreadHandle handle,
 ThreadPriority PlatformThread::GetThreadPriority(PlatformThreadHandle handle) {
   DCHECK(!handle.is_null());
 
-  int priority = ::GetThreadPriority(handle.handle_);
+  int priority = ::GetThreadPriority(handle.platform_handle());
   switch (priority) {
     case THREAD_PRIORITY_LOWEST:
       return ThreadPriority::BACKGROUND;

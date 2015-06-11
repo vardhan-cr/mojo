@@ -34,7 +34,7 @@ class CaptureController : public mojo::ViewObserver {
   // The current capture view. Null if there is no capture view.
   mojo::View* capture_view_;
 
-  ObserverList<CaptureControllerObserver> capture_controller_observers_;
+  base::ObserverList<CaptureControllerObserver> capture_controller_observers_;
 
   DISALLOW_COPY_AND_ASSIGN(CaptureController);
 };

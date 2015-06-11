@@ -40,7 +40,7 @@ v8.log
 /third_party/dart-pkg/vector_math
 /third_party/dart-pkg/box2d
 /third_party/dejavu-fonts-ttf-2.34/ttf/*.ttf
-/third_party/freetype/
+/third_party/freetype-android/src
 /third_party/go/tool/
 /third_party/icu/
 /third_party/jsr-305/src/

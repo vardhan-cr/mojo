@@ -11,6 +11,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
+#include "base/trace_event/trace_config.h"
 #include "base/trace_event/trace_event.h"
 
 namespace shell {
@@ -34,10 +35,10 @@ void Tracer::Start(const std::string& categories,
   tracing_ = true;
   trace_filename_ = filename;
   categories_ = categories;
-  base::trace_event::CategoryFilter category_filter(categories);
+  base::trace_event::TraceConfig config(categories,
+                                        base::trace_event::RECORD_UNTIL_FULL);
   base::trace_event::TraceLog::GetInstance()->SetEnabled(
-      category_filter, base::trace_event::TraceLog::RECORDING_MODE,
-      base::trace_event::TraceOptions(base::trace_event::RECORD_UNTIL_FULL));
+      config, base::trace_event::TraceLog::RECORDING_MODE);
 }
 
 void Tracer::DidCreateMessageLoop() {

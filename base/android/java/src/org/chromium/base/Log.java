@@ -19,38 +19,10 @@ import java.util.Locale;
  * the origin of logs, and enable or disable logging in different parts of the code.
  * </p>
  * <p>
- * Please make use of the formatting capability of the logging methods rather than doing
- * concatenations in the calling code. In the release builds of Chrome, debug and verbose log
- * calls will be stripped out of the binary. Concatenations and method calls however will still
- * remain and be executed. If they can't be avoided, try to generate the logs in a method annotated
- * with {@link NoSideEffects}. Another possibility is to use
- * {@link android.util.Log#isLoggable(String, int)} to guard those calls.
+ * @see usage documentation: <a href="README_logging.md">README_logging.md</a>.
  * </p>
- *
- * Usage:
- * <pre>
- * private static final String TAG = Log.makeTag("Group");
- *
- * private void myMethod(String awesome) {
- *   Log.i(TAG, "My %s message.", awesome);
- *   Log.d(TAG, "My debug message");
- * }
- * </pre>
- *
- * Logcat output:
- * <pre>
- * I/cr.Group (999): My awesome message
- * D/cr.Group (999): [MyClass.java:42] My debug message
- * </pre>
- *
- * Set the log level for a given group:
- * <pre>
- * $ adb shell setprop log.tag.chromium.Group VERBOSE
- * </pre>
  */
 public class Log {
-    private static final String BASE_TAG = "cr";
-
     /** Convenience property, same as {@link android.util.Log#ASSERT}. */
     public static final int ASSERT = android.util.Log.ASSERT;
 
@@ -98,10 +70,12 @@ public class Log {
      *
      * @see android.util.Log#isLoggable(String, int)
      * @throws IllegalArgumentException if the tag is too long.
+     * @deprecated Directly use a string (e.g. "cr.Tag") in your class. See http://crbug.com/485772
      */
+    @Deprecated
     public static String makeTag(String groupTag) {
-        if (TextUtils.isEmpty(groupTag)) return BASE_TAG;
-        String tag = BASE_TAG + "." + groupTag;
+        if (TextUtils.isEmpty(groupTag)) return "cr";
+        String tag = "cr." + groupTag;
         if (tag.length() > 23) {
             throw new IllegalArgumentException(
                     "The full tag (" + tag + ") is longer than 23 characters.");
@@ -121,9 +95,7 @@ public class Log {
      * than 7 parameters, consider building your log message using a function annotated with
      * {@link NoSideEffects}.
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
-     *
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last
@@ -193,9 +165,7 @@ public class Log {
      * than 7 parameters, consider building your log message using a function annotated with
      * {@link NoSideEffects}.
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
-     *
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last
@@ -259,8 +229,7 @@ public class Log {
     /**
      * Sends an {@link android.util.Log#INFO} log message.
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last
@@ -281,8 +250,7 @@ public class Log {
     /**
      * Sends a {@link android.util.Log#WARN} log message.
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last
@@ -303,8 +271,7 @@ public class Log {
     /**
      * Sends an {@link android.util.Log#ERROR} log message.
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last
@@ -329,8 +296,7 @@ public class Log {
      *
      * @see android.util.Log#wtf(String, String, Throwable)
      *
-     * @param tag Used to identify the source of a log message. Should be created using
-     *            {@link #makeTag(String)}.
+     * @param tag Used to identify the source of a log message.
      * @param messageTemplate The message you would like logged. It is to be specified as a format
      *                        string.
      * @param args Arguments referenced by the format specifiers in the format string. If the last

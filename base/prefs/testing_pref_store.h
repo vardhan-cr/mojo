@@ -43,6 +43,7 @@ class TestingPrefStore : public PersistentPrefStore {
   PersistentPrefStore::PrefReadError ReadPrefs() override;
   void ReadPrefsAsync(ReadErrorDelegate* error_delegate) override;
   void CommitPendingWrite() override;
+  void SchedulePendingLossyWrites() override;
 
   // Marks the store as having completed initialization.
   void SetInitializationCompleted();
@@ -103,7 +104,7 @@ class TestingPrefStore : public PersistentPrefStore {
   bool committed_;
 
   scoped_ptr<ReadErrorDelegate> error_delegate_;
-  ObserverList<PrefStore::Observer, true> observers_;
+  base::ObserverList<PrefStore::Observer, true> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(TestingPrefStore);
 };

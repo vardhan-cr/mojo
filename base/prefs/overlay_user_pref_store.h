@@ -51,6 +51,7 @@ class BASE_PREFS_EXPORT OverlayUserPrefStore : public PersistentPrefStore,
   PrefReadError ReadPrefs() override;
   void ReadPrefsAsync(ReadErrorDelegate* delegate) override;
   void CommitPendingWrite() override;
+  void SchedulePendingLossyWrites() override;
   void ReportValueChanged(const std::string& key, uint32 flags) override;
 
   // Methods of PrefStore::Observer.
@@ -74,7 +75,7 @@ class BASE_PREFS_EXPORT OverlayUserPrefStore : public PersistentPrefStore,
   // an in-memory PrefStore that is not persisted to disk.
   bool ShallBeStoredInOverlay(const std::string& key) const;
 
-  ObserverList<PrefStore::Observer, true> observers_;
+  base::ObserverList<PrefStore::Observer, true> observers_;
   PrefValueMap overlay_;
   scoped_refptr<PersistentPrefStore> underlay_;
   NamesMap overlay_to_underlay_names_map_;

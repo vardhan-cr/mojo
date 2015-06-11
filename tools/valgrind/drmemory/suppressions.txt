@@ -571,18 +571,6 @@ name=http://crbug.com/382784
 *!media::AudioDeviceThread::Thread::Run
 *!media::AudioDeviceThread::Thread::ThreadMain
 
-HANDLE LEAK
-name=http://crbug.com/383408
-system call NtCreateEvent
-...
-*!base::internal::LockImpl::Lock
-*!mojo::system::MessagePipe::RemoveWaiter
-*!mojo::system::MessagePipeDispatcher::RemoveWaiterImplNoLock
-*!mojo::system::Dispatcher::RemoveWaiter
-*!mojo::system::Core::WaitManyInternal
-*!mojo::system::Core::WaitMany
-*!MojoWaitMany
-
 UNADDRESSABLE ACCESS
 name=IntentionalCrashPluginTest.plugin_client.cc
 npapi_test_plugin.dll!NP_Initialize
@@ -773,16 +761,26 @@ scheduler.dll!scheduler::TaskQueueManager::ProcessTaskFromWorkQueue
 
 UNADDRESSABLE ACCESS
 name=http://crbug.com/484352b
-blink_web.dll!blink::WebFrameWidgetImpl::setIsAcceleratedCompositingActive
+...
 blink_web.dll!blink::WebFrameWidgetImpl::setRootGraphicsLayer
 blink_web.dll!blink::ChromeClientImpl::attachRootGraphicsLayer
-blink_web.dll!blink::DeprecatedPaintLayerCompositor::detachRootLayer
+*.dll!blink::DeprecatedPaintLayerCompositor::detachRootLayer
 
 HANDLE LEAK
 name=http://crbug.com/487500
 system call NtCreateEvent
-...
-v8.dll!v8::base::Mutex::Lock
-base.dll!base::`anonymous namespace'::WorkItemCallback
-ntdll.dll!vsnprintf
-ntdll.dll!TpCallbackIndependent
+ntdll.dll!RtlDosPathNameToNtPathName_U_WithStatus
+ntdll.dll!RtlDosPathNameToNtPathName_U_WithStatus
+ntdll.dll!RtlIntegerToUnicodeString
+
+UNINITIALIZED READ
+name=http://crbug.com/498519_a
+blink_web.dll!blink::Element::styleForLayoutObject
+blink_web.dll!blink::LayoutTreeBuilderForElement::style
+blink_web.dll!blink::LayoutTreeBuilderForElement::shouldCreateLayoutObject
+
+UNINITIALIZED READ
+name=http://crbug.com/498519_b
+blink_web.dll!blink::Element::styleForLayoutObject
+blink_web.dll!blink::Element::recalcOwnStyle
+blink_web.dll!blink::Element::recalcStyle

@@ -101,7 +101,7 @@ LatencyInfoTracedValue::~LatencyInfoTracedValue() {
 
 void LatencyInfoTracedValue::AppendAsTraceFormat(std::string* out) const {
   std::string tmp;
-  base::JSONWriter::Write(value_.get(), &tmp);
+  base::JSONWriter::Write(*value_, &tmp);
   *out += tmp;
 }
 
@@ -228,25 +228,25 @@ void LatencyInfo::AddLatencyNumberWithTimestamp(LatencyComponentType component,
       // for an input event, we want to draw the beginning as when the event is
       // originally created, e.g. the timestamp of its ORIGINAL/UI_COMPONENT,
       // not when we actually issue the ASYNC_BEGIN trace event.
-      LatencyComponent component;
+      LatencyComponent begin_component;
       int64 ts = 0;
       if (FindLatency(INPUT_EVENT_LATENCY_ORIGINAL_COMPONENT,
                       0,
-                      &component) ||
+                      &begin_component) ||
           FindLatency(INPUT_EVENT_LATENCY_UI_COMPONENT,
                       0,
-                      &component)) {
+                      &begin_component)) {
         // The timestamp stored in ORIGINAL/UI_COMPONENT is using clock
         // CLOCK_MONOTONIC while TRACE_EVENT_ASYNC_BEGIN_WITH_TIMESTAMP0
         // expects timestamp using CLOCK_MONOTONIC or CLOCK_SYSTEM_TRACE (on
         // CrOS). So we need to adjust the diff between in CLOCK_MONOTONIC and
         // CLOCK_SYSTEM_TRACE. Note that the diff is drifting overtime so we
         // can't use a static value.
-        int64 diff = base::TimeTicks::Now().ToInternalValue() -
-            base::TimeTicks::NowFromSystemTraceTime().ToInternalValue();
-        ts = component.event_time.ToInternalValue() - diff;
+        base::TimeDelta diff = (base::TimeTicks::Now() - base::TimeTicks()) -
+            (base::TraceTicks::Now() - base::TraceTicks());
+        ts = (begin_component.event_time - diff).ToInternalValue();
       } else {
-        ts = base::TimeTicks::NowFromSystemTraceTime().ToInternalValue();
+        ts = base::TraceTicks::Now().ToInternalValue();
       }
       TRACE_EVENT_ASYNC_BEGIN_WITH_TIMESTAMP0(
           "benchmark",

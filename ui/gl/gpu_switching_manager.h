@@ -64,7 +64,7 @@ class GL_EXPORT GpuSwitchingManager {
 
   struct PlatformSpecific;
 
-  ObserverList<GpuSwitchingObserver> observer_list_;
+  base::ObserverList<GpuSwitchingObserver> observer_list_;
 
   DISALLOW_COPY_AND_ASSIGN(GpuSwitchingManager);
 };

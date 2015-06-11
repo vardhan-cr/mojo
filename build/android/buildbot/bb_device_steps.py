@@ -18,7 +18,6 @@ import bb_annotations
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import provision_devices
-from pylib import android_commands
 from pylib import constants
 from pylib.device import device_utils
 from pylib.gtest import gtest_config
@@ -215,9 +214,9 @@ def RunChromeProxyTests(options):
   """
   InstallApk(options, INSTRUMENTATION_TESTS['ChromeShell'], False)
   args = ['--browser', 'android-chrome-shell']
-  devices = android_commands.GetAttachedDevices()
+  devices = device_utils.DeviceUtils.HealthyDevices()
   if devices:
-    args = args + ['--device', devices[0]]
+    args = args + ['--device', devices[0].adb.GetDeviceSerial()]
   bb_annotations.PrintNamedStep('chrome_proxy')
   RunCmd(['tools/chrome_proxy/run_tests'] + args)
 
@@ -234,7 +233,7 @@ def RunTelemetryTests(options, step_name, run_tests_path):
   """
   InstallApk(options, INSTRUMENTATION_TESTS['ChromeShell'], False)
   args = ['--browser', 'android-chrome-shell']
-  devices = android_commands.GetAttachedDevices()
+  devices = device_utils.DeviceUtils.HealthyDevices()
   if devices:
     args = args + ['--device', 'android']
   bb_annotations.PrintNamedStep(step_name)
@@ -536,7 +535,7 @@ def RunGPUTests(options):
 
   bb_annotations.PrintNamedStep('pixel_tests')
   RunCmd(['content/test/gpu/run_gpu_test.py',
-          'pixel',
+          'pixel', '-v',
           '--browser',
           'android-content-shell',
           '--build-revision',
@@ -550,18 +549,18 @@ def RunGPUTests(options):
           EscapeBuilderName(builder_name)])
 
   bb_annotations.PrintNamedStep('webgl_conformance_tests')
-  RunCmd(['content/test/gpu/run_gpu_test.py',
+  RunCmd(['content/test/gpu/run_gpu_test.py', '-v',
           '--browser=android-content-shell', 'webgl_conformance',
           '--webgl-conformance-version=1.0.1'])
 
   bb_annotations.PrintNamedStep('android_webview_webgl_conformance_tests')
-  RunCmd(['content/test/gpu/run_gpu_test.py',
+  RunCmd(['content/test/gpu/run_gpu_test.py', '-v',
           '--browser=android-webview-shell', 'webgl_conformance',
           '--webgl-conformance-version=1.0.1'])
 
   bb_annotations.PrintNamedStep('gpu_rasterization_tests')
   RunCmd(['content/test/gpu/run_gpu_test.py',
-          'gpu_rasterization',
+          'gpu_rasterization', '-v',
           '--browser',
           'android-content-shell',
           '--build-revision',
