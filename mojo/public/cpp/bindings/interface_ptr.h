@@ -7,6 +7,7 @@
 
 #include <algorithm>
 
+#include "mojo/public/cpp/bindings/callback.h"
 #include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/bindings/interface_ptr_info.h"
 #include "mojo/public/cpp/bindings/lib/interface_ptr_internal.h"
@@ -14,7 +15,6 @@
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
-class ErrorHandler;
 
 // A pointer to a local proxy of a remote Interface implementation. Uses a
 // message pipe to communicate with the remote implementation, and automatically
@@ -130,8 +130,17 @@ class InterfacePtr {
   //
   // This method may only be called after the InterfacePtr has been bound to a
   // message pipe.
+  void set_connection_error_handler(const Closure& error_handler) {
+    internal_state_.set_connection_error_handler(error_handler);
+  }
+
+  // Similar to the method above but uses the ErrorHandler interface instead of
+  // a callback.
+  // NOTE: Deprecated. Please use the method above.
+  // TODO(yzshen): Remove this method once all callsites are converted.
   void set_error_handler(ErrorHandler* error_handler) {
-    internal_state_.set_error_handler(error_handler);
+    set_connection_error_handler(
+        [error_handler]() { error_handler->OnConnectionError(); });
   }
 
   // Unbinds the InterfacePtr and returns the information which could be used
