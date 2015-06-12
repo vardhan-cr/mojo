@@ -6,7 +6,6 @@
 
 #include <windows.h>
 
-#include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/compiler_specific.h"
 #include "base/lazy_instance.h"
@@ -254,18 +253,20 @@ void RawChannelWin::RawChannelIOHandler::OnIOCompleted(
   DCHECK(!owner_ ||
          base::MessageLoop::current() == owner_->message_loop_for_io());
 
-  {
-    // Suppress self-destruction inside |OnReadCompleted()|, etc. (in case they
-    // result in a call to |Shutdown()|).
-    base::AutoReset<bool> resetter(&suppress_self_destruct_, true);
+  // Suppress self-destruction inside |OnReadCompleted()|, etc. (in case they
+  // result in a call to |Shutdown()|).
+  bool old_suppress_self_destruct = suppress_self_destruct_;
+  suppress_self_destruct_ = true;
 
-    if (context == &read_context_)
-      OnReadCompleted(bytes_transferred, error);
-    else if (context == &write_context_)
-      OnWriteCompleted(bytes_transferred, error);
-    else
-      NOTREACHED();
-  }
+  if (context == &read_context_)
+    OnReadCompleted(bytes_transferred, error);
+  else if (context == &write_context_)
+    OnWriteCompleted(bytes_transferred, error);
+  else
+    NOTREACHED();
+
+  // Maybe allow self-destruction again.
+  suppress_self_destruct_ = old_suppress_self_destruct;
 
   if (ShouldSelfDestruct())
     delete this;
