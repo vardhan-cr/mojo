@@ -13,14 +13,20 @@ _MOJO_DEBUGGER_PORT = 7777
 
 def _send_request(request):
   """Sends a request to mojo:debugger."""
-  url = 'http://localhost:%s/%s' % (_MOJO_DEBUGGER_PORT, request)
-  return requests.get(url)
+  try:
+    url = 'http://localhost:%s/%s' % (_MOJO_DEBUGGER_PORT, request)
+    return requests.get(url)
+  except requests.exceptions.ConnectionError:
+    print 'Failed to connect to mojo:debugger, make sure the shell is running.'
+    return None
 
 
 def _tracing_start(_):
   """Starts tracing."""
-  _send_request('start_tracing')
+  if not _send_request('start_tracing'):
+    return 1
   print "Started tracing."
+  return 0
 
 
 def _tracing_stop(args):
@@ -37,12 +43,16 @@ def _tracing_stop(args):
       print 'Failed to pick a name for the trace output file.'
       return 1
 
-  trace = _send_request('stop_tracing').content
+  response = _send_request('stop_tracing')
+  if not response:
+    return 1
+
   with open(file_name, "wb") as trace_file:
     trace_file.write('{"traceEvents":[')
-    trace_file.write(trace)
+    trace_file.write(response.content)
     trace_file.write(']}')
   print "Trace saved in %s" % file_name
+  return 0
 
 
 def _add_tracing_command(subparsers):
@@ -70,8 +80,7 @@ def main():
   _add_tracing_command(subparsers)
 
   args = parser.parse_args()
-  args.func(args)
-  return 0
+  return args.func(args)
 
 if __name__ == '__main__':
   sys.exit(main())
