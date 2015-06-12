@@ -55,7 +55,7 @@ def sky_or_dart_filter(path):
 def assets_filter(path):
     if os.path.isdir(path):
         return True
-    if os.path.basename(os.path.dirname(path)) != '2x_web':
+    if os.path.basename(os.path.dirname(path)) != 'drawable-xxhdpi':
         return False
     # We only use the 18 and 24s for now.
     return '18dp' in path or '24dp' in path
