@@ -17,8 +17,9 @@ class GTestListTestsTest(unittest.TestCase):
   def testConfigToGNToConfig(self):
     """Tests that config to gn to config is the identity"""
     configs_to_test = {
-      "target_os": [None, "android", "linux"],
+      "target_os": [None, "android", "linux", "ios"],
       "target_cpu": [None, "x86", "x64", "arm"],
+      "is_simulator": [False, True],
       "is_debug": [False, True],
       "is_official_build": [False, True],
       "is_clang": [False, True],
@@ -45,6 +46,7 @@ class GTestListTestsTest(unittest.TestCase):
       "is_clang": [False, True],
       "is_asan": [False, True],
       "use_goma": [False],
+      "use_ios_simulator": [False, True],
       "mojo_use_nacl": [False, True],
       "mojo_use_go": [False],
       "dcheck_always_on": [False, True],

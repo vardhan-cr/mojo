@@ -69,7 +69,8 @@ def GetTestList(config, verbose_count=0):
 
   # TODO(vtl): Currently, we only know how to run tests for Android, Linux, or
   # Windows.
-  if target_os not in (Config.OS_ANDROID, Config.OS_LINUX, Config.OS_WINDOWS):
+  if target_os not in (Config.OS_ANDROID, Config.OS_LINUX, Config.OS_WINDOWS,
+                       Config.OS_IOS):
     return test_list
 
   # Tests run by default -------------------------------------------------------

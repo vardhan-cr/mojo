@@ -17,6 +17,7 @@ class Config(object):
 
   # Valid values for target_os (None is also valid):
   OS_ANDROID = "android"
+  OS_IOS = "ios"
   OS_LINUX = "linux"
   OS_MAC = "mac"
   OS_WINDOWS = "windows"
@@ -38,12 +39,13 @@ class Config(object):
 
   def __init__(self, target_os=None, target_cpu=None, is_debug=True,
                is_clang=None, sanitizer=None, dcheck_always_on=False,
-               is_official_build=False, **kwargs):
+               is_simulator=False, is_official_build=False, **kwargs):
     """Constructs a Config with key-value pairs specified via keyword arguments.
     If target_os is not specified, it will be set to the host OS."""
 
-    assert target_os in (None, Config.OS_ANDROID, Config.OS_LINUX,
-                         Config.OS_MAC, Config.OS_WINDOWS)
+    assert target_os in (None, Config.OS_ANDROID, Config.OS_IOS,
+                         Config.OS_LINUX, Config.OS_MAC,
+                         Config.OS_WINDOWS)
     assert target_cpu in (None, Config.ARCH_X86, Config.ARCH_X64,
                            Config.ARCH_ARM)
     assert isinstance(is_debug, bool)
@@ -60,10 +62,13 @@ class Config(object):
     if target_cpu is None:
       if target_os == Config.OS_ANDROID:
         target_cpu = Config.ARCH_ARM
+      elif target_os == Config.OS_IOS:
+        target_cpu = Config.ARCH_X64 if is_simulator else Config.ARCH_ARM
       else:
         target_cpu = self.GetHostCPUArch()
-    self.values["target_cpu"] = target_cpu
 
+    self.values["target_cpu"] = target_cpu
+    self.values["is_simulator"] = is_simulator
     self.values["is_debug"] = is_debug
     self.values["is_official_build"] = is_official_build
     self.values["is_clang"] = is_clang
@@ -106,6 +111,11 @@ class Config(object):
   def target_cpu(self):
     """CPU arch of the build/test target."""
     return self.values["target_cpu"]
+
+  @property
+  def is_simulator(self):
+    """Is a simulator build?"""
+    return self.values["is_simulator"]
 
   @property
   def is_debug(self):
