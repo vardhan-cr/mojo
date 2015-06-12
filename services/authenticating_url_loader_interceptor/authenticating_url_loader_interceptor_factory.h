@@ -8,7 +8,6 @@
 #include <memory>
 
 #include "base/callback.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
@@ -22,8 +21,7 @@ class ApplicationImpl;
 class AuthenticatingURLLoaderInterceptor;
 
 class AuthenticatingURLLoaderInterceptorFactory
-    : public URLLoaderInterceptorFactory,
-      public ErrorHandler {
+    : public URLLoaderInterceptorFactory {
  public:
   AuthenticatingURLLoaderInterceptorFactory(
       mojo::InterfaceRequest<URLLoaderInterceptorFactory> request,
@@ -41,15 +39,14 @@ class AuthenticatingURLLoaderInterceptorFactory
   void RetrieveToken(const GURL& url,
                      const base::Callback<void(std::string)>& callback);
 
-  void OnInterceptorError(AuthenticatingURLLoaderInterceptor* interceptor);
-
  private:
   // URLLoaderInterceptorFactory:
   void Create(
       mojo::InterfaceRequest<URLLoaderInterceptor> interceptor) override;
 
-  // ErrorHandler:
-  void OnConnectionError() override;
+  void ClearAuthenticationService();
+
+  void ClearInterceptor(AuthenticatingURLLoaderInterceptor* interceptor);
 
   void OnAccountSelected(const GURL& origin,
                          mojo::String account,

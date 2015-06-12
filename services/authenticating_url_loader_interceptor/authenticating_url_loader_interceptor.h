@@ -6,7 +6,6 @@
 #define SERVICES_AUTHENTICATING_URL_LOADER_INTERCEPTOR_AUTHENTICATING_URL_LOADER_INTERCEPTOR_H_
 
 #include "mojo/public/cpp/bindings/binding.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 #include "services/authenticating_url_loader_interceptor/authenticating_url_loader_interceptor_factory.h"
 #include "url/gurl.h"
@@ -21,13 +20,14 @@ enum RequestAuthorizationState {
   REQUEST_USED_FRESH_AUTH_SERVICE_TOKEN,
 };
 
-class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor,
-                                           public ErrorHandler {
+class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor {
  public:
   AuthenticatingURLLoaderInterceptor(
       mojo::InterfaceRequest<URLLoaderInterceptor> request,
       AuthenticatingURLLoaderInterceptorFactory* factory);
   ~AuthenticatingURLLoaderInterceptor() override;
+
+  void set_connection_error_handler(const Closure& error_handler);
 
  private:
   // URLLoaderInterceptor:
@@ -38,15 +38,14 @@ class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor,
   void InterceptResponse(mojo::URLResponsePtr response,
                          const InterceptResponseCallback& callback) override;
 
-  // ErrorHandler:
-  void OnConnectionError() override;
-
   void OnOAuth2TokenReceived(std::string token);
 
   URLRequestPtr BuildRequest(std::string token);
   void StartRequest(mojo::URLRequestPtr request);
 
   Binding<URLLoaderInterceptor> binding_;
+
+  // Owns this object.
   AuthenticatingURLLoaderInterceptorFactory* factory_;
   InterceptResponseCallback pending_interception_callback_;
   URLResponsePtr pending_response_;

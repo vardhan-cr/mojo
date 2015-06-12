@@ -23,7 +23,8 @@ AuthenticatingURLLoaderInterceptorFactory::
       app_(app),
       cached_tokens_(cached_tokens) {
   app_->ConnectToService("mojo:network_service", &network_service_);
-  authentication_service_.set_error_handler(this);
+  authentication_service_.set_connection_error_handler(
+      [this]() { ClearAuthenticationService(); });
 }
 
 AuthenticatingURLLoaderInterceptorFactory::
@@ -71,7 +72,7 @@ void AuthenticatingURLLoaderInterceptorFactory::RetrieveToken(
   }
 }
 
-void AuthenticatingURLLoaderInterceptorFactory::OnInterceptorError(
+void AuthenticatingURLLoaderInterceptorFactory::ClearInterceptor(
     AuthenticatingURLLoaderInterceptor* interceptor) {
   auto it = std::find_if(
       interceptors_.begin(), interceptors_.end(),
@@ -83,7 +84,7 @@ void AuthenticatingURLLoaderInterceptorFactory::OnInterceptorError(
   interceptors_.erase(it);
 }
 
-void AuthenticatingURLLoaderInterceptorFactory::OnConnectionError() {
+void AuthenticatingURLLoaderInterceptorFactory::ClearAuthenticationService() {
   authentication_service_ = nullptr;
 
   // All pending requests need to fail.
@@ -97,8 +98,12 @@ void AuthenticatingURLLoaderInterceptorFactory::OnConnectionError() {
 
 void AuthenticatingURLLoaderInterceptorFactory::Create(
     mojo::InterfaceRequest<URLLoaderInterceptor> interceptor) {
-  interceptors_.push_back(std::unique_ptr<AuthenticatingURLLoaderInterceptor>(
-      new AuthenticatingURLLoaderInterceptor(interceptor.Pass(), this)));
+  std::unique_ptr<AuthenticatingURLLoaderInterceptor> interceptor_impl(
+      new AuthenticatingURLLoaderInterceptor(interceptor.Pass(), this));
+  interceptor_impl->set_connection_error_handler(base::Bind(
+      &AuthenticatingURLLoaderInterceptorFactory::ClearInterceptor,
+      base::Unretained(this), base::Unretained(interceptor_impl.get())));
+  interceptors_.push_back(std::move(interceptor_impl));
 }
 
 void AuthenticatingURLLoaderInterceptorFactory::OnAccountSelected(

@@ -12,7 +12,6 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 #include "mojo/services/authenticating_url_loader_interceptor/public/interfaces/authenticating_url_loader_interceptor_meta_factory.mojom.h"
@@ -34,8 +33,7 @@ const char kAuthenticationScope[] =
 const char kAuthenticationHeaderName[] = "Authorization";
 const char kAuthenticationHeaderValuePrefix[] = "Bearer";
 
-class MockAuthenticationService : public authentication::AuthenticationService,
-                                  public ErrorHandler {
+class MockAuthenticationService : public authentication::AuthenticationService {
  public:
   MockAuthenticationService(
       mojo::InterfaceRequest<authentication::AuthenticationService> request)
@@ -47,7 +45,9 @@ class MockAuthenticationService : public authentication::AuthenticationService,
         close_pipe_on_user_selection_(false),
         return_error_on_user_selection_(false),
         return_error_on_token_retrieval_(false) {
-    binding_.set_error_handler(this);
+    // The AuthenticationService should never be closed from the other side in
+    // these tests.
+    binding_.set_connection_error_handler([this]() { DCHECK(0); });
   }
   ~MockAuthenticationService() override {}
 
@@ -105,13 +105,6 @@ class MockAuthenticationService : public authentication::AuthenticationService,
   void ClearOAuth2Token(const mojo::String& token) override {
     num_clear_token_calls_++;
     use_fresh_token_ = true;
-  }
-
-  // ErrorHandler implementation
-  void OnConnectionError() override {
-    // The AuthenticationService should never be closed from the other side in
-    // these tests.
-    DCHECK(0);
   }
 
   Binding<authentication::AuthenticationService> binding_;
@@ -294,8 +287,7 @@ class AuthenticatingURLLoaderInterceptorAppTest
 
   void TearDown() override {
     // Close the AuthenticationService explicitly here so that teardown code
-    // doesn't cause
-    // it to receive an OnConnectionError() call.
+    // doesn't cause it to receive a connection error.
     CloseAuthenticationService();
     ApplicationTestBase::TearDown();
   }

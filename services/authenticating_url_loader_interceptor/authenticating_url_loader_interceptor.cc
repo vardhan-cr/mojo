@@ -17,10 +17,14 @@ AuthenticatingURLLoaderInterceptor::AuthenticatingURLLoaderInterceptor(
       factory_(factory),
       add_authentication_(true),
       request_authorization_state_(REQUEST_INITIAL) {
-  binding_.set_error_handler(this);
 }
 
 AuthenticatingURLLoaderInterceptor::~AuthenticatingURLLoaderInterceptor() {
+}
+
+void AuthenticatingURLLoaderInterceptor::set_connection_error_handler(
+    const Closure& error_handler) {
+  binding_.set_connection_error_handler(error_handler);
 }
 
 void AuthenticatingURLLoaderInterceptor::InterceptRequest(
@@ -154,11 +158,6 @@ void AuthenticatingURLLoaderInterceptor::InterceptResponse(
       url_,
       base::Bind(&AuthenticatingURLLoaderInterceptor::OnOAuth2TokenReceived,
                  base::Unretained(this)));
-}
-
-void AuthenticatingURLLoaderInterceptor::OnConnectionError() {
-  factory_->OnInterceptorError(this);
-  // The factory deleted this object.
 }
 
 URLRequestPtr AuthenticatingURLLoaderInterceptor::BuildRequest(
