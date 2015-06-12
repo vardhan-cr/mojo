@@ -92,7 +92,7 @@ class NestingApp
 
   View* nested_;
   Shell* shell_;
-  IWindowManagerPtr window_manager_;
+  ::examples::IWindowManagerPtr window_manager_;
   scoped_ptr<BitmapUploader> bitmap_uploader_;
 
   DISALLOW_COPY_AND_ASSIGN(NestingApp);

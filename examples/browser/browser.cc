@@ -120,7 +120,7 @@ class Browser : public ApplicationDelegate,
   scoped_ptr<ViewManagerClientFactory> view_manager_client_factory_;
   View* root_;
   NavigatorHostPtr navigator_host_;
-  IWindowManagerPtr window_manager_;
+  ::examples::IWindowManagerPtr window_manager_;
   ServiceProviderImpl browser_host_services_impl_;
 
   GURL url_;

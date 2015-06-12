@@ -47,19 +47,19 @@ const int kTextfieldHeight = 39;
 
 }  // namespace
 
-class WindowManagerConnection : public IWindowManager {
+class WindowManagerConnection : public ::examples::IWindowManager {
  public:
   WindowManagerConnection(WindowManager* window_manager,
-                          InterfaceRequest<IWindowManager> request)
+                          InterfaceRequest<::examples::IWindowManager> request)
       : window_manager_(window_manager), binding_(this, request.Pass()) {}
   ~WindowManagerConnection() override {}
 
  private:
-  // Overridden from IWindowManager:
+  // Overridden from ::examples::IWindowManager:
   void CloseWindow(Id view_id) override;
 
   WindowManager* window_manager_;
-  StrongBinding<IWindowManager> binding_;
+  StrongBinding<::examples::IWindowManager> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerConnection);
 };
@@ -199,15 +199,14 @@ class Window : public InterfaceFactory<NavigatorHost> {
   NavigatorHostImpl navigator_host_;
 };
 
-class WindowManager
-    : public ApplicationDelegate,
-      public examples::DebugPanelHost,
-      public ViewManagerDelegate,
-      public window_manager::WindowManagerDelegate,
-      public ui::EventHandler,
-      public ui::AcceleratorTarget,
-      public mojo::InterfaceFactory<examples::DebugPanelHost>,
-      public InterfaceFactory<IWindowManager> {
+class WindowManager : public ApplicationDelegate,
+                      public examples::DebugPanelHost,
+                      public ViewManagerDelegate,
+                      public window_manager::WindowManagerDelegate,
+                      public ui::EventHandler,
+                      public ui::AcceleratorTarget,
+                      public mojo::InterfaceFactory<examples::DebugPanelHost>,
+                      public InterfaceFactory<::examples::IWindowManager> {
  public:
   WindowManager()
       : shell_(nullptr),
@@ -268,9 +267,10 @@ class WindowManager
     binding_.Bind(request.Pass());
   }
 
-  // mojo::InterfaceFactory<mojo::IWindowManager> implementation.
-  void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<mojo::IWindowManager> request) override {
+  // mojo::InterfaceFactory<::examples::IWindowManager> implementation.
+  void Create(
+      mojo::ApplicationConnection* connection,
+      mojo::InterfaceRequest<::examples::IWindowManager> request) override {
     new WindowManagerConnection(this, request.Pass());
   }
 
@@ -288,7 +288,7 @@ class WindowManager
   }
 
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    connection->AddService<IWindowManager>(this);
+    connection->AddService<::examples::IWindowManager>(this);
     window_manager_app_->ConfigureIncomingConnection(connection);
     return true;
   }
@@ -452,7 +452,8 @@ class WindowManager
 
     ServiceProviderPtr exposed_services;
     control_panel_exposed_services_impl_.Bind(GetProxy(&exposed_services));
-    control_panel_exposed_services_impl_.AddService<IWindowManager>(this);
+    control_panel_exposed_services_impl_.AddService<::examples::IWindowManager>(
+        this);
 
     GURL frame_url = url_.Resolve("/examples/window_manager/debug_panel.sky");
     view->Embed(frame_url.spec(), nullptr, exposed_services.Pass());
