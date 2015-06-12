@@ -133,8 +133,11 @@ class Debugger : public mojo::ApplicationDelegate,
   }
 
   void Reload() {
-    if (!window_manager_)
-      return;
+    if (!window_manager_) {
+      // If window_manager_ was not connected to eagerly on startup, we do that
+      // on the first demand.
+      app_->ConnectToService("mojo:window_manager", &window_manager_);
+    }
 
     // SimpleWindowManager will wire up necessary services on our behalf.
     window_manager_->Embed(url_, nullptr, nullptr);
