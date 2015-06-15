@@ -81,5 +81,5 @@ interface SmallCache {
 };
 
 interface UnionInterface {
-  Echo(PodUnion in) => (PodUnion out);
+  Echo(PodUnion in_val) => (PodUnion out_val);
 };
