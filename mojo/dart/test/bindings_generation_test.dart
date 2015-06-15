@@ -114,45 +114,45 @@ testSerializeStructs() {
 
 testSerializePodUnions() {
   var s = new unions.WrapperStruct()
-    ..podUnion = new unions.PodUnionWrapper();
-  s.podUnion.fFUint32 = 32;
+    ..podUnion = new unions.PodUnion();
+  s.podUnion.fUint32 = 32;
 
-  Expect.equals(unions.PodUnionTag.tagFUint32, s.podUnion.tag);
-  Expect.equals(32, s.podUnion.fFUint32);
+  Expect.equals(unions.PodUnionTag.fUint32, s.podUnion.tag);
+  Expect.equals(32, s.podUnion.fUint32);
 
   var message = messageOfStruct(s);
   var s2 = unions.WrapperStruct.deserialize(message.payload);
 
-  Expect.equals(s.podUnion.fFUint32, s2.podUnion.fFUint32);
+  Expect.equals(s.podUnion.fUint32, s2.podUnion.fUint32);
 }
 
 testSerializeStructInUnion() {
   var s = new unions.WrapperStruct()
-    ..objectUnion = new unions.ObjectUnionWrapper();
-  s.objectUnion.fFDummy = new unions.DummyStruct()
+    ..objectUnion = new unions.ObjectUnion();
+  s.objectUnion.fDummy = new unions.DummyStruct()
     ..fInt8 = 8;
 
   var message = messageOfStruct(s);
   var s2 = unions.WrapperStruct.deserialize(message.payload);
 
-  Expect.equals(s.objectUnion.fFDummy.fInt8, s2.objectUnion.fFDummy.fInt8);
+  Expect.equals(s.objectUnion.fDummy.fInt8, s2.objectUnion.fDummy.fInt8);
 }
 
 testSerializeArrayInUnion() {
   var s = new unions.WrapperStruct()
-    ..objectUnion = new unions.ObjectUnionWrapper();
-  s.objectUnion.fFArrayInt8 = [1, 2, 3];
+    ..objectUnion = new unions.ObjectUnion();
+  s.objectUnion.fArrayInt8 = [1, 2, 3];
 
   var message = messageOfStruct(s);
   var s2 = unions.WrapperStruct.deserialize(message.payload);
 
-  Expect.listEquals(s.objectUnion.fFArrayInt8, s2.objectUnion.fFArrayInt8);
+  Expect.listEquals(s.objectUnion.fArrayInt8, s2.objectUnion.fArrayInt8);
 }
 
 testSerializeMapInUnion() {
   var s = new unions.WrapperStruct()
-    ..objectUnion = new unions.ObjectUnionWrapper();
-  s.objectUnion.fFMapInt8 = {
+    ..objectUnion = new unions.ObjectUnion();
+  s.objectUnion.fMapInt8 = {
     "one": 1,
     "two": 2,
   };
@@ -160,57 +160,63 @@ testSerializeMapInUnion() {
   var message = messageOfStruct(s);
   var s2 = unions.WrapperStruct.deserialize(message.payload);
 
-  Expect.equals(1, s.objectUnion.fFMapInt8["one"]);
-  Expect.equals(2, s.objectUnion.fFMapInt8["two"]);
+  Expect.equals(1, s.objectUnion.fMapInt8["one"]);
+  Expect.equals(2, s.objectUnion.fMapInt8["two"]);
 }
 
 testSerializeUnionInArray() {
   var s = new unions.SmallStruct()
     ..podUnionArray = [
-      new unions.PodUnionWrapper()
-        ..fFUint16 = 16,
-      new unions.PodUnionWrapper()
-        ..fFUint32 = 32,
+      new unions.PodUnion()
+        ..fUint16 = 16,
+      new unions.PodUnion()
+        ..fUint32 = 32,
     ];
 
   var message = messageOfStruct(s);
 
   var s2 = unions.SmallStruct.deserialize(message.payload);
 
-  Expect.equals(16, s2.podUnionArray[0].fFUint16);
-  Expect.equals(32, s2.podUnionArray[1].fFUint32);
+  Expect.equals(16, s2.podUnionArray[0].fUint16);
+  Expect.equals(32, s2.podUnionArray[1].fUint32);
 }
 
 testSerializeUnionInMap() {
   var s = new unions.SmallStruct()
     ..podUnionMap = {
-      'one': new unions.PodUnionWrapper()
-        ..fFUint16 = 16,
-      'two': new unions.PodUnionWrapper()
-        ..fFUint32 = 32,
+      'one': new unions.PodUnion()
+        ..fUint16 = 16,
+      'two': new unions.PodUnion()
+        ..fUint32 = 32,
     };
 
   var message = messageOfStruct(s);
 
   var s2 = unions.SmallStruct.deserialize(message.payload);
 
-  Expect.equals(16, s2.podUnionMap['one'].fFUint16);
-  Expect.equals(32, s2.podUnionMap['two'].fFUint32);
+  Expect.equals(16, s2.podUnionMap['one'].fUint16);
+  Expect.equals(32, s2.podUnionMap['two'].fUint32);
 }
 
 testSerializeUnionInUnion() {
   var s = new unions.WrapperStruct()
-    ..objectUnion = new unions.ObjectUnionWrapper();
-    s.objectUnion.fFPodUnion = new unions.PodUnionWrapper()
-        ..fFUint32 = 32;
+    ..objectUnion = new unions.ObjectUnion();
+    s.objectUnion.fPodUnion = new unions.PodUnion()
+        ..fUint32 = 32;
 
   var message = messageOfStruct(s);
   var s2 = unions.WrapperStruct.deserialize(message.payload);
 
-  Expect.equals(32, s2.objectUnion.fFPodUnion.fFUint32);
+  Expect.equals(32, s2.objectUnion.fPodUnion.fUint32);
 }
 
-testSerializeUnions() {
+testUnionsToString() {
+  var podUnion = new unions.PodUnion();
+  podUnion.fUint32 = 32;
+  Expect.equals("PodUnion(fUint32: 32)", podUnion.toString());
+}
+
+testUnions() {
   testSerializePodUnions();
   testSerializeStructInUnion();
   testSerializeArrayInUnion();
@@ -218,6 +224,7 @@ testSerializeUnions() {
   testSerializeUnionInArray();
   testSerializeUnionInMap();
   testSerializeUnionInUnion();
+  testUnionsToString();
 }
 
 void closingProviderIsolate(core.MojoMessagePipeEndpoint endpoint) {
@@ -238,7 +245,7 @@ Future<bool> runOnClosedTest() {
 
 main() async {
   testSerializeStructs();
-  testSerializeUnions();
+  testUnions();
   await testCallResponse();
   await testAwaitCallResponse();
   await runOnClosedTest();
