@@ -74,13 +74,13 @@ def GNArgsForConfig(config):
     gn_args["clang_use_chrome_plugins"] = False
     if config.is_simulator:
       gn_args["use_libjpeg_turbo"] = False
+    gn_args["use_ios_simulator"] = config.is_simulator
   elif config.target_os == Config.OS_LINUX:
     gn_args["use_aura"] = False
     gn_args["use_glib"] = False
     gn_args["use_system_harfbuzz"] = False
 
   gn_args["target_cpu"] = config.target_cpu
-  gn_args["use_ios_simulator"] = config.is_simulator
 
   if "use_nacl" in config.values:
     gn_args["mojo_use_nacl"] = config.values.get("use_nacl", False)
@@ -131,7 +131,7 @@ def ConfigForGNArgs(args):
   config_args["target_os"] = args.get("target_os")
   config_args["target_cpu"] = args.get("target_cpu")
   config_args["dcheck_always_on"] = args.get("dcheck_always_on")
-  config_args["is_simulator"] = args.get("use_ios_simulator")
+  config_args["is_simulator"] = args.get("use_ios_simulator", False)
   return Config(**config_args)
 
 

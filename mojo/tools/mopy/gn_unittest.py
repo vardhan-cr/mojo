@@ -31,6 +31,8 @@ class GTestListTestsTest(unittest.TestCase):
     }
 
     for args in _iterate_over_config(configs_to_test):
+      if args.get("target_os") != "ios" and args["is_simulator"]:
+        continue
       config = Config(**args)
       gn_args = gn.GNArgsForConfig(config)
       new_config = gn.ConfigForGNArgs(gn_args)
@@ -38,6 +40,7 @@ class GTestListTestsTest(unittest.TestCase):
 
   def testGNToConfigToGN(self):
     """Tests that gn to config to gn is the identity"""
+    # TODO(vtl): Test OSes other than None (== host?) and "android".
     configs_to_test = {
       "target_os": [None, "android"],
       "target_cpu": ["x86", "x64", "arm"],
@@ -46,7 +49,6 @@ class GTestListTestsTest(unittest.TestCase):
       "is_clang": [False, True],
       "is_asan": [False, True],
       "use_goma": [False],
-      "use_ios_simulator": [False, True],
       "mojo_use_nacl": [False, True],
       "mojo_use_go": [False],
       "dcheck_always_on": [False, True],
