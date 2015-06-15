@@ -77,7 +77,7 @@ void TracingApp::StopAndFlush() {
   // support this directly we do our own MojoWaitMany over the handles and read
   // individual messages until all are closed or our absolute deadline has
   // elapsed.
-  static const MojoDeadline kTimeToWaitMicros = 100 * 1000;
+  static const MojoDeadline kTimeToWaitMicros = 1000 * 1000;
   MojoTimeTicks end = MojoGetTimeTicksNow() + kTimeToWaitMicros;
 
   while (!collector_impls_.empty()) {
@@ -98,6 +98,7 @@ void TracingApp::StopAndFlush() {
         mojo::WaitMany(handles, signals, mojo_deadline, &signals_states);
     if (wait_many_result.result == MOJO_RESULT_DEADLINE_EXCEEDED) {
       // Timed out waiting, nothing more to read.
+      LOG(WARNING) << "Timed out waiting for trace flush";
       break;
     }
     if (wait_many_result.IsIndexValid()) {
@@ -106,9 +107,11 @@ void TracingApp::StopAndFlush() {
       for (size_t i = signals_states.size(); i != 0; --i) {
         size_t index = i - 1;
         MojoHandleSignals satisfied = signals_states[index].satisfied_signals;
+        // To avoid dropping data, don't close unless there's no
+        // readable signal.
         if (satisfied & MOJO_HANDLE_SIGNAL_READABLE)
           collector_impls_[index]->TryRead();
-        if (satisfied & MOJO_HANDLE_SIGNAL_PEER_CLOSED)
+        else if (satisfied & MOJO_HANDLE_SIGNAL_PEER_CLOSED)
           collector_impls_.erase(collector_impls_.begin() + index);
       }
     }
