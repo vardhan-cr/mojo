@@ -103,7 +103,7 @@ def AppendToArgument(arguments, key, value, delimiter=","):
   If the argument is not present in |arguments| it is added.
 
   Args:
-    arguments: List of arguments for the shel.
+    arguments: List of arguments for the shell.
     key: Identifier of the argument, including the equal sign, eg.
         "--content-handlers=".
     value: The value to be appended, after |delimeter|, to the argument.
@@ -111,16 +111,6 @@ def AppendToArgument(arguments, key, value, delimiter=","):
 
   Returns:
     The updated argument list.
-
-  >>> AppendToArgument(arguments=[], key='--something=', value='val')
-  ['--something=val']
-
-  >>> AppendToArgument(arguments=['--something=old_val'], key='--something=',
-  ...                  value='val')
-  ['--something=old_val,val']
-
-  >>> AppendToArgument(arguments=['--other'], key='--something=', value='val')
-  ['--other', '--something=val']
   """
   assert key and key.endswith('=')
   assert value
