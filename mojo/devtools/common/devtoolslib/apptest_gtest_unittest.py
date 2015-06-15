@@ -8,7 +8,7 @@ import sys
 import unittest
 
 try:
-  imp.find_module("pylib")
+  imp.find_module("devtoolslib")
 except ImportError:
   sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from devtoolslib.apptest_gtest import _gtest_list_tests
