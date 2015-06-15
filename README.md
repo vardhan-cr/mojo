@@ -225,6 +225,15 @@ mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --android
 Passing the `-v` flag will increase the output verbosity. In particular, it will
 also print all arguments passed by `mojo_shell.py` to the shell binary.
 
+### Chromoting
+
+Some Mojo apps (Sky apps in particular) will need the --use-osmesa flag to run
+over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
+
+```
+mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --use-osmesa
+```
+
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
 While the shell is running, the `debugger` script allows you to interactively

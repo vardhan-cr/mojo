@@ -68,9 +68,16 @@ def main():
                       help="Increase output verbosity")
 
   # Android-only arguments.
-  parser.add_argument('--target-device', help='Device to run on.')
-  parser.add_argument('--logcat-tags', help='Comma-separated list of '
-                      'additional logcat tags to display on the console.')
+  parser.add_argument('--target-device',
+                      help='(android-only) Device to run on.')
+  parser.add_argument('--logcat-tags',
+                      help='(android-only) Comma-separated list of additional '
+                      'logcat tags to display on the console.')
+
+  # Desktop-only arguments.
+  parser.add_argument('--use-osmesa', action='store_true',
+                      help='(linux-only) Configure the native viewport service '
+                      'for off-screen rendering.')
 
   launcher_args, args = parser.parse_known_args()
   if launcher_args.android:
@@ -98,6 +105,8 @@ def main():
                     is_debug=launcher_args.debug)
     paths = Paths(config)
     shell = LinuxShell(paths.mojo_shell_path)
+    if launcher_args.use_osmesa:
+      args.append('--args-for=mojo:native_viewport_service --use-osmesa')
 
   if launcher_args.origin:
     args.append('--origin=' + launcher_args.origin)
