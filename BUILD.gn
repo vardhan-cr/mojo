@@ -30,6 +30,11 @@ group("default") {
     deps = []
     deps = [
       "//sky/shell",
+
+      # TODO(csg): This target builds the testonly dependencies that allow
+      # running a local instance of Sky server. Needs to to be renamed to not
+      # imply Android specific behavior
+      "//sky:sky_apk",
     ]
   }
 }
