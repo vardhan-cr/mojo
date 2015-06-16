@@ -218,6 +218,10 @@ bool GLSurfaceIOS::SwapBuffers() {
   return [[EAGLContext currentContext] presentRenderbuffer:GL_RENDERBUFFER];
 }
 
+unsigned int GLSurfaceIOS::GetBackingFrameBufferObject() {
+  return framebuffer_;
+}
+
 void GLSurfaceIOS::Destroy() {
   DCHECK(glGetError() == GL_NO_ERROR);
 
