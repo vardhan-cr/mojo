@@ -69,8 +69,14 @@ def main():
     # CC env var that will be used by the go tool.
     if 'CC' not in env:
       ndk_path = os.path.join(src_root, 'third_party', 'android_tools', 'ndk')
+      if sys.platform.startswith('linux'):
+        arch = 'linux-x86_64'
+      elif sys.platform == 'darwin':
+        arch = 'darwin-x86_64'
+      else:
+        raise Exception('unsupported platform: ' + sys.platform)
       ndk_cc = os.path.join(ndk_path, 'toolchains', NDK_TOOLCHAIN,
-          'prebuilt', 'linux-x86_64', 'bin', 'arm-linux-androideabi-gcc')
+          'prebuilt', arch, 'bin', 'arm-linux-androideabi-gcc')
       sysroot = os.path.join(ndk_path, 'platforms', NDK_PLATFORM, 'arch-arm')
       env['CC'] = '%s --sysroot %s' % (ndk_cc, sysroot)
 

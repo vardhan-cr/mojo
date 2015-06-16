@@ -36,8 +36,17 @@ def RunCommand(command):
   print 'Failed.'
   return False
 
+def VersionFileName():
+  if sys.platform.startswith('linux'):
+    platform_suffix = 'LINUX'
+  elif sys.platform == 'darwin':
+    platform_suffix = 'MACOSX'
+  else:
+    raise Exception('unsupported platform: ' + sys.platform)
+  return 'VERSION_' + platform_suffix
+
 def GetInstalledVersion():
-  version_file = os.path.join(INSTALL_DIR, 'VERSION')
+  version_file = os.path.join(INSTALL_DIR, VersionFileName())
   if not os.path.exists(version_file):
     return None
   with open(version_file) as f:
@@ -65,13 +74,13 @@ def InstallGoBinaries(version):
     arch.extractall(INSTALL_DIR)
   os.remove(archive_path)
   # Write version as the last step.
-  with open(os.path.join(INSTALL_DIR, 'VERSION'), 'w+') as f:
+  with open(os.path.join(INSTALL_DIR, VersionFileName()), 'w+') as f:
     f.write('%s\n' % version)
 
 def main():
   # Read latest version.
   version = ''
-  with open(os.path.join(THIS_DIR, 'VERSION')) as f:
+  with open(os.path.join(THIS_DIR, VersionFileName())) as f:
     version = f.read().strip()
   # Return if installed binaries are up to date.
   if version == GetInstalledVersion():

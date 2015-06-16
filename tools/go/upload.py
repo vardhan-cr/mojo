@@ -60,6 +60,24 @@ def RunCommand(command, env=None):
   print 'Failed.'
   return False
 
+def VersionFileName():
+  if sys.platform.startswith('linux'):
+    platform_suffix = 'LINUX'
+  elif sys.platform == 'darwin':
+    platform_suffix = 'MACOSX'
+  else:
+    raise Exception('unsupported platform: ' + sys.platform)
+  return 'VERSION_' + platform_suffix
+
+def HostArchName():
+  if sys.platform.startswith('linux'):
+    arch = 'linux_amd64'
+  elif sys.platform == 'darwin':
+    arch = 'darwin_amd64'
+  else:
+    raise Exception('unsupported platform: ' + sys.platform)
+  return arch
+
 def ExtractBinaries(archive_path):
   """Extracts go binaries from the given tar file to INSTALL_DIR."""
 
@@ -69,14 +87,14 @@ def ExtractBinaries(archive_path):
   archive_path = os.path.abspath(archive_path)
   with tarfile.open(archive_path) as arch:
     arch.extractall(INSTALL_DIR)
-  os.rename(os.path.join(INSTALL_DIR, 'go'),
-            os.path.join(INSTALL_DIR, 'linux_amd64'))
+    os.rename(os.path.join(INSTALL_DIR, 'go'),
+              os.path.join(INSTALL_DIR, HostArchName()))
 
 def BuildGoAndroid():
-  go_linux = os.path.join(INSTALL_DIR, 'linux_amd64')
+  go_host = os.path.join(INSTALL_DIR, HostArchName())
   go_android = os.path.join(INSTALL_DIR, 'android_arm')
   # Copy go sources and remove binaries to keep only that we generate.
-  shutil.copytree(go_linux, go_android)
+  shutil.copytree(go_host, go_android)
   shutil.rmtree(os.path.join(go_android, 'bin'))
   shutil.rmtree(os.path.join(go_android, 'pkg'))
   # Prepare the Android NDK tool chain.
@@ -92,8 +110,8 @@ def BuildGoAndroid():
   # Configure environment variables.
   cc = os.path.join(ndk_out_dir, 'bin', 'arm-linux-androideabi-gcc')
   env = os.environ.copy()
-  env["GOROOT"] = go_linux
-  env["GOROOT_BOOTSTRAP"] = go_linux
+  env["GOROOT"] = go_host
+  env["GOROOT_BOOTSTRAP"] = go_host
   env["CC_FOR_TARGET"] = '%s' % cc
   env["CGO_ENABLED"] = '1'
   env["GOOS"] = 'android'
@@ -115,7 +133,7 @@ def Compress():
   os.chdir(INSTALL_DIR)
   with tarfile.open(os.path.join('a.tar.gz'), 'w|gz') as arch:
     arch.add('android_arm')
-    arch.add('linux_amd64')
+    arch.add(HostArchName())
 
   sha1 = ''
   with open(os.path.join(INSTALL_DIR, 'a.tar.gz')) as f:
@@ -140,11 +158,11 @@ def Upload(sha1):
     sys.exit(1)
   os.remove(os.path.join(INSTALL_DIR, file_name))
   # Write versions as the last step.
-  stamp_file = os.path.join(THIS_DIR, 'VERSION')
+  stamp_file = os.path.join(THIS_DIR, VersionFileName())
   with open(stamp_file, 'w+') as stamp:
     stamp.write('%s\n' % sha1)
 
-  stamp_file = os.path.join(INSTALL_DIR, 'VERSION')
+  stamp_file = os.path.join(INSTALL_DIR, VersionFileName())
   with open(stamp_file, 'w+') as stamp:
     stamp.write('%s\n' % sha1)
 
