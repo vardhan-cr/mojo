@@ -33,6 +33,7 @@ vars = {
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
   'vector_math_dart_revision': '65915583f7aa606cb47ed265f853c18c60102b81',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
+  'quiver_dart_revision': '6bab7dec34189eee579178eb16d3063c8ae69031',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -108,6 +109,9 @@ deps = {
 
   'src/third_party/dart-pkg/box2d':
       Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
+
+  'src/third_party/dart-pkg/quiver':
+      Var('chromium_git') + '/external/github.com/google/quiver-dart.git' + '@' + Var('quiver_dart_revision'),
 }
 
 
