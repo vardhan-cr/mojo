@@ -33,6 +33,7 @@ group("services") {
       "//services/android:java_handler",
       "//services/camera_roll",
       "//services/location",
+      "//services/notifications",
       "//services/sensors",
     ]
   }

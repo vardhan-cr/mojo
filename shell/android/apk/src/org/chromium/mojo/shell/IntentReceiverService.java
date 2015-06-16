@@ -25,7 +25,8 @@ public class IntentReceiverService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (intent.getCategories().contains(CATEGORY_START_ACTIVITY_FOR_RESULT)) {
+        if (intent.getCategories() != null
+                && intent.getCategories().contains(CATEGORY_START_ACTIVITY_FOR_RESULT)) {
             if (!intent.hasExtra(EXTRA_START_ACTIVITY_FOR_RESULT_INTENT)) {
                 return;
             }

@@ -61,6 +61,9 @@ public class ShellMain {
             mojoShellChild.setExecutable(true, true);
 
             List<String> parametersList = new ArrayList<String>();
+
+            parametersList.add("--args-for=mojo:notifications " + R.mipmap.ic_launcher);
+
             // Program name.
             if (parameters != null) {
                 parametersList.addAll(Arrays.asList(parameters));
