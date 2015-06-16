@@ -260,8 +260,9 @@ Dart_Isolate DartController::CreateIsolateHelper(
       script,
       script_uri,
       package_root);
-  Dart_Isolate isolate = Dart_CreateIsolate(
-      script_uri.c_str(), "main", isolate_snapshot_buffer, isolate_data, error);
+  Dart_Isolate isolate =
+      Dart_CreateIsolate(script_uri.c_str(), "main", isolate_snapshot_buffer,
+                         nullptr, isolate_data, error);
   if (isolate == nullptr) {
     delete isolate_data;
     return nullptr;
@@ -352,6 +353,7 @@ Dart_Isolate DartController::CreateIsolateHelper(
 Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
                                                    const char* main,
                                                    const char* package_root,
+                                                   Dart_IsolateFlags* flags,
                                                    void* callback_data,
                                                    char** error) {
   IsolateData* parent_isolate_data =

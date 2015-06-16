@@ -94,6 +94,7 @@ class DartController {
   static Dart_Isolate IsolateCreateCallback(const char* script_uri,
                                             const char* main,
                                             const char* package_root,
+                                            Dart_IsolateFlags* flags,
                                             void* callback_data,
                                             char** error);
   static void IsolateShutdownCallback(void* callback_data);
