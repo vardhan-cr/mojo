@@ -36,8 +36,10 @@ ARCHITECTURE_INDEPENDENT_FILES = [
 
 
 def target(config):
-  return config.target_os + "-" + config.target_cpu
-
+  target_name = config.target_os + "-" + config.target_cpu
+  if config.is_official_build:
+    target_name += "-official"
+  return target_name
 
 def find_apps_to_upload(build_dir):
   apps = []
@@ -153,13 +155,27 @@ def main():
   parser.add_argument("--android",
                       action="store_true",
                       help="Upload the shell and apps for Android")
+  parser.add_argument("--official",
+                      action="store_true",
+                      help="Upload the official build of the Android shell")
   args = parser.parse_args()
 
+  is_official_build = args.official
   target_os = Config.OS_LINUX
   if args.android:
     target_os = Config.OS_ANDROID
-  config = Config(target_os=target_os, is_debug=False)
+  elif is_official_build:
+    print "Uploading official builds is only supported for android."
+    return 1
+
+  config = Config(target_os=target_os, is_debug=False,
+                  is_official_build=is_official_build)
+
   upload_shell(config, args.dry_run, args.verbose)
+
+  if is_official_build:
+    print "Skipping uploading apps (official apk build)."
+    return 0
 
   build_directory = gn.BuildDirectoryForConfig(config, Paths(config).src_root)
   apps_to_upload = find_apps_to_upload(build_directory)
