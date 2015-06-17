@@ -26,3 +26,5 @@ Changed the toolchain to remove references to 4.6 toolchains.
 Added support for arch=x64 as an alias to arch=x86_64
 Added support for mojo. Specifically detection of mojo apps downloaded
     to temporary files which are in crash stacks.
+Taught `stack` to find the output directory and android_tools regardless of
+    where under the checkout root it is placed.

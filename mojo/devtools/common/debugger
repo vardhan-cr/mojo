@@ -6,6 +6,7 @@
 import argparse
 import os.path
 import requests
+import subprocess
 import sys
 
 _MOJO_DEBUGGER_PORT = 7777
@@ -96,10 +97,60 @@ def _add_wm_command(subparsers):
   wm_load_parser.set_defaults(func=_wm_load)
 
 
+def _device_stack(args):
+  """Runs the device logcat through android_stack_parser."""
+  adb_path = args.adb_path if args.adb_path else 'adb'
+  logcat_cmd = [adb_path, 'logcat', '-d']
+  try:
+    logcat = subprocess.Popen(logcat_cmd, stdout=subprocess.PIPE)
+  except OSError:
+    print 'failed to call adb, make sure it is in PATH or pass --adb-path'
+    return 1
+
+  devtools_dir = os.path.dirname(os.path.abspath(__file__))
+  stack_command = [os.path.join(devtools_dir, 'android_stack_parser', 'stack')]
+  if args.build_dir:
+    stack_command.append('--build-dir=' + os.path.abspath(args.build_dir))
+  if args.ndk_dir:
+    stack_command.append('--ndk-dir=' + os.path.abspath(args.ndk_dir))
+  stack_command.append('-')
+  stack = subprocess.Popen(stack_command, stdin=logcat.stdout)
+
+  logcat.wait()
+  stack.wait()
+
+  if logcat.returncode:
+    print 'adb logcat failed, make sure the device is connected and available'
+    return logcat.returncode
+  if stack.returncode:
+    return stack.returncode
+  return 0
+
+
+def _add_device_command(subparsers):
+  """Sets up the parser for the 'device' command."""
+  device_parser = subparsers.add_parser('device',
+      help='interact with the Android device (requires adb in PATH or passing '
+           '--adb-path)')
+  device_parser.add_argument('--adb-path', type=str,
+      help='path to the adb tool from the Android SDK')
+  device_subparser = device_parser.add_subparsers(
+      help='the command to run')
+
+  device_stack_parser = device_subparser.add_parser('stack',
+      help='symbolize the crash stacktraces from the device log')
+  device_stack_parser.add_argument('--build-dir', type=str,
+      help='path to the build directory')
+  device_stack_parser.add_argument('--ndk-dir', type=str,
+      help='path to the directory containing the Android NDK')
+  device_stack_parser.set_defaults(func=_device_stack)
+
+
 def main():
   parser = argparse.ArgumentParser(description='Command-line interface for '
                                                 'mojo:debugger')
   subparsers = parser.add_subparsers(help='the tool to run')
+  _add_device_command(subparsers)
   _add_tracing_command(subparsers)
   _add_wm_command(subparsers)
 

@@ -26,11 +26,9 @@ import re
 import subprocess
 import zipfile
 
-CHROME_SRC = os.path.join(os.path.realpath(os.path.dirname(__file__)),
-                          os.pardir, os.pardir)
-ANDROID_BUILD_TOP = CHROME_SRC
-SYMBOLS_DIR = CHROME_SRC
-CHROME_SYMBOLS_DIR = CHROME_SRC
+NDK_DIR = ""
+BUILD_DIR = ""
+SYMBOLS_DIR = ""
 
 ARCH = "arm"
 
@@ -55,31 +53,25 @@ def ToolPath(tool, toolchain_info=None):
   if ARCH == "arm":
     toolchain_source = "arm-linux-androideabi-4.9"
     toolchain_prefix = "arm-linux-androideabi"
-    ndk = "ndk"
   elif ARCH == "arm64":
     toolchain_source = "aarch64-linux-android-4.9"
     toolchain_prefix = "aarch64-linux-android"
-    ndk = "ndk"
   elif ARCH == "x86":
     toolchain_source = "x86-4.9"
     toolchain_prefix = "i686-linux-android"
-    ndk = "ndk"
   elif ARCH == "x86_64" or ARCH == "x64":
     toolchain_source = "x86_64-4.9"
     toolchain_prefix = "x86_64-linux-android"
-    ndk = "ndk"
   elif ARCH == "mips":
     toolchain_source = "mipsel-linux-android-4.9"
     toolchain_prefix = "mipsel-linux-android"
-    ndk = "ndk"
   else:
     raise Exception("Could not find tool chain")
 
   toolchain_subdir = (
-      "third_party/android_tools/%s/toolchains/%s/prebuilt/linux-x86_64/bin" %
-       (ndk, toolchain_source))
+      "toolchains/%s/prebuilt/linux-x86_64/bin" % (toolchain_source))
 
-  return os.path.join(CHROME_SRC,
+  return os.path.join(NDK_DIR,
                       toolchain_subdir,
                       toolchain_prefix + "-" + tool)
 
@@ -195,11 +187,7 @@ def GetCandidates(filepart, candidate_fun, relative_dirs=None):
   Returns:
     A list of candidate files ordered by modification time, newest first.
   """
-  candidates = [CHROME_SYMBOLS_DIR]
-
-  # Add the two possible mojo outdirs.
-  out_dir = os.path.join(CHROME_SYMBOLS_DIR, 'out')
-  candidates += PathListJoin([out_dir], ['android_Debug', 'android_Release'])
+  candidates = [BUILD_DIR]
 
   if relative_dirs:
     candidates = PathListJoin(candidates, relative_dirs)

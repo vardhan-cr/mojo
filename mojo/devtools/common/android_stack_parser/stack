@@ -25,9 +25,11 @@ import sys
 import stack_core
 import subprocess
 import symbol
-import sys
 
-DEFAULT_SYMROOT='/tmp/symbols'
+_DEFAULT_SYMROOT = '/tmp/symbols'
+_DEFAULT_BUILD_DIR = 'out/android_Debug'
+_DEFAULT_NDK_DIR = 'third_party/android_tools/ndk'
+
 
 def PrintUsage():
   """Print usage and exit with error."""
@@ -39,11 +41,12 @@ def PrintUsage():
   print "       the path to a symbols dir, this is generally for system level"
   print "       symbols"
   print
-  print "  --mojo-symbols-dir=path"
+  print "  --build-dir=path"
   print "       the path to a directory containing Mojo symbols (can be"
   print "       absolute or relative to src), such as =out/android_Debug"
-  print "       If not specified, will look for the newest lib in "
-  print "       out/android_Debug or out/android_Release"
+
+  print "  --ndk-dir=path"
+  print "       the path to a directory containing Android NDK"
   print
   print "  --symbols-zip=path"
   print "       the path to a symbols zip file, such as =dream-symbols-12345.zip"
@@ -69,7 +72,7 @@ def PrintUsage():
   sys.exit(1)
 
 def UnzipSymbols(symbolfile, symdir=None):
-  """Unzips a file to DEFAULT_SYMROOT and returns the unzipped location.
+  """Unzips a file to _DEFAULT_SYMROOT and returns the unzipped location.
 
   Args:
     symbolfile: The .zip file to unzip
@@ -84,7 +87,7 @@ def UnzipSymbols(symbolfile, symdir=None):
     SymbolDownloadException: When the unzip fails.
   """
   if not symdir:
-    symdir = "%s/%s" % (DEFAULT_SYMROOT, hash(symbolfile))
+    symdir = "%s/%s" % (_DEFAULT_SYMROOT, hash(symbolfile))
   if not os.path.exists(symdir):
     os.makedirs(symdir)
 
@@ -140,12 +143,39 @@ def GetSymbolMapping(lines):
   return mappings
 
 
+def _LowestAncestorContainingRelpath(dir_path, relpath):
+  """Returns the lowest ancestor dir of |dir_path| that contains |relpath|.
+  """
+  cur_dir_path = os.path.abspath(dir_path)
+  while True:
+    if os.path.exists(os.path.join(cur_dir_path, relpath)):
+      return cur_dir_path
+
+    next_dir_path = os.path.dirname(cur_dir_path)
+    if next_dir_path != cur_dir_path:
+      cur_dir_path = next_dir_path
+    else:
+      return None
+
+
+def _GuessDir(relpath):
+  """Returns absolute path to location |relpath| in the lowest ancestor of this
+  file that contains it."""
+  lowest_ancestor = _LowestAncestorContainingRelpath(
+      os.path.dirname(__file__), relpath)
+  if not lowest_ancestor:
+    return None
+  return os.path.join(lowest_ancestor, relpath)
+
+
+
 def main():
   try:
     options, arguments = getopt.getopt(sys.argv[1:], "",
                                        ["more-info",
                                         "less-info",
-                                        "mojo-symbols-dir=",
+                                        "build-dir=",
+                                        "ndk-dir=",
                                         "symbols-dir=",
                                         "symbols-zip=",
                                         "arch=",
@@ -164,12 +194,31 @@ def main():
       zip_arg = os.path.expanduser(value)
     elif option == "--arch":
       symbol.ARCH = value
-    elif option == "--mojo-symbols-dir":
-      symbol.CHROME_SYMBOLS_DIR = os.path.join(symbol.CHROME_SYMBOLS_DIR, value)
+    elif option == "--build-dir":
+      symbol.BUILD_DIR = value
+    elif option == "--ndk-dir":
+      symbol.NDK_DIR = value
     elif option == "--more-info":
       more_info = True
     elif option == "--less-info":
       more_info = False
+
+  if not symbol.BUILD_DIR:
+    guess = _GuessDir(_DEFAULT_BUILD_DIR)
+    if not guess:
+      print "Couldn't find the build directory, please pass --build-dir."
+      return 1
+    print "Inferring the build directory path as " + guess
+    symbol.BUILD_DIR = guess
+
+  if not symbol.NDK_DIR:
+    guess = _GuessDir(_DEFAULT_NDK_DIR)
+    if not guess:
+      print "Couldn't find the Android NDK, please pass --ndk-dir."
+      return 1
+    print "Inferring the Android NDK path as " + guess
+    symbol.NDK_DIR = guess
+
 
   if len(arguments) > 1:
     PrintUsage()
@@ -188,8 +237,10 @@ def main():
   if zip_arg:
     rootdir, symbol.SYMBOLS_DIR = UnzipSymbols(zip_arg)
 
-  print "Reading Android symbols from", symbol.SYMBOLS_DIR
-  print "Reading Mojo symbols from", symbol.CHROME_SYMBOLS_DIR
+  if symbol.SYMBOLS_DIR:
+    print "Reading Android symbols from", symbol.SYMBOLS_DIR
+
+  print "Reading Mojo symbols from", symbol.BUILD_DIR
   stack_core.ConvertTrace(lines, more_info, GetSymbolMapping(lines))
 
   if rootdir:

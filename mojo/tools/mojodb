@@ -568,7 +568,7 @@ class SkyDebugger(object):
         logcat = subprocess.Popen(logcat_cmd, stdout=subprocess.PIPE)
 
         stack_path = os.path.join(SRC_ROOT,
-            'tools', 'android_stack_parser', 'stack')
+            'mojo', 'devtools', 'common', 'android_stack_parser', 'stack')
         stack = subprocess.Popen([stack_path, '-'], stdin=logcat.stdout)
         logcat.wait()
         stack.wait()
