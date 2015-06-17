@@ -242,6 +242,7 @@ mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --use-osmesa
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
+#### Tracing
 While the shell is running, the `debugger` script allows you to interactively
 start
 [tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
@@ -254,6 +255,15 @@ devtools/common/debugger tracing stop [result.json]
 
 The trace file can be then loaded using the trace viewer in Chrome available at
 `about://tracing`.
+
+#### Android crash stacks
+When Mojo shell crashes on Android ("Unfortunately, Mojo shell has stopped.")
+due to a crash in native code, `debugger` can be used to find and symbolize the
+stack trace present in the device log:
+
+```
+mojo/devtools/common/debugger device stack
+```
 
 ### Android set-up
 
