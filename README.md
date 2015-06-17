@@ -133,6 +133,12 @@ can dramatically increase the number of parallel tasks:
 $ ninja -C out/Debug -j 1000
 ```
 
+### Official builds
+
+Official builds for android generate a signed Mojo Shell intended for
+distribution. You normally should not need to produce one. If you have any
+questions, reach out to [etiennej@chromium.org](mailto:etiennej@chromium.org).
+
 ## Update your checkout
 
 You can update your checkout like this. The order is important. You must do the

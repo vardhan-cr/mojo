@@ -9,6 +9,12 @@ import("//mojo/public/tools/bindings/mojom.gni")
 import("//mojo/tools/embed/rules.gni")
 import("//testing/test.gni")
 
+declare_args() {
+  # Password to the keystore used to sign MojoShell APK. The actual password
+  # should be defined in args.gn in the root build directory.
+  keystore_password = ""
+}
+
 # We don't support building in the component build since mojo apps are
 # inherently components.
 assert(!is_component_build)
@@ -338,7 +344,7 @@ if (is_android) {
     manifest_package = "org.chromium.mojo.shell"
     apk_name = "Mojo Shell (dev)"
   } else {
-    manifest_package = "io.mojoapps.shell"
+    manifest_package = "io.mojoapps.launcher"
     apk_name = "Mojo Shell"
   }
 
@@ -352,6 +358,16 @@ if (is_android) {
                       rebase_path("//", root_build_dir),
                     ],
                     "trim string")
+
+    # Download the keystore for signing.
+    keystore_path = "$root_build_dir/mojo_shell-official.keystore"
+    action("download_keystore") {
+      script = "//mojo/tools/download_keystore.py"
+      outputs = [
+        keystore_path,
+      ]
+      args = [ rebase_path(keystore_path, root_build_dir) ]
+    }
   } else {
     version_code = "1"
   }
@@ -391,6 +407,13 @@ if (is_android) {
       "//services/native_viewport:native_viewport_java",
       "//third_party/android_tools:google_play_services_default_resources",
     ]
+
+    if (is_official_build) {
+      deps += [ ":download_keystore" ]
+      keystore_path = keystore_path
+      keystore_name = "official"
+      keystore_password = keystore_password
+    }
   }
 
   android_library("mojo_shell_tests_java") {
