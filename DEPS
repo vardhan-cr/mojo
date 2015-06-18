@@ -132,9 +132,6 @@ deps_os = {
     'src/third_party/robolectric/lib':
       Var('chromium_git') + '/chromium/third_party/robolectric.git' + '@' + '6b63c99a8b6967acdb42cbed0adb067c80efc810',
 
-    'src/third_party/android_tools':
-     Var('chromium_git') + '/android_tools.git' + '@' + 'a3afc68f31ed9b32954954da95c855ee73820bd1',
-
     'src/third_party/appurify-python/src':
      Var('chromium_git') + '/external/github.com/appurify/appurify-python.git' + '@' + 'ee7abd5c5ae3106f72b2a0b9d2cb55094688e867',
 
@@ -170,6 +167,12 @@ hooks = [
     'name': 'dart',
     'pattern': '.',
     'action': ['python', 'src/tools/dart/update.py'],
+  },
+  {
+    # This downloads android_tools according to tools/android/VERSION_*.
+    'name': 'android_tools',
+    'pattern': '.',
+    'action': ['python', 'src/tools/android/download_android_tools.py'],
   },
   {
     # This downloads SDK extras and puts them in the
