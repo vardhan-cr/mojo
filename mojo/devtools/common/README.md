@@ -23,8 +23,10 @@ runner](https://github.com/domokit/mojo/blob/master/mojo/tools/apptest_runner.py
 
 The set of executable scripts is WIP. We currently offer:
 
- - **debugger** - allowing to send commands to the mojo:debugger app running in
-   the shell, allowing e.g. to interactively start and stop tracing
+ - **debugger** - supports interactive tracing of a running mojo shell and
+   symbolizing android stack traces
+ - **remote_adb_setup** - configures adb on a remote machine to communicate with
+   a device attached to the local machine
 
 ## Install
 
