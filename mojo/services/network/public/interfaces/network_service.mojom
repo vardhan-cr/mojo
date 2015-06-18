@@ -6,6 +6,7 @@ module mojo;
 
 import "mojo/public/interfaces/network/network_error.mojom";
 import "network/public/interfaces/cookie_store.mojom";
+import "network/public/interfaces/host_resolver.mojom";
 import "network/public/interfaces/http_server.mojom";
 import "network/public/interfaces/net_address.mojom";
 import "network/public/interfaces/tcp_bound_socket.mojom";
@@ -75,7 +76,11 @@ interface NetworkService {
           NetAddress? bound_to);
 
   // Register a new url loader interceptor that will be used on any new
-  // URLLoader. Interceptor are chained. The last registed interceptor will
-  // received the requests first and the responses last.
+  // URLLoader created with the current connection to the network service.
+  // Interceptors are chained. The last registered interceptor will received the
+  // requests first and the responses last.
   RegisterURLLoaderInterceptor(URLLoaderInterceptorFactory factory);
+
+  // Create a HostResolver that can be used to do ip <-> host lookups.
+  CreateHostResolver(HostResolver& host_resolver);
 };
