@@ -18,6 +18,7 @@ library dart_embedder_packages;
 import 'dart:_mojo/application.dart';
 import 'dart:_mojo/bindings.dart';
 import 'dart:_mojo/core.dart';
+import 'dart:_mojom/mojo/host_resolver.mojom.dart';
 import 'dart:_mojom/mojo/net_address.mojom.dart';
 import 'dart:_mojom/mojo/network_error.mojom.dart';
 import 'dart:_mojom/mojo/network_service.mojom.dart';

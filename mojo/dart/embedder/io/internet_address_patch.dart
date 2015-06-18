@@ -177,20 +177,27 @@ class _InternetAddress implements InternetAddress {
 
 int _internetAddressTypeToAddressFamily(InternetAddressType type) {
   if (type == null) {
-    return AddressFamily_UNSPECIFIED;
+    return NetAddressFamily_UNSPECIFIED;
   }
   if (type == InternetAddressType.IP_V4) {
-    return AddressFamily_IPV4;
+    return NetAddressFamily_IPV4;
   } else if (type == InternetAddressType.IP_V6) {
-    return AddressFamily_IPV6;
+    return NetAddressFamily_IPV6;
   }
-  return AddressFamily_UNSPECIFIED;
+  return NetAddressFamily_UNSPECIFIED;
 }
 
 class _MojoInternetAddress {
   static Future _lookup(String host, InternetAddressType type) async {
-    // TODO(johnmccutchan): Implement once a host resolver is available
-    // in the network service. For now, return LOOPBACK_IP_V4.
-    return [InternetAddress.LOOPBACK_IP_V4];
+    HostResolverProxy hostResolver = _getHostResolver();
+    var family = _internetAddressTypeToAddressFamily(type);
+    var response = await hostResolver.ptr.getHostAddresses(host, family);
+    _NetworkService._throwOnError(response.result);
+    var numAddresses = response.addresses.length;
+    var r = new List(numAddresses);
+    for (var i = 0; i < numAddresses; i++) {
+      r[i] = _NetworkServiceCodec._fromNetAddress(response.addresses[i]);
+    }
+    return r;
   }
 }

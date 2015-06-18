@@ -5,6 +5,7 @@
 import 'dart:_mojo/application.dart';
 import 'dart:_mojo/bindings.dart';
 import 'dart:_mojo/core.dart';
+import 'dart:_mojom/mojo/host_resolver.mojom.dart';
 import 'dart:_mojom/mojo/net_address.mojom.dart';
 import 'dart:_mojom/mojo/network_error.mojom.dart';
 import 'dart:_mojom/mojo/network_service.mojom.dart';
@@ -17,6 +18,7 @@ import 'dart:_mojom/mojo/tcp_server_socket.mojom.dart';
 //
 int _networkServiceHandle;
 NetworkServiceProxy _networkService;
+HostResolverProxy _hostResolver;
 
 void _initialize(int h) {
   _networkServiceHandle = h;
@@ -40,6 +42,10 @@ _closeProxies() {
     _networkService.close(immediate: true);
     _networkService = null;
   }
+  if (_hostResolver != null) {
+    _hostResolver.close(immediate: true);
+    _hostResolver = null;
+  }
 }
 
 /// Get the singleton NetworkServiceProxy.
@@ -53,6 +59,19 @@ NetworkServiceProxy _getNetworkService() {
   return _networkService;
 }
 
+/// Get the singleton HostResolverProxy.
+HostResolverProxy _getHostResolver() {
+  if (_hostResolver != null) {
+    return _hostResolver;
+  }
+  var networkService = _getNetworkService();
+  if (networkService == null) {
+    return null;
+  }
+  _hostResolver = new HostResolverProxy.unbound();
+  networkService.ptr.createHostResolver(_hostResolver);
+  return _hostResolver;
+}
 
 /// Static utility methods for converting between 'dart:io' and
 /// 'mojo:network_service' structs.
