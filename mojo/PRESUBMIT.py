@@ -233,10 +233,14 @@ def _CheckChangePylintsClean(input_api, output_api):
   devtools_path = os.path.join(input_api.PresubmitLocalPath(), "devtools")
   # TODO(vtl): Don't lint these files until the (many) problems are fixed
   # (possibly by deleting/rewriting some files).
-  temporary_black_list = input_api.DEFAULT_BLACK_LIST + \
-      (r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]pylib[\\\/]mojom[\\\/]"
-           r"generate[\\\/].+\.py$",
-       r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]generators[\\\/].+\.py$")
+  temporary_black_list = (
+      r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]pylib[\\\/]mojom[\\\/]"
+          r"generate[\\\/].+\.py$",
+      r".*\bpublic[\\\/]tools[\\\/]bindings[\\\/]generators[\\\/].+\.py$")
+  black_list = input_api.DEFAULT_BLACK_LIST + temporary_black_list + (
+      # Imported from Android tools, we might want not to fix the warnings
+      # raised for it to make it easier to compare the code with the original.
+      r".*\bdevtools[\\\/]common[\\\/]android_stack_parser[\\\/].+\.py$",)
 
   results = []
   pylint_extra_paths = [
@@ -250,7 +254,7 @@ def _CheckChangePylintsClean(input_api, output_api):
   ]
   results.extend(input_api.canned_checks.RunPylint(
       input_api, output_api, extra_paths_list=pylint_extra_paths,
-      black_list=temporary_black_list))
+      black_list=black_list))
   return results
 
 def _BuildFileChecks(input_api, output_api):
