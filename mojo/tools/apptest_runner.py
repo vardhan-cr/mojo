@@ -50,7 +50,7 @@ def main():
       return 1
     shell.InstallApk(paths.target_mojo_shell_path)
     extra_args.extend(shell_arguments.ConfigureLocalOrigin(
-        shell, paths.build_dir, fixed_port=False))
+        shell, paths.build_dir, fixed_port=True))
   else:
     shell = LinuxShell(paths.mojo_shell_path)
 

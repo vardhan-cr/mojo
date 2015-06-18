@@ -7,12 +7,12 @@ list."""
 
 import urlparse
 
-_LOCAL_ORIGIN_PORT = 31337
-
-_MAP_ORIGIN_PREFIX = '--map-origin='
 # When spinning up servers for local origins, we want to use predictable ports
 # so that caching works between subsequent runs with the same command line.
-_MAP_ORIGIN_BASE_PORT = 31338
+_LOCAL_ORIGIN_PORT = 31840
+_MAP_ORIGIN_BASE_PORT = 31841
+
+_MAP_ORIGIN_PREFIX = '--map-origin='
 
 # Port on which the mojo:debugger http server will be available on the host
 # machine.

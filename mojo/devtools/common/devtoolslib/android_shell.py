@@ -323,7 +323,7 @@ class AndroidShell(Shell):
     """
     assert local_dir_path
     print 'starting http for', local_dir_path
-    server_address = StartHttpServer(local_dir_path,
+    server_address = StartHttpServer(local_dir_path, host_port=port,
                                      additional_mappings=additional_mappings)
 
     print 'local port=%d' % server_address[1]
