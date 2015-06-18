@@ -9,12 +9,6 @@ import("//mojo/public/tools/bindings/mojom.gni")
 import("//mojo/tools/embed/rules.gni")
 import("//testing/test.gni")
 
-declare_args() {
-  # Password to the keystore used to sign MojoShell APK. The actual password
-  # should be defined in args.gn in the root build directory.
-  keystore_password = ""
-}
-
 # We don't support building in the component build since mojo apps are
 # inherently components.
 assert(!is_component_build)
@@ -366,8 +360,14 @@ if (is_android) {
       outputs = [
         keystore_path,
       ]
-      args = [ rebase_path(keystore_path, root_build_dir) ]
+      args = [
+        "keystore_file",
+        rebase_path(keystore_path, root_build_dir),
+      ]
     }
+    keystore_password = exec_script("//mojo/tools/download_keystore.py",
+                                    [ "keystore_password" ],
+                                    "trim string")
   } else {
     version_code = "1"
   }
