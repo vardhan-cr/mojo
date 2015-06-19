@@ -33,19 +33,9 @@ class ServiceConnector;
 //   connection->AddService<Bar>(&my_foo_and_bar_factory_);
 //
 // The InterfaceFactory must outlive the ApplicationConnection.
-//
-// Additionally you specify a ServiceConnector. If a ServiceConnector has
-// been set and an InterfaceFactory has not been registered for the interface
-// request, than the interface request is sent to the ServiceConnector.
-//
-// Just as with InterfaceFactory, ServiceConnector must outlive
-// ApplicationConnection.
 class ApplicationConnection {
  public:
   virtual ~ApplicationConnection();
-
-  // See class description for details.
-  virtual void SetServiceConnector(ServiceConnector* connector) = 0;
 
   // Makes Interface available as a service to the remote application.
   // |factory| will create implementations of Interface on demand.

@@ -9,8 +9,7 @@
 namespace mojo {
 namespace internal {
 
-ServiceConnectorRegistry::ServiceConnectorRegistry()
-    : service_connector_(nullptr) {
+ServiceConnectorRegistry::ServiceConnectorRegistry() {
 }
 
 ServiceConnectorRegistry::~ServiceConnectorRegistry() {
@@ -48,10 +47,6 @@ void ServiceConnectorRegistry::ConnectToService(
     iter->second->ConnectToService(application_connection, interface_name,
                                    client_handle.Pass());
     return;
-  }
-  if (service_connector_) {
-    service_connector_->ConnectToService(application_connection, interface_name,
-                                         client_handle.Pass());
   }
 }
 

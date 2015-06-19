@@ -32,7 +32,6 @@ class ServiceRegistry : public ServiceProvider, public ApplicationConnection {
   ~ServiceRegistry() override;
 
   // ApplicationConnection overrides.
-  void SetServiceConnector(ServiceConnector* service_connector) override;
   void SetServiceConnectorForName(ServiceConnector* service_connector,
                                   const std::string& interface_name) override;
   const std::string& GetConnectionURL() override;
