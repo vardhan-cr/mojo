@@ -5,10 +5,12 @@
 import atexit
 import datetime
 import email.utils
+import errno
 import hashlib
 import logging
 import math
 import os.path
+import socket
 import threading
 
 import SimpleHTTPServer
@@ -179,10 +181,23 @@ def StartHttpServer(local_dir_path, host_port=0, additional_mappings=None):
   mappings.append(('', local_dir_path))
   handler_class = _GetHandlerClassForPath(mappings)
 
-  httpd = _SilentTCPServer(('127.0.0.1', host_port), handler_class)
-  atexit.register(httpd.shutdown)
+  try:
+    httpd = _SilentTCPServer(('127.0.0.1', host_port), handler_class)
+    atexit.register(httpd.shutdown)
 
-  http_thread = threading.Thread(target=httpd.serve_forever)
-  http_thread.daemon = True
-  http_thread.start()
-  return httpd.server_address
+    http_thread = threading.Thread(target=httpd.serve_forever)
+    http_thread.daemon = True
+    http_thread.start()
+    print 'Started http://%s:%d to host %s.' % (httpd.server_address[0],
+                                                httpd.server_address[1],
+                                                local_dir_path)
+    return httpd.server_address
+  except socket.error as v:
+    error_code = v[0]
+    print 'Failed to start http server for %s on port %d: %s.' % (
+        local_dir_path, host_port, os.strerror(error_code))
+    if error_code == errno.EADDRINUSE:
+      print ('  Run `fuser %d/tcp` to find out which process is using the port.'
+             % host_port)
+    print '---'
+    raise

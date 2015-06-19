@@ -329,11 +329,9 @@ class AndroidShell(Shell):
       The url that the shell can use to access the content of |local_dir_path|.
     """
     assert local_dir_path
-    print 'starting http for', local_dir_path
     server_address = StartHttpServer(local_dir_path, host_port=port,
                                      additional_mappings=additional_mappings)
 
-    print 'local port=%d' % server_address[1]
     return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
         port, server_address[1])
 
