@@ -6,7 +6,7 @@ library dart_controller_service_isolate;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:mojo.io';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:vmservice';
 

@@ -375,7 +375,7 @@ action("generate_snapshot_bin") {
            current_os,
            "--url_mapping=dart:mojo.builtin,$builtin_path",
            "--url_mapping=dart:mojo.internal,$internal_path",
-           "--url_mapping=dart:mojo.io,$io_path",
+           "--url_mapping=dart:io,$io_path",
 
            # Embedder packages
            "--url_mapping=dart:embedder_private_packages,$embedder_packages_path",

@@ -37,10 +37,6 @@ static bool IsDartSchemeURL(const char* url_name) {
   return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
 }
 
-static bool IsDartIOLibURL(const char* url_name) {
-  return (strcmp(url_name, kIOLibURL) == 0);
-}
-
 static void ReportScriptError(Dart_Handle handle) {
   // The normal DART_CHECK_VALID macro displays error information and a stack
   // dump for the C++ application, which is confusing. Only show the Dart error.
@@ -93,13 +89,6 @@ Dart_Handle DartController::LibraryTagHandler(Dart_LibraryTag tag,
   Dart_Handle result = Dart_StringToCString(library_url, &library_url_string);
   if (Dart_IsError(result)) {
     return result;
-  }
-
-  bool is_io_library = IsDartIOLibURL(library_url_string);
-
-  // Handle IO library.
-  if (is_io_library) {
-    return Builtin::NewError("Use 'dart:mojo.io' instead of 'dart:io'");
   }
 
   // Handle URI canonicalization requests.
@@ -452,7 +441,7 @@ void DartController::InitializeDartMojoIo() {
     // Not supported.
     return;
   }
-  // Pass handle into 'dart:mojo.io' library.
+  // Pass handle into 'dart:io' library.
   Dart_Handle mojo_io_library =
       Builtin::GetLibrary(Builtin::kDartMojoIoLibrary);
   CHECK(!Dart_IsError(mojo_io_library));

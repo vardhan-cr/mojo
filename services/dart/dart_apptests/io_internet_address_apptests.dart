@@ -5,7 +5,7 @@
 library io_internet_address_apptests;
 
 import 'dart:async';
-import 'dart:mojo.io';
+import 'dart:io';
 
 import 'package:apptest/apptest.dart';
 import 'package:mojo/application.dart';

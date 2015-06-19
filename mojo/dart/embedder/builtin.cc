@@ -69,11 +69,11 @@ Builtin::builtin_lib_props Builtin::builtin_libraries_[] = {
      MojoNativeLookup,
      "dart:mojo.internal-patch",
      mojo_core_patch_resource_names_},
-    {"dart:mojo.io",
+    {"dart:io",
      true,
      MojoIoNativeSymbol,
      MojoIoNativeLookup,
-     "dart:mojo.io-patch",
+     "dart:io-patch",
      mojo_io_patch_resource_names_},
 };
 

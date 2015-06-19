@@ -6,7 +6,7 @@ library io_http_apptests;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:mojo.io';
+import 'dart:io';
 
 import 'package:apptest/apptest.dart';
 import 'package:mojo/application.dart';

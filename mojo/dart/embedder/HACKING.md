@@ -47,14 +47,14 @@ rebase_path("//mojo/public/interfaces/application"),
 
 ## Dart IO
 
-Under Mojo, the 'dart:io' library is the 'dart:mojo.io' library. 'dart:mojo.io'
-exports the same API as 'dart:io' but the implementation is not complete and
-likely suffers from subtle differences. Implementation status:
+Under Mojo, the 'dart:io' implementation is not complete and likely suffers
+from subtle differences. Implementation status:
 
 | 'dart:io' feature  | Mojo Service         | Implemented |
 | ------------------ | -------------------- | ----------- |
 | Socket             | mojo:network_service | Yes         |
 | ServerSocket       | mojo:network_service | Yes         |
+| DNS                | mojo:network_srevice | Yes         |
 | SecureSocket       | N/A                  | No          |
 | SecureServerSocket | N/A                  | No          |
 | Datagram           | mojo:network_service | No          |

@@ -72,11 +72,11 @@ class DartController {
   // Waits for the handle watcher isolate to finish and shuts down the VM.
   static void Shutdown();
 
-  // Does this controller support the 'dart:mojo.io' library?
+  // Does this controller support the 'dart:io' library?
   static bool SupportDartMojoIo();
-  // Initialize 'dart:mojo.io' for the current isolate.
+  // Initialize 'dart:io' for the current isolate.
   static void InitializeDartMojoIo();
-  // Shutdown 'dart:mojo.io' for the current isolate.
+  // Shutdown 'dart:io' for the current isolate.
   static void ShutdownDartMojoIo();
 
   static Dart_Handle LibraryTagHandler(Dart_LibraryTag tag,

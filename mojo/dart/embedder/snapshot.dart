@@ -6,12 +6,12 @@ import 'dart:async';
 import 'dart:core';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:mirrors';
 import 'dart:mojo.builtin';
 import 'dart:mojo.internal';
-import 'dart:mojo.io';
 import 'dart:typed_data';
 
 // Import packages.dart which contains all embedder package imports.
