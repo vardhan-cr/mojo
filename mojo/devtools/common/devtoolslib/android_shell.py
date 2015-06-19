@@ -119,6 +119,13 @@ class AndroidShell(Shell):
         port = random.randint(4096, 16384)
         if port not in opened:
           return port
+
+    # Root is not required for `adb forward` (hence we don't check the return
+    # value), but if we can run adb as root, we have to do it now, because
+    # restarting adbd as root clears any port mappings. See
+    # https://github.com/domokit/devtools/issues/20.
+    self._RunAdbAsRoot()
+
     if device_port == 0:
       device_port = _FindAvailablePortOnDevice()
     subprocess.check_call(self._AdbCommand([
