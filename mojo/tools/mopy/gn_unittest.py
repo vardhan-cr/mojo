@@ -29,6 +29,8 @@ class GTestListTestsTest(unittest.TestCase):
       "mojo_use_go": [False],
       "dcheck_always_on": [False, True],
     }
+    if sys.platform == "darwin":
+      configs_to_test["target_os"].remove("linux")
 
     for args in _iterate_over_config(configs_to_test):
       if args.get("target_os") != "ios" and args["is_simulator"]:
