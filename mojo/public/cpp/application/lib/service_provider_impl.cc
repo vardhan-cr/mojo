@@ -9,12 +9,13 @@
 
 namespace mojo {
 
-ServiceProviderImpl::ServiceProviderImpl() : binding_(this) {
+ServiceProviderImpl::ServiceProviderImpl()
+    : binding_(this), fallback_service_provider_(nullptr) {
 }
 
 ServiceProviderImpl::ServiceProviderImpl(
     InterfaceRequest<ServiceProvider> request)
-    : binding_(this, request.Pass()) {
+    : binding_(this, request.Pass()), fallback_service_provider_(nullptr) {
 }
 
 ServiceProviderImpl::~ServiceProviderImpl() {
