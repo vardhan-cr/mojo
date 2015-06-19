@@ -38,16 +38,17 @@ void ServiceConnectorRegistry::RemoveServiceConnectorForName(
   name_to_service_connector_.erase(it);
 }
 
-void ServiceConnectorRegistry::ConnectToService(
+bool ServiceConnectorRegistry::ConnectToService(
     ApplicationConnection* application_connection,
     const std::string& interface_name,
-    ScopedMessagePipeHandle client_handle) {
+    ScopedMessagePipeHandle* client_handle) {
   auto iter = name_to_service_connector_.find(interface_name);
   if (iter != name_to_service_connector_.end()) {
     iter->second->ConnectToService(application_connection, interface_name,
-                                   client_handle.Pass());
-    return;
+                                   client_handle->Pass());
+    return true;
   }
+  return false;
 }
 
 }  // namespace internal

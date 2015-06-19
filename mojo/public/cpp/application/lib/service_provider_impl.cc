@@ -34,8 +34,12 @@ void ServiceProviderImpl::ConnectToService(
     ScopedMessagePipeHandle client_handle) {
   // TODO(beng): perhaps take app connection thru ctor so that we can pass
   // ApplicationConnection through?
-  service_connector_registry_.ConnectToService(nullptr, service_name,
-                                               client_handle.Pass());
+  bool service_found = service_connector_registry_.ConnectToService(
+      nullptr, service_name, &client_handle);
+  if (!service_found && fallback_service_provider_) {
+    fallback_service_provider_->ConnectToService(service_name,
+                                                 client_handle.Pass());
+  }
 }
 
 void ServiceProviderImpl::SetServiceConnectorForName(

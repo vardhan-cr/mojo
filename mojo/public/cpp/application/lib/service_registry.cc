@@ -62,7 +62,7 @@ ServiceProvider* ServiceRegistry::GetServiceProvider() {
 void ServiceRegistry::ConnectToService(const mojo::String& service_name,
                                        ScopedMessagePipeHandle client_handle) {
   service_connector_registry_.ConnectToService(this, service_name,
-                                               client_handle.Pass());
+                                               &client_handle);
 }
 
 }  // namespace internal

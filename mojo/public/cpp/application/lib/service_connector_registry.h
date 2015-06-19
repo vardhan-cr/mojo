@@ -34,9 +34,13 @@ class ServiceConnectorRegistry {
                                   const std::string& interface_name);
   void RemoveServiceConnectorForName(const std::string& interface_name);
 
-  void ConnectToService(ApplicationConnection* application_connection,
+  // ConnectToService returns true if this registery has an entry for
+  // |interface_name|. In that case, the |client_handle| is passed along
+  // to the |ServiceConnector|. Otherwise, this function returns false and
+  // |client_handle| is untouched.
+  bool ConnectToService(ApplicationConnection* application_connection,
                         const std::string& interface_name,
-                        ScopedMessagePipeHandle client_handle);
+                        ScopedMessagePipeHandle* client_handle);
 
  private:
   using NameToServiceConnectorMap = std::map<std::string, ServiceConnector*>;

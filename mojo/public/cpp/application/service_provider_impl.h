@@ -33,6 +33,16 @@ class ServiceProviderImpl : public ServiceProvider {
         Interface::Name_);
   }
 
+  // ServiceProviderImpl uses the fallback_service_provider_ whenever someone
+  // asks a service that doesn't exist in the service_connector_registry_.
+  //
+  // Note: ServiceProviderImpl does not take ownership of |fallback|. The caller
+  //       must ensure that |fallback| outlives the ServiceProviderImpl.
+  //
+  void set_fallback_service_provider(ServiceProvider* fallback) {
+    fallback_service_provider_ = fallback;
+  }
+
  private:
   // Overridden from ServiceProvider:
   void ConnectToService(const String& service_name,
@@ -44,6 +54,7 @@ class ServiceProviderImpl : public ServiceProvider {
   Binding<ServiceProvider> binding_;
 
   internal::ServiceConnectorRegistry service_connector_registry_;
+  ServiceProvider* fallback_service_provider_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ServiceProviderImpl);
 };
