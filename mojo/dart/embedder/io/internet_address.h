@@ -33,6 +33,10 @@ class InternetAddress {
 
   static bool Parse(int type, const char* address, RawAddr* addr);
 
+  static bool Reverse(const RawAddr& addr, intptr_t addr_length,
+                      char* host, intptr_t host_len,
+                      intptr_t* error_code, const char** error_description);
+
  private:
   DISALLOW_IMPLICIT_CONSTRUCTORS(InternetAddress);
 };

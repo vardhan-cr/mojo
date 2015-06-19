@@ -46,10 +46,21 @@ class DartEmbedder {
   // Sets the return value in arguments to null.
   static void SetNullReturn(Dart_NativeArguments arguments);
 
+  // Sets the return value in arguments to a string created from |str|.
+  static void SetCStringReturn(Dart_NativeArguments arguments, const char* str);
+
   // Gets the string argument at index and returns a C string.
   // Any error is propagated.
   static const char* GetStringArgument(Dart_NativeArguments arguments,
                                        intptr_t index);
+
+  // Copies the bytes from a TypedDataList argument at |index| into a C array.
+  // Any error is propagated. Caller must call free on |out|.
+  // NOTE: Only supports Uint8List now.
+  static void GetTypedDataListArgument(Dart_NativeArguments arguments,
+                                       intptr_t index,
+                                       uint8_t** out,
+                                       intptr_t* out_len);
 
   // Creates a Uint8List with a copy of bytes.
   // Any error is propagated.

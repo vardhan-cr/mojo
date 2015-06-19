@@ -89,6 +89,11 @@ void DartEmbedder::SetNullReturn(Dart_NativeArguments arguments) {
   Dart_SetReturnValue(arguments, Dart_Null());
 }
 
+void DartEmbedder::SetCStringReturn(Dart_NativeArguments arguments,
+                                    const char* str) {
+  Dart_SetReturnValue(arguments, NewCString(str));
+}
+
 const char* DartEmbedder::GetStringArgument(Dart_NativeArguments arguments,
                                             intptr_t index) {
   Dart_Handle str_arg = Dart_GetNativeArgument(arguments, index);
@@ -98,6 +103,45 @@ const char* DartEmbedder::GetStringArgument(Dart_NativeArguments arguments,
     Dart_PropagateError(result);
   }
   return cstring;
+}
+
+void DartEmbedder::GetTypedDataListArgument(Dart_NativeArguments arguments,
+                                            intptr_t index,
+                                            uint8_t** out,
+                                            intptr_t* out_len) {
+  // Initialize outputs.
+  *out = NULL;
+  *out_len = 0;
+  Dart_Handle list_arg = Dart_GetNativeArgument(arguments, index);
+  if (Dart_IsError(list_arg)) {
+    Dart_PropagateError(list_arg);
+    return;
+  }
+  // Acquire data.
+  Dart_TypedData_Type type = Dart_TypedData_kInvalid;
+  void* data = NULL;
+  intptr_t data_len = 0;
+  Dart_Handle result =
+      Dart_TypedDataAcquireData(list_arg, &type, &data, &data_len);
+  if (Dart_IsError(result)) {
+    Dart_PropagateError(result);
+    return;
+  }
+  // Only support Uint8List for now.
+  if (type != Dart_TypedData_kUint8) {
+    // Release data.
+    Dart_TypedDataReleaseData(list_arg);
+    Dart_PropagateError(
+        Dart_NewApiError("Unimplemented type in "
+                         "DartEmbedder::GetTypedDataListArgument"));
+    return;
+  }
+  // Copy payload.
+  *out = reinterpret_cast<uint8_t*>(malloc(data_len));
+  *out_len = data_len;
+  memmove(*out, data, data_len);
+  // Release data.
+  Dart_TypedDataReleaseData(list_arg);
 }
 
 Dart_Handle DartEmbedder::MakeUint8TypedData(uint8_t* bytes, intptr_t length) {

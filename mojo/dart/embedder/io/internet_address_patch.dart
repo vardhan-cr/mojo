@@ -100,10 +100,18 @@ class _InternetAddress implements InternetAddress {
   }
 
   Future<InternetAddress> reverse() {
-    // TODO(johnmccutchan): Implement once a host resolver is available
-    // in the network service. For now, return LOOPBACK_IP_V4.
-    return InternetAddress.LOOPBACK_IP_V4;
+    var result = _reverse(this._in_addr);
+    if (result[0] == 0) {
+      // Success.
+      return new Future.value(
+          new _InternetAddress(this.address, result[1], this._in_addr));
+    } else {
+      // Failure. Throw an error.
+      throw new OSError(result[1], result[0]);
+    }
   }
+
+  static _reverse(List address) native "InternetAddress_Reverse";
 
   _InternetAddress(String this.address,
                    String this._host,

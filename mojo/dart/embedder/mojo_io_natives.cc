@@ -18,6 +18,7 @@ namespace dart {
 
 #define MOJO_IO_NATIVE_LIST(V)                                                 \
   V(InternetAddress_Parse, 1)                                                  \
+  V(InternetAddress_Reverse, 1)                                                \
   V(Platform_NumberOfProcessors, 0)                                            \
   V(Platform_OperatingSystem, 0)                                               \
   V(Platform_PathSeparator, 0)                                                 \
@@ -82,6 +83,42 @@ void InternetAddress_Parse(Dart_NativeArguments arguments) {
   } else {
     DartEmbedder::SetNullReturn(arguments);
   }
+}
+
+void InternetAddress_Reverse(Dart_NativeArguments arguments) {
+  uint8_t* addr = NULL;
+  intptr_t addr_len = 0;
+  DartEmbedder::GetTypedDataListArgument(arguments, 0, &addr, &addr_len);
+  if (addr_len == 0) {
+    DartEmbedder::SetNullReturn(arguments);
+    return;
+  }
+  // IPv4 or IPv6 address length.
+  CHECK((addr_len == 4) || (addr_len == 16));
+  RawAddr raw_addr;
+  for (intptr_t i = 0; i < addr_len; i++) {
+    raw_addr.bytes[i] = addr[i];
+  }
+  free(addr);
+
+  const intptr_t kMaxHostLength = 1025;
+  char host[kMaxHostLength];
+  intptr_t error_code = 0;
+  const char* error_description = NULL;
+  bool success = InternetAddress::Reverse(raw_addr, addr_len,
+                                          &host[0], kMaxHostLength,
+                                          &error_code, &error_description);
+  // List of length 2.
+  // [0] -> code (0 indicates success).
+  // [1] -> error or host.
+  Dart_Handle result_list = Dart_NewList(2);
+  Dart_ListSetAt(result_list, 0, Dart_NewInteger(error_code));
+  if (success) {
+    Dart_ListSetAt(result_list, 1, DartEmbedder::NewCString(host));
+  } else {
+    Dart_ListSetAt(result_list, 1, DartEmbedder::NewCString(error_description));
+  }
+  Dart_SetReturnValue(arguments, result_list);
 }
 
 void Platform_NumberOfProcessors(Dart_NativeArguments arguments) {

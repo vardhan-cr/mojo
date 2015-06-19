@@ -22,6 +22,10 @@ tests(Application application, String url) {
       var localhost = new InternetAddress('0:0:0:0:0:0:0:1');
       expect(localhost, equals(InternetAddress.LOOPBACK_IP_V6));
     });
+    test('Reverse', () async {
+      var result = await InternetAddress.LOOPBACK_IP_V4.reverse();
+      expect(result.host, equals('localhost'));
+    });
     test('Lookup IPv4', () async {
       var result =
           await InternetAddress.lookup('localhost',
