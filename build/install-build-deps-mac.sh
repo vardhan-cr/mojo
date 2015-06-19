@@ -19,8 +19,8 @@ fi
 
 if [ -z $(which java) ] || ! java -version 2>&1 | grep -q ${JDK_VERSION}; then
   temp=$(
-    echo "** Make sure you have the Java JDK 7 installed:"
-    echo " http://download.oracle.com/otn-pub/java/jdk/7u79-b15/jdk-7u79-macosx-x64.dmg"
+    echo "** Download the Java JDK (Java SE Development Kit) 7:"
+    echo " http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html"
   )
 
   INSTRUCTIONS="${INSTRUCTIONS}\n$temp"
