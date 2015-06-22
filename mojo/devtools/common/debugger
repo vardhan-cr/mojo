@@ -51,6 +51,11 @@ def _tracing_stop(args):
   if not response:
     return 1
 
+  # https://github.com/domokit/mojo/issues/253
+  if int(response.headers['content-length']) != len(response.content):
+    print 'Response is truncated.'
+    return 1
+
   with open(file_name, "wb") as trace_file:
     trace_file.write('{"traceEvents":[')
     trace_file.write(response.content)
