@@ -40,4 +40,6 @@ func TestMessageHeader(t *testing.T) {
 	headerWithId := bindings.MessageHeader{1, 2, 3}
 	checkMessageEncoding(t, header, headerWithId)
 	checkMessageEncoding(t, headerWithId, header)
+	headerWithZeroId := bindings.MessageHeader{1, 2, 0}
+	checkMessageEncoding(t, headerWithZeroId, header)
 }
