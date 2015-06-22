@@ -168,8 +168,9 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
   // Helper for |OnReadMessage()|, handling messages for the client.
   void OnReadMessageForClient(scoped_ptr<MessageInTransit> message);
 
-  // Resets |channel_| to null (and sets |is_detached_from_channel_|). This may
-  // only be called if |channel_| is non-null. Must be called with |lock_| held.
+  // Resets |channel_| to null (and sets |channel_state_| to
+  // |ChannelState::DETACHED|). This may only be called if |channel_| is
+  // non-null. Must be called with |lock_| held.
   void ResetChannelNoLock();
 
   // Protects the members below.
@@ -190,15 +191,23 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
   scoped_refptr<ChannelEndpointClient> client_;
   unsigned client_port_;
 
+  // State with respect to interaction with the |Channel|.
+  enum class ChannelState {
+    // |AttachAndRun()| has not been called yet (|channel_| is null).
+    NOT_YET_ATTACHED,
+    // |AttachAndRun()| has been called, but not |DetachFromChannel()|
+    // (|channel_| is non-null and valid).
+    ATTACHED,
+    // |DetachFromChannel()| has been called (|channel_| is null).
+    DETACHED
+  };
+  ChannelState channel_state_;
   // |channel_| must be valid whenever it is non-null. Before |*channel_| gives
   // up its reference to this object, it must call |DetachFromChannel()|.
   // |local_id_| and |remote_id_| are valid if and only |channel_| is non-null.
   Channel* channel_;
   ChannelEndpointId local_id_;
   ChannelEndpointId remote_id_;
-  // This distinguishes the two cases of |channel| being null: not yet attached
-  // versus detached.
-  bool is_detached_from_channel_;
 
   // This queue is used before we're running on a channel and ready to send
   // messages to the channel.
