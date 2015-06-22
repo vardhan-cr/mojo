@@ -25,6 +25,7 @@ group("mojo") {
     "//mojo/dart/apptest:apptest_pkg",
     "//mojo/dart/mojom",
     "//mojo/dart/mojo_services",
+    "//mojo/dart/observatory_test",
     "//mojo/public",
     "//mojo/services",
     "//services",
