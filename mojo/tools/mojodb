@@ -27,7 +27,7 @@ import platform
 SUPPORTED_MIME_TYPES = [
     'text/html',
     'text/sky',
-    'text/plain',
+    'application/dart',
 ]
 
 DEFAULT_SKY_COMMAND_PORT = 7777
@@ -166,7 +166,7 @@ class SkyDebugger(object):
         # not a magical "configuration" name.
         configuration = os.path.basename(os.path.normpath(self.paths.build_dir))
         server_root = self._server_root_for_url(args.url_or_path)
-        return SkyServer(SKY_SERVER_PORT, configuration, server_root, packages_root)
+        return SkyServer(SKY_SERVER_PORT, server_root, packages_root)
 
     def _create_paths_for_build_dir(self, build_dir):
         # skypy.paths.Paths takes a root-relative build_dir argument. :(
