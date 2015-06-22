@@ -4,7 +4,6 @@
 
 import("//build/config/android/rules.gni")
 import("//mojo/public/mojo_application.gni")
-import("//mojo/public/tools/bindings/mojom.gni")
 
 shared_library("libjava_handler") {
   deps = [
@@ -61,10 +60,4 @@ android_standalone_library("content_handler_java_lib") {
 mojo_android_application("java_handler") {
   input_so = "$root_out_dir/lib.stripped/libjava_handler.so"
   input_dex_jar = dex_output_path
-}
-
-mojom("bindings") {
-  sources = [
-    "intent_receiver.mojom",
-  ]
 }

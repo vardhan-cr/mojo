@@ -13,7 +13,6 @@
 #include "mojo/public/cpp/application/interface_factory_impl.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
-#include "shell/android/intent_receiver_manager_factory.h"
 
 namespace base {
 class FilePath;
@@ -44,7 +43,6 @@ class AndroidHandler : public mojo::ApplicationDelegate,
                           const base::Closure& callback);
 
   mojo::ContentHandlerFactory content_handler_factory_;
-  IntentReceiverManagerFactory intent_receiver_manager_factory_;
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   scoped_refptr<base::SingleThreadTaskRunner> handler_task_runner_;
 

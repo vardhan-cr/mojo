@@ -24,6 +24,7 @@
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"
+#include "shell/android/java_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
 #include "shell/application_manager/application_loader.h"
@@ -112,9 +113,17 @@ void ConfigureAndroidServices(Context* context) {
           base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:android_handler"));
 
-  // By default, the keyboard is handled by the native_viewport_service.
-  context->url_resolver()->AddURLMapping(GURL("mojo:keyboard"),
-                                         GURL("mojo:native_viewport_service"));
+  // Register java applications.
+  base::android::ScopedJavaGlobalRef<jobject> java_application_registry(
+      JavaApplicationLoader::CreateJavaApplicationRegistry());
+  for (const auto& url : JavaApplicationLoader::GetApplicationURLs(
+           java_application_registry.obj())) {
+    context->application_manager()->SetLoaderForURL(
+        make_scoped_ptr(
+            new JavaApplicationLoader(java_application_registry, url)),
+        GURL(url));
+  }
+
   // By default, the authenticated_network_service is handled by the
   // authentication service.
   context->url_resolver()->AddURLMapping(

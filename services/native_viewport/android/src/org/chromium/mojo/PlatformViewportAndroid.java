@@ -16,7 +16,6 @@ import android.view.inputmethod.InputConnection;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
-
 import org.chromium.mojo.keyboard.KeyboardServiceImpl;
 
 /**
@@ -32,6 +31,7 @@ public class PlatformViewportAndroid extends SurfaceView {
     public static PlatformViewportAndroid createForActivity(
             Activity activity, long nativeViewport) {
         PlatformViewportAndroid rv = new PlatformViewportAndroid(activity, nativeViewport);
+        KeyboardServiceImpl.setActiveView(rv);
         activity.setContentView(rv);
         return rv;
     }

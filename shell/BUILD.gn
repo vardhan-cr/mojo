@@ -176,12 +176,8 @@ source_set("parent_lib") {
       "android/android_handler.h",
       "android/android_handler_loader.cc",
       "android/android_handler_loader.h",
-      "android/intent_receiver_manager_factory.cc",
-      "android/intent_receiver_manager_factory.h",
-      "android/intent_receiver_manager_impl.cc",
-      "android/intent_receiver_manager_impl.h",
-      "android/keyboard_impl.cc",
-      "android/keyboard_impl.h",
+      "android/java_application_loader.cc",
+      "android/java_application_loader.h",
       "android/native_viewport_application_loader.cc",
       "android/native_viewport_application_loader.h",
       "android/ui_application_loader_android.cc",
@@ -194,9 +190,7 @@ source_set("parent_lib") {
       "//mojo/application:content_handler",
       "//mojo/services/content_handler/public/interfaces",
       "//mojo/services/gpu/public/interfaces",
-      "//mojo/services/keyboard/public/interfaces",
       "//mojo/services/native_viewport/public/interfaces",
-      "//services/android:bindings",
       "//services/gles2",
       "//services/native_viewport:lib",
     ]
@@ -234,8 +228,7 @@ if (is_android) {
     sources = [
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo/shell/Bootstrap.java",
-      "android/apk/src/org/chromium/mojo/shell/IntentReceiverRegistry.java",
-      "android/apk/src/org/chromium/mojo/shell/Keyboard.java",
+      "android/apk/src/org/chromium/mojo/shell/JavaApplicationRegistry.java",
       "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
       "android/tests/src/org/chromium/mojo/shell/ShellTestBase.java",
     ]
@@ -277,10 +270,11 @@ if (is_android) {
   android_library("java") {
     java_files = [
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
-      "android/apk/src/org/chromium/mojo/shell/IntentReceiverService.java",
       "android/apk/src/org/chromium/mojo/shell/FileHelper.java",
       "android/apk/src/org/chromium/mojo/shell/IntentReceiverRegistry.java",
-      "android/apk/src/org/chromium/mojo/shell/Keyboard.java",
+      "android/apk/src/org/chromium/mojo/shell/IntentReceiverService.java",
+      "android/apk/src/org/chromium/mojo/shell/JavaApplicationRegistry.java",
+      "android/apk/src/org/chromium/mojo/shell/KeyboardFactory.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellApplication.java",
       "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
@@ -290,9 +284,12 @@ if (is_android) {
       ":resources",
       "//base:base_java",
       "//mojo/android:system_java",
+      "//mojo/public/interfaces/application:application_java",
+      "//mojo/public/java:application",
       "//mojo/public/java:bindings",
       "//mojo/public/java:system",
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
+      "//services/intent_receiver:bindings_java",
       "//services/keyboard",
     ]
   }

@@ -7,31 +7,27 @@
 #include "base/android/jni_android.h"
 #include "base/android/jni_registrar.h"
 #include "base/bind.h"
+#include "mojo/android/system/base_run_loop.h"
 #include "mojo/android/system/core_impl.h"
 #include "services/native_viewport/platform_viewport_android.h"
 #include "shell/android/android_handler.h"
-#include "shell/android/intent_receiver_manager_impl.h"
-#include "shell/android/keyboard_impl.h"
+#include "shell/android/java_application_loader.h"
 #include "shell/android/main.h"
 
 namespace {
 
 base::android::RegistrationMethod kMojoRegisteredMethods[] = {
+    {"Base", base::android::RegisterJni},
+    {"Core", mojo::android::RegisterCoreImpl},
+    {"BaseRunLoop", mojo::android::RegisterBaseRunLoop},
     {"AndroidHandler", shell::RegisterAndroidHandlerJni},
-    {"IntentReceiverRegistry", shell::RegisterIntentReceiverRegistry},
-    {"Keyboard", shell::RegisterKeyboardJni},
     {"PlatformViewportAndroid",
      native_viewport::PlatformViewportAndroid::Register},
     {"ShellMain", shell::RegisterShellMain},
+    {"JavaApplicationLoader", shell::JavaApplicationLoader::RegisterJni},
 };
 
 bool RegisterJNI(JNIEnv* env) {
-  if (!base::android::RegisterJni(env))
-    return false;
-
-  if (!mojo::android::RegisterCoreImpl(env))
-    return false;
-
   return RegisterNativeMethods(env, kMojoRegisteredMethods,
                                arraysize(kMojoRegisteredMethods));
 }

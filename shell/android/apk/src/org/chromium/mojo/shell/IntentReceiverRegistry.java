@@ -9,22 +9,25 @@ import android.content.Intent;
 import android.os.Parcel;
 
 import org.chromium.base.ApplicationStatus;
-import org.chromium.base.CalledByNative;
-import org.chromium.base.JNINamespace;
+import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.bindings.ConnectionErrorHandler;
+import org.chromium.mojo.bindings.InterfaceRequest;
+import org.chromium.mojo.intent.IntentReceiver;
+import org.chromium.mojo.intent.IntentReceiverManager;
+import org.chromium.mojo.system.MojoException;
+import org.chromium.mojo.system.RunLoop;
+import org.chromium.mojo.system.impl.CoreImpl;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Java helper class for services/android/intent_receiver.mojom. This class creates intents for
- * privileged mojo applications and routes received intents back to the mojo application. The
- * implementation of the IntentReceiverManager service is in C++, but calls back to this class to
- * access the android framework.
+ * Java implementation for services/android/intent_receiver.mojom. This class creates intents for
+ * privileged mojo applications and routes received intents back to the mojo application.
  */
-@JNINamespace("shell")
-public class IntentReceiverRegistry {
+public class IntentReceiverRegistry
+        implements IntentReceiverManager, ServiceFactoryBinder<IntentReceiverManager> {
     private static class LazyHolder {
         private static final IntentReceiverRegistry INSTANCE = new IntentReceiverRegistry();
     }
@@ -36,100 +39,147 @@ public class IntentReceiverRegistry {
         return LazyHolder.INSTANCE;
     }
 
-    private final Map<String, Long> mReceiversByUuid = new HashMap<>();
-    private final Map<Long, String> mUuidsByReceiver = new HashMap<>();
+    /**
+     * The runloop the service runs on.
+     */
+    private RunLoop mRunLoop = null;
+    private final Map<String, IntentReceiver> mReceiversByUuid = new HashMap<>();
+    private final Map<IntentReceiver, String> mUuidsByReceiver = new HashMap<>();
     private int mLastRequestCode = 0;
 
     private IntentReceiverRegistry() {}
 
-    public void onIntentReceived(Intent intent) {
+    public void onIntentReceived(final Intent intent) {
         String uuid = intent.getAction();
         if (uuid == null) return;
-        Long ptr = mReceiversByUuid.get(uuid);
-        if (ptr == null) return;
-        nativeOnIntentReceived(ptr, true, intentToBuffer(intent));
+        final IntentReceiver receiver = mReceiversByUuid.get(uuid);
+        if (receiver == null) return;
+        mRunLoop.postDelayedTask(new Runnable() {
+            @Override
+            public void run() {
+                receiver.onIntent(intentToBytes(intent));
+            }
+        }, 0);
     }
 
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         String uuid = Integer.toString(requestCode);
         if (uuid == null) return;
-        Long ptr = mReceiversByUuid.get(uuid);
-        if (ptr == null) return;
-        if (resultCode == Activity.RESULT_OK) {
-            nativeOnIntentReceived(ptr, true, intentToBuffer(data));
-        } else {
-            nativeOnIntentReceived(ptr, false, null);
-        }
+        final IntentReceiver receiver = mReceiversByUuid.get(uuid);
+        if (receiver == null) return;
+        mRunLoop.postDelayedTask(new Runnable() {
+            @Override
+            public void run() {
+                if (resultCode == Activity.RESULT_OK) {
+                    receiver.onIntent(intentToBytes(data));
+                } else {
+                    receiver.onIntent(null);
+                }
+                receiver.close();
+            }
+        }, 0);
+        unregisterReceiver(receiver);
     }
 
-    private static ByteBuffer intentToBuffer(Intent intent) {
+    private static byte[] intentToBytes(Intent intent) {
         Parcel p = Parcel.obtain();
         intent.writeToParcel(p, 0);
         p.setDataPosition(0);
-        byte[] b = p.marshall();
-        ByteBuffer result = ByteBuffer.allocateDirect(b.length);
-        result.put(b);
-        result.flip();
-        return result;
+        return p.marshall();
     }
 
-    private static Intent bufferToIntent(ByteBuffer buffer) {
-        Parcel p = Parcel.obtain();
-        byte[] bytes;
-        if (buffer.hasArray()) {
-            bytes = buffer.array();
-        } else {
-            bytes = new byte[buffer.limit()];
-            buffer.get(bytes, 0, buffer.limit());
-        }
-        p.unmarshall(bytes, 0, bytes.length);
-        p.setDataPosition(0);
-        Intent result = Intent.CREATOR.createFromParcel(p);
-        p.recycle();
-        return result;
-    }
-
-    @CalledByNative
-    private static ByteBuffer registerIntentReceiver(long intentDispatcher) {
-        IntentReceiverRegistry registry = getInstance();
+    /**
+     * @see IntentReceiverManager#registerIntentReceiver(IntentReceiver,
+     *      RegisterIntentReceiverResponse)
+     */
+    @Override
+    public void registerIntentReceiver(
+            IntentReceiver receiver, RegisterIntentReceiverResponse callback) {
+        registerErrorHandler(receiver);
         String uuid = UUID.randomUUID().toString();
         Intent intent = new Intent(
                 uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
-        registry.mReceiversByUuid.put(uuid, intentDispatcher);
-        registry.mUuidsByReceiver.put(intentDispatcher, uuid);
-        return intentToBuffer(intent);
+        mReceiversByUuid.put(uuid, receiver);
+        mUuidsByReceiver.put(receiver, uuid);
+        callback.call(intentToBytes(intent));
     }
 
-    @CalledByNative
-    private static ByteBuffer registerActivityResultReceiver(long intentDispatcher) {
-        IntentReceiverRegistry registry = getInstance();
+    /**
+     * @see IntentReceiverManager#registerActivityResultReceiver(IntentReceiver,
+     *      RegisterActivityResultReceiverResponse)
+     */
+    @Override
+    public void registerActivityResultReceiver(
+            IntentReceiver receiver, RegisterActivityResultReceiverResponse callback) {
+        registerErrorHandler(receiver);
         String uuid;
         // Handle unlikely overflows.
         do {
-            ++registry.mLastRequestCode;
-            if (registry.mLastRequestCode < 1) {
-                registry.mLastRequestCode = 1;
+            ++mLastRequestCode;
+            if (mLastRequestCode < 1) {
+                mLastRequestCode = 1;
             }
-            uuid = Integer.toString(registry.mLastRequestCode);
-        } while (registry.mReceiversByUuid.keySet().contains(uuid));
-        registry.mReceiversByUuid.put(uuid, intentDispatcher);
-        registry.mUuidsByReceiver.put(intentDispatcher, uuid);
+            uuid = Integer.toString(mLastRequestCode);
+        } while (mReceiversByUuid.keySet().contains(uuid));
+        mReceiversByUuid.put(uuid, receiver);
+        mUuidsByReceiver.put(receiver, uuid);
         Intent intent = new Intent(
                 uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
         intent.addCategory(IntentReceiverService.CATEGORY_START_ACTIVITY_FOR_RESULT);
-        return intentToBuffer(intent);
+        callback.call(intentToBytes(intent));
     }
 
-    @CalledByNative
-    private static void unregisterReceiver(long intentDispatcher) {
+    /**
+     * @see IntentReceiverManager#close()
+     */
+    @Override
+    public void close() {}
+
+    /**
+     * @see IntentReceiverManager#onConnectionError(MojoException)
+     */
+    @Override
+    public void onConnectionError(MojoException e) {}
+
+    /**
+     * @see ServiceFactoryBinder#bind(InterfaceRequest)
+     */
+    @Override
+    public void bind(InterfaceRequest<IntentReceiverManager> request) {
+        if (mRunLoop == null) {
+            mRunLoop = CoreImpl.getInstance().getCurrentRunLoop();
+        }
+        assert mRunLoop == CoreImpl.getInstance().getCurrentRunLoop();
+        IntentReceiverManager.MANAGER.bind(this, request);
+    }
+
+    /**
+     * @see ServiceFactoryBinder#getInterfaceName()
+     */
+    @Override
+    public String getInterfaceName() {
+        return IntentReceiverManager.MANAGER.getName();
+    }
+
+    private void unregisterReceiver(IntentReceiver receiver) {
         IntentReceiverRegistry registry = getInstance();
-        String uuid = registry.mUuidsByReceiver.get(intentDispatcher);
+        String uuid = registry.mUuidsByReceiver.get(receiver);
         if (uuid != null) {
-            registry.mUuidsByReceiver.remove(intentDispatcher);
+            registry.mUuidsByReceiver.remove(receiver);
             registry.mReceiversByUuid.remove(uuid);
         }
     }
 
-    private static native void nativeOnIntentReceived(
-            long intentDispatcher, boolean accepted, ByteBuffer intent);
+    private void registerErrorHandler(final IntentReceiver receiver) {
+        if (receiver instanceof IntentReceiver.Proxy) {
+            IntentReceiver.Proxy proxy = (IntentReceiver.Proxy) receiver;
+            proxy.getProxyHandler().setErrorHandler(new ConnectionErrorHandler() {
+
+                @Override
+                public void onConnectionError(MojoException e) {
+                    unregisterReceiver(receiver);
+                }
+            });
+        }
+    }
 }

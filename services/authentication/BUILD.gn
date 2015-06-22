@@ -23,7 +23,7 @@ if (is_android) {
       "//mojo/services/authenticating_url_loader_interceptor/public/interfaces:interfaces_java",
       "//mojo/services/authentication/public/interfaces:interfaces_java",
       "//mojo/services/network/public/interfaces:interfaces_java",
-      "//services/android:bindings_java",
+      "//services/intent_receiver:bindings_java",
       "//third_party/android_tools:google_play_services_default_java",
     ]
   }

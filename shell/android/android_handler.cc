@@ -132,7 +132,6 @@ void AndroidHandler::Initialize(mojo::ApplicationImpl* app) {
 bool AndroidHandler::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
   connection->AddService(&content_handler_factory_);
-  connection->AddService(&intent_receiver_manager_factory_);
   return true;
 }
 

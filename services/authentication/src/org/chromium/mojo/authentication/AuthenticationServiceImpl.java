@@ -89,7 +89,7 @@ public class AuthenticationServiceImpl
         mContext = (Activity) context;
         mConsumerURL = consumerURL;
         mIntentReceiverManager = ShellHelper.connectToService(
-                core, shell, "mojo:android_handler", IntentReceiverManager.MANAGER);
+                core, shell, "mojo:intent_receiver", IntentReceiverManager.MANAGER);
     }
 
     /**

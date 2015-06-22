@@ -21,7 +21,7 @@ if (is_android) {
       "//mojo/public/interfaces/application:application_java",
       "//mojo/public/java:application",
       "//mojo/services/notifications/public/interfaces:interfaces_java",
-      "//services/android:bindings_java",
+      "//services/intent_receiver:bindings_java",
     ]
   }
 

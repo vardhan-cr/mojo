@@ -7,7 +7,6 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/gles2/gpu_state.h"
 #include "services/native_viewport/native_viewport_impl.h"
-#include "shell/android/keyboard_impl.h"
 
 using mojo::ApplicationConnection;
 using mojo::InterfaceRequest;
@@ -31,7 +30,6 @@ bool NativeViewportApplicationLoader::ConfigureIncomingConnection(
     ApplicationConnection* connection) {
   connection->AddService<mojo::NativeViewport>(this);
   connection->AddService<mojo::Gpu>(this);
-  connection->AddService<keyboard::KeyboardService>(this);
   return true;
 }
 
@@ -41,12 +39,6 @@ void NativeViewportApplicationLoader::Create(
   if (!gpu_state_)
     gpu_state_ = new gles2::GpuState;
   new native_viewport::NativeViewportImpl(false, gpu_state_, request.Pass());
-}
-
-void NativeViewportApplicationLoader::Create(
-    ApplicationConnection* connection,
-    InterfaceRequest<keyboard::KeyboardService> request) {
-  KeyboardImpl::CreateKeyboardImpl(request.Pass());
 }
 
 void NativeViewportApplicationLoader::Create(
