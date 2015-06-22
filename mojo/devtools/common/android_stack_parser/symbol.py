@@ -37,13 +37,18 @@ TOOLCHAIN_INFO = None
 def Uname():
   """'uname' for constructing prebuilt/<...> and out/host/<...> paths."""
   uname = os.uname()[0]
+  proc = os.uname()[-1]
   if uname == "Darwin":
-    proc = os.uname()[-1]
-    if proc == "i386" or proc == "x86_64":
+    if proc == "i386":
       return "darwin-x86"
+    elif proc == "x86_64":
+      return "darwin-x86_64"
     return "darwin-ppc"
   if uname == "Linux":
-    return "linux-x86"
+    if proc == "i386":
+      return "linux-x86"
+    else:
+      return "linux-x86_64"
   return uname
 
 def ToolPath(tool, toolchain_info=None):
@@ -68,8 +73,8 @@ def ToolPath(tool, toolchain_info=None):
   else:
     raise Exception("Could not find tool chain")
 
-  toolchain_subdir = (
-      "toolchains/%s/prebuilt/linux-x86_64/bin" % (toolchain_source))
+  toolchain_subdir = ("toolchains/%s/prebuilt/%s/bin" % (
+                      toolchain_source, Uname()))
 
   return os.path.join(NDK_DIR,
                       toolchain_subdir,
