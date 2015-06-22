@@ -135,9 +135,7 @@ def main():
 
     # Copy sky/examples into examples/
     copy(src_path('sky/examples'), deploy_path('examples'), examples_filter)
-
-    copy(src_path('sky/sky_home'), args.deploy_root)
-    copy(src_path('sky/sky_home.dart'), args.deploy_root)
+    copy(src_path('sky/home.dart'), args.deploy_root)
 
     # Deep copy packages/. This follows symlinks and flattens them.
     packages_root = deploy_path('packages')
