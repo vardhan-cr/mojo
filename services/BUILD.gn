@@ -4,6 +4,7 @@
 
 group("services") {
   deps = [
+    "//services/asset_bundle",
     "//services/authenticating_url_loader_interceptor",
     "//services/authentication",
     "//services/clipboard",
@@ -20,10 +21,10 @@ group("services") {
     "//services/native_viewport",
     "//services/prediction",
     "//services/reaper",
-    "//services/url_response_disk_cache",
     "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",
+    "//services/url_response_disk_cache",
     "//services/view_manager",
     "//services/window_manager",
   ]
