@@ -60,7 +60,7 @@ char(&ArraySizeHelper(const T(&array)[N]))[N];
 //   };
 //
 // In the .cc file:
-//   STATIC_CONST_MEMBER_DEFINITION const int Foo::kBar;
+//   MOJO_STATIC_CONST_MEMBER_DEFINITION const int Foo::kBar;
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #define MOJO_STATIC_CONST_MEMBER_DEFINITION __declspec(selectany)
 #else
