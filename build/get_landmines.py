@@ -72,6 +72,7 @@ def print_landmines():
   print 'Remove NaCl toolchains from the output dir (crbug.com/456902)'
   if platform() == 'ios':
     print 'Clobber iOS to workaround Xcode deps bug (crbug.com/485435)'
+  print 'Clobber: https://github.com/domokit/mojo/issues/269'
 
 
 def main():
