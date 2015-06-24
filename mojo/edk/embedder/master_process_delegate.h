@@ -5,7 +5,6 @@
 #ifndef MOJO_EDK_EMBEDDER_MASTER_PROCESS_DELEGATE_H_
 #define MOJO_EDK_EMBEDDER_MASTER_PROCESS_DELEGATE_H_
 
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/process_delegate.h"
 #include "mojo/edk/embedder/slave_info.h"
 #include "mojo/edk/system/system_impl_export.h"
