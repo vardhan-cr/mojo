@@ -7,7 +7,6 @@
 #include <windows.h>
 
 #include "base/bind.h"
-#include "base/compiler_specific.h"
 #include "base/lazy_instance.h"
 #include "base/location.h"
 #include "base/logging.h"

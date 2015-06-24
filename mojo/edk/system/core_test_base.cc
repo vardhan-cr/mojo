@@ -6,7 +6,6 @@
 
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/system/configuration.h"

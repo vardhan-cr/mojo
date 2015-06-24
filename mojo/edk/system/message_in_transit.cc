@@ -8,7 +8,6 @@
 
 #include <ostream>
 
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "mojo/edk/system/configuration.h"
 #include "mojo/edk/system/transport_data.h"

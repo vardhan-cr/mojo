@@ -6,7 +6,6 @@
 
 #include <string.h>
 
-#include "base/compiler_specific.h"
 #include "base/logging.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/configuration.h"

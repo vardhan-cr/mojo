@@ -4,8 +4,6 @@
 
 #include "mojo/edk/system/channel_endpoint_id.h"
 
-#include "base/compiler_specific.h"
-
 namespace mojo {
 namespace system {
 
