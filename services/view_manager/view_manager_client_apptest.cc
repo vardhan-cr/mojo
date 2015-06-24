@@ -165,7 +165,6 @@ class ViewTracker : public ViewObserver {
     view_ = nullptr;
   }
 
-  int id_;
   View* view_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ViewTracker);
