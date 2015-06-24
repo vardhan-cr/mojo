@@ -17,20 +17,22 @@
   void operator=(const TypeName&) = delete
 
 // Used to calculate the number of elements in an array.
-// (See |arraysize()| in Chromium's base/basictypes.h for more details.)
+// (See |arraysize()| in Chromium's base/macros.h for more details.)
 namespace mojo {
+namespace internal {
 template <typename T, size_t N>
 char(&ArraySizeHelper(T(&array)[N]))[N];
 #if !defined(_MSC_VER)
 template <typename T, size_t N>
 char(&ArraySizeHelper(const T(&array)[N]))[N];
 #endif
+}  // namespace internal
 }  // namespace mojo
-#define MOJO_ARRAYSIZE(array) (sizeof(::mojo::ArraySizeHelper(array)))
+#define MOJO_ARRAYSIZE(array) (sizeof(::mojo::internal::ArraySizeHelper(array)))
 
 // Used to make a type move-only. See Chromium's base/move.h for more
-// details. The MoveOnlyTypeForCPP03 typedef is for Chromium's base/callback to
-// tell that this type is move-only.
+// details. The MoveOnlyTypeForCPP03 typedef is for Chromium's base/callback.h
+// to tell that this type is move-only.
 #define MOJO_MOVE_ONLY_TYPE(type)                                              \
  private:                                                                      \
   type(type&);                                                                 \
@@ -52,17 +54,28 @@ char(&ArraySizeHelper(const T(&array)[N]))[N];
 // information. This workaround does not appear to be necessary after VS2015.
 // Use like:
 //
-// In .h file:
+// In the .h file:
 //   struct Foo {
 //     static const int kBar = 5;
 //   };
 //
-// In .cc file:
+// In the .cc file:
 //   STATIC_CONST_MEMBER_DEFINITION const int Foo::kBar;
 #if defined(_MSC_VER) && _MSC_VER < 1900
 #define MOJO_STATIC_CONST_MEMBER_DEFINITION __declspec(selectany)
 #else
 #define MOJO_STATIC_CONST_MEMBER_DEFINITION
 #endif
+
+namespace mojo {
+
+// Used to explicitly mark the return value of a function as unused. (You this
+// if you are really sure you don't want to do anything with the return value of
+// a function marked with |MOJO_WARN_UNUSED_RESULT|.
+template <typename T>
+inline void ignore_result(const T&) {
+}
+
+}  // namespace mojo
 
 #endif  // MOJO_PUBLIC_CPP_SYSTEM_MACROS_H_
