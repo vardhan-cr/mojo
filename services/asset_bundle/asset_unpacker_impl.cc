@@ -10,8 +10,10 @@
 namespace mojo {
 namespace asset_bundle {
 
-AssetUnpackerImpl::AssetUnpackerImpl(InterfaceRequest<AssetUnpacker> request)
-    : binding_(this, request.Pass()) {
+AssetUnpackerImpl::AssetUnpackerImpl(
+    InterfaceRequest<AssetUnpacker> request,
+    scoped_refptr<base::TaskRunner> worker_runner)
+    : binding_(this, request.Pass()), worker_runner_(worker_runner.Pass()) {
 }
 
 AssetUnpackerImpl::~AssetUnpackerImpl() {
@@ -19,7 +21,7 @@ AssetUnpackerImpl::~AssetUnpackerImpl() {
 
 void AssetUnpackerImpl::UnpackZipStream(ScopedDataPipeConsumerHandle zipped,
                                         InterfaceRequest<AssetBundle> request) {
-  (new AssetUnpackerJob(request.Pass()))->Unpack(zipped.Pass());
+  (new AssetUnpackerJob(request.Pass(), worker_runner_))->Unpack(zipped.Pass());
 }
 
 }  // namespace asset_bundle

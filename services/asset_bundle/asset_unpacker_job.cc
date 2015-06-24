@@ -9,7 +9,6 @@
 #include "base/files/file_util.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
-#include "base/threading/worker_pool.h"
 #include "services/asset_bundle/asset_bundle_impl.h"
 #include "third_party/zlib/google/zip.h"
 
@@ -33,8 +32,12 @@ void UnzipAssets(
 
 }  // namespace
 
-AssetUnpackerJob::AssetUnpackerJob(InterfaceRequest<AssetBundle> asset_bundle)
-    : asset_bundle_(asset_bundle.Pass()), weak_factory_(this) {
+AssetUnpackerJob::AssetUnpackerJob(
+    InterfaceRequest<AssetBundle> asset_bundle,
+    scoped_refptr<base::TaskRunner> worker_runner)
+    : asset_bundle_(asset_bundle.Pass()),
+      worker_runner_(worker_runner.Pass()),
+      weak_factory_(this) {
 }
 
 AssetUnpackerJob::~AssetUnpackerJob() {
@@ -46,9 +49,7 @@ void AssetUnpackerJob::Unpack(ScopedDataPipeConsumerHandle zipped_assets) {
     delete this;
     return;
   }
-  scoped_refptr<base::TaskRunner> worker =
-      base::WorkerPool::GetTaskRunner(true);
-  common::CopyToFile(zipped_assets.Pass(), zip_path, worker.get(),
+  common::CopyToFile(zipped_assets.Pass(), zip_path, worker_runner_.get(),
                      base::Bind(&AssetUnpackerJob::OnZippedAssetsAvailable,
                                 weak_factory_.GetWeakPtr(), zip_path));
 }
@@ -64,19 +65,18 @@ void AssetUnpackerJob::OnZippedAssetsAvailable(const base::FilePath& zip_path,
     delete this;
     return;
   }
-  base::WorkerPool::PostTask(
+  worker_runner_->PostTask(
       FROM_HERE,
       base::Bind(&UnzipAssets, zip_path, base::Passed(asset_dir.Pass()),
                  base::MessageLoop::current()->task_runner(),
                  base::Bind(&AssetUnpackerJob::OnUnzippedAssetsAvailable,
-                            weak_factory_.GetWeakPtr())),
-      true);
+                            weak_factory_.GetWeakPtr())));
 }
 
 void AssetUnpackerJob::OnUnzippedAssetsAvailable(
     scoped_ptr<base::ScopedTempDir> asset_dir) {
   if (asset_dir)
-    new AssetBundleImpl(asset_bundle_.Pass(), asset_dir.Pass());
+    new AssetBundleImpl(asset_bundle_.Pass(), asset_dir.Pass(), worker_runner_);
 
   delete this;
 }

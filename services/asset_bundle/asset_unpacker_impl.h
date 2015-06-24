@@ -6,6 +6,7 @@
 #define SERVICES_ASSET_BUNDLE_ASSET_UNPACKER_IMPL_H_
 
 #include "base/macros.h"
+#include "base/task_runner.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/data_pipe.h"
@@ -16,7 +17,8 @@ namespace asset_bundle {
 
 class AssetUnpackerImpl : public AssetUnpacker {
  public:
-  AssetUnpackerImpl(InterfaceRequest<AssetUnpacker> request);
+  AssetUnpackerImpl(InterfaceRequest<AssetUnpacker> request,
+                    scoped_refptr<base::TaskRunner> worker_runner);
   ~AssetUnpackerImpl() override;
 
   // AssetUnpacker implementation
@@ -25,6 +27,8 @@ class AssetUnpackerImpl : public AssetUnpacker {
 
  private:
   StrongBinding<AssetUnpacker> binding_;
+
+  scoped_refptr<base::TaskRunner> worker_runner_;
 
   DISALLOW_COPY_AND_ASSIGN(AssetUnpackerImpl);
 };

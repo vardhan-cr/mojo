@@ -8,7 +8,6 @@
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
-#include "base/threading/worker_pool.h"
 #include "mojo/common/data_pipe_utils.h"
 
 namespace mojo {
@@ -21,8 +20,11 @@ void Ignored(bool) {
 }  // namespace
 
 AssetBundleImpl::AssetBundleImpl(InterfaceRequest<AssetBundle> request,
-                                 scoped_ptr<base::ScopedTempDir> asset_dir)
-    : binding_(this, request.Pass()), asset_dir_(asset_dir.Pass()) {
+                                 scoped_ptr<base::ScopedTempDir> asset_dir,
+                                 scoped_refptr<base::TaskRunner> worker_runner)
+    : binding_(this, request.Pass()),
+      asset_dir_(asset_dir.Pass()),
+      worker_runner_(worker_runner.Pass()) {
 }
 
 AssetBundleImpl::~AssetBundleImpl() {
@@ -43,10 +45,8 @@ void AssetBundleImpl::GetAsStream(
     return;
   }
 
-  scoped_refptr<base::TaskRunner> worker =
-      base::WorkerPool::GetTaskRunner(true);
-  common::CopyFromFile(asset_path, pipe.producer_handle.Pass(), 0, worker.get(),
-                       base::Bind(&Ignored));
+  common::CopyFromFile(asset_path, pipe.producer_handle.Pass(), 0,
+                       worker_runner_.get(), base::Bind(&Ignored));
 }
 
 }  // namespace asset_bundle

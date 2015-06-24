@@ -8,6 +8,7 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/task_runner.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/system/data_pipe.h"
@@ -19,7 +20,8 @@ namespace asset_bundle {
 class AssetBundleImpl : public AssetBundle {
  public:
   AssetBundleImpl(InterfaceRequest<AssetBundle> request,
-                  scoped_ptr<base::ScopedTempDir> asset_dir);
+                  scoped_ptr<base::ScopedTempDir> asset_dir,
+                  scoped_refptr<base::TaskRunner> worker_runner);
   ~AssetBundleImpl() override;
 
   // AssetBundle implementation
@@ -30,6 +32,7 @@ class AssetBundleImpl : public AssetBundle {
  private:
   StrongBinding<AssetBundle> binding_;
   scoped_ptr<base::ScopedTempDir> asset_dir_;
+  scoped_refptr<base::TaskRunner> worker_runner_;
 
   DISALLOW_COPY_AND_ASSIGN(AssetBundleImpl);
 };

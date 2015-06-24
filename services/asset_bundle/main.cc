@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "base/macros.h"
+#include "base/threading/sequenced_worker_pool.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -29,8 +30,25 @@ class AssetBundleApp : public ApplicationDelegate,
   // |InterfaceFactory<AssetUnpacker>| implementation:
   void Create(ApplicationConnection* connection,
               InterfaceRequest<AssetUnpacker> request) override {
-    new AssetUnpackerImpl(request.Pass());
+    // Lazily initialize |sequenced_worker_pool_|. (We can't create it in the
+    // constructor, since AtExitManager is only created in
+    // ApplicationRunnerChromium::Run().)
+    if (!sequenced_worker_pool_) {
+      // TODO(vtl): What's the "right" way to choose the maximum number of
+      // threads?
+      sequenced_worker_pool_ =
+          new base::SequencedWorkerPool(4, "AssetBundleWorker");
+    }
+
+    new AssetUnpackerImpl(
+        request.Pass(),
+        sequenced_worker_pool_->GetTaskRunnerWithShutdownBehavior(
+            base::SequencedWorkerPool::SKIP_ON_SHUTDOWN));
   }
+
+  // We don't really need the "sequenced" part, but we need to be able to shut
+  // down our worker pool.
+  scoped_refptr<base::SequencedWorkerPool> sequenced_worker_pool_;
 
   DISALLOW_COPY_AND_ASSIGN(AssetBundleApp);
 };
