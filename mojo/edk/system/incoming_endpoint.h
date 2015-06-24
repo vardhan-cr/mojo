@@ -7,12 +7,12 @@
 
 #include <stddef.h>
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 struct MojoCreateDataPipeOptions;
 
@@ -55,7 +55,7 @@ class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint : public ChannelEndpointClient {
   scoped_refptr<ChannelEndpoint> endpoint_;
   MessageInTransitQueue message_queue_;
 
-  DISALLOW_COPY_AND_ASSIGN(IncomingEndpoint);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(IncomingEndpoint);
 };
 
 }  // namespace system

@@ -10,7 +10,6 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/test/test_io_thread.h"
 #include "base/test/test_timeouts.h"
@@ -26,6 +25,7 @@
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
+#include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -116,7 +116,7 @@ class RemoteDataPipeImplTest : public testing::Test {
   scoped_refptr<Channel> channels_[2];
   scoped_refptr<MessagePipe> message_pipes_[2];
 
-  DISALLOW_COPY_AND_ASSIGN(RemoteDataPipeImplTest);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(RemoteDataPipeImplTest);
 };
 
 // These tests are heavier-weight than ideal. They test remote data pipes by

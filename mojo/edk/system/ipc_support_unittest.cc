@@ -11,7 +11,6 @@
 #include "base/command_line.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/macros.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/test/test_io_thread.h"
 #include "base/test/test_timeouts.h"
@@ -29,6 +28,7 @@
 #include "mojo/edk/system/waiter.h"
 #include "mojo/edk/test/multiprocess_test_helper.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -59,7 +59,7 @@ class TestMasterProcessDelegate : public embedder::MasterProcessDelegate {
 
   base::WaitableEvent on_slave_disconnect_event_;
 
-  DISALLOW_COPY_AND_ASSIGN(TestMasterProcessDelegate);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(TestMasterProcessDelegate);
 };
 
 class TestSlaveProcessDelegate : public embedder::SlaveProcessDelegate {
@@ -73,7 +73,7 @@ class TestSlaveProcessDelegate : public embedder::SlaveProcessDelegate {
 
   void OnMasterDisconnect() override { NOTREACHED(); }
 
-  DISALLOW_COPY_AND_ASSIGN(TestSlaveProcessDelegate);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(TestSlaveProcessDelegate);
 };
 
 // Represents the master's side of its connection to a slave.
@@ -136,7 +136,7 @@ class TestSlaveConnection {
   base::WaitableEvent event_;
   embedder::ScopedPlatformHandle slave_platform_handle_;
 
-  DISALLOW_COPY_AND_ASSIGN(TestSlaveConnection);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(TestSlaveConnection);
 };
 
 // Encapsulates the state of a slave. (Note, however, that we share a
@@ -200,7 +200,7 @@ class TestSlave {
   IPCSupport slave_ipc_support_;
   base::WaitableEvent event_;
 
-  DISALLOW_COPY_AND_ASSIGN(TestSlave);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(TestSlave);
 };
 
 class IPCSupportTest : public testing::Test {
@@ -239,7 +239,7 @@ class IPCSupportTest : public testing::Test {
   TestMasterProcessDelegate master_process_delegate_;
   IPCSupport master_ipc_support_;
 
-  DISALLOW_COPY_AND_ASSIGN(IPCSupportTest);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(IPCSupportTest);
 };
 
 // Tests writing a message (containing just data) to |write_mp| and then reading

@@ -10,7 +10,6 @@
 
 #include <vector>
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
@@ -24,6 +23,7 @@
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/message_pipe.h"
 #include "mojo/public/c/system/types.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -139,7 +139,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe : public ChannelEndpointClient {
   base::Lock lock_;  // Protects the following members.
   scoped_ptr<MessagePipeEndpoint> endpoints_[2];
 
-  DISALLOW_COPY_AND_ASSIGN(MessagePipe);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(MessagePipe);
 };
 
 }  // namespace system

@@ -5,13 +5,13 @@
 #ifndef MOJO_EDK_SYSTEM_REMOTE_PRODUCER_DATA_PIPE_IMPL_H_
 #define MOJO_EDK_SYSTEM_REMOTE_PRODUCER_DATA_PIPE_IMPL_H_
 
-#include "base/macros.h"
 #include "base/memory/aligned_memory.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -111,7 +111,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl : public DataPipeImpl {
   size_t start_index_;
   size_t current_num_bytes_;
 
-  DISALLOW_COPY_AND_ASSIGN(RemoteProducerDataPipeImpl);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(RemoteProducerDataPipeImpl);
 };
 
 }  // namespace system

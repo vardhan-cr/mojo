@@ -9,7 +9,8 @@
 namespace mojo {
 namespace system {
 
-STATIC_CONST_MEMBER_DEFINITION const uint32_t ChannelEndpointId::kRemoteFlag;
+MOJO_STATIC_CONST_MEMBER_DEFINITION const uint32_t
+    ChannelEndpointId::kRemoteFlag;
 
 ChannelEndpointId LocalChannelEndpointIdGenerator::GetNext() {
   ChannelEndpointId rv = next_;

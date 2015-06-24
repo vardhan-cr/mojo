@@ -5,11 +5,11 @@
 #ifndef MOJO_EDK_SYSTEM_SHARED_BUFFER_DISPATCHER_H_
 #define MOJO_EDK_SYSTEM_SHARED_BUFFER_DISPATCHER_H_
 
-#include "base/macros.h"
 #include "mojo/edk/embedder/platform_shared_buffer.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/simple_dispatcher.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 
@@ -94,7 +94,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher : public SimpleDispatcher {
 
   scoped_refptr<embedder::PlatformSharedBuffer> shared_buffer_;
 
-  DISALLOW_COPY_AND_ASSIGN(SharedBufferDispatcher);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(SharedBufferDispatcher);
 };
 
 }  // namespace system

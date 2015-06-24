@@ -7,10 +7,10 @@
 
 #include <deque>
 
-#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -52,7 +52,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransitQueue {
   // |scoped_ptr|/|unique_ptr|s.
   std::deque<MessageInTransit*> queue_;
 
-  DISALLOW_COPY_AND_ASSIGN(MessageInTransitQueue);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(MessageInTransitQueue);
 };
 
 }  // namespace system

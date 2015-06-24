@@ -8,7 +8,6 @@
 #include <deque>
 #include <vector>
 
-#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/synchronization/lock.h"
@@ -16,6 +15,7 @@
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace base {
 class MessageLoopForIO;
@@ -142,7 +142,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
     std::vector<char> buffer_;
     size_t num_valid_bytes_;
 
-    DISALLOW_COPY_AND_ASSIGN(ReadBuffer);
+    MOJO_DISALLOW_COPY_AND_ASSIGN(ReadBuffer);
   };
 
   class MOJO_SYSTEM_IMPL_EXPORT WriteBuffer {
@@ -193,7 +193,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
     // write.
     size_t data_offset_;
 
-    DISALLOW_COPY_AND_ASSIGN(WriteBuffer);
+    MOJO_DISALLOW_COPY_AND_ASSIGN(WriteBuffer);
   };
 
   RawChannel();
@@ -323,7 +323,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // are only used/invalidated on the I/O thread.
   base::WeakPtrFactory<RawChannel> weak_ptr_factory_;
 
-  DISALLOW_COPY_AND_ASSIGN(RawChannel);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(RawChannel);
 };
 
 }  // namespace system

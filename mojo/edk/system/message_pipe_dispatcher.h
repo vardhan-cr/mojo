@@ -5,11 +5,11 @@
 #ifndef MOJO_EDK_SYSTEM_MESSAGE_PIPE_DISPATCHER_H_
 #define MOJO_EDK_SYSTEM_MESSAGE_PIPE_DISPATCHER_H_
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/system/dispatcher.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -107,7 +107,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipeDispatcher : public Dispatcher {
   scoped_refptr<MessagePipe> message_pipe_;  // This will be null if closed.
   unsigned port_;
 
-  DISALLOW_COPY_AND_ASSIGN(MessagePipeDispatcher);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(MessagePipeDispatcher);
 };
 
 class MessagePipeDispatcherTransport : public DispatcherTransport {

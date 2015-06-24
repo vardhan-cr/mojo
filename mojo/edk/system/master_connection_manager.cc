@@ -16,6 +16,7 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/transport_data.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -61,7 +62,7 @@ class MasterConnectionManager::Helper : public RawChannel::Delegate {
   embedder::SlaveInfo const slave_info_;
   scoped_ptr<RawChannel> raw_channel_;
 
-  DISALLOW_COPY_AND_ASSIGN(Helper);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(Helper);
 };
 
 MasterConnectionManager::Helper::Helper(

@@ -15,7 +15,6 @@
 #include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/macros.h"
 #include "base/message_loop/message_loop.h"
 #include "base/test/test_io_thread.h"
 #include "base/threading/platform_thread.h"  // For |Sleep()|.
@@ -36,6 +35,7 @@
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -165,7 +165,7 @@ class RemoteMessagePipeTest : public testing::Test {
   embedder::ScopedPlatformHandle platform_handles_[2];
   scoped_refptr<Channel> channels_[2];
 
-  DISALLOW_COPY_AND_ASSIGN(RemoteMessagePipeTest);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(RemoteMessagePipeTest);
 };
 
 TEST_F(RemoteMessagePipeTest, Basic) {

@@ -5,7 +5,6 @@
 #ifndef MOJO_EDK_SYSTEM_SLAVE_CONNECTION_MANAGER_H_
 #define MOJO_EDK_SYSTEM_SLAVE_CONNECTION_MANAGER_H_
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
@@ -16,6 +15,7 @@
 #include "mojo/edk/system/connection_manager.h"
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace base {
 class TaskRunner;
@@ -146,7 +146,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SlaveConnectionManager
   base::Lock lock_;
   base::WaitableEvent event_;
 
-  DISALLOW_COPY_AND_ASSIGN(SlaveConnectionManager);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(SlaveConnectionManager);
 };
 
 }  // namespace system

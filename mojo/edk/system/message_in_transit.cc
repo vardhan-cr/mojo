@@ -16,7 +16,8 @@
 namespace mojo {
 namespace system {
 
-STATIC_CONST_MEMBER_DEFINITION const size_t MessageInTransit::kMessageAlignment;
+MOJO_STATIC_CONST_MEMBER_DEFINITION const size_t
+    MessageInTransit::kMessageAlignment;
 
 struct MessageInTransit::PrivateStructForCompileAsserts {
   // The size of |Header| must be a multiple of the alignment.

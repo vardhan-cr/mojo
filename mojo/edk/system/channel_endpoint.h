@@ -5,13 +5,13 @@
 #ifndef MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_H_
 #define MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_H_
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -213,7 +213,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
   // messages to the channel.
   MessageInTransitQueue channel_message_queue_;
 
-  DISALLOW_COPY_AND_ASSIGN(ChannelEndpoint);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ChannelEndpoint);
 };
 
 }  // namespace system

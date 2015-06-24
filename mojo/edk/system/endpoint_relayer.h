@@ -5,12 +5,12 @@
 #ifndef MOJO_EDK_SYSTEM_ENDPOINT_RELAYER_H_
 #define MOJO_EDK_SYSTEM_ENDPOINT_RELAYER_H_
 
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -58,7 +58,7 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
     Filter() {}
 
    private:
-    DISALLOW_COPY_AND_ASSIGN(Filter);
+    MOJO_DISALLOW_COPY_AND_ASSIGN(Filter);
   };
 
   EndpointRelayer();
@@ -86,7 +86,7 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
   scoped_refptr<ChannelEndpoint> endpoints_[2];
   scoped_ptr<Filter> filter_;
 
-  DISALLOW_COPY_AND_ASSIGN(EndpointRelayer);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(EndpointRelayer);
 };
 
 }  // namespace system

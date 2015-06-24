@@ -8,6 +8,7 @@
 #include "base/threading/platform_thread.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {

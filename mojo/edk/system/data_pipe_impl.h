@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "base/compiler_specific.h"
-#include "base/macros.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/data_pipe.h"
 #include "mojo/edk/system/handle_signals_state.h"
@@ -130,7 +129,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
  private:
   DataPipe* owner_;
 
-  DISALLOW_COPY_AND_ASSIGN(DataPipeImpl);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(DataPipeImpl);
 };
 
 // TODO(vtl): This is not the ideal place for the following structs; find

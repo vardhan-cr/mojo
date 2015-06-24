@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "base/containers/hash_tables.h"
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/strings/string_piece.h"
@@ -22,6 +21,7 @@
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 
@@ -263,7 +263,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel
   // if/when we wrap).
   RemoteChannelEndpointIdGenerator remote_id_generator_;
 
-  DISALLOW_COPY_AND_ASSIGN(Channel);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(Channel);
 };
 
 }  // namespace system

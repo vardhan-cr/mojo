@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 #include "base/compiler_specific.h"
-#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/synchronization/lock.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
@@ -18,6 +17,7 @@
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/data_pipe.h"
 #include "mojo/public/c/system/types.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -268,7 +268,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
   uint32_t consumer_two_phase_max_num_bytes_read_;
   scoped_ptr<DataPipeImpl> impl_;
 
-  DISALLOW_COPY_AND_ASSIGN(DataPipe);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(DataPipe);
 };
 
 }  // namespace system

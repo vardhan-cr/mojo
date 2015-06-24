@@ -5,7 +5,6 @@
 #ifndef MOJO_EDK_SYSTEM_HANDLE_SIGNALS_STATE_H_
 #define MOJO_EDK_SYSTEM_HANDLE_SIGNALS_STATE_H_
 
-#include "base/macros.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 

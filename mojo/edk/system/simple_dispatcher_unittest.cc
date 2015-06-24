@@ -10,7 +10,6 @@
 #include "mojo/edk/system/simple_dispatcher.h"
 
 #include "base/logging.h"
-#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_vector.h"
 #include "base/synchronization/lock.h"
@@ -19,6 +18,7 @@
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
 #include "mojo/edk/system/waiter_test_utils.h"
+#include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -82,7 +82,7 @@ class MockSimpleDispatcher : public SimpleDispatcher {
   // Protected by |lock()|:
   HandleSignalsState state_;
 
-  DISALLOW_COPY_AND_ASSIGN(MockSimpleDispatcher);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(MockSimpleDispatcher);
 };
 
 #if defined(OS_WIN)

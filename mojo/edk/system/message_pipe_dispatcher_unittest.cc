@@ -23,6 +23,7 @@
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
 #include "mojo/edk/system/waiter_test_utils.h"
+#include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -528,7 +529,7 @@ class WriterThread : public base::SimpleThread {
   size_t* const messages_written_;
   size_t* const bytes_written_;
 
-  DISALLOW_COPY_AND_ASSIGN(WriterThread);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(WriterThread);
 };
 
 class ReaderThread : public base::SimpleThread {
@@ -615,7 +616,7 @@ class ReaderThread : public base::SimpleThread {
   size_t* const messages_read_;
   size_t* const bytes_read_;
 
-  DISALLOW_COPY_AND_ASSIGN(ReaderThread);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ReaderThread);
 };
 
 TEST(MessagePipeDispatcherTest, Stress) {

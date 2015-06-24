@@ -26,9 +26,9 @@ static_assert(kMaxSizePerPlatformHandle % MessageInTransit::kMessageAlignment ==
                   0,
               "kMaxSizePerPlatformHandle not a multiple of alignment");
 
-STATIC_CONST_MEMBER_DEFINITION const size_t
+MOJO_STATIC_CONST_MEMBER_DEFINITION const size_t
     TransportData::kMaxSerializedDispatcherSize;
-STATIC_CONST_MEMBER_DEFINITION const size_t
+MOJO_STATIC_CONST_MEMBER_DEFINITION const size_t
     TransportData::kMaxSerializedDispatcherPlatformHandles;
 
 // static

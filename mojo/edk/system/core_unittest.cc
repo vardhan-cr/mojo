@@ -13,6 +13,7 @@
 #include "base/time/time.h"
 #include "mojo/edk/system/awakable.h"
 #include "mojo/edk/system/core_test_base.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -734,7 +735,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing1) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),
@@ -774,7 +775,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing1) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passed[1], UserPointer<void>(buffer),
@@ -797,7 +798,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing1) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),
@@ -832,7 +833,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing1) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_received, UserPointer<void>(buffer),
@@ -1079,7 +1080,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing2) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),
@@ -1135,7 +1136,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing2) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),
@@ -1206,7 +1207,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing2) {
             core()->Wait(h_passing[1], MOJO_HANDLE_SIGNAL_READABLE, 1000000000,
                          NullUserPointer()));
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),
@@ -1256,7 +1257,7 @@ TEST_F(CoreTest, MessagePipeBasicLocalHandlePassing2) {
             hss.satisfied_signals);
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
   num_bytes = kBufferSize;
-  num_handles = arraysize(handles);
+  num_handles = MOJO_ARRAYSIZE(handles);
   EXPECT_EQ(MOJO_RESULT_OK,
             core()->ReadMessage(
                 h_passing[1], UserPointer<void>(buffer),

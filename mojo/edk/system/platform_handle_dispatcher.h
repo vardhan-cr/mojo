@@ -5,10 +5,10 @@
 #ifndef MOJO_EDK_SYSTEM_PLATFORM_HANDLE_DISPATCHER_H_
 #define MOJO_EDK_SYSTEM_PLATFORM_HANDLE_DISPATCHER_H_
 
-#include "base/macros.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/simple_dispatcher.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -52,7 +52,7 @@ class MOJO_SYSTEM_IMPL_EXPORT PlatformHandleDispatcher
 
   embedder::ScopedPlatformHandle platform_handle_;
 
-  DISALLOW_COPY_AND_ASSIGN(PlatformHandleDispatcher);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(PlatformHandleDispatcher);
 };
 
 }  // namespace system

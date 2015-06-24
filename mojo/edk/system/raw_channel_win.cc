@@ -11,13 +11,13 @@
 #include "base/lazy_instance.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/process/process.h"
 #include "base/synchronization/lock.h"
 #include "base/win/windows_version.h"
 #include "mojo/edk/embedder/platform_handle.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace system {
@@ -157,7 +157,7 @@ class RawChannelWin : public RawChannel {
     size_t platform_handles_written_;
     base::MessageLoopForIO::IOContext write_context_;
 
-    DISALLOW_COPY_AND_ASSIGN(RawChannelIOHandler);
+    MOJO_DISALLOW_COPY_AND_ASSIGN(RawChannelIOHandler);
   };
 
   // |RawChannel| private methods:
@@ -180,7 +180,7 @@ class RawChannelWin : public RawChannel {
 
   const bool skip_completion_port_on_success_;
 
-  DISALLOW_COPY_AND_ASSIGN(RawChannelWin);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(RawChannelWin);
 };
 
 RawChannelWin::RawChannelIOHandler::RawChannelIOHandler(
