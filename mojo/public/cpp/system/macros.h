@@ -12,10 +12,9 @@
 #include "mojo/public/c/system/macros.h"  // Symbols exposed.
 
 // A macro to disallow the copy constructor and operator= functions.
-// This should be used in the private: declarations for a class.
 #define MOJO_DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&);                    \
-  void operator=(const TypeName&)
+  TypeName(const TypeName&) = delete;           \
+  void operator=(const TypeName&) = delete
 
 // Used to calculate the number of elements in an array.
 // (See |arraysize()| in Chromium's base/basictypes.h for more details.)
