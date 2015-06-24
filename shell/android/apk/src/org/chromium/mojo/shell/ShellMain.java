@@ -10,6 +10,13 @@ import android.util.Log;
 
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
+import org.chromium.mojo.bindings.InterfaceRequest;
+import org.chromium.mojo.system.MessagePipeHandle;
+import org.chromium.mojo.system.MojoException;
+import org.chromium.mojo.system.Pair;
+import org.chromium.mojo.system.impl.CoreImpl;
+import org.chromium.mojom.mojo.ServiceProvider;
+import org.chromium.mojom.mojo.Shell;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,6 +46,47 @@ public class ShellMain {
     private static final String DEFAULT_ORIGIN = "https://core.mojoapps.io/";
     // Name of the default window manager.
     private static final String DEFAULT_WM = "mojo:kiosk_wm";
+
+    private static class ShellImpl implements Shell {
+        private static final ShellImpl INSTANCE = new ShellImpl();
+
+        /**
+         * @see Shell#close()
+         */
+        @Override
+        public void close() {}
+
+        /**
+         * @see Shell#onConnectionError(org.chromium.mojo.system.MojoException)
+         */
+        @Override
+        public void onConnectionError(MojoException e) {}
+
+        /**
+         * @see Shell#connectToApplication(String, InterfaceRequest, ServiceProvider)
+         */
+        @Override
+        public void connectToApplication(String applicationUrl,
+                InterfaceRequest<ServiceProvider> services, ServiceProvider exposedServices) {
+            int exposedServicesHandle = CoreImpl.INVALID_HANDLE;
+            if (exposedServices != null) {
+                if (exposedServices instanceof ServiceProvider.Proxy) {
+                    ServiceProvider.Proxy proxy = (ServiceProvider.Proxy) exposedServices;
+                    exposedServicesHandle =
+                            proxy.getProxyHandler().passHandle().releaseNativeHandle();
+                } else {
+                    Pair<MessagePipeHandle, MessagePipeHandle> pipes =
+                            CoreImpl.getInstance().createMessagePipe(null);
+                    ServiceProvider.MANAGER.bind(exposedServices, pipes.first);
+                    exposedServicesHandle = pipes.second.releaseNativeHandle();
+                }
+            }
+            nativeConnectToApplication(applicationUrl,
+                    services == null ? CoreImpl.INVALID_HANDLE
+                                     : services.passHandle().releaseNativeHandle(),
+                    exposedServicesHandle);
+        }
+    }
 
     /**
      * A guard flag for calling nativeInit() only once.
@@ -108,6 +156,13 @@ public class ShellMain {
         nativeStartApplicationURL(url);
     }
 
+    /**
+     * Returns an instance of the shell interface that allows to interact with mojo applications.
+     */
+    static Shell getShell() {
+        return ShellImpl.INSTANCE;
+    }
+
     private static File getLocalAppsDir(Context context) {
         return context.getDir(LOCAL_APP_DIRECTORY, Context.MODE_PRIVATE);
     }
@@ -140,4 +195,7 @@ public class ShellMain {
     private static native void nativeAddApplicationURL(String url);
 
     private static native void nativeStartApplicationURL(String url);
+
+    private static native void nativeConnectToApplication(
+            String applicationURL, int servicesHandle, int exposedServicesHandle);
 }

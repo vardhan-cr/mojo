@@ -52,7 +52,7 @@ public class CoreImpl implements Core, AsyncWaiter {
     /**
      * The mojo handle for an invalid handle.
      */
-    static final int INVALID_HANDLE = 0;
+    public static final int INVALID_HANDLE = 0;
 
     private static class LazyHolder { private static final Core INSTANCE = new CoreImpl(); }
 

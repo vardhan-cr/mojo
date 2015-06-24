@@ -178,12 +178,27 @@ void InitializeRedirection() {
       << "Unable to redirect stderr to stdout.";
 }
 
-void EmbedApplicationByURL(Context* context, std::string url) {
+void EmbedApplicationByURL(std::string url) {
   if (!g_internal_data.Get().window_manager.get()) {
+    Context* context = g_internal_data.Get().context.get();
     context->application_manager()->ConnectToService(
         GURL("mojo:window_manager"), &g_internal_data.Get().window_manager);
   }
   g_internal_data.Get().window_manager->Embed(url, nullptr, nullptr);
+}
+
+void ConnectToApplicationImpl(
+    const GURL& url,
+    mojo::ScopedMessagePipeHandle services_handle,
+    mojo::ScopedMessagePipeHandle exposed_services_handle) {
+  Context* context = g_internal_data.Get().context.get();
+  mojo::InterfaceRequest<mojo::ServiceProvider> services;
+  services.Bind(services_handle.Pass());
+  mojo::ServiceProviderPtr exposed_services;
+  exposed_services.Bind(mojo::InterfacePtrInfo<mojo::ServiceProvider>(
+      exposed_services_handle.Pass(), 0u));
+  context->application_manager()->ConnectToApplication(
+      url, GURL(), services.Pass(), exposed_services.Pass(), base::Closure());
 }
 
 }  // namespace
@@ -282,10 +297,24 @@ static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
 }
 
 static void StartApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {
-  Context* context = g_internal_data.Get().context.get();
   std::string url = base::android::ConvertJavaStringToUTF8(env, jurl);
   g_internal_data.Get().shell_task_runner->PostTask(
-      FROM_HERE, base::Bind(&EmbedApplicationByURL, context, url));
+      FROM_HERE, base::Bind(&EmbedApplicationByURL, url));
+}
+
+static void ConnectToApplication(JNIEnv* env,
+                                 jclass clazz,
+                                 jstring jurl,
+                                 jint services_handle,
+                                 jint exposed_services_handle) {
+  GURL url = GURL(base::android::ConvertJavaStringToUTF8(env, jurl));
+  g_internal_data.Get().shell_task_runner->PostTask(
+      FROM_HERE,
+      base::Bind(&ConnectToApplicationImpl, url,
+                 base::Passed(mojo::ScopedMessagePipeHandle(
+                     mojo::MessagePipeHandle(services_handle))),
+                 base::Passed(mojo::ScopedMessagePipeHandle(
+                     mojo::MessagePipeHandle(exposed_services_handle)))));
 }
 
 bool RegisterShellMain(JNIEnv* env) {
