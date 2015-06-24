@@ -28,6 +28,7 @@ SUPPORTED_MIME_TYPES = [
     'text/html',
     'text/sky',
     'application/dart',
+    'application/octet-stream',
 ]
 
 DEFAULT_SKY_COMMAND_PORT = 7777
