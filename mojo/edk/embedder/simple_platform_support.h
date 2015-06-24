@@ -5,9 +5,9 @@
 #ifndef MOJO_EDK_EMBEDDER_SIMPLE_PLATFORM_SUPPORT_H_
 #define MOJO_EDK_EMBEDDER_SIMPLE_PLATFORM_SUPPORT_H_
 
-#include "base/macros.h"
 #include "mojo/edk/embedder/platform_support.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace embedder {
@@ -29,7 +29,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSupport : public PlatformSupport {
       ScopedPlatformHandle platform_handle) override;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(SimplePlatformSupport);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(SimplePlatformSupport);
 };
 
 }  // namespace embedder
