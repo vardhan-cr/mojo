@@ -7,6 +7,7 @@ import argparse
 import logging
 import sys
 import os.path
+import subprocess
 
 import devtools
 devtools.add_lib_to_path()
@@ -143,6 +144,15 @@ def main():
     # Configure the window manager to embed the sky_viewer.
     sky_url = server_url + launcher_args.sky
     args.append('mojo:window_manager %s' % sky_url)
+
+    # Download Sky assets if needed.
+    sky_lib_dir = os.path.join(paths.build_dir, 'gen', 'dart-pkg', 'sky', 'lib')
+    sky_icons_dir = os.path.join(sky_lib_dir, 'assets', 'material-design-icons')
+    if not os.path.isdir(sky_icons_dir):
+      logging.info('NOTE: sky/assets/material-design-icons missing, '
+                   'Running `download_material_design_icons` for you.')
+      subprocess.check_call([os.path.join(sky_lib_dir,
+                                          'download_material_design_icons')])
 
   if launcher_args.verbose:
     print "Shell arguments: " + str(args)
