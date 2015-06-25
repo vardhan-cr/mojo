@@ -13,11 +13,13 @@ namespace mojo {
 namespace system {
 namespace test {
 
-// A timeout smaller than |TestTimeouts::tiny_timeout()|. Warning: This may lead
-// to flakiness, but this is unavoidable if, e.g., you're trying to ensure that
-// functions with timeouts are reasonably accurate. We want this to be as small
-// as possible without causing too much flakiness.
-base::TimeDelta EpsilonTimeout();
+MojoDeadline DeadlineFromMilliseconds(unsigned milliseconds);
+
+// A timeout smaller than |TestTimeouts::tiny_timeout()|, as a |MojoDeadline|.
+// Warning: This may lead to flakiness, but this is unavoidable if, e.g., you're
+// trying to ensure that functions with timeouts are reasonably accurate. We
+// want this to be as small as possible without causing too much flakiness.
+MojoDeadline EpsilonDeadline();
 
 // |TestTimeouts::tiny_timeout()|, as a |MojoDeadline|. (Expect this to be on
 // the order of 100 ms.)
@@ -27,17 +29,21 @@ MojoDeadline TinyDeadline();
 // the order of 10 s.)
 MojoDeadline ActionDeadline();
 
+// Sleeps for at least the specified duration.
+void Sleep(MojoDeadline deadline);
+
 // Stopwatch -------------------------------------------------------------------
 
 // A simple "stopwatch" for measuring time elapsed from a given starting point.
 class Stopwatch {
  public:
-  Stopwatch() {}
-  ~Stopwatch() {}
+  Stopwatch();
+  ~Stopwatch();
 
-  void Start() { start_time_ = base::TimeTicks::Now(); }
-
-  base::TimeDelta Elapsed() { return base::TimeTicks::Now() - start_time_; }
+  void Start();
+  // Returns the amount of time elapsed since the last call to |Start()| (in
+  // microseconds).
+  MojoDeadline Elapsed();
 
  private:
   base::TimeTicks start_time_;

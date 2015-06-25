@@ -14,7 +14,6 @@
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
 #include "base/test/perf_time_logger.h"
-#include "base/time/time.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/local_message_pipe_endpoint.h"

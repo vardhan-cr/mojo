@@ -22,9 +22,7 @@
 #include "base/synchronization/lock.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/test/test_io_thread.h"
-#include "base/threading/platform_thread.h"  // For |Sleep()|.
 #include "base/threading/simple_thread.h"
-#include "base/time/time.h"
 #include "build/build_config.h"  // TODO(vtl): Remove this.
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/platform_handle.h"
@@ -126,7 +124,7 @@ class WriteOnlyRawChannelDelegate : public RawChannel::Delegate {
   MOJO_DISALLOW_COPY_AND_ASSIGN(WriteOnlyRawChannelDelegate);
 };
 
-static const int64_t kMessageReaderSleepMs = 1;
+static const unsigned kMessageReaderSleepMs = 1;
 static const size_t kMessageReaderMaxPollIterations = 3000;
 
 class TestMessageReaderAndChecker {
@@ -176,8 +174,7 @@ class TestMessageReaderAndChecker {
 
       if (static_cast<size_t>(read_size) < sizeof(buffer)) {
         i++;
-        base::PlatformThread::Sleep(
-            base::TimeDelta::FromMilliseconds(kMessageReaderSleepMs));
+        test::Sleep(test::DeadlineFromMilliseconds(kMessageReaderSleepMs));
       }
     }
 
@@ -404,7 +401,7 @@ TEST_F(RawChannelTest, WriteMessageAndOnReadMessage) {
 
   // Sleep a bit, to let any extraneous reads be processed. (There shouldn't be
   // any, but we want to know about them.)
-  base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(100));
+  test::Sleep(test::DeadlineFromMilliseconds(100));
 
   // Wait for reading to finish.
   reader_delegate.Wait();
@@ -497,7 +494,7 @@ TEST_F(RawChannelTest, OnError) {
 
   // Sleep a bit, to make sure we don't get another |OnError()|
   // notification. (If we actually get another one, |OnError()| crashes.)
-  base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(20));
+  test::Sleep(test::DeadlineFromMilliseconds(20));
 
   io_thread()->PostTaskAndWait(
       FROM_HERE, base::Bind(&RawChannel::Shutdown, base::Unretained(rc.get())));
