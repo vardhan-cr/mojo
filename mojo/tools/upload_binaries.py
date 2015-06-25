@@ -114,24 +114,17 @@ def upload_shell(config, dry_run, verbose):
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
   version = Version().version
-  app_location_in_gs = ("mojo/services/" + target(config) + "/" + version +
-                        "/" + app_binary_name)
-  gsutil_app_location = "gs://" + app_location_in_gs
+  gsutil_app_location = ("gs://mojo/services/%s/%s/%s" %
+                         (target(config), version, app_binary_name))
 
   # Upload the new binary.
   upload(config, app_binary_path, gsutil_app_location, dry_run)
-
-  # Update the app's location file to point to the new binary.
-  app_location_file = ("gs://mojo/services/" + target(config) + "/" +
-                       app_binary_name + "_location")
-  write_file_to_gs(app_location_in_gs, app_location_file, config, dry_run)
 
 
 def upload_file(file_path, config, dry_run):
   file_binary_name = os.path.basename(file_path)
   version = Version().version
-  file_location_in_gs = ("mojo/file/" + version + "/" + file_binary_name)
-  gsutil_file_location = "gs://" + file_location_in_gs
+  gsutil_file_location = "gs://mojo/file/%s/%s" % (version, file_binary_name)
 
   # Upload the new binary.
   upload(config, file_path, gsutil_file_location, dry_run)
