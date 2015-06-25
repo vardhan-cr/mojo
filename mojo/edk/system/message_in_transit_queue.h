@@ -35,6 +35,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransitQueue {
     return make_scoped_ptr(rv);
   }
 
+  const MessageInTransit* PeekMessage() const { return queue_.front(); }
   MessageInTransit* PeekMessage() { return queue_.front(); }
 
   void DiscardMessage() {
