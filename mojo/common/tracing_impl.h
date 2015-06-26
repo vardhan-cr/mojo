@@ -7,7 +7,7 @@
 
 #include "base/macros.h"
 #include "mojo/public/cpp/application/interface_factory.h"
-#include "services/tracing/tracing.mojom.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 
 namespace mojo {
 

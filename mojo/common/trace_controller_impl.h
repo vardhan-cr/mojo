@@ -8,7 +8,7 @@
 #include "base/memory/ref_counted_memory.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
-#include "services/tracing/tracing.mojom.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 
 namespace mojo {
 

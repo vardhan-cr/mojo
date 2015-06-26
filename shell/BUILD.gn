@@ -160,9 +160,9 @@ source_set("parent_lib") {
     "//mojo/public/cpp/bindings",
     "//mojo/public/interfaces/application",
     "//mojo/services/network/public/interfaces",
-    "//shell/application_manager",
+    "//mojo/services/tracing/public/interfaces",
     "//services/url_response_disk_cache",
-    "//services/tracing:bindings",
+    "//shell/application_manager",
     "//url",
   ]
 

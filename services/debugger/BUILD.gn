@@ -24,7 +24,7 @@ mojo_native_application("debugger") {
     "//mojo/services/http_server/public/cpp",
     "//mojo/services/http_server/public/interfaces",
     "//mojo/services/network/public/interfaces",
+    "//mojo/services/tracing/public/interfaces",
     "//mojo/services/window_manager/public/interfaces",
-    "//services/tracing:bindings",
   ]
 }

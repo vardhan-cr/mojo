@@ -18,9 +18,9 @@
 #include "mojo/services/http_server/public/interfaces/http_server.mojom.h"
 #include "mojo/services/http_server/public/interfaces/http_server_factory.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "services/debugger/trace_collector.h"
-#include "services/tracing/tracing.mojom.h"
 
 // Debugger is a Mojo application that exposes an http server and talks to other
 // mojo apps in response to url requests received by the server. Supported

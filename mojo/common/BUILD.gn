@@ -81,6 +81,6 @@ source_set("tracing_impl") {
     "//base",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/bindings",
-    "//services/tracing:bindings",
+    "//mojo/services/tracing/public/interfaces",
   ]
 }

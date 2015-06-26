@@ -8,8 +8,8 @@
 #include "base/macros.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/bindings/string.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 #include "services/tracing/trace_data_sink.h"
-#include "services/tracing/tracing.mojom.h"
 
 namespace tracing {
 

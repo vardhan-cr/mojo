@@ -28,7 +28,7 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
-#include "services/tracing/tracing.mojom.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/application_manager/application_manager.h"
 #include "shell/background_application_loader.h"

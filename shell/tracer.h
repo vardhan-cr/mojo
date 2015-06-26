@@ -14,7 +14,7 @@
 #include "base/memory/ref_counted_memory.h"
 #include "mojo/common/data_pipe_drainer.h"
 #include "mojo/common/trace_controller_impl.h"
-#include "services/tracing/tracing.mojom.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 
 namespace shell {
 

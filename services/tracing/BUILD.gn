@@ -17,17 +17,11 @@ mojo_native_application("tracing") {
   ]
 
   deps = [
-    ":bindings",
     "//base",
     "//mojo/application",
     "//mojo/common",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/system",
-  ]
-}
-
-mojom("bindings") {
-  sources = [
-    "tracing.mojom",
+    "//mojo/services/tracing/public/interfaces",
   ]
 }
