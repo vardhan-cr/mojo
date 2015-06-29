@@ -33,6 +33,7 @@ group("tests") {
   testonly = true
   deps = [
     ":mojo_shell_tests",
+    ":shell_nfc_apptests",
     "//shell/application_manager:mojo_application_manager_unittests",
   ]
 }
@@ -277,6 +278,11 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/KeyboardFactory.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellApplication.java",
+      "android/apk/src/org/chromium/mojo/shell/NfcApplicationDelegate.java",
+      "android/apk/src/org/chromium/mojo/shell/NfcDbManager.java",
+      "android/apk/src/org/chromium/mojo/shell/NfcImpl.java",
+      "android/apk/src/org/chromium/mojo/shell/NfcReceiverActivity.java",
+      "android/apk/src/org/chromium/mojo/shell/NfcServiceFactoryBinder.java",
       "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
     ]
 
@@ -290,6 +296,8 @@ if (is_android) {
       "//mojo/public/java:system",
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
       "//services/intent_receiver:bindings_java",
+      "//services/nfc_message_sink:bindings_java",
+      "//mojo/services/nfc/public/interfaces:interfaces_java",
       "//services/keyboard",
     ]
   }
@@ -520,4 +528,26 @@ mojo_native_application("apptests") {
   ]
 
   data_deps = [ "//services/http_server:http_server($default_toolchain)" ]
+}
+
+mojo_native_application("shell_nfc_apptests") {
+  output_name = "shell_nfc_apptests"
+
+  testonly = true
+
+  sources = [
+    "android/nfc_apptest.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/application:test_support",
+    "//mojo/common:common",
+    "//mojo/public/cpp/bindings:callback",
+    "//mojo/public/cpp/environment",
+    "//mojo/public/cpp/system:system",
+    "//mojo/services/nfc/public/interfaces",
+    "//shell/test:bindings",
+  ]
 }

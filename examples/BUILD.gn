@@ -25,6 +25,7 @@ group("examples") {
     "//examples/indirect_service",
     "//examples/keyboard_client",
     "//examples/nesting_app",
+    "//examples/nfc_sender",
     "//examples/notification_generator",
     "//examples/png_viewer",
     "//examples/recursive_content_handler",

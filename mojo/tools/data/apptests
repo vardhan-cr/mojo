@@ -106,6 +106,9 @@ if config.target_os == config.OS_ANDROID:
     {
       "test": "mojo:notification_apptests",
     },
+    {
+      "test": "mojo:shell_nfc_apptests",
+    },
   ]
 
 if config.target_os != config.OS_ANDROID:

@@ -93,6 +93,10 @@ public class ShellMain {
      **/
     private static boolean sInitialized = false;
 
+    static boolean isInitialized() {
+        return sInitialized;
+    }
+
     /**
      * Initializes the native system.
      **/

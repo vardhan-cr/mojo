@@ -1,0 +1,25 @@
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//mojo/public/mojo_application.gni")
+
+mojo_native_application("nfc_sender") {
+  sources = [
+    "nfc_sender.cc",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/application",
+    "//mojo/gpu",
+    "//mojo/common",
+    "//mojo/public/interfaces/application:application__generator",
+    "//mojo/services/geometry/public/interfaces",
+    "//mojo/services/nfc/public/interfaces",
+    "//mojo/services/view_manager/public/cpp",
+    "//mojo/skia",
+    "//skia",
+    "//ui/gfx/geometry",
+  ]
+}

@@ -14,9 +14,7 @@ import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.impl.CoreImpl;
 import org.chromium.mojom.mojo.Shell;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,17 +26,70 @@ import java.util.Map;
  */
 @JNINamespace("shell")
 public class JavaApplicationRegistry {
-    private final Map<String, List<ServiceFactoryBinder<?>>> mServiceFactoryBinder =
-            new HashMap<>();
+    private final Map<String, ApplicationDelegate> mApplicationDelegateMap = new HashMap<>();
 
-    private static final class ApplicationRunnable implements ApplicationDelegate, Runnable {
-        private final List<ServiceFactoryBinder<?>> mBinders;
+    private static final class ApplicationRunnable implements Runnable {
+        private final ApplicationDelegate mApplicationDelegate;
         private final MessagePipeHandle mApplicationRequestHandle;
 
-        private ApplicationRunnable(
-                List<ServiceFactoryBinder<?>> binders, MessagePipeHandle applicationRequestHandle) {
-            mBinders = binders;
+        private ApplicationRunnable(ApplicationDelegate applicationDelegate,
+                MessagePipeHandle applicationRequestHandle) {
+            mApplicationDelegate = applicationDelegate;
             mApplicationRequestHandle = applicationRequestHandle;
+        }
+
+        /**
+         * @see Runnable#run()
+         */
+        @Override
+        public void run() {
+            ApplicationRunner.run(
+                    mApplicationDelegate, CoreImpl.getInstance(), mApplicationRequestHandle);
+        }
+    }
+
+    private JavaApplicationRegistry() {}
+
+    private void registerApplicationDelegate(String url, ApplicationDelegate applicationDelegate) {
+        mApplicationDelegateMap.put(url, applicationDelegate);
+    }
+
+    @CalledByNative
+    private String[] getApplications() {
+        return mApplicationDelegateMap.keySet().toArray(new String[mApplicationDelegateMap.size()]);
+    }
+
+    @CalledByNative
+    private void startApplication(String url, int applicationRequestHandle) {
+        MessagePipeHandle messagePipeHandle = CoreImpl.getInstance()
+                                                      .acquireNativeHandle(applicationRequestHandle)
+                                                      .toMessagePipeHandle();
+        ApplicationDelegate applicationDelegate = mApplicationDelegateMap.get(url);
+        if (applicationDelegate != null) {
+            new Thread(new ApplicationRunnable(applicationDelegate, messagePipeHandle)).start();
+        } else {
+            messagePipeHandle.close();
+        }
+    }
+
+    @CalledByNative
+    private static JavaApplicationRegistry create() {
+        JavaApplicationRegistry registry = new JavaApplicationRegistry();
+        // Register services.
+        registry.registerApplicationDelegate("mojo:keyboard",
+                new ServiceProviderFactoryApplicationDelegate(new KeyboardFactory()));
+        registry.registerApplicationDelegate(
+                "mojo:intent_receiver", new ServiceProviderFactoryApplicationDelegate(
+                                                IntentReceiverRegistry.getInstance()));
+        registry.registerApplicationDelegate("mojo:nfc", new NfcApplicationDelegate());
+        return registry;
+    }
+
+    static class ServiceProviderFactoryApplicationDelegate implements ApplicationDelegate {
+        private final ServiceFactoryBinder<?> mBinder;
+
+        ServiceProviderFactoryApplicationDelegate(ServiceFactoryBinder<?> binder) {
+            mBinder = binder;
         }
 
         /**
@@ -52,9 +103,7 @@ public class JavaApplicationRegistry {
          */
         @Override
         public boolean configureIncomingConnection(ApplicationConnection connection) {
-            for (ServiceFactoryBinder<?> binder : mBinders) {
-                connection.addService(binder);
-            }
+            connection.addService(mBinder);
             return true;
         }
 
@@ -63,51 +112,5 @@ public class JavaApplicationRegistry {
          */
         @Override
         public void quit() {}
-
-        /**
-         * @see Runnable#run()
-         */
-        @Override
-        public void run() {
-            ApplicationRunner.run(this, CoreImpl.getInstance(), mApplicationRequestHandle);
-        }
-    }
-
-    private JavaApplicationRegistry() {}
-
-    private void registerService(String url, ServiceFactoryBinder<?> serviceFactoryBinder) {
-        List<ServiceFactoryBinder<?>> binders = mServiceFactoryBinder.get(url);
-        if (binders == null) {
-            binders = new ArrayList<>();
-            mServiceFactoryBinder.put(url, binders);
-        }
-        binders.add(serviceFactoryBinder);
-    }
-
-    @CalledByNative
-    private String[] getApplications() {
-        return mServiceFactoryBinder.keySet().toArray(new String[mServiceFactoryBinder.size()]);
-    }
-
-    @CalledByNative
-    private void startApplication(String url, int applicationRequestHandle) {
-        MessagePipeHandle messagePipeHandle = CoreImpl.getInstance()
-                                                      .acquireNativeHandle(applicationRequestHandle)
-                                                      .toMessagePipeHandle();
-        List<ServiceFactoryBinder<?>> binders = mServiceFactoryBinder.get(url);
-        if (binders != null) {
-            new Thread(new ApplicationRunnable(binders, messagePipeHandle)).start();
-        } else {
-            messagePipeHandle.close();
-        }
-    }
-
-    @CalledByNative
-    private static JavaApplicationRegistry create() {
-        JavaApplicationRegistry registry = new JavaApplicationRegistry();
-        // Register services.
-        registry.registerService("mojo:keyboard", new KeyboardFactory());
-        registry.registerService("mojo:intent_receiver", IntentReceiverRegistry.getInstance());
-        return registry;
     }
 }

@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_CONDITIONS"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.NFC"/>
 
     <application android:icon="@mipmap/ic_launcher"
             android:name="org.chromium.mojo.shell.MojoShellApplication"
@@ -36,6 +37,14 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="org.chromium.mojo.shell.NfcReceiverActivity"
+                  android:theme="@android:style/Theme.NoDisplay" >
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="mojo/data"/>
             </intent-filter>
         </activity>
         <service android:name="org.chromium.mojo.shell.IntentReceiverService"/>
