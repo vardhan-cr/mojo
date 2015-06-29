@@ -8,6 +8,7 @@
 import argparse
 from copy import deepcopy
 import logging
+from multiprocessing import cpu_count
 import os
 import subprocess
 import sys
@@ -144,7 +145,13 @@ def _build(config):
     if exit_code:
       return exit_code
 
-    return subprocess.call(['ninja', '-j', '1000', '-l', '100', '-C', out_dir])
+    # Goma allows us to run many more jobs in parallel, say 32 per core/thread
+    # (= 1024 on a 16-core, 32-thread Z620). Limit the load average to 4 per
+    # core/thread (= 128 on said Z620).
+    jobs = cpu_count() * 32
+    limit = cpu_count() * 4
+    return subprocess.call(['ninja', '-j', str(jobs), '-l', str(limit),
+                            '-C', out_dir])
   else:
     return subprocess.call(['ninja', '-C', out_dir])
 
