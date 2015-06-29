@@ -26,7 +26,8 @@ class MessagePipe;
 // This is a simple |ChannelEndpointClient| that only receives messages. It's
 // used for endpoints that are "received" by |Channel|, but not yet turned into
 // |MessagePipe|s or |DataPipe|s.
-class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint : public ChannelEndpointClient {
+class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint final
+    : public ChannelEndpointClient {
  public:
   IncomingEndpoint();
 

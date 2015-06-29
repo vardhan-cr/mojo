@@ -22,7 +22,8 @@ namespace system {
 // TODO(vtl): We derive from SimpleDispatcher, even though we don't currently
 // have anything that's waitable. I want to add a "transferrable" wait flag
 // (which would entail overriding |GetHandleSignalsStateImplNoLock()|, etc.).
-class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher : public SimpleDispatcher {
+class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher final
+    : public SimpleDispatcher {
  public:
   // The default options to use for |MojoCreateSharedBuffer()|. (Real uses
   // should obtain this via |ValidateCreateOptions()| with a null |in_options|;

@@ -27,7 +27,7 @@ class MessagePipe;
 // remote consists of a |LocalMessagePipeEndpoint| and a
 // |ProxyMessagePipeEndpoint|, with only the local endpoint being accessible via
 // a |MessagePipeDispatcher|.
-class MOJO_SYSTEM_IMPL_EXPORT ProxyMessagePipeEndpoint
+class MOJO_SYSTEM_IMPL_EXPORT ProxyMessagePipeEndpoint final
     : public MessagePipeEndpoint {
  public:
   explicit ProxyMessagePipeEndpoint(ChannelEndpoint* channel_endpoint);

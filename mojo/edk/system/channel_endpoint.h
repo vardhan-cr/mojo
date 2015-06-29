@@ -108,7 +108,7 @@ class MessageInTransit;
 //         simultaneously, and both sides send "remove" messages). In that
 //         case, it must still remain alive until it receives the "remove
 //         ack" (and it must ack the "remove" message that it received).
-class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint
+class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint final
     : public base::RefCountedThreadSafe<ChannelEndpoint> {
  public:
   // Constructor for a |ChannelEndpoint| with the given client (specified by

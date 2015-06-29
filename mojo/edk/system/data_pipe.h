@@ -35,7 +35,7 @@ class MessageInTransitQueue;
 // Its subclasses implement the three cases: local producer and consumer, local
 // producer and remote consumer, and remote producer and local consumer. This
 // class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT DataPipe : public ChannelEndpointClient {
+class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
  public:
   // The default options for |MojoCreateDataPipe()|. (Real uses should obtain
   // this via |ValidateCreateOptions()| with a null |in_options|; this is

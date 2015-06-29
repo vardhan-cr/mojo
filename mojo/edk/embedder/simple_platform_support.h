@@ -17,7 +17,8 @@ namespace embedder {
 // has no state, and different instances of |SimplePlatformSupport| are mutually
 // compatible (i.e., you don't need to use a single instance of it everywhere --
 // you may simply create one whenever/wherever you need it).
-class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSupport : public PlatformSupport {
+class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSupport final
+    : public PlatformSupport {
  public:
   SimplePlatformSupport() {}
   ~SimplePlatformSupport() override {}

@@ -21,7 +21,7 @@ namespace mojo {
 namespace system {
 namespace test {
 
-class TestChannelEndpointClient : public ChannelEndpointClient {
+class TestChannelEndpointClient final : public ChannelEndpointClient {
  public:
   TestChannelEndpointClient();
 

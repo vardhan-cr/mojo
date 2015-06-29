@@ -21,7 +21,7 @@ namespace system {
 // under other locks, in particular, |Dispatcher::lock_|s, so |Waiter| methods
 // must never call out to other objects (in particular, |Dispatcher|s). This
 // class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT Waiter : public Awakable {
+class MOJO_SYSTEM_IMPL_EXPORT Waiter final : public Awakable {
  public:
   Waiter();
   ~Waiter();

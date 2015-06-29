@@ -18,7 +18,8 @@ class DataPipe;
 // This is the |Dispatcher| implementation for the producer handle for data
 // pipes (created by the Mojo primitive |MojoCreateDataPipe()|). This class is
 // thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT DataPipeProducerDispatcher : public Dispatcher {
+class MOJO_SYSTEM_IMPL_EXPORT DataPipeProducerDispatcher final
+    : public Dispatcher {
  public:
   DataPipeProducerDispatcher();
 

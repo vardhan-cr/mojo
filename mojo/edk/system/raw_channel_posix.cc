@@ -29,8 +29,8 @@ namespace system {
 
 namespace {
 
-class RawChannelPosix : public RawChannel,
-                        public base::MessageLoopForIO::Watcher {
+class RawChannelPosix final : public RawChannel,
+                              public base::MessageLoopForIO::Watcher {
  public:
   explicit RawChannelPosix(embedder::ScopedPlatformHandle handle);
   ~RawChannelPosix() override;

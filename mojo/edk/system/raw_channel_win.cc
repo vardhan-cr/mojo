@@ -68,7 +68,7 @@ VistaOrHigherFunctions::VistaOrHigherFunctions()
 base::LazyInstance<VistaOrHigherFunctions> g_vista_or_higher_functions =
     LAZY_INSTANCE_INITIALIZER;
 
-class RawChannelWin : public RawChannel {
+class RawChannelWin final : public RawChannel {
  public:
   RawChannelWin(embedder::ScopedPlatformHandle handle);
   ~RawChannelWin() override;

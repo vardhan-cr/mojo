@@ -34,7 +34,7 @@ static_assert(kMasterProcessIdentifier != kFirstSlaveProcessIdentifier,
 
 // |MasterConnectionManager::Helper| is not thread-safe, and must only be used
 // on its |owner_|'s private thread.
-class MasterConnectionManager::Helper : public RawChannel::Delegate {
+class MasterConnectionManager::Helper final : public RawChannel::Delegate {
  public:
   Helper(MasterConnectionManager* owner,
          ProcessIdentifier process_identifier,

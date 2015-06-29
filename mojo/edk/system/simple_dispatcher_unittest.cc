@@ -23,7 +23,7 @@ namespace mojo {
 namespace system {
 namespace {
 
-class MockSimpleDispatcher : public SimpleDispatcher {
+class MockSimpleDispatcher final : public SimpleDispatcher {
  public:
   MockSimpleDispatcher()
       : state_(MOJO_HANDLE_SIGNAL_NONE,

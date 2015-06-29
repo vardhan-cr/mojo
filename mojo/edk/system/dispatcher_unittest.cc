@@ -19,7 +19,7 @@ namespace system {
 namespace {
 
 // Trivial subclass that makes the constructor public.
-class TrivialDispatcher : public Dispatcher {
+class TrivialDispatcher final : public Dispatcher {
  public:
   TrivialDispatcher() {}
 

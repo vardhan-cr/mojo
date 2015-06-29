@@ -21,7 +21,8 @@ class MessageInTransitQueue;
 // |RemoteProducerDataPipeImpl| is a subclass that "implements" |DataPipe| for
 // data pipes whose producer is remote and whose consumer is local. See
 // |DataPipeImpl| for more details.
-class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl : public DataPipeImpl {
+class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl final
+    : public DataPipeImpl {
  public:
   explicit RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint);
   RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint,

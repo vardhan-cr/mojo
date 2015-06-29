@@ -49,7 +49,7 @@ class MessageInTransitQueue;
 // |ChannelEndpointClient| (e.g., |MessagePipe|), |ChannelEndpoint|, |Channel|.
 // Thus |Channel| may not call into |ChannelEndpoint| with |Channel|'s lock
 // held.
-class MOJO_SYSTEM_IMPL_EXPORT Channel
+class MOJO_SYSTEM_IMPL_EXPORT Channel final
     : public base::RefCountedThreadSafe<Channel>,
       public RawChannel::Delegate {
  public:

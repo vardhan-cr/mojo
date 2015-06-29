@@ -19,7 +19,8 @@ class ChannelEndpoint;
 
 // This is a simple |ChannelEndpointClient| that just relays messages between
 // two |ChannelEndpoint|s (without the overhead of |MessagePipe|).
-class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer : public ChannelEndpointClient {
+class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer final
+    : public ChannelEndpointClient {
  public:
   // A class that can inspect and optionally handle messages of type
   // |Type::ENDPOINT_CLIENT| received from either |ChannelEndpoint|.

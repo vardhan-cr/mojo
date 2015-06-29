@@ -13,7 +13,7 @@ namespace system {
 
 // Just "add" some constructors and methods to the C struct
 // |MojoHandleSignalsState| (for convenience). This should add no overhead.
-struct MOJO_SYSTEM_IMPL_EXPORT HandleSignalsState
+struct MOJO_SYSTEM_IMPL_EXPORT HandleSignalsState final
     : public MojoHandleSignalsState {
   HandleSignalsState() {
     satisfied_signals = MOJO_HANDLE_SIGNAL_NONE;

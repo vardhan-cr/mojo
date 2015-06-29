@@ -15,7 +15,7 @@ namespace mojo {
 namespace embedder {
 
 // A simple implementation of |PlatformSharedBuffer|.
-class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSharedBuffer
+class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSharedBuffer final
     : public PlatformSharedBuffer {
  public:
   // Creates a shared buffer of size |num_bytes| bytes (initially zero-filled).

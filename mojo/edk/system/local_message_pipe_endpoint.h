@@ -15,7 +15,7 @@
 namespace mojo {
 namespace system {
 
-class MOJO_SYSTEM_IMPL_EXPORT LocalMessagePipeEndpoint
+class MOJO_SYSTEM_IMPL_EXPORT LocalMessagePipeEndpoint final
     : public MessagePipeEndpoint {
  public:
   // If |message_queue| is non-null, its contents will be taken as the queue of

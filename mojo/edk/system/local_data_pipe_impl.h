@@ -19,7 +19,7 @@ class MessageInTransitQueue;
 // |LocalDataPipeImpl| is a subclass that "implements" |DataPipe| for data pipes
 // whose producer and consumer are both local. See |DataPipeImpl| for more
 // details.
-class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl : public DataPipeImpl {
+class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl final : public DataPipeImpl {
  public:
   LocalDataPipeImpl();
   ~LocalDataPipeImpl() override;

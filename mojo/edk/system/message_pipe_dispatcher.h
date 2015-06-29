@@ -20,7 +20,7 @@ class MessagePipeDispatcherTransport;
 
 // This is the |Dispatcher| implementation for message pipes (created by the
 // Mojo primitive |MojoCreateMessagePipe()|). This class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT MessagePipeDispatcher : public Dispatcher {
+class MOJO_SYSTEM_IMPL_EXPORT MessagePipeDispatcher final : public Dispatcher {
  public:
   // The default options to use for |MojoCreateMessagePipe()|. (Real uses
   // should obtain this via |ValidateCreateOptions()| with a null |in_options|;

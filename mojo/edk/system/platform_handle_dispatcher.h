@@ -15,7 +15,7 @@ namespace system {
 
 // A dispatcher that simply wraps/transports a |PlatformHandle| (only for use by
 // the embedder).
-class MOJO_SYSTEM_IMPL_EXPORT PlatformHandleDispatcher
+class MOJO_SYSTEM_IMPL_EXPORT PlatformHandleDispatcher final
     : public SimpleDispatcher {
  public:
   explicit PlatformHandleDispatcher(
