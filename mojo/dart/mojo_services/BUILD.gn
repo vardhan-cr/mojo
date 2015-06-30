@@ -13,5 +13,6 @@ dart_pkg("mojo_services") {
 
   deps = [
     "//mojo/services",
+    "//mojo/public/interfaces",
   ]
 }

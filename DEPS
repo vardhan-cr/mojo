@@ -272,6 +272,14 @@ hooks = [
                 '-s', 'src/sky/tools/skygo/mac/sky_server.sha1',
     ],
   },
+  {
+    'name': 'material_design_icons',
+    'pattern': '.',
+    'action': [
+        'python',
+        'src/sky/sdk/lib/download_material_design_icons',
+    ],
+  },
   # Pull binutils for linux, enabled debug fission for faster linking /
   # debugging when used with clang on Ubuntu Precise.
   # https://code.google.com/p/chromium/issues/detail?id=352046
