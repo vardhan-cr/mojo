@@ -27,8 +27,10 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipeDispatcher final : public Dispatcher {
   // this is exposed directly for testing convenience.)
   static const MojoCreateMessagePipeOptions kDefaultCreateOptions;
 
-  MessagePipeDispatcher(
-      const MojoCreateMessagePipeOptions& /*validated_options*/);
+  static scoped_refptr<MessagePipeDispatcher> Create(
+      const MojoCreateMessagePipeOptions& /*validated_options*/) {
+    return make_scoped_refptr(new MessagePipeDispatcher());
+  }
 
   // Validates and/or sets default options for |MojoCreateMessagePipeOptions|.
   // If non-null, |in_options| must point to a struct of at least
@@ -62,6 +64,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipeDispatcher final : public Dispatcher {
  private:
   friend class MessagePipeDispatcherTransport;
 
+  MessagePipeDispatcher();
   ~MessagePipeDispatcher() override;
 
   // Gets a dumb pointer to |message_pipe_|. This must be called under the

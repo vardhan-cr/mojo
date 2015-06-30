@@ -204,10 +204,10 @@ MojoResult Core::CreateMessagePipe(
   if (result != MOJO_RESULT_OK)
     return result;
 
-  scoped_refptr<MessagePipeDispatcher> dispatcher0(
-      new MessagePipeDispatcher(validated_options));
-  scoped_refptr<MessagePipeDispatcher> dispatcher1(
-      new MessagePipeDispatcher(validated_options));
+  scoped_refptr<MessagePipeDispatcher> dispatcher0 =
+      MessagePipeDispatcher::Create(validated_options);
+  scoped_refptr<MessagePipeDispatcher> dispatcher1 =
+      MessagePipeDispatcher::Create(validated_options);
 
   std::pair<MojoHandle, MojoHandle> handle_pair;
   {
@@ -370,10 +370,10 @@ MojoResult Core::CreateDataPipe(
   if (result != MOJO_RESULT_OK)
     return result;
 
-  scoped_refptr<DataPipeProducerDispatcher> producer_dispatcher(
-      new DataPipeProducerDispatcher());
-  scoped_refptr<DataPipeConsumerDispatcher> consumer_dispatcher(
-      new DataPipeConsumerDispatcher());
+  scoped_refptr<DataPipeProducerDispatcher> producer_dispatcher =
+      DataPipeProducerDispatcher::Create();
+  scoped_refptr<DataPipeConsumerDispatcher> consumer_dispatcher =
+      DataPipeConsumerDispatcher::Create();
 
   std::pair<MojoHandle, MojoHandle> handle_pair;
   {

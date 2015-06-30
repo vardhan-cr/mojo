@@ -18,8 +18,11 @@ namespace system {
 class MOJO_SYSTEM_IMPL_EXPORT PlatformHandleDispatcher final
     : public SimpleDispatcher {
  public:
-  explicit PlatformHandleDispatcher(
-      embedder::ScopedPlatformHandle platform_handle);
+  static scoped_refptr<PlatformHandleDispatcher> Create(
+      embedder::ScopedPlatformHandle platform_handle) {
+    return make_scoped_refptr(
+        new PlatformHandleDispatcher(platform_handle.Pass()));
+  }
 
   embedder::ScopedPlatformHandle PassPlatformHandle();
 
@@ -35,6 +38,8 @@ class MOJO_SYSTEM_IMPL_EXPORT PlatformHandleDispatcher final
       embedder::PlatformHandleVector* platform_handles);
 
  private:
+  explicit PlatformHandleDispatcher(
+      embedder::ScopedPlatformHandle platform_handle);
   ~PlatformHandleDispatcher() override;
 
   // |Dispatcher| protected methods:

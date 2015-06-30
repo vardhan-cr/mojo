@@ -103,8 +103,8 @@ MojoResult CreatePlatformHandleWrapper(
     MojoHandle* platform_handle_wrapper_handle) {
   DCHECK(platform_handle_wrapper_handle);
 
-  scoped_refptr<system::Dispatcher> dispatcher(
-      new system::PlatformHandleDispatcher(platform_handle.Pass()));
+  scoped_refptr<system::Dispatcher> dispatcher =
+      system::PlatformHandleDispatcher::Create(platform_handle.Pass());
 
   DCHECK(internal::g_core);
   MojoHandle h = internal::g_core->AddDispatcher(dispatcher);

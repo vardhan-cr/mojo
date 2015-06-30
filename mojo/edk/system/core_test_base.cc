@@ -24,15 +24,20 @@ namespace {
 
 class MockDispatcher : public Dispatcher {
  public:
-  explicit MockDispatcher(CoreTestBase::MockHandleInfo* info) : info_(info) {
-    CHECK(info_);
-    info_->IncrementCtorCallCount();
+  static scoped_refptr<MockDispatcher> Create(
+      CoreTestBase::MockHandleInfo* info) {
+    return make_scoped_refptr(new MockDispatcher(info));
   }
 
   // |Dispatcher| private methods:
   Type GetType() const override { return Type::UNKNOWN; }
 
  private:
+  explicit MockDispatcher(CoreTestBase::MockHandleInfo* info) : info_(info) {
+    CHECK(info_);
+    info_->IncrementCtorCallCount();
+  }
+
   ~MockDispatcher() override { info_->IncrementDtorCallCount(); }
 
   // |Dispatcher| protected methods:
@@ -153,7 +158,7 @@ class MockDispatcher : public Dispatcher {
 
   scoped_refptr<Dispatcher> CreateEquivalentDispatcherAndCloseImplNoLock()
       override {
-    return scoped_refptr<Dispatcher>(new MockDispatcher(info_));
+    return Create(info_);
   }
 
   CoreTestBase::MockHandleInfo* const info_;
@@ -182,7 +187,7 @@ void CoreTestBase::TearDown() {
 
 MojoHandle CoreTestBase::CreateMockHandle(CoreTestBase::MockHandleInfo* info) {
   CHECK(core_);
-  scoped_refptr<MockDispatcher> dispatcher(new MockDispatcher(info));
+  scoped_refptr<MockDispatcher> dispatcher = MockDispatcher::Create(info);
   return core_->AddDispatcher(dispatcher);
 }
 

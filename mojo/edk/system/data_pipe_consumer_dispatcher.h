@@ -21,7 +21,9 @@ class DataPipe;
 class MOJO_SYSTEM_IMPL_EXPORT DataPipeConsumerDispatcher final
     : public Dispatcher {
  public:
-  DataPipeConsumerDispatcher();
+  static scoped_refptr<DataPipeConsumerDispatcher> Create() {
+    return make_scoped_refptr(new DataPipeConsumerDispatcher());
+  }
 
   // Must be called before any other methods.
   void Init(scoped_refptr<DataPipe> data_pipe);
@@ -38,6 +40,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeConsumerDispatcher final
   DataPipe* GetDataPipeForTest() { return data_pipe_.get(); }
 
  private:
+  DataPipeConsumerDispatcher();
   ~DataPipeConsumerDispatcher() override;
 
   // |Dispatcher| protected methods:

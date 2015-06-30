@@ -366,7 +366,7 @@ class RemoteProducerDataPipeImplTestHelper
   void DoTransfer() override {
     // This is the producer dispatcher we'll send.
     scoped_refptr<DataPipeProducerDispatcher> to_send =
-        new DataPipeProducerDispatcher();
+        DataPipeProducerDispatcher::Create();
     to_send->Init(dp());
     scoped_refptr<Dispatcher> to_receive;
     SendDispatcher(0, to_send, &to_receive);
@@ -416,7 +416,7 @@ class RemoteConsumerDataPipeImplTestHelper
   void DoTransfer() override {
     // This is the consumer dispatcher we'll send.
     scoped_refptr<DataPipeConsumerDispatcher> to_send =
-        new DataPipeConsumerDispatcher();
+        DataPipeConsumerDispatcher::Create();
     to_send->Init(dp());
     scoped_refptr<Dispatcher> to_receive;
     SendDispatcher(0, to_send, &to_receive);
@@ -471,7 +471,7 @@ class RemoteProducerDataPipeImplTestHelper2
   void DoTransfer() override {
     // This is the producer dispatcher we'll send.
     scoped_refptr<DataPipeProducerDispatcher> to_send =
-        new DataPipeProducerDispatcher();
+        DataPipeProducerDispatcher::Create();
     to_send->Init(dp());
     scoped_refptr<Dispatcher> to_receive;
     SendDispatcher(0, to_send, &to_receive);
@@ -518,7 +518,7 @@ class RemoteConsumerDataPipeImplTestHelper2
   void DoTransfer() override {
     // This is the consumer dispatcher we'll send.
     scoped_refptr<DataPipeConsumerDispatcher> to_send =
-        new DataPipeConsumerDispatcher();
+        DataPipeConsumerDispatcher::Create();
     to_send->Init(dp());
     scoped_refptr<Dispatcher> to_receive;
     SendDispatcher(0, to_send, &to_receive);

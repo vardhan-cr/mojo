@@ -40,11 +40,11 @@ TEST(MessagePipeDispatcherTest, Basic) {
 
   // Run this test both with |d0| as port 0, |d1| as port 1 and vice versa.
   for (unsigned i = 0; i < 2; i++) {
-    scoped_refptr<MessagePipeDispatcher> d0(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
+    scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
     EXPECT_EQ(Dispatcher::Type::MESSAGE_PIPE, d0->GetType());
-    scoped_refptr<MessagePipeDispatcher> d1(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
+    scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
     {
       scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
       d0->Init(mp, i);      // 0, 1.
@@ -152,10 +152,10 @@ TEST(MessagePipeDispatcherTest, Basic) {
 TEST(MessagePipeDispatcherTest, InvalidParams) {
   char buffer[1];
 
-  scoped_refptr<MessagePipeDispatcher> d0(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
-  scoped_refptr<MessagePipeDispatcher> d1(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
+  scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
   {
     scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
     d0->Init(mp, 0);
@@ -182,10 +182,10 @@ TEST(MessagePipeDispatcherTest, InvalidParams) {
 TEST(MessagePipeDispatcherTest, InvalidParamsDeath) {
   const char kMemoryCheckFailedRegex[] = "Check failed";
 
-  scoped_refptr<MessagePipeDispatcher> d0(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
-  scoped_refptr<MessagePipeDispatcher> d1(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
+  scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
   {
     scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
     d0->Init(mp, 0);
@@ -222,10 +222,10 @@ TEST(MessagePipeDispatcherTest, BasicClosed) {
 
   // Run this test both with |d0| as port 0, |d1| as port 1 and vice versa.
   for (unsigned i = 0; i < 2; i++) {
-    scoped_refptr<MessagePipeDispatcher> d0(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
-    scoped_refptr<MessagePipeDispatcher> d1(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
+    scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
+    scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
     {
       scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
       d0->Init(mp, i);      // 0, 1.
@@ -358,10 +358,10 @@ TEST(MessagePipeDispatcherTest, MAYBE_BasicThreaded) {
 
   // Run this test both with |d0| as port 0, |d1| as port 1 and vice versa.
   for (unsigned i = 0; i < 2; i++) {
-    scoped_refptr<MessagePipeDispatcher> d0(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
-    scoped_refptr<MessagePipeDispatcher> d1(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
+    scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
+    scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
     {
       scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
       d0->Init(mp, i);      // 0, 1.
@@ -441,10 +441,10 @@ TEST(MessagePipeDispatcherTest, MAYBE_BasicThreaded) {
   }
 
   for (unsigned i = 0; i < 2; i++) {
-    scoped_refptr<MessagePipeDispatcher> d0(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
-    scoped_refptr<MessagePipeDispatcher> d1(new MessagePipeDispatcher(
-        MessagePipeDispatcher::kDefaultCreateOptions));
+    scoped_refptr<MessagePipeDispatcher> d0 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
+    scoped_refptr<MessagePipeDispatcher> d1 = MessagePipeDispatcher::Create(
+        MessagePipeDispatcher::kDefaultCreateOptions);
     {
       scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
       d0->Init(mp, i);      // 0, 1.
@@ -621,10 +621,10 @@ TEST(MessagePipeDispatcherTest, Stress) {
   static const size_t kNumWriters = 30;
   static const size_t kNumReaders = kNumWriters;
 
-  scoped_refptr<MessagePipeDispatcher> d_write(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
-  scoped_refptr<MessagePipeDispatcher> d_read(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> d_write = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
+  scoped_refptr<MessagePipeDispatcher> d_read = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
   {
     scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
     d_write->Init(mp, 0);

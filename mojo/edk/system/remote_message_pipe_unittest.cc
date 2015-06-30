@@ -615,8 +615,9 @@ TEST_F(RemoteMessagePipeTest, HandlePassing) {
   BootstrapChannelEndpoints(ep0, ep1);
 
   // We'll try to pass this dispatcher.
-  scoped_refptr<MessagePipeDispatcher> dispatcher(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> dispatcher =
+      MessagePipeDispatcher::Create(
+          MessagePipeDispatcher::kDefaultCreateOptions);
   scoped_refptr<MessagePipe> local_mp(MessagePipe::CreateLocalLocal());
   dispatcher->Init(local_mp, 0);
 
@@ -759,8 +760,9 @@ TEST_F(RemoteMessagePipeTest, HandlePassingHalfClosed) {
   uint32_t context = 0;
 
   // We'll try to pass this dispatcher.
-  scoped_refptr<MessagePipeDispatcher> dispatcher(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> dispatcher =
+      MessagePipeDispatcher::Create(
+          MessagePipeDispatcher::kDefaultCreateOptions);
   scoped_refptr<MessagePipe> local_mp(MessagePipe::CreateLocalLocal());
   dispatcher->Init(local_mp, 0);
 
@@ -1043,9 +1045,9 @@ TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
   EXPECT_EQ(sizeof(kHello), fwrite(kHello, 1, sizeof(kHello), fp.get()));
   // We'll try to pass this dispatcher, which will cause a |PlatformHandle| to
   // be passed.
-  scoped_refptr<PlatformHandleDispatcher> dispatcher(
-      new PlatformHandleDispatcher(
-          mojo::test::PlatformHandleFromFILE(fp.Pass())));
+  scoped_refptr<PlatformHandleDispatcher> dispatcher =
+      PlatformHandleDispatcher::Create(
+          mojo::test::PlatformHandleFromFILE(fp.Pass()));
 
   // Prepare to wait on MP 1, port 1. (Add the waiter now. Otherwise, if we do
   // it later, it might already be readable.)
@@ -1179,8 +1181,9 @@ TEST_F(RemoteMessagePipeTest, PassMessagePipeHandleAcrossAndBack) {
   BootstrapChannelEndpoints(ep0, ep1);
 
   // We'll try to pass this dispatcher.
-  scoped_refptr<MessagePipeDispatcher> dispatcher(
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions));
+  scoped_refptr<MessagePipeDispatcher> dispatcher =
+      MessagePipeDispatcher::Create(
+          MessagePipeDispatcher::kDefaultCreateOptions);
   scoped_refptr<MessagePipe> local_mp(MessagePipe::CreateLocalLocal());
   dispatcher->Init(local_mp, 0);
 

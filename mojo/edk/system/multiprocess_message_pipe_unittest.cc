@@ -470,9 +470,9 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
     fflush(fp.get());
     rewind(fp.get());
 
-    scoped_refptr<PlatformHandleDispatcher> dispatcher(
-        new PlatformHandleDispatcher(embedder::ScopedPlatformHandle(
-            mojo::test::PlatformHandleFromFILE(fp.Pass()))));
+    scoped_refptr<PlatformHandleDispatcher> dispatcher =
+        PlatformHandleDispatcher::Create(embedder::ScopedPlatformHandle(
+            mojo::test::PlatformHandleFromFILE(fp.Pass())));
     dispatchers.push_back(dispatcher);
     DispatcherTransport transport(
         test::DispatcherTryStartTransport(dispatcher.get()));

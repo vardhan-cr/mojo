@@ -41,6 +41,8 @@ class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher final
 
   // Static factory method: |validated_options| must be validated (obviously).
   // On failure, |*result| will be left as-is.
+  // TODO(vtl): This should probably be made to return a scoped_refptr and have
+  // a MojoResult out parameter instead.
   static MojoResult Create(
       embedder::PlatformSupport* platform_support,
       const MojoCreateSharedBufferOptions& validated_options,
@@ -59,8 +61,13 @@ class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher final
       embedder::PlatformHandleVector* platform_handles);
 
  private:
+  static scoped_refptr<SharedBufferDispatcher> CreateInternal(
+      scoped_refptr<embedder::PlatformSharedBuffer> shared_buffer) {
+    return make_scoped_refptr(new SharedBufferDispatcher(shared_buffer.Pass()));
+  }
+
   explicit SharedBufferDispatcher(
-      scoped_refptr<embedder::PlatformSharedBuffer> shared_buffer_);
+      scoped_refptr<embedder::PlatformSharedBuffer> shared_buffer);
   ~SharedBufferDispatcher() override;
 
   // Validates and/or sets default options for

@@ -171,7 +171,7 @@ TEST_F(RemoteDataPipeImplTest, SendConsumerWithClosedProducer) {
   scoped_refptr<DataPipe> dp(CreateLocal(sizeof(int32_t), 1000));
   // This is the consumer dispatcher we'll send.
   scoped_refptr<DataPipeConsumerDispatcher> consumer =
-      new DataPipeConsumerDispatcher();
+      DataPipeConsumerDispatcher::Create();
   consumer->Init(dp);
 
   // Write to the producer and close it, before sending the consumer.

@@ -279,10 +279,10 @@ using MessagePipeDispatcherPair =
               scoped_refptr<MessagePipeDispatcher>>;
 MessagePipeDispatcherPair CreateMessagePipe() {
   MessagePipeDispatcherPair rv;
-  rv.first =
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions);
-  rv.second =
-      new MessagePipeDispatcher(MessagePipeDispatcher::kDefaultCreateOptions);
+  rv.first = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
+  rv.second = MessagePipeDispatcher::Create(
+      MessagePipeDispatcher::kDefaultCreateOptions);
   scoped_refptr<MessagePipe> mp(MessagePipe::CreateLocalLocal());
   rv.first->Init(mp, 0);
   rv.second->Init(mp, 1);
