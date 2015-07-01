@@ -34,6 +34,7 @@ group("mojo") {
   if (is_android) {
     deps += [
       "//mojo/android",
+      "//mojo/java",
       "//mojo/tools/android_shortcuts",
       "//mojo/tools:remote_file_reader",
     ]
