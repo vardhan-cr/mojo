@@ -240,6 +240,7 @@ action("pub_build_observatory") {
                   "$root_gen_dir/observatory_copy/dart/runtime/observatory")
 
   deps = [
+    ":copy_observatory",
     ":copy_observatory_deps",
   ]
 

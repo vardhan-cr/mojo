@@ -59,6 +59,7 @@ python_binary_source_set("mojo_system_impl") {
     "python_system_impl_helper.h",
   ]
   deps = [
+    ":common_system_pxd",
     "//base",
     "//mojo/environment:chromium",
     "//mojo/common",
