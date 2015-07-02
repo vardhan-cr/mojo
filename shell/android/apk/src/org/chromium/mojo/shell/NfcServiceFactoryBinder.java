@@ -9,7 +9,6 @@ import android.nfc.NfcAdapter;
 import org.chromium.base.ApplicationStatus;
 import org.chromium.mojo.application.ServiceFactoryBinder;
 import org.chromium.mojo.bindings.InterfaceRequest;
-import org.chromium.mojom.mojo.Shell;
 import org.chromium.mojom.nfc.Nfc;
 
 /**
@@ -18,7 +17,7 @@ import org.chromium.mojom.nfc.Nfc;
 final class NfcServiceFactoryBinder implements ServiceFactoryBinder<Nfc> {
     private final NfcImpl mNfcImpl;
 
-    NfcServiceFactoryBinder(Shell shell, String requestorUrl) {
+    NfcServiceFactoryBinder(String requestorUrl) {
         NfcAdapter nfcAdapter =
                 NfcAdapter.getDefaultAdapter(ApplicationStatus.getApplicationContext());
         if (nfcAdapter == null || !nfcAdapter.isNdefPushEnabled()) {
@@ -26,7 +25,7 @@ final class NfcServiceFactoryBinder implements ServiceFactoryBinder<Nfc> {
             mNfcImpl = null;
         } else {
             String packageName = ApplicationStatus.getApplicationContext().getPackageName();
-            mNfcImpl = new NfcImpl(nfcAdapter, packageName, shell, requestorUrl);
+            mNfcImpl = new NfcImpl(nfcAdapter, packageName, requestorUrl);
         }
     }
 

@@ -39,7 +39,7 @@ final class NfcApplicationDelegate implements ApplicationDelegate {
      */
     @Override
     public boolean configureIncomingConnection(ApplicationConnection connection) {
-        connection.addService(new NfcServiceFactoryBinder(mShell, connection.getRequestorUrl()));
+        connection.addService(new NfcServiceFactoryBinder(connection.getRequestorUrl()));
         if (TextUtils.isEmpty(connection.getRequestorUrl())) {
             connection.addService(new NfcMessageSinkServiceFactoryBinder());
         }

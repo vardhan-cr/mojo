@@ -11,7 +11,6 @@ import android.nfc.NfcEvent;
 
 import org.chromium.base.ApplicationStatus;
 import org.chromium.mojo.system.MojoException;
-import org.chromium.mojom.mojo.Shell;
 import org.chromium.mojom.nfc.Nfc;
 import org.chromium.mojom.nfc.NfcData;
 import org.chromium.mojom.nfc.NfcTransmission;
@@ -26,15 +25,13 @@ class NfcImpl implements Nfc, NfcAdapter.OnNdefPushCompleteCallback,
                          NfcAdapter.CreateNdefMessageCallback {
     private final NfcAdapter mNfcAdapter;
     private final String mPackageName;
-    private final Shell mShell;
     private final String mRequestorUrl;
     private final List<NfcTransmissionInfo> mNfcTransmissionInfos;
     private List<NfcTransmissionInfo> mLastMessageNfcTransmissionInfos;
 
-    NfcImpl(NfcAdapter nfcAdapter, String packageName, Shell shell, String requestorUrl) {
+    NfcImpl(NfcAdapter nfcAdapter, String packageName, String requestorUrl) {
         mNfcAdapter = nfcAdapter;
         mPackageName = packageName;
-        mShell = shell;
         mRequestorUrl = requestorUrl;
         mNfcTransmissionInfos = new ArrayList<NfcTransmissionInfo>();
         mLastMessageNfcTransmissionInfos = new ArrayList<NfcTransmissionInfo>();
