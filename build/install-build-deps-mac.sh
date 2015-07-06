@@ -44,7 +44,7 @@ fi
 if [ ! -z $(which brew) ]; then
   brew install ant
 elif [ ! -z $(which port) ]; then
-  sudo port install apache-ant
+  sudo `which port` install apache-ant
 else
   INSTRUCTIONS="${INSTRUCTIONS}\n** Install homebrew (brew.sh) or macports (macports.org) and re-run this script."
 fi
