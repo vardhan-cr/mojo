@@ -6,20 +6,55 @@ import("//mojo/public/dart/rules.gni")
 
 group("dart-pkg") {
   deps = [
+    ":args",
     ":box2d",
-    ":vector_math",
+    ":collection",
+    ":crypto",
+    ":path",
     ":quiver",
+    ":source_span",
+    ":string_scanner",
+    ":vector_math",
+    ":yaml",
   ]
+}
+
+dart_pkg("args") {
+  pkg_dir = "//third_party/dart-pkg/args"
 }
 
 dart_pkg("box2d") {
   pkg_dir = "//third_party/dart-pkg/box2d"
 }
 
-dart_pkg("vector_math") {
-  pkg_dir = "//third_party/dart-pkg/vector_math"
+dart_pkg("collection") {
+  pkg_dir = "//third_party/dart-pkg/collection"
+}
+
+dart_pkg("crypto") {
+  pkg_dir = "//third_party/dart-pkg/crypto"
+}
+
+dart_pkg("path") {
+  pkg_dir = "//third_party/dart-pkg/path"
 }
 
 dart_pkg("quiver") {
   pkg_dir = "//third_party/dart-pkg/quiver"
+}
+
+dart_pkg("source_span") {
+  pkg_dir = "//third_party/dart-pkg/source_span"
+}
+
+dart_pkg("string_scanner") {
+  pkg_dir = "//third_party/dart-pkg/string_scanner"
+}
+
+dart_pkg("vector_math") {
+  pkg_dir = "//third_party/dart-pkg/vector_math"
+}
+
+dart_pkg("yaml") {
+  pkg_dir = "//third_party/dart-pkg/yaml"
 }

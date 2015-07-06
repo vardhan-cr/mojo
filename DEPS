@@ -31,9 +31,16 @@ vars = {
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
-  'vector_math_dart_revision': '65915583f7aa606cb47ed265f853c18c60102b81',
+  'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
+  'collection_dart_revision': '79ebc6fc2dae581cb23ad50a5c600c1b7dd132f8',
+  'crypto_dart_revision': 'd4558dea1639e5ad2a41d045265b8ece270c2d90',
+  'path_dart_revision': '2f3dcdec32011f1bc41194ae3640d6d9292a7096',
   'quiver_dart_revision': '6bab7dec34189eee579178eb16d3063c8ae69031',
+  'source_span_dart_revision': '5c6c13f62fc111adaace3aeb4a38853d64481d06',
+  'string_scanner_dart_revision': '9f00056b32f41efc376adecfb696a01bc7c593d7',
+  'vector_math_dart_revision': '65915583f7aa606cb47ed265f853c18c60102b81',
+  'yaml_dart_revision': 'd8c1ce75edf051ea1d5583b24474f8656abb4920',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -104,16 +111,36 @@ deps = {
   'src/native_client':
     Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
 
-  'src/third_party/dart-pkg/vector_math':
-      Var('chromium_git') + '/external/github.com/google/vector_math.dart.git' + '@' + Var('vector_math_dart_revision'),
+  'src/third_party/dart-pkg/args':
+    Var('chromium_git') + '/external/github.com/dart-lang/args.git' + '@' + Var('args_dart_revision'),
 
   'src/third_party/dart-pkg/box2d':
-      Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
+    Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
+
+  'src/third_party/dart-pkg/collection':
+    Var('chromium_git') + '/external/github.com/dart-lang/collection.git' + '@' + Var('collection_dart_revision'),
+
+  'src/third_party/dart-pkg/crypto':
+    Var('chromium_git') + '/external/github.com/dart-lang/crypto.git' + '@' + Var('crypto_dart_revision'),
+
+  'src/third_party/dart-pkg/path':
+    Var('chromium_git') + '/external/github.com/dart-lang/path.git' + '@' + Var('path_dart_revision'),
 
   'src/third_party/dart-pkg/quiver':
-      Var('chromium_git') + '/external/github.com/google/quiver-dart.git' + '@' + Var('quiver_dart_revision'),
-}
+    Var('chromium_git') + '/external/github.com/google/quiver-dart.git' + '@' + Var('quiver_dart_revision'),
 
+  'src/third_party/dart-pkg/source_span':
+    Var('chromium_git') + '/external/github.com/dart-lang/source_span.git' + '@' + Var('source_span_dart_revision'),
+
+  'src/third_party/dart-pkg/string_scanner':
+    Var('chromium_git') + '/external/github.com/dart-lang/string_scanner.git' + '@' + Var('string_scanner_dart_revision'),
+
+  'src/third_party/dart-pkg/vector_math':
+    Var('chromium_git') + '/external/github.com/google/vector_math.dart.git' + '@' + Var('vector_math_dart_revision'),
+
+  'src/third_party/dart-pkg/yaml':
+    Var('chromium_git') + '/external/github.com/dart-lang/yaml.git' + '@' + Var('yaml_dart_revision'),
+}
 
 deps_os = {
   'android': {
