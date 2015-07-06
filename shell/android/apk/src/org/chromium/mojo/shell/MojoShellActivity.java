@@ -33,13 +33,8 @@ public class MojoShellActivity extends Activity {
         // has no obligation to kill the application process between destroying and restarting the
         // activity. If the application process is kept alive, initialization parameters sent with
         // the intent will be stale.
-        // TODO(qsr): We should be passing application context here as required by
-        // InitApplicationContext on the native side. Currently we can't, as PlatformViewportAndroid
-        // relies on this being the activity context.
-        ShellMain.ensureInitialized(this, getParametersFromIntent(getIntent()));
-
         // TODO(eseidel): ShellMain can fail, but we're ignoring the return.
-        ShellMain.start();
+        ShellMain.ensureInitialized(getApplicationContext(), getParametersFromIntent(getIntent()));
 
         onNewIntent(getIntent());
 

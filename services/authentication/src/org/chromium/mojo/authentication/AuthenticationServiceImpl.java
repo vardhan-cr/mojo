@@ -5,7 +5,6 @@
 package org.chromium.mojo.authentication;
 
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Parcel;
@@ -79,14 +78,14 @@ public class AuthenticationServiceImpl
         }
     }
 
-    private final Activity mContext;
+    private final Context mContext;
     private final String mConsumerURL;
     private final IntentReceiverManager mIntentReceiverManager;
     private Db mDb = null;
     private File mDbFile = null;
 
     public AuthenticationServiceImpl(Context context, Core core, String consumerURL, Shell shell) {
-        mContext = (Activity) context;
+        mContext = context;
         mConsumerURL = consumerURL;
         mIntentReceiverManager = ShellHelper.connectToService(
                 core, shell, "mojo:intent_receiver", IntentReceiverManager.MANAGER);

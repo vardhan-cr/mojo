@@ -149,9 +149,9 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
 void PlatformViewportAndroid::Init(const gfx::Rect& bounds) {
   JNIEnv* env = base::android::AttachCurrentThread();
   java_platform_viewport_android_ = JavaObjectWeakGlobalRef(
-      env, Java_PlatformViewportAndroid_createForActivity(
-               env, base::android::GetApplicationContext(),
-               reinterpret_cast<jlong>(this)).obj());
+      env,
+      Java_PlatformViewportAndroid_create(env, reinterpret_cast<jlong>(this))
+          .obj());
 }
 
 void PlatformViewportAndroid::Show() {

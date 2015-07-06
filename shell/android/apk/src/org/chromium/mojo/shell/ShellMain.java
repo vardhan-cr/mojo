@@ -135,6 +135,7 @@ public class ShellMain {
             Log.e(TAG, "ShellMain initialization failed.", e);
             throw new RuntimeException(e);
         }
+        start();
     }
 
     /**
