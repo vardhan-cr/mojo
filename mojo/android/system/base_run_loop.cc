@@ -17,22 +17,46 @@
 namespace mojo {
 namespace android {
 
+namespace {
+
+struct MessageLoopHolder {
+  MessageLoopHolder() {
+    if (base::MessageLoop::current()) {
+      message_loop = base::MessageLoop::current();
+      owned = false;
+    } else {
+      message_loop = new base::MessageLoop(common::MessagePumpMojo::Create());
+      owned = true;
+    }
+  }
+
+  ~MessageLoopHolder() {
+    if (owned) {
+      delete message_loop;
+      message_loop = nullptr;
+    }
+  }
+
+  base::MessageLoop* message_loop;
+  bool owned;
+};
+
+}  // namespace
+
 static jlong CreateBaseRunLoop(JNIEnv* env, jobject jcaller) {
-  base::MessageLoop* message_loop =
-      new base::MessageLoop(common::MessagePumpMojo::Create());
-  return reinterpret_cast<uintptr_t>(message_loop);
+  return reinterpret_cast<uintptr_t>(new MessageLoopHolder());
 }
 
 static void Run(JNIEnv* env, jobject jcaller, jlong runLoopID) {
-  reinterpret_cast<base::MessageLoop*>(runLoopID)->Run();
+  reinterpret_cast<MessageLoopHolder*>(runLoopID)->message_loop->Run();
 }
 
 static void RunUntilIdle(JNIEnv* env, jobject jcaller, jlong runLoopID) {
-  reinterpret_cast<base::MessageLoop*>(runLoopID)->RunUntilIdle();
+  reinterpret_cast<MessageLoopHolder*>(runLoopID)->message_loop->RunUntilIdle();
 }
 
 static void Quit(JNIEnv* env, jobject jcaller, jlong runLoopID) {
-  reinterpret_cast<base::MessageLoop*>(runLoopID)->Quit();
+  reinterpret_cast<MessageLoopHolder*>(runLoopID)->message_loop->Quit();
 }
 
 static void RunJavaRunnable(
@@ -51,15 +75,16 @@ static void PostDelayedTask(JNIEnv* env,
   // use it across threads. |RunJavaRunnable| will acquire a new JNIEnv before
   // running the Runnable.
   runnable_ref.Reset(env, runnable);
-  reinterpret_cast<base::MessageLoop*>(runLoopID)->PostDelayedTask(
-      FROM_HERE, base::Bind(&RunJavaRunnable, runnable_ref),
-      base::TimeDelta::FromMicroseconds(delay));
+  reinterpret_cast<MessageLoopHolder*>(runLoopID)
+      ->message_loop->PostDelayedTask(
+          FROM_HERE, base::Bind(&RunJavaRunnable, runnable_ref),
+          base::TimeDelta::FromMicroseconds(delay));
 }
 
 static void DeleteMessageLoop(JNIEnv* env, jobject jcaller, jlong runLoopID) {
-  base::MessageLoop* message_loop =
-      reinterpret_cast<base::MessageLoop*>(runLoopID);
-  delete message_loop;
+  MessageLoopHolder* native_loop =
+      reinterpret_cast<MessageLoopHolder*>(runLoopID);
+  delete native_loop;
 }
 
 bool RegisterBaseRunLoop(JNIEnv* env) {
