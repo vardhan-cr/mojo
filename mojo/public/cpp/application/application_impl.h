@@ -4,9 +4,10 @@
 
 #ifndef MOJO_PUBLIC_APPLICATION_APPLICATION_IMPL_H_
 #define MOJO_PUBLIC_APPLICATION_APPLICATION_IMPL_H_
+
+#include <string>
 #include <vector>
 
-#include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/lib/service_registry.h"
 #include "mojo/public/cpp/system/core.h"
@@ -15,39 +16,21 @@
 
 namespace mojo {
 
-// Utility class for communicating with the Shell, and providing Services
-// to clients.
+class ApplicationConnection;
+
+// Implements the Application interface, which the shell uses for basic
+// communication with an application (e.g., to connect clients to services
+// provided by an application). Also provides the application access to the
+// Shell, which, e.g., may be used by an application to connect to other
+// services.
 //
-// To use define a class that implements your specific server api, e.g. FooImpl
-// to implement a service named Foo.
-// That class must subclass an InterfaceImpl specialization.
-//
-// If there is context that is to be shared amongst all instances, define a
-// constructor with that class as its only argument, otherwise define an empty
-// constructor.
-//
-// class FooImpl : public InterfaceImpl<Foo> {
-//  public:
-//   FooImpl(ApplicationContext* app_context) {}
-// };
-//
-// or
-//
-// class BarImpl : public InterfaceImpl<Bar> {
-//  public:
-//   // contexts will remain valid for the lifetime of BarImpl.
-//   BarImpl(ApplicationContext* app_context, BarContext* service_context)
-//          : app_context_(app_context), servicecontext_(context) {}
-//
-// Create an ApplicationImpl instance that collects any service implementations.
-//
-// ApplicationImpl app(service_provider_handle);
-// app.AddService<FooImpl>();
-//
-// BarContext context;
-// app.AddService<BarImpl>(&context);
-//
-//
+// Typically, you create one or more classes implementing your APIs (e.g.,
+// FooImpl implementing Foo). See bindings/binding.h for more information. Then
+// you implement an mojo::ApplicationDelegate that either is or owns a
+// mojo::InterfaceFactory<Foo> and whose ConfigureIncomingConnection() adds that
+// factory to each connection. Finally, you instantiate your delegate and pass
+// it to an ApplicationRunner, which will create the ApplicationImpl and then
+// run a message (or run) loop.
 class ApplicationImpl : public Application {
  public:
   // Does not take ownership of |delegate|, which must remain valid for the
