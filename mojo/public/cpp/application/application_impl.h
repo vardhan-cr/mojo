@@ -90,8 +90,6 @@ class ApplicationImpl : public Application {
                         const String& url) override;
 
  private:
-  class ShellPtrWatcher;
-
   void ClearConnections();
 
   void OnShellError() {
@@ -110,7 +108,6 @@ class ApplicationImpl : public Application {
   ApplicationDelegate* delegate_;
   Binding<Application> binding_;
   ShellPtr shell_;
-  ShellPtrWatcher* shell_watch_;
   std::string url_;
   std::vector<std::string> args_;
 
