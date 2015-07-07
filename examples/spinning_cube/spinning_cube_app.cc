@@ -22,8 +22,7 @@
 namespace examples {
 
 class SpinningCubeApp : public mojo::ApplicationDelegate,
-                        public mojo::NativeViewportEventDispatcher,
-                        public mojo::ErrorHandler {
+                        public mojo::NativeViewportEventDispatcher {
  public:
   SpinningCubeApp() : dispatcher_binding_(this) {}
 
@@ -34,7 +33,8 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
 
   void Initialize(mojo::ApplicationImpl* app) override {
     app->ConnectToService("mojo:native_viewport_service", &viewport_);
-    viewport_.set_error_handler(this);
+    viewport_.set_connection_error_handler(
+        [this]() { OnViewportConnectionError(); });
 
     SetEventDispatcher();
 
@@ -79,8 +79,7 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
     viewport_->SetEventDispatcher(ptr.Pass());
   }
 
-  // ErrorHandler implementation.
-  void OnConnectionError() override { mojo::RunLoop::current()->Quit(); }
+  void OnViewportConnectionError() { mojo::RunLoop::current()->Quit(); }
 
   scoped_ptr<GLES2ClientImpl> gles2_client_;
   mojo::NativeViewportPtr viewport_;
