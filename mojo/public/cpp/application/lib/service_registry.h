@@ -9,6 +9,7 @@
 
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/lib/service_connector_registry.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/interfaces/application/service_provider.mojom.h"
 
 namespace mojo {

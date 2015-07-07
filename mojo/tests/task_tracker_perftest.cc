@@ -9,6 +9,7 @@
 #include "base/timer/elapsed_timer.h"
 #include "base/tracked_objects.h"
 #include "mojo/common/message_pump_mojo.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/environment/task_tracker.h"
 #include "mojo/public/cpp/test_support/test_support.h"

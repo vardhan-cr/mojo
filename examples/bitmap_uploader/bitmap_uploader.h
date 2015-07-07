@@ -9,6 +9,7 @@
 #include "base/containers/hash_tables.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"

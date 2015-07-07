@@ -13,6 +13,7 @@
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/public/c/gles2/gles2_types.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
