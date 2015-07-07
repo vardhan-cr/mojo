@@ -33,6 +33,7 @@ vars = {
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
   'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
+  'cassowary_dart_revision': 'a262b45f4a8600064a128d3fe56ca8426ba25c30',
   'collection_dart_revision': '79ebc6fc2dae581cb23ad50a5c600c1b7dd132f8',
   'crypto_dart_revision': 'd4558dea1639e5ad2a41d045265b8ece270c2d90',
   'path_dart_revision': '2f3dcdec32011f1bc41194ae3640d6d9292a7096',
@@ -116,6 +117,9 @@ deps = {
 
   'src/third_party/dart-pkg/box2d':
     Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
+
+  'src/third_party/dart-pkg/cassowary':
+    Var('chromium_git') + '/external/github.com/domokit/cassowary.git' + '@' + Var('cassowary_dart_revision'),
 
   'src/third_party/dart-pkg/collection':
     Var('chromium_git') + '/external/github.com/dart-lang/collection.git' + '@' + Var('collection_dart_revision'),
