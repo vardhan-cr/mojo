@@ -19,6 +19,19 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
+
+// The test for |MOJO_STATIC_CONST_MEMBER_DEFINITION| is really a compile/link
+// test. To test it fully would really require a header file and multiple .cc
+// files, but we'll just cursorily verify it.
+//
+// This is defined outside of an anonymous namespace because
+// MOJO_STATIC_CONST_MEMBER_DEFINITION may not be used on internal symbols.
+struct StructWithStaticConstMember {
+  static const int kStaticConstMember = 123;
+};
+MOJO_STATIC_CONST_MEMBER_DEFINITION
+const int StructWithStaticConstMember::kStaticConstMember;
+
 namespace {
 
 // Note: MSVS is very strict (and arguably buggy) about warnings for classes
@@ -123,15 +136,6 @@ TEST(MacrosCppTest, MoveOnlyType) {
   EXPECT_TRUE(z.is_set());
   EXPECT_EQ(123, z.value());
 }
-
-// The test for |MOJO_STATIC_CONST_MEMBER_DEFINITION| is really a compile/link
-// test. To test it fully would really require a header file and multiple .cc
-// files, but we'll just cursorily verify it.
-struct StructWithStaticConstMember {
-  static const int kStaticConstMember = 123;
-};
-MOJO_STATIC_CONST_MEMBER_DEFINITION
-const int StructWithStaticConstMember::kStaticConstMember;
 
 // Use it, to make sure things get linked in and to avoid any warnings about
 // unused things.
