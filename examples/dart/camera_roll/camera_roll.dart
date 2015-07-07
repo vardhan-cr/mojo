@@ -11,7 +11,7 @@ import 'dart:async';
 import 'dart:sky';
 
 import 'package:mojom/mojo/camera_roll.mojom.dart';
-import 'package:sky/framework/embedder.dart';
+import 'package:sky/mojo/embedder.dart';
 
 final CameraRollServiceProxy cameraRoll = new CameraRollServiceProxy.unbound();
 int photoIndex = 0;
