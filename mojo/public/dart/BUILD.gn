@@ -44,6 +44,7 @@ dartzip_package("dart") {
 
 dart_pkg("mojo") {
   sources = dart_mojo_sdk_sources + [
+              "lib/.sdkext",
               "pubspec.yaml",
               "CHANGELOG.md",
               "README.md",
