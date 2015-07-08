@@ -102,9 +102,8 @@ class Binding {
   // Tears down the binding, closing the message pipe and leaving the interface
   // implementation unbound.
   ~Binding() {
-    if (internal_router_) {
+    if (internal_router_)
       Close();
-    }
   }
 
   // Completes a binding that was constructed with only an interface
