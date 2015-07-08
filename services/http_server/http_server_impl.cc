@@ -41,24 +41,25 @@ void HttpServerImpl::SetHandler(const mojo::String& path,
       callback.Run(false);
   }
 
-  http_handler.set_error_handler(this);
-  handlers_.push_back(new Handler(path, http_handler.Pass()));
+  Handler* handler = new Handler(path, http_handler.Pass());
+  handler->http_handler.set_connection_error_handler(
+      [this, handler]() { OnHandlerConnectionError(handler); });
+  handlers_.push_back(handler);
   callback.Run(true);
 }
 
 void HttpServerImpl::GetPort(const GetPortCallback& callback) {
-  if (assigned_port_) {
+  if (assigned_port_)
     callback.Run(assigned_port_);
-  } else {
+  else
     pending_get_port_callbacks_.push_back(callback);
-  }
 }
 
-void HttpServerImpl::OnConnectionError() {
-  handlers_.erase(
-      std::remove_if(handlers_.begin(), handlers_.end(), [](Handler* h) {
-    return h->http_handler.encountered_error();
-  }), handlers_.end());
+void HttpServerImpl::OnHandlerConnectionError(Handler* handler) {
+  auto it = std::find(handlers_.begin(), handlers_.end(), handler);
+  CHECK(it != handlers_.end());
+  DCHECK((*it)->http_handler.encountered_error());
+  handlers_.erase(it);
 
   if (handlers_.empty()) {
     // The call deregisters the server from the factory and deletes |this|.

@@ -24,7 +24,7 @@ namespace http_server {
 class Connection;
 class HttpServerFactoryImpl;
 
-class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
+class HttpServerImpl : public HttpServer {
  public:
   HttpServerImpl(mojo::ApplicationImpl* app,
                  HttpServerFactoryImpl* factory,
@@ -41,8 +41,17 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
   void GetPort(const GetPortCallback& callback) override;
 
  private:
-  // ErrorHandler:
-  void OnConnectionError() override;
+  struct Handler {
+    Handler(const std::string& pattern, HttpHandlerPtr http_handler);
+    ~Handler();
+    scoped_ptr<re2::RE2> pattern;
+    HttpHandlerPtr http_handler;
+
+   private:
+    DISALLOW_COPY_AND_ASSIGN(Handler);
+  };
+
+  void OnHandlerConnectionError(Handler* handler);
 
   void OnSocketBound(mojo::NetworkErrorPtr err,
                      mojo::NetAddressPtr bound_address);
@@ -60,16 +69,6 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
 
   void OnResponse(Connection* connection, HttpResponsePtr response);
 
-  struct Handler {
-    Handler(const std::string& pattern, HttpHandlerPtr http_handler);
-    ~Handler();
-    scoped_ptr<re2::RE2> pattern;
-    HttpHandlerPtr http_handler;
-
-   private:
-    DISALLOW_COPY_AND_ASSIGN(Handler);
-  };
-
   HttpServerFactoryImpl* factory_;
 
   mojo::NetAddressPtr requested_local_address_;
@@ -86,6 +85,8 @@ class HttpServerImpl : public HttpServer, public mojo::ErrorHandler {
   mojo::ScopedDataPipeConsumerHandle pending_receive_handle_;
   mojo::TCPConnectedSocketPtr pending_connected_socket_;
 
+  // TODO(vtl): Maybe this should be an std::set or unordered_set, which would
+  // simplify OnHandlerConnectionError().
   ScopedVector<Handler> handlers_;
 
   base::WeakPtrFactory<HttpServerImpl> weak_ptr_factory_;
