@@ -24,7 +24,6 @@ HttpServerImpl::HttpServerImpl(mojo::ApplicationImpl* app,
       weak_ptr_factory_(this) {
   app->ConnectToService("mojo:network_service", &network_service_);
   Start();
-  bindings_.set_error_handler(this);
 }
 
 HttpServerImpl::~HttpServerImpl() {
