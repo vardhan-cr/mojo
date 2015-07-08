@@ -12,8 +12,39 @@
 
 namespace mojo {
 
+namespace internal {
+
+// TODO(vtl): This name of this class is a little odd -- it's not a "weak
+// pointer", but a wrapper around InterfacePtr that owns itself and can vend
+// weak pointers to itself. Probably, with connection error callbacks instead of
+// ErrorHandlers, this class is unneeded, and WeakInterfacePtrSet can simply
+// own/remove interface pointers as connection errors occur.
+// https://github.com/domokit/mojo/issues/311
 template <typename Interface>
-class WeakInterfacePtr;
+class WeakInterfacePtr {
+ public:
+  explicit WeakInterfacePtr(InterfacePtr<Interface> ptr)
+      : ptr_(ptr.Pass()), weak_ptr_factory_(this) {
+    ptr_.set_connection_error_handler([this]() { delete this; });
+  }
+  ~WeakInterfacePtr() {}
+
+  void Close() { ptr_.reset(); }
+
+  Interface* get() { return ptr_.get(); }
+
+  base::WeakPtr<WeakInterfacePtr> GetWeakPtr() {
+    return weak_ptr_factory_.GetWeakPtr();
+  }
+
+ private:
+  InterfacePtr<Interface> ptr_;
+  base::WeakPtrFactory<WeakInterfacePtr> weak_ptr_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(WeakInterfacePtr);
+};
+
+}  // namespace internal
 
 template <typename Interface>
 class WeakInterfacePtrSet {
@@ -22,7 +53,8 @@ class WeakInterfacePtrSet {
   ~WeakInterfacePtrSet() { CloseAll(); }
 
   void AddInterfacePtr(InterfacePtr<Interface> ptr) {
-    auto weak_interface_ptr = new WeakInterfacePtr<Interface>(ptr.Pass());
+    auto weak_interface_ptr =
+        new internal::WeakInterfacePtr<Interface>(ptr.Pass());
     ptrs_.push_back(weak_interface_ptr->GetWeakPtr());
     ClearNullInterfacePtrs();
   }
@@ -45,7 +77,7 @@ class WeakInterfacePtrSet {
   }
 
  private:
-  using WPWIPI = base::WeakPtr<WeakInterfacePtr<Interface>>;
+  using WPWIPI = base::WeakPtr<internal::WeakInterfacePtr<Interface>>;
 
   void ClearNullInterfacePtrs() {
     ptrs_.erase(std::remove_if(ptrs_.begin(), ptrs_.end(), [](const WPWIPI& p) {
@@ -54,33 +86,6 @@ class WeakInterfacePtrSet {
   }
 
   std::vector<WPWIPI> ptrs_;
-};
-
-template <typename Interface>
-class WeakInterfacePtr : public ErrorHandler {
- public:
-  explicit WeakInterfacePtr(InterfacePtr<Interface> ptr)
-      : ptr_(ptr.Pass()), weak_ptr_factory_(this) {
-    ptr_.set_error_handler(this);
-  }
-  ~WeakInterfacePtr() override {}
-
-  void Close() { ptr_.reset(); }
-
-  Interface* get() { return ptr_.get(); }
-
-  base::WeakPtr<WeakInterfacePtr> GetWeakPtr() {
-    return weak_ptr_factory_.GetWeakPtr();
-  }
-
- private:
-  // ErrorHandler implementation
-  void OnConnectionError() override { delete this; }
-
-  InterfacePtr<Interface> ptr_;
-  base::WeakPtrFactory<WeakInterfacePtr> weak_ptr_factory_;
-
-  DISALLOW_COPY_AND_ASSIGN(WeakInterfacePtr);
 };
 
 }  // namespace mojo
