@@ -23,7 +23,7 @@ class CommandBufferDriver;
 // so that we can insert sync points without blocking on the GL driver. It
 // forwards most method calls to the CommandBufferDriver, which runs on the
 // same thread as the native viewport.
-class CommandBufferImpl : public mojo::CommandBuffer, mojo::ErrorHandler {
+class CommandBufferImpl : public mojo::CommandBuffer {
  public:
   class Observer {
    public:
@@ -62,11 +62,9 @@ class CommandBufferImpl : public mojo::CommandBuffer, mojo::ErrorHandler {
   // to create it, before the destruction happens.
   void set_observer(Observer* observer) { observer_ = observer; }
 
-  // mojo::ErrorHandler implementation
-  void OnConnectionError() override;
-
  private:
   void BindToRequest(mojo::InterfaceRequest<CommandBuffer> request);
+  void OnConnectionError();
   void NotifyAndDestroy();
   void Destroy();
 

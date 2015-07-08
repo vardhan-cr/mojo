@@ -140,14 +140,22 @@ void CommandBufferImpl::Echo(const mojo::Callback<void()>& callback) {
                                         base::Bind(&RunCallback, callback));
 }
 
+void CommandBufferImpl::DidLoseContext() {
+  NotifyAndDestroy();
+}
+
+void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
+                                              base::TimeDelta interval) {
+  if (!viewport_parameter_listener_)
+    return;
+  viewport_parameter_listener_->OnVSyncParametersUpdated(
+      timebase.ToInternalValue(), interval.ToInternalValue());
+}
+
 void CommandBufferImpl::BindToRequest(
     mojo::InterfaceRequest<mojo::CommandBuffer> request) {
   binding_.Bind(request.Pass());
-  binding_.set_error_handler(this);
-}
-
-void CommandBufferImpl::DidLoseContext() {
-  NotifyAndDestroy();
+  binding_.set_connection_error_handler([this]() { OnConnectionError(); });
 }
 
 void CommandBufferImpl::OnConnectionError() {
@@ -172,14 +180,6 @@ void CommandBufferImpl::NotifyAndDestroy() {
 
 void CommandBufferImpl::Destroy() {
   delete this;
-}
-
-void CommandBufferImpl::UpdateVSyncParameters(base::TimeTicks timebase,
-                                              base::TimeDelta interval) {
-  if (!viewport_parameter_listener_)
-    return;
-  viewport_parameter_listener_->OnVSyncParametersUpdated(
-      timebase.ToInternalValue(), interval.ToInternalValue());
 }
 
 }  // namespace gles2
