@@ -187,6 +187,11 @@ def main():
                         help='Directory containing .dart sources',
                         nargs='*',
                         default=[])
+    parser.add_argument('--sdk-ext-files',
+                        metavar='sdk_ext_files',
+                        help='List of .dart files that are part of of sdk_ext.',
+                        nargs='*',
+                        default=[])
     args = parser.parse_args()
 
     # We must have a pubspec.yaml.
@@ -209,6 +214,11 @@ def main():
             relative_source = os.path.relpath(source, common_prefix)
             target = os.path.join(sdk_ext_dir, relative_source)
             copy_or_link(source, target)
+    for source in args.sdk_ext_files:
+        common_prefix = os.path.commonprefix(args.sdk_ext_files)
+        relative_source = os.path.relpath(source, common_prefix)
+        target = os.path.join(sdk_ext_dir, relative_source)
+        copy_or_link(source, target)
 
     lib_path = os.path.join(target_dir, "lib")
     lib_mojom_path = os.path.join(lib_path, "mojom")
