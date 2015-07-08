@@ -5,7 +5,7 @@
 #ifndef MOJO_SERVICES_VIEW_MANAGER_PUBLIC_CPP_LIB_VIEW_MANAGER_CLIENT_IMPL_H_
 #define MOJO_SERVICES_VIEW_MANAGER_PUBLIC_CPP_LIB_VIEW_MANAGER_CLIENT_IMPL_H_
 
-#include "mojo/public/cpp/bindings/strong_binding.h"
+#include "mojo/public/cpp/bindings/binding.h"
 #include "view_manager/public/cpp/types.h"
 #include "view_manager/public/cpp/view.h"
 #include "view_manager/public/cpp/view_manager.h"
@@ -21,8 +21,7 @@ class ViewManagerTransaction;
 // Manages the connection with the View Manager service.
 class ViewManagerClientImpl : public ViewManager,
                               public ViewManagerClient,
-                              public WindowManagerObserver,
-                              public ErrorHandler {
+                              public WindowManagerObserver {
  public:
   ViewManagerClientImpl(ViewManagerDelegate* delegate,
                         Shell* shell,
@@ -128,9 +127,6 @@ class ViewManagerClientImpl : public ViewManager,
   void OnFocusChanged(Id focused_view_id) override;
   void OnActiveWindowChanged(Id focused_view_id) override;
 
-  // ErrorHandler implementation.
-  void OnConnectionError() override;
-
   void RootDestroyed(View* root);
 
   void OnActionCompleted(bool success);
@@ -159,7 +155,6 @@ class ViewManagerClientImpl : public ViewManager,
 
   Binding<ViewManagerClient> binding_;
   ViewManagerServicePtr service_;
-  const bool delete_on_error_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ViewManagerClientImpl);
 };

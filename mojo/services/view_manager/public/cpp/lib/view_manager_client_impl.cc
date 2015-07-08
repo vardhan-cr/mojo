@@ -103,8 +103,9 @@ ViewManagerClientImpl::ViewManagerClientImpl(
       focused_view_(nullptr),
       activated_view_(nullptr),
       wm_observer_binding_(this),
-      binding_(this, request.Pass()),
-      delete_on_error_(delete_on_error) {
+      binding_(this, request.Pass()) {
+  if (delete_on_error)
+    binding_.set_connection_error_handler([this]() { delete this; });
 }
 
 ViewManagerClientImpl::~ViewManagerClientImpl() {
@@ -483,13 +484,6 @@ void ViewManagerClientImpl::OnActiveWindowChanged(Id active_view_id) {
                       *ViewPrivate(activated).observers(),
                       OnViewActivationChanged(activated, deactivated));
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// OnConnectionError, private:
-void ViewManagerClientImpl::OnConnectionError() {
-  if (delete_on_error_)
-    delete this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
