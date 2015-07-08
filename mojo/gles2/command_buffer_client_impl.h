@@ -30,7 +30,6 @@ class CommandBufferDelegate {
 };
 
 class CommandBufferClientImpl : public mojo::CommandBufferLostContextObserver,
-                                public mojo::ErrorHandler,
                                 public gpu::CommandBuffer,
                                 public gpu::GpuControl {
  public:
@@ -80,9 +79,6 @@ class CommandBufferClientImpl : public mojo::CommandBufferLostContextObserver,
 
   // mojo::CommandBufferLostContextObserver implementation:
   void DidLoseContext(int32_t lost_reason) override;
-
-  // mojo::ErrorHandler implementation:
-  void OnConnectionError() override;
 
   void TryUpdateState();
   void MakeProgressAndUpdateState();

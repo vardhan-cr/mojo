@@ -125,7 +125,8 @@ CommandBufferClientImpl::CommandBufferClientImpl(
       mojo::InterfacePtrInfo<mojo::CommandBuffer>(command_buffer_handle.Pass(),
                                                   0u),
       async_waiter);
-  command_buffer_.set_error_handler(this);
+  command_buffer_.set_connection_error_handler(
+      [this]() { DidLoseContext(gpu::error::kUnknown); });
 }
 
 CommandBufferClientImpl::~CommandBufferClientImpl() {}
@@ -307,10 +308,6 @@ void CommandBufferClientImpl::DidLoseContext(int32_t lost_reason) {
   last_state_.context_lost_reason =
       static_cast<gpu::error::ContextLostReason>(lost_reason);
   delegate_->ContextLost();
-}
-
-void CommandBufferClientImpl::OnConnectionError() {
-  DidLoseContext(gpu::error::kUnknown);
 }
 
 void CommandBufferClientImpl::TryUpdateState() {
