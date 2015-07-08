@@ -19,10 +19,12 @@
 const uint32_t kMaxBytesToRead = 1000;
 
 // Owns itself.
-class TerminalEchoer : mojo::ErrorHandler {
+class TerminalEchoer {
  public:
   explicit TerminalEchoer(mojo::files::FilePtr terminal)
-      : terminal_(terminal.Pass()), last_bytes_read_size_(0) {}
+      : terminal_(terminal.Pass()), last_bytes_read_size_(0) {
+    terminal_.set_connection_error_handler([this]() { OnConnectionError(); });
+  }
 
   void StartReading() {
     // TODO(vtl): Are |offset| and |whence| correct?
@@ -32,10 +34,10 @@ class TerminalEchoer : mojo::ErrorHandler {
   }
 
  private:
-  ~TerminalEchoer() override {}
+  ~TerminalEchoer() {}
 
-  // |mojo::ErrorHandler| implementation:
-  void OnConnectionError() override { delete this; }
+  // Error callback:
+  void OnConnectionError() { delete this; }
 
   // |Read()| callback:
   void OnRead(mojo::files::Error error, mojo::Array<uint8_t> bytes_read) {
