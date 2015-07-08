@@ -7,7 +7,7 @@
 
 #include <map>
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/timer/timer.h"
@@ -49,13 +49,11 @@ class DisplayManager {
 
 // DisplayManager implementation that connects to the services necessary to
 // actually display.
-class DefaultDisplayManager : public DisplayManager,
-                              public mojo::ErrorHandler {
+class DefaultDisplayManager : public DisplayManager {
  public:
-  DefaultDisplayManager(
-      mojo::ApplicationImpl* app_impl,
-      mojo::ApplicationConnection* app_connection,
-      const mojo::Callback<void()>& native_viewport_closed_callback);
+  DefaultDisplayManager(mojo::ApplicationImpl* app_impl,
+                        mojo::ApplicationConnection* app_connection,
+                        const mojo::Closure& native_viewport_closed_callback);
   ~DefaultDisplayManager() override;
 
   // DisplayManager:
@@ -71,9 +69,6 @@ class DefaultDisplayManager : public DisplayManager,
 
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics);
 
-  // ErrorHandler:
-  void OnConnectionError() override;
-
   mojo::ApplicationImpl* app_impl_;
   mojo::ApplicationConnection* app_connection_;
   ConnectionManager* connection_manager_;
@@ -85,7 +80,7 @@ class DefaultDisplayManager : public DisplayManager,
 
   mojo::DisplayPtr display_;
   mojo::NativeViewportPtr native_viewport_;
-  mojo::Callback<void()> native_viewport_closed_callback_;
+  mojo::Closure native_viewport_closed_callback_;
   base::WeakPtrFactory<DefaultDisplayManager> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(DefaultDisplayManager);

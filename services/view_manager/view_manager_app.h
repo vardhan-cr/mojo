@@ -26,7 +26,6 @@ class ConnectionManager;
 class ViewManagerApp
     : public mojo::ApplicationDelegate,
       public ConnectionManagerDelegate,
-      public mojo::ErrorHandler,
       public mojo::InterfaceFactory<mojo::ViewManagerService>,
       public mojo::InterfaceFactory<mojo::WindowManagerInternalClient> {
  public:
@@ -65,9 +64,6 @@ class ViewManagerApp
   void Create(mojo::ApplicationConnection* connection,
               mojo::InterfaceRequest<mojo::WindowManagerInternalClient> request)
       override;
-
-  // ErrorHandler (for |wm_internal_| and |wm_internal_client_binding_|).
-  void OnConnectionError() override;
 
   mojo::ApplicationImpl* app_impl_;
   mojo::ApplicationConnection* wm_app_connection_;

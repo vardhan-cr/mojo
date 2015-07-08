@@ -48,7 +48,7 @@ bool ViewManagerApp::ConfigureIncomingConnection(
   // If no ServiceProvider has been sent, refuse the connection.
   if (!wm_internal_)
     return false;
-  wm_internal_.set_error_handler(this);
+  wm_internal_.set_connection_error_handler(&ApplicationImpl::Terminate);
 
   scoped_ptr<DefaultDisplayManager> display_manager(new DefaultDisplayManager(
       app_impl_, connection,
@@ -125,13 +125,10 @@ void ViewManagerApp::Create(
   wm_internal_client_binding_.reset(
       new mojo::Binding<WindowManagerInternalClient>(connection_manager_.get(),
                                                      request.Pass()));
-  wm_internal_client_binding_->set_error_handler(this);
+  wm_internal_client_binding_->set_connection_error_handler(
+      &ApplicationImpl::Terminate);
   wm_internal_->SetViewManagerClient(
       wm_internal_client_request_.PassMessagePipe());
-}
-
-void ViewManagerApp::OnConnectionError() {
-  ApplicationImpl::Terminate();
 }
 
 }  // namespace view_manager

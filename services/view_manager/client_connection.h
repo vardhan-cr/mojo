@@ -36,8 +36,7 @@ class ClientConnection {
 };
 
 // Bindings implementation of ClientConnection.
-class DefaultClientConnection : public ClientConnection,
-                                public mojo::ErrorHandler {
+class DefaultClientConnection : public ClientConnection {
  public:
   DefaultClientConnection(
       scoped_ptr<ViewManagerServiceImpl> service_impl,
@@ -47,9 +46,6 @@ class DefaultClientConnection : public ClientConnection,
   ~DefaultClientConnection() override;
 
  private:
-  // ErrorHandler:
-  void OnConnectionError() override;
-
   ConnectionManager* connection_manager_;
   mojo::Binding<mojo::ViewManagerService> binding_;
   mojo::ViewManagerClientPtr client_;

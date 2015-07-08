@@ -74,7 +74,7 @@ void DrawViewTree(mojo::Pass* pass,
 DefaultDisplayManager::DefaultDisplayManager(
     mojo::ApplicationImpl* app_impl,
     mojo::ApplicationConnection* app_connection,
-    const mojo::Callback<void()>& native_viewport_closed_callback)
+    const mojo::Closure& native_viewport_closed_callback)
     : app_impl_(app_impl),
       app_connection_(app_connection),
       connection_manager_(nullptr),
@@ -91,7 +91,10 @@ void DefaultDisplayManager::Init(ConnectionManager* connection_manager) {
   connection_manager_ = connection_manager;
   app_impl_->ConnectToService("mojo:native_viewport_service",
                               &native_viewport_);
-  native_viewport_.set_error_handler(this);
+  // The connection error handler will be called if native_viewport_ is torn
+  // down before this object is destroyed.
+  native_viewport_.set_connection_error_handler(
+      [this]() { native_viewport_closed_callback_.Run(); });
   native_viewport_->Create(metrics_.size->Clone(),
                            mojo::SurfaceConfiguration::New(),
                            base::Bind(&DefaultDisplayManager::OnMetricsChanged,
@@ -176,12 +179,6 @@ void DefaultDisplayManager::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
   connection_manager_->ProcessViewportMetricsChanged(metrics_, *metrics);
   native_viewport_->RequestMetrics(base::Bind(
       &DefaultDisplayManager::OnMetricsChanged, weak_factory_.GetWeakPtr()));
-}
-
-void DefaultDisplayManager::OnConnectionError() {
-  // This is called when the native_viewport is torn down before
-  // ~DefaultDisplayManager may be called.
-  native_viewport_closed_callback_.Run();
 }
 
 }  // namespace view_manager
