@@ -22,7 +22,8 @@ ShellImpl::ShellImpl(mojo::ApplicationPtr application,
       on_application_end_(on_application_end),
       application_(application.Pass()),
       binding_(this) {
-  binding_.set_error_handler(this);
+  binding_.set_connection_error_handler(
+      [this]() { manager_->OnShellImplError(this); });
 }
 
 ShellImpl::~ShellImpl() {
@@ -56,10 +57,6 @@ void ShellImpl::ConnectToApplication(
   }
   manager_->ConnectToApplication(app_gurl, identity_.url, services.Pass(),
                                  exposed_services.Pass(), base::Closure());
-}
-
-void ShellImpl::OnConnectionError() {
-  manager_->OnShellImplError(this);
 }
 
 }  // namespace shell

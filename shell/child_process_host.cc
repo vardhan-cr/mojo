@@ -60,7 +60,7 @@ void ChildProcessHost::Start() {
   CHECK(channel_info_);
 
   controller_.Bind(mojo::InterfacePtrInfo<ChildController>(handle.Pass(), 0u));
-  controller_.set_error_handler(this);
+  controller_.set_connection_error_handler([this]() { OnConnectionError(); });
 
   CHECK(base::PostTaskAndReplyWithResult(
       context_->task_runners()->blocking_pool(), FROM_HERE,

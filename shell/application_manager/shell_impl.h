@@ -17,7 +17,7 @@ namespace shell {
 
 class ApplicationManager;
 
-class ShellImpl : public mojo::Shell, public mojo::ErrorHandler {
+class ShellImpl : public mojo::Shell {
  public:
   ShellImpl(mojo::ApplicationPtr application,
             ApplicationManager* manager,
@@ -43,9 +43,6 @@ class ShellImpl : public mojo::Shell, public mojo::ErrorHandler {
       const mojo::String& app_url,
       mojo::InterfaceRequest<mojo::ServiceProvider> services,
       mojo::ServiceProviderPtr exposed_services) override;
-
-  // mojo::ErrorHandler implementation:
-  void OnConnectionError() override;
 
   ApplicationManager* const manager_;
   const Identity identity_;

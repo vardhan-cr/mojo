@@ -47,7 +47,7 @@ std::vector<std::string> Concatenate(const std::vector<std::string>& v1,
 
 }  // namespace
 
-class ApplicationManager::ContentHandlerConnection : public mojo::ErrorHandler {
+class ApplicationManager::ContentHandlerConnection {
  public:
   ContentHandlerConnection(ApplicationManager* manager,
                            const GURL& content_handler_url)
@@ -61,17 +61,16 @@ class ApplicationManager::ContentHandlerConnection : public mojo::ErrorHandler {
         mojo::InterfacePtrInfo<mojo::ContentHandler>(pipe.handle0.Pass(), 0u));
     services->ConnectToService(mojo::ContentHandler::Name_,
                                pipe.handle1.Pass());
-    content_handler_.set_error_handler(this);
+    content_handler_.set_connection_error_handler(
+        [this]() { manager_->OnContentHandlerError(this); });
   }
+  ~ContentHandlerConnection() {}
 
   mojo::ContentHandler* content_handler() { return content_handler_.get(); }
 
   GURL content_handler_url() { return content_handler_url_; }
 
  private:
-  // mojo::ErrorHandler implementation:
-  void OnConnectionError() override { manager_->OnContentHandlerError(this); }
-
   ApplicationManager* manager_;
   GURL content_handler_url_;
   mojo::ContentHandlerPtr content_handler_;

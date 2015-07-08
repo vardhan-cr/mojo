@@ -46,20 +46,6 @@ void QuitClosure(bool* value) {
   base::MessageLoop::current()->QuitWhenIdle();
 }
 
-class QuitMessageLoopErrorHandler : public mojo::ErrorHandler {
- public:
-  QuitMessageLoopErrorHandler() {}
-  ~QuitMessageLoopErrorHandler() override {}
-
-  // |mojo::ErrorHandler| implementation:
-  void OnConnectionError() override {
-    base::MessageLoop::current()->QuitWhenIdle();
-  }
-
- private:
-  DISALLOW_COPY_AND_ASSIGN(QuitMessageLoopErrorHandler);
-};
-
 class TestServiceImpl : public TestService {
  public:
   TestServiceImpl(TestContext* context, InterfaceRequest<TestService> request)
@@ -741,8 +727,8 @@ TEST_F(ApplicationManagerTest, NoServiceNoLoad) {
   // ApplicationManager, so this cannot succeed (but also shouldn't crash).
   TestCPtr c;
   application_manager_->ConnectToService(GURL(kTestAURLString), &c);
-  QuitMessageLoopErrorHandler quitter;
-  c.set_error_handler(&quitter);
+  c.set_connection_error_handler(
+      []() { base::MessageLoop::current()->QuitWhenIdle(); });
 
   loop_.Run();
   EXPECT_TRUE(c.encountered_error());
