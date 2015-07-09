@@ -274,7 +274,7 @@ void DocumentView::OnViewInputEvent(
   scoped_ptr<ui::TouchEvent> touch_event =
       ConvertToUITouchEvent(*web_event, device_pixel_ratio);
   if (touch_event)
-    recognizer->ProcessTouchEventPreDispatch(*touch_event, this);
+    recognizer->ProcessTouchEventPreDispatch(touch_event.get(), this);
 
   bool handled = false;
 
@@ -283,8 +283,8 @@ void DocumentView::OnViewInputEvent(
 
   if (touch_event) {
     ui::EventResult result = handled ? ui::ER_UNHANDLED : ui::ER_UNHANDLED;
-    if (auto gestures = recognizer->ProcessTouchEventPostDispatch(
-            *touch_event, result, this)) {
+    if (auto gestures = recognizer->AckTouchEvent(
+          touch_event->unique_event_id(), result, this)) {
       for (auto& gesture : *gestures) {
         scoped_ptr<blink::WebInputEvent> gesture_event =
             ConvertEvent(*gesture, device_pixel_ratio);

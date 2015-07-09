@@ -24,7 +24,7 @@ class EVENTS_EXPORT MotionEventImpl : public MotionEvent {
   void OnTouch(const TouchEvent& touch);
 
   // MotionEvent implementation.
-  int GetId() const override;
+  uint32 GetUniqueEventId() const override;
   Action GetAction() const override;
   int GetActionIndex() const override;
   size_t GetPointerCount() const override;
@@ -42,10 +42,10 @@ class EVENTS_EXPORT MotionEventImpl : public MotionEvent {
   int GetFlags() const override;
   base::TimeTicks GetEventTime() const override;
 
-  scoped_ptr<MotionEvent> Clone() const override;
-  scoped_ptr<MotionEvent> Cancel() const override;
+  scoped_ptr<MotionEvent> Clone() const;
+  scoped_ptr<MotionEvent> Cancel() const;
 
-  int GetSourceDeviceId(size_t pointer_index) const;
+  int GetSourceDeviceId(size_t pointer_index) const override;
 
   // We can't cleanup removed touch points immediately upon receipt of a
   // TouchCancel or TouchRelease, as the MotionEvent needs to be able to report

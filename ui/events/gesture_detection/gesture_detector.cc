@@ -38,7 +38,8 @@ enum TimeoutEvent {
 }  // namespace
 
 // Note: These constants were taken directly from the default (unscaled)
-// versions found in Android's ViewConfiguration.
+// versions found in Android's ViewConfiguration. Do not change these default
+// values without explicitly consulting an OWNER.
 GestureDetector::Config::Config()
     : longpress_timeout(base::TimeDelta::FromMilliseconds(500)),
       showpress_timeout(base::TimeDelta::FromMilliseconds(180)),
@@ -53,7 +54,8 @@ GestureDetector::Config::Config()
       maximum_swipe_deviation_angle(20.f),
       two_finger_tap_enabled(false),
       two_finger_tap_max_separation(300),
-      two_finger_tap_timeout(base::TimeDelta::FromMilliseconds(700)) {
+      two_finger_tap_timeout(base::TimeDelta::FromMilliseconds(700)),
+      velocity_tracker_strategy(VelocityTracker::Strategy::STRATEGY_DEFAULT) {
 }
 
 GestureDetector::Config::~Config() {}
@@ -134,7 +136,8 @@ GestureDetector::GestureDetector(
       longpress_enabled_(true),
       showpress_enabled_(true),
       swipe_enabled_(false),
-      two_finger_tap_enabled_(false) {
+      two_finger_tap_enabled_(false),
+      velocity_tracker_(config.velocity_tracker_strategy) {
   DCHECK(listener_);
   Init(config);
 }
@@ -292,6 +295,9 @@ bool GestureDetector::OnTouchEvent(const MotionEvent& ev) {
             always_in_bigger_tap_region_ = false;
         } else if (std::abs(scroll_x) > kScrollEpsilon ||
                    std::abs(scroll_y) > kScrollEpsilon) {
+          // We should eventually apply touch slop for multi-finger
+          // scrolls as well as single finger scrolls. See
+          // crbug.com/492185 for details.
           handled =
               listener_->OnScroll(*current_down_event_, ev, scroll_x, scroll_y);
           last_focus_x_ = focus_x;
@@ -433,10 +439,12 @@ void GestureDetector::OnLongPressTimeout() {
 void GestureDetector::OnTapTimeout() {
   if (!double_tap_listener_)
     return;
-  if (!still_down_)
-    double_tap_listener_->OnSingleTapConfirmed(*current_down_event_);
-  else
+  if (!still_down_) {
+    CHECK(previous_up_event_);
+    double_tap_listener_->OnSingleTapConfirmed(*previous_up_event_);
+  } else {
     defer_confirm_single_tap_ = true;
+  }
 }
 
 void GestureDetector::Cancel() {

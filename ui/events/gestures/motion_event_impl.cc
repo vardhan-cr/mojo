@@ -10,7 +10,7 @@
 #include <cmath>
 
 #include "base/logging.h"
-#include "ui/events/gestures/gesture_configuration.h"
+#include "ui/events/gesture_detection/gesture_configuration.h"
 
 namespace ui {
 
@@ -70,8 +70,8 @@ MotionEventImpl::PointData MotionEventImpl::GetPointDataFromTouchEvent(
   }
 
   if (!point_data.touch_major) {
-    point_data.touch_major = 2.f * GestureConfiguration::default_radius();
-    point_data.touch_minor = 2.f * GestureConfiguration::default_radius();
+    point_data.touch_major = 2.f * GestureConfiguration::GetInstance()->default_radius();
+    point_data.touch_minor = 2.f * GestureConfiguration::GetInstance()->default_radius();
     point_data.orientation = 0;
   }
 
@@ -103,8 +103,10 @@ void MotionEventImpl::OnTouch(const TouchEvent& touch) {
   last_touch_time_ = touch.time_stamp() + base::TimeTicks();
 }
 
-int MotionEventImpl::GetId() const {
-  return GetPointerId(0);
+uint32 MotionEventImpl::GetUniqueEventId() const {
+  ///CAS???
+  DCHECK(false);
+  return 0;
 }
 
 MotionEvent::Action MotionEventImpl::GetAction() const {

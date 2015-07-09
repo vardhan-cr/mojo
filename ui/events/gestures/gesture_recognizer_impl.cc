@@ -15,7 +15,7 @@
 #include "ui/events/event_constants.h"
 #include "ui/events/event_switches.h"
 #include "ui/events/event_utils.h"
-#include "ui/events/gestures/gesture_configuration.h"
+#include "ui/events/gesture_detection/gesture_configuration.h"
 #include "ui/events/gestures/gesture_types.h"
 
 namespace ui {
@@ -91,8 +91,8 @@ GestureConsumer* GestureRecognizerImpl::GetTargetForGestureEvent(
 
 GestureConsumer* GestureRecognizerImpl::GetTargetForLocation(
     const gfx::PointF& location, int source_device_id) {
-  const float max_distance =
-      GestureConfiguration::max_separation_for_gesture_touches_in_pixels();
+  const float max_distance = GestureConfiguration::GetInstance()
+      ->max_separation_for_gesture_touches_in_pixels();
 
   gfx::PointF closest_point;
   int closest_touch_id = 0;
@@ -200,6 +200,12 @@ bool GestureRecognizerImpl::CancelActiveTouches(GestureConsumer* consumer) {
   return cancelled_touch;
 }
 
+void GestureRecognizerImpl::CancelActiveTouchesExcept(
+    GestureConsumer* not_cancelled) {
+  // CAS???
+  DCHECK(false);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // GestureRecognizerImpl, private:
 
@@ -235,31 +241,20 @@ void GestureRecognizerImpl::DispatchGestureEvent(GestureEvent* event) {
 }
 
 bool GestureRecognizerImpl::ProcessTouchEventPreDispatch(
-    const TouchEvent& event,
+    TouchEvent* event,
     GestureConsumer* consumer) {
-  SetupTargets(event, consumer);
+  SetupTargets(*event, consumer);
 
-  if (event.result() & ER_CONSUMED)
+  if (event->result() & ER_CONSUMED)
     return false;
 
   GestureProviderImpl* gesture_provider =
       GetGestureProviderForConsumer(consumer);
-  return gesture_provider->OnTouchEvent(event);
+  return gesture_provider->OnTouchEvent(*event);
 }
 
-GestureRecognizer::Gestures*
-GestureRecognizerImpl::ProcessTouchEventPostDispatch(
-    const TouchEvent& event,
-    ui::EventResult result,
-    GestureConsumer* consumer) {
-  GestureProviderImpl* gesture_provider =
-      GetGestureProviderForConsumer(consumer);
-  gesture_provider->OnTouchEventAck(result != ER_UNHANDLED);
-  return gesture_provider->GetAndResetPendingGestures();
-}
-
-GestureRecognizer::Gestures* GestureRecognizerImpl::ProcessTouchEventOnAsyncAck(
-    const TouchEvent& event,
+GestureRecognizer::Gestures* GestureRecognizerImpl::AckTouchEvent(
+    uint32 unique_event_id,
     ui::EventResult result,
     GestureConsumer* consumer) {
   if (result & ui::ER_CONSUMED)

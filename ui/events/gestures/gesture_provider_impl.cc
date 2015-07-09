@@ -7,15 +7,16 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "ui/events/event.h"
-#include "ui/events/gesture_detection/gesture_config_helper.h"
 #include "ui/events/gesture_detection/gesture_event_data.h"
-#include "ui/events/gestures/gesture_configuration.h"
+#include "ui/events/gesture_detection/gesture_configuration.h"
+#include "ui/events/gesture_detection/gesture_provider_config_helper.h"
 
 namespace ui {
 
 GestureProviderImpl::GestureProviderImpl(GestureProviderImplClient* client)
     : client_(client),
-      filtered_gesture_provider_(ui::DefaultGestureProviderConfig(), this),
+      filtered_gesture_provider_(
+        GetGestureProviderConfig(GestureProviderConfigType::CURRENT_PLATFORM), this),
       handling_event_(false) {
   filtered_gesture_provider_.SetDoubleTapSupportForPlatformEnabled(false);
 }
@@ -48,16 +49,18 @@ bool GestureProviderImpl::OnTouchEvent(const TouchEvent& event) {
   last_touch_event_latency_info_ = *event.latency();
   pointer_state_.OnTouch(event);
 
-  bool result = filtered_gesture_provider_.OnTouchEvent(pointer_state_);
+  FilteredGestureProvider::TouchHandlingResult result = 
+    filtered_gesture_provider_.OnTouchEvent(pointer_state_);
   pointer_state_.CleanupRemovedTouchPoints(event);
-  return result;
+  return result.succeeded;
 }
 
 void GestureProviderImpl::OnTouchEventAck(bool event_consumed) {
   DCHECK(pending_gestures_.empty());
   DCHECK(!handling_event_);
   base::AutoReset<bool> handling_event(&handling_event_, true);
-  filtered_gesture_provider_.OnTouchEventAck(event_consumed);
+  // CAS???
+  filtered_gesture_provider_.OnTouchEventAck(0, event_consumed);
   last_touch_event_latency_info_.Clear();
 }
 
@@ -116,13 +119,13 @@ bool GestureProviderImpl::IsConsideredDoubleTap(
     const GestureEventData& previous_tap,
     const GestureEventData& current_tap) const {
   if (current_tap.time - previous_tap.time >
-      base::TimeDelta::FromMilliseconds(
-          ui::GestureConfiguration::max_time_between_double_click_in_ms())) {
+      base::TimeDelta::FromMilliseconds(ui::GestureConfiguration::GetInstance()
+        ->max_time_between_double_click_in_ms())) {
     return false;
   }
 
   float double_tap_slop_square =
-      GestureConfiguration::max_distance_between_taps_for_double_tap();
+      GestureConfiguration::GetInstance()->max_distance_between_taps_for_double_tap();
   double_tap_slop_square *= double_tap_slop_square;
   const float delta_x = previous_tap.x - current_tap.x;
   const float delta_y = previous_tap.y - current_tap.y;
