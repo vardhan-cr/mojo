@@ -29,7 +29,6 @@ NativeViewportImpl::NativeViewportImpl(
       metrics_(mojo::ViewportMetrics::New()),
       binding_(this, request.Pass()),
       weak_factory_(this) {
-  binding_.set_error_handler(this);
 }
 
 NativeViewportImpl::~NativeViewportImpl() {
@@ -157,12 +156,6 @@ bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {
 }
 
 void NativeViewportImpl::OnDestroyed() {
-  // This will signal a connection error and cause us to delete |this|.
-  binding_.Close();
-}
-
-void NativeViewportImpl::OnConnectionError() {
-  binding_.set_error_handler(nullptr);
   delete this;
 }
 
