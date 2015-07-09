@@ -5,10 +5,9 @@
 #ifndef SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
 #define SERVICES_WINDOW_MANAGER_WINDOW_MANAGER_IMPL_H_
 
-#include "base/basictypes.h"
 #include "base/logging.h"
-#include "mojo/public/cpp/bindings/binding.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
+#include "base/macros.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/view_manager/public/cpp/types.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 
@@ -16,8 +15,7 @@ namespace window_manager {
 
 class WindowManagerApp;
 
-class WindowManagerImpl : public mojo::WindowManager,
-                          public mojo::ErrorHandler {
+class WindowManagerImpl : public mojo::WindowManager {
  public:
   // See description above |from_vm_| for details on |from_vm|.
   // WindowManagerImpl deletes itself on connection errors.  WindowManagerApp
@@ -47,9 +45,6 @@ class WindowManagerImpl : public mojo::WindowManager,
       const mojo::WindowManager::GetFocusedAndActiveViewsCallback& callback)
       override;
 
-  // mojo::ErrorHandler:
-  void OnConnectionError() override;
-
   WindowManagerApp* window_manager_;
 
   // Whether this connection originated from the ViewManager. Connections that
@@ -57,7 +52,7 @@ class WindowManagerImpl : public mojo::WindowManager,
   // that don't originate from the view manager do not have clients.
   const bool from_vm_;
 
-  mojo::Binding<mojo::WindowManager> binding_;
+  mojo::StrongBinding<mojo::WindowManager> binding_;
   mojo::WindowManagerObserverPtr observer_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerImpl);

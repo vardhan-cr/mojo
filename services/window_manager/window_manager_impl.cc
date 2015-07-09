@@ -18,7 +18,6 @@ WindowManagerImpl::WindowManagerImpl(WindowManagerApp* window_manager,
                                      bool from_vm)
     : window_manager_(window_manager), from_vm_(from_vm), binding_(this) {
   window_manager_->AddConnection(this);
-  binding_.set_error_handler(this);
 }
 
 WindowManagerImpl::~WindowManagerImpl() {
@@ -89,10 +88,6 @@ void WindowManagerImpl::GetFocusedAndActiveViews(
   callback.Run(capture_view ? capture_view->id() : 0,
                focused_view ? focused_view->id() : 0,
                active_view ? active_view->id() : 0);
-}
-
-void WindowManagerImpl::OnConnectionError() {
-  delete this;
 }
 
 }  // namespace window_manager
