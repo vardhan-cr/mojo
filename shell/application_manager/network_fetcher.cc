@@ -46,8 +46,9 @@ NetworkFetcher::NetworkFetcher(
       predictable_app_filenames_(predictable_app_filenames),
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
+      network_service_(network_service),
       weak_ptr_factory_(this) {
-  StartNetworkRequest(url, network_service);
+  StartNetworkRequest(FROM_NETWORK);
 }
 
 NetworkFetcher::~NetworkFetcher() {
@@ -215,13 +216,11 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
                           kPeekTimeout);
 }
 
-void NetworkFetcher::StartNetworkRequest(
-    const GURL& url,
-    mojo::NetworkService* network_service) {
+void NetworkFetcher::StartNetworkRequest(RequestType request_type) {
   TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
-                           "url", url.spec());
+                           "url", url_.spec());
   mojo::URLRequestPtr request(mojo::URLRequest::New());
-  request->url = mojo::String::From(url);
+  request->url = mojo::String::From(url_);
   request->auto_follow_redirects = false;
   request->bypass_cache = disable_cache_;
   auto header = mojo::HttpHeader::New();
@@ -231,20 +230,25 @@ void NetworkFetcher::StartNetworkRequest(
   headers.push_back(header.Pass());
   request->headers = headers.Pass();
 
-  network_service->CreateURLLoader(GetProxy(&url_loader_));
+  network_service_->CreateURLLoader(GetProxy(&url_loader_));
   url_loader_->Start(request.Pass(),
                      base::Bind(&NetworkFetcher::OnLoadComplete,
-                                weak_ptr_factory_.GetWeakPtr()));
+                                weak_ptr_factory_.GetWeakPtr(), request_type));
 }
 
-void NetworkFetcher::OnLoadComplete(mojo::URLResponsePtr response) {
+void NetworkFetcher::OnLoadComplete(RequestType request_type,
+                                    mojo::URLResponsePtr response) {
   TRACE_EVENT_ASYNC_END0("mojo_shell", "NetworkFetcher::NetworkRequest", this);
   scoped_ptr<Fetcher> owner(this);
   if (response->error) {
     LOG(ERROR) << "Error (" << response->error->code << ": "
                << response->error->description << ") while fetching "
                << response->url;
-    loader_callback_.Run(nullptr);
+    if (request_type == FROM_NETWORK) {
+      StartNetworkRequest(FROM_CACHE);
+    } else {
+      loader_callback_.Run(nullptr);
+    }
     return;
   }
 

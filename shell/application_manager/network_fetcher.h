@@ -32,6 +32,14 @@ class NetworkFetcher : public Fetcher {
   // TODO(hansmuller): Revisit this when a real peek operation is available.
   static const MojoDeadline kPeekTimeout = MOJO_DEADLINE_INDEFINITE;
 
+  // The network fetcher will first try to request an application from the
+  // network. If that request fails, it will then try to request the application
+  // from the cache.
+  enum RequestType {
+    FROM_NETWORK,
+    FROM_CACHE,
+  };
+
   const GURL& GetURL() const override;
   GURL GetRedirectURL() const override;
 
@@ -65,15 +73,15 @@ class NetworkFetcher : public Fetcher {
 
   bool PeekFirstLine(std::string* line) override;
 
-  void StartNetworkRequest(const GURL& url,
-                           mojo::NetworkService* network_service);
+  void StartNetworkRequest(RequestType request_type);
 
-  void OnLoadComplete(mojo::URLResponsePtr response);
+  void OnLoadComplete(RequestType request_type, mojo::URLResponsePtr response);
 
   const bool disable_cache_;
   const bool predictable_app_filenames_;
   const GURL url_;
   mojo::URLResponseDiskCache* url_response_disk_cache_;
+  mojo::NetworkService* network_service_;
   mojo::URLLoaderPtr url_loader_;
   mojo::URLResponsePtr response_;
   base::FilePath path_;
