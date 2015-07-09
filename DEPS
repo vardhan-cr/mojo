@@ -34,7 +34,7 @@ vars = {
   'archive_dart_revision': '07ffd98c5403b7f9ae067b57dc9487611be420f5',
   'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
-  'cassowary_dart_revision': 'db724a65712fc36d626a73a1617aa6f118700a30',
+  'cassowary_dart_revision': '7e5afc5b3956a18636d5b37b1dcba1705865564b',
   'collection_dart_revision': '79ebc6fc2dae581cb23ad50a5c600c1b7dd132f8',
   'crypto_dart_revision': 'd4558dea1639e5ad2a41d045265b8ece270c2d90',
   'path_dart_revision': '2f3dcdec32011f1bc41194ae3640d6d9292a7096',
