@@ -10,6 +10,7 @@
 // TODO(vtl): We're still using the old-fashioned, deprecated annotations
 // ("locks" instead of "capabilities"), since the new ones don't work yet (in
 // particular, |TRY_ACQUIRE()| doesn't work: b/19264527).
+// https://github.com/domokit/mojo/issues/314
 
 #ifndef MOJO_EDK_SYSTEM_THREAD_ANNOTATIONS_H_
 #define MOJO_EDK_SYSTEM_THREAD_ANNOTATIONS_H_
