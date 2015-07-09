@@ -31,6 +31,7 @@ vars = {
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
+  'archive_dart_revision': '07ffd98c5403b7f9ae067b57dc9487611be420f5',
   'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
   'cassowary_dart_revision': 'db724a65712fc36d626a73a1617aa6f118700a30',
@@ -111,6 +112,9 @@ deps = {
 
   'src/native_client':
     Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
+
+  'src/third_party/dart-pkg/archive':
+    Var('chromium_git') + '/external/github.com/brendan-duncan/archive.git' + '@' + Var('archive_dart_revision'),
 
   'src/third_party/dart-pkg/args':
     Var('chromium_git') + '/external/github.com/dart-lang/args.git' + '@' + Var('args_dart_revision'),
