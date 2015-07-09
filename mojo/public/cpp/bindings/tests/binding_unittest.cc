@@ -2,7 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Note: This file tests both binding.h (mojo::Binding) and strong_binding.h
+// (mojo::StrongBinding).
+
 #include "mojo/public/cpp/bindings/binding.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "mojo/public/cpp/utility/run_loop.h"
@@ -13,10 +17,10 @@
 namespace mojo {
 namespace {
 
-class BindingTest : public testing::Test {
+class BindingTestBase : public testing::Test {
  public:
-  BindingTest() {}
-  ~BindingTest() override {}
+  BindingTestBase() {}
+  ~BindingTestBase() override {}
 
   RunLoop& loop() { return loop_; }
 
@@ -24,13 +28,17 @@ class BindingTest : public testing::Test {
   Environment env_;
   RunLoop loop_;
 
-  MOJO_DISALLOW_COPY_AND_ASSIGN(BindingTest);
+  MOJO_DISALLOW_COPY_AND_ASSIGN(BindingTestBase);
 };
 
 class ServiceImpl : public sample::Service {
  public:
-  ServiceImpl() {}
-  ~ServiceImpl() override {}
+  explicit ServiceImpl(bool* was_deleted = nullptr)
+      : was_deleted_(was_deleted) {}
+  ~ServiceImpl() override {
+    if (was_deleted_)
+      *was_deleted_ = true;
+  }
 
  private:
   // sample::Service implementation
@@ -42,8 +50,14 @@ class ServiceImpl : public sample::Service {
   }
   void GetPort(InterfaceRequest<sample::Port> port) override {}
 
+  bool* const was_deleted_;
+
   MOJO_DISALLOW_COPY_AND_ASSIGN(ServiceImpl);
 };
+
+// BindingTest -----------------------------------------------------------------
+
+using BindingTest = BindingTestBase;
 
 TEST_F(BindingTest, Close) {
   bool called = false;
@@ -130,16 +144,14 @@ TEST_F(BindingTest, CloseDoesntCallConnectionErrorHandler) {
 
 class ServiceImplWithBinding : public ServiceImpl {
  public:
-  ServiceImplWithBinding(InterfaceRequest<sample::Service> request,
-                         bool* was_deleted)
-      : binding_(this, request.Pass()), was_deleted_(was_deleted) {
+  ServiceImplWithBinding(bool* was_deleted,
+                         InterfaceRequest<sample::Service> request)
+      : ServiceImpl(was_deleted), binding_(this, request.Pass()) {
     binding_.set_connection_error_handler([this]() { delete this; });
   }
-  ~ServiceImplWithBinding() override { *was_deleted_ = true; }
 
  private:
   Binding<sample::Service> binding_;
-  bool* const was_deleted_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ServiceImplWithBinding);
 };
@@ -149,7 +161,7 @@ TEST_F(BindingTest, SelfDeleteOnConnectionError) {
   bool was_deleted = false;
   sample::ServicePtr ptr;
   // This should delete itself on connection error.
-  new ServiceImplWithBinding(GetProxy(&ptr), &was_deleted);
+  new ServiceImplWithBinding(&was_deleted, GetProxy(&ptr));
   ptr.reset();
   EXPECT_FALSE(was_deleted);
   loop().RunUntilIdle();
@@ -208,6 +220,103 @@ TEST_F(BindingTest, SetInterfacePtrVersion) {
   sample::IntegerAccessorPtr ptr;
   Binding<sample::IntegerAccessor> binding(&impl, &ptr);
   EXPECT_EQ(3u, ptr.version());
+}
+
+// StrongBindingTest -----------------------------------------------------------
+
+using StrongBindingTest = BindingTestBase;
+
+// Tests that destroying a mojo::StrongBinding closes the bound message pipe
+// handle but does *not* destroy the implementation object.
+TEST_F(StrongBindingTest, DestroyClosesMessagePipe) {
+  bool encountered_error = false;
+  bool was_deleted = false;
+  ServiceImpl impl(&was_deleted);
+  sample::ServicePtr ptr;
+  auto request = GetProxy(&ptr);
+  ptr.set_connection_error_handler(
+      [&encountered_error]() { encountered_error = true; });
+  bool called = false;
+  auto called_cb = [&called](int32_t result) { called = true; };
+  {
+    StrongBinding<sample::Service> binding(&impl, request.Pass());
+    ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+                   called_cb);
+    loop().RunUntilIdle();
+    EXPECT_TRUE(called);
+    EXPECT_FALSE(encountered_error);
+  }
+  // Now that the StrongBinding is out of scope we should detect an error on the
+  // other end of the pipe.
+  loop().RunUntilIdle();
+  EXPECT_TRUE(encountered_error);
+  // But destroying the StrongBinding doesn't destroy the object.
+  ASSERT_FALSE(was_deleted);
+}
+
+class ServiceImplWithStrongBinding : public ServiceImpl {
+ public:
+  ServiceImplWithStrongBinding(bool* was_deleted,
+                               InterfaceRequest<sample::Service> request)
+      : ServiceImpl(was_deleted), binding_(this, request.Pass()) {}
+
+  StrongBinding<sample::Service>& binding() { return binding_; }
+
+ private:
+  StrongBinding<sample::Service> binding_;
+
+  MOJO_DISALLOW_COPY_AND_ASSIGN(ServiceImplWithStrongBinding);
+};
+
+// Tests the typical case, where the implementation object owns the
+// StrongBinding (and should be destroyed on connection error).
+TEST_F(StrongBindingTest, ConnectionErrorDestroysImpl) {
+  sample::ServicePtr ptr;
+  bool was_deleted = false;
+  // Will delete itself.
+  new ServiceImplWithBinding(&was_deleted, GetProxy(&ptr));
+
+  loop().RunUntilIdle();
+  EXPECT_FALSE(was_deleted);
+
+  ptr.reset();
+  EXPECT_FALSE(was_deleted);
+  loop().RunUntilIdle();
+  EXPECT_TRUE(was_deleted);
+}
+
+// Tests that even when the implementation object owns the StrongBinding, that
+// the implementation can still be deleted (which should result in the message
+// pipe being closed). Also checks that the connection error handler doesn't get
+// called.
+TEST_F(StrongBindingTest, ExplicitDeleteImpl) {
+  bool ptr_error_handler_called = false;
+  sample::ServicePtr ptr;
+  auto request = GetProxy(&ptr);
+  ptr.set_connection_error_handler(
+      [&ptr_error_handler_called]() { ptr_error_handler_called = true; });
+  bool was_deleted = false;
+  ServiceImplWithStrongBinding* impl =
+      new ServiceImplWithStrongBinding(&was_deleted, request.Pass());
+  bool binding_error_handler_called = false;
+  impl->binding().set_connection_error_handler(
+      [&binding_error_handler_called]() {
+        binding_error_handler_called = true;
+      });
+
+  loop().RunUntilIdle();
+  EXPECT_FALSE(ptr_error_handler_called);
+  EXPECT_FALSE(was_deleted);
+
+  delete impl;
+  EXPECT_FALSE(ptr_error_handler_called);
+  EXPECT_TRUE(was_deleted);
+  was_deleted = false;  // It shouldn't be double-deleted!
+  loop().RunUntilIdle();
+  EXPECT_TRUE(ptr_error_handler_called);
+  EXPECT_FALSE(was_deleted);
+
+  EXPECT_FALSE(binding_error_handler_called);
 }
 
 }  // namespace

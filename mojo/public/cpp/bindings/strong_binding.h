@@ -104,6 +104,7 @@ class StrongBinding {
     return binding_.WaitForIncomingMethodCall();
   }
 
+  // Note: The error handler must not delete the interface implementation.
   void set_connection_error_handler(const Closure& error_handler) {
     connection_error_handler_ = error_handler;
   }
