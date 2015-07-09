@@ -14,7 +14,6 @@
 #include "base/process/process.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/child_controller.mojom.h"
 
 namespace shell {

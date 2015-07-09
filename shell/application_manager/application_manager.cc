@@ -11,7 +11,6 @@
 #include "base/strings/string_util.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/bindings/binding.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "mojo/services/authenticating_url_loader_interceptor/public/interfaces/authenticating_url_loader_interceptor_meta_factory.mojom.h"
 #include "mojo/services/authentication/public/interfaces/authentication.mojom.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"

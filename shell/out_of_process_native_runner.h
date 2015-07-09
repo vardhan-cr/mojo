@@ -9,7 +9,6 @@
 #include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "mojo/public/cpp/bindings/error_handler.h"
 #include "shell/application_manager/native_runner.h"
 
 namespace shell {
