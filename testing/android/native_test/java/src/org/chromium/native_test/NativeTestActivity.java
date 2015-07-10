@@ -31,7 +31,7 @@ public class NativeTestActivity extends Activity {
     public static final String EXTRA_STDOUT_FILE =
             "org.chromium.native_test.NativeTestActivity.StdoutFile";
 
-    private static final String TAG = Log.makeTag("native_test");
+    private static final String TAG = "cr.native_test";
     private static final String EXTRA_RUN_IN_SUB_THREAD = "RunInSubThread";
     // We post a delayed task to run tests so that we do not block onCreate().
     private static final long RUN_TESTS_DELAY_IN_MS = 300;

@@ -36,7 +36,7 @@ public class NativeTestInstrumentationTestRunner extends Instrumentation {
             "org.chromium.native_test.NativeTestInstrumentationTestRunner."
                     + "NativeTestActivity";
 
-    private static final String TAG = Log.makeTag("native_test");
+    private static final String TAG = "cr.native_test";
 
     private static final int ACCEPT_TIMEOUT_MS = 5000;
     private static final String DEFAULT_NATIVE_TEST_ACTIVITY =
