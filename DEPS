@@ -37,6 +37,7 @@ vars = {
   'cassowary_dart_revision': '7e5afc5b3956a18636d5b37b1dcba1705865564b',
   'collection_dart_revision': '79ebc6fc2dae581cb23ad50a5c600c1b7dd132f8',
   'crypto_dart_revision': 'd4558dea1639e5ad2a41d045265b8ece270c2d90',
+  'newton_dart_revision': '86f615f047fca6a0a1b16ad76b98897bca20a281',
   'path_dart_revision': '2f3dcdec32011f1bc41194ae3640d6d9292a7096',
   'quiver_dart_revision': '6bab7dec34189eee579178eb16d3063c8ae69031',
   'source_span_dart_revision': '5c6c13f62fc111adaace3aeb4a38853d64481d06',
@@ -130,6 +131,9 @@ deps = {
 
   'src/third_party/dart-pkg/crypto':
     Var('chromium_git') + '/external/github.com/dart-lang/crypto.git' + '@' + Var('crypto_dart_revision'),
+
+  'src/third_party/dart-pkg/newton':
+    Var('chromium_git') + '/external/github.com/domokit/newton.git' + '@' + Var('newton_dart_revision'),
 
   'src/third_party/dart-pkg/path':
     Var('chromium_git') + '/external/github.com/dart-lang/path.git' + '@' + Var('path_dart_revision'),

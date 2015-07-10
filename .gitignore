@@ -43,6 +43,7 @@ v8.log
 /third_party/dart-pkg/cassowary
 /third_party/dart-pkg/collection
 /third_party/dart-pkg/crypto
+/third_party/dart-pkg/newton
 /third_party/dart-pkg/path
 /third_party/dart-pkg/quiver
 /third_party/dart-pkg/source_span
