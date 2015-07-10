@@ -7,12 +7,12 @@
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/synchronization/lock.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/embedder/slave_process_delegate.h"
 #include "mojo/edk/system/connection_manager.h"
+#include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -143,7 +143,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SlaveConnectionManager final
   //
   // TODO(vtl): This is all a hack. It'd really suffice to have a version of
   // |RawChannel| with fully synchronous reading and writing.
-  base::Lock lock_;
+  Mutex mutex_;
   base::WaitableEvent event_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(SlaveConnectionManager);

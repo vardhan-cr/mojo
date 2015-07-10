@@ -9,10 +9,10 @@
 
 #include "base/containers/hash_tables.h"
 #include "base/memory/ref_counted.h"
-#include "base/synchronization/lock.h"
 #include "base/threading/thread.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/connection_manager.h"
+#include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -132,15 +132,15 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager final
   // The following members are only accessed on |private_thread_|:
   base::hash_map<ProcessIdentifier, Helper*> helpers_;  // Owns its values.
 
-  // Protects the members below (except in the constructor, |Init()|,
-  // |Shutdown()|/|ShutdownOnPrivateThread()|, and the destructor).
-  base::Lock lock_;
+  // Note: |mutex_| is not needed in the constructor, |Init()|,
+  // |Shutdown()|/|ShutdownOnPrivateThread()|, or the destructor
+  Mutex mutex_;
 
-  ProcessIdentifier next_process_identifier_;
+  ProcessIdentifier next_process_identifier_ MOJO_GUARDED_BY(mutex_);
 
   struct PendingConnectionInfo;
   base::hash_map<ConnectionIdentifier, PendingConnectionInfo*>
-      pending_connections_;  // Owns its values.
+      pending_connections_ MOJO_GUARDED_BY(mutex_);  // Owns its values.
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(MasterConnectionManager);
 };

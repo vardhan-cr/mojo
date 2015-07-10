@@ -239,7 +239,8 @@ MasterConnectionManager::~MasterConnectionManager() {
 
 void MasterConnectionManager::Init(
     scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
-    embedder::MasterProcessDelegate* master_process_delegate) {
+    embedder::MasterProcessDelegate* master_process_delegate)
+    MOJO_NO_THREAD_SAFETY_ANALYSIS {
   DCHECK(delegate_thread_task_runner);
   DCHECK(master_process_delegate);
   DCHECK(!delegate_thread_task_runner_);
@@ -261,7 +262,7 @@ ProcessIdentifier MasterConnectionManager::AddSlave(
 
   ProcessIdentifier slave_process_identifier;
   {
-    base::AutoLock locker(lock_);
+    MutexLocker locker(&mutex_);
     CHECK_NE(next_process_identifier_, kMasterProcessIdentifier);
     slave_process_identifier = next_process_identifier_;
     next_process_identifier_++;
@@ -288,7 +289,7 @@ ProcessIdentifier MasterConnectionManager::AddSlaveAndBootstrap(
   ProcessIdentifier slave_process_identifier =
       AddSlave(slave_info, platform_handle.Pass());
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(pending_connections_.find(connection_id) ==
          pending_connections_.end());
   PendingConnectionInfo* info =
@@ -300,7 +301,7 @@ ProcessIdentifier MasterConnectionManager::AddSlaveAndBootstrap(
   return slave_process_identifier;
 }
 
-void MasterConnectionManager::Shutdown() {
+void MasterConnectionManager::Shutdown() MOJO_NO_THREAD_SAFETY_ANALYSIS {
   AssertNotOnPrivateThread();
   DCHECK(master_process_delegate_);
   DCHECK(private_thread_.message_loop());
@@ -342,7 +343,7 @@ bool MasterConnectionManager::AllowConnectImpl(
     const ConnectionIdentifier& connection_id) {
   DCHECK_NE(process_identifier, kInvalidProcessIdentifier);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
 
   auto it = pending_connections_.find(connection_id);
   if (it == pending_connections_.end()) {
@@ -381,7 +382,7 @@ bool MasterConnectionManager::CancelConnectImpl(
     const ConnectionIdentifier& connection_id) {
   DCHECK_NE(process_identifier, kInvalidProcessIdentifier);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
 
   auto it = pending_connections_.find(connection_id);
   if (it == pending_connections_.end()) {
@@ -418,7 +419,7 @@ bool MasterConnectionManager::ConnectImpl(
   DCHECK(platform_handle);
   DCHECK(!platform_handle->is_valid());  // Not technically wrong, but unlikely.
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
 
   auto it = pending_connections_.find(connection_id);
   if (it == pending_connections_.end()) {
@@ -502,7 +503,8 @@ bool MasterConnectionManager::ConnectImpl(
   return true;
 }
 
-void MasterConnectionManager::ShutdownOnPrivateThread() {
+void MasterConnectionManager::ShutdownOnPrivateThread()
+    MOJO_NO_THREAD_SAFETY_ANALYSIS {
   AssertOnPrivateThread();
 
   if (!pending_connections_.empty()) {
@@ -555,7 +557,7 @@ void MasterConnectionManager::OnError(ProcessIdentifier process_identifier) {
   delete helper;
 
   {
-    base::AutoLock locker(lock_);
+    MutexLocker locker(&mutex_);
 
     // TODO(vtl): This isn't very efficient.
     for (auto it = pending_connections_.begin();

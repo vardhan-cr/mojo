@@ -78,7 +78,7 @@ bool SlaveConnectionManager::AllowConnect(
     const ConnectionIdentifier& connection_id) {
   AssertNotOnPrivateThread();
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   bool result = false;
   private_thread_.message_loop()->PostTask(
       FROM_HERE,
@@ -92,7 +92,7 @@ bool SlaveConnectionManager::CancelConnect(
     const ConnectionIdentifier& connection_id) {
   AssertNotOnPrivateThread();
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   bool result = false;
   private_thread_.message_loop()->PostTask(
       FROM_HERE,
@@ -108,7 +108,7 @@ bool SlaveConnectionManager::Connect(
     embedder::ScopedPlatformHandle* platform_handle) {
   AssertNotOnPrivateThread();
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   bool result = false;
   private_thread_.message_loop()->PostTask(
       FROM_HERE, base::Bind(&SlaveConnectionManager::ConnectOnPrivateThread,
@@ -144,7 +144,7 @@ void SlaveConnectionManager::AllowConnectOnPrivateThread(
   AssertOnPrivateThread();
   // This should only posted (from another thread, to |private_thread_|) with
   // the lock held (until this thread triggers |event_|).
-  DCHECK(!lock_.Try());
+  DCHECK(!mutex_.TryLock());
   DCHECK_EQ(awaiting_ack_type_, NOT_AWAITING_ACK);
 
   DVLOG(1) << "Sending AllowConnect: connection ID "
@@ -169,7 +169,7 @@ void SlaveConnectionManager::CancelConnectOnPrivateThread(
   AssertOnPrivateThread();
   // This should only posted (from another thread, to |private_thread_|) with
   // the lock held (until this thread triggers |event_|).
-  DCHECK(!lock_.Try());
+  DCHECK(!mutex_.TryLock());
   DCHECK_EQ(awaiting_ack_type_, NOT_AWAITING_ACK);
 
   DVLOG(1) << "Sending CancelConnect: connection ID "
@@ -198,7 +198,7 @@ void SlaveConnectionManager::ConnectOnPrivateThread(
   AssertOnPrivateThread();
   // This should only posted (from another thread, to |private_thread_|) with
   // the lock held (until this thread triggers |event_|).
-  DCHECK(!lock_.Try());
+  DCHECK(!mutex_.TryLock());
   DCHECK_EQ(awaiting_ack_type_, NOT_AWAITING_ACK);
 
   DVLOG(1) << "Sending Connect: connection ID " << connection_id.ToString();
