@@ -65,7 +65,6 @@ class ViewManagerApp
       override;
 
   mojo::ApplicationImpl* app_impl_;
-  mojo::ApplicationConnection* wm_app_connection_;
   scoped_ptr<mojo::Binding<mojo::WindowManagerInternalClient>>
       wm_internal_client_binding_;
   mojo::InterfaceRequest<mojo::ViewManagerClient> wm_internal_client_request_;

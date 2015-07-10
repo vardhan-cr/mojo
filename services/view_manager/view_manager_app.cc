@@ -23,7 +23,7 @@ using mojo::WindowManagerInternalClient;
 namespace view_manager {
 
 ViewManagerApp::ViewManagerApp()
-    : app_impl_(nullptr), wm_app_connection_(nullptr) {
+    : app_impl_(nullptr) {
 }
 
 ViewManagerApp::~ViewManagerApp() {}
@@ -39,7 +39,6 @@ bool ViewManagerApp::ConfigureIncomingConnection(
     VLOG(1) << "ViewManager allows only one window manager connection.";
     return false;
   }
-  wm_app_connection_ = connection;
   // |connection| originates from the WindowManager. Let it connect directly
   // to the ViewManager and WindowManagerInternalClient.
   connection->AddService<ViewManagerService>(this);
