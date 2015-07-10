@@ -8,6 +8,7 @@
 
 import argparse
 import errno
+import json
 import os
 import shutil
 import sys
@@ -105,6 +106,13 @@ def copy_or_link(from_root, to_root, filter_func=None):
         copy(from_root, to_root, filter_func)
 
 
+def remove_if_exists(path):
+    try:
+        os.remove(path)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
 def list_files(from_root, filter_func=None):
     file_list = []
     for root, dirs, files in os.walk(from_root):
@@ -192,13 +200,33 @@ def main():
                         help='List of .dart files that are part of of sdk_ext.',
                         nargs='*',
                         default=[])
+    parser.add_argument('--sdk-ext-mappings',
+                        metavar='sdk_ext_mappings',
+                        help='Mappings for SDK extension libraries.',
+                        nargs='*',
+                        default=[])
     args = parser.parse_args()
 
     # We must have a pubspec.yaml.
     assert has_pubspec_yaml(args.package_sources)
 
-    # Copy or symlink package sources into pkg directory.
     target_dir = os.path.join(args.pkg_directory, args.package_name)
+    lib_path = os.path.join(target_dir, "lib")
+
+    mappings = {}
+    for mapping in args.sdk_ext_mappings:
+        library, path = mapping.split(',', 1)
+        mappings[library] = '../sdk_ext/%s' % path
+
+    sdkext_path = os.path.join(lib_path, '_sdkext')
+    if mappings:
+        with open(sdkext_path, 'w') as stream:
+            json.dump(mappings, stream, sort_keys=True,
+                      indent=2, separators=(',', ': '))
+    else:
+        remove_if_exists(sdkext_path)
+
+    # Copy or symlink package sources into pkg directory.
     common_source_prefix = os.path.commonprefix(args.package_sources)
     for source in args.package_sources:
         relative_source = os.path.relpath(source, common_source_prefix)
@@ -220,7 +248,6 @@ def main():
         target = os.path.join(sdk_ext_dir, relative_source)
         copy_or_link(source, target)
 
-    lib_path = os.path.join(target_dir, "lib")
     lib_mojom_path = os.path.join(lib_path, "mojom")
 
     # Copy generated mojom.dart files.

@@ -227,6 +227,9 @@ template("dartzip_packaged_application") {
 #   sdk_ext_files (optional)
 #       List of sources to include in sdk-ext.
 #
+#   sdk_ext_mappings (optional)
+#       Mappings for dart libraries that are part of of sdk_ext.
+#
 template("dart_pkg") {
   if (defined(invoker.pkg_dir)) {
     pubspec_yaml_path = rebase_path("pubspec.yaml", "", invoker.pkg_dir)
@@ -284,6 +287,11 @@ template("dart_pkg") {
       sdk_ext_files += invoker.sdk_ext_files
     }
 
+    sdk_ext_mappings = []
+    if (defined(invoker.sdk_ext_mappings)) {
+      sdk_ext_mappings += invoker.sdk_ext_mappings
+    }
+
     script = rebase_path("mojo/public/tools/dart_pkg.py", ".", mojo_sdk_root)
     outputs = [
       stamp_file,
@@ -322,6 +330,7 @@ template("dart_pkg") {
            ] + rebase_path(sources) + [ "--mojom-sources" ] +
            rebase_path(mojom_sources, "", mojo_sdk_root) +
            [ "--sdk-ext-directories" ] + rebase_path(sdk_ext_directory) +
-           [ "--sdk-ext-files" ] + rebase_path(sdk_ext_files)
+           [ "--sdk-ext-files" ] + rebase_path(sdk_ext_files) +
+           [ "--sdk-ext-mappings" ] + sdk_ext_mappings
   }
 }
