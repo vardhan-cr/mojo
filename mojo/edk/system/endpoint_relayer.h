@@ -7,8 +7,8 @@
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
+#include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -81,11 +81,9 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer final
  private:
   ~EndpointRelayer() override;
 
-  // TODO(vtl): We could probably get away without the lock if we had a
-  // thread-safe |scoped_refptr|.
-  base::Lock lock_;  // Protects the following members.
-  scoped_refptr<ChannelEndpoint> endpoints_[2];
-  scoped_ptr<Filter> filter_;
+  Mutex mutex_;
+  scoped_refptr<ChannelEndpoint> endpoints_[2] MOJO_GUARDED_BY(mutex_);
+  scoped_ptr<Filter> filter_ MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(EndpointRelayer);
 };

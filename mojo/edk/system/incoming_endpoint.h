@@ -8,9 +8,9 @@
 #include <stddef.h>
 
 #include "base/memory/ref_counted.h"
-#include "base/synchronization/lock.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
+#include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -52,9 +52,9 @@ class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint final
  private:
   ~IncomingEndpoint() override;
 
-  base::Lock lock_;  // Protects the following members.
-  scoped_refptr<ChannelEndpoint> endpoint_;
-  MessageInTransitQueue message_queue_;
+  Mutex mutex_;
+  scoped_refptr<ChannelEndpoint> endpoint_ MOJO_GUARDED_BY(mutex_);
+  MessageInTransitQueue message_queue_ MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(IncomingEndpoint);
 };
