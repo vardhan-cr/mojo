@@ -220,6 +220,7 @@ def main():
 
     sdkext_path = os.path.join(lib_path, '_sdkext')
     if mappings:
+        ensure_dir_exists(lib_path)
         with open(sdkext_path, 'w') as stream:
             json.dump(mappings, stream, sort_keys=True,
                       indent=2, separators=(',', ': '))
