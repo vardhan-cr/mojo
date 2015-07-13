@@ -120,12 +120,12 @@ def upload_sky_shell_linux(config, dry_run, verbose, dest_prefix):
       shell_filename = os.path.basename(shell_path)
       if verbose:
         print 'zipping %s' % shell_path
-      z.write(shell_path, shell_filename)
+      z.write(shell_path, shell_filename, zipfile.ZIP_DEFLATED)
       icu_filename = 'icudtl.dat'
       icu_path = os.path.join(os.path.dirname(shell_path), icu_filename)
       if verbose:
         print 'zipping %s' % icu_path
-      z.write(icu_path, icu_filename)
+      z.write(icu_path, icu_filename, zipfile.ZIP_DEFLATED)
     upload(config, zip_file.name, dest, dry_run)
 
 
