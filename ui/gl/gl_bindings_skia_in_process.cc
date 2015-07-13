@@ -69,6 +69,10 @@ GLvoid StubGLBlendColor(GLclampf red, GLclampf green, GLclampf blue,
   glBlendColor(red, green, blue, alpha);
 }
 
+GLvoid StubGLBlendEquation(GLenum mode) {
+  glBlendEquation(mode);
+}
+
 GLvoid StubGLBlendFunc(GLenum sfactor, GLenum dfactor) {
   glBlendFunc(sfactor, dfactor);
 }
@@ -196,6 +200,12 @@ GLvoid StubGLDrawArrays(GLenum mode, GLint first, GLsizei count) {
   glDrawArrays(mode, first, count);
 }
 
+GLvoid StubGLDrawArraysInstanced(GLenum mode, GLint first, GLsizei count,
+                                 GLsizei instanceCount) {
+  glDrawArraysInstancedANGLE(mode, first, count, instanceCount);
+}
+
+
 GLvoid StubGLDrawBuffer(GLenum mode) {
   glDrawBuffer(mode);
 }
@@ -208,6 +218,13 @@ GLvoid StubGLDrawElements(GLenum mode, GLsizei count, GLenum type,
                           const void* indices) {
   glDrawElements(mode, count, type, indices);
 }
+
+GLvoid StubGLDrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
+                                   const GLvoid *indices,
+                                   GLsizei instanceCount) {
+  glDrawElementsInstancedANGLE(mode, count, type, indices, instanceCount);
+}
+
 
 GLvoid StubGLEnable(GLenum cap) {
   glEnable(cap);
@@ -620,6 +637,10 @@ GLvoid StubGLVertexAttrib4fv(GLuint indx, const GLfloat* values) {
   glVertexAttrib4fv(indx, values);
 }
 
+GLvoid StubGLVertexAttribDivisor(GLuint index, GLuint divisor) {
+  glVertexAttribDivisorANGLE(index, divisor);
+}
+
 GLvoid StubGLVertexAttribPointer(GLuint indx, GLint size, GLenum type,
                                  GLboolean normalized, GLsizei stride,
                                  const void* ptr) {
@@ -686,6 +707,7 @@ GrGLInterface* CreateInProcessSkiaGLBinding() {
   functions->fBindTexture = StubGLBindTexture;
   functions->fBindVertexArray = StubGLBindVertexArray;
   functions->fBlendColor = StubGLBlendColor;
+  functions->fBlendEquation = StubGLBlendEquation;
   functions->fBlendFunc = StubGLBlendFunc;
   functions->fBufferData = StubGLBufferData;
   functions->fBufferSubData = StubGLBufferSubData;
@@ -710,9 +732,11 @@ GrGLInterface* CreateInProcessSkiaGLBinding() {
   functions->fDisableVertexAttribArray = StubGLDisableVertexAttribArray;
   functions->fDiscardFramebuffer = StubGLDiscardFramebuffer;
   functions->fDrawArrays = StubGLDrawArrays;
+  functions->fDrawArraysInstanced = StubGLDrawArraysInstanced;
   functions->fDrawBuffer = StubGLDrawBuffer;
   functions->fDrawBuffers = StubGLDrawBuffers;
   functions->fDrawElements = StubGLDrawElements;
+  functions->fDrawElementsInstanced = StubGLDrawElementsInstanced;
   functions->fEnable = StubGLEnable;
   functions->fEnableVertexAttribArray = StubGLEnableVertexAttribArray;
   functions->fEndQuery = StubGLEndQuery;
@@ -791,6 +815,7 @@ GrGLInterface* CreateInProcessSkiaGLBinding() {
   functions->fVertexAttrib2fv = StubGLVertexAttrib2fv;
   functions->fVertexAttrib3fv = StubGLVertexAttrib3fv;
   functions->fVertexAttrib4fv = StubGLVertexAttrib4fv;
+  functions->fVertexAttribDivisor = StubGLVertexAttribDivisor;
   functions->fVertexAttribPointer = StubGLVertexAttribPointer;
   functions->fViewport = StubGLViewport;
   functions->fBindFramebuffer = StubGLBindFramebuffer;

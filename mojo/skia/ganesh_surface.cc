@@ -18,7 +18,8 @@ GaneshSurface::GaneshSurface(GaneshContext* context,
   desc.fTextureHandle = texture_->texture_id();
   DCHECK(texture_->texture_id());
 
-  auto gr_texture = skia::AdoptRef(context->gr()->wrapBackendTexture(desc));
+  auto gr_texture = skia::AdoptRef(
+      context->gr()->textureProvider()->wrapBackendTexture(desc));
   DCHECK(gr_texture);
   surface_ = skia::AdoptRef(
       SkSurface::NewRenderTargetDirect(gr_texture->asRenderTarget()));

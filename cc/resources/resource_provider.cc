@@ -1147,7 +1147,7 @@ void ResourceProvider::ScopedWriteLockGr::InitSkSurface(
   class GrContext* gr_context =
       resource_provider_->GrContext(use_worker_context);
   skia::RefPtr<GrTexture> gr_texture =
-      skia::AdoptRef(gr_context->wrapBackendTexture(desc));
+      skia::AdoptRef(gr_context->textureProvider()->wrapBackendTexture(desc));
   if (gr_texture) {
     uint32_t flags = use_distance_field_text
                          ? SkSurfaceProps::kUseDistanceFieldFonts_Flag
