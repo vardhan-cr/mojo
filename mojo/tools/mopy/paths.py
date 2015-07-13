@@ -28,20 +28,28 @@ class Paths(object):
 
     if self.build_dir is not None:
       self.mojo_shell_path = os.path.join(self.build_dir, "mojo_shell")
+      self.sky_shell_path = os.path.join(self.build_dir, "sky_shell")
       # TODO(vtl): Use the host OS here, since |config| may not be available.
       # In any case, if the target is Windows, but the host isn't, using
       # |os.path| isn't correct....
       if Config.GetHostOS() == Config.OS_WINDOWS:
         self.mojo_shell_path += ".exe"
+        self.sky_shell_path += ".exe"
       if config and config.target_os == Config.OS_ANDROID:
         self.target_mojo_shell_path = os.path.join(self.build_dir,
                                                    "apks",
                                                    "MojoShell.apk")
+        self.target_sky_shell_path = os.path.join(self.build_dir,
+                                                  "apks",
+                                                  "SkyDemo.apk")
       else:
         self.target_mojo_shell_path = self.mojo_shell_path
+        self.target_sky_shell_path = self.sky_shell_path
     else:
       self.mojo_shell_path = None
+      self.sky_shell_path = None
       self.target_mojo_shell_path = None
+      self.target_sky_shell_path = None
 
   def RelPath(self, path):
     """Returns the given path, relative to the current directory."""
