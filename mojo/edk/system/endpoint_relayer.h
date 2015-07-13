@@ -68,7 +68,8 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer final
   static unsigned GetPeerPort(unsigned port);
 
   // Initialize this object. This must be called before any other method.
-  void Init(ChannelEndpoint* endpoint0, ChannelEndpoint* endpoint1);
+  void Init(ChannelEndpoint* endpoint0,
+            ChannelEndpoint* endpoint1) MOJO_NOT_THREAD_SAFE;
 
   // Sets (or resets) the filter, which can (optionally) handle/filter
   // |Type::ENDPOINT_CLIENT| messages (see |Filter| above).

@@ -32,7 +32,7 @@ class MOJO_SYSTEM_IMPL_EXPORT IncomingEndpoint final
   IncomingEndpoint();
 
   // Must be called before any other method.
-  scoped_refptr<ChannelEndpoint> Init();
+  scoped_refptr<ChannelEndpoint> Init() MOJO_NOT_THREAD_SAFE;
 
   scoped_refptr<MessagePipe> ConvertToMessagePipe();
   scoped_refptr<DataPipe> ConvertToDataPipeProducer(

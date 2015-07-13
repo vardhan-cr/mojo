@@ -74,4 +74,12 @@
 #define MOJO_NO_THREAD_SAFETY_ANALYSIS \
   MOJO_THREAD_ANNOTATION_ATTRIBUTE__(no_thread_safety_analysis)
 
+// Use this in the header to annotate a function/method as not being
+// thread-safe. This is equivalent to |MOJO_NO_THREAD_SAFETY_ANALYSIS|, but
+// semantically different: it declares that the caller must abide by additional
+// restrictions. Limitation: Unfortunately, you can't apply this to a method in
+// an interface (i.e., pure virtual method) and have it applied automatically to
+// implementations.
+#define MOJO_NOT_THREAD_SAFE MOJO_NO_THREAD_SAFETY_ANALYSIS
+
 #endif  // MOJO_EDK_SYSTEM_THREAD_ANNOTATIONS_H_

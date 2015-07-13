@@ -239,8 +239,7 @@ MasterConnectionManager::~MasterConnectionManager() {
 
 void MasterConnectionManager::Init(
     scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
-    embedder::MasterProcessDelegate* master_process_delegate)
-    MOJO_NO_THREAD_SAFETY_ANALYSIS {
+    embedder::MasterProcessDelegate* master_process_delegate) {
   DCHECK(delegate_thread_task_runner);
   DCHECK(master_process_delegate);
   DCHECK(!delegate_thread_task_runner_);
@@ -301,7 +300,7 @@ ProcessIdentifier MasterConnectionManager::AddSlaveAndBootstrap(
   return slave_process_identifier;
 }
 
-void MasterConnectionManager::Shutdown() MOJO_NO_THREAD_SAFETY_ANALYSIS {
+void MasterConnectionManager::Shutdown() {
   AssertNotOnPrivateThread();
   DCHECK(master_process_delegate_);
   DCHECK(private_thread_.message_loop());
@@ -503,8 +502,7 @@ bool MasterConnectionManager::ConnectImpl(
   return true;
 }
 
-void MasterConnectionManager::ShutdownOnPrivateThread()
-    MOJO_NO_THREAD_SAFETY_ANALYSIS {
+void MasterConnectionManager::ShutdownOnPrivateThread() {
   AssertOnPrivateThread();
 
   if (!pending_connections_.empty()) {

@@ -17,8 +17,7 @@ namespace system {
 IncomingEndpoint::IncomingEndpoint() {
 }
 
-scoped_refptr<ChannelEndpoint> IncomingEndpoint::Init()
-    MOJO_NO_THREAD_SAFETY_ANALYSIS {
+scoped_refptr<ChannelEndpoint> IncomingEndpoint::Init() {
   endpoint_ = new ChannelEndpoint(this, 0);
   return endpoint_;
 }

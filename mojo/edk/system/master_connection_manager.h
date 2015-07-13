@@ -51,7 +51,8 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager final
   // thread", on which |master_process_delegate|'s methods will be called. Both
   // must stay alive at least until after |Shutdown()| has been called.
   void Init(scoped_refptr<base::TaskRunner> delegate_thread_task_runner,
-            embedder::MasterProcessDelegate* master_process_delegate);
+            embedder::MasterProcessDelegate* master_process_delegate)
+      MOJO_NOT_THREAD_SAFE;
 
   // Adds a slave process and sets up/tracks a connection to that slave (using
   // |platform_handle|). |slave_info| is used by the caller/implementation of
@@ -75,7 +76,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager final
       const ConnectionIdentifier& connection_id);
 
   // |ConnectionManager| methods:
-  void Shutdown() override;
+  void Shutdown() override MOJO_NOT_THREAD_SAFE;
   bool AllowConnect(const ConnectionIdentifier& connection_id) override;
   bool CancelConnect(const ConnectionIdentifier& connection_id) override;
   bool Connect(const ConnectionIdentifier& connection_id,
@@ -97,7 +98,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager final
                    embedder::ScopedPlatformHandle* platform_handle);
 
   // These should only be called on |private_thread_|:
-  void ShutdownOnPrivateThread();
+  void ShutdownOnPrivateThread() MOJO_NOT_THREAD_SAFE;
   // Signals |*event| on completion.
   void AddSlaveOnPrivateThread(embedder::SlaveInfo slave_info,
                                embedder::ScopedPlatformHandle platform_handle,

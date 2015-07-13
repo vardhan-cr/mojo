@@ -21,8 +21,7 @@ unsigned EndpointRelayer::GetPeerPort(unsigned port) {
 }
 
 void EndpointRelayer::Init(ChannelEndpoint* endpoint0,
-                           ChannelEndpoint* endpoint1)
-    MOJO_NO_THREAD_SAFETY_ANALYSIS {
+                           ChannelEndpoint* endpoint1) {
   DCHECK(endpoint0);
   DCHECK(endpoint1);
   DCHECK(!endpoints_[0]);

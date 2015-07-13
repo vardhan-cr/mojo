@@ -8,6 +8,7 @@
 #include "mojo/edk/system/connection_identifier.h"
 #include "mojo/edk/system/process_identifier.h"
 #include "mojo/edk/system/system_impl_export.h"
+#include "mojo/edk/system/thread_annotations.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -65,7 +66,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ConnectionManager {
 
   // Shuts down this connection manager. No other methods may be called after
   // this is (or while it is being) called.
-  virtual void Shutdown() = 0;
+  virtual void Shutdown() MOJO_NOT_THREAD_SAFE = 0;
 
   // TODO(vtl): Add a "get my own process identifier" method?
 

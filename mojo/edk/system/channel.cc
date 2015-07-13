@@ -35,8 +35,7 @@ Channel::Channel(embedder::PlatformSupport* platform_support)
       channel_manager_(nullptr) {
 }
 
-void Channel::Init(scoped_ptr<RawChannel> raw_channel)
-    MOJO_NO_THREAD_SAFETY_ANALYSIS {
+void Channel::Init(scoped_ptr<RawChannel> raw_channel) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
   DCHECK(raw_channel);
 
