@@ -77,11 +77,16 @@ v8.log
 
 # dart packages directories and related.
 /mojo/dart/apptest/packages
+/mojo/dart/apptest/.packages
 /mojo/dart/mojo_services/packages
+/mojo/dart/mojo_services/.packages
 /mojo/dart/mojo_services/pubspec.lock
 /mojo/dart/mojom/bin/packages
 /mojo/dart/mojom/packages
+/mojo/dart/mojom/.packages
 /mojo/dart/mojom/test/packages
+/mojo/dart/observatory_test/.packages
+/mojo/dart/testing/.packages
 /sky/examples/hello_world/packages
 /sky/examples/stocks/packages
 /sky/sdk/packages/mojo/packages

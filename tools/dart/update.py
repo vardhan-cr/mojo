@@ -17,8 +17,8 @@ import sys
 
 # How to roll the dart sdk: Just change this url! We write this to the stamp
 # file after we download, and then check the stamp file for differences.
-SDK_URL_BASE = ('http://gsdview.appspot.com/dart-archive/channels/dev/'
-                'raw/45311/sdk/')
+SDK_URL_BASE = ('http://gsdview.appspot.com/dart-archive/channels/dev/raw/'
+                '1.12.0-dev.3.1/sdk/')
 
 LINUX_64_SDK = 'dartsdk-linux-x64-release.zip'
 MACOS_64_SDK = 'dartsdk-macos-x64-release.zip'
@@ -95,12 +95,6 @@ def main():
     print "Failed to unzip the dart sdk."
     return 1
 
-  # Patch the the dart-sdk/lib/_internal/libraries.dart file
-  # so that it understands dart:sky imports.
-  patch_command = ['patch', LIBRARIES_FILE, PATCH_FILE]
-  if not RunCommand(patch_command, fail_hard=False):
-    print "Failed to apply the patch to the Dart libraries file."
-    return 1
   return 0
 
 if __name__ == '__main__':
