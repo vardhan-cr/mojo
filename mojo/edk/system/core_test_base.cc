@@ -43,7 +43,7 @@ class MockDispatcher : public Dispatcher {
   // |Dispatcher| protected methods:
   void CloseImplNoLock() override {
     info_->IncrementCloseCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
   }
 
   MojoResult WriteMessageImplNoLock(
@@ -52,7 +52,7 @@ class MockDispatcher : public Dispatcher {
       std::vector<DispatcherTransport>* transports,
       MojoWriteMessageFlags /*flags*/) override {
     info_->IncrementWriteMessageCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
 
     if (num_bytes > GetConfiguration().max_message_num_bytes)
       return MOJO_RESULT_RESOURCE_EXHAUSTED;
@@ -69,7 +69,7 @@ class MockDispatcher : public Dispatcher {
                                    uint32_t* num_dispatchers,
                                    MojoReadMessageFlags /*flags*/) override {
     info_->IncrementReadMessageCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
 
     if (num_dispatchers) {
       *num_dispatchers = 1;
@@ -86,7 +86,7 @@ class MockDispatcher : public Dispatcher {
                                  UserPointer<uint32_t> /*num_bytes*/,
                                  MojoWriteDataFlags /*flags*/) override {
     info_->IncrementWriteDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
@@ -95,13 +95,13 @@ class MockDispatcher : public Dispatcher {
       UserPointer<uint32_t> /*buffer_num_bytes*/,
       MojoWriteDataFlags /*flags*/) override {
     info_->IncrementBeginWriteDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
   MojoResult EndWriteDataImplNoLock(uint32_t /*num_bytes_written*/) override {
     info_->IncrementEndWriteDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
@@ -109,7 +109,7 @@ class MockDispatcher : public Dispatcher {
                                 UserPointer<uint32_t> /*num_bytes*/,
                                 MojoReadDataFlags /*flags*/) override {
     info_->IncrementReadDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
@@ -117,13 +117,13 @@ class MockDispatcher : public Dispatcher {
                                      UserPointer<uint32_t> /*buffer_num_bytes*/,
                                      MojoReadDataFlags /*flags*/) override {
     info_->IncrementBeginReadDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
   MojoResult EndReadDataImplNoLock(uint32_t /*num_bytes_read*/) override {
     info_->IncrementEndReadDataCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     return MOJO_RESULT_UNIMPLEMENTED;
   }
 
@@ -132,7 +132,7 @@ class MockDispatcher : public Dispatcher {
                                    uint32_t /*context*/,
                                    HandleSignalsState* signals_state) override {
     info_->IncrementAddAwakableCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     if (signals_state)
       *signals_state = HandleSignalsState();
     if (info_->IsAddAwakableAllowed()) {
@@ -146,14 +146,14 @@ class MockDispatcher : public Dispatcher {
   void RemoveAwakableImplNoLock(Awakable* /*awakable*/,
                                 HandleSignalsState* signals_state) override {
     info_->IncrementRemoveAwakableCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
     if (signals_state)
       *signals_state = HandleSignalsState();
   }
 
   void CancelAllAwakablesNoLock() override {
     info_->IncrementCancelAllAwakablesCallCount();
-    lock().AssertAcquired();
+    mutex().AssertHeld();
   }
 
   scoped_refptr<Dispatcher> CreateEquivalentDispatcherAndCloseImplNoLock()
