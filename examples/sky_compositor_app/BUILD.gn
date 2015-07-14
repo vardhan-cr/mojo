@@ -21,7 +21,7 @@ mojo_native_application("sky_compositor_app") {
     "//mojo/public/cpp/utility",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
+    "//services/sky/compositor",
     "//skia",
-    "//sky/viewer/compositor",
   ]
 }

@@ -12,9 +12,9 @@
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_client_factory.h"
 #include "mojo/services/view_manager/public/cpp/view_manager_delegate.h"
-#include "sky/viewer/compositor/layer.h"
-#include "sky/viewer/compositor/layer_host.h"
-#include "sky/viewer/compositor/rasterizer_ganesh.h"
+#include "services/sky/compositor/layer.h"
+#include "services/sky/compositor/layer_host.h"
+#include "services/sky/compositor/rasterizer_ganesh.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 
 namespace examples {
