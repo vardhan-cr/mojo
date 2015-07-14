@@ -28,8 +28,6 @@ Internals* GetInternals() {
 }
 
 void NotifyTestComplete(Dart_NativeArguments args) {
-  Dart_Handle test_result = Dart_GetNativeArgument(args, 0);
-  GetInternals()->NotifyTestComplete(StdStringFromDart(test_result));
 }
 
 void TakeRootBundleHandle(Dart_NativeArguments args) {
@@ -97,21 +95,9 @@ void Internals::Create(Dart_Isolate isolate, DocumentView* document_view) {
 Internals::Internals(DocumentView* document_view)
   : document_view_(document_view->GetWeakPtr()),
     shell_binding_(this) {
-  test_harness_ = document_view_->TakeTestHarness();
 }
 
 Internals::~Internals() {
-}
-
-void Internals::NotifyTestComplete(const std::string& test_result) {
-  if (!RuntimeFlags::Get().testing())
-    return;
-  std::vector<unsigned char> pixels;
-  document_view_->GetPixelsForTesting(&pixels);
-  if (test_harness_) {
-    test_harness_->OnTestComplete(test_result,
-        mojo::Array<uint8_t>::From(pixels));
-  }
 }
 
 mojo::Handle Internals::TakeServicesProvidedToEmbedder() {

@@ -10,7 +10,6 @@
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
-#include "sky/services/testing/test_harness.mojom.h"
 
 namespace sky {
 class DocumentView;
@@ -28,8 +27,6 @@ class Internals : public base::SupportsUserData::Data,
       mojo::InterfaceRequest<mojo::ServiceProvider> services,
       mojo::ServiceProviderPtr exposed_services) override;
 
-  void NotifyTestComplete(const std::string& test_result);
-
   mojo::Handle TakeShellProxyHandle();
   mojo::Handle TakeServicesProvidedToEmbedder();
   mojo::Handle TakeServicesProvidedByEmbedder();
@@ -40,7 +37,6 @@ class Internals : public base::SupportsUserData::Data,
 
   base::WeakPtr<DocumentView> document_view_;
   mojo::Binding<mojo::Shell> shell_binding_;
-  TestHarnessPtr test_harness_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(Internals);
 };

@@ -23,7 +23,6 @@
 #include "sky/engine/public/platform/ServiceProvider.h"
 #include "sky/engine/public/sky/sky_view.h"
 #include "sky/engine/public/sky/sky_view_client.h"
-#include "sky/services/testing/test_harness.mojom.h"
 #include "ui/events/gestures/gesture_types.h"
 
 namespace mojo {
@@ -70,7 +69,6 @@ class DocumentView : public blink::ServiceProvider,
 
   void GetPixelsForTesting(std::vector<unsigned char>* pixels);
 
-  TestHarnessPtr TakeTestHarness();
   mojo::ScopedMessagePipeHandle TakeServicesProvidedToEmbedder();
   mojo::ScopedMessagePipeHandle TakeServicesProvidedByEmbedder();
   mojo::ScopedMessagePipeHandle TakeServiceRegistry();
@@ -115,7 +113,6 @@ class DocumentView : public blink::ServiceProvider,
   mojo::InterfaceRequest<mojo::ServiceProvider> services_provided_to_embedder_;
   mojo::ServiceProviderPtr services_provided_by_embedder_;
   mojo::Shell* shell_;
-  TestHarnessPtr test_harness_;
   mojo::NavigatorHostPtr navigator_host_;
   std::unique_ptr<blink::SkyView> sky_view_;
   mojo::View* root_;

@@ -116,9 +116,6 @@ void DocumentView::OnEmbed(
   if (services_provided_by_embedder.get()) {
     mojo::ConnectToService(services_provided_by_embedder.get(),
                            &navigator_host_);
-    if (RuntimeFlags::Get().testing())
-      mojo::ConnectToService(services_provided_by_embedder.get(),
-                             &test_harness_);
   }
 
   services_provided_to_embedder_ = services_provided_to_embedder.Pass();
@@ -162,10 +159,6 @@ void DocumentView::GetPixelsForTesting(std::vector<unsigned char>* pixels) {
   DCHECK(RuntimeFlags::Get().testing()) << "Requires testing runtime flag";
   DCHECK(root_layer_) << "The root layer owns the rasterizer";
   return bitmap_rasterizer_->GetPixelsForTesting(pixels);
-}
-
-TestHarnessPtr DocumentView::TakeTestHarness() {
-  return test_harness_.Pass();
 }
 
 mojo::ScopedMessagePipeHandle DocumentView::TakeServicesProvidedToEmbedder() {
