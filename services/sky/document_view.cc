@@ -93,6 +93,11 @@ DocumentView::DocumentView(
       weak_factory_(this) {
   exported_services_.AddService(&view_manager_client_factory_);
   InitServiceRegistry();
+  mojo::ServiceProviderPtr network_service_provider;
+  shell->ConnectToApplication("mojo:authenticated_network_service",
+                              mojo::GetProxy(&network_service_provider),
+                              nullptr);
+  mojo::ConnectToService(network_service_provider.get(), &network_service_);
 }
 
 DocumentView::~DocumentView() {
@@ -132,7 +137,7 @@ void DocumentView::OnViewManagerDisconnected(mojo::ViewManager* view_manager) {
 void DocumentView::Load(mojo::URLResponsePtr response) {
   String name = String::fromUTF8(response->url);
   library_provider_.reset(new DartLibraryProviderImpl(
-      blink::Platform::current()->networkService(),
+      network_service_.get(),
       CreatePrefetchedLibraryIfNeeded(name, response.Pass())));
   sky_view_ = blink::SkyView::Create(this);
   layer_host_.reset(new LayerHost(this));
