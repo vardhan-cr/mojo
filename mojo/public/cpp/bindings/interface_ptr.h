@@ -73,6 +73,9 @@ class InterfacePtr {
       internal_state_.Bind(info.Pass(), waiter);
   }
 
+  // Returns whether or not this InterfacePtr is bound to a message pipe.
+  bool is_bound() const { return internal_state_.is_bound(); }
+
   // Returns a raw pointer to the local proxy. Caller does not take ownership.
   // Note that the local proxy is thread hostile, as stated above.
   Interface* get() const { return internal_state_.instance(); }

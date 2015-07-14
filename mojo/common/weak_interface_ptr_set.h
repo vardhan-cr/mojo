@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "base/logging.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
 
@@ -46,19 +47,28 @@ class WeakInterfacePtr {
 
 }  // namespace internal
 
+// A WeakInterfacePtrSet contains a collection of InterfacePtrs
+// that are automatically removed from the collection and destroyed
+// when their associated MessagePipe experiences a connection error.
+// When the set is destroyed all of the MessagePipes will be closed.
+// TODO(rudominer) Rename this class since the ownership of the elements
+// is not "weak" from the point of view of the client.
 template <typename Interface>
 class WeakInterfacePtrSet {
  public:
   WeakInterfacePtrSet() {}
   ~WeakInterfacePtrSet() { CloseAll(); }
 
+  // |ptr| must be bound to a message pipe.
   void AddInterfacePtr(InterfacePtr<Interface> ptr) {
+    DCHECK(ptr.is_bound());
     auto weak_interface_ptr =
         new internal::WeakInterfacePtr<Interface>(ptr.Pass());
     ptrs_.push_back(weak_interface_ptr->GetWeakPtr());
     ClearNullInterfacePtrs();
   }
 
+  // Applies |function| to each of the InterfacePtrs in the set.
   template <typename FunctionType>
   void ForAllPtrs(FunctionType function) {
     for (const auto& it : ptrs_) {
@@ -68,12 +78,21 @@ class WeakInterfacePtrSet {
     ClearNullInterfacePtrs();
   }
 
+  // Closes the MessagePipe associated with each of the InterfacePtrs in
+  // this set and clears the set.
   void CloseAll() {
     for (const auto& it : ptrs_) {
       if (it)
         it->Close();
     }
     ptrs_.clear();
+  }
+
+  // TODO(rudominer) After reworking this class and eliminating the method
+  // ClearNullInterfacePtrs, this method should become const.
+  size_t size() {
+    ClearNullInterfacePtrs();
+    return ptrs_.size();
   }
 
  private:

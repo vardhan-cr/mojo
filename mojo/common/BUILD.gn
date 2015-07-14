@@ -50,10 +50,12 @@ test("mojo_common_unittests") {
     "handle_watcher_unittest.cc",
     "message_pump_mojo_unittest.cc",
     "task_tracker_unittest.cc",
+    "weak_interface_ptr_set_unittest.cc",
   ]
 
   deps = [
     ":common",
+    ":test_interfaces",
     "//base",
     "//base/test:test_support",
     "//base:message_loop_tests",
@@ -66,6 +68,13 @@ test("mojo_common_unittests") {
     "//mojo/public/cpp/test_support:test_utils",
     "//testing/gtest",
     "//url",
+  ]
+}
+
+mojom("test_interfaces") {
+  testonly = true
+  sources = [
+    "test_interfaces.mojom",
   ]
 }
 
