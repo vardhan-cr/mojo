@@ -16,10 +16,10 @@
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "services/sky/content_handler_impl.h"
 #include "services/sky/document_view.h"
+#include "services/sky/platform_impl.h"
 #include "services/sky/runtime_flags.h"
 #include "sky/engine/public/web/Sky.h"
 #include "sky/engine/public/web/WebRuntimeFeatures.h"
-#include "sky/services/platform/platform_impl.h"
 
 namespace sky {
 
