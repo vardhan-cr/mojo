@@ -22,7 +22,6 @@ group("services") {
     "//services/prediction",
     "//services/reaper",
     "//services/sky",
-    "//services/speech_recognizer",
     "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",
@@ -38,6 +37,7 @@ group("services") {
       "//services/location",
       "//services/notifications",
       "//services/sensors",
+      "//services/speech_recognizer",
     ]
   }
 
