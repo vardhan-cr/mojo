@@ -207,7 +207,7 @@ component("gl") {
       "//ui/ozone:ozone_base",
     ]
   }
-  if (is_ios) {
+  if (is_ios || is_mac) {
     sources = []
     sources = [
       "gl_bindings_autogen_gl.cc",
@@ -218,6 +218,7 @@ component("gl") {
       "gl_context.h",
       "gl_context_ios.h",
       "gl_context_ios.mm",
+      "gl_context_mac.mm",
       "gl_context_stub.cc",
       "gl_context_stub.h",
       "gl_context_stub_with_extensions.cc",
@@ -230,12 +231,14 @@ component("gl") {
       "gl_implementation.cc",
       "gl_implementation.h",
       "gl_implementation_ios.cc",
+      "gl_implementation_mac.cc",
       "gl_share_group.cc",
       "gl_share_group.h",
       "gl_surface.cc",
       "gl_surface.h",
       "gl_surface_ios.h",
       "gl_surface_ios.mm",
+      "gl_surface_mac.cc",
       "gl_surface_stub.cc",
       "gl_surface_stub.h",
       "gl_switches.cc",
@@ -244,6 +247,15 @@ component("gl") {
       "gl_version_info.h",
       "gpu_timing.cc",
       "gpu_timing.h",
+    ]
+  }
+
+  if (is_mac) {
+    sources += [
+      "gl_context_cgl.cc",
+      "gl_context_cgl.h",
+      "gpu_switching_manager.cc",
+      "gpu_switching_manager.h",
     ]
   }
 }

@@ -160,6 +160,9 @@ const AcceleratedWidget kNullAcceleratedWidget = 0;
 #elif defined(OS_IOS)
 typedef uintptr_t AcceleratedWidget;
 const AcceleratedWidget kNullAcceleratedWidget = 0;
+#elif defined(OS_MACOSX)
+typedef uintptr_t AcceleratedWidget;
+const AcceleratedWidget kNullAcceleratedWidget = 0;
 #else
 #error unknown platform
 #endif
