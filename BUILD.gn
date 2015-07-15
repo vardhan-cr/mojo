@@ -26,7 +26,7 @@ group("default") {
     deps += [ "//sky" ]
   }
 
-  if (is_ios) {
+  if (is_ios || is_mac) {
     deps = []
     deps = [
       "//sky/shell",
