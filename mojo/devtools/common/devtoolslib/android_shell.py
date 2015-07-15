@@ -9,6 +9,7 @@ import logging
 import os
 import os.path
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -43,6 +44,22 @@ def _ExitIfNeeded(process):
   """Exits |process| if it is still alive."""
   if process.poll() is None:
     process.kill()
+
+
+def _FindAvailablePort(netstat_output, max_attempts=10000):
+  opened = [int(x.strip().split()[3].split(':')[1])
+            for x in netstat_output if x.startswith(' tcp')]
+  for _ in xrange(max_attempts):
+    port = random.randint(4096, 16384)
+    if port not in opened:
+      return port
+  else:
+    raise Exception('Failed to identify an available port.')
+
+
+def _FindAvailableHostPort():
+  netstat_output = subprocess.check_output(['netstat'])
+  return _FindAvailablePort(netstat_output)
 
 
 class AndroidShell(Shell):
@@ -103,6 +120,11 @@ class AndroidShell(Shell):
     thread = threading.Thread(target=Run, name="StdoutRedirector")
     thread.start()
 
+  def _FindAvailableDevicePort(self):
+    netstat_output = subprocess.check_output(
+        self._AdbCommand(['shell', 'netstat']))
+    return _FindAvailablePort(netstat_output)
+
   def _ForwardDevicePortToHost(self, device_port, host_port):
     """Maps the device port to the host port. If |device_port| is 0, a random
     available port is chosen.
@@ -110,16 +132,7 @@ class AndroidShell(Shell):
     Returns:
       The device port.
     """
-    def _FindAvailablePortOnDevice():
-      opened = subprocess.check_output(
-          self._AdbCommand(['shell', 'netstat']))
-      opened = [int(x.strip().split()[3].split(':')[1])
-                for x in opened if x.startswith(' tcp')]
-      while True:
-        port = random.randint(4096, 16384)
-        if port not in opened:
-          return port
-
+    assert host_port
     # Root is not required for `adb forward` (hence we don't check the return
     # value), but if we can run adb as root, we have to do it now, because
     # restarting adbd as root clears any port mappings. See
@@ -127,17 +140,40 @@ class AndroidShell(Shell):
     self._RunAdbAsRoot()
 
     if device_port == 0:
-      device_port = _FindAvailablePortOnDevice()
+      # TODO(ppi): Should we have a retry loop to handle the unlikely races?
+      device_port = self._FindAvailableDevicePort()
     subprocess.check_call(self._AdbCommand([
         "reverse", "tcp:%d" % device_port, "tcp:%d" % host_port]))
 
-    unmap_command = self._AdbCommand([
-        "reverse", "--remove", "tcp:%d" % device_port])
-
     def _UnmapPort():
+      unmap_command = self._AdbCommand([
+          "reverse", "--remove", "tcp:%d" % device_port])
       subprocess.Popen(unmap_command)
     atexit.register(_UnmapPort)
     return device_port
+
+  def _ForwardHostPortToDevice(self, host_port, device_port):
+    """Maps the host port to the device port. If |host_port| is 0, a random
+    available port is chosen.
+
+    Returns:
+      The host port.
+    """
+    assert device_port
+    self._RunAdbAsRoot()
+
+    if host_port == 0:
+      # TODO(ppi): Should we have a retry loop to handle the unlikely races?
+      host_port = _FindAvailableHostPort()
+    subprocess.check_call(self._AdbCommand([
+        "forward", 'tcp:%d' % host_port, 'tcp:%d' % device_port]))
+
+    def _UnmapPort():
+      unmap_command = self._AdbCommand([
+          "forward", "--remove", "tcp:%d" % device_port])
+      subprocess.Popen(unmap_command)
+    atexit.register(_UnmapPort)
+    return host_port
 
   def _RunAdbAsRoot(self):
     if self.adb_running_as_root is not None:
@@ -310,6 +346,29 @@ class AndroidShell(Shell):
     atexit.register(_ExitIfNeeded, logcat)
     return logcat
 
+  def ForwardObservatoryPorts(self):
+    """Forwards the ports used by the dart observatories to the host machine.
+    """
+    logcat = subprocess.Popen(self._AdbCommand(['logcat']),
+                              stdout=subprocess.PIPE)
+    atexit.register(_ExitIfNeeded, logcat)
+
+    def _ForwardObservatoriesAsNeeded():
+      while True:
+        line = logcat.stdout.readline()
+        if not line:
+          break
+        match = re.search(r'Observatory listening on http://127.0.0.1:(\d+)',
+                          line)
+        if match:
+          device_port = int(match.group(1))
+          host_port = self._ForwardHostPortToDevice(0, device_port)
+          print ("Dart observatory available at the host at http://127.0.0.1:%d"
+                 % host_port)
+
+    logcat_watch_thread = threading.Thread(target=_ForwardObservatoriesAsNeeded)
+    logcat_watch_thread.start()
+
   def ServeLocalDirectory(self, local_dir_path, port=0,
                           additional_mappings=None):
     """Serves the content of the local (host) directory, making it available to
@@ -341,17 +400,7 @@ class AndroidShell(Shell):
 
     This is a no-op if the shell is running locally.
     """
-    assert host_port
-    device_port = host_port
-    subprocess.check_call(self._AdbCommand([
-        "forward", 'tcp:%d' % host_port, 'tcp:%d' % device_port]))
-
-    unmap_command = self._AdbCommand([
-        "forward", "--remove", "tcp:%d" % device_port])
-
-    def _UnmapPort():
-      subprocess.Popen(unmap_command)
-    atexit.register(_UnmapPort)
+    self._ForwardHostPortToDevice(host_port, host_port)
 
   def Run(self, arguments):
     """Runs the shell with given arguments until shell exits, passing the stdout
@@ -362,6 +411,7 @@ class AndroidShell(Shell):
       retrieved.
     """
     self.CleanLogs()
+    self.ForwardObservatoryPorts()
 
     # If we are running as root, don't carry over the native logs from logcat -
     # we will have these in the stdout.
