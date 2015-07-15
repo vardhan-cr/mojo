@@ -169,7 +169,8 @@ def GetTestList(config, verbose_count=0):
 
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_PERF):
     perf_id = "linux_%s" % ("debug" if config.is_debug else "release")
-    test_names = ["mojo_public_system_perftests"]
+    test_names = ["mojo_public_system_perftests",
+                  "mojo_public_bindings_perftests"]
 
     for test_name in test_names:
       command = ["python",
