@@ -283,6 +283,8 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/NfcImpl.java",
       "android/apk/src/org/chromium/mojo/shell/NfcReceiverActivity.java",
       "android/apk/src/org/chromium/mojo/shell/NfcServiceFactoryBinder.java",
+      "android/apk/src/org/chromium/mojo/shell/SharingActivity.java",
+      "android/apk/src/org/chromium/mojo/shell/SharingApplicationDelegate.java",
       "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
     ]
 
@@ -297,6 +299,7 @@ if (is_android) {
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
       "//services/intent_receiver:bindings_java",
       "//services/nfc_message_sink:bindings_java",
+      "//services/sharing_sink:bindings_java",
       "//mojo/services/nfc/public/interfaces:interfaces_java",
       "//services/keyboard",
     ]

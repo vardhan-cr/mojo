@@ -48,6 +48,15 @@
                 <data android:mimeType="mojo/data"/>
             </intent-filter>
         </activity>
+        <activity android:name="org.chromium.mojo.shell.SharingActivity"
+                  android:theme="@android:style/Theme.NoDisplay"
+                  android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
+        </activity>
         <service android:name="org.chromium.mojo.shell.IntentReceiverService"/>
     </application>
 
