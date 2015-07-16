@@ -20,6 +20,7 @@ template("mojo_native_application") {
   if (!is_nacl) {
     output = base_target_name + ".mojo"
     library_target_name = base_target_name + "_library"
+    copy_symbols_target = "__${final_target_name}_copy_symbols"
 
     if (is_linux || is_android) {
       library_name = "lib${library_target_name}.so"
@@ -130,7 +131,27 @@ template("mojo_native_application") {
         testonly = invoker.testonly
       }
 
+      visibility = [
+        ":${final_target_name}",
+        ":${copy_symbols_target}",
+      ]
+    }
+
+    copy(copy_symbols_target) {
+      if (defined(invoker.testonly)) {
+        testonly = invoker.testonly
+      }
       visibility = [ ":${final_target_name}" ]
+      deps = [
+        ":${library_target_name}",
+      ]
+
+      sources = [
+        "${root_out_dir}/${library_name}",
+      ]
+      outputs = [
+        "${root_out_dir}/symbols/${library_name}",
+      ]
     }
 
     copy(final_target_name) {
@@ -142,6 +163,7 @@ template("mojo_native_application") {
       }
       deps = [
         ":${library_target_name}",
+        ":${copy_symbols_target}",
       ]
 
       sources = [

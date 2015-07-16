@@ -9,6 +9,7 @@ https://github.com/domokit/mojo/wiki/Rolling-code-between-chromium-and-mojo#chro
 
 import argparse
 import glob
+import itertools
 import os
 import subprocess
 import sys
@@ -20,6 +21,11 @@ import mopy.gn as gn
 from mopy.config import Config
 from mopy.paths import Paths
 from mopy.version import Version
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir, os.pardir, "third_party", "pyelftools"))
+import elftools
+import elftools.elf.elffile as elffile
 
 BLACKLISTED_APPS = [
   # The network service apps are not produced out of the Mojo repo, but may
@@ -77,6 +83,42 @@ def upload(config, source, dest, dry_run):
     print str([gsutil_exe, "cp", source, dest])
   else:
     subprocess.check_call([gsutil_exe, "cp", source, dest])
+
+
+def _get_signature(file_object):
+  """Compute a unique signature of a library file.
+
+  TODO(qsr): Move this function to devtools and import it from there to ensure
+  signature computation is always coherent.
+  """
+  try:
+    elf = elffile.ELFFile(file_object)
+    text_section = elf.get_section_by_name(".text")
+    file_object.seek(text_section["sh_offset"])
+    data = file_object.read(min(4096, text_section["sh_size"]))
+    def combine((i, c)):
+      return i ^ ord(c)
+    result = 16 * [0]
+    for i in xrange(0, len(data), len(result)):
+      result = map(combine,
+                   itertools.izip_longest(result,
+                                          data[i:i + len(result)],
+                                          fillvalue="\0"))
+    return "".join(["%02x" % x for x in result])
+  except elftools.common.exceptions.ELFError:
+    return None
+
+
+def upload_symbols(config, build_dir, dry_run):
+  dest_dir = "gs://mojo/symbols/"
+  symbols_dir = os.path.join(build_dir, "symbols")
+  for name in os.listdir(symbols_dir):
+    path = os.path.join(symbols_dir, name)
+    with open(path) as f:
+      signature = _get_signature(f)
+      if signature is not None:
+        dest = dest_dir + _get_signature(f)
+        upload(config, path, dest, dry_run)
 
 
 def upload_shell(config, dry_run, verbose):
@@ -223,6 +265,8 @@ def main():
   files_to_upload = find_architecture_independent_files(build_directory)
   for file_to_upload in files_to_upload:
     upload_file(file_to_upload, config, args.dry_run)
+
+  upload_symbols(config, build_directory, args.dry_run)
 
   return 0
 

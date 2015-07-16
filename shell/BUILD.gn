@@ -19,6 +19,7 @@ group("shell") {
   deps = [
     ":mojo_shell",
     ":tests",
+    ":copy_symbols",
   ]
 
   if (is_android) {
@@ -552,5 +553,32 @@ mojo_native_application("shell_nfc_apptests") {
     "//mojo/public/cpp/system:system",
     "//mojo/services/nfc/public/interfaces",
     "//shell/test:bindings",
+  ]
+}
+
+copy("copy_symbols") {
+  testonly = true
+
+  deps = [
+    ":mojo_shell",
+  ]
+  if (is_android) {
+    deps += [ ":bootstrap" ]
+  }
+
+  sources = [
+    "${root_out_dir}/mojo_shell_child",
+  ]
+  if (is_android) {
+    sources += [
+      "${root_out_dir}/libbootstrap.so",
+      "${root_out_dir}/libmojo_shell.so",
+    ]
+  } else {
+    sources += [ "${root_out_dir}/mojo_shell" ]
+  }
+
+  outputs = [
+    "${root_out_dir}/symbols/{{source_file_part}}",
   ]
 }

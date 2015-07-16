@@ -65,6 +65,7 @@ v8.log
 /third_party/mesa/src/
 /third_party/mockito/src/
 /third_party/pdfium/
+/third_party/pyelftools/
 /third_party/pywebsocket/src/
 /third_party/requests/src/
 /third_party/robolectric/src/

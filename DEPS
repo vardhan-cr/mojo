@@ -152,6 +152,9 @@ deps = {
 
   'src/third_party/dart-pkg/yaml':
     Var('chromium_git') + '/external/github.com/dart-lang/yaml.git' + '@' + Var('yaml_dart_revision'),
+
+  'src/third_party/pyelftools':
+    Var('chromium_git') + '/chromiumos/third_party/pyelftools.git' + '@' + '19b3e610c86fcadb837d252c794cb5e8008826ae',
 }
 
 deps_os = {
