@@ -21,7 +21,6 @@ group("services") {
     "//services/native_viewport",
     "//services/prediction",
     "//services/reaper",
-    "//services/sky",
     "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",

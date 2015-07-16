@@ -21,18 +21,6 @@ group("default") {
   if (!is_android && !is_win) {
     deps += [ "//tools/xdisplaycheck" ]
   }
-
-  if (!is_asan) {
-    deps += [ "//sky" ]
-  }
-
-  if (is_ios || is_mac) {
-    deps = []
-    deps = [
-      "//sky/shell",
-      "//sky:sky_dev",
-    ]
-  }
 }
 
 # Deprecated name for the default build target.
