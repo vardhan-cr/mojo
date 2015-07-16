@@ -34,7 +34,6 @@ source_set("compositor") {
     "//base",
     "//mojo/application",
     "//mojo/converters/geometry",
-    "//mojo/converters/surfaces",
     "//mojo/gpu",
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/bindings",
