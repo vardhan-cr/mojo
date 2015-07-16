@@ -327,8 +327,13 @@ if (is_android) {
   template("mojo_android_application") {
     shared_library_name = "__${target_name}_lib"
     library_basename = "lib${shared_library_name}.so"
-    generate_jni_name = "__${target_name}_jni"
-    java_library_name = "__${target_name}_java"
+    if (defined(invoker.jni_package)) {
+      assert(defined(invoker.java_sources))
+      generate_jni_name = "__${target_name}_jni"
+    }
+    if (defined(invoker.java_sources)) {
+      java_library_name = "__${target_name}_java"
+    }
     android_standalone_library_name = "__${target_name}_java_lib"
     dex_output_path = "${target_gen_dir}/${target_name}.dex"
     zip_action_name = "__${target_name}_zip"
@@ -336,7 +341,7 @@ if (is_android) {
     copy_symbols_target = "__${target_name}_copy_symbols"
     final_target_name = target_name
 
-    if (defined(invoker.java_sources) && defined(invoker.jni_package)) {
+    if (defined(invoker.jni_package)) {
       generate_jni(generate_jni_name) {
         visibility = [ ":${shared_library_name}" ]
 
@@ -356,7 +361,7 @@ if (is_android) {
       }
 
       deps = []
-      if (defined(invoker.java_sources) && defined(invoker.jni_package)) {
+      if (defined(invoker.jni_package)) {
         deps += [ ":${generate_jni_name}" ]
       }
       if (defined(invoker.deps)) {
@@ -378,22 +383,24 @@ if (is_android) {
       ]
     }
 
-    android_library(java_library_name) {
-      visibility = [ ":*" ]
+    if (defined(invoker.java_sources)) {
+      android_library(java_library_name) {
+        visibility = [ ":*" ]
 
-      if (defined(invoker.java_sources)) {
         java_files = invoker.java_sources
-      }
 
-      if (defined(invoker.java_deps)) {
-        deps = invoker.java_deps
+        if (defined(invoker.java_deps)) {
+          deps = invoker.java_deps
+        }
       }
     }
 
     android_standalone_library(android_standalone_library_name) {
-      deps = [
-        ":${java_library_name}",
-      ]
+      deps = []
+
+      if (defined(invoker.java_sources)) {
+        deps += [ ":${java_library_name}" ]
+      }
 
       if (defined(invoker.java_deps)) {
         deps += invoker.java_deps
