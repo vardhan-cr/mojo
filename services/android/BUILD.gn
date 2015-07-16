@@ -5,9 +5,12 @@
 import("//build/config/android/rules.gni")
 import("//mojo/public/mojo_application.gni")
 
-shared_library("libjava_handler") {
+mojo_android_application("java_handler") {
+  sources = [
+    "java_handler.cc",
+  ]
+
   deps = [
-    ":jni_headers",
     "//base",
     "//mojo/android:libsystem_java",
     "//mojo/android:system_java_jni_headers",
@@ -22,42 +25,13 @@ shared_library("libjava_handler") {
     "//mojo/services/url_response_disk_cache/public/interfaces",
   ]
 
-  sources = [
-    "java_handler.cc",
-  ]
-}
+  java_sources = [ "java/src/org/chromium/services/android/JavaHandler.java" ]
 
-generate_jni("jni_headers") {
-  sources = [
-    "java/src/org/chromium/services/android/JavaHandler.java",
-  ]
-
-  jni_package = "mojo"
-}
-
-android_library("content_handler_java") {
-  java_files = [ "java/src/org/chromium/services/android/JavaHandler.java" ]
-
-  deps = [
+  java_deps = [
     "//base:base_java",
     "//mojo/android:system_java",
     "//mojo/public/java:system",
   ]
-}
 
-dex_output_path = "$target_out_dir/java_handler_java.dex.jar"
-
-android_standalone_library("content_handler_java_lib") {
-  deps = [
-    "//mojo/public/java:system",
-    "//mojo/android:system_java",
-    ":content_handler_java",
-  ]
-
-  dex_path = dex_output_path
-}
-
-mojo_android_application("java_handler") {
-  input_so = "$root_out_dir/lib.stripped/libjava_handler.so"
-  input_dex_jar = dex_output_path
+  jni_package = "mojo"
 }
