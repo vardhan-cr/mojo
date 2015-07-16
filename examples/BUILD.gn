@@ -29,7 +29,6 @@ group("examples") {
     "//examples/notification_generator",
     "//examples/png_viewer",
     "//examples/recursive_content_handler",
-    "//examples/sky_compositor_app",
     "//examples/spinning_cube",
     "//examples/surfaces_app",
     "//examples/tiny",
