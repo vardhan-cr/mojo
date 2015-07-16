@@ -17,6 +17,10 @@
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/mojo_natives.h"
 
+#if defined(OS_ANDROID)
+#include <android/log.h>
+#endif
+
 namespace mojo {
 namespace dart {
 
@@ -80,14 +84,17 @@ void Logger_PrintString(Dart_NativeArguments args) {
   if (Dart_IsError(result)) {
     Dart_PropagateError(result);
   } else {
-  // TODO(dart): Hook up to developer console (if/when that's a thing).
-#if defined(OS_ANDROID)
-    std::string message(reinterpret_cast<char*>(chars), length);
-    LOG(INFO) << "CONSOLE: " << message;
-#else
+    // TODO(dart): Hook up to developer console (if/when that's a thing).
     // Uses fwrite to support printing NUL bytes.
     fwrite(chars, 1, length, stdout);
     fputs("\n", stdout);
+#if defined(OS_ANDROID)
+    // In addition to writing to the stdout, write to the logcat so that the
+    // message is discoverable when running on an unrooted device. Use the
+    // "chromium" tag to match native printouts produced by base LOG macros, so
+    // that the same rule will pick them up in scripts that stream relevant
+    // logcat output to host terminal.
+    __android_log_print(ANDROID_LOG_INFO, "chromium", "%.*s", length, chars);
 #endif
   }
   fflush(stdout);
