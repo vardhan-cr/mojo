@@ -212,24 +212,24 @@ $ mojo/tools/mojob.py dartcheck
 
 ## Run Mojo Shell
 
-`mojo_shell.py` is a universal shell runner abstracting away the differences
-between running on Linux and Android. Having built Mojo as described above, a
-demo app can be run as follows:
+Devtools script `mojo_shell` is a universal shell runner abstracting away the
+differences between running on Linux and Android. Having built Mojo as
+described above, a demo app can be run as follows:
 
 ```
-mojo/tools/mojo_shell.py mojo:spinning_cube  # Linux.
-mojo/tools/mojo_shell.py mojo:spinning_cube  --android # Android.
+mojo/devtools/common/mojo_shell mojo:spinning_cube  # Linux.
+mojo/devtools/common/mojo_shell mojo:spinning_cube  --android # Android.
 ```
 
 Pass `--sky path_to_sky_file` to run a
 [Sky](https://github.com/domokit/mojo/tree/master/sky) app on either platform:
 ```
-mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart
-mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --android
+mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart
+mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart --android
 ```
 
 Passing the `-v` flag will increase the output verbosity. In particular, it will
-also print all arguments passed by `mojo_shell.py` to the shell binary.
+also print all arguments passed by `mojo_shell` to the shell binary.
 
 ### Chromoting
 
@@ -237,7 +237,7 @@ Some Mojo apps (Sky apps in particular) will need the --use-osmesa flag to run
 over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
 
 ```
-mojo/tools/mojo_shell.py --sky sky/examples/raw/hello_world.dart --use-osmesa
+mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart --use-osmesa
 ```
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
@@ -249,8 +249,8 @@ start
 and retrieve the result:
 
 ```
-devtools/common/debugger tracing start
-devtools/common/debugger tracing stop [result.json]
+mojo/devtools/common/debugger tracing start
+mojo/devtools/common/debugger tracing stop [result.json]
 ```
 
 The trace file can be then loaded using the trace viewer in Chrome available at
@@ -298,14 +298,6 @@ Many features useful for development (ie. streaming of the shell stdout when
 running shell on the device) will not work unless the device is rooted and
 running a userdebug build. For Googlers, [follow the instructions at this
 link](http://go/mojo-internal-build-instructions).
-
-#### Aw, snap!
-
-If the shell crashes on the device, you won't see symbols. Use
-`tools/android_stack_parser/stack` to map back to symbols, e.g.:
-```
-adb logcat | ./tools/android_stack_parser/stack
-```
 
 ### Running manually on Linux
 

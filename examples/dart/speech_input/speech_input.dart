@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// To run: mojo/tools/mojo_shell.py --sky \
+// To run: mojo/devtools/common/mojo_shell --sky \
 //             examples/dart/speech_input/speech_input.dart --android
 //
 // The speech_recognizer service is only available for Android targets.

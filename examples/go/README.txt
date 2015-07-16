@@ -20,10 +20,10 @@ $ mojo/tools/mojob.py build
 
 3) Run
 To run echo client:
-$ mojo/tools/mojo_shell.py --enable-multiprocess mojo:go_echo_client
+$ mojo/devtools/common/mojo_shell --enable-multiprocess mojo:go_echo_client
 
 To run http handler:
-$ mojo/tools/mojo_shell.py --enable-multiprocess mojo:go_http_handler
+$ mojo/devtools/common/mojo_shell --enable-multiprocess mojo:go_http_handler
 
 To run http server:
-$ mojo/tools/mojo_shell.py --enable-multiprocess mojo:go_http_server
+$ mojo/devtools/common/mojo_shell --enable-multiprocess mojo:go_http_server
