@@ -29,6 +29,7 @@ import traceback
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import android_gdb.config as config
 from android_gdb.remote_file_connection import RemoteFileConnection
+from android_gdb.signatures import get_signature
 
 
 logging.getLogger().setLevel(logging.INFO)
@@ -37,28 +38,6 @@ logging.getLogger().setLevel(logging.INFO)
 def _gdb_execute(command):
   """Executes a GDB command."""
   return gdb.execute(command, to_string=True)
-
-
-def get_signature(file_object, elffile_module):
-  """Computes a unique signature of a library file.
-
-  We only hash the .text section of the library in order to make the hash
-  resistant to stripping (we want the same hash for the same library with debug
-  symbols kept or stripped).
-  """
-  elf = elffile_module.ELFFile(file_object)
-  text_section = elf.get_section_by_name('.text')
-  file_object.seek(text_section['sh_offset'])
-  data = file_object.read(min(4096, text_section['sh_size']))
-  def combine((i, c)):
-    return i ^ ord(c)
-  result = 16 * [0]
-  for i in xrange(0, len(data), len(result)):
-    result = map(combine,
-                 itertools.izip_longest(result,
-                                        data[i:i + len(result)],
-                                        fillvalue='\0'))
-  return ''.join(["%02x" % x for x in result])
 
 
 class Mapping(object):
