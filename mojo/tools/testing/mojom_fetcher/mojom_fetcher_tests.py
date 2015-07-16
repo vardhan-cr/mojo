@@ -23,6 +23,7 @@ from mojom_fetcher import UrlRewriter, UrlRewriterException, MojomFetcher
 # Fake repository for testing
 from fakes import FakeRepository
 
+
 class TestUrlRewriter(unittest.TestCase):
   def test_no_transitive(self):
     rules = {"foo.com": "bar.com/foo", "bar.com": "baz.com"}
@@ -43,10 +44,12 @@ class TestUrlRewriter(unittest.TestCase):
     self.assertEquals("example.com/file",
                       rewriter.rewrite("example.com/file"))
 
+
 class FakeRequest(object):
   def __init__(self, content, ok):
     self.content = content
     self.ok = ok
+
 
 class FakeMojomFetcher(MojomFetcher):
   data = """module test;
@@ -65,7 +68,7 @@ interface Fiz {};"""
   def _os_makedirs(self, _):
     return
 
-  def _open(self, f, mode="r"):
+  def _open(self, f, _):
     fake_file = io.BytesIO()
     self.opened_files[f] = fake_file
     if "services.fiz.org/foo/bar.mojom" in f:
@@ -86,7 +89,6 @@ class TestMojomFetcher(unittest.TestCase):
                        "https://services.fiz.org/foo/bar.mojom"],
                       self.fetcher.downloaded_urls)
 
-
   def test_update(self):
     self.fetcher.update()
     self.assertEquals(["https://services.domokit.org/foo/fiz.mojom",
@@ -105,4 +107,3 @@ if __name__ == '__main__':
   directory = os.path.dirname(os.path.abspath(__file__))
   suite = loader.discover(directory, '*_tests.py')
   runner.run(suite)
-
