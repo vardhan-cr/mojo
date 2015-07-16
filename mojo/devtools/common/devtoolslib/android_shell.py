@@ -32,6 +32,7 @@ _LOGCAT_JAVA_TAGS = [
 # Tags used by native logging reflected in the logcat.
 _LOGCAT_NATIVE_TAGS = [
     'chromium',
+    'sky',
 ]
 
 _MOJO_SHELL_PACKAGE_NAME = 'org.chromium.mojo.shell'
