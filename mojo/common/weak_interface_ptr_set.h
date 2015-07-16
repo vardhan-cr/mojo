@@ -13,40 +13,6 @@
 
 namespace mojo {
 
-namespace internal {
-
-// TODO(vtl): This name of this class is a little odd -- it's not a "weak
-// pointer", but a wrapper around InterfacePtr that owns itself and can vend
-// weak pointers to itself. Probably, with connection error callbacks instead of
-// ErrorHandlers, this class is unneeded, and WeakInterfacePtrSet can simply
-// own/remove interface pointers as connection errors occur.
-// https://github.com/domokit/mojo/issues/311
-template <typename Interface>
-class WeakInterfacePtr {
- public:
-  explicit WeakInterfacePtr(InterfacePtr<Interface> ptr)
-      : ptr_(ptr.Pass()), weak_ptr_factory_(this) {
-    ptr_.set_connection_error_handler([this]() { delete this; });
-  }
-  ~WeakInterfacePtr() {}
-
-  void Close() { ptr_.reset(); }
-
-  Interface* get() { return ptr_.get(); }
-
-  base::WeakPtr<WeakInterfacePtr> GetWeakPtr() {
-    return weak_ptr_factory_.GetWeakPtr();
-  }
-
- private:
-  InterfacePtr<Interface> ptr_;
-  base::WeakPtrFactory<WeakInterfacePtr> weak_ptr_factory_;
-
-  DISALLOW_COPY_AND_ASSIGN(WeakInterfacePtr);
-};
-
-}  // namespace internal
-
 // A WeakInterfacePtrSet contains a collection of InterfacePtrs
 // that are automatically removed from the collection and destroyed
 // when their associated MessagePipe experiences a connection error.
@@ -62,10 +28,21 @@ class WeakInterfacePtrSet {
   // |ptr| must be bound to a message pipe.
   void AddInterfacePtr(InterfacePtr<Interface> ptr) {
     DCHECK(ptr.is_bound());
-    auto weak_interface_ptr =
-        new internal::WeakInterfacePtr<Interface>(ptr.Pass());
-    ptrs_.push_back(weak_interface_ptr->GetWeakPtr());
-    ClearNullInterfacePtrs();
+    ptrs_.emplace_back(ptr.Pass());
+    InterfacePtr<Interface>& intrfc_ptr = ptrs_.back();
+    Interface* pointer = intrfc_ptr.get();
+    // Set the connection error handler for the newly added InterfacePtr to be a
+    // function that will erase it from the vector.
+    intrfc_ptr.set_connection_error_handler([pointer, this]() {
+      // Since InterfacePtr itself is a movable type, the thing that uniquely
+      // identifies the InterfacePtr we wish to erase is its Interface*.
+      auto it = std::find_if(ptrs_.begin(), ptrs_.end(),
+                             [pointer](const InterfacePtr<Interface>& p) {
+                               return (p.get() == pointer);
+                             });
+      DCHECK(it != ptrs_.end());
+      ptrs_.erase(it);
+    });
   }
 
   // Applies |function| to each of the InterfacePtrs in the set.
@@ -73,38 +50,24 @@ class WeakInterfacePtrSet {
   void ForAllPtrs(FunctionType function) {
     for (const auto& it : ptrs_) {
       if (it)
-        function(it->get());
+        function(it.get());
     }
-    ClearNullInterfacePtrs();
   }
 
   // Closes the MessagePipe associated with each of the InterfacePtrs in
   // this set and clears the set.
   void CloseAll() {
-    for (const auto& it : ptrs_) {
+    for (auto& it : ptrs_) {
       if (it)
-        it->Close();
+        it.reset();
     }
     ptrs_.clear();
   }
 
-  // TODO(rudominer) After reworking this class and eliminating the method
-  // ClearNullInterfacePtrs, this method should become const.
-  size_t size() {
-    ClearNullInterfacePtrs();
-    return ptrs_.size();
-  }
+  size_t size() const { return ptrs_.size(); }
 
  private:
-  using WPWIPI = base::WeakPtr<internal::WeakInterfacePtr<Interface>>;
-
-  void ClearNullInterfacePtrs() {
-    ptrs_.erase(std::remove_if(ptrs_.begin(), ptrs_.end(), [](const WPWIPI& p) {
-      return p.get() == nullptr;
-    }), ptrs_.end());
-  }
-
-  std::vector<WPWIPI> ptrs_;
+  std::vector<InterfacePtr<Interface>> ptrs_;
 };
 
 }  // namespace mojo
