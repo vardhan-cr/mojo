@@ -50,6 +50,7 @@ test("mojo_common_unittests") {
     "handle_watcher_unittest.cc",
     "message_pump_mojo_unittest.cc",
     "task_tracker_unittest.cc",
+    "weak_binding_set_unittest.cc",
     "weak_interface_ptr_set_unittest.cc",
   ]
 

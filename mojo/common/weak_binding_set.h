@@ -74,6 +74,8 @@ class WeakBindingSet {
     bindings_.clear();
   }
 
+  size_t size() const { return bindings_.size(); }
+
  private:
   void OnConnectionError() {
     // Clear any deleted bindings.
