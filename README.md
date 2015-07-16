@@ -265,6 +265,14 @@ stack trace present in the device log:
 mojo/devtools/common/debugger device stack
 ```
 
+#### GDB
+It is possible to inspect a Mojo Shell process using GDB. The `debugger` script
+can be used to launch GDB and attach it to a running shell process (android
+only):
+```
+mojo/devtools/common/debugger gdb attach
+```
+
 ### Android set-up
 
 #### Adb
