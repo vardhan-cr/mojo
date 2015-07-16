@@ -23,7 +23,7 @@ DartLibraryProviderImpl::~DartLibraryProviderImpl() {
 }
 
 void DartLibraryProviderImpl::GetLibraryAsStream(
-    const String& name,
+    const std::string& name,
     blink::DataPipeConsumerCallback callback) {
   if (prefetched_library_ && prefetched_library_->name == name) {
     mojo::ScopedDataPipeConsumerHandle pipe = prefetched_library_->pipe.Pass();

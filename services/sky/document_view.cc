@@ -70,7 +70,7 @@ CreatePrefetchedLibraryIfNeeded(const String& name,
   scoped_ptr<DartLibraryProviderImpl::PrefetchedLibrary> prefetched;
   if (response->status_code == 200) {
     prefetched.reset(new DartLibraryProviderImpl::PrefetchedLibrary());
-    prefetched->name = name;
+    prefetched->name = name.toUTF8();
     prefetched->pipe = response->body.Pass();
   }
   return prefetched.Pass();

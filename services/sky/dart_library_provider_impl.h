@@ -16,7 +16,7 @@ class DartLibraryProviderImpl : public shell::DartLibraryProviderNetwork {
     PrefetchedLibrary();
     ~PrefetchedLibrary();
 
-    String name;
+    std::string name;
     mojo::ScopedDataPipeConsumerHandle pipe;
   };
 
@@ -25,7 +25,7 @@ class DartLibraryProviderImpl : public shell::DartLibraryProviderNetwork {
   ~DartLibraryProviderImpl() override;
 
  private:
-  void GetLibraryAsStream(const String& name,
+  void GetLibraryAsStream(const std::string& name,
                           blink::DataPipeConsumerCallback callback) override;
 
   scoped_ptr<PrefetchedLibrary> prefetched_library_;
