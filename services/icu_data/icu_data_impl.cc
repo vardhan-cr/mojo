@@ -9,7 +9,7 @@
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
-#include "services/icu_data/icu_data.mojom.h"
+#include "mojo/services/icu_data/public/interfaces/icu_data.mojom.h"
 #include "services/icu_data/kICUData.h"
 
 namespace icu_data {
