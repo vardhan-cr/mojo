@@ -5,8 +5,10 @@
 import("//build/config/android/rules.gni")
 import("//mojo/public/mojo_application.gni")
 
-shared_library("libdevice_name") {
-  output_name = "device_name"
+mojo_android_application("device_name") {
+  sources = [
+    "device_name.cc",
+  ]
 
   deps = [
     "//base",
@@ -16,34 +18,11 @@ shared_library("libdevice_name") {
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/platform/native:system",
-    ":jni_headers",
   ]
 
-  sources = [
-    "device_name.cc",
-  ]
-}
+  java_sources = [ "java/src/org/chromium/mojo/examples/DeviceName.java" ]
 
-generate_jni("jni_headers") {
-  sources = [
-    "java/src/org/chromium/mojo/examples/DeviceName.java",
-  ]
+  java_deps = [ "//base:base_java" ]
 
   jni_package = "mojo"
-}
-
-dex_output_path = "$target_out_dir/device_name_java.dex.jar"
-android_library("device_name_java") {
-  java_files = [ "java/src/org/chromium/mojo/examples/DeviceName.java" ]
-
-  deps = [
-    "//base:base_java",
-  ]
-
-  dex_path = dex_output_path
-}
-
-mojo_android_application("device_name") {
-  input_so = "$root_out_dir/lib.stripped/libdevice_name.so"
-  input_dex_jar = dex_output_path
 }

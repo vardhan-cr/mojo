@@ -47,6 +47,8 @@ public class AndroidHandler {
                 if (child.getName().endsWith(suffix)) return child;
             }
         }
+        Log.e(TAG, "Unable to find element with suffix: " + suffix + " in directory: "
+                        + dir.getAbsolutePath());
         return null;
     }
 
