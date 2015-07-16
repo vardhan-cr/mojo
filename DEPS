@@ -295,37 +295,6 @@ hooks = [
                 '-s', 'src/buildtools/mac/clang-format.sha1',
     ],
   },
-  # Pull sky_server binaries using checked-in hashes.
-  {
-    'name': 'sky_server_linux',
-    'pattern': '.',
-    'action': [ 'download_from_google_storage',
-                '--no_resume',
-                '--platform=linux*',
-                '--no_auth',
-                '--bucket', 'mojo',
-                '-s', 'src/sky/tools/skygo/linux64/sky_server.sha1',
-    ],
-  },
-  {
-    'name': 'sky_server_mac',
-    'pattern': '.',
-    'action': [ 'download_from_google_storage',
-                '--no_resume',
-                '--platform=darwin',
-                '--no_auth',
-                '--bucket', 'mojo',
-                '-s', 'src/sky/tools/skygo/mac/sky_server.sha1',
-    ],
-  },
-  {
-    'name': 'material_design_icons',
-    'pattern': '.',
-    'action': [
-        'python',
-        'src/sky/sdk/lib/download_material_design_icons',
-    ],
-  },
   # Pull binutils for linux, enabled debug fission for faster linking /
   # debugging when used with clang on Ubuntu Precise.
   # https://code.google.com/p/chromium/issues/detail?id=352046
