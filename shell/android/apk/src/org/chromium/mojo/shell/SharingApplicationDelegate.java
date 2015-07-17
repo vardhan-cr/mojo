@@ -15,11 +15,9 @@ import org.chromium.mojom.mojo.Shell;
 import org.chromium.mojom.sharing.SharingSink;
 
 final class SharingApplicationDelegate implements ApplicationDelegate {
-    private Shell mShell;
 
     @Override
     public void initialize(Shell shell, String[] args, String url) {
-        mShell = shell;
     }
 
     @Override
