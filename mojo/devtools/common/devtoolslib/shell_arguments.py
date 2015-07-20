@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 """Functions that configure the shell before it is run manipulating its argument
-list."""
+list.
+"""
 
 import urlparse
 
@@ -17,6 +18,8 @@ _MAP_ORIGIN_PREFIX = '--map-origin='
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
 _MOJO_DEBUGGER_PORT = 7777
+
+_SKY_SERVER_PORT = 9998
 
 
 def _IsMapOrigin(arg):
@@ -81,6 +84,47 @@ def ConfigureDebugger(shell):
   """
   shell.ForwardHostPortToShell(_MOJO_DEBUGGER_PORT)
   return ['mojo:debugger %d' % _MOJO_DEBUGGER_PORT]
+
+
+def ConfigureSky(shell, root_path, sky_packages_path, sky_target):
+  """Configures additional mappings and a server needed to run the given Sky
+  app.
+
+  Args:
+    root_path: Local path to the root from which Sky apps will be served.
+    sky_packages_path: Local path to the root from which Sky packages will be
+        served.
+    sky_target: Path to the Sky app to be run, relative to |root_path|.
+
+  Returns:
+    Arguments that need to be appended to the shell argument list.
+  """
+  # Configure a server to serve the checkout root at / (so that Sky examples
+  # are accessible using a root-relative path) and Sky packages at /packages.
+  # This is independent from the server that potentially serves the origin
+  # directory containing the mojo: apps.
+  additional_mappings = [
+      ('packages/', sky_packages_path),
+  ]
+  server_url = shell.ServeLocalDirectory(root_path, port=_SKY_SERVER_PORT,
+      additional_mappings=additional_mappings)
+
+  args = []
+  # Configure the content type mappings for the sky_viewer. This is needed
+  # only for the Sky apps that do not declare mojo:sky_viewer in a shebang,
+  # and it is unfortunate as it configures the shell to map all items of the
+  # application/dart content-type as Sky apps.
+  # TODO(ppi): drop this part once we can rely on the Sky files declaring
+  # correct shebang.
+  args = AppendToArgument(args, '--content-handlers=',
+                          'text/sky,mojo:sky_viewer')
+  args = AppendToArgument(args, '--content-handlers=',
+                          'application/dart,mojo:sky_viewer')
+
+  # Configure the window manager to embed the sky_viewer.
+  sky_url = server_url + sky_target
+  args.append('mojo:window_manager %s' % sky_url)
+  return args
 
 
 def ConfigureLocalOrigin(shell, local_dir, fixed_port=True):
