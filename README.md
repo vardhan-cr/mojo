@@ -242,36 +242,10 @@ mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart --use-os
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
-#### Tracing
-While the shell is running, the `debugger` script allows you to interactively
-start
-[tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-and retrieve the result:
-
-```
-mojo/devtools/common/debugger tracing start
-mojo/devtools/common/debugger tracing stop [result.json]
-```
-
-The trace file can be then loaded using the trace viewer in Chrome available at
-`about://tracing`.
-
-#### Android crash stacks
-When Mojo shell crashes on Android ("Unfortunately, Mojo shell has stopped.")
-due to a crash in native code, `debugger` can be used to find and symbolize the
-stack trace present in the device log:
-
-```
-mojo/devtools/common/debugger device stack
-```
-
-#### GDB
-It is possible to inspect a Mojo Shell process using GDB. The `debugger` script
-can be used to launch GDB and attach it to a running shell process (android
-only):
-```
-mojo/devtools/common/debugger gdb attach
-```
+Devtools `debugger` script allows you to interactively inspect a running shell,
+collect performance traces and attach a gdb debugger. Refer to the
+[documentation](https://github.com/domokit/devtools/blob/master/README.md#debugger)
+for details.
 
 ### Android set-up
 
