@@ -13,7 +13,7 @@ import 'io_http_apptests.dart' as io_http;
 import 'io_internet_address_apptests.dart' as io_internet_address;
 import 'versioning_apptests.dart' as versioning;
 
-Future<int> main(List args) async {
+main(List args) {
   final tests = [
     connect_to_loader_apptests.connectToLoaderApptests,
     echo.echoApptests,
@@ -22,6 +22,5 @@ Future<int> main(List args) async {
     pingpong.pingpongApptests,
     versioning.tests
   ];
-  var exitCode = await runAppTests(args[0], tests);
-  return exitCode;
+  runAppTests(args[0], tests);
 }
