@@ -21,19 +21,13 @@ using mojo::Application;
 namespace dart {
 
 DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
-                 mojo::URLResponsePtr response,
+                 const base::FilePath& application_dir,
                  bool strict)
-    : application_request_(application_request.Pass()) {
-  DCHECK(!response.is_null());
-  std::string url(response->url);
+    : application_request_(application_request.Pass()),
+      application_dir_(application_dir) {
+  base::FilePath package_root = application_dir_.AppendASCII("packages");
 
-  CHECK(unpacked_app_directory_.CreateUniqueTempDir());
-  ExtractApplication(response.Pass());
-  base::FilePath package_root =
-      unpacked_app_directory_.path().AppendASCII("packages");
-
-  base::FilePath entry_path =
-      unpacked_app_directory_.path().Append("main.dart");
+  base::FilePath entry_path = application_dir_.Append("main.dart");
   std::string source;
   if (!base::ReadFileToString(entry_path, &source)) {
     NOTREACHED();
@@ -67,25 +61,6 @@ void DartApp::OnAppLoaded() {
     free(error);
   }
   base::MessageLoop::current()->QuitWhenIdle();
-}
-
-void DartApp::ExtractApplication(mojo::URLResponsePtr response) {
-  zip::ZipReader reader;
-  const std::string input_data = CopyToString(response->body.Pass());
-  CHECK(reader.OpenFromString(input_data));
-  base::FilePath temp_dir_path = unpacked_app_directory_.path();
-  while (reader.HasMore()) {
-    CHECK(reader.OpenCurrentEntryInZip());
-    CHECK(reader.ExtractCurrentEntryIntoDirectory(temp_dir_path));
-    CHECK(reader.AdvanceToNextEntry());
-  }
-}
-
-std::string DartApp::CopyToString(mojo::ScopedDataPipeConsumerHandle body) {
-  std::string body_str;
-  bool result = mojo::common::BlockingCopyToString(body.Pass(), &body_str);
-  DCHECK(result);
-  return body_str;
 }
 
 }  // namespace dart

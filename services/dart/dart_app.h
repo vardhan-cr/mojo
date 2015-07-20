@@ -23,26 +23,16 @@ class ApplicationDelegateImpl;
 class DartApp : public mojo::ContentHandlerFactory::HandledApplicationHolder {
  public:
   DartApp(mojo::InterfaceRequest<mojo::Application> application_request,
-          mojo::URLResponsePtr response,
+          const base::FilePath& application_dir,
           bool strict);
   virtual ~DartApp();
 
  private:
   void OnAppLoaded();
 
-  // Extracts the target application into a temporary directory. This directory
-  // is deleted at the end of the life of the DartContentHandler object.
-  void ExtractApplication(mojo::URLResponsePtr response);
-
-  // Reads all the data out of a pipe into a string.
-  std::string CopyToString(mojo::ScopedDataPipeConsumerHandle body);
-
   mojo::InterfaceRequest<mojo::Application> application_request_;
   mojo::dart::DartControllerConfig config_;
-
-  // A reference to our unpacked application. This directory gets cleaned up
-  // once we go out of scope.
-  base::ScopedTempDir unpacked_app_directory_;
+  base::FilePath application_dir_;
 
   DISALLOW_COPY_AND_ASSIGN(DartApp);
 };

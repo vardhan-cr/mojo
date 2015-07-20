@@ -4,6 +4,7 @@
 
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
+#include "base/run_loop.h"
 #include "base/strings/string_util.h"
 #include "base/synchronization/waitable_event.h"
 #include "mojo/application/application_runner_chromium.h"
@@ -13,27 +14,36 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
+#include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "services/dart/content_handler_app_service_connector.h"
 #include "services/dart/dart_app.h"
 #include "url/gurl.h"
 
 namespace dart {
 
+class DartContentHandlerApp;
+
 class DartContentHandler : public mojo::ContentHandlerFactory::ManagedDelegate {
  public:
-  DartContentHandler(bool strict) : strict_(strict) {}
+  DartContentHandler(DartContentHandlerApp* app, bool strict)
+      : app_(app), strict_(strict) {
+  }
+
+  void set_handler_task_runner(
+      scoped_refptr<base::SingleThreadTaskRunner> handler_task_runner) {
+    handler_task_runner_ = handler_task_runner;
+  }
 
  private:
   // Overridden from ContentHandlerFactory::ManagedDelegate:
   scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
   CreateApplication(
       mojo::InterfaceRequest<mojo::Application> application_request,
-      mojo::URLResponsePtr response) override {
-    return make_scoped_ptr(
-        new DartApp(application_request.Pass(), response.Pass(), strict_));
-  }
+      mojo::URLResponsePtr response) override;
 
+  DartContentHandlerApp* app_;
   bool strict_;
+  scoped_refptr<base::SingleThreadTaskRunner> handler_task_runner_;
 
   DISALLOW_COPY_AND_ASSIGN(DartContentHandler);
 };
@@ -41,23 +51,45 @@ class DartContentHandler : public mojo::ContentHandlerFactory::ManagedDelegate {
 class DartContentHandlerApp : public mojo::ApplicationDelegate {
  public:
   DartContentHandlerApp()
-      : content_handler_(false),
-        strict_content_handler_(true),
+      : content_handler_(this, false),
+        strict_content_handler_(this, true),
         content_handler_factory_(&content_handler_),
         strict_content_handler_factory_(&strict_content_handler_),
-        service_connector_(nullptr) {
-  }
+        service_connector_(nullptr) {}
 
-  ~DartContentHandlerApp() override {
+  ~DartContentHandlerApp() override {}
+
+  void ExtractApplication(base::FilePath* application_dir,
+                          mojo::URLResponsePtr response,
+                          const base::Closure& callback) {
+    url_response_disk_cache_->GetExtractedContent(
+        response.Pass(),
+        [application_dir, callback](mojo::Array<uint8_t> application_dir_path,
+                                    mojo::Array<uint8_t> cache_path) {
+          if (application_dir_path.is_null()) {
+            *application_dir = base::FilePath();
+          } else {
+            *application_dir = base::FilePath(std::string(
+                reinterpret_cast<char*>(&application_dir_path.front()),
+                application_dir_path.size()));
+          }
+          callback.Run();
+        });
   }
 
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     mojo::icu::Initialize(app);
+    content_handler_.set_handler_task_runner(
+        base::MessageLoop::current()->task_runner());
+    strict_content_handler_.set_handler_task_runner(
+        base::MessageLoop::current()->task_runner());
+    app->ConnectToService("mojo:url_response_disk_cache",
+                          &url_response_disk_cache_);
     service_connector_ = new ContentHandlerAppServiceConnector(app);
-    bool success = mojo::dart::DartController::Initialize(service_connector_,
-                                                          false);
+    bool success =
+        mojo::dart::DartController::Initialize(service_connector_, false);
     if (!success) {
       LOG(ERROR) << "Dart VM Initialization failed";
     }
@@ -69,10 +101,9 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
     if (url.has_query()) {
       std::vector<std::string> query_parameters;
       Tokenize(url.query(), "&", &query_parameters);
-      strict_compilation = std::find(query_parameters.begin(),
-                                     query_parameters.end(),
-                                     "strict=true")
-                           != query_parameters.end();
+      strict_compilation =
+          std::find(query_parameters.begin(), query_parameters.end(),
+                    "strict=true") != query_parameters.end();
     }
     return strict_compilation;
   }
@@ -100,10 +131,33 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
   DartContentHandler strict_content_handler_;
   mojo::ContentHandlerFactory content_handler_factory_;
   mojo::ContentHandlerFactory strict_content_handler_factory_;
+  mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   ContentHandlerAppServiceConnector* service_connector_;
 
   DISALLOW_COPY_AND_ASSIGN(DartContentHandlerApp);
 };
+
+scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
+DartContentHandler::CreateApplication(
+    mojo::InterfaceRequest<mojo::Application> application_request,
+    mojo::URLResponsePtr response) {
+  base::FilePath application_dir;
+  {
+    handler_task_runner_->PostTask(
+        FROM_HERE,
+        base::Bind(
+            &DartContentHandlerApp::ExtractApplication, base::Unretained(app_),
+            base::Unretained(&application_dir), base::Passed(response.Pass()),
+            base::Bind(
+                base::IgnoreResult(&base::SingleThreadTaskRunner::PostTask),
+                base::MessageLoop::current()->task_runner(), FROM_HERE,
+                base::MessageLoop::QuitWhenIdleClosure())));
+    base::RunLoop().Run();
+  }
+
+  return make_scoped_ptr(
+      new DartApp(application_request.Pass(), application_dir, strict_));
+}
 
 }  // namespace dart
 

@@ -48,6 +48,7 @@ mojo_native_application("dart_content_handler") {
     "//mojo/public/interfaces/application",
     "//mojo/services/content_handler/public/interfaces",
     "//mojo/services/network/public/interfaces",
+    "//mojo/services/url_response_disk_cache/public/interfaces",
     "//third_party/zlib:zip",
     "//url:url",
   ]

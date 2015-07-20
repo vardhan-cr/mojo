@@ -68,16 +68,17 @@ Array<uint8_t> PathToArray(const base::FilePath& path) {
   return result.Pass();
 }
 
-// Encode a string in ascii. This uses # as an escape character. It also escapes
-// ':' because it is an usual path separator.
+// Encode a string in ascii. This uses _ as an escape character. It also escapes
+// ':' because it is an usual path separator, and '#' because dart refuses it in
+// URLs.
 std::string EncodeString(const std::string& string) {
   std::string result = "";
   for (size_t i = 0; i < string.size(); ++i) {
     unsigned char c = string[i];
-    if (c >= 32 && c < 128 && c != '#' && c != ':') {
+    if (c >= 32 && c < 128 && c != '_' && c != ':' && c != '#') {
       result += c;
     } else {
-      result += base::StringPrintf("#%02x", c);
+      result += base::StringPrintf("_%02x", c);
     }
   }
   return result;
