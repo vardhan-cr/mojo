@@ -19,13 +19,12 @@
 
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
-  'dart_svn': 'https://dart.googlecode.com',
   'skia_revision': '2ced78866fcadd98895777c8dffe92e229775181',
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': 'fa660d47fa1a6c649d5c29e001348447c55709e6',
   'dart_revision': 'e5e3d161e70d862608e6597facdf5ac8ae9ab2c3',
-  'dart_observatory_packages_revision': '45565',
+  'dart_observatory_packages_revision': 'cdc4b3d4c15b9c0c8e7702dff127b440afbb7485',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
   'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
@@ -51,7 +50,6 @@ vars = {
 allowed_hosts = [
   'boringssl.googlesource.com',
   'chromium.googlesource.com',
-  'dart.googlecode.com',
   'pdfium.googlesource.com',
 ]
 
@@ -81,7 +79,8 @@ deps = {
     Var('chromium_git') + '/external/github.com/dart-lang/sdk.git' + '@' + Var('dart_revision'),
 
   'src/dart/third_party/observatory_pub_packages':
-    Var('dart_svn') + '/svn/third_party/observatory_pub_packages' + '@' +
+    Var('chromium_git') +
+    '/external/github.com/dart-lang/observatory_pub_packages' + '@' +
     Var('dart_observatory_packages_revision'),
 
   'src/third_party/skia':
