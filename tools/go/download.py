@@ -62,7 +62,7 @@ def InstallGoBinaries(version):
   os.mkdir(INSTALL_DIR)
   # Download go tool binaries from GCS.
   archive_path = os.path.join(INSTALL_DIR, 'go.tar.gz')
-  download_cmd = ['python', GSUTIL_PATH, '-b', 'cp',
+  download_cmd = ['python', GSUTIL_PATH, 'cp',
                   'gs://mojo/go/tool/%s.tar.gz' % version,
                   archive_path]
   if not RunCommand(download_cmd):
