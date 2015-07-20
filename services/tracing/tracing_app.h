@@ -8,8 +8,8 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
+#include "mojo/common/interface_ptr_set.h"
 #include "mojo/common/weak_binding_set.h"
-#include "mojo/common/weak_interface_ptr_set.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
@@ -44,7 +44,7 @@ class TracingApp : public mojo::ApplicationDelegate,
 
   scoped_ptr<TraceDataSink> sink_;
   ScopedVector<CollectorImpl> collector_impls_;
-  mojo::WeakInterfacePtrSet<TraceController> controller_ptrs_;
+  mojo::InterfacePtrSet<TraceController> controller_ptrs_;
   mojo::Binding<TraceCoordinator> coordinator_binding_;
   bool tracing_active_;
   mojo::String tracing_categories_;

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/common/weak_interface_ptr_set.h"
+#include "mojo/common/interface_ptr_set.h"
 
 #include "base/message_loop/message_loop.h"
 #include "mojo/common/message_pump_mojo.h"
@@ -32,8 +32,8 @@ class DummyImpl : public tests::Dummy {
   DISALLOW_COPY_AND_ASSIGN(DummyImpl);
 };
 
-// Tests all of the functionality of WeakInterfacePtrSet.
-TEST(WeakInterfacePtr, FullLifeCycleTest) {
+// Tests all of the functionality of InterfacePtrSet.
+TEST(InterfacePtrSetTest, FullLifeCycle) {
   base::MessageLoop loop(MessagePumpMojo::Create());
 
   // Create 10 InterfacePtrs.
@@ -47,7 +47,7 @@ TEST(WeakInterfacePtr, FullLifeCycleTest) {
   }
 
   // Move all 10 InterfacePtrs into the set.
-  WeakInterfacePtrSet<tests::Dummy> intrfc_ptr_set;
+  InterfacePtrSet<tests::Dummy> intrfc_ptr_set;
   EXPECT_EQ(0u, intrfc_ptr_set.size());
   for (InterfacePtr<tests::Dummy>& ptr : intrfc_ptrs) {
     intrfc_ptr_set.AddInterfacePtr(ptr.Pass());

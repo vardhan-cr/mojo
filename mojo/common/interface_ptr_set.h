@@ -2,28 +2,25 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_WEAK_INTERFACE_PTR_SET_H_
-#define MOJO_COMMON_WEAK_INTERFACE_PTR_SET_H_
+#ifndef MOJO_COMMON_INTERFACE_PTR_SET_H_
+#define MOJO_COMMON_INTERFACE_PTR_SET_H_
 
 #include <vector>
 
 #include "base/logging.h"
-#include "base/memory/weak_ptr.h"
 #include "mojo/public/cpp/bindings/interface_ptr.h"
 
 namespace mojo {
 
-// A WeakInterfacePtrSet contains a collection of InterfacePtrs
+// An InterfacePtrSet contains a collection of InterfacePtrs
 // that are automatically removed from the collection and destroyed
 // when their associated MessagePipe experiences a connection error.
 // When the set is destroyed all of the MessagePipes will be closed.
-// TODO(rudominer) Rename this class since the ownership of the elements
-// is not "weak" from the point of view of the client.
 template <typename Interface>
-class WeakInterfacePtrSet {
+class InterfacePtrSet {
  public:
-  WeakInterfacePtrSet() {}
-  ~WeakInterfacePtrSet() { CloseAll(); }
+  InterfacePtrSet() {}
+  ~InterfacePtrSet() { CloseAll(); }
 
   // |ptr| must be bound to a message pipe.
   void AddInterfacePtr(InterfacePtr<Interface> ptr) {
@@ -72,4 +69,4 @@ class WeakInterfacePtrSet {
 
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_WEAK_INTERFACE_PTR_SET_H_
+#endif  // MOJO_COMMON_INTERFACE_PTR_SET_H_
