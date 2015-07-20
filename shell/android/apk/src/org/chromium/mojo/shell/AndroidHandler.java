@@ -38,17 +38,19 @@ public class AndroidHandler {
 
     // Recursively finds the first file in |dir| whose name ends with |suffix|. Returns |null| if
     // none is found.
-    static File find(File dir, String suffix) {
+    static File find(File dir, String suffix, boolean root) {
         for (File child : dir.listFiles()) {
             if (child.isDirectory()) {
-                File result = find(child, suffix);
+                File result = find(child, suffix, false);
                 if (result != null) return result;
             } else {
                 if (child.getName().endsWith(suffix)) return child;
             }
         }
-        Log.e(TAG, "Unable to find element with suffix: " + suffix + " in directory: "
-                        + dir.getAbsolutePath());
+        if (root) {
+            Log.e(TAG, "Unable to find element with suffix: " + suffix + " in directory: "
+                            + dir.getAbsolutePath());
+        }
         return null;
     }
 
@@ -102,9 +104,9 @@ public class AndroidHandler {
         }
         // Find the 4 files needed to execute the android application.
         File bootstrap_java_library = new File(assetDir, BOOTSTRAP_JAVA_LIBRARY);
-        File bootstrap_native_library = find(assetDir, NATIVE_LIBRARY_SUFFIX);
-        File application_java_library = find(extractedDir, JAVA_LIBRARY_SUFFIX);
-        File application_native_library = find(extractedDir, NATIVE_LIBRARY_SUFFIX);
+        File bootstrap_native_library = find(assetDir, NATIVE_LIBRARY_SUFFIX, true);
+        File application_java_library = find(extractedDir, JAVA_LIBRARY_SUFFIX, true);
+        File application_native_library = find(extractedDir, NATIVE_LIBRARY_SUFFIX, true);
 
         // Compile the java files.
         String dexPath = bootstrap_java_library.getAbsolutePath() + File.pathSeparator
