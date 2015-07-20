@@ -222,7 +222,8 @@ void NetworkFetcher::StartNetworkRequest(RequestType request_type) {
   mojo::URLRequestPtr request(mojo::URLRequest::New());
   request->url = mojo::String::From(url_);
   request->auto_follow_redirects = false;
-  request->bypass_cache = disable_cache_;
+  if (disable_cache_)
+    request->cache_mode = mojo::URLRequest::CACHE_MODE_ONLY_FROM_CACHE;
   auto header = mojo::HttpHeader::New();
   header->name = "X-Architecture";
   header->value = kArchitecture;

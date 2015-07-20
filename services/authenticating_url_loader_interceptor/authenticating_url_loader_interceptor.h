@@ -53,7 +53,7 @@ class AuthenticatingURLLoaderInterceptor : public URLLoaderInterceptor {
   RequestAuthorizationState request_authorization_state_;
   GURL url_;
   bool auto_follow_redirects_;
-  bool bypass_cache_;
+  URLRequest::CacheMode cache_mode_;
   Array<HttpHeaderPtr> headers_;
 };
 

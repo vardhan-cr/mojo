@@ -52,7 +52,7 @@ void AuthenticatingURLLoaderInterceptor::InterceptRequest(
   url_ = GURL(request->url);
   auto_follow_redirects_ = request->auto_follow_redirects;
   request->auto_follow_redirects = false;
-  bypass_cache_ = request->bypass_cache;
+  cache_mode_ = request->cache_mode;
   headers_ = request->headers.Clone();
   std::string token = factory_->GetCachedToken(url_);
   if (token != "") {
@@ -182,7 +182,7 @@ URLRequestPtr AuthenticatingURLLoaderInterceptor::BuildRequest(
   URLRequestPtr request(mojo::URLRequest::New());
   request->url = url_.spec();
   request->auto_follow_redirects = false;
-  request->bypass_cache = bypass_cache_;
+  request->cache_mode = cache_mode_;
   request->headers = headers.Pass();
 
   return request.Pass();
