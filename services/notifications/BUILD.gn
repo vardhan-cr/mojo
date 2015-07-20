@@ -5,7 +5,7 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 
 if (is_android) {
-  import("//services/android/rules.gni")
+  import("//mojo/android/rules.gni")
 
   mojo_android_java_application("notifications") {
     sources = [

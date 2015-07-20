@@ -1,4 +1,4 @@
-import("//services/android/rules.gni")
+import("//mojo/android/rules.gni")
 
 group("example_service") {
   deps = [
