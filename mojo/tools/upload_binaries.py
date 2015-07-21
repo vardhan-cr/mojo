@@ -84,8 +84,9 @@ def upload(config, source, dest, dry_run, gzip=True):
   gsutil_exe = os.path.join(depot_tools_path, "third_party", "gsutil", "gsutil")
 
   command_line = [gsutil_exe, "cp"]
-  if gzip:
-    command_line.extend(["-z"])
+  if gzip and "." in source:
+    extension = source.split(".")[-1]
+    command_line.extend(["-z", extension])
   command_line.extend([source, dest])
 
   if dry_run:
