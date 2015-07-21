@@ -10,7 +10,7 @@
 #include "apps/moterm/moterm_model.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/application/service_provider_impl.h"
 #include "mojo/public/cpp/bindings/callback.h"
@@ -95,7 +95,7 @@ class MotermView : public mojo::ViewObserver,
   mojo::Closure on_closed_callback_;
 
   mojo::ServiceProviderImpl service_provider_impl_;
-  mojo::WeakBindingSet<mojo::terminal::Terminal> terminal_bindings_;
+  mojo::BindingSet<mojo::terminal::Terminal> terminal_bindings_;
 
   // TODO(vtl): For some reason, drawing while a frame is already pending (i.e.,
   // we've submitted it but haven't gotten a callback) interacts badly with

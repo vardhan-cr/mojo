@@ -10,7 +10,7 @@
 #include <set>
 #include <vector>
 
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/services/http_server/public/interfaces/http_server_factory.mojom.h"
 #include "mojo/services/network/public/interfaces/net_address.mojom.h"
@@ -46,7 +46,7 @@ class HttpServerFactoryImpl : public HttpServerFactory {
   void CreateHttpServer(mojo::InterfaceRequest<HttpServer> server_request,
                         mojo::NetAddressPtr local_address) override;
 
-  mojo::WeakBindingSet<HttpServerFactory> bindings_;
+  mojo::BindingSet<HttpServerFactory> bindings_;
 
   std::map<ServerKey, HttpServerImpl*> port_indicated_servers_;
 

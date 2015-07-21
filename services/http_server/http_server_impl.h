@@ -5,7 +5,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/http_server/public/interfaces/http_request.mojom.h"
@@ -75,7 +75,7 @@ class HttpServerImpl : public HttpServer {
   uint16_t assigned_port_;
   std::vector<GetPortCallback> pending_get_port_callbacks_;
 
-  mojo::WeakBindingSet<HttpServer> bindings_;
+  mojo::BindingSet<HttpServer> bindings_;
 
   mojo::NetworkServicePtr network_service_;
   mojo::TCPBoundSocketPtr bound_socket_;

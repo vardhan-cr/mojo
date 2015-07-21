@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "examples/echo/echo.mojom.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -22,7 +22,7 @@ namespace examples {
 // 1. MultiServer - creates a new object for each connection. Cleans up by using
 //    StrongBinding.
 // 2. SingletonServer -- all requests are handled by one object. Connections are
-//    tracked using WeakBindingSet.
+//    tracked using BindingSet.
 // 3. OneAtATimeServer -- each Create call from InterfaceFactory<> closes the
 //    old interface pipe and binds the new interface pipe.
 
@@ -95,7 +95,7 @@ class SingletonServer : public mojo::ApplicationDelegate,
  private:
   EchoImpl echo_impl_;
 
-  mojo::WeakBindingSet<Echo> bindings_;
+  mojo::BindingSet<Echo> bindings_;
 };
 
 // OneAtATimeServer works with only one pipe at a time. When a new pipe tries

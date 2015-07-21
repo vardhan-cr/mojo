@@ -5,7 +5,7 @@
 #include "base/bind.h"
 #include "base/macros.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -106,7 +106,7 @@ class NotificationGeneratorDelegate : public mojo::ApplicationDelegate,
 
  private:
   notifications::NotificationServicePtr notification_service_;
-  mojo::WeakBindingSet<notifications::NotificationClient> client_bindings_;
+  mojo::BindingSet<notifications::NotificationClient> client_bindings_;
   notifications::NotificationPtr first_notification_;
   notifications::NotificationPtr second_notification_;
   notifications::NotificationPtr dismissed_notification_;

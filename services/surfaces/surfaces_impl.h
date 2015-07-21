@@ -8,7 +8,6 @@
 #include "cc/surfaces/display_client.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_factory_client.h"
-#include "mojo/common/weak_binding_set.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -49,7 +49,7 @@ class DummyAuthenticationApplication
   }
   void ClearOAuth2Token(const mojo::String& token) override {}
 
-  mojo::WeakBindingSet<AuthenticationService> bindings_;
+  mojo::BindingSet<AuthenticationService> bindings_;
 };
 
 }  // namespace

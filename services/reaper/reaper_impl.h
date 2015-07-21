@@ -9,7 +9,7 @@
 #include <set>
 
 #include "base/macros.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/public/cpp/bindings/array.h"
@@ -98,7 +98,7 @@ class ReaperImpl : public Diagnostics,
   typedef std::map<InternedURL, NodeMap> AppMap;
   AppMap nodes_;
 
-  mojo::WeakBindingSet<Diagnostics> diagnostics_bindings_;
+  mojo::BindingSet<Diagnostics> diagnostics_bindings_;
 
   std::set<InternedURL> roots_;
   ScythePtr scythe_;

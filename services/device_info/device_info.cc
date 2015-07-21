@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -43,7 +43,7 @@ class DeviceInfo : public mojo::ApplicationDelegate,
   }
 
  private:
-  mojo::WeakBindingSet<mojo::DeviceInfo> binding_;
+  mojo::BindingSet<mojo::DeviceInfo> binding_;
 };
 
 }  // namespace device_info

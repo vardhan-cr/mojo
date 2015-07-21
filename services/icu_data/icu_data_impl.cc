@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -64,7 +64,7 @@ class ICUDataImpl : public mojo::ApplicationDelegate,
   }
 
   scoped_ptr<mojo::SharedBuffer> buffer_;
-  mojo::WeakBindingSet<ICUData> bindings_;
+  mojo::BindingSet<ICUData> bindings_;
 };
 }
 

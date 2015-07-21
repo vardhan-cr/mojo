@@ -5,7 +5,7 @@
 #include "base/bind.h"
 #include "base/macros.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/gpu/gl_texture.h"
 #include "mojo/gpu/texture_cache.h"
 #include "mojo/gpu/texture_uploader.h"
@@ -310,7 +310,7 @@ class NfcSenderDelegate : public mojo::ApplicationDelegate,
   scoped_ptr<mojo::TextureCache> texture_cache_;
   scoped_ptr<ViewTextureUploader> texture_uploader_;
   bool transmission_pending_;
-  mojo::WeakBindingSet<nfc::NfcReceiver> nfc_receiver_bindings_;
+  mojo::BindingSet<nfc::NfcReceiver> nfc_receiver_bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(NfcSenderDelegate);
 };

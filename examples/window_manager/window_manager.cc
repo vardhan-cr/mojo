@@ -7,7 +7,7 @@
 #include "examples/window_manager/debug_panel_host.mojom.h"
 #include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/public/c/system/main.h"
@@ -88,7 +88,7 @@ class NavigatorHostImpl : public NavigatorHost {
   std::vector<std::string> history_;
   int32_t current_index_;
 
-  WeakBindingSet<NavigatorHost> bindings_;
+  BindingSet<NavigatorHost> bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);
 };

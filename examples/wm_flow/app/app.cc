@@ -11,7 +11,7 @@
 #include "examples/wm_flow/app/embedder.mojom.h"
 #include "examples/wm_flow/embedded/embeddee.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/weak_binding_set.h"
+#include "mojo/common/binding_set.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -69,7 +69,7 @@ class EmbedderImplProvider : public mojo::ServiceProvider {
     new EmbedderImpl(mojo::MakeRequest<Embedder>(pipe_handle.Pass()));
   }
 
-  mojo::WeakBindingSet<mojo::ServiceProvider> embeddee_exposed_services_;
+  mojo::BindingSet<mojo::ServiceProvider> embeddee_exposed_services_;
 
   DISALLOW_COPY_AND_ASSIGN(EmbedderImplProvider);
 };
