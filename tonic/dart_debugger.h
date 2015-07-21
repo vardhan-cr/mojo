@@ -2,23 +2,80 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
-#define MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
+#ifndef TONIC_DART_DEBUGGER_H_
+#define TONIC_DART_DEBUGGER_H_
 
 #include <memory>
 #include <vector>
 
+#include "base/synchronization/condition_variable.h"
+#include "base/synchronization/lock.h"
 #include "dart/runtime/include/dart_api.h"
 #include "dart/runtime/include/dart_native_api.h"
 #include "dart/runtime/include/dart_tools_api.h"
-#include "mojo/dart/embedder/monitor.h"
 
 namespace base {
   class Lock;
 }
 
-namespace mojo {
-namespace dart {
+namespace tonic {
+
+class Monitor {
+ public:
+  Monitor() {
+    lock_ = new base::Lock();
+    condition_variable_ = new base::ConditionVariable(lock_);
+  }
+
+  ~Monitor() {
+    delete condition_variable_;
+    delete lock_;
+  }
+
+  void Enter() {
+    lock_->Acquire();
+  }
+
+  void Exit() {
+    lock_->Release();
+  }
+
+  void Notify() {
+    condition_variable_->Signal();
+  }
+
+  void Wait() {
+    condition_variable_->Wait();
+  }
+
+ private:
+  base::Lock* lock_;
+  base::ConditionVariable* condition_variable_;
+  DISALLOW_COPY_AND_ASSIGN(Monitor);
+};
+
+class MonitorLocker {
+ public:
+  explicit MonitorLocker(Monitor* monitor) : monitor_(monitor) {
+    CHECK(monitor_);
+    monitor_->Enter();
+  }
+
+  virtual ~MonitorLocker();
+
+  void Wait() {
+    return monitor_->Wait();
+  }
+
+  void Notify() {
+    monitor_->Notify();
+  }
+
+ private:
+  Monitor* const monitor_;
+
+  DISALLOW_COPY_AND_ASSIGN(MonitorLocker);
+};
 
 class DartDebuggerIsolate {
  public:
@@ -77,7 +134,6 @@ class DartDebugger {
   friend class DartDebuggerIsolate;
 };
 
-}  // namespace dart
-}  // namespace mojo
+}  // namespace tonic
 
-#endif  // MOJO_DART_EMBEDDER_DART_DEBUGGER_H_
+#endif  // TONIC_DART_DEBUGGER_H_

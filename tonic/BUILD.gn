@@ -13,6 +13,8 @@ source_set("tonic") {
     "dart_class_provider.h",
     "dart_converter.cc",
     "dart_converter.h",
+    "dart_debugger.cc",
+    "dart_debugger.h",
     "dart_dependency_catcher.cc",
     "dart_dependency_catcher.h",
     "dart_error.cc",
@@ -59,6 +61,12 @@ source_set("tonic") {
     "//dart/runtime:libdart",
     "//dart/runtime/vm:libdart_platform",
   ]
+
+  public_configs = [ ":tonic_config" ]
+}
+
+config("tonic_config") {
+  include_dirs = [ "//dart/runtime" ]
 }
 
 # TODO(johnmccutchan): Move these sources into sky_engine and remove this.
