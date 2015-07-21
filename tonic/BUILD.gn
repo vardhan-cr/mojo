@@ -39,14 +39,8 @@ source_set("tonic") {
     "dart_snapshot_loader.h",
     "dart_state.cc",
     "dart_state.h",
-    "dart_string.cc",
-    "dart_string.h",
-    "dart_string_cache.cc",
-    "dart_string_cache.h",
     "dart_timer_heap.cc",
     "dart_timer_heap.h",
-    "dart_value.cc",
-    "dart_value.h",
     "dart_wrappable.cc",
     "dart_wrappable.h",
     "dart_wrapper_info.h",
@@ -59,7 +53,31 @@ source_set("tonic") {
     "//base",
     "//mojo/common",
     "//mojo/public/cpp/system",
-    "//sky/engine/wtf",
+  ]
+
+  public_deps = [
+    "//dart/runtime:libdart",
+    "//dart/runtime/vm:libdart_platform",
+  ]
+}
+
+# TODO(johnmccutchan): Move these sources into sky_engine and remove this.
+source_set("tonic_wtf") {
+  sources = [
+    "dart_converter_wtf.cc",
+    "dart_converter_wtf.h",
+    "dart_string.cc",
+    "dart_string.h",
+    "dart_string_cache.cc",
+    "dart_string_cache.h",
+    "dart_value.cc",
+    "dart_value.h",
+  ]
+
+  deps = [
+    "//base",
+    "//mojo/common",
+    "//mojo/public/cpp/system",
   ]
 
   public_deps = [

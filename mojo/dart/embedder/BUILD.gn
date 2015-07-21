@@ -48,6 +48,7 @@ source_set("dart_controller_no_snapshot") {
     "//third_party/dart-pkg",
     "//mojo/public/c/system",
     "//mojo/public/cpp/system",
+    "//tonic",
   ]
 
   defines = []

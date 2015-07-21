@@ -8,7 +8,6 @@
 #include "tonic/dart_converter.h"
 #include "tonic/dart_exception_factory.h"
 #include "tonic/dart_library_loader.h"
-#include "tonic/dart_string_cache.h"
 #include "tonic/dart_timer_heap.h"
 
 namespace blink {
@@ -26,8 +25,6 @@ DartState::DartState()
           new DartExceptionFactory(this))),
       library_loader_(std::unique_ptr<DartLibraryLoader>(
           new DartLibraryLoader(this))),
-      string_cache_(std::unique_ptr<DartStringCache>(
-          new DartStringCache)),
       timer_heap_(std::unique_ptr<DartTimerHeap>(
           new DartTimerHeap())),
       weak_factory_(this) {

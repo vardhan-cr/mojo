@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/logging.h"
 #include "tonic/dart_error.h"
 #include "tonic/float32_list.h"
 
@@ -16,7 +17,7 @@ Float32List::Float32List(Dart_Handle list)
   Dart_TypedDataAcquireData(
       list, &type, reinterpret_cast<void**>(&data_), &num_elements_);
   DCHECK(!LogIfError(list));
-  ASSERT(type == Dart_TypedData_kFloat32);
+  DCHECK(type == Dart_TypedData_kFloat32);
 }
 
 Float32List::Float32List(Float32List&& other)
