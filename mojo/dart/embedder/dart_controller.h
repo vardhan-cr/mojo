@@ -6,7 +6,7 @@
 #define MOJO_DART_EMBEDDER_DART_CONTROLLER_H_
 
 #include "dart/runtime/include/dart_api.h"
-#include "mojo/dart/embedder/isolate_data.h"
+#include "mojo/dart/embedder/dart_state.h"
 #include "mojo/public/c/system/types.h"
 
 namespace mojo {

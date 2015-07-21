@@ -12,7 +12,7 @@
 #include "base/path_service.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/dart/embedder/dart_controller.h"
-#include "mojo/dart/embedder/isolate_data.h"
+#include "mojo/dart/embedder/dart_state.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "third_party/zlib/google/zip_reader.h"
 
