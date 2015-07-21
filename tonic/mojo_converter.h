@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_MOJO_CONVERTER_H_
-#define SKY_ENGINE_TONIC_MOJO_CONVERTER_H_
+#ifndef TONIC_MOJO_CONVERTER_H_
+#define TONIC_MOJO_CONVERTER_H_
 
 #include "mojo/public/cpp/system/handle.h"
 #include "tonic/dart_converter.h"
@@ -43,4 +43,4 @@ struct DartConverter<mojo::ScopedHandleBase<HandleType>> {
 
 }  // namespace tonic
 
-#endif  // SKY_ENGINE_TONIC_MOJO_CONVERTER_H_
+#endif  // TONIC_MOJO_CONVERTER_H_

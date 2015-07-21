@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_DART_GC_VISITOR_H_
-#define SKY_ENGINE_TONIC_DART_GC_VISITOR_H_
+#ifndef TONIC_DART_GC_VISITOR_H_
+#define TONIC_DART_GC_VISITOR_H_
 
 #include "base/logging.h"
 #include "dart/runtime/include/dart_api.h"
@@ -36,4 +36,4 @@ class DartGCVisitor {
 
 }  // namespace tonic
 
-#endif  // SKY_ENGINE_TONIC_DART_GC_VISITOR_H_
+#endif  // TONIC_DART_GC_VISITOR_H_

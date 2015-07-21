@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_DART_TIMER_HEAP_H_
-#define SKY_ENGINE_TONIC_DART_TIMER_HEAP_H_
+#ifndef TONIC_DART_TIMER_HEAP_H_
+#define TONIC_DART_TIMER_HEAP_H_
 
 #include <unordered_map>
 
@@ -40,4 +40,4 @@ class DartTimerHeap {
 
 }
 
-#endif  // SKY_ENGINE_TONIC_DART_TIMER_HEAP_H_
+#endif  // TONIC_DART_TIMER_HEAP_H_

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_DART_GC_CONTEXT_H_
-#define SKY_ENGINE_TONIC_DART_GC_CONTEXT_H_
+#ifndef TONIC_DART_GC_CONTEXT_H_
+#define TONIC_DART_GC_CONTEXT_H_
 
 #include <unordered_map>
 
@@ -29,4 +29,4 @@ class DartGCContext {
 
 }  // namespace tonic
 
-#endif  // SKY_ENGINE_TONIC_DART_GC_CONTEXT_H_
+#endif  // TONIC_DART_GC_CONTEXT_H_

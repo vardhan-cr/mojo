@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_DART_WRAPPER_INFO_H_
-#define SKY_ENGINE_TONIC_DART_WRAPPER_INFO_H_
+#ifndef TONIC_DART_WRAPPER_INFO_H_
+#define TONIC_DART_WRAPPER_INFO_H_
 
 #include "base/macros.h"
 
@@ -25,4 +25,4 @@ struct DartWrapperInfo {
 
 }  // namespace tonic
 
-#endif  // SKY_ENGINE_TONIC_DART_WRAPPER_INFO_H_
+#endif  // TONIC_DART_WRAPPER_INFO_H_

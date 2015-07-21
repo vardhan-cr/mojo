@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKY_ENGINE_TONIC_FLOAT32_LIST_H_
-#define SKY_ENGINE_TONIC_FLOAT32_LIST_H_
+#ifndef TONIC_FLOAT32_LIST_H_
+#define TONIC_FLOAT32_LIST_H_
 
 #include "dart/runtime/include/dart_api.h"
 #include "tonic/dart_converter.h"
@@ -41,4 +41,4 @@ struct DartConverter<Float32List> {
 
 } // namespace tonic
 
-#endif  // SKY_ENGINE_TONIC_FLOAT32_LIST_H_
+#endif  // TONIC_FLOAT32_LIST_H_
