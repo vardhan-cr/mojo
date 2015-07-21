@@ -25,7 +25,7 @@ class BenchmarkRunner(object):
       build_directory = os.path.join('out', 'Release')
     else:
       build_directory = os.path.join('out', 'Debug')
-    self._paths = Paths(build_directory)
+    self._paths = Paths(build_dir=build_directory)
 
   def _list_tests(self):
     for name in os.listdir(self._benchmark_dir):
