@@ -13,7 +13,7 @@
 #include "tonic/dart_isolate_scope.h"
 #include "tonic/dart_persistent_value.h"
 
-namespace blink {
+namespace tonic {
 class DartClassLibrary;
 class DartExceptionFactory;
 class DartLibraryLoader;
@@ -37,7 +37,7 @@ class DartState : public base::SupportsUserData {
   };
 
   DartState();
-  virtual ~DartState();
+  ~DartState() override;
 
   static DartState* From(Dart_Isolate isolate);
   static DartState* Current();
@@ -70,6 +70,6 @@ class DartState : public base::SupportsUserData {
   DISALLOW_COPY_AND_ASSIGN(DartState);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_STATE_H_

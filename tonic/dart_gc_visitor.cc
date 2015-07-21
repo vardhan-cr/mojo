@@ -6,7 +6,7 @@
 
 #include "tonic/dart_gc_context.h"
 
-namespace blink {
+namespace tonic {
 
 DartGCVisitor::DartGCVisitor(DartGCContext* context)
     : context_(context), current_set_(nullptr) {
@@ -22,4 +22,4 @@ void DartGCVisitor::AddToSetForRoot(const void* root,
   current_set_ = set;
 }
 
-}  // namespace blink
+}  // namespace tonic

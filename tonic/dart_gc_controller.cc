@@ -10,7 +10,7 @@
 #include "tonic/dart_gc_visitor.h"
 #include "tonic/dart_wrappable.h"
 
-namespace blink {
+namespace tonic {
 namespace {
 
 DartGCContext* g_gc_context = nullptr;
@@ -49,4 +49,4 @@ void DartGCEpilogue() {
   TRACE_EVENT_ASYNC_END0("sky", "DartGC", 0);
 }
 
-}  // namespace blink
+}  // namespace tonic

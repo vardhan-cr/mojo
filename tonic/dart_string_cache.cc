@@ -7,7 +7,7 @@
 #include "tonic/dart_state.h"
 #include "tonic/dart_string.h"
 
-namespace blink {
+namespace tonic {
 
 DartStringCache::DartStringCache() : last_dart_string_(nullptr) {
 }
@@ -63,4 +63,4 @@ void DartStringCache::FinalizeCacheEntry(void* isolate_callback_data,
   string_impl->deref();
 }
 
-}  // namespace blink
+}  // namespace tonic

@@ -16,7 +16,7 @@
 #include "base/memory/weak_ptr.h"
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 class DartDependency;
 class DartDependencyCatcher;
 class DartLibraryProvider;
@@ -80,6 +80,6 @@ class DartLibraryLoader {
   DISALLOW_COPY_AND_ASSIGN(DartLibraryLoader);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_LIBRARY_LOADER_H_

@@ -6,7 +6,7 @@
 
 #include "base/logging.h"
 
-namespace blink {
+namespace tonic {
 
 namespace DartError {
 
@@ -31,4 +31,4 @@ bool LogIfError(Dart_Handle handle) {
   return false;
 }
 
-}  // namespace blink
+}  // namespace tonic

@@ -9,7 +9,7 @@
 
 #include "tonic/dart_state.h"
 
-namespace blink {
+namespace tonic {
 
 // DartConvert converts types back and forth from Sky to Dart. The template
 // parameter |T| determines what kind of type conversion to perform.
@@ -198,6 +198,6 @@ inline Dart_Handle ToDart(const char* val) {
   return Dart_NewStringFromCString(val);
 }
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_CONVERTER_H_

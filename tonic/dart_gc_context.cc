@@ -6,7 +6,7 @@
 
 #include "tonic/dart_gc_context.h"
 
-namespace blink {
+namespace tonic {
 
 DartGCContext::DartGCContext() : builder_(Dart_NewWeakReferenceSetBuilder()) {
 }
@@ -27,4 +27,4 @@ Dart_WeakReferenceSet DartGCContext::AddToSetForRoot(
   return result.first->second;
 }
 
-}  // namespace blink
+}  // namespace tonic

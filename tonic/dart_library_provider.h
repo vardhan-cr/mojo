@@ -11,7 +11,7 @@
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/public/cpp/system/data_pipe.h"
 
-namespace blink {
+namespace tonic {
 
 typedef base::Callback<void(mojo::ScopedDataPipeConsumerHandle)>
     DataPipeConsumerCallback;
@@ -26,6 +26,6 @@ class DartLibraryProvider {
   virtual ~DartLibraryProvider();
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_LIBRARY_PROVIDER_H_

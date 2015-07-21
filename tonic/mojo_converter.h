@@ -8,7 +8,7 @@
 #include "mojo/public/cpp/system/handle.h"
 #include "tonic/dart_converter.h"
 
-namespace blink {
+namespace tonic {
 
 template <typename HandleType>
 struct DartConverter<mojo::ScopedHandleBase<HandleType>> {
@@ -41,6 +41,6 @@ struct DartConverter<mojo::ScopedHandleBase<HandleType>> {
   }
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_MOJO_CONVERTER_H_

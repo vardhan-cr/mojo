@@ -17,7 +17,7 @@
 
 using mojo::common::DataPipeDrainer;
 
-namespace blink {
+namespace tonic {
 
 namespace {
 
@@ -304,4 +304,4 @@ void DartLibraryLoader::DidFailJob(Job* job) {
   EraseUniquePtr<Job>(jobs_, job);
 }
 
-}  // namespace blink
+}  // namespace tonic

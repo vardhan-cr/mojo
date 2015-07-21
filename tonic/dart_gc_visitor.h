@@ -8,7 +8,7 @@
 #include "base/logging.h"
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 class DartGCContext;
 
 class DartGCVisitor {
@@ -34,6 +34,6 @@ class DartGCVisitor {
   DISALLOW_COPY_AND_ASSIGN(DartGCVisitor);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_GC_VISITOR_H_

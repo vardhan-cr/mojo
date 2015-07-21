@@ -10,7 +10,7 @@
 #include "tonic/dart_library_loader.h"
 #include "tonic/dart_timer_heap.h"
 
-namespace blink {
+namespace tonic {
 
 DartState::Scope::Scope(DartState* dart_state) : scope_(dart_state->isolate()) {
 }
@@ -58,4 +58,4 @@ base::WeakPtr<DartState> DartState::GetWeakPtr() {
   return weak_factory_.GetWeakPtr();
 }
 
-}  // namespace blink
+}  // namespace tonic

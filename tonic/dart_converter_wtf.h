@@ -13,7 +13,7 @@
 #include "tonic/dart_string_cache.h"
 #include "tonic/dart_value.h"
 
-namespace blink {
+namespace tonic {
 
 ////////////////////////////////////////////////////////////////////////////////
 // Strings

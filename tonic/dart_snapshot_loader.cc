@@ -13,7 +13,7 @@
 
 using mojo::common::DataPipeDrainer;
 
-namespace blink {
+namespace tonic {
 
 DartSnapshotLoader::DartSnapshotLoader(DartState* dart_state)
     : dart_state_(dart_state->GetWeakPtr()) {
@@ -49,4 +49,4 @@ void DartSnapshotLoader::OnDataComplete() {
   callback_.Run();
 }
 
-}  // namespace blink
+}  // namespace tonic

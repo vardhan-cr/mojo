@@ -12,7 +12,7 @@
 #include "tonic/dart_isolate_scope.h"
 #include "tonic/dart_state.h"
 
-namespace blink {
+namespace tonic {
 
 DartTimerHeap::DartTimerHeap() : next_timer_id_(1), weak_factory_(this) {
 }

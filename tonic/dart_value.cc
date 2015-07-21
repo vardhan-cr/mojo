@@ -4,7 +4,7 @@
 
 #include "tonic/dart_value.h"
 
-namespace blink {
+namespace tonic {
 
 DartValue::DartValue() {
 }
@@ -29,4 +29,4 @@ void DartValue::Clear() {
   dart_value_.Clear();
 }
 
-}  // namespace blink
+}  // namespace tonic

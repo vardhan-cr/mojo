@@ -10,7 +10,7 @@
 #include "tonic/dart_state.h"
 #include "tonic/dart_wrapper_info.h"
 
-namespace blink {
+namespace tonic {
 
 DartWrappable::~DartWrappable() {
   CHECK(!dart_wrapper_);
@@ -114,4 +114,4 @@ DartWrappable* DartConverterWrappable::FromArgumentsWithNullCheck(
       native_fields[DartWrappable::kPeerIndex]);
 }
 
-}  // namespace blink
+}  // namespace tonic

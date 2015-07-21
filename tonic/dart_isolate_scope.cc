@@ -4,7 +4,7 @@
 
 #include "tonic/dart_isolate_scope.h"
 
-namespace blink {
+namespace tonic {
 
 DartIsolateScope::DartIsolateScope(Dart_Isolate isolate) {
   isolate_ = isolate;
@@ -25,4 +25,4 @@ DartIsolateScope::~DartIsolateScope() {
     Dart_EnterIsolate(previous_);
 }
 
-}  // namespace blink
+}  // namespace tonic

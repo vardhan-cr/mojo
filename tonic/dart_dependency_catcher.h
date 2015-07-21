@@ -9,7 +9,7 @@
 
 #include "base/macros.h"
 
-namespace blink {
+namespace tonic {
 class DartLibraryLoader;
 
 // A base class to represent a dependency.
@@ -34,6 +34,6 @@ class DartDependencyCatcher {
   DISALLOW_COPY_AND_ASSIGN(DartDependencyCatcher);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_DEPENDENCY_CATCHER_H_

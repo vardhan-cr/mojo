@@ -7,7 +7,7 @@
 
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 bool DartInvokeAppField(Dart_Handle target, Dart_Handle name,
                         int number_of_arguments,
@@ -17,7 +17,7 @@ bool DartInvokeAppClosure(Dart_Handle closure,
                           int number_of_arguments,
                           Dart_Handle* arguments);
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_INVOKE_H_
 

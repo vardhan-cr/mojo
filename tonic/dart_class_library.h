@@ -10,7 +10,7 @@
 #include "dart/runtime/include/dart_api.h"
 #include "tonic/dart_class_provider.h"
 
-namespace blink {
+namespace tonic {
 struct DartWrapperInfo;
 
 class DartClassLibrary {
@@ -28,6 +28,6 @@ class DartClassLibrary {
   DISALLOW_COPY_AND_ASSIGN(DartClassLibrary);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_CLASS_LIBRARY_H_

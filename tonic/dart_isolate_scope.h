@@ -8,7 +8,7 @@
 #include "base/logging.h"
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 // DartIsolateScope is a helper class for entering and exiting a given isolate.
 class DartIsolateScope {
@@ -23,6 +23,6 @@ class DartIsolateScope {
   DISALLOW_COPY_AND_ASSIGN(DartIsolateScope);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_ISOLATE_SCOPE_H_

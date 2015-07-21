@@ -7,7 +7,7 @@
 
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 class DartClassProvider {
  public:
@@ -17,6 +17,6 @@ class DartClassProvider {
   virtual ~DartClassProvider();
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_CLASS_PROVIDER_H_

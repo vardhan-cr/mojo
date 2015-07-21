@@ -10,7 +10,7 @@
 #include "base/logging.h"
 #include "tonic/dart_converter.h"
 
-namespace blink {
+namespace tonic {
 
 DartBuiltin::DartBuiltin(const Natives* natives, size_t count)
     : natives_(natives), count_(count) {
@@ -53,4 +53,4 @@ Dart_Handle DartBuiltin::LookupLibrary(const char* name) {
     return library;
 }
 
-}  // namespace blink
+}  // namespace tonic

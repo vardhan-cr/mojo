@@ -13,7 +13,7 @@
 #include "sky/engine/wtf/RefCounted.h"
 #include "sky/engine/wtf/RefPtr.h"
 
-namespace blink {
+namespace tonic {
 
 // DartValue is a convience wrapper around DartPersistentValue that lets clients
 // use RefPtr to keep track of the number of references to the underlying Dart
@@ -60,6 +60,6 @@ class DartValue : public RefCounted<DartValue> {
   DISALLOW_COPY_AND_ASSIGN(DartValue);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_VALUE_H_

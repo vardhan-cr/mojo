@@ -6,7 +6,7 @@
 #include "tonic/dart_error.h"
 #include "tonic/float32_list.h"
 
-namespace blink {
+namespace tonic {
 
 Float32List::Float32List(Dart_Handle list)
     : data_(nullptr), num_elements_(0), dart_handle_(list) {
@@ -44,4 +44,4 @@ Float32List DartConverter<Float32List>::FromArgumentsWithNullCheck(
   return result;
 }
 
-} // namespace blink
+} // namespace tonic

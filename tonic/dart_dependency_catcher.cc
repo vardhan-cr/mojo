@@ -6,7 +6,7 @@
 
 #include "tonic/dart_library_loader.h"
 
-namespace blink {
+namespace tonic {
 
 DartDependencyCatcher::DartDependencyCatcher(DartLibraryLoader& loader)
     : loader_(loader) {
@@ -21,4 +21,4 @@ void DartDependencyCatcher::AddDependency(DartDependency* dependency) {
   dependencies_.insert(dependency);
 }
 
-}  // namespace blink
+}  // namespace tonic

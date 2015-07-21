@@ -7,7 +7,7 @@
 #include "base/logging.h"
 #include "tonic/dart_wrapper_info.h"
 
-namespace blink {
+namespace tonic {
 
 DartClassLibrary::DartClassLibrary() : provider_(nullptr) {
 }
@@ -31,4 +31,4 @@ Dart_PersistentHandle DartClassLibrary::GetClass(const DartWrapperInfo& info) {
   return result.first->second;
 }
 
-}  // namespace blink
+}  // namespace tonic

@@ -7,7 +7,7 @@
 
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 namespace DartError {
 extern const char kInvalidArgument[];
@@ -15,7 +15,7 @@ extern const char kInvalidArgument[];
 
 bool LogIfError(Dart_Handle handle);
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_ERROR_H_
 

@@ -6,7 +6,7 @@
 
 #include "base/logging.h"
 
-namespace blink {
+namespace tonic {
 namespace {
 
 void FinalizeString(void* string_impl) {
@@ -61,4 +61,4 @@ String ExternalizeDartString(Dart_Handle handle) {
   return Externalize<UChar>(handle, length);
 }
 
-}  // namespace blink
+}  // namespace tonic

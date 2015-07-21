@@ -5,11 +5,11 @@
 #ifndef SKY_ENGINE_TONIC_DART_GC_CONTROLLER_H_
 #define SKY_ENGINE_TONIC_DART_GC_CONTROLLER_H_
 
-namespace blink {
+namespace tonic {
 
 void DartGCPrologue();
 void DartGCEpilogue();
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_GC_CONTROLLER_H_

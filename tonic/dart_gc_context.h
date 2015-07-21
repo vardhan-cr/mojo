@@ -10,7 +10,7 @@
 #include "base/macros.h"
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 class DartGCContext {
  public:
@@ -27,6 +27,6 @@ class DartGCContext {
   DISALLOW_COPY_AND_ASSIGN(DartGCContext);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_GC_CONTEXT_H_

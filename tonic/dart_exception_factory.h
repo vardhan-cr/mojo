@@ -11,7 +11,7 @@
 #include "dart/runtime/include/dart_api.h"
 #include "tonic/dart_persistent_value.h"
 
-namespace blink {
+namespace tonic {
 class DartState;
 
 class DartExceptionFactory {
@@ -30,6 +30,6 @@ class DartExceptionFactory {
   DartPersistentValue core_library_;
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_EXCEPTION_FACTORY_H_

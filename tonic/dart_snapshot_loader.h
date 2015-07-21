@@ -13,13 +13,13 @@
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/common/data_pipe_drainer.h"
 
-namespace blink {
+namespace tonic {
 class DartState;
 
 class DartSnapshotLoader : public mojo::common::DataPipeDrainer::Client {
  public:
   explicit DartSnapshotLoader(DartState* dart_state);
-  ~DartSnapshotLoader();
+  ~DartSnapshotLoader() override;
 
   void LoadSnapshot(mojo::ScopedDataPipeConsumerHandle pipe,
                     const base::Closure& callback);
@@ -38,6 +38,6 @@ class DartSnapshotLoader : public mojo::common::DataPipeDrainer::Client {
   DISALLOW_COPY_AND_ASSIGN(DartSnapshotLoader);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_SNAPSHOT_LOADER_H_

@@ -12,7 +12,7 @@
 #include "sky/engine/wtf/text/StringHash.h"
 #include "sky/engine/wtf/text/StringImpl.h"
 
-namespace blink {
+namespace tonic {
 
 // DartStringCache maintains a mapping between WTF Strings and Dart strings.
 // When you create a Dart string from a WTF String, the underlying character
@@ -43,6 +43,6 @@ class DartStringCache {
   DISALLOW_COPY_AND_ASSIGN(DartStringCache);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_STRING_CACHE_H_

@@ -8,7 +8,7 @@
 #include "base/macros.h"
 #include "dart/runtime/include/dart_api.h"
 
-namespace blink {
+namespace tonic {
 
 class DartBuiltin {
  public:
@@ -37,6 +37,6 @@ class DartBuiltin {
   DISALLOW_COPY_AND_ASSIGN(DartBuiltin);
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_BUILTIN_H_

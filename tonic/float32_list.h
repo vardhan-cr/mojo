@@ -8,7 +8,7 @@
 #include "dart/runtime/include/dart_api.h"
 #include "tonic/dart_converter.h"
 
-namespace blink {
+namespace tonic {
 
 // A simple wrapper around a Dart Float32List. It uses Dart_TypedDataAcquireData
 // to obtain a raw pointer to the data, which is released when this object is
@@ -39,6 +39,6 @@ struct DartConverter<Float32List> {
                                                 Dart_Handle& exception);
 };
 
-} // namespace blink
+} // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_FLOAT32_LIST_H_

@@ -9,11 +9,11 @@
 #include "dart/runtime/include/dart_api.h"
 #include "sky/engine/wtf/text/WTFString.h"
 
-namespace blink {
+namespace tonic {
 
 Dart_Handle CreateDartString(StringImpl* string_impl);
 String ExternalizeDartString(Dart_Handle handle);
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_STRING_H_

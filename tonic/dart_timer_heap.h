@@ -12,7 +12,7 @@
 #include "dart/runtime/include/dart_api.h"
 #include "tonic/dart_persistent_value.h"
 
-namespace blink {
+namespace tonic {
 
 class DartTimerHeap {
  public:

@@ -13,7 +13,7 @@
 #include "tonic/dart_state.h"
 #include "tonic/dart_wrapper_info.h"
 
-namespace blink {
+namespace tonic {
 class DartGCVisitor;
 struct DartWrapperInfo;
 
@@ -130,6 +130,6 @@ inline T* GetReceiver(Dart_NativeArguments args) {
   return static_cast<T*>(reinterpret_cast<DartWrappable*>(receiver));
 }
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_WRAPPABLE_H_

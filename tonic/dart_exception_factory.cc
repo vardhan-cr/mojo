@@ -7,7 +7,7 @@
 #include "tonic/dart_converter.h"
 #include "tonic/dart_builtin.h"
 
-namespace blink {
+namespace tonic {
 
 // TODO(johnmccutchan): Move this into another file.
 class StdStringBuilder {
@@ -118,4 +118,4 @@ Dart_Handle DartExceptionFactory::CreateException(const std::string& class_name,
   return Dart_New(exception_class, Dart_EmptyString(), 1, &message);
 }
 
-}  // namespace blink
+}  // namespace tonic

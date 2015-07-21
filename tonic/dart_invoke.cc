@@ -8,7 +8,7 @@
 #include "base/trace_event/trace_event.h"
 #include "tonic/dart_error.h"
 
-namespace blink {
+namespace tonic {
 
 bool DartInvokeAppField(Dart_Handle target, Dart_Handle name,
                                int number_of_arguments,
@@ -25,4 +25,4 @@ bool DartInvokeAppClosure(Dart_Handle closure,
       Dart_InvokeClosure(closure, number_of_arguments, arguments));
 }
 
-}  // namespace blink
+}  // namespace tonic

@@ -7,7 +7,7 @@
 #include "tonic/dart_isolate_scope.h"
 #include "tonic/dart_state.h"
 
-namespace blink {
+namespace tonic {
 
 DartPersistentValue::DartPersistentValue() : value_(nullptr) {
 }

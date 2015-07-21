@@ -7,7 +7,7 @@
 
 #include "base/macros.h"
 
-namespace blink {
+namespace tonic {
 class DartWrappable;
 
 typedef void (*DartWrappableAccepter)(DartWrappable*);
@@ -23,6 +23,6 @@ struct DartWrapperInfo {
   DartWrapperInfo& operator=(const DartWrapperInfo&) = delete;
 };
 
-}  // namespace blink
+}  // namespace tonic
 
 #endif  // SKY_ENGINE_TONIC_DART_WRAPPER_INFO_H_

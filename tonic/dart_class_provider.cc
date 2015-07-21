@@ -4,9 +4,9 @@
 
 #include "tonic/dart_class_provider.h"
 
-namespace blink {
+namespace tonic {
 
 DartClassProvider::~DartClassProvider() {
 }
 
-}  // namespace blink
+}  // namespace tonic
