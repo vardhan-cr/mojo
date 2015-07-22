@@ -9,8 +9,8 @@ import sys
 
 from devtoolslib.android_shell import AndroidShell
 from devtoolslib.linux_shell import LinuxShell
+from devtoolslib import paths
 from devtoolslib import shell_arguments
-from devtoolslib import default_paths
 
 USAGE = ("mojo_shell "
          "[--args-for=<mojo-app>] "
@@ -74,9 +74,9 @@ def main():
                       'for off-screen rendering.')
 
   launcher_args, args = parser.parse_known_args()
-  mojo_paths, _ = default_paths.infer_default_paths(launcher_args.android,
-                                                    launcher_args.debug,
-                                                    launcher_args.target_cpu)
+  mojo_paths, _ = paths.infer_mojo_paths(launcher_args.android,
+                                         launcher_args.debug,
+                                         launcher_args.target_cpu)
   if mojo_paths:
     adb_path = mojo_paths['adb']
     shell_binary_path = mojo_paths['shell']
