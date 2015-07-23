@@ -87,7 +87,7 @@ class DebugSession(object):
       import elftools.elf.elffile as elffile
     except ImportError:
       logging.fatal("Unable to find elftools module; please install it "
-                    "(for exmple, using 'pip install elftools')")
+                    "(for example, using 'pip install pyelftools')")
       sys.exit(1)
 
     self._elffile_module = elffile
