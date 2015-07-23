@@ -35,6 +35,8 @@ source_set("tonic") {
     "dart_library_loader.h",
     "dart_library_provider.cc",
     "dart_library_provider.h",
+    "dart_library_provider_files.cc",
+    "dart_library_provider_files.h",
     "dart_persistent_value.cc",
     "dart_persistent_value.h",
     "dart_snapshot_loader.cc",
@@ -53,6 +55,7 @@ source_set("tonic") {
 
   deps = [
     "//base",
+    "//build/config/sanitizers:deps",
     "//mojo/common",
     "//mojo/public/cpp/system",
   ]

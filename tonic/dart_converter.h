@@ -155,25 +155,6 @@ template <>
 struct DartConverter<double> : public DartConverterFloatingPoint<double> {};
 
 ////////////////////////////////////////////////////////////////////////////////
-// Enums
-
-template <typename T>
-struct DartConverterEnum {
-  static T FromArguments(Dart_NativeArguments args,
-                         int index,
-                         Dart_Handle& exception) {
-    Dart_Handle enum_handle = Dart_GetNativeArgument(args, index);
-    Dart_Handle index_handle =
-        Dart_GetField(enum_handle, DartState::Current()->index_handle());
-
-    uint64_t enum_index = 0;
-    Dart_IntegerToUint64(index_handle, &enum_index);
-    return static_cast<T>(enum_index);
-  }
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
 // std::string support (slower, but more convienent for some clients)
 
 inline Dart_Handle StdStringToDart(const std::string& val) {

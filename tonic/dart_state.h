@@ -52,8 +52,6 @@ class DartState : public base::SupportsUserData {
   DartLibraryLoader& library_loader() { return *library_loader_; }
   DartTimerHeap& timer_heap() { return *timer_heap_; }
 
-  Dart_Handle index_handle() { return index_handle_.value(); }
-
   virtual void DidSetIsolate() {}
 
  private:
@@ -62,7 +60,6 @@ class DartState : public base::SupportsUserData {
   std::unique_ptr<DartExceptionFactory> exception_factory_;
   std::unique_ptr<DartLibraryLoader> library_loader_;
   std::unique_ptr<DartTimerHeap> timer_heap_;
-  DartPersistentValue index_handle_;
 
  protected:
   base::WeakPtrFactory<DartState> weak_factory_;
