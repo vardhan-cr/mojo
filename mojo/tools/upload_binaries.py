@@ -74,7 +74,7 @@ def find_architecture_independent_files(build_dir):
   return existing_files
 
 
-def upload(config, source, dest, dry_run, gzip=True):
+def upload(config, source, dest, dry_run, gzip=False):
   paths = Paths(config)
   sys.path.insert(0, os.path.join(paths.src_root, "tools"))
   # pylint: disable=F0401
