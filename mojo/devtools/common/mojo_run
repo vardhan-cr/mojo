@@ -12,18 +12,17 @@ from devtoolslib.linux_shell import LinuxShell
 from devtoolslib import paths
 from devtoolslib import shell_arguments
 
-USAGE = ("mojo_shell "
+USAGE = ("mojo_run "
          "[--args-for=<mojo-app>] "
          "[--content-handlers=<handlers>] "
          "[--enable-external-applications] "
          "[--disable-cache] "
          "[--enable-multiprocess] "
-         "[--url-mappings=from1=to1,from2=to2] "
          "[<mojo-app>] "
          """
 
 A <mojo-app> is a Mojo URL or a Mojo URL and arguments within quotes.
-Example: mojo_shell "mojo:js_standalone test.js".
+Example: mojo_run "mojo:js_standalone test.js".
 <url-lib-path> is searched for shared libraries named by mojo URLs.
 The value of <handlers> is a comma separated list like:
 text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
@@ -50,6 +49,12 @@ def main():
 
   # Arguments configuring the shell run.
   parser.add_argument('--origin', help='Origin for mojo: URLs.')
+  parser.add_argument('--map-url', action='append',
+                      help='Define a mapping for a url in the format '
+                      '<url>=<url-or-local-file-path>')
+  parser.add_argument('--map-origin', action='append',
+                      help='Define a mapping for a url origin in the format '
+                      '<origin>=<url-or-local-file-path>')
   parser.add_argument('--window-manager', default=_DEFAULT_WINDOW_MANAGER,
                       help='Window manager app to be mapped as '
                       'mojo:window_manager. By default it is ' +
@@ -111,7 +116,8 @@ def main():
     if shell_binary_path:
       shell.InstallApk(shell_binary_path)
 
-    args = shell_arguments.RewriteMapOriginParameters(shell, args)
+    args = shell_arguments.ApplyMappings(shell, args, launcher_args.map_url,
+                                         launcher_args.map_origin)
     if not launcher_args.origin:
       args.extend(shell_arguments.ConfigureLocalOrigin(shell,
                                                        local_origin_path))

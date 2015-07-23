@@ -6,14 +6,13 @@
 list.
 """
 
+import os.path
 import urlparse
 
 # When spinning up servers for local origins, we want to use predictable ports
 # so that caching works between subsequent runs with the same command line.
 _LOCAL_ORIGIN_PORT = 31840
-_MAP_ORIGIN_BASE_PORT = 31841
-
-_MAP_ORIGIN_PREFIX = '--map-origin='
+_MAPPINGS_BASE_PORT = 31841
 
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
@@ -22,56 +21,81 @@ _MOJO_DEBUGGER_PORT = 7777
 _SKY_SERVER_PORT = 9998
 
 
-def _IsMapOrigin(arg):
-  """Returns whether |arg| is a --map-origin argument."""
-  return arg.startswith(_MAP_ORIGIN_PREFIX)
+def _HostLocalUrlDestination(shell, dest_file, port):
+  """Starts a local server to host |dest_file|.
+
+  Returns:
+    Url of the hosted file.
+  """
+  directory = os.path.dirname(dest_file)
+  if not os.path.exists(directory):
+    raise ValueError('local path passed as --map-url destination '
+                     'does not exist')
+  server_url = shell.ServeLocalDirectory(directory, port)
+  return server_url + os.path.relpath(dest_file, directory)
 
 
-def _Split(l, pred):
-  positive = []
-  negative = []
-  for v in l:
-    if pred(v):
-      positive.append(v)
-    else:
-      negative.append(v)
-  return (positive, negative)
+def _HostLocalOriginDestination(shell, dest_dir, port):
+  """Starts a local server to host |dest_dir|.
+
+  Returns:
+    Url of the hosted directory.
+  """
+  return shell.ServeLocalDirectory(dest_dir, port)
 
 
-def _RewriteMapOriginParameter(shell, mapping, device_port):
-  parts = mapping[len(_MAP_ORIGIN_PREFIX):].split('=')
+def _Rewrite(mapping, host_destination_functon, shell, port):
+  """Takes a mapping given as <src>=<dest> and rewrites the <dest> part to be
+  hosted locally using the given function if <dest> is not a web url.
+  """
+  parts = mapping.split('=')
   if len(parts) != 2:
+    raise ValueError('each mapping value should be in format '
+                     '"<url>=<url-or-local-path>"')
+  if urlparse.urlparse(parts[1])[0]:
+    # The destination is a web url, do nothing.
     return mapping
-  dest = parts[1]
-  # If the destination is a url, don't map it.
-  if urlparse.urlparse(dest)[0]:
-    return mapping
-  # Assume the destination is a local directory and serve it.
-  localUrl = shell.ServeLocalDirectory(dest, device_port)
-  print 'started server at %s for %s' % (dest, localUrl)
-  return _MAP_ORIGIN_PREFIX + parts[0] + '=' + localUrl
+
+  src = parts[0]
+  dest = host_destination_functon(shell, parts[1], port)
+  return src + '=' + dest
 
 
-def RewriteMapOriginParameters(shell, original_arguments):
-  """Spawns a server for each local destination indicated in a map-origin
-  argument in |original_arguments| and rewrites it to point to the server url.
-  The arguments other than "map-origin" and "map-origin" arguments pointing to
-  web urls are left intact.
+
+def ApplyMappings(shell, original_arguments, map_urls, map_origins):
+  """Applies mappings for specified urls and origins. For each local path
+  specified as destination a local server will be spawned and the mapping will
+  be rewritten accordingly.
 
   Args:
     shell: The shell that is being configured.
-    original_arguments: List of arguments to be rewritten.
+    original_arguments: Current list of shell arguments.
+    map_urls: List of url mappings, each in the form of
+      <url>=<url-or-local-path>.
+    map_origins: List of origin mappings, each in the form of
+        <origin>=<url-or-local-path>.
 
   Returns:
     The updated argument list.
   """
-  map_arguments, other_arguments = _Split(original_arguments, _IsMapOrigin)
-  arguments = other_arguments
-  next_port = _MAP_ORIGIN_BASE_PORT
-  for mapping in sorted(map_arguments):
-    arguments.append(_RewriteMapOriginParameter(shell, mapping, next_port))
-    next_port += 1
-  return arguments
+  next_port = _MAPPINGS_BASE_PORT
+  args = original_arguments
+  if map_urls:
+    # Sort the mappings to preserve caching regardless of argument order.
+    for map_url in sorted(map_urls):
+      mapping = _Rewrite(map_url, _HostLocalUrlDestination, shell, next_port)
+      next_port += 1
+      # All url mappings need to be coalesced into one shell argument.
+      args = AppendToArgument(args, '--url-mappings=', mapping)
+
+  if map_origins:
+    for map_origin in sorted(map_origins):
+      mapping = _Rewrite(map_origin, _HostLocalOriginDestination, shell,
+                         next_port)
+      next_port += 1
+      # Origin mappings are specified as separate, repeated shell arguments.
+      args.append('--map-origin=' + mapping)
+  return args
 
 
 def ConfigureDebugger(shell):
