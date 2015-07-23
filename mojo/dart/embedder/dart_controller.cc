@@ -2,20 +2,30 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include "base/bind.h"
 #include "base/callback.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "base/rand_util.h"
+#include "base/run_loop.h"
+#include "base/strings/string_util.h"
 #include "base/sys_info.h"
 #include "dart/runtime/include/dart_api.h"
 #include "dart/runtime/include/dart_native_api.h"
+#include "mojo/common/message_pump_mojo.h"
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/dart/embedder/dart_state.h"
 #include "mojo/dart/embedder/vmservice.h"
 #include "mojo/public/c/system/core.h"
+#include "tonic/dart_converter.h"
 #include "tonic/dart_debugger.h"
+#include "tonic/dart_dependency_catcher.h"
+#include "tonic/dart_error.h"
+#include "tonic/dart_library_loader.h"
+#include "tonic/dart_library_provider.h"
+#include "tonic/dart_library_provider_files.h"
 
 namespace mojo {
 namespace dart {
@@ -30,20 +40,10 @@ const char* kIsolateLibURL = "dart:isolate";
 const char* kIOLibURL = "dart:io";
 const char* kCoreLibURL = "dart:core";
 
-static bool IsDartSchemeURL(const char* url_name) {
-  static const intptr_t kDartSchemeLen = strlen(kDartScheme);
-  // If the URL starts with "dart:" then it is considered as a special
-  // library URL which is handled differently from other URLs.
-  return (strncmp(url_name, kDartScheme, kDartSchemeLen) == 0);
+static void ReportScriptError(Dart_Handle handle) {
+  tonic::LogIfError(handle);
 }
 
-static void ReportScriptError(Dart_Handle handle) {
-  // The normal DART_CHECK_VALID macro displays error information and a stack
-  // dump for the C++ application, which is confusing. Only show the Dart error.
-  if (Dart_IsError((handle))) {
-    LOG(ERROR) << "Dart runtime error:\n" << Dart_GetError(handle) << "\n";
-  }
-}
 
 Dart_Handle ResolveUri(Dart_Handle library_url,
                        Dart_Handle url,
@@ -58,64 +58,15 @@ Dart_Handle ResolveUri(Dart_Handle library_url,
                      dart_args);
 }
 
-static Dart_Handle LoadDataAsync_Invoke(Dart_Handle tag,
-                                        Dart_Handle url,
-                                        Dart_Handle library_url,
-                                        Dart_Handle builtin_lib,
-                                        Dart_Handle data) {
-  const int kNumArgs = 4;
-  Dart_Handle dart_args[kNumArgs];
-  dart_args[0] = tag;
-  dart_args[1] = url;
-  dart_args[2] = library_url;
-  dart_args[3] = data;
-  return Dart_Invoke(builtin_lib,
-                     Dart_NewStringFromCString("_loadDataAsync"),
-                     kNumArgs,
-                     dart_args);
-}
-
 Dart_Handle DartController::LibraryTagHandler(Dart_LibraryTag tag,
                                               Dart_Handle library,
                                               Dart_Handle url) {
-  if (!Dart_IsLibrary(library)) {
-    return Dart_NewApiError("not a library");
-  }
-  if (!Dart_IsString(url)) {
-    return Dart_NewApiError("url is not a string");
-  }
-  Dart_Handle library_url = Dart_LibraryUrl(library);
-  const char* library_url_string = nullptr;
-  Dart_Handle result = Dart_StringToCString(library_url, &library_url_string);
-  if (Dart_IsError(result)) {
-    return result;
-  }
-
-  // Handle URI canonicalization requests.
-  const char* url_string = nullptr;
-  result = Dart_StringToCString(url, &url_string);
   if (tag == Dart_kCanonicalizeUrl) {
-    if (Dart_IsError(result)) {
-      return result;
-    }
-    const bool is_internal_scheme_url = IsDartSchemeURL(url_string);
-    // If this is a Dart Scheme URL, or a Mojo Scheme URL, then it is not
-    // modified as it will be handled internally.
-    if (is_internal_scheme_url) {
+    std::string string = tonic::StdStringFromDart(url);
+    if (StartsWithASCII(string, "dart:", true))
       return url;
-    }
-    // Resolve the url within the context of the library's URL.
-    Dart_Handle builtin_lib =
-        Builtin::GetLibrary(Builtin::kBuiltinLibrary);
-    return ResolveUri(library_url, url, builtin_lib);
   }
-
-  Dart_Handle builtin_lib =
-      Builtin::GetLibrary(Builtin::kBuiltinLibrary);
-  // Handle 'import' or 'part' requests for all other URIs. Call dart code to
-  // read the source code asynchronously.
-  return LoadDataAsync_Invoke(
-      Dart_NewInteger(tag), url, library_url, builtin_lib, Dart_Null());
+  return tonic::DartLibraryLoader::HandleLibraryTag(tag, library, url);
 }
 
 static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
@@ -130,6 +81,17 @@ static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
       current_dir_string.length());
   return Dart_Invoke(builtin_lib,
                      Dart_NewStringFromCString("_setWorkingDirectory"),
+                     kNumArgs,
+                     dart_args);
+}
+
+
+static Dart_Handle ResolveScriptUri(Dart_Handle builtin_lib, Dart_Handle uri) {
+  const int kNumArgs = 1;
+  Dart_Handle dart_args[kNumArgs];
+  dart_args[0] = uri;
+  return Dart_Invoke(builtin_lib,
+                     Dart_NewStringFromCString("_resolveScriptUri"),
                      kNumArgs,
                      dart_args);
 }
@@ -256,6 +218,19 @@ Dart_Isolate DartController::CreateIsolateHelper(
     return nullptr;
   }
 
+
+  isolate_data->SetIsolate(isolate);
+
+  // Set library provider.
+  const char* package_root_str = nullptr;
+  if (package_root.empty()) {
+    package_root_str = "/";
+  } else {
+    package_root_str = package_root.c_str();
+  }
+  isolate_data->set_library_provider(
+      new tonic::DartLibraryProviderFiles(base::FilePath(package_root_str)));
+
   Dart_EnterScope();
 
   Dart_IsolateSetStrictCompilation(strict_compilation);
@@ -307,22 +282,17 @@ Dart_Isolate DartController::CreateIsolateHelper(
       script_uri.length());
   DART_CHECK_VALID(uri);
 
-  const void* data = static_cast<const void*>(script.data());
-  Dart_Handle script_source = Dart_NewExternalTypedData(
-      Dart_TypedData_kUint8,
-      const_cast<void*>(data),
-      script.length());
-  DART_CHECK_VALID(script_source);
-
-  result = LoadDataAsync_Invoke(
-      Dart_Null(), uri, Dart_Null(), builtin_lib, script_source);
+  result = ResolveScriptUri(builtin_lib, uri);
   DART_CHECK_VALID(result);
 
-  // Run event-loop and wait for script loading to complete.
-  result = Dart_RunLoop();
-  ReportScriptError(result);
+  if ((script_uri == "vm-service") || (script_uri == "stop-handle-watcher")) {
+    // Special case for starting and stopping the the handle watcher isolate.
+    LoadEmptyScript(script_uri);
+  } else {
+    LoadScript(script_uri, isolate_data->library_provider());
+  }
 
-  DartController::InitializeDartMojoIo();
+  InitializeDartMojoIo();
 
   // Make the isolate runnable so that it is ready to handle messages.
   Dart_ExitScope();
@@ -501,7 +471,7 @@ void DartController::StopHandleWatcherIsolate() {
   IsolateCallbacks callbacks;
   char* error;
   Dart_Isolate shutdown_isolate = CreateIsolateHelper(
-      nullptr, false, callbacks, "", "", "", &error);
+      nullptr, false, callbacks, "", "stop-handle-watcher", "", &error);
   CHECK(shutdown_isolate);
 
   Dart_EnterIsolate(shutdown_isolate);
@@ -578,6 +548,89 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   Dart_ServiceWaitForLoadPort();
   initialized_ = true;
   service_isolate_running_ = true;
+}
+
+void DartController::BlockWaitingForDependencies(
+      tonic::DartLibraryLoader* loader,
+      const std::unordered_set<tonic::DartDependency*>& dependencies) {
+  {
+    scoped_refptr<base::SingleThreadTaskRunner> task_runner =
+        base::MessageLoop::current()->task_runner();
+    base::RunLoop run_loop;
+    task_runner->PostTask(
+        FROM_HERE,
+        base::Bind(
+            &tonic::DartLibraryLoader::WaitForDependencies,
+            base::Unretained(loader),
+            dependencies,
+            base::Bind(
+               base::IgnoreResult(&base::SingleThreadTaskRunner::PostTask),
+               task_runner.get(), FROM_HERE,
+               run_loop.QuitClosure())));
+    run_loop.Run();
+  }
+}
+
+void DartController::LoadEmptyScript(const std::string& script_uri) {
+  Dart_Handle uri = Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>(script_uri.c_str()),
+      script_uri.length());
+  DART_CHECK_VALID(uri);
+  Dart_Handle script_source = Dart_NewStringFromCString("");
+  DART_CHECK_VALID(script_source);
+  Dart_Handle result = Dart_LoadScript(uri, script_source, 0, 0);
+  DART_CHECK_VALID(result);
+  tonic::LogIfError(Dart_FinalizeLoading(true));
+}
+
+void DartController::InnerLoadScript(
+    const std::string& script_uri,
+    tonic::DartLibraryProvider* library_provider) {
+  // When spawning isolates, Dart expects the script loading to be completed
+  // before returning from the isolate creation callback. The mojo dart
+  // controller also expects the isolate to be finished loading a script
+  // before the isolate creation callback returns.
+
+  // We block here by creating a nested message pump and waiting for the load
+  // to complete.
+
+  DCHECK(base::MessageLoop::current() != nullptr);
+  base::MessageLoop::ScopedNestableTaskAllower allow(
+      base::MessageLoop::current());
+
+  // Initiate the load.
+  auto dart_state = tonic::DartState::Current();
+  DCHECK(library_provider != nullptr);
+  tonic::DartLibraryLoader& loader = dart_state->library_loader();
+  loader.set_library_provider(library_provider);
+  std::unordered_set<tonic::DartDependency*> dependencies;
+  {
+    tonic::DartDependencyCatcher dependency_catcher(loader);
+    loader.LoadScript(script_uri);
+    // Copy dependencies before dependency_catcher goes out of scope.
+    dependencies = std::unordered_set<tonic::DartDependency*>(
+        dependency_catcher.dependencies());
+  }
+
+  // Run inner message loop.
+  BlockWaitingForDependencies(&loader, dependencies);
+
+  // Finalize loading.
+  tonic::LogIfError(Dart_FinalizeLoading(true));
+}
+
+void DartController::LoadScript(const std::string& script_uri,
+                                tonic::DartLibraryProvider* library_provider) {
+  if (base::MessageLoop::current() == nullptr) {
+    // Threads running on the Dart thread pool may not have a message loop,
+    // we rely on a message loop during loading. Create a temporary one
+    // here.
+    base::MessageLoop message_loop(common::MessagePumpMojo::Create());
+    InnerLoadScript(script_uri, library_provider);
+  } else {
+    // Thread has a message loop, use it.
+    InnerLoadScript(script_uri, library_provider);
+  }
 }
 
 bool DartController::RunSingleDartScript(const DartControllerConfig& config) {

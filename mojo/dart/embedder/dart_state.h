@@ -11,6 +11,7 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "mojo/public/c/system/types.h"
+#include "tonic/dart_library_provider.h"
 #include "tonic/dart_state.h"
 
 namespace mojo {
@@ -37,7 +38,8 @@ class MojoDartState : public tonic::DartState {
         callbacks_(callbacks),
         script_(script),
         script_uri_(script_uri),
-        package_root_(package_root) {
+        package_root_(package_root),
+        library_provider_(nullptr) {
   }
 
   void* application_data() const { return application_data_; }
@@ -46,13 +48,22 @@ class MojoDartState : public tonic::DartState {
   const std::string& script() const { return script_; }
   const std::string& script_uri() const { return script_uri_; }
   const std::string& package_root() const { return package_root_; }
-
   std::set<MojoHandle>& unclosed_handles() {
     return unclosed_handles_;
   }
 
   const std::set<MojoHandle>& unclosed_handles() const {
     return unclosed_handles_;
+  }
+
+
+  void set_library_provider(tonic::DartLibraryProvider* library_provider) {
+    library_provider_.reset(library_provider);
+    DCHECK(library_provider_.get() == library_provider);
+  }
+
+  tonic::DartLibraryProvider* library_provider() const {
+    return library_provider_.get();
   }
 
   static MojoDartState* From(Dart_Isolate isolate) {
@@ -75,6 +86,7 @@ class MojoDartState : public tonic::DartState {
   std::string script_uri_;
   std::string package_root_;
   std::set<MojoHandle> unclosed_handles_;
+  std::unique_ptr<tonic::DartLibraryProvider> library_provider_;
 };
 
 }  // namespace dart

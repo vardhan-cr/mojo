@@ -7,6 +7,7 @@
 #include "base/run_loop.h"
 #include "base/strings/string_util.h"
 #include "base/synchronization/waitable_event.h"
+#include "base/threading/platform_thread.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/dart/embedder/dart_controller.h"
@@ -163,5 +164,8 @@ DartContentHandler::CreateApplication(
 
 MojoResult MojoMain(MojoHandle application_request) {
   mojo::ApplicationRunnerChromium runner(new dart::DartContentHandlerApp);
-  return runner.Run(application_request);
+  MojoResult r = runner.Run(application_request);
+  // TODO(johnmccutchan): Remove this once the Dart VM shuts down threads.
+  base::PlatformThread::Sleep(base::TimeDelta::FromMilliseconds(100));
+  return r;
 }

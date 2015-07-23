@@ -42,6 +42,7 @@ source_set("dart_controller_no_snapshot") {
     "//dart/runtime:libdart",
     "//dart/runtime/bin:libdart_embedder_noio",
     "//third_party/dart-pkg",
+    "//mojo/common",
     "//mojo/public/c/system",
     "//mojo/public/cpp/system",
     "//tonic",

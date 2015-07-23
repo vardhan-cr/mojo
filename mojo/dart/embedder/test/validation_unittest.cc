@@ -70,7 +70,7 @@ static void RunTest(const std::string& test) {
   // Run with strict compilation even in Release mode so that ASAN testing gets
   // coverage of Dart asserts, type-checking, etc.
   config.strict_compilation = true;
-  config.script_uri = test;
+  config.script_uri = path.value();
   config.package_root = package_root.AsUTF8Unsafe();
   config.application_data = nullptr;
   config.callbacks.exception =

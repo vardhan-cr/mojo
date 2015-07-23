@@ -5,9 +5,16 @@
 #ifndef MOJO_DART_EMBEDDER_DART_CONTROLLER_H_
 #define MOJO_DART_EMBEDDER_DART_CONTROLLER_H_
 
+#include <unordered_set>
+
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/dart_state.h"
 #include "mojo/public/c/system/types.h"
+
+namespace tonic {
+class DartDependency;
+class DartLibraryLoader;
+}
 
 namespace mojo {
 namespace dart {
@@ -112,6 +119,17 @@ class DartController {
   static void InitVmIfNeeded(Dart_EntropySource entropy,
                              const char** arguments,
                              int arguments_count);
+
+  static void BlockWaitingForDependencies(
+      tonic::DartLibraryLoader* loader,
+      const std::unordered_set<tonic::DartDependency*>& dependencies);
+  static void LoadEmptyScript(const std::string& script_uri);
+  static void InnerLoadScript(const std::string& script_uri,
+                              tonic::DartLibraryProvider* library_provider);
+  static void LoadScript(const std::string& script_uri,
+                         tonic::DartLibraryProvider* library_provider);
+
+  static tonic::DartLibraryProvider* library_provider_;
   static bool initialized_;
   static bool strict_compilation_;
   static bool service_isolate_running_;
