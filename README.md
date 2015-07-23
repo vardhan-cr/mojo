@@ -212,24 +212,24 @@ $ mojo/tools/mojob.py dartcheck
 
 ## Run Mojo Shell
 
-Devtools script `mojo_shell` is a universal shell runner abstracting away the
+Devtools script `mojo_run` is a universal shell runner abstracting away the
 differences between running on Linux and Android. Having built Mojo as
 described above, a demo app can be run as follows:
 
 ```
-mojo/devtools/common/mojo_shell mojo:spinning_cube  # Linux.
-mojo/devtools/common/mojo_shell mojo:spinning_cube  --android # Android.
+mojo/devtools/common/mojo_run mojo:spinning_cube  # Linux.
+mojo/devtools/common/mojo_run mojo:spinning_cube  --android # Android.
 ```
 
 Pass `--sky path_to_sky_file` to run a
 [Sky](https://github.com/domokit/mojo/tree/master/sky) app on either platform:
 ```
-mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart
-mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart --android
+mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart
+mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart --android
 ```
 
 Passing the `-v` flag will increase the output verbosity. In particular, it will
-also print all arguments passed by `mojo_shell` to the shell binary.
+also print all arguments passed by `mojo_run` to the shell binary.
 
 ### Chromoting
 
@@ -237,13 +237,13 @@ Some Mojo apps (Sky apps in particular) will need the --use-osmesa flag to run
 over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
 
 ```
-mojo/devtools/common/mojo_shell --sky sky/examples/raw/hello_world.dart --use-osmesa
+mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart --use-osmesa
 ```
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
-Devtools `debugger` script allows you to interactively inspect a running shell,
-collect performance traces and attach a gdb debugger. Refer to the
+Devtools `mojo_debug` script allows you to interactively inspect a running
+shell, collect performance traces and attach a gdb debugger. Refer to the
 [documentation](https://github.com/domokit/devtools/blob/master/README.md#debugger)
 for details.
 

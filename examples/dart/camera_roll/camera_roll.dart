@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// To run: mojo/devtools/common/mojo_shell --sky \
+// To run: mojo/devtools/common/mojo_run --sky \
 //             examples/dart/camera_roll/camera_roll.dart --android
 // This example makes use of mojo:camera_roll which is available only when
 // running on Android.

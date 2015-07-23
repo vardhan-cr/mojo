@@ -12,17 +12,17 @@ git clone https://github.com/domokit/devtools.git
 
 Devtools offers the following tools:
 
- - `mojo_shell` - universal shell runner
- - `debugger` - supports interactive tracing and debugging of a running mojo
+ - `mojo_run` - universal shell runner
+ - `mojo_debug` - supports interactive tracing and debugging of a running mojo
    shell
  - `remote_adb_setup` - configures adb on a remote machine to communicate with
    a device attached to the local machine
 
 and a Python scripting library designed for being embedded (`devtoolslib`).
 
-### debugger
+### Debugger
 
-The `debugger` script allows you to interactively inspect a running shell,
+The `mojo_debug` script allows you to interactively inspect a running shell,
 collect performance traces and attach a gdb debugger.
 
 #### Tracing
@@ -31,8 +31,8 @@ traces](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
 and retrieve the result:
 
 ```sh
-debugger tracing start
-debugger tracing stop [result.json]
+mojo_debug tracing start
+mojo_debug tracing stop [result.json]
 ```
 
 The trace file can be then loaded using the trace viewer in Chrome available at
@@ -44,7 +44,7 @@ can be used to launch GDB and attach it to a running shell process (android
 only):
 
 ```sh
-debugger gdb attach
+mojo_debug gdb attach
 ```
 
 #### Android crash stacks
@@ -53,7 +53,7 @@ due to a crash in native code, `debugger` can be used to find and symbolize the
 stack trace present in the device log:
 
 ```sh
-debugger device stack
+mojo_debug device stack
 ```
 
 ### devtoolslib
