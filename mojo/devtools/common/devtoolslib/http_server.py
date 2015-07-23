@@ -155,14 +155,12 @@ def _GetHandlerClassForPath(mappings):
       assert False
 
     def guess_type(self, path):
-      # This is needed so that Sky files without shebang can still run thanks to
-      # content-type mappings.
+      # This is needed so that exploded Sky apps without shebang can still run
+      # thanks to content-type mappings.
       # TODO(ppi): drop this part once we can rely on the Sky files declaring
       # correct shebang.
-      if path.endswith('.dart'):
+      if path.endswith('.dart') or path.endswith('.dart.gz'):
         return 'application/dart'
-      elif path.endswith('.sky'):
-        return 'text/sky'
       return SimpleHTTPServer.SimpleHTTPRequestHandler.guess_type(self, path)
 
     def log_message(self, *_):
