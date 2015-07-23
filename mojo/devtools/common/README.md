@@ -39,7 +39,7 @@ The trace file can be then loaded using the trace viewer in Chrome available at
 `about://tracing`.
 
 #### GDB
-It is possible to inspect a Mojo Shell process using GDB. The `debugger` script
+It is possible to inspect a Mojo Shell process using GDB. The `mojo_debug` script
 can be used to launch GDB and attach it to a running shell process (android
 only):
 
@@ -47,9 +47,26 @@ only):
 mojo_debug gdb attach
 ```
 
+Once started, GDB will first stop the Mojo Shell execution, then load symbols
+from loaded Mojo applications. Please note that this initial step can take some
+time (up to several minutes in the worst case).
+
+After each execution pause, GDB will update the set of loaded symbols based on
+the selected thread only. If you need symbols for all threads, use the
+`update-symbols` GDB command:
+```sh
+(gdb) update-symbols
+```
+
+If you only want to update symbols for the current selected thread (for example,
+after changing threads), use the `current` option:
+```sh
+(gdb) update-symbols current
+```
+
 #### Android crash stacks
 When Mojo shell crashes on Android ("Unfortunately, Mojo shell has stopped.")
-due to a crash in native code, `debugger` can be used to find and symbolize the
+due to a crash in native code, `mojo_debug` can be used to find and symbolize the
 stack trace present in the device log:
 
 ```sh
