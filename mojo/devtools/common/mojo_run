@@ -83,7 +83,8 @@ def main():
                                          launcher_args.debug,
                                          launcher_args.target_cpu)
   if mojo_paths:
-    adb_path = mojo_paths['adb']
+    if launcher_args.android:
+      adb_path = mojo_paths['adb']
     shell_binary_path = mojo_paths['shell']
     local_origin_path = mojo_paths['build']
     if launcher_args.verbose:
