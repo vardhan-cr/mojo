@@ -222,6 +222,8 @@ def _gdb_attach(args):
     debug_session_arguments["package_name"] = args.package_name
   else:
     debug_session_arguments["package_name"] = _DEFAULT_PACKAGE_NAME
+  if args.adb_path:
+    debug_session_arguments['adb'] = args.adb_path
   if args.pyelftools_dir:
     debug_session_arguments["pyelftools_dir"] = args.pyelftools_dir
   else:
