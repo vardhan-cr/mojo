@@ -490,16 +490,16 @@ void DartController::StopHandleWatcherIsolate() {
 }
 
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
-                                    const char** arguments,
-                                    int arguments_count) {
+                                    const char** vm_flags,
+                                    int vm_flags_count) {
   // TODO(zra): If runDartScript can be called from multiple threads
   // concurrently, then initialized_ will need to be protected by a lock.
   if (initialized_) {
     return;
   }
 
-  const int kNumArgs = arguments_count + 1;
-  const char* args[kNumArgs];
+  const int kNumFlags = vm_flags_count + 1;
+  const char* flags[kNumFlags];
 
   // TODO(zra): Fix Dart VM Shutdown race.
   // There is a bug in Dart VM shutdown which causes its thread pool threads
@@ -508,13 +508,13 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   // embedder has been unloaded. Setting this flag to 0 ensures that these
   // threads sleep forever instead of waking up and trying to run code
   // that isn't there anymore.
-  args[0] = "--worker-timeout-millis=0";
+  flags[0] = "--worker-timeout-millis=0";
 
-  for (int i = 0; i < arguments_count; ++i) {
-    args[i + 1] = arguments[i];
+  for (int i = 0; i < vm_flags_count; ++i) {
+    flags[i + 1] = vm_flags[i];
   }
 
-  bool result = Dart_SetVMFlags(kNumArgs, args);
+  bool result = Dart_SetVMFlags(kNumFlags, flags);
   CHECK(result);
 
   // This should be called before calling Dart_Initialize.
@@ -621,8 +621,8 @@ void DartController::LoadScript(const std::string& script_uri,
 
 bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   InitVmIfNeeded(config.entropy,
-                 config.arguments,
-                 config.arguments_count);
+                 config.vm_flags,
+                 config.vm_flags_count);
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
                                              config.strict_compilation,
                                              config.callbacks,

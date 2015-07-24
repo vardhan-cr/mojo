@@ -67,14 +67,10 @@ static void RunTest(const std::string& test) {
   config.strict_compilation = true;
   config.script_uri = path.value();
   config.package_root = package_root.AsUTF8Unsafe();
-  config.application_data = nullptr;
   config.callbacks.exception =
       base::Bind(&exceptionCallback, &unhandled_exception);
   config.entropy = generateEntropy;
-  config.arguments = nullptr;
-  config.arguments_count = 0;
-  config.handle = MOJO_HANDLE_INVALID;
-  config.compile_all = false;
+  config.SetVmFlags(nullptr, 0);
   config.error = &error;
 
   bool success = DartController::RunSingleDartScript(config);

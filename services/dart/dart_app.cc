@@ -32,10 +32,7 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
   config_.strict_compilation = strict;
   config_.script_uri = entry_path.AsUTF8Unsafe();
   config_.package_root = package_root.AsUTF8Unsafe();
-  config_.entropy = nullptr;
-  config_.arguments = nullptr;
-  config_.arguments_count = 0;
-  config_.compile_all = false;
+  config_.SetVmFlags(nullptr, 0);
 
   base::MessageLoop::current()->PostTask(FROM_HERE,
       base::Bind(&DartApp::OnAppLoaded, base::Unretained(this)));

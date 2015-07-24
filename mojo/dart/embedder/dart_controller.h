@@ -20,16 +20,41 @@ namespace mojo {
 namespace dart {
 
 struct DartControllerConfig {
+  DartControllerConfig()
+      : application_data(nullptr),
+        strict_compilation(false),
+        entropy(nullptr),
+        vm_flags(nullptr),
+        vm_flags_count(0),
+        handle(MOJO_HANDLE_INVALID),
+        compile_all(false),
+        error(nullptr) {
+  }
+
+  void SetVmFlags(const char** vm_flags, intptr_t vm_flags_count) {
+    this->vm_flags = vm_flags;
+    this->vm_flags_count = vm_flags_count;
+
+    // See if compile_all is one of the vm flags.
+    compile_all = false;
+    const char* kCompileAllFlag = "--compile_all";
+    const intptr_t kCompileAllFlagLen = strlen(kCompileAllFlag);
+    for (intptr_t i = 0; i < vm_flags_count; i++) {
+      if (strncmp(vm_flags[i], kCompileAllFlag, kCompileAllFlagLen) == 0) {
+        compile_all = true;
+      }
+    }
+  }
+
   void* application_data;
   bool strict_compilation;
   std::string script_uri;
   std::string package_root;
   IsolateCallbacks callbacks;
   Dart_EntropySource entropy;
-  const char** arguments;
-  int arguments_count;
+  const char** vm_flags;
+  int vm_flags_count;
   MojoHandle handle;
-  // TODO(zra): search for the --compile_all flag in arguments where needed.
   bool compile_all;
   char** error;
 };

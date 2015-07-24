@@ -307,14 +307,11 @@ class DartToCppTest : public testing::Test {
     config->strict_compilation = true;
     config->script_uri = path.AsUTF8Unsafe();
     config->package_root = package_root.AsUTF8Unsafe();
-    config->application_data = nullptr;
     config->callbacks.exception =
         base::Bind(&UnhandledExceptionCallback, unhandled_exception);
     config->entropy = GenerateEntropy;
     config->handle = handle;
-    config->arguments = arguments;
-    config->arguments_count = arguments_count;
-    config->compile_all = false;
+    config->SetVmFlags(arguments, arguments_count);
     config->error = error;
   }
 
