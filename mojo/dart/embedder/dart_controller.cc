@@ -96,9 +96,10 @@ static Dart_Handle ResolveScriptUri(Dart_Handle builtin_lib, Dart_Handle uri) {
                      dart_args);
 }
 
-static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
-                                           Dart_Handle builtin_lib) {
+static Dart_Handle PrepareIsolateLibraries(const std::string& package_root,
+                                           const std::string& script_uri) {
   // First ensure all required libraries are available.
+  Dart_Handle builtin_lib = Builtin::GetLibrary(Builtin::kBuiltinLibrary);
   Dart_Handle url = Dart_NewStringFromCString(kInternalLibURL);
   DART_CHECK_VALID(url);
   Dart_Handle internal_lib = Dart_LookupLibrary(url);
@@ -165,6 +166,13 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
     return result;
   }
 
+  // Set script entry uri.
+  Dart_Handle uri = Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>(script_uri.c_str()),
+      script_uri.length());
+  DART_CHECK_VALID(uri);
+  result = ResolveScriptUri(builtin_lib, uri);
+
   // Set up package root.
   result = Dart_NewStringFromUTF8(
       reinterpret_cast<const uint8_t*>(package_root.c_str()),
@@ -191,10 +199,8 @@ static Dart_Handle PrepareScriptForLoading(const std::string& package_root,
                          Dart_NewStringFromCString("_uriBaseClosure"),
                          uri_base);
   DART_CHECK_VALID(result);
-
   return result;
 }
-
 
 Dart_Isolate DartController::CreateIsolateHelper(
     void* dart_app,
@@ -215,86 +221,71 @@ Dart_Isolate DartController::CreateIsolateHelper(
     delete isolate_data;
     return nullptr;
   }
-
-
   isolate_data->SetIsolate(isolate);
+  Dart_ExitIsolate();
 
-  // Set library provider.
-  const char* package_root_str = nullptr;
-  if (package_root.empty()) {
-    package_root_str = "/";
-  } else {
-    package_root_str = package_root.c_str();
-  }
-  isolate_data->set_library_provider(
-      new tonic::DartLibraryProviderFiles(base::FilePath(package_root_str)));
+  // Setup isolate and load script.
+  {
+    tonic::DartIsolateScope isolate_scope(isolate);
+    tonic::DartApiScope api_scope;
 
-  Dart_EnterScope();
-
-  Dart_IsolateSetStrictCompilation(strict_compilation);
-
-  // Set up the library tag handler for this isolate.
-  Dart_Handle result = Dart_SetLibraryTagHandler(LibraryTagHandler);
-  DART_CHECK_VALID(result);
-
-  // Setup the native resolvers for the builtin libraries as they are not set
-  // up when the snapshot is read.
-  CHECK(isolate_snapshot_buffer != nullptr);
-  Builtin::PrepareLibrary(Builtin::kBuiltinLibrary);
-  Builtin::PrepareLibrary(Builtin::kMojoInternalLibrary);
-  Builtin::PrepareLibrary(Builtin::kDartMojoIoLibrary);
-
-  if (!callbacks.create.is_null()) {
-    callbacks.create.Run(script_uri.c_str(),
-                         "main",
-                         package_root.c_str(),
-                         isolate_data,
-                         error);
-  }
-
-  // Prepare builtin and its dependent libraries for use to resolve URIs.
-  // The builtin library is part of the snapshot and is already available.
-  Dart_Handle builtin_lib =
-      Builtin::GetLibrary(Builtin::kBuiltinLibrary);
-  DART_CHECK_VALID(builtin_lib);
-
-  if (Dart_IsServiceIsolate(isolate)) {
-    result = PrepareScriptForLoading(package_root, builtin_lib);
-    DART_CHECK_VALID(result);
-    const intptr_t port = SupportDartMojoIo() ? 0 : -1;
-    InitializeDartMojoIo();
-    StartHandleWatcherIsolate();
-    if (!VmService::Setup("127.0.0.1", port)) {
-      *error = strdup(VmService::GetErrorMessage());
-      return nullptr;
+    // Setup loader.
+    const char* package_root_str = nullptr;
+    if (package_root.empty()) {
+      package_root_str = "/";
+    } else {
+      package_root_str = package_root.c_str();
     }
-    Dart_ExitScope();
-    Dart_ExitIsolate();
-    return isolate;
+    isolate_data->set_library_provider(
+        new tonic::DartLibraryProviderFiles(base::FilePath(package_root_str)));
+    Dart_Handle result = Dart_SetLibraryTagHandler(LibraryTagHandler);
+    DART_CHECK_VALID(result);
+    // Toggle checked mode.
+    Dart_IsolateSetStrictCompilation(strict_compilation);
+    // Setup the native resolvers for the builtin libraries as they are not set
+    // up when the snapshot is read.
+    CHECK(isolate_snapshot_buffer != nullptr);
+    Builtin::PrepareLibrary(Builtin::kBuiltinLibrary);
+    Builtin::PrepareLibrary(Builtin::kMojoInternalLibrary);
+    Builtin::PrepareLibrary(Builtin::kDartMojoIoLibrary);
+
+    // TODO(johnmccutchan): Remove?
+    if (!callbacks.create.is_null()) {
+      DCHECK(false);
+      callbacks.create.Run(script_uri.c_str(),
+                           "main",
+                           package_root.c_str(),
+                           isolate_data,
+                           error);
+    }
+
+    // Prepare builtin and its dependent libraries.
+    result = PrepareIsolateLibraries(package_root, script_uri);
+    DART_CHECK_VALID(result);
+
+    // The VM is creating the service isolate.
+    if (Dart_IsServiceIsolate(isolate)) {
+      const intptr_t port = SupportDartMojoIo() ? 0 : -1;
+      InitializeDartMojoIo();
+      StartHandleWatcherIsolate();
+      if (!VmService::Setup("127.0.0.1", port)) {
+        *error = strdup(VmService::GetErrorMessage());
+        return nullptr;
+      }
+      return isolate;
+    }
+
+    if ((script_uri == "vm-service") || (script_uri == "stop-handle-watcher")) {
+      // Special case for starting and stopping the the handle watcher isolate.
+      LoadEmptyScript(script_uri);
+    } else {
+      LoadScript(script_uri, isolate_data->library_provider());
+    }
+
+    InitializeDartMojoIo();
   }
-  result = PrepareScriptForLoading(package_root, builtin_lib);
-  DART_CHECK_VALID(result);
-
-  Dart_Handle uri = Dart_NewStringFromUTF8(
-      reinterpret_cast<const uint8_t*>(script_uri.c_str()),
-      script_uri.length());
-  DART_CHECK_VALID(uri);
-
-  result = ResolveScriptUri(builtin_lib, uri);
-  DART_CHECK_VALID(result);
-
-  if ((script_uri == "vm-service") || (script_uri == "stop-handle-watcher")) {
-    // Special case for starting and stopping the the handle watcher isolate.
-    LoadEmptyScript(script_uri);
-  } else {
-    LoadScript(script_uri, isolate_data->library_provider());
-  }
-
-  InitializeDartMojoIo();
 
   // Make the isolate runnable so that it is ready to handle messages.
-  Dart_ExitScope();
-  Dart_ExitIsolate();
   bool retval = Dart_IsolateMakeRunnable(isolate);
   if (!retval) {
     *error = strdup("Invalid isolate state - Unable to make it runnable");
