@@ -71,8 +71,7 @@ def _get_mapped_files():
 
 
 class DebugSession(object):
-  def __init__(self, build_directory, package_name, pyelftools_dir=None,
-               adb='adb'):
+  def __init__(self, build_directory, package_name, pyelftools_dir, adb):
     self._build_directory = build_directory
     if not os.path.exists(self._build_directory):
       logging.fatal("Please pass a valid build directory")
@@ -86,8 +85,9 @@ class DebugSession(object):
     try:
       import elftools.elf.elffile as elffile
     except ImportError:
-      logging.fatal("Unable to find elftools module; please install it "
-                    "(for example, using 'pip install pyelftools')")
+      logging.fatal("Unable to find elftools module; please install pyelftools "
+                    "and specify its path on the command line using "
+                    "--pyelftools-dir.")
       sys.exit(1)
 
     self._elffile_module = elffile

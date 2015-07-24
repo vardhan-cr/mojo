@@ -190,7 +190,19 @@ def _gdb_attach(args):
 
   if args.adb_path:
     install_args['adb'] = args.adb_path
-  install(**install_args)
+  else:
+    install_args['adb'] = 'adb'
+
+  try:
+    install(**install_args)
+  except OSError as e:
+    if e.errno == 2:
+      # ADB not found in path, print an error message
+      logging.fatal("Unable to find ADB, please specify its path with "
+                    "--adb-path.")
+      return
+    else:
+      raise
 
   gdb_path = os.path.join(
       ndk_dir,
@@ -222,13 +234,19 @@ def _gdb_attach(args):
     debug_session_arguments["package_name"] = args.package_name
   else:
     debug_session_arguments["package_name"] = _DEFAULT_PACKAGE_NAME
-  if args.adb_path:
-    debug_session_arguments['adb'] = args.adb_path
+  debug_session_arguments['adb'] = install_args['adb']
   if args.pyelftools_dir:
     debug_session_arguments["pyelftools_dir"] = args.pyelftools_dir
   else:
-    debug_session_arguments["pyelftools_dir"] = os.path.join(
-        _get_dir_above('third_party'), 'third_party', 'pyelftools')
+    try:
+      debug_session_arguments["pyelftools_dir"] = os.path.join(
+          _get_dir_above('third_party'), 'third_party', 'pyelftools')
+      if not os.path.exists(debug_session_arguments["pyelftools_dir"]):
+        raise DirectoryNotFoundException()
+    except DirectoryNotFoundException:
+      logging.fatal("Unable to find pyelftools python module, please specify "
+          "its path using --pyelftools-dir.")
+      return
 
   debug_session_arguments_str = ', '.join(
       [k + '="' + codecs.encode(v, 'string_escape') + '"'
