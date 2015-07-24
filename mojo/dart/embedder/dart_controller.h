@@ -22,7 +22,6 @@ namespace dart {
 struct DartControllerConfig {
   void* application_data;
   bool strict_compilation;
-  std::string script;
   std::string script_uri;
   std::string package_root;
   IsolateCallbacks callbacks;
@@ -111,7 +110,6 @@ class DartController {
   static Dart_Isolate CreateIsolateHelper(void* dart_app,
                                           bool strict_compilation,
                                           IsolateCallbacks callbacks,
-                                          const std::string& script,
                                           const std::string& script_uri,
                                           const std::string& package_root,
                                           char** error);

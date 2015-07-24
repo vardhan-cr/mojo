@@ -39,10 +39,6 @@ static void RunTest(const std::string& test,
              .AppendASCII("test")
              .AppendASCII(test);
 
-  // Read in the source.
-  std::string source;
-  EXPECT_TRUE(ReadFileToString(path, &source)) << "Failed to read test file";
-
   // Setup the package root.
   base::FilePath package_root;
   PathService::Get(base::DIR_EXE, &package_root);
@@ -56,7 +52,6 @@ static void RunTest(const std::string& test,
   // Run with strict compilation even in Release mode so that ASAN testing gets
   // coverage of Dart asserts, type-checking, etc.
   config.strict_compilation = true;
-  config.script = source;
   config.script_uri = path.AsUTF8Unsafe();
   config.package_root = package_root.AsUTF8Unsafe();
   config.application_data = nullptr;

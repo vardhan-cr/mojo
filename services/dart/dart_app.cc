@@ -26,17 +26,10 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
     : application_request_(application_request.Pass()),
       application_dir_(application_dir) {
   base::FilePath package_root = application_dir_.AppendASCII("packages");
-
   base::FilePath entry_path = application_dir_.Append("main.dart");
-  std::string source;
-  if (!base::ReadFileToString(entry_path, &source)) {
-    NOTREACHED();
-    return;
-  }
 
   config_.application_data = reinterpret_cast<void*>(this);
   config_.strict_compilation = strict;
-  config_.script = source;
   config_.script_uri = entry_path.AsUTF8Unsafe();
   config_.package_root = package_root.AsUTF8Unsafe();
   config_.entropy = nullptr;

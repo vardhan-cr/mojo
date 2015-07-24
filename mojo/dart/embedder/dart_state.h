@@ -30,13 +30,11 @@ class MojoDartState : public tonic::DartState {
   MojoDartState(void* application_data,
                 bool strict_compilation,
                 IsolateCallbacks callbacks,
-                std::string script,
                 std::string script_uri,
                 std::string package_root)
       : application_data_(application_data),
         strict_compilation_(strict_compilation),
         callbacks_(callbacks),
-        script_(script),
         script_uri_(script_uri),
         package_root_(package_root),
         library_provider_(nullptr) {
@@ -45,7 +43,6 @@ class MojoDartState : public tonic::DartState {
   void* application_data() const { return application_data_; }
   bool strict_compilation() const { return strict_compilation_; }
   const IsolateCallbacks& callbacks() const { return callbacks_; }
-  const std::string& script() const { return script_; }
   const std::string& script_uri() const { return script_uri_; }
   const std::string& package_root() const { return package_root_; }
   std::set<MojoHandle>& unclosed_handles() {
@@ -82,7 +79,6 @@ class MojoDartState : public tonic::DartState {
   void* application_data_;
   bool strict_compilation_;
   IsolateCallbacks callbacks_;
-  std::string script_;
   std::string script_uri_;
   std::string package_root_;
   std::set<MojoHandle> unclosed_handles_;

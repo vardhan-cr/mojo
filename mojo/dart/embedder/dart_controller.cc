@@ -200,14 +200,12 @@ Dart_Isolate DartController::CreateIsolateHelper(
     void* dart_app,
     bool strict_compilation,
     IsolateCallbacks callbacks,
-    const std::string& script,
     const std::string& script_uri,
     const std::string& package_root,
     char** error) {
   auto isolate_data = new MojoDartState(dart_app,
                                         strict_compilation,
                                         callbacks,
-                                        script,
                                         script_uri,
                                         package_root);
   Dart_Isolate isolate =
@@ -338,17 +336,14 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
   void* dart_app = nullptr;
   bool strict_compilation = true;
   IsolateCallbacks callbacks;
-  std::string script;
   if (parent_isolate_data != nullptr) {
     dart_app = parent_isolate_data->application_data();
     strict_compilation = parent_isolate_data->strict_compilation();
     callbacks = parent_isolate_data->callbacks();
-    script = parent_isolate_data->script();
   }
   return CreateIsolateHelper(dart_app,
                              strict_compilation,
                              callbacks,
-                             script,
                              script_uri_string,
                              package_root_string,
                              error);
@@ -471,7 +466,7 @@ void DartController::StopHandleWatcherIsolate() {
   IsolateCallbacks callbacks;
   char* error;
   Dart_Isolate shutdown_isolate = CreateIsolateHelper(
-      nullptr, false, callbacks, "", "stop-handle-watcher", "", &error);
+      nullptr, false, callbacks, "stop-handle-watcher", "", &error);
   CHECK(shutdown_isolate);
 
   Dart_EnterIsolate(shutdown_isolate);
@@ -640,7 +635,6 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
                                              config.strict_compilation,
                                              config.callbacks,
-                                             config.script,
                                              config.script_uri,
                                              config.package_root,
                                              config.error);
@@ -724,7 +718,7 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
   CHECK(service_isolate_running_);
   const bool strict = strict_compilation_ || config.strict_compilation;
   Dart_Isolate isolate = CreateIsolateHelper(
-      config.application_data, strict, config.callbacks, config.script,
+      config.application_data, strict, config.callbacks,
       config.script_uri, config.package_root, config.error);
   if (isolate == nullptr) {
     return false;
