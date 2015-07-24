@@ -33,41 +33,10 @@ namespace dart {
 extern const uint8_t* vm_isolate_snapshot_buffer;
 extern const uint8_t* isolate_snapshot_buffer;
 
-const char* kDartScheme = "dart:";
-const char* kAsyncLibURL = "dart:async";
-const char* kInternalLibURL = "dart:_internal";
-const char* kIsolateLibURL = "dart:isolate";
-const char* kIOLibURL = "dart:io";
-const char* kCoreLibURL = "dart:core";
-
-static void ReportScriptError(Dart_Handle handle) {
-  tonic::LogIfError(handle);
-}
-
-
-Dart_Handle ResolveUri(Dart_Handle library_url,
-                       Dart_Handle url,
-                       Dart_Handle builtin_lib) {
-  const int kNumArgs = 2;
-  Dart_Handle dart_args[kNumArgs];
-  dart_args[0] = library_url;
-  dart_args[1] = url;
-  return Dart_Invoke(builtin_lib,
-                     Dart_NewStringFromCString("_resolveUri"),
-                     kNumArgs,
-                     dart_args);
-}
-
-Dart_Handle DartController::LibraryTagHandler(Dart_LibraryTag tag,
-                                              Dart_Handle library,
-                                              Dart_Handle url) {
-  if (tag == Dart_kCanonicalizeUrl) {
-    std::string string = tonic::StdStringFromDart(url);
-    if (StartsWithASCII(string, "dart:", true))
-      return url;
-  }
-  return tonic::DartLibraryLoader::HandleLibraryTag(tag, library, url);
-}
+static const char* kAsyncLibURL = "dart:async";
+static const char* kInternalLibURL = "dart:_internal";
+static const char* kIsolateLibURL = "dart:isolate";
+static const char* kCoreLibURL = "dart:core";
 
 static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
   base::FilePath current_dir;
@@ -84,7 +53,6 @@ static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
                      kNumArgs,
                      dart_args);
 }
-
 
 static Dart_Handle ResolveScriptUri(Dart_Handle builtin_lib, Dart_Handle uri) {
   const int kNumArgs = 1;
@@ -202,6 +170,93 @@ static Dart_Handle PrepareIsolateLibraries(const std::string& package_root,
   return result;
 }
 
+static const intptr_t kStartIsolateArgumentsLength = 2;
+
+static void SetupStartIsolateArguments(
+    const DartControllerConfig& config,
+    Dart_Handle main_closure,
+    Dart_Handle* start_isolate_args) {
+  // start_isolate_args:
+  // [0] -> main closure
+  // [1] -> args list.
+  // args list:
+  // [0] -> mojo handle.
+  // [1] -> script uri
+  // [2] -> list of script arguments in config.
+  start_isolate_args[0] = main_closure;     // entryPoint
+  DART_CHECK_VALID(start_isolate_args[0]);
+  start_isolate_args[1] = Dart_NewList(3);  // args
+  DART_CHECK_VALID(start_isolate_args[1]);
+  Dart_Handle script_uri = Dart_NewStringFromUTF8(
+      reinterpret_cast<const uint8_t*>(config.script_uri.data()),
+      config.script_uri.length());
+  Dart_ListSetAt(start_isolate_args[1], 0, Dart_NewInteger(config.handle));
+  Dart_ListSetAt(start_isolate_args[1], 1, script_uri);
+  Dart_Handle script_args = Dart_NewList(config.script_flags_count);
+  DART_CHECK_VALID(script_args);
+  Dart_ListSetAt(start_isolate_args[1], 2, script_args);
+  for (intptr_t i = 0; i < config.script_flags_count; i++) {
+    Dart_ListSetAt(script_args, i,
+                   Dart_NewStringFromCString(config.script_flags[i]));
+  }
+}
+
+static void RunIsolate(Dart_Isolate isolate,
+                       const DartControllerConfig& config) {
+  tonic::DartIsolateScope isolate_scope(isolate);
+  tonic::DartApiScope api_scope;
+
+  Dart_Handle result;
+
+  // Load the root library into the builtin library so that main can be found.
+  Dart_Handle builtin_lib =
+      Builtin::GetLibrary(Builtin::kBuiltinLibrary);
+  DART_CHECK_VALID(builtin_lib);
+  Dart_Handle root_lib = Dart_RootLibrary();
+  DART_CHECK_VALID(root_lib);
+  result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
+  DART_CHECK_VALID(result);
+
+  if (config.compile_all) {
+    result = Dart_CompileAll();
+    DART_CHECK_VALID(result);
+  }
+
+  Dart_Handle main_closure = Dart_Invoke(
+      builtin_lib,
+      Dart_NewStringFromCString("_getMainClosure"),
+      0,
+      nullptr);
+  DART_CHECK_VALID(main_closure);
+
+  Dart_Handle start_isolate_args[kStartIsolateArgumentsLength];
+  SetupStartIsolateArguments(config, main_closure, &start_isolate_args[0]);
+  Dart_Handle isolate_lib =
+      Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));
+  DART_CHECK_VALID(isolate_lib);
+
+  result = Dart_Invoke(isolate_lib,
+                       Dart_NewStringFromCString("_startMainIsolate"),
+                       kStartIsolateArgumentsLength,
+                       start_isolate_args);
+  DART_CHECK_VALID(result);
+
+  result = Dart_RunLoop();
+  tonic::LogIfError(result);
+  DART_CHECK_VALID(result);
+}
+
+Dart_Handle DartController::LibraryTagHandler(Dart_LibraryTag tag,
+                                              Dart_Handle library,
+                                              Dart_Handle url) {
+  if (tag == Dart_kCanonicalizeUrl) {
+    std::string string = tonic::StdStringFromDart(url);
+    if (StartsWithASCII(string, "dart:", true))
+      return url;
+  }
+  return tonic::DartLibraryLoader::HandleLibraryTag(tag, library, url);
+}
+
 Dart_Isolate DartController::CreateIsolateHelper(
     void* dart_app,
     bool strict_compilation,
@@ -294,6 +349,8 @@ Dart_Isolate DartController::CreateIsolateHelper(
     return nullptr;
   }
 
+  DCHECK(Dart_CurrentIsolate() == nullptr);
+
   return isolate;
 }
 
@@ -341,9 +398,10 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
 }
 
 void DartController::IsolateShutdownCallback(void* callback_data) {
-  Dart_EnterScope();
-  ShutdownDartMojoIo();
-  Dart_ExitScope();
+  {
+    tonic::DartApiScope api_scope;
+    ShutdownDartMojoIo();
+  }
 
   auto isolate_data = MojoDartState::Cast(callback_data);
   if (!isolate_data->callbacks().shutdown.is_null()) {
@@ -373,6 +431,7 @@ bool DartController::initialized_ = false;
 bool DartController::service_isolate_running_ = false;
 bool DartController::strict_compilation_ = false;
 DartControllerServiceConnector* DartController::service_connector_ = nullptr;
+base::Lock DartController::lock_;
 
 bool DartController::SupportDartMojoIo() {
   return service_connector_ != nullptr;
@@ -483,6 +542,7 @@ void DartController::StopHandleWatcherIsolate() {
 
   // Run until the handle watcher isolate has exited.
   result = Dart_RunLoop();
+  tonic::LogIfError(result);
   DART_CHECK_VALID(result);
 
   Dart_ExitScope();
@@ -492,8 +552,7 @@ void DartController::StopHandleWatcherIsolate() {
 void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                                     const char** vm_flags,
                                     int vm_flags_count) {
-  // TODO(zra): If runDartScript can be called from multiple threads
-  // concurrently, then initialized_ will need to be protected by a lock.
+  base::AutoLock al(lock_);
   if (initialized_) {
     return;
   }
@@ -633,59 +692,10 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
     return false;
   }
 
+  RunIsolate(isolate, config);
+
+  // Cleanup.
   Dart_EnterIsolate(isolate);
-  Dart_Handle result;
-  Dart_EnterScope();
-
-  // Load the root library into the builtin library so that main can be found.
-  Dart_Handle builtin_lib =
-      Builtin::GetLibrary(Builtin::kBuiltinLibrary);
-  DART_CHECK_VALID(builtin_lib);
-  Dart_Handle root_lib = Dart_RootLibrary();
-  DART_CHECK_VALID(root_lib);
-  result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
-  DART_CHECK_VALID(result);
-
-  if (config.compile_all) {
-    result = Dart_CompileAll();
-    DART_CHECK_VALID(result);
-  }
-
-  Dart_Handle main_closure = Dart_Invoke(
-      builtin_lib,
-      Dart_NewStringFromCString("_getMainClosure"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(main_closure);
-
-  // Call _startIsolate in the isolate library to enable dispatching the
-  // initial startup message.
-  const intptr_t kNumIsolateArgs = 2;
-  Dart_Handle isolate_args[kNumIsolateArgs];
-  isolate_args[0] = main_closure;     // entryPoint
-  isolate_args[1] = Dart_NewList(2);  // args
-  DART_CHECK_VALID(isolate_args[1]);
-
-  Dart_Handle script_uri = Dart_NewStringFromUTF8(
-      reinterpret_cast<const uint8_t*>(config.script_uri.data()),
-      config.script_uri.length());
-  Dart_ListSetAt(isolate_args[1], 0, Dart_NewInteger(config.handle));
-  Dart_ListSetAt(isolate_args[1], 1, script_uri);
-
-  Dart_Handle isolate_lib =
-      Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));
-  DART_CHECK_VALID(isolate_lib);
-
-  result = Dart_Invoke(isolate_lib,
-                       Dart_NewStringFromCString("_startMainIsolate"),
-                       kNumIsolateArgs,
-                       isolate_args);
-  DART_CHECK_VALID(result);
-
-  result = Dart_RunLoop();
-  DART_CHECK_VALID(result);
-
-  Dart_ExitScope();
   Dart_ShutdownIsolate();
   Dart_Cleanup();
   return true;
@@ -715,65 +725,20 @@ bool DartController::RunDartScript(const DartControllerConfig& config) {
     return false;
   }
 
+  RunIsolate(isolate, config);
+
+  // Cleanup.
   Dart_EnterIsolate(isolate);
-  Dart_Handle result;
-  Dart_EnterScope();
-
-  // Load the root library into the builtin library so that main can be found.
-  Dart_Handle builtin_lib =
-      Builtin::GetLibrary(Builtin::kBuiltinLibrary);
-  DART_CHECK_VALID(builtin_lib);
-  Dart_Handle root_lib = Dart_RootLibrary();
-  DART_CHECK_VALID(root_lib);
-  result = Dart_LibraryImportLibrary(builtin_lib, root_lib, Dart_Null());
-  DART_CHECK_VALID(result);
-
-  if (config.compile_all) {
-    result = Dart_CompileAll();
-    DART_CHECK_VALID(result);
-  }
-
-  Dart_Handle main_closure = Dart_Invoke(
-      builtin_lib,
-      Dart_NewStringFromCString("_getMainClosure"),
-      0,
-      nullptr);
-  DART_CHECK_VALID(main_closure);
-
-  // Call _startIsolate in the isolate library to enable dispatching the
-  // initial startup message.
-  const intptr_t kNumIsolateArgs = 2;
-  Dart_Handle isolate_args[kNumIsolateArgs];
-  isolate_args[0] = main_closure;     // entryPoint
-  isolate_args[1] = Dart_NewList(2);  // args
-  DART_CHECK_VALID(isolate_args[1]);
-
-  Dart_Handle script_uri = Dart_NewStringFromUTF8(
-      reinterpret_cast<const uint8_t*>(config.script_uri.data()),
-      config.script_uri.length());
-  Dart_ListSetAt(isolate_args[1], 0, Dart_NewInteger(config.handle));
-  Dart_ListSetAt(isolate_args[1], 1, script_uri);
-
-  Dart_Handle isolate_lib =
-      Dart_LookupLibrary(Dart_NewStringFromCString(kIsolateLibURL));
-  DART_CHECK_VALID(isolate_lib);
-
-  result = Dart_Invoke(isolate_lib,
-                       Dart_NewStringFromCString("_startMainIsolate"),
-                       kNumIsolateArgs,
-                       isolate_args);
-  DART_CHECK_VALID(result);
-
-  // Run main until completion.
-  result = Dart_RunLoop();
-  ReportScriptError(result);
-
-  Dart_ExitScope();
   Dart_ShutdownIsolate();
+
   return true;
 }
 
 void DartController::Shutdown() {
+  base::AutoLock al(lock_);
+  if (!initialized_) {
+    return;
+  }
   StopHandleWatcherIsolate();
   Dart_Cleanup();
   service_isolate_running_ = false;

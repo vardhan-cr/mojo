@@ -7,6 +7,7 @@
 
 #include <unordered_set>
 
+#include "base/synchronization/lock.h"
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/dart_state.h"
 #include "mojo/public/c/system/types.h"
@@ -26,6 +27,8 @@ struct DartControllerConfig {
         entropy(nullptr),
         vm_flags(nullptr),
         vm_flags_count(0),
+        script_flags(nullptr),
+        script_flags_count(0),
         handle(MOJO_HANDLE_INVALID),
         compile_all(false),
         error(nullptr) {
@@ -46,6 +49,11 @@ struct DartControllerConfig {
     }
   }
 
+  void SetScriptFlags(const char** script_flags, intptr_t script_flags_count) {
+    this->script_flags = script_flags;
+    this->script_flags_count = script_flags_count;
+  }
+
   void* application_data;
   bool strict_compilation;
   std::string script_uri;
@@ -54,6 +62,8 @@ struct DartControllerConfig {
   Dart_EntropySource entropy;
   const char** vm_flags;
   int vm_flags_count;
+  const char** script_flags;
+  int script_flags_count;
   MojoHandle handle;
   bool compile_all;
   char** error;
@@ -153,6 +163,7 @@ class DartController {
                          tonic::DartLibraryProvider* library_provider);
 
   static tonic::DartLibraryProvider* library_provider_;
+  static base::Lock lock_;
   static bool initialized_;
   static bool strict_compilation_;
   static bool service_isolate_running_;
