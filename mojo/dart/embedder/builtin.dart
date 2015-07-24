@@ -91,13 +91,3 @@ _resolveScriptUri(String scriptName) {
     _print('# Script entry point: $scriptName -> $_entryPointScript');
   }
 }
-
-// TODO(zra): readSync and enumerateFiles are exposed for testing purposes only.
-// Eventually, there will be different builtin libraries for testing and
-// production(i.e. the content handler). In the content handler's builtin
-// library, File IO capabilities will be removed.
-// This uses the synchronous base::ReadFileToString exposed by Mojo.
-List<int> readSync(String uri) native "Builtin_ReadSync";
-
-// This uses base::FileEnumerator.
-List<String> enumerateFiles(String path) native "Builtin_EnumerateFiles";

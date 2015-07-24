@@ -29,8 +29,6 @@ namespace dart {
 #define BUILTIN_NATIVE_LIST(V)                                                 \
   V(Crypto_GetRandomBytes, 1)                                                  \
   V(Logger_PrintString, 1)                                                     \
-  V(Builtin_ReadSync, 1)                                                       \
-  V(Builtin_EnumerateFiles, 1)                                                 \
 
 BUILTIN_NATIVE_LIST(DECLARE_FUNCTION);
 
@@ -95,84 +93,6 @@ void Logger_PrintString(Dart_NativeArguments args) {
 #endif
   }
   fflush(stdout);
-}
-
-void Builtin_ReadSync(Dart_NativeArguments args) {
-  intptr_t chars_length = 0;
-  uint8_t* chars = nullptr;
-  Dart_Handle file_uri = Dart_GetNativeArgument(args, 0);
-  if (!Dart_IsString(file_uri)) {
-    Dart_PropagateError(file_uri);
-  }
-
-  intptr_t file_uri_length = 0;
-  Dart_Handle result = Dart_StringLength(file_uri, &file_uri_length);
-
-  result = Dart_StringToUTF8(file_uri, &chars, &chars_length);
-  if (Dart_IsError(result)) {
-    Dart_PropagateError(result);
-  }
-  chars[file_uri_length] = '\0';
-
-  base::FilePath path(base::FilePath::FromUTF8Unsafe(
-      std::string(reinterpret_cast<char*>(chars))));
-
-  std::string source;
-  if (ReadFileToString(path, &source)) {
-    Dart_Handle data =
-        Dart_NewTypedData(Dart_TypedData_kUint8, source.length());
-    char* source_chars = const_cast<char*>(source.c_str());
-    Dart_ListSetAsBytes(data, 0, reinterpret_cast<uint8_t*>(source_chars),
-                        source.length());
-    Dart_SetReturnValue(args, data);
-    return;
-  }
-  LOG(ERROR) << "Failed to read path: " << chars;
-  Dart_SetReturnValue(args, Dart_Null());
-}
-
-void Builtin_EnumerateFiles(Dart_NativeArguments args) {
-  intptr_t chars_length = 0;
-  uint8_t* chars = nullptr;
-  Dart_Handle path = Dart_GetNativeArgument(args, 0);
-  if (!Dart_IsString(path)) {
-    Dart_PropagateError(path);
-  }
-
-  intptr_t path_length = 0;
-  Dart_Handle result = Dart_StringLength(path, &path_length);
-  if (Dart_IsError(result)) {
-    Dart_PropagateError(result);
-  }
-
-  result = Dart_StringToUTF8(path, &chars, &chars_length);
-  if (Dart_IsError(result)) {
-    Dart_PropagateError(result);
-  }
-
-  chars[path_length] = '\0';
-  base::FilePath dir_path(base::FilePath::FromUTF8Unsafe(
-      std::string(reinterpret_cast<char*>(chars))));
-
-  std::vector<std::string> entries;
-  base::FileEnumerator enumerator(dir_path, false, base::FileEnumerator::FILES);
-  while (true) {
-    base::FilePath file_path = enumerator.Next();
-    std::string file_path_string = file_path.AsUTF8Unsafe();
-    if (file_path_string == "") {
-      break;
-    }
-    entries.push_back(file_path_string);
-  }
-
-  Dart_Handle list = Dart_NewList(entries.size());
-  for (uintptr_t i = 0; i < entries.size(); i++) {
-    Dart_Handle entry = Dart_NewStringFromUTF8(
-        reinterpret_cast<const uint8_t*>(entries[i].data()),
-        entries[i].length());
-    Dart_ListSetAt(list, i, entry);
-  }
-  Dart_SetReturnValue(args, list);
 }
 
 static bool GetInt64Value(Dart_Handle value_obj, int64_t* value) {
