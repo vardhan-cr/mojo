@@ -22,6 +22,12 @@
 
 namespace dart {
 
+static bool IsDartZip(std::string url) {
+  // If the url doesn't end with ".dart" we assume it is a zipped up
+  // dart application.
+  return !EndsWith(url, ".dart", false);
+}
+
 class DartContentHandlerApp;
 
 class DartContentHandler : public mojo::ContentHandlerFactory::ManagedDelegate {
@@ -143,7 +149,11 @@ DartContentHandler::CreateApplication(
     mojo::InterfaceRequest<mojo::Application> application_request,
     mojo::URLResponsePtr response) {
   base::FilePath application_dir;
-  {
+  std::string url = response->url.get();
+  if (IsDartZip(response->url.get())) {
+    // Loading a .dartzip:
+    // 1) Extract the .dartzip
+    // 2) Launch from temporary directory (|application_dir|).
     handler_task_runner_->PostTask(
         FROM_HERE,
         base::Bind(
@@ -154,10 +164,13 @@ DartContentHandler::CreateApplication(
                 base::MessageLoop::current()->task_runner(), FROM_HERE,
                 base::MessageLoop::QuitWhenIdleClosure())));
     base::RunLoop().Run();
+    return make_scoped_ptr(
+        new DartApp(application_request.Pass(), application_dir, strict_));
+  } else {
+    // Loading a raw .dart file pointed at by |url|.
+    return make_scoped_ptr(
+        new DartApp(application_request.Pass(), url, strict_));
   }
-
-  return make_scoped_ptr(
-      new DartApp(application_request.Pass(), application_dir, strict_));
 }
 
 }  // namespace dart

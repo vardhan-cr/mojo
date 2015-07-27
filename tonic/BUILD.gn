@@ -37,6 +37,8 @@ source_set("tonic") {
     "dart_library_provider.h",
     "dart_library_provider_files.cc",
     "dart_library_provider_files.h",
+    "dart_library_provider_network.cc",
+    "dart_library_provider_network.h",
     "dart_persistent_value.cc",
     "dart_persistent_value.h",
     "dart_snapshot_loader.cc",

@@ -159,6 +159,12 @@ def GetTestList(config, verbose_count=0):
               "--build-dir=" + build_dir,
               "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
 
+  AddEntry("Dart HTTP Load test",
+         ["python",
+          os.path.join("mojo", "dart", "http_load_test", "runner.py"),
+          "--build-dir=" + build_dir,
+          "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
+
   # mojo tools unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "tools"):
     AddEntry("Mojo tools unit tests",

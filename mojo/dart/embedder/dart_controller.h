@@ -31,7 +31,8 @@ struct DartControllerConfig {
         script_flags_count(0),
         handle(MOJO_HANDLE_INVALID),
         compile_all(false),
-        error(nullptr) {
+        error(nullptr),
+        use_network_loader(false) {
   }
 
   void SetVmFlags(const char** vm_flags, intptr_t vm_flags_count) {
@@ -67,6 +68,7 @@ struct DartControllerConfig {
   MojoHandle handle;
   bool compile_all;
   char** error;
+  bool use_network_loader;
 };
 
 // The DartController may need to request for services to be connected
@@ -147,7 +149,8 @@ class DartController {
                                           IsolateCallbacks callbacks,
                                           const std::string& script_uri,
                                           const std::string& package_root,
-                                          char** error);
+                                          char** error,
+                                          bool use_network_loader);
 
   static void InitVmIfNeeded(Dart_EntropySource entropy,
                              const char** arguments,

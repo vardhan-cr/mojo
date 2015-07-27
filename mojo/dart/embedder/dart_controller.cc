@@ -26,6 +26,7 @@
 #include "tonic/dart_library_loader.h"
 #include "tonic/dart_library_provider.h"
 #include "tonic/dart_library_provider_files.h"
+#include "tonic/dart_library_provider_network.h"
 
 namespace mojo {
 namespace dart {
@@ -263,7 +264,8 @@ Dart_Isolate DartController::CreateIsolateHelper(
     IsolateCallbacks callbacks,
     const std::string& script_uri,
     const std::string& package_root,
-    char** error) {
+    char** error,
+    bool use_network_loader) {
   auto isolate_data = new MojoDartState(dart_app,
                                         strict_compilation,
                                         callbacks,
@@ -276,14 +278,20 @@ Dart_Isolate DartController::CreateIsolateHelper(
     delete isolate_data;
     return nullptr;
   }
-  isolate_data->SetIsolate(isolate);
   Dart_ExitIsolate();
+
+  isolate_data->SetIsolate(isolate);
+  if (service_connector_ != nullptr) {
+    // This is not supported in the unit test harness.
+    isolate_data->BindNetworkService(
+        service_connector_->ConnectToService(
+            DartControllerServiceConnector::kNetworkServiceId));
+  }
 
   // Setup isolate and load script.
   {
     tonic::DartIsolateScope isolate_scope(isolate);
     tonic::DartApiScope api_scope;
-
     // Setup loader.
     const char* package_root_str = nullptr;
     if (package_root.empty()) {
@@ -291,8 +299,15 @@ Dart_Isolate DartController::CreateIsolateHelper(
     } else {
       package_root_str = package_root.c_str();
     }
-    isolate_data->set_library_provider(
-        new tonic::DartLibraryProviderFiles(base::FilePath(package_root_str)));
+    if (use_network_loader) {
+      mojo::NetworkService* network_service = isolate_data->network_service();
+      isolate_data->set_library_provider(
+          new tonic::DartLibraryProviderNetwork(network_service));
+    } else {
+      isolate_data->set_library_provider(
+          new tonic::DartLibraryProviderFiles(
+              base::FilePath(package_root_str)));
+    }
     Dart_Handle result = Dart_SetLibraryTagHandler(LibraryTagHandler);
     DART_CHECK_VALID(result);
     // Toggle checked mode.
@@ -383,6 +398,8 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
   // Inherit parameters from parent isolate (if any).
   void* dart_app = nullptr;
   bool strict_compilation = true;
+  // TODO(johnmccutchan): Use parent's setting?
+  bool use_network_loader = false;
   IsolateCallbacks callbacks;
   if (parent_isolate_data != nullptr) {
     dart_app = parent_isolate_data->application_data();
@@ -394,7 +411,8 @@ Dart_Isolate DartController::IsolateCreateCallback(const char* script_uri,
                              callbacks,
                              script_uri_string,
                              package_root_string,
-                             error);
+                             error,
+                             use_network_loader);
 }
 
 void DartController::IsolateShutdownCallback(void* callback_data) {
@@ -516,7 +534,7 @@ void DartController::StopHandleWatcherIsolate() {
   IsolateCallbacks callbacks;
   char* error;
   Dart_Isolate shutdown_isolate = CreateIsolateHelper(
-      nullptr, false, callbacks, "stop-handle-watcher", "", &error);
+      nullptr, false, callbacks, "stop-handle-watcher", "", &error, false);
   CHECK(shutdown_isolate);
 
   Dart_EnterIsolate(shutdown_isolate);
@@ -687,7 +705,8 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
                                              config.callbacks,
                                              config.script_uri,
                                              config.package_root,
-                                             config.error);
+                                             config.error,
+                                             config.use_network_loader);
   if (isolate == nullptr) {
     return false;
   }
@@ -718,9 +737,13 @@ bool DartController::Initialize(
 bool DartController::RunDartScript(const DartControllerConfig& config) {
   CHECK(service_isolate_running_);
   const bool strict = strict_compilation_ || config.strict_compilation;
-  Dart_Isolate isolate = CreateIsolateHelper(
-      config.application_data, strict, config.callbacks,
-      config.script_uri, config.package_root, config.error);
+  Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
+                                             strict,
+                                             config.callbacks,
+                                             config.script_uri,
+                                             config.package_root,
+                                             config.error,
+                                             config.use_network_loader);
   if (isolate == nullptr) {
     return false;
   }

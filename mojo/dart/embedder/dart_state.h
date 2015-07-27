@@ -11,6 +11,8 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "mojo/public/c/system/types.h"
+#include "mojo/public/cpp/system/message_pipe.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "tonic/dart_library_provider.h"
 #include "tonic/dart_state.h"
 
@@ -59,6 +61,26 @@ class MojoDartState : public tonic::DartState {
     DCHECK(library_provider_.get() == library_provider);
   }
 
+  // Takes ownership of |raw_handle|.
+  void BindNetworkService(MojoHandle raw_handle) {
+    if (raw_handle == MOJO_HANDLE_INVALID) {
+      return;
+    }
+    DCHECK(!network_service_.is_bound());
+    MessagePipeHandle handle(raw_handle);
+    ScopedMessagePipeHandle message_pipe(handle);
+    InterfacePtrInfo<mojo::NetworkService> interface_info(message_pipe.Pass(),
+                                                          0);
+    network_service_.Bind(interface_info.Pass());
+    DCHECK(network_service_.is_bound());
+  }
+
+  mojo::NetworkService* network_service() {
+    // Should only be called after |BindNetworkService|.
+    DCHECK(network_service_.is_bound());
+    return network_service_.get();
+  }
+
   tonic::DartLibraryProvider* library_provider() const {
     return library_provider_.get();
   }
@@ -83,6 +105,7 @@ class MojoDartState : public tonic::DartState {
   std::string package_root_;
   std::set<MojoHandle> unclosed_handles_;
   std::unique_ptr<tonic::DartLibraryProvider> library_provider_;
+  mojo::NetworkServicePtr network_service_;
 };
 
 }  // namespace dart
