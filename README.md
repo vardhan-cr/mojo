@@ -29,7 +29,7 @@ $ ./build/install-build-deps.sh
 $ mojo/tools/mojob.py gn
 ```
 
-The "fetch mojo" command does the following:
+The `fetch mojo` command does the following:
 - creates a directory called 'src' under your checkout directory
 - clones the repository using git clone
 - clones dependencies with gclient sync
