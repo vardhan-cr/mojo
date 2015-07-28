@@ -31,6 +31,11 @@ The program may use the |target_os| global that will be any of ['android',
 TODO(vtl|msw): Add a way of specifying data dependencies.
 """
 
+_DESCRIPTION = """Runner for Mojo application tests.
+
+Any arguments not recognized by the script will be passed on as shell arguments.
+"""
+
 import argparse
 import sys
 
@@ -39,17 +44,16 @@ from devtoolslib import shell_arguments
 
 
 def main():
-  parser = argparse.ArgumentParser(description="Test runner for Mojo "
-                                   "application tests.")
+  parser = argparse.ArgumentParser(description=_DESCRIPTION)
   parser.add_argument("test_list_file", type=file,
                       help="a file listing apptests to run")
 
   # Common shell configuration arguments.
   shell_arguments.AddShellArguments(parser)
-  script_args = parser.parse_args()
+  script_args, shell_args = parser.parse_known_args()
 
   try:
-    shell, shell_args = shell_arguments.ConfigureShell(script_args, [])
+    shell, shell_args = shell_arguments.ConfigureShell(script_args, shell_args)
   except shell_arguments.ShellConfigurationException as e:
     print e
     return 1
