@@ -90,18 +90,18 @@ def main():
   if mojo_paths:
     if script_args.android and not script_args.adb_path:
       script_args.adb_path = mojo_paths['adb']
-    if script_args.android and not script_args.origin_path:
-      script_args.origin_path = mojo_paths['build']
+    if script_args.android and not script_args.origin:
+      script_args.origin = mojo_paths['build']
     if not script_args.shell_path:
       script_args.shell_path = mojo_paths['shell']
 
     if script_args.verbose:
       print 'Running within a Chromium-style checkout.'
-      print ' - using the locally built shell at ' + script_args.shell_path
-      if script_args.origin_path:
-        print ' - using the local origin of ' + script_args.origin_path
+      print ' - using the locally built shell at: ' + script_args.shell_path
+      if script_args.origin:
+        print ' - using the origin:  ' + script_args.origin
       if script_args.android:
-        print ' - using adb path of ' + script_args.adb_path
+        print ' - using the adb path: ' + script_args.adb_path
   elif script_args.verbose:
     print 'Running outside a Chromium-style checkout.'
 

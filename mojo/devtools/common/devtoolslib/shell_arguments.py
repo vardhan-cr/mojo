@@ -21,6 +21,10 @@ _MAPPINGS_BASE_PORT = 31841
 _SKY_SERVER_PORT = 9998
 
 
+def _IsWebUrl(dest):
+  return True if urlparse.urlparse(dest).scheme else False
+
+
 def _HostLocalUrlDestination(shell, dest_file, port):
   """Starts a local server to host |dest_file|.
 
@@ -52,7 +56,7 @@ def _Rewrite(mapping, host_destination_functon, shell, port):
   if len(parts) != 2:
     raise ValueError('each mapping value should be in format '
                      '"<url>=<url-or-local-path>"')
-  if urlparse.urlparse(parts[1])[0]:
+  if _IsWebUrl(parts[1]):
     # The destination is a web url, do nothing.
     return mapping
 
@@ -188,13 +192,12 @@ def AddShellArguments(parser):
   # Arguments indicating paths to binaries and tools.
   parser.add_argument('--adb-path', help='Path of the adb binary.')
   parser.add_argument('--shell-path', help='Path of the Mojo shell binary.')
-  parser.add_argument('--origin-path', help='Path of a directory to be set as '
-                      'the origin for mojo: urls')
 
   # Arguments configuring the shell run.
   parser.add_argument('--android', help='Run on Android',
                       action='store_true')
-  parser.add_argument('--origin', help='Origin for mojo: URLs.')
+  parser.add_argument('--origin', help='Origin for mojo: URLs. This can be a '
+                      'web url or a local directory path.')
   parser.add_argument('--map-url', action='append',
                       help='Define a mapping for a url in the format '
                       '<url>=<url-or-local-file-path>')
@@ -265,9 +268,10 @@ def ConfigureShell(config_args, shell_args):
       shell_args.append('--args-for=mojo:native_viewport_service --use-osmesa')
 
   if config_args.origin:
-    shell_args.append('--origin=' + config_args.origin)
-  elif config_args.origin_path:
-    shell_args.extend(ConfigureLocalOrigin(shell, config_args.origin_path,
-                                           fixed_port=True))
+    if _IsWebUrl(config_args.origin):
+      shell_args.append('--origin=' + config_args.origin)
+    else:
+      shell_args.extend(ConfigureLocalOrigin(shell, config_args.origin,
+                                             fixed_port=True))
 
   return shell, shell_args

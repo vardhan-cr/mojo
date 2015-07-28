@@ -43,7 +43,7 @@ def main():
   if config.target_os == Config.OS_ANDROID:
     command_line.append("--android")
     command_line.append("--adb-path=" + paths.adb_path)
-    command_line.append("--origin-path=" + paths.build_dir)
+    command_line.append("--origin=" + paths.build_dir)
 
   command_line.append("--shell-path=" + paths.target_mojo_shell_path)
   if args.verbose_count:
