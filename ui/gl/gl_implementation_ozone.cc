@@ -42,13 +42,17 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
 
   switch (implementation) {
     case kGLImplementationOSMesaGL:
+      LOG(INFO) << "InitializeStaticGLBindings A";
       return InitializeStaticGLBindingsOSMesaGL();
     case kGLImplementationEGLGLES2:
+      LOG(INFO) << "InitializeStaticGLBindings B";
       if (!ui::OzonePlatform::GetInstance()
                ->GetSurfaceFactoryOzone()
                ->LoadEGLGLES2Bindings(base::Bind(&AddGLNativeLibrary),
-                                      base::Bind(&SetGLGetProcAddressProc)))
+                                      base::Bind(&SetGLGetProcAddressProc))) {
+        LOG(INFO) << "InitializeStaticGLBindings C";
         return false;
+      }
       SetGLImplementation(kGLImplementationEGLGLES2);
       InitializeStaticGLBindingsGL();
       InitializeStaticGLBindingsEGL();
@@ -59,16 +63,19 @@ bool InitializeStaticGLBindings(GLImplementation implementation) {
       ::gfx::g_driver_gl.fn.glDepthRangeFn = MarshalDepthRangeToDepthRangef;
       break;
     case kGLImplementationMockGL: {
+      LOG(INFO) << "InitializeStaticGLBindings D";
       SetGLImplementation(kGLImplementationMockGL);
       InitializeStaticGLBindingsGL();
       break;
     }
     default:
+      LOG(INFO) << "InitializeStaticGLBindings E";
       NOTIMPLEMENTED()
           << "Unsupported GL type for Ozone surface implementation";
       return false;
   }
 
+  LOG(INFO) << "InitializeStaticGLBindings returning true";
   return true;
 }
 

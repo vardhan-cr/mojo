@@ -16,15 +16,14 @@
 #include "services/native_viewport/platform_viewport_headless.h"
 #include "ui/events/event.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/gl/gl_implementation.h"
 
 namespace native_viewport {
 
 NativeViewportImpl::NativeViewportImpl(
     bool is_headless,
-    const scoped_refptr<gles2::GpuState>& gpu_state,
     mojo::InterfaceRequest<mojo::NativeViewport> request)
     : is_headless_(is_headless),
-      context_provider_(gpu_state),
       sent_metrics_(false),
       metrics_(mojo::ViewportMetrics::New()),
       binding_(this, request.Pass()),
@@ -37,22 +36,43 @@ NativeViewportImpl::~NativeViewportImpl() {
   platform_viewport_.reset();
 }
 
+void NativeViewportImpl::SetGpuState(const scoped_refptr<gles2::GpuState>& gpu_state) {
+  context_provider_.reset(new OnscreenContextProvider(gpu_state));
+  context_provider_->set_surface_configuration(requested_configuration_);
+  
+  InitPlatformViewport();
+}
+
 void NativeViewportImpl::Create(
     mojo::SizePtr size,
     mojo::SurfaceConfigurationPtr requested_configuration,
     const CreateCallback& callback) {
-  if (requested_configuration == nullptr)
-    requested_configuration = mojo::SurfaceConfiguration::New();
-
+  LOG(INFO) << "NativeViewportImpl::Create";
+  
   create_callback_ = callback;
   metrics_->size = size.Clone();
-  context_provider_.set_surface_configuration(
-      requested_configuration.To<gfx::SurfaceConfiguration>());
+
+  requested_configuration_ = (requested_configuration == nullptr) ?
+    gfx::SurfaceConfiguration() : requested_configuration.To<gfx::SurfaceConfiguration>();
+
+  InitPlatformViewport();
+}
+
+void NativeViewportImpl::InitPlatformViewport() {
+  if (platform_viewport_)
+    return;
+  
+  if (!context_provider_.get())
+    return;
+
+  LOG(INFO) << "Initializing platform viewport";
+  
   if (is_headless_)
     platform_viewport_ = PlatformViewportHeadless::Create(this);
   else
     platform_viewport_ = PlatformViewport::Create(this);
-  platform_viewport_->Init(gfx::Rect(size.To<gfx::Size>()));
+  
+  platform_viewport_->Init(gfx::Rect(metrics_->size.To<gfx::Size>()));
 }
 
 void NativeViewportImpl::RequestMetrics(
@@ -84,7 +104,8 @@ void NativeViewportImpl::SetSize(mojo::SizePtr size) {
 
 void NativeViewportImpl::GetContextProvider(
     mojo::InterfaceRequest<mojo::ContextProvider> request) {
-  context_provider_.Bind(request.Pass());
+  DCHECK(context_provider_);
+  context_provider_->Bind(request.Pass());
 }
 
 void NativeViewportImpl::SetEventDispatcher(
@@ -108,7 +129,8 @@ void NativeViewportImpl::OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
 
 void NativeViewportImpl::OnAcceleratedWidgetAvailable(
     gfx::AcceleratedWidget widget) {
-  context_provider_.SetAcceleratedWidget(widget);
+  DCHECK(context_provider_);
+  context_provider_->SetAcceleratedWidget(widget);
   // TODO: The metrics here might not match the actual window size on android
   // where we don't know the actual size until the first OnMetricsChanged call.
   create_callback_.Run(metrics_.Clone());
@@ -117,7 +139,7 @@ void NativeViewportImpl::OnAcceleratedWidgetAvailable(
 }
 
 void NativeViewportImpl::OnAcceleratedWidgetDestroyed() {
-  context_provider_.SetAcceleratedWidget(gfx::kNullAcceleratedWidget);
+  context_provider_->SetAcceleratedWidget(gfx::kNullAcceleratedWidget);
 }
 
 bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {

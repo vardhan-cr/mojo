@@ -1,0 +1,39 @@
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+module mojo;
+
+import "geometry/public/interfaces/geometry.mojom";
+
+struct DisplayMode {
+  Size size;
+  bool is_interlaced;
+  float refresh_rate;
+};
+
+struct DisplaySnapshot {
+  int64 display_id;
+  Point origin;
+  Size physical_size;
+  int32 type;
+  bool is_aspect_preserving_scaling;
+  bool has_overscan;
+  string display_name;
+  array<DisplayMode> modes;
+  bool has_current_mode;
+  DisplayMode current_mode;
+  bool has_native_mode;
+  DisplayMode native_mode;
+  int64 product_id;
+  string string_representation;
+};
+
+interface OzoneDrmGpu {
+  AddGraphicsDevice(string file_path, int32 file_descriptor);
+  CreateWindow(int64 widget);
+  WindowBoundsChanged(int64 widget, Rect bounds);
+
+  RefreshNativeDisplays();
+  ConfigureNativeDisplay(int64 id, DisplayMode mode, Point originhost);
+};

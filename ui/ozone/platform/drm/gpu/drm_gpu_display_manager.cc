@@ -42,8 +42,16 @@ class DisplayComparator {
 bool FindMatchingMode(const std::vector<drmModeModeInfo> modes,
                       const DisplayMode_Params& mode_params,
                       drmModeModeInfo* mode) {
+  LOG(INFO) << "FindMatchingMode";
   for (const drmModeModeInfo& m : modes) {
     DisplayMode_Params params = CreateDisplayModeParams(m);
+    LOG(INFO) << "FindMatchingMode checking  " << params.size.width() << " " << params.size.height() << " " << params.refresh_rate << " " << params.is_interlaced;
+    LOG(INFO) << "FindMatchingMode comparing  " << mode_params.size.width() << " " << mode_params.size.height() << " " << mode_params.refresh_rate << " " << mode_params.is_interlaced;
+    if (mode_params.refresh_rate != params.refresh_rate) {
+      LOG(INFO) << "refresh rate diff";
+      params.refresh_rate = mode_params.refresh_rate;
+    }
+    
     if (mode_params.size == params.size &&
         mode_params.refresh_rate == params.refresh_rate &&
         mode_params.is_interlaced == params.is_interlaced) {

@@ -11,6 +11,7 @@ group("services") {
     "//services/dart",
     "//services/debugger",
     "//services/device_info",
+    #"//services/display",
     "//services/fake_surfaces",
     "//services/files",
     "//services/gles2:lib",

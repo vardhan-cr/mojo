@@ -39,8 +39,8 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
     SetEventDispatcher();
 
     mojo::SizePtr size(mojo::Size::New());
-    size->width = 800;
-    size->height = 600;
+    size->width = 2560;//800;
+    size->height = 1700;//600;
 
     auto requested_configuration = mojo::SurfaceConfiguration::New();
     requested_configuration->depth_bits = 16;
@@ -48,15 +48,19 @@ class SpinningCubeApp : public mojo::ApplicationDelegate,
     viewport_->Create(
         size.Clone(),
         requested_configuration.Pass(),
-        base::Bind(&SpinningCubeApp::OnMetricsChanged, base::Unretained(this)));
-    viewport_->Show();
-    mojo::ContextProviderPtr onscreen_context_provider;
-    viewport_->GetContextProvider(GetProxy(&onscreen_context_provider));
-
-    gles2_client_.reset(new GLES2ClientImpl(onscreen_context_provider.Pass()));
-    gles2_client_->SetSize(*size);
+        base::Bind(&SpinningCubeApp::OnViewportCreated, base::Unretained(this)));
   }
 
+  void OnViewportCreated(mojo::ViewportMetricsPtr metrics) {
+    viewport_->Show();
+
+    mojo::ContextProviderPtr onscreen_context_provider;
+    viewport_->GetContextProvider(GetProxy(&onscreen_context_provider));
+    gles2_client_.reset(new GLES2ClientImpl(onscreen_context_provider.Pass()));
+    
+    OnMetricsChanged(metrics.Clone());
+  }
+  
   void OnMetricsChanged(mojo::ViewportMetricsPtr metrics) {
     assert(metrics);
     gles2_client_->SetSize(*metrics->size);

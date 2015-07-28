@@ -46,6 +46,7 @@ class PlatformViewportOzone : public PlatformViewport,
  private:
   // Overridden from PlatformViewport:
   void Init(const gfx::Rect& bounds) override {
+    LOG(INFO) << "Creating new ozone platform window";
     platform_window_ =
         ui::OzonePlatform::GetInstance()->CreatePlatformWindow(this, bounds);
 

@@ -75,13 +75,16 @@ GLSurfaceOzoneEGL::GLSurfaceOzoneEGL(
                              requested_configuration),
       ozone_surface_(ozone_surface.Pass()),
       widget_(widget) {
+  LOG(INFO) << "GLSUrfaceOzoneEGL()";
 }
 
 bool GLSurfaceOzoneEGL::Initialize() {
+  LOG(INFO) << "GLSUrfaceOzoneEGL::Initialize";
   return Initialize(ozone_surface_->CreateVSyncProvider());
 }
 
 bool GLSurfaceOzoneEGL::Resize(const gfx::Size& size) {
+  LOG(INFO) << "Resizing from " << GetSize().width() << "x" << GetSize().height() << " to " << size.width() << "x" << size.height();
   if (!ozone_surface_->ResizeNativeWindow(size)) {
     if (!ReinitializeNativeSurface() ||
         !ozone_surface_->ResizeNativeWindow(size))
@@ -615,10 +618,12 @@ bool GLSurfaceOzoneSurfacelessSurfaceImpl::CreatePixmaps() {
 
 }  // namespace
 
-// static
+// statice
 bool GLSurface::InitializeOneOffInternal() {
+  LOG(INFO) << "gl_surface_ozoen InitializeOneOffInternal";
   switch (GetGLImplementation()) {
     case kGLImplementationEGLGLES2:
+      LOG(INFO) << "GlSurface::InitializeOneOffInternal A";
       if (!GLSurfaceEGL::InitializeOneOff()) {
         LOG(ERROR) << "GLSurfaceEGL::InitializeOneOff failed.";
         return false;
@@ -629,6 +634,7 @@ bool GLSurface::InitializeOneOffInternal() {
     case kGLImplementationMockGL:
       return true;
     default:
+      LOG(INFO) << "GlSurface::InitializeOneOffInternal B";
       return false;
   }
 }
@@ -664,6 +670,7 @@ scoped_refptr<GLSurface> GLSurface::CreateSurfacelessViewGLSurface(
 scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
     gfx::AcceleratedWidget window,
     const gfx::SurfaceConfiguration& requested_configuration) {
+  LOG(INFO) << "GLSurface::CreateViewGLSurface";
   if (GetGLImplementation() == kGLImplementationOSMesaGL) {
     scoped_refptr<GLSurface> surface(
       new GLSurfaceOSMesaHeadless(requested_configuration));
@@ -695,6 +702,7 @@ scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
       if (!surface_ozone)
         return NULL;
 
+      LOG(INFO) << "Creating new GLSurfaceOzoneEGL";
       surface = new GLSurfaceOzoneEGL(
         surface_ozone.Pass(), window, requested_configuration);
     }
@@ -713,6 +721,7 @@ scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
 scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
     const gfx::Size& size,
     const gfx::SurfaceConfiguration& requested_configuration) {
+  LOG(INFO) << "GLSUrface::CreateOffscreenGLSurface";
   switch (GetGLImplementation()) {
     case kGLImplementationOSMesaGL: {
       scoped_refptr<GLSurface> surface(

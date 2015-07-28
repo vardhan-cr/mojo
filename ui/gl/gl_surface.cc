@@ -77,16 +77,18 @@ bool GLSurface::InitializeOneOffImplementation(GLImplementation impl,
                                                bool disable_gl_drawing) {
   bool initialized =
       InitializeStaticGLBindings(impl) && InitializeOneOffInternal();
+  LOG(INFO) << "initialized A " << initialized;
   if (!initialized && fallback_to_osmesa) {
     ClearGLBindings();
     initialized = InitializeStaticGLBindings(kGLImplementationOSMesaGL) &&
                   InitializeOneOffInternal();
+    LOG(INFO) << "initialized B " << initialized;    
   }
   if (!initialized)
     ClearGLBindings();
 
   if (initialized) {
-    DVLOG(1) << "Using "
+    LOG(INFO) << "Using "
              << GetGLImplementationName(GetGLImplementation())
              << " GL implementation.";
     if (gpu_service_logging)
@@ -94,6 +96,7 @@ bool GLSurface::InitializeOneOffImplementation(GLImplementation impl,
     if (disable_gl_drawing)
       InitializeNullDrawGLBindings();
   }
+  LOG(INFO) << "initialized C " << (initialized ? "TRUE" : "FALSE");
   return initialized;
 }
 

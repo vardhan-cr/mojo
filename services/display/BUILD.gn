@@ -1,0 +1,27 @@
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/config/ui.gni")
+import("//mojo/public/mojo_application.gni")
+
+mojo_native_application("display") {
+    output_name = "display_service"
+    sources = [
+      "display_main.cc",
+      "ozone_drm_host_impl.cc",
+      "ozone_drm_host_impl.h",
+    ]
+    deps = [
+      "//base",
+      "//mojo/application",
+      "//mojo/common:tracing_impl",
+      "//mojo/public/cpp/bindings:bindings",
+      "//mojo/services/ozone_drm_gpu/public/interfaces",
+      "//mojo/services/ozone_drm_host/public/interfaces",
+      "//ui/ozone",
+      # Rethink these dependencies
+      "//ui/ozone/platform/drm:drm_common",
+      "//ui/events/ozone:events_ozone_evdev",
+    ]
+}

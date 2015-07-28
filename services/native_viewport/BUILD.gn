@@ -51,20 +51,30 @@ if (is_android) {
       "//mojo/public/cpp/bindings:bindings",
       "//mojo/services/native_viewport/public/interfaces",
       "//mojo/services/native_viewport/public/cpp:args",
+      "//mojo/services/ozone_drm_gpu/public/interfaces",
+      "//mojo/services/ozone_drm_host/public/interfaces",
       "//services/gles2",
       "//ui/events",
       "//ui/events/platform",
+      "//ui/events/ozone:events_ozone_evdev",
       "//ui/gl",
+      "//ui/ozone",
     ]
   }
 }
 
 source_set("lib") {
   sources = [
+    "display_manager.cc",
+    "display_manager.h",
     "native_viewport_impl.cc",
     "native_viewport_impl.h",
     "onscreen_context_provider.cc",
     "onscreen_context_provider.h",
+    "ozone_drm_gpu_impl.cc",
+    "ozone_drm_gpu_impl.h",
+    "ozone_drm_host_impl.cc",
+    "ozone_drm_host_impl.h",
     "platform_viewport.h",
     "platform_viewport_android.cc",
     "platform_viewport_android.h",
@@ -88,16 +98,22 @@ source_set("lib") {
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/converters/native_viewport",
+    "//mojo/converters/ozone_drm_gpu",
     "//mojo/environment:chromium",
     "//services/gles2",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/native_viewport/public/interfaces",
+    "//mojo/services/ozone_drm_gpu/public/interfaces",
+    "//mojo/services/ozone_drm_host/public/interfaces",
     "//ui/events",
     "//ui/events/platform",
+    "//ui/events/ozone:events_ozone_evdev",
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/gl",
+    "//ui/ozone/platform/drm:drm_common",
     "//ui/platform_window",
+    "//ui/display/types",  
   ]
 
   if (is_android) {
