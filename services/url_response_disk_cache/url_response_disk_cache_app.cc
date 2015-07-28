@@ -8,18 +8,11 @@
 
 namespace mojo {
 
-namespace {
-
-const size_t kMaxBlockingPoolThreads = 3;
-
-}  // namespace
-
-URLResponseDiskCacheApp::URLResponseDiskCacheApp() {
+URLResponseDiskCacheApp::URLResponseDiskCacheApp(base::TaskRunner* task_runner)
+    : task_runner_(task_runner) {
 }
 
 URLResponseDiskCacheApp::~URLResponseDiskCacheApp() {
-  if (worker_pool_)
-    worker_pool_->Shutdown();
 }
 
 bool URLResponseDiskCacheApp::ConfigureIncomingConnection(
@@ -31,12 +24,8 @@ bool URLResponseDiskCacheApp::ConfigureIncomingConnection(
 void URLResponseDiskCacheApp::Create(
     ApplicationConnection* connection,
     InterfaceRequest<URLResponseDiskCache> request) {
-  if (!worker_pool_) {
-    worker_pool_ = new base::SequencedWorkerPool(kMaxBlockingPoolThreads,
-                                                 "URLResponseDiskCachePool");
-  }
   new URLResponseDiskCacheImpl(
-      worker_pool_, connection->GetRemoteApplicationURL(), request.Pass());
+      task_runner_, connection->GetRemoteApplicationURL(), request.Pass());
 }
 
 }  // namespace mojo

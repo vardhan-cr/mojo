@@ -6,6 +6,7 @@
 #define SERVICES_URL_RESPONSE_DISK_CACHE_URL_RESPONSE_DISK_CACHE_APP_H_
 
 #include "base/macros.h"
+#include "base/task_runner.h"
 #include "base/threading/sequenced_worker_pool.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -17,7 +18,7 @@ namespace mojo {
 class URLResponseDiskCacheApp : public ApplicationDelegate,
                                 public InterfaceFactory<URLResponseDiskCache> {
  public:
-  URLResponseDiskCacheApp();
+  URLResponseDiskCacheApp(base::TaskRunner* task_runner);
   ~URLResponseDiskCacheApp() override;
 
  private:
@@ -28,7 +29,7 @@ class URLResponseDiskCacheApp : public ApplicationDelegate,
   void Create(ApplicationConnection* connection,
               InterfaceRequest<URLResponseDiskCache> request) override;
 
-  scoped_refptr<base::SequencedWorkerPool> worker_pool_;
+  base::TaskRunner* task_runner_;
 
   DISALLOW_COPY_AND_ASSIGN(URLResponseDiskCacheApp);
 };

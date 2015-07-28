@@ -272,15 +272,17 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
 
   mojo_shell_child_path_ = shell_child_path;
 
+  task_runners_.reset(
+      new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
+
   application_manager()->SetLoaderForURL(
       make_scoped_ptr(new BackgroundApplicationLoader(
-          make_scoped_ptr(new URLResponseDiskCacheLoader()),
+          make_scoped_ptr(
+              new URLResponseDiskCacheLoader(task_runners_->blocking_pool())),
           "url_response_disk_cache", base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:url_response_disk_cache"));
 
   EnsureEmbedderIsInitialized();
-  task_runners_.reset(
-      new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
 
   // TODO(vtl): Probably these failures should be checked before |Init()|, and
   // this function simply shouldn't fail.

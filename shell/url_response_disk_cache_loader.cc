@@ -6,7 +6,9 @@
 
 namespace shell {
 
-URLResponseDiskCacheLoader::URLResponseDiskCacheLoader() {
+URLResponseDiskCacheLoader::URLResponseDiskCacheLoader(
+    base::TaskRunner* task_runner)
+    : url_response_disk_cache_(task_runner) {
 }
 
 URLResponseDiskCacheLoader::~URLResponseDiskCacheLoader() {

@@ -203,10 +203,10 @@ bool IsCacheEntryValid(const base::FilePath& dir,
 }  // namespace
 
 URLResponseDiskCacheImpl::URLResponseDiskCacheImpl(
-    scoped_refptr<base::SequencedWorkerPool> worker_pool,
+    base::TaskRunner* task_runner,
     const std::string& remote_application_url,
     InterfaceRequest<URLResponseDiskCache> request)
-    : worker_pool_(worker_pool), binding_(this, request.Pass()) {
+    : task_runner_(task_runner), binding_(this, request.Pass()) {
   base_directory_ = GetBaseDirectory();
   // The cached files are shared only for application of the same origin.
   if (remote_application_url != "") {
@@ -263,7 +263,7 @@ void URLResponseDiskCacheImpl::GetFileInternal(
     base::FilePath to_delete;
     CHECK(CreateTemporaryDirInDir(base_directory_, "to_delete", &to_delete));
     CHECK(Move(dir, to_delete));
-    worker_pool_->PostTask(
+    task_runner_->PostTask(
         FROM_HERE,
         base::Bind(base::IgnoreResult(&base::DeleteFile), to_delete, true));
   }
@@ -296,7 +296,7 @@ void URLResponseDiskCacheImpl::GetFileInternal(
   // Asynchronously copy the response body to the cached file. The entry is send
   // to the callback so that it is saved on disk only if the copy of the body
   // succeded.
-  common::CopyToFile(response->body.Pass(), content, worker_pool_.get(),
+  common::CopyToFile(response->body.Pass(), content, task_runner_,
                      base::Bind(&RunCallbackWithSuccess, callback, content,
                                 GetConsumerCacheDirectory(dir), entry_path,
                                 base::Passed(entry.Pass())));

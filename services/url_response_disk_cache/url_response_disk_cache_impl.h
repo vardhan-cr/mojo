@@ -7,7 +7,7 @@
 
 #include "base/files/file_path.h"
 #include "base/macros.h"
-#include "base/threading/sequenced_worker_pool.h"
+#include "base/task_runner.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 
@@ -18,7 +18,7 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
   using FilePathPairCallback =
       base::Callback<void(const base::FilePath&, const base::FilePath&)>;
 
-  URLResponseDiskCacheImpl(scoped_refptr<base::SequencedWorkerPool> worker_pool,
+  URLResponseDiskCacheImpl(base::TaskRunner* task_runner,
                            const std::string& remote_application_url,
                            InterfaceRequest<URLResponseDiskCache> request);
   ~URLResponseDiskCacheImpl() override;
@@ -49,7 +49,7 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
                                    const base::FilePath& content,
                                    const base::FilePath& cache_dir);
 
-  scoped_refptr<base::SequencedWorkerPool> worker_pool_;
+  base::TaskRunner* task_runner_;
   base::FilePath base_directory_;
   StrongBinding<URLResponseDiskCache> binding_;
 
