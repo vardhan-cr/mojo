@@ -35,10 +35,9 @@ class ShellImpl;
 class ApplicationManager {
  public:
   struct Options {
-    Options() : disable_cache(false), predictable_app_filenames(false) {}
+    Options() : disable_cache(false) {}
 
     bool disable_cache;
-    bool predictable_app_filenames;
   };
 
   class Delegate {

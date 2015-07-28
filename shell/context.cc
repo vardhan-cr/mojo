@@ -65,9 +65,6 @@ ApplicationManager::Options MakeApplicationManagerOptions() {
   ApplicationManager::Options options;
   options.disable_cache = base::CommandLine::ForCurrentProcess()->HasSwitch(
       switches::kDisableCache);
-  options.predictable_app_filenames =
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kPredictableAppFilenames);
   return options;
 }
 

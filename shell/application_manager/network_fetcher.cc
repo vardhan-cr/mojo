@@ -36,14 +36,12 @@ char kArchitecture[] = "android-arm";
 
 NetworkFetcher::NetworkFetcher(
     bool disable_cache,
-    bool predictable_app_filenames,
     const GURL& url,
     mojo::URLResponseDiskCache* url_response_disk_cache,
     mojo::NetworkService* network_service,
     const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(disable_cache),
-      predictable_app_filenames_(predictable_app_filenames),
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
       network_service_(network_service),
@@ -102,66 +100,6 @@ void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,
     base::AppendToFile(map_path, map_entry.data(), map_entry.length());
 }
 
-// For remote debugging, GDB needs to be, a apriori, aware of the filename a
-// library will be loaded from. AppIds should be be both predictable and unique,
-// but any hash would work. Currently we use sha256 from crypto/secure_hash.h
-bool NetworkFetcher::ComputeAppId(const base::FilePath& path,
-                                  std::string* digest_string) {
-  scoped_ptr<crypto::SecureHash> ctx(
-      crypto::SecureHash::Create(crypto::SecureHash::SHA256));
-  base::File file(path, base::File::FLAG_OPEN | base::File::FLAG_READ);
-  if (!file.IsValid()) {
-    LOG(ERROR) << "Failed to open " << path.value() << " for computing AppId";
-    return false;
-  }
-  char buf[1024];
-  while (file.IsValid()) {
-    int bytes_read = file.ReadAtCurrentPos(buf, sizeof(buf));
-    if (bytes_read == 0)
-      break;
-    ctx->Update(buf, bytes_read);
-  }
-  if (!file.IsValid()) {
-    LOG(ERROR) << "Error reading " << path.value();
-    return false;
-  }
-  // The output is really a vector of unit8, we're cheating by using a string.
-  std::string output(crypto::kSHA256Length, 0);
-  ctx->Finish(string_as_array(&output), output.size());
-  output = base::HexEncode(output.c_str(), output.size());
-  // Using lowercase for compatiblity with sha256sum output.
-  *digest_string = base::StringToLowerASCII(output);
-  return true;
-}
-
-bool NetworkFetcher::RenameToAppId(const GURL& url,
-                                   const base::FilePath& old_path,
-                                   base::FilePath* new_path) {
-  std::string app_id;
-  if (!ComputeAppId(old_path, &app_id))
-    return false;
-
-  // Using a hash of the url as a directory to prevent a race when the same
-  // bytes are downloaded from 2 different urls. In particular, if the same
-  // application is connected to twice concurrently with different query
-  // parameters, the directory will be different, which will prevent the
-  // collision.
-  std::string dirname = base::HexEncode(
-      crypto::SHA256HashString(url.spec()).data(), crypto::kSHA256Length);
-
-  base::FilePath temp_dir;
-  base::GetTempDir(&temp_dir);
-  base::FilePath app_dir = temp_dir.Append(dirname);
-  // The directory is leaked, because it can be reused at any time if the same
-  // application is downloaded. Deleting it would be racy. This is only
-  // happening when --predictable-app-filenames is used.
-  bool result = base::CreateDirectoryAndGetError(app_dir, nullptr);
-  DCHECK(result);
-  std::string unique_name = base::StringPrintf("%s.mojo", app_id.c_str());
-  *new_path = app_dir.Append(unique_name);
-  return base::Move(old_path, *new_path);
-}
-
 void NetworkFetcher::OnFileRetrievedFromCache(
     base::Callback<void(const base::FilePath&, bool)> callback,
     mojo::Array<uint8_t> path_as_array,
@@ -170,20 +108,8 @@ void NetworkFetcher::OnFileRetrievedFromCache(
   if (success) {
     path_ = base::FilePath(std::string(
         reinterpret_cast<char*>(&path_as_array.front()), path_as_array.size()));
-    if (predictable_app_filenames_) {
-      // The copy completed, now move to $TMP/$APP_ID.mojo before the dlopen.
-      base::FilePath new_path;
-      if (RenameToAppId(url_, path_, &new_path)) {
-        if (base::PathExists(new_path)) {
-          path_ = new_path;
-          success = true;
-        }
-      }
-    }
-  }
-
-  if (success)
     RecordCacheToURLMapping(path_, url_);
+  }
 
   base::MessageLoop::current()->PostTask(FROM_HERE,
                                          base::Bind(callback, path_, success));

@@ -38,7 +38,6 @@ void Usage() {
       << " [--" << switches::kTraceStartup << "[=\"list,of,categories\"]]"
       << " [--" << switches::kTraceStartupDuration << "=<seconds>]"
       << " [--" << switches::kURLMappings << "=from1=to1,from2=to2]"
-      << " [--" << switches::kPredictableAppFilenames << "]"
       << " [--" << switches::kWaitForDebugger << "]"
       << " <mojo-app> ...\n\n"
       << "A <mojo-app> is a Mojo URL or a Mojo URL and arguments within "

@@ -20,7 +20,6 @@ namespace shell {
 class NetworkFetcher : public Fetcher {
  public:
   NetworkFetcher(bool disable_cache,
-                 bool predictable_app_filenames,
                  const GURL& url,
                  mojo::URLResponseDiskCache* url_response_disk_cache,
                  mojo::NetworkService* network_service,
@@ -49,15 +48,6 @@ class NetworkFetcher : public Fetcher {
   static void RecordCacheToURLMapping(const base::FilePath& path,
                                       const GURL& url);
 
-  // AppIds should be be both predictable and unique, but any hash would work.
-  // Currently we use sha256 from crypto/secure_hash.h
-  static bool ComputeAppId(const base::FilePath& path,
-                           std::string* digest_string);
-
-  static bool RenameToAppId(const GURL& url,
-                            const base::FilePath& old_path,
-                            base::FilePath* new_path);
-
   void OnFileRetrievedFromCache(
       base::Callback<void(const base::FilePath&, bool)> callback,
       mojo::Array<uint8_t> path_as_array,
@@ -78,7 +68,6 @@ class NetworkFetcher : public Fetcher {
   void OnLoadComplete(RequestType request_type, mojo::URLResponsePtr response);
 
   const bool disable_cache_;
-  const bool predictable_app_filenames_;
   const GURL url_;
   mojo::URLResponseDiskCache* url_response_disk_cache_;
   mojo::NetworkService* network_service_;

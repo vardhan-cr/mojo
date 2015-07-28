@@ -57,13 +57,6 @@ const char kMapOrigin[] = "map-origin";
 // url_resolver.cc for details.
 const char kOrigin[] = "origin";
 
-// If set apps downloaded are saved in with a predictable filename, to help
-// remote debugging: when gdb is used through gdbserver, it needs to be able to
-// find locally any loaded library. For this, gdb use the filename of the
-// library. When using this flag, the application are named with the sha256 of
-// their content.
-const char kPredictableAppFilenames[] = "predictable-app-filenames";
-
 // Starts tracing when the shell starts up, saving a trace file on disk after 5
 // seconds or when the shell exits.
 const char kTraceStartup[] = "trace-startup";
@@ -90,7 +83,6 @@ const char* kSwitchArray[] = {kV,
                               kHelp,
                               kMapOrigin,
                               kOrigin,
-                              kPredictableAppFilenames,
                               kTraceStartup,
                               kTraceStartupDuration,
                               kURLMappings};
