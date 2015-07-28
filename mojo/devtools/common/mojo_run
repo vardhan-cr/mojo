@@ -97,9 +97,11 @@ def main():
 
     if script_args.verbose:
       print 'Running within a Chromium-style checkout.'
-      print 'Using the locally built shell at ' + script_args.shell_path
+      print ' - using the locally built shell at ' + script_args.shell_path
       if script_args.origin_path:
-        print 'Using the local origin of ' + script_args.origin_path
+        print ' - using the local origin of ' + script_args.origin_path
+      if script_args.android:
+        print ' - using adb path of ' + script_args.adb_path
   elif script_args.verbose:
     print 'Running outside a Chromium-style checkout.'
 

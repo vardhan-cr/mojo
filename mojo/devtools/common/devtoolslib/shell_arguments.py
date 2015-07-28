@@ -186,8 +186,7 @@ def AddShellArguments(parser):
   ConfigureShell() below.
   """
   # Arguments indicating paths to binaries and tools.
-  parser.add_argument('--adb-path', default='adb',
-                      help='Path of the adb binary.')
+  parser.add_argument('--adb-path', help='Path of the adb binary.')
   parser.add_argument('--shell-path', help='Path of the Mojo shell binary.')
   parser.add_argument('--origin-path', help='Path of a directory to be set as '
                       'the origin for mojo: urls')
