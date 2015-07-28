@@ -293,6 +293,12 @@ basicSharedBufferTest() {
 utilsTest() {
   int ticksa = getTimeTicksNow();
   Expect.isTrue(1000 < ticksa);
+
+  // Wait for the clock to advance.
+  MojoWaitResult mwr = (new MojoMessagePipe()).endpoints[0].handle.wait(
+      MojoHandleSignals.kReadable, 1);
+  Expect.isTrue(mwr.result.isDeadlineExceeded);
+
   int ticksb = getTimeTicksNow();
   Expect.isTrue(ticksa < ticksb);
 }
