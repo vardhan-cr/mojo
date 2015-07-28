@@ -19,9 +19,8 @@ invalidHandleTest() {
       invalidHandle.wait(MojoHandleSignals.kReadWrite, 1000000);
   Expect.isTrue(mwr.result.isInvalidArgument);
 
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([invalidHandle.h], [
-    MojoHandleSignals.kReadWrite
-  ], MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([invalidHandle.h],
+      [MojoHandleSignals.kReadWrite], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isInvalidArgument);
 
   // Message pipe.
@@ -106,9 +105,8 @@ basicMessagePipeTest() {
   Expect.isTrue(result.isOk);
 
   // end0 should now be readable.
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([end0.handle.h], [
-    MojoHandleSignals.kReadable
-  ], MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([end0.handle.h],
+      [MojoHandleSignals.kReadable], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwmr.result.isOk);
 
   // Read from end0.
@@ -178,9 +176,8 @@ basicDataPipeTest() {
   Expect.equals(written, helloData.lengthInBytes);
 
   // Now that we have written, the consumer should be readable.
-  MojoWaitManyResult mwmr = MojoHandle.waitMany([consumer.handle.h], [
-    MojoHandleSignals.kReadable
-  ], MojoHandle.DEADLINE_INDEFINITE);
+  MojoWaitManyResult mwmr = MojoHandle.waitMany([consumer.handle.h],
+      [MojoHandleSignals.kReadable], MojoHandle.DEADLINE_INDEFINITE);
   Expect.isTrue(mwr.result.isOk);
 
   // Do a two-phase write to the producer.
@@ -293,9 +290,17 @@ basicSharedBufferTest() {
   duplicate = null;
 }
 
+utilsTest() {
+  int ticksa = getTimeTicksNow();
+  Expect.isTrue(1000 < ticksa);
+  int ticksb = getTimeTicksNow();
+  Expect.isTrue(ticksa < ticksb);
+}
+
 main() {
   invalidHandleTest();
   basicMessagePipeTest();
   basicDataPipeTest();
   basicSharedBufferTest();
+  utilsTest();
 }
