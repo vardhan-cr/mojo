@@ -8,6 +8,7 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_miscellaneous_thunks.h"
+#include "mojo/public/platform/native/gles2_impl_chromium_resize_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sub_image_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
@@ -84,16 +85,19 @@ bool RunNativeApplication(
     // If the application is using GLES2 extension points, register those
     // thunks. Applications may use or not use any of these, so don't warn if
     // they are missing.
-    SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
-              "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);
-    SetThunks(MojoMakeGLES2ImplChromiumSubImageThunks,
-              "MojoSetGLES2ImplChromiumSubImageThunks", app_library);
-    SetThunks(MojoMakeGLES2ImplChromiumTextureMailboxThunks,
-              "MojoSetGLES2ImplChromiumTextureMailboxThunks", app_library);
-    SetThunks(MojoMakeGLES2ImplChromiumSyncPointThunks,
-              "MojoSetGLES2ImplChromiumSyncPointThunks", app_library);
     SetThunks(MojoMakeGLES2ImplOcclusionQueryExtThunks,
               "MojoSetGLES2ImplOcclusionQueryExtThunks", app_library);
+    // "Chromium" extensions:
+    SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
+              "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);
+    SetThunks(MojoMakeGLES2ImplChromiumResizeThunks,
+              "MojoSetGLES2ImplChromiumResizeThunks", app_library);
+    SetThunks(MojoMakeGLES2ImplChromiumSubImageThunks,
+              "MojoSetGLES2ImplChromiumSubImageThunks", app_library);
+    SetThunks(MojoMakeGLES2ImplChromiumSyncPointThunks,
+              "MojoSetGLES2ImplChromiumSyncPointThunks", app_library);
+    SetThunks(MojoMakeGLES2ImplChromiumTextureMailboxThunks,
+              "MojoSetGLES2ImplChromiumTextureMailboxThunks", app_library);
   }
   // Unlike system thunks, we don't warn on a lack of GLES2 thunks because
   // not everything is a visual app.

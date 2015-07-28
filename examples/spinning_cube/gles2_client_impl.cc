@@ -2,14 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
+
 #include "examples/spinning_cube/gles2_client_impl.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <GLES2/gl2extchromium.h>
 #include <math.h>
 #include <stdlib.h>
 
-#include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/utility/run_loop.h"
@@ -48,10 +52,7 @@ void GLES2ClientImpl::SetSize(const mojo::Size& size) {
   cube_.set_size(size_.width, size_.height);
   if (size_.width == 0 || size_.height == 0 || !context_)
     return;
-  static_cast<gpu::gles2::GLES2Interface*>(
-      MojoGLES2GetGLES2Interface(context_))->ResizeCHROMIUM(size_.width,
-                                                            size_.height,
-                                                            1);
+  glResizeCHROMIUM(size_.width, size_.height, 1.f);
   WantToDraw();
 }
 

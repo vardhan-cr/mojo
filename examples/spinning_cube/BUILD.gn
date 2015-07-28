@@ -14,7 +14,6 @@ mojo_native_application("spinning_cube") {
   deps = [
     ":lib",
     "//base",
-    "//gpu/command_buffer/client:gles2_interface",
     "//mojo/public/c/gles2",
     "//mojo/public/cpp/application:standalone",
     "//mojo/public/cpp/bindings",
