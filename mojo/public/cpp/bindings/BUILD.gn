@@ -3,6 +3,30 @@
 # found in the LICENSE file.
 
 import("../../mojo_sdk.gni")
+mojo_sdk_source_set("serialization") {
+  sources = [
+    "lib/buffer.h",
+
+    "lib/fixed_buffer.cc",
+    "lib/fixed_buffer.h",
+    
+    "lib/overlay_buffer.h",
+    "lib/overlay_buffer.cc",
+    
+    "lib/string_serialization.cc",
+    "lib/string_serialization.h",
+    
+    "string.h",
+    "struct_ptr.h",
+    "type_converter.h",
+    
+    "bindings_serialization.h",
+    "lib/bindings_serialization.cc",
+    
+    "../system/macros.h",
+    "..../c/system/macros.h",
+  ]
+}
 
 mojo_sdk_source_set("bindings") {
   sources = [

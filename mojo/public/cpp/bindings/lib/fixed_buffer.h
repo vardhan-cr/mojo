@@ -37,7 +37,7 @@ namespace internal {
 //
 class FixedBuffer : public Buffer {
  public:
-  explicit FixedBuffer(size_t size);
+  FixedBuffer(size_t size);
   ~FixedBuffer() override;
 
   // Grows the buffer by |num_bytes| and returns a pointer to the start of the

@@ -5,14 +5,27 @@
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
 
 #include <stdlib.h>
-
 #include <algorithm>
 
 #include "mojo/public/cpp/bindings/lib/bindings_serialization.h"
-#include "mojo/public/cpp/environment/logging.h"
 
 namespace mojo {
 namespace internal {
+
+//namespace {
+//
+//const size_t kAlignment = 8;
+//
+//template <typename T>
+//T AlignImpl(T t) {
+//  return t + (kAlignment - (t % kAlignment)) % kAlignment;
+//}
+//
+//}  // namespace
+//
+//size_t Align(size_t size) {
+//  return AlignImpl(size);
+//}
 
 FixedBuffer::FixedBuffer(size_t size)
     : ptr_(nullptr), cursor_(0), size_(internal::Align(size)) {
@@ -28,7 +41,7 @@ void* FixedBuffer::Allocate(size_t delta) {
   delta = internal::Align(delta);
 
   if (delta == 0 || delta > size_ - cursor_) {
-    MOJO_DCHECK(false) << "Not reached";
+//    MOJO_DCHECK(false) << "Not reached";
     return nullptr;
   }
 

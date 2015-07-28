@@ -61,16 +61,6 @@
 {%-     else %}
   Serialize_(mojo::internal::Forward({{input_field}}), {{buffer}}, &{{output}}->{{name}}.ptr);
 {%-     endif %}
-{%-     if not kind|is_nullable_kind %}
-  MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-{%-       if kind|is_union_kind %}
-      {{output}}->{{name}}.is_null(),
-{%-       else %}
-      !{{output}}->{{name}}.ptr,
-{%-       endif %}
-      mojo::internal::VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
-      "null {{name}} in {{struct_display_name}}");
-{%-     endif %}
 {%-   elif kind|is_any_handle_kind or kind|is_interface_kind %}
 {%-     if kind|is_interface_kind %}
   mojo::internal::InterfacePointerToData({{input_field}}.Pass(), &{{output}}->{{name}});
@@ -78,16 +68,6 @@
   {{output}}->{{name}} = {{input_field}}.PassMessagePipe().release();
 {%-     else %}
   {{output}}->{{name}} = {{input_field}}.release();
-{%-     endif %}
-{%-     if not kind|is_nullable_kind %}
-  MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
-{%-       if kind|is_interface_kind %}
-      !{{output}}->{{name}}.handle.is_valid(),
-{%-       else %}
-      !{{output}}->{{name}}.is_valid(),
-{%-       endif %}
-      mojo::internal::VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
-      "invalid {{name}} in {{struct_display_name}}");
 {%-     endif %}
 {%-   else %}
   {{output}}->{{name}} = {{input_field}};

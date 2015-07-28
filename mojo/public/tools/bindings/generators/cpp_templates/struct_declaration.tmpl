@@ -4,9 +4,6 @@ class {{class_name}} {
  public:
   static {{class_name}}* New(mojo::internal::Buffer* buf);
 
-  static bool Validate(const void* data,
-                       mojo::internal::BoundsChecker* bounds_checker);
-
   void EncodePointersAndHandles(std::vector<mojo::Handle>* handles);
   void DecodePointersAndHandles(std::vector<mojo::Handle>* handles);
 

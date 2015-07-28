@@ -1,10 +1,11 @@
-// Copyright 2013 The Chromium Authors. All rights reserved.
+  // Copyright 2013 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_INTERNAL_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_ARRAY_INTERNAL_H_
 
+#include <assert.h>
 #include <new>
 #include <vector>
 
@@ -17,7 +18,6 @@
 #include "mojo/public/cpp/bindings/lib/template_util.h"
 #include "mojo/public/cpp/bindings/lib/validate_params.h"
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
-#include "mojo/public/cpp/environment/logging.h"
 
 namespace mojo {
 template <typename T>
@@ -48,7 +48,7 @@ struct ArrayDataTraits {
       (kMaxUint32 - sizeof(ArrayHeader)) / sizeof(StorageType);
 
   static uint32_t GetStorageSize(uint32_t num_elements) {
-    MOJO_DCHECK(num_elements <= kMaxNumElements);
+    assert(num_elements <= kMaxNumElements);
     return sizeof(ArrayHeader) + sizeof(StorageType) * num_elements;
   }
   static Ref ToRef(StorageType* storage, size_t offset) {
@@ -69,7 +69,7 @@ struct ArrayDataTraits<P*> {
       (kMaxUint32 - sizeof(ArrayHeader)) / sizeof(StorageType);
 
   static uint32_t GetStorageSize(uint32_t num_elements) {
-    MOJO_DCHECK(num_elements <= kMaxNumElements);
+    assert(num_elements <= kMaxNumElements);
     return sizeof(ArrayHeader) + sizeof(StorageType) * num_elements;
   }
   static Ref ToRef(StorageType* storage, size_t offset) {
@@ -90,7 +90,7 @@ struct ArrayDataTraits<Array_Data<T>*> {
       (kMaxUint32 - sizeof(ArrayHeader)) / sizeof(StorageType);
 
   static uint32_t GetStorageSize(uint32_t num_elements) {
-    MOJO_DCHECK(num_elements <= kMaxNumElements);
+    assert(num_elements <= kMaxNumElements);
     return sizeof(ArrayHeader) + sizeof(StorageType) * num_elements;
   }
   static Ref ToRef(StorageType* storage, size_t offset) {
@@ -166,9 +166,9 @@ struct ArraySerializationHelper<T, false> {
                                const ElementType* elements,
                                BoundsChecker* bounds_checker,
                                const ArrayValidateParams* validate_params) {
-    MOJO_DCHECK(!validate_params->element_is_nullable)
+    assert(!validate_params->element_is_nullable)
         << "Primitive type should be non-nullable";
-    MOJO_DCHECK(!validate_params->element_validate_params)
+    assert(!validate_params->element_validate_params)
         << "Primitive type should not have array validate params";
     return true;
   }
@@ -190,8 +190,7 @@ struct ArraySerializationHelper<Handle, true> {
                                const ElementType* elements,
                                BoundsChecker* bounds_checker,
                                const ArrayValidateParams* validate_params) {
-    MOJO_DCHECK(!validate_params->element_validate_params)
-        << "Handle type should not have array validate params";
+    assert(!validate_params->element_validate_params);
 
     for (uint32_t i = 0; i < header->num_elements; ++i) {
       if (!validate_params->element_is_nullable &&
@@ -294,7 +293,7 @@ struct ArraySerializationHelper<P*, false> {
     static bool Run(const void* data,
                     BoundsChecker* bounds_checker,
                     const ArrayValidateParams* validate_params) {
-      MOJO_DCHECK(!validate_params)
+      assert(!validate_params)
           << "Struct type should not have array validate params";
 
       return T::Validate(data, bounds_checker);
@@ -306,7 +305,7 @@ struct ArraySerializationHelper<P*, false> {
     static bool Run(const void* data,
                     BoundsChecker* bounds_checker,
                     const ArrayValidateParams* validate_params) {
-      MOJO_DCHECK(!validate_params)
+      assert(!validate_params)
           << "Union type should not have array validate params";
 
       return T::Validate(data, bounds_checker, true);
@@ -396,12 +395,12 @@ class Array_Data {
   size_t size() const { return header_.num_elements; }
 
   Ref at(size_t offset) {
-    MOJO_DCHECK(offset < static_cast<size_t>(header_.num_elements));
+    assert(offset < static_cast<size_t>(header_.num_elements));
     return Traits::ToRef(storage(), offset);
   }
 
   ConstRef at(size_t offset) const {
-    MOJO_DCHECK(offset < static_cast<size_t>(header_.num_elements));
+    assert(offset < static_cast<size_t>(header_.num_elements));
     return Traits::ToConstRef(storage(), offset);
   }
 

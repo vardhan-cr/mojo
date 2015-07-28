@@ -5,6 +5,7 @@
 #ifndef MOJO_PUBLIC_CPP_BINDINGS_STRUCT_PTR_H_
 #define MOJO_PUBLIC_CPP_BINDINGS_STRUCT_PTR_H_
 
+#include <assert.h>
 #include <new>
 
 #include "mojo/public/cpp/bindings/type_converter.h"
@@ -63,11 +64,11 @@ class StructPtr {
   bool is_null() const { return ptr_ == nullptr; }
 
   Struct& operator*() const {
-    MOJO_DCHECK(ptr_);
+    assert(ptr_);
     return *ptr_;
   }
   Struct* operator->() const {
-    MOJO_DCHECK(ptr_);
+    assert(ptr_);
     return ptr_;
   }
   Struct* get() const { return ptr_; }
@@ -94,7 +95,7 @@ class StructPtr {
  private:
   friend class internal::StructHelper<Struct>;
   void Initialize() {
-    MOJO_DCHECK(!ptr_);
+    assert(!ptr_);
     ptr_ = new Struct();
   }
 
@@ -143,11 +144,11 @@ class InlinedStructPtr {
   bool is_null() const { return is_null_; }
 
   Struct& operator*() const {
-    MOJO_DCHECK(!is_null_);
+    assert(!is_null_);
     return value_;
   }
   Struct* operator->() const {
-    MOJO_DCHECK(!is_null_);
+    assert(!is_null_);
     return &value_;
   }
   Struct* get() const { return &value_; }

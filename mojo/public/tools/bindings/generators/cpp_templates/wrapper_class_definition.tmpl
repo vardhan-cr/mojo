@@ -1,4 +1,5 @@
 {%- from "enum_macros.tmpl" import is_valid_enum_def %}
+{%- import "struct_macros.tmpl" as struct_macros %}
 
 {#--- Enums #}
 {%- for enum in struct.enums -%}
@@ -40,5 +41,18 @@ bool {{struct.name}}::Equals(const {{struct.name}}& other) const {
   if (!mojo::internal::ValueTraits<{{field.kind|cpp_wrapper_type}}>::Equals(this->{{field.name}}, other.{{field.name}}))
     return false;
 {%-  endfor %}
+  return true;
+}
+
+size_t {{struct.name}}::GetSerializedSize(const {{struct.name}}Ptr& input) {
+  return 0;
+}
+
+bool {{struct.name}}::SerializeTo(void* data, size_t num_bytes) {
+  assert(num_bytes >= sizeof(internal::{{struct.name}}_Data));
+  return true;
+}
+
+bool {{struct.name}}::DeserializeFrom(void* data, size_t num_bytes) {
   return true;
 }

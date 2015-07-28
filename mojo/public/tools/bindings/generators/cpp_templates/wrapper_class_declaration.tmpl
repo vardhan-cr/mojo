@@ -29,6 +29,10 @@ class {{struct.name}} {
     return mojo::TypeConverter<U, {{struct.name}}>::Convert(*this);
   }
 
+  size_t GetSerializedSize(const {{struct.name}}Ptr& input);
+  bool SerializeTo(void* data, size_t num_bytes);
+  bool DeserializeFrom(void* data, size_t num_bytes);
+
   {{struct.name}}();
   ~{{struct.name}}();
 
