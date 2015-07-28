@@ -10,8 +10,8 @@
 #include "dart/runtime/include/dart_api.h"
 #include "mojo/dart/embedder/builtin.h"
 #include "mojo/dart/embedder/common.h"
-#include "mojo/dart/embedder/dart_state.h"
 #include "mojo/dart/embedder/io/internet_address.h"
+#include "mojo/dart/embedder/mojo_dart_state.h"
 
 
 namespace mojo {

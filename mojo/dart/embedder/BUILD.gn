@@ -17,6 +17,7 @@ source_set("dart_controller_no_snapshot") {
     "dart_controller.cc",
     "dart_controller.h",
     "io/internet_address.h",
+    "mojo_dart_state.h",
     "mojo_io_natives.cc",
     "mojo_io_natives.h",
     "mojo_natives.cc",
@@ -45,6 +46,7 @@ source_set("dart_controller_no_snapshot") {
     "//mojo/common",
     "//mojo/public/c/system",
     "//mojo/public/cpp/system",
+    "//mojo/services/network/public/interfaces",
     "//tonic",
   ]
 
