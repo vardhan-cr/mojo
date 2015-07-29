@@ -502,7 +502,6 @@ void HandleCrashDump(const BreakpadInfo& info) {
 
   int temp_file_fd = -1;
   if (keep_fd) {
-    LOG(WARNING) << "Keeping fd...";
     temp_file_fd = dumpfd;
     // Rewind the destination, we are going to overwrite it.
     if (lseek(dumpfd, 0, SEEK_SET) == -1) {
@@ -514,7 +513,6 @@ void HandleCrashDump(const BreakpadInfo& info) {
       return;
     }
   } else {
-    LOG(WARNING) << "Opening file: " << info.filename;
     temp_file_fd = sys_open(info.filename, O_WRONLY, 0600);
     if (temp_file_fd < 0) {
       static const char msg[] = "Failed to save crash dump: failed to open\n";
@@ -714,7 +712,6 @@ bool CrashDone(const MinidumpDescriptor& minidump, const bool succeeded) {
 bool CrashDoneNoUpload(const MinidumpDescriptor& minidump,
                        void* context,
                        bool succeeded) {
-  LOG(WARNING) << "CrashDoneNoUpload";
   return CrashDone(minidump, succeeded);
 }
 
