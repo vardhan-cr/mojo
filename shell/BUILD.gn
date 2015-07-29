@@ -47,6 +47,7 @@ if (is_android) {
 if (!mojo_use_prebuilt_mojo_shell) {
   shell_common_deps = [
     ":parent_lib",
+    "crash",
     "//base",
     "//base/allocator",
     "//build/config/sanitizers:deps",

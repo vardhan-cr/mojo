@@ -31,6 +31,7 @@
 #include "shell/background_application_loader.h"
 #include "shell/command_line_util.h"
 #include "shell/context.h"
+#include "shell/crash/breakpad.h"
 #include "shell/init.h"
 #include "shell/switches.h"
 #include "shell/tracer.h"
@@ -237,6 +238,10 @@ static void Init(JNIEnv* env,
   base::CommandLine::Init(0, nullptr);
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   command_line->InitFromArgv(parameters);
+
+  base::FilePath dumps_path = base::FilePath(tmp_dir).Append("breakpad_dumps");
+  breakpad::InitCrashReporter(dumps_path);
+
   Tracer* tracer = new Tracer;
   g_internal_data.Get().tracer.reset(tracer);
   bool trace_startup = command_line->HasSwitch(switches::kTraceStartup);

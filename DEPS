@@ -27,7 +27,7 @@ vars = {
   'dart_observatory_packages_revision': 'cdc4b3d4c15b9c0c8e7702dff127b440afbb7485',
   'pdfium_revision': 'b0115665b0f33971f1b7077740d51e155583cec0',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
-  'lss_revision': 'e079768b7e3a94dcbe7d338496c0c3bde7151b6e',
+  'lss_revision': '6f97298fe3794e92c8c896a6bc06e0b36e4c3de3',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
   'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
   'archive_dart_revision': '07ffd98c5403b7f9ae067b57dc9487611be420f5',
@@ -154,6 +154,12 @@ deps = {
 
   'src/third_party/pyelftools':
     Var('chromium_git') + '/chromiumos/third_party/pyelftools.git' + '@' + '19b3e610c86fcadb837d252c794cb5e8008826ae',
+
+  'src/third_party/breakpad/src':
+    Var('chromium_git') + '/external/google-breakpad/src.git' + '@' + '242fb9a38db6ba534b1f7daa341dd4d79171658b', # from svn revision 1471
+
+  'src/third_party/lss':
+    Var('chromium_git') + '/external/linux-syscall-support/lss.git' + '@' + Var('lss_revision'),
 }
 
 deps_os = {
