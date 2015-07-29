@@ -5,35 +5,7 @@
 
 """Test runner for Mojo application tests.
 
-The file describing the list of tests has to be a valid Python program that sets
-a |tests| global variable, containing entries of the following form:
-
- {
-   # Required URL for apptest.
-   "test": "mojo:test_app_url",
-   # Optional display name (otherwise the entry for "test" above is used).
-   "name": "mojo:test_app_url (more details)",
-   # Optional test type. Valid values:
-   #   * "gtest" (default)
-   #   * "gtest_isolated": like "gtest", but run with fixture isolation,
-   #      i.e., each test in a fresh mojo_shell)
-   #   * "dart".
-   "type": "gtest",
-   # Optional arguments for the apptest.
-   "test-args": ["--an_arg", "another_arg"],
-   # Optional arguments for the shell.
-   "shell-args": ["--some-flag-for-the-shell", "--another-flag"],
- }
-
-The program may use the |target_os| global that will be any of ['android',
-'linux'], indicating the system on which the tests are to be run.
-
 TODO(vtl|msw): Add a way of specifying data dependencies.
-"""
-
-_DESCRIPTION = """Runner for Mojo application tests.
-
-Any arguments not recognized by the script will be passed on as shell arguments.
 """
 
 import argparse
@@ -44,11 +16,41 @@ from devtoolslib import apptest_dart
 from devtoolslib import apptest_gtest
 from devtoolslib import shell_arguments
 
+_DESCRIPTION = """Runner for Mojo application tests.
+
+|test_list_file| has to be a valid Python program that sets a |tests| global
+variable, containing entries of the following form:
+
+ {
+   # Required URL for apptest.
+   "test": "mojo:test_app_url",
+   # Optional display name (otherwise the entry for "test" above is used).
+   "name": "mojo:test_app_url (more details)",
+   # Optional test type. Valid values:
+   #   * "gtest" (default)
+   #   * "gtest_isolated": like "gtest", but run with fixture isolation,
+   #      i.e., each test in a fresh mojo_shell
+   #   * "dart"
+   "type": "gtest",
+   # Optional arguments to be passed to the apptest.
+   "test-args": ["--an_arg", "another_arg"],
+   # Optional shell arguments.
+   "shell-args": ["--some-flag-for-the-shell", "--another-flag"],
+ }
+
+|test_list_file| may reference the |target_os| global that will be any of
+['android', 'linux'], indicating the system on which the tests are to be run.
+
+Any arguments not recognized by the script will be passed on as shell arguments.
+"""
+
 _logger = logging.getLogger()
 
 
 def main():
-  parser = argparse.ArgumentParser(description=_DESCRIPTION)
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=_DESCRIPTION)
   parser.add_argument("test_list_file", type=file,
                       help="a file listing apptests to run")
 
