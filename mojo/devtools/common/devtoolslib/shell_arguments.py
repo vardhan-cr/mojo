@@ -17,15 +17,14 @@ from devtoolslib.linux_shell import LinuxShell
 # so that caching works between subsequent runs with the same command line.
 _LOCAL_ORIGIN_PORT = 31840
 _MAPPINGS_BASE_PORT = 31841
-
 _SKY_SERVER_PORT = 9998
 
 
-def _IsWebUrl(dest):
+def _is_web_url(dest):
   return True if urlparse.urlparse(dest).scheme else False
 
 
-def _HostLocalUrlDestination(shell, dest_file, port):
+def _host_local_url_destination(shell, dest_file, port):
   """Starts a local server to host |dest_file|.
 
   Returns:
@@ -39,7 +38,7 @@ def _HostLocalUrlDestination(shell, dest_file, port):
   return server_url + os.path.relpath(dest_file, directory)
 
 
-def _HostLocalOriginDestination(shell, dest_dir, port):
+def _host_local_origin_destination(shell, dest_dir, port):
   """Starts a local server to host |dest_dir|.
 
   Returns:
@@ -48,7 +47,7 @@ def _HostLocalOriginDestination(shell, dest_dir, port):
   return shell.ServeLocalDirectory(dest_dir, port)
 
 
-def _Rewrite(mapping, host_destination_functon, shell, port):
+def _rewrite(mapping, host_destination_functon, shell, port):
   """Takes a mapping given as <src>=<dest> and rewrites the <dest> part to be
   hosted locally using the given function if <dest> is not a web url.
   """
@@ -56,7 +55,7 @@ def _Rewrite(mapping, host_destination_functon, shell, port):
   if len(parts) != 2:
     raise ValueError('each mapping value should be in format '
                      '"<url>=<url-or-local-path>"')
-  if _IsWebUrl(parts[1]):
+  if _is_web_url(parts[1]):
     # The destination is a web url, do nothing.
     return mapping
 
@@ -65,7 +64,7 @@ def _Rewrite(mapping, host_destination_functon, shell, port):
   return src + '=' + dest
 
 
-def _ApplyMappings(shell, original_arguments, map_urls, map_origins):
+def _apply_appings(shell, original_arguments, map_urls, map_origins):
   """Applies mappings for specified urls and origins. For each local path
   specified as destination a local server will be spawned and the mapping will
   be rewritten accordingly.
@@ -86,14 +85,14 @@ def _ApplyMappings(shell, original_arguments, map_urls, map_origins):
   if map_urls:
     # Sort the mappings to preserve caching regardless of argument order.
     for map_url in sorted(map_urls):
-      mapping = _Rewrite(map_url, _HostLocalUrlDestination, shell, next_port)
+      mapping = _rewrite(map_url, _host_local_url_destination, shell, next_port)
       next_port += 1
       # All url mappings need to be coalesced into one shell argument.
-      args = AppendToArgument(args, '--url-mappings=', mapping)
+      args = append_to_argument(args, '--url-mappings=', mapping)
 
   if map_origins:
     for map_origin in sorted(map_origins):
-      mapping = _Rewrite(map_origin, _HostLocalOriginDestination, shell,
+      mapping = _rewrite(map_origin, _host_local_origin_destination, shell,
                          next_port)
       next_port += 1
       # Origin mappings are specified as separate, repeated shell arguments.
@@ -101,7 +100,7 @@ def _ApplyMappings(shell, original_arguments, map_urls, map_origins):
   return args
 
 
-def ConfigureSky(shell, root_path, sky_packages_path, sky_target):
+def _configure_sky(shell, root_path, sky_packages_path, sky_target):
   """Configures additional mappings and a server needed to run the given Sky
   app.
 
@@ -131,10 +130,10 @@ def ConfigureSky(shell, root_path, sky_packages_path, sky_target):
   # application/dart content-type as Sky apps.
   # TODO(ppi): drop this part once we can rely on the Sky files declaring
   # correct shebang.
-  args = AppendToArgument(args, '--content-handlers=',
-                          'text/sky,mojo:sky_viewer')
-  args = AppendToArgument(args, '--content-handlers=',
-                          'application/dart,mojo:sky_viewer')
+  args = append_to_argument(args, '--content-handlers=',
+                                            'text/sky,mojo:sky_viewer')
+  args = append_to_argument(args, '--content-handlers=',
+                                            'application/dart,mojo:sky_viewer')
 
   # Configure the window manager to embed the sky_viewer.
   sky_url = server_url + sky_target
@@ -142,7 +141,7 @@ def ConfigureSky(shell, root_path, sky_packages_path, sky_target):
   return args
 
 
-def ConfigureLocalOrigin(shell, local_dir, fixed_port=True):
+def configure_local_origin(shell, local_dir, fixed_port=True):
   """Sets up a local http server to serve files in |local_dir| along with
   device port forwarding if needed.
 
@@ -155,7 +154,7 @@ def ConfigureLocalOrigin(shell, local_dir, fixed_port=True):
   return ["--origin=" + origin_url]
 
 
-def AppendToArgument(arguments, key, value, delimiter=","):
+def append_to_argument(arguments, key, value, delimiter=","):
   """Looks for an argument of the form "key=val1,val2" within |arguments| and
   appends |value| to it.
 
@@ -185,9 +184,9 @@ def AppendToArgument(arguments, key, value, delimiter=","):
   return arguments
 
 
-def AddShellArguments(parser):
+def add_shell_arguments(parser):
   """Adds argparse arguments allowing to configure shell abstraction using
-  ConfigureShell() below.
+  configure_shell() below.
   """
   # Arguments indicating paths to binaries and tools.
   parser.add_argument('--adb-path', help='Path of the adb binary.')
@@ -227,13 +226,13 @@ class ShellConfigurationException(Exception):
   pass
 
 
-def ConfigureShell(config_args, shell_args):
+def configure_shell(config_args, shell_args):
   """
   Produces a shell abstraction configured using the parsed arguments defined in
-  AddShellArguments().
+  add_shell_arguments().
 
   Args:
-    config_args: Parsed arguments added using AddShellArguments().
+    config_args: Parsed arguments added using add_shell_arguments().
     shell_args: Additional raw shell arguments to be passed to the shell. We
         need to take these into account as some parameters need to appear only
         once on the argument list (e.g. url-mappings) so we need to coalesce any
@@ -257,7 +256,7 @@ def ConfigureShell(config_args, shell_args):
     if config_args.shell_path:
       shell.InstallApk(config_args.shell_path)
 
-    shell_args = _ApplyMappings(shell, shell_args, config_args.map_url,
+    shell_args = _apply_appings(shell, shell_args, config_args.map_url,
                                 config_args.map_origin)
   else:
     if not config_args.shell_path:
@@ -268,10 +267,10 @@ def ConfigureShell(config_args, shell_args):
       shell_args.append('--args-for=mojo:native_viewport_service --use-osmesa')
 
   if config_args.origin:
-    if _IsWebUrl(config_args.origin):
+    if _is_web_url(config_args.origin):
       shell_args.append('--origin=' + config_args.origin)
     else:
-      shell_args.extend(ConfigureLocalOrigin(shell, config_args.origin,
+      shell_args.extend(configure_local_origin(shell, config_args.origin,
                                              fixed_port=True))
 
   return shell, shell_args

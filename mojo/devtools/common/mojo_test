@@ -53,12 +53,12 @@ def main():
                       help="a file listing apptests to run")
 
   # Common shell configuration arguments.
-  shell_arguments.AddShellArguments(parser)
+  shell_arguments.add_shell_arguments(parser)
   script_args, common_shell_args = parser.parse_known_args()
 
   try:
-    shell, common_shell_args = shell_arguments.ConfigureShell(script_args,
-                                                              common_shell_args)
+    shell, common_shell_args = shell_arguments.configure_shell(
+        script_args, common_shell_args)
   except shell_arguments.ShellConfigurationException as e:
     print e
     return 1

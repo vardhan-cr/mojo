@@ -35,11 +35,10 @@ Any arguments not recognized by the script will be passed on as shell arguments.
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
 _MOJO_DEBUGGER_PORT = 7777
-
 _DEFAULT_WINDOW_MANAGER = "mojo:kiosk_wm"
 
 
-def _ConfigureDebugger(shell):
+def _configure_debugger(shell):
   """Configures mojo:debugger to run and sets up port forwarding for its http
   server if the shell is running on a device.
 
@@ -71,7 +70,7 @@ def main():
                                      help='CPU architecture to run for.',
                                      choices=['x64', 'x86', 'arm'])
 
-  shell_arguments.AddShellArguments(parser)
+  shell_arguments.add_shell_arguments(parser)
   parser.add_argument('--no-debugger', action="store_true",
                       help='Do not spawn mojo:debugger.')
   parser.add_argument('--window-manager', default=_DEFAULT_WINDOW_MANAGER,
@@ -106,7 +105,7 @@ def main():
     print 'Running outside a Chromium-style checkout.'
 
   try:
-    shell, shell_args = shell_arguments.ConfigureShell(script_args, shell_args)
+    shell, shell_args = shell_arguments.configure_shell(script_args, shell_args)
   except shell_arguments.ShellConfigurationException as e:
     print e
     return 1
@@ -116,20 +115,20 @@ def main():
       print 'Spawning mojo:debugger, use `mojo_debug` to inspect the shell.'
       print 'Note that mojo:debugger will prevent the shell from terminating,'
       print '  pass --no-debugger to skip spawning mojo:debugger.'
-    shell_args.extend(_ConfigureDebugger(shell))
+    shell_args.extend(_configure_debugger(shell))
 
-  shell_args = shell_arguments.AppendToArgument(shell_args, '--url-mappings=',
-                                                'mojo:window_manager=%s' %
-                                                script_args.window_manager)
+  shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
+                                                  'mojo:window_manager=%s' %
+                                                  script_args.window_manager)
 
   if script_args.sky:
     if not mojo_paths:
       print 'Running with --sky is not supported outside of the Mojo checkout.'
       # See https://github.com/domokit/devtools/issues/27.
       return 1
-    shell_args.extend(shell_arguments.ConfigureSky(shell, mojo_paths['root'],
-                                                   mojo_paths['sky_packages'],
-                                                   script_args.sky))
+    shell_args.extend(shell_arguments._configure_sky(shell, mojo_paths['root'],
+                                                     mojo_paths['sky_packages'],
+                                                     script_args.sky))
 
   if script_args.verbose:
     print "Shell arguments: " + str(shell_args)
