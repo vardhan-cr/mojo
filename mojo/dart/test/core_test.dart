@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:_testing/expect.dart';
@@ -302,6 +303,10 @@ utilsTest() {
   int ticksb = getTimeTicksNow();
   Expect.isTrue(ticksa < ticksb);
 }
+// TODO(rudominer) This probably belongs in a different file.
+processTest() {
+  Expect.isTrue(pid > 0);
+}
 
 main() {
   invalidHandleTest();
@@ -309,4 +314,5 @@ main() {
   basicDataPipeTest();
   basicSharedBufferTest();
   utilsTest();
+  processTest();
 }
