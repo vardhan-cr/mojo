@@ -37,10 +37,14 @@ Any arguments not recognized by the script will be passed on as shell arguments.
 """
 
 import argparse
+import logging
 import sys
 
-from devtoolslib.apptest_runner import run_apptests
+from devtoolslib import apptest_dart
+from devtoolslib import apptest_gtest
 from devtoolslib import shell_arguments
+
+_logger = logging.getLogger()
 
 
 def main():
@@ -50,20 +54,50 @@ def main():
 
   # Common shell configuration arguments.
   shell_arguments.AddShellArguments(parser)
-  script_args, shell_args = parser.parse_known_args()
+  script_args, common_shell_args = parser.parse_known_args()
 
   try:
-    shell, shell_args = shell_arguments.ConfigureShell(script_args, shell_args)
+    shell, common_shell_args = shell_arguments.ConfigureShell(script_args,
+                                                              common_shell_args)
   except shell_arguments.ShellConfigurationException as e:
     print e
     return 1
 
-  target_os = 'android' if script_args.android else 'linux'
+  target_os = "android" if script_args.android else "linux"
   test_list_globals = {"target_os": target_os}
   exec script_args.test_list_file in test_list_globals
-  apptests_result = run_apptests(shell, shell_args,
-                                 test_list_globals["tests"])
-  return 0 if apptests_result else 1
+  test_list = test_list_globals["tests"]
+
+  succeeded = True
+  for test_dict in test_list:
+    test = test_dict["test"]
+    test_name = test_dict.get("name", test)
+    test_type = test_dict.get("type", "gtest")
+    test_args = test_dict.get("test-args", [])
+    shell_args = test_dict.get("shell-args", []) + common_shell_args
+
+    _logger.info("Will start: %s" % test_name)
+    print "Running %s...." % test_name,
+    sys.stdout.flush()
+
+    if test_type == "dart":
+      apptest_result = apptest_dart.run_dart_apptest(shell, shell_args, test,
+                                                     test_args)
+    elif test_type == "gtest":
+      apptest_result = apptest_gtest.run_gtest_apptest(shell, shell_args, test,
+                                                       test_args, False)
+    elif test_type == "gtest_isolated":
+      apptest_result = apptest_gtest.run_gtest_apptest(shell, shell_args, test,
+                                                       test_args, True)
+    else:
+      apptest_result = False
+      print "Unrecognized test type in %r" % test_dict
+
+    print "Succeeded" if apptest_result else "Failed"
+    _logger.info("Completed: %s" % test_name)
+    if not apptest_result:
+      succeeded = False
+  return 0 if succeeded else 1
 
 if __name__ == '__main__':
   sys.exit(main())
