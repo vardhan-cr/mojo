@@ -13,6 +13,7 @@
 .pydevproject
 .checkstyle
 cscope.*
+mojo_shell.trace
 Session.vim
 tags
 Thumbs.db
