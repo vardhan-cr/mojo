@@ -188,11 +188,8 @@ def add_shell_arguments(parser):
   """Adds argparse arguments allowing to configure shell abstraction using
   configure_shell() below.
   """
-  # Arguments indicating paths to binaries and tools.
-  parser.add_argument('--adb-path', help='Path of the adb binary.')
-  parser.add_argument('--shell-path', help='Path of the Mojo shell binary.')
-
   # Arguments configuring the shell run.
+  parser.add_argument('--shell-path', help='Path of the Mojo shell binary.')
   parser.add_argument('--android', help='Run on Android',
                       action='store_true')
   parser.add_argument('--origin', help='Origin for mojo: URLs. This can be a '
@@ -203,22 +200,21 @@ def add_shell_arguments(parser):
   parser.add_argument('--map-origin', action='append',
                       help='Define a mapping for a url origin in the format '
                       '<origin>=<url-or-local-file-path>')
-
-  # Android-only arguments.
-  parser.add_argument('--target-device',
-                      help='(android-only) Device to run on.')
-  parser.add_argument('--logcat-tags',
-                      help='(android-only) Comma-separated list of additional '
-                      'logcat tags to display on the console.')
-
-  # Desktop-only arguments.
-  parser.add_argument('--use-osmesa', action='store_true',
-                      help='(linux-only) Configure the native viewport service '
-                      'for off-screen rendering.')
-
-  # Other configuration.
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
+
+  android_group = parser.add_argument_group('Android-only',
+      'These arguments apply only when --android is passed.')
+  android_group.add_argument('--adb-path', help='Path of the adb binary.')
+  android_group.add_argument('--target-device', help='Device to run on.')
+  android_group.add_argument('--logcat-tags', help='Comma-separated list of '
+                             'additional logcat tags to display.')
+
+  desktop_group = parser.add_argument_group('Desktop-only',
+      'These arguments apply only when running on desktop.')
+  desktop_group.add_argument('--use-osmesa', action='store_true',
+                             help='Configure the native viewport service '
+                             'for off-screen rendering.')
 
 
 class ShellConfigurationException(Exception):
