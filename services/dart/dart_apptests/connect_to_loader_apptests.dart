@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:apptest/apptest.dart';
 import 'package:mojom/mojo/url_response_disk_cache.mojom.dart';
-import 'package:mojom/mojo/url_response.mojom.dart';
+import 'package:mojo/mojo/url_response.mojom.dart';
 import 'package:mojo/application.dart';
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';

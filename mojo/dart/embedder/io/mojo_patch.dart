@@ -5,9 +5,9 @@
 import 'dart:_mojo/application.dart';
 import 'dart:_mojo/bindings.dart';
 import 'dart:_mojo/core.dart';
+import 'dart:_mojo/mojo/network_error.mojom.dart';
 import 'dart:_mojom/mojo/host_resolver.mojom.dart';
 import 'dart:_mojom/mojo/net_address.mojom.dart';
-import 'dart:_mojom/mojo/network_error.mojom.dart';
 import 'dart:_mojom/mojo/network_service.mojom.dart';
 import 'dart:_mojom/mojo/tcp_bound_socket.mojom.dart';
 import 'dart:_mojom/mojo/tcp_connected_socket.mojom.dart';
