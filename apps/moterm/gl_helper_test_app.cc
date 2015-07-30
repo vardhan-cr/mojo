@@ -233,7 +233,7 @@ class GlHelperExampleApp : public mojo::ApplicationDelegate,
                             GetProxy(&display_));
 
     gl_helper_.reset(new GlHelper(this, application_impl_->shell(), GL_RGBA,
-                                  viewport_size_));
+                                  false, viewport_size_));
     Draw();
   }
 

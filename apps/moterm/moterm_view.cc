@@ -52,7 +52,11 @@ MotermView::MotermView(
     mojo::View* view,
     mojo::InterfaceRequest<mojo::ServiceProvider> service_provider_request)
     : view_(view),
-      gl_helper_(this, shell, kTextureFormat, RectToSize(view->bounds())),
+      gl_helper_(this,
+                 shell,
+                 kTextureFormat,
+                 false,
+                 RectToSize(view->bounds())),
       model_(MotermModel::Size(240, 160), MotermModel::Size(24, 80)),
       frame_pending_(false),
       force_next_draw_(false),

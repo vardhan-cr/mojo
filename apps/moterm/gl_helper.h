@@ -41,13 +41,15 @@ class GlHelper : public mojo::ResourceReturner {
   };
 
   // Both |client| and |shell| must outlive us. |texture_format| is the texture
-  // format to use, e.g., |GL_RGBA| or |GL_BGRA_EXT|. This object will create a
-  // surface (of initial size |initial_size|), and call the client's
-  // |OnSurfaceIdChanged()| when it has a surface ID for it (which the client
-  // can then provide to its |View|).
+  // format to use, e.g., |GL_RGBA| or |GL_BGRA_EXT|. |flipped| means that the
+  // texture is in the usual GL orientation (origin at lower-left). This object
+  // will create a surface (of initial size |initial_size|), and call the
+  // client's |OnSurfaceIdChanged()| when it has a surface ID for it (which the
+  // client can then provide to its |View|).
   GlHelper(Client* client,
            mojo::Shell* shell,
            GLint texture_format,
+           bool flipped,
            const mojo::Size& initial_size);
   ~GlHelper() override;
 
@@ -133,6 +135,7 @@ class GlHelper : public mojo::ResourceReturner {
 
   Client* const client_;
   const GLint texture_format_;
+  const bool flipped_;
 
   mojo::GpuPtr gpu_;
   mojo::SurfacePtr surface_;

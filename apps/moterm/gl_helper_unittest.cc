@@ -35,7 +35,7 @@ class GlHelperTest : public mojo::test::ApplicationTestBase,
     initial_size_.width = 100;
     initial_size_.height = 100;
     gl_helper_.reset(new GlHelper(this, application_impl()->shell(), GL_RGBA,
-                                  initial_size_));
+                                  false, initial_size_));
   }
 
  protected:

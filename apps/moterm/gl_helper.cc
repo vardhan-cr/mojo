@@ -28,9 +28,11 @@ const size_t kMaxTextures = 10;
 GlHelper::GlHelper(Client* client,
                    mojo::Shell* shell,
                    GLint texture_format,
+                   bool flipped,
                    const mojo::Size& initial_size)
     : client_(client),
       texture_format_(texture_format),
+      flipped_(flipped),
       returner_binding_(this),
       next_surface_size_(initial_size),
       gl_context_(nullptr),
@@ -143,7 +145,7 @@ uint32_t GlHelper::EndFrame() {
   texture_state->background_color->rgba = 0;
   for (int i = 0; i < 4; ++i)
     texture_state->vertex_opacity.push_back(1.f);
-  texture_state->flipped = false;
+  texture_state->flipped = flipped_;
   pass->shared_quad_states.push_back(
       mojo::CreateDefaultSQS(current_surface_size_));
 
