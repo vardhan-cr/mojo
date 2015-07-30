@@ -173,6 +173,7 @@ def analyze_entrypoints(dart_sdk, package_root, entrypoints):
   try:
     subprocess.check_call(cmd)
   except subprocess.CalledProcessError as e:
+    print('Failed analyzing %s' % entrypoints)
     return e.returncode
   return 0
 
@@ -289,8 +290,9 @@ def main():
 
   # Copy generated mojom.dart files.
   # HACK(johnmccutchan): This entire step will be removed once all DartPackage
-  # annotations are in place. Until then, skip doing this for the mojo package.
-  if args.package_name != 'mojo':
+  # annotations are in place. Until then, skip doing this for the mojo and
+  # mojo_services packages.
+  if (args.package_name != 'mojo') and (args.package_name != 'mojo_services'):
     generated_mojom_lib_path = os.path.join(args.gen_directory, "mojom/lib")
     for mojom_source_path in args.mojom_sources:
       path = mojom_path(mojom_source_path)

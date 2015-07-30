@@ -100,7 +100,7 @@ dart_embedder_package("dart_embedder_package_network") {
 
 dart_embedder_package("dart_embedder_package_network_service") {
   package = "mojo/services/network/public/interfaces"
-  destination = "mojom/mojo"
+  destination = "mojo_services/mojo"
 }
 
 action_foreach("dart_embedder_package_sdk") {
@@ -355,7 +355,7 @@ action("generate_snapshot_bin") {
                     "$application_mojoms,mojo/mojo",
                     "$bindings_mojoms,mojo/mojo",
                     "$network_mojoms,mojo/mojo",
-                    "$network_service_mojoms,mojom/mojo",
+                    "$network_service_mojoms,mojo_services/mojo",
                   ],
                   "list lines")
 
