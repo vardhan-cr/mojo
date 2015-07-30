@@ -12,7 +12,6 @@ group("dart-pkg") {
     ":cassowary",
     ":collection",
     ":crypto",
-    ":newton",
     ":path",
     ":quiver",
     ":source_span",
@@ -44,10 +43,6 @@ dart_pkg("collection") {
 
 dart_pkg("crypto") {
   pkg_dir = "//third_party/dart-pkg/crypto"
-}
-
-dart_pkg("newton") {
-  pkg_dir = "//third_party/dart-pkg/newton"
 }
 
 dart_pkg("path") {
