@@ -64,7 +64,7 @@ def _rewrite(mapping, host_destination_functon, shell, port):
   return src + '=' + dest
 
 
-def _apply_appings(shell, original_arguments, map_urls, map_origins):
+def _apply_mappings(shell, original_arguments, map_urls, map_origins):
   """Applies mappings for specified urls and origins. For each local path
   specified as destination a local server will be spawned and the mapping will
   be rewritten accordingly.
@@ -255,9 +255,6 @@ def configure_shell(config_args, shell_args):
       raise ShellConfigurationException('Device check failed: ' + error)
     if config_args.shell_path:
       shell.InstallApk(config_args.shell_path)
-
-    shell_args = _apply_appings(shell, shell_args, config_args.map_url,
-                                config_args.map_origin)
   else:
     if not config_args.shell_path:
       raise ShellConfigurationException('Can not run without a shell binary. '
@@ -265,6 +262,9 @@ def configure_shell(config_args, shell_args):
     shell = LinuxShell(config_args.shell_path)
     if config_args.use_osmesa:
       shell_args.append('--args-for=mojo:native_viewport_service --use-osmesa')
+
+  shell_args = _apply_mappings(shell, shell_args, config_args.map_url,
+                               config_args.map_origin)
 
   if config_args.origin:
     if _is_web_url(config_args.origin):
