@@ -283,12 +283,6 @@ static jboolean Start(JNIEnv* env, jclass clazz) {
 // We always start the shell. We can then listen for intents requesting apps
 // to be started.
 
-#if defined(MOJO_SHELL_DEBUG_URL)
-  base::CommandLine::ForCurrentProcess()->AppendArg(MOJO_SHELL_DEBUG_URL);
-  // Sleep for 5 seconds to give the debugger a chance to attach.
-  sleep(5);
-#endif
-
   g_internal_data.Get().shell_thread.reset(new base::DelegateSimpleThread(
       g_internal_data.Get().shell_runner.get(), "ShellThread"));
   g_internal_data.Get().shell_thread->Start();
