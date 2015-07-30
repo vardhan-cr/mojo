@@ -98,9 +98,9 @@ public class ShellMain {
     }
 
     /**
-     * Initializes the native system.
+     * Initializes the native system and starts the shell.
      **/
-    static void ensureInitialized(Context applicationContext, String[] parameters) {
+    static void ensureStarted(Context applicationContext, String[] parameters) {
         if (sInitialized) return;
         try {
             FileHelper.extractFromAssets(applicationContext, NETWORK_LIBRARY_APP,
@@ -125,7 +125,7 @@ public class ShellMain {
                 parametersList.add("--url-mappings=mojo:window_manager=" + DEFAULT_WM);
             }
 
-            nativeInit(applicationContext, mojoShellChild.getAbsolutePath(),
+            nativeStart(applicationContext, mojoShellChild.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
                     getTmpDir(applicationContext).getAbsolutePath(),
@@ -135,20 +135,11 @@ public class ShellMain {
             Log.e(TAG, "ShellMain initialization failed.", e);
             throw new RuntimeException(e);
         }
-        start();
     }
 
     /**
-     * Starts the specified application in the specified context.
-     *
-     * @return <code>true</code> if an application has been launched.
-     **/
-    static boolean start() {
-        return nativeStart();
-    }
-
-    /**
-     * Adds the given URL to the set of mojo applications to run on start.
+     * Adds the given URL to the set of mojo applications to run on start. This must be called
+     * before {@link ShellMain#ensureStarted(Context, String[])}
      */
     static void addApplicationURL(String url) {
         nativeAddApplicationURL(url);
@@ -192,10 +183,8 @@ public class ShellMain {
     /**
      * Initializes the native system. This API should be called only once per process.
      **/
-    private static native void nativeInit(Context context, String mojoShellChildPath,
+    private static native void nativeStart(Context context, String mojoShellChildPath,
             String[] parameters, String bundledAppsDirectory, String tmpDir, String homeDir);
-
-    private static native boolean nativeStart();
 
     private static native void nativeAddApplicationURL(String url);
 

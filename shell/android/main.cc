@@ -142,6 +142,7 @@ void QuitShellThread() {
 void MojoShellRunner::Run() {
   base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
   g_internal_data.Get().shell_task_runner = loop.task_runner();
+  // Signal that the shell is ready to receive requests.
   g_internal_data.Get().shell_runner_ready->Signal();
 
   Context* context = g_internal_data.Get().context.get();
@@ -153,7 +154,6 @@ void MojoShellRunner::Run() {
 
   RunCommandLineApps(context);
 
-  // Signal that the shell is ready to receive requests.
   loop.Run();
 
   g_internal_data.Get().java_message_loop.get()->PostTask(
@@ -204,14 +204,14 @@ void ConnectToApplicationImpl(
 
 }  // namespace
 
-static void Init(JNIEnv* env,
-                 jclass clazz,
-                 jobject activity,
-                 jstring mojo_shell_child_path,
-                 jobjectArray jparameters,
-                 jstring j_local_apps_directory,
-                 jstring j_tmp_dir,
-                 jstring j_home_dir) {
+static void Start(JNIEnv* env,
+                  jclass clazz,
+                  jobject activity,
+                  jstring mojo_shell_child_path,
+                  jobjectArray jparameters,
+                  jstring j_local_apps_directory,
+                  jstring j_tmp_dir,
+                  jstring j_home_dir) {
   g_internal_data.Get().main_activity.Reset(env, activity);
   // Initially, the shell runner is not ready.
   g_internal_data.Get().shell_runner_ready.reset(
@@ -273,21 +273,16 @@ static void Init(JNIEnv* env,
   base::MessageLoopForUI::current()->Start();
   tracer->DidCreateMessageLoop();
 
+  g_internal_data.Get().shell_thread.reset(new base::DelegateSimpleThread(
+      g_internal_data.Get().shell_runner.get(), "ShellThread"));
+  g_internal_data.Get().shell_thread->Start();
+
   // TODO(abarth): At which point should we switch to cross-platform
   // initialization?
 
   gfx::GLSurface::InitializeOneOff();
-}
 
-static jboolean Start(JNIEnv* env, jclass clazz) {
-// We always start the shell. We can then listen for intents requesting apps
-// to be started.
-
-  g_internal_data.Get().shell_thread.reset(new base::DelegateSimpleThread(
-      g_internal_data.Get().shell_runner.get(), "ShellThread"));
-  g_internal_data.Get().shell_thread->Start();
   g_internal_data.Get().shell_runner_ready->Wait();
-  return true;
 }
 
 static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {

@@ -34,7 +34,7 @@ public class MojoShellActivity extends Activity {
         // activity. If the application process is kept alive, initialization parameters sent with
         // the intent will be stale.
         // TODO(eseidel): ShellMain can fail, but we're ignoring the return.
-        ShellMain.ensureInitialized(getApplicationContext(), getParametersFromIntent(getIntent()));
+        ShellMain.ensureStarted(getApplicationContext(), getParametersFromIntent(getIntent()));
 
         onNewIntent(getIntent());
 
