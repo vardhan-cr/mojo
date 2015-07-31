@@ -401,4 +401,28 @@ hooks = [
                 '-d', 'src/services/keyboard_native/res',
     ],
   },
+  # Pull dump_syms resources using checked-in hashes.
+  {
+    'name': 'dump_syms_linux64',
+    'pattern': '.',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--platform=linux*',
+                '--no_auth',
+                '--bucket', 'mojo',
+                '-s', 'src/mojo/tools/linux64/dump_syms.sha1',
+    ],
+  },
+  # Pull symupload resources using checked-in hashes.
+  {
+    'name': 'symupload_linux64',
+    'pattern': '.',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--platform=linux*',
+                '--no_auth',
+                '--bucket', 'mojo',
+                '-s', 'src/mojo/tools/linux64/symupload.sha1',
+    ],
+  },
 ]

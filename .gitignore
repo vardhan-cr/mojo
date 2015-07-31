@@ -104,3 +104,7 @@ v8.log
 
 # downloaded keyboard_native resources.
 /services/keyboard_native/res/*.png
+
+# breakpad tool
+/mojo/tools/linux64/dump_syms
+/mojo/tools/linux64/symupload
