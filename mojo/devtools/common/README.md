@@ -21,10 +21,48 @@ Additionally, `remote_adb_setup` script helps to configure adb on a remote
 machine to communicate with a device attached to a local machine, forwarding the
 ports used by `mojo_run`.
 
+### Runner
+
+`mojo_run` allows you to run a Mojo shell either on the host, or on an attached
+Android device.
+
+```sh
+mojo_run APP_URL  # Run on the host.
+mojo_run APP_URL --android  # Run on Android device.
+```
+
+Unless running within a Mojo checkout, we need to indicate the path to the shell
+binary:
+
+```sh
+mojo_run --shell-path path/to/shell/binary APP_URL
+```
+
+#### Sky apps
+
+To run a [Sky](https://github.com/domokit/sky_engine) app, you need to build
+`sky_viewer.mojo` in a Sky checkout, and indicate the path to the binary using
+the `--map-url` parameter:
+
+```sh
+mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer APP_URL
+```
+
+If the app does not declare a shebang indicating that it needs to be run in
+`sky_viewer`, pass `--sky` to map `sky_viewer` as a default content handler for
+dart apps:
+
+```sh
+mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer APP_URL --sky
+```
+
+Note that Sky apps will need the --use-osmesa flag to run
+over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
+
 ### Debugger
 
-The `mojo_debug` script allows you to interactively inspect a running shell,
-collect performance traces and attach a gdb debugger.
+`mojo_debug` allows you to interactively inspect a running shell, collect
+performance traces and attach a gdb debugger.
 
 #### Tracing
 To collect [performance

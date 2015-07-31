@@ -212,40 +212,28 @@ $ mojo/tools/mojob.py dartcheck
 
 ## Run Mojo Shell
 
-Devtools script `mojo_run` is a universal shell runner abstracting away the
-differences between running on Linux and Android. Having built Mojo as
-described above, a demo app can be run as follows:
+Devtools `mojo_run` is a universal shell runner abstracting away the differences
+between running on Linux and Android. Having built Mojo as described above, a
+demo app can be run as follows:
 
 ```
 mojo/devtools/common/mojo_run mojo:spinning_cube  # Linux.
 mojo/devtools/common/mojo_run mojo:spinning_cube  --android # Android.
 ```
 
-Pass `--sky path_to_sky_file` to run a
-[Sky](https://github.com/domokit/mojo/tree/master/sky) app on either platform:
-```
-mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart
-mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart --android
-```
-
 Passing the `-v` flag will increase the output verbosity. In particular, it will
 also print all arguments passed by `mojo_run` to the shell binary.
 
-### Chromoting
-
-Some Mojo apps (Sky apps in particular) will need the --use-osmesa flag to run
-over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
-
-```
-mojo/devtools/common/mojo_run --sky sky/examples/raw/hello_world.dart --use-osmesa
-```
+For additional information refer to the built-in help and the
+[documentation](https://github.com/domokit/devtools/blob/master/README.md#runner).
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
-Devtools `mojo_debug` script allows you to interactively inspect a running
-shell, collect performance traces and attach a gdb debugger. Refer to the
-[documentation](https://github.com/domokit/devtools/blob/master/README.md#debugger)
-for details.
+Devtools `mojo_debug` allows you to interactively inspect a running shell,
+collect performance traces and attach a gdb debugger.
+
+For additional information refer to the built-in help and the
+[documentation](https://github.com/domokit/devtools/blob/master/README.md#debugger).
 
 ### Android set-up
 

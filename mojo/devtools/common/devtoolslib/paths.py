@@ -53,9 +53,6 @@ def infer_mojo_paths(is_android, is_debug, target_cpu):
                                 'sdk', 'platform-tools', 'adb')
   else:
     paths['shell'] = os.path.join(build_dir_path, 'mojo_shell')
-
-  paths['sky_packages'] = os.path.join(build_dir_path, 'gen', 'dart-pkg',
-                                       'packages')
   return paths, None
 
 
