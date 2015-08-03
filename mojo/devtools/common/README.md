@@ -29,6 +29,7 @@ Android device.
 ```sh
 mojo_run APP_URL  # Run on the host.
 mojo_run APP_URL --android  # Run on Android device.
+mojo_run "APP_URL APP_ARGUMENTS"  # Run an app with startup arguments
 ```
 
 Unless running within a Mojo checkout, we need to indicate the path to the shell
@@ -38,6 +39,17 @@ binary:
 mojo_run --shell-path path/to/shell/binary APP_URL
 ```
 
+Some applications are running embedded inside a window manager. To start such an
+app, you have to first start the window manager app, then have it embed the app
+you are interested in. It is done as follows using the default window manager:
+
+```sh
+mojo_run "mojo:window_manager APP_URL"
+```
+
+By default, `mojo_run` uses `mojo:kiosk_wm` as the default window manager. It
+can be changed using the `--window-manager` flag.
+
 #### Sky apps
 
 To run a [Sky](https://github.com/domokit/sky_engine) app, you need to build
@@ -45,7 +57,7 @@ To run a [Sky](https://github.com/domokit/sky_engine) app, you need to build
 the `--map-url` parameter:
 
 ```sh
-mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer APP_URL
+mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer "mojo:window_manager APP_URL"
 ```
 
 If the app does not declare a shebang indicating that it needs to be run in
@@ -53,7 +65,7 @@ If the app does not declare a shebang indicating that it needs to be run in
 dart apps:
 
 ```sh
-mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer APP_URL --sky
+mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer "mojo:window_manager APP_URL" --sky
 ```
 
 Note that Sky apps will need the --use-osmesa flag to run
