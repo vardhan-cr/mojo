@@ -370,8 +370,7 @@ class AndroidShell(Shell):
     logcat_watch_thread = threading.Thread(target=_ForwardObservatoriesAsNeeded)
     logcat_watch_thread.start()
 
-  def ServeLocalDirectory(self, local_dir_path, port=0,
-                          additional_mappings=None):
+  def ServeLocalDirectory(self, local_dir_path, port=0):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
 
@@ -381,16 +380,36 @@ class AndroidShell(Shell):
     Args:
       local_dir_path: path to the directory to be served
       port: port at which the server will be available to the shell
-      additional_mappings: List of tuples (prefix, local_base_path) mapping
-          URLs that start with |prefix| to local directory at |local_base_path|.
-          The prefixes should skip the leading slash.
 
     Returns:
       The url that the shell can use to access the content of |local_dir_path|.
     """
     assert local_dir_path
-    server_address = start_http_server(local_dir_path, host_port=port,
-                                       additional_mappings=additional_mappings)
+    mappings = [('', local_dir_path)]
+    server_address = start_http_server(mappings, host_port=port)
+
+    return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
+        port, server_address[1])
+
+  def ServeLocalDirectories(self, mappings, port=0):
+    """Serves the content of the local (host) directories, making it available
+    to the shell under the url returned by the function.
+
+    The server will run on a separate thread until the program terminates. The
+    call returns immediately.
+
+    Args:
+      mappings: List of tuples (prefix, local_base_path) mapping URLs that start
+          with |prefix| to local directory at |local_base_path|. The prefixes
+          should skip the leading slash. The first matching prefix will be used
+          each time.
+      port: port at which the server will be available to the shell
+
+    Returns:
+      The url that the shell can use to access the content of |local_dir_path|.
+    """
+    assert mappings
+    server_address = start_http_server(mappings, host_port=port)
 
     return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
         port, server_address[1])

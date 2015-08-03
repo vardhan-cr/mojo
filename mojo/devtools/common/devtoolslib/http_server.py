@@ -173,24 +173,21 @@ def _GetHandlerClassForPath(mappings):
   return RequestHandler
 
 
-def start_http_server(local_dir_path, host_port=0, additional_mappings=None):
+def start_http_server(mappings, host_port=0):
   """Starts an http server serving files from |local_dir_path| on |host_port|.
 
   Args:
-    local_dir_path: Path to the local filesystem directory to be served over
-        http under.
+    mappings: List of tuples (prefix, local_base_path) mapping
+        URLs that start with |prefix| to local directory at |local_base_path|.
+        The prefixes should skip the leading slash. The first matching prefix
+        will be used each time.
     host_port: Port on the host machine to run the server on. Pass 0 to use a
         system-assigned port.
-    additional_mappings: List of tuples (prefix, local_base_path) mapping
-        URLs that start with |prefix| to local directory at |local_base_path|.
-        The prefixes should skip the leading slash.
 
   Returns:
     Tuple of the server address and the port on which it runs.
   """
-  assert local_dir_path
-  mappings = additional_mappings if additional_mappings else []
-  mappings.append(('', local_dir_path))
+  assert mappings
   handler_class = _GetHandlerClassForPath(mappings)
 
   try:
@@ -202,12 +199,12 @@ def start_http_server(local_dir_path, host_port=0, additional_mappings=None):
     http_thread.start()
     print 'Started http://%s:%d to host %s.' % (httpd.server_address[0],
                                                 httpd.server_address[1],
-                                                local_dir_path)
+                                                str(mappings))
     return httpd.server_address
   except socket.error as v:
     error_code = v[0]
     print 'Failed to start http server for %s on port %d: %s.' % (
-        local_dir_path, host_port, os.strerror(error_code))
+        str(mappings), host_port, os.strerror(error_code))
     if error_code == errno.EADDRINUSE:
       print ('  Run `fuser %d/tcp` to find out which process is using the port.'
              % host_port)

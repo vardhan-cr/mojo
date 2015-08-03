@@ -22,8 +22,7 @@ class LinuxShell(Shell):
     self.executable_path = executable_path
     self.command_prefix = command_prefix if command_prefix else []
 
-  def ServeLocalDirectory(self, local_dir_path, port=0,
-                          additional_mappings=None):
+  def ServeLocalDirectory(self, local_dir_path, port=0):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
 
@@ -33,15 +32,31 @@ class LinuxShell(Shell):
     Args:
       local_dir_path: path to the directory to be served
       port: port at which the server will be available to the shell
-      additional_mappings: List of tuples (prefix, local_base_path) mapping
-          URLs that start with |prefix| to local directory at |local_base_path|.
-          The prefixes should skip the leading slash.
 
     Returns:
       The url that the shell can use to access the content of |local_dir_path|.
     """
-    return 'http://%s:%d/' % http_server.start_http_server(local_dir_path, port,
-                                                           additional_mappings)
+    mappings = [('', local_dir_path)]
+    return 'http://%s:%d/' % http_server.start_http_server(mappings, port)
+
+  def ServeLocalDirectories(self, mappings, port=0):
+    """Serves the content of the local (host) directories, making it available
+    to the shell under the url returned by the function.
+
+    The server will run on a separate thread until the program terminates. The
+    call returns immediately.
+
+    Args:
+      mappings: List of tuples (prefix, local_base_path) mapping URLs that start
+          with |prefix| to local directory at |local_base_path|. The prefixes
+          should skip the leading slash. The first matching prefix will be used
+          each time.
+      port: port at which the server will be available to the shell
+
+    Returns:
+      The url that the shell can use to access the content of |local_dir_path|.
+    """
+    return 'http://%s:%d/' % http_server.start_http_server(mappings, port)
 
   def ForwardHostPortToShell(self, host_port):
     """Forwards a port on the host machine to the same port wherever the shell
