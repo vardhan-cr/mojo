@@ -74,7 +74,7 @@ def _GetHandlerClassForPath(mappings):
       if self.etag:
         return self.etag
 
-      path = self.translate_path(self.path)
+      path = self.translate_path(self.path, False)
       if not os.path.isfile(path):
         return None
 
@@ -130,7 +130,8 @@ def _GetHandlerClassForPath(mappings):
 
       return SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
 
-    def translate_path(self, path):
+    # pylint: disable=W0221
+    def translate_path(self, path, gzipped=True):
       # Parent translate_path() will strip away the query string and fragment
       # identifier, but also will prepend the cwd to the path. relpath() gives
       # us the relative path back.
@@ -141,13 +142,14 @@ def _GetHandlerClassForPath(mappings):
         if normalized_path.startswith(prefix):
           result = os.path.join(local_base_path, normalized_path[len(prefix):])
           if os.path.isfile(result):
-            gz_result = result + '.gz'
-            if (not os.path.isfile(gz_result) or
-                os.path.getmtime(gz_result) <= os.path.getmtime(result)):
-              with open(result, 'rb') as f:
-                with gzip.open(gz_result, 'wb') as zf:
-                  shutil.copyfileobj(f, zf)
-            result = gz_result
+            if gzipped:
+              gz_result = result + '.gz'
+              if (not os.path.isfile(gz_result) or
+                  os.path.getmtime(gz_result) <= os.path.getmtime(result)):
+                with open(result, 'rb') as f:
+                  with gzip.open(gz_result, 'wb') as zf:
+                    shutil.copyfileobj(f, zf)
+              result = gz_result
           return result
 
       # This class is only used internally, and we're adding a catch-all ''
