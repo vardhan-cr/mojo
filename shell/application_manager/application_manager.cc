@@ -128,9 +128,10 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     ServiceProviderPtr exposed_services,
     const base::Closure& on_application_end,
     const std::vector<std::string>& pre_redirect_parameters) {
-  TRACE_EVENT_INSTANT1(
+  TRACE_EVENT_INSTANT2(
       "mojo_shell", "ApplicationManager::ConnectToApplicationWithParameters",
-      TRACE_EVENT_SCOPE_THREAD, "requested_url", requested_url.spec());
+      TRACE_EVENT_SCOPE_THREAD, "requested_url", requested_url.spec(),
+      "requestor_url", requestor_url.spec());
   DCHECK(requested_url.is_valid());
 
   // We check both the mapped and resolved urls for existing shell_impls because
