@@ -103,6 +103,10 @@ after changing threads), use the `current` option:
 (gdb) update-symbols current
 ```
 
+If you want to debug the startup of your application, you can pass
+`--wait-for-debugger` to `mojo_run` to have the Mojo Shell stop and wait to be
+attached by `gdb` before continuing.
+
 #### Android crash stacks
 When Mojo shell crashes on Android ("Unfortunately, Mojo shell has stopped.")
 due to a crash in native code, `mojo_debug` can be used to find and symbolize

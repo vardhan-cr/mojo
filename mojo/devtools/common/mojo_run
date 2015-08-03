@@ -16,7 +16,8 @@ _USAGE = ("mojo_run "
          "[--enable-external-applications] "
          "[--disable-cache] "
          "[--enable-multiprocess] "
-         "[<mojo-app>] "
+         "[--wait-for-debugger] "
+         "[--sky <mojo-app>|<mojo-app>] "
          """
 
 A <mojo-app> is a Mojo URL or a Mojo URL and arguments within quotes.
