@@ -27,7 +27,6 @@ mojo_native_application("moterm") {
     "//mojo/services/surfaces/public/interfaces:surface_id",
     "//mojo/services/terminal/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
-    "//mojo/skia",
     "//skia",
     "//third_party/dejavu-fonts-ttf-2.34:DejaVuSansMonoRegular",
   ]
