@@ -65,6 +65,10 @@ const char kTraceStartup[] = "trace-startup";
 // 5 seconds is used.
 const char kTraceStartupDuration[] = "trace-startup-duration";
 
+// Sets the name of the output file for startup tracing. If omitted a default of
+// 'mojo_shell.trace' is used.
+const char kTraceStartupOutputName[] = "trace-startup-output-name";
+
 // Specifies a set of mappings to apply when resolving urls. The value is a set
 // of ',' separated mappings, where each mapping consists of a pair of urls
 // giving the to/from url to map. For example, 'a=b,c=d' contains two mappings,
@@ -85,6 +89,7 @@ const char* kSwitchArray[] = {kV,
                               kOrigin,
                               kTraceStartup,
                               kTraceStartupDuration,
+                              kTraceStartupOutputName,
                               kURLMappings};
 
 const std::set<std::string> GetAllSwitches() {

@@ -246,10 +246,15 @@ static void Start(JNIEnv* env,
   g_internal_data.Get().tracer.reset(tracer);
   bool trace_startup = command_line->HasSwitch(switches::kTraceStartup);
   if (trace_startup) {
+    std::string output_name =
+        command_line->GetSwitchValueASCII(switches::kTraceStartupOutputName);
+    std::string output_path =
+        tmp_dir + "/" +
+        (output_name.empty() ? "mojo_shell.trace" : output_name);
     tracer->Start(
         command_line->GetSwitchValueASCII(switches::kTraceStartup),
         command_line->GetSwitchValueASCII(switches::kTraceStartupDuration),
-        tmp_dir + "/mojo_shell.trace");
+        output_path);
   }
 
   g_internal_data.Get().shell_runner.reset(

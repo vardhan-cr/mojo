@@ -37,6 +37,7 @@ void Usage() {
       << " [--" << switches::kOrigin << "=<url-lib-path>]"
       << " [--" << switches::kTraceStartup << "[=\"list,of,categories\"]]"
       << " [--" << switches::kTraceStartupDuration << "=<seconds>]"
+      << " [--" << switches::kTraceStartupOutputName << "=<file_name>]"
       << " [--" << switches::kURLMappings << "=from1=to1,from2=to2]"
       << " [--" << switches::kWaitForDebugger << "]"
       << " <mojo-app> ...\n\n"
@@ -78,10 +79,12 @@ int main(int argc, char** argv) {
 
   bool trace_startup = command_line.HasSwitch(switches::kTraceStartup);
   if (trace_startup) {
+    std::string output_name =
+        command_line.GetSwitchValueASCII(switches::kTraceStartupOutputName);
     tracer.Start(
         command_line.GetSwitchValueASCII(switches::kTraceStartup),
         command_line.GetSwitchValueASCII(switches::kTraceStartupDuration),
-        "mojo_shell.trace");
+        output_name.empty() ? "mojo_shell.trace" : output_name);
   }
 
   if (command_line.HasSwitch(switches::kCPUProfile)) {
