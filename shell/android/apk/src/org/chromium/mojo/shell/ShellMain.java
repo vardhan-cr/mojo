@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 
+import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 import org.chromium.mojo.bindings.InterfaceRequest;
@@ -19,6 +20,7 @@ import org.chromium.mojom.mojo.ServiceProvider;
 import org.chromium.mojom.mojo.Shell;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -176,8 +178,13 @@ public class ShellMain {
     }
 
     @CalledByNative
-    private static void finishActivity(Activity activity) {
-        activity.finish();
+    private static void finishActivities() {
+        for (WeakReference<Activity> activityRef : ApplicationStatus.getRunningActivities()) {
+            Activity activity = activityRef.get();
+            if (activity != null) {
+                activity.finish();
+            }
+        }
     }
 
     /**

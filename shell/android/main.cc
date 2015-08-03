@@ -83,9 +83,6 @@ struct InternalShellData {
   // Thread to run the shell on.
   scoped_ptr<base::DelegateSimpleThread> shell_thread;
 
-  // Main android app activity, to be used on the main thread.
-  base::android::ScopedJavaGlobalRef<jobject> main_activity;
-
   // Proxy to a Window Manager, initialized on the shell thread.
   mojo::WindowManagerPtr window_manager;
 
@@ -134,8 +131,7 @@ void ConfigureAndroidServices(Context* context) {
 void QuitShellThread() {
   g_internal_data.Get().shell_thread->Join();
   g_internal_data.Get().shell_thread.reset();
-  Java_ShellMain_finishActivity(base::android::AttachCurrentThread(),
-                                g_internal_data.Get().main_activity.obj());
+  Java_ShellMain_finishActivities(base::android::AttachCurrentThread());
   exit(0);
 }
 
@@ -206,13 +202,12 @@ void ConnectToApplicationImpl(
 
 static void Start(JNIEnv* env,
                   jclass clazz,
-                  jobject activity,
+                  jobject application_context,
                   jstring mojo_shell_child_path,
                   jobjectArray jparameters,
                   jstring j_local_apps_directory,
                   jstring j_tmp_dir,
                   jstring j_home_dir) {
-  g_internal_data.Get().main_activity.Reset(env, activity);
   // Initially, the shell runner is not ready.
   g_internal_data.Get().shell_runner_ready.reset(
       new base::WaitableEvent(true, false));
@@ -228,8 +223,9 @@ static void Start(JNIEnv* env,
       1);
   DCHECK_EQ(return_value, 0);
 
-  base::android::ScopedJavaLocalRef<jobject> scoped_activity(env, activity);
-  base::android::InitApplicationContext(env, scoped_activity);
+  base::android::ScopedJavaLocalRef<jobject> scoped_application_context(
+      env, application_context);
+  base::android::InitApplicationContext(env, scoped_application_context);
 
   std::vector<std::string> parameters;
   parameters.push_back("mojo_shell");
