@@ -2,8 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Functions that configure the shell before it is run manipulating its argument
-list.
+"""Produces configured shell abstractions.
+
+This module knows how to produce a configured shell abstraction based on
+shell_config.ShellConfig.
 """
 
 import os.path
@@ -17,7 +19,11 @@ from devtoolslib.linux_shell import LinuxShell
 # so that caching works between subsequent runs with the same command line.
 _LOCAL_ORIGIN_PORT = 31840
 _MAPPINGS_BASE_PORT = 31841
-_SKY_SERVER_PORT = 9998
+
+
+class ShellConfigurationException(Exception):
+  """Represents an error preventing creating a functional shell abstraction."""
+  pass
 
 
 def _is_web_url(dest):
@@ -164,95 +170,55 @@ def append_to_argument(arguments, key, value, delimiter=","):
   return arguments
 
 
-def add_shell_arguments(parser):
-  """Adds argparse arguments allowing to configure shell abstraction using
-  configure_shell() below.
+def get_shell(shell_config, shell_args):
   """
-  # Arguments configuring the shell run.
-  parser.add_argument('--shell-path', help='Path of the Mojo shell binary.')
-  parser.add_argument('--android', help='Run on Android',
-                      action='store_true')
-  parser.add_argument('--origin', help='Origin for mojo: URLs. This can be a '
-                      'web url or a local directory path.')
-  parser.add_argument('--map-url', action='append',
-                      help='Define a mapping for a url in the format '
-                      '<url>=<url-or-local-file-path>')
-  parser.add_argument('--map-origin', action='append',
-                      help='Define a mapping for a url origin in the format '
-                      '<origin>=<url-or-local-file-path>')
-  parser.add_argument('--sky', action='store_true',
-                      help='Maps mojo:sky_viewer as the content handler for '
-                           'dart apps.')
-  parser.add_argument('-v', '--verbose', action="store_true",
-                      help="Increase output verbosity")
-
-  android_group = parser.add_argument_group('Android-only',
-      'These arguments apply only when --android is passed.')
-  android_group.add_argument('--adb-path', help='Path of the adb binary.')
-  android_group.add_argument('--target-device', help='Device to run on.')
-  android_group.add_argument('--logcat-tags', help='Comma-separated list of '
-                             'additional logcat tags to display.')
-
-  desktop_group = parser.add_argument_group('Desktop-only',
-      'These arguments apply only when running on desktop.')
-  desktop_group.add_argument('--use-osmesa', action='store_true',
-                             help='Configure the native viewport service '
-                             'for off-screen rendering.')
-
-
-class ShellConfigurationException(Exception):
-  """Represents an error preventing creating a functional shell abstraction."""
-  pass
-
-
-def configure_shell(config_args, shell_args):
-  """
-  Produces a shell abstraction configured using the parsed arguments defined in
-  add_shell_arguments().
+  Produces a shell abstraction configured according to |shell_config|.
 
   Args:
-    config_args: Parsed arguments added using add_shell_arguments().
+    shell_config: Instance of shell_config.ShellConfig.
     shell_args: Additional raw shell arguments to be passed to the shell. We
         need to take these into account as some parameters need to appear only
         once on the argument list (e.g. url-mappings) so we need to coalesce any
         overrides and the existing value into just one argument.
 
   Returns:
-    A tuple of (shell, shell_args).
+    A tuple of (shell, shell_args). |shell| is the configured shell abstraction,
+    |shell_args| is updated list of shell arguments.
 
   Throws:
     ShellConfigurationException if shell abstraction could not be configured.
   """
-  if config_args.android:
-    verbose_pipe = sys.stdout if config_args.verbose else None
+  if shell_config.android:
+    verbose_pipe = sys.stdout if shell_config.verbose else None
 
-    shell = AndroidShell(config_args.adb_path, config_args.target_device,
-                         logcat_tags=config_args.logcat_tags,
+    shell = AndroidShell(shell_config.adb_path, shell_config.target_device,
+                         logcat_tags=shell_config.logcat_tags,
                          verbose_pipe=verbose_pipe)
+
     device_status, error = shell.CheckDevice()
     if not device_status:
       raise ShellConfigurationException('Device check failed: ' + error)
-    if config_args.shell_path:
-      shell.InstallApk(config_args.shell_path)
+    if shell_config.shell_path:
+      shell.InstallApk(shell_config.shell_path)
   else:
-    if not config_args.shell_path:
+    if not shell_config.shell_path:
       raise ShellConfigurationException('Can not run without a shell binary. '
                                         'Please pass --shell-path.')
-    shell = LinuxShell(config_args.shell_path)
-    if config_args.use_osmesa:
+    shell = LinuxShell(shell_config.shell_path)
+    if shell_config.use_osmesa:
       shell_args.append('--args-for=mojo:native_viewport_service --use-osmesa')
 
-  shell_args = _apply_mappings(shell, shell_args, config_args.map_url,
-                               config_args.map_origin)
+  shell_args = _apply_mappings(shell, shell_args, shell_config.map_url_list,
+                               shell_config.map_origin_list)
 
-  if config_args.origin:
-    if _is_web_url(config_args.origin):
-      shell_args.append('--origin=' + config_args.origin)
+  if shell_config.origin:
+    if _is_web_url(shell_config.origin):
+      shell_args.append('--origin=' + shell_config.origin)
     else:
-      shell_args.extend(configure_local_origin(shell, config_args.origin,
-                                             fixed_port=True))
+      shell_args.extend(configure_local_origin(shell, shell_config.origin,
+                                               fixed_port=True))
 
-  if config_args.sky:
+  if shell_config.sky:
     shell_args = _configure_sky(shell_args)
 
   return shell, shell_args
