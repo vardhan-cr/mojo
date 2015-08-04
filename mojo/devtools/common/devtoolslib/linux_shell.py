@@ -25,7 +25,7 @@ class LinuxShell(Shell):
 
   @overrides(Shell)
   def serve_local_directory(self, local_dir_path, port=0):
-    mappings = [('', local_dir_path)]
+    mappings = [('', [local_dir_path])]
     return 'http://%s:%d/' % http_server.start_http_server(mappings, port)
 
   @overrides(Shell)

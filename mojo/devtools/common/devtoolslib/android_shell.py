@@ -375,7 +375,7 @@ class AndroidShell(Shell):
   @overrides(Shell)
   def serve_local_directory(self, local_dir_path, port=0):
     assert local_dir_path
-    mappings = [('', local_dir_path)]
+    mappings = [('', [local_dir_path])]
     server_address = start_http_server(mappings, host_port=port)
 
     return 'http://127.0.0.1:%d/' % self._forward_device_port_to_host(

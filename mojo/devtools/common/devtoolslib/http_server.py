@@ -53,9 +53,11 @@ def _get_handler_class_for_path(mappings):
   """Creates a handler override for SimpleHTTPServer.
 
   Args:
-    mappings: List of tuples (prefix, local_base_path), mapping path prefixes
-        without the leading slash to local filesystem directory paths. The first
-        matching prefix will be used each time.
+    mappings: List of tuples (prefix, local_base_path_list) mapping URLs that
+        start with |prefix| to one or more local directories enumerated in
+        |local_base_path_list|. The prefixes should skip the leading slash.
+        The first matching prefix and the first location that contains the
+        requested file will be used each time.
   """
   for prefix, _ in mappings:
     assert not prefix.startswith('/'), ('Prefixes for the http server mappings '
@@ -138,23 +140,26 @@ def _get_handler_class_for_path(mappings):
       normalized_path = os.path.relpath(
           SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path))
 
-      for prefix, local_base_path in mappings:
+      for prefix, local_base_path_list in mappings:
         if normalized_path.startswith(prefix):
-          result = os.path.join(local_base_path, normalized_path[len(prefix):])
-          if os.path.isfile(result):
-            if gzipped:
-              gz_result = result + '.gz'
-              if (not os.path.isfile(gz_result) or
-                  os.path.getmtime(gz_result) <= os.path.getmtime(result)):
-                with open(result, 'rb') as f:
-                  with gzip.open(gz_result, 'wb') as zf:
-                    shutil.copyfileobj(f, zf)
-              result = gz_result
-          return result
-
-      # This class is only used internally, and we're adding a catch-all ''
-      # prefix at the end of |mappings|.
-      assert False
+          for local_base_path in local_base_path_list:
+            candidate = os.path.join(local_base_path,
+                                     normalized_path[len(prefix):])
+            if os.path.isfile(candidate):
+              if gzipped:
+                gz_result = candidate + '.gz'
+                if (not os.path.isfile(gz_result) or
+                    os.path.getmtime(gz_result) <= os.path.getmtime(candidate)):
+                  with open(candidate, 'rb') as f:
+                    with gzip.open(gz_result, 'wb') as zf:
+                      shutil.copyfileobj(f, zf)
+                return gz_result
+              return candidate
+          else:
+            self.send_response(404)
+            return None
+      self.send_response(404)
+      return None
 
     def guess_type(self, path):
       # This is needed so that exploded Sky apps without shebang can still run
@@ -177,10 +182,11 @@ def start_http_server(mappings, host_port=0):
   """Starts an http server serving files from |local_dir_path| on |host_port|.
 
   Args:
-    mappings: List of tuples (prefix, local_base_path) mapping
-        URLs that start with |prefix| to local directory at |local_base_path|.
-        The prefixes should skip the leading slash. The first matching prefix
-        will be used each time.
+    mappings: List of tuples (prefix, local_base_path_list) mapping URLs that
+        start with |prefix| to one or more local directories enumerated in
+        |local_base_path_list|. The prefixes should skip the leading slash.
+        The first matching prefix and the first location that contains the
+        requested file will be used each time.
     host_port: Port on the host machine to run the server on. Pass 0 to use a
         system-assigned port.
 

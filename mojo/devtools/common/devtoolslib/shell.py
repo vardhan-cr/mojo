@@ -30,14 +30,15 @@ class Shell(object):
     call returns immediately.
 
     Args:
-      mappings: List of tuples (prefix, local_base_path) mapping URLs that start
-          with |prefix| to local directory at |local_base_path|. The prefixes
-          should skip the leading slash. The first matching prefix will be used
-          each time.
+      mappings: List of tuples (prefix, local_base_path_list) mapping URLs that
+          start with |prefix| to one or more local directories enumerated in
+          |local_base_path_list|. The prefixes should skip the leading slash.
+          The first matching prefix and the first location that contains the
+          requested file will be used each time.
       port: port at which the server will be available to the shell
 
     Returns:
-      The url that the shell can use to access the content of |local_dir_path|.
+      The url that the shell can use to access the server.
     """
     raise NotImplementedError()
 

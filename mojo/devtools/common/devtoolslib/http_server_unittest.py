@@ -56,8 +56,8 @@ class HttpServerTest(unittest.TestCase):
     there.
     """
     mappings = [
-        ('hello/', self.hello_dir),
-        ('other/', self.other_dir),
+        ('hello/', [self.hello_dir]),
+        ('other/', [self.other_dir]),
     ]
     server_address = ('http://%s:%u/' %
                       http_server.start_http_server(mappings))
@@ -72,10 +72,54 @@ class HttpServerTest(unittest.TestCase):
                                      other_relpath)
     self.assertEquals(200, other_response.getcode())
 
+  def test_unmapped_path(self):
+    """Verifies that the server returns 404 when a request for unmapped url
+    prefix is made.
+    """
+    mappings = [
+        ('hello/', [self.hello_dir]),
+    ]
+    server_address = ('http://%s:%u/' %
+                      http_server.start_http_server(mappings))
+
+    error_code = None
+    try:
+      urllib2.urlopen(server_address + 'unmapped/abc')
+    except urllib2.HTTPError as error:
+      error_code = error.code
+    self.assertEquals(404, error_code)
+
+  def test_multiple_paths(self):
+    """Verfies mapping multiple local paths under the same url prefix."""
+    mappings = [
+        ('singularity/', [self.hello_dir, self.other_dir]),
+    ]
+    server_address = ('http://%s:%u/' %
+                      http_server.start_http_server(mappings))
+
+    hello_relpath = os.path.relpath(self.hello_file.name, self.hello_dir)
+    hello_response = urllib2.urlopen(server_address + 'singularity/' +
+                                     hello_relpath)
+    self.assertEquals(200, hello_response.getcode())
+
+    other_relpath = os.path.relpath(self.other_file.name, self.other_dir)
+    other_response = urllib2.urlopen(server_address + 'singularity/' +
+                                     other_relpath)
+    self.assertEquals(200, other_response.getcode())
+
+    # Verify that a request for a file not present under any of the mapped
+    # directories results in 404.
+    error_code = None
+    try:
+      urllib2.urlopen(server_address + 'singularity/unavailable')
+    except urllib2.HTTPError as error:
+      error_code = error.code
+    self.assertEquals(404, error_code)
+
   def test_gzip(self):
     """Verifies the gzip content encoding of the files being served."""
     mappings = [
-        ('hello/', self.hello_dir),
+        ('hello/', [self.hello_dir]),
     ]
     server_address = ('http://%s:%u/' %
                       http_server.start_http_server(mappings))
