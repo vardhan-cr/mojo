@@ -333,6 +333,12 @@ if (is_android) {
       "$root_out_dir/network_service.mojo",
       "$root_out_dir/obj/shell/bootstrap_java.dex.jar",
     ]
+    deps = [
+      ":mojo_shell_child",
+      ":bootstrap",
+      ":bootstrap_java",
+      "//mojo/public/tools:copy_network_service",
+    ]
   }
 
   copy_ex("copy_mojo_shell_test_assets") {
@@ -341,6 +347,10 @@ if (is_android) {
     sources = [
       "$root_out_dir/test_app.mojo",
       "$root_out_dir/test_request_tracker_app.mojo",
+    ]
+    deps = [
+      "//services/test_service:test_app",
+      "//services/test_service:test_request_tracker_app",
     ]
   }
 
@@ -412,6 +422,7 @@ if (is_android) {
       ":copy_mojo_shell_assets",
       ":java",
       ":mojo_shell",
+      ":mojo_shell_manifest",
       ":resources",
       "//base:base_java",
       "//services/native_viewport:native_viewport_java",
@@ -497,14 +508,25 @@ test("mojo_shell_tests") {
   }
 }
 
+# Shared library propagation will happen up to executable, shared library,
+# or complete static library boundaries.
+# Workaround from brettw to prevent gn from linking pingable app into the
+# apptests executable.
+static_library("pingable_app_dummy") {
+  complete_static_lib = true
+  testonly = true
+  public_deps = [
+    "//shell/test:pingable_app($default_toolchain)",
+  ]
+}
+
 embed_file("embed_pingable") {
   source = "$root_build_dir/pingable_app.mojo"
   namespace = "shell::test"
   variable = "kPingable"
   testonly = true
-
   deps = [
-    "//shell/test:pingable_app",
+    ":pingable_app_dummy",
   ]
 }
 
@@ -562,6 +584,7 @@ copy("copy_symbols") {
 
   deps = [
     ":mojo_shell",
+    ":mojo_shell_child",
   ]
   if (is_android) {
     deps += [ ":bootstrap" ]

@@ -34,6 +34,12 @@ template("python_binary_source_set") {
                "-o",
                rebase_path(cython_output, root_build_dir),
              ] + rebase_path(sources, root_build_dir)
+      if (defined(invoker.deps)) {
+        deps = invoker.deps
+      }
+      if (defined(invoker.public_deps)) {
+        public_deps = invoker.public_deps
+      }
     }
   }
 
@@ -73,6 +79,9 @@ template("python_binary_source_set") {
     }
     if (defined(invoker.datadeps)) {
       datadeps = invoker.datadeps
+    }
+    if (defined(invoker.public_deps)) {
+      public_deps = invoker.public_deps
     }
   }
 }

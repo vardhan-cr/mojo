@@ -37,7 +37,10 @@ python_binary_source_set("content_handler_src") {
 }
 
 copy("common_system_pxd") {
-  visibility = [ ":mojo_system_impl" ]
+  visibility = [
+    ":mojo_system_impl",
+    ":mojo_system_impl_cython_compiler",
+  ]
   sources = [
     "//mojo/public/python/c_async_waiter.pxd",
     "//mojo/public/python/c_export.pxd",
@@ -59,7 +62,6 @@ python_binary_source_set("mojo_system_impl") {
     "python_system_impl_helper.h",
   ]
   deps = [
-    ":common_system_pxd",
     "//base",
     "//mojo/environment:chromium",
     "//mojo/common",
@@ -68,5 +70,8 @@ python_binary_source_set("mojo_system_impl") {
     "//mojo/public/cpp/utility",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/python:python_common",
+  ]
+  public_deps = [
+    ":common_system_pxd",
   ]
 }
