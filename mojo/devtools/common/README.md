@@ -128,14 +128,6 @@ the stack trace present in the device log:
 mojo_debug device stack
 ```
 
-### devtoolslib
-
-**devtoolslib** is a Python module containing the core scripting functionality
-for running Mojo apps: shell abstraction with implementations for Android and
-Linux and support for apptest frameworks. The executable scripts in devtools are
-based on this module. One can also choose to embed the functionality provided by
-**devtoolslib** in their own wrapper.
-
 ## Development
 
 The library is canonically developed [in the mojo
