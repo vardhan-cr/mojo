@@ -18,6 +18,7 @@ import time
 
 from devtoolslib.http_server import start_http_server
 from devtoolslib.shell import Shell
+from devtoolslib.utils import overrides
 
 
 # Tags used by mojo shell Java logging.
@@ -370,20 +371,8 @@ class AndroidShell(Shell):
     logcat_watch_thread = threading.Thread(target=_ForwardObservatoriesAsNeeded)
     logcat_watch_thread.start()
 
+  @overrides(Shell)
   def ServeLocalDirectory(self, local_dir_path, port=0):
-    """Serves the content of the local (host) directory, making it available to
-    the shell under the url returned by the function.
-
-    The server will run on a separate thread until the program terminates. The
-    call returns immediately.
-
-    Args:
-      local_dir_path: path to the directory to be served
-      port: port at which the server will be available to the shell
-
-    Returns:
-      The url that the shell can use to access the content of |local_dir_path|.
-    """
     assert local_dir_path
     mappings = [('', local_dir_path)]
     server_address = start_http_server(mappings, host_port=port)
@@ -391,45 +380,20 @@ class AndroidShell(Shell):
     return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
         port, server_address[1])
 
+  @overrides(Shell)
   def ServeLocalDirectories(self, mappings, port=0):
-    """Serves the content of the local (host) directories, making it available
-    to the shell under the url returned by the function.
-
-    The server will run on a separate thread until the program terminates. The
-    call returns immediately.
-
-    Args:
-      mappings: List of tuples (prefix, local_base_path) mapping URLs that start
-          with |prefix| to local directory at |local_base_path|. The prefixes
-          should skip the leading slash. The first matching prefix will be used
-          each time.
-      port: port at which the server will be available to the shell
-
-    Returns:
-      The url that the shell can use to access the content of |local_dir_path|.
-    """
     assert mappings
     server_address = start_http_server(mappings, host_port=port)
 
     return 'http://127.0.0.1:%d/' % self._ForwardDevicePortToHost(
         port, server_address[1])
 
+  @overrides(Shell)
   def ForwardHostPortToShell(self, host_port):
-    """Forwards a port on the host machine to the same port wherever the shell
-    is running.
-
-    This is a no-op if the shell is running locally.
-    """
     self._ForwardHostPortToDevice(host_port, host_port)
 
+  @overrides(Shell)
   def Run(self, arguments):
-    """Runs the shell with given arguments until shell exits, passing the stdout
-    mingled with stderr produced by the shell onto the stdout.
-
-    Returns:
-      Exit code retured by the shell or None if the exit code cannot be
-      retrieved.
-    """
     self.CleanLogs()
     self.ForwardObservatoryPorts()
 
@@ -440,22 +404,8 @@ class AndroidShell(Shell):
     p.wait()
     return None
 
+  @overrides(Shell)
   def RunAndGetOutput(self, arguments, timeout=None):
-    """Runs the shell with given arguments until shell exits and returns the
-    output.
-
-    Args:
-      arguments: list of arguments for the shell
-      timeout: maximum running time in seconds, after which the shell will be
-          terminated
-
-    Returns:
-      A tuple of (return_code, output, did_time_out). |return_code| is the exit
-      code returned by the shell or None if the exit code cannot be retrieved.
-      |output| is the stdout mingled with the stderr produced by the shell.
-      |did_time_out| is True iff the shell was terminated because it exceeded
-      the |timeout| and False otherwise.
-    """
     class Results:
       """Workaround for Python scoping rules that prevent assigning to variables
       from the outer scope.

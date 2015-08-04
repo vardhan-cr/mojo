@@ -5,8 +5,9 @@
 import subprocess
 import threading
 
-from devtoolslib.shell import Shell
 from devtoolslib import http_server
+from devtoolslib.shell import Shell
+from devtoolslib.utils import overrides
 
 
 class LinuxShell(Shell):
@@ -22,77 +23,26 @@ class LinuxShell(Shell):
     self.executable_path = executable_path
     self.command_prefix = command_prefix if command_prefix else []
 
+  @overrides(Shell)
   def ServeLocalDirectory(self, local_dir_path, port=0):
-    """Serves the content of the local (host) directory, making it available to
-    the shell under the url returned by the function.
-
-    The server will run on a separate thread until the program terminates. The
-    call returns immediately.
-
-    Args:
-      local_dir_path: path to the directory to be served
-      port: port at which the server will be available to the shell
-
-    Returns:
-      The url that the shell can use to access the content of |local_dir_path|.
-    """
     mappings = [('', local_dir_path)]
     return 'http://%s:%d/' % http_server.start_http_server(mappings, port)
 
+  @overrides(Shell)
   def ServeLocalDirectories(self, mappings, port=0):
-    """Serves the content of the local (host) directories, making it available
-    to the shell under the url returned by the function.
-
-    The server will run on a separate thread until the program terminates. The
-    call returns immediately.
-
-    Args:
-      mappings: List of tuples (prefix, local_base_path) mapping URLs that start
-          with |prefix| to local directory at |local_base_path|. The prefixes
-          should skip the leading slash. The first matching prefix will be used
-          each time.
-      port: port at which the server will be available to the shell
-
-    Returns:
-      The url that the shell can use to access the content of |local_dir_path|.
-    """
     return 'http://%s:%d/' % http_server.start_http_server(mappings, port)
 
+  @overrides(Shell)
   def ForwardHostPortToShell(self, host_port):
-    """Forwards a port on the host machine to the same port wherever the shell
-    is running.
-
-    This is a no-op if the shell is running locally.
-    """
     pass
 
+  @overrides(Shell)
   def Run(self, arguments):
-    """Runs the shell with given arguments until shell exits, passing the stdout
-    mingled with stderr produced by the shell onto the stdout.
-
-    Returns:
-      Exit code retured by the shell or None if the exit code cannot be
-      retrieved.
-    """
     command = self.command_prefix + [self.executable_path] + arguments
     return subprocess.call(command, stderr=subprocess.STDOUT)
 
+  @overrides(Shell)
   def RunAndGetOutput(self, arguments, timeout=None):
-    """Runs the shell with given arguments until shell exits and returns the
-    output.
-
-    Args:
-      arguments: list of arguments for the shell
-      timeout: maximum running time in seconds, after which the shell will be
-          terminated
-
-    Returns:
-      A tuple of (return_code, output, did_time_out). |return_code| is the exit
-      code returned by the shell or None if the exit code cannot be retrieved.
-      |output| is the stdout mingled with the stderr produced by the shell.
-      |did_time_out| is True iff the shell was terminated because it exceeded
-      the |timeout| and False otherwise.
-    """
     command = self.command_prefix + [self.executable_path] + arguments
     p = subprocess.Popen(command, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT)
