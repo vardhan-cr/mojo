@@ -40,7 +40,7 @@ def _host_local_url_destination(shell, dest_file, port):
   if not os.path.exists(directory):
     raise ValueError('local path passed as --map-url destination '
                      'does not exist')
-  server_url = shell.ServeLocalDirectory(directory, port)
+  server_url = shell.serve_local_directory(directory, port)
   return server_url + os.path.relpath(dest_file, directory)
 
 
@@ -50,7 +50,7 @@ def _host_local_origin_destination(shell, dest_dir, port):
   Returns:
     Url of the hosted directory.
   """
-  return shell.ServeLocalDirectory(dest_dir, port)
+  return shell.serve_local_directory(dest_dir, port)
 
 
 def _rewrite(mapping, host_destination_functon, shell, port):
@@ -135,7 +135,7 @@ def configure_local_origin(shell, local_dir, fixed_port=True):
     The list of arguments to be appended to the shell argument list.
   """
 
-  origin_url = shell.ServeLocalDirectory(
+  origin_url = shell.serve_local_directory(
       local_dir, _LOCAL_ORIGIN_PORT if fixed_port else 0)
   return ["--origin=" + origin_url]
 
@@ -195,11 +195,11 @@ def get_shell(shell_config, shell_args):
                          logcat_tags=shell_config.logcat_tags,
                          verbose_pipe=verbose_pipe)
 
-    device_status, error = shell.CheckDevice()
+    device_status, error = shell.check_device()
     if not device_status:
       raise ShellConfigurationException('Device check failed: ' + error)
     if shell_config.shell_path:
-      shell.InstallApk(shell_config.shell_path)
+      shell.install_apk(shell_config.shell_path)
   else:
     if not shell_config.shell_path:
       raise ShellConfigurationException('Can not run without a shell binary. '

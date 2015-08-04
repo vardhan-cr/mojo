@@ -47,7 +47,7 @@ def _configure_debugger(shell):
     Arguments that need to be appended to the shell argument list in order to
     run with the debugger.
   """
-  shell.ForwardHostPortToShell(_MOJO_DEBUGGER_PORT)
+  shell.forward_host_port_to_shell(_MOJO_DEBUGGER_PORT)
   return ['mojo:debugger %d' % _MOJO_DEBUGGER_PORT]
 
 
@@ -87,7 +87,7 @@ def main():
   if script_args.verbose:
     print "Shell arguments: " + str(shell_args)
 
-  shell.Run(shell_args)
+  shell.run(shell_args)
   return 0
 
 

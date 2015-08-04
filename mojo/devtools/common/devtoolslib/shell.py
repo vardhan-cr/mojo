@@ -6,7 +6,7 @@
 class Shell(object):
   """Represents an abstract Mojo shell."""
 
-  def ServeLocalDirectory(self, local_dir_path, port=0):
+  def serve_local_directory(self, local_dir_path, port=0):
     """Serves the content of the local (host) directory, making it available to
     the shell under the url returned by the function.
 
@@ -22,7 +22,7 @@ class Shell(object):
     """
     raise NotImplementedError()
 
-  def ServeLocalDirectories(self, mappings, port=0):
+  def serve_local_directories(self, mappings, port=0):
     """Serves the content of the local (host) directories, making it available
     to the shell under the url returned by the function.
 
@@ -41,7 +41,7 @@ class Shell(object):
     """
     raise NotImplementedError()
 
-  def ForwardHostPortToShell(self, host_port):
+  def forward_host_port_to_shell(self, host_port):
     """Forwards a port on the host machine to the same port wherever the shell
     is running.
 
@@ -49,7 +49,7 @@ class Shell(object):
     """
     raise NotImplementedError()
 
-  def Run(self, arguments):
+  def run(self, arguments):
     """Runs the shell with given arguments until shell exits, passing the stdout
     mingled with stderr produced by the shell onto the stdout.
 
@@ -59,7 +59,7 @@ class Shell(object):
     """
     raise NotImplementedError()
 
-  def RunAndGetOutput(self, arguments, timeout=None):
+  def run_and_get_output(self, arguments, timeout=None):
     """Runs the shell with given arguments until shell exits and returns the
     output.
 

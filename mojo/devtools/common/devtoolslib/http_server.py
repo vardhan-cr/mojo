@@ -49,7 +49,7 @@ class _SilentTCPServer(SocketServer.TCPServer):
       SocketServer.TCPServer.handle_error(self, request, client_address)
 
 
-def _GetHandlerClassForPath(mappings):
+def _get_handler_class_for_path(mappings):
   """Creates a handler override for SimpleHTTPServer.
 
   Args:
@@ -188,7 +188,7 @@ def start_http_server(mappings, host_port=0):
     Tuple of the server address and the port on which it runs.
   """
   assert mappings
-  handler_class = _GetHandlerClassForPath(mappings)
+  handler_class = _get_handler_class_for_path(mappings)
 
   try:
     httpd = _SilentTCPServer(('127.0.0.1', host_port), handler_class)
