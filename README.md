@@ -200,15 +200,6 @@ $ git cl land
 Don't break the build! Waterfall is here:
 http://build.chromium.org/p/client.mojo/waterfall
 
-## Dart Code
-
-Because the dart analyzer is a bit slow, we don't run it unless the user
-specifically asks for it. To run the dart analyzer against the list of dart
-targets in the toplevel BUILD.gn file, run:
-
-```
-$ mojo/tools/mojob.py dartcheck
-```
 
 ## Run Mojo Shell
 
