@@ -13,6 +13,7 @@
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_occlusion_query_ext_thunks.h"
+#include "mojo/public/platform/native/gles2_impl_oes_vertex_array_object_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_thunks.h"
 #include "mojo/public/platform/native/gles2_thunks.h"
 #include "mojo/public/platform/native/system_impl_private_thunks.h"
@@ -87,6 +88,8 @@ bool RunNativeApplication(
     // they are missing.
     SetThunks(MojoMakeGLES2ImplOcclusionQueryExtThunks,
               "MojoSetGLES2ImplOcclusionQueryExtThunks", app_library);
+    SetThunks(MojoMakeGLES2ImplOesVertexArrayObjectThunks,
+              "MojoSetGLES2ImplOesVertexArrayObjectThunks", app_library);
     // "Chromium" extensions:
     SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
               "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);

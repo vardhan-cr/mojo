@@ -39,9 +39,11 @@ mojo_sdk_source_set("headers") {
     "gles2_call_visitor_chromium_sync_point_autogen.h",
     "gles2_call_visitor_chromium_texture_mailbox_autogen.h",
     "gles2_call_visitor_occlusion_query_ext_autogen.h",
+    "gles2_call_visitor_oes_vertex_array_object_autogen.h",
     "gles2_export.h",
     "gles2_types.h",
     "occlusion_query_ext.h",
+    "oes_vertex_array_object.h",
   ]
 
   public_configs = [ ":gles2_config" ]

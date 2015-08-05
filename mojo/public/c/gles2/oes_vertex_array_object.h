@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_PUBLIC_C_GLES2_OCCLUSION_QUERY_EXT_H_
-#define MOJO_PUBLIC_C_GLES2_OCCLUSION_QUERY_EXT_H_
+#ifndef MOJO_PUBLIC_C_GLES2_OES_VERTEX_ARRAY_OBJECT_H_
+#define MOJO_PUBLIC_C_GLES2_OES_VERTEX_ARRAY_OBJECT_H_
 
 // Note: This header should be compilable as C.
 
@@ -19,11 +19,11 @@ extern "C" {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   MOJO_GLES2_EXPORT ReturnType GL_APIENTRY gl##Function PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_occlusion_query_ext_autogen.h"
+#include "mojo/public/c/gles2/gles2_call_visitor_oes_vertex_array_object_autogen.h"
 #undef VISIT_GL_CALL
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // MOJO_PUBLIC_C_GLES2_OCCLUSION_QUERY_EXT_H_
+#endif  // MOJO_PUBLIC_C_GLES2_OES_VERTEX_ARRAY_OBJECT_H_
