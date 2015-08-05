@@ -13,9 +13,9 @@ import os.path
 import sys
 
 
-def find_ancestor_with(relpath):
+def find_ancestor_with(relpath, start_path=None):
   """Returns the lowest ancestor of this file that contains |relpath|."""
-  cur_dir_path = os.path.abspath(os.path.dirname(__file__))
+  cur_dir_path = start_path or os.path.abspath(os.path.dirname(__file__))
   while True:
     if os.path.exists(os.path.join(cur_dir_path, relpath)):
       return cur_dir_path
@@ -25,6 +25,16 @@ def find_ancestor_with(relpath):
       cur_dir_path = next_dir_path
     else:
       return None
+
+
+def find_within_ancestors(target_relpath, start_path=None):
+  """Returns the absolute path to |target_relpath| in the lowest ancestor of
+  |start_path| that contains it.
+  """
+  ancestor = find_ancestor_with(target_relpath, start_path)
+  if not ancestor:
+    return None
+  return os.path.join(ancestor, target_relpath)
 
 
 def infer_paths(is_android, is_debug, target_cpu):

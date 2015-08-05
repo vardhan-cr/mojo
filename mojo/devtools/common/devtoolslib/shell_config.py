@@ -90,6 +90,9 @@ def add_shell_arguments(parser):
       'file.')
   config_file_group.add_argument('--config-file', type=file,
                                  help='Path of the configuration file to use.')
+  config_file_group.add_argument('--no-config-file', action='store_true',
+                                 help='Pass to skip automatic discovery of the '
+                                 'mojoconfig file.')
 
   # Arguments allowing to indicate the build directory we are targeting when
   # running within a Chromium-like checkout (e.g. Mojo checkout). These will go
@@ -107,6 +110,13 @@ def add_shell_arguments(parser):
   chromium_checkout_group.add_argument('--target-cpu',
                                      help='CPU architecture to run for.',
                                      choices=['x64', 'x86', 'arm'])
+
+
+def _discover_config_file():
+  config_file_path = paths.find_within_ancestors('mojoconfig')
+  if not config_file_path:
+    return None
+  return open(config_file_path, 'r')
 
 
 def _read_config_file(config_file, aliases):
@@ -151,22 +161,29 @@ def get_shell_config(script_args):
     shell_config.origin = inferred_paths['build_dir_path']
 
   # Read the mojoconfig file.
-  if script_args.config_file:
-    config_file_aliases = []
-    if inferred_paths['build_dir_path']:
-      config_file_aliases.append(('@{BUILD_DIR}',
-                                  inferred_paths['build_dir_path']))
+  config_file = script_args.config_file
+  if not script_args.no_config_file:
+    config_file = config_file or _discover_config_file()
 
-    mojoconfig = None
-    try:
-      mojoconfig = _read_config_file(script_args.config_file,
-                                     config_file_aliases)
-    except SyntaxError:
-      raise ShellConfigurationException('Failed to parse the mojoconfig file.')
+  if config_file:
+    with config_file:
+      config_file_aliases = []
+      if inferred_paths['build_dir_path']:
+        config_file_aliases.append(('@{BUILD_DIR}',
+                                    inferred_paths['build_dir_path']))
 
-    if 'dev_servers' in mojoconfig:
+      config = None
       try:
-        for dev_server_spec in mojoconfig['dev_servers']:
+        if script_args.verbose:
+          print 'Reading config file from: ' + config_file.name
+        config = _read_config_file(config_file, config_file_aliases)
+      except SyntaxError:
+        raise ShellConfigurationException('Failed to parse the mojoconfig '
+                                          'file.')
+
+    if 'dev_servers' in config:
+      try:
+        for dev_server_spec in config['dev_servers']:
           dev_server_config = DevServerConfig()
           dev_server_config.host = dev_server_spec['host']
           dev_server_config.mappings = []

@@ -180,7 +180,7 @@ def _configure_dev_server(shell, shell_args, dev_server_config):
   """
   server_url = shell.serve_local_directories(dev_server_config.mappings)
   shell_args.append('--map-origin=%s=%s' % (dev_server_config.host, server_url))
-  print "Configured %s locally as %s" % (dev_server_config.host, server_url)
+  print "Configured %s locally to serve:" % (dev_server_config.host)
   for mapping_prefix, mapping_path in dev_server_config.mappings:
     print "  /%s -> %s" % (mapping_prefix, mapping_path)
   return shell_args
