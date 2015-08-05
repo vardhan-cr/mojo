@@ -4,15 +4,19 @@
 
 #include "services/url_response_disk_cache/url_response_disk_cache_impl.h"
 
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/types.h>
+
 #include <type_traits>
 
 #include "base/bind.h"
 #include "base/files/file_util.h"
-#include "base/files/important_file_writer.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/common/data_pipe_utils.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
@@ -29,6 +33,9 @@ namespace {
 const uint32_t kCurrentVersion = 2;
 
 const char kEtagHeader[] = "etag";
+
+const char kEntryName[] = "entry";
+const char kEntryTmpName[] = "entry.tmp";
 
 template <typename T>
 void Serialize(T input, std::string* output) {
@@ -57,6 +64,28 @@ bool Deserialize(std::string input, T* output) {
   data_type->DecodePointersAndHandles(&handles);
   Deserialize_(data_type, output);
   return true;
+}
+
+void SaveEntry(CacheEntryPtr entry, base::ScopedFD dir) {
+  TRACE_EVENT0("url_response_disk_cache", "SaveEntry");
+
+  std::string serialized_entry;
+  Serialize(entry.Pass(), &serialized_entry);
+  DCHECK_LT(serialized_entry.size(),
+            static_cast<size_t>(std::numeric_limits<int>::max()));
+
+  int file_fd =
+      HANDLE_EINTR(openat(dir.get(), kEntryTmpName, O_WRONLY | O_CREAT, 0600));
+  if (file_fd < 0)
+    return;
+  base::File file(file_fd);
+  if (file.WriteAtCurrentPos(serialized_entry.data(),
+                             serialized_entry.size()) !=
+      static_cast<int>(serialized_entry.size()))
+    return;
+  // The file must be closed before the file is moved.
+  file.Close();
+  renameat(dir.get(), kEntryTmpName, dir.get(), kEntryName);
 }
 
 Array<uint8_t> PathToArray(const base::FilePath& path) {
@@ -136,16 +165,24 @@ void RunCallbackWithSuccess(
     const base::FilePath& cache_dir,
     const base::FilePath& entry_path,
     CacheEntryPtr entry,
+    base::TaskRunner* task_runner,
     bool success) {
+  TRACE_EVENT1("url_response_disk_cache", "RunCallbackWithSuccess",
+               "content_path", content_path.value());
   if (!success) {
     callback.Run(base::FilePath(), base::FilePath());
     return;
   }
-  std::string serialized_entry;
-  Serialize(entry.Pass(), &serialized_entry);
-  // We can ignore write error, as it will just force to clear the cache on the
-  // next request.
-  base::ImportantFileWriter::WriteFileAtomically(entry_path, serialized_entry);
+
+  // Save the entry in a background thread. The entry directory is opened and
+  // passed because if this service wants to replace the content later on, it
+  // will start by moving the current directory.
+  base::ScopedFD dir(HANDLE_EINTR(
+      open(entry_path.DirName().value().c_str(), O_RDONLY | O_DIRECTORY)));
+  task_runner->PostTask(FROM_HERE,
+                        base::Bind(&SaveEntry, base::Passed(entry.Pass()),
+                                   base::Passed(dir.Pass())));
+
   callback.Run(content_path, cache_dir);
 }
 
@@ -178,7 +215,7 @@ bool IsCacheEntryValid(const base::FilePath& dir,
                        URLResponse* response,
                        CacheEntryPtr* output) {
   // Find the entry file, and deserialize it.
-  base::FilePath entry_path = dir.Append("entry");
+  base::FilePath entry_path = dir.Append(kEntryName);
   if (!base::PathExists(entry_path))
     return false;
   std::string serialized_entry;
@@ -298,7 +335,7 @@ void URLResponseDiskCacheImpl::GetFileInternal(
   }
 
   // Fill the entry values for the request.
-  base::FilePath entry_path = dir.Append("entry");
+  base::FilePath entry_path = dir.Append(kEntryName);
   base::FilePath content;
   CHECK(CreateTemporaryFileInDir(dir, &content));
   entry = CacheEntry::New();
@@ -314,10 +351,11 @@ void URLResponseDiskCacheImpl::GetFileInternal(
   // Asynchronously copy the response body to the cached file. The entry is send
   // to the callback so that it is saved on disk only if the copy of the body
   // succeded.
-  common::CopyToFile(response->body.Pass(), content, task_runner_,
-                     base::Bind(&RunCallbackWithSuccess, callback, content,
-                                GetConsumerCacheDirectory(dir), entry_path,
-                                base::Passed(entry.Pass())));
+  common::CopyToFile(
+      response->body.Pass(), content, task_runner_,
+      base::Bind(&RunCallbackWithSuccess, callback, content,
+                 GetConsumerCacheDirectory(dir), entry_path,
+                 base::Passed(entry.Pass()), base::Unretained(task_runner_)));
 }
 
 void URLResponseDiskCacheImpl::GetExtractedContentInternal(
@@ -326,6 +364,8 @@ void URLResponseDiskCacheImpl::GetExtractedContentInternal(
     const base::FilePath& extracted_dir,
     const base::FilePath& content,
     const base::FilePath& cache_dir) {
+  TRACE_EVENT1("url_response_disk_cache", "GetExtractedContentInternal",
+               "extracted_dir", extracted_dir.value());
   // If it is not possible to get the cached file, returns an error.
   if (content.empty()) {
     callback.Run(base::FilePath(), base::FilePath());
