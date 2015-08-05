@@ -68,6 +68,24 @@ Array<uint8_t> PathToArray(const base::FilePath& path) {
   return result.Pass();
 }
 
+// This method remove the query string of an url if one is present. It does
+// match the behavior of the application manager, which connects to the same app
+// if requested twice with different query parameters.
+std::string CanonicalizeURL(const std::string& url) {
+  GURL gurl(url);
+
+  if (!gurl.has_query()) {
+    return gurl.spec();
+  }
+
+  GURL::Replacements repl;
+  repl.SetQueryStr("");
+  std::string result = gurl.ReplaceComponents(repl).spec();
+  // Remove the dangling '?' because it's ugly.
+  base::ReplaceChars(result, "?", "", &result);
+  return result;
+}
+
 // Encode a string in ascii. This uses _ as an escape character. It also escapes
 // ':' because it is an usual path separator, and '#' because dart refuses it in
 // URLs.
@@ -95,7 +113,7 @@ base::FilePath GetDirName(base::FilePath base_directory,
                           const std::string& url) {
   // TODO(qsr): If the speed of directory traversal is problematic, this might
   // need to change to use less directories.
-  return base_directory.Append(EncodeString(url));
+  return base_directory.Append(EncodeString(CanonicalizeURL(url)));
 }
 
 // Returns the directory that the consumer can use to cache its own data.
