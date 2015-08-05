@@ -16,7 +16,15 @@
       # a prefix, first location that contains the requested path will apply.
       'mappings': [
         ('packages/', ['@{BUILD_DIR}/gen/dart-pkg/packages']),
-        ('', ['@{BUILD_DIR}']),
+        ('', [
+          # We map two directiories, so that both exploded dart apps under
+          # checkout root and built apps in the build directory are available.
+          # For example, one could refer to the apps of either type using urls:
+          #  - https://core.mojoapps.io/spinning_cube.mojo
+          #  - https://core.mojoapps.io/examples/dart/device_info/main.dart
+          '@{BUILD_DIR}',
+          '.'
+        ]),
       ],
     },
   ],
