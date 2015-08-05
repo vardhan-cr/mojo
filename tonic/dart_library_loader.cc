@@ -275,6 +275,8 @@ Dart_Handle DartLibraryLoader::CanonicalizeURL(Dart_Handle library,
 void DartLibraryLoader::DidCompleteImportJob(
     ImportJob* job,
     const std::vector<uint8_t>& buffer) {
+  TRACE_EVENT1("sky", "DartLibraryLoader::DidCompleteImportJob", "url",
+               job->name());
   DartIsolateScope scope(dart_state_->isolate());
   DartApiScope api_scope;
 
@@ -304,6 +306,8 @@ void DartLibraryLoader::DidCompleteImportJob(
 void DartLibraryLoader::DidCompleteSourceJob(
     SourceJob* job,
     const std::vector<uint8_t>& buffer) {
+  TRACE_EVENT1("sky", "DartLibraryLoader::DidCompleteSourceJob", "url",
+               job->name());
   DartIsolateScope scope(dart_state_->isolate());
   DartApiScope api_scope;
 
