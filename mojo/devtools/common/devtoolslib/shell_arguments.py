@@ -14,16 +14,12 @@ import urlparse
 
 from devtoolslib.android_shell import AndroidShell
 from devtoolslib.linux_shell import LinuxShell
+from devtoolslib.shell_config import ShellConfigurationException
 
 # When spinning up servers for local origins, we want to use predictable ports
 # so that caching works between subsequent runs with the same command line.
 _LOCAL_ORIGIN_PORT = 31840
 _MAPPINGS_BASE_PORT = 31841
-
-
-class ShellConfigurationException(Exception):
-  """Represents an error preventing creating a functional shell abstraction."""
-  pass
 
 
 def _is_web_url(dest):
@@ -170,6 +166,26 @@ def append_to_argument(arguments, key, value, delimiter=","):
   return arguments
 
 
+def _configure_dev_server(shell, shell_args, dev_server_config):
+  """Sets up a dev server on the host according to |dev_server_config|.
+
+  Args:
+    shell: The shell that is being configured.
+    shell_arguments: Current list of shell arguments.
+    dev_server_config: Instance of shell_config.DevServerConfig describing the
+        dev server to be set up.
+
+  Returns:
+    The updated argument list.
+  """
+  server_url = shell.serve_local_directories(dev_server_config.mappings)
+  shell_args.append('--map-origin=%s=%s' % (dev_server_config.host, server_url))
+  print "Configured %s locally as %s" % (dev_server_config.host, server_url)
+  for mapping_prefix, mapping_path in dev_server_config.mappings:
+    print "  /%s -> %s" % (mapping_prefix, mapping_path)
+  return shell_args
+
+
 def get_shell(shell_config, shell_args):
   """
   Produces a shell abstraction configured according to |shell_config|.
@@ -220,5 +236,8 @@ def get_shell(shell_config, shell_args):
 
   if shell_config.sky:
     shell_args = _configure_sky(shell_args)
+
+  for dev_server_config in shell_config.dev_servers:
+    shell_args = _configure_dev_server(shell, shell_args, dev_server_config)
 
   return shell, shell_args

@@ -59,11 +59,11 @@ def main():
   shell_config.add_shell_arguments(parser)
 
   script_args, shell_args = parser.parse_known_args()
-  config = shell_config.get_shell_config(script_args)
 
   try:
+    config = shell_config.get_shell_config(script_args)
     shell, common_shell_args = shell_arguments.get_shell(config, shell_args)
-  except shell_arguments.ShellConfigurationException as e:
+  except shell_config.ShellConfigurationException as e:
     print e
     return 1
 

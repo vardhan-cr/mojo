@@ -9,7 +9,14 @@ arguments, applying any default paths inferred from the checkout, configuration
 file, etc.
 """
 
+import ast
+
 from devtoolslib import paths
+
+
+class ShellConfigurationException(Exception):
+  """Represents an error preventing creating a functional shell abstraction."""
+  pass
 
 
 class ShellConfig(object):
@@ -19,8 +26,9 @@ class ShellConfig(object):
     self.android = None
     self.shell_path = None
     self.origin = None
-    self.map_url_list = None
-    self.map_origin_list = None
+    self.map_url_list = []
+    self.map_origin_list = []
+    self.dev_servers = []
     self.sky = None
     self.verbose = None
 
@@ -31,6 +39,15 @@ class ShellConfig(object):
 
     # Desktop-only.
     self.use_osmesa = None
+
+
+class DevServerConfig(object):
+  """Configuration for a development server running on a host and available to
+  the shell.
+  """
+  def __init__(self):
+    self.host = None
+    self.mappings = None
 
 
 def add_shell_arguments(parser):
@@ -68,20 +85,35 @@ def add_shell_arguments(parser):
                              help='Configure the native viewport service '
                              'for off-screen rendering.')
 
-  # Arguments allowing to indicate the configuration we are targeting when
-  # running within a Chromium-like checkout. These will go away once we have
-  # devtools config files, see https://github.com/domokit/devtools/issues/28.
-  chromium_config_group = parser.add_argument_group('Chromium configuration',
+  config_file_group = parser.add_argument_group('Configuration file',
+      'These arguments allow to modify the behavior regarding the mojoconfig '
+      'file.')
+  config_file_group.add_argument('--config-file', type=file,
+                                 help='Path of the configuration file to use.')
+
+  # Arguments allowing to indicate the build directory we are targeting when
+  # running within a Chromium-like checkout (e.g. Mojo checkout). These will go
+  # away once we have devtools config files, see
+  # https://github.com/domokit/devtools/issues/28.
+  chromium_checkout_group = parser.add_argument_group(
+      'Chromium-like checkout configuration',
       'These arguments allow to infer paths to tools and build results '
-      'when running withing a Chromium-like checkout')
-  debug_group = chromium_config_group.add_mutually_exclusive_group()
+      'when running within a Chromium-like checkout')
+  debug_group = chromium_checkout_group.add_mutually_exclusive_group()
   debug_group.add_argument('--debug', help='Debug build (default)',
                            default=True, action='store_true')
   debug_group.add_argument('--release', help='Release build', default=False,
                            dest='debug', action='store_false')
-  chromium_config_group.add_argument('--target-cpu',
+  chromium_checkout_group.add_argument('--target-cpu',
                                      help='CPU architecture to run for.',
                                      choices=['x64', 'x86', 'arm'])
+
+
+def _read_config_file(config_file, aliases):
+  spec = config_file.read()
+  for alias_pattern, alias_value in aliases:
+    spec = spec.replace(alias_pattern, alias_value)
+  return ast.literal_eval(spec)
 
 
 def get_shell_config(script_args):
@@ -95,7 +127,6 @@ def get_shell_config(script_args):
   # (--debug/--release, etc.), if running within a Chromium-like checkout.
   inferred_paths = paths.infer_paths(script_args.android, script_args.debug,
                                      script_args.target_cpu)
-
   shell_config = ShellConfig()
 
   shell_config.android = script_args.android
@@ -118,4 +149,31 @@ def get_shell_config(script_args):
   if (shell_config.android and not shell_config.origin and
       inferred_paths['build_dir_path']):
     shell_config.origin = inferred_paths['build_dir_path']
+
+  # Read the mojoconfig file.
+  if script_args.config_file:
+    config_file_aliases = []
+    if inferred_paths['build_dir_path']:
+      config_file_aliases.append(('@{BUILD_DIR}',
+                                  inferred_paths['build_dir_path']))
+
+    mojoconfig = None
+    try:
+      mojoconfig = _read_config_file(script_args.config_file,
+                                     config_file_aliases)
+    except SyntaxError:
+      raise ShellConfigurationException('Failed to parse the mojoconfig file.')
+
+    if 'dev_servers' in mojoconfig:
+      try:
+        for dev_server_spec in mojoconfig['dev_servers']:
+          dev_server_config = DevServerConfig()
+          dev_server_config.host = dev_server_spec['host']
+          dev_server_config.mappings = []
+          for prefix, path in dev_server_spec['mappings']:
+            dev_server_config.mappings.append((prefix, path))
+          shell_config.dev_servers.append(dev_server_config)
+      except (ValueError, KeyError):
+        raise ShellConfigurationException('Failed to parse dev_servers in '
+                                          'the mojoconfig file.')
   return shell_config

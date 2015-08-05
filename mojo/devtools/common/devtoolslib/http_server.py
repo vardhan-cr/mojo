@@ -203,9 +203,6 @@ def start_http_server(mappings, host_port=0):
     http_thread = threading.Thread(target=httpd.serve_forever)
     http_thread.daemon = True
     http_thread.start()
-    print 'Started http://%s:%d to host %s.' % (httpd.server_address[0],
-                                                httpd.server_address[1],
-                                                str(mappings))
     return httpd.server_address
   except socket.error as v:
     error_code = v[0]
