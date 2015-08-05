@@ -8,8 +8,10 @@
 #include "base/strings/string_util.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/platform_thread.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/icu/icu.h"
 #include "mojo/public/c/system/main.h"
@@ -87,6 +89,7 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
+    tracing_.Initialize(app);
     mojo::icu::Initialize(app);
     content_handler_.set_handler_task_runner(
         base::MessageLoop::current()->task_runner());
@@ -134,6 +137,7 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
     delete service_connector_;
   }
 
+  mojo::TracingImpl tracing_;
   DartContentHandler content_handler_;
   DartContentHandler strict_content_handler_;
   mojo::ContentHandlerFactory content_handler_factory_;
@@ -148,6 +152,8 @@ scoped_ptr<mojo::ContentHandlerFactory::HandledApplicationHolder>
 DartContentHandler::CreateApplication(
     mojo::InterfaceRequest<mojo::Application> application_request,
     mojo::URLResponsePtr response) {
+  base::trace_event::TraceLog::GetInstance()
+      ->SetCurrentThreadBlocksMessageLoop();
   base::FilePath application_dir;
   std::string url = response->url.get();
   if (IsDartZip(response->url.get())) {

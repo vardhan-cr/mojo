@@ -41,6 +41,7 @@ mojo_native_application("dart_content_handler") {
     "//mojo/application:content_handler",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
     "//mojo/common",
+    "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
     "//mojo/icu",
     "//mojo/public/cpp/system",
