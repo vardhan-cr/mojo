@@ -20,7 +20,7 @@
 #include "base/run_loop.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/simple_thread.h"
-#include "jni/ShellMain_jni.h"
+#include "jni/ShellService_jni.h"
 #include "mojo/common/message_pump_mojo.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"
@@ -131,7 +131,7 @@ void ConfigureAndroidServices(Context* context) {
 void QuitShellThread() {
   g_internal_data.Get().shell_thread->Join();
   g_internal_data.Get().shell_thread.reset();
-  Java_ShellMain_finishActivities(base::android::AttachCurrentThread());
+  Java_ShellService_finishActivities(base::android::AttachCurrentThread());
   exit(0);
 }
 
@@ -312,7 +312,7 @@ static void ConnectToApplication(JNIEnv* env,
                      mojo::MessagePipeHandle(exposed_services_handle)))));
 }
 
-bool RegisterShellMain(JNIEnv* env) {
+bool RegisterShellService(JNIEnv* env) {
   return RegisterNativesImpl(env);
 }
 

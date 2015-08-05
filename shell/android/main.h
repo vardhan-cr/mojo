@@ -9,7 +9,7 @@
 
 namespace shell {
 
-bool RegisterShellMain(JNIEnv* env);
+bool RegisterShellService(JNIEnv* env);
 
 }  // namespace shell
 

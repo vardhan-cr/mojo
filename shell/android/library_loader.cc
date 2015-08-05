@@ -23,7 +23,7 @@ base::android::RegistrationMethod kMojoRegisteredMethods[] = {
     {"AndroidHandler", shell::RegisterAndroidHandlerJni},
     {"PlatformViewportAndroid",
      native_viewport::PlatformViewportAndroid::Register},
-    {"ShellMain", shell::RegisterShellMain},
+    {"ShellService", shell::RegisterShellService},
     {"JavaApplicationLoader", shell::JavaApplicationLoader::RegisterJni},
 };
 

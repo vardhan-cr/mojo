@@ -6,35 +6,34 @@ package org.chromium.mojo.shell;
 
 import android.app.Activity;
 import android.app.UiModeManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.JsonReader;
-import android.util.Log;
 import android.view.WindowManager;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
 
 /**
  * Activity for managing the Mojo Shell.
  */
-public class MojoShellActivity extends Activity {
+public class MojoShellActivity extends Activity implements ShellService.IShellBindingActivity {
     private static final String TAG = "MojoShellActivity";
+    private ArrayDeque<Intent> mPendingIntents = new ArrayDeque<Intent>();
+    private ShellService mShellService;
+    private ServiceConnection mShellServiceConnection;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // TODO(ppi): Gotcha - the call below will work only once per process lifetime, but the OS
-        // has no obligation to kill the application process between destroying and restarting the
-        // activity. If the application process is kept alive, initialization parameters sent with
-        // the intent will be stale.
-        // TODO(eseidel): ShellMain can fail, but we're ignoring the return.
-        ShellMain.ensureStarted(getApplicationContext(), getParametersFromIntent(getIntent()));
+        Intent serviceIntent = new Intent(this, ShellService.class);
+        // Copy potential startup arguments.
+        serviceIntent.putExtras(getIntent());
+        startService(serviceIntent);
+        bindShellService(serviceIntent);
 
         onNewIntent(getIntent());
 
@@ -42,49 +41,73 @@ public class MojoShellActivity extends Activity {
         // couple of seconds of detaching from adb. So for demonstration purposes,
         // we just keep the screen on. Eventually we'll want a solution for
         // allowing the screen to sleep without quitting the shell.
+        // TODO(etiennej): Verify the above is still true after the switch to a Service model.
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
         if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_WATCH) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
 
+    private void bindShellService(Intent serviceIntent) {
+        if (mShellServiceConnection == null) {
+            mShellServiceConnection = new ShellService.ShellServiceConnection(this);
+            bindService(serviceIntent, mShellServiceConnection, Context.BIND_AUTO_CREATE);
+        }
+    }
+
+    private void unbindShellService() {
+        if (mShellServiceConnection != null) {
+            unbindService(mShellServiceConnection);
+            mShellServiceConnection = null;
+        }
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        bindShellService(new Intent(this, ShellService.class));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindShellService();
+    }
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        mPendingIntents.add(intent);
 
-        Uri data = intent.getData();
-        if (data != null) {
-            String url = data.buildUpon().scheme("https").build().toString();
-            ShellMain.startApplicationURL(url);
+        if (mShellService != null) {
+            communicateWithShell();
         }
     }
 
-    private static String[] getParametersFromIntent(Intent intent) {
-        if (intent == null) {
-            return null;
-        }
-        String[] parameters = intent.getStringArrayExtra("parameters");
-        if (parameters != null) {
-            return parameters;
-        }
-        String encodedParameters = intent.getStringExtra("encodedParameters");
-        if (encodedParameters != null) {
-            JsonReader reader = new JsonReader(new StringReader(encodedParameters));
-            List<String> parametersList = new ArrayList<String>();
-            try {
-                reader.beginArray();
-                while (reader.hasNext()) {
-                    parametersList.add(reader.nextString());
-                }
-                reader.endArray();
-                reader.close();
-                return parametersList.toArray(new String[parametersList.size()]);
-            } catch (IOException e) {
-                Log.w(TAG, e.getMessage(), e);
+    @Override
+    public void onShellBound(ShellService shellService) {
+        mShellService = shellService;
+        communicateWithShell();
+    }
+
+    @Override
+    public void onShellUnbound() {
+        mShellService = null;
+    }
+
+    /**
+     * Communicate with the shell to start new apps, based on pending intents.
+     */
+    private void communicateWithShell() {
+        while (!mPendingIntents.isEmpty()) {
+            Intent intent = mPendingIntents.remove();
+            Uri data = intent.getData();
+            if (data != null) {
+                String url = data.buildUpon().scheme("https").build().toString();
+                mShellService.startApplicationURL(url);
             }
         }
-        return null;
     }
 
     /**

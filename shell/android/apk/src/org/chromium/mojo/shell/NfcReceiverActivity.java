@@ -5,7 +5,9 @@
 package org.chromium.mojo.shell;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -16,27 +18,57 @@ import org.chromium.mojo.application.ShellHelper;
 import org.chromium.mojo.system.impl.CoreImpl;
 import org.chromium.mojom.nfc.NfcMessageSink;
 
+import java.util.ArrayDeque;
+
 /**
  * Activity for receiving nfc messages.
  */
-public class NfcReceiverActivity extends Activity {
+public class NfcReceiverActivity extends Activity implements ShellService.IShellBindingActivity {
+    private static final String TAG = "NfcReceiverActivity";
+
+    private ArrayDeque<Intent> mPendingIntents = new ArrayDeque<Intent>();
+    private ShellService mShellService;
+    private ServiceConnection mShellServiceConnection;
+
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        finish();
-        // TODO(anwilson): Figure out how we can deliver nfc data when the shell is not active.
-        if (!ShellMain.isInitialized()) {
-            android.util.Log.w(
-                    "Nfc", "MojoShell is not active; launching!  Try again in a moment.");
-            startActivity(new Intent(this, MojoShellActivity.class));
-            return;
-        }
-        sendNfcMessages(getIntent());
+
+        Intent serviceIntent = new Intent(this, ShellService.class);
+        startService(serviceIntent);
+        mShellServiceConnection = new ShellService.ShellServiceConnection(this);
+        bindService(serviceIntent, mShellServiceConnection, Context.BIND_AUTO_CREATE);
+        onNewIntent(getIntent());
     }
 
-    private static void sendNfcMessages(Intent intent) {
-        NfcMessageSink nfcMessageSink = ShellHelper.connectToService(
-                CoreImpl.getInstance(), ShellMain.getShell(), "mojo:nfc", NfcMessageSink.MANAGER);
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        mPendingIntents.add(intent);
+    }
+
+    @Override
+    public void onShellBound(ShellService shellService) {
+        mShellService = shellService;
+        finish();
+        Intent intent = new Intent(this, MojoShellActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        while (!mPendingIntents.isEmpty()) {
+            Intent pendingIntent = mPendingIntents.remove();
+            sendNfcMessages(pendingIntent);
+        }
+        unbindService(mShellServiceConnection);
+    }
+
+    @Override
+    public void onShellUnbound() {
+        mShellService = null;
+    }
+
+    private void sendNfcMessages(Intent intent) {
+        NfcMessageSink nfcMessageSink = ShellHelper.connectToService(CoreImpl.getInstance(),
+                mShellService.getShell(), "mojo:nfc", NfcMessageSink.MANAGER);
 
         Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 

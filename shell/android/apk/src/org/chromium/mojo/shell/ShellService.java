@@ -5,7 +5,14 @@
 package org.chromium.mojo.shell;
 
 import android.app.Activity;
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Binder;
+import android.os.IBinder;
+import android.util.JsonReader;
 import android.util.Log;
 
 import org.chromium.base.ApplicationStatus;
@@ -20,6 +27,8 @@ import org.chromium.mojom.mojo.ServiceProvider;
 import org.chromium.mojom.mojo.Shell;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,8 +38,8 @@ import java.util.List;
  * A placeholder class to call native functions.
  **/
 @JNINamespace("shell")
-public class ShellMain {
-    private static final String TAG = "ShellMain";
+public class ShellService extends Service {
+    private static final String TAG = "ShellService";
 
     // Directory where applications bundled with the shell will be extracted.
     private static final String LOCAL_APP_DIRECTORY = "local_apps";
@@ -48,6 +57,12 @@ public class ShellMain {
     private static final String DEFAULT_ORIGIN = "https://core.mojoapps.io/";
     // Name of the default window manager.
     private static final String DEFAULT_WM = "mojo:kiosk_wm";
+    // Binder to this service.
+    private final ShellBinder mBinder = new ShellBinder();
+    // A guard flag for calling nativeInit() only once.
+    private boolean mInitialized = false;
+    // A static reference to the service.
+    private static ShellService sShellService;
 
     private static class ShellImpl implements Shell {
         private static final ShellImpl INSTANCE = new ShellImpl();
@@ -91,19 +106,79 @@ public class ShellMain {
     }
 
     /**
-     * A guard flag for calling nativeInit() only once.
+     * Binder for the Shell service. This object is passed to the calling activities.
      **/
-    private static boolean sInitialized = false;
+    private class ShellBinder extends Binder {
+        ShellService getService() {
+            return ShellService.this;
+        }
+    }
 
-    static boolean isInitialized() {
-        return sInitialized;
+    /**
+     * Interface implemented by activities wanting to bind with the ShellService service.
+     **/
+    static interface IShellBindingActivity {
+        // Called when the ShellService service is connected.
+        void onShellBound(ShellService shellService);
+        // Called when the ShellService service is disconnected.
+        void onShellUnbound();
+    }
+
+    /**
+     * ServiceConnection for the ShellService service.
+     **/
+    static class ShellServiceConnection implements ServiceConnection {
+        private final IShellBindingActivity mActivity;
+
+        ShellServiceConnection(IShellBindingActivity activity) {
+            this.mActivity = activity;
+        }
+
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            ShellService.ShellBinder shellBinder = (ShellService.ShellBinder) binder;
+            this.mActivity.onShellBound(shellBinder.getService());
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            this.mActivity.onShellUnbound();
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        sShellService = this;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        sShellService = null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // A client is starting this service; make sure the shell is initialized.
+        // Note that ensureInitialized is gated by the mInitialized boolean flag. This means that
+        // only the first set of parameters will ever be taken into account.
+        // TODO(eseidel): ShellService can fail, but we're ignoring the return.
+        ensureStarted(getApplicationContext(), getParametersFromIntent(intent));
+        return Service.START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (!mInitialized) {
+            throw new IllegalStateException("Start the service first");
+        }
+        return mBinder;
     }
 
     /**
      * Initializes the native system and starts the shell.
      **/
-    static void ensureStarted(Context applicationContext, String[] parameters) {
-        if (sInitialized) return;
+    private void ensureStarted(Context applicationContext, String[] parameters) {
+        if (mInitialized) return;
         try {
             FileHelper.extractFromAssets(applicationContext, NETWORK_LIBRARY_APP,
                     getLocalAppsDir(applicationContext), false);
@@ -132,32 +207,59 @@ public class ShellMain {
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
                     getTmpDir(applicationContext).getAbsolutePath(),
                     getHomeDir(applicationContext).getAbsolutePath());
-            sInitialized = true;
+            mInitialized = true;
         } catch (Exception e) {
-            Log.e(TAG, "ShellMain initialization failed.", e);
+            Log.e(TAG, "ShellService initialization failed.", e);
             throw new RuntimeException(e);
         }
     }
 
+    private static String[] getParametersFromIntent(Intent intent) {
+        if (intent == null) {
+            return null;
+        }
+        String[] parameters = intent.getStringArrayExtra("parameters");
+        if (parameters != null) {
+            return parameters;
+        }
+        String encodedParameters = intent.getStringExtra("encodedParameters");
+        if (encodedParameters != null) {
+            JsonReader reader = new JsonReader(new StringReader(encodedParameters));
+            List<String> parametersList = new ArrayList<String>();
+            try {
+                reader.beginArray();
+                while (reader.hasNext()) {
+                    parametersList.add(reader.nextString());
+                }
+                reader.endArray();
+                reader.close();
+                return parametersList.toArray(new String[parametersList.size()]);
+            } catch (IOException e) {
+                Log.w(TAG, e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
     /**
      * Adds the given URL to the set of mojo applications to run on start. This must be called
-     * before {@link ShellMain#ensureStarted(Context, String[])}
+     * before {@link ShellService#ensureStarted(Context, String[])}
      */
-    static void addApplicationURL(String url) {
+    void addApplicationURL(String url) {
         nativeAddApplicationURL(url);
     }
 
     /**
      * Starts this application in an already-initialized shell.
      */
-    static void startApplicationURL(String url) {
+    void startApplicationURL(String url) {
         nativeStartApplicationURL(url);
     }
 
     /**
      * Returns an instance of the shell interface that allows to interact with mojo applications.
      */
-    static Shell getShell() {
+    Shell getShell() {
         return ShellImpl.INSTANCE;
     }
 
@@ -182,8 +284,11 @@ public class ShellMain {
         for (WeakReference<Activity> activityRef : ApplicationStatus.getRunningActivities()) {
             Activity activity = activityRef.get();
             if (activity != null) {
-                activity.finish();
+                activity.finishAndRemoveTask();
             }
+        }
+        if (sShellService != null) {
+            sShellService.stopSelf();
         }
     }
 

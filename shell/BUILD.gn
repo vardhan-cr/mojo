@@ -232,7 +232,7 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo/shell/Bootstrap.java",
       "android/apk/src/org/chromium/mojo/shell/JavaApplicationRegistry.java",
-      "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
+      "android/apk/src/org/chromium/mojo/shell/ShellService.java",
       "android/tests/src/org/chromium/mojo/shell/ShellTestBase.java",
     ]
     jni_package = "mojo/shell"
@@ -287,7 +287,7 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/NfcServiceFactoryBinder.java",
       "android/apk/src/org/chromium/mojo/shell/SharingActivity.java",
       "android/apk/src/org/chromium/mojo/shell/SharingApplicationDelegate.java",
-      "android/apk/src/org/chromium/mojo/shell/ShellMain.java",
+      "android/apk/src/org/chromium/mojo/shell/ShellService.java",
     ]
 
     deps = [
