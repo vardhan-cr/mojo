@@ -92,7 +92,7 @@ void CopyToFileHandler::OpenFile() {
                    base::File::FLAG_CREATE_ALWAYS | base::File::FLAG_WRITE);
   if (!file_.IsValid()) {
     LOG(ERROR) << "Opening file '" << destination_.value()
-               << "' failed in CopyToFileInternal";
+               << "' failed in CopyToFileHandler::OpenFile";
     main_runner_->PostTask(FROM_HERE,
                            base::Bind(&CopyToFileHandler::SendCallback,
                                       base::Unretained(this), false));
@@ -231,7 +231,7 @@ void CopyFromFileHandler::OpenFile() {
   file_.Initialize(source_, base::File::FLAG_OPEN | base::File::FLAG_READ);
   if (!file_.IsValid()) {
     LOG(ERROR) << "Opening file '" << source_.value()
-               << "' failed in CopyFromFileInternal";
+               << "' failed in CopyFromFileHandler::OpenFile";
     main_runner_->PostTask(FROM_HERE,
                            base::Bind(&CopyFromFileHandler::SendCallback,
                                       base::Unretained(this), false));
