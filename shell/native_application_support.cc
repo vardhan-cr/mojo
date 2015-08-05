@@ -12,6 +12,7 @@
 #include "mojo/public/platform/native/gles2_impl_chromium_sub_image_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
+#include "mojo/public/platform/native/gles2_impl_ext_debug_marker_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_occlusion_query_ext_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_oes_vertex_array_object_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_thunks.h"
@@ -86,6 +87,8 @@ bool RunNativeApplication(
     // If the application is using GLES2 extension points, register those
     // thunks. Applications may use or not use any of these, so don't warn if
     // they are missing.
+    SetThunks(MojoMakeGLES2ImplExtDebugMarkerThunks,
+              "MojoSetGLES2ImplExtDebugMarkerThunks", app_library);
     SetThunks(MojoMakeGLES2ImplOcclusionQueryExtThunks,
               "MojoSetGLES2ImplOcclusionQueryExtThunks", app_library);
     SetThunks(MojoMakeGLES2ImplOesVertexArrayObjectThunks,

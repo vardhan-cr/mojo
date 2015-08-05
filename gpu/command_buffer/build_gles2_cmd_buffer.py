@@ -3463,18 +3463,18 @@ _FUNCTION_INFO = {
     'type': 'GLcharN',
     'decoder_func': 'DoInsertEventMarkerEXT',
     'expectation': False,
-    'extension': True,
+    'extension': "EXT_debug_marker",
   },
   'PushGroupMarkerEXT': {
     'type': 'GLcharN',
     'decoder_func': 'DoPushGroupMarkerEXT',
     'expectation': False,
-    'extension': True,
+    'extension': "EXT_debug_marker",
   },
   'PopGroupMarkerEXT': {
     'decoder_func': 'DoPopGroupMarkerEXT',
     'expectation': False,
-    'extension': True,
+    'extension': "EXT_debug_marker",
     'impl_func': False,
   },
 
@@ -10636,8 +10636,8 @@ def main(argv):
   gen.WriteMojoGLCallVisitor(mojo_gles2_prefix + "_autogen.h")
   mojo_extensions = ["CHROMIUM_texture_mailbox", "CHROMIUM_sync_point",
                      "CHROMIUM_sub_image", "CHROMIUM_miscellaneous",
-                     "CHROMIUM_resize", "OES_vertex_array_object",
-                     "occlusion_query_EXT"]
+                     "CHROMIUM_resize", "EXT_debug_marker",
+                     "OES_vertex_array_object", "occlusion_query_EXT"]
   for extension in mojo_extensions:
     gen.WriteMojoGLCallVisitorForExtension(
         mojo_gles2_prefix + "_" + extension.lower() + "_autogen.h", extension)
