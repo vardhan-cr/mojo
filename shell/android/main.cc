@@ -143,7 +143,7 @@ void MojoShellRunner::Run() {
 
   Context* context = g_internal_data.Get().context.get();
   ConfigureAndroidServices(context);
-  context->InitWithPaths(mojo_shell_child_path_);
+  CHECK(context->InitWithPaths(mojo_shell_child_path_));
 
   for (const auto& args : parameters_)
     ApplyApplicationArgs(context, args);
