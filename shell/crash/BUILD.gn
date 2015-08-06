@@ -2,14 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if (is_android) {
-  import("//build/config/android/config.gni")
-}
+import("//testing/test.gni")
 
 source_set("crash") {
   sources = [
     "breakpad.cc",
     "breakpad.h",
+    "crash_upload.cc",
+    "crash_upload.h",
   ]
 
   if (is_android) {
@@ -18,6 +18,24 @@ source_set("crash") {
 
   deps = [
     "//base",
+    "//mojo/common",
+    "//mojo/services/network/public/interfaces",
     "//third_party/breakpad:client",
+  ]
+}
+
+test("crash_unittests") {
+  sources = [
+    "crash_upload_unittests.cc",
+  ]
+
+  deps = [
+    ":crash",
+    "//base",
+    "//mojo/common",
+    "//mojo/edk/test:run_all_unittests",
+    "//mojo/environment:chromium",
+    "//mojo/services/network/public/interfaces",
+    "//testing/gtest",
   ]
 }

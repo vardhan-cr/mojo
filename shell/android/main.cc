@@ -19,9 +19,11 @@
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
 #include "base/synchronization/waitable_event.h"
+#include "base/task_runner_util.h"
 #include "base/threading/simple_thread.h"
 #include "jni/ShellService_jni.h"
 #include "mojo/common/message_pump_mojo.h"
+#include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"
 #include "shell/android/java_application_loader.h"
@@ -32,6 +34,7 @@
 #include "shell/command_line_util.h"
 #include "shell/context.h"
 #include "shell/crash/breakpad.h"
+#include "shell/crash/crash_upload.h"
 #include "shell/init.h"
 #include "shell/switches.h"
 #include "shell/tracer.h"
@@ -48,6 +51,10 @@ const char kLogTag[] = "chromium";
 
 // Command line argument for the communication fifo.
 const char kFifoPath[] = "fifo-path";
+
+// Delay before trying to upload a crash report. This must not slow down
+// startup.
+const int kDelayBeforeCrashUploadInSeconds = 60;
 
 class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
  public:
@@ -175,15 +182,6 @@ void InitializeRedirection() {
       << "Unable to redirect stderr to stdout.";
 }
 
-void EmbedApplicationByURL(std::string url) {
-  if (!g_internal_data.Get().window_manager.get()) {
-    Context* context = g_internal_data.Get().context.get();
-    context->application_manager()->ConnectToService(
-        GURL("mojo:window_manager"), &g_internal_data.Get().window_manager);
-  }
-  g_internal_data.Get().window_manager->Embed(url, nullptr, nullptr);
-}
-
 void ConnectToApplicationImpl(
     const GURL& url,
     mojo::ScopedMessagePipeHandle services_handle,
@@ -196,6 +194,26 @@ void ConnectToApplicationImpl(
       exposed_services_handle.Pass(), 0u));
   context->application_manager()->ConnectToApplication(
       url, GURL(), services.Pass(), exposed_services.Pass(), base::Closure());
+}
+
+void EmbedApplicationByURL(std::string url) {
+  DCHECK(g_internal_data.Get().shell_task_runner->RunsTasksOnCurrentThread());
+  if (!g_internal_data.Get().window_manager.get()) {
+    Context* context = g_internal_data.Get().context.get();
+    context->application_manager()->ConnectToService(
+        GURL("mojo:window_manager"), &g_internal_data.Get().window_manager);
+  }
+  g_internal_data.Get().window_manager->Embed(url, nullptr, nullptr);
+}
+
+void UploadCrashes(const base::FilePath& dumps_path) {
+  DCHECK(g_internal_data.Get().shell_task_runner->RunsTasksOnCurrentThread());
+  Context* context = g_internal_data.Get().context.get();
+  mojo::NetworkServicePtr network_service;
+  context->application_manager()->ConnectToService(GURL("mojo:network_service"),
+                                                   &network_service);
+  breakpad::UploadCrashes(dumps_path, context->task_runners()->blocking_pool(),
+                          network_service.Pass());
 }
 
 }  // namespace
@@ -284,6 +302,11 @@ static void Start(JNIEnv* env,
   gfx::GLSurface::InitializeOneOff();
 
   g_internal_data.Get().shell_runner_ready->Wait();
+
+  // Upload crashes after one minute.
+  g_internal_data.Get().shell_task_runner->PostDelayedTask(
+      FROM_HERE, base::Bind(&UploadCrashes, dumps_path),
+      base::TimeDelta::FromSeconds(kDelayBeforeCrashUploadInSeconds));
 }
 
 static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {

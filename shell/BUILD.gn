@@ -36,6 +36,7 @@ group("tests") {
     ":mojo_shell_tests",
     ":shell_nfc_apptests",
     "//shell/application_manager:mojo_application_manager_unittests",
+    "//shell/crash:crash_unittests",
   ]
 }
 

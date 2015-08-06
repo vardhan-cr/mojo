@@ -87,7 +87,7 @@ void CopyToFileHandler::SendCallback(bool value) {
 }
 
 void CopyToFileHandler::OpenFile() {
-  DCHECK(!main_runner_->RunsTasksOnCurrentThread());
+  DCHECK(file_task_runner_->RunsTasksOnCurrentThread());
   file_.Initialize(destination_,
                    base::File::FLAG_CREATE_ALWAYS | base::File::FLAG_WRITE);
   if (!file_.IsValid()) {
@@ -129,7 +129,7 @@ void CopyToFileHandler::OnHandleReady(MojoResult result) {
 }
 
 void CopyToFileHandler::WriteToFile() {
-  DCHECK(!main_runner_->RunsTasksOnCurrentThread());
+  DCHECK(file_task_runner_->RunsTasksOnCurrentThread());
   uint32_t num_bytes = buffer_size_;
   size_t num_bytes_written =
       file_.WriteAtCurrentPos(static_cast<const char*>(buffer_), num_bytes);
@@ -227,7 +227,7 @@ void CopyFromFileHandler::SendCallback(bool value) {
 }
 
 void CopyFromFileHandler::OpenFile() {
-  DCHECK(!main_runner_->RunsTasksOnCurrentThread());
+  DCHECK(file_task_runner_->RunsTasksOnCurrentThread());
   file_.Initialize(source_, base::File::FLAG_OPEN | base::File::FLAG_READ);
   if (!file_.IsValid()) {
     LOG(ERROR) << "Opening file '" << source_.value()
@@ -273,7 +273,7 @@ void CopyFromFileHandler::OnHandleReady(MojoResult result) {
 }
 
 void CopyFromFileHandler::ReadFromFile() {
-  DCHECK(!main_runner_->RunsTasksOnCurrentThread());
+  DCHECK(file_task_runner_->RunsTasksOnCurrentThread());
   DCHECK_LT(buffer_size_,
             static_cast<uint32_t>(std::numeric_limits<int>::max()));
   int num_bytes = buffer_size_;
