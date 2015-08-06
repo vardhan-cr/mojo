@@ -173,7 +173,8 @@ MinidumpAndBoundary GetMinidumpAndBoundary(const base::FilePath& dumps_path) {
     base::DeleteFile(minidump, false);
     return MinidumpAndBoundary();
   }
-  return MinidumpAndBoundary(minidump, start_of_file.substr(2, space_index));
+  return MinidumpAndBoundary(minidump,
+                             start_of_file.substr(2, space_index - 2));
 }
 
 }  // namespace
