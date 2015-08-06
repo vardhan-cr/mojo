@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/mobile/app"
-
 	"mojo/public/go/application"
 	"mojo/public/go/bindings"
 	"mojo/public/go/system"
@@ -243,5 +241,4 @@ func MojoMain(handle C.MojoHandle) C.MojoResult {
 }
 
 func main() {
-	app.Run(app.Callbacks{})
 }
