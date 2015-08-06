@@ -18,6 +18,7 @@ import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 import org.chromium.mojo.keyboard.KeyboardServiceImpl;
+import org.chromium.mojo.keyboard.KeyboardServiceState;
 
 /**
  * Exposes SurfaceView to native code.
@@ -27,12 +28,12 @@ public class PlatformViewportAndroid extends SurfaceView {
 
     private long mNativeMojoViewport;
     private final SurfaceHolder.Callback mSurfaceCallback;
+    private KeyboardServiceState mKeyboardState;
 
     @CalledByNative
     public static PlatformViewportAndroid create(long nativeViewport) {
         Activity activity = ApplicationStatus.getLastTrackedFocusedActivity();
         PlatformViewportAndroid rv = new PlatformViewportAndroid(activity, nativeViewport);
-        KeyboardServiceImpl.setActiveView(rv);
         activity.setContentView(rv);
         return rv;
     }
@@ -69,6 +70,9 @@ public class PlatformViewportAndroid extends SurfaceView {
         };
         getHolder().addCallback(mSurfaceCallback);
 
+        // TODO(eseidel): We need per-view service providers!
+        mKeyboardState = new KeyboardServiceState(this);
+        KeyboardServiceImpl.setViewState(mKeyboardState);
     }
 
     @CalledByNative
@@ -106,7 +110,7 @@ public class PlatformViewportAndroid extends SurfaceView {
 
     @Override
     public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-        return KeyboardServiceImpl.createInputConnection(outAttrs);
+        return mKeyboardState.createInputConnection(outAttrs);
     }
 
     private boolean notifyTouchEventAtIndex(MotionEvent event, int index) {

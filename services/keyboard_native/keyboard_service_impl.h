@@ -19,7 +19,7 @@ class KeyboardServiceImpl : public KeyboardService {
   ~KeyboardServiceImpl() override;
 
   // KeyboardService implementation.
-  void Show(KeyboardClientPtr client) override;
+  void Show(KeyboardClientPtr client, KeyboardType type) override;
   void ShowByRequest() override;
   void Hide() override;
 

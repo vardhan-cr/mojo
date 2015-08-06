@@ -15,7 +15,7 @@ KeyboardServiceImpl::~KeyboardServiceImpl() {
 }
 
 // KeyboardService implementation.
-void KeyboardServiceImpl::Show(KeyboardClientPtr client) {
+void KeyboardServiceImpl::Show(KeyboardClientPtr client, KeyboardType type) {
   client_ = client.Pass();
 }
 
