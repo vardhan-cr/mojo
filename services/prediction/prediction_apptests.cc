@@ -30,21 +30,11 @@ class PredictionApptest : public mojo::test::ApplicationTestBase {
                                          &prediction_);
   }
 
-  void SetSettingsClient(bool correction,
-                         bool offensive,
-                         bool space_aware_gesture) {
-    SettingsPtr settings = Settings::New();
-    settings->correction_enabled = correction;
-    settings->block_potentially_offensive = offensive;
-    settings->space_aware_gesture_enabled = space_aware_gesture;
-    prediction_->SetSettings(settings.Pass());
-  }
-
   std::vector<std::string> GetPredictionListClient(
-      const mojo::Array<mojo::String>& prev_words,
+      mojo::Array<PrevWordInfoPtr>& prev_words,
       const mojo::String& cur_word) {
     PredictionInfoPtr prediction_info = PredictionInfo::New();
-    prediction_info->previous_words = prev_words.Clone().Pass();
+    prediction_info->previous_words = prev_words.Pass();
     prediction_info->current_word = cur_word;
 
     std::vector<std::string> prediction_list;
@@ -61,12 +51,76 @@ class PredictionApptest : public mojo::test::ApplicationTestBase {
   DISALLOW_COPY_AND_ASSIGN(PredictionApptest);
 };
 
-TEST_F(PredictionApptest, PredictCat) {
-  SetSettingsClient(true, true, true);
-  mojo::Array<mojo::String> prev_words;
-  prev_words.push_back("dog");
-  std::string prediction_cat = GetPredictionListClient(prev_words, "d")[0];
-  EXPECT_EQ(prediction_cat, "cat");
+TEST_F(PredictionApptest, CurrentSpellcheck) {
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction = GetPredictionListClient(prev_words, "tgis")[0];
+  EXPECT_EQ(prediction, "this");
+
+  mojo::Array<PrevWordInfoPtr> prev_words1 =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction1 = GetPredictionListClient(prev_words1, "aplle")[0];
+  EXPECT_EQ(prediction1, "Apple");
+}
+
+TEST_F(PredictionApptest, CurrentSuggest) {
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction = GetPredictionListClient(prev_words, "peac")[0];
+  EXPECT_EQ(prediction, "peace");
+
+  mojo::Array<PrevWordInfoPtr> prev_words1 =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction1 = GetPredictionListClient(prev_words1, "fil")[0];
+  EXPECT_EQ(prediction1, "film");
+
+  mojo::Array<PrevWordInfoPtr> prev_words2 =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction2 = GetPredictionListClient(prev_words2, "entert")[0];
+  EXPECT_EQ(prediction2, "entertainment");
+}
+
+TEST_F(PredictionApptest, CurrentSuggestCont) {
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction = GetPredictionListClient(prev_words, "a")[0];
+  EXPECT_EQ(prediction, "and");
+
+  mojo::Array<PrevWordInfoPtr> prev_words1 =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction1 = GetPredictionListClient(prev_words1, "ab")[0];
+  EXPECT_EQ(prediction1, "an");
+}
+
+TEST_F(PredictionApptest, CurrentSuggestUp) {
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction = GetPredictionListClient(prev_words, "Beau")[0];
+  EXPECT_EQ(prediction, "Beat");
+
+  mojo::Array<PrevWordInfoPtr> prev_words1 =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction1 = GetPredictionListClient(prev_words1, "THis")[0];
+  EXPECT_EQ(prediction1, "This");
+}
+
+TEST_F(PredictionApptest, CurrentNoSuggest) {
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  std::string prediction = GetPredictionListClient(
+      prev_words,
+      "hjlahflgfagfdafaffgruhgadfhjklghadflkghjalkdfjkldfhrshrtshtsrhkra")[0];
+  EXPECT_EQ(prediction, "homage offered a faded rugged should had dough");
+}
+
+TEST_F(PredictionApptest, EmptyCurrent) {
+  PrevWordInfoPtr prev_word = PrevWordInfo::New();
+  prev_word->word = "This";
+  prev_word->is_beginning_of_sentence = true;
+  mojo::Array<PrevWordInfoPtr> prev_words =
+      mojo::Array<PrevWordInfoPtr>::New(0);
+  prev_words.push_back(prev_word.Pass());
+  EXPECT_EQ((int)GetPredictionListClient(prev_words, "").size(), 0);
 }
 
 }  // namespace prediction

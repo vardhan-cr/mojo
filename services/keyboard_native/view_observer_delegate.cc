@@ -11,9 +11,11 @@
 #include "mojo/gpu/gl_texture.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/connect.h"
+#include "mojo/services/prediction/public/interfaces/prediction.mojom.h"
 #include "mojo/skia/ganesh_surface.h"
 #include "services/keyboard_native/clip_animation.h"
 #include "services/keyboard_native/keyboard_service_impl.h"
+#include "services/keyboard_native/predictor.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkTypeface.h"
@@ -36,6 +38,7 @@ mojo::Size ToSize(const mojo::Rect& rect) {
 
 ViewObserverDelegate::ViewObserverDelegate()
     : keyboard_service_impl_(nullptr),
+      predictor_(nullptr),
       view_(nullptr),
       id_namespace_(0u),
       surface_id_(1u),
@@ -49,6 +52,8 @@ ViewObserverDelegate::ViewObserverDelegate()
       base::Bind(&ViewObserverDelegate::OnText, weak_factory_.GetWeakPtr()));
   key_layout_.SetDeleteCallback(
       base::Bind(&ViewObserverDelegate::OnDelete, weak_factory_.GetWeakPtr()));
+  key_layout_.SetSuggestTextCallback(base::Bind(
+      &ViewObserverDelegate::OnSuggestText, weak_factory_.GetWeakPtr()));
   submit_frame_callback_ = base::Bind(&ViewObserverDelegate::OnFrameComplete,
                                       weak_factory_.GetWeakPtr());
 }
@@ -92,6 +97,10 @@ void ViewObserverDelegate::OnViewCreated(mojo::View* view, mojo::Shell* shell) {
   surface_->CreateSurface(surface_id_);
   surface_->GetIdNamespace(base::Bind(&ViewObserverDelegate::SetIdNamespace,
                                       base::Unretained(this)));
+  predictor_ = new Predictor(shell);
+  predictor_->SetUpdateCallback(base::Bind(
+      &ViewObserverDelegate::OnUpdateSuggestion, weak_factory_.GetWeakPtr()));
+  key_layout_.SetPredictor(predictor_);
   IssueDraw();
 }
 
@@ -101,6 +110,15 @@ void ViewObserverDelegate::OnText(const std::string& text) {
 
 void ViewObserverDelegate::OnDelete() {
   keyboard_service_impl_->OnDelete();
+}
+
+void ViewObserverDelegate::OnSuggestText(const std::string& text) {
+  std::string text_with_space = text + " ";
+  keyboard_service_impl_->OnKey(text_with_space.c_str());
+}
+
+void ViewObserverDelegate::OnUpdateSuggestion() {
+  IssueDraw();
 }
 
 void ViewObserverDelegate::UpdateState(int32 pointer_id,

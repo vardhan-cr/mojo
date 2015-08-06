@@ -108,3 +108,6 @@ v8.log
 # breakpad tool
 /mojo/tools/linux64/dump_syms
 /mojo/tools/linux64/symupload
+
+# downloaded prediction dictionary files.
+/services/prediction/res/*.dict

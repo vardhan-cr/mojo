@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <algorithm>
+
 #include "base/bind.h"
 #include "base/macros.h"
 #include "mojo/application/application_runner_chromium.h"
@@ -219,16 +221,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
 
   void CommitText(const mojo::String& text,
                   int32_t new_cursor_position) override {
-    std::string combined(text_[1]);
-    combined.append(text);
-    SkRect bounds;
-    text_paint_.measureText(combined.data(), combined.size(), &bounds);
-    if (bounds.width() > text_view_->bounds().width) {
-      text_[0] = text_[1];
-      text_[1] = text;
-    } else {
-      text_[1].append(text);
-    }
+    text_.append(text);
     DrawText();
   }
 
@@ -236,10 +229,10 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
                              int32_t after_length) override {
     // treat negative and zero |before_length| values as no-op.
     if (before_length > 0) {
-      if (before_length > static_cast<int32_t>(text_[1].size())) {
-        before_length = text_[1].size();
+      if (before_length > static_cast<int32_t>(text_.size())) {
+        before_length = text_.size();
       }
-      text_[1].erase(text_[1].end() - before_length, text_[1].end());
+      text_.erase(text_.end() - before_length, text_.end());
     }
     DrawText();
   }
@@ -316,18 +309,61 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
 
     float row_height = text_view_height_ / 2.0f;
     float text_baseline_offset = row_height / 5.0f;
+    if (!text_.empty()) {
+      SkRect sk_rect;
+      text_paint_.measureText((const void*)(text_.c_str()), text_.length(),
+                              &sk_rect);
 
-    if (!text_[0].empty()) {
-      canvas->drawText(text_[0].data(), text_[0].size(), 0.0f,
-                       row_height - text_baseline_offset, text_paint_);
-    }
+      if (sk_rect.width() > text_view_->bounds().width) {
+        std::string reverse_text = text_;
+        std::reverse(reverse_text.begin(), reverse_text.end());
 
-    if (!text_[1].empty()) {
-      canvas->drawText(text_[1].data(), text_[1].size(), 0.0f,
-                       (2.0f * row_height) - text_baseline_offset, text_paint_);
+        size_t processed1 = text_paint_.breakText(
+            (const void*)(reverse_text.c_str()), strlen(reverse_text.c_str()),
+            text_view_->bounds().width);
+        size_t processed2 = text_paint_.breakText(
+            (const void*)(reverse_text.c_str() + processed1),
+            strlen(reverse_text.c_str()) - processed1,
+            text_view_->bounds().width);
+        if (processed1 + processed2 < text_.length()) {
+          DrawSecondLine(canvas, text_.length() - processed1, processed1,
+                         row_height, text_baseline_offset);
+          DrawFirstLine(canvas, text_.length() - processed1 - processed2,
+                        processed2, row_height, text_baseline_offset);
+        } else {
+          size_t processed3 =
+              text_paint_.breakText((const void*)(text_.c_str()),
+                                    text_.length(), text_view_->bounds().width);
+          DrawFirstLine(canvas, 0, processed3, row_height,
+                        text_baseline_offset);
+          DrawSecondLine(canvas, processed3, text_.length() - processed3,
+                         row_height, text_baseline_offset);
+        }
+      } else {
+        DrawSecondLine(canvas, 0, text_.length(), row_height,
+                       text_baseline_offset);
+      }
     }
 
     canvas->flush();
+  }
+
+  void DrawFirstLine(SkCanvas* canvas,
+                     const size_t offset,
+                     const size_t length,
+                     const float row_height,
+                     const float text_baseline_offset) {
+    canvas->drawText(text_.data() + offset, length, 0.0f,
+                     row_height - text_baseline_offset, text_paint_);
+  }
+
+  void DrawSecondLine(SkCanvas* canvas,
+                      const size_t offset,
+                      const size_t length,
+                      const float row_height,
+                      const float text_baseline_offset) {
+    canvas->drawText(text_.data() + offset, length, 0.0f,
+                     (2.0f * row_height) - text_baseline_offset, text_paint_);
   }
 
   void DrawRootView(SkCanvas* canvas) {
@@ -352,7 +388,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
   scoped_ptr<ViewTextureUploader> text_view_texture_uploader_;
   scoped_ptr<ViewTextureUploader> root_view_texture_uploader_;
   int text_view_height_;
-  std::string text_[2];
+  std::string text_;
   SkPaint text_paint_;
   base::WeakPtrFactory<KeyboardDelegate> weak_factory_;
 

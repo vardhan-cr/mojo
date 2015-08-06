@@ -22,6 +22,9 @@ class PointF;
 
 namespace keyboard {
 
+class Predictor;
+class TextUpdateKey;
+
 // Represents a drawable keyboard.
 class KeyLayout {
  public:
@@ -55,6 +58,9 @@ class KeyLayout {
   // Sets the callback to call whenever delete is pressed.
   void SetDeleteCallback(base::Callback<void()> on_delete_callback);
 
+  void SetSuggestTextCallback(
+      base::Callback<void(const std::string&)> on_suggest_text_callback);
+
   // Sets the dimensions the keyboard will draw itself into.
   void SetKeyArea(const gfx::RectF& key_area);
 
@@ -67,6 +73,8 @@ class KeyLayout {
 
   // Indicate to the keyboard that a touch up has occurred at the given Point.
   void OnTouchUp(const gfx::PointF& touch_up);
+
+  void SetPredictor(Predictor* predictor);
 
  private:
   // initializes the *_layout_ vectors.
@@ -85,6 +93,8 @@ class KeyLayout {
   // A TextKey callback that calls on_delete_callback_.
   void OnKeyDelete(const TextKey& key);
 
+  void OnSuggestKeyEmitText(const TextUpdateKey& key);
+
   // A TextKey callback that switches the layout_ and key_map_ to upper case.
   void OnKeySwitchToUpperCase(const TextKey& key);
 
@@ -96,6 +106,7 @@ class KeyLayout {
 
   base::Callback<void(const std::string&)> on_text_callback_;
   base::Callback<void()> on_delete_callback_;
+  base::Callback<void(const std::string&)> on_suggest_text_callback_;
   gfx::RectF key_area_;
   std::vector<std::vector<float>>* layout_;
   std::vector<std::vector<float>> letters_layout_;
@@ -104,6 +115,7 @@ class KeyLayout {
   std::vector<std::vector<Key*>> lower_case_key_map_;
   std::vector<std::vector<Key*>> upper_case_key_map_;
   std::vector<std::vector<Key*>> symbols_key_map_;
+  Predictor* predictor_;
   base::WeakPtrFactory<KeyLayout> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(KeyLayout);

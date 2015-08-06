@@ -7,6 +7,7 @@
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
+#include "services/prediction/dictionary_service.h"
 #include "services/prediction/prediction_service_impl.h"
 
 namespace prediction {
@@ -14,28 +15,21 @@ namespace prediction {
 PredictionServiceImpl::PredictionServiceImpl(
     mojo::InterfaceRequest<PredictionService> request)
     : strong_binding_(this, request.Pass()) {
+  ProximityInfoFactory proximity_info;
+  proximity_settings_ = scoped_ptr<latinime::ProximityInfo>(
+      proximity_info.GetNativeProximityInfo());
 }
 
 PredictionServiceImpl::~PredictionServiceImpl() {
 }
 
 // PredictionService implementation
-void PredictionServiceImpl::SetSettings(SettingsPtr settings) {
-  stored_settings_.correction_enabled = settings->correction_enabled;
-  stored_settings_.block_potentially_offensive =
-      settings->block_potentially_offensive;
-  stored_settings_.space_aware_gesture_enabled =
-      settings->space_aware_gesture_enabled;
-}
-
-// only predict "cat" no matter what prediction_info
-// has for now
 void PredictionServiceImpl::GetPredictionList(
     PredictionInfoPtr prediction_info,
     const GetPredictionListCallback& callback) {
-  mojo::String cat = "cat";
-  mojo::Array<mojo::String> prediction_list;
-  prediction_list.push_back(cat);
+  mojo::Array<mojo::String> prediction_list =
+      dictionary_service_.GetDictionarySuggestion(prediction_info.Pass(),
+                                                  proximity_settings_.get());
   callback.Run(prediction_list.Pass());
 }
 

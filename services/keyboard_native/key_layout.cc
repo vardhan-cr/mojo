@@ -11,6 +11,8 @@
 #include "services/keyboard_native/kLowerCaseIcon.h"
 #include "services/keyboard_native/kUpperCaseIcon.h"
 #include "services/keyboard_native/key_layout.h"
+#include "services/keyboard_native/predictor.h"
+#include "services/keyboard_native/text_update_key.h"
 #include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkImageDecoder.h"
@@ -103,8 +105,10 @@ class ImageKey : public KeyLayout::Key {
 
 KeyLayout::KeyLayout()
     : on_text_callback_(),
+      on_suggest_text_callback_(),
       layout_(&letters_layout_),
       key_map_(&lower_case_key_map_),
+      predictor_(nullptr),
       weak_factory_(this) {
   InitLayouts();
   InitKeyMaps();
@@ -135,6 +139,11 @@ void KeyLayout::SetTextCallback(
 
 void KeyLayout::SetDeleteCallback(base::Callback<void()> on_delete_callback) {
   on_delete_callback_ = on_delete_callback;
+}
+
+void KeyLayout::SetSuggestTextCallback(
+    base::Callback<void(const std::string&)> on_suggest_text_callback) {
+  on_suggest_text_callback_ = on_suggest_text_callback;
 }
 
 void KeyLayout::SetKeyArea(const gfx::RectF& key_area) {
@@ -174,7 +183,6 @@ void KeyLayout::Draw(SkCanvas* canvas) {
          key_index++) {
       float key_width = static_cast<float>(key_area_.width()) *
                         (*layout_)[row_index][key_index];
-
       (*key_map_)[row_index][key_index]->Draw(
           canvas, text_paint,
           gfx::RectF(current_left, current_top, key_width, row_height));
@@ -208,6 +216,11 @@ void KeyLayout::OnTouchUp(const gfx::PointF& touch_up) {
   }
 }
 
+void KeyLayout::SetPredictor(Predictor* predictor) {
+  predictor_ = predictor;
+  predictor_->SetSuggestionKeys(lower_case_key_map_[0]);
+}
+
 void KeyLayout::InitLayouts() {
   // Row layouts are specified by a vector of floats which indicate the percent
   // width a given key takes up in that row.  The floats of a given row *MUST*
@@ -219,12 +232,15 @@ void KeyLayout::InitLayouts() {
   std::vector<float> seven_key_row_layout = {
       0.15f, 0.1f, 0.1f, 0.3f, 0.1f, 0.1f, 0.15f};
   std::vector<float> five_key_row_layout = {0.15f, 0.1f, 0.5f, 0.1f, 0.15f};
+  std::vector<float> three_key_row_layout = {0.33f, 0.33f, 0.33f};
 
+  letters_layout_.push_back(three_key_row_layout);
   letters_layout_.push_back(ten_key_row_layout);
   letters_layout_.push_back(nine_key_row_layout);
   letters_layout_.push_back(nine_key_row_layout);
   letters_layout_.push_back(five_key_row_layout);
 
+  symbols_layout_.push_back(three_key_row_layout);
   symbols_layout_.push_back(ten_key_row_layout);
   symbols_layout_.push_back(nine_key_row_layout);
   symbols_layout_.push_back(nine_key_row_layout);
@@ -236,26 +252,40 @@ void KeyLayout::OnKeyDoNothing(const TextKey& key) {
 }
 
 void KeyLayout::OnKeyEmitText(const TextKey& key) {
+  predictor_->StoreCurWord(std::string(key.ToText()));
   on_text_callback_.Run(std::string(key.ToText()));
 }
 
 void KeyLayout::OnKeyDelete(const TextKey& key) {
+  predictor_->DeleteCharInCurWord();
   on_delete_callback_.Run();
+}
+
+void KeyLayout::OnSuggestKeyEmitText(const TextUpdateKey& key) {
+  std::string update_string = std::string(key.ToText());
+  int delete_size = predictor_->ChooseSuggestedWord(std::string(key.ToText()));
+  for (int i = 0; i < delete_size; i++) {
+    on_delete_callback_.Run();
+  }
+  on_suggest_text_callback_.Run(update_string);
 }
 
 void KeyLayout::OnKeySwitchToUpperCase(const TextKey& key) {
   layout_ = &letters_layout_;
   key_map_ = &upper_case_key_map_;
+  predictor_->SetSuggestionKeys(upper_case_key_map_[0]);
 }
 
 void KeyLayout::OnKeySwitchToLowerCase(const TextKey& key) {
   layout_ = &letters_layout_;
   key_map_ = &lower_case_key_map_;
+  predictor_->SetSuggestionKeys(lower_case_key_map_[0]);
 }
 
 void KeyLayout::OnKeySwitchToSymbols(const TextKey& key) {
   layout_ = &symbols_layout_;
   key_map_ = &symbols_key_map_;
+  predictor_->SetSuggestionKeys(symbols_key_map_[0]);
 }
 
 void KeyLayout::InitKeyMaps() {
@@ -265,6 +295,8 @@ void KeyLayout::InitKeyMaps() {
       base::Bind(&KeyLayout::OnKeyEmitText, weak_factory_.GetWeakPtr());
   base::Callback<void(const TextKey&)> delete_callback =
       base::Bind(&KeyLayout::OnKeyDelete, weak_factory_.GetWeakPtr());
+  base::Callback<void(const TextUpdateKey&)> suggest_emit_text_callback =
+      base::Bind(&KeyLayout::OnSuggestKeyEmitText, weak_factory_.GetWeakPtr());
   base::Callback<void(const TextKey&)> switch_to_upper_case_callback =
       base::Bind(&KeyLayout::OnKeySwitchToUpperCase,
                  weak_factory_.GetWeakPtr());
@@ -282,6 +314,21 @@ void KeyLayout::InitKeyMaps() {
       new ImageKey("<-", delete_callback, keyboard_native::kDeleteIcon);
   ImageKey* action_image_key =
       new ImageKey(":)", do_nothing_callback, keyboard_native::kActionIcon);
+
+  std::vector<Key*> suggestion_strip_key_map_row_lower = {
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback)};
+
+  std::vector<Key*> suggestion_strip_key_map_row_upper = {
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback)};
+
+  std::vector<Key*> suggestion_strip_key_map_row_symbol = {
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback),
+      new TextUpdateKey("", suggest_emit_text_callback)};
 
   std::vector<Key*> lower_case_key_map_row_one = {
       new TextKey("q", emit_text_callback),
@@ -324,7 +371,8 @@ void KeyLayout::InitKeyMaps() {
       new TextKey(".", emit_text_callback),
       action_image_key};
 
-  lower_case_key_map_ = {lower_case_key_map_row_one,
+  lower_case_key_map_ = {suggestion_strip_key_map_row_lower,
+                         lower_case_key_map_row_one,
                          lower_case_key_map_row_two,
                          lower_case_key_map_row_three,
                          lower_case_key_map_row_four};
@@ -370,7 +418,8 @@ void KeyLayout::InitKeyMaps() {
       new TextKey(".", emit_text_callback),
       action_image_key};
 
-  upper_case_key_map_ = {upper_case_key_map_row_one,
+  upper_case_key_map_ = {suggestion_strip_key_map_row_upper,
+                         upper_case_key_map_row_one,
                          upper_case_key_map_row_two,
                          upper_case_key_map_row_three,
                          upper_case_key_map_row_four};
@@ -418,10 +467,11 @@ void KeyLayout::InitKeyMaps() {
       new TextKey(".", emit_text_callback),
       action_image_key};
 
-  symbols_key_map_ = {symbols_key_map_row_one,
+  symbols_key_map_ = {suggestion_strip_key_map_row_symbol,
+                      symbols_key_map_row_one,
                       symbols_key_map_row_two,
                       symbols_key_map_row_three,
                       symbols_key_map_row_four};
 }
-}
-// namespace keyboard
+
+}  // namespace keyboard

@@ -19,6 +19,7 @@
 namespace keyboard {
 
 class KeyboardServiceImpl;
+class Predictor;
 
 struct PointerState {
   KeyLayout::Key* last_key;
@@ -39,6 +40,8 @@ class ViewObserverDelegate : public mojo::ViewObserver {
   void OnFrameComplete();
   void OnText(const std::string& text);
   void OnDelete();
+  void OnSuggestText(const std::string& text);
+  void OnUpdateSuggestion();
   void DrawState();
   void DrawKeysToCanvas(const gfx::RectF& key_area, SkCanvas* canvas);
   void DrawAnimations(SkCanvas* canvas, const base::TimeTicks& current_ticks);
@@ -58,6 +61,7 @@ class ViewObserverDelegate : public mojo::ViewObserver {
   void OnViewInputEvent(mojo::View* view, const mojo::EventPtr& event) override;
 
   KeyboardServiceImpl* keyboard_service_impl_;
+  Predictor* predictor_;
   mojo::View* view_;
   uint32_t id_namespace_;
   uint32_t surface_id_;

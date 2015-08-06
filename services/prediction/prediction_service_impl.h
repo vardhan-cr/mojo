@@ -5,6 +5,7 @@
 #ifndef SERVICES_PREDICTION_PREDICTION_SERVICE_IMPL_H_
 #define SERVICES_PREDICTION_PREDICTION_SERVICE_IMPL_H_
 
+#include "base/memory/scoped_ptr.h"
 #include "mojo/services/prediction/public/interfaces/prediction.mojom.h"
 
 namespace prediction {
@@ -16,14 +17,14 @@ class PredictionServiceImpl : public PredictionService {
   ~PredictionServiceImpl() override;
 
   // PredictionService implementation
-  void SetSettings(SettingsPtr settings) override;
-
   void GetPredictionList(PredictionInfoPtr prediction_info,
                          const GetPredictionListCallback& callback) override;
 
  private:
-  Settings stored_settings_;
   mojo::StrongBinding<PredictionService> strong_binding_;
+
+  scoped_ptr<latinime::ProximityInfo> proximity_settings_;
+  DictionaryService dictionary_service_;
 
   DISALLOW_COPY_AND_ASSIGN(PredictionServiceImpl);
 };

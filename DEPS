@@ -423,6 +423,17 @@ hooks = [
                 '--no_auth',
                 '--bucket', 'mojo',
                 '-s', 'src/mojo/tools/linux64/symupload.sha1',
+	],
+  },
+  # Pull prediction resources using checked-in hashes.
+  {
+    'name': 'prediction_resources',
+    'pattern': '',
+    'action': [ 'download_from_google_storage',
+                '--no_resume',
+                '--no_auth',
+                '--bucket', 'mojo/prediction',
+                '-d', 'src/services/prediction/res',
     ],
   },
 ]
