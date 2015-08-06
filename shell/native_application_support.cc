@@ -108,16 +108,6 @@ bool RunNativeApplication(
   // Unlike system thunks, we don't warn on a lack of GLES2 thunks because
   // not everything is a visual app.
 
-  // Go shared library support requires us to initialize the runtime before we
-  // start running any go code. This is a temporary patch.
-  typedef void (*InitGoRuntimeFn)();
-  InitGoRuntimeFn init_go_runtime = reinterpret_cast<InitGoRuntimeFn>(
-      base::GetFunctionPointerFromNativeLibrary(app_library, "InitGoRuntime"));
-  if (init_go_runtime) {
-    DVLOG(2) << "InitGoRuntime: Initializing Go Runtime found in app";
-    init_go_runtime();
-  }
-
   typedef MojoResult (*MojoMainFunction)(MojoHandle);
   MojoMainFunction main_function = reinterpret_cast<MojoMainFunction>(
       base::GetFunctionPointerFromNativeLibrary(app_library, "MojoMain"));
