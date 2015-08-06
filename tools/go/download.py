@@ -59,7 +59,7 @@ def InstallGoBinaries(version):
   # Remove current installation.
   if os.path.exists(INSTALL_DIR):
     shutil.rmtree(INSTALL_DIR)
-  os.mkdir(INSTALL_DIR)
+  os.makedirs(INSTALL_DIR)
   # Download go tool binaries from GCS.
   archive_path = os.path.join(INSTALL_DIR, 'go.tar.gz')
   download_cmd = ['python', GSUTIL_PATH, 'cp',
