@@ -90,6 +90,12 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
     tracing_.Initialize(app);
+
+    // TODO(qsr): This has no effect for now, as the tracing infrastructure
+    // doesn't allow to trace anything before the tracing app connects to the
+    // application.
+    TRACE_EVENT0("dart_content_handler", "DartContentHandler::Initialize");
+
     mojo::icu::Initialize(app);
     content_handler_.set_handler_task_runner(
         base::MessageLoop::current()->task_runner());
@@ -154,6 +160,10 @@ DartContentHandler::CreateApplication(
     mojo::URLResponsePtr response) {
   base::trace_event::TraceLog::GetInstance()
       ->SetCurrentThreadBlocksMessageLoop();
+
+  TRACE_EVENT1("dart_content_handler", "DartContentHandler::CreateApplication",
+               "url", response->url.get());
+
   base::FilePath application_dir;
   std::string url = response->url.get();
   if (IsDartZip(response->url.get())) {
