@@ -14,6 +14,7 @@ import os.path
 import shutil
 import socket
 import threading
+import tempfile
 
 import SimpleHTTPServer
 import SocketServer
@@ -66,10 +67,13 @@ def _get_handler_class_for_path(mappings):
   class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     """Handler for SocketServer.TCPServer that will serve the files from
     local directiories over http.
+
+    A new instance is created for each request.
     """
 
     def __init__(self, *args, **kwargs):
       self.etag = None
+      self.gzipped_file = None
       SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def get_etag(self):
@@ -147,13 +151,13 @@ def _get_handler_class_for_path(mappings):
                                      normalized_path[len(prefix):])
             if os.path.isfile(candidate):
               if gzipped:
-                gz_result = candidate + '.gz'
-                if (not os.path.isfile(gz_result) or
-                    os.path.getmtime(gz_result) <= os.path.getmtime(candidate)):
-                  with open(candidate, 'rb') as f:
-                    with gzip.open(gz_result, 'wb') as zf:
-                      shutil.copyfileobj(f, zf)
-                return gz_result
+                if not self.gzipped_file:
+                  self.gzipped_file = tempfile.NamedTemporaryFile(delete=False)
+                  with open(candidate, 'rb') as source:
+                    with gzip.GzipFile(fileobj=self.gzipped_file) as target:
+                      shutil.copyfileobj(source, target)
+                  self.gzipped_file.close()
+                return self.gzipped_file.name
               return candidate
           else:
             self.send_response(404)
@@ -173,6 +177,10 @@ def _get_handler_class_for_path(mappings):
     def log_message(self, *_):
       """Override the base class method to disable logging."""
       pass
+
+    def __del__(self):
+      if self.gzipped_file:
+        os.remove(self.gzipped_file.name)
 
   RequestHandler.protocol_version = 'HTTP/1.1'
   return RequestHandler
