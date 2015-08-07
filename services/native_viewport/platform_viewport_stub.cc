@@ -7,7 +7,9 @@
 namespace mojo {
 
 // static
-scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
+scoped_ptr<PlatformViewport> PlatformViewport::Create(
+    mojo::ApplicationImpl* application_,
+    Delegate* delegate) {
   return PlatformViewportHeadless::Create(delegate);
 }
 

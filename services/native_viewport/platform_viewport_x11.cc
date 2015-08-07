@@ -34,8 +34,7 @@ float ConvertUIWheelValueToMojoValue(int offset) {
 class PlatformViewportX11 : public PlatformViewport,
                             public ui::PlatformWindowDelegate {
  public:
-  explicit PlatformViewportX11(Delegate* delegate) : delegate_(delegate) {
-  }
+  explicit PlatformViewportX11(Delegate* delegate) : delegate_(delegate) {}
 
   ~PlatformViewportX11() override {
     // Destroy the platform-window while |this| is still alive.
@@ -160,7 +159,9 @@ class PlatformViewportX11 : public PlatformViewport,
 };
 
 // static
-scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
+scoped_ptr<PlatformViewport> PlatformViewport::Create(
+    mojo::ApplicationImpl* application_,
+    Delegate* delegate) {
   return make_scoped_ptr(new PlatformViewportX11(delegate));
 }
 

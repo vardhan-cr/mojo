@@ -5,7 +5,6 @@
 package org.chromium.mojo;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -14,40 +13,58 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
-import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 import org.chromium.mojo.keyboard.KeyboardServiceImpl;
 import org.chromium.mojo.keyboard.KeyboardServiceState;
+
+import java.util.ArrayDeque;
 
 /**
  * Exposes SurfaceView to native code.
  */
 @JNINamespace("native_viewport")
 public class PlatformViewportAndroid extends SurfaceView {
+    private static final ArrayDeque<Long> PENDING_NATIVE_VIEWPORTS =
+            new ArrayDeque<Long>();
 
     private long mNativeMojoViewport;
+    private final Activity mActivity;
     private final SurfaceHolder.Callback mSurfaceCallback;
     private KeyboardServiceState mKeyboardState;
 
+
     @CalledByNative
-    public static PlatformViewportAndroid create(long nativeViewport) {
-        Activity activity = ApplicationStatus.getLastTrackedFocusedActivity();
-        PlatformViewportAndroid rv = new PlatformViewportAndroid(activity, nativeViewport);
-        activity.setContentView(rv);
-        return rv;
+    public static void createRequest(long nativeViewport) {
+        PENDING_NATIVE_VIEWPORTS.add(nativeViewport);
     }
 
-    public PlatformViewportAndroid(Context context, long nativeViewport) {
-        super(context);
+    @CalledByNative
+    public static void withdrawRequest(long nativeViewport) {
+        PENDING_NATIVE_VIEWPORTS.remove(nativeViewport);
+    }
+
+    public static boolean newActivityStarted(Activity activity) {
+        if (PENDING_NATIVE_VIEWPORTS.isEmpty()) {
+            return false;
+        }
+        Long nativeViewport = PENDING_NATIVE_VIEWPORTS.remove();
+        PlatformViewportAndroid rv = new PlatformViewportAndroid(activity, nativeViewport);
+        activity.setContentView(rv);
+        return true;
+    }
+
+    public PlatformViewportAndroid(Activity activity, long nativeViewport) {
+        super(activity);
 
         setFocusable(true);
         setFocusableInTouchMode(true);
 
+        mActivity = activity;
         mNativeMojoViewport = nativeViewport;
         assert mNativeMojoViewport != 0;
 
-        final float density = context.getResources().getDisplayMetrics().density;
+        final float density = activity.getResources().getDisplayMetrics().density;
 
         mSurfaceCallback = new SurfaceHolder.Callback() {
             @Override
@@ -73,12 +90,14 @@ public class PlatformViewportAndroid extends SurfaceView {
         // TODO(eseidel): We need per-view service providers!
         mKeyboardState = new KeyboardServiceState(this);
         KeyboardServiceImpl.setViewState(mKeyboardState);
+        nativeSurfaceAttached(mNativeMojoViewport, this);
     }
 
     @CalledByNative
     public void detach() {
         getHolder().removeCallback(mSurfaceCallback);
         mNativeMojoViewport = 0;
+        mActivity.finishAndRemoveTask();
     }
 
     @Override
@@ -120,6 +139,9 @@ public class PlatformViewportAndroid extends SurfaceView {
                 event.getOrientation(index), event.getAxisValue(MotionEvent.AXIS_HSCROLL, index),
                 event.getAxisValue(MotionEvent.AXIS_VSCROLL, index));
     }
+
+    private static native void nativeSurfaceAttached(long nativePlatformViewportAndroid,
+            PlatformViewportAndroid platformViewport);
 
     private static native void nativeDestroy(long nativePlatformViewportAndroid);
 

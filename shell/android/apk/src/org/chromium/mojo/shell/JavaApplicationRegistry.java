@@ -83,6 +83,8 @@ public class JavaApplicationRegistry {
                                                 IntentReceiverRegistry.getInstance()));
         registry.registerApplicationDelegate("mojo:nfc", new NfcApplicationDelegate());
         registry.registerApplicationDelegate("mojo:sharing", new SharingApplicationDelegate());
+        registry.registerApplicationDelegate(
+                "mojo:native_viewport_support", new NativeViewportSupportApplicationDelegate());
         return registry;
     }
 

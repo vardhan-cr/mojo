@@ -49,9 +49,6 @@ public final class SharingActivity extends Activity implements ShellService.IShe
     public void onShellBound(ShellService shellService) {
         mShellService = shellService;
         finish();
-        Intent intent = new Intent(this, MojoShellActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
         while (!mPendingIntents.isEmpty()) {
             Intent pendingIntent = mPendingIntents.remove();
             shareFromIntent(pendingIntent);

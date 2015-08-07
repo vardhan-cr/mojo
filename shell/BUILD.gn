@@ -281,6 +281,7 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/KeyboardFactory.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellApplication.java",
+      "android/apk/src/org/chromium/mojo/shell/NativeViewportSupportApplicationDelegate.java",
       "android/apk/src/org/chromium/mojo/shell/NfcApplicationDelegate.java",
       "android/apk/src/org/chromium/mojo/shell/NfcDbManager.java",
       "android/apk/src/org/chromium/mojo/shell/NfcImpl.java",
@@ -289,6 +290,7 @@ if (is_android) {
       "android/apk/src/org/chromium/mojo/shell/SharingActivity.java",
       "android/apk/src/org/chromium/mojo/shell/SharingApplicationDelegate.java",
       "android/apk/src/org/chromium/mojo/shell/ShellService.java",
+      "android/apk/src/org/chromium/mojo/shell/ViewportActivity.java",
     ]
 
     deps = [
@@ -301,10 +303,12 @@ if (is_android) {
       "//mojo/public/java:system",
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
       "//services/intent_receiver:bindings_java",
+      "//services/native_viewport:interfaces_java",
       "//services/nfc_message_sink:bindings_java",
       "//services/sharing_sink:bindings_java",
       "//mojo/services/nfc/public/interfaces:interfaces_java",
       "//services/keyboard",
+      "//services/native_viewport:native_viewport_java",
     ]
   }
 

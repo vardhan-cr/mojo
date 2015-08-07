@@ -8,6 +8,7 @@ import("//mojo/public/mojo_application.gni")
 if (is_android) {
   import("//build/config/android/config.gni")
   import("//build/config/android/rules.gni")
+  import("//mojo/public/tools/bindings/mojom.gni")
 
   group("native_viewport") {
     deps = [
@@ -36,6 +37,12 @@ if (is_android) {
     ]
 
     jni_package = "mojo"
+  }
+
+  mojom("interfaces") {
+    sources = [
+      "native_viewport_internal.mojom",
+    ]
   }
 } else {
   mojo_native_application("native_viewport") {
@@ -100,7 +107,10 @@ source_set("lib") {
   ]
 
   if (is_android) {
-    deps += [ ":jni_headers" ]
+    deps += [
+      ":interfaces",
+      ":jni_headers",
+    ]
   }
 
   if (use_x11) {

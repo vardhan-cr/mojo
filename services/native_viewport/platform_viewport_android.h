@@ -18,6 +18,10 @@ namespace gpu {
 class GLInProcessContext;
 }
 
+namespace mojo {
+class ApplicationImpl;
+}
+
 struct ANativeWindow;
 
 namespace native_viewport {
@@ -26,10 +30,12 @@ class PlatformViewportAndroid : public PlatformViewport {
  public:
   static bool Register(JNIEnv* env);
 
-  explicit PlatformViewportAndroid(Delegate* delegate);
+  explicit PlatformViewportAndroid(mojo::ApplicationImpl* application,
+                                   Delegate* delegate);
   virtual ~PlatformViewportAndroid();
 
   void Destroy(JNIEnv* env, jobject obj);
+  void SurfaceAttached(JNIEnv* env, jobject obj, jobject platform_viewport);
   void SurfaceCreated(JNIEnv* env, jobject obj, jobject jsurface);
   void SurfaceDestroyed(JNIEnv* env, jobject obj);
   void SurfaceSetSize(JNIEnv* env,
@@ -62,6 +68,7 @@ class PlatformViewportAndroid : public PlatformViewport {
 
   void ReleaseWindow();
 
+  mojo::ApplicationImpl* application_;
   Delegate* const delegate_;
   JavaObjectWeakGlobalRef java_platform_viewport_android_;
   ANativeWindow* window_;

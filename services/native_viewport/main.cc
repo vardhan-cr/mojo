@@ -36,6 +36,7 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
  private:
   // mojo::ApplicationDelegate implementation.
   void Initialize(mojo::ApplicationImpl* application) override {
+    application_ = application;
     tracing_.Initialize(application);
 
     // Apply the switch for kTouchEvents to CommandLine (if set). This allows
@@ -44,8 +45,7 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
     const std::string touch_event_string("--" +
                                          std::string(switches::kTouchDevices));
     auto touch_iter = std::find(application->args().begin(),
-                                application->args().end(),
-                                touch_event_string);
+                                application->args().end(), touch_event_string);
     if (touch_iter != application->args().end() &&
         ++touch_iter != application->args().end()) {
       command_line->AppendSwitchASCII(touch_event_string, *touch_iter);
@@ -72,7 +72,8 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
               mojo::InterfaceRequest<NativeViewport> request) override {
     if (!gpu_state_.get())
       gpu_state_ = new gles2::GpuState;
-    new NativeViewportImpl(is_headless_, gpu_state_, request.Pass());
+    new NativeViewportImpl(application_, is_headless_, gpu_state_,
+                           request.Pass());
   }
 
   // mojo::InterfaceFactory<Gpu> implementation.
@@ -83,6 +84,7 @@ class NativeViewportAppDelegate : public mojo::ApplicationDelegate,
     new gles2::GpuImpl(request.Pass(), gpu_state_);
   }
 
+  mojo::ApplicationImpl* application_;
   scoped_refptr<gles2::GpuState> gpu_state_;
   bool is_headless_;
   mojo::TracingImpl tracing_;

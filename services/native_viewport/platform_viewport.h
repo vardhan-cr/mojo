@@ -15,6 +15,10 @@ namespace gfx {
 class Rect;
 }
 
+namespace mojo {
+class ApplicationImpl;
+}
+
 namespace native_viewport {
 
 // Encapsulation of platform-specific Viewport.
@@ -41,7 +45,8 @@ class PlatformViewport {
   virtual gfx::Size GetSize() = 0;
   virtual void SetBounds(const gfx::Rect& bounds) = 0;
 
-  static scoped_ptr<PlatformViewport> Create(Delegate* delegate);
+  static scoped_ptr<PlatformViewport> Create(mojo::ApplicationImpl* application,
+                                             Delegate* delegate);
 };
 
 }  // namespace native_viewport

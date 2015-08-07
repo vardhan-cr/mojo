@@ -20,6 +20,10 @@ namespace gles2 {
 class GpuState;
 }
 
+namespace mojo {
+class ApplicationImpl;
+}
+
 namespace ui {
 class Event;
 }
@@ -33,7 +37,8 @@ namespace native_viewport {
 class NativeViewportImpl : public mojo::NativeViewport,
                            public PlatformViewport::Delegate {
  public:
-  NativeViewportImpl(bool is_headless,
+  NativeViewportImpl(mojo::ApplicationImpl* application,
+                     bool is_headless,
                      const scoped_refptr<gles2::GpuState>& gpu_state,
                      mojo::InterfaceRequest<mojo::NativeViewport> request);
   ~NativeViewportImpl() override;
@@ -65,6 +70,7 @@ class NativeViewportImpl : public mojo::NativeViewport,
   // with.
   void AckEvent(int32 pointer_id);
 
+  mojo::ApplicationImpl* application_;
   bool is_headless_;
   scoped_ptr<PlatformViewport> platform_viewport_;
   OnscreenContextProvider context_provider_;

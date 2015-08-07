@@ -11,6 +11,8 @@
 #include "jni/PlatformViewportAndroid_jni.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
+#include "mojo/public/cpp/application/application_impl.h"
+#include "services/native_viewport/native_viewport_internal.mojom.h"
 #include "ui/events/event.h"
 #include "ui/events/keycodes/keyboard_code_conversion_android.h"
 #include "ui/gfx/point.h"
@@ -51,25 +53,37 @@ bool PlatformViewportAndroid::Register(JNIEnv* env) {
   return RegisterNativesImpl(env);
 }
 
-PlatformViewportAndroid::PlatformViewportAndroid(Delegate* delegate)
-    : delegate_(delegate),
+PlatformViewportAndroid::PlatformViewportAndroid(
+    mojo::ApplicationImpl* application,
+    Delegate* delegate)
+    : application_(application),
+      delegate_(delegate),
       window_(NULL),
       id_generator_(0),
-      weak_factory_(this) {
-}
+      weak_factory_(this) {}
 
 PlatformViewportAndroid::~PlatformViewportAndroid() {
   if (window_)
     ReleaseWindow();
+  JNIEnv* env = base::android::AttachCurrentThread();
   if (!java_platform_viewport_android_.is_empty()) {
-    JNIEnv* env = base::android::AttachCurrentThread();
     Java_PlatformViewportAndroid_detach(
         env, java_platform_viewport_android_.get(env).obj());
+  } else {
+    Java_PlatformViewportAndroid_withdrawRequest(
+        env, reinterpret_cast<intptr_t>(this));
   }
 }
 
 void PlatformViewportAndroid::Destroy(JNIEnv* env, jobject obj) {
   delegate_->OnDestroyed();
+}
+
+void PlatformViewportAndroid::SurfaceAttached(JNIEnv* env,
+                                              jobject obj,
+                                              jobject platform_viewport) {
+  java_platform_viewport_android_ =
+      JavaObjectWeakGlobalRef(env, platform_viewport);
 }
 
 void PlatformViewportAndroid::SurfaceCreated(JNIEnv* env,
@@ -148,10 +162,13 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
 
 void PlatformViewportAndroid::Init(const gfx::Rect& bounds) {
   JNIEnv* env = base::android::AttachCurrentThread();
-  java_platform_viewport_android_ = JavaObjectWeakGlobalRef(
-      env,
-      Java_PlatformViewportAndroid_create(env, reinterpret_cast<jlong>(this))
-          .obj());
+  Java_PlatformViewportAndroid_createRequest(env,
+                                             reinterpret_cast<intptr_t>(this));
+
+  NativeViewportShellServicePtr shell_service;
+  application_->ConnectToService("mojo:native_viewport_support",
+                                 &shell_service);
+  shell_service->CreateNewNativeWindow();
 }
 
 void PlatformViewportAndroid::Show() {
@@ -189,9 +206,12 @@ void PlatformViewportAndroid::ReleaseWindow() {
 // PlatformViewport, public:
 
 // static
-scoped_ptr<PlatformViewport> PlatformViewport::Create(Delegate* delegate) {
+scoped_ptr<PlatformViewport> PlatformViewport::Create(
+    mojo::ApplicationImpl* application_,
+    Delegate* delegate) {
   return scoped_ptr<PlatformViewport>(
-      new PlatformViewportAndroid(delegate)).Pass();
+             new PlatformViewportAndroid(application_, delegate))
+      .Pass();
 }
 
 }  // namespace native_viewport
