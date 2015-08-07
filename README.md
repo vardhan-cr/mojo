@@ -204,19 +204,49 @@ http://build.chromium.org/p/client.mojo/waterfall
 ## Run Mojo Shell
 
 Devtools `mojo_run` is a universal shell runner abstracting away the differences
-between running on Linux and Android. Having built Mojo as described above, a
-demo app can be run as follows:
+between running on Linux and Android.
+
+Having built Mojo as described above, a demo app can be run as follows:
 
 ```
-mojo/devtools/common/mojo_run mojo:spinning_cube  # Linux.
-mojo/devtools/common/mojo_run mojo:spinning_cube  --android # Android.
+mojo/devtools/common/mojo_run https://core.mojoapps.io/spinning_cube.mojo  # Linux
+mojo/devtools/common/mojo_run https://core.mojoapps.io/spinning_cube.mojo --android  # Android
 ```
 
-Passing the `-v` flag will increase the output verbosity. In particular, it will
-also print all arguments passed by `mojo_run` to the shell binary.
+### Development server
 
-For additional information refer to the built-in help and the
+Whenever `mojo_run` is run, a development server is set up according to [the
+config file](mojoconfig). The server runs on your machine, serving the locally
+built apps, but appears to the shell under the `https://core.mojoapps.io` host.
+
+You can ignore the config file and skip spawning the local server (for example,
+in order to use apps at the actual https://core.mojoapps.io web host) by passing
+`--no-config-file` to `mojo_run`.
+
+### More examples
+
+Some applications can be run directly from the source tree. The development
+server serves the `src` directory, allowing to refer to these apps. For
+instance, this command serves a dart Mojo app from the source at
+`examples/dart/device_info/main.dart`:
+
+```sh
+mojo_run https://core.mojoapps.io/examples/dart/device_info/main.dart [--android]
+```
+
+Some applications are meant to be run embedded in a **window manager**. To run
+these, pass their urls as arguments for `mojo:window_manager`, which is a
+special url that `mojo_run` maps to a real window manager (
+https://core.mojoapps.io/kiosk_wm.mojo) for you:
+
+```sh
+devtools/common/mojo_run "mojo:window_manager https://core.mojoapps.io/ganesh_app.mojo" [--android]
+```
+
+For additional information on `mojo_run` refer to the built-in help and the
 [documentation](https://github.com/domokit/devtools/blob/master/README.md#runner).
+You can also request more information on what the tool is doing for you by
+passing the `--verbose` flag.
 
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
@@ -256,5 +286,5 @@ link](http://go/mojo-internal-build-instructions).
 
 If you wish to, you can also run the Linux Mojo shell directly with no wrappers:
 ```
-./out/Debug/mojo_shell mojo:spinning_cube
+./out/Debug/mojo_shell out/Debug/spinning_cube.mojo
 ```
