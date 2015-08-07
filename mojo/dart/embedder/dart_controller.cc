@@ -606,10 +606,21 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
                            nullptr, nullptr, nullptr, nullptr,
                            entropy);
   CHECK(result);
+  initialized_ = true;
+}
+
+void DartController::BlockForServiceIsolate() {
+  base::AutoLock al(lock_);
+  BlockForServiceIsolateLocked();
+}
+
+void DartController::BlockForServiceIsolateLocked() {
+  if (service_isolate_running_) {
+    return;
+  }
   // By waiting for the load port, we ensure that the service isolate is fully
   // running before returning.
   Dart_ServiceWaitForLoadPort();
-  initialized_ = true;
   service_isolate_running_ = true;
 }
 
@@ -700,6 +711,7 @@ bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   InitVmIfNeeded(config.entropy,
                  config.vm_flags,
                  config.vm_flags_count);
+  BlockForServiceIsolate();
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
                                              config.strict_compilation,
                                              config.callbacks,
@@ -735,6 +747,7 @@ bool DartController::Initialize(
 }
 
 bool DartController::RunDartScript(const DartControllerConfig& config) {
+  BlockForServiceIsolate();
   CHECK(service_isolate_running_);
   const bool strict = strict_compilation_ || config.strict_compilation;
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
@@ -762,6 +775,7 @@ void DartController::Shutdown() {
   if (!initialized_) {
     return;
   }
+  BlockForServiceIsolateLocked();
   StopHandleWatcherIsolate();
   Dart_Cleanup();
   service_isolate_running_ = false;
