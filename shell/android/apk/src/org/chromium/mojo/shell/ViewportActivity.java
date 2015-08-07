@@ -17,9 +17,6 @@ import org.chromium.mojo.PlatformViewportAndroid;
  * Activity for displaying on the screen from the NativeViewportService.
  */
 public class ViewportActivity extends Activity {
-    private static final String TAG = "ViewportActivity";
-    private PlatformViewportAndroid mPlatformViewport;
-
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
