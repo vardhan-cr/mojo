@@ -24,8 +24,6 @@ import java.util.ArrayDeque;
  * Activity for receiving nfc messages.
  */
 public class NfcReceiverActivity extends Activity implements ShellService.IShellBindingActivity {
-    private static final String TAG = "NfcReceiverActivity";
-
     private ArrayDeque<Intent> mPendingIntents = new ArrayDeque<Intent>();
     private ShellService mShellService;
     private ServiceConnection mShellServiceConnection;

@@ -20,7 +20,6 @@ import java.util.ArrayDeque;
  * Activity for managing the Mojo Shell.
  */
 public class MojoShellActivity extends Activity implements ShellService.IShellBindingActivity {
-    private static final String TAG = "MojoShellActivity";
     private ArrayDeque<Intent> mPendingIntents = new ArrayDeque<Intent>();
     private ShellService mShellService;
     private ServiceConnection mShellServiceConnection;

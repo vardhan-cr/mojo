@@ -134,11 +134,13 @@ public class ShellService extends Service {
             this.mActivity = activity;
         }
 
+        @Override
         public void onServiceConnected(ComponentName className, IBinder binder) {
             ShellService.ShellBinder shellBinder = (ShellService.ShellBinder) binder;
             this.mActivity.onShellBound(shellBinder.getService());
         }
 
+        @Override
         public void onServiceDisconnected(ComponentName className) {
             this.mActivity.onShellUnbound();
         }
