@@ -74,6 +74,7 @@ def _get_handler_class_for_path(mappings):
     def __init__(self, *args, **kwargs):
       self.etag = None
       self.gzipped_file = None
+      self.original_file_name = None
       SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def get_etag(self):
@@ -153,6 +154,7 @@ def _get_handler_class_for_path(mappings):
               if gzipped:
                 if not self.gzipped_file:
                   self.gzipped_file = tempfile.NamedTemporaryFile(delete=False)
+                  self.original_file_name = candidate
                   with open(candidate, 'rb') as source:
                     with gzip.GzipFile(fileobj=self.gzipped_file) as target:
                       shutil.copyfileobj(source, target)
@@ -170,9 +172,12 @@ def _get_handler_class_for_path(mappings):
       # thanks to content-type mappings.
       # TODO(ppi): drop this part once we can rely on the Sky files declaring
       # correct shebang.
-      if path.endswith('.dart') or path.endswith('.dart.gz'):
+      actual_path = self.original_file_name or path
+
+      if actual_path.endswith('.dart'):
         return 'application/dart'
-      return SimpleHTTPServer.SimpleHTTPRequestHandler.guess_type(self, path)
+      return SimpleHTTPServer.SimpleHTTPRequestHandler.guess_type(self,
+                                                                  actual_path)
 
     def log_message(self, *_):
       """Override the base class method to disable logging."""

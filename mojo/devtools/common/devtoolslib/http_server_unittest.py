@@ -33,6 +33,8 @@ class HttpServerTest(unittest.TestCase):
             hello_file
         other_dir
           other_file
+        apps
+          app.dart
     """
     self.parent_dir = tempfile.mkdtemp()
     self.parent_file = tempfile.NamedTemporaryFile(delete=False,
@@ -47,6 +49,11 @@ class HttpServerTest(unittest.TestCase):
     self.other_dir = tempfile.mkdtemp(dir=self.parent_dir)
     self.other_file = tempfile.NamedTemporaryFile(delete=False,
                                                   dir=self.other_dir)
+    self.other_file.close()
+
+    self.apps_dir = tempfile.mkdtemp(dir=self.parent_dir)
+    self.dart_app_path = os.path.join(self.apps_dir, 'app.dart')
+    open(self.dart_app_path, 'w').close()
 
   def tearDown(self):
     shutil.rmtree(self.parent_dir)
@@ -134,6 +141,23 @@ class HttpServerTest(unittest.TestCase):
     content = gzip.GzipFile(
         fileobj=StringIO.StringIO(hello_response.read())).read()
     self.assertEquals('hello', content)
+
+  def test_dart_mime_type(self):
+    """Verifies that files of '.dart' extension are served with MIME type
+    'application/dart'.
+    """
+    mappings = [
+        ('', [self.apps_dir]),
+    ]
+    server_address = ('http://%s:%u/' %
+                      http_server.start_http_server(mappings))
+
+    app_relpath = os.path.relpath(self.dart_app_path, self.apps_dir)
+    hello_response = urllib2.urlopen(server_address + app_relpath)
+    self.assertEquals(200, hello_response.getcode())
+    self.assertTrue('Content-Type' in hello_response.info())
+    self.assertEquals('application/dart',
+                      hello_response.info().get('Content-Type'))
 
 
 if __name__ == "__main__":
