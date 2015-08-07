@@ -13,7 +13,6 @@
 #include "mojo/application/content_handler_factory.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/dart/embedder/dart_controller.h"
-#include "mojo/icu/icu.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
@@ -96,7 +95,6 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
     // application.
     TRACE_EVENT0("dart_content_handler", "DartContentHandler::Initialize");
 
-    mojo::icu::Initialize(app);
     content_handler_.set_handler_task_runner(
         base::MessageLoop::current()->task_runner());
     strict_content_handler_.set_handler_task_runner(

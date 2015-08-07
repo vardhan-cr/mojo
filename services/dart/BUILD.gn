@@ -43,7 +43,6 @@ mojo_native_application("dart_content_handler") {
     "//mojo/common",
     "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
-    "//mojo/icu",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",
