@@ -1,0 +1,47 @@
+# This is a configuration file one can use to run Sky apps from a local Sky
+# checkout using a locally built Mojo shell. As Sky is a layer on top of Mojo,
+# this file does not really belong in the Mojo repo and could hopefully move to
+# sky_engine.
+
+# To use this you need to check out sky_engine
+# (https://github.com/domokit/sky_engine ) and build for Android.
+
+# Then, run the lengthy command-line:
+#
+#  mojo/devtools/common/mojo_run \
+#    --android \
+#    --config-file mojo/tools/configs/sky \
+#    --config-alias SKY_SRC=/path_to_your_checkout/sky_engine/src \
+#    "mojo:window_manager https://sky/examples/hello_world/lib/main.dart"
+
+# The sky apps are served from the Sky checkout, so all of
+# sky/packages/sky/example is available under https://sky/examples .
+
+{
+  'dev_servers': [
+    {
+      'host': 'https://sky/',
+      'mappings': [
+        ('packages/', [
+          '@{SKY_SRC}/sky/packages/workbench/packages'
+        ]),
+        ('examples/', [
+          '@{SKY_SRC}/sky/packages/sky/example'
+        ]),
+        ('', [
+          '@{SKY_SRC}/out/android_Debug',
+        ]),
+      ],
+    },
+    {
+      'host': 'https://core.mojoapps.io/',
+      'mappings': [
+        ('', ['@{BUILD_DIR}']),
+      ],
+    },
+  ],
+
+  'content_handlers': {
+    'application/dart': 'https://sky/sky_viewer.mojo',
+  }
+}

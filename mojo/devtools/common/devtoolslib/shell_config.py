@@ -29,7 +29,7 @@ class ShellConfig(object):
     self.map_url_list = []
     self.map_origin_list = []
     self.dev_servers = []
-    self.sky = None
+    self.content_handlers = dict()
     self.verbose = None
 
     # Android-only.
@@ -66,9 +66,6 @@ def add_shell_arguments(parser):
   parser.add_argument('--map-origin', action='append',
                       help='Define a mapping for a url origin in the format '
                       '<origin>=<url-or-local-file-path>')
-  parser.add_argument('--sky', action='store_true',
-                      help='Maps mojo:sky_viewer as the content handler for '
-                           'dart apps.')
   parser.add_argument('-v', '--verbose', action="store_true",
                       help="Increase output verbosity")
 
@@ -90,6 +87,11 @@ def add_shell_arguments(parser):
       'file.')
   config_file_group.add_argument('--config-file', type=file,
                                  help='Path of the configuration file to use.')
+  config_file_group.add_argument('--config-alias', action='append',
+                                 dest='config_aliases',
+                                 help='Alias to substitute in the config file '
+                                 'of the form ALIAS=<value>. Can be passed '
+                                 'more than once.')
   config_file_group.add_argument('--no-config-file', action='store_true',
                                  help='Pass to skip automatic discovery of the '
                                  'mojoconfig file.')
@@ -145,7 +147,6 @@ def get_shell_config(script_args):
   shell_config.origin = script_args.origin
   shell_config.map_url_list = script_args.map_url
   shell_config.map_origin_list = script_args.map_origin
-  shell_config.sky = script_args.sky
   shell_config.verbose = script_args.verbose
 
   # Android-only.
@@ -168,6 +169,11 @@ def get_shell_config(script_args):
   if config_file:
     with config_file:
       config_file_aliases = []
+      if script_args.config_aliases:
+        for alias_spec in script_args.config_aliases:
+          alias_from, alias_to = alias_spec.split('=')
+          config_file_aliases.append(('@{%s}' % alias_from, alias_to))
+
       if inferred_paths['build_dir_path']:
         config_file_aliases.append(('@{BUILD_DIR}',
                                     inferred_paths['build_dir_path']))
@@ -192,5 +198,14 @@ def get_shell_config(script_args):
           shell_config.dev_servers.append(dev_server_config)
       except (ValueError, KeyError):
         raise ShellConfigurationException('Failed to parse dev_servers in '
-                                          'the mojoconfig file.')
+                                          'the config file.')
+
+    if 'content_handlers' in config:
+      try:
+        for (mime_type,
+             content_handler_url) in config['content_handlers'].iteritems():
+          shell_config.content_handlers[mime_type] = content_handler_url
+      except (ValueError, KeyError):
+        raise ShellConfigurationException('Failed to parse content_handlers in '
+                                          'the config file.')
   return shell_config

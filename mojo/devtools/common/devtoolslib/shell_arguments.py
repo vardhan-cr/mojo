@@ -102,27 +102,6 @@ def _apply_mappings(shell, original_arguments, map_urls, map_origins):
   return args
 
 
-def _configure_sky(shell_args):
-  """Maps mojo:sky_viewer as a content handler for dart applications.
-  app.
-
-  Args:
-    shell_args: Current list of shell arguments.
-
-  Returns:
-    Updated list of shell arguments.
-  """
-  # Configure the content type mappings for the sky_viewer. This is needed
-  # only for the Sky apps that do not declare mojo:sky_viewer in a shebang.
-  # TODO(ppi): drop this part once we can rely on the Sky files declaring
-  # correct shebang.
-  shell_args = append_to_argument(shell_args, '--content-handlers=',
-                                            'text/sky,mojo:sky_viewer')
-  shell_args = append_to_argument(shell_args, '--content-handlers=',
-                                            'application/dart,mojo:sky_viewer')
-  return shell_args
-
-
 def configure_local_origin(shell, local_dir, fixed_port=True):
   """Sets up a local http server to serve files in |local_dir| along with
   device port forwarding if needed.
@@ -234,8 +213,12 @@ def get_shell(shell_config, shell_args):
       shell_args.extend(configure_local_origin(shell, shell_config.origin,
                                                fixed_port=True))
 
-  if shell_config.sky:
-    shell_args = _configure_sky(shell_args)
+  if shell_config.content_handlers:
+    for (mime_type,
+         content_handler_url) in shell_config.content_handlers.iteritems():
+      shell_args = append_to_argument(shell_args, '--content-handlers=',
+                                      '%s,%s' % (mime_type,
+                                                 content_handler_url))
 
   for dev_server_config in shell_config.dev_servers:
     shell_args = _configure_dev_server(shell, shell_args, dev_server_config)

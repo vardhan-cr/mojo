@@ -50,27 +50,6 @@ mojo_run "mojo:window_manager APP_URL"
 By default, `mojo_run` uses `mojo:kiosk_wm` as the default window manager. It
 can be changed using the `--window-manager` flag.
 
-#### Sky apps
-
-To run a [Sky](https://github.com/domokit/sky_engine) app, you need to build
-`sky_viewer.mojo` in a Sky checkout, and indicate the path to the binary using
-the `--map-url` parameter:
-
-```sh
-mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer "mojo:window_manager APP_URL"
-```
-
-If the app does not declare a shebang indicating that it needs to be run in
-`sky_viewer`, pass `--sky` to map `sky_viewer` as a default content handler for
-dart apps:
-
-```sh
-mojo_run --map-url mojo:sky_viewer=/path/to/sky/viewer "mojo:window_manager APP_URL" --sky
-```
-
-Note that Sky apps will need the --use-osmesa flag to run
-over [chromoting](https://support.google.com/chrome/answer/1649523?hl=en):
-
 ### Debugger
 
 `mojo_debug` allows you to interactively inspect a running shell, collect
