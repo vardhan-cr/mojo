@@ -39,16 +39,17 @@ binary:
 mojo_run --shell-path path/to/shell/binary APP_URL
 ```
 
-Some applications are running embedded inside a window manager. To start such an
-app, you have to first start the window manager app, then have it embed the app
-you are interested in. It is done as follows using the default window manager:
+Some applications are meant to be run embedded in a **window manager**. To run
+these, you can pass the app url using the `--embed` flag. This will run the
+window manager and pass the given url to it:
 
 ```sh
-mojo_run "mojo:window_manager APP_URL"
+mojo_run --embed APP_URL [--android]
 ```
 
-By default, `mojo_run` uses `mojo:kiosk_wm` as the default window manager. It
-can be changed using the `--window-manager` flag.
+By default, `mojo_run` uses https://core.mojoapps.io/kiosk_wm.mojo as the window
+manager. You can pass a different window manager url using the
+`--window-manager` flag to override this.
 
 ### Debugger
 

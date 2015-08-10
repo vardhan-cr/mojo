@@ -36,7 +36,10 @@ Any arguments not recognized by the script will be passed on as shell arguments.
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
 _MOJO_DEBUGGER_PORT = 7777
-_DEFAULT_WINDOW_MANAGER = "mojo:kiosk_wm"
+_DEFAULT_WM = 'https://core.mojoapps.io/kiosk_wm.mojo'
+
+_LEGACY_WM_URL = 'mojo:window_manager'
+_WM_URL = 'https://core.mojoapps.io/window_manager.mojo'
 
 
 def _configure_debugger(shell):
@@ -57,12 +60,14 @@ def main():
   parser = argparse.ArgumentParser(usage=_USAGE, description=_DESCRIPTION)
   shell_config.add_shell_arguments(parser)
 
-  parser.add_argument('--no-debugger', action="store_true",
-                      help='Do not spawn mojo:debugger.')
-  parser.add_argument('--window-manager', default=_DEFAULT_WINDOW_MANAGER,
+  parser.add_argument('--embed', type=str,
+                      help='Url to be embedded in the window manager.')
+  parser.add_argument('--window-manager', default=_DEFAULT_WM,
                       help='Window manager app to be mapped as '
                       'mojo:window_manager. By default it is ' +
-                      _DEFAULT_WINDOW_MANAGER)
+                      _DEFAULT_WM)
+  parser.add_argument('--no-debugger', action="store_true",
+                      help='Do not spawn mojo:debugger.')
 
   script_args, shell_args = parser.parse_known_args()
 
@@ -73,16 +78,22 @@ def main():
     print e
     return 1
 
+  shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
+                                                  '%s=%s' % (_LEGACY_WM_URL,
+                                                  script_args.window_manager))
+  shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
+                                                  '%s=%s' % (_WM_URL,
+                                                  script_args.window_manager))
+
+  if script_args.embed:
+    shell_args.append('%s %s' % (script_args.window_manager, script_args.embed))
+
   if not script_args.no_debugger:
     if script_args.verbose:
       print 'Spawning mojo:debugger, use `mojo_debug` to inspect the shell.'
       print 'Note that mojo:debugger will prevent the shell from terminating,'
       print '  pass --no-debugger to skip spawning mojo:debugger.'
     shell_args.extend(_configure_debugger(shell))
-
-  shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
-                                                  'mojo:window_manager=%s' %
-                                                  script_args.window_manager)
 
   if script_args.verbose:
     print "Shell arguments: " + str(shell_args)

@@ -235,13 +235,16 @@ mojo_run https://core.mojoapps.io/examples/dart/device_info/main.dart [--android
 ```
 
 Some applications are meant to be run embedded in a **window manager**. To run
-these, pass their urls as arguments for `mojo:window_manager`, which is a
-special url that `mojo_run` maps to a real window manager (
-https://core.mojoapps.io/kiosk_wm.mojo) for you:
+these, you can pass the app url using the `--embed` flag. This will run the
+window manager and pass the given url to it:
 
 ```sh
-devtools/common/mojo_run "mojo:window_manager https://core.mojoapps.io/ganesh_app.mojo" [--android]
+devtools/common/mojo_run --embed https://core.mojoapps.io/ganesh_app.mojo [--android]
 ```
+
+By default, `mojo_run` uses https://core.mojoapps.io/kiosk_wm.mojo as the window
+manager. You can pass a different window manager url using the
+`--window-manager` flag to override this.
 
 For additional information on `mojo_run` refer to the built-in help and the
 [documentation](https://github.com/domokit/devtools/blob/master/README.md#runner).
