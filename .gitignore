@@ -80,14 +80,16 @@ v8.log
 /v8/
 
 # dart packages directories and related.
-/mojo/dart/apptest/packages
+/mojo/common/dart/.packages
+/mojo/common/dart/packages
 /mojo/dart/apptest/.packages
-/mojo/dart/mojo_services/packages
+/mojo/dart/apptest/packages
 /mojo/dart/mojo_services/.packages
+/mojo/dart/mojo_services/packages
 /mojo/dart/mojo_services/pubspec.lock
+/mojo/dart/mojom/.packages
 /mojo/dart/mojom/bin/packages
 /mojo/dart/mojom/packages
-/mojo/dart/mojom/.packages
 /mojo/dart/mojom/test/packages
 /mojo/dart/observatory_test/.packages
 /mojo/dart/testing/.packages
