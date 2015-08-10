@@ -492,6 +492,55 @@ TEST_F(IPCSupportTest, ConnectTwoSlaves) {
   ShutdownMasterIPCSupport();
 }
 
+// Like |ConnectTwoSlaves|, but does it twice, to test reusing a connection.
+TEST_F(IPCSupportTest, ConnectTwoSlavesTwice) {
+  scoped_ptr<TestSlaveSetup> s1(SetupSlave());
+  scoped_ptr<TestSlaveSetup> s2(SetupSlave());
+  s1->TestConnection();
+  s2->TestConnection();
+
+  MessagePipeDispatcherPair send_mp1 = CreateMessagePipe();
+  scoped_refptr<MessagePipeDispatcher> slave1_received_mp1 =
+      SendMessagePipeDispatcher(s1->master_mp(), s1->slave_mp(),
+                                send_mp1.first);
+  scoped_refptr<MessagePipeDispatcher> slave2_received_mp1 =
+      SendMessagePipeDispatcher(s2->master_mp(), s2->slave_mp(),
+                                send_mp1.second);
+
+  MessagePipeDispatcherPair send_mp2 = CreateMessagePipe();
+  scoped_refptr<MessagePipeDispatcher> slave1_received_mp2 =
+      SendMessagePipeDispatcher(s1->master_mp(), s1->slave_mp(),
+                                send_mp2.first);
+  scoped_refptr<MessagePipeDispatcher> slave2_received_mp2 =
+      SendMessagePipeDispatcher(s2->master_mp(), s2->slave_mp(),
+                                send_mp2.second);
+
+  s1->PassMasterMessagePipe()->Close();
+  s2->PassMasterMessagePipe()->Close();
+  s1->PassSlaveMessagePipe()->Close();
+  s2->PassSlaveMessagePipe()->Close();
+
+  TestWriteReadMessage(slave1_received_mp1, slave2_received_mp1);
+  TestWriteReadMessage(slave2_received_mp1, slave1_received_mp1);
+
+  TestWriteReadMessage(slave1_received_mp2, slave2_received_mp2);
+  TestWriteReadMessage(slave2_received_mp2, slave1_received_mp2);
+
+  slave1_received_mp1->Close();
+  slave2_received_mp1->Close();
+
+  TestWriteReadMessage(slave1_received_mp2, slave2_received_mp2);
+  TestWriteReadMessage(slave2_received_mp2, slave1_received_mp2);
+
+  slave1_received_mp2->Close();
+  slave2_received_mp2->Close();
+
+  s1->Shutdown();
+  s2->Shutdown();
+
+  ShutdownMasterIPCSupport();
+}
+
 // Creates a message pipe in the slave, which sends both ends (in separate
 // messages) to the master.
 TEST_F(IPCSupportTest, SlavePassBackToMaster) {
