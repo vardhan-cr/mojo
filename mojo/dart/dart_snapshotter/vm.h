@@ -41,6 +41,5 @@ class SnapshotterDartState : public tonic::DartState {
 
 void InitDartVM();
 Dart_Isolate CreateDartIsolate();
-void LoadScript(const std::string& url);
 
 #endif  // MOJO_DART_DART_SNAPSHOTTER_VM_H_

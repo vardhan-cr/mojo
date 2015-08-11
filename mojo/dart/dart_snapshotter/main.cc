@@ -12,10 +12,15 @@
 #include "base/logging.h"
 #include "base/process/memory.h"
 #include "dart/runtime/include/dart_api.h"
-#include "mojo/dart/dart_snapshotter/loader.h"
 #include "mojo/dart/dart_snapshotter/vm.h"
+#include "mojo/edk/embedder/embedder.h"
+#include "mojo/edk/embedder/simple_platform_support.h"
 #include "tonic/dart_error.h"
 #include "tonic/dart_isolate_scope.h"
+#include "tonic/dart_library_loader.h"
+#include "tonic/dart_library_provider_files.h"
+#include "tonic/dart_script_loader_sync.h"
+#include "tonic/dart_state.h"
 
 const char kHelp[] = "help";
 const char kPackageRoot[] = "package-root";
@@ -49,10 +54,16 @@ int main(int argc, const char* argv[]) {
     return 0;
   }
 
+  // Initialize mojo.
+  mojo::embedder::Init(
+      make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
+
   InitDartVM();
 
   CHECK(command_line.HasSwitch(kPackageRoot)) << "Need --package-root";
-  InitLoader(command_line.GetSwitchValuePath(kPackageRoot));
+  CHECK(command_line.HasSwitch(kSnapshot)) << "Need --snapshot";
+  auto args = command_line.GetArgs();
+  CHECK(args.size() == 1);
 
   Dart_Isolate isolate = CreateDartIsolate();
   CHECK(isolate);
@@ -60,13 +71,23 @@ int main(int argc, const char* argv[]) {
   tonic::DartIsolateScope scope(isolate);
   tonic::DartApiScope api_scope;
 
-  auto args = command_line.GetArgs();
-  CHECK(args.size() == 1);
-  LoadScript(args[0]);
+  auto isolate_data = SnapshotterDartState::Current();
+  CHECK(isolate_data != nullptr);
 
-  CHECK(!tonic::LogIfError(Dart_FinalizeLoading(true)));
+  // Use tonic's library tag handler.
+  CHECK(!tonic::LogIfError(Dart_SetLibraryTagHandler(
+            tonic::DartLibraryLoader::HandleLibraryTag)));
 
-  CHECK(command_line.HasSwitch(kSnapshot)) << "Need --snapshot";
+  // Use tonic's file system library provider.
+  isolate_data->set_library_provider(
+      new tonic::DartLibraryProviderFiles(
+          command_line.GetSwitchValuePath(kPackageRoot)));
+
+  // Load script.
+  tonic::DartScriptLoaderSync::LoadScript(args[0],
+                                          isolate_data->library_provider());
+
+  // Write snapshot.
   WriteSnapshot(command_line.GetSwitchValuePath(kSnapshot));
 
   return 0;

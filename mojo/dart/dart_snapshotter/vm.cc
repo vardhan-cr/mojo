@@ -5,7 +5,6 @@
 #include "mojo/dart/dart_snapshotter/vm.h"
 
 #include "base/logging.h"
-#include "mojo/dart/dart_snapshotter/loader.h"
 #include "tonic/dart_error.h"
 #include "tonic/dart_state.h"
 
@@ -30,13 +29,16 @@ void InitDartVM() {
 Dart_Isolate CreateDartIsolate() {
   CHECK(mojo::dart::isolate_snapshot_buffer);
   char* error = nullptr;
-  Dart_Isolate isolate = Dart_CreateIsolate("dart:snapshot", "main",
+  auto isolate_data = new SnapshotterDartState();
+  CHECK(isolate_data != nullptr);
+  Dart_Isolate isolate = Dart_CreateIsolate("dart:snapshot",
+                                            "main",
                                             mojo::dart::isolate_snapshot_buffer,
-                                            nullptr, nullptr, &error);
-
+                                            nullptr,
+                                            isolate_data,
+                                            &error);
   CHECK(isolate) << error;
-  CHECK(!tonic::LogIfError(Dart_SetLibraryTagHandler(HandleLibraryTag)));
-
   Dart_ExitIsolate();
+  isolate_data->SetIsolate(isolate);
   return isolate;
 }

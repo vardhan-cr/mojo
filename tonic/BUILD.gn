@@ -41,6 +41,8 @@ source_set("tonic") {
     "dart_library_provider_network.h",
     "dart_persistent_value.cc",
     "dart_persistent_value.h",
+    "dart_script_loader_sync.cc",
+    "dart_script_loader_sync.h",
     "dart_snapshot_loader.cc",
     "dart_snapshot_loader.h",
     "dart_state.cc",
@@ -60,6 +62,7 @@ source_set("tonic") {
     "//build/config/sanitizers:deps",
     "//mojo/common",
     "//mojo/public/cpp/system",
+    "//mojo/services/network/public/interfaces",
   ]
 
   public_deps = [

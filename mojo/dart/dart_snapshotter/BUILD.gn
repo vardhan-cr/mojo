@@ -4,8 +4,6 @@
 
 executable("dart_snapshotter") {
   sources = [
-    "loader.cc",
-    "loader.h",
     "main.cc",
     "vm.cc",
     "vm.h",
