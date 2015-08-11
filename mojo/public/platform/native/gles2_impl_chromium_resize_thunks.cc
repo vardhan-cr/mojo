@@ -12,7 +12,7 @@ extern "C" {
 static MojoGLES2ImplChromiumResizeThunks g_impl_chromium_resize_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
-  ReturnType gl##Function PARAMETERS {                             \
+  ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
     assert(g_impl_chromium_resize_thunks.Function);                \
     return g_impl_chromium_resize_thunks.Function ARGUMENTS;       \
   }
