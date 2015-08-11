@@ -130,27 +130,6 @@ def GetTestList(config, verbose_count=0):
                            "run_mojo_python_bindings_tests.py"),
               "--build-dir=" + build_dir])
 
-  # Sky tests (Linux-only):
-  # TODO(abarth): Re-enabled in ASAN once the DartVM works in ASAN.
-  # See https://code.google.com/p/dart/issues/detail?id=22122
-  if (target_os == Config.OS_LINUX and
-      ShouldRunTest(Config.TEST_TYPE_DEFAULT, "sky") and
-      config.sanitizer != Config.SANITIZER_ASAN):
-    sky_command = ["python",
-                   "sky/tools/test_sky",
-                   "-t", os.path.basename(build_dir),
-                   "--no-new-test-results", "--no-show-results", "--verbose"]
-    if config.values.get("builder_name"):
-      sky_command += ["--builder-name", config.values["builder_name"]]
-    if config.values.get("build_number"):
-      sky_command += ["--build-number", config.values["build_number"]]
-    if config.values.get("master_name"):
-      sky_command += ["--master-name", config.values["master_name"]]
-    if config.values.get("test_results_server"):
-      sky_command += ["--test-results-server",
-                      config.values["test_results_server"]]
-    AddXvfbEntry("Sky tests", sky_command)
-
   # Observatory tests (Linux-only):
   if target_os == Config.OS_LINUX:
     AddEntry("Dart Observatory tests",
