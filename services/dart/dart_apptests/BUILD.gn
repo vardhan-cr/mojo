@@ -4,19 +4,19 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("dart_apptests") {
+dartzip_packaged_application("dart_apptests_dartzip") {
   sources = [
-    "connect_to_loader_apptests.dart",
-    "echo_apptests.dart",
-    "io_http_apptests.dart",
-    "io_internet_address_apptests.dart",
-    "main.dart",
-    "pingpong_apptests.dart",
+    "lib/main.dart",
+    "lib/src/connect_to_loader_apptests.dart",
+    "lib/src/echo_apptests.dart",
+    "lib/src/io_http_apptests.dart",
+    "lib/src/io_internet_address_apptests.dart",
+    "lib/src/pingpong_apptests.dart",
+    "lib/src/versioning_apptests.dart",
     "pubspec.yaml",
-    "versioning_apptests.dart",
   ]
   deps = [
-    "//mojo/dart/apptest",
+    "//mojo/dart/apptest:mojo_dart_apptest_dartzip",
     "//mojo/public/interfaces/bindings/tests:versioning_test_client_interfaces",
     "//mojo/public/interfaces/bindings/tests:versioning_test_service_interfaces",
     "//mojo/services/url_response_disk_cache/public/interfaces",
@@ -27,5 +27,36 @@ dartzip_packaged_application("dart_apptests") {
     "//services/dart/test/echo",
     "//services/dart/test/pingpong",
     "//services/dart/test/pingpong_target",
+  ]
+}
+
+dart_pkg("dart_apptests_pkg") {
+  entrypoints = [ "lib/main.dart" ]
+  sources = [
+    "lib/src/connect_to_loader_apptests.dart",
+    "lib/src/echo_apptests.dart",
+    "lib/src/io_http_apptests.dart",
+    "lib/src/io_internet_address_apptests.dart",
+    "lib/src/pingpong_apptests.dart",
+    "lib/src/versioning_apptests.dart",
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/dart/apptest",
+    "//mojo/public/interfaces/bindings/tests:versioning_test_client_interfaces",
+    "//mojo/public/interfaces/bindings/tests:versioning_test_service_interfaces",
+    "//mojo/services/url_response_disk_cache/public/interfaces",
+    "//services/dart/test:echo_service_interface",
+    "//services/dart/test:pingpong_service_interface",
+    "//services/dart/test/echo",
+    "//services/dart/test/pingpong",
+    "//services/dart/test/pingpong_target",
+  ]
+}
+
+group("dart_apptests") {
+  deps = [
+    ":dart_apptests_dartzip",
+    ":dart_apptests_pkg",
   ]
 }

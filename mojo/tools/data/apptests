@@ -115,7 +115,7 @@ if target_os != 'android':
       "test": "mojo:reaper_apptests",
     },
     {
-      "test": "mojo:dart_apptests",
+      "test": "mojo:dart_apptests_dartzip",
       "type": "dart",
     },
     {

@@ -4,14 +4,33 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_package("dart") {
+dartzip_package("dart_dartzip") {
   sources = [
     "lib/trace_controller_impl.dart",
     "lib/tracing_helper.dart",
     "pubspec.yaml",
   ]
   deps = [
-    "//mojo/public/dart",
+    "//mojo/public/dart:dart_dartzip",
     "//mojo/services/tracing/public/interfaces",
+  ]
+}
+
+dart_pkg("dart_pkg") {
+  entrypoints = [ "lib/tracing_helper.dart" ]
+  sources = [
+    "lib/trace_controller_impl.dart",
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/public/dart",
+    "//mojo/dart/mojo_services",
+  ]
+}
+
+group("dart") {
+  deps = [
+    ":dart_dartzip",
+    ":dart_pkg",
   ]
 }

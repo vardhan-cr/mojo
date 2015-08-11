@@ -10,14 +10,14 @@ import 'dart:typed_data';
 import 'package:mojo/application.dart';
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
-import 'package:mojom/mojo/files/file.mojom.dart' as files;
-import 'package:mojom/mojo/files/types.mojom.dart' as files;
-import 'package:mojom/mojo/net_address.mojom.dart';
-import 'package:mojom/mojo/network_error.mojom.dart';
-import 'package:mojom/mojo/network_service.mojom.dart';
-import 'package:mojom/mojo/tcp_bound_socket.mojom.dart';
-import 'package:mojom/mojo/tcp_connected_socket.mojom.dart';
-import 'package:mojom/mojo/terminal/terminal_client.mojom.dart';
+import 'package:mojo/mojo/network_error.mojom.dart';
+import 'package:mojo_services/mojo/files/file.mojom.dart' as files;
+import 'package:mojo_services/mojo/files/types.mojom.dart' as files;
+import 'package:mojo_services/mojo/net_address.mojom.dart';
+import 'package:mojo_services/mojo/network_service.mojom.dart';
+import 'package:mojo_services/mojo/tcp_bound_socket.mojom.dart';
+import 'package:mojo_services/mojo/tcp_connected_socket.mojom.dart';
+import 'package:mojo_services/mojo/terminal/terminal_client.mojom.dart';
 
 void ignoreFuture(Future f) {
   f.catchError((e) {});

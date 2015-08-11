@@ -6,12 +6,12 @@ import 'dart:async';
 import 'package:apptest/apptest.dart';
 import 'package:mojom/dart/test/echo_service.mojom.dart';
 
-import 'connect_to_loader_apptests.dart' as connect_to_loader_apptests;
-import 'echo_apptests.dart' as echo;
-import 'pingpong_apptests.dart' as pingpong;
-import 'io_http_apptests.dart' as io_http;
-import 'io_internet_address_apptests.dart' as io_internet_address;
-import 'versioning_apptests.dart' as versioning;
+import 'src/connect_to_loader_apptests.dart' as connect_to_loader_apptests;
+import 'src/echo_apptests.dart' as echo;
+import 'src/pingpong_apptests.dart' as pingpong;
+import 'src/io_http_apptests.dart' as io_http;
+import 'src/io_internet_address_apptests.dart' as io_internet_address;
+import 'src/versioning_apptests.dart' as versioning;
 
 main(List args) {
   final tests = [

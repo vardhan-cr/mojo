@@ -37,7 +37,8 @@ pingpongApptests(Application application, String url) {
     // and sends responses to our client.
     test('Ping Service To Pong Client', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
-      application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
+      application.connectToService(
+          "mojo:mojo_dart_pingpong_dartzip", pingPongServiceProxy);
 
       var pingPongClient = new _TestingPingPongClient.unbound();
       pingPongServiceProxy.ptr.setClient(pingPongClient.stub);
@@ -59,10 +60,11 @@ pingpongApptests(Application application, String url) {
     // target.ping() => client.pong() methods have executed 9 times.
     test('Ping Target URL', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
-      application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
+      application.connectToService(
+          "mojo:mojo_dart_pingpong_dartzip", pingPongServiceProxy);
 
       var r = await pingPongServiceProxy.ptr.pingTargetUrl(
-          "mojo:dart_pingpong_target", 9);
+          "mojo:mojo_dart_pingpong_target_dartzip", 9);
       expect(r.ok, equals(true));
 
       await pingPongServiceProxy.close();
@@ -72,11 +74,12 @@ pingpongApptests(Application application, String url) {
     // pingpong_target.dart URL, we provide a connection to its PingPongService.
     test('Ping Target Service', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
-      application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
+      application.connectToService(
+          "mojo:mojo_dart_pingpong_dartzip", pingPongServiceProxy);
 
       var targetServiceProxy = new PingPongServiceProxy.unbound();
-      application
-          .connectToService("mojo:dart_pingpong_target", targetServiceProxy);
+      application.connectToService(
+          "mojo:mojo_dart_pingpong_target_dartzip", targetServiceProxy);
 
       var r = await pingPongServiceProxy.ptr.pingTargetService(
           targetServiceProxy.impl, 9);
@@ -91,7 +94,8 @@ pingpongApptests(Application application, String url) {
     // Verify that Dart can implement an interface "request" parameter.
     test('Get Target Service', () async {
       var pingPongServiceProxy = new PingPongServiceProxy.unbound();
-      application.connectToService("mojo:dart_pingpong", pingPongServiceProxy);
+      application.connectToService(
+          "mojo:mojo_dart_pingpong_dartzip", pingPongServiceProxy);
 
       var targetServiceProxy = new PingPongServiceProxy.unbound();
       pingPongServiceProxy.ptr.getPingPongService(targetServiceProxy);

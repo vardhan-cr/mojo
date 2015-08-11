@@ -26,7 +26,7 @@ _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
 _PACKAGE_IGNORED_BUILD_FILES = {
     "SDK": {},
     "EDK": {},
-    "services": {"mojo/services/BUILD.gn"},
+    "services": {"mojo/services/BUILD.gn", "mojo/services/mojo_services.gni"},
 }
 
 

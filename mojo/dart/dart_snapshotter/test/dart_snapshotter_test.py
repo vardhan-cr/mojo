@@ -53,7 +53,7 @@ def main():
   dart_snapshotter = os.path.join(args.build_dir, 'dart_snapshotter')
   package_root = os.path.join(args.build_dir, 'gen', 'dart-pkg', 'packages')
   main_dart = os.path.join(
-      args.build_dir, 'gen', 'dart-pkg', 'mojo_dart_hello', 'main.dart')
+      args.build_dir, 'gen', 'dart-pkg', 'mojo_dart_hello', 'lib', 'main.dart')
   snapshot = tempfile.mktemp()
 
   if not os.path.isfile(dart_snapshotter):

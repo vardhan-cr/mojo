@@ -4,14 +4,32 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("wget") {
+dartzip_packaged_application("mojo_dart_wget_dartzip") {
   output_name = "dart_wget"
   sources = [
-    "main.dart",
+    "lib/main.dart",
   ]
   deps = [
-    "//mojo/public/dart",
+    "//mojo/public/dart:dart_dartzip",
     "//mojo/public/interfaces/network",
     "//mojo/services/network/public/interfaces",
+  ]
+}
+
+dart_pkg("mojo_dart_wget_pkg") {
+  entrypoints = [ "lib/main.dart" ]
+  sources = [
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/dart/mojo_services",
+    "//mojo/public/dart",
+  ]
+}
+
+group("wget") {
+  deps = [
+    ":mojo_dart_wget_dartzip",
+    ":mojo_dart_wget_pkg",
   ]
 }

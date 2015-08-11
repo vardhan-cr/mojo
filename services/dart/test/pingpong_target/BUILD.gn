@@ -4,13 +4,31 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("pingpong_target") {
-  output_name = "dart_pingpong_target"
+dartzip_packaged_application("mojo_dart_pingpong_target_dartzip") {
   sources = [
-    "main.dart",
+    "lib/main.dart",
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/public/dart:dart_dartzip",
+    "//services/dart/test:pingpong_service_interface",
+  ]
+}
+
+dart_pkg("mojo_dart_pingpong_target_pkg") {
+  entrypoints = [ "lib/main.dart" ]
+  sources = [
+    "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
     "//services/dart/test:pingpong_service_interface",
+  ]
+}
+
+group("pingpong_target") {
+  deps = [
+    ":mojo_dart_pingpong_target_dartzip",
+    ":mojo_dart_pingpong_target_pkg",
   ]
 }

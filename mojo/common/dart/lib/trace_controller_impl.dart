@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:mojo/application.dart';
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
-import 'package:mojom/tracing/tracing.mojom.dart';
+import 'package:mojo_services/tracing/tracing.mojom.dart';
 
 class TraceControllerImpl implements TraceController {
   TraceControllerStub _stub;

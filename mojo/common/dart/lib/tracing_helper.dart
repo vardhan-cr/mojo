@@ -15,7 +15,7 @@ import 'dart:isolate';
 import 'package:mojo/application.dart';
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
-import 'package:mojom/tracing/tracing.mojom.dart';
+import 'package:mojo_services/tracing/tracing.mojom.dart';
 
 // TracingHelper is used by Dart code running in the Mojo shell in order
 // to perform tracing.

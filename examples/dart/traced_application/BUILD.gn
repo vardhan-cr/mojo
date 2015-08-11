@@ -4,12 +4,32 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("traced_application") {
+dartzip_packaged_application("mojo_dart_traced_application_dartzip") {
+  output_name = "mojo_dart_traced_application"
   sources = [
-    "main.dart",
+    "lib/main.dart",
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/common/dart:dart_dartzip",
+    "//mojo/public/dart:dart_dartzip",
+  ]
+}
+
+dart_pkg("mojo_dart_traced_application_pkg") {
+  entrypoints = [ "lib/main.dart" ]
+  sources = [
+    "pubspec.yaml",
   ]
   deps = [
     "//mojo/common/dart",
     "//mojo/public/dart",
+  ]
+}
+
+group("traced_application") {
+  deps = [
+    ":mojo_dart_traced_application_dartzip",
+    ":mojo_dart_traced_application_pkg",
   ]
 }

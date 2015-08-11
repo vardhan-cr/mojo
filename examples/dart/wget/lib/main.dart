@@ -12,9 +12,9 @@ import 'dart:typed_data';
 import 'package:mojo/application.dart';
 import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
-import 'package:mojom/mojo/network_service.mojom.dart';
-import 'package:mojom/mojo/url_loader.mojom.dart';
-import 'package:mojom/mojo/url_request.mojom.dart';
+import 'package:mojo/mojo/url_request.mojom.dart';
+import 'package:mojo_services/mojo/network_service.mojom.dart';
+import 'package:mojo_services/mojo/url_loader.mojom.dart';
 
 class WGet extends Application {
   NetworkServiceProxy _networkService;

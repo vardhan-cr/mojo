@@ -82,6 +82,16 @@ v8.log
 # dart packages directories and related.
 /examples/dart/hello_world/hello/.packages
 /examples/dart/hello_world/hello/packages
+/examples/dart/device_info/.packages
+/examples/dart/device_info/packages
+/examples/dart/hello_world/world/.packages
+/examples/dart/hello_world/world/packages
+/examples/dart/netcat/.packages
+/examples/dart/netcat/packages
+/examples/dart/traced_application/.packages
+/examples/dart/traced_application/packages
+/examples/dart/wget/.packages
+/examples/dart/wget/packages
 /mojo/common/dart/.packages
 /mojo/common/dart/packages
 /mojo/dart/apptest/.packages
@@ -95,6 +105,12 @@ v8.log
 /mojo/dart/mojom/test/packages
 /mojo/dart/observatory_test/.packages
 /mojo/dart/testing/.packages
+/services/dart/test/echo/.packages
+/services/dart/test/echo/packages
+/services/dart/test/pingpong/.packages
+/services/dart/test/pingpong/packages
+/services/dart/test/pingpong_target/.packages
+/services/dart/test/pingpong_target/packages
 
 # downloaded keyboard_native resources.
 /services/keyboard_native/res/*.png

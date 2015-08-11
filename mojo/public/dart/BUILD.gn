@@ -27,7 +27,7 @@ dart_mojo_sdk_sources = [
   "lib/src/utils.dart",
 ]
 
-dartzip_package("dart") {
+dartzip_package("dart_dartzip") {
   sources = dart_mojo_sdk_entrypoints + dart_mojo_sdk_sources + [
               "pubspec.yaml",
               "CHANGELOG.md",
@@ -42,7 +42,7 @@ dartzip_package("dart") {
   ]
 }
 
-dart_pkg("mojo") {
+dart_pkg("dart_pkg") {
   entrypoints = dart_mojo_sdk_entrypoints
   sources = dart_mojo_sdk_sources + [
               "pubspec.yaml",
@@ -56,5 +56,12 @@ dart_pkg("mojo") {
   # List of mojom targets that the mojo pkg exports
   deps = [
     "../interfaces",
+  ]
+}
+
+group("dart") {
+  deps = [
+    ":dart_dartzip",
+    ":dart_pkg",
   ]
 }

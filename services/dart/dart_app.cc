@@ -27,7 +27,7 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
     : application_request_(application_request.Pass()),
       application_dir_(application_dir) {
   base::FilePath package_root = application_dir_.AppendASCII("packages");
-  base::FilePath entry_path = application_dir_.Append("main.dart");
+  base::FilePath entry_path = application_dir_.Append("lib/main.dart");
 
   config_.application_data = reinterpret_cast<void*>(this);
   config_.strict_compilation = strict;
