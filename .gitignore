@@ -80,6 +80,8 @@ v8.log
 /v8/
 
 # dart packages directories and related.
+/examples/dart/hello_world/hello/.packages
+/examples/dart/hello_world/hello/packages
 /mojo/common/dart/.packages
 /mojo/common/dart/packages
 /mojo/dart/apptest/.packages

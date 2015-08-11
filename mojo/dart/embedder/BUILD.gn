@@ -411,3 +411,13 @@ action("generate_snapshot_file") {
     rebase_path(output),
   ]
 }
+
+source_set("dart_snapshot_cc") {
+  sources = [
+    "$root_gen_dir/dart_snapshot.cc",
+  ]
+
+  deps = [
+    ":generate_snapshot_file",
+  ]
+}

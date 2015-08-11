@@ -4,11 +4,29 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("hello") {
+dartzip_packaged_application("mojo_dart_hello_dartzip") {
+  output_name = "mojo_dart_hello"
   sources = [
     "main.dart",
   ]
   deps = [
     "//mojo/public/dart",
+  ]
+}
+
+dart_pkg("mojo_dart_hello_pkg") {
+  entrypoints = [ "main.dart" ]
+  sources = [
+    "pubspec.yaml",
+  ]
+  deps = [
+    "//mojo/public/dart",
+  ]
+}
+
+group("hello") {
+  deps = [
+    ":mojo_dart_hello_dartzip",
+    ":mojo_dart_hello_pkg",
   ]
 }

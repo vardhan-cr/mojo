@@ -180,6 +180,13 @@ def GetTestList(config, verbose_count=0):
          "-p", os.path.join("mojo", "dart", "mojom", "packages"),
          os.path.join("mojo", "dart", "mojom", "test", "generate_test.dart")])
 
+  if target_os == Config.OS_LINUX:
+    AddEntry("Dart snapshotter test",
+        ["python",
+         os.path.join("mojo", "dart", "dart_snapshotter", "test",
+                      "dart_snapshotter_test.py"),
+         "--build-dir=" + build_dir])
+
   # Perf tests -----------------------------------------------------------------
 
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_PERF):

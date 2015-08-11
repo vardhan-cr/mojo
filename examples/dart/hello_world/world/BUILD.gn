@@ -4,7 +4,8 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("world") {
+dartzip_packaged_application("mojo_dart_world_dartzip") {
+  output_name = "mojo_dart_world"
   sources = [
     "main.dart",
   ]
@@ -19,4 +20,10 @@ dartzip_packaged_application("world") {
   if (!is_debug) {
     strict = true
   }
+}
+
+group("world") {
+  deps = [
+    ":mojo_dart_world_dartzip",
+  ]
 }
