@@ -37,7 +37,7 @@ class GaneshView : public TextureUploader::Client, public mojo::ViewObserver {
 
   mojo::View* view_;
   base::WeakPtr<mojo::GLContext> gl_context_;
-  mojo::GaneshContext gr_context_;
+  scoped_ptr<mojo::GaneshContext> gr_context_;
   TextureUploader texture_uploader_;
 
   DISALLOW_COPY_AND_ASSIGN(GaneshView);

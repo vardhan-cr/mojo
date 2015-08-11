@@ -176,6 +176,15 @@ public class ShellService extends Service {
         return mBinder;
     }
 
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        if (!rootIntent.getComponent().getClassName().equals(ViewportActivity.class.getName())) {
+            return;
+        }
+        String viewportId = rootIntent.getStringExtra("ViewportId");
+        NativeViewportSupportApplicationDelegate.viewportClosed(viewportId);
+    }
+
     /**
      * Initializes the native system and starts the shell.
      **/

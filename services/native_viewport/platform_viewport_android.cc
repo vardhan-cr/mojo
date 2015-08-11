@@ -8,6 +8,7 @@
 #include <android/native_window_jni.h>
 
 #include "base/android/jni_android.h"
+#include "base/bind.h"
 #include "jni/PlatformViewportAndroid_jni.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
@@ -165,10 +166,10 @@ void PlatformViewportAndroid::Init(const gfx::Rect& bounds) {
   Java_PlatformViewportAndroid_createRequest(env,
                                              reinterpret_cast<intptr_t>(this));
 
-  NativeViewportShellServicePtr shell_service;
   application_->ConnectToService("mojo:native_viewport_support",
-                                 &shell_service);
-  shell_service->CreateNewNativeWindow();
+                                 &shell_service_);
+  shell_service_->CreateNewNativeWindow(
+      base::Bind(&PlatformViewportAndroid::Close, weak_factory_.GetWeakPtr()));
 }
 
 void PlatformViewportAndroid::Show() {

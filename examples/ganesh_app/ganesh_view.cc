@@ -25,15 +25,18 @@ mojo::Size ToSize(const mojo::Rect& rect) {
 GaneshView::GaneshView(mojo::Shell* shell, mojo::View* view)
     : view_(view),
       gl_context_(mojo::GLContext::Create(shell)),
-      gr_context_(gl_context_),
+      gr_context_(new mojo::GaneshContext(gl_context_)),
       texture_uploader_(this, shell, gl_context_) {
   view_->AddObserver(this);
   Draw(ToSize(view_->bounds()));
 }
 
 GaneshView::~GaneshView() {
-  if (gl_context_)
+  if (gl_context_) {
+    // GaneshContext needs to be destroyed before GLContext.
+    gr_context_.reset();
     gl_context_->Destroy();
+  }
 }
 
 void GaneshView::OnSurfaceIdAvailable(mojo::SurfaceIdPtr surface_id) {
@@ -58,9 +61,10 @@ void GaneshView::OnViewBoundsChanged(mojo::View* view,
 }
 
 void GaneshView::Draw(const mojo::Size& size) {
-  mojo::GaneshContext::Scope scope(&gr_context_);
+  mojo::GaneshContext::Scope scope(gr_context_.get());
   mojo::GaneshSurface surface(
-      &gr_context_, make_scoped_ptr(new mojo::GLTexture(gl_context_, size)));
+      gr_context_.get(),
+      make_scoped_ptr(new mojo::GLTexture(gl_context_, size)));
 
   SkCanvas* canvas = surface.canvas();
   canvas->clear(SK_ColorCYAN);

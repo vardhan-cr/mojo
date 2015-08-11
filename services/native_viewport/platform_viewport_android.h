@@ -8,6 +8,7 @@
 #include "base/android/jni_weak_ref.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
+#include "services/native_viewport/native_viewport_internal.mojom.h"
 #include "services/native_viewport/platform_viewport.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/rect.h"
@@ -69,6 +70,7 @@ class PlatformViewportAndroid : public PlatformViewport {
   void ReleaseWindow();
 
   mojo::ApplicationImpl* application_;
+  NativeViewportShellServicePtr shell_service_;
   Delegate* const delegate_;
   JavaObjectWeakGlobalRef java_platform_viewport_android_;
   ANativeWindow* window_;
