@@ -95,16 +95,6 @@ v8.log
 /mojo/dart/mojom/test/packages
 /mojo/dart/observatory_test/.packages
 /mojo/dart/testing/.packages
-/sky/examples/hello_world/packages
-/sky/examples/stocks/packages
-/sky/sdk/packages/mojo/packages
-/sky/sdk/packages/mojo/pubspec.lock
-/sky/sdk/packages/sky/packages
-/sky/sdk/packages/sky/pubspec.lock
-
-# sky tools
-/sky/tools/skygo/linux64/sky_server
-/sky/tools/skygo/mac/sky_server
 
 # downloaded keyboard_native resources.
 /services/keyboard_native/res/*.png
