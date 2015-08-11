@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-[DartPackage="native_viewport"]
 module native_viewport;
 
 // Service implemented by the Shell for the Native Viewport service.
