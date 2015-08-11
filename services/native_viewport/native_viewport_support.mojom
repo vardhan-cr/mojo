@@ -6,7 +6,7 @@
 module native_viewport;
 
 // Service implemented by the Shell for the Native Viewport service.
-interface NativeViewportShellService {
+interface NativeViewportSupportService {
   // Asks the shell to create a new native window (on Android, a new task).
   // The callback will be called when the window is destroyed (on Android, when
   // the task is removed).

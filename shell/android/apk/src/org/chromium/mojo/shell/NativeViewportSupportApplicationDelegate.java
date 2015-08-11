@@ -14,8 +14,8 @@ import org.chromium.mojo.application.ServiceFactoryBinder;
 import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.MojoException;
 import org.chromium.mojom.mojo.Shell;
-import org.chromium.mojom.native_viewport.NativeViewportShellService;
-import org.chromium.mojom.native_viewport.NativeViewportShellService.CreateNewNativeWindowResponse;
+import org.chromium.mojom.native_viewport.NativeViewportSupportService;
+import org.chromium.mojom.native_viewport.NativeViewportSupportService.CreateNewNativeWindowResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,20 +28,21 @@ final class NativeViewportSupportApplicationDelegate implements ApplicationDeleg
     private static Map<String, CreateNewNativeWindowResponse> sActiveTasks =
             new HashMap<String, CreateNewNativeWindowResponse>();
 
-    private class NativeViewportShellServiceFactoryBinder
-            implements ServiceFactoryBinder<NativeViewportShellService> {
+    private class NativeViewportSupportServiceFactoryBinder
+            implements ServiceFactoryBinder<NativeViewportSupportService> {
         @Override
-        public void bind(InterfaceRequest<NativeViewportShellService> request) {
-            NativeViewportShellService.MANAGER.bind(new NativeViewportShellServiceImpl(), request);
+        public void bind(InterfaceRequest<NativeViewportSupportService> request) {
+            NativeViewportSupportService.MANAGER.bind(
+                    new NativeViewportSupportServiceImpl(), request);
         }
 
         @Override
         public String getInterfaceName() {
-            return NativeViewportShellService.MANAGER.getName();
+            return NativeViewportSupportService.MANAGER.getName();
         }
     }
 
-    private class NativeViewportShellServiceImpl implements NativeViewportShellService {
+    private class NativeViewportSupportServiceImpl implements NativeViewportSupportService {
         @Override
         public void close() {}
 
@@ -85,7 +86,7 @@ final class NativeViewportSupportApplicationDelegate implements ApplicationDeleg
         if (!connection.getRequestorUrl().equals("mojo://native_viewport_service/")) {
             return false;
         }
-        connection.addService(new NativeViewportShellServiceFactoryBinder());
+        connection.addService(new NativeViewportSupportServiceFactoryBinder());
         return true;
     }
 

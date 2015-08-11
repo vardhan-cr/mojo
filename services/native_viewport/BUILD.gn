@@ -41,7 +41,7 @@ if (is_android) {
 
   mojom("interfaces") {
     sources = [
-      "native_viewport_internal.mojom",
+      "native_viewport_support.mojom",
     ]
   }
 } else {
