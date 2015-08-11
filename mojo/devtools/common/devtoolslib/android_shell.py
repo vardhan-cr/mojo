@@ -279,9 +279,7 @@ class AndroidShell(Shell):
     """Starts the mojo shell, passing it the given arguments.
 
     Args:
-      arguments: List of arguments for the shell. It must contain the
-          "--origin=" arg. shell_arguments.configure_local_origin() can be used
-          to set up a local directory on the host machine as origin.
+      arguments: List of arguments for the shell.
       stdout: Valid argument for subprocess.Popen() or None.
     """
     if not self.stop_shell_registered:
@@ -310,8 +308,6 @@ class AndroidShell(Shell):
       else:
         _logger.warning("Running without root access, full stdout of the "
                         "shell won't be available.")
-    # The origin has to be specified whether it's local or external.
-    assert any("--origin=" in arg for arg in arguments)
     parameters.extend(arguments)
 
     if parameters:
