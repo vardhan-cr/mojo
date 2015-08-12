@@ -110,12 +110,18 @@ def copy_or_link(from_root, to_root, filter_func=None):
     copy(from_root, to_root, filter_func)
 
 
+def link_if_possible(from_root, to_root):
+  if USE_LINKS:
+    link(from_root, to_root)
+
+
 def remove_if_exists(path):
   try:
     os.remove(path)
   except OSError as e:
     if e.errno != errno.ENOENT:
       raise
+
 
 def list_files(from_root, filter_func=None):
   file_list = []
@@ -240,6 +246,7 @@ def main():
   assert has_pubspec_yaml(args.package_sources)
 
   target_dir = os.path.join(args.pkg_directory, args.package_name)
+  target_packages_dir = os.path.join(target_dir, 'packages')
   lib_path = os.path.join(target_dir, "lib")
 
   mappings = {}
@@ -298,6 +305,9 @@ def main():
       target = os.path.join(args.package_root, package)
       if not os.path.exists(target):
         link(source, target)
+
+  # Link dart-pkg/$package/packages to dart-pkg/packages
+  link_if_possible(args.package_root, target_packages_dir)
 
   # Remove any broken symlinks in target_dir and package root.
   remove_broken_symlinks(target_dir)

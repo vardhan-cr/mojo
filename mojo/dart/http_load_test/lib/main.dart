@@ -5,7 +5,9 @@ library test;
 import 'dart:async';
 import 'dart:mojo.internal';
 
-part 'part0.dart';
+import 'package:mojo_services/tracing/tracing.mojom.dart' as tracing;
+
+part 'src/part0.dart';
 
 main(List args) {
   // Hang around for a sec and then close the shell handle.

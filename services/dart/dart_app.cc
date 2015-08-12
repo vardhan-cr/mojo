@@ -39,14 +39,16 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
       base::Bind(&DartApp::OnAppLoaded, base::Unretained(this)));
 }
 
-// Assume that |url| ends in a file name, and as a peer to the filename
+// Assume that |url| ends in a file name in lib/, and as a peer to lib/
 // is the packages directory.
 // 1) Strip the filename.
-// 2) Append with packages/.
-// 3) Reconstruct full url.
+// 2) Strip lib/
+// 3) Append with packages/.
+// 4) Reconstruct full url.
 static std::string SimplePackageRootFromUrl(std::string url) {
   GURL gurl = GURL(url);
   base::FilePath path = base::FilePath(gurl.path());
+  path = path.DirName();
   path = path.DirName();
   path = path.Append("packages");
   path = path.AsEndingWithSeparator();

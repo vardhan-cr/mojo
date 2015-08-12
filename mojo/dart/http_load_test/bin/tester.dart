@@ -17,19 +17,20 @@ class Launcher {
 
     // Completer completes once the child process exits.
     var completer = new Completer();
-    String stdout = '';
+    String output = '';
     process.stdout.transform(UTF8.decoder)
                   .transform(new LineSplitter()).listen((line) {
-      stdout = '$stdout\n$line';
+      output = '$output\n$line';
       print(line);
     });
     process.stderr.transform(UTF8.decoder)
                   .transform(new LineSplitter()).listen((line) {
+      output = '$output\n$line';
       print(line);
     });
     process.exitCode.then((ec) {
-      stdout = '$stdout\nEXIT_CODE=$ec\n';
-      completer.complete(stdout);
+      output = '$output\nEXIT_CODE=$ec\n';
+      completer.complete(output);
     });
     return completer.future;
   }
@@ -56,15 +57,18 @@ main(List<String> args) async {
     }
   });
 
-  var launchUrl = 'http://127.0.0.1:${server.port}/main.dart';
-  var stdout = await Launcher.launch(mojo_shell_executable, [launchUrl]);
+  var launchUrl = 'http://127.0.0.1:${server.port}/lib/main.dart';
+  var output = await Launcher.launch(mojo_shell_executable, [launchUrl]);
 
   server.close();
 
-  if (!stdout.contains("\nPASS")) {
+  if (output.contains("ERROR")) {
+    throw "test failed.";
+  }
+  if (!output.contains("\nEXIT_CODE=0\n")) {
     throw "Test failed.";
   }
-  if (!stdout.contains("\nEXIT_CODE=0\n")) {
+  if (!output.contains("\nPASS")) {
     throw "Test failed.";
   }
 }
