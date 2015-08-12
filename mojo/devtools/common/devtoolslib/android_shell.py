@@ -366,6 +366,7 @@ class AndroidShell(Shell):
 
     logcat_watch_thread = threading.Thread(
         target=_forward_observatories_as_needed)
+    logcat_watch_thread.daemon = True
     logcat_watch_thread.start()
 
   @overrides(Shell)
