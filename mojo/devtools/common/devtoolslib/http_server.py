@@ -222,7 +222,8 @@ def start_http_server(mappings, host_port=0):
     print 'Failed to start http server for %s on port %d: %s.' % (
         str(mappings), host_port, os.strerror(error_code))
     if error_code == errno.EADDRINUSE:
-      print ('  Run `fuser %d/tcp` to find out which process is using the port.'
+      print ('  Run `fuser %d/tcp` to find out which process is using the port;'
              % host_port)
+      print ('  or `fuser -k %d/tcp` terminate it.' % host_port)
     print '---'
     raise
