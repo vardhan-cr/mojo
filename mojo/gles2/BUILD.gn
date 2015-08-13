@@ -16,9 +16,9 @@ source_set("gles2") {
   sources = [
     "command_buffer_client_impl.cc",
     "command_buffer_client_impl.h",
-    "gles2_impl.cc",
     "gles2_context.cc",
     "gles2_context.h",
+    "gles2_impl.cc",
   ]
 
   defines = [
@@ -48,5 +48,21 @@ source_set("gles2") {
     "//mojo/public/cpp/system",
     "//mojo/services/gpu/public/interfaces",
     "//services/gles2:lib",
+  ]
+}
+
+source_set("mgl") {
+  sources = [
+    "mgl_impl.cc",
+  ]
+
+  configs += [ ":gles2_use_mojo" ]
+
+  deps = [
+    ":gles2",
+    "//mojo/public/c/gles2:headers",
+    "//mojo/public/c/gpu:MGL",
+    "//mojo/public/c/gpu:MGL_onscreen",
+    "//mojo/public/cpp/system",
   ]
 }

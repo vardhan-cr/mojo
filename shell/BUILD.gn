@@ -216,6 +216,7 @@ source_set("native_application_support") {
   deps = [
     "//base",
     "//mojo/gles2",
+    "//mojo/gles2:mgl",
   ]
 
   # This target has to include the public thunk headers, which generally

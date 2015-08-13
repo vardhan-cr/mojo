@@ -105,3 +105,25 @@ mojo_sdk_source_set("gles2") {
     # 'DYLIB_INSTALL_NAME_BASE': '@loader_path',
   }
 }
+
+mojo_sdk_source_set("gpu_thunks") {
+  sources = []
+}
+
+mojo_sdk_source_set("mgl_thunks") {
+  sources = [
+    "mgl_thunks.c",
+    "mgl_thunks.h",
+  ]
+
+  mojo_sdk_deps = [ "mojo/public/c/gpu:MGL" ]
+}
+
+mojo_sdk_source_set("mgl_onscreen_thunks") {
+  sources = [
+    "mgl_onscreen_thunks.c",
+    "mgl_onscreen_thunks.h",
+  ]
+
+  mojo_sdk_deps = [ "mojo/public/c/gpu:MGL_onscreen" ]
+}

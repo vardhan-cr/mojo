@@ -8,13 +8,11 @@
 
 #include "examples/spinning_cube/gles2_client_impl.h"
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#include <GLES2/gl2extchromium.h>
 #include <math.h>
 #include <stdlib.h>
 
-#include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gpu/MGL/mgl.h"
+#include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/utility/run_loop.h"
 
@@ -44,7 +42,7 @@ GLES2ClientImpl::GLES2ClientImpl(mojo::ContextProviderPtr context_provider)
 }
 
 GLES2ClientImpl::~GLES2ClientImpl() {
-  MojoGLES2DestroyContext(context_);
+  MGLDestroyContext(context_);
 }
 
 void GLES2ClientImpl::SetSize(const mojo::Size& size) {
@@ -52,7 +50,7 @@ void GLES2ClientImpl::SetSize(const mojo::Size& size) {
   cube_.set_size(size_.width, size_.height);
   if (size_.width == 0 || size_.height == 0 || !context_)
     return;
-  glResizeCHROMIUM(size_.width, size_.height, 1.f);
+  MGLResizeSurface(size_.width, size_.height);
   WantToDraw();
 }
 
@@ -107,17 +105,19 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
 }
 
 void GLES2ClientImpl::ContextCreated(mojo::CommandBufferPtr command_buffer) {
-  context_ = MojoGLES2CreateContext(
+  context_ = MGLCreateContext(
+      MGL_API_VERSION_GLES2,
       command_buffer.PassInterface().PassHandle().release().value(),
-      &ContextLostThunk, this, mojo::Environment::GetDefaultAsyncWaiter());
-  MojoGLES2MakeCurrent(context_);
+      MGL_NO_CONTEXT, &ContextLostThunk, this,
+      mojo::Environment::GetDefaultAsyncWaiter());
+  MGLMakeCurrent(context_);
   cube_.Init();
   WantToDraw();
 }
 
 void GLES2ClientImpl::ContextLost() {
   cube_.OnGLContextLost();
-  MojoGLES2DestroyContext(context_);
+  MGLDestroyContext(context_);
   context_ = nullptr;
   context_provider_->Create(nullptr,
                             [this](mojo::CommandBufferPtr command_buffer) {
@@ -148,7 +148,7 @@ void GLES2ClientImpl::Draw() {
   cube_.UpdateForTimeDelta(delta);
   cube_.Draw();
 
-  MojoGLES2SwapBuffers();
+  MGLSwapBuffers();
   WantToDraw();
 }
 

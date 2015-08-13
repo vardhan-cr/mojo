@@ -6,7 +6,7 @@
 #define EXAMPLES_SPINNING_CUBE_GLES2_CLIENT_IMPL_H_
 
 #include "examples/spinning_cube/spinning_cube.h"
-#include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gpu/MGL/mgl.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/native_viewport/public/interfaces/native_viewport.mojom.h"
 
@@ -36,7 +36,7 @@ class GLES2ClientImpl {
   bool waiting_to_draw_;
 
   mojo::ContextProviderPtr context_provider_;
-  MojoGLES2Context context_;
+  MGLContext context_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(GLES2ClientImpl);
 };
