@@ -26,7 +26,7 @@
           '@{SKY_SRC}/sky/packages/workbench/packages'
         ]),
         ('examples/', [
-          '@{SKY_SRC}/sky/packages/sky/example'
+          '@{SKY_SRC}/examples'
         ]),
         ('', [
           '@{SKY_SRC}/out/android_Debug',
