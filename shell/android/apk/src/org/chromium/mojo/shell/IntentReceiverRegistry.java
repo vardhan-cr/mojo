@@ -97,8 +97,9 @@ public class IntentReceiverRegistry
             IntentReceiver receiver, RegisterIntentReceiverResponse callback) {
         registerErrorHandler(receiver);
         String uuid = UUID.randomUUID().toString();
-        Intent intent = new Intent(
-                uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
+        Intent intent = new Intent(uuid, null, ApplicationStatus.getApplicationContext(),
+                IntentReceiverActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mReceiversByUuid.put(uuid, receiver);
         mUuidsByReceiver.put(receiver, uuid);
         callback.call(intentToBytes(intent));
@@ -123,9 +124,10 @@ public class IntentReceiverRegistry
         } while (mReceiversByUuid.keySet().contains(uuid));
         mReceiversByUuid.put(uuid, receiver);
         mUuidsByReceiver.put(receiver, uuid);
-        Intent intent = new Intent(
-                uuid, null, ApplicationStatus.getApplicationContext(), IntentReceiverService.class);
-        intent.addCategory(IntentReceiverService.CATEGORY_START_ACTIVITY_FOR_RESULT);
+        Intent intent = new Intent(uuid, null, ApplicationStatus.getApplicationContext(),
+                IntentReceiverActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addCategory(IntentReceiverActivity.CATEGORY_START_ACTIVITY_FOR_RESULT);
         callback.call(intentToBytes(intent));
     }
 

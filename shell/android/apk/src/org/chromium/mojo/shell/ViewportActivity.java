@@ -42,13 +42,4 @@ public class ViewportActivity extends Activity {
         super.onNewIntent(intent);
         new RuntimeException("This activity instance should only ever receive one intent.");
     }
-
-    /**
-     * @see Activity#onActivityResult(int, int, Intent)
-     * TODO(etiennej): Fix by changing IntentReceiverService into an Activity.
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentReceiverRegistry.getInstance().onActivityResult(requestCode, resultCode, data);
-    }
 }

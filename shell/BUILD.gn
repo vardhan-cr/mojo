@@ -275,8 +275,8 @@ if (is_android) {
     java_files = [
       "android/apk/src/org/chromium/mojo/shell/AndroidHandler.java",
       "android/apk/src/org/chromium/mojo/shell/FileHelper.java",
+      "android/apk/src/org/chromium/mojo/shell/IntentReceiverActivity.java",
       "android/apk/src/org/chromium/mojo/shell/IntentReceiverRegistry.java",
-      "android/apk/src/org/chromium/mojo/shell/IntentReceiverService.java",
       "android/apk/src/org/chromium/mojo/shell/JavaApplicationRegistry.java",
       "android/apk/src/org/chromium/mojo/shell/KeyboardFactory.java",
       "android/apk/src/org/chromium/mojo/shell/MojoShellActivity.java",

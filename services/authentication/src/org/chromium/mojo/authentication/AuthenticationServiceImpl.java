@@ -52,6 +52,10 @@ public class AuthenticationServiceImpl
     // Type of the accounts that this service allows the user to pick.
     private static final String[] ACCOUNT_TYPES = new String[] {GOOGLE_ACCOUNT_TYPE};
 
+    // Name of the extra key used to store the intent we actually want to send. This value must
+    // match IntentReceiverActivity.EXTRA_START_ACTIVITY_FOR_RESULT_INTENT.
+    private static final String EXTRA_START_ACTIVITY_FOR_RESULT_INTENT = "intent";
+
     /**
      * An callback that takes a serialized intent, add the intent the shell needs to send and start
      * the container intent.
@@ -74,7 +78,7 @@ public class AuthenticationServiceImpl
         public void call(byte[] serializedIntent) {
             Intent trampolineIntent = bytesToIntent(serializedIntent);
             trampolineIntent.putExtra("intent", mIntent);
-            mContext.startService(trampolineIntent);
+            mContext.startActivity(trampolineIntent);
         }
     }
 

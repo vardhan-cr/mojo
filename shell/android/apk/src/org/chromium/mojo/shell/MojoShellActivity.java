@@ -70,13 +70,4 @@ public class MojoShellActivity extends Activity implements ShellService.IShellBi
             }
         }
     }
-
-    /**
-     * @see Activity#onActivityResult(int, int, Intent)
-     * TODO(etiennej): Fix by changing IntentReceiverService into an Activity.
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentReceiverRegistry.getInstance().onActivityResult(requestCode, resultCode, data);
-    }
 }

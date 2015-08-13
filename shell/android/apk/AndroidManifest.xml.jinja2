@@ -61,7 +61,9 @@
                 <data android:mimeType="text/plain"/>
             </intent-filter>
         </activity>
-        <service android:name="org.chromium.mojo.shell.IntentReceiverService"/>
+        <activity android:name="org.chromium.mojo.shell.IntentReceiverActivity"
+                  android:theme="@android:style/Theme.NoDisplay">
+        </activity>
         <service android:name="org.chromium.mojo.shell.ShellService" />
     </application>
 
