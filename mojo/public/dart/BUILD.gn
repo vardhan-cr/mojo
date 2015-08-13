@@ -45,13 +45,13 @@ dartzip_package("dart_dartzip") {
 dart_pkg("dart_pkg") {
   entrypoints = dart_mojo_sdk_entrypoints
   sources = dart_mojo_sdk_sources + [
+              "lib/_sdkext",
               "pubspec.yaml",
               "CHANGELOG.md",
               "README.md",
             ]
 
   sdk_ext_directory = "sdk_ext"
-  sdk_ext_mappings = [ "dart:mojo.internal,internal.dart" ]
 
   # List of mojom targets that the mojo pkg exports
   deps = [
