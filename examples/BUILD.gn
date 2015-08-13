@@ -28,6 +28,7 @@ group("examples") {
     "//examples/spinning_cube",
     "//examples/surfaces_app",
     "//examples/tiny",
+    "//examples/trace_me",
     "//examples/wget",
     "//examples/window_manager",
     "//examples/wm_flow",
