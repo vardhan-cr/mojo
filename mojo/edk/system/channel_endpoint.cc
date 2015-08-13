@@ -186,7 +186,7 @@ void ChannelEndpoint::OnReadMessageForClient(
       MutexLocker locker(&mutex_);
       if (!channel_ || !client_) {
         // This isn't a failure per se. (It just means that, e.g., the other end
-        // of the message point closed first.)
+        // of the message pipe closed first.)
         return;
       }
 
