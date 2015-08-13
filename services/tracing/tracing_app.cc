@@ -10,7 +10,7 @@
 
 namespace tracing {
 
-TracingApp::TracingApp() : coordinator_binding_(this), tracing_active_(false) {
+TracingApp::TracingApp() : collector_binding_(this), tracing_active_(false) {
 }
 
 TracingApp::~TracingApp() {
@@ -18,39 +18,40 @@ TracingApp::~TracingApp() {
 
 bool TracingApp::ConfigureIncomingConnection(
     mojo::ApplicationConnection* connection) {
-  connection->AddService<TraceCoordinator>(this);
+  connection->AddService<TraceCollector>(this);
 
-  // If someone connects to us they may want to use the TraceCoordinator
+  // If someone connects to us they may want to use the TraceCollector
   // interface and/or they may want to expose themselves to be traced. Attempt
-  // to connect to the TraceController interface to see if the application
+  // to connect to the TraceProvider interface to see if the application
   // connecting to us wants to be traced. They can refuse the connection or
   // close the pipe if not.
-  TraceControllerPtr controller_ptr;
-  connection->ConnectToService(&controller_ptr);
+  TraceProviderPtr provider_ptr;
+  connection->ConnectToService(&provider_ptr);
   if (tracing_active_) {
-    TraceDataCollectorPtr collector_ptr;
-    collector_impls_.push_back(
-        new CollectorImpl(GetProxy(&collector_ptr), sink_.get()));
-    controller_ptr->StartTracing(tracing_categories_, collector_ptr.Pass());
+    TraceRecorderPtr recorder_ptr;
+    recorder_impls_.push_back(
+        new TraceRecorderImpl(GetProxy(&recorder_ptr), sink_.get()));
+    provider_ptr->StartTracing(tracing_categories_, recorder_ptr.Pass());
   }
-  controller_ptrs_.AddInterfacePtr(controller_ptr.Pass());
+  provider_ptrs_.AddInterfacePtr(provider_ptr.Pass());
   return true;
 }
 
-// mojo::InterfaceFactory<TraceCoordinator> implementation.
+// mojo::InterfaceFactory<TraceCollector> implementation.
 void TracingApp::Create(mojo::ApplicationConnection* connection,
-                        mojo::InterfaceRequest<TraceCoordinator> request) {
-  coordinator_binding_.Bind(request.Pass());
+                        mojo::InterfaceRequest<TraceCollector> request) {
+  collector_binding_.Bind(request.Pass());
 }
 
-// tracing::TraceCoordinator implementation.
+// tracing::TraceCollector implementation.
 void TracingApp::Start(mojo::ScopedDataPipeProducerHandle stream,
                        const mojo::String& categories) {
   tracing_categories_ = categories;
   sink_.reset(new TraceDataSink(stream.Pass()));
-  controller_ptrs_.ForAllPtrs([categories, this](TraceController* controller) {
-    TraceDataCollectorPtr ptr;
-    collector_impls_.push_back(new CollectorImpl(GetProxy(&ptr), sink_.get()));
+  provider_ptrs_.ForAllPtrs([categories, this](TraceProvider* controller) {
+    TraceRecorderPtr ptr;
+    recorder_impls_.push_back(
+        new TraceRecorderImpl(GetProxy(&ptr), sink_.get()));
     controller->StartTracing(categories, ptr.Pass());
   });
   tracing_active_ = true;
@@ -59,15 +60,15 @@ void TracingApp::Start(mojo::ScopedDataPipeProducerHandle stream,
 void TracingApp::StopAndFlush() {
   // Remove any collectors that closed their message pipes before we called
   // StopTracing(). See https://github.com/domokit/mojo/issues/225.
-  for (int i = collector_impls_.size() - 1; i >= 0; --i) {
-    if (!collector_impls_[i]->TraceDataCollectorHandle().is_valid()) {
-      collector_impls_.erase(collector_impls_.begin() + i);
+  for (int i = recorder_impls_.size() - 1; i >= 0; --i) {
+    if (!recorder_impls_[i]->TraceRecorderHandle().is_valid()) {
+      recorder_impls_.erase(recorder_impls_.begin() + i);
     }
   }
 
   tracing_active_ = false;
-  controller_ptrs_.ForAllPtrs(
-      [](TraceController* controller) { controller->StopTracing(); });
+  provider_ptrs_.ForAllPtrs(
+      [](TraceProvider* controller) { controller->StopTracing(); });
 
   // Sending the StopTracing message to registered controllers will request that
   // they send trace data back via the collector interface and, when they are
@@ -80,7 +81,7 @@ void TracingApp::StopAndFlush() {
   static const MojoDeadline kTimeToWaitMicros = 1000 * 1000;
   MojoTimeTicks end = MojoGetTimeTicksNow() + kTimeToWaitMicros;
 
-  while (!collector_impls_.empty()) {
+  while (!recorder_impls_.empty()) {
     MojoTimeTicks now = MojoGetTimeTicksNow();
     if (now >= end)  // Timed out?
       break;
@@ -88,8 +89,8 @@ void TracingApp::StopAndFlush() {
     MojoDeadline mojo_deadline = end - now;
     std::vector<mojo::Handle> handles;
     std::vector<MojoHandleSignals> signals;
-    for (const auto& it : collector_impls_) {
-      handles.push_back(it->TraceDataCollectorHandle());
+    for (const auto& it : recorder_impls_) {
+      handles.push_back(it->TraceRecorderHandle());
       signals.push_back(MOJO_HANDLE_SIGNAL_READABLE |
                         MOJO_HANDLE_SIGNAL_PEER_CLOSED);
     }
@@ -102,7 +103,7 @@ void TracingApp::StopAndFlush() {
       break;
     }
     if (wait_many_result.IsIndexValid()) {
-      // Iterate backwards so we can remove closed pipes from |collector_impls_|
+      // Iterate backwards so we can remove closed pipes from |recorder_impls_|
       // without invalidating subsequent offsets.
       for (size_t i = signals_states.size(); i != 0; --i) {
         size_t index = i - 1;
@@ -110,9 +111,9 @@ void TracingApp::StopAndFlush() {
         // To avoid dropping data, don't close unless there's no
         // readable signal.
         if (satisfied & MOJO_HANDLE_SIGNAL_READABLE)
-          collector_impls_[index]->TryRead();
+          recorder_impls_[index]->TryRead();
         else if (satisfied & MOJO_HANDLE_SIGNAL_PEER_CLOSED)
-          collector_impls_.erase(collector_impls_.begin() + index);
+          recorder_impls_.erase(recorder_impls_.begin() + index);
       }
     }
   }
@@ -120,7 +121,7 @@ void TracingApp::StopAndFlush() {
 }
 
 void TracingApp::AllDataCollected() {
-  collector_impls_.clear();
+  recorder_impls_.clear();
   sink_.reset();
 }
 

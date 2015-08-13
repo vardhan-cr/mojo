@@ -83,8 +83,8 @@ mojom("test_interfaces") {
 
 source_set("tracing_impl") {
   sources = [
-    "trace_controller_impl.cc",
-    "trace_controller_impl.h",
+    "trace_provider_impl.cc",
+    "trace_provider_impl.h",
     "tracing_impl.cc",
     "tracing_impl.h",
   ]

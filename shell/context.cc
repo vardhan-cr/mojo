@@ -21,7 +21,7 @@
 #include "base/strings/string_util.h"
 #include "base/trace_event/trace_event.h"
 #include "build/build_config.h"
-#include "mojo/common/trace_controller_impl.h"
+#include "mojo/common/trace_provider_impl.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
@@ -193,9 +193,9 @@ class TracingServiceProvider : public ServiceProvider {
 
   void ConnectToService(const mojo::String& service_name,
                         mojo::ScopedMessagePipeHandle client_handle) override {
-    if (tracer_ && service_name == tracing::TraceController::Name_) {
-      tracer_->ConnectToController(
-          mojo::MakeRequest<tracing::TraceController>(client_handle.Pass()));
+    if (tracer_ && service_name == tracing::TraceProvider::Name_) {
+      tracer_->ConnectToProvider(
+          mojo::MakeRequest<tracing::TraceProvider>(client_handle.Pass()));
     }
   }
 
@@ -312,9 +312,9 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
 
   if (command_line.HasSwitch(switches::kTraceStartup)) {
     DCHECK(tracer_);
-    tracing::TraceCoordinatorPtr coordinator;
+    tracing::TraceCollectorPtr coordinator;
     auto coordinator_request = GetProxy(&coordinator);
-    tracing_services->ConnectToService(tracing::TraceCoordinator::Name_,
+    tracing_services->ConnectToService(tracing::TraceCollector::Name_,
                                        coordinator_request.PassMessagePipe());
     tracer_->StartCollectingFromTracingService(coordinator.Pass());
   }

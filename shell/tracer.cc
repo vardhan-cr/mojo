@@ -52,7 +52,7 @@ void Tracer::DidCreateMessageLoop() {
 }
 
 void Tracer::StartCollectingFromTracingService(
-    tracing::TraceCoordinatorPtr coordinator) {
+    tracing::TraceCollectorPtr coordinator) {
   coordinator_ = coordinator.Pass();
   mojo::DataPipe data_pipe;
   coordinator_->Start(data_pipe.producer_handle.Pass(), categories_);
@@ -65,9 +65,9 @@ void Tracer::StopAndFlushToFile() {
     StopTracingAndFlushToDisk();
 }
 
-void Tracer::ConnectToController(
-    mojo::InterfaceRequest<tracing::TraceController> request) {
-  auto impl = new mojo::TraceControllerImpl(request.Pass());
+void Tracer::ConnectToProvider(
+    mojo::InterfaceRequest<tracing::TraceProvider> request) {
+  auto impl = new mojo::TraceProviderImpl(request.Pass());
   impl->set_tracing_already_started(tracing_);
 }
 

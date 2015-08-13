@@ -13,7 +13,7 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted_memory.h"
 #include "mojo/common/data_pipe_drainer.h"
-#include "mojo/common/trace_controller_impl.h"
+#include "mojo/common/trace_provider_impl.h"
 #include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 
 namespace shell {
@@ -43,15 +43,15 @@ class Tracer : public mojo::common::DataPipeDrainer::Client {
   // Starts collecting data from the tracing service with the given set of
   // categories.
   void StartCollectingFromTracingService(
-      tracing::TraceCoordinatorPtr coordinator);
+      tracing::TraceCollectorPtr coordinator);
 
   // Stops tracing and flushes all collected trace data to the file specified in
   // Start(). Blocks until the file write is complete. May be called after the
   // message loop is shut down.
   void StopAndFlushToFile();
 
-  void ConnectToController(
-      mojo::InterfaceRequest<tracing::TraceController> request);
+  void ConnectToProvider(
+      mojo::InterfaceRequest<tracing::TraceProvider> request);
 
  private:
   void StopTracingAndFlushToDisk();
@@ -78,7 +78,7 @@ class Tracer : public mojo::common::DataPipeDrainer::Client {
   void WriteFooterAndClose();
 
   // Set when connected to the tracing service.
-  tracing::TraceCoordinatorPtr coordinator_;
+  tracing::TraceCollectorPtr coordinator_;
   scoped_ptr<mojo::common::DataPipeDrainer> drainer_;
 
   // Whether we're currently tracing.

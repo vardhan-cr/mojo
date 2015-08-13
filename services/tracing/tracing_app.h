@@ -13,14 +13,14 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
-#include "services/tracing/collector_impl.h"
 #include "services/tracing/trace_data_sink.h"
+#include "services/tracing/trace_recorder_impl.h"
 
 namespace tracing {
 
 class TracingApp : public mojo::ApplicationDelegate,
-                   public mojo::InterfaceFactory<TraceCoordinator>,
-                   public TraceCoordinator {
+                   public mojo::InterfaceFactory<TraceCollector>,
+                   public TraceCollector {
  public:
   TracingApp();
   ~TracingApp() override;
@@ -30,11 +30,11 @@ class TracingApp : public mojo::ApplicationDelegate,
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
 
-  // mojo::InterfaceFactory<TraceCoordinator> implementation.
+  // mojo::InterfaceFactory<TraceCollector> implementation.
   void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<TraceCoordinator> request) override;
+              mojo::InterfaceRequest<TraceCollector> request) override;
 
-  // tracing::TraceCoordinator implementation.
+  // tracing::TraceCollector implementation.
   void Start(mojo::ScopedDataPipeProducerHandle stream,
              const mojo::String& categories) override;
   void StopAndFlush() override;
@@ -42,9 +42,9 @@ class TracingApp : public mojo::ApplicationDelegate,
   void AllDataCollected();
 
   scoped_ptr<TraceDataSink> sink_;
-  ScopedVector<CollectorImpl> collector_impls_;
-  mojo::InterfacePtrSet<TraceController> controller_ptrs_;
-  mojo::Binding<TraceCoordinator> coordinator_binding_;
+  ScopedVector<TraceRecorderImpl> recorder_impls_;
+  mojo::InterfacePtrSet<TraceProvider> provider_ptrs_;
+  mojo::Binding<TraceCollector> collector_binding_;
   bool tracing_active_;
   mojo::String tracing_categories_;
 

@@ -9,38 +9,38 @@ import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
 import 'package:mojo_services/tracing/tracing.mojom.dart';
 
-class TraceControllerImpl implements TraceController {
-  TraceControllerStub _stub;
-  TraceDataCollectorProxy _collector;
+class TraceProviderImpl implements TraceProvider {
+  TraceProviderStub _stub;
+  TraceRecorderProxy _recorder;
   // TODO(rudominer) We currently ignore _categories.
   String _categories;
 
-  TraceControllerImpl.fromEndpoint(MojoMessagePipeEndpoint e) {
-    _stub = TraceControllerStub.newFromEndpoint(e);
+  TraceProviderImpl.fromEndpoint(MojoMessagePipeEndpoint e) {
+    _stub = TraceProviderStub.newFromEndpoint(e);
     _stub.impl = this;
   }
 
   @override
-  void startTracing(String categories, TraceDataCollectorProxy collector) {
-    assert(_collector == null);
-    _collector = collector;
+  void startTracing(String categories, TraceRecorderProxy recorder) {
+    assert(_recorder == null);
+    _recorder = recorder;
     _categories = categories;
   }
 
   @override
   void stopTracing() {
-    assert(_collector != null);
-    _collector.close();
-    _collector = null;
+    assert(_recorder != null);
+    _recorder.close();
+    _recorder = null;
   }
 
   bool isActive() {
-    return _collector != null;
+    return _recorder != null;
   }
 
   void sendTraceMessage(String message) {
-    if (_collector != null) {
-      _collector.ptr.dataCollected(message);
+    if (_recorder != null) {
+      _recorder.ptr.record(message);
     }
   }
 }

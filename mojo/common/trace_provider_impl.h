@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_TRACING_CONTROLLER_IMPL_H_
-#define MOJO_COMMON_TRACING_CONTROLLER_IMPL_H_
+#ifndef MOJO_COMMON_TRACE_PROVIDER_IMPL_H_
+#define MOJO_COMMON_TRACE_PROVIDER_IMPL_H_
 
 #include "base/memory/ref_counted_memory.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
@@ -12,11 +12,10 @@
 
 namespace mojo {
 
-class TraceControllerImpl : public tracing::TraceController {
+class TraceProviderImpl : public tracing::TraceProvider {
  public:
-  explicit TraceControllerImpl(
-      InterfaceRequest<tracing::TraceController> request);
-  ~TraceControllerImpl() override;
+  explicit TraceProviderImpl(InterfaceRequest<tracing::TraceProvider> request);
+  ~TraceProviderImpl() override;
 
   // Set to true if base::trace_event::TraceLog is enabled externally to this
   // class. If this is set to true this class will save the collector but not
@@ -27,21 +26,21 @@ class TraceControllerImpl : public tracing::TraceController {
   }
 
  private:
-  // tracing::TraceController implementation:
+  // tracing::TraceProvider implementation:
   void StartTracing(const String& categories,
-                    tracing::TraceDataCollectorPtr collector) override;
+                    tracing::TraceRecorderPtr collector) override;
   void StopTracing() override;
 
   void SendChunk(const scoped_refptr<base::RefCountedString>& events_str,
                  bool has_more_events);
 
   bool tracing_already_started_;
-  tracing::TraceDataCollectorPtr collector_;
-  StrongBinding<tracing::TraceController> binding_;
+  tracing::TraceRecorderPtr recorder_;
+  StrongBinding<tracing::TraceProvider> binding_;
 
-  DISALLOW_COPY_AND_ASSIGN(TraceControllerImpl);
+  DISALLOW_COPY_AND_ASSIGN(TraceProviderImpl);
 };
 
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_TRACING_CONTROLLER_IMPL_H_
+#endif  // MOJO_COMMON_TRACE_PROVIDER_IMPL_H_

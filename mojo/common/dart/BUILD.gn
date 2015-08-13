@@ -6,7 +6,7 @@ import("//mojo/public/dart/rules.gni")
 
 dartzip_package("dart_dartzip") {
   sources = [
-    "lib/trace_controller_impl.dart",
+    "lib/trace_provider_impl.dart",
     "lib/tracing_helper.dart",
     "pubspec.yaml",
   ]
@@ -19,7 +19,7 @@ dartzip_package("dart_dartzip") {
 dart_pkg("dart_pkg") {
   entrypoints = [ "lib/tracing_helper.dart" ]
   sources = [
-    "lib/trace_controller_impl.dart",
+    "lib/trace_provider_impl.dart",
     "pubspec.yaml",
   ]
   deps = [

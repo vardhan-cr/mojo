@@ -2,27 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "services/tracing/collector_impl.h"
+#include "services/tracing/trace_recorder_impl.h"
 
 namespace tracing {
 
-CollectorImpl::CollectorImpl(mojo::InterfaceRequest<TraceDataCollector> request,
-                             TraceDataSink* sink)
+TraceRecorderImpl::TraceRecorderImpl(
+    mojo::InterfaceRequest<TraceRecorder> request,
+    TraceDataSink* sink)
     : sink_(sink), binding_(this, request.Pass()) {
 }
 
-CollectorImpl::~CollectorImpl() {
+TraceRecorderImpl::~TraceRecorderImpl() {
 }
 
-void CollectorImpl::TryRead() {
+void TraceRecorderImpl::TryRead() {
   binding_.WaitForIncomingMethodCall(MojoDeadline(0));
 }
 
-mojo::Handle CollectorImpl::TraceDataCollectorHandle() const {
+mojo::Handle TraceRecorderImpl::TraceRecorderHandle() const {
   return binding_.handle();
 }
 
-void CollectorImpl::DataCollected(const mojo::String& json) {
+void TraceRecorderImpl::Record(const mojo::String& json) {
   sink_->AddChunk(json.To<std::string>());
 }
 

@@ -203,7 +203,7 @@ class Debugger : public mojo::ApplicationDelegate,
   bool is_tracing_;
   mojo::ApplicationImpl* app_;
   mojo::WindowManagerPtr window_manager_;
-  tracing::TraceCoordinatorPtr tracing_;
+  tracing::TraceCollectorPtr tracing_;
   std::string url_;
   uint32_t command_port_;
 
