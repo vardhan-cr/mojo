@@ -43,12 +43,53 @@
 // 'views'.
 
 class SkRegion;
+
 namespace ui {
+class Cursor;
 class Event;
 }
 
-#if defined(OS_POSIX)
-typedef struct _PangoFontDescription PangoFontDescription;
+#if defined(OS_WIN)
+#include <windows.h>  // NOLINT
+typedef struct HFONT__* HFONT;
+struct IAccessible;
+#elif defined(OS_IOS)
+struct CGContext;
+#ifdef __OBJC__
+@class UIEvent;
+@class UIFont;
+@class UIImage;
+@class UIView;
+@class UIWindow;
+@class UITextField;
+#else
+class UIEvent;
+class UIFont;
+class UIImage;
+class UIView;
+class UIWindow;
+class UITextField;
+#endif  // __OBJC__
+#elif defined(OS_MACOSX)
+struct CGContext;
+#ifdef __OBJC__
+@class NSCursor;
+@class NSEvent;
+@class NSFont;
+@class NSImage;
+@class NSView;
+@class NSWindow;
+@class NSTextField;
+#else
+class NSCursor;
+class NSEvent;
+class NSFont;
+class NSImage;
+struct NSView;
+class NSWindow;
+class NSTextField;
+#endif  // __OBJC__
+#elif defined(OS_POSIX)
 typedef struct _cairo cairo_t;
 #endif
 
@@ -61,34 +102,93 @@ class ViewAndroid;
 #endif
 class SkBitmap;
 
+#if defined(USE_X11) && !defined(OS_CHROMEOS)
+extern "C" {
+struct _AtkObject;
+typedef struct _AtkObject AtkObject;
+}
+#endif
+
 namespace gfx {
 
 #if defined(OS_LINUX)
-typedef SkRegion* NativeRegion;
+typedef SkRegion* NativeRegion;  
+typedef ui::Cursor NativeCursor;
+typedef void* NativeView;
+typedef void* NativeWindow;
 typedef ui::Event* NativeEvent;
+#elif defined(OS_IOS)
+typedef void* NativeCursor;
+typedef UIView* NativeView;
+typedef UIWindow* NativeWindow;
+typedef UIEvent* NativeEvent;
+#elif defined(OS_MACOSX)
+typedef NSCursor* NativeCursor;
+typedef NSView* NativeView;
+typedef NSWindow* NativeWindow;
+typedef NSEvent* NativeEvent;
 #elif defined(OS_ANDROID)
 typedef void* NativeRegion;
+typedef void* NativeCursor;
+typedef ui::ViewAndroid* NativeView;
+typedef ui::WindowAndroid* NativeWindow;
 typedef jobject NativeEvent;
+#else
+#error Unknown build environment.
 #endif
 
-#if defined(USE_CAIRO)
-typedef PangoFontDescription* NativeFont;
-typedef void* NativeEditView;
-typedef cairo_t* NativeDrawingContext;
-typedef void* NativeViewAccessible;
+#if defined(OS_WIN)
+typedef HFONT NativeFont;
+typedef HWND NativeEditView;
+typedef HDC NativeDrawingContext;
+typedef IAccessible* NativeViewAccessible;
+#elif defined(OS_IOS)
+typedef UIFont* NativeFont;
+typedef UITextField* NativeEditView;
+typedef CGContext* NativeDrawingContext;
+#ifdef __OBJC__
+typedef id NativeViewAccessible;
 #else
-typedef void* NativeFont;
-typedef void* NativeEditView;
-typedef void* NativeDrawingContext;
 typedef void* NativeViewAccessible;
+#endif  // __OBJC__
+#elif defined(OS_MACOSX)
+typedef NSFont* NativeFont;
+typedef NSTextField* NativeEditView;
+typedef CGContext* NativeDrawingContext;
+#ifdef __OBJC__
+typedef id NativeViewAccessible;
+#else
+typedef void* NativeViewAccessible;
+#endif  // __OBJC__
+#else  // Android, Linux, Chrome OS, etc.
+// Linux doesn't have a native font type.
+typedef void* NativeEditView;
+#if defined(USE_CAIRO)
+typedef cairo_t* NativeDrawingContext;
+#else
+typedef void* NativeDrawingContext;
+#endif  // defined(USE_CAIRO)
+#if defined(USE_X11) && !defined(OS_CHROMEOS)
+typedef AtkObject* NativeViewAccessible;
+#else
+typedef void* NativeViewAccessible;
+#endif
 #endif
 
 // A constant value to indicate that gfx::NativeCursor refers to no cursor.
 #if defined(OS_LINUX)
 const int kNullCursor = 0;
+#else
+const gfx::NativeCursor kNullCursor = static_cast<gfx::NativeCursor>(NULL);
 #endif
 
+#if defined(OS_IOS)
+typedef UIImage NativeImageType;
+#elif defined(OS_MACOSX)
+typedef NSImage NativeImageType;
+#else
 typedef SkBitmap NativeImageType;
+#endif
 typedef NativeImageType* NativeImage;
 
 // Note: for test_shell we're packing a pointer into the NativeViewId. So, if
@@ -101,7 +201,10 @@ typedef intptr_t NativeViewId;
 // PluginWindowHandle is an abstraction wrapping "the types of windows
 // used by NPAPI plugins". On Windows it's an HWND, on X it's an X
 // window id.
-#if defined(USE_X11)
+#if defined(OS_WIN)
+  typedef HWND PluginWindowHandle;
+  const PluginWindowHandle kNullPluginWindow = NULL;
+#elif defined(USE_X11)
   typedef unsigned long PluginWindowHandle;
   const PluginWindowHandle kNullPluginWindow = 0;
 #elif defined(OS_ANDROID)
@@ -148,8 +251,17 @@ struct GLSurfaceHandle {
 };
 
 // AcceleratedWidget provides a surface to compositors to paint pixels.
-#if defined(USE_X11)
+#if defined(OS_WIN)
+typedef HWND AcceleratedWidget;
+const AcceleratedWidget kNullAcceleratedWidget = NULL;
+#elif defined(USE_X11)
 typedef unsigned long AcceleratedWidget;
+const AcceleratedWidget kNullAcceleratedWidget = 0;
+#elif defined(OS_IOS)
+typedef UIView* AcceleratedWidget;
+const AcceleratedWidget kNullAcceleratedWidget = 0;
+#elif defined(OS_MACOSX)
+typedef NSView* AcceleratedWidget;
 const AcceleratedWidget kNullAcceleratedWidget = 0;
 #elif defined(OS_ANDROID)
 typedef ANativeWindow* AcceleratedWidget;

@@ -4,6 +4,7 @@
 
 #include "services/window_manager/focus_controller.h"
 
+#include "ui/events/event_utils.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/capture_controller.h"
@@ -413,12 +414,14 @@ class FocusControllerTestBase : public testing::Test {
                                      root_view_->target(), &center);
 
     ui::MouseEvent button_down(ui::ET_MOUSE_PRESSED, center, center,
+                               ui::EventTimeForNow(),
                                ui::EF_LEFT_MOUSE_BUTTON, ui::EF_NONE);
     ui::EventDispatchDetails details =
         view_event_dispatcher_->OnEventFromSource(&button_down);
     CHECK(!details.dispatcher_destroyed);
 
     ui::MouseEvent button_up(ui::ET_MOUSE_RELEASED, center, center,
+                             ui::EventTimeForNow(),
                              ui::EF_LEFT_MOUSE_BUTTON, ui::EF_NONE);
     details = view_event_dispatcher_->OnEventFromSource(&button_up);
     CHECK(!details.dispatcher_destroyed);

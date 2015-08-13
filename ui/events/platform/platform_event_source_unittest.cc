@@ -65,9 +65,7 @@ class TestPlatformEventSource : public PlatformEventSource {
   }
 
   // PlatformEventSource:
-  void StopCurrentEventStream() override {
-    stop_stream_ = true;
-  }
+  void StopCurrentEventStream() override { stop_stream_ = true; }
 
  private:
   bool stop_stream_;
@@ -79,8 +77,7 @@ class TestPlatformEventDispatcher : public PlatformEventDispatcher {
   TestPlatformEventDispatcher(int id, std::vector<int>* list)
       : id_(id),
         list_(list),
-        post_dispatch_action_(POST_DISPATCH_NONE),
-        stop_stream_(false) {
+        post_dispatch_action_(POST_DISPATCH_NONE) {
     PlatformEventSource::GetInstance()->AddPlatformEventDispatcher(this);
   }
   ~TestPlatformEventDispatcher() override {
@@ -93,9 +90,7 @@ class TestPlatformEventDispatcher : public PlatformEventDispatcher {
 
  protected:
   // PlatformEventDispatcher:
-  bool CanDispatchEvent(const PlatformEvent& event) override {
-    return true;
-  }
+  bool CanDispatchEvent(const PlatformEvent& event) override { return true; }
 
   uint32_t DispatchEvent(const PlatformEvent& event) override {
     list_->push_back(id_);
@@ -106,7 +101,6 @@ class TestPlatformEventDispatcher : public PlatformEventDispatcher {
   int id_;
   std::vector<int>* list_;
   uint32_t post_dispatch_action_;
-  bool stop_stream_;
 
   DISALLOW_COPY_AND_ASSIGN(TestPlatformEventDispatcher);
 };
@@ -145,9 +139,7 @@ class PlatformEventTest : public testing::Test {
 
  protected:
   // testing::Test:
-  void SetUp() override {
-    source_.reset(new TestPlatformEventSource());
-  }
+  void SetUp() override { source_.reset(new TestPlatformEventSource()); }
 
  private:
   scoped_ptr<TestPlatformEventSource> source_;
@@ -581,9 +573,7 @@ class DestroyScopedHandleDispatcher : public TestPlatformEventDispatcher {
 
  private:
   // PlatformEventDispatcher:
-  bool CanDispatchEvent(const PlatformEvent& event) override {
-    return true;
-  }
+  bool CanDispatchEvent(const PlatformEvent& event) override { return true; }
 
   uint32_t DispatchEvent(const PlatformEvent& event) override {
     handler_.reset();
@@ -611,9 +601,9 @@ class DestroyedNestedOverriddenDispatcherQuitsNestedLoopIteration
                   TestPlatformEventDispatcher* dispatcher) {
     ScopedVector<PlatformEvent> events;
     scoped_ptr<PlatformEvent> event(CreatePlatformEvent());
-    events.push_back(event.release());
+    events.push_back(event.Pass());
     event = CreatePlatformEvent();
-    events.push_back(event.release());
+    events.push_back(event.Pass());
 
     // Attempt to dispatch a couple of events. Dispatching the first event will
     // have terminated the ScopedEventDispatcher object, which will terminate

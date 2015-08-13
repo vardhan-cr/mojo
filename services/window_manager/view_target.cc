@@ -57,7 +57,7 @@ void ViewTarget::ConvertPointToTarget(const ViewTarget* source,
     target->ConvertPointFromAncestor(root_target, point);
 }
 
-std::vector<ViewTarget*> ViewTarget::GetChildren() {
+std::vector<ViewTarget*> ViewTarget::GetChildren() const {
   std::vector<ViewTarget*> targets;
   for (mojo::View* child : view_->children())
     targets.push_back(TargetFromView(child));
@@ -119,7 +119,7 @@ ui::EventTarget* ViewTarget::GetParentTarget() {
   return TargetFromView(view_->parent());
 }
 
-scoped_ptr<ui::EventTargetIterator> ViewTarget::GetChildIterator() {
+scoped_ptr<ui::EventTargetIterator> ViewTarget::GetChildIterator() const {
   return scoped_ptr<ui::EventTargetIterator>(
       new ui::CopyingEventTargetIteratorImpl<ViewTarget>(GetChildren()));
 }

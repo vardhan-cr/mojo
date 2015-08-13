@@ -55,7 +55,7 @@ class ViewTarget : public ui::EventTarget {
   // accept const objects. (When that gets done, re-const the
   // EventTargetIterator::GetNextTarget and EventTarget::GetChildIterator
   // interfaces.)
-  std::vector<ViewTarget*> GetChildren();
+  std::vector<ViewTarget*> GetChildren() const;
 
   const ViewTarget* GetParent() const;
   gfx::Rect GetBounds() const;
@@ -71,7 +71,7 @@ class ViewTarget : public ui::EventTarget {
   // Overridden from ui::EventTarget:
   bool CanAcceptEvent(const ui::Event& event) override;
   EventTarget* GetParentTarget() override;
-  scoped_ptr<ui::EventTargetIterator> GetChildIterator() override;
+  scoped_ptr<ui::EventTargetIterator> GetChildIterator() const override;
   ui::EventTargeter* GetEventTargeter() override;
   void ConvertEventToTarget(ui::EventTarget* target,
                             ui::LocatedEvent* event) override;

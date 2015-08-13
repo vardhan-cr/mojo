@@ -7,6 +7,7 @@
 
 #include "base/basictypes.h"
 #include "base/containers/stack_container.h"
+#include "base/memory/scoped_vector.h"
 #include "ui/events/gesture_detection/gesture_detection_export.h"
 #include "ui/events/gesture_detection/motion_event.h"
 
@@ -14,7 +15,14 @@ namespace ui {
 
 struct GESTURE_DETECTION_EXPORT PointerProperties {
   PointerProperties();
-  PointerProperties(float x, float y);
+  PointerProperties(float x, float y, float touch_major);
+  PointerProperties(const MotionEvent& event, size_t pointer_index);
+
+  // Sets |touch_major|, |touch_minor|, and |orientation| from the given radius
+  // and rotation angle (in degrees).
+  void SetAxesAndOrientation(float radius_x,
+                             float radius_y,
+                             float rotation_angle_degree);
 
   int id;
   MotionEvent::ToolType tool_type;
@@ -26,6 +34,8 @@ struct GESTURE_DETECTION_EXPORT PointerProperties {
   float touch_major;
   float touch_minor;
   float orientation;
+  // source_device_id is only used on Aura.
+  int source_device_id;
 };
 
 // A generic MotionEvent implementation.
@@ -39,7 +49,7 @@ class GESTURE_DETECTION_EXPORT MotionEventGeneric : public MotionEvent {
   ~MotionEventGeneric() override;
 
   // MotionEvent implementation.
-  int GetId() const override;
+  uint32 GetUniqueEventId() const override;
   Action GetAction() const override;
   int GetActionIndex() const override;
   size_t GetPointerCount() const override;
@@ -56,38 +66,61 @@ class GESTURE_DETECTION_EXPORT MotionEventGeneric : public MotionEvent {
   int GetButtonState() const override;
   int GetFlags() const override;
   base::TimeTicks GetEventTime() const override;
-  scoped_ptr<MotionEvent> Clone() const override;
-  scoped_ptr<MotionEvent> Cancel() const override;
+  size_t GetHistorySize() const override;
+  base::TimeTicks GetHistoricalEventTime(
+      size_t historical_index) const override;
+  float GetHistoricalTouchMajor(size_t pointer_index,
+                                size_t historical_index) const override;
+  float GetHistoricalX(size_t pointer_index,
+                       size_t historical_index) const override;
+  float GetHistoricalY(size_t pointer_index,
+                       size_t historical_index) const override;
 
-  void PushPointer(const PointerProperties& pointer);
+  // Adds |pointer| to the set of pointers returning the index it was added at.
+  size_t PushPointer(const PointerProperties& pointer);
 
-  void set_action(Action action) { action_ = action; }
-  void set_event_time(base::TimeTicks event_time) { event_time_ = event_time; }
-  void set_id(int id) { id_ = id; }
-  void set_action_index(int action_index) { action_index_ = action_index; }
-  void set_button_state(int button_state) { button_state_ = button_state; }
-  void set_flags(int flags) { flags_ = flags; }
-
- protected:
-  MotionEventGeneric();
-
-  void PopPointer();
+  // Removes the PointerProperties at |index|.
+  void RemovePointerAt(size_t index);
 
   PointerProperties& pointer(size_t index) { return pointers_[index]; }
   const PointerProperties& pointer(size_t index) const {
     return pointers_[index];
   }
 
+  // Add an event to the history. |this| and |event| must have the same pointer
+  // count and must both have an action of ACTION_MOVE.
+  void PushHistoricalEvent(scoped_ptr<MotionEvent> event);
+
+  void set_action(Action action) { action_ = action; }
+  void set_event_time(base::TimeTicks event_time) { event_time_ = event_time; }
+  void set_unique_event_id(uint32 unique_event_id) {
+    unique_event_id_ = unique_event_id;
+  }
+  void set_action_index(int action_index) { action_index_ = action_index; }
+  void set_button_state(int button_state) { button_state_ = button_state; }
+  void set_flags(int flags) { flags_ = flags; }
+
+  static scoped_ptr<MotionEventGeneric> CloneEvent(const MotionEvent& event);
+  static scoped_ptr<MotionEventGeneric> CancelEvent(const MotionEvent& event);
+
+ protected:
+  MotionEventGeneric();
+  MotionEventGeneric(const MotionEvent& event, bool with_history);
+  MotionEventGeneric& operator=(const MotionEventGeneric& other);
+
+  void PopPointer();
+
  private:
   enum { kTypicalMaxPointerCount = 5 };
 
   Action action_;
   base::TimeTicks event_time_;
-  int id_;
+  uint32 unique_event_id_;
   int action_index_;
   int button_state_;
   int flags_;
   base::StackVector<PointerProperties, kTypicalMaxPointerCount> pointers_;
+  ScopedVector<MotionEvent> historical_events_;
 };
 
 }  // namespace ui

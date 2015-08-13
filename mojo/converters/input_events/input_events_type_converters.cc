@@ -11,6 +11,7 @@
 #include <X11/Xlib.h>
 #endif
 
+#include "base/time/time.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/mojo_extended_key_event_data.h"
 #include "mojo/services/input_events/public/interfaces/input_events.mojom.h"
@@ -277,6 +278,7 @@ scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
         // TODO: last flags isn't right. Need to send changed_flags.
         scoped_ptr<ui::MouseEvent> event(new ui::MouseEvent(
             MojoMouseEventTypeToUIEvent(input), location, screen_location,
+            base::TimeDelta::FromMilliseconds(input->time_stamp),
             ui::EventFlags(input->flags), ui::EventFlags(input->flags)));
         if (event->IsMouseWheelEvent()) {
           // This conversion assumes we're using the mojo meaning of these

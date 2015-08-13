@@ -5,6 +5,7 @@
 #ifndef SERVICES_WINDOW_MANAGER_VIEW_TARGETER_H_
 #define SERVICES_WINDOW_MANAGER_VIEW_TARGETER_H_
 
+#include "ui/events/event.h"
 #include "ui/events/event_targeter.h"
 
 namespace window_manager {
@@ -20,12 +21,17 @@ class ViewTargeter : public ui::EventTargeter {
   // ui::EventTargeter:
   ui::EventTarget* FindTargetForEvent(ui::EventTarget* root,
                                       ui::Event* event) override;
+  ui::EventTarget* FindNextBestTarget(ui::EventTarget* previous_target,
+                                      ui::Event* event) override;
+
   ui::EventTarget* FindTargetForLocatedEvent(ui::EventTarget* root,
-                                             ui::LocatedEvent* event) override;
+                                             ui::LocatedEvent* event);
+  bool SubtreeShouldBeExploredForEvent(ui::EventTarget* target,
+                                       const ui::LocatedEvent& event);
   bool SubtreeCanAcceptEvent(ui::EventTarget* target,
-                             const ui::LocatedEvent& event) const override;
+                             const ui::LocatedEvent& event) const;
   bool EventLocationInsideBounds(ui::EventTarget* target,
-                                 const ui::LocatedEvent& event) const override;
+                                 const ui::LocatedEvent& event) const;
 
  private:
   // Targets either the root View or the currently focused view.

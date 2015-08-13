@@ -7,6 +7,7 @@
 #include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
 #include "services/window_manager/view_target.h"
+#include "ui/events/event_target_iterator.h"
 
 namespace window_manager {
 
@@ -17,11 +18,18 @@ ViewTargeter::~ViewTargeter() {}
 ui::EventTarget* ViewTargeter::FindTargetForEvent(ui::EventTarget* root,
                                                   ui::Event* event) {
   ViewTarget* view = static_cast<ViewTarget*>(root);
-  ViewTarget* target =
-      event->IsKeyEvent()
-          ? FindTargetForKeyEvent(view, *static_cast<ui::KeyEvent*>(event))
-          : static_cast<ViewTarget*>(
-                EventTargeter::FindTargetForEvent(root, event));
+  ViewTarget* target;
+  if (event->IsKeyEvent()) {
+    target = FindTargetForKeyEvent(view, *static_cast<ui::KeyEvent*>(event));
+  } else if (event->IsMouseEvent() ||
+      event->IsScrollEvent() ||
+      event->IsTouchEvent() ||
+      event->IsGestureEvent()) {
+    target = static_cast<ViewTarget*>(FindTargetForLocatedEvent(
+      root, static_cast<ui::LocatedEvent*>(event)));
+  } else {
+    target = static_cast<ViewTarget*>(root);
+  }
 
   // TODO(erg): The aura version of this method does a lot of work to handle
   // dispatching to a target that isn't a child of |view|. For now, punt on
@@ -29,6 +37,11 @@ ui::EventTarget* ViewTargeter::FindTargetForEvent(ui::EventTarget* root,
   DCHECK_EQ(view->GetRoot(), target->GetRoot());
 
   return target;
+}
+
+ui::EventTarget* ViewTargeter::FindNextBestTarget(
+  ui::EventTarget* previous_target, ui::Event* event) {
+  return nullptr;
 }
 
 ui::EventTarget* ViewTargeter::FindTargetForLocatedEvent(
@@ -42,7 +55,33 @@ ui::EventTarget* ViewTargeter::FindTargetForLocatedEvent(
       return target;
     }
   }
-  return EventTargeter::FindTargetForLocatedEvent(view, event);
+  scoped_ptr<ui::EventTargetIterator> iter = root->GetChildIterator();
+  if (iter) {
+    ui::EventTarget* target = root;
+    for (ui::EventTarget* child = iter->GetNextTarget(); child;
+         child = iter->GetNextTarget()) {
+      ViewTargeter* targeter = static_cast<ViewTargeter*>(
+        child->GetEventTargeter());
+      if (!targeter)
+        targeter = this;
+      if (!targeter->SubtreeShouldBeExploredForEvent(child, *event))
+        continue;
+      target->ConvertEventToTarget(child, event);
+      target = child;
+      ui::EventTarget* child_target =
+          targeter->FindTargetForLocatedEvent(child, event);
+      if (child_target)
+        return child_target;
+    }
+    target->ConvertEventToTarget(root, event);
+  }
+  return root->CanAcceptEvent(*event) ? root : NULL;
+}
+
+bool ViewTargeter::SubtreeShouldBeExploredForEvent(
+  ui::EventTarget* target, const ui::LocatedEvent& event) {
+  return SubtreeCanAcceptEvent(target, event) &&
+         EventLocationInsideBounds(target, event);
 }
 
 bool ViewTargeter::SubtreeCanAcceptEvent(ui::EventTarget* target,

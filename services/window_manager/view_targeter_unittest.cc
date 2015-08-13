@@ -4,6 +4,7 @@
 
 #include "services/window_manager/view_targeter.h"
 
+#include "base/time/time.h"
 #include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
@@ -55,7 +56,8 @@ TEST_F(ViewTargeterTest, Basic) {
   one.target()->AddPreTargetHandler(&handler);
 
   ui::MouseEvent press(ui::ET_MOUSE_PRESSED, gfx::Point(20, 20),
-                       gfx::Point(20, 20), ui::EF_NONE, ui::EF_NONE);
+                       gfx::Point(20, 20), base::TimeDelta(),
+                       ui::EF_NONE, ui::EF_NONE);
   ui::EventDispatchDetails details =
       view_event_dispatcher_->OnEventFromSource(&press);
   ASSERT_FALSE(details.dispatcher_destroyed);

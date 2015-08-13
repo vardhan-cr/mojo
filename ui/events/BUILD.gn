@@ -5,11 +5,14 @@
 import("//build/config/ui.gni")
 import("//testing/test.gni")
 
-static_library("dom4_keycode_converter") {
+static_library("dom_keycode_converter") {
   sources = [
-    "keycodes/dom4/keycode_converter.cc",
-    "keycodes/dom4/keycode_converter.h",
-    "keycodes/dom4/keycode_converter_data.h",
+    "keycodes/dom/dom_code.h",
+    "keycodes/dom/dom_key.h",
+    "keycodes/dom/dom_key_data.inc",
+    "keycodes/dom/keycode_converter.cc",
+    "keycodes/dom/keycode_converter.h",
+    "keycodes/dom/keycode_converter_data.inc",
   ]
 
   deps = [
@@ -19,9 +22,8 @@ static_library("dom4_keycode_converter") {
 
 component("events_base") {
   sources = [
-    "device_data_manager.cc",
-    "device_data_manager.h",
-    "device_hotplug_event_observer.h",
+    "base_event_utils.cc",
+    "base_event_utils.h",
     "event_constants.h",
     "event_switches.cc",
     "event_switches.h",
@@ -31,8 +33,7 @@ component("events_base") {
     "gesture_event_details.h",
     "gestures/fling_curve.cc",
     "gestures/fling_curve.h",
-    "gestures/gesture_configuration.cc",
-    "gestures/gesture_configuration.h",
+    "keycodes/dom_us_layout_data.h",
     "keycodes/keyboard_code_conversion.cc",
     "keycodes/keyboard_code_conversion.h",
     "keycodes/keyboard_code_conversion_android.cc",
@@ -40,23 +41,43 @@ component("events_base") {
     "keycodes/keyboard_codes.h",
     "latency_info.cc",
     "latency_info.h",
-    "touchscreen_device.cc",
-    "touchscreen_device.h",
   ]
 
   defines = [ "EVENTS_BASE_IMPLEMENTATION" ]
 
   deps = [
-    ":dom4_keycode_converter",
+    ":dom_keycode_converter",
     "//base/third_party/dynamic_annotations",
     "//skia",
   ]
 
   public_deps = [
     "//base",
+    "//ui/events/platform",
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
+
+  if (use_x11) {
+    configs += [ "//build/config/linux:x11" ]
+
+    sources += [
+      "keycodes/keyboard_code_conversion_x.cc",
+      "keycodes/keyboard_code_conversion_x.h",
+      "x/keysym_to_unicode.cc",
+      "x/keysym_to_unicode.h",
+    ]
+
+    deps += [ "//ui/gfx/x" ]
+  }
+
+  if (use_x11 || use_ozone) {
+    sources += [
+      "keycodes/keyboard_code_conversion_xkb.cc",
+      "keycodes/keyboard_code_conversion_xkb.h",
+      "keycodes/xkb_keysym.h",
+    ]
+  }
 }
 
 component("events") {
@@ -75,11 +96,11 @@ component("events") {
     "event_target.cc",
     "event_target.h",
     "event_target_iterator.h",
-    "event_targeter.cc",
     "event_targeter.h",
     "event_utils.cc",
     "event_utils.h",
     "events_export.h",
+    "events_stub.cc",
     "gestures/gesture_provider_impl.cc",
     "gestures/gesture_provider_impl.h",
     "gestures/gesture_recognizer.h",
@@ -88,6 +109,8 @@ component("events") {
     "gestures/gesture_types.h",
     "gestures/motion_event_impl.cc",
     "gestures/motion_event_impl.h",
+    "null_event_targeter.cc",
+    "null_event_targeter.h",
   ]
 
   defines = [ "EVENTS_IMPLEMENTATION" ]
@@ -96,13 +119,34 @@ component("events") {
     ":events_base",
   ]
   deps = [
-    ":dom4_keycode_converter",
+    ":dom_keycode_converter",
     ":gesture_detection",
     "//base/third_party/dynamic_annotations",
     "//skia",
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
+
+  if (use_x11) {
+    sources += [ "x/events_x.cc" ]
+    configs += [
+      "//build/config/linux:glib",
+      "//build/config/linux:x11",
+    ]
+    deps += [
+      "//ui/events/devices",
+      "//ui/gfx/x",
+    ]
+  }
+
+  if (use_ozone) {
+    sources += [ "ozone/events_ozone.cc" ]
+    deps += [ "//ui/events/ozone:events_ozone_layout" ]
+  }
+
+  if (is_win || is_mac || use_x11 || use_ozone) {
+    sources -= [ "events_stub.cc" ]
+  }
 }
 
 component("gesture_detection") {
@@ -110,8 +154,8 @@ component("gesture_detection") {
     "gesture_detection/bitset_32.h",
     "gesture_detection/filtered_gesture_provider.cc",
     "gesture_detection/filtered_gesture_provider.h",
-    "gesture_detection/gesture_config_helper.h",
-    "gesture_detection/gesture_config_helper_aura.cc",
+    "gesture_detection/gesture_configuration.cc",
+    "gesture_detection/gesture_configuration.h",
     "gesture_detection/gesture_detection_export.h",
     "gesture_detection/gesture_detector.cc",
     "gesture_detection/gesture_detector.h",
@@ -123,6 +167,8 @@ component("gesture_detection") {
     "gesture_detection/gesture_listeners.h",
     "gesture_detection/gesture_provider.cc",
     "gesture_detection/gesture_provider.h",
+    "gesture_detection/gesture_provider_config_helper.cc",
+    "gesture_detection/gesture_provider_config_helper.h",
     "gesture_detection/gesture_touch_uma_histogram.cc",
     "gesture_detection/gesture_touch_uma_histogram.h",
     "gesture_detection/motion_event.cc",
@@ -148,19 +194,30 @@ component("gesture_detection") {
   deps = [
     ":events_base",
     "//base",
+    "//base/third_party/dynamic_annotations",
     "//ui/gfx",
     "//ui/gfx/geometry",
   ]
 
   defines = [ "GESTURE_DETECTION_IMPLEMENTATION" ]
+
+  if (is_android) {
+    sources += [ "gesture_detection/gesture_configuration_android.cc" ]
+  } else if (use_aura) {
+    sources += [ "gesture_detection/gesture_configuration_aura.cc" ]
+  } else {
+    sources += [ "gesture_detection/gesture_configuration_default.cc" ]
+  }
 }
 
 source_set("test_support") {
   sources = [
+    "test/event_generator.cc",
+    "test/event_generator.h",
     "test/events_test_utils.cc",
     "test/events_test_utils.h",
-    "test/mock_motion_event.cc",
-    "test/mock_motion_event.h",
+    "test/motion_event_test_utils.cc",
+    "test/motion_event_test_utils.h",
     "test/platform_event_waiter.cc",
     "test/platform_event_waiter.h",
     "test/test_event_handler.cc",
@@ -169,6 +226,8 @@ source_set("test_support") {
     "test/test_event_processor.h",
     "test/test_event_target.cc",
     "test/test_event_target.h",
+    "test/test_event_targeter.cc",
+    "test/test_event_targeter.h",
   ]
 
   public_deps = [
@@ -188,34 +247,41 @@ source_set("test_support") {
       "test/events_test_utils_x11.cc",
       "test/events_test_utils_x11.h",
     ]
-    deps += [ "//ui/gfx/x" ]
+    deps += [
+      "//ui/events/devices",
+      "//ui/gfx/x",
+    ]
   }
 }
 
 test("events_unittests") {
   sources = [
+    "cocoa/events_mac_unittest.mm",
+    "devices/x11/device_data_manager_x11_unittest.cc",
     "event_dispatcher_unittest.cc",
     "event_processor_unittest.cc",
     "event_rewriter_unittest.cc",
     "event_unittest.cc",
     "gesture_detection/bitset_32_unittest.cc",
+    "gesture_detection/filtered_gesture_provider_unittest.cc",
     "gesture_detection/gesture_event_data_packet_unittest.cc",
     "gesture_detection/gesture_provider_unittest.cc",
     "gesture_detection/motion_event_buffer_unittest.cc",
     "gesture_detection/motion_event_generic_unittest.cc",
+    "gesture_detection/snap_scroll_controller_unittest.cc",
     "gesture_detection/touch_disposition_gesture_filter_unittest.cc",
     "gesture_detection/velocity_tracker_unittest.cc",
     "gestures/fling_curve_unittest.cc",
     "gestures/gesture_provider_impl_unittest.cc",
-    "keycodes/dom4/keycode_converter_unittest.cc",
+    "keycodes/dom/keycode_converter_unittest.cc",
+    "keycodes/keyboard_code_conversion_unittest.cc",
     "latency_info_unittest.cc",
-    "platform/platform_event_builder_x_unittest.cc",
     "platform/platform_event_source_unittest.cc",
-    "platform/x11/platform_event_utils_x_unittest.cc",
+    "x/events_x_unittest.cc",
   ]
 
   deps = [
-    ":dom4_keycode_converter",
+    ":dom_keycode_converter",
     ":events",
     ":events_base",
     ":gesture_detection",
@@ -224,17 +290,51 @@ test("events_unittests") {
     "//base/test:run_all_unittests",
     "//skia",
     "//testing/gtest",
+    "//ui/events/devices",
     "//ui/events/platform",
     "//ui/gfx:test_support",
   ]
+
+  include_dirs = [ "//testing/gmock/include" ]
 
   if (use_x11) {
     configs += [ "//build/config/linux:x11" ]
     deps += [ "//ui/gfx/x" ]
   } else {
     sources -= [
-      "platform/platform_event_builder_x_unittest.cc",
-      "platform/x11/platform_event_utils_x_unittest.cc",
+      "devices/x11/device_data_manager_x11_unittest.cc",
+      "x/events_x_unittest.cc",
+    ]
+  }
+
+  if (use_ozone) {
+    sources += [
+      "ozone/chromeos/cursor_controller_unittest.cc",
+      "ozone/evdev/event_converter_evdev_impl_unittest.cc",
+      "ozone/evdev/event_converter_test_util.cc",
+      "ozone/evdev/event_device_info_unittest.cc",
+      "ozone/evdev/event_device_test_util.cc",
+      "ozone/evdev/input_injector_evdev_unittest.cc",
+      "ozone/evdev/tablet_event_converter_evdev_unittest.cc",
+      "ozone/evdev/touch_event_converter_evdev_unittest.cc",
+      "ozone/evdev/touch_noise/touch_noise_finder_unittest.cc",
+      "ozone/layout/xkb/xkb_keyboard_layout_engine_unittest.cc",
+    ]
+    deps += [
+      "//ui/events/ozone:events_ozone",
+      "//ui/events/ozone:events_ozone_evdev",
+      "//ui/events/ozone:events_ozone_layout",
+    ]
+  }
+}
+
+if (is_nacl) {
+  source_set("latency_info") {
+    sources = [
+      "ipc/latency_info_param_traits.cc",
+      "ipc/latency_info_param_traits.h",
+      "latency_info.cc",
+      "latency_info.h",
     ]
   }
 }

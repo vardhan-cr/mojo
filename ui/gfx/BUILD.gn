@@ -65,6 +65,11 @@ component("gfx") {
     "hud_font.cc",
     "hud_font.h",
     "native_widget_types.h",
+    "screen.cc",
+    "screen.h",
+    "screen_android.cc",
+    "screen_stub.cc",
+    "screen_type_delegate.h",
     "sequential_id_generator.cc",
     "sequential_id_generator.h",
     "shadow_value.cc",
@@ -111,6 +116,7 @@ component("gfx") {
     sources -= [
       "animation/throb_animation.cc",
       "display_observer.cc",
+      "screen_stub.cc",
     ]
 
     # TODO(jdduke): Revisit optimization after gauging benefit, crbug/419051.

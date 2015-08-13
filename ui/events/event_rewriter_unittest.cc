@@ -84,8 +84,7 @@ class TestConstantEventRewriter : public EventRewriter {
   }
 
   EventRewriteStatus RewriteEvent(const Event& event,
-                                  scoped_ptr<Event>* rewritten_event)
-      override {
+                                  scoped_ptr<Event>* rewritten_event) override {
     if (status_ == EVENT_REWRITE_REWRITTEN)
       rewritten_event->reset(new TestEvent(type_));
     return status_;

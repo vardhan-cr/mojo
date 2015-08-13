@@ -50,14 +50,16 @@ class TestEventTarget : public EventTarget {
     target_name_ = target_name;
   }
 
+  // EventTarget:
+  EventTargeter* GetEventTargeter() override;
+
  protected:
   bool Contains(TestEventTarget* target) const;
 
   // EventTarget:
   bool CanAcceptEvent(const ui::Event& event) override;
   EventTarget* GetParentTarget() override;
-  scoped_ptr<EventTargetIterator> GetChildIterator() override;
-  EventTargeter* GetEventTargeter() override;
+  scoped_ptr<EventTargetIterator> GetChildIterator() const override;
 
   // EventHandler:
   void OnEvent(Event* event) override;
