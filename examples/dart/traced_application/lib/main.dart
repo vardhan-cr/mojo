@@ -6,7 +6,8 @@
 // This example application illustrates how to use Mojo Tracing from Dart code.
 //
 // To run this app:
-// mojo/devtools/common/mojo_run mojo:traced_application --trace-startup
+// mojo/devtools/common/mojo_run --trace-startup \
+//   https://core.mojoapps.io/examples/dart/traced_application/lib/main.dart
 //
 // This will produce a file called |mojo_shell.trace| that may be loaded
 // by Chrome's about:tracing.
