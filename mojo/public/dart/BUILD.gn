@@ -43,7 +43,7 @@ dartzip_package("dart_dartzip") {
 }
 
 dart_pkg("dart_pkg") {
-  entrypoints = dart_mojo_sdk_entrypoints
+  libs = dart_mojo_sdk_entrypoints
   sources = dart_mojo_sdk_sources + [
               "lib/_sdkext",
               "pubspec.yaml",

@@ -24,13 +24,21 @@ dartzip_packaged_application("mojo_dart_world_dartzip") {
 }
 
 dart_pkg("mojo_dart_world_pkg") {
-  entrypoints = [ "lib/main.dart" ]
+  apps = [ "lib/main.dart" ]
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
   ]
+
+  # This exercises the ability of the Dart content handler to run isolates in
+  # either strict or non-strict mode at the same time. In a Debug build, the
+  # content handler always runs code in strict mode, so we run in different
+  # modes only in a Release build.
+  if (!is_debug) {
+    strict = true
+  }
 }
 
 group("world") {

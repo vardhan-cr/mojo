@@ -17,7 +17,7 @@ dartzip_package("dart_dartzip") {
 }
 
 dart_pkg("dart_pkg") {
-  entrypoints = [ "lib/tracing_helper.dart" ]
+  libs = [ "lib/tracing_helper.dart" ]
   sources = [
     "lib/trace_provider_impl.dart",
     "pubspec.yaml",

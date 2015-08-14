@@ -15,7 +15,7 @@ dartzip_packaged_application("observatory_test_dartzip") {
 }
 
 dart_pkg("observatory_test_pkg") {
-  entrypoints = [ "lib/main.dart" ]
+  apps = [ "lib/main.dart" ]
   sources = [
     "pubspec.yaml",
   ]

@@ -31,7 +31,7 @@ dartzip_packaged_application("dart_apptests_dartzip") {
 }
 
 dart_pkg("dart_apptests_pkg") {
-  entrypoints = [ "lib/main.dart" ]
+  libs = [ "lib/main.dart" ]
   sources = [
     "lib/src/connect_to_loader_apptests.dart",
     "lib/src/echo_apptests.dart",

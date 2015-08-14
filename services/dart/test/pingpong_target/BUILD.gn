@@ -16,7 +16,7 @@ dartzip_packaged_application("mojo_dart_pingpong_target_dartzip") {
 }
 
 dart_pkg("mojo_dart_pingpong_target_pkg") {
-  entrypoints = [ "lib/main.dart" ]
+  apps = [ "lib/main.dart" ]
   sources = [
     "pubspec.yaml",
   ]

@@ -18,7 +18,7 @@ dartzip_package("mojo_dart_http_load_test_dartzip") {
 }
 
 dart_pkg("mojo_dart_http_load_test_pkg") {
-  entrypoints = [ "lib/main.dart" ]
+  apps = [ "lib/main.dart" ]
   sources = [
     "lib/src/part0.dart",
     "pubspec.yaml",
