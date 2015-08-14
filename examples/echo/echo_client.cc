@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 
+#include "base/logging.h"
 #include "examples/echo/echo.mojom.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -17,8 +18,7 @@ namespace examples {
 class ResponsePrinter {
  public:
   void Run(const String& value) const {
-    printf("Response: \"%s\"\n", value.get().c_str());
-
+    LOG(INFO) << "***** Response: " << value.get().c_str();
     RunLoop::current()->Quit();  // All done!
   }
 };
