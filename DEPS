@@ -29,7 +29,7 @@ vars = {
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
   'lss_revision': '6f97298fe3794e92c8c896a6bc06e0b36e4c3de3',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
-  'nacl_revision': '87d5dd90911a0657c27574f78e86b7dfc4ad8b29',
+  'nacl_revision': 'd8c34ff8a79c5e6e385f3b39534220090d64e019',
   'archive_dart_revision': '07ffd98c5403b7f9ae067b57dc9487611be420f5',
   'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
   'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
