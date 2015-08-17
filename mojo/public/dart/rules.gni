@@ -49,7 +49,9 @@ template("dartx") {
       rebase_path(snapshot),
     ]
 
-    deps = []
+    deps = [
+      dart_snapshotter_bin,
+    ]
     if (defined(invoker.deps)) {
       deps += invoker.deps
     }

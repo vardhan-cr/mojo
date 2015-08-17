@@ -4,3 +4,5 @@
 
 # This variable should point to the Dart SDK.
 dart_sdk_root = "//third_party/dart-sdk/dart-sdk"
+
+dart_snapshotter_bin = "//mojo/dart/dart_snapshotter($host_toolchain)"
