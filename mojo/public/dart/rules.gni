@@ -9,6 +9,7 @@
 # - dartzip_package
 # - dartzip_packaged_application
 
+import("../mojo.gni")
 import("//build/module_args/mojo.gni")
 import("//build/module_args/dart.gni")
 
@@ -16,11 +17,17 @@ template("dartx") {
   bundle_prefix = target_name
   bundle = "$target_gen_dir/${bundle_prefix}.dartx"
   snapshot = "$target_gen_dir/${bundle_prefix}_snapshot.bin"
-  dart_snapshotter = "$root_out_dir/dart_snapshotter"
-  if (current_toolchain != host_toolchain) {
-    toolchain_name = get_label_info(host_toolchain, "name")
-    dart_snapshotter = "$root_out_dir/$toolchain_name/dart_snapshotter"
+
+  if (mojo_use_prebuilt_dart_snapshotter) {
+    dart_snapshotter_path =
+        rebase_path("mojo/public/tools:copy_dart_snapshotter", ".", mojo_root)
+    dart_snapshotter_rule = "$dart_snapshotter_path($host_toolchain)"
+  } else {
+    dart_snapshotter_rule = dart_snapshotter_bin
   }
+  dart_snapshotter_dir =
+      get_label_info("$dart_snapshotter_rule", "root_out_dir")
+  dart_snapshotter = "$dart_snapshotter_dir/dart_snapshotter"
 
   action("gen_${bundle_prefix}_snapshot") {
     main_dart = invoker.main_dart
@@ -50,7 +57,7 @@ template("dartx") {
     ]
 
     deps = [
-      dart_snapshotter_bin,
+      dart_snapshotter_rule,
     ]
     if (defined(invoker.deps)) {
       deps += invoker.deps

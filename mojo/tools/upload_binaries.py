@@ -154,6 +154,36 @@ def upload_shell(config, dry_run, verbose):
   write_file_to_gs(version, latest_file, config, dry_run)
 
 
+def upload_dart_snapshotter(config, dry_run, verbose):
+  # Only built for Linux and Mac.
+  if not config.target_os in [Config.OS_LINUX, Config.OS_MAC]:
+    return
+
+  paths = Paths(config)
+  zipfile_name = target(config)
+  version = Version().version
+
+  dest = "gs://mojo/dart_snapshotter/" + version + "/" + zipfile_name + ".zip"
+  with tempfile.NamedTemporaryFile() as zip_file:
+    with zipfile.ZipFile(zip_file, 'w') as z:
+      dart_snapshotter_path = paths.target_dart_snapshotter_path
+      with open(dart_snapshotter_path) as dart_snapshotter_binary:
+        dart_snapshotter_filename = os.path.basename(dart_snapshotter_path)
+        zipinfo = zipfile.ZipInfo(dart_snapshotter_filename)
+        zipinfo.external_attr = 0777 << 16L
+        compress_type = zipfile.ZIP_DEFLATED
+        zipinfo.compress_type = compress_type
+        zipinfo.date_time = time.gmtime(os.path.getmtime(dart_snapshotter_path))
+        if verbose:
+          print "zipping %s" % dart_snapshotter_path
+        z.writestr(zipinfo, dart_snapshotter_binary.read())
+    upload(config, zip_file.name, dest, dry_run, gzip=False)
+
+  # Update the LATEST file to contain the version of the new binary.
+  latest_file = "gs://mojo/dart_snapshotter/%s/LATEST" % target(config)
+  write_file_to_gs(version, latest_file, config, dry_run)
+
+
 def upload_app(app_binary_path, config, dry_run):
   app_binary_name = os.path.basename(app_binary_path)
   version = Version().version
@@ -227,6 +257,8 @@ def main():
 
   upload_symbols(config, build_directory,
                  args.symbols_upload_url, args.dry_run)
+
+  upload_dart_snapshotter(config, args.dry_run, args.verbose)
 
   return 0
 
