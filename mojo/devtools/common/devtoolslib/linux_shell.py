@@ -4,6 +4,7 @@
 
 import subprocess
 import threading
+import tempfile
 
 from devtoolslib import http_server
 from devtoolslib.shell import Shell
@@ -44,23 +45,18 @@ class LinuxShell(Shell):
   @overrides(Shell)
   def run_and_get_output(self, arguments, timeout=None):
     command = self.command_prefix + [self.executable_path] + arguments
-    p = subprocess.Popen(command, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+    output_file = tempfile.TemporaryFile()
+    p = subprocess.Popen(command, stdout=output_file, stderr=output_file)
 
-    class Results:
-      """Workaround for Python scoping rules that prevent assigning to variables
-      from the outer scope.
-      """
-      output = None
+    wait_thread = threading.Thread(target=p.wait)
+    wait_thread.start()
+    wait_thread.join(timeout)
 
-    def do_run():
-      (Results.output, _) = p.communicate()
-
-    run_thread = threading.Thread(target=do_run)
-    run_thread.start()
-    run_thread.join(timeout)
-
-    if run_thread.is_alive():
+    did_time_out = False
+    if p.poll() is None:
+      did_time_out = True
       p.terminate()
-      return p.returncode, Results.output, True
-    return p.returncode, Results.output, False
+      p.poll()
+    output_file.seek(0)
+    output = output_file.read()
+    return p.returncode, output, did_time_out
