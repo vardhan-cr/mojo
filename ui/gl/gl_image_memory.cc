@@ -7,8 +7,12 @@
 #include "base/logging.h"
 #include "base/trace_event/trace_event.h"
 #include "ui/gl/gl_bindings.h"
-#include "ui/gl/gl_surface_egl.h"
 #include "ui/gl/scoped_binders.h"
+
+#if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || \
+    defined(USE_OZONE)
+#include "ui/gl/gl_surface_egl.h"
+#endif
 
 namespace gfx {
 namespace {

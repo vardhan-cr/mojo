@@ -197,13 +197,13 @@ unsigned int GLSurface::GetBackingFrameBufferObject() {
 
 bool GLSurface::SwapBuffersAsync(const SwapCompletionCallback& callback) {
   DCHECK(!IsSurfaceless());
-  bool success = SwapBuffers();
-  callback.Run();
-  return success;
+  gfx::SwapResult result = SwapBuffers();
+  callback.Run(result);
+  return result == gfx::SwapResult::SWAP_ACK;
 }
 
-bool GLSurface::PostSubBuffer(int x, int y, int width, int height) {
-  return false;
+gfx::SwapResult GLSurface::PostSubBuffer(int x, int y, int width, int height) {
+  return gfx::SwapResult::SWAP_FAILED;
 }
 
 bool GLSurface::PostSubBufferAsync(int x,
@@ -211,9 +211,9 @@ bool GLSurface::PostSubBufferAsync(int x,
                                    int width,
                                    int height,
                                    const SwapCompletionCallback& callback) {
-  bool success = PostSubBuffer(x, y, width, height);
-  callback.Run();
-  return success;
+  gfx::SwapResult result = PostSubBuffer(x, y, width, height);
+  callback.Run(result);
+  return result == gfx::SwapResult::SWAP_ACK;
 }
 
 bool GLSurface::OnMakeCurrent(GLContext* context) {
@@ -324,7 +324,7 @@ bool GLSurfaceAdapter::IsOffscreen() {
   return surface_->IsOffscreen();
 }
 
-bool GLSurfaceAdapter::SwapBuffers() {
+gfx::SwapResult GLSurfaceAdapter::SwapBuffers() {
   return surface_->SwapBuffers();
 }
 
@@ -333,7 +333,8 @@ bool GLSurfaceAdapter::SwapBuffersAsync(
   return surface_->SwapBuffersAsync(callback);
 }
 
-bool GLSurfaceAdapter::PostSubBuffer(int x, int y, int width, int height) {
+gfx::SwapResult GLSurfaceAdapter::PostSubBuffer(
+    int x, int y, int width, int height) {
   return surface_->PostSubBuffer(x, y, width, height);
 }
 

@@ -50,6 +50,13 @@ group("mojo") {
       "//mojo/nacl:mojo_nacl_tests",
     ]
   }
+
+  if (use_ozone) {
+    deps += [
+      "//ui/ozone",
+      "//ui/ozone/demo",
+    ]
+  }
 }
 
 group("tests") {

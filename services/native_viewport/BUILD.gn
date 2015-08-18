@@ -119,6 +119,11 @@ source_set("lib") {
     sources -= [ "platform_viewport_x11.cc" ]
   }
 
+  if (use_ozone) {
+    sources += [ "platform_viewport_ozone.cc" ]
+    deps += [ "//ui/ozone" ]
+  }
+
   if (is_win) {
     deps += [ "//ui/platform_window/win" ]
   }

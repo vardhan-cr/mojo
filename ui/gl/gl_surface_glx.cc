@@ -501,13 +501,13 @@ bool NativeViewGLSurfaceGLX::IsOffscreen() {
   return false;
 }
 
-bool NativeViewGLSurfaceGLX::SwapBuffers() {
+gfx::SwapResult NativeViewGLSurfaceGLX::SwapBuffers() {
   TRACE_EVENT2("gpu", "NativeViewGLSurfaceGLX:RealSwapBuffers",
       "width", GetSize().width(),
       "height", GetSize().height());
 
   glXSwapBuffers(g_display, GetDrawableHandle());
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 gfx::Size NativeViewGLSurfaceGLX::GetSize() {
@@ -586,11 +586,11 @@ void* NativeViewGLSurfaceGLX::GetConfig() {
   return config_;
 }
 
-bool NativeViewGLSurfaceGLX::PostSubBuffer(
+gfx::SwapResult NativeViewGLSurfaceGLX::PostSubBuffer(
     int x, int y, int width, int height) {
   DCHECK(gfx::g_driver_glx.ext.b_GLX_MESA_copy_sub_buffer);
   glXCopySubBufferMESA(g_display, GetDrawableHandle(), x, y, width, height);
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
@@ -673,9 +673,9 @@ bool PbufferGLSurfaceGLX::IsOffscreen() {
   return true;
 }
 
-bool PbufferGLSurfaceGLX::SwapBuffers() {
+gfx::SwapResult PbufferGLSurfaceGLX::SwapBuffers() {
   NOTREACHED() << "Attempted to call SwapBuffers on a pbuffer.";
-  return false;
+  return gfx::SwapResult::SWAP_FAILED;
 }
 
 gfx::Size PbufferGLSurfaceGLX::GetSize() {

@@ -34,9 +34,9 @@ class NativeViewGLSurfaceOSMesa : public GLSurfaceOSMesa {
   void Destroy() override;
   bool Resize(const gfx::Size& new_size) override;
   bool IsOffscreen() override;
-  bool SwapBuffers() override;
+  gfx::SwapResult SwapBuffers() override;
   bool SupportsPostSubBuffer() override;
-  bool PostSubBuffer(int x, int y, int width, int height) override;
+  gfx::SwapResult PostSubBuffer(int x, int y, int width, int height) override;
 
  protected:
   ~NativeViewGLSurfaceOSMesa() override;
@@ -186,7 +186,7 @@ bool NativeViewGLSurfaceOSMesa::IsOffscreen() {
   return false;
 }
 
-bool NativeViewGLSurfaceOSMesa::SwapBuffers() {
+gfx::SwapResult NativeViewGLSurfaceOSMesa::SwapBuffers() {
   TRACE_EVENT2("gpu", "NativeViewGLSurfaceOSMesa:RealSwapBuffers",
       "width", GetSize().width(),
       "height", GetSize().height());
@@ -196,7 +196,7 @@ bool NativeViewGLSurfaceOSMesa::SwapBuffers() {
   XWindowAttributes attributes;
   if (!XGetWindowAttributes(xdisplay_, window_, &attributes)) {
     LOG(ERROR) << "XGetWindowAttributes failed for window " << window_ << ".";
-    return false;
+    return gfx::SwapResult::SWAP_FAILED;
   }
 
   // Copy the frame into the pixmap.
@@ -221,14 +221,14 @@ bool NativeViewGLSurfaceOSMesa::SwapBuffers() {
             0,
             0);
 
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 bool NativeViewGLSurfaceOSMesa::SupportsPostSubBuffer() {
   return true;
 }
 
-bool NativeViewGLSurfaceOSMesa::PostSubBuffer(
+gfx::SwapResult NativeViewGLSurfaceOSMesa::PostSubBuffer(
     int x, int y, int width, int height) {
   gfx::Size size = GetSize();
 
@@ -238,7 +238,7 @@ bool NativeViewGLSurfaceOSMesa::PostSubBuffer(
   XWindowAttributes attributes;
   if (!XGetWindowAttributes(xdisplay_, window_, &attributes)) {
     LOG(ERROR) << "XGetWindowAttributes failed for window " << window_ << ".";
-    return false;
+    return gfx::SwapResult::SWAP_FAILED;
   }
 
   // Copy the frame into the pixmap.
@@ -269,7 +269,7 @@ bool NativeViewGLSurfaceOSMesa::PostSubBuffer(
             x,
             y);
 
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 NativeViewGLSurfaceOSMesa::~NativeViewGLSurfaceOSMesa() {

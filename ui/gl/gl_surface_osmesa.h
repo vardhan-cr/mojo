@@ -27,7 +27,7 @@ class GL_EXPORT GLSurfaceOSMesa : public GLSurface {
   void Destroy() override;
   bool Resize(const gfx::Size& new_size) override;
   bool IsOffscreen() override;
-  bool SwapBuffers() override;
+  gfx::SwapResult SwapBuffers() override;
   gfx::Size GetSize() override;
   void* GetHandle() override;
   unsigned GetFormat() override;
@@ -53,7 +53,7 @@ class GLSurfaceOSMesaHeadless : public GLSurfaceOSMesa {
       const gfx::SurfaceConfiguration requested_configuration);
 
   bool IsOffscreen() override;
-  bool SwapBuffers() override;
+  SwapResult SwapBuffers() override;
   void* GetConfig() override;
 
  protected:

@@ -8,10 +8,11 @@ namespace gfx {
 
 GpuMemoryBufferHandle::GpuMemoryBufferHandle()
     : type(EMPTY_BUFFER),
+      id(0),
       handle(base::SharedMemory::NULLHandle())
-#if defined(USE_X11)
+#if defined(OS_MACOSX)
       ,
-      pixmap(0)
+      io_surface_id(0)
 #endif
 {
 }

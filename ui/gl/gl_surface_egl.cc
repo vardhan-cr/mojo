@@ -30,7 +30,8 @@ extern "C" {
 #endif
 
 #if defined (USE_OZONE)
-#include "ui/ozone/public/surface_factory_ozone.h"
+#include "ui/ozone/public/ozone_platform.h" // nogncheck
+#include "ui/ozone/public/surface_factory_ozone.h" // nogncheck
 #endif
 
 #if !defined(EGL_FIXED_SIZE_ANGLE)
@@ -142,7 +143,7 @@ void* GetEGLConfig(const EGLNativeWindowType window,
           switches::kEnableUnsafeES3APIs)) {
     renderable_type = EGL_OPENGL_ES3_BIT;
   }
-  EGLint config_attribs[] = {
+  EGLint kConfigAttribs[] = {
     EGL_BUFFER_SIZE, configuration.alpha_bits +
                      configuration.red_bits +
                      configuration.green_bits +
@@ -161,16 +162,19 @@ void* GetEGLConfig(const EGLNativeWindowType window,
   };
 
 #if defined(USE_OZONE)
-  config_attribs =
-      ui::SurfaceFactoryOzone::GetInstance()->GetEGLSurfaceProperties(
-          config_attribs);
+  const EGLint* config_attribs = ui::OzonePlatform::GetInstance()
+    ->GetSurfaceFactoryOzone()
+    ->GetEGLSurfaceProperties(kConfigAttribs);
 #elif defined(USE_X11)
+  EGLint* config_attribs = kConfigAttribs;
   // Try matching the window depth with an alpha channel,
   // because we're worried the destination alpha width could
   // constrain blending precision.
   const int kBufferSizeOffset = 1;
   const int kAlphaSizeOffset = 3;
   config_attribs[kBufferSizeOffset] = win_attribs.depth;
+#else
+  const EGLint* config_attribs = kConfigAttribs;
 #endif
 
   EGLint num_configs;
@@ -446,7 +450,7 @@ bool NativeViewGLSurfaceEGL::IsOffscreen() {
   return false;
 }
 
-bool NativeViewGLSurfaceEGL::SwapBuffers() {
+gfx::SwapResult NativeViewGLSurfaceEGL::SwapBuffers() {
   TRACE_EVENT2("gpu", "NativeViewGLSurfaceEGL:RealSwapBuffers",
       "width", GetSize().width(),
       "height", GetSize().height());
@@ -454,10 +458,10 @@ bool NativeViewGLSurfaceEGL::SwapBuffers() {
   if (!eglSwapBuffers(GetDisplay(), surface_)) {
     DVLOG(1) << "eglSwapBuffers failed with error "
              << GetLastEGLErrorString();
-    return false;
+    return gfx::SwapResult::SWAP_FAILED;
   }
 
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 gfx::Size NativeViewGLSurfaceEGL::GetSize() {
@@ -516,15 +520,15 @@ bool NativeViewGLSurfaceEGL::SupportsPostSubBuffer() {
   return supports_post_sub_buffer_;
 }
 
-bool NativeViewGLSurfaceEGL::PostSubBuffer(
+gfx::SwapResult NativeViewGLSurfaceEGL::PostSubBuffer(
     int x, int y, int width, int height) {
   DCHECK(supports_post_sub_buffer_);
   if (!eglPostSubBufferNV(GetDisplay(), surface_, x, y, width, height)) {
     DVLOG(1) << "eglPostSubBufferNV failed with error "
              << GetLastEGLErrorString();
-    return false;
+    return gfx::SwapResult::SWAP_FAILED;
   }
-  return true;
+  return gfx::SwapResult::SWAP_ACK;
 }
 
 VSyncProvider* NativeViewGLSurfaceEGL::GetVSyncProvider() {
@@ -614,9 +618,9 @@ bool PbufferGLSurfaceEGL::IsOffscreen() {
   return true;
 }
 
-bool PbufferGLSurfaceEGL::SwapBuffers() {
+gfx::SwapResult PbufferGLSurfaceEGL::SwapBuffers() {
   NOTREACHED() << "Attempted to call SwapBuffers on a PbufferGLSurfaceEGL.";
-  return false;
+  return gfx::SwapResult::SWAP_FAILED;
 }
 
 gfx::Size PbufferGLSurfaceEGL::GetSize() {
@@ -702,9 +706,9 @@ bool SurfacelessEGL::IsSurfaceless() const {
   return true;
 }
 
-bool SurfacelessEGL::SwapBuffers() {
+gfx::SwapResult SurfacelessEGL::SwapBuffers() {
   LOG(ERROR) << "Attempted to call SwapBuffers with SurfacelessEGL.";
-  return false;
+  return gfx::SwapResult::SWAP_FAILED;
 }
 
 gfx::Size SurfacelessEGL::GetSize() {
