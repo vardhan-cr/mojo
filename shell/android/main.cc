@@ -4,6 +4,8 @@
 
 #include "shell/android/main.h"
 
+#include <stdio.h>
+
 #include "base/android/fifo_utils.h"
 #include "base/android/jni_android.h"
 #include "base/android/jni_array.h"
@@ -180,6 +182,10 @@ void InitializeRedirection() {
       << "Failed to redirect stdout to file: " << fifo_path.value();
   CHECK(dup2(STDOUT_FILENO, STDERR_FILENO) != -1)
       << "Unable to redirect stderr to stdout.";
+  // Set stdout to be line buffered to match what one expects when running
+  // attached to a terminal.
+  if (setvbuf(stdout, NULL, _IONBF, 0) != 0)
+    LOG(ERROR) << "Failed to set stdout to be line buffered.";
 }
 
 void ConnectToApplicationImpl(
