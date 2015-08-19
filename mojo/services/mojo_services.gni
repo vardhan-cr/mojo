@@ -26,6 +26,7 @@ mojo_services = [
   "//mojo/services/speech_recognizer/public/interfaces",
   "//mojo/services/surfaces/public/interfaces",
   "//mojo/services/terminal/public/interfaces",
+  "//mojo/services/vanadium/security/public/interfaces",
   "//mojo/services/view_manager/public/interfaces",
   "//mojo/services/window_manager/public/interfaces",
 ]
