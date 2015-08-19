@@ -58,8 +58,8 @@ void DisplayImpl::OnContextCreated(mojo::CommandBufferPtr gles2_client) {
 }
 
 DisplayImpl::~DisplayImpl() {
+  factory_.Destroy(cc_id_);
   if (display_) {
-    factory_.Destroy(cc_id_);
     scheduler_->RemoveDisplay(display_.get());
   }
 }
