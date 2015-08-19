@@ -741,6 +741,10 @@ template("create_apk") {
     keystore_password = invoker.keystore_password
     rezip_apk = _load_library_from_apk
 
+    if (defined(invoker.deps)) {
+      deps = invoker.deps
+    }
+
     public_deps = [
       # Generator of the _packaged_apk_path this target takes as input.
       ":$package_target",
