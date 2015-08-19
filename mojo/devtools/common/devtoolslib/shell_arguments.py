@@ -190,7 +190,8 @@ def get_shell(shell_config, shell_args):
                          logcat_tags=shell_config.logcat_tags,
                          verbose_pipe=verbose_pipe)
 
-    device_status, error = shell.check_device()
+    device_status, error = shell.check_device(
+        require_root=shell_config.require_root)
     if not device_status:
       raise ShellConfigurationException('Device check failed: ' + error)
     if shell_config.shell_path:

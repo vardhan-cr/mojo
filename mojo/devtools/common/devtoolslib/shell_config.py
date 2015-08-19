@@ -36,6 +36,7 @@ class ShellConfig(object):
     self.adb_path = None
     self.target_device = None
     self.logcat_tags = None
+    self.require_root = False
 
     # Desktop-only.
     self.use_osmesa = None

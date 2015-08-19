@@ -199,7 +199,7 @@ class AndroidShell(Shell):
     return len(subprocess.check_output(self._adb_command([
         'shell', 'pm', 'list', 'packages', _MOJO_SHELL_PACKAGE_NAME]))) > 0
 
-  def check_device(self):
+  def check_device(self, require_root=False):
     """Verifies if the device configuration allows adb to run.
 
     If a target device was indicated in the constructor, it checks that the
@@ -233,6 +233,9 @@ class AndroidShell(Shell):
 
     if not device_list[0].endswith('device'):
       return False, 'Connected device is not available.'
+
+    if require_root and not self._run_adb_as_root():
+      return False, 'Cannot run on an unrooted device.'
 
     return True, None
 
