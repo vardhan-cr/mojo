@@ -119,6 +119,10 @@ if target_os != 'android':
       "type": "dart",
     },
     {
+      "test": "mojo:dart_apptests_pkg",
+      "type": "dart",
+    },
+    {
       # https://github.com/domokit/mojo/issues/61
       # Sometime the shell get a trucated application when exposed through the
       # http server.

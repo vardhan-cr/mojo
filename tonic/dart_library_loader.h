@@ -57,6 +57,15 @@ class DartLibraryLoader {
     library_provider_ = library_provider;
   }
 
+  // If one is needed by the embedder, this sets the magic number used to
+  // distinguish snapshots from scripts. If no magic number is set, the
+  // DartLibraryLoader always assumes that the targets of LoadLibrary and
+  // LoadScript are Dart source, and not snapshots.
+  void set_magic_number(const uint8_t* magic_number, intptr_t len) {
+    magic_number_ = magic_number;
+    magic_number_len_ = len;
+  }
+
  private:
   class Job;
   class ImportJob;
@@ -71,12 +80,17 @@ class DartLibraryLoader {
   void DidCompleteSourceJob(SourceJob* job, const std::vector<uint8_t>& buffer);
   void DidFailJob(Job* job);
 
+  const uint8_t* SniffForMagicNumber(
+    const uint8_t* text_buffer, intptr_t* buffer_len, bool* is_snapshot);
+
   DartState* dart_state_;
   DartLibraryProvider* library_provider_;
   std::unordered_map<std::string, Job*> pending_libraries_;
   std::unordered_set<std::unique_ptr<Job>> jobs_;
   std::unordered_set<std::unique_ptr<DependencyWatcher>> dependency_watchers_;
   DartDependencyCatcher* dependency_catcher_;
+  const uint8_t* magic_number_;
+  intptr_t magic_number_len_;
 
   DISALLOW_COPY_AND_ASSIGN(DartLibraryLoader);
 };

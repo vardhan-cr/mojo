@@ -71,7 +71,7 @@ def main():
   expected_hash = makeSnapshotHashString()
   actual_hash = ""
   with open(snapshot) as snapshot_file:
-    snapshot_file.seek(16)
+    snapshot_file.seek(20)
     actual_hash = snapshot_file.read(32)
   if not actual_hash == expected_hash:
     print ('wrong hash: actual = %s, expected = %s'

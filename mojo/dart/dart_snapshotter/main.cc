@@ -26,6 +26,8 @@ const char kHelp[] = "help";
 const char kPackageRoot[] = "package-root";
 const char kSnapshot[] = "snapshot";
 
+const uint8_t magic_number[] = { 0xf5, 0xf5, 0xdc, 0xdc };
+
 void Usage() {
   std::cerr << "Usage: dart_snapshotter"
             << " --" << kPackageRoot << " --" << kSnapshot
@@ -37,8 +39,12 @@ void WriteSnapshot(base::FilePath path) {
   intptr_t size;
   CHECK(!tonic::LogIfError(Dart_CreateScriptSnapshot(&buffer, &size)));
 
-  CHECK_EQ(base::WriteFile(path, reinterpret_cast<const char*>(buffer), size),
-           size);
+  intptr_t magic_number_len = sizeof(magic_number);
+  CHECK_EQ(base::WriteFile(
+      path, reinterpret_cast<const char*>(magic_number), sizeof(magic_number)),
+      magic_number_len);
+  CHECK(base::AppendToFile(
+      path, reinterpret_cast<const char*>(buffer), size));
 }
 
 int main(int argc, const char* argv[]) {

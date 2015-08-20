@@ -40,6 +40,8 @@ static const char* kInternalLibURL = "dart:_internal";
 static const char* kIsolateLibURL = "dart:isolate";
 static const char* kCoreLibURL = "dart:core";
 
+static uint8_t snapshot_magic_number[] = { 0xf5, 0xf5, 0xdc, 0xdc };
+
 static Dart_Handle SetWorkingDirectory(Dart_Handle builtin_lib) {
   base::FilePath current_dir;
   PathService::Get(base::DIR_CURRENT, &current_dir);
@@ -300,6 +302,8 @@ Dart_Isolate DartController::CreateIsolateHelper(
     } else {
       package_root_str = package_root.c_str();
     }
+    isolate_data->library_loader().set_magic_number(
+        snapshot_magic_number, sizeof(snapshot_magic_number));
     if (use_network_loader) {
       mojo::NetworkService* network_service = isolate_data->network_service();
       isolate_data->set_library_provider(
@@ -638,7 +642,6 @@ void DartController::LoadEmptyScript(const std::string& script_uri) {
   DART_CHECK_VALID(result);
   tonic::LogIfError(Dart_FinalizeLoading(true));
 }
-
 
 bool DartController::RunSingleDartScript(const DartControllerConfig& config) {
   InitVmIfNeeded(config.entropy,
