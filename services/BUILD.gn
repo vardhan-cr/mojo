@@ -37,6 +37,7 @@ group("services") {
       "//services/notifications",
       "//services/sensors",
       "//services/speech_recognizer",
+      "//services/sharing:android_sharing",
     ]
     if (defined(go_build_tool) && go_build_tool != "") {
       deps += [ "//services/vanadium/security:principal_service" ]
