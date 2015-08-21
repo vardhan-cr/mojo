@@ -21,6 +21,11 @@ group("default") {
   if (!is_android && !is_win) {
     deps += [ "//tools/xdisplaycheck" ]
   }
+
+  if (is_linux) {
+    deps += [ "//sandbox/linux:sandbox" ]
+    deps += [ "//sandbox/linux:sandbox_linux_unittests" ]
+  }
 }
 
 # Deprecated name for the default build target.

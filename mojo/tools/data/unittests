@@ -94,3 +94,10 @@ if config.target_os != config.OS_ANDROID:
       "cacheable": False,
     },
   ]
+
+if config.target_os == config.OS_LINUX:
+  tests += [
+    {
+      "test": "sandbox_linux_unittests",
+    },
+  ]
