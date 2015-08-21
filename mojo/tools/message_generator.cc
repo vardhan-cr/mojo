@@ -48,9 +48,7 @@ void GenerateMessageDataMessage() {
   data[2] = 7;
   data[3] = 6;
 
-  Message message;
-  builder.Finish(&message);
-  WriteMessageToFile(message,
+  WriteMessageToFile(*builder.message(),
                      base::FilePath(FILE_PATH_LITERAL("message_data")));
 }
 
