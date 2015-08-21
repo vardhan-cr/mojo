@@ -5,6 +5,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"sync"
@@ -13,43 +14,58 @@ import (
 	"mojo/public/go/bindings"
 	"mojo/public/go/system"
 	auth "mojo/services/authentication/public/interfaces/authentication"
-	"mojo/services/vanadium/security/public/interfaces/principal"
+	vpkg "mojo/services/vanadium/security/public/interfaces/principal"
 )
 
 //#include "mojo/public/c/system/types.h"
 import "C"
 
-type PrincipalServiceImpl struct {
-	app principal.AppInstanceName
-	psd *PrincipalServiceDelegate
+type principalServiceImpl struct {
+	app vpkg.AppInstanceName
+	psd *principalServiceDelegate
 }
 
-func (pImpl *PrincipalServiceImpl) Login() (b *principal.Blessing, err error) {
+func newPrincipal(name string) (*vpkg.Certificate, *ecdsa.PrivateKey, error) {
+	pubKey, privKey, err := newPrincipalKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	var pubKeyBytes []byte
+	if pubKeyBytes, err = pubKey.MarshalBinary(); err != nil {
+		return nil, nil, err
+	}
+	return &vpkg.Certificate{name, &pubKeyBytes}, privKey, nil
+}
+
+func (pImpl *principalServiceImpl) Login() (b *vpkg.Blessing, err error) {
 	authReq, authPtr := auth.CreateMessagePipeForAuthenticationService()
 	pImpl.psd.Ctx.ConnectToApplication("mojo:authentication").ConnectToService(&authReq)
 	authProxy := auth.NewAuthenticationServiceProxy(authPtr, bindings.GetAsyncWaiter())
 	name, errString, _ := authProxy.SelectAccount(false /*return_last_selected*/)
 	if name != nil {
-		cert := []principal.Certificate{principal.Certificate{Extension: *name}}
-		b = &principal.Blessing{cert}
-		pImpl.psd.addUserBlessing(pImpl.app, b)
+		cert, privKey, err := newPrincipal(*name)
+		if err != nil {
+			return nil, err
+		}
+		b = &vpkg.Blessing{[]vpkg.Certificate{*cert}}
+		pImpl.psd.addPrincipal(pImpl.app, &principal{b, privKey})
 	} else {
 		err = fmt.Errorf("Failed to authenticate user:%s", errString)
 	}
 	return
 }
 
-func (pImpl *PrincipalServiceImpl) Logout() (err error) {
-	pImpl.psd.deleteUserBlessing(pImpl.app)
+func (pImpl *principalServiceImpl) Logout() (err error) {
+	pImpl.psd.deletePrincipal(pImpl.app)
 	return
 }
 
-func (pImpl *PrincipalServiceImpl) GetUserBlessing(app principal.AppInstanceName) (*principal.Blessing, error) {
-	return pImpl.psd.getUserBlessing(app), nil
+func (pImpl *principalServiceImpl) GetUserBlessing(app vpkg.AppInstanceName) (*vpkg.Blessing, error) {
+	return pImpl.psd.getBlessing(app), nil
 }
 
-func (pImpl *PrincipalServiceImpl) Create(req principal.PrincipalService_Request) {
-	stub := principal.NewPrincipalServiceStub(req, pImpl, bindings.GetAsyncWaiter())
+func (pImpl *principalServiceImpl) Create(req vpkg.PrincipalService_Request) {
+	stub := vpkg.NewPrincipalServiceStub(req, pImpl, bindings.GetAsyncWaiter())
 	pImpl.psd.addStubForCleanup(stub)
 	go func() {
 		for {
@@ -64,51 +80,59 @@ func (pImpl *PrincipalServiceImpl) Create(req principal.PrincipalService_Request
 	}()
 }
 
-type PrincipalServiceDelegate struct {
-	bMap  map[principal.AppInstanceName]*principal.Blessing
+type principal struct {
+	blessing *vpkg.Blessing
+	private  *ecdsa.PrivateKey
+}
+
+type principalServiceDelegate struct {
+	table map[vpkg.AppInstanceName]*principal
 	Ctx   application.Context
 	mu    sync.Mutex
 	stubs []*bindings.Stub
 }
 
-func (psd *PrincipalServiceDelegate) Initialize(context application.Context) {
-	psd.bMap = make(map[principal.AppInstanceName]*principal.Blessing)
+func (psd *principalServiceDelegate) Initialize(context application.Context) {
+	psd.table = make(map[vpkg.AppInstanceName]*principal)
 	psd.Ctx = context
 }
 
-func (psd *PrincipalServiceDelegate) AcceptConnection(connection *application.Connection) {
-	app := principal.AppInstanceName{
+func (psd *principalServiceDelegate) AcceptConnection(connection *application.Connection) {
+	app := vpkg.AppInstanceName{
 		Url:       connection.RequestorURL(),
 		Qualifier: nil,
 	}
-	connection.ProvideServices(&principal.PrincipalService_ServiceFactory{&PrincipalServiceImpl{app, psd}})
+	connection.ProvideServices(&vpkg.PrincipalService_ServiceFactory{&principalServiceImpl{app, psd}})
 }
 
-func (psd *PrincipalServiceDelegate) addStubForCleanup(stub *bindings.Stub) {
+func (psd *principalServiceDelegate) addStubForCleanup(stub *bindings.Stub) {
 	psd.mu.Lock()
 	defer psd.mu.Unlock()
 	psd.stubs = append(psd.stubs, stub)
 }
 
-func (psd *PrincipalServiceDelegate) addUserBlessing(app principal.AppInstanceName, b *principal.Blessing) {
+func (psd *principalServiceDelegate) addPrincipal(app vpkg.AppInstanceName, p *principal) {
 	psd.mu.Lock()
 	defer psd.mu.Unlock()
-	psd.bMap[app] = b
+	psd.table[app] = p
 }
 
-func (psd *PrincipalServiceDelegate) getUserBlessing(app principal.AppInstanceName) *principal.Blessing {
+func (psd *principalServiceDelegate) getBlessing(app vpkg.AppInstanceName) *vpkg.Blessing {
 	psd.mu.Lock()
 	defer psd.mu.Unlock()
-	return psd.bMap[app]
+	if p, ok := psd.table[app]; ok {
+		return p.blessing
+	}
+	return nil
 }
 
-func (psd *PrincipalServiceDelegate) deleteUserBlessing(app principal.AppInstanceName) {
+func (psd *principalServiceDelegate) deletePrincipal(app vpkg.AppInstanceName) {
 	psd.mu.Lock()
 	defer psd.mu.Unlock()
-	delete(psd.bMap, app)
+	delete(psd.table, app)
 }
 
-func (psd *PrincipalServiceDelegate) Quit() {
+func (psd *principalServiceDelegate) Quit() {
 	psd.mu.Lock()
 	defer psd.mu.Unlock()
 	for _, stub := range psd.stubs {
@@ -118,7 +142,7 @@ func (psd *PrincipalServiceDelegate) Quit() {
 
 //export MojoMain
 func MojoMain(handle C.MojoHandle) C.MojoResult {
-	application.Run(&PrincipalServiceDelegate{}, system.MojoHandle(handle))
+	application.Run(&principalServiceDelegate{}, system.MojoHandle(handle))
 	return C.MOJO_RESULT_OK
 }
 
