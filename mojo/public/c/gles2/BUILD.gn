@@ -20,6 +20,7 @@ group("gles2") {
 
 mojo_sdk_source_set("headers") {
   sources = [
+    "chromium_bind_uniform_location.h",
     "chromium_copy_texture.h",
     "chromium_image.h",
     "chromium_miscellaneous.h",

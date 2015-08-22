@@ -15,6 +15,9 @@
 
 namespace mojo {
 
+class MojoContextSupport;
+class MojoGLES2Impl;
+
 class ContextProviderMojo : public cc::ContextProvider {
  public:
   explicit ContextProviderMojo(ScopedMessagePipeHandle command_buffer_handle);
@@ -50,6 +53,7 @@ class ContextProviderMojo : public cc::ContextProvider {
   cc::ContextProvider::Capabilities capabilities_;
   ScopedMessagePipeHandle command_buffer_handle_;
   MojoGLES2Context context_;
+  scoped_ptr<MojoGLES2Impl> gles2_impl_;
   scoped_ptr<MojoContextSupport> context_support_;
   bool context_lost_;
   LostContextCallback lost_context_callback_;

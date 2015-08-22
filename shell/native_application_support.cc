@@ -7,6 +7,7 @@
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
+#include "mojo/public/platform/native/gles2_impl_chromium_bind_uniform_location_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_miscellaneous_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_resize_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sub_image_thunks.h"
@@ -86,6 +87,8 @@ bool RunNativeApplication(
   SetThunks(MojoMakeGLES2ImplOesVertexArrayObjectThunks,
             "MojoSetGLES2ImplOesVertexArrayObjectThunks", app_library);
   // "Chromium" extensions:
+  SetThunks(MojoMakeGLES2ImplChromiumBindUniformLocationThunks,
+            "MojoSetGLES2ImplChromiumBindUniformLocationThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
             "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumResizeThunks,

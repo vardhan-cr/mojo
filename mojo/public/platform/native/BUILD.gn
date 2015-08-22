@@ -62,6 +62,8 @@ mojo_sdk_source_set("system_impl_private_tests") {
 
 mojo_sdk_source_set("gles2") {
   sources = [
+    "gles2_impl_chromium_bind_uniform_location_thunks.cc",
+    "gles2_impl_chromium_bind_uniform_location_thunks.h",
     "gles2_impl_chromium_copy_texture_thunks.cc",
     "gles2_impl_chromium_copy_texture_thunks.h",
     "gles2_impl_chromium_image_thunks.cc",

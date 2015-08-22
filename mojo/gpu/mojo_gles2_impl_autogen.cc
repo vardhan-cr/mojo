@@ -11,12 +11,14 @@
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
 #include "base/logging.h"
+#include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
 #include "mojo/public/c/gles2/chromium_miscellaneous.h"
 #include "mojo/public/c/gles2/chromium_sub_image.h"
 #include "mojo/public/c/gles2/chromium_sync_point.h"
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/c/gles2/occlusion_query_ext.h"
+#include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
 
 namespace mojo {
 
@@ -1326,7 +1328,8 @@ void MojoGLES2Impl::UnmapTexSubImage2DCHROMIUM(const void* mem) {
 void MojoGLES2Impl::ResizeCHROMIUM(GLuint width,
                                    GLuint height,
                                    GLfloat scale_factor) {
-  NOTREACHED() << "Unimplemented ResizeCHROMIUM.";
+  MojoGLES2MakeCurrent(context_);
+  MGLResizeSurface(width, height);
 }
 const GLchar* MojoGLES2Impl::GetRequestableExtensionsCHROMIUM() {
   NOTREACHED() << "Unimplemented GetRequestableExtensionsCHROMIUM.";
@@ -1460,7 +1463,8 @@ GLuint MojoGLES2Impl::CreateAndConsumeTextureCHROMIUM(GLenum target,
 void MojoGLES2Impl::BindUniformLocationCHROMIUM(GLuint program,
                                                 GLint location,
                                                 const char* name) {
-  NOTREACHED() << "Unimplemented BindUniformLocationCHROMIUM.";
+  MojoGLES2MakeCurrent(context_);
+  glBindUniformLocationCHROMIUM(program, location, name);
 }
 void MojoGLES2Impl::GenValuebuffersCHROMIUM(GLsizei n, GLuint* buffers) {
   NOTREACHED() << "Unimplemented GenValuebuffersCHROMIUM.";

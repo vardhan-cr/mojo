@@ -71,6 +71,7 @@ void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
     return g_gpu_interface.Get().Get()->Function ARGUMENTS;        \
   }
 #include "mojo/public/c/gles2/gles2_call_visitor_autogen.h"
+#include "mojo/public/c/gles2/gles2_call_visitor_chromium_bind_uniform_location_autogen.h"
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_miscellaneous_autogen.h"
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_resize_autogen.h"
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_sub_image_autogen.h"

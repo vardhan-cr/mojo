@@ -5,6 +5,8 @@
 #include "services/surfaces/context_provider_mojo.h"
 
 #include "base/logging.h"
+#include "mojo/gpu/mojo_context_support.h"
+#include "mojo/gpu/mojo_gles2_impl_autogen.h"
 #include "mojo/public/cpp/environment/environment.h"
 
 namespace mojo {
@@ -23,14 +25,12 @@ bool ContextProviderMojo::BindToCurrentThread() {
                                     Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
   context_support_.reset(new MojoContextSupport(context_));
+  gles2_impl_.reset(new MojoGLES2Impl(context_));
   return !!context_;
 }
 
 gpu::gles2::GLES2Interface* ContextProviderMojo::ContextGL() {
-  if (!context_)
-    return nullptr;
-  return static_cast<gpu::gles2::GLES2Interface*>(
-      MojoGLES2GetGLES2Interface(context_));
+  return gles2_impl_.get();
 }
 
 gpu::ContextSupport* ContextProviderMojo::ContextSupport() {

@@ -3454,7 +3454,7 @@ _FUNCTION_INFO = {
   },
   'BindUniformLocationCHROMIUM': {
     'type': 'GLchar',
-    'extension': True,
+    'extension': "CHROMIUM_bind_uniform_location",
     'data_transfer_methods': ['bucket'],
     'needs_size': True,
     'gl_test_func': 'DoBindUniformLocationCHROMIUM',
@@ -4351,9 +4351,12 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
                (func.return_type, func.original_name,
                 func.MakeTypedOriginalArgString("")))
 
-    extensions = ["CHROMIUM_sync_point", "CHROMIUM_texture_mailbox",
-                  "CHROMIUM_miscellaneous", "CHROMIUM_sub_image",
-                  "occlusion_query_EXT"]
+    extensions = ["CHROMIUM_bind_uniform_location",
+                  "CHROMIUM_miscellaneous",
+                  "CHROMIUM_sub_image",
+                  "CHROMIUM_texture_mailbox",
+                  "occlusion_query_EXT",
+                  "CHROMIUM_sync_point"]
     if func.IsCoreGLFunction() or func.GetInfo("extension") in extensions:
       file.Write("MojoGLES2MakeCurrent(context_);");
       func_return = "gl" + func.original_name + "(" + \
@@ -4362,6 +4365,9 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
         file.Write(func_return);
       else:
         file.Write("return " + func_return);
+    elif func.original_name == "ResizeCHROMIUM":
+        file.Write("MojoGLES2MakeCurrent(context_);");
+        file.Write("MGLResizeSurface(width, height);");
     else:
       file.Write("NOTREACHED() << \"Unimplemented %s.\";\n" %
                  func.original_name);
@@ -10176,12 +10182,14 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
 #include "base/logging.h"
+#include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
 #include "mojo/public/c/gles2/chromium_miscellaneous.h"
 #include "mojo/public/c/gles2/chromium_sub_image.h"
 #include "mojo/public/c/gles2/chromium_sync_point.h"
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/c/gles2/occlusion_query_ext.h"
+#include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
 
 namespace mojo {
 
@@ -10578,10 +10586,6 @@ def main(argv):
     "gpu/command_buffer/common/gles2_cmd_format_test_autogen.h")
   gen.WriteGLES2InterfaceHeader(
     "gpu/command_buffer/client/gles2_interface_autogen.h")
-  gen.WriteMojoGLES2ImplHeader(
-    "mojo/gpu/mojo_gles2_impl_autogen.h")
-  gen.WriteMojoGLES2Impl(
-    "mojo/gpu/mojo_gles2_impl_autogen.cc")
   gen.WriteGLES2InterfaceStub(
     "gpu/command_buffer/client/gles2_interface_stub_autogen.h")
   gen.WriteGLES2InterfaceStubImpl(
@@ -10625,15 +10629,26 @@ def main(argv):
   gen.WriteCommonUtilsImpl(
     "gpu/command_buffer/common/gles2_cmd_utils_implementation_autogen.h")
   gen.WriteGLES2Header("gpu/GLES2/gl2chromium_autogen.h")
+
   mojo_gles2_prefix = ("mojo/public/c/gles2/gles2_call_visitor")
   gen.WriteMojoGLCallVisitor(mojo_gles2_prefix + "_autogen.h")
-  mojo_extensions = ["CHROMIUM_texture_mailbox", "CHROMIUM_sync_point",
-                     "CHROMIUM_sub_image", "CHROMIUM_miscellaneous",
-                     "CHROMIUM_resize", "EXT_debug_marker",
-                     "OES_vertex_array_object", "occlusion_query_EXT"]
+  mojo_extensions = ["CHROMIUM_bind_uniform_location",
+                     "CHROMIUM_miscellaneous",
+                     "CHROMIUM_resize",
+                     "CHROMIUM_sub_image",
+                     "CHROMIUM_sync_point",
+                     "CHROMIUM_texture_mailbox",
+                     "EXT_debug_marker",
+                     "OES_vertex_array_object",
+                     "occlusion_query_EXT"]
   for extension in mojo_extensions:
     gen.WriteMojoGLCallVisitorForExtension(
         mojo_gles2_prefix + "_" + extension.lower() + "_autogen.h", extension)
+
+  gen.WriteMojoGLES2ImplHeader(
+    "mojo/gpu/mojo_gles2_impl_autogen.h")
+  gen.WriteMojoGLES2Impl(
+    "mojo/gpu/mojo_gles2_impl_autogen.cc")
 
   Format(gen.generated_cpp_filenames)
 
