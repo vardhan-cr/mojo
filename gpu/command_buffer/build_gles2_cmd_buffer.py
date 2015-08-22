@@ -4350,20 +4350,10 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
     file.Write("%s MojoGLES2Impl::%s(%s) {\n" %
                (func.return_type, func.original_name,
                 func.MakeTypedOriginalArgString("")))
-    # TODO(alhaad): Add Mojo C thunk for each of the following methods and
-    # remove this.
-    func_list = ["GenQueriesEXT", "BeginQueryEXT", "MapTexSubImage2DCHROMIUM",
-                 "UnmapTexSubImage2DCHROMIUM", "DeleteQueriesEXT",
-                 "EndQueryEXT", "GetQueryObjectuivEXT", "ShallowFlushCHROMIUM"]
-    if func.original_name in func_list:
-      file.Write("return static_cast<gpu::gles2::GLES2Interface*>"
-                 "(MojoGLES2GetGLES2Interface(context_))->" +
-                 func.original_name + "(" + func.MakeOriginalArgString("") +
-                 ");")
-      file.Write("}")
-      return
 
-    extensions = ["CHROMIUM_sync_point", "CHROMIUM_texture_mailbox"]
+    extensions = ["CHROMIUM_sync_point", "CHROMIUM_texture_mailbox",
+                  "CHROMIUM_miscellaneous", "CHROMIUM_sub_image",
+                  "occlusion_query_EXT"]
     if func.IsCoreGLFunction() or func.GetInfo("extension") in extensions:
       file.Write("MojoGLES2MakeCurrent(context_);");
       func_return = "gl" + func.original_name + "(" + \
@@ -10186,9 +10176,12 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
 #include "base/logging.h"
+#include "mojo/public/c/gles2/chromium_miscellaneous.h"
+#include "mojo/public/c/gles2/chromium_sub_image.h"
 #include "mojo/public/c/gles2/chromium_sync_point.h"
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
 #include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gles2/occlusion_query_ext.h"
 
 namespace mojo {
 
