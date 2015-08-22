@@ -209,23 +209,27 @@ template("dart_pkg_helper") {
     }
 
     sources = entrypoints
+    pkg_sources = entrypoints
     if (defined(invoker.sources)) {
       sources += invoker.sources
+      pkg_sources += invoker.sources
     } else if (defined(invoker.pkg_dir)) {
       list_script = rebase_path("build/ls.py", ".", mojo_sdk_root)
-      sources += exec_script(list_script,
-                             [
-                               "--target-directory",
-                               rebase_path(invoker.pkg_dir),
-                             ],
-                             "list lines")
+      ls_sources = exec_script(list_script,
+                               [
+                                 "--target-directory",
+                                 rebase_path(invoker.pkg_dir),
+                               ],
+                               "list lines")
+      sources += ls_sources
+      pkg_sources += rebase_path(ls_sources, rebase_path(invoker.pkg_dir))
     }
 
     # We have to use foreach to set up outputs instead of rebase_path because
     # GN doesn't like assignments to outputs that aren't obviously under
     # $root_gen_dir somewhere.
     outputs = []
-    foreach(s, sources) {
+    foreach(s, pkg_sources) {
       outputs += [ "$root_gen_dir/dart-pkg/${package_name}/$s" ]
     }
     outputs += [ stamp_file ]
