@@ -33,6 +33,13 @@ tests(Application application, String url) {
       expect(result.length, greaterThan(0));
       expect(result[0], equals(InternetAddress.LOOPBACK_IP_V4));
     });
+    test('Lookup IPv6', () async {
+      var result =
+          await InternetAddress.lookup('localhost',
+                                       type:InternetAddressType.IP_V6);
+      expect(result.length, greaterThan(0));
+      expect(result[0], equals(InternetAddress.LOOPBACK_IP_V6));
+    });
     test('Lookup ANY', () async {
       var result =
           await InternetAddress.lookup('localhost',
