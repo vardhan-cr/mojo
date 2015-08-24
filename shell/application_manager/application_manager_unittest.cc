@@ -241,11 +241,11 @@ class TesterContext {
 // Used to test that the requestor url will be correctly passed.
 class TestAImpl : public TestA {
  public:
-  TestAImpl(ApplicationImpl* app_impl,
+  TestAImpl(ApplicationConnection* b_connection,
             TesterContext* test_context,
             InterfaceRequest<TestA> request)
       : test_context_(test_context), binding_(this, request.Pass()) {
-    app_impl->ConnectToApplication(kTestBURLString)->ConnectToService(&b_);
+    b_connection->ConnectToService(&b_);
   }
 
   ~TestAImpl() override {
@@ -357,16 +357,13 @@ class Tester : public ApplicationDelegate,
     return true;
   }
 
-  bool ConfigureOutgoingConnection(ApplicationConnection* connection) override {
-    // If we're connecting to B, then add C.
-    if (connection->GetRemoteApplicationURL() == kTestBURLString)
-      connection->AddService<TestC>(this);
-    return true;
-  }
-
   void Create(ApplicationConnection* connection,
               InterfaceRequest<TestA> request) override {
-    a_bindings_.push_back(new TestAImpl(app_.get(), context_, request.Pass()));
+    ApplicationConnection* b_connection =
+        app_->ConnectToApplication(kTestBURLString);
+    b_connection->AddService<TestC>(this);
+    a_bindings_.push_back(
+        new TestAImpl(b_connection, context_, request.Pass()));
   }
 
   void Create(ApplicationConnection* connection,

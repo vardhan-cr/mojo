@@ -48,10 +48,6 @@ ApplicationConnection* ApplicationImpl::ConnectToApplication(
   internal::ServiceRegistry* registry = new internal::ServiceRegistry(
       this, application_url, application_url, remote_services.Pass(),
       local_request.Pass());
-  if (!delegate_->ConfigureOutgoingConnection(registry)) {
-    delete registry;
-    return nullptr;
-  }
   outgoing_service_registries_.push_back(registry);
   return registry;
 }

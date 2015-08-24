@@ -43,8 +43,6 @@ class KioskWM : public mojo::ApplicationDelegate,
   void Initialize(mojo::ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
-  bool ConfigureOutgoingConnection(
-      mojo::ApplicationConnection* connection) override;
 
   // Overridden from mojo::ViewManagerDelegate:
   void OnEmbed(mojo::View* root,

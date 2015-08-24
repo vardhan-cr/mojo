@@ -16,8 +16,9 @@ class ServiceConnector;
 
 // Represents a connection to another application. An instance of this class is
 // passed to ApplicationDelegate's ConfigureIncomingConnection() method each
-// time a connection is made to this app, and to ApplicationDelegate's
-// ConfigureOutgoingConnection() method when the app connects to another.
+// time a connection is made to this app, and is returned by the
+// ApplicationDelegate's ConnectToApplication() method when this app
+// connects to another.
 //
 // To use, define a class that implements your specific service API (e.g.,
 // FooImpl to implement a service named Foo). Then implement an
