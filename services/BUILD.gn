@@ -3,7 +3,10 @@
 # found in the LICENSE file.
 
 group("services") {
+  testonly = true
+
   deps = [
+    ":tests",
     "//services/asset_bundle",
     "//services/authenticating_url_loader_interceptor",
     "//services/authentication",
@@ -48,9 +51,48 @@ group("services") {
     deps += [ "//services/python" ]
   }
 
+  # TODO(jamesr): We only support building V8 snapshot data on a linux host
+  # since it needs a 32 bit toolchain and we don't have one configured for mac
+  # hosts.
+  if (host_os == "linux") {
+    deps += [ "//services/js" ]
+  }
+}
+
+group("tests") {
+  testonly = true
+
+  deps = [
+    "//services/asset_bundle:apptests",
+    "//services/authenticating_url_loader_interceptor:apptests",
+    "//services/clipboard:apptests",
+    "//services/dart/dart_apptests",
+    "//services/files:apptests",
+    "//services/http_server:apptests",
+    "//services/prediction:apptests",
+    "//services/reaper:tests",
+    "//services/url_response_disk_cache:tests",
+    "//services/view_manager:mojo_view_manager_client_apptests",
+    "//services/view_manager:view_manager_service_apptests",
+    "//services/view_manager:view_manager_service_unittests",
+    "//services/window_manager:window_manager_apptests",
+    "//services/window_manager:window_manager_unittests",
+  ]
+
+  if (is_linux) {
+    deps += [ "//services/python:python_apptests" ]
+  }
+
+  if (is_android) {
+    deps += [ "//services/notifications:apptests" ]
+  }
+
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
   # needs a 32 bit toolchain and we don't have one configured for mac hosts.
   if (host_os == "linux") {
-    deps += [ "//services/js" ]
+    deps += [
+      "//services/js:js_apptests",
+      "//services/js:js_services_unittests",
+    ]
   }
 }

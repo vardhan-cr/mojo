@@ -33,6 +33,7 @@ group("shell") {
 group("tests") {
   testonly = true
   deps = [
+    ":apptests",
     ":mojo_shell_tests",
     ":shell_nfc_apptests",
     "//shell/application_manager:mojo_application_manager_unittests",

@@ -2,11 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/config/ui.gni")
 import("//build/module_args/mojo.gni")
 import("//mojo/public/mojo.gni")
 
-# TODO(beng): this meta target should probably move to the root dir's BUILD.gn.
 group("mojo") {
   # Meta-target, don't link into production code.
   testonly = true
@@ -18,13 +16,10 @@ group("mojo") {
   }
   deps = [
     ":tests",
-    "//benchmarks",
-    "//examples",
     "//mojo/common",
     "//mojo/dart",
     "//mojo/public",
     "//mojo/services",
-    "//services",
   ]
 
   if (is_android) {
@@ -50,13 +45,6 @@ group("mojo") {
       "//mojo/nacl:mojo_nacl_tests",
     ]
   }
-
-  if (use_ozone) {
-    deps += [
-      "//ui/ozone",
-      "//ui/ozone/demo",
-    ]
-  }
 }
 
 group("tests") {
@@ -71,41 +59,14 @@ group("tests") {
     "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
     "//mojo/tests:mojo_task_tracker_perftests",
     "//mojo/tools:message_generator",
-    "//services/asset_bundle:apptests",
-    "//services/clipboard:apptests",
-    "//services/dart/dart_apptests",
-    "//services/files:apptests",
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
-    "//services/authenticating_url_loader_interceptor:apptests",
-    "//services/http_server:apptests",
-    "//services/prediction:apptests",
-    "//services/reaper:tests",
-    "//services/url_response_disk_cache:tests",
-    "//services/view_manager:mojo_view_manager_client_apptests",
-    "//services/view_manager:view_manager_service_apptests",
-    "//services/view_manager:view_manager_service_unittests",
-    "//services/window_manager:window_manager_apptests",
-    "//services/window_manager:window_manager_unittests",
-    "//shell:apptests",
   ]
-
-  if (is_linux) {
-    deps += [ "//services/python:python_apptests" ]
-  }
-
-  if (is_android) {
-    deps += [ "//services/notifications:apptests" ]
-  }
 
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
   # needs a 32 bit toolchain and we don't have one configured for mac hosts.
   if (host_os == "linux") {
-    deps += [
-      "//mojo/edk/js:tests",
-      "//services/js:js_apptests",
-      "//services/js:js_services_unittests",
-    ]
+    deps += [ "//mojo/edk/js:tests" ]
   }
 
   if (mojo_use_prebuilt_network_service) {
