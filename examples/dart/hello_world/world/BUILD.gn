@@ -4,27 +4,9 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("mojo_dart_world_dartzip") {
-  output_name = "mojo_dart_world"
-  sources = [
-    "lib/main.dart",
-    "pubspec.yaml",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-  ]
-
-  # This exercises the ability of the Dart content handler to run isolates in
-  # either strict or non-strict mode at the same time. In a Debug build, the
-  # content handler always runs code in strict mode, so we run in different
-  # modes only in a Release build.
-  if (!is_debug) {
-    strict = true
-  }
-}
-
-dart_pkg("mojo_dart_world_pkg") {
+dart_pkg("world") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_world"
   sources = [
     "pubspec.yaml",
   ]
@@ -39,11 +21,4 @@ dart_pkg("mojo_dart_world_pkg") {
   if (!is_debug) {
     strict = true
   }
-}
-
-group("world") {
-  deps = [
-    ":mojo_dart_world_dartzip",
-    ":mojo_dart_world_pkg",
-  ]
 }

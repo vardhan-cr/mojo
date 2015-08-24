@@ -4,31 +4,14 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("mojo_dart_device_info_dartzip") {
-  output_name = "mojo_dart_device_info"
-  sources = [
-    "lib/main.dart",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-    "//mojo/services/device_info/public/interfaces",
-  ]
-}
-
-dart_pkg("mojo_dart_device_info_pkg") {
+dart_pkg("device_info") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_device_info"
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/dart/mojo_services",
     "//mojo/public/dart",
-  ]
-}
-
-group("device_info") {
-  deps = [
-    ":mojo_dart_device_info_dartzip",
-    ":mojo_dart_device_info_pkg",
   ]
 }

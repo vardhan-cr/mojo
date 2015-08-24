@@ -165,8 +165,8 @@ DartContentHandler::CreateApplication(
   base::FilePath application_dir;
   std::string url = response->url.get();
   if (IsDartZip(response->url.get())) {
-    // Loading a .dartzip:
-    // 1) Extract the .dartzip
+    // Loading a zipped snapshot:
+    // 1) Extract the zip file.
     // 2) Launch from temporary directory (|application_dir|).
     handler_task_runner_->PostTask(
         FROM_HERE,

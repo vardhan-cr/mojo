@@ -4,34 +4,14 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("mojo_dart_netcat_dartzip") {
-  output_name = "mojo_dart_netcat"
-  sources = [
-    "lib/main.dart",
-    "pubspec.yaml",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-    "//mojo/services/files/public/interfaces",
-    "//mojo/services/network/public/interfaces",
-    "//mojo/services/terminal/public/interfaces",
-  ]
-}
-
-dart_pkg("mojo_dart_netcat_pkg") {
+dart_pkg("netcat") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_netcat"
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/dart/mojo_services",
     "//mojo/public/dart",
-  ]
-}
-
-group("netcat") {
-  deps = [
-    ":mojo_dart_netcat_dartzip",
-    ":mojo_dart_netcat_pkg",
   ]
 }

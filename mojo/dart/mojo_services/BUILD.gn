@@ -5,16 +5,7 @@
 import("//mojo/public/dart/rules.gni")
 import("//mojo/services/mojo_services.gni")
 
-dartzip_package("mojo_services_dartzip") {
-  sources = [
-    "CHANGELOG.md",
-    "README.md",
-    "pubspec.yaml",
-  ]
-  deps = mojo_services
-}
-
-dart_pkg("mojo_services_pkg") {
+dart_pkg("mojo_services") {
   sources = [
     "CHANGELOG.md",
     "README.md",
@@ -23,12 +14,5 @@ dart_pkg("mojo_services_pkg") {
 
   deps = [
     "//mojo/services",
-  ]
-}
-
-group("mojo_services") {
-  deps = [
-    ":mojo_services_dartzip",
-    ":mojo_services_pkg",
   ]
 }

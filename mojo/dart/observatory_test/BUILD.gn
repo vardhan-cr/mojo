@@ -4,29 +4,13 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("observatory_test_dartzip") {
-  sources = [
-    "lib/main.dart",
-    "pubspec.yaml",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-  ]
-}
-
-dart_pkg("observatory_test_pkg") {
+dart_pkg("observatory_test") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_observatory_test"
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
-  ]
-}
-
-group("observatory_test") {
-  deps = [
-    ":observatory_test_dartzip",
-    ":observatory_test_pkg",
   ]
 }

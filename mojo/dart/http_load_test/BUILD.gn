@@ -4,21 +4,9 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_package("mojo_dart_http_load_test_dartzip") {
-  uses_pub = true
-  sources = [
-    "lib/main.dart",
-    "lib/src/part0.dart",
-    "pubspec.yaml",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-    "//mojo/dart/mojo_services:mojo_services_dartzip",
-  ]
-}
-
-dart_pkg("mojo_dart_http_load_test_pkg") {
+dart_pkg("http_load_test") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_http_load_test"
   sources = [
     "lib/src/part0.dart",
     "pubspec.yaml",
@@ -26,12 +14,5 @@ dart_pkg("mojo_dart_http_load_test_pkg") {
   deps = [
     "//mojo/public/dart",
     "//mojo/dart/mojo_services",
-  ]
-}
-
-group("http_load_test") {
-  deps = [
-    ":mojo_dart_http_load_test_dartzip",
-    ":mojo_dart_http_load_test_pkg",
   ]
 }

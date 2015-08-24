@@ -26,18 +26,12 @@ DartApp::DartApp(mojo::InterfaceRequest<Application> application_request,
                  bool strict)
     : application_request_(application_request.Pass()),
       application_dir_(application_dir) {
-  base::FilePath package_root = application_dir_.AppendASCII("packages");
-  base::FilePath entry_path = application_dir_.Append("lib")
-                                              .Append("main.dart");
   base::FilePath snapshot_path = application_dir_.Append("snapshot_blob.bin");
 
   // Look for snapshot_blob.bin. If exists, then load from snapshot.
   if (base::PathExists(snapshot_path)) {
     config_.script_uri = snapshot_path.AsUTF8Unsafe();
     config_.package_root = "";
-  } else if (base::PathExists(entry_path)) {
-    config_.script_uri = entry_path.AsUTF8Unsafe();
-    config_.package_root = package_root.AsUTF8Unsafe();
   } else {
     LOG(ERROR) << "Dart entry point could not be found under: "
                << application_dir_.AsUTF8Unsafe();

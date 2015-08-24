@@ -4,31 +4,14 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dartzip_packaged_application("mojo_dart_echo_dartzip") {
-  sources = [
-    "lib/main.dart",
-    "pubspec.yaml",
-  ]
-  deps = [
-    "//mojo/public/dart:dart_dartzip",
-    "//services/dart/test:echo_service_interface",
-  ]
-}
-
-dart_pkg("mojo_dart_echo_pkg") {
+dart_pkg("echo") {
   apps = [ "lib/main.dart" ]
+  app_name_override = "dart_echo"
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
     "//services/dart/test:echo_service_interface",
-  ]
-}
-
-group("echo") {
-  deps = [
-    ":mojo_dart_echo_dartzip",
-    ":mojo_dart_echo_pkg",
   ]
 }

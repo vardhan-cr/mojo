@@ -38,18 +38,13 @@ BLACKLISTED_APPS = [
   "network_service_apptests.mojo",
 ]
 
-ARCHITECTURE_INDEPENDENT_FILES = [
-  # These are files other than *.mojo files which are part of our binary
-  # artifact scheme. These files must be architecture independent.
-  "obj/mojo/dart/apptest/apptest.dartzip",
-]
-
 
 def target(config):
   target_name = config.target_os + "-" + config.target_cpu
   if config.is_official_build:
     target_name += "-official"
   return target_name
+
 
 def find_apps_to_upload(build_dir):
   apps = []
@@ -63,15 +58,6 @@ def find_apps_to_upload(build_dir):
       continue
     apps.append(path)
   return apps
-
-
-def find_architecture_independent_files(build_dir):
-  existing_files = []
-  for path in ARCHITECTURE_INDEPENDENT_FILES:
-    joined_path = os.path.join(build_dir, path)
-    if os.path.isfile(joined_path):
-      existing_files.append(joined_path)
-  return existing_files
 
 
 def check_call(command_line, dry_run, **kwargs):
@@ -194,15 +180,6 @@ def upload_app(app_binary_path, config, dry_run):
   upload(config, app_binary_path, gsutil_app_location, dry_run)
 
 
-def upload_file(file_path, config, dry_run):
-  file_binary_name = os.path.basename(file_path)
-  version = Version().version
-  gsutil_file_location = "gs://mojo/file/%s/%s" % (version, file_binary_name)
-
-  # Upload the new binary.
-  upload(config, file_path, gsutil_file_location, dry_run)
-
-
 def write_file_to_gs(file_contents, dest, config, dry_run):
   with tempfile.NamedTemporaryFile() as temp_version_file:
     temp_version_file.write(file_contents)
@@ -250,10 +227,6 @@ def main():
   apps_to_upload = find_apps_to_upload(build_directory)
   for app in apps_to_upload:
     upload_app(app, config, args.dry_run)
-
-  files_to_upload = find_architecture_independent_files(build_directory)
-  for file_to_upload in files_to_upload:
-    upload_file(file_to_upload, config, args.dry_run)
 
   upload_symbols(config, build_directory,
                  args.symbols_upload_url, args.dry_run)
