@@ -165,6 +165,7 @@ _VALID_OS_MACROS = (
     'OS_LINUX',
     'OS_MACOSX',
     'OS_NACL',
+    'OS_NACL_NONSFI',
     'OS_OPENBSD',
     'OS_POSIX',
     'OS_QNX',
