@@ -146,7 +146,7 @@ def remove_broken_symlink(path):
       pass
   else:
     if not os.path.exists(link_path):
-      os.unlink(path)
+      remove_if_exists(path)
 
 
 def remove_broken_symlinks(root_dir):
