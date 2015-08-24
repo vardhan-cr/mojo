@@ -8,9 +8,9 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_bind_uniform_location_thunks.h"
+#include "mojo/public/platform/native/gles2_impl_chromium_map_sub_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_miscellaneous_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_resize_thunks.h"
-#include "mojo/public/platform/native/gles2_impl_chromium_sub_image_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_ext_debug_marker_thunks.h"
@@ -89,12 +89,12 @@ bool RunNativeApplication(
   // "Chromium" extensions:
   SetThunks(MojoMakeGLES2ImplChromiumBindUniformLocationThunks,
             "MojoSetGLES2ImplChromiumBindUniformLocationThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplChromiumMapSubThunks,
+            "MojoSetGLES2ImplChromiumMapSubThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
             "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumResizeThunks,
             "MojoSetGLES2ImplChromiumResizeThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumSubImageThunks,
-            "MojoSetGLES2ImplChromiumSubImageThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumSyncPointThunks,
             "MojoSetGLES2ImplChromiumSyncPointThunks", app_library);
   SetThunks(MojoMakeGLES2ImplChromiumTextureMailboxThunks,

@@ -12,12 +12,14 @@
 
 #include "base/logging.h"
 #include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
+#include "mojo/public/c/gles2/chromium_map_sub.h"
 #include "mojo/public/c/gles2/chromium_miscellaneous.h"
-#include "mojo/public/c/gles2/chromium_sub_image.h"
 #include "mojo/public/c/gles2/chromium_sync_point.h"
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
+#include "mojo/public/c/gles2/ext_debug_marker.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/c/gles2/occlusion_query_ext.h"
+#include "mojo/public/c/gles2/oes_vertex_array_object.h"
 #include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
 
 namespace mojo {
@@ -1244,26 +1246,32 @@ void MojoGLES2Impl::GetQueryObjectuivEXT(GLuint id,
   glGetQueryObjectuivEXT(id, pname, params);
 }
 void MojoGLES2Impl::InsertEventMarkerEXT(GLsizei length, const GLchar* marker) {
-  NOTREACHED() << "Unimplemented InsertEventMarkerEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glInsertEventMarkerEXT(length, marker);
 }
 void MojoGLES2Impl::PushGroupMarkerEXT(GLsizei length, const GLchar* marker) {
-  NOTREACHED() << "Unimplemented PushGroupMarkerEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glPushGroupMarkerEXT(length, marker);
 }
 void MojoGLES2Impl::PopGroupMarkerEXT() {
-  NOTREACHED() << "Unimplemented PopGroupMarkerEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glPopGroupMarkerEXT();
 }
 void MojoGLES2Impl::GenVertexArraysOES(GLsizei n, GLuint* arrays) {
-  NOTREACHED() << "Unimplemented GenVertexArraysOES.";
+  MojoGLES2MakeCurrent(context_);
+  glGenVertexArraysOES(n, arrays);
 }
 void MojoGLES2Impl::DeleteVertexArraysOES(GLsizei n, const GLuint* arrays) {
-  NOTREACHED() << "Unimplemented DeleteVertexArraysOES.";
+  MojoGLES2MakeCurrent(context_);
+  glDeleteVertexArraysOES(n, arrays);
 }
 GLboolean MojoGLES2Impl::IsVertexArrayOES(GLuint array) {
-  NOTREACHED() << "Unimplemented IsVertexArrayOES.";
-  return 0;
+  MojoGLES2MakeCurrent(context_);
+  return glIsVertexArrayOES(array);
 }
 void MojoGLES2Impl::BindVertexArrayOES(GLuint array) {
-  NOTREACHED() << "Unimplemented BindVertexArrayOES.";
+  MojoGLES2MakeCurrent(context_);
+  glBindVertexArrayOES(array);
 }
 void MojoGLES2Impl::SwapBuffers() {
   NOTREACHED() << "Unimplemented SwapBuffers.";
@@ -1291,11 +1299,12 @@ void* MojoGLES2Impl::MapBufferSubDataCHROMIUM(GLuint target,
                                               GLintptr offset,
                                               GLsizeiptr size,
                                               GLenum access) {
-  NOTREACHED() << "Unimplemented MapBufferSubDataCHROMIUM.";
-  return 0;
+  MojoGLES2MakeCurrent(context_);
+  return glMapBufferSubDataCHROMIUM(target, offset, size, access);
 }
 void MojoGLES2Impl::UnmapBufferSubDataCHROMIUM(const void* mem) {
-  NOTREACHED() << "Unimplemented UnmapBufferSubDataCHROMIUM.";
+  MojoGLES2MakeCurrent(context_);
+  glUnmapBufferSubDataCHROMIUM(mem);
 }
 void* MojoGLES2Impl::MapBufferRange(GLenum target,
                                     GLintptr offset,

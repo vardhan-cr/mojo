@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_PUBLIC_C_GLES2_CHROMIUM_SUB_IMAGE_H_
-#define MOJO_PUBLIC_C_GLES2_CHROMIUM_SUB_IMAGE_H_
+#ifndef MOJO_PUBLIC_C_GLES2_CHROMIUM_MAP_SUB_H_
+#define MOJO_PUBLIC_C_GLES2_CHROMIUM_MAP_SUB_H_
 
 // Note: This header should be compilable as C.
 
@@ -20,11 +20,11 @@ extern "C" {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   MOJO_GLES2_EXPORT ReturnType GL_APIENTRY gl##Function PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_sub_image_autogen.h"
+#include "mojo/public/c/gles2/gles2_call_visitor_chromium_map_sub_autogen.h"
 #undef VISIT_GL_CALL
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // MOJO_PUBLIC_C_GLES2_CHROMIUM_SUBIMAGE_H_
+#endif  // MOJO_PUBLIC_C_GLES2_CHROMIUM_MAP_SUB_H_

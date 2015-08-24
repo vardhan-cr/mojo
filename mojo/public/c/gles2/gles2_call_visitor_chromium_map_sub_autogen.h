@@ -8,6 +8,11 @@
 //    clang-format -i -style=chromium filename
 // DO NOT EDIT!
 
+VISIT_GL_CALL(MapBufferSubDataCHROMIUM,
+              void*,
+              (GLuint target, GLintptr offset, GLsizeiptr size, GLenum access),
+              (target, offset, size, access))
+VISIT_GL_CALL(UnmapBufferSubDataCHROMIUM, void, (const void* mem), (mem))
 VISIT_GL_CALL(
     MapTexSubImage2DCHROMIUM,
     void*,

@@ -32,6 +32,17 @@ _DO_NOT_EDIT_WARNING = """// This file is auto-generated from
 
 """
 
+_MOJO_EXPOSED_EXTENSIONS = ["CHROMIUM_bind_uniform_location",
+                            "CHROMIUM_map_sub",
+                            "CHROMIUM_miscellaneous",
+                            "CHROMIUM_resize",
+                            "CHROMIUM_sync_point",
+                            "CHROMIUM_texture_mailbox",
+                            "EXT_debug_marker",
+                            "OES_vertex_array_object",
+                            "occlusion_query_EXT"]
+
+
 # This string is copied directly out of the gl2.h file from GLES2.0
 #
 # Edits:
@@ -2803,14 +2814,14 @@ _FUNCTION_INFO = {
   },
   'MapBufferSubDataCHROMIUM': {
     'gen_cmd': False,
-    'extension': True,
+    'extension': "CHROMIUM_map_sub",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
   },
   'MapTexSubImage2DCHROMIUM': {
     'gen_cmd': False,
-    'extension': "CHROMIUM_sub_image",
+    'extension': "CHROMIUM_map_sub",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
@@ -3205,7 +3216,7 @@ _FUNCTION_INFO = {
   },
   'UnmapBufferSubDataCHROMIUM': {
     'gen_cmd': False,
-    'extension': True,
+    'extension': "CHROMIUM_map_sub",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
@@ -3216,7 +3227,7 @@ _FUNCTION_INFO = {
   },
   'UnmapTexSubImage2DCHROMIUM': {
     'gen_cmd': False,
-    'extension': "CHROMIUM_sub_image",
+    'extension': "CHROMIUM_map_sub",
     'chromium': True,
     'client_test': False,
     'pepper_interface': 'ChromiumMapSub',
@@ -4351,23 +4362,17 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
                (func.return_type, func.original_name,
                 func.MakeTypedOriginalArgString("")))
 
-    extensions = ["CHROMIUM_bind_uniform_location",
-                  "CHROMIUM_miscellaneous",
-                  "CHROMIUM_sub_image",
-                  "CHROMIUM_texture_mailbox",
-                  "occlusion_query_EXT",
-                  "CHROMIUM_sync_point"]
-    if func.IsCoreGLFunction() or func.GetInfo("extension") in extensions:
+    is_mojo_extension = func.GetInfo("extension") in _MOJO_EXPOSED_EXTENSIONS
+    if func.IsCoreGLFunction() or is_mojo_extension:
       file.Write("MojoGLES2MakeCurrent(context_);");
       func_return = "gl" + func.original_name + "(" + \
           func.MakeOriginalArgString("") + ");"
-      if func.return_type == "void":
+      if func.original_name == "ResizeCHROMIUM":
+          file.Write("MGLResizeSurface(width, height);");
+      elif func.return_type == "void":
         file.Write(func_return);
       else:
         file.Write("return " + func_return);
-    elif func.original_name == "ResizeCHROMIUM":
-        file.Write("MojoGLES2MakeCurrent(context_);");
-        file.Write("MGLResizeSurface(width, height);");
     else:
       file.Write("NOTREACHED() << \"Unimplemented %s.\";\n" %
                  func.original_name);
@@ -10183,12 +10188,14 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
 
 #include "base/logging.h"
 #include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
+#include "mojo/public/c/gles2/chromium_map_sub.h"
 #include "mojo/public/c/gles2/chromium_miscellaneous.h"
-#include "mojo/public/c/gles2/chromium_sub_image.h"
 #include "mojo/public/c/gles2/chromium_sync_point.h"
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
+#include "mojo/public/c/gles2/ext_debug_marker.h"
 #include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/c/gles2/occlusion_query_ext.h"
+#include "mojo/public/c/gles2/oes_vertex_array_object.h"
 #include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
 
 namespace mojo {
@@ -10632,16 +10639,7 @@ def main(argv):
 
   mojo_gles2_prefix = ("mojo/public/c/gles2/gles2_call_visitor")
   gen.WriteMojoGLCallVisitor(mojo_gles2_prefix + "_autogen.h")
-  mojo_extensions = ["CHROMIUM_bind_uniform_location",
-                     "CHROMIUM_miscellaneous",
-                     "CHROMIUM_resize",
-                     "CHROMIUM_sub_image",
-                     "CHROMIUM_sync_point",
-                     "CHROMIUM_texture_mailbox",
-                     "EXT_debug_marker",
-                     "OES_vertex_array_object",
-                     "occlusion_query_EXT"]
-  for extension in mojo_extensions:
+  for extension in _MOJO_EXPOSED_EXTENSIONS:
     gen.WriteMojoGLCallVisitorForExtension(
         mojo_gles2_prefix + "_" + extension.lower() + "_autogen.h", extension)
 
