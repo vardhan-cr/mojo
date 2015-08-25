@@ -13,7 +13,6 @@ mojo_native_application("keyboard_client") {
     "//base",
     "//mojo/application",
     "//mojo/gpu",
-    "//mojo/public/c/gles2:headers",
     "//mojo/public/interfaces/application:application__generator",
     "//mojo/services/geometry/public/cpp:cpp",
     "//mojo/services/geometry/public/interfaces:interfaces__generator",
