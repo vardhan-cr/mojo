@@ -405,6 +405,30 @@ TEST(UnionTest, PodUnionInArraySerialization) {
   EXPECT_EQ(12, array2[1]->get_f_int16());
 }
 
+TEST(UnionTest, PodUnionInArrayValidation) {
+  Environment environment;
+  Array<PodUnionPtr> array(2);
+  array[0] = PodUnion::New();
+  array[1] = PodUnion::New();
+
+  array[0]->set_f_int8(10);
+  array[1]->set_f_int16(12);
+
+  size_t size = GetSerializedSize_(array);
+
+  mojo::internal::FixedBufferForTesting buf(size);
+  mojo::internal::Array_Data<internal::PodUnion_Data>* data;
+  mojo::internal::ArrayValidateParams validate_params(0, false, nullptr);
+  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+
+  void* raw_buf = buf.Leak();
+  mojo::internal::BoundsChecker bounds_checker(data,
+                                               static_cast<uint32_t>(size), 1);
+
+  EXPECT_TRUE(Array<PodUnionPtr>::Data_::Validate(raw_buf, &bounds_checker,
+                                                  &validate_params));
+  free(raw_buf);
+}
 TEST(UnionTest, PodUnionInArraySerializationWithNull) {
   Environment environment;
   Array<PodUnionPtr> array(2);

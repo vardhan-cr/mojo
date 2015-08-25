@@ -90,6 +90,33 @@ struct IsHandle {
 };
 
 template <typename T>
+struct RemoveStructPtr {
+  typedef T type;
+};
+
+template <typename T>
+struct RemoveStructPtr<StructPtr<T>> {
+  typedef T type;
+};
+
+template <typename T>
+struct RemoveStructPtr<InlinedStructPtr<T>> {
+  typedef T type;
+};
+
+template <typename T>
+struct IsUnionWrapperType {
+  template <typename U>
+  static YesType Test(const typename U::Data_::MojomUnionDataType*);
+
+  template <typename U>
+  static NoType Test(...);
+
+  static const bool value =
+      sizeof(Test<T>(0)) == sizeof(YesType) && !IsConst<T>::value;
+};
+
+template <typename T>
 struct IsUnionDataType {
   template <typename U>
   static YesType Test(const typename U::MojomUnionDataType*);
@@ -101,27 +128,38 @@ struct IsUnionDataType {
       sizeof(Test<T>(0)) == sizeof(YesType) && !IsConst<T>::value;
 };
 
-template <typename T, bool move_only = IsMoveOnlyType<T>::value>
+template <typename T,
+          bool move_only = IsMoveOnlyType<T>::value,
+          bool is_union =
+              IsUnionWrapperType<typename RemoveStructPtr<T>::type>::value>
 struct WrapperTraits;
 
 template <typename T>
-struct WrapperTraits<T, false> {
+struct WrapperTraits<T, false, false> {
   typedef T DataType;
 };
 template <typename H>
-struct WrapperTraits<ScopedHandleBase<H>, true> {
+struct WrapperTraits<ScopedHandleBase<H>, true, false> {
   typedef H DataType;
 };
 template <typename S>
-struct WrapperTraits<StructPtr<S>, true> {
+struct WrapperTraits<StructPtr<S>, true, false> {
   typedef typename S::Data_* DataType;
 };
 template <typename S>
-struct WrapperTraits<InlinedStructPtr<S>, true> {
+struct WrapperTraits<InlinedStructPtr<S>, true, false> {
   typedef typename S::Data_* DataType;
 };
+template <typename U>
+struct WrapperTraits<StructPtr<U>, true, true> {
+  typedef typename U::Data_ DataType;
+};
+template <typename U>
+struct WrapperTraits<InlinedStructPtr<U>, true, true> {
+  typedef typename U::Data_ DataType;
+};
 template <typename S>
-struct WrapperTraits<S, true> {
+struct WrapperTraits<S, true, false> {
   typedef typename S::Data_* DataType;
 };
 

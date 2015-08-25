@@ -53,7 +53,7 @@ ArrayDataTraits<bool>::BitRef::operator bool() const {
 }
 
 // static
-void ArraySerializationHelper<Handle, true>::EncodePointersAndHandles(
+void ArraySerializationHelper<Handle, true, false>::EncodePointersAndHandles(
     const ArrayHeader* header,
     ElementType* elements,
     std::vector<Handle>* handles) {
@@ -62,7 +62,7 @@ void ArraySerializationHelper<Handle, true>::EncodePointersAndHandles(
 }
 
 // static
-void ArraySerializationHelper<Handle, true>::DecodePointersAndHandles(
+void ArraySerializationHelper<Handle, true, false>::DecodePointersAndHandles(
     const ArrayHeader* header,
     ElementType* elements,
     std::vector<Handle>* handles) {

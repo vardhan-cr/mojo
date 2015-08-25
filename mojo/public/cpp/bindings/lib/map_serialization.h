@@ -74,7 +74,7 @@ struct MapSerializer<
 };
 
 template <typename U, typename U_Data>
-struct MapSerializer<U, U_Data*, true, true> {
+struct MapSerializer<U, U_Data, true, true> {
   static size_t GetBaseArraySize(size_t count) {
     return count * sizeof(U_Data);
   }
