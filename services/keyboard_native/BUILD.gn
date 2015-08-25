@@ -39,7 +39,7 @@ mojo_native_application("keyboard_native") {
     "//mojo/application",
     "//mojo/public/cpp/bindings",
     "//mojo/gpu",
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",
