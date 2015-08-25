@@ -48,6 +48,7 @@ class DevServerConfig(object):
   """
   def __init__(self):
     self.host = None
+    self.port = None
     self.mappings = None
 
 
@@ -193,6 +194,7 @@ def get_shell_config(script_args):
         for dev_server_spec in config['dev_servers']:
           dev_server_config = DevServerConfig()
           dev_server_config.host = dev_server_spec['host']
+          dev_server_config.port = dev_server_spec.get('port', None)
           dev_server_config.mappings = []
           for prefix, path in dev_server_spec['mappings']:
             dev_server_config.mappings.append((prefix, path))

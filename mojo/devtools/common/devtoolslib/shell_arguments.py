@@ -157,7 +157,9 @@ def _configure_dev_server(shell, shell_args, dev_server_config):
   Returns:
     The updated argument list.
   """
-  server_url = shell.serve_local_directories(dev_server_config.mappings)
+  port = dev_server_config.port if dev_server_config.port else 0
+  server_url = shell.serve_local_directories(dev_server_config.mappings,
+                                             port=port)
   shell_args.append('--map-origin=%s=%s' % (dev_server_config.host, server_url))
   print "Configured %s locally at %s to serve:" % (dev_server_config.host,
                                                    server_url)

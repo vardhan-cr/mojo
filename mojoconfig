@@ -12,6 +12,11 @@
   'dev_servers': [
     {
       'host': 'https://core.mojoapps.io/',
+      # At this port the server will appear to the shell. That means actually
+      # running on this port when running a Linux shell and being forwarded from
+      # this port when running on Android. Using a fixed port enables caching
+      # server responses between shell runs.
+      'port': 31839,
       # First matching prefix will apply. Within the directiories specified for
       # a prefix, first location that contains the requested path will apply.
       'mappings': [
