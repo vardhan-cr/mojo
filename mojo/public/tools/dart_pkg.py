@@ -306,6 +306,13 @@ def main():
       if not os.path.exists(target):
         link(source, target)
 
+  # Copy generated bindings back to the source directory.
+  generated_bindings = list_files(lib_path, mojom_dart_filter)
+  for binding in generated_bindings:
+    lib_rel_path = os.path.relpath(binding, lib_path)
+    dest = os.path.join(common_source_prefix, 'lib', lib_rel_path)
+    copy(binding, dest)
+
   # Link dart-pkg/$package/packages to dart-pkg/packages
   link_if_possible(args.package_root, target_packages_dir)
 
