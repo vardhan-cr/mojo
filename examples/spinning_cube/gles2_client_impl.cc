@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <cmath>
 
 #include "mojo/public/c/gpu/MGL/mgl.h"
 #include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
@@ -28,6 +29,19 @@ float GetRandomColor() {
   return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
+// Return a direction multiplier to apply to drag distances:
+// 1 for natural (positive) motion, -1 for reverse (negative) motion
+int GetEventDirection(const mojo::PointF& current,
+                      const mojo::PointF& initial,
+                      const mojo::PointF& last) {
+  // Axis of motion is determined by coarse alignment of overall movement
+  bool use_x = std::abs(current.y - initial.y) <
+               std::abs(current.x - initial.x);
+  // Current direction is determined by comparison with previous point
+  float delta = use_x ? (current.x - last.x)
+                      : (current.y - last.y);
+  return delta > 0 ? -1 : 1;
+}
 }  // namespace
 
 GLES2ClientImpl::GLES2ClientImpl(mojo::ContextProviderPtr context_provider)
@@ -63,44 +77,51 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
       capture_point_.y = event.pointer_data->y;
       last_drag_point_ = capture_point_;
       drag_start_time_ = mojo::GetTimeTicksNow();
+      cube_.SetFlingMultiplier(0.0f, 1.0f);
       break;
     case mojo::EVENT_TYPE_POINTER_MOVE: {
-      if (event.flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON)
+      if (!(event.flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON) &&
+          event.pointer_data->kind == mojo::POINTER_KIND_MOUSE) {
         break;
+      }
       mojo::PointF event_location;
       event_location.x = event.pointer_data->x;
       event_location.y = event.pointer_data->y;
-      int direction = (event_location.y < last_drag_point_.y ||
-                       event_location.x > last_drag_point_.x)
-                          ? 1
-                          : -1;
-      cube_.set_direction(direction);
+      int direction = GetEventDirection(event_location,
+                                        capture_point_,
+                                        last_drag_point_);
       cube_.UpdateForDragDistance(
-          CalculateDragDistance(last_drag_point_, event_location));
+          direction * CalculateDragDistance(last_drag_point_, event_location));
       WantToDraw();
 
       last_drag_point_ = event_location;
       break;
-  }
-  case mojo::EVENT_TYPE_POINTER_UP: {
-    if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON) {
-      cube_.set_color(GetRandomColor(), GetRandomColor(), GetRandomColor());
+    }
+    case mojo::EVENT_TYPE_POINTER_UP: {
+      if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON) {
+        cube_.set_color(GetRandomColor(), GetRandomColor(), GetRandomColor());
+        break;
+      }
+      mojo::PointF event_location;
+      event_location.x = event.pointer_data->x;
+      event_location.y = event.pointer_data->y;
+      MojoTimeTicks offset = mojo::GetTimeTicksNow() - drag_start_time_;
+      float delta = static_cast<float>(offset) / 1000000.f;
+      // Last drag point is the same as current point here; use initial capture
+      // point instead
+      int direction = GetEventDirection(event_location,
+                                        capture_point_,
+                                        capture_point_);
+      cube_.SetFlingMultiplier(
+          direction * CalculateDragDistance(capture_point_, event_location),
+          delta);
+
+      capture_point_ = last_drag_point_ = mojo::PointF();
+      WantToDraw();
       break;
     }
-    mojo::PointF event_location;
-    event_location.x = event.pointer_data->x;
-    event_location.y = event.pointer_data->y;
-    MojoTimeTicks offset = mojo::GetTimeTicksNow() - drag_start_time_;
-    float delta = static_cast<float>(offset) / 1000000.;
-    cube_.SetFlingMultiplier(
-        CalculateDragDistance(capture_point_, event_location), delta);
-
-    capture_point_ = last_drag_point_ = mojo::PointF();
-    WantToDraw();
-    break;
-  }
-  default:
-    break;
+    default:
+      break;
   }
 }
 

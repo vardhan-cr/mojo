@@ -393,6 +393,7 @@ class SpinningCube::GLState {
   GLuint program_object_;
   GLint position_location_;
   GLint normal_location_;
+  GLint color_location_;
   GLint mvp_location_;
   GLuint vbo_vertices_;
   GLuint vbo_indices_;
@@ -409,6 +410,7 @@ void SpinningCube::GLState::OnGLContextLost() {
   program_object_ = 0;
   position_location_ = 0;
   normal_location_ = 0;
+  color_location_ = 0;
   mvp_location_ = 0;
   vbo_vertices_ = 0;
   vbo_indices_ = 0;
@@ -424,7 +426,7 @@ SpinningCube::SpinningCube()
       direction_(1),
       color_() {
   state_->angle_ = 45.0f;
-  set_color(0.0, 1.0, 0.0);
+  set_color(1.0, 1.0, 1.0);
 }
 
 SpinningCube::~SpinningCube() {
@@ -443,6 +445,7 @@ void SpinningCube::Init() {
       "uniform mat4 u_mvpMatrix;                                       \n"
       "attribute vec4 a_position;                                      \n"
       "attribute vec4 a_normal;                                        \n"
+      "uniform vec3 u_color;                                           \n"
       "varying vec4 v_color;                                           \n"
       "void main()                                                     \n"
       "{                                                               \n"
@@ -453,7 +456,8 @@ void SpinningCube::Init() {
       "       clamp(dot(rotated_normal, light_direction), 0.0, 1.0);   \n"
       "   float light_intensity = 0.6 * directional_capture + 0.4;     \n"
       "   vec3 base_color = a_position.xyz + 0.5;                      \n"
-      "   v_color = vec4(base_color * light_intensity, 1.0);           \n"
+      "   vec3 color = base_color * u_color;                           \n"
+      "   v_color = vec4(color * light_intensity, 1.0);                \n"
       "}                                                               \n";
 
   const char fragment_shader_source[] =
@@ -470,6 +474,8 @@ void SpinningCube::Init() {
       state_->program_object_, "a_position");
   state_->normal_location_ = glGetAttribLocation(
       state_->program_object_, "a_normal");
+  state_->color_location_ = glGetUniformLocation(
+      state_->program_object_, "u_color");
   state_->mvp_location_ = glGetUniformLocation(
       state_->program_object_, "u_mvpMatrix");
   state_->num_indices_ = GenerateCube(
@@ -489,7 +495,6 @@ void SpinningCube::SetFlingMultiplier(float drag_distance,
                                       float drag_time) {
   fling_multiplier_ = RotationForDragDistance(drag_distance) /
       RotationForTimeDelta(drag_time);
-
 }
 
 void SpinningCube::UpdateForTimeDelta(float delta_time) {
@@ -501,6 +506,11 @@ void SpinningCube::UpdateForTimeDelta(float delta_time) {
   if (fling_multiplier_ > 1.0f) {
     fling_multiplier_ =
         std::max(1.0f, fling_multiplier_ - (fling_multiplier_ - 1.0f) / 50);
+  }
+
+  if (fling_multiplier_ < -1.0f) {
+    fling_multiplier_ =
+        std::min(-1.0f, fling_multiplier_ - (fling_multiplier_ + 1.0f) / 50);
   }
 
   Update();
@@ -530,6 +540,7 @@ void SpinningCube::Draw() {
   glEnableVertexAttribArray(state_->normal_location_);
   glUniformMatrix4fv(state_->mvp_location_, 1, GL_FALSE,
                      static_cast<GLfloat*>(&state_->mvp_matrix_.m[0][0]));
+  glUniform3fv(state_->color_location_, 1, color_);
   glDrawElements(GL_TRIANGLES, state_->num_indices_, GL_UNSIGNED_SHORT, 0);
 }
 
