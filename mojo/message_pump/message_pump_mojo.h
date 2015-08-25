@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_MESSAGE_PUMP_MOJO_H_
-#define MOJO_COMMON_MESSAGE_PUMP_MOJO_H_
+#ifndef MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_H_
+#define MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_H_
 
 #include <map>
 #include <utility>
@@ -135,4 +135,4 @@ class MessagePumpMojo : public base::MessagePump {
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_MESSAGE_PUMP_MOJO_H_
+#endif  // MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_H_

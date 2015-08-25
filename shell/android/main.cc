@@ -24,7 +24,7 @@
 #include "base/task_runner_util.h"
 #include "base/threading/simple_thread.h"
 #include "jni/ShellService_jni.h"
-#include "mojo/common/message_pump_mojo.h"
+#include "mojo/message_pump/message_pump_mojo.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
 #include "mojo/services/window_manager/public/interfaces/window_manager.mojom.h"
 #include "shell/android/android_handler_loader.h"

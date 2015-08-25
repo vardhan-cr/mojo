@@ -30,10 +30,11 @@ source_set("application_manager") {
 
   public_deps = [
     "//base",
-    "//mojo/common",
+    "//mojo/converters/url",
+    "//mojo/data_pipe_utils",
     "//mojo/public/interfaces/application:application",
-    "//mojo/services/authentication/public/interfaces",
     "//mojo/services/authenticating_url_loader_interceptor/public/interfaces",
+    "//mojo/services/authentication/public/interfaces",
     "//mojo/services/network/public/interfaces",
     "//mojo/services/url_response_disk_cache/public/interfaces",
     "//url",
@@ -60,7 +61,6 @@ test("mojo_application_manager_unittests") {
     ":test_bindings",
     "//base",
     "//mojo/application",
-    "//mojo/common",
     "//mojo/edk/test:run_all_unittests",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/application",

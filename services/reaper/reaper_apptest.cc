@@ -4,7 +4,6 @@
 
 #include "base/bind.h"
 #include "base/run_loop.h"
-#include "mojo/common/common_type_converters.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"

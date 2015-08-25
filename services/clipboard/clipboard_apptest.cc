@@ -4,7 +4,7 @@
 
 #include "base/bind.h"
 #include "base/run_loop.h"
-#include "mojo/common/common_type_converters.h"
+#include "mojo/converters/array_string/array_string_type_converters.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/application_test_base.h"
 #include "mojo/services/clipboard/public/interfaces/clipboard.mojom.h"

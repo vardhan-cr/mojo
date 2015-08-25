@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "base/callback.h"
-#include "mojo/common/data_pipe_drainer.h"
+#include "mojo/data_pipe_utils/data_pipe_drainer.h"
 
 namespace debugger {
 

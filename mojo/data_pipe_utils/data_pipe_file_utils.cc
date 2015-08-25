@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 
 #include <stdio.h>
 
@@ -14,7 +14,7 @@
 #include "base/files/scoped_file.h"
 #include "base/location.h"
 #include "base/trace_event/trace_event.h"
-#include "mojo/common/data_pipe_utils_internal.h"
+#include "mojo/data_pipe_utils/data_pipe_utils_internal.h"
 #include "mojo/public/cpp/environment/async_waiter.h"
 
 namespace mojo {

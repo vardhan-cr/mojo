@@ -60,9 +60,11 @@ source_set("tonic") {
   deps = [
     "//base",
     "//build/config/sanitizers:deps",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
+    "//mojo/message_pump",
     "//mojo/public/cpp/system",
     "//mojo/services/network/public/interfaces",
+    "//url",
   ]
 
   public_deps = [

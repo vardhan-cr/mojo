@@ -25,11 +25,11 @@ mojo_native_application("js_content_handler") {
   deps = [
     "//base:i18n",
     "//mojo/application",
-    "//mojo/application:application",
     "//mojo/application:content_handler",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/edk/js/",
     "//mojo/environment:chromium",
+    "//mojo/message_pump",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",
     "//mojo/public/interfaces/application",

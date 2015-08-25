@@ -6,7 +6,7 @@
 #define SERVICES_JS_JS_APP_MESSAGE_LOOP_OBSERVERS_H_
 
 #include "base/message_loop/message_loop.h"
-#include "mojo/common/message_pump_mojo.h"
+#include "mojo/message_pump/message_pump_mojo.h"
 #include "v8/include/v8.h"
 
 namespace js {

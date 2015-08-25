@@ -76,7 +76,6 @@ source_set("view_manager_lib") {
     "//cc/surfaces",
     "//cc/surfaces:surface_id",
     "//mojo/application",
-    "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/converters/input_events",
     "//mojo/converters/surfaces",
@@ -106,7 +105,7 @@ source_set("test_support") {
 
   deps = [
     "//base",
-    "//mojo/common",
+    "//mojo/converters/array_string",
     "//mojo/public/cpp/bindings:bindings",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/view_manager/public/cpp",

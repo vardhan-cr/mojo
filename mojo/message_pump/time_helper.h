@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_TIME_HELPER_H_
-#define MOJO_COMMON_TIME_HELPER_H_
+#ifndef MOJO_MESSAGE_PUMP_TIME_HELPER_H_
+#define MOJO_MESSAGE_PUMP_TIME_HELPER_H_
 
 #include "base/time/time.h"
 
@@ -30,4 +30,4 @@ base::TimeTicks NowTicks();
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_TIME_HELPER_H_
+#endif  // MOJO_MESSAGE_PUMP_TIME_HELPER_H_

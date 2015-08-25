@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_DATA_PIPE_UTILS_INTERNAL_H_
-#define MOJO_COMMON_DATA_PIPE_UTILS_INTERNAL_H_
+#ifndef MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_INTERNAL_H_
+#define MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_INTERNAL_H_
 
 #include "base/callback_forward.h"
 #include "mojo/public/cpp/system/core.h"
@@ -19,4 +19,4 @@ bool BlockingCopyHelper(
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_DATA_PIPE_UTILS_INTERNAL_H_
+#endif  // MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_INTERNAL_H_

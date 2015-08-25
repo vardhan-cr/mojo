@@ -18,8 +18,8 @@
 #include "base/trace_event/trace_event.h"
 #include "crypto/secure_hash.h"
 #include "crypto/sha2.h"
-#include "mojo/common/common_type_converters.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/converters/url/url_type_converters.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "shell/application_manager/data_pipe_peek.h"
 
 namespace shell {

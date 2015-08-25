@@ -8,11 +8,11 @@ import("//mojo/public/mojo.gni")
 test("mojo_task_tracker_perftests") {
   deps = [
     "//base/test:test_support",
-    "//mojo/common",
     "//mojo/edk/system",
     "//mojo/edk/test:test_support",
     "//mojo/edk/test:test_support_impl",
     "//mojo/environment:chromium",
+    "//mojo/message_pump",
     "//mojo/public/c/test_support",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/bindings:callback",

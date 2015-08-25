@@ -11,7 +11,7 @@
 #include "base/location.h"
 #include "base/strings/string_util.h"
 #include "base/task_runner_util.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "mojo/services/network/public/interfaces/url_loader.mojom.h"
 
 namespace breakpad {

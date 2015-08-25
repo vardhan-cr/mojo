@@ -18,7 +18,7 @@ source_set("crash") {
 
   deps = [
     "//base",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/services/network/public/interfaces",
     "//third_party/breakpad:client",
   ]
@@ -32,9 +32,10 @@ test("crash_unittests") {
   deps = [
     ":crash",
     "//base",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/edk/test:run_all_unittests",
     "//mojo/environment:chromium",
+    "//mojo/message_pump",
     "//mojo/services/network/public/interfaces",
     "//testing/gtest",
   ]

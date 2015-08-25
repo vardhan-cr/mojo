@@ -4,7 +4,7 @@
 
 #include "shell/application_manager/shell_impl.h"
 
-#include "mojo/common/common_type_converters.h"
+#include "mojo/converters/url/url_type_converters.h"
 #include "mojo/services/content_handler/public/interfaces/content_handler.mojom.h"
 #include "shell/application_manager/application_manager.h"
 

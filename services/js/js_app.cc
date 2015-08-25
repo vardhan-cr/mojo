@@ -9,7 +9,7 @@
 #include "gin/converter.h"
 #include "gin/modules/module_registry.h"
 #include "gin/try_catch.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "mojo/edk/js/core.h"
 #include "mojo/edk/js/handle.h"
 #include "mojo/edk/js/support.h"

@@ -8,7 +8,6 @@
 #include "examples/browser/browser_host.mojom.h"
 #include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
-#include "mojo/common/common_type_converters.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"

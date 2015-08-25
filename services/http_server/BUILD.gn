@@ -21,6 +21,7 @@ mojo_native_application("http_server") {
   deps = [
     "//base",
     "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/public/cpp/application:standalone",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/environment",
@@ -53,7 +54,7 @@ mojo_native_application("apptests") {
     "//base",
     "//mojo/application",
     "//mojo/application:test_support",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/public/cpp/bindings:callback",
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",

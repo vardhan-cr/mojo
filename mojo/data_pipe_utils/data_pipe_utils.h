@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_SHELL_DATA_PIPE_UTILS_H_
-#define MOJO_SHELL_DATA_PIPE_UTILS_H_
+#ifndef MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_H_
+#define MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_H_
 
 #include <string>
 
@@ -51,4 +51,4 @@ bool BlockingCopyToFile(ScopedDataPipeConsumerHandle source,
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_SHELL_DATA_PIPE_UTILS_H_
+#endif  // MOJO_DATA_PIPE_UTILS_DATA_PIPE_UTILS_H_

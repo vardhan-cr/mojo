@@ -17,7 +17,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/trace_event/trace_event.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
 #include "services/url_response_disk_cache/url_response_disk_cache_entry.mojom.h"

@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_DATA_PIPE_DRAINER_H_
-#define MOJO_COMMON_DATA_PIPE_DRAINER_H_
+#ifndef MOJO_DATA_PIPE_UTILS_DATA_PIPE_DRAINER_H_
+#define MOJO_DATA_PIPE_UTILS_DATA_PIPE_DRAINER_H_
 
 #include "base/memory/weak_ptr.h"
-#include "mojo/common/handle_watcher.h"
+#include "mojo/message_pump/handle_watcher.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace mojo {
@@ -20,7 +20,7 @@ class DataPipeDrainer {
     virtual void OnDataComplete() = 0;
 
    protected:
-    virtual ~Client() { }
+    virtual ~Client() {}
   };
 
   DataPipeDrainer(Client*, mojo::ScopedDataPipeConsumerHandle source);
@@ -43,4 +43,4 @@ class DataPipeDrainer {
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_DATA_PIPE_DRAINER_H_
+#endif  // MOJO_DATA_PIPE_UTILS_DATA_PIPE_DRAINER_H_

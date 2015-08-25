@@ -24,8 +24,8 @@ mojo_native_application("indirect_service_demo") {
     ":bindings",
     "//base",
     "//mojo/application",
-    "//mojo/common",
     "//mojo/environment:chromium",
+    "//mojo/message_pump",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/utility",
   ]

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_MESSAGE_PUMP_MOJO_HANDLER_H_
-#define MOJO_COMMON_MESSAGE_PUMP_MOJO_HANDLER_H_
+#ifndef MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_HANDLER_H_
+#define MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_HANDLER_H_
 
 #include "mojo/public/cpp/system/core.h"
 
@@ -25,4 +25,4 @@ class MessagePumpMojoHandler {
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_MESSAGE_PUMP_MOJO_HANDLER_H_
+#endif  // MOJO_MESSAGE_PUMP_MESSAGE_PUMP_MOJO_HANDLER_H_

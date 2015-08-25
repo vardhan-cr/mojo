@@ -17,7 +17,7 @@ mojo_native_application("debugger") {
     "//base",
     "//base/allocator",
     "//mojo/application",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//mojo/public/cpp/utility",

@@ -5,7 +5,7 @@
 #include "services/tracing/trace_data_sink.h"
 
 #include "base/logging.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 
 using mojo::common::BlockingCopyFromString;
 

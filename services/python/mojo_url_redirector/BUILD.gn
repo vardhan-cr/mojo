@@ -37,7 +37,7 @@ mojo_native_application("apptests") {
     "//base",
     "//mojo/application",
     "//mojo/application:test_support",
-    "//mojo/common",
+    "//mojo/data_pipe_utils",
     "//mojo/services/http_server/public/cpp",
     "//mojo/services/http_server/public/interfaces",
     "//mojo/services/network/public/interfaces",

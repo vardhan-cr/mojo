@@ -7,7 +7,7 @@
 #include "base/callback.h"
 #include "base/run_loop.h"
 #include "base/trace_event/trace_event.h"
-#include "mojo/common/message_pump_mojo.h"
+#include "mojo/message_pump/message_pump_mojo.h"
 #include "tonic/dart_api_scope.h"
 #include "tonic/dart_converter.h"
 #include "tonic/dart_dependency_catcher.h"

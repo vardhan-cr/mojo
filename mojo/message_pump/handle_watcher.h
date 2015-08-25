@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_COMMON_HANDLE_WATCHER_H_
-#define MOJO_COMMON_HANDLE_WATCHER_H_
+#ifndef MOJO_MESSAGE_PUMP_HANDLE_WATCHER_H_
+#define MOJO_MESSAGE_PUMP_HANDLE_WATCHER_H_
 
 #include "base/basictypes.h"
 #include "base/callback_forward.h"
@@ -60,4 +60,4 @@ class HandleWatcher {
 }  // namespace common
 }  // namespace mojo
 
-#endif  // MOJO_COMMON_HANDLE_WATCHER_H_
+#endif  // MOJO_MESSAGE_PUMP_HANDLE_WATCHER_H_

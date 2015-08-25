@@ -16,7 +16,6 @@ mojo_native_application("browser") {
     "//base",
     "//examples/window_manager:bindings",
     "//mojo/application",
-    "//mojo/common",
     "//mojo/converters/geometry",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/navigation/public/interfaces",

@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <python2.7/Python.h>
 #include <dlfcn.h>
+#include <python2.7/Python.h>
 
 #include "base/files/file_path.h"
 #include "base/files/scoped_temp_dir.h"
@@ -12,8 +12,7 @@
 #include "base/strings/stringprintf.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/application/content_handler_factory.h"
-#include "mojo/common/common_type_converters.h"
-#include "mojo/common/data_pipe_utils.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"

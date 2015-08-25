@@ -4,6 +4,8 @@
 
 #include "shell/application_manager/local_fetcher.h"
 
+#include <sys/stat.h>
+
 #include "base/bind.h"
 #include "base/files/file_enumerator.h"
 #include "base/files/file_util.h"
@@ -12,9 +14,8 @@
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/trace_event/trace_event.h"
-#include "mojo/common/common_type_converters.h"
-#include "mojo/common/data_pipe_utils.h"
-#include <sys/stat.h>
+#include "mojo/converters/url/url_type_converters.h"
+#include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "url/url_util.h"
 
 namespace shell {
