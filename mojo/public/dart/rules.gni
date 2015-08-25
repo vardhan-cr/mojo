@@ -226,7 +226,9 @@ template("dart_pkg_helper") {
     # We have to use foreach to set up outputs instead of rebase_path because
     # GN doesn't like assignments to outputs that aren't obviously under
     # $root_gen_dir somewhere.
-    outputs = []
+    outputs = [
+      "$root_gen_dir/dart-pkg/${package_name}",
+    ]
     foreach(s, pkg_sources) {
       outputs += [ "$root_gen_dir/dart-pkg/${package_name}/$s" ]
     }
