@@ -195,7 +195,8 @@ DartLibraryLoader::DartLibraryLoader(DartState* dart_state)
       library_provider_(nullptr),
       dependency_catcher_(nullptr),
       magic_number_(nullptr),
-      magic_number_len_(0) {
+      magic_number_len_(0),
+      error_during_loading_(false) {
 }
 
 DartLibraryLoader::~DartLibraryLoader() {
@@ -325,6 +326,7 @@ void DartLibraryLoader::DidCompleteImportJob(
   if (Dart_IsError(result)) {
     LOG(ERROR) << "Error Loading " << job->name() << " "
         << Dart_GetError(result);
+    error_during_loading_ = true;
   }
 
   pending_libraries_.erase(job->name());
@@ -349,6 +351,7 @@ void DartLibraryLoader::DidCompleteSourceJob(
   if (Dart_IsError(result)) {
     LOG(ERROR) << "Error Loading " << job->name() << " "
         << Dart_GetError(result);
+    error_during_loading_ = true;
   }
 
   EraseUniquePtr<Job>(jobs_, job);
@@ -362,6 +365,7 @@ void DartLibraryLoader::DidFailJob(Job* job) {
 
   LOG(ERROR) << "Library Load failed: " << job->name();
   // TODO(eseidel): Call Dart_LibraryHandleError in the SourceJob case?
+  error_during_loading_ = true;
 
   EraseUniquePtr<Job>(jobs_, job);
 }

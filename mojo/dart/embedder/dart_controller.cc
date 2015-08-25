@@ -362,6 +362,13 @@ Dart_Isolate DartController::CreateIsolateHelper(
     InitializeDartMojoIo();
   }
 
+  if (isolate_data->library_loader().error_during_loading()) {
+    *error = strdup("Library loader reported error during loading. See log.");
+    Dart_EnterIsolate(isolate);
+    Dart_ShutdownIsolate();
+    return nullptr;
+  }
+
   // Make the isolate runnable so that it is ready to handle messages.
   bool retval = Dart_IsolateMakeRunnable(isolate);
   if (!retval) {

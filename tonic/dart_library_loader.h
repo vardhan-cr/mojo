@@ -57,6 +57,10 @@ class DartLibraryLoader {
     library_provider_ = library_provider;
   }
 
+  bool error_during_loading() const {
+    return error_during_loading_;
+  }
+
   // If one is needed by the embedder, this sets the magic number used to
   // distinguish snapshots from scripts. If no magic number is set, the
   // DartLibraryLoader always assumes that the targets of LoadLibrary and
@@ -91,6 +95,7 @@ class DartLibraryLoader {
   DartDependencyCatcher* dependency_catcher_;
   const uint8_t* magic_number_;
   intptr_t magic_number_len_;
+  bool error_during_loading_;
 
   DISALLOW_COPY_AND_ASSIGN(DartLibraryLoader);
 };
