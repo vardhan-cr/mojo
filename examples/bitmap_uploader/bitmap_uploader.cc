@@ -8,10 +8,10 @@
 #define GL_GLEXT_PROTOTYPES
 #endif  // GL_GLEXT_PROTOTYPES
 
+#include <GLES2/gl2extmojo.h>
+#include <MGL/mgl.h>
+
 #include "base/bind.h"
-#include "gpu/GLES2/gl2chromium.h"
-#include "gpu/GLES2/gl2extchromium.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/geometry/public/cpp/geometry_util.h"
@@ -61,14 +61,16 @@ void BitmapUploader::Init(Shell* shell) {
 
   CommandBufferPtr gles2_client;
   gpu_service_->CreateOffscreenGLES2Context(GetProxy(&gles2_client));
-  gles2_context_ = MojoGLES2CreateContext(
+  mgl_context_ = MGLCreateContext(
+      MGL_API_VERSION_GLES2,
       gles2_client.PassInterface().PassHandle().release().value(),
-      &LostContext, NULL, Environment::GetDefaultAsyncWaiter());
-  MojoGLES2MakeCurrent(gles2_context_);
+      MGL_NO_CONTEXT, &LostContext, nullptr,
+      Environment::GetDefaultAsyncWaiter());
+  MGLMakeCurrent(mgl_context_);
 }
 
 BitmapUploader::~BitmapUploader() {
-  MojoGLES2DestroyContext(gles2_context_);
+  MGLDestroyContext(mgl_context_);
 }
 
 void BitmapUploader::SetColor(uint32_t color) {
@@ -125,7 +127,7 @@ void BitmapUploader::Upload() {
   pass->quads.resize(0u);
   pass->shared_quad_states.push_back(CreateDefaultSQS(size));
 
-  MojoGLES2MakeCurrent(gles2_context_);
+  MGLMakeCurrent(mgl_context_);
   if (bitmap_.get()) {
     Size bitmap_size;
     bitmap_size.width = width_;
@@ -236,7 +238,7 @@ void BitmapUploader::SetIdNamespace(uint32_t id_namespace) {
 }
 
 void BitmapUploader::ReturnResources(Array<ReturnedResourcePtr> resources) {
-  MojoGLES2MakeCurrent(gles2_context_);
+  MGLMakeCurrent(mgl_context_);
   // TODO(jamesr): Recycle.
   for (size_t i = 0; i < resources.size(); ++i) {
     ReturnedResourcePtr resource = resources[i].Pass();

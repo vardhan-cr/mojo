@@ -10,7 +10,7 @@ source_set("bitmap_uploader") {
 
   public_deps = [
     "//base",
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
   ]

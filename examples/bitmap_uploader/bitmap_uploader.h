@@ -5,10 +5,11 @@
 #ifndef EXAMPLES_BITMAP_UPLOADER_BITMAP_UPLOADER_H_
 #define EXAMPLES_BITMAP_UPLOADER_BITMAP_UPLOADER_H_
 
+#include <MGL/mgl_types.h>
+
 #include "base/callback.h"
 #include "base/containers/hash_tables.h"
 #include "base/memory/scoped_ptr.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
@@ -53,7 +54,7 @@ class BitmapUploader : public ResourceReturner {
 
   View* view_;
   GpuPtr gpu_service_;
-  MojoGLES2Context gles2_context_;
+  MGLContext mgl_context_;
 
   Size size_;
   uint32_t color_;
