@@ -152,7 +152,7 @@ void Channel::DetachEndpoint(ChannelEndpoint* endpoint,
 
   // Note: Send the remove message outside the lock.
   if (!SendControlMessage(MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT,
-                          local_id, remote_id)) {
+                          local_id, remote_id, 0, nullptr)) {
     HandleLocalError(
         base::StringPrintf("Failed to send message to remove remote endpoint "
                            "(local ID %u, remote ID %u)",
@@ -521,7 +521,7 @@ bool Channel::OnRemoveEndpoint(ChannelEndpointId local_id,
 
   if (!SendControlMessage(
           MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT_ACK, local_id,
-          remote_id)) {
+          remote_id, 0, nullptr)) {
     HandleLocalError(base::StringPrintf(
                          "Failed to send message to ack remove remote endpoint "
                          "(local ID %u, remote ID %u)",
@@ -596,7 +596,7 @@ ChannelEndpointId Channel::AttachAndRunEndpoint(
 
   if (!SendControlMessage(
           MessageInTransit::Subtype::CHANNEL_ATTACH_AND_RUN_ENDPOINT, local_id,
-          remote_id)) {
+          remote_id, 0, nullptr)) {
     HandleLocalError(base::StringPrintf(
                          "Failed to send message to run remote endpoint (local "
                          "ID %u, remote ID %u)",
@@ -611,11 +611,13 @@ ChannelEndpointId Channel::AttachAndRunEndpoint(
 
 bool Channel::SendControlMessage(MessageInTransit::Subtype subtype,
                                  ChannelEndpointId local_id,
-                                 ChannelEndpointId remote_id) {
+                                 ChannelEndpointId remote_id,
+                                 uint32_t num_bytes,
+                                 const void* bytes) {
   DVLOG(2) << "Sending channel control message: subtype " << subtype
            << ", local ID " << local_id << ", remote ID " << remote_id;
   scoped_ptr<MessageInTransit> message(new MessageInTransit(
-      MessageInTransit::Type::CHANNEL, subtype, 0, nullptr));
+      MessageInTransit::Type::CHANNEL, subtype, num_bytes, bytes));
   message->set_source_id(local_id);
   message->set_destination_id(remote_id);
   return WriteMessage(message.Pass());
