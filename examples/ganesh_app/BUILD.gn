@@ -18,7 +18,7 @@ mojo_native_application("ganesh_app") {
     "//mojo/application",
     "//mojo/environment:chromium",
     "//mojo/gpu",
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/system",
     "//mojo/public/interfaces/application",
