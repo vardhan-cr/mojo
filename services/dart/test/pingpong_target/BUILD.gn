@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("pingpong_target") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_pingpong_target"
+  apps = [ [
+        "dart_pingpong_target",
+        "lib/main.dart",
+      ] ]
   sources = [
     "pubspec.yaml",
   ]

@@ -198,7 +198,9 @@ template("dart_pkg_helper") {
 
     entrypoints = []
     if (defined(invoker.apps)) {
-      entrypoints += invoker.apps
+      foreach(app, invoker.apps) {
+        entrypoints += [ app[1] ]
+      }
     }
     if (defined(invoker.libs)) {
       entrypoints += invoker.libs
@@ -260,41 +262,43 @@ template("dart_pkg_helper") {
 
 # This is the entrypoint for organizing Dart code for Mojo.
 #
-# For each file in |apps|, it makes a .mojo Mojo application using the dartx
-# format as well as an assemblage of the app under $root_gen_dir/part-pkg for
+# There should be a one to one mapping between dart_pkg rules and pubspec.yamls.
+#
+# This build rule will result in a package under $root_gen_dir/dart-pkg/
+#
+# The name of the package is taken from the 'pubspec.yaml' file.
+#
+# For each app in |apps|, it makes a .mojo Mojo application using the dartx
+# format as well as an assemblage of the app under $root_gen_dir/dart-pkg for
 # use in local development.
 #
-# For each file in |libs|, it invokes the Dart analyzer. All other sources go in
-# |sources|. This should at least contain a 'pubspec.yaml' file. If no |apps|
-# are defined, this rule makes the library package available to applications.
-# The name of the package is taken from the 'pubspec.yaml' file. Even if a
-# package will not be uploaded to pub, an attempt should be made not to conflict
-# with the names of existing pub packages, for example by using the prefix
-# 'mojo_dart_'.
+# For each library in |libs|, it invokes the Dart analyzer on that library. The
+# build will fail if the library is not analyzer clean.
+#
+# All other sources go in |sources|. This should at least contain the
+# 'pubspec.yaml' file.
+#
+# Even if a package will not be uploaded to pub, an attempt should be made not
+# to conflict with the names of existing pub packages, for example by using the
+# prefix 'mojo_dart_'.
 #
 #   sources
-#       List of non-app and non-lib sources to include in the package. This
-#       should at least contain the pubspec.yaml for the package.
+#       List of sources to include in the package. This should at least contain
+#       the pubspec.yaml for the package.
 #
 #   apps (optional)
-#       List of Mojo application entrypoints containing a main() function.
-#       Each of these entrypoints will result in a .mojo Mojo application.
-#       See |output_name| for how this application is named.
+#       List of pairs. [mojo_app_name, entrypoint.dart]. Each entrypoint
+#       script must contain a main() function. A .mojo Mojo application will be
+#       generated for each application.
 #
 #   libs (optional)
-#       List of package entrypoints to pass to the analyzer. If none are
+#       List of library entrypoints to pass to the analyzer. If none are
 #       defined, the analyzer is not run.
 #
 #   strict (optional)
 #       If |apps| are specified, |strict| can be set to true to
 #       instruct the content handler to run the apps in Dart VM's strict
 #       compilation mode (with assertions and type-checks, etc.).
-#
-#   app_name_override (optional)
-#       When |apps| are specified, this is the prefix to use for the
-#       name of the assembled .mojo file. The target name is used by default.
-#       For each entrypoint, the result is |output_name|_|entrypoint|.mojo. If
-#       the entrypoint is main.dart, the result is simply |output_name|.mojo.
 #
 #   deps (optional)
 #       List of other dart_pkg targets for Dart packages imported by this
@@ -363,21 +367,14 @@ template("dart_pkg") {
   }
 
   if (defined(invoker.apps)) {
-    pkg_name = target_name
-    if (defined(invoker.app_name_override)) {
-      pkg_name = invoker.app_name_override
-    }
     pkg_helper_output_dir = "$root_gen_dir/dart-pkg/${dart_package_name}"
-    foreach(entrypoint, invoker.apps) {
-      entrypoint_name = get_path_info(entrypoint, "name")
-      dartx_target_name = "${pkg_name}_${entrypoint_name}"
-      dartx_output_name = dartx_target_name
-      if (entrypoint_name == "main") {
-        dartx_output_name = pkg_name
-      }
-      dartx_application(dartx_target_name) {
+    foreach(app, invoker.apps) {
+      app_name = app[0]
+      app_entrypoint = app[1]
+      dartx_output_name = app_name
+      dartx_application("${app_name}_dart_app") {
         output_name = dartx_output_name
-        main_dart = rebase_path(entrypoint, "", pkg_helper_output_dir)
+        main_dart = rebase_path(app_entrypoint, "", pkg_helper_output_dir)
         sources = rebase_path(invoker.sources, "", pkg_helper_output_dir)
         deps = [
           ":$dart_pkg_target_name",
@@ -395,13 +392,9 @@ template("dart_pkg") {
       ":$dart_pkg_target_name",
     ]
     if (defined(invoker.apps)) {
-      pkg_name = target_name
-      if (defined(invoker.app_name_override)) {
-        pkg_name = invoker.app_name_override
-      }
-      foreach(entrypoint, invoker.apps) {
-        entrypoint_name = get_path_info(entrypoint, "name")
-        dartx_target_name = "${pkg_name}_${entrypoint_name}"
+      foreach(app, invoker.apps) {
+        app_name = app[0]
+        dartx_target_name = "${app_name}_dart_app"
         deps += [ ":$dartx_target_name" ]
       }
     }

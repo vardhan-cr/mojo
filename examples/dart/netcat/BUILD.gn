@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("netcat") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_netcat"
+  apps = [ [
+        "dart_netcat",
+        "lib/main.dart",
+      ] ]
   sources = [
     "pubspec.yaml",
   ]

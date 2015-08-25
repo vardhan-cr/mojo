@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("http_load_test") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_http_load_test"
+  apps = [ [
+        "dart_http_load_test",
+        "lib/main.dart",
+      ] ]
   sources = [
     "lib/src/part0.dart",
     "pubspec.yaml",

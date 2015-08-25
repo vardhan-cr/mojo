@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("hello") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_hello"
+  apps = [ [
+        "dart_hello",
+        "lib/main.dart",
+      ] ]
   sources = [
     "pubspec.yaml",
   ]

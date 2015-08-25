@@ -5,7 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("dart_apptests") {
-  apps = [ "lib/main.dart" ]
+  apps = [ [
+        "dart_apptests",
+        "lib/main.dart",
+      ] ]
   sources = [
     "lib/src/connect_to_loader_apptests.dart",
     "lib/src/echo_apptests.dart",

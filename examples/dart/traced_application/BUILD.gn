@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("traced_application") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_traced_application"
+  apps = [ [
+        "dart_traced_application",
+        "lib/main.dart",
+      ] ]
   sources = [
     "pubspec.yaml",
   ]

@@ -5,8 +5,10 @@
 import("//mojo/public/dart/rules.gni")
 
 dart_pkg("device_info") {
-  apps = [ "lib/main.dart" ]
-  app_name_override = "dart_device_info"
+  apps = [ [
+        "dart_device_info",
+        "lib/main.dart",
+      ] ]
   sources = [
     "pubspec.yaml",
   ]
