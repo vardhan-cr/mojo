@@ -6,15 +6,14 @@ import atexit
 import datetime
 import email.utils
 import errno
-import gzip
 import hashlib
 import logging
 import math
 import os.path
-import shutil
 import socket
-import threading
+import subprocess
 import tempfile
+import threading
 
 import SimpleHTTPServer
 import SocketServer
@@ -35,6 +34,24 @@ class UTC_TZINFO(datetime.tzinfo):
      return _ZERO
 
 _UTC = UTC_TZINFO()
+
+
+def _gzip(file_path):
+  """Gzips the given file storing the result in a temporary file.
+
+  Returns:
+    Path to the resulting file.
+  """
+  gzipped_file = tempfile.NamedTemporaryFile(delete=False)
+  try:
+    subprocess.check_call(['gzip', '-c', file_path],
+                          stdout=gzipped_file)
+  except Exception:
+    print ('http_server: call to gzip failed, make sure that '
+           'gzip is installed on the host.')
+    raise
+  gzipped_file.close()
+  return gzipped_file.name
 
 
 class _SilentTCPServer(SocketServer.TCPServer):
@@ -73,7 +90,7 @@ def _get_handler_class_for_path(mappings):
 
     def __init__(self, *args, **kwargs):
       self.etag = None
-      self.gzipped_file = None
+      self.gzipped_file_name = None
       self.original_file_name = None
       SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
 
@@ -138,7 +155,7 @@ def _get_handler_class_for_path(mappings):
       return SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
 
     # pylint: disable=W0221
-    def translate_path(self, path, gzipped=True):
+    def translate_path(self, path, gzip=True):
       # Parent translate_path() will strip away the query string and fragment
       # identifier, but also will prepend the cwd to the path. relpath() gives
       # us the relative path back.
@@ -146,24 +163,22 @@ def _get_handler_class_for_path(mappings):
           SimpleHTTPServer.SimpleHTTPRequestHandler.translate_path(self, path))
 
       for prefix, local_base_path_list in mappings:
-        if normalized_path.startswith(prefix):
-          for local_base_path in local_base_path_list:
-            candidate = os.path.join(local_base_path,
-                                     normalized_path[len(prefix):])
-            if os.path.isfile(candidate):
-              if gzipped:
-                if not self.gzipped_file:
-                  self.gzipped_file = tempfile.NamedTemporaryFile(delete=False)
-                  self.original_file_name = candidate
-                  with open(candidate, 'rb') as source:
-                    with gzip.GzipFile(fileobj=self.gzipped_file) as target:
-                      shutil.copyfileobj(source, target)
-                  self.gzipped_file.close()
-                return self.gzipped_file.name
-              return candidate
-          else:
-            self.send_response(404)
-            return None
+        if not normalized_path.startswith(prefix):
+          continue
+
+        for local_base_path in local_base_path_list:
+          candidate = os.path.join(local_base_path,
+                                   normalized_path[len(prefix):])
+          if os.path.isfile(candidate):
+            if gzip:
+              if not self.gzipped_file_name:
+                self.original_file_name = candidate
+                self.gzipped_file_name = _gzip(candidate)
+              return self.gzipped_file_name
+            return candidate
+        else:
+          self.send_response(404)
+          return None
       self.send_response(404)
       return None
 
@@ -184,8 +199,8 @@ def _get_handler_class_for_path(mappings):
       pass
 
     def __del__(self):
-      if self.gzipped_file:
-        os.remove(self.gzipped_file.name)
+      if self.gzipped_file_name:
+        os.remove(self.gzipped_file_name)
 
   RequestHandler.protocol_version = 'HTTP/1.1'
   return RequestHandler
