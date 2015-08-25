@@ -147,38 +147,18 @@ bool Channel::IsWriteBufferEmpty() {
 void Channel::DetachEndpoint(ChannelEndpoint* endpoint,
                              ChannelEndpointId local_id,
                              ChannelEndpointId remote_id) {
-  DCHECK(endpoint);
-  DCHECK(local_id.is_valid());
+  if (!DetachEndpointInternal(endpoint, local_id, remote_id))
+    return;
 
-  if (!remote_id.is_valid())
-    return;  // Nothing to do.
-
-  {
-    MutexLocker locker_(&mutex_);
-    if (!is_running_)
-      return;
-
-    IdToEndpointMap::iterator it = local_id_to_endpoint_map_.find(local_id);
-    // We detach immediately if we receive a remove message, so it's possible
-    // that the local ID is no longer in |local_id_to_endpoint_map_|, or even
-    // that it's since been reused for another endpoint. In both cases, there's
-    // nothing more to do.
-    if (it == local_id_to_endpoint_map_.end() || it->second.get() != endpoint)
-      return;
-
-    DCHECK(it->second);
-    it->second = nullptr;
-
-    // Send a remove message outside the lock.
-  }
-
+  // Note: Send the remove message outside the lock.
   if (!SendControlMessage(MessageInTransit::Subtype::CHANNEL_REMOVE_ENDPOINT,
                           local_id, remote_id)) {
-    HandleLocalError(base::StringPrintf(
-                         "Failed to send message to remove remote endpoint "
-                         "(local ID %u, remote ID %u)",
-                         static_cast<unsigned>(local_id.value()),
-                         static_cast<unsigned>(remote_id.value())).c_str());
+    HandleLocalError(
+        base::StringPrintf("Failed to send message to remove remote endpoint "
+                           "(local ID %u, remote ID %u)",
+                           static_cast<unsigned>(local_id.value()),
+                           static_cast<unsigned>(remote_id.value()))
+            .c_str());
   }
 }
 
@@ -273,6 +253,32 @@ size_t Channel::GetSerializedPlatformHandleSize() const {
 Channel::~Channel() {
   // The channel should have been shut down first.
   DCHECK(!is_running_);
+}
+
+bool Channel::DetachEndpointInternal(ChannelEndpoint* endpoint,
+                                     ChannelEndpointId local_id,
+                                     ChannelEndpointId remote_id) {
+  DCHECK(endpoint);
+  DCHECK(local_id.is_valid());
+
+  if (!remote_id.is_valid())
+    return false;  // Nothing to do.
+
+  MutexLocker locker(&mutex_);
+  if (!is_running_)
+    return false;
+
+  IdToEndpointMap::iterator it = local_id_to_endpoint_map_.find(local_id);
+  // We detach immediately if we receive a remove message, so it's possible
+  // that the local ID is no longer in |local_id_to_endpoint_map_|, or even
+  // that it's since been reused for another endpoint. In both cases, there's
+  // nothing more to do.
+  if (it == local_id_to_endpoint_map_.end() || it->second.get() != endpoint)
+    return false;
+
+  DCHECK(it->second);
+  it->second = nullptr;
+  return true;
 }
 
 void Channel::OnReadMessage(
