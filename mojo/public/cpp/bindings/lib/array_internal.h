@@ -386,9 +386,10 @@ class Array_Data {
   typedef typename Traits::StorageType StorageType;
   typedef typename Traits::Ref Ref;
   typedef typename Traits::ConstRef ConstRef;
-  typedef ArraySerializationHelper<T,
-                                   IsHandle<T>::value,
-                                   IsUnionDataType<T>::value> Helper;
+  typedef ArraySerializationHelper<
+      T,
+      IsHandle<T>::value,
+      IsUnionDataType<typename RemovePointer<T>::type>::value> Helper;
 
   // Returns null if |num_elements| or the corresponding storage size cannot be
   // stored in uint32_t.

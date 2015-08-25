@@ -244,16 +244,31 @@ TEST(UnionTest, OOBValidation) {
   free(raw_buf);
 }
 
+TEST(UnionTest, UnknownTagDeserialization) {
+  Environment environment;
+  size_t size = sizeof(internal::PodUnion_Data);
+  mojo::internal::FixedBufferForTesting buf(size);
+  internal::PodUnion_Data* data = internal::PodUnion_Data::New(&buf);
+  data->size = size;
+  data->tag = static_cast<internal::PodUnion_Data::PodUnion_Tag>(100);
+
+  PodUnionPtr pod2;
+  Deserialize_(data, &pod2);
+
+  EXPECT_TRUE(pod2->has_unknown_tag());
+}
+
 TEST(UnionTest, UnknownTagValidation) {
   Environment environment;
   size_t size = sizeof(internal::PodUnion_Data);
   mojo::internal::FixedBufferForTesting buf(size);
   internal::PodUnion_Data* data = internal::PodUnion_Data::New(&buf);
-  data->tag = static_cast<internal::PodUnion_Data::PodUnion_Tag>(0xFFFFFF);
+  data->size = size;
+  data->tag = static_cast<internal::PodUnion_Data::PodUnion_Tag>(100);
   mojo::internal::BoundsChecker bounds_checker(data,
                                                static_cast<uint32_t>(size), 0);
   void* raw_buf = buf.Leak();
-  EXPECT_FALSE(
+  EXPECT_TRUE(
       internal::PodUnion_Data::Validate(raw_buf, &bounds_checker, false));
   free(raw_buf);
 }
@@ -546,7 +561,7 @@ TEST(UnionTest, Validation_PodUnionInStruct_Failure) {
   void* raw_buf = buf.Leak();
   mojo::internal::BoundsChecker bounds_checker(data,
                                                static_cast<uint32_t>(size), 0);
-  EXPECT_FALSE(internal::SmallStruct_Data::Validate(raw_buf, &bounds_checker));
+  EXPECT_TRUE(internal::SmallStruct_Data::Validate(raw_buf, &bounds_checker));
   free(raw_buf);
 }
 
