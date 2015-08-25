@@ -9,14 +9,13 @@
 #endif
 
 #include <GLES2/gl2.h>
-#include <GLES2/gl2chromium.h>
-#include <GLES2/gl2extchromium.h>
+#include <GLES2/gl2extmojo.h>
+#include <MGL/mgl.h>
 
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/message_loop/message_loop.h"
 #include "base/task_runner.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/geometry/public/cpp/geometry_util.h"
@@ -35,7 +34,7 @@ GlHelper::GlHelper(Client* client,
       flipped_(flipped),
       returner_binding_(this),
       next_surface_size_(initial_size),
-      gl_context_(nullptr),
+      mgl_context_(MGL_NO_CONTEXT),
       next_frame_id_(0),
       frame_texture_(0),
       id_namespace_(0),
@@ -61,8 +60,8 @@ GlHelper::GlHelper(Client* client,
 
 GlHelper::~GlHelper() {
   DCHECK(!frame_texture_);
-  if (gl_context_)
-    MojoGLES2DestroyContext(gl_context_);
+  if (mgl_context_ != MGL_NO_CONTEXT)
+    MGLDestroyContext(mgl_context_);
 }
 
 void GlHelper::SetSurfaceSize(const mojo::Size& surface_size) {
@@ -165,12 +164,12 @@ void GlHelper::ReturnResources(
     mojo::Array<mojo::ReturnedResourcePtr> resources) {
   DCHECK(!frame_texture_);
 
-  if (!gl_context_) {
+  if (mgl_context_ == MGL_NO_CONTEXT) {
     DCHECK(textures_pending_return_.empty());
     return;
   }
 
-  MojoGLES2MakeCurrent(gl_context_);
+  MGLMakeCurrent(mgl_context_);
 
   // Note: This quadratic nested loop is OK, since we expect both |resources|
   // and |textures_pending_return_| to be small (and |resources| should
@@ -202,24 +201,25 @@ void GlHelper::ReturnResources(
 void GlHelper::EnsureContext() {
   DCHECK(!frame_texture_);
 
-  if (!gl_context_) {
+  if (mgl_context_ == MGL_NO_CONTEXT) {
     DCHECK(textures_pending_return_.empty());
 
     mojo::CommandBufferPtr command_buffer;
     gpu_->CreateOffscreenGLES2Context(mojo::GetProxy(&command_buffer));
-    gl_context_ = MojoGLES2CreateContext(
-        command_buffer.PassInterface().PassHandle().release().value(),
+    mgl_context_ = MGLCreateContext(
+        MGL_API_VERSION_GLES2,
+        command_buffer.PassInterface().PassHandle().release().value(), nullptr,
         &GlHelper::OnContextLostThunk, this,
         mojo::Environment::GetDefaultAsyncWaiter());
-    CHECK(gl_context_);
+    CHECK_NE(mgl_context_, MGL_NO_CONTEXT);
   }
 
-  MojoGLES2MakeCurrent(gl_context_);
+  MGLMakeCurrent(mgl_context_);
 }
 
 void GlHelper::EnsureSurface() {
   DCHECK(!frame_texture_);
-  DCHECK(gl_context_);
+  DCHECK_NE(mgl_context_, MGL_NO_CONTEXT);
 
   if (local_id_) {
     if (current_surface_size_ == next_surface_size_)
@@ -251,7 +251,7 @@ void GlHelper::CallOnSurfaceIdChanged() {
 }
 
 GlHelper::TextureInfo GlHelper::GetTexture() {
-  DCHECK(gl_context_);
+  DCHECK_NE(mgl_context_, MGL_NO_CONTEXT);
 
   if (!textures_.empty()) {
     TextureInfo rv = textures_.front();
@@ -273,7 +273,7 @@ GlHelper::TextureInfo GlHelper::GetTexture() {
 }
 
 void GlHelper::ReturnTexture(const TextureInfo& texture_info) {
-  DCHECK(gl_context_);
+  DCHECK_NE(mgl_context_, MGL_NO_CONTEXT);
   DCHECK_NE(texture_info.texture, 0u);
 
   if (texture_info.size == current_surface_size_ &&
@@ -284,7 +284,7 @@ void GlHelper::ReturnTexture(const TextureInfo& texture_info) {
 }
 
 void GlHelper::ClearTextures() {
-  DCHECK(gl_context_);
+  DCHECK_NE(mgl_context_, MGL_NO_CONTEXT);
 
   for (const auto& texture_info : textures_)
     glDeleteTextures(1, &texture_info.texture);
@@ -309,9 +309,9 @@ void GlHelper::OnContextLost() {
   // We shouldn't get this while we're processing a frame.
   DCHECK(!frame_texture_);
 
-  DCHECK(gl_context_);
-  MojoGLES2DestroyContext(gl_context_);
-  gl_context_ = nullptr;
+  DCHECK_NE(mgl_context_, MGL_NO_CONTEXT);
+  MGLDestroyContext(mgl_context_);
+  mgl_context_ = MGL_NO_CONTEXT;
 
   // TODO(vtl): We don't know if any of those textures will be valid when
   // returned (if they are), so assume they aren't.

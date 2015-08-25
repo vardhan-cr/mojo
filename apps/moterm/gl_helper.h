@@ -6,13 +6,13 @@
 #define APPS_MOTERM_GL_HELPER_H_
 
 #include <GLES2/gl2.h>
+#include <MGL/mgl_types.h>
 
 #include <deque>
 #include <vector>
 
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
-#include "mojo/public/c/gles2/gles2_types.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/services/geometry/public/interfaces/geometry.mojom.h"
 #include "mojo/services/gpu/public/interfaces/gpu.mojom.h"
@@ -110,7 +110,7 @@ class GlHelper : public mojo::ResourceReturner {
   // |id_namespace_| and |local_id_| must be set).
   void CallOnSurfaceIdChanged();
 
-  // Texture queue functions. (For all functions, |gl_context_| should be
+  // Texture queue functions. (For all functions, |mgl_context_| should be
   // current.)
   // Gets and binds a texture of size |current_surface_size_|.
   TextureInfo GetTexture();
@@ -144,7 +144,7 @@ class GlHelper : public mojo::ResourceReturner {
   // The size for the surface at the next |StartFrame()|.
   mojo::Size next_surface_size_;
 
-  MojoGLES2Context gl_context_;
+  MGLContext mgl_context_;
 
   std::deque<TextureInfo> textures_;
 

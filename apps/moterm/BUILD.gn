@@ -88,21 +88,21 @@ source_set("gl_helper") {
 
   deps = [
     "//mojo/public/cpp/application",
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/public/interfaces/application",
     "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
   ]
 
   forward_dependent_configs_from = [
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/services/gpu/public/interfaces",
     "//mojo/services/surfaces/public/interfaces",
   ]
 
   public_deps = [
     "//base",
-    "//mojo/public/c/gles2:headers",
+    "//mojo/public/c/gpu:GLES2",
     "//mojo/services/geometry/public/cpp",
     "//mojo/services/geometry/public/interfaces",
     "//mojo/services/surfaces/public/cpp",
