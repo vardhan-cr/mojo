@@ -147,7 +147,7 @@ MojoResult MojoEndReadData(MojoHandle data_pipe_consumer_handle,
 MojoTimeTicks MojoGetTimeTicksNow() {
   struct nacl_irt_mojo* irt_mojo = get_irt_mojo();
   if (irt_mojo == NULL)
-    return MOJO_RESULT_INTERNAL;
+    abort();
   return irt_mojo->MojoGetTimeTicksNow();
 }
 
