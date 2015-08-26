@@ -1,4 +1,8 @@
 #!mojo mojo:js_content_handler
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // Demonstrate use of the Mojo network service to load a URL. To run this
 // application with mojo_shell, set DIR to be the absolute path for this
 // directory, then:
@@ -11,12 +15,12 @@ define("main", [
   "mojo/services/public/js/application",
   "mojo/public/js/core",
   "mojo/services/network/public/interfaces/network_service.mojom",
-  "mojo/services/network/public/interfaces/url_loader.mojom",
-], function(console, application, core, network, loader) {
+  "mojo/public/interfaces/network/url_request.mojom",
+], function(console, application, core, network, request) {
 
   const Application = application.Application;
   const NetworkService = network.NetworkService;
-  const URLRequest = loader.URLRequest;
+  const URLRequest = request.URLRequest;
 
   class WGet extends Application {
     initialize(args) {
@@ -52,6 +56,8 @@ define("main", [
           .then(function() {
             app.quit();
           });
+      }).catch(function(e) {
+        console.log("URLLoader start() failed: " + e.stack);
       });
     }
   }
