@@ -38,7 +38,7 @@ abstract class Stub extends core.MojoEventStreamListener {
     try {
       message = new ServiceMessage.fromMessage(new Message(bytes, handles));
       responseFuture = _isClosing ? null : handleMessage(message);
-    } catch (e, s) {
+    } catch (e) {
       handles.forEach((h) => h.close());
       rethrow;
     }

@@ -62,10 +62,6 @@ class MojoHandle {
     }
   }
 
-  void _set(int value) {
-    _h = value;
-  }
-
   bool get readyRead => _ready(MojoHandleSignals.PEER_CLOSED_READABLE);
   bool get readyWrite => _ready(MojoHandleSignals.WRITABLE);
   bool get isValid => (_h != INVALID);

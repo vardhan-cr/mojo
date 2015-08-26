@@ -72,29 +72,6 @@ class MessageHeader {
 
   bool validateHeader(int expectedType, int expectedFlags) =>
       (type == expectedType) && validateHeaderFlags(expectedFlags);
-
-  static void _validateDataHeader(StructDataHeader dataHeader) {
-    if (dataHeader.version < kSimpleMessageVersion) {
-      throw 'Incorrect version, expecting at least '
-          '$kSimpleMessageVersion, but got: ${dataHeader.version}.';
-    }
-    if (dataHeader.size < kSimpleMessageSize) {
-      throw 'Incorrect message size, expecting at least $kSimpleMessageSize, '
-          'but got: ${dataHeader.size}';
-    }
-    if ((dataHeader.version == kSimpleMessageVersion) &&
-        (dataHeader.size != kSimpleMessageSize)) {
-      throw 'Incorrect message size for a message of version '
-          '$kSimpleMessageVersion, expecting $kSimpleMessageSize, '
-          'but got ${dataHeader.size}';
-    }
-    if ((dataHeader.version == kMessageWithRequestIdVersion) &&
-        (dataHeader.size != kMessageWithRequestIdSize)) {
-      throw 'Incorrect message size for a message of version '
-          '$kMessageWithRequestIdVersion, expecting '
-          '$kMessageWithRequestIdSize, but got ${dataHeader.size}';
-    }
-  }
 }
 
 class Message {
