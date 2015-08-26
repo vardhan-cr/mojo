@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'package:apptest/apptest.dart';
-import 'package:mojom/dart/test/echo_service.mojom.dart';
 
 import 'src/connect_to_loader_apptests.dart' as connect_to_loader_apptests;
 import 'src/echo_apptests.dart' as echo;

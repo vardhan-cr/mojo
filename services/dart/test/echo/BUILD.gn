@@ -14,6 +14,6 @@ dart_pkg("echo") {
   ]
   deps = [
     "//mojo/public/dart",
-    "//services/dart/test:echo_service_interface",
+    "//services/dart/test/service_test_interfaces",
   ]
 }

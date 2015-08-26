@@ -4,16 +4,13 @@
 
 import("//mojo/public/dart/rules.gni")
 
-dart_pkg("pingpong_target") {
-  apps = [ [
-        "dart_pingpong_target",
-        "lib/main.dart",
-      ] ]
+dart_pkg("service_test_interfaces") {
   sources = [
     "pubspec.yaml",
   ]
   deps = [
     "//mojo/public/dart",
-    "//services/dart/test/service_test_interfaces",
+    "//services/dart/test:pingpong_service_interface",
+    "//services/dart/test:echo_service_interface",
   ]
 }

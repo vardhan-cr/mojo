@@ -115,6 +115,9 @@ v8.log
 /services/dart/test/pingpong/packages
 /services/dart/test/pingpong_target/.packages
 /services/dart/test/pingpong_target/packages
+/services/dart/test/service_test_interfaces/.packages
+/services/dart/test/service_test_interfaces/packages
+services/dart/test/service_test_interfaces/pubspec.lock
 
 # downloaded keyboard_native resources.
 /services/keyboard_native/res/*.png

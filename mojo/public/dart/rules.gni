@@ -30,14 +30,13 @@ template("dartx") {
 
     inputs = [
       dart_snapshotter,
-      main_dart,
     ]
     outputs = [
       snapshot,
     ]
 
     if (defined(invoker.sources)) {
-      inputs += invoker.sources
+      sources = invoker.sources
     }
 
     script =
@@ -207,10 +206,8 @@ template("dart_pkg_helper") {
     }
 
     sources = entrypoints
-    pkg_sources = entrypoints
     if (defined(invoker.sources)) {
       sources += invoker.sources
-      pkg_sources += invoker.sources
     } else if (defined(invoker.pkg_dir)) {
       list_script = rebase_path("build/ls.py", ".", mojo_sdk_root)
       ls_sources = exec_script(list_script,
@@ -220,7 +217,6 @@ template("dart_pkg_helper") {
                                ],
                                "list lines")
       sources += ls_sources
-      pkg_sources += rebase_path(ls_sources, rebase_path(invoker.pkg_dir))
     }
 
     # We have to use foreach to set up outputs instead of rebase_path because
@@ -228,11 +224,8 @@ template("dart_pkg_helper") {
     # $root_gen_dir somewhere.
     outputs = [
       "$root_gen_dir/dart-pkg/${package_name}",
+      stamp_file,
     ]
-    foreach(s, pkg_sources) {
-      outputs += [ "$root_gen_dir/dart-pkg/${package_name}/$s" ]
-    }
-    outputs += [ stamp_file ]
 
     inputs = [
                list_mojoms_script,
@@ -377,7 +370,9 @@ template("dart_pkg") {
       dartx_application("${app_name}_dart_app") {
         output_name = dartx_output_name
         main_dart = rebase_path(app_entrypoint, "", pkg_helper_output_dir)
-        sources = rebase_path(invoker.sources, "", pkg_helper_output_dir)
+        sources = [
+          "$root_gen_dir/dart-pkg/${dart_package_name}.stamp",
+        ]
         deps = [
           ":$dart_pkg_target_name",
         ]
