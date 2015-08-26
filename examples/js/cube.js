@@ -1,40 +1,33 @@
 #!mojo mojo:js_content_handler
-
 // Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 define("main", [
   "console",
-  "mojo/services/public/js/application",
   "mojo/public/js/bindings",
-  "mojo/services/geometry/public/interfaces/geometry.mojom",
-  "mojo/services/gpu/public/interfaces/gpu.mojom",
-  "mojo/services/gpu/public/interfaces/viewport_parameter_listener.mojom",
-  "mojo/services/native_viewport/public/interfaces/native_viewport.mojom",
   "mojo/public/js/core",
+  "mojo/services/geometry/public/interfaces/geometry.mojom",
+  "mojo/services/native_viewport/public/interfaces/native_viewport.mojom",
+  "mojo/services/public/js/application",
   "services/js/modules/gl",
   "services/js/modules/clock",
   "timer",
 ], function(console,
-            application,
             bindings,
-            geometry,
-            gpu,
-            vpl,
-            nv,
             core,
+            geometry,
+            nv,
+            application,
             gl,
             clock,
             timer) {
 
   const Application = application.Application;
   const Context = gl.Context;
-  const Gpu = gpu.Gpu;
+  const NativeViewport = nv.NativeViewport;
   const Size = geometry.Size;
   const StubBindings = bindings.StubBindings;
-  const ViewportParameterListener = vpl.ViewportParameterListener;
-  const NativeViewport = nv.NativeViewport;
 
   const VERTEX_SHADER_SOURCE = [
     'uniform mat4 u_mvpMatrix;',
@@ -363,33 +356,47 @@ define("main", [
   }
 
   class GLES2ClientImpl {
-    constructor (remotePipe, size) {
-      this.gl_ = new Context(remotePipe, this.contextLost.bind(this));
-      this.lastTime_ = clock.seconds();
-      this.angle_ = 45;
+    constructor (contextProvider) {
+      this.contextProvider_ = contextProvider;
+      this.gl_ = null;
+      this.width_ = 0;
+      this.height_ = 0;
 
-      this.program_ = loadProgram(this.gl_);
-      this.positionLocation_ =
-        this.gl_.getAttribLocation(this.program_, 'a_position');
-      this.normalLocation_ =
-        this.gl_.getAttribLocation(this.program_, 'a_normal');
-      this.mvpLocation_ =
-        this.gl_.getUniformLocation(this.program_, 'u_mvpMatrix');
-      this.numIndices_ = generateCube(this.gl_);
-      this.mvpMatrix_ = new ESMatrix();
-      this.mvpMatrix_.loadIdentity();
+      var self = this;
+      contextProvider.create(core.kInvalidHandle).then(
+        function (result) {
+          self.gl_ =
+            new Context(result.gles2_client, self.contextLost.bind(self));
+          self.lastTime_ = clock.seconds();
+          self.angle_ = 45;
 
-      this.gl_.clearColor(0, 0, 0, 0);
-      this.gl_.enable(this.gl_.DEPTH_TEST);
-      this.setDimensions(size);
-      this.timer_ =
-          timer.createRepeating(16, this.handleTimer.bind(this));
+          self.program_ = loadProgram(self.gl_);
+          self.positionLocation_ =
+            self.gl_.getAttribLocation(self.program_, 'a_position');
+          self.normalLocation_ =
+            self.gl_.getAttribLocation(self.program_, 'a_normal');
+          self.mvpLocation_ =
+            self.gl_.getUniformLocation(self.program_, 'u_mvpMatrix');
+          self.numIndices_ = generateCube(self.gl_);
+          self.mvpMatrix_ = new ESMatrix();
+          self.mvpMatrix_.loadIdentity();
+
+          self.gl_.clearColor(0, 0, 0, 0);
+          self.gl_.enable(self.gl_.DEPTH_TEST);
+          if (self.width_ >= 0 && self.height_ >= 0)
+            self.gl_.resize(self.width_, self.height_, 1);
+          self.timer_ =
+              timer.createRepeating(16, self.handleTimer.bind(self));
+        }).catch(function(e) {
+          console.log("ContextProvider create() failed: " + e.stack);
+        });
     }
 
     setDimensions(size) {
       this.width_ = size.width;
       this.height_ = size.height;
-      this.gl_.resize(size.width, size.height, 1);
+      if (this.gl_)
+        this.gl_.resize(this.width_, this.height_, 1);
     }
 
     drawCube() {
@@ -411,6 +418,9 @@ define("main", [
     };
 
     handleTimer() {
+      if (!this.gl_)
+        return;
+
       var now = clock.seconds();
       var secondsDelta = now - this.lastTime_;
       this.lastTime_ = now;
@@ -455,16 +465,13 @@ define("main", [
       this.viewport = this.shell.connectToService(
           "mojo:native_viewport_service", NativeViewport, this);
 
-      this.gpu = this.shell.connectToService(
-          "mojo:native_viewport_service", Gpu);
-
       var app = this;
       var viewportSize = new Size({width: 800, height: 600});
       this.viewport.create(viewportSize).then(
         function(result) {
-          app.onViewportCreated(result.native_viewport_id, viewportSize);
+          app.onMetricsChanged(result.metrics);
         }).catch(function(e) {
-          console.log("onViewportCreated() failed: " + e.stack);
+          console.log("NativeViewport create() failed: " + e.stack);
         });
 
       this.viewport.setEventDispatcher(function(stub) {
@@ -472,20 +479,12 @@ define("main", [
         StubBindings(stub).delegate = app;
       });
       this.viewport.show();
-    }
 
-    onViewportCreated(id, size) {
-      var vpl = function(stub) {
-        StubBindings(stub).delegate = {
-          onVSyncParametersUpdated: function(timebase, interval) {
-            console.log("onVSyncParametersUpdated");
-          }
-        }
-      };
-
-      var pipe = core.createMessagePipe();
-      this.gpu.createOnscreenGLES2Context(id, size, pipe.handle1, vpl);
-      this.gles2_ = new GLES2ClientImpl(pipe.handle0, size);
+      var onscreenContextProvider;
+      this.viewport.getContextProvider(function(onscreenContextProviderProxy) {
+        onscreenContextProvider = onscreenContextProviderProxy;
+      });
+      this.gles2_ = new GLES2ClientImpl(onscreenContextProvider);
     }
 
     onEvent(event) {
