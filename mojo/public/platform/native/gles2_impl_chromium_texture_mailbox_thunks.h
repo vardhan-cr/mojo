@@ -2,6 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// This file is auto-generated from
+// gpu/command_buffer/build_gles2_cmd_buffer.py
+// It's formatted by clang-format using chromium coding style:
+//    clang-format -i -style=chromium filename
+// DO NOT EDIT!
+
 #ifndef MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_TEXTURE_MAILBOX_THUNKS_H_
 #define MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_TEXTURE_MAILBOX_THUNKS_H_
 
@@ -9,25 +15,26 @@
 
 #include "mojo/public/c/gles2/chromium_texture_mailbox.h"
 
-// Specifies the frozen API for the GLES2 CHROMIUM_texture_mailbox extension.
+// Specifies the frozen API for the CHROMIUM_texture_mailbox extension.
 #pragma pack(push, 8)
-struct MojoGLES2ImplChromiumTextureMailboxThunks {
+struct MojoGLES2ImplCHROMIUMTextureMailboxThunks {
   size_t size;  // Should be set to sizeof(*this).
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
-  ReturnType(GL_APIENTRY *Function) PARAMETERS;
+  ReturnType(GL_APIENTRY* Function) PARAMETERS;
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_texture_mailbox_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
 
+#ifdef __cplusplus
 // Intended to be called from the embedder to get the embedder's implementation
-// of GLES2.
-inline MojoGLES2ImplChromiumTextureMailboxThunks
-MojoMakeGLES2ImplChromiumTextureMailboxThunks() {
-  MojoGLES2ImplChromiumTextureMailboxThunks
+// of chromium_texture_mailbox.
+inline MojoGLES2ImplCHROMIUMTextureMailboxThunks
+MojoMakeGLES2ImplCHROMIUMTextureMailboxThunks() {
+  MojoGLES2ImplCHROMIUMTextureMailboxThunks
       gles2_impl_chromium_texture_mailbox_thunks = {
-          sizeof(MojoGLES2ImplChromiumTextureMailboxThunks),
+          sizeof(MojoGLES2ImplCHROMIUMTextureMailboxThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_texture_mailbox_autogen.h"
 #undef VISIT_GL_CALL
@@ -36,10 +43,12 @@ MojoMakeGLES2ImplChromiumTextureMailboxThunks() {
   return gles2_impl_chromium_texture_mailbox_thunks;
 }
 
+#endif  // __cplusplus
+
 // Use this type for the function found by dynamically discovering it in
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_texture_mailbox_thunks| are copied.
-typedef size_t (*MojoSetGLES2ImplChromiumTextureMailboxThunksFn)(
-    const MojoGLES2ImplChromiumTextureMailboxThunks* thunks);
+typedef size_t (*MojoSetGLES2ImplCHROMIUMTextureMailboxThunksFn)(
+    const MojoGLES2ImplCHROMIUMTextureMailboxThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_TEXTURE_MAILBOX_THUNKS_H_

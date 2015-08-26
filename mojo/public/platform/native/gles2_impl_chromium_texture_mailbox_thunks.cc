@@ -2,6 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// This file is auto-generated from
+// gpu/command_buffer/build_gles2_cmd_buffer.py
+// It's formatted by clang-format using chromium coding style:
+//    clang-format -i -style=chromium filename
+// DO NOT EDIT!
+
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
 
 #include <assert.h>
@@ -9,7 +15,8 @@
 #include "mojo/public/platform/native/thunk_export.h"
 
 extern "C" {
-static MojoGLES2ImplChromiumTextureMailboxThunks
+
+static MojoGLES2ImplCHROMIUMTextureMailboxThunks
     g_impl_chromium_texture_mailbox_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)    \
@@ -20,8 +27,8 @@ static MojoGLES2ImplChromiumTextureMailboxThunks
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_texture_mailbox_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplChromiumTextureMailboxThunks(
-    const MojoGLES2ImplChromiumTextureMailboxThunks*
+extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMTextureMailboxThunks(
+    const MojoGLES2ImplCHROMIUMTextureMailboxThunks*
         gles2_impl_chromium_texture_mailbox_thunks) {
   if (gles2_impl_chromium_texture_mailbox_thunks->size >=
       sizeof(g_impl_chromium_texture_mailbox_thunks))

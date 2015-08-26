@@ -1,6 +1,12 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// This file is auto-generated from
+// gpu/command_buffer/build_gles2_cmd_buffer.py
+// It's formatted by clang-format using chromium coding style:
+//    clang-format -i -style=chromium filename
+// DO NOT EDIT!
 
 #ifndef MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OES_VERTEX_ARRAY_OBJECT_THUNKS_H_
 #define MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OES_VERTEX_ARRAY_OBJECT_THUNKS_H_
@@ -9,25 +15,26 @@
 
 #include "mojo/public/c/gles2/oes_vertex_array_object.h"
 
-// Specifies the frozen API for the Vertex Array Object Extension.
+// Specifies the frozen API for the OES_vertex_array_object extension.
 #pragma pack(push, 8)
-struct MojoGLES2ImplOesVertexArrayObjectThunks {
+struct MojoGLES2ImplOESVertexArrayObjectThunks {
   size_t size;  // Should be set to sizeof(*this).
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
-  ReturnType(*Function) PARAMETERS;
+  ReturnType(GL_APIENTRY* Function) PARAMETERS;
 #include "mojo/public/c/gles2/gles2_call_visitor_oes_vertex_array_object_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
 
+#ifdef __cplusplus
 // Intended to be called from the embedder to get the embedder's implementation
-// of GLES2.
-inline MojoGLES2ImplOesVertexArrayObjectThunks
-MojoMakeGLES2ImplOesVertexArrayObjectThunks() {
-  MojoGLES2ImplOesVertexArrayObjectThunks
+// of oes_vertex_array_object.
+inline MojoGLES2ImplOESVertexArrayObjectThunks
+MojoMakeGLES2ImplOESVertexArrayObjectThunks() {
+  MojoGLES2ImplOESVertexArrayObjectThunks
       gles2_impl_oes_vertex_array_object_thunks = {
-          sizeof(MojoGLES2ImplOesVertexArrayObjectThunks),
+          sizeof(MojoGLES2ImplOESVertexArrayObjectThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
 #include "mojo/public/c/gles2/gles2_call_visitor_oes_vertex_array_object_autogen.h"
 #undef VISIT_GL_CALL
@@ -36,10 +43,12 @@ MojoMakeGLES2ImplOesVertexArrayObjectThunks() {
   return gles2_impl_oes_vertex_array_object_thunks;
 }
 
+#endif  // __cplusplus
+
 // Use this type for the function found by dynamically discovering it in
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_oes_vertex_array_object_thunks| are copied.
-typedef size_t (*MojoSetGLES2ImplOesVertexArrayObjectThunksFn)(
-    const MojoGLES2ImplOesVertexArrayObjectThunks* thunks);
+typedef size_t (*MojoSetGLES2ImplOESVertexArrayObjectThunksFn)(
+    const MojoGLES2ImplOESVertexArrayObjectThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OES_VERTEX_ARRAY_OBJECT_THUNKS_H_

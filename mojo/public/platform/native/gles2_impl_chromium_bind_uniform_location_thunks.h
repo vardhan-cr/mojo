@@ -1,6 +1,12 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// This file is auto-generated from
+// gpu/command_buffer/build_gles2_cmd_buffer.py
+// It's formatted by clang-format using chromium coding style:
+//    clang-format -i -style=chromium filename
+// DO NOT EDIT!
 
 #ifndef MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_BIND_UNIFORM_LOCATION_THUNKS_H_
 #define MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_BIND_UNIFORM_LOCATION_THUNKS_H_
@@ -9,10 +15,9 @@
 
 #include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
 
-// Specifies the frozen API for the GLES2 CHROMIUM_bind_uniform_location
-// extension.
+// Specifies the frozen API for the CHROMIUM_bind_uniform_location extension.
 #pragma pack(push, 8)
-struct MojoGLES2ImplChromiumBindUniformLocationThunks {
+struct MojoGLES2ImplCHROMIUMBindUniformLocationThunks {
   size_t size;  // Should be set to sizeof(*this).
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
@@ -22,13 +27,14 @@ struct MojoGLES2ImplChromiumBindUniformLocationThunks {
 };
 #pragma pack(pop)
 
+#ifdef __cplusplus
 // Intended to be called from the embedder to get the embedder's implementation
-// of GLES2.
-inline MojoGLES2ImplChromiumBindUniformLocationThunks
-MojoMakeGLES2ImplChromiumBindUniformLocationThunks() {
-  MojoGLES2ImplChromiumBindUniformLocationThunks
+// of chromium_bind_uniform_location.
+inline MojoGLES2ImplCHROMIUMBindUniformLocationThunks
+MojoMakeGLES2ImplCHROMIUMBindUniformLocationThunks() {
+  MojoGLES2ImplCHROMIUMBindUniformLocationThunks
       gles2_impl_chromium_bind_uniform_location_thunks = {
-          sizeof(MojoGLES2ImplChromiumBindUniformLocationThunks),
+          sizeof(MojoGLES2ImplCHROMIUMBindUniformLocationThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
 #include "mojo/public/c/gles2/gles2_call_visitor_chromium_bind_uniform_location_autogen.h"
 #undef VISIT_GL_CALL
@@ -37,11 +43,13 @@ MojoMakeGLES2ImplChromiumBindUniformLocationThunks() {
   return gles2_impl_chromium_bind_uniform_location_thunks;
 }
 
+#endif  // __cplusplus
+
 // Use this type for the function found by dynamically discovering it in
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_bind_uniform_location_thunks| are
 // copied.
-typedef size_t (*MojoSetGLES2ImplChromiumBindUniformLocationThunksFn)(
-    const MojoGLES2ImplChromiumBindUniformLocationThunks* thunks);
+typedef size_t (*MojoSetGLES2ImplCHROMIUMBindUniformLocationThunksFn)(
+    const MojoGLES2ImplCHROMIUMBindUniformLocationThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_BIND_UNIFORM_LOCATION_THUNKS_H_

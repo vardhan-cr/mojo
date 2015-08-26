@@ -80,25 +80,25 @@ bool RunNativeApplication(
             app_library);
   SetThunks(&MojoMakeGLES2ImplThunks, "MojoSetGLES2ImplThunks",
             app_library);
-  SetThunks(MojoMakeGLES2ImplExtDebugMarkerThunks,
-            "MojoSetGLES2ImplExtDebugMarkerThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplOcclusionQueryExtThunks,
-            "MojoSetGLES2ImplOcclusionQueryExtThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplOesVertexArrayObjectThunks,
-            "MojoSetGLES2ImplOesVertexArrayObjectThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplEXTDebugMarkerThunks,
+            "MojoSetGLES2ImplEXTDebugMarkerThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplOcclusionQueryEXTThunks,
+            "MojoSetGLES2ImplOcclusionQueryEXTThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplOESVertexArrayObjectThunks,
+            "MojoSetGLES2ImplOESVertexArrayObjectThunks", app_library);
   // "Chromium" extensions:
-  SetThunks(MojoMakeGLES2ImplChromiumBindUniformLocationThunks,
-            "MojoSetGLES2ImplChromiumBindUniformLocationThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumMapSubThunks,
-            "MojoSetGLES2ImplChromiumMapSubThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumMiscellaneousThunks,
-            "MojoSetGLES2ImplChromiumMiscellaneousThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumResizeThunks,
-            "MojoSetGLES2ImplChromiumResizeThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumSyncPointThunks,
-            "MojoSetGLES2ImplChromiumSyncPointThunks", app_library);
-  SetThunks(MojoMakeGLES2ImplChromiumTextureMailboxThunks,
-            "MojoSetGLES2ImplChromiumTextureMailboxThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMBindUniformLocationThunks,
+            "MojoSetGLES2ImplCHROMIUMBindUniformLocationThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMMapSubThunks,
+            "MojoSetGLES2ImplCHROMIUMMapSubThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMMiscellaneousThunks,
+            "MojoSetGLES2ImplCHROMIUMMiscellaneousThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMResizeThunks,
+            "MojoSetGLES2ImplCHROMIUMResizeThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMSyncPointThunks,
+            "MojoSetGLES2ImplCHROMIUMSyncPointThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplCHROMIUMTextureMailboxThunks,
+            "MojoSetGLES2ImplCHROMIUMTextureMailboxThunks", app_library);
 
   if (SetThunks(MojoMakeMGLThunks, "MojoSetMGLThunks", app_library)) {
     // TODO(jamesr): We should only need to expose these on apps that need to
