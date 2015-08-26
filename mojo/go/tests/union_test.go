@@ -182,3 +182,26 @@ func TestUnionInMap(t *testing.T) {
 	}
 	check(t, &ss, &out)
 }
+
+func TestUnknownTag(t *testing.T) {
+	var wrapper test_unions.WrapperStruct
+	wrapper.PodUnion = &test_unions.PodUnionFInt16{10}
+	bytes, handles, err := encode(t, &wrapper)
+	if err != nil {
+		t.Fatalf("Test failed prematurely.")
+	}
+
+	// Set PodUnion tag to unknown.
+	bytes[8*3+4] = 100
+
+	decoder := bindings.NewDecoder(bytes, handles)
+	var decoded test_unions.WrapperStruct
+	err = decoded.Decode(decoder)
+	if err != nil {
+		t.Fatalf("Failed to decode union with unknown tag.")
+	}
+
+	if decoded.PodUnion.Tag() != 100 {
+		t.Fatalf("Wrong unknown tag number")
+	}
+}

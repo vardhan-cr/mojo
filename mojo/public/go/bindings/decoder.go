@@ -184,8 +184,8 @@ func (d *Decoder) FinishReadingUnionValue() {
 	d.state().alignOffsetToBytes()
 }
 
-// SkipNullUnionValue skips the union's null value.
-func (d *Decoder) SkipNullUnionValue() {
+// SkipUnionValue skips the union's value.
+func (d *Decoder) SkipUnionValue() {
 	d.state().offset += 8
 	d.state().elementsProcessed += 1
 }
