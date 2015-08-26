@@ -13,7 +13,8 @@
 
 #include <stddef.h>
 
-#include "mojo/public/c/gles2/chromium_map_sub.h"
+#define GL_GLEXT_PROTOTYPES
+#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
 
 // Specifies the frozen API for the CHROMIUM_map_sub extension.
 #pragma pack(push, 8)
@@ -22,7 +23,7 @@ struct MojoGLES2ImplCHROMIUMMapSubThunks {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType(GL_APIENTRY* Function) PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_map_sub_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_map_sub_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
@@ -35,13 +36,12 @@ MojoMakeGLES2ImplCHROMIUMMapSubThunks() {
   MojoGLES2ImplCHROMIUMMapSubThunks gles2_impl_chromium_map_sub_thunks = {
       sizeof(MojoGLES2ImplCHROMIUMMapSubThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_map_sub_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_map_sub_autogen.h"
 #undef VISIT_GL_CALL
   };
 
   return gles2_impl_chromium_map_sub_thunks;
 }
-
 #endif  // __cplusplus
 
 // Use this type for the function found by dynamically discovering it in

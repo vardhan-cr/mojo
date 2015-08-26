@@ -24,7 +24,7 @@ static MojoGLES2ImplOcclusionQueryEXTThunks g_impl_occlusion_query_ext_thunks =
     assert(g_impl_occlusion_query_ext_thunks.Function);            \
     return g_impl_occlusion_query_ext_thunks.Function ARGUMENTS;   \
   }
-#include "mojo/public/c/gles2/gles2_call_visitor_occlusion_query_ext_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_occlusion_query_ext_autogen.h"
 #undef VISIT_GL_CALL
 
 extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplOcclusionQueryEXTThunks(

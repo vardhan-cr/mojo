@@ -10188,16 +10188,13 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
 #include "base/logging.h"
-#include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
-#include "mojo/public/c/gles2/chromium_map_sub.h"
-#include "mojo/public/c/gles2/chromium_miscellaneous.h"
-#include "mojo/public/c/gles2/chromium_sync_point.h"
-#include "mojo/public/c/gles2/chromium_texture_mailbox.h"
-#include "mojo/public/c/gles2/ext_debug_marker.h"
 #include "mojo/public/c/gles2/gles2.h"
-#include "mojo/public/c/gles2/occlusion_query_ext.h"
-#include "mojo/public/c/gles2/oes_vertex_array_object.h"
 #include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
+
+#define GL_GLEXT_PROTOTYPES
+#include "mojo/public/c/gpu/GLES2/gl2.h"
+#include "mojo/public/c/gpu/GLES2/gl2ext.h"
+#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
 
 namespace mojo {
 
@@ -10513,23 +10510,6 @@ const size_t GLES2Util::enum_to_string_table_len_ =
 
     file.Close()
 
-  def WriteMojoGLCallVisitor(self, filename):
-    """Provides the GL implementation for mojo"""
-    file = CWriter(filename)
-    file.Write(_LICENSE)
-    file.Write(_DO_NOT_EDIT_WARNING)
-
-    for func in self.original_functions:
-      if not func.IsCoreGLFunction():
-        continue
-      file.Write("VISIT_GL_CALL(%s, %s, (%s), (%s))\n" %
-                             (func.name, func.return_type,
-                              func.MakeTypedOriginalArgString(""),
-                              func.MakeOriginalArgString("")))
-
-    file.Close()
-    self.generated_cpp_filenames.append(file.filename)
-
   def WriteMojoGLCallVisitorForExtension(self, filename, extension):
     """Provides the GL implementation for mojo for a particular extension"""
     file = CWriter(filename)
@@ -10550,8 +10530,6 @@ const size_t GLES2Util::enum_to_string_table_len_ =
   def WriteMojoGLThunksHeader(self, filename, extension):
     """Provides the thunks header for a particular extension"""
     file = CHeaderWriter(filename)
-    file.Write("#include <stddef.h>\n\n")
-    file.Write('#include "mojo/public/c/gles2/%s.h"' % extension.lower())
     camel_case_extension = ToCamelCase(extension)
     thunks_type = "MojoGLES2Impl%sThunks" % camel_case_extension
     fields = {"extension": extension,
@@ -10559,6 +10537,10 @@ const size_t GLES2Util::enum_to_string_table_len_ =
               "camel_case_extension": camel_case_extension,
               "thunks_type": thunks_type}
     body = """
+#include <stddef.h>
+
+#define GL_GLEXT_PROTOTYPES
+#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
 
 // Specifies the frozen API for the %(extension)s extension.
 #pragma pack(push, 8)
@@ -10567,7 +10549,7 @@ struct %(thunks_type)s {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType(GL_APIENTRY* Function) PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_%(extension_lower)s_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_%(extension_lower)s_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
@@ -10580,7 +10562,7 @@ MojoMakeGLES2Impl%(camel_case_extension)sThunks() {
   %(thunks_type)s gles2_impl_%(extension_lower)s_thunks = {
     sizeof(%(thunks_type)s),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
-#include "mojo/public/c/gles2/gles2_call_visitor_%(extension_lower)s_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_%(extension_lower)s_autogen.h"
 #undef VISIT_GL_CALL
   };
 
@@ -10629,7 +10611,7 @@ static %(thunks_type)s %(g_impl_name)s = {0};
     assert(%(g_impl_name)s.Function);          \
     return %(g_impl_name)s.Function ARGUMENTS; \
   }
-#include "mojo/public/c/gles2/gles2_call_visitor_%(extension_lower)s_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_%(extension_lower)s_autogen.h"
 #undef VISIT_GL_CALL
 
 extern "C" THUNK_EXPORT size_t
@@ -10737,11 +10719,10 @@ def main(argv):
     "gpu/command_buffer/common/gles2_cmd_utils_implementation_autogen.h")
   gen.WriteGLES2Header("gpu/GLES2/gl2chromium_autogen.h")
 
-  mojo_gles2_prefix = ("mojo/public/c/gles2/gles2_call_visitor")
-  gen.WriteMojoGLCallVisitor(mojo_gles2_prefix + "_autogen.h")
+  mojo_gles2_call_visitor_prefix = ("mojo/public/platform/native/gles2/call_visitor")
   for extension in _MOJO_EXPOSED_EXTENSIONS:
     gen.WriteMojoGLCallVisitorForExtension(
-        mojo_gles2_prefix + "_" + extension.lower() + "_autogen.h", extension)
+        mojo_gles2_call_visitor_prefix + "_" + extension.lower() + "_autogen.h", extension)
 
   mojo_gles2_thunks_prefix = ("mojo/public/platform/native/gles2_impl_")
   for extension in _MOJO_EXPOSED_EXTENSIONS:

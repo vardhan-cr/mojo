@@ -13,7 +13,8 @@
 
 #include <stddef.h>
 
-#include "mojo/public/c/gles2/chromium_bind_uniform_location.h"
+#define GL_GLEXT_PROTOTYPES
+#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
 
 // Specifies the frozen API for the CHROMIUM_bind_uniform_location extension.
 #pragma pack(push, 8)
@@ -22,7 +23,7 @@ struct MojoGLES2ImplCHROMIUMBindUniformLocationThunks {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType(GL_APIENTRY* Function) PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_bind_uniform_location_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_bind_uniform_location_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
@@ -36,13 +37,12 @@ MojoMakeGLES2ImplCHROMIUMBindUniformLocationThunks() {
       gles2_impl_chromium_bind_uniform_location_thunks = {
           sizeof(MojoGLES2ImplCHROMIUMBindUniformLocationThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_bind_uniform_location_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_bind_uniform_location_autogen.h"
 #undef VISIT_GL_CALL
       };
 
   return gles2_impl_chromium_bind_uniform_location_thunks;
 }
-
 #endif  // __cplusplus
 
 // Use this type for the function found by dynamically discovering it in

@@ -23,7 +23,7 @@ static MojoGLES2ImplCHROMIUMMapSubThunks g_impl_chromium_map_sub_thunks = {0};
     assert(g_impl_chromium_map_sub_thunks.Function);               \
     return g_impl_chromium_map_sub_thunks.Function ARGUMENTS;      \
   }
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_map_sub_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_map_sub_autogen.h"
 #undef VISIT_GL_CALL
 
 extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMapSubThunks(

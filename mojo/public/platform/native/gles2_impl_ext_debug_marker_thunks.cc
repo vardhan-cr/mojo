@@ -23,7 +23,7 @@ static MojoGLES2ImplEXTDebugMarkerThunks g_impl_ext_debug_marker_thunks = {0};
     assert(g_impl_ext_debug_marker_thunks.Function);               \
     return g_impl_ext_debug_marker_thunks.Function ARGUMENTS;      \
   }
-#include "mojo/public/c/gles2/gles2_call_visitor_ext_debug_marker_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_ext_debug_marker_autogen.h"
 #undef VISIT_GL_CALL
 
 extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplEXTDebugMarkerThunks(

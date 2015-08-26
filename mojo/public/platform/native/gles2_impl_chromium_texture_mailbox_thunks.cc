@@ -24,7 +24,7 @@ static MojoGLES2ImplCHROMIUMTextureMailboxThunks
     assert(g_impl_chromium_texture_mailbox_thunks.Function);          \
     return g_impl_chromium_texture_mailbox_thunks.Function ARGUMENTS; \
   }
-#include "mojo/public/c/gles2/gles2_call_visitor_chromium_texture_mailbox_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_chromium_texture_mailbox_autogen.h"
 #undef VISIT_GL_CALL
 
 extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMTextureMailboxThunks(

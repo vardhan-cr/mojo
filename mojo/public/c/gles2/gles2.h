@@ -37,11 +37,6 @@ MOJO_GLES2_EXPORT void MojoGLES2SignalSyncPoint(
 // type-unsafe way.
 MOJO_GLES2_EXPORT void* MojoGLES2GetGLES2Interface(MojoGLES2Context context);
 
-#define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
-  MOJO_GLES2_EXPORT ReturnType GL_APIENTRY gl##Function PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_autogen.h"
-#undef VISIT_GL_CALL
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif

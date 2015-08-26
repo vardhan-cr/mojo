@@ -781,6 +781,16 @@ typedef void(GL_APIENTRYP PFNGLMATRIXLOADIDENTITYCHROMIUMPROC)(
 
 #endif /* GL_CHROMIUM_path_rendering */
 
+/* GL_CHROMIUM_shallow_flush */
+#ifndef GL_CHROMIUM_shallow_flush
+#define GL_CHROMIUM_shallow_flush 1
+
+#ifdef GL_GLEXT_PROTOTYPES
+GL_APICALL void GL_APIENTRY glShallowFlushCHROMIUM(void);
+#endif
+
+#endif /* GL_CHROMIUM_shallow_flush */
+
 #ifdef __cplusplus
 }
 #endif

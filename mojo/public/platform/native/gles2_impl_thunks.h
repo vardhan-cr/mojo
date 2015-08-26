@@ -18,7 +18,7 @@ struct MojoGLES2ImplThunks {
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType(GL_APIENTRY *Function) PARAMETERS;
-#include "mojo/public/c/gles2/gles2_call_visitor_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
@@ -29,7 +29,7 @@ inline MojoGLES2ImplThunks MojoMakeGLES2ImplThunks() {
   MojoGLES2ImplThunks gles2_impl_thunks = {
       sizeof(MojoGLES2ImplThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
-#include "mojo/public/c/gles2/gles2_call_visitor_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_autogen.h"
 #undef VISIT_GL_CALL
   };
 
