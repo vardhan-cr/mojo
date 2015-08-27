@@ -1204,7 +1204,8 @@ void MojoGLES2Impl::TexStorage2DEXT(GLenum target,
                                     GLenum internalFormat,
                                     GLsizei width,
                                     GLsizei height) {
-  NOTREACHED() << "Unimplemented TexStorage2DEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glTexStorage2DEXT(target, levels, internalFormat, width, height);
 }
 void MojoGLES2Impl::GenQueriesEXT(GLsizei n, GLuint* queries) {
   MojoGLES2MakeCurrent(context_);
