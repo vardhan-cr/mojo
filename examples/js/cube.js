@@ -384,7 +384,7 @@ define("main", [
           self.gl_.clearColor(0, 0, 0, 0);
           self.gl_.enable(self.gl_.DEPTH_TEST);
           if (self.width_ >= 0 && self.height_ >= 0)
-            self.gl_.resize(self.width_, self.height_, 1);
+            self.gl_.resize(self.width_, self.height_);
           self.timer_ =
               timer.createRepeating(16, self.handleTimer.bind(self));
         }).catch(function(e) {
@@ -396,7 +396,7 @@ define("main", [
       this.width_ = size.width;
       this.height_ = size.height;
       if (this.gl_)
-        this.gl_.resize(this.width_, this.height_, 1);
+        this.gl_.resize(this.width_, this.height_);
     }
 
     drawCube() {
@@ -494,6 +494,13 @@ define("main", [
     onMetricsChanged(metrics) {
       if (this.gles2_)
         this.gles2_.setDimensions(metrics.size);
+      var self = this;
+      this.viewport.requestMetrics().then(
+        function(result) {
+          self.onMetricsChanged(result.metrics);
+        }).catch(function(e) {
+          console.log("NativeViewport requestMetrics() failed: " + e.stack);
+        });
     }
 
     onDestroyed() {

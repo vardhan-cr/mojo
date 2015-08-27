@@ -6,6 +6,7 @@
 #define SERVICES_JS_MODULES_GL_CONTEXT_H_
 
 #include <GLES2/gl2.h>
+#include <MGL/mgl_types.h>
 
 #include "base/memory/weak_ptr.h"
 #include "gin/handle.h"
@@ -13,7 +14,6 @@
 #include "gin/runner.h"
 #include "gin/wrappable.h"
 #include "mojo/edk/js/handle.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "v8/include/v8.h"
 
 namespace gin {
@@ -51,7 +51,7 @@ class Context : public gin::Wrappable<Context> {
   static void VertexAttribPointer(GLuint index, GLint size, GLenum type,
                                   GLboolean normalized, GLsizei stride,
                                   uint64_t offset);
-  void Resize(GLuint width, GLuint height, GLfloat scale_factor);
+  void Resize(GLuint width, GLuint height);
 
  private:
   gin::ObjectTemplateBuilder GetObjectTemplateBuilder(
@@ -67,7 +67,7 @@ class Context : public gin::Wrappable<Context> {
 
   base::WeakPtr<gin::Runner> runner_;
   v8::Persistent<v8::Function> context_lost_callback_;
-  MojoGLES2Context context_;
+  MGLContext context_;
 };
 
 }  // namespace gl

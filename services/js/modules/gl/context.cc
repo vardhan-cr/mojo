@@ -10,14 +10,14 @@
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <GLES2/gl2extchromium.h>
+#include <MGL/mgl.h>
+#include <MGL/mgl_onscreen.h>
 
 #include "base/bind.h"
 #include "gin/arguments.h"
 #include "gin/array_buffer.h"
 #include "gin/object_template_builder.h"
 #include "gin/per_context_data.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/cpp/environment/logging.h"
 
@@ -164,7 +164,7 @@ gin::ObjectTemplateBuilder Context::GetObjectTemplateBuilder(
       .SetMethod("linkProgram", glLinkProgram)
       .SetMethod("resize", base::Bind(&Context::Resize, base::Unretained(this)))
       .SetMethod("shaderSource", ShaderSource)
-      .SetMethod("swapBuffers", MojoGLES2SwapBuffers)
+      .SetMethod("swapBuffers", MGLSwapBuffers)
       .SetMethod("uniformMatrix4fv", UniformMatrix4fv)
       .SetMethod("useProgram", glUseProgram)
       .SetMethod("vertexAttribPointer", VertexAttribPointer)
@@ -177,19 +177,18 @@ Context::Context(v8::Isolate* isolate,
   v8::Handle<v8::Context> context = isolate->GetCurrentContext();
   runner_ = gin::PerContextData::From(context)->runner()->GetWeakPtr();
   context_lost_callback_.Reset(isolate, context_lost_callback);
-  context_ = MojoGLES2CreateContext(handle.value(),
-                                    &ContextLostThunk,
-                                    this,
-                                    mojo::Environment::GetDefaultAsyncWaiter());
-  MojoGLES2MakeCurrent(context_);
+  context_ = MGLCreateContext(MGL_API_VERSION_GLES2, handle.value(),
+                              MGL_NO_CONTEXT, &ContextLostThunk, this,
+                              mojo::Environment::GetDefaultAsyncWaiter());
+  MGLMakeCurrent(context_);
 }
 
 Context::~Context() {
-  MojoGLES2DestroyContext(context_);
+  MGLDestroyContext(context_);
 }
 
-void Context::Resize(GLuint width, GLuint height, GLfloat scale_factor) {
-  glResizeCHROMIUM(width, height, scale_factor);
+void Context::Resize(GLuint width, GLuint height) {
+  MGLResizeSurface(width, height);
 }
 
 void Context::ContextLost() {

@@ -20,7 +20,7 @@ void MGLResizeSurface(uint32_t width, uint32_t height);
 
 // Presents the default framebuffer for the currently bound onscreen MGLContext
 // to the windowing system or display.
-void MGLSwapBuffers();
+void MGLSwapBuffers(void);
 
 #ifdef __cplusplus
 }  // extern "C"
