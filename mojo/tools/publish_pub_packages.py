@@ -19,8 +19,9 @@ PUB = os.path.join(DART_SDK, 'pub')
 
 PACKAGES = [
   'mojo',
-  'mojom',
+  'mojo_apptest',
   'mojo_services',
+  'mojom',
 ]
 
 CONFIRM = """This tool is destructive and will revert your current branch to

@@ -1,4 +1,8 @@
-name: apptest
-version: 0.0.1
+author: Chromium Authors <mojo-dev@googlegroups.com>
 dependencies:
+  mojo: any
   test: ^0.12.3+7
+description: Test harness for mojo applications
+homepage: https://github.com/domokit/mojo
+name: mojo_apptest
+version: 0.0.23

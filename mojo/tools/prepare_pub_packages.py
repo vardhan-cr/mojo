@@ -44,8 +44,9 @@ def main():
     parser.add_argument('--src-root',
                         type=str,
                         default='.')
-    parser.add_argument('--packages',
-                        default=['mojo', 'mojom', 'mojo_services'])
+    parser.add_argument(
+        '--packages',
+        default=['mojo', 'mojo_apptest', 'mojo_services', 'mojom'])
     parser.add_argument('--out-dir',
                         default=None)
     parser.add_argument('build_dir',
