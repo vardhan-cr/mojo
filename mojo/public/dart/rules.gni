@@ -224,6 +224,7 @@ template("dart_pkg_helper") {
     # $root_gen_dir somewhere.
     outputs = [
       "$root_gen_dir/dart-pkg/${package_name}",
+      "$root_gen_dir/dart-pkg/packages/${package_name}",
       stamp_file,
     ]
 
