@@ -1542,7 +1542,8 @@ void MojoGLES2Impl::WaitAllAsyncTexImage2DCHROMIUM() {
 void MojoGLES2Impl::DiscardFramebufferEXT(GLenum target,
                                           GLsizei count,
                                           const GLenum* attachments) {
-  NOTREACHED() << "Unimplemented DiscardFramebufferEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glDiscardFramebufferEXT(target, count, attachments);
 }
 void MojoGLES2Impl::LoseContextCHROMIUM(GLenum current, GLenum other) {
   NOTREACHED() << "Unimplemented LoseContextCHROMIUM.";

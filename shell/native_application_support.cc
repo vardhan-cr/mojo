@@ -14,6 +14,7 @@
 #include "mojo/public/platform/native/gles2_impl_chromium_sync_point_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_chromium_texture_mailbox_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_ext_debug_marker_thunks.h"
+#include "mojo/public/platform/native/gles2_impl_ext_discard_framebuffer_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_ext_texture_storage_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_khr_blend_equation_advanced_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_occlusion_query_ext_thunks.h"
@@ -84,6 +85,8 @@ bool RunNativeApplication(
             app_library);
   SetThunks(MojoMakeGLES2ImplEXTDebugMarkerThunks,
             "MojoSetGLES2ImplEXTDebugMarkerThunks", app_library);
+  SetThunks(MojoMakeGLES2ImplEXTDiscardFramebufferThunks,
+            "MojoSetGLES2ImplEXTDiscardFramebufferThunks", app_library);
   SetThunks(MojoMakeGLES2ImplEXTTextureStorageThunks,
             "MojoSetGLES2ImplEXTTextureStorageThunks", app_library);
   SetThunks(MojoMakeGLES2ImplKHRBlendEquationAdvancedThunks,
