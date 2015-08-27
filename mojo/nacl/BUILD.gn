@@ -19,6 +19,20 @@ if (!is_nacl) {
 
     data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
   }
+
+  executable("monacl_shell_nonsfi") {
+    testonly = true
+    sources = [
+      "monacl_shell_nonsfi.cc",
+    ]
+    deps = [
+      "//mojo/edk/system",
+      "//mojo/public/c/system",
+      "//mojo/public/platform/nacl:mojo_irt_header",
+      "//native_client/src/nonsfi/irt:irt_interfaces",
+      "//native_client/src/nonsfi/loader:elf_loader",
+    ]
+  }
 }
 
 # Untrusted code
@@ -66,10 +80,18 @@ group("mojo_nacl") {
   ]
 }
 
+group("mojo_pnacl_tests") {
+  testonly = true
+  deps = [
+    ":monacl_test(//native_client/build/toolchain/nacl:newlib_pnacl)",
+  ]
+}
+
 group("mojo_nacl_tests") {
   testonly = true
   deps = [
     ":mojo_nacl_tests_untrusted(//native_client/build/toolchain/nacl:clang_newlib_${current_cpu})",
     ":monacl_shell",
+    ":mojo_pnacl_tests",
   ]
 }

@@ -2,9 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-assert(is_nacl)
-
 import("../../mojo_sdk.gni")
+
+mojo_sdk_source_set("mojo_irt_header") {
+  sources = [
+    "mojo_initial_handle.h",
+    "mojo_irt.h",
+  ]
+  mojo_sdk_deps = [ "mojo/public/c/system" ]
+}
 
 # Untrusted code
 if (is_nacl) {
@@ -12,20 +18,22 @@ if (is_nacl) {
   mojo_sdk_source_set("mojo") {
     sources = [
       "libmojo.cc",
-      "mojo_irt.h",
     ]
-    mojo_sdk_deps = [ "mojo/public/c/system" ]
+    mojo_sdk_deps = [
+      "mojo/public/c/system",
+      "mojo/public/platform/nacl:mojo_irt_header",
+    ]
   }
 
   mojo_sdk_source_set("system") {
     sources = [
-      "mojo_initial_handle.h",
       "mojo_main_thunk.cc",
     ]
 
     mojo_sdk_deps = [
       "mojo/public/c/system",
       "mojo/public/platform/nacl:mojo",
+      "mojo/public/platform/nacl:mojo_irt_header",
     ]
   }
 }

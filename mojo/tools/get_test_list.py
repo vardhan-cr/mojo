@@ -90,6 +90,7 @@ def GetTestList(config, verbose_count=0):
                              "irt_mojo.nexe"),
                 os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
                              "monacl_test.nexe")])
+      # TODO(smklein): Add an x86-specific nonsfi test here
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
