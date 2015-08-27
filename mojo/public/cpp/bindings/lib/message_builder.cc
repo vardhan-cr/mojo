@@ -31,7 +31,7 @@ MessageBuilder::~MessageBuilder() {
 MessageBuilder::MessageBuilder() {}
 
 void MessageBuilder::Initialize(size_t size) {
-  message_.AllocData(Align(size));
+  message_.AllocData(static_cast<uint32_t>(Align(size)));
   buf_.Initialize(message_.mutable_data(), message_.data_num_bytes());
 }
 
