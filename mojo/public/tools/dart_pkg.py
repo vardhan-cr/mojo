@@ -66,8 +66,12 @@ def has_pubspec_yaml(paths):
 
 def link(from_root, to_root):
   ensure_dir_exists(os.path.dirname(to_root))
-  if os.path.exists(to_root):
+  try:
     os.unlink(to_root)
+  except OSError as e:
+    if e.errno == errno.ENOENT:
+      pass
+
   try:
     os.symlink(from_root, to_root)
   except OSError as e:
@@ -177,9 +181,10 @@ def analyze_entrypoints(dart_sdk, package_root, entrypoints):
   cmd.append(package_root)
   cmd.append("--no-hints")
   try:
-    subprocess.check_call(cmd)
+    subprocess.check_output(cmd, stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:
     print('Failed analyzing %s' % entrypoints)
+    print(e.output)
     return e.returncode
   return 0
 
