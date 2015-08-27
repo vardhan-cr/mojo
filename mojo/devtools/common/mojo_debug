@@ -287,7 +287,7 @@ def _add_device_command(subparsers):
   device_stack_parser.add_argument('--ndk-dir', type=str,
       help='path to the directory containing the Android NDK')
   device_stack_parser.add_argument('--build-dir', type=str,
-      help='path to the build directory')
+      help='list paths to the build directories, separated by commas')
   device_stack_parser.set_defaults(func=_device_stack)
 
 

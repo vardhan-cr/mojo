@@ -25,7 +25,7 @@ import subprocess
 import zipfile
 
 NDK_DIR = ""
-BUILD_DIR = ""
+BUILD_DIRS = []
 SYMBOLS_DIR = ""
 
 ARCH = "arm"
@@ -190,7 +190,7 @@ def GetCandidates(filepart, candidate_fun, relative_dirs=None):
   Returns:
     A list of candidate files ordered by modification time, newest first.
   """
-  candidates = [BUILD_DIR]
+  candidates = list(BUILD_DIRS)
 
   if relative_dirs:
     candidates = PathListJoin(candidates, relative_dirs)

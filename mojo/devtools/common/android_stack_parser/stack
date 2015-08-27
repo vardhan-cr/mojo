@@ -99,7 +99,7 @@ def main():
     elif option == "--arch":
       symbol.ARCH = value
     elif option == "--build-dir":
-      symbol.BUILD_DIR = value
+      symbol.BUILD_DIRS = value.split(',')
     elif option == "--ndk-dir":
       symbol.NDK_DIR = value
     elif option == "--more-info":
@@ -107,13 +107,13 @@ def main():
     elif option == "--less-info":
       more_info = False
 
-  if not symbol.BUILD_DIR:
+  if not symbol.BUILD_DIRS:
     guess = stack_utils.GuessDir(_DEFAULT_BUILD_DIR)
     if not guess:
       print "Couldn't find the build directory, please pass --build-dir."
       return 1
     print "Inferring the build directory path as " + guess
-    symbol.BUILD_DIR = guess
+    symbol.BUILD_DIRS = [guess]
 
   if not symbol.NDK_DIR:
     guess = stack_utils.GuessDir(_DEFAULT_NDK_DIR)
@@ -144,7 +144,7 @@ def main():
   if symbol.SYMBOLS_DIR:
     print "Reading Android symbols from", symbol.SYMBOLS_DIR
 
-  print "Reading Mojo symbols from", symbol.BUILD_DIR
+  print "Reading symbols from", symbol.BUILD_DIRS
   stack_core.ConvertTrace(lines, more_info, stack_utils.GetSymbolMapping(lines))
 
   if rootdir:
