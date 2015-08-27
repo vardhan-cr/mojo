@@ -93,7 +93,7 @@ mojo_native_application("child_gl_app") {
     "//mojo/converters/geometry",
     "//mojo/converters/surfaces",
     "//mojo/environment:chromium",
-    "//mojo/public/c/gles2",
+    "//mojo/public/c/gpu",
     "//mojo/public/cpp/bindings",
     "//mojo/public/cpp/environment",
     "//mojo/public/cpp/system",

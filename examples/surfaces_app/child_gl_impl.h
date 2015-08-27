@@ -5,14 +5,15 @@
 #ifndef EXAMPLES_SURFACES_APP_CHILD_GL_IMPL_H_
 #define EXAMPLES_SURFACES_APP_CHILD_GL_IMPL_H_
 
+#include <GLES2/gl2.h>
+#include <MGL/mgl_types.h>
+
 #include "base/containers/hash_tables.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
-#include "cc/surfaces/surface_id.h"
 #include "examples/spinning_cube/spinning_cube.h"
 #include "examples/surfaces_app/child.mojom.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/bindings/string.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/gpu/public/interfaces/command_buffer.mojom.h"
@@ -20,10 +21,6 @@
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
 #include "third_party/skia/include/core/SkColor.h"
 #include "ui/gfx/size.h"
-
-namespace cc {
-class CompositorFrame;
-}
 
 namespace mojo {
 
@@ -57,7 +54,7 @@ class ChildGLImpl : public Child, public ResourceReturner {
   SkColor color_;
   gfx::Size size_;
   SurfacePtr surface_;
-  MojoGLES2Context context_;
+  MGLContext context_;
   uint32_t id_namespace_;
   uint32_t local_id_;
   ::examples::SpinningCube cube_;

@@ -8,6 +8,10 @@
 #define GL_GLEXT_PROTOTYPES
 #endif
 
+#include <GLES2/gl2ext.h>
+#include <GLES2/gl2extmojo.h>
+#include <MGL/mgl.h>
+
 #include "base/bind.h"
 #include "base/message_loop/message_loop.h"
 #include "cc/output/compositor_frame.h"
@@ -15,8 +19,6 @@
 #include "cc/quads/render_pass.h"
 #include "cc/quads/texture_draw_quad.h"
 #include "examples/surfaces_app/surfaces_util.h"
-#include "gpu/GLES2/gl2chromium.h"
-#include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/command_buffer/common/mailbox_holder.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
@@ -25,8 +27,6 @@
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/services/surfaces/public/interfaces/surface_id.mojom.h"
 #include "mojo/services/surfaces/public/interfaces/surfaces.mojom.h"
-#include "third_party/khronos/GLES2/gl2.h"
-#include "third_party/khronos/GLES2/gl2ext.h"
 #include "ui/gfx/rect.h"
 #include "ui/gfx/transform.h"
 
@@ -35,7 +35,6 @@ namespace examples {
 
 using cc::RenderPass;
 using cc::RenderPassId;
-using cc::DrawQuad;
 using cc::TextureDrawQuad;
 using cc::DelegatedFrameData;
 using cc::CompositorFrame;
@@ -59,15 +58,17 @@ ChildGLImpl::ChildGLImpl(ApplicationConnection* surfaces_service_connection,
   ResourceReturnerPtr returner_ptr;
   returner_binding_.Bind(GetProxy(&returner_ptr));
   surface_->SetResourceReturner(returner_ptr.Pass());
-  context_ = MojoGLES2CreateContext(
+  context_ = MGLCreateContext(
+      MGL_API_VERSION_GLES2,
       command_buffer.PassInterface().PassHandle().release().value(),
-      &ContextLostThunk, this, Environment::GetDefaultAsyncWaiter());
+      MGL_NO_CONTEXT, &ContextLostThunk, this,
+      Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
 }
 
 ChildGLImpl::~ChildGLImpl() {
-  MojoGLES2DestroyContext(context_);
+  MGLDestroyContext(context_);
   surface_->DestroySurface(local_id_);
 }
 
