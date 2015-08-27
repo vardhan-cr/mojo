@@ -8,25 +8,13 @@
 #include "base/memory/scoped_ptr.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/cpp/application/application_delegate.h"
-#include "mojo/public/cpp/application/interface_factory.h"
-#include "mojo/public/cpp/bindings/binding.h"
-#include "mojo/services/view_manager/public/interfaces/view_manager.mojom.h"
-#include "mojo/services/window_manager/public/interfaces/window_manager_internal.mojom.h"
-#include "services/view_manager/connection_manager_delegate.h"
-
-namespace mojo {
-class ApplicationImpl;
-}
+#include "services/view_manager/view_manager_root_connection.h"
 
 namespace view_manager {
 
-class ConnectionManager;
-
 class ViewManagerApp
     : public mojo::ApplicationDelegate,
-      public ConnectionManagerDelegate,
-      public mojo::InterfaceFactory<mojo::ViewManagerService>,
-      public mojo::InterfaceFactory<mojo::WindowManagerInternalClient> {
+      public ViewManagerRootConnection::ViewManagerRootConnectionObserver {
  public:
   ViewManagerApp();
   ~ViewManagerApp() override;
@@ -37,39 +25,12 @@ class ViewManagerApp
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override;
 
-  // ConnectionManagerDelegate:
-  void OnLostConnectionToWindowManager() override;
-  ClientConnection* CreateClientConnectionForEmbedAtView(
-      ConnectionManager* connection_manager,
-      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
-      mojo::ConnectionSpecificId creator_id,
-      const std::string& creator_url,
-      const std::string& url,
-      const ViewId& root_id) override;
-  ClientConnection* CreateClientConnectionForEmbedAtView(
-      ConnectionManager* connection_manager,
-      mojo::InterfaceRequest<mojo::ViewManagerService> service_request,
-      mojo::ConnectionSpecificId creator_id,
-      const std::string& creator_url,
-      const ViewId& root_id,
-      mojo::ViewManagerClientPtr view_manager_client) override;
+  // ViewManagerRootConnectionObserver:
+  void OnCloseViewManagerRootConnection(
+      ViewManagerRootConnection* view_manager_root_connection) override;
 
-  // mojo::InterfaceFactory<mojo::ViewManagerService>:
-  void Create(
-      mojo::ApplicationConnection* connection,
-      mojo::InterfaceRequest<mojo::ViewManagerService> request) override;
-
-  // mojo::InterfaceFactory<mojo::WindowManagerInternalClient>:
-  void Create(mojo::ApplicationConnection* connection,
-              mojo::InterfaceRequest<mojo::WindowManagerInternalClient> request)
-      override;
-
+  std::set<ViewManagerRootConnection*> active_root_connections_;
   mojo::ApplicationImpl* app_impl_;
-  scoped_ptr<mojo::Binding<mojo::WindowManagerInternalClient>>
-      wm_internal_client_binding_;
-  mojo::InterfaceRequest<mojo::ViewManagerClient> wm_internal_client_request_;
-  mojo::WindowManagerInternalPtr wm_internal_;
-  scoped_ptr<ConnectionManager> connection_manager_;
   mojo::TracingImpl tracing_;
 
   DISALLOW_COPY_AND_ASSIGN(ViewManagerApp);

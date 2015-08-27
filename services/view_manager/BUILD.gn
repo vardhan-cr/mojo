@@ -11,6 +11,8 @@ mojo_native_application("view_manager") {
     "main.cc",
     "view_manager_app.cc",
     "view_manager_app.h",
+    "view_manager_root_connection.cc",
+    "view_manager_root_connection.h",
   ]
 
   deps = [
