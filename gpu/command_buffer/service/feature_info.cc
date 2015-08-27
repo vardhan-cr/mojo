@@ -663,6 +663,7 @@ void FeatureInfo::InitializeFeatures() {
 
   // Check for multisample support
   if (!workarounds_.disable_multisampling) {
+#if 0  // TODO(jamesr): Document this extension and consider exposing.
     bool ext_has_multisample =
         extensions.Contains("GL_EXT_framebuffer_multisample") ||
         gl_version_info_->is_es3;
@@ -680,6 +681,7 @@ void FeatureInfo::InitializeFeatures() {
       validators_.render_buffer_parameter.AddValue(GL_RENDERBUFFER_SAMPLES_EXT);
       AddExtensionString("GL_CHROMIUM_framebuffer_multisample");
     }
+#endif
     if (extensions.Contains("GL_EXT_multisampled_render_to_texture")) {
       feature_flags_.multisampled_render_to_texture = true;
     } else if (extensions.Contains("GL_IMG_multisampled_render_to_texture")) {

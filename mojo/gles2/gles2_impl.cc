@@ -63,6 +63,7 @@ void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_texture_mailbox_autogen.h"
 #include "mojo/public/platform/native/gles2/call_visitor_ext_debug_marker_autogen.h"
 #include "mojo/public/platform/native/gles2/call_visitor_ext_discard_framebuffer_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_ext_multisampled_render_to_texture_autogen.h"
 #include "mojo/public/platform/native/gles2/call_visitor_ext_texture_storage_autogen.h"
 #include "mojo/public/platform/native/gles2/call_visitor_khr_blend_equation_advanced_autogen.h"
 #include "mojo/public/platform/native/gles2/call_visitor_occlusion_query_ext_autogen.h"

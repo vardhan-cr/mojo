@@ -1189,7 +1189,9 @@ void MojoGLES2Impl::RenderbufferStorageMultisampleEXT(GLenum target,
                                                       GLenum internalformat,
                                                       GLsizei width,
                                                       GLsizei height) {
-  NOTREACHED() << "Unimplemented RenderbufferStorageMultisampleEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glRenderbufferStorageMultisampleEXT(target, samples, internalformat, width,
+                                      height);
 }
 void MojoGLES2Impl::FramebufferTexture2DMultisampleEXT(GLenum target,
                                                        GLenum attachment,
@@ -1197,7 +1199,9 @@ void MojoGLES2Impl::FramebufferTexture2DMultisampleEXT(GLenum target,
                                                        GLuint texture,
                                                        GLint level,
                                                        GLsizei samples) {
-  NOTREACHED() << "Unimplemented FramebufferTexture2DMultisampleEXT.";
+  MojoGLES2MakeCurrent(context_);
+  glFramebufferTexture2DMultisampleEXT(target, attachment, textarget, texture,
+                                       level, samples);
 }
 void MojoGLES2Impl::TexStorage2DEXT(GLenum target,
                                     GLsizei levels,
