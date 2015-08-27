@@ -73,6 +73,7 @@ def print_landmines():
   if platform() == 'ios':
     print 'Clobber iOS to workaround Xcode deps bug (crbug.com/485435)'
   print 'Clobber: https://github.com/domokit/mojo/issues/269'
+  print 'Clobber: https://github.com/domokit/mojo/issues/401'
 
 
 def main():
