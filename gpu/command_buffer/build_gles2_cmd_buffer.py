@@ -40,6 +40,7 @@ _MOJO_EXPOSED_EXTENSIONS = ["CHROMIUM_bind_uniform_location",
                             "CHROMIUM_texture_mailbox",
                             "EXT_debug_marker",
                             "EXT_texture_storage",
+                            "KHR_blend_equation_advanced",
                             "OES_vertex_array_object",
                             "occlusion_query_EXT"]
 

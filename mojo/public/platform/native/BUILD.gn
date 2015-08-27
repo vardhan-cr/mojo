@@ -78,6 +78,8 @@ mojo_sdk_source_set("gles2") {
     "gles2_impl_ext_debug_marker_thunks.h",
     "gles2_impl_ext_texture_storage_thunks.cc",
     "gles2_impl_ext_texture_storage_thunks.h",
+    "gles2_impl_khr_blend_equation_advanced_thunks.cc",
+    "gles2_impl_khr_blend_equation_advanced_thunks.h",
     "gles2_impl_occlusion_query_ext_thunks.cc",
     "gles2_impl_occlusion_query_ext_thunks.h",
     "gles2_impl_oes_vertex_array_object_thunks.cc",

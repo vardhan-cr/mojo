@@ -1584,7 +1584,8 @@ void MojoGLES2Impl::MatrixLoadIdentityCHROMIUM(GLenum matrixMode) {
   NOTREACHED() << "Unimplemented MatrixLoadIdentityCHROMIUM.";
 }
 void MojoGLES2Impl::BlendBarrierKHR() {
-  NOTREACHED() << "Unimplemented BlendBarrierKHR.";
+  MojoGLES2MakeCurrent(context_);
+  glBlendBarrierKHR();
 }
 
 }  // namespace mojo
