@@ -45,9 +45,6 @@ tests = [
     "test": "mojo_surfaces_lib_unittests",
   },
   {
-    "test": "sandbox_linux_unittests",
-  },
-  {
     "test": "view_manager_service_unittests",
   },
   {
@@ -95,5 +92,12 @@ if config.target_os != config.OS_ANDROID:
     {
       "test": "dart_unittests",
       "cacheable": False,
+    },
+  ]
+
+if config.target_os == config.OS_LINUX:
+  tests += [
+    {
+      "test": "sandbox_linux_unittests",
     },
   ]
