@@ -156,8 +156,9 @@ def GetTestList(config, verbose_count=0):
     AddEntry("Dart mojom package generate tests",
         [os.path.join("third_party", "dart-sdk", "dart-sdk", "bin", "dart"),
          "--checked",
-         "-p", os.path.join("mojo", "dart", "mojom", "packages"),
-         os.path.join("mojo", "dart", "mojom", "test", "generate_test.dart")])
+         "-p", os.path.join("mojo", "public", "dart", "mojom", "packages"),
+         os.path.join(
+           "mojo", "public", "dart", "mojom", "test", "generate_test.dart")])
 
   if target_os == Config.OS_LINUX:
     AddEntry("Dart snapshotter test",

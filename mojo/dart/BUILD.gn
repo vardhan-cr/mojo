@@ -7,7 +7,6 @@ group("dart") {
     "//mojo/dart/apptest",
     "//mojo/dart/dart_snapshotter($host_toolchain)",
     "//mojo/dart/http_load_test",
-    "//mojo/dart/mojom",
     "//mojo/dart/mojo_services",
     "//mojo/dart/observatory_test",
   ]
