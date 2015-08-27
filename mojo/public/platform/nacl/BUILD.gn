@@ -19,9 +19,9 @@ if (is_nacl) {
     sources = [
       "libmojo.cc",
     ]
-    mojo_sdk_deps = [
-      "mojo/public/c/system",
-      "mojo/public/platform/nacl:mojo_irt_header",
+    mojo_sdk_deps = [ "mojo/public/c/system" ]
+    deps = [
+      ":mojo_irt_header",
     ]
   }
 
@@ -29,11 +29,13 @@ if (is_nacl) {
     sources = [
       "mojo_main_thunk.cc",
     ]
-
     mojo_sdk_deps = [
       "mojo/public/c/system",
       "mojo/public/platform/nacl:mojo",
       "mojo/public/platform/nacl:mojo_irt_header",
+    ]
+    deps = [
+      ":mojo_irt_header",
     ]
   }
 }
