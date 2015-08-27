@@ -311,6 +311,14 @@ func (v *conformanceValidator) Method13(*test.InterfaceA_Pointer, uint32, *test.
 	return nil
 }
 
+func (v *conformanceValidator) Method14(test.UnionA) error {
+	return nil
+}
+
+func (v *conformanceValidator) Method15(test.StructH) error {
+	return nil
+}
+
 func verifyValidationError(t *testing.T, test string, err error, answer string) {
 	if (err == nil) != (answer == "PASS") {
 		t.Fatalf("unexpected result for test %v: %v", test, err)

@@ -41,6 +41,30 @@ struct StructG {
   bool b;
 };
 
+struct StructH {
+  bool a;
+  uint8 b;
+  UnionA? c;
+  array<UnionA>? d;
+  map<uint8, UnionA>? e;
+};
+
+union UnionA {
+  uint16 a;
+  uint32 b;
+  StructA c;
+  array<uint8>? d;
+  map<string, uint8>? e;
+  UnionB? f;
+};
+
+union UnionB {
+  uint16 a;
+  uint32 b;
+  uint64 c;
+  uint32 d;
+};
+
 interface InterfaceA {
 };
 
@@ -68,6 +92,8 @@ interface ConformanceTestInterface {
   Method11(StructG param0);
   Method12(float param0) => (float param0);
   Method13(InterfaceA? param0, uint32 param1, InterfaceA? param2);
+  Method14(UnionA param0);
+  Method15(StructH param0);
 };
 
 struct BasicStruct {
