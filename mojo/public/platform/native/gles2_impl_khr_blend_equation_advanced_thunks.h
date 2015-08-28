@@ -49,6 +49,6 @@ MojoMakeGLES2ImplKHRBlendEquationAdvancedThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_khr_blend_equation_advanced_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplKHRBlendEquationAdvancedThunksFn)(
-    const MojoGLES2ImplKHRBlendEquationAdvancedThunks* thunks);
+    const struct MojoGLES2ImplKHRBlendEquationAdvancedThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_KHR_BLEND_EQUATION_ADVANCED_THUNKS_H_

@@ -14,10 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplOcclusionQueryEXTThunks g_impl_occlusion_query_ext_thunks =
-    {0};
+static struct MojoGLES2ImplOcclusionQueryEXTThunks
+    g_impl_occlusion_query_ext_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -27,13 +25,11 @@ static MojoGLES2ImplOcclusionQueryEXTThunks g_impl_occlusion_query_ext_thunks =
 #include "mojo/public/platform/native/gles2/call_visitor_occlusion_query_ext_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplOcclusionQueryEXTThunks(
-    const MojoGLES2ImplOcclusionQueryEXTThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplOcclusionQueryEXTThunks(
+    const struct MojoGLES2ImplOcclusionQueryEXTThunks*
         gles2_impl_occlusion_query_ext_thunks) {
   if (gles2_impl_occlusion_query_ext_thunks->size >=
       sizeof(g_impl_occlusion_query_ext_thunks))
     g_impl_occlusion_query_ext_thunks = *gles2_impl_occlusion_query_ext_thunks;
   return sizeof(g_impl_occlusion_query_ext_thunks);
 }
-
-}  // extern "C"

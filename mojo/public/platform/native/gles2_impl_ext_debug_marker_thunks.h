@@ -48,6 +48,6 @@ MojoMakeGLES2ImplEXTDebugMarkerThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_ext_debug_marker_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplEXTDebugMarkerThunksFn)(
-    const MojoGLES2ImplEXTDebugMarkerThunks* thunks);
+    const struct MojoGLES2ImplEXTDebugMarkerThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_DEBUG_MARKER_THUNKS_H_

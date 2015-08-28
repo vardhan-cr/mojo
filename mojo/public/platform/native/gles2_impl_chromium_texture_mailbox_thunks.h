@@ -49,6 +49,6 @@ MojoMakeGLES2ImplCHROMIUMTextureMailboxThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_texture_mailbox_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplCHROMIUMTextureMailboxThunksFn)(
-    const MojoGLES2ImplCHROMIUMTextureMailboxThunks* thunks);
+    const struct MojoGLES2ImplCHROMIUMTextureMailboxThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_TEXTURE_MAILBOX_THUNKS_H_

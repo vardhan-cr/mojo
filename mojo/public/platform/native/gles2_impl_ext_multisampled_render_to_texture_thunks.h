@@ -51,6 +51,6 @@ MojoMakeGLES2ImplEXTMultisampledRenderToTextureThunks() {
 // The contents of |gles2_impl_ext_multisampled_render_to_texture_thunks| are
 // copied.
 typedef size_t (*MojoSetGLES2ImplEXTMultisampledRenderToTextureThunksFn)(
-    const MojoGLES2ImplEXTMultisampledRenderToTextureThunks* thunks);
+    const struct MojoGLES2ImplEXTMultisampledRenderToTextureThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_MULTISAMPLED_RENDER_TO_TEXTURE_THUNKS_H_

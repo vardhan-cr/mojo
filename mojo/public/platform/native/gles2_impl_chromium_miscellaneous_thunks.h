@@ -49,6 +49,6 @@ MojoMakeGLES2ImplCHROMIUMMiscellaneousThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_miscellaneous_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplCHROMIUMMiscellaneousThunksFn)(
-    const MojoGLES2ImplCHROMIUMMiscellaneousThunks* thunks);
+    const struct MojoGLES2ImplCHROMIUMMiscellaneousThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_MISCELLANEOUS_THUNKS_H_

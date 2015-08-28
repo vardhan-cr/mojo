@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMBindUniformLocationThunks
+static struct MojoGLES2ImplCHROMIUMBindUniformLocationThunks
     g_impl_chromium_bind_uniform_location_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)          \
@@ -27,9 +25,8 @@ static MojoGLES2ImplCHROMIUMBindUniformLocationThunks
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_bind_uniform_location_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t
-MojoSetGLES2ImplCHROMIUMBindUniformLocationThunks(
-    const MojoGLES2ImplCHROMIUMBindUniformLocationThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMBindUniformLocationThunks(
+    const struct MojoGLES2ImplCHROMIUMBindUniformLocationThunks*
         gles2_impl_chromium_bind_uniform_location_thunks) {
   if (gles2_impl_chromium_bind_uniform_location_thunks->size >=
       sizeof(g_impl_chromium_bind_uniform_location_thunks))
@@ -37,5 +34,3 @@ MojoSetGLES2ImplCHROMIUMBindUniformLocationThunks(
         *gles2_impl_chromium_bind_uniform_location_thunks;
   return sizeof(g_impl_chromium_bind_uniform_location_thunks);
 }
-
-}  // extern "C"

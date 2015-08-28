@@ -14,9 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMMapSubThunks g_impl_chromium_map_sub_thunks = {0};
+static struct MojoGLES2ImplCHROMIUMMapSubThunks g_impl_chromium_map_sub_thunks =
+    {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -26,13 +25,11 @@ static MojoGLES2ImplCHROMIUMMapSubThunks g_impl_chromium_map_sub_thunks = {0};
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_map_sub_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMapSubThunks(
-    const MojoGLES2ImplCHROMIUMMapSubThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMapSubThunks(
+    const struct MojoGLES2ImplCHROMIUMMapSubThunks*
         gles2_impl_chromium_map_sub_thunks) {
   if (gles2_impl_chromium_map_sub_thunks->size >=
       sizeof(g_impl_chromium_map_sub_thunks))
     g_impl_chromium_map_sub_thunks = *gles2_impl_chromium_map_sub_thunks;
   return sizeof(g_impl_chromium_map_sub_thunks);
 }
-
-}  // extern "C"

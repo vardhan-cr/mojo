@@ -14,10 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplEXTTextureStorageThunks g_impl_ext_texture_storage_thunks =
-    {0};
+static struct MojoGLES2ImplEXTTextureStorageThunks
+    g_impl_ext_texture_storage_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -27,13 +25,11 @@ static MojoGLES2ImplEXTTextureStorageThunks g_impl_ext_texture_storage_thunks =
 #include "mojo/public/platform/native/gles2/call_visitor_ext_texture_storage_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplEXTTextureStorageThunks(
-    const MojoGLES2ImplEXTTextureStorageThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplEXTTextureStorageThunks(
+    const struct MojoGLES2ImplEXTTextureStorageThunks*
         gles2_impl_ext_texture_storage_thunks) {
   if (gles2_impl_ext_texture_storage_thunks->size >=
       sizeof(g_impl_ext_texture_storage_thunks))
     g_impl_ext_texture_storage_thunks = *gles2_impl_ext_texture_storage_thunks;
   return sizeof(g_impl_ext_texture_storage_thunks);
 }
-
-}  // extern "C"

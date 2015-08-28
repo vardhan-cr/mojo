@@ -49,6 +49,6 @@ MojoMakeGLES2ImplEXTDiscardFramebufferThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_ext_discard_framebuffer_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplEXTDiscardFramebufferThunksFn)(
-    const MojoGLES2ImplEXTDiscardFramebufferThunks* thunks);
+    const struct MojoGLES2ImplEXTDiscardFramebufferThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_DISCARD_FRAMEBUFFER_THUNKS_H_

@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplEXTDiscardFramebufferThunks
+static struct MojoGLES2ImplEXTDiscardFramebufferThunks
     g_impl_ext_discard_framebuffer_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)   \
@@ -27,8 +25,8 @@ static MojoGLES2ImplEXTDiscardFramebufferThunks
 #include "mojo/public/platform/native/gles2/call_visitor_ext_discard_framebuffer_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplEXTDiscardFramebufferThunks(
-    const MojoGLES2ImplEXTDiscardFramebufferThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplEXTDiscardFramebufferThunks(
+    const struct MojoGLES2ImplEXTDiscardFramebufferThunks*
         gles2_impl_ext_discard_framebuffer_thunks) {
   if (gles2_impl_ext_discard_framebuffer_thunks->size >=
       sizeof(g_impl_ext_discard_framebuffer_thunks))
@@ -36,5 +34,3 @@ extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplEXTDiscardFramebufferThunks(
         *gles2_impl_ext_discard_framebuffer_thunks;
   return sizeof(g_impl_ext_discard_framebuffer_thunks);
 }
-
-}  // extern "C"

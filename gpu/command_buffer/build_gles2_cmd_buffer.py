@@ -10580,7 +10580,7 @@ MojoMakeGLES2Impl%(camel_case_extension)sThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_%(extension_lower)s_thunks| are copied.
 typedef size_t (*MojoSetGLES2Impl%(camel_case_extension)sThunksFn)(
-    const MojoGLES2Impl%(camel_case_extension)sThunks* thunks);
+    const struct MojoGLES2Impl%(camel_case_extension)sThunks* thunks);
 
 """ % fields
     file.Write(body)
@@ -10594,7 +10594,7 @@ typedef size_t (*MojoSetGLES2Impl%(camel_case_extension)sThunksFn)(
     file.Write(_DO_NOT_EDIT_WARNING)
     camel_case_extension = ToCamelCase(extension)
     g_impl_name = "g_impl_%s_thunks" % extension.lower()
-    thunks_type = "MojoGLES2Impl%sThunks" % camel_case_extension
+    thunks_type = "struct MojoGLES2Impl%sThunks" % camel_case_extension
     fields = {"extension_lower": extension.lower(),
               "camel_case_extension": camel_case_extension,
               "thunks_type": thunks_type,
@@ -10608,8 +10608,6 @@ typedef size_t (*MojoSetGLES2Impl%(camel_case_extension)sThunksFn)(
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
 static %(thunks_type)s %(g_impl_name)s = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)          \
@@ -10620,15 +10618,12 @@ static %(thunks_type)s %(g_impl_name)s = {0};
 #include "mojo/public/platform/native/gles2/call_visitor_%(extension_lower)s_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t
-MojoSetGLES2Impl%(camel_case_extension)sThunks(
+THUNK_EXPORT size_t MojoSetGLES2Impl%(camel_case_extension)sThunks(
     const %(thunks_type)s* %(thunks_param_name)s) {
   if (%(thunks_param_name)s->size >= sizeof(%(g_impl_name)s))
     %(g_impl_name)s = *%(thunks_param_name)s;
   return sizeof(%(g_impl_name)s);
 }
-
-}   // extern "C"
 """ % fields
     file.Write(body)
     file.Close()
@@ -10735,7 +10730,7 @@ def main(argv):
     gen.WriteMojoGLThunksHeader(
         mojo_gles2_thunks_prefix + extension.lower() + "_thunks.h", extension)
     gen.WriteMojoGLThunksImpl(
-        mojo_gles2_thunks_prefix + extension.lower() + "_thunks.cc", extension)
+        mojo_gles2_thunks_prefix + extension.lower() + "_thunks.c", extension)
 
   gen.WriteMojoGLES2ImplHeader(
     "mojo/gpu/mojo_gles2_impl_autogen.h")

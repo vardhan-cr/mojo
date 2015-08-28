@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplOESVertexArrayObjectThunks
+static struct MojoGLES2ImplOESVertexArrayObjectThunks
     g_impl_oes_vertex_array_object_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)   \
@@ -27,8 +25,8 @@ static MojoGLES2ImplOESVertexArrayObjectThunks
 #include "mojo/public/platform/native/gles2/call_visitor_oes_vertex_array_object_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplOESVertexArrayObjectThunks(
-    const MojoGLES2ImplOESVertexArrayObjectThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplOESVertexArrayObjectThunks(
+    const struct MojoGLES2ImplOESVertexArrayObjectThunks*
         gles2_impl_oes_vertex_array_object_thunks) {
   if (gles2_impl_oes_vertex_array_object_thunks->size >=
       sizeof(g_impl_oes_vertex_array_object_thunks))
@@ -36,5 +34,3 @@ extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplOESVertexArrayObjectThunks(
         *gles2_impl_oes_vertex_array_object_thunks;
   return sizeof(g_impl_oes_vertex_array_object_thunks);
 }
-
-}  // extern "C"

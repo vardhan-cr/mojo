@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplEXTMultisampledRenderToTextureThunks
+static struct MojoGLES2ImplEXTMultisampledRenderToTextureThunks
     g_impl_ext_multisampled_render_to_texture_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)     \
@@ -28,9 +26,8 @@ static MojoGLES2ImplEXTMultisampledRenderToTextureThunks
 #include "mojo/public/platform/native/gles2/call_visitor_ext_multisampled_render_to_texture_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t
-MojoSetGLES2ImplEXTMultisampledRenderToTextureThunks(
-    const MojoGLES2ImplEXTMultisampledRenderToTextureThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplEXTMultisampledRenderToTextureThunks(
+    const struct MojoGLES2ImplEXTMultisampledRenderToTextureThunks*
         gles2_impl_ext_multisampled_render_to_texture_thunks) {
   if (gles2_impl_ext_multisampled_render_to_texture_thunks->size >=
       sizeof(g_impl_ext_multisampled_render_to_texture_thunks))
@@ -38,5 +35,3 @@ MojoSetGLES2ImplEXTMultisampledRenderToTextureThunks(
         *gles2_impl_ext_multisampled_render_to_texture_thunks;
   return sizeof(g_impl_ext_multisampled_render_to_texture_thunks);
 }
-
-}  // extern "C"

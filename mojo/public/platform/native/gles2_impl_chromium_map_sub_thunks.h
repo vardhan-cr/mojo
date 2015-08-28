@@ -48,6 +48,6 @@ MojoMakeGLES2ImplCHROMIUMMapSubThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_map_sub_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplCHROMIUMMapSubThunksFn)(
-    const MojoGLES2ImplCHROMIUMMapSubThunks* thunks);
+    const struct MojoGLES2ImplCHROMIUMMapSubThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_MAP_SUB_THUNKS_H_

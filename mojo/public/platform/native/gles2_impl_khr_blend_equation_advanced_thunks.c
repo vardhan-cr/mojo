@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplKHRBlendEquationAdvancedThunks
+static struct MojoGLES2ImplKHRBlendEquationAdvancedThunks
     g_impl_khr_blend_equation_advanced_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)       \
@@ -27,8 +25,8 @@ static MojoGLES2ImplKHRBlendEquationAdvancedThunks
 #include "mojo/public/platform/native/gles2/call_visitor_khr_blend_equation_advanced_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplKHRBlendEquationAdvancedThunks(
-    const MojoGLES2ImplKHRBlendEquationAdvancedThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplKHRBlendEquationAdvancedThunks(
+    const struct MojoGLES2ImplKHRBlendEquationAdvancedThunks*
         gles2_impl_khr_blend_equation_advanced_thunks) {
   if (gles2_impl_khr_blend_equation_advanced_thunks->size >=
       sizeof(g_impl_khr_blend_equation_advanced_thunks))
@@ -36,5 +34,3 @@ extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplKHRBlendEquationAdvancedThunks(
         *gles2_impl_khr_blend_equation_advanced_thunks;
   return sizeof(g_impl_khr_blend_equation_advanced_thunks);
 }
-
-}  // extern "C"

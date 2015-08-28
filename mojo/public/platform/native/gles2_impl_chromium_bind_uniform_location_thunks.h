@@ -50,6 +50,6 @@ MojoMakeGLES2ImplCHROMIUMBindUniformLocationThunks() {
 // The contents of |gles2_impl_chromium_bind_uniform_location_thunks| are
 // copied.
 typedef size_t (*MojoSetGLES2ImplCHROMIUMBindUniformLocationThunksFn)(
-    const MojoGLES2ImplCHROMIUMBindUniformLocationThunks* thunks);
+    const struct MojoGLES2ImplCHROMIUMBindUniformLocationThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_BIND_UNIFORM_LOCATION_THUNKS_H_

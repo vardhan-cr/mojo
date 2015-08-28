@@ -48,6 +48,6 @@ MojoMakeGLES2ImplOcclusionQueryEXTThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_occlusion_query_ext_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplOcclusionQueryEXTThunksFn)(
-    const MojoGLES2ImplOcclusionQueryEXTThunks* thunks);
+    const struct MojoGLES2ImplOcclusionQueryEXTThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OCCLUSION_QUERY_EXT_THUNKS_H_

@@ -49,6 +49,6 @@ MojoMakeGLES2ImplOESVertexArrayObjectThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_oes_vertex_array_object_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplOESVertexArrayObjectThunksFn)(
-    const MojoGLES2ImplOESVertexArrayObjectThunks* thunks);
+    const struct MojoGLES2ImplOESVertexArrayObjectThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OES_VERTEX_ARRAY_OBJECT_THUNKS_H_

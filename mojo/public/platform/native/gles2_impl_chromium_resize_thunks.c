@@ -14,9 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMResizeThunks g_impl_chromium_resize_thunks = {0};
+static struct MojoGLES2ImplCHROMIUMResizeThunks g_impl_chromium_resize_thunks =
+    {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -26,13 +25,11 @@ static MojoGLES2ImplCHROMIUMResizeThunks g_impl_chromium_resize_thunks = {0};
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_resize_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMResizeThunks(
-    const MojoGLES2ImplCHROMIUMResizeThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMResizeThunks(
+    const struct MojoGLES2ImplCHROMIUMResizeThunks*
         gles2_impl_chromium_resize_thunks) {
   if (gles2_impl_chromium_resize_thunks->size >=
       sizeof(g_impl_chromium_resize_thunks))
     g_impl_chromium_resize_thunks = *gles2_impl_chromium_resize_thunks;
   return sizeof(g_impl_chromium_resize_thunks);
 }
-
-}  // extern "C"

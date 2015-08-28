@@ -48,6 +48,6 @@ MojoMakeGLES2ImplEXTTextureStorageThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_ext_texture_storage_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplEXTTextureStorageThunksFn)(
-    const MojoGLES2ImplEXTTextureStorageThunks* thunks);
+    const struct MojoGLES2ImplEXTTextureStorageThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_TEXTURE_STORAGE_THUNKS_H_

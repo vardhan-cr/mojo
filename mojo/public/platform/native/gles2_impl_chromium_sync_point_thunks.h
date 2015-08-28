@@ -48,6 +48,6 @@ MojoMakeGLES2ImplCHROMIUMSyncPointThunks() {
 // a DSO linked with mojo_system.
 // The contents of |gles2_impl_chromium_sync_point_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplCHROMIUMSyncPointThunksFn)(
-    const MojoGLES2ImplCHROMIUMSyncPointThunks* thunks);
+    const struct MojoGLES2ImplCHROMIUMSyncPointThunks* thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_CHROMIUM_SYNC_POINT_THUNKS_H_

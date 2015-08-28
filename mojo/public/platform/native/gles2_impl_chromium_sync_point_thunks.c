@@ -14,10 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMSyncPointThunks g_impl_chromium_sync_point_thunks =
-    {0};
+static struct MojoGLES2ImplCHROMIUMSyncPointThunks
+    g_impl_chromium_sync_point_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -27,13 +25,11 @@ static MojoGLES2ImplCHROMIUMSyncPointThunks g_impl_chromium_sync_point_thunks =
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_sync_point_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMSyncPointThunks(
-    const MojoGLES2ImplCHROMIUMSyncPointThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMSyncPointThunks(
+    const struct MojoGLES2ImplCHROMIUMSyncPointThunks*
         gles2_impl_chromium_sync_point_thunks) {
   if (gles2_impl_chromium_sync_point_thunks->size >=
       sizeof(g_impl_chromium_sync_point_thunks))
     g_impl_chromium_sync_point_thunks = *gles2_impl_chromium_sync_point_thunks;
   return sizeof(g_impl_chromium_sync_point_thunks);
 }
-
-}  // extern "C"

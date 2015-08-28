@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMMiscellaneousThunks
+static struct MojoGLES2ImplCHROMIUMMiscellaneousThunks
     g_impl_chromium_miscellaneous_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)  \
@@ -27,8 +25,8 @@ static MojoGLES2ImplCHROMIUMMiscellaneousThunks
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_miscellaneous_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMiscellaneousThunks(
-    const MojoGLES2ImplCHROMIUMMiscellaneousThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMiscellaneousThunks(
+    const struct MojoGLES2ImplCHROMIUMMiscellaneousThunks*
         gles2_impl_chromium_miscellaneous_thunks) {
   if (gles2_impl_chromium_miscellaneous_thunks->size >=
       sizeof(g_impl_chromium_miscellaneous_thunks))
@@ -36,5 +34,3 @@ extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMMiscellaneousThunks(
         *gles2_impl_chromium_miscellaneous_thunks;
   return sizeof(g_impl_chromium_miscellaneous_thunks);
 }
-
-}  // extern "C"

@@ -14,9 +14,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplCHROMIUMTextureMailboxThunks
+static struct MojoGLES2ImplCHROMIUMTextureMailboxThunks
     g_impl_chromium_texture_mailbox_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)    \
@@ -27,8 +25,8 @@ static MojoGLES2ImplCHROMIUMTextureMailboxThunks
 #include "mojo/public/platform/native/gles2/call_visitor_chromium_texture_mailbox_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMTextureMailboxThunks(
-    const MojoGLES2ImplCHROMIUMTextureMailboxThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMTextureMailboxThunks(
+    const struct MojoGLES2ImplCHROMIUMTextureMailboxThunks*
         gles2_impl_chromium_texture_mailbox_thunks) {
   if (gles2_impl_chromium_texture_mailbox_thunks->size >=
       sizeof(g_impl_chromium_texture_mailbox_thunks))
@@ -36,5 +34,3 @@ extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplCHROMIUMTextureMailboxThunks(
         *gles2_impl_chromium_texture_mailbox_thunks;
   return sizeof(g_impl_chromium_texture_mailbox_thunks);
 }
-
-}  // extern "C"

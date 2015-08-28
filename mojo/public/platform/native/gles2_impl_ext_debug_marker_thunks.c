@@ -14,9 +14,8 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoGLES2ImplEXTDebugMarkerThunks g_impl_ext_debug_marker_thunks = {0};
+static struct MojoGLES2ImplEXTDebugMarkerThunks g_impl_ext_debug_marker_thunks =
+    {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -26,13 +25,11 @@ static MojoGLES2ImplEXTDebugMarkerThunks g_impl_ext_debug_marker_thunks = {0};
 #include "mojo/public/platform/native/gles2/call_visitor_ext_debug_marker_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ImplEXTDebugMarkerThunks(
-    const MojoGLES2ImplEXTDebugMarkerThunks*
+THUNK_EXPORT size_t MojoSetGLES2ImplEXTDebugMarkerThunks(
+    const struct MojoGLES2ImplEXTDebugMarkerThunks*
         gles2_impl_ext_debug_marker_thunks) {
   if (gles2_impl_ext_debug_marker_thunks->size >=
       sizeof(g_impl_ext_debug_marker_thunks))
     g_impl_ext_debug_marker_thunks = *gles2_impl_ext_debug_marker_thunks;
   return sizeof(g_impl_ext_debug_marker_thunks);
 }
-
-}  // extern "C"
