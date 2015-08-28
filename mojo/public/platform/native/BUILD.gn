@@ -96,18 +96,13 @@ mojo_sdk_source_set("gles2") {
 
   defines = [ "MOJO_GLES2_IMPLEMENTATION" ]
 
-  configs = [ "//third_party/khronos:khronos_headers" ]
+  configs = [ "../../c/gpu:gpu_configs" ]
 
   mojo_sdk_deps = [
     "mojo/public/c/gles2:headers",
     "mojo/public/c/environment",
     "mojo/public/c/system",
   ]
-
-  if (is_mac) {
-    # TODO(GYP): Make it a run-path dependent library.
-    # 'DYLIB_INSTALL_NAME_BASE': '@loader_path',
-  }
 }
 
 mojo_sdk_source_set("gpu_thunks") {
