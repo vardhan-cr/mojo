@@ -17,7 +17,10 @@
 
 typedef void* MojoSystemImpl;
 
+#ifdef __cplusplus
 extern "C" {
+#endif  // __cplusplus
+
 // APIs for creating and manipulating MojoSystemImpls.
 
 // Returns the MojoSystemImpl implicitly used by the non-SystemImpl version of
@@ -137,6 +140,9 @@ MOJO_SYSTEM_EXPORT MojoResult MojoSystemImplMapBuffer(MojoSystemImpl system,
                                                       MojoMapBufferFlags flags);
 MOJO_SYSTEM_EXPORT MojoResult
 MojoSystemImplUnmapBuffer(MojoSystemImpl system, void* buffer);
+
+#ifdef __cplusplus
 }  // extern "C"
+#endif  // __cplusplus
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_SYSTEM_IMPL_PRIVATE_H_

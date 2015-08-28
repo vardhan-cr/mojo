@@ -8,7 +8,7 @@ import("../../mojo_sdk.gni")
 
 mojo_sdk_source_set("system") {
   sources = [
-    "system_thunks.cc",
+    "system_thunks.c",
     "system_thunks.h",
   ]
   defines = [ "MOJO_SYSTEM_IMPLEMENTATION" ]
@@ -27,7 +27,7 @@ mojo_sdk_source_set("system") {
 # For internal use only.
 mojo_sdk_source_set("system_impl_private") {
   sources = [
-    "system_impl_private_thunks.cc",
+    "system_impl_private_thunks.c",
     "system_impl_private_thunks.h",
   ]
   defines = [ "MOJO_SYSTEM_IMPLEMENTATION" ]

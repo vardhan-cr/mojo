@@ -8,10 +8,9 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoSystemImplControlThunksPrivate g_system_impl_control_thunks = {0};
-static MojoSystemImplThunksPrivate g_system_impl_thunks = {0};
+static struct MojoSystemImplControlThunksPrivate g_system_impl_control_thunks =
+    {0};
+static struct MojoSystemImplThunksPrivate g_system_impl_thunks = {0};
 
 MojoSystemImpl MojoSystemImplGetDefaultImpl() {
   assert(g_system_impl_control_thunks.GetDefaultSystemImpl);
@@ -203,18 +202,16 @@ MojoResult MojoSystemImplUnmapBuffer(MojoSystemImpl system, void* buffer) {
   return g_system_impl_thunks.UnmapBuffer(system, buffer);
 }
 
-extern "C" THUNK_EXPORT size_t MojoSetSystemImplControlThunksPrivate(
-    const MojoSystemImplControlThunksPrivate* system_thunks) {
+THUNK_EXPORT size_t MojoSetSystemImplControlThunksPrivate(
+    const struct MojoSystemImplControlThunksPrivate* system_thunks) {
   if (system_thunks->size >= sizeof(g_system_impl_control_thunks))
     g_system_impl_control_thunks = *system_thunks;
   return sizeof(g_system_impl_control_thunks);
 }
 
-extern "C" THUNK_EXPORT size_t MojoSetSystemImplThunksPrivate(
-    const MojoSystemImplThunksPrivate* system_thunks) {
+THUNK_EXPORT size_t MojoSetSystemImplThunksPrivate(
+    const struct MojoSystemImplThunksPrivate* system_thunks) {
   if (system_thunks->size >= sizeof(g_system_impl_thunks))
     g_system_impl_thunks = *system_thunks;
   return sizeof(g_system_impl_thunks);
 }
-
-}  // extern "C"

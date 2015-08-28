@@ -8,9 +8,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-
-static MojoSystemThunks g_thunks = {0};
+static struct MojoSystemThunks g_thunks = {0};
 
 MojoTimeTicks MojoGetTimeTicksNow() {
   assert(g_thunks.GetTimeTicksNow);
@@ -41,9 +39,10 @@ MojoResult MojoWaitMany(const MojoHandle* handles,
                            result_index, signals_states);
 }
 
-MojoResult MojoCreateMessagePipe(const MojoCreateMessagePipeOptions* options,
-                                 MojoHandle* message_pipe_handle0,
-                                 MojoHandle* message_pipe_handle1) {
+MojoResult MojoCreateMessagePipe(
+    const struct MojoCreateMessagePipeOptions* options,
+    MojoHandle* message_pipe_handle0,
+    MojoHandle* message_pipe_handle1) {
   assert(g_thunks.CreateMessagePipe);
   return g_thunks.CreateMessagePipe(options, message_pipe_handle0,
                                     message_pipe_handle1);
@@ -71,7 +70,7 @@ MojoResult MojoReadMessage(MojoHandle message_pipe_handle,
                               num_handles, flags);
 }
 
-MojoResult MojoCreateDataPipe(const MojoCreateDataPipeOptions* options,
+MojoResult MojoCreateDataPipe(const struct MojoCreateDataPipeOptions* options,
                               MojoHandle* data_pipe_producer_handle,
                               MojoHandle* data_pipe_consumer_handle) {
   assert(g_thunks.CreateDataPipe);
@@ -158,11 +157,9 @@ MojoResult MojoUnmapBuffer(void* buffer) {
   return g_thunks.UnmapBuffer(buffer);
 }
 
-extern "C" THUNK_EXPORT size_t MojoSetSystemThunks(
-    const MojoSystemThunks* system_thunks) {
+THUNK_EXPORT size_t
+MojoSetSystemThunks(const struct MojoSystemThunks* system_thunks) {
   if (system_thunks->size >= sizeof(g_thunks))
     g_thunks = *system_thunks;
   return sizeof(g_thunks);
 }
-
-}  // extern "C"
