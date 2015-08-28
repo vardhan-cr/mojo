@@ -35,6 +35,13 @@ MGLContext MGLGetCurrentContext() {
   return gles2::ControlThunksImpl::Get()->GetCurrentContext();
 }
 
+void MGLSignalSyncPoint(uint32_t sync_point,
+                        MGLSignalSyncPointCallback callback,
+                        void* closure) {
+  gles2::ControlThunksImpl::Get()->SignalSyncPoint(sync_point, callback,
+                                                   closure);
+}
+
 void MGLResizeSurface(uint32_t width, uint32_t height) {
   return gles2::ControlThunksImpl::Get()->ResizeSurface(width, height);
 }

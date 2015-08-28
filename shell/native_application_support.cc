@@ -23,6 +23,7 @@
 #include "mojo/public/platform/native/gles2_impl_thunks.h"
 #include "mojo/public/platform/native/gles2_thunks.h"
 #include "mojo/public/platform/native/mgl_onscreen_thunks.h"
+#include "mojo/public/platform/native/mgl_signal_sync_point_thunks.h"
 #include "mojo/public/platform/native/mgl_thunks.h"
 #include "mojo/public/platform/native/system_impl_private_thunks.h"
 #include "mojo/public/platform/native/system_thunks.h"
@@ -114,14 +115,14 @@ bool RunNativeApplication(
             "MojoSetGLES2ImplCHROMIUMTextureMailboxThunks", app_library);
 
   if (SetThunks(MojoMakeMGLThunks, "MojoSetMGLThunks", app_library)) {
-    // TODO(jamesr): We should only need to expose these on apps that need to
-    // draw to the screen like the system compositor.
+    // TODO(jamesr): We should only need to expose the onscreen thunks to apps
+    // that need to draw to the screen like the system compositor.
     SetThunks(MojoMakeMGLOnscreenThunks, "MojoSetMGLOnscreenThunks",
               app_library);
-  }
 
-  // Unlike system thunks, we don't warn on a lack of GLES2 thunks because
-  // not everything is a visual app.
+    SetThunks(MojoMakeMGLSignalSyncPointThunks,
+              "MojoSetMGLSignalSyncPointThunks", app_library);
+  }
 
   typedef MojoResult (*MojoMainFunction)(MojoHandle);
   MojoMainFunction main_function = reinterpret_cast<MojoMainFunction>(

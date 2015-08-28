@@ -44,8 +44,8 @@ void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
                               uint32_t sync_point,
                               MojoGLES2SignalSyncPointCallback callback,
                               void* closure) {
-  gles2::ControlThunksImpl::Get()->SignalSyncPoint(context, sync_point,
-                                                   callback, closure);
+  gles2::ControlThunksImpl::Get()->SignalSyncPoint(sync_point, callback,
+                                                   closure);
 }
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)             \

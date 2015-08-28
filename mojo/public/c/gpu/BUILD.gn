@@ -14,6 +14,7 @@ group("gpu") {
 
   deps = [
     ":MGL",
+    ":MGL_signal_sync_point",
     ":GLES2",
     "../../platform/native:mgl_thunks",
     "../../platform/native:gles2",
@@ -43,6 +44,16 @@ mojo_sdk_source_set("MGL") {
 mojo_sdk_source_set("MGL_onscreen") {
   sources = [
     "MGL/mgl_onscreen.h",
+  ]
+
+  public_deps = [
+    ":MGL",
+  ]
+}
+
+mojo_sdk_source_set("MGL_signal_sync_point") {
+  sources = [
+    "MGL/mgl_signal_sync_point.h",
   ]
 
   public_deps = [

@@ -47,8 +47,7 @@ class ControlThunksImpl {
 
   void* GetGLES2Interface(MojoGLES2Context context);
 
-  void SignalSyncPoint(MojoGLES2Context context,
-                       uint32_t sync_point,
+  void SignalSyncPoint(uint32_t sync_point,
                        MojoGLES2SignalSyncPointCallback callback,
                        void* closure);
 

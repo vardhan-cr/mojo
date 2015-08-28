@@ -59,7 +59,6 @@ void* ControlThunksImpl::GetGLES2Interface(MojoGLES2Context context) {
 }
 
 void ControlThunksImpl::SignalSyncPoint(
-    MojoGLES2Context context,
     uint32_t sync_point,
     MojoGLES2SignalSyncPointCallback callback,
     void* closure) {

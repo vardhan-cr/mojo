@@ -6,6 +6,7 @@
 
 #include "base/callback.h"
 #include "base/logging.h"
+#include "mojo/public/c/gpu/MGL/mgl_signal_sync_point.h"
 
 namespace mojo {
 namespace {
@@ -26,8 +27,8 @@ MojoContextSupport::~MojoContextSupport() {
 
 void MojoContextSupport::SignalSyncPoint(uint32 sync_point,
                                          const base::Closure& callback) {
-  MojoGLES2SignalSyncPoint(context_, sync_point, &RunAndDeleteCallback,
-                           new base::Closure(callback));
+  MGLSignalSyncPoint(sync_point, &RunAndDeleteCallback,
+                     new base::Closure(callback));
 }
 
 void MojoContextSupport::SignalQuery(uint32 query,
