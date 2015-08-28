@@ -6,6 +6,8 @@ group("apps") {
   testonly = true
 
   deps = [
+    "//apps/benchmark",
+    "//apps/benchmark:apptests",
     "//apps/moterm",
     "//apps/moterm:apptests",
     "//apps/moterm:gl_helper_test_app",

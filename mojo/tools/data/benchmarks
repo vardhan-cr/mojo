@@ -1,0 +1,23 @@
+# This file contains a list of Mojo benchmarks. For description of the file
+# format, see `mojo_benchmark --help`.
+
+benchmarks = [
+  {
+    'name': 'Trace me',
+    'app': 'https://core.mojoapps.io/trace_me.mojo',
+    'duration': 10,
+    'measurements': [
+      'time_until/trace_me/DoWork',
+      'avg_duration/trace_me/DoWork',
+    ]
+  },
+  {
+    'name': 'Spinning cube',
+    'app': 'https://core.mojoapps.io/spinning_cube.mojo',
+    'duration': 10,
+    'measurements': [
+      'time_until/gpu/GpuScheduler:PutChanged',
+    ]
+  },
+]
+

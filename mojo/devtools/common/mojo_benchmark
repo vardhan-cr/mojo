@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+# Copyright 2015 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Runner for Mojo application benchmarks."""
+
+import argparse
+import logging
+import sys
+
+from devtoolslib import shell_arguments
+from devtoolslib import shell_config
+
+
+_DESCRIPTION = """Runner for Mojo application benchmarks.
+
+|benchmark_list_file| has to be a valid Python program that sets a |benchmarks|
+global variable, containing entries of the following form:
+
+  {
+    'name': '<name of the benchmark>',
+    'app': '<url of the app to benchmark>',
+    'shell-args': [],
+    'duration': <duration in seconds>,
+
+    # List of measurements to make.
+    'measurements': [
+      '<measurement type>/<event category>/<event name>',
+    ]
+  }
+
+Available measurement types are:
+
+  - 'time_until' - time until the first occurence of the targeted event
+  - 'avg_duration' - average duration of the targeted event
+
+|benchmark_list_file| may reference the |target_os| global that will be any of
+['android', 'linux'], indicating the system on which the benchmarks are to be
+run.
+"""
+
+_logger = logging.getLogger()
+
+_BENCHMARK_APP = 'https://core.mojoapps.io/benchmark.mojo'
+
+# Additional time in seconds allocated per shell run to accommodate start-up.
+# The shell should terminate before hitting this time out, it is an error if it
+# doesn't.
+_EXTRA_TIMEOUT = 20
+
+
+def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
+                   verbose):
+  """Runs `benchmark.mojo` in a shell with correct arguments, parses and
+  presents the benchmark results.
+  """
+  timeout = duration_seconds + _EXTRA_TIMEOUT
+  benchmark_args = []
+  benchmark_args.append('--app=' + app)
+  benchmark_args.append('--duration=' + str(duration_seconds))
+  for measurement in measurements:
+    benchmark_args.append(measurement)
+  shell_args.append(_BENCHMARK_APP)
+  shell_args.append('--args-for=%s %s' % (_BENCHMARK_APP,
+                                          ' '.join(benchmark_args)))
+  if verbose:
+    print 'shell arguments: ' + str(shell_args)
+  print '[' + name + ']'
+  return_code, output, did_time_out = shell.run_and_get_output(
+      shell_args, timeout=timeout)
+  output_lines = [line.strip() for line in output.split('\n')]
+
+  if return_code or did_time_out or 'benchmark succeeded' not in output_lines:
+    print 'timed out' if did_time_out else 'failed'
+    if return_code:
+      print 'Return code: ' + str(return_code)
+    print 'Output: '
+    print output
+    print '-' * 72
+    return False
+
+  # Echo measurement results.
+  for line in output_lines:
+    if line.strip().startswith('measurement:'):
+      print line
+  return True
+
+
+def main():
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=_DESCRIPTION)
+  parser.add_argument('benchmark_list_file', type=file,
+                      help='a file listing benchmarks to run')
+
+  # Common shell configuration arguments.
+  shell_config.add_shell_arguments(parser)
+  script_args = parser.parse_args()
+  config = shell_config.get_shell_config(script_args)
+
+  try:
+    shell, common_shell_args = shell_arguments.get_shell(config, [])
+  except shell_arguments.ShellConfigurationException as e:
+    print e
+    return 1
+
+  target_os = 'android' if script_args.android else 'linux'
+  benchmark_list_params = {"target_os": target_os}
+  exec script_args.benchmark_list_file in benchmark_list_params
+  benchmark_list = benchmark_list_params['benchmarks']
+
+  succeeded = True
+  for benchmark_spec in benchmark_list:
+    name = benchmark_spec['name']
+    app = benchmark_spec['app']
+    duration = benchmark_spec['duration']
+    shell_args = benchmark_spec.get('shell-args', []) + common_shell_args
+    measurements = benchmark_spec['measurements']
+    _run_benchmark(shell, shell_args, name, app, duration, measurements,
+                   script_args.verbose)
+
+  return 0 if succeeded else 1
+
+if __name__ == '__main__':
+  sys.exit(main())

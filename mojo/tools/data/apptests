@@ -9,6 +9,9 @@ tests = [
     "test": "mojo:authenticating_url_loader_interceptor_apptests",
   },
   {
+    "test": "mojo:benchmark_apptests",
+  },
+  {
     "test": "mojo:clipboard_apptests",
   },
   {
