@@ -47,8 +47,8 @@ class DrmDisplayHostManager : public DeviceEventObserver {
   void OnDeviceEvent(const DeviceEvent& event) override;
 
   // Note: IO is performed in OnChannelEstablished.
-  void OnChannelEstablished(int host_id);
-  void OnChannelDestroyed(int host_id);
+  void OnChannelEstablished();
+  void OnChannelDestroyed();
 
   void OnUpdateNativeDisplays(
       const std::vector<DisplaySnapshot_Params>& displays);

@@ -23,9 +23,6 @@ class DISPLAY_TYPES_EXPORT DisplaySnapshot {
                   const gfx::Point& origin,
                   const gfx::Size& physical_size,
                   DisplayConnectionType type,
-                  bool is_aspect_preserving_scaling,
-                  bool has_overscan,
-                  std::string display_name,
                   const std::vector<const DisplayMode*>& modes,
                   const DisplayMode* current_mode,
                   const DisplayMode* native_mode);
@@ -34,11 +31,6 @@ class DISPLAY_TYPES_EXPORT DisplaySnapshot {
   const gfx::Point& origin() const { return origin_; }
   const gfx::Size& physical_size() const { return physical_size_; }
   ui::DisplayConnectionType type() const { return type_; }
-  bool is_aspect_preserving_scaling() const {
-    return is_aspect_preserving_scaling_;
-  }
-  bool has_overscan() const { return has_overscan_; }
-  std::string display_name() const { return display_name_; }
 
   int64_t display_id() const { return display_id_; }
 
@@ -68,12 +60,6 @@ class DISPLAY_TYPES_EXPORT DisplaySnapshot {
   gfx::Size physical_size_;
 
   DisplayConnectionType type_;
-
-  bool is_aspect_preserving_scaling_;
-
-  bool has_overscan_;
-
-  std::string display_name_;
 
   std::vector<const DisplayMode*> modes_;  // Not owned.
 

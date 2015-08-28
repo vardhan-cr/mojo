@@ -88,6 +88,18 @@ component("ozone_base") {
   ]
 }
 
+source_set("ozone_common_message_types") {
+  sources = [
+    "common/gpu/ozone_gpu_message_params.cc",
+    "common/gpu/ozone_gpu_message_params.h",
+  ]
+  deps = [
+    ":ozone_base",
+    "//ui/display/types",
+    "//ui/gfx/geometry",
+  ]
+}
+
 component("ozone") {
   sources = [
     "common/display_mode_proxy.cc",
@@ -98,8 +110,6 @@ component("ozone") {
     "common/display_util.h",
     "common/egl_util.cc",
     "common/egl_util.h",
-    "common/gpu/ozone_gpu_message_params.cc",
-    "common/gpu/ozone_gpu_message_params.h",
     "common/native_display_delegate_ozone.cc",
     "common/native_display_delegate_ozone.h",
     "common/stub_overlay_manager.cc",
@@ -122,6 +132,7 @@ component("ozone") {
         ":generate_constructor_list",
         ":generate_ozone_platform_list",
         ":ozone_base",
+        ":ozone_common_message_types",
         "//base",
         "//skia",
         "//ui/display/types",
@@ -130,16 +141,12 @@ component("ozone") {
         "//ui/events/devices",
         "//ui/events/ozone:events_ozone",
         "//ui/gfx",
-        "//ui/gfx/geometry",
 
         # TODO(GYP) the GYP version has a way to add additional dependencies via
         # build flags.
       ] + ozone_platform_deps
 
   allow_circular_includes_from = [
-    "platform/egltest",
-
-    #"platform/drm",
     "platform/drm:drm_common",
     "platform/drm:gbm",
     "//ui/events/ozone:events_ozone",

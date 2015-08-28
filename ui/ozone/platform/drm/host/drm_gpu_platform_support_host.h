@@ -104,7 +104,7 @@ class DrmGpuPlatformSupportHost : public GpuPlatformSupportHost {
   bool SetGammaRamp(int64_t id, const std::vector<GammaRampRGBEntry>& lut);
 
  private:
-  int host_id_ = -1;
+  bool connected_;
 
   DrmDisplayHostManager* display_manager_;           // Not owned
   DrmWindowHostManager* window_manager_;           // Not owned

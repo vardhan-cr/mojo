@@ -36,6 +36,7 @@
 #include "ui/ozone/public/cursor_factory_ozone.h"
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
+#include "ui/ozone/public/ipc_init_helper_ozone.h"
 #include "ui/ozone/public/ozone_gpu_test_helper.h"
 #include "ui/ozone/public/ozone_platform.h"
 #include "ui/ozone/public/ozone_switches.h"
@@ -111,7 +112,9 @@ class GbmDeviceGenerator : public DrmDeviceGenerator {
 
 class OzonePlatformGbm : public OzonePlatform {
  public:
-  OzonePlatformGbm(bool use_surfaceless) : use_surfaceless_(use_surfaceless) {}
+  OzonePlatformGbm(bool use_surfaceless)
+      : use_surfaceless_(use_surfaceless),
+        ipc_init_helper_ozone_(IpcInitHelperOzone::Create()) {}
   ~OzonePlatformGbm() override {}
 
   // OzonePlatform:
@@ -133,6 +136,9 @@ class OzonePlatformGbm : public OzonePlatform {
   }
   GpuPlatformSupportHost* GetGpuPlatformSupportHost() override {
     return gpu_platform_support_host_.get();
+  }
+  IpcInitHelperOzone* GetIpcInitHelperOzone() override {
+    return ipc_init_helper_ozone_.get();
   }
   scoped_ptr<SystemInputInjector> CreateSystemInputInjector() override {
     return event_factory_ozone_->CreateSystemInputInjector();
@@ -197,6 +203,7 @@ class OzonePlatformGbm : public OzonePlatform {
  private:
   // Objects in both processes.
   bool use_surfaceless_;
+  scoped_ptr<IpcInitHelperOzone> ipc_init_helper_ozone_;
 
   // Objects in the GPU process.
   scoped_ptr<GbmSurfaceFactory> surface_factory_ozone_;
@@ -226,10 +233,8 @@ class OzonePlatformGbm : public OzonePlatform {
 
 OzonePlatform* CreateOzonePlatformGbm() {
   base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
-#if defined(USE_MESA_PLATFORM_NULL)
-  // Only works with surfaceless.
+  // Always go surfaceless.
   cmd->AppendSwitch(switches::kOzoneUseSurfaceless);
-#endif
   return new OzonePlatformGbm(cmd->HasSwitch(switches::kOzoneUseSurfaceless));
 }
 

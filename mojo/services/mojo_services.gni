@@ -21,6 +21,8 @@ mojo_services = [
   "//mojo/services/network/public/interfaces",
   "//mojo/services/notifications/public/interfaces",
   "//mojo/services/nfc/public/interfaces",
+  "//mojo/services/ozone_drm_gpu/public/interfaces",
+  "//mojo/services/ozone_drm_host/public/interfaces",
   "//mojo/services/sensors/public/interfaces",
   "//mojo/services/service_registry/public/interfaces",
   "//mojo/services/speech_recognizer/public/interfaces",

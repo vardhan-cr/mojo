@@ -25,6 +25,7 @@ executable("ozone_demo") {
   deps = [
     "//base",
     "//skia",
+    "//mojo/public/c/system:for_shared_library",
     "//ui/events",
     "//ui/events:dom_keycode_converter",
     "//ui/events/ozone:events_ozone_layout",

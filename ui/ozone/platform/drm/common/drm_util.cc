@@ -116,14 +116,6 @@ int GetDrmProperty(int fd,
   return -1;
 }
 
-std::string GetNameForEnumValue(drmModePropertyRes* property, uint32_t value) {
-  for (int i = 0; i < property->count_enums; ++i)
-    if (property->enums[i].value == value)
-      return property->enums[i].name;
-
-  return std::string();
-}
-
 ScopedDrmPropertyBlobPtr GetDrmPropertyBlob(int fd,
                                             drmModeConnector* connector,
                                             const std::string& name) {
@@ -138,16 +130,6 @@ ScopedDrmPropertyBlobPtr GetDrmPropertyBlob(int fd,
   }
 
   return nullptr;
-}
-
-bool IsAspectPreserving(int fd, drmModeConnector* connector) {
-  ScopedDrmPropertyPtr property;
-  int index = GetDrmProperty(fd, connector, "scaling mode", &property);
-  if (index < 0)
-    return false;
-
-  return (GetNameForEnumValue(property.get(), connector->prop_values[index]) ==
-          "Full aspect");
 }
 
 }  // namespace
@@ -217,8 +199,6 @@ DisplaySnapshot_Params CreateDisplaySnapshotParams(
   params.physical_size =
       gfx::Size(info->connector()->mmWidth, info->connector()->mmHeight);
   params.type = GetDisplayType(info->connector());
-  params.is_aspect_preserving_scaling =
-      IsAspectPreserving(fd, info->connector());
 
   ScopedDrmPropertyBlobPtr edid_blob(
       GetDrmPropertyBlob(fd, info->connector(), "EDID"));
@@ -231,10 +211,6 @@ DisplaySnapshot_Params CreateDisplaySnapshotParams(
     if (!GetDisplayIdFromEDID(edid, display_index, &params.display_id,
                               &params.product_id))
       params.display_id = display_index;
-
-    ParseOutputDeviceData(edid, nullptr, nullptr, &params.display_name, nullptr,
-                          nullptr);
-    ParseOutputOverscanFlag(edid, &params.has_overscan);
   } else {
     VLOG(1) << "Failed to get EDID blob for connector "
             << info->connector()->connector_id;

@@ -50,7 +50,7 @@ class PlatformViewportOzone : public PlatformViewport,
         ui::OzonePlatform::GetInstance()->CreatePlatformWindow(this, bounds);
 
     metrics_ = mojo::ViewportMetrics::New();
-    metrics_->size = mojo::Size::From(bounds.size());
+    metrics_->size = mojo::Size::From(platform_window_->GetBounds().size());
   }
 
   void Show() override { platform_window_->Show(); }
@@ -59,9 +59,7 @@ class PlatformViewportOzone : public PlatformViewport,
 
   void Close() override { platform_window_->Close(); }
 
-  gfx::Size GetSize() override {
-    return platform_window_->GetBounds().size();
-  }
+  gfx::Size GetSize() override { return platform_window_->GetBounds().size(); }
 
   void SetBounds(const gfx::Rect& bounds) override {
     platform_window_->SetBounds(bounds);
@@ -129,8 +127,8 @@ class PlatformViewportOzone : public PlatformViewport,
 scoped_ptr<PlatformViewport> PlatformViewport::Create(
     mojo::ApplicationImpl* application_,
     Delegate* delegate) {
-  return scoped_ptr<PlatformViewport>(
-      new PlatformViewportOzone(delegate)).Pass();
+  return scoped_ptr<PlatformViewport>(new PlatformViewportOzone(delegate))
+      .Pass();
 }
 
 }  // namespace native_viewport

@@ -251,7 +251,8 @@ GLSurfaceOzoneSurfaceless::GLSurfaceOzoneSurfaceless(
     scoped_ptr<ui::SurfaceOzoneEGL> ozone_surface,
     AcceleratedWidget widget,
     const gfx::SurfaceConfiguration& requested_configuration)
-    : SurfacelessEGL(gfx::Size(), requested_configuration),
+    : SurfacelessEGL(gfx::Size(1, 1),  // passing zero size causes a failure
+                     requested_configuration),
       ozone_surface_(ozone_surface.Pass()),
       widget_(widget),
       has_implicit_external_sync_(
@@ -433,6 +434,7 @@ class GL_EXPORT GLSurfaceOzoneSurfacelessSurfaceImpl
   gfx::SwapResult SwapBuffers() override;
   bool SwapBuffersAsync(const SwapCompletionCallback& callback) override;
   void Destroy() override;
+  bool IsSurfaceless() const override { return false; }
 
  private:
   class SurfaceImage : public GLImageLinuxDMABuffer {
@@ -606,9 +608,12 @@ bool GLSurfaceOzoneSurfacelessSurfaceImpl::CreatePixmaps() {
         new SurfaceImage(GetSize(), GL_BGRA_EXT);
     if (!image->Initialize(pixmap, gfx::GpuMemoryBuffer::Format::BGRA_8888))
       return false;
+    if (images_[i])
+      images_[i]->Destroy(true);
     images_[i] = image;
     // Bind image to texture.
     ScopedTextureBinder binder(GL_TEXTURE_2D, textures_[i]);
+
     if (!images_[i]->BindTexImage(GL_TEXTURE_2D))
       return false;
   }

@@ -87,6 +87,15 @@ source_set("drm_common") {
     "host/drm_window_host.h",
     "host/drm_window_host_manager.cc",
     "host/drm_window_host_manager.h",
+    "mojo/drm_gpu_delegate.cc",
+    "mojo/drm_gpu_delegate.h",
+    "mojo/drm_gpu_impl.cc",
+    "mojo/drm_gpu_impl.h",
+    "mojo/drm_host_delegate.cc",
+    "mojo/drm_host_delegate.h",
+    "mojo/drm_host_impl.cc",
+    "mojo/drm_host_impl.h",
+    "mojo/drm_ipc_init_helper.cc",
   ]
 
   defines = [ "OZONE_IMPLEMENTATION" ]
@@ -104,6 +113,12 @@ source_set("drm_common") {
   deps = [
     "//base",
     "//skia",
+    "//mojo/application",
+    "//mojo/common",
+    "//mojo/converters/geometry",
+    "//mojo/converters/ozone_drm_gpu",
+    "//mojo/services/ozone_drm_gpu/public/interfaces",
+    "//mojo/services/ozone_drm_host/public/interfaces",
     "//ui/base",
     "//ui/display/types",
     "//ui/display/util",
@@ -116,6 +131,7 @@ source_set("drm_common") {
     "//ui/gfx",
     "//ui/gfx/geometry",
     "//ui/ozone:ozone_base",
+    "//ui/ozone:ozone_common_message_types",
     "//ui/platform_window",
   ]
 

@@ -45,9 +45,6 @@ DisplaySnapshot_Params GetDisplaySnapshotParams(
   params.origin = display.origin();
   params.physical_size = display.physical_size();
   params.type = display.type();
-  params.is_aspect_preserving_scaling = display.is_aspect_preserving_scaling();
-  params.has_overscan = display.has_overscan();
-  params.display_name = display.display_name();
   for (size_t i = 0; i < display.modes().size(); ++i)
     params.modes.push_back(GetDisplayModeParams(*display.modes()[i]));
 

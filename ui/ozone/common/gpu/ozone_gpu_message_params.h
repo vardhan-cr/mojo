@@ -35,9 +35,6 @@ struct OZONE_EXPORT DisplaySnapshot_Params {
   gfx::Point origin;
   gfx::Size physical_size;
   DisplayConnectionType type = DISPLAY_CONNECTION_TYPE_NONE;
-  bool is_aspect_preserving_scaling = false;
-  bool has_overscan = false;
-  std::string display_name;
   std::vector<DisplayMode_Params> modes;
   bool has_current_mode = false;
   DisplayMode_Params current_mode;

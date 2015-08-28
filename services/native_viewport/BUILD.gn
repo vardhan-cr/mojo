@@ -48,6 +48,7 @@ if (is_android) {
   mojo_native_application("native_viewport") {
     output_name = "native_viewport_service"
     sources = [
+      "app_delegate.cc",
       "main.cc",
     ]
     deps = [
@@ -63,6 +64,16 @@ if (is_android) {
       "//ui/events/platform",
       "//ui/gl",
     ]
+
+    if (use_ozone) {
+      sources += [ "ozone/app_delegate_ozone.cc" ]
+      deps += [
+        "//mojo/services/ozone_drm_gpu/public/interfaces",
+        "//mojo/services/ozone_drm_host/public/interfaces",
+        "//ui/events/ozone:events_ozone_evdev",
+        "//ui/ozone",
+      ]
+    }
   }
 }
 
@@ -78,7 +89,6 @@ source_set("lib") {
     "platform_viewport_headless.cc",
     "platform_viewport_headless.h",
     "platform_viewport_stub.cc",
-    "platform_viewport_win.cc",
     "platform_viewport_x11.cc",
   ]
 
@@ -104,6 +114,7 @@ source_set("lib") {
     "//ui/gfx/geometry",
     "//ui/gl",
     "//ui/platform_window",
+    "//ui/display/types",
   ]
 
   if (is_android) {
@@ -120,8 +131,17 @@ source_set("lib") {
   }
 
   if (use_ozone) {
-    sources += [ "platform_viewport_ozone.cc" ]
-    deps += [ "//ui/ozone" ]
+    sources += [
+      "ozone/display_manager.cc",
+      "ozone/display_manager.h",
+      "ozone/platform_viewport_ozone.cc",
+    ]
+    deps += [
+      "//ui/events/ozone:events_ozone_evdev",
+      "//ui/ozone",
+      "//ui/ozone:ozone_base",
+      "//ui/ozone/platform/drm:drm_common",
+    ]
   }
 
   if (is_win) {

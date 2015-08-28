@@ -223,6 +223,7 @@ void DrmDisplayHostManager::RelinquishDisplayControl(
 
 void DrmDisplayHostManager::UpdateDisplays(
     const GetDisplaysCallback& callback) {
+  DCHECK(get_displays_callback_.is_null());
   get_displays_callback_ = callback;
   if (!proxy_->RefreshNativeDisplays()) {
     get_displays_callback_.Reset();
@@ -307,19 +308,17 @@ void DrmDisplayHostManager::OnRemoveGraphicsDevice(const base::FilePath& path) {
   ProcessEvent();
 }
 
-void DrmDisplayHostManager::OnChannelEstablished(int host_id) {
-  // If in the middle of a configuration, just respond with the old list of
-  // displays. This is fine, since after the DRM resources are initialized and
-  // IPC-ed to the GPU NotifyDisplayDelegate() is called to let the display
-  // delegate know that the display configuration changed and it needs to
-  // update it again.
-  if (!get_displays_callback_.is_null()) {
-    base::ThreadTaskRunnerHandle::Get()->PostTask(
-        FROM_HERE,
-        base::Bind(&DrmDisplayHostManager::RunUpdateDisplaysCallback,
-                   weak_ptr_factory_.GetWeakPtr(), get_displays_callback_));
-    get_displays_callback_.Reset();
-  }
+void DrmDisplayHostManager::OnChannelEstablished() {
+  // If in the middle of a configuration - don't respond here.
+  // Chromium does so, but that causes a problem:
+  // NotifyDisplayDelegate, below, triggers a new update display request which
+  // is
+  // fulfilled by the results from the first request. That result is empty
+  // because
+  // we haven't added a drm device yet).
+  // The second update display request generates non empty results,
+  // but those won't be forwarded to the observer because there is no longer
+  // an outstanding request.
 
   // Signal that we're taking DRM master since we're going through the
   // initialization process again and we'll take all the available resources.
@@ -347,7 +346,7 @@ void DrmDisplayHostManager::OnChannelEstablished(int host_id) {
   NotifyDisplayDelegate();
 }
 
-void DrmDisplayHostManager::OnChannelDestroyed(int host_id) {
+void DrmDisplayHostManager::OnChannelDestroyed() {
   // Do nothing.
 }
 

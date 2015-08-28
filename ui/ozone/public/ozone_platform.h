@@ -24,6 +24,7 @@ class PlatformWindow;
 class PlatformWindowDelegate;
 class SurfaceFactoryOzone;
 class SystemInputInjector;
+class IpcInitHelperOzone;
 
 // Base class for Ozone platform implementations.
 //
@@ -68,6 +69,7 @@ class OZONE_EXPORT OzonePlatform {
       const gfx::Rect& bounds) = 0;
   virtual scoped_ptr<ui::NativeDisplayDelegate>
       CreateNativeDisplayDelegate() = 0;
+  virtual ui::IpcInitHelperOzone* GetIpcInitHelperOzone() = 0;
 
  private:
   virtual void InitializeUI() = 0;

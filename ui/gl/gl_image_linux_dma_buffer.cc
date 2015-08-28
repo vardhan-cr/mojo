@@ -58,6 +58,8 @@ bool ValidFormat(unsigned internalformat, gfx::GpuMemoryBuffer::Format format) {
       }
       NOTREACHED();
       return false;
+    case GL_BGRA_EXT:
+      return format == gfx::GpuMemoryBuffer::BGRA_8888;
     default:
       return false;
   }

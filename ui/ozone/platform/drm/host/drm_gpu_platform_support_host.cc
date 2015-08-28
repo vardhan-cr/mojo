@@ -10,11 +10,11 @@
 namespace ui {
 
 DrmGpuPlatformSupportHost::DrmGpuPlatformSupportHost(DrmCursor* cursor)
-  : display_manager_(nullptr),
-    window_manager_(nullptr),
-    cursor_(cursor),
-    delegate_(nullptr) {
-}
+    : connected_(false),
+      display_manager_(nullptr),
+      window_manager_(nullptr),
+      cursor_(cursor),
+      delegate_(nullptr) {}
 
 DrmGpuPlatformSupportHost::~DrmGpuPlatformSupportHost() {
 }
@@ -24,7 +24,7 @@ void DrmGpuPlatformSupportHost::SetDisplayManager(
   DCHECK(!display_manager_);
   display_manager_ = display_manager;
   if (IsConnected()) {
-    display_manager_->OnChannelEstablished(host_id_);
+    display_manager_->OnChannelEstablished();
   }
 }
 
@@ -47,17 +47,17 @@ void DrmGpuPlatformSupportHost::RemoveChannelObserver(
 }
 
 bool DrmGpuPlatformSupportHost::IsConnected() {
-  return host_id_ >= 0;
+  return connected_;
 }
 
 void DrmGpuPlatformSupportHost::OnChannelEstablished(int host_id) {
   TRACE_EVENT1("drm", "DrmGpuPlatformSupportHost::OnChannelEstablished",
                "host_id", host_id);
 
-  host_id_ = host_id;
+  connected_ = true;
 
   if (display_manager_) {
-    display_manager_->OnChannelEstablished(host_id_);
+    display_manager_->OnChannelEstablished();
   }
 
   FOR_EACH_OBSERVER(ChannelObserver, channel_observers_,
@@ -68,8 +68,8 @@ void DrmGpuPlatformSupportHost::OnChannelDestroyed(int host_id) {
    TRACE_EVENT1("drm", "DrmGpuPlatformSupportHost::OnChannelDestroyed",
                 "host_id", host_id);
 
-   if (host_id_ == host_id) {
-     host_id_ = -1;
+   if (connected_) {
+     connected_ = false;
      FOR_EACH_OBSERVER(ChannelObserver, channel_observers_,
                        OnChannelDestroyed());
    }

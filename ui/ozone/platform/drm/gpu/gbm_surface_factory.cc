@@ -39,11 +39,11 @@ void GbmSurfaceFactory::InitializeGpu(DrmDeviceManager* drm_device_manager,
 
 intptr_t GbmSurfaceFactory::GetNativeDisplay() {
   DCHECK(thread_checker_.CalledOnValidThread());
-  auto primary_device = drm_device_manager_->GetDrmDevice(
-    gfx::kNullAcceleratedWidget);
-  DCHECK(primary_device.get());
-  auto gbm_device = static_cast<GbmDevice*>(primary_device.get());
-  return reinterpret_cast<EGLNativeDisplayType>(gbm_device->device());
+  // If using gbm surfaces, must return here the gbm device that corresponds
+  // to the primary drm device.
+  // Using surfaceless is convenient because we don't need to ensure the primary
+  // drm device has been added by the host at the time this is called.
+  return EGL_DEFAULT_DISPLAY;
 }
 
 const int32* GbmSurfaceFactory::GetEGLSurfaceProperties(
