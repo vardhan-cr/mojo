@@ -7,7 +7,8 @@ import("//mojo/go/rules.gni")
 go_mojo_application("principal_service") {
   sources = [
     "principal_service.go",
-    "publickey.go",
+    "public_key.go",
+    "wire_blessings.go",
   ]
   deps = [
     "//mojo/services/vanadium/security/public/interfaces",

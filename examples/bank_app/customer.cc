@@ -17,8 +17,9 @@ class LoginHandler {
  public:
   void Run(const vanadium::BlessingPtr& b) const {
     std::string user;
-    if (b) {
-      for (size_t i = 0; i < b->chain.size(); i++) {
+    if (b && b->chain.size() > 0) {
+      user = b->chain[0]->extension;
+      for (size_t i = 1; i < b->chain.size(); i++) {
         user += vanadium::ChainSeparator;
         user += b->chain[i]->extension;
       }

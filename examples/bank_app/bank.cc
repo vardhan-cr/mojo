@@ -35,8 +35,9 @@ class BankUser {
   explicit BankUser(std::string* user) : user_(user) { }
   void Run(const vanadium::BlessingPtr& b) const {
     user_->clear();
-    if (b) {
-      for (size_t i = 0; i < b->chain.size(); i++) {
+    if (b && b->chain.size() > 0) {
+      user_->append(b->chain[0]->extension);
+      for (size_t i = 1; i < b->chain.size(); i++) {
         user_->append(vanadium::ChainSeparator);
         user_->append(b->chain[i]->extension);
       }
