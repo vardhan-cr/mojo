@@ -77,7 +77,7 @@ public class AuthenticationServiceImpl
         @Override
         public void call(byte[] serializedIntent) {
             Intent trampolineIntent = bytesToIntent(serializedIntent);
-            trampolineIntent.putExtra("intent", mIntent);
+            trampolineIntent.putExtra(EXTRA_START_ACTIVITY_FOR_RESULT_INTENT, mIntent);
             mContext.startActivity(trampolineIntent);
         }
     }

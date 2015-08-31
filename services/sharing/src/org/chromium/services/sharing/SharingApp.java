@@ -31,7 +31,7 @@ public class SharingApp implements ApplicationDelegate, SharingService {
     /**
      * Share text using an Android Intent.
      *
-     * @see org.chromium.mojom.mojo.SharingService#getDeviceType(String)
+     * @see org.chromium.mojom.mojo.SharingService#shareText(String)
      */
     @Override
     public void shareText(String text) {
