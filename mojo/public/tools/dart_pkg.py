@@ -253,6 +253,7 @@ def main():
   target_dir = os.path.join(args.pkg_directory, args.package_name)
   target_packages_dir = os.path.join(target_dir, 'packages')
   lib_path = os.path.join(target_dir, "lib")
+  ensure_dir_exists(lib_path)
 
   mappings = {}
   for mapping in args.sdk_ext_mappings:
@@ -261,7 +262,6 @@ def main():
 
   sdkext_path = os.path.join(lib_path, '_sdkext')
   if mappings:
-    ensure_dir_exists(lib_path)
     with open(sdkext_path, 'w') as stream:
       json.dump(mappings, stream, sort_keys=True,
                 indent=2, separators=(',', ': '))
