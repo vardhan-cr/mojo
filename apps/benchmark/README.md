@@ -4,7 +4,7 @@ This application connects to another mojo application, collects traces during
 indicated period of time and computes a number of results based on the collected
 traces. It can be used to measure performance of a mojo app, provided that the
 app being benchmarked participates in the [tracing
-ecosystem](mojo/services/tracing/public/interfaces/tracing.mojom).
+ecosystem](../../mojo/services/tracing/public/interfaces/tracing.mojom).
 
 ## Arguments
 
@@ -26,5 +26,5 @@ The following measurement types are available:
 
 ## Runner script
 
-Devtools offers [a helper script](mojo/devtools/common/mojo_benchmark) allowing
-to run a list of benchmarks, including on an Android device.
+Devtools offers [a helper script](../../mojo/devtools/common/mojo_benchmark)
+allowing to run a list of benchmarks, including on an Android device.
