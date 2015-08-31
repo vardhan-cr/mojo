@@ -8,8 +8,7 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
-static MojoGLES2ImplThunks g_impl_thunks = {0};
+static struct MojoGLES2ImplThunks g_impl_thunks = {0};
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                 \
@@ -19,11 +18,9 @@ static MojoGLES2ImplThunks g_impl_thunks = {0};
 #include "mojo/public/platform/native/gles2/call_visitor_autogen.h"
 #undef VISIT_GL_CALL
 
-extern "C" THUNK_EXPORT size_t
-MojoSetGLES2ImplThunks(const MojoGLES2ImplThunks* gles2_impl_thunks) {
+THUNK_EXPORT size_t
+MojoSetGLES2ImplThunks(const struct MojoGLES2ImplThunks* gles2_impl_thunks) {
   if (gles2_impl_thunks->size >= sizeof(g_impl_thunks))
     g_impl_thunks = *gles2_impl_thunks;
   return sizeof(g_impl_thunks);
 }
-
-}  // extern "C"

@@ -8,17 +8,16 @@
 
 #include "mojo/public/platform/native/thunk_export.h"
 
-extern "C" {
+static struct MojoGLES2ControlThunks g_control_thunks = {0};
 
-static MojoGLES2ControlThunks g_control_thunks = {0};
-
-MojoGLES2Context MojoGLES2CreateContext(MojoHandle handle,
-                                        MojoGLES2ContextLost lost_callback,
-                                        void* closure,
-                                        const MojoAsyncWaiter* async_waiter) {
+MojoGLES2Context MojoGLES2CreateContext(
+    MojoHandle handle,
+    MojoGLES2ContextLost lost_callback,
+    void* closure,
+    const struct MojoAsyncWaiter* async_waiter) {
   assert(g_control_thunks.GLES2CreateContext);
-  return g_control_thunks.GLES2CreateContext(
-      handle, lost_callback, closure, async_waiter);
+  return g_control_thunks.GLES2CreateContext(handle, lost_callback, closure,
+                                             async_waiter);
 }
 
 void MojoGLES2DestroyContext(MojoGLES2Context context) {
@@ -49,11 +48,9 @@ void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
   g_control_thunks.GLES2SignalSyncPoint(context, sync_point, callback, closure);
 }
 
-extern "C" THUNK_EXPORT size_t MojoSetGLES2ControlThunks(
-    const MojoGLES2ControlThunks* gles2_control_thunks) {
+THUNK_EXPORT size_t MojoSetGLES2ControlThunks(
+    const struct MojoGLES2ControlThunks* gles2_control_thunks) {
   if (gles2_control_thunks->size >= sizeof(g_control_thunks))
     g_control_thunks = *gles2_control_thunks;
   return sizeof(g_control_thunks);
 }
-
-}  // extern "C"

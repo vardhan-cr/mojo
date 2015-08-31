@@ -18,10 +18,11 @@
 struct MojoGLES2ControlThunks {
   size_t size;  // Should be set to sizeof(MojoGLES2ControlThunks).
 
-  MojoGLES2Context (*GLES2CreateContext)(MojoHandle handle,
-                                         MojoGLES2ContextLost lost_callback,
-                                         void* closure,
-                                         const MojoAsyncWaiter* async_waiter);
+  MojoGLES2Context (*GLES2CreateContext)(
+      MojoHandle handle,
+      MojoGLES2ContextLost lost_callback,
+      void* closure,
+      const struct MojoAsyncWaiter* async_waiter);
   void (*GLES2DestroyContext)(MojoGLES2Context context);
   void (*GLES2MakeCurrent)(MojoGLES2Context context);
   void (*GLES2SwapBuffers)();
@@ -39,9 +40,9 @@ struct MojoGLES2ControlThunks {
 
 // Intended to be called from the embedder. Returns an object initialized to
 // contain pointers to each of the embedder's MojoGLES2ControlThunks functions.
-inline MojoGLES2ControlThunks MojoMakeGLES2ControlThunks() {
-  MojoGLES2ControlThunks gles2_control_thunks = {
-      sizeof(MojoGLES2ControlThunks),
+inline struct MojoGLES2ControlThunks MojoMakeGLES2ControlThunks() {
+  struct MojoGLES2ControlThunks gles2_control_thunks = {
+      sizeof(struct MojoGLES2ControlThunks),
       MojoGLES2CreateContext,
       MojoGLES2DestroyContext,
       MojoGLES2MakeCurrent,
@@ -61,6 +62,6 @@ inline MojoGLES2ControlThunks MojoMakeGLES2ControlThunks() {
 // The expected size of |gles2_control_thunks| is returned.
 // The contents of |gles2_control_thunks| are copied.
 typedef size_t (*MojoSetGLES2ControlThunksFn)(
-    const MojoGLES2ControlThunks* gles2_control_thunks);
+    const struct MojoGLES2ControlThunks* gles2_control_thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_THUNKS_H_

@@ -25,9 +25,9 @@ struct MojoGLES2ImplThunks {
 
 // Intended to be called from the embedder to get the embedder's implementation
 // of GLES2.
-inline MojoGLES2ImplThunks MojoMakeGLES2ImplThunks() {
-  MojoGLES2ImplThunks gles2_impl_thunks = {
-      sizeof(MojoGLES2ImplThunks),
+inline struct MojoGLES2ImplThunks MojoMakeGLES2ImplThunks() {
+  struct MojoGLES2ImplThunks gles2_impl_thunks = {
+      sizeof(struct MojoGLES2ImplThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
 #include "mojo/public/platform/native/gles2/call_visitor_autogen.h"
 #undef VISIT_GL_CALL
@@ -44,6 +44,6 @@ inline MojoGLES2ImplThunks MojoMakeGLES2ImplThunks() {
 // The expected size of |gles2_impl_thunks| is returned.
 // The contents of |gles2_impl_thunks| are copied.
 typedef size_t (*MojoSetGLES2ImplThunksFn)(
-    const MojoGLES2ImplThunks* gles2_impl_thunks);
+    const struct MojoGLES2ImplThunks* gles2_impl_thunks);
 
 #endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_THUNKS_H_
