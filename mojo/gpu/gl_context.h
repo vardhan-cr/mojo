@@ -5,10 +5,11 @@
 #ifndef MOJO_GPU_GL_CONTEXT_H_
 #define MOJO_GPU_GL_CONTEXT_H_
 
+#include <MGL/mgl.h>
+
 #include "base/basictypes.h"
 #include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
-#include "mojo/public/c/gles2/gles2.h"
 
 namespace gpu {
 namespace gles2 {
@@ -47,7 +48,7 @@ class GLContext {
   static void ContextLostThunk(void* self);
   void OnContextLost();
 
-  MojoGLES2Context context_;
+  MGLContext context_;
   scoped_ptr<MojoGLES2Impl> gl_impl_;
 
   base::ObserverList<Observer> observers_;

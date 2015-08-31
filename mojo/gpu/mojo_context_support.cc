@@ -4,9 +4,11 @@
 
 #include "mojo/gpu/mojo_context_support.h"
 
+#include <MGL/mgl_onscreen.h>
+#include <MGL/mgl_signal_sync_point.h>
+
 #include "base/callback.h"
 #include "base/logging.h"
-#include "mojo/public/c/gpu/MGL/mgl_signal_sync_point.h"
 
 namespace mojo {
 namespace {
@@ -18,9 +20,8 @@ void RunAndDeleteCallback(void* context) {
 }
 }
 
-MojoContextSupport::MojoContextSupport(MojoGLES2Context context)
-    : context_(context) {
-}
+MojoContextSupport::MojoContextSupport(MGLContext context)
+    : context_(context) {}
 
 MojoContextSupport::~MojoContextSupport() {
 }
@@ -41,8 +42,8 @@ void MojoContextSupport::SetSurfaceVisible(bool visible) {
 }
 
 void MojoContextSupport::Swap() {
-  MojoGLES2MakeCurrent(context_);
-  MojoGLES2SwapBuffers();
+  MGLMakeCurrent(context_);
+  MGLSwapBuffers();
 }
 
 void MojoContextSupport::PartialSwapBuffers(const gfx::Rect& sub_buffer) {

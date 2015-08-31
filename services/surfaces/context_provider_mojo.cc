@@ -20,9 +20,10 @@ ContextProviderMojo::ContextProviderMojo(
 
 bool ContextProviderMojo::BindToCurrentThread() {
   DCHECK(command_buffer_handle_.is_valid());
-  context_ = MojoGLES2CreateContext(command_buffer_handle_.release().value(),
-                                    &ContextLostThunk, this,
-                                    Environment::GetDefaultAsyncWaiter());
+  context_ = MGLCreateContext(MGL_API_VERSION_GLES2,
+                              command_buffer_handle_.release().value(),
+                              MGL_NO_CONTEXT, &ContextLostThunk, this,
+                              Environment::GetDefaultAsyncWaiter());
   DCHECK(context_);
   context_support_.reset(new MojoContextSupport(context_));
   gles2_impl_.reset(new MojoGLES2Impl(context_));
@@ -66,7 +67,7 @@ void ContextProviderMojo::SetLostContextCallback(
 
 ContextProviderMojo::~ContextProviderMojo() {
   if (context_)
-    MojoGLES2DestroyContext(context_);
+    MGLDestroyContext(context_);
 }
 
 void ContextProviderMojo::ContextLost() {

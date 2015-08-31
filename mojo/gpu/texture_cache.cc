@@ -5,8 +5,7 @@
 #ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES
 #endif
-
-#include <GLES2/gl2extchromium.h>
+#include <GLES2/gl2extmojo.h>
 
 #include "mojo/gpu/gl_context.h"
 #include "mojo/gpu/gl_texture.h"

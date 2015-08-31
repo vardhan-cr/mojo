@@ -10,33 +10,36 @@
 
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
-#include "base/logging.h"
-#include "mojo/public/c/gles2/gles2.h"
-#include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
+#include <MGL/mgl.h>
+#include <MGL/mgl_onscreen.h>
 
+#ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES
-#include "mojo/public/c/gpu/GLES2/gl2.h"
-#include "mojo/public/c/gpu/GLES2/gl2ext.h"
-#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
+#endif
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <GLES2/gl2extmojo.h>
+
+#include "base/logging.h"
 
 namespace mojo {
 
 void MojoGLES2Impl::ActiveTexture(GLenum texture) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glActiveTexture(texture);
 }
 void MojoGLES2Impl::AttachShader(GLuint program, GLuint shader) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glAttachShader(program, shader);
 }
 void MojoGLES2Impl::BindAttribLocation(GLuint program,
                                        GLuint index,
                                        const char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindAttribLocation(program, index, name);
 }
 void MojoGLES2Impl::BindBuffer(GLenum target, GLuint buffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindBuffer(target, buffer);
 }
 void MojoGLES2Impl::BindBufferBase(GLenum target, GLuint index, GLuint buffer) {
@@ -50,18 +53,18 @@ void MojoGLES2Impl::BindBufferRange(GLenum target,
   NOTREACHED() << "Unimplemented BindBufferRange.";
 }
 void MojoGLES2Impl::BindFramebuffer(GLenum target, GLuint framebuffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindFramebuffer(target, framebuffer);
 }
 void MojoGLES2Impl::BindRenderbuffer(GLenum target, GLuint renderbuffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindRenderbuffer(target, renderbuffer);
 }
 void MojoGLES2Impl::BindSampler(GLuint unit, GLuint sampler) {
   NOTREACHED() << "Unimplemented BindSampler.";
 }
 void MojoGLES2Impl::BindTexture(GLenum target, GLuint texture) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindTexture(target, texture);
 }
 void MojoGLES2Impl::BindTransformFeedback(GLenum target,
@@ -72,48 +75,48 @@ void MojoGLES2Impl::BlendColor(GLclampf red,
                                GLclampf green,
                                GLclampf blue,
                                GLclampf alpha) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendColor(red, green, blue, alpha);
 }
 void MojoGLES2Impl::BlendEquation(GLenum mode) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendEquation(mode);
 }
 void MojoGLES2Impl::BlendEquationSeparate(GLenum modeRGB, GLenum modeAlpha) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendEquationSeparate(modeRGB, modeAlpha);
 }
 void MojoGLES2Impl::BlendFunc(GLenum sfactor, GLenum dfactor) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendFunc(sfactor, dfactor);
 }
 void MojoGLES2Impl::BlendFuncSeparate(GLenum srcRGB,
                                       GLenum dstRGB,
                                       GLenum srcAlpha,
                                       GLenum dstAlpha) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
 }
 void MojoGLES2Impl::BufferData(GLenum target,
                                GLsizeiptr size,
                                const void* data,
                                GLenum usage) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBufferData(target, size, data, usage);
 }
 void MojoGLES2Impl::BufferSubData(GLenum target,
                                   GLintptr offset,
                                   GLsizeiptr size,
                                   const void* data) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBufferSubData(target, offset, size, data);
 }
 GLenum MojoGLES2Impl::CheckFramebufferStatus(GLenum target) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glCheckFramebufferStatus(target);
 }
 void MojoGLES2Impl::Clear(GLbitfield mask) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glClear(mask);
 }
 void MojoGLES2Impl::ClearBufferfi(GLenum buffer,
@@ -141,15 +144,15 @@ void MojoGLES2Impl::ClearColor(GLclampf red,
                                GLclampf green,
                                GLclampf blue,
                                GLclampf alpha) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glClearColor(red, green, blue, alpha);
 }
 void MojoGLES2Impl::ClearDepthf(GLclampf depth) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glClearDepthf(depth);
 }
 void MojoGLES2Impl::ClearStencil(GLint s) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glClearStencil(s);
 }
 GLenum MojoGLES2Impl::ClientWaitSync(GLsync sync,
@@ -162,11 +165,11 @@ void MojoGLES2Impl::ColorMask(GLboolean red,
                               GLboolean green,
                               GLboolean blue,
                               GLboolean alpha) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glColorMask(red, green, blue, alpha);
 }
 void MojoGLES2Impl::CompileShader(GLuint shader) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCompileShader(shader);
 }
 void MojoGLES2Impl::CompressedTexImage2D(GLenum target,
@@ -177,7 +180,7 @@ void MojoGLES2Impl::CompressedTexImage2D(GLenum target,
                                          GLint border,
                                          GLsizei imageSize,
                                          const void* data) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCompressedTexImage2D(target, level, internalformat, width, height, border,
                          imageSize, data);
 }
@@ -190,7 +193,7 @@ void MojoGLES2Impl::CompressedTexSubImage2D(GLenum target,
                                             GLenum format,
                                             GLsizei imageSize,
                                             const void* data) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCompressedTexSubImage2D(target, level, xoffset, yoffset, width, height,
                             format, imageSize, data);
 }
@@ -209,7 +212,7 @@ void MojoGLES2Impl::CopyTexImage2D(GLenum target,
                                    GLsizei width,
                                    GLsizei height,
                                    GLint border) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCopyTexImage2D(target, level, internalformat, x, y, width, height, border);
 }
 void MojoGLES2Impl::CopyTexSubImage2D(GLenum target,
@@ -220,7 +223,7 @@ void MojoGLES2Impl::CopyTexSubImage2D(GLenum target,
                                       GLint y,
                                       GLsizei width,
                                       GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
 }
 void MojoGLES2Impl::CopyTexSubImage3D(GLenum target,
@@ -235,32 +238,32 @@ void MojoGLES2Impl::CopyTexSubImage3D(GLenum target,
   NOTREACHED() << "Unimplemented CopyTexSubImage3D.";
 }
 GLuint MojoGLES2Impl::CreateProgram() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glCreateProgram();
 }
 GLuint MojoGLES2Impl::CreateShader(GLenum type) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glCreateShader(type);
 }
 void MojoGLES2Impl::CullFace(GLenum mode) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glCullFace(mode);
 }
 void MojoGLES2Impl::DeleteBuffers(GLsizei n, const GLuint* buffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteBuffers(n, buffers);
 }
 void MojoGLES2Impl::DeleteFramebuffers(GLsizei n, const GLuint* framebuffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteFramebuffers(n, framebuffers);
 }
 void MojoGLES2Impl::DeleteProgram(GLuint program) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteProgram(program);
 }
 void MojoGLES2Impl::DeleteRenderbuffers(GLsizei n,
                                         const GLuint* renderbuffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteRenderbuffers(n, renderbuffers);
 }
 void MojoGLES2Impl::DeleteSamplers(GLsizei n, const GLuint* samplers) {
@@ -270,49 +273,49 @@ void MojoGLES2Impl::DeleteSync(GLsync sync) {
   NOTREACHED() << "Unimplemented DeleteSync.";
 }
 void MojoGLES2Impl::DeleteShader(GLuint shader) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteShader(shader);
 }
 void MojoGLES2Impl::DeleteTextures(GLsizei n, const GLuint* textures) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteTextures(n, textures);
 }
 void MojoGLES2Impl::DeleteTransformFeedbacks(GLsizei n, const GLuint* ids) {
   NOTREACHED() << "Unimplemented DeleteTransformFeedbacks.";
 }
 void MojoGLES2Impl::DepthFunc(GLenum func) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDepthFunc(func);
 }
 void MojoGLES2Impl::DepthMask(GLboolean flag) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDepthMask(flag);
 }
 void MojoGLES2Impl::DepthRangef(GLclampf zNear, GLclampf zFar) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDepthRangef(zNear, zFar);
 }
 void MojoGLES2Impl::DetachShader(GLuint program, GLuint shader) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDetachShader(program, shader);
 }
 void MojoGLES2Impl::Disable(GLenum cap) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDisable(cap);
 }
 void MojoGLES2Impl::DisableVertexAttribArray(GLuint index) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDisableVertexAttribArray(index);
 }
 void MojoGLES2Impl::DrawArrays(GLenum mode, GLint first, GLsizei count) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDrawArrays(mode, first, count);
 }
 void MojoGLES2Impl::DrawElements(GLenum mode,
                                  GLsizei count,
                                  GLenum type,
                                  const void* indices) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDrawElements(mode, count, type, indices);
 }
 void MojoGLES2Impl::DrawRangeElements(GLenum mode,
@@ -324,11 +327,11 @@ void MojoGLES2Impl::DrawRangeElements(GLenum mode,
   NOTREACHED() << "Unimplemented DrawRangeElements.";
 }
 void MojoGLES2Impl::Enable(GLenum cap) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glEnable(cap);
 }
 void MojoGLES2Impl::EnableVertexAttribArray(GLuint index) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glEnableVertexAttribArray(index);
 }
 GLsync MojoGLES2Impl::FenceSync(GLenum condition, GLbitfield flags) {
@@ -336,18 +339,18 @@ GLsync MojoGLES2Impl::FenceSync(GLenum condition, GLbitfield flags) {
   return 0;
 }
 void MojoGLES2Impl::Finish() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFinish();
 }
 void MojoGLES2Impl::Flush() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFlush();
 }
 void MojoGLES2Impl::FramebufferRenderbuffer(GLenum target,
                                             GLenum attachment,
                                             GLenum renderbuffertarget,
                                             GLuint renderbuffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFramebufferRenderbuffer(target, attachment, renderbuffertarget,
                             renderbuffer);
 }
@@ -356,7 +359,7 @@ void MojoGLES2Impl::FramebufferTexture2D(GLenum target,
                                          GLenum textarget,
                                          GLuint texture,
                                          GLint level) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFramebufferTexture2D(target, attachment, textarget, texture, level);
 }
 void MojoGLES2Impl::FramebufferTextureLayer(GLenum target,
@@ -367,30 +370,30 @@ void MojoGLES2Impl::FramebufferTextureLayer(GLenum target,
   NOTREACHED() << "Unimplemented FramebufferTextureLayer.";
 }
 void MojoGLES2Impl::FrontFace(GLenum mode) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFrontFace(mode);
 }
 void MojoGLES2Impl::GenBuffers(GLsizei n, GLuint* buffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenBuffers(n, buffers);
 }
 void MojoGLES2Impl::GenerateMipmap(GLenum target) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenerateMipmap(target);
 }
 void MojoGLES2Impl::GenFramebuffers(GLsizei n, GLuint* framebuffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenFramebuffers(n, framebuffers);
 }
 void MojoGLES2Impl::GenRenderbuffers(GLsizei n, GLuint* renderbuffers) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenRenderbuffers(n, renderbuffers);
 }
 void MojoGLES2Impl::GenSamplers(GLsizei n, GLuint* samplers) {
   NOTREACHED() << "Unimplemented GenSamplers.";
 }
 void MojoGLES2Impl::GenTextures(GLsizei n, GLuint* textures) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenTextures(n, textures);
 }
 void MojoGLES2Impl::GenTransformFeedbacks(GLsizei n, GLuint* ids) {
@@ -403,7 +406,7 @@ void MojoGLES2Impl::GetActiveAttrib(GLuint program,
                                     GLint* size,
                                     GLenum* type,
                                     char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetActiveAttrib(program, index, bufsize, length, size, type, name);
 }
 void MojoGLES2Impl::GetActiveUniform(GLuint program,
@@ -413,7 +416,7 @@ void MojoGLES2Impl::GetActiveUniform(GLuint program,
                                      GLint* size,
                                      GLenum* type,
                                      char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetActiveUniform(program, index, bufsize, length, size, type, name);
 }
 void MojoGLES2Impl::GetActiveUniformBlockiv(GLuint program,
@@ -440,29 +443,29 @@ void MojoGLES2Impl::GetAttachedShaders(GLuint program,
                                        GLsizei maxcount,
                                        GLsizei* count,
                                        GLuint* shaders) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetAttachedShaders(program, maxcount, count, shaders);
 }
 GLint MojoGLES2Impl::GetAttribLocation(GLuint program, const char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glGetAttribLocation(program, name);
 }
 void MojoGLES2Impl::GetBooleanv(GLenum pname, GLboolean* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetBooleanv(pname, params);
 }
 void MojoGLES2Impl::GetBufferParameteriv(GLenum target,
                                          GLenum pname,
                                          GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetBufferParameteriv(target, pname, params);
 }
 GLenum MojoGLES2Impl::GetError() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glGetError();
 }
 void MojoGLES2Impl::GetFloatv(GLenum pname, GLfloat* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetFloatv(pname, params);
 }
 GLint MojoGLES2Impl::GetFragDataLocation(GLuint program, const char* name) {
@@ -473,7 +476,7 @@ void MojoGLES2Impl::GetFramebufferAttachmentParameteriv(GLenum target,
                                                         GLenum attachment,
                                                         GLenum pname,
                                                         GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetFramebufferAttachmentParameteriv(target, attachment, pname, params);
 }
 void MojoGLES2Impl::GetInteger64v(GLenum pname, GLint64* params) {
@@ -486,7 +489,7 @@ void MojoGLES2Impl::GetInteger64i_v(GLenum pname, GLuint index, GLint64* data) {
   NOTREACHED() << "Unimplemented GetInteger64i_v.";
 }
 void MojoGLES2Impl::GetIntegerv(GLenum pname, GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetIntegerv(pname, params);
 }
 void MojoGLES2Impl::GetInternalformativ(GLenum target,
@@ -497,20 +500,20 @@ void MojoGLES2Impl::GetInternalformativ(GLenum target,
   NOTREACHED() << "Unimplemented GetInternalformativ.";
 }
 void MojoGLES2Impl::GetProgramiv(GLuint program, GLenum pname, GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetProgramiv(program, pname, params);
 }
 void MojoGLES2Impl::GetProgramInfoLog(GLuint program,
                                       GLsizei bufsize,
                                       GLsizei* length,
                                       char* infolog) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetProgramInfoLog(program, bufsize, length, infolog);
 }
 void MojoGLES2Impl::GetRenderbufferParameteriv(GLenum target,
                                                GLenum pname,
                                                GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetRenderbufferParameteriv(target, pname, params);
 }
 void MojoGLES2Impl::GetSamplerParameterfv(GLuint sampler,
@@ -524,32 +527,32 @@ void MojoGLES2Impl::GetSamplerParameteriv(GLuint sampler,
   NOTREACHED() << "Unimplemented GetSamplerParameteriv.";
 }
 void MojoGLES2Impl::GetShaderiv(GLuint shader, GLenum pname, GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetShaderiv(shader, pname, params);
 }
 void MojoGLES2Impl::GetShaderInfoLog(GLuint shader,
                                      GLsizei bufsize,
                                      GLsizei* length,
                                      char* infolog) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetShaderInfoLog(shader, bufsize, length, infolog);
 }
 void MojoGLES2Impl::GetShaderPrecisionFormat(GLenum shadertype,
                                              GLenum precisiontype,
                                              GLint* range,
                                              GLint* precision) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetShaderPrecisionFormat(shadertype, precisiontype, range, precision);
 }
 void MojoGLES2Impl::GetShaderSource(GLuint shader,
                                     GLsizei bufsize,
                                     GLsizei* length,
                                     char* source) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetShaderSource(shader, bufsize, length, source);
 }
 const GLubyte* MojoGLES2Impl::GetString(GLenum name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glGetString(name);
 }
 void MojoGLES2Impl::GetSynciv(GLsync sync,
@@ -562,13 +565,13 @@ void MojoGLES2Impl::GetSynciv(GLsync sync,
 void MojoGLES2Impl::GetTexParameterfv(GLenum target,
                                       GLenum pname,
                                       GLfloat* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetTexParameterfv(target, pname, params);
 }
 void MojoGLES2Impl::GetTexParameteriv(GLenum target,
                                       GLenum pname,
                                       GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetTexParameteriv(target, pname, params);
 }
 void MojoGLES2Impl::GetTransformFeedbackVarying(GLuint program,
@@ -587,13 +590,13 @@ GLuint MojoGLES2Impl::GetUniformBlockIndex(GLuint program, const char* name) {
 void MojoGLES2Impl::GetUniformfv(GLuint program,
                                  GLint location,
                                  GLfloat* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetUniformfv(program, location, params);
 }
 void MojoGLES2Impl::GetUniformiv(GLuint program,
                                  GLint location,
                                  GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetUniformiv(program, location, params);
 }
 void MojoGLES2Impl::GetUniformIndices(GLuint program,
@@ -603,29 +606,29 @@ void MojoGLES2Impl::GetUniformIndices(GLuint program,
   NOTREACHED() << "Unimplemented GetUniformIndices.";
 }
 GLint MojoGLES2Impl::GetUniformLocation(GLuint program, const char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glGetUniformLocation(program, name);
 }
 void MojoGLES2Impl::GetVertexAttribfv(GLuint index,
                                       GLenum pname,
                                       GLfloat* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetVertexAttribfv(index, pname, params);
 }
 void MojoGLES2Impl::GetVertexAttribiv(GLuint index,
                                       GLenum pname,
                                       GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetVertexAttribiv(index, pname, params);
 }
 void MojoGLES2Impl::GetVertexAttribPointerv(GLuint index,
                                             GLenum pname,
                                             void** pointer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetVertexAttribPointerv(index, pname, pointer);
 }
 void MojoGLES2Impl::Hint(GLenum target, GLenum mode) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glHint(target, mode);
 }
 void MojoGLES2Impl::InvalidateFramebuffer(GLenum target,
@@ -643,23 +646,23 @@ void MojoGLES2Impl::InvalidateSubFramebuffer(GLenum target,
   NOTREACHED() << "Unimplemented InvalidateSubFramebuffer.";
 }
 GLboolean MojoGLES2Impl::IsBuffer(GLuint buffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsBuffer(buffer);
 }
 GLboolean MojoGLES2Impl::IsEnabled(GLenum cap) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsEnabled(cap);
 }
 GLboolean MojoGLES2Impl::IsFramebuffer(GLuint framebuffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsFramebuffer(framebuffer);
 }
 GLboolean MojoGLES2Impl::IsProgram(GLuint program) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsProgram(program);
 }
 GLboolean MojoGLES2Impl::IsRenderbuffer(GLuint renderbuffer) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsRenderbuffer(renderbuffer);
 }
 GLboolean MojoGLES2Impl::IsSampler(GLuint sampler) {
@@ -667,7 +670,7 @@ GLboolean MojoGLES2Impl::IsSampler(GLuint sampler) {
   return 0;
 }
 GLboolean MojoGLES2Impl::IsShader(GLuint shader) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsShader(shader);
 }
 GLboolean MojoGLES2Impl::IsSync(GLsync sync) {
@@ -675,7 +678,7 @@ GLboolean MojoGLES2Impl::IsSync(GLsync sync) {
   return 0;
 }
 GLboolean MojoGLES2Impl::IsTexture(GLuint texture) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsTexture(texture);
 }
 GLboolean MojoGLES2Impl::IsTransformFeedback(GLuint transformfeedback) {
@@ -683,22 +686,22 @@ GLboolean MojoGLES2Impl::IsTransformFeedback(GLuint transformfeedback) {
   return 0;
 }
 void MojoGLES2Impl::LineWidth(GLfloat width) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glLineWidth(width);
 }
 void MojoGLES2Impl::LinkProgram(GLuint program) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glLinkProgram(program);
 }
 void MojoGLES2Impl::PauseTransformFeedback() {
   NOTREACHED() << "Unimplemented PauseTransformFeedback.";
 }
 void MojoGLES2Impl::PixelStorei(GLenum pname, GLint param) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glPixelStorei(pname, param);
 }
 void MojoGLES2Impl::PolygonOffset(GLfloat factor, GLfloat units) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glPolygonOffset(factor, units);
 }
 void MojoGLES2Impl::ReadBuffer(GLenum src) {
@@ -711,25 +714,25 @@ void MojoGLES2Impl::ReadPixels(GLint x,
                                GLenum format,
                                GLenum type,
                                void* pixels) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glReadPixels(x, y, width, height, format, type, pixels);
 }
 void MojoGLES2Impl::ReleaseShaderCompiler() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glReleaseShaderCompiler();
 }
 void MojoGLES2Impl::RenderbufferStorage(GLenum target,
                                         GLenum internalformat,
                                         GLsizei width,
                                         GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glRenderbufferStorage(target, internalformat, width, height);
 }
 void MojoGLES2Impl::ResumeTransformFeedback() {
   NOTREACHED() << "Unimplemented ResumeTransformFeedback.";
 }
 void MojoGLES2Impl::SampleCoverage(GLclampf value, GLboolean invert) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glSampleCoverage(value, invert);
 }
 void MojoGLES2Impl::SamplerParameterf(GLuint sampler,
@@ -753,7 +756,7 @@ void MojoGLES2Impl::SamplerParameteriv(GLuint sampler,
   NOTREACHED() << "Unimplemented SamplerParameteriv.";
 }
 void MojoGLES2Impl::Scissor(GLint x, GLint y, GLsizei width, GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glScissor(x, y, width, height);
 }
 void MojoGLES2Impl::ShaderBinary(GLsizei n,
@@ -761,54 +764,54 @@ void MojoGLES2Impl::ShaderBinary(GLsizei n,
                                  GLenum binaryformat,
                                  const void* binary,
                                  GLsizei length) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glShaderBinary(n, shaders, binaryformat, binary, length);
 }
 void MojoGLES2Impl::ShaderSource(GLuint shader,
                                  GLsizei count,
                                  const GLchar* const* str,
                                  const GLint* length) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glShaderSource(shader, count, str, length);
 }
 void MojoGLES2Impl::ShallowFinishCHROMIUM() {
   NOTREACHED() << "Unimplemented ShallowFinishCHROMIUM.";
 }
 void MojoGLES2Impl::ShallowFlushCHROMIUM() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glShallowFlushCHROMIUM();
 }
 void MojoGLES2Impl::OrderingBarrierCHROMIUM() {
   NOTREACHED() << "Unimplemented OrderingBarrierCHROMIUM.";
 }
 void MojoGLES2Impl::StencilFunc(GLenum func, GLint ref, GLuint mask) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilFunc(func, ref, mask);
 }
 void MojoGLES2Impl::StencilFuncSeparate(GLenum face,
                                         GLenum func,
                                         GLint ref,
                                         GLuint mask) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilFuncSeparate(face, func, ref, mask);
 }
 void MojoGLES2Impl::StencilMask(GLuint mask) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilMask(mask);
 }
 void MojoGLES2Impl::StencilMaskSeparate(GLenum face, GLuint mask) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilMaskSeparate(face, mask);
 }
 void MojoGLES2Impl::StencilOp(GLenum fail, GLenum zfail, GLenum zpass) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilOp(fail, zfail, zpass);
 }
 void MojoGLES2Impl::StencilOpSeparate(GLenum face,
                                       GLenum fail,
                                       GLenum zfail,
                                       GLenum zpass) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glStencilOpSeparate(face, fail, zfail, zpass);
 }
 void MojoGLES2Impl::TexImage2D(GLenum target,
@@ -820,7 +823,7 @@ void MojoGLES2Impl::TexImage2D(GLenum target,
                                GLenum format,
                                GLenum type,
                                const void* pixels) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexImage2D(target, level, internalformat, width, height, border, format,
                type, pixels);
 }
@@ -837,23 +840,23 @@ void MojoGLES2Impl::TexImage3D(GLenum target,
   NOTREACHED() << "Unimplemented TexImage3D.";
 }
 void MojoGLES2Impl::TexParameterf(GLenum target, GLenum pname, GLfloat param) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexParameterf(target, pname, param);
 }
 void MojoGLES2Impl::TexParameterfv(GLenum target,
                                    GLenum pname,
                                    const GLfloat* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexParameterfv(target, pname, params);
 }
 void MojoGLES2Impl::TexParameteri(GLenum target, GLenum pname, GLint param) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexParameteri(target, pname, param);
 }
 void MojoGLES2Impl::TexParameteriv(GLenum target,
                                    GLenum pname,
                                    const GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexParameteriv(target, pname, params);
 }
 void MojoGLES2Impl::TexStorage3D(GLenum target,
@@ -873,7 +876,7 @@ void MojoGLES2Impl::TexSubImage2D(GLenum target,
                                   GLenum format,
                                   GLenum type,
                                   const void* pixels) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type,
                   pixels);
 }
@@ -897,21 +900,21 @@ void MojoGLES2Impl::TransformFeedbackVaryings(GLuint program,
   NOTREACHED() << "Unimplemented TransformFeedbackVaryings.";
 }
 void MojoGLES2Impl::Uniform1f(GLint location, GLfloat x) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform1f(location, x);
 }
 void MojoGLES2Impl::Uniform1fv(GLint location,
                                GLsizei count,
                                const GLfloat* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform1fv(location, count, v);
 }
 void MojoGLES2Impl::Uniform1i(GLint location, GLint x) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform1i(location, x);
 }
 void MojoGLES2Impl::Uniform1iv(GLint location, GLsizei count, const GLint* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform1iv(location, count, v);
 }
 void MojoGLES2Impl::Uniform1ui(GLint location, GLuint x) {
@@ -923,21 +926,21 @@ void MojoGLES2Impl::Uniform1uiv(GLint location,
   NOTREACHED() << "Unimplemented Uniform1uiv.";
 }
 void MojoGLES2Impl::Uniform2f(GLint location, GLfloat x, GLfloat y) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform2f(location, x, y);
 }
 void MojoGLES2Impl::Uniform2fv(GLint location,
                                GLsizei count,
                                const GLfloat* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform2fv(location, count, v);
 }
 void MojoGLES2Impl::Uniform2i(GLint location, GLint x, GLint y) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform2i(location, x, y);
 }
 void MojoGLES2Impl::Uniform2iv(GLint location, GLsizei count, const GLint* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform2iv(location, count, v);
 }
 void MojoGLES2Impl::Uniform2ui(GLint location, GLuint x, GLuint y) {
@@ -949,21 +952,21 @@ void MojoGLES2Impl::Uniform2uiv(GLint location,
   NOTREACHED() << "Unimplemented Uniform2uiv.";
 }
 void MojoGLES2Impl::Uniform3f(GLint location, GLfloat x, GLfloat y, GLfloat z) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform3f(location, x, y, z);
 }
 void MojoGLES2Impl::Uniform3fv(GLint location,
                                GLsizei count,
                                const GLfloat* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform3fv(location, count, v);
 }
 void MojoGLES2Impl::Uniform3i(GLint location, GLint x, GLint y, GLint z) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform3i(location, x, y, z);
 }
 void MojoGLES2Impl::Uniform3iv(GLint location, GLsizei count, const GLint* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform3iv(location, count, v);
 }
 void MojoGLES2Impl::Uniform3ui(GLint location, GLuint x, GLuint y, GLuint z) {
@@ -979,13 +982,13 @@ void MojoGLES2Impl::Uniform4f(GLint location,
                               GLfloat y,
                               GLfloat z,
                               GLfloat w) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform4f(location, x, y, z, w);
 }
 void MojoGLES2Impl::Uniform4fv(GLint location,
                                GLsizei count,
                                const GLfloat* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform4fv(location, count, v);
 }
 void MojoGLES2Impl::Uniform4i(GLint location,
@@ -993,11 +996,11 @@ void MojoGLES2Impl::Uniform4i(GLint location,
                               GLint y,
                               GLint z,
                               GLint w) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform4i(location, x, y, z, w);
 }
 void MojoGLES2Impl::Uniform4iv(GLint location, GLsizei count, const GLint* v) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniform4iv(location, count, v);
 }
 void MojoGLES2Impl::Uniform4ui(GLint location,
@@ -1021,7 +1024,7 @@ void MojoGLES2Impl::UniformMatrix2fv(GLint location,
                                      GLsizei count,
                                      GLboolean transpose,
                                      const GLfloat* value) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniformMatrix2fv(location, count, transpose, value);
 }
 void MojoGLES2Impl::UniformMatrix2x3fv(GLint location,
@@ -1040,7 +1043,7 @@ void MojoGLES2Impl::UniformMatrix3fv(GLint location,
                                      GLsizei count,
                                      GLboolean transpose,
                                      const GLfloat* value) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniformMatrix3fv(location, count, transpose, value);
 }
 void MojoGLES2Impl::UniformMatrix3x2fv(GLint location,
@@ -1059,7 +1062,7 @@ void MojoGLES2Impl::UniformMatrix4fv(GLint location,
                                      GLsizei count,
                                      GLboolean transpose,
                                      const GLfloat* value) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUniformMatrix4fv(location, count, transpose, value);
 }
 void MojoGLES2Impl::UniformMatrix4x2fv(GLint location,
@@ -1075,38 +1078,38 @@ void MojoGLES2Impl::UniformMatrix4x3fv(GLint location,
   NOTREACHED() << "Unimplemented UniformMatrix4x3fv.";
 }
 void MojoGLES2Impl::UseProgram(GLuint program) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUseProgram(program);
 }
 void MojoGLES2Impl::ValidateProgram(GLuint program) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glValidateProgram(program);
 }
 void MojoGLES2Impl::VertexAttrib1f(GLuint indx, GLfloat x) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib1f(indx, x);
 }
 void MojoGLES2Impl::VertexAttrib1fv(GLuint indx, const GLfloat* values) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib1fv(indx, values);
 }
 void MojoGLES2Impl::VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib2f(indx, x, y);
 }
 void MojoGLES2Impl::VertexAttrib2fv(GLuint indx, const GLfloat* values) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib2fv(indx, values);
 }
 void MojoGLES2Impl::VertexAttrib3f(GLuint indx,
                                    GLfloat x,
                                    GLfloat y,
                                    GLfloat z) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib3f(indx, x, y, z);
 }
 void MojoGLES2Impl::VertexAttrib3fv(GLuint indx, const GLfloat* values) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib3fv(indx, values);
 }
 void MojoGLES2Impl::VertexAttrib4f(GLuint indx,
@@ -1114,11 +1117,11 @@ void MojoGLES2Impl::VertexAttrib4f(GLuint indx,
                                    GLfloat y,
                                    GLfloat z,
                                    GLfloat w) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib4f(indx, x, y, z, w);
 }
 void MojoGLES2Impl::VertexAttrib4fv(GLuint indx, const GLfloat* values) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttrib4fv(indx, values);
 }
 void MojoGLES2Impl::VertexAttribI4i(GLuint indx,
@@ -1154,11 +1157,11 @@ void MojoGLES2Impl::VertexAttribPointer(GLuint indx,
                                         GLboolean normalized,
                                         GLsizei stride,
                                         const void* ptr) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glVertexAttribPointer(indx, size, type, normalized, stride, ptr);
 }
 void MojoGLES2Impl::Viewport(GLint x, GLint y, GLsizei width, GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glViewport(x, y, width, height);
 }
 void MojoGLES2Impl::WaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout) {
@@ -1189,7 +1192,7 @@ void MojoGLES2Impl::RenderbufferStorageMultisampleEXT(GLenum target,
                                                       GLenum internalformat,
                                                       GLsizei width,
                                                       GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glRenderbufferStorageMultisampleEXT(target, samples, internalformat, width,
                                       height);
 }
@@ -1199,7 +1202,7 @@ void MojoGLES2Impl::FramebufferTexture2DMultisampleEXT(GLenum target,
                                                        GLuint texture,
                                                        GLint level,
                                                        GLsizei samples) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glFramebufferTexture2DMultisampleEXT(target, attachment, textarget, texture,
                                        level, samples);
 }
@@ -1208,71 +1211,71 @@ void MojoGLES2Impl::TexStorage2DEXT(GLenum target,
                                     GLenum internalFormat,
                                     GLsizei width,
                                     GLsizei height) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glTexStorage2DEXT(target, levels, internalFormat, width, height);
 }
 void MojoGLES2Impl::GenQueriesEXT(GLsizei n, GLuint* queries) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenQueriesEXT(n, queries);
 }
 void MojoGLES2Impl::DeleteQueriesEXT(GLsizei n, const GLuint* queries) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteQueriesEXT(n, queries);
 }
 GLboolean MojoGLES2Impl::IsQueryEXT(GLuint id) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsQueryEXT(id);
 }
 void MojoGLES2Impl::BeginQueryEXT(GLenum target, GLuint id) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBeginQueryEXT(target, id);
 }
 void MojoGLES2Impl::BeginTransformFeedback(GLenum primitivemode) {
   NOTREACHED() << "Unimplemented BeginTransformFeedback.";
 }
 void MojoGLES2Impl::EndQueryEXT(GLenum target) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glEndQueryEXT(target);
 }
 void MojoGLES2Impl::EndTransformFeedback() {
   NOTREACHED() << "Unimplemented EndTransformFeedback.";
 }
 void MojoGLES2Impl::GetQueryivEXT(GLenum target, GLenum pname, GLint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetQueryivEXT(target, pname, params);
 }
 void MojoGLES2Impl::GetQueryObjectuivEXT(GLuint id,
                                          GLenum pname,
                                          GLuint* params) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGetQueryObjectuivEXT(id, pname, params);
 }
 void MojoGLES2Impl::InsertEventMarkerEXT(GLsizei length, const GLchar* marker) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glInsertEventMarkerEXT(length, marker);
 }
 void MojoGLES2Impl::PushGroupMarkerEXT(GLsizei length, const GLchar* marker) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glPushGroupMarkerEXT(length, marker);
 }
 void MojoGLES2Impl::PopGroupMarkerEXT() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glPopGroupMarkerEXT();
 }
 void MojoGLES2Impl::GenVertexArraysOES(GLsizei n, GLuint* arrays) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenVertexArraysOES(n, arrays);
 }
 void MojoGLES2Impl::DeleteVertexArraysOES(GLsizei n, const GLuint* arrays) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDeleteVertexArraysOES(n, arrays);
 }
 GLboolean MojoGLES2Impl::IsVertexArrayOES(GLuint array) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glIsVertexArrayOES(array);
 }
 void MojoGLES2Impl::BindVertexArrayOES(GLuint array) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindVertexArrayOES(array);
 }
 void MojoGLES2Impl::SwapBuffers() {
@@ -1301,11 +1304,11 @@ void* MojoGLES2Impl::MapBufferSubDataCHROMIUM(GLuint target,
                                               GLintptr offset,
                                               GLsizeiptr size,
                                               GLenum access) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glMapBufferSubDataCHROMIUM(target, offset, size, access);
 }
 void MojoGLES2Impl::UnmapBufferSubDataCHROMIUM(const void* mem) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUnmapBufferSubDataCHROMIUM(mem);
 }
 void* MojoGLES2Impl::MapBufferRange(GLenum target,
@@ -1328,18 +1331,18 @@ void* MojoGLES2Impl::MapTexSubImage2DCHROMIUM(GLenum target,
                                               GLenum format,
                                               GLenum type,
                                               GLenum access) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glMapTexSubImage2DCHROMIUM(target, level, xoffset, yoffset, width,
                                     height, format, type, access);
 }
 void MojoGLES2Impl::UnmapTexSubImage2DCHROMIUM(const void* mem) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glUnmapTexSubImage2DCHROMIUM(mem);
 }
 void MojoGLES2Impl::ResizeCHROMIUM(GLuint width,
                                    GLuint height,
                                    GLfloat scale_factor) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   MGLResizeSurface(width, height);
 }
 const GLchar* MojoGLES2Impl::GetRequestableExtensionsCHROMIUM() {
@@ -1447,34 +1450,34 @@ void MojoGLES2Impl::VertexAttribDivisorANGLE(GLuint index, GLuint divisor) {
   NOTREACHED() << "Unimplemented VertexAttribDivisorANGLE.";
 }
 void MojoGLES2Impl::GenMailboxCHROMIUM(GLbyte* mailbox) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glGenMailboxCHROMIUM(mailbox);
 }
 void MojoGLES2Impl::ProduceTextureCHROMIUM(GLenum target,
                                            const GLbyte* mailbox) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glProduceTextureCHROMIUM(target, mailbox);
 }
 void MojoGLES2Impl::ProduceTextureDirectCHROMIUM(GLuint texture,
                                                  GLenum target,
                                                  const GLbyte* mailbox) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glProduceTextureDirectCHROMIUM(texture, target, mailbox);
 }
 void MojoGLES2Impl::ConsumeTextureCHROMIUM(GLenum target,
                                            const GLbyte* mailbox) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glConsumeTextureCHROMIUM(target, mailbox);
 }
 GLuint MojoGLES2Impl::CreateAndConsumeTextureCHROMIUM(GLenum target,
                                                       const GLbyte* mailbox) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glCreateAndConsumeTextureCHROMIUM(target, mailbox);
 }
 void MojoGLES2Impl::BindUniformLocationCHROMIUM(GLuint program,
                                                 GLint location,
                                                 const char* name) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBindUniformLocationCHROMIUM(program, location, name);
 }
 void MojoGLES2Impl::GenValuebuffersCHROMIUM(GLsizei n, GLuint* buffers) {
@@ -1546,18 +1549,18 @@ void MojoGLES2Impl::WaitAllAsyncTexImage2DCHROMIUM() {
 void MojoGLES2Impl::DiscardFramebufferEXT(GLenum target,
                                           GLsizei count,
                                           const GLenum* attachments) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glDiscardFramebufferEXT(target, count, attachments);
 }
 void MojoGLES2Impl::LoseContextCHROMIUM(GLenum current, GLenum other) {
   NOTREACHED() << "Unimplemented LoseContextCHROMIUM.";
 }
 GLuint MojoGLES2Impl::InsertSyncPointCHROMIUM() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   return glInsertSyncPointCHROMIUM();
 }
 void MojoGLES2Impl::WaitSyncPointCHROMIUM(GLuint sync_point) {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glWaitSyncPointCHROMIUM(sync_point);
 }
 void MojoGLES2Impl::DrawBuffersEXT(GLsizei count, const GLenum* bufs) {
@@ -1589,7 +1592,7 @@ void MojoGLES2Impl::MatrixLoadIdentityCHROMIUM(GLenum matrixMode) {
   NOTREACHED() << "Unimplemented MatrixLoadIdentityCHROMIUM.";
 }
 void MojoGLES2Impl::BlendBarrierKHR() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
   glBlendBarrierKHR();
 }
 

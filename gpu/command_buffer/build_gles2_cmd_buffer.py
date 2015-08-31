@@ -4371,7 +4371,7 @@ TEST_P(%(test_name)s, %(name)sInvalidArgs%(arg_index)d_%(value_index)d) {
 
     is_mojo_extension = func.GetInfo("extension") in _MOJO_EXPOSED_EXTENSIONS
     if func.IsCoreGLFunction() or is_mojo_extension:
-      file.Write("MojoGLES2MakeCurrent(context_);");
+      file.Write("MGLMakeCurrent(context_);");
       func_return = "gl" + func.original_name + "(" + \
           func.MakeOriginalArgString("") + ");"
       if func.original_name == "ResizeCHROMIUM":
@@ -10158,14 +10158,15 @@ extern const NameToFunc g_gles2_function_table[] = {
         "// GL api functions.\n")
 
     code = """
+#include <MGL/mgl.h>
+
 #include "gpu/command_buffer/client/gles2_interface.h"
-#include "mojo/public/c/gles2/gles2.h"
 
 namespace mojo {
 
 class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
  public:
-  explicit MojoGLES2Impl(MojoGLES2Context context) {
+  explicit MojoGLES2Impl(MGLContext context) {
     context_ = context;
   }
   ~MojoGLES2Impl() override {}
@@ -10175,7 +10176,7 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
       func.WriteMojoGLES2ImplHeader(file)
     code = """
  private:
-  MojoGLES2Context context_;
+  MGLContext context_;
 };
 
 }  // namespace mojo
@@ -10193,14 +10194,17 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
     code = """
 #include "mojo/gpu/mojo_gles2_impl_autogen.h"
 
-#include "base/logging.h"
-#include "mojo/public/c/gles2/gles2.h"
-#include "mojo/public/c/gpu/MGL/mgl_onscreen.h"
+#include <MGL/mgl.h>
+#include <MGL/mgl_onscreen.h>
 
+#ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES
-#include "mojo/public/c/gpu/GLES2/gl2.h"
-#include "mojo/public/c/gpu/GLES2/gl2ext.h"
-#include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
+#endif
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <GLES2/gl2extmojo.h>
+
+#include "base/logging.h"
 
 namespace mojo {
 

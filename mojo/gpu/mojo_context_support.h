@@ -5,15 +5,16 @@
 #ifndef MOJO_GPU_MOJO_CONTEXT_SUPPORT_H_
 #define MOJO_GPU_MOJO_CONTEXT_SUPPORT_H_
 
+#include <MGL/mgl.h>
+
 #include "base/macros.h"
 #include "gpu/command_buffer/client/context_support.h"
-#include "mojo/public/c/gles2/gles2.h"
 
 namespace mojo {
 
 class MojoContextSupport : public gpu::ContextSupport {
  public:
-  explicit MojoContextSupport(MojoGLES2Context context);
+  explicit MojoContextSupport(MGLContext context);
   ~MojoContextSupport() override;
 
   // gpu::ContextSupport implementation.
@@ -32,7 +33,7 @@ class MojoContextSupport : public gpu::ContextSupport {
   void RetireSyncPointCHROMIUM(uint32 sync_point) override;
 
  private:
-  MojoGLES2Context context_;
+  MGLContext context_;
   DISALLOW_COPY_AND_ASSIGN(MojoContextSupport);
 };
 }

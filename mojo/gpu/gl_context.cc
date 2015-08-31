@@ -22,14 +22,16 @@ GLContext::GLContext(Shell* shell) : weak_factory_(this) {
   ConnectToService(native_viewport.get(), &gpu_service);
   CommandBufferPtr command_buffer;
   gpu_service->CreateOffscreenGLES2Context(GetProxy(&command_buffer));
-  context_ = MojoGLES2CreateContext(
+  context_ = MGLCreateContext(
+      MGL_API_VERSION_GLES2,
       command_buffer.PassInterface().PassHandle().release().value(),
-      &ContextLostThunk, this, Environment::GetDefaultAsyncWaiter());
+      MGL_NO_CONTEXT, &ContextLostThunk, this,
+      Environment::GetDefaultAsyncWaiter());
   gl_impl_.reset(new MojoGLES2Impl(context_));
 }
 
 GLContext::~GLContext() {
-  MojoGLES2DestroyContext(context_);
+  MGLDestroyContext(context_);
 }
 
 base::WeakPtr<GLContext> GLContext::Create(Shell* shell) {
@@ -37,7 +39,7 @@ base::WeakPtr<GLContext> GLContext::Create(Shell* shell) {
 }
 
 void GLContext::MakeCurrent() {
-  MojoGLES2MakeCurrent(context_);
+  MGLMakeCurrent(context_);
 }
 
 void GLContext::Destroy() {

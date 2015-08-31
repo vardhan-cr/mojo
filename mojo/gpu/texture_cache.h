@@ -6,6 +6,7 @@
 #define MOJO_GPU_TEXTURE_CACHE_H_
 
 #include <GLES2/gl2.h>
+
 #include <deque>
 #include <map>
 

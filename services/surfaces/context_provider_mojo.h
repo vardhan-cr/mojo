@@ -5,12 +5,13 @@
 #ifndef SERVICES_SURFACES_CONTEXT_PROVIDER_MOJO_H_
 #define SERVICES_SURFACES_CONTEXT_PROVIDER_MOJO_H_
 
+#include <MGL/mgl.h>
+
 #include "base/macros.h"
 #include "base/synchronization/lock.h"
 #include "cc/output/context_provider.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/gpu/mojo_context_support.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace mojo {
@@ -52,7 +53,7 @@ class ContextProviderMojo : public cc::ContextProvider {
 
   cc::ContextProvider::Capabilities capabilities_;
   ScopedMessagePipeHandle command_buffer_handle_;
-  MojoGLES2Context context_;
+  MGLContext context_;
   scoped_ptr<MojoGLES2Impl> gles2_impl_;
   scoped_ptr<MojoContextSupport> context_support_;
   bool context_lost_;

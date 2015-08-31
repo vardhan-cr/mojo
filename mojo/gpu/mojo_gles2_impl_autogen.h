@@ -13,14 +13,15 @@
 #ifndef MOJO_GPU_MOJO_GLES2_IMPL_AUTOGEN_H_
 #define MOJO_GPU_MOJO_GLES2_IMPL_AUTOGEN_H_
 
+#include <MGL/mgl.h>
+
 #include "gpu/command_buffer/client/gles2_interface.h"
-#include "mojo/public/c/gles2/gles2.h"
 
 namespace mojo {
 
 class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
  public:
-  explicit MojoGLES2Impl(MojoGLES2Context context) { context_ = context; }
+  explicit MojoGLES2Impl(MGLContext context) { context_ = context; }
   ~MojoGLES2Impl() override {}
   void ActiveTexture(GLenum texture) override;
   void AttachShader(GLuint program, GLuint shader) override;
@@ -750,7 +751,7 @@ class MojoGLES2Impl : public gpu::gles2::GLES2Interface {
   void BlendBarrierKHR() override;
 
  private:
-  MojoGLES2Context context_;
+  MGLContext context_;
 };
 
 }  // namespace mojo

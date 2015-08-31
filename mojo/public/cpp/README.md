@@ -34,14 +34,6 @@ represents shared state needed to support the Bindings and GLES2 libraries.
 This library depends on the Utility library.
 
 
-GLES2
------
-
-The gles2/ subdirectory contains C++ wrappers (and some additional helpers) of
-the API defined in mojo/public/c/gles2/ (which provides access to GLES2).
-
-These wrappers depend on the Environment library.
-
 Shell
 -----
 
