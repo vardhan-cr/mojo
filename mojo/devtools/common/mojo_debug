@@ -45,7 +45,10 @@ def _send_request(request, payload=None):
     else:
       return requests.get(url)
   except requests.exceptions.ConnectionError:
-    print 'Failed to connect to mojo:debugger, make sure the shell is running.'
+    print ('Failed to connect to debugger.mojo. Make sure the shell is running '
+           'and the app was started with debugger, ie. through '
+           '`mojo_run --debugger APP_URL`')
+
     return None
 
 
@@ -91,7 +94,7 @@ def _tracing_stop(args):
 def _add_tracing_command(subparsers):
   """Sets up the command line parser to manage tracing."""
   tracing_parser = subparsers.add_parser('tracing',
-      help='trace event profiler')
+      help='tracer (requires debugger.mojo)')
   tracing_subparser = tracing_parser.add_subparsers(
       help='the command to run')
 
@@ -115,7 +118,8 @@ def _wm_load(args):
 
 def _add_wm_command(subparsers):
   """Sets up the parser for the 'wm' command."""
-  wm_parser = subparsers.add_parser('wm', help='window manager')
+  wm_parser = subparsers.add_parser('wm', help='window manager (requires '
+                                    'debugger.mojo)')
   wm_subparser = wm_parser.add_subparsers(
       help='the command to run')
 

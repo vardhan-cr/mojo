@@ -57,9 +57,16 @@ manager. You can pass a different window manager url using the
 performance traces and attach a gdb debugger.
 
 #### Tracing
-To collect [performance
+In order to collect [performance
 traces](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-and retrieve the result:
+interactively through `mojo_debug`, make sure that the app being inspected was
+run with `--debugger` switch. E.g.:
+
+```sh
+mojo_run --debugger APP_URL [--android]
+```
+
+Then, in another shell, tracing can be orchestrated as follows:
 
 ```sh
 mojo_debug tracing start

@@ -40,10 +40,11 @@ _DEFAULT_WM = 'https://core.mojoapps.io/kiosk_wm.mojo'
 
 _LEGACY_WM_URL = 'mojo:window_manager'
 _WM_URL = 'https://core.mojoapps.io/window_manager.mojo'
+_DEBUGGER_URL = 'https://core.mojoapps.io/debugger.mojo'
 
 
 def _configure_debugger(shell):
-  """Configures mojo:debugger to run and sets up port forwarding for its http
+  """Configures debugger.mojo to run and sets up port forwarding for its http
   server if the shell is running on a device.
 
   Returns:
@@ -51,7 +52,7 @@ def _configure_debugger(shell):
     run with the debugger.
   """
   shell.forward_host_port_to_shell(_MOJO_DEBUGGER_PORT)
-  return ['mojo:debugger %d' % _MOJO_DEBUGGER_PORT]
+  return ['%s %d' % (_DEBUGGER_URL, _MOJO_DEBUGGER_PORT)]
 
 
 def main():
@@ -66,8 +67,8 @@ def main():
                       help='Window manager app to be mapped as '
                       'mojo:window_manager. By default it is ' +
                       _DEFAULT_WM)
-  parser.add_argument('--no-debugger', action="store_true",
-                      help='Do not spawn mojo:debugger.')
+  parser.add_argument('--debugger', action="store_true",
+                      help='Run debugger.mojo along with the app.')
 
   script_args, shell_args = parser.parse_known_args()
 
@@ -88,7 +89,7 @@ def main():
   if script_args.embed:
     shell_args.append('%s %s' % (script_args.window_manager, script_args.embed))
 
-  if not script_args.no_debugger:
+  if script_args.debugger:
     if script_args.verbose:
       print 'Spawning mojo:debugger, use `mojo_debug` to inspect the shell.'
       print 'Note that mojo:debugger will prevent the shell from terminating,'
