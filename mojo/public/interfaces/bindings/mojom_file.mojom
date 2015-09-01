@@ -1,0 +1,26 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+[DartPackage="mojo.bindings.types",
+JavaPackage="org.chromium.mojo.bindings.types"]
+module mojo.bindings.types;
+
+import "mojom_descriptors.mojom";
+import "mojom_types.mojom";
+
+struct MojomFile {
+  string file_name;
+
+  // Attributes declared in the Mojom file at the module level.
+  array<Attribute>? attributes;
+
+  // The identifier of the declared module, if any.
+  string? module_identifier;
+
+  // The list of other .mojom files imported by this one.
+  array<string>? imports;
+
+  // The types and constants declared in this Mojom file.
+  MojomDescriptor? mojom_descriptor;
+};
