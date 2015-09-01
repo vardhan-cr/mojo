@@ -145,7 +145,7 @@ def append_to_argument(arguments, key, value, delimiter=","):
   return arguments
 
 
-def _configure_dev_server(shell, shell_args, dev_server_config):
+def _configure_dev_server(shell, shell_args, dev_server_config, verbose):
   """Sets up a dev server on the host according to |dev_server_config|.
 
   Args:
@@ -161,10 +161,12 @@ def _configure_dev_server(shell, shell_args, dev_server_config):
   server_url = shell.serve_local_directories(dev_server_config.mappings,
                                              port=port)
   shell_args.append('--map-origin=%s=%s' % (dev_server_config.host, server_url))
-  print "Configured %s locally at %s to serve:" % (dev_server_config.host,
-                                                   server_url)
-  for mapping_prefix, mapping_path in dev_server_config.mappings:
-    print "  /%s -> %s" % (mapping_prefix, mapping_path)
+
+  if verbose:
+    print "Configured %s locally at %s to serve:" % (dev_server_config.host,
+                                                     server_url)
+    for mapping_prefix, mapping_path in dev_server_config.mappings:
+      print "  /%s -> %s" % (mapping_prefix, mapping_path)
   return shell_args
 
 
@@ -225,6 +227,7 @@ def get_shell(shell_config, shell_args):
                                                  content_handler_url))
 
   for dev_server_config in shell_config.dev_servers:
-    shell_args = _configure_dev_server(shell, shell_args, dev_server_config)
+    shell_args = _configure_dev_server(shell, shell_args, dev_server_config,
+                                       shell_config.verbose)
 
   return shell, shell_args
