@@ -362,7 +362,7 @@ struct ArraySerializationHelper<P, false, true> {
     for (uint32_t i = 0; i < header->num_elements; ++i) {
       if (!validate_params->element_is_nullable && elements[i].is_null()) {
         ReportValidationError(
-            VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
+            VALIDATION_ERROR_UNEXPECTED_NULL_UNION,
             MakeMessageWithArrayIndex(
                 "null union in array expecting non-null unions",
                 header->num_elements, i)

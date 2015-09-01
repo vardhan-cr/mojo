@@ -44,7 +44,8 @@ define("mojo/public/js/validator", [
     return type === codec.NullableString || type === codec.NullableHandle ||
         type === codec.NullableInterface ||
         type instanceof codec.NullableArrayOf ||
-        type instanceof codec.NullablePointerTo;
+        type instanceof codec.NullablePointerTo ||
+        type instanceof codec.NullableUnionWrapper;
   }
 
   function Validator(message) {
@@ -230,7 +231,7 @@ define("mojo/public/js/validator", [
 
     if (unionOffset === NULL_MOJO_POINTER)
       return nullable ?
-          validationError.NONE : validationError.UNEXPECTED_NULL_UNION;
+          validationError.NONE : validationError.UNEXPECTED_NULL_POINTER;
 
     return this.validateUnion(unionOffset, unionClass, nullable);
   }
@@ -347,6 +348,10 @@ define("mojo/public/js/validator", [
       return this.validateArrayElements(
           elementsOffset, numElements, elementType.cls, nullable,
           expectedDimensionSizes, currentDimension + 1);
+    if (elementType instanceof codec.UnionWrapper) {
+      return this.validateUnionElements(
+          elementsOffset, numElements, elementType.cls, nullable);
+    }
 
     return validationError.NONE;
   }
@@ -402,6 +407,19 @@ define("mojo/public/js/validator", [
       var elementOffset = offset + i * elementSize;
       var err =
           this.validateStructPointer(elementOffset, structClass, nullable);
+      if (err != validationError.NONE)
+        return err;
+    }
+    return validationError.NONE;
+  }
+
+  Validator.prototype.validateUnionElements =
+      function(offset, numElements, unionClass, nullable) {
+    var elementSize = codec.UnionWrapper.prototype.encodedSize;
+    for (var i = 0; i < numElements; i++) {
+      var elementOffset = offset + i * elementSize;
+      var err =
+          this.validateUnion(elementOffset, unionClass, nullable);
       if (err != validationError.NONE)
         return err;
     }

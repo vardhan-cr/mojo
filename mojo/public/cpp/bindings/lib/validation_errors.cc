@@ -44,6 +44,8 @@ const char* ValidationErrorToString(ValidationError error) {
       return "VALIDATION_ERROR_MESSAGE_HEADER_UNKNOWN_METHOD";
     case VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP:
       return "VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP";
+    case VALIDATION_ERROR_UNEXPECTED_NULL_UNION:
+      return "VALIDATION_ERROR_UNEXPECTED_NULL_UNION";
   }
 
   return "Unknown error";

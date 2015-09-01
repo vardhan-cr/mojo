@@ -170,7 +170,7 @@ define([
       });
 
     var err = structValidate(s);
-    expect(err).toEqual(validator.validationError.UNEXPECTED_NULL_UNION);
+    expect(err).toEqual(validator.validationError.UNEXPECTED_NULL_POINTER);
   }
 
   testConstructors();

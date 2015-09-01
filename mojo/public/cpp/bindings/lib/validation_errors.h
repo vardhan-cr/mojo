@@ -53,6 +53,8 @@ enum ValidationError {
   // Two parallel arrays which are supposed to represent a map have different
   // lengths.
   VALIDATION_ERROR_DIFFERENT_SIZED_ARRAYS_IN_MAP,
+  // A non-nullable union is set to null. (Has size 0)
+  VALIDATION_ERROR_UNEXPECTED_NULL_UNION,
 };
 
 const char* ValidationErrorToString(ValidationError error);

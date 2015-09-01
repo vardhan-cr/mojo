@@ -825,6 +825,26 @@ define("mojo/public/js/codec", [
 
   NullableMapOf.prototype = Object.create(MapOf.prototype);
 
+  function UnionWrapper(cls) {
+    this.cls = cls;
+  }
+
+  UnionWrapper.prototype.encodedSize = 16;
+
+  UnionWrapper.prototype.decode = function(decoder) {
+    return this.cls.decode(decoder);
+  }
+
+  UnionWrapper.prototype.encode = function(encoder, val) {
+    return this.cls.encode(encoder, val);
+  }
+
+  function NullableUnionWrapper(cls) {
+    UnionWrapper.call(this, cls);
+  }
+
+  NullableUnionWrapper.prototype = Object.create(UnionWrapper.prototype);
+
   var exports = {};
   exports.align = align;
   exports.isAligned = isAligned;
@@ -863,5 +883,7 @@ define("mojo/public/js/codec", [
   exports.NullableInterface = NullableInterface;
   exports.MapOf = MapOf;
   exports.NullableMapOf = NullableMapOf;
+  exports.UnionWrapper = UnionWrapper;
+  exports.NullableUnionWrapper = NullableUnionWrapper;
   return exports;
 });

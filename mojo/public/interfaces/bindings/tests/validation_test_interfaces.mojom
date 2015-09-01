@@ -52,10 +52,14 @@ struct StructH {
 union UnionA {
   uint16 a;
   uint32 b;
-  StructA c;
+  StructA? c;
   array<uint8>? d;
   map<string, uint8>? e;
   UnionB? f;
+  StructA g;
+  array<uint8> h;
+  map<string, uint8> i;
+  UnionB j;
 };
 
 union UnionB {
