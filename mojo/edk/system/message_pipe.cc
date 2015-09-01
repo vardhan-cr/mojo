@@ -19,7 +19,7 @@ namespace mojo {
 namespace system {
 
 // static
-MessagePipe* MessagePipe::CreateLocalLocal() {
+MessagePipe* MessagePipe::CreateLocalLocal() MOJO_NO_THREAD_SAFETY_ANALYSIS {
   MessagePipe* message_pipe = new MessagePipe();
   message_pipe->endpoints_[0].reset(new LocalMessagePipeEndpoint());
   message_pipe->endpoints_[1].reset(new LocalMessagePipeEndpoint());
@@ -28,7 +28,8 @@ MessagePipe* MessagePipe::CreateLocalLocal() {
 
 // static
 MessagePipe* MessagePipe::CreateLocalProxy(
-    scoped_refptr<ChannelEndpoint>* channel_endpoint) {
+    scoped_refptr<ChannelEndpoint>* channel_endpoint)
+    MOJO_NO_THREAD_SAFETY_ANALYSIS {
   DCHECK(!*channel_endpoint);  // Not technically wrong, but unlikely.
   MessagePipe* message_pipe = new MessagePipe();
   message_pipe->endpoints_[0].reset(new LocalMessagePipeEndpoint());
@@ -41,7 +42,7 @@ MessagePipe* MessagePipe::CreateLocalProxy(
 // static
 MessagePipe* MessagePipe::CreateLocalProxyFromExisting(
     MessageInTransitQueue* message_queue,
-    ChannelEndpoint* channel_endpoint) {
+    ChannelEndpoint* channel_endpoint) MOJO_NO_THREAD_SAFETY_ANALYSIS {
   DCHECK(message_queue);
   MessagePipe* message_pipe = new MessagePipe();
   message_pipe->endpoints_[0].reset(
@@ -64,7 +65,8 @@ MessagePipe* MessagePipe::CreateLocalProxyFromExisting(
 
 // static
 MessagePipe* MessagePipe::CreateProxyLocal(
-    scoped_refptr<ChannelEndpoint>* channel_endpoint) {
+    scoped_refptr<ChannelEndpoint>* channel_endpoint)
+    MOJO_NO_THREAD_SAFETY_ANALYSIS {
   DCHECK(!*channel_endpoint);  // Not technically wrong, but unlikely.
   MessagePipe* message_pipe = new MessagePipe();
   *channel_endpoint = new ChannelEndpoint(message_pipe, 0);
@@ -106,7 +108,7 @@ bool MessagePipe::Deserialize(Channel* channel,
 
 MessagePipeEndpoint::Type MessagePipe::GetType(unsigned port) {
   DCHECK(port == 0 || port == 1);
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   return endpoints_[port]->GetType();
@@ -115,7 +117,7 @@ MessagePipeEndpoint::Type MessagePipe::GetType(unsigned port) {
 void MessagePipe::CancelAllAwakables(unsigned port) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
   endpoints_[port]->CancelAllAwakables();
 }
@@ -125,7 +127,7 @@ void MessagePipe::Close(unsigned port) {
 
   unsigned peer_port = GetPeerPort(port);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   // The endpoint's |OnPeerClose()| may have been called first and returned
   // false, which would have resulted in its destruction.
   if (!endpoints_[port])
@@ -148,7 +150,7 @@ MojoResult MessagePipe::WriteMessage(
     MojoWriteMessageFlags flags) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   return EnqueueMessageNoLock(
       GetPeerPort(port),
       make_scoped_ptr(new MessageInTransit(
@@ -165,7 +167,7 @@ MojoResult MessagePipe::ReadMessage(unsigned port,
                                     MojoReadMessageFlags flags) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   return endpoints_[port]->ReadMessage(bytes, num_bytes, dispatchers,
@@ -175,7 +177,7 @@ MojoResult MessagePipe::ReadMessage(unsigned port,
 HandleSignalsState MessagePipe::GetHandleSignalsState(unsigned port) const {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(const_cast<base::Lock&>(lock_));
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   return endpoints_[port]->GetHandleSignalsState();
@@ -188,7 +190,7 @@ MojoResult MessagePipe::AddAwakable(unsigned port,
                                     HandleSignalsState* signals_state) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   return endpoints_[port]->AddAwakable(awakable, signals, context,
@@ -200,7 +202,7 @@ void MessagePipe::RemoveAwakable(unsigned port,
                                  HandleSignalsState* signals_state) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   endpoints_[port]->RemoveAwakable(awakable, signals_state);
@@ -222,7 +224,7 @@ bool MessagePipe::EndSerialize(
     embedder::PlatformHandleVector* /*platform_handles*/) {
   DCHECK(port == 0 || port == 1);
 
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(endpoints_[port]);
 
   // The port being serialized must be local.
@@ -274,7 +276,7 @@ bool MessagePipe::EndSerialize(
 }
 
 bool MessagePipe::OnReadMessage(unsigned port, MessageInTransit* message) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
 
   if (!endpoints_[port]) {
     // This will happen only on the rare occasion that the call to

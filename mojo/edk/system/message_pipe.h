@@ -12,7 +12,6 @@
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/synchronization/lock.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/dispatcher.h"
@@ -20,6 +19,7 @@
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_pipe_endpoint.h"
+#include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/message_pipe.h"
 #include "mojo/public/c/system/types.h"
@@ -128,16 +128,18 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe final : public ChannelEndpointClient {
   // dispatchers attached. Must be called with |lock_| held.
   MojoResult EnqueueMessageNoLock(unsigned port,
                                   scoped_ptr<MessageInTransit> message,
-                                  std::vector<DispatcherTransport>* transports);
+                                  std::vector<DispatcherTransport>* transports)
+      MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  // Helper for |EnqueueMessageNoLock()|. Must be called with |lock_| held.
+  // Helper for |EnqueueMessageNoLock()|.
   MojoResult AttachTransportsNoLock(
       unsigned port,
       MessageInTransit* message,
-      std::vector<DispatcherTransport>* transports);
+      std::vector<DispatcherTransport>* transports)
+      MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
-  base::Lock lock_;  // Protects the following members.
-  scoped_ptr<MessagePipeEndpoint> endpoints_[2];
+  mutable Mutex mutex_;
+  scoped_ptr<MessagePipeEndpoint> endpoints_[2] MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(MessagePipe);
 };
