@@ -10,8 +10,8 @@
 #include "base/threading/thread_local.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "mojo/gles2/gles2_context.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/c/gpu/MGL/mgl.h"
+#include "mojo/public/c/gpu/MGL/mgl_signal_sync_point.h"
 
 namespace gpu {
 namespace gles2 {
@@ -21,9 +21,9 @@ class GLES2Interface;
 
 namespace gles2 {
 
-// ControlThunksImpl is a singleton class that implements the MGL and MojoGLES2
-// control functions. The class maintains a lazily allocated TLS slot on each
-// thread for the current GL context.
+// ControlThunksImpl is a singleton class that implements the MGL control
+// functions. The class maintains a lazily allocated TLS slot on each thread for
+// the current GL context.
 class ControlThunksImpl {
  public:
   static ControlThunksImpl* Get();
@@ -45,10 +45,10 @@ class ControlThunksImpl {
 
   void SwapBuffers();
 
-  void* GetGLES2Interface(MojoGLES2Context context);
+  void* GetGLES2Interface(MGLContext context);
 
   void SignalSyncPoint(uint32_t sync_point,
-                       MojoGLES2SignalSyncPointCallback callback,
+                       MGLSignalSyncPointCallback callback,
                        void* closure);
 
   gpu::gles2::GLES2Interface* CurrentGLES2Interface();

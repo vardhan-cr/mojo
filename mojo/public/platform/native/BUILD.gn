@@ -90,8 +90,6 @@ mojo_sdk_source_set("gles2") {
     "gles2_impl_oes_vertex_array_object_thunks.h",
     "gles2_impl_thunks.c",
     "gles2_impl_thunks.h",
-    "gles2_thunks.c",
-    "gles2_thunks.h",
   ]
 
   defines = [ "MOJO_GLES2_IMPLEMENTATION" ]
@@ -99,7 +97,7 @@ mojo_sdk_source_set("gles2") {
   configs = [ "../../c/gpu:gpu_configs" ]
 
   mojo_sdk_deps = [
-    "mojo/public/c/gles2:headers",
+    "mojo/public/c/gpu:GLES2",
     "mojo/public/c/environment",
     "mojo/public/c/system",
   ]

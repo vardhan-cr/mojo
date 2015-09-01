@@ -7,7 +7,7 @@
 
 #include <stddef.h>
 
-#include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gpu/GLES2/gl2.h"
 
 // Like MojoGLES2ControlThunks, but specifies the frozen GLES2 API. Separated
 // out as MojoGLES2ControlThunks may be modified and added to, but this

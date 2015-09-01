@@ -9,7 +9,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "gpu/command_buffer/client/gles2_implementation.h"
 #include "mojo/gles2/command_buffer_client_impl.h"
-#include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gpu/MGL/mgl_signal_sync_point.h"
 #include "mojo/public/c/gpu/MGL/mgl_types.h"
 
 struct MGLContextPrivate {};
@@ -39,7 +39,7 @@ class GLES2Context : public CommandBufferDelegate, public MGLContextPrivate {
   gpu::ContextSupport* context_support() const { return implementation_.get(); }
 
   void SignalSyncPoint(uint32_t sync_point,
-                       MojoGLES2SignalSyncPointCallback callback,
+                       MGLSignalSyncPointCallback callback,
                        void* closure);
 
  private:

@@ -4,49 +4,10 @@
 
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "mojo/gles2/control_thunks_impl.h"
-#include "mojo/public/c/gles2/gles2.h"
+#include "mojo/public/c/gpu/GLES2/gl2.h"
 #include "mojo/public/c/gpu/MGL/mgl.h"
 
 extern "C" {
-
-MojoGLES2Context MojoGLES2CreateContext(MojoHandle handle,
-                                        MojoGLES2ContextLost lost_callback,
-                                        void* closure,
-                                        const MojoAsyncWaiter* async_waiter) {
-  MGLContext context = gles2::ControlThunksImpl::Get()->CreateContext(
-      MGL_API_VERSION_GLES2,  // version
-      handle,                 // command_buffer_handle
-      MGL_NO_CONTEXT,         // share_group
-      static_cast<MGLContextLostCallback>(lost_callback), closure,
-      async_waiter);
-  return reinterpret_cast<MojoGLES2Context>(context);
-}
-
-void MojoGLES2DestroyContext(MojoGLES2Context context) {
-  gles2::ControlThunksImpl::Get()->DestroyContext(
-      reinterpret_cast<MGLContext>(context));
-}
-
-void MojoGLES2MakeCurrent(MojoGLES2Context context) {
-  gles2::ControlThunksImpl::Get()->MakeCurrent(
-      reinterpret_cast<MGLContext>(context));
-}
-
-void MojoGLES2SwapBuffers() {
-  gles2::ControlThunksImpl::Get()->SwapBuffers();
-}
-
-void* MojoGLES2GetGLES2Interface(MojoGLES2Context context) {
-  return gles2::ControlThunksImpl::Get()->GetGLES2Interface(context);
-}
-
-void MojoGLES2SignalSyncPoint(MojoGLES2Context context,
-                              uint32_t sync_point,
-                              MojoGLES2SignalSyncPointCallback callback,
-                              void* closure) {
-  gles2::ControlThunksImpl::Get()->SignalSyncPoint(sync_point, callback,
-                                                   closure);
-}
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS)             \
   ReturnType GL_APIENTRY gl##Function PARAMETERS {                             \

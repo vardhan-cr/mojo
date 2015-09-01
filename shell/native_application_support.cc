@@ -21,7 +21,6 @@
 #include "mojo/public/platform/native/gles2_impl_occlusion_query_ext_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_oes_vertex_array_object_thunks.h"
 #include "mojo/public/platform/native/gles2_impl_thunks.h"
-#include "mojo/public/platform/native/gles2_thunks.h"
 #include "mojo/public/platform/native/mgl_onscreen_thunks.h"
 #include "mojo/public/platform/native/mgl_signal_sync_point_thunks.h"
 #include "mojo/public/platform/native/mgl_thunks.h"
@@ -81,8 +80,6 @@ bool RunNativeApplication(
   SetThunks(&MojoMakeSystemImplThunksPrivate, "MojoSetSystemImplThunksPrivate",
             app_library);
 
-  SetThunks(&MojoMakeGLES2ControlThunks, "MojoSetGLES2ControlThunks",
-            app_library);
   SetThunks(&MojoMakeGLES2ImplThunks, "MojoSetGLES2ImplThunks",
             app_library);
   SetThunks(MojoMakeGLES2ImplEXTDebugMarkerThunks,

@@ -52,7 +52,7 @@ void ControlThunksImpl::SwapBuffers() {
   current_context_tls_.Get()->interface()->SwapBuffers();
 }
 
-void* ControlThunksImpl::GetGLES2Interface(MojoGLES2Context context) {
+void* ControlThunksImpl::GetGLES2Interface(MGLContext context) {
   GLES2Context* client = reinterpret_cast<GLES2Context*>(context);
   DCHECK(client);
   return client->interface();
@@ -60,7 +60,7 @@ void* ControlThunksImpl::GetGLES2Interface(MojoGLES2Context context) {
 
 void ControlThunksImpl::SignalSyncPoint(
     uint32_t sync_point,
-    MojoGLES2SignalSyncPointCallback callback,
+    MGLSignalSyncPointCallback callback,
     void* closure) {
   current_context_tls_.Get()->context_support()->SignalSyncPoint(
       sync_point, base::Bind(callback, closure));

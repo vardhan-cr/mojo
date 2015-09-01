@@ -7,7 +7,6 @@
 #include "gpu/command_buffer/client/gles2_cmd_helper.h"
 #include "gpu/command_buffer/client/gles2_implementation.h"
 #include "gpu/command_buffer/client/transfer_buffer.h"
-#include "mojo/public/c/gles2/gles2.h"
 #include "mojo/public/cpp/system/core.h"
 
 namespace gles2 {
@@ -60,14 +59,14 @@ bool GLES2Context::Initialize() {
 }
 
 namespace {
-void RunSignalSyncCallback(MojoGLES2SignalSyncPointCallback callback,
+void RunSignalSyncCallback(MGLSignalSyncPointCallback callback,
                            void* closure) {
   callback(closure);
 }
 }
 
 void GLES2Context::SignalSyncPoint(uint32_t sync_point,
-                                   MojoGLES2SignalSyncPointCallback callback,
+                                   MGLSignalSyncPointCallback callback,
                                    void* closure) {
   implementation_->SignalSyncPoint(
       sync_point, base::Bind(&RunSignalSyncCallback, callback, closure));
