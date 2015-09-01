@@ -11,6 +11,7 @@
 #include <type_traits>
 
 #include "base/bind.h"
+#include "base/files/file.h"
 #include "base/files/file_util.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -143,6 +144,14 @@ base::FilePath GetBaseDirectory() {
   return base::FilePath(getenv("HOME")).Append(".mojo_url_response_disk_cache");
 }
 
+base::FilePath GetCacheDirectory() {
+  return GetBaseDirectory().Append("cache");
+}
+
+base::FilePath GetTrashDirectory() {
+  return GetBaseDirectory().Append("trash");
+}
+
 // Returns the directory used store cached data for the given |url|, under
 // |base_directory|.
 base::FilePath GetDirName(base::FilePath base_directory,
@@ -264,12 +273,35 @@ bool IsCacheEntryValid(const base::FilePath& dir,
 
 }  // namespace
 
+// static
+void URLResponseDiskCacheImpl::ClearCache(base::TaskRunner* task_runner) {
+  // Create a unique subdirectory in trash.
+  base::FilePath trash_dir = GetTrashDirectory();
+  base::CreateDirectory(trash_dir);
+  base::FilePath dest_dir;
+  base::CreateTemporaryDirInDir(trash_dir, "", &dest_dir);
+
+  // Move the current cache directory, if present, into trash.
+  base::FilePath cache_dir = GetCacheDirectory();
+  if (PathExists(cache_dir)) {
+    base::File::Error error;
+    if (!base::ReplaceFile(cache_dir, dest_dir, &error)) {
+      LOG(ERROR) << "Failed to clear cache content: " << error;
+    }
+  }
+
+  // Delete the trash directory.
+  task_runner->PostTask(
+      FROM_HERE,
+      base::Bind(base::IgnoreResult(&base::DeleteFile), trash_dir, true));
+}
+
 URLResponseDiskCacheImpl::URLResponseDiskCacheImpl(
     base::TaskRunner* task_runner,
     const std::string& remote_application_url,
     InterfaceRequest<URLResponseDiskCache> request)
     : task_runner_(task_runner), binding_(this, request.Pass()) {
-  base_directory_ = GetBaseDirectory();
+  base_directory_ = GetCacheDirectory();
   // The cached files are shared only for application of the same origin.
   if (remote_application_url != "") {
     base_directory_ = base_directory_.Append(

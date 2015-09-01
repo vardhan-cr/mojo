@@ -18,6 +18,11 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
   using FilePathPairCallback =
       base::Callback<void(const base::FilePath&, const base::FilePath&)>;
 
+  // Cleares the cached content. The actual deletion will be performed using the
+  // given task runner, but cache appears as cleared immediately after the
+  // function returns.
+  static void ClearCache(base::TaskRunner* task_runner);
+
   URLResponseDiskCacheImpl(base::TaskRunner* task_runner,
                            const std::string& remote_application_url,
                            InterfaceRequest<URLResponseDiskCache> request);

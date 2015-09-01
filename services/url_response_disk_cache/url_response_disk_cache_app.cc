@@ -4,6 +4,7 @@
 
 #include "services/url_response_disk_cache/url_response_disk_cache_app.h"
 
+#include "base/command_line.h"
 #include "services/url_response_disk_cache/url_response_disk_cache_impl.h"
 
 namespace mojo {
@@ -13,6 +14,13 @@ URLResponseDiskCacheApp::URLResponseDiskCacheApp(base::TaskRunner* task_runner)
 }
 
 URLResponseDiskCacheApp::~URLResponseDiskCacheApp() {
+}
+
+void URLResponseDiskCacheApp::Initialize(ApplicationImpl* app) {
+  base::CommandLine command_line(app->args());
+  if (command_line.HasSwitch("clear")) {
+    URLResponseDiskCacheImpl::ClearCache(task_runner_);
+  }
 }
 
 bool URLResponseDiskCacheApp::ConfigureIncomingConnection(

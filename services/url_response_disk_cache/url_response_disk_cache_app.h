@@ -10,6 +10,7 @@
 #include "base/threading/sequenced_worker_pool.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
+#include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 
@@ -22,10 +23,11 @@ class URLResponseDiskCacheApp : public ApplicationDelegate,
   ~URLResponseDiskCacheApp() override;
 
  private:
-  // ApplicationDelegate
+  // ApplicationDelegate:
+  void Initialize(ApplicationImpl* app) override;
   bool ConfigureIncomingConnection(ApplicationConnection* connection) override;
 
-  // InterfaceFactory<URLResponseDiskCache>
+  // InterfaceFactory<URLResponseDiskCache>:
   void Create(ApplicationConnection* connection,
               InterfaceRequest<URLResponseDiskCache> request) override;
 
