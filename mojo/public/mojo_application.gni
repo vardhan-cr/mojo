@@ -161,9 +161,14 @@ template("mojo_native_application") {
       if (defined(invoker.visibility)) {
         visibility = invoker.visibility
       }
+
+      public_deps = [
+        # We want to allow rules to depend on symbol libraries.
+        ":${copy_symbols_target}",
+      ]
+
       deps = [
         ":${library_target_name}",
-        ":${copy_symbols_target}",
       ]
 
       sources = [
