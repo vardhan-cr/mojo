@@ -16,8 +16,7 @@ _PACKAGE_WHITELISTED_EXTERNAL_PATHS = {
     "SDK": ["//build/module_args/mojo.gni",
             "//build/module_args/dart.gni",
             "//testing/gtest",
-            "//third_party/cython",
-            "//third_party/khronos"],
+            "//third_party/cython"],
     "services": ["//build/module_args/mojo.gni",
                  "//testing/gtest"],
 }
