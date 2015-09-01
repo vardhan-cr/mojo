@@ -174,8 +174,7 @@ void ApplicationManager::ConnectToApplicationWithParameters(
   auto callback = base::Bind(
       &ApplicationManager::HandleFetchCallback, weak_ptr_factory_.GetWeakPtr(),
       requestor_url, base::Passed(services.Pass()),
-      base::Passed(exposed_services.Pass()), on_application_end,
-      parameters);
+      base::Passed(exposed_services.Pass()), on_application_end, parameters);
 
   if (resolved_url.SchemeIsFile()) {
     new LocalFetcher(resolved_url, GetBaseURLAndQuery(resolved_url, nullptr),
@@ -358,6 +357,8 @@ void ApplicationManager::HandleFetchCallback(
     options = url_to_native_options_[base_resolved_url];
   }
 
+  TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "ApplicationManager::RetrievePath",
+                           fetcher.get(), "url", fetcher->GetURL().spec());
   fetcher->AsPath(
       blocking_pool_,
       base::Bind(&ApplicationManager::RunNativeApplication,
@@ -371,6 +372,8 @@ void ApplicationManager::RunNativeApplication(
     scoped_ptr<Fetcher> fetcher,
     const base::FilePath& path,
     bool path_exists) {
+  TRACE_EVENT_ASYNC_END0("mojo_shell", "ApplicationManager::RetrievePath",
+                         fetcher.get());
   // We only passed fetcher to keep it alive. Done with it now.
   fetcher.reset();
 
