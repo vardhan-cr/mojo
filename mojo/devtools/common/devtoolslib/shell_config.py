@@ -152,7 +152,8 @@ def get_shell_config(script_args):
   shell_config.verbose = script_args.verbose
 
   # Android-only.
-  shell_config.adb_path = (script_args.adb_path or inferred_paths['adb_path'])
+  shell_config.adb_path = (script_args.adb_path or inferred_paths['adb_path'] or
+                           'adb')
   shell_config.target_device = script_args.target_device
   shell_config.logcat_tags = script_args.logcat_tags
 
