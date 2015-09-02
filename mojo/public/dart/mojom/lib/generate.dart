@@ -349,9 +349,14 @@ class MojomGenerator {
 
       if (!_dryRun) {
         final File source = new File(mojom.path);
+        final File destFile = new File(dest);
+        if (await destFile.exists()) {
+          await destFile.delete();
+        }
         if (_verbose) print("Ensuring $destDirectory exists");
         await destDirectory.create(recursive: true);
-        source.copy(dest);
+        await source.copy(dest);
+        await markFileReadOnly(dest);
       }
     }
   }

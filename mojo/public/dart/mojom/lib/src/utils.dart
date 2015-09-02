@@ -88,3 +88,14 @@ Future<String> fetchUri(HttpClient httpClient, Uri uri) async {
     }
   }
 }
+
+markFileReadOnly(String file) async {
+  if (!Platform.isLinux && !Platform.isMacOS) {
+    String os = Platform.operatingSystem;
+    throw 'Setting file $file read-only is not supported on $os.';
+  }
+  var process = await Process.run('chmod', ['a-w', file]);
+  if (process.exitCode != 0) {
+    print('Setting file $file read-only failed: ${process.stderr}');
+  }
+}
