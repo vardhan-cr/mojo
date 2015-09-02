@@ -26,10 +26,8 @@ if (!is_nacl) {
       "monacl_shell_nonsfi.cc",
     ]
     deps = [
+      ":irt_mojo_nonsfi",
       "//mojo/edk/system",
-      "//mojo/public/c/system",
-      "//mojo/public/platform/nacl:mojo_irt_header",
-      "//native_client/src/nonsfi/irt:irt_interfaces",
       "//native_client/src/nonsfi/loader:elf_loader",
     ]
   }
@@ -74,9 +72,23 @@ if (is_nacl) {
   }
 }
 
+static_library("irt_mojo_nonsfi") {
+  sources = [
+    "irt_mojo_nonsfi.cc",
+    "irt_mojo_nonsfi.h",
+  ]
+
+  deps = [
+    "//mojo/public/c/system",
+    "//mojo/public/platform/nacl:mojo_irt_header",
+    "//native_client/src/nonsfi/irt:irt_interfaces",
+  ]
+}
+
 group("mojo_nacl") {
   deps = [
     "//services/nacl:nacl_content_handler",
+    "//services/nacl:nacl_content_handler_nonsfi",
   ]
 }
 

@@ -25,4 +25,21 @@ if (!is_nacl) {
 
     data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
   }
+
+  mojo_native_application("nacl_content_handler_nonsfi") {
+    sources = [
+      "content_handler_main_nonsfi.cc",
+    ]
+
+    deps = [
+      "//base",
+      "//mojo/application:application",
+      "//mojo/application:content_handler",
+      "//mojo/data_pipe_utils",
+      "//mojo/message_pump",
+      "//mojo/nacl:irt_mojo_nonsfi",
+      "//mojo/public/cpp/application:application",
+      "//native_client/src/nonsfi/loader:elf_loader",
+    ]
+  }
 }

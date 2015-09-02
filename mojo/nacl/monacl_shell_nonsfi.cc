@@ -7,51 +7,9 @@
 
 #include "mojo/edk/embedder/embedder.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
-#include "mojo/public/platform/nacl/mojo_irt.h"
+#include "mojo/nacl/irt_mojo_nonsfi.h"
 #include "native_client/src/public/irt_core.h"
 #include "native_client/src/public/nonsfi/elf_loader.h"
-
-namespace {
-
-const struct nacl_irt_mojo kIrtMojo = {
-  MojoCreateSharedBuffer,
-  MojoDuplicateBufferHandle,
-  MojoMapBuffer,
-  MojoUnmapBuffer,
-  MojoCreateDataPipe,
-  MojoWriteData,
-  MojoBeginWriteData,
-  MojoEndWriteData,
-  MojoReadData,
-  MojoBeginReadData,
-  MojoEndReadData,
-  MojoGetTimeTicksNow,
-  MojoClose,
-  MojoWait,
-  MojoWaitMany,
-  MojoCreateMessagePipe,
-  MojoWriteMessage,
-  MojoReadMessage,
-  nullptr, // TODO(smklein): Add _MojoGetInitialHandle.
-};
-
-const struct nacl_irt_interface kIrtInterfaces[] = {
-  { NACL_IRT_MOJO_v0_1, &kIrtMojo, sizeof(kIrtMojo), nullptr }
-};
-
-size_t mojo_irt_nonsfi_query(const char* interface_ident,
-                             void* table, size_t tablesize) {
-  size_t result = nacl_irt_query_list(interface_ident,
-                                      table,
-                                      tablesize,
-                                      kIrtInterfaces,
-                                      sizeof(kIrtInterfaces));
-  if (result != 0)
-    return result;
-  return nacl_irt_query_core(interface_ident, table, tablesize);
-}
-
-} // namespace
 
 int main(int argc, char** argv, char** environ) {
   nacl_irt_nonsfi_allow_dev_interfaces();
@@ -73,5 +31,5 @@ int main(int argc, char** argv, char** environ) {
 
   return nacl_irt_nonsfi_entry(argc - 1, argv + 1, environ,
                                reinterpret_cast<nacl_entry_func_t>(entry),
-                               mojo_irt_nonsfi_query);
+                               irtNonsfi::MojoIrtNonsfiQuery);
 }
