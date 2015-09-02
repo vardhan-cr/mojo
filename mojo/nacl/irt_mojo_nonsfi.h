@@ -7,7 +7,7 @@
 
 #include "mojo/public/c/system/functions.h"
 
-namespace irtNonsfi {
+namespace nacl {
 
 // Used to pass handle to application. If uncalled,
 // the handle defaults to MOJO_HANDLE_INVALID.
@@ -19,5 +19,5 @@ size_t MojoIrtNonsfiQuery(const char* interface_ident,
                           void* table,
                           size_t tablesize);
 
-}  // namespace
+}  // namespace nacl
 #endif  // MOJO_NACL_IRT_MOJO_NONSFI_H_

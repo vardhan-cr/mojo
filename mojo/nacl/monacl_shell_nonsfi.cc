@@ -31,5 +31,5 @@ int main(int argc, char** argv, char** environ) {
 
   return nacl_irt_nonsfi_entry(argc - 1, argv + 1, environ,
                                reinterpret_cast<nacl_entry_func_t>(entry),
-                               irtNonsfi::MojoIrtNonsfiQuery);
+                               nacl::MojoIrtNonsfiQuery);
 }

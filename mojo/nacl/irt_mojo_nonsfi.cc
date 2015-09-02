@@ -44,7 +44,7 @@ const struct nacl_irt_interface kIrtInterfaces[] = {
 
 }  // namespace
 
-namespace irtNonsfi {
+namespace nacl {
 
 void MojoSetInitialHandle(MojoHandle handle) {
   g_mojo_handle = handle;
@@ -60,4 +60,4 @@ size_t MojoIrtNonsfiQuery(const char* interface_ident,
   return nacl_irt_query_core(interface_ident, table, tablesize);
 }
 
-}  // namespace irtNonsfi
+}  // namespace nacl

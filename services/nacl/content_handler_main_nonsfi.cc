@@ -78,14 +78,14 @@ class NaClContentHandler : public mojo::ApplicationDelegate,
     // Run -- also, closes the fd, removing the temp file.
     uintptr_t entry = NaClLoadElfFile(fd);
 
-    irtNonsfi::MojoSetInitialHandle(
+    MojoSetInitialHandle(
         application_request.PassMessagePipe().release().value());
     int argc = 1;
     char* argvp = const_cast<char*>("NaClMain");
     char* envp = nullptr;
     nacl_irt_nonsfi_entry(argc, &argvp, &envp,
                           reinterpret_cast<nacl_entry_func_t>(entry),
-                          irtNonsfi::MojoIrtNonsfiQuery);
+                          MojoIrtNonsfiQuery);
     abort();
     NOTREACHED();
   }
