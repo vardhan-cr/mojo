@@ -6,6 +6,7 @@ part of generate;
 
 bool isMojomDart(String path) => path.endsWith('.mojom.dart');
 bool isMojom(String path) => path.endsWith('.mojom');
+bool isDotMojoms(String path) => path.endsWith(".mojoms");
 
 /// An Error for problems on the command line.
 class CommandLineError extends Error {
@@ -21,73 +22,47 @@ class GenerationError extends Error {
   toString() => _msg;
 }
 
-/// An Error for failing to download a .mojom file.
-class DownloadError extends Error {
+/// An Error for failing to fetch a .mojom file.
+class FetchError extends Error {
   final _msg;
-  DownloadError(this._msg);
+  FetchError(this._msg);
   toString() => _msg;
 }
 
-/// The base type of data passed to actions for [mojomDirIter].
-class PackageIterData {
-  Directory currentPackage;
-  PackageIterData(this.currentPackage);
+class SubDirIterData {
+  Directory subdir;
+  SubDirIterData(this.subdir);
 }
 
-/// Data for [mojomDirIter] that includes the path to the Mojo SDK for bindings
-/// generation.
-class GenerateIterData extends PackageIterData {
-  final Directory _mojoSdk;
-  GenerateIterData(this._mojoSdk) : super(null);
-  Directory get mojoSdk => _mojoSdk;
-}
+typedef Future SubDirAction(SubDirIterData data, Directory subdir);
 
-/// The type of action performed by [mojomDirIter].
-typedef Future MojomAction(PackageIterData data, Directory mojomDirectory);
+typedef bool DirectoryFilter(Directory d);
 
-packageDirIter(
-    Directory packages, PackageIterData data, MojomAction action) async {
-  await for (var package in packages.list()) {
-    if (package is Directory) {
-      if (data != null) {
-        data.currentPackage = package;
-      }
-      await action(data, package);
+/// Iterates over subdirectories of |directory| that satisfy |filter| if one
+/// is given. Applies |action| to each subdirectory passing it |data| and the
+/// subdirectory. Recurses into further subdirectories if |recursive| is true.
+subDirIter(Directory directory, SubDirIterData data, SubDirAction action,
+    {DirectoryFilter filter, bool recursive: false}) async {
+  await for (var subdir in directory.list(recursive: recursive)) {
+    if (subdir is! Directory) continue;
+    if ((filter != null) && !filter(subdir)) continue;
+    if (data != null) {
+      data.subdir = subdir;
     }
+    await action(data, subdir);
   }
 }
 
-/// Iterates over mojom directories of Dart packages, taking some action for
-/// each.
-///
-/// For each 'mojom' subdirectory of each subdirectory in [packages], runs
-/// [action] on the subdirectory passing along [data] to [action].
-mojomDirIter(
-    Directory packages, PackageIterData data, MojomAction action) async {
-  await packageDirIter(packages, data, (d, p) async {
-    if (verbose) print("package = $p");
-    final mojomDirectory = new Directory(path.join(p.path, 'mojom'));
-    if (verbose) print("looking for = $mojomDirectory");
-    if (await mojomDirectory.exists()) {
-      await action(d, mojomDirectory);
-    } else if (verbose) {
-      print("$mojomDirectory not found");
-    }
-  });
-}
-
-/// Download file at [url] using [httpClient]. Throw a [DownloadError] if
-/// the file is not successfully downloaded.
-Future<String> getUrl(HttpClient httpClient, String url) async {
+Future<String> _downloadUrl(HttpClient httpClient, Uri uri) async {
   try {
-    var request = await httpClient.getUrl(Uri.parse(url));
+    var request = await httpClient.getUrl(uri);
     var response = await request.close();
     if (response.statusCode >= 400) {
-      var msg = "Failed to download $url\nCode ${response.statusCode}";
+      var msg = "Failed to download $uri\nCode ${response.statusCode}";
       if (response.reasonPhrase != null) {
         msg = "$msg: ${response.reasonPhrase}";
       }
-      throw new DownloadError(msg);
+      throw new FetchError(msg);
     }
     var fileString = new StringBuffer();
     await for (String contents in response.transform(UTF8.decoder)) {
@@ -95,6 +70,21 @@ Future<String> getUrl(HttpClient httpClient, String url) async {
     }
     return fileString.toString();
   } catch (e) {
-    throw new DownloadError("$e");
+    throw new FetchError("$e");
+  }
+}
+
+/// Fetch file at [uri] using [httpClient] if needed. Throw a [FetchError] if
+/// the file is not successfully fetched.
+Future<String> fetchUri(HttpClient httpClient, Uri uri) async {
+  if (uri.scheme.startsWith('http')) {
+    return _downloadUrl(httpClient, uri);
+  } else {
+    try {
+      File f = new File.fromUri(uri);
+      return await f.readAsString();
+    } catch (e) {
+      throw new FetchError("$e");
+    }
   }
 }
