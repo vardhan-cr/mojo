@@ -79,13 +79,12 @@ Future<String> _downloadUrl(HttpClient httpClient, Uri uri) async {
 Future<String> fetchUri(HttpClient httpClient, Uri uri) async {
   if (uri.scheme.startsWith('http')) {
     return _downloadUrl(httpClient, uri);
-  } else {
-    try {
-      File f = new File.fromUri(uri);
-      return await f.readAsString();
-    } catch (e) {
-      throw new FetchError("$e");
-    }
+  }
+  try {
+    File f = new File.fromUri(uri);
+    return await f.readAsString();
+  } catch (e) {
+    throw new FetchError("$e");
   }
 }
 
@@ -98,4 +97,13 @@ markFileReadOnly(String file) async {
   if (process.exitCode != 0) {
     print('Setting file $file read-only failed: ${process.stderr}');
   }
+}
+
+getModificationTime(Uri uri) async {
+  if (uri.scheme.startsWith('http')) {
+    return new DateTime.now();
+  }
+  File f = new File.fromUri(uri);
+  var stat = await f.stat();
+  return stat.modified;
 }

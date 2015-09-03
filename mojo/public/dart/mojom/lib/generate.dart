@@ -101,13 +101,19 @@ class MojomGenerator {
       throw new FetchError(
           "--single-package specified but no .mojoms file found: $mojomsFile");
     }
-    await _fetchFromDotMojoms(package.uri, temp, mojomsFile);
-    await for (var dir in temp.list()) {
-      if (dir is! Directory) continue;
-      var mojomDir = new Directory(path.join(dir.path, 'mojom'));
-      if (_verbose) print("pathSegments = ${package.uri.pathSegments}");
-      await _generateForMojomDir(mojomDir, packageRoot,
-          packageName: package.uri.pathSegments.lastWhere((s) => s != ""));
+    DateTime dotMojomsTime = (await mojomsFile.stat()).modified;
+    DateTime mojomTime =
+        await _fetchFromDotMojoms(package.uri, temp, mojomsFile);
+    DateTime mojomDartTime = await _findOldestMojomDart(package);
+
+    if (_shouldRegenerate(dotMojomsTime, mojomTime, mojomDartTime)) {
+      await for (var dir in temp.list()) {
+        if (dir is! Directory) continue;
+        var mojomDir = new Directory(path.join(dir.path, 'mojom'));
+        if (_verbose) print("pathSegments = ${package.uri.pathSegments}");
+        await _generateForMojomDir(mojomDir, packageRoot,
+            packageName: package.uri.pathSegments.lastWhere((s) => s != ""));
+      }
     }
     await temp.delete(recursive: true);
   }
@@ -172,6 +178,34 @@ class MojomGenerator {
     }
   }
 
+  /// Under [package]/lib, returns the oldest modification time for a
+  /// .mojom.dart file.
+  _findOldestMojomDart(Directory package) async {
+    DateTime oldestModTime;
+    Directory libDir = new Directory(path.join(package.path, 'lib'));
+    if (!await libDir.exists()) return null;
+    await for (var file in libDir.list(recursive: true)) {
+      if (file is! File) continue;
+      if (!isMojomDart(file.path)) continue;
+      DateTime modTime = (await file.stat()).modified;
+      if ((oldestModTime == null) || oldestModTime.isAfter(modTime)) {
+        oldestModTime = modTime;
+      }
+    }
+    return oldestModTime;
+  }
+
+  /// If the .mojoms file or the newest .mojom is newer than the oldest
+  /// .mojom.dart, then regenerate everything.
+  bool _shouldRegenerate(
+      DateTime dotMojomsTime, DateTime mojomTime, DateTime mojomDartTime) {
+    return (dotMojomsTime == null) ||
+           (mojomTime == null) ||
+           (mojomDartTime == null) ||
+           dotMojomsTime.isAfter(mojomDartTime) ||
+           mojomTime.isAfter(mojomDartTime);
+  }
+
   /// Given a .mojoms file in |mojomsFile|, fetch the listed .mojom files and
   /// store them in a directory tree rooted at |destination|. Relative file URIs
   /// are resolved relative to |base|. The "mojom" directories populated under
@@ -197,7 +231,10 @@ class MojomGenerator {
   /// ...
   ///
   /// Lines beginning with '#' are ignored.
+  ///
+  /// Returns the modification time of the newest .mojom found.
   _fetchFromDotMojoms(Uri base, Directory destination, File mojomsFile) async {
+    DateTime newestModTime;
     Directory mojomsDir;
     var httpClient = new HttpClient();
     int repoCount = 0;
@@ -235,9 +272,9 @@ class MojomGenerator {
           throw new FetchError('Malformed .mojoms file: $mojomsFile');
         }
         Uri uri = repoRoot.resolve(line);
-        if (_verbose) print("Found $uri");
-        String fileString = await fetchUri(httpClient, uri);
+        DateTime modTime = await getModificationTime(uri);
         if (_verbose) print("Fetching $uri");
+        String fileString = await fetchUri(httpClient, uri);
         String filePath = path.join(mojomsDir.path, line);
         var file = new File(filePath);
         if (!await file.exists()) {
@@ -245,9 +282,13 @@ class MojomGenerator {
           await file.writeAsString(fileString);
           if (_verbose) print("Wrote $filePath");
         }
+        if ((newestModTime == null) || newestModTime.isBefore(modTime)) {
+          newestModTime = modTime;
+        }
         mojomCount++;
       }
     }
+    return newestModTime;
   }
 
   /// Generate bindings for .mojom files found in [source].
