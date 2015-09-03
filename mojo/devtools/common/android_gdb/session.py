@@ -71,10 +71,11 @@ def _get_mapped_files():
 
 
 class DebugSession(object):
-  def __init__(self, build_directory, package_name, pyelftools_dir, adb):
-    self._build_directory = build_directory
-    if not os.path.exists(self._build_directory):
-      logging.fatal("Please pass a valid build directory")
+  def __init__(self, build_directory_list, package_name, pyelftools_dir, adb):
+    build_directories = build_directory_list.split(',')
+    if len(build_directories) == 0 or not all(map(os.path.exists,
+                                                  build_directories)):
+      logging.fatal("Please pass a list of valid build directories")
       sys.exit(1)
     self._package_name = package_name
     self._adb = adb
@@ -92,7 +93,7 @@ class DebugSession(object):
 
     self._elffile_module = elffile
 
-    self._libraries = self._find_libraries(build_directory)
+    self._libraries = self._find_libraries(build_directories)
     self._rfc = RemoteFileConnection('localhost', 10000)
     self._remote_file_reader_process = None
     if not os.path.exists(self._remote_file_cache):
@@ -111,15 +112,16 @@ class DebugSession(object):
     if self._remote_file_reader_process != None:
       self._remote_file_reader_process.kill()
 
-  def _find_libraries(self, lib_dir):
-    """Finds all libraries in |lib_dir| and key them by their signatures.
+  def _find_libraries(self, lib_dirs):
+    """Finds all libraries in |lib_dirs| and key them by their signatures.
     """
     res = {}
-    for fn in glob.glob('%s/*.so' % lib_dir):
-      with open(fn, 'r') as f:
-        s = get_signature(f, self._elffile_module)
-        if s is not None:
-          res[s] = fn
+    for lib_dir in lib_dirs:
+      for fn in glob.glob('%s/*.so' % lib_dir):
+        with open(fn, 'r') as f:
+          s = get_signature(f, self._elffile_module)
+          if s is not None:
+            res[s] = fn
     return res
 
   def _associate_symbols(self, mapping, local_file):

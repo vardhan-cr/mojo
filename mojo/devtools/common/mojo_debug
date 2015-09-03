@@ -143,7 +143,8 @@ def _device_stack(args):
   devtools_dir = os.path.dirname(os.path.abspath(__file__))
   stack_command = [os.path.join(devtools_dir, 'android_stack_parser', 'stack')]
   if args.build_dir:
-    stack_command.append('--build-dir=' + os.path.abspath(args.build_dir))
+    stack_command.append('--build-dir=' +
+            os.path.abspath(','.join(args.build_dir)))
   if args.ndk_dir:
     stack_command.append('--ndk-dir=' + os.path.abspath(args.ndk_dir))
   stack_command.append('-')
@@ -222,12 +223,12 @@ def _gdb_attach(args):
                                         'android_gdb', 'session.py')
   debug_session_arguments = {}
   if args.build_dir:
-    debug_session_arguments["build_directory"] = args.build_dir
+    debug_session_arguments["build_directory_list"] = ','.join(args.build_dir)
   else:
     try:
-      debug_session_arguments["build_directory"] = os.path.join(
+      debug_session_arguments["build_directory_list"] = os.path.join(
           _get_dir_above('out'), 'out', 'android_Debug')
-      if not os.path.exists(debug_session_arguments["build_directory"]):
+      if not os.path.exists(debug_session_arguments["build_directory_list"]):
         raise DirectoryNotFoundException()
     except DirectoryNotFoundException:
       logging.fatal("Unable to find the build directory, please specify it "
@@ -290,8 +291,8 @@ def _add_device_command(subparsers):
       help='symbolize the crash stacktraces from the device log')
   device_stack_parser.add_argument('--ndk-dir', type=str,
       help='path to the directory containing the Android NDK')
-  device_stack_parser.add_argument('--build-dir', type=str,
-      help='list paths to the build directories, separated by commas')
+  device_stack_parser.add_argument('--build-dir', type=str, action='append',
+      help='paths to the build directory, may be repeated')
   device_stack_parser.set_defaults(func=_device_stack)
 
 
@@ -307,8 +308,8 @@ def _add_gdb_command(subparsers):
       help='path to the adb tool from the Android SDK (optional)')
   gdb_attach_parser.add_argument('--ndk-dir', type=str,
       help='path to the directory containing the Android NDK')
-  gdb_attach_parser.add_argument('--build-dir', type=str,
-      help='path to the build directory')
+  gdb_attach_parser.add_argument('--build-dir', type=str, action='append',
+      help='Paths to the build directory, may be repeated')
   gdb_attach_parser.add_argument('--pyelftools-dir', type=str,
       help='Path to a directory containing third party libraries')
   gdb_attach_parser.add_argument('--gsutil-dir', type=str,
