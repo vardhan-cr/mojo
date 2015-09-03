@@ -17,35 +17,6 @@
 
 namespace nacl {
 namespace content_handler {
-namespace {
-
-// Copies response (input) into new temporary file open by fd (output).
-bool URLResponseToTempFile(mojo::URLResponsePtr& response, int* fd) {
-  base::FilePath path;
-  if (!base::CreateTemporaryFile(&path)) {
-    return false;
-  }
-
-  if (!mojo::common::BlockingCopyToFile(response->body.Pass(), path)) {
-    base::DeleteFile(path, false);
-    return false;
-  }
-  *fd = open(path.value().c_str(), O_RDONLY);
-  if (*fd < 0) {
-    LOG(FATAL) << "Failed to open " << path.value().c_str() << ": "
-               << strerror(errno) << "\n";
-  }
-
-  // Since we unlink an open file, the temp file will be removed as soon as the
-  // fd is closed.
-  if (unlink(path.value().c_str())) {
-    LOG(FATAL) << "Failed to unlink " << path.value().c_str() << ": "
-               << strerror(errno) << "\n";
-  }
-  return true;
-}
-
-}  // namespace
 
 class NaClContentHandler : public mojo::ApplicationDelegate,
                            public mojo::ContentHandlerFactory::Delegate {
@@ -70,9 +41,22 @@ class NaClContentHandler : public mojo::ApplicationDelegate,
     // Needed to use Mojo interfaces on this thread.
     base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
     // Acquire the nexe.
-    int fd;
-    if (!URLResponseToTempFile(response, &fd)) {
-      LOG(FATAL) << "could not redirect nexe to temp file";
+    base::ScopedFILE nexe_fp =
+        mojo::common::BlockingCopyToTempFile(response->body.Pass());
+    if (!nexe_fp) {
+      LOG(FATAL) << "Could not redirect nexe to temp file";
+    }
+    FILE* nexe_file_stream = nexe_fp.release();
+    int fd = fileno(nexe_file_stream);
+    if (fd == -1) {
+      LOG(FATAL) << "Could not open the stream pointer's file descriptor";
+    }
+    fd = dup(fd);
+    if (fd == -1) {
+      LOG(FATAL) << "Could not dup the file descriptor";
+    }
+    if (fclose(nexe_file_stream)) {
+      LOG(FATAL) << "Failed to close temp file";
     }
 
     // Run -- also, closes the fd, removing the temp file.

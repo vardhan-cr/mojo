@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "base/files/file_path.h"
 #include "base/files/file_util.h"
+#include "base/files/scoped_file.h"
 #include "base/message_loop/message_loop.h"
 #include "build/build_config.h"
 #include "mojo/application/application_runner_chromium.h"
@@ -24,24 +24,8 @@ namespace nacl {
 namespace content_handler {
 
 namespace {
-bool URLResponseToTempFile(mojo::URLResponsePtr& response,
-                           base::FilePath* file_path) {
-  if (!base::CreateTemporaryFile(file_path)) {
-    return false;
-  }
-
-  if (!mojo::common::BlockingCopyToFile(response->body.Pass(), *file_path)) {
-    base::DeleteFile(*file_path, false);
-    return false;
-  }
-
-  // TODO(ncbray): can we ensure temp file deletion even if we crash?
-  return true;
-}
-
-bool TempFileForURL(mojo::URLLoaderPtr& url_loader,
-                    const GURL& url,
-                    base::FilePath* path) {
+base::ScopedFILE TempFileForURL(mojo::URLLoaderPtr& url_loader,
+                                const GURL& url) {
   mojo::URLRequestPtr request(mojo::URLRequest::New());
   request->url = url.spec();
   request->method = "GET";
@@ -61,22 +45,35 @@ bool TempFileForURL(mojo::URLLoaderPtr& url_loader,
     LOG(ERROR) << "could not load " << url.spec() << " ("
                << response->error->code << ") "
                << response->error->description.get().c_str();
-    return false;
+    return nullptr;
   }
 
-  return URLResponseToTempFile(response, path);
+  return mojo::common::BlockingCopyToTempFile(response->body.Pass());
 }
 
-NaClDesc* NaClDescFromNexePath(base::FilePath& path) {
-  base::File file(path, base::File::FLAG_OPEN | base::File::FLAG_READ |
-                            base::File::FLAG_EXECUTE);
-  if (!file.IsValid()) {
-    LOG(FATAL) << "failed to open " << path.value();
+NaClDesc* FileStreamToNaClDesc(FILE* file_stream) {
+  // Get file handle
+  int fd = fileno(file_stream);
+  if (fd == -1) {
+    LOG(FATAL) << "Could not open the stream pointer's file descriptor";
   }
-  // Note: potentially unsafe, assumes the file is immutable. This should be
-  // OK because we're currently only using temp files.
-  return NaClDescCreateWithFilePathMetadata(file.TakePlatformFile(),
-                                            path.AsUTF8Unsafe().c_str());
+
+  // These file descriptors must be dup'd, since NaClDesc takes ownership
+  // of the file descriptor. The descriptor is still needed to close
+  // the file stream.
+  fd = dup(fd);
+  if (fd == -1) {
+    LOG(FATAL) << "Could not dup the file descriptor";
+  }
+
+  NaClDesc* desc = NaClDescCreateWithFilePathMetadata(fd, "");
+
+  // Clean up.
+  if (fclose(file_stream)) {
+    LOG(FATAL) << "Failed to close temp file";
+  }
+
+  return desc;
 }
 
 }  // namespace
@@ -109,8 +106,9 @@ class NaClContentHandler : public mojo::ApplicationDelegate,
       LOG(FATAL) << "Cannot resolve IRT URL";
     }
 
-    if (!TempFileForURL(url_loader, irt_url, &irt_path_)) {
-      LOG(FATAL) << "Could not aquire the IRT";
+    irt_fp_ = TempFileForURL(url_loader, irt_url);
+    if (!irt_fp_) {
+      LOG(FATAL) << "Could not acquire the IRT";
     }
   }
 
@@ -128,34 +126,24 @@ class NaClContentHandler : public mojo::ApplicationDelegate,
     // Needed to use Mojo interfaces on this thread.
     base::MessageLoop loop(mojo::common::MessagePumpMojo::Create());
 
-    // Aquire the nexe.
-    base::FilePath nexe_path;
-    if (!URLResponseToTempFile(response, &nexe_path)) {
+    // Acquire the nexe.
+    base::ScopedFILE nexe_fp =
+        mojo::common::BlockingCopyToTempFile(response->body.Pass());
+    if (!nexe_fp) {
       LOG(FATAL) << "could not redirect nexe to temp file";
     }
 
-    // Aquire the IRT.
+    // Acquire the IRT.
     mojo::URLLoaderPtr url_loader = url_loader_.Pass();
     LoadIRT(url_loader);
 
-    // Get file handles to the IRT and nexe.
-    NaClDesc* irt_desc = NaClDescFromNexePath(irt_path_);
-    NaClDesc* nexe_desc = NaClDescFromNexePath(nexe_path);
+    NaClDesc* irt_desc = FileStreamToNaClDesc(irt_fp_.release());
+    NaClDesc* nexe_desc = FileStreamToNaClDesc(nexe_fp.release());
 
     // Run.
     int exit_code = mojo::LaunchNaCl(
-        nexe_desc, irt_desc, 0, NULL,
+        nexe_desc, irt_desc, 0, nullptr,
         application_request.PassMessagePipe().release().value());
-
-    // TODO(ncbray): are the file handles actually closed at this point?
-
-    // Clean up.
-    if (!base::DeleteFile(irt_path_, false)) {
-      LOG(FATAL) << "Failed to remove irt temp file " << irt_path_.value();
-    }
-    if (!base::DeleteFile(nexe_path, false)) {
-      LOG(FATAL) << "Failed to remove nexe temp file " << nexe_path.value();
-    }
 
     // Exits the process cleanly, does not return.
     mojo::NaClExit(exit_code);
@@ -164,7 +152,7 @@ class NaClContentHandler : public mojo::ApplicationDelegate,
 
   mojo::ContentHandlerFactory content_handler_factory_;
   GURL url_;
-  base::FilePath irt_path_;
+  base::ScopedFILE irt_fp_;
 
   mojo::URLLoaderPtr url_loader_;
 
