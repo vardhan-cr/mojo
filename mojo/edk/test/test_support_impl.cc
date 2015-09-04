@@ -14,29 +14,19 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/path_service.h"
-#include "base/strings/string_split.h"
-#include "base/strings/string_util.h"
-#include "base/strings/stringprintf.h"
 #include "base/test/perf_log.h"
+#include "build/build_config.h"
 
 namespace mojo {
 namespace test {
 namespace {
 
 base::FilePath ResolveSourceRootRelativePath(const char* relative_path) {
+  // TODO(vtl): Have someone inject the source root instead.
   base::FilePath path;
   if (!PathService::Get(base::DIR_SOURCE_ROOT, &path))
     return base::FilePath();
-
-  std::vector<std::string> components;
-  base::SplitString(relative_path, '/', &components);
-
-  for (size_t i = 0; i < components.size(); ++i) {
-    if (!components[i].empty())
-      path = path.AppendASCII(components[i]);
-  }
-
-  return path;
+  return path.Append(base::FilePath::FromUTF8Unsafe(relative_path));
 }
 
 }  // namespace
@@ -53,7 +43,7 @@ void TestSupportImpl::LogPerfResult(const char* test_name,
                                     const char* units) {
   DCHECK(test_name);
   if (sub_test_name) {
-    std::string name = base::StringPrintf("%s/%s", test_name, sub_test_name);
+    std::string name = std::string(test_name) + "/" + sub_test_name;
     base::LogPerfResult(name.c_str(), value, units);
   } else {
     base::LogPerfResult(test_name, value, units);
@@ -74,8 +64,13 @@ char** TestSupportImpl::EnumerateSourceRootRelativeDirectory(
 
   // |names.size() + 1| for null terminator.
   char** rv = static_cast<char**>(calloc(names.size() + 1, sizeof(char*)));
-  for (size_t i = 0; i < names.size(); ++i)
-    rv[i] = base::strdup(names[i].c_str());
+  for (size_t i = 0; i < names.size(); ++i) {
+#if defined(OS_WIN)
+    rv[i] = _strdup(names[i].c_str());
+#else
+    rv[i] = strdup(names[i].c_str());
+#endif
+  }
   return rv;
 }
 
