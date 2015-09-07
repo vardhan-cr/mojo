@@ -48,25 +48,27 @@ class TracingHelper {
 
   // Invoke this at the beginning of a function whose duration you wish to
   // trace. Invoke |end()| on the returned object.
-  FunctionTrace beginFunction(String functionName, {Map<String, String> args}) {
+  FunctionTrace beginFunction(String functionName, String categories,
+      {Map<String, String> args}) {
     assert(functionName != null);
     if (isActive()) {
-      _sendTraceMessage(functionName, "B", args: args);
+      _sendTraceMessage(functionName, categories, "B", args: args);
     } else {
       functionName = null;
     }
-    return new _FunctionTraceImpl(this, functionName);
+    return new _FunctionTraceImpl(this, functionName, categories);
   }
 
-  void _endFunction(String functionName) {
-    _sendTraceMessage(functionName, "E");
+  void _endFunction(String functionName, String categories) {
+    _sendTraceMessage(functionName, categories, "E");
   }
 
-  void _sendTraceMessage(String name, String phase,
+  void _sendTraceMessage(String name, String categories, String phase,
       {Map<String, String> args}) {
     if (isActive()) {
       var map = {};
       map["name"] = name;
+      map["cat"] = categories;
       map["ph"] = phase;
       map["ts"] = getTimeTicksNow();
       map["pid"] = pid;
@@ -80,8 +82,8 @@ class TracingHelper {
 
   // A convenience method that wraps a closure in a begin-end pair of
   // tracing calls.
-  dynamic trace(String functionName, closure(), {Map<String, String> args}) {
-    FunctionTrace ft = beginFunction(functionName, args: args);
+  dynamic trace(String functionName, String categories, closure(), {Map<String, String> args}) {
+    FunctionTrace ft = beginFunction(functionName, categories, args: args);
     final returnValue = closure();
     ft.end();
     return returnValue;
@@ -97,13 +99,14 @@ abstract class FunctionTrace {
 class _FunctionTraceImpl implements FunctionTrace {
   TracingHelper _tracing;
   String _functionName;
+  String _categories;
 
-  _FunctionTraceImpl(this._tracing, this._functionName);
+  _FunctionTraceImpl(this._tracing, this._functionName, this._categories);
 
   @override
   void end() {
     if (_functionName != null) {
-      _tracing._endFunction(_functionName);
+      _tracing._endFunction(_functionName, _categories);
     }
   }
 }
