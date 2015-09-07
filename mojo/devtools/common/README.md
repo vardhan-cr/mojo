@@ -57,23 +57,33 @@ manager. You can pass a different window manager url using the
 performance traces and attach a gdb debugger.
 
 #### Tracing
-In order to collect [performance
+[Performance
 traces](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-interactively through `mojo_debug`, make sure that the app being inspected was
-run with `--debugger` switch. E.g.:
+can either be collected by Mojo Shell during its startup, or collected
+interactively by `mojo_debug`.
+
+To trace the Mojo Shell startup, use the `--trace-startup` flag:
+
+```sh
+mojo_run --trace-startup APP_URL [--android]
+```
+
+In order to collect traces interactively through `mojo_debug`, make sure that
+the app being inspected was run with `--debugger` switch. E.g.:
 
 ```sh
 mojo_run --debugger APP_URL [--android]
 ```
 
-Then, in another shell, tracing can be orchestrated as follows:
+While Mojo Shell is running, tracing can be started and stopped by these two
+commands respectively:
 
 ```sh
 mojo_debug tracing start
 mojo_debug tracing stop [result.json]
 ```
 
-The trace file can be then loaded using the trace viewer in Chrome available at
+Trace files can be then loaded using the trace viewer in Chrome available at
 `about://tracing`.
 
 #### GDB
