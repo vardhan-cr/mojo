@@ -43,6 +43,7 @@ run.
 _logger = logging.getLogger()
 
 _BENCHMARK_APP = 'https://core.mojoapps.io/benchmark.mojo'
+_CACHE_SERVICE_URL = 'mojo:url_response_disk_cache'
 
 # Additional time in seconds allocated per shell run to accommodate start-up.
 # The shell should terminate before hitting this time out, it is an error if it
@@ -51,8 +52,8 @@ _EXTRA_TIMEOUT = 20
 
 
 def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
-                   verbose):
-  """Runs `benchmark.mojo` in a shell with correct arguments, parses and
+                   cold_start, verbose):
+  """Runs `benchmark.mojo` in shell with correct arguments, parses and
   presents the benchmark results.
   """
   timeout = duration_seconds + _EXTRA_TIMEOUT
@@ -61,12 +62,18 @@ def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
   benchmark_args.append('--duration=' + str(duration_seconds))
   for measurement in measurements:
     benchmark_args.append(measurement)
+
+  shell_args = list(shell_args)
   shell_args.append(_BENCHMARK_APP)
   shell_args.append('--args-for=%s %s' % (_BENCHMARK_APP,
                                           ' '.join(benchmark_args)))
+
+  if cold_start:
+    shell_args.append('--args-for=%s %s' % (_CACHE_SERVICE_URL, '--clear'))
+
   if verbose:
     print 'shell arguments: ' + str(shell_args)
-  print '[' + name + ']'
+  print '[ %s ] %s' % (name, 'cold start' if cold_start else 'warm start')
   return_code, output, did_time_out = shell.run_and_get_output(
       shell_args, timeout=timeout)
   output_lines = [line.strip() for line in output.split('\n')]
@@ -118,7 +125,9 @@ def main():
     shell_args = benchmark_spec.get('shell-args', []) + common_shell_args
     measurements = benchmark_spec['measurements']
     _run_benchmark(shell, shell_args, name, app, duration, measurements,
-                   script_args.verbose)
+                   cold_start=True, verbose=script_args.verbose)
+    _run_benchmark(shell, shell_args, name, app, duration, measurements,
+                   cold_start=False, verbose=script_args.verbose)
 
   return 0 if succeeded else 1
 
