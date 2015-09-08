@@ -4,15 +4,18 @@
 
 package org.chromium.mojo.shell;
 
+import org.chromium.base.ApplicationStatus;
 import org.chromium.base.CalledByNative;
 import org.chromium.base.JNINamespace;
 import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
 import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
+import org.chromium.mojo.authentication.AuthenticationApplicationDelegate;
 import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojo.system.impl.CoreImpl;
 import org.chromium.mojom.mojo.Shell;
+import org.chromium.services.location.LocationApplicationDelegate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,11 +79,18 @@ public class JavaApplicationRegistry {
     private static JavaApplicationRegistry create() {
         JavaApplicationRegistry registry = new JavaApplicationRegistry();
         // Register services.
+        registry.registerApplicationDelegate("mojo:authentication",
+                new AuthenticationApplicationDelegate(ApplicationStatus.getApplicationContext(),
+                                                     CoreImpl.getInstance()));
         registry.registerApplicationDelegate("mojo:keyboard",
                 new ServiceProviderFactoryApplicationDelegate(new KeyboardFactory()));
         registry.registerApplicationDelegate(
                 "mojo:intent_receiver", new ServiceProviderFactoryApplicationDelegate(
                                                 IntentReceiverRegistry.getInstance()));
+        registry.registerApplicationDelegate("mojo:location_service",
+                new LocationApplicationDelegate(ApplicationStatus.getApplicationContext(),
+                                                     CoreImpl.getInstance()));
+
         registry.registerApplicationDelegate("mojo:nfc", new NfcApplicationDelegate());
         registry.registerApplicationDelegate("mojo:sharing", new SharingApplicationDelegate());
         registry.registerApplicationDelegate(

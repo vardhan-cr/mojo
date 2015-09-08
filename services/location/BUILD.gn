@@ -2,25 +2,19 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//mojo/android/rules.gni")
+import("//build/config/android/rules.gni")
 
-group("location") {
-  deps = [
-    ":location_service",
-  ]
-}
-
-mojo_android_java_application("location_service") {
-  sources = [
-    "src/org/chromium/services/location/LocationServiceApp.java",
+android_library("location") {
+  java_files = [
+    "src/org/chromium/services/location/LocationApplicationDelegate.java",
     "src/org/chromium/services/location/LocationServiceImpl.java",
     "src/org/chromium/services/location/LocationUtil.java",
   ]
 
-  mojo_main = "org.chromium.services.location.LocationServiceApp"
-
   deps = [
     "//mojo/public/interfaces/application:application_java",
+    "//mojo/public/java:bindings",
+    "//mojo/public/java:system",
     "//mojo/public/java:application",
     "//mojo/services/location/public/interfaces:interfaces_java",
     "//third_party/android_tools:google_play_services_default_java",

@@ -5,21 +5,21 @@
 import("//mojo/public/tools/bindings/mojom.gni")
 
 if (is_android) {
-  import("//mojo/android/rules.gni")
+  import("//build/config/android/rules.gni")
 
-  mojo_android_java_application("authentication") {
-    sources = [
-      "src/org/chromium/mojo/authentication/AuthenticationApp.java",
+  android_library("authentication") {
+    java_files = [
+      "src/org/chromium/mojo/authentication/AuthenticationApplicationDelegate.java",
       "src/org/chromium/mojo/authentication/AuthenticationServiceImpl.java",
       "src/org/chromium/mojo/authentication/NetworkServiceProxyFactory.java",
     ]
-
-    mojo_main = "org.chromium.mojo.authentication.AuthenticationApp"
 
     deps = [
       ":interfaces_java",
       "//mojo/public/interfaces/application:application_java",
       "//mojo/public/java:application",
+      "//mojo/public/java:bindings",
+      "//mojo/public/java:system",
       "//mojo/services/authenticating_url_loader_interceptor/public/interfaces:interfaces_java",
       "//mojo/services/authentication/public/interfaces:interfaces_java",
       "//mojo/services/network/public/interfaces:interfaces_java",

@@ -14,19 +14,17 @@ import com.google.android.gms.location.LocationServices;
 
 import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
-import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
 import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
-import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.LocationService;
 import org.chromium.mojom.mojo.Shell;
 
 /**
- * Android service application implementing the LocationService interface using Google play
- * services API.
+ * Android service application implementing the LocationService interface using Google play services
+ * API.
  */
-class LocationServiceApp implements ApplicationDelegate {
+public class LocationApplicationDelegate implements ApplicationDelegate {
     private static final String TAG = "LocationServiceApp";
 
     private final GoogleApiClient mGoogleApiClient;
@@ -74,9 +72,10 @@ class LocationServiceApp implements ApplicationDelegate {
             mLooper.quitSafely();
         }
     }
+
     private final LooperThread mLooperThread = new LooperThread();
 
-    public LocationServiceApp(Context context, Core core) {
+    public LocationApplicationDelegate(Context context, Core core) {
         // TODO(alhaad): Create a test mode which uses mock locations instead of real locations.
         mGoogleApiClient =
                 new GoogleApiClient.Builder(context).addApi(LocationServices.API).build();
@@ -132,11 +131,5 @@ class LocationServiceApp implements ApplicationDelegate {
         } catch (InterruptedException e) {
             Log.e(TAG, e.getMessage(), e);
         }
-    }
-
-    public static void mojoMain(
-            Context context, Core core, MessagePipeHandle applicationRequestHandle) {
-        ApplicationRunner.run(
-                new LocationServiceApp(context, core), core, applicationRequestHandle);
     }
 }

@@ -306,6 +306,8 @@ if (is_android) {
       "//mojo/public/java:bindings",
       "//mojo/public/java:system",
       "//mojo/services/keyboard/public/interfaces:interfaces_java",
+      "//services/authentication",
+      "//services/location",
       "//services/intent_receiver:bindings_java",
       "//services/native_viewport:interfaces_java",
       "//services/nfc_message_sink:bindings_java",

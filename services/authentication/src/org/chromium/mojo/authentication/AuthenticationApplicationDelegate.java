@@ -8,22 +8,20 @@ import android.content.Context;
 
 import org.chromium.mojo.application.ApplicationConnection;
 import org.chromium.mojo.application.ApplicationDelegate;
-import org.chromium.mojo.application.ApplicationRunner;
 import org.chromium.mojo.application.ServiceFactoryBinder;
 import org.chromium.mojo.bindings.InterfaceRequest;
 import org.chromium.mojo.system.Core;
-import org.chromium.mojo.system.MessagePipeHandle;
 import org.chromium.mojom.mojo.Shell;
 
 /**
  * Android service application implementing the AuthenticationService interface.
  */
-public class AuthenticationApp implements ApplicationDelegate {
+public class AuthenticationApplicationDelegate implements ApplicationDelegate {
     private final Context mContext;
     private final Core mCore;
     private Shell mShell;
 
-    public AuthenticationApp(Context context, Core core) {
+    public AuthenticationApplicationDelegate(Context context, Core core) {
         mContext = context;
         mCore = core;
     }
@@ -64,9 +62,4 @@ public class AuthenticationApp implements ApplicationDelegate {
      */
     @Override
     public void quit() {}
-
-    public static void mojoMain(
-            Context context, Core core, MessagePipeHandle applicationRequestHandle) {
-        ApplicationRunner.run(new AuthenticationApp(context, core), core, applicationRequestHandle);
-    }
 }
