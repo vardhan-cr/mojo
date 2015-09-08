@@ -303,6 +303,13 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
   InitContentHandlers(&application_manager_, command_line);
   InitNativeOptions(&application_manager_, command_line);
 
+  // The mojo_shell --args-for command-line switch is handled specially because
+  // it can appear more than once. The base::CommandLine class collapses
+  // multiple occurrences of the same switch.
+  base::CommandLine* current = base::CommandLine::ForCurrentProcess();
+  for (size_t i = 1; i < current->argv().size(); ++i)
+    ApplyApplicationArgs(this, current->argv()[i]);
+
   ServiceProviderPtr tracing_services;
   ServiceProviderPtr tracing_exposed_services;
   new TracingServiceProvider(tracer_, GetProxy(&tracing_exposed_services));

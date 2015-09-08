@@ -60,17 +60,14 @@ const int kDelayBeforeCrashUploadInSeconds = 60;
 
 class MojoShellRunner : public base::DelegateSimpleThread::Delegate {
  public:
-  MojoShellRunner(const base::FilePath& mojo_shell_child_path,
-                  const std::vector<std::string>& parameters)
-      : mojo_shell_child_path_(mojo_shell_child_path),
-        parameters_(parameters) {}
+  MojoShellRunner(const base::FilePath& mojo_shell_child_path)
+      : mojo_shell_child_path_(mojo_shell_child_path) {}
   ~MojoShellRunner() override {}
 
  private:
   void Run() override;
 
   const base::FilePath mojo_shell_child_path_;
-  const std::vector<std::string> parameters_;
 
   DISALLOW_COPY_AND_ASSIGN(MojoShellRunner);
 };
@@ -153,9 +150,6 @@ void MojoShellRunner::Run() {
   Context* context = g_internal_data.Get().context.get();
   ConfigureAndroidServices(context);
   CHECK(context->InitWithPaths(mojo_shell_child_path_));
-
-  for (const auto& args : parameters_)
-    ApplyApplicationArgs(context, args);
 
   RunCommandLineApps(context);
 
@@ -277,10 +271,8 @@ static void Start(JNIEnv* env,
         output_path);
   }
 
-  g_internal_data.Get().shell_runner.reset(
-      new MojoShellRunner(base::FilePath(base::android::ConvertJavaStringToUTF8(
-                              env, mojo_shell_child_path)),
-                          parameters));
+  g_internal_data.Get().shell_runner.reset(new MojoShellRunner(base::FilePath(
+      base::android::ConvertJavaStringToUTF8(env, mojo_shell_child_path))));
 
   InitializeLogging();
 

@@ -110,12 +110,6 @@ int main(int argc, char** argv) {
       return 1;
     }
 
-    // The mojo_shell --args-for command-line switch is handled specially
-    // because it can appear more than once. The base::CommandLine class
-    // collapses multiple occurrences of the same switch.
-    for (int i = 1; i < argc; i++)
-      ApplyApplicationArgs(&shell_context, argv[i]);
-
     message_loop.PostTask(
         FROM_HERE, base::Bind(&shell::RunCommandLineApps, &shell_context));
     message_loop.Run();
