@@ -14,6 +14,7 @@
 #include "base/bind.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "base/time/time.h"
 #include "base/trace_event/trace_event.h"
@@ -46,7 +47,9 @@ class BenchmarkApp : public mojo::ApplicationDelegate,
     // categories targeted in measurements.
     std::set<std::string> category_set;
     for (const Measurement& measurement : args_.measurements) {
-      category_set.insert(measurement.target_event.category);
+      std::vector<std::string> categories;
+      base::SplitString(measurement.target_event.categories, ',', &categories);
+      category_set.insert(categories.begin(), categories.end());
     }
     std::vector<std::string> unique_categories(category_set.begin(),
                                                category_set.end());

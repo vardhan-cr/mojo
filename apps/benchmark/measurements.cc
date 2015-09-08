@@ -8,15 +8,15 @@ namespace benchmark {
 namespace {
 
 bool Match(const Event& event, const EventSpec& spec) {
-  return event.name == spec.name && event.category == spec.category;
+  return event.name == spec.name && event.categories == spec.categories;
 }
 
 }  // namespace
 
 EventSpec::EventSpec() {}
 
-EventSpec::EventSpec(std::string name, std::string category)
-    : name(name), category(category) {}
+EventSpec::EventSpec(std::string name, std::string categories)
+    : name(name), categories(categories) {}
 
 EventSpec::~EventSpec() {}
 
@@ -24,8 +24,8 @@ Measurement::Measurement() {}
 
 Measurement::Measurement(MeasurementType type,
                          std::string target_name,
-                         std::string target_category)
-    : type(type), target_event(target_name, target_category) {}
+                         std::string target_categories)
+    : type(type), target_event(target_name, target_categories) {}
 
 Measurement::~Measurement() {}
 
@@ -51,9 +51,6 @@ double Measurements::TimeUntil(const EventSpec& event_spec) {
   base::TimeTicks earliest;
   bool found = false;
   for (const Event& event : events_) {
-    if (event.category == "__metadata")
-      continue;
-
     if (!Match(event, event_spec))
       continue;
 
@@ -73,7 +70,7 @@ double Measurements::AvgDuration(const EventSpec& event_spec) {
   double sum = 0.0;
   int count = 0;
   for (const Event& event : events_) {
-    if (event.category == "__metadata")
+    if (event.type != EventType::COMPLETE)
       continue;
 
     if (!Match(event, event_spec))

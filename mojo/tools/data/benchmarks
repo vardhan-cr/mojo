@@ -3,6 +3,15 @@
 
 benchmarks = [
   {
+    'name': 'Dart Traced App',
+    'app': 'https://core.mojoapps.io/dart_traced_application.mojo',
+    'duration': 10,
+    'measurements': [
+      'time_until/traced_application/function1',
+      'avg_duration/traced_application/function1',
+    ]
+  },
+  {
     'name': 'Trace me',
     'app': 'https://core.mojoapps.io/trace_me.mojo',
     'duration': 10,

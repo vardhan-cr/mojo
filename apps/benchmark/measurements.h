@@ -18,10 +18,10 @@ namespace benchmark {
 // Describes a trace event to match.
 struct EventSpec {
   std::string name;
-  std::string category;
+  std::string categories;
 
   EventSpec();
-  EventSpec(std::string name, std::string category);
+  EventSpec(std::string name, std::string categories);
   ~EventSpec();
 };
 
@@ -38,7 +38,7 @@ struct Measurement {
   Measurement();
   Measurement(MeasurementType type,
               std::string target_name,
-              std::string target_category);
+              std::string target_categories);
   ~Measurement();
 };
 

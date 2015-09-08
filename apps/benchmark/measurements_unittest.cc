@@ -23,13 +23,11 @@ class MeasurementsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     events_.resize(6);
-    events_[0] = Event("a", "some", Ticks(10), Delta(2));
-    events_[1] = Event("a", "some", Ticks(11), Delta(4));
-    events_[2] = Event("a", "other", Ticks(12), Delta(8));
-    events_[3] = Event("b", "some", Ticks(3), Delta(16));
-    events_[4] = Event("b", "some", Ticks(13), Delta(32));
-    // Event entries carrying metadata have timestamp of 0.
-    events_[5] = Event("something", "__metadata", Ticks(0), Delta(0));
+    events_[0] = Event(EventType::COMPLETE, "a", "some", Ticks(10), Delta(2));
+    events_[1] = Event(EventType::COMPLETE, "a", "some", Ticks(11), Delta(4));
+    events_[2] = Event(EventType::COMPLETE, "a", "other", Ticks(12), Delta(8));
+    events_[3] = Event(EventType::COMPLETE, "b", "some", Ticks(3), Delta(16));
+    events_[4] = Event(EventType::COMPLETE, "b", "some", Ticks(13), Delta(32));
 
     reversed_ = events_;
     reverse(reversed_.begin(), reversed_.end());

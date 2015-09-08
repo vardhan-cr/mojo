@@ -34,7 +34,7 @@ bool GetMeasurement(const std::string& measurement_spec, Measurement* result) {
     return false;
   }
 
-  result->target_event.category = parts[1];
+  result->target_event.categories = parts[1];
   result->target_event.name = parts[2];
   result->spec = measurement_spec;
   return true;

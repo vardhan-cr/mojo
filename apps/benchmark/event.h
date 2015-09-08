@@ -13,15 +13,20 @@
 
 namespace benchmark {
 
+// Event types as per the Trace Event format spec.
+enum class EventType {COMPLETE, INSTANT};
+
 // Represents a single trace event.
 struct Event {
+  EventType type;
   std::string name;
-  std::string category;
+  std::string categories;
   base::TimeTicks timestamp;
   base::TimeDelta duration;
 
   Event();
-  Event(std::string name,
+  Event(EventType type,
+        std::string name,
         std::string category,
         base::TimeTicks timestamp,
         base::TimeDelta duration);
@@ -29,7 +34,17 @@ struct Event {
 };
 
 // Parses a JSON string representing a list of trace events. Stores the outcome
-// in |result| and returns true on success. Returns false on error.
+// in |result| and returns true on success, returns false on error.
+//
+// The supported event types as per the Trace Event format spec:
+//  - duration events (phase "B" or "E")
+//  - complete events (phase "X")
+//  - instant events (phase "I")
+//
+//  All other types are accepted, but ignored, ie. they don't appear in
+//  |result|. All duration events are joined to form the corresponding complete
+//  events and the resulting complete events appear in |result| instead of the
+//  the duration events.
 bool GetEvents(const std::string& trace_json, std::vector<Event>* result);
 
 }  // namespace benchmark
