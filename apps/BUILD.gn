@@ -11,6 +11,5 @@ group("apps") {
     "//apps/moterm",
     "//apps/moterm:apptests",
     "//apps/moterm:gl_helper_test_app",
-    "//apps/moterm:moterm_example_app",
   ]
 }

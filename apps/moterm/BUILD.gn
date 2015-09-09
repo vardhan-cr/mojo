@@ -32,25 +32,6 @@ mojo_native_application("moterm") {
   ]
 }
 
-mojo_native_application("moterm_example_app") {
-  sources = [
-    "moterm_example_app.cc",
-  ]
-
-  deps = [
-    "//base",
-    "//examples/window_manager:bindings",
-    "//mojo/application",
-    "//mojo/public/cpp/bindings",
-    "//mojo/public/cpp/utility",
-    "//mojo/public/interfaces/application",
-    "//mojo/services/files/public/interfaces",
-    "//mojo/services/geometry/public/interfaces",
-    "//mojo/services/view_manager/public/cpp",
-    "//mojo/services/terminal/public/interfaces",
-  ]
-}
-
 mojo_native_application("gl_helper_test_app") {
   sources = [
     "gl_helper_test_app.cc",

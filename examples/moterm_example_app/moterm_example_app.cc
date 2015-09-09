@@ -14,7 +14,6 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
-#include "examples/window_manager/window_manager.mojom.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -191,8 +190,7 @@ class MotermExampleApp : public mojo::ApplicationDelegate,
     new MotermExampleAppView(application_impl_->shell(), root);
   }
 
-  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
-  }
+  void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {}
 
   mojo::ApplicationImpl* application_impl_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;

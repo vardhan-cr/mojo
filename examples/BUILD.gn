@@ -20,6 +20,7 @@ group("examples") {
     "//examples/http_handler",
     "//examples/indirect_service",
     "//examples/keyboard_client",
+    "//examples/moterm_example_app",
     "//examples/nesting_app",
     "//examples/nfc_sender",
     "//examples/notification_generator",
