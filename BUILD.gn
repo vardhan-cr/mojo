@@ -21,13 +21,12 @@ group("default") {
     "//ui/events:events_unittests",
   ]
 
-  if (!is_android) {
-    deps += [ "//tools/xdisplaycheck" ]
-  }
-
   if (is_linux) {
-    deps += [ "//sandbox/linux:sandbox" ]
-    deps += [ "//sandbox/linux:sandbox_linux_unittests" ]
+    deps += [
+      "//sandbox/linux:sandbox",
+      "//sandbox/linux:sandbox_linux_unittests",
+      "//tools/xdisplaycheck",
+    ]
   }
 
   if (use_ozone) {

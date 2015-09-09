@@ -242,12 +242,14 @@ config("skia_library_config") {
     ]
   }
 
-  if (is_ios) {
+  if (is_ios || is_mac) {
     cflags = [
       # Skia uses routines deprecated in iOS 7 and above
       "-Wno-deprecated-declarations",
     ]
+  }
 
+  if (is_ios) {
     libs = [ "ImageIO.framework" ]
   }
 }

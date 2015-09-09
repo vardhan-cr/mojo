@@ -770,6 +770,11 @@ component("base") {
       "strings/sys_string_conversions_posix.cc",
       "threading/platform_thread_internal_posix.cc",
     ]
+
+    # We build with a 10.9 min sdk version but lots of code in this directory is
+    # written to target a 10.6 min sdk version and thus depends on declarations
+    # marked as deprecated on 10.9+. Suppress these warnings for now.
+    cflags = [ "-Wno-deprecated-declarations" ]
   } else {
     # Non-Mac.
     sources -= [
