@@ -78,9 +78,7 @@ if (is_nacl) {
       "//services/clipboard",
       "//services/clipboard:apptests",
       "//services/files:apptests",
-
-      # TODO(ncbray): enable when NaCl has pthread rw locks.
-      #"//services/http_server",
+      "//services/http_server",
       "//services/http_server:apptests",
       "//services/view_manager:mojo_view_manager_client_apptests",
       "//services/view_manager:view_manager_service_apptests",
