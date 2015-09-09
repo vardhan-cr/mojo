@@ -54,6 +54,9 @@ class PlatformViewportX11 : public PlatformViewport,
 
     platform_window_.reset(new ui::X11Window(this));
     platform_window_->SetBounds(bounds);
+
+    // X11 window isn't created until explicitly shown
+    Show();
   }
 
   void Show() override { platform_window_->Show(); }
