@@ -103,8 +103,13 @@ const MotermModel::Attributes MotermModel::kAttributesBlink;
 const unsigned MotermModel::kMaxRows;
 const unsigned MotermModel::kMaxColumns;
 
-MotermModel::MotermModel(const Size& max_size, const Size& size)
-    : max_size_(max_size), terminal_(), current_state_changes_() {
+MotermModel::MotermModel(const Size& max_size,
+                         const Size& size,
+                         Delegate* delegate)
+    : max_size_(max_size),
+      delegate_(delegate),
+      terminal_(),
+      current_state_changes_() {
   DCHECK_GT(max_size_.rows, 0u);
   DCHECK_LE(max_size_.rows, kMaxRows);
   DCHECK_GT(max_size_.columns, 0u);
@@ -309,8 +314,10 @@ void MotermModel::OnParam(int cmd, unsigned val) {
 }
 
 void MotermModel::OnRespond(const void* buf, size_t size) {
-  // TODO(vtl)
-  NOTIMPLEMENTED();
+  if (delegate_)
+    delegate_->OnResponse(buf, size);
+  else
+    DLOG(WARNING) << "Ignoring response: no delegate";
 }
 
 // static

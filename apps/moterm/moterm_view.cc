@@ -57,7 +57,7 @@ MotermView::MotermView(
                  kTextureFormat,
                  false,
                  RectToSize(view->bounds())),
-      model_(MotermModel::Size(240, 160), MotermModel::Size(24, 80)),
+      model_(MotermModel::Size(240, 160), MotermModel::Size(24, 80), this),
       frame_pending_(false),
       force_next_draw_(false),
       ascent_(0),
@@ -133,6 +133,11 @@ void MotermView::OnFrameDisplayed(uint32_t frame_id) {
   DCHECK(frame_pending_);
   frame_pending_ = false;
   Draw(false);
+}
+
+void MotermView::OnResponse(const void* buf, size_t size) {
+  if (driver_)
+    driver_->SendData(buf, size);
 }
 
 void MotermView::OnDataReceived(const void* bytes, size_t num_bytes) {

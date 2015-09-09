@@ -131,7 +131,8 @@ TEST(MotermModelTest, StateChanges) {
 }
 
 TEST(MotermModelTest, Basic) {
-  MotermModel model(MotermModel::Size(43, 132), MotermModel::Size(25, 80));
+  MotermModel model(MotermModel::Size(43, 132), MotermModel::Size(25, 80),
+                    nullptr);
 
   MotermModel::Size size = model.GetSize();
   EXPECT_EQ(25u, size.rows);
@@ -199,5 +200,7 @@ TEST(MotermModelTest, Basic) {
   EXPECT_EQ(40u, size.rows);
   EXPECT_EQ(100u, size.columns);
 }
+
+// TODO(vtl): Test responses.
 
 }  // namespace

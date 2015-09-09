@@ -103,11 +103,26 @@ class MotermModel {
     Rectangle dirty_rect;
   };
 
+  class Delegate {
+   public:
+    // Called when a response is received (i.e., the terminal wants to put data
+    // into the input stream).
+    virtual void OnResponse(const void* buf, size_t size) = 0;
+
+   protected:
+    Delegate() {}
+    ~Delegate() {}
+
+   private:
+    DISALLOW_COPY_AND_ASSIGN(Delegate);
+  };
+
   // Maximum number of rows/columns.
   static const unsigned kMaxRows = 500;  // TODO(vtl): Made up number.
   static const unsigned kMaxColumns = T_NUMCOL;
 
-  MotermModel(const Size& max_size, const Size& size);
+  // If non-null, |delegate| must outlive this object.
+  MotermModel(const Size& max_size, const Size& size, Delegate* delegate);
   ~MotermModel();
 
   // Process the given input bytes, reporting (additional) state changes to
@@ -162,6 +177,7 @@ class MotermModel {
   static void OnRespondThunk(void* ctx, const void* buf, size_t size);
 
   const Size max_size_;
+  Delegate* const delegate_;
 
   scoped_ptr<teken_char_t[]> characters_;
   scoped_ptr<teken_attr_t[]> attributes_;
