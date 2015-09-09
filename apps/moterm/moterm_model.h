@@ -108,10 +108,12 @@ class MotermModel {
     // Called when a response is received (i.e., the terminal wants to put data
     // into the input stream).
     virtual void OnResponse(const void* buf, size_t size) = 0;
+    // Called for ESC > (false) and ESC = (true).
+    virtual void OnSetKeypadMode(bool application_mode) = 0;
 
    protected:
     Delegate() {}
-    ~Delegate() {}
+    virtual ~Delegate() {}
 
    private:
     DISALLOW_COPY_AND_ASSIGN(Delegate);

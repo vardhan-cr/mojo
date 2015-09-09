@@ -324,6 +324,9 @@ void MotermModel::OnParam(int cmd, unsigned val) {
       current_state_changes_->cursor_changed = true;
       break;
     case TP_KEYPADAPP:
+      if (delegate_)
+        delegate_->OnSetKeypadMode(!!val);
+      break;
     case TP_AUTOREPEAT:
     case TP_SWITCHVT:
     case TP_132COLS:

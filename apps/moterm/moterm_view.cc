@@ -140,6 +140,13 @@ void MotermView::OnResponse(const void* buf, size_t size) {
     driver_->SendData(buf, size);
 }
 
+void MotermView::OnSetKeypadMode(bool application_mode) {
+  // This should affect the numeric keypad with numlock off, changing what's
+  // sent for /, *, -, +, and enter (if |application_mode| is true, it should
+  // send escape sequences for these).
+  NOTIMPLEMENTED();
+}
+
 void MotermView::OnDataReceived(const void* bytes, size_t num_bytes) {
   model_.ProcessInput(bytes, num_bytes, &model_state_changes_);
   Draw(false);

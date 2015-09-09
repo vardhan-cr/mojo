@@ -4,6 +4,7 @@
 
 #include "apps/moterm/moterm_model.h"
 
+#include "base/logging.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace {
@@ -228,6 +229,55 @@ TEST(MotermModelTest, ShowHideCursor) {
   EXPECT_TRUE(state_changes.cursor_changed);
   EXPECT_TRUE(model.GetCursorVisibility());
 }
+
+class SetResetKeypadModeTestDelegate : public MotermModel::Delegate {
+ public:
+  SetResetKeypadModeTestDelegate() {}
+  ~SetResetKeypadModeTestDelegate() override {}
+
+  void OnResponse(const void* buf, size_t size) override { CHECK(false); }
+  void OnSetKeypadMode(bool application_mode) override {
+    call_count_++;
+    last_application_mode_ = application_mode;
+  }
+
+  int call_count() const { return call_count_; }
+  bool last_application_mode() const { return last_application_mode_; }
+
+ private:
+  int call_count_ = 0;
+  bool last_application_mode_ = false;
+};
+
+TEST(MotermModelTest, SetResetKeypadMode) {
+  SetResetKeypadModeTestDelegate test_delegate;
+
+  MotermModel model(MotermModel::Size(43, 132), MotermModel::Size(25, 80),
+                    &test_delegate);
+
+  ASSERT_EQ(0, test_delegate.call_count());
+  ASSERT_FALSE(test_delegate.last_application_mode());
+
+  MotermModel::StateChanges state_changes;
+
+  static const char kSetKeypadAppMode[] = "\x1b=";
+  model.ProcessInput(kSetKeypadAppMode, sizeof(kSetKeypadAppMode) - 1,
+                     &state_changes);
+
+  EXPECT_FALSE(state_changes.IsDirty());
+  EXPECT_EQ(1, test_delegate.call_count());
+  EXPECT_TRUE(test_delegate.last_application_mode());
+
+  state_changes.Reset();
+
+  static const char kResetKeypadAppMode[] = "\x1b>";
+  model.ProcessInput(kResetKeypadAppMode, sizeof(kResetKeypadAppMode) - 1,
+                     &state_changes);
+
+  EXPECT_FALSE(state_changes.IsDirty());
+  EXPECT_EQ(2, test_delegate.call_count());
+  EXPECT_FALSE(test_delegate.last_application_mode());
+};
 
 // TODO(vtl): Test responses.
 

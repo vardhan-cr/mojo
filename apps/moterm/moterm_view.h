@@ -54,6 +54,7 @@ class MotermView : public mojo::ViewObserver,
 
   // |MotermModel::Delegate|:
   void OnResponse(const void* buf, size_t size) override;
+  void OnSetKeypadMode(bool application_mode) override;
 
   // |MotermDriver::Client|:
   void OnDataReceived(const void* bytes, size_t num_bytes) override;
