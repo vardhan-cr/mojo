@@ -7,7 +7,7 @@ benchmarks = [
     'app': 'https://core.mojoapps.io/dart_traced_application.mojo',
     'duration': 10,
     'measurements': [
-      'time_until/traced_application/function1',
+      'time_until/traced_application/initialized',
       'avg_duration/traced_application/function1',
     ]
   },

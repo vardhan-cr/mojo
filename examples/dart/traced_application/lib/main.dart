@@ -29,6 +29,7 @@ class TestUsingTracingApp extends Application {
     // This sets up a connection between this application and the Mojo
     // tracing service.
     _tracing = new TracingHelper(this, "example_traced_application");
+    _tracing.traceInstant("initialized", "traced_application");
 
     // Now we schedule some random work just so we have something to trace.
     new Timer.periodic(new Duration(seconds: 1), (t) => function1());
