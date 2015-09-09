@@ -2,11 +2,24 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-part of generate;
+library mojom.utils;
+
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:path/path.dart' as path;
 
 bool isMojomDart(String path) => path.endsWith('.mojom.dart');
 bool isMojom(String path) => path.endsWith('.mojom');
 bool isDotMojoms(String path) => path.endsWith(".mojoms");
+
+String makeAbsolute(String p) =>
+    path.isAbsolute(p) ? path.normalize(p) : path.normalize(path.absolute(p));
+
+String makeRelative(String p) => path.isAbsolute(p)
+    ? path.normalize(path.relative(p, from: Directory.current.path))
+    : path.normalize(p);
 
 /// An Error for problems on the command line.
 class CommandLineError extends Error {

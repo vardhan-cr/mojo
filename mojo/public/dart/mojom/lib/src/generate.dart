@@ -10,11 +10,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:args/args.dart' as args;
 import 'package:path/path.dart' as path;
 
-part 'src/options.dart';
-part 'src/utils.dart';
+import 'utils.dart';
 
 class _GenerateIterData extends SubDirIterData {
   final Directory _packageRoot;
@@ -31,57 +29,11 @@ class MojomGenerator {
   Directory _mojoSdk;
   int _generationMs;
 
-  static singleMain(List<String> arguments) async {
-    var options = await parseArguments(arguments);
-    var singlePackage = options.singlePackage;
-    if (singlePackage == null) {
-      throw new CommandLineError("--single-package is required.");
-    }
-    var generator = new MojomGenerator(options.mojoSdk,
-        verbose: options.verbose,
-        dryRun: options.dryRun,
-        errorOnDuplicate: options.errorOnDuplicate,
-        profile: options.profile);
-    await generator.generateForPackage(singlePackage);
-    if (options.profile) {
-      generator.printProfile();
-    }
-  }
-
-  static allMain(List<String> arguments) async {
-    var options = await parseArguments(arguments);
-    if (options.singlePackage != null) {
-      throw new CommandLineError(
-          "This script does not do --single-package. Try generate.dart");
-    }
-
-    // mojoms without a DartPackage annotation, and pregenerated mojoms from
-    // [additionalDirs] will go into the mojom package, so we make a local
-    // copy of it so we don't pollute the global pub cache.
-    //
-    // TODO(zra): Fail if a mojom has no DartPackage annotation, and remove the
-    // need for [additionalDirs].
-    if (!options.dryRun) {
-      await _copyMojomPackage(options.packages);
-    }
-
-    var generator = new MojomGenerator(options.mojoSdk,
-        verbose: options.verbose,
-        dryRun: options.dryRun,
-        errorOnDuplicate: options.errorOnDuplicate,
-        profile: options.profile);
-
-    await generator.generateForAllPackages(
-        options.packages, options.mojomPackage, options.additionalDirs,
-        fetch: options.fetch, generate: options.generate);
-
-    if (options.profile) {
-      generator.printProfile();
-    }
-  }
-
-  MojomGenerator(this._mojoSdk, {bool errorOnDuplicate: true,
-      bool verbose: false, bool profile: false, bool dryRun: false})
+  MojomGenerator(this._mojoSdk,
+      {bool errorOnDuplicate: true,
+      bool verbose: false,
+      bool profile: false,
+      bool dryRun: false})
       : _errorOnDuplicate = errorOnDuplicate,
         _verbose = verbose,
         _dryRun = dryRun,
@@ -149,35 +101,6 @@ class MojomGenerator {
     print("Generation time: $_generationMs ms");
   }
 
-  /// The "mojom" entry in [packages] is a symbolic link to the mojom package in
-  /// the global pub cache directory. Because we might need to write package
-  /// specific .mojom.dart files into the mojom package, we need to make a local
-  /// copy of it.
-  static _copyMojomPackage(Directory packages) async {
-    var link = new Link(path.join(packages.path, "mojom"));
-    if (!await link.exists()) {
-      // If the "mojom" entry in packages is not a symbolic link,
-      // then do nothing.
-      return;
-    }
-
-    var realpath = await link.resolveSymbolicLinks();
-    var realDir = new Directory(realpath);
-    var mojomDir = new Directory(path.join(packages.path, "mojom"));
-
-    await link.delete();
-    await mojomDir.create();
-    await for (var file in realDir.list(recursive: true)) {
-      if (file is File) {
-        var relative = path.relative(file.path, from: realDir.path);
-        var destPath = path.join(mojomDir.path, relative);
-        var destDir = new Directory(path.dirname(destPath));
-        await destDir.create(recursive: true);
-        await file.copy(path.join(mojomDir.path, relative));
-      }
-    }
-  }
-
   /// Under [package]/lib, returns the oldest modification time for a
   /// .mojom.dart file.
   _findOldestMojomDart(Directory package) async {
@@ -200,10 +123,10 @@ class MojomGenerator {
   bool _shouldRegenerate(
       DateTime dotMojomsTime, DateTime mojomTime, DateTime mojomDartTime) {
     return (dotMojomsTime == null) ||
-           (mojomTime == null) ||
-           (mojomDartTime == null) ||
-           dotMojomsTime.isAfter(mojomDartTime) ||
-           mojomTime.isAfter(mojomDartTime);
+        (mojomTime == null) ||
+        (mojomDartTime == null) ||
+        dotMojomsTime.isAfter(mojomDartTime) ||
+        mojomTime.isAfter(mojomDartTime);
   }
 
   /// Given a .mojoms file in |mojomsFile|, fetch the listed .mojom files and
@@ -441,18 +364,22 @@ class TreeGenerator {
   MojomGenerator _generator;
   Directory _mojoSdk;
   Directory _rootDir;
+  List<String> _skip;
   bool _verbose;
   bool _profile;
+  bool _dryRun;
   int errors;
 
-  TreeGenerator(String mojoSdk, String rootDir,
-      {bool verbose: false, bool profile: false}) {
-    _mojoSdk = new Directory(mojoSdk);
-    _rootDir = new Directory(rootDir);
+  TreeGenerator(Directory mojoSdk, Directory rootDir, List<String> skip,
+      {bool verbose: false, bool profile: false, bool dryRun: false}) {
+    _mojoSdk = mojoSdk;
+    _rootDir = rootDir;
+    _skip = skip;
     _verbose = verbose;
     _profile = profile;
-    _generator =
-        new MojomGenerator(_mojoSdk, verbose: _verbose, profile: _profile);
+    _dryRun = dryRun;
+    _generator = new MojomGenerator(_mojoSdk,
+        verbose: _verbose, profile: _profile, dryRun: _dryRun);
     errors = 0;
   }
 
@@ -462,12 +389,20 @@ class TreeGenerator {
       if (entry is! File) continue;
       if (!isDotMojoms(entry.path)) continue;
       if (alreadySeen.contains(entry.path)) continue;
+      if (_shouldSkip(entry)) continue;
       alreadySeen.add(entry.path);
       await _runGenerate(entry.parent);
     }
     if (_profile) {
       _generator.printProfile();
     }
+  }
+
+  bool _shouldSkip(File f) {
+    if (_skip == null) return false;
+    var match =
+        _skip.firstWhere((p) => f.path.startsWith(p), orElse: () => null);
+    return match != null;
   }
 
   _runGenerate(Directory package) async {
