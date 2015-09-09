@@ -48,7 +48,7 @@ GURL GetAppURLAndArgs(Context* context,
   // SplitString() returns empty strings for extra delimeter characters (' ').
   base::SplitString(app_url_and_args, ' ', args);
   args->erase(std::remove_if(args->begin(), args->end(),
-                             std::mem_fun_ref(&std::string::empty)),
+                             [](const std::string& a) { return a.empty(); }),
               args->end());
 
   if (args->empty())
