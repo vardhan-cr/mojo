@@ -21,7 +21,7 @@ import 'package:mojo_services/tracing/tracing.mojom.dart';
 // to perform tracing.
 class TracingHelper {
   TraceProviderImpl _impl;
-  String _tid;
+  int _tid;
 
   // Construct an instance of TracingHelper from within your application's
   // |initialize()| method. |appName| will be used to form a thread identifier
@@ -34,7 +34,7 @@ class TracingHelper {
     if (appName.length > 20) {
       appName = appName.substring(appName.length - 20);
     }
-    _tid = "${appName}/${Isolate.current.hashCode.toString()}";
+    _tid = appName.hashCode ^ Isolate.current.hashCode;
     ApplicationConnection connection = app.connectToApplication("mojo:tracing");
     connection.provideService(TraceProviderName, (e) {
       assert(_impl == null);
