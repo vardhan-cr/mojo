@@ -100,21 +100,21 @@ TEST(MotermModelTest, CharacterInfo) {
 
 TEST(MotermModelTest, StateChanges) {
   MotermModel::StateChanges state_changes;
-  EXPECT_FALSE(state_changes.cursor_moved);
+  EXPECT_FALSE(state_changes.cursor_changed);
   EXPECT_EQ(0u, state_changes.bell_count);
   EXPECT_TRUE(state_changes.dirty_rect.IsEmpty());
   EXPECT_FALSE(state_changes.IsDirty());
   // Should be the same after reset.
   state_changes.Reset();
-  EXPECT_FALSE(state_changes.cursor_moved);
+  EXPECT_FALSE(state_changes.cursor_changed);
   EXPECT_EQ(0u, state_changes.bell_count);
   EXPECT_TRUE(state_changes.dirty_rect.IsEmpty());
   EXPECT_FALSE(state_changes.IsDirty());
 
-  state_changes.cursor_moved = true;
+  state_changes.cursor_changed = true;
   EXPECT_TRUE(state_changes.IsDirty());
   state_changes.Reset();
-  EXPECT_FALSE(state_changes.cursor_moved);
+  EXPECT_FALSE(state_changes.cursor_changed);
   EXPECT_FALSE(state_changes.IsDirty());
 
   state_changes.bell_count++;
@@ -138,10 +138,11 @@ TEST(MotermModelTest, Basic) {
   EXPECT_EQ(25u, size.rows);
   EXPECT_EQ(80u, size.columns);
 
-  // The cursor should start out at the upper-left.
+  // The cursor should start out at the upper-left (and be visible).
   MotermModel::Position cursor_pos = model.GetCursorPosition();
   EXPECT_EQ(0, cursor_pos.row);
   EXPECT_EQ(0, cursor_pos.column);
+  EXPECT_TRUE(model.GetCursorVisibility());
 
   MotermModel::StateChanges state_changes;
   EXPECT_FALSE(state_changes.IsDirty());
@@ -150,7 +151,7 @@ TEST(MotermModelTest, Basic) {
   static const char kXYZ[] = "\x1b[1;32;41mXYZ";
   model.ProcessInput(kXYZ, sizeof(kXYZ) - 1, &state_changes);
   EXPECT_TRUE(state_changes.IsDirty());
-  EXPECT_TRUE(state_changes.cursor_moved);
+  EXPECT_TRUE(state_changes.cursor_changed);
   EXPECT_EQ(0u, state_changes.bell_count);
   EXPECT_FALSE(state_changes.dirty_rect.IsEmpty());
   // The model has some flexibility in the size of the dirty rectangle (it may
@@ -186,7 +187,7 @@ TEST(MotermModelTest, Basic) {
   static const char kBellBellBell[] = "\a\a\a";
   model.ProcessInput(kBellBellBell, sizeof(kBellBellBell) - 1, &state_changes);
   EXPECT_TRUE(state_changes.IsDirty());
-  EXPECT_FALSE(state_changes.cursor_moved);
+  EXPECT_FALSE(state_changes.cursor_changed);
   EXPECT_EQ(3u, state_changes.bell_count);
   EXPECT_TRUE(state_changes.dirty_rect.IsEmpty());
 
@@ -199,6 +200,33 @@ TEST(MotermModelTest, Basic) {
   size = model.GetSize();
   EXPECT_EQ(40u, size.rows);
   EXPECT_EQ(100u, size.columns);
+}
+
+TEST(MotermModelTest, ShowHideCursor) {
+  MotermModel model(MotermModel::Size(43, 132), MotermModel::Size(25, 80),
+                    nullptr);
+
+  // The cursor should start visible.
+  EXPECT_TRUE(model.GetCursorVisibility());
+
+  MotermModel::StateChanges state_changes;
+
+  // Note: A lot of sources on the web have show/hide backwards!
+  static const char kHideCursor[] = "\x1b[?25l";
+  model.ProcessInput(kHideCursor, sizeof(kHideCursor) - 1, &state_changes);
+
+  EXPECT_TRUE(state_changes.IsDirty());
+  EXPECT_TRUE(state_changes.cursor_changed);
+  EXPECT_FALSE(model.GetCursorVisibility());
+
+  state_changes.Reset();
+
+  static const char kShowCursor[] = "\x1b[?25h";
+  model.ProcessInput(kShowCursor, sizeof(kShowCursor) - 1, &state_changes);
+
+  EXPECT_TRUE(state_changes.IsDirty());
+  EXPECT_TRUE(state_changes.cursor_changed);
+  EXPECT_TRUE(model.GetCursorVisibility());
 }
 
 // TODO(vtl): Test responses.

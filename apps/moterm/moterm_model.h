@@ -91,14 +91,14 @@ class MotermModel {
   };
 
   struct StateChanges {
-    StateChanges() : cursor_moved(false), bell_count(0), dirty_rect() {}
+    StateChanges() : cursor_changed(false), bell_count(0), dirty_rect() {}
 
     bool IsDirty() const {
-      return cursor_moved || bell_count > 0 || !dirty_rect.IsEmpty();
+      return cursor_changed || bell_count > 0 || !dirty_rect.IsEmpty();
     }
     void Reset() { *this = StateChanges(); }
 
-    bool cursor_moved;
+    bool cursor_changed;  // Moved or changed visibility.
     unsigned bell_count;
     Rectangle dirty_rect;
   };
@@ -134,6 +134,7 @@ class MotermModel {
 
   Size GetSize() const;
   Position GetCursorPosition() const;
+  bool GetCursorVisibility() const;
   CharacterInfo GetCharacterInfoAt(const Position& position) const;
 
   void SetSize(const Size& size, bool reset);
@@ -181,6 +182,7 @@ class MotermModel {
 
   scoped_ptr<teken_char_t[]> characters_;
   scoped_ptr<teken_attr_t[]> attributes_;
+  bool cursor_visible_;
 
   teken_t terminal_;
 

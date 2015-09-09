@@ -309,19 +309,21 @@ void MotermView::Draw(bool force) {
     }
   }
 
-  // Draw the cursor.
-  MotermModel::Position cursor_pos = model_.GetCursorPosition();
-  // Reuse the background paint, but don't just paint over.
-  // TODO(vtl): Consider doing other things. Maybe make it blink, to be extra
-  // annoying.
-  // TODO(vtl): Maybe vary how we draw the cursor, depending on if we're focused
-  // and/or active.
-  bg_paint.setColor(SK_ColorWHITE);
-  bg_paint.setXfermodeMode(SkXfermode::kDifference_Mode);
-  canvas.drawRect(SkRect::MakeXYWH(cursor_pos.column * advance_width_,
-                                   cursor_pos.row * line_height_,
-                                   advance_width_, line_height_),
-                  bg_paint);
+  if (model_.GetCursorVisibility()) {
+    // Draw the cursor.
+    MotermModel::Position cursor_pos = model_.GetCursorPosition();
+    // Reuse the background paint, but don't just paint over.
+    // TODO(vtl): Consider doing other things. Maybe make it blink, to be extra
+    // annoying.
+    // TODO(vtl): Maybe vary how we draw the cursor, depending on if we're
+    // focused and/or active.
+    bg_paint.setColor(SK_ColorWHITE);
+    bg_paint.setXfermodeMode(SkXfermode::kDifference_Mode);
+    canvas.drawRect(SkRect::MakeXYWH(cursor_pos.column * advance_width_,
+                                     cursor_pos.row * line_height_,
+                                     advance_width_, line_height_),
+                    bg_paint);
+  }
 
   canvas.flush();
 

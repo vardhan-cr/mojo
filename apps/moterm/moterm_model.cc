@@ -108,6 +108,7 @@ MotermModel::MotermModel(const Size& max_size,
                          Delegate* delegate)
     : max_size_(max_size),
       delegate_(delegate),
+      cursor_visible_(true),
       terminal_(),
       current_state_changes_() {
   DCHECK_GT(max_size_.rows, 0u);
@@ -158,7 +159,7 @@ void MotermModel::ProcessInput(const void* input_bytes,
   teken_pos_t final_cursor_pos = *teken_get_cursor(&terminal_);
   if (initial_cursor_pos.tp_row != final_cursor_pos.tp_row ||
       initial_cursor_pos.tp_col != final_cursor_pos.tp_col) {
-    state_changes->cursor_moved = true;
+    state_changes->cursor_changed = true;
     // Update dirty rect to include old and new cursor positions.
     current_state_changes_->dirty_rect = EnclosingRectangle(
         current_state_changes_->dirty_rect,
@@ -181,6 +182,10 @@ MotermModel::Position MotermModel::GetCursorPosition() const {
   // Teken isn't const-correct, sadly.
   return TekenToMotermPosition(
       *teken_get_cursor(const_cast<teken_t*>(&terminal_)));
+}
+
+bool MotermModel::GetCursorVisibility() const {
+  return cursor_visible_;
 }
 
 MotermModel::CharacterInfo MotermModel::GetCharacterInfoAt(
@@ -309,8 +314,28 @@ void MotermModel::OnCopy(const teken_rect_t* rect, const teken_pos_t* pos) {
 }
 
 void MotermModel::OnParam(int cmd, unsigned val) {
-  // TODO(vtl)
-  NOTIMPLEMENTED();
+  DCHECK(current_state_changes_);
+
+  // Note: |val| is usually a "boolean", except for |TP_SETBELLPD| (for which
+  // |val| can be decomposed using |TP_SETBELLPD_{PITCH, DURATION}()|).
+  switch (cmd) {
+    case TP_SHOWCURSOR:
+      cursor_visible_ = !!val;
+      current_state_changes_->cursor_changed = true;
+      break;
+    case TP_KEYPADAPP:
+    case TP_AUTOREPEAT:
+    case TP_SWITCHVT:
+    case TP_132COLS:
+    case TP_SETBELLPD:
+    case TP_MOUSE:
+      // TODO(vtl): TP_KEYPADAPP seems especially common.
+      NOTIMPLEMENTED() << "OnParam(" << cmd << ", " << val << ")";
+      break;
+    default:
+      NOTREACHED() << "OnParam(): unknown command: " << cmd;
+      break;
+  }
 }
 
 void MotermModel::OnRespond(const void* buf, size_t size) {
