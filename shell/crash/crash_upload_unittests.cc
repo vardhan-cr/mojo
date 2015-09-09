@@ -91,7 +91,7 @@ class MockNetworkService : public mojo::NetworkService {
 };
 
 std::string GetDumpContent(const base::FilePath& path) {
-  return "--" + path.value() + "\r\n";
+  return "--" + path.BaseName().value() + "\r\n";
 }
 
 void CreateValidDump(const base::FilePath& path, const base::Time& time) {
