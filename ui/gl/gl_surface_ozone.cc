@@ -4,6 +4,7 @@
 
 #include "ui/gl/gl_surface.h"
 
+#include <memory>
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/location.h"
