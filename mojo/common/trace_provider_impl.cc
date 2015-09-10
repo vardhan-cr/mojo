@@ -5,7 +5,6 @@
 #include "mojo/common/trace_provider_impl.h"
 
 #include "base/logging.h"
-#include "base/memory/ref_counted_memory.h"
 #include "base/trace_event/trace_config.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/application_connection.h"
