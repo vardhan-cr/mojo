@@ -5,6 +5,7 @@
 #include "mojo/common/trace_provider_impl.h"
 
 #include "base/logging.h"
+#include "base/memory/ref_counted_memory.h"
 #include "base/trace_event/trace_config.h"
 #include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -45,7 +46,11 @@ void TraceProviderImpl::SendChunk(
     const scoped_refptr<base::RefCountedString>& events_str,
     bool has_more_events) {
   DCHECK(recorder_);
-  recorder_->Record(mojo::String(events_str->data()));
+  // The string will be empty if an error eccured or there were no trace
+  // events. Empty string is not a valid chunk to record so skip in this case.
+  if (events_str->data().length()) {
+    recorder_->Record(mojo::String(events_str->data()));
+  }
   if (!has_more_events) {
     recorder_.reset();
   }
