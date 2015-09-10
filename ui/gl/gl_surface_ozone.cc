@@ -460,8 +460,10 @@ class GL_EXPORT GLSurfaceOzoneSurfacelessSurfaceImpl
   void BindFramebuffer();
   bool CreatePixmaps();
 
+  static const int kBuffers = 2;
   GLuint fbo_;
-  GLuint textures_[2];
+  GLuint textures_[kBuffers];
+  std::unique_ptr<GLuint[]> rb_depth_;
   scoped_refptr<GLImage> images_[2];
   int current_surface_;
   DISALLOW_COPY_AND_ASSIGN(GLSurfaceOzoneSurfacelessSurfaceImpl);
@@ -519,6 +521,10 @@ bool GLSurfaceOzoneSurfacelessSurfaceImpl::OnMakeCurrent(GLContext* context) {
     if (!fbo_)
       return false;
     glGenTextures(arraysize(textures_), textures_);
+    if (get_surface_configuration().depth_bits <= 16) {
+      rb_depth_.reset(new GLuint[kBuffers]);
+      glGenRenderbuffersEXT(kBuffers, rb_depth_.get());
+    }
     if (!CreatePixmaps())
       return false;
   }
@@ -571,6 +577,10 @@ void GLSurfaceOzoneSurfacelessSurfaceImpl::Destroy() {
     glDeleteTextures(arraysize(textures_), textures_);
     for (auto& texture : textures_)
       texture = 0;
+    if (rb_depth_) {
+      glDeleteRenderbuffersEXT(kBuffers, rb_depth_.get());
+      rb_depth_.reset();
+    }
     glDeleteFramebuffersEXT(1, &fbo_);
     fbo_ = 0;
   }
@@ -584,12 +594,17 @@ GLSurfaceOzoneSurfacelessSurfaceImpl::~GLSurfaceOzoneSurfacelessSurfaceImpl() {
   DCHECK(!fbo_);
   for (size_t i = 0; i < arraysize(textures_); i++)
     DCHECK(!textures_[i]) << "texture " << i << " not released";
+  DCHECK(!rb_depth_);
 }
 
 void GLSurfaceOzoneSurfacelessSurfaceImpl::BindFramebuffer() {
   ScopedFrameBufferBinder fb(fbo_);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                             textures_[current_surface_], 0);
+  if (rb_depth_) {
+    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER,
+      GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb_depth_[current_surface_]);
+  }
 }
 
 bool GLSurfaceOzoneSurfacelessSurfaceImpl::CreatePixmaps() {
@@ -616,6 +631,13 @@ bool GLSurfaceOzoneSurfacelessSurfaceImpl::CreatePixmaps() {
 
     if (!images_[i]->BindTexImage(GL_TEXTURE_2D))
       return false;
+  }
+  if (rb_depth_) {
+    for (size_t i = 0; i < kBuffers; i++) {
+      glBindRenderbufferEXT(GL_RENDERBUFFER, rb_depth_[i]);
+      glRenderbufferStorageEXT(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16,
+        GetSize().width(), GetSize().height());
+    }
   }
   return true;
 }
