@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:_testing/expect.dart';
 import 'package:mojo/bindings.dart' as bindings;
@@ -13,6 +14,7 @@ import 'package:mojom/sample/sample_interfaces.mojom.dart' as sample;
 import 'package:mojom/mojo/test/test_structs.mojom.dart' as structs;
 import 'package:mojom/mojo/test/test_unions.mojom.dart' as unions;
 import 'package:mojom/mojo/test/rect.mojom.dart' as rect;
+import 'package:mojom/mojo/test/serialization_test_structs.mojom.dart' as serialization;
 
 class ProviderImpl implements sample.Provider {
   sample.ProviderStub _stub;
@@ -107,9 +109,30 @@ testSerializeArrayValueTypes() {
   Expect.listEquals(arrayValues.f5, arrayValues2.f5);
 }
 
+testSerializeToJSON() {
+  var r = new rect.Rect()
+    ..x = 1
+    ..y = 2
+    ..width = 3
+    ..height = 4;
+
+  var encodedRect = JSON.encode(r);
+  var goldenEncoding = "{\"x\":1,\"y\":2,\"width\":3,\"height\":4}";
+  Expect.equals(goldenEncoding, encodedRect);
+}
+
+testSerializeHandleToJSON() {
+  var s = new serialization.Struct2();
+
+  Expect.throws(() => JSON.encode(s),
+    (e) => e.cause is bindings.MojoCodecError);
+}
+
 testSerializeStructs() {
   testSerializeNamedRegion();
   testSerializeArrayValueTypes();
+  testSerializeToJSON();
+  testSerializeHandleToJSON();
 }
 
 testSerializePodUnions() {
