@@ -50,4 +50,4 @@ At its `>` prompt, you can enter JavaScript expressions. E.g.:
 
 * [//apps/moterm](../../apps/moterm)
 * [//examples/dart/netcat](../dart/netcat)
-* [//examples/js/repl.js](../dart/js/repl.js)
+* [//examples/js/repl.js](../js/repl.js)
