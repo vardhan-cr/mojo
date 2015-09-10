@@ -156,7 +156,9 @@ if (ozone_platform_dri || ozone_platform_drm) {
       "//ui/events/ozone:events_ozone_layout",
     ]
   }
+}
 
+if (ozone_platform_dri || ozone_platform_drm || ozone_platform_gbm) {
   source_set("drm_unittests") {
     testonly = true
     sources = [
@@ -171,8 +173,10 @@ if (ozone_platform_dri || ozone_platform_drm) {
 
     deps = [
       "//base",
+      "//mojo/public/c/system:for_shared_library",
       "//skia",
       "//testing/gtest",
+      "//ui/ozone",
       "//ui/ozone:ozone_base",
       "//ui/ozone/platform/drm:drm_common",
     ]

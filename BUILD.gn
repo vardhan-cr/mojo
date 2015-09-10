@@ -33,6 +33,7 @@ group("default") {
     deps += [
       "//ui/ozone",
       "//ui/ozone/demo",
+      "//ui/ozone:ozone_unittests",
     ]
   }
 }

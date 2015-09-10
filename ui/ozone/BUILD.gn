@@ -47,6 +47,7 @@ if (ozone_platform_gbm) {
     "platform/drm:drm_common",
     "platform/drm:gbm",
   ]
+  ozone_platform_test_deps += [ "platform/drm:drm_unittests" ]
 }
 
 platform_list_cc_file = "$target_gen_dir/platform_list.cc"
