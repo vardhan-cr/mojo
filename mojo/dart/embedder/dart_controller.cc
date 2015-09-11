@@ -690,8 +690,6 @@ bool DartController::Initialize(
 }
 
 bool DartController::RunDartScript(const DartControllerConfig& config) {
-  BlockForServiceIsolate();
-  CHECK(service_isolate_running_);
   const bool strict = strict_compilation_ || config.strict_compilation;
   Dart_Isolate isolate = CreateIsolateHelper(config.application_data,
                                              strict,
