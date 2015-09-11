@@ -9,18 +9,59 @@ module mojo.bindings.types;
 import "mojom_descriptors.mojom";
 import "mojom_types.mojom";
 
+/*
+* The structures in this file are intended to be used by the Mojom compiler
+* and code generators. The front end of the compiler takes as input a
+* .mojom file (or a list of .mojom files) and produces a MojomFileGraph struct.
+*
+* The backend of the compiler consumes a MojomFileGraph and invokes each of the
+* code generators passing them data derived from the MojomFileGraph.
+*
+* A MojomFile represents the data parsed from a single .mojom file. Mojom
+* modules form a directed acyclic graph via the "imports" relation.
+* That is, if Module A imports Module B then there is a directed edge in the
+* graph from A to B. A MojomFileGraph represents the whole Graph.
+
+* The Mojom structures represented here have been fully resolved, meaning that
+* the type references have been associated with their corresponding type
+* definitions. This resolved type data is contained in a MojomDescriptor.
+*/
+
+// A MojomFile represents the data defined by a single .mojom file, when
+// all of the type references to types declared in imported .mojom files
+// have been resolved.
 struct MojomFile {
-  string file_name;
+  // The module name is (derived from) the file name of the corresponding
+  // .mojom file. It is the unique identifier for this module within the
+  // MojomFileGraph
+  string module_name;
+
+   // The namespace is the identifier declared via the "module" declaration
+   // in the .mojom file.
+  string? module_namespace;
 
   // Attributes declared in the Mojom file at the module level.
   array<Attribute>? attributes;
 
-  // The identifier of the declared module, if any.
-  string? module_identifier;
-
-  // The list of other .mojom files imported by this one.
+  // The list of other MojomFiles imported by this one. The elements
+  // of the array are the |module_name|s and the associated module may
+  // be retrieved from the  MojomFileGraph.
   array<string>? imports;
 
-  // The types and constants declared in this Mojom file.
+  // The MojomDescriptor in the MojomFileGraph contains the types and
+  // constants declared in the union of all modules in the graph. This
+  // KeysByType selects the keys of the types and constants defined in
+  // this module
+  KeysByType declaredMojomObjects;
+};
+
+// Represents a directed acyclic graph of MojomFiles.
+struct MojomFileGraph {
+  // All the modules in this graph. The keys are module names
+  map<string, MojomFile> modules;
+
+  // The types and constants declared in the union of all MojomFiles
+  // in this Graph. Each MojomFile contains a |KeysByType| that selects
+  // the objects described in that module.
   MojomDescriptor? mojom_descriptor;
 };
