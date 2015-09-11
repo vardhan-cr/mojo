@@ -42,7 +42,8 @@ class RawChannelPosix final : public RawChannel,
   // |RawChannel| protected methods:
   // Actually override this so that we can send multiple messages with (only)
   // FDs if necessary.
-  void EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message) override;
+  void EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message) override
+      MOJO_EXCLUSIVE_LOCKS_REQUIRED(write_mutex());
   // Override this to handle those extra FD-only messages.
   bool OnReadMessageForRawChannel(
       const MessageInTransit::View& message_view) override;
@@ -78,14 +79,12 @@ class RawChannelPosix final : public RawChannel,
 
   std::deque<embedder::PlatformHandle> read_platform_handles_;
 
-  // The following members are used on multiple threads and protected by
-  // |write_lock()|:
-  bool pending_write_;
+  bool pending_write_ MOJO_GUARDED_BY(write_mutex());
 
-  // This is used for posting tasks from write threads to the I/O thread. It
-  // must only be accessed under |write_lock_|. The weak pointers it produces
-  // are only used/invalidated on the I/O thread.
-  base::WeakPtrFactory<RawChannelPosix> weak_ptr_factory_;
+  // This is used for posting tasks from write threads to the I/O thread. The
+  // weak pointers it produces are only used/invalidated on the I/O thread.
+  base::WeakPtrFactory<RawChannelPosix> weak_ptr_factory_
+      MOJO_GUARDED_BY(write_mutex());
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(RawChannelPosix);
 };
@@ -102,7 +101,7 @@ RawChannelPosix::~RawChannelPosix() {
   DCHECK(!pending_read_);
   DCHECK(!pending_write_);
 
-  // No need to take the |write_lock()| here -- if there are still weak pointers
+  // No need to take |write_mutex()| here -- if there are still weak pointers
   // outstanding, then we're hosed anyway (since we wouldn't be able to
   // invalidate them cleanly, since we might not be on the I/O thread).
   DCHECK(!weak_ptr_factory_.HasWeakPtrs());
@@ -215,7 +214,7 @@ embedder::ScopedPlatformHandleVectorPtr RawChannelPosix::GetReadPlatformHandles(
 RawChannel::IOResult RawChannelPosix::WriteNoLock(
     size_t* platform_handles_written,
     size_t* bytes_written) {
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   DCHECK(!pending_write_);
 
@@ -288,7 +287,7 @@ RawChannel::IOResult RawChannelPosix::WriteNoLock(
 }
 
 RawChannel::IOResult RawChannelPosix::ScheduleWriteNoLock() {
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   DCHECK(!pending_write_);
 
@@ -332,7 +331,7 @@ void RawChannelPosix::OnShutdownNoLock(
     scoped_ptr<ReadBuffer> /*read_buffer*/,
     scoped_ptr<WriteBuffer> /*write_buffer*/) {
   DCHECK_EQ(base::MessageLoop::current(), message_loop_for_io());
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   read_watcher_.reset();   // This will stop watching (if necessary).
   write_watcher_.reset();  // This will stop watching (if necessary).
@@ -385,7 +384,7 @@ void RawChannelPosix::OnFileCanWriteWithoutBlocking(int fd) {
   size_t platform_handles_written = 0;
   size_t bytes_written = 0;
   {
-    base::AutoLock locker(write_lock());
+    MutexLocker locker(&write_mutex());
 
     DCHECK(pending_write_);
 
@@ -454,7 +453,7 @@ void RawChannelPosix::WaitToWrite() {
           fd_.get().fd, false, base::MessageLoopForIO::WATCH_WRITE,
           write_watcher_.get(), this)) {
     {
-      base::AutoLock locker(write_lock());
+      MutexLocker locker(&write_mutex());
 
       DCHECK(pending_write_);
       pending_write_ = false;

@@ -163,7 +163,7 @@ RawChannel::~RawChannel() {
   DCHECK(!read_buffer_);
   DCHECK(!write_buffer_);
 
-  // No need to take the |write_lock_| here -- if there are still weak pointers
+  // No need to take |write_mutex_| here -- if there are still weak pointers
   // outstanding, then we're hosed anyway (since we wouldn't be able to
   // invalidate them cleanly, since we might not be on the I/O thread).
   DCHECK(!weak_ptr_factory_.HasWeakPtrs());
@@ -203,7 +203,7 @@ void RawChannel::Init(Delegate* delegate) {
 void RawChannel::Shutdown() {
   DCHECK_EQ(base::MessageLoop::current(), message_loop_for_io_);
 
-  base::AutoLock locker(write_lock_);
+  MutexLocker locker(&write_mutex_);
 
   LOG_IF(WARNING, !write_buffer_->message_queue_.IsEmpty())
       << "Shutting down RawChannel with write buffer nonempty";
@@ -224,7 +224,7 @@ void RawChannel::Shutdown() {
 bool RawChannel::WriteMessage(scoped_ptr<MessageInTransit> message) {
   DCHECK(message);
 
-  base::AutoLock locker(write_lock_);
+  MutexLocker locker(&write_mutex_);
   if (write_stopped_)
     return false;
 
@@ -258,7 +258,7 @@ bool RawChannel::WriteMessage(scoped_ptr<MessageInTransit> message) {
 
 // Reminder: This must be thread-safe.
 bool RawChannel::IsWriteBufferEmpty() {
-  base::AutoLock locker(write_lock_);
+  MutexLocker locker(&write_mutex_);
   return write_buffer_->message_queue_.IsEmpty();
 }
 
@@ -412,7 +412,7 @@ void RawChannel::OnWriteCompleted(IOResult io_result,
 
   bool did_fail = false;
   {
-    base::AutoLock locker(write_lock_);
+    MutexLocker locker(&write_mutex_);
     DCHECK_EQ(write_stopped_, write_buffer_->message_queue_.IsEmpty());
 
     if (write_stopped_) {
@@ -431,7 +431,7 @@ void RawChannel::OnWriteCompleted(IOResult io_result,
 }
 
 void RawChannel::EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message) {
-  write_lock_.AssertAcquired();
+  write_mutex_.AssertHeld();
   write_buffer_->message_queue_.AddMessage(message.Pass());
 }
 
@@ -463,7 +463,7 @@ RawChannel::Delegate::Error RawChannel::ReadIOResultToError(
 
 void RawChannel::CallOnError(Delegate::Error error) {
   DCHECK_EQ(base::MessageLoop::current(), message_loop_for_io_);
-  // TODO(vtl): Add a "write_lock_.AssertNotAcquired()"?
+  // TODO(vtl): Add a "write_mutex_.AssertNotHeld()"?
   if (delegate_) {
     delegate_->OnError(error);
     return;  // |this| may have been destroyed in |OnError()|.
@@ -473,7 +473,7 @@ void RawChannel::CallOnError(Delegate::Error error) {
 bool RawChannel::OnWriteCompletedNoLock(IOResult io_result,
                                         size_t platform_handles_written,
                                         size_t bytes_written) {
-  write_lock_.AssertAcquired();
+  write_mutex_.AssertHeld();
 
   DCHECK(!write_stopped_);
   DCHECK(!write_buffer_->message_queue_.IsEmpty());

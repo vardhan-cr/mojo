@@ -225,21 +225,21 @@ void RawChannelWin::RawChannelIOHandler::OnPendingReadStarted() {
 
 bool RawChannelWin::RawChannelIOHandler::pending_write_no_lock() const {
   DCHECK(owner_);
-  owner_->write_lock().AssertAcquired();
+  owner_->write_mutex().AssertHeld();
   return pending_write_;
 }
 
 base::MessageLoopForIO::IOContext*
 RawChannelWin::RawChannelIOHandler::write_context_no_lock() {
   DCHECK(owner_);
-  owner_->write_lock().AssertAcquired();
+  owner_->write_mutex().AssertHeld();
   return &write_context_;
 }
 
 void RawChannelWin::RawChannelIOHandler::OnPendingWriteStartedNoLock(
     size_t platform_handles_written) {
   DCHECK(owner_);
-  owner_->write_lock().AssertAcquired();
+  owner_->write_mutex().AssertHeld();
   DCHECK(!pending_write_);
   pending_write_ = true;
   platform_handles_written_ = platform_handles_written;
@@ -276,7 +276,7 @@ void RawChannelWin::RawChannelIOHandler::DetachFromOwnerNoLock(
     scoped_ptr<WriteBuffer> write_buffer) {
   DCHECK(owner_);
   DCHECK_EQ(base::MessageLoop::current(), owner_->message_loop_for_io());
-  owner_->write_lock().AssertAcquired();
+  owner_->write_mutex().AssertHeld();
 
   // If read/write is pending, we have to retain the corresponding buffer.
   if (pending_read_)
@@ -336,7 +336,7 @@ void RawChannelWin::RawChannelIOHandler::OnWriteCompleted(DWORD bytes_written,
   }
 
   {
-    base::AutoLock locker(owner_->write_lock());
+    MutexLocker locker(&owner_->write_mutex());
     CHECK(pending_write_);
     pending_write_ = false;
   }
@@ -482,7 +482,7 @@ embedder::ScopedPlatformHandleVectorPtr RawChannelWin::GetReadPlatformHandles(
 RawChannel::IOResult RawChannelWin::WriteNoLock(
     size_t* platform_handles_written,
     size_t* bytes_written) {
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   DCHECK(io_handler_);
   DCHECK(!io_handler_->pending_write_no_lock());
@@ -551,7 +551,7 @@ RawChannel::IOResult RawChannelWin::WriteNoLock(
 }
 
 RawChannel::IOResult RawChannelWin::ScheduleWriteNoLock() {
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   DCHECK(io_handler_);
   DCHECK(!io_handler_->pending_write_no_lock());
@@ -598,7 +598,7 @@ void RawChannelWin::OnShutdownNoLock(scoped_ptr<ReadBuffer> read_buffer,
   DCHECK_EQ(base::MessageLoop::current(), message_loop_for_io());
   DCHECK(io_handler_);
 
-  write_lock().AssertAcquired();
+  write_mutex().AssertHeld();
 
   if (io_handler_->pending_read() || io_handler_->pending_write_no_lock()) {
     // |io_handler_| will be alive until pending read/write (if any) completes.
