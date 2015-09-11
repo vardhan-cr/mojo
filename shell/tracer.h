@@ -81,6 +81,7 @@ class Tracer : public mojo::common::DataPipeDrainer::Client {
   tracing::TraceCollectorPtr coordinator_;
   scoped_ptr<mojo::common::DataPipeDrainer> drainer_;
 
+  mojo::TraceProviderImpl trace_provider_impl_;
   // Whether we're currently tracing.
   bool tracing_;
   // How long to trace after message loop creation.

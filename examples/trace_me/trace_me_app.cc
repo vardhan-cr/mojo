@@ -52,11 +52,11 @@ class TraceMeApp : public mojo::ApplicationDelegate {
 
   // mojo:ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
-    TRACE_EVENT0("trace_me", "TraceMeApp::Initialize");
-
     // Allow TracingImpl to connect to the central tracing service, advertising
     // its ability to provide trace events.
     tracing_.Initialize(app);
+
+    TRACE_EVENT0("trace_me", "TraceMeApp::Initialize");
 
     base::MessageLoop::current()->PostTask(FROM_HERE, base::Bind(&DoWork));
   }

@@ -17,11 +17,9 @@
 namespace shell {
 
 Tracer::Tracer()
-    : tracing_(false), first_chunk_written_(false), trace_file_(nullptr) {
-}
+    : tracing_(false), first_chunk_written_(false), trace_file_(nullptr) {}
 
-Tracer::~Tracer() {
-}
+Tracer::~Tracer() {}
 
 void Tracer::Start(const std::string& categories,
                    const std::string& duration_seconds_str,
@@ -67,8 +65,7 @@ void Tracer::StopAndFlushToFile() {
 
 void Tracer::ConnectToProvider(
     mojo::InterfaceRequest<tracing::TraceProvider> request) {
-  auto impl = new mojo::TraceProviderImpl(request.Pass());
-  impl->set_tracing_already_started(tracing_);
+  trace_provider_impl_.Bind(request.Pass());
 }
 
 void Tracer::StopTracingAndFlushToDisk() {
