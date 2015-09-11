@@ -99,10 +99,17 @@ void CommandBufferDriver::Initialize(
 
 bool CommandBufferDriver::DoInitialize(
     mojo::ScopedSharedBufferHandle shared_state) {
-  if (widget_ == gfx::kNullAcceleratedWidget)
+  if (widget_ == gfx::kNullAcceleratedWidget) {
+    // This is a dummy surface, so attempt to skip actual surface
+    // allocation by passing size 0.
     surface_ = gfx::GLSurface::CreateOffscreenGLSurface(
-        gfx::Size(1, 1), requested_configuration_);
-  else {
+        gfx::Size(0, 0), requested_configuration_);
+    if (!surface_.get()) {
+      // If size 0 was a fail, retry with size 1.
+      surface_ = gfx::GLSurface::CreateOffscreenGLSurface(
+          gfx::Size(1, 1), requested_configuration_);
+    }
+  } else {
     surface_ =
         gfx::GLSurface::CreateViewGLSurface(widget_, requested_configuration_);
     if (auto vsync_provider = surface_->GetVSyncProvider()) {
