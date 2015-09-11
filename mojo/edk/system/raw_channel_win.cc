@@ -13,7 +13,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/process/process.h"
-#include "base/synchronization/lock.h"
 #include "base/win/windows_version.h"
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/public/cpp/system/macros.h"
