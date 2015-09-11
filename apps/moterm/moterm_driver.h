@@ -21,6 +21,7 @@
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/files/public/interfaces/file.mojom.h"
+#include "mojo/services/files/public/interfaces/types.mojom.h"
 
 // TODO(vtl): Maybe we should Mojo-fy the driver and run it as a separate app?
 class MotermDriver : public mojo::files::File {
@@ -125,6 +126,13 @@ class MotermDriver : public mojo::files::File {
   void Ioctl(uint32_t request,
              mojo::Array<uint32_t> in_values,
              const IoctlCallback& callback) override;
+
+  // Helpers for |Ioctl()|:
+  void IoctlGetSettings(mojo::Array<uint32_t> in_values,
+                        const IoctlCallback& callback);
+  void IoctlSetSettings(mojo::Array<uint32_t> in_values,
+                        const IoctlCallback& callback);
+  mojo::files::Error IoctlSetSettingsHelper(mojo::Array<uint32_t> in_values);
 
   Client* client_;  // Set until |Detach()| is called.
   bool is_closed_;

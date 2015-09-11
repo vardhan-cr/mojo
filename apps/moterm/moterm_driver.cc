@@ -8,12 +8,24 @@
 #include <limits>
 
 #include "base/logging.h"
-#include "mojo/services/files/public/interfaces/types.mojom.h"
+#include "mojo/services/files/public/interfaces/ioctl.mojom.h"
+#include "mojo/services/files/public/interfaces/ioctl_terminal.mojom.h"
 
+// Character constants:
 const uint8_t kEOT = 4;
 const uint8_t kNL = 10;
 const uint8_t kCR = 13;
 const uint8_t kDEL = 127;
+
+// Short forms for various counts/indices used for the get/set settings ioctls.
+const size_t kBaseFieldCount = mojo::files::kIoctlTerminalTermiosBaseFieldCount;
+const size_t kTotalFieldCount =
+    kBaseFieldCount + mojo::files::kIoctlTerminalTermiosCtrlCharCount;
+const size_t kIFlagIdx = mojo::files::kIoctlTerminalTermiosIFlagIndex;
+const size_t kOFlagIdx = mojo::files::kIoctlTerminalTermiosOFlagIndex;
+const size_t kLFlagIdx = mojo::files::kIoctlTerminalTermiosLFlagIndex;
+const size_t kVEraseIdx = mojo::files::kIoctlTerminalTermiosCtrlCharVERASEIndex;
+const size_t kVEOFIdx = mojo::files::kIoctlTerminalTermiosCtrlCharVERASEIndex;
 
 MotermDriver::PendingRead::PendingRead(uint32_t num_bytes,
                                        const ReadCallback& callback)
@@ -369,6 +381,111 @@ void MotermDriver::Ioctl(uint32_t request,
     return;
   }
 
-  // TODO(vtl)
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+  if (request != mojo::files::kIoctlTerminal) {
+    callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+    return;
+  }
+
+  // "Is TTY?" Yes.
+  if (!in_values || !in_values.size()) {
+    callback.Run(mojo::files::ERROR_OK, mojo::Array<uint32_t>());
+    return;
+  }
+
+  switch (in_values[0]) {
+    case mojo::files::kIoctlTerminalGetSettings:
+      IoctlGetSettings(in_values.Pass(), callback);
+      return;
+    case mojo::files::kIoctlTerminalSetSettings:
+      IoctlSetSettings(in_values.Pass(), callback);
+      return;
+    case mojo::files::kIoctlTerminalGetWindowSize:
+    case mojo::files::kIoctlTerminalSetWindowSize:
+      NOTIMPLEMENTED();
+      callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+      return;
+    default:
+      callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+      return;
+  }
+}
+
+void MotermDriver::IoctlGetSettings(mojo::Array<uint32_t> in_values,
+                                    const IoctlCallback& callback) {
+  if (in_values.size() != 1u) {
+    callback.Run(mojo::files::ERROR_INVALID_ARGUMENT, mojo::Array<uint32_t>());
+    return;
+  }
+
+  auto out_values = mojo::Array<uint32_t>::New(kTotalFieldCount);
+
+  // TODO(vtl): Add support for various things. Also, some values should be
+  // hard-coded.
+
+  // iflag:
+  if (icrnl_)
+    out_values[kIFlagIdx] |= mojo::files::kIoctlTerminalTermiosIFlagICRNL;
+
+  // oflag:
+  if (onlcr_)
+    out_values[kOFlagIdx] |= mojo::files::kIoctlTerminalTermiosOFlagONLCR;
+
+  // lflag:
+  if (icanon_)
+    out_values[kLFlagIdx] |= mojo::files::kIoctlTerminalTermiosLFlagICANON;
+
+  // cc:
+  out_values[kVEraseIdx] = verase_;
+  out_values[kVEOFIdx] = veof_;
+
+  callback.Run(mojo::files::ERROR_OK, out_values.Pass());
+}
+
+void MotermDriver::IoctlSetSettings(mojo::Array<uint32_t> in_values,
+                                    const IoctlCallback& callback) {
+  callback.Run(IoctlSetSettingsHelper(in_values.Pass()),
+               mojo::Array<uint32_t>());
+}
+
+mojo::files::Error MotermDriver::IoctlSetSettingsHelper(
+    mojo::Array<uint32_t> in_values) {
+  // Note: "termios" offsets (and sizes) are increased by 1, to accomodate the
+  // subrequest at index 0.
+
+  // The "cc" values are optional.
+  if (in_values.size() < 1 + kBaseFieldCount)
+    return mojo::files::ERROR_INVALID_ARGUMENT;
+
+  // TODO(vtl): Add support for various things. Also, some values can't be
+  // changed.
+
+  // iflag:
+  icrnl_ = !!(in_values[1 + kIFlagIdx] &
+              mojo::files::kIoctlTerminalTermiosIFlagICRNL);
+
+  // oflag:
+  onlcr_ = !!(in_values[1 + kOFlagIdx] &
+              mojo::files::kIoctlTerminalTermiosOFlagONLCR);
+
+  // lflag:
+  icanon_ = !!(in_values[1 + kLFlagIdx] &
+               mojo::files::kIoctlTerminalTermiosLFlagICANON);
+
+  // TODO(vtl): Check that ispeed and ospeed are not set?
+
+  // cc:
+  if (1 + kVEraseIdx < in_values.size()) {
+    uint32_t value = in_values[1 + kVEraseIdx];
+    if (value > std::numeric_limits<uint8_t>::max())
+      return mojo::files::ERROR_INVALID_ARGUMENT;
+    verase_ = static_cast<uint8_t>(value);
+  }
+  if (1 + kVEOFIdx < in_values.size()) {
+    uint32_t value = in_values[1 + kVEOFIdx];
+    if (value > std::numeric_limits<uint8_t>::max())
+      return mojo::files::ERROR_INVALID_ARGUMENT;
+    veof_ = static_cast<uint8_t>(value);
+  }
+
+  return mojo::files::ERROR_OK;
 }
