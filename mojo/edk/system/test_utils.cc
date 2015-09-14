@@ -79,11 +79,11 @@ Stopwatch::~Stopwatch() {
 }
 
 void Stopwatch::Start() {
-  start_time_ = base::TimeTicks::Now();
+  start_time_ = platform_support_.GetTimeTicksNow();
 }
 
 MojoDeadline Stopwatch::Elapsed() {
-  int64_t result = (base::TimeTicks::Now() - start_time_).InMicroseconds();
+  int64_t result = platform_support_.GetTimeTicksNow() - start_time_;
   // |DCHECK_GE|, not |CHECK_GE|, since this may be performance-important.
   DCHECK_GE(result, 0);
   return static_cast<MojoDeadline>(result);

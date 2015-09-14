@@ -23,6 +23,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSupport final
   SimplePlatformSupport() {}
   ~SimplePlatformSupport() override {}
 
+  MojoTimeTicks GetTimeTicksNow() override;
   void GetCryptoRandomBytes(void* bytes, size_t num_bytes) override;
   PlatformSharedBuffer* CreateSharedBuffer(size_t num_bytes) override;
   PlatformSharedBuffer* CreateSharedBufferFromHandle(

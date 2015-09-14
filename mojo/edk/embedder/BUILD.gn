@@ -52,7 +52,10 @@ mojo_edk_source_set("platform") {
   # mojo_system_impl component.
   visibility = [ ":embedder" ]
 
-  mojo_edk_visibility = [ "mojo/edk/system" ]
+  mojo_edk_visibility = [
+    "mojo/edk/system",
+    "mojo/edk/system:test_utils",
+  ]
 
   sources = [
     "platform_channel_pair.cc",

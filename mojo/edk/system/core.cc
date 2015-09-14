@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/time/time.h"
 #include "mojo/edk/embedder/platform_shared_buffer.h"
 #include "mojo/edk/embedder/platform_support.h"
 #include "mojo/edk/system/async_waiter.h"
@@ -121,7 +120,7 @@ MojoResult Core::AsyncWait(MojoHandle handle,
 }
 
 MojoTimeTicks Core::GetTimeTicksNow() {
-  return base::TimeTicks::Now().ToInternalValue();
+  return platform_support_->GetTimeTicksNow();
 }
 
 MojoResult Core::Close(MojoHandle handle) {

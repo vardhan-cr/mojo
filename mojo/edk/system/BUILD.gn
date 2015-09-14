@@ -163,6 +163,8 @@ mojo_edk_source_set("test_utils") {
     "//base",
     "//base/test:test_support",
   ]
+
+  mojo_edk_deps = [ "mojo/edk/embedder:platform" ]
 }
 
 test("mojo_system_unittests") {
