@@ -119,6 +119,9 @@ class MotermView : public mojo::ViewObserver,
 
   skia::RefPtr<SkBitmapDevice> bitmap_device_;
 
+  // Keyboard state.
+  bool keypad_application_mode_;
+
   DISALLOW_COPY_AND_ASSIGN(MotermView);
 };
 

@@ -62,7 +62,8 @@ MotermView::MotermView(
       force_next_draw_(false),
       ascent_(0),
       line_height_(0),
-      advance_width_(0) {
+      advance_width_(0),
+      keypad_application_mode_(false) {
   // TODO(vtl): |service_provider_impl_|'s ctor doesn't like an invalid request,
   // so we have to conditionally, explicitly bind.
   if (service_provider_request.is_pending()) {
@@ -141,10 +142,7 @@ void MotermView::OnResponse(const void* buf, size_t size) {
 }
 
 void MotermView::OnSetKeypadMode(bool application_mode) {
-  // This should affect the numeric keypad with numlock off, changing what's
-  // sent for /, *, -, +, and enter (if |application_mode| is true, it should
-  // send escape sequences for these).
-  NOTIMPLEMENTED();
+  keypad_application_mode_ = application_mode;
 }
 
 void MotermView::OnDataReceived(const void* bytes, size_t num_bytes) {
@@ -347,7 +345,8 @@ void MotermView::Draw(bool force) {
 }
 
 void MotermView::OnKeyPressed(const mojo::EventPtr& key_event) {
-  std::string input_sequence = GetInputSequenceForKeyPressedEvent(*key_event);
+  std::string input_sequence =
+      GetInputSequenceForKeyPressedEvent(*key_event, keypad_application_mode_);
   if (input_sequence.empty())
     return;
 

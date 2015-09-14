@@ -10,7 +10,10 @@
 
 // TODO(vtl): Handle more stuff and verify that we're consistent about the
 // sequences we generate.
-std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event) {
+// TODO(vtl): In particular, our implementation of keypad_application_mode is
+// incomplete.
+std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
+                                               bool keypad_application_mode) {
   DCHECK_EQ(key_event.action, mojo::EVENT_TYPE_KEY_PRESSED);
   CHECK(key_event.key_data);
   const mojo::KeyData& key_data = *key_event.key_data;
@@ -55,17 +58,17 @@ std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event) {
     case mojo::KEYBOARD_CODE_NEXT:
       return std::string("\x1b[6~");
     case mojo::KEYBOARD_CODE_END:
-      return std::string("\x1b[F");
+      return std::string(keypad_application_mode ? "\x1bOF" : "\x1b[F");
     case mojo::KEYBOARD_CODE_HOME:
-      return std::string("\x1b[H");
+      return std::string(keypad_application_mode ? "\x1bOH" : "\x1b[H");
     case mojo::KEYBOARD_CODE_LEFT:
-      return std::string("\x1b[D");
+      return std::string(keypad_application_mode ? "\x1bOD" : "\x1b[D");
     case mojo::KEYBOARD_CODE_UP:
-      return std::string("\x1b[A");
+      return std::string(keypad_application_mode ? "\x1bOA" : "\x1b[A");
     case mojo::KEYBOARD_CODE_RIGHT:
-      return std::string("\x1b[C");
+      return std::string(keypad_application_mode ? "\x1bOC" : "\x1b[C");
     case mojo::KEYBOARD_CODE_DOWN:
-      return std::string("\x1b[B");
+      return std::string(keypad_application_mode ? "\x1bOB" : "\x1b[B");
     case mojo::KEYBOARD_CODE_INSERT:
       return std::string("\x1b[2~");
     case mojo::KEYBOARD_CODE_DELETE:

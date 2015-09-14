@@ -11,9 +11,11 @@ namespace mojo {
 class Event;
 }
 
-// Gets an appropriate sequence of characters to generate for the given key
-// pressed event (|key_event| must have |action| value
-// |EVENT_TYPE_KEY_PRESSED|). (Here, "appropriate" means VT100/xterm-ish.)
-std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event);
+// Gets an appropriate (VT100/xterm-ish) sequence of characters to generate for
+// the given key pressed event (|key_event| must have |action| value
+// |EVENT_TYPE_KEY_PRESSED|). |keypad_application_mode| indicates if the keypad
+// is in "application mode".
+std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
+                                               bool keypad_application_mode);
 
 #endif  // APPS_MOTERM_KEY_UTIL_H_

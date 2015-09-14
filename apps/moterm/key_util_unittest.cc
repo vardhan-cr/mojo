@@ -37,34 +37,63 @@ mojo::EventPtr MakeKeyEvent(bool is_char,
 
 TEST(KeyUtilTest, RegularChars) {
   // Only handles character events.
-  EXPECT_EQ(std::string(), GetInputSequenceForKeyPressedEvent(
-                               *MakeKeyEvent(false, 0, mojo::KEYBOARD_CODE_A)));
+  EXPECT_EQ(std::string(),
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(false, 0, mojo::KEYBOARD_CODE_A), false));
 
   EXPECT_EQ("A", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, 'A', mojo::KEYBOARD_CODE_A)));
+                     *MakeKeyEvent(true, 'A', mojo::KEYBOARD_CODE_A), false));
   EXPECT_EQ("a", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, 'a', mojo::KEYBOARD_CODE_A)));
-  EXPECT_EQ("0", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, '0', mojo::KEYBOARD_CODE_NUM_0)));
-  EXPECT_EQ("!", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, '!', mojo::KEYBOARD_CODE_NUM_0)));
-  EXPECT_EQ("\t", GetInputSequenceForKeyPressedEvent(
-                      *MakeKeyEvent(true, '\t', mojo::KEYBOARD_CODE_TAB)));
-  EXPECT_EQ("\r", GetInputSequenceForKeyPressedEvent(
-                      *MakeKeyEvent(true, '\r', mojo::KEYBOARD_CODE_RETURN)));
+                     *MakeKeyEvent(true, 'a', mojo::KEYBOARD_CODE_A), false));
+  EXPECT_EQ("0",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, '0', mojo::KEYBOARD_CODE_NUM_0), false));
+  EXPECT_EQ("!",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, '!', mojo::KEYBOARD_CODE_NUM_0), false));
+  EXPECT_EQ("\t",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, '\t', mojo::KEYBOARD_CODE_TAB), false));
+  EXPECT_EQ("\r",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, '\r', mojo::KEYBOARD_CODE_RETURN), false));
 }
 
 TEST(KeyUtilTest, SpecialChars) {
   // Backspace should send DEL.
-  EXPECT_EQ("\x7f", GetInputSequenceForKeyPressedEvent(
-                        *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_BACK)));
-  EXPECT_EQ("\x1b", GetInputSequenceForKeyPressedEvent(
-                        *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_ESCAPE)));
+  EXPECT_EQ("\x7f",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_BACK), false));
+  EXPECT_EQ("\x1b",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_ESCAPE), false));
   // Some multi-character results:
-  EXPECT_EQ("\x1b[5~", GetInputSequenceForKeyPressedEvent(
-                           *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_PRIOR)));
-  EXPECT_EQ("\x1b[C", GetInputSequenceForKeyPressedEvent(
-                          *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_RIGHT)));
+  EXPECT_EQ("\x1b[5~",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_PRIOR), false));
+  EXPECT_EQ("\x1b[H",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_HOME), false));
+  EXPECT_EQ("\x1b[C",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_RIGHT), false));
+}
+
+TEST(KeyUtilTest, KeypadApplicationMode) {
+  // Page-up should not be affected by keypad application mode.
+  EXPECT_EQ("\x1b[5~",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_PRIOR), true));
+  // But Home (and End) should be.
+  EXPECT_EQ("\x1bOH",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_HOME), true));
+  // As should the arroy keys.
+  EXPECT_EQ("\x1bOC",
+            GetInputSequenceForKeyPressedEvent(
+                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_RIGHT), true));
+  // TODO(vtl): Test this more thoroughly. Also other keypad keys (once that's
+  // implemented).
 }
 
 }  // namespace
