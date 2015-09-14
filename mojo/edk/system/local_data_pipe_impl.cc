@@ -189,10 +189,10 @@ bool LocalDataPipeImpl::ProducerEndSerialize(
   // Note: We don't use |port|.
   scoped_refptr<ChannelEndpoint> channel_endpoint =
       channel->SerializeEndpointWithLocalPeer(destination_for_endpoint, nullptr,
-                                              owner(), 0);
+                                              channel_endpoint_client(), 0);
   // Note: Keep |*this| alive until the end of this method, to make things
   // slightly easier on ourselves.
-  scoped_ptr<DataPipeImpl> self(owner()->ReplaceImplNoLock(make_scoped_ptr(
+  scoped_ptr<DataPipeImpl> self(ReplaceImpl(make_scoped_ptr(
       new RemoteProducerDataPipeImpl(channel_endpoint.get(), buffer_.Pass(),
                                      start_index_, current_num_bytes_))));
 
@@ -375,10 +375,11 @@ bool LocalDataPipeImpl::ConsumerEndSerialize(
   // Note: We don't use |port|.
   scoped_refptr<ChannelEndpoint> channel_endpoint =
       channel->SerializeEndpointWithLocalPeer(destination_for_endpoint,
-                                              &message_queue, owner(), 0);
+                                              &message_queue,
+                                              channel_endpoint_client(), 0);
   // Note: Keep |*this| alive until the end of this method, to make things
   // slightly easier on ourselves.
-  scoped_ptr<DataPipeImpl> self(owner()->ReplaceImplNoLock(make_scoped_ptr(
+  scoped_ptr<DataPipeImpl> self(ReplaceImpl(make_scoped_ptr(
       new RemoteConsumerDataPipeImpl(channel_endpoint.get(), old_num_bytes))));
 
   *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +

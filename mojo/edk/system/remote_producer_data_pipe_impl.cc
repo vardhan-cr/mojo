@@ -339,7 +339,7 @@ bool RemoteProducerDataPipeImpl::ConsumerEndSerialize(
   channel_endpoint.swap(channel_endpoint_);
   channel->SerializeEndpointWithRemotePeer(destination_for_endpoint,
                                            &message_queue, channel_endpoint);
-  owner()->SetProducerClosedNoLock();
+  SetProducerClosed();
 
   *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
                  channel->GetSerializedEndpointSize();
@@ -460,7 +460,7 @@ void RemoteProducerDataPipeImpl::MarkDataAsConsumed(size_t num_bytes) {
 void RemoteProducerDataPipeImpl::Disconnect() {
   DCHECK(producer_open());
   DCHECK(channel_endpoint_);
-  owner()->SetProducerClosedNoLock();
+  SetProducerClosed();
   channel_endpoint_->DetachFromClient();
   channel_endpoint_ = nullptr;
   // If the consumer is still open and we still have data, we have to keep the

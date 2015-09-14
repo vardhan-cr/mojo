@@ -262,20 +262,20 @@ bool DataPipe::ConsumerDeserialize(Channel* channel,
 }
 
 void DataPipe::ProducerCancelAllAwakables() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
   producer_awakable_list_->CancelAll();
 }
 
 void DataPipe::ProducerClose() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   ProducerCloseNoLock();
 }
 
 MojoResult DataPipe::ProducerWriteData(UserPointer<const void> elements,
                                        UserPointer<uint32_t> num_bytes,
                                        bool all_or_none) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
 
   if (producer_in_two_phase_write_no_lock())
@@ -308,7 +308,7 @@ MojoResult DataPipe::ProducerBeginWriteData(
     UserPointer<void*> buffer,
     UserPointer<uint32_t> buffer_num_bytes,
     bool all_or_none) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
 
   if (producer_in_two_phase_write_no_lock())
@@ -336,7 +336,7 @@ MojoResult DataPipe::ProducerBeginWriteData(
 }
 
 MojoResult DataPipe::ProducerEndWriteData(uint32_t num_bytes_written) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
 
   if (!producer_in_two_phase_write_no_lock())
@@ -370,7 +370,7 @@ MojoResult DataPipe::ProducerEndWriteData(uint32_t num_bytes_written) {
 }
 
 HandleSignalsState DataPipe::ProducerGetHandleSignalsState() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
   return impl_->ProducerGetHandleSignalsState();
 }
@@ -379,7 +379,7 @@ MojoResult DataPipe::ProducerAddAwakable(Awakable* awakable,
                                          MojoHandleSignals signals,
                                          uint32_t context,
                                          HandleSignalsState* signals_state) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
 
   HandleSignalsState producer_state = impl_->ProducerGetHandleSignalsState();
@@ -400,7 +400,7 @@ MojoResult DataPipe::ProducerAddAwakable(Awakable* awakable,
 
 void DataPipe::ProducerRemoveAwakable(Awakable* awakable,
                                       HandleSignalsState* signals_state) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
   producer_awakable_list_->Remove(awakable);
   if (signals_state)
@@ -410,7 +410,7 @@ void DataPipe::ProducerRemoveAwakable(Awakable* awakable,
 void DataPipe::ProducerStartSerialize(Channel* channel,
                                       size_t* max_size,
                                       size_t* max_platform_handles) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
   impl_->ProducerStartSerialize(channel, max_size, max_platform_handles);
 }
@@ -420,7 +420,7 @@ bool DataPipe::ProducerEndSerialize(
     void* destination,
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_producer_no_lock());
   // Warning: After |ProducerEndSerialize()|, quite probably |impl_| has
   // changed.
@@ -443,18 +443,18 @@ bool DataPipe::ProducerEndSerialize(
 }
 
 bool DataPipe::ProducerIsBusy() const {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   return producer_in_two_phase_write_no_lock();
 }
 
 void DataPipe::ConsumerCancelAllAwakables() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
   consumer_awakable_list_->CancelAll();
 }
 
 void DataPipe::ConsumerClose() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   ConsumerCloseNoLock();
 }
 
@@ -462,7 +462,7 @@ MojoResult DataPipe::ConsumerReadData(UserPointer<void> elements,
                                       UserPointer<uint32_t> num_bytes,
                                       bool all_or_none,
                                       bool peek) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   if (consumer_in_two_phase_read_no_lock())
@@ -490,7 +490,7 @@ MojoResult DataPipe::ConsumerReadData(UserPointer<void> elements,
 
 MojoResult DataPipe::ConsumerDiscardData(UserPointer<uint32_t> num_bytes,
                                          bool all_or_none) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   if (consumer_in_two_phase_read_no_lock())
@@ -518,7 +518,7 @@ MojoResult DataPipe::ConsumerDiscardData(UserPointer<uint32_t> num_bytes,
 }
 
 MojoResult DataPipe::ConsumerQueryData(UserPointer<uint32_t> num_bytes) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   if (consumer_in_two_phase_read_no_lock())
@@ -532,7 +532,7 @@ MojoResult DataPipe::ConsumerBeginReadData(
     UserPointer<const void*> buffer,
     UserPointer<uint32_t> buffer_num_bytes,
     bool all_or_none) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   if (consumer_in_two_phase_read_no_lock())
@@ -554,7 +554,7 @@ MojoResult DataPipe::ConsumerBeginReadData(
 }
 
 MojoResult DataPipe::ConsumerEndReadData(uint32_t num_bytes_read) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   if (!consumer_in_two_phase_read_no_lock())
@@ -586,7 +586,7 @@ MojoResult DataPipe::ConsumerEndReadData(uint32_t num_bytes_read) {
 }
 
 HandleSignalsState DataPipe::ConsumerGetHandleSignalsState() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
   return impl_->ConsumerGetHandleSignalsState();
 }
@@ -595,7 +595,7 @@ MojoResult DataPipe::ConsumerAddAwakable(Awakable* awakable,
                                          MojoHandleSignals signals,
                                          uint32_t context,
                                          HandleSignalsState* signals_state) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
 
   HandleSignalsState consumer_state = impl_->ConsumerGetHandleSignalsState();
@@ -616,7 +616,7 @@ MojoResult DataPipe::ConsumerAddAwakable(Awakable* awakable,
 
 void DataPipe::ConsumerRemoveAwakable(Awakable* awakable,
                                       HandleSignalsState* signals_state) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
   consumer_awakable_list_->Remove(awakable);
   if (signals_state)
@@ -626,7 +626,7 @@ void DataPipe::ConsumerRemoveAwakable(Awakable* awakable,
 void DataPipe::ConsumerStartSerialize(Channel* channel,
                                       size_t* max_size,
                                       size_t* max_platform_handles) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
   impl_->ConsumerStartSerialize(channel, max_size, max_platform_handles);
 }
@@ -636,7 +636,7 @@ bool DataPipe::ConsumerEndSerialize(
     void* destination,
     size_t* actual_size,
     embedder::PlatformHandleVector* platform_handles) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(has_local_consumer_no_lock());
   // Warning: After |ConsumerEndSerialize()|, quite probably |impl_| has
   // changed.
@@ -658,7 +658,7 @@ bool DataPipe::ConsumerEndSerialize(
 }
 
 bool DataPipe::ConsumerIsBusy() const {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   return consumer_in_two_phase_read_no_lock();
 }
 
@@ -695,7 +695,7 @@ DataPipe::~DataPipe() {
 
 scoped_ptr<DataPipeImpl> DataPipe::ReplaceImplNoLock(
     scoped_ptr<DataPipeImpl> new_impl) {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   DCHECK(new_impl);
 
   impl_->set_owner(nullptr);
@@ -706,21 +706,21 @@ scoped_ptr<DataPipeImpl> DataPipe::ReplaceImplNoLock(
 }
 
 void DataPipe::SetProducerClosedNoLock() {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   DCHECK(!has_local_producer_no_lock());
   DCHECK(producer_open_);
   producer_open_ = false;
 }
 
 void DataPipe::SetConsumerClosedNoLock() {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   DCHECK(!has_local_consumer_no_lock());
   DCHECK(consumer_open_);
   consumer_open_ = false;
 }
 
 void DataPipe::ProducerCloseNoLock() {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   DCHECK(producer_open_);
   producer_open_ = false;
   if (has_local_producer_no_lock()) {
@@ -736,7 +736,7 @@ void DataPipe::ProducerCloseNoLock() {
 }
 
 void DataPipe::ConsumerCloseNoLock() {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   DCHECK(consumer_open_);
   consumer_open_ = false;
   if (has_local_consumer_no_lock()) {
@@ -752,7 +752,7 @@ void DataPipe::ConsumerCloseNoLock() {
 }
 
 bool DataPipe::OnReadMessage(unsigned port, MessageInTransit* message) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(!has_local_producer_no_lock() || !has_local_consumer_no_lock());
 
   HandleSignalsState old_producer_state =
@@ -775,7 +775,7 @@ bool DataPipe::OnReadMessage(unsigned port, MessageInTransit* message) {
 }
 
 void DataPipe::OnDetachFromChannel(unsigned port) {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   DCHECK(!has_local_producer_no_lock() || !has_local_consumer_no_lock());
 
   HandleSignalsState old_producer_state =
@@ -797,7 +797,7 @@ void DataPipe::OnDetachFromChannel(unsigned port) {
 
 void DataPipe::AwakeProducerAwakablesForStateChangeNoLock(
     const HandleSignalsState& new_producer_state) {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   if (!has_local_producer_no_lock())
     return;
   producer_awakable_list_->AwakeForStateChange(new_producer_state);
@@ -805,19 +805,19 @@ void DataPipe::AwakeProducerAwakablesForStateChangeNoLock(
 
 void DataPipe::AwakeConsumerAwakablesForStateChangeNoLock(
     const HandleSignalsState& new_consumer_state) {
-  lock_.AssertAcquired();
+  mutex_.AssertHeld();
   if (!has_local_consumer_no_lock())
     return;
   consumer_awakable_list_->AwakeForStateChange(new_consumer_state);
 }
 
 void DataPipe::SetProducerClosed() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   SetProducerClosedNoLock();
 }
 
 void DataPipe::SetConsumerClosed() {
-  base::AutoLock locker(lock_);
+  MutexLocker locker(&mutex_);
   SetConsumerClosedNoLock();
 }
 

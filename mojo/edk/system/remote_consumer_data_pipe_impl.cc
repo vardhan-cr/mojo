@@ -299,7 +299,7 @@ bool RemoteConsumerDataPipeImpl::ProducerEndSerialize(
   channel_endpoint.swap(channel_endpoint_);
   channel->SerializeEndpointWithRemotePeer(destination_for_endpoint, nullptr,
                                            channel_endpoint);
-  owner()->SetConsumerClosedNoLock();
+  SetConsumerClosed();
 
   *actual_size = sizeof(SerializedDataPipeProducerDispatcher) +
                  channel->GetSerializedEndpointSize();
@@ -419,7 +419,7 @@ void RemoteConsumerDataPipeImpl::DestroyBuffer() {
 void RemoteConsumerDataPipeImpl::Disconnect() {
   DCHECK(consumer_open());
   DCHECK(channel_endpoint_);
-  owner()->SetConsumerClosedNoLock();
+  SetConsumerClosed();
   channel_endpoint_->DetachFromClient();
   channel_endpoint_ = nullptr;
   if (!producer_in_two_phase_write())
