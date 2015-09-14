@@ -13,6 +13,8 @@ mojo_edk_source_set("test_support") {
     "multiprocess_test_helper.h",
     "scoped_ipc_support.cc",
     "scoped_ipc_support.h",
+    "test_io_thread.cc",
+    "test_io_thread.h",
     "test_utils.h",
     "test_utils_posix.cc",
     "test_utils_win.cc",

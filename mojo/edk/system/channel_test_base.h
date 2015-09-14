@@ -9,9 +9,9 @@
 #include "base/location.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/test/test_io_thread.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
+#include "mojo/edk/test/test_io_thread.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -45,7 +45,7 @@ class ChannelTestBase : public testing::Test {
   void ShutdownChannelOnIOThread(unsigned i);
   void ShutdownAndReleaseChannelOnIOThread(unsigned i);
 
-  base::TestIOThread* io_thread() { return &io_thread_; }
+  mojo::test::TestIOThread* io_thread() { return &io_thread_; }
   Channel* channel(unsigned i) { return channels_[i].get(); }
   scoped_refptr<Channel>* mutable_channel(unsigned i) { return &channels_[i]; }
 
@@ -53,7 +53,7 @@ class ChannelTestBase : public testing::Test {
   void SetUpOnIOThread();
 
   embedder::SimplePlatformSupport platform_support_;
-  base::TestIOThread io_thread_;
+  mojo::test::TestIOThread io_thread_;
   scoped_ptr<RawChannel> raw_channels_[2];
   scoped_refptr<Channel> channels_[2];
 

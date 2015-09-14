@@ -16,7 +16,6 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "base/test/test_io_thread.h"
 #include "build/build_config.h"              // TODO(vtl): Remove this.
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/platform_shared_buffer.h"
@@ -33,6 +32,7 @@
 #include "mojo/edk/system/shared_buffer_dispatcher.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
+#include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -47,7 +47,7 @@ const MojoHandleSignals kAllSignals = MOJO_HANDLE_SIGNAL_READABLE |
 
 class RemoteMessagePipeTest : public testing::Test {
  public:
-  RemoteMessagePipeTest() : io_thread_(base::TestIOThread::kAutoStart) {}
+  RemoteMessagePipeTest() : io_thread_(mojo::test::TestIOThread::kAutoStart) {}
   ~RemoteMessagePipeTest() override {}
 
   void SetUp() override {
@@ -93,7 +93,7 @@ class RemoteMessagePipeTest : public testing::Test {
   }
 
   embedder::PlatformSupport* platform_support() { return &platform_support_; }
-  base::TestIOThread* io_thread() { return &io_thread_; }
+  mojo::test::TestIOThread* io_thread() { return &io_thread_; }
   // Warning: It's up to the caller to ensure that the returned channel
   // is/remains valid.
   Channel* channels(size_t i) { return channels_[i].get(); }
@@ -160,7 +160,7 @@ class RemoteMessagePipeTest : public testing::Test {
   }
 
   embedder::SimplePlatformSupport platform_support_;
-  base::TestIOThread io_thread_;
+  mojo::test::TestIOThread io_thread_;
   embedder::ScopedPlatformHandle platform_handles_[2];
   scoped_refptr<Channel> channels_[2];
 

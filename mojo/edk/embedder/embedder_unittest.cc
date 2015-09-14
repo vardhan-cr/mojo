@@ -12,7 +12,6 @@
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/waitable_event.h"
-#include "base/test/test_io_thread.h"
 #include "base/test/test_timeouts.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/test_embedder.h"
@@ -20,6 +19,7 @@
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/test/multiprocess_test_helper.h"
 #include "mojo/edk/test/scoped_ipc_support.h"
+#include "mojo/edk/test/test_io_thread.h"
 #include "mojo/public/c/system/core.h"
 #include "mojo/public/cpp/system/handle.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -27,6 +27,9 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
+
+using test::TestIOThread;
+
 namespace embedder {
 namespace {
 
@@ -126,11 +129,11 @@ class ScopedTestChannel {
 
 class EmbedderTest : public testing::Test {
  public:
-  EmbedderTest() : test_io_thread_(base::TestIOThread::kAutoStart) {}
+  EmbedderTest() : test_io_thread_(TestIOThread::kAutoStart) {}
   ~EmbedderTest() override {}
 
  protected:
-  base::TestIOThread& test_io_thread() { return test_io_thread_; }
+  TestIOThread& test_io_thread() { return test_io_thread_; }
   scoped_refptr<base::TaskRunner> test_io_task_runner() {
     return test_io_thread_.task_runner();
   }
@@ -140,7 +143,7 @@ class EmbedderTest : public testing::Test {
 
   void TearDown() override { EXPECT_TRUE(test::Shutdown()); }
 
-  base::TestIOThread test_io_thread_;
+  TestIOThread test_io_thread_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(EmbedderTest);
 };
@@ -472,7 +475,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessMasterSlave) {
       mojo::test::MultiprocessTestHelper::client_platform_handle.Pass();
   EXPECT_TRUE(client_platform_handle.is_valid());
 
-  base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
+  TestIOThread test_io_thread(TestIOThread::kAutoStart);
   test::InitWithSimplePlatformSupport();
 
   {
@@ -667,7 +670,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_TEST(MultiprocessChannelsClient) {
       mojo::test::MultiprocessTestHelper::client_platform_handle.Pass();
   EXPECT_TRUE(client_platform_handle.is_valid());
 
-  base::TestIOThread test_io_thread(base::TestIOThread::kAutoStart);
+  TestIOThread test_io_thread(TestIOThread::kAutoStart);
   test::InitWithSimplePlatformSupport();
 
   {

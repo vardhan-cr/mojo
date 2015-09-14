@@ -19,7 +19,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/synchronization/waitable_event.h"
-#include "base/test/test_io_thread.h"
 #include "base/threading/simple_thread.h"
 #include "build/build_config.h"  // TODO(vtl): Remove this.
 #include "mojo/edk/embedder/platform_channel_pair.h"
@@ -29,6 +28,7 @@
 #include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/transport_data.h"
+#include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -74,7 +74,7 @@ bool WriteTestMessageToHandle(const embedder::PlatformHandle& handle,
 
 class RawChannelTest : public testing::Test {
  public:
-  RawChannelTest() : io_thread_(base::TestIOThread::kManualStart) {}
+  RawChannelTest() : io_thread_(mojo::test::TestIOThread::kManualStart) {}
   ~RawChannelTest() override {}
 
   void SetUp() override {
@@ -91,12 +91,12 @@ class RawChannelTest : public testing::Test {
   }
 
  protected:
-  base::TestIOThread* io_thread() { return &io_thread_; }
+  mojo::test::TestIOThread* io_thread() { return &io_thread_; }
 
   embedder::ScopedPlatformHandle handles[2];
 
  private:
-  base::TestIOThread io_thread_;
+  mojo::test::TestIOThread io_thread_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(RawChannelTest);
 };

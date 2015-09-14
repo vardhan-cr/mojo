@@ -14,7 +14,6 @@
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
-#include "base/test/test_io_thread.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
 #include "mojo/edk/system/channel.h"
@@ -27,6 +26,7 @@
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
+#include "mojo/edk/test/test_io_thread.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -222,7 +222,8 @@ class LocalDataPipeImplTestHelper : public DataPipeImplTestHelper {
 // Base class for |Remote{Producer,Consumer}DataPipeImplTestHelper|.
 class RemoteDataPipeImplTestHelper : public DataPipeImplTestHelper {
  public:
-  RemoteDataPipeImplTestHelper() : io_thread_(base::TestIOThread::kAutoStart) {}
+  RemoteDataPipeImplTestHelper()
+      : io_thread_(mojo::test::TestIOThread::kAutoStart) {}
   ~RemoteDataPipeImplTestHelper() override {}
 
   void SetUp() override {
@@ -343,7 +344,7 @@ class RemoteDataPipeImplTestHelper : public DataPipeImplTestHelper {
   }
 
   embedder::SimplePlatformSupport platform_support_;
-  base::TestIOThread io_thread_;
+  mojo::test::TestIOThread io_thread_;
   scoped_refptr<Channel> channels_[2];
   scoped_refptr<MessagePipe> message_pipes_[2];
 

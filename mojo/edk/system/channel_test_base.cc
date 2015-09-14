@@ -14,8 +14,7 @@ namespace system {
 namespace test {
 
 ChannelTestBase::ChannelTestBase()
-    : io_thread_(base::TestIOThread::kAutoStart) {
-}
+    : io_thread_(mojo::test::TestIOThread::kAutoStart) {}
 
 ChannelTestBase::~ChannelTestBase() {
 }
