@@ -20,13 +20,14 @@ class TraceProviderImpl : public tracing::TraceProvider {
 
   void Bind(InterfaceRequest<tracing::TraceProvider> request);
 
-  // Enable tracing without waiting for an inbound connection.
-  void EnableTracingNow();
+  // Enable tracing without waiting for an inbound connection. It will stop if
+  // no TraceRecorder is sent within a set time.
+  void ForceEnableTracing();
 
  private:
   // tracing::TraceProvider implementation:
   void StartTracing(const String& categories,
-                    tracing::TraceRecorderPtr collector) override;
+                    tracing::TraceRecorderPtr recorder) override;
   void StopTracing() override;
 
   void SendChunk(const scoped_refptr<base::RefCountedString>& events_str,

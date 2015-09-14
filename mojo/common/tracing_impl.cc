@@ -20,10 +20,10 @@ void TracingImpl::Initialize(ApplicationImpl* app) {
 
 #ifdef NDEBUG
   if (app->HasArg("--early-tracing")) {
-    provider_impl_.EnableTracingNow();
+    provider_impl_.ForceEnableTracing();
   }
 #else
-  provider_impl_.EnableTracingNow();
+  provider_impl_.ForceEnableTracing();
 #endif
 }
 

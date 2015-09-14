@@ -29,9 +29,9 @@ void TraceProviderImpl::Bind(InterfaceRequest<tracing::TraceProvider> request) {
 }
 
 void TraceProviderImpl::StartTracing(const String& categories,
-                                     tracing::TraceRecorderPtr collector) {
+                                     tracing::TraceRecorderPtr recorder) {
   DCHECK(!recorder_.get());
-  recorder_ = collector.Pass();
+  recorder_ = recorder.Pass();
   tracing_forced_ = false;
   if (!base::trace_event::TraceLog::GetInstance()->IsEnabled()) {
     std::string categories_str = categories.To<std::string>();
@@ -50,7 +50,7 @@ void TraceProviderImpl::StopTracing() {
       base::Bind(&TraceProviderImpl::SendChunk, base::Unretained(this)));
 }
 
-void TraceProviderImpl::EnableTracingNow() {
+void TraceProviderImpl::ForceEnableTracing() {
   base::trace_event::TraceLog::GetInstance()->SetEnabled(
       base::trace_event::TraceConfig("*", base::trace_event::RECORD_UNTIL_FULL),
       base::trace_event::TraceLog::RECORDING_MODE);
@@ -87,7 +87,7 @@ void TraceProviderImpl::SendChunk(
   DCHECK(recorder_);
   // The string will be empty if an error eccured or there were no trace
   // events. Empty string is not a valid chunk to record so skip in this case.
-  if (events_str->data().length()) {
+  if (events_str->data().empty()) {
     recorder_->Record(mojo::String(events_str->data()));
   }
   if (!has_more_events) {
