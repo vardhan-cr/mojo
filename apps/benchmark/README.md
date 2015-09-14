@@ -27,4 +27,5 @@ The following measurement types are available:
 ## Runner script
 
 Devtools offers [a helper script](../../mojo/devtools/common/mojo_benchmark)
-allowing to run a list of benchmarks, including on an Android device.
+allowing to run a list of benchmarks in controlled caching conditions, both
+on Linux and Android.

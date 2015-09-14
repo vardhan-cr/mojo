@@ -13,10 +13,10 @@ git clone https://github.com/domokit/devtools.git
 
 Devtools offers the following tools:
 
- - `mojo_run` - [documentation](docs/mojo_run.md) shell runner
- - `mojo_debug` - [documentation](docs/mojo_debug.md) debugger
+ - `mojo_run` - [documentation](docs/mojo_run.md) - shell runner
+ - `mojo_debug` - [documentation](docs/mojo_debug.md) - debugger
  - `mojo_test` - apptest runner
- - `mojo_benchmark` - perf test runner
+ - `mojo_benchmark` - [documentation](docs/mojo_benchmark.md) - perf test runner
 
 Additionally, `remote_adb_setup` script helps to configure adb on a remote
 machine to communicate with a device attached to a local machine, forwarding the
