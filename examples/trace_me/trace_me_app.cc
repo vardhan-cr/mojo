@@ -56,7 +56,7 @@ class TraceMeApp : public mojo::ApplicationDelegate {
     // its ability to provide trace events.
     tracing_.Initialize(app);
 
-    TRACE_EVENT0("trace_me", "TraceMeApp::Initialize");
+    TRACE_EVENT0("trace_me", "initialized");
 
     base::MessageLoop::current()->PostTask(FROM_HERE, base::Bind(&DoWork));
   }
