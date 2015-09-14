@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as path;
 
 bool isMojomDart(String path) => path.endsWith('.mojom.dart');
@@ -22,24 +23,24 @@ String makeRelative(String p) => path.isAbsolute(p)
     : path.normalize(p);
 
 /// An Error for problems on the command line.
-class CommandLineError extends Error {
+class CommandLineError {
   final _msg;
   CommandLineError(this._msg);
-  toString() => _msg;
+  toString() => "Command Line Error: $_msg";
 }
 
 /// An Error for failures of the bindings generation script.
-class GenerationError extends Error {
+class GenerationError {
   final _msg;
   GenerationError(this._msg);
-  toString() => _msg;
+  toString() => "Generation Error: $_msg";
 }
 
 /// An Error for failing to fetch a .mojom file.
-class FetchError extends Error {
+class FetchError {
   final _msg;
   FetchError(this._msg);
-  toString() => _msg;
+  toString() => "Fetch Error: $_msg";
 }
 
 class SubDirIterData {
@@ -112,11 +113,41 @@ markFileReadOnly(String file) async {
   }
 }
 
-getModificationTime(Uri uri) async {
+Future<DateTime> getModificationTime(Uri uri) async {
   if (uri.scheme.startsWith('http')) {
     return new DateTime.now();
   }
   File f = new File.fromUri(uri);
   var stat = await f.stat();
   return stat.modified;
+}
+
+Future<List<int>> fileSHA1(File f) async {
+  var sha1 = new crypto.SHA1();
+  await for (var bytes in f.openRead()) {
+    sha1.add(bytes);
+  }
+  return sha1.close();
+}
+
+Future<bool> equalSHA1(File file1, File file2) async {
+  List<int> file1sha1 = await fileSHA1(file1);
+  List<int> file2sha1 = await fileSHA1(file2);
+  if (file1sha1.length != file2sha1.length) return false;
+  for (int i = 0; i < file1sha1.length; i++) {
+    if (file1sha1[i] != file2sha1[i]) return false;
+  }
+  return true;
+}
+
+/// If the files are the same, returns 0.
+/// Otherwise, returns a negative number if f1 less recently modified than f2,
+/// or a positive number if f1 is more recently modified than f2.
+Future<int> compareFiles(File f1, File f2) async {
+  FileStat f1stat = await f1.stat();
+  FileStat f2stat = await f2.stat();
+  if ((f1stat.size != f2stat.size) || !await equalSHA1(f1, f2)) {
+    return (f1stat.modified.isBefore(f2stat.modified)) ? -1 : 1;
+  }
+  return 0;
 }

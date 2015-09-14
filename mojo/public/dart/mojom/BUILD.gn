@@ -10,6 +10,7 @@ dart_pkg("mojom") {
     "lib/src/generate.dart",
     "lib/src/command_runner.dart",
     "lib/src/commands/all.dart",
+    "lib/src/commands/check.dart",
     "lib/src/commands/mojom_command.dart",
     "lib/src/commands/single.dart",
     "lib/src/commands/tree.dart",

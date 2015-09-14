@@ -410,9 +410,149 @@ class TreeGenerator {
       if (_verbose) print('Generating bindings for $package');
       await _generator.generateForPackage(package);
       if (_verbose) print('Done generating bindings for $package');
-    } catch (e, s) {
-      print('Bindings generation failed for package $package: $e\n$s');
+    } on GenerationError catch (e) {
+      stderr.writeln('Bindings generation failed for package $package: $e');
       errors += 1;
     }
+  }
+}
+
+/// Given the root of a directory tree to check, and the root of a directory
+/// tree containing the canonical generated bindings, checks that the files
+/// match, and recommends actions to take in case they don't. The canonical
+/// directory should contain a subdirectory for each package that might be
+/// encountered while traversing the directory tree being checked.
+class TreeChecker {
+  bool _verbose;
+  bool _profile;
+  Directory _mojoSdk;
+  Directory _root;
+  Directory _canonical;
+  List<String> _skip;
+  int _errors;
+
+  TreeChecker(this._mojoSdk, this._root, this._canonical, this._skip,
+      {bool verbose: false, bool profile: false})
+      : _verbose = verbose,
+        _profile = profile,
+        _errors = 0;
+
+  check() async {
+    Set<String> alreadySeen = new Set<String>();
+    await for (var entry in _root.list(recursive: true)) {
+      if (entry is! File) continue;
+      if (!isDotMojoms(entry.path)) continue;
+      if (entry.path.startsWith(_canonical.path)) continue;
+
+      String realpath = await entry.resolveSymbolicLinks();
+      if (alreadySeen.contains(realpath)) continue;
+      alreadySeen.add(realpath);
+
+      if (_shouldSkip(entry)) continue;
+      var parent = entry.parent;
+      if (_verbose) print("Checking package at: ${parent.path}");
+
+      await _checkAll(parent);
+      await _checkSame(parent);
+    }
+    if (_errors > 1) {
+      String dart = makeRelative(Platform.executable);
+      String scriptPath = makeRelative(path.fromUri(Platform.script));
+      String mojoSdk = makeRelative(_mojoSdk.path);
+      String root = makeRelative(_root.path);
+      stderr.writeln('It looks like there were multiple problems. '
+          'You can run the following command to regenerate bindings for your '
+          'whole tree:\n'
+          '\t$dart $scriptPath tree -r $root -m $mojoSdk');
+    }
+  }
+
+  int get errors => _errors;
+
+  // Check that the files are the same.
+  _checkSame(Directory package) async {
+    Directory libDir = new Directory(path.join(package.path, 'lib'));
+    Set<String> alreadySeen = new Set<String>();
+    await for (var entry in libDir.list(recursive: true)) {
+      if (entry is! File) continue;
+      if (!isMojomDart(entry.path)) continue;
+      String realpath = await entry.resolveSymbolicLinks();
+      if (alreadySeen.contains(realpath)) continue;
+      alreadySeen.add(realpath);
+
+      String relPath = path.relative(entry.path, from: package.parent.path);
+      File canonicalFile = new File(path.join(_canonical.path, relPath));
+      if (!await canonicalFile.exists()) {
+        if (_verbose) print("No canonical file for $entry");
+        continue;
+      }
+
+      if (_verbose) print("Comparing $entry with $canonicalFile");
+      int fileComparison = await compareFiles(entry, canonicalFile);
+      if (fileComparison != 0) {
+        String entryPath = makeRelative(entry.path);
+        String canonicalPath = makeRelative(canonicalFile.path);
+        if (fileComparison > 0) {
+          stderr.writeln('The generated file:\n\t$entryPath\n'
+              'is newer thanthe canonical file\n\t$canonicalPath\n,'
+              'and they are different. Regenerate canonical files?');
+        } else {
+          String dart = makeRelative(Platform.executable);
+          String packagePath = makeRelative(package.path);
+          String scriptPath = makeRelative(path.fromUri(Platform.script));
+          String mojoSdk = makeRelative(_mojoSdk.path);
+          stderr.writeln('For the package: $packagePath\n'
+              'The generated file:\n\t$entryPath\n'
+              'is older than the canonical file:\n\t$canonicalPath\n'
+              'and they are different. Regenerate by running:\n'
+              '\t$dart $scriptPath single -p $packagePath -m $mojoSdk');
+        }
+        _errors++;
+        return;
+      }
+    }
+  }
+
+  // Check that every .mojom.dart in the canonical package is also in the
+  // package we are checking.
+  _checkAll(Directory package) async {
+    String packageName = path.relative(package.path, from: package.parent.path);
+    String canonicalPackagePath =
+        path.join(_canonical.path, packageName, 'lib');
+    Directory canonicalPackage = new Directory(canonicalPackagePath);
+    if (!await canonicalPackage.exists()) return;
+
+    Set<String> alreadySeen = new Set<String>();
+    await for (var entry in canonicalPackage.list(recursive: true)) {
+      if (entry is! File) continue;
+      if (!isMojomDart(entry.path)) continue;
+      String realpath = await entry.resolveSymbolicLinks();
+      if (alreadySeen.contains(realpath)) continue;
+      alreadySeen.add(realpath);
+
+      String relPath = path.relative(entry.path, from: canonicalPackage.path);
+      File genFile = new File(path.join(package.path, 'lib', relPath));
+      if (_verbose) print("Checking that $genFile exists");
+      if (!await genFile.exists()) {
+        String dart = makeRelative(Platform.executable);
+        String genFilePath = makeRelative(genFile.path);
+        String packagePath = makeRelative(package.path);
+        String scriptPath = makeRelative(path.fromUri(Platform.script));
+        String mojoSdk = makeRelative(_mojoSdk.path);
+        stderr.writeln('The generated file:\n\t$genFilePath\n'
+            'is needed but does not exist. Make sure that the .mojom to '
+            'generate it is listed in the .mojoms file for package '
+            '$packageName, and run the command\n'
+            '\t$dart $scriptPath single -p $packagePath -m $mojoSdk');
+        _errors++;
+      }
+    }
+  }
+
+  bool _shouldSkip(File f) {
+    if (_skip == null) return false;
+    var match =
+        _skip.firstWhere((p) => f.path.startsWith(p), orElse: () => null);
+    return match != null;
   }
 }

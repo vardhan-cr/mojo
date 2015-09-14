@@ -11,6 +11,7 @@ import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 
 import 'commands/all.dart';
+import 'commands/check.dart';
 import 'commands/single.dart';
 import 'commands/tree.dart';
 
@@ -47,6 +48,7 @@ class MojomCommandRunner extends CommandRunner {
 
     super.addCommand(new AllPackagesCommand());
     super.addCommand(new SinglePackageCommand());
+    super.addCommand(new TreeCheckCommand());
     super.addCommand(new TreeCommand());
   }
 }
