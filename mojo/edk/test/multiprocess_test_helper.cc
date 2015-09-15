@@ -6,8 +6,6 @@
 
 #include "base/command_line.h"
 #include "base/logging.h"
-#include "base/process/kill.h"
-#include "base/process/process_handle.h"
 #include "build/build_config.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 
