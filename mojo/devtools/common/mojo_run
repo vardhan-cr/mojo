@@ -10,28 +10,22 @@ import sys
 from devtoolslib import shell_arguments
 from devtoolslib import shell_config
 
-_USAGE = ("mojo_run "
-         "[--args-for=<mojo-app>] "
-         "[--content-handlers=<handlers>] "
-         "[--enable-external-applications] "
-         "[--disable-cache] "
-         "[--enable-multiprocess] "
-         "[--wait-for-debugger] "
-         "[--sky <mojo-app>|<mojo-app>] "
-         """
-
-A <mojo-app> is a Mojo URL or a Mojo URL and arguments within quotes.
-Example: mojo_run "mojo:js_standalone test.js".
-<url-lib-path> is searched for shared libraries named by mojo URLs.
-The value of <handlers> is a comma separated list like:
-text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
-""")
-
 _DESCRIPTION = """Runner for Mojo applications.
 
 Any arguments not recognized by the script will be passed on as shell arguments.
-"""
 
+Important shell arguments include:
+  "--args-for=<mojo-app-url> <arguments>"
+  "--content-handlers=<handlers>"
+  "--disable-cache"
+  "--enable-multiprocess"
+  "--wait-for-debugger"
+  "<mojo-app-url>"
+  "<mojo-app-url> <arguments>"
+
+The value of <handlers> is a comma separated list like:
+text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
+"""
 
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
@@ -58,7 +52,9 @@ def _configure_debugger(shell):
 def main():
   logging.basicConfig()
 
-  parser = argparse.ArgumentParser(usage=_USAGE, description=_DESCRIPTION)
+  parser = argparse.ArgumentParser(
+      formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=_DESCRIPTION)
   shell_config.add_shell_arguments(parser)
 
   parser.add_argument('--embed', type=str,
