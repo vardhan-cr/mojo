@@ -172,9 +172,10 @@ mojo::Array<mojo::String> DictionaryService::GetDictionarySuggestion(
 // modified from Android JniDataUtils::constructPrevWordsInfo
 latinime::PrevWordsInfo DictionaryService::ProcessPrevWord(
     mojo::Array<PrevWordInfoPtr>& prev_words) {
-  int prev_word_codepoints[MAX_PREV_WORD_COUNT_FOR_N_GRAM][MAX_WORD_LENGTH];
-  int prev_word_codepoint_count[MAX_PREV_WORD_COUNT_FOR_N_GRAM];
-  bool are_beginning_of_sentence[MAX_PREV_WORD_COUNT_FOR_N_GRAM];
+  int prev_word_codepoints[MAX_PREV_WORD_COUNT_FOR_N_GRAM][MAX_WORD_LENGTH] = {
+      {0}};
+  int prev_word_codepoint_count[MAX_PREV_WORD_COUNT_FOR_N_GRAM] = {0};
+  bool are_beginning_of_sentence[MAX_PREV_WORD_COUNT_FOR_N_GRAM] = {false};
   int prevwords_count = std::min(
       prev_words.size(), static_cast<size_t>(MAX_PREV_WORD_COUNT_FOR_N_GRAM));
   for (int i = 0; i < prevwords_count; ++i) {
