@@ -15,6 +15,7 @@
 namespace mojo {
 namespace embedder {
 
+// A |PlatformHandle| is a file descriptor on POSIX and a |HANDLE| on Windows.
 #if defined(OS_POSIX)
 struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandle {
   PlatformHandle() : fd(-1) {}

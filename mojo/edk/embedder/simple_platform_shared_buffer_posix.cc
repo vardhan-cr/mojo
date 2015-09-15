@@ -20,7 +20,6 @@
 #include "base/posix/eintr_wrapper.h"
 #include "base/sys_info.h"
 #include "base/threading/thread_restrictions.h"
-#include "mojo/edk/embedder/platform_handle.h"
 
 // We assume that |size_t| and |off_t| (type for |ftruncate()|) fits in a
 // |uint64_t|.
@@ -71,18 +70,19 @@ bool SimplePlatformSharedBuffer::Init() {
   }
 
   // Note: |dup()| is not interruptible (but |dup2()|/|dup3()| are).
-  base::ScopedFD fd(dup(fileno(fp.get())));
-  if (!fd.is_valid()) {
+  ScopedPlatformHandle handle(PlatformHandle(dup(fileno(fp.get()))));
+  if (!handle.is_valid()) {
     PLOG(ERROR) << "dup";
     return false;
   }
 
-  if (HANDLE_EINTR(ftruncate(fd.get(), static_cast<off_t>(num_bytes_))) != 0) {
+  if (HANDLE_EINTR(
+          ftruncate(handle.get().fd, static_cast<off_t>(num_bytes_))) != 0) {
     PLOG(ERROR) << "ftruncate";
     return false;
   }
 
-  handle_.reset(PlatformHandle(fd.release()));
+  handle_ = handle.Pass();
   return true;
 }
 
