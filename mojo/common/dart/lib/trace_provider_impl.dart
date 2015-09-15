@@ -28,9 +28,11 @@ class TraceProviderImpl implements TraceProvider {
   TraceProviderImpl() {
     _message_queue = [];
     _enqueuing = true;
-    new Future.delayed(const Duration(seconds: 1), () {
+    new Future(() {
+      new Future.delayed(const Duration(seconds: 1), () {
       _enqueuing = false;
       _message_queue.clear();
+      });
     });
   }
 
