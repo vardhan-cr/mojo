@@ -87,7 +87,7 @@ void TraceProviderImpl::SendChunk(
   DCHECK(recorder_);
   // The string will be empty if an error eccured or there were no trace
   // events. Empty string is not a valid chunk to record so skip in this case.
-  if (events_str->data().empty()) {
+  if (!events_str->data().empty()) {
     recorder_->Record(mojo::String(events_str->data()));
   }
   if (!has_more_events) {
