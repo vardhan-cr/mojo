@@ -219,6 +219,7 @@ test("mojo_system_unittests") {
     ":test_utils",
     "../embedder:embedder_unittests",
     "../test:test_support",
+    "../util",
     "//base",
     "//base/test:test_support",
     "//testing/gtest",

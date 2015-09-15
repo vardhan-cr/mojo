@@ -77,7 +77,7 @@ bool NonBlockingRead(const embedder::PlatformHandle& handle,
   return true;
 }
 
-embedder::ScopedPlatformHandle PlatformHandleFromFILE(base::ScopedFILE fp) {
+embedder::ScopedPlatformHandle PlatformHandleFromFILE(util::ScopedFILE fp) {
   CHECK(fp);
 
   HANDLE rv = INVALID_HANDLE_VALUE;
@@ -89,7 +89,7 @@ embedder::ScopedPlatformHandle PlatformHandleFromFILE(base::ScopedFILE fp) {
   return embedder::ScopedPlatformHandle(embedder::PlatformHandle(rv));
 }
 
-base::ScopedFILE FILEFromPlatformHandle(embedder::ScopedPlatformHandle h,
+util::ScopedFILE FILEFromPlatformHandle(embedder::ScopedPlatformHandle h,
                                         const char* mode) {
   CHECK(h.is_valid());
   // Microsoft's documentation for |_open_osfhandle()| only discusses these
@@ -101,7 +101,7 @@ base::ScopedFILE FILEFromPlatformHandle(embedder::ScopedPlatformHandle h,
     flags |= _O_RDONLY;
   if (strchr(mode, 't'))
     flags |= _O_TEXT;
-  base::ScopedFILE rv(_fdopen(
+  util::ScopedFILE rv(_fdopen(
       _open_osfhandle(reinterpret_cast<intptr_t>(h.release().handle), flags),
       mode));
   PCHECK(rv) << "_fdopen";

@@ -26,7 +26,10 @@ mojo_edk_source_set("test_support") {
     "//testing/gtest",
   ]
 
-  mojo_edk_deps = [ "mojo/edk/system" ]
+  mojo_edk_deps = [
+    "mojo/edk/system",
+    "mojo/edk/util",
+  ]
 
   mojo_sdk_public_deps = [ "mojo/public/cpp/system" ]
 }

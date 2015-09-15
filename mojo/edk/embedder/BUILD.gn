@@ -95,6 +95,8 @@ mojo_edk_source_set("platform") {
   if (is_android) {
     deps += [ "//third_party/ashmem" ]
   }
+
+  mojo_edk_deps = [ "mojo/edk/util" ]
 }
 
 mojo_edk_source_set("delegates") {
@@ -139,5 +141,6 @@ mojo_edk_source_set("embedder_unittests") {
     "mojo/edk/test:test_support",
     "mojo/edk/system",
     "mojo/edk/system:test_utils",
+    "mojo/edk/util",
   ]
 }

@@ -11,7 +11,6 @@
 #include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
-#include "base/files/scoped_file.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -34,6 +33,7 @@
 #include "mojo/edk/system/waiter.h"
 #include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/edk/util/scoped_file.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -1040,7 +1040,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
   BootstrapChannelEndpoints(ep0, ep1);
 
   base::FilePath unused;
-  base::ScopedFILE fp(
+  util::ScopedFILE fp(
       base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
   EXPECT_EQ(sizeof(kHello), fwrite(kHello, 1, sizeof(kHello), fp.get()));
   // We'll try to pass this dispatcher, which will cause a |PlatformHandle| to

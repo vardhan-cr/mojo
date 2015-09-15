@@ -12,7 +12,6 @@
 #include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
-#include "base/files/scoped_file.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -30,6 +29,7 @@
 #include "mojo/edk/system/transport_data.h"
 #include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/edk/util/scoped_file.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
@@ -763,7 +763,7 @@ class ReadPlatformHandlesCheckerRawChannelDelegate
     {
       char buffer[100] = {};
 
-      base::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h1.Pass(), "rb"));
+      util::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h1.Pass(), "rb"));
       EXPECT_TRUE(fp);
       rewind(fp.get());
       EXPECT_EQ(1u, fread(buffer, 1, sizeof(buffer), fp.get()));
@@ -772,7 +772,7 @@ class ReadPlatformHandlesCheckerRawChannelDelegate
 
     {
       char buffer[100] = {};
-      base::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h2.Pass(), "rb"));
+      util::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h2.Pass(), "rb"));
       EXPECT_TRUE(fp);
       rewind(fp.get());
       EXPECT_EQ(1u, fread(buffer, 1, sizeof(buffer), fp.get()));
@@ -817,10 +817,10 @@ TEST_F(RawChannelTest, MAYBE_ReadWritePlatformHandles) {
                                           base::Unretained(&read_delegate)));
 
   base::FilePath unused;
-  base::ScopedFILE fp1(
+  util::ScopedFILE fp1(
       base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
   EXPECT_EQ(1u, fwrite("1", 1, 1, fp1.get()));
-  base::ScopedFILE fp2(
+  util::ScopedFILE fp2(
       base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
   EXPECT_EQ(1u, fwrite("2", 1, 1, fp2.get()));
 

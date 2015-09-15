@@ -15,11 +15,11 @@
 
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
-#include "base/files/scoped_file.h"
 #include "base/logging.h"
 #include "base/posix/eintr_wrapper.h"
 #include "base/sys_info.h"
 #include "base/threading/thread_restrictions.h"
+#include "mojo/edk/util/scoped_file.h"
 
 // We assume that |size_t| and |off_t| (type for |ftruncate()|) fits in a
 // |uint64_t|.
@@ -56,7 +56,7 @@ bool SimplePlatformSharedBuffer::Init() {
     return false;
   }
   base::FilePath shared_buffer_file;
-  base::ScopedFILE fp(base::CreateAndOpenTemporaryFileInDir(
+  util::ScopedFILE fp(base::CreateAndOpenTemporaryFileInDir(
       shared_buffer_dir, &shared_buffer_file));
   if (!fp) {
     LOG(ERROR) << "Failed to create/open temporary file for shared memory";

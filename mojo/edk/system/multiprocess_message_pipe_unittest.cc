@@ -12,7 +12,6 @@
 #include "base/bind.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
-#include "base/files/scoped_file.h"
 #include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
@@ -28,6 +27,7 @@
 #include "mojo/edk/system/shared_buffer_dispatcher.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/edk/util/scoped_file.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -431,7 +431,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckPlatformHandleFile) {
     CHECK(h.is_valid());
     dispatcher->Close();
 
-    base::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h.Pass(), "r"));
+    util::ScopedFILE fp(mojo::test::FILEFromPlatformHandle(h.Pass(), "r"));
     CHECK(fp);
     std::string fread_buffer(100, '\0');
     size_t bytes_read =
@@ -463,7 +463,7 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
   size_t pipe_count = GetParam();
   for (size_t i = 0; i < pipe_count; ++i) {
     base::FilePath unused;
-    base::ScopedFILE fp(
+    util::ScopedFILE fp(
         CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
     const std::string world("world");
     CHECK_EQ(fwrite(&world[0], 1, world.size(), fp.get()), world.size());
