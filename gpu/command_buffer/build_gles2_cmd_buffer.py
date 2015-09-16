@@ -41,10 +41,10 @@ _MOJO_EXPOSED_EXTENSIONS = ["CHROMIUM_bind_uniform_location",
                             "EXT_debug_marker",
                             "EXT_discard_framebuffer",
                             "EXT_multisampled_render_to_texture",
+                            "EXT_occlusion_query",
                             "EXT_texture_storage",
                             "KHR_blend_equation_advanced",
-                            "OES_vertex_array_object",
-                            "occlusion_query_EXT"]
+                            "OES_vertex_array_object"]
 
 
 # This string is copied directly out of the gl2.h file from GLES2.0
@@ -3416,7 +3416,7 @@ _FUNCTION_INFO = {
     'unit_test': False,
     'pepper_interface': 'Query',
     'not_shared': 'True',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'DeleteQueriesEXT': {
     'type': 'DELn',
@@ -3425,13 +3425,13 @@ _FUNCTION_INFO = {
     'resource_types': 'Queries',
     'unit_test': False,
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'IsQueryEXT': {
     'gen_cmd': False,
     'client_test': False,
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'BeginQueryEXT': {
     'type': 'Manual',
@@ -3439,7 +3439,7 @@ _FUNCTION_INFO = {
     'data_transfer_methods': ['shm'],
     'gl_test_func': 'glBeginQuery',
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'BeginTransformFeedback': {
     'unsafe': True,
@@ -3450,7 +3450,7 @@ _FUNCTION_INFO = {
     'gl_test_func': 'glEndnQuery',
     'client_test': False,
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'EndTransformFeedback': {
     'unsafe': True,
@@ -3460,14 +3460,14 @@ _FUNCTION_INFO = {
     'client_test': False,
     'gl_test_func': 'glGetQueryiv',
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'GetQueryObjectuivEXT': {
     'gen_cmd': False,
     'client_test': False,
     'gl_test_func': 'glGetQueryObjectuiv',
     'pepper_interface': 'Query',
-    'extension': "occlusion_query_EXT",
+    'extension': "EXT_occlusion_query",
   },
   'BindUniformLocationCHROMIUM': {
     'type': 'GLchar',

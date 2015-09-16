@@ -8,46 +8,46 @@
 //    clang-format -i -style=chromium filename
 // DO NOT EDIT!
 
-#ifndef MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OCCLUSION_QUERY_EXT_THUNKS_H_
-#define MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OCCLUSION_QUERY_EXT_THUNKS_H_
+#ifndef MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_OCCLUSION_QUERY_THUNKS_H_
+#define MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_OCCLUSION_QUERY_THUNKS_H_
 
 #include <stddef.h>
 
 #define GL_GLEXT_PROTOTYPES
 #include "mojo/public/c/gpu/GLES2/gl2extmojo.h"
 
-// Specifies the frozen API for the occlusion_query_EXT extension.
+// Specifies the frozen API for the EXT_occlusion_query extension.
 #pragma pack(push, 8)
-struct MojoGLES2ImplOcclusionQueryEXTThunks {
+struct MojoGLES2ImplEXTOcclusionQueryThunks {
   size_t size;  // Should be set to sizeof(*this).
 
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
   ReturnType(GL_APIENTRY* Function) PARAMETERS;
-#include "mojo/public/platform/native/gles2/call_visitor_occlusion_query_ext_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_ext_occlusion_query_autogen.h"
 #undef VISIT_GL_CALL
 };
 #pragma pack(pop)
 
 #ifdef __cplusplus
 // Intended to be called from the embedder to get the embedder's implementation
-// of occlusion_query_ext.
-inline MojoGLES2ImplOcclusionQueryEXTThunks
-MojoMakeGLES2ImplOcclusionQueryEXTThunks() {
-  MojoGLES2ImplOcclusionQueryEXTThunks gles2_impl_occlusion_query_ext_thunks = {
-      sizeof(MojoGLES2ImplOcclusionQueryEXTThunks),
+// of ext_occlusion_query.
+inline MojoGLES2ImplEXTOcclusionQueryThunks
+MojoMakeGLES2ImplEXTOcclusionQueryThunks() {
+  MojoGLES2ImplEXTOcclusionQueryThunks gles2_impl_ext_occlusion_query_thunks = {
+      sizeof(MojoGLES2ImplEXTOcclusionQueryThunks),
 #define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) gl##Function,
-#include "mojo/public/platform/native/gles2/call_visitor_occlusion_query_ext_autogen.h"
+#include "mojo/public/platform/native/gles2/call_visitor_ext_occlusion_query_autogen.h"
 #undef VISIT_GL_CALL
   };
 
-  return gles2_impl_occlusion_query_ext_thunks;
+  return gles2_impl_ext_occlusion_query_thunks;
 }
 #endif  // __cplusplus
 
 // Use this type for the function found by dynamically discovering it in
 // a DSO linked with mojo_system.
-// The contents of |gles2_impl_occlusion_query_ext_thunks| are copied.
-typedef size_t (*MojoSetGLES2ImplOcclusionQueryEXTThunksFn)(
-    const struct MojoGLES2ImplOcclusionQueryEXTThunks* thunks);
+// The contents of |gles2_impl_ext_occlusion_query_thunks| are copied.
+typedef size_t (*MojoSetGLES2ImplEXTOcclusionQueryThunksFn)(
+    const struct MojoGLES2ImplEXTOcclusionQueryThunks* thunks);
 
-#endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_OCCLUSION_QUERY_EXT_THUNKS_H_
+#endif  // MOJO_PUBLIC_PLATFORM_NATIVE_GLES2_IMPL_EXT_OCCLUSION_QUERY_THUNKS_H_
