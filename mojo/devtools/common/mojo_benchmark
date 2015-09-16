@@ -97,7 +97,7 @@ def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
 
   # Echo measurement results.
   for line in output_lines:
-    if line.strip().startswith('measurement:'):
+    if line.strip().startswith('measurement:') or 'WARNING' in line:
       print line
   return True
 
