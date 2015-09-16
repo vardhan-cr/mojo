@@ -119,7 +119,7 @@ def _get_handler_class_for_path(mappings):
       # pylint: disable=W0201
       self.close_connection = 1
 
-      path = self.translate_path(self.path)
+      path = self.translate_path(self.path, False)
       if os.path.isfile(path):
         # Handle If-None-Match
         etag = self.get_etag()
