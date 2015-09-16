@@ -45,6 +45,7 @@ _logger = logging.getLogger()
 
 _BENCHMARK_APP = 'https://core.mojoapps.io/benchmark.mojo'
 _CACHE_SERVICE_URL = 'mojo:url_response_disk_cache'
+_NETWORK_SERVICE_URL = 'mojo:network_service'
 
 # Additional time in seconds allocated per shell run to accommodate start-up.
 # The shell should terminate before hitting this time out, it is an error if it
@@ -78,6 +79,7 @@ def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
 
   if cold_start:
     shell_args.append('--args-for=%s %s' % (_CACHE_SERVICE_URL, '--clear'))
+    shell_args.append('--args-for=%s %s' % (_NETWORK_SERVICE_URL, '--clear'))
 
   if verbose:
     print 'shell arguments: ' + str(shell_args)
