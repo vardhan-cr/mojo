@@ -4,13 +4,44 @@
 
 #include "shell/out_of_process_native_runner.h"
 
+#include <elf.h>
+#include <string>
+
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/files/file_util.h"
 #include "base/logging.h"
+#include "base/strings/string_util.h"
 #include "shell/child_controller.mojom.h"
 #include "shell/child_process_host.h"
 #include "shell/in_process_native_runner.h"
+
+namespace {
+
+// Determines if content handler must be run as 32 bit application
+// based on elf header. Returns false on error.
+bool Require32Bit(const base::FilePath& app_path) {
+  if (sizeof(void*) == 4) {
+    // CPU arch is already 32 bits
+    return true;
+  } else {
+    char data[EI_NIDENT];
+    // Read e_ident from the elf file
+    if (sizeof(data) != ReadFile(app_path, data, sizeof(data))) {
+      DCHECK(false);
+      return false;
+    }
+    // Check the magic elf number
+    if (memcmp(data, ELFMAG, SELFMAG)) {
+      DCHECK(false);
+      return false;
+    }
+    // Identify the architecture required
+    return data[EI_CLASS] == ELFCLASS32;
+  }
+}
+
+}  // namespace
 
 namespace shell {
 
@@ -37,7 +68,7 @@ void OutOfProcessNativeRunner::Start(
   app_completed_callback_ = app_completed_callback;
 
   child_process_host_.reset(new ChildProcessHost(context_));
-  child_process_host_->Start();
+  child_process_host_->Start(Require32Bit(app_path));
 
   // TODO(vtl): |app_path.AsUTF8Unsafe()| is unsafe.
   child_process_host_->StartApp(

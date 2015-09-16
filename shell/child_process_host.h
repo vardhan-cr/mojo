@@ -40,7 +40,7 @@ class ChildProcessHost {
   // TODO(vtl): Consider using weak pointers and removing this requirement.
   // TODO(vtl): This should probably take a callback instead.
   // TODO(vtl): Consider merging this with |StartApp()|.
-  void Start();
+  void Start(bool require_32_bit);
 
   // Waits for the child process to terminate, and returns its exit code.
   // Note: If |Start()| has been called, this must not be called until the

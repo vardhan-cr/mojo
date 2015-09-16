@@ -83,7 +83,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
         "desktop/main.cc",
       ]
 
-      deps = shell_common_deps
+      deps = shell_common_deps + [ ":mojo_shell_child_32_bit" ]
 
       data_deps = shell_common_data_deps
     }
@@ -104,6 +104,37 @@ if (!mojo_use_prebuilt_mojo_shell) {
       "//mojo/environment:chromium",
       "//mojo/message_pump",
     ]
+  }
+
+  if (current_cpu == "x86") {
+    # The 32-bit version of the mojo_shell_child should be accessible in the
+    # root build directory, just like the regular mojo_shell_child, so that
+    # the 32-bit version can be accessed by simply adding a suffix to the path.
+    copy("mojo_shell_child_32_bit_copy") {
+      sources = [
+        "${root_out_dir}/mojo_shell_child",
+      ]
+      outputs = [
+        "${root_build_dir}/mojo_shell_child_32",
+      ]
+      deps = [
+        ":mojo_shell_child",
+      ]
+    }
+  }
+
+  group("mojo_shell_child_32_bit") {
+    # This group is required to run any 32-bit child process.
+    deps = []
+    if ((target_cpu == "x64" || target_cpu == "x86") && is_linux) {
+      # The toolchain is hardcoded as 32-bit clang here -- although it must
+      # be 32 bit (for nonsfi), it assumes clang. Ideally, the toolchain would
+      # be defined as the 32 bit variant of whatever is being used (be it clang,
+      # gcc, or something else).
+      deps = [
+        ":mojo_shell_child_32_bit_copy(//build/toolchain/linux:clang_x86)",
+      ]
+    }
   }
 }  # !mojo_use_prebuilt_mojo_shell
 

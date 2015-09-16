@@ -42,12 +42,16 @@ ChildProcessHost::~ChildProcessHost() {
   DCHECK(!child_process_.IsValid());
 }
 
-void ChildProcessHost::Start() {
+void ChildProcessHost::Start(bool require_32_bit) {
   DCHECK(!child_process_.IsValid());
 
   scoped_ptr<LaunchData> launch_data(new LaunchData());
   launch_data->child_path = context_->mojo_shell_child_path();
-
+#if defined(ARCH_CPU_64_BITS)
+  if (require_32_bit)
+    launch_data->child_path =
+        context_->mojo_shell_child_path().InsertBeforeExtensionASCII("_32");
+#endif
   // TODO(vtl): Add something for |slave_info|.
   // TODO(vtl): The "unretained this" is wrong (see also below).
   mojo::ScopedMessagePipeHandle handle(mojo::embedder::ConnectToSlave(

@@ -49,7 +49,7 @@ TEST(ChildProcessHostTest, MAYBE_StartJoin) {
       scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
   TestChildProcessHost child_process_host(&context);
-  child_process_host.Start();
+  child_process_host.Start(false /* require_32_bit */);
   message_loop.Run();  // This should run until |DidStart()|.
   child_process_host.ExitNow(123);
   int exit_code = child_process_host.Join();
@@ -73,7 +73,7 @@ TEST(ChildProcessHostTest, MAYBE_ConnectionError) {
       scoped_ptr<base::MessagePump>(new mojo::common::MessagePumpMojo()));
   context.Init();
   TestChildProcessHost child_process_host(&context);
-  child_process_host.Start();
+  child_process_host.Start(false /* require_32_bit */);
   message_loop.Run();  // This should run until |DidStart()|.
   // Send |ExitNow()| first, so that the |StartApp()| below won't actually be
   // processed, and we'll just get a connection error.

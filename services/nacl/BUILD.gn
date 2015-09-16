@@ -26,20 +26,51 @@ if (!is_nacl) {
     data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
   }
 
-  mojo_native_application("nacl_content_handler_nonsfi") {
-    sources = [
-      "content_handler_main_nonsfi.cc",
-    ]
+  if (current_cpu == "x86") {
+    # Non-SFI NaCl can only be executed by a 32-bit process, so our
+    # content handler must be built and launched as a 32-bit process as well.
+    mojo_native_application("nacl_content_handler_nonsfi_32_bit") {
+      sources = [
+        "content_handler_main_nonsfi.cc",
+      ]
 
-    deps = [
-      "//base",
-      "//mojo/application:application",
-      "//mojo/application:content_handler",
-      "//mojo/data_pipe_utils",
-      "//mojo/message_pump",
-      "//mojo/nacl:irt_mojo_nonsfi",
-      "//mojo/public/cpp/application:application",
-      "//native_client/src/nonsfi/loader:elf_loader",
-    ]
+      deps = [
+        "//base",
+        "//mojo/application:application",
+        "//mojo/application:content_handler",
+        "//mojo/data_pipe_utils",
+        "//mojo/message_pump",
+        "//mojo/nacl:irt_mojo_nonsfi",
+        "//mojo/public/cpp/application:application",
+        "//native_client/src/nonsfi/loader:elf_loader",
+      ]
+    }
+
+    # Copy to the root build directory so that the '#!' prefix line for invoking
+    # our content handler can simply be "mojo:nacl_content_handler_nonsfi".
+    copy("nacl_content_handler_nonsfi_copy") {
+      sources = [
+        "${root_out_dir}/nacl_content_handler_nonsfi_32_bit.mojo",
+      ]
+      outputs = [
+        "${root_build_dir}/nacl_content_handler_nonsfi.mojo",
+      ]
+      deps = [
+        ":nacl_content_handler_nonsfi_32_bit",
+      ]
+    }
+  }
+}
+
+# This group serves as a 64 to 32 bit transformation for Linux. If we are
+# using a 64 bit toolchain, build the nonsfi nacl content handler as 32 bit.
+group("nacl_content_handler_nonsfi") {
+  deps = []
+  if ((target_cpu == "x64" || target_cpu == "x86") && is_linux) {
+    # The toolchain is hardcoded as 32-bit clang here -- although it must
+    # be 32 bit (for nonsfi), it assumes clang. Ideally, the toolchain would
+    # be defined as the 32 bit variant of whatever is being used (be it clang,
+    # gcc, or something else).
+    deps += [ ":nacl_content_handler_nonsfi_copy(//build/toolchain/linux:clang_x86)" ]
   }
 }
