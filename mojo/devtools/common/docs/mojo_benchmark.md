@@ -38,10 +38,11 @@ The following types of measurements are available:
 
 ## Caching
 
-The script runs each benchmark twice. The first run (**cold start**) clears the
-following caches before start:
+The script runs each benchmark twice. The first run (**cold start**) clears
+caches of the following apps on startup:
 
- - url_response_disk_cache
+ - network_service.mojo
+ - url_response_disk_cache.mojo
 
 The second run (**warm start**) runs immediately afterwards, without clearing
 any caches.
