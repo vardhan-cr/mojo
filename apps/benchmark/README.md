@@ -8,12 +8,17 @@ ecosystem](../../mojo/services/tracing/public/interfaces/tracing.mojom).
 
 ## Arguments
 
-The benchmarking app expects the following arguments:
+The benchmarking app **requires** the following arguments:
 
  - `--app=<app_url>` - url of the application to be benchmarked
  - `--duration=<duration_seconds>` - duration of the benchmark in seconds
 
-any other arguments are assumed to be descriptions of measurements to be
+The following arguments are **optional**:
+
+ - `--trace-output=<output_file_path>` - local file path at which the collected trace
+   will be written
+
+Any other arguments are assumed to be descriptions of measurements to be
 conducted on the collected trace data. Each measurement has to be of form:
 `<measurement_type>/<trace_event_category>/<trace_event_name>`.
 
@@ -28,4 +33,4 @@ The following measurement types are available:
 
 Devtools offers [a helper script](../../mojo/devtools/common/mojo_benchmark)
 allowing to run a list of benchmarks in controlled caching conditions, both
-on Linux and Android.
+on **Android** and **Linux**.

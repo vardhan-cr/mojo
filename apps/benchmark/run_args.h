@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "apps/benchmark/measurements.h"
+#include "base/files/file_path.h"
 #include "base/time/time.h"
 
 namespace benchmark {
@@ -18,6 +19,8 @@ struct RunArgs {
   std::string app;
   base::TimeDelta duration;
   std::vector<Measurement> measurements;
+  bool write_output_file;
+  base::FilePath output_file_path;
 
   RunArgs();
   ~RunArgs();

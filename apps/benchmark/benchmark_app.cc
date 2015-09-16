@@ -12,6 +12,7 @@
 #include "apps/benchmark/run_args.h"
 #include "apps/benchmark/trace_collector_client.h"
 #include "base/bind.h"
+#include "base/files/file_util.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/strings/string_split.h"
@@ -83,6 +84,17 @@ class BenchmarkApp : public mojo::ApplicationDelegate,
 
   // TraceCollectorClient::Receiver:
   void OnTraceCollected(std::string trace_data) override {
+    if (args_.write_output_file) {
+      // Write the trace file regardless of whether it can be parsed (or whether
+      // the measurements succeed), as it can be useful to debug failures.
+      base::File trace_file(
+          args_.output_file_path,
+          base::File::FLAG_CREATE_ALWAYS | base::File::FLAG_WRITE);
+      trace_file.WriteAtCurrentPos(trace_data.data(), trace_data.size());
+      printf("wrote trace file at: %s\n",
+             args_.output_file_path.value().c_str());
+    }
+
     // Parse trace events.
     std::vector<Event> events;
     if (!GetEvents(trace_data, &events)) {

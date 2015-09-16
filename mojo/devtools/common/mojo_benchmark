@@ -8,6 +8,7 @@
 import argparse
 import logging
 import sys
+import time
 
 from devtoolslib import shell_arguments
 from devtoolslib import shell_config
@@ -52,7 +53,7 @@ _EXTRA_TIMEOUT = 20
 
 
 def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
-                   cold_start, verbose):
+                   cold_start, verbose, save_traces):
   """Runs `benchmark.mojo` in shell with correct arguments, parses and
   presents the benchmark results.
   """
@@ -60,6 +61,13 @@ def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
   benchmark_args = []
   benchmark_args.append('--app=' + app)
   benchmark_args.append('--duration=' + str(duration_seconds))
+  if save_traces:
+    trace_output_file = 'benchmark-%s-%s-%s.trace' % (
+        name.replace(' ', '_'),
+        'cold_start' if cold_start else 'warm_start',
+        time.strftime('%Y%m%d%H%M%S'))
+    benchmark_args.append('--trace-output=' + trace_output_file)
+
   for measurement in measurements:
     benchmark_args.append(measurement)
 
@@ -100,6 +108,8 @@ def main():
       description=_DESCRIPTION)
   parser.add_argument('benchmark_list_file', type=file,
                       help='a file listing benchmarks to run')
+  parser.add_argument('--save-traces', action='store_true',
+                      help='save the traces produced by benchmarks to disk')
 
   # Common shell configuration arguments.
   shell_config.add_shell_arguments(parser)
@@ -125,9 +135,11 @@ def main():
     shell_args = benchmark_spec.get('shell-args', []) + common_shell_args
     measurements = benchmark_spec['measurements']
     _run_benchmark(shell, shell_args, name, app, duration, measurements,
-                   cold_start=True, verbose=script_args.verbose)
+                   cold_start=True, verbose=script_args.verbose,
+                   save_traces=script_args.save_traces)
     _run_benchmark(shell, shell_args, name, app, duration, measurements,
-                   cold_start=False, verbose=script_args.verbose)
+                   cold_start=False, verbose=script_args.verbose,
+                   save_traces=script_args.save_traces)
 
   return 0 if succeeded else 1
 

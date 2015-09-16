@@ -68,6 +68,13 @@ bool GetRunArgs(const std::vector<std::string>& input_args, RunArgs* result) {
   }
   result->duration = base::TimeDelta::FromSeconds(duration_int);
 
+  result->write_output_file = false;
+  if (command_line.HasSwitch("trace-output")) {
+    result->write_output_file = true;
+    result->output_file_path =
+        base::FilePath(command_line.GetSwitchValueASCII("trace-output"));
+  }
+
   // All regular arguments (not switches, ie. not preceded by "--") describe
   // measurements.
   for (const std::string& measurement_spec : command_line.GetArgs()) {
