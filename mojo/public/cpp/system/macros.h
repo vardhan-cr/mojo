@@ -69,7 +69,7 @@ char(&ArraySizeHelper(const T(&array)[N]))[N];
 
 namespace mojo {
 
-// Used to explicitly mark the return value of a function as unused. (You this
+// Used to explicitly mark the return value of a function as unused. (Use this
 // if you are really sure you don't want to do anything with the return value of
 // a function marked with |MOJO_WARN_UNUSED_RESULT|.
 template <typename T>
