@@ -5,8 +5,9 @@
 #ifndef MOJO_EDK_SYSTEM_ENDPOINT_RELAYER_H_
 #define MOJO_EDK_SYSTEM_ENDPOINT_RELAYER_H_
 
+#include <memory>
+
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/system_impl_export.h"
@@ -73,7 +74,7 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer final
 
   // Sets (or resets) the filter, which can (optionally) handle/filter
   // |Type::ENDPOINT_CLIENT| messages (see |Filter| above).
-  void SetFilter(scoped_ptr<Filter> filter);
+  void SetFilter(std::unique_ptr<Filter> filter);
 
   // |ChannelEndpointClient| methods:
   bool OnReadMessage(unsigned port, MessageInTransit* message) override;
@@ -84,7 +85,7 @@ class MOJO_SYSTEM_IMPL_EXPORT EndpointRelayer final
 
   Mutex mutex_;
   scoped_refptr<ChannelEndpoint> endpoints_[2] MOJO_GUARDED_BY(mutex_);
-  scoped_ptr<Filter> filter_ MOJO_GUARDED_BY(mutex_);
+  std::unique_ptr<Filter> filter_ MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(EndpointRelayer);
 };
