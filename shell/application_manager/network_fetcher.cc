@@ -124,12 +124,14 @@ void ApplicationUpdater::OnLoadComplete(mojo::URLResponsePtr response) {
 
 NetworkFetcher::NetworkFetcher(
     bool disable_cache,
+    bool force_offline_by_default,
     const GURL& url,
     mojo::URLResponseDiskCache* url_response_disk_cache,
     mojo::NetworkService* network_service,
     const FetchCallback& loader_callback)
     : Fetcher(loader_callback),
       disable_cache_(disable_cache),
+      force_offline_by_default_(force_offline_by_default),
       url_(url),
       url_response_disk_cache_(url_response_disk_cache),
       network_service_(network_service),
@@ -197,6 +199,9 @@ bool NetworkFetcher::PeekFirstLine(std::string* line) {
 bool NetworkFetcher::CanLoadDirectlyFromCache() {
   if (disable_cache_)
     return false;
+
+  if (force_offline_by_default_)
+    return true;
 
   const std::string& host = url_.host();
   return !(host == "localhost" || host == "127.0.0.1" || host == "[::1]");

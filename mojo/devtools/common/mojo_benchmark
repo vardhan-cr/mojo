@@ -74,6 +74,7 @@ def _run_benchmark(shell, shell_args, name, app, duration_seconds, measurements,
 
   shell_args = list(shell_args)
   shell_args.append(_BENCHMARK_APP)
+  shell_args.append('--force-offline-by-default')
   shell_args.append('--args-for=%s %s' % (_BENCHMARK_APP,
                                           ' '.join(benchmark_args)))
 

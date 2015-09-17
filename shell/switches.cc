@@ -46,6 +46,9 @@ const char kEnableMultiprocess[] = "enable-multiprocess";
 // --force-in-process=mojo:native_viewport_service,mojo:network_service
 const char kForceInProcess[] = "force-in-process";
 
+// Forces offline by default mode, even for local URLs.
+const char kForceOfflineByDefault[] = "force-offline-by-default";
+
 // Print the usage message and exit.
 const char kHelp[] = "help";
 
@@ -84,6 +87,7 @@ const char* kSwitchArray[] = {kV,
                               kDontDeleteOnDownload,
                               kEnableMultiprocess,
                               kForceInProcess,
+                              kForceOfflineByDefault,
                               kHelp,
                               kMapOrigin,
                               kOrigin,

@@ -215,8 +215,9 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     initialized_authentication_interceptor_ = true;
   }
 
-  new NetworkFetcher(options_.disable_cache, resolved_url,
-                     url_response_disk_cache_.get(), network_service, callback);
+  new NetworkFetcher(options_.disable_cache, options_.force_offline_by_default,
+                     resolved_url, url_response_disk_cache_.get(),
+                     network_service, callback);
 }
 
 bool ApplicationManager::ConnectToRunningApplication(

@@ -20,6 +20,7 @@ extern const char kDisableCache[];
 extern const char kDontDeleteOnDownload[];
 extern const char kEnableMultiprocess[];
 extern const char kForceInProcess[];
+extern const char kForceOfflineByDefault[];
 extern const char kHelp[];
 extern const char kMapOrigin[];
 extern const char kOrigin[];

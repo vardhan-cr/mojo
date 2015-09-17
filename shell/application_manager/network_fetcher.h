@@ -20,6 +20,7 @@ namespace shell {
 class NetworkFetcher : public Fetcher {
  public:
   NetworkFetcher(bool disable_cache,
+                 bool force_offline_by_default,
                  const GURL& url,
                  mojo::URLResponseDiskCache* url_response_disk_cache,
                  mojo::NetworkService* network_service,
@@ -66,6 +67,7 @@ class NetworkFetcher : public Fetcher {
                                       const GURL& url);
 
   const bool disable_cache_;
+  const bool force_offline_by_default_;
   const GURL url_;
   mojo::URLResponseDiskCache* url_response_disk_cache_;
   mojo::NetworkService* network_service_;

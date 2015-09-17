@@ -66,6 +66,9 @@ ApplicationManager::Options MakeApplicationManagerOptions() {
   ApplicationManager::Options options;
   options.disable_cache = base::CommandLine::ForCurrentProcess()->HasSwitch(
       switches::kDisableCache);
+  options.force_offline_by_default =
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kForceOfflineByDefault);
   return options;
 }
 

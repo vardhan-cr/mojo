@@ -35,9 +35,10 @@ class ShellImpl;
 class ApplicationManager {
  public:
   struct Options {
-    Options() : disable_cache(false) {}
+    Options() : disable_cache(false), force_offline_by_default(false) {}
 
     bool disable_cache;
+    bool force_offline_by_default;
   };
 
   class Delegate {
