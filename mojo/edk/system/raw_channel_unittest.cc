@@ -10,9 +10,6 @@
 #include <vector>
 
 #include "base/bind.h"
-#include "base/files/file_path.h"
-#include "base/files/file_util.h"
-#include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
@@ -26,6 +23,7 @@
 #include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/transport_data.h"
+#include "mojo/edk/test/scoped_test_dir.h"
 #include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/edk/util/scoped_file.h"
@@ -794,8 +792,7 @@ class ReadPlatformHandlesCheckerRawChannelDelegate
 };
 
 TEST_F(RawChannelTest, ReadWritePlatformHandles) {
-  base::ScopedTempDir temp_dir;
-  ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
+  mojo::test::ScopedTestDir test_dir;
 
   WriteOnlyRawChannelDelegate write_delegate;
   scoped_ptr<RawChannel> rc_write(RawChannel::Create(handles[0].Pass()));
@@ -809,12 +806,9 @@ TEST_F(RawChannelTest, ReadWritePlatformHandles) {
                                base::Bind(&InitOnIOThread, rc_read.get(),
                                           base::Unretained(&read_delegate)));
 
-  base::FilePath unused;
-  util::ScopedFILE fp1(
-      base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
+  util::ScopedFILE fp1(test_dir.CreateFile());
   EXPECT_EQ(1u, fwrite("1", 1, 1, fp1.get()));
-  util::ScopedFILE fp2(
-      base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
+  util::ScopedFILE fp2(test_dir.CreateFile());
   EXPECT_EQ(1u, fwrite("2", 1, 1, fp2.get()));
 
   {

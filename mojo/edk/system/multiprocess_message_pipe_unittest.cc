@@ -10,9 +10,6 @@
 #include <vector>
 
 #include "base/bind.h"
-#include "base/files/file_path.h"
-#include "base/files/file_util.h"
-#include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "build/build_config.h"  // TODO(vtl): Remove this.
@@ -26,6 +23,7 @@
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/shared_buffer_dispatcher.h"
 #include "mojo/edk/system/test_utils.h"
+#include "mojo/edk/test/scoped_test_dir.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/edk/util/scoped_file.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -447,8 +445,7 @@ class MultiprocessMessagePipeTestWithPipeCount
       public testing::WithParamInterface<size_t> {};
 
 TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
-  base::ScopedTempDir temp_dir;
-  ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
+  mojo::test::ScopedTestDir test_dir;
 
   helper()->StartChild("CheckPlatformHandleFile");
 
@@ -461,9 +458,7 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
 
   size_t pipe_count = GetParam();
   for (size_t i = 0; i < pipe_count; ++i) {
-    base::FilePath unused;
-    util::ScopedFILE fp(
-        CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
+    util::ScopedFILE fp(test_dir.CreateFile());
     const std::string world("world");
     CHECK_EQ(fwrite(&world[0], 1, world.size(), fp.get()), world.size());
     fflush(fp.get());

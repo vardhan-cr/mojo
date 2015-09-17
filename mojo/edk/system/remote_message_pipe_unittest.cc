@@ -9,9 +9,6 @@
 #include <vector>
 
 #include "base/bind.h"
-#include "base/files/file_path.h"
-#include "base/files/file_util.h"
-#include "base/files/scoped_temp_dir.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
@@ -30,6 +27,7 @@
 #include "mojo/edk/system/shared_buffer_dispatcher.h"
 #include "mojo/edk/system/test_utils.h"
 #include "mojo/edk/system/waiter.h"
+#include "mojo/edk/test/scoped_test_dir.h"
 #include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/edk/util/scoped_file.h"
@@ -1011,8 +1009,7 @@ TEST_F(RemoteMessagePipeTest, SharedBufferPassing) {
 }
 
 TEST_F(RemoteMessagePipeTest, PlatformHandlePassing) {
-  base::ScopedTempDir temp_dir;
-  ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
+  mojo::test::ScopedTestDir test_dir;
 
   static const char kHello[] = "hello";
   static const char kWorld[] = "world";
@@ -1026,9 +1023,7 @@ TEST_F(RemoteMessagePipeTest, PlatformHandlePassing) {
   scoped_refptr<MessagePipe> mp1(MessagePipe::CreateProxyLocal(&ep1));
   BootstrapChannelEndpoints(ep0, ep1);
 
-  base::FilePath unused;
-  util::ScopedFILE fp(
-      base::CreateAndOpenTemporaryFileInDir(temp_dir.path(), &unused));
+  util::ScopedFILE fp(test_dir.CreateFile());
   EXPECT_EQ(sizeof(kHello), fwrite(kHello, 1, sizeof(kHello), fp.get()));
   // We'll try to pass this dispatcher, which will cause a |PlatformHandle| to
   // be passed.

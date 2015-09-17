@@ -21,15 +21,11 @@
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
+#include "mojo/edk/test/scoped_test_dir.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/edk/util/scoped_file.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
-
-#if defined(OS_ANDROID)
-#include "base/android/path_utils.h"
-#include "base/files/file_path.h"
-#endif
 
 namespace mojo {
 namespace embedder {
@@ -40,22 +36,6 @@ void WaitReadable(PlatformHandle h) {
   pfds.fd = h.fd;
   pfds.events = POLLIN;
   CHECK_EQ(poll(&pfds, 1, -1), 1);
-}
-
-FILE* NewTmpFile() {
-#if defined(OS_ANDROID)
-  base::FilePath tmpdir;
-  if (!base::android::GetCacheDirectory(&tmpdir))
-    return nullptr;
-  std::string templ = tmpdir.Append("XXXXXXXX").value();
-  int fd = mkstemp(const_cast<char*>(templ.c_str()));
-  if (fd == -1)
-    return nullptr;
-  CHECK(unlink(templ.c_str()) == 0);
-  return fdopen(fd, "w+");
-#else
-  return tmpfile();
-#endif
 }
 
 class PlatformChannelPairPosixTest : public testing::Test {
@@ -147,6 +127,8 @@ TEST_F(PlatformChannelPairPosixTest, SendReceiveData) {
 }
 
 TEST_F(PlatformChannelPairPosixTest, SendReceiveFDs) {
+  mojo::test::ScopedTestDir test_dir;
+
   static const char kHello[] = "hello";
 
   PlatformChannelPair channel_pair;
@@ -166,7 +148,7 @@ TEST_F(PlatformChannelPairPosixTest, SendReceiveFDs) {
     const char c = '0' + (i % 10);
     ScopedPlatformHandleVectorPtr platform_handles(new PlatformHandleVector);
     for (size_t j = 1; j <= i; j++) {
-      util::ScopedFILE fp(NewTmpFile());
+      util::ScopedFILE fp(test_dir.CreateFile());
       ASSERT_TRUE(fp);
       ASSERT_EQ(j, fwrite(std::string(j, c).data(), 1, j, fp.get()));
       platform_handles->push_back(
@@ -208,6 +190,8 @@ TEST_F(PlatformChannelPairPosixTest, SendReceiveFDs) {
 }
 
 TEST_F(PlatformChannelPairPosixTest, AppendReceivedFDs) {
+  mojo::test::ScopedTestDir test_dir;
+
   static const char kHello[] = "hello";
 
   PlatformChannelPair channel_pair;
@@ -217,7 +201,7 @@ TEST_F(PlatformChannelPairPosixTest, AppendReceivedFDs) {
   const std::string file_contents("hello world");
 
   {
-    util::ScopedFILE fp(NewTmpFile());
+    util::ScopedFILE fp(test_dir.CreateFile());
     ASSERT_TRUE(fp);
     ASSERT_EQ(file_contents.size(),
               fwrite(file_contents.data(), 1, file_contents.size(), fp.get()));
