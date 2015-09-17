@@ -5,6 +5,7 @@
 #include "mojo/edk/test/test_utils.h"
 
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "base/logging.h"

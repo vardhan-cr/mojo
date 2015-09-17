@@ -6,9 +6,6 @@
 #define MOJO_EDK_TEST_TEST_UTILS_H_
 
 #include <stddef.h>
-#include <stdio.h>
-
-#include <string>
 
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
