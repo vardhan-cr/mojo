@@ -54,7 +54,7 @@ group("examples") {
     }
   }
 
-  if (is_linux) {
+  if (is_linux && !is_fnl) {
     deps += [ "//examples/python" ]
   }
 }

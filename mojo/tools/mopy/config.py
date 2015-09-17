@@ -17,6 +17,7 @@ class Config(object):
 
   # Valid values for target_os (None is also valid):
   OS_ANDROID = "android"
+  OS_FNL = "fnl"
   OS_IOS = "ios"
   OS_LINUX = "linux"
   OS_MAC = "mac"
@@ -43,9 +44,9 @@ class Config(object):
     """Constructs a Config with key-value pairs specified via keyword arguments.
     If target_os is not specified, it will be set to the host OS."""
 
-    assert target_os in (None, Config.OS_ANDROID, Config.OS_IOS,
-                         Config.OS_LINUX, Config.OS_MAC,
-                         Config.OS_WINDOWS)
+    assert target_os in (None, Config.OS_ANDROID, Config.OS_FNL,
+                         Config.OS_IOS, Config.OS_LINUX,
+                         Config.OS_MAC, Config.OS_WINDOWS)
     assert target_cpu in (None, Config.ARCH_X86, Config.ARCH_X64,
                            Config.ARCH_ARM)
     assert isinstance(is_debug, bool)

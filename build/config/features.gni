@@ -119,8 +119,8 @@ if (is_android) {
   cld_version = 2
 }
 
-# libudev usage. This currently only affects the content layer.
-use_udev = is_linux
+# libudev usage.
+use_udev = is_linux && !is_fnl
 
 # Enable the spell checker.
 enable_spellcheck = !is_android

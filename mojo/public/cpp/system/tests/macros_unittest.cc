@@ -84,6 +84,9 @@ TEST(MacrosCppTest, ArraySize) {
   // the size of the type of the local and not the values itself.
   MOJO_ALLOW_UNUSED_LOCAL(local_array);
   EXPECT_EQ(4u, MOJO_ARRAYSIZE(local_array));
+
+  // Prevent gcc unneeded-internal-declaration warning.
+  MOJO_ALLOW_UNUSED_LOCAL(kGlobalArray);
 }
 
 // Note: MSVS is very strict (and arguably buggy) about warnings for classes

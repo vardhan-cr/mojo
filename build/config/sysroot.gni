@@ -32,6 +32,8 @@ if (current_toolchain == default_toolchain && target_sysroot != "") {
   } else {
     sysroot = ""
   }
+} else if (is_fnl) {
+  assert(false, "FNL needs target_sysroot")
 } else if (is_linux && is_chrome_branded && is_official_build && !is_chromeos) {
   # For official builds, use the sysroot checked into the internal source repo
   # so that the builds work on older versions of Linux.

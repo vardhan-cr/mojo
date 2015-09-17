@@ -20,7 +20,7 @@ group("public") {
     deps += [ "cpp/application:standalone" ]
   }
 
-  if (is_linux) {
+  if (is_linux && !is_fnl) {
     deps += [ "python" ]
   }
 

@@ -24,6 +24,8 @@ def BuildDirectoryForConfig(config, src_root):
     subdir += "android_"
     if config.target_cpu != Config.ARCH_ARM:
       subdir += config.target_cpu + "_"
+  elif config.target_os == Config.OS_FNL:
+    subdir += "fnl_"
   elif config.target_os == Config.OS_IOS:
     subdir += "ios_"
   if config.is_simulator:
@@ -56,6 +58,7 @@ def GNArgsForConfig(config):
     gn_args["is_clang"] = bool(config.is_clang)
   else:
     gn_args["is_clang"] = config.target_os not in (Config.OS_ANDROID,
+                                                   Config.OS_FNL,
                                                    Config.OS_WINDOWS)
 
   if config.values.get("use_goma"):
@@ -68,6 +71,14 @@ def GNArgsForConfig(config):
 
   if config.target_os == Config.OS_ANDROID:
     gn_args["target_os"] = "android"
+  elif config.target_os == Config.OS_FNL:
+    gn_args["target_os"] = "fnl"
+    gn_args["use_aura"] = False
+    gn_args["use_glib"] = False
+    gn_args["use_ozone"] = True
+    gn_args["use_system_harfbuzz"] = False
+    gn_args["target_sysroot"] = config.values.get("target_sysroot", "")
+    gn_args["toolchain_prefix"] = config.values.get("toolchain_prefix", "")
   elif config.target_os == Config.OS_IOS:
     gn_args["target_os"] = "ios"
     gn_args["ios_deployment_target"] = "7.0"
@@ -132,6 +143,10 @@ def ConfigForGNArgs(args):
   config_args["target_cpu"] = args.get("target_cpu")
   config_args["dcheck_always_on"] = args.get("dcheck_always_on")
   config_args["is_simulator"] = args.get("use_ios_simulator", False)
+  if "target_sysroot" in args:
+    config_args["target_sysroot"] = args.get("target_sysroot")
+  if "toolchain_prefix" in args:
+    config_args["toolchain_prefix"] = args.get("toolchain_prefix")
   return Config(**config_args)
 
 

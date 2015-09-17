@@ -35,12 +35,19 @@ template("embed_file") {
     }
   }
 
+  config_target_name = "__${target_name}_config"
+  config(config_target_name) {
+    cflags = [ "-Wno-narrowing" ]
+  }
+
   source_set(target_name) {
     sources = generator_outputs
 
     if (defined(invoker.testonly)) {
       testonly = invoker.testonly
     }
+
+    configs += [ ":${config_target_name}" ]
 
     deps = [
       ":${generator_target_name}",

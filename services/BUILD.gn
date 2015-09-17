@@ -47,7 +47,7 @@ group("services") {
     }
   }
 
-  if (is_linux) {
+  if (is_linux && !is_fnl) {
     deps += [ "//services/python" ]
   }
 
@@ -79,7 +79,7 @@ group("tests") {
     "//services/window_manager:window_manager_unittests",
   ]
 
-  if (is_linux) {
+  if (is_linux && !is_fnl) {
     deps += [ "//services/python:python_apptests" ]
   }
 

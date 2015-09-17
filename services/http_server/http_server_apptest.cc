@@ -26,7 +26,7 @@ void WriteMessageToDataPipe(
   MojoCreateDataPipeOptions options = {sizeof(MojoCreateDataPipeOptions),
                                        MOJO_CREATE_DATA_PIPE_OPTIONS_FLAG_NONE,
                                        1,
-                                       message.size()};
+                                       static_cast<uint32_t>(message.size())};
 
   MojoResult result =
       CreateDataPipe(&options, &producer_handle_, data_pipe_consumer);

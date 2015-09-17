@@ -3,6 +3,9 @@
 # found in the LICENSE file.
 
 import("//build/config/ui.gni")
+if (is_posix) {
+  import("//build/config/gcc/gcc_version.gni")
+}
 
 config("mesa_headers_config") {
   include_dirs = [ "src/include" ]
@@ -80,6 +83,8 @@ config("mesa_internal_config") {
 
   if (is_clang) {
     cflags += [ "-Wno-tautological-constant-out-of-range-compare" ]
+  } else if (gcc_version >= 48) {
+    cflags += [ "-Wno-narrowing" ]
   }
 
   if (is_android) {

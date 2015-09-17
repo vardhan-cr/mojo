@@ -31,6 +31,8 @@ def _args_to_config(args):
     target_os = Config.OS_ANDROID
   elif args.ios:
     target_os = Config.OS_IOS
+  elif args.fnl:
+    target_os = Config.OS_FNL
 
   target_cpu = args.target_cpu
 
@@ -87,6 +89,12 @@ def _args_to_config(args):
     additional_args['gn_args'] = args.gn_args
 
   is_debug = args.debug and not args.official
+
+  if 'target_sysroot' in args and args.target_sysroot:
+    additional_args['target_sysroot'] = os.path.abspath(args.target_sysroot)
+
+  if 'toolchain_prefix' in args and args.toolchain_prefix:
+    additional_args['toolchain_prefix'] = args.toolchain_prefix
 
   return Config(target_os=target_os, target_cpu=target_cpu,
                 is_debug=is_debug, is_official_build=args.official,
@@ -244,6 +252,8 @@ def main():
                         action='store_true')
   os_group.add_argument('--ios', help='Build for iOS',
                         action='store_true')
+  os_group.add_argument('--fnl', help='Build for FNL',
+                        action='store_true')
 
   parent_parser.add_argument('--simulator',
                              help='Build for a simulator of the target',
@@ -252,6 +262,16 @@ def main():
   parent_parser.add_argument('--target-cpu',
                              help='CPU architecture to build for.',
                              choices=['x64', 'x86', 'arm'])
+
+  parent_parser.add_argument('--target-sysroot',
+                             help='Location of sysroot for target',
+                             default='',
+                             dest='target_sysroot')
+
+  parent_parser.add_argument('--toolchain-prefix',
+                             help='Toolchain prefix',
+                             default='',
+                             dest='toolchain_prefix')
 
   subparsers = parser.add_subparsers()
 

@@ -126,7 +126,7 @@ if (!mojo_use_prebuilt_mojo_shell) {
   group("mojo_shell_child_32_bit") {
     # This group is required to run any 32-bit child process.
     deps = []
-    if ((target_cpu == "x64" || target_cpu == "x86") && is_linux) {
+    if ((target_cpu == "x64" || target_cpu == "x86") && is_linux && !is_fnl) {
       # The toolchain is hardcoded as 32-bit clang here -- although it must
       # be 32 bit (for nonsfi), it assumes clang. Ideally, the toolchain would
       # be defined as the 32 bit variant of whatever is being used (be it clang,
