@@ -4,12 +4,16 @@
 
 #include "shell/application_manager/fetcher.h"
 
+#include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "url/gurl.h"
 
 namespace shell {
 
-const char Fetcher::kMojoMagic[] = "#!mojo ";
-const size_t Fetcher::kMaxShebangLength = 2048;
+namespace {
+const char kMojoMagic[] = "#!mojo ";
+const size_t kMaxShebangLength = 2048;
+}
 
 Fetcher::Fetcher(const FetchCallback& loader_callback)
     : loader_callback_(loader_callback) {
@@ -31,6 +35,26 @@ bool Fetcher::PeekContentHandler(std::string* mojo_shebang,
     }
   }
   return false;
+}
+
+// static
+bool Fetcher::HasMojoMagic(const base::FilePath& path) {
+  DCHECK(!path.empty());
+  std::string magic;
+  ReadFileToString(path, &magic, strlen(kMojoMagic));
+  return magic == kMojoMagic;
+}
+
+// static
+bool Fetcher::PeekFirstLine(const base::FilePath& path, std::string* line) {
+  DCHECK(!path.empty());
+  std::string start_of_file;
+  ReadFileToString(path, &start_of_file, kMaxShebangLength);
+  size_t return_position = start_of_file.find('\n');
+  if (return_position == std::string::npos)
+    return false;
+  *line = start_of_file.substr(0, return_position + 1);
+  return true;
 }
 
 }  // namespace shell

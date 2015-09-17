@@ -160,6 +160,12 @@ deps = {
 
   'src/third_party/lss':
     Var('chromium_git') + '/external/linux-syscall-support/lss.git' + '@' + Var('lss_revision'),
+
+  'src/third_party/leveldatabase/src':
+    Var('chromium_git') + '/external/leveldb.git' + '@' + '40c17c0b84ac0b791fb434096fd5c05f3819ad55',
+
+  'src/third_party/snappy/src':
+    Var('chromium_git') + '/external/snappy.git' + '@' + '762bb32f0c9d2f31ba4958c7c0933d22e80c20bf',
 }
 
 deps_os = {

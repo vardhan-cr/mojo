@@ -6,6 +6,7 @@
 #define SERVICES_URL_RESPONSE_DISK_CACHE_URL_RESPONSE_DISK_CACHE_APP_H_
 
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "base/task_runner.h"
 #include "base/threading/sequenced_worker_pool.h"
 #include "mojo/public/cpp/application/application_connection.h"
@@ -13,13 +14,14 @@
 #include "mojo/public/cpp/application/application_impl.h"
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
+#include "services/url_response_disk_cache/url_response_disk_cache_db.h"
 
 namespace mojo {
 
 class URLResponseDiskCacheApp : public ApplicationDelegate,
                                 public InterfaceFactory<URLResponseDiskCache> {
  public:
-  URLResponseDiskCacheApp(base::TaskRunner* task_runner);
+  explicit URLResponseDiskCacheApp(scoped_refptr<base::TaskRunner> task_runner);
   ~URLResponseDiskCacheApp() override;
 
  private:
@@ -31,7 +33,8 @@ class URLResponseDiskCacheApp : public ApplicationDelegate,
   void Create(ApplicationConnection* connection,
               InterfaceRequest<URLResponseDiskCache> request) override;
 
-  base::TaskRunner* task_runner_;
+  scoped_refptr<base::TaskRunner> task_runner_;
+  scoped_refptr<URLResponseDiskCacheDB> db_;
 
   DISALLOW_COPY_AND_ASSIGN(URLResponseDiskCacheApp);
 };

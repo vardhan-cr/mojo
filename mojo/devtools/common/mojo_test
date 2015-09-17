@@ -49,6 +49,8 @@ Any arguments not recognized by the script will be passed on as shell arguments.
 
 _logger = logging.getLogger()
 
+_CACHE_SERVICE_URL = 'mojo:url_response_disk_cache'
+
 
 def main():
   parser = argparse.ArgumentParser(
@@ -66,6 +68,9 @@ def main():
       # We need root to have the stdout of the shell available on the host.
       config.require_root = True
     shell, common_shell_args = shell_arguments.get_shell(config, shell_args)
+    # Tests must be reproducible. Start with an empty cache.
+    common_shell_args.append(
+        "--args-for=%s %s" % (_CACHE_SERVICE_URL, "--clear"))
   except shell_config.ShellConfigurationException as e:
     print e
     return 1

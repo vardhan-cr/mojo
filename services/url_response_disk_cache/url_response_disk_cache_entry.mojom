@@ -2,18 +2,21 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-[DartPackage="mojo_services"]
+// These mojom structs are declared only to get generated serialization code
+// (ie. they are not used for ipc).
 module mojo;
 
-struct CacheHeaders {
-  string name;
-  string value;
+import "mojo/public/interfaces/network/url_response.mojom";
+
+struct CacheKey {
+  string request_origin;
+  string url;
+  int64 timestamp;
 };
 
 // One entry in the service cache.
 struct CacheEntry {
-  uint32 version = 0;
-  string url;
-  string content_path;
-  array<CacheHeaders>? headers;
+  URLResponse response;
+  string entry_directory;
+  string response_body_path;
 };

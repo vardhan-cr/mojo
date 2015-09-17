@@ -240,6 +240,7 @@ class ApplicationManager {
   base::SequencedWorkerPool* blocking_pool_;
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   mojo::NetworkServicePtr network_service_;
+  mojo::NetworkServicePtr authenticating_network_service_;
   MimeTypeToURLMap mime_type_to_url_;
   ScopedVector<NativeRunner> native_runners_;
   bool initialized_authentication_interceptor_;

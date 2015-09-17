@@ -185,20 +185,22 @@ void ApplicationManager::ConnectToApplicationWithParameters(
   if (!url_response_disk_cache_) {
     ConnectToService(GURL("mojo:url_response_disk_cache"),
                      &url_response_disk_cache_);
+    ConnectToService(GURL("mojo:network_service"), &network_service_);
+    ConnectToService(GURL("mojo:network_service"),
+                     &authenticating_network_service_);
   }
 
-  if (!network_service_) {
-    ConnectToService(GURL("mojo:network_service"), &network_service_);
-  }
+  mojo::NetworkService* network_service = authenticating_network_service_.get();
 
   // NOTE: Attempting to initialize the apps used authentication for while
   // connecting to those apps would result in a recursive loop, so it has to be
   // explicitly avoided here. What this means in practice is that these apps
   // cannot themselves require authentication to obtain.
-  if (!initialized_authentication_interceptor_ &&
-      !EndsWith(resolved_url.path(), "/authentication.mojo", true) &&
-      !EndsWith(resolved_url.path(),
-                "/authenticating_url_loader_interceptor.mojo", true)) {
+  if (EndsWith(resolved_url.path(), "/authentication.mojo", true) ||
+      EndsWith(resolved_url.path(),
+               "/authenticating_url_loader_interceptor.mojo", true)) {
+    network_service = network_service_.get();
+  } else if (!initialized_authentication_interceptor_) {
     authentication::AuthenticationServicePtr authentication_service;
     ConnectToService(GURL("mojo:authentication"), &authentication_service);
     mojo::AuthenticatingURLLoaderInterceptorMetaFactoryPtr
@@ -208,13 +210,13 @@ void ApplicationManager::ConnectToApplicationWithParameters(
     mojo::URLLoaderInterceptorFactoryPtr interceptor_factory;
     interceptor_meta_factory->CreateURLLoaderInterceptorFactory(
         GetProxy(&interceptor_factory), authentication_service.Pass());
-    network_service_->RegisterURLLoaderInterceptor(interceptor_factory.Pass());
+    authenticating_network_service_->RegisterURLLoaderInterceptor(
+        interceptor_factory.Pass());
     initialized_authentication_interceptor_ = true;
   }
 
   new NetworkFetcher(options_.disable_cache, resolved_url,
-                     url_response_disk_cache_.get(), network_service_.get(),
-                     callback);
+                     url_response_disk_cache_.get(), network_service, callback);
 }
 
 bool ApplicationManager::ConnectToRunningApplication(

@@ -9,18 +9,17 @@
 
 namespace mojo {
 
-URLResponseDiskCacheApp::URLResponseDiskCacheApp(base::TaskRunner* task_runner)
-    : task_runner_(task_runner) {
-}
+URLResponseDiskCacheApp::URLResponseDiskCacheApp(
+    scoped_refptr<base::TaskRunner> task_runner)
+    : task_runner_(task_runner) {}
 
 URLResponseDiskCacheApp::~URLResponseDiskCacheApp() {
 }
 
 void URLResponseDiskCacheApp::Initialize(ApplicationImpl* app) {
   base::CommandLine command_line(app->args());
-  if (command_line.HasSwitch("clear")) {
-    URLResponseDiskCacheImpl::ClearCache(task_runner_);
-  }
+  bool force_clean = command_line.HasSwitch("clear");
+  db_ = URLResponseDiskCacheImpl::CreateDB(task_runner_, force_clean);
 }
 
 bool URLResponseDiskCacheApp::ConfigureIncomingConnection(
@@ -33,7 +32,7 @@ void URLResponseDiskCacheApp::Create(
     ApplicationConnection* connection,
     InterfaceRequest<URLResponseDiskCache> request) {
   new URLResponseDiskCacheImpl(
-      task_runner_, connection->GetRemoteApplicationURL(), request.Pass());
+      task_runner_, db_, connection->GetRemoteApplicationURL(), request.Pass());
 }
 
 }  // namespace mojo

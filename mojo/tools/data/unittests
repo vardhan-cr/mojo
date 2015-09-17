@@ -45,6 +45,9 @@ tests = [
     "test": "mojo_surfaces_lib_unittests",
   },
   {
+    "test": "url_response_disk_cache_unittests",
+  },
+  {
     "test": "view_manager_service_unittests",
   },
   {

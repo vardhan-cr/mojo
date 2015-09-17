@@ -139,7 +139,7 @@ void AndroidHandler::ExtractApplication(base::FilePath* extracted_dir,
                                         base::FilePath* cache_dir,
                                         mojo::URLResponsePtr response,
                                         const base::Closure& callback) {
-  url_response_disk_cache_->GetExtractedContent(
+  url_response_disk_cache_->UpdateAndGetExtracted(
       response.Pass(),
       [extracted_dir, cache_dir, callback](mojo::Array<uint8_t> extracted_path,
                                            mojo::Array<uint8_t> cache_path) {

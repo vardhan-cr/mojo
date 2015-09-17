@@ -102,7 +102,7 @@ void JavaHandler::GetApplication(base::FilePath* archive_path,
                                  base::FilePath* cache_dir,
                                  mojo::URLResponsePtr response,
                                  const base::Closure& callback) {
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       response.Pass(),
       [archive_path, cache_dir, callback](mojo::Array<uint8_t> extracted_path,
                                           mojo::Array<uint8_t> cache_path) {

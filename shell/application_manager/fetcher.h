@@ -63,8 +63,8 @@ class Fetcher {
                           GURL* mojo_content_handler_url);
 
  protected:
-  static const char kMojoMagic[];
-  static const size_t kMaxShebangLength;
+  static bool HasMojoMagic(const base::FilePath& path);
+  static bool PeekFirstLine(const base::FilePath& path, std::string* line);
 
   FetchCallback loader_callback_;
 };

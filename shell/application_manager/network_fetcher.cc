@@ -32,7 +32,95 @@ char kArchitecture[] = "android-arm";
 #else
 #error "Unsupported."
 #endif
+
+// The delay to wait before trying to update an application after having served
+// it from the cache.
+const uint32_t kUpdateApplicationDelayInSeconds = 60;
+
+base::FilePath ToFilePath(const mojo::Array<uint8_t>& array) {
+  return base::FilePath(
+      std::string(reinterpret_cast<const char*>(&array.front()), array.size()));
+}
+
+void IgnoreResult(bool result) {}
+
+mojo::URLRequestPtr GetRequest(const GURL& url, bool disable_cache) {
+  mojo::URLRequestPtr request(mojo::URLRequest::New());
+  request->url = mojo::String::From(url);
+  request->auto_follow_redirects = false;
+  if (disable_cache)
+    request->cache_mode = mojo::URLRequest::CACHE_MODE_BYPASS_CACHE;
+  auto architecture_header = mojo::HttpHeader::New();
+  architecture_header->name = "X-Architecture";
+  architecture_header->value = kArchitecture;
+  mojo::Array<mojo::HttpHeaderPtr> headers;
+  headers.push_back(architecture_header.Pass());
+  request->headers = headers.Pass();
+
+  return request.Pass();
+}
+
+// This class is self owned and will delete itself after having tried to update
+// the application cache.
+class ApplicationUpdater : public base::MessageLoop::DestructionObserver {
+ public:
+  ApplicationUpdater(const GURL& url,
+                     const base::TimeDelta& update_delay,
+                     mojo::URLResponseDiskCache* url_response_disk_cache,
+                     mojo::NetworkService* network_service);
+  ~ApplicationUpdater() override;
+
+ private:
+  // DestructionObserver
+  void WillDestroyCurrentMessageLoop() override;
+
+  void UpdateApplication();
+  void OnLoadComplete(mojo::URLResponsePtr response);
+
+  GURL url_;
+  base::TimeDelta update_delay_;
+  mojo::URLResponseDiskCache* url_response_disk_cache_;
+  mojo::NetworkService* network_service_;
+  mojo::URLLoaderPtr url_loader_;
 };
+
+ApplicationUpdater::ApplicationUpdater(
+    const GURL& url,
+    const base::TimeDelta& update_delay,
+    mojo::URLResponseDiskCache* url_response_disk_cache,
+    mojo::NetworkService* network_service)
+    : url_(url),
+      update_delay_(update_delay),
+      url_response_disk_cache_(url_response_disk_cache),
+      network_service_(network_service) {
+  base::MessageLoop::current()->AddDestructionObserver(this);
+  base::MessageLoop::current()->PostDelayedTask(
+      FROM_HERE, base::Bind(&ApplicationUpdater::UpdateApplication,
+                            base::Unretained(this)),
+      update_delay_);
+}
+
+ApplicationUpdater::~ApplicationUpdater() {
+  base::MessageLoop::current()->RemoveDestructionObserver(this);
+}
+
+void ApplicationUpdater::WillDestroyCurrentMessageLoop() {
+  delete this;
+}
+
+void ApplicationUpdater::UpdateApplication() {
+  network_service_->CreateURLLoader(GetProxy(&url_loader_));
+  url_loader_->Start(
+      GetRequest(url_, false),
+      base::Bind(&ApplicationUpdater::OnLoadComplete, base::Unretained(this)));
+}
+
+void ApplicationUpdater::OnLoadComplete(mojo::URLResponsePtr response) {
+  url_response_disk_cache_->Update(response.Pass());
+  delete this;
+}
+
+}  // namespace
 
 NetworkFetcher::NetworkFetcher(
     bool disable_cache,
@@ -46,7 +134,11 @@ NetworkFetcher::NetworkFetcher(
       url_response_disk_cache_(url_response_disk_cache),
       network_service_(network_service),
       weak_ptr_factory_(this) {
-  StartNetworkRequest(FROM_NETWORK);
+  if (CanLoadDirectlyFromCache()) {
+    LoadFromCache(true);
+  } else {
+    StartNetworkRequest();
+  }
 }
 
 NetworkFetcher::~NetworkFetcher() {
@@ -69,13 +161,126 @@ GURL NetworkFetcher::GetRedirectURL() const {
 mojo::URLResponsePtr NetworkFetcher::AsURLResponse(
     base::TaskRunner* task_runner,
     uint32_t skip) {
-  if (skip != 0) {
-    MojoResult result = ReadDataRaw(
-        response_->body.get(), nullptr, &skip,
-        MOJO_READ_DATA_FLAG_ALL_OR_NONE | MOJO_READ_DATA_FLAG_DISCARD);
-    DCHECK_EQ(result, MOJO_RESULT_OK);
-  }
+  DCHECK(response_);
+  DCHECK(!path_.empty());
+  mojo::DataPipe data_pipe;
+  response_->body = data_pipe.consumer_handle.Pass();
+  mojo::common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,
+                             task_runner, base::Bind(&IgnoreResult));
   return response_.Pass();
+}
+
+void NetworkFetcher::AsPath(
+    base::TaskRunner* task_runner,
+    base::Callback<void(const base::FilePath&, bool)> callback) {
+  // This should only called once, when we have a response.
+  DCHECK(response_.get());
+
+  base::MessageLoop::current()->PostTask(
+      FROM_HERE, base::Bind(callback, path_, base::PathExists(path_)));
+  response_.reset();
+  return;
+}
+
+std::string NetworkFetcher::MimeType() {
+  return response_->mime_type;
+}
+
+bool NetworkFetcher::HasMojoMagic() {
+  return Fetcher::HasMojoMagic(path_);
+}
+
+bool NetworkFetcher::PeekFirstLine(std::string* line) {
+  return Fetcher::PeekFirstLine(path_, line);
+}
+
+bool NetworkFetcher::CanLoadDirectlyFromCache() {
+  if (disable_cache_)
+    return false;
+
+  const std::string& host = url_.host();
+  return !(host == "localhost" || host == "127.0.0.1" || host == "[::1]");
+}
+
+void NetworkFetcher::LoadFromCache(bool schedule_update) {
+  url_response_disk_cache_->Get(
+      mojo::String::From(url_),
+      base::Bind(&NetworkFetcher::OnCachedResponseReceived,
+                 base::Unretained(this), schedule_update));
+}
+
+void NetworkFetcher::OnCachedResponseReceived(
+    bool schedule_update,
+    mojo::URLResponsePtr response,
+    mojo::Array<uint8_t> path_as_array,
+    mojo::Array<uint8_t> cache_dir) {
+  if (!response) {
+    // Not in cache, loading from net.
+    StartNetworkRequest();
+    return;
+  }
+  if (schedule_update) {
+    // The response has been found in the cache. Plan updating the application.
+    new ApplicationUpdater(
+        url_, base::TimeDelta::FromSeconds(kUpdateApplicationDelayInSeconds),
+        url_response_disk_cache_, network_service_);
+  }
+  response_ = response.Pass();
+  path_ = ToFilePath(path_as_array);
+  RecordCacheToURLMapping(path_, url_);
+  loader_callback_.Run(make_scoped_ptr(this));
+}
+
+void NetworkFetcher::StartNetworkRequest() {
+  TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
+                           "url", url_.spec());
+  network_service_->CreateURLLoader(GetProxy(&url_loader_));
+  url_loader_->Start(GetRequest(url_, disable_cache_),
+                     base::Bind(&NetworkFetcher::OnLoadComplete,
+                                weak_ptr_factory_.GetWeakPtr()));
+}
+
+void NetworkFetcher::OnLoadComplete(mojo::URLResponsePtr response) {
+  TRACE_EVENT_ASYNC_END0("mojo_shell", "NetworkFetcher::NetworkRequest", this);
+  if (response->error) {
+    LOG(ERROR) << "Error (" << response->error->code << ": "
+               << response->error->description << ") while fetching "
+               << response->url;
+    loader_callback_.Run(nullptr);
+    delete this;
+    return;
+  }
+
+  if (response->status_code >= 400 && response->status_code < 600) {
+    LOG(ERROR) << "Error (" << response->status_code << ": "
+               << response->status_line << "): "
+               << "while fetching " << response->url;
+    loader_callback_.Run(nullptr);
+    delete this;
+    return;
+  }
+
+  if (!response->redirect_url.is_null()) {
+    response_ = response.Pass();
+    loader_callback_.Run(make_scoped_ptr(this));
+    return;
+  }
+
+  url_response_disk_cache_->UpdateAndGet(
+      response.Pass(), base::Bind(&NetworkFetcher::OnFileSavedToCache,
+                                  weak_ptr_factory_.GetWeakPtr()));
+}
+
+void NetworkFetcher::OnFileSavedToCache(mojo::Array<uint8_t> path_as_array,
+                                        mojo::Array<uint8_t> cache_dir) {
+  if (!path_as_array) {
+    LOG(WARNING) << "Error when retrieving content from cache for: "
+                 << url_.spec();
+    loader_callback_.Run(nullptr);
+    delete this;
+    return;
+  }
+  LoadFromCache(false);
 }
 
 void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,
@@ -94,101 +299,11 @@ void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,
   std::string map_entry =
       base::StringPrintf("%s %s\n", path.value().c_str(), url.spec().c_str());
   // TODO(eseidel): AppendToFile is missing O_CREAT, crbug.com/450696
-  if (!PathExists(map_path))
+  if (!PathExists(map_path)) {
     base::WriteFile(map_path, map_entry.data(), map_entry.length());
-  else
+  } else {
     base::AppendToFile(map_path, map_entry.data(), map_entry.length());
-}
-
-void NetworkFetcher::OnFileRetrievedFromCache(
-    base::Callback<void(const base::FilePath&, bool)> callback,
-    mojo::Array<uint8_t> path_as_array,
-    mojo::Array<uint8_t> cache_dir) {
-  bool success = !path_as_array.is_null();
-  if (success) {
-    path_ = base::FilePath(std::string(
-        reinterpret_cast<char*>(&path_as_array.front()), path_as_array.size()));
-    RecordCacheToURLMapping(path_, url_);
   }
-
-  base::MessageLoop::current()->PostTask(FROM_HERE,
-                                         base::Bind(callback, path_, success));
-}
-
-void NetworkFetcher::AsPath(
-    base::TaskRunner* task_runner,
-    base::Callback<void(const base::FilePath&, bool)> callback) {
-  // This should only called once, when we have a response.
-  DCHECK(response_.get());
-
-  url_response_disk_cache_->GetFile(
-      response_.Pass(), base::Bind(&NetworkFetcher::OnFileRetrievedFromCache,
-                                   weak_ptr_factory_.GetWeakPtr(), callback));
-}
-
-std::string NetworkFetcher::MimeType() {
-  return response_->mime_type;
-}
-
-bool NetworkFetcher::HasMojoMagic() {
-  std::string magic;
-  return BlockingPeekNBytes(response_->body.get(), &magic, strlen(kMojoMagic),
-                            kPeekTimeout) &&
-         magic == kMojoMagic;
-}
-
-bool NetworkFetcher::PeekFirstLine(std::string* line) {
-  return BlockingPeekLine(response_->body.get(), line, kMaxShebangLength,
-                          kPeekTimeout);
-}
-
-void NetworkFetcher::StartNetworkRequest(RequestType request_type) {
-  TRACE_EVENT_ASYNC_BEGIN1("mojo_shell", "NetworkFetcher::NetworkRequest", this,
-                           "url", url_.spec());
-  mojo::URLRequestPtr request(mojo::URLRequest::New());
-  request->url = mojo::String::From(url_);
-  request->auto_follow_redirects = false;
-  if (disable_cache_)
-    request->cache_mode = mojo::URLRequest::CACHE_MODE_BYPASS_CACHE;
-  auto header = mojo::HttpHeader::New();
-  header->name = "X-Architecture";
-  header->value = kArchitecture;
-  mojo::Array<mojo::HttpHeaderPtr> headers;
-  headers.push_back(header.Pass());
-  request->headers = headers.Pass();
-
-  network_service_->CreateURLLoader(GetProxy(&url_loader_));
-  url_loader_->Start(request.Pass(),
-                     base::Bind(&NetworkFetcher::OnLoadComplete,
-                                weak_ptr_factory_.GetWeakPtr(), request_type));
-}
-
-void NetworkFetcher::OnLoadComplete(RequestType request_type,
-                                    mojo::URLResponsePtr response) {
-  TRACE_EVENT_ASYNC_END0("mojo_shell", "NetworkFetcher::NetworkRequest", this);
-  scoped_ptr<Fetcher> owner(this);
-  if (response->error) {
-    LOG(ERROR) << "Error (" << response->error->code << ": "
-               << response->error->description << ") while fetching "
-               << response->url;
-    if (request_type == FROM_NETWORK) {
-      StartNetworkRequest(FROM_CACHE);
-    } else {
-      loader_callback_.Run(nullptr);
-    }
-    return;
-  }
-
-  if (response->status_code >= 400 && response->status_code < 600) {
-    LOG(ERROR) << "Error (" << response->status_code << ": "
-               << response->status_line << "): "
-               << "while fetching " << response->url;
-    loader_callback_.Run(nullptr);
-    return;
-  }
-
-  response_ = response.Pass();
-  loader_callback_.Run(owner.Pass());
 }
 
 }  // namespace shell

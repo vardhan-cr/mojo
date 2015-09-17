@@ -51,7 +51,58 @@ HttpHeaderPtr RandomEtagHeader() {
 
 }  // namespace
 
-TEST_F(URLResponseDiskCacheAppTest, GetFile) {
+TEST_F(URLResponseDiskCacheAppTest, BaseCache) {
+  const std::string url = "http://www.example.com/1";
+
+  url_response_disk_cache_->Get(
+      url, [](URLResponsePtr url_response, Array<uint8_t> received_file_path,
+              Array<uint8_t> received_cache_dir_path) {
+        EXPECT_FALSE(url_response);
+      });
+  url_response_disk_cache_.WaitForIncomingResponse();
+
+  URLResponsePtr url_response = mojo::URLResponse::New();
+  url_response->url = "http://www.example.com/1";
+  url_response->headers.push_back(RandomEtagHeader());
+  DataPipe pipe;
+  std::string content = base::RandBytesAsString(32);
+  uint32_t num_bytes = content.size();
+  ASSERT_EQ(MOJO_RESULT_OK,
+            WriteDataRaw(pipe.producer_handle.get(), content.c_str(),
+                         &num_bytes, MOJO_WRITE_DATA_FLAG_ALL_OR_NONE));
+  ASSERT_EQ(content.size(), num_bytes);
+  pipe.producer_handle.reset();
+  url_response->body = pipe.consumer_handle.Pass();
+
+  url_response_disk_cache_->Update(url_response.Pass());
+
+  base::FilePath file;
+  base::FilePath cache_dir;
+
+  // Wait up to 1 second for the cache to be updated.
+  base::Time start = base::Time::Now();
+  while (file.empty() &&
+         ((base::Time::Now() - start) < base::TimeDelta::FromSeconds(1))) {
+    url_response_disk_cache_->Get(
+        url, [&url_response, &file, &cache_dir](
+                 URLResponsePtr response, Array<uint8_t> received_file_path,
+                 Array<uint8_t> received_cache_dir_path) {
+          url_response = response.Pass();
+          file = toPath(received_file_path.Pass());
+          cache_dir = toPath(received_cache_dir_path.Pass());
+        });
+    url_response_disk_cache_.WaitForIncomingResponse();
+  }
+
+  EXPECT_TRUE(url_response);
+  EXPECT_FALSE(file.empty());
+  EXPECT_EQ(url, url_response->url);
+  std::string received_content;
+  ASSERT_TRUE(base::ReadFileToString(file, &received_content));
+  EXPECT_EQ(content, received_content);
+}
+
+TEST_F(URLResponseDiskCacheAppTest, UpdateAndGet) {
   URLResponsePtr url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/1";
   url_response->headers.push_back(RandomEtagHeader());
@@ -66,7 +117,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetFile) {
   url_response->body = pipe.consumer_handle.Pass();
   base::FilePath file;
   base::FilePath cache_dir;
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {
@@ -80,7 +131,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetFile) {
   EXPECT_EQ(content, received_content);
 }
 
-TEST_F(URLResponseDiskCacheAppTest, GetExtractedContent) {
+TEST_F(URLResponseDiskCacheAppTest, UpdateAndGetExtracted) {
   URLResponsePtr url_response = mojo::URLResponse::New();
   url_response->url = "http://www.example.com/2";
   url_response->headers.push_back(RandomEtagHeader());
@@ -95,7 +146,7 @@ TEST_F(URLResponseDiskCacheAppTest, GetExtractedContent) {
   url_response->body = pipe.consumer_handle.Pass();
   base::FilePath extracted_dir;
   base::FilePath cache_dir;
-  url_response_disk_cache_->GetExtractedContent(
+  url_response_disk_cache_->UpdateAndGetExtracted(
       url_response.Pass(),
       [&extracted_dir, &cache_dir](Array<uint8_t> received_extracted_dir,
                                    Array<uint8_t> received_cache_dir_path) {
@@ -134,7 +185,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   url_response->body = pipe1.consumer_handle.Pass();
   base::FilePath file;
   base::FilePath cache_dir;
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {
@@ -171,7 +222,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   ASSERT_EQ(new_content.size(), num_bytes);
   pipe2.producer_handle.reset();
   url_response->body = pipe2.consumer_handle.Pass();
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {
@@ -202,7 +253,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   ASSERT_EQ(new_content.size(), num_bytes);
   pipe3.producer_handle.reset();
   url_response->body = pipe3.consumer_handle.Pass();
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {
@@ -231,7 +282,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   ASSERT_EQ(new_content.size(), num_bytes);
   pipe4.producer_handle.reset();
   url_response->body = pipe4.consumer_handle.Pass();
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {
@@ -261,7 +312,7 @@ TEST_F(URLResponseDiskCacheAppTest, CacheTest) {
   ASSERT_EQ(new_content.size(), num_bytes);
   pipe5.producer_handle.reset();
   url_response->body = pipe5.consumer_handle.Pass();
-  url_response_disk_cache_->GetFile(
+  url_response_disk_cache_->UpdateAndGet(
       url_response.Pass(),
       [&file, &cache_dir](Array<uint8_t> received_file_path,
                           Array<uint8_t> received_cache_dir_path) {

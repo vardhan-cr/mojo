@@ -16,7 +16,7 @@ namespace shell {
 
 class URLResponseDiskCacheLoader : public ApplicationLoader {
  public:
-  URLResponseDiskCacheLoader(base::TaskRunner* task_runner);
+  URLResponseDiskCacheLoader(scoped_refptr<base::TaskRunner> task_runner);
   ~URLResponseDiskCacheLoader() override;
 
  private:

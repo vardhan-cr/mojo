@@ -70,7 +70,7 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
   void ExtractApplication(base::FilePath* application_dir,
                           mojo::URLResponsePtr response,
                           const base::Closure& callback) {
-    url_response_disk_cache_->GetExtractedContent(
+    url_response_disk_cache_->UpdateAndGetExtracted(
         response.Pass(),
         [application_dir, callback](mojo::Array<uint8_t> application_dir_path,
                                     mojo::Array<uint8_t> cache_path) {

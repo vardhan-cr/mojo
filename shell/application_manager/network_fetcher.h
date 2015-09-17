@@ -28,30 +28,11 @@ class NetworkFetcher : public Fetcher {
   ~NetworkFetcher() override;
 
  private:
-  // TODO(hansmuller): Revisit this when a real peek operation is available.
-  static const MojoDeadline kPeekTimeout = MOJO_DEADLINE_INDEFINITE;
-
-  // The network fetcher will first try to request an application from the
-  // network. If that request fails, it will then try to request the application
-  // from the cache.
-  enum RequestType {
-    FROM_NETWORK,
-    FROM_CACHE,
-  };
-
   const GURL& GetURL() const override;
   GURL GetRedirectURL() const override;
 
   mojo::URLResponsePtr AsURLResponse(base::TaskRunner* task_runner,
                                      uint32_t skip) override;
-
-  static void RecordCacheToURLMapping(const base::FilePath& path,
-                                      const GURL& url);
-
-  void OnFileRetrievedFromCache(
-      base::Callback<void(const base::FilePath&, bool)> callback,
-      mojo::Array<uint8_t> path_as_array,
-      mojo::Array<uint8_t> cache_dir);
 
   void AsPath(
       base::TaskRunner* task_runner,
@@ -63,9 +44,26 @@ class NetworkFetcher : public Fetcher {
 
   bool PeekFirstLine(std::string* line) override;
 
-  void StartNetworkRequest(RequestType request_type);
+  // Returns whether the content can be loaded directly from cache. Local hosts
+  // are not loaded from cache to allow effective development.
+  bool CanLoadDirectlyFromCache();
 
-  void OnLoadComplete(RequestType request_type, mojo::URLResponsePtr response);
+  void LoadFromCache(bool schedule_update);
+
+  void OnCachedResponseReceived(bool schedule_update,
+                                mojo::URLResponsePtr response,
+                                mojo::Array<uint8_t> path_as_array,
+                                mojo::Array<uint8_t> cache_dir);
+
+  void StartNetworkRequest();
+
+  void OnLoadComplete(mojo::URLResponsePtr response);
+
+  void OnFileSavedToCache(mojo::Array<uint8_t> path_as_array,
+                          mojo::Array<uint8_t> cache_dir);
+
+  static void RecordCacheToURLMapping(const base::FilePath& path,
+                                      const GURL& url);
 
   const bool disable_cache_;
   const GURL url_;

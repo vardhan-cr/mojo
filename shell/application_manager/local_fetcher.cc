@@ -91,19 +91,11 @@ std::string LocalFetcher::MimeType() {
 }
 
 bool LocalFetcher::HasMojoMagic() {
-  std::string magic;
-  ReadFileToString(path_, &magic, strlen(kMojoMagic));
-  return magic == kMojoMagic;
+  return Fetcher::HasMojoMagic(path_);
 }
 
 bool LocalFetcher::PeekFirstLine(std::string* line) {
-  std::string start_of_file;
-  ReadFileToString(path_, &start_of_file, kMaxShebangLength);
-  size_t return_position = start_of_file.find('\n');
-  if (return_position == std::string::npos)
-    return false;
-  *line = start_of_file.substr(0, return_position + 1);
-  return true;
+  return Fetcher::PeekFirstLine(path_, line);
 }
 
 }  // namespace shell

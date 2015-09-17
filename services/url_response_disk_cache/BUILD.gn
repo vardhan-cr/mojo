@@ -6,6 +6,16 @@ import("//build/module_args/mojo.gni")
 import("//mojo/public/mojo_application.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 import("//mojo/tools/embed/rules.gni")
+import("//testing/test.gni")
+
+group("tests") {
+  testonly = true
+
+  deps = [
+    ":apptests",
+    ":unittests",
+  ]
+}
 
 source_set("url_response_disk_cache") {
   sources = [
@@ -17,15 +27,31 @@ source_set("url_response_disk_cache") {
 
   deps = [
     ":bindings",
+    ":url_response_disk_cache_db",
     "//base",
+    "//crypto",
     "//mojo/application",
     "//mojo/data_pipe_utils",
     "//mojo/environment:chromium",
     "//mojo/public/cpp/application",
     "//mojo/public/cpp/system",
+    "//mojo/public/interfaces/network",
     "//mojo/services/url_response_disk_cache/public/interfaces",
     "//third_party/zlib:zip",
     "//url:url",
+  ]
+}
+
+source_set("url_response_disk_cache_db") {
+  sources = [
+    "url_response_disk_cache_db.cc",
+    "url_response_disk_cache_db.h",
+  ]
+
+  deps = [
+    ":bindings",
+    "//base",
+    "//third_party/leveldatabase",
   ]
 }
 
@@ -33,9 +59,13 @@ mojom("bindings") {
   sources = [
     "url_response_disk_cache_entry.mojom",
   ]
+
+  deps = [
+    "//mojo/public/interfaces/network",
+  ]
 }
 
-mojo_native_application("tests") {
+mojo_native_application("apptests") {
   output_name = "url_response_disk_cache_apptests"
 
   testonly = true
@@ -56,6 +86,26 @@ mojo_native_application("tests") {
   ]
 
   data_deps = [ ":url_response_disk_cache" ]
+}
+
+test("unittests") {
+  output_name = "url_response_disk_cache_unittests"
+
+  sources = [
+    "url_response_disk_cache_db_unittests.cc",
+  ]
+
+  deps = [
+    ":url_response_disk_cache_db",
+    "//base",
+    "//base/test:run_all_unittests",
+    "//base/test:test_support",
+    "//mojo/environment:chromium",
+    "//mojo/public/cpp/bindings",
+    "//mojo/public/cpp/system",
+    "//mojo/public/platform/native:system",
+    "//testing/gtest",
+  ]
 }
 
 action("test_data") {
