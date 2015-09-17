@@ -184,7 +184,7 @@ instance, this command serves a dart Mojo app from the source at
 `examples/dart/device_info/main.dart`:
 
 ```sh
-mojo_run https://core.mojoapps.io/examples/dart/device_info/main.dart [--android]
+mojo/devtools/common/mojo_run https://core.mojoapps.io/examples/dart/device_info/lib/main.dart [--android]
 ```
 
 Some applications are meant to be run embedded in a **window manager**. To run
@@ -192,15 +192,15 @@ these, you can pass the app url using the `--embed` flag. This will run the
 window manager and pass the given url to it:
 
 ```sh
-devtools/common/mojo_run --embed https://core.mojoapps.io/ganesh_app.mojo [--android]
+mojo/devtools/common/mojo_run --embed https://core.mojoapps.io/ganesh_app.mojo [--android]
 ```
 
-By default, `mojo_run` uses https://core.mojoapps.io/kiosk_wm.mojo as the window
+By default, `mojo_run` uses mojo:kiosk_wm as the window
 manager. You can pass a different window manager url using the
 `--window-manager` flag to override this.
 
 For additional information on `mojo_run` refer to the built-in help and the
-[documentation](https://github.com/domokit/devtools/blob/master/README.md#runner).
+[documentation](mojo/devtools/common/docs/mojo_run.md).
 You can also request more information on what the tool is doing for you by
 passing the `--verbose` flag.
 
@@ -210,7 +210,7 @@ Devtools `mojo_debug` allows you to interactively inspect a running shell,
 collect performance traces and attach a gdb debugger.
 
 For additional information refer to the built-in help and the
-[documentation](https://github.com/domokit/devtools/blob/master/README.md#debugger).
+[documentation](mojo/devtools/common/docs/mojo_debug.md).
 
 ### Android set-up
 
