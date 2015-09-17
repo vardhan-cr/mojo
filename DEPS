@@ -30,19 +30,6 @@ vars = {
   'lss_revision': '6f97298fe3794e92c8c896a6bc06e0b36e4c3de3',
   'nss_revision': 'bb4e75a43d007518ae7d618665ea2f25b0c60b63',
   'nacl_revision': '8071f876e10f96da879853a7705d9c5aba378839',
-  'archive_dart_revision': '07ffd98c5403b7f9ae067b57dc9487611be420f5',
-  'args_dart_revision': 'e0e8377412ee6cd6a5a4a8632848181c1db91f44',
-  'box2d_dart_revision': 'c5e65d9546275e78ad2a1d51b459e7638f6e4323',
-  'cassowary_dart_revision': '7e5afc5b3956a18636d5b37b1dcba1705865564b',
-  'collection_dart_revision': '79ebc6fc2dae581cb23ad50a5c600c1b7dd132f8',
-  'crypto_dart_revision': 'd4558dea1639e5ad2a41d045265b8ece270c2d90',
-  'newton_dart_revision': '9fbe5fbac809246f7ace4176feca13bdf731e393',
-  'path_dart_revision': '2f3dcdec32011f1bc41194ae3640d6d9292a7096',
-  'quiver_dart_revision': '6bab7dec34189eee579178eb16d3063c8ae69031',
-  'source_span_dart_revision': '5c6c13f62fc111adaace3aeb4a38853d64481d06',
-  'string_scanner_dart_revision': '9f00056b32f41efc376adecfb696a01bc7c593d7',
-  'vector_math_dart_revision': '65915583f7aa606cb47ed265f853c18c60102b81',
-  'yaml_dart_revision': 'd8c1ce75edf051ea1d5583b24474f8656abb4920',
 }
 
 # Only these hosts are allowed for dependencies in this DEPS file.
@@ -112,45 +99,6 @@ deps = {
 
   'src/native_client':
     Var('chromium_git') + '/native_client/src/native_client.git' + '@' + Var('nacl_revision'),
-
-  'src/third_party/dart-pkg/archive':
-    Var('chromium_git') + '/external/github.com/brendan-duncan/archive.git' + '@' + Var('archive_dart_revision'),
-
-  'src/third_party/dart-pkg/args':
-    Var('chromium_git') + '/external/github.com/dart-lang/args.git' + '@' + Var('args_dart_revision'),
-
-  'src/third_party/dart-pkg/box2d':
-    Var('chromium_git') + '/external/github.com/google/box2d.dart.git' + '@' + Var('box2d_dart_revision'),
-
-  'src/third_party/dart-pkg/cassowary':
-    Var('chromium_git') + '/external/github.com/domokit/cassowary.git' + '@' + Var('cassowary_dart_revision'),
-
-  'src/third_party/dart-pkg/collection':
-    Var('chromium_git') + '/external/github.com/dart-lang/collection.git' + '@' + Var('collection_dart_revision'),
-
-  'src/third_party/dart-pkg/crypto':
-    Var('chromium_git') + '/external/github.com/dart-lang/crypto.git' + '@' + Var('crypto_dart_revision'),
-
-  'src/third_party/dart-pkg/newton':
-    Var('chromium_git') + '/external/github.com/domokit/newton.git' + '@' + Var('newton_dart_revision'),
-
-  'src/third_party/dart-pkg/path':
-    Var('chromium_git') + '/external/github.com/dart-lang/path.git' + '@' + Var('path_dart_revision'),
-
-  'src/third_party/dart-pkg/quiver':
-    Var('chromium_git') + '/external/github.com/google/quiver-dart.git' + '@' + Var('quiver_dart_revision'),
-
-  'src/third_party/dart-pkg/source_span':
-    Var('chromium_git') + '/external/github.com/dart-lang/source_span.git' + '@' + Var('source_span_dart_revision'),
-
-  'src/third_party/dart-pkg/string_scanner':
-    Var('chromium_git') + '/external/github.com/dart-lang/string_scanner.git' + '@' + Var('string_scanner_dart_revision'),
-
-  'src/third_party/dart-pkg/vector_math':
-    Var('chromium_git') + '/external/github.com/google/vector_math.dart.git' + '@' + Var('vector_math_dart_revision'),
-
-  'src/third_party/dart-pkg/yaml':
-    Var('chromium_git') + '/external/github.com/dart-lang/yaml.git' + '@' + Var('yaml_dart_revision'),
 
   'src/third_party/pyelftools':
     Var('chromium_git') + '/chromiumos/third_party/pyelftools.git' + '@' + '19b3e610c86fcadb837d252c794cb5e8008826ae',
@@ -337,20 +285,6 @@ hooks = [
     'action': [ 'python',
                 'src/mojo/public/tools/download_network_service.py',
                 '--tools-directory', '../../../tools',
-    ],
-  },
-  # Run "pub get" on any directories with checked-in pubspec.yaml files
-  # (excluding sky/, whose pubspec.yaml files are not intended for supporting
-  # building in-place in the repo).
-  {
-    'name': 'run_dart_pub_get',
-    'pattern': '',
-    'action': [ 'python',
-                'src/mojo/public/tools/git/dart_pub_get.py',
-                '--repository-root', '../../../..',
-                '--dart-sdk-directory',
-                '../../../../third_party/dart-sdk/dart-sdk',
-                '--dirs-to-ignore', 'sky/',
     ],
   },
   {

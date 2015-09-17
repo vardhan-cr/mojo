@@ -22,4 +22,7 @@ dart_pkg("mojom") {
     "README.md",
     "pubspec.yaml",
   ]
+  deps = [
+    "../third_party",
+  ]
 }

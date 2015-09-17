@@ -9,4 +9,8 @@ dart_pkg("mojo_apptest") {
   sources = [
     "pubspec.yaml",
   ]
+  deps = [
+    "../mojo",
+    "../third_party",
+  ]
 }

@@ -7,5 +7,6 @@ group("dart") {
     "mojo",
     "mojo_apptest",
     "mojom",
+    "third_party",
   ]
 }

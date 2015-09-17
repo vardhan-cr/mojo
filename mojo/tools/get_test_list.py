@@ -157,7 +157,7 @@ def GetTestList(config, verbose_count=0):
     AddEntry("Dart mojom package generate tests",
         [os.path.join("third_party", "dart-sdk", "dart-sdk", "bin", "dart"),
          "--checked",
-         "-p", os.path.join("mojo", "public", "dart", "mojom", "packages"),
+         "-p", os.path.join(build_dir, "gen", "dart-pkg", "packages"),
          os.path.join(
            "mojo", "public", "dart", "mojom", "test", "generate_test.dart")])
 
