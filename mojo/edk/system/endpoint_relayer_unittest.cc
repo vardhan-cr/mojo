@@ -9,10 +9,10 @@
 #include "base/test/test_timeouts.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/channel_test_base.h"
-#include "mojo/edk/system/make_unique.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/message_in_transit_test_utils.h"
 #include "mojo/edk/system/test_channel_endpoint_client.h"
+#include "mojo/edk/util/make_unique.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -185,7 +185,7 @@ class TestFilter : public EndpointRelayer::Filter {
 
 TEST_F(EndpointRelayerTest, Filter) {
   MessageInTransitQueue filtered_messages;
-  relayer()->SetFilter(MakeUnique<TestFilter>(&filtered_messages));
+  relayer()->SetFilter(util::MakeUnique<TestFilter>(&filtered_messages));
 
   EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(1)));
   EXPECT_TRUE(endpoint1a()->EnqueueMessage(test::MakeTestMessage(2)));

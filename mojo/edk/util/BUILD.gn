@@ -6,6 +6,7 @@ import("../mojo_edk.gni")
 
 mojo_edk_source_set("util") {
   sources = [
+    "make_unique.h",
     "scoped_file.h",
   ]
 

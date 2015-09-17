@@ -7,12 +7,12 @@
 // "make_unique" to use until we can use C++14. The following changes have been
 // made:
 //   - It's called |MakeUnique| instead of |make_unique|.
-//   - It's in the |mojo::system| namespace instead of |std|; this also
+//   - It's in the |mojo::util| namespace instead of |std|; this also
 //     necessitates adding some |std::|s.
 //   - It's been formatted.
 
-#ifndef MOJO_EDK_SYSTEM_MAKE_UNIQUE_H_
-#define MOJO_EDK_SYSTEM_MAKE_UNIQUE_H_
+#ifndef MOJO_EDK_UTIL_MAKE_UNIQUE_H_
+#define MOJO_EDK_UTIL_MAKE_UNIQUE_H_
 
 #include <cstddef>
 #include <memory>
@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace mojo {
-namespace system {
+namespace util {
 
 template <class T>
 struct _Unique_if {
@@ -51,7 +51,7 @@ typename _Unique_if<T>::_Unknown_bound MakeUnique(size_t n) {
 template <class T, class... Args>
 typename _Unique_if<T>::_Known_bound MakeUnique(Args&&...) = delete;
 
-}  // namespace system
+}  // namespace util
 }  // namespace mojo
 
-#endif  // MOJO_EDK_SYSTEM_MAKE_UNIQUE_H_
+#endif  // MOJO_EDK_UTIL_MAKE_UNIQUE_H_

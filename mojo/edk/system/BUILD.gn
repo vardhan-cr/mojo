@@ -67,7 +67,6 @@ component("system") {
     "local_data_pipe_impl.h",
     "local_message_pipe_endpoint.cc",
     "local_message_pipe_endpoint.h",
-    "make_unique.h",
     "mapping_table.cc",
     "mapping_table.h",
     "master_connection_manager.cc",
@@ -126,6 +125,7 @@ component("system") {
     "../embedder",
     "../embedder:delegates",
     "../embedder:platform",
+    "../util",
     "../../public/c/system",
     "../../public/cpp/system",
   ]
