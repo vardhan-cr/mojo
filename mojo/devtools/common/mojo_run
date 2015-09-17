@@ -30,10 +30,9 @@ text/html,mojo:html_viewer,application/javascript,mojo:js_content_handler
 # Port on which the mojo:debugger http server will be available on the host
 # machine.
 _MOJO_DEBUGGER_PORT = 7777
-_DEFAULT_WM = 'https://core.mojoapps.io/kiosk_wm.mojo'
+_DEFAULT_WM = 'mojo:kiosk_wm'
 
-_LEGACY_WM_URL = 'mojo:window_manager'
-_WM_URL = 'https://core.mojoapps.io/window_manager.mojo'
+_WM_URL = 'mojo:window_manager'
 _DEBUGGER_URL = 'https://core.mojoapps.io/debugger.mojo'
 
 
@@ -75,9 +74,6 @@ def main():
     print e
     return 1
 
-  shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
-                                                  '%s=%s' % (_LEGACY_WM_URL,
-                                                  script_args.window_manager))
   shell_args = shell_arguments.append_to_argument(shell_args, '--url-mappings=',
                                                   '%s=%s' % (_WM_URL,
                                                   script_args.window_manager))

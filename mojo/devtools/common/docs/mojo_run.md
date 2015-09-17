@@ -24,6 +24,5 @@ window manager and pass the given url to it:
 mojo_run --embed APP_URL [--android]
 ```
 
-By default, `mojo_run` uses https://core.mojoapps.io/kiosk_wm.mojo as the window
-manager. You can pass a different window manager url using the
-`--window-manager` flag to override this.
+By default, `mojo_run` uses mojo:kiosk_wm as the window manager. You can pass a
+different window manager url using the `--window-manager` flag to override this.
