@@ -204,6 +204,12 @@ For additional information on `mojo_run` refer to the built-in help and the
 You can also request more information on what the tool is doing for you by
 passing the `--verbose` flag.
 
+### Running a Sky app
+
+To run a **local build** of Sky with a **local build** of Mojo, follow steps
+described in the [sky config file](mojo/tools/configs/sky). Note that the
+version of Sky has to be compatible with the version of Mojo for this to work.
+
 ### <a name="debugging"></a>Debugging, tracing, profiling
 
 Devtools `mojo_debug` allows you to interactively inspect a running shell,

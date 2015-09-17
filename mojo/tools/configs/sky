@@ -12,7 +12,7 @@
 #    --android \
 #    --config-file mojo/tools/configs/sky \
 #    --config-alias SKY_SRC=/path_to_your_checkout/sky_engine/src \
-#    "mojo:window_manager https://sky/examples/hello_world/lib/main.dart"
+#    --embed https://sky/examples/hello_world/lib/main.dart
 
 # The sky apps are served from the Sky checkout, so all of
 # sky/packages/sky/example is available under https://sky/examples .
