@@ -90,7 +90,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SharedBufferDispatcher final
       uint64_t offset,
       uint64_t num_bytes,
       MojoMapBufferFlags flags,
-      scoped_ptr<embedder::PlatformSharedBufferMapping>* mapping) override;
+      std::unique_ptr<embedder::PlatformSharedBufferMapping>* mapping) override;
   void StartSerializeImplNoLock(Channel* channel,
                                 size_t* max_size,
                                 size_t* max_platform_handles) override

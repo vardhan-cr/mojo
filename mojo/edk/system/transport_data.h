@@ -11,8 +11,6 @@
 #include <vector>
 
 #include "base/memory/aligned_memory.h"
-#include "base/memory/scoped_ptr.h"
-#include "build/build_config.h"
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/dispatcher.h"
@@ -90,7 +88,8 @@ class MOJO_SYSTEM_IMPL_EXPORT TransportData {
   // The maximum total number of platform handles that may be attached.
   static size_t GetMaxPlatformHandles();
 
-  TransportData(scoped_ptr<DispatcherVector> dispatchers, Channel* channel);
+  TransportData(std::unique_ptr<DispatcherVector> dispatchers,
+                Channel* channel);
 
   // This is used for users of |MessageInTransit|/|TransportData|/|RawChannel|
   // that want to simply transport data and platform handles, and not
@@ -141,7 +140,7 @@ class MOJO_SYSTEM_IMPL_EXPORT TransportData {
   // Deserializes dispatchers from the given (serialized) transport data buffer
   // (typically from a |MessageInTransit::View|) and vector of platform handles.
   // |buffer| should be non-null and |buffer_size| should be nonzero.
-  static scoped_ptr<DispatcherVector> DeserializeDispatchers(
+  static std::unique_ptr<DispatcherVector> DeserializeDispatchers(
       const void* buffer,
       size_t buffer_size,
       embedder::ScopedPlatformHandleVectorPtr platform_handles,

@@ -10,7 +10,6 @@
 #include <memory>
 
 #include "base/compiler_specific.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/handle_signals_state.h"
@@ -167,7 +166,8 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
   // serializing data pipe dispatchers (i.e., in |ProducerEndSerialize()| and
   // |ConsumerEndSerialize()|). Returns the old value of |impl_| (in case the
   // caller needs to manage its lifetime).
-  scoped_ptr<DataPipeImpl> ReplaceImplNoLock(scoped_ptr<DataPipeImpl> new_impl)
+  std::unique_ptr<DataPipeImpl> ReplaceImplNoLock(
+      std::unique_ptr<DataPipeImpl> new_impl)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   void SetProducerClosedNoLock() MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   void SetConsumerClosedNoLock() MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
@@ -238,7 +238,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
   DataPipe(bool has_local_producer,
            bool has_local_consumer,
            const MojoCreateDataPipeOptions& validated_options,
-           scoped_ptr<DataPipeImpl> impl);
+           std::unique_ptr<DataPipeImpl> impl);
   ~DataPipe() override;
 
   // |ChannelEndpointClient| implementation:
@@ -277,7 +277,7 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
   // These are nonzero if and only if a two-phase write/read is in progress.
   uint32_t producer_two_phase_max_num_bytes_written_ MOJO_GUARDED_BY(mutex_);
   uint32_t consumer_two_phase_max_num_bytes_read_ MOJO_GUARDED_BY(mutex_);
-  scoped_ptr<DataPipeImpl> impl_ MOJO_GUARDED_BY(mutex_);
+  std::unique_ptr<DataPipeImpl> impl_ MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(DataPipe);
 };

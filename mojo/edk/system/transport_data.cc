@@ -60,7 +60,7 @@ struct TransportData::PrivateStructForCompileAsserts {
                 "alignment");
 };
 
-TransportData::TransportData(scoped_ptr<DispatcherVector> dispatchers,
+TransportData::TransportData(std::unique_ptr<DispatcherVector> dispatchers,
                              Channel* channel)
     : buffer_size_() {
   DCHECK(dispatchers);
@@ -306,7 +306,7 @@ void TransportData::GetPlatformHandleTable(const void* transport_data_buffer,
 }
 
 // static
-scoped_ptr<DispatcherVector> TransportData::DeserializeDispatchers(
+std::unique_ptr<DispatcherVector> TransportData::DeserializeDispatchers(
     const void* buffer,
     size_t buffer_size,
     embedder::ScopedPlatformHandleVectorPtr platform_handles,
@@ -317,7 +317,8 @@ scoped_ptr<DispatcherVector> TransportData::DeserializeDispatchers(
 
   const Header* header = static_cast<const Header*>(buffer);
   const size_t num_handles = header->num_handles;
-  scoped_ptr<DispatcherVector> dispatchers(new DispatcherVector(num_handles));
+  std::unique_ptr<DispatcherVector> dispatchers(
+      new DispatcherVector(num_handles));
 
   const HandleTableEntry* handle_table =
       reinterpret_cast<const HandleTableEntry*>(
@@ -335,7 +336,7 @@ scoped_ptr<DispatcherVector> TransportData::DeserializeDispatchers(
         channel, handle_table[i].type, source, size, platform_handles.get());
   }
 
-  return dispatchers.Pass();
+  return dispatchers;
 }
 
 }  // namespace system

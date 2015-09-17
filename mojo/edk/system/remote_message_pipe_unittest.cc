@@ -912,7 +912,7 @@ TEST_F(RemoteMessagePipeTest, SharedBufferPassing) {
   ASSERT_TRUE(dispatcher);
 
   // Make a mapping.
-  scoped_ptr<embedder::PlatformSharedBufferMapping> mapping0;
+  std::unique_ptr<embedder::PlatformSharedBufferMapping> mapping0;
   EXPECT_EQ(MOJO_RESULT_OK, dispatcher->MapBuffer(
                                 0, 100, MOJO_MAP_BUFFER_FLAG_NONE, &mapping0));
   ASSERT_TRUE(mapping0);
@@ -979,7 +979,7 @@ TEST_F(RemoteMessagePipeTest, SharedBufferPassing) {
   dispatcher = static_cast<SharedBufferDispatcher*>(read_dispatchers[0].get());
 
   // Make another mapping.
-  scoped_ptr<embedder::PlatformSharedBufferMapping> mapping1;
+  std::unique_ptr<embedder::PlatformSharedBufferMapping> mapping1;
   EXPECT_EQ(MOJO_RESULT_OK, dispatcher->MapBuffer(
                                 0, 100, MOJO_MAP_BUFFER_FLAG_NONE, &mapping1));
   ASSERT_TRUE(mapping1);

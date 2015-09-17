@@ -16,7 +16,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/configuration.h"
 #include "mojo/edk/system/data_pipe.h"
@@ -24,6 +23,7 @@
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/remote_consumer_data_pipe_impl.h"
 #include "mojo/edk/system/remote_producer_data_pipe_impl.h"
+#include "mojo/edk/util/make_unique.h"
 
 namespace mojo {
 namespace system {
@@ -193,9 +193,10 @@ bool LocalDataPipeImpl::ProducerEndSerialize(
                                               channel_endpoint_client(), 0);
   // Note: Keep |*this| alive until the end of this method, to make things
   // slightly easier on ourselves.
-  scoped_ptr<DataPipeImpl> self(ReplaceImpl(make_scoped_ptr(
-      new RemoteProducerDataPipeImpl(channel_endpoint.get(), std::move(buffer_),
-                                     start_index_, current_num_bytes_))));
+  std::unique_ptr<DataPipeImpl> self(
+      ReplaceImpl(util::MakeUnique<RemoteProducerDataPipeImpl>(
+          channel_endpoint.get(), std::move(buffer_), start_index_,
+          current_num_bytes_)));
 
   *actual_size = sizeof(SerializedDataPipeProducerDispatcher) +
                  channel->GetSerializedEndpointSize();
@@ -380,8 +381,9 @@ bool LocalDataPipeImpl::ConsumerEndSerialize(
                                               channel_endpoint_client(), 0);
   // Note: Keep |*this| alive until the end of this method, to make things
   // slightly easier on ourselves.
-  scoped_ptr<DataPipeImpl> self(ReplaceImpl(make_scoped_ptr(
-      new RemoteConsumerDataPipeImpl(channel_endpoint.get(), old_num_bytes))));
+  std::unique_ptr<DataPipeImpl> self(
+      ReplaceImpl(util::MakeUnique<RemoteConsumerDataPipeImpl>(
+          channel_endpoint.get(), old_num_bytes)));
 
   *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
                  channel->GetSerializedEndpointSize();

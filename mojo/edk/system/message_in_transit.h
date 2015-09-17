@@ -8,11 +8,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <ostream>
 #include <vector>
 
 #include "base/memory/aligned_memory.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/dispatcher.h"
 #include "mojo/edk/system/memory.h"
@@ -188,11 +188,11 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
   // not be referenced from anywhere else (in particular, not from the handle
   // table), i.e., each dispatcher must have a reference count of 1. This
   // message must not already have dispatchers.
-  void SetDispatchers(scoped_ptr<DispatcherVector> dispatchers);
+  void SetDispatchers(std::unique_ptr<DispatcherVector> dispatchers);
 
   // Sets the |TransportData| for this message. This should only be done when
   // there are no dispatchers and no existing |TransportData|.
-  void SetTransportData(scoped_ptr<TransportData> transport_data);
+  void SetTransportData(std::unique_ptr<TransportData> transport_data);
 
   // Serializes any dispatchers to the secondary buffer. This message must not
   // already have a secondary buffer (so this must only be called once). The
@@ -276,15 +276,16 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
   void UpdateTotalSize();
 
   const size_t main_buffer_size_;
-  const scoped_ptr<char, base::AlignedFreeDeleter> main_buffer_;  // Never null.
+  // Never null.
+  const std::unique_ptr<char, base::AlignedFreeDeleter> main_buffer_;
 
-  scoped_ptr<TransportData> transport_data_;  // May be null.
+  std::unique_ptr<TransportData> transport_data_;  // May be null.
 
   // Any dispatchers that may be attached to this message. These dispatchers
   // should be "owned" by this message, i.e., have a ref count of exactly 1. (We
   // allow a dispatcher entry to be null, in case it couldn't be duplicated for
   // some reason.)
-  scoped_ptr<DispatcherVector> dispatchers_;
+  std::unique_ptr<DispatcherVector> dispatchers_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(MessageInTransit);
 };

@@ -7,8 +7,9 @@
 
 #include <stddef.h>
 
+#include <memory>
+
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -42,16 +43,17 @@ class MOJO_SYSTEM_IMPL_EXPORT PlatformSharedBuffer
   // Maps (some) of the shared buffer into memory; [|offset|, |offset + length|]
   // must be contained in [0, |num_bytes|], and |length| must be at least 1.
   // Returns null on failure.
-  virtual scoped_ptr<PlatformSharedBufferMapping> Map(size_t offset,
-                                                      size_t length) = 0;
+  virtual std::unique_ptr<PlatformSharedBufferMapping> Map(size_t offset,
+                                                           size_t length) = 0;
 
   // Checks if |offset| and |length| are valid arguments.
   virtual bool IsValidMap(size_t offset, size_t length) = 0;
 
   // Like |Map()|, but doesn't check its arguments (which should have been
   // preflighted using |IsValidMap()|).
-  virtual scoped_ptr<PlatformSharedBufferMapping> MapNoCheck(size_t offset,
-                                                             size_t length) = 0;
+  virtual std::unique_ptr<PlatformSharedBufferMapping> MapNoCheck(
+      size_t offset,
+      size_t length) = 0;
 
   // Duplicates the underlying platform handle and passes it to the caller.
   // TODO(vtl): On POSIX, we'll need two FDs to support sharing read-only.

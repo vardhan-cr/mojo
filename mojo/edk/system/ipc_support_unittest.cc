@@ -4,6 +4,7 @@
 
 #include "mojo/edk/system/ipc_support.h"
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -11,7 +12,6 @@
 #include "base/command_line.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/test/test_timeouts.h"
 #include "mojo/edk/embedder/master_process_delegate.h"
@@ -359,10 +359,10 @@ class TestSlaveSetup {
   TestMasterProcessDelegate* const master_process_delegate_;
   IPCSupport* const master_ipc_support_;
 
-  scoped_ptr<TestSlaveConnection> slave_connection_;
+  std::unique_ptr<TestSlaveConnection> slave_connection_;
   scoped_refptr<MessagePipeDispatcher> master_mp_;
 
-  scoped_ptr<TestSlave> slave_;
+  std::unique_ptr<TestSlave> slave_;
   scoped_refptr<MessagePipeDispatcher> slave_mp_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(TestSlaveSetup);
@@ -381,8 +381,8 @@ class IPCSupportTest : public testing::Test {
                             embedder::ScopedPlatformHandle()) {}
   ~IPCSupportTest() override {}
 
-  scoped_ptr<TestSlaveSetup> SetupSlave() {
-    scoped_ptr<TestSlaveSetup> s(
+  std::unique_ptr<TestSlaveSetup> SetupSlave() {
+    std::unique_ptr<TestSlaveSetup> s(
         new TestSlaveSetup(&platform_support_, &test_io_thread_,
                            &master_process_delegate_, &master_ipc_support_));
     s->Init();
@@ -431,7 +431,7 @@ MessagePipeDispatcherPair CreateMessagePipe() {
 }
 
 TEST_F(IPCSupportTest, MasterSlave) {
-  scoped_ptr<TestSlaveSetup> s(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s(SetupSlave());
 
   s->TestConnection();
 
@@ -459,8 +459,8 @@ TEST_F(IPCSupportTest, MasterSlave) {
 // TODO(vtl): In this scenario, we can't test the intermediary (the master)
 // going away.
 TEST_F(IPCSupportTest, ConnectTwoSlaves) {
-  scoped_ptr<TestSlaveSetup> s1(SetupSlave());
-  scoped_ptr<TestSlaveSetup> s2(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s1(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s2(SetupSlave());
   s1->TestConnection();
   s2->TestConnection();
 
@@ -497,8 +497,8 @@ TEST_F(IPCSupportTest, ConnectTwoSlaves) {
 
 // Like |ConnectTwoSlaves|, but does it twice, to test reusing a connection.
 TEST_F(IPCSupportTest, ConnectTwoSlavesTwice) {
-  scoped_ptr<TestSlaveSetup> s1(SetupSlave());
-  scoped_ptr<TestSlaveSetup> s2(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s1(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s2(SetupSlave());
   s1->TestConnection();
   s2->TestConnection();
 
@@ -547,7 +547,7 @@ TEST_F(IPCSupportTest, ConnectTwoSlavesTwice) {
 // Creates a message pipe in the slave, which sends both ends (in separate
 // messages) to the master.
 TEST_F(IPCSupportTest, SlavePassBackToMaster) {
-  scoped_ptr<TestSlaveSetup> s(SetupSlave());
+  std::unique_ptr<TestSlaveSetup> s(SetupSlave());
 
   s->TestConnection();
 

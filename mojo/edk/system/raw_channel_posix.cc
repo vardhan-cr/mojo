@@ -22,6 +22,7 @@
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/transport_data.h"
+#include "mojo/edk/util/make_unique.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -141,8 +142,8 @@ void RawChannelPosix::EnqueueMessageNoLock(
                 platform_handles->begin() + i,
                 platform_handles->begin() + i +
                     embedder::kPlatformChannelMaxNumHandles));
-        fd_message->SetTransportData(make_scoped_ptr(
-            new TransportData(fds.Pass(), GetSerializedPlatformHandleSize())));
+        fd_message->SetTransportData(util::MakeUnique<TransportData>(
+            fds.Pass(), GetSerializedPlatformHandleSize()));
         RawChannel::EnqueueMessageNoLock(fd_message.Pass());
       }
 

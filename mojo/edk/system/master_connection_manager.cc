@@ -4,6 +4,8 @@
 
 #include "mojo/edk/system/master_connection_manager.h"
 
+#include <memory>
+
 #include "base/bind.h"
 #include "base/bind_helpers.h"
 #include "base/location.h"
@@ -18,6 +20,7 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/raw_channel.h"
 #include "mojo/edk/system/transport_data.h"
+#include "mojo/edk/util/make_unique.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -193,9 +196,9 @@ void MasterConnectionManager::Helper::OnReadMessage(
     embedder::ScopedPlatformHandleVectorPtr platform_handles(
         new embedder::PlatformHandleVector());
     platform_handles->push_back(platform_handle.release());
-    response->SetTransportData(make_scoped_ptr(
-        new TransportData(platform_handles.Pass(),
-                          raw_channel_->GetSerializedPlatformHandleSize())));
+    response->SetTransportData(util::MakeUnique<TransportData>(
+        platform_handles.Pass(),
+        raw_channel_->GetSerializedPlatformHandleSize()));
   } else {
     DCHECK(!platform_handle.is_valid());
   }
@@ -554,7 +557,7 @@ ConnectionManager::Result MasterConnectionManager::ConnectImpl(
   // The remaining cases all result in |it| being removed from
   // |pending_connects_| and deleting |info|.
   pending_connects_.erase(it);
-  scoped_ptr<PendingConnectInfo> info_deleter(info);
+  std::unique_ptr<PendingConnectInfo> info_deleter(info);
 
   // |remaining_connectee| should be the same as |process_identifier|.
   ProcessIdentifier remaining_connectee;
@@ -672,8 +675,8 @@ void MasterConnectionManager::AddSlaveOnPrivateThread(
   DCHECK(event);
   AssertOnPrivateThread();
 
-  scoped_ptr<Helper> helper(new Helper(this, slave_process_identifier,
-                                       slave_info, platform_handle.Pass()));
+  std::unique_ptr<Helper> helper(new Helper(
+      this, slave_process_identifier, slave_info, platform_handle.Pass()));
   helper->Init();
 
   DCHECK(helpers_.find(slave_process_identifier) == helpers_.end());

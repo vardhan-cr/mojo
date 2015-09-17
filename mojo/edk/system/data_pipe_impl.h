@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <utility>
+
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/data_pipe.h"
 #include "mojo/edk/system/handle_signals_state.h"
@@ -120,9 +122,9 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
                              size_t* current_num_bytes,
                              MessageInTransitQueue* message_queue);
 
-  scoped_ptr<DataPipeImpl> ReplaceImpl(scoped_ptr<DataPipeImpl> new_impl)
-      MOJO_NO_THREAD_SAFETY_ANALYSIS {
-    return owner_->ReplaceImplNoLock(new_impl.Pass());
+  std::unique_ptr<DataPipeImpl> ReplaceImpl(
+      std::unique_ptr<DataPipeImpl> new_impl) MOJO_NO_THREAD_SAFETY_ANALYSIS {
+    return owner_->ReplaceImplNoLock(std::move(new_impl));
   }
   void SetProducerClosed() MOJO_NO_THREAD_SAFETY_ANALYSIS {
     owner_->SetProducerClosedNoLock();

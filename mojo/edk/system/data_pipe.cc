@@ -23,6 +23,7 @@
 #include "mojo/edk/system/options_validation.h"
 #include "mojo/edk/system/remote_consumer_data_pipe_impl.h"
 #include "mojo/edk/system/remote_producer_data_pipe_impl.h"
+#include "mojo/edk/util/make_unique.h"
 
 namespace mojo {
 namespace system {
@@ -96,7 +97,7 @@ MojoResult DataPipe::ValidateCreateOptions(
 DataPipe* DataPipe::CreateLocal(
     const MojoCreateDataPipeOptions& validated_options) {
   return new DataPipe(true, true, validated_options,
-                      make_scoped_ptr(new LocalDataPipeImpl()));
+                      util::MakeUnique<LocalDataPipeImpl>());
 }
 
 // static
@@ -119,8 +120,8 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
   // is called.
   DataPipe* data_pipe = new DataPipe(
       false, true, validated_options,
-      make_scoped_ptr(new RemoteProducerDataPipeImpl(
-          channel_endpoint, std::move(buffer), 0, buffer_num_bytes)));
+      util::MakeUnique<RemoteProducerDataPipeImpl>(
+          channel_endpoint, std::move(buffer), 0, buffer_num_bytes));
   if (channel_endpoint) {
     if (!channel_endpoint->ReplaceClient(data_pipe, 0))
       data_pipe->OnDetachFromChannel(0);
@@ -149,8 +150,8 @@ DataPipe* DataPipe::CreateRemoteConsumerFromExisting(
   // is called.
   DataPipe* data_pipe =
       new DataPipe(true, false, validated_options,
-                   make_scoped_ptr(new RemoteConsumerDataPipeImpl(
-                       channel_endpoint, consumer_num_bytes)));
+                   util::MakeUnique<RemoteConsumerDataPipeImpl>(
+                       channel_endpoint, consumer_num_bytes));
   if (channel_endpoint) {
     if (!channel_endpoint->ReplaceClient(data_pipe, 0))
       data_pipe->OnDetachFromChannel(0);
@@ -195,9 +196,9 @@ bool DataPipe::ProducerDeserialize(Channel* channel,
       return false;
     }
 
-    *data_pipe = new DataPipe(
-        true, false, revalidated_options,
-        make_scoped_ptr(new RemoteConsumerDataPipeImpl(nullptr, 0)));
+    *data_pipe =
+        new DataPipe(true, false, revalidated_options,
+                     util::MakeUnique<RemoteConsumerDataPipeImpl>(nullptr, 0));
     (*data_pipe)->SetConsumerClosed();
 
     return true;
@@ -667,7 +668,7 @@ bool DataPipe::ConsumerIsBusy() const {
 DataPipe::DataPipe(bool has_local_producer,
                    bool has_local_consumer,
                    const MojoCreateDataPipeOptions& validated_options,
-                   scoped_ptr<DataPipeImpl> impl)
+                   std::unique_ptr<DataPipeImpl> impl)
     : validated_options_(validated_options),
       producer_open_(true),
       consumer_open_(true),
@@ -677,7 +678,7 @@ DataPipe::DataPipe(bool has_local_producer,
                                                  : nullptr),
       producer_two_phase_max_num_bytes_written_(0),
       consumer_two_phase_max_num_bytes_read_(0),
-      impl_(impl.Pass()) {
+      impl_(std::move(impl)) {
   impl_->set_owner(this);
 
 #if !defined(NDEBUG) || defined(DCHECK_ALWAYS_ON)
@@ -695,16 +696,16 @@ DataPipe::~DataPipe() {
   DCHECK(!consumer_awakable_list_);
 }
 
-scoped_ptr<DataPipeImpl> DataPipe::ReplaceImplNoLock(
-    scoped_ptr<DataPipeImpl> new_impl) {
+std::unique_ptr<DataPipeImpl> DataPipe::ReplaceImplNoLock(
+    std::unique_ptr<DataPipeImpl> new_impl) {
   mutex_.AssertHeld();
   DCHECK(new_impl);
 
   impl_->set_owner(nullptr);
-  scoped_ptr<DataPipeImpl> rv(impl_.Pass());
-  impl_ = new_impl.Pass();
+  std::unique_ptr<DataPipeImpl> rv(std::move(impl_));
+  impl_ = std::move(new_impl);
   impl_->set_owner(this);
-  return rv.Pass();
+  return rv;
 }
 
 void DataPipe::SetProducerClosedNoLock() {

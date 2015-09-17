@@ -4,6 +4,8 @@
 
 #include "mojo/edk/system/message_pipe.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint.h"
@@ -367,7 +369,7 @@ MojoResult MessagePipe::AttachTransportsNoLock(
 
   // Clone the dispatchers and attach them to the message. (This must be done as
   // a separate loop, since we want to leave the dispatchers alone on failure.)
-  scoped_ptr<DispatcherVector> dispatchers(new DispatcherVector());
+  std::unique_ptr<DispatcherVector> dispatchers(new DispatcherVector());
   dispatchers->reserve(transports->size());
   for (size_t i = 0; i < transports->size(); i++) {
     if ((*transports)[i].is_valid()) {
@@ -378,7 +380,7 @@ MojoResult MessagePipe::AttachTransportsNoLock(
       dispatchers->push_back(nullptr);
     }
   }
-  message->SetDispatchers(dispatchers.Pass());
+  message->SetDispatchers(std::move(dispatchers));
   return MOJO_RESULT_OK;
 }
 

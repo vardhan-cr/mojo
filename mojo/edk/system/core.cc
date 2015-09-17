@@ -5,6 +5,7 @@
 #include "mojo/edk/system/core.h"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "base/logging.h"
@@ -530,7 +531,7 @@ MojoResult Core::MapBuffer(MojoHandle buffer_handle,
   if (!dispatcher)
     return MOJO_RESULT_INVALID_ARGUMENT;
 
-  scoped_ptr<embedder::PlatformSharedBufferMapping> mapping;
+  std::unique_ptr<embedder::PlatformSharedBufferMapping> mapping;
   MojoResult result = dispatcher->MapBuffer(offset, num_bytes, flags, &mapping);
   if (result != MOJO_RESULT_OK)
     return result;
@@ -539,7 +540,7 @@ MojoResult Core::MapBuffer(MojoHandle buffer_handle,
   void* address = mapping->GetBase();
   {
     MutexLocker locker(&mapping_table_mutex_);
-    result = mapping_table_.AddMapping(mapping.Pass());
+    result = mapping_table_.AddMapping(std::move(mapping));
   }
   if (result != MOJO_RESULT_OK)
     return result;

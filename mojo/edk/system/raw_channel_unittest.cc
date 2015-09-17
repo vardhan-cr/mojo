@@ -26,6 +26,7 @@
 #include "mojo/edk/test/scoped_test_dir.h"
 #include "mojo/edk/test/test_io_thread.h"
 #include "mojo/edk/test/test_utils.h"
+#include "mojo/edk/util/make_unique.h"
 #include "mojo/edk/util/scoped_file.h"
 #include "mojo/public/cpp/system/macros.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -824,8 +825,8 @@ TEST_F(RawChannelTest, ReadWritePlatformHandles) {
         new MessageInTransit(MessageInTransit::Type::ENDPOINT_CLIENT,
                              MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
                              sizeof(kHello), kHello));
-    message->SetTransportData(make_scoped_ptr(new TransportData(
-        platform_handles.Pass(), rc_write->GetSerializedPlatformHandleSize())));
+    message->SetTransportData(util::MakeUnique<TransportData>(
+        platform_handles.Pass(), rc_write->GetSerializedPlatformHandleSize()));
     EXPECT_TRUE(rc_write->WriteMessage(message.Pass()));
   }
 

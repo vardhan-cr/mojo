@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -243,7 +244,7 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
       static_cast<SharedBufferDispatcher*>(dispatchers[0].get()));
 
   // Make a mapping.
-  scoped_ptr<embedder::PlatformSharedBufferMapping> mapping;
+  std::unique_ptr<embedder::PlatformSharedBufferMapping> mapping;
   CHECK_EQ(dispatcher->MapBuffer(0, 100, MOJO_MAP_BUFFER_FLAG_NONE, &mapping),
            MOJO_RESULT_OK);
   CHECK(mapping);
@@ -315,7 +316,7 @@ TEST_F(MultiprocessMessagePipeTest, MAYBE_SharedBufferPassing) {
   ASSERT_TRUE(dispatcher);
 
   // Make a mapping.
-  scoped_ptr<embedder::PlatformSharedBufferMapping> mapping;
+  std::unique_ptr<embedder::PlatformSharedBufferMapping> mapping;
   EXPECT_EQ(MOJO_RESULT_OK,
             dispatcher->MapBuffer(0, 100, MOJO_MAP_BUFFER_FLAG_NONE, &mapping));
   ASSERT_TRUE(mapping);

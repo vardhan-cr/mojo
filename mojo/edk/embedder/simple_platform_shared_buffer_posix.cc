@@ -120,9 +120,8 @@ bool SimplePlatformSharedBuffer::InitFromPlatformHandle(
 
 #endif  // !defined(OS_ANDROID)
 
-scoped_ptr<PlatformSharedBufferMapping> SimplePlatformSharedBuffer::MapImpl(
-    size_t offset,
-    size_t length) {
+std::unique_ptr<PlatformSharedBufferMapping>
+SimplePlatformSharedBuffer::MapImpl(size_t offset, size_t length) {
   size_t offset_rounding = offset % base::SysInfo::VMAllocationGranularity();
   size_t real_offset = offset - offset_rounding;
   size_t real_length = length + offset_rounding;
@@ -143,8 +142,11 @@ scoped_ptr<PlatformSharedBufferMapping> SimplePlatformSharedBuffer::MapImpl(
   }
 
   void* base = static_cast<char*>(real_base) + offset_rounding;
-  return make_scoped_ptr(new SimplePlatformSharedBufferMapping(
-      base, length, real_base, real_length));
+  // Note: We can't use |MakeUnique| here, since it's not a friend of
+  // |SimplePlatformSharedBufferMapping| (only we are).
+  return std::unique_ptr<SimplePlatformSharedBufferMapping>(
+      new SimplePlatformSharedBufferMapping(base, length, real_base,
+                                            real_length));
 }
 
 // SimplePlatformSharedBufferMapping -------------------------------------------

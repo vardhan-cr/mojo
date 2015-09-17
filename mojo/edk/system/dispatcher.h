@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <ostream>
 #include <vector>
 
@@ -121,7 +122,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Dispatcher
       uint64_t offset,
       uint64_t num_bytes,
       MojoMapBufferFlags flags,
-      scoped_ptr<embedder::PlatformSharedBufferMapping>* mapping);
+      std::unique_ptr<embedder::PlatformSharedBufferMapping>* mapping);
 
   // Gets the current handle signals state. (The default implementation simply
   // returns a default-constructed |HandleSignalsState|, i.e., no signals
@@ -272,7 +273,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Dispatcher
       uint64_t offset,
       uint64_t num_bytes,
       MojoMapBufferFlags flags,
-      scoped_ptr<embedder::PlatformSharedBufferMapping>* mapping)
+      std::unique_ptr<embedder::PlatformSharedBufferMapping>* mapping)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   virtual HandleSignalsState GetHandleSignalsStateImplNoLock() const
       MOJO_SHARED_LOCKS_REQUIRED(mutex_);
