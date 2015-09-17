@@ -23,7 +23,8 @@ if (!is_nacl) {
       "//url",
     ]
 
-    data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
+    data_deps =
+        [ "//nacl_bindings:irt_mojo(//build/toolchain/nacl:irt_${target_cpu})" ]
   }
 
   if (current_cpu == "x86") {

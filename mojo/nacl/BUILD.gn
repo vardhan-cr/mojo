@@ -17,7 +17,8 @@ if (!is_nacl) {
       "//nacl_bindings:monacl_sel",
     ]
 
-    data_deps = [ "//nacl_bindings:irt_mojo(//native_client/build/toolchain/nacl:irt_${target_cpu})" ]
+    data_deps =
+        [ "//nacl_bindings:irt_mojo(//build/toolchain/nacl:irt_${target_cpu})" ]
   }
 
   if (current_cpu == "x86") {
@@ -111,14 +112,14 @@ group("mojo_nacl") {
 group("mojo_pnacl_tests") {
   testonly = true
   deps = [
-    ":monacl_test(//native_client/build/toolchain/nacl:newlib_pnacl)",
+    ":monacl_test(//build/toolchain/nacl:newlib_pnacl)",
   ]
 }
 
 group("mojo_nacl_tests") {
   testonly = true
   deps = [
-    ":mojo_nacl_tests_untrusted(//native_client/build/toolchain/nacl:clang_newlib_${current_cpu})",
+    ":mojo_nacl_tests_untrusted(//build/toolchain/nacl:clang_newlib_${current_cpu})",
     ":monacl_shell",
     ":monacl_shell_nonsfi_x86",
     ":mojo_pnacl_tests",
