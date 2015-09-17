@@ -58,7 +58,15 @@ class TraceMeApp : public mojo::ApplicationDelegate {
 
     TRACE_EVENT0("trace_me", "initialized");
 
-    base::MessageLoop::current()->PostTask(FROM_HERE, base::Bind(&DoWork));
+    base::MessageLoop::current()->PostDelayedTask(
+        FROM_HERE, base::Bind(&DoWork), kDoWorkDelay);
+  }
+
+  // mojo:ApplicationDelegate:
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
+    TRACE_EVENT0("trace_me", "connected");
+    return true;
   }
 
  private:

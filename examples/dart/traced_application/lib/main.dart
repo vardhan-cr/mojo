@@ -35,6 +35,13 @@ class TestUsingTracingApp extends Application {
     new Timer.periodic(new Duration(seconds: 1), (t) => function1());
   }
 
+  @override
+  void acceptConnection(String requestorUrl, String resolvedUrl,
+      ApplicationConnection connection) {
+    _tracing.traceInstant("connected", "traced_application");
+  }
+
+
   void function1() {
     var trace = _tracing.beginFunction("function1", "traced_application");
     waitForMilliseconds(100);

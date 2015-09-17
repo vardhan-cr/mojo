@@ -8,6 +8,7 @@ benchmarks = [
     'duration': 10,
     'measurements': [
       'time_until/traced_application/initialized',
+      'time_until/traced_application/connected',
     ]
   },
   {
@@ -16,6 +17,7 @@ benchmarks = [
     'duration': 10,
     'measurements': [
       'time_until/trace_me/initialized',
+      'time_until/trace_me/connected',
     ],
     'shell-args': [
       '--args-for=https://core.mojoapps.io/trace_me.mojo --early-tracing',
