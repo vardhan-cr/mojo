@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
@@ -270,8 +272,8 @@ class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
   bool producer_open_ MOJO_GUARDED_BY(mutex_);
   bool consumer_open_ MOJO_GUARDED_BY(mutex_);
   // Non-null only if the producer or consumer, respectively, is local.
-  scoped_ptr<AwakableList> producer_awakable_list_ MOJO_GUARDED_BY(mutex_);
-  scoped_ptr<AwakableList> consumer_awakable_list_ MOJO_GUARDED_BY(mutex_);
+  std::unique_ptr<AwakableList> producer_awakable_list_ MOJO_GUARDED_BY(mutex_);
+  std::unique_ptr<AwakableList> consumer_awakable_list_ MOJO_GUARDED_BY(mutex_);
   // These are nonzero if and only if a two-phase write/read is in progress.
   uint32_t producer_two_phase_max_num_bytes_written_ MOJO_GUARDED_BY(mutex_);
   uint32_t consumer_two_phase_max_num_bytes_read_ MOJO_GUARDED_BY(mutex_);

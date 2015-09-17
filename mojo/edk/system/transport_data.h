@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include <memory>
 #include <vector>
 
 #include "base/memory/aligned_memory.h"
@@ -174,7 +175,7 @@ class MOJO_SYSTEM_IMPL_EXPORT TransportData {
   }
 
   size_t buffer_size_;
-  scoped_ptr<char, base::AlignedFreeDeleter> buffer_;  // Never null.
+  std::unique_ptr<char, base::AlignedFreeDeleter> buffer_;  // Never null.
 
   // Any platform-specific handles attached to this message (for inter-process
   // transport). The vector (if any) owns the handles that it contains (and is

@@ -11,8 +11,8 @@
 namespace mojo {
 namespace test {
 
-MultiprocessTestHelper::MultiprocessTestHelper() {
-  platform_channel_pair_.reset(new embedder::PlatformChannelPair());
+MultiprocessTestHelper::MultiprocessTestHelper()
+    : platform_channel_pair_(new embedder::PlatformChannelPair()) {
   server_platform_handle = platform_channel_pair_->PassServerHandle();
 }
 

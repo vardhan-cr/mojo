@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <utility>
 
 #include "base/bind.h"
 #include "base/location.h"
@@ -217,7 +218,7 @@ void RawChannel::Shutdown() {
   write_stopped_ = true;
   weak_ptr_factory_.InvalidateWeakPtrs();
 
-  OnShutdownNoLock(read_buffer_.Pass(), write_buffer_.Pass());
+  OnShutdownNoLock(std::move(read_buffer_), std::move(write_buffer_));
 }
 
 // Reminder: This must be thread-safe.

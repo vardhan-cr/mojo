@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
@@ -193,7 +194,7 @@ bool LocalDataPipeImpl::ProducerEndSerialize(
   // Note: Keep |*this| alive until the end of this method, to make things
   // slightly easier on ourselves.
   scoped_ptr<DataPipeImpl> self(ReplaceImpl(make_scoped_ptr(
-      new RemoteProducerDataPipeImpl(channel_endpoint.get(), buffer_.Pass(),
+      new RemoteProducerDataPipeImpl(channel_endpoint.get(), std::move(buffer_),
                                      start_index_, current_num_bytes_))));
 
   *actual_size = sizeof(SerializedDataPipeProducerDispatcher) +

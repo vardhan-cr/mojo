@@ -5,6 +5,7 @@
 #ifndef MOJO_EDK_SYSTEM_RAW_CHANNEL_H_
 #define MOJO_EDK_SYSTEM_RAW_CHANNEL_H_
 
+#include <memory>
 #include <vector>
 
 #include "base/memory/scoped_ptr.h"
@@ -289,8 +290,8 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // want to preserve them if there are pending read/writes. After this is
   // called, |OnReadCompleted()| must no longer be called. Must be called on the
   // I/O thread.
-  virtual void OnShutdownNoLock(scoped_ptr<ReadBuffer> read_buffer,
-                                scoped_ptr<WriteBuffer> write_buffer)
+  virtual void OnShutdownNoLock(std::unique_ptr<ReadBuffer> read_buffer,
+                                std::unique_ptr<WriteBuffer> write_buffer)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(write_mutex_) = 0;
 
  private:
@@ -317,11 +318,11 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // Only used on the I/O thread:
   Delegate* delegate_;
   bool* set_on_shutdown_;
-  scoped_ptr<ReadBuffer> read_buffer_;
+  std::unique_ptr<ReadBuffer> read_buffer_;
 
   Mutex write_mutex_;  // Protects the following members.
   bool write_stopped_ MOJO_GUARDED_BY(write_mutex_);
-  scoped_ptr<WriteBuffer> write_buffer_ MOJO_GUARDED_BY(write_mutex_);
+  std::unique_ptr<WriteBuffer> write_buffer_ MOJO_GUARDED_BY(write_mutex_);
 
   // This is used for posting tasks from write threads to the I/O thread. The
   // weak pointers it produces are only used/invalidated on the I/O thread.

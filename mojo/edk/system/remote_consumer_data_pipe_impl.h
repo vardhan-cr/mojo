@@ -5,9 +5,10 @@
 #ifndef MOJO_EDK_SYSTEM_REMOTE_CONSUMER_DATA_PIPE_IMPL_H_
 #define MOJO_EDK_SYSTEM_REMOTE_CONSUMER_DATA_PIPE_IMPL_H_
 
+#include <memory>
+
 #include "base/memory/aligned_memory.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
 #include "mojo/edk/system/system_impl_export.h"
@@ -97,7 +98,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RemoteConsumerDataPipeImpl final
   size_t consumer_num_bytes_;
 
   // Used for two-phase writes.
-  scoped_ptr<char, base::AlignedFreeDeleter> buffer_;
+  std::unique_ptr<char, base::AlignedFreeDeleter> buffer_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImpl);
 };

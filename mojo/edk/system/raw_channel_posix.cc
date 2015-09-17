@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <memory>
 
 #include "base/bind.h"
 #include "base/location.h"
@@ -55,8 +56,8 @@ class RawChannelPosix final : public RawChannel,
                        size_t* bytes_written) override;
   IOResult ScheduleWriteNoLock() override;
   void OnInit() override;
-  void OnShutdownNoLock(scoped_ptr<ReadBuffer> read_buffer,
-                        scoped_ptr<WriteBuffer> write_buffer) override;
+  void OnShutdownNoLock(std::unique_ptr<ReadBuffer> read_buffer,
+                        std::unique_ptr<WriteBuffer> write_buffer) override;
 
   // |base::MessageLoopForIO::Watcher| implementation:
   void OnFileCanReadWithoutBlocking(int fd) override;
@@ -71,8 +72,8 @@ class RawChannelPosix final : public RawChannel,
   embedder::ScopedPlatformHandle fd_;
 
   // The following members are only used on the I/O thread:
-  scoped_ptr<base::MessageLoopForIO::FileDescriptorWatcher> read_watcher_;
-  scoped_ptr<base::MessageLoopForIO::FileDescriptorWatcher> write_watcher_;
+  std::unique_ptr<base::MessageLoopForIO::FileDescriptorWatcher> read_watcher_;
+  std::unique_ptr<base::MessageLoopForIO::FileDescriptorWatcher> write_watcher_;
 
   bool pending_read_;
 
@@ -327,8 +328,8 @@ void RawChannelPosix::OnInit() {
 }
 
 void RawChannelPosix::OnShutdownNoLock(
-    scoped_ptr<ReadBuffer> /*read_buffer*/,
-    scoped_ptr<WriteBuffer> /*write_buffer*/) {
+    std::unique_ptr<ReadBuffer> /*read_buffer*/,
+    std::unique_ptr<WriteBuffer> /*write_buffer*/) {
   DCHECK_EQ(base::MessageLoop::current(), message_loop_for_io());
   write_mutex().AssertHeld();
 

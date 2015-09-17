@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/memory/aligned_memory.h"
@@ -102,7 +104,7 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
     const MojoCreateDataPipeOptions& validated_options,
     MessageInTransitQueue* message_queue,
     ChannelEndpoint* channel_endpoint) {
-  scoped_ptr<char, base::AlignedFreeDeleter> buffer;
+  std::unique_ptr<char, base::AlignedFreeDeleter> buffer;
   size_t buffer_num_bytes = 0;
   if (!RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
           validated_options, message_queue, &buffer, &buffer_num_bytes))
@@ -115,10 +117,10 @@ DataPipe* DataPipe::CreateRemoteProducerFromExisting(
   // ongoing call to |IncomingEndpoint::OnReadMessage()| return false. This will
   // make |ChannelEndpoint::OnReadMessage()| retry, until its |ReplaceClient()|
   // is called.
-  DataPipe* data_pipe =
-      new DataPipe(false, true, validated_options,
-                   make_scoped_ptr(new RemoteProducerDataPipeImpl(
-                       channel_endpoint, buffer.Pass(), 0, buffer_num_bytes)));
+  DataPipe* data_pipe = new DataPipe(
+      false, true, validated_options,
+      make_scoped_ptr(new RemoteProducerDataPipeImpl(
+          channel_endpoint, std::move(buffer), 0, buffer_num_bytes)));
   if (channel_endpoint) {
     if (!channel_endpoint->ReplaceClient(data_pipe, 0))
       data_pipe->OnDetachFromChannel(0);

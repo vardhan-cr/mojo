@@ -9,7 +9,8 @@
 #include <stdint.h>
 #include <string.h>  // For |memcpy()|.
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
+
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/macros.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -305,7 +306,7 @@ class UserPointerReader {
     memcpy(buffer_.get(), user_pointer, count * sizeof(Type));
   }
 
-  scoped_ptr<TypeNoConst[]> buffer_;
+  std::unique_ptr<TypeNoConst[]> buffer_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(UserPointerReader);
 };
@@ -334,7 +335,7 @@ class UserPointerWriter {
  private:
   UserPointer<Type> user_pointer_;
   size_t count_;
-  scoped_ptr<Type[]> buffer_;
+  std::unique_ptr<Type[]> buffer_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(UserPointerWriter);
 };
@@ -366,7 +367,7 @@ class UserPointerReaderWriter {
  private:
   UserPointer<Type> user_pointer_;
   size_t count_;
-  scoped_ptr<Type[]> buffer_;
+  std::unique_ptr<Type[]> buffer_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(UserPointerReaderWriter);
 };

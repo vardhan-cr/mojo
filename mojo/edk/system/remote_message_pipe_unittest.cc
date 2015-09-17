@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <memory>
 #include <vector>
 
 #include "base/bind.h"
@@ -335,7 +336,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
                       &max_platform_handle_count);
   EXPECT_GT(max_endpoint_info_size, 0u);
   ASSERT_EQ(0u, max_platform_handle_count);
-  scoped_ptr<char[]> endpoint_info(new char[max_endpoint_info_size]);
+  std::unique_ptr<char[]> endpoint_info(new char[max_endpoint_info_size]);
   size_t endpoint_info_size;
   mp2->EndSerialize(1, channels(0), endpoint_info.get(), &endpoint_info_size,
                     nullptr);
@@ -360,7 +361,7 @@ TEST_F(RemoteMessagePipeTest, Multiplex) {
   EXPECT_EQ(kAllSignals, hss.satisfiable_signals);
 
   EXPECT_EQ(endpoint_info_size, channels(1)->GetSerializedEndpointSize());
-  scoped_ptr<char[]> received_endpoint_info(new char[endpoint_info_size]);
+  std::unique_ptr<char[]> received_endpoint_info(new char[endpoint_info_size]);
   buffer_size = static_cast<uint32_t>(endpoint_info_size);
   EXPECT_EQ(MOJO_RESULT_OK,
             mp1->ReadMessage(1, UserPointer<void>(received_endpoint_info.get()),

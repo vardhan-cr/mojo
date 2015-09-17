@@ -4,6 +4,7 @@
 
 #include "mojo/edk/system/core.h"
 
+#include <memory>
 #include <vector>
 
 #include "base/logging.h"
@@ -76,7 +77,6 @@ namespace system {
 //    - Locks at the "INF" level may not have any locks taken while they are
 //      held.
 
-// TODO(vtl): This should take a |scoped_ptr<PlatformSupport>| as a parameter.
 Core::Core(embedder::PlatformSupport* platform_support)
     : platform_support_(platform_support) {
 }
@@ -112,7 +112,7 @@ MojoResult Core::AsyncWait(MojoHandle handle,
   scoped_refptr<Dispatcher> dispatcher = GetDispatcher(handle);
   DCHECK(dispatcher);
 
-  scoped_ptr<AsyncWaiter> waiter = make_scoped_ptr(new AsyncWaiter(callback));
+  std::unique_ptr<AsyncWaiter> waiter(new AsyncWaiter(callback));
   MojoResult rv = dispatcher->AddAwakable(waiter.get(), signals, 0, nullptr);
   if (rv == MOJO_RESULT_OK)
     ignore_result(waiter.release());

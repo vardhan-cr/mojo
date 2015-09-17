@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
@@ -68,11 +69,11 @@ RemoteProducerDataPipeImpl::RemoteProducerDataPipeImpl(
 
 RemoteProducerDataPipeImpl::RemoteProducerDataPipeImpl(
     ChannelEndpoint* channel_endpoint,
-    scoped_ptr<char, base::AlignedFreeDeleter> buffer,
+    std::unique_ptr<char, base::AlignedFreeDeleter> buffer,
     size_t start_index,
     size_t current_num_bytes)
     : channel_endpoint_(channel_endpoint),
-      buffer_(buffer.Pass()),
+      buffer_(std::move(buffer)),
       start_index_(start_index),
       current_num_bytes_(current_num_bytes) {
   DCHECK(buffer_ || !current_num_bytes);
@@ -82,14 +83,14 @@ RemoteProducerDataPipeImpl::RemoteProducerDataPipeImpl(
 bool RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
     const MojoCreateDataPipeOptions& validated_options,
     MessageInTransitQueue* messages,
-    scoped_ptr<char, base::AlignedFreeDeleter>* buffer,
+    std::unique_ptr<char, base::AlignedFreeDeleter>* buffer,
     size_t* buffer_num_bytes) {
   DCHECK(!*buffer);  // Not wrong, but unlikely.
 
   const size_t element_num_bytes = validated_options.element_num_bytes;
   const size_t capacity_num_bytes = validated_options.capacity_num_bytes;
 
-  scoped_ptr<char, base::AlignedFreeDeleter> new_buffer(static_cast<char*>(
+  std::unique_ptr<char, base::AlignedFreeDeleter> new_buffer(static_cast<char*>(
       base::AlignedAlloc(capacity_num_bytes,
                          GetConfiguration().data_pipe_buffer_alignment_bytes)));
 
@@ -109,7 +110,7 @@ bool RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
     }
   }
 
-  *buffer = new_buffer.Pass();
+  *buffer = std::move(new_buffer);
   *buffer_num_bytes = current_num_bytes;
   return true;
 }
