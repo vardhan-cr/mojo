@@ -5,18 +5,12 @@
 #ifndef MOJO_EDK_EMBEDDER_PLATFORM_HANDLE_H_
 #define MOJO_EDK_EMBEDDER_PLATFORM_HANDLE_H_
 
-#include "build/build_config.h"
 #include "mojo/edk/system/system_impl_export.h"
-
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
 
 namespace mojo {
 namespace embedder {
 
-// A |PlatformHandle| is a file descriptor on POSIX and a |HANDLE| on Windows.
-#if defined(OS_POSIX)
+// A |PlatformHandle| is just a file descriptor on POSIX.
 struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandle {
   PlatformHandle() : fd(-1) {}
   explicit PlatformHandle(int fd) : fd(fd) {}
@@ -27,20 +21,6 @@ struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandle {
 
   int fd;
 };
-#elif defined(OS_WIN)
-struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandle {
-  PlatformHandle() : handle(INVALID_HANDLE_VALUE) {}
-  explicit PlatformHandle(HANDLE handle) : handle(handle) {}
-
-  void CloseIfNecessary();
-
-  bool is_valid() const { return handle != INVALID_HANDLE_VALUE; }
-
-  HANDLE handle;
-};
-#else
-#error "Platform not yet supported."
-#endif
 
 }  // namespace embedder
 }  // namespace mojo

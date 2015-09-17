@@ -19,7 +19,6 @@
 #include "base/memory/scoped_vector.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/simple_thread.h"
-#include "build/build_config.h"  // TODO(vtl): Remove this.
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
@@ -794,13 +793,7 @@ class ReadPlatformHandlesCheckerRawChannelDelegate
   MOJO_DISALLOW_COPY_AND_ASSIGN(ReadPlatformHandlesCheckerRawChannelDelegate);
 };
 
-#if defined(OS_POSIX)
-#define MAYBE_ReadWritePlatformHandles ReadWritePlatformHandles
-#else
-// Not yet implemented (on Windows).
-#define MAYBE_ReadWritePlatformHandles DISABLED_ReadWritePlatformHandles
-#endif
-TEST_F(RawChannelTest, MAYBE_ReadWritePlatformHandles) {
+TEST_F(RawChannelTest, ReadWritePlatformHandles) {
   base::ScopedTempDir temp_dir;
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
 

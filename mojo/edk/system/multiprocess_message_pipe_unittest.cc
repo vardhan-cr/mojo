@@ -94,13 +94,13 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(EchoEcho) {
   return rv;
 }
 
-// Sends "hello" to child, and expects "hellohello" back.
 #if defined(OS_ANDROID)
 // Android multi-process tests are not executing the new process. This is flaky.
 #define MAYBE_Basic DISABLED_Basic
 #else
 #define MAYBE_Basic Basic
-#endif  // defined(OS_ANDROID)
+#endif
+// Sends "hello" to child, and expects "hellohello" back.
 TEST_F(MultiprocessMessagePipeTest, MAYBE_Basic) {
   helper()->StartChild("EchoEcho");
 
@@ -139,14 +139,14 @@ TEST_F(MultiprocessMessagePipeTest, MAYBE_Basic) {
   EXPECT_EQ(1 % 100, helper()->WaitForChildShutdown());
 }
 
-// Sends a bunch of messages to the child. Expects them "repeated" back. Waits
-// for the child to close its end before quitting.
 #if defined(OS_ANDROID)
 // Android multi-process tests are not executing the new process. This is flaky.
 #define MAYBE_QueueMessages DISABLED_QueueMessages
 #else
 #define MAYBE_QueueMessages QueueMessages
-#endif  // defined(OS_ANDROID)
+#endif
+// Sends a bunch of messages to the child. Expects them "repeated" back. Waits
+// for the child to close its end before quitting.
 TEST_F(MultiprocessMessagePipeTest, DISABLED_QueueMessages) {
   helper()->StartChild("EchoEcho");
 
@@ -295,12 +295,11 @@ MOJO_MULTIPROCESS_TEST_CHILD_MAIN(CheckSharedBuffer) {
   return 0;
 }
 
-#if defined(OS_POSIX) && !defined(OS_ANDROID)
-#define MAYBE_SharedBufferPassing SharedBufferPassing
-#else
-// Not yet implemented (on Windows).
+#if defined(OS_ANDROID)
 // Android multi-process tests are not executing the new process. This is flaky.
 #define MAYBE_SharedBufferPassing DISABLED_SharedBufferPassing
+#else
+#define MAYBE_SharedBufferPassing SharedBufferPassing
 #endif
 TEST_F(MultiprocessMessagePipeTest, MAYBE_SharedBufferPassing) {
   helper()->StartChild("CheckSharedBuffer");
@@ -506,9 +505,8 @@ TEST_P(MultiprocessMessagePipeTestWithPipeCount, PlatformHandlePassing) {
   EXPECT_EQ(0, helper()->WaitForChildShutdown());
 }
 
-// Not yet implemented (on Windows).
 // Android multi-process tests are not executing the new process. This is flaky.
-#if defined(OS_POSIX) && !defined(OS_ANDROID)
+#if !defined(OS_ANDROID)
 INSTANTIATE_TEST_CASE_P(PipeCount,
                         MultiprocessMessagePipeTestWithPipeCount,
                         testing::Values(1u, 128u, 140u));

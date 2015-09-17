@@ -13,8 +13,7 @@
 namespace mojo {
 namespace embedder {
 
-// Scoper for |PlatformHandle|s, which are file descriptors on POSIX and
-// |HANDLE|s on Windows.
+// Scoper for |PlatformHandle|s, which are just file descriptors.
 class MOJO_SYSTEM_IMPL_EXPORT ScopedPlatformHandle {
   MOJO_MOVE_ONLY_TYPE(ScopedPlatformHandle)
 

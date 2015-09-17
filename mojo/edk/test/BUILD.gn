@@ -17,7 +17,6 @@ mojo_edk_source_set("test_support") {
     "test_io_thread.h",
     "test_utils.h",
     "test_utils_posix.cc",
-    "test_utils_win.cc",
   ]
 
   deps = [

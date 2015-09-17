@@ -15,7 +15,6 @@
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "base/test/perf_log.h"
-#include "build/build_config.h"
 
 namespace mojo {
 namespace test {
@@ -64,13 +63,8 @@ char** TestSupportImpl::EnumerateSourceRootRelativeDirectory(
 
   // |names.size() + 1| for null terminator.
   char** rv = static_cast<char**>(calloc(names.size() + 1, sizeof(char*)));
-  for (size_t i = 0; i < names.size(); ++i) {
-#if defined(OS_WIN)
-    rv[i] = _strdup(names[i].c_str());
-#else
+  for (size_t i = 0; i < names.size(); ++i)
     rv[i] = strdup(names[i].c_str());
-#endif
-  }
   return rv;
 }
 

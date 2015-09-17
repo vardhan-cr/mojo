@@ -94,7 +94,6 @@ component("system") {
     "raw_channel.cc",
     "raw_channel.h",
     "raw_channel_posix.cc",
-    "raw_channel_win.cc",
     "remote_consumer_data_pipe_impl.cc",
     "remote_consumer_data_pipe_impl.h",
     "remote_data_pipe_ack.h",

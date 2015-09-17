@@ -168,9 +168,8 @@ ConnectToMaster(const std::string& platform_connection_id,
 //
 // Both creation functions have a |platform_handle| argument, which should be an
 // OS-dependent handle to one side of a suitable bidirectional OS "pipe" (e.g.,
-// a file descriptor to a socket on POSIX, a handle to a named pipe on Windows);
-// this "pipe" should be connected and ready for operation (e.g., to be written
-// to or read from).
+// a file descriptor to a Unix domain socket); this "pipe" should be connected
+// and ready for operation (e.g., to be written to or read from).
 //
 // Both (synchronously) return a handle to the bootstrap message pipe on the
 // channel that was (or is to be) created, or |MOJO_HANDLE_INVALID| on error

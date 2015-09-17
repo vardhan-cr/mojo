@@ -6,7 +6,6 @@
 
 #include "base/command_line.h"
 #include "base/logging.h"
-#include "build/build_config.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 
 namespace mojo {
@@ -52,14 +51,7 @@ void MultiprocessTestHelper::StartChildWithExtraSwitch(
   }
 
   base::LaunchOptions options;
-#if defined(OS_POSIX)
   options.fds_to_remap = &handle_passing_info;
-#elif defined(OS_WIN)
-  options.start_hidden = true;
-  options.handles_to_inherit = &handle_passing_info;
-#else
-#error "Not supported yet."
-#endif
 
   test_child_ =
       base::SpawnMultiProcessTestChild(test_child_main, command_line, options);

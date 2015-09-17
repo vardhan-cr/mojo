@@ -15,7 +15,6 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "build/build_config.h"              // TODO(vtl): Remove this.
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/platform_shared_buffer.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
@@ -893,13 +892,7 @@ TEST_F(RemoteMessagePipeTest, HandlePassingHalfClosed) {
   EXPECT_EQ(MOJO_RESULT_OK, dispatcher->Close());
 }
 
-#if defined(OS_POSIX)
-#define MAYBE_SharedBufferPassing SharedBufferPassing
-#else
-// Not yet implemented (on Windows).
-#define MAYBE_SharedBufferPassing DISABLED_SharedBufferPassing
-#endif
-TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
+TEST_F(RemoteMessagePipeTest, SharedBufferPassing) {
   static const char kHello[] = "hello";
   Waiter waiter;
   HandleSignalsState hss;
@@ -1017,13 +1010,7 @@ TEST_F(RemoteMessagePipeTest, MAYBE_SharedBufferPassing) {
   EXPECT_EQ('x', static_cast<char*>(mapping1->GetBase())[1]);
 }
 
-#if defined(OS_POSIX)
-#define MAYBE_PlatformHandlePassing PlatformHandlePassing
-#else
-// Not yet implemented (on Windows).
-#define MAYBE_PlatformHandlePassing DISABLED_PlatformHandlePassing
-#endif
-TEST_F(RemoteMessagePipeTest, MAYBE_PlatformHandlePassing) {
+TEST_F(RemoteMessagePipeTest, PlatformHandlePassing) {
   base::ScopedTempDir temp_dir;
   ASSERT_TRUE(temp_dir.CreateUniqueTempDir());
 
