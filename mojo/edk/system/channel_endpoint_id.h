@@ -8,9 +8,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <functional>
 #include <ostream>
 
-#include "base/containers/hash_tables.h"
 #include "base/gtest_prod_util.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -130,12 +130,10 @@ class MOJO_SYSTEM_IMPL_EXPORT RemoteChannelEndpointIdGenerator {
 }  // namespace system
 }  // namespace mojo
 
-// Define "hash" functions for |ChannelEndpointId|s, so they can be used in hash
-// tables.
-// TODO(vtl): Once we can use |std::unordered_{map,set}|, update this (and
-// remove the base/containers/hash_tables.h include).
-namespace BASE_HASH_NAMESPACE {
+namespace std {
 
+// Specialization of |std::hash<>| for |ChannelEndpointId|s, so they can be used
+// in unordered sets/maps.
 template <>
 struct hash<mojo::system::ChannelEndpointId> {
   size_t operator()(mojo::system::ChannelEndpointId channel_endpoint_id) const {
@@ -143,6 +141,6 @@ struct hash<mojo::system::ChannelEndpointId> {
   }
 };
 
-}  // namespace BASE_HASH_NAMESPACE
+}  // namespace std
 
 #endif  // MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_ID_H_

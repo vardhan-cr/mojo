@@ -5,6 +5,7 @@
 #include "mojo/edk/system/master_connection_manager.h"
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
 
 #include "base/bind.h"
@@ -312,7 +313,7 @@ class MasterConnectionManager::ProcessConnections {
   }
 
  private:
-  base::hash_map<ProcessIdentifier, embedder::PlatformHandle>
+  std::unordered_map<ProcessIdentifier, embedder::PlatformHandle>
       process_connections_;  // "Owns" any valid platform handles.
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ProcessConnections);

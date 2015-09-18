@@ -7,8 +7,9 @@
 
 #include <stdint.h>
 
+#include <unordered_map>
+
 #include "base/callback_forward.h"
-#include "base/containers/hash_tables.h"
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/channel_id.h"
@@ -151,7 +152,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
   mutable Mutex mutex_;
 
   using ChannelIdToChannelMap =
-      base::hash_map<ChannelId, scoped_refptr<Channel>>;
+      std::unordered_map<ChannelId, scoped_refptr<Channel>>;
   ChannelIdToChannelMap channels_ MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(ChannelManager);

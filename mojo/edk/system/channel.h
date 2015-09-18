@@ -8,8 +8,8 @@
 #include <stdint.h>
 
 #include <memory>
+#include <unordered_map>
 
-#include "base/containers/hash_tables.h"
 #include "base/memory/ref_counted.h"
 #include "base/threading/thread_checker.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
@@ -257,7 +257,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel final
   ChannelManager* channel_manager_ MOJO_GUARDED_BY(mutex_);
 
   using IdToEndpointMap =
-      base::hash_map<ChannelEndpointId, scoped_refptr<ChannelEndpoint>>;
+      std::unordered_map<ChannelEndpointId, scoped_refptr<ChannelEndpoint>>;
   // Map from local IDs to endpoints. If the endpoint is null, this means that
   // we're just waiting for the remove ack before removing the entry.
   IdToEndpointMap local_id_to_endpoint_map_ MOJO_GUARDED_BY(mutex_);
@@ -265,7 +265,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel final
   LocalChannelEndpointIdGenerator local_id_generator_ MOJO_GUARDED_BY(mutex_);
 
   using IdToIncomingEndpointMap =
-      base::hash_map<ChannelEndpointId, scoped_refptr<IncomingEndpoint>>;
+      std::unordered_map<ChannelEndpointId, scoped_refptr<IncomingEndpoint>>;
   // Map from local IDs to incoming endpoints (i.e., those received inside other
   // messages, but not yet claimed via |DeserializeEndpoint()|).
   IdToIncomingEndpointMap incoming_endpoints_ MOJO_GUARDED_BY(mutex_);

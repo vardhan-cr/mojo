@@ -5,10 +5,10 @@
 #ifndef MOJO_EDK_SYSTEM_HANDLE_TABLE_H_
 #define MOJO_EDK_SYSTEM_HANDLE_TABLE_H_
 
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "base/containers/hash_tables.h"
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
@@ -126,7 +126,7 @@ class MOJO_SYSTEM_IMPL_EXPORT HandleTable {
     scoped_refptr<Dispatcher> dispatcher;
     bool busy;
   };
-  using HandleToEntryMap = base::hash_map<MojoHandle, Entry>;
+  using HandleToEntryMap = std::unordered_map<MojoHandle, Entry>;
 
   // Adds the given dispatcher to the handle table, not doing any size checks.
   MojoHandle AddDispatcherNoSizeCheck(
