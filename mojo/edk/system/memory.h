@@ -10,6 +10,7 @@
 #include <string.h>  // For |memcpy()|.
 
 #include <memory>
+#include <type_traits>
 
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/macros.h"
@@ -19,17 +20,6 @@ namespace mojo {
 namespace system {
 
 namespace internal {
-
-// Removes |const| from |T| (available as |remove_const<T>::type|):
-// TODO(vtl): Remove these once we have the C++11 |remove_const|.
-template <typename T>
-struct remove_const {
-  using type = T;
-};
-template <typename T>
-struct remove_const<const T> {
-  using type = T;
-};
 
 // Yields |(const) char| if |T| is |(const) void|, else |T|:
 template <typename T>
@@ -157,7 +147,7 @@ class UserPointer {
   // void|) from the location pointed to by this user pointer. Use this when
   // you'd do something like |memcpy(destination, user_pointer, count *
   // sizeof(Type)|.
-  void GetArray(typename internal::remove_const<Type>::type* destination,
+  void GetArray(typename std::remove_cv<Type>::type* destination,
                 size_t count) const {
     CheckArray(count);
     memcpy(destination, pointer_, count * sizeof(NonVoidType));
@@ -270,7 +260,7 @@ inline UserPointer<Type> MakeUserPointer(Type* pointer) {
 template <typename Type>
 class UserPointerReader {
  private:
-  using TypeNoConst = typename internal::remove_const<Type>::type;
+  using TypeNoConst = typename std::remove_const<Type>::type;
 
  public:
   // Note: If |count| is zero, |GetPointer()| will always return null.
