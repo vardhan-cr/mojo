@@ -19,6 +19,8 @@ source_set("gles2") {
     "gpu_impl.h",
     "gpu_state.cc",
     "gpu_state.h",
+    "mailbox_manager_factory.cc",
+    "mailbox_manager_factory.h",
   ]
 
   public_deps = [

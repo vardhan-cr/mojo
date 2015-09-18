@@ -236,6 +236,8 @@ void CommandBufferDriver::OnResize(gfx::Size size, float scale_factor) {
 bool CommandBufferDriver::OnWaitSyncPoint(uint32_t sync_point) {
   if (!sync_point)
     return true;
+  if (mailbox_manager_->UsesSync())
+    mailbox_manager_->PullTextureUpdates(sync_point);
   if (sync_point_manager_->IsSyncPointRetired(sync_point))
     return true;
   scheduler_->SetScheduled(false);
@@ -247,6 +249,12 @@ bool CommandBufferDriver::OnWaitSyncPoint(uint32_t sync_point) {
 
 void CommandBufferDriver::OnSyncPointRetired() {
   scheduler_->SetScheduled(true);
+}
+
+void CommandBufferDriver::RetireSyncPointOnGpuThread(uint32 sync_point) {
+  if (mailbox_manager_->UsesSync())
+    mailbox_manager_->PushTextureUpdates(sync_point);
+  sync_point_manager_->RetireSyncPoint(sync_point);
 }
 
 void CommandBufferDriver::OnContextLost(uint32_t reason) {

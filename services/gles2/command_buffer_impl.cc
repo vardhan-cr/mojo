@@ -124,15 +124,15 @@ void CommandBufferImpl::InsertSyncPoint(bool retire) {
   sync_point_client_->DidInsertSyncPoint(sync_point);
   if (retire) {
     driver_task_runner_->PostTask(
-        FROM_HERE, base::Bind(&gpu::SyncPointManager::RetireSyncPoint,
-                              sync_point_manager_, sync_point));
+        FROM_HERE, base::Bind(&CommandBufferDriver::RetireSyncPointOnGpuThread,
+                              base::Unretained(driver_.get()), sync_point));
   }
 }
 
 void CommandBufferImpl::RetireSyncPoint(uint32_t sync_point) {
   driver_task_runner_->PostTask(
-      FROM_HERE, base::Bind(&gpu::SyncPointManager::RetireSyncPoint,
-                            sync_point_manager_, sync_point));
+      FROM_HERE, base::Bind(&CommandBufferDriver::RetireSyncPointOnGpuThread,
+                            base::Unretained(driver_.get()), sync_point));
 }
 
 void CommandBufferImpl::Echo(const mojo::Callback<void()>& callback) {

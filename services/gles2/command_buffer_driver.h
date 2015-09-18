@@ -69,6 +69,7 @@ class CommandBufferDriver {
                               uint32_t size);
   void DestroyTransferBuffer(int32_t id);
   void Echo(const mojo::Callback<void()>& callback);
+  void RetireSyncPointOnGpuThread(uint32_t sync_point);
 
  private:
   bool DoInitialize(mojo::ScopedSharedBufferHandle shared_state);
