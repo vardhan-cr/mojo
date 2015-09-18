@@ -28,7 +28,8 @@ class TestUsingTracingApp extends Application {
   void initialize(List<String> args, String url) {
     // This sets up a connection between this application and the Mojo
     // tracing service.
-    _tracing = new TracingHelper(this, "example_traced_application");
+    _tracing = new TracingHelper.fromApplication(
+        this, "example_traced_application");
     _tracing.traceInstant("initialized", "traced_application");
 
     // Now we schedule some random work just so we have something to trace.
@@ -42,58 +43,54 @@ class TestUsingTracingApp extends Application {
   }
 
 
-  void function1() {
-    var trace = _tracing.beginFunction("function1", "traced_application");
-    waitForMilliseconds(100);
-    function2(42);
-    waitForMilliseconds(100);
-    trace.end();
+  Future function1() {
+    return _tracing.traceAsync("function1", "traced_application", () async {
+      await waitForMilliseconds(100);
+      await function2(42);
+      await waitForMilliseconds(100);
+    });
   }
 
-  void function2(int x) {
-    var trace = _tracing.beginFunction("function2", "traced_application",
-        args: {"x": x});
-    waitForMilliseconds(200);
-    assert(identity(42) == 42);
-    assert(fourtyTwo() == 42);
-    assert(addOne(42) == 43);
-    doNothing();
-    trace.end();
+  Future function2(int x) {
+    return _tracing.traceAsync("function2", "traced_application", () async {
+      await waitForMilliseconds(200);
+      assert(await identity(42) == 42);
+      assert(await fourtyTwo() == 42);
+      assert(await addOne(42) == 43);
+      await doNothing();
+    }, args: {"x": x});
   }
 
-  int identity(int x) {
-    return _tracing.trace("identity", "traced_application", () {
-      waitForMilliseconds(10);
+  Future identity(int x) {
+    return _tracing.traceAsync("identity", "traced_application", () async {
+      await waitForMilliseconds(10);
       return x;
     });
   }
 
-  int addOne(int x) {
-    return _tracing.trace("add1", "traced_application", () {
-      waitForMilliseconds(10);
+  Future addOne(int x) {
+    return _tracing.traceAsync("add1", "traced_application", () async {
+      await waitForMilliseconds(10);
       return x + 1;
     }, args: {"x": x});
   }
 
-  int fourtyTwo() {
-    return _tracing.trace("fourtyTwo", "traced_application", () {
-      waitForMilliseconds(10);
+  Future fourtyTwo() {
+    return _tracing.traceAsync("fourtyTwo", "traced_application", () async {
+      await waitForMilliseconds(10);
       return 42;
     });
   }
 
-  void doNothing() {
-    _tracing.trace("doNothing", "traced_application", () {
-      waitForMilliseconds(10);
+  Future doNothing() {
+    return _tracing.traceAsync("doNothing", "traced_application", () async {
+      await waitForMilliseconds(10);
     });
   }
 }
 
-// Uses Mojo's wait() method in order to let time pass.
-void waitForMilliseconds(int milliseconds) {
-  (new MojoMessagePipe()).endpoints[0]
-      .handle
-      .wait(MojoHandleSignals.kReadable, milliseconds * 1000);
+Future waitForMilliseconds(int milliseconds) {
+  return new Future.delayed(new Duration(milliseconds: milliseconds), () {});
 }
 
 main(List args) {

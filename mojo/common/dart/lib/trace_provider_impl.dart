@@ -4,8 +4,6 @@
 
 import 'dart:async';
 
-import 'package:mojo/application.dart';
-import 'package:mojo/bindings.dart';
 import 'package:mojo/core.dart';
 import 'package:mojo_services/tracing/tracing.mojom.dart';
 
@@ -62,7 +60,7 @@ class TraceProviderImpl implements TraceProvider {
   }
 
   bool isActive() {
-    return _recorder != null;
+    return _enqueuing || _recorder != null;
   }
 
   void sendTraceMessage(String message) {
