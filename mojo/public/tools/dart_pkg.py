@@ -216,6 +216,10 @@ def main():
                       metavar='stamp_file',
                       help='timestamp file',
                       required=True)
+  parser.add_argument('--entries-file',
+                      metavar='entries_file',
+                      help='script entries file',
+                      required=True)
   parser.add_argument('--package-sources',
                       metavar='package_sources',
                       help='Package sources',
@@ -319,20 +323,11 @@ def main():
   remove_broken_symlinks(target_dir)
   remove_broken_symlinks(args.package_root)
 
-  # If any entrypoints are defined, invoke the analyzer on them.
-  if entrypoint_targets != []:
-    # Make sure we have a Dart SDK.
-    dart_sdk = args.dart_sdk
-    if dart_sdk is None:
-      dart_sdk = os.environ.get('DART_SDK')
-    if dart_sdk is None:
-      print "Pass --dart-sdk, or define the DART_SDK environment variable"
-      return 1
-
-    result = analyze_entrypoints(dart_sdk, args.package_root,
-                                 entrypoint_targets)
-    if result != 0:
-      return result
+  # If any entrypoints are defined, write them to disk so that the analyzer
+  # test can find them.
+  with open(args.entries_file, 'w') as f:
+    for entrypoint in entrypoint_targets:
+      f.write(entrypoint + '\n')
 
   # Write stamp file.
   with open(args.stamp_file, 'w'):

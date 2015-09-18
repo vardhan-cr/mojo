@@ -96,6 +96,9 @@ def _args_to_config(args):
   if 'toolchain_prefix' in args and args.toolchain_prefix:
     additional_args['toolchain_prefix'] = args.toolchain_prefix
 
+  if 'package_name' in args:
+    additional_args['package_name'] = args.package_name
+
   return Config(target_os=target_os, target_cpu=target_cpu,
                 is_debug=is_debug, is_official_build=args.official,
                 dcheck_always_on=args.dcheck_always_on,
@@ -217,6 +220,26 @@ def _pytest(config):
   _logger.debug('_pytest()')
   return _run_tests(config, ['python'])
 
+def _analyzedart(config):
+  _logger.debug('_analyzedart()')
+  command = ['python']
+  build_dir = _get_out_dir(config)
+  command.append(os.path.join("mojo",
+                              "public",
+                              "tools",
+                              "dart_pkg_static_analysis.py"))
+  command.append("--dart-pkg-dir=" + os.path.join(build_dir, "gen", "dart-pkg"))
+  command.append("--dart-sdk=" + os.path.join("third_party",
+                                              "dart-sdk", "dart-sdk"))
+  command.append("--package-root=" + os.path.join(build_dir,
+                                                  "gen",
+                                                  "dart-pkg",
+                                                  "packages"))
+  if config.values.get('package_name'):
+    command.append(config.values.get('package_name'))
+  print 'Running %s %s ...' % (command[0],
+                               ' '.join('\'%s\'' % x for x in command[1:]))
+  return subprocess.call(command)
 
 def main():
   os.chdir(Paths().src_root)
@@ -322,6 +345,12 @@ def main():
   pytest_parser = subparsers.add_parser('pytest', parents=[parent_parser],
       help='Run Python unit tests (does not build).')
   pytest_parser.set_defaults(func=_pytest)
+
+  analyze_dart_parser = subparsers.add_parser('analyze-dart',
+      parents=[parent_parser],
+      help='Run the dart analyzer (does not build.')
+  analyze_dart_parser.add_argument('package_name', nargs='?', default=None)
+  analyze_dart_parser.set_defaults(func=_analyzedart)
 
   args = parser.parse_args()
   global _verbose_count

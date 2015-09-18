@@ -149,6 +149,7 @@ template("dart_pkg_helper") {
   pkg_directory = rebase_path("$root_gen_dir/dart-pkg")
   package_root = rebase_path("$root_gen_dir/dart-pkg/packages")
   stamp_file = "$root_gen_dir/dart-pkg/${package_name}.stamp"
+  entries_file = "$root_gen_dir/dart-pkg/${package_name}.entries"
 
   assert(defined(invoker.sources) || defined(invoker.apps) ||
          defined(invoker.libs) || defined(invoker.pkg_dir))
@@ -246,6 +247,8 @@ template("dart_pkg_helper") {
              package_root,
              "--stamp-file",
              rebase_path(stamp_file),
+             "--entries-file",
+             rebase_path(entries_file),
              "--package-sources",
            ] + rebase_path(sources) + [ "--package-entrypoints" ] +
            rebase_path(entrypoints) + [ "--mojom-sources" ] +

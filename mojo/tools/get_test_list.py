@@ -168,6 +168,18 @@ def GetTestList(config, verbose_count=0):
                       "dart_snapshotter_test.py"),
          "--build-dir=" + build_dir])
 
+  # Dart analyzer test
+  if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "analyze-dart"):
+    AddEntry("Dart Package Static Analysis",
+        ["python",
+         os.path.join("mojo", "public", "tools", "dart_pkg_static_analysis.py"),
+         "--dart-pkg-dir=" + os.path.join(build_dir, "gen", "dart-pkg"),
+         "--dart-sdk=" + os.path.join("third_party", "dart-sdk", "dart-sdk"),
+         "--package-root=" + os.path.join(build_dir,
+                                          "gen",
+                                          "dart-pkg",
+                                          "packages")])
+
   # Perf tests -----------------------------------------------------------------
 
   if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_PERF):
