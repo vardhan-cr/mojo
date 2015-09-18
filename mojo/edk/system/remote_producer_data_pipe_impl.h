@@ -11,7 +11,6 @@
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -22,8 +21,7 @@ class MessageInTransitQueue;
 // |RemoteProducerDataPipeImpl| is a subclass that "implements" |DataPipe| for
 // data pipes whose producer is remote and whose consumer is local. See
 // |DataPipeImpl| for more details.
-class MOJO_SYSTEM_IMPL_EXPORT RemoteProducerDataPipeImpl final
-    : public DataPipeImpl {
+class RemoteProducerDataPipeImpl final : public DataPipeImpl {
  public:
   explicit RemoteProducerDataPipeImpl(ChannelEndpoint* channel_endpoint);
   RemoteProducerDataPipeImpl(

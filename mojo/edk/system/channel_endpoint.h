@@ -11,7 +11,6 @@
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/mutex.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -109,7 +108,7 @@ class MessageInTransit;
 //         simultaneously, and both sides send "remove" messages). In that
 //         case, it must still remain alive until it receives the "remove
 //         ack" (and it must ack the "remove" message that it received).
-class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint final
+class ChannelEndpoint final
     : public base::RefCountedThreadSafe<ChannelEndpoint> {
  public:
   // Constructor for a |ChannelEndpoint| with the given client (specified by

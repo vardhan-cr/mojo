@@ -114,10 +114,7 @@ component("system") {
     "waiter.h",
   ]
 
-  defines = [
-    "MOJO_SYSTEM_IMPL_IMPLEMENTATION",
-    "MOJO_SYSTEM_IMPLEMENTATION",
-  ]
+  defines = [ "MOJO_SYSTEM_IMPLEMENTATION" ]
 
   all_dependent_configs = [ ":system_config" ]
 

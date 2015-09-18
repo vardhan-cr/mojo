@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "base/memory/ref_counted.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -37,7 +36,7 @@ bool ShutdownCheckNoLeaks(Core*);
 // to make several changes -- "atomically" or in rapid successsion, in which
 // case the extra locking/unlocking would be unnecessary overhead).
 
-class MOJO_SYSTEM_IMPL_EXPORT HandleTable {
+class HandleTable {
  public:
   HandleTable();
   ~HandleTable();

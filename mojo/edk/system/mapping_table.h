@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -35,7 +34,7 @@ bool ShutdownCheckNoLeaks(Core*);
 // which maps mapping base addresses to |PlatformSharedBufferMapping|s.
 //
 // This class is NOT thread-safe; locking is left to |Core|.
-class MOJO_SYSTEM_IMPL_EXPORT MappingTable {
+class MappingTable {
  public:
   MappingTable();
   ~MappingTable();

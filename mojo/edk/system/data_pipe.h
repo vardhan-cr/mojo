@@ -15,7 +15,6 @@
 #include "mojo/edk/system/handle_signals_state.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/mutex.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/edk/system/thread_annotations.h"
 #include "mojo/public/c/system/data_pipe.h"
 #include "mojo/public/c/system/types.h"
@@ -37,7 +36,7 @@ class MessageInTransitQueue;
 // Its subclasses implement the three cases: local producer and consumer, local
 // producer and remote consumer, and remote producer and local consumer. This
 // class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT DataPipe final : public ChannelEndpointClient {
+class DataPipe final : public ChannelEndpointClient {
  public:
   // The default options for |MojoCreateDataPipe()|. (Real uses should obtain
   // this via |ValidateCreateOptions()| with a null |in_options|; this is

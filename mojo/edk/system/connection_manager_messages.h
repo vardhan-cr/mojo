@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "mojo/edk/system/process_identifier.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/macros.h"
 
 namespace mojo {

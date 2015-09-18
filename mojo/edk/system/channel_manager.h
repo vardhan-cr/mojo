@@ -36,7 +36,7 @@ class MessagePipeDispatcher;
 // This class manages and "owns" |Channel|s (which typically connect to other
 // processes) for a given process. This class is thread-safe, except as
 // specifically noted.
-class MOJO_SYSTEM_IMPL_EXPORT ChannelManager {
+class ChannelManager {
  public:
   // |io_thread_task_runner| should be the |TaskRunner| for the I/O thread, on
   // which this channel manager will create all channels. Connection manager is

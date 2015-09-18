@@ -8,15 +8,13 @@
 #include <stddef.h>
 
 #include "mojo/edk/embedder/platform_shared_buffer.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
 namespace embedder {
 
 // A simple implementation of |PlatformSharedBuffer|.
-class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSharedBuffer final
-    : public PlatformSharedBuffer {
+class SimplePlatformSharedBuffer final : public PlatformSharedBuffer {
  public:
   // Creates a shared buffer of size |num_bytes| bytes (initially zero-filled).
   // |num_bytes| must be nonzero. Returns null on failure.
@@ -67,7 +65,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSharedBuffer final
 
 // An implementation of |PlatformSharedBufferMapping|, produced by
 // |SimplePlatformSharedBuffer|.
-class MOJO_SYSTEM_IMPL_EXPORT SimplePlatformSharedBufferMapping
+class SimplePlatformSharedBufferMapping final
     : public PlatformSharedBufferMapping {
  public:
   ~SimplePlatformSharedBufferMapping() override;

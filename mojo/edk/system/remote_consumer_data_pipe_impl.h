@@ -11,7 +11,6 @@
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/data_pipe_impl.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -20,8 +19,7 @@ namespace system {
 // |RemoteConsumerDataPipeImpl| is a subclass that "implements" |DataPipe| for
 // data pipes whose producer is local and whose consumer is remote. See
 // |DataPipeImpl| for more details.
-class MOJO_SYSTEM_IMPL_EXPORT RemoteConsumerDataPipeImpl final
-    : public DataPipeImpl {
+class RemoteConsumerDataPipeImpl final : public DataPipeImpl {
  public:
   RemoteConsumerDataPipeImpl(ChannelEndpoint* channel_endpoint,
                              size_t consumer_num_bytes);

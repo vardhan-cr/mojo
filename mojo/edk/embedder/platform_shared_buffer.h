@@ -11,7 +11,6 @@
 
 #include "base/memory/ref_counted.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -34,7 +33,7 @@ class PlatformSharedBufferMapping;
 //   - Sharing read-only. (This will probably eventually be supported.)
 //
 // TODO(vtl): Rectify this with |base::SharedMemory|.
-class MOJO_SYSTEM_IMPL_EXPORT PlatformSharedBuffer
+class PlatformSharedBuffer
     : public base::RefCountedThreadSafe<PlatformSharedBuffer> {
  public:
   // Gets the size of shared buffer (in number of bytes).
@@ -83,7 +82,7 @@ class MOJO_SYSTEM_IMPL_EXPORT PlatformSharedBuffer
 //
 // Note: This is an entirely separate class (instead of
 // |PlatformSharedBuffer::Mapping|) so that it can be forward-declared.
-class MOJO_SYSTEM_IMPL_EXPORT PlatformSharedBufferMapping {
+class PlatformSharedBufferMapping {
  public:
   // IMPORTANT: Implementations must implement a destructor that unmaps memory.
   virtual ~PlatformSharedBufferMapping() {}

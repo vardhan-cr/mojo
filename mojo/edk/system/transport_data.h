@@ -14,7 +14,6 @@
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/dispatcher.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -72,7 +71,7 @@ class Channel;
 //     the application the data payload and these handles.
 //
 // TODO(vtl): Everything above involving |PlatformHandle|s.
-class MOJO_SYSTEM_IMPL_EXPORT TransportData {
+class TransportData {
  public:
   // The maximum size of a single serialized dispatcher. This must be a multiple
   // of |kMessageAlignment|.

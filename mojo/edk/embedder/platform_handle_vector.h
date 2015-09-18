@@ -10,7 +10,6 @@
 
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/embedder/platform_handle_utils.h"
-#include "mojo/edk/system/system_impl_export.h"
 
 namespace mojo {
 namespace embedder {
@@ -20,7 +19,7 @@ using PlatformHandleVector = std::vector<PlatformHandle>;
 
 // A deleter (for use with |std::unique_ptr|) that closes all handles and then
 // |delete|s the |PlatformHandleVector|.
-struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandleVectorDeleter {
+struct PlatformHandleVectorDeleter {
   void operator()(PlatformHandleVector* platform_handles) const {
     CloseAllPlatformHandles(platform_handles);
     delete platform_handles;

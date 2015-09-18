@@ -12,7 +12,6 @@
 #include <memory>
 #include <type_traits>
 
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/macros.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -38,19 +37,17 @@ struct VoidToChar<const void> {
 // Checks (insofar as appropriate/possible) that |pointer| is a valid pointer to
 // a buffer of the given size and alignment (both in bytes).
 template <size_t size, size_t alignment>
-void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer(const void* pointer);
+void CheckUserPointer(const void* pointer);
 
 // Checks (insofar as appropriate/possible) that |pointer| is a valid pointer to
 // a buffer of |count| elements of the given size and alignment (both in bytes).
 template <size_t size, size_t alignment>
-void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount(const void* pointer, size_t count);
+void CheckUserPointerWithCount(const void* pointer, size_t count);
 
 // Checks (insofar as appropriate/possible) that |pointer| is a valid pointer to
 // a buffer of the given size and alignment (both in bytes).
 template <size_t alignment>
-void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithSize(const void* pointer, size_t size);
+void CheckUserPointerWithSize(const void* pointer, size_t size);
 
 }  // namespace internal
 

@@ -7,7 +7,6 @@
 
 #include "base/process/launch.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace base {
@@ -41,7 +40,7 @@ using HandlePassingInformation = base::FileHandleMappingVector;
 // |PlatformChannel{Write,Writev}()| (from platform_channel_utils_posix.h)
 // instead of |write()|, |writev()|, etc. Otherwise, you have to worry about
 // platform differences in suppressing |SIGPIPE|.
-class MOJO_SYSTEM_IMPL_EXPORT PlatformChannelPair {
+class PlatformChannelPair {
  public:
   PlatformChannelPair();
   ~PlatformChannelPair();

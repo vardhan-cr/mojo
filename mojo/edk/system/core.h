@@ -13,7 +13,6 @@
 #include "mojo/edk/system/mapping_table.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/mutex.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/buffer.h"
 #include "mojo/public/c/system/data_pipe.h"
 #include "mojo/public/c/system/message_pipe.h"
@@ -33,7 +32,7 @@ struct HandleSignalsState;
 
 // |Core| is an object that implements the Mojo system calls. All public methods
 // are thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT Core {
+class Core {
  public:
   // ---------------------------------------------------------------------------
 

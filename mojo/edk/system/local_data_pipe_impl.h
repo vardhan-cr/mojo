@@ -9,7 +9,6 @@
 
 #include "base/memory/aligned_memory.h"
 #include "mojo/edk/system/data_pipe_impl.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -20,7 +19,7 @@ class MessageInTransitQueue;
 // |LocalDataPipeImpl| is a subclass that "implements" |DataPipe| for data pipes
 // whose producer and consumer are both local. See |DataPipeImpl| for more
 // details.
-class MOJO_SYSTEM_IMPL_EXPORT LocalDataPipeImpl final : public DataPipeImpl {
+class LocalDataPipeImpl final : public DataPipeImpl {
  public:
   LocalDataPipeImpl();
   ~LocalDataPipeImpl() override;

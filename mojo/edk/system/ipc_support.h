@@ -17,7 +17,6 @@
 #include "mojo/edk/system/channel_id.h"
 #include "mojo/edk/system/connection_identifier.h"
 #include "mojo/edk/system/process_identifier.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -54,7 +53,7 @@ void MultiprocessMasterSlaveInternalTestChildTest();
 //
 // Except for |ShutdownOnIOThread()|, this class is thread-safe. (No methods may
 // be called during/after |ShutdownOnIOThread()|.)
-class MOJO_SYSTEM_IMPL_EXPORT IPCSupport {
+class IPCSupport {
  public:
   // Constructor: initializes for the given |process_type|; |process_delegate|
   // must match the process type. |platform_handle| is only used for slave

@@ -66,8 +66,7 @@ MessageInTransit::Subtype ConnectionManagerResultToMessageInTransitSubtype(
 
 // |MasterConnectionManager::Helper| is not thread-safe, and must only be used
 // on its |owner_|'s private thread.
-class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager::Helper final
-    : public RawChannel::Delegate {
+class MasterConnectionManager::Helper final : public RawChannel::Delegate {
  public:
   Helper(MasterConnectionManager* owner,
          ProcessIdentifier process_identifier,
@@ -226,7 +225,7 @@ void MasterConnectionManager::Helper::FatalError() {
 
 // MasterConnectionManager::PendingConnectInfo ---------------------------------
 
-struct MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager::PendingConnectInfo {
+struct MasterConnectionManager::PendingConnectInfo {
   // States:
   //   - This is created upon a first "allow connect" (with |first| set
   //     immediately). We then wait for a second "allow connect".

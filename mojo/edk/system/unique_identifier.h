@@ -12,7 +12,6 @@
 #include <string>
 
 #include "base/containers/hash_tables.h"  // For |base::HashInts64()|.
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -43,7 +42,7 @@ namespace system {
 
 // |UniqueIdentifier| is a POD class whose value is used to uniquely identify
 // things.
-class MOJO_SYSTEM_IMPL_EXPORT UniqueIdentifier {
+class UniqueIdentifier {
  public:
   // This generates a new identifier. Uniqueness is "guaranteed" (i.e.,
   // probabilistically) for identifiers.

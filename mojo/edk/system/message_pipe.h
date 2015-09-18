@@ -20,7 +20,6 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_pipe_endpoint.h"
 #include "mojo/edk/system/mutex.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/message_pipe.h"
 #include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/system/macros.h"
@@ -36,7 +35,7 @@ class MessageInTransitQueue;
 // |MessagePipe| is the secondary object implementing a message pipe (see the
 // explanatory comment in core.cc). It is typically owned by the dispatcher(s)
 // corresponding to the local endpoints. This class is thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT MessagePipe final : public ChannelEndpointClient {
+class MessagePipe final : public ChannelEndpointClient {
  public:
   // Creates a |MessagePipe| with two new |LocalMessagePipeEndpoint|s.
   static MessagePipe* CreateLocalLocal();

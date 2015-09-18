@@ -19,7 +19,6 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/raw_channel.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -50,9 +49,8 @@ class MessageInTransitQueue;
 // |ChannelEndpointClient| (e.g., |MessagePipe|), |ChannelEndpoint|, |Channel|.
 // Thus |Channel| may not call into |ChannelEndpoint| with |Channel|'s lock
 // held.
-class MOJO_SYSTEM_IMPL_EXPORT Channel final
-    : public base::RefCountedThreadSafe<Channel>,
-      public RawChannel::Delegate {
+class Channel final : public base::RefCountedThreadSafe<Channel>,
+                      public RawChannel::Delegate {
  public:
   // |platform_support| must remain alive until after |Shutdown()| is called.
   explicit Channel(embedder::PlatformSupport* platform_support);

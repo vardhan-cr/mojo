@@ -8,7 +8,6 @@
 #include <stddef.h>
 
 #include "mojo/edk/embedder/scoped_platform_handle.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/c/system/types.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -20,7 +19,7 @@ class PlatformSharedBuffer;
 // This class is provided by the embedder to implement (typically
 // platform-dependent) things needed by the Mojo system implementation.
 // Implementations must be thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT PlatformSupport {
+class PlatformSupport {
  public:
   virtual ~PlatformSupport() {}
 

@@ -5,13 +5,11 @@
 #ifndef MOJO_EDK_EMBEDDER_PLATFORM_HANDLE_H_
 #define MOJO_EDK_EMBEDDER_PLATFORM_HANDLE_H_
 
-#include "mojo/edk/system/system_impl_export.h"
-
 namespace mojo {
 namespace embedder {
 
 // A |PlatformHandle| is just a file descriptor on POSIX.
-struct MOJO_SYSTEM_IMPL_EXPORT PlatformHandle {
+struct PlatformHandle {
   PlatformHandle() : fd(-1) {}
   explicit PlatformHandle(int fd) : fd(fd) {}
 

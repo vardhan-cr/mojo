@@ -16,7 +16,6 @@
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/dispatcher.h"
 #include "mojo/edk/system/memory.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -42,7 +41,7 @@ class TransportData;
 //
 // See |TransportData| for a description of the (serialized) transport data
 // buffer.
-class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
+class MessageInTransit {
  public:
   enum class Type : uint16_t {
     // Messages that are forwarded to endpoint clients.
@@ -102,7 +101,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
 
  public:
   // This represents a view of serialized message data in a raw buffer.
-  class MOJO_SYSTEM_IMPL_EXPORT View {
+  class View {
    public:
     // Constructs a view from the given buffer of the given size. (The size must
     // be as provided by |MessageInTransit::GetNextMessageSize()|.) The buffer
@@ -291,16 +290,14 @@ class MOJO_SYSTEM_IMPL_EXPORT MessageInTransit {
 };
 
 // So logging macros and |DCHECK_EQ()|, etc. work.
-MOJO_SYSTEM_IMPL_EXPORT inline std::ostream& operator<<(
-    std::ostream& out,
-    MessageInTransit::Type type) {
+inline std::ostream& operator<<(std::ostream& out,
+                                MessageInTransit::Type type) {
   return out << static_cast<uint16_t>(type);
 }
 
 // So logging macros and |DCHECK_EQ()|, etc. work.
-MOJO_SYSTEM_IMPL_EXPORT inline std::ostream& operator<<(
-    std::ostream& out,
-    MessageInTransit::Subtype subtype) {
+inline std::ostream& operator<<(std::ostream& out,
+                                MessageInTransit::Subtype subtype) {
   return out << static_cast<uint16_t>(subtype);
 }
 

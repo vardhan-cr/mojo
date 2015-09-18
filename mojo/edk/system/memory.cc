@@ -28,32 +28,27 @@ bool IsAligned<8>(const void* pointer) {
 #endif
 
 template <size_t size, size_t alignment>
-void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer(const void* pointer) {
+void CheckUserPointer(const void* pointer) {
   CHECK(pointer && IsAligned<alignment>(pointer));
 }
 
 // Explicitly instantiate the sizes we need. Add instantiations as needed.
-template void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer<1, 1>(const void*);
-template void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer<4, 4>(const void*);
-template void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer<8, 4>(const void*);
-template void MOJO_SYSTEM_IMPL_EXPORT CheckUserPointer<8, 8>(const void*);
+template void CheckUserPointer<1, 1>(const void*);
+template void CheckUserPointer<4, 4>(const void*);
+template void CheckUserPointer<8, 4>(const void*);
+template void CheckUserPointer<8, 8>(const void*);
 
 template <size_t size, size_t alignment>
-void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount(const void* pointer, size_t count) {
+void CheckUserPointerWithCount(const void* pointer, size_t count) {
   CHECK_LE(count, std::numeric_limits<size_t>::max() / size);
   CHECK(count == 0 || (pointer && IsAligned<alignment>(pointer)));
 }
 
 // Explicitly instantiate the sizes we need. Add instantiations as needed.
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount<1, 1>(const void*, size_t);
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount<4, 4>(const void*, size_t);
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount<8, 4>(const void*, size_t);
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithCount<8, 8>(const void*, size_t);
+template void CheckUserPointerWithCount<1, 1>(const void*, size_t);
+template void CheckUserPointerWithCount<4, 4>(const void*, size_t);
+template void CheckUserPointerWithCount<8, 4>(const void*, size_t);
+template void CheckUserPointerWithCount<8, 8>(const void*, size_t);
 
 template <size_t alignment>
 void CheckUserPointerWithSize(const void* pointer, size_t size) {
@@ -64,25 +59,9 @@ void CheckUserPointerWithSize(const void* pointer, size_t size) {
 }
 
 // Explicitly instantiate the sizes we need. Add instantiations as needed.
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithSize<1>(const void*, size_t);
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithSize<4>(const void*, size_t);
-// Whereas the other |Check...()| functions are usually used with integral typs
-// or arrays of integral types, this one is used with Options structs for which
-// alignment has been explicitly been specified (using |MOJO_ALIGNAS()|), which
-// MSVS *does* respect.
-#if defined(COMPILER_MSVC) && defined(ARCH_CPU_32_BITS)
-template <>
-void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithSize<8>(const void* pointer, size_t size) {
-  CHECK(size == 0 ||
-        (!!pointer && reinterpret_cast<uintptr_t>(pointer) % 8 == 0));
-}
-#else
-template void MOJO_SYSTEM_IMPL_EXPORT
-CheckUserPointerWithSize<8>(const void*, size_t);
-#endif
+template void CheckUserPointerWithSize<1>(const void*, size_t);
+template void CheckUserPointerWithSize<4>(const void*, size_t);
+template void CheckUserPointerWithSize<8>(const void*, size_t);
 
 }  // namespace internal
 }  // namespace system

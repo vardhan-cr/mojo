@@ -13,7 +13,6 @@
 #include "mojo/edk/system/data_pipe.h"
 #include "mojo/edk/system/handle_signals_state.h"
 #include "mojo/edk/system/memory.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/edk/system/thread_annotations.h"
 #include "mojo/public/c/system/data_pipe.h"
 #include "mojo/public/c/system/macros.h"
@@ -50,7 +49,7 @@ class MessageInTransit;
 // Note that subclasses do not have access to the owning |DataPipe| (except as a
 // |ChannelEndpointClient|), so that their methods should never need
 // |MOJO_NO_THREAD_SAFETY_ANALYSIS| annotations.
-class MOJO_SYSTEM_IMPL_EXPORT DataPipeImpl {
+class DataPipeImpl {
  public:
   virtual ~DataPipeImpl() {}
 

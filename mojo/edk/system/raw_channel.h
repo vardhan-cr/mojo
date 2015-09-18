@@ -14,7 +14,6 @@
 #include "mojo/edk/system/message_in_transit.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/mutex.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/edk/system/thread_annotations.h"
 #include "mojo/public/cpp/system/macros.h"
 
@@ -40,7 +39,7 @@ namespace system {
 // With the exception of |WriteMessage()| and |IsWriteBufferEmpty()|, this class
 // is thread-unsafe (and in general its methods should only be used on the I/O
 // thread, i.e., the thread on which |Init()| is called).
-class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
+class RawChannel {
  public:
   // This object may be destroyed on any thread (if |Init()| was called, after
   // |Shutdown()| was called).
@@ -48,7 +47,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
 
   // The |Delegate| is only accessed on the same thread as the message loop
   // (passed in on creation).
-  class MOJO_SYSTEM_IMPL_EXPORT Delegate {
+  class Delegate {
    public:
     enum Error {
       // Failed read due to raw channel shutdown (e.g., on the other side).
@@ -127,7 +126,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
     IO_PENDING
   };
 
-  class MOJO_SYSTEM_IMPL_EXPORT ReadBuffer {
+  class ReadBuffer {
    public:
     ReadBuffer();
     ~ReadBuffer();
@@ -147,7 +146,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
     MOJO_DISALLOW_COPY_AND_ASSIGN(ReadBuffer);
   };
 
-  class MOJO_SYSTEM_IMPL_EXPORT WriteBuffer {
+  class WriteBuffer {
    public:
     struct Buffer {
       const char* addr;

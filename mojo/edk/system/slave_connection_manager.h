@@ -15,7 +15,6 @@
 #include "mojo/edk/system/connection_manager.h"
 #include "mojo/edk/system/mutex.h"
 #include "mojo/edk/system/raw_channel.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace base {
@@ -36,9 +35,8 @@ namespace system {
 // its internal, private thread), with condition that |Init()| be called before
 // anything else and |Shutdown()| be called before destruction (and no other
 // public methods may be called during/after |Shutdown()|).
-class MOJO_SYSTEM_IMPL_EXPORT SlaveConnectionManager final
-    : public ConnectionManager,
-      public RawChannel::Delegate {
+class SlaveConnectionManager final : public ConnectionManager,
+                                     public RawChannel::Delegate {
  public:
   // Note: None of the public methods may be called from |private_thread_|.
 

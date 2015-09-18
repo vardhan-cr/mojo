@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "mojo/edk/system/message_in_transit.h"
-#include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 
 namespace mojo {
@@ -17,7 +16,7 @@ namespace system {
 
 // A simple queue for |MessageInTransit|s (that owns its messages).
 // This class is not thread-safe.
-class MOJO_SYSTEM_IMPL_EXPORT MessageInTransitQueue {
+class MessageInTransitQueue {
  public:
   MessageInTransitQueue();
   ~MessageInTransitQueue();
