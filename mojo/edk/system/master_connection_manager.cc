@@ -91,7 +91,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MasterConnectionManager::Helper final
   MasterConnectionManager* const owner_;
   const ProcessIdentifier process_identifier_;
   embedder::SlaveInfo const slave_info_;
-  scoped_ptr<RawChannel> raw_channel_;
+  std::unique_ptr<RawChannel> raw_channel_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(Helper);
 };

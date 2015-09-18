@@ -15,7 +15,6 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/edk/embedder/platform_channel_utils_posix.h"
@@ -470,9 +469,9 @@ void RawChannelPosix::WaitToWrite() {
 
 // Static factory method declared in raw_channel.h.
 // static
-scoped_ptr<RawChannel> RawChannel::Create(
+std::unique_ptr<RawChannel> RawChannel::Create(
     embedder::ScopedPlatformHandle handle) {
-  return make_scoped_ptr(new RawChannelPosix(handle.Pass()));
+  return util::MakeUnique<RawChannelPosix>(handle.Pass());
 }
 
 }  // namespace system

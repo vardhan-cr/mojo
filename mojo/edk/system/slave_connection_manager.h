@@ -5,8 +5,9 @@
 #ifndef MOJO_EDK_SYSTEM_SLAVE_CONNECTION_MANAGER_H_
 #define MOJO_EDK_SYSTEM_SLAVE_CONNECTION_MANAGER_H_
 
+#include <memory>
+
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
@@ -106,7 +107,7 @@ class MOJO_SYSTEM_IMPL_EXPORT SlaveConnectionManager final
   base::Thread private_thread_;
 
   // Only accessed on |private_thread_|:
-  scoped_ptr<RawChannel> raw_channel_;
+  std::unique_ptr<RawChannel> raw_channel_;
   enum AwaitingAckType {
     NOT_AWAITING_ACK,
     AWAITING_ACCEPT_CONNECT_ACK,

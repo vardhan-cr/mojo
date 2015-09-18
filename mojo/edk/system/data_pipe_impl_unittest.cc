@@ -9,10 +9,11 @@
 
 #include <stdint.h>
 
+#include <memory>
+
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "mojo/edk/embedder/platform_channel_pair.h"
 #include "mojo/edk/embedder/simple_platform_support.h"
@@ -180,7 +181,7 @@ class DataPipeImplTest : public testing::Test {
   DataPipe* dpp() { return helper_->DataPipeForProducer(); }
   DataPipe* dpc() { return helper_->DataPipeForConsumer(); }
 
-  scoped_ptr<Helper> helper_;
+  std::unique_ptr<Helper> helper_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(DataPipeImplTest);
 };

@@ -5,6 +5,7 @@
 #include "mojo/edk/system/channel.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "base/bind.h"
 #include "base/logging.h"
@@ -35,14 +36,14 @@ Channel::Channel(embedder::PlatformSupport* platform_support)
       channel_manager_(nullptr) {
 }
 
-void Channel::Init(scoped_ptr<RawChannel> raw_channel) {
+void Channel::Init(std::unique_ptr<RawChannel> raw_channel) {
   DCHECK(creation_thread_checker_.CalledOnValidThread());
   DCHECK(raw_channel);
 
   // No need to take |mutex_|, since this must be called before this object
   // becomes thread-safe.
   DCHECK(!is_running_);
-  raw_channel_ = raw_channel.Pass();
+  raw_channel_ = std::move(raw_channel);
   raw_channel_->Init(this);
   is_running_ = true;
 }

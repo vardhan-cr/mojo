@@ -86,7 +86,8 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // Static factory method. |handle| should be a handle to a
   // (platform-appropriate) bidirectional communication channel (e.g., a socket
   // on POSIX, a named pipe on Windows).
-  static scoped_ptr<RawChannel> Create(embedder::ScopedPlatformHandle handle);
+  static std::unique_ptr<RawChannel> Create(
+      embedder::ScopedPlatformHandle handle);
 
   // This must be called (on an I/O thread) before this object is used. Does
   // *not* take ownership of |delegate|. Both the I/O thread and |delegate| must
