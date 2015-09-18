@@ -827,7 +827,8 @@ TEST_F(RawChannelTest, ReadWritePlatformHandles) {
                              MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
                              sizeof(kHello), kHello));
     message->SetTransportData(util::MakeUnique<TransportData>(
-        platform_handles.Pass(), rc_write->GetSerializedPlatformHandleSize()));
+        std::move(platform_handles),
+        rc_write->GetSerializedPlatformHandleSize()));
     EXPECT_TRUE(rc_write->WriteMessage(std::move(message)));
   }
 

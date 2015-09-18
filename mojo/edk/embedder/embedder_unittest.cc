@@ -6,6 +6,8 @@
 
 #include <string.h>
 
+#include <memory>
+
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/location.h"
@@ -454,7 +456,7 @@ TEST_F(EmbedderTest, ChannelShutdownRace_MessagePipeClose) {
 
   for (size_t i = 0; i < kIterations; i++) {
     PlatformChannelPair channel_pair;
-    scoped_ptr<ScopedTestChannel> server_channel(
+    std::unique_ptr<ScopedTestChannel> server_channel(
         new ScopedTestChannel(channel_pair.PassServerHandle()));
     server_channel->WaitForChannelCreationCompletion();
     server_channel->NoWaitOnShutdown();

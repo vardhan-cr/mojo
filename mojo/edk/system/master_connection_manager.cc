@@ -198,7 +198,7 @@ void MasterConnectionManager::Helper::OnReadMessage(
         new embedder::PlatformHandleVector());
     platform_handles->push_back(platform_handle.release());
     response->SetTransportData(util::MakeUnique<TransportData>(
-        platform_handles.Pass(),
+        std::move(platform_handles),
         raw_channel_->GetSerializedPlatformHandleSize()));
   } else {
     DCHECK(!platform_handle.is_valid());

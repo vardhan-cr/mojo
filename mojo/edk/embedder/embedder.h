@@ -5,11 +5,11 @@
 #ifndef MOJO_EDK_EMBEDDER_EMBEDDER_H_
 #define MOJO_EDK_EMBEDDER_EMBEDDER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/callback.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/task_runner.h"
 #include "mojo/edk/embedder/channel_info_forward.h"
 #include "mojo/edk/embedder/process_type.h"
@@ -37,7 +37,8 @@ MOJO_SYSTEM_IMPL_EXPORT Configuration* GetConfiguration();
 
 // Must be called first, or just after setting configuration parameters, to
 // initialize the (global, singleton) system.
-MOJO_SYSTEM_IMPL_EXPORT void Init(scoped_ptr<PlatformSupport> platform_support);
+MOJO_SYSTEM_IMPL_EXPORT void Init(
+    std::unique_ptr<PlatformSupport> platform_support);
 
 // Basic functions -------------------------------------------------------------
 

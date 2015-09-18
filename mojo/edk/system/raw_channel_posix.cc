@@ -143,7 +143,7 @@ void RawChannelPosix::EnqueueMessageNoLock(
                 platform_handles->begin() + i +
                     embedder::kPlatformChannelMaxNumHandles));
         fd_message->SetTransportData(util::MakeUnique<TransportData>(
-            fds.Pass(), GetSerializedPlatformHandleSize()));
+            std::move(fds), GetSerializedPlatformHandleSize()));
         RawChannel::EnqueueMessageNoLock(std::move(fd_message));
       }
 
@@ -209,7 +209,7 @@ embedder::ScopedPlatformHandleVectorPtr RawChannelPosix::GetReadPlatformHandles(
   read_platform_handles_.erase(
       read_platform_handles_.begin(),
       read_platform_handles_.begin() + num_platform_handles);
-  return rv.Pass();
+  return rv;
 }
 
 RawChannel::IOResult RawChannelPosix::WriteNoLock(

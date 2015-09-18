@@ -333,9 +333,8 @@ void RawChannel::OnReadCompleted(IOResult io_result, size_t bytes_read) {
               &platform_handle_table);
 
           if (num_platform_handles > 0) {
-            platform_handles =
-                GetReadPlatformHandles(num_platform_handles,
-                                       platform_handle_table).Pass();
+            platform_handles = GetReadPlatformHandles(num_platform_handles,
+                                                      platform_handle_table);
             if (!platform_handles) {
               LOG(ERROR) << "Invalid number of platform handles received";
               CallOnError(Delegate::ERROR_READ_BAD_MESSAGE);
@@ -354,7 +353,7 @@ void RawChannel::OnReadCompleted(IOResult io_result, size_t bytes_read) {
         DCHECK(!set_on_shutdown_);
         set_on_shutdown_ = &shutdown_called;
         DCHECK(delegate_);
-        delegate_->OnReadMessage(message_view, platform_handles.Pass());
+        delegate_->OnReadMessage(message_view, std::move(platform_handles));
         if (shutdown_called)
           return;
         set_on_shutdown_ = nullptr;

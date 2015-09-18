@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
   NaClDesc* irt_desc = OpenFile(irt_file);
   NaClDesc* nexe_desc = OpenFile(nexe_file);
 
-  mojo::embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
+  // TODO(vtl): Use make_unique when C++14 is available.
+  mojo::embedder::Init(std::unique_ptr<mojo::embedder::PlatformSupport>(
       new mojo::embedder::SimplePlatformSupport()));
 
   int exit_code = mojo::LaunchNaCl(nexe_desc, irt_desc, argc - 2, argv + 2,

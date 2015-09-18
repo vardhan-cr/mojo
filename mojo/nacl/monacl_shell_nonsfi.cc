@@ -26,8 +26,9 @@ int main(int argc, char** argv, char** environ) {
   }
   uintptr_t entry = NaClLoadElfFile(fd);
 
-  mojo::embedder::Init(scoped_ptr<mojo::embedder::PlatformSupport>(
-            new mojo::embedder::SimplePlatformSupport()));
+  // TODO(vtl): Use make_unique when C++14 is available.
+  mojo::embedder::Init(std::unique_ptr<mojo::embedder::PlatformSupport>(
+      new mojo::embedder::SimplePlatformSupport()));
 
   return nacl_irt_nonsfi_entry(argc - 1, argv + 1, environ,
                                reinterpret_cast<nacl_entry_func_t>(entry),

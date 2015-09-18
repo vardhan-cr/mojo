@@ -93,8 +93,9 @@ class AppContext : public mojo::embedder::SlaveProcessDelegate {
 
   void Init(mojo::embedder::ScopedPlatformHandle platform_handle) {
     // Initialize Mojo before starting any threads.
-    mojo::embedder::Init(
-        make_scoped_ptr(new mojo::embedder::SimplePlatformSupport()));
+    // TODO(vtl): Use make_unique when C++14 is available.
+    mojo::embedder::Init(std::unique_ptr<mojo::embedder::PlatformSupport>(
+        new mojo::embedder::SimplePlatformSupport()));
 
     // Create and start our I/O thread.
     base::Thread::Options io_thread_options(base::MessageLoop::TYPE_IO, 0);

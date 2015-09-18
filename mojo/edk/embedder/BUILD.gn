@@ -45,6 +45,8 @@ mojo_edk_source_set("embedder") {
   deps = [
     "//base",
   ]
+
+  mojo_edk_deps = [ "mojo/edk/util" ]
 }
 
 mojo_edk_source_set("platform") {

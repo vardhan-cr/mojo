@@ -297,10 +297,10 @@ void Channel::OnReadMessage(
   switch (message_view.type()) {
     case MessageInTransit::Type::ENDPOINT_CLIENT:
     case MessageInTransit::Type::ENDPOINT:
-      OnReadMessageForEndpoint(message_view, platform_handles.Pass());
+      OnReadMessageForEndpoint(message_view, std::move(platform_handles));
       break;
     case MessageInTransit::Type::CHANNEL:
-      OnReadMessageForChannel(message_view, platform_handles.Pass());
+      OnReadMessageForChannel(message_view, std::move(platform_handles));
       break;
     default:
       HandleRemoteError(
@@ -396,7 +396,7 @@ void Channel::OnReadMessageForEndpoint(
     DCHECK(message_view.transport_data_buffer());
     message->SetDispatchers(TransportData::DeserializeDispatchers(
         message_view.transport_data_buffer(),
-        message_view.transport_data_buffer_size(), platform_handles.Pass(),
+        message_view.transport_data_buffer_size(), std::move(platform_handles),
         this));
   }
 

@@ -10,7 +10,6 @@
 
 #include <deque>
 
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/platform_handle.h"
 #include "mojo/edk/system/system_impl_export.h"
 
