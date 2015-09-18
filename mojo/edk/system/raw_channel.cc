@@ -222,7 +222,7 @@ void RawChannel::Shutdown() {
 }
 
 // Reminder: This must be thread-safe.
-bool RawChannel::WriteMessage(scoped_ptr<MessageInTransit> message) {
+bool RawChannel::WriteMessage(std::unique_ptr<MessageInTransit> message) {
   DCHECK(message);
 
   MutexLocker locker(&write_mutex_);
@@ -230,11 +230,11 @@ bool RawChannel::WriteMessage(scoped_ptr<MessageInTransit> message) {
     return false;
 
   if (!write_buffer_->message_queue_.IsEmpty()) {
-    EnqueueMessageNoLock(message.Pass());
+    EnqueueMessageNoLock(std::move(message));
     return true;
   }
 
-  EnqueueMessageNoLock(message.Pass());
+  EnqueueMessageNoLock(std::move(message));
   DCHECK_EQ(write_buffer_->data_offset_, 0u);
 
   size_t platform_handles_written = 0;
@@ -431,9 +431,10 @@ void RawChannel::OnWriteCompleted(IOResult io_result,
   }
 }
 
-void RawChannel::EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message) {
+void RawChannel::EnqueueMessageNoLock(
+    std::unique_ptr<MessageInTransit> message) {
   write_mutex_.AssertHeld();
-  write_buffer_->message_queue_.AddMessage(message.Pass());
+  write_buffer_->message_queue_.AddMessage(std::move(message));
 }
 
 bool RawChannel::OnReadMessageForRawChannel(

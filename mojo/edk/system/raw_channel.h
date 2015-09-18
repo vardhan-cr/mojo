@@ -8,7 +8,6 @@
 #include <memory>
 #include <vector>
 
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
@@ -102,7 +101,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // have no |Dispatcher|s still attached (i.e.,
   // |SerializeAndCloseDispatchers()| should have been called). This method is
   // thread-safe and may be called from any thread. Returns true on success.
-  bool WriteMessage(scoped_ptr<MessageInTransit> message);
+  bool WriteMessage(std::unique_ptr<MessageInTransit> message);
 
   // Returns true if the write buffer is empty (i.e., all messages written using
   // |WriteMessage()| have actually been sent.
@@ -226,7 +225,7 @@ class MOJO_SYSTEM_IMPL_EXPORT RawChannel {
   // Adds |message| to the write message queue. Implementation subclasses may
   // override this to add any additional "control" messages needed. This is
   // called (on any thread).
-  virtual void EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message)
+  virtual void EnqueueMessageNoLock(std::unique_ptr<MessageInTransit> message)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(write_mutex_);
 
   // Handles any control messages targeted to the |RawChannel| (or

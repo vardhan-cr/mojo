@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <deque>
 #include <memory>
+#include <utility>
 
 #include "base/bind.h"
 #include "base/location.h"
@@ -42,7 +43,7 @@ class RawChannelPosix final : public RawChannel,
   // |RawChannel| protected methods:
   // Actually override this so that we can send multiple messages with (only)
   // FDs if necessary.
-  void EnqueueMessageNoLock(scoped_ptr<MessageInTransit> message) override
+  void EnqueueMessageNoLock(std::unique_ptr<MessageInTransit> message) override
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(write_mutex());
   // Override this to handle those extra FD-only messages.
   bool OnReadMessageForRawChannel(
@@ -119,7 +120,7 @@ size_t RawChannelPosix::GetSerializedPlatformHandleSize() const {
 }
 
 void RawChannelPosix::EnqueueMessageNoLock(
-    scoped_ptr<MessageInTransit> message) {
+    std::unique_ptr<MessageInTransit> message) {
   if (message->transport_data()) {
     embedder::PlatformHandleVector* const platform_handles =
         message->transport_data()->platform_handles();
@@ -132,7 +133,7 @@ void RawChannelPosix::EnqueueMessageNoLock(
       for (; platform_handles->size() - i >
                  embedder::kPlatformChannelMaxNumHandles;
            i += embedder::kPlatformChannelMaxNumHandles) {
-        scoped_ptr<MessageInTransit> fd_message(new MessageInTransit(
+        std::unique_ptr<MessageInTransit> fd_message(new MessageInTransit(
             MessageInTransit::Type::RAW_CHANNEL,
             MessageInTransit::Subtype::RAW_CHANNEL_POSIX_EXTRA_PLATFORM_HANDLES,
             0, nullptr));
@@ -143,7 +144,7 @@ void RawChannelPosix::EnqueueMessageNoLock(
                     embedder::kPlatformChannelMaxNumHandles));
         fd_message->SetTransportData(util::MakeUnique<TransportData>(
             fds.Pass(), GetSerializedPlatformHandleSize()));
-        RawChannel::EnqueueMessageNoLock(fd_message.Pass());
+        RawChannel::EnqueueMessageNoLock(std::move(fd_message));
       }
 
       // Remove the handles that we "moved" into the other messages.
@@ -152,7 +153,7 @@ void RawChannelPosix::EnqueueMessageNoLock(
     }
   }
 
-  RawChannel::EnqueueMessageNoLock(message.Pass());
+  RawChannel::EnqueueMessageNoLock(std::move(message));
 }
 
 bool RawChannelPosix::OnReadMessageForRawChannel(

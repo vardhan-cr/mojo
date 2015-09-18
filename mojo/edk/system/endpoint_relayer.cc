@@ -55,8 +55,10 @@ bool EndpointRelayer::OnReadMessage(unsigned port, MessageInTransit* message) {
   }
 
   // Otherwise, consume it even if the peer port is closed.
-  if (endpoints_[peer_port])
-    endpoints_[peer_port]->EnqueueMessage(make_scoped_ptr(message));
+  if (endpoints_[peer_port]) {
+    endpoints_[peer_port]->EnqueueMessage(
+        std::unique_ptr<MessageInTransit>(message));
+  }
   return true;
 }
 

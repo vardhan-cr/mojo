@@ -6,7 +6,6 @@
 #define MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_CLIENT_H_
 
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/system_impl_export.h"
 #include "mojo/public/cpp/system/macros.h"
 

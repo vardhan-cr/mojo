@@ -11,7 +11,6 @@
 
 #include "base/containers/hash_tables.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/threading/thread_checker.h"
 #include "mojo/edk/embedder/scoped_platform_handle.h"
 #include "mojo/edk/system/channel_endpoint.h"
@@ -101,7 +100,7 @@ class MOJO_SYSTEM_IMPL_EXPORT Channel final
                                    ChannelEndpointId remote_id);
 
   // This forwards |message| verbatim to |raw_channel_|.
-  bool WriteMessage(scoped_ptr<MessageInTransit> message);
+  bool WriteMessage(std::unique_ptr<MessageInTransit> message);
 
   // See |RawChannel::IsWriteBufferEmpty()|.
   // TODO(vtl): Maybe we shouldn't expose this, and instead have a

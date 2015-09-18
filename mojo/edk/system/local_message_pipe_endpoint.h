@@ -27,7 +27,7 @@ class MOJO_SYSTEM_IMPL_EXPORT LocalMessagePipeEndpoint final
   // |MessagePipeEndpoint| implementation:
   Type GetType() const override;
   bool OnPeerClose() override;
-  void EnqueueMessage(scoped_ptr<MessageInTransit> message) override;
+  void EnqueueMessage(std::unique_ptr<MessageInTransit> message) override;
 
   // There's a dispatcher for |LocalMessagePipeEndpoint|s, so we have to
   // implement/override these:

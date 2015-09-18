@@ -5,6 +5,7 @@
 #include "mojo/edk/system/master_connection_manager.h"
 
 #include <memory>
+#include <utility>
 
 #include "base/bind.h"
 #include "base/bind_helpers.h"
@@ -184,7 +185,7 @@ void MasterConnectionManager::Helper::OnReadMessage(
       return;
   }
 
-  scoped_ptr<MessageInTransit> response(new MessageInTransit(
+  std::unique_ptr<MessageInTransit> response(new MessageInTransit(
       MessageInTransit::Type::CONNECTION_MANAGER_ACK,
       ConnectionManagerResultToMessageInTransitSubtype(result), num_bytes,
       bytes));
@@ -203,7 +204,7 @@ void MasterConnectionManager::Helper::OnReadMessage(
     DCHECK(!platform_handle.is_valid());
   }
 
-  if (!raw_channel_->WriteMessage(response.Pass())) {
+  if (!raw_channel_->WriteMessage(std::move(response))) {
     LOG(ERROR) << "WriteMessage failed";
     FatalError();  // WARNING: This destroys us.
     return;

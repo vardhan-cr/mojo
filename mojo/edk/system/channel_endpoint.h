@@ -5,8 +5,9 @@
 #ifndef MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_H_
 #define MOJO_EDK_SYSTEM_CHANNEL_ENDPOINT_H_
 
+#include <memory>
+
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel_endpoint_id.h"
 #include "mojo/edk/system/message_in_transit_queue.h"
 #include "mojo/edk/system/mutex.h"
@@ -128,7 +129,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint final
   // Called to enqueue an outbound message. (If |AttachAndRun()| has not yet
   // been called, the message will be enqueued and sent when |AttachAndRun()| is
   // called.)
-  bool EnqueueMessage(scoped_ptr<MessageInTransit> message);
+  bool EnqueueMessage(std::unique_ptr<MessageInTransit> message);
 
   // Called to *replace* current client with a new client (which must differ
   // from the existing client). This must not be called after
@@ -153,7 +154,7 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint final
                     ChannelEndpointId remote_id);
 
   // Called when the |Channel| receives a message for the |ChannelEndpoint|.
-  void OnReadMessage(scoped_ptr<MessageInTransit> message);
+  void OnReadMessage(std::unique_ptr<MessageInTransit> message);
 
   // Called before the |Channel| gives up its reference to this object.
   void DetachFromChannel();
@@ -162,11 +163,11 @@ class MOJO_SYSTEM_IMPL_EXPORT ChannelEndpoint final
   friend class base::RefCountedThreadSafe<ChannelEndpoint>;
   ~ChannelEndpoint();
 
-  bool WriteMessageNoLock(scoped_ptr<MessageInTransit> message)
+  bool WriteMessageNoLock(std::unique_ptr<MessageInTransit> message)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   // Helper for |OnReadMessage()|, handling messages for the client.
-  void OnReadMessageForClient(scoped_ptr<MessageInTransit> message);
+  void OnReadMessageForClient(std::unique_ptr<MessageInTransit> message);
 
   // Moves |state_| from |RUNNING| to |DEAD|. |channel_| must be non-null, but
   // this does not call |channel_->DetachEndpoint()|.

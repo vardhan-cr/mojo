@@ -7,12 +7,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/simple_thread.h"
@@ -35,14 +36,14 @@ namespace mojo {
 namespace system {
 namespace {
 
-scoped_ptr<MessageInTransit> MakeTestMessage(uint32_t num_bytes) {
+std::unique_ptr<MessageInTransit> MakeTestMessage(uint32_t num_bytes) {
   std::vector<unsigned char> bytes(num_bytes, 0);
   for (size_t i = 0; i < num_bytes; i++)
     bytes[i] = static_cast<unsigned char>(i + num_bytes);
-  return make_scoped_ptr(
-      new MessageInTransit(MessageInTransit::Type::ENDPOINT_CLIENT,
-                           MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
-                           num_bytes, bytes.empty() ? nullptr : &bytes[0]));
+  return util::MakeUnique<MessageInTransit>(
+      MessageInTransit::Type::ENDPOINT_CLIENT,
+      MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA, num_bytes,
+      bytes.empty() ? nullptr : &bytes[0]);
 }
 
 bool CheckMessageData(const void* bytes, uint32_t num_bytes) {
@@ -60,7 +61,7 @@ void InitOnIOThread(RawChannel* raw_channel, RawChannel::Delegate* delegate) {
 
 bool WriteTestMessageToHandle(const embedder::PlatformHandle& handle,
                               uint32_t num_bytes) {
-  scoped_ptr<MessageInTransit> message(MakeTestMessage(num_bytes));
+  std::unique_ptr<MessageInTransit> message(MakeTestMessage(num_bytes));
 
   size_t write_size = 0;
   mojo::test::BlockingWrite(handle, message->main_buffer(),
@@ -821,13 +822,13 @@ TEST_F(RawChannelTest, ReadWritePlatformHandles) {
     platform_handles->push_back(
         mojo::test::PlatformHandleFromFILE(fp2.Pass()).release());
 
-    scoped_ptr<MessageInTransit> message(
+    std::unique_ptr<MessageInTransit> message(
         new MessageInTransit(MessageInTransit::Type::ENDPOINT_CLIENT,
                              MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA,
                              sizeof(kHello), kHello));
     message->SetTransportData(util::MakeUnique<TransportData>(
         platform_handles.Pass(), rc_write->GetSerializedPlatformHandleSize()));
-    EXPECT_TRUE(rc_write->WriteMessage(message.Pass()));
+    EXPECT_TRUE(rc_write->WriteMessage(std::move(message)));
   }
 
   read_delegate.Wait();

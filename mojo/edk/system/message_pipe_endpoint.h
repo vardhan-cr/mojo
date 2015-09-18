@@ -7,10 +7,10 @@
 
 #include <stdint.h>
 
+#include <memory>
 #include <vector>
 
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/dispatcher.h"
 #include "mojo/edk/system/memory.h"
 #include "mojo/edk/system/message_in_transit.h"
@@ -47,7 +47,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipeEndpoint {
   //  a) Dispatchers have been vetted and cloned/attached to the message.
   //  b) At this point, we cannot report failure (if, e.g., a channel is torn
   //     down at this point, we should silently swallow the message).
-  virtual void EnqueueMessage(scoped_ptr<MessageInTransit> message) = 0;
+  virtual void EnqueueMessage(std::unique_ptr<MessageInTransit> message) = 0;
   virtual void Close() = 0;
 
   // Implementations must override these if they represent a local endpoint,

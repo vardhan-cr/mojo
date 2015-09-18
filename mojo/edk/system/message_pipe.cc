@@ -5,6 +5,7 @@
 #include "mojo/edk/system/message_pipe.h"
 
 #include <memory>
+#include <utility>
 
 #include "base/logging.h"
 #include "mojo/edk/system/channel.h"
@@ -16,6 +17,7 @@
 #include "mojo/edk/system/message_pipe_dispatcher.h"
 #include "mojo/edk/system/message_pipe_endpoint.h"
 #include "mojo/edk/system/proxy_message_pipe_endpoint.h"
+#include "mojo/edk/util/make_unique.h"
 
 namespace mojo {
 namespace system {
@@ -155,9 +157,9 @@ MojoResult MessagePipe::WriteMessage(
   MutexLocker locker(&mutex_);
   return EnqueueMessageNoLock(
       GetPeerPort(port),
-      make_scoped_ptr(new MessageInTransit(
+      util::MakeUnique<MessageInTransit>(
           MessageInTransit::Type::ENDPOINT_CLIENT,
-          MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA, num_bytes, bytes)),
+          MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA, num_bytes, bytes),
       transports);
 }
 
@@ -293,8 +295,8 @@ bool MessagePipe::OnReadMessage(unsigned port, MessageInTransit* message) {
   // |ProxyMessagePipeEndpoint| |port| receives a message (from the |Channel|).
   // We need to pass this message on to its peer port (typically a
   // |LocalMessagePipeEndpoint|).
-  MojoResult result = EnqueueMessageNoLock(GetPeerPort(port),
-                                           make_scoped_ptr(message), nullptr);
+  MojoResult result = EnqueueMessageNoLock(
+      GetPeerPort(port), std::unique_ptr<MessageInTransit>(message), nullptr);
   DLOG_IF(WARNING, result != MOJO_RESULT_OK)
       << "EnqueueMessageNoLock() failed (result  = " << result << ")";
   return true;
@@ -317,7 +319,7 @@ MessagePipe::~MessagePipe() {
 
 MojoResult MessagePipe::EnqueueMessageNoLock(
     unsigned port,
-    scoped_ptr<MessageInTransit> message,
+    std::unique_ptr<MessageInTransit> message,
     std::vector<DispatcherTransport>* transports) {
   DCHECK(port == 0 || port == 1);
   DCHECK(message);
@@ -336,7 +338,7 @@ MojoResult MessagePipe::EnqueueMessageNoLock(
   }
 
   // The endpoint's |EnqueueMessage()| may not report failure.
-  endpoints_[port]->EnqueueMessage(message.Pass());
+  endpoints_[port]->EnqueueMessage(std::move(message));
   return MOJO_RESULT_OK;
 }
 

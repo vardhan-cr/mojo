@@ -7,10 +7,10 @@
 #include <string.h>
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/system/channel.h"
 #include "mojo/edk/system/channel_endpoint.h"
 #include "mojo/edk/system/configuration.h"
@@ -97,7 +97,7 @@ bool RemoteProducerDataPipeImpl::ProcessMessagesFromIncomingEndpoint(
   size_t current_num_bytes = 0;
   if (messages) {
     while (!messages->IsEmpty()) {
-      scoped_ptr<MessageInTransit> message(messages->GetMessage());
+      std::unique_ptr<MessageInTransit> message(messages->GetMessage());
       if (!ValidateIncomingMessage(element_num_bytes, capacity_num_bytes,
                                    current_num_bytes, message.get())) {
         messages->Clear();
@@ -361,7 +361,7 @@ bool RemoteProducerDataPipeImpl::OnReadMessage(unsigned /*port*/,
 
   // Otherwise, we take ownership of the message. (This means that we should
   // always return true below.)
-  scoped_ptr<MessageInTransit> msg(message);
+  std::unique_ptr<MessageInTransit> msg(message);
 
   if (!ValidateIncomingMessage(element_num_bytes(), capacity_num_bytes(),
                                current_num_bytes_, msg.get())) {
@@ -450,11 +450,11 @@ void RemoteProducerDataPipeImpl::MarkDataAsConsumed(size_t num_bytes) {
 
   RemoteDataPipeAck ack_data = {};
   ack_data.num_bytes_consumed = static_cast<uint32_t>(num_bytes);
-  scoped_ptr<MessageInTransit> message(new MessageInTransit(
+  std::unique_ptr<MessageInTransit> message(new MessageInTransit(
       MessageInTransit::Type::ENDPOINT_CLIENT,
       MessageInTransit::Subtype::ENDPOINT_CLIENT_DATA_PIPE_ACK,
       static_cast<uint32_t>(sizeof(ack_data)), &ack_data));
-  if (!channel_endpoint_->EnqueueMessage(message.Pass()))
+  if (!channel_endpoint_->EnqueueMessage(std::move(message)))
     Disconnect();
 }
 

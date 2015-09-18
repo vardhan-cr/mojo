@@ -125,7 +125,7 @@ void Channel::SetBootstrapEndpointWithIds(
   endpoint->AttachAndRun(this, local_id, remote_id);
 }
 
-bool Channel::WriteMessage(scoped_ptr<MessageInTransit> message) {
+bool Channel::WriteMessage(std::unique_ptr<MessageInTransit> message) {
   MutexLocker locker(&mutex_);
   if (!is_running_) {
     // TODO(vtl): I think this is probably not an error condition, but I should
@@ -135,7 +135,7 @@ bool Channel::WriteMessage(scoped_ptr<MessageInTransit> message) {
   }
 
   DLOG_IF(WARNING, is_shutting_down_) << "WriteMessage() while shutting down";
-  return raw_channel_->WriteMessage(message.Pass());
+  return raw_channel_->WriteMessage(std::move(message));
 }
 
 bool Channel::IsWriteBufferEmpty() {
@@ -391,7 +391,7 @@ void Channel::OnReadMessageForEndpoint(
     return;
   }
 
-  scoped_ptr<MessageInTransit> message(new MessageInTransit(message_view));
+  std::unique_ptr<MessageInTransit> message(new MessageInTransit(message_view));
   if (message_view.transport_data_buffer_size() > 0) {
     DCHECK(message_view.transport_data_buffer());
     message->SetDispatchers(TransportData::DeserializeDispatchers(
@@ -400,7 +400,7 @@ void Channel::OnReadMessageForEndpoint(
         this));
   }
 
-  endpoint->OnReadMessage(message.Pass());
+  endpoint->OnReadMessage(std::move(message));
 }
 
 void Channel::OnReadMessageForChannel(
@@ -624,11 +624,11 @@ bool Channel::SendControlMessage(MessageInTransit::Subtype subtype,
                                  const void* bytes) {
   DVLOG(2) << "Sending channel control message: subtype " << subtype
            << ", local ID " << local_id << ", remote ID " << remote_id;
-  scoped_ptr<MessageInTransit> message(new MessageInTransit(
+  std::unique_ptr<MessageInTransit> message(new MessageInTransit(
       MessageInTransit::Type::CHANNEL, subtype, num_bytes, bytes));
   message->set_source_id(local_id);
   message->set_destination_id(remote_id);
-  return WriteMessage(message.Pass());
+  return WriteMessage(std::move(message));
 }
 
 }  // namespace system

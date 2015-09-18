@@ -8,10 +8,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <vector>
 
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "mojo/edk/embedder/platform_handle_vector.h"
 #include "mojo/edk/system/channel_endpoint_client.h"
 #include "mojo/edk/system/dispatcher.h"
@@ -127,7 +127,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe final : public ChannelEndpointClient {
   // |transports| may be non-null only if it's nonempty and |message| has no
   // dispatchers attached. Must be called with |lock_| held.
   MojoResult EnqueueMessageNoLock(unsigned port,
-                                  scoped_ptr<MessageInTransit> message,
+                                  std::unique_ptr<MessageInTransit> message,
                                   std::vector<DispatcherTransport>* transports)
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
@@ -139,7 +139,7 @@ class MOJO_SYSTEM_IMPL_EXPORT MessagePipe final : public ChannelEndpointClient {
       MOJO_EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   mutable Mutex mutex_;
-  scoped_ptr<MessagePipeEndpoint> endpoints_[2] MOJO_GUARDED_BY(mutex_);
+  std::unique_ptr<MessagePipeEndpoint> endpoints_[2] MOJO_GUARDED_BY(mutex_);
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(MessagePipe);
 };
