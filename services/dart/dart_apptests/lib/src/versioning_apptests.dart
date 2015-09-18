@@ -30,7 +30,7 @@ tests(Application application, String url) {
           await databaseProxy.ptr.queryEmployee(1, retrieveFingerPrint);
       expect(response.employee.employeeId, equals(1));
       expect(response.employee.name, equals("Homer Simpson"));
-      expect(response.employee.department, equals(Department_DEV));
+      expect(response.employee.department, equals(Department.DEV));
       expect(response.fingerPrint, isNotNull);
 
       // Pass an Employee struct to the service side that lacks the 'birthday'
@@ -38,7 +38,7 @@ tests(Application application, String url) {
       var newEmployee = new Employee();
       newEmployee.employeeId = 2;
       newEmployee.name = "Marge Simpson";
-      newEmployee.department = Department_SALES;
+      newEmployee.department = Department.SALES;
       response = await databaseProxy.ptr.addEmployee(newEmployee);
       expect(response.success, isTrue);
 
@@ -47,7 +47,7 @@ tests(Application application, String url) {
       response = await databaseProxy.ptr.queryEmployee(2, retrieveFingerPrint);
       expect(response.employee.employeeId, equals(2));
       expect(response.employee.name, equals("Marge Simpson"));
-      expect(response.employee.department, equals(Department_SALES));
+      expect(response.employee.department, equals(Department.SALES));
       expect(response.fingerPrint, isNull);
 
       // Disconnect from database.

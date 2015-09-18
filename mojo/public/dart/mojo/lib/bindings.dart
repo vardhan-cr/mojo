@@ -13,6 +13,7 @@ import 'package:mojo/mojo/interface_control_messages.mojom.dart' as icm;
 
 part 'src/control_message.dart';
 part 'src/codec.dart';
+part 'src/enum.dart';
 part 'src/message.dart';
 part 'src/proxy.dart';
 part 'src/struct.dart';

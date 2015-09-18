@@ -11,6 +11,7 @@ const int kSerializedHandleSize = 4;
 const int kSerializedInterfaceSize = 8; // 4-byte handle + 4-byte version
 const int kPointerSize = 8;
 const int kUnionSize = 16;
+const int kEnumSize = 4;
 const StructDataHeader kMapStructHeader = const StructDataHeader(24, 0);
 const int kUnspecifiedArrayLength = -1;
 const int kNothingNullable = 0;
@@ -284,6 +285,9 @@ class Encoder {
     value.encode(this, offset);
   }
 
+  void encodeEnum(MojoEnum value, int offset) =>
+      encodeUint32(value.value, offset);
+
   void encodeNestedUnion(Union value, int offset, bool nullable) {
     _buffer.claimMemory(align(kUnionSize));
     encodePointerToNextUnclaimed(offset);
@@ -296,6 +300,9 @@ class Encoder {
 
   Encoder encodeUnionArray(int length, int offset, int expectedLength) =>
       encoderForArray(kUnionSize, length, offset, expectedLength);
+
+  Encoder encodeEnumArray(int length, int offset, int expectedLength) =>
+      encoderForArray(kEnumSize, length, offset, expectedLength);
 
   Encoder encoderForArray(
       int elementSize, int length, int offset, int expectedLength) {
@@ -740,6 +747,9 @@ class Decoder {
 
   ArrayDataHeader decodeDataHeaderForUnionArray(int expectedLength) =>
       decodeDataHeaderForArray(kUnionSize, expectedLength);
+
+  ArrayDataHeader decodeDataHeaderForEnumArray(int expectedLength) =>
+      decodeDataHeaderForArray(kEnumSize, expectedLength);
 
   List decodeArray(Function arrayViewer, int elementSize, int offset,
       int nullability, int expectedLength) {

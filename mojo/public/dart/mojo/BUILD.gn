@@ -19,6 +19,7 @@ dart_mojo_sdk_sources = [
   "lib/src/control_message.dart",
   "lib/src/data_pipe.dart",
   "lib/src/drain_data.dart",
+  "lib/src/enum.dart",
   "lib/src/event_stream.dart",
   "lib/src/handle.dart",
   "lib/src/message.dart",

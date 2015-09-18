@@ -25,7 +25,7 @@ void ignoreFuture(Future f) {
 
 NetAddress makeIPv4NetAddress(List<int> addr, int port) {
   var rv = new NetAddress();
-  rv.family = NetAddressFamily_IPV4;
+  rv.family = NetAddressFamily.IPV4;
   rv.ipv4 = new NetAddressIPv4();
   rv.ipv4.addr = new List<int>.from(addr);
   rv.ipv4.port = port;
@@ -33,7 +33,7 @@ NetAddress makeIPv4NetAddress(List<int> addr, int port) {
 }
 
 void fputs(files.File f, String s) {
-  ignoreFuture(f.write((s + '\n').codeUnits, 0, files.Whence_FROM_CURRENT));
+  ignoreFuture(f.write((s + '\n').codeUnits, 0, files.Whence.FROM_CURRENT));
 }
 
 // Connects the terminal |File| and the socket.
@@ -87,12 +87,12 @@ class Connector {
   void _startReadingFromTerminal() {
     // TODO(vtl): Handle terminal errors.
     _terminal.ptr
-        .read(_writeBuffer.lengthInBytes, 0, files.Whence_FROM_CURRENT)
+        .read(_writeBuffer.lengthInBytes, 0, files.Whence.FROM_CURRENT)
         .then(_onReadFromTerminal);
   }
 
   void _onReadFromTerminal(files.FileReadResponseParams p) {
-    if (p.error != files.Error_OK) {
+    if (p.error != files.Error.OK) {
       // TODO(vtl): Do terminal errors.
       return;
     }
@@ -100,7 +100,7 @@ class Connector {
     // TODO(vtl): Temporary hack: echo, since we don't have built-in echo
     // support.
     ignoreFuture(
-        _terminal.ptr.write(p.bytesRead, 0, files.Whence_FROM_CURRENT));
+        _terminal.ptr.write(p.bytesRead, 0, files.Whence.FROM_CURRENT));
 
     // TODO(vtl): Verify that |bytesRead.length| is within the expected range.
     for (var i = 0, j = 0; i < p.bytesRead.length; i++, j++) {
@@ -128,7 +128,7 @@ class Connector {
       if (_socketReceiver.status.isOk) {
         assert(numBytesRead > 0);
         _terminal.ptr.write(_readBuffer.buffer.asUint8List(0, numBytesRead), 0,
-            files.Whence_FROM_CURRENT);
+            files.Whence.FROM_CURRENT);
         _socketReceiverEventStream.enableReadEvents();
       } else {
         shouldClose = true;

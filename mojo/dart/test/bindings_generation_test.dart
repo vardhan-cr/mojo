@@ -32,7 +32,7 @@ class ProviderImpl implements sample.Provider {
   echoMessagePipeHanlde(core.MojoHandle a, Function responseFactory) =>
       new Future.value(responseFactory(a));
 
-  echoEnum(int a, Function responseFactory) =>
+  echoEnum(sample.Enum a, Function responseFactory) =>
       new Future.value(responseFactory(a));
 }
 
@@ -250,6 +250,18 @@ testUnions() {
   testUnionsToString();
 }
 
+testSerializeEnum() {
+  var constants = new structs.ScopedConstants();
+  constants.f4 = structs.ScopedConstantsEType.E0;
+  var message = messageOfStruct(constants);
+  var constants2 = structs.ScopedConstants.deserialize(message.payload);
+  Expect.equals(constants.f4.value, constants2.f4.value);
+}
+
+testEnums() {
+  testSerializeEnum();
+}
+
 void closingProviderIsolate(core.MojoMessagePipeEndpoint endpoint) {
   var provider = new ProviderImpl(endpoint);
   provider._stub.close();
@@ -269,6 +281,7 @@ Future<bool> runOnClosedTest() {
 main() async {
   testSerializeStructs();
   testUnions();
+  testEnums();
   await testCallResponse();
   await testAwaitCallResponse();
   await runOnClosedTest();

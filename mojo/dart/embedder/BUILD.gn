@@ -114,6 +114,7 @@ action_foreach("dart_embedder_package_sdk") {
     "//mojo/public/dart/mojo/lib/src/control_message.dart",
     "//mojo/public/dart/mojo/lib/src/data_pipe.dart",
     "//mojo/public/dart/mojo/lib/src/drain_data.dart",
+    "//mojo/public/dart/mojo/lib/src/enum.dart",
     "//mojo/public/dart/mojo/lib/src/event_stream.dart",
     "//mojo/public/dart/mojo/lib/src/handle.dart",
     "//mojo/public/dart/mojo/lib/src/message.dart",
