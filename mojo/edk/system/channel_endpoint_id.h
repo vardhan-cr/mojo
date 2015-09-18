@@ -36,7 +36,12 @@ FORWARD_DECLARE_TEST(RemoteChannelEndpointIdGeneratorTest, WrapAround);
 // "locally-allocated remote ID".
 class ChannelEndpointId {
  public:
-  ChannelEndpointId() : value_(0) {}
+  ChannelEndpointId() : value_(0) {
+    // This wrapper should add no overhead. (Put this here, since |value_| is
+    // private and we also need the class to be fully defined.)
+    static_assert(sizeof(ChannelEndpointId) == sizeof(value_),
+                  "ChannelEndpointId has incorrect size");
+  }
   ChannelEndpointId(const ChannelEndpointId& other) : value_(other.value_) {}
 
   // Returns the local ID to use for the first message pipe endpoint on a
@@ -73,11 +78,6 @@ class ChannelEndpointId {
 
   // Copying and assignment allowed.
 };
-// This wrapper should add no overhead.
-// TODO(vtl): Rewrite |sizeof(uint32_t)| as |sizeof(ChannelEndpointId::value)|
-// once we have sufficient C++11 support.
-static_assert(sizeof(ChannelEndpointId) == sizeof(uint32_t),
-              "ChannelEndpointId has incorrect size");
 
 // So logging macros and |DCHECK_EQ()|, etc. work.
 inline std::ostream& operator<<(std::ostream& out,
