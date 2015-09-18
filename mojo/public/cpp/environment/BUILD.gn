@@ -45,3 +45,18 @@ mojo_sdk_source_set("standalone") {
     "mojo/public/cpp/utility",
   ]
 }
+
+# This is an implementation of Environment, which can be used instead of
+# :standalone, that provides only logging and has no external dependencies.
+mojo_sdk_source_set("logging_only") {
+  sources = [
+    "lib/default_logger.cc",
+    "lib/default_logger.h",
+    "lib/logging.cc",
+    "lib/logging_only_environment.cc",
+  ]
+
+  public_deps = [
+    ":environment",
+  ]
+}
