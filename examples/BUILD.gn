@@ -27,12 +27,9 @@ group("examples") {
     "//examples/png_viewer",
     "//examples/recursive_content_handler",
     "//examples/spinning_cube",
-    "//examples/surfaces_app",
     "//examples/tiny",
     "//examples/trace_me",
     "//examples/wget",
-    "//examples/window_manager",
-    "//examples/wm_flow",
   ]
 
   if (!is_android) {
@@ -44,6 +41,14 @@ group("examples") {
       "//examples/device_name",
       "//examples/java_android/example_service",
       "//examples/java_android/echo",
+    ]
+  }
+
+  if (is_linux || is_android) {
+    deps += [
+      "//examples/surfaces_app",
+      "//examples/window_manager",
+      "//examples/wm_flow",
     ]
   }
 

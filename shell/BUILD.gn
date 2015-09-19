@@ -37,8 +37,11 @@ group("tests") {
     ":mojo_shell_tests",
     ":shell_nfc_apptests",
     "//shell/application_manager:mojo_application_manager_unittests",
-    "//shell/crash:crash_unittests",
   ]
+
+  if (is_android || is_linux) {
+    deps += [ "//shell/crash:crash_unittests" ]
+  }
 }
 
 if (is_android) {
@@ -54,9 +57,12 @@ if (!mojo_use_prebuilt_mojo_shell) {
     "//build/config/sanitizers:deps",
     "//mojo/environment:chromium",
     "//mojo/message_pump",
-    "//shell/crash",
   ]
   shell_common_data_deps = [ ":mojo_shell_child" ]
+
+  if (is_android || is_linux) {
+    shell_common_deps += [ "//shell/crash" ]
+  }
 
   if (is_android) {
     shared_library("mojo_shell") {
@@ -231,6 +237,15 @@ source_set("parent_lib") {
       "//services/gles2",
       "//services/native_viewport:lib",
     ]
+  }
+
+  if (is_mac) {
+    sources -= [
+      "url_response_disk_cache_loader.cc",
+      "url_response_disk_cache_loader.h",
+    ]
+
+    deps -= [ "//services/url_response_disk_cache" ]
   }
 }
 
@@ -560,6 +575,9 @@ static_library("pingable_app_dummy") {
   testonly = true
   public_deps = [
     "//shell/test:pingable_app($default_toolchain)",
+  ]
+  sources = [
+    "pingable_app_dummy_empty.cc",
   ]
 }
 

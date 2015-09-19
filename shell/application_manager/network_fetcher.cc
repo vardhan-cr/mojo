@@ -16,6 +16,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/stringprintf.h"
 #include "base/trace_event/trace_event.h"
+#include "build/build_config.h"
 #include "crypto/secure_hash.h"
 #include "crypto/sha2.h"
 #include "mojo/converters/url/url_type_converters.h"
@@ -29,6 +30,8 @@ namespace {
 char kArchitecture[] = "linux-x64";
 #elif defined(OS_ANDROID)
 char kArchitecture[] = "android-arm";
+#elif defined(OS_MACOSX)
+char kArchitecture[] = "macosx";
 #else
 #error "Unsupported."
 #endif

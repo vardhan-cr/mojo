@@ -17,6 +17,7 @@ source_set("dart_controller_no_snapshot") {
     "dart_controller.cc",
     "dart_controller.h",
     "io/internet_address.h",
+    "io/internet_address_posix.cc",
     "mojo_dart_state.h",
     "mojo_io_natives.cc",
     "mojo_io_natives.h",
@@ -25,14 +26,6 @@ source_set("dart_controller_no_snapshot") {
     "vmservice.cc",
     "vmservice.h",
   ]
-
-  if (is_linux) {
-    sources += [ "io/internet_address_linux.cc" ]
-  }
-
-  if (is_android) {
-    sources += [ "io/internet_address_android.cc" ]
-  }
 
   deps = [
     ":dart_embedder_packages",

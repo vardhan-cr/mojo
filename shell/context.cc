@@ -39,8 +39,11 @@
 #include "shell/out_of_process_native_runner.h"
 #include "shell/switches.h"
 #include "shell/tracer.h"
-#include "shell/url_response_disk_cache_loader.h"
 #include "url/gurl.h"
+
+#if !defined(OS_MACOSX)
+#include "shell/url_response_disk_cache_loader.h"
+#endif
 
 using mojo::ServiceProvider;
 using mojo::ServiceProviderPtr;
@@ -277,12 +280,14 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
   task_runners_.reset(
       new TaskRunners(base::MessageLoop::current()->message_loop_proxy()));
 
+#if !defined(OS_MACOSX)
   application_manager()->SetLoaderForURL(
       make_scoped_ptr(new BackgroundApplicationLoader(
           make_scoped_ptr(
               new URLResponseDiskCacheLoader(task_runners_->blocking_pool())),
           "url_response_disk_cache", base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:url_response_disk_cache"));
+#endif
 
   EnsureEmbedderIsInitialized();
 

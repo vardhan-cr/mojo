@@ -257,7 +257,6 @@ source_set("test_support") {
 
 test("events_unittests") {
   sources = [
-    "cocoa/events_mac_unittest.mm",
     "devices/x11/device_data_manager_x11_unittest.cc",
     "event_dispatcher_unittest.cc",
     "event_processor_unittest.cc",

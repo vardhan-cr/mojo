@@ -21,7 +21,6 @@ using mojo::Callback;
 using mojo::Id;
 using mojo::InterfaceRequest;
 using mojo::OrderDirection;
-using mojo::Rect;
 using mojo::ServiceProvider;
 using mojo::ServiceProviderPtr;
 using mojo::String;
@@ -168,8 +167,8 @@ void ViewManagerServiceImpl::ProcessViewBoundsChanged(
   if (originated_change || !IsViewKnown(view))
     return;
   client()->OnViewBoundsChanged(ViewIdToTransportId(view->id()),
-                                Rect::From(old_bounds),
-                                Rect::From(new_bounds));
+                                mojo::Rect::From(old_bounds),
+                                mojo::Rect::From(new_bounds));
 }
 
 void ViewManagerServiceImpl::ProcessViewportMetricsChanged(
@@ -416,7 +415,7 @@ ViewDataPtr ViewManagerServiceImpl::ViewToViewData(const ServerView* view) {
   ViewDataPtr view_data(mojo::ViewData::New());
   view_data->parent_id = ViewIdToTransportId(parent ? parent->id() : ViewId());
   view_data->view_id = ViewIdToTransportId(view->id());
-  view_data->bounds = Rect::From(view->bounds());
+  view_data->bounds = mojo::Rect::From(view->bounds());
   view_data->properties =
       mojo::Map<String, Array<uint8_t>>::From(view->properties());
   view_data->visible = view->visible();

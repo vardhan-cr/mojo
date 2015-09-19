@@ -96,4 +96,7 @@ source_set("config") {
   if (!use_ozone) {
     sources -= [ "gpu_info_collector_ozone.cc" ]
   }
+  if (is_mac) {
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
 }

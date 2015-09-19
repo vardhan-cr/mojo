@@ -14,6 +14,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/trace_event/trace_event.h"
+#include "build/build_config.h"
 #include "mojo/converters/url/url_type_converters.h"
 #include "mojo/data_pipe_utils/data_pipe_utils.h"
 #include "url/url_util.h"
@@ -60,7 +61,11 @@ mojo::URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
   mojo::DataPipe data_pipe;
   response->body = data_pipe.consumer_handle.Pass();
   base::stat_wrapper_t stat_result;
+#if defined(OS_MACOSX)
+  if (stat(path_.value().c_str(), &stat_result) == 0) {
+#else
   if (stat64(path_.value().c_str(), &stat_result) == 0) {
+#endif
     auto content_length_header = mojo::HttpHeader::New();
     content_length_header->name = "Content-Length";
     content_length_header->value =
@@ -69,8 +74,9 @@ mojo::URLResponsePtr LocalFetcher::AsURLResponse(base::TaskRunner* task_runner,
     auto etag_header = mojo::HttpHeader::New();
     etag_header->name = "ETag";
     etag_header->value = base::StringPrintf(
-        "\"%" PRId64 "-%" PRId64 "-%" PRId64 "\"", stat_result.st_dev,
-        stat_result.st_ino, static_cast<uint64_t>(stat_result.st_mtime));
+        "\"%" PRId64 "-%" PRId64 "-%" PRId64 "\"",
+        static_cast<uint64_t>(stat_result.st_dev), stat_result.st_ino,
+        static_cast<uint64_t>(stat_result.st_mtime));
     response->headers.push_back(etag_header.Pass());
   }
   mojo::common::CopyFromFile(path_, data_pipe.producer_handle.Pass(), skip,

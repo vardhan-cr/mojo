@@ -17,8 +17,6 @@ group("default") {
     "//mojom",
     "//services",
     "//shell",
-    "//ui/gfx:gfx_unittests",
-    "//ui/events:events_unittests",
   ]
 
   if (is_linux) {
@@ -29,6 +27,13 @@ group("default") {
     if (!use_ozone) {
       deps += [ "//tools/xdisplaycheck" ]
     }
+  }
+
+  if (is_linux || is_android) {
+    deps += [
+      "//ui/events:events_unittests",
+      "//ui/gfx:gfx_unittests",
+    ]
   }
 
   if (use_ozone) {

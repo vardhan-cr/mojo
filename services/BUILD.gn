@@ -13,23 +13,15 @@ group("services") {
     "//services/clipboard",
     "//services/dart",
     "//services/debugger",
-    "//services/device_info",
     "//services/fake_surfaces",
-    "//services/files",
     "//services/gles2:lib",
     "//services/http_server",
     "//services/icu_data",
     "//services/keyboard_native",
-    "//services/kiosk_wm",
-    "//services/native_viewport",
     "//services/prediction",
     "//services/reaper",
-    "//services/surfaces",
     "//services/test_service:bindings",
     "//services/tracing",
-    "//services/url_response_disk_cache",
-    "//services/view_manager",
-    "//services/window_manager",
   ]
 
   if (is_android) {
@@ -51,6 +43,19 @@ group("services") {
     deps += [ "//services/python" ]
   }
 
+  if (is_android || is_linux) {
+    deps += [
+      "//services/device_info",
+      "//services/files",
+      "//services/kiosk_wm",
+      "//services/native_viewport",
+      "//services/surfaces",
+      "//services/url_response_disk_cache",
+      "//services/view_manager",
+      "//services/window_manager",
+    ]
+  }
+
   # TODO(jamesr): We only support building V8 snapshot data on a linux host
   # since it needs a 32 bit toolchain and we don't have one configured for mac
   # hosts.
@@ -67,16 +72,9 @@ group("tests") {
     "//services/authenticating_url_loader_interceptor:apptests",
     "//services/clipboard:apptests",
     "//services/dart/dart_apptests",
-    "//services/files:apptests",
     "//services/http_server:apptests",
     "//services/prediction:apptests",
     "//services/reaper:tests",
-    "//services/url_response_disk_cache:tests",
-    "//services/view_manager:mojo_view_manager_client_apptests",
-    "//services/view_manager:view_manager_service_apptests",
-    "//services/view_manager:view_manager_service_unittests",
-    "//services/window_manager:window_manager_apptests",
-    "//services/window_manager:window_manager_unittests",
   ]
 
   if (is_linux && !is_fnl) {
@@ -87,12 +85,29 @@ group("tests") {
     deps += [ "//services/notifications:apptests" ]
   }
 
+  if (is_linux || is_android) {
+    deps += [
+      "//services/window_manager:window_manager_apptests",
+      "//services/window_manager:window_manager_unittests",
+    ]
+  }
+
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
   # needs a 32 bit toolchain and we don't have one configured for mac hosts.
   if (host_os == "linux") {
     deps += [
       "//services/js:js_apptests",
       "//services/js:js_services_unittests",
+    ]
+  }
+
+  if (is_android || is_linux) {
+    deps += [
+      "//services/files:apptests",
+      "//services/url_response_disk_cache:tests",
+      "//services/view_manager:mojo_view_manager_client_apptests",
+      "//services/view_manager:view_manager_service_apptests",
+      "//services/view_manager:view_manager_service_unittests",
     ]
   }
 }

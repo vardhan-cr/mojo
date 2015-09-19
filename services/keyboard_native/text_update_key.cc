@@ -74,4 +74,5 @@ void TextUpdateKey::OnTouchUp() {
 void TextUpdateKey::ChangeText(std::string new_text) {
   text_ = new_text;
 }
+
 }  // namespace keyboard

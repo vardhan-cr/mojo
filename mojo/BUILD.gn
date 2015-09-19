@@ -51,7 +51,6 @@ group("tests") {
   testonly = true
   deps = [
     "//mojo/common:mojo_common_unittests",
-    "//mojo/converters/surfaces/tests:mojo_surfaces_lib_unittests",
     "//mojo/edk/system:tests",
     "//mojo/edk/test:public_tests",
     "//mojo/dart/embedder/test:dart_unittests",
@@ -62,6 +61,10 @@ group("tests") {
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
   ]
+
+  if (is_linux || is_android) {
+    deps += [ "//mojo/converters/surfaces/tests:mojo_surfaces_lib_unittests" ]
+  }
 
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
   # needs a 32 bit toolchain and we don't have one configured for mac hosts.

@@ -17,9 +17,6 @@
 #include "services/view_manager/server_view.h"
 #include "services/view_manager/view_coordinate_conversions.h"
 
-using mojo::Rect;
-using mojo::Size;
-
 namespace view_manager {
 namespace {
 
@@ -52,15 +49,15 @@ void DrawViewTree(mojo::Pass* pass,
   const gfx::Rect bounds_at_origin(view->bounds().size());
   auto surface_quad = mojo::Quad::New();
   surface_quad->material = mojo::Material::MATERIAL_SURFACE_CONTENT;
-  surface_quad->rect = Rect::From(bounds_at_origin);
-  surface_quad->opaque_rect = Rect::From(bounds_at_origin);
-  surface_quad->visible_rect = Rect::From(bounds_at_origin);
+  surface_quad->rect = mojo::Rect::From(bounds_at_origin);
+  surface_quad->opaque_rect = mojo::Rect::From(bounds_at_origin);
+  surface_quad->visible_rect = mojo::Rect::From(bounds_at_origin);
   surface_quad->needs_blending = true;
   surface_quad->shared_quad_state_index =
       base::saturated_cast<int32_t>(pass->shared_quad_states.size());
   surface_quad->surface_quad_state = surface_quad_state.Pass();
 
-  auto sqs = CreateDefaultSQS(*Size::From(view->bounds().size()));
+  auto sqs = CreateDefaultSQS(*mojo::Size::From(view->bounds().size()));
   sqs->blend_mode = mojo::SK_XFERMODE_kSrcOver_Mode;
   sqs->opacity = combined_opacity;
   sqs->content_to_target_transform = mojo::Transform::From(node_transform);
@@ -130,7 +127,7 @@ void DefaultDisplayManager::SchedulePaint(const ServerView* view,
 }
 
 void DefaultDisplayManager::SetViewportSize(const gfx::Size& size) {
-  native_viewport_->SetSize(Size::From(size));
+  native_viewport_->SetSize(mojo::Size::From(size));
 }
 
 const mojo::ViewportMetrics& DefaultDisplayManager::GetViewportMetrics() {
@@ -138,11 +135,11 @@ const mojo::ViewportMetrics& DefaultDisplayManager::GetViewportMetrics() {
 }
 
 void DefaultDisplayManager::Draw() {
-  Rect rect;
+  mojo::Rect rect;
   rect.width = metrics_.size->width;
   rect.height = metrics_.size->height;
   auto pass = CreateDefaultPass(1, rect);
-  pass->damage_rect = Rect::From(dirty_rect_);
+  pass->damage_rect = mojo::Rect::From(dirty_rect_);
 
   DrawViewTree(pass.get(), connection_manager_->root(), gfx::Vector2d(), 1.0f);
 
