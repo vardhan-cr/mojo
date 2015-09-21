@@ -55,6 +55,7 @@ TEST(MapIteratorTest, BidirectionalIteratorConcept) {
   MapValueIterator<int, int> map_value_iter(&my_map);
 
   {
+    SCOPED_TRACE("Test map key iterator bidirectionality.");
     std::vector<int> expected_vals;
     expected_vals.push_back(1);
     expected_vals.push_back(3);
@@ -64,6 +65,7 @@ TEST(MapIteratorTest, BidirectionalIteratorConcept) {
   }
 
   {
+    SCOPED_TRACE("Test map value iterator bidirectionality.");
     std::vector<int> expected_vals;
     expected_vals.push_back(2);
     expected_vals.push_back(4);
@@ -73,6 +75,7 @@ TEST(MapIteratorTest, BidirectionalIteratorConcept) {
   }
 
   {
+    SCOPED_TRACE("Test map value iterator mutability.");
     std::vector<int> expected_vals;
     expected_vals.push_back(2);
     expected_vals.push_back(4);
