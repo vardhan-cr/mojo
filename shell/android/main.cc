@@ -23,6 +23,7 @@
 #include "base/synchronization/waitable_event.h"
 #include "base/task_runner_util.h"
 #include "base/threading/simple_thread.h"
+#include "gpu/config/gpu_util.h"
 #include "jni/ShellService_jni.h"
 #include "mojo/message_pump/message_pump_mojo.h"
 #include "mojo/services/network/public/interfaces/network_service.mojom.h"
@@ -305,6 +306,8 @@ static void Start(JNIEnv* env,
   g_internal_data.Get().shell_task_runner->PostDelayedTask(
       FROM_HERE, base::Bind(&UploadCrashes, dumps_path),
       base::TimeDelta::FromSeconds(kDelayBeforeCrashUploadInSeconds));
+
+  gpu::ApplyGpuDriverBugWorkarounds(command_line);
 }
 
 static void AddApplicationURL(JNIEnv* env, jclass clazz, jstring jurl) {

@@ -2,8 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <vector>
 #include "services/native_viewport/app_delegate.h"
+
+#include <vector>
+#include "gpu/config/gpu_util.h"
 
 namespace native_viewport {
 
@@ -43,6 +45,8 @@ void NativeViewportAppDelegate::Initialize(mojo::ApplicationImpl* application) {
       ++touch_iter != application->args().end()) {
     command_line->AppendSwitchASCII(touch_event_string, *touch_iter);
   }
+
+  gpu::ApplyGpuDriverBugWorkarounds(command_line);
 
   if (application->HasArg(mojo::kUseTestConfig))
     gfx::GLSurface::InitializeOneOffForTests();

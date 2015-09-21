@@ -54,6 +54,7 @@ if (is_android) {
     deps = [
       ":lib",
       "//base",
+      "//gpu/config",
       "//mojo/application",
       "//mojo/common:tracing_impl",
       "//mojo/public/cpp/bindings:bindings",
