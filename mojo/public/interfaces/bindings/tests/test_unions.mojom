@@ -4,6 +4,8 @@
 
 module mojo.test;
 
+import "test_included_unions.mojom";
+
 enum AnEnum {
   FIRST, SECOND
 };
@@ -93,4 +95,8 @@ union OldUnion {
 union NewUnion {
   int8 f_int8;
   int16 f_int16;
+};
+
+struct IncludingStruct {
+  IncludedUnion a;
 };

@@ -28,6 +28,7 @@ mojom("test_interfaces") {
 mojom("test_interfaces_experimental") {
   testonly = true
   sources = [
+    "test_included_unions.mojom",
     "test_unions.mojom",
   ]
 }
