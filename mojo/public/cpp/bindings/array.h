@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <set>
 #include <string>
 #include <vector>
@@ -162,6 +163,76 @@ class Array {
     }
     return true;
   }
+
+ public:
+  // Array<>::Iterator satisfies the RandomAccessIterator concept:
+  //   http://en.cppreference.com/w/cpp/concept/RandomAccessIterator.
+  class Iterator {
+   public:
+    using difference_type = std::ptrdiff_t;
+
+    // The following satisfy BidirectionalIterator:
+    Iterator() : arr_(nullptr), pos_(0u) {}
+    Iterator(Array<T>* arr, size_t pos) : arr_(arr), pos_(pos) {}
+    Iterator& operator++() {
+      ++pos_;
+      return *this;
+    }
+    Iterator operator++(int) {
+      Iterator original = *this;
+      ++pos_;
+      return original;
+    }
+    Iterator& operator--() {
+      --pos_;
+      return *this;
+    }
+    Iterator operator--(int) {
+      Iterator original = *this;
+      --pos_;
+      return original;
+    }
+    bool operator==(const Iterator& o) const {
+      return o.arr_ == arr_ && o.pos_ == pos_;
+    }
+    bool operator!=(const Iterator& o) const { return !(*this == o); }
+    RefType operator*() const { return arr_->at(pos_); }
+    RefType operator->() const { return operator*(); }
+
+    // The following satisfy RandomAccessIterator:
+    Iterator& operator+=(difference_type dist) {
+      pos_ += dist;
+      return *this;
+    }
+    Iterator& operator-=(difference_type dist) {
+      pos_ -= dist;
+      return *this;
+    }
+    friend Iterator operator+(difference_type dist, const Iterator& o_it) {
+      return Iterator(o_it.arr_, dist + o_it.pos_);
+    }
+    Iterator operator+(difference_type dist) const {
+      return Iterator(arr_, pos_ + dist);
+    }
+    Iterator operator-(difference_type dist) const {
+      return Iterator(arr_, pos_ - dist);
+    }
+    difference_type operator-(const Iterator& o_it) const {
+      return pos_ - o_it.pos_;
+    }
+    bool operator<(const Iterator& o_it) const { return pos_ < o_it.pos_; }
+    bool operator>(const Iterator& o_it) const { return pos_ > o_it.pos_; }
+    bool operator<=(const Iterator& o_it) const { return pos_ <= o_it.pos_; }
+    bool operator>=(const Iterator& o_it) const { return pos_ >= o_it.pos_; }
+    RefType operator[](difference_type dist) { return arr_->at(pos_ + dist); }
+
+   private:
+    Array<T>* arr_;
+    size_t pos_;
+  };
+
+  Iterator begin() { return Iterator(this, 0); }
+  Iterator end() { return Iterator(this, size()); }
 
  private:
   typedef std::vector<StorageType> Array::*Testable;

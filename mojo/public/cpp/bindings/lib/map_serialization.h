@@ -115,7 +115,7 @@ inline size_t GetSerializedSize_(const Map<MapKey, MapValue>& input) {
 
   size_t key_data_size = 0;
   size_t value_data_size = 0;
-  for (auto it = input.begin(); it != input.end(); ++it) {
+  for (auto it = input.cbegin(); it != input.cend(); ++it) {
     key_data_size +=
         internal::MapSerializer<MapKey, DataKey>::GetItemSize(it.GetKey());
     value_data_size +=

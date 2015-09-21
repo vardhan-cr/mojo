@@ -8,6 +8,7 @@
 #include <map>
 
 #include "mojo/public/cpp/bindings/lib/map_internal.h"
+#include "mojo/public/cpp/bindings/lib/template_util.h"
 
 namespace mojo {
 
@@ -170,9 +171,9 @@ class Map {
       return false;
     if (size() != other.size())
       return false;
-    auto i = begin();
-    auto j = other.begin();
-    while (i != end()) {
+    auto i = cbegin();
+    auto j = other.cbegin();
+    while (i != cend()) {
       if (i.GetKey() != j.GetKey())
         return false;
       if (!internal::ValueTraits<Value>::Equals(i.GetValue(), j.GetValue()))
@@ -183,43 +184,80 @@ class Map {
     return true;
   }
 
-  // A read-only iterator for Map.
-  class ConstMapIterator {
+ private:
+  // A Map Iterator, templated for mutable and const iterator behaviour.
+  // If |IsConstIterator| is true, the iterator behaves like a const-iterator.
+  //
+  // TODO(vardhan):  Make this adhere to the BidirectionalIterator concept.
+  enum class IteratorMutability { kConst, kMutable };
+  template <IteratorMutability MutabilityType = IteratorMutability::kMutable>
+  class InternalIterator {
+    using InternalIteratorType = typename internal::Conditional<
+        MutabilityType == IteratorMutability::kConst,
+        typename std::map<KeyStorageType, ValueStorageType>::const_iterator,
+        typename std::map<KeyStorageType, ValueStorageType>::iterator>::type;
+
+    using ReturnValueType =
+        typename internal::Conditional<MutabilityType ==
+                                           IteratorMutability::kConst,
+                                       ValueConstRefType,
+                                       ValueRefType>::type;
+
    public:
-    ConstMapIterator(
-        const typename std::map<KeyStorageType,
-                                ValueStorageType>::const_iterator& it)
-        : it_(it) {}
+    InternalIterator() : it_() {}
+    InternalIterator(InternalIteratorType it) : it_(it) {}
 
-    // Returns a const reference to the key and value.
+    // The key is always a const reference, but the value is conditional on
+    // whether this is a const iterator or not.
     KeyConstRefType GetKey() { return Traits::GetKey(it_); }
-    ValueConstRefType GetValue() { return Traits::GetValue(it_); }
+    ReturnValueType GetValue() { return Traits::GetValue(it_); }
 
-    ConstMapIterator& operator++() {
-      it_++;
+    InternalIterator& operator++() {
+      ++it_;
       return *this;
     }
-    bool operator!=(const ConstMapIterator& rhs) const {
+    InternalIterator<MutabilityType> operator++(int) {
+      InternalIterator<MutabilityType> original(*this);
+      ++it_;
+      return original;
+    }
+    InternalIterator& operator--() {
+      --it_;
+      return *this;
+    }
+    InternalIterator<MutabilityType> operator--(int) {
+      InternalIterator<MutabilityType> original(*this);
+      --it_;
+      return original;
+    }
+    bool operator!=(const InternalIterator& rhs) const {
       return it_ != rhs.it_;
     }
-    bool operator==(const ConstMapIterator& rhs) const {
+    bool operator==(const InternalIterator& rhs) const {
       return it_ == rhs.it_;
     }
 
    private:
-    typename std::map<KeyStorageType, ValueStorageType>::const_iterator it_;
+    InternalIteratorType it_;
   };
 
-  // Provide read-only iteration over map members in a way similar to STL
-  // collections.
-  ConstMapIterator begin() const { return ConstMapIterator(map_.begin()); }
-  ConstMapIterator end() const { return ConstMapIterator(map_.end()); }
+ public:
+  using MapIterator = InternalIterator<IteratorMutability::kMutable>;
+  using ConstMapIterator = InternalIterator<IteratorMutability::kConst>;
+
+  // Provide read-only and mutable iteration over map members in a way similar
+  // to STL collections.
+  ConstMapIterator cbegin() const { return ConstMapIterator(map_.cbegin()); }
+  ConstMapIterator cend() const { return ConstMapIterator(map_.cend()); }
+  MapIterator begin() { return MapIterator(map_.begin()); }
+  MapIterator end() { return MapIterator(map_.end()); }
 
   // Returns the iterator pointing to the entry for |key|, if present, or else
-  // returns end().
+  // returns |cend()| or |end()|, respectively.
   ConstMapIterator find(KeyForwardType key) const {
     return ConstMapIterator(map_.find(key));
   }
+  MapIterator find(KeyForwardType key) { return MapIterator(map_.find(key)); }
 
  private:
   typedef std::map<KeyStorageType, ValueStorageType> Map::*Testable;
@@ -270,7 +308,7 @@ struct TypeConverter<std::map<STLKey, STLValue>, Map<MojoKey, MojoValue>> {
       const Map<MojoKey, MojoValue>& input) {
     std::map<STLKey, STLValue> result;
     if (!input.is_null()) {
-      for (auto it = input.begin(); it != input.end(); ++it) {
+      for (auto it = input.cbegin(); it != input.cend(); ++it) {
         result.insert(std::make_pair(
             TypeConverter<STLKey, MojoKey>::Convert(it.GetKey()),
             TypeConverter<STLValue, MojoValue>::Convert(it.GetValue())));
