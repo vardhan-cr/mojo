@@ -21,7 +21,10 @@ group("public") {
   }
 
   if (is_linux && !is_fnl) {
-    deps += [ "python" ]
+    deps += [
+      "python",
+      "tools/bindings",
+    ]
   }
 
   if (is_android) {
