@@ -151,7 +151,7 @@ DataPipe* DataPipe::CreateRemoteConsumerFromExisting(
   DataPipe* data_pipe =
       new DataPipe(true, false, validated_options,
                    util::MakeUnique<RemoteConsumerDataPipeImpl>(
-                       channel_endpoint, consumer_num_bytes));
+                       channel_endpoint, consumer_num_bytes, nullptr, 0));
   if (channel_endpoint) {
     if (!channel_endpoint->ReplaceClient(data_pipe, 0))
       data_pipe->OnDetachFromChannel(0);
@@ -196,9 +196,9 @@ bool DataPipe::ProducerDeserialize(Channel* channel,
       return false;
     }
 
-    *data_pipe =
-        new DataPipe(true, false, revalidated_options,
-                     util::MakeUnique<RemoteConsumerDataPipeImpl>(nullptr, 0));
+    *data_pipe = new DataPipe(
+        true, false, revalidated_options,
+        util::MakeUnique<RemoteConsumerDataPipeImpl>(nullptr, 0, nullptr, 0));
     (*data_pipe)->SetConsumerClosed();
 
     return true;

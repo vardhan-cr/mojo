@@ -359,11 +359,10 @@ bool LocalDataPipeImpl::ConsumerEndSerialize(
   MessageInTransitQueue message_queue;
   ConvertDataToMessages(buffer_.get(), &start_index_, &current_num_bytes_,
                         &message_queue);
-  start_index_ = 0;
-  current_num_bytes_ = 0;
 
   if (!producer_open()) {
     // Case 1: The producer is closed.
+    DestroyBuffer();
     channel->SerializeEndpointWithClosedPeer(destination_for_endpoint,
                                              &message_queue);
     *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
@@ -383,7 +382,9 @@ bool LocalDataPipeImpl::ConsumerEndSerialize(
   // slightly easier on ourselves.
   std::unique_ptr<DataPipeImpl> self(
       ReplaceImpl(util::MakeUnique<RemoteConsumerDataPipeImpl>(
-          channel_endpoint.get(), old_num_bytes)));
+          channel_endpoint.get(), old_num_bytes, std::move(buffer_),
+          start_index_)));
+  DestroyBuffer();
 
   *actual_size = sizeof(SerializedDataPipeConsumerDispatcher) +
                  channel->GetSerializedEndpointSize();
@@ -417,6 +418,8 @@ void LocalDataPipeImpl::DestroyBuffer() {
     memset(buffer_.get(), 0xcd, capacity_num_bytes());
 #endif
   buffer_.reset();
+  start_index_ = 0;
+  current_num_bytes_ = 0;
 }
 
 size_t LocalDataPipeImpl::GetMaxNumBytesToWrite() {

@@ -21,8 +21,14 @@ namespace system {
 // |DataPipeImpl| for more details.
 class RemoteConsumerDataPipeImpl final : public DataPipeImpl {
  public:
-  RemoteConsumerDataPipeImpl(ChannelEndpoint* channel_endpoint,
-                             size_t consumer_num_bytes);
+  // |buffer| is only required if |producer_two_phase_max_num_bytes_written()|
+  // is nonzero (i.e., if we're in the middle of a two-phase write when the
+  // consumer handle is transferred); |start_index| is ignored if it is zero.
+  RemoteConsumerDataPipeImpl(
+      ChannelEndpoint* channel_endpoint,
+      size_t consumer_num_bytes,
+      std::unique_ptr<char, base::AlignedFreeDeleter> buffer,
+      size_t start_index);
   ~RemoteConsumerDataPipeImpl() override;
 
   // Processes messages that were received and queued by an |IncomingEndpoint|.
@@ -97,6 +103,9 @@ class RemoteConsumerDataPipeImpl final : public DataPipeImpl {
 
   // Used for two-phase writes.
   std::unique_ptr<char, base::AlignedFreeDeleter> buffer_;
+  // This is nearly always zero, except when the two-phase write started on a
+  // |LocalDataPipeImpl|.
+  size_t start_index_;
 
   MOJO_DISALLOW_COPY_AND_ASSIGN(RemoteConsumerDataPipeImpl);
 };
