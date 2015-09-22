@@ -6,7 +6,12 @@ import("//build/config/sysroot.gni")
 import("//build/toolchain/nacl_toolchain.gni")
 
 nacl_toolchain_dir = rebase_path("//native_client/toolchain", root_build_dir)
-os_toolchain_dir = "${nacl_toolchain_dir}/${current_os}_x86"
+
+if (current_os == "fnl") {
+  os_toolchain_dir = "${nacl_toolchain_dir}/linux_x86"
+} else {
+  os_toolchain_dir = "${nacl_toolchain_dir}/${current_os}_x86"
+}
 
 # Add the toolchain revision as a preprocessor define so that sources are
 # rebuilt when a toolchain is updated.
