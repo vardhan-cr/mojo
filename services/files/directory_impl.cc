@@ -190,14 +190,16 @@ void DirectoryImpl::OpenFile(const String& path,
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 
-  if (Error error = IsPathValid(path)) {
+  Error error = IsPathValid(path);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
   // TODO(vtl): Make sure the path doesn't exit this directory (if appropriate).
   // TODO(vtl): Maybe allow absolute paths?
 
-  if (Error error = ValidateOpenFlags(open_flags, false)) {
+  error = ValidateOpenFlags(open_flags, false);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
@@ -235,14 +237,16 @@ void DirectoryImpl::OpenDirectory(const String& path,
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 
-  if (Error error = IsPathValid(path)) {
+  Error error = IsPathValid(path);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
   // TODO(vtl): Make sure the path doesn't exit this directory (if appropriate).
   // TODO(vtl): Maybe allow absolute paths?
 
-  if (Error error = ValidateOpenFlags(open_flags, false)) {
+  error = ValidateOpenFlags(open_flags, false);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
@@ -284,11 +288,14 @@ void DirectoryImpl::Rename(const String& path,
   DCHECK(!new_path.is_null());
   DCHECK(dir_fd_.is_valid());
 
-  if (Error error = IsPathValid(path)) {
+  Error error = IsPathValid(path);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
-  if (Error error = IsPathValid(new_path)) {
+
+  error = IsPathValid(new_path);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
@@ -309,13 +316,15 @@ void DirectoryImpl::Delete(const String& path,
   DCHECK(!path.is_null());
   DCHECK(dir_fd_.is_valid());
 
-  if (Error error = IsPathValid(path)) {
+  Error error = IsPathValid(path);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
   // TODO(vtl): See TODOs about |path| in OpenFile().
 
-  if (Error error = ValidateDeleteFlags(delete_flags)) {
+  error = ValidateDeleteFlags(delete_flags);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }

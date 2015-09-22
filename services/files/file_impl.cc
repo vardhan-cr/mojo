@@ -71,11 +71,15 @@ void FileImpl::Read(uint32_t num_bytes_to_read,
     callback.Run(ERROR_OUT_OF_RANGE, Array<uint8_t>());
     return;
   }
-  if (Error error = IsOffsetValid(offset)) {
+
+  Error error = IsOffsetValid(offset);
+  if (error != ERROR_OK) {
     callback.Run(error, Array<uint8_t>());
     return;
   }
-  if (Error error = IsWhenceValid(whence)) {
+
+  error = IsWhenceValid(whence);
+  if (error != ERROR_OK) {
     callback.Run(error, Array<uint8_t>());
     return;
   }
@@ -125,11 +129,15 @@ void FileImpl::Write(Array<uint8_t> bytes_to_write,
     callback.Run(ERROR_OUT_OF_RANGE, 0);
     return;
   }
-  if (Error error = IsOffsetValid(offset)) {
+
+  Error error = IsOffsetValid(offset);
+  if (error != ERROR_OK) {
     callback.Run(error, 0);
     return;
   }
-  if (Error error = IsWhenceValid(whence)) {
+
+  error = IsWhenceValid(whence);
+  if (error != ERROR_OK) {
     callback.Run(error, 0);
     return;
   }
@@ -172,11 +180,15 @@ void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
     callback.Run(ERROR_CLOSED);
     return;
   }
-  if (Error error = IsOffsetValid(offset)) {
+
+  Error error = IsOffsetValid(offset);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
-  if (Error error = IsWhenceValid(whence)) {
+
+  error = IsWhenceValid(whence);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
@@ -194,11 +206,15 @@ void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
     callback.Run(ERROR_CLOSED);
     return;
   }
-  if (Error error = IsOffsetValid(offset)) {
+
+  Error error = IsOffsetValid(offset);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
-  if (Error error = IsWhenceValid(whence)) {
+
+  error = IsWhenceValid(whence);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
@@ -219,11 +235,15 @@ void FileImpl::Seek(int64_t offset,
     callback.Run(ERROR_CLOSED, 0);
     return;
   }
-  if (Error error = IsOffsetValid(offset)) {
+
+  Error error = IsOffsetValid(offset);
+  if (error != ERROR_OK) {
     callback.Run(error, 0);
     return;
   }
-  if (Error error = IsWhenceValid(whence)) {
+
+  error = IsWhenceValid(whence);
+  if (error != ERROR_OK) {
     callback.Run(error, 0);
     return;
   }
@@ -255,7 +275,9 @@ void FileImpl::Truncate(int64_t size, const TruncateCallback& callback) {
     callback.Run(ERROR_INVALID_ARGUMENT);
     return;
   }
-  if (Error error = IsOffsetValid(size)) {
+
+  Error error = IsOffsetValid(size);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }

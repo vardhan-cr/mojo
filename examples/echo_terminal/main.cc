@@ -41,7 +41,7 @@ class TerminalEchoer {
 
   // |Read()| callback:
   void OnRead(mojo::files::Error error, mojo::Array<uint8_t> bytes_read) {
-    if (error) {
+    if (error != mojo::files::ERROR_OK) {
       LOG(ERROR) << "Error: Read(): " << error;
       delete this;
       return;
@@ -71,7 +71,7 @@ class TerminalEchoer {
 
   // |Write()| callback:
   void OnWrite(mojo::files::Error error, uint32_t num_bytes_written) {
-    if (error) {
+    if (error != mojo::files::ERROR_OK) {
       LOG(ERROR) << "Error: Write(): " << error;
       delete this;
       return;

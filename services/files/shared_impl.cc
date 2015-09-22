@@ -60,11 +60,14 @@ void TouchFD(int fd,
   DCHECK_NE(fd, -1);
 
   struct timespec times[2];
-  if (Error error = TimespecOrNowToStandardTimespec(atime.get(), &times[0])) {
+  Error error = TimespecOrNowToStandardTimespec(atime.get(), &times[0]);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
-  if (Error error = TimespecOrNowToStandardTimespec(mtime.get(), &times[1])) {
+
+  error = TimespecOrNowToStandardTimespec(mtime.get(), &times[1]);
+  if (error != ERROR_OK) {
     callback.Run(error);
     return;
   }
