@@ -7,7 +7,6 @@
 #include <limits>
 
 #include "base/logging.h"
-#include "build/build_config.h"
 
 namespace mojo {
 namespace system {
@@ -17,15 +16,6 @@ template <size_t alignment>
 bool IsAligned(const void* pointer) {
   return reinterpret_cast<uintptr_t>(pointer) % alignment == 0;
 }
-
-// MSVS (2010, 2013) sometimes (on the stack) aligns, e.g., |int64_t|s (for
-// which |__alignof(int64_t)| is 8) to 4-byte boundaries. http://goo.gl/Y2n56T
-#if defined(COMPILER_MSVC) && defined(ARCH_CPU_32_BITS)
-template <>
-bool IsAligned<8>(const void* pointer) {
-  return reinterpret_cast<uintptr_t>(pointer) % 4 == 0;
-}
-#endif
 
 template <size_t size, size_t alignment>
 void CheckUserPointer(const void* pointer) {
