@@ -207,10 +207,12 @@ template("dart_pkg_helper") {
     }
 
     sources = entrypoints
+    extra_flags = []
     if (defined(invoker.sources)) {
       sources += invoker.sources
     } else if (defined(invoker.pkg_dir)) {
-      list_script = rebase_path("build/ls.py", ".", mojo_sdk_root)
+      list_script = rebase_path("mojo/public/tools/ls.py", ".", mojo_sdk_root)
+      extra_flags += [ "--read_only" ]
       ls_sources = exec_script(list_script,
                                [
                                  "--target-directory",
@@ -255,7 +257,7 @@ template("dart_pkg_helper") {
            rebase_path(mojom_sources, "", mojo_sdk_root) +
            [ "--sdk-ext-directories" ] + rebase_path(sdk_ext_directory) +
            [ "--sdk-ext-files" ] + rebase_path(sdk_ext_files) +
-           [ "--sdk-ext-mappings" ] + sdk_ext_mappings
+           [ "--sdk-ext-mappings" ] + sdk_ext_mappings + extra_flags
   }
 }
 
