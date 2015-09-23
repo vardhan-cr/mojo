@@ -7,6 +7,7 @@
 #include "mojo/public/cpp/bindings/lib/bounds_checker.h"
 #include "mojo/public/cpp/bindings/lib/validation_errors.h"
 #include "mojo/public/cpp/bindings/lib/validation_util.h"
+#include "mojo/public/interfaces/bindings/interface_control_messages.mojom.h"
 
 namespace mojo {
 namespace internal {
@@ -71,6 +72,28 @@ bool MessageHeaderValidator::Accept(Message* message) {
     return false;
 
   return sink_->Accept(message);
+}
+
+bool ValidateControlRequest(const Message* message) {
+  switch (message->header()->name) {
+    case kRunMessageId:
+      return ValidateMessageIsRequestExpectingResponse(message) &&
+             ValidateMessagePayload<RunMessageParams_Data>(message);
+    case kRunOrClosePipeMessageId:
+      return ValidateMessageIsRequestWithoutResponse(message) &&
+             ValidateMessagePayload<RunOrClosePipeMessageParams_Data>(message);
+  }
+  return false;
+}
+
+bool ValidateControlResponse(const Message* message) {
+  if (!ValidateMessageIsResponse(message))
+    return false;
+  switch (message->header()->name) {
+    case kRunMessageId:
+      return ValidateMessagePayload<RunResponseMessageParams_Data>(message);
+  }
+  return false;
 }
 
 }  // namespace internal
