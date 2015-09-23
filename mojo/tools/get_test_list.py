@@ -84,13 +84,16 @@ def GetTestList(config, verbose_count=0):
     # NaCl tests (Linux only):
     if (target_os == Config.OS_LINUX and
         config.sanitizer != Config.SANITIZER_ASAN):
-      AddEntry("NaCl tests",
+      AddEntry("SFI NaCl tests",
                [os.path.join(build_dir, "monacl_shell"),
                 os.path.join(build_dir, "irt_" + config.target_cpu,
                              "irt_mojo.nexe"),
                 os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
                              "monacl_test.nexe")])
-      # TODO(smklein): Add an x86-specific nonsfi test here
+      AddEntry("Non-SFI NaCl tests",
+               [os.path.join(build_dir, "clang_x86", "monacl_shell_nonsfi"),
+                os.path.join(build_dir, "monacl_test_nonsfi.nexe")])
+      # TODO(smklein): Test nonsfi on arm / android
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):

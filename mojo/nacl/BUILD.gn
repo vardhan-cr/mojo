@@ -116,12 +116,72 @@ group("mojo_pnacl_tests") {
   ]
 }
 
+action("translate_mojo_pnacl_tests_to_native") {
+  testonly = true
+
+  script = rebase_path("//") +
+           "native_client/toolchain/linux_x86/pnacl_newlib/bin/pydir/loader.py"
+  input = rebase_path(root_build_dir) + "/newlib_pnacl/monacl_test.pexe"
+  inputs = [
+    input,
+  ]
+  output = "monacl_test_nonsfi.nexe"
+  outputs = [
+    "$root_out_dir/${output}",
+  ]
+  args = [
+    "pnacl-translate",
+    "$input",
+    "-o",
+    "$output",
+    "-arch",
+    "x86-32-nonsfi",
+    "--allow-llvm-bitcode-input",
+  ]
+  deps = [
+    ":mojo_pnacl_tests",
+  ]
+}
+
+action("prepend_shebang_to_nexe") {
+  testonly = true
+
+  script = rebase_path("//") + "mojo/public/tools/prepend.py"
+  nexe_path = "$root_out_dir/monacl_test_nonsfi"
+  input = "${nexe_path}.nexe"
+  inputs = [
+    input,
+  ]
+  output = "${nexe_path}.mojo"
+  outputs = [
+    output,
+  ]
+
+  line = "#!mojo mojo:nacl_content_handler_nonsfi"
+  args = [
+    "--input=" + rebase_path(input, root_build_dir),
+    "--output=" + rebase_path(output, root_build_dir),
+    "--line=$line",
+  ]
+  deps = [
+    ":translate_mojo_pnacl_tests_to_native",
+  ]
+}
+
+group("monacl_test_nonsfi_nexes") {
+  testonly = true
+  deps = [
+    ":translate_mojo_pnacl_tests_to_native",
+    ":prepend_shebang_to_nexe",
+  ]
+}
+
 group("mojo_nacl_tests") {
   testonly = true
   deps = [
     ":mojo_nacl_tests_untrusted(//build/toolchain/nacl:clang_newlib_${current_cpu})",
     ":monacl_shell",
     ":monacl_shell_nonsfi_x86",
-    ":mojo_pnacl_tests",
+    ":monacl_test_nonsfi_nexes",
   ]
 }
