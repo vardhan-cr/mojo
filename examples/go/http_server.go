@@ -53,11 +53,14 @@ func (c *MojoConnection) Read(b []byte) (int, error) {
 // Implements net.Conn.
 func (c *MojoConnection) Write(b []byte) (int, error) {
 	l := len(b)
-	r, buf := c.sendStream.BeginWriteData(l, system.MOJO_WRITE_DATA_FLAG_ALL_OR_NONE)
+	r, buf := c.sendStream.BeginWriteData(l, system.MOJO_WRITE_DATA_FLAG_NONE)
 	if r != system.MOJO_RESULT_OK {
 		return 0, fmt.Errorf("can't write %v bytes: %v", l, r)
 	}
-	copy(buf, b)
+	if l > len(buf) {
+		l = len(buf)
+	}
+	copy(buf, b[:l])
 	if r := c.sendStream.EndWriteData(l); r != system.MOJO_RESULT_OK {
 		return 0, fmt.Errorf("can't write %v bytes: %v", l, r)
 	}
