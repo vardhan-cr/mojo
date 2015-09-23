@@ -6,20 +6,21 @@
 
 #include "mojo/converters/input_events/input_events_type_converters.h"
 #include "services/window_manager/view_event_dispatcher.h"
-#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_root.h"
 
 namespace window_manager {
 
 NativeViewportEventDispatcherImpl::NativeViewportEventDispatcherImpl(
-    WindowManagerApp* app,
+    WindowManagerRoot* root,
     mojo::InterfaceRequest<mojo::NativeViewportEventDispatcher> request)
-    : app_(app), binding_(this, request.Pass()) {
+    : root_(root), binding_(this, request.Pass()) {
 }
+
 NativeViewportEventDispatcherImpl::~NativeViewportEventDispatcherImpl() {
 }
 
 ui::EventProcessor* NativeViewportEventDispatcherImpl::GetEventProcessor() {
-  return app_->event_dispatcher();
+  return root_->event_dispatcher();
 }
 
 void NativeViewportEventDispatcherImpl::OnEvent(

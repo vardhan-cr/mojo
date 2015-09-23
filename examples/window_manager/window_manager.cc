@@ -26,6 +26,7 @@
 #include "services/window_manager/view_target.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
+#include "services/window_manager/window_manager_root.h"
 #include "ui/events/event.h"
 #include "ui/events/event_constants.h"
 #include "url/gurl.h"
@@ -37,7 +38,7 @@
 namespace mojo {
 namespace examples {
 
-class WindowManager;
+class WindowManagerController;
 
 namespace {
 
@@ -49,7 +50,7 @@ const int kTextfieldHeight = 39;
 
 class WindowManagerConnection : public ::examples::IWindowManager {
  public:
-  WindowManagerConnection(WindowManager* window_manager,
+  WindowManagerConnection(WindowManagerController* window_manager,
                           InterfaceRequest<::examples::IWindowManager> request)
       : window_manager_(window_manager), binding_(this, request.Pass()) {}
   ~WindowManagerConnection() override {}
@@ -58,7 +59,7 @@ class WindowManagerConnection : public ::examples::IWindowManager {
   // Overridden from ::examples::IWindowManager:
   void CloseWindow(Id view_id) override;
 
-  WindowManager* window_manager_;
+  WindowManagerController* window_manager_;
   StrongBinding<::examples::IWindowManager> binding_;
 
   DISALLOW_COPY_AND_ASSIGN(WindowManagerConnection);
@@ -66,7 +67,7 @@ class WindowManagerConnection : public ::examples::IWindowManager {
 
 class NavigatorHostImpl : public NavigatorHost {
  public:
-  NavigatorHostImpl(WindowManager* window_manager, Id view_id)
+  NavigatorHostImpl(WindowManagerController* window_manager, Id view_id)
       : window_manager_(window_manager),
         view_id_(view_id),
         current_index_(-1) {}
@@ -83,7 +84,7 @@ class NavigatorHostImpl : public NavigatorHost {
   void RequestNavigate(Target target, URLRequestPtr request) override;
   void RequestNavigateHistory(int32_t delta) override;
 
-  WindowManager* window_manager_;
+  WindowManagerController* window_manager_;
   Id view_id_;
   std::vector<std::string> history_;
   int32_t current_index_;
@@ -123,8 +124,7 @@ class RootLayoutManager : public ViewObserver {
     int delta_width = new_bounds.width - old_bounds.width;
     int delta_height = new_bounds.height - old_bounds.height;
 
-    View* launcher_ui_view =
-        view_manager_->GetViewById(launcher_ui_view_id_);
+    View* launcher_ui_view = view_manager_->GetViewById(launcher_ui_view_id_);
     Rect launcher_ui_bounds(launcher_ui_view->bounds());
     launcher_ui_bounds.width += delta_width;
     launcher_ui_view->SetBounds(launcher_ui_bounds);
@@ -137,7 +137,7 @@ class RootLayoutManager : public ViewObserver {
 
     const View::Children& content_views = content_view->children();
     View::Children::const_iterator iter = content_views.begin();
-    for(; iter != content_views.end(); ++iter) {
+    for (; iter != content_views.end(); ++iter) {
       View* view = *iter;
       if (view->id() == control_panel_view->id() ||
           view->id() == launcher_ui_view->id())
@@ -165,7 +165,7 @@ class RootLayoutManager : public ViewObserver {
 
 class Window : public InterfaceFactory<NavigatorHost> {
  public:
-  Window(WindowManager* window_manager, View* view)
+  Window(WindowManagerController* window_manager, View* view)
       : window_manager_(window_manager),
         view_(view),
         navigator_host_(window_manager_, view_->id()) {
@@ -193,31 +193,35 @@ class Window : public InterfaceFactory<NavigatorHost> {
     navigator_host_.Bind(request.Pass());
   }
 
-  WindowManager* window_manager_;
+  WindowManagerController* window_manager_;
   View* view_;
   ServiceProviderImpl exposed_services_impl_;
   NavigatorHostImpl navigator_host_;
 };
 
-class WindowManager : public ApplicationDelegate,
-                      public examples::DebugPanelHost,
-                      public ViewManagerDelegate,
-                      public window_manager::WindowManagerDelegate,
-                      public ui::EventHandler,
-                      public ui::AcceleratorTarget,
-                      public mojo::InterfaceFactory<examples::DebugPanelHost>,
-                      public InterfaceFactory<::examples::IWindowManager> {
+class WindowManagerController
+    : public examples::DebugPanelHost,
+      public window_manager::WindowManagerController,
+      public ui::EventHandler,
+      public ui::AcceleratorTarget,
+      public mojo::InterfaceFactory<examples::DebugPanelHost>,
+      public InterfaceFactory<::examples::IWindowManager> {
  public:
-  WindowManager()
-      : shell_(nullptr),
+  WindowManagerController(Shell* shell,
+                          ApplicationImpl* app,
+                          ApplicationConnection* connection,
+                          window_manager::WindowManagerRoot* wm_root)
+      : shell_(shell),
         launcher_ui_(NULL),
         view_manager_(NULL),
-        window_manager_app_(new window_manager::WindowManagerApp(this, this)),
+        window_manager_root_(wm_root),
         navigation_target_(TARGET_DEFAULT),
-        app_(NULL),
-        binding_(this) {}
+        app_(app),
+        binding_(this) {
+    connection->AddService<::examples::IWindowManager>(this);
+  }
 
-  ~WindowManager() override {
+  ~WindowManagerController() override {
     // host() may be destroyed by the time we get here.
     // TODO: figure out a way to always cleanly remove handler.
 
@@ -233,7 +237,6 @@ class WindowManager : public ApplicationDelegate,
     windows_.erase(iter);
     window->view()->Destroy();
   }
-
 
   void DidNavigateLocally(uint32 source_view_id, const mojo::String& url) {
     LOG(ERROR) << "DidNavigateLocally: source_view_id: " << source_view_id
@@ -256,9 +259,7 @@ class WindowManager : public ApplicationDelegate,
     OnLaunch(control_panel_id_, TARGET_NEW_NODE, url);
   }
 
-  void SetNavigationTarget(Target t) override {
-    navigation_target_ = t;
-  }
+  void SetNavigationTarget(Target t) override { navigation_target_ = t; }
 
   // mojo::InterfaceFactory<examples::DebugPanelHost> implementation.
   void Create(
@@ -276,22 +277,6 @@ class WindowManager : public ApplicationDelegate,
 
  private:
   typedef std::vector<Window*> WindowVector;
-
-  // Overridden from ApplicationDelegate:
-  void Initialize(ApplicationImpl* app) override {
-    shell_ = app->shell();
-    app_ = app;
-    // FIXME: Mojo applications don't know their URLs yet:
-    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
-    url_ = GURL(app->args()[1]);
-    window_manager_app_->Initialize(app);
-  }
-
-  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
-    connection->AddService<::examples::IWindowManager>(this);
-    window_manager_app_->ConfigureIncomingConnection(connection);
-    return true;
-  }
 
   // Overridden from ViewManagerDelegate:
   void OnEmbed(View* root,
@@ -321,9 +306,9 @@ class WindowManager : public ApplicationDelegate,
     // PreTargetHandler to the window() here. We probably have to do something
     // analogous here.
 
-    window_manager_app_->InitFocus(
+    window_manager_root_->InitFocus(
         make_scoped_ptr(new window_manager::BasicFocusRules(root)));
-    window_manager_app_->accelerator_manager()->Register(
+    window_manager_root_->accelerator_manager()->Register(
         ui::Accelerator(ui::VKEY_BROWSER_BACK, 0),
         ui::AcceleratorManager::kNormalPriority, this);
   }
@@ -363,9 +348,7 @@ class WindowManager : public ApplicationDelegate,
   }
 
   // Overriden from ui::AcceleratorTarget:
-  bool CanHandleAccelerators() const override {
-    return true;
-  }
+  bool CanHandleAccelerators() const override { return true; }
 
   void OnLaunch(uint32 source_view_id,
                 Target requested_target,
@@ -445,8 +428,7 @@ class WindowManager : public ApplicationDelegate,
     bounds.x = root->bounds().width - kControlPanelWidth - kBorderInset;
     bounds.y = kBorderInset * 2 + kTextfieldHeight;
     bounds.width = kControlPanelWidth;
-    bounds.height =
-        root->bounds().height - kBorderInset * 3 - kTextfieldHeight;
+    bounds.height = root->bounds().height - kBorderInset * 3 - kTextfieldHeight;
     view->SetBounds(bounds);
     view->SetVisible(true);
 
@@ -463,8 +445,7 @@ class WindowManager : public ApplicationDelegate,
 
   WindowVector::iterator GetWindowByViewId(Id view_id) {
     for (std::vector<Window*>::iterator iter = windows_.begin();
-         iter != windows_.end();
-         ++iter) {
+         iter != windows_.end(); ++iter) {
       if ((*iter)->view()->id() == view_id) {
         return iter;
       }
@@ -480,7 +461,7 @@ class WindowManager : public ApplicationDelegate,
   scoped_ptr<RootLayoutManager> root_layout_manager_;
   ServiceProviderImpl control_panel_exposed_services_impl_;
 
-  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
+  window_manager::WindowManagerRoot* window_manager_root_;
 
   // Id of the view most content is added to.
   Id content_view_id_;
@@ -495,6 +476,45 @@ class WindowManager : public ApplicationDelegate,
 
   mojo::Binding<examples::DebugPanelHost> binding_;
 
+  DISALLOW_COPY_AND_ASSIGN(WindowManagerController);
+};
+
+class WindowManager : public ApplicationDelegate,
+                      public window_manager::WindowManagerControllerFactory {
+ public:
+  WindowManager()
+      : window_manager_app_(new window_manager::WindowManagerApp(this)) {}
+
+  scoped_ptr<window_manager::WindowManagerController>
+  CreateWindowManagerController(
+      ApplicationConnection* connection,
+      window_manager::WindowManagerRoot* wm_root) override {
+    return scoped_ptr<WindowManagerController>(
+        new WindowManagerController(shell_, app_, connection, wm_root));
+  }
+
+ private:
+  // Overridden from ApplicationDelegate:
+  void Initialize(ApplicationImpl* app) override {
+    window_manager_app_.reset(new window_manager::WindowManagerApp(this));
+    shell_ = app->shell();
+    app_ = app;
+    // FIXME: Mojo applications don't know their URLs yet:
+    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
+    url_ = GURL(app->args()[1]);
+    window_manager_app_->Initialize(app);
+  }
+
+  bool ConfigureIncomingConnection(ApplicationConnection* connection) override {
+    window_manager_app_->ConfigureIncomingConnection(connection);
+    return true;
+  }
+
+  ApplicationImpl* app_;
+  Shell* shell_;
+  GURL url_;
+
+  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
   DISALLOW_COPY_AND_ASSIGN(WindowManager);
 };
 

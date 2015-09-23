@@ -11,7 +11,7 @@
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "mojo/services/view_manager/public/cpp/view_manager.h"
 #include "services/window_manager/capture_controller.h"
-#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_root.h"
 #include "url/gurl.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,11 +21,11 @@ FrameController::FrameController(
     const GURL& frame_app_url,
     mojo::View* view,
     mojo::View** app_view,
-    window_manager::WindowManagerApp* window_manager_app)
+    window_manager::WindowManagerRoot* window_manager_root)
     : view_(view),
       app_view_(view->view_manager()->CreateView()),
       maximized_(false),
-      window_manager_app_(window_manager_app),
+      window_manager_root_(window_manager_root),
       binding_(this) {
   view_->AddObserver(this);
   view_->SetVisible(true);  // FIXME: This should not be our responsibility?
@@ -69,14 +69,14 @@ void FrameController::ToggleMaximize() {
 }
 
 void FrameController::ActivateWindow() {
-  window_manager_app_->focus_controller()->ActivateView(view_);
+  window_manager_root_->focus_controller()->ActivateView(view_);
 }
 
 void FrameController::SetCapture(bool frame_has_capture) {
   if (frame_has_capture)
-    window_manager_app_->capture_controller()->SetCapture(view_);
+    window_manager_root_->capture_controller()->SetCapture(view_);
   else
-    window_manager_app_->capture_controller()->ReleaseCapture(view_);
+    window_manager_root_->capture_controller()->ReleaseCapture(view_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

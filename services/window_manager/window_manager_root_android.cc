@@ -2,12 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_root.h"
+
+#include <android/keycodes.h>
+
+#include "ui/events/keycodes/keyboard_codes_posix.h"
 
 namespace window_manager {
 
-ui::Accelerator WindowManagerApp::ConvertEventToAccelerator(
+ui::Accelerator WindowManagerRoot::ConvertEventToAccelerator(
     const ui::KeyEvent* event) {
+  if (event->platform_keycode() == AKEYCODE_BACK)
+    return ui::Accelerator(ui::VKEY_BROWSER_BACK, 0);
   return ui::Accelerator(event->key_code(), event->flags());
 }
 

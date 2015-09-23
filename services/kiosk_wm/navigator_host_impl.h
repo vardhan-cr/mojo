@@ -11,11 +11,11 @@
 #include "mojo/services/navigation/public/interfaces/navigation.mojom.h"
 
 namespace kiosk_wm {
-class KioskWM;
+class KioskWMController;
 
 class NavigatorHostImpl : public mojo::NavigatorHost {
  public:
-  NavigatorHostImpl(KioskWM* kiosk_wm);
+  NavigatorHostImpl(KioskWMController* kiosk_wm);
   ~NavigatorHostImpl() override;
 
   void Bind(mojo::InterfaceRequest<mojo::NavigatorHost> request);
@@ -32,7 +32,7 @@ class NavigatorHostImpl : public mojo::NavigatorHost {
   std::vector<std::string> history_;
   int32_t current_index_;
 
-  KioskWM* kiosk_wm_;
+  KioskWMController* kiosk_wm_;
   mojo::BindingSet<NavigatorHost> bindings_;
 
   DISALLOW_COPY_AND_ASSIGN(NavigatorHostImpl);

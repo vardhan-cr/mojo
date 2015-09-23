@@ -9,6 +9,8 @@ mojo_native_application("kiosk_wm") {
   sources = [
     "kiosk_wm.cc",
     "kiosk_wm.h",
+    "kiosk_wm_controller.cc",
+    "kiosk_wm_controller.h",
     "main.cc",
     "merged_service_provider.cc",
     "merged_service_provider.h",
@@ -28,6 +30,7 @@ mojo_native_application("kiosk_wm") {
     "//mojo/services/input_events/public/interfaces",
     "//mojo/services/navigation/public/interfaces",
     "//mojo/services/view_manager/public/cpp",
+    "//mojo/services/window_manager/public/interfaces:interfaces",
     "//services/window_manager:lib",
     "//ui/base",
   ]

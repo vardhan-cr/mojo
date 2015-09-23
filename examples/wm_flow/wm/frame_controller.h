@@ -21,7 +21,7 @@ class View;
 }
 
 namespace window_manager {
-class WindowManagerApp;
+class WindowManagerRoot;
 }
 
 // FrameController encapsulates the window manager's frame additions to a window
@@ -35,7 +35,7 @@ class FrameController
   FrameController(const GURL& frame_app_url,
                   mojo::View* view,
                   mojo::View** app_view,
-                  window_manager::WindowManagerApp* window_manager_app);
+                  window_manager::WindowManagerRoot* window_manager_root);
   ~FrameController() override;
 
   // mojo::InterfaceFactory<examples::WindowFrameHost> implementation.
@@ -59,7 +59,7 @@ class FrameController
   mojo::View* app_view_;
   bool maximized_;
   gfx::Rect restored_bounds_;
-  window_manager::WindowManagerApp* window_manager_app_;
+  window_manager::WindowManagerRoot* window_manager_root_;
   mojo::ServiceProviderImpl viewer_services_impl_;
 
   mojo::Binding<examples::WindowFrameHost> binding_;

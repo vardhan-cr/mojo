@@ -90,9 +90,6 @@ struct InternalShellData {
   // Thread to run the shell on.
   scoped_ptr<base::DelegateSimpleThread> shell_thread;
 
-  // Proxy to a Window Manager, initialized on the shell thread.
-  mojo::WindowManagerPtr window_manager;
-
   // TaskRunner used to execute tasks on the shell thread.
   scoped_refptr<base::SingleThreadTaskRunner> shell_task_runner;
 
@@ -171,8 +168,8 @@ void InitializeRedirection() {
   CHECK(base::CreateDirectoryAndGetError(directory, nullptr))
       << "Unable to create directory: " << directory.value();
   unlink(fifo_path.value().c_str());
-  CHECK(base::android::CreateFIFO(fifo_path, 0666))
-      << "Unable to create fifo: " << fifo_path.value();
+  CHECK(base::android::CreateFIFO(fifo_path, 0666)) << "Unable to create fifo: "
+                                                    << fifo_path.value();
   CHECK(base::android::RedirectStream(stdout, fifo_path, "w"))
       << "Failed to redirect stdout to file: " << fifo_path.value();
   CHECK(dup2(STDOUT_FILENO, STDERR_FILENO) != -1)
@@ -199,12 +196,12 @@ void ConnectToApplicationImpl(
 
 void EmbedApplicationByURL(std::string url) {
   DCHECK(g_internal_data.Get().shell_task_runner->RunsTasksOnCurrentThread());
-  if (!g_internal_data.Get().window_manager.get()) {
-    Context* context = g_internal_data.Get().context.get();
-    context->application_manager()->ConnectToService(
-        GURL("mojo:window_manager"), &g_internal_data.Get().window_manager);
-  }
-  g_internal_data.Get().window_manager->Embed(url, nullptr, nullptr);
+
+  mojo::WindowManagerPtr window_manager;
+  Context* context = g_internal_data.Get().context.get();
+  context->application_manager()->ConnectToService(GURL("mojo:window_manager"),
+                                                   &window_manager);
+  window_manager->Embed(url, nullptr, nullptr);
 }
 
 void UploadCrashes(const base::FilePath& dumps_path) {

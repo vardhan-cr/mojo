@@ -15,36 +15,22 @@
 #include "services/window_manager/basic_focus_rules.h"
 #include "services/window_manager/window_manager_app.h"
 #include "services/window_manager/window_manager_delegate.h"
+#include "services/window_manager/window_manager_root.h"
 #include "url/gurl.h"
 
 namespace examples {
 
-class SimpleWM : public mojo::ApplicationDelegate,
-                 public mojo::ViewManagerDelegate,
-                 public window_manager::WindowManagerDelegate,
-                 public mojo::ViewObserver {
+class SimpleWMController : public window_manager::WindowManagerController,
+                           public mojo::ViewObserver {
  public:
-  SimpleWM()
-      : window_manager_app_(new window_manager::WindowManagerApp(this, this)),
+  SimpleWMController(window_manager::WindowManagerRoot* wm_root)
+      : window_manager_root_(wm_root),
         root_(NULL),
         window_container_(NULL),
         next_window_origin_(10, 10) {}
-  ~SimpleWM() override {}
+  ~SimpleWMController() override {}
 
  private:
-  // Overridden from mojo::ApplicationDelegate:
-  void Initialize(mojo::ApplicationImpl* impl) override {
-    // FIXME: Mojo applications don't know their URLs yet:
-    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
-    url_ = GURL(impl->args()[1]);
-    window_manager_app_->Initialize(impl);
-  }
-  bool ConfigureIncomingConnection(
-      mojo::ApplicationConnection* connection) override {
-    window_manager_app_->ConfigureIncomingConnection(connection);
-    return true;
-  }
-
   // Overridden from mojo::ViewManagerDelegate:
   void OnEmbed(mojo::View* root,
                mojo::InterfaceRequest<mojo::ServiceProvider> services,
@@ -56,7 +42,7 @@ class SimpleWM : public mojo::ApplicationDelegate,
     root_->AddChild(window_container_);
     window_container_->SetVisible(true);
 
-    window_manager_app_->InitFocus(make_scoped_ptr(
+    window_manager_root_->InitFocus(make_scoped_ptr(
         new window_manager::BasicFocusRules(window_container_)));
   }
   void OnViewManagerDisconnected(mojo::ViewManager* view_manager) override {
@@ -105,18 +91,55 @@ class SimpleWM : public mojo::ApplicationDelegate,
     next_window_origin_.Offset(50, 50);
 
     GURL frame_url = url_.Resolve("/examples/wm_flow/wm/window_frame.sky");
-    new FrameController(frame_url, frame_view, app_view,
-                        window_manager_app_.get());
+    new FrameController(frame_url, frame_view, app_view, window_manager_root_);
     return frame_view;
   }
 
-  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
+  window_manager::WindowManagerRoot* window_manager_root_;
 
   GURL url_;
   mojo::View* root_;
   mojo::View* window_container_;
 
   gfx::Point next_window_origin_;
+
+  DISALLOW_COPY_AND_ASSIGN(SimpleWMController);
+};
+
+class SimpleWM : public mojo::ApplicationDelegate,
+                 public window_manager::WindowManagerControllerFactory {
+ public:
+  SimpleWM()
+      : window_manager_app_(new window_manager::WindowManagerApp(this)) {}
+
+ protected:
+  ~SimpleWM() override {}
+
+ private:
+  // Overridden from mojo::ApplicationDelegate:
+  void Initialize(mojo::ApplicationImpl* impl) override {
+    // FIXME: Mojo applications don't know their URLs yet:
+    // https://docs.google.com/a/chromium.org/document/d/1AQ2y6ekzvbdaMF5WrUQmneyXJnke-MnYYL4Gz1AKDos
+    url_ = GURL(impl->args()[1]);
+    window_manager_app_->Initialize(impl);
+  }
+
+  bool ConfigureIncomingConnection(
+      mojo::ApplicationConnection* connection) override {
+    window_manager_app_->ConfigureIncomingConnection(connection);
+    return true;
+  }
+
+  scoped_ptr<window_manager::WindowManagerController>
+  CreateWindowManagerController(
+      mojo::ApplicationConnection* connection,
+      window_manager::WindowManagerRoot* wm_root) override {
+    return scoped_ptr<window_manager::WindowManagerController>(
+        new SimpleWMController(wm_root));
+  }
+
+  scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
+  GURL url_;
 
   DISALLOW_COPY_AND_ASSIGN(SimpleWM);
 };

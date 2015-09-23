@@ -4,11 +4,11 @@
 
 #include "services/kiosk_wm/navigator_host_impl.h"
 
-#include "services/kiosk_wm/kiosk_wm.h"
+#include "services/kiosk_wm/kiosk_wm_controller.h"
 
 namespace kiosk_wm {
 
-NavigatorHostImpl::NavigatorHostImpl(KioskWM* window_manager)
+NavigatorHostImpl::NavigatorHostImpl(KioskWMController* window_manager)
     : current_index_(-1), kiosk_wm_(window_manager) {
 }
 

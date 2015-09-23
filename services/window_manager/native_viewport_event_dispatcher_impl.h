@@ -12,14 +12,14 @@
 
 namespace window_manager {
 
-class WindowManagerApp;
+class WindowManagerRoot;
 
 class NativeViewportEventDispatcherImpl
     : public ui::EventSource,
       public mojo::NativeViewportEventDispatcher {
  public:
   NativeViewportEventDispatcherImpl(
-      WindowManagerApp* app,
+      WindowManagerRoot* root,
       mojo::InterfaceRequest<mojo::NativeViewportEventDispatcher> request);
   ~NativeViewportEventDispatcherImpl() override;
 
@@ -31,7 +31,7 @@ class NativeViewportEventDispatcherImpl
   void OnEvent(mojo::EventPtr event,
                const mojo::Callback<void()>& callback) override;
 
-  WindowManagerApp* app_;
+  WindowManagerRoot* root_;
 
   mojo::StrongBinding<mojo::NativeViewportEventDispatcher> binding_;
   DISALLOW_COPY_AND_ASSIGN(NativeViewportEventDispatcherImpl);

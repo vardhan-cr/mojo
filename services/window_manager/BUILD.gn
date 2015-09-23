@@ -44,11 +44,13 @@ source_set("lib") {
     "view_targeter.h",
     "window_manager_app.cc",
     "window_manager_app.h",
-    "window_manager_app_android.cc",
-    "window_manager_app_linux.cc",
     "window_manager_delegate.h",
     "window_manager_impl.cc",
     "window_manager_impl.h",
+    "window_manager_root.cc",
+    "window_manager_root.h",
+    "window_manager_root_android.cc",
+    "window_manager_root_linux.cc",
   ]
 
   deps = [

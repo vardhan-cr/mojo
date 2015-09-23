@@ -4,30 +4,31 @@
 
 #include "services/window_manager/window_manager_impl.h"
 
+#include "base/bind.h"
 #include "mojo/services/view_manager/public/cpp/view.h"
 #include "services/window_manager/capture_controller.h"
 #include "services/window_manager/focus_controller.h"
-#include "services/window_manager/window_manager_app.h"
+#include "services/window_manager/window_manager_root.h"
 
 using mojo::Callback;
 using mojo::Id;
 
 namespace window_manager {
 
-WindowManagerImpl::WindowManagerImpl(WindowManagerApp* window_manager,
-                                     bool from_vm)
-    : window_manager_(window_manager), from_vm_(from_vm), binding_(this) {
-  window_manager_->AddConnection(this);
+WindowManagerImpl::WindowManagerImpl(
+    WindowManagerRoot* window_manager,
+    mojo::ScopedMessagePipeHandle window_manager_pipe,
+    bool from_vm)
+    : window_manager_(window_manager),
+      from_vm_(from_vm),
+      binding_(this, window_manager_pipe.Pass()) {
+  binding_.set_connection_error_handler(
+      // WindowManagerRoot::RemoveConnectedService will destroy this object.
+      base::Bind(&WindowManagerRoot::RemoveConnectedService,
+                 base::Unretained(window_manager_), base::Unretained(this)));
 }
 
-WindowManagerImpl::~WindowManagerImpl() {
-  window_manager_->RemoveConnection(this);
-}
-
-void WindowManagerImpl::Bind(
-    mojo::ScopedMessagePipeHandle window_manager_pipe) {
-  binding_.Bind(window_manager_pipe.Pass());
-}
+WindowManagerImpl::~WindowManagerImpl(){};
 
 void WindowManagerImpl::NotifyViewFocused(Id focused_id) {
   if (from_vm_ && observer_)
