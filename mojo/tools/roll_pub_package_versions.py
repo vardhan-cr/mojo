@@ -14,9 +14,15 @@ PUBSPECS = [
     'mojo/public/dart/mojo/pubspec.yaml',
 ]
 
-def increment_version(version):
+def increment_patch_version(version):
     pieces = version.split('.')
     pieces[-1] = str(int(pieces[-1]) + 1)
+    return '.'.join(pieces)
+
+def increment_minor_version(version):
+    pieces = version.split('.')
+    pieces[-2] = str(int(pieces[-2]) + 1)
+    pieces[-1] = '0'
     return '.'.join(pieces)
 
 
@@ -35,7 +41,7 @@ def update_pubspec(pubspec):
     with open(pubspec, 'r') as stream:
         spec = yaml.load(stream)
         old_version = spec['version']
-        spec['version'] = increment_version(old_version)
+        spec['version'] = increment_minor_version(old_version)
         print "%20s  %6s => %6s" % (spec['name'], old_version, spec['version'])
 
     with open(pubspec, 'w') as stream:

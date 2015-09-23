@@ -1,3 +1,9 @@
+## 0.1.0
+
+  - 0 changes: https://github.com/domokit/mojo/compare/86d3dc4...86d3dc4
+
+  Declare dependency on mojom and mojo 0.1.x
+
 ## 0.0.25
 
   - 187 changes: https://github.com/domokit/mojo/compare/e5cc610...3139c74
