@@ -7,12 +7,11 @@ import os
 import subprocess
 import yaml
 
-
 PUBSPECS = [
-    'mojo/dart/apptest/pubspec.yaml',
+    'mojo/public/dart/mojo_apptest/pubspec.yaml',
     'mojo/dart/mojo_services/pubspec.yaml',
-    'mojo/dart/mojom/pubspec.yaml',
-    'mojo/public/dart/pubspec.yaml',
+    'mojo/public/dart/mojom/pubspec.yaml',
+    'mojo/public/dart/mojo/pubspec.yaml',
 ]
 
 def increment_version(version):
