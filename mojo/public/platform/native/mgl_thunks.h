@@ -27,6 +27,7 @@ struct MGLThunks {
   void (*MGLDestroyContext)(MGLContext context);
   void (*MGLMakeCurrent)(MGLContext context);
   MGLContext (*MGLGetCurrentContext)(void);
+  MGLMustCastToProperFunctionPointerType (*MGLGetProcAddress)(const char* name);
 };
 #pragma pack(pop)
 
@@ -39,6 +40,7 @@ inline struct MGLThunks MojoMakeMGLThunks() {
       MGLDestroyContext,
       MGLMakeCurrent,
       MGLGetCurrentContext,
+      MGLGetProcAddress,
   };
 
   return mgl_thunks;

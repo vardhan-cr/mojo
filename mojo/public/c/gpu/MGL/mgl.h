@@ -55,6 +55,13 @@ void MGLMakeCurrent(MGLContext context);
 // if there is none.
 MGLContext MGLGetCurrentContext(void);
 
+// Returns GL function usable in any context that advertise the corresponding
+// extension in their GL_EXTENSIONS string, or null for functions that the
+// implementation does not support. The implementation only advertises GL
+// functions.
+// |name| is the name of the GL function.
+MGLMustCastToProperFunctionPointerType MGLGetProcAddress(const char* name);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -7,6 +7,15 @@
 #include "mojo/gles2/gles2_context.h"
 #include "mojo/public/cpp/system/message_pipe.h"
 
+extern "C" {
+
+#define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
+  ReturnType MojoGLES2gl##Function PARAMETERS;
+#include "mojo/public/platform/native/gles2/call_visitor.h"
+#undef VISIT_GL_CALL
+
+}
+
 namespace gles2 {
 
 // static
@@ -50,6 +59,18 @@ void ControlThunksImpl::ResizeSurface(uint32_t width, uint32_t height) {
 
 void ControlThunksImpl::SwapBuffers() {
   current_context_tls_.Get()->interface()->SwapBuffers();
+}
+
+
+MGLMustCastToProperFunctionPointerType ControlThunksImpl::GetProcAddress(
+    const char* name) {
+#define VISIT_GL_CALL(Function, ReturnType, PARAMETERS, ARGUMENTS) \
+  if (!strcmp(name, "gl"#Function)) \
+    return reinterpret_cast<MGLMustCastToProperFunctionPointerType>( \
+        MojoGLES2gl##Function);
+#include "mojo/public/platform/native/gles2/call_visitor.h"
+#undef VISIT_GL_CALL
+  return nullptr;
 }
 
 void* ControlThunksImpl::GetGLES2Interface(MGLContext context) {

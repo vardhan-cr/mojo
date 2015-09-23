@@ -15,6 +15,10 @@ typedef struct MGLContextPrivate* MGLContext;
 typedef void (*MGLContextLostCallback)(void* closure);
 typedef void (*MGLSignalSyncPointCallback)(void* closure);
 
+// This is a generic function pointer type, which must be cast to the proper
+// type and calling convention before use.
+typedef void (*MGLMustCastToProperFunctionPointerType)(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -49,4 +49,8 @@ void MGLSwapBuffers() {
   return gles2::ControlThunksImpl::Get()->SwapBuffers();
 }
 
+MGLMustCastToProperFunctionPointerType MGLGetProcAddress(const char* procname) {
+  return gles2::ControlThunksImpl::Get()->GetProcAddress(procname);
+}
+
 }  // extern "C"

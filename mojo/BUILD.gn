@@ -58,6 +58,7 @@ group("tests") {
     "//mojo/services/view_manager/public/cpp/tests:mojo_view_manager_lib_unittests",
     "//mojo/tests:mojo_task_tracker_perftests",
     "//mojo/tools:message_generator",
+    "//mojo/gles2:mgl_unittests",
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
   ]

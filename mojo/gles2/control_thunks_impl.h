@@ -45,6 +45,8 @@ class ControlThunksImpl {
 
   void SwapBuffers();
 
+  MGLMustCastToProperFunctionPointerType GetProcAddress(const char* procname);
+
   void* GetGLES2Interface(MGLContext context);
 
   void SignalSyncPoint(uint32_t sync_point,

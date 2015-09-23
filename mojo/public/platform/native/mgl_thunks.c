@@ -43,3 +43,8 @@ THUNK_EXPORT size_t MojoSetMGLThunks(
     g_thunks = *mgl_thunks;
   return sizeof(g_thunks);
 }
+
+MGLMustCastToProperFunctionPointerType MGLGetProcAddress(const char* name) {
+  assert(g_thunks.MGLGetProcAddress);
+  return g_thunks.MGLGetProcAddress(name);
+}

@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//testing/test.gni")
 import("//mojo/public/tools/bindings/mojom.gni")
 
 config("mojo_use_gles2") {
@@ -77,5 +78,24 @@ source_set("mgl") {
     "//mojo/public/c/gpu:MGL",
     "//mojo/public/c/gpu:MGL_onscreen",
     "//mojo/public/cpp/system",
+  ]
+}
+
+test("mgl_unittests") {
+  deps = [
+    ":mgl",
+    "//base",
+    "//base/test:test_support",
+    "//mojo/edk/system",
+    "//mojo/edk/test:run_all_unittests",
+    "//mojo/edk/test:test_support_impl",
+    "//mojo/public/c/gpu:MGL",
+    "//mojo/public/c/test_support:test_support",
+    "//mojo/public/cpp/environment:standalone",
+    "//testing/gtest:gtest",
+  ]
+
+  sources = [
+    "mgl_unittest.cc",
   ]
 }
