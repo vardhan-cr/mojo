@@ -37,7 +37,8 @@ const MojoHandleSignals kAllSignals = MOJO_HANDLE_SIGNAL_READABLE |
 
 class RemoteDataPipeImplTest : public testing::Test {
  public:
-  RemoteDataPipeImplTest() : io_thread_(mojo::test::TestIOThread::kAutoStart) {}
+  RemoteDataPipeImplTest()
+      : io_thread_(mojo::test::TestIOThread::StartMode::AUTO) {}
   ~RemoteDataPipeImplTest() override {}
 
   void SetUp() override {

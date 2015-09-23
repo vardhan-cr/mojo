@@ -73,7 +73,7 @@ bool WriteTestMessageToHandle(const embedder::PlatformHandle& handle,
 
 class RawChannelTest : public testing::Test {
  public:
-  RawChannelTest() : io_thread_(mojo::test::TestIOThread::kManualStart) {}
+  RawChannelTest() : io_thread_(mojo::test::TestIOThread::StartMode::MANUAL) {}
   ~RawChannelTest() override {}
 
   void SetUp() override {

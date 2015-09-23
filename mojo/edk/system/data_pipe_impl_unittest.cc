@@ -224,7 +224,7 @@ class LocalDataPipeImplTestHelper : public DataPipeImplTestHelper {
 class RemoteDataPipeImplTestHelper : public DataPipeImplTestHelper {
  public:
   RemoteDataPipeImplTestHelper()
-      : io_thread_(mojo::test::TestIOThread::kAutoStart) {}
+      : io_thread_(mojo::test::TestIOThread::StartMode::AUTO) {}
   ~RemoteDataPipeImplTestHelper() override {}
 
   void SetUp() override {
