@@ -157,23 +157,26 @@ TEST_F(ShellHTTPAppTest, MAYBE_QueryHandling) {
   application_impl()->ConnectToService(GetURL("app?bar"), &pingable2);
 
   int num_responses = 0;
-  auto callback = [this, &num_responses](const String& app_url,
-                                         const String& connection_url,
-                                         const String& message) {
-    EXPECT_EQ(GetURL("app"), app_url);
-    EXPECT_EQ("hello", message);
-    ++num_responses;
-    if (num_responses == 1) {
-      EXPECT_EQ(GetURL("app?foo"), connection_url);
-    } else if (num_responses == 2) {
-      EXPECT_EQ(GetURL("app?bar"), connection_url);
-      base::MessageLoop::current()->Quit();
-    } else {
-      CHECK(false);
-    }
+  auto callbacks_builder = [this, &num_responses](int query_index) {
+    return [this, &num_responses, query_index](const String& app_url,
+                                               const String& connection_url,
+                                               const String& message) {
+      EXPECT_EQ(GetURL("app"), app_url);
+      EXPECT_EQ("hello", message);
+      if (query_index == 1) {
+        EXPECT_EQ(GetURL("app?foo"), connection_url);
+      } else if (query_index == 2) {
+        EXPECT_EQ(GetURL("app?bar"), connection_url);
+      } else {
+        CHECK(false);
+      }
+      ++num_responses;
+      if (num_responses == 2)
+        base::MessageLoop::current()->Quit();
+    };
   };
-  pingable1->Ping("hello", callback);
-  pingable2->Ping("hello", callback);
+  pingable1->Ping("hello", callbacks_builder(1));
+  pingable2->Ping("hello", callbacks_builder(2));
   base::RunLoop().Run();
 }
 
