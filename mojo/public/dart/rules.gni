@@ -403,3 +403,51 @@ template("dart_pkg") {
     }
   }
 }
+
+# Used to create dart_pkgs from a directory populated by fetch_dart_packages.py
+#
+# This build rule will result in a many packages under $root_gen_dir/dart-pkg/.
+#
+#   base_dir (optional)
+#       Directory populated by fetch_dart_packages.py. Defaults to BUILD.gn
+#       directory.
+template("dart_packages") {
+  base_dir = "."
+  if (defined(invoker.base_dir)) {
+    base_dir = invoker.base_dir
+  }
+
+  # Determine list of packages.
+  list_script = rebase_path("mojo/public/dart/tools/fetch_dart_packages.py",
+                            ".",
+                            mojo_sdk_root)
+  packages = exec_script(list_script,
+                         [
+                           "--directory",
+                           rebase_path(base_dir),
+                           "--list",
+                         ],
+                         "list lines",
+                         [
+                           rebase_path("pubspec.yaml"),
+                           rebase_path("pubspec.lock"),
+                         ])
+
+  # Generate dart_pkg for each package.
+  foreach(package_dir, packages) {
+    dart_pkg("$package_dir") {
+      pkg_dir = rebase_path("$package_dir")
+    }
+  }
+
+  # Generate target group.
+  group(target_name) {
+    deps = []
+    foreach(package_dir, packages) {
+      deps += [ ":$package_dir" ]
+    }
+    if (defined(invoker.deps)) {
+      deps += invoker.deps
+    }
+  }
+}

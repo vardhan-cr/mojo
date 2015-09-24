@@ -16,11 +16,17 @@ import sys
 
 SCRIPT_DIR = os.path.dirname(sys.argv[0])
 
-def check_for_pubspec_yaml():
-  return os.path.exists(os.path.join(SCRIPT_DIR, 'pubspec.yaml'))
+def check_for_pubspec_yaml(directory):
+  return os.path.exists(os.path.join(directory, 'pubspec.yaml'))
 
 def change_directory(directory):
   return os.chdir(directory)
+
+def list_packages(directory):
+  for child in os.listdir(directory):
+    path = os.path.join(directory, child)
+    if os.path.isdir(path):
+      print(child)
 
 def remove_existing_packages(base_path):
   print('Removing all package directories under %s' % base_path)
@@ -54,19 +60,32 @@ def main():
                       metavar='pub_exe',
                       help='Path to the pub executable',
                       default='../../../../third_party/dart-sdk/dart-sdk/bin/pub')
-
+  parser.add_argument('--directory',
+                      action='store',
+                      metavar='directory',
+                      help='Directory containing pubspec.yaml',
+                      default='.')
+  parser.add_argument('--list',
+                      help='List mode',
+                      action='store_true',
+                      default=False)
   args = parser.parse_args()
-  if not check_for_pubspec_yaml():
+  args.directory = os.path.abspath(args.directory)
+
+  if not check_for_pubspec_yaml(args.directory):
     print('Error could not find pubspec.yaml')
     return 1
 
-  remove_existing_packages(SCRIPT_DIR)
-  change_directory(SCRIPT_DIR)
-  print('Running pub get')
-  pub_get(args.pub_exe)
-  copy_packages(SCRIPT_DIR)
-  print('Cleaning up')
-  cleanup(SCRIPT_DIR)
+  if args.list:
+    list_packages(args.directory)
+  else:
+    remove_existing_packages(args.directory)
+    change_directory(args.directory)
+    print('Running pub get')
+    pub_get(args.pub_exe)
+    copy_packages(args.directory)
+    print('Cleaning up')
+    cleanup(args.directory)
 
 if __name__ == '__main__':
   sys.exit(main())
