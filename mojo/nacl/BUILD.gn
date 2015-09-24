@@ -136,7 +136,6 @@ action("translate_mojo_pnacl_tests_to_native") {
     "$output",
     "-arch",
     "x86-32-nonsfi",
-    "--allow-llvm-bitcode-input",
   ]
   deps = [
     ":mojo_pnacl_tests",
