@@ -43,11 +43,13 @@ adb start-server
 #   5037: adb
 # and from the local host to the remote host:
 #   9998: http server for Sky
-#   31840: http server for the local mojo: origin
 #   31839: http server for https://core.mojoapps.io
+#   31840: http server for the local mojo: origin
+#   31841: http server for base mappings
 ssh -C \
     -R 5037:127.0.0.1:5037 \
     -L 9998:127.0.0.1:9998 \
     -L 31839:127.0.0.1:31839 \
     -L 31840:127.0.0.1:31840 \
+    -L 31841:127.0.0.1:31841 \
     "$remote_host"
