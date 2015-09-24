@@ -594,15 +594,17 @@ void DartController::InitVmIfNeeded(Dart_EntropySource entropy,
   // This should be called before calling Dart_Initialize.
   tonic::DartDebugger::InitDebugger();
 
-  result = Dart_Initialize(vm_isolate_snapshot_buffer,
-                           IsolateCreateCallback,
-                           nullptr,  // Isolate interrupt callback.
-                           UnhandledExceptionCallback,
-                           IsolateShutdownCallback,
-                           // File IO callbacks.
-                           nullptr, nullptr, nullptr, nullptr,
-                           entropy);
-  CHECK(result);
+  const char* error = Dart_Initialize(
+      vm_isolate_snapshot_buffer,
+      nullptr, // Precompiled instructions
+      IsolateCreateCallback,
+      nullptr,  // Isolate interrupt callback.
+      UnhandledExceptionCallback,
+      IsolateShutdownCallback,
+      // File IO callbacks.
+      nullptr, nullptr, nullptr, nullptr,
+      entropy);
+  CHECK(error == nullptr);
   initialized_ = true;
 }
 

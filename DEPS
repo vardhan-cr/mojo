@@ -23,7 +23,8 @@ vars = {
   'v8_revision': '230d131d173ab2d60291d303177bc04ec3f6e519',
   'angle_revision': 'bdd419f9f5b006e913606e7363125942c8ae06bc',
   'buildtools_revision': '565d04e8741429fb1b4f26d102f2c6c3b849edeb',
-  'dart_revision': 'cab003366785773ace16b5305ac1f33c228cac54',
+  'dart_revision': '0b931dbc007ff9d8574c8bd80a8e42723f936cfe',
+  'dart_root_certificates_revision': 'c3a41df63afacec62fcb8135196177e35fe72f71',
   'dart_observatory_packages_revision': 'cdc4b3d4c15b9c0c8e7702dff127b440afbb7485',
   'pdfium_revision': 'ae4256f45df69bbfdf722a6ec17e1e851911ae4e',
   'boringssl_revision': '642f1498d056dbba3e50ed5a232ab2f482626dec',
@@ -69,6 +70,11 @@ deps = {
     Var('chromium_git') +
     '/external/github.com/dart-lang/observatory_pub_packages' + '@' +
     Var('dart_observatory_packages_revision'),
+
+  'src/dart/third_party/root_certificates':
+    Var('chromium_git') +
+    '/external/github.com/dart-lang/root_certificates' + '@' +
+    Var('dart_root_certificates_revision'),
 
   'src/third_party/skia':
    Var('chromium_git') + '/skia.git' + '@' +  Var('skia_revision'),
