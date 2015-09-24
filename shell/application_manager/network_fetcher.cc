@@ -36,6 +36,9 @@ char kArchitecture[] = "macosx";
 #error "Unsupported."
 #endif
 
+const bool kScheduleUpdate = true;
+const bool kDoNotScheduleUpdate = false;
+
 // The delay to wait before trying to update an application after having served
 // it from the cache.
 const uint32_t kUpdateApplicationDelayInSeconds = 60;
@@ -61,6 +64,22 @@ mojo::URLRequestPtr GetRequest(const GURL& url, bool disable_cache) {
   request->headers = headers.Pass();
 
   return request.Pass();
+}
+
+// Clone an URLResponse, except for the body.
+mojo::URLResponsePtr CloneResponse(const mojo::URLResponsePtr& response) {
+  mojo::URLResponsePtr cloned = mojo::URLResponse::New();
+  cloned->error = response->error.Clone();
+  cloned->url = response->url;
+  cloned->status_code = response->status_code;
+  cloned->status_line = response->status_line;
+  cloned->headers = response->headers.Clone();
+  cloned->mime_type = response->mime_type;
+  cloned->charset = response->charset;
+  cloned->redirect_method = response->redirect_method;
+  cloned->redirect_url = response->redirect_url;
+  cloned->redirect_referrer = response->redirect_referrer;
+  return cloned.Pass();
 }
 
 // This class is self owned and will delete itself after having tried to update
@@ -119,7 +138,9 @@ void ApplicationUpdater::UpdateApplication() {
 }
 
 void ApplicationUpdater::OnLoadComplete(mojo::URLResponsePtr response) {
+  std::string url = response->url;
   url_response_disk_cache_->Update(response.Pass());
+  url_response_disk_cache_->Validate(url);
   delete this;
 }
 
@@ -140,7 +161,7 @@ NetworkFetcher::NetworkFetcher(
       network_service_(network_service),
       weak_ptr_factory_(this) {
   if (CanLoadDirectlyFromCache()) {
-    LoadFromCache(true);
+    LoadFromCache();
   } else {
     StartNetworkRequest();
   }
@@ -210,18 +231,17 @@ bool NetworkFetcher::CanLoadDirectlyFromCache() {
   return !(host == "localhost" || host == "127.0.0.1" || host == "[::1]");
 }
 
-void NetworkFetcher::LoadFromCache(bool schedule_update) {
+void NetworkFetcher::LoadFromCache() {
   url_response_disk_cache_->Get(
       mojo::String::From(url_),
-      base::Bind(&NetworkFetcher::OnCachedResponseReceived,
-                 base::Unretained(this), schedule_update));
+      base::Bind(&NetworkFetcher::OnResponseReceived, base::Unretained(this),
+                 kScheduleUpdate));
 }
 
-void NetworkFetcher::OnCachedResponseReceived(
-    bool schedule_update,
-    mojo::URLResponsePtr response,
-    mojo::Array<uint8_t> path_as_array,
-    mojo::Array<uint8_t> cache_dir) {
+void NetworkFetcher::OnResponseReceived(bool schedule_update,
+                                        mojo::URLResponsePtr response,
+                                        mojo::Array<uint8_t> path_as_array,
+                                        mojo::Array<uint8_t> cache_dir) {
   if (!response) {
     // Not in cache, loading from net.
     StartNetworkRequest();
@@ -274,12 +294,15 @@ void NetworkFetcher::OnLoadComplete(mojo::URLResponsePtr response) {
     return;
   }
 
+  mojo::URLResponsePtr cloned_response = CloneResponse(response);
   url_response_disk_cache_->UpdateAndGet(
       response.Pass(), base::Bind(&NetworkFetcher::OnFileSavedToCache,
-                                  weak_ptr_factory_.GetWeakPtr()));
+                                  weak_ptr_factory_.GetWeakPtr(),
+                                  base::Passed(cloned_response.Pass())));
 }
 
-void NetworkFetcher::OnFileSavedToCache(mojo::Array<uint8_t> path_as_array,
+void NetworkFetcher::OnFileSavedToCache(mojo::URLResponsePtr response,
+                                        mojo::Array<uint8_t> path_as_array,
                                         mojo::Array<uint8_t> cache_dir) {
   if (!path_as_array) {
     LOG(WARNING) << "Error when retrieving content from cache for: "
@@ -288,7 +311,8 @@ void NetworkFetcher::OnFileSavedToCache(mojo::Array<uint8_t> path_as_array,
     delete this;
     return;
   }
-  LoadFromCache(false);
+  OnResponseReceived(kDoNotScheduleUpdate, response.Pass(),
+                     path_as_array.Pass(), cache_dir.Pass());
 }
 
 void NetworkFetcher::RecordCacheToURLMapping(const base::FilePath& path,

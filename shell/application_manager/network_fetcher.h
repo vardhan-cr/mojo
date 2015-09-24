@@ -49,20 +49,27 @@ class NetworkFetcher : public Fetcher {
   // are not loaded from cache to allow effective development.
   bool CanLoadDirectlyFromCache();
 
-  void LoadFromCache(bool schedule_update);
+  // Tries to load the URL directly from the offline cache.
+  void LoadFromCache();
 
-  void OnCachedResponseReceived(bool schedule_update,
-                                mojo::URLResponsePtr response,
-                                mojo::Array<uint8_t> path_as_array,
-                                mojo::Array<uint8_t> cache_dir);
-
-  void StartNetworkRequest();
-
-  void OnLoadComplete(mojo::URLResponsePtr response);
-
-  void OnFileSavedToCache(mojo::Array<uint8_t> path_as_array,
+  // Callback from the offline cache.
+  void OnResponseReceived(bool schedule_update,
+                          mojo::URLResponsePtr response,
+                          mojo::Array<uint8_t> path_as_array,
                           mojo::Array<uint8_t> cache_dir);
 
+  // Start a network request to load the URL.
+  void StartNetworkRequest();
+
+  // Callback from the network stack.
+  void OnLoadComplete(mojo::URLResponsePtr response);
+
+  // Callback from the offline cache when the response is saved by the cache.
+  void OnFileSavedToCache(mojo::URLResponsePtr response,
+                          mojo::Array<uint8_t> path_as_array,
+                          mojo::Array<uint8_t> cache_dir);
+
+  // Record the mapping from URLs to files.
   static void RecordCacheToURLMapping(const base::FilePath& path,
                                       const GURL& url);
 

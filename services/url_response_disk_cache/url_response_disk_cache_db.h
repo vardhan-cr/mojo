@@ -44,6 +44,10 @@ class URLResponseDiskCacheDB
   uint64_t GetVersion();
   void SetVersion(uint64_t version);
 
+  // Set and get an entry for a given key.
+  void Put(CacheKeyPtr key, CacheEntryPtr entry);
+  CacheEntryPtr Get(CacheKeyPtr key);
+
   // Put an entry for the given |request_origin| and |url|. Older entry for the
   // same |request_origin| and |url| will not be removed, but will be shadowed
   // by the new one.
@@ -52,9 +56,11 @@ class URLResponseDiskCacheDB
               CacheEntryPtr entry);
 
   // Returns the newest entry for the given |request_origin| and |url|, or null
-  // if none exist.
+  // if none exist. If |key| is not null and GetNewest returns an entry, |*key|
+  // will contain the actual key of the entry.
   CacheEntryPtr GetNewest(const std::string& request_origin,
-                          const std::string& url);
+                          const std::string& url,
+                          CacheKeyPtr* key);
 
   // Delete the entry for the given |key|.
   void Delete(CacheKeyPtr key);

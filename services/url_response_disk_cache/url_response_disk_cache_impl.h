@@ -38,6 +38,7 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
   // URLResponseDiskCache
   void Get(const String& url, const GetCallback& callback) override;
   void Update(URLResponsePtr response) override;
+  void Validate(const String& url) override;
   void UpdateAndGet(URLResponsePtr response,
                     const UpdateAndGetCallback& callback) override;
   void UpdateAndGetExtracted(

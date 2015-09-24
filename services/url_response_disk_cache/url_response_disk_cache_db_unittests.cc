@@ -55,11 +55,25 @@ TEST_F(URLResponseDiskCacheDBTest, Entry) {
   std::string origin = "origin";
   std::string url = "url";
   db_->PutNew(origin, url, NewEntry());
-  CacheEntryPtr entry = db_->GetNewest(origin, url);
+  CacheKeyPtr key;
+  CacheEntryPtr entry = db_->GetNewest(origin, url, &key);
+  EXPECT_TRUE(key);
   EXPECT_TRUE(entry);
   Open();
-  entry = db_->GetNewest(origin, url);
+  CacheKeyPtr key2;
+  entry = db_->GetNewest(origin, url, &key2);
   EXPECT_TRUE(entry);
+  EXPECT_TRUE(key.Equals(key2));
+
+  std::string new_entry_directory = "/newcache/";
+  entry->entry_directory = new_entry_directory;
+  db_->Put(key.Clone(), entry.Pass());
+  entry = db_->GetNewest(origin, url, nullptr);
+  EXPECT_TRUE(entry);
+  EXPECT_EQ(new_entry_directory, entry->entry_directory);
+  entry = db_->Get(key.Pass());
+  EXPECT_TRUE(entry);
+  EXPECT_EQ(new_entry_directory, entry->entry_directory);
 }
 
 TEST_F(URLResponseDiskCacheDBTest, Newest) {
@@ -71,7 +85,7 @@ TEST_F(URLResponseDiskCacheDBTest, Newest) {
   CacheEntryPtr entry = NewEntry();
   entry->entry_directory = new_entry_directory;
   db_->PutNew(origin, url, entry.Pass());
-  entry = db_->GetNewest(origin, url);
+  entry = db_->GetNewest(origin, url, nullptr);
   EXPECT_TRUE(entry);
   EXPECT_EQ(new_entry_directory, entry->entry_directory);
 }
@@ -82,7 +96,7 @@ TEST_F(URLResponseDiskCacheDBTest, Iterator) {
   std::string url2 = "b";
   std::string url3 = "c";
   db_->PutNew(origin, url2, NewEntry());
-  CacheEntryPtr entry = db_->GetNewest(origin, url2);
+  CacheEntryPtr entry = db_->GetNewest(origin, url2, nullptr);
   EXPECT_TRUE(entry);
   db_->PutNew(origin, url1, NewEntry());
   db_->PutNew(origin, url3, NewEntry());
@@ -111,7 +125,7 @@ TEST_F(URLResponseDiskCacheDBTest, Delete) {
   std::string origin = "origin";
   std::string url = "url";
   db_->PutNew(origin, url, NewEntry());
-  CacheEntryPtr entry = db_->GetNewest(origin, url);
+  CacheEntryPtr entry = db_->GetNewest(origin, url, nullptr);
   EXPECT_TRUE(entry);
   entry = CacheEntry::New();
   scoped_ptr<URLResponseDiskCacheDB::Iterator> iterator = db_->GetIterator();
@@ -122,7 +136,7 @@ TEST_F(URLResponseDiskCacheDBTest, Delete) {
   EXPECT_TRUE(key);
   EXPECT_TRUE(entry);
   db_->Delete(key.Pass());
-  entry = db_->GetNewest(origin, url);
+  entry = db_->GetNewest(origin, url, nullptr);
   EXPECT_FALSE(entry);
 }
 

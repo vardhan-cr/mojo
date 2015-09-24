@@ -168,13 +168,7 @@ void URLResponseDiskCacheDB::SetVersion(uint64_t version) {
   DCHECK(status.ok());
 }
 
-void URLResponseDiskCacheDB::PutNew(const std::string& request_origin,
-                                    const std::string& url,
-                                    CacheEntryPtr entry) {
-  CacheKeyPtr key = CacheKey::New();
-  key->request_origin = request_origin;
-  key->url = url;
-  key->timestamp = base::Time::Now().ToInternalValue();
+void URLResponseDiskCacheDB::Put(CacheKeyPtr key, CacheEntryPtr entry) {
   std::string key_string;
   Serialize(key.Pass(), &key_string);
   std::string entry_string;
@@ -184,9 +178,34 @@ void URLResponseDiskCacheDB::PutNew(const std::string& request_origin,
   DCHECK(s.ok());
 }
 
+CacheEntryPtr URLResponseDiskCacheDB::Get(CacheKeyPtr key) {
+  std::string key_string;
+  std::string entry_string;
+  Serialize(key.Pass(), &key_string);
+  leveldb::Status status =
+      db_->Get(leveldb::ReadOptions(), key_string, &entry_string);
+  if (status.IsNotFound())
+    return CacheEntryPtr();
+  DCHECK(status.ok());
+  CacheEntryPtr result;
+  Deserialize(entry_string, &result);
+  return result.Pass();
+}
+
+void URLResponseDiskCacheDB::PutNew(const std::string& request_origin,
+                                    const std::string& url,
+                                    CacheEntryPtr entry) {
+  CacheKeyPtr key = CacheKey::New();
+  key->request_origin = request_origin;
+  key->url = url;
+  key->timestamp = base::Time::Now().ToInternalValue();
+  Put(key.Pass(), entry.Pass());
+}
+
 CacheEntryPtr URLResponseDiskCacheDB::GetNewest(
     const std::string& request_origin,
-    const std::string& url) {
+    const std::string& url,
+    CacheKeyPtr* output_key) {
   CacheKeyPtr key = CacheKey::New();
   key->request_origin = request_origin;
   key->url = url;
@@ -200,6 +219,9 @@ CacheEntryPtr URLResponseDiskCacheDB::GetNewest(
     Deserialize(it->key(), &key);
     if (key->request_origin == request_origin && key->url == url) {
       Deserialize(it->value(), &result);
+      if (output_key) {
+        *output_key = key.Pass();
+      }
     }
   }
   return result.Pass();

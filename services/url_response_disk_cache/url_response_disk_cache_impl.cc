@@ -35,11 +35,15 @@ namespace {
 
 // The current version of the cache. This should only be incremented. When this
 // is incremented, all current cache entries will be invalidated.
-const uint32_t kCurrentVersion = 0;
+const uint32_t kCurrentVersion = 1;
 
 // The delay to wait before starting deleting data. This is delayed to not
 // interfere with the shell startup.
 const uint32_t kTrashDelayInSeconds = 60;
+
+// The delay between the time an entry is invalidated and the cache not
+// returning it anymore.
+const uint32_t kTimeUntilInvalidationInSeconds = 90;
 
 const char kEtagHeader[] = "etag";
 
@@ -175,6 +179,7 @@ void RunCallbackWithSuccess(
   entry->response = response.Pass();
   entry->entry_directory = entry_directory.value();
   entry->response_body_path = response_body_path.value();
+  entry->last_invalidation = base::Time::Max().ToInternalValue();
 
   db->PutNew(request_origin, url, entry.Pass());
 
@@ -242,6 +247,14 @@ bool IsCacheEntryFresh(const URLResponsePtr& response,
 
   // Looking for the first etag header.
   return entry_etags[0] == response_etags[0];
+}
+
+void UpdateLastInvalidation(scoped_refptr<URLResponseDiskCacheDB> db,
+                            CacheKeyPtr key,
+                            const base::Time& time) {
+  CacheEntryPtr entry = db->Get(key.Clone());
+  entry->last_invalidation = time.ToInternalValue();
+  db->Put(key.Pass(), entry.Pass());
 }
 
 void PruneCache(scoped_refptr<URLResponseDiskCacheDB> db,
@@ -317,10 +330,20 @@ URLResponseDiskCacheImpl::URLResponseDiskCacheImpl(
 URLResponseDiskCacheImpl::~URLResponseDiskCacheImpl() {
 }
 
+bool IsInvalidated(const CacheEntryPtr& entry) {
+  if (!entry)
+    return true;
+  return base::Time::Now() -
+             base::Time::FromInternalValue(entry->last_invalidation) >
+         base::TimeDelta::FromSeconds(kTimeUntilInvalidationInSeconds);
+}
+
 void URLResponseDiskCacheImpl::Get(const String& url,
                                    const GetCallback& callback) {
-  CacheEntryPtr entry = db_->GetNewest(request_origin_, CanonicalizeURL(url));
-  if (!IsCacheEntryValid(entry)) {
+  CacheKeyPtr key;
+  CacheEntryPtr entry =
+      db_->GetNewest(request_origin_, CanonicalizeURL(url), &key);
+  if (IsInvalidated(entry) || !IsCacheEntryValid(entry)) {
     callback.Run(URLResponsePtr(), Array<uint8_t>(), Array<uint8_t>());
     return;
   }
@@ -328,6 +351,15 @@ void URLResponseDiskCacheImpl::Get(const String& url,
                PathToArray(base::FilePath(entry->response_body_path)),
                PathToArray(GetConsumerCacheDirectory(
                    base::FilePath(entry->entry_directory))));
+  UpdateLastInvalidation(db_, key.Pass(), base::Time::Now());
+}
+
+void URLResponseDiskCacheImpl::Validate(const String& url) {
+  CacheKeyPtr key;
+  CacheEntryPtr entry =
+      db_->GetNewest(request_origin_, CanonicalizeURL(url), &key);
+  if (entry)
+    UpdateLastInvalidation(db_, key.Pass(), base::Time::Max());
 }
 
 void URLResponseDiskCacheImpl::Update(URLResponsePtr response) {
@@ -343,38 +375,11 @@ void URLResponseDiskCacheImpl::UpdateAndGet(
 void URLResponseDiskCacheImpl::UpdateAndGetExtracted(
     URLResponsePtr response,
     const UpdateAndGetExtractedCallback& callback) {
-  if (response->error ||
-      (response->status_code >= 400 && response->status_code < 600)) {
-    callback.Run(Array<uint8_t>(), Array<uint8_t>());
-    return;
-  }
-
-  std::string url = CanonicalizeURL(response->url);
-
-  // Check if the response is cached and valid. If that's the case, returns the
-  // cached value.
-  CacheEntryPtr entry = db_->GetNewest(request_origin_, url);
-
-  if (!IsCacheEntryFresh(response, entry)) {
-    UpdateAndGetInternal(
-        response.Pass(),
-        base::Bind(&URLResponseDiskCacheImpl::UpdateAndGetExtractedInternal,
-                   base::Unretained(this),
-                   base::Bind(&RunMojoCallback, callback)));
-    return;
-  }
-
-  base::FilePath entry_directory = base::FilePath(entry->entry_directory);
-  base::FilePath extraction_directory = GetExtractionDirectory(entry_directory);
-  if (!PathExists(GetExtractionSentinel(entry_directory))) {
-    UpdateAndGetExtractedInternal(base::Bind(&RunMojoCallback, callback),
-                                  base::FilePath(entry->response_body_path),
-                                  GetConsumerCacheDirectory(entry_directory));
-    return;
-  }
-
-  callback.Run(PathToArray(extraction_directory),
-               PathToArray(GetConsumerCacheDirectory(entry_directory)));
+  UpdateAndGetInternal(
+      response.Pass(),
+      base::Bind(&URLResponseDiskCacheImpl::UpdateAndGetExtractedInternal,
+                 base::Unretained(this),
+                 base::Bind(&RunMojoCallback, callback)));
 }
 
 void URLResponseDiskCacheImpl::UpdateAndGetInternal(
@@ -390,11 +395,13 @@ void URLResponseDiskCacheImpl::UpdateAndGetInternal(
 
   // Check if the response is cached and valid. If that's the case, returns
   // the cached value.
-  CacheEntryPtr entry = db_->GetNewest(request_origin_, url);
+  CacheKeyPtr key;
+  CacheEntryPtr entry = db_->GetNewest(request_origin_, url, &key);
   if (IsCacheEntryFresh(response, entry)) {
     callback.Run(
         base::FilePath(entry->response_body_path),
         GetConsumerCacheDirectory(base::FilePath(entry->entry_directory)));
+    UpdateLastInvalidation(db_, key.Pass(), base::Time::Max());
     return;
   }
 

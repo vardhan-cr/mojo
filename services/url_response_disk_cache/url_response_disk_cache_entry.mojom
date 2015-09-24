@@ -19,4 +19,5 @@ struct CacheEntry {
   URLResponse response;
   string entry_directory;
   string response_body_path;
+  int64 last_invalidation;
 };
