@@ -19,7 +19,11 @@ public class IntentReceiverActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (processIntent(getIntent())) {
-            finish();
+            if (isTaskRoot()) {
+                finishAndRemoveTask();
+            } else {
+                finish();
+            }
         }
     }
 
@@ -56,6 +60,10 @@ public class IntentReceiverActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentReceiverRegistry.getInstance().onActivityResult(requestCode, resultCode, data);
-        finish();
+        if (isTaskRoot()) {
+            finishAndRemoveTask();
+        } else {
+            finish();
+        }
     }
 }
