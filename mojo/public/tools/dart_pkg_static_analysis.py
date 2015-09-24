@@ -9,6 +9,7 @@
 import argparse
 import errno
 import json
+import multiprocessing
 import os
 import shutil
 import subprocess
@@ -16,6 +17,11 @@ import sys
 
 DART_ANALYZE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "dart_analyze.py")
+
+# List of analysis results.
+result_list = []
+def collect_result(result):
+  result_list.append(result)
 
 def analyze_entrypoints(dart_sdk, package_root, entrypoints):
   cmd = [ "python", DART_ANALYZE ]
@@ -34,6 +40,12 @@ def analyze_entrypoints(dart_sdk, package_root, entrypoints):
     return e.returncode
   return 0
 
+
+def analyze_package(dart_sdk, package_root, package):
+  package_name = package[0]
+  package_entrypoints = package[1]
+  print('Analyzing dart-pkg %s ' % package_name)
+  return analyze_entrypoints(dart_sdk, package_root, package_entrypoints)
 
 def main():
   parser = argparse.ArgumentParser(description='Generate a dart-pkg')
@@ -63,17 +75,31 @@ def main():
       print "Pass --dart-sdk, or define the DART_SDK environment variable"
       return 1
 
-  # Analyze each package
+  jobs = []
+  # Determine which packages to analyze
   for filename in os.listdir(args.dart_pkg_dir):
     if filename.endswith('.entries'):
       if not args.package_name or (filename == args.package_name + '.entries'):
-        print('Analyzing dart-pkg %s ' % os.path.splitext(filename)[0])
         with open(os.path.join(args.dart_pkg_dir, filename)) as f:
             entrypoints = f.read().splitlines()
         if entrypoints != []:
-          result = analyze_entrypoints(dart_sdk, args.package_root, entrypoints)
-          if result != 0:
-            return result
+          jobs.append([os.path.splitext(filename)[0], entrypoints])
+
+  # Create a process pool.
+  pool = multiprocessing.Pool(multiprocessing.cpu_count())
+  # Spawn jobs.
+  for job in jobs:
+    pool.apply_async(analyze_package,
+                     args = (dart_sdk, args.package_root, job, ),
+                     callback = collect_result)
+  # Wait for them to complete.
+  pool.close();
+  pool.join();
+
+  # Return the error code if any packages failed.
+  for result in result_list:
+    if result != 0:
+      return result
 
   return 0
 
