@@ -7,6 +7,7 @@
 #include "mojo/public/cpp/bindings/lib/array_serialization.h"
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
 #include "mojo/public/cpp/bindings/tests/container_test_util.h"
+#include "mojo/public/cpp/bindings/tests/iterator_test_util.h"
 #include "mojo/public/cpp/environment/environment.h"
 #include "mojo/public/interfaces/bindings/tests/test_structs.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -438,6 +439,55 @@ TEST_F(ArrayTest, PushBack_MoveOnly) {
   }
   array.reset();
   EXPECT_EQ(0u, MoveOnlyType::num_instances());
+}
+
+TEST_F(ArrayTest, Iterator) {
+  std::vector<int> values;
+  values.push_back(0);
+  values.push_back(1);
+  values.push_back(2);
+  values.push_back(3);
+  Array<int> arr = Array<int>::From(values);
+
+  // Test RandomAcessIterator traits.
+  {
+    // Test +,-,+=,-=.
+    auto i1 = arr.begin();
+    i1 += 2;
+    EXPECT_EQ(*i1, values[2]);
+    i1 -= 2;
+    EXPECT_EQ(*i1, values[0]);
+    EXPECT_EQ((i1 + 2)[1], values[3]);
+
+    auto i2 = arr.begin() + 3;
+    EXPECT_EQ(*i2, values[3]);
+    EXPECT_EQ(*(i2 - 2), values[1]);
+    EXPECT_EQ(i2 - i1, 3);
+
+    {
+      auto j1 = arr.begin();
+      auto j1_cp = arr.begin();
+      j1 += 1;
+      j1_cp++;
+      EXPECT_EQ(j1, j1_cp);
+
+      j1 -= 1;
+      j1_cp--;
+      EXPECT_EQ(j1, j1_cp);
+    }
+
+    // Test >, <, >=, <=.
+    EXPECT_GT(i2, i1);
+    EXPECT_LT(i1, i2);
+    EXPECT_GE(i2, i1);
+    EXPECT_LE(i1, i2);
+  }
+
+  {
+    SCOPED_TRACE("Array iterator bidirectionality test.");
+    ExpectBidiIteratorConcept(arr.begin(), arr.end(), values);
+    ExpectBidiMutableIteratorConcept(arr.begin(), arr.end(), values);
+  }
 }
 
 }  // namespace
