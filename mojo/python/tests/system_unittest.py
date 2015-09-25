@@ -264,7 +264,7 @@ class CoreTest(mojo_unittest.MojoTestCase):
 
   def testTwoPhaseWriteOnDataPipe(self):
     pipes = system.DataPipe()
-    (res, buf) = pipes.producer_handle.BeginWriteData(DATA_SIZE)
+    (res, buf) = pipes.producer_handle.BeginWriteData()
     self.assertEquals(system.RESULT_OK, res)
     self.assertGreaterEqual(len(buf.buffer), DATA_SIZE)
     data = _GetRandomBuffer(DATA_SIZE)

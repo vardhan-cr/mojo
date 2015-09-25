@@ -55,11 +55,12 @@ def cleanup(base_path):
 
 def main():
   parser = argparse.ArgumentParser(description='Update third_party packages')
-  parser.add_argument('--pub-exe',
-                      action='store',
-                      metavar='pub_exe',
-                      help='Path to the pub executable',
-                      default='../../../../third_party/dart-sdk/dart-sdk/bin/pub')
+  parser.add_argument(
+      '--pub-exe',
+      action='store',
+      metavar='pub_exe',
+      help='Path to the pub executable',
+      default='../../../../third_party/dart-sdk/dart-sdk/bin/pub')
   parser.add_argument('--directory',
                       action='store',
                       metavar='directory',
