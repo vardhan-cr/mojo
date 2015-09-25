@@ -107,12 +107,13 @@ MojoResult DataPipeConsumerDispatcher::BeginReadDataImplNoLock(
   mutex().AssertHeld();
 
   // These flags may not be used in two-phase mode.
-  if ((flags & MOJO_READ_DATA_FLAG_DISCARD) ||
+  if ((flags & MOJO_READ_DATA_FLAG_ALL_OR_NONE) ||
+      (flags & MOJO_READ_DATA_FLAG_DISCARD) ||
       (flags & MOJO_READ_DATA_FLAG_QUERY) || (flags & MOJO_READ_DATA_FLAG_PEEK))
     return MOJO_RESULT_INVALID_ARGUMENT;
 
-  return data_pipe_->ConsumerBeginReadData(
-      buffer, buffer_num_bytes, (flags & MOJO_READ_DATA_FLAG_ALL_OR_NONE));
+  // TODO(vtl): Remove all-or-none support at lower levels.
+  return data_pipe_->ConsumerBeginReadData(buffer, buffer_num_bytes, false);
 }
 
 MojoResult DataPipeConsumerDispatcher::EndReadDataImplNoLock(

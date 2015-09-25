@@ -122,9 +122,9 @@ func (c *CGoSystem) WriteData(producerHandle uint32, buf []byte, flags uint32) (
 	return uint32(r), uint32(numBytes)
 }
 
-func (c *CGoSystem) BeginWriteData(producerHandle uint32, numBytes uint32, flags uint32) (result uint32, buf []byte) {
+func (c *CGoSystem) BeginWriteData(producerHandle uint32, flags uint32) (result uint32, buf []byte) {
 	var buffer unsafe.Pointer
-	bufferNumBytes := C.uint32_t(numBytes)
+	var bufferNumBytes C.uint32_t
 	r := C.MojoBeginWriteData(C.MojoHandle(producerHandle), &buffer, &bufferNumBytes, C.MojoWriteDataFlags(flags))
 	if r != C.MOJO_RESULT_OK {
 		return uint32(r), nil
@@ -147,9 +147,9 @@ func (c *CGoSystem) ReadData(consumerHandle uint32, flags uint32) (result uint32
 	return uint32(r), buf
 }
 
-func (c *CGoSystem) BeginReadData(consumerHandle uint32, numBytes uint32, flags uint32) (result uint32, buf []byte) {
+func (c *CGoSystem) BeginReadData(consumerHandle uint32, flags uint32) (result uint32, buf []byte) {
 	var buffer unsafe.Pointer
-	bufferNumBytes := C.uint32_t(numBytes)
+	var bufferNumBytes C.uint32_t
 	r := C.MojoBeginReadData(C.MojoHandle(consumerHandle), &buffer, &bufferNumBytes, C.MojoReadDataFlags(flags))
 	if r != C.MOJO_RESULT_OK {
 		return uint32(r), nil

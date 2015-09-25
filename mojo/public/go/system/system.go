@@ -20,11 +20,11 @@ type MojoSystem interface {
 	CreateDataPipe(flags, elementNumBytes, capacityNumBytes uint32) (result uint32, producerHandle, consumerHandle uint32)
 	CreateDataPipeWithDefaultOptions() (result uint32, producerHandle, consumerHandle uint32)
 	WriteData(producerHandle uint32, buf []byte, flags uint32) (result uint32, bytesWritten uint32)
-	BeginWriteData(producerHandle uint32, numBytes uint32, flags uint32) (result uint32, buf []byte)
+	BeginWriteData(producerHandle uint32, flags uint32) (result uint32, buf []byte)
 	EndWriteData(producerHandle uint32, numBytesWritten uint32) (result uint32)
 
 	ReadData(consumerHandle, flags uint32) (result uint32, buf []byte)
-	BeginReadData(consumerHandle uint32, numBytes uint32, flags uint32) (result uint32, buf []byte)
+	BeginReadData(consumerHandle uint32, flags uint32) (result uint32, buf []byte)
 	EndReadData(consumerHandle uint32, numBytesRead uint32) (result uint32)
 
 	// Time

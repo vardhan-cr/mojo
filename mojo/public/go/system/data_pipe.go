@@ -14,10 +14,8 @@ type ConsumerHandle interface {
 
 	// BeginReadData begins a two-phase read from the data pipe consumer.
 	// On success, returns a slice from which the caller can read up to its
-	// length bytes of data. If flags has |MOJO_READ_DATA_FLAG_ALL_OR_NONE|
-	// set, then the slice length will be at least as large as |numBytes|,
-	// which must also be a multiple of the element size (otherwise the
-	// caller must check the length of the slice).
+	// length bytes of data. The slice length will always be a multiple of 
+	// the element size.
 	//
 	// During a two-phase read, this handle is *not* readable. E.g., read
 	// from this handle will return |MOJO_RESULT_BUSY|.
@@ -25,7 +23,7 @@ type ConsumerHandle interface {
 	// Once the caller has finished reading data from the slice, it should
 	// call |EndReadData()| to specify the amount read and to complete the
 	// two-phase read.
-	BeginReadData(numBytes int, flags MojoReadDataFlags) (MojoResult, []byte)
+	BeginReadData(flags MojoReadDataFlags) (MojoResult, []byte)
 
 	// EndReadData ends a two-phase read from the data pipe consumer that
 	// was begun by a call to |BeginReadData()| on the same handle.
@@ -48,11 +46,8 @@ type ProducerHandle interface {
 	WriteData(data []byte, flags MojoWriteDataFlags) (MojoResult, int)
 
 	// BeginWriteData begins a two-phase write to the data pipe producer.
-	// On success, returns a slice to which the caller can write. If flags
-	// has |MOJO_READ_DATA_FLAG_ALL_OR_NONE| set, then the slice length will
-	// be at least as large as |numBytes|, which must also be a multiple of
-	// the element size (otherwise the caller must check the length of the
-	// slice).
+	// On success, returns a slice to which the caller can write. The slice
+	// length will always be a multiple of the element size.
 	//
 	// During a two-phase write, this handle is *not* writable. E.g., write
 	// to this handle will return |MOJO_RESULT_BUSY|.
@@ -60,7 +55,7 @@ type ProducerHandle interface {
 	// Once the caller has finished writing data to the buffer, it should
 	// call |EndWriteData()| to specify the amount written and to complete
 	// the two-phase write.
-	BeginWriteData(numBytes int, flags MojoWriteDataFlags) (MojoResult, []byte)
+	BeginWriteData(flags MojoWriteDataFlags) (MojoResult, []byte)
 
 	// EndWriteData ends a two-phase write to the data pipe producer that
 	// was begun by a call to |BeginWriteData()| on the same handle.
@@ -89,9 +84,9 @@ func (h *dataPipeConsumer) ReadData(flags MojoReadDataFlags) (MojoResult, []byte
 	return MojoResult(r), buf
 }
 
-func (h *dataPipeConsumer) BeginReadData(numBytes int, flags MojoReadDataFlags) (MojoResult, []byte) {
+func (h *dataPipeConsumer) BeginReadData(flags MojoReadDataFlags) (MojoResult, []byte) {
 	h.core.mu.Lock()
-	r, buf := sysImpl.BeginReadData(uint32(h.mojoHandle), uint32(numBytes), uint32(flags))
+	r, buf := sysImpl.BeginReadData(uint32(h.mojoHandle), uint32(flags))
 	h.core.mu.Unlock()
 	return MojoResult(r), buf
 }
@@ -116,9 +111,9 @@ func (h *dataPipeProducer) WriteData(data []byte, flags MojoWriteDataFlags) (Moj
 	return MojoResult(r), int(bytesWritten)
 }
 
-func (h *dataPipeProducer) BeginWriteData(numBytes int, flags MojoWriteDataFlags) (MojoResult, []byte) {
+func (h *dataPipeProducer) BeginWriteData(flags MojoWriteDataFlags) (MojoResult, []byte) {
 	h.core.mu.Lock()
-	r, buf := sysImpl.BeginWriteData(uint32(h.mojoHandle), uint32(numBytes), uint32(flags))
+	r, buf := sysImpl.BeginWriteData(uint32(h.mojoHandle), uint32(flags))
 	h.core.mu.Unlock()
 	return MojoResult(r), buf
 }

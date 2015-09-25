@@ -56,7 +56,7 @@ func (h *InvalidHandle) ReadData(flags system.MojoReadDataFlags) (system.MojoRes
 	return system.MOJO_RESULT_INVALID_ARGUMENT, nil
 }
 
-func (h *InvalidHandle) BeginReadData(numBytes int, flags system.MojoReadDataFlags) (system.MojoResult, []byte) {
+func (h *InvalidHandle) BeginReadData(flags system.MojoReadDataFlags) (system.MojoResult, []byte) {
 	return system.MOJO_RESULT_INVALID_ARGUMENT, nil
 }
 
@@ -68,7 +68,7 @@ func (h *InvalidHandle) WriteData(data []byte, flags system.MojoWriteDataFlags) 
 	return system.MOJO_RESULT_INVALID_ARGUMENT, 0
 }
 
-func (h *InvalidHandle) BeginWriteData(numBytes int, flags system.MojoWriteDataFlags) (system.MojoResult, []byte) {
+func (h *InvalidHandle) BeginWriteData(flags system.MojoWriteDataFlags) (system.MojoResult, []byte) {
 	return system.MOJO_RESULT_INVALID_ARGUMENT, nil
 }
 

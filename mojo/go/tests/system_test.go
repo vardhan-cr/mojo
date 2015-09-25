@@ -205,9 +205,9 @@ func TestDataPipe(t *testing.T) {
 	// Test two-phase read/write.
 	// Writing.
 	kHello = []byte("Hello, world!")
-	r, buf := hp.BeginWriteData(len(kHello), system.MOJO_WRITE_DATA_FLAG_NONE)
+	r, buf := hp.BeginWriteData(system.MOJO_WRITE_DATA_FLAG_NONE)
 	if r != system.MOJO_RESULT_OK {
-		t.Fatalf("Failed BeginWriteData on hp:%v numBytes:%d", r, len(kHello))
+		t.Fatalf("Failed BeginWriteData on hp:%v", r)
 	}
 	if len(buf) < len(kHello) {
 		t.Fatalf("Buffer size(%d) should be at least %d", len(buf), len(kHello))
@@ -226,8 +226,8 @@ func TestDataPipe(t *testing.T) {
 	if r, _ = hc.Wait(system.MOJO_HANDLE_SIGNAL_READABLE, system.MOJO_DEADLINE_INDEFINITE); r != system.MOJO_RESULT_OK {
 		t.Fatalf("hc should be readable after EndWriteData on hp:%v", r)
 	}
-	if r, buf = hc.BeginReadData(len(kHello), system.MOJO_READ_DATA_FLAG_NONE); r != system.MOJO_RESULT_OK {
-		t.Fatalf("Failed BeginReadData on hc:%v numBytes:%d", r, len(kHello))
+	if r, buf = hc.BeginReadData(system.MOJO_READ_DATA_FLAG_NONE); r != system.MOJO_RESULT_OK {
+		t.Fatalf("Failed BeginReadData on hc:%v", r)
 	}
 	if len(buf) != len(kHello) {
 		t.Fatalf("Buffer size(%d) should be equal to %d", len(buf), len(kHello))

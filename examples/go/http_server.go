@@ -35,12 +35,12 @@ type MojoConnection struct {
 
 // Implements net.Conn.
 func (c *MojoConnection) Read(b []byte) (int, error) {
-	l := len(b)
-	r, read := c.receiveStream.BeginReadData(l, system.MOJO_READ_DATA_FLAG_NONE)
+	r, read := c.receiveStream.BeginReadData(system.MOJO_READ_DATA_FLAG_NONE)
 	if r != system.MOJO_RESULT_OK {
-		return 0, fmt.Errorf("can't read %v bytes: %v", l, r)
+		return 0, fmt.Errorf("can't read: %v", r)
 	}
-	if l > len(read) {
+	l := len(b)
+	if (l > len(read)) {
 		l = len(read)
 	}
 	copy(b, read[:l])
@@ -52,11 +52,11 @@ func (c *MojoConnection) Read(b []byte) (int, error) {
 
 // Implements net.Conn.
 func (c *MojoConnection) Write(b []byte) (int, error) {
-	l := len(b)
-	r, buf := c.sendStream.BeginWriteData(l, system.MOJO_WRITE_DATA_FLAG_NONE)
+	r, buf := c.sendStream.BeginWriteData(system.MOJO_WRITE_DATA_FLAG_NONE)
 	if r != system.MOJO_RESULT_OK {
-		return 0, fmt.Errorf("can't write %v bytes: %v", l, r)
+		return 0, fmt.Errorf("can't write: %v", r)
 	}
+	l := len(b)
 	if l > len(buf) {
 		l = len(buf)
 	}
