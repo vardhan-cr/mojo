@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//build/config/nacl/config.gni")
+
 # This value will be inherited in the toolchain below.
 concurrent_links = exec_script("get_concurrent_links.py", [], "value")
 
@@ -13,15 +15,14 @@ concurrent_links = exec_script("get_concurrent_links.py", [], "value")
 #  - cxx
 #  - ar
 #  - ld
-#  - readelf
-#  - nm
 # and the following which is used in the toolchain_args
 #  - toolchain_cpu  (What "current_cpu" should be set to when invoking a
 #                    build using this toolchain.)
 #  - toolchain_os  (What "current_os" should be set to when invoking a
 #                   build using this toolchain.)
 #
-# Optional parameters:
+# Optional parameters that control the tools:
+#
 #  - libs_section_prefix
 #  - libs_section_postfix
 #      The contents of these strings, if specified, will be placed around
@@ -35,7 +36,17 @@ concurrent_links = exec_script("get_concurrent_links.py", [], "value")
 #      command.
 #  - deps
 #      Just forwarded to the toolchain definition.
+#
+# Optional build argument contols.
+#
 #  - is_clang
+#      Whether to use clang instead of gcc.
+#  - is_component_build
+#      Whether to forcibly enable or disable component builds for this
+#      toolchain; if not specified, the toolchain will inherit the
+#      default setting.
+#  - is_nacl_glibc
+#      Whether NaCl code is built using Glibc instead of Newlib.
 template("gcc_toolchain") {
   toolchain(target_name) {
     assert(defined(invoker.cc), "gcc_toolchain() must specify a \"cc\" value")
@@ -244,6 +255,7 @@ template("gcc_toolchain") {
                              [
                                "is_clang",
                                "is_component_build",
+                               "is_nacl_glibc",
                              ])
     }
 

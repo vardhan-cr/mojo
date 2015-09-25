@@ -38,6 +38,7 @@ template("nacl_toolchain") {
                              "cxx",
                              "deps",
                              "is_clang",
+                             "is_nacl_glibc",
                              "ld",
                              "link_outputs",
                              "postlink",
