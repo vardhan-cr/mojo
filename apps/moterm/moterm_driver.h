@@ -39,8 +39,8 @@ class MotermDriver : public mojo::files::File {
     // but not verified.
     virtual void OnDataReceived(const void* bytes, size_t num_bytes) = 0;
 
-    // Called when the terminal "file" is closed (via |Close()|. (The client may
-    // optionally call |Detach()| in response.)
+    // Called when the terminal "file" is closed (via |Close()|). (The client
+    // may optionally call |Detach()| in response.)
     virtual void OnClosed() = 0;
 
     // Called when this object is destroyed (which will happen if the other end

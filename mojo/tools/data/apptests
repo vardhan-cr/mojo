@@ -30,6 +30,9 @@ tests = [
     "test": "mojo:files_apptests",
   },
   {
+    "test": "mojo:files_impl_apptests",
+  },
+  {
     "test": "mojo:http_server_apptests",
   },
   {

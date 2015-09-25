@@ -187,6 +187,7 @@ void MotermDriver::Close(const CloseCallback& callback) {
     return;
   }
 
+  is_closed_ = true;
   callback.Run(mojo::files::ERROR_OK);
 
   // TODO(vtl): Call pending read callbacks?
@@ -240,8 +241,7 @@ void MotermDriver::Write(mojo::Array<uint8_t> bytes_to_write,
     return;
   }
 
-  HandleOutput(static_cast<const uint8_t*>(&bytes_to_write.front()),
-               bytes_to_write.size());
+  HandleOutput(&bytes_to_write.front(), bytes_to_write.size());
 
   // TODO(vtl): Is this OK if the client detached (and we're destroyed?).
   callback.Run(mojo::files::ERROR_OK,

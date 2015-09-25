@@ -60,6 +60,7 @@ group("tests") {
     "//mojo/gles2:mgl_unittests",
     "//mojo/gpu:apptests",
     "//mojo/services/files/public/c:apptests",
+    "//mojo/services/files/public/cpp:files_impl_apptests",
   ]
 
   if (is_linux || is_android) {
