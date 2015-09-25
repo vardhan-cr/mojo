@@ -13,6 +13,7 @@ group("mojo") {
 
     # TODO(ncbray): support ASAN once NaCl's GN build is unforked.
     mojo_use_nacl = is_linux && !is_asan
+    mojo_use_nacl_nonsfi = is_linux && !is_asan
   }
   deps = [
     ":tests",
@@ -42,6 +43,13 @@ group("mojo") {
     deps += [
       "//mojo/nacl:mojo_nacl",
       "//mojo/nacl:mojo_nacl_tests",
+    ]
+  }
+
+  if (mojo_use_nacl_nonsfi) {
+    deps += [
+      "//mojo/nacl:mojo_nacl_nonsfi",
+      "//mojo/nacl:mojo_nacl_tests_nonsfi",
     ]
   }
 }

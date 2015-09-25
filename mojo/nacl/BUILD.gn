@@ -105,6 +105,11 @@ static_library("irt_mojo_nonsfi") {
 group("mojo_nacl") {
   deps = [
     "//services/nacl:nacl_content_handler",
+  ]
+}
+
+group("mojo_nacl_nonsfi") {
+  deps = [
     "//services/nacl:nacl_content_handler_nonsfi",
   ]
 }
@@ -180,6 +185,12 @@ group("mojo_nacl_tests") {
   deps = [
     ":mojo_nacl_tests_untrusted(//build/toolchain/nacl:clang_newlib_${current_cpu})",
     ":monacl_shell",
+  ]
+}
+
+group("mojo_nacl_tests_nonsfi") {
+  testonly = true
+  deps = [
     ":monacl_shell_nonsfi_x86",
     ":monacl_test_nonsfi_nexes",
   ]
