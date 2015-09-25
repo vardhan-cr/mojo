@@ -10,6 +10,7 @@
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/path_service.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/dart/embedder/dart_controller.h"
 #include "mojo/dart/embedder/mojo_dart_state.h"
 #include "mojo/data_pipe_utils/data_pipe_utils.h"
@@ -105,6 +106,9 @@ DartApp::~DartApp() {
 }
 
 void DartApp::OnAppLoaded() {
+  // RunDartScript blocks the message loop.
+  base::trace_event::TraceLog::GetInstance()
+      ->SetCurrentThreadBlocksMessageLoop();
   char* error = nullptr;
   config_.handle = application_request_.PassMessagePipe().release().value();
   config_.error = &error;

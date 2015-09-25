@@ -16,9 +16,13 @@
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_delegate.h"
 #include "mojo/public/cpp/application/application_impl.h"
+#include "mojo/public/cpp/bindings/binding.h"
+#include "mojo/public/cpp/bindings/interface_request.h"
+#include "mojo/services/tracing/public/interfaces/tracing.mojom.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "services/dart/content_handler_app_service_connector.h"
 #include "services/dart/dart_app.h"
+#include "services/dart/dart_tracing.h"
 #include "url/gurl.h"
 
 namespace dart {
@@ -88,7 +92,10 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
  private:
   // Overridden from mojo::ApplicationDelegate:
   void Initialize(mojo::ApplicationImpl* app) override {
+    // Tracing of content handler and controller.
     tracing_.Initialize(app);
+    // Tracing of isolates and VM.
+    dart_tracing_.Initialize(app);
 
     // TODO(qsr): This has no effect for now, as the tracing infrastructure
     // doesn't allow to trace anything before the tracing app connects to the
@@ -148,6 +155,7 @@ class DartContentHandlerApp : public mojo::ApplicationDelegate {
   mojo::ContentHandlerFactory strict_content_handler_factory_;
   mojo::URLResponseDiskCachePtr url_response_disk_cache_;
   ContentHandlerAppServiceConnector* service_connector_;
+  DartTracingImpl dart_tracing_;
 
   DISALLOW_COPY_AND_ASSIGN(DartContentHandlerApp);
 };

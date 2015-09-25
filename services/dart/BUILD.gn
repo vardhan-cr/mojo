@@ -28,6 +28,8 @@ mojo_native_application("dart_content_handler") {
     "content_handler_main.cc",
     "dart_app.cc",
     "dart_app.h",
+    "dart_tracing.cc",
+    "dart_tracing.h",
   ]
 
   deps = [
@@ -37,7 +39,6 @@ mojo_native_application("dart_content_handler") {
     "//crypto",
     "//dart/runtime:libdart",
     "//mojo/application",
-    "//mojo/application:application",
     "//mojo/application:content_handler",
     "//mojo/dart/embedder:dart_controller_no_snapshot",
     "//mojo/data_pipe_utils",
@@ -48,6 +49,7 @@ mojo_native_application("dart_content_handler") {
     "//mojo/public/interfaces/application",
     "//mojo/services/content_handler/public/interfaces",
     "//mojo/services/network/public/interfaces",
+    "//mojo/services/tracing/public/interfaces",
     "//mojo/services/url_response_disk_cache/public/interfaces",
     "//third_party/zlib:zip",
     "//url:url",
