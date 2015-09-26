@@ -88,8 +88,7 @@ MojoResult DataPipeProducerDispatcher::BeginWriteDataImplNoLock(
   if ((flags & MOJO_WRITE_DATA_FLAG_ALL_OR_NONE))
     return MOJO_RESULT_INVALID_ARGUMENT;
 
-  // TODO(vtl): Remove all-or-none support at lower levels.
-  return data_pipe_->ProducerBeginWriteData(buffer, buffer_num_bytes, false);
+  return data_pipe_->ProducerBeginWriteData(buffer, buffer_num_bytes);
 }
 
 MojoResult DataPipeProducerDispatcher::EndWriteDataImplNoLock(

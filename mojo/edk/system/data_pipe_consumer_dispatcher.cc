@@ -112,8 +112,7 @@ MojoResult DataPipeConsumerDispatcher::BeginReadDataImplNoLock(
       (flags & MOJO_READ_DATA_FLAG_QUERY) || (flags & MOJO_READ_DATA_FLAG_PEEK))
     return MOJO_RESULT_INVALID_ARGUMENT;
 
-  // TODO(vtl): Remove all-or-none support at lower levels.
-  return data_pipe_->ConsumerBeginReadData(buffer, buffer_num_bytes, false);
+  return data_pipe_->ConsumerBeginReadData(buffer, buffer_num_bytes);
 }
 
 MojoResult DataPipeConsumerDispatcher::EndReadDataImplNoLock(
