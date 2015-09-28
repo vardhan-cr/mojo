@@ -12,6 +12,7 @@
 #include "mojo/public/cpp/bindings/strong_binding.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "services/url_response_disk_cache/url_response_disk_cache_db.h"
+#include "services/url_response_disk_cache/url_response_disk_cache_delegate.h"
 
 namespace mojo {
 
@@ -29,6 +30,7 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
       bool force_clean);
 
   URLResponseDiskCacheImpl(scoped_refptr<base::TaskRunner> task_runner,
+                           URLResponseDiskCacheDelegate* delegate,
                            scoped_refptr<URLResponseDiskCacheDB> db,
                            const std::string& remote_application_url,
                            InterfaceRequest<URLResponseDiskCache> request);
@@ -64,6 +66,7 @@ class URLResponseDiskCacheImpl : public URLResponseDiskCache {
 
   scoped_refptr<base::TaskRunner> task_runner_;
   std::string request_origin_;
+  URLResponseDiskCacheDelegate* delegate_;
   scoped_refptr<URLResponseDiskCacheDB> db_;
   StrongBinding<URLResponseDiskCache> binding_;
 

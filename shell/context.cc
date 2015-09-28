@@ -264,10 +264,12 @@ bool Context::Init() {
       base::CommandLine::ForCurrentProcess()->GetProgram());
   base::FilePath shell_child_path =
       shell_path.DirName().AppendASCII("mojo_shell_child");
-  return InitWithPaths(shell_child_path);
+  return InitWithPaths(shell_child_path, nullptr);
 }
 
-bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
+bool Context::InitWithPaths(
+    const base::FilePath& shell_child_path,
+    mojo::URLResponseDiskCacheDelegate* url_response_disk_cache_delegate) {
   TRACE_EVENT0("mojo_shell", "Context::InitWithPaths");
   const base::CommandLine& command_line =
       *base::CommandLine::ForCurrentProcess();
@@ -284,7 +286,8 @@ bool Context::InitWithPaths(const base::FilePath& shell_child_path) {
   application_manager()->SetLoaderForURL(
       make_scoped_ptr(new BackgroundApplicationLoader(
           make_scoped_ptr(
-              new URLResponseDiskCacheLoader(task_runners_->blocking_pool())),
+              new URLResponseDiskCacheLoader(task_runners_->blocking_pool(),
+                                             url_response_disk_cache_delegate)),
           "url_response_disk_cache", base::MessageLoop::TYPE_DEFAULT)),
       GURL("mojo:url_response_disk_cache"));
 #endif

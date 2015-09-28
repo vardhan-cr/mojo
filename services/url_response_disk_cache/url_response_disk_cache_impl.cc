@@ -203,6 +203,25 @@ void RunMojoCallback(
   callback.Run(PathToArray(path1), PathToArray(path2));
 }
 
+mojo::URLResponsePtr GetMinimalResponse(const std::string& url) {
+  mojo::URLResponsePtr response = mojo::URLResponse::New();
+  response->url = url;
+  response->status_code = 200;
+  return response.Pass();
+}
+
+void RunMojoCallbackWithResponse(
+    const Callback<void(mojo::URLResponsePtr, Array<uint8_t>, Array<uint8_t>)>&
+        callback,
+    const std::string& url,
+    const base::FilePath& path1,
+    const base::FilePath& path2) {
+  mojo::URLResponsePtr response;
+  if (!path1.empty())
+    response = GetMinimalResponse(url);
+  callback.Run(response.Pass(), PathToArray(path1), PathToArray(path2));
+}
+
 // Returns the list of values for the given |header_name| in the given list of
 // headers.
 std::vector<std::string> GetHeaderValues(const std::string& header_name,
@@ -320,10 +339,14 @@ scoped_refptr<URLResponseDiskCacheDB> URLResponseDiskCacheImpl::CreateDB(
 
 URLResponseDiskCacheImpl::URLResponseDiskCacheImpl(
     scoped_refptr<base::TaskRunner> task_runner,
+    URLResponseDiskCacheDelegate* delegate,
     scoped_refptr<URLResponseDiskCacheDB> db,
     const std::string& remote_application_url,
     InterfaceRequest<URLResponseDiskCache> request)
-    : task_runner_(task_runner), db_(db), binding_(this, request.Pass()) {
+    : task_runner_(task_runner),
+      delegate_(delegate),
+      db_(db),
+      binding_(this, request.Pass()) {
   request_origin_ = GURL(remote_application_url).GetOrigin().spec();
 }
 
@@ -340,9 +363,29 @@ bool IsInvalidated(const CacheEntryPtr& entry) {
 
 void URLResponseDiskCacheImpl::Get(const String& url,
                                    const GetCallback& callback) {
+  std::string canonilized_url = CanonicalizeURL(url);
   CacheKeyPtr key;
-  CacheEntryPtr entry =
-      db_->GetNewest(request_origin_, CanonicalizeURL(url), &key);
+  CacheEntryPtr entry = db_->GetNewest(request_origin_, canonilized_url, &key);
+  if (!entry && delegate_) {
+    // This is the first request for the given |url|. Ask |delegate| for initial
+    // content.
+
+    std::string identifier = GetNewIdentifier();
+    // The content is copied to the staging directory so that files are not
+    // leaked if the shell terminates before an entry is saved to the database.
+    base::FilePath staged_response_body_path =
+        GetStagingDirectory().Append(identifier);
+
+    delegate_->GetInitialPath(
+        task_runner_, canonilized_url, staged_response_body_path,
+        base::Bind(
+            RunCallbackWithSuccess,
+            base::Bind(&RunMojoCallbackWithResponse, callback, canonilized_url),
+            identifier, request_origin_, canonilized_url,
+            base::Passed(GetMinimalResponse(canonilized_url)), db_,
+            task_runner_));
+    return;
+  }
   if (IsInvalidated(entry) || !IsCacheEntryValid(entry)) {
     callback.Run(URLResponsePtr(), Array<uint8_t>(), Array<uint8_t>());
     return;

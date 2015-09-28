@@ -10,6 +10,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.AssetManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.JsonReader;
@@ -120,6 +121,7 @@ public class ShellService extends Service {
     static interface IShellBindingActivity {
         // Called when the ShellService service is connected.
         void onShellBound(ShellService shellService);
+
         // Called when the ShellService service is disconnected.
         void onShellUnbound();
     }
@@ -213,7 +215,8 @@ public class ShellService extends Service {
                 parametersList.add("--url-mappings=mojo:window_manager=" + DEFAULT_WM);
             }
 
-            nativeStart(applicationContext, mojoShellChild.getAbsolutePath(),
+            nativeStart(applicationContext, applicationContext.getAssets(),
+                    mojoShellChild.getAbsolutePath(),
                     parametersList.toArray(new String[parametersList.size()]),
                     getLocalAppsDir(applicationContext).getAbsolutePath(),
                     getTmpDir(applicationContext).getAbsolutePath(),
@@ -306,8 +309,9 @@ public class ShellService extends Service {
     /**
      * Initializes the native system. This API should be called only once per process.
      **/
-    private static native void nativeStart(Context context, String mojoShellChildPath,
-            String[] parameters, String bundledAppsDirectory, String tmpDir, String homeDir);
+    private static native void nativeStart(Context context, AssetManager assetManager,
+            String mojoShellChildPath, String[] parameters, String bundledAppsDirectory,
+            String tmpDir, String homeDir);
 
     private static native void nativeAddApplicationURL(String url);
 

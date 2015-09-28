@@ -13,6 +13,10 @@
 #include "shell/task_runners.h"
 #include "shell/url_resolver.h"
 
+namespace mojo {
+class URLResponseDiskCacheDelegate;
+}
+
 namespace shell {
 class Tracer;
 
@@ -48,8 +52,11 @@ class Context : public ApplicationManager::Delegate,
   // success.
   bool Init();
 
-  // Like Init(), but specifies |mojo_shell_child_path()| explicitly.
-  bool InitWithPaths(const base::FilePath& shell_child_path);
+  // Like Init(), but specifies |mojo_shell_child_path()| explicitly. Also
+  // allows to set a delegate for the application offline cache.
+  bool InitWithPaths(
+      const base::FilePath& shell_child_path,
+      mojo::URLResponseDiskCacheDelegate* url_response_disk_cache_delegate);
 
   // If Init() was called and succeeded, this must be called before destruction.
   void Shutdown();

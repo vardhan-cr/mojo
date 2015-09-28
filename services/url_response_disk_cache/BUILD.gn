@@ -21,6 +21,7 @@ source_set("url_response_disk_cache") {
   sources = [
     "url_response_disk_cache_app.cc",
     "url_response_disk_cache_app.h",
+    "url_response_disk_cache_delegate.h",
     "url_response_disk_cache_impl.cc",
     "url_response_disk_cache_impl.h",
   ]

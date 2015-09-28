@@ -7,8 +7,9 @@
 namespace shell {
 
 URLResponseDiskCacheLoader::URLResponseDiskCacheLoader(
-    scoped_refptr<base::TaskRunner> task_runner)
-    : url_response_disk_cache_(task_runner) {}
+    scoped_refptr<base::TaskRunner> task_runner,
+    mojo::URLResponseDiskCacheDelegate* delegate)
+    : url_response_disk_cache_(task_runner, delegate) {}
 
 URLResponseDiskCacheLoader::~URLResponseDiskCacheLoader() {
 }

@@ -10,8 +10,9 @@
 namespace mojo {
 
 URLResponseDiskCacheApp::URLResponseDiskCacheApp(
-    scoped_refptr<base::TaskRunner> task_runner)
-    : task_runner_(task_runner) {}
+    scoped_refptr<base::TaskRunner> task_runner,
+    URLResponseDiskCacheDelegate* delegate)
+    : task_runner_(task_runner), delegate_(delegate) {}
 
 URLResponseDiskCacheApp::~URLResponseDiskCacheApp() {
 }
@@ -31,8 +32,9 @@ bool URLResponseDiskCacheApp::ConfigureIncomingConnection(
 void URLResponseDiskCacheApp::Create(
     ApplicationConnection* connection,
     InterfaceRequest<URLResponseDiskCache> request) {
-  new URLResponseDiskCacheImpl(
-      task_runner_, db_, connection->GetRemoteApplicationURL(), request.Pass());
+  new URLResponseDiskCacheImpl(task_runner_, delegate_, db_,
+                               connection->GetRemoteApplicationURL(),
+                               request.Pass());
 }
 
 }  // namespace mojo

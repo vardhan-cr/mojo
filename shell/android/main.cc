@@ -32,6 +32,7 @@
 #include "shell/android/java_application_loader.h"
 #include "shell/android/native_viewport_application_loader.h"
 #include "shell/android/ui_application_loader_android.h"
+#include "shell/android/url_response_disk_cache_delegate_impl.h"
 #include "shell/application_manager/application_loader.h"
 #include "shell/background_application_loader.h"
 #include "shell/command_line_util.h"
@@ -95,6 +96,10 @@ struct InternalShellData {
 
   // Event signalling when the shell task runner has been initialized.
   scoped_ptr<base::WaitableEvent> shell_runner_ready;
+
+  // Delegate for URLResponseDiskCache. Allows to access bundled application on
+  // cold start.
+  scoped_ptr<URLResponseDiskCacheDelegateImpl> url_response_disk_cache_delegate;
 };
 
 LazyInstance<InternalShellData> g_internal_data = LAZY_INSTANCE_INITIALIZER;
@@ -147,7 +152,9 @@ void MojoShellRunner::Run() {
 
   Context* context = g_internal_data.Get().context.get();
   ConfigureAndroidServices(context);
-  CHECK(context->InitWithPaths(mojo_shell_child_path_));
+  CHECK(context->InitWithPaths(
+      mojo_shell_child_path_,
+      g_internal_data.Get().url_response_disk_cache_delegate.get()));
 
   RunCommandLineApps(context);
 
@@ -219,6 +226,7 @@ void UploadCrashes(const base::FilePath& dumps_path) {
 static void Start(JNIEnv* env,
                   jclass clazz,
                   jobject application_context,
+                  jobject j_asset_manager,
                   jstring mojo_shell_child_path,
                   jobjectArray jparameters,
                   jstring j_local_apps_directory,
@@ -283,6 +291,9 @@ static void Start(JNIEnv* env,
   shell_context->SetShellFileRoot(base::FilePath(
       base::android::ConvertJavaStringToUTF8(env, j_local_apps_directory)));
   g_internal_data.Get().context.reset(shell_context);
+
+  g_internal_data.Get().url_response_disk_cache_delegate.reset(
+      new URLResponseDiskCacheDelegateImpl(shell_context, j_asset_manager));
 
   g_internal_data.Get().java_message_loop.reset(new base::MessageLoopForUI);
   base::MessageLoopForUI::current()->Start();

@@ -226,6 +226,8 @@ source_set("parent_lib") {
       "android/native_viewport_application_loader.h",
       "android/ui_application_loader_android.cc",
       "android/ui_application_loader_android.h",
+      "android/url_response_disk_cache_delegate_impl.cc",
+      "android/url_response_disk_cache_delegate_impl.h",
     ]
 
     deps += [
@@ -397,6 +399,32 @@ if (is_android) {
       ":bootstrap_java",
       "//mojo/public/tools:copy_network_service",
     ]
+
+    if (!is_debug) {
+      sources += [
+        "$root_out_dir/authenticating_url_loader_interceptor.mojo",
+        "$root_out_dir/dart_content_handler.mojo",
+        "$root_out_dir/device_info.mojo",
+        "$root_out_dir/icu_data.mojo",
+        "$root_out_dir/java_handler.mojo",
+        "$root_out_dir/kiosk_wm.mojo",
+        "$root_out_dir/surfaces_service.mojo",
+        "$root_out_dir/tracing.mojo",
+        "$root_out_dir/view_manager.mojo",
+      ]
+
+      deps += [
+        "//services/authenticating_url_loader_interceptor",
+        "//services/android:java_handler",
+        "//services/dart:dart_content_handler",
+        "//services/device_info",
+        "//services/icu_data",
+        "//services/kiosk_wm",
+        "//services/surfaces",
+        "//services/tracing",
+        "//services/view_manager",
+      ]
+    }
   }
 
   copy_ex("copy_mojo_shell_test_assets") {

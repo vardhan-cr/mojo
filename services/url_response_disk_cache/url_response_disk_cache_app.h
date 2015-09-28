@@ -15,13 +15,15 @@
 #include "mojo/public/cpp/application/interface_factory.h"
 #include "mojo/services/url_response_disk_cache/public/interfaces/url_response_disk_cache.mojom.h"
 #include "services/url_response_disk_cache/url_response_disk_cache_db.h"
+#include "services/url_response_disk_cache/url_response_disk_cache_delegate.h"
 
 namespace mojo {
 
 class URLResponseDiskCacheApp : public ApplicationDelegate,
                                 public InterfaceFactory<URLResponseDiskCache> {
  public:
-  explicit URLResponseDiskCacheApp(scoped_refptr<base::TaskRunner> task_runner);
+  explicit URLResponseDiskCacheApp(scoped_refptr<base::TaskRunner> task_runner,
+                                   URLResponseDiskCacheDelegate* delegate);
   ~URLResponseDiskCacheApp() override;
 
  private:
@@ -35,6 +37,7 @@ class URLResponseDiskCacheApp : public ApplicationDelegate,
 
   scoped_refptr<base::TaskRunner> task_runner_;
   scoped_refptr<URLResponseDiskCacheDB> db_;
+  URLResponseDiskCacheDelegate* delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(URLResponseDiskCacheApp);
 };
