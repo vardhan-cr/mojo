@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/edk/js/mojo_runner_delegate.h"
+#include "services/js/system/mojo_runner_delegate.h"
 
 #include "base/bind.h"
 #include "base/path_service.h"
@@ -11,10 +11,10 @@
 #include "gin/modules/module_registry.h"
 #include "gin/modules/timer.h"
 #include "gin/try_catch.h"
-#include "mojo/edk/js/core.h"
-#include "mojo/edk/js/handle.h"
-#include "mojo/edk/js/support.h"
-#include "mojo/edk/js/threading.h"
+#include "services/js/system/core.h"
+#include "services/js/system/handle.h"
+#include "services/js/system/support.h"
+#include "services/js/system/threading.h"
 
 namespace mojo {
 namespace js {

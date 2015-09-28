@@ -13,11 +13,11 @@ source_set("gl") {
   deps = [
     "//base",
     "//gin",
-    "//mojo/edk/js",
     "//mojo/environment:chromium",
     "//mojo/public/c/gpu",
     "//mojo/public/c/gpu:gpu_onscreen",
     "//mojo/public/cpp/environment",
+    "//services/js/system",
     "//v8",
   ]
 }

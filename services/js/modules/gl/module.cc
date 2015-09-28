@@ -8,8 +8,8 @@
 #include "gin/object_template_builder.h"
 #include "gin/per_isolate_data.h"
 #include "gin/wrappable.h"
-#include "mojo/edk/js/handle.h"
 #include "services/js/modules/gl/context.h"
+#include "services/js/system/handle.h"
 
 namespace js {
 namespace gl {

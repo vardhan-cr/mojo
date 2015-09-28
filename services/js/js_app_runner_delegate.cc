@@ -7,12 +7,12 @@
 #include "base/path_service.h"
 #include "gin/modules/console.h"
 #include "gin/modules/timer.h"
-#include "mojo/edk/js/core.h"
-#include "mojo/edk/js/handle.h"
-#include "mojo/edk/js/support.h"
-#include "mojo/edk/js/threading.h"
 #include "services/js/modules/clock/monotonic_clock.h"
 #include "services/js/modules/gl/module.h"
+#include "services/js/system/core.h"
+#include "services/js/system/handle.h"
+#include "services/js/system/support.h"
+#include "services/js/system/threading.h"
 
 namespace js {
 

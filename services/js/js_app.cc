@@ -10,11 +10,11 @@
 #include "gin/modules/module_registry.h"
 #include "gin/try_catch.h"
 #include "mojo/data_pipe_utils/data_pipe_utils.h"
-#include "mojo/edk/js/core.h"
-#include "mojo/edk/js/handle.h"
-#include "mojo/edk/js/support.h"
 #include "mojo/public/cpp/bindings/interface_request.h"
 #include "services/js/js_app_message_loop_observers.h"
+#include "services/js/system/core.h"
+#include "services/js/system/handle.h"
+#include "services/js/system/support.h"
 
 namespace js {
 

@@ -11,6 +11,16 @@ group("js") {
   ]
 }
 
+group("tests") {
+  testonly = true
+
+  deps = [
+    ":js_apptests",
+    ":js_services_unittests",
+    "//services/js/system:tests",
+  ]
+}
+
 mojo_native_application("js_content_handler") {
   sources = [
     "content_handler_main.cc",
@@ -27,7 +37,6 @@ mojo_native_application("js_content_handler") {
     "//mojo/application",
     "//mojo/application:content_handler",
     "//mojo/data_pipe_utils",
-    "//mojo/edk/js/",
     "//mojo/environment:chromium",
     "//mojo/message_pump",
     "//mojo/public/cpp/system",
@@ -37,6 +46,7 @@ mojo_native_application("js_content_handler") {
     "//mojo/services/network/public/interfaces",
     "//services/js/modules/clock",
     "//services/js/modules/gl",
+    "//services/js/system",
   ]
 }
 
@@ -44,7 +54,6 @@ test("js_services_unittests") {
   deps = [
     "//base",
     "//gin:gin_test",
-    "//mojo/edk/js",
     "//mojo/edk/test:run_all_unittests",
     "//mojo/edk/test:test_support",
     "//mojo/public/cpp/utility",
@@ -52,6 +61,7 @@ test("js_services_unittests") {
     "//mojo/public/interfaces/bindings/tests:test_interfaces",
     "//mojo/public/interfaces/bindings/tests:test_interfaces_experimental",
     "//services/js/modules/clock/test",
+    "//services/js/system",
   ]
 }
 

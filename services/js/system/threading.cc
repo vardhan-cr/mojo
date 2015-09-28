@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "mojo/edk/js/threading.h"
+#include "services/js/system/threading.h"
 
 #include "base/message_loop/message_loop.h"
 #include "gin/object_template_builder.h"
 #include "gin/per_isolate_data.h"
-#include "mojo/edk/js/handle.h"
+#include "services/js/system/handle.h"
 
 namespace mojo {
 namespace js {

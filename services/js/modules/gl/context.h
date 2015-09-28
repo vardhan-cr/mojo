@@ -13,7 +13,7 @@
 #include "gin/public/wrapper_info.h"
 #include "gin/runner.h"
 #include "gin/wrappable.h"
-#include "mojo/edk/js/handle.h"
+#include "services/js/system/handle.h"
 #include "v8/include/v8.h"
 
 namespace gin {

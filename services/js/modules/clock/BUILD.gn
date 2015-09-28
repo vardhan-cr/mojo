@@ -11,8 +11,8 @@ source_set("clock") {
   deps = [
     "//base",
     "//gin",
-    "//mojo/edk/js",
     "//mojo/public/cpp/system",
+    "//services/js/system",
     "//v8",
   ]
 }

@@ -10,12 +10,12 @@
 #include "base/run_loop.h"
 #include "gin/array_buffer.h"
 #include "gin/public/isolate_holder.h"
-#include "mojo/edk/js/mojo_runner_delegate.h"
-#include "mojo/edk/js/tests/js_to_cpp.mojom.h"
 #include "mojo/edk/test/test_utils.h"
 #include "mojo/public/cpp/bindings/binding.h"
 #include "mojo/public/cpp/system/core.h"
 #include "mojo/public/cpp/system/macros.h"
+#include "services/js/system/mojo_runner_delegate.h"
+#include "services/js/system/tests/js_to_cpp.mojom.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace mojo {
@@ -400,25 +400,25 @@ class JsToCppTest : public testing::Test {
 
 TEST_F(JsToCppTest, Ping) {
   PingCppSideConnection cpp_side_connection;
-  RunTest("mojo/edk/js/tests/js_to_cpp_tests", &cpp_side_connection);
+  RunTest("services/js/system/tests/js_to_cpp_tests", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
 }
 
 TEST_F(JsToCppTest, Echo) {
   EchoCppSideConnection cpp_side_connection;
-  RunTest("mojo/edk/js/tests/js_to_cpp_tests", &cpp_side_connection);
+  RunTest("services/js/system/tests/js_to_cpp_tests", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
 }
 
 TEST_F(JsToCppTest, BitFlip) {
   BitFlipCppSideConnection cpp_side_connection;
-  RunTest("mojo/edk/js/tests/js_to_cpp_tests", &cpp_side_connection);
+  RunTest("services/js/system/tests/js_to_cpp_tests", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
 }
 
 TEST_F(JsToCppTest, BackPointer) {
   BackPointerCppSideConnection cpp_side_connection;
-  RunTest("mojo/edk/js/tests/js_to_cpp_tests", &cpp_side_connection);
+  RunTest("services/js/system/tests/js_to_cpp_tests", &cpp_side_connection);
   EXPECT_TRUE(cpp_side_connection.DidSucceed());
 }
 

@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MOJO_EDK_JS_WAITING_CALLBACK_H_
-#define MOJO_EDK_JS_WAITING_CALLBACK_H_
+#ifndef SERVICES_JS_SYSTEM_WAITING_CALLBACK_H_
+#define SERVICES_JS_SYSTEM_WAITING_CALLBACK_H_
 
 #include "base/memory/weak_ptr.h"
 #include "gin/handle.h"
 #include "gin/runner.h"
 #include "gin/wrappable.h"
-#include "mojo/edk/js/handle.h"
-#include "mojo/edk/js/handle_close_observer.h"
 #include "mojo/public/c/environment/async_waiter.h"
 #include "mojo/public/cpp/system/core.h"
+#include "services/js/system/handle.h"
+#include "services/js/system/handle_close_observer.h"
 
 namespace mojo {
 namespace js {
@@ -65,4 +65,4 @@ class WaitingCallback : public gin::Wrappable<WaitingCallback>,
 }  // namespace js
 }  // namespace mojo
 
-#endif  // MOJO_EDK_JS_WAITING_CALLBACK_H_
+#endif  // SERVICES_JS_SYSTEM_WAITING_CALLBACK_H_

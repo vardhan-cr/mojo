@@ -8,8 +8,8 @@
 #include "gin/modules/timer.h"
 #include "gin/test/file_runner.h"
 #include "gin/test/gtest.h"
-#include "mojo/edk/js/threading.h"
 #include "services/js/modules/clock/monotonic_clock.h"
+#include "services/js/system/threading.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
 namespace js {

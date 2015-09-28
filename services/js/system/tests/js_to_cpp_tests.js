@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-define('mojo/edk/js/tests/js_to_cpp_tests', [
+define('services/js/system/tests/js_to_cpp_tests', [
   'console',
-  'mojo/edk/js/tests/js_to_cpp.mojom',
+  'services/js/system/tests/js_to_cpp.mojom',
   'mojo/public/js/bindings',
   'mojo/public/js/connection',
   'mojo/public/js/connector',

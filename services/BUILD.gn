@@ -95,10 +95,7 @@ group("tests") {
   # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
   # needs a 32 bit toolchain and we don't have one configured for mac hosts.
   if (host_os == "linux") {
-    deps += [
-      "//services/js:js_apptests",
-      "//services/js:js_services_unittests",
-    ]
+    deps += [ "//services/js:tests" ]
   }
 
   if (is_android || is_linux) {

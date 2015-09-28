@@ -75,12 +75,6 @@ group("tests") {
     deps += [ "//mojo/converters/surfaces/tests:mojo_surfaces_lib_unittests" ]
   }
 
-  # TODO(jamesr): We only support building V8 snapshot data on a linux host since it
-  # needs a 32 bit toolchain and we don't have one configured for mac hosts.
-  if (host_os == "linux") {
-    deps += [ "//mojo/edk/js:tests" ]
-  }
-
   if (mojo_use_prebuilt_network_service) {
     deps += [ "//mojo/public/tools:copy_network_service_apptests" ]
   }
