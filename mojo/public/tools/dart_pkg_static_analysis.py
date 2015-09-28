@@ -47,6 +47,16 @@ def analyze_package(dart_sdk, package_root, package):
   print('Analyzing dart-pkg %s ' % package_name)
   return analyze_entrypoints(dart_sdk, package_root, package_entrypoints)
 
+# Filter entrypoints for files that exist.
+def filter_entrypoints(package_name, entrypoints):
+  result = []
+  for entrypoint in entrypoints:
+    if os.path.isfile(entrypoint):
+      result.append(entrypoint)
+    else:
+      print('WARNING: Could not find %s from %s ' % (entrypoint, package_name))
+  return result
+
 def main():
   parser = argparse.ArgumentParser(description='Generate a dart-pkg')
   parser.add_argument('--dart-sdk',
@@ -82,8 +92,10 @@ def main():
       if not args.package_name or (filename == args.package_name + '.entries'):
         with open(os.path.join(args.dart_pkg_dir, filename)) as f:
             entrypoints = f.read().splitlines()
+        package_name = os.path.splitext(filename)[0]
+        entrypoints = filter_entrypoints(package_name, entrypoints)
         if entrypoints != []:
-          jobs.append([os.path.splitext(filename)[0], entrypoints])
+          jobs.append([package_name, entrypoints])
 
   # Create a process pool.
   pool = multiprocessing.Pool(multiprocessing.cpu_count())
