@@ -63,7 +63,7 @@ class MapKeyIterator {
     bool operator==(const Iterator& o) const { return o.it_ == it_; }
     bool operator!=(const Iterator& o) const { return o.it_ != it_; }
     typename Map<K, V>::KeyConstRefType operator*() { return it_.GetKey(); }
-    typename Map<K, V>::KeyConstRefType operator->() { return operator*(); }
+    const K* operator->() { return &it_.GetKey(); }
 
    private:
     typename Map<K, V>::MapIterator it_;
@@ -108,7 +108,7 @@ class MapValueIterator {
     bool operator==(const Iterator& o) const { return o.it_ == it_; }
     bool operator!=(const Iterator& o) const { return o.it_ != it_; }
     typename Map<K, V>::ValueRefType operator*() { return it_.GetValue(); }
-    typename Map<K, V>::ValueRefType operator->() { return operator*(); }
+    V* operator->() { return &it_.GetValue(); }
 
    private:
     typename Map<K, V>::MapIterator it_;

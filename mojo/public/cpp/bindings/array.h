@@ -197,7 +197,7 @@ class Array {
     }
     bool operator!=(const Iterator& o) const { return !(*this == o); }
     RefType operator*() const { return arr_->at(pos_); }
-    RefType operator->() const { return operator*(); }
+    T* operator->() const { return &arr_->at(pos_); }
 
     // The following satisfy RandomAccessIterator:
     Iterator& operator+=(difference_type dist) {

@@ -84,7 +84,7 @@ void ExpectBidiIteratorConcept(Iterator begin,
   EXPECT_EQ(iter3_mv, iter3_cp_mv);
 
   // operator->.
-  EXPECT_EQ(iter3_mv.operator->(), expected_values[1]);
+  EXPECT_EQ(*(iter3_mv.operator->()), expected_values[1]);
 
   // Swap two iterators:
   Iterator i1 = begin;
