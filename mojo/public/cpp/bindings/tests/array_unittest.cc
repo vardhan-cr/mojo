@@ -161,7 +161,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfPOD) {
   FixedBufferForTesting buf(size);
   Array_Data<int32_t>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+  SerializeArray_(&array, &buf, &data, &validate_params);
 
   Array<int32_t> array2;
   Deserialize_(data, &array2);
@@ -179,7 +179,7 @@ TEST_F(ArrayTest, Serialization_EmptyArrayOfPOD) {
   FixedBufferForTesting buf(size);
   Array_Data<int32_t>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+  SerializeArray_(&array, &buf, &data, &validate_params);
 
   Array<int32_t> array2;
   Deserialize_(data, &array2);
@@ -202,7 +202,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfArrayOfPOD) {
   Array_Data<Array_Data<int32_t>*>* data;
   ArrayValidateParams validate_params(
       0, false, new ArrayValidateParams(0, false, nullptr));
-  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+  SerializeArray_(&array, &buf, &data, &validate_params);
 
   Array<Array<int32_t>> array2;
   Deserialize_(data, &array2);
@@ -227,7 +227,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfBool) {
   FixedBufferForTesting buf(size);
   Array_Data<bool>* data;
   ArrayValidateParams validate_params(0, false, nullptr);
-  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+  SerializeArray_(&array, &buf, &data, &validate_params);
 
   Array<bool> array2;
   Deserialize_(data, &array2);
@@ -255,7 +255,7 @@ TEST_F(ArrayTest, Serialization_ArrayOfString) {
   Array_Data<String_Data*>* data;
   ArrayValidateParams validate_params(
       0, false, new ArrayValidateParams(0, false, nullptr));
-  SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+  SerializeArray_(&array, &buf, &data, &validate_params);
 
   Array<String> array2;
   Deserialize_(data, &array2);

@@ -33,8 +33,8 @@ bool RunResponseForwardToCallback::Accept(Message* message) {
           message->mutable_payload());
   params->DecodePointersAndHandles(message->mutable_handles());
 
-  RunResponseMessageParamsPtr params_ptr;
-  Deserialize_(params, &params_ptr);
+  RunResponseMessageParamsPtr params_ptr(RunResponseMessageParams::New());
+  Deserialize_(params, params_ptr.get());
 
   callback_.Run(params_ptr->query_version_result.Pass());
   return true;
@@ -48,11 +48,11 @@ void SendRunMessage(MessageReceiverWithResponder* receiver,
   params_ptr->reserved1 = 0u;
   params_ptr->query_version = query_version.Pass();
 
-  size_t size = GetSerializedSize_(params_ptr);
+  size_t size = GetSerializedSize_(*params_ptr);
   RequestMessageBuilder builder(kRunMessageId, size);
 
   RunMessageParams_Data* params = nullptr;
-  Serialize_(params_ptr.Pass(), builder.buffer(), &params);
+  Serialize_(params_ptr.get(), builder.buffer(), &params);
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   MessageReceiver* responder = new RunResponseForwardToCallback(callback);
   if (!receiver->AcceptWithResponder(builder.message(), responder))
@@ -66,11 +66,11 @@ void SendRunOrClosePipeMessage(MessageReceiverWithResponder* receiver,
   params_ptr->reserved1 = 0u;
   params_ptr->require_version = require_version.Pass();
 
-  size_t size = GetSerializedSize_(params_ptr);
+  size_t size = GetSerializedSize_(*params_ptr);
   MessageBuilder builder(kRunOrClosePipeMessageId, size);
 
   RunOrClosePipeMessageParams_Data* params = nullptr;
-  Serialize_(params_ptr.Pass(), builder.buffer(), &params);
+  Serialize_(params_ptr.get(), builder.buffer(), &params);
   params->EncodePointersAndHandles(builder.message()->mutable_handles());
   bool ok = receiver->Accept(builder.message());
   MOJO_ALLOW_UNUSED_LOCAL(ok);

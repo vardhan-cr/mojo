@@ -59,9 +59,9 @@ class SerializationWarningTest : public testing::Test {
                              mojo::internal::ValidationError expected_warning) {
     warning_observer_.set_last_warning(mojo::internal::VALIDATION_ERROR_NONE);
 
-    mojo::internal::FixedBufferForTesting buf(GetSerializedSize_(obj));
+    mojo::internal::FixedBufferForTesting buf(GetSerializedSize_(*obj));
     typename T::Data_* data;
-    Serialize_(obj.Pass(), &buf, &data);
+    Serialize_(obj.get(), &buf, &data);
 
     EXPECT_EQ(expected_warning, warning_observer_.last_warning());
   }
@@ -74,7 +74,7 @@ class SerializationWarningTest : public testing::Test {
 
     mojo::internal::FixedBufferForTesting buf(GetSerializedSize_(obj));
     typename T::Data_* data;
-    SerializeArray_(obj.Pass(), &buf, &data, validate_params);
+    SerializeArray_(&obj, &buf, &data, validate_params);
 
     EXPECT_EQ(expected_warning, warning_observer_.last_warning());
   }

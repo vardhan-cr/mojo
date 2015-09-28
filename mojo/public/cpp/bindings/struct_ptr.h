@@ -150,7 +150,7 @@ class InlinedStructPtr {
     MOJO_DCHECK(!is_null_);
     return &value_;
   }
-  Struct* get() const { return &value_; }
+  Struct* get() const { return is_null() ? nullptr : &value_; }
 
   void Swap(InlinedStructPtr* other) {
     std::swap(value_, other->value_);

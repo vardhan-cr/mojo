@@ -51,11 +51,11 @@ bool ControlMessageHandler::Run(Message* message,
   response_params_ptr->query_version_result = QueryVersionResult::New();
   response_params_ptr->query_version_result->version = interface_version_;
 
-  size_t size = GetSerializedSize_(response_params_ptr);
+  size_t size = GetSerializedSize_(*response_params_ptr);
   ResponseMessageBuilder builder(kRunMessageId, size, message->request_id());
 
   RunResponseMessageParams_Data* response_params = nullptr;
-  Serialize_(response_params_ptr.Pass(), builder.buffer(), &response_params);
+  Serialize_(response_params_ptr.get(), builder.buffer(), &response_params);
   response_params->EncodePointersAndHandles(
       builder.message()->mutable_handles());
   bool ok = responder->Accept(builder.message());
@@ -71,8 +71,8 @@ bool ControlMessageHandler::RunOrClosePipe(Message* message) {
           message->mutable_payload());
   params->DecodePointersAndHandles(message->mutable_handles());
 
-  RunOrClosePipeMessageParamsPtr params_ptr;
-  Deserialize_(params, &params_ptr);
+  RunOrClosePipeMessageParamsPtr params_ptr(RunOrClosePipeMessageParams::New());
+  Deserialize_(params, params_ptr.get());
 
   return interface_version_ >= params_ptr->require_version->version;
 }

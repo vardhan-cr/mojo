@@ -14,9 +14,9 @@ size_t GetSerializedSize_(const String& input) {
   return internal::Align(sizeof(internal::String_Data) + input.size());
 }
 
-void Serialize_(const String& input,
-                internal::Buffer* buf,
-                internal::String_Data** output) {
+void SerializeString_(const String& input,
+                      internal::Buffer* buf,
+                      internal::String_Data** output) {
   if (input) {
     internal::String_Data* result =
         internal::String_Data::New(input.size(), buf);

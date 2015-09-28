@@ -6,23 +6,15 @@
 #define MOJO_PUBLIC_CPP_BINDINGS_LIB_MAP_SERIALIZATION_H_
 
 #include "mojo/public/cpp/bindings/lib/array_internal.h"
+#include "mojo/public/cpp/bindings/lib/array_serialization.h"
+#include "mojo/public/cpp/bindings/lib/bindings_internal.h"
+#include "mojo/public/cpp/bindings/lib/iterator_util.h"
 #include "mojo/public/cpp/bindings/lib/map_data_internal.h"
 #include "mojo/public/cpp/bindings/lib/map_internal.h"
 #include "mojo/public/cpp/bindings/lib/string_serialization.h"
 #include "mojo/public/cpp/bindings/map.h"
 
 namespace mojo {
-
-template <typename Key, typename Value>
-inline size_t GetSerializedSize_(const Map<Key, Value>& input);
-
-template <typename ValidateParams, typename E, typename F>
-inline void SerializeArray_(
-    Array<E> input,
-    internal::Buffer* buf,
-    internal::Array_Data<F>** output,
-    const internal::ArrayValidateParams* validate_params);
-
 namespace internal {
 
 template <typename MapType,
@@ -70,7 +62,9 @@ struct MapSerializer<
   static size_t GetBaseArraySize(size_t count) {
     return count * sizeof(StructPointer<S_Data>);
   }
-  static size_t GetItemSize(const S& item) { return GetSerializedSize_(item); }
+  static size_t GetItemSize(const S& item) {
+    return GetSerializedSize_(*UnwrapConstStructPtr<S>::value(item));
+  }
 };
 
 template <typename U, typename U_Data>
@@ -135,22 +129,39 @@ template <typename MapKey,
           typename DataKey,
           typename DataValue>
 inline void SerializeMap_(
-    Map<MapKey, MapValue> input,
+    Map<MapKey, MapValue>* input,
     internal::Buffer* buf,
     internal::Map_Data<DataKey, DataValue>** output,
     const internal::ArrayValidateParams* value_validate_params) {
-  if (input) {
+  if (input && *input) {
     internal::Map_Data<DataKey, DataValue>* result =
         internal::Map_Data<DataKey, DataValue>::New(buf);
-    if (result) {
-      Array<MapKey> keys;
-      Array<MapValue> values;
-      input.DecomposeMapTo(&keys, &values);
+    internal::Array_Data<DataKey>* keys_data =
+        internal::Array_Data<DataKey>::New(input->size(), buf);
+
+    if (result && keys_data) {
+      result->keys.ptr = keys_data;
+
+      // We *must* serialize the keys before we allocate an Array_Data for the
+      // values.
+      internal::MapKeyIterator<MapKey, MapValue> key_iter(input);
       const internal::ArrayValidateParams* key_validate_params =
           internal::MapKeyValidateParamsFactory<DataKey>::Get();
-      SerializeArray_(keys.Pass(), buf, &result->keys.ptr, key_validate_params);
-      SerializeArray_(values.Pass(), buf, &result->values.ptr,
-                      value_validate_params);
+
+      internal::ArraySerializer<MapKey, DataKey>::SerializeElements(
+          key_iter.begin(), input->size(), buf, result->keys.ptr,
+          key_validate_params);
+
+      // Now we try allocate an Array_Data for the values
+      internal::Array_Data<DataValue>* values_data =
+          internal::Array_Data<DataValue>::New(input->size(), buf);
+      if (values_data) {
+        result->values.ptr = values_data;
+        internal::MapValueIterator<MapKey, MapValue> value_iter(input);
+        internal::ArraySerializer<MapValue, DataValue>::SerializeElements(
+            value_iter.begin(), input->size(), buf, result->values.ptr,
+            value_validate_params);
+      }
     }
     *output = result;
   } else {

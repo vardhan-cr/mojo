@@ -105,6 +105,42 @@ struct RemoveStructPtr<InlinedStructPtr<T>> {
 };
 
 template <typename T>
+struct UnwrapStructPtr {
+  static T* value(T& x) { return &x; }
+};
+
+template <typename T>
+struct UnwrapStructPtr<StructPtr<T>> {
+  static T* value(StructPtr<T>& x) { return x.get(); }
+};
+
+template <typename T>
+struct UnwrapStructPtr<InlinedStructPtr<T>> {
+  static T* value(InlinedStructPtr<T>& x) { return x.get(); }
+};
+
+template <typename T>
+struct UnwrapConstStructPtr {
+  static const T* value(const T& x) { return &x; }
+};
+
+template <typename T>
+struct UnwrapConstStructPtr<StructPtr<T>> {
+  static const T* value(const StructPtr<T>& x) { return x.get(); }
+};
+
+template <typename T>
+struct UnwrapConstStructPtr<InlinedStructPtr<T>> {
+  static const T* value(const InlinedStructPtr<T>& x) { return x.get(); }
+};
+
+template <typename T>
+struct IsStructPtr {
+  static bool const value = IsSpecializationOf<StructPtr, T>::value ||
+                            IsSpecializationOf<InlinedStructPtr, T>::value;
+};
+
+template <typename T>
 struct IsUnionWrapperType {
   template <typename U>
   static YesType Test(const typename U::Data_::MojomUnionDataType*);

@@ -40,20 +40,6 @@ struct MapTraits<Key, Value, false> {
     for (size_t i = 0; i < keys.size(); ++i)
       Insert(m, keys[i], values[i]);
   }
-  static inline void Decompose(std::map<KeyStorageType, ValueStorageType>* m,
-                               mojo::Array<Key>* keys,
-                               mojo::Array<Value>* values) {
-    keys->resize(m->size());
-    values->resize(m->size());
-    int i = 0;
-    for (typename std::map<KeyStorageType, ValueStorageType>::iterator
-             it = m->begin();
-         it != m->end();
-         ++it, ++i) {
-      (*keys)[i] = it->first;
-      (*values)[i] = it->second;
-    }
-  }
   static inline void Finalize(std::map<KeyStorageType, ValueStorageType>* m) {}
   static inline ValueRefType at(std::map<KeyStorageType, ValueStorageType>* m,
                                 KeyForwardType key) {
@@ -132,20 +118,6 @@ struct MapTraits<Key, Value, true> {
       mojo::Array<Value> values) {
     for (size_t i = 0; i < keys.size(); ++i)
       Insert(m, keys[i], values[i]);
-  }
-  static inline void Decompose(std::map<KeyStorageType, ValueStorageType>* m,
-                               mojo::Array<Key>* keys,
-                               mojo::Array<Value>* values) {
-    keys->resize(m->size());
-    values->resize(m->size());
-    int i = 0;
-    for (typename std::map<KeyStorageType, ValueStorageType>::iterator
-             it = m->begin();
-         it != m->end();
-         ++it, ++i) {
-      (*keys)[i] = it->first;
-      (*values)[i] = GetValue(it).Pass();
-    }
   }
   static inline void Finalize(std::map<KeyStorageType, ValueStorageType>* m) {
     for (auto& pair : *m)

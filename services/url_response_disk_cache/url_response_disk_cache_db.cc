@@ -28,7 +28,7 @@ const char kVersionKey[] = "\1version";
 template <typename T>
 void Serialize(T input, std::string* output) {
   typedef typename mojo::internal::WrapperTraits<T>::DataType DataType;
-  size_t size = GetSerializedSize_(input);
+  size_t size = GetSerializedSize_(*input);
 
   output->clear();
   output->resize(size);
@@ -37,7 +37,7 @@ void Serialize(T input, std::string* output) {
   buf.Initialize(&output->at(0), size);
 
   DataType data_type;
-  Serialize_(input.Pass(), &buf, &data_type);
+  Serialize_(input.get(), &buf, &data_type);
   std::vector<Handle> handles;
   data_type->EncodePointersAndHandles(&handles);
 }
@@ -52,7 +52,8 @@ bool Deserialize(void* data, size_t size, T* output) {
   DataType data_type = reinterpret_cast<DataType>(data);
   std::vector<Handle> handles;
   data_type->DecodePointersAndHandles(&handles);
-  Deserialize_(data_type, output);
+  *output = mojo::internal::RemoveStructPtr<T>::type::New();
+  Deserialize_(data_type, output->get());
   return true;
 }
 

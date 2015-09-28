@@ -51,10 +51,10 @@ U SerializeAndDeserialize(T input) {
   typedef typename mojo::internal::WrapperTraits<T>::DataType InputDataType;
   typedef typename mojo::internal::WrapperTraits<U>::DataType OutputDataType;
 
-  size_t size = GetSerializedSize_(input);
+  size_t size = GetSerializedSize_(*input);
   mojo::internal::FixedBufferForTesting buf(size + 32);
   InputDataType data;
-  Serialize_(input.Pass(), &buf, &data);
+  Serialize_(input.get(), &buf, &data);
 
   std::vector<Handle> handles;
   data->EncodePointersAndHandles(&handles);
@@ -67,8 +67,9 @@ U SerializeAndDeserialize(T input) {
   OutputDataType output_data = reinterpret_cast<OutputDataType>(data);
   output_data->DecodePointersAndHandles(&handles);
 
-  U output;
-  Deserialize_(output_data, &output);
+  using RawUType = typename mojo::internal::RemoveStructPtr<U>::type;
+  U output(RawUType::New());
+  Deserialize_(output_data, output.get());
   return output.Pass();
 }
 
@@ -138,15 +139,15 @@ TEST_F(StructTest, Clone) {
 TEST_F(StructTest, Serialization_Basic) {
   RectPtr rect(MakeRect());
 
-  size_t size = GetSerializedSize_(rect);
+  size_t size = GetSerializedSize_(*rect);
   EXPECT_EQ(8U + 16U, size);
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::Rect_Data* data;
-  Serialize_(rect.Pass(), &buf, &data);
+  Serialize_(rect.get(), &buf, &data);
 
-  RectPtr rect2;
-  Deserialize_(data, &rect2);
+  RectPtr rect2(Rect::New());
+  Deserialize_(data, rect2.get());
 
   CheckRect(*rect2);
 }
@@ -171,15 +172,15 @@ TEST_F(StructTest, Serialization_StructPointers) {
   pair->first = MakeRect();
   pair->second = MakeRect();
 
-  size_t size = GetSerializedSize_(pair);
+  size_t size = GetSerializedSize_(*pair);
   EXPECT_EQ(8U + 16U + 2 * (8U + 16U), size);
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::RectPair_Data* data;
-  Serialize_(pair.Pass(), &buf, &data);
+  Serialize_(pair.get(), &buf, &data);
 
-  RectPairPtr pair2;
-  Deserialize_(data, &pair2);
+  RectPairPtr pair2(RectPair::New());
+  Deserialize_(data, pair2.get());
 
   CheckRect(*pair2->first);
   CheckRect(*pair2->second);
@@ -193,7 +194,7 @@ TEST_F(StructTest, Serialization_ArrayPointers) {
   for (size_t i = 0; i < region->rects.size(); ++i)
     region->rects[i] = MakeRect(static_cast<int32_t>(i) + 1);
 
-  size_t size = GetSerializedSize_(region);
+  size_t size = GetSerializedSize_(*region);
   EXPECT_EQ(8U +            // header
                 8U +        // name pointer
                 8U +        // rects pointer
@@ -207,10 +208,10 @@ TEST_F(StructTest, Serialization_ArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  Serialize_(region.Pass(), &buf, &data);
+  Serialize_(region.get(), &buf, &data);
 
-  NamedRegionPtr region2;
-  Deserialize_(data, &region2);
+  NamedRegionPtr region2(NamedRegion::New());
+  Deserialize_(data, region2.get());
 
   EXPECT_EQ(String("region"), region2->name);
 
@@ -225,7 +226,7 @@ TEST_F(StructTest, Serialization_NullArrayPointers) {
   EXPECT_TRUE(region->name.is_null());
   EXPECT_TRUE(region->rects.is_null());
 
-  size_t size = GetSerializedSize_(region);
+  size_t size = GetSerializedSize_(*region);
   EXPECT_EQ(8U +      // header
                 8U +  // name pointer
                 8U,   // rects pointer
@@ -233,10 +234,10 @@ TEST_F(StructTest, Serialization_NullArrayPointers) {
 
   mojo::internal::FixedBufferForTesting buf(size);
   internal::NamedRegion_Data* data;
-  Serialize_(region.Pass(), &buf, &data);
+  Serialize_(region.get(), &buf, &data);
 
-  NamedRegionPtr region2;
-  Deserialize_(data, &region2);
+  NamedRegionPtr region2(NamedRegion::New());
+  Deserialize_(data, region2.get());
 
   EXPECT_TRUE(region2->name.is_null());
   EXPECT_TRUE(region2->rects.is_null());

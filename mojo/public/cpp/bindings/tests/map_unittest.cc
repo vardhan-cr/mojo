@@ -6,6 +6,7 @@
 #include "mojo/public/cpp/bindings/lib/array_serialization.h"
 #include "mojo/public/cpp/bindings/lib/bindings_internal.h"
 #include "mojo/public/cpp/bindings/lib/fixed_buffer.h"
+#include "mojo/public/cpp/bindings/lib/map_serialization.h"
 #include "mojo/public/cpp/bindings/lib/validate_params.h"
 #include "mojo/public/cpp/bindings/map.h"
 #include "mojo/public/cpp/bindings/string.h"
@@ -112,44 +113,6 @@ TEST_F(MapTest, ConstructedFromArray) {
   for (size_t i = 0; i < kStringIntDataSize; ++i) {
     EXPECT_EQ(kStringIntData[i].int_data,
               map.at(mojo::String(kStringIntData[i].string_data)));
-  }
-}
-
-TEST_F(MapTest, DecomposeMapTo) {
-  Array<String> keys(kStringIntDataSize);
-  Array<int> values(kStringIntDataSize);
-  for (size_t i = 0; i < kStringIntDataSize; ++i) {
-    keys[i] = kStringIntData[i].string_data;
-    values[i] = kStringIntData[i].int_data;
-  }
-
-  Map<String, int> map(keys.Pass(), values.Pass());
-  EXPECT_EQ(kStringIntDataSize, map.size());
-
-  Array<String> keys2;
-  Array<int> values2;
-  map.DecomposeMapTo(&keys2, &values2);
-  EXPECT_EQ(0u, map.size());
-
-  EXPECT_EQ(kStringIntDataSize, keys2.size());
-  EXPECT_EQ(kStringIntDataSize, values2.size());
-
-  for (size_t i = 0; i < kStringIntDataSize; ++i) {
-    // We are not guaranteed that the copies have the same sorting as the
-    // originals.
-    String key = kStringIntData[i].string_data;
-    int value = kStringIntData[i].int_data;
-
-    bool found = false;
-    for (size_t j = 0; j < keys2.size(); ++j) {
-      if (keys2[j] == key) {
-        EXPECT_EQ(value, values2[j]);
-        found = true;
-        break;
-      }
-    }
-
-    EXPECT_TRUE(found);
   }
 }
 
@@ -283,7 +246,7 @@ TEST_F(MapTest, ArrayOfMap) {
     Array_Data<Map_Data<int32_t, int8_t>*>* data;
     ArrayValidateParams validate_params(
         0, false, new ArrayValidateParams(0, false, nullptr));
-    SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+    SerializeArray_(&array, &buf, &data, &validate_params);
 
     Array<Map<int32_t, int8_t>> deserialized_array;
     Deserialize_(data, &deserialized_array);
@@ -306,7 +269,7 @@ TEST_F(MapTest, ArrayOfMap) {
     ArrayValidateParams validate_params(
         0, false, new ArrayValidateParams(
                       0, false, new ArrayValidateParams(0, false, nullptr)));
-    SerializeArray_(array.Pass(), &buf, &data, &validate_params);
+    SerializeArray_(&array, &buf, &data, &validate_params);
 
     Array<Map<String, Array<bool>>> deserialized_array;
     Deserialize_(data, &deserialized_array);

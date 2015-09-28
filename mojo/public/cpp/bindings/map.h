@@ -135,18 +135,6 @@ class Map {
     map_.swap(*other);
   }
 
-  // Removes all contents from the Map and places them into parallel key/value
-  // arrays. Each key will be copied from the source to the destination, and
-  // values will be copied unless their type is designated move-only, in which
-  // case they will be passed by calling their Pass() method. Either way, the
-  // Map will be left in a null state.
-  void DecomposeMapTo(mojo::Array<Key>* keys, mojo::Array<Value>* values) {
-    Traits::Decompose(&map_, keys, values);
-    Traits::Finalize(&map_);
-    map_.clear();
-    is_null_ = true;
-  }
-
   // Returns a new Map that contains a copy of the contents of this map.  If the
   // values are of a type that is designated move-only, they will be cloned
   // using the Clone() method of the type. Please note that calling this method
