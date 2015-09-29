@@ -5,6 +5,7 @@
 #include "examples/ganesh_app/ganesh_view.h"
 
 #include "base/logging.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/skia/ganesh_surface.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkColor.h"
@@ -61,6 +62,7 @@ void GaneshView::OnViewBoundsChanged(mojo::View* view,
 }
 
 void GaneshView::Draw(const mojo::Size& size) {
+  TRACE_EVENT0("ganesh_app", __func__);
   mojo::GaneshContext::Scope scope(gr_context_.get());
   mojo::GaneshSurface surface(
       gr_context_.get(),

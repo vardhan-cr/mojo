@@ -16,6 +16,7 @@ mojo_native_application("ganesh_app") {
   deps = [
     "//base",
     "//mojo/application",
+    "//mojo/common:tracing_impl",
     "//mojo/environment:chromium",
     "//mojo/gpu",
     "//mojo/public/c/gpu",

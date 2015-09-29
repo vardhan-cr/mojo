@@ -6,6 +6,7 @@
 
 #include "base/bind.h"
 #include "base/stl_util.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "mojo/converters/input_events/input_events_type_converters.h"
 #include "mojo/converters/surfaces/surfaces_type_converters.h"
@@ -56,6 +57,7 @@ void ViewManagerServiceImpl::Init(mojo::ViewManagerClient* client,
                                   mojo::ViewManagerServicePtr service_ptr,
                                   InterfaceRequest<ServiceProvider> services,
                                   ServiceProviderPtr exposed_services) {
+  TRACE_EVENT0("view_manager", __func__);
   DCHECK(!client_);
   client_ = client;
   std::vector<const ServerView*> to_send;
@@ -71,6 +73,7 @@ void ViewManagerServiceImpl::Init(mojo::ViewManagerClient* client,
 }
 
 const ServerView* ViewManagerServiceImpl::GetView(const ViewId& id) const {
+  TRACE_EVENT0("view_manager", __func__);
   if (id_ == id.connection_id) {
     ViewMap::const_iterator i = view_map_.find(id.view_id);
     return i == view_map_.end() ? NULL : i->second;
@@ -144,6 +147,7 @@ bool ViewManagerServiceImpl::EmbedUrl(
     const ViewId& view_id,
     InterfaceRequest<ServiceProvider> services,
     ServiceProviderPtr exposed_services) {
+  TRACE_EVENT0("view_manager", __func__);
   if (!PrepareForEmbed(view_id))
     return false;
   connection_manager_->EmbedAtView(id_, url, view_id, services.Pass(),
@@ -153,6 +157,7 @@ bool ViewManagerServiceImpl::EmbedUrl(
 
 bool ViewManagerServiceImpl::Embed(const ViewId& view_id,
                                    mojo::ViewManagerClientPtr client) {
+  TRACE_EVENT0("view_manager", __func__);
   if (!client.get() || !PrepareForEmbed(view_id))
     return false;
   connection_manager_->EmbedAtView(id_, view_id, client.Pass());
@@ -189,7 +194,7 @@ void ViewManagerServiceImpl::ProcessWillChangeViewHierarchy(
 
   const bool old_drawn = view->IsDrawn(connection_manager_->root());
   const bool new_drawn = view->visible() && new_parent &&
-      new_parent->IsDrawn(connection_manager_->root());
+                         new_parent->IsDrawn(connection_manager_->root());
   if (old_drawn == new_drawn)
     return;
 
@@ -227,8 +232,8 @@ void ViewManagerServiceImpl::ProcessViewHierarchyChanged(
     return;
   }
 
-  if (!access_policy_->ShouldNotifyOnHierarchyChange(
-          view, &new_parent, &old_parent)) {
+  if (!access_policy_->ShouldNotifyOnHierarchyChange(view, &new_parent,
+                                                     &old_parent)) {
     return;
   }
   // Inform the client of any new views and update the set of views we know
@@ -238,10 +243,9 @@ void ViewManagerServiceImpl::ProcessViewHierarchyChanged(
     GetUnknownViewsFrom(view, &to_send);
   const ViewId new_parent_id(new_parent ? new_parent->id() : ViewId());
   const ViewId old_parent_id(old_parent ? old_parent->id() : ViewId());
-  client()->OnViewHierarchyChanged(ViewIdToTransportId(view->id()),
-                                   ViewIdToTransportId(new_parent_id),
-                                   ViewIdToTransportId(old_parent_id),
-                                   ViewsToViewDatas(to_send));
+  client()->OnViewHierarchyChanged(
+      ViewIdToTransportId(view->id()), ViewIdToTransportId(new_parent_id),
+      ViewIdToTransportId(old_parent_id), ViewsToViewDatas(to_send));
   connection_manager_->OnConnectionMessagedClient(id_);
 }
 
@@ -350,7 +354,7 @@ void ViewManagerServiceImpl::GetUnknownViewsFrom(
   if (!access_policy_->CanDescendIntoViewForViewTree(view))
     return;
   std::vector<const ServerView*> children(view->GetChildren());
-  for (size_t i = 0 ; i < children.size(); ++i)
+  for (size_t i = 0; i < children.size(); ++i)
     GetUnknownViewsFrom(children[i], views);
 }
 
@@ -439,7 +443,7 @@ void ViewManagerServiceImpl::GetViewTreeImpl(
     return;
 
   std::vector<const ServerView*> children(view->GetChildren());
-  for (size_t i = 0 ; i < children.size(); ++i)
+  for (size_t i = 0; i < children.size(); ++i)
     GetViewTreeImpl(children[i], views);
 }
 
@@ -496,9 +500,8 @@ void ViewManagerServiceImpl::CreateView(
   callback.Run(CreateView(ViewIdFromTransportId(transport_view_id)));
 }
 
-void ViewManagerServiceImpl::DeleteView(
-    Id transport_view_id,
-    const Callback<void(bool)>& callback) {
+void ViewManagerServiceImpl::DeleteView(Id transport_view_id,
+                                        const Callback<void(bool)>& callback) {
   ServerView* view = GetView(ViewIdFromTransportId(transport_view_id));
   bool success = false;
   if (view && access_policy_->CanDeleteView(view)) {
@@ -509,10 +512,9 @@ void ViewManagerServiceImpl::DeleteView(
   callback.Run(success);
 }
 
-void ViewManagerServiceImpl::AddView(
-    Id parent_id,
-    Id child_id,
-    const Callback<void(bool)>& callback) {
+void ViewManagerServiceImpl::AddView(Id parent_id,
+                                     Id child_id,
+                                     const Callback<void(bool)>& callback) {
   callback.Run(AddView(ViewIdFromTransportId(parent_id),
                        ViewIdFromTransportId(child_id)));
 }
@@ -630,6 +632,7 @@ void ViewManagerServiceImpl::PerformAction(
     mojo::Id transport_view_id,
     const mojo::String& action,
     const mojo::Callback<void(bool)>& callback) {
+  TRACE_EVENT0("view_manager", __func__);
   connection_manager_->GetWindowManagerViewManagerClient()->OnPerformAction(
       transport_view_id, action, callback);
 }

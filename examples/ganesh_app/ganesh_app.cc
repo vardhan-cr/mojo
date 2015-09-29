@@ -3,8 +3,10 @@
 // found in the LICENSE file.
 
 #include "base/macros.h"
+#include "base/trace_event/trace_event.h"
 #include "examples/ganesh_app/ganesh_view.h"
 #include "mojo/application/application_runner_chromium.h"
+#include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_delegate.h"
@@ -22,6 +24,8 @@ class GaneshApp : public mojo::ApplicationDelegate,
   ~GaneshApp() override {}
 
   void Initialize(mojo::ApplicationImpl* app) override {
+    tracing_.Initialize(app);
+    TRACE_EVENT0("ganesh_app", __func__);
     shell_ = app->shell();
     view_manager_client_factory_.reset(
         new mojo::ViewManagerClientFactory(app->shell(), this));
@@ -29,6 +33,7 @@ class GaneshApp : public mojo::ApplicationDelegate,
 
   bool ConfigureIncomingConnection(
       mojo::ApplicationConnection* connection) override {
+    TRACE_EVENT0("ganesh_app", __func__);
     connection->AddService(view_manager_client_factory_.get());
     return true;
   }
@@ -36,6 +41,7 @@ class GaneshApp : public mojo::ApplicationDelegate,
   void OnEmbed(mojo::View* root,
                mojo::InterfaceRequest<mojo::ServiceProvider> services,
                mojo::ServiceProviderPtr exposed_services) override {
+    TRACE_EVENT0("ganesh_app", __func__);
     new GaneshView(shell_, root);
   }
 
@@ -44,6 +50,7 @@ class GaneshApp : public mojo::ApplicationDelegate,
   }
 
  private:
+  mojo::TracingImpl tracing_;
   mojo::Shell* shell_;
   scoped_ptr<mojo::ViewManagerClientFactory> view_manager_client_factory_;
 

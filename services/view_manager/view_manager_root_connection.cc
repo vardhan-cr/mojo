@@ -4,6 +4,7 @@
 
 #include "services/view_manager/view_manager_root_connection.h"
 
+#include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/application_connection.h"
 #include "mojo/public/cpp/application/application_impl.h"
 #include "services/view_manager/client_connection.h"
@@ -28,6 +29,7 @@ ViewManagerRootConnection::~ViewManagerRootConnection() {
 }
 
 bool ViewManagerRootConnection::Init(mojo::ApplicationConnection* connection) {
+  TRACE_EVENT0("view_manager", __func__);
   if (connection_manager_.get()) {
     NOTREACHED() << "Only one incoming connection is allowed.";
   }
@@ -66,6 +68,7 @@ ViewManagerRootConnection::CreateClientConnectionForEmbedAtView(
     const std::string& creator_url,
     const std::string& url,
     const ViewId& root_id) {
+  TRACE_EVENT0("view_manager", __func__);
   mojo::ViewManagerClientPtr client;
   app_impl_->ConnectToService(url, &client);
 
@@ -83,6 +86,7 @@ ViewManagerRootConnection::CreateClientConnectionForEmbedAtView(
     const std::string& creator_url,
     const ViewId& root_id,
     mojo::ViewManagerClientPtr view_manager_client) {
+  TRACE_EVENT0("view_manager", __func__);
   scoped_ptr<ViewManagerServiceImpl> service(new ViewManagerServiceImpl(
       connection_manager, creator_id, creator_url, std::string(), root_id));
   return new DefaultClientConnection(service.Pass(), connection_manager,
@@ -93,6 +97,7 @@ ViewManagerRootConnection::CreateClientConnectionForEmbedAtView(
 void ViewManagerRootConnection::Create(
     ApplicationConnection* connection,
     InterfaceRequest<ViewManagerService> request) {
+  TRACE_EVENT0("view_manager", __func__);
   if (connection_manager_->has_window_manager_client_connection()) {
     VLOG(1) << "ViewManager interface requested more than once.";
     return;
@@ -113,6 +118,7 @@ void ViewManagerRootConnection::Create(
 void ViewManagerRootConnection::Create(
     ApplicationConnection* connection,
     InterfaceRequest<WindowManagerInternalClient> request) {
+  TRACE_EVENT0("view_manager", __func__);
   if (wm_internal_client_binding_.get()) {
     VLOG(1) << "WindowManagerInternalClient requested more than once.";
     return;

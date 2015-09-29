@@ -4,6 +4,7 @@
 
 #include "services/view_manager/view_manager_app.h"
 
+#include "base/trace_event/trace_event.h"
 #include "mojo/application/application_runner_chromium.h"
 #include "mojo/common/tracing_impl.h"
 #include "mojo/public/c/system/main.h"
@@ -26,10 +27,12 @@ ViewManagerApp::~ViewManagerApp() {}
 void ViewManagerApp::Initialize(ApplicationImpl* app) {
   app_impl_ = app;
   tracing_.Initialize(app);
+  TRACE_EVENT0("view_manager", __func__);
 }
 
 bool ViewManagerApp::ConfigureIncomingConnection(
     ApplicationConnection* connection) {
+  TRACE_EVENT0("view_manager", __func__);
   // We keep a raw pointer in active_root_connections_ in order to be able to
   // close the ViewManagerApp when all outstanding ViewManagerRootConnections
   // are closed. ViewManagerRootConnection manages its own lifetime.

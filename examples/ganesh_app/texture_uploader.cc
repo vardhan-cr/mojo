@@ -12,6 +12,7 @@
 #include <GLES2/gl2extmojo.h>
 
 #include "base/bind.h"
+#include "base/trace_event/trace_event.h"
 #include "mojo/public/cpp/application/connect.h"
 #include "mojo/public/interfaces/application/shell.mojom.h"
 #include "mojo/services/geometry/public/cpp/geometry_util.h"
@@ -19,8 +20,7 @@
 
 namespace examples {
 
-TextureUploader::Client::~Client() {
-}
+TextureUploader::Client::~Client() {}
 
 TextureUploader::TextureUploader(Client* client,
                                  mojo::Shell* shell,
@@ -31,6 +31,7 @@ TextureUploader::TextureUploader(Client* client,
       id_namespace_(0u),
       local_id_(0u),
       returner_binding_(this) {
+  TRACE_EVENT0("ganesh_app", __func__);
   context_->AddObserver(this);
 
   mojo::ServiceProviderPtr surfaces_service_provider;
@@ -51,6 +52,7 @@ TextureUploader::~TextureUploader() {
 }
 
 void TextureUploader::Upload(scoped_ptr<mojo::GLTexture> texture) {
+  TRACE_EVENT0("ganesh_app", __func__);
   mojo::Size size = texture->size();
   EnsureSurfaceForSize(size);
 
@@ -126,6 +128,7 @@ void TextureUploader::OnContextLost() {
 
 void TextureUploader::ReturnResources(
     mojo::Array<mojo::ReturnedResourcePtr> resources) {
+  TRACE_EVENT0("ganesh_app", __func__);
   context_->MakeCurrent();
   for (size_t i = 0u; i < resources.size(); ++i) {
     mojo::ReturnedResourcePtr resource = resources[i].Pass();
@@ -139,6 +142,7 @@ void TextureUploader::ReturnResources(
 }
 
 void TextureUploader::EnsureSurfaceForSize(const mojo::Size& size) {
+  TRACE_EVENT0("ganesh_app", __func__);
   if (local_id_ != 0u && size == surface_size_)
     return;
 
