@@ -142,7 +142,11 @@ public class AuthenticationServiceImpl
                     if (mPendingCallback == null) {
                         return;
                     }
-                    getOAuth2Token(username, scopes, mPendingCallback);
+                    if (bytes != null) {
+                        getOAuth2Token(username, scopes, mPendingCallback);
+                    } else {
+                        mPendingCallback.call(null, e.getMessage());
+                    }
                     mPendingCallback = null;
                 }
 
@@ -209,6 +213,10 @@ public class AuthenticationServiceImpl
 
             @Override
             public void onIntent(byte[] bytes) {
+                if (bytes == null) {
+                    call(null, "Unable to retrieve user name.");
+                    return;
+                }
                 Intent intent = bytesToIntent(bytes);
                 call(intent.getStringExtra(AccountManager.KEY_ACCOUNT_NAME), null);
             }

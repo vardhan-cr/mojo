@@ -30,5 +30,5 @@ interface IntentReceiverManager {
 
 // Receiver interface, to be used with |IntentReceiverManager|.
 interface IntentReceiver {
-  OnIntent(array<uint8> intent);
+  OnIntent(array<uint8>? intent);
 };
