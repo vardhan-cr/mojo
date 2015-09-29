@@ -20,16 +20,10 @@ mojom("test_interfaces") {
     "scoping.mojom",
     "serialization_test_structs.mojom",
     "test_constants.mojom",
-    "test_structs.mojom",
-    "validation_test_interfaces.mojom",
-  ]
-}
-
-mojom("test_interfaces_experimental") {
-  testonly = true
-  sources = [
     "test_included_unions.mojom",
+    "test_structs.mojom",
     "test_unions.mojom",
+    "validation_test_interfaces.mojom",
   ]
 }
 
