@@ -7,8 +7,7 @@ import("../../tools/bindings/mojom.gni")
 mojom("bindings") {
   sources = [
     "interface_control_messages.mojom",
-    "mojom_descriptors.mojom",
-    "mojom_file.mojom",
+    "mojom_files.mojom",
     "mojom_types.mojom",
   ]
 }

@@ -6,7 +6,6 @@
 JavaPackage="org.chromium.mojo.bindings.types"]
 module mojo.bindings.types;
 
-import "mojom_descriptors.mojom";
 import "mojom_types.mojom";
 
 /*
@@ -31,10 +30,10 @@ import "mojom_types.mojom";
 // all of the type references to types declared in imported .mojom files
 // have been resolved.
 struct MojomFile {
-  // The module name is (derived from) the file name of the corresponding
+  // |file_name| is (derived from) the file name of the corresponding
   // .mojom file. It is the unique identifier for this module within the
   // MojomFileGraph
-  string module_name;
+  string file_name;
 
    // The namespace is the identifier declared via the "module" declaration
    // in the .mojom file.
@@ -44,7 +43,7 @@ struct MojomFile {
   array<Attribute>? attributes;
 
   // The list of other MojomFiles imported by this one. The elements
-  // of the array are the |module_name|s and the associated module may
+  // of the array are the |file_name|s and the associated module may
   // be retrieved from the  MojomFileGraph.
   array<string>? imports;
 
@@ -57,11 +56,31 @@ struct MojomFile {
 
 // Represents a directed acyclic graph of MojomFiles.
 struct MojomFileGraph {
-  // All the modules in this graph. The keys are module names
-  map<string, MojomFile> modules;
+  // All the files in this graph. The keys are file names
+  map<string, MojomFile> files;
 
-  // The types and constants declared in the union of all MojomFiles
-  // in this Graph. Each MojomFile contains a |KeysByType| that selects
-  // the objects described in that module.
-  MojomDescriptor? mojom_descriptor;
+  // All the resolved user-defined types known to this descriptor. The keys are
+  // the |type_key|s.
+  map<string, UserDefinedType> resolved_types;
+
+  // All the resolved declared constants known to this descriptor. The keys are
+  // the |constant_key|s.
+  map<string, DeclaredConstant> resolved_constants;
 };
+
+// A KeysByType struct organizes by type all of the type and constant keys known
+// to an associated MojomDescriptor.
+struct KeysByType {
+  // All the type_keys known to the owning MojomDescriptor, organized by
+  // type;
+  array<string>? interfaces;
+  array<string>? structs;
+  array<string>? unions;
+  array<string>? top_level_enums;
+  array<string>? embedded_enums;
+
+  // All the constant_keys known to the owning MojomDescriptor.
+  array<string>? top_level_constants;
+  array<string>? embedded_constants;
+};
+

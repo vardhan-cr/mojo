@@ -184,6 +184,15 @@ struct TypeReference {
 // obtained from the  owning |MojomDescriptor|.
 ////////////////////////////////////////////////////////////////////////////
 
+// Represents a user-defined type referenced
+// via its identifier from another Mojom object.
+union UserDefinedType {
+  MojomEnum enum_type;
+  MojomStruct struct_type;
+  MojomUnion union_type;
+  MojomInterface interface_type;
+};
+
 // A field of a struct. These structures are contained in the |fields| field
 // of the |MojomStruct| struct.
 struct StructField {
@@ -270,8 +279,20 @@ struct MojomMethod {
 struct MojomInterface {
   DeclarationData? decl_data;
 
+  // By definition, the name of an interface is the string that would be to be
+  // passed to the method ServiceProvider.ConnectToService() in order obtain a
+  // connection to the interface.
+  string interface_name;
+
   // All the methods in the interface. The keys are the method ordinals.
-  map<uint32, MojomMethod> methods;
+  // Note that in some uses of this structure, the |methods| field will
+  // not be populated and one must use |interface_name| in order to
+  // obtain an |InterfaceDescriber| to query for the methods of the
+  // interface. |InterfaceDescriber| is defined in "inerface_describer.mojom"
+  // which is not included by this file. The procedure for obtaining
+  // an |InterfaceDescriber| given an |interface_name| is outside the scope
+  // of these comments.
+  map<uint32, MojomMethod>? methods;
 };
 
 ////////////////////////////////////////////////////////////////////////////
