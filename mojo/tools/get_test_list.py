@@ -134,20 +134,6 @@ def GetTestList(config, verbose_count=0):
                            "run_mojo_python_bindings_tests.py"),
               "--build-dir=" + build_dir])
 
-  # Observatory tests (Linux-only):
-  if target_os == Config.OS_LINUX:
-    AddEntry("Dart Observatory tests",
-             ["python",
-              os.path.join("mojo", "dart", "observatory_tester", "runner.py"),
-              "--build-dir=" + build_dir,
-              "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
-
-    AddEntry("Dart HTTP Load test",
-           ["python",
-            os.path.join("mojo", "dart", "http_load_test", "runner.py"),
-            "--build-dir=" + build_dir,
-            "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
-
   # mojo tools unit tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, Config.TEST_TYPE_UNIT, "tools"):
     AddEntry("Mojo tools unit tests",
@@ -155,8 +141,21 @@ def GetTestList(config, verbose_count=0):
                                      "mojom_fetcher",
                                      "mojom_fetcher_tests.py")])
 
+  # Observatory tests (Linux-only):
+  if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT):
+    AddEntry("Dart Observatory tests",
+             ["python",
+              os.path.join("mojo", "dart", "observatory_tester", "runner.py"),
+              "--build-dir=" + build_dir,
+              "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
+    AddEntry("Dart HTTP Load test",
+           ["python",
+            os.path.join("mojo", "dart", "http_load_test", "runner.py"),
+            "--build-dir=" + build_dir,
+            "--dart-exe=third_party/dart-sdk/dart-sdk/bin/dart"])
+
   # Dart mojom package generate.dart script tests:
-  if target_os == Config.OS_LINUX:
+  if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT):
     AddEntry("Dart mojom package generate tests",
         [os.path.join("third_party", "dart-sdk", "dart-sdk", "bin", "dart"),
          "--checked",
@@ -164,7 +163,7 @@ def GetTestList(config, verbose_count=0):
          os.path.join(
            "mojo", "public", "dart", "mojom", "test", "generate_test.dart")])
 
-  if target_os == Config.OS_LINUX:
+  if target_os == Config.OS_LINUX and ShouldRunTest(Config.TEST_TYPE_DEFAULT):
     AddEntry("Dart snapshotter test",
         ["python",
          os.path.join("mojo", "dart", "dart_snapshotter", "test",
