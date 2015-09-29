@@ -82,17 +82,17 @@ TEST(GetEventsTest, InstantEvent) {
 TEST(GetEventsTest, DurationEventsSameThread) {
   std::vector<std::string> event_specs(6);
   event_specs[0] =
-    "{\"tid\":1,\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Outer event\"}";
+      "{\"tid\":1,\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Outer "
+      "event\"}";
   event_specs[1] =
-    "{\"tid\":1,\"ts\":2,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Inner event\"}";
-  event_specs[2] =
-    "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
-  event_specs[3] =
-    "{\"tid\":1,\"ts\":4,\"ph\":\"E\"}";
+      "{\"tid\":1,\"ts\":2,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Inner "
+      "event\"}";
+  event_specs[2] = "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
+  event_specs[3] = "{\"tid\":1,\"ts\":4,\"ph\":\"E\"}";
   event_specs[4] =
-    "{\"tid\":1,\"ts\":5,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Next event\"}";
-  event_specs[5] =
-    "{\"tid\":1,\"ts\":6,\"ph\":\"E\"}";
+      "{\"tid\":1,\"ts\":5,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"Next "
+      "event\"}";
+  event_specs[5] = "{\"tid\":1,\"ts\":6,\"ph\":\"E\"}";
 
   std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
   std::vector<Event> events;
@@ -121,13 +121,44 @@ TEST(GetEventsTest, DurationEventsSameThread) {
 TEST(GetEventsTest, DurationEventsTwoThreads) {
   std::vector<std::string> event_specs(4);
   event_specs[0] =
-    "{\"tid\":1,\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"t1 event\"}";
+      "{\"tid\":1,\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"t1 event\"}";
   event_specs[1] =
-    "{\"tid\":2,\"ts\":2,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"t2 event\"}";
+      "{\"tid\":2,\"ts\":2,\"ph\":\"B\",\"cat\":\"cc\",\"name\":\"t2 event\"}";
+  event_specs[2] = "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
+  event_specs[3] = "{\"tid\":2,\"ts\":4,\"ph\":\"E\"}";
+
+  std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
+  std::vector<Event> events;
+  ASSERT_TRUE(GetEvents(trace_json, &events));
+  ASSERT_EQ(2u, events.size());
+
+  EXPECT_EQ(EventType::COMPLETE, events[0].type);
+  EXPECT_EQ("t1 event", events[0].name);
+  EXPECT_EQ("cc", events[0].categories);
+  EXPECT_EQ(base::TimeTicks::FromInternalValue(1), events[0].timestamp);
+  EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[0].duration);
+
+  EXPECT_EQ(EventType::COMPLETE, events[1].type);
+  EXPECT_EQ("t2 event", events[1].name);
+  EXPECT_EQ("cc", events[1].categories);
+  EXPECT_EQ(base::TimeTicks::FromInternalValue(2), events[1].timestamp);
+  EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[1].duration);
+}
+
+TEST(GetEventsTest, AsyncEvents) {
+  std::vector<std::string> event_specs(4);
+  event_specs[0] =
+      "{\"tid\":1001,\"id\":1,\"ts\":1,\"ph\":\"S\",\"cat\":\"cc\",\"name\":"
+      "\"t1 event\"}";
+  event_specs[1] =
+      "{\"tid\":1002,\"id\":2,\"ts\":2,\"ph\":\"S\",\"cat\":\"cc\",\"name\":"
+      "\"t2 event\"}";
   event_specs[2] =
-    "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
+      "{\"tid\":1003,\"id\":1,\"ts\":3,\"ph\":\"F\",\"cat\":\"cc\",\"name\":"
+      "\"t1 event\"}";
   event_specs[3] =
-    "{\"tid\":2,\"ts\":4,\"ph\":\"E\"}";
+      "{\"tid\":1004,\"id\":2,\"ts\":4,\"ph\":\"F\",\"cat\":\"cc\",\"name\":"
+      "\"t2 event\"}";
 
   std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
   std::vector<Event> events;

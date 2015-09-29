@@ -30,14 +30,99 @@ Event::Event(EventType type,
 Event::~Event() {}
 
 namespace {
+// ID uniquely identifying an asynchronous event stack.
+struct AsyncEventStackId {
+  int id;
+  std::string cat;
+};
 
-// Finds the matching "duration end" event for each "duration begin" event and
-// rewrites the "begin event" as a "complete" event with a duration. Leaves all
-// events that are not "duration begin" unchanged.
-bool JoinDurationEvents(base::ListValue* event_list) {
+bool operator<(const AsyncEventStackId& t, const AsyncEventStackId& o) {
+  return t.id < o.id || (t.id == o.id && t.cat < o.cat);
+}
+
+// ID uniquely identifying a duration event stack.
+typedef int DurationEventStackId;
+
+// Makes a unique id for a duration event stack.
+bool GetDurationEventStackId(base::DictionaryValue* event_dict,
+                             DurationEventStackId* durationId) {
+  if (!event_dict->GetInteger("tid", durationId)) {
+    LOG(ERROR) << "Incorrect trace event (missing tid).";
+    return false;
+  }
+  return true;
+}
+
+// Makes a unique key for an async event stack.
+bool GetAsyncEventStackId(base::DictionaryValue* event_dict,
+                          AsyncEventStackId* asyncId) {
+  if (!event_dict->GetInteger("id", &asyncId->id)) {
+    LOG(ERROR) << "Incorrect async trace event (missing id).";
+    return false;
+  }
+
+  // We can have an empty category, but it is still relevant for event merging,
+  // per the documentation.
+  std::string cat;
+  event_dict->GetString("cat", &asyncId->cat);
+
+  return true;
+}
+
+// Given a beginning event, registers its beginning for future merging.
+template <typename T>
+void RegisterEventBegin(
+    T key,
+    base::DictionaryValue* event_dict,
+    std::map<T, std::stack<base::DictionaryValue*>>* open_events) {
+  (*open_events)[key].push(event_dict);
+}
+
+// Given an end event, merges it with a previously-seen beginning event.
+template <typename T>
+bool MergeEventEnd(
+    T key,
+    base::DictionaryValue* event_dict,
+    std::map<T, std::stack<base::DictionaryValue*>>* open_events) {
+  if (!open_events->count(key) || (*open_events)[key].empty()) {
+    LOG(ERROR) << "Incorrect trace event (event end without begin).";
+    return false;
+  }
+
+  base::DictionaryValue* begin_event_dict = (*open_events)[key].top();
+  (*open_events)[key].pop();
+  double begin_ts;
+  if (!begin_event_dict->GetDouble("ts", &begin_ts)) {
+    LOG(ERROR) << "Incorrect trace event (no timestamp)";
+    return false;
+  }
+
+  double end_ts;
+  if (!event_dict->GetDouble("ts", &end_ts)) {
+    LOG(ERROR) << "Incorrect trace event (no timestamp)";
+    return false;
+  }
+
+  if (end_ts < begin_ts) {
+    LOG(ERROR) << "Incorrect trace event (event ends before it begins)";
+    return false;
+  }
+
+  begin_event_dict->SetDouble("dur", end_ts - begin_ts);
+  begin_event_dict->SetString("ph", "X");
+  return true;
+}
+
+// Finds the matching "end" event for each "begin" event of type duration or
+// async, and rewrites the "begin event" as a "complete" event with a duration.
+// Leaves all events that are not "begin" unchanged.
+bool JoinEvents(base::ListValue* event_list) {
   // Maps thread ids to stacks of unmatched duration begin events on the given
   // thread.
-  std::map<int, std::stack<base::DictionaryValue*>> open_begin_events;
+  std::map<DurationEventStackId, std::stack<base::DictionaryValue*>>
+      open_begin_duration_events;
+  std::map<AsyncEventStackId, std::stack<base::DictionaryValue*>>
+      open_begin_async_events;
 
   for (base::Value* val : *event_list) {
     base::DictionaryValue* event_dict;
@@ -50,46 +135,30 @@ bool JoinDurationEvents(base::ListValue* event_list) {
       return false;
     }
 
-    if (phase != "B" && phase != "E")
-      continue;
-
-    int tid;
-    if (!event_dict->GetInteger("tid", &tid)) {
-      LOG(ERROR) << "Incorrect trace event (missing tid).";
-      return false;
-    }
-
-    if (phase == "B") {
-      open_begin_events[tid].push(event_dict);
-    } else if (phase == "E") {
-      if (!open_begin_events.count(tid) || open_begin_events[tid].empty()) {
-        LOG(ERROR) << "Incorrect trace event (duration end without begin).";
+    if (phase == "B" || phase == "E") {
+      DurationEventStackId durationId;
+      if (!GetDurationEventStackId(event_dict, &durationId)) {
         return false;
       }
-
-      base::DictionaryValue* begin_event_dict = open_begin_events[tid].top();
-      open_begin_events[tid].pop();
-      double begin_ts;
-      if (!begin_event_dict->GetDouble("ts", &begin_ts)) {
-        LOG(ERROR) << "Incorrect trace event (no timestamp)";
+      if (phase == "B") {
+        RegisterEventBegin(durationId, event_dict, &open_begin_duration_events);
+      } else if (phase == "E" &&
+                 !MergeEventEnd(durationId, event_dict,
+                                &open_begin_duration_events)) {
         return false;
       }
-
-      double end_ts;
-      if (!event_dict->GetDouble("ts", &end_ts)) {
-        LOG(ERROR) << "Incorrect trace event (no timestamp)";
+    } else if (phase == "b" || phase == "S" || phase == "e" || phase == "F") {
+      AsyncEventStackId asyncId;
+      if (!GetAsyncEventStackId(event_dict, &asyncId)) {
         return false;
       }
-
-      if (end_ts < begin_ts) {
-        LOG(ERROR) << "Incorrect trace event (duration timestamps decreasing)";
+      if (phase == "b" || phase == "S") {
+        RegisterEventBegin(asyncId, event_dict, &open_begin_async_events);
+      } else if ((phase == "e" || phase == "F") &&
+                 !MergeEventEnd(asyncId, event_dict,
+                                &open_begin_async_events)) {
         return false;
       }
-
-      begin_event_dict->SetDouble("dur", end_ts - begin_ts);
-      begin_event_dict->SetString("ph", "X");
-    } else {
-      NOTREACHED();
     }
   }
   return true;
@@ -114,7 +183,7 @@ bool ParseEvents(base::ListValue* event_list, std::vector<Event>* result) {
     }
     if (phase == "X") {
       event.type = EventType::COMPLETE;
-    } else if (phase == "I") {
+    } else if (phase == "I" || phase == "n") {
       event.type = EventType::INSTANT;
     } else {
       // Skip all event types we do not handle.
@@ -173,7 +242,7 @@ bool GetEvents(const std::string& trace_json, std::vector<Event>* result) {
     return false;
   }
 
-  if (!JoinDurationEvents(event_list))
+  if (!JoinEvents(event_list))
     return false;
 
   if (!ParseEvents(event_list, result))
