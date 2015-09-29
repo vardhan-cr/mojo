@@ -1,4 +1,34 @@
 {%- import "struct_macros.tmpl" as struct_macros %}
+
+size_t {{struct.name}}::GetSerializedSize() const {
+  return GetSerializedSize_(*this);
+}
+
+void {{struct.name}}::Serialize(void* buf,
+                                size_t buf_size) {
+  mojo::internal::FixedBuffer overlay_buf;
+  overlay_buf.Initialize(buf, buf_size);
+
+  internal::{{struct.name}}_Data* output_ptr;
+  Serialize_(this, &overlay_buf, &output_ptr);
+
+  std::vector<mojo::Handle> handles;
+  output_ptr->EncodePointersAndHandles(&handles);
+}
+
+void {{struct.name}}::Deserialize(void* buf) {
+  internal::{{struct.name}}_Data* input =
+      static_cast<internal::{{struct.name}}_Data*>(buf);
+
+  std::vector<mojo::Handle> handles;
+  input->DecodePointersAndHandles(&handles);
+
+  MOJO_DCHECK(handles.size() == 0)
+    << "Deserialization does not support handles.";
+
+  Deserialize_(input, this);
+}
+
 size_t GetSerializedSize_(const {{struct.name}}& input) {
   {{struct_macros.get_serialized_size(struct, "input.%s")}}
   return size;

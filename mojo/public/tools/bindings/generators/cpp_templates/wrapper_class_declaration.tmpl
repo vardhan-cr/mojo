@@ -32,6 +32,10 @@ class {{struct.name}} {
   {{struct.name}}();
   ~{{struct.name}}();
 
+  size_t GetSerializedSize() const;
+  void Serialize(void* buf, size_t buf_size);
+  void Deserialize(void* buf);
+  
 {%  if struct|is_cloneable_kind %}
   {{struct.name}}Ptr Clone() const;
 {%- endif %}
