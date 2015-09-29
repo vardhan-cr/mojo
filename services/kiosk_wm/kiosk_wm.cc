@@ -20,10 +20,10 @@ void KioskWM::Initialize(mojo::ApplicationImpl* app) {
 
   // Format: --args-for="app_url default_url"
   if (app->args().size() > 1) {
-    default_url_ = app->args()[1];
+    std::string default_url = app->args()[1];
     mojo::WindowManagerPtr window_manager;
     app->ConnectToService("mojo:kiosk_wm", &window_manager);
-    window_manager->Embed(default_url_, nullptr, nullptr);
+    window_manager->Embed(default_url, nullptr, nullptr);
   }
 }
 
@@ -32,7 +32,7 @@ KioskWM::CreateWindowManagerController(
     mojo::ApplicationConnection* connection,
     window_manager::WindowManagerRoot* wm_root) {
   return scoped_ptr<window_manager::WindowManagerController>(
-      new KioskWMController(wm_root, default_url_));
+      new KioskWMController(wm_root));
 }
 
 bool KioskWM::ConfigureIncomingConnection(

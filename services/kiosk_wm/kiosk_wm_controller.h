@@ -28,8 +28,7 @@ class KioskWMController : public mojo::ViewObserver,
                           public mojo::InterfaceFactory<mojo::NavigatorHost>,
                           public ui::AcceleratorTarget {
  public:
-  KioskWMController(window_manager::WindowManagerRoot* wm_root,
-                    std::string default_url);
+  KioskWMController(window_manager::WindowManagerRoot* wm_root);
   ~KioskWMController() override;
 
   base::WeakPtr<KioskWMController> GetWeakPtr();
@@ -69,8 +68,6 @@ class KioskWMController : public mojo::ViewObserver,
   // and embedding-level state are shared on the same object.
   mojo::View* root_;
   mojo::View* content_;
-  std::string default_url_;
-  std::string pending_url_;
 
   mojo::ServiceProviderImpl exposed_services_impl_;
   scoped_ptr<MergedServiceProvider> merged_service_provider_;

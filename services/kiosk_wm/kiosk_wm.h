@@ -35,7 +35,6 @@ class KioskWM : public mojo::ApplicationDelegate,
       mojo::ApplicationConnection* connection) override;
 
   scoped_ptr<window_manager::WindowManagerApp> window_manager_app_;
-  std::string default_url_;
 
   DISALLOW_COPY_AND_ASSIGN(KioskWM);
 };

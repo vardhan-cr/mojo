@@ -10,12 +10,10 @@
 
 namespace kiosk_wm {
 
-KioskWMController::KioskWMController(window_manager::WindowManagerRoot* wm_root,
-                                     std::string default_url)
+KioskWMController::KioskWMController(window_manager::WindowManagerRoot* wm_root)
     : window_manager_root_(wm_root),
       root_(nullptr),
       content_(nullptr),
-      default_url_(default_url),
       navigator_host_(this),
       weak_factory_(this) {
   exposed_services_impl_.AddService(this);
@@ -50,25 +48,16 @@ void KioskWMController::OnEmbed(
   window_manager_root_->accelerator_manager()->Register(
       ui::Accelerator(ui::VKEY_BROWSER_BACK, 0),
       ui::AcceleratorManager::kNormalPriority, this);
-
-  // Now that we're ready, either load a pending url or the default url.
-  if (!pending_url_.empty())
-    Embed(pending_url_, services.Pass(), exposed_services.Pass());
-  else if (!default_url_.empty())
-    Embed(default_url_, services.Pass(), exposed_services.Pass());
 }
 
 void KioskWMController::Embed(
     const mojo::String& url,
     mojo::InterfaceRequest<mojo::ServiceProvider> services,
     mojo::ServiceProviderPtr exposed_services) {
-  // We can get Embed calls before we've actually been
-  // embedded into the root view and content_ is created.
-  // Just save the last url, we'll embed it when we're ready.
-  if (!content_) {
-    pending_url_ = url;
-    return;
-  }
+  // KioskWMController is embedded in a WindowManagerRoot. WindowManagerRoot
+  // queues pending embed requests while we connect to the ViewManager. This
+  // method should only be called once ::OnEmbed has been called.
+  CHECK(content_);
 
   merged_service_provider_.reset(
       new MergedServiceProvider(exposed_services.Pass(), this));
