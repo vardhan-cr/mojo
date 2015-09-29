@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 import("//build/config/nacl/config.gni")
+import("//build/toolchain/ccache.gni")
+import("//build/toolchain/goma.gni")
 
 # This value will be inherited in the toolchain below.
 concurrent_links = exec_script("get_concurrent_links.py", [], "value")
@@ -58,6 +60,21 @@ template("gcc_toolchain") {
     assert(defined(invoker.toolchain_os),
            "gcc_toolchain() must specify a \"toolchain_os\"")
 
+    if (defined(invoker.use_ccache)) {
+      use_ccache = invoker.use_ccache
+    }
+    if (defined(invoker.use_goma)) {
+      use_goma = invoker.use_goma
+    }
+    if (use_goma) {
+      assert(!use_ccache, "Goma and ccache can't be used together.")
+      compiler_prefix = "$goma_dir/gomacc "
+    } else if (use_ccache) {
+      compiler_prefix = "ccache "
+    } else {
+      compiler_prefix = ""
+    }
+
     # This define changes when the toolchain changes, forcing a rebuild.
     # Nothing should ever use this define.
     if (defined(invoker.rebuild_define)) {
@@ -69,8 +86,8 @@ template("gcc_toolchain") {
     # We can't do string interpolation ($ in strings) on things with dots in
     # them. To allow us to use $cc below, for example, we create copies of
     # these values in our scope.
-    cc = invoker.cc
-    cxx = invoker.cxx
+    cc = compiler_prefix + invoker.cc
+    cxx = compiler_prefix + invoker.cxx
     ar = invoker.ar
     ld = invoker.ld
     if (defined(invoker.readelf)) {
