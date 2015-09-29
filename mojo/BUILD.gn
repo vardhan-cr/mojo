@@ -13,7 +13,7 @@ group("mojo") {
 
     # TODO(ncbray): support ASAN once NaCl's GN build is unforked.
     mojo_use_nacl = is_linux && !is_asan
-    mojo_use_nacl_nonsfi = is_linux && !is_asan
+    mojo_use_nacl_nonsfi = (is_linux || is_android) && !is_asan
   }
   deps = [
     ":tests",

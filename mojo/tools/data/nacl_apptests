@@ -29,13 +29,5 @@ tests = [
   {
     "test": "mojo:shell_apptests_x64.nexe",
   },
-  {
-    "test": "mojo:monacl_test_nonsfi",
-    # Multiprocess mode is required for the nonsfi nacl tests: the content
-    # handler for these tests must exist in a 32-bit process but the parent
-    # may be a 64-bit process. This makes multithreading insufficient for
-    # these tests.
-    "shell-args": ["--enable-multiprocess"],
-  },
   # TODO(ncbray): http_server_apptests (uses two-stage data pipe reads)
 ]

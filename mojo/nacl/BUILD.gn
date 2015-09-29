@@ -21,9 +21,9 @@ if (!is_nacl) {
         [ "//nacl_bindings:irt_mojo(//build/toolchain/nacl:irt_${target_cpu})" ]
   }
 
-  if (current_cpu == "x86") {
-    # Non-SFI NaCl currently supports x86-32 but not x86-64. Additionally,
-    # PNaCl pexes assume 32-bit pointers.
+  if (current_cpu == "x86" || current_cpu == "arm") {
+    # Non-SFI NaCl currently supports x86-32 and ARMv7, but not anything 64-bit.
+    # Additionally, PNaCl pexes assume 32-bit pointers.
     executable("monacl_shell_nonsfi") {
       testonly = true
       sources = [
@@ -140,8 +140,14 @@ action("translate_mojo_pnacl_tests_to_native") {
     "-o",
     "$output",
     "-arch",
-    "x86-32-nonsfi",
   ]
+  if (target_cpu == "x86" || target_cpu == "x64") {
+    args += [ "x86-32-nonsfi" ]
+  } else if (target_cpu == "arm") {
+    args += [ "arm-nonsfi" ]
+  } else {
+    assert(false, "Unrecognized target CPU for Non-SFI NaCl translation")
+  }
   deps = [
     ":mojo_pnacl_tests",
   ]

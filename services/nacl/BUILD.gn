@@ -27,7 +27,7 @@ if (!is_nacl) {
         [ "//nacl_bindings:irt_mojo(//build/toolchain/nacl:irt_${target_cpu})" ]
   }
 
-  if (current_cpu == "x86") {
+  if (current_cpu == "x86" || current_cpu == "arm") {
     # Non-SFI NaCl can only be executed by a 32-bit process, so our
     # content handler must be built and launched as a 32-bit process as well.
     mojo_native_application("nacl_content_handler_nonsfi_32_bit") {
@@ -73,5 +73,7 @@ group("nacl_content_handler_nonsfi") {
     # be defined as the 32 bit variant of whatever is being used (be it clang,
     # gcc, or something else).
     deps += [ ":nacl_content_handler_nonsfi_copy(//build/toolchain/linux:clang_x86)" ]
+  } else {
+    deps += [ ":nacl_content_handler_nonsfi_copy" ]
   }
 }

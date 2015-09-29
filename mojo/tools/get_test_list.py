@@ -90,10 +90,6 @@ def GetTestList(config, verbose_count=0):
                              "irt_mojo.nexe"),
                 os.path.join(build_dir, "clang_newlib_" + config.target_cpu,
                              "monacl_test.nexe")])
-      AddEntry("Non-SFI NaCl tests",
-               [os.path.join(build_dir, "clang_x86", "monacl_shell_nonsfi"),
-                os.path.join(build_dir, "monacl_test_nonsfi.nexe")])
-      # TODO(smklein): Test nonsfi on arm / android
 
   # C++ app tests:
   if ShouldRunTest(Config.TEST_TYPE_DEFAULT, "app"):
@@ -101,9 +97,17 @@ def GetTestList(config, verbose_count=0):
                  [os.path.join("mojo", "tools", "apptest_runner.py"),
                   os.path.join("mojo", "tools", "data", "apptests"),
                   build_dir] + verbose_flags)
-    # NaCl app tests (Linux only):
+    # Non-SFI NaCl app tests (Linux including Android, no asan):
+    if config.sanitizer != Config.SANITIZER_ASAN:
+      AddXvfbEntry("Non-SFI NaCl App tests",
+                   [os.path.join("mojo", "tools", "apptest_runner.py"),
+                    os.path.join("mojo", "tools", "data",
+                                 "nacl_nonsfi_apptests"),
+                    build_dir] + verbose_flags)
+    # NaCl app tests (Linux excluding Android):
     if (target_os == Config.OS_LINUX and
         config.sanitizer != Config.SANITIZER_ASAN):
+      # TODO(smklein): Add for Android once tests are pexes.
       AddXvfbEntry("NaCl app tests",
                    [os.path.join("mojo", "tools", "apptest_runner.py"),
                     os.path.join("mojo", "tools", "data", "nacl_apptests"),
