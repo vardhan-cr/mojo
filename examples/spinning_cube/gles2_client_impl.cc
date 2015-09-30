@@ -20,6 +20,13 @@
 namespace examples {
 namespace {
 
+// TODO(johngro) : investigate extending mojom with a formal flags type which it
+// generates good bindings for, so we don't need to resort to this.
+static inline constexpr bool operator &(const mojo::EventFlags& f1,
+                                        const mojo::EventFlags& f2) {
+  return ((static_cast<uint32_t>(f1) & static_cast<uint32_t>(f2)) != 0);
+}
+
 float CalculateDragDistance(const mojo::PointF& start,
                             const mojo::PointF& end) {
   return hypot(start.x - end.x, start.y - end.y);

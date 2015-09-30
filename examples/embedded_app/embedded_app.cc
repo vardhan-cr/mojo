@@ -87,7 +87,8 @@ class EmbeddedApp
   }
   void OnViewInputEvent(View* view, const EventPtr& event) override {
     if (event->action == EVENT_TYPE_POINTER_UP &&
-        event->flags & EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
+        (static_cast<uint32_t>(event->flags) &
+         static_cast<uint32_t>(EVENT_FLAGS_LEFT_MOUSE_BUTTON))) {
       URLRequestPtr request(URLRequest::New());
       request->url = "http://www.aaronboodman.com/z_dropbox/test.html";
       NavigatorHostPtr navigator_host;

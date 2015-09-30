@@ -36,9 +36,10 @@ ui::EventType MojoMouseEventTypeToUIEvent(const EventPtr& event) {
           event->pointer_data->vertical_wheel != 0) {
         return ui::ET_MOUSEWHEEL;
       }
-      if (event->flags &
-          (EVENT_FLAGS_LEFT_MOUSE_BUTTON | EVENT_FLAGS_MIDDLE_MOUSE_BUTTON |
-           EVENT_FLAGS_RIGHT_MOUSE_BUTTON)) {
+      if (static_cast<uint32_t>(event->flags) &
+          (static_cast<uint32_t>(EVENT_FLAGS_LEFT_MOUSE_BUTTON) |
+           static_cast<uint32_t>(EVENT_FLAGS_MIDDLE_MOUSE_BUTTON) |
+           static_cast<uint32_t>(EVENT_FLAGS_RIGHT_MOUSE_BUTTON))) {
         return ui::ET_MOUSE_DRAGGED;
       }
       return ui::ET_MOUSE_MOVED;

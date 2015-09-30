@@ -33,6 +33,13 @@
 namespace examples {
 namespace {
 
+// TODO(johngro) : investigate extending mojom with a formal flags type which it
+// generates good bindings for, so we don't need to resort to this.
+static inline constexpr bool operator &(const mojo::EventFlags& f1,
+                                        const mojo::EventFlags& f2) {
+  return ((static_cast<uint32_t>(f1) & static_cast<uint32_t>(f2)) != 0);
+}
+
 const SkColor kColors[] = { SK_ColorRED, SK_ColorGREEN, SK_ColorYELLOW };
 
 class EmbedderImpl : public Embedder {
