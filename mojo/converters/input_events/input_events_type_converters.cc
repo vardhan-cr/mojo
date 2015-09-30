@@ -250,18 +250,22 @@ scoped_ptr<ui::Event> TypeConverter<scoped_ptr<ui::Event>, EventPtr>::Convert(
     case EVENT_TYPE_KEY_RELEASED: {
       scoped_ptr<ui::KeyEvent> key_event;
       if (input->key_data->is_char) {
+        // TODO(johngro) : Need to verify that input->flags (a mojom generated
+        // enum) is a valid set of flags for a ui::KeyEvent
         key_event.reset(new ui::KeyEvent(
             static_cast<base::char16>(input->key_data->character),
             static_cast<ui::KeyboardCode>(
                 input->key_data->key_code),
-            input->flags));
+            static_cast<int32_t>(input->flags)));
       } else {
+        // TODO(johngro) : Need to verify that input->flags (a mojom generated
+        // enum) is a valid set of flags for a ui::KeyEvent
         key_event.reset(new ui::KeyEvent(
             input->action == EVENT_TYPE_KEY_PRESSED ? ui::ET_KEY_PRESSED
                                                     : ui::ET_KEY_RELEASED,
 
             static_cast<ui::KeyboardCode>(input->key_data->key_code),
-            input->flags));
+            static_cast<int32_t>(input->flags)));
       }
       key_event->SetExtendedKeyEventData(scoped_ptr<ui::ExtendedKeyEventData>(
           new MojoExtendedKeyEventData(

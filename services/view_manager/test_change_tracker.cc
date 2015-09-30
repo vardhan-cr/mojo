@@ -83,7 +83,7 @@ std::string ChangeToDescription1(const Change& change) {
     case CHANGE_TYPE_INPUT_EVENT:
       return base::StringPrintf("InputEvent view=%s event_action=%d",
                                 ViewIdToString(change.view_id).c_str(),
-                                change.event_action);
+                                static_cast<int32_t>(change.event_action));
 
     case CHANGE_TYPE_PROPERTY_CHANGED:
       return base::StringPrintf("PropertyChanged view=%s key=%s value=%s",
@@ -152,7 +152,7 @@ Change::Change()
       view_id(0),
       view_id2(0),
       view_id3(0),
-      event_action(0),
+      event_action(mojo::EVENT_TYPE_UNKNOWN),
       direction(mojo::ORDER_DIRECTION_ABOVE),
       bool_value(false) {
 }

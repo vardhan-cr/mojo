@@ -273,7 +273,7 @@ class ServiceImpl : public Service {
       std::cout << "Frobinate:" << std::endl;
       int depth = 1;
       Print(depth, "foo", foo);
-      Print(depth, "baz", baz);
+      Print(depth, "baz", static_cast<int32_t>(baz));
       Print(depth, "port", port.get());
     }
     callback.Run(5);
@@ -372,7 +372,7 @@ TEST_F(BindingsSampleTest, DefaultValues) {
   EXPECT_TRUE(defaults->a21.is_null());
   ASSERT_FALSE(defaults->a22.is_null());
   EXPECT_EQ(imported::SHAPE_RECTANGLE, defaults->a22->shape);
-  EXPECT_EQ(imported::COLOR_BLACK, defaults->a22->color);
+  EXPECT_EQ(static_cast<int32_t>(imported::COLOR_BLACK), defaults->a22->color);
   EXPECT_EQ(0xFFFFFFFFFFFFFFFFULL, defaults->a23);
   EXPECT_EQ(0x123456789, defaults->a24);
   EXPECT_EQ(-0x123456789, defaults->a25);

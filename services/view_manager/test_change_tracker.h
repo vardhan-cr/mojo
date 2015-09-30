@@ -64,7 +64,7 @@ struct Change {
   mojo::Id view_id3;
   mojo::Rect bounds;
   mojo::Rect bounds2;
-  int32_t event_action;
+  mojo::EventType event_action;
   mojo::String creator_url;
   mojo::String embed_url;
   mojo::OrderDirection direction;
