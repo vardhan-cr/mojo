@@ -17,6 +17,8 @@ mojo_sdk_source_set("files_impl") {
   public_configs = [ "../../../public/build/config:mojo_services" ]
 
   sources = [
+    "input_stream_file.h",
+    "lib/input_stream_file.cc",
     "lib/output_stream_file.cc",
     "output_stream_file.h",
   ]
@@ -27,6 +29,7 @@ mojo_sdk_source_set("files_impl") {
 
   mojo_sdk_deps = [
     "mojo/public/cpp/bindings",
+    "mojo/public/cpp/bindings:callback",
     "mojo/public/cpp/environment",
     "mojo/public/cpp/system",
   ]
@@ -38,6 +41,7 @@ mojo_native_application("files_impl_apptests") {
   testonly = true
 
   sources = [
+    "tests/input_stream_file_unittest.cc",
     "tests/output_stream_file_unittest.cc",
   ]
 

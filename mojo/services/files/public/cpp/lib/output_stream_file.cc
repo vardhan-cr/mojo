@@ -51,11 +51,6 @@ void OutputStreamFile::Read(uint32_t num_bytes_to_read,
     return;
   }
 
-  if (!num_bytes_to_read) {
-    callback.Run(mojo::files::ERROR_OK, mojo::Array<uint8_t>());
-    return;
-  }
-
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
   callback.Run(mojo::files::ERROR_UNAVAILABLE, mojo::Array<uint8_t>());

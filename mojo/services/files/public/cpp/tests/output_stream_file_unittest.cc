@@ -33,7 +33,7 @@ void RunMessageLoopUntilIdle() {
   mojo::RunLoop::current()->RunUntilIdle();
 }
 
-// Converts a string to a |mojo::Array<uint8_t>| (not in
+// Converts a string to a |mojo::Array<uint8_t>|.
 mojo::Array<uint8_t> StringToArray(const std::string& s) {
   auto rv = mojo::Array<uint8_t>::New(s.size());
   if (s.size())
