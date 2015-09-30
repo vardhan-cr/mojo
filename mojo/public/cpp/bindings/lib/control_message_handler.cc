@@ -13,8 +13,7 @@ namespace internal {
 
 // static
 bool ControlMessageHandler::IsControlMessage(const Message* message) {
-  return message->header()->name == kRunMessageId ||
-         message->header()->name == kRunOrClosePipeMessageId;
+  return !!(message->header()->name & 0x80000000);
 }
 
 ControlMessageHandler::ControlMessageHandler(uint32_t interface_version)
@@ -28,7 +27,8 @@ bool ControlMessageHandler::Accept(Message* message) {
   if (message->header()->name == kRunOrClosePipeMessageId)
     return RunOrClosePipe(message);
 
-  MOJO_NOTREACHED();
+  MOJO_DCHECK(false) << "Bad control message (no response): name = "
+                     << message->header()->name;
   return false;
 }
 
@@ -38,7 +38,8 @@ bool ControlMessageHandler::AcceptWithResponder(
   if (message->header()->name == kRunMessageId)
     return Run(message, responder);
 
-  MOJO_NOTREACHED();
+  MOJO_DCHECK(false) << "Bad control message (with response): name = "
+                     << message->header()->name;
   return false;
 }
 

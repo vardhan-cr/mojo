@@ -57,8 +57,6 @@
 #define MOJO_DCHECK(condition) MOJO_CHECK(condition)
 #endif  // NDEBUG && !defined(DCHECK_ALWAYS_ON)
 
-#define MOJO_NOTREACHED() MOJO_DCHECK(false)
-
 namespace mojo {
 namespace internal {
 
