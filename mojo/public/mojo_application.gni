@@ -15,9 +15,8 @@ template("mojo_native_application") {
     base_target_name = target_name
   }
 
-  final_target_name = target_name
-
   if (!is_nacl) {
+    final_target_name = target_name
     output = base_target_name + ".mojo"
     library_target_name = base_target_name + "_library"
     copy_symbols_target = "__${final_target_name}_copy_symbols"
@@ -142,9 +141,7 @@ template("mojo_native_application") {
     }
   } else {
     nexe_target_name = base_target_name + "_nexe"
-    nexe_name = base_target_name + ".nexe"
-
-    output = "${base_target_name}_${target_cpu}.nexe.mojo"
+    executable_target_name = base_target_name + "_exe"
 
     executable(nexe_target_name) {
       output_name = base_target_name
@@ -202,10 +199,33 @@ template("mojo_native_application") {
                                "testonly",
                              ])
 
-      visibility = [ ":${final_target_name}" ]
+      visibility = [ ":*" ]
     }
 
-    action(target_name) {
+    group(target_name) {
+      # This group specifies two targets: first, it requests that the
+      # pexe be built, and secondly (if the toolchain is not requesting
+      # a pexe implicitly), it creates a nexe.
+      forward_variables_from(invoker, [ "testonly" ])
+      deps = [
+        ":${executable_target_name}(//build/toolchain/nacl:newlib_pnacl)",
+      ]
+      if (current_cpu != "pnacl") {
+        deps += [ ":${executable_target_name}" ]
+      }
+    }
+
+    action(executable_target_name) {
+      if (current_cpu == "pnacl") {
+        filetype = "pexe"
+        content_handler = "pexe_content_handler"
+      } else {
+        filetype = "nexe"
+        content_handler = "nacl_content_handler"
+      }
+      output_file = "${base_target_name}.${filetype}.mojo"
+      input_name = base_target_name + ".${filetype}"
+
       forward_variables_from(invoker,
                              [
                                "testonly",
@@ -214,12 +234,12 @@ template("mojo_native_application") {
 
       script = rebase_path("mojo/public/tools/prepend.py", ".", mojo_root)
 
-      input_path = "${root_out_dir}/${nexe_name}"
+      input_path = "${root_out_dir}/${input_name}"
       inputs = [
         input_path,
       ]
 
-      output_path = "${root_build_dir}/${output}"
+      output_path = "${root_build_dir}/${output_file}"
       outputs = [
         output_path,
       ]
@@ -233,7 +253,7 @@ template("mojo_native_application") {
       args = [
         "--input=$rebase_input",
         "--output=$rebase_output",
-        "--line=#!mojo mojo:nacl_content_handler",
+        "--line=#!mojo mojo:$content_handler",
       ]
     }
   }
