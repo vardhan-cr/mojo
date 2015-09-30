@@ -49,7 +49,7 @@ class ViewObserverDelegate : public mojo::ViewObserver {
                        float floating_key_height,
                        float floating_key_width);
   void UpdateState(int32 pointer_id,
-                   int action,
+                   mojo::EventType action,
                    const gfx::PointF& touch_point);
   void IssueDraw();
 

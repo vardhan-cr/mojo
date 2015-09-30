@@ -122,7 +122,7 @@ void ViewObserverDelegate::OnUpdateSuggestion() {
 }
 
 void ViewObserverDelegate::UpdateState(int32 pointer_id,
-                                       int action,
+                                       mojo::EventType action,
                                        const gfx::PointF& touch_point) {
   // Ignore touches outside of key area.
   if (!key_area_.Contains(touch_point)) {
