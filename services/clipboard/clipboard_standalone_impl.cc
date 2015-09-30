@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include "base/logging.h"
 #include "mojo/public/cpp/bindings/array.h"
 #include "mojo/public/cpp/bindings/callback.h"
 #include "mojo/public/cpp/bindings/string.h"
@@ -49,7 +50,7 @@ class ClipboardStandaloneImpl::ClipboardData {
 ClipboardStandaloneImpl::ClipboardStandaloneImpl(
     mojo::InterfaceRequest<mojo::Clipboard> request)
     : binding_(this, request.Pass()) {
-  for (int i = 0; i < kNumClipboards; ++i) {
+  for (size_t i = 0; i < arraysize(clipboard_state_); ++i) {
     sequence_number_[i] = 0;
     clipboard_state_[i].reset(new ClipboardData);
   }
@@ -61,13 +62,17 @@ ClipboardStandaloneImpl::~ClipboardStandaloneImpl() {
 void ClipboardStandaloneImpl::GetSequenceNumber(
     Clipboard::Type clipboard_type,
     const mojo::Callback<void(uint64_t)>& callback) {
-  callback.Run(sequence_number_[clipboard_type]);
+  const size_t ndx = static_cast<size_t>(clipboard_type);
+  CHECK_LT(ndx, arraysize(sequence_number_));
+  callback.Run(sequence_number_[ndx]);
 }
 
 void ClipboardStandaloneImpl::GetAvailableMimeTypes(
     Clipboard::Type clipboard_type,
     const mojo::Callback<void(Array<String>)>& callback) {
-  callback.Run(clipboard_state_[clipboard_type]->GetMimeTypes().Pass());
+  const size_t ndx = static_cast<size_t>(clipboard_type);
+  CHECK_LT(ndx, arraysize(sequence_number_));
+  callback.Run(clipboard_state_[ndx]->GetMimeTypes().Pass());
 }
 
 void ClipboardStandaloneImpl::ReadMimeType(
@@ -75,15 +80,19 @@ void ClipboardStandaloneImpl::ReadMimeType(
     const String& mime_type,
     const mojo::Callback<void(Array<uint8_t>)>& callback) {
   Array<uint8_t> mime_data;
-  clipboard_state_[clipboard_type]->GetData(mime_type, &mime_data);
+  const size_t ndx = static_cast<size_t>(clipboard_type);
+  CHECK_LT(ndx, arraysize(sequence_number_));
+  clipboard_state_[ndx]->GetData(mime_type, &mime_data);
   callback.Run(mime_data.Pass());
 }
 
 void ClipboardStandaloneImpl::WriteClipboardData(
     Clipboard::Type clipboard_type,
     Map<String, Array<uint8_t>> data) {
-  sequence_number_[clipboard_type]++;
-  clipboard_state_[clipboard_type]->SetData(data.Pass());
+  const size_t ndx = static_cast<size_t>(clipboard_type);
+  CHECK_LT(ndx, arraysize(sequence_number_));
+  sequence_number_[ndx]++;
+  clipboard_state_[ndx]->SetData(data.Pass());
 }
 
 }  // namespace clipboard

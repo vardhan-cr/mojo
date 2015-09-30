@@ -23,6 +23,9 @@ namespace clipboard {
 class ClipboardStandaloneImpl : public mojo::Clipboard {
  public:
   // mojo::Clipboard exposes three possible clipboards.
+  //
+  // TODO(johngro) : this should not be arbitrary.  This should come (somehow)
+  // from the mojom itself
   static const int kNumClipboards = 3;
 
   explicit ClipboardStandaloneImpl(
