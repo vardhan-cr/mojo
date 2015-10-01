@@ -10,6 +10,7 @@
 #include "base/json/json_reader.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/values.h"
 
 namespace benchmark {
@@ -32,7 +33,7 @@ Event::~Event() {}
 namespace {
 // ID uniquely identifying an asynchronous event stack.
 struct AsyncEventStackId {
-  int id;
+  std::string id;
   std::string cat;
 };
 
@@ -41,28 +42,49 @@ bool operator<(const AsyncEventStackId& t, const AsyncEventStackId& o) {
 }
 
 // ID uniquely identifying a duration event stack.
-typedef int DurationEventStackId;
+typedef std::string DurationEventStackId;
 
-// Makes a unique id for a duration event stack.
-bool GetDurationEventStackId(base::DictionaryValue* event_dict,
-                             DurationEventStackId* durationId) {
-  if (!event_dict->GetInteger("tid", durationId)) {
-    LOG(ERROR) << "Incorrect trace event (missing tid).";
+bool ExtractKeyAsString(base::DictionaryValue* event_dict,
+                        const std::string& key,
+                        std::string* output) {
+  const base::Value* value;
+  if (!event_dict->Get(key, &value)) {
+    LOG(ERROR) << "Incorrect trace event (missing " + key + "): "
+               << *event_dict;
+    return false;
+  }
+
+  if (value->IsType(base::Value::TYPE_INTEGER)) {
+    int id_int;
+    // We already verified the type, so it should be an integer.
+    DCHECK(value->GetAsInteger(&id_int));
+    *output = base::IntToString(id_int);
+  } else if (value->IsType(base::Value::TYPE_STRING)) {
+    DCHECK(value->GetAsString(output));
+  } else {
+    LOG(ERROR) << "Incorrect trace event (" + key +
+                      " not a string or integer): "
+               << *event_dict;
     return false;
   }
   return true;
 }
 
+// Makes a unique id for a duration event stack.
+bool GetDurationEventStackId(base::DictionaryValue* event_dict,
+                             DurationEventStackId* durationId) {
+  return ExtractKeyAsString(event_dict, "tid", durationId);
+}
+
 // Makes a unique key for an async event stack.
 bool GetAsyncEventStackId(base::DictionaryValue* event_dict,
                           AsyncEventStackId* asyncId) {
-  if (!event_dict->GetInteger("id", &asyncId->id)) {
-    LOG(ERROR) << "Incorrect async trace event (missing id).";
+  if (!ExtractKeyAsString(event_dict, "id", &asyncId->id)) {
     return false;
   }
 
-  // We can have an empty category, but it is still relevant for event merging,
-  // per the documentation.
+  // We can have an empty category, but it is still relevant for event
+  // merging per the documentation.
   std::string cat;
   event_dict->GetString("cat", &asyncId->cat);
 
@@ -195,10 +217,9 @@ bool ParseEvents(base::ListValue* event_list, std::vector<Event>* result) {
       return false;
     }
 
-    if (!event_dict->GetString("cat", &event.categories)) {
-      LOG(WARNING) << "Ignoring incorrect trace event (no categories)";
-      continue;
-    }
+    // Some clients do not add categories to events, but we don't want to fail
+    // nor skip the event.
+    event_dict->GetString("cat", &event.categories);
 
     double timestamp;
     if (!event_dict->GetDouble("ts", &timestamp)) {

@@ -145,6 +145,25 @@ TEST(GetEventsTest, DurationEventsTwoThreads) {
   EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[1].duration);
 }
 
+TEST(GetEventsTest, DurationEventsTidIsString) {
+  std::vector<std::string> event_specs(2);
+  event_specs[0] =
+      "{\"tid\":\"1\",\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\","
+      "\"name\":\"t1 event\"}";
+  event_specs[1] = "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
+
+  std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
+  std::vector<Event> events;
+  ASSERT_TRUE(GetEvents(trace_json, &events));
+  ASSERT_EQ(1u, events.size());
+
+  EXPECT_EQ(EventType::COMPLETE, events[0].type);
+  EXPECT_EQ("t1 event", events[0].name);
+  EXPECT_EQ("cc", events[0].categories);
+  EXPECT_EQ(base::TimeTicks::FromInternalValue(1), events[0].timestamp);
+  EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[0].duration);
+}
+
 TEST(GetEventsTest, AsyncEvents) {
   std::vector<std::string> event_specs(4);
   event_specs[0] =
@@ -176,6 +195,27 @@ TEST(GetEventsTest, AsyncEvents) {
   EXPECT_EQ("cc", events[1].categories);
   EXPECT_EQ(base::TimeTicks::FromInternalValue(2), events[1].timestamp);
   EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[1].duration);
+}
+
+TEST(GetEventsTest, AsyncEventIdIsString) {
+  std::vector<std::string> event_specs(2);
+  event_specs[0] =
+      "{\"tid\":1001,\"id\":\"a\",\"ts\":1,\"ph\":\"S\",\"cat\":\"cc\","
+      "\"name\":\"t1 event\"}";
+  event_specs[1] =
+      "{\"tid\":1003,\"id\":\"a\",\"ts\":3,\"ph\":\"F\",\"cat\":\"cc\","
+      "\"name\":\"t1 event\"}";
+
+  std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
+  std::vector<Event> events;
+  ASSERT_TRUE(GetEvents(trace_json, &events));
+  ASSERT_EQ(1u, events.size());
+
+  EXPECT_EQ(EventType::COMPLETE, events[0].type);
+  EXPECT_EQ("t1 event", events[0].name);
+  EXPECT_EQ("cc", events[0].categories);
+  EXPECT_EQ(base::TimeTicks::FromInternalValue(1), events[0].timestamp);
+  EXPECT_EQ(base::TimeDelta::FromInternalValue(2), events[0].duration);
 }
 
 }  // namespace
