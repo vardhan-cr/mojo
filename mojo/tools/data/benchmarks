@@ -12,6 +12,14 @@ benchmarks = [
     ]
   },
   {
+    'name': 'Dart app initialization with handler already running',
+    'app': 'https://core.mojoapps.io/dart_handler_running.mojo',
+    'duration': 10,
+    'measurements': [
+      'time_between/dart_handler_running/connecting/traced_application/initialized',
+    ]
+  },
+  {
     'name': 'C++ app initialization',
     'app': 'https://core.mojoapps.io/trace_me.mojo',
     'duration': 10,
