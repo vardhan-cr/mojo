@@ -37,7 +37,7 @@ void DartTraceProvider::StartTracing(const mojo::String& categories,
 
 static void AppendStreamConsumer(Dart_StreamConsumer_State state,
                                  const char* stream_name,
-                                 uint8_t* buffer,
+                                 const uint8_t* buffer,
                                  intptr_t buffer_length,
                                  void* user_data) {
   if (state == Dart_StreamConsumer_kFinish) {
