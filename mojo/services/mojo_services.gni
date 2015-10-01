@@ -14,6 +14,7 @@ mojo_services = [
   "//mojo/services/authentication/public/interfaces",
   "//mojo/services/camera_roll/public/interfaces",
   "//mojo/services/clipboard/public/interfaces",
+  "//mojo/services/contacts/public/interfaces",
   "//mojo/services/content_handler/public/interfaces",
   "//mojo/services/device_info/public/interfaces",
   "//mojo/services/files/public/interfaces",

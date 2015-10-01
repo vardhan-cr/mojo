@@ -28,6 +28,7 @@ group("services") {
     deps += [
       "//services/android:java_handler",
       "//services/camera_roll",
+      "//services/contacts",
       "//services/location",
       "//services/notifications",
       "//services/sensors",
@@ -82,6 +83,7 @@ group("tests") {
   }
 
   if (is_android) {
+    deps += [ "//services/contacts:apptests" ]
     deps += [ "//services/notifications:apptests" ]
   }
 

@@ -104,6 +104,9 @@ if target_os == 'android':
       ],
     },
     {
+      "test": "mojo:contacts_apptests",
+    },
+    {
       "test": "mojo:notification_apptests",
     },
     {
