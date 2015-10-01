@@ -150,7 +150,7 @@ TEST(GetEventsTest, DurationEventsTidIsString) {
   event_specs[0] =
       "{\"tid\":\"1\",\"ts\":1,\"ph\":\"B\",\"cat\":\"cc\","
       "\"name\":\"t1 event\"}";
-  event_specs[1] = "{\"tid\":1,\"ts\":3,\"ph\":\"E\"}";
+  event_specs[1] = "{\"tid\":\"1\",\"ts\":3,\"ph\":\"E\"}";
 
   std::string trace_json = "[" + JoinString(event_specs, ',') + "]";
   std::vector<Event> events;

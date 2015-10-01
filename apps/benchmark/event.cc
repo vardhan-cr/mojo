@@ -57,10 +57,10 @@ bool ExtractKeyAsString(base::DictionaryValue* event_dict,
   if (value->IsType(base::Value::TYPE_INTEGER)) {
     int id_int = 0;
     // We already verified the type, so it should be an integer.
-    DCHECK(value->GetAsInteger(&id_int));
+    CHECK(value->GetAsInteger(&id_int));
     *output = base::IntToString(id_int);
   } else if (value->IsType(base::Value::TYPE_STRING)) {
-    DCHECK(value->GetAsString(output));
+    CHECK(value->GetAsString(output));
   } else {
     LOG(ERROR) << "Incorrect trace event (" + key +
                       " not a string or integer): "
