@@ -41,18 +41,18 @@ bool GetMeasurement(const std::string& measurement_spec, Measurement* result) {
     if (!CheckMeasurementFormat(parts[0], 3, parts.size()))
       return false;
     *result =
-        Measurement(MeasurementType::TIME_UNTIL, EventSpec(parts[1], parts[2]));
+        Measurement(MeasurementType::TIME_UNTIL, EventSpec(parts[2], parts[1]));
   } else if (parts[0] == "time_between") {
     if (!CheckMeasurementFormat(parts[0], 5, parts.size()))
       return false;
     *result = Measurement(MeasurementType::TIME_BETWEEN,
-                          EventSpec(parts[1], parts[2]),
-                          EventSpec(parts[3], parts[4]));
+                          EventSpec(parts[2], parts[1]),
+                          EventSpec(parts[4], parts[3]));
   } else if (parts[0] == "avg_duration") {
     if (!CheckMeasurementFormat(parts[0], 3, parts.size()))
       return false;
     *result = Measurement(MeasurementType::AVG_DURATION,
-                          EventSpec(parts[1], parts[2]));
+                          EventSpec(parts[2], parts[1]));
   } else {
     LOG(ERROR) << "Could not recognize the measurement type: " << parts[0];
     return false;
