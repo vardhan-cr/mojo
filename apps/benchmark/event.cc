@@ -55,7 +55,7 @@ bool ExtractKeyAsString(base::DictionaryValue* event_dict,
   }
 
   if (value->IsType(base::Value::TYPE_INTEGER)) {
-    int id_int;
+    int id_int = 0;
     // We already verified the type, so it should be an integer.
     DCHECK(value->GetAsInteger(&id_int));
     *output = base::IntToString(id_int);
