@@ -14,28 +14,50 @@
 namespace benchmark {
 namespace {
 
+bool CheckMeasurementFormat(const std::string& type,
+                            int required_args,
+                            int provided_args) {
+  if (required_args != provided_args) {
+    LOG(ERROR) << "Could not parse a measurement of type " << type
+               << ", expected " << required_args << " while " << provided_args
+               << " were provided";
+    return false;
+  }
+  return true;
+}
+
 bool GetMeasurement(const std::string& measurement_spec, Measurement* result) {
   // Measurements are described in the format:
   // <measurement type>/<event category>/<event name>.
   std::vector<std::string> parts;
   base::SplitString(measurement_spec, '/', &parts);
-  if (parts.size() != 3) {
+  if (parts.size() < 1) {
     LOG(ERROR) << "Could not parse the measurement description: "
                << measurement_spec;
     return false;
   }
 
   if (parts[0] == "time_until") {
-    result->type = MeasurementType::TIME_UNTIL;
+    if (!CheckMeasurementFormat(parts[0], 3, parts.size()))
+      return false;
+    *result =
+        Measurement(MeasurementType::TIME_UNTIL, EventSpec(parts[1], parts[2]));
+  } else if (parts[0] == "time_between") {
+    if (!CheckMeasurementFormat(parts[0], 5, parts.size()))
+      return false;
+    *result = Measurement(MeasurementType::TIME_BETWEEN,
+                          EventSpec(parts[1], parts[2]),
+                          EventSpec(parts[3], parts[4]));
   } else if (parts[0] == "avg_duration") {
-    result->type = MeasurementType::AVG_DURATION;
+    if (!CheckMeasurementFormat(parts[0], 3, parts.size()))
+      return false;
+    *result = Measurement(MeasurementType::AVG_DURATION,
+                          EventSpec(parts[1], parts[2]));
   } else {
     LOG(ERROR) << "Could not recognize the measurement type: " << parts[0];
     return false;
   }
 
-  result->target_event.categories = parts[1];
-  result->target_event.name = parts[2];
   result->spec = measurement_spec;
   return true;
 }
