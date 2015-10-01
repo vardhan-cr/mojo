@@ -128,6 +128,10 @@ if target_os != 'android':
       "type": "dart",
     },
     {
+      # These tests rely on various things in /bin.
+      "test": "mojo:native_support_apptests",
+    },
+    {
       # https://github.com/domokit/mojo/issues/61
       # Sometime the shell get a trucated application when exposed through the
       # http server.

@@ -25,6 +25,7 @@ mojo_services = [
   "//mojo/services/input_events/public/interfaces",
   "//mojo/services/keyboard/public/interfaces",
   "//mojo/services/location/public/interfaces",
+  "//mojo/services/native_support/public/interfaces",
   "//mojo/services/native_viewport/public/interfaces",
   "//mojo/services/navigation/public/interfaces",
   "//mojo/services/network/public/interfaces",

@@ -187,10 +187,10 @@ void MotermDriver::Close(const CloseCallback& callback) {
     return;
   }
 
+  // TODO(vtl): Call pending read callbacks?
+
   is_closed_ = true;
   callback.Run(mojo::files::ERROR_OK);
-
-  // TODO(vtl): Call pending read callbacks?
 
   client_->OnClosed();
 }

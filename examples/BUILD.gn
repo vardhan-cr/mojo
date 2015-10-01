@@ -21,6 +21,7 @@ group("examples") {
     "//examples/indirect_service",
     "//examples/keyboard_client",
     "//examples/moterm_example_app",
+    "//examples/native_run_app",
     "//examples/nesting_app",
     "//examples/nfc_sender",
     "//examples/notification_generator",

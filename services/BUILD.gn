@@ -18,6 +18,7 @@ group("services") {
     "//services/http_server",
     "//services/icu_data",
     "//services/keyboard_native",
+    "//services/native_support",
     "//services/prediction",
     "//services/reaper",
     "//services/test_service:bindings",
@@ -74,6 +75,7 @@ group("tests") {
     "//services/clipboard:apptests",
     "//services/dart/dart_apptests",
     "//services/http_server:apptests",
+    "//services/native_support:apptests",
     "//services/prediction:apptests",
     "//services/reaper:tests",
   ]
