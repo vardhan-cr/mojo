@@ -328,6 +328,17 @@ union ConstantValue {
   uint32 uint32_value;
   uint64 uint64_value;
   EnumConstantValue enum_value;
+  BuiltinConstantValue builtin_value;
+};
+
+// Represents the built-in constants.
+enum BuiltinConstantValue {
+  DOUBLE_INFINITY,
+  DOUBLE_NEGATIVE_INFINITY,
+  DOUBLE_NAN,
+  FLOAT_INFINITY,
+  FLOAT_NEGATIVE_INFINITY,
+  FLOAT_NAN,
 };
 
 // Represents an occurrence of a user-defined identifier that should resolve to
