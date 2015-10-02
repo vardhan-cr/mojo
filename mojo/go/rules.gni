@@ -91,6 +91,92 @@ template("go_test_binary") {
   }
 }
 
+# Declare a go binary target.
+#
+# The target generates a go executable, optionally linking against C code,
+# which is compiled into a static library and linked against Go.
+#
+# Only works on linux. |go_build_tool| must be set to the absolute path
+# of the go build tool.
+#
+# Variables
+#   sources: list of top-level .go files to compile (required)
+#   inputs: list of files that are input dependencies. Use this to
+#           specify your imported .go files. These files will not be
+#           specified in the command line to go build but they will cause
+#           a re-compile if they are touched. (optional)
+#   static_library_sources: list of C sources needed for the static library
+#                           (optional)
+#   deps: dependencies (optional)
+template("go_binary") {
+  assert(is_linux)
+  assert(defined(invoker.sources))
+  assert(go_build_tool != "")
+
+  static_library_name = target_name + "_static_library"
+
+  static_library(static_library_name) {
+    complete_static_lib = true
+
+    if (defined(invoker.static_library_sources)) {
+      sources = invoker.static_library_sources
+    }
+    if (defined(invoker.deps)) {
+      deps = invoker.deps
+    }
+  }
+
+  go_binary_name = target_name + "_go"
+  action(go_binary_name) {
+    deps = [
+      ":${static_library_name}",
+    ]
+    if (defined(invoker.deps)) {
+      deps += invoker.deps
+    }
+    script = "//mojo/go/go.py"
+    inputs = invoker.sources
+    if (defined(invoker.inputs)) {
+      inputs += invoker.inputs
+    }
+    outputs = [
+      "${target_out_dir}/${target_name}",
+    ]
+
+    # Since go build does not permit specifying an output directory or output
+    # binary name, we create a temporary build directory, and the python
+    # script will later identify the output, copy it to the target location,
+    # and clean up the temporary build directory.
+    # TODO(rudominer) Update the version of go in the Mojo repo and then
+    # we will be able to use the -o flag instead.
+    build_dir = "${target_out_dir}/${target_name}_build"
+    args = [
+      "--",
+      "${go_build_tool}",
+      rebase_path(build_dir, root_build_dir),
+      rebase_path(target_out_dir, root_build_dir) + "/${target_name}",
+      rebase_path("//", root_build_dir),
+      rebase_path(root_out_dir, root_build_dir),
+      "-I" + rebase_path("//"),
+      "-L" + rebase_path(target_out_dir) + " -l" + static_library_name + "",
+      "build",
+    ]
+    args += rebase_path(invoker.sources, build_dir)
+  }
+
+  copy(target_name) {
+    deps = [
+      ":${go_binary_name}",
+    ]
+    sources = [
+      "${target_out_dir}/${go_binary_name}",
+    ]
+    outputs = [
+      "${root_out_dir}/${target_name}",
+    ]
+  }
+}
+
 template("go_mojo_application") {
   assert(is_android || is_linux)
   assert(defined(invoker.sources))
