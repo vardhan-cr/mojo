@@ -328,14 +328,14 @@ inline size_t GetSerializedSize_(const Array<E>& input) {
 }
 
 template <typename E, typename F>
-inline void SerializeArray_(
+inline internal::ValidationError SerializeArray_(
     Array<E>* input,
     internal::Buffer* buf,
     internal::Array_Data<F>** output,
     const internal::ArrayValidateParams* validate_params) {
   MOJO_DCHECK(input);
   if (*input) {
-    MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+    MOJO_INTERNAL_SERIALIZATION_CHECK_OR_RETURN(
         validate_params->expected_num_elements != 0 &&
             input->size() != validate_params->expected_num_elements,
         internal::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER,
@@ -346,13 +346,19 @@ inline void SerializeArray_(
     internal::Array_Data<F>* result =
         internal::Array_Data<F>::New(input->size(), buf);
     if (result) {
-      internal::ArraySerializer<E, F>::SerializeElements(
-          input->begin(), input->size(), buf, result, validate_params);
+        auto retval = internal::ArraySerializer<E, F>::SerializeElements(
+            input->begin(), input->size(), buf, result, validate_params);
+        if (retval != VALIDATION_ERROR_NONE) {
+          return retval;
+        }
     }
     *output = result;
   } else {
+    // It is up to the caller to make the given |Array| is not null if it is
+    // not nullable.
     *output = nullptr;
   }
+  return VALIDATION_ERROR_NONE;
 }
 
 template <typename E, typename F>
