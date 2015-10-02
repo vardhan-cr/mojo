@@ -5,6 +5,7 @@
 package tests
 
 import (
+	"fmt"
 	"regexp"
 	"sync"
 	"testing"
@@ -82,13 +83,14 @@ func TestAcceptWithResponseMultiple(t *testing.T) {
 		for i := 0; i < numberOfRequests; i++ {
 			c := make(chan bindings.WaitResponse, 1)
 			bindings.GetAsyncWaiter().AsyncWait(h1, system.MOJO_HANDLE_SIGNAL_READABLE, c)
+			<-c
 			r, bytes, handles := h1.ReadMessage(system.MOJO_READ_MESSAGE_FLAG_NONE)
 			if r != system.MOJO_RESULT_OK {
-				t.Fatalf("can't read from a message pipe: %v", r)
+				panic(fmt.Sprintf("can't read from a message pipe: %v", r))
 			}
 			r = h1.WriteMessage(bytes, handles, system.MOJO_WRITE_MESSAGE_FLAG_NONE)
 			if r != system.MOJO_RESULT_OK {
-				t.Fatalf("can't write to a message pipe: %v", r)
+				panic(fmt.Sprintf("can't write to a message pipe: %v", r))
 			}
 		}
 		wg.Done()

@@ -68,6 +68,7 @@ if (is_linux) {
       "tests/encoding_test.go",
       "tests/interface_test.go",
       "tests/message_test.go",
+      "tests/regression_test.go",
       "tests/request_response_test.go",
       "tests/router_test.go",
       "tests/system_test.go",

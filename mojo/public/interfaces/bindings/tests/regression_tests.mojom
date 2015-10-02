@@ -8,7 +8,7 @@
 module regression_tests;
 
 interface CheckMethodWithEmptyResponse {
-WithouParameterAndEmptyResponse() => ();
+WithoutParameterAndEmptyResponse() => ();
 WithParameterAndEmptyResponse(bool b) => ();
 };
 
