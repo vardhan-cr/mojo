@@ -14,7 +14,7 @@
 // incomplete.
 std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
                                                bool keypad_application_mode) {
-  DCHECK_EQ(key_event.action, mojo::EVENT_TYPE_KEY_PRESSED);
+  DCHECK_EQ(key_event.action, mojo::EventType::KEY_PRESSED);
   CHECK(key_event.key_data);
   const mojo::KeyData& key_data = *key_event.key_data;
 
@@ -48,72 +48,72 @@ std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
   // |event.flags|).
   switch (key_data.windows_key_code) {
     // Produces input sequence:
-    case mojo::KEYBOARD_CODE_BACK:
+    case mojo::KeyboardCode::BACK:
       // Have backspace send DEL instead of BS.
       return std::string("\x7f");
-    case mojo::KEYBOARD_CODE_ESCAPE:
+    case mojo::KeyboardCode::ESCAPE:
       return std::string("\x1b");
-    case mojo::KEYBOARD_CODE_PRIOR:
+    case mojo::KeyboardCode::PRIOR:
       return std::string("\x1b[5~");
-    case mojo::KEYBOARD_CODE_NEXT:
+    case mojo::KeyboardCode::NEXT:
       return std::string("\x1b[6~");
-    case mojo::KEYBOARD_CODE_END:
+    case mojo::KeyboardCode::END:
       return std::string(keypad_application_mode ? "\x1bOF" : "\x1b[F");
-    case mojo::KEYBOARD_CODE_HOME:
+    case mojo::KeyboardCode::HOME:
       return std::string(keypad_application_mode ? "\x1bOH" : "\x1b[H");
-    case mojo::KEYBOARD_CODE_LEFT:
+    case mojo::KeyboardCode::LEFT:
       return std::string(keypad_application_mode ? "\x1bOD" : "\x1b[D");
-    case mojo::KEYBOARD_CODE_UP:
+    case mojo::KeyboardCode::UP:
       return std::string(keypad_application_mode ? "\x1bOA" : "\x1b[A");
-    case mojo::KEYBOARD_CODE_RIGHT:
+    case mojo::KeyboardCode::RIGHT:
       return std::string(keypad_application_mode ? "\x1bOC" : "\x1b[C");
-    case mojo::KEYBOARD_CODE_DOWN:
+    case mojo::KeyboardCode::DOWN:
       return std::string(keypad_application_mode ? "\x1bOB" : "\x1b[B");
-    case mojo::KEYBOARD_CODE_INSERT:
+    case mojo::KeyboardCode::INSERT:
       return std::string("\x1b[2~");
-    case mojo::KEYBOARD_CODE_DELETE:
+    case mojo::KeyboardCode::DELETE:
       return std::string("\x1b[3~");
 
     // Should have |character| set:
-    case mojo::KEYBOARD_CODE_TAB:
-    case mojo::KEYBOARD_CODE_RETURN:
-    case mojo::KEYBOARD_CODE_SPACE:
-    case mojo::KEYBOARD_CODE_NUM_0:
-    case mojo::KEYBOARD_CODE_NUM_1:
-    case mojo::KEYBOARD_CODE_NUM_2:
-    case mojo::KEYBOARD_CODE_NUM_3:
-    case mojo::KEYBOARD_CODE_NUM_4:
-    case mojo::KEYBOARD_CODE_NUM_5:
-    case mojo::KEYBOARD_CODE_NUM_6:
-    case mojo::KEYBOARD_CODE_NUM_7:
-    case mojo::KEYBOARD_CODE_NUM_8:
-    case mojo::KEYBOARD_CODE_NUM_9:
-    case mojo::KEYBOARD_CODE_A:
-    case mojo::KEYBOARD_CODE_B:
-    case mojo::KEYBOARD_CODE_C:
-    case mojo::KEYBOARD_CODE_D:
-    case mojo::KEYBOARD_CODE_E:
-    case mojo::KEYBOARD_CODE_F:
-    case mojo::KEYBOARD_CODE_G:
-    case mojo::KEYBOARD_CODE_H:
-    case mojo::KEYBOARD_CODE_I:
-    case mojo::KEYBOARD_CODE_J:
-    case mojo::KEYBOARD_CODE_K:
-    case mojo::KEYBOARD_CODE_L:
-    case mojo::KEYBOARD_CODE_M:
-    case mojo::KEYBOARD_CODE_N:
-    case mojo::KEYBOARD_CODE_O:
-    case mojo::KEYBOARD_CODE_P:
-    case mojo::KEYBOARD_CODE_Q:
-    case mojo::KEYBOARD_CODE_R:
-    case mojo::KEYBOARD_CODE_S:
-    case mojo::KEYBOARD_CODE_T:
-    case mojo::KEYBOARD_CODE_U:
-    case mojo::KEYBOARD_CODE_V:
-    case mojo::KEYBOARD_CODE_W:
-    case mojo::KEYBOARD_CODE_X:
-    case mojo::KEYBOARD_CODE_Y:
-    case mojo::KEYBOARD_CODE_Z:
+    case mojo::KeyboardCode::TAB:
+    case mojo::KeyboardCode::RETURN:
+    case mojo::KeyboardCode::SPACE:
+    case mojo::KeyboardCode::NUM_0:
+    case mojo::KeyboardCode::NUM_1:
+    case mojo::KeyboardCode::NUM_2:
+    case mojo::KeyboardCode::NUM_3:
+    case mojo::KeyboardCode::NUM_4:
+    case mojo::KeyboardCode::NUM_5:
+    case mojo::KeyboardCode::NUM_6:
+    case mojo::KeyboardCode::NUM_7:
+    case mojo::KeyboardCode::NUM_8:
+    case mojo::KeyboardCode::NUM_9:
+    case mojo::KeyboardCode::A:
+    case mojo::KeyboardCode::B:
+    case mojo::KeyboardCode::C:
+    case mojo::KeyboardCode::D:
+    case mojo::KeyboardCode::E:
+    case mojo::KeyboardCode::F:
+    case mojo::KeyboardCode::G:
+    case mojo::KeyboardCode::H:
+    case mojo::KeyboardCode::I:
+    case mojo::KeyboardCode::J:
+    case mojo::KeyboardCode::K:
+    case mojo::KeyboardCode::L:
+    case mojo::KeyboardCode::M:
+    case mojo::KeyboardCode::N:
+    case mojo::KeyboardCode::O:
+    case mojo::KeyboardCode::P:
+    case mojo::KeyboardCode::Q:
+    case mojo::KeyboardCode::R:
+    case mojo::KeyboardCode::S:
+    case mojo::KeyboardCode::T:
+    case mojo::KeyboardCode::U:
+    case mojo::KeyboardCode::V:
+    case mojo::KeyboardCode::W:
+    case mojo::KeyboardCode::X:
+    case mojo::KeyboardCode::Y:
+    case mojo::KeyboardCode::Z:
       // TODO(vtl): Actually, we won't get characters for Ctrl+<number> (and
       // probably other odd combinations).
       DLOG(WARNING) << "Expected character for key code "
@@ -121,126 +121,126 @@ std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
       break;
 
     // Purposely produce no input sequence:
-    case mojo::KEYBOARD_CODE_SHIFT:
-    case mojo::KEYBOARD_CODE_CONTROL:
-    case mojo::KEYBOARD_CODE_MENU:
-    case mojo::KEYBOARD_CODE_LSHIFT:
-    case mojo::KEYBOARD_CODE_RSHIFT:
-    case mojo::KEYBOARD_CODE_LCONTROL:
-    case mojo::KEYBOARD_CODE_RCONTROL:
-    case mojo::KEYBOARD_CODE_LMENU:
-    case mojo::KEYBOARD_CODE_RMENU:
+    case mojo::KeyboardCode::SHIFT:
+    case mojo::KeyboardCode::CONTROL:
+    case mojo::KeyboardCode::MENU:
+    case mojo::KeyboardCode::LSHIFT:
+    case mojo::KeyboardCode::RSHIFT:
+    case mojo::KeyboardCode::LCONTROL:
+    case mojo::KeyboardCode::RCONTROL:
+    case mojo::KeyboardCode::LMENU:
+    case mojo::KeyboardCode::RMENU:
       break;
 
     // TODO(vtl): Figure these out.
-    case mojo::KEYBOARD_CODE_CLEAR:
-    case mojo::KEYBOARD_CODE_PAUSE:
-    case mojo::KEYBOARD_CODE_CAPITAL:
-    case mojo::KEYBOARD_CODE_KANA:  // A.k.a. |KEYBOARD_CODE_HANGUL|.
-    case mojo::KEYBOARD_CODE_JUNJA:
-    case mojo::KEYBOARD_CODE_FINAL:
-    case mojo::KEYBOARD_CODE_HANJA:  // A.k.a. |KEYBOARD_CODE_KANJI|.
-    case mojo::KEYBOARD_CODE_CONVERT:
-    case mojo::KEYBOARD_CODE_NONCONVERT:
-    case mojo::KEYBOARD_CODE_ACCEPT:
-    case mojo::KEYBOARD_CODE_MODECHANGE:
-    case mojo::KEYBOARD_CODE_SELECT:
-    case mojo::KEYBOARD_CODE_PRINT:
-    case mojo::KEYBOARD_CODE_EXECUTE:
-    case mojo::KEYBOARD_CODE_SNAPSHOT:
-    case mojo::KEYBOARD_CODE_HELP:
-    case mojo::KEYBOARD_CODE_LWIN:  // A.k.a. |KEYBOARD_CODE_COMMAND|.
-    case mojo::KEYBOARD_CODE_RWIN:
-    case mojo::KEYBOARD_CODE_APPS:
-    case mojo::KEYBOARD_CODE_SLEEP:
-    case mojo::KEYBOARD_CODE_NUMPAD0:
-    case mojo::KEYBOARD_CODE_NUMPAD1:
-    case mojo::KEYBOARD_CODE_NUMPAD2:
-    case mojo::KEYBOARD_CODE_NUMPAD3:
-    case mojo::KEYBOARD_CODE_NUMPAD4:
-    case mojo::KEYBOARD_CODE_NUMPAD5:
-    case mojo::KEYBOARD_CODE_NUMPAD6:
-    case mojo::KEYBOARD_CODE_NUMPAD7:
-    case mojo::KEYBOARD_CODE_NUMPAD8:
-    case mojo::KEYBOARD_CODE_NUMPAD9:
-    case mojo::KEYBOARD_CODE_MULTIPLY:
-    case mojo::KEYBOARD_CODE_ADD:
-    case mojo::KEYBOARD_CODE_SEPARATOR:
-    case mojo::KEYBOARD_CODE_SUBTRACT:
-    case mojo::KEYBOARD_CODE_DECIMAL:
-    case mojo::KEYBOARD_CODE_DIVIDE:
-    case mojo::KEYBOARD_CODE_F1:
-    case mojo::KEYBOARD_CODE_F2:
-    case mojo::KEYBOARD_CODE_F3:
-    case mojo::KEYBOARD_CODE_F4:
-    case mojo::KEYBOARD_CODE_F5:
-    case mojo::KEYBOARD_CODE_F6:
-    case mojo::KEYBOARD_CODE_F7:
-    case mojo::KEYBOARD_CODE_F8:
-    case mojo::KEYBOARD_CODE_F9:
-    case mojo::KEYBOARD_CODE_F10:
-    case mojo::KEYBOARD_CODE_F11:
-    case mojo::KEYBOARD_CODE_F12:
-    case mojo::KEYBOARD_CODE_F13:
-    case mojo::KEYBOARD_CODE_F14:
-    case mojo::KEYBOARD_CODE_F15:
-    case mojo::KEYBOARD_CODE_F16:
-    case mojo::KEYBOARD_CODE_F17:
-    case mojo::KEYBOARD_CODE_F18:
-    case mojo::KEYBOARD_CODE_F19:
-    case mojo::KEYBOARD_CODE_F20:
-    case mojo::KEYBOARD_CODE_F21:
-    case mojo::KEYBOARD_CODE_F22:
-    case mojo::KEYBOARD_CODE_F23:
-    case mojo::KEYBOARD_CODE_F24:
-    case mojo::KEYBOARD_CODE_NUMLOCK:
-    case mojo::KEYBOARD_CODE_SCROLL:
-    case mojo::KEYBOARD_CODE_BROWSER_BACK:
-    case mojo::KEYBOARD_CODE_BROWSER_FORWARD:
-    case mojo::KEYBOARD_CODE_BROWSER_REFRESH:
-    case mojo::KEYBOARD_CODE_BROWSER_STOP:
-    case mojo::KEYBOARD_CODE_BROWSER_SEARCH:
-    case mojo::KEYBOARD_CODE_BROWSER_FAVORITES:
-    case mojo::KEYBOARD_CODE_BROWSER_HOME:
-    case mojo::KEYBOARD_CODE_VOLUME_MUTE:
-    case mojo::KEYBOARD_CODE_VOLUME_DOWN:
-    case mojo::KEYBOARD_CODE_VOLUME_UP:
-    case mojo::KEYBOARD_CODE_MEDIA_NEXT_TRACK:
-    case mojo::KEYBOARD_CODE_MEDIA_PREV_TRACK:
-    case mojo::KEYBOARD_CODE_MEDIA_STOP:
-    case mojo::KEYBOARD_CODE_MEDIA_PLAY_PAUSE:
-    case mojo::KEYBOARD_CODE_MEDIA_LAUNCH_MAIL:
-    case mojo::KEYBOARD_CODE_MEDIA_LAUNCH_MEDIA_SELECT:
-    case mojo::KEYBOARD_CODE_MEDIA_LAUNCH_APP1:
-    case mojo::KEYBOARD_CODE_MEDIA_LAUNCH_APP2:
-    case mojo::KEYBOARD_CODE_OEM_1:
-    case mojo::KEYBOARD_CODE_OEM_PLUS:
-    case mojo::KEYBOARD_CODE_OEM_COMMA:
-    case mojo::KEYBOARD_CODE_OEM_MINUS:
-    case mojo::KEYBOARD_CODE_OEM_PERIOD:
-    case mojo::KEYBOARD_CODE_OEM_2:
-    case mojo::KEYBOARD_CODE_OEM_3:
-    case mojo::KEYBOARD_CODE_OEM_4:
-    case mojo::KEYBOARD_CODE_OEM_5:
-    case mojo::KEYBOARD_CODE_OEM_6:
-    case mojo::KEYBOARD_CODE_OEM_7:
-    case mojo::KEYBOARD_CODE_OEM_8:
-    case mojo::KEYBOARD_CODE_OEM_102:
-    case mojo::KEYBOARD_CODE_PROCESSKEY:
-    case mojo::KEYBOARD_CODE_PACKET:
-    case mojo::KEYBOARD_CODE_DBE_SBCSCHAR:
-    case mojo::KEYBOARD_CODE_DBE_DBCSCHAR:
-    case mojo::KEYBOARD_CODE_ATTN:
-    case mojo::KEYBOARD_CODE_CRSEL:
-    case mojo::KEYBOARD_CODE_EXSEL:
-    case mojo::KEYBOARD_CODE_EREOF:
-    case mojo::KEYBOARD_CODE_PLAY:
-    case mojo::KEYBOARD_CODE_ZOOM:
-    case mojo::KEYBOARD_CODE_NONAME:
-    case mojo::KEYBOARD_CODE_PA1:
-    case mojo::KEYBOARD_CODE_OEM_CLEAR:
-    case mojo::KEYBOARD_CODE_UNKNOWN:
-    case mojo::KEYBOARD_CODE_ALTGR:
+    case mojo::KeyboardCode::CLEAR:
+    case mojo::KeyboardCode::PAUSE:
+    case mojo::KeyboardCode::CAPITAL:
+    case mojo::KeyboardCode::KANA:  // A.k.a. |KeyboardCode::HANGUL|.
+    case mojo::KeyboardCode::JUNJA:
+    case mojo::KeyboardCode::FINAL:
+    case mojo::KeyboardCode::HANJA:  // A.k.a. |KeyboardCode::KANJI|.
+    case mojo::KeyboardCode::CONVERT:
+    case mojo::KeyboardCode::NONCONVERT:
+    case mojo::KeyboardCode::ACCEPT:
+    case mojo::KeyboardCode::MODECHANGE:
+    case mojo::KeyboardCode::SELECT:
+    case mojo::KeyboardCode::PRINT:
+    case mojo::KeyboardCode::EXECUTE:
+    case mojo::KeyboardCode::SNAPSHOT:
+    case mojo::KeyboardCode::HELP:
+    case mojo::KeyboardCode::LWIN:  // A.k.a. |KeyboardCode::COMMAND|.
+    case mojo::KeyboardCode::RWIN:
+    case mojo::KeyboardCode::APPS:
+    case mojo::KeyboardCode::SLEEP:
+    case mojo::KeyboardCode::NUMPAD0:
+    case mojo::KeyboardCode::NUMPAD1:
+    case mojo::KeyboardCode::NUMPAD2:
+    case mojo::KeyboardCode::NUMPAD3:
+    case mojo::KeyboardCode::NUMPAD4:
+    case mojo::KeyboardCode::NUMPAD5:
+    case mojo::KeyboardCode::NUMPAD6:
+    case mojo::KeyboardCode::NUMPAD7:
+    case mojo::KeyboardCode::NUMPAD8:
+    case mojo::KeyboardCode::NUMPAD9:
+    case mojo::KeyboardCode::MULTIPLY:
+    case mojo::KeyboardCode::ADD:
+    case mojo::KeyboardCode::SEPARATOR:
+    case mojo::KeyboardCode::SUBTRACT:
+    case mojo::KeyboardCode::DECIMAL:
+    case mojo::KeyboardCode::DIVIDE:
+    case mojo::KeyboardCode::F1:
+    case mojo::KeyboardCode::F2:
+    case mojo::KeyboardCode::F3:
+    case mojo::KeyboardCode::F4:
+    case mojo::KeyboardCode::F5:
+    case mojo::KeyboardCode::F6:
+    case mojo::KeyboardCode::F7:
+    case mojo::KeyboardCode::F8:
+    case mojo::KeyboardCode::F9:
+    case mojo::KeyboardCode::F10:
+    case mojo::KeyboardCode::F11:
+    case mojo::KeyboardCode::F12:
+    case mojo::KeyboardCode::F13:
+    case mojo::KeyboardCode::F14:
+    case mojo::KeyboardCode::F15:
+    case mojo::KeyboardCode::F16:
+    case mojo::KeyboardCode::F17:
+    case mojo::KeyboardCode::F18:
+    case mojo::KeyboardCode::F19:
+    case mojo::KeyboardCode::F20:
+    case mojo::KeyboardCode::F21:
+    case mojo::KeyboardCode::F22:
+    case mojo::KeyboardCode::F23:
+    case mojo::KeyboardCode::F24:
+    case mojo::KeyboardCode::NUMLOCK:
+    case mojo::KeyboardCode::SCROLL:
+    case mojo::KeyboardCode::BROWSER_BACK:
+    case mojo::KeyboardCode::BROWSER_FORWARD:
+    case mojo::KeyboardCode::BROWSER_REFRESH:
+    case mojo::KeyboardCode::BROWSER_STOP:
+    case mojo::KeyboardCode::BROWSER_SEARCH:
+    case mojo::KeyboardCode::BROWSER_FAVORITES:
+    case mojo::KeyboardCode::BROWSER_HOME:
+    case mojo::KeyboardCode::VOLUME_MUTE:
+    case mojo::KeyboardCode::VOLUME_DOWN:
+    case mojo::KeyboardCode::VOLUME_UP:
+    case mojo::KeyboardCode::MEDIA_NEXT_TRACK:
+    case mojo::KeyboardCode::MEDIA_PREV_TRACK:
+    case mojo::KeyboardCode::MEDIA_STOP:
+    case mojo::KeyboardCode::MEDIA_PLAY_PAUSE:
+    case mojo::KeyboardCode::MEDIA_LAUNCH_MAIL:
+    case mojo::KeyboardCode::MEDIA_LAUNCH_MEDIA_SELECT:
+    case mojo::KeyboardCode::MEDIA_LAUNCH_APP1:
+    case mojo::KeyboardCode::MEDIA_LAUNCH_APP2:
+    case mojo::KeyboardCode::OEM_1:
+    case mojo::KeyboardCode::OEM_PLUS:
+    case mojo::KeyboardCode::OEM_COMMA:
+    case mojo::KeyboardCode::OEM_MINUS:
+    case mojo::KeyboardCode::OEM_PERIOD:
+    case mojo::KeyboardCode::OEM_2:
+    case mojo::KeyboardCode::OEM_3:
+    case mojo::KeyboardCode::OEM_4:
+    case mojo::KeyboardCode::OEM_5:
+    case mojo::KeyboardCode::OEM_6:
+    case mojo::KeyboardCode::OEM_7:
+    case mojo::KeyboardCode::OEM_8:
+    case mojo::KeyboardCode::OEM_102:
+    case mojo::KeyboardCode::PROCESSKEY:
+    case mojo::KeyboardCode::PACKET:
+    case mojo::KeyboardCode::DBE_SBCSCHAR:
+    case mojo::KeyboardCode::DBE_DBCSCHAR:
+    case mojo::KeyboardCode::ATTN:
+    case mojo::KeyboardCode::CRSEL:
+    case mojo::KeyboardCode::EXSEL:
+    case mojo::KeyboardCode::EREOF:
+    case mojo::KeyboardCode::PLAY:
+    case mojo::KeyboardCode::ZOOM:
+    case mojo::KeyboardCode::NONAME:
+    case mojo::KeyboardCode::PA1:
+    case mojo::KeyboardCode::OEM_CLEAR:
+    case mojo::KeyboardCode::UNKNOWN:
+    case mojo::KeyboardCode::ALTGR:
       NOTIMPLEMENTED() << "Key code " << key_data.windows_key_code;
       break;
 

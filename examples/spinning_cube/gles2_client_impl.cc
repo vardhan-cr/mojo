@@ -77,8 +77,8 @@ void GLES2ClientImpl::SetSize(const mojo::Size& size) {
 
 void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
   switch (event.action) {
-    case mojo::EVENT_TYPE_POINTER_DOWN:
-      if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON)
+    case mojo::EventType::POINTER_DOWN:
+      if (event.flags & mojo::EventFlags::RIGHT_MOUSE_BUTTON)
         break;
       capture_point_.x = event.pointer_data->x;
       capture_point_.y = event.pointer_data->y;
@@ -86,9 +86,9 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
       drag_start_time_ = mojo::GetTimeTicksNow();
       cube_.SetFlingMultiplier(0.0f, 1.0f);
       break;
-    case mojo::EVENT_TYPE_POINTER_MOVE: {
-      if (!(event.flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON) &&
-          event.pointer_data->kind == mojo::POINTER_KIND_MOUSE) {
+    case mojo::EventType::POINTER_MOVE: {
+      if (!(event.flags & mojo::EventFlags::LEFT_MOUSE_BUTTON) &&
+          event.pointer_data->kind == mojo::PointerKind::MOUSE) {
         break;
       }
       mojo::PointF event_location;
@@ -104,8 +104,8 @@ void GLES2ClientImpl::HandleInputEvent(const mojo::Event& event) {
       last_drag_point_ = event_location;
       break;
     }
-    case mojo::EVENT_TYPE_POINTER_UP: {
-      if (event.flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON) {
+    case mojo::EventType::POINTER_UP: {
+      if (event.flags & mojo::EventFlags::RIGHT_MOUSE_BUTTON) {
         cube_.set_color(GetRandomColor(), GetRandomColor(), GetRandomColor());
         break;
       }

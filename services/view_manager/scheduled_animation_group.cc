@@ -9,9 +9,6 @@
 #include "mojo/converters/geometry/geometry_type_converters.h"
 #include "services/view_manager/server_view.h"
 
-using mojo::ANIMATION_PROPERTY_NONE;
-using mojo::ANIMATION_PROPERTY_OPACITY;
-using mojo::ANIMATION_PROPERTY_TRANSFORM;
 using mojo::AnimationProperty;
 
 namespace view_manager {
@@ -24,13 +21,13 @@ void GetValueFromView(const ServerView* view,
                       AnimationProperty property,
                       ScheduledAnimationValue* value) {
   switch (property) {
-    case ANIMATION_PROPERTY_NONE:
+    case AnimationProperty::NONE:
       NOTREACHED();
       break;
-    case ANIMATION_PROPERTY_OPACITY:
+    case AnimationProperty::OPACITY:
       value->float_value = view->opacity();
       break;
-    case ANIMATION_PROPERTY_TRANSFORM:
+    case AnimationProperty::TRANSFORM:
       value->transform = view->transform();
       break;
   }
@@ -41,12 +38,12 @@ void SetViewPropertyFromValue(ServerView* view,
                               AnimationProperty property,
                               const ScheduledAnimationValue& value) {
   switch (property) {
-    case ANIMATION_PROPERTY_NONE:
+    case AnimationProperty::NONE:
       break;
-    case ANIMATION_PROPERTY_OPACITY:
+    case AnimationProperty::OPACITY:
       view->SetOpacity(value.float_value);
       break;
-    case ANIMATION_PROPERTY_TRANSFORM:
+    case AnimationProperty::TRANSFORM:
       view->SetTransform(value.transform);
       break;
   }
@@ -61,13 +58,13 @@ void SetViewPropertyFromValueBetween(ServerView* view,
                                      const ScheduledAnimationValue& target) {
   const double tween_value = gfx::Tween::CalculateValue(tween_type, value);
   switch (property) {
-    case ANIMATION_PROPERTY_NONE:
+    case AnimationProperty::NONE:
       break;
-    case ANIMATION_PROPERTY_OPACITY:
+    case AnimationProperty::OPACITY:
       view->SetOpacity(gfx::Tween::FloatValueBetween(
           tween_value, start.float_value, target.float_value));
       break;
-    case ANIMATION_PROPERTY_TRANSFORM:
+    case AnimationProperty::TRANSFORM:
       view->SetTransform(gfx::Tween::TransformValueBetween(
           tween_value, start.transform, target.transform));
       break;
@@ -76,13 +73,13 @@ void SetViewPropertyFromValueBetween(ServerView* view,
 
 gfx::Tween::Type AnimationTypeToTweenType(mojo::AnimationTweenType type) {
   switch (type) {
-    case mojo::ANIMATION_TWEEN_TYPE_LINEAR:
+    case mojo::AnimationTweenType::LINEAR:
       return gfx::Tween::LINEAR;
-    case mojo::ANIMATION_TWEEN_TYPE_EASE_IN:
+    case mojo::AnimationTweenType::EASE_IN:
       return gfx::Tween::EASE_IN;
-    case mojo::ANIMATION_TWEEN_TYPE_EASE_OUT:
+    case mojo::AnimationTweenType::EASE_OUT:
       return gfx::Tween::EASE_OUT;
-    case mojo::ANIMATION_TWEEN_TYPE_EASE_IN_OUT:
+    case mojo::AnimationTweenType::EASE_IN_OUT:
       return gfx::Tween::EASE_IN_OUT;
   }
   return gfx::Tween::LINEAR;
@@ -100,7 +97,7 @@ void ConvertToScheduledElement(const mojo::AnimationElement& transport_element,
   element->duration =
       base::TimeDelta::FromMicroseconds(transport_element.duration);
   element->tween_type = AnimationTypeToTweenType(transport_element.tween_type);
-  if (transport_element.property != ANIMATION_PROPERTY_NONE) {
+  if (transport_element.property != AnimationProperty::NONE) {
     if (transport_element.start_value.get()) {
       element->is_start_valid = true;
       ConvertToScheduledValue(*transport_element.start_value,
@@ -116,19 +113,19 @@ void ConvertToScheduledElement(const mojo::AnimationElement& transport_element,
 bool IsAnimationValueValid(AnimationProperty property,
                            const mojo::AnimationValue& value) {
   switch (property) {
-    case ANIMATION_PROPERTY_NONE:
+    case AnimationProperty::NONE:
       NOTREACHED();
       return false;
-    case ANIMATION_PROPERTY_OPACITY:
+    case AnimationProperty::OPACITY:
       return value.float_value >= 0.f && value.float_value <= 1.f;
-    case ANIMATION_PROPERTY_TRANSFORM:
+    case AnimationProperty::TRANSFORM:
       return value.transform.get() && value.transform->matrix.size() == 16u;
   }
   return false;
 }
 
 bool IsAnimationElementValid(const mojo::AnimationElement& element) {
-  if (element.property == ANIMATION_PROPERTY_NONE)
+  if (element.property == AnimationProperty::NONE)
     return true;  // None is a pause and doesn't need any values.
   if (element.start_value.get() &&
       !IsAnimationValueValid(element.property, *element.start_value))
@@ -163,7 +160,7 @@ bool IsAnimationGroupValid(const mojo::AnimationGroup& transport_group) {
 // is obtained from |view| and placed into |element|.
 void GetStartValueFromViewIfNecessary(const ServerView* view,
                                       ScheduledAnimationElement* element) {
-  if (element->property != ANIMATION_PROPERTY_NONE &&
+  if (element->property != AnimationProperty::NONE &&
       !element->is_start_valid) {
     GetValueFromView(view, element->property, &(element->start_value));
   }
@@ -265,7 +262,7 @@ ScheduledAnimationValue::~ScheduledAnimationValue() {
 }
 
 ScheduledAnimationElement::ScheduledAnimationElement()
-    : property(ANIMATION_PROPERTY_OPACITY),
+    : property(AnimationProperty::OPACITY),
       tween_type(gfx::Tween::EASE_IN),
       is_start_valid(false) {
 }
@@ -317,7 +314,7 @@ void ScheduledAnimationGroup::SetValuesToTargetValuesForPropertiesNotIn(
 
   for (AnimationProperty property : our_properties) {
     if (other_properties.count(property) == 0 &&
-        property != ANIMATION_PROPERTY_NONE) {
+        property != AnimationProperty::NONE) {
       SetPropertyToTargetProperty(view_, property, sequences_);
     }
   }

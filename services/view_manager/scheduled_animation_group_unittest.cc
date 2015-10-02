@@ -10,10 +10,8 @@
 #include "services/view_manager/test_server_view_delegate.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-using mojo::ANIMATION_PROPERTY_NONE;
-using mojo::ANIMATION_PROPERTY_OPACITY;
-using mojo::ANIMATION_PROPERTY_TRANSFORM;
-using mojo::ANIMATION_TWEEN_TYPE_LINEAR;
+using mojo::AnimationProperty;
+using mojo::AnimationTweenType;
 using mojo::AnimationGroup;
 using mojo::AnimationSequence;
 using mojo::AnimationElement;
@@ -46,8 +44,8 @@ TEST(ScheduledAnimationGroupTest, IsAnimationGroupValid) {
   AnimationSequence& sequence = *(group.sequences[0]);
   sequence.elements.push_back(AnimationElement::New());
   AnimationElement& element = *(sequence.elements[0]);
-  element.property = ANIMATION_PROPERTY_OPACITY;
-  element.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
+  element.property = AnimationProperty::OPACITY;
+  element.tween_type = AnimationTweenType::LINEAR;
 
   // Element with no target_value is not valid.
   EXPECT_FALSE(IsAnimationGroupValid(group));
@@ -69,7 +67,7 @@ TEST(ScheduledAnimationGroupTest, IsAnimationGroupValid) {
   EXPECT_TRUE(IsAnimationGroupValid(group));
 
   // Bogus transform.
-  element.property = ANIMATION_PROPERTY_TRANSFORM;
+  element.property = AnimationProperty::TRANSFORM;
   EXPECT_FALSE(IsAnimationGroupValid(group));
   element.start_value->transform = mojo::Transform::From(gfx::Transform());
   EXPECT_FALSE(IsAnimationGroupValid(group));
@@ -83,13 +81,13 @@ TEST(ScheduledAnimationGroupTest, IsAnimationGroupValid) {
   AnimationSequence& sequence2 = *(group.sequences[1]);
   sequence2.elements.push_back(AnimationElement::New());
   AnimationElement& element2 = *(sequence2.elements[0]);
-  element2.property = ANIMATION_PROPERTY_OPACITY;
-  element2.tween_type = ANIMATION_TWEEN_TYPE_LINEAR;
+  element2.property = AnimationProperty::OPACITY;
+  element2.tween_type = AnimationTweenType::LINEAR;
 
   // Element with no target_value is not valid.
   EXPECT_FALSE(IsAnimationGroupValid(group));
 
-  element2.property = ANIMATION_PROPERTY_NONE;
+  element2.property = AnimationProperty::NONE;
   EXPECT_TRUE(IsAnimationGroupValid(group));
 }
 

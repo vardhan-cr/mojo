@@ -215,7 +215,7 @@ class WindowManagerController
         launcher_ui_(NULL),
         view_manager_(NULL),
         window_manager_root_(wm_root),
-        navigation_target_(TARGET_DEFAULT),
+        navigation_target_(Target::DEFAULT),
         app_(app),
         binding_(this) {
     connection->AddService<::examples::IWindowManager>(this);
@@ -256,7 +256,7 @@ class WindowManagerController
   }
 
   void NavigateTo(const String& url) override {
-    OnLaunch(control_panel_id_, TARGET_NEW_NODE, url);
+    OnLaunch(control_panel_id_, Target::NEW_NODE, url);
   }
 
   void SetNavigationTarget(Target t) override { navigation_target_ = t; }
@@ -323,7 +323,7 @@ class WindowManagerController
              InterfaceRequest<ServiceProvider> services,
              ServiceProviderPtr exposed_services) override {
     const Id kInvalidSourceViewId = 0;
-    OnLaunch(kInvalidSourceViewId, TARGET_DEFAULT, url);
+    OnLaunch(kInvalidSourceViewId, Target::DEFAULT, url);
   }
 
   // Overridden from ui::EventHandler:
@@ -354,18 +354,18 @@ class WindowManagerController
                 Target requested_target,
                 const mojo::String& url) {
     Target target = navigation_target_;
-    if (target == TARGET_DEFAULT) {
-      if (requested_target != TARGET_DEFAULT) {
+    if (target == Target::DEFAULT) {
+      if (requested_target != Target::DEFAULT) {
         target = requested_target;
       } else {
-        // TODO(aa): Should be TARGET_NEW_NODE if source origin and dest origin
+        // TODO(aa): Should be Target::NEW_NODE if source origin and dest origin
         // are different?
-        target = TARGET_SOURCE_NODE;
+        target = Target::SOURCE_NODE;
       }
     }
 
     Window* dest_view = NULL;
-    if (target == TARGET_SOURCE_NODE) {
+    if (target == Target::SOURCE_NODE) {
       WindowVector::iterator source_view = GetWindowByViewId(source_view_id);
       bool app_initiated = source_view != windows_.end();
       if (app_initiated)
@@ -537,7 +537,7 @@ void NavigatorHostImpl::RequestNavigateHistory(int32_t delta) {
   current_index_ =
       std::max(0, std::min(current_index_ + delta,
                            static_cast<int32_t>(history_.size()) - 1));
-  window_manager_->RequestNavigate(view_id_, TARGET_SOURCE_NODE,
+  window_manager_->RequestNavigate(view_id_, Target::SOURCE_NODE,
                                    history_[current_index_]);
 }
 

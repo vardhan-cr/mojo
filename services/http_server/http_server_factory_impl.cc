@@ -49,9 +49,9 @@ HttpServerFactoryImpl::ServerKey HttpServerFactoryImpl::GetServerKey(
     mojo::NetAddress* local_address) {
   DCHECK(local_address);
 
-  if (local_address->family == mojo::NET_ADDRESS_FAMILY_IPV6) {
+  if (local_address->family == mojo::NetAddressFamily::IPV6) {
     return ServerKey(local_address->ipv6->addr, local_address->ipv6->port);
-  } else if (local_address->family == mojo::NET_ADDRESS_FAMILY_IPV4) {
+  } else if (local_address->family == mojo::NetAddressFamily::IPV4) {
     return ServerKey(local_address->ipv4->addr, local_address->ipv4->port);
   } else {
     return ServerKey();
@@ -63,7 +63,7 @@ void HttpServerFactoryImpl::CreateHttpServer(
     mojo::NetAddressPtr local_address) {
   if (!local_address) {
     local_address = mojo::NetAddress::New();
-    local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    local_address->family = mojo::NetAddressFamily::IPV4;
     local_address->ipv4 = mojo::NetAddressIPv4::New();
     local_address->ipv4->addr.resize(4);
     local_address->ipv4->addr[0] = 0;

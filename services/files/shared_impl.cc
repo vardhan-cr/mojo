@@ -50,7 +50,7 @@ void StatFD(int fd, FileType type, const StatFDCallback& callback) {
   file_info->mtime->nanoseconds = static_cast<int32_t>(buf.st_mtim.tv_nsec);
 #endif
 
-  callback.Run(ERROR_OK, file_info.Pass());
+  callback.Run(Error::OK, file_info.Pass());
 }
 
 void TouchFD(int fd,
@@ -61,13 +61,13 @@ void TouchFD(int fd,
 
   struct timespec times[2];
   Error error = TimespecOrNowToStandardTimespec(atime.get(), &times[0]);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   error = TimespecOrNowToStandardTimespec(mtime.get(), &times[1]);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -77,7 +77,7 @@ void TouchFD(int fd,
     return;
   }
 
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 }  // namespace files

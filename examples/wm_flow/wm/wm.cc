@@ -69,8 +69,8 @@ class SimpleWMController : public window_manager::WindowManagerController,
   // Overridden from mojo::ViewObserver:
   void OnViewInputEvent(mojo::View* view,
                         const mojo::EventPtr& event) override {
-    if (event->action == mojo::EVENT_TYPE_POINTER_UP &&
-        event->flags & mojo::EVENT_FLAGS_RIGHT_MOUSE_BUTTON &&
+    if (event->action == mojo::EventType::POINTER_UP &&
+        event->flags & mojo::EventFlags::RIGHT_MOUSE_BUTTON &&
         view->parent() == window_container_) {
       CloseWindow(view);
     }

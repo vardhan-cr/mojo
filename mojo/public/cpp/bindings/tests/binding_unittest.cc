@@ -85,7 +85,7 @@ TEST_F(BindingTest, DestroyClosesMessagePipe) {
   auto called_cb = [&called](int32_t result) { called = true; };
   {
     Binding<sample::Service> binding(&impl, request.Pass());
-    ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+    ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                    called_cb);
     loop().RunUntilIdle();
     EXPECT_TRUE(called);
@@ -98,7 +98,7 @@ TEST_F(BindingTest, DestroyClosesMessagePipe) {
 
   // And calls should fail.
   called = false;
-  ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                  called_cb);
   loop().RunUntilIdle();
   EXPECT_FALSE(called);
@@ -176,7 +176,7 @@ TEST_F(BindingTest, Unbind) {
 
   bool called = false;
   auto called_cb = [&called](int32_t result) { called = true; };
-  ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                  called_cb);
   loop().RunUntilIdle();
   EXPECT_TRUE(called);
@@ -185,7 +185,7 @@ TEST_F(BindingTest, Unbind) {
   auto request = binding.Unbind();
   EXPECT_FALSE(binding.is_bound());
   // All calls should fail when not bound...
-  ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                  called_cb);
   loop().RunUntilIdle();
   EXPECT_FALSE(called);
@@ -194,7 +194,7 @@ TEST_F(BindingTest, Unbind) {
   binding.Bind(request.Pass());
   EXPECT_TRUE(binding.is_bound());
   // ...and should succeed again when the rebound.
-  ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                  called_cb);
   loop().RunUntilIdle();
   EXPECT_TRUE(called);
@@ -208,7 +208,7 @@ class IntegerAccessorImpl : public sample::IntegerAccessor {
  private:
   // sample::IntegerAccessor implementation.
   void GetInteger(const GetIntegerCallback& callback) override {
-    callback.Run(1, sample::ENUM_VALUE);
+    callback.Run(1, sample::Enum::VALUE);
   }
   void SetInteger(int64_t data, sample::Enum type) override {}
 
@@ -240,7 +240,7 @@ TEST_F(StrongBindingTest, DestroyClosesMessagePipe) {
   auto called_cb = [&called](int32_t result) { called = true; };
   {
     StrongBinding<sample::Service> binding(&impl, request.Pass());
-    ptr->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+    ptr->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                    called_cb);
     loop().RunUntilIdle();
     EXPECT_TRUE(called);

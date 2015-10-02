@@ -19,13 +19,10 @@ using mojo::ApplicationDelegate;
 using mojo::Array;
 using mojo::Callback;
 using mojo::ConnectionSpecificId;
-using mojo::ERROR_CODE_NONE;
 using mojo::ErrorCode;
 using mojo::EventPtr;
 using mojo::Id;
 using mojo::InterfaceRequest;
-using mojo::ORDER_DIRECTION_ABOVE;
-using mojo::ORDER_DIRECTION_BELOW;
 using mojo::OrderDirection;
 using mojo::RectPtr;
 using mojo::ServiceProvider;
@@ -72,12 +69,12 @@ void ViewTreeResultCallback(base::RunLoop* run_loop,
 // The following functions call through to the supplied ViewManagerService. They
 // block until call completes and return the result.
 bool CreateView(ViewManagerService* vm, Id view_id) {
-  ErrorCode result = ERROR_CODE_NONE;
+  ErrorCode result = ErrorCode::NONE;
   base::RunLoop run_loop;
   vm->CreateView(view_id,
                  base::Bind(&ErrorCodeResultCallback, &run_loop, &result));
   run_loop.Run();
-  return result == ERROR_CODE_NONE;
+  return result == ErrorCode::NONE;
 }
 
 bool EmbedUrl(ViewManagerService* vm, const String& url, Id root_id) {
@@ -105,7 +102,7 @@ bool Embed(ViewManagerService* vm,
 }
 
 ErrorCode CreateViewWithErrorCode(ViewManagerService* vm, Id view_id) {
-  ErrorCode result = ERROR_CODE_NONE;
+  ErrorCode result = ErrorCode::NONE;
   base::RunLoop run_loop;
   vm->CreateView(view_id,
                  base::Bind(&ErrorCodeResultCallback, &run_loop, &result));
@@ -209,12 +206,12 @@ bool SetViewProperty(ViewManagerService* vm,
 // create a bogus view. When we get the response we know all messages have been
 // processed.
 bool WaitForAllMessages(ViewManagerService* vm) {
-  ErrorCode result = ERROR_CODE_NONE;
+  ErrorCode result = ErrorCode::NONE;
   base::RunLoop run_loop;
   vm->CreateView(ViewIdToTransportId(InvalidViewId()),
                  base::Bind(&ErrorCodeResultCallback, &run_loop, &result));
   run_loop.Run();
-  return result != ERROR_CODE_NONE;
+  return result != ErrorCode::NONE;
 }
 
 bool HasClonedView(const std::vector<TestView>& views) {
@@ -660,12 +657,12 @@ TEST_F(ViewManagerServiceAppTest, CreateView) {
   EXPECT_TRUE(changes1()->empty());
 
   // Can't create a view with the same id.
-  ASSERT_EQ(mojo::ERROR_CODE_VALUE_IN_USE,
+  ASSERT_EQ(mojo::ErrorCode::VALUE_IN_USE,
             CreateViewWithErrorCode(vm1(), BuildViewId(1, 1)));
   EXPECT_TRUE(changes1()->empty());
 
   // Can't create a view with a bogus connection id.
-  EXPECT_EQ(mojo::ERROR_CODE_ILLEGAL_ARGUMENT,
+  EXPECT_EQ(mojo::ErrorCode::ILLEGAL_ARGUMENT,
             CreateViewWithErrorCode(vm1(), BuildViewId(2, 1)));
   EXPECT_TRUE(changes1()->empty());
 }
@@ -850,7 +847,7 @@ TEST_F(ViewManagerServiceAppTest, ReorderView) {
 
   {
     changes1()->clear();
-    ASSERT_TRUE(ReorderView(vm2(), view2_id, view3_id, ORDER_DIRECTION_ABOVE));
+    ASSERT_TRUE(ReorderView(vm2(), view2_id, view3_id, OrderDirection::ABOVE));
 
     vm_client1_.WaitForChangeCount(1);
     EXPECT_EQ("Reordered view=2,2 relative=2,3 direction=above",
@@ -859,7 +856,7 @@ TEST_F(ViewManagerServiceAppTest, ReorderView) {
 
   {
     changes1()->clear();
-    ASSERT_TRUE(ReorderView(vm2(), view2_id, view3_id, ORDER_DIRECTION_BELOW));
+    ASSERT_TRUE(ReorderView(vm2(), view2_id, view3_id, OrderDirection::BELOW));
 
     vm_client1_.WaitForChangeCount(1);
     EXPECT_EQ("Reordered view=2,2 relative=2,3 direction=below",
@@ -867,20 +864,20 @@ TEST_F(ViewManagerServiceAppTest, ReorderView) {
   }
 
   // view2 is already below view3.
-  EXPECT_FALSE(ReorderView(vm2(), view2_id, view3_id, ORDER_DIRECTION_BELOW));
+  EXPECT_FALSE(ReorderView(vm2(), view2_id, view3_id, OrderDirection::BELOW));
 
   // view4 & 5 are unknown to connection2_.
-  EXPECT_FALSE(ReorderView(vm2(), view4_id, view5_id, ORDER_DIRECTION_ABOVE));
+  EXPECT_FALSE(ReorderView(vm2(), view4_id, view5_id, OrderDirection::ABOVE));
 
   // view6 & view3 have different parents.
-  EXPECT_FALSE(ReorderView(vm1(), view3_id, view6_id, ORDER_DIRECTION_ABOVE));
+  EXPECT_FALSE(ReorderView(vm1(), view3_id, view6_id, OrderDirection::ABOVE));
 
   // Non-existent view-ids
   EXPECT_FALSE(ReorderView(vm1(), BuildViewId(1, 27), BuildViewId(1, 28),
-                           ORDER_DIRECTION_ABOVE));
+                           OrderDirection::ABOVE));
 
   // view7 & view8 are un-parented.
-  EXPECT_FALSE(ReorderView(vm1(), view7_id, view8_id, ORDER_DIRECTION_ABOVE));
+  EXPECT_FALSE(ReorderView(vm1(), view7_id, view8_id, OrderDirection::ABOVE));
 }
 
 // Verifies DeleteView works.

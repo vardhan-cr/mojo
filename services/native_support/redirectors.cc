@@ -80,14 +80,14 @@ void FDToMojoFileRedirector::DoWrite() {
   mojo::Array<uint8_t> bytes_to_write(num_bytes_to_write);
   memcpy(&bytes_to_write[offset_], buffer_.get(), num_bytes_to_write);
 
-  file_->Write(bytes_to_write.Pass(), 0, mojo::files::WHENCE_FROM_CURRENT,
+  file_->Write(bytes_to_write.Pass(), 0, mojo::files::Whence::FROM_CURRENT,
                base::Bind(&FDToMojoFileRedirector::DidWrite,
                           weak_factory_.GetWeakPtr()));
 }
 
 void FDToMojoFileRedirector::DidWrite(mojo::files::Error error,
                                       uint32_t num_bytes_written) {
-  if (error != mojo::files::ERROR_OK) {
+  if (error != mojo::files::Error::OK) {
     LOG(WARNING) << "Failed to write to Mojo File";
     // TODO(vtl): Should maybe close |file_|?
     return;
@@ -131,7 +131,7 @@ void MojoFileToFDRedirector::Start() {
     return;
 
   file_->Read(
-      static_cast<uint32_t>(buffer_size_), 0, mojo::files::WHENCE_FROM_CURRENT,
+      static_cast<uint32_t>(buffer_size_), 0, mojo::files::Whence::FROM_CURRENT,
       base::Bind(&MojoFileToFDRedirector::DidRead, weak_factory_.GetWeakPtr()));
   read_pending_ = true;
 }
@@ -145,7 +145,7 @@ void MojoFileToFDRedirector::DidRead(mojo::files::Error error,
   DCHECK(read_pending_);
   read_pending_ = false;
 
-  if (error != mojo::files::ERROR_OK) {
+  if (error != mojo::files::Error::OK) {
     LOG(ERROR) << "Read failed";
     // TODO(vtl): Should maybe close |file_|?
     return;

@@ -55,7 +55,7 @@ mojo::URLRequestPtr GetRequest(const GURL& url, bool disable_cache) {
   request->url = mojo::String::From(url);
   request->auto_follow_redirects = false;
   if (disable_cache)
-    request->cache_mode = mojo::URLRequest::CACHE_MODE_BYPASS_CACHE;
+    request->cache_mode = mojo::URLRequest::URLRequest::CacheMode::BYPASS_CACHE;
   auto architecture_header = mojo::HttpHeader::New();
   architecture_header->name = "X-Architecture";
   architecture_header->value = kArchitecture;

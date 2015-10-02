@@ -54,7 +54,7 @@ void ServerView::Add(ServerView* child) {
   if (child->parent() == this) {
     if (children_.size() == 1)
       return;  // Already in the right position.
-    Reorder(child, children_.back(), mojo::ORDER_DIRECTION_ABOVE);
+    Reorder(child, children_.back(), mojo::OrderDirection::ABOVE);
     return;
   }
 
@@ -95,10 +95,10 @@ void ServerView::Reorder(ServerView* child,
   DCHECK_GT(children_.size(), 1u);
   children_.erase(std::find(children_.begin(), children_.end(), child));
   Views::iterator i = std::find(children_.begin(), children_.end(), relative);
-  if (direction == mojo::ORDER_DIRECTION_ABOVE) {
+  if (direction == mojo::OrderDirection::ABOVE) {
     DCHECK(i != children_.end());
     children_.insert(++i, child);
-  } else if (direction == mojo::ORDER_DIRECTION_BELOW) {
+  } else if (direction == mojo::OrderDirection::BELOW) {
     DCHECK(i != children_.end());
     children_.insert(i, child);
   }

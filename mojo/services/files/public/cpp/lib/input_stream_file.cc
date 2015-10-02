@@ -45,14 +45,14 @@ InputStreamFile::InputStreamFile(
 
 void InputStreamFile::Close(const CloseCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Call pending read callbacks?
 
   is_closed_ = true;
-  callback.Run(mojo::files::ERROR_OK);
+  callback.Run(mojo::files::Error::OK);
 
   if (client_)
     client_->OnClosed();
@@ -63,13 +63,13 @@ void InputStreamFile::Read(uint32_t num_bytes_to_read,
                            mojo::files::Whence whence,
                            const ReadCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::Array<uint8_t>());
+    callback.Run(mojo::files::Error::CLOSED, mojo::Array<uint8_t>());
     return;
   }
 
-  if (offset != 0 || whence != mojo::files::WHENCE_FROM_CURRENT) {
+  if (offset != 0 || whence != mojo::files::Whence::FROM_CURRENT) {
     // TODO(vtl): Is this the "right" behavior?
-    callback.Run(mojo::files::ERROR_INVALID_ARGUMENT, mojo::Array<uint8_t>());
+    callback.Run(mojo::files::Error::INVALID_ARGUMENT, mojo::Array<uint8_t>());
     return;
   }
 
@@ -86,13 +86,13 @@ void InputStreamFile::Write(mojo::Array<uint8_t> bytes_to_write,
   MOJO_DCHECK(!bytes_to_write.is_null());
 
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+  callback.Run(mojo::files::Error::UNAVAILABLE, 0);
 }
 
 void InputStreamFile::ReadToStream(mojo::ScopedDataPipeProducerHandle source,
@@ -101,13 +101,13 @@ void InputStreamFile::ReadToStream(mojo::ScopedDataPipeProducerHandle source,
                                    int64_t num_bytes_to_read,
                                    const ReadToStreamCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl)
   MOJO_DLOG(ERROR) << "Not implemented";
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED);
+  callback.Run(mojo::files::Error::UNIMPLEMENTED);
 }
 
 void InputStreamFile::WriteFromStream(mojo::ScopedDataPipeConsumerHandle sink,
@@ -115,108 +115,108 @@ void InputStreamFile::WriteFromStream(mojo::ScopedDataPipeConsumerHandle sink,
                                       mojo::files::Whence whence,
                                       const WriteFromStreamCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void InputStreamFile::Tell(const TellCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+  callback.Run(mojo::files::Error::UNAVAILABLE, 0);
 }
 
 void InputStreamFile::Seek(int64_t offset,
                            mojo::files::Whence whence,
                            const SeekCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+  callback.Run(mojo::files::Error::UNAVAILABLE, 0);
 }
 
 void InputStreamFile::Stat(const StatCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, nullptr);
+    callback.Run(mojo::files::Error::CLOSED, nullptr);
     return;
   }
 
   // TODO(vtl)
   MOJO_DLOG(ERROR) << "Not implemented";
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED, nullptr);
+  callback.Run(mojo::files::Error::UNIMPLEMENTED, nullptr);
 }
 
 void InputStreamFile::Truncate(int64_t size, const TruncateCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void InputStreamFile::Touch(mojo::files::TimespecOrNowPtr atime,
                             mojo::files::TimespecOrNowPtr mtime,
                             const TouchCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void InputStreamFile::Dup(mojo::InterfaceRequest<mojo::files::File> file,
                           const DupCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void InputStreamFile::Reopen(mojo::InterfaceRequest<mojo::files::File> file,
                              uint32_t open_flags,
                              const ReopenCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void InputStreamFile::AsBuffer(const AsBufferCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::ScopedSharedBufferHandle());
+    callback.Run(mojo::files::Error::CLOSED, mojo::ScopedSharedBufferHandle());
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE,
+  callback.Run(mojo::files::Error::UNAVAILABLE,
                mojo::ScopedSharedBufferHandle());
 }
 
@@ -224,11 +224,11 @@ void InputStreamFile::Ioctl(uint32_t request,
                             mojo::Array<uint32_t> in_values,
                             const IoctlCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::Array<uint32_t>());
+    callback.Run(mojo::files::Error::CLOSED, mojo::Array<uint32_t>());
     return;
   }
 
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+  callback.Run(mojo::files::Error::UNIMPLEMENTED, mojo::Array<uint32_t>());
 }
 
 void InputStreamFile::StartRead() {
@@ -238,7 +238,7 @@ void InputStreamFile::StartRead() {
   if (!client_) {
     while (!pending_read_queue_.empty()) {
       // TODO(vtl): Is this what we want?
-      pending_read_queue_.front().callback.Run(mojo::files::ERROR_UNAVAILABLE,
+      pending_read_queue_.front().callback.Run(mojo::files::Error::UNAVAILABLE,
                                                mojo::Array<uint8_t>());
       pending_read_queue_.pop_front();
     }
@@ -250,7 +250,7 @@ void InputStreamFile::StartRead() {
     // the queue. Note that we do this in FIFO order (thus couldn't have
     // completed them earlier).
     while (!pending_read_queue_.front().num_bytes) {
-      pending_read_queue_.front().callback.Run(mojo::files::ERROR_OK,
+      pending_read_queue_.front().callback.Run(mojo::files::Error::OK,
                                                mojo::Array<uint8_t>());
       pending_read_queue_.pop_front();
 
@@ -260,7 +260,7 @@ void InputStreamFile::StartRead() {
 
     // Binding |this| is OK, since the client must not call the callback if we
     // are destroyed.
-    mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+    mojo::files::Error error = mojo::files::Error::INTERNAL;
     mojo::Array<uint8_t> data;
     // Detect if we were destroyed inside |RequestData()|.
     bool was_destroyed = false;
@@ -287,7 +287,7 @@ void InputStreamFile::CompleteRead(mojo::files::Error error,
                                    mojo::Array<uint8_t> data) {
   MOJO_CHECK(!pending_read_queue_.empty());
 
-  if (error != mojo::files::ERROR_OK) {
+  if (error != mojo::files::Error::OK) {
     pending_read_queue_.front().callback.Run(error, mojo::Array<uint8_t>());
     pending_read_queue_.pop_front();
     return;
@@ -295,7 +295,7 @@ void InputStreamFile::CompleteRead(mojo::files::Error error,
 
   MOJO_CHECK(!data.is_null());
   MOJO_CHECK(data.size() <= pending_read_queue_.front().num_bytes);
-  pending_read_queue_.front().callback.Run(mojo::files::ERROR_OK, data.Pass());
+  pending_read_queue_.front().callback.Run(mojo::files::Error::OK, data.Pass());
   pending_read_queue_.pop_front();
 }
 

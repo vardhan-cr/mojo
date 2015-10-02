@@ -162,8 +162,8 @@ class WMFlowApp : public mojo::ApplicationDelegate,
   // Overridden from mojo::ViewObserver:
   void OnViewInputEvent(mojo::View* view,
                         const mojo::EventPtr& event) override {
-    if (event->action == mojo::EVENT_TYPE_POINTER_UP &&
-        event->flags & mojo::EVENT_FLAGS_LEFT_MOUSE_BUTTON) {
+    if (event->action == mojo::EventType::POINTER_UP &&
+        event->flags & mojo::EventFlags::LEFT_MOUSE_BUTTON) {
       OpenNewWindow();
     }
   }

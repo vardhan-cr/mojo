@@ -29,7 +29,7 @@ std::string RectToString(const mojo::Rect& rect) {
 }
 
 std::string DirectionToString(mojo::OrderDirection direction) {
-  return direction == mojo::ORDER_DIRECTION_ABOVE ? "above" : "below";
+  return direction == mojo::OrderDirection::ABOVE ? "above" : "below";
 }
 
 std::string ChangeToDescription1(const Change& change) {
@@ -152,8 +152,8 @@ Change::Change()
       view_id(0),
       view_id2(0),
       view_id3(0),
-      event_action(mojo::EVENT_TYPE_UNKNOWN),
-      direction(mojo::ORDER_DIRECTION_ABOVE),
+      event_action(mojo::EventType::UNKNOWN),
+      direction(mojo::OrderDirection::ABOVE),
       bool_value(false) {
 }
 

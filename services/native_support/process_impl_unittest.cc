@@ -28,35 +28,35 @@ TEST_F(ProcessImplTest, Spawn) {
 
   {
     ProcessControllerPtr process_controller;
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     process()->Spawn("/bin/true", mojo::Array<mojo::String>(),
                      mojo::Array<mojo::String>(), nullptr, nullptr, nullptr,
                      GetProxy(&process_controller), Capture(&error));
     ASSERT_TRUE(process().WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
 
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     int32_t exit_status = 42;
     process_controller->Wait(Capture(&error, &exit_status));
     ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
     EXPECT_EQ(0, exit_status);
   }
 
   {
     ProcessControllerPtr process_controller;
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     process()->Spawn("/bin/false", mojo::Array<mojo::String>(),
                      mojo::Array<mojo::String>(), nullptr, nullptr, nullptr,
                      GetProxy(&process_controller), Capture(&error));
     ASSERT_TRUE(process().WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
 
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     int32_t exit_status = 0;
     process_controller->Wait(Capture(&error, &exit_status));
     ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
     EXPECT_NE(exit_status, 0);
   }
 }
@@ -108,23 +108,23 @@ TEST_F(ProcessImplTest, SpawnRedirectStdout) {
   argv.push_back("/bin/echo");
   argv.push_back(kOutput);
   ProcessControllerPtr process_controller;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   process()->Spawn("/bin/echo", argv.Pass(), mojo::Array<mojo::String>(),
                    nullptr, file.Pass(), nullptr, GetProxy(&process_controller),
                    Capture(&error));
   ASSERT_TRUE(process().WaitForIncomingResponse());
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 
   // Since |file|'s impl is on our thread, we have to spin our message loop.
   RunMessageLoop();
   // /bin/echo adds a newline (alas, POSIX /bin/echo doesn't specify "-n").
   EXPECT_EQ(std::string(kOutput) + "\n", file_impl.output());
 
-  error = mojo::files::ERROR_INTERNAL;
+  error = mojo::files::Error::INTERNAL;
   int32_t exit_status = 0;
   process_controller->Wait(Capture(&error, &exit_status));
   ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   EXPECT_EQ(0, exit_status);
 
   // TODO(vtl): Currently, |file| won't be closed until the process controller

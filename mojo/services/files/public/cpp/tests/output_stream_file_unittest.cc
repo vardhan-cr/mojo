@@ -79,9 +79,9 @@ void TestWrite(mojo::files::File* file,
                TestClient* client,
                const std::string& s) {
   bool write_cb_called = false;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   uint32_t num_bytes_written = 0;
-  file->Write(StringToArray(s), 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Write(StringToArray(s), 0, mojo::files::Whence::FROM_CURRENT,
               [&write_cb_called, &error, &num_bytes_written](
                   mojo::files::Error e, uint32_t n) {
                 write_cb_called = true;
@@ -110,13 +110,13 @@ void TestWrite(mojo::files::File* file,
     RunMessageLoop();
   }
   EXPECT_TRUE(write_cb_called);
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   EXPECT_EQ(s.size(), num_bytes_written);
 }
 
 void TestClose(mojo::files::File* file, TestClient* client) {
   bool close_cb_called = false;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   file->Close([&close_cb_called, &error](mojo::files::Error e) {
     close_cb_called = true;
     error = e;
@@ -137,7 +137,7 @@ void TestClose(mojo::files::File* file, TestClient* client) {
     RunMessageLoop();
   }
   EXPECT_TRUE(close_cb_called);
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 }
 
 TEST_F(OutputStreamFileTest, Basic) {

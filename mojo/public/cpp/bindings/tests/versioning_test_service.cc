@@ -39,7 +39,7 @@ class HumanResourceDatabaseImpl : public HumanResourceDatabase {
     info->employee = Employee::New();
     info->employee->employee_id = 1;
     info->employee->name = "Homer Simpson";
-    info->employee->department = DEPARTMENT_DEV;
+    info->employee->department = Department::DEV;
     info->employee->birthday = Date::New();
     info->employee->birthday->year = 1955;
     info->employee->birthday->month = 5;

@@ -25,8 +25,8 @@ class DeviceInfo : public mojo::ApplicationDelegate,
   // We look for the 'DISPLAY' environment variable. If present, then we assume
   // it to be a desktop, else we assume it to be a commandline
   void GetDeviceType(const GetDeviceTypeCallback& callback) override {
-    callback.Run(getenv("DISPLAY") ? DEVICE_TYPE_DESKTOP
-                                   : DEVICE_TYPE_HEADLESS);
+    callback.Run(getenv("DISPLAY") ? DeviceInfo::DeviceType::DESKTOP
+                                   : DeviceInfo::DeviceType::HEADLESS);
   }
 
   // |ApplicationDelegate| override.

@@ -57,7 +57,7 @@ void ReparentClonedViews(ServerView* new_parent,
     const gfx::Rect new_bounds(ConvertRectBetweenViews(
         view, new_parent, gfx::Rect(view->bounds().size())));
     new_parent->Add(view);
-    new_parent->Reorder(view, *stack_above, mojo::ORDER_DIRECTION_ABOVE);
+    new_parent->Reorder(view, *stack_above, mojo::OrderDirection::ABOVE);
     view->SetBounds(new_bounds);
     *stack_above = view;
     return;
@@ -265,7 +265,7 @@ bool ConnectionManager::CloneAndAnimate(const ViewId& view_id) {
   ServerView* clone = CloneView(view, this);
   CloneViewTree(view, clone, this);
   view->parent()->Add(clone);
-  view->parent()->Reorder(clone, view, mojo::ORDER_DIRECTION_ABOVE);
+  view->parent()->Reorder(clone, view, mojo::OrderDirection::ABOVE);
   return true;
 }
 

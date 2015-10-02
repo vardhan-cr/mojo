@@ -141,11 +141,11 @@ void ViewObserverDelegate::UpdateState(int32 pointer_id,
     } else {
       it2->second->last_point = touch_point;
     }
-    it2->second->last_point_valid = action != mojo::EVENT_TYPE_POINTER_UP;
+    it2->second->last_point_valid = action != mojo::EventType::POINTER_UP;
   }
 
-  if (action == mojo::EVENT_TYPE_POINTER_UP ||
-      action == mojo::EVENT_TYPE_POINTER_DOWN) {
+  if (action == mojo::EventType::POINTER_UP ||
+      action == mojo::EventType::POINTER_DOWN) {
     animations_.push_back(make_scoped_ptr(new MaterialSplashAnimation(
         current_ticks, kAnimationDurationMs, touch_point)));
   }
@@ -336,12 +336,12 @@ void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
   if (event->pointer_data) {
     gfx::PointF point(event->pointer_data->x, event->pointer_data->y);
 
-    if (event->action == mojo::EVENT_TYPE_POINTER_UP) {
+    if (event->action == mojo::EventType::POINTER_UP) {
       key_layout_.OnTouchUp(point);
     }
 
-    if (event->action == mojo::EVENT_TYPE_POINTER_DOWN ||
-        event->action == mojo::EVENT_TYPE_POINTER_UP) {
+    if (event->action == mojo::EventType::POINTER_DOWN ||
+        event->action == mojo::EventType::POINTER_UP) {
       auto it =
           std::find(active_pointer_ids_.begin(), active_pointer_ids_.end(),
                     event->pointer_data->pointer_id);
@@ -353,7 +353,7 @@ void ViewObserverDelegate::OnViewInputEvent(mojo::View* view,
       if (it2 != active_pointer_state_.end()) {
         active_pointer_state_.erase(it2);
       }
-      if (event->action == mojo::EVENT_TYPE_POINTER_DOWN) {
+      if (event->action == mojo::EventType::POINTER_DOWN) {
         active_pointer_ids_.push_back(event->pointer_data->pointer_id);
         PointerState* pointer_state = new PointerState();
         pointer_state->last_key = nullptr;

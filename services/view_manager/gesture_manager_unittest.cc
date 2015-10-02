@@ -46,13 +46,13 @@ std::set<uint32_t> SetWith(uint32_t v1, uint32_t v2, uint32_t v3) {
 
 std::string EventTypeToString(mojo::EventType event_type) {
   switch (event_type) {
-    case mojo::EVENT_TYPE_POINTER_CANCEL:
+    case mojo::EventType::POINTER_CANCEL:
       return "cancel";
-    case mojo::EVENT_TYPE_POINTER_DOWN:
+    case mojo::EventType::POINTER_DOWN:
       return "down";
-    case mojo::EVENT_TYPE_POINTER_MOVE:
+    case mojo::EventType::POINTER_MOVE:
       return "move";
-    case mojo::EVENT_TYPE_POINTER_UP:
+    case mojo::EventType::POINTER_UP:
       return "up";
     default:
       break;
@@ -187,7 +187,7 @@ class GestureManagerTest : public testing::Test {
 TEST_F(GestureManagerTest, SingleViewAndSingleGesture) {
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   EXPECT_EQ("down pointer=1 connection=1 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
@@ -200,7 +200,7 @@ TEST_F(GestureManagerTest, SingleViewAndSingleGesture) {
 TEST_F(GestureManagerTest, SingleViewAndTwoGestures) {
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   EXPECT_EQ("down pointer=1 connection=1 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
@@ -223,7 +223,7 @@ TEST_F(GestureManagerTest, TwoViewsSingleGesture) {
 
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   // Deepest child should be queried first.
   EXPECT_EQ("down pointer=1 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
@@ -259,7 +259,7 @@ TEST_F(GestureManagerTest, TwoViewsWaitForMoveToChoose) {
 
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   // Deepest child should be queried first.
   EXPECT_EQ("down pointer=1 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
@@ -267,7 +267,7 @@ TEST_F(GestureManagerTest, TwoViewsWaitForMoveToChoose) {
   // Send a move. The move should not be processed as GestureManager is
   // still waiting for responses.
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_MOVE, pointer_id, 6, 6));
+      *CreateEvent(mojo::EventType::POINTER_MOVE, pointer_id, 6, 6));
   EXPECT_EQ(std::string(), gesture_delegate_.GetAndClearDescriptions());
 
   // Respond from the first view, which triggers the second to be queried.
@@ -298,7 +298,7 @@ TEST_F(GestureManagerTest, TwoViewsWaitForMoveToChoose) {
 
   // Send another move event and respond with a chosen id.
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_MOVE, pointer_id, 7, 7));
+      *CreateEvent(mojo::EventType::POINTER_MOVE, pointer_id, 7, 7));
   EXPECT_EQ("move pointer=1 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
   SetGestures(&child_, pointer_id, 5u, SetWith(5u, 10u), std::set<uint32_t>());
@@ -314,7 +314,7 @@ TEST_F(GestureManagerTest, TwoViewsWaitForMoveToChoose) {
 TEST_F(GestureManagerTest, SingleViewNewPointerAfterChoose) {
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   EXPECT_EQ("down pointer=1 connection=1 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
@@ -326,7 +326,7 @@ TEST_F(GestureManagerTest, SingleViewNewPointerAfterChoose) {
   // Start another down event with a different pointer.
   const int32_t pointer_id2 = 2;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id2, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id2, 5, 5));
   EXPECT_EQ("down pointer=2 connection=1 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
@@ -343,7 +343,7 @@ TEST_F(GestureManagerTest, SingleViewChoosingConflictingGestures) {
   // For pointer1 choose 1 with 1,2,3 as possibilities.
   const int32_t pointer1 = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer1, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer1, 5, 5));
   gesture_delegate_.GetAndClearDescriptions();
   SetGestures(&root_, pointer1, 1u, SetWith(1u, 2u, 3u), std::set<uint32_t>());
   EXPECT_EQ("connection=1 chosen=1 canceled=2,3",
@@ -352,7 +352,7 @@ TEST_F(GestureManagerTest, SingleViewChoosingConflictingGestures) {
   // For pointer2 choose 11 with 11,12 as possibilities.
   const int32_t pointer2 = 2;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer2, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer2, 5, 5));
   gesture_delegate_.GetAndClearDescriptions();
   SetGestures(&root_, pointer2, 11u, SetWith(11u, 12u), std::set<uint32_t>());
   EXPECT_EQ("connection=1 chosen=11 canceled=12",
@@ -361,7 +361,7 @@ TEST_F(GestureManagerTest, SingleViewChoosingConflictingGestures) {
   // For pointer3 choose 21 with 1,11,21 as possibilties.
   const int32_t pointer3 = 3;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer3, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer3, 5, 5));
   gesture_delegate_.GetAndClearDescriptions();
   SetGestures(&root_, pointer3, 21u, SetWith(1u, 11u, 21u),
               std::set<uint32_t>());
@@ -376,20 +376,20 @@ TEST_F(GestureManagerTest,
   // Start two pointer downs, don't respond to either.
   const int32_t pointer1 = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer1, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer1, 5, 5));
   EXPECT_EQ("down pointer=1 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
   const int32_t pointer2 = 2;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer2, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer2, 5, 5));
   EXPECT_EQ("down pointer=2 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
   // Queue up a move event for pointer1. The event should not be forwarded
   // as we're still waiting.
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_MOVE, pointer1, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_MOVE, pointer1, 5, 5));
   EXPECT_EQ(std::string(), gesture_delegate_.GetAndClearDescriptions());
 
   // Respond with 1,2 for pointer1 (nothing chosen yet).
@@ -422,14 +422,14 @@ TEST_F(GestureManagerTest, TwoViewsSingleGestureUp) {
 
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   // Deepest child should be queried first.
   EXPECT_EQ("down pointer=1 connection=2 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
   // Send an up, shouldn't result in anything.
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_UP, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_UP, pointer_id, 5, 5));
   EXPECT_EQ(std::string(), gesture_delegate_.GetAndClearDescriptions());
 
   // Respond from the first view, with a chosen gesture.
@@ -448,13 +448,13 @@ TEST_F(GestureManagerTest, TwoViewsSingleGestureUp) {
 TEST_F(GestureManagerTest, SingleViewSingleGestureCancel) {
   const int32_t pointer_id = 1;
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_DOWN, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_DOWN, pointer_id, 5, 5));
   EXPECT_EQ("down pointer=1 connection=1 chosen=false",
             gesture_delegate_.GetAndClearDescriptions());
 
   // Send a cancel, shouldn't result in anything.
   gesture_manager_.ProcessEvent(
-      *CreateEvent(mojo::EVENT_TYPE_POINTER_CANCEL, pointer_id, 5, 5));
+      *CreateEvent(mojo::EventType::POINTER_CANCEL, pointer_id, 5, 5));
   EXPECT_EQ(std::string(), gesture_delegate_.GetAndClearDescriptions());
 
   // Respond from the first view, with no gesture, should unblock cancel.

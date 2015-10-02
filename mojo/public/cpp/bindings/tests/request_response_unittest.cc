@@ -140,11 +140,11 @@ TEST_F(RequestResponseTest, EchoEnum) {
   ProviderImpl provider_impl(GetProxy(&provider));
 
   sample::Enum value;
-  provider->EchoEnum(sample::ENUM_VALUE, EnumRecorder(&value));
+  provider->EchoEnum(sample::Enum::VALUE, EnumRecorder(&value));
 
   PumpMessages();
 
-  EXPECT_EQ(sample::ENUM_VALUE, value);
+  EXPECT_EQ(sample::Enum::VALUE, value);
 }
 
 }  // namespace

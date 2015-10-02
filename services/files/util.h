@@ -14,21 +14,21 @@ class String;
 namespace files {
 
 // Validation functions (typically used to check arguments; they return
-// |ERROR_OK| if valid, else the standard/recommended error for the validation
+// |Error::OK| if valid, else the standard/recommended error for the validation
 // error):
 
 // Checks if |path|, which must be non-null, is (looks like) a valid (relative)
-// path. (On failure, returns |ERROR_INVALID_ARGUMENT| if |path| is not UTF-8,
-// or |ERROR_PERMISSION_DENIED| if it is not relative.)
+// path. (On failure, returns |Error::INVALID_ARGUMENT| if |path| is not UTF-8,
+// or |Error::PERMISSION_DENIED| if it is not relative.)
 Error IsPathValid(const String& path);
 
 // Checks if |whence| is a valid (known) |Whence| value. (On failure, returns
-// |ERROR_UNIMPLEMENTED|.)
+// |Error::UNIMPLEMENTED|.)
 Error IsWhenceValid(Whence whence);
 
 // Checks if |offset| is a valid file offset (from some point); this is
 // implementation-dependent (typically checking if |offset| fits in an |off_t|).
-// (On failure, returns |ERROR_OUT_OF_RANGE|.)
+// (On failure, returns |Error::OUT_OF_RANGE|.)
 Error IsOffsetValid(int64_t offset);
 
 // Conversion functions:

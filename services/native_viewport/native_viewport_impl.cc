@@ -128,7 +128,7 @@ bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {
 
   mojo::NativeViewportEventDispatcher::OnEventCallback callback;
   switch (event->action) {
-    case mojo::EVENT_TYPE_POINTER_MOVE: {
+    case mojo::EventType::POINTER_MOVE: {
       // TODO(sky): add logic to remember last event location and not send if
       // the same.
       if (pointers_waiting_on_ack_.count(event->pointer_data->pointer_id))
@@ -141,11 +141,11 @@ bool NativeViewportImpl::OnEvent(mojo::EventPtr event) {
       break;
     }
 
-    case mojo::EVENT_TYPE_POINTER_CANCEL:
+    case mojo::EventType::POINTER_CANCEL:
       pointers_waiting_on_ack_.clear();
       break;
 
-    case mojo::EVENT_TYPE_POINTER_UP:
+    case mojo::EventType::POINTER_UP:
       pointers_waiting_on_ack_.erase(event->pointer_data->pointer_id);
       break;
 

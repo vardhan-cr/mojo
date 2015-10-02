@@ -147,7 +147,7 @@ void MotermDriver::CompletePendingReads() {
     send_data_queue_.erase(send_data_queue_.begin(),
                            send_data_queue_.begin() + data_size);
 
-    pending_read.callback.Run(mojo::files::ERROR_OK, data.Pass());
+    pending_read.callback.Run(mojo::files::Error::OK, data.Pass());
   }
 }
 
@@ -183,14 +183,14 @@ void MotermDriver::HandleOutput(const uint8_t* bytes, size_t num_bytes) {
 
 void MotermDriver::Close(const CloseCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Call pending read callbacks?
 
   is_closed_ = true;
-  callback.Run(mojo::files::ERROR_OK);
+  callback.Run(mojo::files::Error::OK);
 
   client_->OnClosed();
 }
@@ -200,18 +200,18 @@ void MotermDriver::Read(uint32_t num_bytes_to_read,
                         mojo::files::Whence whence,
                         const ReadCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::Array<uint8_t>());
+    callback.Run(mojo::files::Error::CLOSED, mojo::Array<uint8_t>());
     return;
   }
 
-  if (offset != 0 || whence != mojo::files::WHENCE_FROM_CURRENT) {
+  if (offset != 0 || whence != mojo::files::Whence::FROM_CURRENT) {
     // TODO(vtl): Is this the "right" behavior?
-    callback.Run(mojo::files::ERROR_INVALID_ARGUMENT, mojo::Array<uint8_t>());
+    callback.Run(mojo::files::Error::INVALID_ARGUMENT, mojo::Array<uint8_t>());
     return;
   }
 
   if (!num_bytes_to_read) {
-    callback.Run(mojo::files::ERROR_OK, mojo::Array<uint8_t>());
+    callback.Run(mojo::files::Error::OK, mojo::Array<uint8_t>());
     return;
   }
 
@@ -226,25 +226,25 @@ void MotermDriver::Write(mojo::Array<uint8_t> bytes_to_write,
   DCHECK(!bytes_to_write.is_null());
 
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
-  if (offset != 0 || whence != mojo::files::WHENCE_FROM_CURRENT) {
+  if (offset != 0 || whence != mojo::files::Whence::FROM_CURRENT) {
     // TODO(vtl): Is this the "right" behavior?
-    callback.Run(mojo::files::ERROR_INVALID_ARGUMENT, 0);
+    callback.Run(mojo::files::Error::INVALID_ARGUMENT, 0);
     return;
   }
 
   if (!bytes_to_write.size()) {
-    callback.Run(mojo::files::ERROR_OK, 0);
+    callback.Run(mojo::files::Error::OK, 0);
     return;
   }
 
   HandleOutput(&bytes_to_write.front(), bytes_to_write.size());
 
   // TODO(vtl): Is this OK if the client detached (and we're destroyed?).
-  callback.Run(mojo::files::ERROR_OK,
+  callback.Run(mojo::files::Error::OK,
                static_cast<uint32_t>(bytes_to_write.size()));
 }
 
@@ -254,13 +254,13 @@ void MotermDriver::ReadToStream(mojo::ScopedDataPipeProducerHandle source,
                                 int64_t num_bytes_to_read,
                                 const ReadToStreamCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl)
   NOTIMPLEMENTED();
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED);
+  callback.Run(mojo::files::Error::UNIMPLEMENTED);
 }
 
 void MotermDriver::WriteFromStream(mojo::ScopedDataPipeConsumerHandle sink,
@@ -268,108 +268,108 @@ void MotermDriver::WriteFromStream(mojo::ScopedDataPipeConsumerHandle sink,
                                    mojo::files::Whence whence,
                                    const WriteFromStreamCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl)
   NOTIMPLEMENTED();
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED);
+  callback.Run(mojo::files::Error::UNIMPLEMENTED);
 }
 
 void MotermDriver::Tell(const TellCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+  callback.Run(mojo::files::Error::UNAVAILABLE, 0);
 }
 
 void MotermDriver::Seek(int64_t offset,
                         mojo::files::Whence whence,
                         const SeekCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, 0);
+    callback.Run(mojo::files::Error::CLOSED, 0);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+  callback.Run(mojo::files::Error::UNAVAILABLE, 0);
 }
 
 void MotermDriver::Stat(const StatCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, nullptr);
+    callback.Run(mojo::files::Error::CLOSED, nullptr);
     return;
   }
 
   // TODO(vtl)
   NOTIMPLEMENTED();
-  callback.Run(mojo::files::ERROR_UNIMPLEMENTED, nullptr);
+  callback.Run(mojo::files::Error::UNIMPLEMENTED, nullptr);
 }
 
 void MotermDriver::Truncate(int64_t size, const TruncateCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void MotermDriver::Touch(mojo::files::TimespecOrNowPtr atime,
                          mojo::files::TimespecOrNowPtr mtime,
                          const TouchCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void MotermDriver::Dup(mojo::InterfaceRequest<mojo::files::File> file,
                        const DupCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void MotermDriver::Reopen(mojo::InterfaceRequest<mojo::files::File> file,
                           uint32_t open_flags,
                           const ReopenCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED);
+    callback.Run(mojo::files::Error::CLOSED);
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE);
+  callback.Run(mojo::files::Error::UNAVAILABLE);
 }
 
 void MotermDriver::AsBuffer(const AsBufferCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::ScopedSharedBufferHandle());
+    callback.Run(mojo::files::Error::CLOSED, mojo::ScopedSharedBufferHandle());
     return;
   }
 
   // TODO(vtl): Is this what we want? (Also is "unavailable" right? Maybe
   // unsupported/EINVAL is better.)
-  callback.Run(mojo::files::ERROR_UNAVAILABLE,
+  callback.Run(mojo::files::Error::UNAVAILABLE,
                mojo::ScopedSharedBufferHandle());
 }
 
@@ -377,18 +377,18 @@ void MotermDriver::Ioctl(uint32_t request,
                          mojo::Array<uint32_t> in_values,
                          const IoctlCallback& callback) {
   if (is_closed_) {
-    callback.Run(mojo::files::ERROR_CLOSED, mojo::Array<uint32_t>());
+    callback.Run(mojo::files::Error::CLOSED, mojo::Array<uint32_t>());
     return;
   }
 
   if (request != mojo::files::kIoctlTerminal) {
-    callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+    callback.Run(mojo::files::Error::UNIMPLEMENTED, mojo::Array<uint32_t>());
     return;
   }
 
   // "Is TTY?" Yes.
   if (!in_values || !in_values.size()) {
-    callback.Run(mojo::files::ERROR_OK, mojo::Array<uint32_t>());
+    callback.Run(mojo::files::Error::OK, mojo::Array<uint32_t>());
     return;
   }
 
@@ -402,10 +402,10 @@ void MotermDriver::Ioctl(uint32_t request,
     case mojo::files::kIoctlTerminalGetWindowSize:
     case mojo::files::kIoctlTerminalSetWindowSize:
       NOTIMPLEMENTED();
-      callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+      callback.Run(mojo::files::Error::UNIMPLEMENTED, mojo::Array<uint32_t>());
       return;
     default:
-      callback.Run(mojo::files::ERROR_UNIMPLEMENTED, mojo::Array<uint32_t>());
+      callback.Run(mojo::files::Error::UNIMPLEMENTED, mojo::Array<uint32_t>());
       return;
   }
 }
@@ -413,7 +413,7 @@ void MotermDriver::Ioctl(uint32_t request,
 void MotermDriver::IoctlGetSettings(mojo::Array<uint32_t> in_values,
                                     const IoctlCallback& callback) {
   if (in_values.size() != 1u) {
-    callback.Run(mojo::files::ERROR_INVALID_ARGUMENT, mojo::Array<uint32_t>());
+    callback.Run(mojo::files::Error::INVALID_ARGUMENT, mojo::Array<uint32_t>());
     return;
   }
 
@@ -438,7 +438,7 @@ void MotermDriver::IoctlGetSettings(mojo::Array<uint32_t> in_values,
   out_values[kVEraseIdx] = verase_;
   out_values[kVEOFIdx] = veof_;
 
-  callback.Run(mojo::files::ERROR_OK, out_values.Pass());
+  callback.Run(mojo::files::Error::OK, out_values.Pass());
 }
 
 void MotermDriver::IoctlSetSettings(mojo::Array<uint32_t> in_values,
@@ -454,7 +454,7 @@ mojo::files::Error MotermDriver::IoctlSetSettingsHelper(
 
   // The "cc" values are optional.
   if (in_values.size() < 1 + kBaseFieldCount)
-    return mojo::files::ERROR_INVALID_ARGUMENT;
+    return mojo::files::Error::INVALID_ARGUMENT;
 
   // TODO(vtl): Add support for various things. Also, some values can't be
   // changed.
@@ -477,15 +477,15 @@ mojo::files::Error MotermDriver::IoctlSetSettingsHelper(
   if (1 + kVEraseIdx < in_values.size()) {
     uint32_t value = in_values[1 + kVEraseIdx];
     if (value > std::numeric_limits<uint8_t>::max())
-      return mojo::files::ERROR_INVALID_ARGUMENT;
+      return mojo::files::Error::INVALID_ARGUMENT;
     verase_ = static_cast<uint8_t>(value);
   }
   if (1 + kVEOFIdx < in_values.size()) {
     uint32_t value = in_values[1 + kVEOFIdx];
     if (value > std::numeric_limits<uint8_t>::max())
-      return mojo::files::ERROR_INVALID_ARGUMENT;
+      return mojo::files::Error::INVALID_ARGUMENT;
     veof_ = static_cast<uint8_t>(value);
   }
 
-  return mojo::files::ERROR_OK;
+  return mojo::files::Error::OK;
 }

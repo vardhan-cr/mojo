@@ -13,7 +13,7 @@ class Event;
 
 // Gets an appropriate (VT100/xterm-ish) sequence of characters to generate for
 // the given key pressed event (|key_event| must have |action| value
-// |EVENT_TYPE_KEY_PRESSED|). |keypad_application_mode| indicates if the keypad
+// |EventType::KEY_PRESSED|). |keypad_application_mode| indicates if the keypad
 // is in "application mode".
 std::string GetInputSequenceForKeyPressedEvent(const mojo::Event& key_event,
                                                bool keypad_application_mode);

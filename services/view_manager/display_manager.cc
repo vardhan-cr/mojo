@@ -48,7 +48,7 @@ void DrawViewTree(mojo::Pass* pass,
 
   const gfx::Rect bounds_at_origin(view->bounds().size());
   auto surface_quad = mojo::Quad::New();
-  surface_quad->material = mojo::Material::MATERIAL_SURFACE_CONTENT;
+  surface_quad->material = mojo::Material::SURFACE_CONTENT;
   surface_quad->rect = mojo::Rect::From(bounds_at_origin);
   surface_quad->opaque_rect = mojo::Rect::From(bounds_at_origin);
   surface_quad->visible_rect = mojo::Rect::From(bounds_at_origin);
@@ -58,7 +58,7 @@ void DrawViewTree(mojo::Pass* pass,
   surface_quad->surface_quad_state = surface_quad_state.Pass();
 
   auto sqs = CreateDefaultSQS(*mojo::Size::From(view->bounds().size()));
-  sqs->blend_mode = mojo::SK_XFERMODE_kSrcOver_Mode;
+  sqs->blend_mode = mojo::SkXfermode::kSrcOver_Mode;
   sqs->opacity = combined_opacity;
   sqs->content_to_target_transform = mojo::Transform::From(node_transform);
 

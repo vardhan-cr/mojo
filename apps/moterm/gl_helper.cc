@@ -108,7 +108,7 @@ uint32_t GlHelper::EndFrame() {
       TextureInfo(resource->id, frame_texture_, current_surface_size_));
   frame_texture_ = 0;
   // TODO(vtl): This is wrong, but doesn't seem to have an effect.
-  resource->format = mojo::RESOURCE_FORMAT_RGBA_8888;
+  resource->format = mojo::ResourceFormat::RGBA_8888;
   resource->filter = GL_LINEAR;
   resource->size = current_surface_size_.Clone();
   mojo::MailboxHolderPtr mailbox_holder = mojo::MailboxHolder::New();
@@ -126,7 +126,7 @@ uint32_t GlHelper::EndFrame() {
   mojo::Pass* pass = frame->passes[0].get();
   pass->quads.push_back(mojo::Quad::New());
   mojo::Quad* quad = pass->quads[0].get();
-  quad->material = mojo::MATERIAL_TEXTURE_CONTENT;
+  quad->material = mojo::Material::TEXTURE_CONTENT;
   quad->rect = size_rect.Clone();
   quad->opaque_rect = size_rect.Clone();
   quad->visible_rect = size_rect.Clone();

@@ -100,12 +100,12 @@ void ViewManagerServiceImpl::OnWillDestroyViewManagerServiceImpl(
 
 mojo::ErrorCode ViewManagerServiceImpl::CreateView(const ViewId& view_id) {
   if (view_id.connection_id != id_)
-    return mojo::ERROR_CODE_ILLEGAL_ARGUMENT;
+    return mojo::ErrorCode::ILLEGAL_ARGUMENT;
   if (view_map_.find(view_id.view_id) != view_map_.end())
-    return mojo::ERROR_CODE_VALUE_IN_USE;
+    return mojo::ErrorCode::VALUE_IN_USE;
   view_map_[view_id.view_id] = connection_manager_->CreateServerView(view_id);
   known_views_.insert(ViewIdToTransportId(view_id));
-  return mojo::ERROR_CODE_NONE;
+  return mojo::ErrorCode::NONE;
 }
 
 bool ViewManagerServiceImpl::AddView(const ViewId& parent_id,
@@ -327,8 +327,8 @@ bool ViewManagerServiceImpl::CanReorderView(const ServerView* view,
   const size_t target_i =
       std::find(children.begin(), children.end(), relative_view) -
       children.begin();
-  if ((direction == mojo::ORDER_DIRECTION_ABOVE && child_i == target_i + 1) ||
-      (direction == mojo::ORDER_DIRECTION_BELOW && child_i + 1 == target_i)) {
+  if ((direction == mojo::OrderDirection::ABOVE && child_i == target_i + 1) ||
+      (direction == mojo::OrderDirection::BELOW && child_i + 1 == target_i)) {
     return false;
   }
 

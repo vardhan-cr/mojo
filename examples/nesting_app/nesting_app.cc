@@ -84,7 +84,7 @@ class NestingApp
     nested_ = NULL;
   }
   void OnViewInputEvent(View* view, const EventPtr& event) override {
-    if (event->action == EVENT_TYPE_POINTER_UP)
+    if (event->action == EventType::POINTER_UP)
       window_manager_->CloseWindow(view->id());
   }
 

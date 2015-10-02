@@ -37,38 +37,38 @@ Error ValidateOpenFlags(uint32_t open_flags, bool is_directory) {
   if ((open_flags &
        ~(kOpenFlagRead | kOpenFlagWrite | kOpenFlagCreate | kOpenFlagExclusive |
          kOpenFlagAppend | kOpenFlagTruncate)))
-    return ERROR_UNIMPLEMENTED;
+    return Error::UNIMPLEMENTED;
 
   // At least one of |kOpenFlagRead| or |kOpenFlagWrite| must be set.
   if (!(open_flags & (kOpenFlagRead | kOpenFlagWrite)))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
   // |kOpenFlagCreate| requires |kOpenFlagWrite|.
   if ((open_flags & kOpenFlagCreate) && !(open_flags & kOpenFlagWrite))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
   // |kOpenFlagExclusive| requires |kOpenFlagCreate|.
   if ((open_flags & kOpenFlagExclusive) && !(open_flags & kOpenFlagCreate))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
   if (is_directory) {
     // Check that file-only flags aren't set.
     if ((open_flags & (kOpenFlagAppend | kOpenFlagTruncate)))
-      return ERROR_INVALID_ARGUMENT;
-    return ERROR_OK;
+      return Error::INVALID_ARGUMENT;
+    return Error::OK;
   }
 
   // File-only flags:
 
   // |kOpenFlagAppend| requires |kOpenFlagWrite|.
   if ((open_flags & kOpenFlagAppend) && !(open_flags & kOpenFlagWrite))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
   // |kOpenFlagTruncate| requires |kOpenFlagWrite|.
   if ((open_flags & kOpenFlagTruncate) && !(open_flags & kOpenFlagWrite))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
-  return ERROR_OK;
+  return Error::OK;
 }
 
 Error ValidateDeleteFlags(uint32_t delete_flags) {
@@ -76,20 +76,20 @@ Error ValidateDeleteFlags(uint32_t delete_flags) {
   if ((delete_flags &
        ~(kDeleteFlagFileOnly | kDeleteFlagDirectoryOnly |
          kDeleteFlagRecursive)))
-    return ERROR_UNIMPLEMENTED;
+    return Error::UNIMPLEMENTED;
 
   // Only one of the three currently-defined flags may be set.
   if ((delete_flags & kDeleteFlagFileOnly) &&
       (delete_flags & (kDeleteFlagDirectoryOnly | kDeleteFlagRecursive)))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
   if ((delete_flags & kDeleteFlagDirectoryOnly) &&
       (delete_flags & (kDeleteFlagFileOnly | kDeleteFlagRecursive)))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
   if ((delete_flags & kDeleteFlagRecursive) &&
       (delete_flags & (kDeleteFlagFileOnly | kDeleteFlagDirectoryOnly)))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
-  return ERROR_OK;
+  return Error::OK;
 }
 
 }  // namespace
@@ -147,32 +147,32 @@ void DirectoryImpl::Read(const ReadCallback& callback) {
     n++;
     if (n > kMaxReadCount) {
       LOG(WARNING) << "Directory contents truncated";
-      callback.Run(ERROR_OUT_OF_RANGE, result.Pass());
+      callback.Run(Error::OUT_OF_RANGE, result.Pass());
       return;
     }
 
     DirectoryEntryPtr e = DirectoryEntry::New();
     switch (entry->d_type) {
       case DT_DIR:
-        e->type = FILE_TYPE_DIRECTORY;
+        e->type = FileType::DIRECTORY;
         break;
       case DT_REG:
-        e->type = FILE_TYPE_REGULAR_FILE;
+        e->type = FileType::REGULAR_FILE;
         break;
       default:
-        e->type = FILE_TYPE_UNKNOWN;
+        e->type = FileType::UNKNOWN;
         break;
     }
     e->name = String(entry->d_name);
     result.push_back(e.Pass());
   }
 
-  callback.Run(ERROR_OK, result.Pass());
+  callback.Run(Error::OK, result.Pass());
 }
 
 void DirectoryImpl::Stat(const StatCallback& callback) {
   DCHECK(dir_fd_.is_valid());
-  StatFD(dir_fd_.get(), FILE_TYPE_DIRECTORY, callback);
+  StatFD(dir_fd_.get(), FileType::DIRECTORY, callback);
 }
 
 void DirectoryImpl::Touch(TimespecOrNowPtr atime,
@@ -191,7 +191,7 @@ void DirectoryImpl::OpenFile(const String& path,
   DCHECK(dir_fd_.is_valid());
 
   Error error = IsPathValid(path);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -199,7 +199,7 @@ void DirectoryImpl::OpenFile(const String& path,
   // TODO(vtl): Maybe allow absolute paths?
 
   error = ValidateOpenFlags(open_flags, false);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -227,7 +227,7 @@ void DirectoryImpl::OpenFile(const String& path,
 
   if (file.is_pending())
     new FileImpl(file.Pass(), file_fd.Pass());
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 void DirectoryImpl::OpenDirectory(const String& path,
@@ -238,7 +238,7 @@ void DirectoryImpl::OpenDirectory(const String& path,
   DCHECK(dir_fd_.is_valid());
 
   Error error = IsPathValid(path);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -246,14 +246,14 @@ void DirectoryImpl::OpenDirectory(const String& path,
   // TODO(vtl): Maybe allow absolute paths?
 
   error = ValidateOpenFlags(open_flags, false);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   // TODO(vtl): Implement read-only (whatever that means).
   if (!(open_flags & kOpenFlagWrite)) {
-    callback.Run(ERROR_UNIMPLEMENTED);
+    callback.Run(Error::UNIMPLEMENTED);
     return;
   }
 
@@ -278,7 +278,7 @@ void DirectoryImpl::OpenDirectory(const String& path,
 
   if (directory.is_pending())
     new DirectoryImpl(directory.Pass(), new_dir_fd.Pass(), nullptr);
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 void DirectoryImpl::Rename(const String& path,
@@ -289,13 +289,13 @@ void DirectoryImpl::Rename(const String& path,
   DCHECK(dir_fd_.is_valid());
 
   Error error = IsPathValid(path);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   error = IsPathValid(new_path);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -307,7 +307,7 @@ void DirectoryImpl::Rename(const String& path,
     return;
   }
 
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 void DirectoryImpl::Delete(const String& path,
@@ -317,28 +317,28 @@ void DirectoryImpl::Delete(const String& path,
   DCHECK(dir_fd_.is_valid());
 
   Error error = IsPathValid(path);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
   // TODO(vtl): See TODOs about |path| in OpenFile().
 
   error = ValidateDeleteFlags(delete_flags);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   // TODO(vtl): Recursive not yet supported.
   if ((delete_flags & kDeleteFlagRecursive)) {
-    callback.Run(ERROR_UNIMPLEMENTED);
+    callback.Run(Error::UNIMPLEMENTED);
     return;
   }
 
   // First try deleting it as a file, unless we're told to do directory-only.
   if (!(delete_flags & kDeleteFlagDirectoryOnly)) {
     if (unlinkat(dir_fd_.get(), path.get().c_str(), 0) == 0) {
-      callback.Run(ERROR_OK);
+      callback.Run(Error::OK);
       return;
     }
 
@@ -351,7 +351,7 @@ void DirectoryImpl::Delete(const String& path,
 
   // Try deleting it as a directory.
   if (unlinkat(dir_fd_.get(), path.get().c_str(), AT_REMOVEDIR) == 0) {
-    callback.Run(ERROR_OK);
+    callback.Run(Error::OK);
     return;
   }
 

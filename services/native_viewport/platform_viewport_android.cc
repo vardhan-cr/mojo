@@ -25,14 +25,14 @@ mojo::EventType MotionEventActionToEventType(jint action) {
   switch (action) {
     case AMOTION_EVENT_ACTION_DOWN:
     case AMOTION_EVENT_ACTION_POINTER_DOWN:
-      return mojo::EVENT_TYPE_POINTER_DOWN;
+      return mojo::EventType::POINTER_DOWN;
     case AMOTION_EVENT_ACTION_UP:
     case AMOTION_EVENT_ACTION_POINTER_UP:
-      return mojo::EVENT_TYPE_POINTER_UP;
+      return mojo::EventType::POINTER_UP;
     case AMOTION_EVENT_ACTION_MOVE:
-      return mojo::EVENT_TYPE_POINTER_MOVE;
+      return mojo::EventType::POINTER_MOVE;
     case AMOTION_EVENT_ACTION_CANCEL:
-      return mojo::EVENT_TYPE_POINTER_CANCEL;
+      return mojo::EventType::POINTER_CANCEL;
     case AMOTION_EVENT_ACTION_OUTSIDE:
     case AMOTION_EVENT_ACTION_HOVER_MOVE:
     case AMOTION_EVENT_ACTION_SCROLL:
@@ -41,7 +41,7 @@ mojo::EventType MotionEventActionToEventType(jint action) {
     default:
       NOTIMPLEMENTED() << "Unimplemented motion action: " << action;
   }
-  return mojo::EVENT_TYPE_UNKNOWN;
+  return mojo::EventType::UNKNOWN;
 }
 
 }  // namespace
@@ -138,7 +138,7 @@ bool PlatformViewportAndroid::TouchEvent(JNIEnv* env,
       (base::TimeTicks() + base::TimeDelta::FromMilliseconds(time_ms))
           .ToInternalValue();
   event->action = MotionEventActionToEventType(masked_action);
-  if (event->action == mojo::EVENT_TYPE_UNKNOWN)
+  if (event->action == mojo::EventType::UNKNOWN)
     return false;
 
   event->pointer_data = mojo::PointerData::New();

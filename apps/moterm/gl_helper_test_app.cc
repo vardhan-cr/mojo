@@ -179,7 +179,7 @@ class GlHelperExampleApp : public mojo::ApplicationDelegate,
     pass->has_transparent_background = false;
     pass->quads = mojo::Array<mojo::QuadPtr>::New(1);
     mojo::QuadPtr quad = mojo::Quad::New();
-    quad->material = mojo::MATERIAL_SURFACE_CONTENT;
+    quad->material = mojo::Material::SURFACE_CONTENT;
     quad->rect = viewport_rect.Clone();
     quad->opaque_rect = viewport_rect.Clone();
     quad->visible_rect = viewport_rect.Clone();
@@ -199,7 +199,7 @@ class GlHelperExampleApp : public mojo::ApplicationDelegate,
     shared_quad_state->clip_rect = viewport_rect.Clone();
     shared_quad_state->is_clipped = false;
     shared_quad_state->opacity = 1;
-    shared_quad_state->blend_mode = mojo::SK_XFERMODE_kSrc_Mode;
+    shared_quad_state->blend_mode = mojo::SkXfermode::kSrc_Mode;
     shared_quad_state->sorting_context_id = 0;
     pass->shared_quad_states[0] = shared_quad_state.Pass();
     frame->passes[0] = pass.Pass();

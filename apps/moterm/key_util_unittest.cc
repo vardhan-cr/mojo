@@ -21,8 +21,8 @@ mojo::EventPtr MakeKeyEvent(bool is_char,
   uint16_t character16 = static_cast<unsigned char>(character);
 
   mojo::EventPtr ev = mojo::Event::New();
-  ev->action = mojo::EVENT_TYPE_KEY_PRESSED;
-  ev->flags = mojo::EVENT_FLAGS_NONE;  // Cheat.
+  ev->action = mojo::EventType::KEY_PRESSED;
+  ev->flags = mojo::EventFlags::NONE;  // Cheat.
   ev->time_stamp = 1234567890LL;
   ev->key_data = mojo::KeyData::New();
   ev->key_data->key_code = 0;  // Cheat.
@@ -39,59 +39,59 @@ TEST(KeyUtilTest, RegularChars) {
   // Only handles character events.
   EXPECT_EQ(std::string(),
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(false, 0, mojo::KEYBOARD_CODE_A), false));
+                *MakeKeyEvent(false, 0, mojo::KeyboardCode::A), false));
 
   EXPECT_EQ("A", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, 'A', mojo::KEYBOARD_CODE_A), false));
+                     *MakeKeyEvent(true, 'A', mojo::KeyboardCode::A), false));
   EXPECT_EQ("a", GetInputSequenceForKeyPressedEvent(
-                     *MakeKeyEvent(true, 'a', mojo::KEYBOARD_CODE_A), false));
+                     *MakeKeyEvent(true, 'a', mojo::KeyboardCode::A), false));
   EXPECT_EQ("0",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, '0', mojo::KEYBOARD_CODE_NUM_0), false));
+                *MakeKeyEvent(true, '0', mojo::KeyboardCode::NUM_0), false));
   EXPECT_EQ("!",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, '!', mojo::KEYBOARD_CODE_NUM_0), false));
+                *MakeKeyEvent(true, '!', mojo::KeyboardCode::NUM_0), false));
   EXPECT_EQ("\t",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, '\t', mojo::KEYBOARD_CODE_TAB), false));
+                *MakeKeyEvent(true, '\t', mojo::KeyboardCode::TAB), false));
   EXPECT_EQ("\r",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, '\r', mojo::KEYBOARD_CODE_RETURN), false));
+                *MakeKeyEvent(true, '\r', mojo::KeyboardCode::RETURN), false));
 }
 
 TEST(KeyUtilTest, SpecialChars) {
   // Backspace should send DEL.
   EXPECT_EQ("\x7f",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_BACK), false));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::BACK), false));
   EXPECT_EQ("\x1b",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_ESCAPE), false));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::ESCAPE), false));
   // Some multi-character results:
   EXPECT_EQ("\x1b[5~",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_PRIOR), false));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::PRIOR), false));
   EXPECT_EQ("\x1b[H",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_HOME), false));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::HOME), false));
   EXPECT_EQ("\x1b[C",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_RIGHT), false));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::RIGHT), false));
 }
 
 TEST(KeyUtilTest, KeypadApplicationMode) {
   // Page-up should not be affected by keypad application mode.
   EXPECT_EQ("\x1b[5~",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_PRIOR), true));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::PRIOR), true));
   // But Home (and End) should be.
   EXPECT_EQ("\x1bOH",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_HOME), true));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::HOME), true));
   // As should the arroy keys.
   EXPECT_EQ("\x1bOC",
             GetInputSequenceForKeyPressedEvent(
-                *MakeKeyEvent(true, 0, mojo::KEYBOARD_CODE_RIGHT), true));
+                *MakeKeyEvent(true, 0, mojo::KeyboardCode::RIGHT), true));
   // TODO(vtl): Test this more thoroughly. Also other keypad keys (once that's
   // implemented).
 }

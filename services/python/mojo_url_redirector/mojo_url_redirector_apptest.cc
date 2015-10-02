@@ -101,7 +101,7 @@ class MojoUrlRedirectorApplicationTest :
                                          &http_server_factory);
 
     mojo::NetAddressPtr location_files_server_addr(mojo::NetAddress::New());
-    location_files_server_addr->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    location_files_server_addr->family = mojo::NetAddressFamily::IPV4;
     location_files_server_addr->ipv4 = mojo::NetAddressIPv4::New();
     location_files_server_addr->ipv4->addr.resize(4);
     location_files_server_addr->ipv4->addr[0] = 0;

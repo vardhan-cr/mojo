@@ -14,10 +14,6 @@
 #include "testing/gtest/include/gtest/gtest.h"
 
 using base::TimeDelta;
-using mojo::ANIMATION_PROPERTY_NONE;
-using mojo::ANIMATION_PROPERTY_OPACITY;
-using mojo::ANIMATION_PROPERTY_TRANSFORM;
-using mojo::ANIMATION_TWEEN_TYPE_LINEAR;
 using mojo::AnimationElement;
 using mojo::AnimationGroup;
 using mojo::AnimationProperty;
@@ -106,7 +102,7 @@ void AddOpacityElement(AnimationGroup* group,
                        AnimationValuePtr start_value,
                        AnimationValuePtr target_value) {
   AddElement(group, time, start_value.Pass(), target_value.Pass(),
-             ANIMATION_PROPERTY_OPACITY, ANIMATION_TWEEN_TYPE_LINEAR);
+             AnimationProperty::OPACITY, AnimationTweenType::LINEAR);
 }
 
 void AddTransformElement(AnimationGroup* group,
@@ -114,12 +110,12 @@ void AddTransformElement(AnimationGroup* group,
                          AnimationValuePtr start_value,
                          AnimationValuePtr target_value) {
   AddElement(group, time, start_value.Pass(), target_value.Pass(),
-             ANIMATION_PROPERTY_TRANSFORM, ANIMATION_TWEEN_TYPE_LINEAR);
+             AnimationProperty::TRANSFORM, AnimationTweenType::LINEAR);
 }
 
 void AddPauseElement(AnimationGroup* group, TimeDelta time) {
   AddElement(group, time, AnimationValuePtr(), AnimationValuePtr(),
-             ANIMATION_PROPERTY_NONE, ANIMATION_TWEEN_TYPE_LINEAR);
+             AnimationProperty::NONE, AnimationTweenType::LINEAR);
 }
 
 void InitGroupForView(AnimationGroup* group,
@@ -496,7 +492,7 @@ TEST_F(AnimationRunnerTest, RescheduleSetsPropertiesToFinalValue) {
   ScheduleForSingleView(&view, &group, initial_time_);
 
   // Schedule() again, this time without animating opacity.
-  group.sequences[0]->elements[0]->property = ANIMATION_PROPERTY_NONE;
+  group.sequences[0]->elements[0]->property = AnimationProperty::NONE;
   ScheduleForSingleView(&view, &group, initial_time_);
 
   // Opacity should go to final value.

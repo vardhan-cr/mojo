@@ -175,7 +175,7 @@ class IntegerAccessorImpl : public sample::IntegerAccessor {
  private:
   // sample::IntegerAccessor implementation.
   void GetInteger(const GetIntegerCallback& callback) override {
-    callback.Run(integer_, sample::ENUM_VALUE);
+    callback.Run(integer_, sample::Enum::VALUE);
   }
   void SetInteger(int64_t data, sample::Enum type) override { integer_ = data; }
 
@@ -378,9 +378,9 @@ TEST_F(InterfacePtrTest, ReentrantWaitForIncomingMethodCall) {
   sample::ServicePtr proxy;
   ReentrantServiceImpl impl(GetProxy(&proxy));
 
-  proxy->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  proxy->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                    sample::Service::FrobinateCallback());
-  proxy->Frobinate(nullptr, sample::Service::BAZ_OPTIONS_REGULAR, nullptr,
+  proxy->Frobinate(nullptr, sample::Service::BazOptions::REGULAR, nullptr,
                    sample::Service::FrobinateCallback());
 
   PumpMessages();
@@ -412,14 +412,14 @@ TEST_F(InterfacePtrTest, RequireVersion) {
 
   ptr.RequireVersion(1u);
   EXPECT_EQ(1u, ptr.version());
-  ptr->SetInteger(123, sample::ENUM_VALUE);
+  ptr->SetInteger(123, sample::Enum::VALUE);
   PumpMessages();
   EXPECT_FALSE(ptr.encountered_error());
   EXPECT_EQ(123, impl.integer());
 
   ptr.RequireVersion(3u);
   EXPECT_EQ(3u, ptr.version());
-  ptr->SetInteger(456, sample::ENUM_VALUE);
+  ptr->SetInteger(456, sample::Enum::VALUE);
   PumpMessages();
   EXPECT_FALSE(ptr.encountered_error());
   EXPECT_EQ(456, impl.integer());
@@ -428,7 +428,7 @@ TEST_F(InterfacePtrTest, RequireVersion) {
   ptr.RequireVersion(4u);
   // This value is set to the input of RequireVersion() synchronously.
   EXPECT_EQ(4u, ptr.version());
-  ptr->SetInteger(789, sample::ENUM_VALUE);
+  ptr->SetInteger(789, sample::Enum::VALUE);
   PumpMessages();
   EXPECT_TRUE(ptr.encountered_error());
   // The call to SetInteger() after RequireVersion(4u) is ignored.

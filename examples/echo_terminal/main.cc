@@ -29,7 +29,7 @@ class TerminalEchoer {
   void StartReading() {
     // TODO(vtl): Are |offset| and |whence| correct?
     terminal_->Read(
-        kMaxBytesToRead, 0, mojo::files::WHENCE_FROM_CURRENT,
+        kMaxBytesToRead, 0, mojo::files::Whence::FROM_CURRENT,
         base::Bind(&TerminalEchoer::OnRead, base::Unretained(this)));
   }
 
@@ -41,7 +41,7 @@ class TerminalEchoer {
 
   // |Read()| callback:
   void OnRead(mojo::files::Error error, mojo::Array<uint8_t> bytes_read) {
-    if (error != mojo::files::ERROR_OK) {
+    if (error != mojo::files::Error::OK) {
       LOG(ERROR) << "Error: Read(): " << error;
       delete this;
       return;
@@ -65,13 +65,13 @@ class TerminalEchoer {
 
     // TODO(vtl): Are |offset| and |whence| correct?
     terminal_->Write(
-        bytes_read.Pass(), 0, mojo::files::WHENCE_FROM_CURRENT,
+        bytes_read.Pass(), 0, mojo::files::Whence::FROM_CURRENT,
         base::Bind(&TerminalEchoer::OnWrite, base::Unretained(this)));
   }
 
   // |Write()| callback:
   void OnWrite(mojo::files::Error error, uint32_t num_bytes_written) {
-    if (error != mojo::files::ERROR_OK) {
+    if (error != mojo::files::Error::OK) {
       LOG(ERROR) << "Error: Write(): " << error;
       delete this;
       return;

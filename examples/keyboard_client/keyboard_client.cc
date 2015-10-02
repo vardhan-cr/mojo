@@ -177,7 +177,7 @@ class KeyboardDelegate : public mojo::ApplicationDelegate,
     keyboard::KeyboardClientPtr keyboard_client;
     auto request = mojo::GetProxy(&keyboard_client);
     binding_.Bind(request.Pass());
-    keyboard_->Show(keyboard_client.Pass(), keyboard::KEYBOARD_TYPE_TEXT);
+    keyboard_->Show(keyboard_client.Pass(), keyboard::KeyboardType::TEXT);
 
     mojo::ServiceProviderPtr surfaces_service_provider;
     shell_->ConnectToApplication("mojo:surfaces_service",

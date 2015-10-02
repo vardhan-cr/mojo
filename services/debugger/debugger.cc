@@ -56,7 +56,7 @@ class Debugger : public mojo::ApplicationDelegate,
     app->ConnectToService("mojo:http_server", &http_server_factory);
 
     mojo::NetAddressPtr local_address(mojo::NetAddress::New());
-    local_address->family = mojo::NET_ADDRESS_FAMILY_IPV4;
+    local_address->family = mojo::NetAddressFamily::IPV4;
     local_address->ipv4 = mojo::NetAddressIPv4::New();
     local_address->ipv4->addr.resize(4);
     local_address->ipv4->addr[0] = 127;

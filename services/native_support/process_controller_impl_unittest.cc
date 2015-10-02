@@ -35,7 +35,7 @@ TEST_F(ProcessControllerImplTest, Wait) {
 
   {
     ProcessControllerPtr process_controller;
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     const char kPath[] = "/bin/sh";
     mojo::Array<mojo::String> argv;
     argv.push_back(kPath);
@@ -45,13 +45,13 @@ TEST_F(ProcessControllerImplTest, Wait) {
                      nullptr, nullptr, GetProxy(&process_controller),
                      Capture(&error));
     ASSERT_TRUE(process().WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
 
-    error = mojo::files::ERROR_INTERNAL;
+    error = mojo::files::Error::INTERNAL;
     int32_t exit_status = 0;
     process_controller->Wait(Capture(&error, &exit_status));
     ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
     EXPECT_EQ(42, exit_status);
   }
 }
@@ -127,7 +127,7 @@ TEST_F(ProcessControllerImplTest, Kill) {
   QuitOnReadyFile ofile_impl(GetProxy(&ofile));
 
   ProcessControllerPtr process_controller;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   const char kPath[] = "/bin/bash";
   mojo::Array<mojo::String> argv;
   argv.push_back(kPath);
@@ -137,23 +137,23 @@ TEST_F(ProcessControllerImplTest, Kill) {
                    ifile.Pass(), ofile.Pass(), nullptr,
                    GetProxy(&process_controller), Capture(&error));
   ASSERT_TRUE(process().WaitForIncomingResponse());
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 
   // |ofile_impl| will quit the message loop once it sees "ready".
   RunMessageLoop();
   ASSERT_TRUE(ofile_impl.got_ready());
 
   // Send SIGINT.
-  error = mojo::files::ERROR_INTERNAL;
+  error = mojo::files::Error::INTERNAL;
   process_controller->Kill(static_cast<int32_t>(SIGINT), Capture(&error));
   ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 
-  error = mojo::files::ERROR_INTERNAL;
+  error = mojo::files::Error::INTERNAL;
   int32_t exit_status = 0;
   process_controller->Wait(Capture(&error, &exit_status));
   ASSERT_TRUE(process_controller.WaitForIncomingResponse());
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   EXPECT_EQ(42, exit_status);
 }
 
@@ -167,7 +167,7 @@ TEST_F(ProcessControllerImplTest, DestroyingControllerKills) {
     QuitOnReadyFile ofile_impl(GetProxy(&ofile));
 
     ProcessControllerPtr process_controller;
-    mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+    mojo::files::Error error = mojo::files::Error::INTERNAL;
     const char kPath[] = "/bin/bash";
     mojo::Array<mojo::String> argv;
     argv.push_back(kPath);
@@ -177,7 +177,7 @@ TEST_F(ProcessControllerImplTest, DestroyingControllerKills) {
                      ifile.Pass(), ofile.Pass(), nullptr,
                      GetProxy(&process_controller), Capture(&error));
     ASSERT_TRUE(process().WaitForIncomingResponse());
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
 
     // |ofile_impl| will quit the message loop once it sees "ready".
     RunMessageLoop();

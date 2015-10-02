@@ -30,8 +30,8 @@ void WaitForProcess(
     const base::Callback<void(mojo::files::Error, int32_t)>& done_callback) {
   int exit_status = 0;
   mojo::files::Error result = process.WaitForExit(&exit_status)
-                                  ? mojo::files::ERROR_OK
-                                  : mojo::files::ERROR_UNKNOWN;
+                                  ? mojo::files::Error::OK
+                                  : mojo::files::Error::UNKNOWN;
   done_runner->PostTask(
       FROM_HERE,
       base::Bind(done_callback, result, static_cast<int32_t>(exit_status)));
@@ -67,7 +67,7 @@ ProcessControllerImpl::~ProcessControllerImpl() {
 void ProcessControllerImpl::Wait(const WaitCallback& callback) {
   if (!process_.IsValid()) {
     // TODO(vtl): This isn't quite right.
-    callback.Run(mojo::files::ERROR_UNAVAILABLE, 0);
+    callback.Run(mojo::files::Error::UNAVAILABLE, 0);
     return;
   }
 
@@ -90,13 +90,13 @@ void ProcessControllerImpl::OnWaitComplete(const WaitCallback& callback,
 
 mojo::files::Error ProcessControllerImpl::KillHelper(int32_t signal) {
   if (signal < 0)
-    return mojo::files::ERROR_INVALID_ARGUMENT;
+    return mojo::files::Error::INVALID_ARGUMENT;
 
   if (!process_.IsValid()) {
     LOG(ERROR) << "Kill() called after Wait()";
     // TODO(vtl): This error code isn't quite right, but "unavailable" (which
     // would also be wrong) is used for a more appropriate purpose below.
-    return mojo::files::ERROR_INVALID_ARGUMENT;
+    return mojo::files::Error::INVALID_ARGUMENT;
   }
 
   // |base::HandleType| is just a typedef for |pid_t|.
@@ -104,19 +104,19 @@ mojo::files::Error ProcessControllerImpl::KillHelper(int32_t signal) {
 
   // Note: |kill()| is not interruptible.
   if (kill(pid, static_cast<int>(signal)) == 0)
-    return mojo::files::ERROR_OK;
+    return mojo::files::Error::OK;
 
   switch (errno) {
     case EINVAL:
-      return mojo::files::ERROR_INVALID_ARGUMENT;
+      return mojo::files::Error::INVALID_ARGUMENT;
     case EPERM:
-      return mojo::files::ERROR_PERMISSION_DENIED;
+      return mojo::files::Error::PERMISSION_DENIED;
     case ESRCH:
-      return mojo::files::ERROR_UNAVAILABLE;
+      return mojo::files::Error::UNAVAILABLE;
     default:
       break;
   }
-  return mojo::files::ERROR_UNKNOWN;
+  return mojo::files::Error::UNKNOWN;
 }
 
 }  // namespace native_support

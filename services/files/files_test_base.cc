@@ -23,10 +23,10 @@ void FilesTestBase::SetUp() {
 }
 
 void FilesTestBase::GetTemporaryRoot(DirectoryPtr* directory) {
-  Error error = ERROR_INTERNAL;
+  Error error = Error::INTERNAL;
   files()->OpenFileSystem(nullptr, GetProxy(directory), Capture(&error));
   ASSERT_TRUE(files().WaitForIncomingResponse());
-  ASSERT_EQ(ERROR_OK, error);
+  ASSERT_EQ(Error::OK, error);
 }
 
 }  // namespace files

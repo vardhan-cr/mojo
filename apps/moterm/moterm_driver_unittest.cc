@@ -70,44 +70,44 @@ void FileWriteString(mojo::files::File* file, const std::string& s) {
   std::vector<uint8_t> bytes_to_write;
   for (size_t i = 0; i < s.size(); i++)
     bytes_to_write.push_back(static_cast<uint8_t>(s[i]));
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   uint32_t num_bytes_written = 0;
   file->Write(mojo::Array<uint8_t>::From(bytes_to_write), 0,
-              mojo::files::WHENCE_FROM_CURRENT,
+              mojo::files::Whence::FROM_CURRENT,
               [&error, &num_bytes_written](mojo::files::Error e, uint32_t n) {
                 error = e;
                 num_bytes_written = n;
                 base::MessageLoop::current()->Quit();
               });
   base::MessageLoop::current()->Run();
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   EXPECT_EQ(bytes_to_write.size(), num_bytes_written);
 }
 
 // (See the comments above |FileWriteString()|.)
 void FileClose(mojo::files::File* file) {
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   file->Close([&error](mojo::files::Error e) {
     error = e;
     base::MessageLoop::current()->Quit();
   });
   base::MessageLoop::current()->Run();
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 }
 
 // (See the comments above |FileWriteString()|.)
 std::string FileReadString(mojo::files::File* file, uint32_t max_bytes) {
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   mojo::Array<uint8_t> bytes_read;
   file->Read(
-      10, 0, mojo::files::WHENCE_FROM_CURRENT,
+      10, 0, mojo::files::Whence::FROM_CURRENT,
       [&error, &bytes_read](mojo::files::Error e, mojo::Array<uint8_t> b) {
         error = e;
         bytes_read = b.Pass();
         base::MessageLoop::current()->Quit();
       });
   base::MessageLoop::current()->Run();
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   if (!bytes_read.size())
     return std::string();
   return std::string(reinterpret_cast<const char*>(&bytes_read[0]),
@@ -171,19 +171,19 @@ TEST_F(MotermDriverTest, BasicReadsFromTerminal) {
   // Kick off two reads. They should be satisfied in order. (Don't use
   // |FileReadString()| here, since we want to queue up the reads before calling
   // |SendData()|.)
-  mojo::files::Error error1 = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error1 = mojo::files::Error::INTERNAL;
   mojo::Array<uint8_t> bytes_read1;
   file->Read(
-      4, 0, mojo::files::WHENCE_FROM_CURRENT,
+      4, 0, mojo::files::Whence::FROM_CURRENT,
       [&error1, &bytes_read1](mojo::files::Error e, mojo::Array<uint8_t> b) {
         error1 = e;
         bytes_read1 = b.Pass();
       });
   // Only quit the message loop on getting the response to the second.
-  mojo::files::Error error2 = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error2 = mojo::files::Error::INTERNAL;
   mojo::Array<uint8_t> bytes_read2;
   file->Read(
-      100, 0, mojo::files::WHENCE_FROM_CURRENT,
+      100, 0, mojo::files::Whence::FROM_CURRENT,
       [&error2, &bytes_read2](mojo::files::Error e, mojo::Array<uint8_t> b) {
         error2 = e;
         bytes_read2 = b.Pass();
@@ -194,12 +194,12 @@ TEST_F(MotermDriverTest, BasicReadsFromTerminal) {
   std::string data("hello\nworld");
   driver->SendData(data.data(), data.size());
   base::MessageLoop::current()->Run();
-  EXPECT_EQ(mojo::files::ERROR_OK, error1);
+  EXPECT_EQ(mojo::files::Error::OK, error1);
   EXPECT_EQ(4u, bytes_read1.size());
   EXPECT_EQ(std::string("hell"),
             std::string(reinterpret_cast<const char*>(&bytes_read1[0]),
                         bytes_read1.size()));
-  EXPECT_EQ(mojo::files::ERROR_OK, error2);
+  EXPECT_EQ(mojo::files::Error::OK, error2);
   EXPECT_EQ(2u, bytes_read2.size());
   // (We shouldn't get the "world" yet.)
   EXPECT_EQ(std::string("o\n"),

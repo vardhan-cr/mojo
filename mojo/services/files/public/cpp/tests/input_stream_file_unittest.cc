@@ -74,7 +74,7 @@ class TestClient : public InputStreamFile::Client {
     MOJO_CHECK(!callback_.is_null());
     RequestDataCallback callback;
     std::swap(callback, callback_);
-    callback.Run(mojo::files::ERROR_OK, data.Pass());
+    callback.Run(mojo::files::Error::OK, data.Pass());
   }
 
   void set_data(mojo::Array<uint8_t> data) {
@@ -110,7 +110,7 @@ class TestClient : public InputStreamFile::Client {
       return false;
     }
 
-    *error = mojo::files::ERROR_OK;
+    *error = mojo::files::Error::OK;
     *data = data_.Clone();
     return true;
   }
@@ -134,9 +134,9 @@ void TestReadSync(mojo::files::File* file,
                   TestClient* client,
                   const std::string& s) {
   bool read_cb_called = false;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   mojo::Array<uint8_t> data;
-  file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
              [&read_cb_called, &error, &data](mojo::files::Error e,
                                               mojo::Array<uint8_t> d) {
                read_cb_called = true;
@@ -160,14 +160,14 @@ void TestReadSync(mojo::files::File* file,
     EXPECT_FALSE(client->got_request_data());
     EXPECT_FALSE(client->got_on_closed());
     EXPECT_TRUE(read_cb_called);
-    EXPECT_EQ(mojo::files::ERROR_OK, error);
+    EXPECT_EQ(mojo::files::Error::OK, error);
     EXPECT_EQ(s, ArrayToString(data));
   } else {
     // Otherwise, only the read callback will be called and quit the message
     // loop.
     RunMessageLoop();
     EXPECT_TRUE(read_cb_called);
-    EXPECT_EQ(mojo::files::ERROR_UNAVAILABLE, error);
+    EXPECT_EQ(mojo::files::Error::UNAVAILABLE, error);
     EXPECT_TRUE(data.is_null());
   }
 }
@@ -178,9 +178,9 @@ void TestReadAsync(mojo::files::File* file,
   MOJO_CHECK(client);
 
   bool read_cb_called = false;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   mojo::Array<uint8_t> data;
-  file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
              [&read_cb_called, &error, &data](mojo::files::Error e,
                                               mojo::Array<uint8_t> d) {
                read_cb_called = true;
@@ -207,13 +207,13 @@ void TestReadAsync(mojo::files::File* file,
   EXPECT_FALSE(client->got_request_data());
   EXPECT_FALSE(client->got_on_closed());
   EXPECT_TRUE(read_cb_called);
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
   EXPECT_EQ(s, ArrayToString(data));
 }
 
 void TestClose(mojo::files::File* file, TestClient* client) {
   bool close_cb_called = false;
-  mojo::files::Error error = mojo::files::ERROR_INTERNAL;
+  mojo::files::Error error = mojo::files::Error::INTERNAL;
   file->Close([&close_cb_called, &error](mojo::files::Error e) {
     close_cb_called = true;
     error = e;
@@ -234,7 +234,7 @@ void TestClose(mojo::files::File* file, TestClient* client) {
     RunMessageLoop();
   }
   EXPECT_TRUE(close_cb_called);
-  EXPECT_EQ(mojo::files::ERROR_OK, error);
+  EXPECT_EQ(mojo::files::Error::OK, error);
 }
 
 TEST_F(InputStreamFileTest, BasicSync) {
@@ -379,7 +379,7 @@ TEST_F(InputStreamFileTest, ClientDestroysImpl) {
     // respond.
     // TODO(vtl): I'm not sure if this is the best behavior. Maybe it should
     // respond with an error?
-    file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+    file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
                [](mojo::files::Error, mojo::Array<uint8_t>) {
                  MOJO_CHECK(false) << "Not reached";
                });
@@ -418,7 +418,7 @@ class TestClientFifoSync : public InputStreamFile::Client {
                    mojo::files::Error* error,
                    mojo::Array<uint8_t>* data,
                    const RequestDataCallback& callback) override {
-    *error = mojo::files::ERROR_OK;
+    *error = mojo::files::Error::OK;
     data->resize(1);
     (*data)[0] = next_byte_++;
     return true;
@@ -449,7 +449,7 @@ class TestClientFifoAsync : public InputStreamFile::Client {
     PostTaskToMessageLoop([this, callback]() {
       mojo::Array<uint8_t> data;
       data.push_back(next_byte_++);
-      callback.Run(mojo::files::ERROR_OK, data.Pass());
+      callback.Run(mojo::files::Error::OK, data.Pass());
     });
     return false;
   }
@@ -466,49 +466,49 @@ void TestFifo(mojo::files::File* file) {
   uint8_t expect_byte = 0;
 
   // Test a couple of zero-byte reads.
-  file->Read(0u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(0u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback](mojo::files::Error e, mojo::Array<uint8_t> a) {
                EXPECT_EQ(0, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(0u, a.size());
              });
-  file->Read(0u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(0u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback](mojo::files::Error e, mojo::Array<uint8_t> a) {
                EXPECT_EQ(1, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(0u, a.size());
              });
 
   // Test a couple of non-zero-byte reads.
-  file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback, &expect_byte](mojo::files::Error e,
                                               mojo::Array<uint8_t> a) {
                EXPECT_EQ(2, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(1u, a.size());
                EXPECT_EQ(expect_byte++, a[0]);
              });
-  file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback, &expect_byte](mojo::files::Error e,
                                               mojo::Array<uint8_t> a) {
                EXPECT_EQ(3, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(1u, a.size());
                EXPECT_EQ(expect_byte++, a[0]);
              });
   // Throw in a zero-byte read.
-  file->Read(0u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(0u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback](mojo::files::Error e, mojo::Array<uint8_t> a) {
                EXPECT_EQ(4, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(0u, a.size());
              });
   // And a final non-zero-byte read (we'll quit the message loop).
-  file->Read(100u, 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Read(100u, 0, mojo::files::Whence::FROM_CURRENT,
              [&expect_callback, &expect_byte](mojo::files::Error e,
                                               mojo::Array<uint8_t> a) {
                EXPECT_EQ(5, expect_callback++);
-               EXPECT_EQ(mojo::files::ERROR_OK, e);
+               EXPECT_EQ(mojo::files::Error::OK, e);
                EXPECT_EQ(1u, a.size());
                EXPECT_EQ(expect_byte++, a[0]);
                QuitMessageLoop();

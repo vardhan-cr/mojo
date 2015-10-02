@@ -39,7 +39,7 @@ void Fputs(mojo::files::File* file, const char* s) {
   mojo::Array<uint8_t> a(length);
   memcpy(&a[0], s, length);
 
-  file->Write(a.Pass(), 0, mojo::files::WHENCE_FROM_CURRENT,
+  file->Write(a.Pass(), 0, mojo::files::Whence::FROM_CURRENT,
               mojo::files::File::WriteCallback());
 }
 
@@ -67,7 +67,7 @@ class MotermExampleAppView : public mojo::ViewObserver {
   void Resize() {
     moterm_terminal_->SetSize(0, 0, false, [](mojo::files::Error error,
                                               uint32_t rows, uint32_t columns) {
-      DCHECK_EQ(error, mojo::files::ERROR_OK);
+      DCHECK_EQ(error, mojo::files::Error::OK);
       DVLOG(1) << "New size: " << rows << "x" << columns;
     });
   }
@@ -76,7 +76,7 @@ class MotermExampleAppView : public mojo::ViewObserver {
     if (!moterm_file_) {
       moterm_terminal_->Connect(GetProxy(&moterm_file_), false,
                                 [](mojo::files::Error error) {
-                                  DCHECK_EQ(error, mojo::files::ERROR_OK);
+                                  DCHECK_EQ(error, mojo::files::Error::OK);
                                 });
     }
 
@@ -89,13 +89,13 @@ class MotermExampleAppView : public mojo::ViewObserver {
     }
 
     Fputs(moterm_file_.get(), "\x1b[0m\nWhere do you want to go today?\n:) ");
-    moterm_file_->Read(1000, 0, mojo::files::WHENCE_FROM_CURRENT,
+    moterm_file_->Read(1000, 0, mojo::files::Whence::FROM_CURRENT,
                        base::Bind(&MotermExampleAppView::OnInputFromPrompt,
                                   weak_factory_.GetWeakPtr()));
   }
   void OnInputFromPrompt(mojo::files::Error error,
                          mojo::Array<uint8_t> bytes_read) {
-    if (error != mojo::files::ERROR_OK || !bytes_read) {
+    if (error != mojo::files::Error::OK || !bytes_read) {
       // TODO(vtl): Handle errors?
       NOTIMPLEMENTED();
       return;
@@ -131,7 +131,7 @@ class MotermExampleAppView : public mojo::ViewObserver {
   void OnDestinationDone(mojo::files::Error error) {
     // We should always succeed. (It'll only fail on synchronous failures, which
     // only occur when it's busy.)
-    DCHECK_EQ(error, mojo::files::ERROR_OK);
+    DCHECK_EQ(error, mojo::files::Error::OK);
     StartPrompt(false);
   }
 

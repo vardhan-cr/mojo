@@ -25,7 +25,7 @@
 #include "ui/gfx/geometry/rect.h"
 
 using mojo::Array;
-using mojo::ERROR_CODE_NONE;
+using mojo::ErrorCode;
 using mojo::InterfaceRequest;
 using mojo::ServiceProvider;
 using mojo::ServiceProviderPtr;
@@ -288,7 +288,7 @@ const ServerView* GetFirstCloned(const ServerView* view) {
 // CloneAndAnimate() is invoked for 2,2.
 void SetUpAnimate1(ViewManagerServiceTest* test, ViewId* embed_view_id) {
   *embed_view_id = ViewId(test->wm_connection()->id(), 1);
-  EXPECT_EQ(ERROR_CODE_NONE, test->wm_connection()->CreateView(*embed_view_id));
+  EXPECT_EQ(ErrorCode::NONE, test->wm_connection()->CreateView(*embed_view_id));
   EXPECT_TRUE(test->wm_connection()->SetViewVisibility(*embed_view_id, true));
   EXPECT_TRUE(test->wm_connection()->AddView(*(test->wm_connection()->root()),
                                              *embed_view_id));
@@ -300,11 +300,11 @@ void SetUpAnimate1(ViewManagerServiceTest* test, ViewId* embed_view_id) {
   ASSERT_NE(connection1, test->wm_connection());
 
   const ViewId child1(connection1->id(), 1);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child1));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child1));
   const ViewId child2(connection1->id(), 2);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child2));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child2));
   const ViewId child3(connection1->id(), 3);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child3));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child3));
 
   ServerView* v1 = connection1->GetView(child1);
   v1->SetVisible(true);
@@ -425,7 +425,7 @@ TEST_F(ViewManagerServiceTest, ClonedViewsPromotedOnHide) {
 // SetUpAnimate1() but cloning 2,1.
 TEST_F(ViewManagerServiceTest, CloneAndAnimateLargerDepth) {
   const ViewId embed_view_id(wm_connection()->id(), 1);
-  EXPECT_EQ(ERROR_CODE_NONE, wm_connection()->CreateView(embed_view_id));
+  EXPECT_EQ(ErrorCode::NONE, wm_connection()->CreateView(embed_view_id));
   EXPECT_TRUE(wm_connection()->SetViewVisibility(embed_view_id, true));
   EXPECT_TRUE(
       wm_connection()->AddView(*(wm_connection()->root()), embed_view_id));
@@ -436,11 +436,11 @@ TEST_F(ViewManagerServiceTest, CloneAndAnimateLargerDepth) {
   ASSERT_NE(connection1, wm_connection());
 
   const ViewId child1(connection1->id(), 1);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child1));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child1));
   const ViewId child2(connection1->id(), 2);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child2));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child2));
   const ViewId child3(connection1->id(), 3);
-  EXPECT_EQ(ERROR_CODE_NONE, connection1->CreateView(child3));
+  EXPECT_EQ(ErrorCode::NONE, connection1->CreateView(child3));
 
   ServerView* v1 = connection1->GetView(child1);
   v1->SetVisible(true);

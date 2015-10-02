@@ -61,7 +61,7 @@ class ClipboardAppTest : public mojo::test::ApplicationTestBase {
     base::RunLoop run_loop;
     uint64_t sequence_num = 999999;
     clipboard_->GetSequenceNumber(
-        Clipboard::TYPE_COPY_PASTE,
+        Clipboard::Type::COPY_PASTE,
         base::Bind(&CopyUint64AndEndRunloop, &sequence_num, &run_loop));
     run_loop.Run();
     return sequence_num;
@@ -72,7 +72,7 @@ class ClipboardAppTest : public mojo::test::ApplicationTestBase {
     std::vector<std::string> types;
     types.push_back(kUninitialized);
     clipboard_->GetAvailableMimeTypes(
-        Clipboard::TYPE_COPY_PASTE,
+        Clipboard::Type::COPY_PASTE,
         base::Bind(&CopyVectorStringAndEndRunloop, &types, &run_loop));
     run_loop.Run();
     return types;
@@ -82,7 +82,7 @@ class ClipboardAppTest : public mojo::test::ApplicationTestBase {
     base::RunLoop run_loop;
     bool is_null = false;
     clipboard_->ReadMimeType(
-        Clipboard::TYPE_COPY_PASTE, mime_type,
+        Clipboard::Type::COPY_PASTE, mime_type,
         base::Bind(&CopyStringAndEndRunloop, data, &is_null, &run_loop));
     run_loop.Run();
     return !is_null;
@@ -91,7 +91,7 @@ class ClipboardAppTest : public mojo::test::ApplicationTestBase {
   void SetStringText(const std::string& data) {
     Map<String, Array<uint8_t>> mime_data;
     mime_data[Clipboard::MIME_TYPE_TEXT] = Array<uint8_t>::From(data);
-    clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE,
+    clipboard_->WriteClipboardData(Clipboard::Type::COPY_PASTE,
                                    mime_data.Pass());
   }
 
@@ -127,7 +127,7 @@ TEST_F(ClipboardAppTest, CanSetMultipleDataTypesAtOnce) {
   mime_data[Clipboard::MIME_TYPE_HTML] =
       Array<uint8_t>::From(std::string(kHtmlData));
 
-  clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE, mime_data.Pass());
+  clipboard_->WriteClipboardData(Clipboard::Type::COPY_PASTE, mime_data.Pass());
 
   EXPECT_EQ(1ul, GetSequenceNumber());
 
@@ -147,7 +147,7 @@ TEST_F(ClipboardAppTest, CanClearClipboardWithZeroArray) {
   EXPECT_EQ(kPlainTextData, data);
 
   Map<String, Array<uint8_t>> mime_data;
-  clipboard_->WriteClipboardData(Clipboard::TYPE_COPY_PASTE, mime_data.Pass());
+  clipboard_->WriteClipboardData(Clipboard::Type::COPY_PASTE, mime_data.Pass());
 
   EXPECT_EQ(2ul, GetSequenceNumber());
   EXPECT_FALSE(GetDataOfType(Clipboard::MIME_TYPE_TEXT, &data));

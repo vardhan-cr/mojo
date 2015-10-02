@@ -132,7 +132,7 @@ void ProcessImpl::SpawnWithTerminal(
   int errno_value = 0;
   if (!MakePtyPair(&master_fd, &slave_fd, &errno_value)) {
     // TODO(vtl): Well, this is dumb (we should use errno_value).
-    callback.Run(mojo::files::ERROR_UNKNOWN);
+    callback.Run(mojo::files::Error::UNKNOWN);
     return;
   }
 
@@ -174,7 +174,7 @@ void ProcessImpl::SpawnImpl(
   } else {
     if (!argv.size() ||
         argv.size() > static_cast<size_t>(std::numeric_limits<int>::max())) {
-      callback.Run(mojo::files::ERROR_INVALID_ARGUMENT);
+      callback.Run(mojo::files::Error::INVALID_ARGUMENT);
       return;
     }
     // TODO(vtl): Currently, we don't support setting argv[0], due to
@@ -227,13 +227,13 @@ void ProcessImpl::SpawnImpl(
   // doesn't exist (since fork succeeds; it's the exec that fails).
   if (!process.IsValid()) {
     // TODO(vtl): Well, this is dumb (can we check errno?).
-    callback.Run(mojo::files::ERROR_UNKNOWN);
+    callback.Run(mojo::files::Error::UNKNOWN);
     return;
   }
 
   new ProcessControllerImpl(worker_runner_, process_controller.Pass(),
                             process.Pass(), std::move(process_io_redirection));
-  callback.Run(mojo::files::ERROR_OK);
+  callback.Run(mojo::files::Error::OK);
 }
 
 }  // namespace native_support

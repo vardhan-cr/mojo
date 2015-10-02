@@ -106,18 +106,18 @@ class PDFView : public ApplicationDelegate,
   void OnViewInputEvent(View* view, const EventPtr& event) override {
     DCHECK(embedder_for_roots_.find(view) != embedder_for_roots_.end());
     if (event->key_data &&
-        (event->action != EVENT_TYPE_KEY_PRESSED || event->key_data->is_char)) {
+        (event->action != EventType::KEY_PRESSED || event->key_data->is_char)) {
       return;
     }
     if ((event->key_data &&
-         event->key_data->windows_key_code == KEYBOARD_CODE_DOWN) ||
+         event->key_data->windows_key_code == KeyboardCode::DOWN) ||
         (event->pointer_data && event->pointer_data->vertical_wheel < 0)) {
       if (current_page_ < (page_count_ - 1)) {
         current_page_++;
         DrawBitmap(embedder_for_roots_[view]);
       }
     } else if ((event->key_data &&
-                event->key_data->windows_key_code == KEYBOARD_CODE_UP) ||
+                event->key_data->windows_key_code == KeyboardCode::UP) ||
                (event->pointer_data &&
                 event->pointer_data->vertical_wheel > 0)) {
       if (current_page_ > 0) {

@@ -36,7 +36,7 @@ FileImpl::~FileImpl() {
 
 void FileImpl::Close(const CloseCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
   int fd_to_try_to_close = file_fd_.release();
@@ -55,7 +55,7 @@ void FileImpl::Close(const CloseCallback& callback) {
     return;
   }
 
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 // TODO(vtl): Move the implementation to a thread pool.
@@ -64,28 +64,28 @@ void FileImpl::Read(uint32_t num_bytes_to_read,
                     Whence whence,
                     const ReadCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, Array<uint8_t>());
+    callback.Run(Error::CLOSED, Array<uint8_t>());
     return;
   }
   if (num_bytes_to_read > kMaxReadSize) {
-    callback.Run(ERROR_OUT_OF_RANGE, Array<uint8_t>());
+    callback.Run(Error::OUT_OF_RANGE, Array<uint8_t>());
     return;
   }
 
   Error error = IsOffsetValid(offset);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, Array<uint8_t>());
     return;
   }
 
   error = IsWhenceValid(whence);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, Array<uint8_t>());
     return;
   }
 
-  if (offset != 0 || whence != WHENCE_FROM_CURRENT) {
-    // TODO(vtl): Use |pread()| below in the |WHENCE_FROM_START| case. This
+  if (offset != 0 || whence != Whence::FROM_CURRENT) {
+    // TODO(vtl): Use |pread()| below in the |Whence::FROM_START| case. This
     // implementation is obviously not atomic. (If someone seeks simultaneously,
     // we'll end up writing somewhere else. Or, well, we would if we were
     // multithreaded.) Maybe we should do an |ftell()| and always use |pread()|.
@@ -108,7 +108,7 @@ void FileImpl::Read(uint32_t num_bytes_to_read,
 
   DCHECK_LE(static_cast<size_t>(num_bytes_read), num_bytes_to_read);
   bytes_read.resize(static_cast<size_t>(num_bytes_read));
-  callback.Run(ERROR_OK, bytes_read.Pass());
+  callback.Run(Error::OK, bytes_read.Pass());
 }
 
 // TODO(vtl): Move the implementation to a thread pool.
@@ -119,31 +119,31 @@ void FileImpl::Write(Array<uint8_t> bytes_to_write,
   DCHECK(!bytes_to_write.is_null());
 
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, 0);
+    callback.Run(Error::CLOSED, 0);
     return;
   }
   // Who knows what |write()| would return if the size is that big (and it
   // actually wrote that much).
   if (bytes_to_write.size() >
       static_cast<size_t>(std::numeric_limits<ssize_t>::max())) {
-    callback.Run(ERROR_OUT_OF_RANGE, 0);
+    callback.Run(Error::OUT_OF_RANGE, 0);
     return;
   }
 
   Error error = IsOffsetValid(offset);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, 0);
     return;
   }
 
   error = IsWhenceValid(whence);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, 0);
     return;
   }
 
-  if (offset != 0 || whence != WHENCE_FROM_CURRENT) {
-    // TODO(vtl): Use |pwrite()| below in the |WHENCE_FROM_START| case. This
+  if (offset != 0 || whence != Whence::FROM_CURRENT) {
+    // TODO(vtl): Use |pwrite()| below in the |Whence::FROM_START| case. This
     // implementation is obviously not atomic. (If someone seeks simultaneously,
     // we'll end up writing somewhere else. Or, well, we would if we were
     // multithreaded.) Maybe we should do an |ftell()| and always use
@@ -168,7 +168,7 @@ void FileImpl::Write(Array<uint8_t> bytes_to_write,
 
   DCHECK_LE(static_cast<size_t>(num_bytes_written),
             std::numeric_limits<uint32_t>::max());
-  callback.Run(ERROR_OK, static_cast<uint32_t>(num_bytes_written));
+  callback.Run(Error::OK, static_cast<uint32_t>(num_bytes_written));
 }
 
 void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
@@ -177,25 +177,25 @@ void FileImpl::ReadToStream(ScopedDataPipeProducerHandle source,
                             int64_t num_bytes_to_read,
                             const ReadToStreamCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
 
   Error error = IsOffsetValid(offset);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   error = IsWhenceValid(whence);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   // TODO(vtl): FIXME soon
   NOTIMPLEMENTED();
-  callback.Run(ERROR_UNIMPLEMENTED);
+  callback.Run(Error::UNIMPLEMENTED);
 }
 
 void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
@@ -203,47 +203,47 @@ void FileImpl::WriteFromStream(ScopedDataPipeConsumerHandle sink,
                                Whence whence,
                                const WriteFromStreamCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
 
   Error error = IsOffsetValid(offset);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   error = IsWhenceValid(whence);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
 
   // TODO(vtl): FIXME soon
   NOTIMPLEMENTED();
-  callback.Run(ERROR_UNIMPLEMENTED);
+  callback.Run(Error::UNIMPLEMENTED);
 }
 
 void FileImpl::Tell(const TellCallback& callback) {
-  Seek(0, WHENCE_FROM_CURRENT, callback);
+  Seek(0, Whence::FROM_CURRENT, callback);
 }
 
 void FileImpl::Seek(int64_t offset,
                     Whence whence,
                     const SeekCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, 0);
+    callback.Run(Error::CLOSED, 0);
     return;
   }
 
   Error error = IsOffsetValid(offset);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, 0);
     return;
   }
 
   error = IsWhenceValid(whence);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error, 0);
     return;
   }
@@ -255,29 +255,29 @@ void FileImpl::Seek(int64_t offset,
     return;
   }
 
-  callback.Run(ERROR_OK, static_cast<int64>(position));
+  callback.Run(Error::OK, static_cast<int64>(position));
 }
 
 void FileImpl::Stat(const StatCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, nullptr);
+    callback.Run(Error::CLOSED, nullptr);
     return;
   }
-  StatFD(file_fd_.get(), FILE_TYPE_REGULAR_FILE, callback);
+  StatFD(file_fd_.get(), FileType::REGULAR_FILE, callback);
 }
 
 void FileImpl::Truncate(int64_t size, const TruncateCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
   if (size < 0) {
-    callback.Run(ERROR_INVALID_ARGUMENT);
+    callback.Run(Error::INVALID_ARGUMENT);
     return;
   }
 
   Error error = IsOffsetValid(size);
-  if (error != ERROR_OK) {
+  if (error != Error::OK) {
     callback.Run(error);
     return;
   }
@@ -287,14 +287,14 @@ void FileImpl::Truncate(int64_t size, const TruncateCallback& callback) {
     return;
   }
 
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 void FileImpl::Touch(TimespecOrNowPtr atime,
                      TimespecOrNowPtr mtime,
                      const TouchCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
   TouchFD(file_fd_.get(), atime.Pass(), mtime.Pass(), callback);
@@ -302,7 +302,7 @@ void FileImpl::Touch(TimespecOrNowPtr atime,
 
 void FileImpl::Dup(InterfaceRequest<File> file, const DupCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
 
@@ -313,44 +313,44 @@ void FileImpl::Dup(InterfaceRequest<File> file, const DupCallback& callback) {
   }
 
   new FileImpl(file.Pass(), file_fd.Pass());
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 void FileImpl::Reopen(InterfaceRequest<File> file,
                       uint32_t open_flags,
                       const ReopenCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED);
+    callback.Run(Error::CLOSED);
     return;
   }
 
   // TODO(vtl): FIXME soon
   NOTIMPLEMENTED();
-  callback.Run(ERROR_UNIMPLEMENTED);
+  callback.Run(Error::UNIMPLEMENTED);
 }
 
 void FileImpl::AsBuffer(const AsBufferCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, ScopedSharedBufferHandle());
+    callback.Run(Error::CLOSED, ScopedSharedBufferHandle());
     return;
   }
 
   // TODO(vtl): FIXME soon
   NOTIMPLEMENTED();
-  callback.Run(ERROR_UNIMPLEMENTED, ScopedSharedBufferHandle());
+  callback.Run(Error::UNIMPLEMENTED, ScopedSharedBufferHandle());
 }
 
 void FileImpl::Ioctl(uint32_t request,
                      Array<uint32_t> in_values,
                      const IoctlCallback& callback) {
   if (!file_fd_.is_valid()) {
-    callback.Run(ERROR_CLOSED, Array<uint32_t>());
+    callback.Run(Error::CLOSED, Array<uint32_t>());
     return;
   }
 
   // TODO(vtl): The "correct" error code should be one that can be translated to
   // ENOTTY!
-  callback.Run(ERROR_UNAVAILABLE, Array<uint32_t>());
+  callback.Run(Error::UNAVAILABLE, Array<uint32_t>());
 }
 
 }  // namespace files

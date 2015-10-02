@@ -151,7 +151,7 @@ void BitmapUploader::Upload() {
     TransferableResourcePtr resource = TransferableResource::New();
     resource->id = next_resource_id_++;
     resource_to_texture_id_map_[resource->id] = texture_id;
-    resource->format = mojo::RESOURCE_FORMAT_RGBA_8888;
+    resource->format = mojo::ResourceFormat::RGBA_8888;
     resource->filter = GL_LINEAR;
     resource->size = bitmap_size.Clone();
     MailboxHolderPtr mailbox_holder = MailboxHolder::New();
@@ -165,7 +165,7 @@ void BitmapUploader::Upload() {
     resource->is_software = false;
 
     QuadPtr quad = Quad::New();
-    quad->material = MATERIAL_TEXTURE_CONTENT;
+    quad->material = Material::TEXTURE_CONTENT;
 
     RectPtr rect = Rect::New();
     if (width_ <= size.width && height_ <= size.height) {
@@ -210,7 +210,7 @@ void BitmapUploader::Upload() {
 
   if (color_ != TRANSPARENT_COLOR) {
     QuadPtr quad = Quad::New();
-    quad->material = MATERIAL_SOLID_COLOR;
+    quad->material = Material::SOLID_COLOR;
     quad->rect = bounds.Clone();
     quad->opaque_rect = Rect::New();
     quad->visible_rect = bounds.Clone();

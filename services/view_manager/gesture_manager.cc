@@ -482,8 +482,8 @@ void GestureManager::Pointer::ChooseGestureIfPossible() {
 
 bool GestureManager::Pointer::ScheduleDeleteIfNecessary() {
   if (current_event_ &&
-      (current_event_->action == mojo::EVENT_TYPE_POINTER_UP ||
-       current_event_->action == mojo::EVENT_TYPE_POINTER_CANCEL)) {
+      (current_event_->action == mojo::EventType::POINTER_UP ||
+       current_event_->action == mojo::EventType::POINTER_CANCEL)) {
     gesture_manager_->ScheduleDelete(this);
     return true;
   }
@@ -547,7 +547,7 @@ bool GestureManager::ProcessEvent(const mojo::Event& event) {
   const gfx::Point location(static_cast<int>(event.pointer_data->x),
                             static_cast<int>(event.pointer_data->y));
   switch (event.action) {
-    case mojo::EVENT_TYPE_POINTER_DOWN: {
+    case mojo::EventType::POINTER_DOWN: {
       if (GetPointerById(event.pointer_data->pointer_id)) {
         DVLOG(1) << "received more than one down for a pointer without a "
                  << "corresponding up, id=" << event.pointer_data->pointer_id;
@@ -566,9 +566,9 @@ bool GestureManager::ProcessEvent(const mojo::Event& event) {
       return true;
     }
 
-    case mojo::EVENT_TYPE_POINTER_CANCEL:
-    case mojo::EVENT_TYPE_POINTER_MOVE:
-    case mojo::EVENT_TYPE_POINTER_UP: {
+    case mojo::EventType::POINTER_CANCEL:
+    case mojo::EventType::POINTER_MOVE:
+    case mojo::EventType::POINTER_UP: {
       Pointer* pointer = GetPointerById(event.pointer_data->pointer_id);
       // We delete a pointer when it has no gestures, so it's possible to get
       // here with no gestures. Additionally there is no need to explicitly

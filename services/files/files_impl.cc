@@ -79,17 +79,17 @@ void FilesImpl::OpenFileSystem(const mojo::String& file_system,
 #endif
     if (!dir_fd.is_valid()) {
       LOG(ERROR) << "~/MojoDebug unavailable";
-      callback.Run(ERROR_UNAVAILABLE);
+      callback.Run(Error::UNAVAILABLE);
       return;
     }
   } else {
     LOG(ERROR) << "Unknown file system: " << file_system.get();
-    callback.Run(ERROR_UNIMPLEMENTED);
+    callback.Run(Error::UNIMPLEMENTED);
     return;
   }
 
   new DirectoryImpl(directory.Pass(), dir_fd.Pass(), temp_dir.Pass());
-  callback.Run(ERROR_OK);
+  callback.Run(Error::OK);
 }
 
 }  // namespace files

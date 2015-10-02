@@ -204,8 +204,8 @@ class NfcSenderDelegate : public mojo::ApplicationDelegate,
   // mojo::ViewObserver
   void OnViewInputEvent(mojo::View* view,
                         const mojo::EventPtr& event) override {
-    if (event->action == mojo::EVENT_TYPE_POINTER_DOWN ||
-        event->action == mojo::EVENT_TYPE_POINTER_MOVE) {
+    if (event->action == mojo::EventType::POINTER_DOWN ||
+        event->action == mojo::EventType::POINTER_MOVE) {
       if (event->pointer_data) {
         gfx::Point point(event->pointer_data->x, event->pointer_data->y);
 

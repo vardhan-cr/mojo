@@ -105,7 +105,7 @@ class Browser : public ApplicationDelegate,
   void NavigateTo(const mojo::String& url) override {
     URLRequestPtr request(URLRequest::New());
     request->url = url;
-    navigator_host_->RequestNavigate(TARGET_NEW_NODE, request.Pass());
+    navigator_host_->RequestNavigate(Target::NEW_NODE, request.Pass());
   }
 
   // mojo::InterfaceFactory<examples::BrowserHost> implementation.

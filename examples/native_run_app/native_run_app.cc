@@ -54,7 +54,7 @@ class TerminalConnection {
     size_t length = strlen(s);
     mojo::Array<uint8_t> a(length);
     memcpy(&a[0], s, length);
-    terminal_->Write(a.Pass(), 0, mojo::files::WHENCE_FROM_CURRENT, callback);
+    terminal_->Write(a.Pass(), 0, mojo::files::Whence::FROM_CURRENT, callback);
   }
 
   void Start() {
@@ -66,21 +66,21 @@ class TerminalConnection {
     });
   }
   void DidWritePrompt(mojo::files::Error error) {
-    if (error != mojo::files::ERROR_OK) {
+    if (error != mojo::files::Error::OK) {
       LOG(ERROR) << "Write() error: " << error;
       delete this;
       return;
     }
 
     terminal_->Read(
-        1000, 0, mojo::files::WHENCE_FROM_CURRENT,
+        1000, 0, mojo::files::Whence::FROM_CURRENT,
         [this](mojo::files::Error error, mojo::Array<uint8_t> bytes_read) {
           this->DidReadFromPrompt(error, bytes_read.Pass());
         });
   }
   void DidReadFromPrompt(mojo::files::Error error,
                          mojo::Array<uint8_t> bytes_read) {
-    if (error != mojo::files::ERROR_OK || !bytes_read.size()) {
+    if (error != mojo::files::Error::OK || !bytes_read.size()) {
       LOG(ERROR) << "Read() error: " << error;
       delete this;
       return;
@@ -111,7 +111,7 @@ class TerminalConnection {
   }
   void DidGetTerminalSettings(mojo::files::Error error,
                               mojo::Array<uint32_t> out_values) {
-    if (error != mojo::files::ERROR_OK || out_values.size() < 6) {
+    if (error != mojo::files::Error::OK || out_values.size() < 6) {
       LOG(ERROR) << "Ioctl() (terminal get settings) error: " << error;
       delete this;
       return;
@@ -136,7 +136,7 @@ class TerminalConnection {
   }
   void DidSetTerminalSettings(mojo::files::Error error,
                               mojo::Array<uint32_t> out_values) {
-    if (error != mojo::files::ERROR_OK) {
+    if (error != mojo::files::Error::OK) {
       LOG(ERROR) << "Ioctl() (terminal set settings) error: " << error;
       delete this;
       return;
@@ -158,7 +158,7 @@ class TerminalConnection {
     process_controller_.set_connection_error_handler([this]() { delete this; });
   }
   void DidSpawnWithTerminal(mojo::files::Error error) {
-    if (error != mojo::files::ERROR_OK) {
+    if (error != mojo::files::Error::OK) {
       LOG(ERROR) << "SpawnWithTerminal() error: " << error;
       delete this;
       return;
@@ -169,7 +169,7 @@ class TerminalConnection {
         });
   }
   void DidWait(mojo::files::Error error, int32_t exit_status) {
-    if (error != mojo::files::ERROR_OK)
+    if (error != mojo::files::Error::OK)
       LOG(ERROR) << "Wait() error: " << error;
     else if (exit_status != 0)  // |exit_status| only valid if OK.
       LOG(ERROR) << "Process exit status: " << exit_status;

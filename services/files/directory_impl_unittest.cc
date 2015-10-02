@@ -28,35 +28,35 @@ TEST_F(DirectoryImplTest, Read) {
       {"my_file3", kOpenFlagWrite | kOpenFlagCreate | kOpenFlagAppend},
       {"my_file4", kOpenFlagWrite | kOpenFlagCreate | kOpenFlagTruncate}};
   for (size_t i = 0; i < arraysize(files_to_create); i++) {
-    error = ERROR_INTERNAL;
+    error = Error::INTERNAL;
     directory->OpenFile(files_to_create[i].name, nullptr,
                         files_to_create[i].open_flags, Capture(&error));
     ASSERT_TRUE(directory.WaitForIncomingResponse());
-    EXPECT_EQ(ERROR_OK, error);
+    EXPECT_EQ(Error::OK, error);
   }
   // Make a directory.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenDirectory("my_dir", nullptr,
                            kOpenFlagRead | kOpenFlagWrite | kOpenFlagCreate,
                            Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   Array<DirectoryEntryPtr> directory_contents;
   directory->Read(Capture(&error, &directory_contents));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Expected contents of the directory.
   std::map<std::string, FileType> expected_contents;
-  expected_contents["my_file1"] = FILE_TYPE_REGULAR_FILE;
-  expected_contents["my_file2"] = FILE_TYPE_REGULAR_FILE;
-  expected_contents["my_file3"] = FILE_TYPE_REGULAR_FILE;
-  expected_contents["my_file4"] = FILE_TYPE_REGULAR_FILE;
-  expected_contents["my_dir"] = FILE_TYPE_DIRECTORY;
-  expected_contents["."] = FILE_TYPE_DIRECTORY;
-  expected_contents[".."] = FILE_TYPE_DIRECTORY;
+  expected_contents["my_file1"] = FileType::REGULAR_FILE;
+  expected_contents["my_file2"] = FileType::REGULAR_FILE;
+  expected_contents["my_file3"] = FileType::REGULAR_FILE;
+  expected_contents["my_file4"] = FileType::REGULAR_FILE;
+  expected_contents["my_dir"] = FileType::DIRECTORY;
+  expected_contents["."] = FileType::DIRECTORY;
+  expected_contents[".."] = FileType::DIRECTORY;
 
   EXPECT_EQ(expected_contents.size(), directory_contents.size());
   for (size_t i = 0; i < directory_contents.size(); i++) {
@@ -79,13 +79,13 @@ TEST_F(DirectoryImplTest, StatTouch) {
   Error error;
 
   // Stat it.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   FileInformationPtr file_info;
   directory->Stat(Capture(&error, &file_info));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
   ASSERT_FALSE(file_info.is_null());
-  EXPECT_EQ(FILE_TYPE_DIRECTORY, file_info->type);
+  EXPECT_EQ(FileType::DIRECTORY, file_info->type);
   EXPECT_EQ(0, file_info->size);
   ASSERT_FALSE(file_info->atime.is_null());
   EXPECT_GT(file_info->atime->seconds, 0);  // Expect that it's not 1970-01-01.
@@ -94,7 +94,7 @@ TEST_F(DirectoryImplTest, StatTouch) {
   int64_t first_mtime = file_info->mtime->seconds;
 
   // Touch only the atime.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   TimespecOrNowPtr t(TimespecOrNow::New());
   t->now = false;
   t->timespec = Timespec::New();
@@ -102,14 +102,14 @@ TEST_F(DirectoryImplTest, StatTouch) {
   t->timespec->seconds = kPartyTime1;
   directory->Touch(t.Pass(), nullptr, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Stat again.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   file_info.reset();
   directory->Stat(Capture(&error, &file_info));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
   ASSERT_FALSE(file_info.is_null());
   ASSERT_FALSE(file_info->atime.is_null());
   EXPECT_EQ(kPartyTime1, file_info->atime->seconds);
@@ -124,14 +124,14 @@ TEST_F(DirectoryImplTest, StatTouch) {
   t->timespec->seconds = kPartyTime2;
   directory->Touch(nullptr, t.Pass(), Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Stat again.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   file_info.reset();
   directory->Stat(Capture(&error, &file_info));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
   ASSERT_FALSE(file_info.is_null());
   ASSERT_FALSE(file_info->atime.is_null());
   EXPECT_EQ(kPartyTime1, file_info->atime->seconds);
@@ -150,45 +150,45 @@ TEST_F(DirectoryImplTest, BasicRenameDelete) {
   Error error;
 
   // Create my_file.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenFile("my_file", nullptr, kOpenFlagWrite | kOpenFlagCreate,
                       Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Opening my_file should succeed.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenFile("my_file", nullptr, kOpenFlagRead, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Rename my_file to my_new_file.
   directory->Rename("my_file", "my_new_file", Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Opening my_file should fail.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenFile("my_file", nullptr, kOpenFlagRead, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_UNKNOWN, error);
+  EXPECT_EQ(Error::UNKNOWN, error);
 
   // Opening my_new_file should succeed.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenFile("my_new_file", nullptr, kOpenFlagRead, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Delete my_new_file (no flags).
   directory->Delete("my_new_file", 0, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_OK, error);
+  EXPECT_EQ(Error::OK, error);
 
   // Opening my_new_file should fail.
-  error = ERROR_INTERNAL;
+  error = Error::INTERNAL;
   directory->OpenFile("my_new_file", nullptr, kOpenFlagRead, Capture(&error));
   ASSERT_TRUE(directory.WaitForIncomingResponse());
-  EXPECT_EQ(ERROR_UNKNOWN, error);
+  EXPECT_EQ(Error::UNKNOWN, error);
 }
 
 // TODO(vtl): Test that an open file can be moved (by someone else) without

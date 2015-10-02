@@ -118,7 +118,7 @@ void MotermView::OnViewBoundsChanged(mojo::View* view,
 
 void MotermView::OnViewInputEvent(mojo::View* view,
                                   const mojo::EventPtr& event) {
-  if (event->action == mojo::EVENT_TYPE_KEY_PRESSED)
+  if (event->action == mojo::EventType::KEY_PRESSED)
     OnKeyPressed(event);
 }
 
@@ -183,14 +183,14 @@ void MotermView::Connect(
       OnClosed();
     } else {
       // TODO(vtl): Is this error code right?
-      callback.Run(mojo::files::ERROR_UNAVAILABLE);
+      callback.Run(mojo::files::Error::UNAVAILABLE);
       return;
     }
   }
 
   driver_ = MotermDriver::Create(this, terminal_file.Pass());
   DCHECK(on_closed_callback_.is_null());
-  on_closed_callback_ = [callback] { callback.Run(mojo::files::ERROR_OK); };
+  on_closed_callback_ = [callback] { callback.Run(mojo::files::Error::OK); };
 }
 
 void MotermView::ConnectToClient(
@@ -203,7 +203,7 @@ void MotermView::ConnectToClient(
       OnClosed();
     } else {
       // TODO(vtl): Is this error code right?
-      callback.Run(mojo::files::ERROR_UNAVAILABLE);
+      callback.Run(mojo::files::Error::UNAVAILABLE);
       return;
     }
   }
@@ -212,12 +212,12 @@ void MotermView::ConnectToClient(
   driver_ = MotermDriver::Create(this, GetProxy(&file));
   terminal_client->ConnectToTerminal(file.Pass());
   DCHECK(on_closed_callback_.is_null());
-  on_closed_callback_ = [callback] { callback.Run(mojo::files::ERROR_OK); };
+  on_closed_callback_ = [callback] { callback.Run(mojo::files::Error::OK); };
 }
 
 void MotermView::GetSize(const GetSizeCallback& callback) {
   MotermModel::Size size = model_.GetSize();
-  callback.Run(mojo::files::ERROR_OK, size.rows, size.columns);
+  callback.Run(mojo::files::Error::OK, size.rows, size.columns);
 }
 
 void MotermView::SetSize(uint32_t rows,
@@ -237,7 +237,7 @@ void MotermView::SetSize(uint32_t rows,
   }
 
   model_.SetSize(MotermModel::Size(rows, columns), reset);
-  callback.Run(mojo::files::ERROR_OK, rows, columns);
+  callback.Run(mojo::files::Error::OK, rows, columns);
 
   Draw(false);
 }

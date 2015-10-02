@@ -21,39 +21,39 @@ namespace files {
 Error IsPathValid(const String& path) {
   DCHECK(!path.is_null());
   if (!base::IsStringUTF8(path.get()))
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
   if (path.size() > 0 && path[0] == '/')
-    return ERROR_PERMISSION_DENIED;
-  return ERROR_OK;
+    return Error::PERMISSION_DENIED;
+  return Error::OK;
 }
 
 Error IsWhenceValid(Whence whence) {
-  return (whence == WHENCE_FROM_CURRENT || whence == WHENCE_FROM_START ||
-          whence == WHENCE_FROM_END)
-             ? ERROR_OK
-             : ERROR_UNIMPLEMENTED;
+  return (whence == Whence::FROM_CURRENT || whence == Whence::FROM_START ||
+          whence == Whence::FROM_END)
+             ? Error::OK
+             : Error::UNIMPLEMENTED;
 }
 
 Error IsOffsetValid(int64_t offset) {
   return (offset >= std::numeric_limits<off_t>::min() &&
           offset <= std::numeric_limits<off_t>::max())
-             ? ERROR_OK
-             : ERROR_OUT_OF_RANGE;
+             ? Error::OK
+             : Error::OUT_OF_RANGE;
 }
 
 Error ErrnoToError(int errno_value) {
   // TODO(vtl)
-  return ERROR_UNKNOWN;
+  return Error::UNKNOWN;
 }
 
 int WhenceToStandardWhence(Whence whence) {
-  DCHECK_EQ(IsWhenceValid(whence), ERROR_OK);
+  DCHECK_EQ(IsWhenceValid(whence), Error::OK);
   switch (whence) {
-    case WHENCE_FROM_CURRENT:
+    case Whence::FROM_CURRENT:
       return SEEK_CUR;
-    case WHENCE_FROM_START:
+    case Whence::FROM_START:
       return SEEK_SET;
-    case WHENCE_FROM_END:
+    case Whence::FROM_END:
       return SEEK_END;
   }
   NOTREACHED();
@@ -64,20 +64,20 @@ Error TimespecToStandardTimespec(const Timespec* in, struct timespec* out) {
   if (!in) {
     out->tv_sec = 0;
     out->tv_nsec = UTIME_OMIT;
-    return ERROR_OK;
+    return Error::OK;
   }
 
   static_assert(sizeof(int64_t) >= sizeof(time_t), "whoa, time_t is huge");
   if (in->seconds < std::numeric_limits<time_t>::min() ||
       in->seconds > std::numeric_limits<time_t>::max())
-    return ERROR_OUT_OF_RANGE;
+    return Error::OUT_OF_RANGE;
 
   if (in->nanoseconds < 0 || in->nanoseconds >= 1000000000)
-    return ERROR_INVALID_ARGUMENT;
+    return Error::INVALID_ARGUMENT;
 
   out->tv_sec = static_cast<time_t>(in->seconds);
   out->tv_nsec = static_cast<long>(in->nanoseconds);
-  return ERROR_OK;
+  return Error::OK;
 }
 
 Error TimespecOrNowToStandardTimespec(const TimespecOrNow* in,
@@ -85,15 +85,15 @@ Error TimespecOrNowToStandardTimespec(const TimespecOrNow* in,
   if (!in) {
     out->tv_sec = 0;
     out->tv_nsec = UTIME_OMIT;
-    return ERROR_OK;
+    return Error::OK;
   }
 
   if (in->now) {
     if (!in->timespec.is_null())
-      return ERROR_INVALID_ARGUMENT;
+      return Error::INVALID_ARGUMENT;
     out->tv_sec = 0;
     out->tv_nsec = UTIME_NOW;
-    return ERROR_OK;
+    return Error::OK;
   }
 
   return TimespecToStandardTimespec(in->timespec.get(), out);

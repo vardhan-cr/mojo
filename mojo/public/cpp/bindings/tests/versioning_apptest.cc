@@ -37,7 +37,7 @@ TEST_F(VersioningApplicationTest, Struct) {
   EmployeePtr employee(Employee::New());
   employee->employee_id = 1;
   employee->name = "Homer Simpson";
-  employee->department = DEPARTMENT_DEV;
+  employee->department = Department::DEV;
 
   database_->QueryEmployee(1, true,
                            [&employee](EmployeePtr returned_employee,
@@ -51,7 +51,7 @@ TEST_F(VersioningApplicationTest, Struct) {
   EmployeePtr new_employee(Employee::New());
   new_employee->employee_id = 2;
   new_employee->name = "Marge Simpson";
-  new_employee->department = DEPARTMENT_SALES;
+  new_employee->department = Department::SALES;
 
   database_->AddEmployee(new_employee.Clone(),
                          [](bool success) { EXPECT_TRUE(success); });
