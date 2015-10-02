@@ -119,4 +119,15 @@ class SerializationWarningObserverForTesting {
       << ValidationErrorToString(error) << " at the receiving side ("    \
       << description << ").";
 
+// If condition is true, we either report or log a warning, and then return.
+#define MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(condition, return_code, \
+                                                     description)            \
+  if (condition) {                                                           \
+    MOJO_DLOG_IF(WARNING, !ReportSerializationWarning(return_code))          \
+        << "The outgoing message will trigger "                              \
+        << ValidationErrorToString(error) << " at the receiving side ("      \
+        << description << ").";                                              \
+    return return_code;                                                      \
+  }
+
 #endif  // MOJO_PUBLIC_CPP_BINDINGS_LIB_VALIDATION_ERRORS_H_
