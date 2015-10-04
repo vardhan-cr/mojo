@@ -45,7 +45,7 @@ struct ArraySerializer<E, F, false> {
   }
 
   template <typename Iterator>
-  static void SerializeElements(Iterator it,
+  static ValidationError SerializeElements(Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<F>* output,
@@ -56,11 +56,13 @@ struct ArraySerializer<E, F, false> {
         << "Primitive type should not have array validate params";
     for (size_t i = 0; i < num_elements; ++i, ++it)
       output->at(i) = *it;
+
+    return VALIDATION_ERROR_NONE;
   }
 
   // We can optimize serializing PODs by |memcpy|ing directly.
   // Note that this has precedence over its templated sibling defined above.
-  static void SerializeElements(typename Array<E>::Iterator it,
+  static ValidationError SerializeElements(typename Array<E>::Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<F>* output,
@@ -71,6 +73,8 @@ struct ArraySerializer<E, F, false> {
         << "Primitive type should not have array validate params";
     if (num_elements)
       memcpy(output->storage(), &(*it), num_elements * sizeof(E));
+
+    return VALIDATION_ERROR_NONE;
   }
 
   static void DeserializeElements(Array_Data<F>* input, Array<E>* output) {
@@ -89,7 +93,7 @@ struct ArraySerializer<bool, bool, false> {
   }
 
   template <typename Iterator>
-  static void SerializeElements(Iterator it,
+  static ValidationError SerializeElements(Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<bool>* output,
@@ -102,6 +106,8 @@ struct ArraySerializer<bool, bool, false> {
     // TODO(darin): Can this be a memcpy somehow instead of a bit-by-bit copy?
     for (size_t i = 0; i < num_elements; ++i, ++it)
       output->at(i) = *it;
+
+    return VALIDATION_ERROR_NONE;
   }
 
   static void DeserializeElements(Array_Data<bool>* input,
@@ -122,7 +128,7 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
   }
 
   template <typename Iterator>
-  static void SerializeElements(Iterator it,
+  static ValidationError SerializeElements(Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<H>* output,
@@ -133,13 +139,15 @@ struct ArraySerializer<ScopedHandleBase<H>, H, false> {
     for (size_t i = 0; i < num_elements; ++i, ++it) {
       // Transfer ownership of the handle.
       output->at(i) = it->release();
-      MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+      MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(
           !validate_params->element_is_nullable && !output->at(i).is_valid(),
           VALIDATION_ERROR_UNEXPECTED_INVALID_HANDLE,
           MakeMessageWithArrayIndex(
               "invalid handle in array expecting valid handles", num_elements,
               i));
     }
+
+    return VALIDATION_ERROR_NONE;
   }
 
   static void DeserializeElements(Array_Data<H>* input,
@@ -171,22 +179,27 @@ struct ArraySerializer<
   }
 
   template <typename Iterator>
-  static void SerializeElements(Iterator it,
+  static ValidationError SerializeElements(Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<S_Data*>* output,
                                 const ArrayValidateParams* validate_params) {
     for (size_t i = 0; i < num_elements; ++i, ++it) {
       S_Data* element;
-      SerializeCaller::Run(&(*it), buf, &element,
+      auto retval = SerializeCaller::Run(&(*it), buf, &element,
                            validate_params->element_validate_params);
+      if (retval != VALIDATION_ERROR_NONE)
+        return retval;
+
       output->at(i) = element;
-      MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+      MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(
           !validate_params->element_is_nullable && !element,
           VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
           MakeMessageWithArrayIndex("null in array expecting valid pointers",
                                     num_elements, i));
     }
+
+    return VALIDATION_ERROR_NONE;
   }
 
   static void DeserializeElements(Array_Data<S_Data*>* input,
@@ -208,16 +221,17 @@ struct ArraySerializer<
     // takes precedence over the |String|-overloaded Run() below.
     template <typename T,
               typename = typename EnableIf<!IsSame<T, String>::value, T>::type>
-    static void Run(T* input,
+    static ValidationError Run(T* input,
                     Buffer* buf,
                     typename WrapperTraits<T>::DataType* output,
                     const ArrayValidateParams* validate_params) {
       MOJO_DCHECK(!validate_params)
           << "Struct type should not have array validate params";
       Serialize_(UnwrapStructPtr<T>::value(*input), buf, output);
+      return VALIDATION_ERROR_NONE;
     }
 
-    static void Run(const String* input,
+    static ValidationError Run(const String* input,
                     Buffer* buf,
                     String_Data** output,
                     const ArrayValidateParams* validate_params) {
@@ -227,22 +241,24 @@ struct ArraySerializer<
                   validate_params->expected_num_elements == 0)
           << "String type has unexpected array validate params";
       SerializeString_(*input, buf, output);
+      return VALIDATION_ERROR_NONE;
     }
 
     template <typename T>
-    static void Run(Array<T>* input,
+    static ValidationError Run(Array<T>* input,
                     Buffer* buf,
                     typename Array<T>::Data_** output,
                     const ArrayValidateParams* validate_params) {
-      SerializeArray_(input, buf, output, validate_params);
+      return SerializeArray_(input, buf, output, validate_params);
     }
 
     template <typename Key, typename Value>
-    static void Run(Map<Key, Value>* input,
+    static ValidationError Run(Map<Key, Value>* input,
                     Buffer* buf,
                     typename Map<Key, Value>::Data_** output,
                     const ArrayValidateParams* validate_params) {
       SerializeMap_(input, buf, output, validate_params);
+      return VALIDATION_ERROR_NONE;
     }
   };
 
@@ -287,7 +303,7 @@ struct ArraySerializer<U, U_Data, true> {
   }
 
   template <typename Iterator>
-  static void SerializeElements(Iterator it,
+  static ValidationError SerializeElements(Iterator it,
                                 size_t num_elements,
                                 Buffer* buf,
                                 Array_Data<U_Data>* output,
@@ -295,12 +311,14 @@ struct ArraySerializer<U, U_Data, true> {
     for (size_t i = 0; i < num_elements; ++i, ++it) {
       U_Data* result = output->storage() + i;
       SerializeUnion_(it->get(), buf, &result, true);
-      MOJO_INTERNAL_DLOG_SERIALIZATION_WARNING(
+      MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(
           !validate_params->element_is_nullable && output->at(i).is_null(),
           VALIDATION_ERROR_UNEXPECTED_NULL_POINTER,
           MakeMessageWithArrayIndex("null in array expecting valid unions",
                                     num_elements, i));
     }
+
+    return VALIDATION_ERROR_NONE;
   }
 
   static void DeserializeElements(Array_Data<U_Data>* input, Array<U>* output) {
@@ -335,7 +353,7 @@ inline internal::ValidationError SerializeArray_(
     const internal::ArrayValidateParams* validate_params) {
   MOJO_DCHECK(input);
   if (*input) {
-    MOJO_INTERNAL_SERIALIZATION_CHECK_OR_RETURN(
+    MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(
         validate_params->expected_num_elements != 0 &&
             input->size() != validate_params->expected_num_elements,
         internal::VALIDATION_ERROR_UNEXPECTED_ARRAY_HEADER,
@@ -348,7 +366,7 @@ inline internal::ValidationError SerializeArray_(
     if (result) {
         auto retval = internal::ArraySerializer<E, F>::SerializeElements(
             input->begin(), input->size(), buf, result, validate_params);
-        if (retval != VALIDATION_ERROR_NONE) {
+        if (retval != internal::VALIDATION_ERROR_NONE) {
           return retval;
         }
     }
@@ -358,7 +376,8 @@ inline internal::ValidationError SerializeArray_(
     // not nullable.
     *output = nullptr;
   }
-  return VALIDATION_ERROR_NONE;
+
+  return internal::VALIDATION_ERROR_NONE;
 }
 
 template <typename E, typename F>

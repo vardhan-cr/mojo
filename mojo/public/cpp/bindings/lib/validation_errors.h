@@ -119,13 +119,15 @@ class SerializationWarningObserverForTesting {
       << ValidationErrorToString(error) << " at the receiving side ("    \
       << description << ").";
 
-// If condition is true, we either report or log a warning, and then return.
+// If condition is true, we either report or make a fatal log message, and then
+// return.
 #define MOJO_INTERNAL_SERIALIZATION_CHECK_AND_RETURN(condition, return_code, \
                                                      description)            \
   if (condition) {                                                           \
-    MOJO_DLOG_IF(WARNING, !ReportSerializationWarning(return_code))          \
+    MOJO_DLOG_IF(FATAL, !ReportSerializationWarning(return_code))            \
         << "The outgoing message will trigger "                              \
-        << ValidationErrorToString(error) << " at the receiving side ("      \
+        << ValidationErrorToString(return_code)                              \
+        << " at the receiving side ("                                        \
         << description << ").";                                              \
     return return_code;                                                      \
   }
